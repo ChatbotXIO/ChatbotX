@@ -2,14 +2,14 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockGetCurrentUserAndTargetWorkspace, mockNotFound } = vi.hoisted(
-  () => ({
+const { mockGetCurrentUserAndTargetWorkspace, mockListContacts, mockNotFound } =
+  vi.hoisted(() => ({
     mockGetCurrentUserAndTargetWorkspace: vi.fn(),
+    mockListContacts: vi.fn(),
     mockNotFound: vi.fn(() => {
       throw new Error("not found")
     }),
-  }),
-)
+  }))
 
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: mockGetCurrentUserAndTargetWorkspace,
@@ -30,12 +30,7 @@ vi.mock("next-intl/server", () => ({
 }))
 
 vi.mock("@/features/contacts/queries/list-contacts.queries", () => ({
-  listContacts: vi.fn(async () => ({
-    data: [],
-    pageCount: 0,
-    totalCount: 0,
-    totalCountCapped: false,
-  })),
+  listContacts: mockListContacts,
 }))
 
 vi.mock("@/features/contacts/schema/query", () => ({
@@ -104,6 +99,27 @@ const basePermissions = {
 describe("contacts route guards", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  test("renders the contacts shell without issuing an RSC contact-list query", async () => {
+    mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { id: "user-1" },
+      targetWorkspaceMember: {
+        permissions: {
+          ...basePermissions,
+          contacts: true,
+        },
+      },
+    })
+
+    await expect(
+      ContactsPage({
+        params: Promise.resolve({ workspaceId: "ws-1" }),
+        searchParams: Promise.resolve({}),
+      }),
+    ).resolves.toBeDefined()
+
+    expect(mockListContacts).not.toHaveBeenCalled()
   })
 
   test("allows assigned-only members to reach contacts and contacts import pages", async () => {

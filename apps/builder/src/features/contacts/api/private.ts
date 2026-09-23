@@ -22,7 +22,7 @@ import {
   listContactInboxesAudiencePreviewRequest,
   listContactInboxesAudiencePreviewResponse,
   listContactsRequest,
-  listContactsResponse,
+  listContactsTableResponse,
 } from "../schema/query"
 
 export const contactsAuthenticatedAPI = {
@@ -58,7 +58,7 @@ export const contactsAuthenticatedAPI = {
     })
     .input(listContactsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(listContactsResponse)
+    .output(listContactsTableResponse)
     .handler(async ({ input, context }) => {
       const scope = requireContactPermissionScopeForMember({
         permissions: context.workspaceMember.permissions,

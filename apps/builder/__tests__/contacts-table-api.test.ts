@@ -59,7 +59,7 @@ vi.mock("@/features/contacts/schema/query", () => ({
   listContactInboxesAudiencePreviewRequest: {},
   listContactInboxesAudiencePreviewResponse: {},
   listContactsRequest: { and: () => ({}) },
-  listContactsResponse: {},
+  listContactsTableResponse: {},
 }))
 
 vi.mock("@/orpc", () => ({

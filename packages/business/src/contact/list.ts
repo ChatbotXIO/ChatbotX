@@ -51,8 +51,8 @@ const resolveScope = (
 
 type ListInput = ListContactsInput & {
   scope: ContactListScopeInput
-  /** "table" mirrors the private RSC contacts-table relation set (no tags /
-   * custom fields); "full" is the default public/API relation set. */
+  /** "table" uses the contacts-table relation set; "full" is the default
+   * public/API relation set. */
   projection?: "full" | "table"
   include?: readonly ContactListInclude[]
   withCount?: boolean
@@ -60,6 +60,13 @@ type ListInput = ListContactsInput & {
 
 type CountInput = ListContactsInput & {
   scope: ContactListScopeInput
+}
+
+type ContactListRow = ContactModel & {
+  tags?: unknown
+  contactCustomFields?: unknown
+  contactInboxes?: unknown
+  conversation?: unknown
 }
 
 /**
@@ -144,41 +151,17 @@ async function getTotalContactsFromStats(
   }
 }
 
-export async function list<T extends ContactModel = ContactModel>(
-  input: ListInput,
-): Promise<ContactListResult<T>> {
-  const { projection = "full", include, withCount = true } = input
-  const scope = resolveScope(input.scope)
-  const normalizedInput = {
-    ...input,
-    perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
-  }
-
-  const where = contactRepository.buildListWhere(toListWhereInput(input, scope))
-
-  const pagination = getPaginationWithDefaults(normalizedInput)
-  const orderBy = contactRepository.resolveOrderBy(normalizedInput)
-
-  // `listForTable` is the "full" relation set minus tags/customFields — use
-  // it whenever the caller can't need those two joins, either because the
-  // table projection never returns them, or because `include` was given and
-  // omits both.
-  const skipsTagsAndCustomFields =
-    !!include && !include.includes("tags") && !include.includes("customFields")
-  const usesTableRelations = projection === "table" || skipsTagsAndCustomFields
-
-  const [data, countResult] = await Promise.all([
-    usesTableRelations
-      ? contactRepository.listForTable({ where, ...pagination, orderBy })
-      : contactRepository.listWithRelations({ where, ...pagination, orderBy }),
-    resolveCount({ withCount, where }),
-  ])
-
-  const pageCount = withCount
-    ? Math.ceil(countResult.total / pagination.limit)
-    : 0
-
-  // Unscoped (token) callers see PII; scoped members only when permitted.
+async function buildListResult<T extends ContactListRow>(input: {
+  dataPromise: Promise<T[]>
+  countPromise: Promise<{ total: number; capped: boolean }>
+  withCount: boolean
+  limit: number
+  scope: ContactListScope | undefined
+  include?: readonly ContactListInclude[]
+}): Promise<ContactListResult<T>> {
+  const { countPromise, dataPromise, include, limit, scope, withCount } = input
+  const [data, countResult] = await Promise.all([dataPromise, countPromise])
+  const pageCount = withCount ? Math.ceil(countResult.total / limit) : 0
   const maskedData =
     scope && !scope.canViewEmailAndPhone
       ? data.map(maskContactEmailAndPhone)
@@ -195,6 +178,68 @@ export async function list<T extends ContactModel = ContactModel>(
     totalCount: countResult.total,
     totalCountCapped: countResult.capped,
   }
+}
+
+export async function list<T extends ContactModel = ContactModel>(
+  input: ListInput,
+): Promise<ContactListResult<T>> {
+  const { projection = "full", include, withCount = true } = input
+  const scope = resolveScope(input.scope)
+  const normalizedInput = {
+    ...input,
+    perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
+  }
+
+  const where = contactRepository.buildListWhere(toListWhereInput(input, scope))
+
+  const pagination = getPaginationWithDefaults(normalizedInput)
+  const orderBy = contactRepository.resolveOrderBy(normalizedInput)
+
+  // `listForTable` is the "full" relation set minus tags/customFields — use
+  // it when `include` omits both. The contacts table has a narrower relation
+  // set and must use `listTableRows`.
+  const skipsTagsAndCustomFields =
+    !!include && !include.includes("tags") && !include.includes("customFields")
+
+  const countPromise = resolveCount({ withCount, where })
+  const resultInput = {
+    countPromise,
+    include,
+    limit: pagination.limit,
+    scope,
+    withCount,
+  }
+
+  if (projection === "table") {
+    return await (buildListResult({
+      ...resultInput,
+      dataPromise: contactRepository.listTableRows({
+        where,
+        ...pagination,
+        orderBy,
+      }),
+    }) as Promise<ContactListResult<T>>)
+  }
+
+  if (skipsTagsAndCustomFields) {
+    return await (buildListResult({
+      ...resultInput,
+      dataPromise: contactRepository.listForTable({
+        where,
+        ...pagination,
+        orderBy,
+      }),
+    }) as Promise<ContactListResult<T>>)
+  }
+
+  return await (buildListResult({
+    ...resultInput,
+    dataPromise: contactRepository.listWithRelations({
+      where,
+      ...pagination,
+      orderBy,
+    }),
+  }) as Promise<ContactListResult<T>>)
 }
 
 export async function count(input: CountInput): Promise<{ total: number }> {

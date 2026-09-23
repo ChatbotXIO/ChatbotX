@@ -13,12 +13,11 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import { hashKey } from "@tanstack/react-query"
 import type { Column, ColumnDef, Row } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
 import { useSearchParams } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
-import { use, useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   type ContactFilterCriteria,
   ContactListFilterButton,
@@ -27,7 +26,6 @@ import {
   useContactFilterQueryState,
 } from "@/features/contact-filter"
 import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "@/features/contact-filter/lib/restricted-fields"
-import { orpc } from "@/lib/orpc/query"
 import { getUserName } from "../users/schema/resource"
 import { ContactNameCell } from "./components/contact-name-cell"
 import { CONTACTS_DEFAULT_PER_PAGE } from "./constants"
@@ -35,8 +33,10 @@ import { ContactListAction } from "./contacts-list-action"
 import { useContacts } from "./hooks/use-contacts"
 import { getContactsListInput } from "./lib/contact-list-input"
 import type { ExportContactsFilter } from "./schema/action"
-import type { ListContactsRequest, ListContactsResponse } from "./schema/query"
-import type { ContactResource } from "./schema/resource"
+import type {
+  ListContactsRequest,
+  ListContactsTableResponse,
+} from "./schema/query"
 import { getLatestContactLastReadAt } from "./utils"
 
 /**
@@ -51,7 +51,7 @@ function ContactCard({
   row,
   workspaceId,
 }: {
-  row: Row<ListContactsResponse["data"][number]>
+  row: Row<ListContactsTableResponse["data"][number]>
   workspaceId: string
 }) {
   const t = useTranslations()
@@ -93,20 +93,17 @@ type ContactsTableProps = {
   canViewEmailAndPhone?: boolean
   initialInput: ListContactsRequest
   workspaceId: string
-  promises: Promise<[ListContactsResponse]>
 }
 
 export function ContactsTable({
   canViewEmailAndPhone = true,
   initialInput,
   workspaceId,
-  promises,
 }: ContactsTableProps) {
   const t = useTranslations()
   const formatter = useFormatter()
   const searchParams = useSearchParams()
   const searchParamsKey = searchParams.toString()
-  const [initialResponse] = use(promises)
   const {
     filter: contactFilter,
     setFilter: setContactFilter,
@@ -138,14 +135,9 @@ export function ContactsTable({
     [contactFilter, searchParamsRecord, workspaceId],
   )
   const keyword = listContactsInput.keyword
-  const contactsQuery = useContacts(
-    listContactsInput,
-    {
-      input: initialInput,
-      response: initialResponse,
-    },
-    { enabled: !pendingContactFilter },
-  )
+  const contactsQuery = useContacts(listContactsInput, {
+    enabled: !pendingContactFilter,
+  })
   const contactsResponse = contactsQuery.data
   const tableData = contactsResponse?.data ?? []
   const tablePageCount = contactsResponse?.pageCount ?? 0
@@ -176,7 +168,9 @@ export function ContactsTable({
     ? t("contacts.countCapped", { count: totalCountDisplay })
     : t("contacts.countExact", { count: totalCountDisplay })
 
-  const columns = useMemo<ColumnDef<ListContactsResponse["data"][number]>[]>(
+  const columns = useMemo<
+    ColumnDef<ListContactsTableResponse["data"][number]>[]
+  >(
     () => [
       {
         id: "select",
@@ -238,7 +232,11 @@ export function ContactsTable({
       },
       {
         accessorKey: "source",
-        header: ({ column }: { column: Column<ContactResource, unknown> }) => (
+        header: ({
+          column,
+        }: {
+          column: Column<ListContactsTableResponse["data"][number], unknown>
+        }) => (
           <DataTableColumnHeader
             column={column}
             title={t("fields.source.label")}
@@ -364,12 +362,6 @@ export function ContactsTable({
     shallow: true,
     clearOnDefault: true,
   })
-
-  const _contactsQueryKey = hashKey(
-    orpc.contactsAPIs.listContactsByPOSTAuthenticatedAPI.queryOptions({
-      input: listContactsInput,
-    }).queryKey,
-  )
 
   useEffect(() => {
     table.resetRowSelection()

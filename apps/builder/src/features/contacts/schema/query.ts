@@ -145,6 +145,39 @@ export const listContactsResponse = z.object({
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
 
+export const listContactsTableResponse = z.object({
+  data: z.array(
+    contactResource.and(
+      z.object({
+        contactInboxes: z.array(
+          contactInboxResource.pick({
+            id: true,
+            channel: true,
+            source: true,
+            contactLastReadAt: true,
+          }),
+        ),
+        conversation: conversationResource
+          .pick({ id: true, assignedUserId: true })
+          .and(
+            z.object({
+              assignedUser: userResource
+                .pick({ id: true, name: true, email: true, image: true })
+                .nullish(),
+            }),
+          )
+          .nullable(),
+      }),
+    ),
+  ),
+  pageCount: z.number(),
+  totalCount: z.number(),
+  totalCountCapped: z.boolean(),
+})
+export type ListContactsTableResponse = z.infer<
+  typeof listContactsTableResponse
+>
+
 // Back-compat for the deprecated `contacts.findByCustomField` alias — use
 // `contacts.list` with a `contactFilter` instead.
 export const publicListContactsResponse = z.object({

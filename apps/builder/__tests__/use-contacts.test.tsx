@@ -7,7 +7,7 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type {
   ListContactsRequest,
-  ListContactsResponse,
+  ListContactsTableResponse,
 } from "@/features/contacts/schema/query"
 
 const { mockListContacts } = vi.hoisted(() => ({
@@ -28,7 +28,7 @@ vi.mock("@/lib/orpc/query", () => ({
   },
 }))
 
-type ContactsQueryResult = UseQueryResult<ListContactsResponse, Error>
+type ContactsQueryResult = UseQueryResult<ListContactsTableResponse, Error>
 
 const { useContacts, useInvalidateContacts } = await import(
   "@/features/contacts/hooks/use-contacts"
@@ -51,13 +51,13 @@ const makeInput = (page: number): ListContactsRequest => ({
   sort: [{ id: "createdAt", desc: true }],
 })
 
-const makeResponse = (id: string): ListContactsResponse =>
+const makeResponse = (id: string): ListContactsTableResponse =>
   ({
     data: [{ id }],
     pageCount: 1,
     totalCount: 1,
     totalCountCapped: false,
-  }) as ListContactsResponse
+  }) as ListContactsTableResponse
 
 const waitForQueryResult = () => {
   const deferred = Promise.withResolvers<void>()
@@ -79,14 +79,12 @@ const waitForObserver = async (predicate: () => boolean) => {
 
 function ContactsProbe({
   input,
-  seed,
   onRender,
 }: {
   input: ListContactsRequest
-  seed: { input: ListContactsRequest; response: ListContactsResponse }
   onRender: (result: ContactsQueryResult) => void
 }) {
-  const result = useContacts(input, seed)
+  const result = useContacts(input)
   onRender(result)
 
   return <output>{result.data?.data[0]?.id ?? "none"}</output>
@@ -119,44 +117,34 @@ describe("useContacts", () => {
     await act(async () => root.unmount())
     container.remove()
   })
-  test("uses a matching RSC response without a client request and keeps it as placeholder for page changes", async () => {
+  test("fetches on mount and keeps the prior page as a placeholder while the next page loads", async () => {
     const pageOneInput = makeInput(1)
-    const pageOneResponse = makeResponse("contact-a")
-    const pageTwoRequest = Promise.withResolvers<ListContactsResponse>()
+    const pageOneRequest = Promise.withResolvers<ListContactsTableResponse>()
+    const pageTwoRequest = Promise.withResolvers<ListContactsTableResponse>()
     mockListContacts.mockImplementation((input: ListContactsRequest) =>
-      input.page === 2
-        ? pageTwoRequest.promise
-        : Promise.resolve(makeResponse("unexpected")),
+      input.page === 1 ? pageOneRequest.promise : pageTwoRequest.promise,
     )
 
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ContactsProbe
-            input={pageOneInput}
-            onRender={() => undefined}
-            seed={{ input: pageOneInput, response: pageOneResponse }}
-          />
+          <ContactsProbe input={pageOneInput} onRender={() => undefined} />
         </QueryClientProvider>,
       )
     })
 
-    expect(mockListContacts).not.toHaveBeenCalled()
-    expect(container.textContent).toBe("contact-a")
+    expect(mockListContacts).toHaveBeenCalledWith(pageOneInput)
+    pageOneRequest.resolve(makeResponse("contact-a"))
+    await waitForObserver(() => container.textContent === "contact-a")
 
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ContactsProbe
-            input={makeInput(2)}
-            onRender={() => undefined}
-            seed={{ input: pageOneInput, response: pageOneResponse }}
-          />
+          <ContactsProbe input={makeInput(2)} onRender={() => undefined} />
         </QueryClientProvider>,
       )
     })
 
-    expect(mockListContacts).toHaveBeenCalledTimes(1)
     expect(mockListContacts).toHaveBeenLastCalledWith(makeInput(2))
     expect(container.textContent).toBe("contact-a")
     pageTwoRequest.resolve(makeResponse("contact-b"))
@@ -167,22 +155,14 @@ describe("useContacts", () => {
 
   test("deduplicates matching observers", async () => {
     const input = makeInput(2)
-    const request = Promise.withResolvers<ListContactsResponse>()
+    const request = Promise.withResolvers<ListContactsTableResponse>()
     mockListContacts.mockReturnValue(request.promise)
 
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ContactsProbe
-            input={input}
-            onRender={() => undefined}
-            seed={{ input: makeInput(1), response: makeResponse("contact-a") }}
-          />
-          <ContactsProbe
-            input={input}
-            onRender={() => undefined}
-            seed={{ input: makeInput(1), response: makeResponse("contact-a") }}
-          />
+          <ContactsProbe input={input} onRender={() => undefined} />
+          <ContactsProbe input={input} onRender={() => undefined} />
         </QueryClientProvider>,
       )
     })
@@ -194,14 +174,14 @@ describe("useContacts", () => {
     })
   })
 
-  test("fetches filter and sort inputs instead of reusing a mismatched seed", async () => {
-    const seedInput = makeInput(1)
+  test("fetches filter and sort inputs on their query keys", async () => {
+    const baseInput = makeInput(1)
     const sortedInput = {
-      ...seedInput,
+      ...baseInput,
       sort: [{ id: "fullName", desc: false }],
     }
     const filteredInput: ListContactsRequest = {
-      ...seedInput,
+      ...baseInput,
       contactFilter: {
         operator: "and" as const,
         conditions: [
@@ -218,11 +198,7 @@ describe("useContacts", () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ContactsProbe
-            input={sortedInput}
-            onRender={() => undefined}
-            seed={{ input: seedInput, response: makeResponse("contact-a") }}
-          />
+          <ContactsProbe input={sortedInput} onRender={() => undefined} />
         </QueryClientProvider>,
       )
       await waitForQueryResult()
@@ -233,11 +209,7 @@ describe("useContacts", () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ContactsProbe
-            input={filteredInput}
-            onRender={() => undefined}
-            seed={{ input: seedInput, response: makeResponse("contact-a") }}
-          />
+          <ContactsProbe input={filteredInput} onRender={() => undefined} />
         </QueryClientProvider>,
       )
       await waitForQueryResult()
@@ -246,10 +218,8 @@ describe("useContacts", () => {
     expect(mockListContacts).toHaveBeenLastCalledWith(filteredInput)
   })
 
-  test("exposes a new-key request error without storing seed data under that key", async () => {
-    const pageOneInput = makeInput(1)
+  test("exposes a request error without storing data under its query key", async () => {
     const pageTwoInput = makeInput(2)
-    const pageOneResponse = makeResponse("contact-a")
     const queryError = new Error("network error")
     const renderedResults: ContactsQueryResult[] = []
     mockListContacts.mockRejectedValue(queryError)
@@ -262,7 +232,6 @@ describe("useContacts", () => {
             onRender={(result) => {
               renderedResults.push(result)
             }}
-            seed={{ input: pageOneInput, response: pageOneResponse }}
           />
         </QueryClientProvider>,
       )

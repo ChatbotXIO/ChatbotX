@@ -46,11 +46,11 @@ import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
 import { ExportContactDialog } from "./export-contact-dialog"
 import { useInvalidateContacts } from "./hooks/use-contacts"
 import type { ExportContactsFilter } from "./schema/action"
-import type { ContactResponse } from "./schema/query"
+import type { ListContactsTableResponse } from "./schema/query"
 
 type ContactListActionProps = {
   workspaceId: string
-  table: Table<ContactResponse>
+  table: Table<ListContactsTableResponse["data"][number]>
   filter?: ExportContactsFilter
   disabled?: boolean
 }

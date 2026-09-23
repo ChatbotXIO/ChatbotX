@@ -10,10 +10,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 //    buildListWhere.
 //  - unscoped calls (scope: UNSCOPED) never mask.
 //  - withCount:false skips the count round-trip entirely (totalCount: 0).
-//  - the O1 projection/relation optimization: listForTable is used for
-//    projection:"table", or when `include` omits both "tags" and
-//    "customFields"; listWithRelations is used otherwise (include omitted,
-//    or include contains "tags"/"customFields").
+//  - the O1 projection/relation optimization: listTableRows is used for
+//    projection:"table"; listForTable is used when `include` omits both
+//    "tags" and "customFields"; listWithRelations is used otherwise.
 // ---------------------------------------------------------------------------
 
 const { contactRepository } = await import("@chatbotx.io/database/repositories")
@@ -29,6 +28,7 @@ beforeEach(() => {
     orderBy as never,
   )
   vi.spyOn(contactRepository, "listForTable").mockResolvedValue([] as never)
+  vi.spyOn(contactRepository, "listTableRows").mockResolvedValue([] as never)
   vi.spyOn(contactRepository, "listWithRelations").mockResolvedValue(
     [] as never,
   )
@@ -114,13 +114,13 @@ describe("contactService.list", () => {
     expect(result.pageCount).toBe(0)
   })
 
-  test("projection:'table' uses listForTable, not listWithRelations", async () => {
-    const tableSpy = vi.spyOn(contactRepository, "listForTable")
+  test("projection:'table' uses listTableRows, not listWithRelations", async () => {
+    const tableRowsSpy = vi.spyOn(contactRepository, "listTableRows")
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
     await list({ workspaceId: "ws-1", scope: UNSCOPED, projection: "table" })
 
-    expect(tableSpy).toHaveBeenCalledTimes(1)
+    expect(tableRowsSpy).toHaveBeenCalledTimes(1)
     expect(relationsSpy).not.toHaveBeenCalled()
   })
 

@@ -85,6 +85,29 @@ export const contactRepository = {
       },
     })
   },
+  listTableRows(input: ContactListInput, tx: DatabaseClient = db) {
+    return tx.query.contactModel.findMany({
+      ...input,
+      with: {
+        contactInboxes: {
+          columns: {
+            id: true,
+            channel: true,
+            source: true,
+            contactLastReadAt: true,
+          },
+        },
+        conversation: {
+          columns: { id: true, assignedUserId: true },
+          with: {
+            assignedUser: {
+              columns: { id: true, name: true, email: true, image: true },
+            },
+          },
+        },
+      },
+    })
+  },
   findDetailById(
     input: { workspaceId: string; id: string },
     tx: DatabaseClient = db,

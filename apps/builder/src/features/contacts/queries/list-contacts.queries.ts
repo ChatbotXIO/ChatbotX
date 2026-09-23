@@ -3,18 +3,21 @@ import {
   type ContactPermissionScope,
   requireContactPermissionScope,
 } from "../permissions"
-import type { ListContactsRequest, ListContactsResponse } from "../schema/query"
+import type {
+  ListContactsRequest,
+  ListContactsTableResponse,
+} from "../schema/query"
 import { resolveContactAvatars } from "./resolve-contact-avatars"
 
 export async function listContacts(
   input: ListContactsRequest,
   scope: ContactPermissionScope,
-): Promise<ListContactsResponse> {
-  const result = await contactService.list({
+): Promise<ListContactsTableResponse> {
+  const result = (await contactService.list({
     ...input,
     scope,
     projection: "table",
-  })
+  })) as ListContactsTableResponse
 
   return {
     ...result,
