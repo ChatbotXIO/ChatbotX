@@ -66,12 +66,10 @@ describe("getInboxInitialState", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useRealTimers()
-
   })
 
   afterEach(() => {
     vi.useRealTimers()
-
   })
 
   test("selects the first conversation, reverses messages, and seeds its contact without a URL id", async () => {
@@ -137,14 +135,14 @@ describe("getInboxInitialState", () => {
   test("does not auto-select a conversation when the URL conversationId is unparseable", async () => {
     mockSeedRequests()
 
-    const state = await getInboxInitialState({
+    const state = await getInitialState({
       workspaceId: "workspace-1",
       conversationId: "not-a-bigint",
     })
 
-    expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
-    expect(mockListMessagesAuthenticatedAPI).not.toHaveBeenCalled()
-    expect(mockGetContactAuthenticatedAPI).not.toHaveBeenCalled()
+    expect(mockFindConversation).not.toHaveBeenCalled()
+    expect(mockListMessages).not.toHaveBeenCalled()
+    expect(mockGetContact).not.toHaveBeenCalled()
     expect(state).toMatchObject({
       activeConversationAutoSelected: false,
       activeConversationId: null,
