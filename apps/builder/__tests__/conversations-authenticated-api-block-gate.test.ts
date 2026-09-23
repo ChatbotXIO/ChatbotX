@@ -70,14 +70,14 @@ vi.mock("@/middlewares/auth", () => ({
 const {
   archiveByIds,
   canViewContactEmailAndPhone,
-  getAtLimitMap,
+  hasReachedLimit,
   getForUser,
   isCloud,
   listConversations,
 } = vi.hoisted(() => ({
   archiveByIds: vi.fn(),
   canViewContactEmailAndPhone: vi.fn(),
-  getAtLimitMap: vi.fn(),
+  hasReachedLimit: vi.fn(),
   getForUser: vi.fn(),
   isCloud: vi.fn(),
   listConversations: vi.fn(),
@@ -93,7 +93,7 @@ vi.mock("@chatbotx.io/business", () => ({
     setFollowed: vi.fn(),
     markUnread: vi.fn(),
   },
-  quotaEnforcementService: { getAtLimitMap },
+  quotaEnforcementService: { hasReachedLimit },
   userQuotaService: { getForUser },
 }))
 
@@ -139,7 +139,7 @@ beforeEach(() => {
 describe("conversationsAuthenticatedAPI — trial-expired/MAC block gate", () => {
   test("archiveConversationsAuthenticatedAPI rejects a blocked workspace owner with a 402", async () => {
     getForUser.mockResolvedValue({ planStatus: "expired", periodEnd: null })
-    getAtLimitMap.mockResolvedValue({ mac: false })
+    hasReachedLimit.mockResolvedValue(false)
 
     const handler = handlersByPath[ARCHIVE_PATH]
     expect(handler).toBeDefined()
@@ -162,7 +162,7 @@ describe("conversationsAuthenticatedAPI — trial-expired/MAC block gate", () =>
 
   test("archiveConversationsAuthenticatedAPI proceeds when the owner is not blocked", async () => {
     getForUser.mockResolvedValue({ planStatus: "active", periodEnd: null })
-    getAtLimitMap.mockResolvedValue({ mac: false })
+    hasReachedLimit.mockResolvedValue(false)
     archiveByIds.mockResolvedValue(undefined)
 
     const handler = handlersByPath[ARCHIVE_PATH]
