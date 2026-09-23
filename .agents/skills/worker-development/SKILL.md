@@ -1,7 +1,7 @@
 ---
 name: worker-development
 description: >-
-  Create and manage background workers, BullMQ queues, and scheduled jobs.
+  Create and manage background workers, BullMQ queues, and scheduled jobs. Use when adding new workers, creating queues, defining job types, building scheduled tasks, or working with async processing.
 ---
 
 # Worker Development

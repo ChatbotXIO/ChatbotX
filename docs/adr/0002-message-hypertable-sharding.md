@@ -4,6 +4,8 @@
 
 Accepted
 
+Date: 2026-09-23
+
 ## Context
 
 Messages and attachments are the highest-volume operational records. Their storage
@@ -27,9 +29,10 @@ Use the existing message-storage design:
 - `MessageShardConnectionManager` keeps an LRU pool of at most 10 shard
   connections and reuses the main database client when external sharding is not
   configured.
-- Read-replica routing is present but disabled by default. Deployments opt in via
-  `SHARD_READ_REPLICAS_ENABLED`; unhealthy replicas fall back to the primary and
-  are retried after the configured retry TTL.
+- Read-replica routing is disabled by default through the hardcoded
+  `READ_REPLICAS_ENABLED = false`. It can be enabled only with the
+  `readReplicasEnabled` constructor option; `SHARD_READ_REPLICA_RETRY_TTL_MS`
+  is the sole environment knob.
 
 ## Consequences
 

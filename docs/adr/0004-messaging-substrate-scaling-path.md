@@ -4,6 +4,8 @@
 
 Accepted
 
+Date: 2026-09-23
+
 ## Context
 
 ChatbotX removed its unused Kafka package in ADR 0001 and today runs every queue,
@@ -14,11 +16,14 @@ prerequisites that must be correct regardless of which transport eventually wins
 
 Grounding facts, verified against the code at the time of this decision:
 
-- All nine active BullMQ queues shared one ioredis singleton built from `REDIS_URL`
-  (`packages/worker-config/src/lib/connection.ts`). `REDIS_QUEUE_URL` existed in
-  `packages/redis/src/keys.ts` and `packages/redis/src/connections/queue-connection.ts`,
-  but no queue used it — the "split Redis per role" comment in `.env.example` did not
-  apply to queues. This ADR's Step 1 closes that gap for the queue role specifically.
+- All 13 active BullMQ queues use the hot/bulk split: hot is `integration`,
+  `chat`, `notification`, `low`, `callTranscription`, and
+  `whatsappVoipSignaling`; bulk is `aiAgent`, `heavy`, `default`, `schedule`,
+  `trigger`, `webhook`, and `quota`. `sequenceScheduler` stays on its dedicated
+  `sequenceConnections` client.
+- The default hot `getRedisConnection()` is also used by event-bus streams,
+  `packages/events` cache, heavy-step-runner, and provider-rate-limiter keys.
+  Setting `REDIS_QUEUE_URL` moves those Streams and plain KV users too.
 - `packages/event-bus` is already Redis **Streams** with consumer groups, `XAUTOCLAIM`
   reclaim, `max_deliveries`, and a DLQ (`packages/event-bus/src/event-bus.ts`), not
   pub/sub. Its ceiling is `MAXLEN` retention, not throughput.
@@ -50,7 +55,7 @@ Grounding facts, verified against the code at the time of this decision:
 ### Tier-1 (now → the triggers below): keep BullMQ, split Redis by role
 
 BullMQ is retained. Re-implementing its investment on a log transport is not
-justified today: 43 `IntegrationJobAction` values, 29 registered `upsertJobScheduler`
+justified today: 49 `IntegrationJobAction` values, 28 registered `upsertJobScheduler`
 cron entries (`apps/worker/src/schedule/handlers/register-schedules.ts`), delayed
 jobs, per-action retry/priority policy
 (`packages/worker-config/src/queues/integration/index.ts`), and `QueueEvents`-based
@@ -61,24 +66,27 @@ replacing BullMQ means writing a scheduler, not swapping a transport.
 slot, so horizontal growth is achieved by splitting queue groups across instances,
 not by clustering a single queue. Do not plan a cluster migration for the queue role.
 
-Instead, queues split into a **hot** group (`integration`, `chat`, `notification` —
-latency-sensitive, low background contention) and a **bulk** group (`aiAgent`,
-`heavy`, `default`, `schedule`, `trigger`, `webhook`, `quota` — background and export
-work that can burst). `getRedisConnection(group: "hot" | "bulk")`
+Instead, queues split into a **hot** group (`integration`, `chat`, `notification`,
+`low`, `callTranscription`, `whatsappVoipSignaling` — latency-sensitive) and a
+**bulk** group (`aiAgent`, `heavy`, `default`, `schedule`, `trigger`, `webhook`,
+`quota` — background and export work that can burst).
+`getRedisConnection(group: "hot" | "bulk")`
 (`packages/worker-config/src/lib/connection.ts`) resolves each group's URL
 independently, falling back through `REDIS_QUEUE_BULK_URL` → `REDIS_QUEUE_URL` →
-`REDIS_URL` for the bulk group, and `REDIS_QUEUE_URL` → `REDIS_URL` for the hot group.
-The `sequenceScheduler` queue keeps its existing dedicated `sequenceConnections`
-connection and is untouched by this split.
+`REDIS_URL` for bulk and `REDIS_QUEUE_URL` → `REDIS_URL` for hot. The
+`sequenceScheduler` queue keeps its dedicated `sequenceConnections` connection.
+
+redlock-universal's auto-extension failure only aborts a signal that this wrapper
+does not observe, so lock extension is advisory rather than a guarantee.
 
 ### Per-role substrate matrix
 
 | Role | Env | Commands needed beyond core | Substrate |
 |---|---|---|---|
-| Queue (hot + bulk) | `REDIS_QUEUE_URL`, `REDIS_QUEUE_BULK_URL` | BullMQ Lua only | Valkey 8+ (BSD, `io-threads`) |
+| Queue (hot + bulk) | `REDIS_QUEUE_URL`, `REDIS_QUEUE_BULK_URL` | BullMQ Lua, Streams, plain KV | Valkey 8+ (BSD, `io-threads`) |
 | Sequence | `REDIS_SEQUENCE_URL` | zset + Redlock | Valkey 8+ |
 | Cache / lock / MAC | `REDIS_CACHE_URL` | **`BF.RESERVE`, `BF.ADD`** | Dragonfly (native `BF.*`) or `redis:8` or Valkey + `valkey-bloom` |
-| Event streams | `REDIS_URL` today | Streams + consumer groups | Valkey 8+ until tier-2 |
+| Event streams | `REDIS_QUEUE_URL` → `REDIS_URL` (shares the hot connection) | Streams + consumer groups | Valkey 8+ until tier-2 |
 
 Evidence for the cache row: `packages/redis/src/bloom-filter.ts` issues `BF.RESERVE`
 and `BF.ADD` on the `cacheConnections` client
@@ -121,7 +129,7 @@ Tier-2 is a provider implementation behind two existing seams, not a rewrite:
    envelope, and **`integrationIdentifier` is the partition key**. It is already
    present on every inbound job, needs no producer change, and per-page ordering is a
    superset of per-conversation ordering, so one ordered consumer per partition
-   yields real FIFO per conversation — replacing this ADR's Step 3 best-effort lock.
+   yields real FIFO per conversation — replacing today's best-effort lock.
 
 ### Numeric triggers
 

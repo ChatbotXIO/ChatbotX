@@ -9,11 +9,11 @@ retention-formula worked example.
 
 | Role | Env var (falls back in order) | Image for a module-capable OSS deploy | Why |
 |---|---|---|---|
-| Queue — hot (`integration`, `chat`, `notification`) | `REDIS_QUEUE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | Latency-sensitive; BullMQ Lua only, no special modules. |
+| Queue — hot (`integration`, `chat`, `notification`, `low`, `callTranscription`, `whatsappVoipSignaling`) | `REDIS_QUEUE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | Latency-sensitive BullMQ, event-stream, and plain-KV work. |
 | Queue — bulk (`aiAgent`, `heavy`, `default`, `schedule`, `trigger`, `webhook`, `quota`) | `REDIS_QUEUE_BULK_URL` → `REDIS_QUEUE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | Background/export work that can burst; isolating it protects hot-path latency. |
 | Sequence scheduler | `REDIS_SEQUENCE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | zset + Redlock coordination across 256 hash buckets. |
 | Cache / distributed lock / MAC bloom filter | `REDIS_CACHE_URL` → `REDIS_URL` | `redis:8-alpine`, or Dragonfly, or Valkey **with** `valkey-bloom` loaded | `packages/redis/src/bloom-filter.ts` issues `BF.RESERVE`/`BF.ADD`. Plain `valkey/valkey` rejects these commands and silently breaks MAC counting. |
-| Event streams (`events:message`, `events:analytics-dashboard`, `events:error-log`, `flow:events`) | `REDIS_URL` | `redis:8-alpine` or Valkey 8+ until tier-2 | Redis Streams with consumer groups; ceiling is `MAXLEN` retention, not throughput. |
+| Event streams (`events:message`, `events:analytics-dashboard`, `events:error-log`, `flow:events`) | `REDIS_QUEUE_URL` → `REDIS_URL` (shares hot) | `redis:8-alpine` or Valkey 8+ until tier-2 | Redis Streams with consumer groups; ceiling is `MAXLEN` retention, not throughput. |
 
 The `sequenceScheduler` BullMQ queue always uses `sequenceConnections`
 (`packages/redis/src/connections/sequence-connection.ts`) — it is never affected by
@@ -25,7 +25,10 @@ role-specific env vars set runs today's single-instance topology unchanged.
 ## Enabling the hot/bulk queue split
 
 1. Provision a second Redis/Valkey instance.
-2. Set `REDIS_QUEUE_BULK_URL` in the worker's environment.
+2. Set `REDIS_QUEUE_BULK_URL` in every process that enqueues bulk jobs: all
+   worker processes (hot workers enqueue `aiAgent`/`heavy`; image-reader waits
+   on heavy `QueueEvents`) and `apps/builder` (quota/default/heavy jobs and Bull
+   Board).
 3. **Drain the bulk queues before restarting workers on the new URL.** In-flight
    jobs and registered `upsertJobScheduler` repeatable-job entries live on the old
    instance's queue keys and are not migrated automatically — they would become
@@ -36,12 +39,12 @@ role-specific env vars set runs today's single-instance topology unchanged.
      `quota` queues to reach zero active + waiting + delayed jobs on the old
      instance (`redis-cli --scan --pattern 'bull:<queue>:*'` per queue, or the
      BullMQ dashboard).
-   - Re-registering the 29 `register-schedules.ts` cron entries once workers using
+   - Re-registering the 28 `register-schedules.ts` cron entries once workers using
      `REDIS_QUEUE_BULK_URL` are up — `upsertJobScheduler` recreates them
      idempotently against the new instance.
-4. Restart the bulk workers (`ai-agent`, `heavy`, `default`, `schedule`, `trigger`,
-   `webhook`) with the new env var present. Hot-group workers (`integration`,
-   `chat`, `notification`) are unaffected and need no restart for this change.
+4. Restart every producer and consumer with the new env var: all workers and
+   `apps/builder`. The enterprise `quota-worker` consumes `quota` and must receive
+   the same bulk URL.
 5. Verify the split: `redis-cli --scan --pattern 'bull:heavy:*'` should return
    matches on the new instance and be empty on the old one; `bull:integration:*`
    should remain on the original instance.

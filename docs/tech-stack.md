@@ -39,9 +39,10 @@ Key components of the project's tech stack.
 ### Background Jobs & Queues
 
 - [BullMQ](https://bullmq.io/) backed by **Redis / Dragonfly**
-- Queues split into a hot group (`integration`, `chat`, `notification`) and a bulk
-  group (`aiAgent`, `heavy`, `default`, `schedule`, `trigger`, `webhook`, `quota`) via
-  `REDIS_QUEUE_URL` / `REDIS_QUEUE_BULK_URL` — each falls back to `REDIS_URL` if unset
+- Queues split into a hot group (`integration`, `chat`, `notification`, `low`,
+  `callTranscription`, `whatsappVoipSignaling`) and a bulk group (`aiAgent`, `heavy`,
+  `default`, `schedule`, `trigger`, `webhook`, `quota`) via `REDIS_QUEUE_URL` /
+  `REDIS_QUEUE_BULK_URL` — each falls back to `REDIS_URL` if unset
 - Sequence scheduling uses BullMQ over Redis across 256 hash buckets with Redlock coordination
 - The cache/lock role requires bloom-filter commands (`BF.RESERVE`/`BF.ADD` for MAC
   counting) — Dragonfly, `redis:8`, or Valkey with `valkey-bloom`, never plain Valkey
