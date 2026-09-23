@@ -8,7 +8,7 @@ import {
 } from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
-import { distributedLock, LockAcquisitionError } from "@chatbotx.io/redis"
+import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import { getWhatsappCallEntity } from "@chatbotx.io/sdk"
 import { contactService } from "../contact/service"
 import { contactInboxService } from "../contact-inbox/service"
@@ -219,9 +219,11 @@ class WhatsappCallSummaryService {
 
     // Non-blocking lock: a concurrent Regenerate click fails fast instead of
     // queueing behind the in-flight (paid) provider call.
+    const lockKey = `whatsapp-call-summary:${call.id}`
+
     try {
       await distributedLock.runExclusive({
-        key: `whatsapp-call-summary:${call.id}`,
+        key: lockKey,
         timeoutInSeconds: SUMMARY_LOCK_TIMEOUT_SECONDS,
         retryTimeoutInSeconds: SUMMARY_LOCK_RETRY_TIMEOUT_SECONDS,
         fn: async () => {
@@ -243,7 +245,7 @@ class WhatsappCallSummaryService {
         },
       })
     } catch (error) {
-      if (error instanceof LockAcquisitionError) {
+      if (isLockAcquisitionError(error, lockKey)) {
         throw summaryAlreadyGeneratingException()
       }
       throw error

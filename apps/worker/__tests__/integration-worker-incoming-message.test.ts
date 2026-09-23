@@ -373,17 +373,20 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-// A minimal stand-in for redlock-universal's `LockAcquisitionError` so tests
-// can exercise the real `isLockAcquisitionError` branching: only this shape
-// degrades to unlocked processing; any other rejection (e.g. a `persist()`
-// failure) must propagate instead of silently re-running unlocked.
-class FakeLockAcquisitionError extends Error {}
+const lockAcquisitionError = (key: string) =>
+  Object.assign(new Error("lock acquisition timed out"), {
+    name: "LockAcquisitionError",
+    code: "LOCK_ACQUISITION_FAILED",
+    key,
+  })
 
-vi.mock("@chatbotx.io/redis", () => ({
-  distributedLock: { runExclusive: mockDistributedLockRunExclusive },
-  isLockAcquisitionError: (error: unknown) =>
-    error instanceof FakeLockAcquisitionError,
-}))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    distributedLock: { runExclusive: mockDistributedLockRunExclusive },
+  }
+})
 
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: vi.fn().mockResolvedValue(undefined),
@@ -801,7 +804,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
 
   test("degrades to unlocked processing and still persists + broadcasts exactly once when the lock cannot be acquired", async () => {
     mockDistributedLockRunExclusive.mockRejectedValueOnce(
-      new FakeLockAcquisitionError("lock acquisition timed out"),
+      lockAcquisitionError("ingress:conv:conv-1"),
     )
     const [integrationWorker] = workerState.capturedWorkers
 
@@ -846,6 +849,29 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
       }),
     ).rejects.toThrow(persistError)
 
+    expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
+    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+  })
+
+  test("propagates a nested repository lock failure without broadcasting", async () => {
+    const innerLockError = lockAcquisitionError("msg:upsert:conv-1:source-1")
+    mockCreateOrUpdate.mockRejectedValueOnce(innerLockError)
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await expect(
+      integrationWorker?.processor({
+        data: {
+          type: "incomingMessage",
+          data: {
+            integrationType: "messenger",
+            integrationIdentifier: "inbox-1",
+            payload: {},
+          },
+        },
+      }),
+    ).rejects.toBe(innerLockError)
+
+    expect(mockDistributedLockRunExclusive).toHaveBeenCalledOnce()
     expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
     expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
   })

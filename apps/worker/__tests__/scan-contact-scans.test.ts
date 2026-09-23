@@ -31,10 +31,14 @@ vi.mock("@chatbotx.io/business/contact-scan", () => ({
   CONTACT_SCAN_MAX_ATTEMPTS: 5,
 }))
 
-vi.mock("@chatbotx.io/redis", () => ({
-  distributedLock: { runExclusive },
-  distributedStore: { exists: lockExists },
-}))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    distributedLock: { runExclusive },
+    distributedStore: { exists: lockExists },
+  }
+})
 
 vi.mock("@chatbotx.io/logger", () => ({
   getChildLogger: () => ({ info, warn, error, debug: vi.fn() }),
@@ -175,6 +179,18 @@ describe("scanContactScans", () => {
 
     await expect(scanContactScans()).rejects.toBe(err)
     expect(mockPickDue).not.toHaveBeenCalled()
+  })
+
+  it("rethrows an acquisition error for a different lock key", async () => {
+    const err = Object.assign(new Error("lock held"), {
+      name: "LockAcquisitionError",
+      code: "LOCK_ACQUISITION_FAILED",
+      key: "schedule:other",
+    })
+    runExclusive.mockRejectedValueOnce(err)
+
+    await expect(scanContactScans()).rejects.toBe(err)
+    expect(lockExists).not.toHaveBeenCalled()
   })
 
   it("rethrows any other error unrelated to lock acquisition", async () => {

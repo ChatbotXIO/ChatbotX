@@ -11,10 +11,14 @@ const warn = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: { purgeDueScheduled },
 }))
-vi.mock("@chatbotx.io/redis", () => ({
-  distributedLock: { runExclusive },
-  distributedStore: { exists: lockExists },
-}))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    distributedLock: { runExclusive },
+    distributedStore: { exists: lockExists },
+  }
+})
 vi.mock("@chatbotx.io/logger", () => ({
   getChildLogger: () => ({ info, warn }),
 }))

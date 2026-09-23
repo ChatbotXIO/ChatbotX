@@ -25,12 +25,13 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mocks.createMessageRepository,
 }))
 
-class MockLockAcquisitionError extends Error {}
-
-vi.mock("@chatbotx.io/redis", () => ({
-  distributedLock: { runExclusive: mocks.runExclusive },
-  LockAcquisitionError: MockLockAcquisitionError,
-}))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    distributedLock: { runExclusive: mocks.runExclusive },
+  }
+})
 
 vi.mock("../src/user/service", () => ({
   userService: { findNameAndEmail: mocks.findNameAndEmail },
@@ -282,7 +283,11 @@ describe("whatsappCallSummaryService.attachSummary", () => {
   test("a second concurrent Regenerate for the SAME call fails fast with 'already generating' instead of calling the provider twice", async () => {
     mocks.findById.mockResolvedValue({ ...baseCall, aiSummarizedAt: null })
     mocks.runExclusive.mockRejectedValueOnce(
-      new MockLockAcquisitionError("locked"),
+      Object.assign(new Error("locked"), {
+        name: "LockAcquisitionError",
+        code: "LOCK_ACQUISITION_FAILED",
+        key: "whatsapp-call-summary:call-1",
+      }),
     )
 
     await expect(
