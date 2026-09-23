@@ -99,6 +99,10 @@ vi.mock("@/lib/workspace-quota", () => ({
     blocked: false,
     blockReason: null,
   })),
+  getWorkspaceBlockStateForRender: vi.fn(async () => ({
+    blocked: false,
+    blockReason: null,
+  })),
 }))
 
 vi.mock("@/features/inboxes/components/inbox-card-list", () => ({
@@ -288,6 +292,7 @@ describe("channel route guards", () => {
 
   test("hides the dashboard add-channel card for non-superAdmins", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { mustChangePassword: false },
       targetWorkspace: { ownerId: "owner-1" },
       targetWorkspaceMember: {
         permissions: {
@@ -314,6 +319,7 @@ describe("channel route guards", () => {
 
   test("shows the dashboard add-channel card for superAdmins", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { mustChangePassword: false },
       targetWorkspace: { ownerId: "owner-1" },
       targetWorkspaceMember: {
         permissions: {
