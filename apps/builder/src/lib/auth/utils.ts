@@ -95,38 +95,47 @@ const getCachedCurrentUserAndAllLinkedWorkspaces = cache(
 export const getCurrentUserAndAllLinkedWorkspaces = async () =>
   getCachedCurrentUserAndAllLinkedWorkspaces()
 
-export const getCurrentUserAndTargetWorkspace = async (
-  workspaceId: string,
-): Promise<{
+type CurrentUserAndTargetWorkspace = {
   user: SessionUser
   targetWorkspace: WorkspaceModel
   targetWorkspaceMember: WorkspaceMemberModel
   isSupportSession: boolean
   allWorkspaces: WorkspaceModel[]
   allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
-} | null> => {
-  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
-  if (!userAndWorkspaces) {
-    return null
-  }
-
-  const realMember = userAndWorkspaces.allWorkspaceMembers.find(
-    (workspaceMember) => workspaceMember.workspaceId === workspaceId,
-  )
-
-  const access = await resolveWorkspaceAccess({
-    realMember,
-    workspaceId,
-    user: userAndWorkspaces.user,
-  })
-  if (!access) {
-    return null
-  }
-
-  return {
-    ...userAndWorkspaces,
-    targetWorkspace: access.workspace,
-    targetWorkspaceMember: access.member,
-    isSupportSession: access.isSupportSession,
-  }
 }
+
+const getCachedCurrentUserAndTargetWorkspace = cache(
+  async (
+    workspaceId: string,
+  ): Promise<CurrentUserAndTargetWorkspace | null> => {
+    const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+    if (!userAndWorkspaces) {
+      return null
+    }
+
+    const realMember = userAndWorkspaces.allWorkspaceMembers.find(
+      (workspaceMember) => workspaceMember.workspaceId === workspaceId,
+    )
+
+    const access = await resolveWorkspaceAccess({
+      realMember,
+      workspaceId,
+      user: userAndWorkspaces.user,
+    })
+    if (!access) {
+      return null
+    }
+
+    return {
+      ...userAndWorkspaces,
+      targetWorkspace: access.workspace,
+      targetWorkspaceMember: access.member,
+      isSupportSession: access.isSupportSession,
+    }
+  },
+)
+
+export const getCurrentUserAndTargetWorkspace = async (
+  workspaceId: string,
+): Promise<CurrentUserAndTargetWorkspace | null> =>
+  getCachedCurrentUserAndTargetWorkspace(workspaceId)

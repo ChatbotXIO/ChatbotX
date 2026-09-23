@@ -8,14 +8,14 @@ import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
 
 const {
   getAccessState,
-  getAtLimitMap,
+  hasReachedLimit,
   getForUser,
   isAtLimit,
   isCloud,
   checkWorkspaceOwnerAccess,
 } = vi.hoisted(() => ({
   getAccessState: vi.fn(),
-  getAtLimitMap: vi.fn(),
+  hasReachedLimit: vi.fn(),
   getForUser: vi.fn(),
   isAtLimit: vi.fn(),
   isCloud: vi.fn(),
@@ -26,8 +26,8 @@ vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: vi.fn(),
   isSuperAdmin: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn(() => false),
-  quotaEnforcementService: { getAtLimitMap, isAtLimit },
-  userQuotaService: { getAccessState, getAtLimitMap, getForUser },
+  quotaEnforcementService: { hasReachedLimit, isAtLimit },
+  userQuotaService: { getAccessState, getForUser },
 }))
 
 vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
@@ -117,7 +117,7 @@ const expiredQuota = {
 beforeEach(() => {
   vi.clearAllMocks()
   isCloud.mockReturnValue(true)
-  getAtLimitMap.mockResolvedValue({ mac: false })
+  hasReachedLimit.mockResolvedValue(false)
   getForUser.mockResolvedValue(activeQuota)
   isAtLimit.mockResolvedValue(false)
   checkWorkspaceOwnerAccess.mockResolvedValue(null)
@@ -129,7 +129,10 @@ describe("resolveWorkspaceBlockState", () => {
 
     expect(result).toMatchObject({ blocked: false, blockReason: null })
     expect(getForUser).toHaveBeenCalledWith("owner-active")
-    expect(getAtLimitMap).toHaveBeenCalledWith("owner-active")
+    expect(hasReachedLimit).toHaveBeenCalledWith({
+      userId: "owner-active",
+      metric: "mac",
+    })
   })
 
   test("blocks a member when the workspace owner quota is expired", async () => {
@@ -144,6 +147,34 @@ describe("resolveWorkspaceBlockState", () => {
     expect(getForUser).toHaveBeenCalledWith("owner-expired")
   })
 
+  test("blocks when the owner reaches the MAC limit", async () => {
+    hasReachedLimit.mockResolvedValue(true)
+
+    await expect(resolveWorkspaceBlockState("owner-id")).resolves.toMatchObject(
+      {
+        blocked: true,
+        blockReason: "mac",
+      },
+    )
+  })
+
+  test("does not block an active owner when a non-MAC limit is full", async () => {
+    getForUser.mockResolvedValue({
+      ...activeQuota,
+      contactsLimit: 0,
+      contactsUsed: 1,
+      macLimit: 10,
+      macUsed: 0,
+    })
+
+    await expect(resolveWorkspaceBlockState("owner-id")).resolves.toMatchObject(
+      {
+        blocked: false,
+        blockReason: null,
+      },
+    )
+  })
+
   test("never blocks a self-hosted workspace", async () => {
     isCloud.mockReturnValue(false)
 
@@ -154,7 +185,7 @@ describe("resolveWorkspaceBlockState", () => {
       trialEndsAt: null,
     })
     expect(getForUser).not.toHaveBeenCalled()
-    expect(getAtLimitMap).not.toHaveBeenCalled()
+    expect(hasReachedLimit).not.toHaveBeenCalled()
   })
 })
 

@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
+import { cache } from "react"
 import { isCloud } from "@/env"
 import { resolveBlockReason, resolveTrialEndsAt } from "./quota-metrics"
 
@@ -31,15 +32,15 @@ export async function resolveWorkspaceBlockState(
     }
   }
 
-  const [quota, atLimit] = await Promise.all([
+  const [quota, macAtLimit] = await Promise.all([
     userQuotaService.getForUser(ownerId),
-    quotaEnforcementService.getAtLimitMap(ownerId),
+    quotaEnforcementService.hasReachedLimit({ userId: ownerId, metric: "mac" }),
   ])
   const trialEndsAt = resolveTrialEndsAt(quota)
   const blockReason = resolveBlockReason(
     quota?.planStatus ?? null,
     trialEndsAt,
-    atLimit.mac,
+    macAtLimit,
   )
 
   return {
@@ -49,6 +50,8 @@ export async function resolveWorkspaceBlockState(
     trialEndsAt,
   }
 }
+
+export const getWorkspaceBlockStateForRender = cache(resolveWorkspaceBlockState)
 
 /**
  * Mutation-path parity with `workspaceActionClient`'s `getWorkspaceOwnerAccessState`
