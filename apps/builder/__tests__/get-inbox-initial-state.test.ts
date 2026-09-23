@@ -225,7 +225,7 @@ describe("getInboxInitialState", () => {
     )
 
     const seed = getInitialState({ workspaceId: "workspace-1" })
-    await vi.advanceTimersByTimeAsync(8000)
+    await vi.advanceTimersByTimeAsync(3000)
 
     await expect(seed).resolves.toBeNull()
     expect(loggerWarnMock).toHaveBeenCalledWith(
