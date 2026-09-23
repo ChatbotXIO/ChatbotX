@@ -1,6 +1,10 @@
 import { workspaceSupportAccessService } from "@chatbotx.io/business"
 import { getChildLogger } from "@chatbotx.io/logger"
-import { distributedLock, distributedStore } from "@chatbotx.io/redis"
+import {
+  distributedLock,
+  distributedStore,
+  isLockAcquisitionError,
+} from "@chatbotx.io/redis"
 
 const LOCK_KEY = "schedule:clear-expired-support-access"
 const log = getChildLogger("clear-expired-support-access")
@@ -35,7 +39,7 @@ export async function clearExpiredSupportAccess(): Promise<void> {
     })
   } catch (err) {
     if (
-      isLockAcquisitionFailure(err) &&
+      isLockAcquisitionError(err, LOCK_KEY) &&
       (await distributedStore.exists(LOCK_KEY))
     ) {
       log.warn(
@@ -49,17 +53,4 @@ export async function clearExpiredSupportAccess(): Promise<void> {
   } finally {
     isClearExpiredSupportAccessRunning = false
   }
-}
-
-function isLockAcquisitionFailure(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "name" in err &&
-    "code" in err &&
-    "key" in err &&
-    err.name === "LockAcquisitionError" &&
-    err.code === "LOCK_ACQUISITION_FAILED" &&
-    err.key === LOCK_KEY
-  )
 }
