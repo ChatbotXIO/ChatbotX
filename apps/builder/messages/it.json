@@ -3264,6 +3264,8 @@
     "resetConfirmation": "Questo cancellerà i valori dei {feature} selezionati.\nQuesta azione non può essere annullata.",
     "resetAllConfirmation": "Questo cancellerà i valori di tutti i {feature} di questo contatto.\nQuesta azione non può essere annullata.",
     "resetSuccess": "{feature} reimpostato con successo",
+    "clearFeature": "Cancella {feature}",
+    "clearSuccess": "{feature} cancellato con successo",
     "deleteConfirmation": "Sei assolutamente sicuro?\nQuesta azione non può essere annullata.\nIl tuo {feature} verrà eliminato definitivamente dai nostri server.",
     "addFeature": "Aggiungi {feature}",
     "signOutConfirmation": "Vuoi davvero uscire?",

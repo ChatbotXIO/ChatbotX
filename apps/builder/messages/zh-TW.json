@@ -1557,6 +1557,8 @@
     "resetConfirmation": "這將清空所選{feature}的值。\n此操作無法復原。",
     "resetAllConfirmation": "這將清空該聯絡人所有{feature}的值。\n此操作無法復原。",
     "resetSuccess": "{feature}重置成功",
+    "clearFeature": "清除{feature}",
+    "clearSuccess": "{feature}清除成功",
     "deleteConfirmation": "您確定嗎？\n此操作無法復原。\n這將從我們的伺服器永久刪除您的 {feature}。",
     "addFeature": "新增 {feature}",
     "signOutConfirmation": "您確定要退出嗎？",

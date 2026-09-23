@@ -1331,6 +1331,8 @@
     "resetConfirmation": "פעולה זו תנקה את הערכים של {feature} שנבחרו.\nלא ניתן לבטל פעולה זו.",
     "resetAllConfirmation": "פעולה זו תנקה את הערכים של כל {feature} של איש קשר זה.\nלא ניתן לבטל פעולה זו.",
     "resetSuccess": "{feature} אופס בהצלחה",
+    "clearFeature": "ניקוי {feature}",
+    "clearSuccess": "{feature} נוקה בהצלחה",
     "deleteConfirmation": "האם אתם בטוחים לחלוטין?\nלא ניתן לבטל פעולה זו.\nפעולה זו תמחק לצמיתות את {feature} מהשרתים שלנו.",
     "addFeature": "הוספת {feature}",
     "signOutConfirmation": "האם לצאת מהחשבון?",
