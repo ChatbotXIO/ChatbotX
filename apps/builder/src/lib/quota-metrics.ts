@@ -154,9 +154,9 @@ export function isBlockedFromPlan(
  * Discriminates WHY the account is blocked, mirroring
  * `userQuotaService.getAccessState`'s `reason` field: `"status"` when the
  * plan itself blocks (see {@link isBlockedFromPlan}), else `"mac"` when the
- * account has hit its monthly-active-contacts limit (the caller passes the
- * already-fetched `atLimit.mac` from `quotaEnforcementService.getAtLimitMap`
- * so this stays pure and avoids a redundant service call), else `null`.
+ * account has hit its monthly-active-contacts limit (the caller obtains it
+ * through `quotaEnforcementService.hasReachedLimit({ metric: "mac" })`), else
+ * `null`.
  */
 export function resolveBlockReason(
   planStatus: string | null,
