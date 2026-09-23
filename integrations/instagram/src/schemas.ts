@@ -184,6 +184,9 @@ export const instagramPageEntrySchema = z.object({
   id: z.string(),
   time: z.number(),
   messaging: z.array(instagramMessagingEventSchema).optional(),
+  // Handover Protocol: events on a thread another app owns arrive as `standby`
+  // (same shape) (fork, s171).
+  standby: z.array(instagramMessagingEventSchema).optional(),
   changes: z
     .array(z.object({ field: z.string(), value: z.unknown() }))
     .optional(),
