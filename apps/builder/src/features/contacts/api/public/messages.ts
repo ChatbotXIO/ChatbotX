@@ -44,7 +44,7 @@ export const contactsMessagesPublicRouter = {
             .string()
             .min(1)
             .describe(
-              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+              "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
             ),
         }),
       ),
@@ -85,7 +85,7 @@ export const contactsMessagesPublicRouter = {
           .string()
           .min(1)
           .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
           ),
         perPage: z.coerce
           .number()
@@ -137,7 +137,7 @@ export const contactsMessagesPublicRouter = {
           .string()
           .min(1)
           .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
           ),
         messageId: zodBigintAsString().describe("Message id (numeric string)."),
       }),
@@ -179,7 +179,7 @@ export const contactsMessagesPublicRouter = {
           .string()
           .min(1)
           .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
           ),
         keyword: z
           .string()
@@ -243,7 +243,7 @@ export const contactsMessagesPublicRouter = {
           .string()
           .min(1)
           .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
           ),
         flowId: zodBigintAsString().describe(
           "Flow id (numeric string). Get it from `flows.list`.",

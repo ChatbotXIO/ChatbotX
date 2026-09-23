@@ -597,9 +597,15 @@ importers:
         specifier: ^4.3.6
         version: 4.4.3
     devDependencies:
+      '@ai-sdk/openai':
+        specifier: ^3.0.54
+        version: 3.0.68(zod@4.4.3)
       '@types/node':
         specifier: 24.x
         version: 24.13.1
+      ai:
+        specifier: ^6.0.170
+        version: 6.0.197(zod@4.4.3)
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0

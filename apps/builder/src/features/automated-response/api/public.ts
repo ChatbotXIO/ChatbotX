@@ -15,6 +15,8 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { publicKeywordResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
+const keywordDirectionDescription =
+  "Keyword direction: inbound matches messages from contacts; outbound matches messages sent by the Page/agent. Defaults to inbound. Keep the same type when reading, updating, disabling, or deleting a rule. This is not post/comment automation; use the channel's comment-automation tools for comments."
 
 export const keywordsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -23,7 +25,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords",
       summary: "List keywords (automated responses)",
       description:
-        "Use this to find keyword-triggered automations by type before inspecting one with `keywords.get` or adding one with `keywords.create`. Returns inbound or comment automations.",
+        "Find keyword-triggered automations by direction before inspecting one with `keywords.get` or adding one with `keywords.create`. Keyword direction: inbound matches messages from contacts; outbound matches messages sent by the Page/agent. This is not post/comment automation; use the channel's comment-automation tools for comments.",
       tags: ["Keywords"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -31,7 +33,7 @@ export const keywordsPublicRouter = {
       publicListRequest.extend({
         type: automatedResponseTypes
           .default("inbound")
-          .describe("Automation type: inbound message or comment reply."),
+          .describe(keywordDirectionDescription),
       }),
     )
     .output(publicListResponse(publicKeywordResource))
@@ -54,7 +56,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords/{id}",
       summary: "Get keyword automation",
       description:
-        "Returns one keyword automation. Use `keywords.list` to find its id first.",
+        "Returns one keyword automation. Use `keywords.list` to find its id first and keep the same inbound or outbound type. This is not post/comment automation; use the channel's comment-automation tools for comments.",
       tags: ["Keywords"],
     })
     .input(
@@ -64,7 +66,7 @@ export const keywordsPublicRouter = {
         ),
         type: automatedResponseTypes
           .default("inbound")
-          .describe("Automation type: inbound message or comment reply."),
+          .describe(keywordDirectionDescription),
       }),
     )
     .output(publicKeywordResource)
@@ -84,7 +86,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords",
       summary: "Create keyword automation",
       description:
-        "Adds a keyword automation that sends text or starts a flow for matching inbound messages or comments. Use `keywords.list` first to inspect existing rules and `flows.list` to resolve a flow.",
+        "Adds a keyword automation that sends text or starts a flow. Inbound matches messages from contacts; outbound matches messages sent by the Page/agent. Use `keywords.list` first to inspect existing rules and `flows.list` to resolve a flow. This is not post/comment automation; use the channel's comment-automation tools for comments.",
       successStatus: 201,
       tags: ["Keywords"],
     })
@@ -92,7 +94,7 @@ export const keywordsPublicRouter = {
       z.object({
         type: automatedResponseTypes
           .default("inbound")
-          .describe("Automation type: inbound message or comment reply."),
+          .describe(keywordDirectionDescription),
         keywords: z
           .array(z.string().min(1).max(255))
           .min(1)
@@ -129,7 +131,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords/{id}",
       summary: "Update keyword automation",
       description:
-        "Overwrites the given fields on an existing keyword automation. Use `keywords.get` to inspect current values first.",
+        "Overwrites the given fields on an existing keyword automation. Use `keywords.get` to inspect current values first and keep the same inbound or outbound type. This is not post/comment automation; use the channel's comment-automation tools for comments.",
       tags: ["Keywords"],
     })
     .input(
@@ -139,7 +141,7 @@ export const keywordsPublicRouter = {
         ),
         type: automatedResponseTypes
           .default("inbound")
-          .describe("Automation type: inbound message or comment reply."),
+          .describe(keywordDirectionDescription),
         keywords: z
           .array(z.string().min(1).max(255))
           .min(1)
@@ -181,7 +183,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords/{id}/status",
       summary: "Enable or disable keyword automation",
       description:
-        "Toggles whether a keyword automation is active without changing its other fields.",
+        "Toggles whether a keyword automation is active without changing its other fields. Keep the same inbound or outbound type. This is not post/comment automation; use the channel's comment-automation tools for comments.",
       tags: ["Keywords"],
     })
     .input(
@@ -194,7 +196,7 @@ export const keywordsPublicRouter = {
           .describe("Whether the automation should be active."),
         type: automatedResponseTypes
           .default("inbound")
-          .describe("Automation type: inbound message or comment reply."),
+          .describe(keywordDirectionDescription),
       }),
     )
     .output(publicKeywordResource)
@@ -217,7 +219,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords/{id}",
       summary: "Delete keyword automation",
       description:
-        "Permanently deletes one keyword automation. Use `keywords.list` to find its id first.",
+        "Permanently deletes one keyword automation. Use `keywords.list` to find its id first and keep the same inbound or outbound type. This is not post/comment automation; use the channel's comment-automation tools for comments.",
       successStatus: 204,
       tags: ["Keywords"],
     })
@@ -228,7 +230,7 @@ export const keywordsPublicRouter = {
         ),
         type: automatedResponseTypes
           .default("inbound")
-          .describe("Automation type: inbound message or comment reply."),
+          .describe(keywordDirectionDescription),
       }),
     )
     .errors(possibleErrorsOnDeletingResource)

@@ -20,15 +20,14 @@ export const META_TOOLS = [
   {
     name: "search_tools",
     description:
-      "Search the full ChatbotX API for tools not listed in tools/list. " +
-      "Returns each match's name, description and inputSchema. " +
-      "Use when no listed tool fits — then run it with call_tool.",
+      "Search the full ChatbotX tool catalog for tool definitions, not workspace records, and never execute a tool. Use one action plus one resource in Vietnamese, English, or an exact tool name. Each match includes its full inputSchema; read it, then call the exact returned name with call_tool.",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "What you want to do, in plain language.",
+          description:
+            "Short business intent: one action plus one resource, in Vietnamese, English, or an exact tool name. Do not combine independent tasks.",
         },
         limit: {
           type: "number",
@@ -41,15 +40,19 @@ export const META_TOOLS = [
   {
     name: "call_tool",
     description:
-      "Execute any ChatbotX tool by name, including ones not in tools/list.",
+      'Execute an exact tool name returned by search_tools. The selected tool\'s inputSchema defines every argument; dotted API operation labels are not executable tool names. Example: {"name":"contacts_get","arguments":{"identifier":"email:ada@example.com"}}.',
     inputSchema: {
       type: "object",
       properties: {
         name: {
           type: "string",
-          description: "Exact tool name from search_tools.",
+          description: "Exact executable name returned by search_tools.",
         },
-        arguments: { type: "object", description: "Arguments for that tool." },
+        arguments: {
+          type: "object",
+          description:
+            "JSON object containing every field declared by the selected inputSchema. Read its schema and lookup requirements first; use {} only for a no-input tool. Do not wrap fields in body, params, or workspaceId unless the selected schema declares them.",
+        },
       },
       required: ["name"],
     },
@@ -66,8 +69,16 @@ const NAME_TOKEN_WEIGHT = 2
 const DESCRIPTION_TOKEN_WEIGHT = 1
 const PHRASE_MATCH_BONUS = 3
 
+function normalizeSearchText(text: string): string {
+  return text
+    .toLocaleLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replaceAll("đ", "d")
+}
+
 function tokenize(text: string): string[] {
-  return text.toLowerCase().match(/[a-z0-9]+/g) ?? []
+  return [...new Set(normalizeSearchText(text).match(/[\p{L}\p{N}]+/gu) ?? [])]
 }
 
 type ToolTokens = { name: Set<string>; description: Set<string> }
@@ -111,7 +122,9 @@ function scoreTool(
 
   if (
     queryPhrase.length > 0 &&
-    `${tool.name} ${tool.description}`.toLowerCase().includes(queryPhrase)
+    normalizeSearchText(`${tool.name} ${tool.description}`).includes(
+      queryPhrase,
+    )
   ) {
     score += PHRASE_MATCH_BONUS
   }
@@ -127,7 +140,7 @@ function scoreTool(
  * and rephrasing.
  */
 export function searchTools(query: string, limit?: number): DynamicTool[] {
-  const queryPhrase = query.trim().toLowerCase()
+  const queryPhrase = normalizeSearchText(query).trim()
   const queryTokens = tokenize(query)
   const cappedLimit = Math.min(
     Math.max(
