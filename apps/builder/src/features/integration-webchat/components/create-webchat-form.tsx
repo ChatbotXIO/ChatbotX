@@ -33,6 +33,7 @@ import { useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { useTenantSettings } from "@/features/tenant"
 import { createWebchatAction } from "../actions/create-webchat.action"
 import { BRANDING_TITLE, getBrandingUrl } from "../lib"
@@ -43,6 +44,7 @@ import PersistentMenuField from "./persistent-menu-field"
 export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
   const { appUrl } = useTenantSettings()
 
   const flowOptions = useFlowSelectOptions()
@@ -79,6 +81,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
               feature: t("fields.webchat.label"),
             }),
           )
+          invalidateInboxes()
           router.push(`/space/${workspaceId}/settings/channels`)
         },
         onError: ({ error }) => {

@@ -382,6 +382,15 @@ export const useInvalidateItems = () => {
 }
 ```
 
+**Mutations:** Call the resource invalidator in every successful create, update,
+delete, toggle, or move handler in addition to `router.refresh()`; invalidate
+before any `router.push`. Existing invalidators include
+`useInvalidateTags`, `useInvalidateInboxes`, `useInvalidateUsers`,
+`useInvalidateSequences`, `useInvalidateCustomFields`,
+`useInvalidateBotFields`, `useInvalidateFlows`, and `useSavedReplyCache`.
+When a shared dialog mutates on behalf of multiple resources, give it an
+`onSuccess` prop so each caller supplies its own invalidator.
+
 Use `useWorkspaceId()` (`@/hooks/routing`) to scope the query to the current
 workspace. Never put a fetched list, `loading`, or `error` in a zustand store —
 TanStack Query already dedupes concurrent reads app-wide, caches per query key,

@@ -128,6 +128,7 @@ export function FlowsTable({
             rowAction?.row.original ? [rowAction?.row.original.id] : null
           }
           onOpenChange={() => setRowAction(null)}
+          onSuccess={invalidateFlows}
           open={rowAction?.variant === "move"}
           workspaceId={workspaceId}
         />

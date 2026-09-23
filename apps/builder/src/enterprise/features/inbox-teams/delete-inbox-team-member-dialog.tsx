@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import type { InboxTeamMemberResource } from "../inbox-team-members/schema/resource"
 import { deleteTeamMembersAction } from "./actions/delete-inbox-team-member.action"
 
@@ -35,6 +36,7 @@ export function DeleteInboxTeamMembersDialog({
 }: DeleteMembersDialogProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateUsers = useInvalidateUsers()
 
   const { execute, isPending } = useAction(
     deleteTeamMembersAction.bind(
@@ -50,6 +52,7 @@ export function DeleteInboxTeamMembersDialog({
           }),
         )
         onOpenChange(false)
+        invalidateUsers()
         router.refresh()
       },
       onError: ({ error }) => {

@@ -31,6 +31,7 @@ import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import PersistentMenuField from "@/features/integration-webchat/components/persistent-menu-field"
 import { updateInstagramAction } from "../actions/update-instagram-action"
 import {
@@ -49,6 +50,7 @@ export function UpdateInstagramForm({
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
   const flowOptions = useFlowSelectOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -62,6 +64,7 @@ export function UpdateInstagramForm({
               feature: t("fields.instagram.label"),
             }),
           )
+          invalidateInboxes()
           router.push(`/space/${workspaceId}/settings/channels/instagram`)
         },
         onError: ({ error }) => {

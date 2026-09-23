@@ -27,6 +27,7 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud, isCommunity } from "@/env"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import { inviteWorkspaceMemberAction } from "../actions/invite-workspace-member.action"
 import { getSuperAdminPermissions } from "../helpers"
@@ -149,6 +150,7 @@ export function AddWorkspaceMemberForm({
   submitHandler,
 }: AddWorkspaceMemberFormProps) {
   const workspaceId = useWorkspaceId()
+  const invalidateUsers = useInvalidateUsers()
 
   const t = useTranslations()
 
@@ -165,6 +167,7 @@ export function AddWorkspaceMemberForm({
                 feature: t("fields.workspaceMember.label"),
               }),
             )
+            invalidateUsers()
             submitHandler?.(
               `${window.location.origin}/invitations/${data.code}`,
             )

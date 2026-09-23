@@ -240,6 +240,17 @@ export const useInvalidateCustomFields = () => {
   )
 }
 
+export const useInvalidateBotFields = () => {
+  const queryClient = useQueryClient()
+  return useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: orpc.botFieldAPIs.privateListBotFieldsAPI.key(),
+      }),
+    [queryClient],
+  )
+}
+
 export const useCustomFieldSelectOptions = (
   props: {
     customFieldTypes?: CustomFieldType[]

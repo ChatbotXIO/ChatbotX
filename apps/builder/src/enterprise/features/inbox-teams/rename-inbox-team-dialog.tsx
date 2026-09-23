@@ -20,6 +20,7 @@ import { useEffect } from "react"
 import "react-day-picker/style.css"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import { updateInboxTeamAction } from "./actions/update-inbox-team.action"
 import { updateInboxTeamRequest } from "./schema/action"
 import type { InboxTeamResource } from "./schema/resource"
@@ -37,6 +38,7 @@ export function RenameInboxTeamDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateUsers = useInvalidateUsers()
   const {
     form,
     handleSubmitWithAction,
@@ -54,6 +56,7 @@ export function RenameInboxTeamDialog({
           )
 
           onOpenChange(false)
+          invalidateUsers()
           router.refresh()
         },
         onError: ({ error }) => {

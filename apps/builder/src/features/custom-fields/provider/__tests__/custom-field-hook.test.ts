@@ -6,7 +6,11 @@ import { act, createElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
-import { buildGroupedFieldOptions, useCustomFields } from "../custom-field-hook"
+import {
+  buildGroupedFieldOptions,
+  useCustomFields,
+  useInvalidateBotFields,
+} from "../custom-field-hook"
 
 const { mockListCustomFields } = vi.hoisted(() => ({
   mockListCustomFields: vi.fn(),
@@ -17,11 +21,23 @@ vi.mock("@/lib/orpc/orpc", () => ({
     customFieldsAPI: {
       privateListCustomFieldsAPI: mockListCustomFields,
     },
+    botFieldAPIs: {
+      privateListBotFieldsAPI: vi.fn(),
+    },
   },
 }))
 
 function CustomFieldsProbe({ onData }: { onData: (data: unknown) => void }) {
   onData(useCustomFields("workspace-1").data)
+  return null
+}
+
+function InvalidateBotFieldsProbe({
+  onReady,
+}: {
+  onReady: (invalidate: () => unknown) => void
+}) {
+  onReady(useInvalidateBotFields())
   return null
 }
 
@@ -128,6 +144,32 @@ describe("custom field query hooks", () => {
       expect(returnedData).toEqual([
         { id: "field-1", name: "Company", type: "shortText" },
       ])
+    })
+  })
+  test("invalidates the bot field query key", async () => {
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries")
+    let invalidateBotFields: (() => unknown) | undefined
+
+    act(() => {
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client: queryClient },
+          createElement(InvalidateBotFieldsProbe, {
+            onReady: (invalidate) => {
+              invalidateBotFields = invalidate
+            },
+          }),
+        ),
+      )
+    })
+
+    await act(async () => {
+      await invalidateBotFields?.()
+    })
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: [["botFieldAPIs", "privateListBotFieldsAPI"], {}],
     })
   })
 })

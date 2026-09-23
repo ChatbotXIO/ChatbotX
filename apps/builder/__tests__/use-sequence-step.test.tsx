@@ -1,8 +1,10 @@
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, useEffect } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import type { Step } from "@/features/sequences/hooks/use-sequence-step"
 import { useSequenceStep } from "@/features/sequences/hooks/use-sequence-step"
+import { makeQueryClient } from "./query-test-utils"
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -33,6 +35,7 @@ type HookProps = Parameters<typeof useSequenceStep>[0]
 const holder: { current: HookApi | null } = { current: null }
 let container: HTMLDivElement | null = null
 let root: Root | null = null
+let queryClient: QueryClient | null = null
 
 /** Reads the hook's latest return value, failing fast if the probe has not
  * mounted yet — avoids non-null assertions at every call site. */
@@ -55,8 +58,14 @@ function renderHook(props: HookProps) {
   container = document.createElement("div")
   document.body.appendChild(container)
   root = createRoot(container)
+  const nextQueryClient = makeQueryClient()
+  queryClient = nextQueryClient
   act(() => {
-    root?.render(<Probe props={props} />)
+    root?.render(
+      <QueryClientProvider client={nextQueryClient}>
+        <Probe props={props} />
+      </QueryClientProvider>,
+    )
   })
 }
 
@@ -69,6 +78,8 @@ afterEach(() => {
   container?.remove()
   container = null
   root = null
+  queryClient?.clear()
+  queryClient = null
   holder.current = null
   toast.error.mockClear()
   toast.success.mockClear()

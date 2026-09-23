@@ -33,6 +33,7 @@ import { useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import { updateWebchatAction } from "../actions/update-webchat.action"
 import { updateWebchatRequest } from "../schema/mutation"
@@ -49,6 +50,7 @@ export function UpdateWebchatForm({
   const workspaceId = useWorkspaceId()
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
 
   const flowOptions = useFlowSelectOptions()
 
@@ -84,6 +86,7 @@ export function UpdateWebchatForm({
               feature: t("fields.webchat.label"),
             }),
           )
+          invalidateInboxes()
           router.push(`/space/${workspaceId}/settings/channels`)
         },
         onError: ({ error }) => {

@@ -288,6 +288,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
         folderType={folderTypes.enum.sequence}
         modelIds={rowAction?.row.original ? [rowAction.row.original.id] : []}
         onOpenChange={() => setRowAction(null)}
+        onSuccess={invalidateSequences}
         open={rowAction?.variant === "move"}
         workspaceId={workspaceId}
       />
