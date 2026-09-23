@@ -983,17 +983,6 @@ type AttachmentInputs = Parameters<
   IMessageRepository["createOrUpdateWithAttachments"]
 >[1]
 
-const safeBroadcast = async (
-  workspaceId: string,
-  event: RealtimeEventData,
-  context: string,
-): Promise<void> => {
-  try {
-    await broadcastToWorkspaceParty(workspaceId, event)
-  } catch (err) {
-    logger.warn({ err }, `${context}: unable to broadcast`)
-  }
-}
 
 const buildMessageInput = ({
   inbox,
@@ -1184,11 +1173,10 @@ const persistMessage = async (
   }
 
   if (isNew && !isOwnSendEcho) {
-    await safeBroadcast(
-      inbox.workspaceId,
-      { eventType: RealtimeEventType.messageCreated, data: message },
-      "persistMessage",
-    )
+    publishToWorkspaceParty(inbox.workspaceId, {
+      eventType: RealtimeEventType.messageCreated,
+      data: message,
+    })
   }
 
   if (isNew && inbound) {
@@ -1694,18 +1682,14 @@ export const updateIncomingComment = async (
     return
   }
 
-  await safeBroadcast(
-    inbox.workspaceId,
-    {
-      eventType: RealtimeEventType.messageUpdated,
-      data: {
-        messageId: updated.id,
-        newText,
-        removedAttachment: false,
-      },
+  publishToWorkspaceParty(inbox.workspaceId, {
+    eventType: RealtimeEventType.messageUpdated,
+    data: {
+      messageId: updated.id,
+      newText,
+      removedAttachment: false,
     },
-    "updateIncomingComment",
-  )
+  })
 }
 
 // When a commenter deletes their comment, soft-delete it (and any
@@ -1733,14 +1717,11 @@ export const deleteIncomingComment = async (
     return
   }
 
-  await safeBroadcast(
-    inbox.workspaceId,
-    {
-      eventType: RealtimeEventType.messageDeleted,
-      data: { messageIds: deleted.map((row) => row.id) },
-    },
-    "deleteIncomingComment",
-  )
+  const messageIds = deleted.map((row) => row.id)
+  publishToWorkspaceParty(inbox.workspaceId, {
+    eventType: RealtimeEventType.messageDeleted,
+    data: { messageIds },
+  })
 }
 
 // When a contact unsends a previously-sent DM, soft-delete it in the DB and
@@ -1770,14 +1751,11 @@ export const deleteIncomingMessage = async (
     return
   }
 
-  await safeBroadcast(
-    inbox.workspaceId,
-    {
-      eventType: RealtimeEventType.messageDeleted,
-      data: { messageIds: deleted.map((row) => row.id) },
-    },
-    "deleteIncomingMessage",
-  )
+  const messageIds = deleted.map((row) => row.id)
+  publishToWorkspaceParty(inbox.workspaceId, {
+    eventType: RealtimeEventType.messageDeleted,
+    data: { messageIds },
+  })
 }
 
 type ContactInboxResolverProps = {
@@ -1865,14 +1843,10 @@ export const processMessageReaction = async (
   })
 
   if (isNew) {
-    await safeBroadcast(
-      inbox.workspaceId,
-      {
-        eventType: RealtimeEventType.messageCreated,
-        data: reactionRow,
-      },
-      "processMessageReaction",
-    )
+    publishToWorkspaceParty(inbox.workspaceId, {
+      eventType: RealtimeEventType.messageCreated,
+      data: reactionRow,
+    })
     return
   }
 
@@ -1884,18 +1858,14 @@ export const processMessageReaction = async (
       reactionRow.createdAt,
     )
     if (updated) {
-      await safeBroadcast(
-        inbox.workspaceId,
-        {
-          eventType: RealtimeEventType.messageUpdated,
-          data: {
-            messageId: updated.id,
-            newText: reactionText,
-            removedAttachment: false,
-          },
+      publishToWorkspaceParty(inbox.workspaceId, {
+        eventType: RealtimeEventType.messageUpdated,
+        data: {
+          messageId: updated.id,
+          newText: reactionText,
+          removedAttachment: false,
         },
-        "processMessageReaction",
-      )
+      })
     }
   }
 }
