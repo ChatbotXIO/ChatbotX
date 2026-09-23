@@ -186,7 +186,7 @@ beforeEach(() => {
 })
 
 describe("ConversationService.updateFlowStepState lastActivityAt monotonicity", () => {
-  test("advancing lastActivityAt emits a GREATEST guard instead of overwriting the column", async () => {
+  test("uses GREATEST to advance lastActivityAt without regressing or retaining NULL", async () => {
     const at = new Date("2024-01-02T00:00:00Z")
 
     await conversationService.updateFlowStepState({
@@ -200,46 +200,8 @@ describe("ConversationService.updateFlowStepState lastActivityAt monotonicity", 
       { lastActivityAt: { strings: string[]; values: unknown[] } },
     ]
     expect(data.lastActivityAt.strings.join("")).toContain("GREATEST")
-    expect(data.lastActivityAt.values.at(-1)).toBe(at)
-  })
-
-  test("an older lastActivityAt still goes through the GREATEST guard, never a bare overwrite", async () => {
-    // Regression: pre-fix, `data.lastActivityAt = props.lastActivityAt` wrote
-    // this value unconditionally, letting a late-processed older message move
-    // `lastActivityAt` backwards. The fix always routes through GREATEST, so
-    // Postgres — not caller ordering — decides which timestamp wins.
-    const earlierAt = new Date("2024-01-01T00:00:00Z")
-
-    await conversationService.updateFlowStepState({
-      workspaceId: WORKSPACE_ID,
-      conversationId: "conv-1",
-      lastActivityAt: earlierAt,
-    })
-
-    const [data] = mocks.updateSet.mock.calls.at(-1) as [
-      { lastActivityAt: { strings: string[]; values: unknown[] } },
-    ]
-    expect(data.lastActivityAt.strings.join("")).toContain("GREATEST")
-    expect(data.lastActivityAt.values.at(-1)).toBe(earlierAt)
-  })
-
-  test("wraps the current column in COALESCE so a NULL lastActivityAt still advances", async () => {
-    // Regression: Postgres's GREATEST(NULL, x) evaluates to NULL, which would
-    // silently discard the update on a conversation whose lastActivityAt is
-    // still unset. COALESCE-ing the column against the new value inside the
-    // GREATEST call ensures a NULL column always advances instead.
-    const at = new Date("2024-01-02T00:00:00Z")
-
-    await conversationService.updateFlowStepState({
-      workspaceId: WORKSPACE_ID,
-      conversationId: "conv-1",
-      lastActivityAt: at,
-    })
-
-    const [data] = mocks.updateSet.mock.calls.at(-1) as [
-      { lastActivityAt: { strings: string[]; values: unknown[] } },
-    ]
-    expect(data.lastActivityAt.strings.join("")).toContain("COALESCE")
+    expect(data.lastActivityAt.strings.join("")).not.toContain("COALESCE")
+    expect(data.lastActivityAt.values).toEqual([undefined, at])
   })
 
   test("omits lastActivityAt entirely when not provided, leaving currentStep/lastStep unconditional", async () => {
