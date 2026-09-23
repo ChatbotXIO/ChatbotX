@@ -5,6 +5,8 @@
 Accepted — isolation by convention. PostgreSQL Row-Level Security is proposed and
 deferred.
 
+Date: 2026-09-23
+
 ## Context
 
 Workspace data is isolated in application and repository code. Repository methods
@@ -35,7 +37,5 @@ been validated under that connection model.
 
 ## Consequences
 
-The interim mitigation is a lint/test-based safety net pursued in parallel: a
-workspace-scoping ratchet script and cross-workspace integration tests make new
-unscoped repository access harder to introduce. These checks complement, rather
-than replace, each repository method's explicit `workspaceId` filter.
+The lint/test safety net is a follow-up and has not landed. Until then, every
+repository method remains responsible for its explicit `workspaceId` filter.

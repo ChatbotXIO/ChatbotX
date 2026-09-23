@@ -4,6 +4,8 @@
 
 Accepted
 
+Date: 2026-09-23
+
 ## Context
 
 The Kafka workspace package was fully implemented, but the message-queue factory only

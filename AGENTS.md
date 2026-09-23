@@ -201,6 +201,8 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 
 - Human-facing docs: [chatbotx.io/docs](https://chatbotx.io/docs) (including Quick Start).
 - Tech stack details: `docs/tech-stack.md`
+- Architecture decisions: `docs/adr/`
+- Messaging scaling runbook: `docs/scaling-messaging.md`
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`
 - Workspace API tokens (hashing, scopes, `{{api_key}}` default token): `docs/developer/workspace-api-tokens.md`
