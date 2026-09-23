@@ -6,6 +6,7 @@ const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
 const EMAIL_PATTERN = /^[\w.+-]+@[\w-]+\.[\w.]+$/u
 const PHONE_PATTERN = /^\+\d{6,}$/u
+const LOCAL_PHONE_PATTERN = /^0\d{8,}$/u
 const NUMERIC_ID_PATTERN = /^\d+$/u
 const PREFIXED_IDENTIFIER_PATTERN = /^(id|email|phone):/u
 
@@ -13,15 +14,13 @@ const PREFIXED_IDENTIFIER_PATTERN = /^(id|email|phone):/u
  * Contact-facing tools accept a prefixed identifier (`id:123`,
  * `email:ada@example.com`, `phone:+841234567890`) — see
  * `apps/builder/src/features/contacts/api/public/tags.ts` and siblings.
- * An agent (especially a cheaper model) very often passes the bare value
- * instead, which the API then rejects with a 422 the eval harness scores
- * as a hard failure. The shape is unambiguous — an email has an `@`, a
- * phone number starts with `+` and is otherwise all digits, a bare
- * numeric string is an id — so auto-prefixing here removes a whole class
- * of preventable failures without guessing at anything semantically
- * unclear. A value that already carries a recognized prefix, or matches
- * none of the three shapes (e.g. a display name), is passed through
- * unchanged so the API's real validation error still surfaces.
+ * Agents often pass a bare value instead, which the API then rejects with a
+ * 422. The shape is unambiguous — an email has an `@`, a phone number starts
+ * with `+` or `0` and is otherwise all digits, and a bare numeric string is
+ * an id — so auto-prefixing removes preventable failures without guessing at
+ * anything semantically unclear. A value that already carries a recognized
+ * prefix, or matches none of the three shapes (e.g. a display name), is
+ * passed through unchanged so the API's real validation error still surfaces.
  */
 function withNormalizedIdentifier(value: unknown): unknown {
   if (typeof value !== "string") {
@@ -33,7 +32,7 @@ function withNormalizedIdentifier(value: unknown): unknown {
   if (EMAIL_PATTERN.test(value)) {
     return `email:${value}`
   }
-  if (PHONE_PATTERN.test(value)) {
+  if (PHONE_PATTERN.test(value) || LOCAL_PHONE_PATTERN.test(value)) {
     return `phone:${value}`
   }
   if (NUMERIC_ID_PATTERN.test(value)) {

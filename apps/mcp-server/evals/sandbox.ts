@@ -310,7 +310,7 @@ const fixtures: Record<string, FixtureHandler> = {
 
 const readBody = async (
   request: IncomingMessage,
-): Promise<Record<string, unknown>> => {
+): Promise<Record<string, unknown> | undefined> => {
   const chunks: Buffer[] = []
   for await (const chunk of request) {
     chunks.push(Buffer.from(chunk))
@@ -319,12 +319,13 @@ const readBody = async (
     return {}
   }
   try {
-    return JSON.parse(Buffer.concat(chunks).toString("utf8")) as Record<
-      string,
-      unknown
-    >
+    const body: unknown = JSON.parse(Buffer.concat(chunks).toString("utf8"))
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return
+    }
+    return body as Record<string, unknown>
   } catch {
-    return {}
+    return
   }
 }
 
@@ -519,6 +520,10 @@ export const createSandbox = async (spec: OpenApiSpec): Promise<Sandbox> => {
       status: 404,
     }
     traces.push(trace)
+    if (body === undefined) {
+      trace.status = 400
+      return send(response, 400, { error: "malformedJson" })
+    }
     if (!(operation && fixtures[operation.operationId])) {
       return send(response, 404, { error: "Unsupported synthetic operation" })
     }

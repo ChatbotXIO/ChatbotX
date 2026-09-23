@@ -1,36 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { META_TOOLS } from "../src/server/meta-tools"
-
-// Same convention as openapi-loader.test.ts: `getCachedTools()` is
-// module-level state populated by `loadOpenApiSpec()`, so each test needs a
-// fresh module instance (`vi.resetModules()`) and its own fetch mock rather
-// than sharing the previous test's cached tools.
-const specWithTools = (
-  tools: Array<{
-    name: string
-    summary: string
-    description?: string
-    method?: string
-  }>,
-) => ({
-  ok: true,
-  headers: { get: () => null },
-  json: async () => ({
-    servers: [{ url: "https://api.example.com" }],
-    paths: Object.fromEntries(
-      tools.map((tool) => [
-        `/v1/${tool.name}`,
-        {
-          [(tool.method ?? "get").toLowerCase()]: {
-            operationId: tool.name,
-            summary: tool.summary,
-            description: tool.description,
-          },
-        },
-      ]),
-    ),
-  }),
-})
+import { specWithTools } from "./helpers/spec-fixture"
 
 describe("META_TOOLS", () => {
   test("are exactly search_tools and call_tool", () => {
@@ -242,8 +212,8 @@ describe("handleSearchTools", () => {
 
     const result = handleSearchTools({ query: "tags" })
     expect(result.isError).toBeUndefined()
-    const parsed = JSON.parse(result.content[0]?.text ?? "[]")
-    expect(parsed).toEqual([
+    const parsed = JSON.parse(result.content[0]?.text ?? "{}")
+    expect(parsed.matches).toEqual([
       {
         name: "tags_list",
         description: "Get all tags",
@@ -313,7 +283,7 @@ describe("handleCallTool", () => {
     expect(result.isError).toBeUndefined()
   })
 
-  test("rejects an arguments array without executing a fetch", async () => {
+  test("rejects invalid arguments objects without executing a fetch", async () => {
     globalThis.fetch = vi
       .fn()
       .mockResolvedValue(
@@ -339,6 +309,16 @@ describe("handleCallTool", () => {
       ],
       isError: true,
     })
+    expect(executeFetch).not.toHaveBeenCalled()
+
+    const nullPrototypeResult = await handleCallTool(
+      { arguments: Object.create(null), name: "tags_list" },
+      "api-key",
+    )
+    expect(nullPrototypeResult.isError).toBe(true)
+    expect(nullPrototypeResult.content[0]?.text).toBe(
+      "call_tool 'arguments' must be a JSON object.",
+    )
     expect(executeFetch).not.toHaveBeenCalled()
   })
 
@@ -388,7 +368,7 @@ describe("handleCallTool", () => {
     expect(result.content[0]?.text).toContain("contacts_get")
   })
 
-  test("rejects a call missing a required argument before making a request", async () => {
+  test("rejects missing or null required arguments before making a request", async () => {
     const specFetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       headers: { get: () => null },
@@ -428,16 +408,25 @@ describe("handleCallTool", () => {
     await loadOpenApiSpec()
     const { handleCallTool } = await import("../src/server/meta-tools")
 
-    const result = await handleCallTool(
+    const missingResult = await handleCallTool(
       {
         name: "contacts_add_tags_by_name",
         arguments: { identifier: "id:1" },
       },
       "api-key",
     )
+    const nullResult = await handleCallTool(
+      {
+        name: "contacts_add_tags_by_name",
+        arguments: { identifier: "id:1", tags: null },
+      },
+      "api-key",
+    )
 
-    expect(result.isError).toBe(true)
-    expect(result.content[0]?.text).toContain("tags")
+    expect(missingResult.isError).toBe(true)
+    expect(missingResult.content[0]?.text).toContain("tags")
+    expect(nullResult.isError).toBe(true)
+    expect(nullResult.content[0]?.text).toContain("tags")
     expect(executeFetch).not.toHaveBeenCalled()
   })
 

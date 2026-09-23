@@ -1,5 +1,6 @@
 import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 
 // The public API speaks friendly operation names (`increase`, not the
 // internal `"O04"` opaque code `FieldOperationType.increase` maps to) so an
@@ -41,12 +42,7 @@ const contactCustomFieldOperationPublicRequest = z.object({
 })
 
 export const addContactCustomFieldOperationsPublicRequest = z.object({
-  identifier: z
-    .string()
-    .min(1)
-    .describe(
-      "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
-    ),
+  identifier: publicContactIdentifier,
   operations: z
     .array(contactCustomFieldOperationPublicRequest)
     .min(1)

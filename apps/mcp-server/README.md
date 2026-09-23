@@ -14,7 +14,7 @@ ChatbotX's public API has ~350 operations. Listing all of them as MCP tools over
 
 | Tool | Description |
 |---|---|
-| `search_tools` | Search the full API for a tool not in the default set. Returns each match's name, description, and input schema. |
+| `search_tools` | Search the full API for a tool not in the default set. Returns `{ matches, hint? }`, where each match has its name, description, and input schema. |
 | `call_tool` | Execute any tool by name, including ones `search_tools` found but `tools/list` doesn't show. |
 
 Use `search_tools` when the task needs something outside the default set (e.g. deleting a resource, managing AI agents, coupons, products) — then invoke it with `call_tool`.
@@ -24,7 +24,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 - **Name normalization**: a dotted or camelCase operation label (`contacts.get`, `contactsGet`) is accepted and re-derived to the executable snake_case name — you don't have to pass the exact string `search_tools` returned.
 - **Unknown-tool suggestions**: an unrecognized `name` returns the closest matching tool names instead of a bare error, so a model can self-correct without another `search_tools` round trip.
 - **Pre-flight argument check**: a `call_tool` invocation missing a field the selected tool's `inputSchema` marks `required` is rejected immediately with the missing field names, instead of waiting for the real API's 422. A common wrapper mistake (nesting every field under `body`/`params`/`input` instead of passing them at the top level) is called out explicitly.
-- **Contact identifier auto-prefix**: a bare email, `+`-prefixed phone number, or numeric id passed as `identifier` to a contact tool is automatically prefixed (`email:`/`phone:`/`id:`) before the request is sent, matching what the API actually requires.
+- **Contact identifier auto-prefix**: a bare email, `+`-prefixed or local `0`-prefixed phone number, or numeric id passed as `identifier` to a contact tool is automatically prefixed (`email:`/`phone:`/`id:`) before the request is sent, matching what the API actually requires.
 
 ### Scope-based filtering
 
@@ -306,7 +306,7 @@ Scores every prompt in the eval corpus (`evals/cases.ts`) through the real `sear
 
 ### `eval:business` — full LLM-driven business eval
 
-Spins up a synthetic HTTP sandbox implementing the generated spec's operations, connects a real MCP client, and drives `gpt-4o-mini`/`gpt-4.1-mini` (or any `@ai-sdk/openai`-supported model) through 240+ business prompts across 5 locale variants (`vi`, `vi-unaccented`, colloquial, `en`, mixed). Requires `OPENAI_API_KEY`.
+Spins up a synthetic HTTP sandbox implementing the generated spec's operations, connects a real MCP client, and drives `gpt-4o-mini`/`gpt-4.1-mini` (or any `@ai-sdk/openai`-supported model) through 240 prompts (48 families × 5 locales: `vi`, `vi-unaccented`, colloquial, `en`, mixed). Requires `OPENAI_API_KEY`.
 
 ```bash
 pnpm --filter chatbotx-mcp eval:business \

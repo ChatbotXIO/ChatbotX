@@ -161,8 +161,8 @@ const main = async (): Promise<void> => {
 }
 
 main().catch((error) => {
-  process.stderr.write(
-    `${error instanceof Error ? error.message : String(error)}\n`,
-  )
+  const message =
+    error instanceof Error ? (error.stack ?? error.message) : String(error)
+  process.stderr.write(`${message}\n`)
   process.exitCode = 1
 })

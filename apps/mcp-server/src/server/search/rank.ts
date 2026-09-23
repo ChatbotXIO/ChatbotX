@@ -31,6 +31,7 @@ type ToolTokens = {
   summary: Set<string>
   body: Set<string>
   tags: Set<string>
+  text: string
 }
 
 // Keyed by the `DynamicTool` object itself (not its name): `openapi-loader`
@@ -50,10 +51,9 @@ function tokenSet(text: string): Set<string> {
 }
 
 /**
- * `buildToolDescription` (`openapi-loader.ts`) joins `summary` and the
- * long-form `description` with a blank line: `${summary}\n\n${description}`.
- * Splitting on the first blank line recovers that boundary so the ranker
- * can weight the short summary higher than the verbose body.
+ * `buildToolDescription` joins the summary, description, and optional
+ * requirements with blank lines. Only the first boundary separates the
+ * weighted summary; remaining sections stay in the body.
  */
 function splitDescription(description: string): {
   summary: string
@@ -80,6 +80,7 @@ function getToolTokens(tool: DynamicTool): ToolTokens {
     summary: tokenSet(summary),
     body: tokenSet(body),
     tags: new Set(tool.tags.flatMap((tag) => [...tokenSet(tag)])),
+    text: normalizeSearchText(`${tool.name} ${tool.description}`),
   }
   toolTokensCache.set(tool, tokens)
   return tokens
@@ -129,7 +130,7 @@ function scoreTool(
   queryPhrase: string,
   corpusSize: number,
 ): number {
-  const { name, summary, body, tags } = getToolTokens(tool)
+  const { name, summary, body, tags, text } = getToolTokens(tool)
 
   let score = 0
   let nameMatches = 0
@@ -151,12 +152,7 @@ function scoreTool(
     score += MULTI_NAME_MATCH_BONUS
   }
 
-  if (
-    queryPhrase.length > 0 &&
-    normalizeSearchText(`${tool.name} ${tool.description}`).includes(
-      queryPhrase,
-    )
-  ) {
+  if (queryPhrase.length > 0 && text.includes(queryPhrase)) {
     score += PHRASE_MATCH_BONUS
   }
 

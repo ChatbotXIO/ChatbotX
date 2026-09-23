@@ -23,7 +23,7 @@ export const META_TOOLS = [
   {
     name: "search_tools",
     description:
-      "Search the full ChatbotX tool catalog for tool definitions, not workspace records, and never execute a tool. The catalog is English: use one action plus one resource written in English, or an exact tool name, translating the user's intent first if needed. Each match includes its full inputSchema; read it, then call the exact returned name with call_tool.",
+      "Search the full ChatbotX tool catalog for tool definitions, not workspace records, and never execute a tool. The catalog is English: use one action plus one resource written in English, or an exact tool name, translating the user's intent first if needed. The result contains `matches`, each with its full inputSchema; read it, then call the exact returned name with call_tool.",
     inputSchema: {
       type: "object",
       properties: {
@@ -94,17 +94,16 @@ function resourceGroupSuffix(): string {
 }
 
 /**
- * `search_tools` handler — validates the raw MCP `arguments` object and
- * returns each match's name/description/inputSchema as JSON text, the same
- * shape a `tools/list` entry has, so an agent can go straight from a match
- * to a `call_tool` invocation. A zero-match result includes a hint listing
- * the catalog's resource groups (OpenAPI tags) instead of nothing, so a
- * model can rephrase around a known group rather than giving up; a
- * non-Latin-script query (Arabic, CJK, Cyrillic, Thai, Korean, ...) gets a
- * hint naming the real cause -- the catalog is English-only -- and asking
- * for a translated retry, both when it scored zero and, more weakly, when
- * it still produced matches (e.g. by mixing in an English word).
+ * Validates a `search_tools` query and returns matched tool definitions.
+ * Zero or non-Latin-script results include a hint that helps the caller
+ * retry without executing a catalog tool.
  */
+export type SearchMatch = Pick<
+  DynamicTool,
+  "name" | "description" | "inputSchema"
+>
+export type SearchToolsResult = { matches: SearchMatch[]; hint?: string }
+
 export function handleSearchTools(
   args: Record<string, unknown>,
 ): ToolCallResult {
@@ -115,7 +114,7 @@ export function handleSearchTools(
   const limit = typeof args.limit === "number" ? args.limit : undefined
   const isNonLatinQuery = containsNonLatinScript(query)
 
-  const matches = searchTools(query, limit).map((tool) => ({
+  const matches: SearchMatch[] = searchTools(query, limit).map((tool) => ({
     name: tool.name,
     description: tool.description,
     inputSchema: tool.inputSchema,
@@ -140,7 +139,7 @@ export function handleSearchTools(
     })
   }
 
-  return jsonResult(matches)
+  return jsonResult({ matches } satisfies SearchToolsResult)
 }
 
 /**
@@ -180,7 +179,9 @@ function preflightArgumentError(
   args: Record<string, unknown>,
 ): string | undefined {
   const required = tool.inputSchema.required ?? []
-  const missing = required.filter((key) => args[key] === undefined)
+  const missing = required.filter(
+    (key) => args[key] === undefined || args[key] === null,
+  )
   if (missing.length === 0) {
     return
   }

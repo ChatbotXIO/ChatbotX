@@ -159,6 +159,24 @@ describe("executeTool", () => {
     expect(url).toContain(encodeURIComponent("phone:+841234567890"))
   })
 
+  test("auto-prefixes a local phone identifier", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const getTool: DynamicTool = {
+      ...tool,
+      name: "contacts_get",
+      pathTemplate: "/v1/contacts/{identifier}",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(getTool, { identifier: "0901234567" }, "api-key")
+
+    const url = fetchMock.mock.calls[0]?.[0] as string
+    expect(url).toContain(encodeURIComponent("phone:0901234567"))
+  })
+
   test("auto-prefixes a bare numeric identifier as an id", async () => {
     const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
     globalThis.fetch = fetchMock as unknown as typeof fetch
@@ -175,6 +193,24 @@ describe("executeTool", () => {
 
     const url = fetchMock.mock.calls[0]?.[0] as string
     expect(url).toContain(encodeURIComponent("id:42"))
+  })
+
+  test("leaves a non-string identifier unchanged", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const getTool: DynamicTool = {
+      ...tool,
+      name: "contacts_get",
+      pathTemplate: "/v1/contacts/{identifier}",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(getTool, { identifier: 42 }, "api-key")
+
+    const url = fetchMock.mock.calls[0]?.[0] as string
+    expect(url).toContain("/v1/contacts/42")
   })
 
   test("leaves an already-prefixed identifier untouched", async () => {

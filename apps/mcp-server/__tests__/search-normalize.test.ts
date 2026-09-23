@@ -4,7 +4,6 @@ import {
   normalizeSearchText,
   stem,
   stripLiterals,
-  tokenize,
 } from "../src/server/search/normalize"
 
 describe("normalizeSearchText", () => {
@@ -28,6 +27,14 @@ describe("stripLiterals", () => {
     )
   })
 
+  test("keeps spaced numeric literals as separate id hints", () => {
+    expect(stripLiterals("cancel 123 456")).toBe("cancel  id   id ")
+  })
+
+  test("does not classify spaced numeric values as a phone number", () => {
+    expect(stripLiterals("reply 41 2026 done")).not.toContain("phone")
+  })
+
   test("replaces a bare numeric id with an id hint", () => {
     expect(stripLiterals("Cancel appointment 99")).toBe(
       "Cancel appointment  id ",
@@ -48,12 +55,6 @@ describe("stem", () => {
 
   test("leaves a short word ending in s untouched", () => {
     expect(stem("vs")).toBe("vs")
-  })
-})
-
-describe("tokenize", () => {
-  test("deduplicates and lowercases tokens", () => {
-    expect(tokenize("Tags tags TAGS")).toEqual(["tags"])
   })
 })
 

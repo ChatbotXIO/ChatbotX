@@ -16,6 +16,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 // Sending/reading messages, auto-replies, and flows for a contact are
@@ -40,12 +41,7 @@ export const contactsMessagesPublicRouter = {
     .input(
       createMessageRequest.and(
         z.object({
-          identifier: z
-            .string()
-            .min(1)
-            .describe(
-              "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
-            ),
+          identifier: publicContactIdentifier,
         }),
       ),
     )
@@ -81,12 +77,7 @@ export const contactsMessagesPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
-          ),
+        identifier: publicContactIdentifier,
         perPage: z.coerce
           .number()
           .optional()
@@ -133,12 +124,7 @@ export const contactsMessagesPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
-          ),
+        identifier: publicContactIdentifier,
         messageId: zodBigintAsString().describe("Message id (numeric string)."),
       }),
     )
@@ -175,12 +161,7 @@ export const contactsMessagesPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
-          ),
+        identifier: publicContactIdentifier,
         keyword: z
           .string()
           .min(1)
@@ -239,12 +220,7 @@ export const contactsMessagesPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier with a required prefix: id:123, email:ada@example.com, or phone:+841234567890. Bare ids, emails, phone numbers, and display names are invalid. For a name, search contacts.list and use id:<returned id>.",
-          ),
+        identifier: publicContactIdentifier,
         flowId: zodBigintAsString().describe(
           "Flow id (numeric string). Get it from `flows.list`.",
         ),

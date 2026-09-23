@@ -17,6 +17,12 @@ describe("expandSynonyms", () => {
     expect(expand("huy dang ky")).toEqual(["unsubscribe"])
   })
 
+  test("maps unaccented tag removal to the tag concept only", () => {
+    const expanded = expand("go nhan")
+    expect(expanded).toEqual(expect.arrayContaining(["remove", "tag"]))
+    expect(expanded).not.toContain("message")
+  })
+
   test("subscribe phrase does not fire the cancel synonym", () => {
     expect(expand("dang ky")).toEqual(["subscribe"])
   })

@@ -29,7 +29,7 @@ export function normalizeSearchText(text: string): string {
 export function stripLiterals(text: string): string {
   return text
     .replace(/[\w.+-]+@[\w-]+\.[\w.]+/gu, " contact email ")
-    .replace(/\+?\d[\d\s-]{5,}\d/gu, " contact phone ")
+    .replace(/\+?\d[\d-]{5,}\d/gu, " contact phone ")
     .replace(/\b\d+\b/gu, " id ")
 }
 
@@ -93,24 +93,10 @@ export function stem(token: string): string {
   return token.length > 3 && token.endsWith("s") ? token.slice(0, -1) : token
 }
 
-export function tokenize(text: string): string[] {
-  return [...new Set(normalizeSearchText(text).match(/[\p{L}\p{N}]+/gu) ?? [])]
-}
-
 /**
- * Detects a query written in a script the catalog (English tool names,
- * summaries, descriptions) and the hand-written Vietnamese synonym table
- * cannot serve -- Arabic, CJK, Cyrillic, Thai, Korean, etc. Runs on
- * `normalizeSearchText`'s NFD-stripped output so precomposed Vietnamese
- * letters (`ệ`, `ạ`, `ở`, ... in Latin Extended Additional, U+1E00-U+1EFF)
- * are decomposed to plain Latin base letters + combining marks *before* this
- * check, and combining marks/diacritics are already removed by the time this
- * runs. Checking `\p{Script=Latin}` (rather than a hardcoded code-point
- * range) is what keeps this correct for every Latin-script language, not
- * just Vietnamese -- a hardcoded range like `\u0000-ɏ` would
- * misclassify Vietnamese's precomposed letters as non-Latin. Punctuation,
- * digits, symbols (currency, emoji, etc.), and whitespace are excluded from
- * the check since they carry no script information.
+ * Detects non-Latin letters after normalization. This relies on
+ * `\p{Script=Latin}` so every Latin-script language is accepted; normalize
+ * first so Vietnamese diacritics do not appear as a separate script.
  */
 const NON_LATIN_LETTER = /[^\p{Script=Latin}\p{N}\p{P}\p{S}\s]/u
 export function containsNonLatinScript(text: string): boolean {

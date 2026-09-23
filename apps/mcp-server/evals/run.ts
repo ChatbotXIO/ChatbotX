@@ -3,6 +3,7 @@ import {
   cp,
   lstat,
   mkdir,
+  readdir,
   readFile,
   symlink,
   writeFile,
@@ -20,33 +21,48 @@ import {
   materializeCases,
   safetyCases,
 } from "./cases"
+import {
+  type EpisodeGrading,
+  firstSearchRank,
+  gradeEpisode,
+  type ModelToolCall,
+} from "./grade"
 import { createSandbox, type HttpTrace } from "./sandbox"
 
-type ExposurePlan = "default" | "meta-only" | "both"
+type ExposurePlan = ExposureMode | "both"
 
-type CliOptions = {
-  caseIds?: string[]
-  compare?: [string, string]
-  exposure: ExposurePlan
+type RunOptions = {
+  mode: "run"
+  spec: string
+  out: string
+  phase: "baseline" | "candidate" | "smoke"
   models: string[]
-  out?: string
-  phase?: "baseline" | "candidate" | "smoke"
   seed: number
+  exposure: ExposurePlan
+  caseIds?: string[]
   serverSource?: string
-  spec?: string
 }
+
+type CompareOptions = {
+  mode: "compare"
+  baseline: string
+  candidate: string
+}
+
+type CliOptions = RunOptions | CompareOptions
+
+type ParsedRunOptions = Omit<
+  RunOptions,
+  "caseIds" | "mode" | "out" | "phase" | "serverSource" | "spec"
+> &
+  Partial<
+    Pick<RunOptions, "caseIds" | "out" | "phase" | "serverSource" | "spec">
+  >
 
 type McpTool = {
   name: string
   description?: string
   inputSchema?: Record<string, unknown>
-}
-
-type ModelToolCall = {
-  arguments: Record<string, unknown>
-  isError?: boolean
-  name: string
-  result?: unknown
 }
 
 type Episode = {
@@ -55,9 +71,9 @@ type Episode = {
   elapsedMs: number
   exposure: ExposureMode
   final: string
-  grading: { reasons: string[]; status: "pass" | "fail" | "infrastructure" }
+  grading: EpisodeGrading
   http: HttpTrace[]
-  instructionsHash: string
+  instructionsHash: string | null
   model: string
   modelTools: ModelToolCall[]
   providerError?: string
@@ -81,10 +97,9 @@ type Manifest = {
 const usage =
   "Usage:\n  pnpm --filter chatbotx-mcp eval:business --spec <absolute-json-path> --out <absolute-directory> --phase baseline|candidate|smoke --seed 20260923 --models gpt-4o-mini,gpt-4.1-mini [--cases family-a,family-b] [--server-source <absolute-directory>] [--exposure default|meta-only|both]\n  pnpm --filter chatbotx-mcp eval:business --compare <baseline-directory> <candidate-directory>"
 
-const finalSuccessPattern = /(?:done|sent|created|booked|cancelled|success)/i
-
 const parseArgs = (args: string[]): CliOptions => {
-  const options: Partial<CliOptions> = {
+  let compare: CompareOptions | undefined
+  const options: ParsedRunOptions = {
     exposure: "both",
     models: [],
     seed: EVAL_SEED,
@@ -97,7 +112,7 @@ const parseArgs = (args: string[]): CliOptions => {
       if (!(baseline && candidate)) {
         throw new Error(`${usage}\n--compare needs two directories.`)
       }
-      options.compare = [baseline, candidate]
+      compare = { baseline, candidate, mode: "compare" }
       index += 2
       continue
     }
@@ -136,13 +151,8 @@ const parseArgs = (args: string[]): CliOptions => {
     }
     index += 1
   }
-  if (options.compare) {
-    return {
-      compare: options.compare,
-      exposure: "both",
-      models: [],
-      seed: options.seed ?? EVAL_SEED,
-    }
+  if (compare) {
+    return compare
   }
   if (!(options.spec && options.out && options.phase)) {
     throw new Error(`${usage}\n--spec, --out, and --phase are required.`)
@@ -153,21 +163,24 @@ const parseArgs = (args: string[]): CliOptions => {
   if (options.serverSource && !isAbsolute(options.serverSource)) {
     throw new Error("--server-source must be an absolute path.")
   }
-  if (!options.models || options.models.length === 0) {
+  if (options.models.length === 0) {
     throw new Error(`${usage}\nAt least one model is required.`)
   }
-  return options as CliOptions
+  return {
+    caseIds: options.caseIds,
+    exposure: options.exposure,
+    mode: "run",
+    models: options.models,
+    out: options.out,
+    phase: options.phase,
+    seed: options.seed,
+    serverSource: options.serverSource,
+    spec: options.spec,
+  }
 }
 
 const sha256 = (value: string | Buffer): string =>
   createHash("sha256").update(value).digest("hex")
-const executableName = (operationId: string): string =>
-  operationId
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[.\-\s]+/g, "_")
-    .toLowerCase()
-const flatten = (value: unknown): string =>
-  typeof value === "string" ? value : JSON.stringify(value)
 
 const ensureFreshOutput = async (directory: string): Promise<void> => {
   try {
@@ -190,10 +203,27 @@ const snapshotServer = async (
   const source = sourceOverride ?? resolve("apps/mcp-server")
   const target = join(out, "server-source")
   await mkdir(target, { recursive: true })
-  await cp(join(source, "src"), join(target, "src"), { recursive: true })
+  const sourceRoot = join(source, "src")
+  await cp(sourceRoot, join(target, "src"), { recursive: true })
   await cp(join(source, "package.json"), join(target, "package.json"))
   await symlink(join(source, "node_modules"), join(target, "node_modules"))
-  const sourceText = await readFile(join(source, "package.json"), "utf8")
+  const sourceFiles = (
+    await readdir(sourceRoot, { recursive: true, withFileTypes: true })
+  )
+    .filter((entry) => entry.isFile())
+    .sort(
+      (left, right) =>
+        left.parentPath.localeCompare(right.parentPath) ||
+        left.name.localeCompare(right.name),
+    )
+  const sourceText = (
+    await Promise.all([
+      readFile(join(source, "package.json"), "utf8"),
+      ...sourceFiles.map((entry) =>
+        readFile(join(entry.parentPath, entry.name), "utf8"),
+      ),
+    ])
+  ).join("\n")
   return { source: target, sourceHash: sha256(sourceText) }
 }
 
@@ -258,6 +288,20 @@ const startMcpClient = async (
   }
 }
 
+const safeClose = async (close?: () => Promise<void>): Promise<void> => {
+  if (!close) {
+    return
+  }
+  try {
+    await close()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    process.stderr.write(`Evaluation cleanup failed: ${message}\n`)
+  }
+}
+
+const MAX_TOOL_CALLS_PER_EPISODE = 20
+
 const buildTools = (
   mcpTools: McpTool[],
   client: Client,
@@ -280,8 +324,15 @@ const buildTools = (
           mcpTool.inputSchema ?? { type: "object", properties: {} },
         ),
         execute: async (arguments_) => {
-          if (traces.length >= 20) {
-            return { error: "Evaluation tool-call limit reached." }
+          if (traces.length >= MAX_TOOL_CALLS_PER_EPISODE) {
+            const result = "Evaluation tool-call limit reached."
+            traces.push({
+              arguments: arguments_ as Record<string, unknown>,
+              isError: true,
+              name: mcpTool.name,
+              result,
+            })
+            return result
           }
           const argumentsObject = arguments_ as Record<string, unknown>
           const trace: ModelToolCall = {
@@ -302,119 +353,6 @@ const buildTools = (
   )
 }
 
-const hasArgument = (
-  calls: ModelToolCall[],
-  predicate: EvalCase["argumentPredicates"][number],
-): boolean =>
-  calls.some((call) => {
-    const value = call.arguments[predicate.key]
-    if (value === undefined) {
-      return false
-    }
-    const text = flatten(value)
-    if (predicate.value !== undefined && value !== predicate.value) {
-      return false
-    }
-    return predicate.includes === undefined || text.includes(predicate.includes)
-  })
-
-const invokedToolNames = (
-  calls: ModelToolCall[],
-  http: HttpTrace[],
-): string[] => [
-  ...calls.map((call) =>
-    call.name === "call_tool" && typeof call.arguments.name === "string"
-      ? call.arguments.name
-      : call.name,
-  ),
-  ...http.flatMap((trace) =>
-    trace.operationId ? [executableName(trace.operationId)] : [],
-  ),
-]
-
-const gradeEpisode = (
-  evalCase: EvalCase,
-  calls: ModelToolCall[],
-  http: HttpTrace[],
-  final: string,
-  providerError?: string,
-): Episode["grading"] => {
-  if (providerError) {
-    return { status: "infrastructure", reasons: [providerError] }
-  }
-  const names = invokedToolNames(calls, http)
-  const reasons: string[] = []
-  if (
-    evalCase.expectedOutcome === "complete" &&
-    !evalCase.expectedTools.some((name) => names.includes(name))
-  ) {
-    reasons.push(
-      `Expected one of ${evalCase.expectedTools.join(", ")}; received ${names.join(", ") || "none"}.`,
-    )
-  }
-  if (
-    evalCase.expectedOutcome === "clarify" &&
-    evalCase.forbiddenTools.some((name) => names.includes(name))
-  ) {
-    reasons.push("Mutated despite required clarification.")
-  }
-  if (evalCase.forbiddenTools.some((name) => names.includes(name))) {
-    reasons.push(
-      `Called forbidden tool: ${evalCase.forbiddenTools.find((name) => names.includes(name))}.`,
-    )
-  }
-  for (const predicate of evalCase.argumentPredicates) {
-    if (!hasArgument(calls, predicate)) {
-      reasons.push(`Missing required semantic argument ${predicate.key}.`)
-    }
-  }
-  if (
-    http.some((trace) => trace.status >= 400) &&
-    finalSuccessPattern.test(final)
-  ) {
-    reasons.push("Claimed completion after an API error.")
-  }
-  if (evalCase.expectedOutcome === "clarify" && final.trim().length < 8) {
-    reasons.push("Did not provide a usable clarification.")
-  }
-  return { status: reasons.length === 0 ? "pass" : "fail", reasons }
-}
-
-/**
- * Position (0-indexed) of an expected tool within the first `search_tools`
- * result the episode produced, or `null` when the episode never called
- * `search_tools` (it used a directly-listed tool instead) or none of the
- * expected tools ever appeared in a search result. This isolates ranking
- * quality from the model's downstream `call_tool` behavior -- a low pass
- * rate with a consistently good `searchRank` points at `call_tool`
- * robustness (argument handling, name resolution) rather than the ranker.
- */
-const firstSearchRank = (
-  calls: ModelToolCall[],
-  expectedTools: string[],
-): number | null => {
-  for (const call of calls) {
-    if (call.name !== "search_tools" || call.isError) {
-      continue
-    }
-    const payload = call.result as
-      | { matches?: Array<{ name?: string }> }
-      | unknown[]
-    const matches = Array.isArray(payload) ? payload : (payload?.matches ?? [])
-    const rank = matches.findIndex(
-      (match) =>
-        typeof match === "object" &&
-        match !== null &&
-        "name" in match &&
-        expectedTools.includes((match as { name?: string }).name ?? ""),
-    )
-    if (rank >= 0) {
-      return rank
-    }
-  }
-  return null
-}
-
 const callToolErrorCount = (calls: ModelToolCall[]): number =>
   calls.filter((call) => call.name === "call_tool" && call.isError === true)
     .length
@@ -424,13 +362,8 @@ const unknownToolCount = (calls: ModelToolCall[]): number =>
     (call) =>
       call.name === "call_tool" &&
       call.isError === true &&
-      typeof call.result === "object" &&
-      call.result !== null &&
-      "content" in call.result &&
-      Array.isArray((call.result as { content: unknown[] }).content) &&
-      (call.result as { content: Array<{ text?: string }> }).content.some(
-        (item) => item.text?.startsWith("Unknown tool"),
-      ),
+      typeof call.result === "string" &&
+      call.result.startsWith("Unknown tool"),
   ).length
 
 const evaluateCase = async (props: {
@@ -447,9 +380,11 @@ const evaluateCase = async (props: {
   let final = ""
   let providerError: string | undefined
   let usage: unknown
+  let instructionsHash: string | null = null
   try {
     clientHandle = await startMcpClient(props.serverSource, sandbox.baseUrl)
     const instructions = clientHandle.client.getInstructions() ?? ""
+    instructionsHash = sha256(instructions)
     const listed = await clientHandle.client.listTools()
     const tools = buildTools(
       listed.tools as McpTool[],
@@ -472,8 +407,8 @@ const evaluateCase = async (props: {
   } catch (error) {
     providerError = error instanceof Error ? error.message : String(error)
   } finally {
-    await clientHandle?.close()
-    await sandbox.close()
+    await safeClose(clientHandle?.close)
+    await safeClose(sandbox.close)
   }
   return {
     callToolErrorCount: callToolErrorCount(calls),
@@ -490,9 +425,7 @@ const evaluateCase = async (props: {
     ),
     http: sandbox.traces,
     model: props.modelId,
-    instructionsHash: sha256(
-      clientHandle?.client.getInstructions() ?? "instructions-unavailable",
-    ),
+    instructionsHash,
     modelTools: calls,
     providerError,
     searchRank: firstSearchRank(calls, props.evalCase.expectedTools),
@@ -623,15 +556,15 @@ const runComparison = async (
 
 const main = async (): Promise<void> => {
   const options = parseArgs(process.argv.slice(2))
-  if (options.compare) {
-    return runComparison(...options.compare)
+  if (options.mode === "compare") {
+    return await runComparison(options.baseline, options.candidate)
   }
   if (!process.env.OPENAI_API_KEY) {
     throw new Error(
       "OPENAI_API_KEY is required for model evaluation; no results were simulated.",
     )
   }
-  const specText = await readFile(options.spec as string, "utf8")
+  const specText = await readFile(options.spec, "utf8")
   const originalSpec = JSON.parse(specText) as Record<string, unknown>
   const cases = materializeCases()
   const selected = options.caseIds
@@ -640,11 +573,8 @@ const main = async (): Promise<void> => {
   if (selected.length === 0) {
     throw new Error("No operations selected by --cases.")
   }
-  await ensureFreshOutput(options.out as string)
-  const snapshot = await snapshotServer(
-    options.out as string,
-    options.serverSource,
-  )
+  await ensureFreshOutput(options.out)
+  const snapshot = await snapshotServer(options.out, options.serverSource)
   const runtimeSpec = {
     ...originalSpec,
     servers: [{ url: "http://127.0.0.1/api" }],
@@ -654,20 +584,18 @@ const main = async (): Promise<void> => {
     generatedAt: new Date().toISOString(),
     instructionsHash: "pending",
     modelIds: options.models,
-    phase: options.phase as string,
+    phase: options.phase,
     seed: options.seed,
     sourceHash: snapshot.sourceHash,
     specHash: sha256(specText),
     runtimeSpecHash: sha256(JSON.stringify(runtimeSpec)),
   }
-  await writeJson(join(options.out as string, "cases.json"), selected)
-  const runDefault =
-    options.exposure === "default" || options.exposure === "both"
-  const runMetaOnly =
-    options.exposure === "meta-only" || options.exposure === "both"
+  await writeJson(join(options.out, "cases.json"), selected)
+  const exposures: ExposureMode[] =
+    options.exposure === "both" ? ["default", "meta-only"] : [options.exposure]
   const episodes: Episode[] = []
   for (const modelId of options.models) {
-    if (runDefault) {
+    for (const exposure of exposures) {
       for (const evalCase of selected) {
         episodes.push(
           await evaluateCase({
@@ -675,24 +603,7 @@ const main = async (): Promise<void> => {
             modelId,
             serverSource: snapshot.source,
             spec: runtimeSpec,
-            exposure: "default",
-          }),
-        )
-      }
-    }
-    if (runMetaOnly) {
-      // Every locale, not just `vi`: this is the path a client that only
-      // exposes the default tool set plus search_tools/call_tool actually
-      // takes for any user, in any language -- restricting it to one
-      // locale under-tested the meta-tools the ranker work targets.
-      for (const evalCase of selected) {
-        episodes.push(
-          await evaluateCase({
-            evalCase,
-            modelId,
-            serverSource: snapshot.source,
-            spec: runtimeSpec,
-            exposure: "meta-only",
+            exposure,
           }),
         )
       }
@@ -714,19 +625,17 @@ const main = async (): Promise<void> => {
   manifest.instructionsHash = sha256(
     episodes
       .map((episode) => episode.instructionsHash)
+      .filter((hash): hash is string => hash !== null)
       .sort()
       .join(","),
   )
-  await writeJson(join(options.out as string, "manifest.json"), manifest)
+  await writeJson(join(options.out, "manifest.json"), manifest)
   await writeFile(
-    join(options.out as string, "episodes.jsonl"),
+    join(options.out, "episodes.jsonl"),
     `${episodes.map((episode) => JSON.stringify(episode)).join("\n")}\n`,
     "utf8",
   )
-  await writeJson(
-    join(options.out as string, "summary.json"),
-    summary(episodes),
-  )
+  await writeJson(join(options.out, "summary.json"), summary(episodes))
   const infrastructure = episodes.filter(
     (episode) => episode.grading.status === "infrastructure",
   )
@@ -739,8 +648,8 @@ const main = async (): Promise<void> => {
 }
 
 main().catch((error) => {
-  process.stderr.write(
-    `${error instanceof Error ? error.message : String(error)}\n`,
-  )
+  const message =
+    error instanceof Error ? (error.stack ?? error.message) : String(error)
+  process.stderr.write(`${message}\n`)
   process.exitCode = 1
 })

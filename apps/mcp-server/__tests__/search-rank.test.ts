@@ -1,36 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-
-// Same convention as meta-tools.test.ts: `getCachedTools()` is module-level
-// state populated by `loadOpenApiSpec()`, so each test needs a fresh module
-// instance and its own fetch mock.
-const specWithTools = (
-  tools: Array<{
-    name: string
-    summary: string
-    description?: string
-    method?: string
-    tags?: string[]
-  }>,
-) => ({
-  ok: true,
-  headers: { get: () => null },
-  json: async () => ({
-    servers: [{ url: "https://api.example.com" }],
-    paths: Object.fromEntries(
-      tools.map((tool) => [
-        `/v1/${tool.name}`,
-        {
-          [(tool.method ?? "get").toLowerCase()]: {
-            operationId: tool.name,
-            summary: tool.summary,
-            description: tool.description,
-            tags: tool.tags ?? [],
-          },
-        },
-      ]),
-    ),
-  }),
-})
+import { specWithTools } from "./helpers/spec-fixture"
 
 describe("rankTools via searchTools", () => {
   const originalFetch = globalThis.fetch

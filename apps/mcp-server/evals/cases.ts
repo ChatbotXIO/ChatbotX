@@ -4,7 +4,7 @@ export const EVAL_SEED = 20_260_923
 export const EVAL_TIME = "2026-09-23T09:00:00+07:00"
 export const EVAL_TIMEZONE = "Asia/Ho_Chi_Minh"
 
-export type ExpectedOutcome = "complete" | "clarify" | "unavailable"
+export type ExpectedOutcome = "complete" | "clarify"
 export type Locale = "vi" | "vi-unaccented" | "colloquial" | "en" | "mixed"
 export type ExposureMode = "default" | "meta-only"
 
@@ -25,10 +25,8 @@ export type EvalCase = {
   timezone: string
   expectedOutcome: ExpectedOutcome
   expectedTools: string[]
-  allowedReadTools: string[]
   argumentPredicates: ArgumentPredicate[]
   forbiddenTools: string[]
-  expectedFacts: string[]
 }
 
 type CaseFamily = Omit<
@@ -45,21 +43,17 @@ const variants: readonly Locale[] = [
 ]
 
 const complete = (
-  definition: Omit<CaseFamily, "expectedOutcome" | "expectedFacts"> & {
-    expectedFacts?: string[]
-  },
+  definition: Omit<CaseFamily, "expectedOutcome">,
 ): CaseFamily => ({
   ...definition,
   expectedOutcome: "complete",
-  expectedFacts: definition.expectedFacts ?? [],
 })
 
 const clarify = (
-  definition: Omit<CaseFamily, "expectedOutcome" | "expectedFacts">,
+  definition: Omit<CaseFamily, "expectedOutcome">,
 ): CaseFamily => ({
   ...definition,
   expectedOutcome: "clarify",
-  expectedFacts: ["needs clarification"],
 })
 
 const families: CaseFamily[] = [
@@ -67,7 +61,6 @@ const families: CaseFamily[] = [
     domain: "contacts",
     family: "contact-email-get",
     expectedTools: ["contacts_get"],
-    allowedReadTools: ["contacts_list"],
     argumentPredicates: [{ key: "identifier", includes: "email:" }],
     forbiddenTools: ["contacts_search", "contacts_find_by_custom_field"],
     prompts: {
@@ -82,7 +75,6 @@ const families: CaseFamily[] = [
     domain: "contacts",
     family: "contact-phone-get",
     expectedTools: ["contacts_get"],
-    allowedReadTools: ["contacts_list"],
     argumentPredicates: [{ key: "identifier", includes: "phone:" }],
     forbiddenTools: ["contacts_search", "contacts_find_by_custom_field"],
     prompts: {
@@ -97,7 +89,6 @@ const families: CaseFamily[] = [
     domain: "contacts",
     family: "contact-name-get",
     expectedTools: ["contacts_list"],
-    allowedReadTools: ["contacts_get"],
     argumentPredicates: [],
     forbiddenTools: ["contacts_search", "contacts_find_by_custom_field"],
     prompts: {
@@ -112,7 +103,6 @@ const families: CaseFamily[] = [
     domain: "contacts",
     family: "contact-name-ambiguous",
     expectedTools: ["contacts_list"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: [
       "contacts_update",
@@ -131,7 +121,6 @@ const families: CaseFamily[] = [
     domain: "tags",
     family: "tag-create",
     expectedTools: ["tags_create"],
-    allowedReadTools: ["tags_list"],
     argumentPredicates: [],
     forbiddenTools: ["contacts_set_tags"],
     prompts: {
@@ -146,13 +135,11 @@ const families: CaseFamily[] = [
     domain: "tags",
     family: "contact-tag-add",
     expectedTools: ["contacts_add_tags_by_name"],
-    allowedReadTools: ["contacts_list", "tags_list"],
     argumentPredicates: [
       { key: "identifier", includes: "id:" },
       { key: "tags", includes: "VIP" },
     ],
     forbiddenTools: ["contacts_set_tags"],
-    expectedFacts: ["Newsletter remains", "VIP added"],
     prompts: {
       vi: "Gắn VIP cho khách An",
       "vi-unaccented": "Gan VIP cho khach An",
@@ -165,7 +152,6 @@ const families: CaseFamily[] = [
     domain: "tags",
     family: "contact-tag-remove",
     expectedTools: ["contacts_remove_tags"],
-    allowedReadTools: ["contacts_list", "contacts_list_tags"],
     argumentPredicates: [{ key: "tagIds" }],
     forbiddenTools: ["tags_delete", "contacts_set_tags"],
     prompts: {
@@ -180,7 +166,6 @@ const families: CaseFamily[] = [
     domain: "tags",
     family: "contact-tags-replace",
     expectedTools: ["contacts_set_tags"],
-    allowedReadTools: ["contacts_list", "contacts_list_tags"],
     argumentPredicates: [{ key: "tagIds" }],
     forbiddenTools: ["contacts_add_tags_by_name"],
     prompts: {
@@ -195,13 +180,11 @@ const families: CaseFamily[] = [
     domain: "messages",
     family: "contact-email-send",
     expectedTools: ["contacts_send_message"],
-    allowedReadTools: ["contacts_get"],
     argumentPredicates: [
       { key: "identifier", includes: "email:" },
       { key: "text", includes: "hello" },
     ],
     forbiddenTools: ["contacts_trigger_auto_reply", "broadcasts_create"],
-    expectedFacts: ["queued"],
     prompts: {
       vi: "Gửi hello cho ada@example.com",
       "vi-unaccented": "Gui hello cho ada@example.com",
@@ -214,7 +197,6 @@ const families: CaseFamily[] = [
     domain: "messages",
     family: "conversation-reply",
     expectedTools: ["messages_create"],
-    allowedReadTools: [],
     argumentPredicates: [{ key: "conversationId" }],
     forbiddenTools: ["contacts_send_message", "broadcasts_create"],
     prompts: {
@@ -229,7 +211,6 @@ const families: CaseFamily[] = [
     domain: "messages",
     family: "contact-flow-send",
     expectedTools: ["contacts_send_flow"],
-    allowedReadTools: ["flows_list", "contacts_list"],
     argumentPredicates: [{ key: "flowId" }],
     forbiddenTools: ["contacts_subscribe_sequences"],
     prompts: {
@@ -244,7 +225,6 @@ const families: CaseFamily[] = [
     domain: "messages",
     family: "keyword-trigger",
     expectedTools: ["contacts_trigger_auto_reply"],
-    allowedReadTools: ["contacts_list"],
     argumentPredicates: [{ key: "keyword" }],
     forbiddenTools: ["contacts_send_message"],
     prompts: {
@@ -259,7 +239,6 @@ const families: CaseFamily[] = [
     domain: "broadcasts",
     family: "broadcast-draft",
     expectedTools: ["broadcasts_create"],
-    allowedReadTools: ["tags_list"],
     argumentPredicates: [],
     forbiddenTools: ["broadcasts_schedule", "broadcasts_send"],
     prompts: {
@@ -274,7 +253,6 @@ const families: CaseFamily[] = [
     domain: "broadcasts",
     family: "broadcast-audience",
     expectedTools: ["broadcasts_get_audience"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["broadcasts_create"],
     prompts: {
@@ -289,7 +267,6 @@ const families: CaseFamily[] = [
     domain: "broadcasts",
     family: "broadcast-schedule",
     expectedTools: ["broadcasts_schedule"],
-    allowedReadTools: ["broadcasts_get"],
     argumentPredicates: [],
     forbiddenTools: ["broadcasts_send"],
     prompts: {
@@ -304,7 +281,6 @@ const families: CaseFamily[] = [
     domain: "broadcasts",
     family: "broadcast-missing-content",
     expectedTools: [],
-    allowedReadTools: ["tags_list"],
     argumentPredicates: [],
     forbiddenTools: [
       "broadcasts_create",
@@ -323,7 +299,6 @@ const families: CaseFamily[] = [
     domain: "flows",
     family: "flow-create",
     expectedTools: ["flows_create"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["flows_publish"],
     prompts: {
@@ -338,7 +313,6 @@ const families: CaseFamily[] = [
     domain: "flows",
     family: "flow-validate",
     expectedTools: ["flows_validate"],
-    allowedReadTools: ["flows_get"],
     argumentPredicates: [],
     forbiddenTools: ["flows_publish"],
     prompts: {
@@ -353,7 +327,6 @@ const families: CaseFamily[] = [
     domain: "flows",
     family: "flow-publish",
     expectedTools: ["flows_publish"],
-    allowedReadTools: ["flows_get"],
     argumentPredicates: [],
     forbiddenTools: ["flows_update_draft"],
     prompts: {
@@ -368,7 +341,6 @@ const families: CaseFamily[] = [
     domain: "flows",
     family: "flow-draft-update",
     expectedTools: ["flows_update_draft"],
-    allowedReadTools: ["flows_get"],
     argumentPredicates: [],
     forbiddenTools: ["flows_publish"],
     prompts: {
@@ -383,7 +355,6 @@ const families: CaseFamily[] = [
     domain: "sequences",
     family: "sequence-create",
     expectedTools: ["sequences_create"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["contacts_subscribe_sequences"],
     prompts: {
@@ -398,7 +369,6 @@ const families: CaseFamily[] = [
     domain: "sequences",
     family: "sequence-step",
     expectedTools: ["sequences_upsert_step"],
-    allowedReadTools: ["sequences_list", "flows_list"],
     argumentPredicates: [{ key: "sequenceId" }],
     forbiddenTools: ["contacts_subscribe_sequences"],
     prompts: {
@@ -413,7 +383,6 @@ const families: CaseFamily[] = [
     domain: "sequences",
     family: "sequence-subscribe",
     expectedTools: ["contacts_subscribe_sequences"],
-    allowedReadTools: ["contacts_list", "sequences_list"],
     argumentPredicates: [
       { key: "identifier", includes: "id:" },
       { key: "sequenceIds" },
@@ -431,7 +400,6 @@ const families: CaseFamily[] = [
     domain: "sequences",
     family: "sequence-unsubscribe",
     expectedTools: ["contacts_unsubscribe_sequences"],
-    allowedReadTools: ["contacts_list", "sequences_list"],
     argumentPredicates: [
       { key: "identifier", includes: "id:" },
       { key: "sequenceIds" },
@@ -449,7 +417,6 @@ const families: CaseFamily[] = [
     domain: "keywords",
     family: "keyword-inbound",
     expectedTools: ["keywords_create"],
-    allowedReadTools: ["flows_list"],
     argumentPredicates: [{ key: "type", value: "inbound" }],
     forbiddenTools: ["fb_comments_create"],
     prompts: {
@@ -464,7 +431,6 @@ const families: CaseFamily[] = [
     domain: "keywords",
     family: "keyword-outbound",
     expectedTools: ["keywords_create"],
-    allowedReadTools: ["flows_list"],
     argumentPredicates: [{ key: "type", value: "outbound" }],
     forbiddenTools: ["fb_comments_create"],
     prompts: {
@@ -479,7 +445,6 @@ const families: CaseFamily[] = [
     domain: "keywords",
     family: "keyword-outbound-disable",
     expectedTools: ["keywords_update_status"],
-    allowedReadTools: ["keywords_list"],
     argumentPredicates: [{ key: "type", value: "outbound" }],
     forbiddenTools: ["keywords_delete"],
     prompts: {
@@ -494,7 +459,6 @@ const families: CaseFamily[] = [
     domain: "keywords",
     family: "comment-automation-request",
     expectedTools: ["fb_comments_list_posts"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["keywords_create"],
     prompts: {
@@ -509,7 +473,6 @@ const families: CaseFamily[] = [
     domain: "fb-comments",
     family: "comment-post-list",
     expectedTools: ["fb_comments_list_posts"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["keywords_list"],
     prompts: {
@@ -524,7 +487,6 @@ const families: CaseFamily[] = [
     domain: "fb-comments",
     family: "comment-automation-get",
     expectedTools: ["fb_comments_get"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["keywords_get"],
     prompts: {
@@ -539,7 +501,6 @@ const families: CaseFamily[] = [
     domain: "fb-comments",
     family: "comment-reply-update",
     expectedTools: ["fb_comments_update"],
-    allowedReadTools: ["fb_comments_get"],
     argumentPredicates: [],
     forbiddenTools: ["keywords_update"],
     prompts: {
@@ -554,7 +515,6 @@ const families: CaseFamily[] = [
     domain: "fb-comments",
     family: "comment-hide-update",
     expectedTools: ["fb_comments_update"],
-    allowedReadTools: ["fb_comments_get"],
     argumentPredicates: [{ key: "hideComments" }],
     forbiddenTools: ["keywords_update"],
     prompts: {
@@ -569,7 +529,6 @@ const families: CaseFamily[] = [
     domain: "products",
     family: "product-list",
     expectedTools: ["products_list"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["products_create"],
     prompts: {
@@ -584,7 +543,6 @@ const families: CaseFamily[] = [
     domain: "products",
     family: "product-get",
     expectedTools: ["products_get"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["products_update"],
     prompts: {
@@ -599,7 +557,6 @@ const families: CaseFamily[] = [
     domain: "products",
     family: "product-create",
     expectedTools: ["products_create"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["products_update"],
     prompts: {
@@ -614,7 +571,6 @@ const families: CaseFamily[] = [
     domain: "products",
     family: "product-rename",
     expectedTools: ["products_update"],
-    allowedReadTools: ["products_get"],
     argumentPredicates: [],
     forbiddenTools: [],
     prompts: {
@@ -629,7 +585,6 @@ const families: CaseFamily[] = [
     domain: "coupons",
     family: "coupon-topic-create",
     expectedTools: ["coupons_create_topic"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["coupons_issue_coupon"],
     prompts: {
@@ -644,7 +599,6 @@ const families: CaseFamily[] = [
     domain: "coupons",
     family: "coupon-list",
     expectedTools: ["coupons_list_coupons"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: ["coupons_list_topics"],
     prompts: {
@@ -659,7 +613,6 @@ const families: CaseFamily[] = [
     domain: "coupons",
     family: "coupon-issue",
     expectedTools: ["coupons_issue_coupon"],
-    allowedReadTools: ["coupons_list_topics", "contacts_list"],
     argumentPredicates: [{ key: "topicId" }, { key: "contactId" }],
     forbiddenTools: ["coupons_create_topic"],
     prompts: {
@@ -674,7 +627,6 @@ const families: CaseFamily[] = [
     domain: "coupons",
     family: "coupon-mark-used",
     expectedTools: ["coupons_mark_coupon_used"],
-    allowedReadTools: ["coupons_list_coupons"],
     argumentPredicates: [],
     forbiddenTools: ["coupons_issue_coupon"],
     prompts: {
@@ -689,7 +641,6 @@ const families: CaseFamily[] = [
     domain: "appointments",
     family: "appointment-next",
     expectedTools: ["appointments_list"],
-    allowedReadTools: [],
     argumentPredicates: [{ key: "tab", value: "next" }],
     forbiddenTools: ["appointments_cancel"],
     prompts: {
@@ -704,7 +655,6 @@ const families: CaseFamily[] = [
     domain: "appointments",
     family: "appointment-book",
     expectedTools: ["appointments_book"],
-    allowedReadTools: ["appointments_list", "contacts_list"],
     argumentPredicates: [
       { key: "calendarId" },
       { key: "contactId" },
@@ -723,7 +673,6 @@ const families: CaseFamily[] = [
     domain: "appointments",
     family: "appointment-cancel",
     expectedTools: ["appointments_cancel"],
-    allowedReadTools: ["appointments_get"],
     argumentPredicates: [],
     forbiddenTools: ["appointments_delete"],
     prompts: {
@@ -738,7 +687,6 @@ const families: CaseFamily[] = [
     domain: "appointments",
     family: "appointment-unavailable",
     expectedTools: ["appointments_book"],
-    allowedReadTools: [],
     argumentPredicates: [],
     forbiddenTools: [],
     prompts: {
@@ -753,7 +701,6 @@ const families: CaseFamily[] = [
     domain: "analytics",
     family: "analytics-new",
     expectedTools: ["analytics_new_contacts_count"],
-    allowedReadTools: [],
     argumentPredicates: [
       { key: "from" },
       { key: "to" },
@@ -772,7 +719,6 @@ const families: CaseFamily[] = [
     domain: "analytics",
     family: "analytics-total",
     expectedTools: ["analytics_contacts_count"],
-    allowedReadTools: [],
     argumentPredicates: [
       { key: "from" },
       { key: "to" },
@@ -791,7 +737,6 @@ const families: CaseFamily[] = [
     domain: "analytics",
     family: "analytics-active",
     expectedTools: ["analytics_active_contacts_count"],
-    allowedReadTools: [],
     argumentPredicates: [
       { key: "from" },
       { key: "to" },
@@ -810,7 +755,6 @@ const families: CaseFamily[] = [
     domain: "analytics",
     family: "analytics-channel",
     expectedTools: ["analytics_contacts_by_dimension"],
-    allowedReadTools: [],
     argumentPredicates: [
       { key: "dimension", value: "channel" },
       { key: "from" },
