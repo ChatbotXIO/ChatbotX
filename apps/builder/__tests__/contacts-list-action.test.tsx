@@ -5,7 +5,7 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { ContactListAction } from "@/features/contacts/contacts-list-action"
-import type { ListContactsTableResponse } from "@/features/contacts/schema/query"
+import type { ContactTableRow } from "@/features/contacts/schema/query"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -146,7 +146,7 @@ function render() {
     getFilteredSelectedRowModel: () => ({ rows: [] }),
     getIsAllPageRowsSelected: () => false,
     resetRowSelection: vi.fn(),
-  } as unknown as Table<ListContactsTableResponse["data"][number]>
+  } as unknown as Table<ContactTableRow>
   act(() => {
     root?.render(
       <QueryClientProvider client={queryClient}>

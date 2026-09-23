@@ -1,4 +1,4 @@
-import { contactService } from "@chatbotx.io/business"
+import { type ContactTableListRow, contactService } from "@chatbotx.io/business"
 import {
   type ContactPermissionScope,
   requireContactPermissionScope,
@@ -13,11 +13,11 @@ export async function listContacts(
   input: ListContactsRequest,
   scope: ContactPermissionScope,
 ): Promise<ListContactsTableResponse> {
-  const result = (await contactService.list({
+  const result = await contactService.list<ContactTableListRow>({
     ...input,
     scope,
     projection: "table",
-  })) as ListContactsTableResponse
+  })
 
   return {
     ...result,

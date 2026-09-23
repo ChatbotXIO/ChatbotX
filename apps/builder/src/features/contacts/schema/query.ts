@@ -135,7 +135,6 @@ export const contactResponse = contactResource.and(
       .optional(),
   }),
 )
-export type ContactResponse = z.infer<typeof contactResponse>
 
 export const listContactsResponse = z.object({
   data: z.array(contactResponse),
@@ -145,31 +144,42 @@ export const listContactsResponse = z.object({
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
 
-export const listContactsTableResponse = z.object({
-  data: z.array(
-    contactResource.and(
-      z.object({
-        contactInboxes: z.array(
-          contactInboxResource.pick({
-            id: true,
-            channel: true,
-            source: true,
-            contactLastReadAt: true,
-          }),
-        ),
-        conversation: conversationResource
-          .pick({ id: true, assignedUserId: true })
-          .and(
-            z.object({
-              assignedUser: userResource
-                .pick({ id: true, name: true, email: true, image: true })
-                .nullish(),
-            }),
-          )
-          .nullable(),
+/** Column-level row for the private contacts table — the selected columns
+ * must match `contactRepository.listTableRows` 1:1. */
+export const contactTableRowResource = contactResource
+  .pick({
+    id: true,
+    workspaceId: true,
+    firstName: true,
+    lastName: true,
+    fullName: true,
+    avatar: true,
+    email: true,
+    phoneNumber: true,
+    createdAt: true,
+  })
+  .extend({
+    contactInboxes: z.array(
+      contactInboxResource.pick({
+        id: true,
+        channel: true,
+        source: true,
+        contactLastReadAt: true,
       }),
     ),
-  ),
+    conversation: conversationResource
+      .pick({ id: true, assignedUserId: true })
+      .extend({
+        assignedUser: userResource
+          .pick({ id: true, name: true, email: true, image: true })
+          .nullish(),
+      })
+      .nullable(),
+  })
+export type ContactTableRow = z.infer<typeof contactTableRowResource>
+
+export const listContactsTableResponse = z.object({
+  data: z.array(contactTableRowResource),
   pageCount: z.number(),
   totalCount: z.number(),
   totalCountCapped: z.boolean(),

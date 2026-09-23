@@ -124,6 +124,46 @@ describe("contactService.list", () => {
     expect(relationsSpy).not.toHaveBeenCalled()
   })
 
+  test("projection:'table' still masks email/phone for a restricted member", async () => {
+    const rows = [
+      {
+        id: "contact-1",
+        email: "ada@example.com",
+        phoneNumber: "+15551234567",
+        contactInboxes: [],
+        conversation: null,
+      },
+    ]
+    vi.spyOn(contactRepository, "listTableRows").mockResolvedValue(
+      rows as never,
+    )
+
+    const result = await list({
+      workspaceId: "ws-1",
+      scope: {
+        canViewEmailAndPhone: false,
+        restrictToAssignedUserId: "user-1",
+      },
+      projection: "table",
+    })
+
+    expect(result.data).toEqual([
+      {
+        id: "contact-1",
+        email: null,
+        phoneNumber: null,
+        contactInboxes: [],
+        conversation: null,
+      },
+    ])
+    expect(contactRepository.buildListWhere).toHaveBeenCalledWith(
+      expect.objectContaining({
+        includeEmailAndPhone: false,
+        restrictToAssignedUserId: "user-1",
+      }),
+    )
+  })
+
   test("include omitting both 'tags' and 'customFields' uses listForTable", async () => {
     const tableSpy = vi.spyOn(contactRepository, "listForTable")
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")

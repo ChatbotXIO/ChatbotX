@@ -88,6 +88,17 @@ export const contactRepository = {
   listTableRows(input: ContactListInput, tx: DatabaseClient = db) {
     return tx.query.contactModel.findMany({
       ...input,
+      columns: {
+        id: true,
+        workspaceId: true,
+        firstName: true,
+        lastName: true,
+        fullName: true,
+        avatar: true,
+        email: true,
+        phoneNumber: true,
+        createdAt: true,
+      },
       with: {
         contactInboxes: {
           columns: {

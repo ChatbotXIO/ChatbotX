@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   type ContactFilterCriteria,
   contactFilterCriteriaSchema,
@@ -37,17 +37,22 @@ const cleanContactFilterUrl = (
   return query ? `${pathname}?${query}` : pathname
 }
 
-export function useContactFilterQueryState({
-  initialFilter = EMPTY_CONTACT_FILTER,
-}: {
-  initialFilter?: ContactFilterCriteria
-} = {}) {
+/**
+ * Local contact-filter state, seeded once from a `?contactFilter=` deep link
+ * (read during the first render so the first list request is already
+ * filtered). The param is then stripped from the URL; afterwards the filter
+ * lives only in component state.
+ */
+export function useContactFilterQueryState() {
   const consumedQueryFilterRef = useRef<string | null>(null)
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const searchParamsKey = searchParams.toString()
-  const [filter, setFilterState] =
-    useState<ContactFilterCriteria>(initialFilter)
+  const [filter, setFilter] = useState<ContactFilterCriteria>(
+    () =>
+      parseContactFilterQueryParam(searchParams.get("contactFilter")) ??
+      EMPTY_CONTACT_FILTER,
+  )
 
   useEffect(() => {
     const params = new URLSearchParams(searchParamsKey)
@@ -65,18 +70,13 @@ export function useContactFilterQueryState({
     }
 
     consumedQueryFilterRef.current = queryFilterValue
-    setFilterState(queryFilter)
+    setFilter(queryFilter)
     window.history.replaceState(
       window.history.state,
       "",
       `${cleanContactFilterUrl(pathname, params)}${window.location.hash}`,
     )
   }, [pathname, searchParamsKey])
-
-  const setFilter = useCallback((next: ContactFilterCriteria) => {
-    setFilterState(next)
-    return Promise.resolve()
-  }, [])
 
   return {
     filter,

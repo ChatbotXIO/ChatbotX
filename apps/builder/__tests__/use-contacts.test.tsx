@@ -19,7 +19,13 @@ vi.mock("@/lib/orpc/query", () => ({
     contactsAPIs: {
       listContactsByPOSTAuthenticatedAPI: {
         key: () => ["contacts", "list"],
-        queryOptions: ({ input }: { input: ListContactsRequest }) => ({
+        queryOptions: ({
+          input,
+          ...options
+        }: {
+          input: ListContactsRequest
+        } & Record<string, unknown>) => ({
+          ...options,
           queryKey: ["contacts", "list", input],
           queryFn: () => mockListContacts(input),
         }),

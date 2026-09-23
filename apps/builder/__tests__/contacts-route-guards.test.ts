@@ -115,7 +115,6 @@ describe("contacts route guards", () => {
     await expect(
       ContactsPage({
         params: Promise.resolve({ workspaceId: "ws-1" }),
-        searchParams: Promise.resolve({}),
       }),
     ).resolves.toBeDefined()
 
@@ -136,7 +135,6 @@ describe("contacts route guards", () => {
     await expect(
       ContactsPage({
         params: Promise.resolve({ workspaceId: "ws-1" }),
-        searchParams: Promise.resolve({}),
       }),
     ).resolves.toBeDefined()
     await expect(
@@ -163,7 +161,6 @@ describe("contacts route guards", () => {
     await expect(
       ContactsPage({
         params: Promise.resolve({ workspaceId: "ws-1" }),
-        searchParams: Promise.resolve({}),
       }),
     ).rejects.toThrow("not found")
     await expect(

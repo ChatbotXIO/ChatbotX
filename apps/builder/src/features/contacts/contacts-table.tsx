@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { Column, ColumnDef, Row } from "@tanstack/react-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
 import { useSearchParams } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
@@ -22,7 +22,6 @@ import {
   type ContactFilterCriteria,
   ContactListFilterButton,
   ContactListFilterPanel,
-  EMPTY_CONTACT_FILTER,
   useContactFilterQueryState,
 } from "@/features/contact-filter"
 import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "@/features/contact-filter/lib/restricted-fields"
@@ -33,10 +32,7 @@ import { ContactListAction } from "./contacts-list-action"
 import { useContacts } from "./hooks/use-contacts"
 import { getContactsListInput } from "./lib/contact-list-input"
 import type { ExportContactsFilter } from "./schema/action"
-import type {
-  ListContactsRequest,
-  ListContactsTableResponse,
-} from "./schema/query"
+import type { ContactTableRow } from "./schema/query"
 import { getLatestContactLastReadAt } from "./utils"
 
 /**
@@ -51,7 +47,7 @@ function ContactCard({
   row,
   workspaceId,
 }: {
-  row: Row<ListContactsTableResponse["data"][number]>
+  row: Row<ContactTableRow>
   workspaceId: string
 }) {
   const t = useTranslations()
@@ -91,13 +87,11 @@ function ContactCard({
 
 type ContactsTableProps = {
   canViewEmailAndPhone?: boolean
-  initialInput: ListContactsRequest
   workspaceId: string
 }
 
 export function ContactsTable({
   canViewEmailAndPhone = true,
-  initialInput,
   workspaceId,
 }: ContactsTableProps) {
   const t = useTranslations()
@@ -108,18 +102,16 @@ export function ContactsTable({
     filter: contactFilter,
     setFilter: setContactFilter,
     isActive: isContactFilterActive,
-  } = useContactFilterQueryState({
-    initialFilter: initialInput.contactFilter ?? EMPTY_CONTACT_FILTER,
-  })
-  const [optimisticContactFilter, setOptimisticContactFilter] =
-    useState<ContactFilterCriteria>(contactFilter)
-  const [pendingContactFilter, setPendingContactFilter] =
-    useState<ContactFilterCriteria | null>(null)
+  } = useContactFilterQueryState()
+  // The URL page the user was on when the filter last changed. Until the
+  // throttled `?page=` reset lands, that stale page is forced to 1 so the new
+  // filter never fetches (or renders) an out-of-range page.
+  const [filterChangedOnPage, setFilterChangedOnPage] = useState<number | null>(
+    null,
+  )
   const [showContactFilterPanel, setShowContactFilterPanel] = useState(
     isContactFilterActive,
   )
-  const isOptimisticContactFilterActive =
-    optimisticContactFilter.conditions.length > 0
   const excludedFilterFields = useMemo(
     () =>
       canViewEmailAndPhone ? [] : [...EMAIL_PHONE_RESTRICTED_FILTER_FIELDS],
@@ -130,14 +122,22 @@ export function ContactsTable({
     () => Object.fromEntries(new URLSearchParams(searchParamsKey).entries()),
     [searchParamsKey],
   )
-  const listContactsInput = useMemo(
+  const urlListInput = useMemo(
     () => getContactsListInput(workspaceId, searchParamsRecord, contactFilter),
     [contactFilter, searchParamsRecord, workspaceId],
   )
+  if (
+    filterChangedOnPage !== null &&
+    urlListInput.page !== filterChangedOnPage
+  ) {
+    setFilterChangedOnPage(null)
+  }
+  const listContactsInput =
+    urlListInput.page === filterChangedOnPage
+      ? { ...urlListInput, page: 1 }
+      : urlListInput
   const keyword = listContactsInput.keyword
-  const contactsQuery = useContacts(listContactsInput, {
-    enabled: !pendingContactFilter,
-  })
+  const contactsQuery = useContacts(listContactsInput)
   const contactsResponse = contactsQuery.data
   const tableData = contactsResponse?.data ?? []
   const tablePageCount = contactsResponse?.pageCount ?? 0
@@ -150,27 +150,16 @@ export function ContactsTable({
     }
   }, [isContactFilterActive])
 
-  useEffect(() => {
-    setOptimisticContactFilter(contactFilter)
-  }, [contactFilter])
-
   const exportFilter = useMemo<ExportContactsFilter>(
-    () => ({
-      keyword,
-      contactFilter: isOptimisticContactFilterActive
-        ? optimisticContactFilter
-        : undefined,
-    }),
-    [keyword, isOptimisticContactFilterActive, optimisticContactFilter],
+    () => ({ keyword, contactFilter: listContactsInput.contactFilter }),
+    [keyword, listContactsInput.contactFilter],
   )
   const totalCountDisplay = formatter.number(tableTotalCount)
   const totalCountLabel = tableTotalCountCapped
     ? t("contacts.countCapped", { count: totalCountDisplay })
     : t("contacts.countExact", { count: totalCountDisplay })
 
-  const columns = useMemo<
-    ColumnDef<ListContactsTableResponse["data"][number]>[]
-  >(
+  const columns = useMemo<ColumnDef<ContactTableRow>[]>(
     () => [
       {
         id: "select",
@@ -232,11 +221,7 @@ export function ContactsTable({
       },
       {
         accessorKey: "source",
-        header: ({
-          column,
-        }: {
-          column: Column<ListContactsTableResponse["data"][number], unknown>
-        }) => (
+        header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
             title={t("fields.source.label")}
@@ -363,48 +348,17 @@ export function ContactsTable({
     clearOnDefault: true,
   })
 
-  useEffect(() => {
-    table.resetRowSelection()
-  }, [table])
-
-  useEffect(() => {
-    if (!pendingContactFilter || listContactsInput.page !== 1) {
-      return
-    }
-
-    setContactFilter(pendingContactFilter).catch(() => {
-      setOptimisticContactFilter(contactFilter)
-    })
-    setPendingContactFilter(null)
-  }, [
-    contactFilter,
-    listContactsInput.page,
-    pendingContactFilter,
-    setContactFilter,
-  ])
-
   const handleContactFilterChange = useCallback(
     (next: ContactFilterCriteria) => {
-      setOptimisticContactFilter(next)
-
-      if (pendingContactFilter || listContactsInput.page !== 1) {
-        setPendingContactFilter(next)
+      if (urlListInput.page !== 1) {
+        setFilterChangedOnPage(urlListInput.page)
         table.setPageIndex(0)
-        return
       }
-
-      setContactFilter(next).catch(() => {
-        setOptimisticContactFilter(contactFilter)
-      })
+      setContactFilter(next)
     },
-    [
-      contactFilter,
-      listContactsInput.page,
-      pendingContactFilter,
-      setContactFilter,
-      table,
-    ],
+    [setContactFilter, table, urlListInput.page],
   )
+
   if (!contactsResponse && contactsQuery.isPending) {
     return <DataTableSkeleton columnCount={6} filterCount={1} rowCount={10} />
   }
@@ -422,7 +376,7 @@ export function ContactsTable({
 
   return (
     <DataTable
-      aria-busy={contactsQuery.isFetching || Boolean(pendingContactFilter)}
+      aria-busy={contactsQuery.isFetching}
       className="[&_tbody_td]:py-3 [&_tbody_td]:text-[15px] [&_tbody_tr]:h-16"
       mobileCard={(row) => <ContactCard row={row} workspaceId={workspaceId} />}
       table={table}
@@ -430,7 +384,7 @@ export function ContactsTable({
       {showContactFilterPanel && (
         <ContactListFilterPanel
           excludeFields={excludedFilterFields}
-          filter={optimisticContactFilter}
+          filter={contactFilter}
           onFilterChange={handleContactFilterChange}
         />
       )}
@@ -444,15 +398,13 @@ export function ContactsTable({
           {totalCountLabel}
         </span>
         <ContactListFilterButton
-          active={isOptimisticContactFilterActive}
-          filter={optimisticContactFilter}
+          active={isContactFilterActive}
+          filter={contactFilter}
           onToggle={() => setShowContactFilterPanel((current) => !current)}
           open={showContactFilterPanel}
         />
         <ContactListAction
-          disabled={
-            contactsQuery.isPlaceholderData || Boolean(pendingContactFilter)
-          }
+          disabled={contactsQuery.isPlaceholderData}
           filter={exportFilter}
           table={table}
           workspaceId={workspaceId}
