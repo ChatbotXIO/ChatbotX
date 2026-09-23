@@ -20,7 +20,10 @@ export { presenceStoreFactory } from "./presence-store"
 export const presenceStore = presenceStoreFactory(cacheConnections.useExisting)
 
 export { cacheConnections } from "./connections/cache-connection"
-export { distributedLockFactory } from "./distributed-lock"
+export {
+  distributedLockFactory,
+  isLockAcquisitionError,
+} from "./distributed-lock"
 export const distributedLock = distributedLockFactory(cacheConnections.create)
 // Re-exported so callers can catch a failed (non-blocking) lock acquisition
 // distinctly from a failure inside the locked `fn` itself, without adding

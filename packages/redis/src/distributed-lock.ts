@@ -1,6 +1,18 @@
 import { Mutex } from "async-mutex"
 import type Redis from "ioredis"
-import { createRedlock, IoredisAdapter } from "redlock-universal"
+import {
+  createRedlock,
+  IoredisAdapter,
+  LockAcquisitionError,
+} from "redlock-universal"
+
+// `redLock.using()` throws `LockAcquisitionError` when it cannot obtain the
+// lock, and lets any error thrown by `fn` propagate unchanged (redlock-universal
+// does not wrap `fn`'s rejection). Callers that degrade to unlocked processing
+// on a lock failure must check this before falling back, or they will also
+// treat a `fn` failure as "lock unavailable" and rerun `fn` a second time.
+export const isLockAcquisitionError = (error: unknown): boolean =>
+  error instanceof LockAcquisitionError
 
 export const distributedLockFactory = (
   createRedisConnection: () => Promise<Redis>,

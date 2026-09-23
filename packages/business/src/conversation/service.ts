@@ -1434,8 +1434,12 @@ class ConversationService extends BaseService {
       data.currentStep = props.currentStep
     }
     if ("lastActivityAt" in props && props.lastActivityAt) {
+      // Postgres GREATEST(NULL, x) evaluates to NULL, which would silently
+      // discard the update on a conversation whose lastActivityAt is still
+      // unset — COALESCE the current value out of the comparison so a NULL
+      // column always advances to the new value instead.
       Object.assign(data, {
-        lastActivityAt: sql`GREATEST(${conversationModel.lastActivityAt}, ${props.lastActivityAt})`,
+        lastActivityAt: sql`GREATEST(COALESCE(${conversationModel.lastActivityAt}, ${props.lastActivityAt}), ${props.lastActivityAt})`,
       })
     }
     if ("lastStep" in props) {

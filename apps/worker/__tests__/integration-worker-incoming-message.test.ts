@@ -373,8 +373,16 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+// A minimal stand-in for redlock-universal's `LockAcquisitionError` so tests
+// can exercise the real `isLockAcquisitionError` branching: only this shape
+// degrades to unlocked processing; any other rejection (e.g. a `persist()`
+// failure) must propagate instead of silently re-running unlocked.
+class FakeLockAcquisitionError extends Error {}
+
 vi.mock("@chatbotx.io/redis", () => ({
   distributedLock: { runExclusive: mockDistributedLockRunExclusive },
+  isLockAcquisitionError: (error: unknown) =>
+    error instanceof FakeLockAcquisitionError,
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -793,7 +801,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
 
   test("degrades to unlocked processing and still persists + broadcasts exactly once when the lock cannot be acquired", async () => {
     mockDistributedLockRunExclusive.mockRejectedValueOnce(
-      new Error("lock acquisition timed out"),
+      new FakeLockAcquisitionError("lock acquisition timed out"),
     )
     const [integrationWorker] = workerState.capturedWorkers
 
@@ -811,5 +819,34 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     expect(mockDistributedLockRunExclusive).toHaveBeenCalledOnce()
     expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
     expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledOnce()
+  })
+
+  test("propagates a persist() failure instead of re-running unlocked, even though it surfaces through the same runExclusive rejection path", async () => {
+    // Regression: the lock-degrade catch must only degrade on an actual
+    // lock-acquisition failure. A failure inside `fn` itself (DB error,
+    // conflict, etc.) after the lock was already held looks identical to a
+    // rejected `runExclusive` from the call site's perspective — without the
+    // isLockAcquisitionError guard, this would silently retry persist()
+    // unlocked and duplicate the insert/broadcast/notification/event side
+    // effects instead of letting BullMQ retry the job.
+    const persistError = new Error("db write failed")
+    mockCreateOrUpdate.mockRejectedValueOnce(persistError)
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await expect(
+      integrationWorker?.processor({
+        data: {
+          type: "incomingMessage",
+          data: {
+            integrationType: "messenger",
+            integrationIdentifier: "inbox-1",
+            payload: {},
+          },
+        },
+      }),
+    ).rejects.toThrow(persistError)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
+    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
   })
 })

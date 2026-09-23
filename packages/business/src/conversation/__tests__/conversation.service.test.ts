@@ -223,6 +223,25 @@ describe("ConversationService.updateFlowStepState lastActivityAt monotonicity", 
     expect(data.lastActivityAt.values.at(-1)).toBe(earlierAt)
   })
 
+  test("wraps the current column in COALESCE so a NULL lastActivityAt still advances", async () => {
+    // Regression: Postgres's GREATEST(NULL, x) evaluates to NULL, which would
+    // silently discard the update on a conversation whose lastActivityAt is
+    // still unset. COALESCE-ing the column against the new value inside the
+    // GREATEST call ensures a NULL column always advances instead.
+    const at = new Date("2024-01-02T00:00:00Z")
+
+    await conversationService.updateFlowStepState({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      lastActivityAt: at,
+    })
+
+    const [data] = mocks.updateSet.mock.calls.at(-1) as [
+      { lastActivityAt: { strings: string[]; values: unknown[] } },
+    ]
+    expect(data.lastActivityAt.strings.join("")).toContain("COALESCE")
+  })
+
   test("omits lastActivityAt entirely when not provided, leaving currentStep/lastStep unconditional", async () => {
     await conversationService.updateFlowStepState({
       workspaceId: WORKSPACE_ID,

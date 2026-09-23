@@ -272,6 +272,7 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   distributedLock: { runExclusive: mockDistributedLockRunExclusive },
+  isLockAcquisitionError: () => false,
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

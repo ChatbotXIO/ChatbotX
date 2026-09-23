@@ -62,7 +62,7 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
-import { distributedLock } from "@chatbotx.io/redis"
+import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
@@ -992,10 +992,14 @@ const saveAndBroadcastMessage = async (props: {
             attachmentCount: newMessage.attachments.length,
           },
         },
-        { jobId: `notify-incoming-${newMessage.id}` },
-      )
-    } catch (error) {
-      logger.warn(error, "Unable to enqueue incoming message notification")
+          { jobId: `notify-incoming-${newMessage.id}` },
+        )
+      } catch (error) {
+        logger.warn(
+          { err: error },
+          "Unable to enqueue incoming message notification",
+        )
+      }
     }
   }
 
@@ -1031,10 +1035,19 @@ const saveAndBroadcastMessage = async (props: {
       fn: persist,
     })
   } catch (error) {
-    // Ordering is best-effort at tier-1: a lock acquisition failure must
+    // Ordering is best-effort at tier-1: a lock *acquisition* failure must
     // degrade to unlocked processing rather than fail the job, because
     // `integration` jobs only have 2 attempts and a thrown error here could
-    // drop an inbound message permanently.
+    // drop an inbound message permanently. But `persist()` can also throw
+    // after the lock was already held (e.g. a transient DB error) — that is
+    // not a lock failure, and rerunning it here would duplicate the
+    // broadcast/notification/event-emit side effects. Only degrade when the
+    // failure is actually a lock-acquisition error; anything else propagates
+    // so BullMQ retries the job normally.
+    if (!isLockAcquisitionError(error)) {
+      throw error
+    }
+
     logger.warn(
       { err: error, conversationId: conversation.id },
       "Unable to acquire ingress lock for conversation; processing unlocked",

@@ -99,7 +99,7 @@ export class SchedulerWorker {
       try {
         await this.processBucket(bucket)
       } catch (error) {
-        logger.error(error, `Error processing bucket ${bucket}`)
+        logger.error({ err: error, bucket }, "Error processing bucket")
       }
 
       if (this.running) {
@@ -186,29 +186,52 @@ export class SchedulerWorker {
           { err, bucket, count: claimed.length },
           "Failed to publish claimed dispatches; re-inserting for retry on next tick",
         )
-        const nowRetryMs = Date.now()
-        const scheduleEntries = claimed
-          .filter((entry) => entry.source === "schedule")
-          .map((entry) => ({
-            bucket: entry.bucket,
-            dispatchId: entry.dispatchId,
-            runAtMs: nowRetryMs,
-          }))
-        if (scheduleEntries.length > 0) {
-          await this.scheduler.batchAddToSchedule(scheduleEntries)
-        }
-        await Promise.all(
-          claimed
-            .filter((entry) => entry.source === "retry")
-            .map((entry) =>
-              this.scheduler.addToRetry(
-                entry.bucket,
-                entry.dispatchId,
-                nowRetryMs,
-              ),
-            ),
-        )
+        await this.reinsertClaimed(bucket, claimed)
       }
+    }
+  }
+
+  // `claimed` entries were already removed from their zset by the claim step
+  // above, so if this reinsertion itself fails (e.g. Redis is still
+  // unreachable), those dispatches are gone from both the zset and the
+  // publish target unless we log every id that failed to go back in —
+  // that's the same silent-drop failure mode this method exists to close.
+  private async reinsertClaimed(
+    bucket: number,
+    claimed: {
+      dispatchId: string
+      bucket: number
+      source: "schedule" | "retry"
+    }[],
+  ): Promise<void> {
+    const nowRetryMs = Date.now()
+    const scheduleEntries = claimed
+      .filter((entry) => entry.source === "schedule")
+      .map((entry) => ({
+        bucket: entry.bucket,
+        dispatchId: entry.dispatchId,
+        runAtMs: nowRetryMs,
+      }))
+    const retryEntries = claimed.filter((entry) => entry.source === "retry")
+
+    try {
+      if (scheduleEntries.length > 0) {
+        await this.scheduler.batchAddToSchedule(scheduleEntries)
+      }
+      await Promise.all(
+        retryEntries.map((entry) =>
+          this.scheduler.addToRetry(entry.bucket, entry.dispatchId, nowRetryMs),
+        ),
+      )
+    } catch (err) {
+      logger.error(
+        {
+          err,
+          bucket,
+          dispatchIds: claimed.map((entry) => entry.dispatchId),
+        },
+        "Failed to re-insert claimed dispatches after publish failure; these dispatches are lost from scheduling until the hourly reconcile timer recovers them",
+      )
     }
   }
 
