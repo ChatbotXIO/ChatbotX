@@ -17,7 +17,10 @@ import { useForm } from "react-hook-form"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { toast } from "sonner"
 import { useDebouncedCallback } from "use-debounce"
-import type { ConversationFilters } from "../chat/store/chat-store"
+import {
+  type ConversationFilters,
+  selectHasNextConversationPage,
+} from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
@@ -69,9 +72,10 @@ export default function ConversationList({
     [contactAssigneeOptions],
   )
 
-  // Check if there are more pages to load
-  const hasNextPage =
-    conversations.length === 0 || nextCursorConversation !== null
+  const hasNextPage = selectHasNextConversationPage({
+    isFirstLoadConversation,
+    nextCursorConversation,
+  })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once on mount and is skipped entirely when the server seed already loaded the first page (isFirstLoadConversation === false)
   useEffect(() => {

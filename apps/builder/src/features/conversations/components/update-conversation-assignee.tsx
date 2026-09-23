@@ -107,10 +107,7 @@ export function UpdateConversationAssignee({
     } else if (conversation.assignedInboxTeamId) {
       nextSelectedId = `t_${conversation.assignedInboxTeamId}`
     }
-    const nextAssigneeName =
-      conversation.assignedUser?.name ??
-      conversation.assignedInboxTeam?.name ??
-      null
+    const nextAssigneeName = relationLabel
     const nextAssignmentKey = `${conversation.id}:${nextSelectedId ?? ""}`
     const hasOptimisticNameForAssignment =
       selectedAssignmentKeyRef.current === nextAssignmentKey
@@ -121,11 +118,10 @@ export function UpdateConversationAssignee({
       setSelectedAssigneeName(nextAssigneeName)
     }
   }, [
-    conversation.assignedInboxTeam?.name,
     conversation.assignedInboxTeamId,
-    conversation.assignedUser?.name,
     conversation.assignedUserId,
     conversation.id,
+    relationLabel,
   ])
 
   return (

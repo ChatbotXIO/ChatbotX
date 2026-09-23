@@ -1,3 +1,4 @@
+import type * as MobileHook from "@chatbotx.io/ui/hooks/use-mobile"
 import { setViewportWidth } from "@chatbotx.io/vitest-config/setup-dom"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
@@ -10,6 +11,25 @@ vi.mock("next-intl", () => ({
 vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
+
+const { mockMobileState } = vi.hoisted(() => ({
+  mockMobileState: {
+    isOverridden: false,
+    value: undefined as boolean | undefined,
+  },
+}))
+
+vi.mock("@chatbotx.io/ui/hooks/use-mobile", async (importOriginal) => {
+  const actual = await importOriginal<typeof MobileHook>()
+
+  return {
+    ...actual,
+    useIsMobileState: () => {
+      const isMobile = actual.useIsMobileState()
+      return mockMobileState.isOverridden ? mockMobileState.value : isMobile
+    },
+  }
+})
 
 vi.mock("@/features/messages/store/call-playback-store", () => ({
   useCallPlaybackStore: {
@@ -105,6 +125,7 @@ describe("ChatLayout", () => {
     storeState.activeConversationId = null
     storeState.activeConversationAutoSelected = false
     storeState.setActiveConversationId.mockClear()
+    mockMobileState.isOverridden = false
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -159,25 +180,52 @@ describe("ChatLayout", () => {
     expect(storeState.setActiveConversationId).toHaveBeenCalledWith(null)
   })
 
-  test("keeps an auto-selected conversation open across a mid-session resize to mobile", () => {
+  test("does not clear an auto-selected conversation on a later resize to mobile", () => {
     storeState.activeConversationId = "c1"
     storeState.activeConversationAutoSelected = true
     setViewportWidth(1440)
     render()
 
-    // Starts on desktop: the first resolved measurement is not mobile, so
-    // the one-time suppression never applies and the auto-selected
-    // conversation stays open for the rest of the session.
-    expect(find("thread-pane")).not.toBeNull()
-    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
-
     act(() => {
       setViewportWidth(375)
     })
+    render()
 
-    // A later resize/rotation across the breakpoint must not retroactively
-    // wipe out a conversation the user has been reading.
     expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+
+    act(() => {
+      root.unmount()
+    })
+    root = createRoot(container)
+    storeState.activeConversationId = "c1"
+    storeState.setActiveConversationId.mockClear()
+    setViewportWidth(375)
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      setViewportWidth(1440)
+      setViewportWidth(375)
+    })
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
+  })
+
+  test("waits for the first mobile measurement before suppressing selection", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    mockMobileState.isOverridden = true
+    mockMobileState.value = undefined
+    render()
+
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+
+    mockMobileState.value = true
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
   })
 
   test("keeps a deep-linked conversation open on mobile", () => {

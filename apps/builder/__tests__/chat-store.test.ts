@@ -352,6 +352,7 @@ describe("chat store conversation updates", () => {
       new Date("2026-01-01T00:00:00Z"),
     )
     store.setState({
+      isFirstLoadConversation: false,
       conversations: [existing] as never,
       nextCursorConversation: null,
     })
@@ -360,6 +361,28 @@ describe("chat store conversation updates", () => {
 
     expect(mockListConversationsByPOSTAuthenticatedAPI).not.toHaveBeenCalled()
     expect(store.getState().conversations).toEqual([existing])
+  })
+
+  test("loadMoreConversations fetches from an empty, never-loaded store", async () => {
+    const store = createChatStore()
+    mockConversationPage([])
+
+    await store.getState().loadMoreConversations("ws-1")
+
+    expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(1)
+  })
+
+  test("loadMoreConversations does not refetch an inbox that loaded empty", async () => {
+    const store = createChatStore()
+    store.setState({
+      isFirstLoadConversation: false,
+      conversations: [],
+      nextCursorConversation: null,
+    })
+
+    await store.getState().loadMoreConversations("ws-1")
+
+    expect(mockListConversationsByPOSTAuthenticatedAPI).not.toHaveBeenCalled()
   })
 
   test("loadMoreConversations does not auto-select the first item when a URL conversation id exists", async () => {
@@ -1016,6 +1039,26 @@ describe("chat store inbox seed state", () => {
       activeConversationAutoSelected: false,
       messagesConversationId: null,
       seededContact: null,
+    })
+  })
+
+  test("resetState clears reply and post fields", () => {
+    const store = createChatStore()
+    store.setState({
+      replyToMessage: makeMessage(
+        "conv-seeded",
+        new Date("2026-01-01T00:00:00Z"),
+      ) as never,
+      isPrivateReply: true,
+      activePost: { id: "post-1" } as never,
+    })
+
+    store.getState().resetState()
+
+    expect(store.getState()).toMatchObject({
+      replyToMessage: null,
+      isPrivateReply: false,
+      activePost: null,
     })
   })
 

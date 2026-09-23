@@ -39,12 +39,11 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
  * exception — never add a route here that mutates anything.
  *
  * The two allow-lists below (`READ_ONLY_TOKEN_ALLOWED_POST_PATHS` and
- * `READ_ONLY_POST_PATHS`) both draw from this set but are NOT the same list:
- * a route can be a read for the trial/MAC-limit gate (invariant #14 — every
- * read stays open regardless of caller) without also being safe to expose to
- * a `read_only` WorkspaceApiToken (a narrower, separately-reviewed
- * capability). Adding a path to `POST_FOR_READ_PATHS` documents it as a read;
- * each call site below still opts in individually.
+ * `READ_ONLY_POST_PATHS`) are NOT the same list: a route can be a read for
+ * the trial/MAC-limit gate (invariant #14 — every read stays open regardless
+ * of caller) without also being safe to expose to a `read_only`
+ * WorkspaceApiToken (a narrower, separately-reviewed capability). Each path
+ * opts into each Set below individually.
  *
  * - `ADS_CAMPAIGNS_INSIGHTS_PATH` (`/v1/ads/campaigns/insights`): `adIds` can
  *   carry up to `MAX_INSIGHTS_AD_IDS` (500) entries, too large to safely fit
@@ -65,13 +64,9 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
  *   stays out of `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` until that review
  *   happens.
  */
-const POST_FOR_READ_PATHS = {
-  adsCampaignsInsights: ADS_CAMPAIGNS_INSIGHTS_PATH,
-  conversationsList: CONVERSATIONS_LIST_POST_PATH,
-} as const
 
 const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
-  POST_FOR_READ_PATHS.adsCampaignsInsights,
+  ADS_CAMPAIGNS_INSIGHTS_PATH,
 ])
 
 /**
@@ -160,12 +155,10 @@ export const workspaceAccessDenialOrpcError = (
  * oRPC gates: reads, deletes, and allow-listed POST-for-read routes (see
  * `READ_ONLY_POST_PATHS`) stay open; all other mutations are checked against
  * the owner's quota/trial state. Deliberately NOT the same membership as
- * `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` — see the `POST_FOR_READ_PATHS`
- * comment above for why each path opts in independently.
+ * `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` — see the comments above for why each
+ * path opts in independently.
  */
-const READ_ONLY_POST_PATHS = new Set<string>([
-  POST_FOR_READ_PATHS.conversationsList,
-])
+const READ_ONLY_POST_PATHS = new Set<string>([CONVERSATIONS_LIST_POST_PATH])
 
 export async function assertWorkspaceOwnerAccessForMethod(props: {
   method: HTTPMethod | undefined

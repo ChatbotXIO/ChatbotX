@@ -132,7 +132,7 @@ export type ChatState = {
 // must be seeded together or not at all: a `messages` seed without its
 // matching `messagesConversationId` makes `loadInitialMessages` re-fetch and
 // prepend a duplicate page on top of the one already in state. Nesting them
-// makes that split unrepresentable instead of merely undocumented.
+// makes a partial seed a compile error.
 export type ChatStoreMessagesSeed = Pick<
   ChatState,
   | "messages"
@@ -256,6 +256,15 @@ export type ChatActions = {
 
 export type ChatStore = ChatState & ChatActions
 
+/**
+ * False only once a page has loaded and the server returned no further cursor.
+ * After a failed first load, scrolling does not retry; the error toast plus a
+ * filter change, which resets this state, is the retry path.
+ */
+export const selectHasNextConversationPage = (
+  state: Pick<ChatState, "isFirstLoadConversation" | "nextCursorConversation">,
+) => state.isFirstLoadConversation || state.nextCursorConversation !== null
+
 const appendUniqueConversations = (
   current: ListConversationsResponse["data"],
   incoming: ListConversationsResponse["data"],
@@ -309,11 +318,44 @@ const loadAndSelectConversation = async (
   }
 }
 
+type ConversationListState = Pick<
+  ChatState,
+  | "isFirstLoadConversation"
+  | "conversations"
+  | "nextCursorConversation"
+  | "isLoadingConversation"
+  | "isBootstrappingUrlConversation"
+  | "activeConversationId"
+>
+
+const conversationListDefaults = (): ConversationListState => ({
+  isFirstLoadConversation: true,
+  conversations: [],
+  nextCursorConversation: null,
+  isLoadingConversation: false,
+  isBootstrappingUrlConversation: false,
+  activeConversationId: null,
+})
+
+type MessageThreadState = Pick<
+  ChatState,
+  | "messages"
+  | "nextCursorMessage"
+  | "isLoadMoreMessage"
+  | "hasNextMessagePage"
+  | "messagesConversationId"
+  | "activeConversationAutoSelected"
+  | "seededContact"
+  | "replyToMessage"
+  | "isPrivateReply"
+  | "activePost"
+>
+
 // The message-thread fields that must be cleared together whenever the
 // active conversation changes (or is unset) — otherwise a stale
 // `activeConversationAutoSelected`/`messagesConversationId` etc. from the
 // previous conversation leaks into the next one.
-const messageThreadDefaults = () => ({
+const messageThreadDefaults = (): MessageThreadState => ({
   messages: [],
   nextCursorMessage: null,
   isLoadMoreMessage: false,
@@ -348,7 +390,7 @@ const shouldAutoSelectConversation = ({
  * `undefined` rather than an error — logged here so a future second seed
  * producer that breaks the pairing is caught instead of debugged blind.
  */
-const assertActiveConversationIsListed = (
+const warnIfActiveConversationUnlisted = (
   initialState: ChatStoreInitialState,
 ): void => {
   const { activeConversationId, conversations } = initialState
@@ -365,7 +407,7 @@ const assertActiveConversationIsListed = (
 }
 
 export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
-  assertActiveConversationIsListed(initialState)
+  warnIfActiveConversationUnlisted(initialState)
 
   // The conversationId of the most recently issued openConversation call — lets
   // a call that just finished waiting tell whether a newer call superseded it.
@@ -375,16 +417,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => ({
-    // default conversation state
-    isFirstLoadConversation: true,
-    conversations: [],
-    nextCursorConversation: null,
-    isLoadingConversation: false,
-    isBootstrappingUrlConversation: false,
-    activeConversationId: null,
+    ...conversationListDefaults(),
     filters: {},
-
-    // default message state
     ...messageThreadDefaults(),
 
     ...restInitialState,
@@ -483,14 +517,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       workspaceId: string,
       options: LoadMoreConversationsOptions = {},
     ) => {
-      const { isLoadingConversation, conversations, nextCursorConversation } =
-        get()
-      // Exhausted once a page has loaded and the server returned no further
-      // cursor — before that first load, `conversations` is empty and the
-      // cursor is also `null`, which must not read as "exhausted".
-      const hasNextConversationPage =
-        conversations.length === 0 || nextCursorConversation !== null
-      if (isLoadingConversation || !hasNextConversationPage) {
+      const { isLoadingConversation, nextCursorConversation } = get()
+      if (isLoadingConversation || !selectHasNextConversationPage(get())) {
         return
       }
 
@@ -598,13 +626,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
 
     resetState: () => {
       set({
-        isFirstLoadConversation: true,
-        conversations: [],
-        nextCursorConversation: null,
-        isLoadingConversation: false,
-        isBootstrappingUrlConversation: false,
-        activeConversationId: null,
-
+        ...conversationListDefaults(),
         ...messageThreadDefaults(),
       })
     },

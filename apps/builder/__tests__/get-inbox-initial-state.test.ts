@@ -176,7 +176,7 @@ describe("getInboxInitialState", () => {
     mockListConversations.mockRejectedValue(error)
 
     await expect(
-      getInitialState({ workspaceId: "workspace-1" })
+      getInitialState({ workspaceId: "workspace-1" }),
     ).resolves.toBeNull()
 
     expect(loggerWarnMock).toHaveBeenCalledWith(

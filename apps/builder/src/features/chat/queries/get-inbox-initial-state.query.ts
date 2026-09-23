@@ -160,15 +160,15 @@ const shapeInitialState = ({
 
 const loadInitialState = async ({
   workspaceId,
-  conversationId,
+  urlConversation,
   contactPermissionScope,
-  hasUrlConversationId,
 }: {
   workspaceId: string
-  conversationId?: string
+  urlConversation: UrlConversation
   contactPermissionScope: ContactPermissionScope
-  hasUrlConversationId: boolean
 }): Promise<ChatStoreInitialState | null> => {
+  const conversationId =
+    urlConversation.kind === "valid" ? urlConversation.id : undefined
   const conversationsPromise = listConversations(
     {
       workspaceId,
@@ -180,25 +180,15 @@ const loadInitialState = async ({
     },
   )
   const findConversationPromise = conversationId
-    ? findConversation({
-        workspaceId,
-        perPage: INBOX_CONVERSATIONS_PER_PAGE,
-        cursor: "",
-      },
-      { signal },
-    )
-  const findConversationPromise = conversationId
-    ? client.conversationsAPI.findConversationAuthenticatedAPI(
-        { workspaceId, id: conversationId },
-        { signal },
-      )
+    ? findConversation({ workspaceId, id: conversationId })
     : null
+
   let activeConversationPromise: Promise<ListConversationItemResource | null>
   if (findConversationPromise) {
     activeConversationPromise = findConversationPromise.then(
       (result) => result.data,
     )
-  } else if (hasUrlConversationId) {
+  } else if (urlConversation.kind === "invalid") {
     activeConversationPromise = Promise.resolve(null)
   } else {
     activeConversationPromise = conversationsPromise.then(
@@ -228,24 +218,14 @@ const loadInitialState = async ({
     )
     return {}
   }
-  const contactPromise: Promise<ChatStoreInitialState> = activeConversationPromise
-    .then((conversation) =>
-      conversation
-        ? seedContactState(workspaceId, conversation, contactPermissionScope)
-        : {},
-    )
-    .catch(logContactSeedFailure)
-  }
-  const messagesPromise = conversationId
-    ? seedMessagesState(workspaceId, conversationId)
-    : activeConversationPromise.then((conversation) =>
-        conversation ? seedMessagesState(workspaceId, conversation.id) : {},
+  const contactPromise: Promise<ChatStoreInitialState> =
+    activeConversationPromise
+      .then((conversation) =>
+        conversation
+          ? seedContactState(workspaceId, conversation, contactPermissionScope)
+          : {},
       )
-  const contactPromise = activeConversationPromise.then((conversation) =>
-    conversation
-      ? seedContactState(workspaceId, conversation, contactPermissionScope)
-      : {},
-  )
+      .catch(logContactSeedFailure)
 
   const [
     conversationsResult,
@@ -269,7 +249,7 @@ const loadInitialState = async ({
 
   const { data: listedConversations, nextCursor } = conversationsResult.value
   let activeConversation: (typeof listedConversations)[number] | null = null
-  if (conversationId) {
+  if (urlConversation.kind === "valid") {
     if (conversationResult.status === "rejected") {
       logger.warn(
         { err: conversationResult.reason, workspaceId, conversationId },
@@ -278,10 +258,8 @@ const loadInitialState = async ({
     } else {
       activeConversation = conversationResult.value?.data ?? null
     }
-  } else {
-    activeConversation = hasUrlConversationId
-      ? null
-      : (listedConversations[0] ?? null)
+  } else if (urlConversation.kind === "none") {
+    activeConversation = listedConversations[0] ?? null
   }
 
   return shapeInitialState({
@@ -303,20 +281,13 @@ export const getInboxInitialState = async ({
   conversationId?: string
   contactPermissionScope: ContactPermissionScope
 }): Promise<ChatStoreInitialState | null> => {
-  const parsedConversationId = conversationId
-    ? zodBigintAsString().safeParse(conversationId)
-    : null
-
   try {
     const signal = AbortSignal.timeout(INBOX_SEED_TIMEOUT_MS)
     return await withAbortSignal(
       loadInitialState({
         workspaceId,
-        conversationId: parsedConversationId?.success
-          ? parsedConversationId.data
-          : undefined,
+        urlConversation: parseUrlConversation(conversationId),
         contactPermissionScope,
-        hasUrlConversationId: Boolean(conversationId),
       }),
       signal,
       "Inbox initial state seed timed out",

@@ -21,12 +21,10 @@ vi.mock("@/lib/orpc/orpc", () => ({
 
 function FlowsProbe({
   enabled = true,
-  onError,
   onRender,
   onState,
 }: {
   enabled?: boolean
-  onError?: (isError: boolean) => void
   onRender: (data: unknown) => void
   onState?: (state: { isError: boolean; error: unknown }) => void
 }) {

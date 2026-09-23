@@ -3,7 +3,7 @@
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
 import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
-import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, createElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
