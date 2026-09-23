@@ -1,6 +1,0 @@
-include:
-  - compose.base.yml
-
-networks:
-  scheduler-network:
-    driver: bridge
