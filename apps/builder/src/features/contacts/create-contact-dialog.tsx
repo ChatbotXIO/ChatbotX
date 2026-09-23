@@ -9,10 +9,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { CreateContactForm } from "./create-contact-form"
+import { useInvalidateContacts } from "./hooks/use-contacts"
 
 export function CreateContactDialog({
   workspaceId,
@@ -21,13 +21,13 @@ export function CreateContactDialog({
   workspaceId: string
   trigger?: ReactElement
 }) {
-  const router = useRouter()
   const t = useTranslations()
+  const invalidateContacts = useInvalidateContacts()
 
   const [open, setOpen] = useState(false)
   const onSubmmited = () => {
     setOpen(false)
-    router.refresh()
+    invalidateContacts()
   }
 
   return (

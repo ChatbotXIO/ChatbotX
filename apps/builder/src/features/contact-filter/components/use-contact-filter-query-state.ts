@@ -1,7 +1,7 @@
 "use client"
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   type ContactFilterCriteria,
   contactFilterCriteriaSchema,
@@ -42,7 +42,7 @@ export function useContactFilterQueryState({
 }: {
   initialFilter?: ContactFilterCriteria
 } = {}) {
-  const router = useRouter()
+  const consumedQueryFilterRef = useRef<string | null>(null)
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const searchParamsKey = searchParams.toString()
@@ -51,16 +51,27 @@ export function useContactFilterQueryState({
 
   useEffect(() => {
     const params = new URLSearchParams(searchParamsKey)
-    const queryFilter = parseContactFilterQueryParam(
-      params.get("contactFilter"),
-    )
+    const queryFilterValue = params.get("contactFilter")
+    if (
+      !queryFilterValue ||
+      consumedQueryFilterRef.current === queryFilterValue
+    ) {
+      return
+    }
+
+    const queryFilter = parseContactFilterQueryParam(queryFilterValue)
     if (!queryFilter) {
       return
     }
 
+    consumedQueryFilterRef.current = queryFilterValue
     setFilterState(queryFilter)
-    router.replace(cleanContactFilterUrl(pathname, params), { scroll: false })
-  }, [pathname, router, searchParamsKey])
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${cleanContactFilterUrl(pathname, params)}${window.location.hash}`,
+    )
+  }, [pathname, searchParamsKey])
 
   const setFilter = useCallback((next: ContactFilterCriteria) => {
     setFilterState(next)

@@ -6,6 +6,7 @@ import { authorizedAPI } from "@/orpc"
 import {
   buildContactPermissionScope,
   requireContactPermissionScope,
+  requireContactPermissionScopeForMember,
 } from "../permissions"
 import { getContact } from "../queries/get-contact.query"
 import { getExportFile } from "../queries/get-export-file.query"
@@ -58,9 +59,12 @@ export const contactsAuthenticatedAPI = {
     .input(listContactsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listContactsResponse)
-    .handler(async ({ input }) => {
-      const { workspaceId, ...rest } = input
-      return await listContacts({ ...rest, workspaceId })
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await listContacts(input, scope)
     }),
 
   countContactsAuthenticatedAPI: authorizedAPI

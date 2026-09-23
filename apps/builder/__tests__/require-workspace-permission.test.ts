@@ -47,6 +47,8 @@ describe("requireContactsAccess", () => {
 
   test("allows members with assigned-only contact access", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { id: "user-1" },
+      targetWorkspace: { id: "ws-1" },
       targetWorkspaceMember: {
         permissions: {
           ...basePermissions,
@@ -55,13 +57,18 @@ describe("requireContactsAccess", () => {
       },
     })
 
-    await expect(requireContactsAccess("ws-1")).resolves.toBeUndefined()
+    await expect(requireContactsAccess("ws-1")).resolves.toEqual({
+      canViewEmailAndPhone: false,
+      restrictToAssignedUserId: "user-1",
+    })
 
     expect(mockNotFound).not.toHaveBeenCalled()
   })
 
   test("rejects members without full or assigned-only contact access", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { id: "user-1" },
+      targetWorkspace: { id: "ws-1" },
       targetWorkspaceMember: {
         permissions: basePermissions,
       },

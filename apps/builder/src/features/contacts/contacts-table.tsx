@@ -3,7 +3,9 @@
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { DataTableSkeleton } from "@chatbotx.io/ui/components/data-table/data-table-skeleton"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   Tooltip,
@@ -11,7 +13,7 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
+import { hashKey } from "@tanstack/react-query"
 import type { Column, ColumnDef, Row } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
 import { useSearchParams } from "next/navigation"
@@ -30,9 +32,10 @@ import { getUserName } from "../users/schema/resource"
 import { ContactNameCell } from "./components/contact-name-cell"
 import { CONTACTS_DEFAULT_PER_PAGE } from "./constants"
 import { ContactListAction } from "./contacts-list-action"
-import type { listContacts } from "./queries/list-contacts.queries"
+import { useContacts } from "./hooks/use-contacts"
+import { getContactsListInput } from "./lib/contact-list-input"
 import type { ExportContactsFilter } from "./schema/action"
-import type { ListContactsResponse } from "./schema/query"
+import type { ListContactsRequest, ListContactsResponse } from "./schema/query"
 import type { ContactResource } from "./schema/resource"
 import { getLatestContactLastReadAt } from "./utils"
 
@@ -86,36 +89,16 @@ function ContactCard({
   )
 }
 
-const parseSortParam = (value: string | null) => {
-  if (!value) {
-    return []
-  }
-
-  try {
-    const parsed = JSON.parse(value)
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-
-    return parsed.filter(
-      (sort): sort is { id: string; desc: boolean } =>
-        typeof sort?.id === "string" && typeof sort?.desc === "boolean",
-    )
-  } catch {
-    return []
-  }
-}
-
 type ContactsTableProps = {
   canViewEmailAndPhone?: boolean
-  initialContactFilter?: ContactFilterCriteria
+  initialInput: ListContactsRequest
   workspaceId: string
-  promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
+  promises: Promise<[ListContactsResponse]>
 }
 
 export function ContactsTable({
   canViewEmailAndPhone = true,
-  initialContactFilter = EMPTY_CONTACT_FILTER,
+  initialInput,
   workspaceId,
   promises,
 }: ContactsTableProps) {
@@ -128,9 +111,13 @@ export function ContactsTable({
     filter: contactFilter,
     setFilter: setContactFilter,
     isActive: isContactFilterActive,
-  } = useContactFilterQueryState({ initialFilter: initialContactFilter })
+  } = useContactFilterQueryState({
+    initialFilter: initialInput.contactFilter ?? EMPTY_CONTACT_FILTER,
+  })
   const [optimisticContactFilter, setOptimisticContactFilter] =
     useState<ContactFilterCriteria>(contactFilter)
+  const [pendingContactFilter, setPendingContactFilter] =
+    useState<ContactFilterCriteria | null>(null)
   const [showContactFilterPanel, setShowContactFilterPanel] = useState(
     isContactFilterActive,
   )
@@ -142,41 +129,28 @@ export function ContactsTable({
     [canViewEmailAndPhone],
   )
 
-  const keyword = useMemo(() => {
-    const params = new URLSearchParams(searchParamsKey)
-    return params.get("keyword") ?? undefined
-  }, [searchParamsKey])
-
-  const listContactsInput = useMemo(() => {
-    const params = new URLSearchParams(searchParamsKey)
-    return {
-      workspaceId,
-      page: Number(params.get("page") ?? "1"),
-      perPage: Number(
-        params.get("perPage") ?? String(CONTACTS_DEFAULT_PER_PAGE),
-      ),
-      sort: parseSortParam(params.get("sort")),
-      keyword: params.get("keyword") ?? undefined,
-      contactFilter: isContactFilterActive ? contactFilter : undefined,
-    }
-  }, [contactFilter, isContactFilterActive, searchParamsKey, workspaceId])
-
-  // `initialData` seeds the very first render from the RSC-fetched
-  // `promises` prop — the old `useEffect`+`didHydrateInitialDataRef` guard
-  // existed only to skip re-fetching on mount for that same reason.
-  // `placeholderData: keepPreviousData` keeps the previous page on screen
-  // (rather than a blank/loading table) while a new page/filter/sort loads.
-  const { data: contactsResponse } = useQuery(
-    orpc.contactsAPIs.listContactsByPOSTAuthenticatedAPI.queryOptions({
-      input: listContactsInput,
-      initialData: initialResponse,
-      placeholderData: keepPreviousData,
-    }),
+  const searchParamsRecord = useMemo(
+    () => Object.fromEntries(new URLSearchParams(searchParamsKey).entries()),
+    [searchParamsKey],
   )
-  const tableData = contactsResponse.data
-  const tablePageCount = contactsResponse.pageCount
-  const tableTotalCount = contactsResponse.totalCount
-  const tableTotalCountCapped = contactsResponse.totalCountCapped
+  const listContactsInput = useMemo(
+    () => getContactsListInput(workspaceId, searchParamsRecord, contactFilter),
+    [contactFilter, searchParamsRecord, workspaceId],
+  )
+  const keyword = listContactsInput.keyword
+  const contactsQuery = useContacts(
+    listContactsInput,
+    {
+      input: initialInput,
+      response: initialResponse,
+    },
+    { enabled: !pendingContactFilter },
+  )
+  const contactsResponse = contactsQuery.data
+  const tableData = contactsResponse?.data ?? []
+  const tablePageCount = contactsResponse?.pageCount ?? 0
+  const tableTotalCount = contactsResponse?.totalCount ?? 0
+  const tableTotalCountCapped = contactsResponse?.totalCountCapped ?? false
 
   useEffect(() => {
     if (isContactFilterActive) {
@@ -387,23 +361,76 @@ export function ContactsTable({
       columnPinning: { right: ["actions"] },
     },
     getRowId: (originalRow) => originalRow.id,
-    shallow: false,
+    shallow: true,
     clearOnDefault: true,
   })
 
+  const _contactsQueryKey = hashKey(
+    orpc.contactsAPIs.listContactsByPOSTAuthenticatedAPI.queryOptions({
+      input: listContactsInput,
+    }).queryKey,
+  )
+
+  useEffect(() => {
+    table.resetRowSelection()
+  }, [table])
+
+  useEffect(() => {
+    if (!pendingContactFilter || listContactsInput.page !== 1) {
+      return
+    }
+
+    setContactFilter(pendingContactFilter).catch(() => {
+      setOptimisticContactFilter(contactFilter)
+    })
+    setPendingContactFilter(null)
+  }, [
+    contactFilter,
+    listContactsInput.page,
+    pendingContactFilter,
+    setContactFilter,
+  ])
+
   const handleContactFilterChange = useCallback(
     (next: ContactFilterCriteria) => {
-      table.setPageIndex(0)
       setOptimisticContactFilter(next)
+
+      if (pendingContactFilter || listContactsInput.page !== 1) {
+        setPendingContactFilter(next)
+        table.setPageIndex(0)
+        return
+      }
+
       setContactFilter(next).catch(() => {
         setOptimisticContactFilter(contactFilter)
       })
     },
-    [contactFilter, setContactFilter, table],
+    [
+      contactFilter,
+      listContactsInput.page,
+      pendingContactFilter,
+      setContactFilter,
+      table,
+    ],
   )
+  if (!contactsResponse && contactsQuery.isPending) {
+    return <DataTableSkeleton columnCount={6} filterCount={1} rowCount={10} />
+  }
+
+  if (!contactsResponse && contactsQuery.isError) {
+    return (
+      <div className="flex flex-col items-start gap-3" role="alert">
+        <p>{t("messages.unknownError")}</p>
+        <Button onClick={() => contactsQuery.refetch()} type="button">
+          {t("actions.retry")}
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <DataTable
+      aria-busy={contactsQuery.isFetching || Boolean(pendingContactFilter)}
       className="[&_tbody_td]:py-3 [&_tbody_td]:text-[15px] [&_tbody_tr]:h-16"
       mobileCard={(row) => <ContactCard row={row} workspaceId={workspaceId} />}
       table={table}
@@ -415,6 +442,11 @@ export function ContactsTable({
           onFilterChange={handleContactFilterChange}
         />
       )}
+      {contactsQuery.isFetching ? (
+        <span aria-live="polite" className="sr-only" role="status">
+          {t("actions.loading")}
+        </span>
+      ) : null}
       <DataTableToolbar table={table}>
         <span className="whitespace-nowrap text-muted-foreground text-sm">
           {totalCountLabel}
@@ -426,6 +458,9 @@ export function ContactsTable({
           open={showContactFilterPanel}
         />
         <ContactListAction
+          disabled={
+            contactsQuery.isPlaceholderData || Boolean(pendingContactFilter)
+          }
           filter={exportFilter}
           table={table}
           workspaceId={workspaceId}

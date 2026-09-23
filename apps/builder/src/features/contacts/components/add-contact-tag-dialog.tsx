@@ -30,11 +30,13 @@ import { addContactTagRequest } from "../schema/contact-tag"
 type AddContactTagDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function AddContactTagDialog({
   trigger,
   ids,
+  onSuccess,
 }: AddContactTagDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -58,6 +60,7 @@ export default function AddContactTagDialog({
             invalidateTags()
             setOpen(false)
             resetFormAndAction()
+            onSuccess?.()
           },
           onError: ({ error }) => {
             if (error.serverError) {

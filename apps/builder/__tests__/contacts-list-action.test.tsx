@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import type { Table } from "@tanstack/react-table"
 import type { ReactElement, ReactNode } from "react"
 import { act } from "react"
@@ -138,12 +139,20 @@ function render() {
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   const table = {
     getFilteredSelectedRowModel: () => ({ rows: [] }),
     getIsAllPageRowsSelected: () => false,
+    resetRowSelection: vi.fn(),
   } as unknown as Table<ContactResponse>
   act(() => {
-    root?.render(<ContactListAction table={table} workspaceId="ws-1" />)
+    root?.render(
+      <QueryClientProvider client={queryClient}>
+        <ContactListAction table={table} workspaceId="ws-1" />
+      </QueryClientProvider>,
+    )
   })
   // biome-ignore lint/style/noNonNullAssertion: assigned synchronously above
   return container!

@@ -22,11 +22,13 @@ import { disableBotAction } from "../actions/disable-bot.action"
 type DisableBotDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function DisableBotDialog({
   trigger,
   ids,
+  onSuccess,
 }: DisableBotDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -42,6 +44,7 @@ export default function DisableBotDialog({
           }),
         )
         setOpen(false)
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {

@@ -27,11 +27,13 @@ import { addContactSequenceRequest } from "../schema/contact-sequence"
 type AddContactSequenceDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function AddContactSequenceDialog({
   trigger,
   ids,
+  onSuccess,
 }: AddContactSequenceDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -58,6 +60,7 @@ export default function AddContactSequenceDialog({
             )
             setOpen(false)
             resetFormAndAction()
+            onSuccess?.()
           },
           onError: ({ error }) => {
             if (error.serverError) {

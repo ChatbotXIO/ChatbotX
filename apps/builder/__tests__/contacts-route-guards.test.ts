@@ -30,7 +30,7 @@ vi.mock("next-intl/server", () => ({
 }))
 
 vi.mock("@/features/contacts/queries/list-contacts.queries", () => ({
-  listContactsRSC: vi.fn(async () => ({
+  listContacts: vi.fn(async () => ({
     data: [],
     pageCount: 0,
     totalCount: 0,

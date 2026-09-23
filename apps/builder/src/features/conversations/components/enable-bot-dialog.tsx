@@ -22,11 +22,13 @@ import { enableBotAction } from "../actions/enable-bot.action"
 type EnableBotDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function EnableBotDialog({
   trigger,
   ids,
+  onSuccess,
 }: EnableBotDialogProps) {
   const [open, setOpen] = useState(false)
 
@@ -43,6 +45,7 @@ export default function EnableBotDialog({
           }),
         )
         setOpen(false)
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {
