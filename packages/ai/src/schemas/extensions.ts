@@ -2,6 +2,7 @@ import z from "zod"
 
 export const allowableKnowledgeExtensionsMap = () => ({
   "text/plain": [".txt"],
+  "application/json": [".json"],
   "application/pdf": [".pdf"],
   "text/markdown": [".md", ".markdown"],
   "text/x-markdown": [".md", ".markdown"],

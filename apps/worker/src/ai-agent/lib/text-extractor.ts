@@ -99,7 +99,10 @@ async function streamToBuffer(
 export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   try {
     const parser = await pdfParse(buffer)
-    return parser.text
+    // pdf-parse can return NUL and other control characters. PostgreSQL text
+    // values reject NUL bytes, so normalize before the text is chunked and
+    // persisted as AIEmbedding content.
+    return normalizeWhitespace(parser.text)
   } catch (error) {
     logger.warn(error, "PDF parsing failed, falling back to plain text")
     throw new Error("PDF parsing failed")
