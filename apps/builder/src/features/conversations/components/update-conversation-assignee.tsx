@@ -3,6 +3,7 @@
 import { ChevronDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
 import { authClient } from "@/lib/auth/auth-client"
 import type { ListConversationItemResource } from "../schema/resource"
 import AssignConversationDialog, {
@@ -37,21 +38,67 @@ export function UpdateConversationAssignee({
     [conversation.id, onChange],
   )
 
+  const relationLabel = useMemo(() => {
+    const assignedUserId = conversation.assignedUserId
+    const assignedUser = conversation.assignedUser
+    if (
+      assignedUserId &&
+      assignedUser?.id === assignedUserId &&
+      assignedUser.name
+    ) {
+      return assignedUser.name
+    }
+
+    const assignedInboxTeamId = conversation.assignedInboxTeamId
+    const assignedInboxTeam = conversation.assignedInboxTeam
+    if (
+      assignedInboxTeamId &&
+      assignedInboxTeam?.id === assignedInboxTeamId &&
+      assignedInboxTeam.name
+    ) {
+      return assignedInboxTeam.name
+    }
+
+    return null
+  }, [conversation])
+
+  const isSelfAssigned = selectedId === `u_${session?.user.id}`
+  const needsOptionLookup =
+    selectedId !== null &&
+    selectedAssigneeName === null &&
+    relationLabel === null &&
+    !isSelfAssigned
+  const contactAssigneeOptions = useContactAssigneeOptions({
+    autoGroup: false,
+    enabled: needsOptionLookup,
+  })
+
   const agentLabel = useMemo(() => {
-    if (selectedId?.startsWith("u_") && selectedAssigneeName) {
-      if (selectedId === `u_${session?.user.id}`) {
-        return t("assignAdmin.assignedToMe")
-      }
-
-      return t("assignAdmin.assignedTo", { name: selectedAssigneeName })
+    if (!selectedId) {
+      return t("assignAdmin.assignConversation")
     }
 
-    if (selectedId?.startsWith("t_") && selectedAssigneeName) {
-      return t("assignAdmin.assignedTo", { name: selectedAssigneeName })
+    if (isSelfAssigned) {
+      return t("assignAdmin.assignedToMe")
     }
 
-    return t("assignAdmin.assignConversation")
-  }, [selectedAssigneeName, selectedId, session, t])
+    const label =
+      selectedAssigneeName ??
+      relationLabel ??
+      contactAssigneeOptions.find((option) => option.value === selectedId)
+        ?.label
+
+    return label
+      ? t("assignAdmin.assignedTo", { name: label })
+      : t("assignAdmin.assignConversation")
+  }, [
+    contactAssigneeOptions,
+    isSelfAssigned,
+    relationLabel,
+    selectedAssigneeName,
+    selectedId,
+    t,
+  ])
 
   useEffect(() => {
     let nextSelectedId: string | null = null
@@ -60,10 +107,7 @@ export function UpdateConversationAssignee({
     } else if (conversation.assignedInboxTeamId) {
       nextSelectedId = `t_${conversation.assignedInboxTeamId}`
     }
-    const nextAssigneeName =
-      conversation.assignedUser?.name ??
-      conversation.assignedInboxTeam?.name ??
-      null
+    const nextAssigneeName = relationLabel
     const nextAssignmentKey = `${conversation.id}:${nextSelectedId ?? ""}`
     const hasOptimisticNameForAssignment =
       selectedAssignmentKeyRef.current === nextAssignmentKey
@@ -74,11 +118,10 @@ export function UpdateConversationAssignee({
       setSelectedAssigneeName(nextAssigneeName)
     }
   }, [
-    conversation.assignedInboxTeam?.name,
     conversation.assignedInboxTeamId,
-    conversation.assignedUser?.name,
     conversation.assignedUserId,
     conversation.id,
+    relationLabel,
   ])
 
   return (

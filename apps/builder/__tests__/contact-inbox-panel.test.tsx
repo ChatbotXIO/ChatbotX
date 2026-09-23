@@ -12,7 +12,10 @@ vi.mock("next-intl", () => ({
 }))
 
 const getContactMock = vi.fn()
-
+const notesMock = vi.fn().mockResolvedValue({ data: [] })
+const couponsMock = vi.fn().mockResolvedValue([])
+const appointmentsMock = vi.fn().mockResolvedValue([])
+const sequencesMock = vi.fn().mockResolvedValue({ data: [] })
 vi.mock("@/lib/orpc/query", () => ({
   orpc: {
     contactsAPIs: {
@@ -41,7 +44,47 @@ vi.mock("@/lib/orpc/query", () => ({
           input: { workspaceId: string; contactId: string }
         }) => ({
           queryKey: ["contact-notes", input.workspaceId, input.contactId],
-          queryFn: async () => ({ data: [] }),
+          queryFn: () => notesMock(input),
+        }),
+      },
+    },
+    couponsAPI: {
+      listContactCouponsAPI: {
+        queryOptions: ({
+          input,
+        }: {
+          input: { workspaceId: string; contactId: string }
+        }) => ({
+          queryKey: ["contact-coupons", input.workspaceId, input.contactId],
+          queryFn: () => couponsMock(input),
+        }),
+      },
+    },
+    appointmentsAPI: {
+      listContactAppointmentsAPI: {
+        queryOptions: ({
+          input,
+        }: {
+          input: { workspaceId: string; contactId: string }
+        }) => ({
+          queryKey: [
+            "contact-appointments",
+            input.workspaceId,
+            input.contactId,
+          ],
+          queryFn: () => appointmentsMock(input),
+        }),
+      },
+    },
+    contactSequencesAPI: {
+      listContactSequencesAuthenticatedAPI: {
+        queryOptions: ({
+          input,
+        }: {
+          input: { workspaceId: string; contactId: string }
+        }) => ({
+          queryKey: ["contact-sequences", input.workspaceId, input.contactId],
+          queryFn: () => sequencesMock(input),
         }),
       },
     },
@@ -97,10 +140,19 @@ vi.mock("@/features/contact-sequences/update-contact-sequence-field", () => ({
   default: () => null,
 }))
 
+let latestAccordionOnValueChange: ((value: string[]) => void) | undefined
+
 vi.mock("@chatbotx.io/ui/components/ui/accordion", () => ({
-  Accordion: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  Accordion: ({
+    children,
+    onValueChange,
+  }: {
+    children: React.ReactNode
+    onValueChange: (value: string[]) => void
+  }) => {
+    latestAccordionOnValueChange = onValueChange
+    return <div>{children}</div>
+  },
   AccordionItem: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -155,6 +207,11 @@ describe("ContactInboxPanel", () => {
     root = createRoot(container)
     queryClient = makeQueryClient()
     getContactMock.mockReset()
+    notesMock.mockClear()
+    couponsMock.mockClear()
+    appointmentsMock.mockClear()
+    sequencesMock.mockClear()
+    latestAccordionOnValueChange = undefined
     seededContact = undefined
     latestConversations = [firstConversation, secondConversation]
     autoRefreshCapture = {}
@@ -285,5 +342,190 @@ describe("ContactInboxPanel", () => {
     expect(
       container.querySelector('[data-testid="contact-detail"]')?.textContent,
     ).toBe("Patched Jane")
+  })
+
+  test("does not mount or query the coupons/appointments/sequences sections before any accordion item opens", () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+
+    expect(couponsMock).not.toHaveBeenCalled()
+    expect(appointmentsMock).not.toHaveBeenCalled()
+    expect(sequencesMock).not.toHaveBeenCalled()
+  })
+
+  test("mounts and queries the coupons section once its accordion item opens", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    couponsMock.mockResolvedValueOnce([
+      {
+        id: "coupon-1",
+        topicName: "Welcome",
+        code: "WELCOME10",
+        usedAt: null,
+      },
+    ])
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["coupons.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(couponsMock).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+      })
+      expect(container.textContent).toContain("Welcome")
+    })
+    expect(appointmentsMock).not.toHaveBeenCalled()
+    expect(sequencesMock).not.toHaveBeenCalled()
+  })
+
+  test("shows a loader while the coupons request is pending, not the empty state", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    const { promise, resolve } =
+      Promise.withResolvers<
+        { id: string; topicName: string; code: string; usedAt: Date | null }[]
+      >()
+    couponsMock.mockReturnValueOnce(promise)
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["coupons.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(couponsMock).toHaveBeenCalled()
+    })
+    expect(container.textContent).not.toContain("coupons.messages.empty")
+
+    await act(async () => {
+      resolve([])
+      await promise
+    })
+
+    await vi.waitFor(() => {
+      expect(container.textContent).toContain("coupons.messages.empty")
+    })
+  })
+
+  test("shows a loader while the notes request is pending", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    const { promise, resolve } = Promise.withResolvers<{ data: [] }>()
+    notesMock.mockReturnValueOnce(promise)
+
+    render()
+
+    await vi.waitFor(() => {
+      expect(notesMock).toHaveBeenCalled()
+      expect(container.querySelector("svg.animate-spin")).not.toBeNull()
+    })
+
+    await act(async () => {
+      resolve({ data: [] })
+      await promise
+    })
+  })
+
+  test("disables retry and shows progress while refetching a failed section query", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    couponsMock.mockRejectedValueOnce(new Error("network error"))
+    const { promise, resolve } =
+      Promise.withResolvers<
+        { id: string; topicName: string; code: string; usedAt: Date | null }[]
+      >()
+    couponsMock.mockReturnValueOnce(promise)
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["coupons.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(container.textContent).toContain("messages.errorLoadingData")
+    })
+
+    const retryButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "actions.retry",
+    )
+    await act(async () => {
+      retryButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        queryClient.getQueryState(["contact-coupons", "ws-1", "contact-1"])
+          ?.fetchStatus,
+      ).toBe("fetching")
+    })
+    const { promise: renderFlush, resolve: resolveRenderFlush } =
+      Promise.withResolvers<void>()
+    setTimeout(resolveRenderFlush, 0)
+    await act(() => renderFlush)
+
+    expect(container.querySelector("svg.animate-spin")).not.toBeNull()
+    expect(container.textContent).not.toContain("actions.retry")
+
+    await act(async () => {
+      resolve([])
+      await promise
+    })
+
+    await vi.waitFor(() => {
+      expect(couponsMock).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  test("mounts and queries the appointments section once its accordion item opens", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["appointments.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(appointmentsMock).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+      })
+    })
+  })
+
+  test("mounts and queries the sequences section once its accordion item opens", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["sequences.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(sequencesMock).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+      })
+    })
+  })
+  test("shows a loader while the sequences request is pending", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    const { promise, resolve } = Promise.withResolvers<{ data: [] }>()
+    sequencesMock.mockReturnValueOnce(promise)
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["sequences.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(sequencesMock).toHaveBeenCalled()
+      expect(container.querySelector("svg.animate-spin")).not.toBeNull()
+    })
+
+    await act(async () => {
+      resolve({ data: [] })
+      await promise
+    })
   })
 })

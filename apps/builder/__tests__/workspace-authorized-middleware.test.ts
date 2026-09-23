@@ -39,13 +39,16 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
 }))
 
 const { workspaceAuthorizedMidddleware } = await import("@/middlewares/auth")
+const { CONVERSATIONS_LIST_POST_PATH } = await import(
+  "@/features/conversations/lib/api-paths"
+)
 
 const next = vi.fn(async (opts?: { context: Record<string, unknown> }) => ({
   output: "ok",
   context: opts?.context,
 }))
 
-const callMiddleware = (method: string | undefined) =>
+const callMiddleware = (method: string | undefined, path?: string) =>
   (
     workspaceAuthorizedMidddleware as unknown as (
       opts: {
@@ -55,7 +58,7 @@ const callMiddleware = (method: string | undefined) =>
           session?: { ipAddress?: string; userAgent?: string }
         }
         next: typeof next
-        procedure: { "~orpc": { route: { method?: string } } }
+        procedure: { "~orpc": { route: { method?: string; path?: string } } }
       },
       workspaceId: string,
     ) => Promise<unknown>
@@ -63,7 +66,7 @@ const callMiddleware = (method: string | undefined) =>
     {
       context: { user: { id: "user-1" }, headers: new Headers() },
       next,
-      procedure: { "~orpc": { route: { method } } },
+      procedure: { "~orpc": { route: { method, path } } },
     },
     "ws-1",
   )
@@ -158,5 +161,13 @@ describe("workspaceAuthorizedMidddleware", () => {
         },
       }),
     )
+  })
+
+  test("allow-listed POST-for-read path still passes for a blocked owner", async () => {
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await callMiddleware("POST", CONVERSATIONS_LIST_POST_PATH)
+
+    expect(next).toHaveBeenCalled()
   })
 })

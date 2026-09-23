@@ -120,6 +120,16 @@ describe("contact permission helpers", () => {
     )
   })
 
+  test("reports a missing workspace membership for mutation scopes", async () => {
+    vi.mocked(getCurrentUserAndTargetWorkspace).mockResolvedValue(
+      undefined as never,
+    )
+
+    await expect(requireContactPermissionScope("ws-1")).rejects.toThrow(
+      "User is not associated with this workspace",
+    )
+  })
+
   test("returns no contact permission scope without contact access", async () => {
     vi.mocked(getCurrentUserAndTargetWorkspace).mockResolvedValue({
       user: { id: "user-1" },

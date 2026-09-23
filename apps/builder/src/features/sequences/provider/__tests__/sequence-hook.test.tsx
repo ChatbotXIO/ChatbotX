@@ -24,15 +24,18 @@ function SequencesProbe({
   enabled = true,
   onData,
   onError,
+  onState,
 }: {
   workspaceId?: string
   enabled?: boolean
   onData?: (data: unknown) => void
   onError?: (isError: boolean) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
   const sequences = useSequences(workspaceId, { enabled })
   onData?.(sequences.data)
   onError?.(sequences.isError)
+  onState?.({ isError: sequences.isError, error: sequences.error })
   return null
 }
 
@@ -140,21 +143,46 @@ describe("sequence query hooks", () => {
     expect(mockListSequences).not.toHaveBeenCalled()
   })
 
-  test("invalidates sequence readers", async () => {
+  test("surfaces isError and the rejection when the request fails", async () => {
+    mockListSequences.mockRejectedValue(new Error("sequences failed"))
+    let state: { isError: boolean; error: unknown } | undefined
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <SequencesProbe onState={(nextState) => (state = nextState)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(state?.isError).toBe(true)
+    })
+    expect(state?.error).toBeInstanceOf(Error)
+  })
+
+  test("invalidates sequence readers, and a refetch returns fresh data", async () => {
     let invalidate: (() => unknown) | null = null
+    let data: unknown
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries")
 
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <SequencesProbe />
+          <SequencesProbe onData={(nextData) => (data = nextData)} />
           <InvalidateProbe onReady={(fn) => (invalidate = fn)} />
         </QueryClientProvider>,
       )
     })
 
     await vi.waitFor(() => {
-      expect(mockListSequences).toHaveBeenCalledTimes(1)
+      expect(data).toEqual([{ id: "1", name: "Welcome" }])
+    })
+
+    // A wrong query key on the invalidator would leave `data` stuck on the
+    // stale value forever, timing the final `waitFor` out below.
+    mockListSequences.mockResolvedValue({
+      data: [{ id: "sequence-2", name: "Refreshed" }],
     })
 
     await act(async () => {
@@ -162,6 +190,9 @@ describe("sequence query hooks", () => {
     })
 
     expect(invalidateQueries).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => {
+      expect(data).toEqual([{ id: "sequence-2", name: "Refreshed" }])
+    })
   })
 
   test("keeps the invalidator stable across renders", () => {

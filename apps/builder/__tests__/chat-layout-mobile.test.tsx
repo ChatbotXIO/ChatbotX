@@ -1,3 +1,4 @@
+import type * as MobileHook from "@chatbotx.io/ui/hooks/use-mobile"
 import { setViewportWidth } from "@chatbotx.io/vitest-config/setup-dom"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
@@ -11,17 +12,33 @@ vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
 
+const { mockMobileState } = vi.hoisted(() => ({
+  mockMobileState: {
+    isOverridden: false,
+    value: undefined as boolean | undefined,
+  },
+}))
+
+vi.mock("@chatbotx.io/ui/hooks/use-mobile", async (importOriginal) => {
+  const actual = await importOriginal<typeof MobileHook>()
+
+  return {
+    ...actual,
+    useIsMobileState: () => {
+      const isMobile = actual.useIsMobileState()
+      return mockMobileState.isOverridden ? mockMobileState.value : isMobile
+    },
+  }
+})
+
 vi.mock("@/features/messages/store/call-playback-store", () => ({
   useCallPlaybackStore: {
     getState: () => ({ reset: vi.fn() }),
   },
 }))
 
-const mockRouterReplace = vi.fn()
-
 vi.mock("next/navigation", () => ({
   usePathname: () => "/space/w1/inbox",
-  useRouter: () => ({ replace: mockRouterReplace }),
   useSearchParams: () => new URLSearchParams("conversationId=c1"),
 }))
 
@@ -108,6 +125,7 @@ describe("ChatLayout", () => {
     storeState.activeConversationId = null
     storeState.activeConversationAutoSelected = false
     storeState.setActiveConversationId.mockClear()
+    mockMobileState.isOverridden = false
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -119,7 +137,6 @@ describe("ChatLayout", () => {
     })
     container.remove()
     setViewportWidth(1024)
-    mockRouterReplace.mockClear()
   })
 
   test("shows only the conversation list on mobile with nothing selected", () => {
@@ -161,6 +178,54 @@ describe("ChatLayout", () => {
 
     expect(find("list-pane")).not.toBeNull()
     expect(storeState.setActiveConversationId).toHaveBeenCalledWith(null)
+  })
+
+  test("does not clear an auto-selected conversation on a later resize to mobile", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    setViewportWidth(1440)
+    render()
+
+    act(() => {
+      setViewportWidth(375)
+    })
+    render()
+
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+
+    act(() => {
+      root.unmount()
+    })
+    root = createRoot(container)
+    storeState.activeConversationId = "c1"
+    storeState.setActiveConversationId.mockClear()
+    setViewportWidth(375)
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      setViewportWidth(1440)
+      setViewportWidth(375)
+    })
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
+  })
+
+  test("waits for the first mobile measurement before suppressing selection", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    mockMobileState.isOverridden = true
+    mockMobileState.value = undefined
+    render()
+
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+
+    mockMobileState.value = true
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
   })
 
   test("keeps a deep-linked conversation open on mobile", () => {
@@ -210,6 +275,7 @@ describe("ChatLayout", () => {
     })
 
     expect(replaceState).toHaveBeenCalledWith(null, "", "/space/w1/inbox")
+    replaceState.mockRestore()
   })
 
   test("offers the contact panel behind a control instead of a third column", () => {

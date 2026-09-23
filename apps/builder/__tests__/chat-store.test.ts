@@ -345,6 +345,46 @@ describe("chat store conversation updates", () => {
     expect(store.getState().conversations[0]).toBe(existing)
   })
 
+  test("loadMoreConversations does not refetch once pagination is exhausted", async () => {
+    const store = createChatStore()
+    const existing = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    store.setState({
+      isFirstLoadConversation: false,
+      conversations: [existing] as never,
+      nextCursorConversation: null,
+    })
+
+    await store.getState().loadMoreConversations("ws-1")
+
+    expect(mockListConversationsByPOSTAuthenticatedAPI).not.toHaveBeenCalled()
+    expect(store.getState().conversations).toEqual([existing])
+  })
+
+  test("loadMoreConversations fetches from an empty, never-loaded store", async () => {
+    const store = createChatStore()
+    mockConversationPage([])
+
+    await store.getState().loadMoreConversations("ws-1")
+
+    expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(1)
+  })
+
+  test("loadMoreConversations does not refetch an inbox that loaded empty", async () => {
+    const store = createChatStore()
+    store.setState({
+      isFirstLoadConversation: false,
+      conversations: [],
+      nextCursorConversation: null,
+    })
+
+    await store.getState().loadMoreConversations("ws-1")
+
+    expect(mockListConversationsByPOSTAuthenticatedAPI).not.toHaveBeenCalled()
+  })
+
   test("loadMoreConversations does not auto-select the first item when a URL conversation id exists", async () => {
     const store = createChatStore()
     const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
@@ -919,8 +959,12 @@ describe("chat store inbox seed state", () => {
       ] as never,
       activeConversationId: "conv-seeded",
       activeConversationAutoSelected: true,
-      messages: [seededMessage] as never,
-      messagesConversationId: "conv-seeded",
+      messagesSeed: {
+        messages: [seededMessage] as never,
+        nextCursorMessage: null,
+        hasNextMessagePage: true,
+        messagesConversationId: "conv-seeded",
+      },
       seededContact: seededContact as never,
     })
 
@@ -936,7 +980,12 @@ describe("chat store inbox seed state", () => {
   test("loadInitialMessages skips the matching seeded page and fetches a different one", async () => {
     const store = createChatStore({
       activeConversationId: "conv-seeded",
-      messagesConversationId: "conv-seeded",
+      messagesSeed: {
+        messages: [],
+        nextCursorMessage: null,
+        hasNextMessagePage: true,
+        messagesConversationId: "conv-seeded",
+      },
     })
 
     await store.getState().loadInitialMessages("ws-1", 20)
@@ -962,7 +1011,12 @@ describe("chat store inbox seed state", () => {
     const store = createChatStore({
       activeConversationId: "conv-seeded",
       activeConversationAutoSelected: true,
-      messagesConversationId: "conv-seeded",
+      messagesSeed: {
+        messages: [],
+        nextCursorMessage: null,
+        hasNextMessagePage: true,
+        messagesConversationId: "conv-seeded",
+      },
       seededContact: { id: "contact-seeded" } as never,
     })
 
@@ -986,5 +1040,182 @@ describe("chat store inbox seed state", () => {
       messagesConversationId: null,
       seededContact: null,
     })
+  })
+
+  test("re-selecting the auto-selected conversation clears the auto-selected flag without resetting the thread", () => {
+    const seededMessage = makeMessage(
+      "conv-seeded",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-seeded", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-seeded",
+      activeConversationAutoSelected: true,
+      messagesSeed: {
+        messages: [seededMessage] as never,
+        nextCursorMessage: "next-message",
+        hasNextMessagePage: true,
+        messagesConversationId: "conv-seeded",
+      },
+      seededContact: { id: "contact-seeded" } as never,
+    })
+
+    store.getState().setActiveConversationId("conv-seeded")
+
+    expect(store.getState()).toMatchObject({
+      activeConversationAutoSelected: false,
+      messages: [seededMessage],
+      nextCursorMessage: "next-message",
+      messagesConversationId: "conv-seeded",
+      seededContact: { id: "contact-seeded" },
+    })
+  })
+
+  test("resetState clears reply and post fields", () => {
+    const store = createChatStore()
+    store.setState({
+      replyToMessage: makeMessage(
+        "conv-seeded",
+        new Date("2026-01-01T00:00:00Z"),
+      ) as never,
+      isPrivateReply: true,
+      activePost: { id: "post-1" } as never,
+    })
+
+    store.getState().resetState()
+
+    expect(store.getState()).toMatchObject({
+      replyToMessage: null,
+      isPrivateReply: false,
+      activePost: null,
+    })
+  })
+
+  test("deleteConversation clears the seed fields when it removes the active conversation", () => {
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-seeded", new Date("2026-01-01T00:00:00Z")),
+        makeConversation("conv-next", new Date("2026-01-02T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-seeded",
+      activeConversationAutoSelected: true,
+      messagesSeed: {
+        messages: [
+          makeMessage("conv-seeded", new Date("2026-01-01T00:00:00Z")),
+        ] as never,
+        nextCursorMessage: null,
+        hasNextMessagePage: true,
+        messagesConversationId: "conv-seeded",
+      },
+      seededContact: { id: "contact-seeded" } as never,
+    })
+
+    store.getState().deleteConversation("conv-seeded")
+
+    expect(store.getState()).toMatchObject({
+      activeConversationId: "conv-next",
+      activeConversationAutoSelected: false,
+      messages: [],
+      messagesConversationId: null,
+      seededContact: null,
+    })
+  })
+
+  test("deleteConversation publishes one consistent state when removing the active conversation", () => {
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-active", new Date("2026-01-01T00:00:00Z")),
+        makeConversation("conv-next", new Date("2026-01-02T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-active",
+    })
+    const notifications: {
+      activeConversationId: string | null
+      conversationIds: string[]
+    }[] = []
+    const unsubscribe = store.subscribe((state) => {
+      notifications.push({
+        activeConversationId: state.activeConversationId,
+        conversationIds: state.conversations.map(
+          (conversation) => conversation.id,
+        ),
+      })
+    })
+
+    store.getState().deleteConversation("conv-active")
+    unsubscribe()
+
+    expect(notifications).toEqual([
+      {
+        activeConversationId: "conv-next",
+        conversationIds: ["conv-next"],
+      },
+    ])
+  })
+
+  test("deleteConversation leaves the seed fields untouched when it removes a background conversation", () => {
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-seeded", new Date("2026-01-01T00:00:00Z")),
+        makeConversation("conv-other", new Date("2026-01-02T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-seeded",
+      activeConversationAutoSelected: true,
+      messagesSeed: {
+        messages: [],
+        nextCursorMessage: null,
+        hasNextMessagePage: true,
+        messagesConversationId: "conv-seeded",
+      },
+      seededContact: { id: "contact-seeded" } as never,
+    })
+
+    store.getState().deleteConversation("conv-other")
+
+    expect(store.getState()).toMatchObject({
+      activeConversationId: "conv-seeded",
+      activeConversationAutoSelected: true,
+      messagesConversationId: "conv-seeded",
+      seededContact: { id: "contact-seeded" },
+    })
+  })
+})
+
+describe("createChatStore seed invariant check", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("warns when activeConversationId is not present in the seeded conversations list", () => {
+    createChatStore({
+      conversations: [
+        makeConversation("conv-listed", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-missing",
+    })
+
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      { activeConversationId: "conv-missing" },
+      "createChatStore: activeConversationId in the seeded initial state is not present in the seeded conversations list",
+    )
+  })
+
+  test("does not warn when activeConversationId is present in the seeded conversations list", () => {
+    createChatStore({
+      conversations: [
+        makeConversation("conv-listed", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-listed",
+    })
+
+    expect(loggerWarnMock).not.toHaveBeenCalled()
+  })
+
+  test("does not warn when no seed is provided", () => {
+    createChatStore()
+
+    expect(loggerWarnMock).not.toHaveBeenCalled()
   })
 })

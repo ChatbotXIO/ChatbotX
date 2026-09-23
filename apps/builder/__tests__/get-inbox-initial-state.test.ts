@@ -80,8 +80,10 @@ describe("getInboxInitialState", () => {
     expect(state).toMatchObject({
       activeConversationAutoSelected: true,
       activeConversationId: "conversation-1",
-      messages: [makeMessage("message-old"), makeMessage("message-new")],
-      messagesConversationId: "conversation-1",
+      messagesSeed: {
+        messages: [makeMessage("message-old"), makeMessage("message-new")],
+        messagesConversationId: "conversation-1",
+      },
       seededContact: { id: "contact-conversation-1" },
     })
   })
@@ -148,8 +150,7 @@ describe("getInboxInitialState", () => {
       activeConversationId: null,
       conversations: [makeConversation("conversation-1")],
     })
-    expect(state?.messages).toBeUndefined()
-    expect(state?.messagesConversationId).toBeUndefined()
+    expect(state?.messagesSeed).toBeUndefined()
     expect(state?.seededContact).toBeUndefined()
   })
 
@@ -163,8 +164,15 @@ describe("getInboxInitialState", () => {
       activeConversationId: "conversation-1",
       seededContact: { id: "contact-conversation-1" },
     })
-    expect(state).not.toHaveProperty("messages")
-    expect(state).not.toHaveProperty("messagesConversationId")
+    expect(state).not.toHaveProperty("messagesSeed")
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: expect.any(Error),
+        workspaceId: "workspace-1",
+        conversationId: "conversation-1",
+      }),
+      "getInboxInitialState: failed to seed messages state",
+    )
   })
 
   test("returns null and logs a warning when listing conversations rejects", async () => {
@@ -217,7 +225,7 @@ describe("getInboxInitialState", () => {
     )
 
     const seed = getInitialState({ workspaceId: "workspace-1" })
-    await vi.advanceTimersByTimeAsync(8000)
+    await vi.advanceTimersByTimeAsync(3000)
 
     await expect(seed).resolves.toBeNull()
     expect(loggerWarnMock).toHaveBeenCalledWith(

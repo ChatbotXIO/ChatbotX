@@ -8,6 +8,9 @@ const { dialogOnSuccessMock } = vi.hoisted(() => ({
 }))
 
 const authSessionMock = vi.fn()
+const contactAssigneeOptionsMock = vi.fn(
+  (_props?: unknown): { label: string; value: string }[] => [],
+)
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: { name?: string }) =>
@@ -16,6 +19,11 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@/lib/auth/auth-client", () => ({
   authClient: { useSession: authSessionMock },
+}))
+
+vi.mock("@/features/users/provider/user-hook", () => ({
+  useContactAssigneeOptions: (props?: unknown) =>
+    contactAssigneeOptionsMock(props),
 }))
 
 vi.mock(
@@ -45,8 +53,8 @@ type ConversationOverrides = Omit<
   Partial<ListConversationItemResource>,
   "assignedInboxTeam" | "assignedUser"
 > & {
-  assignedInboxTeam?: { name: string | null } | null
-  assignedUser?: { name: string | null } | null
+  assignedInboxTeam?: { id?: string | null; name: string | null } | null
+  assignedUser?: { id?: string | null; name: string | null } | null
 }
 
 const makeConversation = (
@@ -68,6 +76,7 @@ describe("UpdateConversationAssignee", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
+    contactAssigneeOptionsMock.mockReturnValue([])
     authSessionMock.mockReturnValue({ data: { user: { id: "current-user" } } })
     container = document.createElement("div")
     document.body.appendChild(container)
@@ -97,27 +106,26 @@ describe("UpdateConversationAssignee", () => {
   }
 
   test("renders the assigned user's name without requesting assignee options", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch")
-
     await render(
       makeConversation({
         assignedUserId: "user-1",
-        assignedUser: { name: "Ada Lovelace" },
+        assignedUser: { id: "user-1", name: "Ada Lovelace" },
       }),
     )
 
     expect(container.textContent).toContain(
       "assignAdmin.assignedTo:Ada Lovelace",
     )
-    expect(fetchSpy).not.toHaveBeenCalled()
-    fetchSpy.mockRestore()
+    expect(contactAssigneeOptionsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ enabled: false }),
+    )
   })
 
   test("renders the assigned inbox team's name", async () => {
     await render(
       makeConversation({
         assignedInboxTeamId: "team-1",
-        assignedInboxTeam: { name: "Support" },
+        assignedInboxTeam: { id: "team-1", name: "Support" },
       }),
     )
 
@@ -163,6 +171,68 @@ describe("UpdateConversationAssignee", () => {
     await render(makeConversation(conversation))
 
     expect(container.textContent).toContain("assignAdmin.assignConversation")
-    expect(container.textContent).not.toContain("--")
+  })
+
+  test("shows 'assigned to me' immediately for a self-assignment with no relation object yet", async () => {
+    await render(
+      makeConversation({
+        assignedUserId: "current-user",
+        assignedUser: null,
+      }),
+    )
+
+    expect(container.textContent).toContain("assignAdmin.assignedToMe")
+    expect(contactAssigneeOptionsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ enabled: false }),
+    )
+  })
+
+  test("falls back to the option list when the relation object is missing (fresh assignment)", async () => {
+    contactAssigneeOptionsMock.mockReturnValue([
+      { label: "Grace Hopper", value: "u_user-2" },
+    ])
+
+    await render(
+      makeConversation({
+        assignedUserId: "user-2",
+        assignedUser: null,
+      }),
+    )
+
+    expect(container.textContent).toContain(
+      "assignAdmin.assignedTo:Grace Hopper",
+    )
+    expect(contactAssigneeOptionsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ enabled: true }),
+    )
+  })
+
+  test("falls back to the option list when the relation object is stale after a reassignment", async () => {
+    contactAssigneeOptionsMock.mockReturnValue([
+      { label: "Grace Hopper", value: "u_user-2" },
+    ])
+
+    await render(
+      makeConversation({
+        assignedUserId: "user-2",
+        assignedUser: { id: "user-1", name: "Ada Lovelace" },
+      }),
+    )
+
+    expect(container.textContent).toContain(
+      "assignAdmin.assignedTo:Grace Hopper",
+    )
+    expect(container.textContent).not.toContain("Ada Lovelace")
+  })
+
+  test("falls back to the assign-conversation prompt when no name can be resolved", async () => {
+    await render(
+      makeConversation({
+        assignedUserId: "user-2",
+        assignedUser: null,
+      }),
+    )
+
+    expect(container.textContent).toContain("assignAdmin.assignConversation")
   })
 })

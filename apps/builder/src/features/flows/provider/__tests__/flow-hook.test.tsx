@@ -21,14 +21,14 @@ vi.mock("@/lib/orpc/orpc", () => ({
 
 function FlowsProbe({
   enabled = true,
-  onError,
   onRender,
+  onState,
 }: {
   enabled?: boolean
-  onError?: (isError: boolean) => void
   onRender: (data: unknown) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
-  const { data, isError } = useFlows("workspace-1", {
+  const query = useFlows("workspace-1", {
     enabled,
     filter: {
       integrationWhatsappIds: ["whatsapp-1"],
@@ -36,8 +36,8 @@ function FlowsProbe({
     },
   })
 
-  onError?.(isError)
-  onRender(data)
+  onRender(query.data)
+  onState?.({ isError: query.isError, error: query.error })
   return null
 }
 
@@ -113,24 +113,25 @@ describe("flow query hooks", () => {
     expect(mockPrivateListFlows).not.toHaveBeenCalled()
   })
 
-  test("surfaces a failed flow request", async () => {
-    let isError = false
+  test("surfaces isError and the rejection when the request fails", async () => {
     mockPrivateListFlows.mockRejectedValue(new Error("flows failed"))
+    let state: { isError: boolean; error: unknown } | undefined
 
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
           <FlowsProbe
-            onError={(nextIsError) => (isError = nextIsError)}
             onRender={() => undefined}
+            onState={(nextState) => (state = nextState)}
           />
         </QueryClientProvider>,
       )
     })
 
     await vi.waitFor(() => {
-      expect(isError).toBe(true)
+      expect(state?.isError).toBe(true)
     })
+    expect(state?.error).toBeInstanceOf(Error)
   })
 
   test("invalidates the flows query key with a stable callback", async () => {
@@ -158,6 +159,39 @@ describe("flow query hooks", () => {
 
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: [["flowsAPI", "privateListFlowsAPI"], {}],
+    })
+  })
+
+  test("a refetch after invalidation returns the flows query's fresh data", async () => {
+    let latestData: unknown
+    let invalidate: (() => unknown) | null = null
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FlowsProbe onRender={(data) => (latestData = data)} />
+          <InvalidateProbe onReady={(fn) => (invalidate = fn)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(latestData).toEqual([{ id: "flow-1", name: "Welcome" }])
+    })
+
+    // A wrong query key on the invalidator would leave this probe stuck on
+    // the stale data forever, timing this `waitFor` out below.
+    mockPrivateListFlows.mockResolvedValue({
+      data: [{ id: "flow-2", name: "Refreshed" }],
+      pageCount: 1,
+    })
+
+    await act(async () => {
+      await invalidate?.()
+    })
+
+    await vi.waitFor(() => {
+      expect(latestData).toEqual([{ id: "flow-2", name: "Refreshed" }])
     })
   })
 })
