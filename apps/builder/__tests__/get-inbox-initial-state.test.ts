@@ -166,7 +166,11 @@ describe("getInboxInitialState", () => {
     })
     expect(state).not.toHaveProperty("messagesSeed")
     expect(loggerWarnMock).toHaveBeenCalledWith(
-      expect.objectContaining({ err: expect.any(Error) }),
+      expect.objectContaining({
+        err: expect.any(Error),
+        workspaceId: "workspace-1",
+        conversationId: "conversation-1",
+      }),
       "getInboxInitialState: failed to seed messages state",
     )
   })
@@ -221,7 +225,7 @@ describe("getInboxInitialState", () => {
     )
 
     const seed = getInitialState({ workspaceId: "workspace-1" })
-    await vi.advanceTimersByTimeAsync(3000)
+    await vi.advanceTimersByTimeAsync(8000)
 
     await expect(seed).resolves.toBeNull()
     expect(loggerWarnMock).toHaveBeenCalledWith(

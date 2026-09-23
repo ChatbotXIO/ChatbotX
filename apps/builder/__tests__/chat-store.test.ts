@@ -1042,6 +1042,37 @@ describe("chat store inbox seed state", () => {
     })
   })
 
+  test("re-selecting the auto-selected conversation clears the auto-selected flag without resetting the thread", () => {
+    const seededMessage = makeMessage(
+      "conv-seeded",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-seeded", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-seeded",
+      activeConversationAutoSelected: true,
+      messagesSeed: {
+        messages: [seededMessage] as never,
+        nextCursorMessage: "next-message",
+        hasNextMessagePage: true,
+        messagesConversationId: "conv-seeded",
+      },
+      seededContact: { id: "contact-seeded" } as never,
+    })
+
+    store.getState().setActiveConversationId("conv-seeded")
+
+    expect(store.getState()).toMatchObject({
+      activeConversationAutoSelected: false,
+      messages: [seededMessage],
+      nextCursorMessage: "next-message",
+      messagesConversationId: "conv-seeded",
+      seededContact: { id: "contact-seeded" },
+    })
+  })
+
   test("resetState clears reply and post fields", () => {
     const store = createChatStore()
     store.setState({
@@ -1090,6 +1121,38 @@ describe("chat store inbox seed state", () => {
       messagesConversationId: null,
       seededContact: null,
     })
+  })
+
+  test("deleteConversation publishes one consistent state when removing the active conversation", () => {
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-active", new Date("2026-01-01T00:00:00Z")),
+        makeConversation("conv-next", new Date("2026-01-02T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-active",
+    })
+    const notifications: {
+      activeConversationId: string | null
+      conversationIds: string[]
+    }[] = []
+    const unsubscribe = store.subscribe((state) => {
+      notifications.push({
+        activeConversationId: state.activeConversationId,
+        conversationIds: state.conversations.map(
+          (conversation) => conversation.id,
+        ),
+      })
+    })
+
+    store.getState().deleteConversation("conv-active")
+    unsubscribe()
+
+    expect(notifications).toEqual([
+      {
+        activeConversationId: "conv-next",
+        conversationIds: ["conv-next"],
+      },
+    ])
   })
 
   test("deleteConversation leaves the seed fields untouched when it removes a background conversation", () => {

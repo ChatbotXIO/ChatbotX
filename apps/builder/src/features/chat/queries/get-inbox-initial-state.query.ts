@@ -19,15 +19,11 @@ import type { ListConversationItemResource } from "@/features/conversations/sche
 import { listMessages } from "@/features/messages/queries"
 import { logger } from "@/lib/log"
 
-// Balances slow-network tolerance against blocking the page render: past this,
-// the client-side fallback (loadMoreConversations/loadInitialMessages) takes
-// over, so a long wait here only delays the first paint without buying
-// anything the client path can't recover on its own. Each seed call also
-// carries this as an AbortSignal (see `loadInitialState`), but that only
-// aborts the *wait* for it here — the in-flight queries are not cancelled,
-// since none of the procedure handlers read `signal` (this client is
-// `createRouterClient`'s in-process call, not a fetch).
-const INBOX_SEED_TIMEOUT_MS = 3000
+// Bounds the server-side seed wait before the client fallback takes over.
+// In-process oRPC calls continue after this timeout because the signal is not
+// forwarded to or read by procedure handlers. The longer window avoids a
+// duplicate client refetch while a slow server query still runs.
+const INBOX_SEED_TIMEOUT_MS = 8000
 
 /**
  * The three states a URL `conversationId` query param can be in. Kept as a
@@ -55,11 +51,9 @@ const parseUrlConversation = (conversationId?: string): UrlConversation => {
 
 /**
  * Races `promise` against `signal` firing, rejecting with `message` if the
- * signal wins. `signal` is also threaded into every seed call
- * (`loadInitialState`) as their `AbortSignal`, but a lost race only stops
- * this function from waiting on `promise` — it does not cancel the
- * in-flight oRPC calls themselves, which keep running to completion
- * unobserved (no handler in this router reads `signal`).
+ * signal wins. A lost race only stops this function from waiting on `promise`;
+ * it does not cancel in-flight oRPC calls because no handler receives or reads
+ * the signal.
  */
 const withAbortSignal = <T>(
   promise: Promise<T>,
@@ -196,36 +190,61 @@ const loadInitialState = async ({
     )
   }
 
-  const logMessagesSeedFailure = (err: unknown) => {
-    logger.warn(
-      { err, workspaceId, conversationId },
-      "getInboxInitialState: failed to seed messages state",
-    )
-    return {}
-  }
-  const messagesPromise: Promise<ChatStoreInitialState> = (
-    conversationId
-      ? seedMessagesState(workspaceId, conversationId)
-      : activeConversationPromise.then((conversation) =>
-          conversation ? seedMessagesState(workspaceId, conversation.id) : {},
+  const logSeedFailure =
+    (message: string, seedConversationId: string | null) => (err: unknown) => {
+      logger.warn(
+        { err, workspaceId, conversationId: seedConversationId },
+        message,
+      )
+      return {}
+    }
+  const messagesPromise: Promise<ChatStoreInitialState> = conversationId
+    ? seedMessagesState(workspaceId, conversationId).catch(
+        logSeedFailure(
+          "getInboxInitialState: failed to seed messages state",
+          conversationId,
+        ),
+      )
+    : activeConversationPromise
+        .then((conversation) =>
+          conversation
+            ? seedMessagesState(workspaceId, conversation.id).catch(
+                logSeedFailure(
+                  "getInboxInitialState: failed to seed messages state",
+                  conversation.id,
+                ),
+              )
+            : {},
         )
-  ).catch(logMessagesSeedFailure)
+        .catch(
+          logSeedFailure(
+            "getInboxInitialState: failed to seed messages state",
+            null,
+          ),
+        )
 
-  const logContactSeedFailure = (err: unknown) => {
-    logger.warn(
-      { err, workspaceId, conversationId },
-      "getInboxInitialState: failed to seed contact state",
-    )
-    return {}
-  }
   const contactPromise: Promise<ChatStoreInitialState> =
     activeConversationPromise
       .then((conversation) =>
         conversation
-          ? seedContactState(workspaceId, conversation, contactPermissionScope)
+          ? seedContactState(
+              workspaceId,
+              conversation,
+              contactPermissionScope,
+            ).catch(
+              logSeedFailure(
+                "getInboxInitialState: failed to seed contact state",
+                conversation.id,
+              ),
+            )
           : {},
       )
-      .catch(logContactSeedFailure)
+      .catch(
+        logSeedFailure(
+          "getInboxInitialState: failed to seed contact state",
+          null,
+        ),
+      )
 
   const [
     conversationsResult,

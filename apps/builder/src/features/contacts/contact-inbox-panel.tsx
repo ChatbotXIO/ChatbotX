@@ -31,16 +31,18 @@ type AccordionModule = {
 
 const SectionQueryState = ({
   isError,
+  isFetching,
   isPending,
   onRetry,
 }: {
   isError: boolean
+  isFetching: boolean
   isPending: boolean
   onRetry: () => Promise<unknown>
 }) => {
   const t = useTranslations()
 
-  if (isPending) {
+  if (isPending || isFetching) {
     return (
       <div className="flex justify-center px-2 py-4">
         <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
@@ -245,12 +247,14 @@ function ContactNotesSection({
     orpc.contactNotesAPI.listContactNotesAuthenticatedAPI.queryOptions({
       input: { workspaceId, contactId },
     })
-  const { data, isError, isPending, refetch } = useQuery(queryOptions)
+  const { data, isError, isFetching, isPending, refetch } =
+    useQuery(queryOptions)
 
   if (isPending || isError) {
     return (
       <SectionQueryState
         isError={isError}
+        isFetching={isFetching}
         isPending={isPending}
         onRetry={() => refetch()}
       />
@@ -281,7 +285,8 @@ function ContactSequencesSection({
     orpc.contactSequencesAPI.listContactSequencesAuthenticatedAPI.queryOptions({
       input: { workspaceId, contactId },
     })
-  const { data, isError, isPending, refetch } = useQuery(queryOptions)
+  const { data, isError, isFetching, isPending, refetch } =
+    useQuery(queryOptions)
   const sequences: ContactSequence[] = useMemo(
     () =>
       (data?.data ?? []).map((sequence) => ({
@@ -297,6 +302,7 @@ function ContactSequencesSection({
     return (
       <SectionQueryState
         isError={isError}
+        isFetching={isFetching}
         isPending={isPending}
         onRetry={() => refetch()}
       />
@@ -333,6 +339,7 @@ function ContactCouponsSection({
   const {
     data: coupons = [],
     isError,
+    isFetching,
     isPending,
     refetch,
   } = useQuery(queryOptions)
@@ -341,6 +348,7 @@ function ContactCouponsSection({
     return (
       <SectionQueryState
         isError={isError}
+        isFetching={isFetching}
         isPending={isPending}
         onRetry={() => refetch()}
       />
@@ -384,6 +392,7 @@ function ContactAppointmentsSection({
   const {
     data: appointments = [],
     isError,
+    isFetching,
     isPending,
     refetch,
   } = useQuery(queryOptions)
@@ -392,6 +401,7 @@ function ContactAppointmentsSection({
     return (
       <SectionQueryState
         isError={isError}
+        isFetching={isFetching}
         isPending={isPending}
         onRetry={() => refetch()}
       />

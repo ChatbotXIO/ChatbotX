@@ -581,12 +581,20 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
     },
 
     setActiveConversationId: (activeConversationId: string | null) => {
-      const { activeConversationId: oldActiveConversationId } = get()
+      const {
+        activeConversationId: oldActiveConversationId,
+        activeConversationAutoSelected,
+      } = get()
       if (oldActiveConversationId !== activeConversationId) {
         set({
           activeConversationId,
           ...messageThreadDefaults(),
         })
+        return
+      }
+
+      if (activeConversationAutoSelected) {
+        set({ activeConversationAutoSelected: false })
       }
     },
 
@@ -595,17 +603,16 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       const updatedConversations = conversations.filter(
         (c) => c.id !== conversationId,
       )
-      let newActiveConversationId = activeConversationId
-      if (activeConversationId === conversationId) {
-        newActiveConversationId =
-          updatedConversations.length > 0 ? updatedConversations[0].id : null
+      if (activeConversationId !== conversationId) {
+        set({ conversations: updatedConversations })
+        return
       }
+
       set({
         conversations: updatedConversations,
+        activeConversationId: updatedConversations[0]?.id ?? null,
+        ...messageThreadDefaults(),
       })
-      if (activeConversationId !== newActiveConversationId) {
-        get().setActiveConversationId(newActiveConversationId)
-      }
     },
 
     readConversation: (conversationId: string) => {

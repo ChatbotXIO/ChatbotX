@@ -427,10 +427,14 @@ describe("ContactInboxPanel", () => {
     })
   })
 
-  test("shows a retry control for a failed section query", async () => {
+  test("disables retry and shows progress while refetching a failed section query", async () => {
     seededContact = makeContact("contact-1", "Jane")
     couponsMock.mockRejectedValueOnce(new Error("network error"))
-    couponsMock.mockResolvedValueOnce([])
+    const { promise, resolve } =
+      Promise.withResolvers<
+        { id: string; topicName: string; code: string; usedAt: Date | null }[]
+      >()
+    couponsMock.mockReturnValueOnce(promise)
 
     render()
     act(() => {
@@ -444,8 +448,28 @@ describe("ContactInboxPanel", () => {
     const retryButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "actions.retry",
     )
-    act(() => {
+    await act(async () => {
       retryButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        queryClient.getQueryState(["contact-coupons", "ws-1", "contact-1"])
+          ?.fetchStatus,
+      ).toBe("fetching")
+    })
+    const { promise: renderFlush, resolve: resolveRenderFlush } =
+      Promise.withResolvers<void>()
+    setTimeout(resolveRenderFlush, 0)
+    await act(() => renderFlush)
+
+    expect(container.querySelector("svg.animate-spin")).not.toBeNull()
+    expect(container.textContent).not.toContain("actions.retry")
+
+    await act(async () => {
+      resolve([])
+      await promise
     })
 
     await vi.waitFor(() => {
