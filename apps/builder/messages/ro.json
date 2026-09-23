@@ -3264,6 +3264,8 @@
     "resetConfirmation": "Aceasta va goli valorile {feature} selectate.\nAceastă acțiune nu poate fi anulată.",
     "resetAllConfirmation": "Aceasta va goli valorile tuturor {feature} ale acestui contact.\nAceastă acțiune nu poate fi anulată.",
     "resetSuccess": "{feature} resetat cu succes",
+    "clearFeature": "Șterge {feature}",
+    "clearSuccess": "{feature} șters cu succes",
     "deleteConfirmation": "Ești absolut sigur?\nAceastă acțiune nu poate fi anulată.\nAceasta va șterge definitiv {feature} de pe serverele noastre.",
     "addFeature": "Adaugă {feature}",
     "signOutConfirmation": "Ești sigur că vrei să te deconectezi?",

@@ -3264,6 +3264,8 @@
     "resetConfirmation": "Tindakan ini akan mengosongkan nilai {feature} yang dipilih.\nTindakan ini tidak dapat dibatalkan.",
     "resetAllConfirmation": "Tindakan ini akan mengosongkan nilai semua {feature} dari kontak ini.\nTindakan ini tidak dapat dibatalkan.",
     "resetSuccess": "{feature} berhasil diatur ulang",
+    "clearFeature": "Kosongkan {feature}",
+    "clearSuccess": "{feature} berhasil dikosongkan",
     "deleteConfirmation": "Apakah Anda benar-benar yakin?\nTindakan ini tidak dapat dibatalkan.\nTindakan ini akan menghapus {feature} Anda secara permanen dari server kami.",
     "addFeature": "Tambah {feature}",
     "signOutConfirmation": "Apakah Anda yakin ingin keluar?",

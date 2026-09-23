@@ -39,7 +39,7 @@ export function ResetContactCustomFieldsDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.resetSuccess", {
+          t("messages.clearSuccess", {
             feature: t("fields.customField.groupCustomFields"),
           }),
         )
@@ -65,14 +65,14 @@ export function ResetContactCustomFieldsDialog({
             variant="link"
           >
             <ListRestartIcon />
-            {t("actions.reset")}
+            {t("actions.clear")}
           </Button>
         }
       />
       <DialogContent className="max-h-screen max-w-xl overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>
-            {t("messages.resetFeature", {
+            {t("messages.clearFeature", {
               feature: t("fields.customField.groupCustomFields"),
             })}
           </DialogTitle>
@@ -91,7 +91,7 @@ export function ResetContactCustomFieldsDialog({
             }
           />
           <Button
-            aria-label={t("actions.reset")}
+            aria-label={t("actions.clear")}
             disabled={isPending}
             onClick={() => execute({ contactId })}
             size="sm"
@@ -101,7 +101,7 @@ export function ResetContactCustomFieldsDialog({
             {isPending && (
               <Loader aria-hidden="true" className="me-2 size-4 animate-spin" />
             )}
-            {t("actions.reset")}
+            {t("actions.clear")}
           </Button>
         </DialogFooter>
       </DialogContent>

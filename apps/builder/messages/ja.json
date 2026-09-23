@@ -3243,6 +3243,8 @@
     "resetConfirmation": "選択した{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
     "resetAllConfirmation": "この連絡先のすべての{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
     "resetSuccess": "{feature}をリセットしました",
+    "clearFeature": "{feature}をクリア",
+    "clearSuccess": "{feature}をクリアしました",
     "deleteConfirmation": "本当によろしいですか？\nこの操作は元に戻せません。\n{feature}はサーバーから完全に削除されます。",
     "addFeature": "{feature}を追加",
     "signOutConfirmation": "サインアウトしてもよろしいですか？",

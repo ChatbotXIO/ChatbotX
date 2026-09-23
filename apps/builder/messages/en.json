@@ -3452,6 +3452,8 @@
     "resetConfirmation": "This will clear the values of the selected {feature} back to empty.\nThis action cannot be undone.",
     "resetAllConfirmation": "This will clear the values of all {feature} of this contact back to empty.\nThis action cannot be undone.",
     "resetSuccess": "{feature} reset successfully",
+    "clearFeature": "Clear {feature}",
+    "clearSuccess": "{feature} cleared successfully",
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "addFeature": "Add {feature}",
     "signOutConfirmation": "Are you sure you want to sign out?",
