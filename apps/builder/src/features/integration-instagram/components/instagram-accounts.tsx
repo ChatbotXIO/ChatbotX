@@ -22,6 +22,7 @@ import {
   INSTAGRAM_DIRECT_CONNECT_ROUTE,
 } from "@/features/channel-connect/lib/registry"
 import { connectActionResultSchemaDefault } from "@/features/channel-connect/schema"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 
 /**
  * Instagram direct-login connect (plan §3.3): a single account, so it always
@@ -38,6 +39,7 @@ export function InstagramAccounts({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
   // The same two per-row opt-ins the multi-select picker renders, for the one
   // account this screen ever shows.
   const [syncHistory, setSyncHistory] = useState(false)
@@ -60,6 +62,7 @@ export function InstagramAccounts({
     channel: "instagram",
     connectOne,
     onFinished: () => {
+      invalidateInboxes()
       router.push(settingsHref)
     },
     resolveCoexistWorkspaceId: () => workspaceId,

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
+import { useInvalidateCustomFields } from "./provider/custom-field-hook"
 import type { CustomFieldResource } from "./schema/resource"
 
 type CustomFieldsTableToolbarActionsProps = {
@@ -20,6 +21,7 @@ export function CustomFieldsTableToolbarActions({
   // setRowAction,
 }: CustomFieldsTableToolbarActionsProps) {
   const t = useTranslations()
+  const invalidateCustomFields = useInvalidateCustomFields()
   const [openChangeFolder, setOpenChangeFolder] = useState(false)
 
   return (
@@ -40,6 +42,10 @@ export function CustomFieldsTableToolbarActions({
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original.id)}
             onOpenChange={setOpenChangeFolder}
+            onSuccess={() => {
+              table.toggleAllRowsSelected(false)
+              invalidateCustomFields()
+            }}
             open={openChangeFolder}
             trigger={
               <Button type="button" variant="outline">

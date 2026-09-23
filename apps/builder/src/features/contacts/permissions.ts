@@ -1,4 +1,7 @@
-import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  ChatbotXException,
+  notFoundException,
+} from "@chatbotx.io/business/errors"
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import {
   hasContactsAccess,
@@ -61,6 +64,10 @@ export function buildContactPermissionScope({
   }
 }
 
+/**
+ * Gate for private per-contact reads; null scope is not-found so contact
+ * existence is never exposed.
+ */
 export function requireContactPermissionScopeForMember({
   permissions,
   userId,
@@ -70,12 +77,11 @@ export function requireContactPermissionScopeForMember({
 }): ContactPermissionScope {
   const scope = buildContactPermissionScope({ permissions, userId })
   if (!scope) {
-    throw new ChatbotXException("User is not authorized to access contacts")
+    throw notFoundException("Contact not found")
   }
 
   return scope
 }
-
 export async function resolveContactPermissionScope(
   workspaceId: string,
 ): Promise<ContactPermissionScope | null> {

@@ -18,8 +18,13 @@ type ListContactAppointmentsResult = {
 }[]
 
 type WorkspaceMapper = (input: ListContactAppointmentsInput) => string
+type HandlerContext = {
+  workspaceMember: { permissions: Record<string, unknown> }
+  user: { id: string }
+}
 type ProcedureHandler = (args: {
   input: ListContactAppointmentsInput
+  context: HandlerContext
 }) => Promise<ListContactAppointmentsResult>
 
 const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
@@ -53,6 +58,7 @@ const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
       authorizedAPI: procedure,
       mocks: {
         listContactAppointments: vi.fn(),
+        requireContactPermissionScopeForMember: vi.fn(),
         state,
       },
       workspaceAuthorizedMidddleware: vi.fn(),
@@ -68,12 +74,19 @@ vi.mock("@/middlewares/auth", () => ({
   workspaceAuthorizedMidddleware,
 }))
 
+vi.mock("@/features/contacts/permissions", () => ({
+  requireContactPermissionScopeForMember:
+    mocks.requireContactPermissionScopeForMember,
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: {
     listContactAppointments: mocks.listContactAppointments,
   },
 }))
 
+// The handler loads after mocks because a static import resolves real server
+// dependencies before Vitest can install the test substitutes.
 const { appointmentsAuthenticatedAPI } = await import(
   "@/features/appointments/api/private"
 )
@@ -99,7 +112,11 @@ describe("listContactAppointmentsAPI", () => {
     expect(mocks.state.handler).toBeDefined()
   })
 
-  test("calls appointmentService.listContactAppointments with validated input", async () => {
+  test("passes the member contact scope to appointmentService", async () => {
+    mocks.requireContactPermissionScopeForMember.mockReturnValueOnce({
+      canViewEmailAndPhone: false,
+      restrictToAssignedUserId: undefined,
+    })
     mocks.listContactAppointments.mockResolvedValueOnce([
       { id: "appointment-1", calendarName: "Discovery" },
     ])
@@ -107,12 +124,17 @@ describe("listContactAppointmentsAPI", () => {
     await expect(
       mocks.state.handler?.({
         input: { workspaceId: "workspace-1", contactId: "contact-1" },
+        context: {
+          workspaceMember: { permissions: { contacts: true } },
+          user: { id: "user-1" },
+        },
       }),
     ).resolves.toEqual([{ id: "appointment-1", calendarName: "Discovery" }])
 
     expect(mocks.listContactAppointments).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactId: "contact-1",
+      accessScope: { restrictToAssignedUserId: undefined },
     })
   })
 })

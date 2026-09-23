@@ -23,7 +23,7 @@ export const contactSequencesAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listContactSequencesPublicResponse)
     .handler(async ({ input, context }) => {
-      const accessScope = requireContactPermissionScopeForMember({
+      const scope = requireContactPermissionScopeForMember({
         permissions: context.workspaceMember.permissions,
         userId: context.user.id,
       })
@@ -33,7 +33,7 @@ export const contactSequencesAuthenticatedAPI = {
           workspaceId: input.workspaceId,
           contactId: input.contactId,
           accessScope: {
-            restrictToAssignedUserId: accessScope.restrictToAssignedUserId,
+            restrictToAssignedUserId: scope.restrictToAssignedUserId,
           },
         }),
       }

@@ -7,6 +7,7 @@ import { couponRepository } from "@chatbotx.io/database/repositories"
 import { workspaceModel } from "@chatbotx.io/database/schema"
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 import { BaseService } from "../base.service"
+import { type ContactAccessScope, contactService } from "../contact/service"
 import { ChatbotXException, notFoundException } from "../errors"
 
 export type CouponImportBatchResult = {
@@ -418,7 +419,18 @@ class CouponService extends BaseService {
   async listIssuedCouponsForContact(input: {
     workspaceId: string
     contactId: string
+    accessScope?: ContactAccessScope
   }) {
+    // Repositories already scope by workspace; only restricted members need a
+    // parent-contact lookup to enforce their assigned-contact access.
+    if (input.accessScope?.restrictToAssignedUserId) {
+      await contactService.findByIdOrFail({
+        workspaceId: input.workspaceId,
+        id: input.contactId,
+        accessScope: input.accessScope,
+      })
+    }
+
     return await couponRepository.listIssuedCouponsForContact(input)
   }
 

@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import { authClient } from "@/lib/auth/auth-client"
 import { deleteWorkspaceMemberAction } from "../actions/delete-workspace-member.action"
 import type { WorkspaceMemberResource } from "../schema/resource"
@@ -29,6 +30,7 @@ export function DeleteWorkspaceMemberDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateUsers = useInvalidateUsers()
   const { data: session } = authClient.useSession()
 
   const { execute, isPending } = useAction(
@@ -39,6 +41,7 @@ export function DeleteWorkspaceMemberDialog({
     ),
     {
       onSuccess: () => {
+        invalidateUsers()
         onOpenChange(false)
         if (workspaceMember?.userId === session?.user?.id) {
           router.push("/")

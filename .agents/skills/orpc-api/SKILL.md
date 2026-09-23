@@ -430,6 +430,10 @@ const queryClient = useQueryClient()
 queryClient.invalidateQueries({ queryKey: orpc.myFeatureAPI.key() })
 ```
 
+`router.refresh()` alone is insufficient: it re-renders the RSC tree but does
+not invalidate the browser TanStack Query cache, so call the invalidator in
+every successful mutation handler.
+
 ### Imperative calls (event handlers, non-React code)
 
 ```typescript

@@ -48,6 +48,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import PersistentMenuField from "../integration-webchat/components/persistent-menu-field"
 import { updateMessengerAction } from "./actions/update-messenger-action"
 import { TagSyncCard } from "./components/tag-sync-card"
@@ -64,6 +65,7 @@ export function UpdateMessengerForm({
 }: UpdateMessengerFormProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
 
   const flowOptions = useFlowSelectOptions()
 
@@ -82,6 +84,7 @@ export function UpdateMessengerForm({
               feature: t("fields.messenger.label"),
             }),
           )
+          invalidateInboxes()
           router.push(`/space/${workspaceId}/settings/channels/messenger`)
         },
         onError: ({ error }) => {

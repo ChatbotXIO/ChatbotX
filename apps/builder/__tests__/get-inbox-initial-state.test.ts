@@ -132,6 +132,27 @@ describe("getInboxInitialState", () => {
     )
   })
 
+  test("does not auto-select a conversation when the URL conversationId is unparseable", async () => {
+    mockSeedRequests()
+
+    const state = await getInitialState({
+      workspaceId: "workspace-1",
+      conversationId: "not-a-bigint",
+    })
+
+    expect(mockFindConversation).not.toHaveBeenCalled()
+    expect(mockListMessages).not.toHaveBeenCalled()
+    expect(mockGetContact).not.toHaveBeenCalled()
+    expect(state).toMatchObject({
+      activeConversationAutoSelected: false,
+      activeConversationId: null,
+      conversations: [makeConversation("conversation-1")],
+    })
+    expect(state?.messages).toBeUndefined()
+    expect(state?.messagesConversationId).toBeUndefined()
+    expect(state?.seededContact).toBeUndefined()
+  })
+
   test("returns the remaining seed when loading messages rejects", async () => {
     mockSeedRequests()
     mockListMessages.mockRejectedValue(new Error("messages failed"))

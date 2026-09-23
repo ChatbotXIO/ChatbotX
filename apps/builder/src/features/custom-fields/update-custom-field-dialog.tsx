@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { useInvalidateCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
 import { updateCustomFieldAction } from "./actions/update-custom-field.action"
 import { updateCustomFieldRequest } from "./schema/action"
 import type { CustomFieldResource } from "./schema/resource"
@@ -35,6 +36,7 @@ export function UpdateCustomFieldDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateCustomFields = useInvalidateCustomFields()
 
   const {
     form,
@@ -56,6 +58,7 @@ export function UpdateCustomFieldDialog({
           onOpenChange(false)
           resetFormAndAction()
           router.refresh()
+          invalidateCustomFields()
         },
         onError: ({ error }) => {
           if (error.serverError) {

@@ -112,10 +112,12 @@ const loadInitialState = async ({
   workspaceId,
   conversationId,
   contactPermissionScope,
+  hasUrlConversationId,
 }: {
   workspaceId: string
   conversationId?: string
   contactPermissionScope: ContactPermissionScope
+  hasUrlConversationId: boolean
 }): Promise<ChatStoreInitialState | null> => {
   const conversationsPromise = listConversations(
     {
@@ -133,23 +135,26 @@ const loadInitialState = async ({
         id: conversationId,
       })
     : null
-  const activeConversationPromise = findConversationPromise
-    ? findConversationPromise.then((result) => result.data)
-    : conversationsPromise.then(({ data }) => data[0] ?? null)
+  let activeConversationPromise: Promise<ListConversationItemResource | null>
+  if (findConversationPromise) {
+    activeConversationPromise = findConversationPromise.then(
+      (result) => result.data,
+    )
+  } else if (hasUrlConversationId) {
+    activeConversationPromise = Promise.resolve(null)
+  } else {
+    activeConversationPromise = conversationsPromise.then(
+      ({ data }) => data[0] ?? null,
+    )
+  }
   const messagesPromise = conversationId
     ? seedMessagesState(workspaceId, conversationId)
-    : activeConversationPromise.then((activeConversation) =>
-        activeConversation
-          ? seedMessagesState(workspaceId, activeConversation.id)
-          : {},
+    : activeConversationPromise.then((conversation) =>
+        conversation ? seedMessagesState(workspaceId, conversation.id) : {},
       )
-  const contactPromise = activeConversationPromise.then((activeConversation) =>
-    activeConversation
-      ? seedContactState(
-          workspaceId,
-          activeConversation,
-          contactPermissionScope,
-        )
+  const contactPromise = activeConversationPromise.then((conversation) =>
+    conversation
+      ? seedContactState(workspaceId, conversation, contactPermissionScope)
       : {},
   )
 
@@ -185,14 +190,16 @@ const loadInitialState = async ({
       activeConversation = conversationResult.value?.data ?? null
     }
   } else {
-    activeConversation = listedConversations[0] ?? null
+    activeConversation = hasUrlConversationId
+      ? null
+      : (listedConversations[0] ?? null)
   }
 
   return shapeInitialState({
     listedConversations,
     nextCursor,
     activeConversation,
-    isUrlConversation: Boolean(conversationId),
+    isUrlConversation: hasUrlConversationId,
     messagesResult,
     contactResult,
   })
@@ -219,6 +226,7 @@ export const getInboxInitialState = async ({
           ? parsedConversationId.data
           : undefined,
         contactPermissionScope,
+        hasUrlConversationId: Boolean(conversationId),
       }),
       INBOX_SEED_TIMEOUT_MS,
       "Inbox initial state seed timed out",

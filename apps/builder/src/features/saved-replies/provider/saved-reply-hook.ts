@@ -34,17 +34,20 @@ export const useSavedReplyCache = (workspaceId: string | undefined) => {
   const upsert = useCallback(
     (savedReply: SavedReplyResource) => {
       queryClient.setQueryData<ListSavedReplyResponse>(queryKey, (response) => {
-        const savedReplies = response?.data ?? []
-        const existingIndex = savedReplies.findIndex(
+        if (!response) {
+          return response
+        }
+
+        const existingIndex = response.data.findIndex(
           (item) => item.id === savedReply.id,
         )
 
         if (existingIndex === -1) {
-          return { data: [savedReply, ...savedReplies] }
+          return { data: [savedReply, ...response.data] }
         }
 
         return {
-          data: savedReplies.map((item) =>
+          data: response.data.map((item) =>
             item.id === savedReply.id ? savedReply : item,
           ),
         }
@@ -55,12 +58,13 @@ export const useSavedReplyCache = (workspaceId: string | undefined) => {
 
   const remove = useCallback(
     (id: string) => {
-      queryClient.setQueryData<ListSavedReplyResponse>(
-        queryKey,
-        (response) => ({
-          data: (response?.data ?? []).filter((item) => item.id !== id),
-        }),
-      )
+      queryClient.setQueryData<ListSavedReplyResponse>(queryKey, (response) => {
+        if (!response) {
+          return response
+        }
+
+        return { data: response.data.filter((item) => item.id !== id) }
+      })
     },
     [queryClient, queryKey],
   )

@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
+import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
 import { deleteTagAction } from "./actions/delete-tag-action"
 
 type DeleteTagsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
@@ -39,6 +40,7 @@ export function DeleteTagsDialog({
 }: DeleteTagsDialogProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateTags = useInvalidateTags()
 
   const { execute, isPending } = useAction(
     deleteTagAction.bind(null, workspaceId),
@@ -52,6 +54,7 @@ export function DeleteTagsDialog({
         onSuccess?.()
         onOpenChange?.(false)
         router.refresh()
+        invalidateTags()
       },
       onError: ({ error }) => {
         if (error.serverError) {

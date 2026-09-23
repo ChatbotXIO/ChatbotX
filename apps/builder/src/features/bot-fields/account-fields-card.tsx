@@ -43,6 +43,7 @@ import { use, useEffect, useMemo, useState } from "react"
 import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import CustomFieldTypeLabel from "../custom-fields/components/custom-field-label"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
+import { useInvalidateBotFields } from "../custom-fields/provider/custom-field-hook"
 import { CreateBotFieldDialog } from "./create-bot-field-dialog"
 import { DeleteBotFieldsDialog } from "./delete-bot-fields-dialog"
 import type { listBotFieldsRSC } from "./queries"
@@ -128,6 +129,7 @@ export function AccountFieldsCard({
   const t = useTranslations()
   const router = useRouter()
   const [{ data }] = use(promises)
+  const invalidateBotFields = useInvalidateBotFields()
 
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -195,6 +197,7 @@ export function AccountFieldsCard({
   }
 
   const handleRefresh = () => {
+    invalidateBotFields()
     router.refresh()
   }
 

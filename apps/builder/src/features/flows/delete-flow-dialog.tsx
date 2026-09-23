@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
+import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { deleteFlowAction } from "./actions/delete-flow.action"
 
 type DeleteFlowsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
@@ -37,6 +38,7 @@ export function DeleteFlowsDialog({
   ...props
 }: DeleteFlowsDialogProps) {
   const t = useTranslations()
+  const invalidateFlows = useInvalidateFlows()
 
   const { execute, isPending } = useAction(
     deleteFlowAction.bind(null, workspaceId),
@@ -47,6 +49,7 @@ export function DeleteFlowsDialog({
             feature: t("fields.flow.label"),
           }),
         )
+        invalidateFlows()
         onOpenChange(false)
         onSuccess?.()
       },

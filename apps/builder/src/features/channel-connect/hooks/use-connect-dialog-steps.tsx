@@ -4,6 +4,7 @@ import { DialogFooter } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
 import type { ReactNode, RefObject } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import {
   ConnectingStepBody,
   ConnectingStepFooter,
@@ -299,6 +300,7 @@ export function useConnectDialogSteps<TItem extends ConnectPickerItem>({
   resolveCoexistWorkspaceId,
 }: UseConnectDialogStepsOptions<TItem>) {
   const t = useTranslations()
+  const invalidateInboxes = useInvalidateInboxes()
   const afterConnect = useCoexistAfterConnect<TItem>({
     channel,
     resolveCoexistWorkspaceId,
@@ -317,6 +319,12 @@ export function useConnectDialogSteps<TItem extends ConnectPickerItem>({
   // already implies the batch has started — no need to also read the
   // mount-guard ref during render.
   const finished = !batch.isRunning && batch.done > 0
+
+  useEffect(() => {
+    if (finished && batch.connectedCount > 0) {
+      invalidateInboxes()
+    }
+  }, [finished, batch.connectedCount, invalidateInboxes])
   // `batch.outcomes` is itself one stable array per settle (useConnectBatch
   // memoizes it), so this derivation needs no memo of its own to avoid a
   // fresh identity on every unrelated re-render.

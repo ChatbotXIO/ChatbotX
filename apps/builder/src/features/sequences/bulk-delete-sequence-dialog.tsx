@@ -15,6 +15,7 @@ import { Trash } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
+import { useInvalidateSequences } from "@/features/sequences/provider/sequence-hook"
 import { deleteSequenceAction } from "./actions/delete-sequence.action"
 import type { SequenceResource } from "./schema/resource"
 
@@ -33,6 +34,7 @@ export function BulkDeleteSequenceDialog({
   ...props
 }: BulkDeleteSequenceDialogProps) {
   const t = useTranslations()
+  const invalidateSequences = useInvalidateSequences()
 
   const handleBulkDelete = async () => {
     try {
@@ -41,6 +43,7 @@ export function BulkDeleteSequenceDialog({
           deleteSequenceAction(sequence.workspaceId, sequence.id),
         ),
       )
+      invalidateSequences()
       toast.success(
         t("messages.deletedSuccess", {
           feature: t("fields.sequences.label"),
