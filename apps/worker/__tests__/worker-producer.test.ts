@@ -32,7 +32,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config/message-queue/factory", () => ({
-  createProducer: vi.fn().mockResolvedValue({
+  createProducer: vi.fn().mockReturnValue({
     close: vi.fn(),
     send: producerSendSpy,
   }),
@@ -72,9 +72,9 @@ describe("SchedulerWorker.publishDispatches", () => {
     const worker = new SchedulerWorker({ buckets: [0] })
     attachProducer(worker)
 
-    await worker.publishDispatches([
-      { dispatchId: "dispatch-1", bucket: 7 },
-      { dispatchId: "dispatch-2", bucket: 8 },
+    await worker.publishDispatches(7, [
+      { dispatchId: "dispatch-1" },
+      { dispatchId: "dispatch-2" },
     ])
 
     expect(findManySpy).toHaveBeenCalledWith({
@@ -96,7 +96,7 @@ describe("SchedulerWorker.publishDispatches", () => {
         workspaceId: "workspace-1",
       }),
       expect.objectContaining({
-        bucket: 8,
+        bucket: 7,
         dispatchId: "dispatch-2",
         workspaceId: "workspace-2",
       }),
@@ -108,9 +108,9 @@ describe("SchedulerWorker.publishDispatches", () => {
     const worker = new SchedulerWorker({ buckets: [0] })
     attachProducer(worker)
 
-    await worker.publishDispatches([
-      { dispatchId: "dispatch-1", bucket: 7 },
-      { dispatchId: "missing-dispatch", bucket: 7 },
+    await worker.publishDispatches(7, [
+      { dispatchId: "dispatch-1" },
+      { dispatchId: "missing-dispatch" },
     ])
 
     const messages = producerSendSpy.mock.calls[0]?.[0] as Array<{
