@@ -341,4 +341,187 @@ describe("handleCallTool", () => {
     })
     expect(executeFetch).not.toHaveBeenCalled()
   })
+
+  test("accepts a dotted operation-style name by normalizing it", async () => {
+    const specFetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        specWithTools([{ name: "contacts.get", summary: "Get contact" }]),
+      )
+    const executeFetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      headers: {
+        get: (name: string) =>
+          name === "content-type" ? "application/json" : null,
+      },
+      json: async () => ({ id: 1 }),
+    })
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementationOnce(specFetch)
+      .mockImplementationOnce(executeFetch) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleCallTool } = await import("../src/server/meta-tools")
+
+    const result = await handleCallTool(
+      { name: "contacts.get", arguments: { identifier: "id:1" } },
+      "api-key",
+    )
+    expect(result.isError).toBeUndefined()
+  })
+
+  test("suggests close matches for an unknown tool name", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        specWithTools([{ name: "contacts.get", summary: "Get contact" }]),
+      ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleCallTool } = await import("../src/server/meta-tools")
+
+    const result = await handleCallTool({ name: "contact_get" }, "api-key")
+    expect(result.isError).toBe(true)
+    expect(result.content[0]?.text).toContain("Closest matches")
+    expect(result.content[0]?.text).toContain("contacts_get")
+  })
+
+  test("rejects a call missing a required argument before making a request", async () => {
+    const specFetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/contacts/{identifier}/tags": {
+            post: {
+              operationId: "contacts.addTagsByName",
+              summary: "Add tags to contact",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        identifier: { type: "string" },
+                        tags: { type: "array", items: { type: "string" } },
+                      },
+                      required: ["identifier", "tags"],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+    })
+    const executeFetch = vi.fn()
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementationOnce(specFetch)
+      .mockImplementationOnce(executeFetch) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleCallTool } = await import("../src/server/meta-tools")
+
+    const result = await handleCallTool(
+      {
+        name: "contacts_add_tags_by_name",
+        arguments: { identifier: "id:1" },
+      },
+      "api-key",
+    )
+
+    expect(result.isError).toBe(true)
+    expect(result.content[0]?.text).toContain("tags")
+    expect(executeFetch).not.toHaveBeenCalled()
+  })
+
+  test("flags a body/params/input wrapper instead of top-level fields", async () => {
+    const specFetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/tags": {
+            post: {
+              operationId: "tags.create",
+              summary: "Create tag",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: { name: { type: "string" } },
+                      required: ["name"],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+    })
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementationOnce(specFetch) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleCallTool } = await import("../src/server/meta-tools")
+
+    const result = await handleCallTool(
+      { name: "tags_create", arguments: { body: { name: "VIP" } } },
+      "api-key",
+    )
+
+    expect(result.isError).toBe(true)
+    expect(result.content[0]?.text).toContain("wrapper")
+  })
+})
+
+describe("handleSearchTools empty result", () => {
+  const originalFetch = globalThis.fetch
+
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  test("returns a hint with resource groups instead of an empty array", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/contacts": {
+            get: {
+              operationId: "contacts.list",
+              summary: "List contacts",
+              tags: ["Contacts"],
+            },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleSearchTools } = await import("../src/server/meta-tools")
+
+    const result = handleSearchTools({ query: "launch spaceship" })
+    const parsed = JSON.parse(result.content[0]?.text ?? "{}")
+    expect(parsed.matches).toEqual([])
+    expect(parsed.hint).toContain("Contacts")
+  })
 })

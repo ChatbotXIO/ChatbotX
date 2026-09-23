@@ -4,6 +4,64 @@ import type { DynamicTool } from "../openapi-loader"
 
 const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
+const EMAIL_PATTERN = /^[\w.+-]+@[\w-]+\.[\w.]+$/u
+const PHONE_PATTERN = /^\+\d{6,}$/u
+const NUMERIC_ID_PATTERN = /^\d+$/u
+const PREFIXED_IDENTIFIER_PATTERN = /^(id|email|phone):/u
+
+/**
+ * Contact-facing tools accept a prefixed identifier (`id:123`,
+ * `email:ada@example.com`, `phone:+841234567890`) — see
+ * `apps/builder/src/features/contacts/api/public/tags.ts` and siblings.
+ * An agent (especially a cheaper model) very often passes the bare value
+ * instead, which the API then rejects with a 422 the eval harness scores
+ * as a hard failure. The shape is unambiguous — an email has an `@`, a
+ * phone number starts with `+` and is otherwise all digits, a bare
+ * numeric string is an id — so auto-prefixing here removes a whole class
+ * of preventable failures without guessing at anything semantically
+ * unclear. A value that already carries a recognized prefix, or matches
+ * none of the three shapes (e.g. a display name), is passed through
+ * unchanged so the API's real validation error still surfaces.
+ */
+function withNormalizedIdentifier(value: unknown): unknown {
+  if (typeof value !== "string") {
+    return value
+  }
+  if (PREFIXED_IDENTIFIER_PATTERN.test(value)) {
+    return value
+  }
+  if (EMAIL_PATTERN.test(value)) {
+    return `email:${value}`
+  }
+  if (PHONE_PATTERN.test(value)) {
+    return `phone:${value}`
+  }
+  if (NUMERIC_ID_PATTERN.test(value)) {
+    return `id:${value}`
+  }
+  return value
+}
+
+/**
+ * Applies `withNormalizedIdentifier` to every argument literally named
+ * `identifier` — the consistent parameter name every contact-identifier
+ * tool uses, in both path params (`contacts.get`) and body fields
+ * (`contacts.addTagsByName`). Every other argument passes through
+ * untouched; this never rewrites ids, emails, or phone numbers under a
+ * different key.
+ */
+export function normalizeToolArguments(
+  args: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!("identifier" in args)) {
+    return args
+  }
+  return {
+    ...args,
+    identifier: withNormalizedIdentifier(args.identifier),
+  }
+}
+
 const appendQueryParam = (
   params: URLSearchParams,
   key: string,
@@ -57,9 +115,10 @@ export const jsonResult = (value: unknown): ToolCallResult => ({
  */
 export async function executeTool(
   tool: DynamicTool,
-  args: Record<string, unknown>,
+  rawArgs: Record<string, unknown>,
   apiKey: string,
 ): Promise<ToolCallResult> {
+  const args = normalizeToolArguments(rawArgs)
   let path = tool.pathTemplate
 
   for (const paramName of tool.pathParamNames) {

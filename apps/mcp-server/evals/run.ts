@@ -22,9 +22,12 @@ import {
 } from "./cases"
 import { createSandbox, type HttpTrace } from "./sandbox"
 
+type ExposurePlan = "default" | "meta-only" | "both"
+
 type CliOptions = {
   caseIds?: string[]
   compare?: [string, string]
+  exposure: ExposurePlan
   models: string[]
   out?: string
   phase?: "baseline" | "candidate" | "smoke"
@@ -41,10 +44,13 @@ type McpTool = {
 
 type ModelToolCall = {
   arguments: Record<string, unknown>
+  isError?: boolean
   name: string
+  result?: unknown
 }
 
 type Episode = {
+  callToolErrorCount: number
   case: EvalCase
   elapsedMs: number
   exposure: ExposureMode
@@ -55,6 +61,8 @@ type Episode = {
   model: string
   modelTools: ModelToolCall[]
   providerError?: string
+  searchRank: number | null
+  unknownToolCount: number
   usage?: unknown
 }
 
@@ -71,12 +79,16 @@ type Manifest = {
 }
 
 const usage =
-  "Usage:\n  pnpm --filter chatbotx-mcp eval:business --spec <absolute-json-path> --out <absolute-directory> --phase baseline|candidate|smoke --seed 20260923 --models gpt-4o-mini,gpt-4.1-mini [--cases family-a,family-b] [--server-source <absolute-directory>]\n  pnpm --filter chatbotx-mcp eval:business --compare <baseline-directory> <candidate-directory>"
+  "Usage:\n  pnpm --filter chatbotx-mcp eval:business --spec <absolute-json-path> --out <absolute-directory> --phase baseline|candidate|smoke --seed 20260923 --models gpt-4o-mini,gpt-4.1-mini [--cases family-a,family-b] [--server-source <absolute-directory>] [--exposure default|meta-only|both]\n  pnpm --filter chatbotx-mcp eval:business --compare <baseline-directory> <candidate-directory>"
 
 const finalSuccessPattern = /(?:done|sent|created|booked|cancelled|success)/i
 
 const parseArgs = (args: string[]): CliOptions => {
-  const options: Partial<CliOptions> = { models: [], seed: EVAL_SEED }
+  const options: Partial<CliOptions> = {
+    exposure: "both",
+    models: [],
+    seed: EVAL_SEED,
+  }
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
     if (argument === "--compare") {
@@ -114,6 +126,11 @@ const parseArgs = (args: string[]): CliOptions => {
       options.caseIds = value.split(",").filter(Boolean)
     } else if (argument === "--server-source") {
       options.serverSource = value
+    } else if (argument === "--exposure") {
+      if (value !== "default" && value !== "meta-only" && value !== "both") {
+        throw new Error(`${usage}\nInvalid --exposure ${value}.`)
+      }
+      options.exposure = value
     } else {
       throw new Error(`${usage}\nUnknown flag ${argument}.`)
     }
@@ -122,6 +139,7 @@ const parseArgs = (args: string[]): CliOptions => {
   if (options.compare) {
     return {
       compare: options.compare,
+      exposure: "both",
       models: [],
       seed: options.seed ?? EVAL_SEED,
     }
@@ -266,12 +284,18 @@ const buildTools = (
             return { error: "Evaluation tool-call limit reached." }
           }
           const argumentsObject = arguments_ as Record<string, unknown>
-          traces.push({ name: mcpTool.name, arguments: argumentsObject })
-          const result = await client.callTool({
+          const trace: ModelToolCall = {
+            arguments: argumentsObject,
+            name: mcpTool.name,
+          }
+          traces.push(trace)
+          const rawResult = await client.callTool({
             name: mcpTool.name,
             arguments: argumentsObject,
           })
-          return decodeMcp(result)
+          trace.isError = rawResult.isError === true
+          trace.result = decodeMcp(rawResult)
+          return trace.result
         },
       }),
     ]),
@@ -356,6 +380,59 @@ const gradeEpisode = (
   return { status: reasons.length === 0 ? "pass" : "fail", reasons }
 }
 
+/**
+ * Position (0-indexed) of an expected tool within the first `search_tools`
+ * result the episode produced, or `null` when the episode never called
+ * `search_tools` (it used a directly-listed tool instead) or none of the
+ * expected tools ever appeared in a search result. This isolates ranking
+ * quality from the model's downstream `call_tool` behavior -- a low pass
+ * rate with a consistently good `searchRank` points at `call_tool`
+ * robustness (argument handling, name resolution) rather than the ranker.
+ */
+const firstSearchRank = (
+  calls: ModelToolCall[],
+  expectedTools: string[],
+): number | null => {
+  for (const call of calls) {
+    if (call.name !== "search_tools" || call.isError) {
+      continue
+    }
+    const payload = call.result as
+      | { matches?: Array<{ name?: string }> }
+      | unknown[]
+    const matches = Array.isArray(payload) ? payload : (payload?.matches ?? [])
+    const rank = matches.findIndex(
+      (match) =>
+        typeof match === "object" &&
+        match !== null &&
+        "name" in match &&
+        expectedTools.includes((match as { name?: string }).name ?? ""),
+    )
+    if (rank >= 0) {
+      return rank
+    }
+  }
+  return null
+}
+
+const callToolErrorCount = (calls: ModelToolCall[]): number =>
+  calls.filter((call) => call.name === "call_tool" && call.isError === true)
+    .length
+
+const unknownToolCount = (calls: ModelToolCall[]): number =>
+  calls.filter(
+    (call) =>
+      call.name === "call_tool" &&
+      call.isError === true &&
+      typeof call.result === "object" &&
+      call.result !== null &&
+      "content" in call.result &&
+      Array.isArray((call.result as { content: unknown[] }).content) &&
+      (call.result as { content: Array<{ text?: string }> }).content.some(
+        (item) => item.text?.startsWith("Unknown tool"),
+      ),
+  ).length
+
 const evaluateCase = async (props: {
   evalCase: EvalCase
   modelId: string
@@ -399,6 +476,7 @@ const evaluateCase = async (props: {
     await sandbox.close()
   }
   return {
+    callToolErrorCount: callToolErrorCount(calls),
     case: props.evalCase,
     elapsedMs: Math.round(performance.now() - started),
     exposure: props.exposure,
@@ -417,9 +495,16 @@ const evaluateCase = async (props: {
     ),
     modelTools: calls,
     providerError,
+    searchRank: firstSearchRank(calls, props.evalCase.expectedTools),
+    unknownToolCount: unknownToolCount(calls),
     usage,
   }
 }
+
+const average = (values: number[]): number | null =>
+  values.length === 0
+    ? null
+    : values.reduce((total, value) => total + value, 0) / values.length
 
 const summary = (episodes: Episode[]) => {
   const grouped = Object.groupBy(
@@ -436,6 +521,9 @@ const summary = (episodes: Episode[]) => {
       const infrastructure = rows.filter(
         (episode) => episode.grading.status === "infrastructure",
       ).length
+      const searchRanks = rows
+        .map((episode) => episode.searchRank)
+        .filter((rank): rank is number => rank !== null)
       return [
         key,
         {
@@ -444,6 +532,16 @@ const summary = (episodes: Episode[]) => {
           fail: rows.length - pass - infrastructure,
           infrastructure,
           successRate: rows.length === 0 ? 0 : pass / rows.length,
+          averageSearchRank: average(searchRanks),
+          searchRankSamples: searchRanks.length,
+          totalCallToolErrors: rows.reduce(
+            (total, episode) => total + episode.callToolErrorCount,
+            0,
+          ),
+          totalUnknownToolCalls: rows.reduce(
+            (total, episode) => total + episode.unknownToolCount,
+            0,
+          ),
         },
       ]
     }),
@@ -471,16 +569,52 @@ const runComparison = async (
   const candidateRows = parse(candidate)
   const key = (row: Episode) => `${row.model}:${row.exposure}:${row.case.id}`
   const baselineByKey = new Map(baselineRows.map((row) => [key(row), row]))
-  const comparison = candidateRows.map((row) => ({
-    key: key(row),
-    baseline: baselineByKey.get(key(row))?.grading.status ?? "missing",
-    candidate: row.grading.status,
-  }))
+  const comparison = candidateRows.map((row) => {
+    const baselineRow = baselineByKey.get(key(row))
+    return {
+      key: key(row),
+      baseline: baselineRow?.grading.status ?? "missing",
+      candidate: row.grading.status,
+      baselineSearchRank: baselineRow?.searchRank ?? null,
+      candidateSearchRank: row.searchRank,
+    }
+  })
   const regressions = comparison.filter(
     (row) => row.baseline === "pass" && row.candidate !== "pass",
   )
+  const baselineRanks = baselineRows
+    .map((row) => row.searchRank)
+    .filter((rank): rank is number => rank !== null)
+  const candidateRanks = candidateRows
+    .map((row) => row.searchRank)
+    .filter((rank): rank is number => rank !== null)
+  const baselineCallToolErrors = baselineRows.reduce(
+    (total, row) => total + row.callToolErrorCount,
+    0,
+  )
+  const candidateCallToolErrors = candidateRows.reduce(
+    (total, row) => total + row.callToolErrorCount,
+    0,
+  )
   process.stdout.write(
-    `${JSON.stringify({ baseline: basename(baselineDirectory), candidate: basename(candidateDirectory), regressions, compared: comparison.length }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        baseline: basename(baselineDirectory),
+        candidate: basename(candidateDirectory),
+        regressions,
+        compared: comparison.length,
+        averageSearchRank: {
+          baseline: average(baselineRanks),
+          candidate: average(candidateRanks),
+        },
+        totalCallToolErrors: {
+          baseline: baselineCallToolErrors,
+          candidate: candidateCallToolErrors,
+        },
+      },
+      null,
+      2,
+    )}\n`,
   )
   if (regressions.length > 0) {
     process.exitCode = 1
@@ -527,30 +661,41 @@ const main = async (): Promise<void> => {
     runtimeSpecHash: sha256(JSON.stringify(runtimeSpec)),
   }
   await writeJson(join(options.out as string, "cases.json"), selected)
+  const runDefault =
+    options.exposure === "default" || options.exposure === "both"
+  const runMetaOnly =
+    options.exposure === "meta-only" || options.exposure === "both"
   const episodes: Episode[] = []
   for (const modelId of options.models) {
-    for (const evalCase of selected) {
-      episodes.push(
-        await evaluateCase({
-          evalCase,
-          modelId,
-          serverSource: snapshot.source,
-          spec: runtimeSpec,
-          exposure: "default",
-        }),
-      )
+    if (runDefault) {
+      for (const evalCase of selected) {
+        episodes.push(
+          await evaluateCase({
+            evalCase,
+            modelId,
+            serverSource: snapshot.source,
+            spec: runtimeSpec,
+            exposure: "default",
+          }),
+        )
+      }
     }
-    const metaCases = selected.filter((evalCase) => evalCase.locale === "vi")
-    for (const evalCase of metaCases) {
-      episodes.push(
-        await evaluateCase({
-          evalCase,
-          modelId,
-          serverSource: snapshot.source,
-          spec: runtimeSpec,
-          exposure: "meta-only",
-        }),
-      )
+    if (runMetaOnly) {
+      // Every locale, not just `vi`: this is the path a client that only
+      // exposes the default tool set plus search_tools/call_tool actually
+      // takes for any user, in any language -- restricting it to one
+      // locale under-tested the meta-tools the ranker work targets.
+      for (const evalCase of selected) {
+        episodes.push(
+          await evaluateCase({
+            evalCase,
+            modelId,
+            serverSource: snapshot.source,
+            spec: runtimeSpec,
+            exposure: "meta-only",
+          }),
+        )
+      }
     }
     for (const evalCase of safetyCases(selected)) {
       for (let repeat = 0; repeat < 3; repeat += 1) {

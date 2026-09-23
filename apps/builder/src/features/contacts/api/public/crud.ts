@@ -39,7 +39,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts",
       summary: "List contacts",
       description:
-        "Use this to find contacts by keyword or filter before inspecting one with `contacts.get` or sending a message with `contacts.sendMessage`. Supports `include` and `withCount` to shape the response. Call `contacts.listFilterFields` first to discover `contactFilter` fields, including custom fields.",
+        "Use this to find contacts by name, keyword, or filter before inspecting one with `contacts.get` or sending a message with `contacts.sendMessage`. Supports `include` and `withCount` to shape the response. Call `contacts.listFilterFields` first to discover `contactFilter` fields, including custom fields.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -111,7 +111,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/{identifier}",
       summary: "Get contact",
       description:
-        "Use this after locating a prefixed id, email, or phone identifier to inspect one contact. Call `contacts.list` to search first, or use `contacts.sendMessage` to contact the result.",
+        "Use this to look up a contact by email, phone, or id after locating a prefixed identifier. Call `contacts.list` to search first, or use `contacts.sendMessage` to contact the result.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })

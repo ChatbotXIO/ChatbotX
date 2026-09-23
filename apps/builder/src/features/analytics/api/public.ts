@@ -220,7 +220,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/contacts-count",
       summary: "Get contacts count",
       description:
-        "Counts all contacts that existed at any point within the given `from`/`to` time range.",
+        "Use this for total contacts over a time range. Counts all contacts that existed at any point within the given `from`/`to` time range.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -287,7 +287,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/contacts-by-dimension",
       summary: "Get contacts by dimension",
       description:
-        "Groups contact counts by country, channel, or source over a time range. Set `dimension` to choose the grouping.",
+        "Use this for a breakdown of contacts by channel, country, or source. Groups contact counts by country, channel, or source over a time range. Set `dimension` to choose the grouping.",
       tags: ["Analytics"],
     })
     .input(contactsByDimensionPublicRequest)

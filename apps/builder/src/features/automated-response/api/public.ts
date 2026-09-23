@@ -86,7 +86,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords",
       summary: "Create keyword automation",
       description:
-        "Adds a keyword automation that sends text or starts a flow. Inbound matches messages from contacts; outbound matches messages sent by the Page/agent. Use `keywords.list` first to inspect existing rules and `flows.list` to resolve a flow. This is not post/comment automation; use the channel's comment-automation tools for comments.",
+        'Use this for "when a contact says <keyword/trigger phrase>, run flow X" automations. Adds a keyword automation that sends text or starts a flow. Inbound matches messages from contacts; outbound matches messages sent by the Page/agent. Use `keywords.list` first to inspect existing rules and `flows.list` to resolve a flow. This is not post/comment automation; use the channel\'s comment-automation tools for comments.',
       successStatus: 201,
       tags: ["Keywords"],
     })

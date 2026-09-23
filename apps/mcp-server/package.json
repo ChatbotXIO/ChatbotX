@@ -39,7 +39,8 @@
     "start": "node dist/index.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "eval:business": "tsx evals/run.ts"
+    "eval:business": "tsx evals/run.ts",
+    "eval:search": "tsx evals/search-audit.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

@@ -19,6 +19,13 @@ ChatbotX's public API has ~350 operations. Listing all of them as MCP tools over
 
 Use `search_tools` when the task needs something outside the default set (e.g. deleting a resource, managing AI agents, coupons, products) — then invoke it with `call_tool`.
 
+`search_tools` ranks the full catalog with a query-expansion layer for Vietnamese/colloquial phrasing (synonym mapping, accent-insensitive matching, stemming, IDF weighting toward rare/specific tokens over generic ones) — see `src/server/search/`. `call_tool` is tolerant of common model mistakes:
+
+- **Name normalization**: a dotted or camelCase operation label (`contacts.get`, `contactsGet`) is accepted and re-derived to the executable snake_case name — you don't have to pass the exact string `search_tools` returned.
+- **Unknown-tool suggestions**: an unrecognized `name` returns the closest matching tool names instead of a bare error, so a model can self-correct without another `search_tools` round trip.
+- **Pre-flight argument check**: a `call_tool` invocation missing a field the selected tool's `inputSchema` marks `required` is rejected immediately with the missing field names, instead of waiting for the real API's 422. A common wrapper mistake (nesting every field under `body`/`params`/`input` instead of passing them at the top level) is called out explicitly.
+- **Contact identifier auto-prefix**: a bare email, `+`-prefixed phone number, or numeric id passed as `identifier` to a contact tool is automatically prefixed (`email:`/`phone:`/`id:`) before the request is sent, matching what the API actually requires.
+
 ### Scope-based filtering
 
 `tools/list` is further narrowed to what the calling token can actually use, resolved once per token via `GET /v1/token` (`introspectToken`, cached per token value for `CHATBOTX_SPEC_TTL_MS`):
@@ -278,6 +285,51 @@ pnpm check-types
 dotenv -e .env -- tsx src/test-tools.ts
 ```
 
+## Evaluating tool selection
+
+Two layers of evaluation cover `search_tools`/`call_tool` accuracy — a fast offline gate and a full LLM-driven business eval.
+
+### `eval:search` — offline ranking gate (no API key, seconds)
+
+Scores every prompt in the eval corpus (`evals/cases.ts`) through the real `searchTools()` ranker against a real generated spec, with no LLM in the loop. Use this after any change to `src/server/search/` or to a public route's `summary`/`description`.
+
+1. Dump the current OpenAPI spec (the builder test already has a hook for this — see `apps/builder/__tests__/public-spec-operations.test.ts`):
+   ```bash
+   MCP_EVAL_SPEC_OUTPUT=/absolute/path/public-spec.json \
+     pnpm --filter builder test -- public-spec-operations.test.ts
+   ```
+2. Run the gate against it:
+   ```bash
+   pnpm --filter chatbotx-mcp eval:search --spec /absolute/path/public-spec.json [--min-top1 0.65] [--min-top3 0.85] [--verbose]
+   ```
+   Prints per-locale top-1/top-3/empty-result rates and exits non-zero if either rate falls below its threshold. `--verbose` also lists every prompt that missed the top 3, with the ranker's actual top matches, for targeted synonym/description fixes.
+
+### `eval:business` — full LLM-driven business eval
+
+Spins up a synthetic HTTP sandbox implementing the generated spec's operations, connects a real MCP client, and drives `gpt-4o-mini`/`gpt-4.1-mini` (or any `@ai-sdk/openai`-supported model) through 240+ business prompts across 5 locale variants (`vi`, `vi-unaccented`, colloquial, `en`, mixed). Requires `OPENAI_API_KEY`.
+
+```bash
+pnpm --filter chatbotx-mcp eval:business \
+  --spec /absolute/path/public-spec.json \
+  --out /absolute/path/out/baseline \
+  --phase baseline \
+  --seed 20260923 \
+  --models gpt-4o-mini,gpt-4.1-mini \
+  [--exposure default|meta-only|both] \
+  [--cases family-a,family-b] \
+  [--server-source /absolute/path/to/apps/mcp-server]
+```
+
+- `--exposure meta-only` restricts the model's tool set to `search_tools`/`call_tool` only (no directly-listed default tools) — the path a client using only the default connection payload takes for any request outside the ~43 default-visible tools. `both` (the default) runs every case under both exposures.
+- Each episode is graded on tool/argument correctness and also records `searchRank` (position of the expected tool in the first `search_tools` result, or `null` if the model never called it), `callToolErrorCount`, and `unknownToolCount` — these isolate ranking quality from `call_tool` argument-handling quality.
+- Compare two runs (regressions fail the command):
+  ```bash
+  pnpm --filter chatbotx-mcp eval:business --compare /absolute/path/out/baseline /absolute/path/out/candidate
+  ```
+  Reports any case that regressed from pass to non-pass, plus the average `searchRank` and total `callToolErrorCount` delta between the two runs.
+
+Evaluation output is written under `evals/out/` (gitignored) unless `--out` points elsewhere.
+
 ## Project structure
 
 ```
@@ -291,10 +343,20 @@ src/
 ├── test-tools.ts           # Dev utility — prints loaded tools
 └── server/
     ├── create-mcp-server.ts   # MCP server factory, tools/list + tools/call handlers
-    ├── meta-tools.ts          # search_tools / call_tool definitions + ranking
-    ├── execute-tool.ts        # Shared HTTP dispatch for a DynamicTool call
+    ├── meta-tools.ts          # search_tools / call_tool definitions, name resolution,
+    │                          # unknown-tool suggestions, pre-flight argument checks
+    ├── execute-tool.ts        # Shared HTTP dispatch for a DynamicTool call + argument
+    │                          # normalization (contact identifier auto-prefix)
+    ├── search/                # search_tools ranking: normalization, Vietnamese/
+    │                          # colloquial synonym expansion, IDF-weighted scoring
     ├── sse-server.ts          # SSE / Streamable HTTP transport
     └── stdio-server.ts        # stdio transport
+
+evals/
+├── cases.ts           # Eval corpus: business-intent prompts × 5 locale variants
+├── sandbox.ts         # Synthetic HTTP server implementing the generated spec
+├── run.ts             # eval:business — drives an LLM through the MCP server
+└── search-audit.ts    # eval:search — offline ranking gate, no LLM
 ```
 
 ## Troubleshooting

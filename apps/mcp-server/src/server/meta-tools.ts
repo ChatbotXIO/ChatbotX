@@ -2,6 +2,7 @@ import {
   type DynamicTool,
   getCachedTools,
   getToolByName,
+  toSnakeCase,
 } from "../openapi-loader"
 import {
   errorResult,
@@ -9,6 +10,7 @@ import {
   jsonResult,
   type ToolCallResult,
 } from "./execute-tool"
+import { distinctResourceGroups, rankTools } from "./search/rank"
 
 /**
  * Static tool definitions for the two meta-tools that give an agent access
@@ -40,7 +42,7 @@ export const META_TOOLS = [
   {
     name: "call_tool",
     description:
-      'Execute an exact tool name returned by search_tools. The selected tool\'s inputSchema defines every argument; dotted API operation labels are not executable tool names. Example: {"name":"contacts_get","arguments":{"identifier":"email:ada@example.com"}}.',
+      'Execute a tool by the exact name returned by search_tools (dotted names like "contacts.get" are also accepted and normalized). The selected tool\'s inputSchema defines every argument. Example: {"name":"contacts_get","arguments":{"identifier":"email:ada@example.com"}}.',
     inputSchema: {
       type: "object",
       properties: {
@@ -61,87 +63,14 @@ export const META_TOOLS = [
 
 const DEFAULT_SEARCH_LIMIT = 10
 const MAX_SEARCH_LIMIT = 25
-// A name/description-token match is worth less than a whole-phrase match,
-// and a name match outweighs a description match — a query naming the
-// resource ("tags") should rank `tags_list` over an unrelated tool whose
-// long description happens to mention tags in passing.
-const NAME_TOKEN_WEIGHT = 2
-const DESCRIPTION_TOKEN_WEIGHT = 1
-const PHRASE_MATCH_BONUS = 3
-
-function normalizeSearchText(text: string): string {
-  return text
-    .toLocaleLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .replaceAll("đ", "d")
-}
-
-function tokenize(text: string): string[] {
-  return [...new Set(normalizeSearchText(text).match(/[\p{L}\p{N}]+/gu) ?? [])]
-}
-
-type ToolTokens = { name: Set<string>; description: Set<string> }
-
-// Keyed by the `DynamicTool` object itself (not its name): `openapi-loader`
-// hands out a fresh array of tool objects on every spec refresh, so a stale
-// entry is naturally unreachable and garbage-collected — no manual
-// invalidation needed when the spec changes.
-const toolTokensCache = new WeakMap<DynamicTool, ToolTokens>()
-
-function getToolTokens(tool: DynamicTool): ToolTokens {
-  const cached = toolTokensCache.get(tool)
-  if (cached) {
-    return cached
-  }
-  const tokens: ToolTokens = {
-    name: new Set(tokenize(tool.name)),
-    description: new Set(tokenize(tool.description)),
-  }
-  toolTokensCache.set(tool, tokens)
-  return tokens
-}
-
-function scoreTool(
-  tool: DynamicTool,
-  queryTokens: string[],
-  queryPhrase: string,
-): number {
-  const { name: nameTokens, description: descriptionTokens } =
-    getToolTokens(tool)
-
-  let score = 0
-  for (const token of queryTokens) {
-    if (nameTokens.has(token)) {
-      score += NAME_TOKEN_WEIGHT
-    }
-    if (descriptionTokens.has(token)) {
-      score += DESCRIPTION_TOKEN_WEIGHT
-    }
-  }
-
-  if (
-    queryPhrase.length > 0 &&
-    normalizeSearchText(`${tool.name} ${tool.description}`).includes(
-      queryPhrase,
-    )
-  ) {
-    score += PHRASE_MATCH_BONUS
-  }
-
-  return score
-}
+const MAX_NAME_SUGGESTIONS = 3
 
 /**
- * Ranks every cached tool (not just the `visibility: "default"` set —
- * that's the whole point) against the query and returns the top matches.
- * Zero-scoring tools are dropped rather than padded in at the tail: an
- * agent acting on a bad match is worse than an agent getting an empty list
- * and rephrasing.
+ * Ranks the full cached catalog against `query` (Vietnamese, colloquial,
+ * or English) and returns the top matches. See `search/rank.ts` for the
+ * scoring model (synonym expansion, IDF, field weighting).
  */
 export function searchTools(query: string, limit?: number): DynamicTool[] {
-  const queryPhrase = normalizeSearchText(query).trim()
-  const queryTokens = tokenize(query)
   const cappedLimit = Math.min(
     Math.max(
       limit !== undefined && Number.isFinite(limit)
@@ -151,33 +80,16 @@ export function searchTools(query: string, limit?: number): DynamicTool[] {
     ),
     MAX_SEARCH_LIMIT,
   )
-
-  return getCachedTools()
-    .map((tool) => ({ tool, score: scoreTool(tool, queryTokens, queryPhrase) }))
-    .filter(({ score }) => score > 0)
-    .sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score
-      }
-      // Tie-break: a read fits more agent intents safely than a write, and
-      // a shorter name is usually the more general/canonical operation
-      // (`tags_list` over `contacts_list_tags`).
-      const aIsGet = a.tool.method === "GET"
-      const bIsGet = b.tool.method === "GET"
-      if (aIsGet !== bIsGet) {
-        return aIsGet ? -1 : 1
-      }
-      return a.tool.name.length - b.tool.name.length
-    })
-    .slice(0, cappedLimit)
-    .map(({ tool }) => tool)
+  return rankTools(getCachedTools(), query, cappedLimit)
 }
 
 /**
  * `search_tools` handler — validates the raw MCP `arguments` object and
  * returns each match's name/description/inputSchema as JSON text, the same
  * shape a `tools/list` entry has, so an agent can go straight from a match
- * to a `call_tool` invocation.
+ * to a `call_tool` invocation. An empty result set includes a hint listing
+ * the catalog's resource groups (OpenAPI tags) instead of nothing, so a
+ * model can rephrase around a known group rather than giving up.
  */
 export function handleSearchTools(
   args: Record<string, unknown>,
@@ -194,7 +106,79 @@ export function handleSearchTools(
     inputSchema: tool.inputSchema,
   }))
 
+  if (matches.length === 0) {
+    const groups = distinctResourceGroups(getCachedTools())
+    return jsonResult({
+      matches: [],
+      hint:
+        groups.length > 0
+          ? `No tool matched "${query}". Rephrase with one action and one resource. Resource groups: ${groups.join(", ")}.`
+          : `No tool matched "${query}". Rephrase with one action and one resource.`,
+    })
+  }
+
   return jsonResult(matches)
+}
+
+/**
+ * Resolves a tool name for `call_tool`, accepting the exact executable
+ * name `search_tools` returns as well as a raw dotted/camelCase
+ * `operationId` (e.g. "contacts.get", "contactsGet") by re-deriving the
+ * snake_case form the loader would have produced. This tolerates a model
+ * echoing back the API-style label it saw in a description instead of the
+ * tool name it was actually given.
+ */
+function resolveToolName(name: string): DynamicTool | undefined {
+  return getToolByName(name) ?? getToolByName(toSnakeCase(name))
+}
+
+function unknownToolMessage(name: string): string {
+  const suggestions = rankTools(getCachedTools(), name, MAX_NAME_SUGGESTIONS)
+  if (suggestions.length === 0) {
+    return `Unknown tool: ${name}`
+  }
+  return `Unknown tool: ${name}. Closest matches: ${suggestions
+    .map((tool) => tool.name)
+    .join(", ")}.`
+}
+
+/**
+ * Checks `arguments` against the selected tool's `required` inputSchema
+ * fields before any HTTP request is made, so a missing field is reported
+ * immediately instead of round-tripping through the real API's 422. Also
+ * flags the common wrapper mistake of nesting every field under a single
+ * `body`/`params`/`input` key the schema never declared — call_tool's own
+ * description already asks agents not to do this, but cheaper models do it
+ * anyway, and the resulting error is otherwise a generic "missing field"
+ * for every declared field at once.
+ */
+function preflightArgumentError(
+  tool: DynamicTool,
+  args: Record<string, unknown>,
+): string | undefined {
+  const required = tool.inputSchema.required ?? []
+  const missing = required.filter((key) => args[key] === undefined)
+  if (missing.length === 0) {
+    return
+  }
+
+  const wrapperKeys = ["body", "params", "input"]
+  const declaredKeys = new Set(Object.keys(tool.inputSchema.properties))
+  const suspectedWrapper = wrapperKeys.find((key) => {
+    const value = args[key]
+    return (
+      !declaredKeys.has(key) &&
+      typeof value === "object" &&
+      value !== null &&
+      !Array.isArray(value)
+    )
+  })
+
+  const missingList = missing.join(", ")
+  if (suspectedWrapper) {
+    return `Missing required field(s): ${missingList}. Arguments must be a flat object matching inputSchema — found a "${suspectedWrapper}" wrapper instead of passing its fields at the top level.`
+  }
+  return `Missing required field(s): ${missingList}. See the tool's inputSchema for the full shape.`
 }
 
 /**
@@ -211,9 +195,9 @@ export async function handleCallTool(
     return errorResult("call_tool requires a non-empty 'name' string.")
   }
 
-  const tool = getToolByName(name)
+  const tool = resolveToolName(name)
   if (!tool) {
-    return errorResult(`Unknown tool: ${name}`)
+    return errorResult(unknownToolMessage(name))
   }
 
   const suppliedArguments = args.arguments
@@ -228,6 +212,11 @@ export async function handleCallTool(
   }
 
   const toolArguments = (suppliedArguments ?? {}) as Record<string, unknown>
+
+  const preflightError = preflightArgumentError(tool, toolArguments)
+  if (preflightError) {
+    return errorResult(preflightError)
+  }
 
   return await executeTool(tool, toolArguments, apiKey)
 }

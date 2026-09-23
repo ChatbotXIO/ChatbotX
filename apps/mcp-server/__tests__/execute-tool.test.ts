@@ -18,6 +18,7 @@ const tool: DynamicTool = {
   pathParamNames: [],
   pathTemplate: "/v1/contacts",
   queryParamNames: ["page", "include", "contactFilter"],
+  tags: ["Contacts"],
   visibility: "default",
 }
 
@@ -120,5 +121,103 @@ describe("executeTool", () => {
 
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit
     expect(init.body).toBeUndefined()
+  })
+
+  test("auto-prefixes a bare email identifier before building the path", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const getTool: DynamicTool = {
+      ...tool,
+      name: "contacts_get",
+      pathTemplate: "/v1/contacts/{identifier}",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(getTool, { identifier: "ada@example.com" }, "api-key")
+
+    const url = fetchMock.mock.calls[0]?.[0] as string
+    expect(url).toContain(encodeURIComponent("email:ada@example.com"))
+  })
+
+  test("auto-prefixes a bare phone identifier", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const getTool: DynamicTool = {
+      ...tool,
+      name: "contacts_get",
+      pathTemplate: "/v1/contacts/{identifier}",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(getTool, { identifier: "+841234567890" }, "api-key")
+
+    const url = fetchMock.mock.calls[0]?.[0] as string
+    expect(url).toContain(encodeURIComponent("phone:+841234567890"))
+  })
+
+  test("auto-prefixes a bare numeric identifier as an id", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const getTool: DynamicTool = {
+      ...tool,
+      name: "contacts_get",
+      pathTemplate: "/v1/contacts/{identifier}",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(getTool, { identifier: "42" }, "api-key")
+
+    const url = fetchMock.mock.calls[0]?.[0] as string
+    expect(url).toContain(encodeURIComponent("id:42"))
+  })
+
+  test("leaves an already-prefixed identifier untouched", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const getTool: DynamicTool = {
+      ...tool,
+      name: "contacts_get",
+      pathTemplate: "/v1/contacts/{identifier}",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(
+      getTool,
+      { identifier: "email:ada@example.com" },
+      "api-key",
+    )
+
+    const url = fetchMock.mock.calls[0]?.[0] as string
+    expect(url).toContain(encodeURIComponent("email:ada@example.com"))
+  })
+
+  test("leaves a display name identifier untouched so the API's real error surfaces", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ...successfulResponse,
+      ok: false,
+      json: async () => ({ error: "invalidIdentifier" }),
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const getTool: DynamicTool = {
+      ...tool,
+      name: "contacts_get",
+      pathTemplate: "/v1/contacts/{identifier}",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(getTool, { identifier: "An" }, "api-key")
+
+    const url = fetchMock.mock.calls[0]?.[0] as string
+    expect(url).toContain("/v1/contacts/An")
   })
 })
