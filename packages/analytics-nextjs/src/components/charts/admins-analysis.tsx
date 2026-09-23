@@ -1,8 +1,10 @@
 "use client"
 
 import type { HumanAgentStats } from "@chatbotx.io/analytics"
+import ChartHeader from "@chatbotx.io/ui/components/charts/chart-header"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef } from "@chatbotx.io/ui/types/data-table"
 import { useTranslations } from "next-intl"
@@ -116,20 +118,25 @@ export function AdminsAnalysis() {
   })
 
   return (
-    <DataTable
-      labels={{
-        firstPage: t("analytics.pagination.firstPage"),
-        lastPage: t("analytics.pagination.lastPage"),
-        nextPage: t("analytics.pagination.nextPage"),
-        noResults: t("fields.noResults.label"),
-        pageOf: (page, pageCount) =>
-          t("analytics.pagination.pageOf", { page, pageCount }),
-        previousPage: t("analytics.pagination.previousPage"),
-        rowsPerPage: t("analytics.pagination.rowsPerPage"),
-        selectedRows: (selected, total) =>
-          t("analytics.pagination.selectedRows", { selected, total }),
-      }}
-      table={table}
-    />
+    <>
+      <ChartHeader title={t("analytics.admins")} />
+      <CardContent>
+        <DataTable
+          labels={{
+            firstPage: t("analytics.pagination.firstPage"),
+            lastPage: t("analytics.pagination.lastPage"),
+            nextPage: t("analytics.pagination.nextPage"),
+            noResults: t("fields.noResults.label"),
+            pageOf: (page, pageCount) =>
+              t("analytics.pagination.pageOf", { page, pageCount }),
+            previousPage: t("analytics.pagination.previousPage"),
+            rowsPerPage: t("analytics.pagination.rowsPerPage"),
+            selectedRows: (selected, total) =>
+              t("analytics.pagination.selectedRows", { selected, total }),
+          }}
+          table={table}
+        />
+      </CardContent>
+    </>
   )
 }
