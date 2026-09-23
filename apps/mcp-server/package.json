@@ -38,7 +38,8 @@
     "prepublishOnly": "node --input-type=commonjs -e \"const v=require('./package.json').version; if (v === '0.0.0-dev') { console.error('chatbotx-mcp: version is the 0.0.0-dev placeholder — publish via .github/workflows/publish-chatbotx-mcp.yml'); process.exit(1) }\"",
     "start": "node dist/index.mjs",
     "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "eval:business": "tsx evals/run.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -47,6 +48,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@ai-sdk/openai": "^3.0.54",
+    "ai": "^6.0.170",
     "@types/node": "24.x",
     "dotenv-cli": "^11.0.0",
     "tsdown": "0.22.3",

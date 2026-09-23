@@ -136,6 +136,80 @@ describe("searchTools", () => {
     const results = searchTools("broadcast op")
     expect(results[0]?.name).toBe("broadcasts_list")
   })
+
+  test("normalizes Vietnamese accents before matching tool descriptions", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithTools([
+        {
+          name: "contacts.addTagsByName",
+          summary: "Append tags to a contact",
+          description: "Gan nhan khach hang without replacing existing tags.",
+          method: "post",
+        },
+        {
+          name: "contacts.setTags",
+          summary: "Replace contact tags",
+          description: "Replace all tags on a contact.",
+          method: "put",
+        },
+      ]),
+    ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { searchTools } = await import("../src/server/meta-tools")
+
+    expect(searchTools("Gắn nhãn khách hàng")[0]?.name).toBe(
+      "contacts_add_tags_by_name",
+    )
+  })
+
+  test("ranks append-tag discovery ahead of replacement", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithTools([
+        {
+          name: "contacts.setTags",
+          summary: "Replace contact tags",
+          description: "Replaces every current tag.",
+          method: "put",
+        },
+        {
+          name: "contacts.addTagsByName",
+          summary: "Add a tag to a contact",
+          description: "Appends named tags while preserving current tags.",
+          method: "post",
+        },
+      ]),
+    ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { searchTools } = await import("../src/server/meta-tools")
+
+    expect(searchTools("add tag contact")[0]?.name).toBe(
+      "contacts_add_tags_by_name",
+    )
+  })
+
+  test("does not return zero-score catalog distractors", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithTools([
+        { name: "contacts.list", summary: "List contacts" },
+        { name: "products.list", summary: "List products" },
+        {
+          name: "broadcasts.create",
+          summary: "Create broadcast",
+          method: "post",
+        },
+      ]),
+    ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { searchTools } = await import("../src/server/meta-tools")
+
+    expect(searchTools("launch spaceship")).toEqual([])
+  })
 })
 
 describe("handleSearchTools", () => {
