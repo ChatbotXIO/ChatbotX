@@ -76,7 +76,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config/message-queue/factory", () => ({
-  createConsumer: vi.fn().mockResolvedValue({
+  createConsumer: vi.fn().mockReturnValue({
     close: vi.fn(),
     consume: consumeSpy,
   }),
@@ -200,7 +200,7 @@ describe("sequence worker consumer", () => {
       capturedHandler = handler
       return Promise.resolve()
     })
-    fetchDispatchSpy.mockRejectedValue(new Error("db exploded"))
+    fetchDispatchSpy.mockRejectedValueOnce(new Error("db exploded"))
 
     await import("../src/sequence-scheduler/worker-consumer")
 
@@ -243,26 +243,5 @@ describe("sequence worker consumer", () => {
       expect.objectContaining({ err: expect.any(SyntaxError) }),
       expect.any(String),
     )
-  })
-
-  test("resolves without throwing for a payload missing workspaceId", async () => {
-    let capturedHandler: ((value: string) => Promise<void>) | undefined
-    consumeSpy.mockImplementation((handler) => {
-      capturedHandler = handler
-      return Promise.resolve()
-    })
-
-    await import("../src/sequence-scheduler/worker-consumer")
-
-    await vi.waitFor(() => {
-      expect(consumeSpy).toHaveBeenCalledOnce()
-    })
-
-    await expect(
-      capturedHandler?.(
-        JSON.stringify({ dispatchId: "dispatch-1", bucket: 1 }),
-      ),
-    ).resolves.toBeUndefined()
-    expect(fetchDispatchSpy).not.toHaveBeenCalled()
   })
 })

@@ -18,7 +18,7 @@ describe("getRedisConnection queue-group routing", () => {
     vi.unstubAllEnvs()
   })
 
-  test("hot falls back to REDIS_QUEUE_URL then REDIS_URL, ignoring REDIS_QUEUE_BULK_URL", async () => {
+  test("hot uses REDIS_QUEUE_URL and ignores REDIS_QUEUE_BULK_URL", async () => {
     vi.stubEnv("REDIS_URL", DEAD_REDIS_URL)
     vi.stubEnv("REDIS_QUEUE_URL", DEAD_QUEUE_URL)
     vi.stubEnv("REDIS_QUEUE_BULK_URL", DEAD_BULK_URL)
@@ -49,17 +49,31 @@ describe("getRedisConnection queue-group routing", () => {
   test("bulk falls back to the hot chain when REDIS_QUEUE_BULK_URL is unset", async () => {
     vi.stubEnv("REDIS_URL", DEAD_REDIS_URL)
     vi.stubEnv("REDIS_QUEUE_URL", DEAD_QUEUE_URL)
-    // Leaving REDIS_QUEUE_BULK_URL un-stubbed (rather than "") is deliberate:
-    // an empty string is a valid connection string to ioredis (it falls back
-    // to its own default host/port), not the "unset" case this test needs —
-    // z.url().optional() only treats a genuinely absent key as undefined.
-    vi.stubEnv("REDIS_QUEUE_BULK_URL", undefined as unknown as string)
+    // An empty string is a valid connection string to ioredis (it falls back
+    // to its own default host/port), not the unset case this test needs.
+    vi.stubEnv("REDIS_QUEUE_BULK_URL", undefined)
 
     const { getRedisConnection } = await import("../src/lib/connection")
     const bulk = getRedisConnection("bulk")
 
     expect(bulk.options.port).toBe(6398)
 
+    bulk.disconnect()
+  })
+
+  test("hot and bulk both fall back to REDIS_URL when queue URLs are unset", async () => {
+    vi.stubEnv("REDIS_URL", DEAD_REDIS_URL)
+    vi.stubEnv("REDIS_QUEUE_URL", undefined)
+    vi.stubEnv("REDIS_QUEUE_BULK_URL", undefined)
+
+    const { getRedisConnection } = await import("../src/lib/connection")
+    const hot = getRedisConnection("hot")
+    const bulk = getRedisConnection("bulk")
+
+    expect(hot.options.port).toBe(6399)
+    expect(bulk.options.port).toBe(6399)
+
+    hot.disconnect()
     bulk.disconnect()
   })
 
