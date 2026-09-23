@@ -14,14 +14,8 @@ import { EVAL_SEED, EVAL_TIME, EVAL_TIMEZONE, type EvalCase } from "./cases"
  * Locales: `en` is the control. `vi-natural` is realistic chat phrasing
  * (particles, punctuation, no forced diacritic-stripping) -- deliberately
  * different from `cases.ts`'s terse `vi`/`vi-unaccented`/`colloquial`
- * variants, which were written to already fit the synonym table. `es` and
- * `zh` probe the Latin-vs-non-Latin-script branch in
- * `containsNonLatinScript` (see `src/server/search/normalize.ts`): Spanish
- * is Latin script like Vietnamese and gets no "translate" hint either,
- * while Chinese is flagged. `fr` has zero entries in
- * `src/server/search/synonyms.ts` and exists to prove a new language needs
- * no code change: it goes through the exact same translate-first /
- * script-detection path as `es`, with no French alias added anywhere.
+ * variants. `es`, `fr`, and `zh` verify that the client translates diverse
+ * user requests before calling the English-only MCP tool catalog.
  */
 export type MultilingualLocale = "en" | "vi-natural" | "es" | "zh" | "fr"
 
@@ -46,9 +40,9 @@ type MultilingualFamilySource = Pick<
 /**
  * Each family name matches an existing family in `cases.ts` so results are
  * directly comparable against that corpus's `en`/`vi` rows. Prompts are
- * realistic short chat requests -- natural punctuation, polite particles,
- * no attempt to pre-fit the synonym table -- reviewed for correctness by a
- * Vietnamese speaker (`vi-natural`) rather than machine-translated only.
+ * realistic short chat requests -- natural punctuation, polite particles, and
+ * no manual rewording for the MCP ranker. A Vietnamese speaker reviewed the
+ * `vi-natural` variants rather than machine-translating them only.
  */
 const FAMILIES: MultilingualFamilySource[] = [
   {

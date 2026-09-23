@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest"
 import {
   containsNonLatinScript,
+  looksNonEnglish,
   normalizeSearchText,
   stem,
   stripLiterals,
@@ -24,6 +25,12 @@ describe("stripLiterals", () => {
   test("replaces a phone number with a contact/phone hint", () => {
     expect(stripLiterals("Tìm khách số +841234567890")).toBe(
       "Tìm khách số  contact phone ",
+    )
+  })
+
+  test("replaces an ISO date with a date hint before phone detection", () => {
+    expect(stripLiterals("analytics from 2026-09-01")).toBe(
+      "analytics from  date ",
     )
   })
 
@@ -55,6 +62,18 @@ describe("stem", () => {
 
   test("leaves a short word ending in s untouched", () => {
     expect(stem("vs")).toBe("vs")
+  })
+})
+
+describe("looksNonEnglish", () => {
+  test("detects accented Vietnamese and CJK queries", () => {
+    expect(looksNonEnglish("gắn nhãn cho khách hàng")).toBe(true)
+    expect(looksNonEnglish("给联系人打标签")).toBe(true)
+  })
+
+  test("does not flag unaccented Vietnamese or English", () => {
+    expect(looksNonEnglish("Gan nhan khach hang")).toBe(false)
+    expect(looksNonEnglish("add tag to contact")).toBe(false)
   })
 })
 

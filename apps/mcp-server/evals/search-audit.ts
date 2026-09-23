@@ -4,10 +4,10 @@
  * `MCP_EVAL_SPEC_OUTPUT=<path> pnpm --filter builder test --
  * public-spec-operations.test.ts`, see `apps/builder/__tests__/public-spec-operations.test.ts`),
  * stubs `fetch` to serve it, and scores every eval-corpus prompt through
- * `searchTools()` directly. Exits non-zero when top-1/top-3 rates fall
- * below the given thresholds, so a synonym-table or description change
- * that regresses ranking quality fails fast in CI/dev without needing
- * `eval:business`'s LLM round trips.
+ * `searchTools()` directly. English top-1/top-3 rates must meet the given
+ * thresholds, while other locales remain report-only because clients translate
+ * them before they reach this ranker. This catches ranking or description
+ * changes without needing `eval:business`'s LLM round trips.
  *
  * `--corpus multilingual` swaps in the standalone probe corpus from
  * `cases-multilingual.ts` (see that file's header) instead of the default
@@ -158,6 +158,17 @@ const main = async (): Promise<void> => {
     }
   }
 
+  const englishStats = byLocale.get("en") ?? {
+    empty: 0,
+    n: 0,
+    top1: 0,
+    top3: 0,
+  }
+  const englishTop1Rate =
+    englishStats.n === 0 ? 0 : englishStats.top1 / englishStats.n
+  const englishTop3Rate =
+    englishStats.n === 0 ? 0 : englishStats.top3 / englishStats.n
+
   const top1Rate = cases.length === 0 ? 0 : top1 / cases.length
   const top3Rate = cases.length === 0 ? 0 : top3 / cases.length
 
@@ -194,6 +205,9 @@ const main = async (): Promise<void> => {
         top3Rate: Number(top3Rate.toFixed(3)),
         empty,
         byLocale: Object.fromEntries(byLocale),
+        thresholdLocale: "en",
+        thresholdTop1Rate: Number(englishTop1Rate.toFixed(3)),
+        thresholdTop3Rate: Number(englishTop3Rate.toFixed(3)),
         ...(options.corpus === "multilingual" ? { pairedRegressions } : {}),
       },
       null,
@@ -207,10 +221,10 @@ const main = async (): Promise<void> => {
 
   if (
     !options.reportOnly &&
-    (top1Rate < options.minTop1 || top3Rate < options.minTop3)
+    (englishTop1Rate < options.minTop1 || englishTop3Rate < options.minTop3)
   ) {
     process.stderr.write(
-      `search_tools ranking below threshold: top1=${top1Rate.toFixed(3)} (min ${options.minTop1}), top3=${top3Rate.toFixed(3)} (min ${options.minTop3})\n`,
+      `search_tools ranking below threshold for en: top1=${englishTop1Rate.toFixed(3)} (min ${options.minTop1}), top3=${englishTop3Rate.toFixed(3)} (min ${options.minTop3})\n`,
     )
     process.exitCode = 1
   }

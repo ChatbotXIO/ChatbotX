@@ -1,7 +1,7 @@
 /**
- * Text-normalization primitives shared by the tool-search ranker
- * (`rank.ts`) and its synonym table (`synonyms.ts`). Kept dependency-free
- * and side-effect-free so they're trivial to unit test in isolation.
+ * Text-normalization primitives shared by the tool-search ranker. Kept
+ * dependency-free and side-effect-free so they're trivial to unit test in
+ * isolation.
  */
 
 /**
@@ -11,7 +11,7 @@
  */
 export function normalizeSearchText(text: string): string {
   return text
-    .toLocaleLowerCase()
+    .toLowerCase()
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .replaceAll("đ", "d")
@@ -23,22 +23,20 @@ export function normalizeSearchText(text: string): string {
  * instead of deleting them outright -- the literal itself never appears in
  * a tool's name or description, but the *kind* of value it is remains a
  * real signal (an email or phone number almost always means "contact").
- * Order matters: emails before phone numbers before bare digits, since a
- * phone number is itself a run of digits.
+ * Order matters: emails before dates before phone numbers before bare digits,
+ * since a phone number is itself a run of digits.
  */
 export function stripLiterals(text: string): string {
   return text
     .replace(/[\w.+-]+@[\w-]+\.[\w.]+/gu, " contact email ")
+    .replace(/\b\d{4}-\d{2}-\d{2}\b/gu, " date ")
     .replace(/\+?\d[\d-]{5,}\d/gu, " contact phone ")
     .replace(/\b\d+\b/gu, " id ")
 }
 
-// English + Vietnamese filler words that carry no resource/action signal.
-// Kept deliberately short: an over-aggressive stopword list can eat a real
-// synonym key before `synonyms.ts` gets a chance to match it, so anything
-// consumed here must be unambiguously filler in both languages.
+// English filler words that carry no resource/action signal. Kept deliberately
+// short so an over-aggressive list cannot remove meaningful query terms.
 export const STOPWORDS = new Set([
-  // English
   "a",
   "an",
   "the",
@@ -62,24 +60,6 @@ export const STOPWORDS = new Set([
   "please",
   "my",
   "me",
-  // Vietnamese (diacritics stripped -- normalization runs before stopword
-  // filtering, so entries here are already accent-free)
-  "cho",
-  "cua",
-  "va",
-  "la",
-  "co",
-  "toi",
-  "minh",
-  "nhe",
-  "di",
-  "nay",
-  "giup",
-  "gium",
-  "dum",
-  "ho",
-  "voi",
-  "duoc",
 ])
 
 /**
@@ -99,8 +79,23 @@ export function stem(token: string): string {
  * first so Vietnamese diacritics do not appear as a separate script.
  */
 const NON_LATIN_LETTER = /[^\p{Script=Latin}\p{N}\p{P}\p{S}\s]/u
+const COMBINING_MARK = /\p{M}/u
+
 export function containsNonLatinScript(text: string): boolean {
   return NON_LATIN_LETTER.test(normalizeSearchText(text))
+}
+
+/**
+ * Detects queries that are not English: any non-Latin script, or Latin text
+ * with diacritics such as Vietnamese, French, or Spanish.
+ */
+export function looksNonEnglish(text: string): boolean {
+  const normalized = text.toLowerCase().normalize("NFD")
+  return (
+    containsNonLatinScript(text) ||
+    COMBINING_MARK.test(normalized) ||
+    normalized.includes("đ")
+  )
 }
 
 // CJK ideographs (Han) carry no whitespace between words, so the

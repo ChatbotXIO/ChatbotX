@@ -12,19 +12,12 @@ describe("rankTools via searchTools", () => {
     globalThis.fetch = originalFetch
   })
 
-  test("a Vietnamese query ranks the right tool first via synonym expansion", async () => {
+  test("ranks English action and resource queries first", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       specWithTools([
-        {
-          name: "contacts.removeTags",
-          summary: "Remove tags from contact",
-          description: "Removes named tags from a contact.",
-        },
-        {
-          name: "contacts.setTags",
-          summary: "Replace contact tags",
-          description: "Replaces every current tag.",
-        },
+        { name: "contacts.update", summary: "Update contact" },
+        { name: "contacts.list", summary: "List all contacts" },
+        { name: "coupons.issue", summary: "Issue coupon" },
       ]),
     ) as unknown as typeof fetch
 
@@ -32,9 +25,8 @@ describe("rankTools via searchTools", () => {
     await loadOpenApiSpec()
     const { searchTools } = await import("../src/server/meta-tools")
 
-    expect(searchTools("Gỡ nhãn VIP của Ada")[0]?.name).toBe(
-      "contacts_remove_tags",
-    )
+    expect(searchTools("update contact")[0]?.name).toBe("contacts_update")
+    expect(searchTools("list all contacts")[0]?.name).toBe("contacts_list")
   })
 
   test("a rare token (low document frequency) outweighs a common one", async () => {
@@ -116,6 +108,38 @@ describe("rankTools via searchTools", () => {
     const { searchTools } = await import("../src/server/meta-tools")
 
     expect(searchTools("contacts")[0]?.name).toBe("contacts_refresh_profile")
+  })
+
+  test("does not rank a create tool for a message query containing them", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithTools([
+        { name: "messages.send", summary: "Send message" },
+        { name: "tags.create", summary: "Create tag" },
+      ]),
+    ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { searchTools } = await import("../src/server/meta-tools")
+
+    expect(searchTools("send a message to them")[0]?.name).toBe("messages_send")
+  })
+
+  test("keeps ISO dates as date hints instead of contact phones", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithTools([
+        { name: "analytics.list", summary: "List analytics" },
+        { name: "contacts.list", summary: "List contacts" },
+      ]),
+    ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { searchTools } = await import("../src/server/meta-tools")
+
+    expect(
+      searchTools("analytics from 2026-09-01 to 2026-09-23")[0]?.name,
+    ).toBe("analytics_list")
   })
 })
 

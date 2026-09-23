@@ -171,10 +171,10 @@ describe("executeTool", () => {
       queryParamNames: [],
     }
 
-    await executeTool(getTool, { identifier: "0901234567" }, "api-key")
+    await executeTool(getTool, { identifier: "0912345678" }, "api-key")
 
     const url = fetchMock.mock.calls[0]?.[0] as string
-    expect(url).toContain(encodeURIComponent("phone:0901234567"))
+    expect(url).toContain(encodeURIComponent("phone:0912345678"))
   })
 
   test("auto-prefixes a bare numeric identifier as an id", async () => {
@@ -189,10 +189,28 @@ describe("executeTool", () => {
       queryParamNames: [],
     }
 
-    await executeTool(getTool, { identifier: "42" }, "api-key")
+    await executeTool(getTool, { identifier: "123" }, "api-key")
 
     const url = fetchMock.mock.calls[0]?.[0] as string
-    expect(url).toContain(encodeURIComponent("id:42"))
+    expect(url).toContain(encodeURIComponent("id:123"))
+  })
+
+  test("leaves an international phone number without a plus unprefixed", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const getTool: DynamicTool = {
+      ...tool,
+      name: "contacts_get",
+      pathTemplate: "/v1/contacts/{identifier}",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(getTool, { identifier: "84912345678" }, "api-key")
+
+    const url = fetchMock.mock.calls[0]?.[0] as string
+    expect(url).toContain("/v1/contacts/84912345678")
   })
 
   test("leaves a non-string identifier unchanged", async () => {

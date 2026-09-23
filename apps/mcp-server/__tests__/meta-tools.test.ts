@@ -221,6 +221,36 @@ describe("handleSearchTools", () => {
       },
     ])
   })
+
+  test.each([
+    ["Gắn nhãn khách hàng", undefined, "is not in English"],
+    ["Gan nhan khach hang", undefined, "Rephrase in English"],
+    ["thêm tag cho liên hệ", "contacts_add_tag", "translating"],
+    ["タグを追加", "tags_japanese_search", "translating"],
+  ])("returns the expected translation guidance for %s", async (query, expectedToolName, expectedHint) => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithTools([
+        {
+          name: "contacts.addTag",
+          summary: "Add tag to contact",
+        },
+        {
+          description: "タグを追加",
+          name: "tags.japaneseSearch",
+          summary: "Search tags",
+        },
+      ]),
+    ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleSearchTools } = await import("../src/server/meta-tools")
+
+    const result = handleSearchTools({ query })
+    const parsed = JSON.parse(result.content[0]?.text ?? "{}")
+    expect(parsed.matches[0]?.name).toBe(expectedToolName)
+    expect(parsed.hint).toContain(expectedHint)
+  })
 })
 
 describe("handleCallTool", () => {

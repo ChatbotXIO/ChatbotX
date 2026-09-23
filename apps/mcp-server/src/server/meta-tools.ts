@@ -10,7 +10,7 @@ import {
   jsonResult,
   type ToolCallResult,
 } from "./execute-tool"
-import { containsNonLatinScript } from "./search/normalize"
+import { looksNonEnglish } from "./search/normalize"
 import { distinctResourceGroups, rankTools } from "./search/rank"
 
 /**
@@ -67,9 +67,8 @@ const MAX_SEARCH_LIMIT = 25
 const MAX_NAME_SUGGESTIONS = 3
 
 /**
- * Ranks the full cached catalog against `query` (Vietnamese, colloquial,
- * or English) and returns the top matches. See `search/rank.ts` for the
- * scoring model (synonym expansion, IDF, field weighting).
+ * Ranks the full cached catalog against an English `query` and returns the
+ * top matches. See `search/rank.ts` for the IDF-weighted scoring model.
  */
 export function searchTools(query: string, limit?: number): DynamicTool[] {
   const cappedLimit = Math.min(
@@ -95,8 +94,8 @@ function resourceGroupSuffix(): string {
 
 /**
  * Validates a `search_tools` query and returns matched tool definitions.
- * Zero or non-Latin-script results include a hint that helps the caller
- * retry without executing a catalog tool.
+ * Zero or non-English results include a hint that helps the caller retry
+ * without executing a catalog tool.
  */
 export type SearchMatch = Pick<
   DynamicTool,
@@ -112,7 +111,7 @@ export function handleSearchTools(
     return errorResult("search_tools requires a non-empty 'query' string.")
   }
   const limit = typeof args.limit === "number" ? args.limit : undefined
-  const isNonLatinQuery = containsNonLatinScript(query)
+  const isNonEnglishQuery = looksNonEnglish(query)
 
   const matches: SearchMatch[] = searchTools(query, limit).map((tool) => ({
     name: tool.name,
@@ -121,18 +120,18 @@ export function handleSearchTools(
   }))
 
   if (matches.length === 0) {
-    const hint = isNonLatinQuery
-      ? `The tool catalog is English-only and "${query}" contains no English words. Translate the request into one English action plus one resource (e.g. "add tag to contact") and call search_tools again.${resourceGroupSuffix()}`
+    const hint = isNonEnglishQuery
+      ? `The tool catalog is English-only and "${query}" is not in English. Translate the request into one English action plus one resource (e.g. "add tag to contact") and call search_tools again.${resourceGroupSuffix()}`
       : `No tool matched "${query}". Rephrase in English with one action and one resource.${resourceGroupSuffix()}`
     return jsonResult({ matches: [], hint })
   }
 
-  // A non-Latin query that still scored > 0 (e.g. it mixed in an English
+  // A non-English query that still scored > 0 (e.g. it mixed in an English
   // word) got ranked against an English catalog rather than translated —
   // matches may be present but weaker than a fully-English query would
   // produce, so nudge the caller toward the higher-quality path without
   // withholding the matches it already found.
-  if (isNonLatinQuery) {
+  if (isNonEnglishQuery) {
     return jsonResult({
       matches,
       hint: `Matches were ranked from a non-English query; translating "${query}" into English (one action plus one resource) before calling search_tools again usually ranks better.`,

@@ -6,7 +6,6 @@ import {
   stripLiterals,
   tokenize,
 } from "./normalize"
-import { expandSynonyms } from "./synonyms"
 
 // Field weights: an exact name-token hit is worth far more than a hit deep
 // in the long-form description body -- an agent naming the resource
@@ -111,14 +110,12 @@ function inverseDocumentFrequency(token: string, corpusSize: number): number {
 }
 
 /**
- * Expands the raw query into concept tokens (Vietnamese/colloquial
- * synonyms resolved to their English catalog vocabulary, literals like
- * emails/phone numbers/bare ids stripped, stopwords dropped, suffixes
- * stemmed) before token-matching against the catalog.
+ * Converts a raw English query into normalized catalog tokens: literals such
+ * as emails, phone numbers, and ids become weak concept hints; stopwords are
+ * dropped; and simple English plurals are stemmed before token matching.
  */
 function queryTokens(query: string): string[] {
-  const normalized = normalizeSearchText(stripLiterals(query))
-  return [...new Set(expandSynonyms(normalized).map(stem))].filter(
+  return [...new Set(tokenize(stripLiterals(query)).map(stem))].filter(
     (token) => token.length > 0 && !STOPWORDS.has(token),
   )
 }

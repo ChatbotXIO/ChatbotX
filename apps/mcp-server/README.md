@@ -19,7 +19,7 @@ ChatbotX's public API has ~350 operations. Listing all of them as MCP tools over
 
 Use `search_tools` when the task needs something outside the default set (e.g. deleting a resource, managing AI agents, coupons, products) — then invoke it with `call_tool`.
 
-`search_tools`'s catalog (tool names, summaries, descriptions) is entirely English, so the tool description asks the calling model to translate the user's intent into an English "action + resource" query before searching — the ranker itself does no translation. A hand-written Vietnamese/colloquial synonym layer (synonym mapping, accent-insensitive matching, stemming, IDF weighting toward rare/specific tokens over generic ones — see `src/server/search/`) exists as a fallback for a query that arrives untranslated in Vietnamese, but is not advertised as the supported path and isn't maintained for any other language. A query written in a non-Latin script (Arabic, CJK, Cyrillic, Thai, Korean, ...) gets a hint pointing this out explicitly, whether it matched zero tools or matched weakly by mixing in an English word — see `containsNonLatinScript` in `src/server/search/normalize.ts`. This only catches non-Latin scripts, not an accent-free Latin-script language like Spanish or French with no English words in it; reliably detecting "this isn't English" for a short 3-6 word query needs a real signal (embeddings/model-level translation), not a cheap heuristic — see `.plans/mcp-multilingual-routing-plan.md` for why statistical language detection (e.g. `franc`) was tried and rejected: it's accurate on long sentences but wrong on short queries (misclassifies "add tag to contact" as Portuguese). `call_tool` is tolerant of common model mistakes:
+`search_tools`'s catalog (tool names, summaries, descriptions) is entirely English. The calling client must translate the user's intent into an English "action + resource" query before searching; the ranker does not translate. When an accented Latin or non-Latin query reaches the server, `search_tools` returns a `hint` asking the client to translate and retry in English.
 
 - **Name normalization**: a dotted or camelCase operation label (`contacts.get`, `contactsGet`) is accepted and re-derived to the executable snake_case name — you don't have to pass the exact string `search_tools` returned.
 - **Unknown-tool suggestions**: an unrecognized `name` returns the closest matching tool names instead of a bare error, so a model can self-correct without another `search_tools` round trip.
@@ -302,7 +302,7 @@ Scores every prompt in the eval corpus (`evals/cases.ts`) through the real `sear
    ```bash
    pnpm --filter chatbotx-mcp eval:search --spec /absolute/path/public-spec.json [--min-top1 0.65] [--min-top3 0.85] [--verbose]
    ```
-   Prints per-locale top-1/top-3/empty-result rates and exits non-zero if either rate falls below its threshold. `--verbose` also lists every prompt that missed the top 3, with the ranker's actual top matches, for targeted synonym/description fixes.
+   Prints per-locale top-1/top-3/empty-result rates, but enforces the configured thresholds only for English. `--verbose` also lists every prompt that missed the top 3, with the ranker's actual top matches, for targeted ranking or description fixes.
 
 ### `eval:business` — full LLM-driven business eval
 
@@ -347,8 +347,8 @@ src/
     │                          # unknown-tool suggestions, pre-flight argument checks
     ├── execute-tool.ts        # Shared HTTP dispatch for a DynamicTool call + argument
     │                          # normalization (contact identifier auto-prefix)
-    ├── search/                # search_tools ranking: normalization, Vietnamese/
-    │                          # colloquial synonym expansion, IDF-weighted scoring
+    ├── search/                # search_tools ranking: normalization and
+    │                          # IDF-weighted scoring
     ├── sse-server.ts          # SSE / Streamable HTTP transport
     └── stdio-server.ts        # stdio transport
 
