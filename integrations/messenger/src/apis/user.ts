@@ -103,6 +103,7 @@ export const deleteUserPersistentMenu = (props: {
 const fetchUserProfile = async (props: {
   ctx: Context<MessengerAuthValue>
   sourceId: string
+  avatar?: boolean
 }): Promise<FacebookUserProfile> =>
   await facebookGraphClient.get<FacebookUserProfile>(
     `${props.ctx.auth.metadata.version}/${props.sourceId}`,
@@ -111,17 +112,24 @@ const fetchUserProfile = async (props: {
         Authorization: `Bearer ${props.ctx.auth.tokens.accessToken}`,
       },
       searchParams: {
-        fields: "first_name,last_name,profile_pic,locale,timezone,gender",
+        fields:
+          props.avatar === false
+            ? "first_name,last_name,locale,timezone,gender"
+            : "first_name,last_name,profile_pic,locale,timezone,gender",
       },
     },
   )
 
 export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
-  ({ data: { sourceId }, ctx }) => {
+  ({ data: { sourceId, avatar }, ctx }) => {
     const endpoint = `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`
 
     return rescue(endpoint, async () => {
-      const response = await fetchUserProfile({ ctx, sourceId })
+      const response = await fetchUserProfile({
+        ctx,
+        sourceId,
+        avatar,
+      })
 
       const result: IncomingContact = {
         sourceId,
@@ -132,7 +140,7 @@ export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
         gender: normalizeGender(response.gender),
       }
 
-      if (response.profile_pic) {
+      if (avatar !== false && response.profile_pic) {
         try {
           result.avatar = await getContactProfilePicture({
             ctx,

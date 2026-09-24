@@ -1,186 +1,240 @@
-# Implementation Plan: Messenger echo flood and per-owner MAC lock
+# Implementation Plan: Messenger echo — collector, bulk pipeline, MAC gate
 
-Status: **draft, waiting for owner confirmation**. No code is written until a
-PR is explicitly approved ("implement PR-A" etc.).
+Status: decisions closed. PR-A implemented; PR-B and PR-C pending.
+Production figures never go into commits or PR descriptions.
 
-## 1. Requirements restatement
+## 1. Goal
 
-- Real customer messages must never queue behind Messenger `message_echoes`.
-- Echoes from Page Inbox, Business Suite, Meta auto-replies and third-party
-  tools on the same Page are still saved and shown in the inbox exactly as
-  today (D5: keep current behaviour, including template echoes with an
-  empty payload).
-- A recipient of an echo who does not exist yet **is created as a contact but
-  is not monthly-active**: no MAC gate, no per-owner MAC lock (D4 = option
-  A). MAC is counted only if that contact later writes back.
-- Echo rows use Meta's `messaging.timestamp` as `createdAt` (D3).
-- No new Redis key keyed by user or message. Any cache must have a computed
-  upper bound.
-- Existing flows stay intact: redelivery dedup, attachments, `sourceId`
-  stamping, conversation activity tracking, the outbound "Page keyword"
-  loop-guard, `getProfile` for new contacts, the story-reply direction flip,
-  and the D8 unique-violation race recovery.
+Messenger `message_echoes` (Page Inbox replies, Meta auto-replies,
+third-party broadcasts) must not slow down real customer messages, and each
+echo must cost far fewer queries than today.
 
-## 2. Root cause (from production investigation; numbers deliberately kept
-out of commits and PRs)
+## 2. Root cause
 
-- Echoes of ChatbotX's own sends are already dropped at the webhook
-  (`metadata: "SENT_FROM_CHATBOTX"`,
-  `integrations/messenger/src/handlers/webhook.ts:279-285`). They cost
-  nothing.
-- The remaining echoes are third-party template broadcasts to recipients
-  unknown to the workspace. Each one runs the full inbound pipeline, calls
-  Graph `getProfile`, then creates the contact through
-  `quotaEnforcementService.createNewContactWithMac`, which holds a Redis lock
-  `quota:user:<owner>:mac` for the whole multi-statement transaction.
-- A losing job spins up to `lockWaitSeconds` (10 s, 51 attempts × 200 ms)
-  while holding a worker slot, then defers with backoff
-  (`apps/worker/src/lib/lock-contention-deferral.ts`). One owner's broadcast
-  therefore occupies every `integration` worker slot and starves all tenants.
-- Additionally, `message:received` is emitted for outgoing echoes (with
-  `origin: undefined`) and `trackMessageIn`
-  (`packages/analytics/src/services/mac-tracking.service.ts`) counts every
-  payload as `message_in`, so a saved echo currently counts MAC.
+- Meta delivers one echo per webhook request. The webhook enqueues one
+  `incomingMessage` job per echo on the `integration` queue
+  (`integrations/messenger/src/handlers/webhook.ts:262-296`). Echoes of
+  ChatbotX's own sends are already dropped there by metadata (`:279-285`).
+- Each echo job runs the full inbound pipeline (identify twice, tenant
+  settings twice, attachment download before dedup, contact lookup,
+  `getProfile`, Redlock + all-shard dedup scan, tracking transaction,
+  broadcast, analytics), roughly 25–30 round trips.
+- An echo to a recipient unknown to the workspace creates the contact under
+  the per-owner Redis lock `quota:user:<owner>:mac`, held for a
+  multi-statement transaction. A losing job spins up to 10 s holding a
+  worker slot before deferring (`apps/worker/src/lib/lock-contention-deferral.ts`).
+  One owner's broadcast therefore occupies every `integration` slot and
+  every other tenant waits.
+- `message:received` is emitted for outgoing echoes and the MAC tracker
+  counts every payload (`packages/analytics/src/services/mac-tracking.service.ts`),
+  so echoes currently count as monthly-active and hourly-active.
 
-## 3. Cost of one echo to an unknown recipient today (estimated from code)
+## 3. Decisions (closed)
 
-| Step | Round trips |
+| # | Decision |
 |---|---|
-| Identify inbox twice (`worker.ts` + `received-message.ts`) | 4 DB + 2 Redis |
-| `resolveTenantSettings` twice | 4–6 Redis/DB |
-| `getProfile` | 1 HTTP (Meta) |
-| Contact + conversation lookup | 2–3 DB |
-| MAC lock acquire/release, spin on contention | 2 Redis, worst case 51 × 200 ms |
-| Inside the lock: remaining slots, `getForUser`, transaction (contact, contactInbox, cleanup, conversation, MAC claim, counters) | ~8 DB |
-| `createOrUpdate`: Redlock + `findBySourceId` across every shard in 24 h + insert | 2 Redis + N shards + 1 DB |
-| Tracking transaction + cache invalidation | 2 DB + 1 Redis |
-| Realtime broadcast + `message:received` (MAC, presence) | 1 publish + 2 DB |
+| D3 | Echo `createdAt` = Meta `messaging.timestamp`, validated to `[now − 7 d, now + 5 min]`, otherwise processing time. |
+| D4 | A recipient of an echo who does not exist yet is created as a contact but is **not** monthly-active: no MAC gate, no MAC lock. MAC counts only when the contact writes back. Contact totals and `contact:created` analytics unchanged. |
+| D5 | Echoes are saved and shown exactly as today, including template echoes with an empty payload. |
+| D6 | Contacts created from third-party broadcast echoes **do** fire "new contact" triggers/automations, as today. |
+| D7 | The echo payload carries only `sender.id` / `recipient.id` (no name), so the name is always fetched: one `getProfile` call **without avatar** (`fields=first_name,last_name,locale,timezone,gender`, no `profile_pic`, no `getContactProfilePicture` mirror to storage). Avatar is filled later by the existing on-demand avatar hydration when the contact writes back. |
+| D8 | Echoes count neither MAC nor hourly presence. |
+| — | Redis is bounded and never keyed per user or per message. |
+| — | Unchanged: redelivery dedup, attachments, `sourceId`, `firstInteractionAt`/`lastMessageAt`/`lastActivityAt` tracking; **`lastIncomingMessageAt` is never touched by an echo** (it governs the 24 h send window); the outbound "Page keyword" loop-guard with its fail-closed `isEchoOfOwnSend` check; the story-reply flip; referral / postback / quick-reply / reaction / deletion handling; D8 race recovery. |
 
-Phase 1 removes the lock, the spin and ~6–7 round trips for new-contact
-echoes, and isolates echoes from customer traffic. Phase 2 brings a typical
-echo from roughly 25–30 round trips down to 8–10 with no lock wait.
-`getProfile` stays the slowest step for new contacts unless the owner
-decides echo-created contacts may go without a profile until they reply
-(open question, see §8).
+## 4. Architecture
 
-## 4. Phase 1 — stop the bleeding (3 PRs, each TDD + Codex review)
+```
+Meta ─1 echo/request─▶ builder webhook
+   plain echo & flag on → echoCollector.push(pageId, compactEvent)   Redis list on the QUEUE connection
+                          echoCollector.schedule(pageId)             SET NX flag → lowQueue.add(messengerEchoFlush)
+   anything else, cap hit, Redis error → today's per-event integration job (fail open)
+                                   ▼
+   low worker: messengerEchoFlush {pageId}
+     distributedLock(pageId)          one flush per page at a time
+     items = peek(0..199)             no ack yet
+     messengerEchoBatchService.process(items)
+     ack(items.length)                only after the batch is durable
+     clearFlag; if size > 0 → schedule again
+   sweeper cron, every minute: scan non-empty lists → schedule   (lost-wakeup recovery)
+                                   ▼
+   packages/business: messengerEchoBatchService (bulk, per page)
+```
 
-No migration. No new Redis keys.
+- BullMQ OSS 5.x cannot consume jobs in batches (that is BullMQ Pro), so
+  the collector is a Redis list; BullMQ still schedules, runs, retries and
+  reports the flush job. Flush jobs have **no fixed jobId** (BullMQ keeps
+  completed ids, a fixed id can silently fail to re-add); the flag is the
+  dedup.
+- The list lives on the **queue** Redis (same as BullMQ), not the cache
+  Redis, so both live or die together.
+- Bounds: one Lua `push` enforces an item cap (5,000) and a byte cap per
+  list and sets `EXPIRE … NX` (a hot list is not kept alive by pushes).
+  Compact event = mid, PSID, timestamp, text, attachment descriptors.
+  Collector window 0.5 s (`MESSENGER_ECHO_FLUSH_DELAY_MS=500`), batch size
+  200 (`MESSENGER_ECHO_FLUSH_BATCH=200`), both env-tunable; under load the
+  flush re-schedules itself immediately while the list is non-empty.
+  In-flight data ≈ window × rate × size, well under 1 MB cluster-wide;
+  less than today's one BullMQ job per echo.
+- Idempotency (a flush that dies mid-way replays the batch): message insert
+  conflicts on `(contactInboxId, sourceId, createdAt)`; attachments are
+  written only for inserted rows after an existence check on
+  `(messageId, sourceId)`; tracking uses LEAST/GREATEST; contact creation is
+  `onConflictDoNothing` + re-select.
+- Wiring: `integrations/messenger` depends on neither `packages/redis` nor
+  `worker-config`, and the builder injects only `integrationQueue`
+  (`apps/builder/src/app/integrations/[...integration]/webhook.ts:187`). The
+  handler contract gains an optional `echoCollector` port (`push`,
+  `schedule`) implemented in the builder.
 
-### PR-A: echo to an unknown recipient → contact without MAC, without lock
+Plain echo (webhook, narrow on purpose): `is_echo` AND no our-metadata AND
+no `quick_reply` AND no `referral` (top-level or nested) AND no `postback`
+AND no `reply_to` AND not `is_deleted` AND no reaction/read AND
+`sender.id === entry.id` AND attachments (if any) only
+`image|video|audio|file|template`. The schema
+(`integrations/messenger/src/schema.ts:162`) gains explicit optional
+`app_id` and `reply_to`. Everything else keeps the single-event path. The
+batch service reuses the existing channel parser in a core-only mode (no
+attachment download); there is one interpretation of Meta payloads.
+
+## 5. PR-A: echo to an unknown recipient → contact without MAC, without lock
+
+Acute fix for the lock. Needed regardless of batching (the single path
+stays for non-plain echoes and the fallback).
 
 `apps/worker/src/integration/handlers/received-message.ts`
-
-- `detectContactAndConversation` gains `newContactQuota: "mac" | "skip"`
-  (default `"mac"`; callers `whatsapp-call.ts`, `lead-ads`, and the
-  referral-only path are untouched).
-- `receiveMessage` passes `"skip"` for an outgoing message **except** an
-  outgoing story reply: for a brand-new contact that is really the
-  customer's first message and is flipped to incoming afterwards
-  (`correctStoryReplyDirectionForNewContact`), so it must go through the
-  MAC gate. Helper `newContactQuotaFor(message)`.
-- `createNewContactAndContactInbox`: extract one `createRows(tx)` closure
-  (Contact + ContactInbox + `cancelByInboxSource` + `conversation.findOrCreate`)
-  shared by both branches. `"skip"` → existing
-  `quotaEnforcementService.createContactWithoutMac`; `"mac"` → the current
-  logic moved verbatim into `createRowsBehindMacGate` (keeps
-  `UnrecoverableError("contact_mac_limit_reached")`).
-- Emit `message:received` only when `isNew && isInboundMessage`. Listeners on
-  this event (MAC presence, hourly activity, ads `contactReplied`) all model
-  the contact acting, which an echo is not.
-- Derive the transaction type from the service signature
-  (`Parameters<…createContactWithoutMac>[0]["create"]`) so the app layer
-  never imports the database client.
+- `detectContactAndConversation` gains `newContactQuota: "mac" | "skip"`,
+  default `"mac"` (`whatsapp-call.ts`, `lead-ads`, referral-only untouched).
+- Decided from the **raw** message before detection,
+  `newContactQuotaFor(rawIncomingMessage)`: `"skip"` only for outgoing
+  messages that are not story replies. An outgoing story reply of a
+  brand-new contact is the customer's first message and is flipped to
+  incoming after creation (`received-message.ts:122,274-298`), so it stays
+  on the MAC gate.
+- One shared transactional `createRows(tx)` closure (Contact + ContactInbox
+  + cleanup cancel + conversation). `"skip"` → existing
+  `quotaEnforcementService.createContactWithoutMac`; `"mac"` → current logic
+  moved verbatim into `createRowsBehindMacGate` (keeps
+  `UnrecoverableError("contact_mac_limit_reached")`). D8 recovery,
+  `emitContactCreated` and `contact:created` unchanged for both (D6).
+- For `"skip"` the profile fetch is name-only (D7): `getProfile` gains an
+  option `{ avatar: false }` in `integrations/messenger/src/apis/user.ts`
+  (`fields` without `profile_pic`, skip `getContactProfilePicture`).
+- `message:received` emitted only when `isNew && isInboundMessage` (D8).
+- Transaction type derived from the service signature; the app layer never
+  imports the database client.
 
 `packages/business/src/quota-enforcement/service.ts`
-
 - `createContactWithoutMac` sets the same `setLocalStatementTimeout` as the
-  MAC path inside its transaction.
+  MAC path.
 
-Tests
+Tests: `apps/worker/__tests__/received-message.test.ts` (echo to unknown
+recipient uses the no-MAC creator: rows, `emitContactCreated`, echo saved,
+name fetched without avatar, no `message:received`; story-reply flip still
+MAC-gated with full profile and emits inbound; D8 race on the no-MAC path;
+inbound new contact still MAC-gated; existing outgoing tests green).
+`integrations/messenger/__tests__` (getProfile avatar option).
+`packages/business/__tests__/quota-enforcement.service.test.ts` (statement
+timeout).
 
-- `apps/worker/__tests__/received-message.test.ts`: echo to unknown recipient
-  uses the no-MAC creator (rows, `emitContactCreated`, echo saved, no
-  `message:received`); story-reply flip still goes through the MAC gate and
-  emits `origin: "inbound"`; D8 race recovery on the no-MAC path; inbound new
-  contact still MAC-gated; existing outgoing tests (`getProfile` still
-  fetched, tracking shape, no profile refresh) stay green.
-- `packages/business/__tests__/quota-enforcement.service.test.ts`: statement
-  timeout on the no-MAC transaction.
+## 6. PR-B: collector + bulk echo pipeline, staged rollout
 
-Known trade-off: `contactsUsed` counters (`UserQuota`, `WorkspaceUsage`) are
-still incremented per contact, a single hot row per owner. Not a regression
-(the MAC path incremented the same rows) and each increment is one short
-statement outside the create transaction. Watch it; batch in Phase 2 if it
-shows up.
+Deploy order, so old/new builder and worker never mismatch:
+1. `packages/worker-config/src/queues/low/index.ts`:
+   `LowJobAction.messengerEchoFlush { pageId }`.
+2. `apps/worker/src/low/worker.ts`: flush handler + sweeper cron. Deploy
+   workers; confirm the handler is live via metrics.
+3. `packages/redis/src/echo-collector.ts` on the queue connection: Lua
+   `push` (RPUSH + caps + EXPIRE NX), `peek`, `ack(count)`, `size`,
+   `schedule` (SET NX), `clearFlag`, `scanPending`.
+4. `integrations/messenger`: `echoCollector` port in the handler contract,
+   `isPlainEcho`, schema fields `app_id` / `reply_to`.
+5. `apps/builder`: implement the port; env flag
+   `MESSENGER_ECHO_COLLECTOR_ENABLED`, default off; enable after step 2.
+   Any collector error → per-event job, logged with `err`.
 
-### PR-B: route echoes to the `low` queue
+`packages/business/src/message/messenger-echo-batch-service.ts`, one batch:
+1. Identify inbox / workspace / tenant settings once.
+2. Parse each event with the channel parser, core mode.
+3. Contacts: `bulkCreatePassiveContacts`, built on the primitives of
+   `bulkImportChannelContacts`
+   (`packages/business/src/contact/bulk-import-channel-contacts.ts:55-174`):
+   dedup by PSID, one `IN` lookup, one transaction with
+   `onConflictDoNothing` + re-select, Contact + ContactInbox + Conversation,
+   no MAC, one owner/pool-aware `contacts` increment per batch,
+   `contact:created` / `emitContactCreated` per new contact (D6).
+4. Name-only `getProfile` in parallel (concurrency 5), new contacts only
+   (D7); one list-based `contactRepository.bulkPatchProfiles` (new).
+5. Timestamp validation per D3.
+6. Messages: one `messageRepository.bulkCreate` (existing: 1,000-row chunks,
+   same-workspace guard, ON CONFLICT, returns inserted rows only).
+7. Attachments: inserted rows only, existence check, bounded download in
+   the same flush (CDN URLs expire), `bulkCreateAttachments` with
+   `messageCreatedAt = createdAt`.
+8. Tracking: reuse `contactInboxService.bulkUpdateTracking`
+   (`packages/business/src/contact-inbox/service.ts:661`, LEAST/GREATEST)
+   with `lastIncomingMessageAt: null`; monotonic GREATEST update for
+   `Conversation.lastActivityAt`.
+9. Realtime broadcast per conversation, inserted rows only.
+10. Outbound keyword loop-guard: for each inserted **text** echo run the
+    existing `isEchoOfOwnSend` check (fail closed,
+    `received-message.ts:483,693`), then enqueue
+    `checkOutboundAutomatedResponse`.
+11. A failing item is logged with `err`, counted, and re-enqueued as a
+    single-event job; nothing is silently dropped.
+12. Fairness: one flush per page at a time; bounded `getProfile` and
+    download concurrency per flush.
 
-- `integrations/messenger/src/handlers/webhook.ts`: an `is_echo` event
-  without our metadata is enqueued to `lowQueue` instead of
-  `integrationQueue`, with jobId
-  `messenger-echo-<sha256(pageId + mid).slice(0, 32)>` (dedups redeliveries
-  while the job exists; no cache).
-- `packages/worker-config/src/queues/low/index.ts`: `LowJobAction.messengerEcho`.
-- `apps/worker/src/low/worker.ts`: handler that calls the existing
-  `receiveMessage` unchanged.
-- Jobs already in `integration` keep the old path. Adjust `low` replicas or
-  `LOW_WORKER_CONCURRENCY` in the deployment stack if needed.
+Tests: `packages/redis/__tests__/echo-collector.test.ts`;
+`integrations/messenger/__tests__/webhook-echo-collector.test.ts`;
+`packages/business/__tests__/messenger-echo-batch-service.test.ts`;
+`apps/worker/__tests__/low-echo-flush.test.ts`.
 
-Tests: `integrations/messenger/__tests__/webhook-echo-routing.test.ts`
-(metadata drop, echo → low, non-echo → integration, jobId has no `:`), low
-worker boot/dispatch test.
+Metrics: collector pushes / fallbacks / scheduling failures, list depth and
+age, batch size, flush p95 per stage, duplicates skipped, per-item
+failures, `low` and `integration` queue lag, echo share.
 
-### PR-C: MAC lock for genuine inbound bursts
+Cost after PR-B, batch of N plain echoes on one page: ~10–15 round trips
+for the batch + N name-only `getProfile` in parallel (new contacts only) +
+N realtime publishes. Echo latency +0.5–1 s; customer messages unaffected.
 
-- `apps/worker/src/lib/lock-contention-deferral.ts`: `lockWaitSeconds`
-  10 → 1 so a losing job frees its slot within a second.
-- `packages/business/src/quota-enforcement/service.ts`
-  `createNewContactWithMac`: replace Redlock with `SELECT … FOR UPDATE` on the
-  owner's `UserQuota` row (and the pool owner's row for a sub-account) inside
-  the transaction that already has `statement_timeout`. Waiters queue FIFO in
-  Postgres, no Redis polling, lock held exactly as long as the transaction.
+## 7. PR-C (after PR-A and PR-B): transactional MAC gate for real inbound bursts
 
-Tests: gate stays atomic, `distributedLock` no longer called, deferral
-policy values.
+Today the Redis lock covers the remaining-slot read, row creation, MAC
+claim and the post-commit counter increment
+(`packages/business/src/quota-enforcement/service.ts:371-408`); the gate
+reads both the sub-account and the pool owner rows (`:550`); the webchat
+server action calls the same method synchronously
+(`apps/builder/src/features/messages/actions/create-webchat-message.action.ts:454`).
+Design: one transaction, `SELECT … FOR UPDATE` on all applicable
+`UserQuota` rows in sorted `userId` order, authoritative check and
+conditional increment inside that transaction, contact rows after the gate,
+Redis mirrors after commit, short DB `lock_timeout`; workers retry via
+BullMQ, interactive callers get a retryable error;
+`lockWaitSeconds` 10 → 1 in the deferral policy. With PR-A in place the
+acute contention is gone, so this is done carefully, not urgently.
 
-## 5. Phase 2 — make each echo cheap (after Phase 1 is stable)
+Also in this phase: single-event path trimming (identify once per job,
+skip `resolveTenantSettings` for outgoing, broadcast only when `isNew`,
+echo-only direct write-shard insert).
 
-1. Echo `createdAt` = Meta `messaging.timestamp`; audit `recordInboundActivity`
-   so a late event cannot move `lastActivityAt` backwards.
-2. Repository: echo-only write path, direct `INSERT … ON CONFLICT DO NOTHING`
-   on the write shard keyed by `(contactInboxId, sourceId, createdAt)`; on
-   conflict read back from the primary. No Redlock, no 24 h all-shard scan.
-3. Identify the inbox once per job; skip `resolveTenantSettings` for
-   outgoing; broadcast realtime only when `isNew`.
-4. Split Messenger parsing into core and attachment; download attachments
-   only after the insert wins, with its own bounded concurrency.
-5. Batch `contactsUsed` increments if the hot row shows up.
-6. Metrics: echo share, p95 echo processing per stage, `low` and
-   `integration` queue lag, MAC lock wait histogram.
+## 8. Risks
 
-## 6. Phase 3 — only if Phase 2 metrics require it
+- Echo-created contacts bypass the MAC gate: an owner may exceed the
+  nominal contact cap without being billed for them (intended by D4).
+- Echoes no longer count hourly presence or `contactReplied` (D8).
+- Echo-created contacts have a name but no avatar until they write back
+  (D7).
+- D6 means a broadcast to many recipients fires that many "new contact"
+  automations; the owner accepted this.
+- Worker outage: lists fill to the cap, then per-event fallback; lists
+  expire; the sweeper drains leftovers when workers return.
+- A successful push followed by a failed schedule yields a duplicate
+  delivery, absorbed by idempotency, never a loss.
+- Broadcast to tens of thousands: throughput is bounded by `getProfile`
+  rate limits and `low` concurrency, not by a lock.
 
-Postgres ingress table for echoes with a `FOR UPDATE SKIP LOCKED` consumer,
-replacing one Redis job per echo (Codex's long-term proposal).
+## 9. Order and complexity
 
-## 7. Risks
-
-- Echo-created contacts bypass the MAC gate: an owner may exceed the nominal
-  contact cap without being billed for them (intended by D4).
-- Dropping `message:received` for echoes also drops hourly presence and
-  `contactReplied` for echoes; both are meaningless for outgoing messages.
-- PR-C row lock: a slow create transaction makes waiters wait in Postgres
-  instead of Redis; bounded by the existing `statement_timeout`.
-- Old commit history: PR #1303 was opened prematurely and closed; its branch
-  is deleted and its head now points at a sanitized commit.
-
-## 8. Open questions for the owner
-
-- May echo-created contacts skip `getProfile` (no name/avatar until they
-  reply)? Removes the one external HTTP call per new-contact echo.
-
-## 9. Complexity
-
-PR-A: M (~1 day). PR-B: S–M (0.5–1 day). PR-C: M (~1 day).
-Phase 2: L (4–6 days). Phase 3: L, only if needed.
+PR-A (M, ~1 day) → PR-B (L, 4–5 days incl. staged rollout) → PR-C (M–L,
+2–3 days). Each PR: TDD, Codex review, `pnpm lint`, typecheck.
