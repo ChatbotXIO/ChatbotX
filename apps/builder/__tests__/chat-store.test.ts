@@ -1035,7 +1035,6 @@ describe("chat store conversation updates", () => {
     ])
     expect(store.getState().conversations[0]?.messages).toEqual([message])
   })
-
   test("handleNewMessage applies patch, read state, and move-to-top in one state update", () => {
     const store = createChatStore()
     const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))

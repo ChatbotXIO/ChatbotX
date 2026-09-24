@@ -463,6 +463,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   // A closure variable rather than store state since it's only read/written
   // inside openConversation and never rendered.
   let pendingOpenConversationId: string | null = null
+  let lastConversationHeadRefreshAt = Number.NEGATIVE_INFINITY
+  let conversationHeadRefreshInFlight: Promise<void> | null = null
   const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => {
