@@ -18,6 +18,11 @@ import {
 
 const NUMERIC_ID = /^\d+$/
 const PLACE_ID_ERROR = /place id/i
+const FROZEN_NOW = new Date("2026-09-24T02:25:38.515Z")
+const SEQUENCE_SPACE = 1024
+
+/** Deterministic stand-in for Math.random: returns `value` on every call. */
+const constantRandom = (value: number) => () => value
 
 afterEach(() => {
   vi.useRealTimers()
@@ -39,57 +44,146 @@ describe("createId", () => {
     expect(resolved.place_id).toBeLessThanOrEqual(SNOWFLAKE_PLACE_ID_MAX)
   })
 
-  test("stays unique across a burst larger than the per-millisecond sequence space", () => {
-    const ids = new Set<string>()
+  test("stays unique and strictly increasing across a burst larger than the per-millisecond sequence space", () => {
+    const ids: string[] = []
     for (let i = 0; i < 3000; i++) {
-      ids.add(createId())
+      ids.push(createId())
     }
-    expect(ids.size).toBe(3000)
+
+    expect(new Set(ids).size).toBe(3000)
+    for (let i = 1; i < ids.length; i++) {
+      expect(BigInt(ids[i]) > BigInt(ids[i - 1])).toBe(true)
+    }
   })
 })
 
 describe("createSnowflakeGenerator", () => {
+  test("encodes the place id in the 4-bit field the legacy decoder reads", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(FROZEN_NOW)
+    const generator = createSnowflakeGenerator({
+      placeId: 3,
+      random: constantRandom(0),
+    })
+
+    const resolved = resolveId(generator.generate())
+
+    expect(resolved.place_id).toBe(3)
+    expect(resolved.sequence).toBe(0)
+    expect(resolved.created_at).toBe(FROZEN_NOW.toISOString())
+  })
+
   test("two processes with different place ids never collide in the same millisecond", () => {
     vi.useFakeTimers()
-    vi.setSystemTime(new Date("2026-09-24T02:25:38.515Z"))
-    const workerA = createSnowflakeGenerator({ placeId: 3 })
-    const workerB = createSnowflakeGenerator({ placeId: 7 })
+    vi.setSystemTime(FROZEN_NOW)
+    // Same random draw on both sides: the place id alone must separate them.
+    const workerA = createSnowflakeGenerator({
+      placeId: 3,
+      random: constantRandom(0),
+    })
+    const workerB = createSnowflakeGenerator({
+      placeId: 7,
+      random: constantRandom(0),
+    })
 
     const idsA = new Set(Array.from({ length: 200 }, () => workerA.generate()))
     const idsB = new Set(Array.from({ length: 200 }, () => workerB.generate()))
 
-    const overlap = [...idsA].filter((id) => idsB.has(id))
-    expect(overlap).toEqual([])
-    for (const id of idsA) {
-      expect(resolveId(id).place_id).toBe(3)
-    }
+    expect([...idsA].filter((id) => idsB.has(id))).toEqual([])
   })
 
-  test("starts each millisecond at a random sequence offset instead of 0", () => {
+  test("two processes sharing a place id are separated by their per-millisecond sequence offset", () => {
     vi.useFakeTimers()
-    vi.setSystemTime(new Date("2026-09-24T02:25:38.515Z"))
-    const generator = createSnowflakeGenerator({ placeId: 1 })
+    vi.setSystemTime(FROZEN_NOW)
+    const legacyLike = createSnowflakeGenerator({
+      placeId: 0,
+      random: constantRandom(0), // offset 0, exactly what the old generator did
+    })
+    const upgraded = createSnowflakeGenerator({
+      placeId: 0,
+      random: constantRandom(0.5), // offset 512
+    })
 
-    const firstSequences = new Set<number>()
-    for (let i = 0; i < 32; i++) {
-      firstSequences.add(resolveId(generator.generate()).sequence)
-      vi.advanceTimersByTime(1)
-    }
-
-    // 32 independent draws from 1024 values: all-equal has probability ~1e-96.
-    expect(firstSequences.size).toBeGreaterThan(1)
-  })
-
-  test("ids minted within one millisecond by one generator are unique", () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date("2026-09-24T02:25:38.515Z"))
-    const generator = createSnowflakeGenerator({ placeId: 0 })
-
-    const ids = new Set(
-      Array.from({ length: 1024 }, () => generator.generate()),
+    const legacyIds = new Set(
+      Array.from({ length: 100 }, () => legacyLike.generate()),
     )
+    const upgradedIds = Array.from({ length: 100 }, () => upgraded.generate())
 
-    expect(ids.size).toBe(1024)
+    expect(upgradedIds.filter((id) => legacyIds.has(id))).toEqual([])
+    expect(resolveId(upgradedIds[0]).sequence).toBe(512)
+  })
+
+  test("starts each new millisecond at the sequence offset drawn from random", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(FROZEN_NOW)
+    const draws = [0.25, 0.75]
+    const generator = createSnowflakeGenerator({
+      placeId: 1,
+      random: () => draws.shift() ?? 0,
+    })
+
+    const first = resolveId(generator.generate()).sequence
+    vi.advanceTimersByTime(1)
+    const second = resolveId(generator.generate()).sequence
+
+    expect(first).toBe(256)
+    expect(second).toBe(768)
+  })
+
+  test("never wraps the sequence inside a millisecond, so ids stay strictly increasing", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(FROZEN_NOW)
+    // Offset 1013 leaves room for 11 ids in the first slot.
+    const generator = createSnowflakeGenerator({
+      placeId: 0,
+      random: constantRandom(0.99),
+    })
+
+    const ids = Array.from({ length: 30 }, () => generator.generate())
+
+    for (let i = 1; i < ids.length; i++) {
+      expect(BigInt(ids[i]) > BigInt(ids[i - 1])).toBe(true)
+    }
+    expect(resolveId(ids[10]).sequence).toBe(1023)
+    expect(resolveId(ids[10]).created_at).toBe(FROZEN_NOW.toISOString())
+    expect(resolveId(ids[11]).sequence).toBe(1013)
+    expect(Date.parse(resolveId(ids[11]).created_at)).toBe(
+      FROZEN_NOW.getTime() + 1,
+    )
+  })
+
+  test("exhausting the sequence in one millisecond advances a logical clock instead of blocking", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(FROZEN_NOW)
+    const generator = createSnowflakeGenerator({
+      placeId: 0,
+      random: constantRandom(0),
+    })
+
+    for (let i = 0; i < SEQUENCE_SPACE; i++) {
+      generator.generate()
+    }
+    // Wall clock is frozen; a busy-wait here would never return.
+    const overflow = resolveId(generator.generate())
+
+    expect(Date.parse(overflow.created_at)).toBe(FROZEN_NOW.getTime() + 1)
+    expect(overflow.sequence).toBe(0)
+  })
+
+  test("keeps ids strictly increasing when the wall clock steps backwards", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(FROZEN_NOW)
+    const generator = createSnowflakeGenerator({
+      placeId: 0,
+      random: constantRandom(0),
+    })
+
+    const beforeRollback = generator.generate()
+    vi.setSystemTime(new Date(FROZEN_NOW.getTime() - 5000))
+    const afterRollback = generator.generate()
+
+    expect(BigInt(afterRollback) > BigInt(beforeRollback)).toBe(true)
+    expect(resolveId(afterRollback).created_at).toBe(FROZEN_NOW.toISOString())
   })
 
   test("rejects a place id outside the 4-bit field", () => {
@@ -99,6 +193,9 @@ describe("createSnowflakeGenerator", () => {
     expect(() => createSnowflakeGenerator({ placeId: -1 })).toThrow(
       PLACE_ID_ERROR,
     )
+    expect(() => createSnowflakeGenerator({ placeId: 1.5 })).toThrow(
+      PLACE_ID_ERROR,
+    )
   })
 })
 
@@ -106,10 +203,23 @@ describe("resolveSnowflakePlaceId", () => {
   test("uses SNOWFLAKE_PLACE_ID when it is a valid integer in range", () => {
     expect(resolveSnowflakePlaceId({ SNOWFLAKE_PLACE_ID: "9" })).toBe(9)
     expect(resolveSnowflakePlaceId({ SNOWFLAKE_PLACE_ID: "0" })).toBe(0)
+    expect(resolveSnowflakePlaceId({ SNOWFLAKE_PLACE_ID: "15" })).toBe(15)
   })
 
-  test("falls back to a random in-range place id when the env value is missing or invalid", () => {
-    const seen = new Set<number>()
+  test("never draws the legacy place id 0 when falling back to random, so a rolling deploy cannot overlap old processes", () => {
+    const drawn = new Set<number>()
+    for (let step = 0; step < 1; step += 1 / 64) {
+      drawn.add(resolveSnowflakePlaceId({}, constantRandom(step)))
+    }
+    drawn.add(resolveSnowflakePlaceId({}, constantRandom(0.999_999)))
+
+    expect(drawn.has(0)).toBe(false)
+    expect(Math.min(...drawn)).toBe(1)
+    expect(Math.max(...drawn)).toBe(SNOWFLAKE_PLACE_ID_MAX)
+    expect(drawn.size).toBe(SNOWFLAKE_PLACE_ID_MAX)
+  })
+
+  test("ignores a missing or invalid env value and falls back to random", () => {
     for (const env of [
       {},
       { SNOWFLAKE_PLACE_ID: "" },
@@ -118,16 +228,7 @@ describe("resolveSnowflakePlaceId", () => {
       { SNOWFLAKE_PLACE_ID: "-1" },
       { SNOWFLAKE_PLACE_ID: "1.5" },
     ]) {
-      const placeId = resolveSnowflakePlaceId(env)
-      expect(Number.isInteger(placeId)).toBe(true)
-      expect(placeId).toBeGreaterThanOrEqual(0)
-      expect(placeId).toBeLessThanOrEqual(SNOWFLAKE_PLACE_ID_MAX)
-      seen.add(placeId)
+      expect(resolveSnowflakePlaceId(env, constantRandom(0.5))).toBe(8)
     }
-    // Sanity: fallback is not a fixed constant (6 draws from 16 values).
-    for (let i = 0; i < 64; i++) {
-      seen.add(resolveSnowflakePlaceId({}))
-    }
-    expect(seen.size).toBeGreaterThan(1)
   })
 })

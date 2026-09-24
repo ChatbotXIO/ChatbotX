@@ -1310,20 +1310,22 @@ export class ShardedMessageRepository implements IMessageRepository {
       "messageId" | "messageCreatedAt"
     >[],
   ): Promise<MessageWithAttachments> {
-    return withShardRetry(async () => {
-      // Plain create path: no ignoreConflict, so a real duplicate throws rather
-      // than returning null. A null here would be unexpected.
-      const created = await this.createWithAttachmentsInternal(
-        message,
-        attachments,
-      )
-      if (!created) {
-        throw new MessageShardUnavailableError(
-          "createWithAttachments: insert returned no row",
+    return withFreshIdOnPrimaryKeyCollision(message, (input) =>
+      withShardRetry(async () => {
+        // Plain create path: no ignoreConflict, so a real duplicate throws
+        // rather than returning null. A null here would be unexpected.
+        const created = await this.createWithAttachmentsInternal(
+          input,
+          attachments,
         )
-      }
-      return created
-    })
+        if (!created) {
+          throw new MessageShardUnavailableError(
+            "createWithAttachments: insert returned no row",
+          )
+        }
+        return created
+      }),
+    )
   }
 
   private async createWithAttachmentsInternal(

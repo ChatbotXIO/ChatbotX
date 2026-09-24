@@ -32,20 +32,35 @@ export interface SnowflakeGenerator {
   readonly placeId: number
 }
 
-const randomInt = (upperExclusive: number): number =>
-  Math.floor(Math.random() * upperExclusive)
-
 const readProcessEnv = (): Record<string, string | undefined> =>
   typeof process === "undefined" ? {} : (process.env ?? {})
+
+/** Source of randomness in [0, 1); injectable so tests are deterministic. */
+export type RandomSource = () => number
+
+/**
+ * The place id every process used before per-process ids existed. The random
+ * fallback never draws it, so during a rolling deploy a new process can never
+ * share a place with a still-running old one.
+ */
+const LEGACY_PLACE_ID = 0
+
+const randomIntBetween = (
+  random: RandomSource,
+  minInclusive: number,
+  maxInclusive: number,
+): number =>
+  minInclusive + Math.floor(random() * (maxInclusive - minInclusive + 1))
 
 /**
  * Pick the 4-bit place id that distinguishes this process from every other
  * one minting ids against the same database. `SNOWFLAKE_PLACE_ID` (0–15) wins
- * when set; otherwise a random slot is drawn at startup so replicas that share
- * one image do not all land on the same value.
+ * when set; otherwise a random slot in 1–15 is drawn at startup so replicas
+ * that share one image do not all land on the same value.
  */
 export const resolveSnowflakePlaceId = (
   env: Record<string, string | undefined> = readProcessEnv(),
+  random: RandomSource = Math.random,
 ): number => {
   const raw = env.SNOWFLAKE_PLACE_ID
   if (raw !== undefined && PLACE_ID_ENV_REGEX.test(raw)) {
@@ -54,15 +69,7 @@ export const resolveSnowflakePlaceId = (
       return parsed
     }
   }
-  return randomInt(SNOWFLAKE_PLACE_ID_MAX + 1)
-}
-
-const waitForNextMillisecond = (lastTimestamp: number): number => {
-  let now = Date.now() - SNOWFLAKE_EPOCH_MS
-  while (now <= lastTimestamp) {
-    now = Date.now() - SNOWFLAKE_EPOCH_MS
-  }
-  return now
+  return randomIntBetween(random, LEGACY_PLACE_ID + 1, SNOWFLAKE_PLACE_ID_MAX)
 }
 
 /**
@@ -72,11 +79,18 @@ const waitForNextMillisecond = (lastTimestamp: number): number => {
  * - each new millisecond starts the sequence at a random offset, so even two
  *   processes that share a place id only collide with probability 1/1024 per
  *   simultaneous millisecond instead of certainty.
+ *
+ * Time is a logical clock: it never runs behind the last id issued (a wall
+ * clock stepping backwards keeps counting in the last slot), and exhausting
+ * the 1024 sequence values in one millisecond advances it by one instead of
+ * busy-waiting, so `generate()` never blocks the event loop.
  */
 export const createSnowflakeGenerator = ({
   placeId,
+  random = Math.random,
 }: {
   placeId: number
+  random?: RandomSource
 }): SnowflakeGenerator => {
   if (
     !Number.isInteger(placeId) ||
@@ -94,19 +108,26 @@ export const createSnowflakeGenerator = ({
   let sequenceStart = 0
   let issuedInTimestamp = 0
 
+  // The sequence never wraps: once `start + issued` would leave the field,
+  // the logical clock moves on. Ids therefore stay strictly increasing within
+  // a process, which the old generator guaranteed and message ordering (index
+  // `createdAt desc, id desc`) relies on for rows sharing a createdAt.
+  const nextTimestamp = (): number => {
+    const wallClock = Math.max(Date.now() - SNOWFLAKE_EPOCH_MS, lastTimestamp)
+    const isSlotExhausted =
+      wallClock === lastTimestamp &&
+      sequenceStart + issuedInTimestamp >= SEQUENCE_SPACE
+    return isSlotExhausted ? lastTimestamp + 1 : wallClock
+  }
+
   const generate = (): string => {
-    // Clamp so a clock stepping backwards keeps counting in the last slot
-    // instead of re-entering an earlier millisecond with a fresh offset.
-    let now = Math.max(Date.now() - SNOWFLAKE_EPOCH_MS, lastTimestamp)
-    if (now === lastTimestamp && issuedInTimestamp >= SEQUENCE_SPACE) {
-      now = waitForNextMillisecond(lastTimestamp)
-    }
+    const now = nextTimestamp()
     if (now !== lastTimestamp) {
       lastTimestamp = now
-      sequenceStart = randomInt(SEQUENCE_SPACE)
+      sequenceStart = randomIntBetween(random, 0, SEQUENCE_SPACE - 1)
       issuedInTimestamp = 0
     }
-    const sequence = (sequenceStart + issuedInTimestamp) % SEQUENCE_SPACE
+    const sequence = sequenceStart + issuedInTimestamp
     issuedInTimestamp += 1
     return (
       BigInt(now) * TIMESTAMP_SCALE +

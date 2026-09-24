@@ -2153,3 +2153,82 @@ describe("ShardedMessageRepository primary-key collision safety net", () => {
     expect(attachmentValues[0].messageId).toBe("fresh-id")
   })
 })
+
+describe("ShardedMessageRepository.createWithAttachments primary-key collision safety net", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("regenerates the id and re-runs the transaction once on a primary-key collision", async () => {
+    const message = makeMessage({ id: "colliding", sourceId: null })
+    const insertedRow = { ...existingRow, id: "fresh-id", sourceId: null }
+    const txChain = {
+      values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockReturnThis(),
+      returning: vi
+        .fn()
+        .mockRejectedValueOnce(makePkConflictError())
+        .mockResolvedValueOnce([insertedRow])
+        .mockResolvedValueOnce([{ id: "att-1", messageId: "fresh-id" }]),
+    }
+    const tx = { insert: vi.fn().mockReturnValue(txChain) }
+    const shardDb = {
+      transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) =>
+        fn(tx),
+      ),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    const result = await repo.createWithAttachments(message, [
+      {
+        id: "att-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        fileType: "image",
+      } as never,
+    ])
+
+    expect(result.id).toBe("fresh-id")
+    expect(shardDb.transaction).toHaveBeenCalledTimes(2)
+    // Plain create path: never ON CONFLICT DO NOTHING.
+    expect(txChain.onConflictDoNothing).not.toHaveBeenCalled()
+    const [retryValues] = txChain.values.mock.calls[1] as [CreateMessageInput]
+    expect(retryValues.id).not.toBe("colliding")
+    expect(retryValues.createdAt).toEqual(message.createdAt)
+    const [attachmentValues] = txChain.values.mock.calls[2] as [
+      { messageId: string }[],
+    ]
+    expect(attachmentValues[0].messageId).toBe("fresh-id")
+  })
+
+  test("surfaces any other insert error unchanged without re-running the transaction", async () => {
+    const txChain = {
+      values: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockRejectedValueOnce(new Error("connection reset")),
+    }
+    const tx = { insert: vi.fn().mockReturnValue(txChain) }
+    const shardDb = {
+      transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) =>
+        fn(tx),
+      ),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    await expect(
+      repo.createWithAttachments(makeMessage({ sourceId: null }), []),
+    ).rejects.toThrow("connection reset")
+    expect(shardDb.transaction).toHaveBeenCalledTimes(1)
+  })
+})
