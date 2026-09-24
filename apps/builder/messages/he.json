@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "הזן Dataset ID תקין (ספרות בלבד).",
       "whatsappNotFound": "שילוב WhatsApp לא נמצא.",
       "testEventCodeRequired": "שמור קוד אירוע בדיקה לפני שליחת אירוע בדיקה.",
-      "noContactForTest": "אין עדיין איש קשר מתאים בערוץ זה. אירוע בדיקה זקוק לאיש קשר אמיתי לשיוך (ב-WhatsApp, כזה שהגיע ממודעת click-to-WhatsApp).",
-      "invalidTestEventCode": "קוד אירוע הבדיקה יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 64 תווים)."
+      "invalidTestEventCode": "קוד אירוע הבדיקה יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 64 תווים).",
+      "invalidMessagingId": "מזהה ההודעות יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 512).",
+      "capiDisconnected": "Meta CAPI מנותק עבור ערוץ זה. חבר אותו מחדש לפני שליחת אירוע בדיקה."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "קוד אירוע הבדיקה נשמר.",
       "cleared": "קוד אירוע הבדיקה נוקה. האירועים חזרו להיות פעילים.",
       "send": "שלח אירוע בדיקה",
-      "sent": "אירוע הבדיקה נכנס לתור. הוא יופיע תחת Test events ב-Events Manager תוך דקה.",
-      "sendHint": "שולח אירוע Purchase לדוגמה אחד (100 USD) לאיש הקשר האחרון בערוץ זה.",
+      "sent": "אירוע הבדיקה נשלח. הוא יופיע תחת Test events ב-Events Manager בתוך דקה.",
+      "sendHint": "שולח אירוע Purchase לדוגמה אחד (100 USD) למזהה הודעות שתזין. לא נעשה שימוש באיש קשר שמור.",
       "activeNotice": "מצב בדיקה פעיל: אירועים מהערוץ הזה לא נספרים בדוחות עד שהקוד ינוקה.",
-      "openTestEvents": "פתח את Test events"
+      "openTestEvents": "פתח את Test events",
+      "dialogTitle": "שליחת אירוע בדיקה",
+      "dialogDescription": "אירוע Purchase לדוגמה אחד (100 USD) נשלח עם קוד אירוע הבדיקה שלך. הדבק את מזהה ההודעות לדוגמה מ-Events Manager → Test events → Messaging → Graph API Explorer, כך ששום דבר לא ישויך לאיש קשר אמיתי.",
+      "messagingIdLabel": {
+        "messenger": "מזהה איש קשר (page_scoped_user_id)",
+        "instagram": "מזהה איש קשר (ig_sid)",
+        "whatsapp": "מזהה איש קשר (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "הדבק את הערך לדוגמה מ-Meta",
+      "messagingIdHint": "אותיות, ספרות, מקפים וקווים תחתונים בלבד (עד 512).",
+      "cancel": "ביטול",
+      "confirmSend": "שליחה"
     }
   },
   "minigames": {

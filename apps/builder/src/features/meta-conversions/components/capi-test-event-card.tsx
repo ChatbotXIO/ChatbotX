@@ -18,6 +18,7 @@ import { useId, useState } from "react"
 import { toast } from "sonner"
 import { saveCapiTestEventCodeAction } from "../actions/save-capi-test-event-code.action"
 import { sendCapiTestEventAction } from "../actions/send-capi-test-event.action"
+import { CapiTestEventDialog } from "./capi-test-event-dialog"
 
 type CapiTestEventCardProps = {
   workspaceId: string
@@ -29,8 +30,9 @@ type CapiTestEventCardProps = {
 
 /**
  * Events Manager "Test events" helper for one channel integration: save or
- * clear the `test_event_code`, and queue one sample event through the real
- * send pipeline so the full payload can be inspected on Meta's side.
+ * clear the `test_event_code`, and post one sample event to a messaging id
+ * the admin types in so the full payload can be inspected on Meta's side
+ * without ever attributing it to a real contact.
  */
 export function CapiTestEventCard({
   workspaceId,
@@ -43,6 +45,7 @@ export function CapiTestEventCard({
   const router = useRouter()
   const inputId = useId()
   const [draftCode, setDraftCode] = useState(testEventCode ?? "")
+  const [isSendOpen, setIsSendOpen] = useState(false)
 
   const save = useAction(
     saveCapiTestEventCodeAction.bind(null, workspaceId, integrationId),
@@ -66,6 +69,7 @@ export function CapiTestEventCard({
         toast.error(error.serverError ?? t("errors.saveFailed"))
       },
       onSuccess: () => {
+        setIsSendOpen(false)
         toast.success(t("testEvents.sent"))
       },
     },
@@ -133,7 +137,7 @@ export function CapiTestEventCard({
       <div className="flex flex-wrap items-center gap-2">
         <Button
           disabled={isBusy || !testEventCode}
-          onClick={() => send.execute({ channel })}
+          onClick={() => setIsSendOpen(true)}
           type="button"
           variant="secondary"
         >
@@ -161,6 +165,13 @@ export function CapiTestEventCard({
       <p className="text-muted-foreground text-xs">
         {t("testEvents.sendHint")}
       </p>
+      <CapiTestEventDialog
+        channel={channel}
+        isPending={send.isPending}
+        onOpenChange={setIsSendOpen}
+        onSend={(messagingId) => send.execute({ channel, messagingId })}
+        open={isSendOpen}
+      />
     </div>
   )
 }

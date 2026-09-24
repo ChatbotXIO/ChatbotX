@@ -38,12 +38,6 @@ import { grantedScopesForWaba } from "@chatbotx.io/integration-whatsapp/api/gran
  * duplicate" outcome without the cycle.
  */
 
-const datasetResourceTypeByChannel = {
-  messenger: "page",
-  instagram: "igUser",
-  whatsapp: "waba",
-} as const satisfies Record<MetaConversionsChannel, "page" | "igUser" | "waba">
-
 const integrationResolvers = {
   messenger: (input) => messengerIntegrationService.findByIdForWorkspace(input),
   instagram: (input) => instagramIntegrationService.findByIdForWorkspace(input),
@@ -79,12 +73,6 @@ export async function findEventIntegration<
       workspaceId: input.workspaceId,
     })) ?? null
   )
-}
-
-export function datasetResourceType(
-  channel: MetaConversionsChannel,
-): "page" | "igUser" | "waba" {
-  return datasetResourceTypeByChannel[channel]
 }
 
 type MetaCapiScopeCheckerConfig = {

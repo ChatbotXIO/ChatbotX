@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Voer een geldig Dataset ID in (alleen cijfers).",
       "whatsappNotFound": "WhatsApp-integratie niet gevonden.",
       "testEventCodeRequired": "Sla een testgebeurteniscode op voordat je een testgebeurtenis verzendt.",
-      "noContactForTest": "Nog geen geschikt contact op dit kanaal. Een testgebeurtenis heeft een echt contact nodig om aan toe te wijzen (voor WhatsApp een contact uit een click-to-WhatsApp-advertentie).",
-      "invalidTestEventCode": "De testgebeurteniscode mag alleen letters, cijfers, koppeltekens of underscores bevatten (max. 64)."
+      "invalidTestEventCode": "De testgebeurteniscode mag alleen letters, cijfers, koppeltekens of underscores bevatten (max. 64).",
+      "invalidMessagingId": "Het messaging-id mag alleen letters, cijfers, koppeltekens of onderstrepingstekens bevatten (max. 512).",
+      "capiDisconnected": "Meta CAPI is losgekoppeld voor dit kanaal. Koppel het opnieuw voordat je een testgebeurtenis verzendt."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Testgebeurteniscode opgeslagen.",
       "cleared": "Testgebeurteniscode gewist. Gebeurtenissen zijn weer live.",
       "send": "Testgebeurtenis verzenden",
-      "sent": "Testgebeurtenis in wachtrij geplaatst. Deze verschijnt binnen een minuut onder Test events in Events Manager.",
-      "sendHint": "Verstuurt één voorbeeld-Purchase (100 USD) naar het meest recente contact van dit kanaal.",
+      "sent": "Testgebeurtenis verzonden. Deze verschijnt binnen een minuut onder Test events in Events Manager.",
+      "sendHint": "Verstuurt één voorbeeld-Purchase (100 USD) naar een messaging-id dat je invoert. Er wordt geen opgeslagen contact gebruikt.",
       "activeNotice": "Testmodus staat aan: gebeurtenissen van dit kanaal worden pas weer meegeteld in rapporten zodra de code is gewist.",
-      "openTestEvents": "Test events openen"
+      "openTestEvents": "Test events openen",
+      "dialogTitle": "Testgebeurtenis verzenden",
+      "dialogDescription": "Eén voorbeeld-Purchase (100 USD) wordt verzonden met je testgebeurteniscode. Plak het voorbeeld-messaging-id uit Events Manager → Test events → Messaging → Graph API Explorer, zodat niets aan een echt contact wordt toegeschreven.",
+      "messagingIdLabel": {
+        "messenger": "Contact-id (page_scoped_user_id)",
+        "instagram": "Contact-id (ig_sid)",
+        "whatsapp": "Contact-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Plak de voorbeeldwaarde van Meta",
+      "messagingIdHint": "Alleen letters, cijfers, koppeltekens en onderstrepingstekens (max. 512).",
+      "cancel": "Annuleren",
+      "confirmSend": "Verzenden"
     }
   },
   "minigames": {

@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "請輸入有效的 Dataset ID（僅數字）。",
       "whatsappNotFound": "找不到 WhatsApp 整合。",
       "testEventCodeRequired": "傳送測試事件前,請先儲存測試事件代碼。",
-      "noContactForTest": "此渠道尚無符合條件的聯絡人。測試事件需要歸因到真實聯絡人（WhatsApp 需為來自 click-to-WhatsApp 廣告的聯絡人）。",
-      "invalidTestEventCode": "測試事件代碼只能包含字母、數字、連字號或底線(最多 64 個字元)。"
+      "invalidTestEventCode": "測試事件代碼只能包含字母、數字、連字號或底線(最多 64 個字元)。",
+      "invalidMessagingId": "訊息 ID 只能包含字母、數字、連字號或底線（最多 512 個字元）。",
+      "capiDisconnected": "此頻道的 Meta CAPI 已中斷連線。請先重新連線，再傳送測試事件。"
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "測試事件代碼已儲存。",
       "cleared": "測試事件代碼已清除。事件已恢復正常上報。",
       "send": "傳送測試事件",
-      "sent": "測試事件已加入佇列,一分鐘內會出現在 Events Manager 的 Test events 中。",
-      "sendHint": "向此頻道最近的聯絡人傳送一個範例 Purchase 事件(100 USD)。",
+      "sent": "測試事件已送出。一分鐘內會出現在 Events Manager 的 Test events 中。",
+      "sendHint": "向你輸入的訊息 ID 傳送一筆範例 Purchase（100 USD）。不會使用任何已儲存的聯絡人。",
       "activeNotice": "測試模式已開啟:在清除代碼之前,此頻道的事件不會計入報表。",
-      "openTestEvents": "開啟 Test events"
+      "openTestEvents": "開啟 Test events",
+      "dialogTitle": "傳送測試事件",
+      "dialogDescription": "將附帶你的測試事件代碼傳送一筆範例 Purchase（100 USD）。請貼上 Events Manager → Test events → Messaging → Graph API Explorer 中的範例訊息 ID，以免歸因到真實聯絡人。",
+      "messagingIdLabel": {
+        "messenger": "聯絡人 ID（page_scoped_user_id）",
+        "instagram": "聯絡人 ID（ig_sid）",
+        "whatsapp": "聯絡人 ID（ctwa_clid）"
+      },
+      "messagingIdPlaceholder": "貼上 Meta 提供的範例值",
+      "messagingIdHint": "僅限字母、數字、連字號和底線（最多 512 個字元）。",
+      "cancel": "取消",
+      "confirmSend": "傳送"
     }
   },
   "minigames": {
