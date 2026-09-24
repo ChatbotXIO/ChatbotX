@@ -108,6 +108,12 @@ import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
 type ContactInboxTracking = ContactInboxTrackingData
+type NewContactQuota = "mac" | "skip"
+type NewContactTransaction = Parameters<
+  Parameters<
+    typeof quotaEnforcementService.createContactWithoutMac
+  >[0]["create"]
+>[0]
 
 type ContactLocation = {
   latitude: number
@@ -134,6 +140,14 @@ const correctStoryReplyDirectionForNewContact = (
   }
   return message
 }
+
+const newContactQuotaFor = (
+  message: IncomingMessage | null,
+): NewContactQuota =>
+  message?.messageType === messageTypes.enum.outgoing &&
+  !getStoryReply(message.contentAttributes)
+    ? "skip"
+    : "mac"
 
 const APPOINTMENT_CANCEL_FEEDBACK_COPY = {
   en: {
@@ -276,6 +290,7 @@ export const receiveMessage = async (
       incomingContact,
       inbox,
       integrationRow,
+      newContactQuota: newContactQuotaFor(rawIncomingMessage),
       source:
         metaReferralToContactSource(referralSource) ??
         contactSources.enum.inboundMessage,
@@ -714,7 +729,8 @@ const isEchoOfOwnSend = async (props: {
 
 // Creates or updates the message row (deduplicates webhook retries via sourceId),
 // updates contactInbox/conversation activity timestamps for new rows,
-// broadcasts the realtime event to the UI, and emits `message:received` to trigger flows.
+// broadcasts the realtime event to the UI, and emits `message:received` for
+// genuinely inbound rows.
 // Shared by `receiveMessage` and `receiveComment`.
 const saveAndBroadcastMessage = async (props: {
   inbox: InboxModel
@@ -845,7 +861,7 @@ const saveAndBroadcastMessage = async (props: {
     }
   }
 
-  if (isNew) {
+  if (isNew && isInboundMessage) {
     emit(messageEventTypeSchema.enum["message:received"], {
       workspaceId: inbox.workspaceId,
       contactId: contactInbox.contactId,
@@ -854,7 +870,7 @@ const saveAndBroadcastMessage = async (props: {
       inboxId: inbox.id,
       occurredAt: newMessage.createdAt,
       sourceId: newMessage.sourceId ?? undefined,
-      origin: isInboundMessage ? "inbound" : undefined,
+      origin: "inbound",
       messageId: newMessage.id,
       isFirstIncomingMessage,
     })
@@ -1552,13 +1568,20 @@ export const detectContactAndConversation = async (props: {
     [x: string]: unknown
   }
   source: ContactSource
+  newContactQuota?: NewContactQuota
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
   conversation: ConversationModel
   isNewContact: boolean
 }> => {
-  const { incomingContact, inbox, integrationRow, source } = props
+  const {
+    incomingContact,
+    inbox,
+    integrationRow,
+    source,
+    newContactQuota = "mac",
+  } = props
 
   const existingContactInbox = await resolveExistingContactInbox({
     inbox,
@@ -1593,6 +1616,7 @@ export const detectContactAndConversation = async (props: {
       integrationRow,
       incomingContact,
       source,
+      newContactQuota,
       conversationSourceId,
       isBsuidKeyedIncomingContact,
     })
@@ -1601,8 +1625,8 @@ export const detectContactAndConversation = async (props: {
     // the resolver-chain miss above. The loser hits a unique-violation on
     // either `(inboxId, sourceId)` or the new partial `(inboxId,
     // sourceUserId)` index; its transaction rolls back (no orphan Contact, no
-    // MAC double-count). Re-run the resolver chain and return the winning
-    // row instead of dead-lettering the job.
+    // duplicate quota accounting). Re-run the resolver chain and return the
+    // winning row instead of dead-lettering the job.
     if (!isContactInboxIdentityRace(error)) {
       throw error
     }
@@ -1636,6 +1660,7 @@ const createNewContactAndContactInbox = async (props: {
   }
   incomingContact: IncomingContact
   source: ContactSource
+  newContactQuota: NewContactQuota
   conversationSourceId: string | null
   isBsuidKeyedIncomingContact: boolean
 }): Promise<{
@@ -1649,6 +1674,7 @@ const createNewContactAndContactInbox = async (props: {
     integrationRow,
     incomingContact,
     source,
+    newContactQuota,
     conversationSourceId,
     isBsuidKeyedIncomingContact,
   } = props
@@ -1675,7 +1701,10 @@ const createNewContactAndContactInbox = async (props: {
           "getProfile",
           {
             ctx: profileCtx,
-            data: { sourceId: incomingContact.sourceId },
+            data:
+              newContactQuota === "skip"
+                ? { sourceId: incomingContact.sourceId, avatar: false }
+                : { sourceId: incomingContact.sourceId },
           },
         )
         contactData = {
@@ -1733,100 +1762,121 @@ const createNewContactAndContactInbox = async (props: {
     throw new Error("Workspace not found")
   }
 
-  // MAC (monthly active contacts) is the billing hard gate. Gate + insert +
-  // consume run atomically so concurrent inbound messages for new contacts
-  // cannot overrun the limit; the `ContactActiveMonthly` presence row written
-  // inside the transaction makes the `message:received` event emitted later a
-  // dedup no-op (no double count). `contacts` stays the info-only metric.
   // Contact + ContactInbox creation share this one transaction (D8): a losing
   // insert's unique-violation rolls back both rows together — no orphan
   // Contact — and is recovered by the caller's try/catch above.
-  const result = await quotaEnforcementService.createNewContactWithMac({
-    ownerId: ws.ownerId,
-    workspaceId: inbox.workspaceId,
-    // This job is wrapped in `deferOnLockContention`: losing the lock parks
-    // the job instead of failing it, so wait briefly rather than pin a slot.
-    lockWaitSeconds: LOCK_CONTENTION_POLICY.lockWaitSeconds,
-    create: async (tx) => {
-      const newContact = await tx
-        .insert(contactModel)
-        .values({
-          id: createId(),
-          ...contactData,
-        })
-        .returning()
-        .then((rows) => rows[0])
-      if (!newContact) {
-        throw new Error("Contact not found")
-      }
-
-      const contactInbox = await tx
-        .insert(contactInboxModel)
-        .values({
-          id: createId(),
-          inboxId: inbox.id,
-          contactId: newContact.id,
-          originalContactId: newContact.id,
-          source,
-          sourceId: incomingContact.sourceId,
-          sourceUserId: incomingContact.sourceUserId ?? null,
-          sourceUsername: incomingContact.sourceUsername ?? null,
-          channel: inbox.channel,
-          language: finalizedProfile.language,
-        })
-        .returning()
-        .then((rows) => rows[0])
-      if (!contactInbox) {
-        throw new Error("Contact inbox not found")
-      }
-
-      // A re-created contact keeps its history: cancel any pending message
-      // cleanup recorded when a contact with this inbox identity was deleted.
-      await messageCleanupService.cancelByInboxSource({
-        inboxId: inbox.id,
-        sourceIds: [contactInbox.sourceId],
-        tx,
+  const createRows = async (tx: NewContactTransaction) => {
+    const newContact = await tx
+      .insert(contactModel)
+      .values({
+        id: createId(),
+        ...contactData,
       })
+      .returning()
+      .then((rows) => rows[0])
+    if (!newContact) {
+      throw new Error("Contact not found")
+    }
 
-      const conversation = await conversationService.findOrCreate({
-        workspaceId: inbox.workspaceId,
-        contactId: newContact.id,
-        sourceId: conversationSourceId,
-        channelConversationId: incomingContact.channelConversationId,
-        tx,
-      })
-
-      return {
-        value: { newContact, contactInbox, conversation },
-        contactId: newContact.id,
-        contactInboxId: contactInbox.id,
+    const contactInbox = await tx
+      .insert(contactInboxModel)
+      .values({
+        id: createId(),
         inboxId: inbox.id,
-      }
-    },
-  })
-
-  if (!result.ok) {
-    // The MAC (billing) cap is a deterministic business outcome, not a
-    // transient failure: retrying never succeeds. Throw UnrecoverableError so
-    // BullMQ fails the job once without retry/backoff instead of dead-lettering
-    // the inbound message after exhausting attempts. Logged at `error` (with
-    // enough context to identify the dropped contact) so a brand-new
-    // contact's first-ever message being silently dropped is discoverable via
-    // alerting, not just the account-level MAC banner (which only reflects
-    // the aggregate cap, not this specific drop).
-    logger.error(
-      {
-        workspaceId: inbox.workspaceId,
-        ownerId: ws.ownerId,
-        channel: inbox.channel,
+        contactId: newContact.id,
+        originalContactId: newContact.id,
+        source,
         sourceId: incomingContact.sourceId,
-      },
-      "Inbound new-contact rejected: MAC limit reached",
-    )
-    throw new UnrecoverableError("contact_mac_limit_reached")
+        sourceUserId: incomingContact.sourceUserId ?? null,
+        sourceUsername: incomingContact.sourceUsername ?? null,
+        channel: inbox.channel,
+        language: finalizedProfile.language,
+      })
+      .returning()
+      .then((rows) => rows[0])
+    if (!contactInbox) {
+      throw new Error("Contact inbox not found")
+    }
+
+    await messageCleanupService.cancelByInboxSource({
+      inboxId: inbox.id,
+      sourceIds: [contactInbox.sourceId],
+      tx,
+    })
+
+    const conversation = await conversationService.findOrCreate({
+      workspaceId: inbox.workspaceId,
+      contactId: newContact.id,
+      sourceId: conversationSourceId,
+      channelConversationId: incomingContact.channelConversationId,
+      tx,
+    })
+
+    return { newContact, contactInbox, conversation }
   }
 
-  const { newContact, contactInbox, conversation } = result.value
+  const createRowsBehindMacGate = async () => {
+    // MAC (monthly active contacts) is the billing hard gate. Gate + insert +
+    // consume run atomically so concurrent inbound messages for new contacts
+    // cannot overrun the limit; the `ContactActiveMonthly` presence row written
+    // inside the transaction makes the `message:received` event emitted later a
+    // dedup no-op (no double count). `contacts` stays the info-only metric.
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: ws.ownerId,
+      workspaceId: inbox.workspaceId,
+      // This job is wrapped in `deferOnLockContention`: losing the lock parks
+      // the job instead of failing it, so wait briefly rather than pin a slot.
+      lockWaitSeconds: LOCK_CONTENTION_POLICY.lockWaitSeconds,
+      create: async (tx) => {
+        const rows = await createRows(tx)
+        return {
+          value: rows,
+          contactId: rows.newContact.id,
+          contactInboxId: rows.contactInbox.id,
+          inboxId: inbox.id,
+        }
+      },
+    })
+
+    if (!result.ok) {
+      // The MAC (billing) cap is a deterministic business outcome, not a
+      // transient failure: retrying never succeeds. Throw UnrecoverableError so
+      // BullMQ fails the job once without retry/backoff instead of dead-lettering
+      // the inbound message after exhausting attempts. Logged at `error` (with
+      // enough context to identify the dropped contact) so a brand-new
+      // contact's first-ever message being silently dropped is discoverable via
+      // alerting, not just the account-level MAC banner (which only reflects
+      // the aggregate cap, not this specific drop).
+      logger.error(
+        {
+          workspaceId: inbox.workspaceId,
+          ownerId: ws.ownerId,
+          channel: inbox.channel,
+          sourceId: incomingContact.sourceId,
+        },
+        "Inbound new-contact rejected: MAC limit reached",
+      )
+      throw new UnrecoverableError("contact_mac_limit_reached")
+    }
+
+    return result.value
+  }
+
+  let createdRows: Awaited<ReturnType<typeof createRows>>
+  if (newContactQuota === "skip") {
+    // An outgoing echo recipient (except a story reply) is a contact but is not
+    // monthly-active, so skip the MAC gate and per-owner MAC lock. MAC starts
+    // only when the contact writes back.
+    createdRows = await quotaEnforcementService.createContactWithoutMac({
+      ownerId: ws.ownerId,
+      workspaceId: inbox.workspaceId,
+      create: createRows,
+    })
+  } else {
+    createdRows = await createRowsBehindMacGate()
+  }
+
+  const { newContact, contactInbox, conversation } = createdRows
 
   await emitContactCreated(
     newContact.workspaceId,

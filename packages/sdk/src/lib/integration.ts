@@ -301,7 +301,14 @@ export type UserCustomSettings = {
 
 export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
-    { ctx: Context<IAuth>; data: { sourceId: string } },
+    {
+      ctx: Context<IAuth>
+      data: {
+        sourceId: string
+        /** `false` skips the profile picture fetch and mirror; omitted/`true` keeps today's behaviour. */
+        avatar?: boolean
+      }
+    },
     IncomingContact
   >
   getContactProfilePicUrl: Handler<

@@ -635,6 +635,22 @@ describe("quotaEnforcementService.createContactWithoutMac", () => {
     )
   })
 
+  test("caps statement time before running the create callback", async () => {
+    asRootUser()
+    const create = vi.fn(async () => ({ contactId: "c-1" }))
+
+    await quotaEnforcementService.createContactWithoutMac({
+      ownerId: ROOT_USER,
+      workspaceId: "ws-1",
+      create,
+    })
+
+    expect(setLocalStatementTimeout).toHaveBeenCalledWith(fakeTx, "30s")
+    expect(setLocalStatementTimeout.mock.invocationCallOrder[0]).toBeLessThan(
+      create.mock.invocationCallOrder[0] as number,
+    )
+  })
+
   test("never rejects — there is no MAC/contacts gate to fail", async () => {
     asRootUser()
     userQuotaService.getRemainingSlots.mockResolvedValue(0)

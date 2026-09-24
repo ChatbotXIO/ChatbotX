@@ -35,8 +35,10 @@ const LOCK_TIMEOUT_SECONDS = 30
  * `distributedLock.runExclusive` auto-extends the Redis lock while `fn` runs,
  * so a statement blocked in Postgres (row lock, hung connection) would hold
  * the owner's MAC lock indefinitely and jam every waiter behind it.
+ * The lock-free path uses the same cap so a blocked statement cannot pin a
+ * worker slot there either.
  */
-const MAC_CREATE_STATEMENT_TIMEOUT: StatementTimeout = "30s"
+const NEW_CONTACT_CREATE_STATEMENT_TIMEOUT: StatementTimeout = "30s"
 
 export type ConsumeLevel = "user" | "pool"
 export type ConsumeResult = { ok: boolean; level?: ConsumeLevel }
@@ -385,7 +387,10 @@ class QuotaEnforcementService {
         const periodStart = quota?.periodStart ?? null
 
         const { value, counted } = await db.transaction(async (tx) => {
-          await setLocalStatementTimeout(tx, MAC_CREATE_STATEMENT_TIMEOUT)
+          await setLocalStatementTimeout(
+            tx,
+            NEW_CONTACT_CREATE_STATEMENT_TIMEOUT,
+          )
           const created = await create(tx)
           let didCount = false
           if (periodStart) {
@@ -447,8 +452,9 @@ class QuotaEnforcementService {
   /**
    * Create a brand-new contact WITHOUT consuming MAC.
    *
-   * For contacts created passively (manual UI add, public-API upsert) where no
-   * inbound/outbound activity has occurred yet. Unlike
+   * For contacts created passively (manual UI add, public-API upsert), or first
+   * seen as the recipient of an outgoing echo, where no contact-authored
+   * activity has occurred yet. Unlike
    * {@link createNewContactWithMac} this applies NO MAC gate, writes NO
    * `ContactActiveMonthly` presence row (which the authoritative MAC reconcile
    * would otherwise re-sum), and does NOT increment `mac`. It only bumps the
@@ -464,7 +470,10 @@ class QuotaEnforcementService {
   }): Promise<T> {
     const { ownerId, workspaceId, create } = args
 
-    const value = await db.transaction(async (tx) => create(tx))
+    const value = await db.transaction(async (tx) => {
+      await setLocalStatementTimeout(tx, NEW_CONTACT_CREATE_STATEMENT_TIMEOUT)
+      return await create(tx)
+    })
 
     const ctx = await this.resolveContext(ownerId)
     await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
