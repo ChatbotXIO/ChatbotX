@@ -10,6 +10,7 @@ import type { AuthStore, AuthValue, Context } from "@chatbotx.io/sdk"
 import {
   resolveBroadcastSecret,
   resolveTenantSettings,
+  type TenantSettings,
 } from "../platform/settings"
 import { type AuthStoreIntegrationRow, makeAuthStore } from "./auth-store"
 
@@ -34,6 +35,14 @@ export type PlatformData = {
   getRealtimeAuthHeaders: GetRealtimeAuthHeaders
 }
 
+export const createPlatformData = (args: {
+  tenantSettings: TenantSettings
+  realtimeSecret: string
+}): PlatformData => ({
+  ...args.tenantSettings,
+  getRealtimeAuthHeaders: buildGetRealtimeAuthHeaders(args.realtimeSecret),
+})
+
 const resolvePlatformData = async (
   workspaceId: string,
 ): Promise<PlatformData> => {
@@ -42,10 +51,7 @@ const resolvePlatformData = async (
     resolveBroadcastSecret({ workspaceId }),
   ])
 
-  return {
-    ...tenantSettings,
-    getRealtimeAuthHeaders: buildGetRealtimeAuthHeaders(realtimeSecret),
-  }
+  return createPlatformData({ tenantSettings, realtimeSecret })
 }
 
 export type IntegrationContext<TAuth extends AuthValue = AuthValue> = {
@@ -79,8 +85,10 @@ export async function buildContextWithAuthStore<TAuth extends AuthValue>(args: {
   auth: TAuth
   authStore: AuthStore<TAuth>
   integrationDetail: Record<string, unknown>
+  platformData?: PlatformData
 }): Promise<IntegrationContext<TAuth>> {
-  const platformData = await resolvePlatformData(args.workspaceId)
+  const platformData =
+    args.platformData ?? (await resolvePlatformData(args.workspaceId))
 
   return {
     storagePrefix: getStoragePrefix(args.workspaceId),
@@ -107,11 +115,13 @@ export function buildContext<TAuth extends AuthValue>(args: {
   workspaceId: string
   integrationType: string
   integration: BuildContextIntegrationRow<TAuth>
+  platformData?: PlatformData
 }): Promise<IntegrationContext<TAuth>> {
   return buildContextWithAuthStore({
     workspaceId: args.workspaceId,
     auth: args.integration.auth,
     authStore: makeAuthStore<TAuth>(args.integrationType, args.integration),
     integrationDetail: args.integration,
+    ...(args.platformData ? { platformData: args.platformData } : {}),
   })
 }

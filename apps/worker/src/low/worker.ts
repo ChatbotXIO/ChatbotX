@@ -10,6 +10,7 @@ import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
+import { messengerEchoFlush } from "../integration/handlers/messenger-echo-flush"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -41,7 +42,8 @@ async function startLowWorker() {
   const worker = new Worker(
     queueNames.enum.low,
     async (job: Job<LowJobData>) => {
-      const workspaceId = job.data.data.workspaceId
+      const workspaceId =
+        "workspaceId" in job.data.data ? job.data.data.workspaceId : undefined
       await withBlockedOwnerGuard(workspaceId, async () => {
         await runJobWithAuditContext(
           { workspaceId, source: `low:${job.data.type}` },
@@ -53,6 +55,10 @@ async function startLowWorker() {
               }
               case LowJobAction.updateContactAvatar: {
                 await updateContactAvatar(job.data.data)
+                return
+              }
+              case LowJobAction.messengerEchoFlush: {
+                await messengerEchoFlush(job, job.data.data)
                 return
               }
               default: {

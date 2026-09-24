@@ -11,6 +11,7 @@ export type {
   FindLastByConversationOptions,
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
+  FindManyOnWriteShardBySourceIdsParams,
   FindMessageByIdParams,
   FindRichResponseByButtonParams,
   FindTriggerMessageOptions,

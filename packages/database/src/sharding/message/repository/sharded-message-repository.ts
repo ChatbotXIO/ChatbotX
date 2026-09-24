@@ -35,6 +35,7 @@ import type {
   FindLastByConversationOptions,
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
+  FindManyOnWriteShardBySourceIdsParams,
   FindMessageByIdParams,
   FindRichResponseByButtonParams,
   FindTriggerMessageOptions,
@@ -473,9 +474,37 @@ export class ShardedMessageRepository implements IMessageRepository {
     return (row as MessageModel) ?? null
   }
 
-  async bulkCreate(
-    messages: CreateMessageInput[],
-  ): Promise<{ id: string; sourceId: string | null }[]> {
+  async findManyOnWriteShardBySourceIds({
+    contactInboxIds,
+    sourceIds,
+    workspaceId,
+    sinceTime,
+  }: FindManyOnWriteShardBySourceIdsParams): Promise<MessageSourceRow[]> {
+    if (contactInboxIds.length === 0 || sourceIds.length === 0) {
+      return []
+    }
+
+    const writeClient = await this.shardManager.getShardForWrite(workspaceId)
+    return (await writeClient
+      .select({
+        id: messageModel.id,
+        conversationId: messageModel.conversationId,
+        contactInboxId: messageModel.contactInboxId,
+        sourceId: messageModel.sourceId,
+        createdAt: messageModel.createdAt,
+      })
+      .from(messageModel)
+      .where(
+        and(
+          eq(messageModel.workspaceId, workspaceId),
+          inArray(messageModel.contactInboxId, contactInboxIds),
+          inArray(messageModel.sourceId, sourceIds),
+          gte(messageModel.createdAt, sinceTime),
+        ),
+      )) as MessageSourceRow[]
+  }
+
+  async bulkCreate(messages: CreateMessageInput[]): Promise<MessageModel[]> {
     if (messages.length === 0) {
       return []
     }
@@ -491,7 +520,7 @@ export class ShardedMessageRepository implements IMessageRepository {
       const shardDb = await this.shardManager.getShardForWrite(workspaceId)
 
       const CHUNK_SIZE = 1000
-      const inserted: { id: string; sourceId: string | null }[] = []
+      const inserted: MessageModel[] = []
 
       for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
         const chunk = messages.slice(i, i + CHUNK_SIZE)
@@ -505,12 +534,9 @@ export class ShardedMessageRepository implements IMessageRepository {
               messageModel.createdAt,
             ],
           })
-          .returning({
-            id: messageModel.id,
-            sourceId: messageModel.sourceId,
-          })
+          .returning()
         for (const row of rows) {
-          inserted.push({ id: row.id, sourceId: row.sourceId })
+          inserted.push(row as MessageModel)
         }
       }
 
@@ -1191,7 +1217,7 @@ export class ShardedMessageRepository implements IMessageRepository {
 
   async bulkCreateAttachments(
     attachments: BulkCreateAttachmentInput[],
-  ): Promise<{ id: string }[]> {
+  ): Promise<AttachmentModel[]> {
     if (attachments.length === 0) {
       return []
     }
@@ -1219,7 +1245,48 @@ export class ShardedMessageRepository implements IMessageRepository {
             name: a.name,
           })),
         )
-        .returning({ id: attachmentModel.id })
+        .returning()
+    })
+  }
+
+  async findAttachmentSourceIdsByMessageIds(props: {
+    workspaceId: string
+    messages: Array<{ messageId: string; messageCreatedAt: Date }>
+  }): Promise<
+    Array<{
+      messageId: string
+      messageCreatedAt: Date
+      sourceId: string | null
+    }>
+  > {
+    if (props.messages.length === 0) {
+      return []
+    }
+
+    return await withShardRetry(async () => {
+      const shardDb = await this.shardManager.getShardForWrite(
+        props.workspaceId,
+      )
+      return await shardDb
+        .selectDistinct({
+          messageId: attachmentModel.messageId,
+          messageCreatedAt: attachmentModel.messageCreatedAt,
+          sourceId: attachmentModel.sourceId,
+        })
+        .from(attachmentModel)
+        .where(
+          and(
+            eq(attachmentModel.workspaceId, props.workspaceId),
+            or(
+              ...props.messages.map(({ messageId, messageCreatedAt }) =>
+                and(
+                  eq(attachmentModel.messageId, messageId),
+                  eq(attachmentModel.messageCreatedAt, messageCreatedAt),
+                ),
+              ),
+            ),
+          ),
+        )
     })
   }
 
@@ -1961,6 +2028,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     sourceIds,
     workspaceId,
     sinceTime,
+    strict = false,
   }: FindManyBySourceIdsParams): Promise<MessageSourceRow[]> {
     if (contactInboxIds.length === 0 || sourceIds.length === 0) {
       return []
@@ -2005,6 +2073,9 @@ export class ShardedMessageRepository implements IMessageRepository {
             { err: error, shardId: shardInfo.shard.id },
             "Shard query failed in findManyBySourceIds",
           )
+          if (strict) {
+            throw error
+          }
           return []
         }
       }),

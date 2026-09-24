@@ -15,6 +15,16 @@ export type { CasStore } from "./cas-store"
 export { casStoreFactory } from "./cas-store"
 export const casStore = casStoreFactory(cacheConnections.useExisting)
 
+export {
+  type EchoCollector,
+  type EchoCollectorLimits,
+  type EchoCollectorPeekResult,
+  type EchoCollectorPushResult,
+  type EchoCollectorScope,
+  echoCollectorFactory,
+  echoCollectorKeys,
+} from "./echo-collector"
+
 export type { PresenceStore } from "./presence-store"
 export { presenceStoreFactory } from "./presence-store"
 export const presenceStore = presenceStoreFactory(cacheConnections.useExisting)
@@ -31,7 +41,6 @@ export const distributedStore = distributedStoreFactory(
   cacheConnections.useExisting,
 )
 
-export { queueConnections } from "./connections/queue-connection"
 export { sequenceConnections } from "./connections/sequence-connection"
 export { createRedisConnection } from "./redis-client"
 export const distributedSequenceStore = distributedStoreFactory(

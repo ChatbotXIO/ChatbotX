@@ -21,8 +21,9 @@ const resolveTargetByWorkspace = async (
 export const broadcastToWorkspaceParty = async (
   workspaceId: string,
   json: RealtimeEventData,
+  resolvedTarget?: BroadcastTarget,
 ) => {
-  const target = await resolveTargetByWorkspace(workspaceId)
+  const target = resolvedTarget ?? (await resolveTargetByWorkspace(workspaceId))
   return broadcastToWorkspacePartyLow(target, workspaceId, json)
 }
 

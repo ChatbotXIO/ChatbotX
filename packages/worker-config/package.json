@@ -25,6 +25,8 @@
     ".": "./src/index.ts",
     "./contact-pii": "./src/lib/contact-pii.ts",
     "./keys": "./src/keys.ts",
+    "./messenger-echo": "./src/queues/low/messenger-echo.ts",
+    "./messenger-echo-env": "./src/queues/low/messenger-echo-env.ts",
     "./message-queue/factory": "./src/message-queue/factory.ts"
   },
   "scripts": {

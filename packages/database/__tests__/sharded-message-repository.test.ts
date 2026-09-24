@@ -1,4 +1,5 @@
 import { endOfHour, startOfHour } from "date-fns"
+import { PgDialect } from "drizzle-orm/pg-core"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { MessageShardUnavailableError } from "../src/errors"
 import type {
@@ -7,6 +8,9 @@ import type {
 } from "../src/repositories/message"
 import { attachmentModel, messageModel } from "../src/sharding/message"
 import { ShardedMessageRepository } from "../src/sharding/message/repository/sharded-message-repository"
+
+const ATTACHMENT_MESSAGE_PAIR_PREDICATE_RE =
+  /"messageId" = \$2.*"messageCreatedAt" = \$3.* or .*"messageId" = \$4.*"messageCreatedAt" = \$5/
 
 // getShardsForRange wraps shard lookups in withCache(); the read path also needs
 // distributedLock from the constructor default. Stub the redis module so cache
@@ -103,13 +107,15 @@ describe("ShardedMessageRepository.bulkCreate", () => {
     expect(insert).not.toHaveBeenCalled()
   })
 
-  test("inserts messages and returns { id, sourceId }[]", async () => {
-    chain.returning.mockResolvedValue([{ id: "msg-1", sourceId: "src-1" }])
+  test("inserts messages and returns the full inserted rows", async () => {
+    const row = makeMessage()
+    chain.returning.mockResolvedValue([row])
 
     const result = await repo.bulkCreate([makeMessage()])
 
-    expect(result).toEqual([{ id: "msg-1", sourceId: "src-1" }])
+    expect(result).toEqual([row])
     expect(insert).toHaveBeenCalledTimes(1)
+    expect(chain.returning).toHaveBeenCalledWith()
   })
 
   test("chunks correctly — 2001 messages triggers 3 db.insert calls with correct slice sizes", async () => {
@@ -281,6 +287,72 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     vi.clearAllMocks()
   })
 
+  test("findAttachmentSourceIdsByMessageIds reads the workspace write shard", async () => {
+    const firstCreatedAt = new Date("2026-09-24T00:00:00.000Z")
+    const secondCreatedAt = new Date("2026-09-25T00:00:00.000Z")
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue([
+        {
+          messageId: "msg-1",
+          messageCreatedAt: firstCreatedAt,
+          sourceId: "source-1",
+        },
+        {
+          messageId: "msg-2",
+          messageCreatedAt: secondCreatedAt,
+          sourceId: "source-2",
+        },
+      ]),
+    }
+    const writeClient = {
+      selectDistinct: vi.fn().mockReturnValue(chain),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.findAttachmentSourceIdsByMessageIds({
+        workspaceId: "ws-1",
+        messages: [
+          { messageId: "msg-1", messageCreatedAt: firstCreatedAt },
+          { messageId: "msg-2", messageCreatedAt: secondCreatedAt },
+        ],
+      }),
+    ).resolves.toEqual([
+      {
+        messageId: "msg-1",
+        messageCreatedAt: firstCreatedAt,
+        sourceId: "source-1",
+      },
+      {
+        messageId: "msg-2",
+        messageCreatedAt: secondCreatedAt,
+        sourceId: "source-2",
+      },
+    ])
+    expect(shardManager.getShardForWrite).toHaveBeenCalledWith("ws-1")
+    expect(writeClient.selectDistinct).toHaveBeenCalledWith({
+      messageId: attachmentModel.messageId,
+      messageCreatedAt: attachmentModel.messageCreatedAt,
+      sourceId: attachmentModel.sourceId,
+    })
+    const predicate = new PgDialect().sqlToQuery(
+      chain.where.mock.calls[0][0] as never,
+    )
+    expect(predicate.sql).toContain(" or ")
+    expect(predicate.sql).toMatch(ATTACHMENT_MESSAGE_PAIR_PREDICATE_RE)
+    expect(predicate.params).toEqual([
+      "ws-1",
+      "msg-1",
+      firstCreatedAt.toISOString(),
+      "msg-2",
+      secondCreatedAt.toISOString(),
+    ])
+  })
+
   test("findManyBySourceIds requires sinceTime", async () => {
     const repo = new ShardedMessageRepository({} as never)
 
@@ -318,6 +390,7 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     ])
     const shardManager = {
       getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
       getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
       getShardClient: vi.fn((shard: { id: string }) =>
         Promise.resolve(clients.get(shard.id)),
@@ -339,6 +412,91 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     expect(shardManager.getWriteShardInfo).toHaveBeenCalledWith("ws-1")
     expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(2)
     expect(result.map((row) => row.id)).toEqual(["msg-range", "msg-write"])
+  })
+
+  test("findManyBySourceIds returns partial results by default when a shard read fails", async () => {
+    const error = new Error("range shard unavailable")
+    const writeClient = makeSelectWhereClient([
+      {
+        id: "msg-write",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        sourceId: "src-1",
+        createdAt: sinceTime,
+      },
+    ])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          shard.id === "range" ? Promise.reject(error) : fn(writeClient),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.findManyBySourceIds({
+        contactInboxIds: ["ci-1"],
+        sourceIds: ["src-1"],
+        workspaceId: "ws-1",
+        sinceTime,
+      }),
+    ).resolves.toEqual([expect.objectContaining({ id: "msg-write" })])
+  })
+
+  test("findManyBySourceIds rejects when a shard read fails in strict mode", async () => {
+    const error = new Error("range shard unavailable")
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getShardForWrite: vi.fn(),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn().mockRejectedValue(error),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.findManyBySourceIds({
+        contactInboxIds: ["ci-1"],
+        sourceIds: ["src-1"],
+        workspaceId: "ws-1",
+        sinceTime,
+        strict: true,
+      }),
+    ).rejects.toBe(error)
+  })
+
+  test("findManyOnWriteShardBySourceIds reads only the write shard primary", async () => {
+    const writePrimary = makeSelectWhereClient([
+      {
+        id: "msg-write",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        sourceId: "src-1",
+        createdAt: sinceTime,
+      },
+    ])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writePrimary),
+      getShardsForTimeRange: vi.fn(),
+      getWriteShardInfo: vi.fn(),
+      withShardClientForRead: vi.fn(),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findManyOnWriteShardBySourceIds({
+      contactInboxIds: ["ci-1"],
+      sourceIds: ["src-1"],
+      workspaceId: "ws-1",
+      sinceTime,
+    })
+
+    expect(shardManager.getShardForWrite).toHaveBeenCalledWith("ws-1")
+    expect(shardManager.getShardsForTimeRange).not.toHaveBeenCalled()
+    expect(shardManager.getWriteShardInfo).not.toHaveBeenCalled()
+    expect(shardManager.withShardClientForRead).not.toHaveBeenCalled()
+    expect(result.map((row) => row.id)).toEqual(["msg-write"])
   })
 
   test("bulkPatchContentAttributes requires sinceTime and fans updates across read shards", async () => {

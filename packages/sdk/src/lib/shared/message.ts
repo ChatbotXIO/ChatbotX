@@ -125,6 +125,8 @@ export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {
   sourceId: string
+  /** The channel's authoritative message time, when the channel provides one. */
+  createdAt?: Date
   messageType: MessageType
   contentType: ContentType
   text?: string
@@ -407,6 +409,39 @@ export type IncomingAttachment = {
   width?: number | null
   height?: number | null
   name?: string
+}
+
+export type EchoAttachmentDescriptor = {
+  sourceId: string
+  type: string
+  url: string
+  [key: string]: unknown
+}
+
+export type EchoParseResult = {
+  sourceId: string
+  contactSourceId: string
+  createdAt: Date
+  text?: string | null
+  contentType: ContentType
+  contentAttributes?: Record<string, unknown> | null
+  attachments: EchoAttachmentDescriptor[]
+}
+
+const CHANNEL_MESSAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+const CHANNEL_MESSAGE_MAX_FUTURE_MS = 5 * 60 * 1000
+
+export const resolveChannelMessageCreatedAt = (
+  timestampMs: number,
+  now: Date = new Date(),
+): Date | null => {
+  const earliest = now.getTime() - CHANNEL_MESSAGE_MAX_AGE_MS
+  const latest = now.getTime() + CHANNEL_MESSAGE_MAX_FUTURE_MS
+  return Number.isFinite(timestampMs) &&
+    timestampMs >= earliest &&
+    timestampMs <= latest
+    ? new Date(timestampMs)
+    : null
 }
 
 export type OutgoingAttachment = {

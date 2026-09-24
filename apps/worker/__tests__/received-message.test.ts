@@ -601,6 +601,48 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
   })
 
+  test("persists an outgoing echo with the channel-authoritative timestamp", async () => {
+    const channelCreatedAt = new Date("2026-09-24T23:59:00.000Z")
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        createdAt: channelCreatedAt,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ createdAt: channelCreatedAt }),
+    )
+  })
+
+  test("uses processing time when an inbound message has no channel timestamp", async () => {
+    const metaTimestamp = new Date("2026-09-24T23:59:00.000Z")
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ createdAt: expect.any(Date) }),
+    )
+    expect(mockCreateOrUpdate.mock.calls[0]?.[0].createdAt).not.toEqual(
+      metaTimestamp,
+    )
+  })
+
   test("auto-unblocks on inbound messages using the loaded contact", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },

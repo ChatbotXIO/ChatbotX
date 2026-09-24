@@ -40,6 +40,7 @@ import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanContactScans } from "./handlers/scan-contact-scans"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
+import { sweepEchoCollectors } from "./handlers/sweep-echo-collectors"
 import { sweepStaleWhatsappCalls } from "./handlers/sweep-stale-whatsapp-calls"
 import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
@@ -179,6 +180,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.sweepStaleWhatsappCalls:
               await sweepStaleWhatsappCalls()
+              return
+
+            case ScheduleJobData.sweepEchoCollectors:
+              await sweepEchoCollectors()
               return
 
             case ScheduleJobData.refreshChannelTokens:

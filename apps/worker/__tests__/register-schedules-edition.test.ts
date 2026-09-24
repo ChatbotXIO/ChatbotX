@@ -34,6 +34,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     reconcileTenants: "reconcileTenants",
     maintainMacPartitions: "maintainMacPartitions",
     scanCoexistRuns: "scanCoexistRuns",
+    sweepEchoCollectors: "sweepEchoCollectors",
     reconcileMetaCatalogSyncs: "reconcileMetaCatalogSyncs",
     purgeCoexistStaging: "purgeCoexistStaging",
     purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
@@ -111,6 +112,10 @@ describe("registerSchedules — edition gating", () => {
     expect(names).toContain("purgeBroadcasts")
     expect(names).toContain("maintainMacPartitions")
     expect(names).toContain("enqueueBroadcast")
+    expect(names).toContain("sweepEchoCollectors")
+    expect(upsertedRepeatOptionsFor("sweepEchoCollectors")?.pattern).toBe(
+      "* * * * *",
+    )
   })
 
   // Derived-const typo protection: the cron pattern must actually track

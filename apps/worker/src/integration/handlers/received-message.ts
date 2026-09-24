@@ -364,6 +364,7 @@ export const receiveMessage = async (
         contactInbox,
         conversation,
         incomingMessage,
+        createdAt: incomingMessage.createdAt,
         storageUrl,
         ...systemFieldUpdates,
       })
@@ -705,7 +706,7 @@ const SELF_SENT_ECHO_LOOKBACK = 10
  * so a recent outgoing row carrying the same text is our own send, not an
  * agent's.
  */
-const isEchoOfOwnSend = async (props: {
+export const isEchoOfOwnSend = async (props: {
   conversation: ConversationModel
   message: MessageModel
 }): Promise<boolean> => {

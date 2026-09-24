@@ -42,6 +42,7 @@ export const ScheduleJobData = {
   // WhatsApp calling.
   purgeExpiredCallRecordings: "purgeExpiredCallRecordings",
   sweepStaleWhatsappCalls: "sweepStaleWhatsappCalls",
+  sweepEchoCollectors: "sweepEchoCollectors",
 } as const
 
 /**
@@ -247,6 +248,11 @@ export type ScheduleJobSweepStaleWhatsappCalls = {
   data: Record<string, never>
 }
 
+export type ScheduleJobSweepEchoCollectors = {
+  type: typeof ScheduleJobData.sweepEchoCollectors
+  data: Record<string, never>
+}
+
 export type ScheduleJobData =
   | ScheduleJobBroadcast
   | ScheduleJobEnqueueBroadcast
@@ -279,6 +285,7 @@ export type ScheduleJobData =
   | ScheduleJobTeardownExpiredTrial
   | ScheduleJobPurgeExpiredCallRecordings
   | ScheduleJobSweepStaleWhatsappCalls
+  | ScheduleJobSweepEchoCollectors
 
 export const scheduleQueue = isNoRedisEnv()
   ? fakeQueue

@@ -13,12 +13,14 @@ export {
 } from "./apis/page"
 export { getPostDetails } from "./apis/post"
 export { getUserInboxLink } from "./apis/user-inbox-link"
+export { MESSENGER_ECHO_MAX_ATTACHMENTS } from "./handlers/message/incomming-message"
 export * from "./integration"
 export {
   isDisconnectSafeError,
   isRevokedTokenError,
   mapToChannelError,
 } from "./lib/error-mapper"
+export { FACEBOOK_GRAPH_REQUEST_TIMEOUT_MS } from "./lib/http-client"
 export {
   messengerMenusToCallToActions,
   type PersistentMenuItem,

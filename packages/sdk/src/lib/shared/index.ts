@@ -1,4 +1,4 @@
-import type { ContextQueue } from "./context"
+import type { ContextQueue, EchoCollectorPort } from "./context"
 import type { IncomingContact, IncomingMessage } from "./message"
 
 export * from "./context"
@@ -16,6 +16,7 @@ export type HandleRequestProps<IConfig extends BaseConfig> = {
   config: IConfig
   req: Request
   queue?: ContextQueue
+  echoCollector?: EchoCollectorPort
 }
 
 export type ReceivedMessageProps = {
