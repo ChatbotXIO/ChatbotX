@@ -1,7 +1,6 @@
 import { getPublicFileUrl } from "@chatbotx.io/utils"
 import { hasRealAvatar } from "@chatbotx.io/utils/no-avatar-sentinel"
 import { useTenantSettings } from "@/features/tenant"
-import type { ContactResource } from "./schema/resource"
 
 type ContactInboxReadTimestamp = {
   contactLastReadAt?: Date | null
@@ -19,7 +18,7 @@ export function getLatestContactLastReadAt(
 }
 
 export function useAvatarUrl(
-  contact?: ContactResource | null,
+  contact?: { avatar?: string | null } | null,
 ): string | undefined {
   const { storageUrl } = useTenantSettings()
   if (!contact) {

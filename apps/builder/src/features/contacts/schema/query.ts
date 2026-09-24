@@ -144,35 +144,31 @@ export const listContactsResponse = z.object({
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
 
-/** Column-level row for the private contacts table — the selected columns
- * must match `contactRepository.listTableRows` 1:1. */
+/**
+ * Column-level row for the private contacts table — the selected columns
+ * must match `contactRepository.listTableRows` 1:1. This compile-time guard
+ * is enforced by `listContacts`'s return type (`ListContactsTableResponse`
+ * from `list<ContactTableListRow>`), not by this schema alone.
+ */
 export const contactTableRowResource = contactResource
   .pick({
     id: true,
-    workspaceId: true,
-    firstName: true,
-    lastName: true,
     fullName: true,
     avatar: true,
-    email: true,
-    phoneNumber: true,
     createdAt: true,
   })
   .extend({
     contactInboxes: z.array(
       contactInboxResource.pick({
-        id: true,
         channel: true,
         source: true,
         contactLastReadAt: true,
       }),
     ),
     conversation: conversationResource
-      .pick({ id: true, assignedUserId: true })
+      .pick({ id: true })
       .extend({
-        assignedUser: userResource
-          .pick({ id: true, name: true, email: true, image: true })
-          .nullish(),
+        assignedUser: userResource.pick({ name: true, email: true }).nullish(),
       })
       .nullable(),
   })

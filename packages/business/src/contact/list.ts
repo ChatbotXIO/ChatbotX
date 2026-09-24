@@ -28,12 +28,15 @@ export type ListContactsInput = {
   sort?: { desc: boolean; id: string }[] | null
 }
 
-/** Row shape of `projection: "table"` — pass as `list<ContactTableListRow>`. */
+/** Row shape returned when `projection: "table"` is passed to `list`. */
 export type ContactTableListRow = Awaited<
   ReturnType<typeof contactRepository.listTableRows>
 >[number]
 
-type ContactListRow = Pick<ContactModel, "email" | "phoneNumber">
+/** Row shape returned for the default ("full") projection. */
+type ContactFullListRow = Awaited<
+  ReturnType<typeof contactRepository.listWithRelations>
+>[number]
 
 export type ContactListResult<T> = {
   data: T[]
@@ -152,9 +155,10 @@ async function getTotalContactsFromStats(
 }
 
 /**
- * "table" is the contacts page's column-level projection. Otherwise
- * `listForTable` is the "full" relation set minus tags/customFields — used
- * when `include` omits both.
+ * "table" is the contacts page's column-level projection (no email/phone
+ * column is selected, so there is nothing to mask). Otherwise
+ * `listWithInboxesAndConversation` is the "full" relation set minus
+ * tags/customFields — used when `include` omits both.
  */
 function listRows(
   query: Parameters<typeof contactRepository.listWithRelations>[0],
@@ -169,14 +173,12 @@ function listRows(
     !include.includes("tags") &&
     !include.includes("customFields")
   ) {
-    return contactRepository.listForTable(query)
+    return contactRepository.listWithInboxesAndConversation(query)
   }
   return contactRepository.listWithRelations(query)
 }
 
-export async function list<T extends ContactListRow = ContactModel>(
-  input: ListInput,
-): Promise<ContactListResult<T>> {
+async function runList(input: ListInput) {
   const { projection = "full", include, withCount = true } = input
   const scope = resolveScope(input.scope)
   const normalizedInput = {
@@ -198,19 +200,43 @@ export async function list<T extends ContactListRow = ContactModel>(
     ? Math.ceil(countResult.total / pagination.limit)
     : 0
 
+  return { data, pageCount, scope, include, countResult }
+}
+
+export async function list(
+  input: ListInput & { projection: "table" },
+): Promise<ContactListResult<ContactTableListRow>>
+export async function list(
+  input: ListInput & { projection?: "full" },
+): Promise<ContactListResult<ContactModel>>
+export async function list(
+  input: ListInput,
+): Promise<ContactListResult<ContactTableListRow | ContactModel>> {
+  const { data, pageCount, scope, include, countResult } = await runList(input)
+
+  if (input.projection === "table") {
+    return {
+      data: data as ContactTableListRow[],
+      pageCount,
+      totalCount: countResult.total,
+      totalCountCapped: countResult.capped,
+    }
+  }
+
+  const fullData = data as ContactFullListRow[]
   // Unscoped (token) callers see PII; scoped members only when permitted.
   const maskedData =
     scope && !scope.canViewEmailAndPhone
-      ? data.map(maskContactEmailAndPhone)
-      : data
-  const visibleData = include
+      ? fullData.map(maskContactEmailAndPhone)
+      : fullData
+  const visibleData: ContactFullListRow[] = include
     ? maskedData.map((contact) =>
-        stripUnrequestedContactRelations(contact, include),
+        stripUnrequestedContactRelations<ContactFullListRow>(contact, include),
       )
     : maskedData
 
   return {
-    data: visibleData as T[],
+    data: visibleData,
     pageCount,
     totalCount: countResult.total,
     totalCountCapped: countResult.capped,

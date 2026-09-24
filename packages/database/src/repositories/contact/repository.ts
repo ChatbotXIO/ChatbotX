@@ -76,7 +76,10 @@ export const contactRepository = {
       with: PUBLIC_CONTACT_RELATIONS,
     })
   },
-  listForTable(input: ContactListInput, tx: DatabaseClient = db) {
+  listWithInboxesAndConversation(
+    input: ContactListInput,
+    tx: DatabaseClient = db,
+  ) {
     return tx.query.contactModel.findMany({
       ...input,
       with: {
@@ -90,29 +93,23 @@ export const contactRepository = {
       ...input,
       columns: {
         id: true,
-        workspaceId: true,
-        firstName: true,
-        lastName: true,
         fullName: true,
         avatar: true,
-        email: true,
-        phoneNumber: true,
         createdAt: true,
       },
       with: {
         contactInboxes: {
           columns: {
-            id: true,
             channel: true,
             source: true,
             contactLastReadAt: true,
           },
         },
         conversation: {
-          columns: { id: true, assignedUserId: true },
+          columns: { id: true },
           with: {
             assignedUser: {
-              columns: { id: true, name: true, email: true, image: true },
+              columns: { name: true, email: true },
             },
           },
         },

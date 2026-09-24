@@ -77,7 +77,13 @@ export const contactsAuthenticatedAPI = {
     .input(listContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ total: z.number() }))
-    .handler(async ({ input }) => await countContacts(input)),
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await countContacts(input, scope)
+    }),
 
   countContactInboxesAuthenticatedAPI: authorizedAPI
     .route({

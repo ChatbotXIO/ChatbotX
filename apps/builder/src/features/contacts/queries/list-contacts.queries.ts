@@ -1,8 +1,5 @@
-import { type ContactTableListRow, contactService } from "@chatbotx.io/business"
-import {
-  type ContactPermissionScope,
-  requireContactPermissionScope,
-} from "../permissions"
+import { contactService } from "@chatbotx.io/business"
+import type { ContactPermissionScope } from "../permissions"
 import type {
   ListContactsRequest,
   ListContactsTableResponse,
@@ -13,7 +10,7 @@ export async function listContacts(
   input: ListContactsRequest,
   scope: ContactPermissionScope,
 ): Promise<ListContactsTableResponse> {
-  const result = await contactService.list<ContactTableListRow>({
+  const result = await contactService.list({
     ...input,
     scope,
     projection: "table",
@@ -27,7 +24,7 @@ export async function listContacts(
 
 export async function countContacts(
   input: ListContactsRequest,
+  scope: ContactPermissionScope,
 ): Promise<{ total: number }> {
-  const scope = await requireContactPermissionScope(input.workspaceId)
   return await contactService.count({ ...input, scope })
 }

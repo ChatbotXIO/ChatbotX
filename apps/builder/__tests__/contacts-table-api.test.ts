@@ -15,14 +15,17 @@ vi.mock("@chatbotx.io/database/repositories", () => {
   return proxy
 })
 
-const { listContacts, requireScope, procedures } = vi.hoisted(() => ({
-  listContacts: vi.fn(),
-  requireScope: vi.fn(),
-  procedures: [] as Array<{
-    route: { method: string; path: string }
-    handler?: (args: { input: unknown; context: unknown }) => Promise<unknown>
-  }>,
-}))
+const { listContacts, countContacts, requireScope, procedures } = vi.hoisted(
+  () => ({
+    listContacts: vi.fn(),
+    countContacts: vi.fn(),
+    requireScope: vi.fn(),
+    procedures: [] as Array<{
+      route: { method: string; path: string }
+      handler?: (args: { input: unknown; context: unknown }) => Promise<unknown>
+    }>,
+  }),
+)
 
 vi.mock("@/features/workspaces/schema/resource", () => ({
   withWorkspaceIdSchema: {},
@@ -46,7 +49,7 @@ vi.mock("@/features/contacts/queries/list-contact-inboxes.queries", () => ({
   listAudienceInboxesPreview: vi.fn(),
 }))
 vi.mock("@/features/contacts/queries/list-contacts.queries", () => ({
-  countContacts: vi.fn(),
+  countContacts,
   listContacts,
 }))
 vi.mock("@/features/contacts/schema/action", () => ({
@@ -94,6 +97,17 @@ if (!listProcedure?.handler) {
 
 const listHandler = listProcedure.handler
 
+const countProcedure = procedures.find(
+  (procedure) =>
+    procedure.route.path === "/workspaces/{workspaceId}/contacts/count",
+)
+
+if (!countProcedure?.handler) {
+  throw new Error("Contacts count procedure was not registered")
+}
+
+const countHandler = countProcedure.handler
+
 describe("contacts table private API", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -133,6 +147,34 @@ describe("contacts table private API", () => {
     })
     expect(listContacts).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", page: 1, perPage: 50 },
+      scope,
+    )
+  })
+
+  test("count handler derives member scope from context and passes it to countContacts", async () => {
+    const scope = {
+      canViewEmailAndPhone: false,
+      restrictToAssignedUserId: "user-1",
+    }
+    requireScope.mockReturnValue(scope)
+    countContacts.mockResolvedValue({ total: 0 })
+
+    await expect(
+      countHandler({
+        input: { workspaceId: "workspace-1" },
+        context: {
+          user: { id: "user-1" },
+          workspaceMember: { permissions: { onlyAssignedContacts: true } },
+        },
+      }),
+    ).resolves.toEqual({ total: 0 })
+
+    expect(requireScope).toHaveBeenCalledWith({
+      permissions: { onlyAssignedContacts: true },
+      userId: "user-1",
+    })
+    expect(countContacts).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1" },
       scope,
     )
   })
