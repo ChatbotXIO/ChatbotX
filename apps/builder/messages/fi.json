@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Anna kelvollinen Dataset ID (vain numeroita).",
       "whatsappNotFound": "WhatsApp-integraatiota ei löytynyt.",
       "testEventCodeRequired": "Tallenna testitapahtuman koodi ennen testitapahtuman lähettämistä.",
-      "noContactForTest": "Tällä kanavalla ei ole vielä sopivaa kontaktia. Testitapahtuma tarvitsee todellisen kontaktin (WhatsAppissa sellaisen, joka tuli click-to-WhatsApp-mainoksesta).",
-      "invalidTestEventCode": "Testitapahtuman koodi saa sisältää vain kirjaimia, numeroita, väliviivoja tai alaviivoja (enintään 64)."
+      "invalidTestEventCode": "Testitapahtuman koodi saa sisältää vain kirjaimia, numeroita, väliviivoja tai alaviivoja (enintään 64).",
+      "invalidMessagingId": "Viestintätunnus saa sisältää vain kirjaimia, numeroita, viivoja tai alaviivoja (enintään 512).",
+      "capiDisconnected": "Meta CAPI on katkaistu tältä kanavalta. Yhdistä se uudelleen ennen testitapahtuman lähettämistä."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Testitapahtuman koodi tallennettu.",
       "cleared": "Testitapahtuman koodi tyhjennetty. Tapahtumat ovat taas live-tilassa.",
       "send": "Lähetä testitapahtuma",
-      "sent": "Testitapahtuma lisätty jonoon. Se näkyy Test events -kohdassa Events Managerissa minuutin sisällä.",
-      "sendHint": "Lähettää yhden esimerkki-Purchase-tapahtuman (100 USD) tämän kanavan viimeisimmälle yhteystiedolle.",
+      "sent": "Testitapahtuma lähetetty. Se näkyy Events Managerin Test events -välilehdellä minuutin sisällä.",
+      "sendHint": "Lähettää yhden esimerkki-Purchase-tapahtuman (100 USD) syöttämääsi viestintätunnukseen. Tallennettua kontaktia ei käytetä.",
       "activeNotice": "Testitila on päällä: tämän kanavan tapahtumia ei lasketa raportteihin ennen kuin koodi poistetaan.",
-      "openTestEvents": "Avaa Test events"
+      "openTestEvents": "Avaa Test events",
+      "dialogTitle": "Lähetä testitapahtuma",
+      "dialogDescription": "Yksi esimerkki-Purchase (100 USD) lähetetään testitapahtumakoodillasi. Liitä esimerkkiviestintätunnus kohdasta Events Manager → Test events → Messaging → Graph API Explorer, jotta mitään ei kohdisteta oikeaan kontaktiin.",
+      "messagingIdLabel": {
+        "messenger": "Kontaktin tunnus (page_scoped_user_id)",
+        "instagram": "Kontaktin tunnus (ig_sid)",
+        "whatsapp": "Klikkaustunnus (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Liitä Metan esimerkkiarvo",
+      "messagingIdHint": "Vain kirjaimia, numeroita, viivoja ja alaviivoja (enintään 512).",
+      "cancel": "Peruuta",
+      "confirmSend": "Lähetä"
     }
   },
   "minigames": {

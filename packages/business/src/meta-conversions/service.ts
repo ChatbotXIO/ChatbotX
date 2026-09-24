@@ -1,11 +1,9 @@
-import {
-  contactInboxRepository,
-  metaCapiEventRepository,
-} from "@chatbotx.io/database/repositories"
+import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import type { MetaCapiEventModel } from "@chatbotx.io/database/types"
 import { encryptUtils } from "@chatbotx.io/encryption"
 import { createId } from "@chatbotx.io/utils"
 import {
+  capiTestMessagingIdSchema,
   defaultMetaCapiActionSource,
   type MetaCapiActionSource,
 } from "@chatbotx.io/utils/meta-capi"
@@ -23,16 +21,13 @@ import { instagramCapiReadinessAdapter } from "./adapters/instagram"
 import { messengerCapiReadinessAdapter } from "./adapters/messenger"
 import type { CapiReadinessAdapter, CapiSendAdapter } from "./adapters/types"
 import { whatsappCapiReadinessAdapter } from "./adapters/whatsapp"
-import {
-  capiEventDedupsPerUtcDay,
-  capiEventRequiresCtwaClid,
-} from "./channel-policy"
+import { buildChannelIdentity } from "./channel-identity"
+import { capiEventDedupsPerUtcDay, isCapiDisconnected } from "./channel-policy"
 import { createDatasetWithFallback } from "./dataset-fallback"
 import {
   type CapiConnectChannel,
   type ClearCapiAccessTokenInput,
   type EnqueueEventInput,
-  type EnqueueTestEventInput,
   type EnsureDatasetIdInput,
   enqueueEventInput,
   type FindWorkspaceEventInput,
@@ -43,6 +38,7 @@ import {
   type SaveCapiAccessTokenInput,
   type SaveCapiTestEventCodeInput,
   type SaveDatasetIdInput,
+  type SendTestEventInput,
   saveCapiAccessTokenInput,
   saveCapiTestEventCodeInput,
   saveDatasetIdInput,
@@ -65,7 +61,8 @@ export class CapiScopeRefreshError extends Error {
 /** A "Send test event" precondition the CAPI settings tab must surface. */
 export type CapiTestEventErrorReason =
   | "testEventCodeRequired"
-  | "noContactForTest"
+  | "capiDisconnected"
+  | "invalidMessagingId"
 
 export class CapiTestEventError extends Error {
   readonly reason: CapiTestEventErrorReason
@@ -80,7 +77,6 @@ export class CapiTestEventError extends Error {
 /** Fixed sample event for "Send test event": what Meta's own Test Events sample uses. */
 const capiTestEventSample = {
   eventName: "Purchase",
-  actionSource: defaultMetaCapiActionSource,
   value: "100",
   currency: "USD",
 } as const
@@ -191,7 +187,7 @@ class MetaConversionsService extends BaseService {
    * they read as the default, exactly as `enqueueEvent` treats them.
    */
   buildSourceKey(input: {
-    scope: "flow" | "trigger" | "test"
+    scope: "flow" | "trigger"
     scopeId: string
     contactInboxId: string
     channel: MetaConversionsChannel
@@ -468,50 +464,62 @@ class MetaConversionsService extends BaseService {
   }
 
   /**
-   * "Send test event": queues one sample Purchase through the real send
-   * pipeline, attributed to the inbox's most recent contact (Meta needs a
-   * real messaging identity even for test events). Refuses to run without a
-   * saved test_event_code so a test can never become a production event;
-   * the worker re-checks the code at send time for the same reason.
+   * "Send test event": one sample Purchase, identified ONLY by the messaging
+   * id the admin typed in (a page-scoped / IG-scoped user id or a
+   * click-to-WhatsApp click id — Meta's Test events tab hands out sample
+   * values). Nothing is read from or attributed to a stored contact, no hashed
+   * customer info is sent, and no `MetaCapiEvent` row is written: the event is
+   * posted synchronously through `send` so Meta's own error reaches the admin.
+   * Requires a saved test_event_code so it can never land in live reporting.
    */
-  async enqueueTestEvent<TChannel extends MetaConversionsChannel>(
-    input: EnqueueTestEventInput<TChannel>,
-  ): Promise<MetaCapiEventModel | null> {
-    if (!input.integration.capiTestEventCode) {
+  async sendTestEvent<TChannel extends MetaConversionsChannel>(
+    input: SendTestEventInput<TChannel>,
+  ): Promise<void> {
+    const testEventCode = input.integration.capiTestEventCode
+    if (!testEventCode) {
       throw new CapiTestEventError("testEventCodeRequired")
     }
-    // Same gate the worker applies to real sends: pick a contact the channel
-    // can actually send for instead of queuing an event Meta would reject.
-    // Derived from the sample's action source, so this lookup and the
-    // `buildSourceKey` call below always agree on the identity rules.
-    const contactInbox = await contactInboxRepository.findMostRecentByInbox({
-      inboxId: input.integration.inboxId,
-      workspaceId: input.integration.workspaceId,
-      requireCtwaClid: capiEventRequiresCtwaClid(
-        input.channel,
-        capiTestEventSample.actionSource,
-      ),
-    })
-    if (!contactInbox) {
-      throw new CapiTestEventError("noContactForTest")
+    // Same user-intent disconnect gate the worker applies to live sends — the
+    // synchronous path must not post (or provision a dataset) either.
+    if (isCapiDisconnected(input.integration)) {
+      throw new CapiTestEventError("capiDisconnected")
+    }
+    const messagingId = capiTestMessagingIdSchema.safeParse(input.messagingId)
+    if (!messagingId.success) {
+      throw new CapiTestEventError("invalidMessagingId", {
+        cause: messagingId.error,
+      })
     }
 
-    return this.enqueueEvent({
-      workspaceId: input.integration.workspaceId,
+    const auth = await resolveCapiAccessTokenForChannel(
+      input.channel,
+      input.integration,
+    )
+    const datasetId = await this.ensureDatasetId({
       channel: input.channel,
-      contactInboxId: contactInbox.id,
-      inboxId: input.integration.inboxId,
-      source: "manualTest",
-      // A fresh scopeId per click so a WhatsApp per-day dedup never swallows
-      // a second test on the same day.
-      sourceKey: this.buildSourceKey({
-        scope: "test",
-        scopeId: createId(),
-        contactInboxId: contactInbox.id,
-        channel: input.channel,
-        actionSource: capiTestEventSample.actionSource,
-      }),
-      ...capiTestEventSample,
+      integration: input.integration,
+      provisionDataset: input.provisionDataset,
+    })
+
+    // Spread the (generic) identity first so TypeScript keeps the concrete
+    // sample fields visible on the resulting intersection type.
+    const identity = buildChannelIdentity(
+      input.channel,
+      input.integration,
+      messagingId.data,
+    )
+    await input.send({
+      datasetId,
+      accessToken: auth.accessToken,
+      testEventCode,
+      event: {
+        ...identity,
+        eventName: capiTestEventSample.eventName,
+        occurredAt: new Date(),
+        eventId: `test:${createId()}`,
+        value: capiTestEventSample.value,
+        currency: capiTestEventSample.currency,
+      },
     })
   }
 

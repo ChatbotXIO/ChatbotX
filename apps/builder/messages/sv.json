@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Ange ett giltigt Dataset ID (endast siffror).",
       "whatsappNotFound": "WhatsApp-integrationen hittades inte.",
       "testEventCodeRequired": "Spara en testhändelsekod innan du skickar en testhändelse.",
-      "noContactForTest": "Ingen lämplig kontakt på den här kanalen än. En testhändelse behöver en riktig kontakt att kopplas till (för WhatsApp en som kom från en click-to-WhatsApp-annons).",
-      "invalidTestEventCode": "Testhändelsekoden får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 64)."
+      "invalidTestEventCode": "Testhändelsekoden får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 64).",
+      "invalidMessagingId": "Messaging-id får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 512).",
+      "capiDisconnected": "Meta CAPI är frånkopplat för den här kanalen. Anslut igen innan du skickar en testhändelse."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Testhändelsekod sparad.",
       "cleared": "Testhändelsekod rensad. Händelser är live igen.",
       "send": "Skicka testhändelse",
-      "sent": "Testhändelse i kö. Den visas under Test events i Events Manager inom en minut.",
-      "sendHint": "Skickar en exempel-Purchase (100 USD) till kanalens senaste kontakt.",
+      "sent": "Testhändelse skickad. Den visas under Test events i Events Manager inom en minut.",
+      "sendHint": "Skickar ett exempel-Purchase (100 USD) till ett messaging-id som du anger. Ingen sparad kontakt används.",
       "activeNotice": "Testläge är på: händelser från den här kanalen räknas inte i rapporter förrän koden rensas.",
-      "openTestEvents": "Öppna Test events"
+      "openTestEvents": "Öppna Test events",
+      "dialogTitle": "Skicka testhändelse",
+      "dialogDescription": "Ett exempel-Purchase (100 USD) skickas med din testhändelsekod. Klistra in exempel-messaging-id:t från Events Manager → Test events → Messaging → Graph API Explorer, så att inget tillskrivs en riktig kontakt.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt-id (page_scoped_user_id)",
+        "instagram": "Kontakt-id (ig_sid)",
+        "whatsapp": "Klick-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Klistra in exempelvärdet från Meta",
+      "messagingIdHint": "Endast bokstäver, siffror, bindestreck och understreck (max 512).",
+      "cancel": "Avbryt",
+      "confirmSend": "Skicka"
     }
   },
   "minigames": {

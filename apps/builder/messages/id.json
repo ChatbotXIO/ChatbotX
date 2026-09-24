@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Masukkan Dataset ID yang valid (hanya angka).",
       "whatsappNotFound": "Integrasi WhatsApp tidak ditemukan.",
       "testEventCodeRequired": "Simpan kode peristiwa uji sebelum mengirim peristiwa uji.",
-      "noContactForTest": "Belum ada kontak yang memenuhi syarat di saluran ini. Peristiwa uji memerlukan kontak nyata untuk dikaitkan (untuk WhatsApp, kontak yang berasal dari iklan click-to-WhatsApp).",
-      "invalidTestEventCode": "Kode peristiwa uji hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 64)."
+      "invalidTestEventCode": "Kode peristiwa uji hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 64).",
+      "invalidMessagingId": "ID pesan hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 512).",
+      "capiDisconnected": "Meta CAPI terputus untuk saluran ini. Hubungkan kembali sebelum mengirim event uji."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Kode peristiwa uji tersimpan.",
       "cleared": "Kode peristiwa uji dihapus. Peristiwa aktif kembali.",
       "send": "Kirim peristiwa uji",
-      "sent": "Peristiwa uji masuk antrean. Peristiwa ini akan muncul di Test events pada Events Manager dalam waktu satu menit.",
-      "sendHint": "Mengirim satu contoh Purchase (100 USD) ke kontak terbaru pada saluran ini.",
+      "sent": "Event uji terkirim. Akan muncul di Test events pada Events Manager dalam satu menit.",
+      "sendHint": "Mengirim satu contoh Purchase (100 USD) ke ID pesan yang Anda masukkan. Tidak ada kontak tersimpan yang digunakan.",
       "activeNotice": "Mode uji aktif: peristiwa dari saluran ini tidak dihitung dalam laporan sampai kode dihapus.",
-      "openTestEvents": "Buka Test events"
+      "openTestEvents": "Buka Test events",
+      "dialogTitle": "Kirim event uji",
+      "dialogDescription": "Satu contoh Purchase (100 USD) dikirim dengan kode event uji Anda. Tempel ID pesan contoh dari Events Manager → Test events → Messaging → Graph API Explorer, agar tidak ada yang diatribusikan ke kontak asli.",
+      "messagingIdLabel": {
+        "messenger": "ID kontak (page_scoped_user_id)",
+        "instagram": "ID kontak (ig_sid)",
+        "whatsapp": "ID klik (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Tempel nilai contoh dari Meta",
+      "messagingIdHint": "Hanya huruf, angka, tanda hubung, dan garis bawah (maks. 512).",
+      "cancel": "Batal",
+      "confirmSend": "Kirim"
     }
   },
   "minigames": {

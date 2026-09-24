@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Indtast et gyldigt Dataset ID (kun tal).",
       "whatsappNotFound": "WhatsApp-integration ikke fundet.",
       "testEventCodeRequired": "Gem en testhændelseskode, før du sender en testhændelse.",
-      "noContactForTest": "Ingen egnet kontakt på denne kanal endnu. En testhændelse kræver en rigtig kontakt at tilknytte (for WhatsApp en, der kom fra en click-to-WhatsApp-annonce).",
-      "invalidTestEventCode": "Testhændelseskoden må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 64)."
+      "invalidTestEventCode": "Testhændelseskoden må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 64).",
+      "invalidMessagingId": "Messaging-id må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 512).",
+      "capiDisconnected": "Meta CAPI er afbrudt for denne kanal. Tilslut igen, før du sender en testhændelse."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Testhændelseskode gemt.",
       "cleared": "Testhændelseskode ryddet. Hændelser er live igen.",
       "send": "Send testhændelse",
-      "sent": "Testhændelse sat i kø. Den vises under Test events i Events Manager inden for et minut.",
-      "sendHint": "Sender ét eksempel på Purchase (100 USD) til denne kanals seneste kontakt.",
+      "sent": "Testhændelse sendt. Den vises under Test events i Events Manager inden for et minut.",
+      "sendHint": "Sender én eksempel-Purchase (100 USD) til et messaging-id, du indtaster. Ingen gemt kontakt bruges.",
       "activeNotice": "Testtilstand er slået til: hændelser fra denne kanal tælles ikke med i rapporter, før koden ryddes.",
-      "openTestEvents": "Åbn Test events"
+      "openTestEvents": "Åbn Test events",
+      "dialogTitle": "Send testhændelse",
+      "dialogDescription": "Én eksempel-Purchase (100 USD) sendes med din testhændelseskode. Indsæt eksempel-messaging-id'et fra Events Manager → Test events → Messaging → Graph API Explorer, så intet tilskrives en rigtig kontakt.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt-id (page_scoped_user_id)",
+        "instagram": "Kontakt-id (ig_sid)",
+        "whatsapp": "Klik-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Indsæt eksempelværdien fra Meta",
+      "messagingIdHint": "Kun bogstaver, tal, bindestreger og understregninger (maks. 512).",
+      "cancel": "Annuller",
+      "confirmSend": "Send"
     }
   },
   "minigames": {

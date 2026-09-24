@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "有効なデータセットID（数字のみ）を入力してください。",
       "whatsappNotFound": "WhatsApp の連携が見つかりません。",
       "testEventCodeRequired": "テストイベントを送信する前にテストイベントコードを保存してください。",
-      "noContactForTest": "このチャネルにはまだ対象となる連絡先がありません。テストイベントには紐付け先となる実際の連絡先が必要です（WhatsApp の場合は click-to-WhatsApp 広告経由の連絡先）。",
-      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。"
+      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。",
+      "invalidMessagingId": "メッセージングIDに使えるのは英字、数字、ハイフン、アンダースコアのみです（最大512文字）。",
+      "capiDisconnected": "このチャネルのMeta CAPIは切断されています。テストイベントを送信する前に再接続してください。"
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "テストイベントコードを保存しました。",
       "cleared": "テストイベントコードをクリアしました。イベントは再びライブになります。",
       "send": "テストイベントを送信",
-      "sent": "テストイベントをキューに追加しました。1分以内に Events Manager の Test events に表示されます。",
-      "sendHint": "このチャネルの最新の連絡先にサンプルの Purchase（100 USD）を1件送信します。",
+      "sent": "テストイベントを送信しました。1分以内にEvents ManagerのTest eventsに表示されます。",
+      "sendHint": "入力したメッセージングIDにサンプルのPurchase（100 USD）を1件送信します。保存済みの連絡先は使用しません。",
       "activeNotice": "テストモードが有効です。コードをクリアするまで、このチャネルのイベントはレポートにカウントされません。",
-      "openTestEvents": "Test events を開く"
+      "openTestEvents": "Test events を開く",
+      "dialogTitle": "テストイベントを送信",
+      "dialogDescription": "テストイベントコード付きでサンプルのPurchase（100 USD）を1件送信します。実際の連絡先に紐付かないよう、Events Manager → Test events → Messaging → Graph API Explorer のサンプルメッセージングIDを貼り付けてください。",
+      "messagingIdLabel": {
+        "messenger": "連絡先ID（page_scoped_user_id）",
+        "instagram": "連絡先ID（ig_sid）",
+        "whatsapp": "クリックID（ctwa_clid）"
+      },
+      "messagingIdPlaceholder": "Metaのサンプル値を貼り付け",
+      "messagingIdHint": "英字、数字、ハイフン、アンダースコアのみ（最大512文字）。",
+      "cancel": "キャンセル",
+      "confirmSend": "送信"
     }
   },
   "minigames": {

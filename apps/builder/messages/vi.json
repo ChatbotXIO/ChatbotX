@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Nhập Dataset ID hợp lệ (chỉ gồm chữ số).",
       "whatsappNotFound": "Không tìm thấy tích hợp WhatsApp.",
       "testEventCodeRequired": "Hãy lưu mã sự kiện thử trước khi gửi sự kiện thử.",
-      "noContactForTest": "Kênh này chưa có liên hệ phù hợp. Sự kiện thử cần một liên hệ thật để gán vào (với WhatsApp, liên hệ phải đến từ quảng cáo click-to-WhatsApp).",
-      "invalidTestEventCode": "Mã sự kiện thử chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 64 ký tự)."
+      "invalidTestEventCode": "Mã sự kiện thử chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 64 ký tự).",
+      "invalidMessagingId": "ID nhắn tin chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 512 ký tự).",
+      "capiDisconnected": "Meta CAPI của kênh này đang ngắt kết nối. Hãy kết nối lại trước khi gửi sự kiện thử."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Đã lưu mã sự kiện thử.",
       "cleared": "Đã xoá mã sự kiện thử. Sự kiện gửi thật trở lại.",
       "send": "Gửi sự kiện thử",
-      "sent": "Đã xếp hàng sự kiện thử. Nó sẽ hiện trong Test events của Events Manager trong khoảng một phút.",
-      "sendHint": "Gửi một sự kiện Purchase mẫu (100 USD) tới liên hệ gần nhất của kênh này.",
+      "sent": "Đã gửi sự kiện thử. Nó sẽ hiện trong Test events của Events Manager trong khoảng một phút.",
+      "sendHint": "Gửi một sự kiện Purchase mẫu (100 USD) tới ID nhắn tin bạn nhập. Không dùng liên hệ nào đã lưu.",
       "activeNotice": "Đang ở chế độ thử: sự kiện của kênh này không được tính vào báo cáo cho tới khi xoá mã.",
-      "openTestEvents": "Mở Test events"
+      "openTestEvents": "Mở Test events",
+      "dialogTitle": "Gửi sự kiện thử",
+      "dialogDescription": "Một sự kiện Purchase mẫu (100 USD) sẽ được gửi kèm mã sự kiện thử của bạn. Dán ID nhắn tin mẫu lấy từ Events Manager → Test events → Messaging → Graph API Explorer, để không gán nhầm vào liên hệ thật.",
+      "messagingIdLabel": {
+        "messenger": "ID liên hệ (page_scoped_user_id)",
+        "instagram": "ID liên hệ (ig_sid)",
+        "whatsapp": "ID click quảng cáo (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Dán giá trị mẫu từ Meta",
+      "messagingIdHint": "Chỉ gồm chữ, số, gạch ngang và gạch dưới (tối đa 512 ký tự).",
+      "cancel": "Huỷ",
+      "confirmSend": "Gửi"
     }
   },
   "minigames": {

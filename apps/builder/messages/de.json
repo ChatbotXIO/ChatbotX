@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Gib eine gültige Dataset-ID ein (nur Zahlen).",
       "whatsappNotFound": "WhatsApp-Integration nicht gefunden.",
       "testEventCodeRequired": "Speichere einen Testereignis-Code, bevor du ein Testereignis sendest.",
-      "noContactForTest": "Noch kein geeigneter Kontakt in diesem Kanal. Ein Testereignis braucht einen echten Kontakt zur Zuordnung (bei WhatsApp einen aus einer Click-to-WhatsApp-Anzeige).",
-      "invalidTestEventCode": "Der Testereignis-Code darf nur Buchstaben, Ziffern, Bindestriche oder Unterstriche enthalten (max. 64)."
+      "invalidTestEventCode": "Der Testereignis-Code darf nur Buchstaben, Ziffern, Bindestriche oder Unterstriche enthalten (max. 64).",
+      "invalidMessagingId": "Die Messaging-ID darf nur Buchstaben, Ziffern, Bindestriche oder Unterstriche enthalten (max. 512).",
+      "capiDisconnected": "Meta CAPI ist für diesen Kanal getrennt. Verbinde es erneut, bevor du ein Testereignis sendest."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Testereignis-Code gespeichert.",
       "cleared": "Testereignis-Code gelöscht. Ereignisse sind wieder live.",
       "send": "Testereignis senden",
-      "sent": "Testereignis wurde eingereiht. Es erscheint innerhalb einer Minute unter Test events im Events Manager.",
-      "sendHint": "Sendet einen Beispiel-Purchase (100 USD) an den letzten Kontakt dieses Kanals.",
+      "sent": "Testereignis gesendet. Es erscheint innerhalb einer Minute unter Test events im Events Manager.",
+      "sendHint": "Sendet ein Beispiel-Purchase-Ereignis (100 USD) an eine von dir eingegebene Messaging-ID. Es wird kein gespeicherter Kontakt verwendet.",
       "activeNotice": "Testmodus ist aktiv: Ereignisse dieses Kanals werden erst wieder in Berichten gezählt, wenn der Code gelöscht wird.",
-      "openTestEvents": "Test events öffnen"
+      "openTestEvents": "Test events öffnen",
+      "dialogTitle": "Testereignis senden",
+      "dialogDescription": "Ein Beispiel-Purchase-Ereignis (100 USD) wird mit deinem Testereignis-Code gesendet. Füge die Beispiel-Messaging-ID aus Events Manager → Test events → Messaging → Graph API Explorer ein, damit nichts einem echten Kontakt zugeordnet wird.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt-ID (page_scoped_user_id)",
+        "instagram": "Kontakt-ID (ig_sid)",
+        "whatsapp": "Klick-ID (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Beispielwert von Meta einfügen",
+      "messagingIdHint": "Nur Buchstaben, Ziffern, Bindestriche und Unterstriche (max. 512).",
+      "cancel": "Abbrechen",
+      "confirmSend": "Senden"
     }
   },
   "minigames": {
