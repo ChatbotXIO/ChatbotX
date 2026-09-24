@@ -5982,7 +5982,7 @@
       "messagingIdLabel": {
         "messenger": "联系人 ID（page_scoped_user_id）",
         "instagram": "联系人 ID（ig_sid）",
-        "whatsapp": "联系人 ID（ctwa_clid）"
+        "whatsapp": "点击 ID（ctwa_clid）"
       },
       "messagingIdPlaceholder": "粘贴 Meta 提供的示例值",
       "messagingIdHint": "仅限字母、数字、连字符和下划线（最多 512 个字符）。",
