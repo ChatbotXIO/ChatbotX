@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Introdu un Dataset ID valid (doar cifre).",
       "whatsappNotFound": "Integrarea WhatsApp nu a fost găsită.",
       "testEventCodeRequired": "Salvează un cod de eveniment de test înainte de a trimite un eveniment de test.",
-      "noContactForTest": "Încă nu există un contact eligibil pe acest canal. Un eveniment de test are nevoie de un contact real căruia să i se atribuie (pentru WhatsApp, unul provenit dintr-o reclamă click-to-WhatsApp).",
-      "invalidTestEventCode": "Codul evenimentului de test poate conține doar litere, cifre, cratime sau underscore-uri (max. 64)."
+      "invalidTestEventCode": "Codul evenimentului de test poate conține doar litere, cifre, cratime sau underscore-uri (max. 64).",
+      "invalidMessagingId": "ID-ul de mesagerie poate conține doar litere, cifre, cratime sau liniuțe de subliniere (max. 512).",
+      "capiDisconnected": "Meta CAPI este deconectat pentru acest canal. Reconectează-l înainte de a trimite un eveniment de test."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Codul evenimentului de test a fost salvat.",
       "cleared": "Codul evenimentului de test a fost șters. Evenimentele sunt din nou live.",
       "send": "Trimite eveniment de test",
-      "sent": "Evenimentul de test a fost pus în coadă. Apare în Test events din Events Manager în decurs de un minut.",
-      "sendHint": "Trimite un exemplu de Purchase (100 USD) către cel mai recent contact de pe acest canal.",
+      "sent": "Eveniment de test trimis. Apare în Test events din Events Manager în cel mult un minut.",
+      "sendHint": "Trimite un Purchase exemplu (100 USD) către un ID de mesagerie introdus de tine. Nu se folosește niciun contact salvat.",
       "activeNotice": "Modul de test este activ: evenimentele de pe acest canal nu sunt contorizate în rapoarte până când codul este șters.",
-      "openTestEvents": "Deschide Test events"
+      "openTestEvents": "Deschide Test events",
+      "dialogTitle": "Trimite eveniment de test",
+      "dialogDescription": "Un Purchase exemplu (100 USD) este trimis cu codul tău de eveniment de test. Lipește ID-ul de mesagerie exemplu din Events Manager → Test events → Messaging → Graph API Explorer, astfel încât nimic să nu fie atribuit unui contact real.",
+      "messagingIdLabel": {
+        "messenger": "ID contact (page_scoped_user_id)",
+        "instagram": "ID contact (ig_sid)",
+        "whatsapp": "ID contact (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Lipește valoarea exemplu de la Meta",
+      "messagingIdHint": "Doar litere, cifre, cratime și liniuțe de subliniere (max. 512).",
+      "cancel": "Anulează",
+      "confirmSend": "Trimite"
     }
   },
   "minigames": {

@@ -117,13 +117,18 @@ can supply.
   Meta `test_event_code` (Events Manager → Test events) stores it on the
   integration row (`capiTestEventCode`); while set, the worker sends it with
   every event of that integration, so Meta shows the full payload under Test
-  events and does not count the events in reporting. *Send test event* queues
-  one sample `Purchase` (100 USD) through the real pipeline as
-  `MetaCapiEvent.source = "manualTest"`, attributed to the inbox's most recent
-  contact. Both the business layer and the worker refuse to send a
-  `manualTest` event without a saved code, so a test can never become a
-  production conversion. Meta's Test events view lists only `_eventName` and
-  `_valueToSum`; `content_*` parameters show up under *Sampled activities*.
+  events and does not count the events in reporting. *Send test event* opens a
+  dialog asking for the person's messaging id for that channel
+  (`page_scoped_user_id`, `ig_sid`, or `ctwa_clid` — Meta's Test events tab
+  hands out sample values via *Messaging → channel → Graph API Explorer*) and
+  `metaConversionsService.sendTestEvent` posts one sample `Purchase` (100 USD)
+  synchronously with that id. It never reads a stored contact, never sends
+  hashed customer data, and never writes a `MetaCapiEvent` row, so a test can
+  neither be attributed to a real person nor become a production conversion;
+  the business layer refuses to send without a saved code. (Rows with
+  `source = "manualTest"` predate this and are only historical.) Meta's Test
+  events view lists only `_eventName` and `_valueToSum`; `content_*`
+  parameters show up under *Sampled activities*.
 
 ## Where Ads dashboard metrics come from
 

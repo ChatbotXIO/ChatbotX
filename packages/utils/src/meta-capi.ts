@@ -192,6 +192,21 @@ export const metaCapiCurrencySchema = z
  * Meta CAPI `custom_data.content_type` values
  * (https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/custom-data).
  */
+/**
+ * The person's messaging id an admin pastes for a CAPI "Send test event": a
+ * page-scoped user id, an IG-scoped user id, or a click-to-WhatsApp click id.
+ * Meta's Test events tab hands out sample values in exactly this alphabet.
+ * Shared by the dialog (client) and the business layer (server) so the two
+ * can never disagree on what is accepted.
+ */
+export const CAPI_TEST_MESSAGING_ID_MAX_LENGTH = 512
+export const capiTestMessagingIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(CAPI_TEST_MESSAGING_ID_MAX_LENGTH)
+  .regex(/^[A-Za-z0-9_-]+$/)
+
 export const metaCapiContentTypeValues = ["product", "product_group"] as const
 export const metaCapiContentTypeSchema = z.enum(metaCapiContentTypeValues)
 export type MetaCapiContentType = z.infer<typeof metaCapiContentTypeSchema>

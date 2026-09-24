@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Geçerli bir Dataset ID girin (yalnızca rakamlar).",
       "whatsappNotFound": "WhatsApp entegrasyonu bulunamadı.",
       "testEventCodeRequired": "Bir test etkinliği göndermeden önce test etkinliği kodunu kaydedin.",
-      "noContactForTest": "Bu kanalda henüz uygun bir kişi yok. Test etkinliği, ilişkilendirilecek gerçek bir kişi gerektirir (WhatsApp için click-to-WhatsApp reklamından gelen bir kişi).",
-      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64)."
+      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64).",
+      "invalidMessagingId": "Mesajlaşma kimliği yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 512).",
+      "capiDisconnected": "Bu kanal için Meta CAPI bağlantısı kesildi. Test etkinliği göndermeden önce yeniden bağlayın."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Test etkinliği kodu kaydedildi.",
       "cleared": "Test etkinliği kodu temizlendi. Etkinlikler tekrar canlı.",
       "send": "Test etkinliği gönder",
-      "sent": "Test etkinliği sıraya alındı. Bir dakika içinde Events Manager içindeki Test events altında görünür.",
-      "sendHint": "Bu kanalın en son kişisine örnek bir Purchase (100 USD) gönderir.",
+      "sent": "Test etkinliği gönderildi. Bir dakika içinde Events Manager'daki Test events altında görünür.",
+      "sendHint": "Girdiğiniz bir mesajlaşma kimliğine örnek bir Purchase (100 USD) gönderir. Kayıtlı hiçbir kişi kullanılmaz.",
       "activeNotice": "Test modu açık: kod temizlenene kadar bu kanaldaki etkinlikler raporlarda sayılmaz.",
-      "openTestEvents": "Test events'i aç"
+      "openTestEvents": "Test events'i aç",
+      "dialogTitle": "Test etkinliği gönder",
+      "dialogDescription": "Test etkinlik kodunuzla örnek bir Purchase (100 USD) gönderilir. Gerçek bir kişiye atfedilmemesi için örnek mesajlaşma kimliğini Events Manager → Test events → Messaging → Graph API Explorer'dan yapıştırın.",
+      "messagingIdLabel": {
+        "messenger": "Kişi kimliği (page_scoped_user_id)",
+        "instagram": "Kişi kimliği (ig_sid)",
+        "whatsapp": "Kişi kimliği (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Meta'daki örnek değeri yapıştırın",
+      "messagingIdHint": "Yalnızca harf, rakam, tire ve alt çizgi (en fazla 512).",
+      "cancel": "İptal",
+      "confirmSend": "Gönder"
     }
   },
   "minigames": {

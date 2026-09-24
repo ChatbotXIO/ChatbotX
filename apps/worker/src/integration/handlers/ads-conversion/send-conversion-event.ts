@@ -2,11 +2,13 @@ import {
   ADS_INTEGRATION_FK_BY_CHANNEL,
   type AdReferralChannel,
   adsConversionService,
+  capiDatasetResourceType,
   contactInboxService,
   contactService,
   hashContactUserData,
   integrationWhatsappService,
   isAdReferralChannel,
+  isCapiDisconnected,
   type MetaConversionsIntegrationByChannel,
   metaConversionsService,
   resolveCapiAccessTokenForChannel,
@@ -36,7 +38,6 @@ import type {
 import type { AdsConversionJobSendConversionEvent } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import {
-  datasetResourceType,
   findEventIntegration,
   refreshScopeCache,
 } from "../meta-conversions/capi-scope-checkers"
@@ -414,9 +415,9 @@ async function handleSendMetaChannelConversionEvent(
     return
   }
 
-  // A user-intent CAPI disconnect blocks the send, mirroring
-  // `send-meta-capi-event.ts`'s `capiDisconnectedAt` guard.
-  if ("capiDisconnectedAt" in integration && integration.capiDisconnectedAt) {
+  // A user-intent CAPI disconnect blocks the send, same gate as
+  // `send-meta-capi-event.ts`.
+  if (isCapiDisconnected(integration)) {
     await markEventFailed(event)
     return
   }
@@ -519,7 +520,7 @@ async function handleSendMetaChannelConversionEvent(
             integration: integrationForSend,
             provisionDataset: ({ accessToken, resourceId, resourceName }) =>
               ensureMetaConversionsDataset({
-                resourceType: datasetResourceType(channel),
+                resourceType: capiDatasetResourceType(channel),
                 resourceId,
                 accessToken,
                 datasetName: buildDatasetName(resourceName),

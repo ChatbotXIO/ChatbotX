@@ -6114,8 +6114,9 @@
       "invalidDatasetId": "Inserisci un Dataset ID valido (solo numeri).",
       "whatsappNotFound": "Integrazione WhatsApp non trovata.",
       "testEventCodeRequired": "Salva un codice evento di test prima di inviare un evento di test.",
-      "noContactForTest": "Nessun contatto idoneo su questo canale. Un evento di test richiede un contatto reale a cui essere attribuito (per WhatsApp, uno proveniente da un annuncio click-to-WhatsApp).",
-      "invalidTestEventCode": "Il codice evento di test può contenere solo lettere, numeri, trattini o trattini bassi (max 64)."
+      "invalidTestEventCode": "Il codice evento di test può contenere solo lettere, numeri, trattini o trattini bassi (max 64).",
+      "invalidMessagingId": "L'ID di messaggistica può contenere solo lettere, cifre, trattini o trattini bassi (max 512).",
+      "capiDisconnected": "Meta CAPI è disconnesso per questo canale. Ricollegalo prima di inviare un evento di test."
     },
     "fields": {
       "eventType": {
@@ -6259,10 +6260,21 @@
       "saved": "Codice evento di test salvato.",
       "cleared": "Codice evento di test cancellato. Gli eventi sono di nuovo attivi.",
       "send": "Invia evento di test",
-      "sent": "Evento di test in coda. Comparirà in Test events su Events Manager entro un minuto.",
-      "sendHint": "Invia un esempio di Purchase (100 USD) al contatto più recente di questo canale.",
+      "sent": "Evento di test inviato. Comparirà in Test events di Events Manager entro un minuto.",
+      "sendHint": "Invia un Purchase di esempio (100 USD) a un ID di messaggistica che inserisci. Nessun contatto salvato viene usato.",
       "activeNotice": "La modalità test è attiva: gli eventi di questo canale non vengono conteggiati nei report finché il codice non viene cancellato.",
-      "openTestEvents": "Apri Test events"
+      "openTestEvents": "Apri Test events",
+      "dialogTitle": "Invia evento di test",
+      "dialogDescription": "Un Purchase di esempio (100 USD) viene inviato con il tuo codice evento di test. Incolla l'ID di messaggistica di esempio da Events Manager → Test events → Messaging → Graph API Explorer, così nulla viene attribuito a un contatto reale.",
+      "messagingIdLabel": {
+        "messenger": "ID contatto (page_scoped_user_id)",
+        "instagram": "ID contatto (ig_sid)",
+        "whatsapp": "ID contatto (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Incolla il valore di esempio da Meta",
+      "messagingIdHint": "Solo lettere, cifre, trattini e trattini bassi (max 512).",
+      "cancel": "Annulla",
+      "confirmSend": "Invia"
     }
   },
   "minigames": {
