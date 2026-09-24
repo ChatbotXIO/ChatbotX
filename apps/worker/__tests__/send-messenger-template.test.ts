@@ -8,6 +8,10 @@ import {
   vi,
 } from "vitest"
 
+const { mockMarkReadByOutbound } = vi.hoisted(() => ({
+  mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
+}))
+
 function makeEmptySelectChain(): Promise<never[]> & Record<string, unknown> {
   const chain = Promise.resolve<never[]>([]) as Promise<never[]> &
     Record<string, unknown>
@@ -90,6 +94,7 @@ vi.mock("@chatbotx.io/business", () => ({
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
   },
   conversationService: {
+    markReadByOutbound: mockMarkReadByOutbound,
     recordOutboundMessageActivity: vi
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
@@ -185,6 +190,7 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     expect(mockDbUpdate).toHaveBeenCalled()
     const setCall = mockDbUpdate.mock.results[0].value.set
     expect(setCall).toHaveBeenCalledWith({ sourceId: PROVIDER_ID })
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 
   test("emits message:sent with inboxId for MAC tracking", async () => {

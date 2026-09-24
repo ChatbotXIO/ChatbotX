@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Diese Einladung ist ungültig oder abgelaufen.",
     "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Bot-Nachrichten als gelesen markieren",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert",
+      "description": "Wenn aktiviert, markiert der Bot seine eigenen Nachrichten automatisch als gelesen"
+    }
+  },
   "inboxTeams": {
     "title": "Posteingangsteams"
   },

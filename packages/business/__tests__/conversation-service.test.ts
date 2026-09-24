@@ -2,21 +2,34 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   execute,
+  chatQueueAdd,
+  conversationFindFirst,
+  createMessageRepository,
+  findLastByConversation,
   invalidateCacheByTags,
   invalidateTracking,
+  returning,
+  selectWhere,
   set,
   transaction,
   update,
   updateTracking,
   where,
 } = vi.hoisted(() => {
-  const where = vi.fn().mockResolvedValue(undefined)
+  const returning = vi.fn().mockResolvedValue([])
+  const where = vi.fn(() => ({ returning }))
   const set = vi.fn(() => ({ where }))
   const update = vi.fn(() => ({ set }))
   return {
+    chatQueueAdd: vi.fn().mockResolvedValue(undefined),
+    conversationFindFirst: vi.fn(),
+    createMessageRepository: vi.fn(),
     execute: vi.fn().mockResolvedValue(undefined),
+    findLastByConversation: vi.fn(),
     invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
+    returning,
+    selectWhere: vi.fn(),
     set,
     transaction: vi
       .fn()
@@ -34,7 +47,38 @@ const {
 vi.mock("@chatbotx.io/database/client", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@chatbotx.io/database/client")>()
-  return { ...original, db: { transaction, update, execute } }
+  return {
+    ...original,
+    db: {
+      transaction,
+      update,
+      execute,
+      query: {
+        conversationModel: { findFirst: conversationFindFirst },
+      },
+      select: vi.fn(() => ({
+        from: (table: unknown) => ({
+          where: (condition: unknown) => {
+            selectWhere(condition)
+            return {
+              getSQL: () =>
+                original.sql`select 1 from ${table} where ${condition}`,
+            }
+          },
+        }),
+      })),
+    },
+  }
+})
+vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@chatbotx.io/database/repositories")>()
+  return { ...original, createMessageRepository }
+})
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  return { ...original, chatQueue: { add: chatQueueAdd } }
 })
 vi.mock("../src/contact-inbox/service", () => ({
   contactInboxService: {
@@ -115,7 +159,7 @@ function collectSqlValues(
       if (
         "value" in obj &&
         obj.value !== null &&
-        typeof obj.value !== "object"
+        (obj.value instanceof Date || typeof obj.value !== "object")
       ) {
         out.push(obj.value)
       }
@@ -360,5 +404,155 @@ describe("conversationService.markReadByContact", () => {
       "conversations:ws-1",
       "conversations:conv-1",
     ])
+  })
+})
+
+describe("conversationService.markReadByOutbound", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    returning.mockResolvedValue([])
+    createMessageRepository.mockResolvedValue({ findLastByConversation })
+  })
+
+  test("advances an older read timestamp, invalidates, and enqueues a realtime update", async () => {
+    const readAt = new Date("2026-09-23T12:00:00.000Z")
+    returning.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    await expect(
+      conversationService.markReadByOutbound({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        inboxId: "inbox-1",
+        readAt,
+      }),
+    ).resolves.toBe(true)
+
+    expect(set).toHaveBeenCalledWith({ agentLastReadAt: readAt })
+    expect(returning).toHaveBeenCalledWith({
+      id: expect.anything(),
+    })
+
+    const whereExpression = where.mock.calls[0][0]
+    const whereValues = collectSqlValues(whereExpression)
+    const inboxWhereValues = collectSqlValues(selectWhere.mock.calls[0][0])
+    const whereSqlText = collectSqlText(whereExpression).toLowerCase()
+    expect(whereValues).toContain("conv-1")
+    expect(whereValues).toContain("ws-1")
+    expect(whereValues).toContain(readAt)
+    expect(inboxWhereValues).toContain("inbox-1")
+    expect(inboxWhereValues).toContain("ws-1")
+    expect(inboxWhereValues).toContain(true)
+    expect(whereSqlText).toContain(" < ")
+    expect(whereSqlText).not.toContain(" >= ")
+    expect(whereSqlText).toContain("is null")
+    expect(whereSqlText).toContain("exists")
+
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "conversations",
+      "conversations:ws-1",
+      "conversations:conv-1",
+    ])
+    expect(chatQueueAdd).toHaveBeenCalledWith("broadcastEvent", {
+      type: "broadcastEvent",
+      data: {
+        workspaceId: "ws-1",
+        event: {
+          eventType: "conversationUpdated",
+          data: {
+            conversationIds: ["conv-1"],
+            changes: { agentLastReadAt: readAt.toISOString() },
+          },
+        },
+      },
+    })
+  })
+
+  test("leaves a newer read timestamp alone without invalidating or broadcasting", async () => {
+    const readAt = new Date("2026-09-23T12:00:00.000Z")
+
+    await expect(
+      conversationService.markReadByOutbound({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        inboxId: "inbox-1",
+        readAt,
+      }),
+    ).resolves.toBe(false)
+
+    const whereExpression = where.mock.calls[0][0]
+    expect(collectSqlValues(whereExpression)).toContain(readAt)
+    expect(collectSqlText(whereExpression)).toContain(" < ")
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a delivery confirmed after a manual mark-unread re-reads up to the reply", async () => {
+    const manualUnreadAt = new Date("2026-09-23T11:00:00.000Z")
+    const deliveredReplyAt = new Date("2026-09-23T12:00:00.000Z")
+    conversationFindFirst.mockResolvedValue({
+      id: "conv-1",
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      lastActivityAt: deliveredReplyAt,
+      createdAt: new Date("2026-09-22T12:00:00.000Z"),
+    })
+    findLastByConversation.mockResolvedValue([
+      { createdAt: deliveredReplyAt },
+      { createdAt: manualUnreadAt },
+    ])
+    returning.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    await conversationService.markUnread({
+      workspaceId: "ws-1",
+      id: "conv-1",
+    })
+    await conversationService.markReadByOutbound({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: deliveredReplyAt,
+    })
+
+    expect(set).toHaveBeenNthCalledWith(1, {
+      agentLastReadAt: manualUnreadAt,
+    })
+    expect(set).toHaveBeenNthCalledWith(2, {
+      agentLastReadAt: deliveredReplyAt,
+    })
+
+    const outboundWhereExpression = where.mock.calls[1][0]
+    expect(collectSqlText(outboundWhereExpression)).toContain(" < ")
+    expect(collectSqlValues(outboundWhereExpression)).toContain(
+      deliveredReplyAt,
+    )
+  })
+
+  test("a manual mark-unread issued after the delivery keeps its older value", async () => {
+    const manualUnreadAt = new Date("2026-09-23T11:00:00.000Z")
+    const deliveredReplyAt = new Date("2026-09-23T12:00:00.000Z")
+    returning.mockResolvedValueOnce([{ id: "conv-1" }])
+    conversationFindFirst.mockResolvedValue({
+      id: "conv-1",
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      lastActivityAt: deliveredReplyAt,
+      createdAt: new Date("2026-09-22T12:00:00.000Z"),
+    })
+    findLastByConversation.mockResolvedValue([{ createdAt: manualUnreadAt }])
+
+    await conversationService.markReadByOutbound({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: deliveredReplyAt,
+    })
+    await conversationService.markUnread({
+      workspaceId: "ws-1",
+      id: "conv-1",
+    })
+
+    expect(set).toHaveBeenLastCalledWith({
+      agentLastReadAt: manualUnreadAt,
+    })
   })
 })

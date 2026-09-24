@@ -3,6 +3,7 @@
 import {
   buildContext,
   type IntegrationContext,
+  inboxService,
   messengerIntegrationService,
 } from "@chatbotx.io/business"
 import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
@@ -60,11 +61,12 @@ export const updateMessenger = async (
   parsedInput: UpdateMessengerRequest,
 ) => {
   try {
+    const { markReadOnOutbound, ...integrationInput } = parsedInput
     let botContext: IntegrationContext<MessengerAuthValue> | undefined
     let fieldsToDelete: string[] = []
     let profileParams: MessengerProfileRequest = {}
 
-    await db.transaction(async (tx) => {
+    const inboxId = await db.transaction(async (tx) => {
       const integrationMessengerData = await findIntegrationMessenger({
         workspaceId: ctx.workspace.id,
         id: ctx.id,
@@ -72,7 +74,7 @@ export const updateMessenger = async (
       const syncedPersonas = await syncMessengerPersonas(
         ctx.workspace,
         integrationMessengerData,
-        parsedInput.personas,
+        integrationInput.personas,
       )
       const defaultPersona = syncedPersonas.find((persona) => persona.isDefault)
 
@@ -89,7 +91,7 @@ export const updateMessenger = async (
       await messengerIntegrationService.updateProfileFields(
         { id: ctx.id },
         {
-          ...parsedInput,
+          ...integrationInput,
           personas: syncedPersonas,
           personaId: defaultPersona?.facebookPersonaId ?? null,
         },
@@ -105,15 +107,25 @@ export const updateMessenger = async (
         },
       })
 
-      fieldsToDelete = getFieldsToDelete(parsedInput)
+      fieldsToDelete = getFieldsToDelete(integrationInput)
       profileParams = getMessengerProfileParams(
         {
           ...integrationMessengerData,
-          ...parsedInput,
+          ...integrationInput,
         },
         botContext.platform.appUrl,
       )
+
+      return integrationMessengerData.inboxId
     })
+
+    if (markReadOnOutbound !== undefined) {
+      await inboxService.updateMarkReadOnOutbound({
+        workspaceId: ctx.workspace.id,
+        id: inboxId,
+        enabled: markReadOnOutbound,
+      })
+    }
 
     if (!botContext) {
       return

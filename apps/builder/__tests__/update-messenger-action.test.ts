@@ -31,11 +31,15 @@ const mocks = vi.hoisted(() => {
     txUpdate,
     txWhere,
     updateProfileFields,
+    updateMarkReadOnOutbound: vi.fn(),
   }
 })
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: mocks.buildContext,
+  inboxService: {
+    updateMarkReadOnOutbound: mocks.updateMarkReadOnOutbound,
+  },
   messengerIntegrationService: {
     updateProfileFields: mocks.updateProfileFields,
   },
@@ -103,6 +107,7 @@ describe("updateMessenger", () => {
     vi.clearAllMocks()
     mocks.findIntegrationMessenger.mockResolvedValue({
       id: "messenger-1",
+      inboxId: "inbox-1",
       auth: { tokens: { accessToken: "token-1" } },
       personas: [],
       persistentMenus: [],
@@ -151,5 +156,44 @@ describe("updateMessenger", () => {
         data: expect.objectContaining({ get_started: expect.any(Object) }),
       }),
     )
+  })
+
+  test("updates the inbox flag after saving the Messenger integration", async () => {
+    await updateMessenger(
+      {
+        workspace: { id: "workspace-1" } as never,
+        id: "messenger-1",
+      },
+      {
+        welcomeFlowId: null,
+        persistentMenus: [],
+        personas: [],
+        conversationStarters: [],
+        markReadOnOutbound: true,
+      },
+    )
+
+    expect(mocks.updateMarkReadOnOutbound).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "inbox-1",
+      enabled: true,
+    })
+  })
+
+  test("does not update the inbox flag when the field is omitted", async () => {
+    await updateMessenger(
+      {
+        workspace: { id: "workspace-1" } as never,
+        id: "messenger-1",
+      },
+      {
+        welcomeFlowId: null,
+        persistentMenus: [],
+        personas: [],
+        conversationStarters: [],
+      },
+    )
+
+    expect(mocks.updateMarkReadOnOutbound).not.toHaveBeenCalled()
   })
 })

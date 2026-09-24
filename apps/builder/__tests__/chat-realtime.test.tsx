@@ -18,6 +18,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 const bubbleConversationToTopMock = vi.fn().mockResolvedValue(undefined)
 const openConversationMock = vi.fn().mockResolvedValue(true)
 const chatStoreState = {
+  applyAgentLastReadAt: vi.fn(),
   handleNewMessage: vi.fn(),
   markMessagesDeleted: vi.fn(),
   markMessageFailed: vi.fn(),
@@ -96,13 +97,14 @@ describe("ChatRealtime — chat event parity", () => {
       root.render(<ChatRealtime />)
     })
 
-  test("registers exactly the nine chat events, no more, no fewer", async () => {
+  test("registers exactly the ten chat events, no more, no fewer", async () => {
     await render()
     expect(Object.keys(capturedHandlers ?? {}).sort()).toEqual(
       [
         "contactBlocked",
         "contactUnblocked",
         "conversationAssigned",
+        "conversationUpdated",
         "messageContentUpdated",
         "messageCreated",
         "messageDeleted",
@@ -216,6 +218,45 @@ describe("ChatRealtime — chat event parity", () => {
         assignedInboxTeam: null,
       },
     )
+  })
+
+  test("conversationUpdated applies a valid agent read timestamp", async () => {
+    await render()
+    act(() =>
+      emit("conversationUpdated", {
+        conversationIds: ["conv-1", "conv-2"],
+        changes: { agentLastReadAt: "2026-09-23T10:00:00.000Z" },
+      }),
+    )
+
+    expect(chatStoreState.applyAgentLastReadAt).toHaveBeenCalledWith(
+      ["conv-1", "conv-2"],
+      new Date("2026-09-23T10:00:00.000Z"),
+    )
+  })
+
+  test("conversationUpdated ignores a null agent read timestamp", async () => {
+    await render()
+    act(() =>
+      emit("conversationUpdated", {
+        conversationIds: ["conv-1"],
+        changes: { agentLastReadAt: null },
+      }),
+    )
+
+    expect(chatStoreState.applyAgentLastReadAt).not.toHaveBeenCalled()
+  })
+
+  test("conversationUpdated ignores a malformed agent read timestamp", async () => {
+    await render()
+    act(() =>
+      emit("conversationUpdated", {
+        conversationIds: ["conv-1"],
+        changes: { agentLastReadAt: "not-a-date" },
+      }),
+    )
+
+    expect(chatStoreState.applyAgentLastReadAt).not.toHaveBeenCalled()
   })
 })
 

@@ -31,6 +31,7 @@ import {
 import {
   contactInboxRepository,
   createMessageRepository,
+  type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import {
   CONTACT_INBOX_SOURCE_ID_KEY,
@@ -39,6 +40,7 @@ import {
   contactModel,
 } from "@chatbotx.io/database/schema"
 import type {
+  AttachmentModel,
   ContactInboxModel,
   ContactModel,
   ConversationModel,
@@ -190,7 +192,7 @@ export const metaReferralToContactSource = (
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
 ): Promise<{
-  message: (MessageModel & { attachments: unknown[] }) | null
+  message: MessageWithAttachments | null
   conversation: ConversationModel
   postbackAction: string | null
   templateFlowToken: string | null
@@ -341,7 +343,7 @@ export const receiveMessage = async (
     }
   }
 
-  let createdMessage: (MessageModel & { attachments: unknown[] }) | null = null
+  let createdMessage: MessageWithAttachments | null = null
   if (incomingMessage) {
     const { message: newMessage, isNew: isNewMessage } =
       await saveAndBroadcastMessage({
@@ -492,7 +494,10 @@ export const receiveMessage = async (
       ) {
         try {
           if (
-            !(await isEchoOfOwnSend({ conversation, message: createdMessage }))
+            !(await isEchoOfOwnSend({
+              conversation,
+              message: createdMessage,
+            }))
           ) {
             await chatQueue.add(ChatJobAction.checkOutboundAutomatedResponse, {
               type: ChatJobAction.checkOutboundAutomatedResponse,
@@ -689,12 +694,21 @@ const SELF_SENT_ECHO_LOOKBACK = 10
  * Every ChatbotX send persists its Message row *before* hitting the channel,
  * so a recent outgoing row carrying the same text is our own send, not an
  * agent's.
+ *
+ * The side-effect skip uses `pendingOnly`: the candidate must still have no
+ * provider `sourceId`, because an own-send row with one would have deduped the
+ * echo before this helper runs, and its text must be non-null so unrelated
+ * media rows cannot match through `null === null`.
  */
-const isEchoOfOwnSend = async (props: {
-  conversation: ConversationModel
-  message: MessageModel
-}): Promise<boolean> => {
+const isEchoOfOwnSend = async (
+  props: {
+    conversation: ConversationModel
+    message: MessageWithAttachments
+  },
+  options: { pendingOnly?: boolean } = {},
+): Promise<boolean> => {
   const { conversation, message } = props
+  const { pendingOnly = false } = options
   const repository = await createMessageRepository()
   const recentOutgoing = await repository.findLastByConversation(
     conversation.id,
@@ -708,9 +722,41 @@ const isEchoOfOwnSend = async (props: {
 
   return recentOutgoing.some(
     (candidate) =>
-      candidate.id !== message.id && candidate.text === message.text,
+      candidate.id !== message.id &&
+      (pendingOnly
+        ? candidate.sourceId === null &&
+          isSameOwnSendContent(candidate, message)
+        : candidate.text === message.text),
   )
 }
+
+/**
+ * Content identity between a still-pending own send and an echo. Text sends
+ * match on non-null equal text; media sends carry no text, so they match on
+ * the attachment file-type signature instead (never on `null === null`, which
+ * would pair unrelated media rows).
+ */
+const isSameOwnSendContent = (
+  candidate: MessageWithAttachments,
+  message: MessageWithAttachments,
+): boolean => {
+  if (candidate.text !== null || message.text !== null) {
+    return candidate.text !== null && candidate.text === message.text
+  }
+  const candidateSignature = attachmentSignature(candidate.attachments)
+  return (
+    candidateSignature !== "" &&
+    candidateSignature === attachmentSignature(message.attachments)
+  )
+}
+
+const attachmentSignature = (
+  attachments: Pick<AttachmentModel, "fileType">[],
+): string =>
+  attachments
+    .map((attachment) => attachment.fileType)
+    .sort()
+    .join(",")
 
 // Creates or updates the message row (deduplicates webhook retries via sourceId),
 // updates contactInbox/conversation activity timestamps for new rows,
@@ -726,7 +772,7 @@ const saveAndBroadcastMessage = async (props: {
   createdAt?: Date
   storageUrl: string
 }): Promise<{
-  message: MessageModel & { attachments: unknown[] }
+  message: MessageWithAttachments
   isNew: boolean
 }> => {
   const {
@@ -780,7 +826,7 @@ const saveAndBroadcastMessage = async (props: {
       conversationId: conversation.id,
     })) ?? []
 
-  let messageWithAttachments: MessageModel & { attachments: unknown[] }
+  let messageWithAttachments: MessageWithAttachments
   let isNew: boolean
 
   if (attachmentInputs.length > 0) {
@@ -797,32 +843,88 @@ const saveAndBroadcastMessage = async (props: {
   }
 
   const newMessage = messageWithAttachments
+  let isOwnSendEcho = false
+  // Fail closed on read state: when the echo cannot be classified, activity
+  // is still recorded (pre-feature behaviour) but the conversation is not
+  // marked read, since the echo might be one of our own broadcast/template
+  // sends, which never count as a reply.
+  let canMarkReadByEcho = true
 
   if (isNew) {
-    await persistNewMessageSideEffects({
-      inbox,
-      contactInbox,
-      conversation,
-      incomingMessage,
-      message: newMessage,
-      storageUrl,
-      contactInboxTracking,
-      contactLocation,
-    })
+    const isOutgoingDirectMessageEcho =
+      !isInboundMessage && (incomingMessage.type ?? "message") === "message"
+
+    if (isOutgoingDirectMessageEcho) {
+      try {
+        isOwnSendEcho = await isEchoOfOwnSend(
+          {
+            conversation,
+            message: newMessage,
+          },
+          { pendingOnly: true },
+        )
+      } catch (err) {
+        canMarkReadByEcho = false
+        logger.warn(
+          {
+            err,
+            workspaceId: inbox.workspaceId,
+            conversationId: conversation.id,
+            messageId: newMessage.id,
+          },
+          "Unable to match outgoing echo to an own send",
+        )
+      }
+    }
+
+    // Duplicate rows of our own sends skip these effects and the realtime
+    // messageCreated broadcast because the send path already recorded activity
+    // and read state with its gating; replaying either would leave the live
+    // client newer and unread while the server conversation remains read.
+    if (!isOwnSendEcho) {
+      await persistNewMessageSideEffects({
+        inbox,
+        contactInbox,
+        conversation,
+        incomingMessage,
+        message: newMessage,
+        storageUrl,
+        contactInboxTracking,
+        contactLocation,
+      })
+
+      if (isOutgoingDirectMessageEcho && canMarkReadByEcho) {
+        const markReadProps = {
+          workspaceId: inbox.workspaceId,
+          conversationId: conversation.id,
+          inboxId: inbox.id,
+          readAt: newMessage.createdAt,
+        }
+        try {
+          await conversationService.markReadByOutbound(markReadProps)
+        } catch (err) {
+          logger.warn(
+            { err, ...markReadProps },
+            "markReadByOutbound after an outgoing echo failed",
+          )
+        }
+      }
+    }
   }
 
-  try {
-    broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: newMessage,
-    })
-  } catch (error) {
-    logger.warn(error, "Unable to emit realtime message")
+  if (!isOwnSendEcho) {
+    try {
+      broadcastToWorkspaceParty(inbox.workspaceId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: newMessage,
+      })
+    } catch (error) {
+      logger.warn(error, "Unable to emit realtime message")
+    }
   }
 
   // Push notification for a genuinely new inbound message only — this
-  // broadcast above is unconditional, so the guard here is built explicitly
-  // rather than copied from it.
+  // guard is independent from the realtime broadcast eligibility above.
   if (isNew && isInboundMessage) {
     try {
       await notificationQueue.add(

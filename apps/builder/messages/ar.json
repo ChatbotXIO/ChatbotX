@@ -4211,6 +4211,14 @@
     "invalidInvitation": "هذه الدعوة غير صالحة أو انتهت صلاحيتها.",
     "workspaceUnavailable": "مساحة العمل هذه لم تعد متاحة."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "وضع علامة مقروءة على رسائل البوت",
+      "enabled": "مفعّل",
+      "disabled": "معطّل",
+      "description": "عند التفعيل، يقوم البوت تلقائيًا بوضع علامة مقروءة على رسائله"
+    }
+  },
   "inboxTeams": {
     "title": "فرق صندوق الوارد"
   },

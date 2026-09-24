@@ -51,6 +51,7 @@ import {
   IntegrationException,
   type MessageButtonTemplate,
   type MessageCardTemplate,
+  type OutgoingSendResult,
   parseSdkError,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
@@ -68,6 +69,8 @@ import {
 } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
 import {
+  isDeliveredDirectMessage,
+  markConversationReadAfterDelivery,
   recordMessageSendError,
   sendFlowStepToChannel,
   sendMessageToChannel,
@@ -946,7 +949,11 @@ export async function sendFlowStep({
           },
         })
 
-    const promises: Promise<unknown>[] = [
+    const promises: [
+      Promise<unknown>,
+      Promise<OutgoingSendResult>,
+      ...Promise<unknown>[],
+    ] = [
       broadcastToWorkspaceParty(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
@@ -970,9 +977,20 @@ export async function sendFlowStep({
     }
 
     const [, channelResult] = await Promise.all(promises)
-    const providerMessageId = (
-      channelResult as { messageIds?: string[] } | undefined
-    )?.messageIds?.[0]
+    const providerMessageId = channelResult.messageIds[0]
+
+    if (
+      message &&
+      !isPublicCommentReply &&
+      isDeliveredDirectMessage({ message, metadata, result: channelResult })
+    ) {
+      await markConversationReadAfterDelivery({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        inboxId: targetContactInbox.inboxId,
+        readAt: message.createdAt,
+      })
+    }
 
     await emit(messageEventTypeSchema.enum["message:sent"], {
       ...eventLogData,

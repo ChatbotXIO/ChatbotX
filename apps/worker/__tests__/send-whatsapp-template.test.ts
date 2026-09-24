@@ -22,6 +22,7 @@ const {
   mockEnqueueIntegrationJob,
   mockFindSendableBroadcast,
   mockResetContactForResume,
+  mockMarkReadByOutbound,
 } = vi.hoisted(() => {
   const mockRepositoryCreate = vi.fn().mockResolvedValue({
     id: "msg-created",
@@ -75,6 +76,7 @@ const {
     mockEnqueueIntegrationJob: vi.fn().mockResolvedValue(undefined),
     mockFindSendableBroadcast: vi.fn().mockResolvedValue({ id: "broadcast-1" }),
     mockResetContactForResume: vi.fn().mockResolvedValue(undefined),
+    mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
   }
 })
 
@@ -106,6 +108,7 @@ vi.mock("@chatbotx.io/business", () => ({
     invalidateTracking: mockInvalidateTracking,
   },
   conversationService: {
+    markReadByOutbound: mockMarkReadByOutbound,
     recordOutboundMessageActivity: mockRecordOutboundMessageActivity,
   },
   broadcastService: {
@@ -278,6 +281,7 @@ describe("processWhatsappTemplate", () => {
         conversationId: "conv-1",
       }),
     )
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 
   test("does NOT call db.insert directly for message creation — goes through the message repository", async () => {

@@ -29,6 +29,7 @@ const {
   mockConversationInvalidate,
   mockFindAppointmentCalendarBySlug,
   mockSignAppointmentWebviewToken,
+  mockMarkReadByOutbound,
 } = vi.hoisted(() => {
   const mockFindConversation = vi.fn()
   const mockFindContactInbox = vi.fn()
@@ -134,6 +135,7 @@ const {
     mockConversationInvalidate: vi.fn().mockResolvedValue(undefined),
     mockFindAppointmentCalendarBySlug: vi.fn(),
     mockSignAppointmentWebviewToken: vi.fn().mockResolvedValue("webview-token"),
+    mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
   }
 })
 
@@ -143,6 +145,11 @@ const {
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: {},
+  eq: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -191,6 +198,7 @@ vi.mock("@chatbotx.io/business", () => ({
     invalidate: mockConversationInvalidate,
     recordOutboundFlowStep: mockRecordOutboundFlowStep,
     recordOutboundMessageActivity: mockRecordOutboundMessageActivity,
+    markReadByOutbound: mockMarkReadByOutbound,
   },
   resolveTenantSettings: mockresolveTenantSettings,
   resolveMediaUrl: mockResolveMediaUrl,
@@ -221,10 +229,14 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
-  parseSdkError: vi.fn().mockResolvedValue({ message: "sdk error" }),
-  IntegrationException: class IntegrationException extends Error {},
-}))
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/sdk")>()
+  return {
+    ...actual,
+    parseSdkError: vi.fn().mockResolvedValue({ message: "sdk error" }),
+    IntegrationException: class IntegrationException extends Error {},
+  }
+})
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
@@ -249,10 +261,22 @@ vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-vi.mock("../src/chat/handlers/send-message", () => ({
-  sendFlowStepToChannel: mockSendFlowStepToChannel,
-  sendMessageToChannel: mockSendMessageToChannel,
+vi.mock("../src/services/integrations", () => ({
+  allIntegrations: {},
+  resolveIntegrationContextFromContactInbox: vi.fn(),
 }))
+
+vi.mock("../src/chat/handlers/send-message", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../src/chat/handlers/send-message")>()
+  return {
+    ...actual,
+    sendFlowStepToChannel: mockSendFlowStepToChannel,
+    sendMessageToChannel: mockSendMessageToChannel,
+    recordMessageSendError: vi.fn().mockResolvedValue(undefined),
+    markConversationReadAfterDelivery: mockMarkReadByOutbound,
+  }
+})
 
 vi.mock("../src/chat/handlers/send-messenger-template", () => ({
   processMessengerTemplate: mockProcessMessengerTemplate,
@@ -387,6 +411,7 @@ describe("sendFlowStep", () => {
     mockEmit.mockResolvedValue(undefined)
     mockFindAppointmentCalendarBySlug.mockResolvedValue(null)
     mockSignAppointmentWebviewToken.mockResolvedValue("webview-token")
+    mockMarkReadByOutbound.mockResolvedValue(true)
   })
 
   test("returns early when conversation not found — repository not called", async () => {
@@ -1363,6 +1388,40 @@ describe("sendFlowStep", () => {
       workspaceId: "ws-1",
       ids: ["conv-1"],
     })
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: createdMessage.createdAt,
+    })
+  })
+
+  test("does not mark the conversation read when a flow send accepts no messages", async () => {
+    mockSendFlowStepToChannel.mockResolvedValueOnce({
+      messageIds: [],
+      sentCount: 0,
+    })
+
+    await sendFlowStep(baseParams)
+
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+  })
+
+  test("does not mark the conversation read for a broadcast flow send", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      metadata: { broadcastId: "broadcast-1" },
+    })
+
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+  })
+
+  test("does not mark the conversation read when no message row was created", async () => {
+    mockRepositoryCreate.mockResolvedValueOnce(undefined)
+
+    await sendFlowStep(baseParams)
+
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 
   test("delegates to processWhatsappTemplate for sendWaTemplateMessage step — does not call createMessageRepository directly", async () => {
@@ -1481,6 +1540,7 @@ describe("sendFlowStep", () => {
     )
     expect(mockSendMessageToChannel).toHaveBeenCalledOnce()
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 
   test("routes to sendMessageToChannel for a public commentAnchor even when the contactInbox is instagram", async () => {
@@ -1505,6 +1565,7 @@ describe("sendFlowStep", () => {
     )
     expect(mockSendMessageToChannel).toHaveBeenCalledOnce()
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 
   // A public anchor now survives every step of the run, so a media step reaches

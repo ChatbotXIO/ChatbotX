@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Tämä kutsu on virheellinen tai vanhentunut.",
     "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Merkitse botin viestit luetuiksi",
+      "enabled": "Käytössä",
+      "disabled": "Pois käytöstä",
+      "description": "Kun tämä on käytössä, botti merkitsee omat viestinsä automaattisesti luetuiksi"
+    }
+  },
   "inboxTeams": {
     "title": "Saapuneet-tiimit"
   },

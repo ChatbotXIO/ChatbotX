@@ -4211,6 +4211,14 @@
     "invalidInvitation": "This invitación es no válido o tiene caducado.",
     "workspaceUnavailable": "This espacio de trabajo es no longer disponible."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Marcar los mensajes del bot como leídos",
+      "enabled": "Activado",
+      "disabled": "Desactivado",
+      "description": "Si está activado, el bot marcará automáticamente sus propios mensajes como leídos"
+    }
+  },
   "inboxTeams": {
     "title": "Equipos de la bandeja de entrada"
   },

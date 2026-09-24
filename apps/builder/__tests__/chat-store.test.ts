@@ -197,7 +197,36 @@ describe("chat store conversation updates", () => {
     expect(store.getState().isBootstrappingUrlConversation).toBe(false)
   })
 
-  test("openConversation fetches, prepends, and selects a missing conversation", async () => {
+  test("openConversation replaces the previously pinned active row at the top", async () => {
+    const store = createChatStore()
+    const active = makeConversation(
+      "conv-active",
+      new Date("2026-01-01T02:00:00Z"),
+    )
+    const target = makeConversation(
+      "conv-target",
+      new Date("2026-01-01T01:00:00Z"),
+    )
+    const other = makeConversation(
+      "conv-other",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    store.setState({
+      activeConversationId: active.id,
+      conversations: [active, target, other] as never,
+    })
+
+    await store.getState().openConversation("ws-1", target.id)
+
+    expect(store.getState().activeConversationId).toBe(target.id)
+    expect(store.getState().conversations.map((item) => item.id)).toEqual([
+      target.id,
+      active.id,
+      other.id,
+    ])
+  })
+
+  test("openConversation fetches a missing conversation and replaces the active row at the top", async () => {
     const store = createChatStore()
     const existing = makeConversation(
       "conv-existing",
@@ -207,7 +236,10 @@ describe("chat store conversation updates", () => {
       "conv-target",
       new Date("2026-01-02T00:00:00Z"),
     )
-    store.setState({ conversations: [existing] as never })
+    store.setState({
+      activeConversationId: existing.id,
+      conversations: [existing] as never,
+    })
     mockFindConversationAuthenticatedAPI.mockResolvedValue({ data: target })
 
     await store.getState().openConversation("ws-1", "conv-target")
@@ -569,6 +601,89 @@ describe("chat store conversation updates", () => {
     ])
   })
 
+  test("places a background conversation with a new message below the pinned active row", async () => {
+    const store = createChatStore()
+    const active = makeConversation(
+      "conv-active",
+      new Date("2026-01-01T02:00:00Z"),
+    )
+    const background = makeConversation(
+      "conv-background",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const other = makeConversation(
+      "conv-other",
+      new Date("2026-01-01T01:00:00Z"),
+    )
+    store.setState({
+      activeConversationId: active.id,
+      conversations: [active, other, background] as never,
+    })
+
+    await store
+      .getState()
+      .updateConversationViaMessage(
+        makeMessage(background.id, new Date("2026-01-03T00:00:00Z")) as never,
+      )
+
+    expect(store.getState().conversations.map((item) => item.id)).toEqual([
+      active.id,
+      background.id,
+      other.id,
+    ])
+  })
+
+  test("keeps the active conversation at index zero when it receives a message", async () => {
+    const store = createChatStore()
+    const active = makeConversation(
+      "conv-active",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const other = makeConversation(
+      "conv-other",
+      new Date("2026-01-01T01:00:00Z"),
+    )
+    store.setState({
+      activeConversationId: active.id,
+      conversations: [active, other] as never,
+    })
+
+    await store
+      .getState()
+      .updateConversationViaMessage(
+        makeMessage(active.id, new Date("2026-01-03T00:00:00Z")) as never,
+      )
+
+    expect(store.getState().conversations.map((item) => item.id)).toEqual([
+      active.id,
+      other.id,
+    ])
+  })
+
+  test("moves a conversation with a new message to index zero when none is active", async () => {
+    const store = createChatStore()
+    const first = makeConversation(
+      "conv-first",
+      new Date("2026-01-01T01:00:00Z"),
+    )
+    const target = makeConversation(
+      "conv-target",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    store.setState({ conversations: [first, target] as never })
+
+    await store
+      .getState()
+      .updateConversationViaMessage(
+        makeMessage(target.id, new Date("2026-01-03T00:00:00Z")) as never,
+      )
+
+    expect(store.getState().conversations.map((item) => item.id)).toEqual([
+      target.id,
+      first.id,
+    ])
+  })
+
   test("updateConversation merges partial data without touching other conversations", () => {
     const store = createChatStore()
     const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
@@ -634,6 +749,34 @@ describe("chat store conversation updates", () => {
     expect(store.getState().conversations).toEqual([fetched, existing])
   })
 
+  test("bubbles a background conversation below the pinned active row", async () => {
+    const store = createChatStore()
+    const active = makeConversation(
+      "conv-active",
+      new Date("2026-01-01T02:00:00Z"),
+    )
+    const target = makeConversation(
+      "conv-target",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const other = makeConversation(
+      "conv-other",
+      new Date("2026-01-01T01:00:00Z"),
+    )
+    store.setState({
+      activeConversationId: active.id,
+      conversations: [active, other, target] as never,
+    })
+
+    await store.getState().bubbleConversationToTop("ws-1", target.id)
+
+    expect(store.getState().conversations.map((item) => item.id)).toEqual([
+      active.id,
+      target.id,
+      other.id,
+    ])
+  })
+
   test("bubbleConversationToTop is a silent no-op when the conversation cannot be fetched (e.g. filtered out)", async () => {
     const store = createChatStore()
     const existing = makeConversation(
@@ -655,6 +798,93 @@ describe("chat store conversation updates", () => {
       expect.objectContaining({ conversationId: "conv-missing" }),
       expect.any(String),
     )
+  })
+})
+
+describe("chat store realtime agent read timestamps", () => {
+  const currentReadAt = new Date("2026-09-23T10:00:00Z")
+
+  test("ignores an older timestamp", () => {
+    const store = createChatStore()
+    store.setState({
+      conversations: [
+        {
+          ...makeConversation("conv-1", currentReadAt),
+          agentLastReadAt: currentReadAt,
+        },
+      ] as never,
+    })
+
+    store
+      .getState()
+      .applyAgentLastReadAt(["conv-1"], new Date("2026-09-23T09:00:00Z"))
+
+    expect(store.getState().conversations[0]?.agentLastReadAt).toEqual(
+      currentReadAt,
+    )
+  })
+
+  test("applies a newer timestamp", () => {
+    const store = createChatStore()
+    const newerReadAt = new Date("2026-09-23T11:00:00Z")
+    store.setState({
+      conversations: [
+        {
+          ...makeConversation("conv-1", currentReadAt),
+          agentLastReadAt: currentReadAt,
+        },
+      ] as never,
+    })
+
+    store.getState().applyAgentLastReadAt(["conv-1"], newerReadAt)
+
+    expect(store.getState().conversations[0]?.agentLastReadAt).toEqual(
+      newerReadAt,
+    )
+  })
+
+  test("applies a timestamp to multiple known conversations and ignores unknown ids", () => {
+    const store = createChatStore()
+    const incomingReadAt = new Date("2026-09-23T11:00:00Z")
+    store.setState({
+      conversations: [
+        {
+          ...makeConversation("conv-1", currentReadAt),
+          agentLastReadAt: null,
+        },
+        {
+          ...makeConversation("conv-2", currentReadAt),
+          agentLastReadAt: currentReadAt,
+        },
+      ] as never,
+    })
+
+    store
+      .getState()
+      .applyAgentLastReadAt(
+        ["conv-1", "conv-missing", "conv-2"],
+        incomingReadAt,
+      )
+
+    expect(
+      store.getState().conversations.map((item) => item.agentLastReadAt),
+    ).toEqual([incomingReadAt, incomingReadAt])
+  })
+
+  test("ignores an invalid timestamp", () => {
+    const store = createChatStore()
+    store.setState({
+      conversations: [
+        {
+          ...makeConversation("conv-1", currentReadAt),
+          agentLastReadAt: null,
+        },
+      ] as never,
+    })
+
+    store.getState().applyAgentLastReadAt(["conv-1"], new Date("invalid"))
+
+    expect(store.getState().conversations[0]?.agentLastReadAt).toBeNull()
   })
 })
 
@@ -753,7 +983,7 @@ describe("chat store handleNewMessage read state", () => {
     })
   })
 
-  test("an incoming message on the open conversation marks it read without an admin reply", async () => {
+  test("an incoming message on the open conversation leaves it unread", async () => {
     const store = makeUnreadStore("conv-1")
 
     await store
@@ -762,9 +992,10 @@ describe("chat store handleNewMessage read state", () => {
         makeMessage("conv-1", new Date("2026-01-01T02:00:00Z")) as never,
       )
 
-    const { agentLastReadAt, adminRepliedAt } = readStateOf(store)
-    expect(agentLastReadAt).not.toEqual(AGENT_LAST_READ_AT)
-    expect(adminRepliedAt).toBeNull()
+    expect(readStateOf(store)).toEqual({
+      agentLastReadAt: AGENT_LAST_READ_AT,
+      adminRepliedAt: null,
+    })
   })
 
   test("an incoming message on a background conversation stays unread", async () => {

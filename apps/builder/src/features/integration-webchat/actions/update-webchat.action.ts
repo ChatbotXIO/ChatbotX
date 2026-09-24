@@ -1,6 +1,6 @@
 "use server"
 
-import { integrationWebchatService } from "@chatbotx.io/business"
+import { inboxService, integrationWebchatService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -17,7 +17,7 @@ export const updateWebchatAction = workspaceActionClient
       parsedInput,
       ctx,
     } = props
-    const { authorizedDomains, ...rest } = parsedInput
+    const { authorizedDomains, markReadOnOutbound, ...rest } = parsedInput
 
     // The edit page gates entry with requireWorkspacePermission(workspaceId,
     // "superAdmin"), but workspaceActionClient only verifies membership — a
@@ -55,4 +55,12 @@ export const updateWebchatAction = workspaceActionClient
           : undefined,
       },
     })
+
+    if (markReadOnOutbound !== undefined) {
+      await inboxService.updateMarkReadOnOutbound({
+        workspaceId,
+        id: integration.inboxId,
+        enabled: markReadOnOutbound,
+      })
+    }
   })

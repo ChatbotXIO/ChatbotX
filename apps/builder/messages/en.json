@@ -4411,6 +4411,14 @@
     "invalidInvitation": "This invitation is invalid or has expired.",
     "workspaceUnavailable": "This workspace is no longer available."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Mark bot messages as read",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "description": "When enabled, the bot automatically marks its own messages as read"
+    }
+  },
   "inboxTeams": {
     "title": "Inbox Teams"
   },

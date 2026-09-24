@@ -3,6 +3,7 @@ import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   applyContactFilter,
   buildSmartKeywordWhere,
+  conversationUnreadWhere,
   parseConversationAssigneeValues,
   pruneEmailPhoneFilterConditions,
   UNASSIGNED_ASSIGNEE_VALUE,
@@ -50,6 +51,13 @@ const addContactWhere = (where: QueryWhere, contactWhere: QueryWhere): void => {
   where.contact = {
     AND: [...getAndParts(currentContactWhere), ...getAndParts(contactWhere)],
   }
+}
+
+export const appendUnreadWhere = (where: QueryWhere): void => {
+  where.AND = [
+    ...(Array.isArray(where.AND) ? where.AND : []),
+    conversationUnreadWhere,
+  ]
 }
 
 export function buildConversationWhere(
@@ -144,13 +152,7 @@ export function buildConversationWhere(
     where.contactRepliedAt = { gt: sql`"adminRepliedAt"` }
   }
   if (tags.includes("unread")) {
-    where.lastActivityAt = {
-      ...(typeof where.lastActivityAt === "object" &&
-      where.lastActivityAt !== null
-        ? where.lastActivityAt
-        : {}),
-      gt: sql`"agentLastReadAt"`,
-    }
+    appendUnreadWhere(where)
   }
   if (tags.includes("followUp")) {
     where.followed = true

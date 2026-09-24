@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Lời mời này không hợp lệ hoặc đã hết hạn.",
     "workspaceUnavailable": "Không gian làm việc này không còn khả dụng."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Đánh dấu tin nhắn bot là đã đọc",
+      "enabled": "Đang bật",
+      "disabled": "Đang tắt",
+      "description": "Nếu bật thì bot sẽ tự động đánh dấu tin nhắn bot là đã đọc"
+    }
+  },
   "inboxTeams": {
     "title": "Nhóm hộp thư"
   },

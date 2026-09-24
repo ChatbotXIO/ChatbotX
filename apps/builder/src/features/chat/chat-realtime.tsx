@@ -37,6 +37,7 @@ export function ChatRealtime() {
     updateMessageContentAttributes,
     updateContact,
     updateConversations,
+    applyAgentLastReadAt,
     bubbleConversationToTop,
     openConversation,
   } = useChatStore((state) => state)
@@ -192,6 +193,19 @@ export function ChatRealtime() {
         assignedUser: null,
         assignedInboxTeam: null,
       })
+    },
+    conversationUpdated: (event) => {
+      const { conversationIds, changes } = event.data
+      // This channel only advances read state. Cross-tab mark-unread (null) is
+      // intentionally unsupported, matching the existing behavior.
+      if (!changes.agentLastReadAt) {
+        return
+      }
+      const agentLastReadAt = new Date(changes.agentLastReadAt)
+      if (Number.isNaN(agentLastReadAt.getTime())) {
+        return
+      }
+      applyAgentLastReadAt(conversationIds, agentLastReadAt)
     },
   }
 

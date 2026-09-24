@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
+import { InboxMarkReadOnOutboundSwitch } from "@/features/inboxes/components/inbox-mark-read-on-outbound-switch"
 import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { ZaloDisconnect } from "./components/zalo-disconnect"
@@ -57,11 +58,12 @@ export function ZaloManage({
         />
       </div>
 
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t("fields.name.label")}</TableHead>
+              <TableHead>{t("inboxes.markReadOnOutbound.label")}</TableHead>
               <TableHead className="w-[200px]" />
             </TableRow>
           </TableHeader>
@@ -78,6 +80,12 @@ export function ZaloManage({
                     {integrationZalo.name}
                   </div>
                 </TableCell>
+                <TableCell>
+                  <InboxMarkReadOnOutboundSwitch
+                    inboxId={integrationZalo.inboxId}
+                    workspaceId={workspaceId}
+                  />
+                </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
                   <ZaloReconnect integrationZalo={integrationZalo} />
                   <ZaloDisconnect integrationZalo={integrationZalo} />
@@ -86,7 +94,7 @@ export function ZaloManage({
             ))}
             {integrationZalos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2}>{t("messages.noData")}</TableCell>
+                <TableCell colSpan={3}>{t("messages.noData")}</TableCell>
               </TableRow>
             )}
           </TableBody>

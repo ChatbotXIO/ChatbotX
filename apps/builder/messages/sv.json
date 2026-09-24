@@ -3473,6 +3473,14 @@
   "editProfile": {
     "title": "Redigera profil"
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Markera botmeddelanden som lästa",
+      "enabled": "Aktiverad",
+      "disabled": "Inaktiverad",
+      "description": "När detta är aktiverat markerar boten automatiskt sina egna meddelanden som lästa"
+    }
+  },
   "inboxTeams": {
     "title": "Inkorgsteam"
   },

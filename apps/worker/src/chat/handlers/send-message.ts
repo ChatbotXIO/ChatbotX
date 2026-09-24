@@ -1,4 +1,8 @@
-import { contactInboxService, contactService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  contactService,
+  conversationService,
+} from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { resolveChannelConversationId } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
@@ -6,9 +10,11 @@ import { whatsappFlowModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
+  MessageModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import {
+  extractMetadata,
   type MetadataPayload,
   messageEventTypeSchema,
   stepTypes,
@@ -45,6 +51,43 @@ import {
   willSendRetry,
 } from "../utils/retry"
 import { reconcileChannelSendError } from "./channel-send-error-reconcilers"
+
+// Keep private comment replies aligned with sendMessageToChannel's isPrivateReply
+// routing below and packages/business/src/message/create-outgoing.ts's DM routing.
+const isDirectMessage = (
+  message: Pick<MessageModel, "type" | "contentAttributes">,
+): boolean =>
+  message.type !== "comment" ||
+  message.contentAttributes?.isPrivateReply === true
+
+export const isDeliveredDirectMessage = ({
+  message,
+  metadata,
+  result,
+}: {
+  message: Pick<MessageModel, "type" | "contentAttributes">
+  metadata: MetadataPayload | undefined
+  result: OutgoingSendResult
+}): boolean =>
+  result.sentCount > 0 &&
+  isDirectMessage(message) &&
+  extractMetadata("broadcastId", metadata) === undefined
+
+export const markConversationReadAfterDelivery = async (props: {
+  workspaceId: string
+  conversationId: string
+  inboxId: string
+  readAt: Date
+}): Promise<void> => {
+  try {
+    await conversationService.markReadByOutbound(props)
+  } catch (err) {
+    logger.warn(
+      { err, ...props },
+      "markReadByOutbound after a delivered send failed",
+    )
+  }
+}
 
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
@@ -218,6 +261,15 @@ export async function sendMessageToChannel(
       workspaceId: conversation.workspaceId,
       at: message.createdAt ?? new Date(),
     })
+
+    if (isDeliveredDirectMessage({ message, metadata, result })) {
+      await markConversationReadAfterDelivery({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        inboxId: contactInbox.inboxId,
+        readAt: new Date(message.createdAt),
+      })
+    }
 
     // The other half of the cross-queue anchor: the integration worker recorded
     // the attempt optimistically and only this handler knows the Graph API
