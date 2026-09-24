@@ -235,7 +235,7 @@ describe("processMessengerTemplate — sourceId persistence", () => {
   })
 })
 
-describe("processMessengerTemplate — ads conversion template-sent enqueue (Amendment A1)", () => {
+describe("processMessengerTemplate — ads conversion template-sent enqueue (disabled)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockValidate.mockResolvedValue(VALIDATED)
@@ -249,31 +249,9 @@ describe("processMessengerTemplate — ads conversion template-sent enqueue (Ame
     })
   })
 
-  test("enqueues an evaluateTemplateSent job for the messenger channel after a successful send", async () => {
-    await processMessengerTemplate({
-      conversation: CONVERSATION as never,
-      contactInbox: CONTACT_INBOX as never,
-      template: TEMPLATE,
-    })
-
-    expect(mockEnqueueIntegrationJob).toHaveBeenCalledWith(
-      {
-        type: "evaluateTemplateSent",
-        data: {
-          workspaceId: "ws-1",
-          channel: "messenger",
-          integrationId: "intg-1",
-          contactInboxId: "ci-1",
-          templateId: "tmpl-1",
-        },
-      },
-      { jobId: "ads-conversion-evaluate-template-msg-1" },
-    )
-  })
-
-  test("never fails the send when the enqueue rejects", async () => {
-    mockEnqueueIntegrationJob.mockRejectedValueOnce(new Error("redis down"))
-
+  // The ads-conversion rule engine is hidden and unused; the follow-up
+  // evaluation job is disabled (commented out) in the handler.
+  test("does not enqueue an evaluateTemplateSent job after a successful send", async () => {
     await expect(
       processMessengerTemplate({
         conversation: CONVERSATION as never,
@@ -281,6 +259,11 @@ describe("processMessengerTemplate — ads conversion template-sent enqueue (Ame
         template: TEMPLATE,
       }),
     ).resolves.toMatchObject({ messageId: "msg-1" })
+
+    const enqueuedTypes = mockEnqueueIntegrationJob.mock.calls.map(
+      ([job]: [{ type: string }]) => job.type,
+    )
+    expect(enqueuedTypes).not.toContain("evaluateTemplateSent")
   })
 })
 
