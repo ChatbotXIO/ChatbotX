@@ -57,6 +57,11 @@ export const contactsOnBroadcastsModel = pgTable(
       name: "ContactsOnBroadcast_pkey",
     }),
     index("idx_contact_on_broadcast_contact_id").on(table.contactId),
+    // Covers the `ContactInbox -> ContactOnBroadcast` ON DELETE CASCADE check.
+    // Without it every ContactInbox delete (workspace purge, contact delete)
+    // seq-scans all 64 partitions. Built per partition + ATTACH, see
+    // drizzle/*_add_contact_inbox_fk_indexes/migration.sql.
+    index("ContactOnBroadcast_contactInboxId_idx").on(table.contactInboxId),
     index("idx_contact_on_broadcast_is_read").on(table.isRead),
     // Speeds up the per-batch unsent-recipient scan
     // (broadcastId + sent=false + failedAt IS NULL) so it doesn't walk an
