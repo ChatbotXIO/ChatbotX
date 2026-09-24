@@ -31,6 +31,7 @@ import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { hasExhaustedAttempts } from "../lib/job-attempts"
+import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -154,380 +155,381 @@ async function startIntegrationWorker() {
     process.exit(1)
   }
 
-  const worker = new Worker(
-    queueNames.enum.integration,
-    async (job: Job<IntegrationJobData>) => {
-      const workspaceId = await resolveWorkspaceId(job.data.data)
-      if (await isBlockedWorkspace(workspaceId)) {
-        return
-      }
+  const processIntegrationJob = async (job: Job<IntegrationJobData>) => {
+    const workspaceId = await resolveWorkspaceId(job.data.data)
+    if (await isBlockedWorkspace(workspaceId)) {
+      return
+    }
 
-      return await runIntegrationJobWithWebhookContext(job.data, () =>
-        runJobWithAuditContext(
-          { workspaceId, source: `integration:${job.data.type}` },
-          async () => {
-            switch (job.data.type) {
-              case IntegrationJobAction.incomingMessage: {
-                const {
-                  message,
-                  postbackAction,
-                  quickReplyAction,
-                  conversation,
-                  channelType,
-                } = await receiveMessage(job.data.data)
+    return await runIntegrationJobWithWebhookContext(job.data, () =>
+      runJobWithAuditContext(
+        { workspaceId, source: `integration:${job.data.type}` },
+        async () => {
+          switch (job.data.type) {
+            case IntegrationJobAction.incomingMessage: {
+              const {
+                message,
+                postbackAction,
+                quickReplyAction,
+                conversation,
+                channelType,
+              } = await receiveMessage(job.data.data)
 
-                if (!message) {
-                  return
-                }
-
-                const isNotPostbackOrQuickReply = !(
-                  postbackAction || quickReplyAction
-                )
-
-                // An image/file message has contentType "text" — only its
-                // `attachments` array distinguishes it; a shared location has
-                // contentType "location".
-                const isFromContact =
-                  isNotPostbackOrQuickReply && message.senderType === "contact"
-                const hasAttachment = message.attachments.length > 0
-                const isLocation = message.contentType === "location"
-
-                const storyReply = getStoryReply(message.contentAttributes)
-
-                const callPermissionReply = getWhatsappCallPermissionReply(
-                  message.contentAttributes,
-                )
-                if (isFromContact && callPermissionReply) {
-                  await whatsappCallPermissionService.recordReply({
-                    workspaceId: conversation.workspaceId,
-                    contactInboxId: message.contactInboxId,
-                    response: callPermissionReply.response,
-                    isPermanent: callPermissionReply.isPermanent === true,
-                    expirationTimestamp:
-                      callPermissionReply.expirationTimestamp,
-                    respondedAt: message.createdAt,
-                  })
-                  return
-                }
-
-                if (isFromContact && storyReply) {
-                  await aiAgentQueue.add(
-                    AIJobAction.processStoryReplyAutomation,
-                    {
-                      type: AIJobAction.processStoryReplyAutomation,
-                      data: {
-                        workspaceId: conversation.workspaceId,
-                        conversationId: conversation.id,
-                        contactInboxId: message.contactInboxId,
-                        messageId: message.id,
-                        storyId: storyReply.id,
-                        storyUrl: storyReply.url,
-                        message: message.text ?? undefined,
-                        channelType,
-                      },
-                    },
-                    { jobId: `story-reply-auto-${message.id}` },
-                  )
-                  return
-                }
-
-                const routing = await resolveIncomingTextRouting({
-                  conversation,
-                  hasActionableInput: Boolean(
-                    isFromContact &&
-                      (message.text || hasAttachment || isLocation),
-                  ),
-                  hasText: Boolean(isFromContact && message.text),
-                  isConversationActive: (conversation) =>
-                    conversationService.ensureActive(conversation),
-                })
-
-                if (routing.type === "challenge") {
-                  await integrationQueue.add(
-                    IntegrationJobAction.runChallenge,
-                    {
-                      type: IntegrationJobAction.runChallenge,
-                      data: {
-                        conversationId: routing.conversation.id,
-                        contactInboxId: message.contactInboxId,
-                        messageId: message.id,
-                        messageCreatedAt: message.createdAt,
-                        challenge: routing.challenge,
-                      },
-                    },
-                    {
-                      jobId: `questionnaire-challenge-${routing.conversation.id}-${message.id}`,
-                    },
-                  )
-                } else if (routing.type === "automatedResponse") {
-                  await automatedResponseService.enqueue({
-                    conversationId: routing.conversation.id,
-                    contactInboxId: message.contactInboxId,
-                    messageId: message.id,
-                    messageText: message.text ?? "",
-                    workspaceId: routing.conversation.workspaceId,
-                  })
-                } else if (isNotPostbackOrQuickReply) {
-                  // Track no response for messages without content or not from contact
-                  // (postback/quickReply are tracked in their own handlers)
-                  await emit("analytics:dashboard", {
-                    eventType: "message:bot_received",
-                    workspaceId: message.workspaceId,
-                    conversationId: message.conversationId,
-                    messageId: message.id,
-                    occurredAt: new Date(),
-                    hasResponse: false,
-                    responseType: "none",
-                    routeType: "fallback",
-                    result: "fallback",
-                    aiProvider: "none",
-                    metadata: {
-                      latency: 0,
-                      fallbackReason: message.text
-                        ? "not_from_contact"
-                        : "no_content",
-                    },
-                  })
-                }
+              if (!message) {
                 return
               }
-              case IntegrationJobAction.incomingComment: {
-                await receiveComment(job.data.data)
-                return
-              }
-              case IntegrationJobAction.updateIncomingComment: {
-                await updateIncomingComment(job.data.data)
-                return
-              }
-              case IntegrationJobAction.deleteIncomingComment: {
-                await deleteIncomingComment(job.data.data)
-                return
-              }
-              case IntegrationJobAction.deleteIncomingMessage: {
-                await deleteIncomingMessage(job.data.data)
-                return
-              }
-              case IntegrationJobAction.messageReaction: {
-                await processMessageReaction(job.data.data)
-                return
-              }
-              case IntegrationJobAction.sendFlow: {
-                await runFlowNode(job.data.data, {
-                  flowExecutionKey:
-                    job.data.data.flowExecutionKey ?? getFlowExecutionKey(job),
+
+              const isNotPostbackOrQuickReply = !(
+                postbackAction || quickReplyAction
+              )
+
+              // An image/file message has contentType "text" — only its
+              // `attachments` array distinguishes it; a shared location has
+              // contentType "location".
+              const isFromContact =
+                isNotPostbackOrQuickReply && message.senderType === "contact"
+              const hasAttachment = message.attachments.length > 0
+              const isLocation = message.contentType === "location"
+
+              const storyReply = getStoryReply(message.contentAttributes)
+
+              const callPermissionReply = getWhatsappCallPermissionReply(
+                message.contentAttributes,
+              )
+              if (isFromContact && callPermissionReply) {
+                await whatsappCallPermissionService.recordReply({
+                  workspaceId: conversation.workspaceId,
+                  contactInboxId: message.contactInboxId,
+                  response: callPermissionReply.response,
+                  isPermanent: callPermissionReply.isPermanent === true,
+                  expirationTimestamp: callPermissionReply.expirationTimestamp,
+                  respondedAt: message.createdAt,
                 })
                 return
               }
-              case IntegrationJobAction.resumeHeavyStep: {
-                await resumeHeavyStep(job.data.data)
-                return
-              }
-              case IntegrationJobAction.sendSequenceFlow: {
-                await handleSendSequenceFlow(job.data.data, job)
-                return
-              }
-              case IntegrationJobAction.runFlowPostback: {
-                await runFlowPostback(job.data.data, {
-                  flowExecutionKey: getFlowExecutionKey(job),
-                })
-                return
-              }
-              case IntegrationJobAction.runFlowQuickReply: {
-                await runFlowQuickReply(job.data.data, {
-                  flowExecutionKey: getFlowExecutionKey(job),
-                })
-                return
-              }
-              case IntegrationJobAction.processAutomatedResonse: {
-                await aiAgentQueue.add(
-                  AIJobAction.processAutomatedResponse,
-                  {
-                    type: AIJobAction.processAutomatedResponse,
-                    data: {
-                      conversationId: normalizeToId(
-                        job.data.data.conversationId,
-                      ),
-                      contactInboxId: normalizeToId(
-                        job.data.data.contactInboxId,
-                      ),
-                      messageId: job.data.data.messageId,
-                    },
-                  },
-                  {
-                    jobId: `automated-response-${job.data.data.messageId}`,
-                  },
-                )
-                return
-              }
-              case IntegrationJobAction.agentMarkAsRead: {
-                await agentMarkAsRead(job.data.data)
-                return
-              }
-              case IntegrationJobAction.contactMarkAsRead: {
-                await contactMarkAsRead(job.data.data)
-                return
-              }
-              case IntegrationJobAction.runRef: {
-                await runRef(job.data.data)
-                return
-              }
-              case IntegrationJobAction.runChallenge: {
-                await runChallenge(job.data.data)
-                return
-              }
-              case IntegrationJobAction.resumeWait: {
-                await runWaitResume(job.data.data, job)
-                return
-              }
-              case IntegrationJobAction.resumeFollowUp: {
-                await runFollowUpResume(job.data.data)
-                return
-              }
-              case IntegrationJobAction.messageStatus: {
-                await handleMessageStatus(job.data.data, job)
-                return
-              }
-              case IntegrationJobAction.coexistWhatsappBuffer: {
-                await coexistWhatsappBuffer(job.data.data)
-                return
-              }
-              case IntegrationJobAction.channelLabelChange: {
-                await handleChannelLabelWebhook(job.data.data)
-                return
-              }
-              case IntegrationJobAction.coexistWhatsappFlush: {
-                await coexistWhatsappFlush(job.data.data)
-                return
-              }
-              case IntegrationJobAction.coexistMessengerSync: {
-                await coexistMessengerSync(job.data.data)
-                return
-              }
-              case IntegrationJobAction.coexistInstagramSync: {
-                await coexistInstagramSync(job.data.data)
-                return
-              }
-              case IntegrationJobAction.coexistAttachmentDownload: {
-                await coexistAttachmentDownload(job, job.data.data)
-                return
-              }
-              case IntegrationJobAction.adsAutomaticEvent: {
-                await handleAdsAutomaticEvent(job.data.data)
-                return
-              }
-              case IntegrationJobAction.whatsappCallEvent: {
-                await handleWhatsappCallEvent(job.data.data)
-                return
-              }
-              case IntegrationJobAction.whatsappCallRecordingReady: {
-                await handleWhatsappCallRecordingReady(job.data.data)
-                return
-              }
-              case IntegrationJobAction.whatsappCallNativeRecordingFetch: {
-                await handleWhatsappCallNativeRecordingFetch(job.data.data)
-                return
-              }
-              case IntegrationJobAction.whatsappCallNativeTranscriptFetch: {
-                await handleWhatsappCallNativeTranscriptFetch(job.data.data)
-                return
-              }
-              case IntegrationJobAction.evaluateTemplateSent:
-              case IntegrationJobAction.evaluateConversionTrigger:
-              case IntegrationJobAction.sendConversionEvent:
-              case IntegrationJobAction.syncRetargetAudience: {
-                await dispatchAdsConversionJob(job.data)
-                return
-              }
-              case IntegrationJobAction.sendMetaCapiEvent: {
-                await handleSendMetaCapiEvent(job.data.data)
-                return
-              }
-              case IntegrationJobAction.updateContactAvatar: {
-                await updateContactAvatar(job.data.data)
-                return
-              }
-              case IntegrationJobAction.contactScan: {
-                await runContactScan(job.data.data)
-                return
-              }
-              case IntegrationJobAction.processCommentAutomation: {
-                await processCommentAutomation(job.data.data)
-                return
-              }
-              case IntegrationJobAction.tiktokHighIntentComment: {
-                await receiveTiktokHighIntentComment(job.data.data)
-                return
-              }
-              case IntegrationJobAction.deferredCommentPrivateReply: {
-                await runDeferredCommentPrivateReply(job.data.data)
-                return
-              }
-              case IntegrationJobAction.commentAIReply: {
-                const payloadHash = hashLegacyPayload(job.data.data)
-                const automationId =
-                  "automationId" in job.data.data &&
-                  typeof job.data.data.automationId === "string" &&
-                  job.data.data.automationId.length > 0
-                    ? job.data.data.automationId
-                    : undefined
 
-                await aiAgentQueue.add(
-                  AIJobAction.commentAIReply,
-                  {
-                    type: AIJobAction.commentAIReply,
-                    data: {
-                      ...job.data.data,
-                      automationId: automationId ?? `legacy-${payloadHash}`,
-                    },
-                  },
-                  {
-                    jobId: automationId
-                      ? `comment-ai-reply-${automationId}-${job.data.data.commentId}-${job.data.data.replyChannel}`
-                      : `comment-ai-reply-legacy-${job.data.data.commentId}-${job.data.data.replyChannel}-${payloadHash}`,
-                  },
-                )
-                return
-              }
-              case IntegrationJobAction.processStoryReplyAutomation: {
+              if (isFromContact && storyReply) {
                 await aiAgentQueue.add(
                   AIJobAction.processStoryReplyAutomation,
                   {
                     type: AIJobAction.processStoryReplyAutomation,
-                    data: job.data.data,
+                    data: {
+                      workspaceId: conversation.workspaceId,
+                      conversationId: conversation.id,
+                      contactInboxId: message.contactInboxId,
+                      messageId: message.id,
+                      storyId: storyReply.id,
+                      storyUrl: storyReply.url,
+                      message: message.text ?? undefined,
+                      channelType,
+                    },
+                  },
+                  { jobId: `story-reply-auto-${message.id}` },
+                )
+                return
+              }
+
+              const routing = await resolveIncomingTextRouting({
+                conversation,
+                hasActionableInput: Boolean(
+                  isFromContact &&
+                    (message.text || hasAttachment || isLocation),
+                ),
+                hasText: Boolean(isFromContact && message.text),
+                isConversationActive: (conversation) =>
+                  conversationService.ensureActive(conversation),
+              })
+
+              if (routing.type === "challenge") {
+                await integrationQueue.add(
+                  IntegrationJobAction.runChallenge,
+                  {
+                    type: IntegrationJobAction.runChallenge,
+                    data: {
+                      conversationId: routing.conversation.id,
+                      contactInboxId: message.contactInboxId,
+                      messageId: message.id,
+                      messageCreatedAt: message.createdAt,
+                      challenge: routing.challenge,
+                    },
                   },
                   {
-                    jobId: `story-reply-auto-${job.data.data.messageId}`,
+                    jobId: `questionnaire-challenge-${routing.conversation.id}-${message.id}`,
                   },
                 )
-                return
+              } else if (routing.type === "automatedResponse") {
+                await automatedResponseService.enqueue({
+                  conversationId: routing.conversation.id,
+                  contactInboxId: message.contactInboxId,
+                  messageId: message.id,
+                  messageText: message.text ?? "",
+                  workspaceId: routing.conversation.workspaceId,
+                })
+              } else if (isNotPostbackOrQuickReply) {
+                // Track no response for messages without content or not from contact
+                // (postback/quickReply are tracked in their own handlers)
+                await emit("analytics:dashboard", {
+                  eventType: "message:bot_received",
+                  workspaceId: message.workspaceId,
+                  conversationId: message.conversationId,
+                  messageId: message.id,
+                  occurredAt: new Date(),
+                  hasResponse: false,
+                  responseType: "none",
+                  routeType: "fallback",
+                  result: "fallback",
+                  aiProvider: "none",
+                  metadata: {
+                    latency: 0,
+                    fallbackReason: message.text
+                      ? "not_from_contact"
+                      : "no_content",
+                  },
+                })
               }
-              case IntegrationJobAction.captureTemplateFlowResponse: {
-                await captureTemplateFlowResponse(job.data.data)
-                return
-              }
-              case IntegrationJobAction.processLeadgen: {
-                await processLeadgen(job.data.data, job)
-                return
-              }
-              case IntegrationJobAction.createMessage: {
-                // No-op — action type exists in the union but has no enqueuer yet.
-                return
-              }
-              default: {
-                // Exhaustiveness guard — adding a new IntegrationJobData variant
-                // without handling it here becomes a compile error.
-                const _exhaustive: never = job.data
-                logger.warn(
-                  { data: _exhaustive },
-                  "Unhandled integration job type",
-                )
-                return
-              }
+              return
             }
-          },
-        ),
-      )
-    },
+            case IntegrationJobAction.incomingComment: {
+              await receiveComment(job.data.data)
+              return
+            }
+            case IntegrationJobAction.updateIncomingComment: {
+              await updateIncomingComment(job.data.data)
+              return
+            }
+            case IntegrationJobAction.deleteIncomingComment: {
+              await deleteIncomingComment(job.data.data)
+              return
+            }
+            case IntegrationJobAction.deleteIncomingMessage: {
+              await deleteIncomingMessage(job.data.data)
+              return
+            }
+            case IntegrationJobAction.messageReaction: {
+              await processMessageReaction(job.data.data)
+              return
+            }
+            case IntegrationJobAction.sendFlow: {
+              await runFlowNode(job.data.data, {
+                flowExecutionKey:
+                  job.data.data.flowExecutionKey ?? getFlowExecutionKey(job),
+              })
+              return
+            }
+            case IntegrationJobAction.resumeHeavyStep: {
+              await resumeHeavyStep(job.data.data)
+              return
+            }
+            case IntegrationJobAction.sendSequenceFlow: {
+              await handleSendSequenceFlow(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.runFlowPostback: {
+              await runFlowPostback(job.data.data, {
+                flowExecutionKey: getFlowExecutionKey(job),
+              })
+              return
+            }
+            case IntegrationJobAction.runFlowQuickReply: {
+              await runFlowQuickReply(job.data.data, {
+                flowExecutionKey: getFlowExecutionKey(job),
+              })
+              return
+            }
+            case IntegrationJobAction.processAutomatedResonse: {
+              await aiAgentQueue.add(
+                AIJobAction.processAutomatedResponse,
+                {
+                  type: AIJobAction.processAutomatedResponse,
+                  data: {
+                    conversationId: normalizeToId(job.data.data.conversationId),
+                    contactInboxId: normalizeToId(job.data.data.contactInboxId),
+                    messageId: job.data.data.messageId,
+                  },
+                },
+                {
+                  jobId: `automated-response-${job.data.data.messageId}`,
+                },
+              )
+              return
+            }
+            case IntegrationJobAction.agentMarkAsRead: {
+              await agentMarkAsRead(job.data.data)
+              return
+            }
+            case IntegrationJobAction.contactMarkAsRead: {
+              await contactMarkAsRead(job.data.data)
+              return
+            }
+            case IntegrationJobAction.runRef: {
+              await runRef(job.data.data)
+              return
+            }
+            case IntegrationJobAction.runChallenge: {
+              await runChallenge(job.data.data)
+              return
+            }
+            case IntegrationJobAction.resumeWait: {
+              await runWaitResume(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.resumeFollowUp: {
+              await runFollowUpResume(job.data.data)
+              return
+            }
+            case IntegrationJobAction.messageStatus: {
+              await handleMessageStatus(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.coexistWhatsappBuffer: {
+              await coexistWhatsappBuffer(job.data.data)
+              return
+            }
+            case IntegrationJobAction.channelLabelChange: {
+              await handleChannelLabelWebhook(job.data.data)
+              return
+            }
+            case IntegrationJobAction.coexistWhatsappFlush: {
+              await coexistWhatsappFlush(job.data.data)
+              return
+            }
+            case IntegrationJobAction.coexistMessengerSync: {
+              await coexistMessengerSync(job.data.data)
+              return
+            }
+            case IntegrationJobAction.coexistInstagramSync: {
+              await coexistInstagramSync(job.data.data)
+              return
+            }
+            case IntegrationJobAction.coexistAttachmentDownload: {
+              await coexistAttachmentDownload(job, job.data.data)
+              return
+            }
+            case IntegrationJobAction.adsAutomaticEvent: {
+              await handleAdsAutomaticEvent(job.data.data)
+              return
+            }
+            case IntegrationJobAction.whatsappCallEvent: {
+              await handleWhatsappCallEvent(job.data.data)
+              return
+            }
+            case IntegrationJobAction.whatsappCallRecordingReady: {
+              await handleWhatsappCallRecordingReady(job.data.data)
+              return
+            }
+            case IntegrationJobAction.whatsappCallNativeRecordingFetch: {
+              await handleWhatsappCallNativeRecordingFetch(job.data.data)
+              return
+            }
+            case IntegrationJobAction.whatsappCallNativeTranscriptFetch: {
+              await handleWhatsappCallNativeTranscriptFetch(job.data.data)
+              return
+            }
+            case IntegrationJobAction.evaluateTemplateSent:
+            case IntegrationJobAction.evaluateConversionTrigger:
+            case IntegrationJobAction.sendConversionEvent:
+            case IntegrationJobAction.syncRetargetAudience: {
+              await dispatchAdsConversionJob(job.data)
+              return
+            }
+            case IntegrationJobAction.sendMetaCapiEvent: {
+              await handleSendMetaCapiEvent(job.data.data)
+              return
+            }
+            case IntegrationJobAction.updateContactAvatar: {
+              await updateContactAvatar(job.data.data)
+              return
+            }
+            case IntegrationJobAction.contactScan: {
+              await runContactScan(job.data.data)
+              return
+            }
+            case IntegrationJobAction.processCommentAutomation: {
+              await processCommentAutomation(job.data.data)
+              return
+            }
+            case IntegrationJobAction.tiktokHighIntentComment: {
+              await receiveTiktokHighIntentComment(job.data.data)
+              return
+            }
+            case IntegrationJobAction.deferredCommentPrivateReply: {
+              await runDeferredCommentPrivateReply(job.data.data)
+              return
+            }
+            case IntegrationJobAction.commentAIReply: {
+              const payloadHash = hashLegacyPayload(job.data.data)
+              const automationId =
+                "automationId" in job.data.data &&
+                typeof job.data.data.automationId === "string" &&
+                job.data.data.automationId.length > 0
+                  ? job.data.data.automationId
+                  : undefined
+
+              await aiAgentQueue.add(
+                AIJobAction.commentAIReply,
+                {
+                  type: AIJobAction.commentAIReply,
+                  data: {
+                    ...job.data.data,
+                    automationId: automationId ?? `legacy-${payloadHash}`,
+                  },
+                },
+                {
+                  jobId: automationId
+                    ? `comment-ai-reply-${automationId}-${job.data.data.commentId}-${job.data.data.replyChannel}`
+                    : `comment-ai-reply-legacy-${job.data.data.commentId}-${job.data.data.replyChannel}-${payloadHash}`,
+                },
+              )
+              return
+            }
+            case IntegrationJobAction.processStoryReplyAutomation: {
+              await aiAgentQueue.add(
+                AIJobAction.processStoryReplyAutomation,
+                {
+                  type: AIJobAction.processStoryReplyAutomation,
+                  data: job.data.data,
+                },
+                {
+                  jobId: `story-reply-auto-${job.data.data.messageId}`,
+                },
+              )
+              return
+            }
+            case IntegrationJobAction.captureTemplateFlowResponse: {
+              await captureTemplateFlowResponse(job.data.data)
+              return
+            }
+            case IntegrationJobAction.processLeadgen: {
+              await processLeadgen(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.createMessage: {
+              // No-op — action type exists in the union but has no enqueuer yet.
+              return
+            }
+            default: {
+              // Exhaustiveness guard — adding a new IntegrationJobData variant
+              // without handling it here becomes a compile error.
+              const _exhaustive: never = job.data
+              logger.warn(
+                { data: _exhaustive },
+                "Unhandled integration job type",
+              )
+              return
+            }
+          }
+        },
+      ),
+    )
+  }
+
+  // A job that lost a distributed-lock race (e.g. the per-owner MAC lock when
+  // many new contacts arrive at once) is deferred, not failed: failing it
+  // burns one of only two attempts and drops the inbound message.
+  const worker = new Worker(
+    queueNames.enum.integration,
+    (job: Job<IntegrationJobData>, token) =>
+      deferOnLockContention(job, token, () => processIntegrationJob(job)),
     {
       connection: getRedisConnection(),
       ...defaultWorkerOptions,
