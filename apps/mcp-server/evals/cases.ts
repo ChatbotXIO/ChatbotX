@@ -145,11 +145,11 @@ const families: CaseFamily[] = [
     ],
     forbiddenTools: ["contacts_set_tags"],
     prompts: {
-      vi: "Gắn VIP cho khách An",
-      "vi-unaccented": "Gan VIP cho khach An",
-      colloquial: "tag VIP cho An",
-      en: "Add VIP to An",
-      mixed: "add VIP cho An",
+      vi: "Gắn VIP cho khách Ada",
+      "vi-unaccented": "Gan VIP cho khach Ada",
+      colloquial: "tag VIP cho Ada",
+      en: "Add VIP to Ada",
+      mixed: "add VIP cho Ada",
     },
   }),
   complete({

@@ -588,10 +588,6 @@ const main = async (): Promise<void> => {
   }
   await ensureFreshOutput(options.out)
   const snapshot = await snapshotServer(options.out, options.serverSource)
-  const runtimeSpec = {
-    ...originalSpec,
-    servers: [{ url: "http://127.0.0.1/api" }],
-  }
   const manifest: Manifest = {
     corpusHash: corpusHash(cases),
     generatedAt: new Date().toISOString(),
@@ -601,7 +597,7 @@ const main = async (): Promise<void> => {
     seed: options.seed,
     sourceHash: snapshot.sourceHash,
     specHash: sha256(specText),
-    runtimeSpecHash: sha256(JSON.stringify(runtimeSpec)),
+    runtimeSpecHash: sha256(JSON.stringify(originalSpec)),
   }
   await writeJson(join(options.out, "cases.json"), selected)
   const exposures: ExposureMode[] =
@@ -615,7 +611,7 @@ const main = async (): Promise<void> => {
             evalCase,
             modelId,
             serverSource: snapshot.source,
-            spec: runtimeSpec,
+            spec: originalSpec,
             exposure,
           }),
         )
@@ -634,7 +630,7 @@ const main = async (): Promise<void> => {
             evalCase,
             modelId,
             serverSource: snapshot.source,
-            spec: runtimeSpec,
+            spec: originalSpec,
             exposure: "default",
           }),
         )

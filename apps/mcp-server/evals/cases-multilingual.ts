@@ -101,11 +101,11 @@ const FAMILIES: MultilingualFamilySource[] = [
     family: "contact-tag-add",
     forbiddenTools: ["contacts_set_tags"],
     prompts: {
-      en: "Could you add the VIP tag to An, please?",
-      es: "¿Podrías agregarle la etiqueta VIP a An, por favor?",
-      fr: "Pourrais-tu ajouter l'étiquette VIP à An, s'il te plaît ?",
-      "vi-natural": "Gắn giúp mình nhãn VIP cho khách An với, cảm ơn bạn!",
-      zh: "能不能帮我给 An 打上 VIP 标签？",
+      en: "Could you add the VIP tag to Ada, please?",
+      es: "¿Podrías agregarle la etiqueta VIP a Ada, por favor?",
+      fr: "Pourrais-tu ajouter l'étiquette VIP à Ada, s'il te plaît ?",
+      "vi-natural": "Gắn giúp mình nhãn VIP cho khách Ada với, cảm ơn bạn!",
+      zh: "能不能帮我给 Ada 打上 VIP 标签？",
     },
   },
   {

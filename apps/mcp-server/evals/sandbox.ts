@@ -40,6 +40,7 @@ type Operation = {
 type OpenApiSpec = {
   components?: Record<string, unknown>
   paths?: Record<string, Record<string, SpecOperation>>
+  servers?: Array<{ url: string }>
 }
 type Contact = {
   id: number
@@ -100,7 +101,14 @@ const notFound = (error: string): FixtureResult => ({
 })
 const has = (value: Record<string, unknown>, ...keys: string[]): boolean =>
   keys.every((key) => value[key] !== undefined && value[key] !== null)
-const idFrom = (path: string): string => path.split("/").at(-1) ?? ""
+
+const pathSegmentAfter = (path: string, segment: string): string => {
+  const segments = path.split("/")
+  const segmentIndex = segments.lastIndexOf(segment)
+  return segmentIndex === -1
+    ? ""
+    : decodeURIComponent(segments[segmentIndex + 1] ?? "")
+}
 const identifierContact = (
   state: FixtureState,
   identifier: unknown,
@@ -137,13 +145,16 @@ const fixtures: Record<string, FixtureHandler> = {
   "contacts.get": (state, request) => {
     const contact = identifierContact(
       state,
-      decodeURIComponent(idFrom(request.path)),
+      pathSegmentAfter(request.path, "contacts"),
     )
     return contact ? ok(contact) : notFound("contactNotFound")
   },
   "contacts.listTags": (state) => ok({ data: state.contacts[0]?.tags ?? [] }),
   "contacts.sendMessage": (state, request) => {
-    const contact = identifierContact(state, idFrom(request.path))
+    const contact = identifierContact(
+      state,
+      pathSegmentAfter(request.path, "contacts"),
+    )
     return contact && has(request.body, "text")
       ? ok({ contactId: contact.id, status: "queued" })
       : invalid("prefixedIdentifierAndTextRequired")
@@ -157,7 +168,10 @@ const fixtures: Record<string, FixtureHandler> = {
       ? ok({ status: "completed" })
       : invalid("keywordRequired"),
   "contacts.addTagsByName": (state, request) => {
-    const contact = identifierContact(state, request.body.identifier)
+    const contact = identifierContact(
+      state,
+      pathSegmentAfter(request.path, "contacts"),
+    )
     const tags = request.body.tags
     if (
       !(contact && Array.isArray(tags)) ||
@@ -168,8 +182,23 @@ const fixtures: Record<string, FixtureHandler> = {
     contact.tags = [...new Set([...contact.tags, ...tags])]
     return ok(contact)
   },
+  "contacts.addTags": (state, request) => {
+    const contact = identifierContact(
+      state,
+      pathSegmentAfter(request.path, "contacts"),
+    )
+    const tagIds = request.body.tagIds
+    if (!(contact && Array.isArray(tagIds))) {
+      return invalid("prefixedIdentifierAndTagIdsRequired")
+    }
+    contact.tags = [...new Set([...contact.tags, ...tagIds])]
+    return ok(contact)
+  },
   "contacts.removeTags": (state, request) => {
-    const contact = identifierContact(state, request.body.identifier)
+    const contact = identifierContact(
+      state,
+      pathSegmentAfter(request.path, "contacts"),
+    )
     const tagIds = request.body.tagIds
     if (!(contact && Array.isArray(tagIds))) {
       return invalid("prefixedIdentifierAndTagIdsRequired")
@@ -178,28 +207,33 @@ const fixtures: Record<string, FixtureHandler> = {
     return ok(contact)
   },
   "contacts.setTags": (state, request) => {
-    const contact = identifierContact(state, request.body.identifier)
-    if (!(contact && Array.isArray(request.body.tagIds))) {
+    const contact = identifierContact(
+      state,
+      pathSegmentAfter(request.path, "contacts"),
+    )
+    if (!(contact && Array.isArray(request.body.tags))) {
       return invalid("prefixedIdentifierAndTagIdsRequired")
     }
-    contact.tags = request.body.tagIds.filter(
+    contact.tags = request.body.tags.filter(
       (tag): tag is string => typeof tag === "string",
     )
     return ok(contact)
   },
-  "contacts.subscribeSequences": (_state, request) =>
-    has(request.body, "identifier", "sequenceIds")
+  "contacts.subscribeSequences": (state, request) =>
+    identifierContact(state, pathSegmentAfter(request.path, "contacts")) &&
+    has(request.body, "sequenceIds")
       ? ok({ status: "subscribed" })
       : invalid("identifierAndSequenceIdsRequired"),
-  "contacts.unsubscribeSequences": (_state, request) =>
-    has(request.body, "identifier", "sequenceIds")
+  "contacts.unsubscribeSequences": (state, request) =>
+    identifierContact(state, pathSegmentAfter(request.path, "contacts")) &&
+    has(request.body, "sequenceIds")
       ? ok({ status: "unsubscribed" })
       : invalid("identifierAndSequenceIdsRequired"),
   "tags.list": () =>
     ok({
       data: [
-        { id: "VIP", name: "VIP" },
-        { id: "Newsletter", name: "Newsletter" },
+        { id: "1", name: "VIP" },
+        { id: "2", name: "Newsletter" },
       ],
     }),
   "tags.create": (_state, request) =>
@@ -295,7 +329,7 @@ const fixtures: Record<string, FixtureHandler> = {
       : ok({ id: 100, status: "booked" })
   },
   "appointments.cancel": (state, request) => {
-    const id = idFrom(request.path)
+    const id = pathSegmentAfter(request.path, "appointments")
     if (state.appointments[id] !== "booked") {
       return notFound("appointmentNotFound")
     }
@@ -368,6 +402,68 @@ const remapLocalReferences = (value: unknown): unknown => {
   )
 }
 
+const INTEGER_QUERY_VALUE = /^[+-]?\d+$/u
+const NUMBER_QUERY_VALUE = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/iu
+
+const schemaAllowsType = (schema: JsonSchema, type: string): boolean => {
+  const declaredType = schema.type
+  if (
+    declaredType === type ||
+    (Array.isArray(declaredType) && declaredType.includes(type))
+  ) {
+    return true
+  }
+
+  return ["anyOf", "oneOf"].some((key) => {
+    const variants = schema[key]
+    return (
+      Array.isArray(variants) &&
+      variants.some(
+        (variant) =>
+          typeof variant === "object" &&
+          variant !== null &&
+          schemaAllowsType(variant as JsonSchema, type),
+      )
+    )
+  })
+}
+
+/**
+ * URL query values are strings, while the OpenAPI handler's smart-coercion
+ * plugin turns declared scalar parameters into their JSON Schema types before
+ * validation. The sandbox validates the same request boundary, so mirror that
+ * behavior without changing the raw query recorded in its trace.
+ */
+const coerceQueryScalar = (
+  schema: JsonSchema,
+  value: string | string[],
+): unknown => {
+  if (Array.isArray(value)) {
+    return value
+  }
+
+  if (schemaAllowsType(schema, "boolean")) {
+    if (value === "true") {
+      return true
+    }
+    if (value === "false") {
+      return false
+    }
+  }
+
+  if (schemaAllowsType(schema, "integer") && INTEGER_QUERY_VALUE.test(value)) {
+    const parsed = Number(value)
+    return Number.isSafeInteger(parsed) ? parsed : value
+  }
+
+  if (schemaAllowsType(schema, "number") && NUMBER_QUERY_VALUE.test(value)) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : value
+  }
+
+  return value
+}
+
 const schemaError = (
   schema: JsonSchema,
   value: unknown,
@@ -428,7 +524,13 @@ const validateRequest = (
     if (value === undefined) {
       continue
     }
-    const error = schemaError(parameter.schema, value, spec)
+    const error = schemaError(
+      parameter.schema,
+      parameter.in === "query"
+        ? coerceQueryScalar(parameter.schema, value)
+        : value,
+      spec,
+    )
     if (error) {
       return `Invalid ${parameter.in} parameter ${parameter.name}: ${error}`
     }
@@ -493,10 +595,11 @@ export const createSandbox = async (spec: OpenApiSpec): Promise<Sandbox> => {
   const state = initialState()
   const operations = operationsFrom(spec)
   const traces: HttpTrace[] = []
+  let runtimeSpec = spec
   const server: Server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", "http://127.0.0.1")
     if (url.pathname === "/api/public-spec.json") {
-      return send(response, 200, spec)
+      return send(response, 200, runtimeSpec)
     }
     if (url.pathname === "/api/v1/token") {
       return send(response, 200, {
@@ -532,7 +635,7 @@ export const createSandbox = async (spec: OpenApiSpec): Promise<Sandbox> => {
       url.pathname.replace(apiPathPrefix, ""),
       trace.query,
       body,
-      spec,
+      runtimeSpec,
     )
     if (validationError) {
       trace.status = 422
@@ -549,8 +652,10 @@ export const createSandbox = async (spec: OpenApiSpec): Promise<Sandbox> => {
   server.listen(0, "127.0.0.1")
   await once(server, "listening")
   const address = server.address() as AddressInfo
+  const baseUrl = `http://127.0.0.1:${address.port}/api`
+  runtimeSpec = { ...spec, servers: [{ url: baseUrl }] }
   return {
-    baseUrl: `http://127.0.0.1:${address.port}/api`,
+    baseUrl,
     traces,
     close: async () => {
       server.close()
