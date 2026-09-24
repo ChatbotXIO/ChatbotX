@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "معرّف جهة الاتصال (page_scoped_user_id)",
         "instagram": "معرّف جهة الاتصال (ig_sid)",
-        "whatsapp": "معرّف جهة الاتصال (ctwa_clid)"
+        "whatsapp": "معرّف النقرة (ctwa_clid)"
       },
       "messagingIdPlaceholder": "الصق القيمة النموذجية من Meta",
       "messagingIdHint": "أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",

@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "Kişi kimliği (page_scoped_user_id)",
         "instagram": "Kişi kimliği (ig_sid)",
-        "whatsapp": "Kişi kimliği (ctwa_clid)"
+        "whatsapp": "Tıklama kimliği (ctwa_clid)"
       },
       "messagingIdPlaceholder": "Meta'daki örnek değeri yapıştırın",
       "messagingIdHint": "Yalnızca harf, rakam, tire ve alt çizgi (en fazla 512).",

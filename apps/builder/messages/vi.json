@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "ID liên hệ (page_scoped_user_id)",
         "instagram": "ID liên hệ (ig_sid)",
-        "whatsapp": "ID liên hệ (ctwa_clid)"
+        "whatsapp": "ID click quảng cáo (ctwa_clid)"
       },
       "messagingIdPlaceholder": "Dán giá trị mẫu từ Meta",
       "messagingIdHint": "Chỉ gồm chữ, số, gạch ngang và gạch dưới (tối đa 512 ký tự).",

@@ -2558,7 +2558,7 @@
       "messagingIdLabel": {
         "messenger": "Contact ID (page_scoped_user_id)",
         "instagram": "Contact ID (ig_sid)",
-        "whatsapp": "Contact ID (ctwa_clid)"
+        "whatsapp": "Click ID (ctwa_clid)"
       },
       "messagingIdPlaceholder": "Paste the sample value from Meta",
       "messagingIdHint": "Letters, digits, dashes and underscores only (max 512).",

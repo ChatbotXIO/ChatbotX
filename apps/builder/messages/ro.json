@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "ID contact (page_scoped_user_id)",
         "instagram": "ID contact (ig_sid)",
-        "whatsapp": "ID contact (ctwa_clid)"
+        "whatsapp": "ID clic (ctwa_clid)"
       },
       "messagingIdPlaceholder": "Lipește valoarea exemplu de la Meta",
       "messagingIdHint": "Doar litere, cifre, cratime și liniuțe de subliniere (max. 512).",

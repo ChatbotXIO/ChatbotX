@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "Kontaktin tunnus (page_scoped_user_id)",
         "instagram": "Kontaktin tunnus (ig_sid)",
-        "whatsapp": "Kontaktin tunnus (ctwa_clid)"
+        "whatsapp": "Klikkaustunnus (ctwa_clid)"
       },
       "messagingIdPlaceholder": "Liitä Metan esimerkkiarvo",
       "messagingIdHint": "Vain kirjaimia, numeroita, viivoja ja alaviivoja (enintään 512).",

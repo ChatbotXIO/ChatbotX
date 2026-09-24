@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "מזהה איש קשר (page_scoped_user_id)",
         "instagram": "מזהה איש קשר (ig_sid)",
-        "whatsapp": "מזהה איש קשר (ctwa_clid)"
+        "whatsapp": "מזהה קליק (ctwa_clid)"
       },
       "messagingIdPlaceholder": "הדבק את הערך לדוגמה מ-Meta",
       "messagingIdHint": "אותיות, ספרות, מקפים וקווים תחתונים בלבד (עד 512).",

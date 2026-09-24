@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "聯絡人 ID（page_scoped_user_id）",
         "instagram": "聯絡人 ID（ig_sid）",
-        "whatsapp": "聯絡人 ID（ctwa_clid）"
+        "whatsapp": "點擊 ID（ctwa_clid）"
       },
       "messagingIdPlaceholder": "貼上 Meta 提供的範例值",
       "messagingIdHint": "僅限字母、數字、連字號和底線（最多 512 個字元）。",

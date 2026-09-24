@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "ID contatto (page_scoped_user_id)",
         "instagram": "ID contatto (ig_sid)",
-        "whatsapp": "ID contatto (ctwa_clid)"
+        "whatsapp": "ID clic (ctwa_clid)"
       },
       "messagingIdPlaceholder": "Incolla il valore di esempio da Meta",
       "messagingIdHint": "Solo lettere, cifre, trattini e trattini bassi (max 512).",

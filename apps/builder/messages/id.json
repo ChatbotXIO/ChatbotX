@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "ID kontak (page_scoped_user_id)",
         "instagram": "ID kontak (ig_sid)",
-        "whatsapp": "ID kontak (ctwa_clid)"
+        "whatsapp": "ID klik (ctwa_clid)"
       },
       "messagingIdPlaceholder": "Tempel nilai contoh dari Meta",
       "messagingIdHint": "Hanya huruf, angka, tanda hubung, dan garis bawah (maks. 512).",

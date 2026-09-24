@@ -6269,7 +6269,7 @@
       "messagingIdLabel": {
         "messenger": "連絡先ID（page_scoped_user_id）",
         "instagram": "連絡先ID（ig_sid）",
-        "whatsapp": "連絡先ID（ctwa_clid）"
+        "whatsapp": "クリックID（ctwa_clid）"
       },
       "messagingIdPlaceholder": "Metaのサンプル値を貼り付け",
       "messagingIdHint": "英字、数字、ハイフン、アンダースコアのみ（最大512文字）。",
