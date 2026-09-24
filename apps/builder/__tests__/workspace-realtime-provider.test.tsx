@@ -12,7 +12,9 @@ vi.mock("@/hooks/routing", () => ({
 }))
 
 vi.mock("@/features/tenant", () => ({
-  useTenantSettings: () => ({ wsUrl: "ws://localhost:1999" }),
+  useTenantSettings: () => ({
+    publicRealtimeUrl: "ws://localhost:1999",
+  }),
 }))
 
 vi.mock("@/lib/orpc/orpc", () => ({

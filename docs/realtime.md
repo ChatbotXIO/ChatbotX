@@ -421,20 +421,12 @@ just a count), one broadcast.
 - **Result:** 150/150 connections established (~1.05s), targeted send
   reached exactly the selected connection id and no other, broadcast
   reached 150/150 connections. No connections refused or dropped.
-- **Caveat found while running this:** the Dockerfile deliberately does
-  NOT copy `.env` into the image (`# COPY --from=pre /app/.env .env`,
-  commented out) and relies on `docker-compose.yml`'s `env_file` to inject
-  vars into the container's process environment — but `partykit dev`'s own
-  env loading for the code it bundles into the workerd/Miniflare sandbox
-  reads a literal `.env` FILE in its working directory, not inherited
-  `process.env` (confirmed: `docker exec ... env` showed
-  `REALTIME_BROADCAST_SECRET` present, yet the container failed to boot
-  with `Invalid environment variables` until a physical `.env` file was
-  written into it). This is an infra gap in the `realtime` service's
-  Docker image unrelated to this presence-lease change; the container
-  used for this load test had a `.env` file manually written in for the
-  one run and was torn down (image kept, container removed) afterward.
-  Tracked as a follow-up, not fixed here (out of scope for this review).
+- **Runtime environment handoff:** the image does not copy `.env` at build
+  time. Instead, its entrypoint writes a mode-600 `.env` containing
+  `REALTIME_BROADCAST_SECRET` and `NEXT_PUBLIC_BUILDER_URL` from the
+  Compose-injected process environment before starting the pinned
+  `partykit` runtime. This supplies the workerd/Miniflare sandbox without
+  baking deployment secrets into the image.
 - This is evidence against §3.3's documented ~100-connection concern for
   this specific container image at 150 connections; it does not test
   Cloudflare's hosted Workers runtime, only self-hosted `partykit dev` (in
@@ -444,6 +436,13 @@ just a count), one broadcast.
   evidence (`docker compose ps` output, the target URL, and per-assertion
   results including the targeted recipient's identity) is in the
   scratchpad as `realtime-load-test-container.log`, not committed here.
+
+## Server-to-server broadcast endpoint
+
+Set `REALTIME_INTERNAL_URL` to the realtime HTTP base URL reachable from both
+the builder and worker. It is deployment-wide and MUST NOT use a tenant custom
+domain. When unset, broadcasts use the deployment's `NEXT_PUBLIC_BUILDER_URL`
+websocket path.
 
 ## Deployment: reverse proxy header requirements
 

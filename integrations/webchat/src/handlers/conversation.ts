@@ -9,13 +9,14 @@ export const sendTyping: ConversationHandlers<WebchatAuthValue>["sendTyping"] =
       data: { contact, typing },
     } = props
 
-    const headers = await ctx.platform.getRealtimeAuthHeaders({
+    const headers = await ctx.platform.getRealtimeBroadcastAuthHeaders({
       kind: "guest",
       id: contact.sourceId,
     })
 
     await ky
-      .post(`${ctx.platform.wsUrl}/parties/guests/${contact.sourceId}`, {
+      .post(`parties/guests/${contact.sourceId}`, {
+        baseUrl: ctx.platform.internalRealtimeUrl,
         headers,
         json: {
           eventType: "typing",

@@ -14,13 +14,12 @@ import { workspaceService } from "../workspace/service"
 import { deriveUrls } from "./derive-urls"
 
 const TRAILING_SLASH_RE = /\/$/
-let realtimeBroadcastUrl: string | undefined
 
 export type EmailTemplate = { subject?: string; body?: string }
 
 export type TenantSettings = {
   appUrl: string
-  wsUrl: string
+  publicRealtimeUrl: string
   storageUrl: string
   name: string
   logoLightUrl: string
@@ -47,7 +46,7 @@ const buildDefaults = (helpItems: TenantHelpItemModel[]): TenantSettings => {
   )
   return {
     appUrl: derived.appUrl,
-    wsUrl: derived.wsUrl,
+    publicRealtimeUrl: derived.publicRealtimeUrl,
     storageUrl: derived.storageUrl,
     name: "ChatbotX",
     logoLightUrl: `${derived.appUrl}/brand/logo_white.svg`,
@@ -87,7 +86,7 @@ const applyCustomDomain = (
   return {
     ...defaults,
     appUrl: derived.appUrl,
-    wsUrl: derived.wsUrl,
+    publicRealtimeUrl: derived.publicRealtimeUrl,
     storageUrl: derived.storageUrl,
     logoLightUrl: `${derived.appUrl}/brand/logo_white.svg`,
     logoDarkUrl: `${derived.appUrl}/brand/logo_black.svg`,
@@ -215,20 +214,17 @@ export const resolveBroadcastSecret = (): string =>
 
 /**
  * Resolve the HTTP endpoint used by server-side realtime broadcasts.
- * This endpoint is deployment-wide, never tenant-specific.
+ * This endpoint is deployment-wide on purpose — never tenant-specific or a
+ * custom domain.
  */
 export const resolveRealtimeBroadcastUrl = (): string => {
-  if (realtimeBroadcastUrl) {
-    return realtimeBroadcastUrl
-  }
-
   const env = integrationContextEnv()
-  realtimeBroadcastUrl =
+  const url =
     env.REALTIME_INTERNAL_URL ??
     deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
       forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS),
-    }).wsUrl
-  return realtimeBroadcastUrl
+    }).publicRealtimeUrl
+  return url.endsWith("/") ? url : `${url}/`
 }
 
 /**

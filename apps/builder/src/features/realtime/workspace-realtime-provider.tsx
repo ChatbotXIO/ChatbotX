@@ -121,7 +121,7 @@ export function WorkspaceRealtimeProvider({
   children: ReactNode
 }) {
   const workspaceId = useWorkspaceId()
-  const { wsUrl } = useTenantSettings()
+  const { publicRealtimeUrl } = useTenantSettings()
   const listenersRef = useRef(
     new Map<RealtimeEventName, Set<ErasedRealtimeListener>>(),
   )
@@ -143,7 +143,7 @@ export function WorkspaceRealtimeProvider({
   )
 
   const socket = usePartySocket({
-    host: wsUrl,
+    host: publicRealtimeUrl,
     room: workspaceId,
     party: "workspaces",
 

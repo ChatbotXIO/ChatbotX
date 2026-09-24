@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const BEARER_PREFIX_RE = /^Bearer /
 
@@ -26,6 +26,7 @@ vi.mock("../src/logger", () => ({
 
 import {
   broadcastToWorkspaceParty,
+  buildBroadcastAuthHeader,
   revokeWorkspaceMemberConnections,
   sendToWorkspaceMember,
 } from "../src/lib"
@@ -157,5 +158,65 @@ describe("broadcastToWorkspaceParty (unchanged)", () => {
     await broadcastToWorkspaceParty(target, "ws_cached", event)
 
     expect(signRealtimeTokenMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("buildBroadcastAuthHeader", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("re-signs after the header reuse window expires", async () => {
+    vi.useFakeTimers()
+    const audience = { kind: "workspace" as const, id: "expired_workspace" }
+
+    await buildBroadcastAuthHeader(audience, target.secret)
+    await vi.advanceTimersByTimeAsync(45_001)
+    await buildBroadcastAuthHeader(audience, target.secret)
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("keeps headers separate for different audiences", async () => {
+    await buildBroadcastAuthHeader(
+      { kind: "workspace", id: "workspace_1" },
+      target.secret,
+    )
+    await buildBroadcastAuthHeader(
+      { kind: "workspace", id: "workspace_2" },
+      target.secret,
+    )
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("evicts a failed signing attempt so a later broadcast retries it", async () => {
+    signRealtimeTokenMock
+      .mockRejectedValueOnce(new Error("signing failed"))
+      .mockResolvedValueOnce("retried-token")
+    const audience = { kind: "guest" as const, id: "retry_guest" }
+
+    await expect(
+      buildBroadcastAuthHeader(audience, target.secret),
+    ).rejects.toThrow("signing failed")
+    await expect(
+      buildBroadcastAuthHeader(audience, target.secret),
+    ).resolves.toBe("Bearer retried-token")
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("evicts the oldest header once the cache reaches its capacity", async () => {
+    const firstAudience = { kind: "guest" as const, id: "cap_guest_0" }
+
+    for (let index = 0; index <= 10_000; index++) {
+      await buildBroadcastAuthHeader(
+        { kind: "guest", id: `cap_guest_${index}` },
+        target.secret,
+      )
+    }
+    await buildBroadcastAuthHeader(firstAudience, target.secret)
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(10_002)
   })
 })

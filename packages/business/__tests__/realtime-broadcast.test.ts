@@ -42,7 +42,8 @@ describe("broadcastToWorkspaceParty", () => {
   test("uses the shared realtime target without resolving tenant settings", async () => {
     await broadcastToWorkspaceParty("workspace_1", event)
     await broadcastToWorkspaceParty("workspace_2", event)
-
+    expect(resolveBroadcastSecret).toHaveBeenCalledTimes(1)
+    expect(resolveRealtimeBroadcastUrl).toHaveBeenCalledTimes(1)
     expect(resolveTenantSettings).not.toHaveBeenCalled()
     expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
       1,
