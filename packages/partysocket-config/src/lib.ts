@@ -1,6 +1,7 @@
 import ky, { HTTPError } from "ky"
 import {
   REALTIME_TOKEN_PURPOSE,
+  REALTIME_TOKEN_TTL_SECONDS,
   type RealtimeAudience,
   signRealtimeToken,
 } from "./auth"
@@ -33,16 +34,41 @@ const describeBroadcastError = (error: unknown): Record<string, unknown> => {
   return { message: "unknown broadcast error" }
 }
 
-const buildAuthHeader = async (
+const AUTH_HEADER_REUSE_MS = (REALTIME_TOKEN_TTL_SECONDS - 15) * 1000
+
+type CachedAuthHeader = {
+  expiresAt: number
+  header: Promise<string>
+}
+
+const authHeaders = new Map<string, CachedAuthHeader>()
+
+const buildAuthHeader = (
   audience: RealtimeAudience,
   secret: string,
 ): Promise<string> => {
-  const token = await signRealtimeToken(
+  const key = `${secret}:${audience.kind}:${audience.id}`
+  const now = Date.now()
+  const cached = authHeaders.get(key)
+  if (cached && cached.expiresAt > now) {
+    return cached.header
+  }
+
+  const header = signRealtimeToken(
     audience,
     REALTIME_TOKEN_PURPOSE.broadcast,
     secret,
-  )
-  return `Bearer ${token}`
+  ).then((token) => `Bearer ${token}`)
+  authHeaders.set(key, {
+    expiresAt: now + AUTH_HEADER_REUSE_MS,
+    header,
+  })
+  header.catch(() => {
+    if (authHeaders.get(key)?.header === header) {
+      authHeaders.delete(key)
+    }
+  })
+  return header
 }
 
 export async function broadcastToWorkspaceParty(

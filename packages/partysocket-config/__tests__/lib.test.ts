@@ -1,8 +1,11 @@
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const BEARER_PREFIX_RE = /^Bearer /
 
-const { postMock } = vi.hoisted(() => ({ postMock: vi.fn() }))
+const { postMock, signRealtimeTokenMock } = vi.hoisted(() => ({
+  postMock: vi.fn(),
+  signRealtimeTokenMock: vi.fn(),
+}))
 
 vi.mock("ky", async () => {
   const actual = await vi.importActual<typeof import("ky")>("ky")
@@ -10,6 +13,11 @@ vi.mock("ky", async () => {
     ...actual,
     default: { post: postMock },
   }
+})
+
+vi.mock("../src/auth", async () => {
+  const actual = await vi.importActual<Record<string, unknown>>("../src/auth")
+  return { ...actual, signRealtimeToken: signRealtimeTokenMock }
 })
 
 vi.mock("../src/logger", () => ({
@@ -27,6 +35,11 @@ const event = {
   eventType: "typing",
   data: { conversationId: "c_1", typing: true, seconds: 1 },
 } as const
+
+beforeEach(() => {
+  signRealtimeTokenMock.mockReset()
+  signRealtimeTokenMock.mockResolvedValue("test-token")
+})
 
 describe("sendToWorkspaceMember", () => {
   it("posts with a userId query param and the raw event body unchanged", async () => {
@@ -133,5 +146,16 @@ describe("broadcastToWorkspaceParty (unchanged)", () => {
     expect(path).toBe("parties/workspaces/ws_1")
     expect(options.searchParams).toBeUndefined()
     expect(options.json).toEqual(event)
+  })
+
+  it("reuses a signed header for repeated workspace broadcasts", async () => {
+    postMock.mockReset()
+    postMock.mockReturnValue({ status: 200 })
+
+    await broadcastToWorkspaceParty(target, "ws_cached", event)
+    await broadcastToWorkspaceParty(target, "ws_cached", event)
+    await broadcastToWorkspaceParty(target, "ws_cached", event)
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(1)
   })
 })

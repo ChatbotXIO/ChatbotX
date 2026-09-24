@@ -14,6 +14,7 @@ import { workspaceService } from "../workspace/service"
 import { deriveUrls } from "./derive-urls"
 
 const TRAILING_SLASH_RE = /\/$/
+let realtimeBroadcastUrl: string | undefined
 
 export type EmailTemplate = { subject?: string; body?: string }
 
@@ -207,12 +208,28 @@ export const resolveWorkspaceAppUrl = async (args: {
 }
 
 /**
- * Resolve the `REALTIME_BROADCAST_SECRET` for a workspace.
- * Returns the global env var (per-user secrets are an enterprise concern).
+ * Resolve the shared secret used for all realtime authentication.
  */
-export const resolveBroadcastSecret = (_args: {
-  workspaceId: string
-}): string => integrationContextEnv().REALTIME_BROADCAST_SECRET
+export const resolveBroadcastSecret = (): string =>
+  integrationContextEnv().REALTIME_BROADCAST_SECRET
+
+/**
+ * Resolve the HTTP endpoint used by server-side realtime broadcasts.
+ * This endpoint is deployment-wide, never tenant-specific.
+ */
+export const resolveRealtimeBroadcastUrl = (): string => {
+  if (realtimeBroadcastUrl) {
+    return realtimeBroadcastUrl
+  }
+
+  const env = integrationContextEnv()
+  realtimeBroadcastUrl =
+    env.REALTIME_INTERNAL_URL ??
+    deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
+      forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS),
+    }).wsUrl
+  return realtimeBroadcastUrl
+}
 
 /**
  * Resolve tenant settings for a reseller/owner directly, without a request

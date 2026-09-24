@@ -42,6 +42,7 @@ services:
       retries: 3
     environment:
       - RUN_DB_MIGRATE=true
+      - REALTIME_INTERNAL_URL=http://realtime:1999
       - RUN_DB_SEED=true
 
   # BullMQ Worker
@@ -61,6 +62,7 @@ services:
         condition: service_healthy
     environment:
       - JAVASCRIPT_EXECUTOR_URL=http://javascript-executor:3210
+      - REALTIME_INTERNAL_URL=http://realtime:1999
 
   javascript-executor:
     platform: linux/amd64

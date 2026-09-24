@@ -6,23 +6,18 @@ import {
   revokeWorkspaceMemberConnections as revokeWorkspaceMemberConnectionsLow,
   sendToWorkspaceMember as sendToWorkspaceMemberLow,
 } from "@chatbotx.io/partysocket-config"
-import { resolveBroadcastSecret, resolveTenantSettings } from "./settings"
+import { resolveBroadcastSecret, resolveRealtimeBroadcastUrl } from "./settings"
 
-const resolveTargetByWorkspace = async (
-  workspaceId: string,
-): Promise<BroadcastTarget> => {
-  const [{ wsUrl }, secret] = await Promise.all([
-    resolveTenantSettings({ workspaceId }),
-    Promise.resolve(resolveBroadcastSecret({ workspaceId })),
-  ])
-  return { url: wsUrl, secret }
-}
+const resolveTarget = (): BroadcastTarget => ({
+  url: resolveRealtimeBroadcastUrl(),
+  secret: resolveBroadcastSecret(),
+})
 
-export const broadcastToWorkspaceParty = async (
+export const broadcastToWorkspaceParty = (
   workspaceId: string,
   json: RealtimeEventData,
 ) => {
-  const target = await resolveTargetByWorkspace(workspaceId)
+  const target = resolveTarget()
   return broadcastToWorkspacePartyLow(target, workspaceId, json)
 }
 
@@ -31,11 +26,11 @@ export const broadcastToWorkspaceParty = async (
  * connections (never a workspace-wide broadcast) — e.g. the VoIP offer for
  * the single agent a call was routed to.
  */
-export const sendToWorkspaceMember = async (
+export const sendToWorkspaceMember = (
   args: { workspaceId: string; userId: string },
   json: RealtimeEventData,
 ) => {
-  const target = await resolveTargetByWorkspace(args.workspaceId)
+  const target = resolveTarget()
   return sendToWorkspaceMemberLow(target, args.workspaceId, args.userId, json)
 }
 
@@ -44,11 +39,11 @@ export const sendToWorkspaceMember = async (
  * on membership removal so a former member's already-open socket stops
  * receiving further events immediately, rather than only on next reconnect.
  */
-export const revokeWorkspaceMemberConnections = async (args: {
+export const revokeWorkspaceMemberConnections = (args: {
   workspaceId: string
   userId: string
 }) => {
-  const target = await resolveTargetByWorkspace(args.workspaceId)
+  const target = resolveTarget()
   return revokeWorkspaceMemberConnectionsLow(
     target,
     args.workspaceId,
@@ -56,10 +51,10 @@ export const revokeWorkspaceMemberConnections = async (args: {
   )
 }
 
-export const broadcastToGuestParty = async (
+export const broadcastToGuestParty = (
   args: { workspaceId: string; guestConversationId: string },
   json: RealtimeEventData,
 ) => {
-  const target = await resolveTargetByWorkspace(args.workspaceId)
+  const target = resolveTarget()
   return broadcastToGuestPartyLow(target, args.guestConversationId, json)
 }

@@ -39,7 +39,7 @@ const resolvePlatformData = async (
 ): Promise<PlatformData> => {
   const [tenantSettings, realtimeSecret] = await Promise.all([
     resolveTenantSettings({ workspaceId }),
-    resolveBroadcastSecret({ workspaceId }),
+    resolveBroadcastSecret(),
   ])
 
   return {

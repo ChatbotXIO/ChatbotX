@@ -37,7 +37,7 @@ export const realtimeAuthenticatedAPI = {
     .handler(async ({ context }) => ({
       token: await signMemberConnectToken(
         { workspaceId: context.workspace.id, userId: context.user.id },
-        resolveBroadcastSecret({ workspaceId: context.workspace.id }),
+        resolveBroadcastSecret(),
       ),
     })),
 }
