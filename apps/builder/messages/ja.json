@@ -4190,6 +4190,14 @@
     "invalidInvitation": "この招待は無効か、有効期限が切れています。",
     "workspaceUnavailable": "このワークスペースは利用できなくなりました。"
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "ボットのメッセージを既読にする",
+      "enabled": "有効",
+      "disabled": "無効",
+      "description": "有効にすると、ボットが自身のメッセージを自動的に既読にします"
+    }
+  },
   "inboxTeams": {
     "title": "受信トレイチーム"
   },

@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Undangan ini tidak valid atau telah kedaluwarsa.",
     "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Tandai pesan bot sebagai sudah dibaca",
+      "enabled": "Aktif",
+      "disabled": "Nonaktif",
+      "description": "Jika diaktifkan, bot akan otomatis menandai pesannya sebagai sudah dibaca"
+    }
+  },
   "inboxTeams": {
     "title": "Tim Kotak Masuk"
   },

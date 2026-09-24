@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
+import { InboxMarkReadOnOutboundSwitch } from "@/features/inboxes/components/inbox-mark-read-on-outbound-switch"
 import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import { TiktokCommentToMessage } from "./components/tiktok-comment-to-message"
 import { TiktokDisconnect } from "./components/tiktok-disconnect"
@@ -62,12 +63,13 @@ export function TiktokManage({
         />
       </div>
 
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t("fields.name.label")}</TableHead>
               <TableHead>{t("fields.tiktok.commentToMessage")}</TableHead>
+              <TableHead>{t("inboxes.markReadOnOutbound.label")}</TableHead>
               <TableHead className="w-50" />
             </TableRow>
           </TableHeader>
@@ -108,6 +110,12 @@ export function TiktokManage({
                     integrationTiktok={integrationTiktok}
                   />
                 </TableCell>
+                <TableCell>
+                  <InboxMarkReadOnOutboundSwitch
+                    inboxId={integrationTiktok.inboxId}
+                    workspaceId={workspaceId}
+                  />
+                </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
                   <TiktokRefreshToken integrationTiktok={integrationTiktok} />
                   <TiktokDisconnect integrationTiktok={integrationTiktok} />
@@ -116,7 +124,7 @@ export function TiktokManage({
             ))}
             {integrationTiktoks.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3}>{t("messages.noData")}</TableCell>
+                <TableCell colSpan={4}>{t("messages.noData")}</TableCell>
               </TableRow>
             )}
           </TableBody>

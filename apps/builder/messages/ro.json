@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Această invitație este invalidă sau a expirat.",
     "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Marchează mesajele botului ca citite",
+      "enabled": "Activat",
+      "disabled": "Dezactivat",
+      "description": "Dacă este activat, botul își marchează automat propriile mesaje ca citite"
+    }
+  },
   "inboxTeams": {
     "title": "Echipe mesaje primite"
   },

@@ -10,7 +10,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   notFoundException: vi.fn(),
 }))
 vi.mock("@chatbotx.io/database/client", () => ({
-  sql: vi.fn(),
+  sql: vi.fn(() => "agentLastReadAtSql"),
 }))
 vi.mock("@chatbotx.io/database/queries", () => ({
   applyContactFilter: vi.fn(() => ({})),
@@ -25,6 +25,7 @@ vi.mock("@chatbotx.io/database/queries", () => ({
       ],
     }),
   ),
+  conversationUnreadWhere: { sharedUnreadPredicate: true },
   parseConversationAssigneeValues: vi.fn((values: string[]) => ({
     hasUnassigned: values.includes("unassigned"),
     inboxTeamIds: values
@@ -72,8 +73,13 @@ vi.mock("@/lib/pagination", () => ({
   encodeCursor: vi.fn(),
 }))
 
-const { buildConversationWhere } = await import("../build-conversation-where")
+const { appendUnreadWhere, buildConversationWhere } = await import(
+  "../build-conversation-where"
+)
 const { applyContactFilter, buildSmartKeywordWhere } = await import(
+  "@chatbotx.io/database/queries"
+)
+const { conversationUnreadWhere } = await import(
   "@chatbotx.io/database/queries"
 )
 
@@ -183,5 +189,49 @@ describe("buildConversationWhere channel filter", () => {
     expect(vi.mocked(buildSmartKeywordWhere)).toHaveBeenCalledWith("ada", {
       includeEmailAndPhone: true,
     })
+  })
+})
+
+describe("buildConversationWhere unread filter", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("adds the unread predicate as a top-level AND condition", () => {
+    const where = buildConversationWhere(
+      "1",
+      { ...baseInput, tags: ["unread"] },
+      null,
+    )
+
+    expect(where.AND).toEqual([conversationUnreadWhere])
+  })
+
+  test("preserves a pre-existing top-level AND condition", () => {
+    const existingCondition = { assignedUserId: "user-1" }
+    const where = { AND: [existingCondition] }
+
+    appendUnreadWhere(where)
+
+    expect(where.AND).toEqual([existingCondition, conversationUnreadWhere])
+  })
+
+  test("keeps cursor OR separate from the unread predicate", () => {
+    const cursor = {
+      id: "100",
+      lastActivityAt: new Date("2026-09-23T10:00:00Z"),
+    }
+    const where = buildConversationWhere(
+      "1",
+      { ...baseInput, tags: ["unread"] },
+      cursor,
+    )
+
+    expect(where.OR).toEqual([
+      { lastActivityAt: { lt: cursor.lastActivityAt } },
+      { lastActivityAt: { isNull: true } },
+      { lastActivityAt: cursor.lastActivityAt, id: { lt: cursor.id } },
+    ])
+    expect(where.AND).toEqual([conversationUnreadWhere])
   })
 })

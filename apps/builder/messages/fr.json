@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Cette invitation n’est pas valide ou a expiré.",
     "workspaceUnavailable": "Cet espace de travail n’est plus disponible."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Marquer les messages du bot comme lus",
+      "enabled": "Activé",
+      "disabled": "Désactivé",
+      "description": "Si activé, le bot marque automatiquement ses propres messages comme lus"
+    }
+  },
   "inboxTeams": {
     "title": "Équipes de la boîte de réception"
   },

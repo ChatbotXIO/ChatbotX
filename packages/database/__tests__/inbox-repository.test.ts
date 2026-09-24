@@ -1,6 +1,8 @@
 // @vitest-environment node
 
+import { getTableConfig } from "drizzle-orm/pg-core"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { inboxModel } from "../src/schema"
 
 // `listOptionsByWorkspaceAndChannel` is a bounded
 // id/name projection scoped by BOTH workspace and channel at the query
@@ -22,6 +24,21 @@ vi.mock("../src/client", () => ({
 }))
 
 const { inboxRepository } = await import("../src/repositories/inbox/repository")
+
+describe("Inbox schema", () => {
+  test("defaults outbound read marking to disabled", () => {
+    const config = getTableConfig(inboxModel)
+    const column = config.columns.find(
+      (candidate) => candidate.name === "markReadOnOutbound",
+    )
+
+    expect(column).toMatchObject({
+      default: false,
+      hasDefault: true,
+      notNull: true,
+    })
+  })
+})
 
 describe("inboxRepository.listOptionsByWorkspaceAndChannel", () => {
   beforeEach(() => {

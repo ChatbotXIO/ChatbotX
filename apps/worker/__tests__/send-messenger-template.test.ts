@@ -8,6 +8,10 @@ import {
   vi,
 } from "vitest"
 
+const { mockMarkReadByOutbound } = vi.hoisted(() => ({
+  mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
+}))
+
 function makeEmptySelectChain(): Promise<never[]> & Record<string, unknown> {
   const chain = Promise.resolve<never[]>([]) as Promise<never[]> &
     Record<string, unknown>
@@ -70,7 +74,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
 }))
 
+// The delivery helpers are stubbed with the real contract (sentCount > 0 →
+// delivered; mark-read forwards to conversationService.markReadByOutbound) so
+// this file checks the handler's wiring; the helpers themselves are covered by
+// send-message-handler.test.ts.
 vi.mock("../src/chat/handlers/send-message", () => ({
+  isDeliveredDirectMessage: ({ result }: { result: { sentCount: number } }) =>
+    result.sentCount > 0,
+  markConversationReadAfterDelivery: (props: unknown) =>
+    mockMarkReadByOutbound(props),
   sendFlowStepToChannel: vi.fn(),
 }))
 
@@ -90,6 +102,7 @@ vi.mock("@chatbotx.io/business", () => ({
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
   },
   conversationService: {
+    markReadByOutbound: mockMarkReadByOutbound,
     recordOutboundMessageActivity: vi
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
@@ -185,6 +198,13 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     expect(mockDbUpdate).toHaveBeenCalled()
     const setCall = mockDbUpdate.mock.results[0].value.set
     expect(setCall).toHaveBeenCalledWith({ sourceId: PROVIDER_ID })
+    // Template sends honour the inbox option like any other bot message.
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        readAt: new Date("2026-01-01T00:00:00Z"),
+      }),
+    )
   })
 
   test("emits message:sent with inboxId for MAC tracking", async () => {
@@ -232,6 +252,7 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     })
 
     expect(mockDbUpdate).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 })
 

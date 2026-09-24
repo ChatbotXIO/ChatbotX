@@ -5025,6 +5025,14 @@
     },
     "dashboardCta": "Ver no painel de Anúncios"
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Marcar mensagens do bot como lidas",
+      "enabled": "Ativado",
+      "disabled": "Desativado",
+      "description": "Se ativado, o bot marca automaticamente as próprias mensagens como lidas"
+    }
+  },
   "inboxTeams": {
     "title": "Equipes da caixa de entrada"
   },

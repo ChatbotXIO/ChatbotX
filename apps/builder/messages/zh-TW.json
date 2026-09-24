@@ -4244,6 +4244,14 @@
     "invalidInvitation": "此邀請無效或已過期。",
     "workspaceUnavailable": "此工作區不再可用。"
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "將機器人訊息標記為已讀",
+      "enabled": "已啟用",
+      "disabled": "已停用",
+      "description": "啟用後，機器人會自動將自己的訊息標記為已讀"
+    }
+  },
   "inboxTeams": {
     "title": "收件匣團隊"
   },

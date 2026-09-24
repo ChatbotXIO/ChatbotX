@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
+import { InboxMarkReadOnOutboundSwitch } from "@/features/inboxes/components/inbox-mark-read-on-outbound-switch"
 import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import type { listIntegrationWhatsapps } from "./queries"
 import { WhatsappDisconnectDialog } from "./whatsapp-disconnect-dialog"
@@ -56,11 +57,12 @@ export function WhatsappManage({
         />
       </div>
 
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>{t("inboxes.markReadOnOutbound.label")}</TableHead>
               <TableHead className="w-[200px]" />
             </TableRow>
           </TableHeader>
@@ -76,6 +78,12 @@ export function WhatsappManage({
                     )}
                     {integrationWhatsapp.inbox?.name}
                   </div>
+                </TableCell>
+                <TableCell>
+                  <InboxMarkReadOnOutboundSwitch
+                    inboxId={integrationWhatsapp.inboxId}
+                    workspaceId={workspaceId}
+                  />
                 </TableCell>
                 <TableCell className="flex w-[200px] justify-end gap-2">
                   <Button size="sm" variant="secondary">
@@ -94,7 +102,7 @@ export function WhatsappManage({
             ))}
             {integrationWhatsapps.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2}>No data</TableCell>
+                <TableCell colSpan={3}>{t("messages.noData")}</TableCell>
               </TableRow>
             )}
           </TableBody>

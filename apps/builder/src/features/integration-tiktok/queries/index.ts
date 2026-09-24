@@ -19,6 +19,7 @@ const toResource = (
   integration: IntegrationTiktokModel,
 ): IntegrationTiktokResource => ({
   id: integration.id,
+  inboxId: integration.inboxId,
   name: integration.name,
   openId: integration.openId,
   tokenRefreshError: integration.tokenRefreshError,

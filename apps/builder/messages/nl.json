@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Deze uitnodiging is ongeldig of verlopen.",
     "workspaceUnavailable": "Deze workspace is niet meer beschikbaar."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Botberichten als gelezen markeren",
+      "enabled": "Ingeschakeld",
+      "disabled": "Uitgeschakeld",
+      "description": "Indien ingeschakeld markeert de bot zijn eigen berichten automatisch als gelezen"
+    }
+  },
   "inboxTeams": {
     "title": "Inboxteams"
   },

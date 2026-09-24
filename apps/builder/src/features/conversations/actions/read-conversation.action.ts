@@ -10,10 +10,17 @@ export const readConversationAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId, id],
     } = props
+    const agentLastReadAt = new Date()
 
     await conversationService.updateReadStatus({
       workspaceId,
       id,
-      agentLastReadAt: new Date(),
+      agentLastReadAt,
     })
+
+    // The persisted value is returned so the client mirrors exactly what the
+    // server wrote — a locally synthesized "now" could be later than a
+    // message that arrived while this request was in flight, and would then
+    // hide it (and reject the authoritative realtime update as older).
+    return { agentLastReadAt: agentLastReadAt.toISOString() }
   })

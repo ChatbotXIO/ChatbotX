@@ -1,4 +1,4 @@
-import { act } from "react"
+import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -9,6 +9,7 @@ vi.mock("next-intl", () => ({
 type VirtuosoCapturedProps = {
   computeItemKey?: (index: number, item: { id: string }) => string
   data: { id: string }[]
+  itemContent?: (index: number, item: { id: string }) => React.ReactNode
 }
 
 const capturedProps: { current: VirtuosoCapturedProps | null } = {
@@ -23,7 +24,11 @@ vi.mock("react-virtuoso", () => ({
 }))
 
 vi.mock("@/features/conversations/conversation-item", () => ({
-  default: () => <div />,
+  default: ({ onSelect }: { onSelect: () => void }) => (
+    <button onClick={onSelect} type="button">
+      conversation
+    </button>
+  ),
 }))
 
 vi.mock("@/features/conversations/conversation-filter", () => ({
@@ -48,6 +53,7 @@ const storeState = {
   isFirstLoadConversation: true,
   isLoadingConversation: false,
   setActiveConversationId: vi.fn(),
+  prependConversation: vi.fn(),
   initActiveConversationFromUrl: vi.fn().mockResolvedValue(undefined),
 }
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
@@ -55,11 +61,9 @@ vi.mock("@/features/chat/store/chat-store-provider", () => ({
     selector(storeState),
 }))
 
+const conversationIdParamMock = { set: vi.fn(), clear: vi.fn() }
 vi.mock("@/features/conversations/hooks/use-conversation-id-param", () => ({
-  useConversationIdParam: () => ({
-    set: vi.fn(),
-    clear: vi.fn(),
-  }),
+  useConversationIdParam: () => conversationIdParamMock,
 }))
 
 const { default: ConversationList } = await import(
@@ -111,5 +115,30 @@ describe("ConversationList", () => {
     })
 
     expect(storeState.loadMoreConversations).not.toHaveBeenCalled()
+  })
+
+  test("selects the clicked conversation without reordering the list", () => {
+    act(() => {
+      root.render(<ConversationList workspaceId="ws-1" />)
+    })
+
+    const selected = storeState.conversations[1]
+    const item = capturedProps.current?.itemContent?.(
+      1,
+      selected,
+    ) as ReactElement<{
+      onSelect: () => void
+    }>
+    act(() => {
+      item.props.onSelect()
+    })
+
+    expect(conversationIdParamMock.set).toHaveBeenCalledWith(selected.id)
+    expect(storeState.setActiveConversationId).toHaveBeenCalledWith(selected.id)
+    expect(storeState.prependConversation).not.toHaveBeenCalled()
+    expect(storeState.conversations.map(({ id }) => id)).toEqual([
+      "conv-2",
+      "conv-1",
+    ])
   })
 })

@@ -48,6 +48,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { MarkReadOnOutboundField } from "@/features/inboxes/components/mark-read-on-outbound-field"
 import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import PersistentMenuField from "../integration-webchat/components/persistent-menu-field"
 import { updateMessengerAction } from "./actions/update-messenger-action"
@@ -57,11 +58,13 @@ import { updateMessengerRequest } from "./schema/action"
 type UpdateMessengerFormProps = {
   workspaceId: string
   integrationMessenger: IntegrationMessengerModel
+  markReadOnOutbound: boolean
 }
 
 export function UpdateMessengerForm({
   workspaceId,
   integrationMessenger,
+  markReadOnOutbound,
 }: UpdateMessengerFormProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -96,6 +99,7 @@ export function UpdateMessengerForm({
         defaultValues: {
           welcomeFlowId: null,
           persistentMenus: [],
+          markReadOnOutbound,
         },
       },
     },
@@ -146,6 +150,7 @@ export function UpdateMessengerForm({
         welcomeFlowId: welcomeFlowId?.toString() ?? null,
         persistentMenus: persistentMenusArray,
         conversationStarters: conversationStartersArray,
+        markReadOnOutbound,
         // Normalize persona ids to numeric Snowflakes. Legacy rows may carry no
         // id (backfill) or a UUID from an older ID scheme (migrate to Snowflake).
         personas: personasArray.map((persona) => ({
@@ -154,7 +159,7 @@ export function UpdateMessengerForm({
         })),
       })
     }
-  }, [integrationMessenger, form])
+  }, [integrationMessenger, markReadOnOutbound, form])
 
   return (
     <Form {...form}>
@@ -364,6 +369,8 @@ export function UpdateMessengerForm({
           syncTagEnabledAt={integrationMessenger.syncTagEnabledAt}
           workspaceId={workspaceId}
         />
+
+        <MarkReadOnOutboundField />
 
         <PersistentMenuField channel={channelTypes.enum.messenger} />
 
