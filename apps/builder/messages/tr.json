@@ -2480,6 +2480,8 @@
       "transferConversationToHuman": "Konuşmayı İnsana Aktar",
       "unarchiveConversation": "Konuşmayı Arşivden Çıkar",
       "unassignConversation": "Konuşma Atamasını Kaldır",
+      "markConversationAsUnread": "Konuşmayı Okunmadı Olarak İşaretle",
+      "markConversationAsRead": "Konuşmayı Okundu Olarak İşaretle",
       "unfollowConversation": "Konuşma Takibini Bırak",
       "unsubscribeBroadcast": "Yayın Aboneliğinden Çık",
       "getUserData": "Kullanıcı Verisini Al",

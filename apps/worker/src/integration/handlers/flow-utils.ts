@@ -141,6 +141,8 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   assignConversation: false,
   autoAssignConversation: false,
   unassignConversation: false,
+  markConversationAsUnread: false,
+  markConversationAsRead: false,
   followConversation: false,
   unfollowConversation: false,
   archiveConversation: false,

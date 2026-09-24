@@ -2480,6 +2480,8 @@
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
       "unarchiveConversation": "Bỏ lưu trữ cuộc trò chuyện",
       "unassignConversation": "Bỏ gán cuộc trò chuyện",
+      "markConversationAsUnread": "Đánh dấu cuộc trò chuyện là chưa đọc",
+      "markConversationAsRead": "Đánh dấu cuộc trò chuyện là đã đọc",
       "unfollowConversation": "Bỏ theo dõi cuộc trò chuyện",
       "unsubscribeBroadcast": "Hủy đăng ký phát sóng",
       "getUserData": "Lấy đầu vào người dùng",

@@ -2659,6 +2659,8 @@
       "transferConversationToHuman": "將對話轉移給人類",
       "unarchiveConversation": "取消封存對話",
       "unassignConversation": "取消分配對話",
+      "markConversationAsUnread": "將對話標示為未讀",
+      "markConversationAsRead": "將對話標示為已讀",
       "unfollowConversation": "取消追蹤對話",
       "unsubscribeBroadcast": "退訂廣播",
       "getUserData": "取得使用者資料",

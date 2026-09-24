@@ -2338,6 +2338,8 @@
       "transferConversationToHuman": "Transferir conversa para uma pessoa",
       "unarchiveConversation": "Desarquivar conversa",
       "unassignConversation": "Remover atribuição da conversa",
+      "markConversationAsUnread": "Marcar conversa como não lida",
+      "markConversationAsRead": "Marcar conversa como lida",
       "unfollowConversation": "Deixar de seguir conversa",
       "unsubscribeBroadcast": "Cancelar subscrição da difusão",
       "getUserData": "Obter dados do utilizador",

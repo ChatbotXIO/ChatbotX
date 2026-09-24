@@ -380,7 +380,9 @@ describe("finalizeCallSideEffects", () => {
         messageId: "msg-1",
       }),
     )
-    expect(mocks.updateFlowStepState).toHaveBeenCalled()
+    expect(mocks.updateFlowStepState).toHaveBeenCalledWith(
+      expect.objectContaining({ contactRepliedAt: expect.any(Date) }),
+    )
     expect(mocks.updateTracking).toHaveBeenCalled()
     expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
       "ws-1",

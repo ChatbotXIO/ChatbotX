@@ -2683,6 +2683,8 @@
       "transferConversationToHuman": "Transfer Conversation to Human",
       "unarchiveConversation": "Unarchive Conversation",
       "unassignConversation": "Unassign Conversation",
+      "markConversationAsUnread": "Mark Conversation as Unread",
+      "markConversationAsRead": "Mark Conversation as Read",
       "unfollowConversation": "Unfollow Conversation",
       "unsubscribeBroadcast": "Unsubscribe Broadcast",
       "getUserData": "Get User Data",

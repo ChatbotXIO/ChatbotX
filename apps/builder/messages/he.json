@@ -405,6 +405,8 @@
       "transferConversationToHuman": "העברת שיחה לנציג אנושי",
       "unarchiveConversation": "הוצאת שיחה מהארכיון",
       "unassignConversation": "ביטול הקצאת שיחה",
+      "markConversationAsUnread": "סמן שיחה כלא נקראה",
+      "markConversationAsRead": "סמן שיחה כנקראה",
       "unfollowConversation": "הפסקת מעקב אחר שיחה",
       "unsubscribeBroadcast": "ביטול הרשמה לשידור",
       "getUserData": "קבלת נתוני משתמש",

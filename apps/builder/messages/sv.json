@@ -3213,6 +3213,8 @@
       "typing": "Skriver",
       "unarchiveConversation": "Återställ konversation från arkivet",
       "unassignConversation": "Ta bort tilldelning av konversation",
+      "markConversationAsUnread": "Markera konversation som oläst",
+      "markConversationAsRead": "Markera konversation som läst",
       "unfollowConversation": "Sluta följa konversation",
       "unsubscribeBroadcast": "Avsluta prenumeration på utskick",
       "unsubscribeSequence": "Avsluta prenumeration på sekvens",

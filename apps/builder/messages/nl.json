@@ -2338,6 +2338,8 @@
       "transferConversationToHuman": "Gesprek overdragen aan medewerker",
       "unarchiveConversation": "Gesprek uit archief halen",
       "unassignConversation": "Toewijzing van gesprek opheffen",
+      "markConversationAsUnread": "Gesprek markeren als ongelezen",
+      "markConversationAsRead": "Gesprek markeren als gelezen",
       "unfollowConversation": "Gesprek niet meer volgen",
       "unsubscribeBroadcast": "Afmelden voor broadcast",
       "getUserData": "Gebruikersgegevens ophalen",

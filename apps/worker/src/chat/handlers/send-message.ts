@@ -5,7 +5,10 @@ import {
   conversationService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
-import { resolveChannelConversationId } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  resolveChannelConversationId,
+} from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { whatsappFlowModel } from "@chatbotx.io/database/schema"
 import type {
@@ -523,6 +526,28 @@ export async function changeMessageStateOnChannel(
   await Promise.all(calls)
 }
 
+/**
+ * WhatsApp has no standalone typing/read API: both the typing indicator and
+ * the "Seen" receipt ride on marking a real inbound message read, so both
+ * callers (this file's `sendTypingToChannel` and the Mark Read step handler)
+ * need that message's wamid. Other channels don't anchor on a message id.
+ */
+export async function resolveWhatsappMessageSourceId(props: {
+  conversation: Pick<
+    ConversationModel,
+    "id" | "workspaceId" | "lastActivityAt" | "createdAt"
+  >
+  contactInbox: Pick<ContactInboxModel, "id" | "channel">
+}): Promise<string | undefined> {
+  const { conversation, contactInbox } = props
+  return contactInbox.channel === channelTypes.enum.whatsapp
+    ? await conversationService.findLastIncomingMessageSourceId({
+        conversation,
+        contactInboxId: contactInbox.id,
+      })
+    : undefined
+}
+
 export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
   const { conversation, contactInbox, typing, seconds } = data
 
@@ -539,9 +564,14 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
     contactInbox,
   })
 
+  const messageSourceId = await resolveWhatsappMessageSourceId({
+    conversation,
+    contactInbox,
+  })
+
   await integration.runChannelHandler("conversation", "sendTyping", {
     ctx,
-    data: { contact: contactInbox, typing, seconds },
+    data: { contact: contactInbox, typing, seconds, messageSourceId },
   })
 }
 

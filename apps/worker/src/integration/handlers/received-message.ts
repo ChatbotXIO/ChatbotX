@@ -1044,6 +1044,11 @@ const persistNewMessageSideEffects = async (props: {
     },
     contactLocation,
     at: message.createdAt,
+    // Contact-authored (DM or comment) — drives the inbox unread rule.
+    // Outgoing echoes (agent replies from the native app) must not count.
+    ...(incomingMessage.messageType === "outgoing"
+      ? {}
+      : { contactRepliedAt: message.createdAt }),
   })
 
   if (trackingInvalidation) {

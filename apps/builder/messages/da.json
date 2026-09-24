@@ -2338,6 +2338,8 @@
       "transferConversationToHuman": "Transfer Samtale til Menneskelig",
       "unarchiveConversation": "Fjern fra arkiv Samtale",
       "unassignConversation": "Unassign Samtale",
+      "markConversationAsUnread": "Marker samtale som ulæst",
+      "markConversationAsRead": "Marker samtale som læst",
       "unfollowConversation": "Unfollow Samtale",
       "unsubscribeBroadcast": "Unsubscribe Broadcast",
       "getUserData": "Get Bruger Data",

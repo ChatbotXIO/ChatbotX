@@ -2480,6 +2480,8 @@
       "transferConversationToHuman": "نقل المحادثة إلى موظف بشري",
       "unarchiveConversation": "إلغاء أرشفة المحادثة",
       "unassignConversation": "إلغاء إسناد المحادثة",
+      "markConversationAsUnread": "تحديد المحادثة كغير مقروءة",
+      "markConversationAsRead": "تحديد المحادثة كمقروءة",
       "unfollowConversation": "إلغاء متابعة المحادثة",
       "unsubscribeBroadcast": "إلغاء الاشتراك في البث",
       "getUserData": "الحصول على بيانات المستخدم",

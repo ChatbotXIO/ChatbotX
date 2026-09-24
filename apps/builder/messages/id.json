@@ -2338,6 +2338,8 @@
       "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
       "unarchiveConversation": "Keluarkan Percakapan dari Arsip",
       "unassignConversation": "Batalkan Penetapan Percakapan",
+      "markConversationAsUnread": "Tandai Percakapan sebagai Belum Dibaca",
+      "markConversationAsRead": "Tandai Percakapan sebagai Dibaca",
       "unfollowConversation": "Berhenti Mengikuti Percakapan",
       "unsubscribeBroadcast": "Berhenti Berlangganan Siaran",
       "getUserData": "Ambil Data Pengguna",

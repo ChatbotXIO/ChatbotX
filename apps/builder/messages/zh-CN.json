@@ -3216,6 +3216,8 @@
       "typing": "打字",
       "unarchiveConversation": "取消封存对话",
       "unassignConversation": "取消分配对话",
+      "markConversationAsUnread": "将会话标记为未读",
+      "markConversationAsRead": "将会话标记为已读",
       "unfollowConversation": "取消追踪对话",
       "unsubscribeBroadcast": "退订广播",
       "unsubscribeSequence": "退订串行",
