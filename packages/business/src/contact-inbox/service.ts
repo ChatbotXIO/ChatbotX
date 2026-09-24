@@ -90,6 +90,9 @@ export type ContactInboxWithAnalytics = Pick<
   conversation: Pick<ConversationModel, "id"> | null
 }
 
+export type FullContactInboxWithAnalytics = ContactInboxModel &
+  Omit<ContactInboxWithAnalytics, keyof ContactInboxModel>
+
 export type ContactInboxTrackingData = Partial<
   Pick<
     ContactInboxModel,
@@ -579,11 +582,33 @@ class ContactInboxService extends BaseService {
   async findManyByIds(props: {
     workspaceId: string
     ids: string[]
-  }): Promise<ContactInboxWithAnalytics[]> {
+    full: true
+  }): Promise<FullContactInboxWithAnalytics[]>
+  async findManyByIds(props: {
+    workspaceId: string
+    ids: string[]
+    full?: false
+  }): Promise<ContactInboxWithAnalytics[]>
+  async findManyByIds(props: {
+    workspaceId: string
+    ids: string[]
+    full?: boolean
+  }): Promise<
+    Array<ContactInboxWithAnalytics | FullContactInboxWithAnalytics>
+  > {
     const { workspaceId, ids } = props
     return (await db.query.contactInboxModel.findMany({
       where: { id: { in: ids }, contact: { workspaceId } },
-      columns: { id: true, contactId: true, sourceId: true, channel: true },
+      ...(props.full
+        ? {}
+        : {
+            columns: {
+              id: true,
+              contactId: true,
+              sourceId: true,
+              channel: true,
+            },
+          }),
       with: {
         contact: {
           columns: {
@@ -596,7 +621,7 @@ class ContactInboxService extends BaseService {
         },
         conversation: { columns: { id: true } },
       },
-    })) as ContactInboxWithAnalytics[]
+    })) as Array<ContactInboxWithAnalytics | FullContactInboxWithAnalytics>
   }
 
   async findRecentByContactId(props: {

@@ -416,6 +416,7 @@ export const receiveMessage = async (
         contactInbox,
         conversation,
         incomingMessage,
+        createdAt: incomingMessage.createdAt,
         storageUrl,
         ...systemFieldUpdates,
       })
@@ -765,10 +766,10 @@ const SELF_SENT_ECHO_LOOKBACK = 10
  * echo before this helper runs, and its text must be non-null so unrelated
  * media rows cannot match through `null === null`.
  */
-const isEchoOfOwnSend = async (
+export const isEchoOfOwnSend = async (
   props: {
     conversation: ConversationModel
-    message: MessageWithAttachments
+    message: MessageModel & { attachments?: AttachmentModel[] }
   },
   options: { pendingOnly?: boolean } = {},
 ): Promise<boolean> => {
@@ -803,7 +804,7 @@ const isEchoOfOwnSend = async (
  */
 const isSameOwnSendContent = (
   candidate: MessageWithAttachments,
-  message: MessageWithAttachments,
+  message: MessageModel & { attachments?: AttachmentModel[] },
 ): boolean => {
   if (candidate.text !== null || message.text !== null) {
     return candidate.text !== null && candidate.text === message.text
@@ -811,7 +812,7 @@ const isSameOwnSendContent = (
   const candidateSignature = attachmentSignature(candidate.attachments)
   return (
     candidateSignature !== "" &&
-    candidateSignature === attachmentSignature(message.attachments)
+    candidateSignature === attachmentSignature(message.attachments ?? [])
   )
 }
 

@@ -1,6 +1,7 @@
 import { keys as database } from "@chatbotx.io/database/keys"
 import { keys as mail } from "@chatbotx.io/mail/keys"
 import { keys as partysocket } from "@chatbotx.io/partysocket-config/keys"
+import { messengerEchoCollectorSharedEnv } from "@chatbotx.io/worker-config/messenger-echo-env"
 import { createEnv } from "@t3-oss/env-nextjs"
 import { z } from "zod"
 import { clientEnv } from "./lib/client-env"
@@ -12,6 +13,9 @@ const editionRule = z
 export const env = createEnv({
   extends: [partysocket(), database(), mail()],
   server: {
+    ...messengerEchoCollectorSharedEnv,
+    MESSENGER_ECHO_COLLECTOR_ENABLED: z.stringbool().default(false),
+    MESSENGER_ECHO_FLUSH_DELAY_MS: z.coerce.number().int().min(0).default(500),
     PLATFORM_ADMIN_EMAIL: z.email().optional(),
     BETTER_AUTH_SECRET: z
       .string()

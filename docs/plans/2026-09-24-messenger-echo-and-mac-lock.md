@@ -1,6 +1,6 @@
 # Implementation Plan: Messenger echo — collector, bulk pipeline, MAC gate
 
-Status: decisions closed. PR-A implemented; PR-B and PR-C pending.
+Status: decisions closed. PR-A and PR-B implemented; PR-C pending.
 Production figures never go into commits or PR descriptions.
 
 ## 1. Goal

@@ -383,6 +383,13 @@ vi.mock("@chatbotx.io/sdk", () => ({
   },
   messageTypes: { enum: { incoming: "incoming", outgoing: "outgoing" } },
   echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
+  resolveChannelMessageCreatedAt: (timestampMs: number, now = new Date()) => {
+    const earliest = now.getTime() - 7 * 24 * 60 * 60 * 1000
+    const latest = now.getTime() + 5 * 60 * 1000
+    return timestampMs >= earliest && timestampMs <= latest
+      ? new Date(timestampMs)
+      : null
+  },
   SdkException: class SdkException extends Error {},
   // Mirror of the real pure predicate — the module is fully mocked, so the
   // actual one-liner is restated here.
@@ -702,6 +709,48 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+  })
+
+  test("persists an outgoing echo with the channel-authoritative timestamp", async () => {
+    const channelCreatedAt = new Date("2026-09-24T23:59:00.000Z")
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        createdAt: channelCreatedAt,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ createdAt: channelCreatedAt }),
+    )
+  })
+
+  test("uses processing time when an inbound message has no channel timestamp", async () => {
+    const metaTimestamp = new Date("2026-09-24T23:59:00.000Z")
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ createdAt: expect.any(Date) }),
+    )
+    expect(mockCreateOrUpdate.mock.calls[0]?.[0].createdAt).not.toEqual(
+      metaTimestamp,
+    )
   })
 
   test("auto-unblocks on inbound messages using the loaded contact", async () => {

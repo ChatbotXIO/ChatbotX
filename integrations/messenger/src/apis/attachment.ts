@@ -5,6 +5,7 @@ import {
   type IncomingAttachment,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { fetchMediaWithLimits } from "@chatbotx.io/utils/media-download"
 import fetch from "cross-fetch"
 import imageSize from "image-size"
 import { rescue } from "../exception"
@@ -47,11 +48,15 @@ export const uploadAttachment = (
 export const getMessageAttachmentEntity = async ({
   ctx,
   attachment,
+  sourceId = createId(),
+  download,
   authorize = true,
   requireMedia = false,
 }: {
   ctx: Context<MessengerAuthValue>
   attachment: MessengerAttachment
+  sourceId?: string
+  download?: { timeoutMs: number; maxBytes: number }
   // False for a URL outside Facebook's CDN, so the page token never leaks to a
   // third-party host.
   authorize?: boolean
@@ -62,21 +67,46 @@ export const getMessageAttachmentEntity = async ({
   if (!attachment.payload.url) {
     throw new Error("No attachment URL found")
   }
-  const response = await fetch(attachment.payload.url as string, {
-    headers: {
-      ...(authorize
-        ? { Authorization: `Bearer ${ctx.auth.tokens.accessToken}` }
-        : {}),
-      "User-Agent": "node",
-    },
-  })
-  if (!(response.ok && response.body)) {
-    throw new Error(
-      `Failed to download attachment (status ${response.status} ${response.statusText}): ${attachment.payload.url}`,
-    )
+  const headers = {
+    ...(authorize
+      ? { Authorization: `Bearer ${ctx.auth.tokens.accessToken}` }
+      : {}),
+    "User-Agent": "node",
   }
 
-  const mimeType = response.headers.get("content-type") ?? "image/png"
+  let bytes: ArrayBuffer
+  let mimeType: string
+  let size: number
+  if (download) {
+    const media = await fetchMediaWithLimits(attachment.payload.url, {
+      headers,
+      ...download,
+    })
+    if (!media) {
+      logger.warn(
+        {
+          err: new Error(
+            `Failed to download attachment: ${attachment.payload.url}`,
+          ),
+        },
+        "Attachment download returned no usable media",
+      )
+      return
+    }
+    bytes = media.bytes
+    mimeType = media.mimeType
+    size = bytes.byteLength
+  } else {
+    const response = await fetch(attachment.payload.url, { headers })
+    if (!(response.ok && response.body)) {
+      throw new Error(
+        `Failed to download attachment (status ${response.status} ${response.statusText}): ${attachment.payload.url}`,
+      )
+    }
+    bytes = await response.arrayBuffer()
+    mimeType = response.headers.get("content-type") ?? "image/png"
+    size = Number.parseInt(response.headers.get("content-length") ?? "0", 10)
+  }
   const fileType = guessFileTypeFromMimeType(mimeType)
   if (requireMedia && fileType !== "image" && fileType !== "video") {
     throw new Error(
@@ -85,7 +115,6 @@ export const getMessageAttachmentEntity = async ({
   }
 
   const originPath = `${ctx.storagePrefix}/${createId()}`
-  const bytes = await response.arrayBuffer()
 
   await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
     ACL: "public-read",
@@ -104,16 +133,16 @@ export const getMessageAttachmentEntity = async ({
       imageProperties.width = dimensions.width
       imageProperties.height = dimensions.height
     } catch (error) {
-      logger.warn(error, "Failed to read attachment image dimensions")
+      logger.warn({ err: error }, "Failed to read attachment image dimensions")
     }
   }
 
   return {
-    sourceId: createId(),
+    sourceId,
     originPath,
     fileType,
     mimeType,
-    size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
+    size,
     ...imageProperties,
   }
 }
