@@ -294,6 +294,31 @@ describe("WorkspaceParty#onRequest", () => {
     expect(connectionB1.sent).toEqual([])
   })
 
+  it("returns before a stalled presence report completes", async () => {
+    connectionA1.setState({ userId: "u_a" })
+    let resolveReport!: () => void
+    reportWorkspacePresenceMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveReport = resolve
+        }),
+    )
+
+    const response = await party.onRequest(
+      postRequest("/parties/workspaces/ws_1", {
+        eventType: "typing",
+        data: { seconds: 1 },
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(room.broadcastCalls).toHaveLength(1)
+    await vi.waitFor(() =>
+      expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", ["u_a"]),
+    )
+    resolveReport()
+  })
+
   it("delivers only to the target user's tagged connections, never broadcasts", async () => {
     const event = {
       eventType: "whatsappCallTransportIncoming",
@@ -659,6 +684,26 @@ describe("WorkspaceParty presence reporting", () => {
       expect(await room.storage.getAlarm()).toBe(freshAlarmAt)
     })
 
+    it("avoids a storage read when the in-memory freshness marker is current", async () => {
+      const room = new FakeRoom("ws_1")
+      const party = new WorkspaceParty(room as unknown as Party.Room)
+      const connection = new FakeConnection()
+      room.registerConnection(connection)
+
+      await party.onConnect(
+        connection as unknown as Party.Connection,
+        connectionContext("u_1"),
+      )
+      const get = vi.spyOn(room.storage, "get")
+
+      await party.onMessage(
+        serializePresencePingMessage(),
+        connection as unknown as Party.Connection,
+      )
+
+      expect(get).not.toHaveBeenCalled()
+    })
+
     it("onRequest self-heals a stalled loop for a room with a connection, without waiting for a new connect", async () => {
       const room = new FakeRoom("ws_1")
       const connection = new FakeConnection()
@@ -679,7 +724,11 @@ describe("WorkspaceParty presence reporting", () => {
       )
 
       expect(response.status).toBe(200)
-      expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", ["u_1"])
+      await vi.waitFor(() =>
+        expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", [
+          "u_1",
+        ]),
+      )
     })
 
     it("onRequest never arms anything for a room with zero connections, even when the freshness marker is stale", async () => {

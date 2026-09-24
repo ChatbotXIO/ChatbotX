@@ -109,8 +109,8 @@ agents). Presence now flows entirely server-to-server:
   PartyKit/Durable-Object **alarm** (`room.storage.setAlarm`, the
   `partykit@0.0.115`/workerd runtime this repo runs supports it, confirmed
   against `node_modules/partykit/server.d.ts`) for
-  `PRESENCE_REPORT_INTERVAL_MS` (10s — see below) later. Every connection
-  after the first is a no-op here: the alarm is already armed.
+  `PRESENCE_REPORT_INTERVAL_MS` (10s — see below) later. Later connections
+  see the fresh in-memory marker and avoid another storage read or re-arm.
 - `onAlarm` collects the DISTINCT `userId`s across every open connection in
   the room (`room.getConnections()`, deduped — several tabs of the same
   user report as one), skips the report entirely when the room has gone
@@ -149,17 +149,19 @@ The alarm loop above can silently stop ticking (process restart timing, a
 supervisor handoff, a runtime-specific alarm-delivery gap) with no
 exception anywhere to notice. `WorkspaceParty` tracks this with a
 FRESHNESS marker instead of trusting `getAlarm() !== null` — a durable
-`presenceLastArmedAt` timestamp refreshed on every healthy `onAlarm` tick.
-`ensureReportLoopArmed` re-bootstraps (re-reports immediately, re-arms the
-alarm) whenever that marker is missing or older than
-`PRESENCE_REPORT_INTERVAL_MS * 1.5`, and is a no-op otherwise — so a
-healthy loop pays no extra cost. Three independent triggers call it, each
+`presenceLastArmedAt` timestamp refreshed on every healthy `onAlarm` tick
+and mirrored in memory. `ensureReportLoopArmed` re-bootstraps
+(re-reports immediately, re-arms the alarm) whenever that marker is
+missing or older than `PRESENCE_REPORT_INTERVAL_MS * 1.5`, and is a no-op
+otherwise — so a healthy loop pays no extra cost.
+Three independent triggers call it, each
 covering a gap the other two cannot:
 
 1. **`onConnect`** — a new connection (every realtime redeploy, every tab
    opening the inbox).
 2. **`onRequest`** — any inbound workspace-wide broadcast/targeted-send/
-   revoke request from the builder.
+   revoke request from the builder; it arms through the same serialized lock
+   in the background and never delays the request response.
 3. **`onMessage` (client keep-alive ping)** — a QUIET room (an
    already-open tab, no new connection, no inbound broadcast) has neither
    of the other two triggers. The builder client
