@@ -92,10 +92,14 @@ export const buildBroadcastAuthHeader = (
 export async function broadcastToWorkspaceParty(
   target: BroadcastTarget,
   workspaceId: string,
-  json: RealtimeEventData,
-) {
+  events: RealtimeEventData | readonly RealtimeEventData[],
+): Promise<number | null> {
+  const batch = Array.isArray(events) ? events : [events]
+  const isBatch = batch.length > 1
+  const json = isBatch ? { batch } : batch[0]
+
   try {
-    return await ky.post(`parties/workspaces/${workspaceId}`, {
+    const response = await ky.post(`parties/workspaces/${workspaceId}`, {
       baseUrl: target.url,
       timeout: REALTIME_BROADCAST_TIMEOUT_MS,
       headers: {
@@ -103,9 +107,33 @@ export async function broadcastToWorkspaceParty(
           { kind: "workspace", id: workspaceId },
           target.secret,
         ),
+        ...(isBatch ? { "X-Realtime-Batch": "1" } : {}),
       },
       json,
     })
+
+    if (typeof response.json !== "function") {
+      return null
+    }
+
+    try {
+      const relayResult: unknown = await response.json()
+      if (
+        typeof relayResult === "object" &&
+        relayResult !== null &&
+        "interested" in relayResult &&
+        typeof relayResult.interested === "number" &&
+        Number.isInteger(relayResult.interested) &&
+        relayResult.interested >= 0
+      ) {
+        return relayResult.interested
+      }
+      return null
+    } catch {
+      // Old realtime deployments return plain text. Treat that as unknown
+      // interest so callers fail open during a rolling deploy.
+      return null
+    }
   } catch (error) {
     logger.error(
       describeBroadcastError(error),

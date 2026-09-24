@@ -14,7 +14,6 @@ import { workspaceService } from "../workspace/service"
 import { deriveUrls } from "./derive-urls"
 
 const TRAILING_SLASH_RE = /\/$/
-let realtimeBroadcastUrl: string | undefined
 
 export type EmailTemplate = { subject?: string; body?: string }
 
@@ -212,6 +211,10 @@ export const resolveWorkspaceAppUrl = async (args: {
  */
 export const resolveBroadcastSecret = (): string =>
   integrationContextEnv().REALTIME_BROADCAST_SECRET
+
+/** Whether zero-interest relay responses may suppress chat-only broadcasts. */
+export const resolveRealtimeDeliveryGate = (): boolean =>
+  integrationContextEnv().REALTIME_DELIVERY_GATE
 
 /**
  * Resolve the HTTP endpoint used by server-side realtime broadcasts.

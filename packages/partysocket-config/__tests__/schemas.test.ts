@@ -1,10 +1,14 @@
 import { describe, expect, test } from "vitest"
 import {
+  REALTIME_EVENT_TOPICS,
   RealtimeEventType,
+  RealtimeTopic,
   realtimeCallTransportEndedSchema,
   realtimeCallTransportIncomingSchema,
   realtimeCallTransportOutboundAnswerVoipSchema,
   realtimeCallTransportOutboundStatusVoipSchema,
+  realtimeSubscriptionMessageSchema,
+  serializeRealtimeSubscriptionMessage,
   whatsappCallClaimedElsewhereSchema,
 } from "../src/schemas"
 
@@ -190,5 +194,75 @@ describe("realtimeCallTransportOutboundStatusVoipSchema", () => {
     expect(RealtimeEventType.whatsappCallOutboundStatus).toBe(
       "whatsappCallOutboundStatus",
     )
+  })
+})
+
+describe("REALTIME_EVENT_TOPICS", () => {
+  test("every RealtimeEventType has at least one registered topic", () => {
+    for (const eventType of Object.values(RealtimeEventType)) {
+      expect(REALTIME_EVENT_TOPICS[eventType]?.length).toBeGreaterThan(0)
+    }
+  })
+
+  test("every registered topic is a known RealtimeTopic value", () => {
+    const knownTopics = new Set(Object.values(RealtimeTopic))
+    for (const topics of Object.values(REALTIME_EVENT_TOPICS)) {
+      for (const topic of topics) {
+        expect(knownTopics.has(topic)).toBe(true)
+      }
+    }
+  })
+
+  test("conversationAssigned carries both chat and voip — it must never be gated as chat-only", () => {
+    expect(REALTIME_EVENT_TOPICS.conversationAssigned).toEqual(
+      expect.arrayContaining([RealtimeTopic.chat, RealtimeTopic.voip]),
+    )
+  })
+})
+
+describe("realtimeSubscriptionMessageSchema", () => {
+  test("parses a valid subscribe frame", () => {
+    const payload = { type: "subscribe", topics: ["chat", "voip"] }
+
+    expect(realtimeSubscriptionMessageSchema.parse(payload)).toEqual(payload)
+  })
+
+  test("parses an empty topic list", () => {
+    const payload = { type: "subscribe", topics: [] }
+
+    expect(realtimeSubscriptionMessageSchema.parse(payload)).toEqual(payload)
+  })
+
+  test("rejects an unknown topic", () => {
+    expect(() =>
+      realtimeSubscriptionMessageSchema.parse({
+        type: "subscribe",
+        topics: ["billing"],
+      }),
+    ).toThrow()
+  })
+
+  test("rejects a wrong message type", () => {
+    expect(() =>
+      realtimeSubscriptionMessageSchema.parse({
+        type: "presence-ping",
+        topics: [],
+      }),
+    ).toThrow()
+  })
+})
+
+describe("serializeRealtimeSubscriptionMessage", () => {
+  test("round-trips through the schema it pairs with", () => {
+    const wire = serializeRealtimeSubscriptionMessage([
+      RealtimeTopic.chat,
+      RealtimeTopic.voip,
+    ])
+
+    const parsed = realtimeSubscriptionMessageSchema.parse(JSON.parse(wire))
+    expect(parsed).toEqual({
+      type: "subscribe",
+      topics: ["chat", "voip"],
+    })
   })
 })

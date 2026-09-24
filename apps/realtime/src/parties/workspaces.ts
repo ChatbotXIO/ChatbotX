@@ -1,3 +1,10 @@
+import {
+  REALTIME_EVENT_TOPICS,
+  type RealtimeEventData,
+  type RealtimeProtocol,
+  type RealtimeTopic,
+  realtimeSubscriptionMessageSchema,
+} from "@chatbotx.io/partysocket-config"
 import { verifyMemberConnectToken } from "@chatbotx.io/partysocket-config/auth"
 import {
   PRESENCE_REPORT_INTERVAL_MS,
@@ -15,6 +22,9 @@ const TARGET_USER_QUERY_PARAM = "userId"
 const ACTION_QUERY_PARAM = "action"
 const REVOKE_CLOSE_CODE = 4001
 const REVOKE_CLOSE_REASON = "Revoked"
+const PROTOCOL_QUERY_PARAM = "protocol"
+const PROTOCOL_HEADER = "X-Realtime-Protocol"
+const BATCH_HEADER = "X-Realtime-Batch"
 
 /** Re-exported so existing importers of this module keep working. */
 export { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/partysocket-config/presence"
@@ -38,7 +48,45 @@ const PRESENCE_LAST_ARMED_AT_STORAGE_KEY = "presenceLastArmedAt"
  */
 const REPORT_LOOP_STALE_THRESHOLD_MS = PRESENCE_REPORT_INTERVAL_MS * 1.5
 
-type PresenceConnectionState = { userId: string }
+type WorkspaceConnectionState = {
+  protocol: RealtimeProtocol
+  topics: RealtimeTopic[]
+  userId: string
+}
+
+const isRealtimeEventData = (value: unknown): value is RealtimeEventData => {
+  if (typeof value !== "object" || value === null || !("eventType" in value)) {
+    return false
+  }
+  return (
+    typeof value.eventType === "string" &&
+    value.eventType in REALTIME_EVENT_TOPICS &&
+    "data" in value
+  )
+}
+
+/**
+ * Extracts the event list from a POST body: `{ batch: [...] }` under
+ * `X-Realtime-Batch: 1`, otherwise the raw body is treated as a single event.
+ * Returns `null` for a malformed batch envelope or a non-event payload.
+ */
+const extractWorkspaceEvents = (
+  payload: unknown,
+  isBatch: boolean,
+): RealtimeEventData[] | null => {
+  if (!isBatch) {
+    return isRealtimeEventData(payload) ? [payload] : null
+  }
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("batch" in payload)
+  ) {
+    return null
+  }
+  const { batch } = payload
+  return Array.isArray(batch) && batch.every(isRealtimeEventData) ? batch : null
+}
 
 export default class WorkspaceParty implements Party.Server {
   // biome-ignore lint/style/noParameterProperties: wip
@@ -79,9 +127,12 @@ export default class WorkspaceParty implements Party.Server {
       return
     }
 
-    // Set before taking the lock so the arming caller sees every queued
-    // connection.
-    connection.setState({ userId } satisfies PresenceConnectionState)
+    const protocol = request.headers.get(PROTOCOL_HEADER) === "v2" ? "v2" : "v1"
+    connection.setState({
+      protocol,
+      topics: [],
+      userId,
+    } satisfies WorkspaceConnectionState)
 
     await this.armReportLoopSerialized(userId)
   }
@@ -175,9 +226,8 @@ export default class WorkspaceParty implements Party.Server {
       return
     }
 
-    const senderUserId = (sender.state as PresenceConnectionState | null)
-      ?.userId
-    if (!senderUserId) {
+    const senderState = sender.state as WorkspaceConnectionState | null
+    if (!senderState?.userId) {
       return
     }
 
@@ -185,6 +235,17 @@ export default class WorkspaceParty implements Party.Server {
     try {
       parsed = JSON.parse(message)
     } catch {
+      return
+    }
+
+    const subscription = realtimeSubscriptionMessageSchema.safeParse(parsed)
+    if (subscription.success) {
+      if (senderState.protocol === "v2") {
+        sender.setState({
+          ...senderState,
+          topics: [...new Set(subscription.data.topics)],
+        } satisfies WorkspaceConnectionState)
+      }
       return
     }
 
@@ -221,7 +282,7 @@ export default class WorkspaceParty implements Party.Server {
 
   private collectConnectedUserIds(): string[] {
     const userIds = new Set<string>()
-    for (const connection of this.room.getConnections<PresenceConnectionState>()) {
+    for (const connection of this.room.getConnections<WorkspaceConnectionState>()) {
       const userId = connection.state?.userId
       if (userId) {
         userIds.add(userId)
@@ -256,29 +317,53 @@ export default class WorkspaceParty implements Party.Server {
       return new Response("ok", { status: 200 })
     }
 
-    const payload = await req.json()
-    const message = JSON.stringify(payload)
-
-    // A present (even empty) `userId` means a targeted send; never fall back to
-    // broadcasting it.
-    if (targetUserId !== null) {
-      this.sendToMember(targetUserId, message)
-      return new Response("ok", { status: 200 })
+    const payload: unknown = await req.json()
+    const isBatch = req.headers.get(BATCH_HEADER) === "1"
+    const events = extractWorkspaceEvents(payload, isBatch)
+    if (!events) {
+      return new Response("Bad Request", { status: 400 })
     }
 
-    this.room.broadcast(message)
-    return new Response("ok", { status: 200 })
+    const connections =
+      targetUserId === null
+        ? this.room.getConnections<WorkspaceConnectionState>()
+        : this.room.getConnections<WorkspaceConnectionState>(
+            toUserConnectionTag(targetUserId),
+          )
+    const interested = this.deliverEvents(connections, events)
+    return Response.json({ interested })
   }
 
-  private sendToMember(userId: string, message: string) {
-    for (const connection of this.room.getConnections(
-      toUserConnectionTag(userId),
-    )) {
-      connection.send(message)
+  private deliverEvents(
+    connections: Iterable<Party.Connection<WorkspaceConnectionState>>,
+    events: readonly RealtimeEventData[],
+  ): number {
+    let interested = 0
+    for (const connection of connections) {
+      const state = connection.state
+      if (state?.protocol !== "v2") {
+        for (const event of events) {
+          connection.send(JSON.stringify(event))
+        }
+        interested += 1
+        continue
+      }
+
+      const matchingEvents = events.filter((event) =>
+        REALTIME_EVENT_TOPICS[event.eventType].some((topic) =>
+          state.topics.includes(topic),
+        ),
+      )
+      if (matchingEvents.length === 0) {
+        continue
+      }
+      connection.send(JSON.stringify({ batch: matchingEvents }))
+      interested += 1
     }
+    return interested
   }
 
-  private closeMemberConnections(userId: string) {
+  private closeMemberConnections(userId: string): void {
     for (const connection of this.room.getConnections(
       toUserConnectionTag(userId),
     )) {
@@ -304,9 +389,19 @@ export default class WorkspaceParty implements Party.Server {
    * is passed on via a header.
    */
   static async onBeforeConnect(req: Party.Request, lobby: Party.Lobby) {
-    const token = new URL(req.url).searchParams.get("token")
+    const url = new URL(req.url)
+    const token = url.searchParams.get("token")
     if (!token) {
       return new Response("Unauthorized", { status: 401 })
+    }
+
+    const requestedProtocol = url.searchParams.get(PROTOCOL_QUERY_PARAM)
+    if (
+      requestedProtocol !== null &&
+      requestedProtocol !== "v1" &&
+      requestedProtocol !== "v2"
+    ) {
+      return new Response("Bad Request", { status: 400 })
     }
 
     try {
@@ -316,6 +411,7 @@ export default class WorkspaceParty implements Party.Server {
         env.REALTIME_BROADCAST_SECRET,
       )
       req.headers.set("X-User-ID", userId)
+      req.headers.set(PROTOCOL_HEADER, requestedProtocol ?? "v1")
     } catch {
       return new Response("Unauthorized", { status: 401 })
     }

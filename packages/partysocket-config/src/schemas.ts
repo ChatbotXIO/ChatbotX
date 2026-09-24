@@ -23,6 +23,69 @@ export const RealtimeEventType = {
   whatsappCallPermissionUpdated: "whatsappCallPermissionUpdated",
 } as const
 
+export const RealtimeTopic = {
+  chat: "chat",
+  voip: "voip",
+} as const
+
+export type RealtimeTopic = (typeof RealtimeTopic)[keyof typeof RealtimeTopic]
+
+export type RealtimeProtocol = "v1" | "v2"
+
+/**
+ * A zero-interest relay response suppresses chat-only publisher traffic for
+ * this long. The builder imports the same value when scheduling its trailing
+ * subscription-state resync, so the two sides cannot drift.
+ */
+export const REALTIME_DELIVERY_NEGATIVE_TTL_MS = 2000
+
+export const REALTIME_EVENT_TOPICS: {
+  readonly [K in (typeof RealtimeEventType)[keyof typeof RealtimeEventType]]: readonly RealtimeTopic[]
+} = {
+  [RealtimeEventType.messageCreated]: [RealtimeTopic.chat],
+  [RealtimeEventType.messageDeleted]: [RealtimeTopic.chat],
+  [RealtimeEventType.messageUpdated]: [RealtimeTopic.chat],
+  [RealtimeEventType.messageContentUpdated]: [RealtimeTopic.chat],
+  [RealtimeEventType.messageIdAssigned]: [RealtimeTopic.chat],
+  [RealtimeEventType.messageFailed]: [RealtimeTopic.chat],
+  [RealtimeEventType.typing]: [RealtimeTopic.chat],
+  [RealtimeEventType.contactBlocked]: [RealtimeTopic.chat],
+  [RealtimeEventType.contactUnblocked]: [RealtimeTopic.chat],
+  [RealtimeEventType.conversationAssigned]: [
+    RealtimeTopic.chat,
+    RealtimeTopic.voip,
+  ],
+  [RealtimeEventType.notifyExportResult]: [RealtimeTopic.chat],
+  [RealtimeEventType.conversationCreated]: [RealtimeTopic.chat],
+  [RealtimeEventType.conversationUpdated]: [RealtimeTopic.chat],
+  [RealtimeEventType.whatsappCallTransportIncoming]: [RealtimeTopic.voip],
+  [RealtimeEventType.whatsappCallTransportEnded]: [RealtimeTopic.voip],
+  [RealtimeEventType.whatsappCallClaimedElsewhere]: [RealtimeTopic.voip],
+  [RealtimeEventType.whatsappCallOutboundAnswer]: [RealtimeTopic.voip],
+  [RealtimeEventType.whatsappCallOutboundStatus]: [RealtimeTopic.voip],
+  [RealtimeEventType.whatsappCallPermissionUpdated]: [RealtimeTopic.voip],
+}
+
+export const realtimeSubscriptionMessageSchema = z.object({
+  type: z.literal("subscribe"),
+  // Repeats are accepted and de-duplicated by the Party; keeping a small
+  // frame bound still prevents untrusted websocket clients from sending an
+  // arbitrarily large topic array.
+  topics: z.array(z.enum(RealtimeTopic)).max(16),
+})
+
+export type RealtimeSubscriptionMessage = z.infer<
+  typeof realtimeSubscriptionMessageSchema
+>
+
+export const serializeRealtimeSubscriptionMessage = (
+  topics: readonly RealtimeTopic[],
+): string =>
+  JSON.stringify({
+    type: "subscribe",
+    topics: [...topics],
+  } satisfies RealtimeSubscriptionMessage)
+
 export type RealtimeEventCreateMessage = {
   eventType: typeof RealtimeEventType.messageCreated
   data: unknown
