@@ -1,6 +1,10 @@
 "use server"
 
-import { contactInboxService, conversationService } from "@chatbotx.io/business"
+import {
+  broadcastToWorkspaceParty,
+  contactInboxService,
+  conversationService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { getImageDimensions, uploader } from "@chatbotx.io/filesystem"
@@ -114,26 +118,21 @@ export const editMessage = async (props: {
     ])
   }
 
+  broadcastToWorkspaceParty(workspaceId, {
+    eventType: RealtimeEventType.messageUpdated,
+    data: {
+      messageId,
+      newText,
+      newAttachmentPath: newAttachmentPath ?? null,
+      newAttachmentPublicUrl: newAttachmentPublicUrl ?? null,
+      newAttachmentMimeType: newAttachmentMimeType ?? null,
+      newAttachmentWidth: resolvedWidth,
+      newAttachmentHeight: resolvedHeight,
+      removedAttachment: removeAttachment ?? false,
+    },
+  })
+
   await Promise.allSettled([
-    chatQueue.add(ChatJobAction.broadcastEvent, {
-      type: ChatJobAction.broadcastEvent,
-      data: {
-        workspaceId,
-        event: {
-          eventType: RealtimeEventType.messageUpdated,
-          data: {
-            messageId,
-            newText,
-            newAttachmentPath: newAttachmentPath ?? null,
-            newAttachmentPublicUrl: newAttachmentPublicUrl ?? null,
-            newAttachmentMimeType: newAttachmentMimeType ?? null,
-            newAttachmentWidth: resolvedWidth,
-            newAttachmentHeight: resolvedHeight,
-            removedAttachment: removeAttachment ?? false,
-          },
-        },
-      },
-    }),
     chatQueue.add(ChatJobAction.editChannelMessage, {
       type: ChatJobAction.editChannelMessage,
       data: {

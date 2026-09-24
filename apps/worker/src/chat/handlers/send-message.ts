@@ -2,6 +2,9 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  broadcastToWorkspaceParty,
+  contactInboxService,
+  contactService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { resolveChannelConversationId } from "@chatbotx.io/database/partials"
@@ -44,7 +47,6 @@ import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
-import { broadcastChatEvent } from "../utils/broadcast-chat-event"
 import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
@@ -211,7 +213,7 @@ export async function sendMessageToChannel(
           )
 
           // Notify the client so edit/delete buttons appear immediately without a refresh.
-          await broadcastChatEvent(conversation.workspaceId, {
+          broadcastToWorkspaceParty(conversation.workspaceId, {
             eventType: RealtimeEventType.messageIdAssigned,
             data: { messageId: message.id, commentId: replyId },
           })
@@ -567,7 +569,7 @@ export async function recordMessageSendError(
       createdAt,
     )
 
-    await broadcastChatEvent(workspaceId, {
+    broadcastToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.messageFailed,
       data: { messageId, clientId, error: truncatedError },
     })
@@ -589,7 +591,7 @@ async function clearMessageSendError(
     const repo = await createMessageRepository()
     await repo.updateSendError(messageId, null, workspaceId, createdAt)
 
-    await broadcastChatEvent(workspaceId, {
+    broadcastToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.messageFailed,
       data: { messageId, clientId, error: null },
     })

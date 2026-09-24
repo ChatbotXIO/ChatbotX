@@ -1,11 +1,13 @@
-import { whatsappCallPermissionService } from "@chatbotx.io/business"
+import {
+  broadcastToWorkspaceParty,
+  whatsappCallPermissionService,
+} from "@chatbotx.io/business"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   ChannelError,
   getWhatsappCallPermissionRequest,
 } from "@chatbotx.io/sdk"
 import { logger } from "../../lib/logger"
-import { broadcastChatEvent } from "../utils/broadcast-chat-event"
 import type { ChannelSendErrorContext } from "./channel-send-error-reconcilers"
 
 /**
@@ -45,7 +47,7 @@ export async function reconcileCallPermissionAlreadyGranted(
     contactInboxId: context.contactInbox.id,
     grantedAt: new Date(),
   })
-  await broadcastChatEvent(context.conversation.workspaceId, {
+  broadcastToWorkspaceParty(context.conversation.workspaceId, {
     eventType: RealtimeEventType.whatsappCallPermissionUpdated,
     data: { conversationId: context.conversation.id },
   })

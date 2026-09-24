@@ -12,6 +12,7 @@ const {
   mockRecordOutboundMessageSent,
   mockRecordSendFailure,
   mockChatQueueAdd,
+  mockBroadcastToWorkspaceParty,
   mockRecordPermanentGrant,
   mockMarkReadByOutbound,
 } = vi.hoisted(() => {
@@ -41,6 +42,7 @@ const {
     mockRecordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
+    mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
     mockRecordPermanentGrant: vi.fn().mockResolvedValue(undefined),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
   }
@@ -59,6 +61,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
   conversationService: { markReadByOutbound: mockMarkReadByOutbound },
+  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
   whatsappCallPermissionService: {
     recordPermanentGrant: mockRecordPermanentGrant,
   },
@@ -798,18 +801,10 @@ describe("chat send-message handlers", () => {
       "ws-1",
       expect.any(Date),
     )
-    expect(mockChatQueueAdd).toHaveBeenCalledWith(
-      "broadcastEvent",
-      expect.objectContaining({
-        data: expect.objectContaining({
-          workspaceId: "ws-1",
-          event: {
-            eventType: "messageFailed",
-            data: { messageId: "msg-1", error: "sdk error" },
-          },
-        }),
-      }),
-    )
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageFailed",
+      data: { messageId: "msg-1", error: "sdk error" },
+    })
   })
 
   test("does not persist a sendError on a successful send", async () => {
@@ -829,7 +824,7 @@ describe("chat send-message handlers", () => {
     })
 
     expect(mockUpdateSendError).not.toHaveBeenCalled()
-    expect(mockChatQueueAdd).not.toHaveBeenCalled()
+    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
   })
 
   test("clears a prior sendError when a retry (attemptsMade > 0) succeeds", async () => {
@@ -861,18 +856,10 @@ describe("chat send-message handlers", () => {
       "ws-1",
       createdAt,
     )
-    expect(mockChatQueueAdd).toHaveBeenCalledWith(
-      "broadcastEvent",
-      expect.objectContaining({
-        data: expect.objectContaining({
-          workspaceId: "ws-1",
-          event: {
-            eventType: "messageFailed",
-            data: { messageId: "msg-1", clientId: "client-1", error: null },
-          },
-        }),
-      }),
-    )
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageFailed",
+      data: { messageId: "msg-1", clientId: "client-1", error: null },
+    })
   })
 
   test("does not clear sendError on a first-attempt (non-retry) successful send", async () => {
@@ -1067,18 +1054,10 @@ describe("chat send-message handlers", () => {
       contactInboxId: "ci-1",
       grantedAt: expect.any(Date),
     })
-    expect(mockChatQueueAdd).toHaveBeenCalledWith(
-      "broadcastEvent",
-      expect.objectContaining({
-        data: expect.objectContaining({
-          workspaceId: "ws-1",
-          event: {
-            eventType: "whatsappCallPermissionUpdated",
-            data: { conversationId: "conv-1" },
-          },
-        }),
-      }),
-    )
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+      eventType: "whatsappCallPermissionUpdated",
+      data: { conversationId: "conv-1" },
+    })
     // The send-error icon is still surfaced (this is the correction).
     expect(mockEmit).toHaveBeenCalledWith(
       "message:failed",

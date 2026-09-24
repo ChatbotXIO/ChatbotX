@@ -3,19 +3,16 @@ import { ChannelError, ChannelErrorCategory } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  broadcastToWorkspaceParty: vi.fn(),
   recordPermanentGrant: vi.fn(),
-  broadcastChatEvent: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
   whatsappCallPermissionService: {
     recordPermanentGrant: mocks.recordPermanentGrant,
   },
-}))
-
-vi.mock("../src/chat/utils/broadcast-chat-event", () => ({
-  broadcastChatEvent: mocks.broadcastChatEvent,
 }))
 
 vi.mock("../src/lib/logger", () => ({ logger: mocks.logger }))
@@ -36,8 +33,7 @@ const channelError = (code: number) =>
 describe("reconcileChannelSendError", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.recordPermanentGrant.mockResolvedValue(undefined)
-    mocks.broadcastChatEvent.mockResolvedValue(undefined)
+    mocks.broadcastToWorkspaceParty.mockResolvedValue(undefined)
   })
 
   test("records a permanent grant, refreshes open threads and reports reconciled for a WhatsApp call_permission_request failing with 138017", async () => {
@@ -54,7 +50,7 @@ describe("reconcileChannelSendError", () => {
       contactInboxId: "ci-1",
       grantedAt: expect.any(Date),
     })
-    expect(mocks.broadcastChatEvent).toHaveBeenCalledWith("ws-1", {
+    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
       eventType: "whatsappCallPermissionUpdated",
       data: { conversationId: "conv-1" },
     })
@@ -70,7 +66,7 @@ describe("reconcileChannelSendError", () => {
 
     expect(isReconciled).toBe(false)
     expect(mocks.recordPermanentGrant).not.toHaveBeenCalled()
-    expect(mocks.broadcastChatEvent).not.toHaveBeenCalled()
+    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
   })
 
   test("ignores a message that is not a call_permission_request", async () => {
@@ -120,6 +116,6 @@ describe("reconcileChannelSendError", () => {
         contentAttributes: permissionRequestAttrs,
       }),
     ).rejects.toThrow("db down")
-    expect(mocks.broadcastChatEvent).not.toHaveBeenCalled()
+    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
   })
 })

@@ -912,7 +912,7 @@ const saveAndBroadcastMessage = async (props: {
     }
   }
 
-  if (!isOwnSendEcho) {
+  if (isNew && !isOwnSendEcho) {
     try {
       broadcastToWorkspaceParty(inbox.workspaceId, {
         eventType: RealtimeEventType.messageCreated,

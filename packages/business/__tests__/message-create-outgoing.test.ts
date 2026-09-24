@@ -7,6 +7,7 @@ const mockRepositoryCreate = vi.fn()
 const mockCreateMessageRepository = vi.fn()
 const mockChatQueueAdd = vi.fn()
 const mockResolveTenantSettings = vi.fn()
+const mockBroadcastToWorkspaceParty = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
@@ -55,6 +56,10 @@ vi.mock("../src/platform/settings", () => ({
   resolveTenantSettings: mockResolveTenantSettings,
 }))
 
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
+}))
+
 vi.mock("../src/utils", () => ({
   getPublicFileUrl: (path: string, base: string) => `${base}/${path}`,
 }))
@@ -94,6 +99,7 @@ describe("messageService.createOutgoing", () => {
       createWithAttachments: vi.fn(),
     })
     mockChatQueueAdd.mockResolvedValue(undefined)
+    mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
   })
 
   test("uses one shared timestamp for the message and conversation agent-replied fields", async () => {
@@ -135,6 +141,22 @@ describe("messageService.createOutgoing", () => {
     })
   })
 
+  test("broadcasts a created message directly instead of queueing it", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      input: { text: "hello", clientId: "client-1" },
+    })
+
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        eventType: "messageCreated",
+        data: expect.objectContaining({ clientId: "client-1", id: "msg-1" }),
+      }),
+    )
+  })
+
   test("uses attempts=1 for manual Threads comment replies", async () => {
     await createOutgoing({
       conversation: conversation as never,
@@ -148,7 +170,7 @@ describe("messageService.createOutgoing", () => {
     })
 
     expect(mockChatQueueAdd).toHaveBeenNthCalledWith(
-      2,
+      1,
       "sendChannelMessage",
       expect.objectContaining({
         data: expect.objectContaining({
@@ -172,7 +194,7 @@ describe("messageService.createOutgoing", () => {
     })
 
     expect(mockChatQueueAdd).toHaveBeenNthCalledWith(
-      2,
+      1,
       "sendChannelMessage",
       expect.objectContaining({
         data: expect.objectContaining({
@@ -180,6 +202,6 @@ describe("messageService.createOutgoing", () => {
         }),
       }),
     )
-    expect(mockChatQueueAdd.mock.calls[1]).toHaveLength(2)
+    expect(mockChatQueueAdd.mock.calls[0]).toHaveLength(2)
   })
 })

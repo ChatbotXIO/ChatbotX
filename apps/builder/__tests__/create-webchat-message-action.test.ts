@@ -6,6 +6,7 @@ const {
   insertBuilder,
   mockAutomatedResponseEnqueue,
   mockAutomatedResponseEnqueueFlowAction,
+  mockBroadcastToWorkspaceParty,
   mockChatQueueAdd,
   mockContactFindById,
   mockContactUnblockIfBlocked,
@@ -59,6 +60,7 @@ const {
     mockContactInboxFindLatest: vi.fn(),
     mockContactInboxUpdateTracking: vi.fn().mockResolvedValue(null),
     mockConversationFindBy: vi.fn(),
+    mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockConversationEnsureActive: vi.fn().mockResolvedValue(false),
     mockCreateMessageRepository: vi.fn().mockResolvedValue({
@@ -113,6 +115,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }
@@ -330,6 +333,7 @@ const resetCommonMocks = () => {
     createWithAttachments: vi.fn(),
   })
   mockChatQueueAdd.mockResolvedValue(undefined)
+  mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
   tx.insert.mockReturnValue(insertBuilder)
   insertBuilder.values.mockReturnValue(insertBuilder)
   insertBuilder.returning.mockReset()

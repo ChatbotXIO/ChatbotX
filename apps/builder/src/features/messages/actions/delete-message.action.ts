@@ -1,6 +1,10 @@
 "use server"
 
-import { contactInboxService, conversationService } from "@chatbotx.io/business"
+import {
+  broadcastToWorkspaceParty,
+  contactInboxService,
+  conversationService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
@@ -48,18 +52,12 @@ export const deleteMessage = async (props: {
     : await repository.deleteById(message.id, workspaceId, message.createdAt)
   const messageIds = deleted.map((row) => row.id)
 
-  const jobs: Promise<unknown>[] = [
-    chatQueue.add(ChatJobAction.broadcastEvent, {
-      type: ChatJobAction.broadcastEvent,
-      data: {
-        workspaceId,
-        event: {
-          eventType: RealtimeEventType.messageDeleted,
-          data: { messageIds },
-        },
-      },
-    }),
-  ]
+  broadcastToWorkspaceParty(workspaceId, {
+    eventType: RealtimeEventType.messageDeleted,
+    data: { messageIds },
+  })
+
+  const jobs: Promise<unknown>[] = []
 
   if (message.sourceId && message.contactInboxId) {
     const contactInbox = await contactInboxService.findBy({
