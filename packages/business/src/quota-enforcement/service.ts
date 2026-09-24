@@ -339,11 +339,12 @@ class QuotaEnforcementService {
     const ctx = await this.resolveContext(ownerId)
     const lockKey = this.lockKeyFor(ctx, ownerId, "mac")
 
-    return distributedLock.runExclusive({
+    const result = await distributedLock.runExclusive({
       key: lockKey,
       timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
       fn: async (): Promise<
-        { ok: true; value: T } | { ok: false; level: ConsumeLevel }
+        | { ok: true; value: T; counted: boolean }
+        | { ok: false; level: ConsumeLevel }
       > => {
         const remaining = await this.dualRemainingSlotsForCtx(
           ctx,
@@ -385,39 +386,44 @@ class QuotaEnforcementService {
         if (shouldConsumeMac) {
           await this.incrementByForCtx(ctx, ownerId, "mac", 1)
         }
-        if (counted) {
-          await macTrackingService.incrementWorkspaceMacCache(workspaceId, 1)
-          // Display-only breakdown, mirroring the `contacts` pattern below.
-          // Never let a failure here affect the authoritative MAC counters above.
-          await workspaceUsageService
-            .increment(workspaceId, "mac")
-            .catch((err) => {
-              logger.warn(
-                { err, workspaceId },
-                "workspace usage mac increment failed",
-              )
-            })
-        }
-        // Info-only total-contacts counter: every brand-new contact counts,
-        // independent of the MAC period/limit. Recorded HERE so the single
-        // new-contact chokepoint owns all per-new-contact metrics and no caller
-        // can forget to bump `contacts` (callers previously did this by hand,
-        // and the bulk-import path forgot it entirely).
-        await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
-        // The workspace row is a display-only breakdown. Never let a failure
-        // here affect the authoritative UserQuota increment above.
-        await workspaceUsageService
-          .increment(workspaceId, "contacts")
-          .catch((err) => {
-            logger.warn(
-              { err, workspaceId },
-              "workspace usage contact increment failed",
-            )
-          })
 
-        return { ok: true, value }
+        return { ok: true as const, value, counted }
       },
     })
+
+    if (!result.ok) {
+      return result
+    }
+
+    // These usage breakdowns are non-authoritative. Run them after releasing
+    // the MAC gate so a slow cache or usage write cannot block new contacts.
+    if (result.counted) {
+      await macTrackingService.incrementWorkspaceMacCache(workspaceId, 1)
+      await workspaceUsageService.increment(workspaceId, "mac").catch((err) => {
+        logger.warn(
+          { err, workspaceId },
+          "workspace usage mac increment failed",
+        )
+      })
+    }
+    // Info-only total-contacts counter: every brand-new contact counts,
+    // independent of the MAC period/limit. Recorded HERE so the single
+    // new-contact chokepoint owns all per-new-contact metrics and no caller
+    // can forget to bump `contacts` (callers previously did this by hand,
+    // and the bulk-import path forgot it entirely).
+    await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
+    // The workspace row is a display-only breakdown. Never let a failure
+    // here affect the authoritative UserQuota increment above.
+    await workspaceUsageService
+      .increment(workspaceId, "contacts")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId },
+          "workspace usage contact increment failed",
+        )
+      })
+
+    return { ok: true, value: result.value }
   }
 
   /**

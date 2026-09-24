@@ -1,14 +1,68 @@
 import { Snowflake } from "uuniq"
 
+const SNOWFLAKE_EPOCH = new Date("2004-02-01").toISOString()
+const DEFAULT_SNOWFLAKE_PLACE_ID = 0
+const MAX_SNOWFLAKE_PLACE_ID = 15
+const SYMBOLIC_ID_ALPHABET =
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+const DECIMAL_INTEGER_REGEX = /^\d+$/
+
+export const parseSnowflakePlaceId = (
+  value: string | undefined,
+  isProduction: boolean,
+): number => {
+  if (!value) {
+    if (isProduction) {
+      throw new Error("SNOWFLAKE_PLACE_ID must be set in production")
+    }
+    return DEFAULT_SNOWFLAKE_PLACE_ID
+  }
+
+  if (!DECIMAL_INTEGER_REGEX.test(value)) {
+    throw new Error("SNOWFLAKE_PLACE_ID must be an integer from 0 to 15")
+  }
+
+  const placeId = Number(value)
+  if (!Number.isSafeInteger(placeId) || placeId > MAX_SNOWFLAKE_PLACE_ID) {
+    throw new Error("SNOWFLAKE_PLACE_ID must be an integer from 0 to 15")
+  }
+
+  return placeId
+}
+
+const getSnowflakePlaceId = (): number => {
+  if (typeof process === "undefined") {
+    return DEFAULT_SNOWFLAKE_PLACE_ID
+  }
+
+  return parseSnowflakePlaceId(
+    process.env.SNOWFLAKE_PLACE_ID,
+    process.env.NODE_ENV === "production",
+  )
+}
+
 const NumericSnowflakeIDs = new Snowflake({
-  epoch: new Date("2004-02-01").toISOString(),
+  epoch: SNOWFLAKE_EPOCH,
+  place_id: getSnowflakePlaceId(),
 })
 
-export const SymbolicSnowflakeIDs = new Snowflake({
-  epoch: new Date("2004-02-01").toISOString(),
-  format: "symbolic",
-  place_id: 1,
-})
+const encodeSymbolicId = (id: string): string => {
+  let value = BigInt(id)
+  let encoded = ""
+  const radix = BigInt(SYMBOLIC_ID_ALPHABET.length)
+
+  while (value > 0) {
+    const characterIndex = Number(value % radix)
+    encoded = `${SYMBOLIC_ID_ALPHABET[characterIndex]}${encoded}`
+    value /= radix
+  }
+
+  return encoded || SYMBOLIC_ID_ALPHABET[0]
+}
+
+export const SymbolicSnowflakeIDs = {
+  generate: (): string => encodeSymbolicId(NumericSnowflakeIDs.generate()),
+}
 
 export const createId = (): string => NumericSnowflakeIDs.generate()
 

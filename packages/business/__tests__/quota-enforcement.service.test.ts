@@ -492,6 +492,35 @@ describe("quotaEnforcementService.createNewContactWithMac", () => {
       1,
     )
   })
+  test("releases the MAC lock before recording non-authoritative usage metrics", async () => {
+    asRootUser()
+    userQuotaService.getRemainingSlots.mockResolvedValue(5)
+    userQuotaService.getForUser.mockResolvedValue({
+      periodStart: new Date("2026-06-01T00:00:00Z"),
+    })
+    let lockReleased = false
+    distributedLock.runExclusive.mockImplementationOnce(
+      async ({ fn }: { fn: () => Promise<unknown> }) => {
+        const result = await fn()
+        lockReleased = true
+        return result
+      },
+    )
+    const lockStateAtUsageIncrement: boolean[] = []
+    workspaceUsageService.increment.mockImplementation(() => {
+      lockStateAtUsageIncrement.push(lockReleased)
+      return Promise.resolve()
+    })
+
+    await quotaEnforcementService.createNewContactWithMac({
+      ownerId: ROOT_USER,
+      workspaceId: "ws-1",
+      create: makeCreate(),
+    })
+
+    expect(workspaceUsageService.increment).toHaveBeenCalledWith("ws-1", "mac")
+    expect(lockStateAtUsageIncrement).toEqual([true, true])
+  })
 })
 
 describe("quotaEnforcementService.createContactWithoutMac", () => {
