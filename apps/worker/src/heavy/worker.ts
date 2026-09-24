@@ -1,6 +1,6 @@
 import {
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   type HeavyFlowContinuation,
   HeavyJobAction,
   type HeavyJobData,
@@ -322,7 +322,7 @@ async function startHeavyWorker() {
       return result
     },
     {
-      connection: getRedisConnection("bulk"),
+      connection: getQueueConnection(queueNames.enum.heavy),
       ...defaultWorkerOptions,
       concurrency: env.HEAVY_WORKER_CONCURRENCY,
       // AI provider calls are allowed to run for HEAVY_JOB_WAIT_TIMEOUT_MS;

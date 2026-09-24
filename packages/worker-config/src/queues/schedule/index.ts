@@ -4,7 +4,7 @@ import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -283,6 +283,6 @@ export type ScheduleJobData =
 export const scheduleQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
-      connection: getRedisConnection("bulk"),
+      connection: getQueueConnection(queueNames.enum.schedule),
       defaultJobOptions,
     })

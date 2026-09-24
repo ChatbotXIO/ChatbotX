@@ -15,7 +15,7 @@ import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -23,7 +23,7 @@ import { queueNames } from "../../lib/types"
 export const defaultQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<DefaultJobData>(queueNames.enum.default, {
-      connection: getRedisConnection("bulk"),
+      connection: getQueueConnection(queueNames.enum.default),
       defaultJobOptions,
     })
 

@@ -107,4 +107,26 @@ describe("getRedisConnection queue-group routing", () => {
 
     defaultConnection.disconnect()
   })
+
+  test("assigns every queue to its documented Redis group", async () => {
+    const { queueGroupByName } = await import("../src/lib/connection")
+
+    expect(queueGroupByName).toEqual({
+      integration: "hot",
+      chat: "hot",
+      aiAgent: "bulk",
+      heavy: "bulk",
+      schedule: "bulk",
+      trigger: "bulk",
+      webhook: "bulk",
+      default: "bulk",
+      sequenceScheduler: "hot",
+      broadcast: "hot",
+      quota: "bulk",
+      notification: "hot",
+      callTranscription: "hot",
+      whatsappVoipSignaling: "hot",
+      low: "hot",
+    })
+  })
 })

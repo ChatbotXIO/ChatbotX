@@ -1,7 +1,7 @@
 import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   type NotificationJobData,
   queueNames,
 } from "@chatbotx.io/worker-config"
@@ -28,7 +28,7 @@ async function startNotificationWorker() {
       })
     },
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.notification),
       ...defaultWorkerOptions,
       concurrency: env.NOTIFICATION_WORKER_CONCURRENCY,
     },

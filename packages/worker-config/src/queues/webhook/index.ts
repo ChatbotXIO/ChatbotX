@@ -3,7 +3,7 @@ import { Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -28,6 +28,6 @@ export type WebhookJobData = WebhookJobEvaluate
 export const webhookQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<WebhookJobData>(queueNames.enum.webhook, {
-      connection: getRedisConnection("bulk"),
+      connection: getQueueConnection(queueNames.enum.webhook),
       defaultJobOptions,
     })

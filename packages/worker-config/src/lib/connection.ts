@@ -1,6 +1,7 @@
 import { createRedisConnection } from "@chatbotx.io/redis"
 import type { default as IORedis, RedisOptions } from "ioredis"
 import { keys } from "../keys"
+import type { QueueName } from "./types"
 
 const connectionsByGroup: Record<QueueGroup, IORedis | null> = {
   hot: null,
@@ -21,6 +22,26 @@ export function isNoRedisEnv(): boolean {
 }
 
 export type QueueGroup = "hot" | "bulk"
+
+export const queueGroupByName: Record<QueueName, QueueGroup> = {
+  integration: "hot",
+  chat: "hot",
+  aiAgent: "bulk",
+  heavy: "bulk",
+  schedule: "bulk",
+  trigger: "bulk",
+  webhook: "bulk",
+  default: "bulk",
+  // Uses sequenceConnections directly.
+  sequenceScheduler: "hot",
+  // Has no Queue or Worker.
+  broadcast: "hot",
+  quota: "bulk",
+  notification: "hot",
+  callTranscription: "hot",
+  whatsappVoipSignaling: "hot",
+  low: "hot",
+}
 
 function resolveGroupUrl(group: QueueGroup): string {
   const queueUrl = env.REDIS_QUEUE_URL ?? env.REDIS_URL
@@ -62,6 +83,9 @@ export function getRedisConnection(group: QueueGroup = "hot") {
 
   return connection
 }
+
+export const getQueueConnection = (name: QueueName) =>
+  getRedisConnection(queueGroupByName[name])
 
 export const defaultJobOptions = {
   attempts: 2,

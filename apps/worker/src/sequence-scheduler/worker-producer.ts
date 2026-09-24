@@ -191,7 +191,11 @@ export class SchedulerWorker {
             () => remove(dispatchId),
           )
           return { dispatchId, source }
-        } catch {
+        } catch (error) {
+          logger.debug(
+            { err: error, dispatchId, bucket },
+            "Dispatch claim skipped",
+          )
           return
         }
       }),

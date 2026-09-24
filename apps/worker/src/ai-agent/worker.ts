@@ -7,7 +7,7 @@ import {
   closeHeavyQueueEvents,
   defaultWorkerOptions,
   getHeavyJobOptions,
-  getRedisConnection,
+  getQueueConnection,
   HeavyJobAction,
   heavyQueue,
   queueNames,
@@ -122,7 +122,7 @@ async function startAIAgentWorker() {
       )
     },
     {
-      connection: getRedisConnection("bulk"),
+      connection: getQueueConnection(queueNames.enum.aiAgent),
       ...defaultWorkerOptions,
       concurrency: env.AI_AGENT_WORKER_CONCURRENCY,
     },

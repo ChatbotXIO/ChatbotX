@@ -13,7 +13,7 @@ import { type JobsOptions, Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -973,7 +973,7 @@ export type IntegrationJobData =
 export const integrationQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<IntegrationJobData>(queueNames.enum.integration, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.integration),
       defaultJobOptions,
     })
 

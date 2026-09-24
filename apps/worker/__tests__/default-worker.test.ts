@@ -77,6 +77,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     },
     defaultWorkerOptions: {},
     getRedisConnection: () => ({}),
+    getQueueConnection: () => ({}),
     queueNames: {
       enum: {
         default: "default",

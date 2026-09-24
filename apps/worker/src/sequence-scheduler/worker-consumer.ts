@@ -118,7 +118,7 @@ class DispatchConsumer {
             payload.workspaceId,
           )
 
-          if (!dispatch || dispatch === null) {
+          if (!dispatch) {
             await this.scheduler.removeFromSchedule(
               payload.bucket,
               payload.dispatchId,

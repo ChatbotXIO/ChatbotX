@@ -39,6 +39,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     },
     defaultWorkerOptions: {},
     getRedisConnection: vi.fn(),
+    getQueueConnection: vi.fn(),
     queueNames: { enum: { schedule: "schedule" } },
     scheduleQueue: {},
   }

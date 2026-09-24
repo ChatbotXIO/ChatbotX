@@ -17,7 +17,7 @@ import {
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
   getHeavyJobCompletionWaitTimeoutMs,
-  getRedisConnection,
+  getQueueConnection,
   HeavyJobAction,
   IntegrationJobAction,
   type IntegrationJobData,
@@ -535,7 +535,7 @@ async function startIntegrationWorker() {
     (job: Job<IntegrationJobData>, token) =>
       deferOnLockContention(job, token, () => processIntegrationJob(job)),
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.integration),
       ...defaultWorkerOptions,
       // Override the shared default (5). I/O-bound webhook handling tolerates
       // more parallelism; env-tunable via INTEGRATION_WORKER_CONCURRENCY.
@@ -574,7 +574,7 @@ async function startIntegrationWorker() {
       })
     },
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.callTranscription),
       concurrency: 1,
       limiter: { max: env.CALL_TRANSCRIBE_PER_MIN, duration: 60_000 },
     },
@@ -607,7 +607,7 @@ async function startIntegrationWorker() {
       })
     },
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.whatsappVoipSignaling),
       concurrency: 10,
     },
   )
