@@ -540,7 +540,7 @@ class WhatsappCallRepository {
         and(
           isNotNull(whatsappCallModel.recordingPath),
           isNotNull(whatsappCallModel.recordedAt),
-          sql`${whatsappCallModel.recordedAt} < ${now} - (${integrationWhatsappModel.callRecordingRetentionDays} || ' days')::interval`,
+          sql`${whatsappCallModel.recordedAt} < ${now}::timestamptz - make_interval(days => ${integrationWhatsappModel.callRecordingRetentionDays})`,
         ),
       )
       .limit(input.limit)
