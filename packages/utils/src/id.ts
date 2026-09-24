@@ -52,21 +52,30 @@ const randomIntBetween = (
 ): number =>
   minInclusive + Math.floor(random() * (maxInclusive - minInclusive + 1))
 
+const parseNonNegativeInt = (raw: string | undefined): number | undefined =>
+  raw !== undefined && PLACE_ID_ENV_REGEX.test(raw) ? Number(raw) : undefined
+
 /**
  * Pick the 4-bit place id that distinguishes this process from every other
- * one minting ids against the same database. `SNOWFLAKE_PLACE_ID` (0–15) wins
- * when set; otherwise a random slot in 1–15 is drawn at startup so replicas
- * that share one image do not all land on the same value.
+ * one minting ids against the same database.
+ *
+ * `SNOWFLAKE_PLACE_ID` plus `SNOWFLAKE_PLACE_ID_OFFSET` (default 0) wins when
+ * the sum is within 0–15. The offset exists for orchestrators whose per-task
+ * number restarts at 1 for every service (Docker Swarm `{{.Task.Slot}}`): give
+ * each service its own offset and the replicas never overlap. Otherwise a
+ * random slot in 1–15 is drawn at startup so replicas that share one image
+ * do not all land on the same value.
  */
 export const resolveSnowflakePlaceId = (
   env: Record<string, string | undefined> = readProcessEnv(),
   random: RandomSource = Math.random,
 ): number => {
-  const raw = env.SNOWFLAKE_PLACE_ID
-  if (raw !== undefined && PLACE_ID_ENV_REGEX.test(raw)) {
-    const parsed = Number(raw)
-    if (parsed <= SNOWFLAKE_PLACE_ID_MAX) {
-      return parsed
+  const configured = parseNonNegativeInt(env.SNOWFLAKE_PLACE_ID)
+  const offset = parseNonNegativeInt(env.SNOWFLAKE_PLACE_ID_OFFSET ?? "0")
+  if (configured !== undefined && offset !== undefined) {
+    const placeId = configured + offset
+    if (placeId <= SNOWFLAKE_PLACE_ID_MAX) {
+      return placeId
     }
   }
   return randomIntBetween(random, LEGACY_PLACE_ID + 1, SNOWFLAKE_PLACE_ID_MAX)

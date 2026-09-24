@@ -219,6 +219,44 @@ describe("resolveSnowflakePlaceId", () => {
     expect(drawn.size).toBe(SNOWFLAKE_PLACE_ID_MAX)
   })
 
+  test("adds SNOWFLAKE_PLACE_ID_OFFSET so orchestrator slot numbers can be spread across services", () => {
+    // Docker Swarm: SNOWFLAKE_PLACE_ID="{{.Task.Slot}}" restarts at 1 for
+    // every service, so each service gets its own offset.
+    expect(
+      resolveSnowflakePlaceId({
+        SNOWFLAKE_PLACE_ID: "1",
+        SNOWFLAKE_PLACE_ID_OFFSET: "4",
+      }),
+    ).toBe(5)
+    expect(
+      resolveSnowflakePlaceId({
+        SNOWFLAKE_PLACE_ID: "3",
+        SNOWFLAKE_PLACE_ID_OFFSET: "12",
+      }),
+    ).toBe(15)
+  })
+
+  test("falls back to random when the offset pushes the place id out of range or is invalid", () => {
+    expect(
+      resolveSnowflakePlaceId(
+        { SNOWFLAKE_PLACE_ID: "4", SNOWFLAKE_PLACE_ID_OFFSET: "12" },
+        constantRandom(0.5),
+      ),
+    ).toBe(8)
+    expect(
+      resolveSnowflakePlaceId(
+        { SNOWFLAKE_PLACE_ID: "4", SNOWFLAKE_PLACE_ID_OFFSET: "abc" },
+        constantRandom(0.5),
+      ),
+    ).toBe(8)
+    expect(
+      resolveSnowflakePlaceId(
+        { SNOWFLAKE_PLACE_ID_OFFSET: "4" },
+        constantRandom(0.5),
+      ),
+    ).toBe(8)
+  })
+
   test("ignores a missing or invalid env value and falls back to random", () => {
     for (const env of [
       {},
