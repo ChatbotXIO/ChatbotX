@@ -92,6 +92,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { UnrecoverableError } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
+import { LOCK_CONTENTION_POLICY } from "../../lib/lock-contention-deferral"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -1743,6 +1744,9 @@ const createNewContactAndContactInbox = async (props: {
   const result = await quotaEnforcementService.createNewContactWithMac({
     ownerId: ws.ownerId,
     workspaceId: inbox.workspaceId,
+    // This job is wrapped in `deferOnLockContention`: losing the lock parks
+    // the job instead of failing it, so wait briefly rather than pin a slot.
+    lockWaitSeconds: LOCK_CONTENTION_POLICY.lockWaitSeconds,
     create: async (tx) => {
       const newContact = await tx
         .insert(contactModel)

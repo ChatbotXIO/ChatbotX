@@ -1,5 +1,10 @@
 import { macAnalyticsService, macTrackingService } from "@chatbotx.io/analytics"
-import { db, type Transaction } from "@chatbotx.io/database/client"
+import {
+  db,
+  type StatementTimeout,
+  setLocalStatementTimeout,
+  type Transaction,
+} from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { tenantService } from "../enterprise/tenant/service"
@@ -24,6 +29,14 @@ const ALL_METRICS: readonly QuotaMetric[] = [
 ]
 
 const LOCK_TIMEOUT_SECONDS = 30
+
+/**
+ * Upper bound on any single statement inside the new-contact transaction.
+ * `distributedLock.runExclusive` auto-extends the Redis lock while `fn` runs,
+ * so a statement blocked in Postgres (row lock, hung connection) would hold
+ * the owner's MAC lock indefinitely and jam every waiter behind it.
+ */
+const MAC_CREATE_STATEMENT_TIMEOUT: StatementTimeout = "30s"
 
 export type ConsumeLevel = "user" | "pool"
 export type ConsumeResult = { ok: boolean; level?: ConsumeLevel }
@@ -322,6 +335,14 @@ class QuotaEnforcementService {
     ownerId: string
     workspaceId: string
     occurredAt?: Date
+    /**
+     * How long to poll for the per-owner MAC lock before giving up with a
+     * `LockAcquisitionError`. Defaults to the lock TTL (30s). A caller that can
+     * park and retry itself cheaply (a queue job that defers on contention)
+     * should pass a short wait so a losing waiter frees its worker slot
+     * quickly; a synchronous caller keeps the default and waits.
+     */
+    lockWaitSeconds?: number
     create: (tx: Transaction) => Promise<{
       value: T
       contactId: string
@@ -331,6 +352,7 @@ class QuotaEnforcementService {
   }): Promise<{ ok: true; value: T } | { ok: false; level: ConsumeLevel }> {
     const { ownerId, workspaceId, create } = args
     const occurredAt = args.occurredAt ?? new Date()
+    const lockWaitSeconds = args.lockWaitSeconds ?? LOCK_TIMEOUT_SECONDS
     // Resolve the owner's quota context ONCE for the whole operation and thread
     // it through the lock key, remaining check, exhaustion level, and both
     // counter increments — the new-contact path is hot (every inbound message
@@ -342,6 +364,7 @@ class QuotaEnforcementService {
     return distributedLock.runExclusive({
       key: lockKey,
       timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
+      retryTimeoutInSeconds: lockWaitSeconds,
       fn: async (): Promise<
         { ok: true; value: T } | { ok: false; level: ConsumeLevel }
       > => {
@@ -362,6 +385,7 @@ class QuotaEnforcementService {
         const periodStart = quota?.periodStart ?? null
 
         const { value, counted } = await db.transaction(async (tx) => {
+          await setLocalStatementTimeout(tx, MAC_CREATE_STATEMENT_TIMEOUT)
           const created = await create(tx)
           let didCount = false
           if (periodStart) {

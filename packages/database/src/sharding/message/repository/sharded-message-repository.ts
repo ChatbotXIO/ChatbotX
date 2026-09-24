@@ -61,6 +61,7 @@ import type { MessageShardDatabaseClient } from "../client"
 import type { MessageShardConnectionManager } from "../connection-manager"
 import type { MessageShardTimeRangeInfo } from "../registry"
 import { attachmentModel, messageModel } from "../shard-schema"
+import { withPrimaryKeyCollisionRecovery } from "./primary-key-collision"
 
 export { getSafeSinceTime } from "../../../repositories"
 
@@ -363,11 +364,11 @@ export class ShardedMessageRepository implements IMessageRepository {
   }
 
   create(message: CreateMessageInput): Promise<MessageModel> {
-    return withShardRetry(async () => {
-      const db = await this.shardManager.getShardForWrite(message.workspaceId)
+    return withPrimaryKeyCollisionRecovery(message, async (input) => {
+      const db = await this.shardManager.getShardForWrite(input.workspaceId)
       const [result] = await db
         .insert(messageModel)
-        .values(message as typeof messageModel.$inferInsert)
+        .values(input as typeof messageModel.$inferInsert)
         .returning()
       return result as MessageModel
     })
@@ -384,11 +385,11 @@ export class ShardedMessageRepository implements IMessageRepository {
   private insertIgnoringConflict(
     message: CreateMessageInput,
   ): Promise<MessageModel | null> {
-    return withShardRetry(async () => {
-      const db = await this.shardManager.getShardForWrite(message.workspaceId)
+    return withPrimaryKeyCollisionRecovery(message, async (input) => {
+      const db = await this.shardManager.getShardForWrite(input.workspaceId)
       const [result] = await db
         .insert(messageModel)
-        .values(message as typeof messageModel.$inferInsert)
+        .values(input as typeof messageModel.$inferInsert)
         .onConflictDoNothing({
           target: [
             messageModel.contactInboxId,
@@ -1305,11 +1306,11 @@ export class ShardedMessageRepository implements IMessageRepository {
       "messageId" | "messageCreatedAt"
     >[],
   ): Promise<MessageWithAttachments> {
-    return withShardRetry(async () => {
-      // Plain create path: no ignoreConflict, so a real duplicate throws rather
-      // than returning null. A null here would be unexpected.
+    return withPrimaryKeyCollisionRecovery(message, async (input) => {
+      // Plain create path: no ignoreConflict, so a real duplicate throws
+      // rather than returning null. A null here would be unexpected.
       const created = await this.createWithAttachmentsInternal(
-        message,
+        input,
         attachments,
       )
       if (!created) {
@@ -1435,8 +1436,8 @@ export class ShardedMessageRepository implements IMessageRepository {
         // handled below as an idempotent no-op.
         let created: MessageWithAttachments | null
         try {
-          created = await withShardRetry(() =>
-            this.createWithAttachmentsInternal(message, attachments, {
+          created = await withPrimaryKeyCollisionRecovery(message, (input) =>
+            this.createWithAttachmentsInternal(input, attachments, {
               ignoreConflict: true,
             }),
           )
@@ -1490,18 +1491,21 @@ export class ShardedMessageRepository implements IMessageRepository {
     }
     // No sourceId to dedup on: plain create path, no ignoreConflict, so a real
     // duplicate throws rather than returning null.
-    const created = await withShardRetry(async () => {
-      const result = await this.createWithAttachmentsInternal(
-        message,
-        attachments,
-      )
-      if (!result) {
-        throw new MessageShardUnavailableError(
-          "createOrUpdateWithAttachments: insert returned no row",
+    const created = await withPrimaryKeyCollisionRecovery(
+      message,
+      async (input) => {
+        const result = await this.createWithAttachmentsInternal(
+          input,
+          attachments,
         )
-      }
-      return result
-    })
+        if (!result) {
+          throw new MessageShardUnavailableError(
+            "createOrUpdateWithAttachments: insert returned no row",
+          )
+        }
+        return result
+      },
+    )
     return { result: created, isNew: true }
   }
 
