@@ -21,49 +21,31 @@ const { handleEvaluateTemplateSent } = await import(
 
 const jobData = {
   workspaceId: "ws-1",
-  integrationWhatsappId: "iw-1",
+  channel: "whatsapp" as const,
+  integrationId: "iw-1",
   contactInboxId: "ci-1",
   templateId: "template-1",
 }
 
-describe("handleEvaluateTemplateSent", () => {
+// The ads-conversion rule engine is hidden and unused. The handler is a
+// deliberate no-op (its body is commented out, not deleted) so the jobs
+// already sitting in the integration queue drain instantly instead of each
+// running an attribution lookup.
+describe("handleEvaluateTemplateSent (disabled)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.evaluateTemplateSent.mockResolvedValue([])
   })
 
-  test("wraps template-sent evaluation in the blocked-owner guard", async () => {
-    await handleEvaluateTemplateSent(jobData)
+  test("completes without evaluating anything", async () => {
+    await expect(handleEvaluateTemplateSent(jobData)).resolves.toBeUndefined()
 
-    expect(mocks.withBlockedOwnerGuard).toHaveBeenCalledWith(
-      "ws-1",
-      expect.any(Function),
-    )
-    expect(mocks.evaluateTemplateSent).toHaveBeenCalledWith(jobData)
+    expect(mocks.evaluateTemplateSent).not.toHaveBeenCalled()
+    expect(mocks.withBlockedOwnerGuard).not.toHaveBeenCalled()
   })
 
-  test("delegates purchase-capable template-sent evaluation unchanged", async () => {
-    mocks.evaluateTemplateSent.mockResolvedValue([
-      {
-        id: "event-1",
-        eventType: "purchase",
-        currency: null,
-        value: null,
-      },
-    ])
+  test("never throws, even if the service would", async () => {
+    mocks.evaluateTemplateSent.mockRejectedValue(new Error("boom"))
 
-    await handleEvaluateTemplateSent(jobData)
-
-    expect(mocks.evaluateTemplateSent).toHaveBeenCalledWith(jobData)
-    await expect(
-      mocks.evaluateTemplateSent.mock.results[0]?.value,
-    ).resolves.toEqual([
-      {
-        id: "event-1",
-        eventType: "purchase",
-        currency: null,
-        value: null,
-      },
-    ])
+    await expect(handleEvaluateTemplateSent(jobData)).resolves.toBeUndefined()
   })
 })
