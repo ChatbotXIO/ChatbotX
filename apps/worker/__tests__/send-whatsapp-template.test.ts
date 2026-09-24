@@ -418,42 +418,21 @@ describe("processWhatsappTemplate", () => {
     expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
   })
 
-  test("enqueues ads conversion evaluation after a successful template send", async () => {
+  // The ads-conversion rule engine is hidden and unused; the follow-up
+  // evaluation job used to be enqueued after every template send and only
+  // added load to the integration queue. It is disabled (commented out) in
+  // the handler — see enqueue-template-sent-evaluation.ts.
+  test("does not enqueue an ads conversion evaluation job after a template send", async () => {
     await processWhatsappTemplate({
       conversation: fakeConversation,
       contactInbox: fakeContactInbox,
       template: fakeTemplate,
     })
 
-    expect(mockEnqueueIntegrationJob).toHaveBeenCalledWith(
-      {
-        type: "evaluateTemplateSent",
-        data: {
-          workspaceId: "ws-1",
-          channel: "whatsapp",
-          integrationId: "iw-1",
-          contactInboxId: "ci-1",
-          templateId: "tmpl-wa-1",
-        },
-      },
-      { jobId: "ads-conversion-evaluate-template-msg-created" },
+    const enqueuedTypes = mockEnqueueIntegrationJob.mock.calls.map(
+      ([job]: [{ type: string }]) => job.type,
     )
-    expect(mockEnqueueIntegrationJob.mock.calls[0][1].jobId).not.toContain(":")
-  })
-
-  test("swallows ads conversion evaluation enqueue failures after send success", async () => {
-    mockEnqueueIntegrationJob.mockRejectedValueOnce(new Error("redis down"))
-
-    await expect(
-      processWhatsappTemplate({
-        conversation: fakeConversation,
-        contactInbox: fakeContactInbox,
-        template: fakeTemplate,
-      }),
-    ).resolves.toBeDefined()
-
-    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
-    expect(mockEnqueueIntegrationJob).toHaveBeenCalledTimes(1)
+    expect(enqueuedTypes).not.toContain("evaluateTemplateSent")
   })
 
   test("emits message:failed on error and rethrows", async () => {
