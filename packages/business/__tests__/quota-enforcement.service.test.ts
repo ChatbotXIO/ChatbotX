@@ -522,7 +522,7 @@ describe("quotaEnforcementService.createNewContactWithMac", () => {
       create,
     })
 
-    expect(setLocalStatementTimeout).toHaveBeenCalledWith(fakeTx, "10s")
+    expect(setLocalStatementTimeout).toHaveBeenCalledWith(fakeTx, "30s")
     // The cap must be in place before the callback runs its inserts.
     expect(setLocalStatementTimeout.mock.invocationCallOrder[0]).toBeLessThan(
       create.mock.invocationCallOrder[0] as number,

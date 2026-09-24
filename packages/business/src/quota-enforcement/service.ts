@@ -36,7 +36,7 @@ const LOCK_TIMEOUT_SECONDS = 30
  * so a statement blocked in Postgres (row lock, hung connection) would hold
  * the owner's MAC lock indefinitely and jam every waiter behind it.
  */
-const MAC_CREATE_STATEMENT_TIMEOUT: StatementTimeout = "10s"
+const MAC_CREATE_STATEMENT_TIMEOUT: StatementTimeout = "30s"
 
 export type ConsumeLevel = "user" | "pool"
 export type ConsumeResult = { ok: boolean; level?: ConsumeLevel }
