@@ -24,6 +24,7 @@ const {
   mockAutomatedResponseEnqueueFlowAction,
   mockIntegrationQueueAdd,
   mockCreateNewContactWithMac,
+  mockCreateContactWithoutMac,
   mockWorkspaceFind,
   mockQuotaIncrement,
   mockContactUpdate,
@@ -80,6 +81,7 @@ const {
       .mockResolvedValue(undefined),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockCreateNewContactWithMac: vi.fn(),
+    mockCreateContactWithoutMac: vi.fn(),
     mockWorkspaceFind: vi.fn().mockResolvedValue(null),
     mockWorkspaceIsActiveNow: vi.fn().mockReturnValue(true),
     mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
@@ -250,6 +252,7 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: {
     increment: mockQuotaIncrement,
     createNewContactWithMac: mockCreateNewContactWithMac,
+    createContactWithoutMac: mockCreateContactWithoutMac,
   },
   userQuotaService: {
     isLimitReached: vi.fn().mockResolvedValue(false),
@@ -492,13 +495,15 @@ type CreateNewContactWithMacArgs = {
   }) => Promise<unknown>
 }
 
-const runCapturedNewContactCreate = async () => {
+const runCapturedNewContactCreate = async (
+  creator: { mock: { calls: unknown[][] } } = mockCreateNewContactWithMac,
+) => {
   const rows: Record<string, unknown>[] = []
-  const args = mockCreateNewContactWithMac.mock.calls.at(-1)?.[0] as
+  const args = creator.mock.calls.at(-1)?.[0] as
     | CreateNewContactWithMacArgs
     | undefined
   if (!args) {
-    throw new Error("Expected createNewContactWithMac to be called")
+    throw new Error("Expected the contact creator to be called")
   }
 
   await args.create({
@@ -771,13 +776,13 @@ describe("receiveMessage — message repository branch", () => {
         }),
       }),
     )
-    // An outgoing webhook echo (e.g. an agent's native-app reply synced back
-    // in) is not a genuine contact-authored message, so it must not carry the
-    // `origin: "inbound"` discriminant the ads-conversion contactReplied
-    // listener keys off of.
-    expect(mockEmit).toHaveBeenCalledWith(
+    // An outgoing webhook echo (e.g. an agent's native-app reply, or a
+    // third-party tool's broadcast, synced back in) is not a contact-authored
+    // message: it must not count MAC / hourly presence / contactReplied, all
+    // of which hang off `message:received`. Only inbound messages emit it.
+    expect(mockEmit).not.toHaveBeenCalledWith(
       "message:received",
-      expect.not.objectContaining({ origin: "inbound" }),
+      expect.anything(),
     )
   })
 
@@ -1247,25 +1252,22 @@ describe("receiveMessage — new contact MAC gate", () => {
         })
       },
     )
-    mockCreateNewContactWithMac.mockResolvedValue({
-      ok: true,
-      value: {
-        newContact: {
-          id: "contact-new",
-          workspaceId: "ws-1",
-          firstName: "Story Replier",
-          phoneNumber: null,
-          email: null,
-          blockedAt: null,
-          createdAt: new Date("2026-06-21T00:00:00Z"),
-        },
-        contactInbox: {
-          ...fakeContactInbox,
-          id: "ci-new",
-          contactId: "contact-new",
-        },
-        conversation: fakeConversation,
+    mockCreateContactWithoutMac.mockResolvedValue({
+      newContact: {
+        id: "contact-new",
+        workspaceId: "ws-1",
+        firstName: "Story Replier",
+        phoneNumber: null,
+        email: null,
+        blockedAt: null,
+        createdAt: new Date("2026-06-21T00:00:00Z"),
       },
+      contactInbox: {
+        ...fakeContactInbox,
+        id: "ci-new",
+        contactId: "contact-new",
+      },
+      conversation: fakeConversation,
     })
 
     await receiveMessage(baseProps)
@@ -1275,7 +1277,7 @@ describe("receiveMessage — new contact MAC gate", () => {
       "getProfile",
       expect.objectContaining({ data: { sourceId: "psid-123" } }),
     )
-    const rows = await runCapturedNewContactCreate()
+    const rows = await runCapturedNewContactCreate(mockCreateContactWithoutMac)
     expect(rows).toContainEqual(
       expect.objectContaining({
         firstName: "Story Replier",
@@ -1311,21 +1313,18 @@ describe("receiveMessage — new contact MAC gate", () => {
       id: "ci-new",
       contactId: "contact-new",
     }
-    mockCreateNewContactWithMac.mockResolvedValue({
-      ok: true,
-      value: {
-        newContact: {
-          id: "contact-new",
-          workspaceId: "ws-1",
-          firstName: null,
-          phoneNumber: null,
-          email: null,
-          blockedAt: null,
-          createdAt: new Date("2026-06-21T00:00:00Z"),
-        },
-        contactInbox,
-        conversation: fakeConversation,
+    mockCreateContactWithoutMac.mockResolvedValue({
+      newContact: {
+        id: "contact-new",
+        workspaceId: "ws-1",
+        firstName: null,
+        phoneNumber: null,
+        email: null,
+        blockedAt: null,
+        createdAt: new Date("2026-06-21T00:00:00Z"),
       },
+      contactInbox,
+      conversation: fakeConversation,
     })
 
     await receiveMessage(baseProps)
@@ -1337,6 +1336,108 @@ describe("receiveMessage — new contact MAC gate", () => {
         senderId: "contact-new",
       }),
     )
+  })
+
+  // Third-party tools (bulk broadcasts on the same Page), Page Inbox and Meta
+  // auto-replies echo back one outgoing message per recipient. A recipient
+  // the workspace never talked to through ChatbotX is still saved (the inbox
+  // must show the message) but is NOT a monthly-active contact: no MAC gate,
+  // no per-owner MAC lock — the lock serialised every replica behind one
+  // owner during a broadcast and starved every other tenant's inbound.
+  test("creates the contact without the MAC gate or lock for an outgoing echo to an unknown recipient", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Broadcast Recipient" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    const newContact = {
+      id: "contact-new",
+      workspaceId: "ws-1",
+      firstName: "Broadcast Recipient",
+      phoneNumber: null,
+      email: null,
+      blockedAt: null,
+      createdAt: new Date("2026-06-21T00:00:00Z"),
+    }
+    const contactInbox = {
+      ...fakeContactInbox,
+      id: "ci-new",
+      contactId: "contact-new",
+    }
+    mockCreateContactWithoutMac.mockResolvedValue({
+      newContact,
+      contactInbox,
+      conversation: fakeConversation,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+    expect(mockCreateContactWithoutMac).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+    // Same rows as the MAC path: Contact + ContactInbox in one transaction.
+    const rows = await runCapturedNewContactCreate(mockCreateContactWithoutMac)
+    expect(rows).toContainEqual(
+      expect.objectContaining({ firstName: "Broadcast Recipient" }),
+    )
+    expect(rows).toContainEqual(
+      expect.objectContaining({ sourceId: "psid-123", inboxId: "inbox-1" }),
+    )
+    // The echo itself is still stored and attributed to the new contact.
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageType: "outgoing",
+        contactInboxId: "ci-new",
+      }),
+    )
+    const { emitContactCreated } = await import("@chatbotx.io/events")
+    expect(emitContactCreated).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-new",
+      "Broadcast Recipient",
+      undefined,
+      undefined,
+      "ci-new",
+    )
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "message:received",
+      expect.anything(),
+    )
+  })
+
+  test("still gates a brand-new contact's inbound message through the MAC path", async () => {
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          id: "contact-new",
+          workspaceId: "ws-1",
+          firstName: "Test",
+          phoneNumber: null,
+          email: null,
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateNewContactWithMac).toHaveBeenCalledTimes(1)
+    expect(mockCreateContactWithoutMac).not.toHaveBeenCalled()
   })
 
   test("creates the contact without profile data when getProfile rejects (e.g. consent error)", async () => {
