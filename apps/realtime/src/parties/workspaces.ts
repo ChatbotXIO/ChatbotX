@@ -69,7 +69,6 @@ export default class WorkspaceParty implements Party.Server {
     await this.room.storage.delete(PRESENCE_LAST_ARMED_AT_STORAGE_KEY)
     this.lastArmedAtMemo = undefined
   }
-
   async onConnect(
     connection: Party.Connection,
     { request }: Party.ConnectionContext,

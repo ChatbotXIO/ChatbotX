@@ -741,7 +741,6 @@ describe("WorkspaceParty presence reporting", () => {
 
       nowSpy.mockRestore()
     })
-
     it("onRequest self-heals a stalled loop for a room with a connection, without waiting for a new connect", async () => {
       const room = new FakeRoom("ws_1")
       const connection = new FakeConnection()
