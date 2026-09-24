@@ -1,14 +1,20 @@
 import { contactService } from "@chatbotx.io/business"
-import { requireContactPermissionScope } from "../permissions"
-import type { ListContactsRequest, ListContactsResponse } from "../schema/query"
+import type { ContactPermissionScope } from "../permissions"
+import type {
+  ListContactsRequest,
+  ListContactsTableResponse,
+} from "../schema/query"
 import { resolveContactAvatars } from "./resolve-contact-avatars"
 
-async function listContactsWithResolvedAvatars(
+export async function listContacts(
   input: ListContactsRequest,
-  projection?: "table",
-): Promise<ListContactsResponse> {
-  const scope = await requireContactPermissionScope(input.workspaceId)
-  const result = await contactService.list({ ...input, scope, projection })
+  scope: ContactPermissionScope,
+): Promise<ListContactsTableResponse> {
+  const result = await contactService.list({
+    ...input,
+    scope,
+    projection: "table",
+  })
 
   return {
     ...result,
@@ -16,21 +22,9 @@ async function listContactsWithResolvedAvatars(
   }
 }
 
-export async function listContacts(
-  input: ListContactsRequest,
-): Promise<ListContactsResponse> {
-  return await listContactsWithResolvedAvatars(input)
-}
-
-export async function listContactsRSC(
-  input: ListContactsRequest & { workspaceId: string },
-): Promise<ListContactsResponse> {
-  return await listContactsWithResolvedAvatars(input, "table")
-}
-
 export async function countContacts(
   input: ListContactsRequest,
+  scope: ContactPermissionScope,
 ): Promise<{ total: number }> {
-  const scope = await requireContactPermissionScope(input.workspaceId)
   return await contactService.count({ ...input, scope })
 }

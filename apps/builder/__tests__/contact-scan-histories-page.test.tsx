@@ -66,7 +66,9 @@ const { default: ContactScanHistoriesPage } = await import(
 
 describe("ContactScanHistoriesPage", () => {
   beforeEach(() => {
-    vi.mocked(requireContactsAccess).mockReset().mockResolvedValue(undefined)
+    vi.mocked(requireContactsAccess).mockReset().mockResolvedValue({
+      canViewEmailAndPhone: true,
+    })
     vi.mocked(requireContactScanPageAccess)
       .mockReset()
       .mockResolvedValue(undefined)

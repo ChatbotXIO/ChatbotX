@@ -30,7 +30,6 @@ import {
   UserSearchIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
@@ -45,25 +44,33 @@ import DeleteContactDialog from "./components/remove-contact-dialog"
 import RemoveContactSequenceDialog from "./components/remove-contact-sequence-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
 import { ExportContactDialog } from "./export-contact-dialog"
+import { useInvalidateContacts } from "./hooks/use-contacts"
 import type { ExportContactsFilter } from "./schema/action"
-import type { ContactResponse } from "./schema/query"
+import type { ContactTableRow } from "./schema/query"
 
 type ContactListActionProps = {
   workspaceId: string
-  table: Table<ContactResponse>
+  table: Table<ContactTableRow>
   filter?: ExportContactsFilter
+  disabled?: boolean
 }
 
 export function ContactListAction({
   workspaceId,
   table,
   filter,
+  disabled = false,
 }: ContactListActionProps) {
   const t = useTranslations()
-  const router = useRouter()
+  const invalidateContacts = useInvalidateContacts()
 
   const rows = table.getFilteredSelectedRowModel().rows
   const exportAll = table.getIsAllPageRowsSelected()
+  const actionsDisabled = disabled || rows.length === 0
+  const handleMutationSuccess = () => {
+    table.resetRowSelection()
+    invalidateContacts()
+  }
 
   const inboxes = useInboxList()
   const hasContactScanInbox = inboxes.some((inbox) =>
@@ -74,7 +81,7 @@ export function ContactListAction({
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline">
+          <Button disabled={disabled} variant="outline">
             <ListIcon />
             Actions
           </Button>
@@ -83,13 +90,11 @@ export function ContactListAction({
       <DropdownMenuContent className="w-56">
         <AssignConversationDialog
           contactIds={rows.map((r) => r.id)}
-          onSuccess={() => {
-            router.refresh()
-          }}
+          onSuccess={handleMutationSuccess}
           trigger={
             <DropdownMenuItem
               closeOnClick={false}
-              disabled={rows.length === 0}
+              disabled={actionsDisabled}
               onClick={(e) => e.preventDefault()}
             >
               <MessageCirclePlusIcon />
@@ -100,10 +105,11 @@ export function ContactListAction({
 
         <AddContactTagDialog
           ids={rows.map((r) => r.id)}
+          onSuccess={handleMutationSuccess}
           trigger={
             <DropdownMenuItem
               closeOnClick={false}
-              disabled={rows.length === 0}
+              disabled={actionsDisabled}
               onClick={(e) => e.preventDefault()}
             >
               <TagIcon />
@@ -114,10 +120,11 @@ export function ContactListAction({
 
         <AddContactSequenceDialog
           ids={rows.map((r) => r.id)}
+          onSuccess={handleMutationSuccess}
           trigger={
             <DropdownMenuItem
               closeOnClick={false}
-              disabled={rows.length === 0}
+              disabled={actionsDisabled}
               onClick={(e) => e.preventDefault()}
             >
               <Layers2Icon />
@@ -128,10 +135,11 @@ export function ContactListAction({
 
         <AddContactCustomFieldDialog
           ids={rows.map((r) => r.id)}
+          onSuccess={handleMutationSuccess}
           trigger={
             <DropdownMenuItem
               closeOnClick={false}
-              disabled={rows.length === 0}
+              disabled={actionsDisabled}
               onClick={(e) => e.preventDefault()}
             >
               <SaveIcon />
@@ -142,10 +150,11 @@ export function ContactListAction({
 
         <DeleteContactDialog
           ids={rows.map((r) => r.id)}
+          onSuccess={handleMutationSuccess}
           trigger={
             <DropdownMenuItem
               closeOnClick={false}
-              disabled={rows.length === 0}
+              disabled={actionsDisabled}
               onClick={(e) => e.preventDefault()}
             >
               <UserRoundXIcon className="text-destructive" />
@@ -161,7 +170,7 @@ export function ContactListAction({
           trigger={
             <DropdownMenuItem
               closeOnClick={false}
-              disabled={rows.length === 0}
+              disabled={actionsDisabled}
               onClick={(e) => e.preventDefault()}
             >
               <CloudDownloadIcon />
@@ -212,10 +221,11 @@ export function ContactListAction({
             <DropdownMenuSubContent className="w-56">
               <RemoveContactTagDialog
                 ids={rows.map((r) => r.id)}
+                onSuccess={handleMutationSuccess}
                 trigger={
                   <DropdownMenuItem
                     closeOnClick={false}
-                    disabled={rows.length === 0}
+                    disabled={actionsDisabled}
                     onClick={(e) => e.preventDefault()}
                   >
                     <OctagonXIcon />
@@ -226,10 +236,11 @@ export function ContactListAction({
 
               <RemoveContactSequenceDialog
                 ids={rows.map((r) => r.id)}
+                onSuccess={handleMutationSuccess}
                 trigger={
                   <DropdownMenuItem
                     closeOnClick={false}
-                    disabled={rows.length === 0}
+                    disabled={actionsDisabled}
                     onClick={(e) => e.preventDefault()}
                   >
                     <Layers2Icon />
@@ -240,10 +251,11 @@ export function ContactListAction({
 
               <ClearContactCustomFieldDialog
                 ids={rows.map((r) => r.id)}
+                onSuccess={handleMutationSuccess}
                 trigger={
                   <DropdownMenuItem
                     closeOnClick={false}
-                    disabled={rows.length === 0}
+                    disabled={actionsDisabled}
                     onClick={(e) => e.preventDefault()}
                   >
                     <SaveOffIcon />
@@ -258,10 +270,11 @@ export function ContactListAction({
                     .map((r) => r.original.conversation?.id || null)
                     .filter(Boolean) as string[]
                 }
+                onSuccess={handleMutationSuccess}
                 trigger={
                   <DropdownMenuItem
                     closeOnClick={false}
-                    disabled={rows.length === 0}
+                    disabled={actionsDisabled}
                     onClick={(e) => e.preventDefault()}
                   >
                     <UserIcon />
@@ -276,10 +289,11 @@ export function ContactListAction({
                     .map((r) => r.original.conversation?.id || null)
                     .filter(Boolean) as string[]
                 }
+                onSuccess={handleMutationSuccess}
                 trigger={
                   <DropdownMenuItem
                     closeOnClick={false}
-                    disabled={rows.length === 0}
+                    disabled={actionsDisabled}
                     onClick={(e) => e.preventDefault()}
                   >
                     <BotIcon />
@@ -294,10 +308,11 @@ export function ContactListAction({
                     .map((r) => r.original.conversation?.id || null)
                     .filter(Boolean) as string[]
                 }
+                onSuccess={handleMutationSuccess}
                 trigger={
                   <DropdownMenuItem
                     closeOnClick={false}
-                    disabled={rows.length === 0}
+                    disabled={actionsDisabled}
                     onClick={(e) => e.preventDefault()}
                   >
                     <ArchiveIcon />

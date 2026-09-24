@@ -65,7 +65,7 @@ import {
  * (public API) surface — see `./list`. Re-exported here so callers get it
  * from the same barrel as `contactService`.
  */
-export { UNSCOPED } from "./list"
+export { type ContactTableListRow, UNSCOPED } from "./list"
 
 import { PROFILE_NAME_BLANK_CHARACTERS } from "./profile-refresh/rules"
 import { updateFieldsAndCustomFields } from "./update-fields"

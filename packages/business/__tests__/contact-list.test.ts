@@ -10,10 +10,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 //    buildListWhere.
 //  - unscoped calls (scope: UNSCOPED) never mask.
 //  - withCount:false skips the count round-trip entirely (totalCount: 0).
-//  - the O1 projection/relation optimization: listForTable is used for
-//    projection:"table", or when `include` omits both "tags" and
-//    "customFields"; listWithRelations is used otherwise (include omitted,
-//    or include contains "tags"/"customFields").
+//  - the O1 projection/relation optimization: listTableRows is used for
+//    projection:"table"; listWithInboxesAndConversation is used when
+//    `include` omits both "tags" and "customFields"; listWithRelations is
+//    used otherwise.
 // ---------------------------------------------------------------------------
 
 const { contactRepository } = await import("@chatbotx.io/database/repositories")
@@ -28,7 +28,11 @@ beforeEach(() => {
   vi.spyOn(contactRepository, "resolveOrderBy").mockReturnValue(
     orderBy as never,
   )
-  vi.spyOn(contactRepository, "listForTable").mockResolvedValue([] as never)
+  vi.spyOn(
+    contactRepository,
+    "listWithInboxesAndConversation",
+  ).mockResolvedValue([] as never)
+  vi.spyOn(contactRepository, "listTableRows").mockResolvedValue([] as never)
   vi.spyOn(contactRepository, "listWithRelations").mockResolvedValue(
     [] as never,
   )
@@ -114,18 +118,54 @@ describe("contactService.list", () => {
     expect(result.pageCount).toBe(0)
   })
 
-  test("projection:'table' uses listForTable, not listWithRelations", async () => {
-    const tableSpy = vi.spyOn(contactRepository, "listForTable")
+  test("projection:'table' uses listTableRows, not listWithRelations", async () => {
+    const tableRowsSpy = vi.spyOn(contactRepository, "listTableRows")
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
     await list({ workspaceId: "ws-1", scope: UNSCOPED, projection: "table" })
 
-    expect(tableSpy).toHaveBeenCalledTimes(1)
+    expect(tableRowsSpy).toHaveBeenCalledTimes(1)
     expect(relationsSpy).not.toHaveBeenCalled()
   })
 
-  test("include omitting both 'tags' and 'customFields' uses listForTable", async () => {
-    const tableSpy = vi.spyOn(contactRepository, "listForTable")
+  test("projection:'table' for a restricted member passes includeEmailAndPhone:false + restrictToAssignedUserId to buildListWhere and returns rows as-is", async () => {
+    const rows = [
+      {
+        id: "contact-1",
+        fullName: "Ada Lovelace",
+        avatar: null,
+        createdAt: new Date("2024-01-01"),
+        contactInboxes: [],
+        conversation: null,
+      },
+    ]
+    vi.spyOn(contactRepository, "listTableRows").mockResolvedValue(
+      rows as never,
+    )
+
+    const result = await list({
+      workspaceId: "ws-1",
+      scope: {
+        canViewEmailAndPhone: false,
+        restrictToAssignedUserId: "user-1",
+      },
+      projection: "table",
+    })
+
+    expect(result.data).toEqual(rows)
+    expect(contactRepository.buildListWhere).toHaveBeenCalledWith(
+      expect.objectContaining({
+        includeEmailAndPhone: false,
+        restrictToAssignedUserId: "user-1",
+      }),
+    )
+  })
+
+  test("include omitting both 'tags' and 'customFields' uses listWithInboxesAndConversation", async () => {
+    const tableSpy = vi.spyOn(
+      contactRepository,
+      "listWithInboxesAndConversation",
+    )
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
     await list({ workspaceId: "ws-1", scope: UNSCOPED, include: ["inboxes"] })
@@ -135,7 +175,10 @@ describe("contactService.list", () => {
   })
 
   test("include containing 'tags' uses listWithRelations", async () => {
-    const tableSpy = vi.spyOn(contactRepository, "listForTable")
+    const tableSpy = vi.spyOn(
+      contactRepository,
+      "listWithInboxesAndConversation",
+    )
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
     await list({ workspaceId: "ws-1", scope: UNSCOPED, include: ["tags"] })
@@ -145,7 +188,10 @@ describe("contactService.list", () => {
   })
 
   test("include containing 'customFields' uses listWithRelations", async () => {
-    const tableSpy = vi.spyOn(contactRepository, "listForTable")
+    const tableSpy = vi.spyOn(
+      contactRepository,
+      "listWithInboxesAndConversation",
+    )
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
     await list({
@@ -159,7 +205,10 @@ describe("contactService.list", () => {
   })
 
   test("include omitted entirely uses listWithRelations (default full relation set)", async () => {
-    const tableSpy = vi.spyOn(contactRepository, "listForTable")
+    const tableSpy = vi.spyOn(
+      contactRepository,
+      "listWithInboxesAndConversation",
+    )
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
     await list({ workspaceId: "ws-1", scope: UNSCOPED })
