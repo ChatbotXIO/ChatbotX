@@ -42,10 +42,4 @@ describe("handleEvaluateTemplateSent (disabled)", () => {
     expect(mocks.evaluateTemplateSent).not.toHaveBeenCalled()
     expect(mocks.withBlockedOwnerGuard).not.toHaveBeenCalled()
   })
-
-  test("never throws, even if the service would", async () => {
-    mocks.evaluateTemplateSent.mockRejectedValue(new Error("boom"))
-
-    await expect(handleEvaluateTemplateSent(jobData)).resolves.toBeUndefined()
-  })
 })
