@@ -61,7 +61,7 @@ import type { MessageShardDatabaseClient } from "../client"
 import type { MessageShardConnectionManager } from "../connection-manager"
 import type { MessageShardTimeRangeInfo } from "../registry"
 import { attachmentModel, messageModel } from "../shard-schema"
-import { withFreshIdOnPrimaryKeyCollision } from "./primary-key-collision"
+import { withPrimaryKeyCollisionRecovery } from "./primary-key-collision"
 
 export { getSafeSinceTime } from "../../../repositories"
 
@@ -364,16 +364,14 @@ export class ShardedMessageRepository implements IMessageRepository {
   }
 
   create(message: CreateMessageInput): Promise<MessageModel> {
-    return withFreshIdOnPrimaryKeyCollision(message, (input) =>
-      withShardRetry(async () => {
-        const db = await this.shardManager.getShardForWrite(input.workspaceId)
-        const [result] = await db
-          .insert(messageModel)
-          .values(input as typeof messageModel.$inferInsert)
-          .returning()
-        return result as MessageModel
-      }),
-    )
+    return withPrimaryKeyCollisionRecovery(message, async (input) => {
+      const db = await this.shardManager.getShardForWrite(input.workspaceId)
+      const [result] = await db
+        .insert(messageModel)
+        .values(input as typeof messageModel.$inferInsert)
+        .returning()
+      return result as MessageModel
+    })
   }
 
   /**
@@ -387,23 +385,21 @@ export class ShardedMessageRepository implements IMessageRepository {
   private insertIgnoringConflict(
     message: CreateMessageInput,
   ): Promise<MessageModel | null> {
-    return withFreshIdOnPrimaryKeyCollision(message, (input) =>
-      withShardRetry(async () => {
-        const db = await this.shardManager.getShardForWrite(input.workspaceId)
-        const [result] = await db
-          .insert(messageModel)
-          .values(input as typeof messageModel.$inferInsert)
-          .onConflictDoNothing({
-            target: [
-              messageModel.contactInboxId,
-              messageModel.sourceId,
-              messageModel.createdAt,
-            ],
-          })
-          .returning()
-        return (result as MessageModel) ?? null
-      }),
-    )
+    return withPrimaryKeyCollisionRecovery(message, async (input) => {
+      const db = await this.shardManager.getShardForWrite(input.workspaceId)
+      const [result] = await db
+        .insert(messageModel)
+        .values(input as typeof messageModel.$inferInsert)
+        .onConflictDoNothing({
+          target: [
+            messageModel.contactInboxId,
+            messageModel.sourceId,
+            messageModel.createdAt,
+          ],
+        })
+        .returning()
+      return (result as MessageModel) ?? null
+    })
   }
 
   /**
@@ -1310,22 +1306,20 @@ export class ShardedMessageRepository implements IMessageRepository {
       "messageId" | "messageCreatedAt"
     >[],
   ): Promise<MessageWithAttachments> {
-    return withFreshIdOnPrimaryKeyCollision(message, (input) =>
-      withShardRetry(async () => {
-        // Plain create path: no ignoreConflict, so a real duplicate throws
-        // rather than returning null. A null here would be unexpected.
-        const created = await this.createWithAttachmentsInternal(
-          input,
-          attachments,
+    return withPrimaryKeyCollisionRecovery(message, async (input) => {
+      // Plain create path: no ignoreConflict, so a real duplicate throws
+      // rather than returning null. A null here would be unexpected.
+      const created = await this.createWithAttachmentsInternal(
+        input,
+        attachments,
+      )
+      if (!created) {
+        throw new MessageShardUnavailableError(
+          "createWithAttachments: insert returned no row",
         )
-        if (!created) {
-          throw new MessageShardUnavailableError(
-            "createWithAttachments: insert returned no row",
-          )
-        }
-        return created
-      }),
-    )
+      }
+      return created
+    })
   }
 
   private async createWithAttachmentsInternal(
@@ -1442,12 +1436,10 @@ export class ShardedMessageRepository implements IMessageRepository {
         // handled below as an idempotent no-op.
         let created: MessageWithAttachments | null
         try {
-          created = await withFreshIdOnPrimaryKeyCollision(message, (input) =>
-            withShardRetry(() =>
-              this.createWithAttachmentsInternal(input, attachments, {
-                ignoreConflict: true,
-              }),
-            ),
+          created = await withPrimaryKeyCollisionRecovery(message, (input) =>
+            this.createWithAttachmentsInternal(input, attachments, {
+              ignoreConflict: true,
+            }),
           )
         } catch (error) {
           this.logSaveFailure("createOrUpdateWithAttachments", message, error)
@@ -1499,8 +1491,9 @@ export class ShardedMessageRepository implements IMessageRepository {
     }
     // No sourceId to dedup on: plain create path, no ignoreConflict, so a real
     // duplicate throws rather than returning null.
-    const created = await withFreshIdOnPrimaryKeyCollision(message, (input) =>
-      withShardRetry(async () => {
+    const created = await withPrimaryKeyCollisionRecovery(
+      message,
+      async (input) => {
         const result = await this.createWithAttachmentsInternal(
           input,
           attachments,
@@ -1511,7 +1504,7 @@ export class ShardedMessageRepository implements IMessageRepository {
           )
         }
         return result
-      }),
+      },
     )
     return { result: created, isNew: true }
   }

@@ -2232,3 +2232,71 @@ describe("ShardedMessageRepository.createWithAttachments primary-key collision s
     expect(shardDb.transaction).toHaveBeenCalledTimes(1)
   })
 })
+
+describe("ShardedMessageRepository primary-key recovery after a transport retry", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // "Commit succeeded, connection reset before the response": withShardRetry
+  // re-sends the same row, the primary key rejects it, and that rejection must
+  // NOT be mistaken for a cross-process id collision — minting a fresh id there
+  // would insert the same logical message twice. The old behaviour (surface
+  // the error) is preserved.
+  test("create surfaces a primary-key violation that follows a transport retry instead of minting a fresh id", async () => {
+    const connectionReset = Object.assign(new Error("read ECONNRESET"), {
+      code: "ECONNRESET",
+    })
+    const shardDb = makeInsertShardDb([])
+    shardDb.chain.returning
+      .mockRejectedValueOnce(connectionReset)
+      .mockRejectedValueOnce(makePkConflictError())
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    await expect(repo.create(makeMessage({ id: "original" }))).rejects.toThrow(
+      FAILED_QUERY,
+    )
+    expect(shardDb.insert).toHaveBeenCalledTimes(2)
+    for (const [values] of shardDb.chain.values.mock.calls as [
+      CreateMessageInput,
+    ][]) {
+      expect(values.id).toBe("original")
+    }
+  })
+
+  test("create still recovers from a first-attempt primary-key collision after which the fresh insert needs a transport retry", async () => {
+    const connectionReset = Object.assign(new Error("read ECONNRESET"), {
+      code: "ECONNRESET",
+    })
+    const insertedRow = { ...existingRow, id: "fresh-id" }
+    const shardDb = makeInsertShardDb([])
+    shardDb.chain.returning
+      .mockRejectedValueOnce(makePkConflictError()) // genuine collision
+      .mockRejectedValueOnce(connectionReset) // fresh-id insert: transient
+      .mockResolvedValueOnce([insertedRow]) // retried fresh-id insert lands
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    const result = await repo.create(makeMessage({ id: "original" }))
+
+    expect(result).toEqual(insertedRow)
+    expect(shardDb.insert).toHaveBeenCalledTimes(3)
+    const ids = (shardDb.chain.values.mock.calls as [CreateMessageInput][]).map(
+      ([values]) => values.id,
+    )
+    expect(ids[0]).toBe("original")
+    expect(ids[1]).not.toBe("original")
+    expect(ids[2]).toBe(ids[1])
+  })
+})
