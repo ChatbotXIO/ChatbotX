@@ -49,7 +49,7 @@ vi.mock("../src/features/contacts/permissions", () => ({
 const { getContact } = await import(
   "../src/features/contacts/queries/get-contact.query"
 )
-const { listContactsRSC } = await import(
+const { listContacts } = await import(
   "../src/features/contacts/queries/list-contacts.queries"
 )
 
@@ -94,7 +94,10 @@ describe("Contacts avatar resolution", () => {
       },
     ])
 
-    const result = await listContactsRSC({ workspaceId: "workspace-1" })
+    const result = await listContacts(
+      { workspaceId: "workspace-1" },
+      { canViewEmailAndPhone: true, restrictToAssignedUserId: undefined },
+    )
 
     expect(mocks.listContactInboxes).toHaveBeenCalledTimes(1)
     expect(mocks.listContactInboxes).toHaveBeenCalledWith({
