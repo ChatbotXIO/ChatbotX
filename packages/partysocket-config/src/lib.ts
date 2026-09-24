@@ -71,7 +71,6 @@ export const buildBroadcastAuthHeader = (
       authHeaders.delete(oldestKey)
     }
   }
-
   const header = signRealtimeToken(
     audience,
     REALTIME_TOKEN_PURPOSE.broadcast,

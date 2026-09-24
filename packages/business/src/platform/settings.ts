@@ -14,6 +14,7 @@ import { workspaceService } from "../workspace/service"
 import { deriveUrls } from "./derive-urls"
 
 const TRAILING_SLASH_RE = /\/$/
+let realtimeBroadcastUrl: string | undefined
 
 export type EmailTemplate = { subject?: string; body?: string }
 

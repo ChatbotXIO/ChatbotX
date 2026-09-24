@@ -28,7 +28,6 @@ vi.mock("../src/platform/settings", () => ({
 vi.mock("../src/logger", () => ({
   logger: { error: loggerError },
 }))
-
 const event = {
   eventType: "typing",
   data: { conversationId: "conversation_1", seconds: 1, typing: true },

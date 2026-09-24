@@ -17,13 +17,13 @@ export const resolveRealtimeBroadcastTarget = (): BroadcastTarget =>
     url: resolveRealtimeBroadcastUrl(),
   })
 
-export const broadcastToWorkspaceParty = async (
+export const broadcastToWorkspaceParty = (
   workspaceId: string,
   json: RealtimeEventData,
 ) => {
   try {
     const target = resolveRealtimeBroadcastTarget()
-    return await broadcastToWorkspacePartyLow(target, workspaceId, json)
+    return broadcastToWorkspacePartyLow(target, workspaceId, json)
   } catch (err) {
     logger.error(
       { err, eventType: json.eventType, workspaceId },
@@ -38,17 +38,12 @@ export const broadcastToWorkspaceParty = async (
  * connections (never a workspace-wide broadcast) — e.g. the VoIP offer for
  * the single agent a call was routed to.
  */
-export const sendToWorkspaceMember = async (
+export const sendToWorkspaceMember = (
   args: { workspaceId: string; userId: string },
   json: RealtimeEventData,
 ) => {
   const target = resolveRealtimeBroadcastTarget()
-  return await sendToWorkspaceMemberLow(
-    target,
-    args.workspaceId,
-    args.userId,
-    json,
-  )
+  return sendToWorkspaceMemberLow(target, args.workspaceId, args.userId, json)
 }
 
 /**
@@ -56,22 +51,22 @@ export const sendToWorkspaceMember = async (
  * on membership removal so a former member's already-open socket stops
  * receiving further events immediately, rather than only on next reconnect.
  */
-export const revokeWorkspaceMemberConnections = async (args: {
+export const revokeWorkspaceMemberConnections = (args: {
   workspaceId: string
   userId: string
 }) => {
   const target = resolveRealtimeBroadcastTarget()
-  return await revokeWorkspaceMemberConnectionsLow(
+  return revokeWorkspaceMemberConnectionsLow(
     target,
     args.workspaceId,
     args.userId,
   )
 }
 
-export const broadcastToGuestParty = async (
+export const broadcastToGuestParty = (
   args: { workspaceId: string; guestConversationId: string },
   json: RealtimeEventData,
 ) => {
   const target = resolveRealtimeBroadcastTarget()
-  return await broadcastToGuestPartyLow(target, args.guestConversationId, json)
+  return broadcastToGuestPartyLow(target, args.guestConversationId, json)
 }
