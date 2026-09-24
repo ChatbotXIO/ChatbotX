@@ -2,7 +2,7 @@ import { Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -37,6 +37,6 @@ export const callTranscriptionJobId = (callId: string): string =>
 export const callTranscriptionQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<CallTranscriptionJobData>(queueNames.enum.callTranscription, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.callTranscription),
       defaultJobOptions,
     })

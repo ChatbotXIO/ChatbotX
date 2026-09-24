@@ -1,6 +1,6 @@
 import type { Job } from "bullmq"
 import { QueueEvents } from "bullmq"
-import { getRedisConnection } from "./connection"
+import { getQueueConnection } from "./connection"
 import { queueNames } from "./types"
 
 // Bounds the wait so a stalled/backlogged integration worker can never block
@@ -51,7 +51,7 @@ function getIntegrationQueueEvents(): QueueEvents {
   }
 
   integrationQueueEvents = new QueueEvents(queueNames.enum.integration, {
-    connection: getRedisConnection().duplicate(),
+    connection: getQueueConnection(queueNames.enum.integration).duplicate(),
   })
   return integrationQueueEvents
 }
@@ -69,7 +69,7 @@ export function getHeavyQueueEvents(): QueueEvents {
   }
 
   heavyQueueEvents = new QueueEvents(queueNames.enum.heavy, {
-    connection: getRedisConnection("bulk").duplicate(),
+    connection: getQueueConnection(queueNames.enum.heavy).duplicate(),
   })
   return heavyQueueEvents
 }

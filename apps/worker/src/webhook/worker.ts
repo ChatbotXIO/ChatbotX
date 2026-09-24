@@ -1,6 +1,6 @@
 import {
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   queueNames,
   WebhookJobAction,
   type WebhookJobData,
@@ -47,7 +47,7 @@ async function startWebhookWorker() {
       )
     },
     {
-      connection: getRedisConnection("bulk"),
+      connection: getQueueConnection(queueNames.enum.webhook),
       ...defaultWorkerOptions,
       concurrency: env.WEBHOOK_WORKER_CONCURRENCY,
     },

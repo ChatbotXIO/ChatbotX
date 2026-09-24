@@ -64,6 +64,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
   ...(await importOriginal()),
   defaultWorkerOptions: {},
   getRedisConnection: () => ({}),
+  getQueueConnection: () => ({}),
   queueNames: { enum: { trigger: "trigger" } },
   TriggerJobAction: { evaluateTriggers: "evaluateTriggers" },
 }))

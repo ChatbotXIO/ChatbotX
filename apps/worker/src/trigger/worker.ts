@@ -4,7 +4,7 @@ import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   queueNames,
   TriggerJobAction,
   type TriggerJobData,
@@ -87,7 +87,7 @@ async function startTriggerWorker() {
       )
     },
     {
-      connection: getRedisConnection("bulk"),
+      connection: getQueueConnection(queueNames.enum.trigger),
       ...defaultWorkerOptions,
       concurrency: 100,
     },

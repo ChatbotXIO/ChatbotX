@@ -17,6 +17,7 @@ const {
   createProducerSpy,
   findManySpy,
   loggerErrorSpy,
+  loggerDebugSpy,
   loggerInfoSpy,
   useExistingSpy,
 } = vi.hoisted(() => {
@@ -41,6 +42,7 @@ const {
     createProducerSpy,
     findManySpy: vi.fn(),
     loggerErrorSpy: vi.fn(),
+    loggerDebugSpy: vi.fn(),
     loggerInfoSpy: vi.fn(),
     useExistingSpy: vi.fn().mockResolvedValue({}),
   }
@@ -84,6 +86,7 @@ vi.mock("@chatbotx.io/worker-config/message-queue/factory", () => ({
 vi.mock("../src/lib/logger", () => ({
   logger: {
     error: loggerErrorSpy,
+    debug: loggerDebugSpy,
     info: loggerInfoSpy,
   },
 }))

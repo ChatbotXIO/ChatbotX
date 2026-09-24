@@ -504,6 +504,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     removeOnFail: { count: 5000 },
   },
   getRedisConnection: () => ({}),
+  getQueueConnection: () => ({}),
   closeHeavyQueueEvents: vi.fn().mockResolvedValue(undefined),
   closeIntegrationQueueEvents: vi.fn().mockResolvedValue(undefined),
   getHeavyJobCompletionWaitTimeoutMs: vi.fn().mockReturnValue(10 * 60 * 1000),

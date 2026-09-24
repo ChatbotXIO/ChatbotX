@@ -57,6 +57,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   queueNames: { enum: { low: "low" } },
   defaultWorkerOptions: { concurrency: 5, removeOnComplete: { count: 1000 } },
   getRedisConnection: vi.fn(() => ({})),
+  getQueueConnection: vi.fn(() => ({})),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
