@@ -25,6 +25,7 @@ import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 export const INBOX_CONVERSATIONS_PER_PAGE = 20
 export const INBOX_MESSAGES_PER_PAGE = 20
+const CONVERSATION_HEAD_REFRESH_THROTTLE_MS = 5000
 
 /**
  * The later of two timestamps — tolerates the string a realtime payload
@@ -163,6 +164,7 @@ export type ConversationAssignee = {
 export type ChatActions = {
   // Conversation actions
   prependConversation: (newConversation: ListConversationItemResource) => void
+  scheduleConversationHeadRefresh: (workspaceId: string) => void
   initActiveConversationFromUrl: (workspaceId: string) => Promise<void>
   /**
    * Opens a conversation by id, fetching and prepending it if not loaded. If
@@ -443,6 +445,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   // A closure variable rather than store state since it's only read/written
   // inside openConversation and never rendered.
   let pendingOpenConversationId: string | null = null
+  let lastConversationHeadRefreshAt = Number.NEGATIVE_INFINITY
+  let conversationHeadRefreshInFlight: Promise<void> | null = null
   const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => ({
@@ -460,6 +464,73 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           newConversation,
         ),
       })),
+
+    scheduleConversationHeadRefresh: (workspaceId: string) => {
+      if (
+        typeof document !== "undefined" &&
+        document.visibilityState === "hidden"
+      ) {
+        return
+      }
+
+      const now = Date.now()
+      if (
+        conversationHeadRefreshInFlight ||
+        now - lastConversationHeadRefreshAt <
+          CONVERSATION_HEAD_REFRESH_THROTTLE_MS
+      ) {
+        return
+      }
+
+      lastConversationHeadRefreshAt = now
+      const requestedFilters = get().filters
+      conversationHeadRefreshInFlight = (async () => {
+        try {
+          const { data: headConversations } =
+            await client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
+              {
+                workspaceId,
+                perPage: INBOX_CONVERSATIONS_PER_PAGE,
+                cursor: "",
+                ...requestedFilters,
+              },
+              { signal: AbortSignal.timeout(30_000) },
+            )
+
+          if (get().filters !== requestedFilters) {
+            return
+          }
+
+          set((state) => {
+            const existingIds = new Set(
+              state.conversations.map((conversation) => conversation.id),
+            )
+            const newConversations = headConversations.filter(
+              (conversation) => {
+                if (existingIds.has(conversation.id)) {
+                  return false
+                }
+                existingIds.add(conversation.id)
+                return true
+              },
+            )
+            if (newConversations.length === 0) {
+              return state
+            }
+            return {
+              conversations: [...newConversations, ...state.conversations],
+            }
+          })
+        } catch (error) {
+          logger.warn(
+            { err: error, workspaceId },
+            "scheduleConversationHeadRefresh: failed to refresh conversation head",
+          )
+        } finally {
+          conversationHeadRefreshInFlight = null
+        }
+      })()
+    },
 
     initActiveConversationFromUrl: async (workspaceId: string) => {
       const urlParams = new URLSearchParams(
@@ -713,7 +784,6 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       }),
 
     appendMessage: (message: MessageResourceWithRelations) => {
-      const { updateConversationViaMessage } = get()
       set((state) => {
         if (state.messages.some((m) => m.id === message.id)) {
           return state
@@ -729,7 +799,6 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         messages.splice(insertIndex, 0, message)
         return { messages }
       })
-      updateConversationViaMessage(message)
     },
 
     updateMessageAttributes: (messageId, attributes) => {
@@ -901,44 +970,33 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       await loadMoreMessages(workspaceId, perPage)
     },
 
-    updateConversationViaMessage: async (message: MessageResource) => {
-      const { conversations, prependConversation } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === message.conversationId,
-      )
+    updateConversationViaMessage: (message: MessageResource) => {
+      let matchedConversation = false
+      set((state) => {
+        const conversationIndex = state.conversations.findIndex(
+          (conversation) => conversation.id === message.conversationId,
+        )
+        if (conversationIndex === -1) {
+          return state
+        }
 
-      if (conversationIndex > -1) {
-        set((state) => {
-          const conversation = state.conversations.find(
-            (item) => item.id === message.conversationId,
-          )
-          if (!conversation) {
-            return state
-          }
-          const updatedConversation = {
-            ...conversation,
-            messages: [message],
-            lastActivityAt: latestActivityAt(
-              conversation.lastActivityAt,
-              message.createdAt,
-            ),
-          }
-          return {
-            conversations: moveConversationToTop(
-              state.conversations,
-              updatedConversation,
-            ),
-          }
-        })
-      } else {
-        // New conversation, we'll need basic details
-        const newConversation =
-          await client.conversationsAPI.findConversationAuthenticatedAPI({
-            workspaceId: message.workspaceId,
-            id: message.conversationId,
-          })
-        newConversation.data.messages = [message]
-        prependConversation(newConversation.data)
+        matchedConversation = true
+        const updatedConversations = [...state.conversations]
+        const currentConversation = updatedConversations[conversationIndex]
+        const conversation = {
+          ...currentConversation,
+          messages: [message],
+          lastActivityAt: latestActivityAt(
+            currentConversation.lastActivityAt,
+            message.createdAt,
+          ),
+        }
+        updatedConversations.splice(conversationIndex, 1)
+        return { conversations: [conversation, ...updatedConversations] }
+      })
+
+      if (!matchedConversation) {
+        get().scheduleConversationHeadRefresh(message.workspaceId)
       }
     },
 
@@ -1018,89 +1076,82 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       }
 
       const { conversations } = get()
-      const updatedConversations = [...conversations]
-
-      for (const conversationId of conversationIds) {
-        const conversationIndex = conversations.findIndex(
-          (c) => c.id === conversationId,
-        )
-        if (conversationIndex > -1) {
-          updatedConversations[conversationIndex] = {
-            ...updatedConversations[conversationIndex],
-            ...data,
-          }
-        }
+      const targetIds = new Set(conversationIds)
+      if (
+        !conversations.some((conversation) => targetIds.has(conversation.id))
+      ) {
+        return
       }
-      set({ conversations: updatedConversations })
+
+      set({
+        conversations: conversations.map((conversation) =>
+          targetIds.has(conversation.id)
+            ? { ...conversation, ...data }
+            : conversation,
+        ),
+      })
     },
 
-    handleNewMessage: async (message: MessageResourceWithRelations) => {
-      const {
-        messages,
-        activeConversationId,
-        appendMessage,
-        applyAgentLastReadAt,
-        updateConversationViaMessage,
-        updateConversation,
-      } = get()
+    handleNewMessage: (message: MessageResourceWithRelations) => {
+      const { messages, activeConversationId, appendMessage } = get()
+      let matchedConversation = false
 
-      const conversationPatch = conversationPatchForMessage(
-        get().conversations.find((c) => c.id === message.conversationId),
-        message,
-      )
-      if (conversationPatch) {
-        updateConversation(message.conversationId, conversationPatch)
+      set((state) => {
+        const conversationIndex = state.conversations.findIndex(
+          (conversation) => conversation.id === message.conversationId,
+        )
+        if (conversationIndex === -1) {
+          return state
+        }
+
+        matchedConversation = true
+        const updatedConversations = [...state.conversations]
+        const currentConversation = updatedConversations[conversationIndex]
+        const conversationPatch = conversationPatchForMessage(
+          currentConversation,
+          message,
+        )
+        const isAgentReply =
+          message.messageType === "outgoing" &&
+          ((message.senderType === "user" && message.senderId !== null) ||
+            message.senderType === "api")
+        const readAt = isAgentReply ? new Date(message.createdAt) : null
+        const conversation = {
+          ...currentConversation,
+          ...(conversationPatch ?? {}),
+          ...(readAt
+            ? {
+                agentLastReadAt: latestDate(
+                  currentConversation.agentLastReadAt,
+                  readAt,
+                ),
+                adminRepliedAt: readAt,
+              }
+            : {}),
+          messages: [message],
+          lastActivityAt: latestActivityAt(
+            currentConversation.lastActivityAt,
+            message.createdAt,
+          ),
+        }
+
+        updatedConversations.splice(conversationIndex, 1)
+        return { conversations: [conversation, ...updatedConversations] }
+      })
+
+      if (!matchedConversation) {
+        get().scheduleConversationHeadRefresh(message.workspaceId)
       }
-      // Only an outgoing message that `createOutgoing` itself produced clears
-      // the unread state locally. Incoming messages, including those on the
-      // open conversation, stay unread until the persisted read action runs.
-      // A bot/system reply (flow step, template, comment automation) must also
-      // leave it alone. This mirrors the server exactly:
-      // `createOutgoing` is the only writer that calls `markAgentReplied`,
-      // and it stamps senderType "user" with a senderId (inbox composer) or
-      // "api" with none (public API); the worker handlers that send on the
-      // bot's behalf only bump `lastActivityAt`. Without this guard a flow
-      // reply broadcast over realtime marked every open inbox tab as read
-      // even though nobody had opened the conversation.
-      //
-      // The senderId check is what excludes a channel echo: `received-message`
-      // stamps every outgoing echo senderType "user" with a null senderId
-      // whatever its origin (see its `isEchoOfOwnSend` comment), so a bot send
-      // whose sourceId dedup missed comes back looking like an agent reply.
-      // Whether an echo reads the conversation is decided server-side (own
-      // sends by the send path, native-tool sends by the receive path) and
-      // arrives here as `conversationUpdated`, so it is not inferred from the
-      // message.
-      const isAgentReply =
-        message.messageType === "outgoing" &&
-        ((message.senderType === "user" && message.senderId !== null) ||
-          message.senderType === "api")
 
-      if (isAgentReply) {
-        // Mirror what `markAgentReplied` persisted (the message's own
-        // timestamp), not the wall clock, and only ever advance: realtime
-        // events are unordered, so a delayed reply must not pull the cursor
-        // back below a customer message that was delivered before it.
-        const readAt = new Date(message.createdAt)
-        applyAgentLastReadAt([message.conversationId], readAt)
-        updateConversation(message.conversationId, { adminRepliedAt: readAt })
-      }
-
-      // Update the conversation list
-      updateConversationViaMessage(message)
-
-      // Add to messages list if this is the active conversation
       if (message.conversationId !== activeConversationId) {
         return
       }
 
-      // If the message contains the clientId, it can be sent from this tab itself.
       if (message.clientId) {
         const messageIndex = messages.findIndex(
-          (m) => m.clientId === message.clientId,
+          (currentMessage) => currentMessage.clientId === message.clientId,
         )
 
-        // let replace the returned content if found
         if (messageIndex > -1) {
           const newMessages = [...messages]
           newMessages[messageIndex] = {
@@ -1112,23 +1163,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             // letting this stale snapshot clobber it.
             sendError: newMessages[messageIndex].sendError ?? message.sendError,
           }
-          set({
-            messages: newMessages,
-          })
-        } else {
-          // New conversation, we'll need basic details
-          const newMessage =
-            await client.messagesAPI.findMessageAuthenticatedAPI({
-              workspaceId: message.workspaceId,
-              id: message.id,
-              createdAt: new Date(message.createdAt),
-            })
-          appendMessage(newMessage)
+          set({ messages: newMessages })
+          return
         }
-      } else {
-        // just append the messages to the end of messages list
-        appendMessage(message)
       }
+
+      // Every relation added by MessageResourceWithRelations is optional, so
+      // the realtime base-message payload is safe to append without a refetch.
+      appendMessage(message)
     },
 
     loadActivePost: async (workspaceId: string) => {

@@ -28,19 +28,25 @@ export function ChatRealtime() {
       ),
     })
 
-  const {
-    handleNewMessage,
-    markMessagesDeleted,
-    markMessageFailed,
-    assignMessageCommentId,
-    updateMessageText,
-    updateMessageContentAttributes,
-    updateContact,
-    updateConversations,
-    applyAgentLastReadAt,
-    bubbleConversationToTop,
-    openConversation,
-  } = useChatStore((state) => state)
+  const handleNewMessage = useChatStore((state) => state.handleNewMessage)
+  const markMessagesDeleted = useChatStore((state) => state.markMessagesDeleted)
+  const markMessageFailed = useChatStore((state) => state.markMessageFailed)
+  const assignMessageCommentId = useChatStore(
+    (state) => state.assignMessageCommentId,
+  )
+  const updateMessageText = useChatStore((state) => state.updateMessageText)
+  const updateMessageContentAttributes = useChatStore(
+    (state) => state.updateMessageContentAttributes,
+  )
+  const updateContact = useChatStore((state) => state.updateContact)
+  const updateConversations = useChatStore((state) => state.updateConversations)
+  const applyAgentLastReadAt = useChatStore(
+    (state) => state.applyAgentLastReadAt,
+  )
+  const bubbleConversationToTop = useChatStore(
+    (state) => state.bubbleConversationToTop,
+  )
+  const openConversation = useChatStore((state) => state.openConversation)
   const conversationIdParam = useConversationIdParam()
 
   // Dedupes newly-ringing calls so each bubbles the conversation to top only
