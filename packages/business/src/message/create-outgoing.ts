@@ -259,7 +259,7 @@ export const createOutgoing = async (props: {
     })),
   }
 
-  broadcastToWorkspaceParty(messageWithAttachments.workspaceId, {
+  await broadcastToWorkspaceParty(messageWithAttachments.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: {
       ...messageWithAttachments,
