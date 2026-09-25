@@ -47,7 +47,7 @@ export async function reconcileCallPermissionAlreadyGranted(
     contactInboxId: context.contactInbox.id,
     grantedAt: new Date(),
   })
-  broadcastToWorkspaceParty(context.conversation.workspaceId, {
+  await broadcastToWorkspaceParty(context.conversation.workspaceId, {
     eventType: RealtimeEventType.whatsappCallPermissionUpdated,
     data: { conversationId: context.conversation.id },
   })

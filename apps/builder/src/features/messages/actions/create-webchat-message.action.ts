@@ -314,7 +314,7 @@ export async function handleCreateWebchatMessage({
       sourceId: newMessage.sourceId ?? undefined,
     })
 
-    broadcastToWorkspaceParty(newMessage.workspaceId, {
+    await broadcastToWorkspaceParty(newMessage.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: {
         ...newMessage,

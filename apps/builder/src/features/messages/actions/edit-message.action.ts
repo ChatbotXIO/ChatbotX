@@ -118,7 +118,7 @@ export const editMessage = async (props: {
     ])
   }
 
-  broadcastToWorkspaceParty(workspaceId, {
+  await broadcastToWorkspaceParty(workspaceId, {
     eventType: RealtimeEventType.messageUpdated,
     data: {
       messageId,

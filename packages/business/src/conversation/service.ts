@@ -991,7 +991,7 @@ class ConversationService extends BaseService {
 
     await this.invalidate({ workspaceId, ids })
 
-    broadcastToWorkspaceParty(workspaceId, {
+    await broadcastToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.conversationAssigned,
       data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
     })

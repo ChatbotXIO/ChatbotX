@@ -52,7 +52,7 @@ export const deleteMessage = async (props: {
     : await repository.deleteById(message.id, workspaceId, message.createdAt)
   const messageIds = deleted.map((row) => row.id)
 
-  broadcastToWorkspaceParty(workspaceId, {
+  await broadcastToWorkspaceParty(workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
   })

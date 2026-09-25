@@ -914,7 +914,7 @@ const saveAndBroadcastMessage = async (props: {
 
   if (isNew && !isOwnSendEcho) {
     try {
-      broadcastToWorkspaceParty(inbox.workspaceId, {
+      await broadcastToWorkspaceParty(inbox.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
       })
@@ -1354,7 +1354,7 @@ export const updateIncomingComment = async (
   }
 
   try {
-    broadcastToWorkspaceParty(inbox.workspaceId, {
+    await broadcastToWorkspaceParty(inbox.workspaceId, {
       eventType: RealtimeEventType.messageUpdated,
       data: {
         messageId: updated.id,
@@ -1394,7 +1394,7 @@ export const deleteIncomingComment = async (
 
   const messageIds = deleted.map((row) => row.id)
   try {
-    broadcastToWorkspaceParty(inbox.workspaceId, {
+    await broadcastToWorkspaceParty(inbox.workspaceId, {
       eventType: RealtimeEventType.messageDeleted,
       data: { messageIds },
     })
@@ -1537,7 +1537,7 @@ export const processMessageReaction = async (
 
   if (isNew) {
     try {
-      broadcastToWorkspaceParty(inbox.workspaceId, {
+      await broadcastToWorkspaceParty(inbox.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: reactionRow,
       })
@@ -1558,7 +1558,7 @@ export const processMessageReaction = async (
     )
     if (updated) {
       try {
-        broadcastToWorkspaceParty(inbox.workspaceId, {
+        await broadcastToWorkspaceParty(inbox.workspaceId, {
           eventType: RealtimeEventType.messageUpdated,
           data: {
             messageId: updated.id,

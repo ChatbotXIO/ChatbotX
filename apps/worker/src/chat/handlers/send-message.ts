@@ -211,7 +211,7 @@ export async function sendMessageToChannel(
           )
 
           // Notify the client so edit/delete buttons appear immediately without a refresh.
-          broadcastToWorkspaceParty(conversation.workspaceId, {
+          await broadcastToWorkspaceParty(conversation.workspaceId, {
             eventType: RealtimeEventType.messageIdAssigned,
             data: { messageId: message.id, commentId: replyId },
           })
@@ -567,7 +567,7 @@ export async function recordMessageSendError(
       createdAt,
     )
 
-    broadcastToWorkspaceParty(workspaceId, {
+    await broadcastToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.messageFailed,
       data: { messageId, clientId, error: truncatedError },
     })
@@ -589,7 +589,7 @@ async function clearMessageSendError(
     const repo = await createMessageRepository()
     await repo.updateSendError(messageId, null, workspaceId, createdAt)
 
-    broadcastToWorkspaceParty(workspaceId, {
+    await broadcastToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.messageFailed,
       data: { messageId, clientId, error: null },
     })
