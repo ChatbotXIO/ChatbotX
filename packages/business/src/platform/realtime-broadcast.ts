@@ -25,7 +25,10 @@ export const broadcastToWorkspaceParty = async (
     const target = resolveRealtimeBroadcastTarget()
     return await broadcastToWorkspacePartyLow(target, workspaceId, json)
   } catch (err) {
-    logger.error({ err }, "Failed to resolve realtime broadcast target")
+    logger.error(
+      { err, eventType: json.eventType, workspaceId },
+      "Failed to resolve realtime broadcast target",
+    )
     return null
   }
 }

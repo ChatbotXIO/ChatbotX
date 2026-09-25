@@ -12,9 +12,9 @@ export const RealtimeEventType = {
   contactUnblocked: "contactUnblocked",
   conversationAssigned: "conversationAssigned",
   notifyExportResult: "notifyExportResult",
-  // Reserved for wire compatibility; servers no longer emit these events.
-  conversationCreated: "conversationCreated",
   conversationUpdated: "conversationUpdated",
+  // Reserved for wire compatibility; servers no longer emit this event.
+  conversationCreated: "conversationCreated",
   whatsappCallTransportIncoming: "whatsappCallTransportIncoming",
   whatsappCallTransportEnded: "whatsappCallTransportEnded",
   whatsappCallClaimedElsewhere: "whatsappCallClaimedElsewhere",

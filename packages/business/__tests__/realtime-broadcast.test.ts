@@ -58,7 +58,11 @@ describe("broadcastToWorkspaceParty", () => {
 
     expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
     expect(loggerError).toHaveBeenCalledWith(
-      { err: error },
+      {
+        err: error,
+        eventType: "typing",
+        workspaceId: "workspace_1",
+      },
       "Failed to resolve realtime broadcast target",
     )
   })

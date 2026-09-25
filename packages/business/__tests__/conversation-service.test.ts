@@ -413,6 +413,30 @@ describe("conversationService.markReadByContact", () => {
   })
 })
 
+describe("conversationService.updateReadStatus", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("broadcasts the updated agent read timestamp", async () => {
+    const agentLastReadAt = new Date("2026-09-23T12:00:00.000Z")
+
+    await conversationService.updateReadStatus({
+      workspaceId: "ws-1",
+      id: "conv-1",
+      agentLastReadAt,
+    })
+
+    expect(broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+      eventType: "conversationUpdated",
+      data: {
+        conversationIds: ["conv-1"],
+        changes: { agentLastReadAt: agentLastReadAt.toISOString() },
+      },
+    })
+  })
+})
+
 describe("conversationService.markReadByOutbound", () => {
   beforeEach(() => {
     vi.clearAllMocks()

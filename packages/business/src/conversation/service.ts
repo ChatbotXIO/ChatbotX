@@ -1240,13 +1240,20 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
+    await broadcastToWorkspaceParty(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: [id],
+        changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
+      },
+    })
   }
 
   /**
    * Advances agent read state only, so retries and delayed outbound events
    * cannot overwrite a newer read. The inbox preference is checked inside the
    * same statement to avoid racing a separate gate read; successful advances
-   * enqueue the same best-effort realtime broadcast as manual read updates.
+   * broadcast the same best-effort realtime update as manual reads.
    */
   async markReadByOutbound(props: {
     workspaceId: string
