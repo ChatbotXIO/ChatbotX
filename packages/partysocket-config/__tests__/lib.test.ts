@@ -1,8 +1,11 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const BEARER_PREFIX_RE = /^Bearer /
 
-const { postMock } = vi.hoisted(() => ({ postMock: vi.fn() }))
+const { postMock, signRealtimeTokenMock } = vi.hoisted(() => ({
+  postMock: vi.fn(),
+  signRealtimeTokenMock: vi.fn(),
+}))
 
 vi.mock("ky", async () => {
   const actual = await vi.importActual<typeof import("ky")>("ky")
@@ -12,12 +15,18 @@ vi.mock("ky", async () => {
   }
 })
 
+vi.mock("../src/auth", async () => {
+  const actual = await vi.importActual<Record<string, unknown>>("../src/auth")
+  return { ...actual, signRealtimeToken: signRealtimeTokenMock }
+})
+
 vi.mock("../src/logger", () => ({
   logger: { error: vi.fn(), info: vi.fn() },
 }))
 
 import {
   broadcastToWorkspaceParty,
+  buildBroadcastAuthHeader,
   revokeWorkspaceMemberConnections,
   sendToWorkspaceMember,
 } from "../src/lib"
@@ -27,6 +36,11 @@ const event = {
   eventType: "typing",
   data: { conversationId: "c_1", typing: true, seconds: 1 },
 } as const
+
+beforeEach(() => {
+  signRealtimeTokenMock.mockReset()
+  signRealtimeTokenMock.mockResolvedValue("test-token")
+})
 
 describe("sendToWorkspaceMember", () => {
   it("posts with a userId query param and the raw event body unchanged", async () => {
@@ -133,5 +147,76 @@ describe("broadcastToWorkspaceParty (unchanged)", () => {
     expect(path).toBe("parties/workspaces/ws_1")
     expect(options.searchParams).toBeUndefined()
     expect(options.json).toEqual(event)
+  })
+
+  it("reuses a signed header for repeated workspace broadcasts", async () => {
+    postMock.mockReset()
+    postMock.mockReturnValue({ status: 200 })
+
+    await broadcastToWorkspaceParty(target, "ws_cached", event)
+    await broadcastToWorkspaceParty(target, "ws_cached", event)
+    await broadcastToWorkspaceParty(target, "ws_cached", event)
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("buildBroadcastAuthHeader", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("re-signs after the header reuse window expires", async () => {
+    vi.useFakeTimers()
+    const audience = { kind: "workspace" as const, id: "expired_workspace" }
+
+    await buildBroadcastAuthHeader(audience, target.secret)
+    await vi.advanceTimersByTimeAsync(45_001)
+    await buildBroadcastAuthHeader(audience, target.secret)
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("keeps headers separate for different audiences", async () => {
+    await buildBroadcastAuthHeader(
+      { kind: "workspace", id: "workspace_1" },
+      target.secret,
+    )
+    await buildBroadcastAuthHeader(
+      { kind: "workspace", id: "workspace_2" },
+      target.secret,
+    )
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("evicts a failed signing attempt so a later broadcast retries it", async () => {
+    signRealtimeTokenMock
+      .mockRejectedValueOnce(new Error("signing failed"))
+      .mockResolvedValueOnce("retried-token")
+    const audience = { kind: "guest" as const, id: "retry_guest" }
+
+    await expect(
+      buildBroadcastAuthHeader(audience, target.secret),
+    ).rejects.toThrow("signing failed")
+    await expect(
+      buildBroadcastAuthHeader(audience, target.secret),
+    ).resolves.toBe("Bearer retried-token")
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("evicts the oldest header once the cache reaches its capacity", async () => {
+    const firstAudience = { kind: "guest" as const, id: "cap_guest_0" }
+
+    for (let index = 0; index <= 10_000; index++) {
+      await buildBroadcastAuthHeader(
+        { kind: "guest", id: `cap_guest_${index}` },
+        target.secret,
+      )
+    }
+    await buildBroadcastAuthHeader(firstAudience, target.secret)
+
+    expect(signRealtimeTokenMock).toHaveBeenCalledTimes(10_002)
   })
 })

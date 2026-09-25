@@ -26,7 +26,7 @@ sequenceDiagram
   participant NextServer
   participant Partysocket
 
-  NextServer->>NextServer: sign 60s JWT <br> aud=room:id, HS256(REALTIME_BROADCAST_SECRET)
+  NextServer->>NextServer: sign 60s JWT, reused up to 45s per audience <br> aud=room:id, HS256(REALTIME_BROADCAST_SECRET)
   NextServer->>Partysocket: POST /parties/xxx <br> Authorization: Bearer <jwt>
   critical JWT verifies and aud matches room
     Partysocket-->>Browser: return ok

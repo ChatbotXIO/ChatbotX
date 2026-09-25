@@ -2,7 +2,7 @@ import { type JWTPayload, jwtVerify, SignJWT } from "jose"
 import { z } from "zod"
 
 const ALGORITHM = "HS256"
-const TOKEN_TTL_SECONDS = 60
+export const REALTIME_TOKEN_TTL_SECONDS = 60
 const BEARER_SCHEME = "Bearer"
 
 /**
@@ -48,8 +48,18 @@ export interface RealtimeAudience {
 const formatAudience = ({ kind, id }: RealtimeAudience): string =>
   `${kind}:${id}`
 
-const encodeSecret = (secret: string): Uint8Array =>
-  new TextEncoder().encode(secret)
+const encodedSecrets = new Map<string, Uint8Array>()
+
+const encodeSecret = (secret: string): Uint8Array => {
+  const encodedSecret = encodedSecrets.get(secret)
+  if (encodedSecret) {
+    return encodedSecret
+  }
+
+  const encoded = new TextEncoder().encode(secret)
+  encodedSecrets.set(secret, encoded)
+  return encoded
+}
 
 /**
  * Extra claims carried in the JWT payload alongside the `aud` room binding. A
@@ -68,7 +78,7 @@ export const signRealtimeToken = async (
     .setProtectedHeader({ alg: ALGORITHM })
     .setIssuedAt()
     .setAudience(formatAudience(audience))
-    .setExpirationTime(`${TOKEN_TTL_SECONDS}s`)
+    .setExpirationTime(`${REALTIME_TOKEN_TTL_SECONDS}s`)
     .sign(encodeSecret(secret))
 
 /** Extra, per-call verification options for `verifyRealtimeToken`. */

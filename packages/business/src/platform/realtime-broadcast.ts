@@ -6,24 +6,22 @@ import {
   revokeWorkspaceMemberConnections as revokeWorkspaceMemberConnectionsLow,
   sendToWorkspaceMember as sendToWorkspaceMemberLow,
 } from "@chatbotx.io/partysocket-config"
-import { resolveBroadcastSecret, resolveTenantSettings } from "./settings"
+import { resolveBroadcastSecret, resolveRealtimeBroadcastUrl } from "./settings"
 
-const resolveTargetByWorkspace = async (
-  workspaceId: string,
-): Promise<BroadcastTarget> => {
-  const [{ wsUrl }, secret] = await Promise.all([
-    resolveTenantSettings({ workspaceId }),
-    Promise.resolve(resolveBroadcastSecret({ workspaceId })),
-  ])
-  return { url: wsUrl, secret }
-}
+let cachedTarget: BroadcastTarget | undefined
+
+export const resolveRealtimeBroadcastTarget = (): BroadcastTarget =>
+  (cachedTarget ??= {
+    secret: resolveBroadcastSecret(),
+    url: resolveRealtimeBroadcastUrl(),
+  })
 
 export const broadcastToWorkspaceParty = async (
   workspaceId: string,
   json: RealtimeEventData,
 ) => {
-  const target = await resolveTargetByWorkspace(workspaceId)
-  return broadcastToWorkspacePartyLow(target, workspaceId, json)
+  const target = resolveRealtimeBroadcastTarget()
+  return await broadcastToWorkspacePartyLow(target, workspaceId, json)
 }
 
 /**
@@ -35,8 +33,13 @@ export const sendToWorkspaceMember = async (
   args: { workspaceId: string; userId: string },
   json: RealtimeEventData,
 ) => {
-  const target = await resolveTargetByWorkspace(args.workspaceId)
-  return sendToWorkspaceMemberLow(target, args.workspaceId, args.userId, json)
+  const target = resolveRealtimeBroadcastTarget()
+  return await sendToWorkspaceMemberLow(
+    target,
+    args.workspaceId,
+    args.userId,
+    json,
+  )
 }
 
 /**
@@ -48,8 +51,8 @@ export const revokeWorkspaceMemberConnections = async (args: {
   workspaceId: string
   userId: string
 }) => {
-  const target = await resolveTargetByWorkspace(args.workspaceId)
-  return revokeWorkspaceMemberConnectionsLow(
+  const target = resolveRealtimeBroadcastTarget()
+  return await revokeWorkspaceMemberConnectionsLow(
     target,
     args.workspaceId,
     args.userId,
@@ -60,6 +63,6 @@ export const broadcastToGuestParty = async (
   args: { workspaceId: string; guestConversationId: string },
   json: RealtimeEventData,
 ) => {
-  const target = await resolveTargetByWorkspace(args.workspaceId)
-  return broadcastToGuestPartyLow(target, args.guestConversationId, json)
+  const target = resolveRealtimeBroadcastTarget()
+  return await broadcastToGuestPartyLow(target, args.guestConversationId, json)
 }

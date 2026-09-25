@@ -23,9 +23,10 @@ const createContext = (
   storagePrefix: "",
   platform: {
     appUrl: "",
-    wsUrl: "",
+    publicRealtimeUrl: "",
+    internalRealtimeUrl: "",
     storageUrl: "",
-    getRealtimeAuthHeaders: async () => ({}),
+    getRealtimeBroadcastAuthHeaders: async () => ({}),
   },
 })
 

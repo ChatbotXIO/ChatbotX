@@ -15,9 +15,10 @@ const createContext = (auth: DripAuthValue): Context<DripAuthValue> => ({
   storagePrefix: "",
   platform: {
     appUrl: "",
-    wsUrl: "",
+    publicRealtimeUrl: "",
+    internalRealtimeUrl: "",
     storageUrl: "",
-    getRealtimeAuthHeaders: async () => ({}),
+    getRealtimeBroadcastAuthHeaders: async () => ({}),
   },
 })
 

@@ -1,6 +1,7 @@
 import ky, { HTTPError } from "ky"
 import {
   REALTIME_TOKEN_PURPOSE,
+  REALTIME_TOKEN_TTL_SECONDS,
   type RealtimeAudience,
   signRealtimeToken,
 } from "./auth"
@@ -33,16 +34,59 @@ const describeBroadcastError = (error: unknown): Record<string, unknown> => {
   return { message: "unknown broadcast error" }
 }
 
-const buildAuthHeader = async (
+const AUTH_HEADER_REUSE_MS = (REALTIME_TOKEN_TTL_SECONDS - 15) * 1000
+const MAX_CACHED_AUTH_HEADERS = 10_000
+
+type CachedAuthHeader = {
+  expiresAt: number
+  header: Promise<string>
+  secret: string
+}
+
+const authHeaders = new Map<string, CachedAuthHeader>()
+
+export const buildBroadcastAuthHeader = (
   audience: RealtimeAudience,
   secret: string,
 ): Promise<string> => {
-  const token = await signRealtimeToken(
+  const key = `${audience.kind}:${audience.id}`
+  const now = Date.now()
+  const cached = authHeaders.get(key)
+  if (cached?.secret === secret && cached.expiresAt > now) {
+    return cached.header
+  }
+
+  authHeaders.delete(key)
+  if (authHeaders.size >= MAX_CACHED_AUTH_HEADERS) {
+    for (const [cachedKey, entry] of authHeaders) {
+      if (entry.expiresAt <= now) {
+        authHeaders.delete(cachedKey)
+      }
+    }
+  }
+  if (authHeaders.size >= MAX_CACHED_AUTH_HEADERS) {
+    const oldestKey = authHeaders.keys().next().value
+    if (oldestKey) {
+      authHeaders.delete(oldestKey)
+    }
+  }
+
+  const header = signRealtimeToken(
     audience,
     REALTIME_TOKEN_PURPOSE.broadcast,
     secret,
-  )
-  return `Bearer ${token}`
+  ).then((token) => `Bearer ${token}`)
+  authHeaders.set(key, {
+    expiresAt: now + AUTH_HEADER_REUSE_MS,
+    header,
+    secret,
+  })
+  header.catch(() => {
+    if (authHeaders.get(key)?.header === header) {
+      authHeaders.delete(key)
+    }
+  })
+  return header
 }
 
 export async function broadcastToWorkspaceParty(
@@ -54,7 +98,7 @@ export async function broadcastToWorkspaceParty(
     return await ky.post(`parties/workspaces/${workspaceId}`, {
       baseUrl: target.url,
       headers: {
-        Authorization: await buildAuthHeader(
+        Authorization: await buildBroadcastAuthHeader(
           { kind: "workspace", id: workspaceId },
           target.secret,
         ),
@@ -87,7 +131,7 @@ export async function sendToWorkspaceMember(
       baseUrl: target.url,
       searchParams: { userId: targetUserId },
       headers: {
-        Authorization: await buildAuthHeader(
+        Authorization: await buildBroadcastAuthHeader(
           { kind: "workspace", id: workspaceId },
           target.secret,
         ),
@@ -118,7 +162,7 @@ export async function revokeWorkspaceMemberConnections(
       baseUrl: target.url,
       searchParams: { action: "revoke", userId: targetUserId },
       headers: {
-        Authorization: await buildAuthHeader(
+        Authorization: await buildBroadcastAuthHeader(
           { kind: "workspace", id: workspaceId },
           target.secret,
         ),
@@ -142,7 +186,7 @@ export async function broadcastToGuestParty(
     return await ky.post(`parties/guests/${guestConversationId}`, {
       baseUrl: target.url,
       headers: {
-        Authorization: await buildAuthHeader(
+        Authorization: await buildBroadcastAuthHeader(
           { kind: "guest", id: guestConversationId },
           target.secret,
         ),

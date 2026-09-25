@@ -43,9 +43,14 @@ export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {
   integrationDetail?: ID
   platform: {
     appUrl: string
-    wsUrl: string
+    /**
+     * Internal server-to-server realtime broadcast base URL. Never expose this
+     * deployment-wide URL to clients.
+     */
+    internalRealtimeUrl: string
+    publicRealtimeUrl: string
     storageUrl: string
-    getRealtimeAuthHeaders: (target: {
+    getRealtimeBroadcastAuthHeaders: (target: {
       kind: "guest" | "workspace" | "user"
       id: string
     }) => Promise<Record<string, string>>
