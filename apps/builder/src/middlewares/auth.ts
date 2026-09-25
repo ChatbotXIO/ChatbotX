@@ -33,6 +33,7 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
   return next({
     context: {
       session: sessionData.session,
+      apiCredentialId: `session:${sessionData.session.id}`,
       user: {
         ...sessionData.user,
         image: sessionData.user.image || null,

@@ -19,6 +19,7 @@ import {
 import { authMiddleware } from "./middlewares/auth"
 import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-auth"
 import { base } from "./middlewares/context"
+import { apiIdempotencyMiddleware } from "./middlewares/idempotency"
 import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-auth"
 
 const CHANNEL_ERROR_FALLBACK = "The provider rejected the request."
@@ -152,7 +153,9 @@ export function mapKnownOrpcErrors(error: unknown) {
 
 const withErrorMapping = base.use(onError(mapKnownOrpcErrors))
 
-export const authorizedAPI = withErrorMapping.use(authMiddleware)
+export const authorizedAPI = withErrorMapping
+  .use(authMiddleware)
+  .use(apiIdempotencyMiddleware)
 
 const publicAPI = withErrorMapping.errors(commonApiErrors)
 
@@ -193,14 +196,19 @@ const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
  * can never spoof its own scope.
  */
 export const workspaceTokenAuthAPIForScope = (scope: WorkspaceApiTokenScope) =>
-  publicAPI.use(workspaceTokenAuthMidddleware).use(
-    oo.spec(requireTokenScope(scope), (current): OperationObjectWithMcp => {
-      const existing = (current as OperationObjectWithMcp)["x-mcp"]
-      return {
-        ...current,
-        "x-mcp": { ...existing, scope },
-      }
-    }),
-  )
+  publicAPI
+    .use(workspaceTokenAuthMidddleware)
+    .use(
+      oo.spec(requireTokenScope(scope), (current): OperationObjectWithMcp => {
+        const existing = (current as OperationObjectWithMcp)["x-mcp"]
+        return {
+          ...current,
+          "x-mcp": { ...existing, scope },
+        }
+      }),
+    )
+    .use(apiIdempotencyMiddleware)
 
-export const channelApiTokenAPI = publicAPI.use(channelApiTokenAuthMidddleware)
+export const channelApiTokenAPI = publicAPI
+  .use(channelApiTokenAuthMidddleware)
+  .use(apiIdempotencyMiddleware)

@@ -2,6 +2,7 @@ import { SmartCoercionPlugin } from "@orpc/json-schema"
 import { OpenAPIHandler } from "@orpc/openapi/fetch"
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins"
 import { type AnyRouter, ORPCError, onError } from "@orpc/server"
+import { ResponseHeadersPlugin } from "@orpc/server/plugins"
 import type { StandardHandleResult } from "@orpc/server/standard"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { logger } from "@/lib/log"
@@ -97,6 +98,7 @@ export function createOpenAPIHandler<T extends AnyRouter>(
       new SmartCoercionPlugin({
         schemaConverters: [new ZodToJsonSchemaConverter()],
       }),
+      new ResponseHeadersPlugin(),
       new OpenAPIReferencePlugin({
         schemaConverters: [new ZodToJsonSchemaConverter()],
         specGenerateOptions: publicSpecGenerateOptions(options.title),

@@ -14,6 +14,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleIdempotencyErrors,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "../lib/api-paths"
@@ -247,7 +248,10 @@ export const adsCampaignPublicRouter = {
     })
     .input(messagingAdsInsightsPublicRequest)
     .output(z.object({ data: z.array(messagingAdInsightResource) }))
-    .errors(possibleErrorsOnListingResource)
+    .errors({
+      ...possibleErrorsOnListingResource,
+      ...possibleIdempotencyErrors,
+    })
     .handler(async ({ context, input: { refresh, ...input } }) => ({
       // Through the service (not the raw cached read) so ownership is
       // enforced — the requested adIds/adAccountId are intersected with this

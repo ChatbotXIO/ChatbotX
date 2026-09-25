@@ -40,6 +40,21 @@ const CHANNEL_API_TOKEN_SECURITY: Record<string, string[]>[] = [
 // hook — only a document-level default via `specGenerateOptions.security`).
 const CHANNEL_API_TOKEN_PATH_PREFIX = "/v1/channels/api/"
 
+const IDEMPOTENT_METHODS: Record<string, true> = {
+  post: true,
+  put: true,
+  patch: true,
+  delete: true,
+}
+
+const IDEMPOTENCY_KEY_PARAMETER = {
+  name: "Idempotency-Key",
+  in: "header",
+  required: false,
+  description:
+    "Optional client-generated key (e.g. a UUID, max 255 chars) that makes this write safe to retry. Replaying the same key on the same operation within 24 hours returns the original 2xx response with `Idempotent-Replayed: true`; reusing it with a different payload returns 422, and a key whose first request is still running returns 409. Only successful responses are stored, so a failed attempt releases the key.",
+  schema: { type: "string", maxLength: 255 },
+} as const
 export function publicSpecGenerateOptions(title: string) {
   return {
     info: { title, version: PUBLIC_SPEC_VERSION },
@@ -76,6 +91,50 @@ export function withChannelApiTokenSecurity(spec: PublicSpecDocument) {
       ) {
         ;(operation as { security?: unknown }).security =
           CHANNEL_API_TOKEN_SECURITY
+      }
+    }
+  }
+
+  return spec
+}
+
+/**
+ * Adds the optional retry key only to write operations. oRPC 1.14.5 has no
+ * method-aware operation hook, so this runs after the document is generated.
+ */
+export function withIdempotencyKeyHeader(spec: PublicSpecDocument) {
+  if (!spec.paths) {
+    return spec
+  }
+
+  for (const pathItem of Object.values(spec.paths)) {
+    if (!pathItem) {
+      continue
+    }
+
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (
+        !(IDEMPOTENT_METHODS[method] && operation) ||
+        typeof operation !== "object" ||
+        !("responses" in operation)
+      ) {
+        continue
+      }
+
+      const operationWithParameters = operation as { parameters?: unknown[] }
+      const parameters = operationWithParameters.parameters ?? []
+      const hasIdempotencyKey = parameters.some(
+        (parameter) =>
+          parameter !== null &&
+          typeof parameter === "object" &&
+          "name" in parameter &&
+          parameter.name === IDEMPOTENCY_KEY_PARAMETER.name,
+      )
+      if (!hasIdempotencyKey) {
+        operationWithParameters.parameters = [
+          ...parameters,
+          IDEMPOTENCY_KEY_PARAMETER,
+        ]
       }
     }
   }
