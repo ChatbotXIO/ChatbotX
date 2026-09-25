@@ -1,8 +1,11 @@
 import {
   REALTIME_EVENT_TOPICS,
-  type RealtimeEventData,
-  type RealtimeProtocol,
+  type RealtimeEventEnvelope,
+  RealtimeProtocol,
   type RealtimeTopic,
+  realtimeBatchEnvelopeSchema,
+  realtimeEventEnvelopeSchema,
+  realtimeProtocolSchema,
   realtimeSubscriptionMessageSchema,
 } from "@chatbotx.io/partysocket-config"
 import { verifyMemberConnectToken } from "@chatbotx.io/partysocket-config/auth"
@@ -50,42 +53,41 @@ const REPORT_LOOP_STALE_THRESHOLD_MS = PRESENCE_REPORT_INTERVAL_MS * 1.5
 
 type WorkspaceConnectionState = {
   protocol: RealtimeProtocol
-  topics: RealtimeTopic[]
+  topics: RealtimeTopic[] | null
   userId: string
 }
 
-const isRealtimeEventData = (value: unknown): value is RealtimeEventData => {
-  if (typeof value !== "object" || value === null || !("eventType" in value)) {
-    return false
-  }
-  return (
-    typeof value.eventType === "string" &&
-    value.eventType in REALTIME_EVENT_TOPICS &&
-    "data" in value
-  )
+type WorkspaceRealtimeEvent = RealtimeEventEnvelope & {
+  eventType: keyof typeof REALTIME_EVENT_TOPICS
 }
 
+const isWorkspaceRealtimeEvent = (
+  event: RealtimeEventEnvelope,
+): event is WorkspaceRealtimeEvent =>
+  Object.hasOwn(REALTIME_EVENT_TOPICS, event.eventType)
+
 /**
- * Extracts the event list from a POST body: `{ batch: [...] }` under
+ * Extracts known event envelopes from a POST body: `{ batch: [...] }` under
  * `X-Realtime-Batch: 1`, otherwise the raw body is treated as a single event.
- * Returns `null` for a malformed batch envelope or a non-event payload.
+ * Returns `null` for malformed envelopes, including inherited event names.
  */
 const extractWorkspaceEvents = (
   payload: unknown,
   isBatch: boolean,
-): RealtimeEventData[] | null => {
-  if (!isBatch) {
-    return isRealtimeEventData(payload) ? [payload] : null
+): WorkspaceRealtimeEvent[] | null => {
+  if (isBatch) {
+    const result = realtimeBatchEnvelopeSchema.safeParse(payload)
+    if (!result.success) {
+      return null
+    }
+    return result.data.batch.every(isWorkspaceRealtimeEvent)
+      ? result.data.batch
+      : null
   }
-  if (
-    typeof payload !== "object" ||
-    payload === null ||
-    !("batch" in payload)
-  ) {
-    return null
-  }
-  const { batch } = payload
-  return Array.isArray(batch) && batch.every(isRealtimeEventData) ? batch : null
+  const result = realtimeEventEnvelopeSchema.safeParse(payload)
+  return result.success && isWorkspaceRealtimeEvent(result.data)
+    ? [result.data]
+    : null
 }
 
 export default class WorkspaceParty implements Party.Server {
@@ -127,10 +129,15 @@ export default class WorkspaceParty implements Party.Server {
       return
     }
 
-    const protocol = request.headers.get(PROTOCOL_HEADER) === "v2" ? "v2" : "v1"
+    const protocolResult = realtimeProtocolSchema.safeParse(
+      request.headers.get(PROTOCOL_HEADER),
+    )
+    const protocol = protocolResult.success
+      ? protocolResult.data
+      : RealtimeProtocol.v1
     connection.setState({
       protocol,
-      topics: [],
+      topics: protocol === RealtimeProtocol.v2 ? null : [],
       userId,
     } satisfies WorkspaceConnectionState)
 
@@ -336,12 +343,12 @@ export default class WorkspaceParty implements Party.Server {
 
   private deliverEvents(
     connections: Iterable<Party.Connection<WorkspaceConnectionState>>,
-    events: readonly RealtimeEventData[],
+    events: readonly WorkspaceRealtimeEvent[],
   ): number {
     let interested = 0
     for (const connection of connections) {
       const state = connection.state
-      if (state?.protocol !== "v2") {
+      if (state?.protocol !== RealtimeProtocol.v2) {
         for (const event of events) {
           connection.send(JSON.stringify(event))
         }
@@ -349,11 +356,15 @@ export default class WorkspaceParty implements Party.Server {
         continue
       }
 
-      const matchingEvents = events.filter((event) =>
-        REALTIME_EVENT_TOPICS[event.eventType].some((topic) =>
-          state.topics.includes(topic),
-        ),
-      )
+      const topics = state.topics
+      const matchingEvents =
+        topics === null
+          ? events
+          : events.filter((event) =>
+              REALTIME_EVENT_TOPICS[event.eventType].some((topic) =>
+                topics.includes(topic),
+              ),
+            )
       if (matchingEvents.length === 0) {
         continue
       }
@@ -395,12 +406,10 @@ export default class WorkspaceParty implements Party.Server {
       return new Response("Unauthorized", { status: 401 })
     }
 
-    const requestedProtocol = url.searchParams.get(PROTOCOL_QUERY_PARAM)
-    if (
-      requestedProtocol !== null &&
-      requestedProtocol !== "v1" &&
-      requestedProtocol !== "v2"
-    ) {
+    const protocolResult = realtimeProtocolSchema
+      .nullable()
+      .safeParse(url.searchParams.get(PROTOCOL_QUERY_PARAM))
+    if (!protocolResult.success) {
       return new Response("Bad Request", { status: 400 })
     }
 
@@ -411,7 +420,10 @@ export default class WorkspaceParty implements Party.Server {
         env.REALTIME_BROADCAST_SECRET,
       )
       req.headers.set("X-User-ID", userId)
-      req.headers.set(PROTOCOL_HEADER, requestedProtocol ?? "v1")
+      req.headers.set(
+        PROTOCOL_HEADER,
+        protocolResult.data ?? RealtimeProtocol.v1,
+      )
     } catch {
       return new Response("Unauthorized", { status: 401 })
     }

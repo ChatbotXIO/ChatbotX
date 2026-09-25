@@ -3,6 +3,7 @@
 import { getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef } from "react"
+import { useShallow } from "zustand/react/shallow"
 import type { RealtimeHandlerMap } from "@/features/realtime/types"
 import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-realtime-events"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -28,29 +29,48 @@ export function ChatRealtime() {
       ),
     })
 
-  const handleNewMessage = useChatStore((state) => state.handleNewMessage)
-  const flushPendingConversationHeadRefresh = useChatStore(
-    (state) => state.flushPendingConversationHeadRefresh,
+  const {
+    applyAgentLastReadAt,
+    assignMessageCommentId,
+    bubbleConversationToTop,
+    handleNewMessage,
+    markMessagesDeleted,
+    markMessageFailed,
+    openConversation,
+    resumeConversationHeadRefresh,
+    updateContact,
+    updateConversations,
+    updateMessageContentAttributes,
+    updateMessageText,
+  } = useChatStore(
+    useShallow((state) => ({
+      applyAgentLastReadAt: state.applyAgentLastReadAt,
+      assignMessageCommentId: state.assignMessageCommentId,
+      bubbleConversationToTop: state.bubbleConversationToTop,
+      handleNewMessage: state.handleNewMessage,
+      markMessagesDeleted: state.markMessagesDeleted,
+      markMessageFailed: state.markMessageFailed,
+      openConversation: state.openConversation,
+      resumeConversationHeadRefresh: state.resumeConversationHeadRefresh,
+      updateContact: state.updateContact,
+      updateConversations: state.updateConversations,
+      updateMessageContentAttributes: state.updateMessageContentAttributes,
+      updateMessageText: state.updateMessageText,
+    })),
   )
-  const markMessagesDeleted = useChatStore((state) => state.markMessagesDeleted)
-  const markMessageFailed = useChatStore((state) => state.markMessageFailed)
-  const assignMessageCommentId = useChatStore(
-    (state) => state.assignMessageCommentId,
-  )
-  const updateMessageText = useChatStore((state) => state.updateMessageText)
-  const updateMessageContentAttributes = useChatStore(
-    (state) => state.updateMessageContentAttributes,
-  )
-  const updateContact = useChatStore((state) => state.updateContact)
-  const updateConversations = useChatStore((state) => state.updateConversations)
-  const applyAgentLastReadAt = useChatStore(
-    (state) => state.applyAgentLastReadAt,
-  )
-  const bubbleConversationToTop = useChatStore(
-    (state) => state.bubbleConversationToTop,
-  )
-  const openConversation = useChatStore((state) => state.openConversation)
   const conversationIdParam = useConversationIdParam()
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        resumeConversationHeadRefresh(workspaceId)
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [resumeConversationHeadRefresh, workspaceId])
 
   // Dedupes newly-ringing calls so each bubbles the conversation to top only
   // once. Held in a ref (not created inside the effect) so Strict Mode's
@@ -71,17 +91,6 @@ export function ChatRealtime() {
       )
   }, [workspaceId, bubbleConversationToTop])
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        flushPendingConversationHeadRefresh()
-      }
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
-  }, [flushPendingConversationHeadRefresh])
 
   useEffect(() => {
     const bubbleNewEntries = (

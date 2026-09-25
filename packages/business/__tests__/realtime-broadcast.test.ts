@@ -4,6 +4,7 @@ import {
   broadcastToWorkspaceParty,
   flushPendingWorkspaceBroadcasts,
   resetRealtimeBroadcastStateForTests,
+  WORKSPACE_BROADCAST_MAX_BYTES,
   WORKSPACE_BROADCAST_MAX_EVENTS,
 } from "../src/platform/realtime-broadcast"
 
@@ -43,6 +44,11 @@ vi.mock("../src/logger", () => ({
 const typingEvent = {
   eventType: "typing",
   data: { conversationId: "conversation_1", seconds: 1, typing: true },
+} as const
+
+const messageCreatedEvent = {
+  eventType: "messageCreated",
+  data: { conversationId: "conversation_1" },
 } as const
 
 const contactBlockedEvent = {
@@ -151,6 +157,32 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
     expect(batch).toHaveLength(WORKSPACE_BROADCAST_MAX_EVENTS)
   })
 
+  test("flushes queued events before adding an event that exceeds the batch byte limit", async () => {
+    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    broadcastToWorkspacePartyLow.mockClear()
+    const queued = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
+    const oversizedEvent = {
+      eventType: "contactBlocked" as const,
+      data: { contactId: "x".repeat(WORKSPACE_BROADCAST_MAX_BYTES) },
+    }
+
+    const oversized = broadcastToWorkspaceParty("workspace_1", oversizedEvent)
+    await Promise.all([queued, oversized])
+
+    expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      "workspace_1",
+      [contactBlockedEvent],
+    )
+    expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      "workspace_1",
+      oversizedEvent,
+    )
+  })
+
   test("flushPendingWorkspaceBroadcasts drains a pending batch on demand, ahead of the timer", async () => {
     await broadcastToWorkspaceParty("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
@@ -172,18 +204,34 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
 })
 
 describe("chat delivery negative cache (B4)", () => {
-  test("suppresses a chat-only broadcast for the TTL after the relay reports zero interest, without hitting the network", async () => {
+  test("suppresses typing for the TTL after the relay reports zero interest, without hitting the network", async () => {
     broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
     await broadcastToWorkspaceParty("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
 
     const interested = await broadcastToWorkspaceParty(
       "workspace_1",
-      contactBlockedEvent,
+      typingEvent,
     )
 
     expect(interested).toBe(0)
     expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
+  })
+
+  test("continues broadcasting durable chat events while the typing gate is active", async () => {
+    broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
+    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    broadcastToWorkspacePartyLow.mockClear()
+
+    const queued = broadcastToWorkspaceParty("workspace_1", messageCreatedEvent)
+    await vi.runOnlyPendingTimersAsync()
+    await queued
+
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
+      expect.anything(),
+      "workspace_1",
+      [messageCreatedEvent],
+    )
   })
 
   test("stops suppressing once the negative-cache TTL elapses", async () => {

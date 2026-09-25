@@ -42,8 +42,8 @@ services:
       retries: 3
     environment:
       - RUN_DB_MIGRATE=true
-      - REALTIME_INTERNAL_URL=http://realtime:1999
       - RUN_DB_SEED=true
+      - REALTIME_INTERNAL_URL=http://realtime:1999
 
   # BullMQ Worker
   worker:

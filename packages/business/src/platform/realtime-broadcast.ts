@@ -5,6 +5,7 @@ import {
   REALTIME_DELIVERY_NEGATIVE_TTL_MS,
   REALTIME_EVENT_TOPICS,
   type RealtimeEventData,
+  RealtimeEventType,
   RealtimeTopic,
   revokeWorkspaceMemberConnections as revokeWorkspaceMemberConnectionsLow,
   sendToWorkspaceMember as sendToWorkspaceMemberLow,
@@ -43,22 +44,31 @@ export const resolveRealtimeBroadcastTarget = (): BroadcastTarget =>
   })
 
 /**
- * `conversationAssigned` carries both a chat topic and a voip topic (VoIP
- * clients use it to drop stale ringing entries). Only an event whose sole
- * topic is chat may ever be suppressed or drive the negative cache — a mixed
- * event must always reach the relay so its voip-relevant side is never
- * silently dropped.
+ * Only disposable events may be skipped. Durable chat events must always reach
+ * the relay because there is no subscriber catch-up path after a dropped
+ * delivery. Keep the sole-topic check so mixed chat+voip events always reach
+ * their voip subscribers.
  */
-const isChatOnlyEvent = (event: RealtimeEventData): boolean => {
+const GATEABLE_EVENT_TYPES: Partial<
+  Record<RealtimeEventData["eventType"], true>
+> = {
+  [RealtimeEventType.typing]: true,
+}
+
+const isGateableEvent = (event: RealtimeEventData): boolean => {
   const topics = REALTIME_EVENT_TOPICS[event.eventType]
-  return topics.length === 1 && topics[0] === RealtimeTopic.chat
+  return (
+    GATEABLE_EVENT_TYPES[event.eventType] === true &&
+    topics.length === 1 &&
+    topics[0] === RealtimeTopic.chat
+  )
 }
 
 const isChatDeliverySuppressed = (
   workspaceId: string,
   event: RealtimeEventData,
 ): boolean => {
-  if (!(resolveRealtimeDeliveryGate() && isChatOnlyEvent(event))) {
+  if (!(resolveRealtimeDeliveryGate() && isGateableEvent(event))) {
     return false
   }
 
@@ -82,7 +92,7 @@ const recordRelayInterest = (
     !resolveRealtimeDeliveryGate() ||
     interested === null ||
     events.length === 0 ||
-    !events.every(isChatOnlyEvent)
+    !events.every(isGateableEvent)
   ) {
     return
   }
@@ -113,10 +123,11 @@ const sendWorkspaceEvents = async (
     logger.error(
       {
         err,
-        eventType: eventList.length === 1 ? eventList[0]?.eventType : undefined,
+        eventCount: eventList.length,
+        eventTypes: eventList.map((event) => event.eventType),
         workspaceId,
       },
-      "Failed to resolve realtime broadcast target",
+      "Failed to broadcast realtime events",
     )
     return null
   }

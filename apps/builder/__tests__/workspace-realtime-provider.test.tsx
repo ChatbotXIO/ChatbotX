@@ -54,11 +54,9 @@ vi.mock("partysocket/react", () => ({
 // Dynamic import required: the module under test must load after the
 // `vi.mock` calls above register, which a static top-level import would
 // race (vi.mock hoisting only reorders vi.mock calls themselves).
-const {
-  REALTIME_TRAILING_RESYNC_DELAY_MS,
-  WorkspaceRealtimeProvider,
-  useWorkspaceRealtimeContext,
-} = await import("@/features/realtime/workspace-realtime-provider")
+const { WorkspaceRealtimeProvider, useWorkspaceRealtimeContext } = await import(
+  "@/features/realtime/workspace-realtime-provider"
+)
 const { useWorkspaceRealtimeEvents } = await import(
   "@/features/realtime/use-workspace-realtime-events"
 )
@@ -738,6 +736,27 @@ describe("WorkspaceRealtimeProvider", () => {
       )
     })
 
+    test("re-sends subscribed topics after a close and reopen", async () => {
+      function Subscriber() {
+        useWorkspaceRealtimeEvents({ messageDeleted: vi.fn() })
+        return null
+      }
+      await render(<Subscriber />)
+      act(() => {
+        captured?.onOpen?.()
+        captured?.onClose?.()
+      })
+      socketSendMock.mockClear()
+
+      act(() => {
+        captured?.onOpen?.()
+      })
+
+      expect(sentSubscriptions()).toEqual([
+        REALTIME_EVENT_TOPICS.messageDeleted,
+      ])
+    })
+
     test("a handler for a mixed-topic event subscribes to every one of its topics", async () => {
       function Subscriber() {
         useWorkspaceRealtimeEvents({ conversationAssigned: vi.fn() })
@@ -845,53 +864,6 @@ describe("WorkspaceRealtimeProvider", () => {
       // messageDeleted's handler unmounted, but contactBlocked (also "chat")
       // is still registered — the topic must not drop out.
       expect(sentSubscriptions().at(-1)).toEqual(["chat"])
-    })
-  })
-
-  describe("trailing resync (B5)", () => {
-    beforeEach(() => {
-      vi.useFakeTimers()
-    })
-
-    afterEach(() => {
-      vi.useRealTimers()
-    })
-
-    test("resends the current topic subscription once REALTIME_TRAILING_RESYNC_DELAY_MS after opening", async () => {
-      function Subscriber() {
-        useWorkspaceRealtimeEvents({ messageDeleted: vi.fn() })
-        return null
-      }
-      await render(<Subscriber />)
-      act(() => {
-        captured?.onOpen?.()
-      })
-      socketSendMock.mockClear()
-
-      act(() => {
-        vi.advanceTimersByTime(REALTIME_TRAILING_RESYNC_DELAY_MS)
-      })
-
-      expect(sentSubscriptions()).toEqual([
-        REALTIME_EVENT_TOPICS.messageDeleted,
-      ])
-    })
-
-    test("never fires the trailing resync once the socket has closed", async () => {
-      await render(null)
-      act(() => {
-        captured?.onOpen?.()
-      })
-      act(() => {
-        captured?.onClose?.()
-      })
-      socketSendMock.mockClear()
-
-      act(() => {
-        vi.advanceTimersByTime(REALTIME_TRAILING_RESYNC_DELAY_MS)
-      })
-
-      expect(socketSendMock).not.toHaveBeenCalled()
     })
   })
 })

@@ -2,11 +2,15 @@ import { describe, expect, test } from "vitest"
 import {
   REALTIME_EVENT_TOPICS,
   RealtimeEventType,
+  RealtimeProtocol,
   RealtimeTopic,
+  realtimeBatchEnvelopeSchema,
   realtimeCallTransportEndedSchema,
   realtimeCallTransportIncomingSchema,
   realtimeCallTransportOutboundAnswerVoipSchema,
   realtimeCallTransportOutboundStatusVoipSchema,
+  realtimeEventEnvelopeSchema,
+  realtimeProtocolSchema,
   realtimeSubscriptionMessageSchema,
   serializeRealtimeSubscriptionMessage,
   whatsappCallClaimedElsewhereSchema,
@@ -217,6 +221,31 @@ describe("REALTIME_EVENT_TOPICS", () => {
     expect(REALTIME_EVENT_TOPICS.conversationAssigned).toEqual(
       expect.arrayContaining([RealtimeTopic.chat, RealtimeTopic.voip]),
     )
+  })
+})
+
+describe("realtime event envelopes", () => {
+  test("accepts known event types in single and batch envelopes", () => {
+    const event = { eventType: RealtimeEventType.messageCreated, data: {} }
+
+    expect(realtimeEventEnvelopeSchema.parse(event)).toEqual(event)
+    expect(realtimeBatchEnvelopeSchema.parse({ batch: [event] })).toEqual({
+      batch: [event],
+    })
+  })
+
+  test("keeps unrecognized event types available to forward-compatible clients", () => {
+    const event = { eventType: "constructor", data: {} }
+
+    expect(realtimeEventEnvelopeSchema.parse(event)).toEqual(event)
+  })
+})
+
+describe("realtimeProtocolSchema", () => {
+  test("accepts the declared protocol values only", () => {
+    expect(realtimeProtocolSchema.parse(RealtimeProtocol.v1)).toBe("v1")
+    expect(realtimeProtocolSchema.parse(RealtimeProtocol.v2)).toBe("v2")
+    expect(() => realtimeProtocolSchema.parse("v3")).toThrow()
   })
 })
 

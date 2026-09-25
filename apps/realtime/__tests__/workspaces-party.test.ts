@@ -30,7 +30,7 @@ let connectionIdCounter = 0
 type FakeConnectionState = {
   userId: string
   protocol?: "v1" | "v2"
-  topics?: string[]
+  topics?: string[] | null
 }
 
 class FakeConnection {
@@ -471,6 +471,41 @@ describe("WorkspaceParty#onRequest", () => {
     ])
   })
 
+  it("fails open before a v2 connection's first subscribe frame, then filters by its subscribed topics", async () => {
+    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: null })
+    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
+    connectionB1.setState({ userId: "u_b", protocol: "v1" })
+    const chatEvent = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+    const voipEvent = {
+      eventType: "whatsappCallTransportIncoming",
+      data: { whatsappCallId: "c_1" },
+    }
+
+    await party.onRequest(
+      postRequest("/parties/workspaces/ws_1?userId=u_a", voipEvent),
+    )
+    await party.onRequest(postRequest("/parties/workspaces/ws_1", chatEvent))
+
+    expect(connectionA1.sent).toEqual([
+      JSON.stringify({ batch: [voipEvent] }),
+      JSON.stringify({ batch: [chatEvent] }),
+    ])
+
+    await party.onMessage(
+      serializeRealtimeSubscriptionMessage(["voip"]),
+      connectionA1 as unknown as Party.Connection,
+    )
+    await party.onRequest(postRequest("/parties/workspaces/ws_1", chatEvent))
+
+    expect(connectionA1.sent).toEqual([
+      JSON.stringify({ batch: [voipEvent] }),
+      JSON.stringify({ batch: [chatEvent] }),
+    ])
+  })
+
   it("excludes a v2 connection with no matching subscribed topic from delivery and the interested count", async () => {
     connectionA1.setState({ userId: "u_a", protocol: "v2", topics: ["voip"] })
     connectionA2.setState({ userId: "u_a", protocol: "v2", topics: [] })
@@ -494,6 +529,18 @@ describe("WorkspaceParty#onRequest", () => {
   it("rejects a malformed batch envelope with 400 Bad Request", async () => {
     const response = await party.onRequest(
       postBatchRequest("/parties/workspaces/ws_1", ["not-an-event"]),
+    )
+
+    expect(response.status).toBe(400)
+    expect(connectionA1.sent).toEqual([])
+  })
+
+  it("rejects inherited object properties as event types with 400 Bad Request", async () => {
+    const response = await party.onRequest(
+      postRequest("/parties/workspaces/ws_1", {
+        eventType: "constructor",
+        data: {},
+      }),
     )
 
     expect(response.status).toBe(400)

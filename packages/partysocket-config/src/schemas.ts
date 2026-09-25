@@ -30,12 +30,17 @@ export const RealtimeTopic = {
 
 export type RealtimeTopic = (typeof RealtimeTopic)[keyof typeof RealtimeTopic]
 
-export type RealtimeProtocol = "v1" | "v2"
+export const RealtimeProtocol = {
+  v1: "v1",
+  v2: "v2",
+} as const
+
+export const realtimeProtocolSchema = z.enum(RealtimeProtocol)
+export type RealtimeProtocol = z.infer<typeof realtimeProtocolSchema>
 
 /**
- * A zero-interest relay response suppresses chat-only publisher traffic for
- * this long. The builder imports the same value when scheduling its trailing
- * subscription-state resync, so the two sides cannot drift.
+ * A zero-interest relay response suppresses ephemeral typing traffic for this
+ * long. Durable events always continue to the relay.
  */
 export const REALTIME_DELIVERY_NEGATIVE_TTL_MS = 2000
 
@@ -65,6 +70,20 @@ export const REALTIME_EVENT_TOPICS: {
   [RealtimeEventType.whatsappCallOutboundStatus]: [RealtimeTopic.voip],
   [RealtimeEventType.whatsappCallPermissionUpdated]: [RealtimeTopic.voip],
 }
+
+/**
+ * Shared wire envelope validation. It intentionally validates only the
+ * envelope; consumers validate event data against their event-specific schema.
+ */
+export const realtimeEventEnvelopeSchema = z.object({
+  eventType: z.string(),
+  data: z.unknown(),
+})
+export type RealtimeEventEnvelope = z.infer<typeof realtimeEventEnvelopeSchema>
+
+export const realtimeBatchEnvelopeSchema = z.object({
+  batch: z.array(realtimeEventEnvelopeSchema),
+})
 
 export const realtimeSubscriptionMessageSchema = z.object({
   type: z.literal("subscribe"),

@@ -5,9 +5,10 @@ import type {
   RealtimeTopic,
 } from "@chatbotx.io/partysocket-config"
 import {
-  REALTIME_DELIVERY_NEGATIVE_TTL_MS,
   REALTIME_EVENT_TOPICS,
   RealtimeEventType,
+  realtimeBatchEnvelopeSchema,
+  realtimeEventEnvelopeSchema,
   serializeRealtimeSubscriptionMessage,
 } from "@chatbotx.io/partysocket-config"
 import {
@@ -25,7 +26,6 @@ import {
   useRef,
   useState,
 } from "react"
-import { z } from "zod"
 import { useTenantSettings } from "@/features/tenant"
 import { useWorkspaceId } from "@/hooks/routing"
 import { logger } from "@/lib/log"
@@ -61,37 +61,6 @@ const KNOWN_REALTIME_EVENT_NAMES: ReadonlySet<string> = new Set(
 function isKnownRealtimeEventName(value: string): value is RealtimeEventName {
   return KNOWN_REALTIME_EVENT_NAMES.has(value)
 }
-
-/**
- * The wire envelope, validated before any property of the parsed JSON is read —
- * a frame that parses as JSON but isn't an object with these two keys is
- * rejected before any property access.
- */
-const realtimeEnvelopeSchema = z.object({
-  eventType: z.string(),
-  data: z.unknown(),
-})
-
-/**
- * Under protocol v2 the party always wraps deliverable events in a single
- * batch frame, even for one event — `{ batch: [...] }`. A v1 frame (or a
- * malformed batch) falls back to `realtimeEnvelopeSchema` for the whole
- * parsed frame, so a stale relay deployment stays wire-compatible.
- */
-const realtimeBatchEnvelopeSchema = z.object({
-  batch: z.array(realtimeEnvelopeSchema),
-})
-
-/**
- * Delay for the second, defensive subscription resend after a connection
- * opens. Guards a narrow startup race: if the server briefly negative-cached
- * this workspace's chat topic before this tab's subscribe message landed
- * (see `REALTIME_DELIVERY_NEGATIVE_TTL_MS`), that window will have expired by
- * the time this fires, and the resend gives the server accurate topic state
- * again.
- */
-export const REALTIME_TRAILING_RESYNC_DELAY_MS =
-  REALTIME_DELIVERY_NEGATIVE_TTL_MS + 1000
 
 /**
  * A listener's real parameter type is `(event: RealtimeEvent<K>) => void` for
@@ -167,9 +136,6 @@ export function WorkspaceRealtimeProvider({
   // at this point in the render. Assigned once `socket` exists (same pattern
   // as `bubbleRingingConversationRef` in chat-realtime.tsx).
   const sendCurrentTopicsRef = useRef<() => void>(() => undefined)
-  const trailingResyncTimeoutRef = useRef<
-    ReturnType<typeof setTimeout> | undefined
-  >(undefined)
 
   // React Strict Mode (dev only) double-invokes mount effects: setup, cleanup,
   // setup again. Without this, the second synthetic mount's `onOpen` would see
@@ -192,7 +158,7 @@ export function WorkspaceRealtimeProvider({
    * shapes — a v2 batch calls this once per contained event.
    */
   const processRealtimeFrame = (frame: unknown): void => {
-    const envelopeResult = realtimeEnvelopeSchema.safeParse(frame)
+    const envelopeResult = realtimeEventEnvelopeSchema.safeParse(frame)
     if (!envelopeResult.success) {
       const decision = decideRealtimeWarnLogging("invalid-envelope", undefined)
       if (decision.shouldLog) {
@@ -299,21 +265,14 @@ export function WorkspaceRealtimeProvider({
       isOpenRef.current = true
       setStatus("open")
 
-      // Resync now — the server's per-connection topic state always starts
-      // empty on a fresh connection — and again once any startup negative-
-      // cache window (see `REALTIME_TRAILING_RESYNC_DELAY_MS`) has passed.
+      // The server's per-connection topic state starts empty, so every open
+      // must immediately re-send this tab's current subscriptions.
       sendCurrentTopicsRef.current()
-      clearTimeout(trailingResyncTimeoutRef.current)
-      trailingResyncTimeoutRef.current = setTimeout(() => {
-        sendCurrentTopicsRef.current()
-      }, REALTIME_TRAILING_RESYNC_DELAY_MS)
     },
 
     onClose: () => {
       isOpenRef.current = false
       setStatus("closed")
-      clearTimeout(trailingResyncTimeoutRef.current)
-      trailingResyncTimeoutRef.current = undefined
     },
 
     onMessage(event) {
@@ -379,16 +338,6 @@ export function WorkspaceRealtimeProvider({
     }
     socket.send(serializeRealtimeSubscriptionMessage(computeSubscribedTopics()))
   }
-
-  // Defensive unmount cleanup for the trailing resync timer — `onClose`
-  // already clears it on a normal disconnect, but unmount can race a
-  // still-connecting socket that never fires `onClose`.
-  useEffect(
-    () => () => {
-      clearTimeout(trailingResyncTimeoutRef.current)
-    },
-    [],
-  )
 
   // Presence ping frame on the same cadence as the party's report interval —
   // a quiet room (no new connections, no broadcasts) has no other self-heal

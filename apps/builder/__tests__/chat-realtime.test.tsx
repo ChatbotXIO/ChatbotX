@@ -29,6 +29,7 @@ const chatStoreState = {
   updateConversations: vi.fn(),
   bubbleConversationToTop: bubbleConversationToTopMock,
   openConversation: openConversationMock,
+  resumeConversationHeadRefresh: vi.fn(),
 }
 const wholeStoreSelectionMock = vi.fn()
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
@@ -124,6 +125,16 @@ describe("ChatRealtime — chat event parity", () => {
         "messageIdAssigned",
         "messageUpdated",
       ].sort(),
+    )
+  })
+
+  test("retries a deferred head refresh when the tab becomes visible", async () => {
+    await render()
+
+    act(() => document.dispatchEvent(new Event("visibilitychange")))
+
+    expect(chatStoreState.resumeConversationHeadRefresh).toHaveBeenCalledWith(
+      "workspace-1",
     )
   })
 

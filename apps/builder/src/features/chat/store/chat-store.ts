@@ -17,10 +17,7 @@ import type {
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
-import type {
-  MessageResource,
-  MessageResourceWithRelations,
-} from "@/features/messages/schema/resource"
+import type { MessageResourceWithRelations } from "@/features/messages/schema/resource"
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 export const INBOX_CONVERSATIONS_PER_PAGE = 20
@@ -73,6 +70,27 @@ const conversationPatchForMessage = (
 
   const patch = { ...repliedPatch, ...windowPatch }
   return Object.keys(patch).length > 0 ? patch : null
+}
+
+const readStatePatchForMessage = (
+  conversation: ListConversationsResponse["data"][number],
+  message: MessageResourceWithRelations,
+): Partial<ConversationResource> => {
+  const isAgentReply =
+    message.messageType === "outgoing" &&
+    ((message.senderType === "user" && message.senderId !== null) ||
+      message.senderType === "api")
+  if (!isAgentReply) {
+    return {}
+  }
+  const readAt = latestDate(
+    conversation.agentLastReadAt,
+    new Date(message.createdAt),
+  )
+  return {
+    adminRepliedAt: readAt,
+    agentLastReadAt: readAt,
+  }
 }
 
 export type ConversationFilters = {
@@ -165,7 +183,7 @@ export type ChatActions = {
   // Conversation actions
   prependConversation: (newConversation: ListConversationItemResource) => void
   scheduleConversationHeadRefresh: (workspaceId: string) => void
-  flushPendingConversationHeadRefresh: () => void
+  resumeConversationHeadRefresh: (workspaceId: string) => void
   dispose: () => void
   initActiveConversationFromUrl: (workspaceId: string) => Promise<void>
   /**
@@ -192,7 +210,6 @@ export type ChatActions = {
     conversationIds: string[],
     data: Partial<ListConversationItemResource>,
   ) => void
-  updateConversationViaMessage: (message: MessageResource) => void
   /**
    * Moves a conversation to the top of the loaded list — a visual reorder to
    * surface a ringing VoIP call. Never touches lastActivityAt or
@@ -465,120 +482,12 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   let pendingOpenConversationId: string | null = null
   let lastConversationHeadRefreshAt = Number.NEGATIVE_INFINITY
   let conversationHeadRefreshInFlight: Promise<void> | null = null
+  let conversationHeadRefreshPending = false
+  let conversationHeadRefreshTimer: number | null = null
+  let pendingConversationHeadRefreshWorkspaceId: string | null = null
   const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => {
-    let lastConversationHeadRefreshAt = Number.NEGATIVE_INFINITY
-    let conversationHeadRefreshInFlight: Promise<void> | null = null
-    let pendingConversationHeadRefreshWorkspaceId: string | null = null
-    let conversationHeadRefreshTimer: number | null = null
-
-    const schedulePendingConversationHeadRefresh = (delay: number) => {
-      if (conversationHeadRefreshTimer) {
-        return
-      }
-      conversationHeadRefreshTimer = window.setTimeout(() => {
-        conversationHeadRefreshTimer = null
-        flushPendingConversationHeadRefresh()
-      }, delay)
-    }
-
-    const flushPendingConversationHeadRefresh = () => {
-      const workspaceId = pendingConversationHeadRefreshWorkspaceId
-      if (
-        !workspaceId ||
-        (typeof document !== "undefined" &&
-          document.visibilityState === "hidden") ||
-        conversationHeadRefreshInFlight
-      ) {
-        return
-      }
-
-      const now = Date.now()
-      const remainingThrottleMs =
-        lastConversationHeadRefreshAt +
-        CONVERSATION_HEAD_REFRESH_THROTTLE_MS -
-        now
-      if (remainingThrottleMs > 0) {
-        schedulePendingConversationHeadRefresh(remainingThrottleMs)
-        return
-      }
-
-      if (conversationHeadRefreshTimer) {
-        clearTimeout(conversationHeadRefreshTimer)
-        conversationHeadRefreshTimer = null
-      }
-      pendingConversationHeadRefreshWorkspaceId = null
-      lastConversationHeadRefreshAt = now
-      const requestedFilters = get().filters
-      conversationHeadRefreshInFlight = (async () => {
-        try {
-          const { data: headConversations } =
-            await client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
-              {
-                workspaceId,
-                perPage: INBOX_CONVERSATIONS_PER_PAGE,
-                cursor: "",
-                ...requestedFilters,
-              },
-              { signal: AbortSignal.timeout(30_000) },
-            )
-
-          if (get().filters !== requestedFilters) {
-            return
-          }
-
-          set((state) => {
-            if (headConversations.length === 0) {
-              return state
-            }
-            const headConversationIds = new Set(
-              headConversations.map((conversation) => conversation.id),
-            )
-            const conversationsById = new Map(
-              state.conversations.map((conversation) => [
-                conversation.id,
-                conversation,
-              ]),
-            )
-            const refreshedConversations = headConversations.map(
-              (headConversation) => {
-                const currentConversation = conversationsById.get(
-                  headConversation.id,
-                )
-                if (!currentConversation) {
-                  return headConversation
-                }
-
-                return hasLaterActivityAt(
-                  currentConversation.lastActivityAt,
-                  headConversation.lastActivityAt,
-                )
-                  ? currentConversation
-                  : headConversation
-              },
-            )
-            return {
-              conversations: [
-                ...refreshedConversations,
-                ...state.conversations.filter(
-                  (conversation) => !headConversationIds.has(conversation.id),
-                ),
-              ],
-            }
-          })
-        } catch (error) {
-          logger.warn(
-            { err: error, workspaceId },
-            "scheduleConversationHeadRefresh: failed to refresh conversation head",
-          )
-        } finally {
-          conversationHeadRefreshInFlight = null
-          flushPendingConversationHeadRefresh()
-        }
-      })()
-    }
-
     return {
       ...conversationListDefaults(),
       filters: {},
@@ -595,21 +504,110 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           ),
         })),
 
-      scheduleConversationHeadRefresh: (workspaceId: string) => {
-        pendingConversationHeadRefreshWorkspaceId = workspaceId
-        flushPendingConversationHeadRefresh()
+      resumeConversationHeadRefresh: (workspaceId: string) => {
+        if (!conversationHeadRefreshPending) {
+          return
+        }
+        get().scheduleConversationHeadRefresh(workspaceId)
       },
 
-      flushPendingConversationHeadRefresh,
+      scheduleConversationHeadRefresh: (workspaceId: string) => {
+        conversationHeadRefreshPending = true
+        pendingConversationHeadRefreshWorkspaceId = workspaceId
+        if (
+          typeof document !== "undefined" &&
+          document.visibilityState === "hidden"
+        ) {
+          return
+        }
 
+        const now = Date.now()
+        if (conversationHeadRefreshInFlight) {
+          return
+        }
+        const throttleDelay = Math.max(
+          0,
+          CONVERSATION_HEAD_REFRESH_THROTTLE_MS -
+            (now - lastConversationHeadRefreshAt),
+        )
+        if (throttleDelay > 0) {
+          if (conversationHeadRefreshTimer) {
+            return
+          }
+          conversationHeadRefreshTimer = window.setTimeout(() => {
+            conversationHeadRefreshTimer = null
+            get().scheduleConversationHeadRefresh(workspaceId)
+          }, throttleDelay)
+          return
+        }
+
+        if (conversationHeadRefreshTimer) {
+          clearTimeout(conversationHeadRefreshTimer)
+          conversationHeadRefreshTimer = null
+        }
+        conversationHeadRefreshPending = false
+        pendingConversationHeadRefreshWorkspaceId = null
+        lastConversationHeadRefreshAt = now
+        const requestedFilters = get().filters
+        conversationHeadRefreshInFlight = (async () => {
+          try {
+            const { data: headConversations } =
+              await client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
+                {
+                  workspaceId,
+                  perPage: INBOX_CONVERSATIONS_PER_PAGE,
+                  cursor: "",
+                  ...requestedFilters,
+                },
+                { signal: AbortSignal.timeout(30_000) },
+              )
+
+            if (get().filters !== requestedFilters) {
+              return
+            }
+
+            set((state) => {
+              const existingIds = new Set(
+                state.conversations.map((conversation) => conversation.id),
+              )
+              const newConversations = headConversations.filter(
+                (conversation) => {
+                  if (existingIds.has(conversation.id)) {
+                    return false
+                  }
+                  existingIds.add(conversation.id)
+                  return true
+                },
+              )
+              if (newConversations.length === 0) {
+                return state
+              }
+              return {
+                conversations: [...newConversations, ...state.conversations],
+              }
+            })
+          } catch (error) {
+            logger.warn(
+              { err: error, workspaceId },
+              "scheduleConversationHeadRefresh: failed to refresh conversation head",
+            )
+          } finally {
+            conversationHeadRefreshInFlight = null
+            const pendingWorkspaceId = pendingConversationHeadRefreshWorkspaceId
+            if (conversationHeadRefreshPending && pendingWorkspaceId) {
+              get().scheduleConversationHeadRefresh(pendingWorkspaceId)
+            }
+          }
+        })()
+      },
       dispose: () => {
         if (conversationHeadRefreshTimer) {
           clearTimeout(conversationHeadRefreshTimer)
           conversationHeadRefreshTimer = null
         }
+        conversationHeadRefreshPending = false
         pendingConversationHeadRefreshWorkspaceId = null
       },
-
       initActiveConversationFromUrl: async (workspaceId: string) => {
         const urlParams = new URLSearchParams(
           typeof window === "undefined" ? "" : window.location.search,
@@ -1085,7 +1083,6 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           get().scheduleConversationHeadRefresh(message.workspaceId)
         }
       },
-
       bubbleConversationToTop: async (
         workspaceId: string,
         conversationId: string,
@@ -1192,34 +1189,20 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           }
 
           matchedConversation = true
-          const currentConversation = state.conversations[conversationIndex]
+          const updatedConversations = [...state.conversations]
+          const currentConversation = updatedConversations[conversationIndex]
           const conversationPatch = conversationPatchForMessage(
             currentConversation,
             message,
           )
-          // Only createOutgoing-style sends count as agent replies. A channel
-          // echo also reports senderType "user", but has no senderId; treating
-          // it as an agent reply would incorrectly mark the conversation read.
-          // The server stamps readAt from the message timestamp, not wall clock,
-          // and it only moves forward, so delayed events cannot regress read
-          // state or hide newer customer activity.
-          const isAgentReply =
-            message.messageType === "outgoing" &&
-            ((message.senderType === "user" && message.senderId !== null) ||
-              message.senderType === "api")
-          const readAt = isAgentReply ? new Date(message.createdAt) : null
+          const readStatePatch = readStatePatchForMessage(
+            currentConversation,
+            message,
+          )
           const conversation = {
             ...currentConversation,
             ...(conversationPatch ?? {}),
-            ...(readAt
-              ? {
-                  agentLastReadAt: latestDate(
-                    currentConversation.agentLastReadAt,
-                    readAt,
-                  ),
-                  adminRepliedAt: readAt,
-                }
-              : {}),
+            ...readStatePatch,
             messages: [message],
             lastActivityAt: latestActivityAt(
               currentConversation.lastActivityAt,
@@ -1227,12 +1210,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             ),
           }
 
-          return {
-            conversations: moveConversationToTop(
-              state.conversations,
-              conversation,
-            ),
-          }
+          updatedConversations.splice(conversationIndex, 1)
+          return { conversations: [conversation, ...updatedConversations] }
         })
 
         if (!matchedConversation) {
