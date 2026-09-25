@@ -153,9 +153,7 @@ export function mapKnownOrpcErrors(error: unknown) {
 
 const withErrorMapping = base.use(onError(mapKnownOrpcErrors))
 
-export const authorizedAPI = withErrorMapping
-  .use(authMiddleware)
-  .use(apiIdempotencyMiddleware)
+export const authorizedAPI = withErrorMapping.use(authMiddleware)
 
 const publicAPI = withErrorMapping.errors(commonApiErrors)
 

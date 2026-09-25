@@ -96,7 +96,6 @@ describe("API idempotency store", () => {
       claimIdempotencyKey({ ...scope, fingerprint, store }),
     ).resolves.toEqual({
       kind: "replay",
-      hasOutput: true,
       output: { id: "tag-1" },
     })
   })
@@ -203,5 +202,29 @@ describe("API idempotency store", () => {
         store,
       }),
     ).resolves.toMatchObject({ kind: "claimed" })
+  })
+
+  test("different Date inputs produce different fingerprints", async () => {
+    const first = await fingerprintInput({
+      startAt: new Date("2026-09-25T10:00:00.000Z"),
+    })
+    const second = await fingerprintInput({
+      startAt: new Date("2026-09-25T11:00:00.000Z"),
+    })
+
+    expect(second).not.toBe(first)
+  })
+
+  test("key order does not change the fingerprint", async () => {
+    const first = await fingerprintInput({
+      name: "tag",
+      nested: { color: "red", size: "large" },
+    })
+    const second = await fingerprintInput({
+      nested: { size: "large", color: "red" },
+      name: "tag",
+    })
+
+    expect(second).toBe(first)
   })
 })

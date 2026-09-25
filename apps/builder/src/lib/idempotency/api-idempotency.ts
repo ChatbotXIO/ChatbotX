@@ -1,15 +1,15 @@
 import { type CasStore, casStore } from "@chatbotx.io/redis"
 import { sha256Hex } from "@chatbotx.io/utils/crypto"
 import { logger } from "@/lib/log"
-
-export const IDEMPOTENCY_KEY_HEADER = "Idempotency-Key"
-export const IDEMPOTENT_REPLAYED_HEADER = "Idempotent-Replayed"
-export const MAX_IDEMPOTENCY_KEY_LENGTH = 255
+import {
+  IDEMPOTENCY_RETENTION_HOURS,
+  MAX_IDEMPOTENCY_KEY_LENGTH,
+} from "./constants"
 
 // A crashed process must not wedge a key at 409 for a day; an in-flight claim
 // expires quickly so a retry re-executes, while a completed record gets 24h.
 const IN_FLIGHT_TTL_MS = 5 * 60 * 1000
-const COMPLETED_TTL_MS = 24 * 60 * 60 * 1000
+const COMPLETED_TTL_MS = IDEMPOTENCY_RETENTION_HOURS * 60 * 60 * 1000
 // Guards Redis memory; a larger response is not stored (key released instead).
 const MAX_STORED_OUTPUT_BYTES = 256 * 1024
 
@@ -33,7 +33,7 @@ type CompleteStore = ClaimStore & Pick<CasStore, "compareAndSwap">
 
 export type ClaimResult =
   | { kind: "claimed"; claimId: string }
-  | { kind: "replay"; output: unknown; hasOutput: boolean }
+  | { kind: "replay"; output: unknown }
   | { kind: "inFlight" }
   | { kind: "fingerprintMismatch" }
   /** Store unavailable, or the claim raced an expiry — run the handler unprotected. */
@@ -50,6 +50,10 @@ const buildStoreKey = ({
   )
 
 const canonicalize = (value: unknown): unknown => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? String(value) : value.toISOString()
+  }
+
   if (typeof value === "bigint") {
     return value.toString()
   }
@@ -70,7 +74,15 @@ const canonicalize = (value: unknown): unknown => {
     )
     return Object.fromEntries(
       entries
-        .sort(([left], [right]) => left.localeCompare(right))
+        .sort(([left], [right]) => {
+          if (left < right) {
+            return -1
+          }
+          if (left > right) {
+            return 1
+          }
+          return 0
+        })
         .map(([key, entry]) => [key, canonicalize(entry)]),
     )
   }
@@ -84,10 +96,8 @@ const canonicalJson = (value: unknown) =>
 export const fingerprintInput = async (input: unknown) =>
   await sha256Hex(canonicalJson(input))
 
-export const isValidIdempotencyKey = (value: string) => {
-  const length = value.trim().length
-  return length >= 1 && length <= MAX_IDEMPOTENCY_KEY_LENGTH
-}
+export const isValidIdempotencyKey = (value: string) =>
+  value.length >= 1 && value.length <= MAX_IDEMPOTENCY_KEY_LENGTH
 
 const logStoreUnavailable = (err: unknown) => {
   logger.warn({ err }, "Idempotency store unavailable, proceeding unprotected")
@@ -127,7 +137,6 @@ export const claimIdempotencyKey = async ({
 
     return {
       kind: "replay",
-      hasOutput: existing.output !== undefined,
       output: existing.output ? JSON.parse(existing.output) : undefined,
     }
   } catch (err) {

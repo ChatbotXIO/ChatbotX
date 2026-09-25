@@ -1,13 +1,13 @@
 import { onError } from "@orpc/server"
 import { RPCHandler } from "@orpc/server/fetch"
-import { BatchHandlerPlugin, ResponseHeadersPlugin } from "@orpc/server/plugins"
+import { BatchHandlerPlugin } from "@orpc/server/plugins"
 import { logUnexpectedOrpcErrorCallback } from "@/lib/orpc/handlers"
 import { router } from "@/routers"
 import "../../../polyfill"
 
 const rpcHandler = new RPCHandler(router, {
   interceptors: [onError(logUnexpectedOrpcErrorCallback("RPC handler"))],
-  plugins: [new BatchHandlerPlugin(), new ResponseHeadersPlugin()],
+  plugins: [new BatchHandlerPlugin()],
 })
 
 async function handleRequest(request: Request) {

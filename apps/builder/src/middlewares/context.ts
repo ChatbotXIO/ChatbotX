@@ -28,8 +28,9 @@ export type BaseContext = ResponseHeadersPluginContext & {
   workspace?: WorkspaceModel
   apiToken?: RequestApiToken
   /**
-   * Stable identity of the credential that authenticated this request, set by
-   * whichever auth middleware ran. Idempotency keys are scoped to it.
+   * Stable identity of the workspace or channel API credential that
+   * authenticated this request. The public API idempotency middleware scopes
+   * keys to it.
    */
   apiCredentialId?: string
 }

@@ -14,8 +14,6 @@ vi.mock("@/lib/idempotency/api-idempotency", () => ({
   claimIdempotencyKey: mocks.claim,
   completeIdempotencyKey: mocks.complete,
   fingerprintInput: mocks.fingerprint,
-  IDEMPOTENCY_KEY_HEADER: "Idempotency-Key",
-  IDEMPOTENT_REPLAYED_HEADER: "Idempotent-Replayed",
   isValidIdempotencyKey: mocks.isValidKey,
   releaseIdempotencyKey: mocks.release,
 }))
@@ -94,7 +92,6 @@ describe("apiIdempotencyMiddleware", () => {
     const output = vi.fn((value: unknown) => ({ output: value }))
     mocks.claim.mockResolvedValue({
       kind: "replay",
-      hasOutput: true,
       output: { id: "tag-1" },
     })
 
@@ -117,6 +114,106 @@ describe("apiIdempotencyMiddleware", () => {
 
     expect(next).not.toHaveBeenCalled()
     expect(resHeaders.get("Idempotent-Replayed")).toBe("true")
+  })
+
+  test("rejects a key reused with a different request", async () => {
+    const next = vi.fn()
+    mocks.claim.mockResolvedValue({ kind: "fingerprintMismatch" })
+
+    await expect(
+      middleware(
+        {
+          context: {
+            headers: new Headers({ "Idempotency-Key": "key-1" }),
+            apiCredentialId: "api-token:1",
+          },
+          next,
+          path: ["tags", "create"],
+          procedure: { "~orpc": { route: { method: "POST" } } },
+        },
+        { name: "tag" },
+        vi.fn(),
+      ),
+    ).rejects.toMatchObject({ code: "idempotencyKeyReused", status: 422 })
+
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  test("rejects an in-flight key", async () => {
+    const next = vi.fn()
+    mocks.claim.mockResolvedValue({ kind: "inFlight" })
+
+    await expect(
+      middleware(
+        {
+          context: {
+            headers: new Headers({ "Idempotency-Key": "key-1" }),
+            apiCredentialId: "api-token:1",
+          },
+          next,
+          path: ["tags", "create"],
+          procedure: { "~orpc": { route: { method: "POST" } } },
+        },
+        { name: "tag" },
+        vi.fn(),
+      ),
+    ).rejects.toMatchObject({ code: "idempotencyKeyConflict", status: 409 })
+
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  test("passes through when the idempotency store is unavailable", async () => {
+    const result = { output: { id: "tag-1" } }
+    const next = vi.fn().mockResolvedValue(result)
+    mocks.claim.mockResolvedValue({ kind: "unprotected" })
+
+    await expect(
+      middleware(
+        {
+          context: {
+            headers: new Headers({ "Idempotency-Key": "key-1" }),
+            apiCredentialId: "api-token:1",
+          },
+          next,
+          path: ["tags", "create"],
+          procedure: { "~orpc": { route: { method: "POST" } } },
+        },
+        { name: "tag" },
+        vi.fn(),
+      ),
+    ).resolves.toEqual(result)
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(mocks.complete).not.toHaveBeenCalled()
+  })
+
+  test("completes a claimed key with the handler output", async () => {
+    const handlerOutput = { id: "tag-1" }
+    const result = { output: handlerOutput }
+    const next = vi.fn().mockResolvedValue(result)
+    const resHeaders = new Headers()
+
+    await expect(
+      middleware(
+        {
+          context: {
+            headers: new Headers({ "Idempotency-Key": "key-1" }),
+            resHeaders,
+            apiCredentialId: "api-token:1",
+          },
+          next,
+          path: ["tags", "create"],
+          procedure: { "~orpc": { route: { method: "POST" } } },
+        },
+        { name: "tag" },
+        vi.fn(),
+      ),
+    ).resolves.toEqual(result)
+
+    expect(mocks.complete).toHaveBeenCalledWith(
+      expect.objectContaining({ claimId: "claim-1", output: handlerOutput }),
+    )
+    expect(resHeaders.get("Idempotent-Replayed")).toBeNull()
   })
 
   test("releases a claimed key when the handler throws", async () => {

@@ -1,4 +1,9 @@
 import type { OpenAPIGenerator } from "@orpc/openapi"
+import {
+  IDEMPOTENCY_KEY_HEADER,
+  IDEMPOTENCY_RETENTION_HOURS,
+  MAX_IDEMPOTENCY_KEY_LENGTH,
+} from "../idempotency/constants"
 
 type PublicSpecDocument = Awaited<
   ReturnType<InstanceType<typeof OpenAPIGenerator>["generate"]>
@@ -40,20 +45,14 @@ const CHANNEL_API_TOKEN_SECURITY: Record<string, string[]>[] = [
 // hook — only a document-level default via `specGenerateOptions.security`).
 const CHANNEL_API_TOKEN_PATH_PREFIX = "/v1/channels/api/"
 
-const IDEMPOTENT_METHODS: Record<string, true> = {
-  post: true,
-  put: true,
-  patch: true,
-  delete: true,
-}
+const IDEMPOTENT_METHODS = new Set(["post", "put", "patch", "delete"])
 
 const IDEMPOTENCY_KEY_PARAMETER = {
-  name: "Idempotency-Key",
+  name: IDEMPOTENCY_KEY_HEADER,
   in: "header",
   required: false,
-  description:
-    "Optional client-generated key (e.g. a UUID, max 255 chars) that makes this write safe to retry. Replaying the same key on the same operation within 24 hours returns the original 2xx response with `Idempotent-Replayed: true`; reusing it with a different payload returns 422, and a key whose first request is still running returns 409. Only successful responses are stored, so a failed attempt releases the key.",
-  schema: { type: "string", maxLength: 255 },
+  description: `Optional client-generated key (e.g. a UUID, max ${MAX_IDEMPOTENCY_KEY_LENGTH} chars) that makes this write safe to retry. Replaying the same key on the same operation within ${IDEMPOTENCY_RETENTION_HOURS} hours returns the original 2xx response with \`Idempotent-Replayed: true\`; reusing it with a different payload returns 422, and a key whose first request is still running returns 409. Only successful responses are stored, so a failed attempt releases the key.`,
+  schema: { type: "string", maxLength: MAX_IDEMPOTENCY_KEY_LENGTH },
 } as const
 export function publicSpecGenerateOptions(title: string) {
   return {
@@ -114,9 +113,8 @@ export function withIdempotencyKeyHeader(spec: PublicSpecDocument) {
 
     for (const [method, operation] of Object.entries(pathItem)) {
       if (
-        !(IDEMPOTENT_METHODS[method] && operation) ||
-        typeof operation !== "object" ||
-        !("responses" in operation)
+        !(IDEMPOTENT_METHODS.has(method) && operation) ||
+        typeof operation !== "object"
       ) {
         continue
       }
