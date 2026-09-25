@@ -25,6 +25,7 @@ import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 export const INBOX_CONVERSATIONS_PER_PAGE = 20
 export const INBOX_MESSAGES_PER_PAGE = 20
+const CONVERSATION_HEAD_REFRESH_THROTTLE_MS = 5000
 
 /**
  * The later of two timestamps — tolerates the string a realtime payload
@@ -163,6 +164,9 @@ export type ConversationAssignee = {
 export type ChatActions = {
   // Conversation actions
   prependConversation: (newConversation: ListConversationItemResource) => void
+  scheduleConversationHeadRefresh: (workspaceId: string) => void
+  flushPendingConversationHeadRefresh: () => void
+  dispose: () => void
   initActiveConversationFromUrl: (workspaceId: string) => Promise<void>
   /**
    * Opens a conversation by id, fetching and prepending it if not loaded. If
@@ -305,6 +309,22 @@ const latestActivityAt = <T extends Date | string>(
     ? current
     : incoming
 
+const hasLaterActivityAt = (
+  current: Date | string | null | undefined,
+  incoming: Date | string | null | undefined,
+) => {
+  if (!current) {
+    return false
+  }
+  if (!incoming) {
+    return true
+  }
+  return (
+    new Date(latestActivityAt(current, incoming)).getTime() >
+    new Date(incoming).getTime()
+  )
+}
+
 const hasConversationIdInUrl = () =>
   !!new URLSearchParams(
     typeof window === "undefined" ? "" : window.location.search,
@@ -445,738 +465,856 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   let pendingOpenConversationId: string | null = null
   const { messagesSeed, ...restInitialState } = initialState
 
-  return createStore<ChatStore>((set, get, store) => ({
-    ...conversationListDefaults(),
-    filters: {},
-    ...messageThreadDefaults(),
+  return createStore<ChatStore>((set, get, store) => {
+    let lastConversationHeadRefreshAt = Number.NEGATIVE_INFINITY
+    let conversationHeadRefreshInFlight: Promise<void> | null = null
+    let pendingConversationHeadRefreshWorkspaceId: string | null = null
+    let conversationHeadRefreshTimer: number | null = null
 
-    ...restInitialState,
-    ...messagesSeed,
+    const schedulePendingConversationHeadRefresh = (delay: number) => {
+      if (conversationHeadRefreshTimer) {
+        return
+      }
+      conversationHeadRefreshTimer = window.setTimeout(() => {
+        conversationHeadRefreshTimer = null
+        flushPendingConversationHeadRefresh()
+      }, delay)
+    }
 
-    prependConversation: (newConversation: ListConversationItemResource) =>
-      set((state) => ({
-        conversations: moveConversationToTop(
-          state.conversations,
-          newConversation,
-        ),
-      })),
-
-    initActiveConversationFromUrl: async (workspaceId: string) => {
-      const urlParams = new URLSearchParams(
-        typeof window === "undefined" ? "" : window.location.search,
-      )
-      const conversationId = urlParams.get("conversationId")
-      if (!conversationId) {
+    const flushPendingConversationHeadRefresh = () => {
+      const workspaceId = pendingConversationHeadRefreshWorkspaceId
+      if (
+        !workspaceId ||
+        (typeof document !== "undefined" &&
+          document.visibilityState === "hidden") ||
+        conversationHeadRefreshInFlight
+      ) {
         return
       }
 
-      const { activeConversationId, isBootstrappingUrlConversation } = get()
-      if (activeConversationId || isBootstrappingUrlConversation) {
+      const now = Date.now()
+      const remainingThrottleMs =
+        lastConversationHeadRefreshAt +
+        CONVERSATION_HEAD_REFRESH_THROTTLE_MS -
+        now
+      if (remainingThrottleMs > 0) {
+        schedulePendingConversationHeadRefresh(remainingThrottleMs)
         return
       }
 
-      set({ isBootstrappingUrlConversation: true })
+      if (conversationHeadRefreshTimer) {
+        clearTimeout(conversationHeadRefreshTimer)
+        conversationHeadRefreshTimer = null
+      }
+      pendingConversationHeadRefreshWorkspaceId = null
+      lastConversationHeadRefreshAt = now
+      const requestedFilters = get().filters
+      conversationHeadRefreshInFlight = (async () => {
+        try {
+          const { data: headConversations } =
+            await client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
+              {
+                workspaceId,
+                perPage: INBOX_CONVERSATIONS_PER_PAGE,
+                cursor: "",
+                ...requestedFilters,
+              },
+              { signal: AbortSignal.timeout(30_000) },
+            )
 
-      try {
-        if (get().isFirstLoadConversation && get().isLoadingConversation) {
+          if (get().filters !== requestedFilters) {
+            return
+          }
+
+          set((state) => {
+            if (headConversations.length === 0) {
+              return state
+            }
+            const headConversationIds = new Set(
+              headConversations.map((conversation) => conversation.id),
+            )
+            const conversationsById = new Map(
+              state.conversations.map((conversation) => [
+                conversation.id,
+                conversation,
+              ]),
+            )
+            const refreshedConversations = headConversations.map(
+              (headConversation) => {
+                const currentConversation = conversationsById.get(
+                  headConversation.id,
+                )
+                if (!currentConversation) {
+                  return headConversation
+                }
+
+                return hasLaterActivityAt(
+                  currentConversation.lastActivityAt,
+                  headConversation.lastActivityAt,
+                )
+                  ? currentConversation
+                  : headConversation
+              },
+            )
+            return {
+              conversations: [
+                ...refreshedConversations,
+                ...state.conversations.filter(
+                  (conversation) => !headConversationIds.has(conversation.id),
+                ),
+              ],
+            }
+          })
+        } catch (error) {
+          logger.warn(
+            { err: error, workspaceId },
+            "scheduleConversationHeadRefresh: failed to refresh conversation head",
+          )
+        } finally {
+          conversationHeadRefreshInFlight = null
+          flushPendingConversationHeadRefresh()
+        }
+      })()
+    }
+
+    return {
+      ...conversationListDefaults(),
+      filters: {},
+      ...messageThreadDefaults(),
+
+      ...restInitialState,
+      ...messagesSeed,
+
+      prependConversation: (newConversation: ListConversationItemResource) =>
+        set((state) => ({
+          conversations: moveConversationToTop(
+            state.conversations,
+            newConversation,
+          ),
+        })),
+
+      scheduleConversationHeadRefresh: (workspaceId: string) => {
+        pendingConversationHeadRefreshWorkspaceId = workspaceId
+        flushPendingConversationHeadRefresh()
+      },
+
+      flushPendingConversationHeadRefresh,
+
+      dispose: () => {
+        if (conversationHeadRefreshTimer) {
+          clearTimeout(conversationHeadRefreshTimer)
+          conversationHeadRefreshTimer = null
+        }
+        pendingConversationHeadRefreshWorkspaceId = null
+      },
+
+      initActiveConversationFromUrl: async (workspaceId: string) => {
+        const urlParams = new URLSearchParams(
+          typeof window === "undefined" ? "" : window.location.search,
+        )
+        const conversationId = urlParams.get("conversationId")
+        if (!conversationId) {
+          return
+        }
+
+        const { activeConversationId, isBootstrappingUrlConversation } = get()
+        if (activeConversationId || isBootstrappingUrlConversation) {
+          return
+        }
+
+        set({ isBootstrappingUrlConversation: true })
+
+        try {
+          if (get().isFirstLoadConversation && get().isLoadingConversation) {
+            await new Promise<void>((resolve) => {
+              const unsubscribe = store.subscribe((state) => {
+                if (
+                  !(
+                    state.isFirstLoadConversation && state.isLoadingConversation
+                  )
+                ) {
+                  unsubscribe()
+                  resolve()
+                }
+              })
+            })
+          }
+
+          await loadAndSelectConversation(get, workspaceId, conversationId)
+        } finally {
+          set({ isBootstrappingUrlConversation: false })
+        }
+      },
+
+      openConversation: async (workspaceId: string, conversationId: string) => {
+        if (get().activeConversationId === conversationId) {
+          return true
+        }
+
+        // Claims this call as the most recently requested openConversation —
+        // rechecked after any wait so a newer call for a different id makes this
+        // one step aside instead of both racing to load.
+        pendingOpenConversationId = conversationId
+
+        // A concurrent bootstrap is already in flight — wait it out instead of
+        // silently no-oping, so a caller that already synced the URL's
+        // conversationId isn't left disagreeing with the actual selection. Same
+        // wait pattern initActiveConversationFromUrl uses.
+        if (get().isBootstrappingUrlConversation) {
           await new Promise<void>((resolve) => {
             const unsubscribe = store.subscribe((state) => {
-              if (
-                !(state.isFirstLoadConversation && state.isLoadingConversation)
-              ) {
+              if (!state.isBootstrappingUrlConversation) {
                 unsubscribe()
                 resolve()
               }
             })
           })
+          // The bootstrap we waited out may already have selected this exact
+          // conversation.
+          if (get().activeConversationId === conversationId) {
+            return true
+          }
+          // A newer openConversation call (for a different id) was issued while
+          // this one waited — it now owns the load; this one resolves false
+          // instead of racing.
+          if (pendingOpenConversationId !== conversationId) {
+            return false
+          }
         }
 
-        await loadAndSelectConversation(get, workspaceId, conversationId)
-      } finally {
-        set({ isBootstrappingUrlConversation: false })
-      }
-    },
+        set({ isBootstrappingUrlConversation: true })
+        try {
+          await loadAndSelectConversation(get, workspaceId, conversationId)
+        } finally {
+          set({ isBootstrappingUrlConversation: false })
+        }
+        return get().activeConversationId === conversationId
+      },
 
-    openConversation: async (workspaceId: string, conversationId: string) => {
-      if (get().activeConversationId === conversationId) {
-        return true
-      }
+      loadMoreConversations: async (
+        workspaceId: string,
+        options: LoadMoreConversationsOptions = {},
+      ) => {
+        const { isLoadingConversation, nextCursorConversation } = get()
+        if (isLoadingConversation || !selectHasNextConversationPage(get())) {
+          return
+        }
 
-      // Claims this call as the most recently requested openConversation —
-      // rechecked after any wait so a newer call for a different id makes this
-      // one step aside instead of both racing to load.
-      pendingOpenConversationId = conversationId
+        // fetch next conversation list
+        const { activeConversationId, filters } = get()
+        const shouldRespectUrlConversationId =
+          options.respectUrlConversationId ?? true
+        const autoSelectFirst = options.autoSelectFirst ?? true
+        set({ isLoadingConversation: true })
 
-      // A concurrent bootstrap is already in flight — wait it out instead of
-      // silently no-oping, so a caller that already synced the URL's
-      // conversationId isn't left disagreeing with the actual selection. Same
-      // wait pattern initActiveConversationFromUrl uses.
-      if (get().isBootstrappingUrlConversation) {
-        await new Promise<void>((resolve) => {
-          const unsubscribe = store.subscribe((state) => {
-            if (!state.isBootstrappingUrlConversation) {
-              unsubscribe()
-              resolve()
-            }
+        try {
+          const { data: newConversations, nextCursor } =
+            await client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
+              {
+                workspaceId,
+                perPage: INBOX_CONVERSATIONS_PER_PAGE,
+                cursor: nextCursorConversation ?? "",
+                ...filters,
+              },
+              // This endpoint fans out into per-conversation sharded message
+              // lookups, which can legitimately take longer under cold caches
+              // or dev-server recompiles, so a longer explicit timeout avoids
+              // spurious aborts.
+              { signal: AbortSignal.timeout(30_000) },
+            )
+
+          const hasUrlConversationId =
+            shouldRespectUrlConversationId && hasConversationIdInUrl()
+          const firstConversationToOpen =
+            autoSelectFirst &&
+            shouldAutoSelectConversation({
+              activeConversationId,
+              hasUrlConversationId,
+              conversations: newConversations,
+            })
+              ? newConversations[0]
+              : null
+
+          set((state) => ({
+            conversations: appendUniqueConversations(
+              state.conversations,
+              newConversations,
+            ),
+            nextCursorConversation: nextCursor,
+            isLoadingConversation: false,
+            isFirstLoadConversation: false,
+          }))
+
+          if (firstConversationToOpen) {
+            get().setActiveConversationId(firstConversationToOpen.id)
+            set({ activeConversationAutoSelected: true })
+          }
+        } catch (error) {
+          set({
+            isLoadingConversation: false,
+            isFirstLoadConversation: false,
           })
-        })
-        // The bootstrap we waited out may already have selected this exact
-        // conversation.
-        if (get().activeConversationId === conversationId) {
-          return true
+          throw error
         }
-        // A newer openConversation call (for a different id) was issued while
-        // this one waited — it now owns the load; this one resolves false
-        // instead of racing.
-        if (pendingOpenConversationId !== conversationId) {
-          return false
-        }
-      }
+      },
 
-      set({ isBootstrappingUrlConversation: true })
-      try {
-        await loadAndSelectConversation(get, workspaceId, conversationId)
-      } finally {
-        set({ isBootstrappingUrlConversation: false })
-      }
-      return get().activeConversationId === conversationId
-    },
-
-    loadMoreConversations: async (
-      workspaceId: string,
-      options: LoadMoreConversationsOptions = {},
-    ) => {
-      const { isLoadingConversation, nextCursorConversation } = get()
-      if (isLoadingConversation || !selectHasNextConversationPage(get())) {
-        return
-      }
-
-      // fetch next conversation list
-      const { activeConversationId, filters } = get()
-      const shouldRespectUrlConversationId =
-        options.respectUrlConversationId ?? true
-      const autoSelectFirst = options.autoSelectFirst ?? true
-      set({ isLoadingConversation: true })
-
-      try {
-        const { data: newConversations, nextCursor } =
-          await client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
-            {
-              workspaceId,
-              perPage: INBOX_CONVERSATIONS_PER_PAGE,
-              cursor: nextCursorConversation ?? "",
-              ...filters,
-            },
-            // This endpoint fans out into per-conversation sharded message
-            // lookups, which can legitimately take longer under cold caches
-            // or dev-server recompiles, so a longer explicit timeout avoids
-            // spurious aborts.
-            { signal: AbortSignal.timeout(30_000) },
-          )
-
-        const hasUrlConversationId =
-          shouldRespectUrlConversationId && hasConversationIdInUrl()
-        const firstConversationToOpen =
-          autoSelectFirst &&
-          shouldAutoSelectConversation({
+      setActiveConversationId: (activeConversationId: string | null) => {
+        const {
+          activeConversationId: oldActiveConversationId,
+          activeConversationAutoSelected,
+        } = get()
+        if (oldActiveConversationId !== activeConversationId) {
+          set({
             activeConversationId,
-            hasUrlConversationId,
-            conversations: newConversations,
+            ...messageThreadDefaults(),
           })
-            ? newConversations[0]
-            : null
-
-        set((state) => ({
-          conversations: appendUniqueConversations(
-            state.conversations,
-            newConversations,
-          ),
-          nextCursorConversation: nextCursor,
-          isLoadingConversation: false,
-          isFirstLoadConversation: false,
-        }))
-
-        if (firstConversationToOpen) {
-          get().setActiveConversationId(firstConversationToOpen.id)
-          set({ activeConversationAutoSelected: true })
+          return
         }
-      } catch (error) {
-        set({
-          isLoadingConversation: false,
-          isFirstLoadConversation: false,
-        })
-        throw error
-      }
-    },
 
-    setActiveConversationId: (activeConversationId: string | null) => {
-      const {
-        activeConversationId: oldActiveConversationId,
-        activeConversationAutoSelected,
-      } = get()
-      if (oldActiveConversationId !== activeConversationId) {
+        if (activeConversationAutoSelected) {
+          set({ activeConversationAutoSelected: false })
+        }
+      },
+
+      deleteConversation: (conversationId: string) => {
+        const { conversations, activeConversationId } = get()
+        const updatedConversations = conversations.filter(
+          (c) => c.id !== conversationId,
+        )
+        if (activeConversationId !== conversationId) {
+          set({ conversations: updatedConversations })
+          return
+        }
+
         set({
-          activeConversationId,
+          conversations: updatedConversations,
+          activeConversationId: updatedConversations[0]?.id ?? null,
           ...messageThreadDefaults(),
         })
-        return
-      }
+      },
 
-      if (activeConversationAutoSelected) {
-        set({ activeConversationAutoSelected: false })
-      }
-    },
-
-    deleteConversation: (conversationId: string) => {
-      const { conversations, activeConversationId } = get()
-      const updatedConversations = conversations.filter(
-        (c) => c.id !== conversationId,
-      )
-      if (activeConversationId !== conversationId) {
-        set({ conversations: updatedConversations })
-        return
-      }
-
-      set({
-        conversations: updatedConversations,
-        activeConversationId: updatedConversations[0]?.id ?? null,
-        ...messageThreadDefaults(),
-      })
-    },
-
-    applyAgentLastReadAt: (conversationIds, agentLastReadAt) => {
-      if (Number.isNaN(agentLastReadAt.getTime())) {
-        return
-      }
-      const targetIds = new Set(conversationIds)
-      set((state) => ({
-        conversations: state.conversations.map((conversation) => {
-          if (!targetIds.has(conversation.id)) {
-            return conversation
-          }
-          const current = conversation.agentLastReadAt
-          if (current !== null && new Date(current) >= agentLastReadAt) {
-            return conversation
-          }
-          return { ...conversation, agentLastReadAt }
-        }),
-      }))
-    },
-
-    resetState: () => {
-      set({
-        ...conversationListDefaults(),
-        ...messageThreadDefaults(),
-      })
-    },
-
-    setFilters: (filters: ConversationFilters) => {
-      set({ filters })
-    },
-
-    setAssignee: ({ id }: ConversationAssignee) => {
-      const { conversations, activeConversationId } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === activeConversationId,
-      )
-
-      if (conversationIndex > -1) {
-        const updatedConversations = [...conversations]
-        const conversation = { ...updatedConversations[conversationIndex] }
-
-        if (id === null) {
-          conversation.assignedUser = null
-          conversation.assignedUserId = null
-          conversation.assignedInboxTeam = null
-          conversation.assignedInboxTeamId = null
-        } else if (id.startsWith("u_")) {
-          conversation.assignedUser = null
-          conversation.assignedUserId = id.slice(2)
-          conversation.assignedInboxTeam = null
-          conversation.assignedInboxTeamId = null
-        } else if (id.startsWith("t_")) {
-          conversation.assignedUser = null
-          conversation.assignedUserId = null
-          conversation.assignedInboxTeam = null
-          conversation.assignedInboxTeamId = id.slice(2)
+      applyAgentLastReadAt: (conversationIds, agentLastReadAt) => {
+        if (Number.isNaN(agentLastReadAt.getTime())) {
+          return
         }
-
-        updatedConversations[conversationIndex] = conversation
-        set({ conversations: updatedConversations })
-      }
-    },
-
-    setReplyToMessage: (message, isPrivate = false) =>
-      set({
-        replyToMessage: message,
-        isPrivateReply: message ? isPrivate : false,
-      }),
-
-    appendMessage: (message: MessageResourceWithRelations) => {
-      const { updateConversationViaMessage } = get()
-      set((state) => {
-        if (state.messages.some((m) => m.id === message.id)) {
-          return state
-        }
-        const messageTime = new Date(message.createdAt).getTime()
-        const insertIndex = state.messages.findIndex(
-          (m) => new Date(m.createdAt).getTime() > messageTime,
-        )
-        if (insertIndex === -1) {
-          return { messages: [...state.messages, message] }
-        }
-        const messages = [...state.messages]
-        messages.splice(insertIndex, 0, message)
-        return { messages }
-      })
-      updateConversationViaMessage(message)
-    },
-
-    updateMessageAttributes: (messageId, attributes) => {
-      set((state) => ({
-        messages: state.messages.map((message) =>
-          message.id === messageId ? { ...message, attributes } : message,
-        ),
-      }))
-    },
-
-    // Merges a contentAttributes patch pushed via messageContentUpdated (e.g. a
-    // transcript arriving after the recording message) — a full replace, not a
-    // deep merge, matching how the worker always sends the entity's complete
-    // shape.
-    updateMessageContentAttributes: (messageId, contentAttributes) => {
-      set((state) => ({
-        messages: state.messages.map((message): typeof message =>
-          message.id === messageId
-            ? { ...message, contentAttributes }
-            : message,
-        ),
-      }))
-    },
-
-    markMessagesDeleted: (messageIds: string[]) => {
-      const idSet = new Set(messageIds)
-      const now = new Date()
-      set((state) => ({
-        messages: state.messages.map((message) =>
-          idSet.has(message.id) ? { ...message, deletedAt: now } : message,
-        ),
-      }))
-    },
-
-    markMessagesRestored: (messageIds: string[]) => {
-      const idSet = new Set(messageIds)
-      set((state) => ({
-        messages: state.messages.map((message) =>
-          idSet.has(message.id) ? { ...message, deletedAt: null } : message,
-        ),
-      }))
-    },
-
-    markMessageFailed: (
-      messageId: string,
-      clientId: string | undefined,
-      error: string | null,
-    ) => {
-      set((state) => {
-        const matchesByClientId =
-          clientId && state.messages.some((m) => m.clientId === clientId)
-        return {
-          messages: state.messages.map((message) =>
-            (
-              matchesByClientId
-                ? message.clientId === clientId
-                : message.id === messageId
-            )
-              ? { ...message, sendError: error }
-              : message,
-          ),
-        }
-      })
-    },
-
-    assignMessageCommentId: (messageId, commentId) => {
-      set((state) => ({
-        messages: state.messages.map((message): typeof message =>
-          message.id === messageId
-            ? { ...message, sourceId: commentId }
-            : message,
-        ),
-      }))
-    },
-
-    updateMessageText: (messageId, newText, attachmentUpdate) => {
-      set((state) => ({
-        messages: state.messages.map((message): typeof message => {
-          if (message.id !== messageId) {
-            return message
-          }
-          const base = { ...message, text: newText }
-          if (!attachmentUpdate) {
-            return base
-          }
-          if (attachmentUpdate.removedAttachment) {
-            return { ...base, attachments: [] }
-          }
-          if (attachmentUpdate.newAttachmentPath) {
-            const mimeType =
-              attachmentUpdate.newAttachmentMimeType ??
-              "application/octet-stream"
-            let fileType: "image" | "video" | "audio" | "file" = "file"
-            if (mimeType.startsWith("image/")) {
-              fileType = "image"
-            } else if (mimeType.startsWith("video/")) {
-              fileType = "video"
-            } else if (mimeType.startsWith("audio/")) {
-              fileType = "audio"
+        const targetIds = new Set(conversationIds)
+        set((state) => ({
+          conversations: state.conversations.map((conversation) => {
+            if (!targetIds.has(conversation.id)) {
+              return conversation
             }
-            return {
-              ...base,
-              attachments: [
-                {
-                  id: "pending",
-                  workspaceId: message.workspaceId,
-                  conversationId: message.conversationId,
-                  messageId: message.id,
-                  messageCreatedAt: message.createdAt,
-                  originPath: attachmentUpdate.newAttachmentPath,
-                  fileType,
-                  mimeType,
-                  url: attachmentUpdate.newAttachmentPublicUrl ?? null,
-                  name: null,
-                  size: 0,
-                  width: attachmentUpdate.newAttachmentWidth ?? null,
-                  height: attachmentUpdate.newAttachmentHeight ?? null,
-                  sourceId: null,
-                  thumbnailPath: null,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                },
-              ],
+            const current = conversation.agentLastReadAt
+            if (current !== null && new Date(current) >= agentLastReadAt) {
+              return conversation
             }
-          }
-          return base
-        }),
-      }))
-    },
+            return { ...conversation, agentLastReadAt }
+          }),
+        }))
+      },
 
-    loadMoreMessages: async (workspaceId: string, perPage: number) => {
-      const { isLoadMoreMessage, hasNextMessagePage } = get()
-      if (isLoadMoreMessage || !hasNextMessagePage) {
-        return
-      }
-
-      const { nextCursorMessage, messages, activeConversationId } = get()
-      set({ isLoadMoreMessage: true })
-
-      try {
-        const { data, nextCursor } =
-          await client.messagesAPI.listMessagesAuthenticatedAPI({
-            workspaceId,
-            perPage,
-            cursor: nextCursorMessage ?? "",
-            conversationId: activeConversationId ?? undefined,
-          })
+      resetState: () => {
         set({
-          messages: [...data.reverse(), ...messages],
-          nextCursorMessage: nextCursor,
-          hasNextMessagePage: nextCursor !== null,
-          isLoadMoreMessage: false,
-          messagesConversationId: activeConversationId,
+          ...conversationListDefaults(),
+          ...messageThreadDefaults(),
         })
-      } catch (error) {
-        // Reset the in-flight flag or the `isLoadMoreMessage` guard above
-        // would block every later scroll-up load for this store instance.
-        set({ isLoadMoreMessage: false })
-        throw error
-      }
-    },
+      },
 
-    loadInitialMessages: async (workspaceId: string, perPage: number) => {
-      const { activeConversationId, messagesConversationId, loadMoreMessages } =
-        get()
-      if (messagesConversationId === activeConversationId) {
-        return
-      }
-      await loadMoreMessages(workspaceId, perPage)
-    },
+      setFilters: (filters: ConversationFilters) => {
+        set({ filters })
+      },
 
-    updateConversationViaMessage: async (message: MessageResource) => {
-      const { conversations, prependConversation } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === message.conversationId,
-      )
+      setAssignee: ({ id }: ConversationAssignee) => {
+        const { conversations, activeConversationId } = get()
+        const conversationIndex = conversations.findIndex(
+          (c) => c.id === activeConversationId,
+        )
 
-      if (conversationIndex > -1) {
+        if (conversationIndex > -1) {
+          const updatedConversations = [...conversations]
+          const conversation = { ...updatedConversations[conversationIndex] }
+
+          if (id === null) {
+            conversation.assignedUser = null
+            conversation.assignedUserId = null
+            conversation.assignedInboxTeam = null
+            conversation.assignedInboxTeamId = null
+          } else if (id.startsWith("u_")) {
+            conversation.assignedUser = null
+            conversation.assignedUserId = id.slice(2)
+            conversation.assignedInboxTeam = null
+            conversation.assignedInboxTeamId = null
+          } else if (id.startsWith("t_")) {
+            conversation.assignedUser = null
+            conversation.assignedUserId = null
+            conversation.assignedInboxTeam = null
+            conversation.assignedInboxTeamId = id.slice(2)
+          }
+
+          updatedConversations[conversationIndex] = conversation
+          set({ conversations: updatedConversations })
+        }
+      },
+
+      setReplyToMessage: (message, isPrivate = false) =>
+        set({
+          replyToMessage: message,
+          isPrivateReply: message ? isPrivate : false,
+        }),
+
+      appendMessage: (message: MessageResourceWithRelations) => {
         set((state) => {
-          const conversation = state.conversations.find(
-            (item) => item.id === message.conversationId,
-          )
-          if (!conversation) {
+          if (state.messages.some((m) => m.id === message.id)) {
             return state
           }
-          const updatedConversation = {
-            ...conversation,
+          const messageTime = new Date(message.createdAt).getTime()
+          const insertIndex = state.messages.findIndex(
+            (m) => new Date(m.createdAt).getTime() > messageTime,
+          )
+          if (insertIndex === -1) {
+            return { messages: [...state.messages, message] }
+          }
+          const messages = [...state.messages]
+          messages.splice(insertIndex, 0, message)
+          return { messages }
+        })
+      },
+
+      updateMessageAttributes: (messageId, attributes) => {
+        set((state) => ({
+          messages: state.messages.map((message) =>
+            message.id === messageId ? { ...message, attributes } : message,
+          ),
+        }))
+      },
+
+      // Merges a contentAttributes patch pushed via messageContentUpdated (e.g. a
+      // transcript arriving after the recording message) — a full replace, not a
+      // deep merge, matching how the worker always sends the entity's complete
+      // shape.
+      updateMessageContentAttributes: (messageId, contentAttributes) => {
+        set((state) => ({
+          messages: state.messages.map((message): typeof message =>
+            message.id === messageId
+              ? { ...message, contentAttributes }
+              : message,
+          ),
+        }))
+      },
+
+      markMessagesDeleted: (messageIds: string[]) => {
+        const idSet = new Set(messageIds)
+        const now = new Date()
+        set((state) => ({
+          messages: state.messages.map((message) =>
+            idSet.has(message.id) ? { ...message, deletedAt: now } : message,
+          ),
+        }))
+      },
+
+      markMessagesRestored: (messageIds: string[]) => {
+        const idSet = new Set(messageIds)
+        set((state) => ({
+          messages: state.messages.map((message) =>
+            idSet.has(message.id) ? { ...message, deletedAt: null } : message,
+          ),
+        }))
+      },
+
+      markMessageFailed: (
+        messageId: string,
+        clientId: string | undefined,
+        error: string | null,
+      ) => {
+        set((state) => {
+          const matchesByClientId =
+            clientId && state.messages.some((m) => m.clientId === clientId)
+          return {
+            messages: state.messages.map((message) =>
+              (
+                matchesByClientId
+                  ? message.clientId === clientId
+                  : message.id === messageId
+              )
+                ? { ...message, sendError: error }
+                : message,
+            ),
+          }
+        })
+      },
+
+      assignMessageCommentId: (messageId, commentId) => {
+        set((state) => ({
+          messages: state.messages.map((message): typeof message =>
+            message.id === messageId
+              ? { ...message, sourceId: commentId }
+              : message,
+          ),
+        }))
+      },
+
+      updateMessageText: (messageId, newText, attachmentUpdate) => {
+        set((state) => ({
+          messages: state.messages.map((message): typeof message => {
+            if (message.id !== messageId) {
+              return message
+            }
+            const base = { ...message, text: newText }
+            if (!attachmentUpdate) {
+              return base
+            }
+            if (attachmentUpdate.removedAttachment) {
+              return { ...base, attachments: [] }
+            }
+            if (attachmentUpdate.newAttachmentPath) {
+              const mimeType =
+                attachmentUpdate.newAttachmentMimeType ??
+                "application/octet-stream"
+              let fileType: "image" | "video" | "audio" | "file" = "file"
+              if (mimeType.startsWith("image/")) {
+                fileType = "image"
+              } else if (mimeType.startsWith("video/")) {
+                fileType = "video"
+              } else if (mimeType.startsWith("audio/")) {
+                fileType = "audio"
+              }
+              return {
+                ...base,
+                attachments: [
+                  {
+                    id: "pending",
+                    workspaceId: message.workspaceId,
+                    conversationId: message.conversationId,
+                    messageId: message.id,
+                    messageCreatedAt: message.createdAt,
+                    originPath: attachmentUpdate.newAttachmentPath,
+                    fileType,
+                    mimeType,
+                    url: attachmentUpdate.newAttachmentPublicUrl ?? null,
+                    name: null,
+                    size: 0,
+                    width: attachmentUpdate.newAttachmentWidth ?? null,
+                    height: attachmentUpdate.newAttachmentHeight ?? null,
+                    sourceId: null,
+                    thumbnailPath: null,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  },
+                ],
+              }
+            }
+            return base
+          }),
+        }))
+      },
+
+      loadMoreMessages: async (workspaceId: string, perPage: number) => {
+        const { isLoadMoreMessage, hasNextMessagePage } = get()
+        if (isLoadMoreMessage || !hasNextMessagePage) {
+          return
+        }
+
+        const { nextCursorMessage, messages, activeConversationId } = get()
+        set({ isLoadMoreMessage: true })
+
+        try {
+          const { data, nextCursor } =
+            await client.messagesAPI.listMessagesAuthenticatedAPI({
+              workspaceId,
+              perPage,
+              cursor: nextCursorMessage ?? "",
+              conversationId: activeConversationId ?? undefined,
+            })
+          set({
+            messages: [...data.reverse(), ...messages],
+            nextCursorMessage: nextCursor,
+            hasNextMessagePage: nextCursor !== null,
+            isLoadMoreMessage: false,
+            messagesConversationId: activeConversationId,
+          })
+        } catch (error) {
+          // Reset the in-flight flag or the `isLoadMoreMessage` guard above
+          // would block every later scroll-up load for this store instance.
+          set({ isLoadMoreMessage: false })
+          throw error
+        }
+      },
+
+      loadInitialMessages: async (workspaceId: string, perPage: number) => {
+        const {
+          activeConversationId,
+          messagesConversationId,
+          loadMoreMessages,
+        } = get()
+        if (messagesConversationId === activeConversationId) {
+          return
+        }
+        await loadMoreMessages(workspaceId, perPage)
+      },
+
+      updateConversationViaMessage: (message: MessageResource) => {
+        let matchedConversation = false
+        set((state) => {
+          const conversationIndex = state.conversations.findIndex(
+            (conversation) => conversation.id === message.conversationId,
+          )
+          if (conversationIndex === -1) {
+            return state
+          }
+
+          matchedConversation = true
+          const currentConversation = state.conversations[conversationIndex]
+          const conversation = {
+            ...currentConversation,
             messages: [message],
             lastActivityAt: latestActivityAt(
-              conversation.lastActivityAt,
+              currentConversation.lastActivityAt,
               message.createdAt,
             ),
           }
           return {
             conversations: moveConversationToTop(
               state.conversations,
-              updatedConversation,
+              conversation,
             ),
           }
         })
-      } else {
-        // New conversation, we'll need basic details
-        const newConversation =
-          await client.conversationsAPI.findConversationAuthenticatedAPI({
-            workspaceId: message.workspaceId,
-            id: message.conversationId,
-          })
-        newConversation.data.messages = [message]
-        prependConversation(newConversation.data)
-      }
-    },
 
-    bubbleConversationToTop: async (
-      workspaceId: string,
-      conversationId: string,
-    ) => {
-      const { conversations, prependConversation } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === conversationId,
-      )
+        if (!matchedConversation) {
+          get().scheduleConversationHeadRefresh(message.workspaceId)
+        }
+      },
 
-      if (conversationIndex > -1) {
-        set((state) => {
-          const conversation = state.conversations.find(
-            (item) => item.id === conversationId,
-          )
-          return conversation
-            ? {
-                conversations: moveConversationToTop(
-                  state.conversations,
-                  conversation,
-                ),
-              }
-            : state
-        })
-        return
-      }
-
-      // Not loaded client-side — fetch and prepend it, mirroring
-      // updateConversationViaMessage's not-found branch. A lookup failure is a
-      // no-op: the ringing state still lives in the VoIP call store, so the
-      // dock and dialog keep working even if the list can't show the row.
-      try {
-        const response =
-          await client.conversationsAPI.findConversationAuthenticatedAPI({
-            workspaceId,
-            id: conversationId,
-          })
-        prependConversation(response.data)
-      } catch (error) {
-        // Not surfaced as a toast, since the VoIP call store keeps the
-        // dock/dialog working regardless. But a real network/auth/5xx failure
-        // must stay distinguishable from the "filtered out" case, so log it.
-        logger.warn(
-          { err: error, conversationId },
-          "bubbleConversationToTop: failed to fetch conversation to prepend",
+      bubbleConversationToTop: async (
+        workspaceId: string,
+        conversationId: string,
+      ) => {
+        const { conversations, prependConversation } = get()
+        const conversationIndex = conversations.findIndex(
+          (c) => c.id === conversationId,
         )
-      }
-    },
 
-    updateConversation: (
-      conversationId: string,
-      data: Partial<ConversationResource>,
-    ) => {
-      const { conversations } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === conversationId,
-      )
-      if (conversationIndex > -1) {
-        const updatedConversations = [...conversations]
-        updatedConversations[conversationIndex] = {
-          ...updatedConversations[conversationIndex],
-          ...data,
+        if (conversationIndex > -1) {
+          set((state) => {
+            const conversation = state.conversations.find(
+              (item) => item.id === conversationId,
+            )
+            return conversation
+              ? {
+                  conversations: moveConversationToTop(
+                    state.conversations,
+                    conversation,
+                  ),
+                }
+              : state
+          })
+          return
         }
 
-        set({ conversations: updatedConversations })
-      }
-    },
+        // Not loaded client-side — fetch and prepend it. The message path
+        // schedules a head refresh for unseen rows; this call-specific path keeps
+        // the ringing conversation visible. A lookup failure is a no-op: the
+        // ringing state still lives in the VoIP call store, so the dock and dialog
+        // keep working even if the list can't show the row.
+        try {
+          const response =
+            await client.conversationsAPI.findConversationAuthenticatedAPI({
+              workspaceId,
+              id: conversationId,
+            })
+          prependConversation(response.data)
+        } catch (error) {
+          // Not surfaced as a toast, since the VoIP call store keeps the
+          // dock/dialog working regardless. But a real network/auth/5xx failure
+          // must stay distinguishable from the "filtered out" case, so log it.
+          logger.warn(
+            { err: error, conversationId },
+            "bubbleConversationToTop: failed to fetch conversation to prepend",
+          )
+        }
+      },
 
-    updateConversations: (
-      conversationIds: string[],
-      data: Partial<ConversationResource>,
-    ) => {
-      if (conversationIds.length === 0) {
-        return
-      }
-
-      const { conversations } = get()
-      const updatedConversations = [...conversations]
-
-      for (const conversationId of conversationIds) {
+      updateConversation: (
+        conversationId: string,
+        data: Partial<ConversationResource>,
+      ) => {
+        const { conversations } = get()
         const conversationIndex = conversations.findIndex(
           (c) => c.id === conversationId,
         )
         if (conversationIndex > -1) {
+          const updatedConversations = [...conversations]
           updatedConversations[conversationIndex] = {
             ...updatedConversations[conversationIndex],
             ...data,
           }
+
+          set({ conversations: updatedConversations })
         }
-      }
-      set({ conversations: updatedConversations })
-    },
+      },
 
-    handleNewMessage: async (message: MessageResourceWithRelations) => {
-      const {
-        messages,
-        activeConversationId,
-        appendMessage,
-        applyAgentLastReadAt,
-        updateConversationViaMessage,
-        updateConversation,
-      } = get()
+      updateConversations: (
+        conversationIds: string[],
+        data: Partial<ConversationResource>,
+      ) => {
+        if (conversationIds.length === 0) {
+          return
+        }
 
-      const conversationPatch = conversationPatchForMessage(
-        get().conversations.find((c) => c.id === message.conversationId),
-        message,
-      )
-      if (conversationPatch) {
-        updateConversation(message.conversationId, conversationPatch)
-      }
-      // Only an outgoing message that `createOutgoing` itself produced clears
-      // the unread state locally. Incoming messages, including those on the
-      // open conversation, stay unread until the persisted read action runs.
-      // A bot/system reply (flow step, template, comment automation) must also
-      // leave it alone. This mirrors the server exactly:
-      // `createOutgoing` is the only writer that calls `markAgentReplied`,
-      // and it stamps senderType "user" with a senderId (inbox composer) or
-      // "api" with none (public API); the worker handlers that send on the
-      // bot's behalf only bump `lastActivityAt`. Without this guard a flow
-      // reply broadcast over realtime marked every open inbox tab as read
-      // even though nobody had opened the conversation.
-      //
-      // The senderId check is what excludes a channel echo: `received-message`
-      // stamps every outgoing echo senderType "user" with a null senderId
-      // whatever its origin (see its `isEchoOfOwnSend` comment), so a bot send
-      // whose sourceId dedup missed comes back looking like an agent reply.
-      // Whether an echo reads the conversation is decided server-side (own
-      // sends by the send path, native-tool sends by the receive path) and
-      // arrives here as `conversationUpdated`, so it is not inferred from the
-      // message.
-      const isAgentReply =
-        message.messageType === "outgoing" &&
-        ((message.senderType === "user" && message.senderId !== null) ||
-          message.senderType === "api")
+        const { conversations } = get()
+        const targetIds = new Set(conversationIds)
+        if (
+          !conversations.some((conversation) => targetIds.has(conversation.id))
+        ) {
+          return
+        }
 
-      if (isAgentReply) {
-        // Mirror what `markAgentReplied` persisted (the message's own
-        // timestamp), not the wall clock, and only ever advance: realtime
-        // events are unordered, so a delayed reply must not pull the cursor
-        // back below a customer message that was delivered before it.
-        const readAt = new Date(message.createdAt)
-        applyAgentLastReadAt([message.conversationId], readAt)
-        updateConversation(message.conversationId, { adminRepliedAt: readAt })
-      }
+        set({
+          conversations: conversations.map((conversation) =>
+            targetIds.has(conversation.id)
+              ? { ...conversation, ...data }
+              : conversation,
+          ),
+        })
+      },
 
-      // Update the conversation list
-      updateConversationViaMessage(message)
+      handleNewMessage: (message: MessageResourceWithRelations) => {
+        const { messages, activeConversationId, appendMessage } = get()
+        let matchedConversation = false
 
-      // Add to messages list if this is the active conversation
-      if (message.conversationId !== activeConversationId) {
-        return
-      }
-
-      // If the message contains the clientId, it can be sent from this tab itself.
-      if (message.clientId) {
-        const messageIndex = messages.findIndex(
-          (m) => m.clientId === message.clientId,
-        )
-
-        // let replace the returned content if found
-        if (messageIndex > -1) {
-          const newMessages = [...messages]
-          newMessages[messageIndex] = {
-            ...newMessages[messageIndex],
-            ...message,
-            // messageCreated's payload is captured before the async send job
-            // runs, so its sendError is always null at broadcast time — keep
-            // a sendError already recorded by markMessageFailed instead of
-            // letting this stale snapshot clobber it.
-            sendError: newMessages[messageIndex].sendError ?? message.sendError,
+        set((state) => {
+          const conversationIndex = state.conversations.findIndex(
+            (conversation) => conversation.id === message.conversationId,
+          )
+          if (conversationIndex === -1) {
+            return state
           }
-          set({
-            messages: newMessages,
-          })
-        } else {
-          // New conversation, we'll need basic details
-          const newMessage =
-            await client.messagesAPI.findMessageAuthenticatedAPI({
-              workspaceId: message.workspaceId,
-              id: message.id,
-              createdAt: new Date(message.createdAt),
-            })
-          appendMessage(newMessage)
+
+          matchedConversation = true
+          const currentConversation = state.conversations[conversationIndex]
+          const conversationPatch = conversationPatchForMessage(
+            currentConversation,
+            message,
+          )
+          // Only createOutgoing-style sends count as agent replies. A channel
+          // echo also reports senderType "user", but has no senderId; treating
+          // it as an agent reply would incorrectly mark the conversation read.
+          // The server stamps readAt from the message timestamp, not wall clock,
+          // and it only moves forward, so delayed events cannot regress read
+          // state or hide newer customer activity.
+          const isAgentReply =
+            message.messageType === "outgoing" &&
+            ((message.senderType === "user" && message.senderId !== null) ||
+              message.senderType === "api")
+          const readAt = isAgentReply ? new Date(message.createdAt) : null
+          const conversation = {
+            ...currentConversation,
+            ...(conversationPatch ?? {}),
+            ...(readAt
+              ? {
+                  agentLastReadAt: latestDate(
+                    currentConversation.agentLastReadAt,
+                    readAt,
+                  ),
+                  adminRepliedAt: readAt,
+                }
+              : {}),
+            messages: [message],
+            lastActivityAt: latestActivityAt(
+              currentConversation.lastActivityAt,
+              message.createdAt,
+            ),
+          }
+
+          return {
+            conversations: moveConversationToTop(
+              state.conversations,
+              conversation,
+            ),
+          }
+        })
+
+        if (!matchedConversation) {
+          get().scheduleConversationHeadRefresh(message.workspaceId)
         }
-      } else {
-        // just append the messages to the end of messages list
+
+        if (message.conversationId !== activeConversationId) {
+          return
+        }
+
+        if (message.clientId) {
+          const messageIndex = messages.findIndex(
+            (currentMessage) => currentMessage.clientId === message.clientId,
+          )
+
+          if (messageIndex > -1) {
+            const newMessages = [...messages]
+            newMessages[messageIndex] = {
+              ...newMessages[messageIndex],
+              ...message,
+              // messageCreated's payload is captured before the async send job
+              // runs, so its sendError is always null at broadcast time — keep
+              // a sendError already recorded by markMessageFailed instead of
+              // letting this stale snapshot clobber it.
+              sendError:
+                newMessages[messageIndex].sendError ?? message.sendError,
+            }
+            set({ messages: newMessages })
+            return
+          }
+        }
+
+        // Every relation added by MessageResourceWithRelations is optional, so
+        // the realtime base-message payload is safe to append without a refetch.
         appendMessage(message)
-      }
-    },
+      },
 
-    loadActivePost: async (workspaceId: string) => {
-      const { conversations, activeConversationId } = get()
-      const conversation = conversations.find(
-        (c) => c.id === activeConversationId,
-      )
-      const contactInbox = conversation?.contactInboxes?.[0]
-      const postId = conversation?.sourceId
-      const inboxId = contactInbox?.inboxId
-      const channel = contactInbox?.channel
+      loadActivePost: async (workspaceId: string) => {
+        const { conversations, activeConversationId } = get()
+        const conversation = conversations.find(
+          (c) => c.id === activeConversationId,
+        )
+        const contactInbox = conversation?.contactInboxes?.[0]
+        const postId = conversation?.sourceId
+        const inboxId = contactInbox?.inboxId
+        const channel = contactInbox?.channel
 
-      if (!(postId && inboxId && supportsPostDetails(channel))) {
-        set({ activePost: null })
-        return
-      }
+        if (!(postId && inboxId && supportsPostDetails(channel))) {
+          set({ activePost: null })
+          return
+        }
 
-      try {
-        const post =
-          await client.conversationsAPI.getPostDetailsAuthenticatedAPI({
-            workspaceId,
-            inboxId,
-            postId,
-            channel,
-          })
-        set({ activePost: post })
-      } catch {
-        set({ activePost: null })
-      }
-    },
+        try {
+          const post =
+            await client.conversationsAPI.getPostDetailsAuthenticatedAPI({
+              workspaceId,
+              inboxId,
+              postId,
+              channel,
+            })
+          set({ activePost: post })
+        } catch {
+          set({ activePost: null })
+        }
+      },
 
-    updateContact: (contactId: string, data: Partial<ContactResource>) => {
-      const { conversations } = get()
-      const hasMatch = conversations.some((c) => c.contactId === contactId)
-      if (!hasMatch) {
-        return
-      }
+      updateContact: (contactId: string, data: Partial<ContactResource>) => {
+        const { conversations } = get()
+        const hasMatch = conversations.some((c) => c.contactId === contactId)
+        if (!hasMatch) {
+          return
+        }
 
-      set({
-        conversations: conversations.map((conversation) =>
-          conversation.contactId === contactId && conversation.contact
-            ? {
-                ...conversation,
-                contact: { ...conversation.contact, ...data },
-              }
-            : conversation,
-        ),
-      })
-    },
-  }))
+        set({
+          conversations: conversations.map((conversation) =>
+            conversation.contactId === contactId && conversation.contact
+              ? {
+                  ...conversation,
+                  contact: { ...conversation.contact, ...data },
+                }
+              : conversation,
+          ),
+        })
+      },
+    }
+  })
 }

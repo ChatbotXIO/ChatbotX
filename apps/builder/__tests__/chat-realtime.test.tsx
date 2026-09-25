@@ -30,9 +30,15 @@ const chatStoreState = {
   bubbleConversationToTop: bubbleConversationToTopMock,
   openConversation: openConversationMock,
 }
+const wholeStoreSelectionMock = vi.fn()
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
-  useChatStore: (selector: (state: typeof chatStoreState) => unknown) =>
-    selector(chatStoreState),
+  useChatStore: (selector: (state: typeof chatStoreState) => unknown) => {
+    const selection = selector(chatStoreState)
+    if (selection === chatStoreState) {
+      wholeStoreSelectionMock()
+    }
+    return selection
+  },
 }))
 
 const conversationIdParamMock = { set: vi.fn(), clear: vi.fn() }
@@ -96,6 +102,12 @@ describe("ChatRealtime — chat event parity", () => {
     act(() => {
       root.render(<ChatRealtime />)
     })
+
+  test("subscribes only to stable actions instead of the whole chat store", async () => {
+    await render()
+
+    expect(wholeStoreSelectionMock).not.toHaveBeenCalled()
+  })
 
   test("registers exactly the ten chat events, no more, no fewer", async () => {
     await render()
