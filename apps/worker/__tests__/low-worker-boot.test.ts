@@ -21,6 +21,7 @@ const workerState = vi.hoisted(() => ({
   capturedWorkers: [] as CapturedWorker[],
   ensureBootstrapped: vi.fn(async () => undefined),
   coexistAttachmentDownload: vi.fn(async () => undefined),
+  messengerEchoFlush: vi.fn(async () => undefined),
   updateContactAvatar: vi.fn(async () => undefined),
   withBlockedOwnerGuard: vi.fn(
     async (_workspaceId: unknown, fn: () => Promise<unknown>) => await fn(),
@@ -49,6 +50,7 @@ vi.mock("bullmq", () => {
 vi.mock("@chatbotx.io/worker-config", () => ({
   LowJobAction: {
     coexistAttachmentDownload: "coexistAttachmentDownload",
+    messengerEchoFlush: "messengerEchoFlush",
     updateContactAvatar: "updateContactAvatar",
   },
   queueNames: { enum: { low: "low" } },
@@ -86,6 +88,10 @@ vi.mock("../src/integration/handlers/contact/update-avatar", () => ({
   updateContactAvatar: workerState.updateContactAvatar,
 }))
 
+vi.mock("../src/integration/handlers/messenger-echo-flush", () => ({
+  messengerEchoFlush: workerState.messengerEchoFlush,
+}))
+
 // Importing the worker module boots it exactly once (ESM module cache).
 await import("../src/low/worker")
 await vi.waitFor(() => {
@@ -95,6 +101,7 @@ await vi.waitFor(() => {
 describe("low worker process boot", () => {
   beforeEach(() => {
     workerState.coexistAttachmentDownload.mockClear()
+    workerState.messengerEchoFlush.mockClear()
     workerState.updateContactAvatar.mockClear()
     workerState.withBlockedOwnerGuard.mockClear()
     workerState.withBlockedOwnerGuard.mockImplementation(
@@ -155,6 +162,27 @@ describe("low worker process boot", () => {
     )
   })
 
+  test("routes messengerEchoFlush with the BullMQ attempt metadata", async () => {
+    const [worker] = workerState.capturedWorkers
+    const data = {
+      channel: "messenger",
+      integrationIdentifier: "page-1",
+    }
+    const job = {
+      attemptsMade: 1,
+      data: { type: "messengerEchoFlush", data },
+      opts: { attempts: 2 },
+    }
+
+    await worker?.processor(job)
+
+    expect(workerState.messengerEchoFlush).toHaveBeenCalledWith(job, data)
+    expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(
+      undefined,
+      expect.any(Function),
+    )
+  })
+
   test("a frozen workspace short-circuits before any handler runs", async () => {
     workerState.withBlockedOwnerGuard.mockImplementationOnce(
       async () => undefined,
@@ -185,5 +213,6 @@ describe("low worker process boot", () => {
 
     expect(workerState.coexistAttachmentDownload).not.toHaveBeenCalled()
     expect(workerState.updateContactAvatar).not.toHaveBeenCalled()
+    expect(workerState.messengerEchoFlush).not.toHaveBeenCalled()
   })
 })

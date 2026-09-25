@@ -116,6 +116,9 @@ export type CoexistDedupContact = {
   email?: string
   avatar?: string
   gender?: string
+  locale?: string
+  language?: string
+  timezone?: string
   sourceUserId?: string
   sourceUsername?: string
 }
@@ -286,6 +289,9 @@ class CoexistImportService extends BaseService {
           email: entry.email,
           phoneNumber: entry.phoneNumber,
           avatar: entry.avatar,
+          gender: entry.gender,
+          locale: entry.locale,
+          timezone: entry.timezone,
         }))
 
         await tx.insert(contactModel).values(contactRows)
@@ -299,6 +305,7 @@ class CoexistImportService extends BaseService {
           sourceId,
           sourceUserId: entry.sourceUserId ?? null,
           sourceUsername: entry.sourceUsername ?? null,
+          language: entry.language ?? null,
           channel: inboxChannel,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -322,6 +329,7 @@ class CoexistImportService extends BaseService {
             sourceId: contactInboxModel.sourceId,
             contactId: contactInboxModel.contactId,
           })
+        const newlyInsertedInboxes = [...insertedInboxes]
 
         const insertedSourceIds = new Set(
           insertedInboxes.map((r) => r.sourceId),
@@ -402,8 +410,7 @@ class CoexistImportService extends BaseService {
           tx,
         })
 
-        const trulyNew = acceptedNew.length - racedSourceIds.length
-        importedContacts = trulyNew
+        importedContacts = newlyInsertedInboxes.length
 
         const racedSet2 = new Set(racedSourceIds)
         const conversationsToInsert = conversationRows.filter(
@@ -439,22 +446,25 @@ class CoexistImportService extends BaseService {
             contactId: inboxRow.contactId,
             conversationId: convId,
           })
+        }
 
+        for (const inboxRow of newlyInsertedInboxes) {
           const entry = dedup.get(inboxRow.sourceId)
-          if (entry) {
-            newContactCreatedEvents.push({
-              workspaceId,
-              contactId: inboxRow.contactId,
-              contactInboxId: inboxRow.id,
-              sourceId: inboxRow.sourceId,
-              firstName: entry.firstName,
-              phoneNumber: entry.phoneNumber,
-              email: entry.email,
-              channel: inboxChannel,
-              source: contactSources.enum.inboundMessage,
-              createdAt: new Date(),
-            })
+          if (!entry) {
+            continue
           }
+          newContactCreatedEvents.push({
+            workspaceId,
+            contactId: inboxRow.contactId,
+            contactInboxId: inboxRow.id,
+            sourceId: inboxRow.sourceId,
+            firstName: entry.firstName,
+            phoneNumber: entry.phoneNumber,
+            email: entry.email,
+            channel: inboxChannel,
+            source: contactSources.enum.inboundMessage,
+            createdAt: new Date(),
+          })
         }
 
         // Scoped-id winners resolve under their own sourceId above; alias the

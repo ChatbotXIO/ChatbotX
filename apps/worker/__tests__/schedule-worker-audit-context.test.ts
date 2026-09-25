@@ -28,6 +28,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       reconcileTenants: "reconcileTenants",
       maintainMacPartitions: "maintainMacPartitions",
       scanCoexistRuns: "scanCoexistRuns",
+      sweepEchoCollectors: "sweepEchoCollectors",
       reconcileMetaCatalogSyncs: "reconcileMetaCatalogSyncs",
       purgeCoexistStaging: "purgeCoexistStaging",
       purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
@@ -125,6 +126,9 @@ vi.mock("../src/schedule/handlers/scan-coexist-runs", () => ({
 }))
 vi.mock("../src/schedule/handlers/scan-smart-delay", () => ({
   scanSmartDelay: vi.fn(),
+}))
+vi.mock("../src/schedule/handlers/sweep-echo-collectors", () => ({
+  sweepEchoCollectors: vi.fn(),
 }))
 vi.mock("../src/schedule/handlers/sync-user-quota", () => ({
   syncUserQuota: vi.fn(),

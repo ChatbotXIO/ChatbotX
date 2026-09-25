@@ -1,7 +1,11 @@
 import type { MessageHandlers } from "@chatbotx.io/sdk"
 import { getMessageMediaUrls as fetchMessageMediaUrls } from "../../apis/sync"
 import type { MessengerAuthValue } from "../../schema"
-import { receiveMessage } from "./incomming-message"
+import {
+  downloadAttachments,
+  parseEcho,
+  receiveMessage,
+} from "./incomming-message"
 import { sendFlowStep, sendMessage } from "./outgoing-message"
 
 const getMessageMediaUrls: MessageHandlers<MessengerAuthValue>["getMessageMediaUrls"] =
@@ -15,6 +19,8 @@ const getMessageMediaUrls: MessageHandlers<MessengerAuthValue>["getMessageMediaU
 export const messageHandlers = {
   sendMessage,
   receiveMessage,
+  parseEcho,
+  downloadAttachments,
   sendFlowStep,
   getMessageMediaUrls,
 }

@@ -163,6 +163,7 @@ export const messengerMessageSchema = z.object({
   mid: z.string(),
   text: z.string().optional(),
   is_echo: z.boolean().optional(),
+  app_id: z.union([z.string(), z.number()]).optional(),
   // Set (with no other message fields besides `mid`) when the sender unsends
   // a previously-sent DM.
   is_deleted: z.boolean().optional(),
@@ -186,6 +187,13 @@ export const messengerMessageSchema = z.object({
   // the whole webhook over an attribution field, losing the customer's message
   // to save a label. Attribution degrades; delivery does not.
   referral: messengerReferralSchema.optional().catch(undefined),
+  reply_to: z.preprocess(
+    (value) =>
+      typeof value === "object" && value !== null && !Array.isArray(value)
+        ? value
+        : undefined,
+    z.looseObject({ mid: z.string().optional() }).optional(),
+  ),
 })
 export type MessengerMessage = z.infer<typeof messengerMessageSchema>
 

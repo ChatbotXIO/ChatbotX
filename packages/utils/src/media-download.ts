@@ -1,7 +1,7 @@
-const DEFAULT_TIMEOUT_MS = 15_000
-// Profile pictures are small; keep a conservative cap so a slow or oversized
-// response cannot hang or exhaust memory on the synchronous hydration path.
-const DEFAULT_MAX_BYTES = 10 * 1024 * 1024
+/** Default timeout for bounded remote-media downloads. */
+export const DEFAULT_MEDIA_DOWNLOAD_TIMEOUT_MS = 15_000
+// Keep bounded request-facing media downloads from allocating arbitrary memory.
+export const DEFAULT_MEDIA_DOWNLOAD_MAX_BYTES = 10 * 1024 * 1024
 
 /**
  * Thrown when a response body exceeds the configured byte cap — either because
@@ -134,8 +134,8 @@ export const fetchMediaWithLimits = async (
 ): Promise<FetchedMedia | null> => {
   const {
     headers,
-    timeoutMs = DEFAULT_TIMEOUT_MS,
-    maxBytes = DEFAULT_MAX_BYTES,
+    timeoutMs = DEFAULT_MEDIA_DOWNLOAD_TIMEOUT_MS,
+    maxBytes = DEFAULT_MEDIA_DOWNLOAD_MAX_BYTES,
     fallbackMimeType = "image/png",
   } = options
 

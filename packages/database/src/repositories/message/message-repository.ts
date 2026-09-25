@@ -131,6 +131,14 @@ export interface FindManyBySourceIdsParams {
   contactInboxIds: string[]
   sinceTime?: Date
   sourceIds: string[]
+  strict?: boolean
+  workspaceId: string
+}
+
+export interface FindManyOnWriteShardBySourceIdsParams {
+  contactInboxIds: string[]
+  sinceTime: Date
+  sourceIds: string[]
   workspaceId: string
 }
 
@@ -212,13 +220,11 @@ export interface DistributedLock {
 }
 
 export interface IMessageRepository {
-  bulkCreate(
-    messages: CreateMessageInput[],
-  ): Promise<{ id: string; sourceId: string | null }[]>
+  bulkCreate(messages: CreateMessageInput[]): Promise<MessageModel[]>
 
   bulkCreateAttachments(
     attachments: BulkCreateAttachmentInput[],
-  ): Promise<{ id: string }[]>
+  ): Promise<AttachmentModel[]>
 
   bulkPatchContentAttributes(
     params: BulkPatchContentAttributesParams,
@@ -270,6 +276,17 @@ export interface IMessageRepository {
     params: FindAttachmentByIdParams,
   ): Promise<AttachmentLookupRow | null>
 
+  findAttachmentSourceIdsByMessageIds(params: {
+    workspaceId: string
+    messages: Array<{ messageId: string; messageCreatedAt: Date }>
+  }): Promise<
+    Array<{
+      messageId: string
+      messageCreatedAt: Date
+      sourceId: string | null
+    }>
+  >
+
   findById(
     params: FindMessageByIdParams,
   ): Promise<MessageWithAttachments | null>
@@ -300,6 +317,10 @@ export interface IMessageRepository {
 
   findManyBySourceIds(
     params: FindManyBySourceIdsParams,
+  ): Promise<MessageSourceRow[]>
+
+  findManyOnWriteShardBySourceIds(
+    params: FindManyOnWriteShardBySourceIdsParams,
   ): Promise<MessageSourceRow[]>
 
   findRichResponseByButton(

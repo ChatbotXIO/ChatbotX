@@ -4,6 +4,7 @@ import { emitContactCreated } from "@chatbotx.io/events"
 import type { IncomingContact } from "@chatbotx.io/sdk"
 import { coexistImportService } from "../coexist-import/service"
 import { logger } from "../logger"
+import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 
 export type ChannelContactImportLink = {
@@ -53,11 +54,13 @@ export type BulkImportChannelContactsResult = {
  * (`bulkImportContacts`) so its coexist callers are unaffected.
  */
 export const bulkImportChannelContacts = async (props: {
-  inbox: InboxModel
+  inbox: Pick<InboxModel, "id" | "channel">
   workspaceId: string
   contacts: IncomingContact[]
+  /** Opt-in owner/pool quota accounting for passive contacts created by live ingestion. */
+  ownerId?: string
 }): Promise<BulkImportChannelContactsResult> => {
-  const { inbox, workspaceId, contacts } = props
+  const { inbox, workspaceId, contacts, ownerId } = props
 
   const empty: BulkImportChannelContactsResult = {
     importedContacts: 0,
@@ -90,6 +93,9 @@ export const bulkImportChannelContacts = async (props: {
       email: existing.email ?? entry.email,
       avatar: existing.avatar ?? entry.avatar,
       gender: existing.gender ?? entry.gender,
+      locale: existing.locale ?? entry.locale,
+      language: existing.language ?? entry.language,
+      timezone: existing.timezone ?? entry.timezone,
       sourceUserId: existing.sourceUserId ?? entry.sourceUserId,
       sourceUsername: existing.sourceUsername ?? entry.sourceUsername,
     })
@@ -132,49 +138,70 @@ export const bulkImportChannelContacts = async (props: {
     }
   }
 
-  // Post-commit side effects.
+  // Post-commit side effects must settle before the caller acknowledges its
+  // source job, but failures remain non-fatal for the committed contacts.
+  const emissions: Array<{ label: string; promise: Promise<unknown> }> = []
   for (const ev of newContactCreatedEvents) {
-    emitContactCreated(
-      ev.workspaceId,
-      ev.contactId,
-      ev.firstName,
-      ev.phoneNumber,
-      ev.email,
-      ev.contactInboxId,
-    ).catch((error) => {
-      logger.error(
-        { err: error },
-        "[bulk-import] Failed to emit contactCreated event",
-      )
-    })
-
-    emit("analytics:dashboard", {
-      eventType: "contact:created",
-      workspaceId: ev.workspaceId,
-      contactId: ev.contactInboxId,
-      occurredAt: ev.createdAt,
-      source: ev.source,
-      sourceId: ev.sourceId,
-      channel: ev.channel,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "bulkImportChannelContacts",
-          triggerType: "contact_created",
-        },
+    emissions.push(
+      {
+        label: "contactCreated event",
+        promise: Promise.resolve().then(() =>
+          emitContactCreated(
+            ev.workspaceId,
+            ev.contactId,
+            ev.firstName,
+            ev.phoneNumber,
+            ev.email,
+            ev.contactInboxId,
+          ),
+        ),
       },
-    })?.catch((error) => {
+      {
+        label: "contact:created",
+        promise: Promise.resolve().then(() =>
+          emit("analytics:dashboard", {
+            eventType: "contact:created",
+            workspaceId: ev.workspaceId,
+            contactId: ev.contactInboxId,
+            occurredAt: ev.createdAt,
+            source: ev.source,
+            sourceId: ev.sourceId,
+            channel: ev.channel,
+            metadata: {
+              triggerContext: {
+                triggerSource: "worker",
+                triggerHandler: "bulkImportChannelContacts",
+                triggerType: "contact_created",
+              },
+            },
+          }),
+        ),
+      },
+    )
+  }
+  const emissionResults = await Promise.allSettled(
+    emissions.map(({ promise }) => promise),
+  )
+  for (const [index, result] of emissionResults.entries()) {
+    if (result.status === "rejected") {
       logger.error(
-        { err: error },
-        "[bulk-import] Failed to emit contact:created",
+        { err: result.reason },
+        `[bulk-import] Failed to emit ${emissions[index]?.label ?? "event"}`,
       )
-    })
+    }
   }
 
   // Info-only workspace usage for newly-created contacts. Bulk import (coexist
   // history backfill, contact scan) is passive and does not consume billing
   // quota.
   if (importedContacts > 0) {
+    if (ownerId) {
+      await quotaEnforcementService.incrementBy({
+        userId: ownerId,
+        metric: "contacts",
+        count: importedContacts,
+      })
+    }
     await workspaceUsageService
       .increment(workspaceId, "contacts", importedContacts)
       .catch((err) => {

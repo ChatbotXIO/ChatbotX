@@ -11,10 +11,15 @@ import type {
   TiktokAuthValue,
   TiktokConfig,
 } from "@chatbotx.io/integration-tiktok"
-import { SdkException } from "@chatbotx.io/sdk"
-import { integrationQueue } from "@chatbotx.io/worker-config"
+import { type EchoCollectorPort, SdkException } from "@chatbotx.io/sdk"
+import {
+  integrationQueue,
+  LowJobAction,
+  lowQueue,
+} from "@chatbotx.io/worker-config"
+import { echoCollector } from "@chatbotx.io/worker-config/messenger-echo"
 import type { NextRequest } from "next/server"
-import { isCloud } from "@/env"
+import { env, isCloud } from "@/env"
 import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
 import { findIntegrationTiktokByOpenId } from "@/features/integration-tiktok/queries"
 import { type IntegrationKey, integrations } from "@/integration"
@@ -37,6 +42,47 @@ const THREADS_BAD_REQUEST_MESSAGES = new Set([
   "Missing webhook signature",
   "Webhook app_id does not match configured clientId",
 ])
+
+const messengerEchoCollectorPort: EchoCollectorPort = {
+  push: async ({ channel, identifier, item }) =>
+    await echoCollector.push({ channel, identifier }, item, {
+      maxItems: env.MESSENGER_ECHO_LIST_MAX_ITEMS,
+      maxBytes: env.MESSENGER_ECHO_LIST_MAX_BYTES,
+      ttlSeconds: env.MESSENGER_ECHO_LIST_TTL_SECONDS,
+    }),
+  schedule: async (scope) => {
+    const won = await echoCollector.schedule(
+      scope,
+      env.MESSENGER_ECHO_FLAG_TTL_MS,
+    )
+    if (!won) {
+      return
+    }
+    try {
+      await lowQueue.add(
+        LowJobAction.messengerEchoFlush,
+        {
+          type: LowJobAction.messengerEchoFlush,
+          data: {
+            channel: "messenger",
+            integrationIdentifier: scope.identifier,
+          },
+        },
+        { delay: env.MESSENGER_ECHO_FLUSH_DELAY_MS },
+      )
+    } catch (err) {
+      try {
+        await echoCollector.clearFlag(scope)
+      } catch (clearErr) {
+        logger.error(
+          { err: clearErr, scope },
+          "Failed to clear Messenger echo collector scheduling claim",
+        )
+      }
+      throw err
+    }
+  },
+}
 
 const createThreadsErrorResponse = (error: unknown) => {
   const safeError = getSafeErrorDetails(error)
@@ -173,6 +219,10 @@ export const handleWebhook = async (
   const settings = credential.config
 
   try {
+    const echoCollectorPort =
+      integrationType === "messenger" && env.MESSENGER_ECHO_COLLECTOR_ENABLED
+        ? messengerEchoCollectorPort
+        : undefined
     const result = await integration.handleRequest({
       config: {
         ...settings,
@@ -185,6 +235,7 @@ export const handleWebhook = async (
       } as any,
       req,
       queue: integrationQueue,
+      ...(echoCollectorPort ? { echoCollector: echoCollectorPort } : {}),
     })
 
     return new Response(result as BodyInit)

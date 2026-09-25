@@ -131,6 +131,9 @@ type DeleteOptions = {
   json?: Record<string, unknown>
 }
 
+/** Timeout used by standard Messenger Graph API requests. */
+export const FACEBOOK_GRAPH_REQUEST_TIMEOUT_MS = 30_000
+
 class MessengerHttpClient {
   private readonly client: KyInstance
 
@@ -205,7 +208,7 @@ class MessengerHttpClient {
 
 export const facebookGraphClient = new MessengerHttpClient({
   baseUrl: "https://graph.facebook.com",
-  timeout: 30_000,
+  timeout: FACEBOOK_GRAPH_REQUEST_TIMEOUT_MS,
   retries: 3,
   retryDelay: 1000,
 })

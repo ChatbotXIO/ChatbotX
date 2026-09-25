@@ -11,8 +11,11 @@ import type {
   BaseConfig,
   CommentAnchor,
   Context,
+  EchoAttachmentDescriptor,
+  EchoParseResult,
   HandleRequestProps,
   Handler,
+  IncomingAttachment,
   IncomingContact,
   MessageButtonTemplate,
   OutgoingContact,
@@ -110,6 +113,20 @@ export type MessageHandlers<
       }
     },
     ReceivedMessageResult | null
+  >
+  parseEcho?: Handler<
+    {
+      ctx: Context<IAuth>
+      data: { payload: unknown }
+    },
+    EchoParseResult | null
+  >
+  downloadAttachments?: Handler<
+    {
+      ctx: Context<IAuth>
+      data: { descriptors: EchoAttachmentDescriptor[] }
+    },
+    IncomingAttachment[]
   >
   sendFlowStep: Handler<
     {

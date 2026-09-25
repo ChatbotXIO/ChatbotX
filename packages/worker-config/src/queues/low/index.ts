@@ -20,6 +20,7 @@ import { queueNames } from "../../lib/types"
  */
 export const LowJobAction = {
   coexistAttachmentDownload: "coexistAttachmentDownload",
+  messengerEchoFlush: "messengerEchoFlush",
   updateContactAvatar: "updateContactAvatar",
 } as const
 
@@ -59,8 +60,17 @@ export type LowJobUpdateContactAvatar = {
   }
 }
 
+export type LowJobMessengerEchoFlush = {
+  type: typeof LowJobAction.messengerEchoFlush
+  data: {
+    channel: "messenger"
+    integrationIdentifier: string
+  }
+}
+
 export type LowJobData =
   | LowJobCoexistAttachmentDownload
+  | LowJobMessengerEchoFlush
   | LowJobUpdateContactAvatar
 
 export const lowQueue = isNoRedisEnv()
