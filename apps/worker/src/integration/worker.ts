@@ -34,7 +34,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { hasExhaustedAttempts } from "../lib/job-attempts"
 import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
-import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
+import { resolveWorkspaceContext } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { integrationService } from "../services/integrations"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
@@ -158,7 +158,8 @@ async function startIntegrationWorker() {
   }
 
   const processIntegrationJob = async (job: Job<IntegrationJobData>) => {
-    const workspaceId = await resolveWorkspaceId(job.data.data)
+    const { integration: resolvedIntegration, workspaceId } =
+      await resolveWorkspaceContext(job.data.data)
     if (await isBlockedWorkspace(workspaceId)) {
       return
     }
@@ -169,7 +170,10 @@ async function startIntegrationWorker() {
         async () => {
           switch (job.data.type) {
             case IntegrationJobAction.incomingMessage: {
-              const received = await receiveMessage(job.data.data)
+              const received = await receiveMessage(
+                job.data.data,
+                resolvedIntegration,
+              )
               if (!received) {
                 return
               }

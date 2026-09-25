@@ -97,6 +97,7 @@ import { UnrecoverableError } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
 import { LOCK_CONTENTION_POLICY } from "../../lib/lock-contention-deferral"
 import { logger } from "../../lib/logger"
+import type { ResolvedJobIntegration } from "../../lib/resolve-workspace-id"
 import {
   allIntegrations,
   integrationService,
@@ -226,6 +227,7 @@ const isThirdPartyEcho = (props: {
 
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
+  resolvedIntegration?: ResolvedJobIntegration,
 ): Promise<{
   message: MessageWithAttachments | null
   conversation: ConversationModel
@@ -244,10 +246,11 @@ export const receiveMessage = async (
   }
 
   const dbIntegration =
-    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+    resolvedIntegration ??
+    (await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
       integrationType as IntegrationType,
       integrationIdentifier,
-    )
+    ))
   const { inbox, integrationRow } = dbIntegration
   let integration = allIntegrations[integrationType]
   if (!integration) {
@@ -266,14 +269,12 @@ export const receiveMessage = async (
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   const isWorkspaceActive = workspaceService.isActiveNow(workspace)
 
-  const { storageUrl } = await resolveTenantSettings({
-    workspaceId: inbox.workspaceId,
-  })
   const ctx = await buildContext({
     workspaceId: inbox.workspaceId,
     integrationType,
     integration: integrationRow,
   })
+  const { storageUrl } = ctx.platform
 
   const parsedMessage = await integration.runChannelHandler(
     "message",
@@ -341,6 +342,7 @@ export const receiveMessage = async (
       incomingContact,
       inbox,
       integrationRow,
+      integrationContext: ctx,
       newContactQuota: newContactQuotaFor(rawIncomingMessage),
       source:
         metaReferralToContactSource(referralSource) ??
@@ -904,7 +906,12 @@ const saveAndBroadcastMessage = async (props: {
     messageWithAttachments = result.result
     isNew = result.isNew
   } else {
-    const result = await repository.createOrUpdate(messageInput)
+    const canSkipDedupLock =
+      incomingMessage.messageType === "outgoing" &&
+      incomingMessage.createdAt !== undefined
+    const result = canSkipDedupLock
+      ? await repository.createOrUpdate(messageInput, { skipDedupLock: true })
+      : await repository.createOrUpdate(messageInput)
     messageWithAttachments = { ...result.message, attachments: [] }
     isNew = result.isNew
   }
@@ -1720,6 +1727,7 @@ export const detectContactAndConversation = async (props: {
   /** A match the caller already resolved for this identity; skips the lookup. */
   existingContactMatch?: SourceScopedIdentityMatch<ContactInboxWithContact>
   newContactQuota?: NewContactQuota
+  integrationContext?: Awaited<ReturnType<typeof buildContext>>
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
@@ -1732,6 +1740,7 @@ export const detectContactAndConversation = async (props: {
     integrationRow,
     source,
     newContactQuota = "mac",
+    integrationContext,
   } = props
 
   const existingContactMatch =
@@ -1768,6 +1777,7 @@ export const detectContactAndConversation = async (props: {
       incomingContact,
       source,
       newContactQuota,
+      integrationContext,
       conversationSourceId,
       isBsuidKeyedIncomingContact,
     })
@@ -1813,6 +1823,7 @@ const createNewContactAndContactInbox = async (props: {
   incomingContact: IncomingContact
   source: ContactSource
   newContactQuota: NewContactQuota
+  integrationContext?: Awaited<ReturnType<typeof buildContext>>
   conversationSourceId: string | null
   isBsuidKeyedIncomingContact: boolean
 }): Promise<{
@@ -1827,6 +1838,7 @@ const createNewContactAndContactInbox = async (props: {
     incomingContact,
     source,
     newContactQuota,
+    integrationContext,
     conversationSourceId,
     isBsuidKeyedIncomingContact,
   } = props
@@ -1842,11 +1854,13 @@ const createNewContactAndContactInbox = async (props: {
         : inbox.channel
     const profileIntegration = allIntegrations[integrationType]
     if (profileIntegration) {
-      const profileCtx = await buildContext({
-        workspaceId: inbox.workspaceId,
-        integrationType,
-        integration: integrationRow,
-      })
+      const profileCtx =
+        integrationContext ??
+        (await buildContext({
+          workspaceId: inbox.workspaceId,
+          integrationType,
+          integration: integrationRow,
+        }))
       try {
         const userProfile = await profileIntegration.runChannelHandler(
           "contact",

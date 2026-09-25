@@ -1829,6 +1829,109 @@ describe("ShardedMessageRepository.createOrUpdate — idempotent echo save", () 
     expect(shardDb.chain.onConflictDoNothing).toHaveBeenCalledTimes(1)
   })
 
+  test("keeps inbound messages on the lock and read-shard guard path", async () => {
+    const insertedRow = { ...existingRow, id: "new-inbound" }
+    const shardDb = makeInsertShardDb([insertedRow])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const runExclusive = vi.fn(({ fn }: { fn: () => Promise<unknown> }) => fn())
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      { runExclusive } as never,
+    )
+    const findSpy = vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    const result = await repo.createOrUpdate(makeMessage(), {
+      skipDedupLock: true,
+    })
+
+    expect(result).toEqual({ message: insertedRow, isNew: true })
+    expect(runExclusive).toHaveBeenCalledOnce()
+    expect(findSpy).toHaveBeenCalledOnce()
+  })
+
+  test("guards across shards before inserting an echo without a lock", async () => {
+    const insertedRow = {
+      ...existingRow,
+      id: "new-echo",
+      messageType: "outgoing",
+    }
+    const shardDb = makeInsertShardDb([insertedRow])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const runExclusive = vi.fn()
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      { runExclusive } as never,
+    )
+    const findSpy = vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    const result = await repo.createOrUpdate(
+      makeMessage({ messageType: "outgoing", senderType: "user" }),
+      { skipDedupLock: true },
+    )
+
+    expect(result).toEqual({ message: insertedRow, isNew: true })
+    expect(runExclusive).not.toHaveBeenCalled()
+    expect(findSpy).toHaveBeenCalledWith(
+      "src-1",
+      "conv-1",
+      "ws-1",
+      new Date("2025-12-31T00:00:00Z"),
+    )
+    expect(shardDb.select).not.toHaveBeenCalled()
+  })
+
+  test("returns a cross-shard echo without inserting or taking a lock", async () => {
+    const shardDb = makeInsertShardDb([])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const runExclusive = vi.fn()
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      { runExclusive } as never,
+    )
+    const findSpy = vi
+      .spyOn(repo, "findBySourceId")
+      .mockResolvedValue(existingRow as never)
+
+    const result = await repo.createOrUpdate(
+      makeMessage({ messageType: "outgoing", senderType: "user" }),
+      { skipDedupLock: true },
+    )
+
+    expect(result).toEqual({ message: existingRow, isNew: false })
+    expect(runExclusive).not.toHaveBeenCalled()
+    expect(findSpy).toHaveBeenCalledOnce()
+    expect(shardDb.insert).not.toHaveBeenCalled()
+  })
+
+  test("resolves an echo insert conflict from the write shard", async () => {
+    const shardDb = makeInsertShardDb([], [existingRow])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const runExclusive = vi.fn()
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      { runExclusive } as never,
+    )
+    const findSpy = vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    const result = await repo.createOrUpdate(
+      makeMessage({ messageType: "outgoing", senderType: "user" }),
+      { skipDedupLock: true },
+    )
+
+    expect(result).toEqual({ message: existingRow, isNew: false })
+    expect(runExclusive).not.toHaveBeenCalled()
+    expect(findSpy).toHaveBeenCalledOnce()
+    expect(shardDb.select).toHaveBeenCalledOnce()
+  })
+
   test("duplicate echo (insert conflict) returns the existing row, isNew=false, without throwing", async () => {
     const shardDb = makeInsertShardDb([]) // ON CONFLICT DO NOTHING → no row back
     const shardManager = {
