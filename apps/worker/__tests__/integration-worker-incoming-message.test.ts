@@ -380,6 +380,7 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
 
 vi.mock("@chatbotx.io/sdk", () => ({
   contentTypes: { enum: { text: "text", location: "location" } },
+  echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
   resolveWithSourceUserIdFallback: async <T>(
     identity: { sourceId: string; sourceUserId?: string | null },
     lookup: (

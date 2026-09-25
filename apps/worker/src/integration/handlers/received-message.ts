@@ -66,6 +66,8 @@ import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
   contentTypes,
+  type EchoOrigin,
+  echoOrigins,
   getStoryReply,
   type IncomingContact,
   type IncomingMessage,
@@ -189,6 +191,22 @@ export const metaReferralToContactSource = (
   }
 }
 
+/**
+ * A third-party echo (another app's send mirrored back by the channel, as
+ * classified by the channel parser via `echoOrigin`) must not open a contact
+ * on its own. First-party or unclassified echoes keep the create path so an
+ * agent's first outbound thread still appears. Story-reply echoes are also
+ * excluded: Meta delivers a customer's first story reply as an echo from the
+ * page id, and `correctStoryReplyDirectionForNewContact` flips it to incoming.
+ */
+const isThirdPartyEcho = (props: {
+  message: IncomingMessage | null
+  echoOrigin: EchoOrigin | null | undefined
+}): boolean =>
+  props.echoOrigin === echoOrigins.enum.thirdParty &&
+  props.message?.messageType === messageTypes.enum.outgoing &&
+  !getStoryReply(props.message.contentAttributes)
+
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
 ): Promise<{
@@ -199,7 +217,7 @@ export const receiveMessage = async (
   quickReplyAction: string | null
   ref?: string | null
   channelType: "instagram" | "instagramFacebook"
-}> => {
+} | null> => {
   setWebhookExecutionContext({ source: "webhook" })
 
   const { integrationType, integrationIdentifier } = props
@@ -271,6 +289,34 @@ export const receiveMessage = async (
     integrationIdentifier,
   })
 
+  // Third-party echoes for a contact this inbox has never seen are dropped
+  // before any contact, profile-fetch, or message write. Such tools fan out
+  // one echo per recipient; creating a contact for each one costs a Graph
+  // profile call plus three inserts and was backing up the queue. The contact
+  // is created on their first inbound message instead. The row resolved here
+  // is handed to `detectContactAndConversation` so the lookup runs once.
+  // Known gap: an echo racing the contact's very first inbound job can miss
+  // this lookup and be dropped; that one outgoing row is then never stored.
+  const isThirdPartyEchoMessage = isThirdPartyEcho({
+    message: rawIncomingMessage,
+    echoOrigin: parsedMessage.echoOrigin,
+  })
+  const existingContactInbox = isThirdPartyEchoMessage
+    ? await resolveExistingContactInbox({ inbox, incomingContact })
+    : undefined
+  if (isThirdPartyEchoMessage && !existingContactInbox) {
+    logger.debug(
+      {
+        inboxId: inbox.id,
+        channel: inbox.channel,
+        sourceId: incomingContact.sourceId,
+        echoAppId: parsedMessage.echoAppId ?? null,
+      },
+      "Skipping third-party echo for an unknown contact",
+    )
+    return null
+  }
+
   // Label resolution only reads the raw text (direction correction never
   // changes it) and the workspace, so it can overlap the contact lookup.
   const [detected, postbackButtonLabel] = await Promise.all([
@@ -281,6 +327,7 @@ export const receiveMessage = async (
       source:
         metaReferralToContactSource(referralSource) ??
         contactSources.enum.inboundMessage,
+      existingContactInbox,
     }),
     resolvePostbackButtonLabel({
       postbackAction,
@@ -1654,6 +1701,8 @@ export const detectContactAndConversation = async (props: {
     [x: string]: unknown
   }
   source: ContactSource
+  /** A row the caller already resolved for this identity; skips the lookup. */
+  existingContactInbox?: ContactInboxWithContact
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
@@ -1662,10 +1711,9 @@ export const detectContactAndConversation = async (props: {
 }> => {
   const { incomingContact, inbox, integrationRow, source } = props
 
-  const existingContactInbox = await resolveExistingContactInbox({
-    inbox,
-    incomingContact,
-  })
+  const existingContactInbox =
+    props.existingContactInbox ??
+    (await resolveExistingContactInbox({ inbox, incomingContact }))
 
   // The conversation source id (e.g. a Facebook post id for comments) keys the
   // conversation; it is null for ordinary DMs. Carried on the conversation row,
