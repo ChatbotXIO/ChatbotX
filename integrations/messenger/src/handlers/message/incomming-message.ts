@@ -2,6 +2,8 @@ import { normalizeMetaAdReferral } from "@chatbotx.io/business/referral"
 import {
   type Context,
   contentTypes,
+  type EchoOrigin,
+  echoOrigins,
   type IncomingAttachment,
   type IncomingContact,
   type IncomingMessage,
@@ -14,6 +16,7 @@ import { getMessageAttachmentEntity } from "../../apis/attachment"
 import { MessengerException } from "../../exception"
 import { logger } from "../../lib/logger"
 import {
+  META_FIRST_PARTY_ECHO_APP_IDS,
   type MessengerAuthValue,
   type MessengerMessage,
   type MessengerMessagingEvent,
@@ -78,6 +81,77 @@ const getMessageLocation = (message: MessengerMessage) => {
   }
 }
 
+const collectTitles = (elements: { title?: string }[] | undefined): string[] =>
+  (elements ?? [])
+    .map((element) => element.title?.trim() ?? "")
+    .filter((title) => title.length > 0)
+
+type TemplateAttachment = NonNullable<MessengerMessage["attachments"]>[number]
+
+/**
+ * Where a `template` echo's display text can come from, in priority order
+ * (message_echoes reference: button / generic / media / product templates).
+ * Media templates carry no title and resolve to nothing.
+ */
+const templateTitleResolvers: ((
+  attachment: TemplateAttachment,
+) => string | undefined)[] = [
+  (attachment) => attachment.title?.trim() || undefined,
+  (attachment) => attachment.payload.text?.trim() || undefined,
+  (attachment) => {
+    const titles = [
+      ...collectTitles(attachment.payload.elements),
+      ...collectTitles(attachment.payload.product?.elements),
+    ]
+    return titles.length > 0 ? titles.join("\n") : undefined
+  },
+]
+
+/**
+ * Text-only summary of a `template` attachment echo. The template body is
+ * never stored as an attachment — it is display-only chrome that would cost
+ * storage on every echo — so its title stands in as the message text.
+ */
+const getTemplateTitle = (message: MessengerMessage): string | undefined => {
+  for (const attachment of message.attachments ?? []) {
+    if (attachment.type !== "template") {
+      continue
+    }
+    for (const resolve of templateTitleResolvers) {
+      const title = resolve(attachment)
+      if (title) {
+        return title
+      }
+    }
+  }
+  return
+}
+
+/**
+ * Meta documents `app_id` as a string but ships a JSON number. A number past
+ * `Number.MAX_SAFE_INTEGER` has already lost digits in `JSON.parse`, so it is
+ * reported as unknown rather than compared against the first-party set.
+ */
+const getEchoAppId = (message: MessengerMessage | undefined): string | null => {
+  if (message?.is_echo !== true || message.app_id === undefined) {
+    return null
+  }
+  if (typeof message.app_id === "number") {
+    return Number.isSafeInteger(message.app_id) ? String(message.app_id) : null
+  }
+  return message.app_id
+}
+
+/** Classifies an echo by its sending app; null when not an echo or unknown. */
+const getEchoOrigin = (echoAppId: string | null): EchoOrigin | null => {
+  if (echoAppId === null) {
+    return null
+  }
+  return META_FIRST_PARTY_ECHO_APP_IDS.has(echoAppId)
+    ? echoOrigins.enum.firstParty
+    : echoOrigins.enum.thirdParty
+}
+
 export const receiveMessage: MessageHandlers<MessengerAuthValue>["receiveMessage"] =
   async (props) => {
     const { ctx, data } = props
@@ -109,6 +183,7 @@ const getMessageEntity = async (
   let referral: MessageReferral | null = null
   let buttonTitle: string | null = null
 
+  const echoAppId = getEchoAppId(messaging.message)
   const sourceId =
     messaging.sender.id === ctx.auth.metadata.pageId
       ? messaging.recipient.id
@@ -125,7 +200,7 @@ const getMessageEntity = async (
         messaging.sender.id === ctx.auth.metadata.pageId
           ? messageTypes.enum.outgoing
           : messageTypes.enum.incoming,
-      text: messaging.message.text,
+      text: messaging.message.text ?? getTemplateTitle(messaging.message),
       contentType: location
         ? contentTypes.enum.location
         : contentTypes.enum.text,
@@ -182,5 +257,7 @@ const getMessageEntity = async (
     referral,
     buttonTitle,
     contact,
+    echoOrigin: getEchoOrigin(echoAppId),
+    echoAppId,
   }
 }

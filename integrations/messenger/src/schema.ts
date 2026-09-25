@@ -15,6 +15,17 @@ import type {
 import type { FacebookPostDetails } from "./apis/post"
 
 export const MESSENGER_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
+/**
+ * `message.app_id` values Meta stamps on a `message_echoes` event when the
+ * message was sent from a Meta first-party surface rather than a third-party
+ * app. The only one Meta documents is Facebook Page Inbox / Business Suite
+ * (`26390203743090`, Graph API v12.0+; the changelog's `263902037430900` is a
+ * typo). Extend from `Skipping outgoing echo` logs if other Meta surfaces
+ * (Pages Manager, the Facebook app) turn out to ship their own ids.
+ */
+export const META_FIRST_PARTY_ECHO_APP_IDS: ReadonlySet<string> = new Set([
+  "26390203743090",
+])
 
 export type MessengerConfig = Oauth2Config & {
   verifyToken?: string
@@ -108,6 +119,14 @@ const attachmentTypeSchema = z
   ])
   .catch("fallback")
 
+// Title-bearing element of a `template` attachment echo (generic / carousel /
+// product). Only the text fields are kept: the echo is stored as a text-only
+// Message row, never re-downloaded as an attachment (see `getTemplateTitle`).
+const templateElementSchema = z.object({
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+})
+
 // Base attachment payload — url optional because template attachments have no url
 const baseAttachmentPayloadSchema = z.object({
   url: z.url().optional(),
@@ -119,6 +138,15 @@ const baseAttachmentPayloadSchema = z.object({
       longitude: z.number().optional(),
     })
     .optional(),
+  // `template` echo fields (message_echoes reference: button / generic /
+  // media / product). Zod strips undeclared keys, so without these the echo
+  // payload reaches the worker as `{}` and the message is stored empty.
+  template_type: z.string().optional(),
+  text: z.string().optional(),
+  elements: z.array(templateElementSchema).optional(),
+  product: z
+    .object({ elements: z.array(templateElementSchema).optional() })
+    .optional(),
 })
 
 // Common ID schemas
@@ -128,6 +156,8 @@ const idSchema = z.object({
 
 export const messengerAttachmentSchema = z.object({
   type: attachmentTypeSchema,
+  // Attachment-level title Meta sets on template/fallback echoes (optional).
+  title: z.string().optional(),
   payload: baseAttachmentPayloadSchema,
 })
 export type MessengerAttachment = z.infer<typeof messengerAttachmentSchema>
@@ -163,6 +193,8 @@ export const messengerMessageSchema = z.object({
   mid: z.string(),
   text: z.string().optional(),
   is_echo: z.boolean().optional(),
+  // Sending app on an echo. Meta documents it as a string but ships a number.
+  app_id: z.union([z.string(), z.number()]).optional(),
   // Set (with no other message fields besides `mid`) when the sender unsends
   // a previously-sent DM.
   is_deleted: z.boolean().optional(),

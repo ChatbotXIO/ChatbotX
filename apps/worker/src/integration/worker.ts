@@ -167,13 +167,17 @@ async function startIntegrationWorker() {
         async () => {
           switch (job.data.type) {
             case IntegrationJobAction.incomingMessage: {
+              const received = await receiveMessage(job.data.data)
+              if (!received) {
+                return
+              }
               const {
                 message,
                 postbackAction,
                 quickReplyAction,
                 conversation,
                 channelType,
-              } = await receiveMessage(job.data.data)
+              } = received
 
               if (!message) {
                 return

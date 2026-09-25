@@ -121,6 +121,15 @@ export type OutgoingMessage = {
 }
 
 export const messageTypes = z.enum(["outgoing", "incoming", "activity"])
+
+/**
+ * Who sent the message a channel is echoing back to us. A channel parser
+ * classifies its own echoes; the shared worker only acts on the enum.
+ * - `firstParty`: the channel's own inbox (e.g. Facebook Page Inbox).
+ * - `thirdParty`: another app connected to the same channel account.
+ */
+export const echoOrigins = z.enum(["firstParty", "thirdParty"])
+export type EchoOrigin = z.infer<typeof echoOrigins>
 export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {
