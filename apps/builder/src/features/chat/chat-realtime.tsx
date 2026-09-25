@@ -91,7 +91,6 @@ export function ChatRealtime() {
       )
   }, [workspaceId, bubbleConversationToTop])
 
-
   useEffect(() => {
     const bubbleNewEntries = (
       ringingCalls: ReturnType<

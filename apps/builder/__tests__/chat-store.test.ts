@@ -613,7 +613,7 @@ describe("chat store conversation updates", () => {
       }),
       expect.any(Object),
     )
-    expect(store.getState().conversations).toEqual([fetched, duplicate])
+    expect(store.getState().conversations).toEqual([fetched, existing])
   })
 
   test("missing conversation updates schedule one trailing head refresh at the end of the throttle window", async () => {

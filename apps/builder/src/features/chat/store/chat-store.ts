@@ -17,7 +17,10 @@ import type {
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
-import type { MessageResourceWithRelations } from "@/features/messages/schema/resource"
+import type {
+  MessageResource,
+  MessageResourceWithRelations,
+} from "@/features/messages/schema/resource"
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 export const INBOX_CONVERSATIONS_PER_PAGE = 20
@@ -210,6 +213,7 @@ export type ChatActions = {
     conversationIds: string[],
     data: Partial<ListConversationItemResource>,
   ) => void
+  updateConversationViaMessage: (message: MessageResource) => void
   /**
    * Moves a conversation to the top of the loaded list — a visual reorder to
    * surface a ringing VoIP call. Never touches lastActivityAt or
@@ -325,22 +329,6 @@ const latestActivityAt = <T extends Date | string>(
   new Date(current).getTime() > new Date(incoming).getTime()
     ? current
     : incoming
-
-const hasLaterActivityAt = (
-  current: Date | string | null | undefined,
-  incoming: Date | string | null | undefined,
-) => {
-  if (!current) {
-    return false
-  }
-  if (!incoming) {
-    return true
-  }
-  return (
-    new Date(latestActivityAt(current, incoming)).getTime() >
-    new Date(incoming).getTime()
-  )
-}
 
 const hasConversationIdInUrl = () =>
   !!new URLSearchParams(
