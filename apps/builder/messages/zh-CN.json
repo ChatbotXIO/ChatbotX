@@ -649,6 +649,7 @@
     },
     "title": "计费",
     "trial": {
+      "planName": "试用",
       "daysLeft": "试用期：剩下 {days} 天",
       "dismiss": "关闭",
       "endsTomorrow": "试用期将于明天结束",
@@ -688,8 +689,7 @@
       "noAudienceFilter": "无受众过滤器",
       "subaction": "子操作",
       "template": "范本",
-      "title": "广播详细信息",
-      "sendLimit": "限制"
+      "title": "广播详细信息"
     },
     "flowType": {
       "flow": {
@@ -829,17 +829,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "升级您的套餐",
+      "sendRate": "您当前的{plan}套餐支持的群发最高速度为每分钟 {rate} 条消息。请升级套餐，群发速度最高可提升至 {multiplier} 倍。",
+      "activeBroadcasts": "您当前的{plan}套餐一次可运行 {max, plural, one {# 个群发任务} other {# 个群发任务}}。请升级套餐以同时运行更多群发任务。"
+    },
     "sendLimit": {
       "title": "限制",
       "hint": "留空以发送给所有匹配的联系人。",
+      "rateHint": "留空以使用默认发送速率。",
+      "rangeSummary": "联系人 #{start} – #{end}",
+      "rangeFromSummary": "从联系人 #{start} 起",
       "rangeLabel": "联系人范围",
       "fromLabel": "从",
       "toLabel": "到",
       "allPlaceholder": "全部",
-      "rangeEndBeforeStart": "结束位置不能早于开始位置",
-      "rangeSummary": "联系人 #{start} – #{end}",
-      "rangeFromSummary": "从联系人 #{start} 起",
-      "rateSummary": "每分钟 {rate} 条消息"
+      "rangeEndBeforeStart": "结束位置不能早于开始位置"
     }
   },
   "commentAutomation": {

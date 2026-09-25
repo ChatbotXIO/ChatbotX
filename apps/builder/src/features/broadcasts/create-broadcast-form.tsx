@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  type BroadcastPlanPolicy,
   type BroadcastScheduleType,
   type BroadcastSubaction,
   broadcastChannelCapabilities,
@@ -37,6 +38,9 @@ import { createBroadcastAction } from "@/features/broadcasts/actions/create-broa
 import { updateDraftBroadcastAction } from "@/features/broadcasts/actions/update-draft-broadcast.action"
 import { BroadcastAudiencePreviewDialog } from "@/features/broadcasts/components/broadcast-audience-preview-dialog"
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
+import { BroadcastPlanLimitDialog } from "@/features/broadcasts/components/broadcast-plan-limit-dialog"
+import { useBroadcastPlanLimit } from "@/features/broadcasts/hooks/use-broadcast-plan-limit"
+import { isBroadcastPlanLimitOutcome } from "@/features/broadcasts/lib/broadcast-plan-limit"
 import {
   type BroadcastTargetRequest,
   createBroadcastRequest,
@@ -128,6 +132,7 @@ type CreateBroadcastFormProps = {
    * only the bound action and the success toast differ.
    */
   editDraft?: EditBroadcastDraft
+  planPolicy: BroadcastPlanPolicy
 }
 
 export function CreateBroadcastForm({
@@ -137,11 +142,14 @@ export function CreateBroadcastForm({
   initialInboxIds,
   initialContactFilter,
   editDraft,
+  planPolicy,
 }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
 
   const isEditing = Boolean(editDraft)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const planLimit = useBroadcastPlanLimit()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     editDraft
@@ -151,12 +159,18 @@ export function CreateBroadcastForm({
     {
       actionProps: {
         onSuccess: ({ data }) => {
+          if (isBroadcastPlanLimitOutcome(data)) {
+            setConfirmOpen(false)
+            planLimit.show(data)
+            return
+          }
+          const status = data && "status" in data ? data.status : undefined
           toast.success(
             t(
               isEditing ? "messages.updatedSuccess" : "messages.createdSuccess",
               {
                 feature: t(
-                  data?.status === "draft"
+                  status === "draft"
                     ? "broadcasts.status.draft"
                     : "fields.broadcast.label",
                 ),
@@ -244,16 +258,24 @@ export function CreateBroadcastForm({
             <CreateBroadcastChooseFlow
               canViewEmailAndPhone={canViewEmailAndPhone}
               channel={watchedChannel}
+              confirmOpen={confirmOpen}
               flows={flows}
               hydrated={
                 editDraft && { targets: editDraft.defaultValues.targets }
               }
+              onConfirmOpenChange={setConfirmOpen}
               onSaveAsDraft={handleSaveAsDraft}
+              planPolicy={planPolicy}
               subaction={watchedSubAction}
             />
           )}
         </form>
       </Form>
+      <BroadcastPlanLimitDialog
+        onDismiss={planLimit.dismiss}
+        onOpenPricing={planLimit.openPricing}
+        state={planLimit.state}
+      />
     </div>
   )
 }
@@ -410,7 +432,10 @@ type CreateBroadcastChooseFlowProps = {
    * creating.
    */
   hydrated?: { targets: BroadcastTargetRequest[] }
+  confirmOpen: boolean
+  onConfirmOpenChange: (open: boolean) => void
   onSaveAsDraft: () => Promise<void>
+  planPolicy: BroadcastPlanPolicy
   subaction: BroadcastSubaction
 }
 
@@ -552,8 +577,6 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
       }),
     [count, watchedAudienceRangeStart, watchedAudienceRangeEnd],
   )
-
-  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const excludeFields = useMemo(
     () =>
@@ -721,7 +744,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
           <Separator />
 
-          <BroadcastSendLimitFields />
+          <BroadcastSendLimitFields planPolicy={props.planPolicy} />
         </CardContent>
       </Card>
 
@@ -762,7 +785,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             disabled={!formState.isValid || formState.isSubmitting}
             onClick={() => {
               setValue("saveAsDraft", false, { shouldDirty: false })
-              setConfirmOpen(true)
+              props.onConfirmOpenChange(true)
             }}
             type="button"
           >
@@ -775,9 +798,9 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             isReceiversCountLoading={isReceiversCountLoading}
             isSubmitting={formState.isSubmitting}
             isValid={formState.isValid}
-            onOpenChange={setConfirmOpen}
+            onOpenChange={props.onConfirmOpenChange}
             onPreviewReceivers={() => setAudiencePreviewOpen(true)}
-            open={confirmOpen}
+            open={props.confirmOpen}
           />
           <BroadcastAudiencePreviewDialog
             audienceRangeEnd={watchedAudienceRangeEnd}

@@ -67,6 +67,7 @@ vi.mock("@/env", () => ({ isCommunity: () => isCommunity() }))
 vi.mock("@chatbotx.io/database/partials", async () => {
   const { z } = await import("zod")
   return {
+    broadcastPlanLimitDataSchema: z.object({}),
     webchatConversationStarter: z.object({}),
     webchatPersistentMenu: z.object({}),
   }

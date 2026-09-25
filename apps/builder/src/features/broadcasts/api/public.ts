@@ -5,7 +5,8 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnActivatingBroadcast,
+  possibleErrorsOnCreatingBroadcast,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -16,6 +17,7 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   createBroadcastRequest,
   resolveScheduleTime,
+  resumeBroadcastSchema,
   scheduleBroadcastSchema,
   updateBroadcastSchema,
 } from "../schema/action"
@@ -188,7 +190,7 @@ export const broadcastsPublicRouter = {
     })
     .input(createBroadcastRequest)
     .output(publicBroadcastResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingBroadcast)
     .handler(
       async ({ context, input }) =>
         await broadcastService.create({
@@ -253,7 +255,7 @@ export const broadcastsPublicRouter = {
     // declaring it here avoids a follow-up GET (zod strips undeclared keys
     // silently, so omitting it dropped the field from the response entirely).
     .output(z.object({ id: z.string(), status: broadcastStatuses }))
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnActivatingBroadcast)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
       return await broadcastService.updateDraft({
@@ -283,7 +285,7 @@ export const broadcastsPublicRouter = {
       ),
     )
     .output(z.object({ id: z.string() }))
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnActivatingBroadcast)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
       return await broadcastService.scheduleDraft({
@@ -291,6 +293,7 @@ export const broadcastsPublicRouter = {
         broadcastId: id,
         schedulesType: data.schedulesType,
         schedulesAt: resolveScheduleTime(data),
+        sendRatePerMinute: data.sendRatePerMinute,
       })
     }),
 
@@ -357,19 +360,22 @@ export const broadcastsPublicRouter = {
       tags: ["Broadcasts"],
     })
     .input(
-      z.object({
-        id: zodBigintAsString().describe(
-          "Broadcast id. Get it from `broadcasts.list`.",
-        ),
-      }),
+      resumeBroadcastSchema.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "Broadcast id. Get it from `broadcasts.list`.",
+          ),
+        }),
+      ),
     )
     .output(z.object({ id: z.string() }))
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnActivatingBroadcast)
     .handler(
       async ({ context, input }) =>
         await broadcastService.resumeSending({
           workspaceId: context.workspace.id,
           broadcastId: input.id,
+          sendRatePerMinute: input.sendRatePerMinute,
         }),
     ),
 
@@ -391,7 +397,7 @@ export const broadcastsPublicRouter = {
       }),
     )
     .output(publicBroadcastResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnActivatingBroadcast)
     .handler(
       async ({ context, input }) =>
         await broadcastService.resendWithPruning({

@@ -336,6 +336,7 @@
       "message": "Son ödemeniz başarısız oldu. Çalışma alanınızı etkin tutmak için ödeme yönteminizi güncelleyin."
     },
     "trial": {
+      "planName": "Deneme",
       "daysLeft": "Deneme: {days} gün kaldı",
       "endsTomorrow": "Deneme yarın sona eriyor",
       "expired": "Deneme süreniz sona erdi — çalışma alanınızı etkin tutmak için planınızı yükseltin",
@@ -449,8 +450,7 @@
       "audienceFilter": "Hedef kitle filtresi",
       "noAudienceFilter": "Hedef kitle filtresi yok",
       "template": "Şablon",
-      "integration": "Entegrasyon",
-      "sendLimit": "Sınır"
+      "integration": "Entegrasyon"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Planınızı yükseltin",
+      "sendRate": "Mevcut {plan} planınız broadcast gönderimlerini dakikada en fazla {rate} mesaj hızında destekler. Broadcast gönderimlerini {multiplier}x daha hızlı yapmak için planınızı yükseltin.",
+      "activeBroadcasts": "Mevcut {plan} planınız aynı anda {max, plural, one {# broadcast} other {# broadcast}} çalıştırır. Aynı anda daha fazla broadcast çalıştırmak için planınızı yükseltin."
+    },
     "sendLimit": {
       "title": "Sınır",
       "hint": "Eşleşen tüm kişilere göndermek için boş bırakın.",
+      "rateHint": "Varsayılan hızı kullanmak için boş bırakın.",
+      "rangeSummary": "Kişiler #{start} – #{end}",
+      "rangeFromSummary": "Kişi #{start}'den itibaren",
       "rangeLabel": "Kişi aralığı",
       "fromLabel": "Başlangıç",
       "toLabel": "Bitiş",
       "allPlaceholder": "Tümü",
-      "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz",
-      "rangeSummary": "Kişiler #{start} – #{end}",
-      "rangeFromSummary": "Kişi #{start}'den itibaren",
-      "rateSummary": "Dakikada {rate} mesaj"
+      "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz"
     }
   },
   "commentAutomation": {

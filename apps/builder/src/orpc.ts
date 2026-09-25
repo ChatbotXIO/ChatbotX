@@ -12,7 +12,10 @@ import { ActionValidationError } from "next-safe-action"
 import { z } from "zod"
 import { logger } from "./lib/log"
 import type { OperationObjectWithMcp } from "./lib/orpc/mcp-annotations"
-import { commonApiErrors } from "./lib/orpc/orpc-error-helper"
+import {
+  commonApiErrors,
+  STRUCTURED_ERROR_CODES,
+} from "./lib/orpc/orpc-error-helper"
 import { authMiddleware } from "./middlewares/auth"
 import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-auth"
 import { base } from "./middlewares/context"
@@ -56,6 +59,7 @@ function toKnownOrpcError(
     return new ORPCError(error.code, {
       message: toDisplayMessage(error),
       status: error.httpStatusCode ?? 400,
+      ...(STRUCTURED_ERROR_CODES.has(error.code) ? { data: error.data } : {}),
     })
   }
 

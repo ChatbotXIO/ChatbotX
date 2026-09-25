@@ -1,3 +1,9 @@
+import {
+  type BroadcastPlanPolicy,
+  type ChannelType,
+  TRIAL_BROADCAST_PLAN_POLICY,
+  UNRESTRICTED_BROADCAST_PLAN_POLICY,
+} from "@chatbotx.io/database/partials"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
@@ -35,15 +41,21 @@ const VALID_BASE_VALUES: CreateBroadcastRequest = {
   contactFilter: { operator: "and", conditions: [] },
 }
 
-function TestForm() {
+function TestForm({
+  channel = "telegram",
+  planPolicy = UNRESTRICTED_BROADCAST_PLAN_POLICY,
+}: {
+  channel?: ChannelType
+  planPolicy?: BroadcastPlanPolicy
+}) {
   const form = useForm({
     resolver: zodResolver(createBroadcastRequest),
     mode: "onChange",
-    defaultValues: VALID_BASE_VALUES,
+    defaultValues: { ...VALID_BASE_VALUES, channel },
   })
   return (
     <FormProvider {...form}>
-      <BroadcastSendLimitFields />
+      <BroadcastSendLimitFields planPolicy={planPolicy} />
     </FormProvider>
   )
 }
@@ -103,6 +115,46 @@ describe("BroadcastSendLimitFields", () => {
       'input[inputmode="numeric"], input[type="text"]',
     )
     expect(numberInputs.length).toBeGreaterThanOrEqual(3)
+  })
+
+  test("shows the restricted policy rate for a governed channel", () => {
+    act(() => {
+      root.render(
+        <TestForm
+          channel="messenger"
+          planPolicy={TRIAL_BROADCAST_PLAN_POLICY}
+        />,
+      )
+    })
+
+    const inputs = container.querySelectorAll<HTMLInputElement>("input")
+    expect(inputs[2]?.placeholder).toBe("60")
+  })
+
+  test("shows the product default for unrestricted and non-governed channels", () => {
+    act(() => {
+      root.render(
+        <TestForm
+          channel="telegram"
+          planPolicy={TRIAL_BROADCAST_PLAN_POLICY}
+        />,
+      )
+    })
+    expect(
+      container.querySelectorAll<HTMLInputElement>("input")[2]?.placeholder,
+    ).toBe("500")
+
+    act(() => {
+      root.render(
+        <TestForm
+          channel="messenger"
+          planPolicy={UNRESTRICTED_BROADCAST_PLAN_POLICY}
+        />,
+      )
+    })
+    expect(
+      container.querySelectorAll<HTMLInputElement>("input")[2]?.placeholder,
+    ).toBe("500")
   })
 
   test("shows no cross-field error message by default", async () => {

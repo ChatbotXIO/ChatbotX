@@ -1,3 +1,8 @@
+import type {
+  BroadcastPlanLimitData,
+  BroadcastPlanLimitReason,
+  RestrictedBroadcastPlanPolicy,
+} from "@chatbotx.io/database/partials"
 import { SdkException } from "@chatbotx.io/sdk"
 import { DrizzleQueryError } from "drizzle-orm"
 
@@ -191,6 +196,43 @@ export const validationException = (
 ) => {
   const error = new ChatbotXException(message, "validation", 422)
   error.field = field
+  error.data = data
+  return error
+}
+
+export const BROADCAST_PLAN_LIMIT_CODE = "broadcastPlanLimit"
+
+const broadcastPlanLimitMessages: Record<
+  BroadcastPlanLimitReason,
+  (policy: RestrictedBroadcastPlanPolicy) => string
+> = {
+  sendRate: (policy) =>
+    `The current plan sends broadcasts at up to ${policy.maxSendRatePerMinute} messages per minute`,
+  activeBroadcasts: (policy) =>
+    `The current plan runs up to ${policy.maxActiveBroadcasts} broadcast(s) at a time`,
+}
+
+export const broadcastPlanLimitException = (
+  reason: BroadcastPlanLimitReason,
+  ctx: {
+    policy: RestrictedBroadcastPlanPolicy
+    planName: string | null
+  },
+) => {
+  const error = new ChatbotXException(
+    broadcastPlanLimitMessages[reason](ctx.policy),
+    BROADCAST_PLAN_LIMIT_CODE,
+    403,
+  )
+  const planName = trimmedText(ctx.planName)
+  const data = {
+    reason,
+    ...(planName ? { planName } : {}),
+    maxSendRatePerMinute: ctx.policy.maxSendRatePerMinute,
+    maxActiveBroadcasts: ctx.policy.maxActiveBroadcasts,
+    displayedSendRatePerMinute: ctx.policy.display.sendRatePerMinute,
+    upgradeSpeedMultiplier: ctx.policy.display.upgradeSpeedMultiplier,
+  } satisfies BroadcastPlanLimitData
   error.data = data
   return error
 }

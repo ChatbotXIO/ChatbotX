@@ -336,6 +336,7 @@
       "message": "O seu último pagamento falhou. Atualize o método de pagamento para manter o espaço de trabalho ativo."
     },
     "trial": {
+      "planName": "Avaliação",
       "daysLeft": "Avaliação: faltam {days} dias",
       "endsTomorrow": "A avaliação termina amanhã",
       "expired": "A sua avaliação terminou — atualize o plano para manter o espaço de trabalho ativo",
@@ -449,8 +450,7 @@
       "audienceFilter": "Filtro de público",
       "noAudienceFilter": "Sem filtro de público",
       "template": "Modelo",
-      "integration": "Integração",
-      "sendLimit": "Limite"
+      "integration": "Integração"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Atualize o seu plano",
+      "sendRate": "O seu plano {plan} atual permite broadcasts com uma velocidade máxima de envio de {rate} mensagens por minuto. Atualize o plano para enviar broadcasts até {multiplier}x mais depressa.",
+      "activeBroadcasts": "O seu plano {plan} atual executa {max, plural, one {# broadcast} other {# broadcasts}} de cada vez. Atualize o plano para executar mais broadcasts em simultâneo."
+    },
     "sendLimit": {
       "title": "Limite",
       "hint": "Deixe em branco para enviar a todos os contactos correspondentes.",
+      "rateHint": "Deixe em branco para utilizar a taxa predefinida.",
+      "rangeSummary": "Contactos n.º{start} – n.º{end}",
+      "rangeFromSummary": "A partir do contacto n.º{start}",
       "rangeLabel": "Intervalo de contactos",
       "fromLabel": "De",
       "toLabel": "Até",
       "allPlaceholder": "Todos",
-      "rangeEndBeforeStart": "A posição final não pode ser anterior à posição inicial",
-      "rangeSummary": "Contactos n.º{start} – n.º{end}",
-      "rangeFromSummary": "A partir do contacto n.º{start}",
-      "rateSummary": "{rate} mensagens / minuto"
+      "rangeEndBeforeStart": "A posição final não pode ser anterior à posição inicial"
     }
   },
   "commentAutomation": {

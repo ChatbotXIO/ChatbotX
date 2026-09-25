@@ -1,4 +1,7 @@
-import { broadcastService } from "@chatbotx.io/business"
+import {
+  broadcastPlanPolicyService,
+  broadcastService,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form"
@@ -47,6 +50,8 @@ export default async function EditBroadcastPage({
   const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
     workspaceId,
   })
+  const { policy: planPolicy } =
+    await broadcastPlanPolicyService.resolveForWorkspace(workspaceId)
 
   return (
     <IntegrationStoreProvider workspaceId={workspaceId}>
@@ -64,6 +69,7 @@ export default async function EditBroadcastPage({
               canViewEmailAndPhone={canViewEmailAndPhone}
               editDraft={editDraft}
               initialChannel={editDraft.channel}
+              planPolicy={planPolicy}
               workspaceId={workspaceId}
             />
           </ContactStoreProvider>

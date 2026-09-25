@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+// The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
+vi.mock("../src/broadcast/plan-policy.service", () => ({
+  broadcastPlanPolicyService: {},
+}))
+
 // contactNoteService: create/update/delete must all authorize against the
 // contact (findByIdOrFail) BEFORE any write; the notes-cache tag they
 // invalidate is `contacts:{contactId}:contact-notes` (the PR's advertised

@@ -336,6 +336,7 @@
       "message": "فشلت آخر عملية دفع. قم بتحديث طريقة الدفع للحفاظ على نشاط مساحة عملك."
     },
     "trial": {
+      "planName": "تجريبية",
       "daysLeft": "التجربة: تبقّى {days} يوم/أيام",
       "endsTomorrow": "تنتهي الفترة التجريبية غدًا",
       "expired": "انتهت فترتك التجريبية — قم بالترقية للحفاظ على نشاط مساحة عملك",
@@ -449,8 +450,7 @@
       "audienceFilter": "تصفية الجمهور",
       "noAudienceFilter": "لا توجد تصفية للجمهور",
       "template": "القالب",
-      "integration": "التكامل",
-      "sendLimit": "الحد"
+      "integration": "التكامل"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "ترقية خطتك",
+      "sendRate": "تدعم خطتك الحالية {plan} حملات البث بسرعة إرسال قصوى تبلغ {rate} رسالة في الدقيقة. يُرجى ترقية خطتك لإرسال حملات البث بسرعة تصل إلى {multiplier} ضعفًا.",
+      "activeBroadcasts": "تُشغّل خطتك الحالية {plan} عدد {max, plural, one {# حملة بث} other {# حملة بث}} في الوقت نفسه. يُرجى ترقية خطتك لتشغيل المزيد من حملات البث معًا."
+    },
     "sendLimit": {
       "title": "الحد",
       "hint": "اتركه فارغًا للإرسال إلى جميع جهات الاتصال المطابقة.",
+      "rateHint": "اتركه فارغًا لاستخدام المعدل الافتراضي.",
+      "rangeSummary": "جهات الاتصال #{start} – #{end}",
+      "rangeFromSummary": "ابتداءً من جهة الاتصال رقم {start}",
       "rangeLabel": "نطاق جهات الاتصال",
       "fromLabel": "من",
       "toLabel": "إلى",
       "allPlaceholder": "الكل",
-      "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية",
-      "rangeSummary": "جهات الاتصال #{start} – #{end}",
-      "rangeFromSummary": "ابتداءً من جهة الاتصال رقم {start}",
-      "rateSummary": "{rate} رسالة / دقيقة"
+      "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية"
     }
   },
   "commentAutomation": {

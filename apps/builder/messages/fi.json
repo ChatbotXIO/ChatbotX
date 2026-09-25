@@ -336,6 +336,7 @@
       "message": "Viimeisin maksusi epäonnistui. Pidä työtilasi aktiivisena päivittämällä maksutapasi."
     },
     "trial": {
+      "planName": "Kokeilu",
       "daysLeft": "Kokeilu: {days} päivää jäljellä",
       "endsTomorrow": "Kokeilu päättyy huomenna",
       "expired": "Kokeilusi on päättynyt — pidä työtilasi aktiivisena päivittämällä tilauksesi",
@@ -449,8 +450,7 @@
       "audienceFilter": "Yleisösuodatin",
       "noAudienceFilter": "Ei yleisösuodatinta",
       "template": "Malli",
-      "integration": "Integraatio",
-      "sendLimit": "Raja"
+      "integration": "Integraatio"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Päivitä tilauksesi",
+      "sendRate": "Nykyinen {plan}-tilauksesi tukee lähetyksiä enintään nopeudella {rate} viestiä minuutissa. Päivitä tilauksesi lähettääksesi broadcasteja jopa {multiplier}x nopeammin.",
+      "activeBroadcasts": "Nykyisellä {plan}-tilauksellasi voi olla käynnissä {max, plural, one {# broadcast} other {# broadcastia}} kerrallaan. Päivitä tilauksesi käyttääksesi useampia broadcasteja samanaikaisesti."
+    },
     "sendLimit": {
       "title": "Raja",
       "hint": "Jätä tyhjäksi lähettääksesi kaikille vastaaville yhteystiedoille.",
+      "rateHint": "Jätä tyhjäksi käyttääksesi oletusnopeutta.",
+      "rangeSummary": "Yhteystiedot #{start} – #{end}",
+      "rangeFromSummary": "Alkaen yhteystiedosta #{start}",
       "rangeLabel": "Yhteystietoväli",
       "fromLabel": "Alkaen",
       "toLabel": "Asti",
       "allPlaceholder": "Kaikki",
-      "rangeEndBeforeStart": "Loppusijainti ei voi olla ennen alkusijaintia",
-      "rangeSummary": "Yhteystiedot #{start} – #{end}",
-      "rangeFromSummary": "Alkaen yhteystiedosta #{start}",
-      "rateSummary": "{rate} viestiä / minuutti"
+      "rangeEndBeforeStart": "Loppusijainti ei voi olla ennen alkusijaintia"
     }
   },
   "commentAutomation": {

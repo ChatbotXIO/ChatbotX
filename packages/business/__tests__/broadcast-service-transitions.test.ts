@@ -4,6 +4,30 @@ const updateReturning = vi.fn()
 const updateWhere = vi.fn()
 const findFirstBroadcast = vi.fn()
 const mockDispatchAuditRecord = vi.fn().mockResolvedValue(undefined)
+const selectForUpdate = vi.fn()
+const transaction = vi.fn()
+
+const update = (table: unknown) => ({
+  set: (values: Record<string, unknown>) => ({
+    where: (condition: unknown) => {
+      updateWhere({ table, values, condition })
+      return {
+        returning: () => updateReturning({ table, values, condition }),
+      }
+    },
+  }),
+})
+
+const txMock = {
+  update,
+  select: () => ({
+    from: () => ({
+      where: () => ({
+        for: () => ({ limit: () => selectForUpdate() }),
+      }),
+    }),
+  }),
+}
 
 vi.mock("@chatbotx.io/analytics", () => ({
   broadcastAnalyticsService: { getContacts: vi.fn() },
@@ -18,16 +42,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
         findFirst: (...args: unknown[]) => findFirstBroadcast(...args),
       },
     },
-    update: (table: unknown) => ({
-      set: (values: Record<string, unknown>) => ({
-        where: (condition: unknown) => {
-          updateWhere({ table, values, condition })
-          return {
-            returning: () => updateReturning({ table, values, condition }),
-          }
-        },
-      }),
-    }),
+    update,
+    transaction,
   },
   and: (...args: unknown[]) => ({ __and: args }),
   asc: vi.fn(),
@@ -59,6 +75,15 @@ vi.mock("@chatbotx.io/database/partials", () => ({
       failed: "failed",
     },
   },
+  resolveActivationSendRate: ({
+    submitted,
+    stored,
+  }: {
+    submitted: number | null | undefined
+    stored: number | null
+  }) => (submitted === undefined ? stored : submitted),
+  resolveSubmittedSendRatePatch: (submitted: number | null | undefined) =>
+    submitted === undefined ? undefined : { sendRatePerMinute: submitted },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -115,6 +140,25 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+vi.mock("../src/broadcast/plan-policy.service", () => ({
+  broadcastPlanPolicyService: {
+    appliesToChannel: vi.fn((channel: string) => channel === "messenger"),
+    hasRestrictions: vi.fn(() => false),
+    resolveForWorkspace: vi.fn().mockResolvedValue({
+      policy: { kind: "unrestricted" },
+      planName: null,
+    }),
+    restrictionFor: vi.fn(() => null),
+    assertSendRateAllowed: vi.fn(),
+    lockActivation: vi.fn().mockResolvedValue(undefined),
+    assertActiveSlotAvailable: vi.fn().mockResolvedValue(undefined),
+    resolveSendRateOverride: vi.fn(() => ({ sendRatePerMinute: 60 })),
+  },
+}))
+
+const { broadcastPlanPolicyService } = await import(
+  "../src/broadcast/plan-policy.service"
+)
 const { broadcastService } = await import("../src/broadcast/service")
 
 const flatten = (condition: unknown): unknown[] => {
@@ -128,10 +172,43 @@ const flatten = (condition: unknown): unknown[] => {
   return [condition]
 }
 
+const restrictedContext = {
+  policy: {
+    kind: "restricted" as const,
+    maxSendRatePerMinute: 60,
+    maxActiveBroadcasts: 1,
+    channels: ["messenger" as const],
+    display: { sendRatePerMinute: 100, upgradeSpeedMultiplier: 20 },
+  },
+  planName: "Trial",
+}
+
 beforeEach(() => {
   updateReturning.mockReset()
   updateWhere.mockReset()
   findFirstBroadcast.mockReset()
+  selectForUpdate.mockReset()
+  transaction
+    .mockReset()
+    .mockImplementation(
+      async (run: (tx: typeof txMock) => Promise<unknown>) => await run(txMock),
+    )
+  vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(false)
+  vi.mocked(broadcastPlanPolicyService.resolveForWorkspace).mockResolvedValue({
+    policy: { kind: "unrestricted" },
+    planName: null,
+  })
+  vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(null)
+  vi.mocked(broadcastPlanPolicyService.assertSendRateAllowed).mockReset()
+  vi.mocked(broadcastPlanPolicyService.lockActivation)
+    .mockReset()
+    .mockResolvedValue(undefined)
+  vi.mocked(broadcastPlanPolicyService.assertActiveSlotAvailable)
+    .mockReset()
+    .mockResolvedValue(undefined)
+  vi.mocked(broadcastPlanPolicyService.resolveSendRateOverride).mockReturnValue(
+    { sendRatePerMinute: 60 },
+  )
   mockDispatchAuditRecord.mockClear()
 })
 
@@ -247,6 +324,25 @@ describe("broadcastService.resumeSending", () => {
       action: "broadcast_resumed",
       detail: "resumed a broadcast (#b-1)",
     })
+    expect(transaction).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    [120, 120],
+    [null, null],
+  ] as const)("writes a submitted send rate of %s on the unrestricted path", async (sendRatePerMinute, expected) => {
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      sendRatePerMinute,
+    })
+
+    expect(updateReturning.mock.calls[0][0].values.sendRatePerMinute).toBe(
+      expected,
+    )
+    expect(transaction).not.toHaveBeenCalled()
   })
 
   test("throws when the broadcast is not stopped", async () => {
@@ -279,6 +375,195 @@ describe("broadcastService.resumeSending", () => {
     expect(flatten(condition)).toContainEqual({
       __isNotNull: "broadcast.contactCount",
     })
+  })
+
+  test("pre-reads a trial non-Messenger row in a transaction without enforcing a slot", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "whatsapp", sendRatePerMinute: null },
+    ])
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    expect(updateReturning.mock.calls[0][0].values).not.toHaveProperty(
+      "sendRatePerMinute",
+    )
+    expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+  })
+
+  test("rejects a restricted stored rate before resuming", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    vi.mocked(
+      broadcastPlanPolicyService.assertSendRateAllowed,
+    ).mockImplementation(() => {
+      throw new Error("send rate limited")
+    })
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: 61 },
+    ])
+
+    await expect(
+      broadcastService.resumeSending({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+      }),
+    ).rejects.toThrow("send rate limited")
+
+    expect(updateReturning).not.toHaveBeenCalled()
+  })
+
+  test("checks a submitted restricted rate instead of the stored rate", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    vi.mocked(
+      broadcastPlanPolicyService.resolveSendRateOverride,
+    ).mockReturnValue({ sendRatePerMinute: 30 })
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: 61 },
+    ])
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      sendRatePerMinute: 30,
+    })
+
+    expect(
+      broadcastPlanPolicyService.assertSendRateAllowed,
+    ).toHaveBeenCalledWith(restrictedContext, 30)
+    expect(
+      broadcastPlanPolicyService.resolveSendRateOverride,
+    ).toHaveBeenCalledWith(restrictedContext, 30)
+    expect(updateReturning.mock.calls[0][0].values.sendRatePerMinute).toBe(30)
+  })
+
+  test("rejects an over-cap submitted restricted rate without writing", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    vi.mocked(
+      broadcastPlanPolicyService.assertSendRateAllowed,
+    ).mockImplementation((_restriction, sendRatePerMinute) => {
+      if (sendRatePerMinute === 61) {
+        throw new Error("send rate limited")
+      }
+    })
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: 30 },
+    ])
+
+    await expect(
+      broadcastService.resumeSending({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        sendRatePerMinute: 61,
+      }),
+    ).rejects.toThrow("send rate limited")
+
+    expect(updateReturning).not.toHaveBeenCalled()
+  })
+
+  test("rolls back a restricted resume when the slot is occupied", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    vi.mocked(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).mockRejectedValue(new Error("active slot limited"))
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: null },
+    ])
+
+    await expect(
+      broadcastService.resumeSending({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+      }),
+    ).rejects.toThrow("active slot limited")
+
+    expect(updateReturning).not.toHaveBeenCalled()
+  })
+
+  test("stores 60 when a restricted blank-rate resume succeeds", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: null },
+    ])
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    expect(updateReturning.mock.calls[0][0].values.sendRatePerMinute).toBe(60)
+    expect(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).toHaveBeenCalledWith(expect.anything(), {
+      workspaceId: "ws-1",
+      channel: "messenger",
+      ctx: restrictedContext,
+      excludeBroadcastId: "b-1",
+    })
+  })
+
+  test("stores 60 when a restricted resume explicitly clears the rate", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: 30 },
+    ])
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      sendRatePerMinute: null,
+    })
+
+    expect(
+      broadcastPlanPolicyService.assertSendRateAllowed,
+    ).toHaveBeenCalledWith(restrictedContext, null)
+    expect(updateReturning.mock.calls[0][0].values.sendRatePerMinute).toBe(60)
+  })
+
+  test("throws the stale stopped-row error before locking or counting", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    selectForUpdate.mockResolvedValue([])
+    vi.mocked(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).mockRejectedValue(new Error("active slot limited"))
+
+    await expect(
+      broadcastService.resumeSending({
+        workspaceId: "ws-1",
+        broadcastId: "stale",
+      }),
+    ).rejects.toThrow("Broadcast is not stopped")
+
+    expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+    expect(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).not.toHaveBeenCalled()
+    expect(updateReturning).not.toHaveBeenCalled()
   })
 })
 

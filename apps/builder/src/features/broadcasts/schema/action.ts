@@ -134,7 +134,7 @@ export const createBroadcastRequest = z
     ),
     sendRatePerMinute:
       broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
-        "Maximum recipients handed off per dispatch minute (1-1000). Omit to use the default (500).",
+        "Maximum recipients handed off per dispatch minute (1-1000). Omit to use your plan's default (500; Messenger broadcasts on a trial plan use and cap at 60).",
       ),
     saveAsDraft: z
       .boolean()
@@ -239,6 +239,10 @@ export const scheduleBroadcastSchema = z
       .string()
       .nullable()
       .describe("ISO 8601 send time, required when schedulesType is `future`."),
+    sendRatePerMinute:
+      broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
+        "Maximum recipients handed off per dispatch minute (1-1000). Omit to keep the stored rate; null clears it.",
+      ),
   })
   .superRefine((data, ctx) => {
     if (
@@ -253,6 +257,13 @@ export const scheduleBroadcastSchema = z
     }
   })
 export type ScheduleBroadcastSchema = z.infer<typeof scheduleBroadcastSchema>
+
+export const resumeBroadcastSchema = z.object({
+  sendRatePerMinute: broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
+    "Maximum recipients handed off per dispatch minute (1-1000). Omit to keep the stored rate; null clears it.",
+  ),
+})
+export type ResumeBroadcastSchema = z.infer<typeof resumeBroadcastSchema>
 
 // A `now` draft gets `schedulesAt = startOfMinute(now) <= now`, so
 // `enqueueBroadcast`'s `schedulesAt <= startTime AND status = scheduled` scan

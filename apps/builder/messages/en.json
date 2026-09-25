@@ -336,6 +336,7 @@
       "message": "Your last payment failed. Update your payment method to keep your workspace active."
     },
     "trial": {
+      "planName": "Trial",
       "daysLeft": "Trial: {days} days left",
       "endsTomorrow": "Trial ends tomorrow",
       "expired": "Your trial has ended — upgrade to keep your workspace active",
@@ -449,8 +450,7 @@
       "audienceFilter": "Audience filter",
       "noAudienceFilter": "No audience filter",
       "template": "Template",
-      "integration": "Integration",
-      "sendLimit": "Limit"
+      "integration": "Integration"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Upgrade your plan",
+      "sendRate": "Your current {plan} plan supports broadcasts at a maximum sending speed of {rate} messages per minute. Please upgrade your plan to send broadcasts up to {multiplier}x faster.",
+      "activeBroadcasts": "Your current {plan} plan runs {max, plural, one {# broadcast} other {# broadcasts}} at a time. Please upgrade your plan to run more broadcasts at once."
+    },
     "sendLimit": {
       "title": "Limit",
       "hint": "Leave blank to send to every matching contact.",
+      "rateHint": "Leave blank to use the default rate.",
+      "rangeSummary": "Contacts #{start} – #{end}",
+      "rangeFromSummary": "From contact #{start}",
       "rangeLabel": "Contact range",
       "fromLabel": "From",
       "toLabel": "To",
       "allPlaceholder": "All",
-      "rangeEndBeforeStart": "The end position must not be before the start position",
-      "rangeSummary": "Contacts #{start} – #{end}",
-      "rangeFromSummary": "From contact #{start}",
-      "rateSummary": "{rate} messages / minute"
+      "rangeEndBeforeStart": "The end position must not be before the start position"
     }
   },
   "commentAutomation": {

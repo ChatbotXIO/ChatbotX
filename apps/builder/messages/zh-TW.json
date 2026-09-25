@@ -2001,6 +2001,7 @@
       "message": "您上次付款失敗。請更新付款方式以保持工作區可用。"
     },
     "trial": {
+      "planName": "試用",
       "daysLeft": "試用期：剩下 {days} 天",
       "endsTomorrow": "試用期將於明天結束",
       "expired": "您的試用已結束 — 升級以保持您的工作區維持啟用狀態",
@@ -2114,8 +2115,7 @@
       "audienceFilter": "受眾過濾器",
       "noAudienceFilter": "無受眾過濾器",
       "template": "範本",
-      "integration": "整合",
-      "sendLimit": "限制"
+      "integration": "整合"
     },
     "filters": {
       "all": "All"
@@ -2174,17 +2174,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "升級您的方案",
+      "sendRate": "您目前的{plan}方案支援的群發最高速度為每分鐘 {rate} 則訊息。請升級方案，群發速度最高可提升至 {multiplier} 倍。",
+      "activeBroadcasts": "您目前的{plan}方案一次可執行 {max, plural, one {# 個群發工作} other {# 個群發工作}}。請升級方案以同時執行更多群發工作。"
+    },
     "sendLimit": {
       "title": "限制",
       "hint": "留空以傳送給所有符合的聯絡人。",
+      "rateHint": "留空以使用預設傳送速率。",
+      "rangeSummary": "聯絡人 #{start} – #{end}",
+      "rangeFromSummary": "從聯絡人 #{start} 起",
       "rangeLabel": "聯絡人範圍",
       "fromLabel": "從",
       "toLabel": "到",
       "allPlaceholder": "全部",
-      "rangeEndBeforeStart": "結束位置不能早於開始位置",
-      "rangeSummary": "聯絡人 #{start} – #{end}",
-      "rangeFromSummary": "從聯絡人 #{start} 起",
-      "rateSummary": "每分鐘 {rate} 則訊息"
+      "rangeEndBeforeStart": "結束位置不能早於開始位置"
     }
   },
   "commentAutomation": {

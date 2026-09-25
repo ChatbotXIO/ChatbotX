@@ -1,4 +1,7 @@
-import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  BROADCAST_PLAN_LIMIT_CODE,
+  ChatbotXException,
+} from "@chatbotx.io/business/errors"
 
 /**
  * Narrows a caught error to a service-thrown, field-scoped validation
@@ -12,6 +15,15 @@ export function isValidationException(
   error: unknown,
 ): error is ChatbotXException & { code: "validation" } {
   return error instanceof ChatbotXException && error.code === "validation"
+}
+
+export function isBroadcastPlanLimitException(
+  error: unknown,
+): error is ChatbotXException & { code: "broadcastPlanLimit" } {
+  return (
+    error instanceof ChatbotXException &&
+    error.code === BROADCAST_PLAN_LIMIT_CODE
+  )
 }
 
 /**

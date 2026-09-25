@@ -92,6 +92,18 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
+vi.mock("../src/broadcast/plan-policy.service", () => ({
+  broadcastPlanPolicyService: {
+    appliesToChannel: (channel: string) => channel === "messenger",
+    hasRestrictions: () => false,
+    resolveForWorkspace: vi.fn().mockResolvedValue({
+      policy: { kind: "unrestricted" },
+      planName: null,
+    }),
+    restrictionFor: vi.fn(() => null),
+  },
+}))
+
 const { broadcastService } = await import("../src/broadcast/service")
 
 const CONTACT_FILTER = {

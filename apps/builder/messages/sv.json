@@ -462,6 +462,7 @@
     },
     "title": "Fakturering",
     "trial": {
+      "planName": "Provperiod",
       "daysLeft": "Provperiod: {days} dagar kvar",
       "dismiss": "Stäng",
       "endsTomorrow": "Provperioden slutar i morgon",
@@ -501,8 +502,7 @@
       "noAudienceFilter": "Inget målgruppsfilter",
       "subaction": "Underåtgärd",
       "template": "Mall",
-      "title": "Utskickningsinformation",
-      "sendLimit": "Gräns"
+      "title": "Utskickningsinformation"
     },
     "flowType": {
       "flow": {
@@ -642,17 +642,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Uppgradera ditt abonnemang",
+      "sendRate": "Ditt nuvarande {plan}-abonnemang stöder broadcasts med en maximal sändningshastighet på {rate} meddelanden per minut. Uppgradera abonnemanget för att skicka broadcasts upp till {multiplier}x snabbare.",
+      "activeBroadcasts": "Ditt nuvarande {plan}-abonnemang kör {max, plural, one {# broadcast} other {# broadcasts}} åt gången. Uppgradera abonnemanget för att köra fler broadcasts samtidigt."
+    },
     "sendLimit": {
       "title": "Gräns",
       "hint": "Lämna tomt för att skicka till alla matchande kontakter.",
+      "rateHint": "Lämna tomt för att använda standardhastigheten.",
+      "rangeSummary": "Kontakter nr {start} – nr {end}",
+      "rangeFromSummary": "Från kontakt nr {start}",
       "rangeLabel": "Kontaktintervall",
       "fromLabel": "Från",
       "toLabel": "Till",
       "allPlaceholder": "Alla",
-      "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen",
-      "rangeSummary": "Kontakter nr {start} – nr {end}",
-      "rangeFromSummary": "Från kontakt nr {start}",
-      "rateSummary": "{rate} meddelanden / minut"
+      "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen"
     }
   },
   "commentAutomation": {

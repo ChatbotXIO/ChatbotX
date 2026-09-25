@@ -336,6 +336,7 @@
       "message": "Pembayaran terakhir Anda gagal. Perbarui metode pembayaran agar workspace tetap aktif."
     },
     "trial": {
+      "planName": "Uji coba",
       "daysLeft": "Uji coba: tersisa {days} hari",
       "endsTomorrow": "Uji coba berakhir besok",
       "expired": "Masa uji coba Anda telah berakhir — tingkatkan paket agar workspace tetap aktif",
@@ -449,8 +450,7 @@
       "audienceFilter": "Filter audiens",
       "noAudienceFilter": "Tanpa filter audiens",
       "template": "Template",
-      "integration": "Integrasi",
-      "sendLimit": "Batas"
+      "integration": "Integrasi"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Tingkatkan paket Anda",
+      "sendRate": "Paket {plan} Anda saat ini mendukung broadcast dengan kecepatan pengiriman maksimum {rate} pesan per menit. Tingkatkan paket Anda untuk mengirim broadcast hingga {multiplier}x lebih cepat.",
+      "activeBroadcasts": "Paket {plan} Anda saat ini menjalankan {max, plural, one {# broadcast} other {# broadcast}} sekaligus. Tingkatkan paket Anda untuk menjalankan lebih banyak broadcast secara bersamaan."
+    },
     "sendLimit": {
       "title": "Batas",
       "hint": "Kosongkan untuk mengirim ke semua kontak yang cocok.",
+      "rateHint": "Kosongkan untuk menggunakan laju bawaan.",
+      "rangeSummary": "Kontak #{start} – #{end}",
+      "rangeFromSummary": "Mulai dari kontak #{start}",
       "rangeLabel": "Rentang kontak",
       "fromLabel": "Dari",
       "toLabel": "Sampai",
       "allPlaceholder": "Semua",
-      "rangeEndBeforeStart": "Posisi akhir tidak boleh sebelum posisi awal",
-      "rangeSummary": "Kontak #{start} – #{end}",
-      "rangeFromSummary": "Mulai dari kontak #{start}",
-      "rateSummary": "{rate} pesan / menit"
+      "rangeEndBeforeStart": "Posisi akhir tidak boleh sebelum posisi awal"
     }
   },
   "commentAutomation": {

@@ -1162,6 +1162,7 @@
       "message": "Ultima plată a eșuat. Actualizează metoda de plată pentru a menține activ spațiul de lucru."
     },
     "trial": {
+      "planName": "Probă",
       "daysLeft": "Perioadă de probă: au mai rămas {days} zile",
       "endsTomorrow": "Perioada de probă se încheie mâine",
       "expired": "Perioada de probă s-a încheiat — actualizează pentru a menține activ spațiul de lucru",
@@ -1275,8 +1276,7 @@
       "audienceFilter": "Filtru de public",
       "noAudienceFilter": "Niciun filtru de public",
       "template": "Șablon",
-      "integration": "Integrare",
-      "sendLimit": "Limită"
+      "integration": "Integrare"
     },
     "filters": {
       "all": "All"
@@ -1335,17 +1335,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Actualizează planul",
+      "sendRate": "Planul tău {plan} actual permite broadcasturi cu o viteză maximă de trimitere de {rate} mesaje pe minut. Actualizează planul pentru a trimite broadcasturi de până la {multiplier}x mai rapid.",
+      "activeBroadcasts": "Planul tău {plan} actual rulează {max, plural, one {# broadcast} other {# broadcasturi}} simultan. Actualizează planul pentru a rula mai multe broadcasturi în același timp."
+    },
     "sendLimit": {
       "title": "Limită",
       "hint": "Lăsați necompletat pentru a trimite tuturor contactelor care corespund.",
+      "rateHint": "Lăsați necompletat pentru a folosi rata implicită.",
+      "rangeSummary": "Contacte nr.{start} – nr.{end}",
+      "rangeFromSummary": "Începând cu contactul nr.{start}",
       "rangeLabel": "Interval de contacte",
       "fromLabel": "De la",
       "toLabel": "Până la",
       "allPlaceholder": "Toate",
-      "rangeEndBeforeStart": "Poziția de final nu poate fi înainte de poziția de start",
-      "rangeSummary": "Contacte nr.{start} – nr.{end}",
-      "rangeFromSummary": "Începând cu contactul nr.{start}",
-      "rateSummary": "{rate} mesaje / minut"
+      "rangeEndBeforeStart": "Poziția de final nu poate fi înainte de poziția de start"
     }
   },
   "commentAutomation": {

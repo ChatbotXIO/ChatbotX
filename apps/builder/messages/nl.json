@@ -336,6 +336,7 @@
       "message": "Je laatste betaling is mislukt. Werk je betaalmethode bij om je werkruimte actief te houden."
     },
     "trial": {
+      "planName": "Proefperiode",
       "daysLeft": "Proefperiode: nog {days} dagen",
       "endsTomorrow": "Proefperiode eindigt morgen",
       "expired": "Je proefperiode is afgelopen — upgrade om je werkruimte actief te houden",
@@ -449,8 +450,7 @@
       "audienceFilter": "Doelgroepfilter",
       "noAudienceFilter": "Geen doelgroepfilter",
       "template": "Sjabloon",
-      "integration": "Integratie",
-      "sendLimit": "Limiet"
+      "integration": "Integratie"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Upgrade je abonnement",
+      "sendRate": "Je huidige {plan}-abonnement ondersteunt broadcasts met een maximale verzendsnelheid van {rate} berichten per minuut. Upgrade je abonnement om broadcasts tot {multiplier}x sneller te verzenden.",
+      "activeBroadcasts": "Je huidige {plan}-abonnement voert {max, plural, one {# broadcast} other {# broadcasts}} tegelijk uit. Upgrade je abonnement om meer broadcasts tegelijk uit te voeren."
+    },
     "sendLimit": {
       "title": "Limiet",
       "hint": "Laat leeg om naar alle overeenkomende contacten te verzenden.",
+      "rateHint": "Laat leeg om de standaardsnelheid te gebruiken.",
+      "rangeSummary": "Contacten #{start} – #{end}",
+      "rangeFromSummary": "Vanaf contact #{start}",
       "rangeLabel": "Contactbereik",
       "fromLabel": "Van",
       "toLabel": "Tot",
       "allPlaceholder": "Alle",
-      "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen",
-      "rangeSummary": "Contacten #{start} – #{end}",
-      "rangeFromSummary": "Vanaf contact #{start}",
-      "rateSummary": "{rate} berichten / minuut"
+      "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen"
     }
   },
   "commentAutomation": {

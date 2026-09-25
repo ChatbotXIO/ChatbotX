@@ -1,3 +1,5 @@
+import { BROADCAST_PLAN_LIMIT_CODE } from "@chatbotx.io/business/errors"
+import { broadcastPlanLimitDataSchema } from "@chatbotx.io/database/partials"
 import type { ErrorMap } from "@orpc/server"
 import { z } from "zod"
 import { DENIAL_MESSAGES } from "@/lib/workspace/authorize-workspace-access"
@@ -11,6 +13,16 @@ const businessError = {
   message: "An error occurred while processing your request",
   status: 400,
 }
+
+const broadcastPlanLimit = {
+  message: "Broadcast exceeds the workspace plan limits",
+  status: 403,
+  data: broadcastPlanLimitDataSchema,
+}
+
+export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
+  BROADCAST_PLAN_LIMIT_CODE,
+])
 
 /**
  * A loose schema for oRPC's own `BAD_REQUEST` issue shape. `validateORPCError`
@@ -106,9 +118,20 @@ export const possibleErrorsOnCreatingResource = {
   businessError,
 } satisfies ErrorMap
 
+export const possibleErrorsOnCreatingBroadcast = {
+  businessError,
+  broadcastPlanLimit,
+} satisfies ErrorMap
+
 export const possibleErrorsOnMutatingResource = {
   notFound,
   businessError,
+} satisfies ErrorMap
+
+export const possibleErrorsOnActivatingBroadcast = {
+  notFound,
+  businessError,
+  broadcastPlanLimit,
 } satisfies ErrorMap
 
 export const possibleErrorsOnDeletingResource = {
