@@ -53,6 +53,10 @@ const REPORT_LOOP_STALE_THRESHOLD_MS = PRESENCE_REPORT_INTERVAL_MS * 1.5
 
 type WorkspaceConnectionState = {
   protocol: RealtimeProtocol
+  /**
+   * `null` before the first subscription frame fails open; `[]` after one
+   * explicitly opts out of every topic and receives no events.
+   */
   topics: RealtimeTopic[] | null
   userId: string
 }
@@ -80,9 +84,7 @@ const extractWorkspaceEvents = (
     if (!result.success) {
       return null
     }
-    return result.data.batch.every(isWorkspaceRealtimeEvent)
-      ? result.data.batch
-      : null
+    return result.data.batch.filter(isWorkspaceRealtimeEvent)
   }
   const result = realtimeEventEnvelopeSchema.safeParse(payload)
   return result.success && isWorkspaceRealtimeEvent(result.data)
@@ -361,7 +363,7 @@ export default class WorkspaceParty implements Party.Server {
         topics === null
           ? events
           : events.filter((event) =>
-              REALTIME_EVENT_TOPICS[event.eventType].some((topic) =>
+              REALTIME_EVENT_TOPICS[event.eventType].topics.some((topic) =>
                 topics.includes(topic),
               ),
             )

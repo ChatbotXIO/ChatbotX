@@ -44,31 +44,90 @@ export type RealtimeProtocol = z.infer<typeof realtimeProtocolSchema>
  */
 export const REALTIME_DELIVERY_NEGATIVE_TTL_MS = 2000
 
+export type RealtimeEventTopicDefinition = {
+  durability: "durable" | "ephemeral"
+  topics: readonly RealtimeTopic[]
+}
+
 export const REALTIME_EVENT_TOPICS: {
-  readonly [K in (typeof RealtimeEventType)[keyof typeof RealtimeEventType]]: readonly RealtimeTopic[]
+  readonly [K in (typeof RealtimeEventType)[keyof typeof RealtimeEventType]]: RealtimeEventTopicDefinition
 } = {
-  [RealtimeEventType.messageCreated]: [RealtimeTopic.chat],
-  [RealtimeEventType.messageDeleted]: [RealtimeTopic.chat],
-  [RealtimeEventType.messageUpdated]: [RealtimeTopic.chat],
-  [RealtimeEventType.messageContentUpdated]: [RealtimeTopic.chat],
-  [RealtimeEventType.messageIdAssigned]: [RealtimeTopic.chat],
-  [RealtimeEventType.messageFailed]: [RealtimeTopic.chat],
-  [RealtimeEventType.typing]: [RealtimeTopic.chat],
-  [RealtimeEventType.contactBlocked]: [RealtimeTopic.chat],
-  [RealtimeEventType.contactUnblocked]: [RealtimeTopic.chat],
-  [RealtimeEventType.conversationAssigned]: [
-    RealtimeTopic.chat,
-    RealtimeTopic.voip,
-  ],
-  [RealtimeEventType.notifyExportResult]: [RealtimeTopic.chat],
-  [RealtimeEventType.conversationCreated]: [RealtimeTopic.chat],
-  [RealtimeEventType.conversationUpdated]: [RealtimeTopic.chat],
-  [RealtimeEventType.whatsappCallTransportIncoming]: [RealtimeTopic.voip],
-  [RealtimeEventType.whatsappCallTransportEnded]: [RealtimeTopic.voip],
-  [RealtimeEventType.whatsappCallClaimedElsewhere]: [RealtimeTopic.voip],
-  [RealtimeEventType.whatsappCallOutboundAnswer]: [RealtimeTopic.voip],
-  [RealtimeEventType.whatsappCallOutboundStatus]: [RealtimeTopic.voip],
-  [RealtimeEventType.whatsappCallPermissionUpdated]: [RealtimeTopic.voip],
+  [RealtimeEventType.messageCreated]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.messageDeleted]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.messageUpdated]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.messageContentUpdated]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.messageIdAssigned]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.messageFailed]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.typing]: {
+    durability: "ephemeral",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.contactBlocked]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.contactUnblocked]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.conversationAssigned]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat, RealtimeTopic.voip],
+  },
+  [RealtimeEventType.notifyExportResult]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.conversationCreated]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.conversationUpdated]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
+  },
+  [RealtimeEventType.whatsappCallTransportIncoming]: {
+    durability: "durable",
+    topics: [RealtimeTopic.voip],
+  },
+  [RealtimeEventType.whatsappCallTransportEnded]: {
+    durability: "durable",
+    topics: [RealtimeTopic.voip],
+  },
+  [RealtimeEventType.whatsappCallClaimedElsewhere]: {
+    durability: "durable",
+    topics: [RealtimeTopic.voip],
+  },
+  [RealtimeEventType.whatsappCallOutboundAnswer]: {
+    durability: "durable",
+    topics: [RealtimeTopic.voip],
+  },
+  [RealtimeEventType.whatsappCallOutboundStatus]: {
+    durability: "durable",
+    topics: [RealtimeTopic.voip],
+  },
+  [RealtimeEventType.whatsappCallPermissionUpdated]: {
+    durability: "durable",
+    topics: [RealtimeTopic.voip],
+  },
 }
 
 /**

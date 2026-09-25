@@ -488,6 +488,18 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => {
+    const waitUntilState = (
+      predicate: (state: ChatStore) => boolean,
+    ): Promise<void> =>
+      new Promise<void>((resolve) => {
+        const unsubscribe = store.subscribe((state) => {
+          if (predicate(state)) {
+            unsubscribe()
+            resolve()
+          }
+        })
+      })
+
     return {
       ...conversationListDefaults(),
       filters: {},
@@ -626,18 +638,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
 
         try {
           if (get().isFirstLoadConversation && get().isLoadingConversation) {
-            await new Promise<void>((resolve) => {
-              const unsubscribe = store.subscribe((state) => {
-                if (
-                  !(
-                    state.isFirstLoadConversation && state.isLoadingConversation
-                  )
-                ) {
-                  unsubscribe()
-                  resolve()
-                }
-              })
-            })
+            await waitUntilState(
+              (state) =>
+                !(state.isFirstLoadConversation && state.isLoadingConversation),
+            )
           }
 
           await loadAndSelectConversation(get, workspaceId, conversationId)
@@ -661,14 +665,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         // conversationId isn't left disagreeing with the actual selection. Same
         // wait pattern initActiveConversationFromUrl uses.
         if (get().isBootstrappingUrlConversation) {
-          await new Promise<void>((resolve) => {
-            const unsubscribe = store.subscribe((state) => {
-              if (!state.isBootstrappingUrlConversation) {
-                unsubscribe()
-                resolve()
-              }
-            })
-          })
+          await waitUntilState((state) => !state.isBootstrappingUrlConversation)
           // The bootstrap we waited out may already have selected this exact
           // conversation.
           if (get().activeConversationId === conversationId) {

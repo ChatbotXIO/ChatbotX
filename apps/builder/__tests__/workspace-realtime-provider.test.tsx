@@ -726,12 +726,12 @@ describe("WorkspaceRealtimeProvider", () => {
       })
 
       expect(sentSubscriptions().at(-1)).toEqual(
-        REALTIME_EVENT_TOPICS.messageDeleted,
+        REALTIME_EVENT_TOPICS.messageDeleted.topics,
       )
       // Exact wire frame — same serializer the party's schema parses.
       expect(socketSendMock).toHaveBeenCalledWith(
         serializeRealtimeSubscriptionMessage(
-          REALTIME_EVENT_TOPICS.messageDeleted,
+          REALTIME_EVENT_TOPICS.messageDeleted.topics,
         ),
       )
     })
@@ -753,7 +753,7 @@ describe("WorkspaceRealtimeProvider", () => {
       })
 
       expect(sentSubscriptions()).toEqual([
-        REALTIME_EVENT_TOPICS.messageDeleted,
+        REALTIME_EVENT_TOPICS.messageDeleted.topics,
       ])
     })
 
@@ -769,7 +769,7 @@ describe("WorkspaceRealtimeProvider", () => {
       })
 
       expect(new Set(sentSubscriptions().at(-1))).toEqual(
-        new Set(REALTIME_EVENT_TOPICS.conversationAssigned),
+        new Set(REALTIME_EVENT_TOPICS.conversationAssigned.topics),
       )
     })
 

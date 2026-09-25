@@ -96,53 +96,52 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+const broadcastAndFlush = async (
+  ...args: Parameters<typeof broadcastToWorkspaceParty>
+) => {
+  const broadcast = broadcastToWorkspaceParty(...args)
+  await vi.runOnlyPendingTimersAsync()
+  return await broadcast
+}
+
 describe("broadcastToWorkspaceParty aggregator (B1)", () => {
-  test("sends the first event for a workspace immediately, as a single event, without waiting for the coalesce window", async () => {
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
-    await broadcastToWorkspaceParty("workspace_2", typingEvent)
-    expect(resolveTenantSettings).not.toHaveBeenCalled()
-    expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
-      1,
+  test("queues the first event until the coalesce window elapses", async () => {
+    const queued = broadcastToWorkspaceParty("workspace_1", typingEvent)
+
+    expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
+
+    await vi.runOnlyPendingTimersAsync()
+    await expect(queued).resolves.toBe(1)
+
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
       { secret: "s".repeat(32), url: "http://realtime:1999" },
       "workspace_1",
-      typingEvent,
-    )
-    expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
-      2,
-      { secret: "s".repeat(32), url: "http://realtime:1999" },
-      "workspace_2",
-      typingEvent,
+      [typingEvent],
     )
   })
 
-  test("coalesces events queued behind an in-flight first send into one batch request", async () => {
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-
+  test("coalesces all events queued during the window into one batch request", async () => {
+    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
     const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
     const third = broadcastToWorkspaceParty(
       "workspace_1",
       conversationAssignedEvent,
     )
 
-    // Not sent yet — still inside the coalesce window.
     expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
 
     await vi.runOnlyPendingTimersAsync()
-    await Promise.all([second, third])
+    await Promise.all([first, second, third])
 
     expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
     expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
       expect.anything(),
       "workspace_1",
-      [contactBlockedEvent, conversationAssignedEvent],
+      [typingEvent, contactBlockedEvent, conversationAssignedEvent],
     )
   })
 
   test("flushes immediately once the max event count is reached, without waiting for the coalesce window", async () => {
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-
     const queued = Array.from({ length: WORKSPACE_BROADCAST_MAX_EVENTS }, () =>
       broadcastToWorkspaceParty("workspace_1", contactBlockedEvent),
     )
@@ -157,42 +156,54 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
     expect(batch).toHaveLength(WORKSPACE_BROADCAST_MAX_EVENTS)
   })
 
-  test("flushes queued events before adding an event that exceeds the batch byte limit", async () => {
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-    const queued = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
+  test("serializes an overflow flush before the next batch", async () => {
     const oversizedEvent = {
       eventType: "contactBlocked" as const,
       data: { contactId: "x".repeat(WORKSPACE_BROADCAST_MAX_BYTES) },
     }
+    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
+    const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
+    const third = broadcastToWorkspaceParty("workspace_1", oversizedEvent)
 
-    const oversized = broadcastToWorkspaceParty("workspace_1", oversizedEvent)
-    await Promise.all([queued, oversized])
+    await vi.runAllTimersAsync()
+    await Promise.all([first, second, third])
 
     expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
       1,
       expect.anything(),
       "workspace_1",
-      [contactBlockedEvent],
+      [typingEvent, contactBlockedEvent],
     )
     expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
       2,
       expect.anything(),
       "workspace_1",
-      oversizedEvent,
+      [oversizedEvent],
     )
   })
 
   test("flushPendingWorkspaceBroadcasts drains a pending batch on demand, ahead of the timer", async () => {
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-
-    const queued = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
+    const queued = broadcastToWorkspaceParty("workspace_1", typingEvent)
     const interested = await flushPendingWorkspaceBroadcasts("workspace_1")
     await queued
 
     expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
     expect(interested).toBe(1)
+  })
+
+  test("resolves every waiter with null when a batched relay request rejects", async () => {
+    broadcastToWorkspacePartyLow.mockRejectedValueOnce(new Error("relay down"))
+    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
+    const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
+
+    await vi.runOnlyPendingTimersAsync()
+
+    await expect(Promise.all([first, second])).resolves.toEqual([null, null])
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
+      expect.anything(),
+      "workspace_1",
+      [typingEvent, contactBlockedEvent],
+    )
   })
 
   test("flushPendingWorkspaceBroadcasts is a no-op when nothing is pending", async () => {
@@ -206,7 +217,7 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
 describe("chat delivery negative cache (B4)", () => {
   test("suppresses typing for the TTL after the relay reports zero interest, without hitting the network", async () => {
     broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    await broadcastAndFlush("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
 
     const interested = await broadcastToWorkspaceParty(
@@ -220,7 +231,7 @@ describe("chat delivery negative cache (B4)", () => {
 
   test("continues broadcasting durable chat events while the typing gate is active", async () => {
     broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    await broadcastAndFlush("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
 
     const queued = broadcastToWorkspaceParty("workspace_1", messageCreatedEvent)
@@ -236,19 +247,19 @@ describe("chat delivery negative cache (B4)", () => {
 
   test("stops suppressing once the negative-cache TTL elapses", async () => {
     broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    await broadcastAndFlush("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
     broadcastToWorkspacePartyLow.mockResolvedValue(1)
 
     await vi.advanceTimersByTimeAsync(2001)
-    await broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
+    await broadcastAndFlush("workspace_1", contactBlockedEvent)
 
     expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
   })
 
   test("a relay response with nonzero interest never sets the negative cache", async () => {
     broadcastToWorkspacePartyLow.mockResolvedValueOnce(3)
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    await broadcastAndFlush("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
 
     const queued = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
@@ -260,7 +271,7 @@ describe("chat delivery negative cache (B4)", () => {
 
   test("never suppresses a mixed chat+voip event, even while the chat gate is active", async () => {
     broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    await broadcastAndFlush("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
 
     const queued = broadcastToWorkspaceParty(
@@ -275,7 +286,7 @@ describe("chat delivery negative cache (B4)", () => {
 
   test("never suppresses a voip-only event, even while the chat gate is active", async () => {
     broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    await broadcastAndFlush("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
 
     const queued = broadcastToWorkspaceParty("workspace_1", voipEvent)
@@ -288,7 +299,7 @@ describe("chat delivery negative cache (B4)", () => {
   test("fails open when REALTIME_DELIVERY_GATE is disabled", async () => {
     resolveRealtimeDeliveryGate.mockReturnValue(false)
     broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastToWorkspaceParty("workspace_1", typingEvent)
+    await broadcastAndFlush("workspace_1", typingEvent)
     broadcastToWorkspacePartyLow.mockClear()
 
     const queued = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)

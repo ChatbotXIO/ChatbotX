@@ -70,6 +70,34 @@ function isKnownRealtimeEventName(value: string): value is RealtimeEventName {
  */
 type ErasedRealtimeListener = (event: RealtimeEventData) => void
 
+const logRealtimeWarning = ({
+  error,
+  eventType,
+  message,
+  reason,
+  suppressionMessage,
+}: {
+  error: unknown
+  eventType?: RealtimeEventName
+  message: string
+  reason: string
+  suppressionMessage: string
+}): void => {
+  const decision = decideRealtimeWarnLogging(reason, eventType)
+  if (!decision.shouldLog) {
+    return
+  }
+
+  logger.warn(
+    {
+      err: error,
+      ...(eventType ? { eventType } : {}),
+      suppressed: decision.isSuppressionSummary,
+    },
+    decision.isSuppressionSummary ? suppressionMessage : message,
+  )
+}
+
 export type WorkspaceRealtimeSubscribe = <K extends RealtimeEventName>(
   eventType: K,
   listener: (event: RealtimeEvent<K>) => void,
@@ -160,18 +188,14 @@ export function WorkspaceRealtimeProvider({
   const processRealtimeFrame = (frame: unknown): void => {
     const envelopeResult = realtimeEventEnvelopeSchema.safeParse(frame)
     if (!envelopeResult.success) {
-      const decision = decideRealtimeWarnLogging("invalid-envelope", undefined)
-      if (decision.shouldLog) {
-        logger.warn(
-          {
-            err: envelopeResult.error,
-            suppressed: decision.isSuppressionSummary,
-          },
-          decision.isSuppressionSummary
-            ? "Workspace realtime: further invalid-envelope warnings suppressed for this window"
-            : "Workspace realtime: message frame is not a valid event envelope",
-        )
-      }
+      logRealtimeWarning({
+        error: envelopeResult.error,
+        message:
+          "Workspace realtime: message frame is not a valid event envelope",
+        reason: "invalid-envelope",
+        suppressionMessage:
+          "Workspace realtime: further invalid-envelope warnings suppressed for this window",
+      })
       return
     }
 
@@ -192,19 +216,14 @@ export function WorkspaceRealtimeProvider({
     if (schema) {
       const result = schema.safeParse(data)
       if (!result.success) {
-        const decision = decideRealtimeWarnLogging("schema-invalid", eventType)
-        if (decision.shouldLog) {
-          logger.warn(
-            {
-              err: result.error,
-              eventType,
-              suppressed: decision.isSuppressionSummary,
-            },
-            decision.isSuppressionSummary
-              ? "Workspace realtime: further schema-validation warnings suppressed for this window"
-              : "Workspace realtime: event failed schema validation",
-          )
-        }
+        logRealtimeWarning({
+          error: result.error,
+          eventType,
+          message: "Workspace realtime: event failed schema validation",
+          reason: "schema-invalid",
+          suppressionMessage:
+            "Workspace realtime: further schema-validation warnings suppressed for this window",
+        })
         return
       }
     }
@@ -224,19 +243,15 @@ export function WorkspaceRealtimeProvider({
         // Keyed by `eventType` (already narrowed, bounded by
         // `RealtimeEventType`) — a listener that throws on every dispatch of
         // one busy event never drowns out warnings for an unrelated one.
-        const decision = decideRealtimeWarnLogging("listener-threw", eventType)
-        if (decision.shouldLog) {
-          logger.warn(
-            {
-              err: error,
-              eventType,
-              suppressed: decision.isSuppressionSummary,
-            },
-            decision.isSuppressionSummary
-              ? "Workspace realtime: further listener-threw warnings suppressed for this window"
-              : "Workspace realtime: a listener threw while handling an event",
-          )
-        }
+        logRealtimeWarning({
+          error,
+          eventType,
+          message:
+            "Workspace realtime: a listener threw while handling an event",
+          reason: "listener-threw",
+          suppressionMessage:
+            "Workspace realtime: further listener-threw warnings suppressed for this window",
+        })
       }
     }
   }
@@ -280,15 +295,13 @@ export function WorkspaceRealtimeProvider({
       try {
         parsedJson = JSON.parse(event.data)
       } catch (error) {
-        const decision = decideRealtimeWarnLogging("malformed-json", undefined)
-        if (decision.shouldLog) {
-          logger.warn(
-            { err: error, suppressed: decision.isSuppressionSummary },
-            decision.isSuppressionSummary
-              ? "Workspace realtime: further malformed-JSON warnings suppressed for this window"
-              : "Workspace realtime: could not parse message frame",
-          )
-        }
+        logRealtimeWarning({
+          error,
+          message: "Workspace realtime: could not parse message frame",
+          reason: "malformed-json",
+          suppressionMessage:
+            "Workspace realtime: further malformed-JSON warnings suppressed for this window",
+        })
         return
       }
 
@@ -321,7 +334,7 @@ export function WorkspaceRealtimeProvider({
       if (listeners.size === 0) {
         continue
       }
-      for (const topic of REALTIME_EVENT_TOPICS[eventType]) {
+      for (const topic of REALTIME_EVENT_TOPICS[eventType].topics) {
         topics.add(topic)
       }
     }

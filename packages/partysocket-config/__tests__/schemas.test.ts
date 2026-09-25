@@ -202,25 +202,29 @@ describe("realtimeCallTransportOutboundStatusVoipSchema", () => {
 })
 
 describe("REALTIME_EVENT_TOPICS", () => {
-  test("every RealtimeEventType has at least one registered topic", () => {
+  test("every RealtimeEventType has at least one registered topic and an explicit durability", () => {
     for (const eventType of Object.values(RealtimeEventType)) {
-      expect(REALTIME_EVENT_TOPICS[eventType]?.length).toBeGreaterThan(0)
+      const event = REALTIME_EVENT_TOPICS[eventType]
+      expect(event?.topics.length).toBeGreaterThan(0)
+      expect(["durable", "ephemeral"]).toContain(event?.durability)
     }
   })
 
   test("every registered topic is a known RealtimeTopic value", () => {
     const knownTopics = new Set(Object.values(RealtimeTopic))
-    for (const topics of Object.values(REALTIME_EVENT_TOPICS)) {
-      for (const topic of topics) {
+    for (const event of Object.values(REALTIME_EVENT_TOPICS)) {
+      for (const topic of event.topics) {
         expect(knownTopics.has(topic)).toBe(true)
       }
     }
   })
 
-  test("conversationAssigned carries both chat and voip — it must never be gated as chat-only", () => {
-    expect(REALTIME_EVENT_TOPICS.conversationAssigned).toEqual(
-      expect.arrayContaining([RealtimeTopic.chat, RealtimeTopic.voip]),
-    )
+  test("only typing is ephemeral and conversationAssigned carries both topics", () => {
+    expect(REALTIME_EVENT_TOPICS.typing.durability).toBe("ephemeral")
+    expect(REALTIME_EVENT_TOPICS.conversationAssigned).toMatchObject({
+      durability: "durable",
+      topics: expect.arrayContaining([RealtimeTopic.chat, RealtimeTopic.voip]),
+    })
   })
 })
 

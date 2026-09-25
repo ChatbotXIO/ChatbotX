@@ -1,12 +1,13 @@
+import type {
+  BroadcastTarget,
+  RealtimeEventData,
+} from "@chatbotx.io/partysocket-config"
 import {
-  type BroadcastTarget,
   broadcastToGuestParty as broadcastToGuestPartyLow,
   broadcastToWorkspaceParty as broadcastToWorkspacePartyLow,
   REALTIME_DELIVERY_NEGATIVE_TTL_MS,
   REALTIME_EVENT_TOPICS,
-  type RealtimeEventData,
   RealtimeEventType,
-  RealtimeTopic,
   revokeWorkspaceMemberConnections as revokeWorkspaceMemberConnectionsLow,
   sendToWorkspaceMember as sendToWorkspaceMemberLow,
 } from "@chatbotx.io/partysocket-config"
@@ -33,6 +34,7 @@ type PendingWorkspaceBroadcast = {
 }
 
 const pendingByWorkspace = new Map<string, PendingWorkspaceBroadcast>()
+const inFlightByWorkspace = new Map<string, Promise<void>>()
 const chatNegativeCache = new Map<string, number>()
 
 let cachedTarget: BroadcastTarget | undefined
@@ -44,23 +46,20 @@ export const resolveRealtimeBroadcastTarget = (): BroadcastTarget =>
   })
 
 /**
- * Only disposable events may be skipped. Durable chat events must always reach
- * the relay because there is no subscriber catch-up path after a dropped
- * delivery. Keep the sole-topic check so mixed chat+voip events always reach
- * their voip subscribers.
+ * Ephemeral chat events may be skipped only when their topic metadata marks
+ * them as such.
  */
-const GATEABLE_EVENT_TYPES: Partial<
-  Record<RealtimeEventData["eventType"], true>
-> = {
-  [RealtimeEventType.typing]: true,
-}
-
 const isGateableEvent = (event: RealtimeEventData): boolean => {
-  const topics = REALTIME_EVENT_TOPICS[event.eventType]
+  if (event.eventType !== "typing") {
+    return false
+  }
+
+  const eventTopics = REALTIME_EVENT_TOPICS[event.eventType]
   return (
-    GATEABLE_EVENT_TYPES[event.eventType] === true &&
-    topics.length === 1 &&
-    topics[0] === RealtimeTopic.chat
+    event.eventType === RealtimeEventType.typing &&
+    eventTopics.durability === "ephemeral" &&
+    eventTopics.topics.length === 1 &&
+    eventTopics.topics[0] === "chat"
   )
 }
 
@@ -152,25 +151,45 @@ const createPendingWorkspaceBroadcast = (
  * Flushes the coalesced tail for one workspace. Exported as a deterministic
  * seam for callers that need to drain before shutdown and for focused tests.
  */
-export async function flushPendingWorkspaceBroadcasts(
+export function flushPendingWorkspaceBroadcasts(
   workspaceId: string,
 ): Promise<number | null> {
   const pending = pendingByWorkspace.get(workspaceId)
   if (!pending) {
-    return null
+    return Promise.resolve(null)
   }
 
   pendingByWorkspace.delete(workspaceId)
   clearTimeout(pending.timer)
   if (pending.events.length === 0) {
-    return null
+    return Promise.resolve(null)
   }
 
-  const interested = await sendWorkspaceEvents(workspaceId, pending.events)
-  for (const waiter of pending.waiters) {
-    waiter.resolve(interested)
-  }
-  return interested
+  const previousSend = inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
+  const flush = previousSend
+    .then(() => sendWorkspaceEvents(workspaceId, pending.events))
+    .then(
+      (interested) => {
+        for (const waiter of pending.waiters) {
+          waiter.resolve(interested)
+        }
+        return interested
+      },
+      () => {
+        for (const waiter of pending.waiters) {
+          waiter.resolve(null)
+        }
+        return null
+      },
+    )
+  const completion = flush.then(() => undefined)
+  inFlightByWorkspace.set(workspaceId, completion)
+  completion.then(() => {
+    if (inFlightByWorkspace.get(workspaceId) === completion) {
+      inFlightByWorkspace.delete(workspaceId)
+    }
+  })
+  return flush
 }
 
 export const resetRealtimeBroadcastStateForTests = (): void => {
@@ -181,6 +200,7 @@ export const resetRealtimeBroadcastStateForTests = (): void => {
     }
   }
   pendingByWorkspace.clear()
+  inFlightByWorkspace.clear()
   chatNegativeCache.clear()
 }
 
@@ -192,10 +212,9 @@ export const broadcastToWorkspaceParty = (
     return Promise.resolve(0)
   }
 
-  const pending = pendingByWorkspace.get(workspaceId)
+  let pending = pendingByWorkspace.get(workspaceId)
   if (!pending) {
-    createPendingWorkspaceBroadcast(workspaceId)
-    return sendWorkspaceEvents(workspaceId, event)
+    pending = createPendingWorkspaceBroadcast(workspaceId)
   }
 
   const serializedEventBytes = new TextEncoder().encode(
@@ -210,12 +229,12 @@ export const broadcastToWorkspaceParty = (
 
   if (wouldExceedBytes || wouldExceedCount) {
     flushPendingWorkspaceBroadcasts(workspaceId)
-    createPendingWorkspaceBroadcast(workspaceId)
-    return sendWorkspaceEvents(workspaceId, event)
+    pending = createPendingWorkspaceBroadcast(workspaceId)
   }
 
+  const nextSeparatorBytes = pending.events.length > 0 ? 1 : 0
   pending.events.push(event)
-  pending.byteLength += separatorBytes + serializedEventBytes
+  pending.byteLength += nextSeparatorBytes + serializedEventBytes
   const result = new Promise<number | null>((resolve) => {
     pending.waiters.push({ resolve })
   })

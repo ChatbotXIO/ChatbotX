@@ -470,6 +470,25 @@ describe("WorkspaceParty#onRequest", () => {
       JSON.stringify(voipEvent),
     ])
   })
+  it("drops only unknown events from a valid batch and delivers known events", async () => {
+    const knownEvent = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+
+    const response = await party.onRequest(
+      postBatchRequest("/parties/workspaces/ws_1", [
+        knownEvent,
+        { eventType: "futureEvent", data: {} },
+      ]),
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ interested: 3 })
+    expect(connectionA1.sent).toEqual([JSON.stringify(knownEvent)])
+    expect(connectionA2.sent).toEqual([JSON.stringify(knownEvent)])
+    expect(connectionB1.sent).toEqual([JSON.stringify(knownEvent)])
+  })
 
   it("fails open before a v2 connection's first subscribe frame, then filters by its subscribed topics", async () => {
     connectionA1.setState({ userId: "u_a", protocol: "v2", topics: null })
