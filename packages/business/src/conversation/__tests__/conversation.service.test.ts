@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   findInboxTeamByIdOrFail: vi.fn(),
   inboxTeamExists: vi.fn(),
   assignUserIfUnassigned: vi.fn(),
+  broadcastToWorkspaceParty: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -87,7 +88,6 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     await importOriginal<typeof import("@chatbotx.io/worker-config")>()
   return {
     ...actual,
-    chatQueue: { add: vi.fn() },
     notificationQueue: { addBulk: vi.fn() },
   }
 })
@@ -98,6 +98,10 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
     conversationUpdated: "conversationUpdated",
     conversationAssigned: "conversationAssigned",
   },
+}))
+
+vi.mock("../../platform/realtime-broadcast", () => ({
+  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
 }))
 
 // `conversationService` now imports `contactService` (for the location write
@@ -143,9 +147,7 @@ const { conversationService } = await import("../service")
 const { emit } = await import("@chatbotx.io/event-bus")
 const { emitConversationAssigned } = await import("@chatbotx.io/events")
 const { invalidateCacheByTags } = await import("@chatbotx.io/redis")
-const { chatQueue, notificationQueue } = await import(
-  "@chatbotx.io/worker-config"
-)
+const { notificationQueue } = await import("@chatbotx.io/worker-config")
 
 const WORKSPACE_ID = "ws-1"
 
@@ -169,7 +171,7 @@ beforeEach(() => {
   mocks.inboxTeamExists.mockReset()
   mocks.assignUserIfUnassigned.mockReset()
   vi.mocked(invalidateCacheByTags).mockReset()
-  vi.mocked(chatQueue.add).mockReset()
+  mocks.broadcastToWorkspaceParty.mockReset()
   vi.mocked(notificationQueue.addBulk).mockReset()
   vi.mocked(emitConversationAssigned).mockReset()
   vi.mocked(emit).mockReset()
@@ -385,22 +387,21 @@ describe("ConversationService.updateAssignment", () => {
     })
   })
 
-  // `updateAssignment` publishes
-  // from the UPDATE's RETURNED rows rather than the caller's `conversations`
-  // input (the behavior `claimForCallAgent` requires, since it has no other
-  // source of the true row), in the fixed side-effect ORDER (invalidate ->
-  // conversationUpdated -> conversationAssigned -> notification unless self
-  // -> emitConversationAssigned -> analytics), and pins the exact payload of
-  // every event, not just that it fired.
+  // `updateAssignment` publishes from the UPDATE's RETURNED rows rather than
+  // the caller's `conversations` input (the behavior `claimForCallAgent`
+  // requires, since it has no other source of the true row), in the fixed
+  // side-effect order (invalidate -> conversationAssigned -> notification
+  // unless self -> emitConversationAssigned -> analytics), and pins the exact
+  // payload of every event, not just that it fired.
   test("publishes assignment side effects in order, built from the UPDATE's returned rows rather than the caller's input", async () => {
     const order: string[] = []
     vi.mocked(invalidateCacheByTags).mockImplementation(() => {
       order.push("invalidate")
       return Promise.resolve()
     })
-    vi.mocked(chatQueue.add).mockImplementation(() => {
+    mocks.broadcastToWorkspaceParty.mockImplementation(() => {
       order.push("broadcast")
-      return Promise.resolve(undefined as never)
+      return Promise.resolve()
     })
     vi.mocked(notificationQueue.addBulk).mockImplementation(() => {
       order.push("notify")
@@ -445,32 +446,13 @@ describe("ConversationService.updateAssignment", () => {
       `conversations:${WORKSPACE_ID}`,
       "conversations:conv-1",
     ])
-    expect(chatQueue.add).toHaveBeenNthCalledWith(1, "broadcastEvent", {
+    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(WORKSPACE_ID, {
+      eventType: "conversationAssigned",
       data: {
-        workspaceId: WORKSPACE_ID,
-        event: {
-          eventType: "conversationUpdated",
-          data: {
-            conversationIds: ["conv-1"],
-            changes: { assignedUserId: "user-2", assignedInboxTeamId: null },
-          },
-        },
+        conversationIds: ["conv-1"],
+        assignedUserId: "user-2",
+        assignedInboxTeamId: null,
       },
-      type: "broadcastEvent",
-    })
-    expect(chatQueue.add).toHaveBeenNthCalledWith(2, "broadcastEvent", {
-      data: {
-        workspaceId: WORKSPACE_ID,
-        event: {
-          eventType: "conversationAssigned",
-          data: {
-            conversationIds: ["conv-1"],
-            assignedUserId: "user-2",
-            assignedInboxTeamId: null,
-          },
-        },
-      },
-      type: "broadcastEvent",
     })
     expect(notificationQueue.addBulk).toHaveBeenCalledWith([
       {
@@ -488,7 +470,6 @@ describe("ConversationService.updateAssignment", () => {
     ])
     expect(order).toEqual([
       "invalidate",
-      "broadcast",
       "broadcast",
       "notify",
       "emitAssigned",
@@ -519,7 +500,7 @@ describe("ConversationService.updateAssignment", () => {
 
     expect(result).toEqual([])
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(chatQueue.add).not.toHaveBeenCalled()
+    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
     expect(notificationQueue.addBulk).not.toHaveBeenCalled()
     expect(emitConversationAssigned).not.toHaveBeenCalled()
     expect(emit).not.toHaveBeenCalled()
@@ -594,7 +575,7 @@ describe("ConversationService.claimForCallAgent", () => {
     })
 
     expect(result).toEqual([])
-    expect(chatQueue.add).not.toHaveBeenCalled()
+    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
     expect(notificationQueue.addBulk).not.toHaveBeenCalled()
     expect(emitConversationAssigned).not.toHaveBeenCalled()
     expect(emit).not.toHaveBeenCalled()

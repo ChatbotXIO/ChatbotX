@@ -314,7 +314,7 @@ export async function processWhatsappTemplate(
       await contactInboxService.invalidateTracking(trackingInvalidation)
     }
 
-    broadcastToWorkspaceParty(conversation.workspaceId, {
+    await broadcastToWorkspaceParty(conversation.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: newMessage,
     })

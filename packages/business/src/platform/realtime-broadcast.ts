@@ -6,6 +6,7 @@ import {
   revokeWorkspaceMemberConnections as revokeWorkspaceMemberConnectionsLow,
   sendToWorkspaceMember as sendToWorkspaceMemberLow,
 } from "@chatbotx.io/partysocket-config"
+import { logger } from "../logger"
 import { resolveBroadcastSecret, resolveRealtimeBroadcastUrl } from "./settings"
 
 let cachedTarget: BroadcastTarget | undefined
@@ -20,8 +21,16 @@ export const broadcastToWorkspaceParty = async (
   workspaceId: string,
   json: RealtimeEventData,
 ) => {
-  const target = resolveRealtimeBroadcastTarget()
-  return await broadcastToWorkspacePartyLow(target, workspaceId, json)
+  try {
+    const target = resolveRealtimeBroadcastTarget()
+    return await broadcastToWorkspacePartyLow(target, workspaceId, json)
+  } catch (err) {
+    logger.error(
+      { err, eventType: json.eventType, workspaceId },
+      "Failed to resolve realtime broadcast target",
+    )
+    return null
+  }
 }
 
 /**

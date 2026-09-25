@@ -36,6 +36,7 @@ const describeBroadcastError = (error: unknown): Record<string, unknown> => {
 
 const AUTH_HEADER_REUSE_MS = (REALTIME_TOKEN_TTL_SECONDS - 15) * 1000
 const MAX_CACHED_AUTH_HEADERS = 10_000
+const REALTIME_BROADCAST_TIMEOUT_MS = 3000
 
 type CachedAuthHeader = {
   expiresAt: number
@@ -97,6 +98,7 @@ export async function broadcastToWorkspaceParty(
   try {
     return await ky.post(`parties/workspaces/${workspaceId}`, {
       baseUrl: target.url,
+      timeout: REALTIME_BROADCAST_TIMEOUT_MS,
       headers: {
         Authorization: await buildBroadcastAuthHeader(
           { kind: "workspace", id: workspaceId },
@@ -129,6 +131,7 @@ export async function sendToWorkspaceMember(
   try {
     return await ky.post(`parties/workspaces/${workspaceId}`, {
       baseUrl: target.url,
+      timeout: REALTIME_BROADCAST_TIMEOUT_MS,
       searchParams: { userId: targetUserId },
       headers: {
         Authorization: await buildBroadcastAuthHeader(

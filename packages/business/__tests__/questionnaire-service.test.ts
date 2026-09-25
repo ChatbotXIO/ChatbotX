@@ -84,6 +84,10 @@ vi.mock("@chatbotx.io/redis", () => ({
   createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
 
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  broadcastToWorkspaceParty: vi.fn(),
+}))
+
 vi.mock("../src/contact/service", () => ({
   contactService: {
     setRichSystemFieldByKey: vi.fn(async () => undefined),

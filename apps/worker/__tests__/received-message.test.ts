@@ -1179,6 +1179,7 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockRecordInboundActivity).not.toHaveBeenCalled()
     expect(mockUpdateTracking).not.toHaveBeenCalled()
+    expect(mockBroadcast).not.toHaveBeenCalled()
   })
 
   test("does NOT call createMessageRepository when message is null", async () => {
