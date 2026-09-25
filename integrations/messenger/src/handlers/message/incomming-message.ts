@@ -2,8 +2,6 @@ import { normalizeMetaAdReferral } from "@chatbotx.io/business/referral"
 import {
   type Context,
   contentTypes,
-  type EchoOrigin,
-  echoOrigins,
   type IncomingAttachment,
   type IncomingContact,
   type IncomingMessage,
@@ -14,9 +12,9 @@ import {
 } from "@chatbotx.io/sdk"
 import { getMessageAttachmentEntity } from "../../apis/attachment"
 import { MessengerException } from "../../exception"
+import { type MessengerEcho, parseEcho } from "../../lib/echo"
 import { logger } from "../../lib/logger"
 import {
-  META_FIRST_PARTY_ECHO_APP_IDS,
   type MessengerAuthValue,
   type MessengerMessage,
   type MessengerMessagingEvent,
@@ -81,80 +79,31 @@ const getMessageLocation = (message: MessengerMessage) => {
   }
 }
 
-const collectTitles = (elements: { title?: string }[] | undefined): string[] =>
-  (elements ?? [])
-    .map((element) => element.title?.trim() ?? "")
-    .filter((title) => title.length > 0)
-
-type TemplateAttachment = NonNullable<MessengerMessage["attachments"]>[number]
+type MessageTextResolver = (
+  message: MessengerMessage,
+  echo: MessengerEcho,
+) => string | undefined
 
 /**
- * Where a `template` echo's display text can come from, in priority order
- * (message_echoes reference: button / generic / media / product templates).
- * Media templates carry no title and resolve to nothing.
+ * Where a stored message's text comes from, in priority order. Add a resolver
+ * here to derive text from another payload shape.
  */
-const templateTitleResolvers: ((
-  attachment: TemplateAttachment,
-) => string | undefined)[] = [
-  (attachment) => attachment.title?.trim() || undefined,
-  (attachment) => attachment.payload.text?.trim() || undefined,
-  (attachment) => {
-    const titles = [
-      ...collectTitles(attachment.payload.elements),
-      ...collectTitles(attachment.payload.product?.elements),
-    ]
-    return titles.length > 0 ? titles.join("\n") : undefined
-  },
+const messageTextResolvers: MessageTextResolver[] = [
+  (message) => message.text,
+  (_message, echo) => echo.templateTitle,
 ]
 
-/**
- * Text-only summary of a `template` attachment on an echo. The template body
- * is never stored as an attachment — it is display-only chrome that would
- * cost storage on every echo — so its title stands in as the message text.
- * Inbound messages are left untouched so a customer's product share never
- * gains text that could match keyword automation.
- */
-const getTemplateTitle = (message: MessengerMessage): string | undefined => {
-  if (message.is_echo !== true) {
-    return
-  }
-  for (const attachment of message.attachments ?? []) {
-    if (attachment.type !== "template") {
-      continue
-    }
-    for (const resolve of templateTitleResolvers) {
-      const title = resolve(attachment)
-      if (title) {
-        return title
-      }
+const resolveMessageText = (
+  message: MessengerMessage,
+  echo: MessengerEcho,
+): string | undefined => {
+  for (const resolve of messageTextResolvers) {
+    const text = resolve(message, echo)
+    if (text !== undefined) {
+      return text
     }
   }
   return
-}
-
-/**
- * Meta documents `app_id` as a string but ships a JSON number. A number past
- * `Number.MAX_SAFE_INTEGER` has already lost digits in `JSON.parse`, so it is
- * reported as unknown rather than compared against the first-party set.
- */
-const getEchoAppId = (message: MessengerMessage | undefined): string | null => {
-  if (message?.is_echo !== true || message.app_id === undefined) {
-    return null
-  }
-  if (typeof message.app_id === "number") {
-    return Number.isSafeInteger(message.app_id) ? String(message.app_id) : null
-  }
-  return message.app_id
-}
-
-/** Classifies an echo by its sending app; null when not an echo or unknown. */
-const getEchoOrigin = (echoAppId: string | null): EchoOrigin | null => {
-  if (echoAppId === null) {
-    return null
-  }
-  return META_FIRST_PARTY_ECHO_APP_IDS.has(echoAppId)
-    ? echoOrigins.enum.firstParty
-    : echoOrigins.enum.thirdParty
 }
 
 export const receiveMessage: MessageHandlers<MessengerAuthValue>["receiveMessage"] =
@@ -188,7 +137,7 @@ const getMessageEntity = async (
   let referral: MessageReferral | null = null
   let buttonTitle: string | null = null
 
-  const echoAppId = getEchoAppId(messaging.message)
+  const echo = parseEcho(messaging.message)
   const sourceId =
     messaging.sender.id === ctx.auth.metadata.pageId
       ? messaging.recipient.id
@@ -205,7 +154,7 @@ const getMessageEntity = async (
         messaging.sender.id === ctx.auth.metadata.pageId
           ? messageTypes.enum.outgoing
           : messageTypes.enum.incoming,
-      text: messaging.message.text ?? getTemplateTitle(messaging.message),
+      text: resolveMessageText(messaging.message, echo),
       contentType: location
         ? contentTypes.enum.location
         : contentTypes.enum.text,
@@ -262,7 +211,7 @@ const getMessageEntity = async (
     referral,
     buttonTitle,
     contact,
-    echoOrigin: getEchoOrigin(echoAppId),
-    echoAppId,
+    echoOrigin: echo.origin,
+    echoAppId: echo.appId,
   }
 }
