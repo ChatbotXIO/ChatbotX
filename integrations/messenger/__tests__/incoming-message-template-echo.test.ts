@@ -96,6 +96,73 @@ describe("Messenger receiveMessage — echo app_id", () => {
   })
 })
 
+describe("Messenger receiveMessage — parsing stays lenient", () => {
+  test("an unexpected app_id shape is treated as unknown instead of failing the webhook", async () => {
+    const result = await receiveEcho({ text: "hi", app_id: null })
+
+    expect(result.message?.text).toBe("hi")
+    expect(result.echoOrigin).toBeNull()
+    expect(result.echoAppId).toBeNull()
+  })
+
+  test("an unexpected template payload shape degrades to no title", async () => {
+    const result = await receiveEcho({
+      attachments: [
+        {
+          type: "template",
+          title: 123,
+          payload: { template_type: "generic", elements: "not-an-array" },
+        },
+      ],
+    })
+
+    expect(result.message?.text).toBeUndefined()
+    expect(result.message?.attachments).toEqual([])
+  })
+
+  test("an inbound product share keeps no text (title only applies to echoes)", async () => {
+    const result = await receiveMessage({
+      ctx: { auth: { metadata: { pageId: "page-1" } } } as never,
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "inbox-1",
+        payload: {
+          object: "page",
+          entry: [
+            {
+              id: "page-1",
+              time: 1,
+              messaging: [
+                {
+                  sender: { id: "psid-1" },
+                  recipient: { id: "page-1" },
+                  timestamp: 1,
+                  message: {
+                    mid: "mid-3",
+                    attachments: [
+                      {
+                        type: "template",
+                        payload: {
+                          product: {
+                            elements: [{ id: "1", title: "Shared product" }],
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.message?.messageType).toBe("incoming")
+    expect(result.message?.text).toBeUndefined()
+  })
+})
+
 describe("Messenger receiveMessage — template echo", () => {
   test("generic template echo stores the element titles as text and no attachment", async () => {
     const result = await receiveEcho({

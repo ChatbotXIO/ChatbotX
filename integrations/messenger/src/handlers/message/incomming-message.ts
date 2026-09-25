@@ -108,11 +108,16 @@ const templateTitleResolvers: ((
 ]
 
 /**
- * Text-only summary of a `template` attachment echo. The template body is
- * never stored as an attachment — it is display-only chrome that would cost
- * storage on every echo — so its title stands in as the message text.
+ * Text-only summary of a `template` attachment on an echo. The template body
+ * is never stored as an attachment — it is display-only chrome that would
+ * cost storage on every echo — so its title stands in as the message text.
+ * Inbound messages are left untouched so a customer's product share never
+ * gains text that could match keyword automation.
  */
 const getTemplateTitle = (message: MessengerMessage): string | undefined => {
+  if (message.is_echo !== true) {
+    return
+  }
   for (const attachment of message.attachments ?? []) {
     if (attachment.type !== "template") {
       continue
