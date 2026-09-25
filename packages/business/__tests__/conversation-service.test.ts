@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  broadcastToWorkspaceParty,
   execute,
   chatQueueAdd,
   conversationFindFirst,
@@ -21,6 +22,7 @@ const {
   const set = vi.fn(() => ({ where }))
   const update = vi.fn(() => ({ set }))
   return {
+    broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
     chatQueueAdd: vi.fn().mockResolvedValue(undefined),
     conversationFindFirst: vi.fn(),
     createMessageRepository: vi.fn(),
@@ -90,6 +92,10 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags,
   withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
   createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
+}))
+
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  broadcastToWorkspaceParty,
 }))
 
 // `conversationService` now imports `contactService` (for the location write
@@ -414,7 +420,7 @@ describe("conversationService.markReadByOutbound", () => {
     createMessageRepository.mockResolvedValue({ findLastByConversation })
   })
 
-  test("advances an older read timestamp, invalidates, and enqueues a realtime update", async () => {
+  test("advances an older read timestamp, invalidates, and broadcasts a realtime update", async () => {
     const readAt = new Date("2026-09-23T12:00:00.000Z")
     returning.mockResolvedValueOnce([{ id: "conv-1" }])
 
@@ -452,17 +458,11 @@ describe("conversationService.markReadByOutbound", () => {
       "conversations:ws-1",
       "conversations:conv-1",
     ])
-    expect(chatQueueAdd).toHaveBeenCalledWith("broadcastEvent", {
-      type: "broadcastEvent",
+    expect(broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+      eventType: "conversationUpdated",
       data: {
-        workspaceId: "ws-1",
-        event: {
-          eventType: "conversationUpdated",
-          data: {
-            conversationIds: ["conv-1"],
-            changes: { agentLastReadAt: readAt.toISOString() },
-          },
-        },
+        conversationIds: ["conv-1"],
+        changes: { agentLastReadAt: readAt.toISOString() },
       },
     })
   })
@@ -483,7 +483,7 @@ describe("conversationService.markReadByOutbound", () => {
     expect(collectSqlValues(whereExpression)).toContain(readAt)
     expect(collectSqlText(whereExpression)).toContain(" < ")
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(chatQueueAdd).not.toHaveBeenCalled()
+    expect(broadcastToWorkspaceParty).not.toHaveBeenCalled()
   })
 
   test("a delivery confirmed after a manual mark-unread re-reads up to the reply", async () => {
