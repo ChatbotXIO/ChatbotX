@@ -43,6 +43,7 @@ const {
   mockRecordProfileRefreshFailure,
   mockResolveIntegrationContextFromContactInbox,
   mockUploaderPutObject,
+  mockMarkReadByOutbound,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
 
@@ -127,6 +128,7 @@ const {
       ctx: { workspaceId: "ws-1" },
     }),
     mockUploaderPutObject: vi.fn().mockResolvedValue(undefined),
+    mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
   }
 })
 
@@ -235,6 +237,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   conversationService: {
     findOrCreate: mockConversationFindOrCreate,
+    markReadByOutbound: mockMarkReadByOutbound,
     recordInboundActivity: mockRecordInboundActivity,
   },
   workspaceService: {
@@ -579,6 +582,7 @@ describe("receiveMessage — message repository branch", () => {
       contactInboxId: "ci-1",
     })
     mockWorkspaceIsActiveNow.mockReturnValue(true)
+    mockMarkReadByOutbound.mockResolvedValue(true)
   })
 
   test("calls repository.createOrUpdate() when message has no attachments", async () => {
@@ -639,7 +643,7 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockCreateOrUpdate).not.toHaveBeenCalled()
   })
 
-  test("updates contact inbox and conversation activity timestamps when incoming message is new", async () => {
+  test("records activity without marking read when an inbound message is new", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },
       contact: { sourceId: "psid-123", firstName: "Test" },
@@ -674,6 +678,7 @@ describe("receiveMessage — message repository branch", () => {
       contactLocation: null,
       at: fakeCreatedMessage.createdAt,
     })
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 
   test("emits message:received with origin: 'inbound' and isFirstIncomingMessage: true for a contact's first inbound message", async () => {
@@ -732,7 +737,8 @@ describe("receiveMessage — message repository branch", () => {
     )
   })
 
-  test("updates conversation activity but not lastIncomingMessageAt for outgoing webhook echo", async () => {
+  test("marks a new outgoing echo read when no recent outgoing row matches", async () => {
+    mockFindLastByConversation.mockResolvedValueOnce([])
     mockRunChannelHandler.mockResolvedValue({
       message: {
         ...baseIncomingMessage,
@@ -778,6 +784,343 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockEmit).toHaveBeenCalledWith(
       "message:received",
       expect.not.objectContaining({ origin: "inbound" }),
+    )
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: fakeCreatedMessage.createdAt,
+    })
+    expect(mockBroadcast).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageCreated",
+      data: expect.objectContaining({
+        id: fakeCreatedMessage.id,
+        messageType: "outgoing",
+      }),
+    })
+  })
+
+  test("logs and swallows mark-read failures for outgoing echoes", async () => {
+    const error = new Error("database unavailable")
+    mockFindLastByConversation.mockResolvedValueOnce([])
+    mockMarkReadByOutbound.mockRejectedValueOnce(error)
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await expect(receiveMessage(baseProps)).resolves.toBeDefined()
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        err: error,
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        inboxId: "inbox-1",
+        readAt: fakeCreatedMessage.createdAt,
+      },
+      "markReadByOutbound after an outgoing echo failed",
+    )
+  })
+
+  test("treats matching text with a provider source id as a native outgoing echo", async () => {
+    mockFindLastByConversation.mockResolvedValue([
+      {
+        id: "msg-native-send",
+        sourceId: "provider-message-id",
+        text: fakeCreatedMessage.text,
+      },
+    ])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: fakeCreatedMessage.createdAt,
+    })
+    expect(mockBroadcast).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageCreated",
+      data: expect.objectContaining({
+        id: fakeCreatedMessage.id,
+        messageType: "outgoing",
+      }),
+    })
+  })
+
+  test("skips activity and mark-read for a pending own media send with the same attachment types", async () => {
+    mockFindLastByConversation.mockResolvedValue([
+      {
+        id: "msg-media-send",
+        sourceId: null,
+        text: null,
+        attachments: [{ fileType: "image" }],
+      },
+    ])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        text: undefined,
+        contentType: "image",
+        attachments: [{ url: "https://cdn.example/echo.jpg", type: "image" }],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      result: {
+        ...fakeCreatedMessage,
+        messageType: "outgoing",
+        text: null,
+        contentType: "image",
+        attachments: [{ fileType: "image" }],
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+    expect(mockBroadcast).not.toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ eventType: "messageCreated" }),
+    )
+  })
+
+  test("treats a media echo whose attachment types differ from the pending own send as native", async () => {
+    mockFindLastByConversation.mockResolvedValue([
+      {
+        id: "msg-media-send",
+        sourceId: null,
+        text: null,
+        attachments: [{ fileType: "video" }],
+      },
+    ])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        text: undefined,
+        contentType: "image",
+        attachments: [{ url: "https://cdn.example/echo.jpg", type: "image" }],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      result: {
+        ...fakeCreatedMessage,
+        messageType: "outgoing",
+        text: null,
+        contentType: "image",
+        attachments: [{ fileType: "image" }],
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).toHaveBeenCalledTimes(1)
+  })
+
+  test("treats matching null text without attachments as a native outgoing echo", async () => {
+    mockFindLastByConversation.mockResolvedValue([
+      { id: "msg-media-send", sourceId: null, text: null, attachments: [] },
+    ])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        text: undefined,
+        contentType: "image",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: {
+        ...fakeCreatedMessage,
+        messageType: "outgoing",
+        text: null,
+        contentType: "image",
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: fakeCreatedMessage.createdAt,
+    })
+  })
+
+  test("skips activity and mark-read for matching text with no provider source id", async () => {
+    const matchingOwnSend = {
+      id: "msg-chatbotx-send",
+      sourceId: null,
+      text: fakeCreatedMessage.text,
+    }
+    mockFindLastByConversation
+      .mockResolvedValueOnce([matchingOwnSend])
+      .mockResolvedValueOnce([matchingOwnSend])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: expect.any(String),
+        messageType: "outgoing",
+      }),
+    )
+    expect(mockRecordInboundActivity).not.toHaveBeenCalled()
+    expect(mockInvalidateTracking).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+    expect(mockBroadcast).not.toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ eventType: "messageCreated" }),
+    )
+  })
+
+  test("does not mark the conversation read for a duplicate outgoing echo", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: false,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockFindLastByConversation).not.toHaveBeenCalled()
+    expect(mockRecordInboundActivity).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+  })
+
+  test("does not mark the conversation read for an outgoing comment echo", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        type: "comment",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: {
+        ...fakeCreatedMessage,
+        messageType: "outgoing",
+        type: "comment",
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+  })
+
+  test("logs a self-send lookup failure, keeps activity, and fails closed on mark-read", async () => {
+    const error = new Error("shard unavailable")
+    mockFindLastByConversation.mockRejectedValueOnce(error)
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await expect(receiveMessage(baseProps)).resolves.toBeDefined()
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        err: error,
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        messageId: fakeCreatedMessage.id,
+      },
+      "Unable to match outgoing echo to an own send",
     )
   })
 
@@ -3597,7 +3940,7 @@ describe("receiveMessage — outbound automated response on message echoes", () 
 
     await receiveMessage(baseProps)
 
-    expect(mockFindLastByConversation).not.toHaveBeenCalled()
+    expect(mockFindLastByConversation).toHaveBeenCalledTimes(1)
     expect(outboundCheckCalls()).toHaveLength(0)
   })
 })

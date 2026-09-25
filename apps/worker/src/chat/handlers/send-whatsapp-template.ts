@@ -47,7 +47,11 @@ import {
 // Disabled — see the commented-out enqueueTemplateSentEvaluation call below.
 // import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
 import { convertButtonsToTemplate } from "./send-flow-step"
-import { sendFlowStepToChannel } from "./send-message"
+import {
+  isDeliveredDirectMessage,
+  markConversationReadAfterDelivery,
+  sendFlowStepToChannel,
+} from "./send-message"
 
 // Meta rejects (error 131062) an authentication-category template sent to a
 // Business-Scoped User ID (BSUID) recipient. Declared as data so the guard
@@ -339,6 +343,18 @@ export async function processWhatsappTemplate(
         triggerType: "message_bot_sent_whatsapp_template",
       },
     })
+
+    // Same rule as a flow reply: a delivered bot DM honours the inbox's
+    // markReadOnOutbound option. Templates get no channel echo on WhatsApp, so
+    // the send result is the only delivery signal.
+    if (isDeliveredDirectMessage({ message: createdMessage, result })) {
+      await markConversationReadAfterDelivery({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        inboxId: contactInbox.inboxId,
+        readAt: createdMessage.createdAt,
+      })
+    }
 
     // 2026-09-24: ads-conversion rule engine is hidden and unused. This
     // follow-up job used to be enqueued after EVERY template send and only

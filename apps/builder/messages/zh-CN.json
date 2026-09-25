@@ -3473,6 +3473,14 @@
     "description": "您访问的页面不存在，或可能已被移动。",
     "backToHome": "返回首页"
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "将机器人消息标记为已读",
+      "enabled": "已启用",
+      "disabled": "已停用",
+      "description": "启用后，机器人会自动将自己的消息标记为已读"
+    }
+  },
   "inboxTeams": {
     "title": "收件匣团队"
   },

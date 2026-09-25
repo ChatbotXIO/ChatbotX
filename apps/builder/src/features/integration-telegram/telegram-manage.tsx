@@ -13,6 +13,7 @@ import { PlusCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
+import { InboxMarkReadOnOutboundSwitch } from "@/features/inboxes/components/inbox-mark-read-on-outbound-switch"
 import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import { TelegramConnect } from "./components/telegram-connect"
 import { TelegramDisconnect } from "./components/telegram-disconnect"
@@ -53,11 +54,12 @@ export function TelegramManage({
         />
       </div>
 
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t("fields.name.label")}</TableHead>
+              <TableHead>{t("inboxes.markReadOnOutbound.label")}</TableHead>
               <TableHead className="w-50" />
             </TableRow>
           </TableHeader>
@@ -65,6 +67,12 @@ export function TelegramManage({
             {integrationTelegrams.map((integrationTelegram) => (
               <TableRow key={integrationTelegram.id}>
                 <TableCell>@{integrationTelegram.name}</TableCell>
+                <TableCell>
+                  <InboxMarkReadOnOutboundSwitch
+                    inboxId={integrationTelegram.inboxId}
+                    workspaceId={workspaceId}
+                  />
+                </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
                   <TelegramDisconnect
                     integrationTelegram={integrationTelegram}

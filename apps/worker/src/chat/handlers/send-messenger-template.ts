@@ -49,7 +49,11 @@ import {
 } from "../utils/retry"
 // Disabled — see the commented-out enqueueTemplateSentEvaluation call below.
 // import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
-import { sendFlowStepToChannel } from "./send-message"
+import {
+  isDeliveredDirectMessage,
+  markConversationReadAfterDelivery,
+  sendFlowStepToChannel,
+} from "./send-message"
 
 export interface ProcessMessengerTemplateParams {
   broadcastId?: string
@@ -282,6 +286,18 @@ export async function processMessengerTemplate(
         triggerType: "message_bot_sent_messenger_template",
       },
     })
+
+    // Same rule as a flow reply: a delivered bot DM honours the inbox's
+    // markReadOnOutbound option. Own-send echoes are ignored by the receive
+    // path, so the send result is the only delivery signal.
+    if (isDeliveredDirectMessage({ message: createdMessage, result })) {
+      await markConversationReadAfterDelivery({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        inboxId: contactInbox.inboxId,
+        readAt: createdMessage.createdAt,
+      })
+    }
 
     // 2026-09-24: ads-conversion rule engine is hidden and unused. This
     // follow-up job used to be enqueued after EVERY template send and only

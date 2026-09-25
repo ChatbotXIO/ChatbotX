@@ -3,7 +3,10 @@ import {
   type DatabaseClient,
   db,
   eq,
+  exists,
   inArray,
+  isNull,
+  lt,
   or,
   type SQL,
   sql,
@@ -14,7 +17,7 @@ import {
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import { conversationModel, inboxModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
   ContactCustomFieldModel,
@@ -1242,8 +1245,12 @@ class ConversationService extends BaseService {
         workspaceId,
       },
     )
-    const lastMessage = last2Messages.at(-1)
-    const agentLastReadAt = lastMessage ? lastMessage.createdAt : null
+    // Newest first: the cursor lands on the second-newest incoming message so
+    // only the latest one is unread. With a single message there is nothing
+    // to anchor on — anchoring on that message would make `lastActivityAt >
+    // agentLastReadAt` false and leave the row read — so it becomes never-read.
+    const agentLastReadAt =
+      last2Messages.length >= 2 ? (last2Messages[1]?.createdAt ?? null) : null
 
     await this.updateReadStatus({ workspaceId, id, agentLastReadAt, tx })
 
@@ -1275,6 +1282,62 @@ class ConversationService extends BaseService {
         changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
       },
     })
+  }
+
+  /**
+   * Advances agent read state only, so retries and delayed outbound events
+   * cannot overwrite a newer read. The inbox preference is checked inside the
+   * same statement to avoid racing a separate gate read; successful advances
+   * enqueue the same best-effort realtime broadcast as manual read updates.
+   */
+  async markReadByOutbound(props: {
+    workspaceId: string
+    conversationId: string
+    inboxId: string
+    readAt: Date
+  }): Promise<boolean> {
+    const { workspaceId, conversationId, inboxId, readAt } = props
+    const updated = await db
+      .update(conversationModel)
+      .set({ agentLastReadAt: readAt })
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+          or(
+            isNull(conversationModel.agentLastReadAt),
+            lt(conversationModel.agentLastReadAt, readAt),
+          ),
+          exists(
+            db
+              .select({ value: sql<number>`1` })
+              .from(inboxModel)
+              .where(
+                and(
+                  eq(inboxModel.id, inboxId),
+                  eq(inboxModel.workspaceId, workspaceId),
+                  eq(inboxModel.markReadOnOutbound, true),
+                ),
+              ),
+          ),
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    if (updated.length === 0) {
+      return false
+    }
+
+    await this.invalidate({ workspaceId, ids: [conversationId] })
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: [conversationId],
+        changes: { agentLastReadAt: readAt.toISOString() },
+      },
+    })
+
+    return true
   }
 
   /**

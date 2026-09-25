@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Denne invitation er ugyldig eller har udløbet.",
     "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Markér botbeskeder som læst",
+      "enabled": "Aktiveret",
+      "disabled": "Deaktiveret",
+      "description": "Når det er slået til, markerer botten automatisk sine egne beskeder som læst"
+    }
+  },
   "inboxTeams": {
     "title": "Indbakke Teams"
   },

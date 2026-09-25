@@ -8,8 +8,9 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
-vi.mock("next-safe-action/hooks", () => ({
-  useAction: () => ({ execute: vi.fn() }),
+const executeReadActionMock = vi.fn()
+vi.mock("@/features/conversations/hooks/use-mark-conversation-read", () => ({
+  useMarkConversationRead: () => executeReadActionMock,
 }))
 
 vi.mock("@/features/contacts/utils", () => ({
@@ -36,13 +37,9 @@ vi.mock("@/features/conversations/utils/ad-badge", () => ({
   adBadgeLabelKey: () => "whatsapp.calls.ringingBadge",
 }))
 
-vi.mock("@/features/conversations/actions/read-conversation.action", () => ({
-  readConversationAction: vi.fn(),
-}))
-
 const storeState = {
   activeConversationId: null as string | null,
-  readConversation: vi.fn(),
+  applyAgentLastReadAt: vi.fn(),
 }
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof storeState) => unknown) =>
@@ -263,6 +260,72 @@ describe("ConversationItem", () => {
       rowButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
     expect(onSelect).toHaveBeenCalledTimes(1)
+  })
+
+  test("clicking an active unread row triggers the read action", async () => {
+    storeState.activeConversationId = "conversation-1"
+    await render(
+      makeConversation({
+        lastActivityAt: new Date("2026-01-02T00:00:00Z"),
+        agentLastReadAt: null,
+      }),
+    )
+    executeReadActionMock.mockClear()
+
+    const rowButton = container.querySelector("button")
+    act(() => {
+      rowButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(executeReadActionMock).toHaveBeenCalledTimes(1)
+  })
+
+  test("clicking an inactive row does not call the read action directly", async () => {
+    await render(
+      makeConversation({
+        lastActivityAt: new Date("2026-01-02T00:00:00Z"),
+        agentLastReadAt: null,
+      }),
+    )
+
+    const rowButton = container.querySelector("button")
+    act(() => {
+      rowButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(executeReadActionMock).not.toHaveBeenCalled()
+  })
+
+  test("renders an unread row with a bold preview and avatar ring", async () => {
+    await render(
+      makeConversation({
+        lastActivityAt: new Date("2026-01-02T00:00:00Z"),
+        agentLastReadAt: null,
+      }),
+    )
+
+    const contactName = Array.from(container.querySelectorAll("span")).find(
+      (element) => element.textContent === "Ada Lovelace",
+    )
+    expect(contactName?.classList.contains("font-semibold")).toBe(true)
+    expect(contactName?.classList.contains("text-muted-foreground")).toBe(false)
+    expect(container.querySelector(".border-primary")).not.toBeNull()
+  })
+
+  test("renders a read row without the unread preview and avatar styles", async () => {
+    await render(
+      makeConversation({
+        lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+        agentLastReadAt: new Date("2026-01-02T00:00:00Z"),
+      }),
+    )
+
+    const contactName = Array.from(container.querySelectorAll("span")).find(
+      (element) => element.textContent === "Ada Lovelace",
+    )
+    expect(contactName?.classList.contains("font-medium")).toBe(true)
+    expect(contactName?.classList.contains("text-muted-foreground")).toBe(true)
+    expect(container.querySelector(".border-primary")).toBeNull()
   })
 
   test("no call preview icon renders for a non-call message", async () => {

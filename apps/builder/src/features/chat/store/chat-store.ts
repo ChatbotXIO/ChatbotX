@@ -202,7 +202,10 @@ export type ChatActions = {
   ) => Promise<void>
 
   deleteConversation: (conversationId: string) => void
-  readConversation: (conversationId: string) => void
+  applyAgentLastReadAt: (
+    conversationIds: string[],
+    agentLastReadAt: Date,
+  ) => void
 
   // Filter actions
   resetState: () => void
@@ -276,6 +279,32 @@ const appendUniqueConversations = (
   ]
 }
 
+/**
+ * Moves `conversation` to index 0 (replacing any stale copy). The active
+ * conversation gets no special treatment: it only reaches the top when it
+ * has activity of its own or is opened from the URL, so a message on another
+ * conversation lands above it exactly as it does on the server.
+ */
+const moveConversationToTop = (
+  list: ListConversationsResponse["data"],
+  conversation: ListConversationItemResource,
+): ListConversationsResponse["data"] => [
+  conversation,
+  ...list.filter((item) => item.id !== conversation.id),
+]
+
+// Realtime events are unordered; activity only ever moves forward so a
+// delayed older event cannot make a conversation look read.
+const latestActivityAt = <T extends Date | string>(
+  current: T | null | undefined,
+  incoming: T,
+): T =>
+  current !== null &&
+  current !== undefined &&
+  new Date(current).getTime() > new Date(incoming).getTime()
+    ? current
+    : incoming
+
 const hasConversationIdInUrl = () =>
   !!new URLSearchParams(
     typeof window === "undefined" ? "" : window.location.search,
@@ -297,8 +326,8 @@ const loadAndSelectConversation = async (
     (conversation) => conversation.id === conversationId,
   )
   if (loadedConversation) {
-    prependConversation(loadedConversation)
     setActiveConversationId(conversationId)
+    prependConversation(loadedConversation)
     return
   }
 
@@ -308,8 +337,8 @@ const loadAndSelectConversation = async (
         workspaceId,
         id: conversationId,
       })
-    prependConversation(response.data)
     setActiveConversationId(conversationId)
+    prependConversation(response.data)
   } catch (error) {
     logger.warn(
       { err: error, conversationId },
@@ -426,10 +455,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
 
     prependConversation: (newConversation: ListConversationItemResource) =>
       set((state) => ({
-        conversations: [
+        conversations: moveConversationToTop(
+          state.conversations,
           newConversation,
-          ...state.conversations.filter((c) => c.id !== newConversation.id),
-        ],
+        ),
       })),
 
     initActiveConversationFromUrl: async (workspaceId: string) => {
@@ -615,20 +644,23 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       })
     },
 
-    readConversation: (conversationId: string) => {
-      const { conversations } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === conversationId,
-      )
-
-      if (conversationIndex > -1) {
-        const updatedConversations = [...conversations]
-        const conversation = { ...updatedConversations[conversationIndex] }
-        conversation.agentLastReadAt = new Date()
-
-        updatedConversations[conversationIndex] = conversation
-        set({ conversations: updatedConversations })
+    applyAgentLastReadAt: (conversationIds, agentLastReadAt) => {
+      if (Number.isNaN(agentLastReadAt.getTime())) {
+        return
       }
+      const targetIds = new Set(conversationIds)
+      set((state) => ({
+        conversations: state.conversations.map((conversation) => {
+          if (!targetIds.has(conversation.id)) {
+            return conversation
+          }
+          const current = conversation.agentLastReadAt
+          if (current !== null && new Date(current) >= agentLastReadAt) {
+            return conversation
+          }
+          return { ...conversation, agentLastReadAt }
+        }),
+      }))
     },
 
     resetState: () => {
@@ -876,19 +908,28 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       )
 
       if (conversationIndex > -1) {
-        // Update existing conversation
-        const updatedConversations = [...conversations]
-        const conversation = { ...updatedConversations[conversationIndex] }
-
-        // Update the latest message
-        conversation.messages = [message]
-        conversation.lastActivityAt = message.createdAt
-
-        // Remove conversation from current position
-        updatedConversations.splice(conversationIndex, 1)
-
-        // Add to the beginning of the list
-        set({ conversations: [conversation, ...updatedConversations] })
+        set((state) => {
+          const conversation = state.conversations.find(
+            (item) => item.id === message.conversationId,
+          )
+          if (!conversation) {
+            return state
+          }
+          const updatedConversation = {
+            ...conversation,
+            messages: [message],
+            lastActivityAt: latestActivityAt(
+              conversation.lastActivityAt,
+              message.createdAt,
+            ),
+          }
+          return {
+            conversations: moveConversationToTop(
+              state.conversations,
+              updatedConversation,
+            ),
+          }
+        })
       } else {
         // New conversation, we'll need basic details
         const newConversation =
@@ -911,14 +952,19 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       )
 
       if (conversationIndex > -1) {
-        // Already loaded — splice it out and re-insert at the front, like
-        // updateConversationViaMessage, but without touching lastActivityAt or
-        // messages since this is a visual-only reorder.
-        const updatedConversations = [...conversations]
-        const [conversation] = updatedConversations.splice(conversationIndex, 1)
-        if (conversation) {
-          set({ conversations: [conversation, ...updatedConversations] })
-        }
+        set((state) => {
+          const conversation = state.conversations.find(
+            (item) => item.id === conversationId,
+          )
+          return conversation
+            ? {
+                conversations: moveConversationToTop(
+                  state.conversations,
+                  conversation,
+                ),
+              }
+            : state
+        })
         return
       }
 
@@ -993,6 +1039,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         messages,
         activeConversationId,
         appendMessage,
+        applyAgentLastReadAt,
         updateConversationViaMessage,
         updateConversation,
       } = get()
@@ -1005,8 +1052,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         updateConversation(message.conversationId, conversationPatch)
       }
       // Only an outgoing message that `createOutgoing` itself produced clears
-      // the unread state — a bot/system reply (flow step, template, comment
-      // automation) must leave it alone. This mirrors the server exactly:
+      // the unread state locally. Incoming messages, including those on the
+      // open conversation, stay unread until the persisted read action runs.
+      // A bot/system reply (flow step, template, comment automation) must also
+      // leave it alone. This mirrors the server exactly:
       // `createOutgoing` is the only writer that calls `markAgentReplied`,
       // and it stamps senderType "user" with a senderId (inbox composer) or
       // "api" with none (public API); the worker handlers that send on the
@@ -1018,25 +1067,23 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       // stamps every outgoing echo senderType "user" with a null senderId
       // whatever its origin (see its `isEchoOfOwnSend` comment), so a bot send
       // whose sourceId dedup missed comes back looking like an agent reply.
-      // Echoes never persist a read state server-side either, so honouring
-      // them here would only produce a state that reverts on reload.
+      // Whether an echo reads the conversation is decided server-side (own
+      // sends by the send path, native-tool sends by the receive path) and
+      // arrives here as `conversationUpdated`, so it is not inferred from the
+      // message.
       const isAgentReply =
         message.messageType === "outgoing" &&
         ((message.senderType === "user" && message.senderId !== null) ||
           message.senderType === "api")
-      // An incoming message only counts as read while the agent has that
-      // conversation open — and it is never an admin reply, so it must not
-      // touch `adminRepliedAt` (that drives the "no admin reply" filter).
-      const isReadWhileConversationOpen =
-        message.messageType === "incoming" &&
-        message.conversationId === activeConversationId
 
-      if (isAgentReply || isReadWhileConversationOpen) {
-        const readAt = new Date()
-        updateConversation(message.conversationId, {
-          agentLastReadAt: readAt,
-          ...(isAgentReply ? { adminRepliedAt: readAt } : {}),
-        })
+      if (isAgentReply) {
+        // Mirror what `markAgentReplied` persisted (the message's own
+        // timestamp), not the wall clock, and only ever advance: realtime
+        // events are unordered, so a delayed reply must not pull the cursor
+        // back below a customer message that was delivered before it.
+        const readAt = new Date(message.createdAt)
+        applyAgentLastReadAt([message.conversationId], readAt)
+        updateConversation(message.conversationId, { adminRepliedAt: readAt })
       }
 
       // Update the conversation list

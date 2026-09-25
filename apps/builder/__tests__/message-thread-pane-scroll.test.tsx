@@ -14,6 +14,13 @@ vi.mock("@/features/conversations/actions/disable-bot.action", () => ({
   disableBotAction: { bind: () => vi.fn() },
 }))
 
+// Read-tracking rules are covered in use-thread-read-tracking.test.tsx; here
+// only the wiring (handlers land on the thread column) is asserted.
+const threadClickCaptureMock = vi.fn()
+vi.mock("@/features/conversations/hooks/use-thread-read-tracking", () => ({
+  useThreadReadTracking: () => ({ onClickCapture: threadClickCaptureMock }),
+}))
+
 // The three panes import each other's heavy leaves at module scope; only the
 // thread pane's own column is under test here.
 vi.mock("@/features/contacts/contact-inbox-panel", () => ({
@@ -97,6 +104,16 @@ describe("MessageThreadPane", () => {
     expect(column?.className).toContain("h-full")
     expect(column?.className).toContain("min-h-0")
     expect(column?.className).toContain("flex-col")
+  })
+
+  test("spreads the read-tracking handlers on the thread column", () => {
+    act(() => {
+      container
+        .querySelector("[data-testid='list']")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(threadClickCaptureMock).toHaveBeenCalledTimes(1)
   })
 
   test("keeps the composer as the column's last child", () => {

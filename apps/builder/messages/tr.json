@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Bu davet geçersiz veya süresi dolmuş.",
     "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Bot mesajlarını okundu olarak işaretle",
+      "enabled": "Etkin",
+      "disabled": "Devre dışı",
+      "description": "Etkinleştirildiğinde bot kendi mesajlarını otomatik olarak okundu olarak işaretler"
+    }
+  },
   "inboxTeams": {
     "title": "Gelen Kutusu Ekipleri"
   },

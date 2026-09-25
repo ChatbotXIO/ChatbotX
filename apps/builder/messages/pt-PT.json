@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Este convite é inválido ou expirou.",
     "workspaceUnavailable": "Este espaço de trabalho já não está disponível."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Marcar mensagens do bot como lidas",
+      "enabled": "Ativado",
+      "disabled": "Desativado",
+      "description": "Se ativado, o bot marca automaticamente as suas próprias mensagens como lidas"
+    }
+  },
   "inboxTeams": {
     "title": "Equipas da caixa de entrada"
   },

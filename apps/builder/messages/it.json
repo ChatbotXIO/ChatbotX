@@ -4211,6 +4211,14 @@
     "invalidInvitation": "Questo invito non è valido o è scaduto.",
     "workspaceUnavailable": "Questa area di lavoro non è più disponibile."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Segna i messaggi del bot come letti",
+      "enabled": "Attivato",
+      "disabled": "Disattivato",
+      "description": "Se attivo, il bot segna automaticamente i propri messaggi come letti"
+    }
+  },
   "inboxTeams": {
     "title": "Team della posta in arrivo"
   },

@@ -142,7 +142,12 @@ vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
+// Delivery helpers stubbed with their real contract; this file only checks
+// message creation, so the mark-read forward is a no-op here.
 vi.mock("../src/chat/handlers/send-message", () => ({
+  isDeliveredDirectMessage: ({ result }: { result: { sentCount: number } }) =>
+    result.sentCount > 0,
+  markConversationReadAfterDelivery: vi.fn().mockResolvedValue(undefined),
   sendFlowStepToChannel: mockSendFlowStep,
 }))
 

@@ -2,6 +2,7 @@ import { z } from "zod"
 
 export const integrationTiktokResource = z.object({
   id: z.string(),
+  inboxId: z.string(),
   name: z.string(),
   openId: z.string(),
   tokenRefreshError: z.string().nullish(),

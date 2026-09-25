@@ -27,7 +27,7 @@ import type {
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { channelLimitReachedException } from "../errors"
+import { channelLimitReachedException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceUsageService } from "../workspace-usage/service"
@@ -164,6 +164,29 @@ class InboxService extends BaseService {
     //     tags: ["inboxes"],
     //   },
     // )
+  }
+
+  async updateMarkReadOnOutbound(props: {
+    workspaceId: string
+    id: string
+    enabled: boolean
+  }): Promise<InboxModel> {
+    const [inbox] = await db
+      .update(inboxModel)
+      .set({ markReadOnOutbound: props.enabled })
+      .where(
+        and(
+          eq(inboxModel.id, props.id),
+          eq(inboxModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning()
+
+    if (!inbox) {
+      throw notFoundException("Inbox not found")
+    }
+
+    return inbox
   }
 
   /**

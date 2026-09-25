@@ -2278,6 +2278,14 @@
     "invalidInvitation": "הזמנה זו אינה תקינה או שפג תוקפה.",
     "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "סמן הודעות בוט כנקראו",
+      "enabled": "מופעל",
+      "disabled": "מושבת",
+      "description": "כשמופעל, הבוט מסמן אוטומטית את ההודעות שלו כנקראו"
+    }
+  },
   "inboxTeams": {
     "title": "צוותי תיבת דואר נכנס"
   },
