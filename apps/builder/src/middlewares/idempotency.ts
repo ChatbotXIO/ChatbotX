@@ -41,25 +41,24 @@ export const apiIdempotencyMiddleware = os
 
       const scope = {
         credentialId: context.apiCredentialId,
-        method,
         procedurePath: path.join("."),
         idempotencyKey,
       }
       const fingerprint = await fingerprintInput(input)
       const claim = await claimIdempotencyKey({ ...scope, fingerprint })
 
+      if (claim.kind === "replay") {
+        context.resHeaders?.set(IDEMPOTENT_REPLAYED_HEADER, "true")
+        return output(claim.output)
+      }
+      if (claim.kind === "unprotected") {
+        return await next()
+      }
       if (claim.kind === "fingerprintMismatch") {
         throw idempotencyError("idempotencyKeyReused")
       }
       if (claim.kind === "inFlight") {
         throw idempotencyError("idempotencyKeyConflict")
-      }
-      if (claim.kind === "unprotected") {
-        return await next()
-      }
-      if (claim.kind === "replay") {
-        context.resHeaders?.set(IDEMPOTENT_REPLAYED_HEADER, "true")
-        return output(claim.output)
       }
 
       let result: Awaited<ReturnType<typeof next>>

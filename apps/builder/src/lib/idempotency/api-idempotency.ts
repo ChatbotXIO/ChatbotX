@@ -21,17 +21,16 @@ type IdempotencyRecord = {
   output?: string
 }
 
-export type IdempotencyScope = {
+type IdempotencyScope = {
   credentialId: string
-  method: string
   procedurePath: string
   idempotencyKey: string
 }
 
-type ClaimStore = Pick<CasStore, "setIfAbsent" | "getJson" | "del">
+type ClaimStore = Pick<CasStore, "setIfAbsent" | "getJson" | "compareAndDelete">
 type CompleteStore = ClaimStore & Pick<CasStore, "compareAndSwap">
 
-export type ClaimResult =
+type ClaimResult =
   | { kind: "claimed"; claimId: string }
   | { kind: "replay"; output: unknown }
   | { kind: "inFlight" }
@@ -41,13 +40,10 @@ export type ClaimResult =
 
 const buildStoreKey = ({
   credentialId,
-  method,
   procedurePath,
   idempotencyKey,
 }: IdempotencyScope) =>
-  ["api-idempotency", credentialId, method, procedurePath, idempotencyKey].join(
-    ":",
-  )
+  ["api-idempotency", credentialId, procedurePath, idempotencyKey].join(":")
 
 const canonicalize = (value: unknown): unknown => {
   if (value instanceof Date) {
@@ -69,20 +65,10 @@ const canonicalize = (value: unknown): unknown => {
   }
 
   if (value && typeof value === "object") {
-    const entries = Object.entries(value).filter(
-      ([, entry]) => entry !== undefined,
-    )
     return Object.fromEntries(
-      entries
-        .sort(([left], [right]) => {
-          if (left < right) {
-            return -1
-          }
-          if (left > right) {
-            return 1
-          }
-          return 0
-        })
+      Object.entries(value)
+        .filter(([, entry]) => entry !== undefined)
+        .sort(([left], [right]) => (left < right ? -1 : 1))
         .map(([key, entry]) => [key, canonicalize(entry)]),
     )
   }
@@ -93,8 +79,8 @@ const canonicalize = (value: unknown): unknown => {
 const canonicalJson = (value: unknown) =>
   JSON.stringify(canonicalize(value)) ?? "null"
 
-export const fingerprintInput = async (input: unknown) =>
-  await sha256Hex(canonicalJson(input))
+export const fingerprintInput = (input: unknown) =>
+  sha256Hex(canonicalJson(input))
 
 export const isValidIdempotencyKey = (value: string) =>
   value.length >= 1 && value.length <= MAX_IDEMPOTENCY_KEY_LENGTH
@@ -173,8 +159,7 @@ export const completeIdempotencyKey = async ({
 
     if (
       encodedOutput === undefined ||
-      new TextEncoder().encode(encodedOutput).byteLength >
-        MAX_STORED_OUTPUT_BYTES
+      Buffer.byteLength(encodedOutput) > MAX_STORED_OUTPUT_BYTES
     ) {
       logger.warn("Idempotency output exceeded storage limit")
       await releaseIdempotencyKey({ ...scope, claimId, store })
@@ -215,10 +200,7 @@ export const releaseIdempotencyKey = async ({
   const key = buildStoreKey(scope)
 
   try {
-    const record = await store.getJson<IdempotencyRecord>(key)
-    if (record?.claimId === claimId) {
-      await store.del(key)
-    }
+    await store.compareAndDelete(key, { state: "inFlight", claimId })
   } catch (err) {
     logStoreUnavailable(err)
   }

@@ -17,7 +17,6 @@ type RecordValue = Record<string, unknown>
 
 const scope = {
   credentialId: "api-token:token-1",
-  method: "POST",
   procedurePath: "tags.create",
   idempotencyKey: "key-1",
 }
@@ -38,9 +37,21 @@ const createStore = () => {
       getJson<T>(key: string): Promise<T | null> {
         return Promise.resolve((records.get(key) as T | undefined) ?? null)
       },
-      del(key: string): Promise<void> {
+      compareAndDelete<T extends Record<string, unknown>>(
+        key: string,
+        expected: Partial<T>,
+      ): Promise<boolean> {
+        const current = records.get(key)
+        if (
+          !current ||
+          Object.entries(expected).some(
+            ([field, value]) => current[field] !== value,
+          )
+        ) {
+          return Promise.resolve(false)
+        }
         records.delete(key)
-        return Promise.resolve()
+        return Promise.resolve(true)
       },
       compareAndSwap<T extends Record<string, unknown>>(
         key: string,
@@ -149,11 +160,34 @@ describe("API idempotency store", () => {
     ).resolves.toMatchObject({ kind: "claimed" })
   })
 
+  test("does not release a claim re-acquired after the original claim expires", async () => {
+    const { records, store } = createStore()
+    const fingerprint = await fingerprintInput({ name: "tag" })
+    const first = await claimIdempotencyKey({ ...scope, fingerprint, store })
+    expect(first.kind).toBe("claimed")
+    if (first.kind !== "claimed") {
+      return
+    }
+
+    records.clear()
+    const second = await claimIdempotencyKey({ ...scope, fingerprint, store })
+    expect(second.kind).toBe("claimed")
+    if (second.kind !== "claimed") {
+      return
+    }
+
+    await releaseIdempotencyKey({ ...scope, claimId: first.claimId, store })
+
+    await expect(
+      claimIdempotencyKey({ ...scope, fingerprint, store }),
+    ).resolves.toEqual({ kind: "inFlight" })
+  })
+
   test("fails open when the store is unavailable", async () => {
     const unavailableStore = {
       setIfAbsent: vi.fn().mockRejectedValue(new Error("Redis unavailable")),
       getJson: vi.fn(),
-      del: vi.fn(),
+      compareAndDelete: vi.fn(),
     }
 
     await expect(

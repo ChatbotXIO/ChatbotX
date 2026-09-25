@@ -181,3 +181,46 @@ describe("casStoreFactory.compareAndSwap", () => {
     )
   })
 })
+
+describe("casStoreFactory.compareAndDelete", () => {
+  test("deletes only when every expected field matches the current record", async () => {
+    const values = new Map([
+      ["api:idempotency:key", JSON.stringify({ state: "inFlight", id: "1" })],
+    ])
+    const client = {
+      defineCommand: vi.fn(),
+      compareAndDeleteJson: vi.fn((key: string, expectedJson: string) => {
+        const current = values.get(key)
+        if (!current) {
+          return Promise.resolve(0)
+        }
+        const expected = JSON.parse(expectedJson) as Record<string, unknown>
+        const record = JSON.parse(current) as Record<string, unknown>
+        if (
+          Object.entries(expected).some(
+            ([field, value]) => record[field] !== value,
+          )
+        ) {
+          return Promise.resolve(0)
+        }
+        values.delete(key)
+        return Promise.resolve(1)
+      }),
+    } as unknown as Redis
+    const store = casStoreFactory(async () => client)
+
+    await expect(
+      store.compareAndDelete("api:idempotency:key", {
+        state: "inFlight",
+        id: "stale",
+      }),
+    ).resolves.toBe(false)
+    await expect(
+      store.compareAndDelete("api:idempotency:key", {
+        state: "inFlight",
+        id: "1",
+      }),
+    ).resolves.toBe(true)
+    expect(values.has("api:idempotency:key")).toBe(false)
+  })
+})
