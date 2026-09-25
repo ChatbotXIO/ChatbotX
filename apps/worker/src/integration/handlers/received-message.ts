@@ -10,6 +10,7 @@ import {
   hasOnDemandProfileApi,
   hasRealAvatar,
   messageCleanupService,
+  type PlatformData,
   quotaEnforcementService,
   recordProfileRefreshFailure,
   resolveTenantSettings,
@@ -94,6 +95,7 @@ import { UnrecoverableError } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
 import { LOCK_CONTENTION_POLICY } from "../../lib/lock-contention-deferral"
 import { logger } from "../../lib/logger"
+import type { ResolvedJobIntegration } from "../../lib/resolve-workspace-id"
 import {
   allIntegrations,
   integrationService,
@@ -203,6 +205,7 @@ export const metaReferralToContactSource = (
 
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
+  resolvedIntegration?: ResolvedJobIntegration,
 ): Promise<{
   message: (MessageModel & { attachments: unknown[] }) | null
   conversation: ConversationModel
@@ -221,10 +224,11 @@ export const receiveMessage = async (
   }
 
   const dbIntegration =
-    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+    resolvedIntegration ??
+    (await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
       integrationType as IntegrationType,
       integrationIdentifier,
-    )
+    ))
   const { inbox, integrationRow } = dbIntegration
   let integration = allIntegrations[integrationType]
   if (!integration) {
@@ -243,14 +247,12 @@ export const receiveMessage = async (
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   const isWorkspaceActive = workspaceService.isActiveNow(workspace)
 
-  const { storageUrl } = await resolveTenantSettings({
-    workspaceId: inbox.workspaceId,
-  })
   const ctx = await buildContext({
     workspaceId: inbox.workspaceId,
     integrationType,
     integration: integrationRow,
   })
+  const { storageUrl } = ctx.platform
 
   const parsedMessage = await integration.runChannelHandler(
     "message",
@@ -290,6 +292,7 @@ export const receiveMessage = async (
       incomingContact,
       inbox,
       integrationRow,
+      platformData: ctx.platform,
       newContactQuota: newContactQuotaFor(rawIncomingMessage),
       source:
         metaReferralToContactSource(referralSource) ??
@@ -808,7 +811,12 @@ const saveAndBroadcastMessage = async (props: {
     messageWithAttachments = result.result
     isNew = result.isNew
   } else {
-    const result = await repository.createOrUpdate(messageInput)
+    const canSkipDedupLock =
+      incomingMessage.messageType === "outgoing" &&
+      incomingMessage.createdAt !== undefined
+    const result = canSkipDedupLock
+      ? await repository.createOrUpdate(messageInput, { skipDedupLock: true })
+      : await repository.createOrUpdate(messageInput)
     messageWithAttachments = { ...result.message, attachments: [] }
     isNew = result.isNew
   }
@@ -828,18 +836,18 @@ const saveAndBroadcastMessage = async (props: {
     })
   }
 
-  try {
-    broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: newMessage,
-    })
-  } catch (error) {
-    logger.warn(error, "Unable to emit realtime message")
+  if (isNew) {
+    try {
+      broadcastToWorkspaceParty(inbox.workspaceId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: newMessage,
+      })
+    } catch (error) {
+      logger.warn(error, "Unable to emit realtime message")
+    }
   }
 
-  // Push notification for a genuinely new inbound message only — this
-  // broadcast above is unconditional, so the guard here is built explicitly
-  // rather than copied from it.
+  // Push notification for a genuinely new inbound message only.
   if (isNew && isInboundMessage) {
     try {
       await notificationQueue.add(
@@ -1570,6 +1578,7 @@ export const detectContactAndConversation = async (props: {
   }
   source: ContactSource
   newContactQuota?: NewContactQuota
+  platformData?: PlatformData
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
@@ -1582,6 +1591,7 @@ export const detectContactAndConversation = async (props: {
     integrationRow,
     source,
     newContactQuota = "mac",
+    platformData,
   } = props
 
   const existingContactInbox = await resolveExistingContactInbox({
@@ -1618,6 +1628,7 @@ export const detectContactAndConversation = async (props: {
       incomingContact,
       source,
       newContactQuota,
+      platformData,
       conversationSourceId,
       isBsuidKeyedIncomingContact,
     })
@@ -1662,6 +1673,7 @@ const createNewContactAndContactInbox = async (props: {
   incomingContact: IncomingContact
   source: ContactSource
   newContactQuota: NewContactQuota
+  platformData?: PlatformData
   conversationSourceId: string | null
   isBsuidKeyedIncomingContact: boolean
 }): Promise<{
@@ -1676,6 +1688,7 @@ const createNewContactAndContactInbox = async (props: {
     incomingContact,
     source,
     newContactQuota,
+    platformData,
     conversationSourceId,
     isBsuidKeyedIncomingContact,
   } = props
@@ -1695,6 +1708,7 @@ const createNewContactAndContactInbox = async (props: {
         workspaceId: inbox.workspaceId,
         integrationType,
         integration: integrationRow,
+        ...(platformData ? { platformData } : {}),
       })
       try {
         const userProfile = await profileIntegration.runChannelHandler(

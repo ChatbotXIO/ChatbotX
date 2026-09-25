@@ -22,7 +22,9 @@ vi.mock("../src/services/integrations", () => ({
   },
 }))
 
-const { resolveWorkspaceId } = await import("../src/lib/resolve-workspace-id")
+const { resolveWorkspaceContext, resolveWorkspaceId } = await import(
+  "../src/lib/resolve-workspace-id"
+)
 
 beforeEach(() => {
   findBy.mockReset()
@@ -56,15 +58,23 @@ describe("resolveWorkspaceId", () => {
   })
 
   test("resolves an integration identifier", async () => {
-    identify.mockResolvedValue({
+    const integration = {
       inbox: { workspaceId: "workspace-from-integration" },
-    })
+      integrationRow: { id: "integration-1" },
+      workspace: { id: "workspace-from-integration" },
+    }
+    identify.mockResolvedValue(integration)
+
     await expect(
-      resolveWorkspaceId({
+      resolveWorkspaceContext({
         integrationType: "messenger",
         integrationIdentifier: "page-1",
       }),
-    ).resolves.toBe("workspace-from-integration")
+    ).resolves.toEqual({
+      integration,
+      workspaceId: "workspace-from-integration",
+    })
+    expect(identify).toHaveBeenCalledOnce()
   })
 
   test("resolves an import id", async () => {

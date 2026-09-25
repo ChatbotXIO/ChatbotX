@@ -129,7 +129,7 @@ vi.mock("../src/lib/logger", () => ({
 }))
 
 vi.mock("../src/lib/resolve-workspace-id", () => ({
-  resolveWorkspaceId: vi.fn(async () => undefined),
+  resolveWorkspaceContext: vi.fn(async () => ({})),
 }))
 
 // Only needed for the `handleConnect`-payload boot tests below (every
@@ -392,16 +392,18 @@ describe("whatsappCallEvent (the main integration queue's isBlockedWorkspace gat
     const { isBlockedWorkspace } = await import(
       "../src/lib/is-blocked-workspace"
     )
-    const { resolveWorkspaceId } = await import(
+    const { resolveWorkspaceContext } = await import(
       "../src/lib/resolve-workspace-id"
     )
     const { handleWhatsappCallEvent } = await import(
       "../src/integration/handlers/whatsapp-call"
     )
     vi.mocked(isBlockedWorkspace).mockClear()
-    vi.mocked(resolveWorkspaceId).mockClear()
+    vi.mocked(resolveWorkspaceContext).mockClear()
     vi.mocked(handleWhatsappCallEvent).mockClear()
-    vi.mocked(resolveWorkspaceId).mockResolvedValueOnce("ws-frozen")
+    vi.mocked(resolveWorkspaceContext).mockResolvedValueOnce({
+      workspaceId: "ws-frozen",
+    })
     // Simulates a frozen workspace (scheduled deletion / blocked owner) —
     // the main integration queue's own guard, distinct from
     // `withBlockedOwnerGuard` used by the VoIP signaling queue above.

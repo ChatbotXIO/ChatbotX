@@ -45,6 +45,7 @@ const {
   mockConversationFindOrCreate,
   mockGetWhatsappCallPermissionReply,
   mockRecordCallPermissionReply,
+  mockResolveWorkspaceContext,
   workerState,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
@@ -72,7 +73,10 @@ const {
     mockDbUpdate,
     mockFindContactInbox,
     mockRunChannelHandler,
-    mockBuildContext: vi.fn().mockResolvedValue({ workspaceId: "ws-1" }),
+    mockBuildContext: vi.fn().mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    }),
     mockresolveTenantSettings: vi
       .fn()
       .mockResolvedValue({ storageUrl: "https://files.example.test" }),
@@ -97,7 +101,11 @@ const {
     mockConversationFindOrCreate: vi.fn(),
     mockGetWhatsappCallPermissionReply: vi.fn(),
     mockRecordCallPermissionReply: vi.fn().mockResolvedValue(undefined),
-    workerState: { capturedWorkers: [] as CapturedWorker[] },
+    mockResolveWorkspaceContext: vi.fn(),
+    workerState: {
+      capturedWorkers: [] as CapturedWorker[],
+      useActualWorkspaceResolver: false,
+    },
   }
 })
 
@@ -128,9 +136,17 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
   isBlockedWorkspace: vi.fn().mockResolvedValue(false),
 }))
 
-vi.mock("../src/lib/resolve-workspace-id", () => ({
-  resolveWorkspaceId: vi.fn().mockResolvedValue("ws-1"),
-}))
+vi.mock("../src/lib/resolve-workspace-id", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../src/lib/resolve-workspace-id")>()
+  return {
+    ...actual,
+    resolveWorkspaceContext: (data: unknown) =>
+      workerState.useActualWorkspaceResolver
+        ? actual.resolveWorkspaceContext(data)
+        : mockResolveWorkspaceContext(data),
+  }
+})
 
 vi.mock("../src/integration/job-context", () => ({
   runIntegrationJobWithWebhookContext: (
@@ -246,10 +262,16 @@ vi.mock("../src/integration/handlers/wait-resume", () => ({
 // ---------------------------------------------------------------------------
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  createAiWorkspaceScopeRepository: () => ({ findWorkspaceId: vi.fn() }),
   createMessageRepository: mockCreateMessageRepository,
   contactInboxRepository: {
     findWithContact: mockFindContactInbox,
   },
+  importRepository: { findWorkspaceId: vi.fn() },
+}))
+
+vi.mock("@chatbotx.io/business/smart-delay", () => ({
+  smartDelayService: { findById: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/automated-response", () => ({
@@ -336,6 +358,7 @@ vi.mock("@chatbotx.io/business", () => ({
     update: mockContactUpdate,
   },
   conversationService: {
+    findBy: vi.fn(),
     findOrCreate: mockConversationFindOrCreate,
     ensureActive: vi.fn().mockResolvedValue(true),
     recordInboundActivity: vi
@@ -558,13 +581,26 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     mockConversationFindOrCreate.mockReset()
     mockGetWhatsappCallPermissionReply.mockReset()
     mockRecordCallPermissionReply.mockClear()
+    mockResolveWorkspaceContext.mockReset()
+    workerState.useActualWorkspaceResolver = false
 
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockReset()
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
     ).mockResolvedValue({
       inbox: fakeInbox,
       integrationRow: fakeIntegrationRow,
     } as never)
+    mockResolveWorkspaceContext.mockResolvedValue({
+      integration: {
+        inbox: fakeInbox,
+        integrationRow: fakeIntegrationRow,
+        workspace: { id: "ws-1" },
+      },
+      workspaceId: "ws-1",
+    })
     mockFindContactInbox.mockResolvedValue({
       ...fakeContactInbox,
       contact: fakeContact,
@@ -638,6 +674,10 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     expect(mockContactProfileRefresh).toHaveBeenCalledWith(
       expect.objectContaining({ contactId: "contact-1", source: "channelApi" }),
     )
+    expect(mockResolveWorkspaceContext).toHaveBeenCalledOnce()
+    expect(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).not.toHaveBeenCalled()
     expect(mockAutomatedResponseEnqueue).toHaveBeenCalledWith(
       expect.objectContaining({ contactInboxId: "ci-1" }),
     )
@@ -653,6 +693,33 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     expect(mockContactProfileRefresh.mock.invocationCallOrder[0]).toBeLessThan(
       mockResolveIncomingTextRouting.mock.invocationCallOrder[0],
     )
+  })
+
+  test("an identify error in workspace resolution falls through to receiveMessage and fails the job", async () => {
+    const identifyError = new Error("identify failed")
+    workerState.useActualWorkspaceResolver = true
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockRejectedValue(identifyError)
+    const integrationWorker = findIntegrationWorker()
+
+    await expect(
+      integrationWorker.processor({
+        data: {
+          type: "incomingMessage",
+          data: {
+            integrationType: "messenger",
+            integrationIdentifier: "inbox-1",
+            payload: {},
+          },
+        },
+      }),
+    ).rejects.toBe(identifyError)
+
+    expect(mockResolveWorkspaceContext).not.toHaveBeenCalled()
+    expect(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).toHaveBeenCalledTimes(2)
   })
 
   test("a named contact skips the refresh entirely but automated-response dispatch still runs", async () => {

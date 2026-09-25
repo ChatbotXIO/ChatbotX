@@ -4,15 +4,15 @@ import { logger } from "./logger"
 
 /**
  * How an integration job treats a distributed-lock race. Losing the race is
- * contention, not a failure: the job polls the lock only briefly
- * (`lockWaitSeconds`, so a loser does not pin its worker slot), is then parked
- * in BullMQ's delayed set and re-fetched after a jittered backoff. Only once
- * the deferral budget is spent does the error fail the attempt normally.
+ * contention, not a failure: the job polls the lock for five 200 ms Redlock
+ * retry steps (`lockWaitSeconds`), then frees its worker slot and is parked in
+ * BullMQ's delayed set. Eight jittered deferrals provide ample wall time for a
+ * genuine inbound burst to drain before the error fails the attempt normally.
  * Handlers that take a contended lock pass `lockWaitSeconds` to the service
  * so the wait and the deferral stay one policy.
  */
 export const LOCK_CONTENTION_POLICY = {
-  lockWaitSeconds: 10,
+  lockWaitSeconds: 1,
   maxDeferrals: 8,
   baseDelayMs: 2000,
   maxDelayMs: 30_000,

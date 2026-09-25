@@ -1,6 +1,6 @@
 # Implementation Plan: Messenger echo — collector, bulk pipeline, MAC gate
 
-Status: decisions closed. PR-A and PR-B implemented; PR-C pending.
+Status: decisions closed. PR-A, PR-B and PR-C (reduced scope: lock wait + single-path trimming; the transactional MAC gate is deferred — the gate is Redis-live-counter-authoritative, see PR-C) implemented.
 Production figures never go into commits or PR descriptions.
 
 ## 1. Goal
