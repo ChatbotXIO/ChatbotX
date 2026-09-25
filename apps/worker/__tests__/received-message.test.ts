@@ -67,7 +67,10 @@ const {
     mockRunChannelHandler,
     mockBroadcast: vi.fn(),
     mockEmit: vi.fn().mockResolvedValue(undefined),
-    mockBuildContext: vi.fn().mockResolvedValue({ workspaceId: "ws-1" }),
+    mockBuildContext: vi.fn().mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    }),
     mockresolveTenantSettings: vi
       .fn()
       .mockResolvedValue({ storageUrl: "https://files.example.test" }),
@@ -554,7 +557,10 @@ describe("receiveMessage — message repository branch", () => {
       integrationRow: fakeIntegrationRow,
     } as never)
 
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -601,6 +607,32 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
   })
 
+  test("reuses the integration resolved by the worker and platform data from buildContext", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    const resolvedIntegration = {
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+      workspace: { id: "ws-1" },
+    } as never
+
+    await receiveMessage(baseProps, resolvedIntegration)
+
+    expect(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).not.toHaveBeenCalled()
+    expect(mockBuildContext).toHaveBeenCalledOnce()
+    expect(mockresolveTenantSettings).not.toHaveBeenCalled()
+    expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1" }),
+    )
+  })
+
   test("persists an outgoing echo with the channel-authoritative timestamp", async () => {
     const channelCreatedAt = new Date("2026-09-24T23:59:00.000Z")
     mockRunChannelHandler.mockResolvedValue({
@@ -620,6 +652,122 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateOrUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ createdAt: channelCreatedAt }),
+      { skipDedupLock: true },
+    )
+  })
+
+  test("keeps an outgoing message without a channel timestamp on the locked path", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageType: "outgoing",
+        createdAt: expect.any(Date),
+      }),
+    )
+  })
+
+  test("keeps inbound messages on the locked cross-shard create-or-update path", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: "incoming" }),
+    )
+  })
+
+  test("broadcasts a new message once", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockBroadcast).toHaveBeenCalledOnce()
+  })
+
+  test("does not rebroadcast a deduplicated redelivery", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.message).toBeNull()
+    expect(mockBroadcast).not.toHaveBeenCalled()
+  })
+
+  test("does not repeat side effects for a redelivered outgoing echo", async () => {
+    const channelCreatedAt = new Date("2026-09-24T23:59:00.000Z")
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        createdAt: channelCreatedAt,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    const storedEcho = {
+      ...fakeCreatedMessage,
+      messageType: "outgoing" as const,
+      createdAt: channelCreatedAt,
+    }
+    mockCreateOrUpdate
+      .mockResolvedValueOnce({ message: storedEcho, isNew: true })
+      .mockResolvedValueOnce({ message: storedEcho, isNew: false })
+
+    await receiveMessage(baseProps)
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        sourceId: baseIncomingMessage.sourceId,
+        createdAt: channelCreatedAt,
+      }),
+      { skipDedupLock: true },
+    )
+    expect(mockBroadcast).toHaveBeenCalledOnce()
+    expect(mockRecordInboundActivity).toHaveBeenCalledOnce()
+    expect(mockUpdateTracking).not.toHaveBeenCalled()
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "message:received",
+      expect.anything(),
     )
   })
 
@@ -1184,7 +1332,10 @@ describe("receiveMessage — new contact MAC gate", () => {
       inbox: fakeInbox,
       integrationRow: fakeIntegrationRow,
     } as never)
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -1262,6 +1413,56 @@ describe("receiveMessage — new contact MAC gate", () => {
       undefined,
       "ci-new",
     )
+  })
+
+  test("reuses the message context platform data for the new-contact profile lookup", async () => {
+    const platformData = { storageUrl: "https://files.example.test" }
+    mockresolveTenantSettings.mockResolvedValue(platformData)
+    mockBuildContext.mockImplementation(async (args) => ({
+      platform:
+        args.platformData ??
+        (await mockresolveTenantSettings({ workspaceId: args.workspaceId })),
+      workspaceId: args.workspaceId,
+    }))
+    mockRunChannelHandler.mockImplementation(
+      (_domain: string, action: string) => {
+        if (action === "getProfile") {
+          return Promise.resolve({ firstName: "Profile Name" })
+        }
+        return Promise.resolve({
+          message: { ...baseIncomingMessage, attachments: [] },
+          contact: { sourceId: "psid-123" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+        })
+      },
+    )
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          firstName: "Profile Name",
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockBuildContext).toHaveBeenCalledTimes(2)
+    expect(mockBuildContext).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ platformData }),
+    )
+    expect(mockresolveTenantSettings).toHaveBeenCalledOnce()
   })
 
   test("creates an unknown echo recipient without MAC and fetches name without avatar", async () => {
@@ -1866,7 +2067,10 @@ describe("receiveMessage — referral-only events", () => {
       integrationRow: fakeIntegrationRow,
     } as never)
 
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -2002,7 +2206,10 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       integrationRow: fakeIntegrationRow,
     } as never)
 
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -2892,7 +3099,10 @@ describe("contact source taxonomy", () => {
       inbox: fakeInbox,
       integrationRow: fakeIntegrationRow,
     } as never)
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockCreateMessageRepository.mockResolvedValue({
       createOrUpdate: mockCreateOrUpdate,
       createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
@@ -3305,7 +3515,10 @@ describe("receiveMessage — BSUID resolver chain (D3)", () => {
       inbox: { ...fakeInbox, channel: "whatsapp" },
       integrationRow: fakeIntegrationRow,
     } as never)
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -3426,7 +3639,10 @@ describe("receiveMessage — new BSUID-keyed contact creation (D2/D8/§8.1)", ()
       inbox: { ...fakeInbox, channel: "whatsapp" },
       integrationRow: fakeIntegrationRow,
     } as never)
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -3635,7 +3851,10 @@ describe("receiveMessage — outbound automated response on message echoes", () 
       integrationRow: fakeIntegrationRow,
     } as never)
 
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })

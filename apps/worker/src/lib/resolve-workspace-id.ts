@@ -23,6 +23,17 @@ type JobData = {
   integrationIdentifier?: unknown
 }
 
+export type ResolvedJobIntegration = Awaited<
+  ReturnType<
+    typeof integrationService.identifyInboxAndIntegrationAuthFromIdentifier
+  >
+>
+
+export type ResolvedWorkspaceContext = {
+  integration?: ResolvedJobIntegration
+  workspaceId?: string
+}
+
 /** Payload fields that carry a single record id resolvable to one workspace. */
 type RecordIdField =
   | "aiEmbeddingId"
@@ -101,15 +112,16 @@ const recordIdResolvers: readonly RecordIdResolver[] = [
 ]
 
 /**
- * Best-effort workspace identity for an arbitrary job payload, used by the
- * freeze guards. Returning `undefined` means "cannot attribute", which callers
+ * Best-effort workspace context for an arbitrary job payload, used by the
+ * freeze guards. Integration-backed jobs retain the resolved row so their
+ * handler can reuse it. An empty result means "cannot attribute", which callers
  * treat as fail-open.
  */
-export async function resolveWorkspaceId(
+export async function resolveWorkspaceContext(
   data: unknown,
-): Promise<string | undefined> {
+): Promise<ResolvedWorkspaceContext> {
   if (!data || typeof data !== "object") {
-    return
+    return {}
   }
 
   const jobData = data as JobData
@@ -118,7 +130,7 @@ export async function resolveWorkspaceId(
     asString(jobData.conversation?.workspaceId) ??
     nestedWorkspaceId(jobData.conversationId)
   if (directWorkspaceId) {
-    return directWorkspaceId
+    return { workspaceId: directWorkspaceId }
   }
 
   // Two fields rather than one id, so it stays out of the table above.
@@ -131,16 +143,24 @@ export async function resolveWorkspaceId(
           integrationType as IntegrationType,
           integrationIdentifier,
         )
-      return result.inbox.workspaceId
+      return { integration: result, workspaceId: result.inbox.workspaceId }
     } catch {
-      return
+      return {}
     }
   }
 
   for (const resolver of recordIdResolvers) {
     const id = asString(jobData[resolver.field])
     if (id) {
-      return await resolver.resolve(id)
+      return { workspaceId: await resolver.resolve(id) }
     }
   }
+
+  return {}
+}
+
+export async function resolveWorkspaceId(
+  data: unknown,
+): Promise<string | undefined> {
+  return (await resolveWorkspaceContext(data)).workspaceId
 }

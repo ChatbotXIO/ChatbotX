@@ -672,7 +672,9 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     // info-only `contacts` counter is recorded inside this chokepoint too, so
     // the action no longer increments it separately (that would double-count).
     expect(mockCreateNewContactWithMac).toHaveBeenCalledTimes(1)
-    expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
+    const createNewContactArgs = mockCreateNewContactWithMac.mock.calls[0]?.[0]
+    expect(createNewContactArgs).not.toHaveProperty("lockWaitSeconds")
+    expect(createNewContactArgs).toEqual(
       expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
     )
     expect(insertBuilder.values).toHaveBeenCalledWith(

@@ -22,6 +22,16 @@ export interface CreateMessageResult {
   message: MessageModel
 }
 
+export interface CreateOrUpdateMessageOptions {
+  /**
+   * Skip the distributed dedup lock while retaining the cross-shard guard read.
+   * Safe only when the caller guarantees a channel-authoritative `createdAt`,
+   * so a concurrent duplicate job collides on the unique key instead of
+   * relying on the lock.
+   */
+  skipDedupLock?: boolean
+}
+
 export interface CreateAttachmentInput {
   conversationId: string
   createdAt?: Date
@@ -232,7 +242,10 @@ export interface IMessageRepository {
 
   create(message: CreateMessageInput): Promise<MessageModel>
 
-  createOrUpdate(message: CreateMessageInput): Promise<CreateMessageResult>
+  createOrUpdate(
+    message: CreateMessageInput,
+    options?: CreateOrUpdateMessageOptions,
+  ): Promise<CreateMessageResult>
 
   createOrUpdateWithAttachments(
     message: CreateMessageInput,

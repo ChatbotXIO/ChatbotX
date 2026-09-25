@@ -29,6 +29,7 @@ import type {
   CreateAttachmentInput,
   CreateMessageInput,
   CreateMessageResult,
+  CreateOrUpdateMessageOptions,
   DistributedLock,
   FindAIContextMessagesOptions,
   FindAttachmentByIdParams,
@@ -472,6 +473,45 @@ export class ShardedMessageRepository implements IMessageRepository {
       )
       .limit(1)
     return (row as MessageModel) ?? null
+  }
+
+  private async insertOrResolveConflict(
+    message: CreateMessageInput,
+    findConflict: () => Promise<MessageModel | null>,
+  ): Promise<CreateMessageResult> {
+    let created: MessageModel | null
+    try {
+      created = await this.insertIgnoringConflict(message)
+    } catch (error) {
+      this.logSaveFailure("createOrUpdate", message, error)
+      throw error
+    }
+    if (created) {
+      return { message: created, isNew: true }
+    }
+
+    const raced = await findConflict()
+    logger.info(
+      {
+        conversationId: message.conversationId,
+        sourceId: message.sourceId,
+        workspaceId: message.workspaceId,
+      },
+      "Duplicate message skipped (dedup conflict)",
+    )
+    if (raced) {
+      return { message: raced, isNew: false }
+    }
+
+    logger.warn(
+      {
+        conversationId: message.conversationId,
+        sourceId: message.sourceId,
+        workspaceId: message.workspaceId,
+      },
+      "Dedup conflict but row unreadable even on the write shard",
+    )
+    return { message: message as unknown as MessageModel, isNew: false }
   }
 
   async findManyOnWriteShardBySourceIds({
@@ -1292,8 +1332,25 @@ export class ShardedMessageRepository implements IMessageRepository {
 
   async createOrUpdate(
     message: CreateMessageInput,
+    options?: CreateOrUpdateMessageOptions,
   ): Promise<CreateMessageResult> {
     if (message.sourceId && message.conversationId && message.workspaceId) {
+      if (options?.skipDedupLock && message.messageType === "outgoing") {
+        const existing = await this.findBySourceId(
+          message.sourceId,
+          message.conversationId,
+          message.workspaceId,
+          getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
+        )
+        if (existing) {
+          return { message: existing, isNew: false }
+        }
+
+        return await this.insertOrResolveConflict(message, () =>
+          this.findOnWriteShardBySource(message),
+        )
+      }
+
       const lockKey = this.buildLockKey(
         message.conversationId,
         message.sourceId,
@@ -1310,54 +1367,16 @@ export class ShardedMessageRepository implements IMessageRepository {
           return { message: existing, isNew: false }
         }
 
-        // Only a genuine DB error (e.g. TimescaleDB decompression, connection
-        // loss) should throw here; a dedup conflict is a normal, expected
-        // outcome handled below — not an error.
-        let created: MessageModel | null
-        try {
-          created = await this.insertIgnoringConflict(message)
-        } catch (error) {
-          this.logSaveFailure("createOrUpdate", message, error)
-          throw error
-        }
-        if (created) {
-          return { message: created, isNew: true }
-        }
-
-        // Conflict: the dedup index already holds this message (echo redelivery,
-        // or read-replica lag on the guard read above). Idempotent no-op — log
-        // at info and return the existing row instead of throwing. Try a replica
-        // read first; if it still lags, read the write shard (primary), which is
-        // guaranteed to see the row the conflict proved exists.
-        const raced =
-          (await this.findBySourceId(
-            message.sourceId as string,
-            message.conversationId,
-            message.workspaceId,
-            getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
-          )) ?? (await this.findOnWriteShardBySource(message))
-        logger.info(
-          {
-            conversationId: message.conversationId,
-            sourceId: message.sourceId,
-            workspaceId: message.workspaceId,
-          },
-          "Duplicate message skipped (dedup conflict)",
+        return await this.insertOrResolveConflict(
+          message,
+          async () =>
+            (await this.findBySourceId(
+              message.sourceId as string,
+              message.conversationId,
+              message.workspaceId,
+              getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
+            )) ?? (await this.findOnWriteShardBySource(message)),
         )
-        if (raced) {
-          return { message: raced, isNew: false }
-        }
-        // Unreachable in practice (the primary must see a committed conflicting
-        // row). Non-throwing best-effort so the flow still advances in order.
-        logger.warn(
-          {
-            conversationId: message.conversationId,
-            sourceId: message.sourceId,
-            workspaceId: message.workspaceId,
-          },
-          "Dedup conflict but row unreadable even on the write shard",
-        )
-        return { message: message as unknown as MessageModel, isNew: false }
       }
 
       return this.executeWithLock(lockKey, doCreateOrUpdate)
