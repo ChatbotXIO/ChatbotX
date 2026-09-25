@@ -8,6 +8,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactTags } from "../../lib/list-contact-tags"
 import {
@@ -30,12 +31,7 @@ export const contactsTagsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
       }),
     )
     .output(z.object({ data: z.array(publicTagResource) }))
@@ -63,12 +59,7 @@ export const contactsTagsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
         tagIds: z
           .array(zodBigintAsString())
           .min(1)
@@ -103,12 +94,7 @@ export const contactsTagsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
         tagIds: z
           .array(zodBigintAsString())
           .min(1)

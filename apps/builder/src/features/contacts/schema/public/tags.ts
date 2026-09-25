@@ -1,15 +1,11 @@
 import { z } from "zod"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 
 const tagNamesDescription =
   "Tag names — not ids. Existing tags whose name matches are reused; unmatched names are created as new tags."
 
 export const setAllContactTagsPublicRequest = z.object({
-  identifier: z
-    .string()
-    .min(1)
-    .describe(
-      "Contact identifier: the numeric contact id, an email address, or a phone number.",
-    ),
+  identifier: publicContactIdentifier,
   tags: z
     .array(z.string().trim().min(1))
     .max(100)

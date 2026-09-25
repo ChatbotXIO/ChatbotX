@@ -14,10 +14,17 @@ ChatbotX's public API has ~350 operations. Listing all of them as MCP tools over
 
 | Tool | Description |
 |---|---|
-| `search_tools` | Search the full API for a tool not in the default set. Returns each match's name, description, and input schema. |
+| `search_tools` | Search the full API for a tool not in the default set. Returns `{ matches, hint? }`, where each match has its name, description, and input schema. |
 | `call_tool` | Execute any tool by name, including ones `search_tools` found but `tools/list` doesn't show. |
 
 Use `search_tools` when the task needs something outside the default set (e.g. deleting a resource, managing AI agents, coupons, products) — then invoke it with `call_tool`.
+
+`search_tools`'s catalog (tool names, summaries, descriptions) is entirely English. The calling client must translate the user's intent into an English "action + resource" query before searching; the ranker does not translate. When an accented Latin or non-Latin query reaches the server, `search_tools` returns a `hint` asking the client to translate and retry in English.
+
+- **Name normalization**: a dotted or camelCase operation label (`contacts.get`, `contactsGet`) is accepted and re-derived to the executable snake_case name — you don't have to pass the exact string `search_tools` returned.
+- **Unknown-tool suggestions**: an unrecognized `name` returns the closest matching tool names instead of a bare error, so a model can self-correct without another `search_tools` round trip.
+- **Pre-flight argument check**: a `call_tool` invocation missing a field the selected tool's `inputSchema` marks `required` is rejected immediately with the missing field names, instead of waiting for the real API's 422. A common wrapper mistake (nesting every field under `body`/`params`/`input` instead of passing them at the top level) is called out explicitly.
+- **Contact identifier auto-prefix**: a bare email, `+`-prefixed or local `0`-prefixed phone number, or numeric id passed as `identifier` to a contact tool is automatically prefixed (`email:`/`phone:`/`id:`) before the request is sent, matching what the API actually requires.
 
 ### Scope-based filtering
 
@@ -278,6 +285,55 @@ pnpm check-types
 dotenv -e .env -- tsx src/test-tools.ts
 ```
 
+## Evaluating tool selection
+
+Two layers of evaluation cover `search_tools`/`call_tool` accuracy — a fast offline gate and a full LLM-driven business eval.
+
+### `eval:search` — offline ranking gate (no API key, seconds)
+
+Scores every prompt in the eval corpus (`evals/cases.ts`) through the real `searchTools()` ranker against a real generated spec, with no LLM in the loop. Use this after any change to `src/server/search/` or to a public route's `summary`/`description`.
+
+1. Dump the current OpenAPI spec (the builder test already has a hook for this — see `apps/builder/__tests__/public-spec-operations.test.ts`):
+   ```bash
+   MCP_EVAL_SPEC_OUTPUT=/absolute/path/public-spec.json \
+     pnpm --filter builder test -- public-spec-operations.test.ts
+   ```
+2. Run the gate against it:
+   ```bash
+   pnpm --filter chatbotx-mcp eval:search --spec /absolute/path/public-spec.json [--min-top1 0.65] [--min-top3 0.85] [--verbose]
+   ```
+   Prints per-locale top-1/top-3/empty-result rates, but enforces the configured thresholds only for English. `--verbose` also lists every prompt that missed the top 3, with the ranker's actual top matches, for targeted ranking or description fixes.
+
+### `eval:business` — full LLM-driven business eval
+
+Spins up a synthetic HTTP sandbox implementing the generated spec's operations, connects a real MCP client, and drives `gpt-4o-mini`/`gpt-4.1-mini` (or any `@ai-sdk/openai`-supported model) through the selected corpus. `business` contains 240 prompts (48 families × 5 locales: `vi`, `vi-unaccented`, colloquial, `en`, mixed); `multilingual` is the 80-case smoke matrix (16 families × `en`, `vi-natural`, `es`, `fr`, `zh`). Requires `OPENAI_API_KEY`.
+
+```bash
+pnpm --filter chatbotx-mcp eval:business \
+  --spec /absolute/path/public-spec.json \
+  --out /absolute/path/out/baseline \
+  --phase smoke \
+  --seed 20260923 \
+  --models gpt-4o-mini,gpt-4.1-mini \
+  [--repeat N] \
+  [--corpus business|multilingual] \
+  [--exposure default|meta-only|both] \
+  [--cases family-a,family-b] \
+  [--server-source /absolute/path/to/apps/mcp-server]
+```
+
+- `--repeat N` runs every selected case under every model and exposure N times. Smoke runs default to 3; baseline and candidate runs default to 1.
+- `--exposure meta-only` restricts the model's tool set to `search_tools`/`call_tool` only (no directly-listed default tools) — the path a client using only the default connection payload takes for any request outside the ~43 default-visible tools. `both` (the default) runs every case under both exposures.
+- Each episode is graded on semantic arguments, ordered tool sequences, its expected final HTTP state, API-error claims, post-failure mutations, and step exhaustion. The summary reports the pass rate per model × exposure × locale × family; episodes also record `searchRank`, `callToolErrorCount`, and `unknownToolCount`.
+- The smoke sandbox includes contact, conversation reply, flow, broadcast, appointment, and analytics fixtures. No public appointment-availability operation exists, so unavailable-slot coverage exercises `appointments_book` returning 422.
+- Compare two runs (regressions fail the command):
+  ```bash
+  pnpm --filter chatbotx-mcp eval:business --compare /absolute/path/out/baseline /absolute/path/out/candidate
+  ```
+  Reports any case that regressed from pass to non-pass, plus the average `searchRank` and total `callToolErrorCount` delta between the two runs.
+
+Evaluation output is written under `evals/out/` (gitignored) unless `--out` points elsewhere.
+
 ## Project structure
 
 ```
@@ -291,10 +347,20 @@ src/
 ├── test-tools.ts           # Dev utility — prints loaded tools
 └── server/
     ├── create-mcp-server.ts   # MCP server factory, tools/list + tools/call handlers
-    ├── meta-tools.ts          # search_tools / call_tool definitions + ranking
-    ├── execute-tool.ts        # Shared HTTP dispatch for a DynamicTool call
+    ├── meta-tools.ts          # search_tools / call_tool definitions, name resolution,
+    │                          # unknown-tool suggestions, pre-flight argument checks
+    ├── execute-tool.ts        # Shared HTTP dispatch for a DynamicTool call + argument
+    │                          # normalization (contact identifier auto-prefix)
+    ├── search/                # search_tools ranking: normalization and
+    │                          # IDF-weighted scoring
     ├── sse-server.ts          # SSE / Streamable HTTP transport
     └── stdio-server.ts        # stdio transport
+
+evals/
+├── cases.ts           # Eval corpus: business-intent prompts × 5 locale variants
+├── sandbox.ts         # Synthetic HTTP server implementing the generated spec
+├── run.ts             # eval:business — drives an LLM through the MCP server
+└── search-audit.ts    # eval:search — offline ranking gate, no LLM
 ```
 
 ## Troubleshooting

@@ -113,7 +113,7 @@ export const messagesPublicRouter = {
       path: "/v1/conversations/{conversationId}/messages",
       summary: "Send message on conversation",
       description:
-        "Sends an outgoing text/media message on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead.",
+        "Use this to reply in an existing conversation by conversationId. Sends an outgoing text/media message on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead.",
       successStatus: 201,
       tags: ["Messages"],
     })

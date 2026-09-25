@@ -2,6 +2,7 @@ import {
   type DynamicTool,
   getCachedTools,
   getToolByName,
+  toSnakeCase,
 } from "../openapi-loader"
 import {
   errorResult,
@@ -9,6 +10,8 @@ import {
   jsonResult,
   type ToolCallResult,
 } from "./execute-tool"
+import { expandSearchQuery, looksNonEnglish } from "./search/normalize"
+import { distinctResourceGroups, rankTools } from "./search/rank"
 
 /**
  * Static tool definitions for the two meta-tools that give an agent access
@@ -20,15 +23,14 @@ export const META_TOOLS = [
   {
     name: "search_tools",
     description:
-      "Search the full ChatbotX API for tools not listed in tools/list. " +
-      "Returns each match's name, description and inputSchema. " +
-      "Use when no listed tool fits — then run it with call_tool.",
+      "Search the full ChatbotX catalog for hidden or unlisted tool definitions; this never executes a tool. Direct listed tools may be called directly. Search with one action plus one resource, inspect each returned inputSchema, then call call_tool with the exact returned name.",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "What you want to do, in plain language.",
+          description:
+            'Short business intent: one action plus one resource (e.g. "add tag to contact"), in English or supported Vietnamese, Spanish, French, or Chinese. An exact tool name also works. Do not combine independent tasks.',
         },
         limit: {
           type: "number",
@@ -41,15 +43,19 @@ export const META_TOOLS = [
   {
     name: "call_tool",
     description:
-      "Execute any ChatbotX tool by name, including ones not in tools/list.",
+      'Execute a hidden tool by the exact name returned by search_tools (dotted names like "contacts.get" are also accepted). Pass a flat arguments object matching inputSchema; resolve named entities first unless the user supplied a stable ID, email, or phone.',
     inputSchema: {
       type: "object",
       properties: {
         name: {
           type: "string",
-          description: "Exact tool name from search_tools.",
+          description: "Exact executable name returned by search_tools.",
         },
-        arguments: { type: "object", description: "Arguments for that tool." },
+        arguments: {
+          type: "object",
+          description:
+            "JSON object containing every field declared by the selected inputSchema. Read its schema and lookup requirements first; use {} only for a no-input tool. Do not wrap fields in body, params, or workspaceId unless the selected schema declares them.",
+        },
       },
       required: ["name"],
     },
@@ -58,77 +64,13 @@ export const META_TOOLS = [
 
 const DEFAULT_SEARCH_LIMIT = 10
 const MAX_SEARCH_LIMIT = 25
-// A name/description-token match is worth less than a whole-phrase match,
-// and a name match outweighs a description match — a query naming the
-// resource ("tags") should rank `tags_list` over an unrelated tool whose
-// long description happens to mention tags in passing.
-const NAME_TOKEN_WEIGHT = 2
-const DESCRIPTION_TOKEN_WEIGHT = 1
-const PHRASE_MATCH_BONUS = 3
-
-function tokenize(text: string): string[] {
-  return text.toLowerCase().match(/[a-z0-9]+/g) ?? []
-}
-
-type ToolTokens = { name: Set<string>; description: Set<string> }
-
-// Keyed by the `DynamicTool` object itself (not its name): `openapi-loader`
-// hands out a fresh array of tool objects on every spec refresh, so a stale
-// entry is naturally unreachable and garbage-collected — no manual
-// invalidation needed when the spec changes.
-const toolTokensCache = new WeakMap<DynamicTool, ToolTokens>()
-
-function getToolTokens(tool: DynamicTool): ToolTokens {
-  const cached = toolTokensCache.get(tool)
-  if (cached) {
-    return cached
-  }
-  const tokens: ToolTokens = {
-    name: new Set(tokenize(tool.name)),
-    description: new Set(tokenize(tool.description)),
-  }
-  toolTokensCache.set(tool, tokens)
-  return tokens
-}
-
-function scoreTool(
-  tool: DynamicTool,
-  queryTokens: string[],
-  queryPhrase: string,
-): number {
-  const { name: nameTokens, description: descriptionTokens } =
-    getToolTokens(tool)
-
-  let score = 0
-  for (const token of queryTokens) {
-    if (nameTokens.has(token)) {
-      score += NAME_TOKEN_WEIGHT
-    }
-    if (descriptionTokens.has(token)) {
-      score += DESCRIPTION_TOKEN_WEIGHT
-    }
-  }
-
-  if (
-    queryPhrase.length > 0 &&
-    `${tool.name} ${tool.description}`.toLowerCase().includes(queryPhrase)
-  ) {
-    score += PHRASE_MATCH_BONUS
-  }
-
-  return score
-}
+const MAX_NAME_SUGGESTIONS = 3
 
 /**
- * Ranks every cached tool (not just the `visibility: "default"` set —
- * that's the whole point) against the query and returns the top matches.
- * Zero-scoring tools are dropped rather than padded in at the tail: an
- * agent acting on a bad match is worse than an agent getting an empty list
- * and rephrasing.
+ * Ranks the full cached catalog against an English `query` and returns the
+ * top matches. See `search/rank.ts` for the IDF-weighted scoring model.
  */
 export function searchTools(query: string, limit?: number): DynamicTool[] {
-  const queryPhrase = query.trim().toLowerCase()
-  const queryTokens = tokenize(query)
   const cappedLimit = Math.min(
     Math.max(
       limit !== undefined && Number.isFinite(limit)
@@ -138,34 +80,29 @@ export function searchTools(query: string, limit?: number): DynamicTool[] {
     ),
     MAX_SEARCH_LIMIT,
   )
-
-  return getCachedTools()
-    .map((tool) => ({ tool, score: scoreTool(tool, queryTokens, queryPhrase) }))
-    .filter(({ score }) => score > 0)
-    .sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score
-      }
-      // Tie-break: a read fits more agent intents safely than a write, and
-      // a shorter name is usually the more general/canonical operation
-      // (`tags_list` over `contacts_list_tags`).
-      const aIsGet = a.tool.method === "GET"
-      const bIsGet = b.tool.method === "GET"
-      if (aIsGet !== bIsGet) {
-        return aIsGet ? -1 : 1
-      }
-      return a.tool.name.length - b.tool.name.length
-    })
-    .slice(0, cappedLimit)
-    .map(({ tool }) => tool)
+  return rankTools(getCachedTools(), query, cappedLimit)
 }
 
 /**
- * `search_tools` handler — validates the raw MCP `arguments` object and
- * returns each match's name/description/inputSchema as JSON text, the same
- * shape a `tools/list` entry has, so an agent can go straight from a match
- * to a `call_tool` invocation.
+ * Builds the resource-group suffix shared by every zero/weak-match hint, or
+ * an empty string when the catalog hasn't loaded any tags yet.
  */
+function resourceGroupSuffix(): string {
+  const groups = distinctResourceGroups(getCachedTools())
+  return groups.length > 0 ? ` Resource groups: ${groups.join(", ")}.` : ""
+}
+
+/**
+ * Validates a `search_tools` query and returns matched tool definitions.
+ * Zero or non-English results include a hint that helps the caller retry
+ * without executing a catalog tool.
+ */
+export type SearchMatch = Pick<
+  DynamicTool,
+  "name" | "description" | "inputSchema"
+>
+export type SearchToolsResult = { matches: SearchMatch[]; hint?: string }
+
 export function handleSearchTools(
   args: Record<string, unknown>,
 ): ToolCallResult {
@@ -174,14 +111,59 @@ export function handleSearchTools(
     return errorResult("search_tools requires a non-empty 'query' string.")
   }
   const limit = typeof args.limit === "number" ? args.limit : undefined
+  const isNonEnglishQuery = looksNonEnglish(query)
+  const queryWasExpanded = expandSearchQuery(query) !== query
 
-  const matches = searchTools(query, limit).map((tool) => ({
+  const matches: SearchMatch[] = searchTools(query, limit).map((tool) => ({
     name: tool.name,
     description: tool.description,
     inputSchema: tool.inputSchema,
   }))
 
-  return jsonResult(matches)
+  if (matches.length === 0) {
+    const hint = isNonEnglishQuery
+      ? `No tool matched "${query}". Translate the request into one English action plus one resource (e.g. "add tag to contact") and call search_tools again.${resourceGroupSuffix()}`
+      : `No tool matched "${query}". Rephrase in English with one action and one resource.${resourceGroupSuffix()}`
+    return jsonResult({ matches: [], hint })
+  }
+
+  if (queryWasExpanded) {
+    return jsonResult({
+      matches,
+      hint: "Recognized supported native-language action/resource terms and ranked their English catalog equivalents.",
+    })
+  }
+
+  if (isNonEnglishQuery) {
+    return jsonResult({
+      matches,
+      hint: `Matches were ranked from a non-English query; translating "${query}" into English (one action plus one resource) before calling search_tools again usually ranks better.`,
+    })
+  }
+
+  return jsonResult({ matches } satisfies SearchToolsResult)
+}
+
+/**
+ * Resolves a tool name for `call_tool`, accepting the exact executable
+ * name `search_tools` returns as well as a raw dotted/camelCase
+ * `operationId` (e.g. "contacts.get", "contactsGet") by re-deriving the
+ * snake_case form the loader would have produced. This tolerates a model
+ * echoing back the API-style label it saw in a description instead of the
+ * tool name it was actually given.
+ */
+function resolveToolName(name: string): DynamicTool | undefined {
+  return getToolByName(name) ?? getToolByName(toSnakeCase(name))
+}
+
+function unknownToolMessage(name: string): string {
+  const suggestions = rankTools(getCachedTools(), name, MAX_NAME_SUGGESTIONS)
+  if (suggestions.length === 0) {
+    return `Unknown tool: ${name}`
+  }
+  return `Unknown tool: ${name}. Closest matches: ${suggestions
+    .map((tool) => tool.name)
+    .join(", ")}.`
 }
 
 /**
@@ -198,9 +180,9 @@ export async function handleCallTool(
     return errorResult("call_tool requires a non-empty 'name' string.")
   }
 
-  const tool = getToolByName(name)
+  const tool = resolveToolName(name)
   if (!tool) {
-    return errorResult(`Unknown tool: ${name}`)
+    return errorResult(unknownToolMessage(name))
   }
 
   const suppliedArguments = args.arguments
@@ -214,7 +196,9 @@ export async function handleCallTool(
     return errorResult("call_tool 'arguments' must be a JSON object.")
   }
 
-  const toolArguments = (suppliedArguments ?? {}) as Record<string, unknown>
-
-  return await executeTool(tool, toolArguments, apiKey)
+  return await executeTool(
+    tool,
+    (suppliedArguments ?? {}) as Record<string, unknown>,
+    apiKey,
+  )
 }

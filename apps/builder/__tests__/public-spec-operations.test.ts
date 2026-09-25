@@ -1,5 +1,8 @@
 // @vitest-environment node
 
+import { mkdir, writeFile } from "node:fs/promises"
+import { dirname } from "node:path"
+
 import {
   type JSONSchema,
   OpenAPIGenerator,
@@ -161,6 +164,14 @@ beforeAll(async () => {
       publicSpecGenerateOptions("public-spec-operations.test"),
     ),
   )
+  if (process.env.MCP_EVAL_SPEC_OUTPUT) {
+    await mkdir(dirname(process.env.MCP_EVAL_SPEC_OUTPUT), { recursive: true })
+    await writeFile(
+      process.env.MCP_EVAL_SPEC_OUTPUT,
+      JSON.stringify(spec, null, 2),
+      "utf8",
+    )
+  }
 
   componentSchemas = (spec.components?.schemas ?? {}) as Record<string, unknown>
   specDocument = spec
