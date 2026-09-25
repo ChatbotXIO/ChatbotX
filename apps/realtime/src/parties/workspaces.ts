@@ -51,6 +51,25 @@ export default class WorkspaceParty implements Party.Server {
    */
   private bootstrapLock: Promise<void> = Promise.resolve()
 
+  /**
+   * In-memory mirror of `PRESENCE_LAST_ARMED_AT_STORAGE_KEY`. A Durable Object
+   * instance is single-threaded and long-lived, so once this instance has
+   * seen the durable value it never needs to re-read storage to check
+   * freshness — only `recordArmedAt`/`clearArmedAt` may write it, keeping it
+   * in lockstep with storage.
+   */
+  private lastArmedAtMemo: number | undefined
+
+  private async recordArmedAt(now: number): Promise<void> {
+    await this.room.storage.put(PRESENCE_LAST_ARMED_AT_STORAGE_KEY, now)
+    this.lastArmedAtMemo = now
+  }
+
+  private async clearArmedAt(): Promise<void> {
+    await this.room.storage.delete(PRESENCE_LAST_ARMED_AT_STORAGE_KEY)
+    this.lastArmedAtMemo = undefined
+  }
+
   async onConnect(
     connection: Party.Connection,
     { request }: Party.ConnectionContext,
@@ -102,9 +121,20 @@ export default class WorkspaceParty implements Party.Server {
     }
 
     const now = Date.now()
+    const memoizedLastArmedAt = this.lastArmedAtMemo
+    if (
+      memoizedLastArmedAt !== undefined &&
+      now - memoizedLastArmedAt < REPORT_LOOP_STALE_THRESHOLD_MS
+    ) {
+      return
+    }
+
     const lastArmedAt = await this.room.storage.get<number>(
       PRESENCE_LAST_ARMED_AT_STORAGE_KEY,
     )
+    if (lastArmedAt !== undefined) {
+      this.lastArmedAtMemo = lastArmedAt
+    }
     const isLoopFresh =
       lastArmedAt !== undefined &&
       now - lastArmedAt < REPORT_LOOP_STALE_THRESHOLD_MS
@@ -113,7 +143,7 @@ export default class WorkspaceParty implements Party.Server {
     }
 
     await this.room.storage.put(PRESENCE_WORKSPACE_ID_STORAGE_KEY, this.room.id)
-    await this.room.storage.put(PRESENCE_LAST_ARMED_AT_STORAGE_KEY, now)
+    await this.recordArmedAt(now)
     await this.room.storage.setAlarm(now + PRESENCE_REPORT_INTERVAL_MS)
 
     await reportWorkspacePresence(this.room.id, [...userIds])
@@ -130,7 +160,7 @@ export default class WorkspaceParty implements Party.Server {
     )
     if (remaining.length === 0) {
       await this.room.storage.deleteAlarm()
-      await this.room.storage.delete(PRESENCE_LAST_ARMED_AT_STORAGE_KEY)
+      await this.clearArmedAt()
     }
   }
 
@@ -179,7 +209,7 @@ export default class WorkspaceParty implements Party.Server {
     }
 
     const now = Date.now()
-    await this.room.storage.put(PRESENCE_LAST_ARMED_AT_STORAGE_KEY, now)
+    await this.recordArmedAt(now)
     await this.room.storage.setAlarm(now + PRESENCE_REPORT_INTERVAL_MS)
 
     const workspaceId = await this.room.storage.get<string>(
@@ -208,14 +238,12 @@ export default class WorkspaceParty implements Party.Server {
    */
   async onRequest(req: Party.Request) {
     // Best-effort recovery for a stalled report loop; never blocks the request.
-    try {
-      await this.ensureReportLoopArmed()
-    } catch (error) {
+    this.armReportLoopSerialized().catch((error) => {
       logger.error(
         { err: error, workspaceId: this.room.id },
         "workspace presence: failed to self-heal report loop from onRequest",
       )
-    }
+    })
 
     const url = new URL(req.url)
     const action = url.searchParams.get(ACTION_QUERY_PARAM)

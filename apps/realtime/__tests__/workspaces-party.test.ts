@@ -294,6 +294,36 @@ describe("WorkspaceParty#onRequest", () => {
     expect(connectionB1.sent).toEqual([])
   })
 
+  it("returns before a stalled presence report completes", async () => {
+    connectionA1.setState({ userId: "u_a" })
+    let resolveReport!: () => void
+    reportWorkspacePresenceMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveReport = resolve
+        }),
+    )
+
+    try {
+      const response = await party.onRequest(
+        postRequest("/parties/workspaces/ws_1", {
+          eventType: "typing",
+          data: { seconds: 1 },
+        }),
+      )
+
+      expect(response.status).toBe(200)
+      expect(room.broadcastCalls).toHaveLength(1)
+      await vi.waitFor(() =>
+        expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", [
+          "u_a",
+        ]),
+      )
+    } finally {
+      resolveReport()
+    }
+  })
+
   it("delivers only to the target user's tagged connections, never broadcasts", async () => {
     const event = {
       eventType: "whatsappCallTransportIncoming",
@@ -659,6 +689,59 @@ describe("WorkspaceParty presence reporting", () => {
       expect(await room.storage.getAlarm()).toBe(freshAlarmAt)
     })
 
+    it("avoids a storage read when the in-memory freshness marker is current", async () => {
+      const room = new FakeRoom("ws_1")
+      const party = new WorkspaceParty(room as unknown as Party.Room)
+      const connection = new FakeConnection()
+      room.registerConnection(connection)
+
+      await party.onConnect(
+        connection as unknown as Party.Connection,
+        connectionContext("u_1"),
+      )
+      const get = vi.spyOn(room.storage, "get")
+
+      await party.onMessage(
+        serializePresencePingMessage(),
+        connection as unknown as Party.Connection,
+      )
+
+      expect(get).not.toHaveBeenCalled()
+    })
+
+    it("re-arms via a ping once the in-memory marker itself goes stale, on a warm instance with no intervening alarm tick", async () => {
+      const room = new FakeRoom("ws_1")
+      const party = new WorkspaceParty(room as unknown as Party.Room)
+      const connection = new FakeConnection()
+      room.registerConnection(connection)
+
+      const nowSpy = vi.spyOn(Date, "now")
+      const start = Date.now()
+      nowSpy.mockReturnValue(start)
+
+      await party.onConnect(
+        connection as unknown as Party.Connection,
+        connectionContext("u_1"),
+      )
+      expect(reportWorkspacePresenceMock).toHaveBeenCalledTimes(1)
+
+      // No onAlarm tick refreshes the marker in between: simulates a stalled
+      // loop discovered only by the next client ping.
+      nowSpy.mockReturnValue(start + PRESENCE_REPORT_INTERVAL_MS * 2)
+
+      await party.onMessage(
+        serializePresencePingMessage(),
+        connection as unknown as Party.Connection,
+      )
+
+      expect(reportWorkspacePresenceMock).toHaveBeenCalledTimes(2)
+      expect(reportWorkspacePresenceMock).toHaveBeenLastCalledWith("ws_1", [
+        "u_1",
+      ])
+
+      nowSpy.mockRestore()
+    })
+
     it("onRequest self-heals a stalled loop for a room with a connection, without waiting for a new connect", async () => {
       const room = new FakeRoom("ws_1")
       const connection = new FakeConnection()
@@ -679,7 +762,11 @@ describe("WorkspaceParty presence reporting", () => {
       )
 
       expect(response.status).toBe(200)
-      expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", ["u_1"])
+      await vi.waitFor(() =>
+        expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", [
+          "u_1",
+        ]),
+      )
     })
 
     it("onRequest never arms anything for a room with zero connections, even when the freshness marker is stale", async () => {
