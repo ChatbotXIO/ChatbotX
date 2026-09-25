@@ -143,6 +143,7 @@ export const possibleErrorsOnCreatingResource = {
 export const possibleErrorsOnCreatingBroadcast = {
   businessError,
   broadcastPlanLimit,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingResource = {
@@ -155,6 +156,7 @@ export const possibleErrorsOnActivatingBroadcast = {
   notFound,
   businessError,
   broadcastPlanLimit,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnDeletingResource = {
