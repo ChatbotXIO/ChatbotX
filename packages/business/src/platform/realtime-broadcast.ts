@@ -18,7 +18,7 @@ import {
   resolveRealtimeDeliveryGate,
 } from "./settings"
 
-export const WORKSPACE_BROADCAST_COALESCE_MS = 10
+export const WORKSPACE_BROADCAST_COALESCE_MS = 25
 export const WORKSPACE_BROADCAST_MAX_EVENTS = 64
 export const WORKSPACE_BROADCAST_MAX_BYTES = 256 * 1024
 

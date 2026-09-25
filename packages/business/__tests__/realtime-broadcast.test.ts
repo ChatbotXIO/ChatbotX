@@ -120,6 +120,17 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
     )
   })
 
+  test("flushes after 25 ms", async () => {
+    const queued = broadcastToWorkspaceParty("workspace_1", typingEvent)
+
+    await vi.advanceTimersByTimeAsync(24)
+    expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(1)
+    await expect(queued).resolves.toBe(1)
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
+  })
+
   test("coalesces all events queued during the window into one batch request", async () => {
     const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
     const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
