@@ -448,6 +448,60 @@ describe("broadcastService.scheduleDraft", () => {
     expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
   })
 
+  test("keeps the update-first order for a trial non-Messenger targets draft", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    selectForUpdate.mockResolvedValue([
+      {
+        id: "b-1",
+        channel: "whatsapp",
+        sendRatePerMinute: null,
+        targetMode: "targets",
+      },
+    ])
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "targets" }])
+    findManyBroadcastTarget.mockResolvedValue([
+      { inboxId: "inbox-a", flowId: null, templateId: "tpl-1" },
+      { inboxId: "inbox-b", flowId: null, templateId: null },
+    ])
+
+    const result = await broadcastService.scheduleDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      schedulesType: "future",
+      schedulesAt: new Date(),
+    })
+
+    expect(result).toEqual({ id: "b-1" })
+    expect(updateReturning.mock.invocationCallOrder[0]).toBeLessThan(
+      findManyBroadcastTarget.mock.invocationCallOrder[0],
+    )
+    expect(deleteTargetsWhere).toHaveBeenCalledTimes(1)
+    expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+  })
+
+  test("locks a restricted draft row before the workspace lock and writes last", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: null },
+    ])
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "channel" }])
+
+    await broadcastService.scheduleDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      schedulesType: "now",
+      schedulesAt: new Date(),
+    })
+
+    const lockOrder = vi.mocked(broadcastPlanPolicyService.lockActivation).mock
+      .invocationCallOrder[0]
+    expect(selectForUpdate.mock.invocationCallOrder[0]).toBeLessThan(lockOrder)
+    expect(lockOrder).toBeLessThan(updateReturning.mock.invocationCallOrder[0])
+  })
+
   test("rejects a restricted stored rate before scheduling", async () => {
     vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
     vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(

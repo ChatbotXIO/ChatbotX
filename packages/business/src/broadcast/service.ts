@@ -453,6 +453,36 @@ class BroadcastService extends BaseService {
   }
 
   /**
+   * Restricted activation of a row the caller has already locked: the rate
+   * checked and stored is the submitted one, else the row's stored one.
+   */
+  private async activateRestrictedRow<T>(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      restriction: RestrictedBroadcastPlanContext
+      row: { id: string; channel: string; sendRatePerMinute: number | null }
+      submittedSendRate: number | null | undefined
+    },
+    write: (override: { sendRatePerMinute: number }) => Promise<T>,
+  ): Promise<T> {
+    return await this.activateWithinPlan(
+      tx,
+      {
+        workspaceId: input.workspaceId,
+        channel: input.row.channel,
+        restriction: input.restriction,
+        sendRatePerMinute: resolveActivationSendRate({
+          submitted: input.submittedSendRate,
+          stored: input.row.sendRatePerMinute,
+        }),
+        excludeBroadcastId: input.row.id,
+      },
+      write,
+    )
+  }
+
+  /**
    * Paginated broadcast list with relations — shared by the public API
    * (`GET /v1/broadcasts`) and the builder's broadcasts page.
    */
@@ -832,10 +862,9 @@ class BroadcastService extends BaseService {
       input.workspaceId,
     )
 
+    const scope = this.draftScope(input.workspaceId, input.broadcastId)
+
     const result = await db.transaction(async (tx) => {
-      const submittedOverride = resolveSubmittedSendRatePatch(
-        input.sendRatePerMinute,
-      )
       const write = async (override?: { sendRatePerMinute: number | null }) => {
         const [row] = await tx
           .update(broadcastModel)
@@ -845,7 +874,7 @@ class BroadcastService extends BaseService {
             schedulesAt: input.schedulesAt,
             ...override,
           })
-          .where(this.draftScope(input.workspaceId, input.broadcastId))
+          .where(scope)
           .returning({
             id: broadcastModel.id,
             targetMode: broadcastModel.targetMode,
@@ -860,11 +889,11 @@ class BroadcastService extends BaseService {
 
       // A draft keeps every picked page, empty ones included, so it can be
       // reopened. Scheduling is the point of no return: a page left without a
-      // template (or flow) can deliver nothing, so it is dropped here. The
-      // restricted path normalizes its locked draft before the plan checks to
-      // preserve target-validation precedence.
+      // template (or flow) can deliver nothing, so it is dropped here.
       const scheduleWithoutPlanLimits = async () => {
-        const row = await write(submittedOverride)
+        const row = await write(
+          resolveSubmittedSendRatePatch(input.sendRatePerMinute),
+        )
         await this.dropUndeliverableTargets(tx, row)
         return { id: row.id }
       }
@@ -881,7 +910,7 @@ class BroadcastService extends BaseService {
           targetMode: broadcastModel.targetMode,
         })
         .from(broadcastModel)
-        .where(this.draftScope(input.workspaceId, input.broadcastId))
+        .where(scope)
         .for("update")
         .limit(1)
 
@@ -900,25 +929,17 @@ class BroadcastService extends BaseService {
       // Normalize first so target-validation errors keep precedence over plan limits.
       await this.dropUndeliverableTargets(tx, draft)
 
-      const activationSendRate = resolveActivationSendRate({
-        submitted: input.sendRatePerMinute,
-        stored: draft.sendRatePerMinute,
-      })
-
-      return await this.activateWithinPlan(
+      const row = await this.activateRestrictedRow(
         tx,
         {
           workspaceId: input.workspaceId,
-          channel: draft.channel,
           restriction,
-          sendRatePerMinute: activationSendRate,
-          excludeBroadcastId: draft.id,
+          row: draft,
+          submittedSendRate: input.sendRatePerMinute,
         },
-        async (override) => {
-          const row = await write(override)
-          return { id: row.id }
-        },
+        write,
       )
+      return { id: row.id }
     })
 
     // Mirrors `createBroadcastAction`: only an immediate send is audited as a
@@ -1063,9 +1084,6 @@ class BroadcastService extends BaseService {
       this.transitionScope(input.workspaceId, input.broadcastId, "cancelled"),
       isNotNull(broadcastModel.contactCount),
     )
-    const submittedOverride = resolveSubmittedSendRatePatch(
-      input.sendRatePerMinute,
-    )
     const write = async (
       tx: DatabaseClient,
       override?: { sendRatePerMinute: number | null },
@@ -1087,49 +1105,48 @@ class BroadcastService extends BaseService {
       return row
     }
 
-    const row = broadcastPlanPolicyService.hasRestrictions(planContext)
-      ? await db.transaction(async (tx) => {
-          const [stopped] = await tx
-            .select({
-              id: broadcastModel.id,
-              channel: broadcastModel.channel,
-              sendRatePerMinute: broadcastModel.sendRatePerMinute,
-            })
-            .from(broadcastModel)
-            .where(scope)
-            .for("update")
-            .limit(1)
-
-          if (!stopped) {
-            throw new ChatbotXException("Broadcast is not stopped")
-          }
-
-          const restriction = broadcastPlanPolicyService.restrictionFor(
-            planContext,
-            stopped.channel,
-          )
-          if (!restriction) {
-            return await write(tx, submittedOverride)
-          }
-
-          const activationSendRate = resolveActivationSendRate({
-            submitted: input.sendRatePerMinute,
-            stored: stopped.sendRatePerMinute,
-          })
-
-          return await this.activateWithinPlan(
-            tx,
-            {
-              workspaceId: input.workspaceId,
-              channel: stopped.channel,
-              restriction,
-              sendRatePerMinute: activationSendRate,
-              excludeBroadcastId: stopped.id,
-            },
-            async (override) => await write(tx, override),
-          )
+    const submittedPatch = resolveSubmittedSendRatePatch(
+      input.sendRatePerMinute,
+    )
+    const resumeWithinPlan = async (tx: DatabaseClient) => {
+      const [stopped] = await tx
+        .select({
+          id: broadcastModel.id,
+          channel: broadcastModel.channel,
+          sendRatePerMinute: broadcastModel.sendRatePerMinute,
         })
-      : await write(db, submittedOverride)
+        .from(broadcastModel)
+        .where(scope)
+        .for("update")
+        .limit(1)
+
+      if (!stopped) {
+        throw new ChatbotXException("Broadcast is not stopped")
+      }
+
+      const restriction = broadcastPlanPolicyService.restrictionFor(
+        planContext,
+        stopped.channel,
+      )
+      if (!restriction) {
+        return await write(tx, submittedPatch)
+      }
+
+      return await this.activateRestrictedRow(
+        tx,
+        {
+          workspaceId: input.workspaceId,
+          restriction,
+          row: stopped,
+          submittedSendRate: input.sendRatePerMinute,
+        },
+        (override) => write(tx, override),
+      )
+    }
+
+    const row = broadcastPlanPolicyService.hasRestrictions(planContext)
+      ? await db.transaction(resumeWithinPlan)
+      : await write(db, submittedPatch)
 
     await this.audit("broadcast_resumed", `resumed a broadcast (#${row.id})`)
 
