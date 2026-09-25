@@ -554,7 +554,7 @@ describe("chat store conversation updates", () => {
     ])
   })
 
-  test("updateConversationViaMessage moves an existing conversation to the top and refreshes lastActivityAt", async () => {
+  test("handleNewMessage moves an existing conversation to the top and refreshes lastActivityAt", async () => {
     const store = createChatStore()
     const oldFirst = makeConversation(
       "conv-1",
@@ -565,7 +565,7 @@ describe("chat store conversation updates", () => {
     store.setState({ conversations: originalList as never })
 
     const message = makeMessage("conv-2", new Date("2026-01-02T00:00:00Z"))
-    await store.getState().updateConversationViaMessage(message as never)
+    await store.getState().handleNewMessage(message as never)
 
     const conversations = store.getState().conversations
     expect(conversations).not.toBe(originalList)
@@ -575,7 +575,7 @@ describe("chat store conversation updates", () => {
     expect(conversations[1]).toBe(oldFirst)
   })
 
-  test("updateConversationViaMessage merges the refreshed head in server order", async () => {
+  test("handleNewMessage refreshes the filtered head and inserts only new conversation ids", async () => {
     const store = createChatStore()
     const existing = makeConversation(
       "conv-1",
@@ -596,7 +596,7 @@ describe("chat store conversation updates", () => {
     mockConversationPage([fetched, duplicate])
 
     const message = makeMessage("conv-new", new Date("2026-01-02T00:00:00Z"))
-    store.getState().updateConversationViaMessage(message as never)
+    store.getState().handleNewMessage(message as never)
 
     await vi.waitFor(() =>
       expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
@@ -613,93 +613,34 @@ describe("chat store conversation updates", () => {
       }),
       expect.any(Object),
     )
-    expect(store.getState().conversations).toEqual([fetched, duplicate])
+    expect(store.getState().conversations).toEqual([fetched, existing])
   })
 
-  test("head refresh preserves newer realtime state that arrives while it is in flight", async () => {
-    const store = createChatStore()
-    const existing = makeConversation(
-      "conv-existing",
-      new Date("2026-01-01T00:00:00Z"),
-    )
-    const staleSnapshot = {
-      ...existing,
-      messages: [
-        makeMessage("conv-existing", new Date("2026-01-01T00:00:00Z")),
-      ],
-    }
-    const fetched = makeConversation(
-      "conv-new",
-      new Date("2026-01-01T02:00:00Z"),
-    )
-    let resolveHeadRefresh: (result: { data: TestConversation[] }) => void =
-      () => undefined
-    mockListConversationsByPOSTAuthenticatedAPI.mockImplementation(
-      () =>
-        new Promise<{ data: TestConversation[] }>((resolve) => {
-          resolveHeadRefresh = resolve
-        }),
-    )
-    store.setState({ conversations: [existing] as never })
-
-    store
-      .getState()
-      .updateConversationViaMessage(
-        makeMessage("conv-new", new Date("2026-01-02T00:00:00Z")) as never,
-      )
-    await vi.waitFor(() =>
-      expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
-        1,
-      ),
-    )
-
-    const realtimeMessage = makeMessage(
-      "conv-existing",
-      new Date("2026-01-03T00:00:00Z"),
-    )
-    store.getState().handleNewMessage(realtimeMessage as never)
-    resolveHeadRefresh({ data: [staleSnapshot, fetched] })
-
-    await vi.waitFor(() =>
-      expect(store.getState().conversations.map((item) => item.id)).toEqual([
-        "conv-existing",
-        "conv-new",
-      ]),
-    )
-    expect(store.getState().conversations[0]).toMatchObject({
-      id: "conv-existing",
-      lastActivityAt: realtimeMessage.createdAt,
-      messages: [realtimeMessage],
-    })
-  })
-
-  test("missing conversation updates run one trailing head refresh after the throttle window", async () => {
+  test("missing conversation updates schedule one trailing head refresh at the end of the throttle window", async () => {
     vi.useFakeTimers()
+    vi.setSystemTime(10_000)
     try {
-      vi.setSystemTime(new Date("2026-01-02T00:00:00Z"))
       const store = createChatStore()
       mockConversationPage([])
 
       store
         .getState()
-        .updateConversationViaMessage(
+        .handleNewMessage(
           makeMessage("conv-new-1", new Date("2026-01-02T00:00:00Z")) as never,
         )
-      expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
-        1,
-      )
+      await vi.advanceTimersByTimeAsync(0)
 
       store
         .getState()
-        .updateConversationViaMessage(
+        .handleNewMessage(
           makeMessage("conv-new-2", new Date("2026-01-02T00:00:01Z")) as never,
         )
-      await vi.advanceTimersByTimeAsync(4999)
       expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
         1,
       )
 
-      await vi.advanceTimersByTimeAsync(1)
+      await vi.advanceTimersByTimeAsync(5000)
+
       expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
         2,
       )
@@ -708,46 +649,7 @@ describe("chat store conversation updates", () => {
     }
   })
 
-  test("dispose cancels a queued head refresh", async () => {
-    vi.useFakeTimers()
-    try {
-      vi.setSystemTime(new Date("2026-01-02T00:00:00Z"))
-      let resolveInitialRefresh: (result: {
-        data: TestConversation[]
-      }) => void = () => undefined
-      mockListConversationsByPOSTAuthenticatedAPI.mockImplementationOnce(
-        () =>
-          new Promise<{ data: TestConversation[] }>((resolve) => {
-            resolveInitialRefresh = resolve
-          }),
-      )
-      const store = createChatStore()
-
-      store
-        .getState()
-        .updateConversationViaMessage(
-          makeMessage("conv-new-1", new Date("2026-01-02T00:00:00Z")) as never,
-        )
-      store
-        .getState()
-        .updateConversationViaMessage(
-          makeMessage("conv-new-2", new Date("2026-01-02T00:00:01Z")) as never,
-        )
-      resolveInitialRefresh({ data: [] })
-      await Promise.resolve()
-
-      store.getState().dispose()
-      await vi.advanceTimersByTimeAsync(5000)
-
-      expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
-        1,
-      )
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  test("missing conversation updates flush when the hidden tab becomes visible", () => {
+  test("missing conversation updates defer head refresh until the tab becomes visible", async () => {
     const visibilitySpy = vi
       .spyOn(document, "visibilityState", "get")
       .mockReturnValue("hidden")
@@ -756,16 +658,39 @@ describe("chat store conversation updates", () => {
 
     store
       .getState()
-      .updateConversationViaMessage(
+      .handleNewMessage(
         makeMessage("conv-new", new Date("2026-01-02T00:00:00Z")) as never,
       )
     expect(mockListConversationsByPOSTAuthenticatedAPI).not.toHaveBeenCalled()
 
     visibilitySpy.mockReturnValue("visible")
-    store.getState().flushPendingConversationHeadRefresh()
+    store.getState().resumeConversationHeadRefresh("ws-1")
 
-    expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() =>
+      expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
+        1,
+      ),
+    )
     visibilitySpy.mockRestore()
+  })
+
+  test("head refresh discards a response when filters change while it is in flight", async () => {
+    const store = createChatStore()
+    const pageResponse = Promise.withResolvers<{ data: TestConversation[] }>()
+    mockListConversationsByPOSTAuthenticatedAPI.mockImplementationOnce(
+      () => pageResponse.promise,
+    )
+
+    store.getState().scheduleConversationHeadRefresh("ws-1")
+    store.getState().setFilters({ channel: "whatsapp" })
+    pageResponse.resolve({ data: [makeConversation("conv-new", new Date())] })
+
+    await vi.waitFor(() =>
+      expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
+        1,
+      ),
+    )
+    expect(store.getState().conversations).toEqual([])
   })
 
   test("head refresh failures are logged without rejecting message handling", async () => {
@@ -827,7 +752,7 @@ describe("chat store conversation updates", () => {
 
     await store
       .getState()
-      .updateConversationViaMessage(
+      .handleNewMessage(
         makeMessage(background.id, new Date("2026-01-03T00:00:00Z")) as never,
       )
 
@@ -855,7 +780,7 @@ describe("chat store conversation updates", () => {
 
     await store
       .getState()
-      .updateConversationViaMessage(
+      .handleNewMessage(
         makeMessage(active.id, new Date("2026-01-03T00:00:00Z")) as never,
       )
 
@@ -879,7 +804,7 @@ describe("chat store conversation updates", () => {
 
     await store
       .getState()
-      .updateConversationViaMessage(
+      .handleNewMessage(
         makeMessage(target.id, new Date("2026-01-03T00:00:00Z")) as never,
       )
 
@@ -923,7 +848,7 @@ describe("chat store conversation updates", () => {
 
     const state = store.getState()
     expect(state.conversations.map((c) => c.id)).toEqual(["conv-2", "conv-1"])
-    // Unlike `updateConversationViaMessage`, this is a purely visual reorder:
+    // Unlike handleNewMessage, this is a purely visual reorder:
     // no fabricated `lastActivityAt` and no message payload attached.
     expect(state.conversations[0].lastActivityAt).toEqual(target.lastActivityAt)
     expect(state.conversations[0].messages).toEqual(target.messages)
@@ -1035,7 +960,6 @@ describe("chat store conversation updates", () => {
     ])
     expect(store.getState().conversations[0]?.messages).toEqual([message])
   })
-
   test("handleNewMessage applies patch, read state, and move-to-top in one state update", () => {
     const store = createChatStore()
     const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))

@@ -212,6 +212,10 @@ export const resolveWorkspaceAppUrl = async (args: {
 export const resolveBroadcastSecret = (): string =>
   integrationContextEnv().REALTIME_BROADCAST_SECRET
 
+/** Whether zero-interest relay responses may suppress ephemeral typing events. */
+export const resolveRealtimeDeliveryGate = (): boolean =>
+  integrationContextEnv().REALTIME_DELIVERY_GATE
+
 /**
  * Resolve the HTTP endpoint used by server-side realtime broadcasts.
  * This endpoint is deployment-wide on purpose — never tenant-specific or a

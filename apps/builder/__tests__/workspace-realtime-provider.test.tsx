@@ -1,4 +1,9 @@
 import {
+  REALTIME_EVENT_TOPICS,
+  type RealtimeTopic,
+  serializeRealtimeSubscriptionMessage,
+} from "@chatbotx.io/partysocket-config"
+import {
   PRESENCE_REPORT_INTERVAL_MS,
   serializePresencePingMessage,
 } from "@chatbotx.io/partysocket-config/presence"
@@ -34,6 +39,7 @@ type CapturedPartySocketOptions = {
   onOpen?: () => void
   onClose?: () => void
   onMessage?: (event: { data: string }) => void
+  query?: () => Promise<Record<string, string>>
 }
 let captured: CapturedPartySocketOptions | null = null
 const socketSendMock = vi.fn()
@@ -45,6 +51,9 @@ vi.mock("partysocket/react", () => ({
   default: (options: CapturedPartySocketOptions) => usePartySocketMock(options),
 }))
 
+// Dynamic import required: the module under test must load after the
+// `vi.mock` calls above register, which a static top-level import would
+// race (vi.mock hoisting only reorders vi.mock calls themselves).
 const { WorkspaceRealtimeProvider, useWorkspaceRealtimeContext } = await import(
   "@/features/realtime/workspace-realtime-provider"
 )
@@ -54,6 +63,28 @@ const { useWorkspaceRealtimeEvents } = await import(
 
 function emit(eventType: string, data: unknown) {
   captured?.onMessage?.({ data: JSON.stringify({ eventType, data }) })
+}
+
+function emitBatch(events: { eventType: string; data: unknown }[]) {
+  captured?.onMessage?.({ data: JSON.stringify({ batch: events }) })
+}
+
+/** Every `socket.send` call whose payload is a subscribe frame, decoded. */
+function sentSubscriptions(): RealtimeTopic[][] {
+  return socketSendMock.mock.calls
+    .map(([payload]) => JSON.parse(payload as string))
+    .filter(
+      (frame): frame is { type: "subscribe"; topics: RealtimeTopic[] } =>
+        frame?.type === "subscribe",
+    )
+    .map((frame) => frame.topics)
+}
+
+/** Every `socket.send` call whose payload is the presence-ping frame. */
+function sentPingCount(): number {
+  return socketSendMock.mock.calls.filter(
+    ([payload]) => payload === serializePresencePingMessage(),
+  ).length
 }
 
 describe("WorkspaceRealtimeProvider", () => {
@@ -547,16 +578,15 @@ describe("WorkspaceRealtimeProvider", () => {
         vi.advanceTimersByTime(PRESENCE_REPORT_INTERVAL_MS)
       })
 
-      expect(socketSendMock).toHaveBeenCalledTimes(1)
-      expect(socketSendMock).toHaveBeenCalledWith(
-        serializePresencePingMessage(),
-      )
+      // A trailing subscription resync (see the "trailing resync" suite
+      // below) also lands inside this window — isolate ping-shaped frames.
+      expect(sentPingCount()).toBe(1)
 
       act(() => {
         vi.advanceTimersByTime(PRESENCE_REPORT_INTERVAL_MS * 2)
       })
 
-      expect(socketSendMock).toHaveBeenCalledTimes(3)
+      expect(sentPingCount()).toBe(3)
     })
 
     test("never sends a ping before the socket has opened", async () => {
@@ -577,7 +607,7 @@ describe("WorkspaceRealtimeProvider", () => {
       act(() => {
         vi.advanceTimersByTime(PRESENCE_REPORT_INTERVAL_MS)
       })
-      expect(socketSendMock).toHaveBeenCalledTimes(1)
+      expect(sentPingCount()).toBe(1)
 
       act(() => {
         captured?.onClose?.()
@@ -605,6 +635,235 @@ describe("WorkspaceRealtimeProvider", () => {
       })
 
       expect(socketSendMock).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("protocol v2 connection request (B2)", () => {
+    test("requests protocol v2 alongside the short-lived connect token", async () => {
+      await render(null)
+
+      await expect(captured?.query?.()).resolves.toEqual({
+        protocol: "v2",
+        token: "token-1",
+      })
+    })
+  })
+
+  describe("batch frame dispatch (B2)", () => {
+    test("dispatches every event inside a single v2 batch frame to its registered handler", async () => {
+      const messageDeletedHandler = vi.fn()
+      const contactBlockedHandler = vi.fn()
+      function Subscriber() {
+        useWorkspaceRealtimeEvents({
+          contactBlocked: contactBlockedHandler,
+          messageDeleted: messageDeletedHandler,
+        })
+        return null
+      }
+      await render(<Subscriber />)
+
+      act(() => {
+        emitBatch([
+          { eventType: "messageDeleted", data: { messageIds: ["m1"] } },
+          { eventType: "contactBlocked", data: { contactId: "c1" } },
+        ])
+      })
+
+      expect(messageDeletedHandler).toHaveBeenCalledWith({
+        eventType: "messageDeleted",
+        data: { messageIds: ["m1"] },
+      })
+      expect(contactBlockedHandler).toHaveBeenCalledWith({
+        eventType: "contactBlocked",
+        data: { contactId: "c1" },
+      })
+    })
+
+    test("a malformed event inside a batch is dropped without blocking the rest of the batch", async () => {
+      const validHandler = vi.fn()
+      const malformedHandler = vi.fn()
+      function Subscriber() {
+        useWorkspaceRealtimeEvents({
+          messageDeleted: validHandler,
+          whatsappCallTransportIncoming: malformedHandler,
+        })
+        return null
+      }
+      await render(<Subscriber />)
+
+      act(() => {
+        emitBatch([
+          // Missing every required field of realtimeCallTransportIncomingSchema.
+          { eventType: "whatsappCallTransportIncoming", data: { bogus: true } },
+          { eventType: "messageDeleted", data: { messageIds: ["m1"] } },
+        ])
+      })
+
+      expect(malformedHandler).not.toHaveBeenCalled()
+      expect(validHandler).toHaveBeenCalledWith({
+        eventType: "messageDeleted",
+        data: { messageIds: ["m1"] },
+      })
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: "whatsappCallTransportIncoming",
+        }),
+        expect.stringContaining("schema"),
+      )
+    })
+  })
+
+  describe("topic subscription inference (B3)", () => {
+    test("sends the topics implied by the currently-registered handlers once the socket opens", async () => {
+      function Subscriber() {
+        useWorkspaceRealtimeEvents({ messageDeleted: vi.fn() })
+        return null
+      }
+      await render(<Subscriber />)
+
+      act(() => {
+        captured?.onOpen?.()
+      })
+
+      expect(sentSubscriptions().at(-1)).toEqual(
+        REALTIME_EVENT_TOPICS.messageDeleted.topics,
+      )
+      // Exact wire frame — same serializer the party's schema parses.
+      expect(socketSendMock).toHaveBeenCalledWith(
+        serializeRealtimeSubscriptionMessage(
+          REALTIME_EVENT_TOPICS.messageDeleted.topics,
+        ),
+      )
+    })
+
+    test("re-sends subscribed topics after a close and reopen", async () => {
+      function Subscriber() {
+        useWorkspaceRealtimeEvents({ messageDeleted: vi.fn() })
+        return null
+      }
+      await render(<Subscriber />)
+      act(() => {
+        captured?.onOpen?.()
+        captured?.onClose?.()
+      })
+      socketSendMock.mockClear()
+
+      act(() => {
+        captured?.onOpen?.()
+      })
+
+      expect(sentSubscriptions()).toEqual([
+        REALTIME_EVENT_TOPICS.messageDeleted.topics,
+      ])
+    })
+
+    test("a handler for a mixed-topic event subscribes to every one of its topics", async () => {
+      function Subscriber() {
+        useWorkspaceRealtimeEvents({ conversationAssigned: vi.fn() })
+        return null
+      }
+      await render(<Subscriber />)
+
+      act(() => {
+        captured?.onOpen?.()
+      })
+
+      expect(new Set(sentSubscriptions().at(-1))).toEqual(
+        new Set(REALTIME_EVENT_TOPICS.conversationAssigned.topics),
+      )
+    })
+
+    test("adds a topic once a handler for it mounts while the socket is already open", async () => {
+      function ChatSubscriber() {
+        useWorkspaceRealtimeEvents({ messageDeleted: vi.fn() })
+        return null
+      }
+      function VoipSubscriber() {
+        useWorkspaceRealtimeEvents({ whatsappCallTransportIncoming: vi.fn() })
+        return null
+      }
+      await render(<ChatSubscriber />)
+      act(() => {
+        captured?.onOpen?.()
+      })
+      socketSendMock.mockClear()
+
+      await act(() => {
+        root.render(
+          <WorkspaceRealtimeProvider>
+            <ChatSubscriber />
+            <VoipSubscriber />
+          </WorkspaceRealtimeProvider>,
+        )
+      })
+
+      expect(new Set(sentSubscriptions().at(-1))).toEqual(
+        new Set(["chat", "voip"]),
+      )
+    })
+
+    test("drops a topic once the last handler for it unmounts (refcounted to zero)", async () => {
+      function ChatSubscriber() {
+        useWorkspaceRealtimeEvents({ messageDeleted: vi.fn() })
+        return null
+      }
+      function VoipSubscriber() {
+        useWorkspaceRealtimeEvents({ whatsappCallTransportIncoming: vi.fn() })
+        return null
+      }
+      await render(
+        <>
+          <ChatSubscriber />
+          <VoipSubscriber />
+        </>,
+      )
+      act(() => {
+        captured?.onOpen?.()
+      })
+      socketSendMock.mockClear()
+
+      await act(() => {
+        root.render(
+          <WorkspaceRealtimeProvider>
+            <ChatSubscriber />
+          </WorkspaceRealtimeProvider>,
+        )
+      })
+
+      expect(sentSubscriptions().at(-1)).toEqual(["chat"])
+    })
+
+    test("keeps a topic subscribed while a second handler for it remains registered", async () => {
+      function FirstChatSubscriber() {
+        useWorkspaceRealtimeEvents({ messageDeleted: vi.fn() })
+        return null
+      }
+      function SecondChatSubscriber() {
+        useWorkspaceRealtimeEvents({ contactBlocked: vi.fn() })
+        return null
+      }
+      await render(
+        <>
+          <FirstChatSubscriber key="first" />
+          <SecondChatSubscriber key="second" />
+        </>,
+      )
+      act(() => {
+        captured?.onOpen?.()
+      })
+      socketSendMock.mockClear()
+
+      await act(() => {
+        root.render(
+          <WorkspaceRealtimeProvider>
+            <SecondChatSubscriber key="second" />
+          </WorkspaceRealtimeProvider>,
+        )
+      })
+
+      // messageDeleted's handler unmounted, but contactBlocked (also "chat")
+      // is still registered — the topic must not drop out.
+      expect(sentSubscriptions().at(-1)).toEqual(["chat"])
     })
   })
 })

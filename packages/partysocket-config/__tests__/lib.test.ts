@@ -220,3 +220,95 @@ describe("buildBroadcastAuthHeader", () => {
     expect(signRealtimeTokenMock).toHaveBeenCalledTimes(10_002)
   })
 })
+describe("broadcastToWorkspaceParty batch wire format (B1)", () => {
+  it("sends a single event as the existing raw body, with no batch header", async () => {
+    postMock.mockReset()
+    postMock.mockReturnValueOnce({ status: 200 })
+
+    await broadcastToWorkspaceParty(target, "ws_1", event)
+
+    const [, options] = postMock.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ]
+    expect(options.json).toEqual(event)
+    expect(
+      (options.headers as Record<string, string>)["X-Realtime-Batch"],
+    ).toBeUndefined()
+  })
+
+  it("sends multiple events as { batch: [...] } with X-Realtime-Batch: 1", async () => {
+    postMock.mockReset()
+    postMock.mockReturnValueOnce({ status: 200 })
+    const second = {
+      eventType: "contactBlocked",
+      data: { contactId: "c_1" },
+    } as const
+
+    await broadcastToWorkspaceParty(target, "ws_1", [event, second])
+
+    const [, options] = postMock.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ]
+    expect(options.json).toEqual({ batch: [event, second] })
+    expect(
+      (options.headers as Record<string, string>)["X-Realtime-Batch"],
+    ).toBe("1")
+  })
+})
+
+describe("broadcastToWorkspaceParty relay interest response (B4)", () => {
+  it("resolves the relay's interested count from a JSON response", async () => {
+    postMock.mockReset()
+    postMock.mockReturnValueOnce({
+      status: 200,
+      json: () => Promise.resolve({ interested: 3 }),
+    })
+
+    await expect(
+      broadcastToWorkspaceParty(target, "ws_1", event),
+    ).resolves.toBe(3)
+  })
+
+  it("fails open (resolves null) for an old relay's plain-text response with no .json()", async () => {
+    postMock.mockReset()
+    postMock.mockReturnValueOnce({ status: 200 })
+
+    await expect(
+      broadcastToWorkspaceParty(target, "ws_1", event),
+    ).resolves.toBeNull()
+  })
+
+  it("fails open (resolves null) when the response body is not valid JSON", async () => {
+    postMock.mockReset()
+    postMock.mockReturnValueOnce({
+      status: 200,
+      json: () => Promise.reject(new Error("not json")),
+    })
+
+    await expect(
+      broadcastToWorkspaceParty(target, "ws_1", event),
+    ).resolves.toBeNull()
+  })
+
+  it("fails open (resolves null) when interested is missing or not a non-negative integer", async () => {
+    postMock.mockReset()
+    postMock.mockReturnValueOnce({
+      status: 200,
+      json: () => Promise.resolve({}),
+    })
+    await expect(
+      broadcastToWorkspaceParty(target, "ws_1", event),
+    ).resolves.toBeNull()
+
+    postMock.mockReset()
+    postMock.mockReturnValueOnce({
+      status: 200,
+      json: () => Promise.resolve({ interested: -1 }),
+    })
+    await expect(
+      broadcastToWorkspaceParty(target, "ws_1", event),
+    ).resolves.toBeNull()
+  })
+})
