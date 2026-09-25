@@ -38,8 +38,8 @@ import {
   type CreateMessageInput,
   contactInboxRepository,
   createMessageRepository,
-  type MessageWithAttachments,
   type IMessageRepository,
+  type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import { contactInboxModel, contactModel } from "@chatbotx.io/database/schema"
 import type {
@@ -64,10 +64,7 @@ import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
-import {
-  type RealtimeEventData,
-  RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
@@ -982,7 +979,6 @@ type MessageInput = CreateMessageInput & {
 type AttachmentInputs = Parameters<
   IMessageRepository["createOrUpdateWithAttachments"]
 >[1]
-
 
 const buildMessageInput = ({
   inbox,

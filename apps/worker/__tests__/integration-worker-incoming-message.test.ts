@@ -53,7 +53,7 @@ const {
   mockReceiveThreadControlEvent,
   mockReleaseOwnedThread,
   mockDistributedLockRunExclusive,
-  mockBroadcastToWorkspaceParty,
+  mockPublishToWorkspaceParty,
   workerState,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
@@ -114,7 +114,7 @@ const {
     mockDistributedLockRunExclusive: vi.fn(
       async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
     ),
-    mockBroadcastToWorkspaceParty: vi.fn(),
+    mockPublishToWorkspaceParty: vi.fn(),
     workerState: { capturedWorkers: [] as CapturedWorker[] },
   }
 })
@@ -338,7 +338,7 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  publishToWorkspaceParty: mockPublishToWorkspaceParty,
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
@@ -641,7 +641,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     mockDistributedLockRunExclusive.mockImplementation(
       async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
     )
-    mockBroadcastToWorkspaceParty.mockClear()
+    mockPublishToWorkspaceParty.mockClear()
 
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -910,10 +910,10 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     )
     // The insert and the realtime broadcast both happen inside the locked
     // section: the default pass-through mock only calls `mockCreateOrUpdate`
-    // and `mockBroadcastToWorkspaceParty` via its `fn`, so their having run
+    // and `mockPublishToWorkspaceParty` via its `fn`, so their having run
     // at all proves they executed inside `runExclusive`, not around it.
     expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledOnce()
+    expect(mockPublishToWorkspaceParty).toHaveBeenCalledOnce()
     expect(
       mockDistributedLockRunExclusive.mock.invocationCallOrder[0],
     ).toBeLessThan(mockCreateOrUpdate.mock.invocationCallOrder[0])
@@ -938,7 +938,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
 
     expect(mockDistributedLockRunExclusive).toHaveBeenCalledOnce()
     expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledOnce()
+    expect(mockPublishToWorkspaceParty).toHaveBeenCalledOnce()
   })
 
   test("propagates a persist() failure instead of re-running unlocked, even though it surfaces through the same runExclusive rejection path", async () => {
@@ -967,7 +967,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     ).rejects.toThrow(persistError)
 
     expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockPublishToWorkspaceParty).not.toHaveBeenCalled()
   })
 
   test("propagates a nested repository lock failure without broadcasting", async () => {
@@ -990,7 +990,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
 
     expect(mockDistributedLockRunExclusive).toHaveBeenCalledOnce()
     expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockPublishToWorkspaceParty).not.toHaveBeenCalled()
   })
 })
 

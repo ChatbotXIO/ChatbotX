@@ -1,4 +1,3 @@
-import { LockAcquisitionError } from "@chatbotx.io/redis"
 import { DelayedError, type Job } from "bullmq"
 import { logger } from "./logger"
 
@@ -47,14 +46,10 @@ export const lockContentionDelayMs = (
   return Math.round(half + random() * half)
 }
 
-// `instanceof` plus the name check, mirroring how BullMQ itself recognises its
-// control-flow errors, so a duplicated `redlock-universal` module instance can
-// never turn contention back into a hard failure.
-const isLockAcquisitionError = (
-  error: unknown,
-): error is LockAcquisitionError =>
-  error instanceof LockAcquisitionError ||
-  (error instanceof Error && error.name === "LockAcquisitionError")
+// Name check mirrors how BullMQ recognises control-flow errors and remains
+// valid when a duplicated redlock-universal module produces the error.
+const isLockAcquisitionError = (error: unknown): boolean =>
+  error instanceof Error && error.name === "LockAcquisitionError"
 
 /**
  * Run `process`; if it fails only because a distributed lock could not be
