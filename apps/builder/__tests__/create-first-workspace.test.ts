@@ -46,6 +46,7 @@ describe("create-first-workspace", () => {
 
   test("recognises only the listed codes, never prototype members", () => {
     expect(isCreateChannelErrorCode("workspaceLimitReached")).toBe(true)
+    expect(isCreateChannelErrorCode("sessionExpired")).toBe(true)
     expect(isCreateChannelErrorCode("toString")).toBe(false)
     expect(isCreateChannelErrorCode(undefined)).toBe(false)
   })

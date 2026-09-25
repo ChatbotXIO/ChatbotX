@@ -74,7 +74,7 @@ describe("InstagramSelectPage", () => {
     mockReadPendingAuth.mockResolvedValue(null)
 
     await expect(InstagramSelectPage()).rejects.toThrow(
-      "redirect:/channels/create",
+      "redirect:/channels/create?error=sessionExpired",
     )
     expect(mockGetInstagramAccount).not.toHaveBeenCalled()
   })
@@ -84,6 +84,9 @@ describe("InstagramSelectPage", () => {
 
     await expect(InstagramSelectPage()).rejects.toThrow(
       "redirect:/channels/create",
+    )
+    expect(mockRedirect).not.toHaveBeenCalledWith(
+      "/channels/create?error=sessionExpired",
     )
   })
 })

@@ -263,7 +263,7 @@ describe("MessengerSelectPage", () => {
     mockReadPendingAuth.mockResolvedValue(null)
 
     await expect(MessengerSelectPage()).rejects.toThrow(
-      "redirect:/channels/create",
+      "redirect:/channels/create?error=sessionExpired",
     )
     expect(mockGetUserPages).not.toHaveBeenCalled()
   })
