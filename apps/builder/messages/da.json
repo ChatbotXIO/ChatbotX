@@ -336,6 +336,7 @@
       "message": "Din seneste betaling mislykkedes. Opdater din betalingsmetode for at holde dit arbejdsområde aktivt."
     },
     "trial": {
+      "planName": "Prøveperiode",
       "daysLeft": "Prøveperiode: {days} dage tilbage",
       "endsTomorrow": "Prøveperioden slutter i morgen",
       "expired": "Din prøveperiode er udløbet — opgrader for at holde dit arbejdsområde aktivt",
@@ -449,8 +450,7 @@
       "audienceFilter": "Målgruppefilter",
       "noAudienceFilter": "Intet målgruppefilter",
       "template": "Skabelon",
-      "integration": "Integration",
-      "sendLimit": "Grænse"
+      "integration": "Integration"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Opgrader dit abonnement",
+      "sendRate": "Dit nuværende {plan}-abonnement understøtter broadcasts med en maksimal sendehastighed på {rate} beskeder pr. minut. Opgrader dit abonnement for at sende broadcasts op til {multiplier}x hurtigere.",
+      "activeBroadcasts": "Dit nuværende {plan}-abonnement kører {max, plural, one {# broadcast} other {# broadcasts}} ad gangen. Opgrader dit abonnement for at køre flere broadcasts samtidigt."
+    },
     "sendLimit": {
       "title": "Grænse",
       "hint": "Lad stå tomt for at sende til alle matchende kontakter.",
+      "rateHint": "Lad stå tomt for at bruge standardhastigheden.",
+      "rangeSummary": "Kontakter #{start} – #{end}",
+      "rangeFromSummary": "Fra kontakt #{start}",
       "rangeLabel": "Kontaktinterval",
       "fromLabel": "Fra",
       "toLabel": "Til",
       "allPlaceholder": "Alle",
-      "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen",
-      "rangeSummary": "Kontakter #{start} – #{end}",
-      "rangeFromSummary": "Fra kontakt #{start}",
-      "rateSummary": "{rate} beskeder / minut"
+      "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen"
     }
   },
   "commentAutomation": {

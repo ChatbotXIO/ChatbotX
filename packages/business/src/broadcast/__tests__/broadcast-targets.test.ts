@@ -33,6 +33,18 @@ vi.mock("../../audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.dispatchAuditRecord,
 }))
 
+vi.mock("../plan-policy.service", () => ({
+  broadcastPlanPolicyService: {
+    appliesToChannel: (channel: string) => channel === "messenger",
+    hasRestrictions: () => false,
+    resolveForWorkspace: vi.fn().mockResolvedValue({
+      policy: { kind: "unrestricted" },
+      planName: null,
+    }),
+    restrictionFor: vi.fn(() => null),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {
     id: "Broadcast.id",

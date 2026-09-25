@@ -1,7 +1,7 @@
 import { broadcastSendLimitIssues } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
 import {
-  describeBroadcastSendLimit,
+  describeBroadcastAudienceRange,
   resolveSendLimitIssueKey,
   resolveWindowedReceiversCount,
 } from "@/features/broadcasts/lib/broadcast-send-limit"
@@ -9,10 +9,10 @@ import {
 const t = (key: string, params?: Record<string, unknown>) =>
   params ? `${key}::${JSON.stringify(params)}` : key
 
-describe("describeBroadcastSendLimit", () => {
-  test("returns null when nothing is set", () => {
+describe("describeBroadcastAudienceRange", () => {
+  test("returns the translated all label when neither bound is set", () => {
     expect(
-      describeBroadcastSendLimit(
+      describeBroadcastAudienceRange(
         {
           audienceRangeStart: null,
           audienceRangeEnd: null,
@@ -20,11 +20,11 @@ describe("describeBroadcastSendLimit", () => {
         },
         t,
       ),
-    ).toBeNull()
+    ).toBe("broadcasts.sendLimit.allPlaceholder")
   })
 
-  test("describes a full range limit", () => {
-    const result = describeBroadcastSendLimit(
+  test("describes a full range", () => {
+    const result = describeBroadcastAudienceRange(
       {
         audienceRangeStart: 1,
         audienceRangeEnd: 20_000,
@@ -32,13 +32,13 @@ describe("describeBroadcastSendLimit", () => {
       },
       t,
     )
-    expect(result).toContain("broadcasts.sendLimit.rangeSummary")
-    expect(result).not.toContain("broadcasts.sendLimit.rangeFromSummary")
-    expect(result).not.toContain("broadcasts.sendLimit.rateSummary")
+    expect(result).toBe(
+      'broadcasts.sendLimit.rangeSummary::{"start":1,"end":20000}',
+    )
   })
 
-  test("describes a start-only limit with the dedicated rangeFromSummary key", () => {
-    const result = describeBroadcastSendLimit(
+  test("describes a start-only range", () => {
+    const result = describeBroadcastAudienceRange(
       {
         audienceRangeStart: 5,
         audienceRangeEnd: null,
@@ -46,12 +46,11 @@ describe("describeBroadcastSendLimit", () => {
       },
       t,
     )
-    expect(result).toContain("broadcasts.sendLimit.rangeFromSummary")
-    expect(result).not.toContain("broadcasts.sendLimit.rangeSummary")
+    expect(result).toBe('broadcasts.sendLimit.rangeFromSummary::{"start":5}')
   })
 
-  test("describes an end-only limit as a range starting at 1", () => {
-    const result = describeBroadcastSendLimit(
+  test("describes an end-only range as starting at 1", () => {
+    const result = describeBroadcastAudienceRange(
       {
         audienceRangeStart: null,
         audienceRangeEnd: 20_000,
@@ -59,35 +58,9 @@ describe("describeBroadcastSendLimit", () => {
       },
       t,
     )
-    expect(result).toContain('"start":1')
-    expect(result).toContain("broadcasts.sendLimit.rangeSummary")
-    expect(result).not.toContain("broadcasts.sendLimit.rangeFromSummary")
-  })
-
-  test("describes a rate-only limit", () => {
-    const result = describeBroadcastSendLimit(
-      {
-        audienceRangeStart: null,
-        audienceRangeEnd: null,
-        sendRatePerMinute: 100,
-      },
-      t,
+    expect(result).toBe(
+      'broadcasts.sendLimit.rangeSummary::{"start":1,"end":20000}',
     )
-    expect(result).toContain("broadcasts.sendLimit.rateSummary")
-    expect(result).not.toContain("broadcasts.sendLimit.rangeSummary")
-  })
-
-  test("describes both a range and a rate together", () => {
-    const result = describeBroadcastSendLimit(
-      {
-        audienceRangeStart: 1,
-        audienceRangeEnd: 20_000,
-        sendRatePerMinute: 100,
-      },
-      t,
-    )
-    expect(result).toContain("broadcasts.sendLimit.rangeSummary")
-    expect(result).toContain("broadcasts.sendLimit.rateSummary")
   })
 })
 

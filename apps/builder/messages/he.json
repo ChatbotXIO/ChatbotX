@@ -5396,6 +5396,7 @@
       "message": "התשלום האחרון שלכם נכשל. עדכנו את אמצעי התשלום כדי להשאיר את סביבת העבודה פעילה."
     },
     "trial": {
+      "planName": "ניסיון",
       "daysLeft": "תקופת ניסיון: נותרו {days} ימים",
       "endsTomorrow": "תקופת הניסיון מסתיימת מחר",
       "expired": "תקופת הניסיון הסתיימה — שדרגו כדי להשאיר את סביבת העבודה פעילה",
@@ -5509,8 +5510,7 @@
       "audienceFilter": "מסנן קהל",
       "noAudienceFilter": "ללא מסנן קהל",
       "template": "תבנית",
-      "integration": "שילוב",
-      "sendLimit": "מגבלה"
+      "integration": "שילוב"
     },
     "filters": {
       "all": "All"
@@ -5569,17 +5569,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "שדרוג התוכנית",
+      "sendRate": "התוכנית הנוכחית שלך, {plan}, תומכת בשידורים במהירות של עד {rate} הודעות בדקה. יש לשדרג את התוכנית כדי לשלוח שידורים במהירות גבוהה עד פי {multiplier}.",
+      "activeBroadcasts": "התוכנית הנוכחית שלך, {plan}, מפעילה {max, plural, one {# שידור} other {# שידורים}} בו-זמנית. יש לשדרג את התוכנית כדי להפעיל יותר שידורים יחד."
+    },
     "sendLimit": {
       "title": "מגבלה",
       "hint": "השאר ריק כדי לשלוח לכל אנשי הקשר התואמים.",
+      "rateHint": "השאר ריק כדי להשתמש בקצב ברירת המחדל.",
+      "rangeSummary": "אנשי קשר מס׳{start} – מס׳{end}",
+      "rangeFromSummary": "החל מאיש קשר מס׳{start}",
       "rangeLabel": "טווח אנשי קשר",
       "fromLabel": "מ",
       "toLabel": "עד",
       "allPlaceholder": "הכול",
-      "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה",
-      "rangeSummary": "אנשי קשר מס׳{start} – מס׳{end}",
-      "rangeFromSummary": "החל מאיש קשר מס׳{start}",
-      "rateSummary": "{rate} הודעות / דקה"
+      "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה"
     }
   },
   "commentAutomation": {

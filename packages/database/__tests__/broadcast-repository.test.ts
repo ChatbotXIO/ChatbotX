@@ -3,14 +3,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  and: vi.fn((...conditions: unknown[]) => ({
+    and: conditions.filter((condition) => condition !== undefined),
+  })),
   findMany: vi.fn(),
   findFirst: vi.fn(),
   audienceFindMany: vi.fn(),
   count: vi.fn(),
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  inArray: vi.fn((field: unknown, values: unknown[]) => ({ field, values })),
+  isNull: vi.fn((field: unknown) => ({ isNull: field })),
+  ne: vi.fn((field: unknown, value: unknown) => ({ ne: [field, value] })),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  and: mocks.and,
   db: {
     query: {
       broadcastModel: {
@@ -24,11 +31,21 @@ vi.mock("@chatbotx.io/database/client", () => ({
     $count: mocks.count,
   },
   eq: mocks.eq,
+  inArray: mocks.inArray,
+  isNull: mocks.isNull,
+  ne: mocks.ne,
   relationsFilterToSQL: vi.fn(() => "sql-filter"),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  broadcastModel: { name: "broadcastModel.name" },
+  broadcastModel: {
+    id: "broadcastModel.id",
+    name: "broadcastModel.name",
+    workspaceId: "broadcastModel.workspaceId",
+    channel: "broadcastModel.channel",
+    status: "broadcastModel.status",
+    deletedAt: "broadcastModel.deletedAt",
+  },
   contactsOnBroadcastsModel: { broadcastId: "broadcastId-column" },
 }))
 
@@ -143,6 +160,58 @@ describe("broadcastRepository.listAudience / countAudience", () => {
 
     expect(result).toBe(3)
     expect(mocks.count).toHaveBeenCalled()
+  })
+})
+
+describe("broadcastRepository.countActive", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("counts active rows by workspace, channel, statuses, and non-deleted state", async () => {
+    mocks.count.mockResolvedValue(1)
+
+    const result = await broadcastRepository.countActive({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      statuses: ["scheduled", "sending"],
+    })
+
+    expect(result).toBe(1)
+    expect(mocks.count).toHaveBeenCalledWith(expect.anything(), {
+      and: [
+        { field: "broadcastModel.workspaceId", value: "ws-1" },
+        { field: "broadcastModel.channel", value: "messenger" },
+        {
+          field: "broadcastModel.status",
+          values: ["scheduled", "sending"],
+        },
+        { isNull: "broadcastModel.deletedAt" },
+      ],
+    })
+    expect(mocks.ne).not.toHaveBeenCalled()
+  })
+
+  test("excludes the supplied broadcast id and uses the passed transaction", async () => {
+    const transactionCount = vi.fn().mockResolvedValue(2)
+
+    const result = await broadcastRepository.countActive(
+      {
+        workspaceId: "ws-1",
+        channel: "messenger",
+        statuses: ["scheduled", "sending"],
+        excludeId: "broadcast-1",
+      },
+      { $count: transactionCount } as never,
+    )
+
+    expect(result).toBe(2)
+    expect(transactionCount).toHaveBeenCalledWith(expect.anything(), {
+      and: expect.arrayContaining([
+        { ne: ["broadcastModel.id", "broadcast-1"] },
+      ]),
+    })
+    expect(mocks.count).not.toHaveBeenCalled()
   })
 })
 

@@ -338,7 +338,18 @@ an endpoint's scope.
   superAdmin minting a `broadcasts` token should know it also grants full
   sequence CRUD (including deleting sequences and steps), full email topic
   CRUD, and WhatsApp template listing — there is no finer-grained scope to
-  withhold just one of the four. Two things worth knowing:
+  withhold just one of the four. Three things worth knowing:
+  - *Cloud trial plans limit Messenger broadcast activation* — `create`,
+    `updateDraft` with `saveAsDraft: false`, `schedule`, `resume`, and
+    `resend` return `403 broadcastPlanLimit` when the rate exceeds 60/minute
+    or a second Messenger broadcast would be `scheduled`/`sending` in the
+    workspace. Its `data` contains `reason`, optional `planName`,
+    `maxSendRatePerMinute`, `maxActiveBroadcasts`,
+    `displayedSendRatePerMinute`, and `upgradeSpeedMultiplier`;
+    `saveAsDraft: true` is never blocked. The `schedule` and `resume`
+    operations accept optional nullable `sendRatePerMinute` (1-1000): omit it
+    to keep the stored rate, or send `null` to clear it and use the applicable
+    default when activation succeeds.
   - *`GET /v1/broadcasts/{idOrName}/audience` returns full contact PII*
     (email, phone, gender) with no field-level gating, including for a
     `read_only` token — unlike the write paths (`create`/`updateDraft`/

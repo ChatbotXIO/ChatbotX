@@ -5,6 +5,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { withBroadcastPlanLimitOutcome } from "./broadcast-plan-limit-outcome"
 
 export const resendBroadcastAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -22,9 +23,11 @@ export const resendBroadcastAction = workspaceActionClient
 
     // The service owns the existence/status guard and the email/phone
     // filter pruning — shared with the public API's `resend` route.
-    return await broadcastService.resendWithPruning({
-      workspaceId,
-      id,
-      canViewEmailAndPhone,
-    })
+    return await withBroadcastPlanLimitOutcome(() =>
+      broadcastService.resendWithPruning({
+        workspaceId,
+        id,
+        canViewEmailAndPhone,
+      }),
+    )
   })

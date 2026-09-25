@@ -336,6 +336,7 @@
       "message": "Tu último pago ha fallado. Actualiza el método de pago para mantener activo tu espacio de trabajo."
     },
     "trial": {
+      "planName": "Prueba",
       "daysLeft": "Prueba: quedan {days} días",
       "endsTomorrow": "La prueba termina mañana",
       "expired": "Tu prueba ha terminado: mejora el plan para mantener activo tu espacio de trabajo",
@@ -449,8 +450,7 @@
       "audienceFilter": "Filtro de audiencia",
       "noAudienceFilter": "Sin filtro de audiencia",
       "template": "Plantilla",
-      "integration": "Integración",
-      "sendLimit": "Límite"
+      "integration": "Integración"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Mejora tu plan",
+      "sendRate": "Tu plan {plan} actual admite broadcasts con una velocidad máxima de envío de {rate} mensajes por minuto. Mejora tu plan para enviar broadcasts hasta {multiplier}x más rápido.",
+      "activeBroadcasts": "Tu plan {plan} actual ejecuta {max, plural, one {# broadcast} other {# broadcasts}} a la vez. Mejora tu plan para ejecutar más broadcasts simultáneamente."
+    },
     "sendLimit": {
       "title": "Límite",
       "hint": "Déjalo en blanco para enviar a todos los contactos que coincidan.",
+      "rateHint": "Déjalo en blanco para usar la velocidad predeterminada.",
+      "rangeSummary": "Contactos n.º{start} – n.º{end}",
+      "rangeFromSummary": "Desde el contacto n.º{start}",
       "rangeLabel": "Rango de contactos",
       "fromLabel": "Desde",
       "toLabel": "Hasta",
       "allPlaceholder": "Todos",
-      "rangeEndBeforeStart": "La posición final no debe ser anterior a la posición inicial",
-      "rangeSummary": "Contactos n.º{start} – n.º{end}",
-      "rangeFromSummary": "Desde el contacto n.º{start}",
-      "rateSummary": "{rate} mensajes / minuto"
+      "rangeEndBeforeStart": "La posición final no debe ser anterior a la posición inicial"
     }
   },
   "commentAutomation": {

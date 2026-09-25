@@ -1,4 +1,5 @@
 import {
+  BROADCAST_AUDIENCE_POSITION_MIN,
   type BroadcastAudienceRangeInput,
   type BroadcastSendLimit,
   broadcastSendLimitIssues,
@@ -54,43 +55,29 @@ type SendLimitFields = Pick<
   "audienceRangeStart" | "audienceRangeEnd" | "sendRatePerMinute"
 >
 
-/**
- * Formats a stored send limit for the detail dialog, e.g.
- * `"Contacts #1 – #20000 · 100 messages / minute"`. `null` when the
- * broadcast carries no limit at all, so the caller renders no row.
- */
-export const describeBroadcastSendLimit = (
+/** Formats the always-visible audience window shown in broadcast details. */
+export const describeBroadcastAudienceRange = (
   broadcast: SendLimitFields,
   t: (key: string, params?: Record<string, string | number | Date>) => string,
-): string | null => {
-  const { audienceRangeStart, audienceRangeEnd, sendRatePerMinute } = broadcast
-  const parts: string[] = []
+): string => {
+  const { audienceRangeStart, audienceRangeEnd } = broadcast
 
   if (audienceRangeStart != null && audienceRangeEnd != null) {
-    parts.push(
-      t("broadcasts.sendLimit.rangeSummary", {
-        start: audienceRangeStart,
-        end: audienceRangeEnd,
-      }),
-    )
-  } else if (audienceRangeStart != null) {
-    parts.push(
-      t("broadcasts.sendLimit.rangeFromSummary", { start: audienceRangeStart }),
-    )
-  } else if (audienceRangeEnd != null) {
-    parts.push(
-      t("broadcasts.sendLimit.rangeSummary", {
-        start: 1,
-        end: audienceRangeEnd,
-      }),
-    )
+    return t("broadcasts.sendLimit.rangeSummary", {
+      start: audienceRangeStart,
+      end: audienceRangeEnd,
+    })
   }
-
-  if (sendRatePerMinute != null) {
-    parts.push(
-      t("broadcasts.sendLimit.rateSummary", { rate: sendRatePerMinute }),
-    )
+  if (audienceRangeStart != null) {
+    return t("broadcasts.sendLimit.rangeFromSummary", {
+      start: audienceRangeStart,
+    })
   }
-
-  return parts.length > 0 ? parts.join(" · ") : null
+  if (audienceRangeEnd != null) {
+    return t("broadcasts.sendLimit.rangeSummary", {
+      start: BROADCAST_AUDIENCE_POSITION_MIN,
+      end: audienceRangeEnd,
+    })
+  }
+  return t("broadcasts.sendLimit.allPlaceholder")
 }

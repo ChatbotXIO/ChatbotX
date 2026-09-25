@@ -390,7 +390,7 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     expect(flowLinks()).toEqual([])
   })
 
-  test("omits the send limit detail row when no limit is stored", async () => {
+  test("always shows the all-contact range and default send rate when no limit is stored", async () => {
     const text = await renderDialog({
       ...BASE_BROADCAST,
       targets: [target("inbox-a", "Page A")],
@@ -399,10 +399,13 @@ describe("BroadcastDetailDialog — per-page targets", () => {
       sendRatePerMinute: null,
     } as BroadcastResourceWithRelations)
 
-    expect(text).not.toContain("broadcasts.detail.sendLimit")
+    expect(text).toContain("broadcasts.sendLimit.rangeLabel")
+    expect(text).toContain("broadcasts.sendLimit.allPlaceholder")
+    expect(text).toContain("fields.sendRatePerMinute.label")
+    expect(text).toContain("500")
   })
 
-  test("shows the send limit detail row when a range or rate is stored", async () => {
+  test("shows the stored contact range and send rate as separate fields", async () => {
     const text = await renderDialog({
       ...BASE_BROADCAST,
       targets: [target("inbox-a", "Page A")],
@@ -411,8 +414,9 @@ describe("BroadcastDetailDialog — per-page targets", () => {
       sendRatePerMinute: 100,
     } as BroadcastResourceWithRelations)
 
-    expect(text).toContain("broadcasts.detail.sendLimit")
+    expect(text).toContain("broadcasts.sendLimit.rangeLabel")
     expect(text).toContain("broadcasts.sendLimit.rangeSummary")
-    expect(text).toContain("broadcasts.sendLimit.rateSummary")
+    expect(text).toContain("fields.sendRatePerMinute.label")
+    expect(text).toContain("100")
   })
 })

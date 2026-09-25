@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { broadcastPlanLimitException } from "@chatbotx.io/business/errors"
+import { TRIAL_BROADCAST_PLAN_POLICY } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // Same chain-capture mock style as broadcast-draft-actions.test.ts: `clearMocks`
@@ -57,6 +59,9 @@ await import("@/features/broadcasts/actions/stop-broadcast.action")
 await import("@/features/broadcasts/actions/resume-broadcast.action")
 await import("@/features/broadcasts/actions/delete-broadcasts.action")
 await import("@/features/broadcasts/actions/delete-broadcast.action")
+const { resumeBroadcastSchema } = await import(
+  "@/features/broadcasts/schema/action"
+)
 
 const [
   { client: moveToDraftClient, handler: moveToDraftHandler },
@@ -134,16 +139,27 @@ describe("resumeBroadcastAction", () => {
     expect(resumeClient).toBe("normal")
   })
 
-  test("delegates to broadcastService.resumeSending with the bound ids", async () => {
+  test("validates the optional nullable send rate", () => {
+    expect(
+      resumeBroadcastSchema.safeParse({ sendRatePerMinute: null }).success,
+    ).toBe(true)
+    expect(
+      resumeBroadcastSchema.safeParse({ sendRatePerMinute: 1001 }).success,
+    ).toBe(false)
+  })
+
+  test("delegates to broadcastService.resumeSending with the bound ids and submitted rate", async () => {
     resumeSending.mockResolvedValue({ id: "b-3" })
 
     const result = await resumeHandler({
       bindArgsParsedInputs: ["ws-1", "b-3"],
+      parsedInput: { sendRatePerMinute: 120 },
     })
 
     expect(resumeSending).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       broadcastId: "b-3",
+      sendRatePerMinute: 120,
     })
     expect(result).toEqual({ id: "b-3" })
   })
@@ -152,8 +168,26 @@ describe("resumeBroadcastAction", () => {
     resumeSending.mockRejectedValue(new Error("Broadcast is not stopped"))
 
     await expect(
-      resumeHandler({ bindArgsParsedInputs: ["ws-1", "b-3"] }),
+      resumeHandler({
+        bindArgsParsedInputs: ["ws-1", "b-3"],
+        parsedInput: { sendRatePerMinute: undefined },
+      }),
     ).rejects.toThrow("Broadcast is not stopped")
+  })
+
+  test("returns a plan-limit outcome for the business exception", async () => {
+    const error = broadcastPlanLimitException("activeBroadcasts", {
+      policy: TRIAL_BROADCAST_PLAN_POLICY,
+      planName: "Trial",
+    })
+    resumeSending.mockRejectedValue(error)
+
+    await expect(
+      resumeHandler({
+        bindArgsParsedInputs: ["ws-1", "b-3"],
+        parsedInput: { sendRatePerMinute: undefined },
+      }),
+    ).resolves.toEqual({ outcome: "planLimit", limit: error.data })
   })
 })
 

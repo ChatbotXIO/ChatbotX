@@ -336,6 +336,7 @@
       "message": "Ihre letzte Zahlung ist fehlgeschlagen. Aktualisieren Sie Ihre Zahlungsmethode, damit Ihr Arbeitsbereich aktiv bleibt."
     },
     "trial": {
+      "planName": "Testphase",
       "daysLeft": "Testphase: Noch {days} Tage",
       "endsTomorrow": "Testphase endet morgen",
       "expired": "Ihre Testphase ist beendet — upgraden Sie, damit Ihr Arbeitsbereich aktiv bleibt",
@@ -449,8 +450,7 @@
       "audienceFilter": "Zielgruppenfilter",
       "noAudienceFilter": "Kein Zielgruppenfilter",
       "template": "Vorlage",
-      "integration": "Integration",
-      "sendLimit": "Limit"
+      "integration": "Integration"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Tarif upgraden",
+      "sendRate": "Ihr aktueller {plan}-Tarif unterstützt Broadcasts mit einer maximalen Sendegeschwindigkeit von {rate} Nachrichten pro Minute. Upgraden Sie Ihren Tarif, um Broadcasts bis zu {multiplier}x schneller zu senden.",
+      "activeBroadcasts": "Ihr aktueller {plan}-Tarif führt {max, plural, one {# Broadcast} other {# Broadcasts}} gleichzeitig aus. Upgraden Sie Ihren Tarif, um mehrere Broadcasts gleichzeitig auszuführen."
+    },
     "sendLimit": {
       "title": "Limit",
       "hint": "Leer lassen, um an alle passenden Kontakte zu senden.",
+      "rateHint": "Leer lassen, um die Standardrate zu verwenden.",
+      "rangeSummary": "Kontakte Nr. {start} – Nr. {end}",
+      "rangeFromSummary": "Ab Kontakt Nr. {start}",
       "rangeLabel": "Kontaktbereich",
       "fromLabel": "Von",
       "toLabel": "Bis",
       "allPlaceholder": "Alle",
-      "rangeEndBeforeStart": "Die Endposition darf nicht vor der Startposition liegen",
-      "rangeSummary": "Kontakte Nr. {start} – Nr. {end}",
-      "rangeFromSummary": "Ab Kontakt Nr. {start}",
-      "rateSummary": "{rate} Nachrichten / Minute"
+      "rangeEndBeforeStart": "Die Endposition darf nicht vor der Startposition liegen"
     }
   },
   "commentAutomation": {

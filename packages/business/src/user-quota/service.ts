@@ -197,6 +197,19 @@ class UserQuotaService extends BaseService {
     return null
   }
 
+  async getPlanIdentity(
+    userId: string,
+  ): Promise<{ isOnTrial: boolean; planName: string | null }> {
+    const quota = await db.query.userQuotaModel.findFirst({
+      where: { userId },
+      columns: { planStatus: true, planName: true },
+    })
+    return {
+      isOnTrial: quota?.planStatus === planStatuses.enum.trial,
+      planName: quota?.planName ?? null,
+    }
+  }
+
   private async readDefaultPlanSnapshot(
     tenantId?: string | null,
   ): Promise<DefaultPlanSnapshot | null> {

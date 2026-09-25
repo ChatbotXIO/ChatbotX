@@ -1822,6 +1822,7 @@
       "message": "L'ultimo pagamento non è riuscito. Aggiorna il metodo di pagamento per mantenere attivo il tuo spazio di lavoro."
     },
     "trial": {
+      "planName": "Prova",
       "daysLeft": "Prova: {days} giorni rimanenti",
       "endsTomorrow": "La prova termina domani",
       "expired": "Il periodo di prova è terminato — aggiorna il piano per mantenere attivo il tuo spazio di lavoro",
@@ -1935,8 +1936,7 @@
       "audienceFilter": "Filtro del pubblico",
       "noAudienceFilter": "Nessun filtro del pubblico",
       "template": "Modello",
-      "integration": "Integrazione",
-      "sendLimit": "Limite"
+      "integration": "Integrazione"
     },
     "filters": {
       "all": "All"
@@ -1995,17 +1995,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Aggiorna il tuo piano",
+      "sendRate": "Il tuo piano {plan} attuale supporta broadcast con una velocità massima di invio di {rate} messaggi al minuto. Aggiorna il piano per inviare broadcast fino a {multiplier}x più velocemente.",
+      "activeBroadcasts": "Il tuo piano {plan} attuale esegue {max, plural, one {# broadcast} other {# broadcast}} alla volta. Aggiorna il piano per eseguire più broadcast contemporaneamente."
+    },
     "sendLimit": {
       "title": "Limite",
       "hint": "Lascia vuoto per inviare a tutti i contatti corrispondenti.",
+      "rateHint": "Lascia vuoto per usare la velocità predefinita.",
+      "rangeSummary": "Contatti n.{start} – n.{end}",
+      "rangeFromSummary": "A partire dal contatto n.{start}",
       "rangeLabel": "Intervallo contatti",
       "fromLabel": "Da",
       "toLabel": "A",
       "allPlaceholder": "Tutti",
-      "rangeEndBeforeStart": "La posizione finale non può essere precedente alla posizione iniziale",
-      "rangeSummary": "Contatti n.{start} – n.{end}",
-      "rangeFromSummary": "A partire dal contatto n.{start}",
-      "rateSummary": "{rate} messaggi / minuto"
+      "rangeEndBeforeStart": "La posizione finale non può essere precedente alla posizione iniziale"
     }
   },
   "commentAutomation": {

@@ -55,6 +55,7 @@ class MockChatbotXException extends Error {
 }
 
 vi.mock("@chatbotx.io/business/errors", () => ({
+  BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
   notFoundException: vi.fn(
     (message: string) => new MockChatbotXException(message, "notFound"),
   ),

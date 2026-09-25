@@ -208,6 +208,25 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+vi.mock("../src/broadcast/plan-policy.service", () => ({
+  broadcastPlanPolicyService: {
+    appliesToChannel: vi.fn((channel: string) => channel === "messenger"),
+    hasRestrictions: vi.fn(() => false),
+    resolveForWorkspace: vi.fn().mockResolvedValue({
+      policy: { kind: "unrestricted" },
+      planName: null,
+    }),
+    restrictionFor: vi.fn(() => null),
+    assertSendRateAllowed: vi.fn(),
+    lockActivation: vi.fn().mockResolvedValue(undefined),
+    assertActiveSlotAvailable: vi.fn().mockResolvedValue(undefined),
+    resolveSendRateOverride: vi.fn(() => ({ sendRatePerMinute: 60 })),
+  },
+}))
+
+const { broadcastPlanPolicyService } = await import(
+  "../src/broadcast/plan-policy.service"
+)
 const { broadcastService } = await import("../src/broadcast/service")
 
 const WS = "ws-1"
@@ -223,9 +242,37 @@ const baseInput = {
   saveAsDraft: false,
 }
 
+const restrictedContext = {
+  policy: {
+    kind: "restricted" as const,
+    maxSendRatePerMinute: 60,
+    maxActiveBroadcasts: 1,
+    channels: ["messenger" as const],
+    display: { sendRatePerMinute: 100, upgradeSpeedMultiplier: 20 },
+  },
+  planName: "Trial",
+}
+
 describe("broadcastService.create — validation branches", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(broadcastPlanPolicyService.appliesToChannel).mockImplementation(
+      (channel) => channel === "messenger",
+    )
+    vi.mocked(broadcastPlanPolicyService.resolveForWorkspace).mockResolvedValue(
+      { policy: { kind: "unrestricted" }, planName: null },
+    )
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(null)
+    vi.mocked(broadcastPlanPolicyService.assertSendRateAllowed).mockReset()
+    vi.mocked(broadcastPlanPolicyService.lockActivation)
+      .mockReset()
+      .mockResolvedValue(undefined)
+    vi.mocked(broadcastPlanPolicyService.assertActiveSlotAvailable)
+      .mockReset()
+      .mockResolvedValue(undefined)
+    vi.mocked(
+      broadcastPlanPolicyService.resolveSendRateOverride,
+    ).mockReturnValue({ sendRatePerMinute: 60 })
     mockPruneFilter.mockImplementation((filter: unknown) => filter)
     insertReturning.mockResolvedValue([{ id: "broadcast-1" }])
   })
@@ -238,6 +285,9 @@ describe("broadcastService.create — validation branches", () => {
       field: "channel",
       message: "Unsupported broadcast channel",
     })
+    expect(
+      broadcastPlanPolicyService.resolveForWorkspace,
+    ).not.toHaveBeenCalled()
   })
 
   test("throws validationException(subaction) for an unsupported subaction", async () => {
@@ -377,6 +427,9 @@ describe("broadcastService.create — validation branches", () => {
     expect(mockDispatchAuditRecord).not.toHaveBeenCalledWith(
       expect.objectContaining({ action: "launch" }),
     )
+    expect(
+      broadcastPlanPolicyService.resolveForWorkspace,
+    ).not.toHaveBeenCalled()
   })
 
   test("does not launch-audit when schedulesType is not 'now'", async () => {
@@ -435,18 +488,25 @@ describe("broadcastService.create — validation branches", () => {
     )
   })
 
-  test("draft status is persisted from saveAsDraft", async () => {
+  test("stores a Messenger save-as-draft without resolving plan policy", async () => {
     mockFindCapability.mockReturnValue({
       subactions: ["sendMessage"],
       supportsTemplateBroadcast: false,
     })
     findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
 
-    await broadcastService.create({ ...baseInput, saveAsDraft: true })
+    await broadcastService.create({
+      ...baseInput,
+      channel: "messenger",
+      saveAsDraft: true,
+    })
 
     expect(insertValues).toHaveBeenCalledWith(
       expect.objectContaining({ status: "draft" }),
     )
+    expect(
+      broadcastPlanPolicyService.resolveForWorkspace,
+    ).not.toHaveBeenCalled()
   })
 
   test("templateData is null when not supplied", async () => {
@@ -482,6 +542,139 @@ describe("broadcastService.create — validation branches", () => {
     )
     expect(insertValues).toHaveBeenCalledWith(
       expect.objectContaining({ contactFilter: { pruned: "yes" } }),
+    )
+  })
+
+  test("keeps a known non-Messenger activation on today's zero-read path", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+
+    await broadcastService.create(baseInput)
+
+    expect(
+      broadcastPlanPolicyService.resolveForWorkspace,
+    ).not.toHaveBeenCalled()
+    expect(insertValues.mock.calls[0][0]).toMatchObject({
+      status: "scheduled",
+      sendRatePerMinute: null,
+    })
+  })
+
+  test("keeps a non-trial Messenger activation unchanged after identity reads", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+
+    await broadcastService.create({ ...baseInput, channel: "messenger" })
+
+    expect(broadcastPlanPolicyService.resolveForWorkspace).toHaveBeenCalledWith(
+      WS,
+    )
+    expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+    expect(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).not.toHaveBeenCalled()
+    expect(insertValues.mock.calls[0][0]).toMatchObject({
+      sendRatePerMinute: null,
+    })
+  })
+
+  test("rejects an over-cap restricted activation before inserting", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    vi.mocked(
+      broadcastPlanPolicyService.assertSendRateAllowed,
+    ).mockImplementation(() => {
+      throw new Error("send rate limited")
+    })
+
+    await expect(
+      broadcastService.create({
+        ...baseInput,
+        channel: "messenger",
+        sendRatePerMinute: 61,
+      }),
+    ).rejects.toThrow("send rate limited")
+
+    expect(insertValues).not.toHaveBeenCalled()
+    expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+  })
+
+  test("rolls back a restricted activation when its active slot is occupied", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    vi.mocked(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).mockRejectedValue(new Error("active slot limited"))
+
+    await expect(
+      broadcastService.create({ ...baseInput, channel: "messenger" }),
+    ).rejects.toThrow("active slot limited")
+
+    expect(broadcastPlanPolicyService.lockActivation).toHaveBeenCalled()
+    expect(insertValues).not.toHaveBeenCalled()
+  })
+
+  test("checks rate, locks, counts, then stores the restricted rate override", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+
+    await broadcastService.create({ ...baseInput, channel: "messenger" })
+
+    expect(
+      broadcastPlanPolicyService.assertSendRateAllowed,
+    ).toHaveBeenCalledWith(restrictedContext, undefined)
+    expect(broadcastPlanPolicyService.lockActivation).toHaveBeenCalledWith(
+      dbMock,
+      WS,
+    )
+    expect(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).toHaveBeenCalledWith(dbMock, {
+      workspaceId: WS,
+      channel: "messenger",
+      ctx: restrictedContext,
+      excludeBroadcastId: undefined,
+    })
+    expect(insertValues.mock.calls[0][0]).toMatchObject({
+      sendRatePerMinute: 60,
+    })
+    expect(
+      vi.mocked(broadcastPlanPolicyService.assertSendRateAllowed).mock
+        .invocationCallOrder[0],
+    ).toBeLessThan(
+      vi.mocked(broadcastPlanPolicyService.lockActivation).mock
+        .invocationCallOrder[0],
+    )
+    expect(
+      vi.mocked(broadcastPlanPolicyService.lockActivation).mock
+        .invocationCallOrder[0],
+    ).toBeLessThan(
+      vi.mocked(broadcastPlanPolicyService.assertActiveSlotAvailable).mock
+        .invocationCallOrder[0],
     )
   })
 })

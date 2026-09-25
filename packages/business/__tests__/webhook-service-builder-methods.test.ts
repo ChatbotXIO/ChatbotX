@@ -2,6 +2,11 @@
 
 import { afterEach, describe, expect, test, vi } from "vitest"
 
+// The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
+vi.mock("../src/broadcast/plan-policy.service", () => ({
+  broadcastPlanPolicyService: {},
+}))
+
 const {
   mockCreateId,
   mockInsert,

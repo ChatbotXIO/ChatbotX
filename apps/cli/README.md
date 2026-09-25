@@ -275,6 +275,7 @@ chatbotx broadcasts audience list <idOrName>         # Get broadcast audience (c
 chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by delivery event
                                                      # eventType: sent|delivered|read|failed [--page --perPage]
 chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedulesType <schedulesType>
+                                                     # Cloud trial Messenger broadcasts: max 60/min and one active at a time
                                                      #   --schedulesAt <schedulesAt> --contactFilter <contactFilter>
                                                      #   [--flowId --templateId --integrationWhatsappId --integrationMessengerId
                                                      #    --templateData --buttons --targets --inboxIds --saveAsDraft]
@@ -283,10 +284,10 @@ chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedul
 chatbotx broadcasts update <id> --name <name>        # Rename only — use `draft update` to change the payload
 chatbotx broadcasts draft update <id>                # Replace a draft's full payload — same fields as `create`
                                                      # (saveAsDraft false schedules it instead of saving as draft)
-chatbotx broadcasts schedule add <id> --schedulesType <schedulesType>  # [--schedulesAt] move draft to scheduled
+chatbotx broadcasts schedule add <id> --schedulesType <schedulesType>  # [--schedulesAt --sendRatePerMinute] move draft to scheduled
 chatbotx broadcasts move-to-draft add <id>           # scheduled -> draft (404 unless status is scheduled)
 chatbotx broadcasts stop add <id>                    # Stop a sending broadcast
-chatbotx broadcasts resume add <id>                  # Resume a stopped (cancelled) broadcast
+chatbotx broadcasts resume add <id>                  # [--sendRatePerMinute] Resume a stopped (cancelled) broadcast
 chatbotx broadcasts resend add <id>                  # Clone a sent/failed broadcast into a new scheduled one
 chatbotx broadcasts duplicate add <id>               # Copy into a new draft, including targets/audience filter
 chatbotx broadcasts delete <id>                      # Soft-delete (fails while status is sending)

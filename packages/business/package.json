@@ -85,12 +85,14 @@
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "@types/qrcode": "^1.5.6",
+    "dotenv-cli": "^11.0.0",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
+    "test:db": "dotenv -e ../../.env -- vitest run --dir __tests__/integration",
     "test:watch": "vitest"
   }
 }

@@ -56,6 +56,7 @@ const facebookLeadAdsAutomationService = {
 vi.mock("@chatbotx.io/business", () => ({ facebookLeadAdsAutomationService }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
+  BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
   notFoundException: (message: string) => new Error(message),
 }))
 

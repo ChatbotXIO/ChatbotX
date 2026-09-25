@@ -401,6 +401,36 @@ describe("public API spec — operation naming guard", () => {
     expect(missingInputDescriptions).toEqual([])
   })
 
+  test("broadcast sendRatePerMinute documents the trial Messenger default and cap", () => {
+    const createBroadcast = operations.find(
+      (operation) => operation.operationId === "broadcasts.create",
+    )
+
+    expect(
+      createBroadcast?.bodySchema?.properties?.sendRatePerMinute?.description,
+    ).toBe(
+      "Maximum recipients handed off per dispatch minute (1-1000). Omit to use your plan's default (500; Messenger broadcasts on a trial plan use and cap at 60).",
+    )
+  })
+
+  test("broadcast schedule and resume document editable send rates", () => {
+    const schedule = operations.find(
+      (operation) => operation.operationId === "broadcasts.schedule",
+    )
+    const resume = operations.find(
+      (operation) => operation.operationId === "broadcasts.resume",
+    )
+    const description =
+      "Maximum recipients handed off per dispatch minute (1-1000). Omit to keep the stored rate; null clears it."
+
+    expect(
+      schedule?.bodySchema?.properties?.sendRatePerMinute?.description,
+    ).toBe(description)
+    expect(resume?.bodySchema?.properties?.sendRatePerMinute?.description).toBe(
+      description,
+    )
+  })
+
   test("every /v1/channels/api/* operation requires only the channel token scheme", () => {
     const channelOps = operations.filter((op) =>
       op.path.startsWith("/v1/channels/api/"),
