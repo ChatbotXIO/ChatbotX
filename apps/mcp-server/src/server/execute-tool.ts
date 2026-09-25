@@ -63,6 +63,70 @@ export function normalizeToolArguments(
   }
 }
 
+const schemaAllowsNull = (schema: unknown): boolean => {
+  if (typeof schema !== "object" || schema === null || Array.isArray(schema)) {
+    return false
+  }
+  const { anyOf, type } = schema as { anyOf?: unknown; type?: unknown }
+  return (
+    type === "null" ||
+    (Array.isArray(anyOf) && anyOf.some((option) => schemaAllowsNull(option)))
+  )
+}
+
+const applyNullableRequiredDefaults = (
+  tool: DynamicTool,
+  args: Record<string, unknown>,
+): Record<string, unknown> => {
+  let normalizedArguments = args
+  for (const key of tool.inputSchema.required ?? []) {
+    if (
+      args[key] === undefined &&
+      schemaAllowsNull(tool.inputSchema.properties[key])
+    ) {
+      if (normalizedArguments === args) {
+        normalizedArguments = { ...args }
+      }
+      normalizedArguments[key] = null
+    }
+  }
+  return normalizedArguments
+}
+
+const preflightArgumentError = (
+  tool: DynamicTool,
+  args: Record<string, unknown>,
+): string | undefined => {
+  const missing = (tool.inputSchema.required ?? []).filter(
+    (key) =>
+      args[key] === undefined ||
+      (args[key] === null &&
+        !schemaAllowsNull(tool.inputSchema.properties[key])),
+  )
+  if (missing.length === 0) {
+    return
+  }
+  const declaredKeys = new Set(Object.keys(tool.inputSchema.properties))
+  const suspectedWrapper = ["body", "params", "input"].find((key) => {
+    const value = args[key]
+    return (
+      !declaredKeys.has(key) &&
+      typeof value === "object" &&
+      value !== null &&
+      !Array.isArray(value)
+    )
+  })
+  const missingList = missing.join(", ")
+  return suspectedWrapper
+    ? `Missing required field(s): ${missingList}. Arguments must be a flat object matching inputSchema — found a "${suspectedWrapper}" wrapper instead of passing its fields at the top level.`
+    : `Missing required field(s): ${missingList}. See the tool's inputSchema for the full shape.`
+}
+
+const prepareToolArguments = (
+  tool: DynamicTool,
+  rawArgs: Record<string, unknown>,
+): Record<string, unknown> => applyNullableRequiredDefaults(tool, rawArgs)
+
 const appendQueryParam = (
   params: URLSearchParams,
   key: string,
@@ -119,7 +183,12 @@ export async function executeTool(
   rawArgs: Record<string, unknown>,
   apiKey: string,
 ): Promise<ToolCallResult> {
-  const args = normalizeToolArguments(rawArgs)
+  const preparedArguments = prepareToolArguments(tool, rawArgs)
+  const preflightError = preflightArgumentError(tool, preparedArguments)
+  if (preflightError) {
+    return errorResult(preflightError)
+  }
+  const args = normalizeToolArguments(preparedArguments)
   let path = tool.pathTemplate
 
   for (const paramName of tool.pathParamNames) {

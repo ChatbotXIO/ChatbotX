@@ -180,6 +180,40 @@ describe("searchTools", () => {
 
     expect(searchTools("launch spaceship")).toEqual([])
   })
+
+  test.each([
+    ["Gắn nhãn VIP cho khách hàng", "contacts_add_tags_by_name"],
+    ["Añade la etiqueta VIP al contacto", "contacts_add_tags_by_name"],
+    ["Ajoute l’étiquette VIP au contact", "contacts_add_tags_by_name"],
+    ["请给联系人添加 VIP 标签", "contacts_add_tags_by_name"],
+    ["创建欢迎流程并发布", "flows_publish"],
+  ])("maps %s to the matching English catalog operation", async (query, expectedToolName) => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithTools([
+        {
+          name: "contacts.addTagsByName",
+          summary: "Add tags to contact",
+          description: "Append named tags without replacing existing tags.",
+          method: "post",
+        },
+        {
+          name: "flows.publish",
+          summary: "Publish flow",
+          method: "post",
+        },
+        {
+          name: "tags.list",
+          summary: "List tags",
+        },
+      ]),
+    ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { searchTools } = await import("../src/server/meta-tools")
+
+    expect(searchTools(query)[0]?.name).toBe(expectedToolName)
+  })
 })
 
 describe("handleSearchTools", () => {
@@ -223,9 +257,21 @@ describe("handleSearchTools", () => {
   })
 
   test.each([
-    ["Gắn nhãn khách hàng", undefined, "is not in English"],
-    ["Gan nhan khach hang", undefined, "Rephrase in English"],
-    ["thêm tag cho liên hệ", "contacts_add_tag", "translating"],
+    [
+      "Gắn nhãn khách hàng",
+      "contacts_add_tag",
+      "Recognized supported native-language",
+    ],
+    [
+      "Gan nhan khach hang",
+      "contacts_add_tag",
+      "Recognized supported native-language",
+    ],
+    [
+      "thêm tag cho liên hệ",
+      "contacts_add_tag",
+      "Recognized supported native-language",
+    ],
     ["タグを追加", "tags_japanese_search", "translating"],
   ])("returns the expected translation guidance for %s", async (query, expectedToolName, expectedHint) => {
     globalThis.fetch = vi.fn().mockResolvedValue(
@@ -460,6 +506,69 @@ describe("handleCallTool", () => {
     expect(executeFetch).not.toHaveBeenCalled()
   })
 
+  test("sends null for an omitted required field whose schema explicitly allows null", async () => {
+    const specFetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/flows": {
+            post: {
+              operationId: "flows.create",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      properties: {
+                        folderId: {
+                          anyOf: [{ type: "string" }, { type: "null" }],
+                        },
+                        name: { type: "string" },
+                      },
+                      required: ["folderId", "name"],
+                      type: "object",
+                    },
+                  },
+                },
+              },
+              summary: "Create flow",
+            },
+          },
+        },
+      }),
+    })
+    const executeFetch = vi.fn().mockResolvedValueOnce({
+      headers: {
+        get: (name: string) =>
+          name === "content-type" ? "application/json" : null,
+      },
+      json: async () => ({ id: 16 }),
+      ok: true,
+    })
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementationOnce(specFetch)
+      .mockImplementationOnce(executeFetch) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleCallTool } = await import("../src/server/meta-tools")
+
+    const result = await handleCallTool(
+      { arguments: { name: "Welcome" }, name: "flows_create" },
+      "api-key",
+    )
+
+    expect(result.isError).toBeUndefined()
+    expect(executeFetch).toHaveBeenCalledWith(
+      "https://api.example.com/v1/flows",
+      expect.objectContaining({
+        body: JSON.stringify({ folderId: null, name: "Welcome" }),
+      }),
+    )
+  })
+
   test("flags a body/params/input wrapper instead of top-level fields", async () => {
     const specFetch = vi.fn().mockResolvedValueOnce({
       ok: true,
@@ -570,12 +679,12 @@ describe("handleSearchTools empty result", () => {
     const result = handleSearchTools({ query: "发射火箭" })
     const parsed = JSON.parse(result.content[0]?.text ?? "{}")
     expect(parsed.matches).toEqual([])
-    expect(parsed.hint).toContain("English-only")
+    expect(parsed.hint).not.toContain("English-only")
     expect(parsed.hint).toContain("Translate the request into one English")
     expect(parsed.hint).toContain("Contacts")
   })
 
-  test("adds a translate-to-English nudge when a non-Latin query still matches", async () => {
+  test("reports native-language expansion when a non-Latin query matches", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       headers: { get: () => null },
@@ -597,13 +706,11 @@ describe("handleSearchTools empty result", () => {
     await loadOpenApiSpec()
     const { handleSearchTools } = await import("../src/server/meta-tools")
 
-    // Mixes an English "tag" token into an otherwise-Chinese query, so the
-    // deterministic ranker still scores > 0 even though translation would
-    // rank higher.
+    // Chinese contact/tag terms now expand to English catalog tokens before
+    // deterministic ranking, so this is an intentional native-language match.
     const result = handleSearchTools({ query: "给联系人加 tag" })
     const parsed = JSON.parse(result.content[0]?.text ?? "{}")
     expect(parsed.matches.length).toBeGreaterThan(0)
-    expect(parsed.hint).toContain("translating")
-    expect(parsed.hint).toContain("into English")
+    expect(parsed.hint).toContain("Recognized supported native-language")
   })
 })

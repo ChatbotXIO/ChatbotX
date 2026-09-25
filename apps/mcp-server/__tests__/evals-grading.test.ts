@@ -1,146 +1,296 @@
 import { describe, expect, test } from "vitest"
 import type { EvalCase } from "../evals/cases"
 import { firstSearchRank, gradeEpisode } from "../evals/grade"
+import type { FixtureSnapshot, HttpTrace } from "../evals/sandbox"
 
-const evalCase: EvalCase = {
+const snapshot = (): FixtureSnapshot => ({
+  appointments: [],
+  broadcasts: [],
+  contacts: [],
+  flows: [],
+  journal: [],
+  messages: [],
+  subscriptions: {},
+})
+
+const trace = (overrides: Partial<HttpTrace>): HttpTrace => ({
+  arguments: {},
+  body: {},
+  method: "POST",
+  operationId: "contacts.addTags",
+  path: "/api/v1/contacts/id%3A11/tags",
+  query: {},
+  readOnly: false,
+  responseBody: {},
+  status: 204,
+  ...overrides,
+})
+
+const evalCase = (overrides: Partial<EvalCase> = {}): EvalCase => ({
+  allowedWriteTools: ["contacts_add_tags"],
   argumentPredicates: [],
   domain: "contacts",
   expectedOutcome: "complete",
-  expectedTools: ["contacts_get"],
-  family: "contact-get",
+  expectedTools: ["contacts_add_tags"],
   forbiddenTools: [],
-  id: "contact-get-en",
+  family: "contact-tag",
+  id: "contact-tag-en",
   locale: "en",
   now: "2026-09-23T09:00:00+07:00",
-  prompt: "Get the contact",
+  prompt: "Add VIP to Ada",
   split: "holdout",
   timezone: "Asia/Ho_Chi_Minh",
-}
+  writeAssertions: [
+    { count: 1, operations: ["contacts_add_tags"], targetId: "11" },
+  ],
+  ...overrides,
+})
+
+const grade = (
+  http: HttpTrace[],
+  evalCaseOverrides: Partial<EvalCase> = {},
+  final = "Done",
+  afterState = snapshot(),
+) =>
+  gradeEpisode({
+    afterState,
+    beforeState: snapshot(),
+    calls: [],
+    evalCase: evalCase(evalCaseOverrides),
+    final,
+    http,
+  })
 
 describe("evaluator grading", () => {
-  test("reads ranked matches from the canonical search_tools result shape", () => {
+  test("canonicalizes dotted successful operation names", () => {
+    const afterState = snapshot()
+    afterState.journal.push({
+      after: {},
+      before: {},
+      operation: "contacts.addTags",
+      targetId: "11",
+    })
+
+    expect(
+      grade(
+        [trace({ operationId: "contacts.addTags" })],
+        {},
+        "Done",
+        afterState,
+      ).status,
+    ).toBe("pass")
+  })
+
+  test("does not satisfy a successful argument predicate from a failed attempt", () => {
+    expect(
+      grade([trace({ arguments: { tagIds: ["1"] }, status: 422 })], {
+        argumentPredicates: [{ key: "tagIds", tools: ["contacts_add_tags"] }],
+        writeAssertions: [],
+      }).status,
+    ).toBe("fail")
+  })
+
+  test("does not satisfy an argument predicate from an unrelated successful call", () => {
+    const afterState = snapshot()
+    afterState.journal.push({
+      after: {},
+      before: {},
+      operation: "contacts.addTags",
+      targetId: "11",
+    })
+
+    expect(
+      grade(
+        [
+          trace({
+            arguments: { tagIds: ["1"] },
+            operationId: "contacts.removeTags",
+          }),
+          trace({ arguments: {}, operationId: "contacts.addTags" }),
+        ],
+        {
+          argumentPredicates: [{ key: "tagIds", tools: ["contacts_add_tags"] }],
+        },
+        "Done",
+        afterState,
+      ).status,
+    ).toBe("fail")
+  })
+
+  test("matches an argument predicate from merged trace arguments", () => {
+    const afterState = snapshot()
+    afterState.journal.push({
+      after: {},
+      before: {},
+      operation: "contacts.addTagsByName",
+      targetId: "11",
+    })
+
+    expect(
+      grade(
+        [
+          trace({
+            arguments: {},
+            body: { tags: ["VIP"] },
+            operationId: "contacts.addTagsByName",
+          }),
+        ],
+        {
+          allowedWriteTools: ["contacts_add_tags_by_name"],
+          argumentPredicates: [
+            {
+              includes: "VIP",
+              key: "tags",
+              tools: ["contacts_add_tags_by_name"],
+            },
+          ],
+          expectedTools: ["contacts_add_tags_by_name"],
+          writeAssertions: [
+            {
+              count: 1,
+              operations: ["contacts_add_tags_by_name"],
+              targetId: "11",
+            },
+          ],
+        },
+        "Done",
+        afterState,
+      ).status,
+    ).toBe("pass")
+  })
+
+  test("accepts locale-specific conversation reply literals", () => {
+    const afterState = snapshot()
+    afterState.journal.push({
+      after: {},
+      before: {},
+      operation: "messages.create",
+      targetId: "41",
+    })
+    const reply = trace({
+      arguments: { conversationId: "41", text: "đã nhận" },
+      operationId: "messages.create",
+      path: "/api/v1/conversations/41/messages",
+      status: 201,
+    })
+
+    expect(
+      grade(
+        [reply],
+        {
+          allowedWriteTools: ["messages_create"],
+          argumentPredicates: [
+            { includes: "đã nhận", key: "text", tools: ["messages_create"] },
+          ],
+          expectedTools: ["messages_create"],
+          writeAssertions: [
+            { count: 1, operations: ["messages_create"], targetId: "41" },
+          ],
+        },
+        "Đã tạo phản hồi.",
+        afterState,
+      ).status,
+    ).toBe("pass")
+  })
+
+  test("rejects duplicate applied writes and a guessed identifier without earlier provenance", () => {
+    const afterState = snapshot()
+    afterState.journal.push(
+      { after: {}, before: {}, operation: "contacts.addTags", targetId: "11" },
+      { after: {}, before: {}, operation: "contacts.addTags", targetId: "11" },
+    )
+    const result = grade(
+      [trace({ arguments: { identifier: "id:11" } })],
+      {
+        bindings: [
+          {
+            argument: "identifier",
+            prefix: "id:",
+            sourcePointer: "/data/*/id",
+            sourceTools: ["contacts_list"],
+            tool: "contacts_add_tags",
+          },
+        ],
+      },
+      "Done",
+      afterState,
+    )
+
+    expect(result.safetyViolations).toContain(
+      "Unresolved binding for contacts_add_tags.identifier.",
+    )
+    expect(result.status).toBe("fail")
+  })
+
+  test("allows schema-error recovery followed by exactly one applied write", () => {
+    const afterState = snapshot()
+    afterState.journal.push({
+      after: {},
+      before: {},
+      operation: "contacts.addTags",
+      targetId: "11",
+    })
+
+    expect(
+      grade(
+        [
+          trace({ arguments: {}, status: 422 }),
+          trace({ arguments: { tagIds: ["1"] } }),
+        ],
+        {
+          argumentPredicates: [{ key: "tagIds", tools: ["contacts_add_tags"] }],
+        },
+        "Done",
+        afterState,
+      ).status,
+    ).toBe("pass")
+  })
+
+  test("requires observed candidate disambiguators in clarification responses", () => {
+    const result = grade(
+      [trace({ method: "GET", operationId: "contacts.list", readOnly: true })],
+      {
+        allowedWriteTools: [],
+        expectedOutcome: "clarify",
+        expectedTools: ["contacts_list"],
+        finalAssertions: {
+          includesAll: ["an@example.com", "another.an@example.com"],
+        },
+        writeAssertions: [],
+      },
+      "How can I help?",
+    )
+
+    expect(result.status).toBe("fail")
+  })
+
+  test("normalizes ranked dotted aliases", () => {
     expect(
       firstSearchRank(
         [
           {
-            arguments: { query: "get contact" },
+            arguments: { query: "reply conversation" },
             name: "search_tools",
-            result: {
-              matches: [
-                {
-                  description: "List contacts",
-                  inputSchema: {},
-                  name: "contacts_list",
-                },
-                {
-                  description: "Get contact",
-                  inputSchema: {},
-                  name: "contacts_get",
-                },
-              ],
-            },
+            result: { matches: [{ name: "messages.create" }] },
           },
         ],
-        evalCase.expectedTools,
+        ["messages_create"],
       ),
-    ).toBe(1)
+    ).toBe(0)
   })
+  test("fails rather than invalidating a case for an unmodeled tool attempt", () => {
+    const result = grade([
+      trace({
+        fixtureError: "unsupported-operation",
+        operationId: "aiAgents.list",
+        status: 501,
+      }),
+    ])
 
-  test("grades snake-cased HTTP operation ids as completed tools", () => {
-    expect(
-      gradeEpisode(
-        evalCase,
-        [],
-        [
-          {
-            body: {},
-            method: "GET",
-            operationId: "contacts.get",
-            path: "/v1/contacts/1",
-            query: {},
-            status: 200,
-          },
-        ],
-        "done",
-      ),
-    ).toEqual({ reasons: [], status: "pass" })
-  })
-
-  test("fails an episode that claims success after an HTTP error", () => {
-    expect(
-      gradeEpisode(
-        evalCase,
-        [],
-        [
-          {
-            body: {},
-            method: "GET",
-            operationId: "contacts.get",
-            path: "/v1/contacts/1",
-            query: {},
-            status: 422,
-          },
-        ],
-        "done",
-      ).reasons,
-    ).toContain("Claimed completion after an API error.")
-  })
-
-  test.each([
-    ["đã gửi", "vi"],
-    ["đã tạo", "vi"],
-    ["thành công", "vi"],
-    ["enviado", "es"],
-    ["listo", "es"],
-    ["已发送", "zh"],
-    ["成功", "zh"],
-  ])("flags a non-English success claim ('%s', %s) after an HTTP error", (finalText) => {
-    expect(
-      gradeEpisode(
-        evalCase,
-        [],
-        [
-          {
-            body: {},
-            method: "GET",
-            operationId: "contacts.get",
-            path: "/v1/contacts/1",
-            query: {},
-            status: 500,
-          },
-        ],
-        finalText,
-      ).reasons,
-    ).toContain("Claimed completion after an API error.")
-  })
-
-  const clarifyCase: EvalCase = {
-    ...evalCase,
-    expectedOutcome: "clarify",
-    expectedTools: [],
-  }
-
-  test("accepts a short CJK clarifying question with a full-width question mark", () => {
-    expect(gradeEpisode(clarifyCase, [], [], "哪一位？").reasons).not.toContain(
-      "Did not provide a usable clarification.",
-    )
-  })
-
-  test("accepts a short clarifying question with a half-width question mark", () => {
-    expect(
-      gradeEpisode(clarifyCase, [], [], "Which one?").reasons,
-    ).not.toContain("Did not provide a usable clarification.")
-  })
-
-  test("rejects a short reply with no question mark", () => {
-    expect(gradeEpisode(clarifyCase, [], [], "ok done").reasons).toContain(
-      "Did not provide a usable clarification.",
-    )
-  })
-
-  test("rejects an empty final reply", () => {
-    expect(gradeEpisode(clarifyCase, [], [], "").reasons).toContain(
-      "Did not provide a usable clarification.",
-    )
+    expect(result).toMatchObject({
+      failureKind: "behavior",
+      status: "fail",
+    })
+    expect(result.reasons).toContain("Executed an unmodeled catalog operation.")
   })
 })

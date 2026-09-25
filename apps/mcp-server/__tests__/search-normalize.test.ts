@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest"
 import {
   containsNonLatinScript,
+  expandSearchQuery,
   looksNonEnglish,
   normalizeSearchText,
   stem,
@@ -14,6 +15,37 @@ describe("normalizeSearchText", () => {
 
   test("normalizes the đ/Đ letter to d", () => {
     expect(normalizeSearchText("Đăng ký")).toBe("dang ky")
+  })
+})
+
+describe("expandSearchQuery", () => {
+  test("adds both add and tag aliases for accented Vietnamese tag creation", () => {
+    expect(expandSearchQuery("Thêm nhãn VIP cho Ada")).toContain("add")
+    expect(expandSearchQuery("Thêm nhãn VIP cho Ada")).toContain("tag")
+  })
+
+  test("does not mistake an acknowledgement for tag intent", () => {
+    expect(expandSearchQuery("Trả lời là đã nhận")).not.toContain(" tag")
+  })
+  test("adds message context when replying to a conversation", () => {
+    expect(expandSearchQuery("Trả lời hội thoại")).toContain(
+      "reply conversation message",
+    )
+  })
+
+  test("normalizes conjugated Spanish and French scheduling, booking, and subscription", () => {
+    const scheduledBroadcast = expandSearchQuery("Programar difusión")
+    expect(scheduledBroadcast).toContain("schedule")
+    expect(scheduledBroadcast).toContain("broadcast")
+
+    const bookedAppointment = expandSearchQuery("Réserver rendez-vous")
+    expect(bookedAppointment).toContain("appointment")
+    expect(bookedAppointment).toContain("book")
+
+    const subscribedContact = expandSearchQuery("Inscrire contact à séquence")
+    expect(subscribedContact).toContain("contact")
+    expect(subscribedContact).toContain("subscribe")
+    expect(subscribedContact).toContain("sequence")
   })
 })
 

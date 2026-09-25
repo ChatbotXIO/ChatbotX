@@ -1,5 +1,6 @@
 import type { DynamicTool } from "../../openapi-loader"
 import {
+  expandSearchQuery,
   normalizeSearchText,
   STOPWORDS,
   stem,
@@ -168,17 +169,23 @@ export function rankTools(
   limit: number,
 ): DynamicTool[] {
   rebuildDocumentFrequencyIfStale(tools)
-  const tokens = queryTokens(query)
+  const expandedQuery = expandSearchQuery(query)
+  const tokens = queryTokens(expandedQuery)
   const queryPhrase = normalizeSearchText(query).trim()
+  const canonicalQuery = queryPhrase.replace(/[.\-\s]+/gu, "_")
   const corpusSize = tools.length
 
   return tools
     .map((tool) => ({
+      exactName: tool.name === canonicalQuery,
       tool,
       score: scoreTool(tool, tokens, queryPhrase, corpusSize),
     }))
     .filter(({ score }) => score > 0)
     .sort((a, b) => {
+      if (a.exactName !== b.exactName) {
+        return a.exactName ? -1 : 1
+      }
       if (b.score !== a.score) {
         return b.score - a.score
       }

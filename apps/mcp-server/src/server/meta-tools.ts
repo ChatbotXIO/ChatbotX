@@ -10,7 +10,7 @@ import {
   jsonResult,
   type ToolCallResult,
 } from "./execute-tool"
-import { looksNonEnglish } from "./search/normalize"
+import { expandSearchQuery, looksNonEnglish } from "./search/normalize"
 import { distinctResourceGroups, rankTools } from "./search/rank"
 
 /**
@@ -23,14 +23,14 @@ export const META_TOOLS = [
   {
     name: "search_tools",
     description:
-      "Search the full ChatbotX tool catalog for tool definitions, not workspace records, and never execute a tool. The catalog is English: use one action plus one resource written in English, or an exact tool name, translating the user's intent first if needed. The result contains `matches`, each with its full inputSchema; read it, then call the exact returned name with call_tool.",
+      "Search the full ChatbotX catalog for hidden or unlisted tool definitions; this never executes a tool. Direct listed tools may be called directly. Search with one action plus one resource, inspect each returned inputSchema, then call call_tool with the exact returned name.",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
           description:
-            'Short business intent written in English: one action plus one resource (e.g. "add tag to contact"), or an exact tool name. Translate the user\'s intent into English first. Do not combine independent tasks.',
+            'Short business intent: one action plus one resource (e.g. "add tag to contact"), in English or supported Vietnamese, Spanish, French, or Chinese. An exact tool name also works. Do not combine independent tasks.',
         },
         limit: {
           type: "number",
@@ -43,7 +43,7 @@ export const META_TOOLS = [
   {
     name: "call_tool",
     description:
-      'Execute a tool by the exact name returned by search_tools (dotted names like "contacts.get" are also accepted and normalized). The selected tool\'s inputSchema defines every argument. Example: {"name":"contacts_get","arguments":{"identifier":"email:ada@example.com"}}.',
+      'Execute a hidden tool by the exact name returned by search_tools (dotted names like "contacts.get" are also accepted). Pass a flat arguments object matching inputSchema; resolve named entities first unless the user supplied a stable ID, email, or phone.',
     inputSchema: {
       type: "object",
       properties: {
@@ -112,6 +112,7 @@ export function handleSearchTools(
   }
   const limit = typeof args.limit === "number" ? args.limit : undefined
   const isNonEnglishQuery = looksNonEnglish(query)
+  const queryWasExpanded = expandSearchQuery(query) !== query
 
   const matches: SearchMatch[] = searchTools(query, limit).map((tool) => ({
     name: tool.name,
@@ -121,16 +122,18 @@ export function handleSearchTools(
 
   if (matches.length === 0) {
     const hint = isNonEnglishQuery
-      ? `The tool catalog is English-only and "${query}" is not in English. Translate the request into one English action plus one resource (e.g. "add tag to contact") and call search_tools again.${resourceGroupSuffix()}`
+      ? `No tool matched "${query}". Translate the request into one English action plus one resource (e.g. "add tag to contact") and call search_tools again.${resourceGroupSuffix()}`
       : `No tool matched "${query}". Rephrase in English with one action and one resource.${resourceGroupSuffix()}`
     return jsonResult({ matches: [], hint })
   }
 
-  // A non-English query that still scored > 0 (e.g. it mixed in an English
-  // word) got ranked against an English catalog rather than translated —
-  // matches may be present but weaker than a fully-English query would
-  // produce, so nudge the caller toward the higher-quality path without
-  // withholding the matches it already found.
+  if (queryWasExpanded) {
+    return jsonResult({
+      matches,
+      hint: "Recognized supported native-language action/resource terms and ranked their English catalog equivalents.",
+    })
+  }
+
   if (isNonEnglishQuery) {
     return jsonResult({
       matches,
@@ -164,47 +167,6 @@ function unknownToolMessage(name: string): string {
 }
 
 /**
- * Checks `arguments` against the selected tool's `required` inputSchema
- * fields before any HTTP request is made, so a missing field is reported
- * immediately instead of round-tripping through the real API's 422. Also
- * flags the common wrapper mistake of nesting every field under a single
- * `body`/`params`/`input` key the schema never declared — call_tool's own
- * description already asks agents not to do this, but cheaper models do it
- * anyway, and the resulting error is otherwise a generic "missing field"
- * for every declared field at once.
- */
-function preflightArgumentError(
-  tool: DynamicTool,
-  args: Record<string, unknown>,
-): string | undefined {
-  const required = tool.inputSchema.required ?? []
-  const missing = required.filter(
-    (key) => args[key] === undefined || args[key] === null,
-  )
-  if (missing.length === 0) {
-    return
-  }
-
-  const wrapperKeys = ["body", "params", "input"]
-  const declaredKeys = new Set(Object.keys(tool.inputSchema.properties))
-  const suspectedWrapper = wrapperKeys.find((key) => {
-    const value = args[key]
-    return (
-      !declaredKeys.has(key) &&
-      typeof value === "object" &&
-      value !== null &&
-      !Array.isArray(value)
-    )
-  })
-
-  const missingList = missing.join(", ")
-  if (suspectedWrapper) {
-    return `Missing required field(s): ${missingList}. Arguments must be a flat object matching inputSchema — found a "${suspectedWrapper}" wrapper instead of passing its fields at the top level.`
-  }
-  return `Missing required field(s): ${missingList}. See the tool's inputSchema for the full shape.`
-}
-
-/**
  * `call_tool` handler — looks up `name` against the *entire* cached tool
  * list (no `visibility` filter; that filter only governs `tools/list`) and
  * executes it exactly like a direct `tools/call` would.
@@ -234,12 +196,9 @@ export async function handleCallTool(
     return errorResult("call_tool 'arguments' must be a JSON object.")
   }
 
-  const toolArguments = (suppliedArguments ?? {}) as Record<string, unknown>
-
-  const preflightError = preflightArgumentError(tool, toolArguments)
-  if (preflightError) {
-    return errorResult(preflightError)
-  }
-
-  return await executeTool(tool, toolArguments, apiKey)
+  return await executeTool(
+    tool,
+    (suppliedArguments ?? {}) as Record<string, unknown>,
+    apiKey,
+  )
 }

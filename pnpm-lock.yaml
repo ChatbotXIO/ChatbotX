@@ -600,6 +600,12 @@ importers:
       '@ai-sdk/openai':
         specifier: ^3.0.54
         version: 3.0.68(zod@4.4.3)
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
+      '@orpc/zod':
+        specifier: ^1.14.0
+        version: 1.14.5(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.5(@opentelemetry/api@1.9.1))(@orpc/server@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)
       '@types/node':
         specifier: 24.x
         version: 24.13.1

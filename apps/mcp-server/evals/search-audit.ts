@@ -3,18 +3,18 @@
  * runs in a few seconds. Loads the real spec (dumped via
  * `MCP_EVAL_SPEC_OUTPUT=<path> pnpm --filter builder test --
  * public-spec-operations.test.ts`, see `apps/builder/__tests__/public-spec-operations.test.ts`),
- * stubs `fetch` to serve it, and scores every eval-corpus prompt through
- * `searchTools()` directly. English top-1/top-3 rates must meet the given
- * thresholds, while other locales remain report-only because clients translate
- * them before they reach this ranker. This catches ranking or description
- * changes without needing `eval:business`'s LLM round trips.
+ * stubs `fetch` to serve it, and scores each eval case's atomic action/resource
+ * probe through `searchTools()` directly. English top-1/top-3 rates must meet
+ * the given thresholds, while other locales remain report-only because clients
+ * translate them before they reach this ranker. This catches ranking or
+ * description changes without needing `eval:business`'s LLM round trips.
  *
  * `--corpus multilingual` swaps in the standalone probe corpus from
  * `cases-multilingual.ts` (see that file's header) instead of the default
  * `cases.ts` corpus, and reports per-locale rank plus a paired `en` vs
- * other-locale comparison per family. Use `--report-only` with it: the
- * multilingual corpus has no tuned pass/fail thresholds, it exists to
- * surface where the ranker loses a non-English intent.
+ * other-locale comparison per family and atomic probe. Use `--report-only`
+ * with it: the multilingual corpus has no tuned pass/fail thresholds, it
+ * exists to surface where the ranker loses a non-English intent.
  *
  * Usage:
  *   pnpm --filter chatbotx-mcp eval:search --spec <absolute-spec-path> \
@@ -23,6 +23,8 @@
  */
 import { readFile } from "node:fs/promises"
 import { isAbsolute } from "node:path"
+import { loadOpenApiSpec } from "../src/openapi-loader"
+import { searchTools } from "../src/server/meta-tools"
 import { materializeCases } from "./cases"
 import { materializeMultilingualCases } from "./cases-multilingual"
 
@@ -108,14 +110,24 @@ const main = async (): Promise<void> => {
       json: async () => spec,
     }) as unknown as Response) as typeof fetch
 
-  const { loadOpenApiSpec } = await import("../src/openapi-loader")
-  const { searchTools } = await import("../src/server/meta-tools")
   await loadOpenApiSpec()
 
   const cases =
     options.corpus === "multilingual"
       ? materializeMultilingualCases()
       : materializeCases()
+  const probes = cases.flatMap((evalCase) =>
+    (
+      evalCase.searchQueries ?? [
+        { expectedTools: evalCase.expectedTools, query: evalCase.prompt },
+      ]
+    ).map((searchQuery, index) => ({
+      evalCase,
+      expectedTools: searchQuery.expectedTools,
+      index,
+      query: searchQuery.query,
+    })),
+  )
   const byLocale = new Map<string, LocaleStats>()
   const rankByFamilyLocale = new Map<string, number>()
   let top1 = 0
@@ -123,13 +135,12 @@ const main = async (): Promise<void> => {
   let empty = 0
   const failures: string[] = []
 
-  for (const evalCase of cases) {
-    const results = searchTools(evalCase.prompt, 10).map((tool) => tool.name)
-    const rank = results.findIndex((name) =>
-      evalCase.expectedTools.includes(name),
-    )
-    rankByFamilyLocale.set(`${evalCase.family}:${evalCase.locale}`, rank)
-    const stats = byLocale.get(evalCase.locale) ?? {
+  for (const probe of probes) {
+    const results = searchTools(probe.query, 10).map((tool) => tool.name)
+    const rank = results.findIndex((name) => probe.expectedTools.includes(name))
+    const rankKey = `${probe.evalCase.family}:${probe.evalCase.locale}:${probe.index}`
+    rankByFamilyLocale.set(rankKey, rank)
+    const stats = byLocale.get(probe.evalCase.locale) ?? {
       n: 0,
       top1: 0,
       top3: 0,
@@ -148,12 +159,12 @@ const main = async (): Promise<void> => {
       empty += 1
       stats.empty += 1
     }
-    byLocale.set(evalCase.locale, stats)
+    byLocale.set(probe.evalCase.locale, stats)
 
     if (options.verbose && !(rank >= 0 && rank < 3)) {
       const status = rank === -1 ? "MISS" : "T10"
       failures.push(
-        `${status}\t${evalCase.locale}\t${evalCase.family}\t${evalCase.prompt}\t-> ${results.slice(0, 3).join(", ") || "<empty>"}`,
+        `${status}\t${probe.evalCase.locale}\t${probe.evalCase.family}\t${probe.query}\t-> ${results.slice(0, 3).join(", ") || "<empty>"}`,
       )
     }
   }
@@ -169,8 +180,8 @@ const main = async (): Promise<void> => {
   const englishTop3Rate =
     englishStats.n === 0 ? 0 : englishStats.top3 / englishStats.n
 
-  const top1Rate = cases.length === 0 ? 0 : top1 / cases.length
-  const top3Rate = cases.length === 0 ? 0 : top3 / cases.length
+  const top1Rate = probes.length === 0 ? 0 : top1 / probes.length
+  const top3Rate = probes.length === 0 ? 0 : top3 / probes.length
 
   // Paired comparison: for each family, how much does the rank degrade
   // going from `en` to every other locale. This is what actually answers
@@ -178,26 +189,33 @@ const main = async (): Promise<void> => {
   // top1Rate alone conflates easy families with hard ones.
   const pairedRegressions =
     options.corpus === "multilingual"
-      ? [...new Set(cases.map((evalCase) => evalCase.family))].flatMap(
-          (family) => {
-            const enRank = rankByFamilyLocale.get(`${family}:en`) ?? -1
-            return [...new Set(cases.map((evalCase) => evalCase.locale))]
+      ? probes
+          .filter((probe) => probe.evalCase.locale === "en")
+          .flatMap((probe) =>
+            [...new Set(cases.map((evalCase) => evalCase.locale))]
               .filter((locale) => locale !== "en")
-              .map((locale) => ({
-                enRank,
-                family,
-                locale,
-                localeRank: rankByFamilyLocale.get(`${family}:${locale}`) ?? -1,
-              }))
-              .filter(({ localeRank }) => localeRank !== enRank)
-          },
-        )
+              .map((locale) => {
+                const { family } = probe.evalCase
+                return {
+                  enRank:
+                    rankByFamilyLocale.get(`${family}:en:${probe.index}`) ?? -1,
+                  family,
+                  locale,
+                  localeRank:
+                    rankByFamilyLocale.get(
+                      `${family}:${locale}:${probe.index}`,
+                    ) ?? -1,
+                }
+              })
+              .filter(({ enRank, localeRank }) => localeRank !== enRank),
+          )
       : []
 
   process.stdout.write(
     `${JSON.stringify(
       {
         cases: cases.length,
+        queries: probes.length,
         corpus: options.corpus,
         top1,
         top1Rate: Number(top1Rate.toFixed(3)),

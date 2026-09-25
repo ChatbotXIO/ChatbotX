@@ -306,22 +306,26 @@ Scores every prompt in the eval corpus (`evals/cases.ts`) through the real `sear
 
 ### `eval:business` — full LLM-driven business eval
 
-Spins up a synthetic HTTP sandbox implementing the generated spec's operations, connects a real MCP client, and drives `gpt-4o-mini`/`gpt-4.1-mini` (or any `@ai-sdk/openai`-supported model) through 240 prompts (48 families × 5 locales: `vi`, `vi-unaccented`, colloquial, `en`, mixed). Requires `OPENAI_API_KEY`.
+Spins up a synthetic HTTP sandbox implementing the generated spec's operations, connects a real MCP client, and drives `gpt-4o-mini`/`gpt-4.1-mini` (or any `@ai-sdk/openai`-supported model) through the selected corpus. `business` contains 240 prompts (48 families × 5 locales: `vi`, `vi-unaccented`, colloquial, `en`, mixed); `multilingual` is the 80-case smoke matrix (16 families × `en`, `vi-natural`, `es`, `fr`, `zh`). Requires `OPENAI_API_KEY`.
 
 ```bash
 pnpm --filter chatbotx-mcp eval:business \
   --spec /absolute/path/public-spec.json \
   --out /absolute/path/out/baseline \
-  --phase baseline \
+  --phase smoke \
   --seed 20260923 \
   --models gpt-4o-mini,gpt-4.1-mini \
+  [--repeat N] \
+  [--corpus business|multilingual] \
   [--exposure default|meta-only|both] \
   [--cases family-a,family-b] \
   [--server-source /absolute/path/to/apps/mcp-server]
 ```
 
+- `--repeat N` runs every selected case under every model and exposure N times. Smoke runs default to 3; baseline and candidate runs default to 1.
 - `--exposure meta-only` restricts the model's tool set to `search_tools`/`call_tool` only (no directly-listed default tools) — the path a client using only the default connection payload takes for any request outside the ~43 default-visible tools. `both` (the default) runs every case under both exposures.
-- Each episode is graded on tool/argument correctness and also records `searchRank` (position of the expected tool in the first `search_tools` result, or `null` if the model never called it), `callToolErrorCount`, and `unknownToolCount` — these isolate ranking quality from `call_tool` argument-handling quality.
+- Each episode is graded on semantic arguments, ordered tool sequences, its expected final HTTP state, API-error claims, post-failure mutations, and step exhaustion. The summary reports the pass rate per model × exposure × locale × family; episodes also record `searchRank`, `callToolErrorCount`, and `unknownToolCount`.
+- The smoke sandbox includes contact, conversation reply, flow, broadcast, appointment, and analytics fixtures. No public appointment-availability operation exists, so unavailable-slot coverage exercises `appointments_book` returning 422.
 - Compare two runs (regressions fail the command):
   ```bash
   pnpm --filter chatbotx-mcp eval:business --compare /absolute/path/out/baseline /absolute/path/out/candidate

@@ -4,39 +4,81 @@ export const EVAL_SEED = 20_260_923
 export const EVAL_TIME = "2026-09-23T09:00:00+07:00"
 export const EVAL_TIMEZONE = "Asia/Ho_Chi_Minh"
 
-export type ExpectedOutcome = "complete" | "clarify"
+export type ExpectedOutcome = "complete" | "clarify" | "reject"
 export type Locale = "vi" | "vi-unaccented" | "colloquial" | "en" | "mixed"
 export type ExposureMode = "default" | "meta-only"
 
 export type ArgumentPredicate = {
-  key: string
-  value?: string | number | boolean
   includes?: string
+  key: string
+  statuses?: number[]
+  tools: string[]
+  value?: string | number | boolean
+}
+export type LegacyArgumentPredicate = Omit<ArgumentPredicate, "tools">
+export type StateAssertion = { equals: unknown; pointer: string }
+export type WriteAssertion = {
+  count: number
+  operations: string[]
+  targetId?: string
+}
+export type Binding = {
+  argument: string
+  prefix?: string
+  sourcePointer: string
+  sourceTools: string[]
+  tool: string
+}
+export type TraceAssertion = {
+  maxCount?: number
+  minCount: number
+  statuses: number[]
+  tools: string[]
 }
 
 export type EvalCase = {
-  id: string
+  allowedWriteTools?: string[]
+  argumentPredicates: ArgumentPredicate[]
+  bindings?: Binding[]
   domain: string
-  family: string
-  split: "tuning" | "holdout"
-  // `string`, not `Locale`: `MultilingualEvalCase` (cases-multilingual.ts)
-  // reuses this shape with its own closed locale set instead of widening
-  // `Locale` itself, which would force a translation onto all 46 families
-  // below. `materializeCases()` still only ever assigns a `Locale` value.
-  locale: string
-  prompt: string
-  now: string
-  timezone: string
   expectedOutcome: ExpectedOutcome
   expectedTools: string[]
-  argumentPredicates: ArgumentPredicate[]
+  finalAssertions?: {
+    includesAll?: string[]
+    includesAny?: string[]
+    numbers?: number[]
+  }
   forbiddenTools: string[]
+  family: string
+  id: string
+  locale: string
+  maxSteps?: number
+  now: string
+  prompt: string
+  searchQueries?: Array<{ expectedTools: string[]; query: string }>
+  sequence?: string[][]
+  split: "tuning" | "holdout"
+  stateAssertions?: StateAssertion[]
+  timezone: string
+  traceAssertions?: TraceAssertion[]
+  writeAssertions?: WriteAssertion[]
 }
 
 type CaseFamily = Omit<
   EvalCase,
-  "id" | "locale" | "prompt" | "now" | "timezone" | "split"
-> & { prompts: Record<Locale, string> }
+  | "argumentPredicates"
+  | "id"
+  | "locale"
+  | "prompt"
+  | "now"
+  | "sequence"
+  | "timezone"
+  | "split"
+> & {
+  argumentPredicates: LegacyArgumentPredicate[]
+  prompts: Record<Locale, string>
+  sequence?: string[]
+}
 
 const variants: readonly Locale[] = [
   "vi",
@@ -776,21 +818,26 @@ const families: CaseFamily[] = [
   }),
 ]
 
-const splitFor = (family: string): "tuning" | "holdout" => {
-  const byte = createHash("sha256").update(`${EVAL_SEED}:${family}`).digest()[0]
+const splitFor = (family: string, seed: number): "tuning" | "holdout" => {
+  const byte = createHash("sha256").update(`${seed}:${family}`).digest()[0]
   return byte % 4 === 0 ? "holdout" : "tuning"
 }
 
-export const materializeCases = (): EvalCase[] =>
-  families.flatMap((definition) =>
+export const materializeCases = (seed = EVAL_SEED): EvalCase[] =>
+  families.flatMap(({ argumentPredicates, sequence, ...definition }) =>
     variants.map((locale) => ({
       ...definition,
+      argumentPredicates: argumentPredicates.map((predicate) => ({
+        ...predicate,
+        tools: definition.expectedTools,
+      })),
       id: `${definition.family}-${locale}`,
       locale,
-      prompt: definition.prompts[locale],
       now: EVAL_TIME,
+      prompt: definition.prompts[locale],
+      sequence: sequence?.map((tool) => [tool]),
+      split: splitFor(definition.family, seed),
       timezone: EVAL_TIMEZONE,
-      split: splitFor(definition.family),
     })),
   )
 

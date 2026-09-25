@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import {
+  appendFile,
   cp,
   lstat,
   mkdir,
@@ -13,13 +14,13 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { generateText, jsonSchema, stepCountIs, type ToolSet, tool } from "ai"
+import { toSnakeCase } from "../src/openapi-loader"
 import {
   corpusHash,
   EVAL_SEED,
   type EvalCase,
   type ExposureMode,
   materializeCases,
-  safetyCases,
 } from "./cases"
 import { materializeMultilingualCases } from "./cases-multilingual"
 import {
@@ -28,7 +29,12 @@ import {
   gradeEpisode,
   type ModelToolCall,
 } from "./grade"
-import { createSandbox, type HttpTrace } from "./sandbox"
+import {
+  assertComparableManifests,
+  type EvalManifest,
+  validateCaseCoverage,
+} from "./run-contract"
+import { createSandbox, fixtureOperationIds, type HttpTrace } from "./sandbox"
 
 type ExposurePlan = ExposureMode | "both"
 type CorpusName = "business" | "multilingual"
@@ -39,6 +45,7 @@ type RunOptions = {
   out: string
   phase: "baseline" | "candidate" | "smoke"
   models: string[]
+  repeat: number
   seed: number
   exposure: ExposurePlan
   corpus: CorpusName
@@ -56,10 +63,13 @@ type CliOptions = RunOptions | CompareOptions
 
 type ParsedRunOptions = Omit<
   RunOptions,
-  "caseIds" | "mode" | "out" | "phase" | "serverSource" | "spec"
+  "caseIds" | "mode" | "out" | "phase" | "repeat" | "serverSource" | "spec"
 > &
   Partial<
-    Pick<RunOptions, "caseIds" | "out" | "phase" | "serverSource" | "spec">
+    Pick<
+      RunOptions,
+      "caseIds" | "out" | "phase" | "repeat" | "serverSource" | "spec"
+    >
   >
 
 type McpTool = {
@@ -80,25 +90,17 @@ type Episode = {
   model: string
   modelTools: ModelToolCall[]
   providerError?: string
+  repeat: number
   searchRank: number | null
+  stepExhausted: boolean
   unknownToolCount: number
   usage?: unknown
 }
 
-type Manifest = {
-  corpusHash: string
-  generatedAt: string
-  instructionsHash: string
-  modelIds: string[]
-  phase: string
-  seed: number
-  sourceHash: string
-  specHash: string
-  runtimeSpecHash: string
-}
+type Manifest = EvalManifest
 
 const usage =
-  "Usage:\n  pnpm --filter chatbotx-mcp eval:business --spec <absolute-json-path> --out <absolute-directory> --phase baseline|candidate|smoke --seed 20260923 --models gpt-4o-mini,gpt-4.1-mini [--cases family-a,family-b] [--server-source <absolute-directory>] [--exposure default|meta-only|both] [--corpus business|multilingual]\n  pnpm --filter chatbotx-mcp eval:business --compare <baseline-directory> <candidate-directory>"
+  "Usage:\n  pnpm --filter chatbotx-mcp eval:business --spec <absolute-json-path> --out <absolute-directory> --phase baseline|candidate|smoke --seed 20260923 --models gpt-4o-mini,gpt-4.1-mini [--repeat N] [--cases family-a,family-b] [--server-source <absolute-directory>] [--exposure default|meta-only|both] [--corpus business|multilingual]\n  pnpm --filter chatbotx-mcp eval:business --compare <baseline-directory> <candidate-directory>"
 
 const parseArgs = (args: string[]): CliOptions => {
   let compare: CompareOptions | undefined
@@ -141,6 +143,12 @@ const parseArgs = (args: string[]): CliOptions => {
       options.seed = seed
     } else if (argument === "--models") {
       options.models = value.split(",").filter(Boolean)
+    } else if (argument === "--repeat") {
+      const repeat = Number(value)
+      if (!Number.isSafeInteger(repeat) || repeat < 1) {
+        throw new Error(`${usage}\n--repeat must be a positive integer.`)
+      }
+      options.repeat = repeat
     } else if (argument === "--cases") {
       options.caseIds = value.split(",").filter(Boolean)
     } else if (argument === "--server-source") {
@@ -183,6 +191,7 @@ const parseArgs = (args: string[]): CliOptions => {
     models: options.models,
     out: options.out,
     phase: options.phase,
+    repeat: options.repeat ?? (options.phase === "smoke" ? 3 : 1),
     seed: options.seed,
     serverSource: options.serverSource,
     spec: options.spec,
@@ -210,7 +219,7 @@ const snapshotServer = async (
   out: string,
   sourceOverride?: string,
 ): Promise<{ source: string; sourceHash: string }> => {
-  const source = sourceOverride ?? resolve("apps/mcp-server")
+  const source = sourceOverride ?? resolve(import.meta.dirname, "..")
   const target = join(out, "server-source")
   await mkdir(target, { recursive: true })
   const sourceRoot = join(source, "src")
@@ -310,6 +319,7 @@ const safeClose = async (close?: () => Promise<void>): Promise<void> => {
   }
 }
 
+const DEFAULT_MAX_STEPS = 20
 const MAX_TOOL_CALLS_PER_EPISODE = 20
 
 const buildTools = (
@@ -379,16 +389,23 @@ const unknownToolCount = (calls: ModelToolCall[]): number =>
 const evaluateCase = async (props: {
   evalCase: EvalCase
   modelId: string
+  repeat: number
   serverSource: string
   spec: Record<string, unknown>
   exposure: ExposureMode
 }): Promise<Episode> => {
   const started = performance.now()
-  const sandbox = await createSandbox(props.spec)
+  const sandbox = await createSandbox(props.spec, {
+    now: props.evalCase.now,
+    scenario: props.evalCase.family,
+  })
+  const beforeState = sandbox.snapshot()
+  let afterState = beforeState
   const calls: ModelToolCall[] = []
   let clientHandle: McpClientHandle | undefined
   let final = ""
   let providerError: string | undefined
+  let stepExhausted = false
   let usage: unknown
   let instructionsHash: string | null = null
   try {
@@ -402,21 +419,24 @@ const evaluateCase = async (props: {
       calls,
       props.exposure,
     )
+    const maxSteps = props.evalCase.maxSteps ?? DEFAULT_MAX_STEPS
     const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY })
     const result = await generateText({
-      model: openai(props.modelId),
-      system: `${instructions}\nCurrent time: ${props.evalCase.now}. Timezone: ${props.evalCase.timezone}.`,
-      prompt: props.evalCase.prompt,
-      tools,
-      stopWhen: stepCountIs(10),
       abortSignal: AbortSignal.timeout(120_000),
+      model: openai(props.modelId),
+      prompt: props.evalCase.prompt,
       providerOptions: { openai: { parallelToolCalls: false } },
+      stopWhen: stepCountIs(maxSteps),
+      system: `${instructions}\nCurrent time: ${props.evalCase.now}. Timezone: ${props.evalCase.timezone}.`,
+      tools,
     })
     final = result.text
+    stepExhausted = result.steps.length >= maxSteps && final.trim().length === 0
     usage = result.usage
   } catch (error) {
     providerError = error instanceof Error ? error.message : String(error)
   } finally {
+    afterState = sandbox.snapshot()
     await safeClose(clientHandle?.close)
     await safeClose(sandbox.close)
   }
@@ -426,19 +446,24 @@ const evaluateCase = async (props: {
     elapsedMs: Math.round(performance.now() - started),
     exposure: props.exposure,
     final,
-    grading: gradeEpisode(
-      props.evalCase,
+    grading: gradeEpisode({
+      afterState,
+      beforeState,
       calls,
-      sandbox.traces,
+      evalCase: props.evalCase,
       final,
+      http: sandbox.traces,
       providerError,
-    ),
+      stepExhausted,
+    }),
     http: sandbox.traces,
     model: props.modelId,
     instructionsHash,
     modelTools: calls,
     providerError,
+    repeat: props.repeat,
     searchRank: firstSearchRank(calls, props.evalCase.expectedTools),
+    stepExhausted,
     unknownToolCount: unknownToolCount(calls),
     usage,
   }
@@ -453,7 +478,7 @@ const summary = (episodes: Episode[]) => {
   const grouped = Object.groupBy(
     episodes,
     (episode) =>
-      `${episode.model}:${episode.exposure}:${episode.case.split}:${episode.case.domain}`,
+      `${episode.model}:${episode.exposure}:${episode.case.locale}:${episode.case.family}`,
   )
   return Object.fromEntries(
     Object.entries(grouped).map(([key, group]) => {
@@ -498,10 +523,17 @@ const runComparison = async (
   baselineDirectory: string,
   candidateDirectory: string,
 ): Promise<void> => {
-  const [baseline, candidate] = await Promise.all([
-    readFile(join(baselineDirectory, "episodes.jsonl"), "utf8"),
-    readFile(join(candidateDirectory, "episodes.jsonl"), "utf8"),
-  ])
+  const [baseline, candidate, baselineManifest, candidateManifest] =
+    await Promise.all([
+      readFile(join(baselineDirectory, "episodes.jsonl"), "utf8"),
+      readFile(join(candidateDirectory, "episodes.jsonl"), "utf8"),
+      readFile(join(baselineDirectory, "manifest.json"), "utf8"),
+      readFile(join(candidateDirectory, "manifest.json"), "utf8"),
+    ])
+  assertComparableManifests(
+    JSON.parse(baselineManifest) as EvalManifest,
+    JSON.parse(candidateManifest) as EvalManifest,
+  )
   const parse = (lines: string) =>
     lines
       .trim()
@@ -510,7 +542,8 @@ const runComparison = async (
       .map((line) => JSON.parse(line) as Episode)
   const baselineRows = parse(baseline)
   const candidateRows = parse(candidate)
-  const key = (row: Episode) => `${row.model}:${row.exposure}:${row.case.id}`
+  const key = (row: Episode) =>
+    `${row.model}:${row.exposure}:${row.case.id}:${row.repeat}`
   const baselineByKey = new Map(baselineRows.map((row) => [key(row), row]))
   const comparison = candidateRows.map((row) => {
     const baselineRow = baselineByKey.get(key(row))
@@ -578,62 +611,84 @@ const main = async (): Promise<void> => {
   const originalSpec = JSON.parse(specText) as Record<string, unknown>
   const cases =
     options.corpus === "multilingual"
-      ? materializeMultilingualCases()
-      : materializeCases()
+      ? materializeMultilingualCases(options.seed)
+      : materializeCases(options.seed)
   const selected = options.caseIds
     ? cases.filter((evalCase) => options.caseIds?.includes(evalCase.family))
     : cases
   if (selected.length === 0) {
     throw new Error("No operations selected by --cases.")
   }
+  const fixtureOperations = fixtureOperationIds()
+  const catalogOperations = new Set(
+    Object.values(
+      (originalSpec.paths ?? {}) as Record<
+        string,
+        Record<string, { operationId?: string }>
+      >,
+    )
+      .flatMap((methods) => Object.values(methods))
+      .flatMap((operation) =>
+        operation.operationId ? [toSnakeCase(operation.operationId)] : [],
+      ),
+  )
+  const coverageFailures = validateCaseCoverage(
+    selected,
+    catalogOperations,
+    fixtureOperations,
+  )
+  if (coverageFailures.length > 0) {
+    throw new Error(
+      `Evaluation coverage failed:\n${coverageFailures.join("\n")}`,
+    )
+  }
   await ensureFreshOutput(options.out)
   const snapshot = await snapshotServer(options.out, options.serverSource)
+  const exposures: ExposureMode[] =
+    options.exposure === "both" ? ["default", "meta-only"] : [options.exposure]
   const manifest: Manifest = {
     corpusHash: corpusHash(cases),
+    exposures,
+    fixtureOperations: [...fixtureOperations].sort(),
     generatedAt: new Date().toISOString(),
+    harnessHash: sha256(
+      await Promise.all([
+        readFile(resolve(import.meta.dirname, "cases.ts"), "utf8"),
+        readFile(resolve(import.meta.dirname, "cases-multilingual.ts"), "utf8"),
+        readFile(resolve(import.meta.dirname, "grade.ts"), "utf8"),
+        readFile(resolve(import.meta.dirname, "sandbox.ts"), "utf8"),
+        readFile(resolve(import.meta.dirname, "run.ts"), "utf8"),
+      ]).then((files) => files.join("\n")),
+    ),
     instructionsHash: "pending",
     modelIds: options.models,
     phase: options.phase,
+    repeat: options.repeat,
+    runtimeSpecHash: sha256(JSON.stringify(originalSpec)),
     seed: options.seed,
+    selectedCaseIds: selected.map((evalCase) => evalCase.id).sort(),
     sourceHash: snapshot.sourceHash,
     specHash: sha256(specText),
-    runtimeSpecHash: sha256(JSON.stringify(originalSpec)),
   }
   await writeJson(join(options.out, "cases.json"), selected)
-  const exposures: ExposureMode[] =
-    options.exposure === "both" ? ["default", "meta-only"] : [options.exposure]
+  await writeJson(join(options.out, "manifest.json"), manifest)
+  const episodesPath = join(options.out, "episodes.jsonl")
   const episodes: Episode[] = []
   for (const modelId of options.models) {
     for (const exposure of exposures) {
       for (const evalCase of selected) {
-        episodes.push(
-          await evaluateCase({
+        for (let repeat = 1; repeat <= options.repeat; repeat += 1) {
+          const episode = await evaluateCase({
             evalCase,
-            modelId,
-            serverSource: snapshot.source,
-            spec: originalSpec,
             exposure,
-          }),
-        )
-      }
-    }
-    // `safetyCases` targets `cases.ts`'s "vi" locale specifically; the
-    // multilingual probe corpus (`cases-multilingual.ts`) has no such
-    // locale and exists purely for the per-locale search/tool-selection
-    // comparison, not the repeated-safety-case check.
-    const safety =
-      options.corpus === "multilingual" ? [] : safetyCases(selected)
-    for (const evalCase of safety) {
-      for (let repeat = 0; repeat < 3; repeat += 1) {
-        episodes.push(
-          await evaluateCase({
-            evalCase,
             modelId,
+            repeat,
             serverSource: snapshot.source,
             spec: originalSpec,
-            exposure: "default",
-          }),
-        )
+          })
+          episodes.push(episode)
+          await appendFile(episodesPath, `${JSON.stringify(episode)}\n`, "utf8")
+        }
       }
     }
   }
@@ -645,11 +700,6 @@ const main = async (): Promise<void> => {
       .join(","),
   )
   await writeJson(join(options.out, "manifest.json"), manifest)
-  await writeFile(
-    join(options.out, "episodes.jsonl"),
-    `${episodes.map((episode) => JSON.stringify(episode)).join("\n")}\n`,
-    "utf8",
-  )
   await writeJson(join(options.out, "summary.json"), summary(episodes))
   const infrastructure = episodes.filter(
     (episode) => episode.grading.status === "infrastructure",

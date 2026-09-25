@@ -50,6 +50,8 @@
   },
   "devDependencies": {
     "@ai-sdk/openai": "^3.0.54",
+    "@chatbotx.io/flow-config": "workspace:*",
+    "@orpc/zod": "^1.14.0",
     "@types/node": "24.x",
     "ai": "^6.0.170",
     "dotenv-cli": "^11.0.0",
