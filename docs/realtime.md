@@ -340,71 +340,14 @@ re-exported from `apps/builder/src/lib/auth/permission-routes.ts`) rather
 than a conversation-aware service call; P2's fuller `CALL_ELIGIBILITY_RULES`
 replaces it.
 
-### Safe deploy order & rolling-deploy token compatibility (round-2 review, 2026-09-18)
+### Purpose-bound realtime tokens
 
-`verifyRealtimeToken` (`packages/partysocket-config/src/auth.ts`) rejects a
-token whose `purpose` claim does not match the purpose being verified —
-this is what stops a broadcast token from being replayed against the
-presence-report route or vice versa (MEDIUM-3). Taken literally, that also
-means a token minted by a NOT-yet-updated process — one still running code
-from before the `purpose` claim was introduced, i.e. production `main`
-before this branch — carries NO `purpose` claim at all and would fail
-verification outright. `apps/builder` and `apps/worker` are the only two
-processes that ever mint a `broadcast`-purpose token
-(`packages/partysocket-config/src/lib.ts`), so during any deploy where
-`apps/realtime` finishes rolling out before they do, EVERY inbound
-broadcast request to `apps/realtime` — including WhatsApp call
-ring/answer/ended events — would 401 for the whole rollout window.
-
-**There is no enforced or documented ordering that would make this
-unnecessary.** `scripts/deployment/upgrade.sh` stops and starts
-`builder worker realtime` as one undifferentiated group
-(`docker compose ... down builder worker realtime`, then
-`up -d builder worker realtime`); Docker Compose gives no ordering
-guarantee across services started in the same command, and any real
-staggered/rolling deploy (blue-green, k8s rolling update, etc.) can land in
-either order. Operators SHOULD still prefer rolling `apps/builder` and
-`apps/worker` out before `apps/realtime` where their deployment tooling
-allows it — it shortens how long the compatibility window below is
-actually exercised — but the code cannot assume this happens.
-
-**The fix is a narrow, self-closing compatibility window**, not a blanket
-exception:
-- Only `verifyBroadcastRequest` (`apps/realtime/src/lib/realtime-auth.ts`)
-  passes `{ allowLegacyMissingPurpose: true }` to `verifyRealtimeToken`. A
-  token with NO `purpose` claim verifies as if it matched, but a token
-  carrying the WRONG purpose is still rejected unconditionally.
-- `verifyMemberConnectToken` (the `onBeforeConnect` websocket-upgrade path)
-  and the presence-report route deliberately do NOT get this exception.
-  Both the `member-connect` and `presence-report` purposes are brand new to
-  this branch — production `main` never minted a JWT for either (the old
-  `onBeforeConnect` authenticated via a session cookie, `getAuthSession`,
-  not a JWT at all) — so no purpose-less token of either kind can ever
-  legitimately exist. Granting the exception there too would have been a
-  privilege escalation: `verifyMemberConnectToken` and `verifyBroadcastRequest`
-  bind to the IDENTICAL `workspace:<id>` audience shape for the same room
-  and the same shared `REALTIME_BROADCAST_SECRET`, so a purpose-less
-  member-connect token (had the exception applied there) could have been
-  replayed as a broadcast-authorized request — able to `room.broadcast`,
-  target-send, or revoke connections — a capability a plain per-member
-  connect token was never meant to carry.
-- The window is self-closing on wall-clock time, independent of any single
-  token's own `iat`/`exp`: `LEGACY_PURPOSE_WINDOW_CUTOFF`
-  (`packages/partysocket-config/src/auth.ts`), currently
-  `2026-09-25T00:00:00.000Z` (one week after this change), is checked on
-  every verification — once `Date.now()` passes it, the exception stops
-  being granted at all, regardless of `allowLegacyMissingPurpose`. This
-  guards against a stuck/zombie old-code pod that stays up far longer than
-  an ordinary rolling deploy and keeps minting fresh purpose-less tokens
-  indefinitely; an individual captured token is separately bounded to its
-  own 60s TTL either way.
-
-**Follow-up (tracked, not yet done):** once a full production rollout has
-gone out with the `purpose` claim in place (so no process can still be
-minting purpose-less broadcast tokens), remove
-`allowLegacyMissingPurpose`/`VerifyRealtimeTokenOptions` and
-`LEGACY_PURPOSE_WINDOW_CUTOFF` entirely, and make `verifyBroadcastRequest`
-strict like the other two paths.
+Every realtime token includes a `purpose` claim and
+`verifyRealtimeToken` (`packages/partysocket-config/src/auth.ts`) requires
+it to exactly match the requested operation. This prevents replay between
+the broadcast, member-connect, and presence-report paths, including the
+broadcast and member-connect paths that share a `workspace:<id>` audience
+and `REALTIME_BROADCAST_SECRET`.
 
 ### §3.3 connection-count load test — result
 
