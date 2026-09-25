@@ -32,8 +32,8 @@ import {
   type CreateMessageInput,
   contactInboxRepository,
   createMessageRepository,
-  type MessageWithAttachments,
   type IMessageRepository,
+  type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import {
   CONTACT_INBOX_SOURCE_ID_KEY,
