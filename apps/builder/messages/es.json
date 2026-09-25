@@ -886,6 +886,7 @@
     "deleteConfirmation": "¿Estás completamente seguro?\nEsta acción no se puede deshacer.\nSe eliminará permanentemente tu {feature} de nuestros servidores."
   },
   "fields": {
+    "optionalHint": "(opcional)",
     "marketingMessagesConfigId": {
       "label": "ID de configuración de Mensajes de marketing",
       "description": "ID de configuración de Facebook Login for Business que se usa para solicitar el permiso marketing_messages_messenger."

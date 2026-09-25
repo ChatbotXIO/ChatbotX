@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "../ui/form"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
+import { useFormOptionalLabel } from "./optional-label-context"
 
 type FormFieldWrapperProps<T extends FieldValues> = {
   name: FieldPath<T>
@@ -50,6 +51,7 @@ export function FormFieldWrapper<T extends FieldValues>({
   children,
 }: FormFieldWrapperProps<T>) {
   const { control } = useFormContext()
+  const optionalLabel = useFormOptionalLabel()
 
   return (
     <FormField
@@ -62,7 +64,7 @@ export function FormFieldWrapper<T extends FieldValues>({
               {label}
               {!required && (
                 <span className="self-start font-normal text-xxs">
-                  (optional)
+                  {optionalLabel}
                 </span>
               )}
               {description && descriptionType === "tooltip" ? (

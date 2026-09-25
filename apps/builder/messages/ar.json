@@ -886,6 +886,7 @@
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا."
   },
   "fields": {
+    "optionalHint": "(اختياري)",
     "marketingMessagesConfigId": {
       "label": "معرّف تكوين الرسائل التسويقية",
       "description": "معرّف تكوين تسجيل الدخول من فيسبوك للأعمال المستخدم لطلب صلاحية marketing_messages_messenger."

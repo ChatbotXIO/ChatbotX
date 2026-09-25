@@ -1623,6 +1623,7 @@
     "dashboardCta": "在广告仪表盘中查看"
   },
   "fields": {
+    "optionalHint": "(可选)",
     "marketingMessagesConfigId": {
       "label": "营销消息配置 ID",
       "description": "用于请求 marketing_messages_messenger 权限的“Facebook 商务登录”配置 ID。"

@@ -886,6 +886,7 @@
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers."
   },
   "fields": {
+    "optionalHint": "(optional)",
     "marketingMessagesConfigId": {
       "label": "Marketing Messages Config ID",
       "description": "Facebook Login for Business configuration ID used to request the marketing_messages_messenger permission."

@@ -886,6 +886,7 @@
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir."
   },
   "fields": {
+    "optionalHint": "(isteğe bağlı)",
     "marketingMessagesConfigId": {
       "label": "Pazarlama Mesajları Yapılandırma Kimliği",
       "description": "marketing_messages_messenger iznini istemek için kullanılan Facebook Login for Business yapılandırma kimliği."

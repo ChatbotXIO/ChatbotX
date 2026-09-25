@@ -1,5 +1,6 @@
 {
   "fields": {
+    "optionalHint": "(facoltativo)",
     "marketingMessagesConfigId": {
       "label": "ID configurazione Messaggi di marketing",
       "description": "ID configurazione di Facebook Login for Business utilizzato per richiedere l'autorizzazione marketing_messages_messenger."

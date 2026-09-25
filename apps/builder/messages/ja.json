@@ -744,6 +744,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(任意)",
     "marketingMessagesConfigId": {
       "label": "マーケティングメッセージ構成ID",
       "description": "marketing_messages_messenger権限をリクエストするために使用するFacebookログイン（ビジネス用）の構成IDです。"

@@ -1570,6 +1570,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(opțional)",
     "marketingMessagesConfigId": {
       "label": "ID de configurare pentru Mesaje de marketing",
       "description": "ID-ul de configurare Facebook Login for Business folosit pentru a solicita permisiunea marketing_messages_messenger."

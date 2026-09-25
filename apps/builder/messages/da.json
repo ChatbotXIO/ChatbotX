@@ -744,6 +744,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(valgfri)",
     "marketingMessagesConfigId": {
       "label": "Konfigurations-ID for marketingbeskeder",
       "description": "Konfigurations-ID til Facebook Login for Business, der bruges til at anmode om tilladelsen marketing_messages_messenger."
