@@ -5,6 +5,7 @@ const updateWhere = vi.fn()
 const findFirstBroadcast = vi.fn()
 const mockDispatchAuditRecord = vi.fn().mockResolvedValue(undefined)
 const selectForUpdate = vi.fn()
+const selectProjection = vi.fn()
 const transaction = vi.fn()
 
 const update = (table: unknown) => ({
@@ -20,13 +21,16 @@ const update = (table: unknown) => ({
 
 const txMock = {
   update,
-  select: () => ({
-    from: () => ({
-      where: () => ({
-        for: () => ({ limit: () => selectForUpdate() }),
+  select: (projection: Record<string, unknown>) => {
+    selectProjection(projection)
+    return {
+      from: () => ({
+        where: () => ({
+          for: () => ({ limit: () => selectForUpdate() }),
+        }),
       }),
-    }),
-  }),
+    }
+  },
 }
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -188,6 +192,7 @@ beforeEach(() => {
   updateWhere.mockReset()
   findFirstBroadcast.mockReset()
   selectForUpdate.mockReset()
+  selectProjection.mockReset()
   transaction
     .mockReset()
     .mockImplementation(
@@ -495,6 +500,50 @@ describe("broadcastService.resumeSending", () => {
     ).rejects.toThrow("active slot limited")
 
     expect(updateReturning).not.toHaveBeenCalled()
+  })
+
+  test("locks a restricted stopped row before the workspace lock and writes last", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: null },
+    ])
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    const lockOrder = vi.mocked(broadcastPlanPolicyService.lockActivation).mock
+      .invocationCallOrder[0]
+    expect(selectForUpdate.mock.invocationCallOrder[0]).toBeLessThan(lockOrder)
+    expect(lockOrder).toBeLessThan(updateReturning.mock.invocationCallOrder[0])
+  })
+
+  test("locks only the columns a restricted resume reads", async () => {
+    vi.mocked(broadcastPlanPolicyService.hasRestrictions).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    selectForUpdate.mockResolvedValue([
+      { id: "b-1", channel: "messenger", sendRatePerMinute: null },
+    ])
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    expect(selectProjection).toHaveBeenCalledTimes(1)
+    expect(Object.keys(selectProjection.mock.calls[0][0]).sort()).toEqual([
+      "channel",
+      "id",
+      "sendRatePerMinute",
+    ])
   })
 
   test("stores 60 when a restricted blank-rate resume succeeds", async () => {
