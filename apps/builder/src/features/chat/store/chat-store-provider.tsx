@@ -1,6 +1,12 @@
 "use client"
 
-import { createContext, type ReactNode, useContext, useRef } from "react"
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+} from "react"
 import { useStore } from "zustand"
 import {
   type ChatStore,
@@ -27,6 +33,8 @@ export const ChatStoreProvider = ({
   if (!storeRef.current) {
     storeRef.current = createChatStore(initialState)
   }
+
+  useEffect(() => () => storeRef.current?.getState().dispose(), [])
 
   return (
     <ChatStoreContext.Provider value={storeRef.current}>

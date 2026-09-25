@@ -616,6 +616,63 @@ describe("chat store conversation updates", () => {
     expect(store.getState().conversations).toEqual([fetched, duplicate])
   })
 
+  test("head refresh preserves newer realtime state that arrives while it is in flight", async () => {
+    const store = createChatStore()
+    const existing = makeConversation(
+      "conv-existing",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const staleSnapshot = {
+      ...existing,
+      messages: [
+        makeMessage("conv-existing", new Date("2026-01-01T00:00:00Z")),
+      ],
+    }
+    const fetched = makeConversation(
+      "conv-new",
+      new Date("2026-01-01T02:00:00Z"),
+    )
+    let resolveHeadRefresh: (result: { data: TestConversation[] }) => void =
+      () => undefined
+    mockListConversationsByPOSTAuthenticatedAPI.mockImplementation(
+      () =>
+        new Promise<{ data: TestConversation[] }>((resolve) => {
+          resolveHeadRefresh = resolve
+        }),
+    )
+    store.setState({ conversations: [existing] as never })
+
+    store
+      .getState()
+      .updateConversationViaMessage(
+        makeMessage("conv-new", new Date("2026-01-02T00:00:00Z")) as never,
+      )
+    await vi.waitFor(() =>
+      expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
+        1,
+      ),
+    )
+
+    const realtimeMessage = makeMessage(
+      "conv-existing",
+      new Date("2026-01-03T00:00:00Z"),
+    )
+    store.getState().handleNewMessage(realtimeMessage as never)
+    resolveHeadRefresh({ data: [staleSnapshot, fetched] })
+
+    await vi.waitFor(() =>
+      expect(store.getState().conversations.map((item) => item.id)).toEqual([
+        "conv-existing",
+        "conv-new",
+      ]),
+    )
+    expect(store.getState().conversations[0]).toMatchObject({
+      id: "conv-existing",
+      lastActivityAt: realtimeMessage.createdAt,
+      messages: [realtimeMessage],
+    })
+  })
+
   test("missing conversation updates run one trailing head refresh after the throttle window", async () => {
     vi.useFakeTimers()
     try {
@@ -645,6 +702,45 @@ describe("chat store conversation updates", () => {
       await vi.advanceTimersByTimeAsync(1)
       expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
         2,
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("dispose cancels a queued head refresh", async () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date("2026-01-02T00:00:00Z"))
+      let resolveInitialRefresh: (result: {
+        data: TestConversation[]
+      }) => void = () => undefined
+      mockListConversationsByPOSTAuthenticatedAPI.mockImplementationOnce(
+        () =>
+          new Promise<{ data: TestConversation[] }>((resolve) => {
+            resolveInitialRefresh = resolve
+          }),
+      )
+      const store = createChatStore()
+
+      store
+        .getState()
+        .updateConversationViaMessage(
+          makeMessage("conv-new-1", new Date("2026-01-02T00:00:00Z")) as never,
+        )
+      store
+        .getState()
+        .updateConversationViaMessage(
+          makeMessage("conv-new-2", new Date("2026-01-02T00:00:01Z")) as never,
+        )
+      resolveInitialRefresh({ data: [] })
+      await Promise.resolve()
+
+      store.getState().dispose()
+      await vi.advanceTimersByTimeAsync(5000)
+
+      expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
+        1,
       )
     } finally {
       vi.useRealTimers()

@@ -166,6 +166,7 @@ export type ChatActions = {
   prependConversation: (newConversation: ListConversationItemResource) => void
   scheduleConversationHeadRefresh: (workspaceId: string) => void
   flushPendingConversationHeadRefresh: () => void
+  dispose: () => void
   initActiveConversationFromUrl: (workspaceId: string) => Promise<void>
   /**
    * Opens a conversation by id, fetching and prepending it if not loaded. If
@@ -308,6 +309,22 @@ const latestActivityAt = <T extends Date | string>(
     ? current
     : incoming
 
+const hasLaterActivityAt = (
+  current: Date | string | null | undefined,
+  incoming: Date | string | null | undefined,
+) => {
+  if (!current) {
+    return false
+  }
+  if (!incoming) {
+    return true
+  }
+  return (
+    new Date(latestActivityAt(current, incoming)).getTime() >
+    new Date(incoming).getTime()
+  )
+}
+
 const hasConversationIdInUrl = () =>
   !!new URLSearchParams(
     typeof window === "undefined" ? "" : window.location.search,
@@ -446,11 +463,11 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   // A closure variable rather than store state since it's only read/written
   // inside openConversation and never rendered.
   let pendingOpenConversationId: string | null = null
-  let lastConversationHeadRefreshAt = Number.NEGATIVE_INFINITY
-  let conversationHeadRefreshInFlight: Promise<void> | null = null
   const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => {
+    let lastConversationHeadRefreshAt = Number.NEGATIVE_INFINITY
+    let conversationHeadRefreshInFlight: Promise<void> | null = null
     let pendingConversationHeadRefreshWorkspaceId: string | null = null
     let conversationHeadRefreshTimer: number | null = null
 
@@ -516,9 +533,32 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             const headConversationIds = new Set(
               headConversations.map((conversation) => conversation.id),
             )
+            const conversationsById = new Map(
+              state.conversations.map((conversation) => [
+                conversation.id,
+                conversation,
+              ]),
+            )
+            const refreshedConversations = headConversations.map(
+              (headConversation) => {
+                const currentConversation = conversationsById.get(
+                  headConversation.id,
+                )
+                if (!currentConversation) {
+                  return headConversation
+                }
+
+                return hasLaterActivityAt(
+                  currentConversation.lastActivityAt,
+                  headConversation.lastActivityAt,
+                )
+                  ? currentConversation
+                  : headConversation
+              },
+            )
             return {
               conversations: [
-                ...headConversations,
+                ...refreshedConversations,
                 ...state.conversations.filter(
                   (conversation) => !headConversationIds.has(conversation.id),
                 ),
@@ -559,6 +599,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       },
 
       flushPendingConversationHeadRefresh,
+
+      dispose: () => {
+        if (conversationHeadRefreshTimer) {
+          clearTimeout(conversationHeadRefreshTimer)
+          conversationHeadRefreshTimer = null
+        }
+        pendingConversationHeadRefreshWorkspaceId = null
+      },
 
       initActiveConversationFromUrl: async (workspaceId: string) => {
         const urlParams = new URLSearchParams(
@@ -1062,10 +1110,11 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           return
         }
 
-        // Not loaded client-side — fetch and prepend it, mirroring
-        // updateConversationViaMessage's not-found branch. A lookup failure is a
-        // no-op: the ringing state still lives in the VoIP call store, so the
-        // dock and dialog keep working even if the list can't show the row.
+        // Not loaded client-side — fetch and prepend it. The message path
+        // schedules a head refresh for unseen rows; this call-specific path keeps
+        // the ringing conversation visible. A lookup failure is a no-op: the
+        // ringing state still lives in the VoIP call store, so the dock and dialog
+        // keep working even if the list can't show the row.
         try {
           const response =
             await client.conversationsAPI.findConversationAuthenticatedAPI({
