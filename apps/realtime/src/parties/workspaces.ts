@@ -3,7 +3,6 @@ import {
   type RealtimeEventEnvelope,
   RealtimeProtocol,
   type RealtimeTopic,
-  realtimeBatchEnvelopeSchema,
   realtimeEventEnvelopeSchema,
   realtimeProtocolSchema,
   realtimeSubscriptionMessageSchema,
@@ -14,6 +13,7 @@ import {
   presencePingMessageSchema,
 } from "@chatbotx.io/partysocket-config/presence"
 import type * as Party from "partykit/server"
+import { z } from "zod"
 import { env } from "../env"
 import { toUserConnectionTag } from "../lib/connection-tags"
 import { reportWorkspacePresence } from "../lib/presence-report"
@@ -28,6 +28,9 @@ const REVOKE_CLOSE_REASON = "Revoked"
 const PROTOCOL_QUERY_PARAM = "protocol"
 const PROTOCOL_HEADER = "X-Realtime-Protocol"
 const BATCH_HEADER = "X-Realtime-Batch"
+
+/** Batch body shape only; items are validated individually. */
+const realtimeBatchBodySchema = z.object({ batch: z.array(z.unknown()) })
 
 /** Re-exported so existing importers of this module keep working. */
 export { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/partysocket-config/presence"
@@ -70,26 +73,61 @@ const isWorkspaceRealtimeEvent = (
 ): event is WorkspaceRealtimeEvent =>
   Object.hasOwn(REALTIME_EVENT_TOPICS, event.eventType)
 
+type DroppedBatchItem = {
+  index: number
+  eventType: string | null
+}
+
+type ExtractedWorkspaceEvents = {
+  events: WorkspaceRealtimeEvent[]
+  dropped: DroppedBatchItem[]
+}
+
+const toDroppedBatchItem = (item: unknown, index: number): DroppedBatchItem => {
+  const eventType =
+    typeof item === "object" &&
+    item !== null &&
+    "eventType" in item &&
+    typeof item.eventType === "string"
+      ? item.eventType
+      : null
+  return { index, eventType }
+}
+
 /**
  * Extracts known event envelopes from a POST body: `{ batch: [...] }` under
  * `X-Realtime-Batch: 1`, otherwise the raw body is treated as a single event.
- * Returns `null` for malformed envelopes, including inherited event names.
+ * Batch items are validated one by one so a single malformed or unknown item
+ * is dropped (and reported in `dropped`) without discarding the valid events
+ * coalesced alongside it. Returns `null` when nothing deliverable remains,
+ * including inherited event names.
  */
 const extractWorkspaceEvents = (
   payload: unknown,
   isBatch: boolean,
-): WorkspaceRealtimeEvent[] | null => {
-  if (isBatch) {
-    const result = realtimeBatchEnvelopeSchema.safeParse(payload)
-    if (!result.success) {
-      return null
-    }
-    return result.data.batch.filter(isWorkspaceRealtimeEvent)
+): ExtractedWorkspaceEvents | null => {
+  if (!isBatch) {
+    const result = realtimeEventEnvelopeSchema.safeParse(payload)
+    return result.success && isWorkspaceRealtimeEvent(result.data)
+      ? { events: [result.data], dropped: [] }
+      : null
   }
-  const result = realtimeEventEnvelopeSchema.safeParse(payload)
-  return result.success && isWorkspaceRealtimeEvent(result.data)
-    ? [result.data]
-    : null
+
+  const result = realtimeBatchBodySchema.safeParse(payload)
+  if (!result.success) {
+    return null
+  }
+  const events: WorkspaceRealtimeEvent[] = []
+  const dropped: DroppedBatchItem[] = []
+  result.data.batch.forEach((item, index) => {
+    const parsed = realtimeEventEnvelopeSchema.safeParse(item)
+    if (parsed.success && isWorkspaceRealtimeEvent(parsed.data)) {
+      events.push(parsed.data)
+      return
+    }
+    dropped.push(toDroppedBatchItem(item, index))
+  })
+  return events.length > 0 ? { events, dropped } : null
 }
 
 export default class WorkspaceParty implements Party.Server {
@@ -328,10 +366,25 @@ export default class WorkspaceParty implements Party.Server {
 
     const payload: unknown = await req.json()
     const isBatch = req.headers.get(BATCH_HEADER) === "1"
-    const events = extractWorkspaceEvents(payload, isBatch)
-    if (!events) {
+    const extracted = extractWorkspaceEvents(payload, isBatch)
+    if (!extracted) {
+      logger.warn(
+        { workspaceId: this.room.id, isBatch },
+        "Rejected realtime broadcast with no deliverable events",
+      )
       return new Response("Bad Request", { status: 400 })
     }
+    if (extracted.dropped.length > 0) {
+      logger.warn(
+        {
+          workspaceId: this.room.id,
+          dropped: extracted.dropped,
+          delivered: extracted.events.length,
+        },
+        "Dropped malformed or unknown events from realtime broadcast batch",
+      )
+    }
+    const { events } = extracted
 
     const connections =
       targetUserId === null

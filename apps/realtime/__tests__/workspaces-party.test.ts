@@ -21,6 +21,7 @@ vi.mock("../src/lib/presence-report", () => ({
   reportWorkspacePresence: reportWorkspacePresenceMock,
 }))
 
+import { logger } from "../src/logger"
 import WorkspaceParty, {
   PRESENCE_REPORT_INTERVAL_MS,
 } from "../src/parties/workspaces"
@@ -543,6 +544,37 @@ describe("WorkspaceParty#onRequest", () => {
     expect(connectionA1.sent).toEqual([])
     expect(connectionA2.sent).toEqual([])
     expect(connectionB1.sent).toEqual([JSON.stringify(chatEvent)])
+  })
+
+  it("drops only a malformed item from a batch, delivers the rest, and logs the drop", async () => {
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined)
+    const knownEvent = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+
+    const response = await party.onRequest(
+      postBatchRequest("/parties/workspaces/ws_1", [
+        { eventType: 42, data: {} },
+        knownEvent,
+        { eventType: "futureEvent", data: {} },
+      ]),
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ interested: 3 })
+    expect(connectionA1.sent).toEqual([JSON.stringify(knownEvent)])
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        delivered: 1,
+        dropped: [
+          { index: 0, eventType: null },
+          { index: 2, eventType: "futureEvent" },
+        ],
+      }),
+      expect.any(String),
+    )
+    warnSpy.mockRestore()
   })
 
   it("rejects a malformed batch envelope with 400 Bad Request", async () => {
