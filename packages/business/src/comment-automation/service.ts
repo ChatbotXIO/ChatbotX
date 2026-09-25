@@ -30,7 +30,8 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
+import { flowService } from "../flow/service"
 import { resolveFolderIdFilter } from "../lib/folder-filter"
 import { assertDeletable } from "../template/installed-resource.service"
 
@@ -543,10 +544,52 @@ class CommentAutomationService extends BaseService {
     return { ...data, publicReply: normalizeReplyTexts(data.publicReply) }
   }
 
+  /**
+   * `AutomatedResponse` (Keywords) validates a `flowId` against
+   * `flowService.exists` before saving it (`automated-response/service.ts`);
+   * this table never did, for either reply field or any of its 8 write
+   * methods. The worker itself scopes the lookup to the triggering
+   * conversation's own workspace (`detectFlowVersion`,
+   * `apps/worker/src/lib/db.ts`) for BOTH `privateReply`
+   * (`private-reply.ts`) and `publicReply` (`public-reply.ts`) — a foreign
+   * flowId can never run cross-tenant, it just fails at delivery time with a
+   * bare `FlowVersion not found`, on an automation that otherwise looks
+   * active. Catching it at write time turns a silent dead automation into an
+   * immediate, actionable error. Structurally typed so it accepts every
+   * reply shape this table's channels use — Messenger/Instagram's
+   * `CommentReply`, and Threads/TikTok's channel-specific reply type (both
+   * fix `privateReply` to `{type: "none"}` and never let the caller set it,
+   * so only their `publicReply` needs covering).
+   */
+  private async assertFlowReplyExists(
+    workspaceId: string,
+    field: "privateReply" | "publicReply",
+    reply: { type: string; value: string | null } | null | undefined,
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    if (reply?.type !== "flow" || !reply.value) {
+      return
+    }
+    const exists = await flowService.exists(workspaceId, reply.value, tx)
+    if (!exists) {
+      throw validationException(field, "Flow not found")
+    }
+  }
+
   async createMessenger(input: {
     workspaceId: string
     data: FbCommentAutomationWriteData
   }): Promise<CommentAutomationModel> {
+    await this.assertFlowReplyExists(
+      input.workspaceId,
+      "privateReply",
+      input.data.privateReply,
+    )
+    await this.assertFlowReplyExists(
+      input.workspaceId,
+      "publicReply",
+      input.data.publicReply,
+    )
     const [created] = await db
       .insert(commentAutomationModel)
       .values({
@@ -564,6 +607,16 @@ class CommentAutomationService extends BaseService {
     data: Partial<FbCommentAutomationWriteData>,
   ): Promise<CommentAutomationModel> {
     await this.findMessengerOrFail(ctx)
+    await this.assertFlowReplyExists(
+      ctx.workspaceId,
+      "privateReply",
+      data.privateReply,
+    )
+    await this.assertFlowReplyExists(
+      ctx.workspaceId,
+      "publicReply",
+      data.publicReply,
+    )
 
     const [updated] = await db
       .update(commentAutomationModel)
@@ -650,6 +703,16 @@ class CommentAutomationService extends BaseService {
     type: IgCommentAutomationType
     data: FbCommentAutomationWriteData
   }): Promise<CommentAutomationModel> {
+    await this.assertFlowReplyExists(
+      input.workspaceId,
+      "privateReply",
+      input.data.privateReply,
+    )
+    await this.assertFlowReplyExists(
+      input.workspaceId,
+      "publicReply",
+      input.data.publicReply,
+    )
     const [created] = await db
       .insert(commentAutomationModel)
       .values({
@@ -667,6 +730,16 @@ class CommentAutomationService extends BaseService {
     data: Partial<FbCommentAutomationWriteData>,
   ): Promise<CommentAutomationModel> {
     await this.findInstagramOrFail(ctx)
+    await this.assertFlowReplyExists(
+      ctx.workspaceId,
+      "privateReply",
+      data.privateReply,
+    )
+    await this.assertFlowReplyExists(
+      ctx.workspaceId,
+      "publicReply",
+      data.publicReply,
+    )
 
     const [updated] = await db
       .update(commentAutomationModel)
@@ -766,6 +839,12 @@ class CommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, data, tx = db } = props
+    await this.assertFlowReplyExists(
+      workspaceId,
+      "publicReply",
+      data.publicReply,
+      tx,
+    )
     const [record] = await tx
       .insert(commentAutomationModel)
       .values({
@@ -795,6 +874,12 @@ class CommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, id, data, tx = db } = props
+    await this.assertFlowReplyExists(
+      workspaceId,
+      "publicReply",
+      data.publicReply,
+      tx,
+    )
     const values: Record<string, unknown> = {}
 
     if (data.name !== undefined) {
@@ -907,6 +992,12 @@ class CommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, data, tx = db } = props
+    await this.assertFlowReplyExists(
+      workspaceId,
+      "publicReply",
+      data.publicReply,
+      tx,
+    )
     const [record] = await tx
       .insert(commentAutomationModel)
       .values({
@@ -936,6 +1027,12 @@ class CommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, id, data, tx = db } = props
+    await this.assertFlowReplyExists(
+      workspaceId,
+      "publicReply",
+      data.publicReply,
+      tx,
+    )
     const values: Record<string, unknown> = {}
 
     if (data.name !== undefined) {

@@ -30,6 +30,13 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   rootFolderId: "0",
 }))
 
+// service.ts now calls flowService.exists() to validate a flow reply; this
+// suite isn't about that check, so stub it to always resolve true and avoid
+// pulling in flowService's own (unrelated) dependency chain.
+vi.mock("../src/flow/service", () => ({
+  flowService: { exists: vi.fn().mockResolvedValue(true) },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {},
   commentAutomationModel: { name: "commentAutomation.name" },
