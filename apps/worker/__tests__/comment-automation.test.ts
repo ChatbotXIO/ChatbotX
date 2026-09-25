@@ -2536,6 +2536,33 @@ describe("applyHideComments case-insensitivity", () => {
       }),
     )
   })
+
+  test("hides a comment matching a keyword regardless of accents", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        hideComments: { hasKeywords: true, keywords: ["promoción"] },
+      }),
+    ])
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ message: "PROMOCION aqui" }) as any,
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        type: "changeChannelMessageState",
+        data: expect.objectContaining({ hidden: true }),
+      }),
+    )
+  })
 })
 
 describe("applyHideComments link detection", () => {

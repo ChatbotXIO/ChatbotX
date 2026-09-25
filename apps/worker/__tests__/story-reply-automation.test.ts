@@ -193,3 +193,25 @@ describe("processStoryReplyAutomation text reply variable resolution", () => {
     expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 })
+
+describe("processStoryReplyAutomation keyword matching", () => {
+  test("an include keyword matches a reply regardless of accents", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      {
+        ...buildAutomation({ type: "text", value: "Thanks!" }),
+        includeKeywords: { type: "contain", value: ["café"] },
+      },
+    ])
+
+    await processStoryReplyAutomation(
+      buildJobData({ message: "Quiero un CAFE" }),
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({ text: "Thanks!" }),
+      }),
+    )
+  })
+})
