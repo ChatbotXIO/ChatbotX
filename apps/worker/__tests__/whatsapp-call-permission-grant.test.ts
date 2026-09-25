@@ -33,6 +33,7 @@ const channelError = (code: number) =>
 describe("reconcileChannelSendError", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.recordPermanentGrant.mockResolvedValue(undefined)
     mocks.broadcastToWorkspaceParty.mockResolvedValue(undefined)
   })
 

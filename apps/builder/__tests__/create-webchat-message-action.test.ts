@@ -377,6 +377,29 @@ describe("handleCreateWebchatMessage", () => {
     })
   })
 
+  test("broadcasts the created message with the client's clientId for optimistic reconciliation", async () => {
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        text: "hello",
+        workspaceId: "ws-1",
+        webchatId: "webchat-1",
+        guestConversationId: "guest-1",
+        clientId: "client-1",
+      },
+    })
+
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        eventType: "messageCreated",
+        data: expect.objectContaining({
+          id: "msg-1",
+          clientId: "client-1",
+        }),
+      }),
+    )
+  })
+
   test("rejects messages when the workspace is scheduled for deletion", async () => {
     mockWorkspaceFind.mockResolvedValue({
       id: "ws-1",
