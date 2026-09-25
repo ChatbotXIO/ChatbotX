@@ -6,10 +6,8 @@ import {
 import {
   type BloomFilter,
   bloomFilter,
-  cacheConnections,
   distributedStore,
 } from "@chatbotx.io/redis"
-import { liveKeyFor, USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { logger } from "../lib/logger"
 import {
   anchoredPeriod,
@@ -32,6 +30,7 @@ import {
   type MacMessageInPayload,
   type MacMessageOutPayload,
 } from "../schemas/mac"
+import { incrementUserQuotaMacLiveCounter } from "./user-quota-mac-live-counter"
 
 const DEFAULT_TIMEZONE = "UTC"
 
@@ -52,8 +51,6 @@ const BLOOM_FILTER_HOUR_BUFFER_SECONDS = 120
 const BLOOM_FILTER_CAPACITY = 1_000_000
 const HOURLY_BLOOM_FILTER_CAPACITY = 100_000
 const BLOOM_FILTER_ERROR_RATE = 0.001
-const MAC_LIVE_FIELD = "mac"
-
 type QuotaContext = {
   userId: string
   periodStart: Date
@@ -786,7 +783,7 @@ export class MacTrackingService {
       if (delta === 0) {
         continue
       }
-      ops.push(this.incrementUserQuotaMac(userId, delta))
+      ops.push(incrementUserQuotaMacLiveCounter(userId, delta))
     }
 
     try {
@@ -795,36 +792,6 @@ export class MacTrackingService {
       logger.error(
         { err: error },
         "[MacTrackingService] INCRBY cache update failed",
-      )
-    }
-  }
-  private async incrementUserQuotaMac(
-    userId: string,
-    count: number,
-  ): Promise<void> {
-    if (count <= 0) {
-      return
-    }
-    try {
-      const client = await cacheConnections.useExisting()
-      const key = liveKeyFor(USER_QUOTA_LABEL, userId)
-
-      // Cold-seed BEFORE incrementing, using `hsetnx` so a concurrent seed can
-      // never clobber a concurrent increment: whichever of them writes the
-      // field first wins, and the other's `hsetnx` becomes a no-op.
-      if ((await client.hget(key, MAC_LIVE_FIELD)) === null) {
-        const quota = await db.query.userQuotaModel.findFirst({
-          where: { userId },
-          columns: { macUsed: true },
-        })
-        await client.hsetnx(key, MAC_LIVE_FIELD, String(quota?.macUsed ?? 0))
-      }
-
-      await client.hincrby(key, MAC_LIVE_FIELD, count)
-    } catch (err) {
-      logger.warn(
-        { err, userId, count },
-        "[MacTrackingService] user quota mac increment failed",
       )
     }
   }

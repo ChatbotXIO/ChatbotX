@@ -1,6 +1,6 @@
 import { db, eq, type PgTable, sql } from "@chatbotx.io/database/client"
 import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
-import { cacheKeyFor, liveKeyFor } from "@chatbotx.io/utils"
+import { cacheKeyFor, createId, liveKeyFor } from "@chatbotx.io/utils"
 import type { PgColumn } from "drizzle-orm/pg-core"
 import { logger } from "../logger"
 
@@ -18,6 +18,18 @@ export type QuotaMetric =
   | "mac"
   | "botMessages"
   | "monthlyBotMessages"
+
+export type LiveReservation = {
+  id: string
+  value: number
+}
+
+export class ReservationLostError extends Error {
+  constructor() {
+    super("Live counter reservation was lost before commit")
+    this.name = "ReservationLostError"
+  }
+}
 
 const CACHE_TTL = 60 // seconds
 
@@ -90,6 +102,24 @@ export class LiveCounterStore<TRow> {
     return liveKeyFor(this.config.label, id)
   }
 
+  private async seedLiveMetric(
+    key: string,
+    metric: QuotaMetric,
+    dbValue: number,
+  ): Promise<number> {
+    const seeded = await distributedStore.hsetWithInflight(
+      key,
+      metric,
+      dbValue,
+      "setnx",
+    )
+    if (seeded.status === "written") {
+      return seeded.value
+    }
+    const client = await cacheConnections.useExisting()
+    return parseLiveCount(await client.hget(key, metric)) ?? dbValue
+  }
+
   /**
    * Live counter for `metric`, cold-started from the DB row so HINCRBY never
    * begins at 0 for an existing scope. Returns the DB value on any Redis error
@@ -98,10 +128,9 @@ export class LiveCounterStore<TRow> {
   async getLiveCount(id: string, metric: QuotaMetric): Promise<number> {
     try {
       const client = await cacheConnections.useExisting()
-      const field = metric
       const key = this.liveKey(id)
 
-      const live = parseLiveCount(await client.hget(key, field))
+      const live = parseLiveCount(await client.hget(key, metric))
       if (live !== null) {
         return live
       }
@@ -112,10 +141,7 @@ export class LiveCounterStore<TRow> {
         await this.config.fetchRow(id),
         metric,
       )
-      await client.hsetnx(key, field, String(dbValue))
-
-      const seeded = parseLiveCount(await client.hget(key, field))
-      return seeded ?? dbValue
+      return this.seedLiveMetric(key, metric, dbValue)
     } catch (err) {
       logger.warn(
         { err },
@@ -163,8 +189,7 @@ export class LiveCounterStore<TRow> {
           continue
         }
         const dbValue = this.config.getUsed(row, metric)
-        await client.hsetnx(key, metric, String(dbValue))
-        result[metric] = dbValue
+        result[metric] = await this.seedLiveMetric(key, metric, dbValue)
       }
       return result
     } catch (err) {
@@ -365,6 +390,98 @@ export class LiveCounterStore<TRow> {
         updatedAt: sql`CURRENT_TIMESTAMP`,
       } as never)
       .where(eq(this.config.idColumn, id))
+  }
+
+  /**
+   * Atomically reserve one live slot within `limit`, cold-seeding a missing
+   * field from the durable row before one retry. Redis errors intentionally
+   * propagate so admission fails closed; swallowing one here would allow
+   * admission without a successful reservation.
+   */
+  async reserve(
+    id: string,
+    metric: QuotaMetric,
+    limit: number | null,
+  ): Promise<LiveReservation | null> {
+    const reservationId = createId()
+    const reserveOnce = () =>
+      distributedStore.reserveWithinLimit(
+        this.liveKey(id),
+        metric,
+        limit,
+        reservationId,
+      )
+
+    let result = await reserveOnce()
+    if (result.status === "missing") {
+      await this.getLiveCount(id, metric)
+      result = await reserveOnce()
+    }
+
+    if (result.status === "missing") {
+      throw new Error(
+        `${this.config.label}: live counter still missing for ${metric} after cold seed`,
+      )
+    }
+    if (result.status === "refused") {
+      return null
+    }
+    return { id: reservationId, value: result.value }
+  }
+
+  /** Refresh a reservation immediately before its surrounding transaction commits. */
+  touchReservation(
+    id: string,
+    metric: QuotaMetric,
+    reservation: LiveReservation,
+  ): Promise<boolean> {
+    return distributedStore.touchReservation(
+      this.liveKey(id),
+      metric,
+      reservation.id,
+    )
+  }
+
+  /** Persist a reserved increment, invalidate the row cache, then settle it. */
+  async commitReservation(
+    id: string,
+    metric: QuotaMetric,
+    reservation: LiveReservation,
+  ): Promise<void> {
+    await this.upsertMetricBy(id, metric, 1)
+    await this.invalidate(id)
+
+    const settled = await distributedStore.settleReservation(
+      this.liveKey(id),
+      metric,
+      reservation.id,
+    )
+    if (!settled) {
+      logger.warn(
+        { id, metric, reservationId: reservation.id },
+        `${this.config.label}: reservation settle found no live reservation`,
+      )
+    }
+  }
+
+  /** Release only the live reservation; durable usage never observed it. */
+  async releaseReservation(
+    id: string,
+    metric: QuotaMetric,
+    reservation: LiveReservation,
+  ): Promise<void> {
+    try {
+      await distributedStore.releaseReservation(
+        this.liveKey(id),
+        metric,
+        reservation.id,
+      )
+    } catch (err) {
+      logger.warn(
+        { err },
+        `${this.config.label}: Redis reservation release failed for ${metric}, counter will reconcile on next sync`,
+      )
+    }
   }
 
   /**

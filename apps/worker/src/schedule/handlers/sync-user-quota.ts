@@ -8,7 +8,11 @@ import {
   workspaceUsageService,
 } from "@chatbotx.io/business"
 import { isForeignKeyViolationError } from "@chatbotx.io/database/client"
-import { cacheConnections } from "@chatbotx.io/redis"
+import {
+  cacheConnections,
+  distributedStore,
+  settledFieldFor,
+} from "@chatbotx.io/redis"
 import { liveKeyFor, USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 
@@ -26,6 +30,18 @@ const MAC_FIELD = "mac"
 const MAC_PERIOD_FIELD = "macPeriodStart"
 
 type CacheClient = Awaited<ReturnType<typeof cacheConnections.useExisting>>
+
+const overwriteLiveMac = async (
+  liveKey: string,
+  value: number,
+  periodIso: string,
+  settledSince: number,
+): Promise<void> => {
+  await distributedStore.hsetWithInflight(liveKey, MAC_FIELD, value, "set", {
+    extra: { field: MAC_PERIOD_FIELD, value: periodIso },
+    settledSince,
+  })
+}
 
 export const syncUserQuota = async (): Promise<void> => {
   const client = await cacheConnections.useExisting()
@@ -238,11 +254,13 @@ const reconcileMac = async (
   isLifetime: boolean,
 ): Promise<void> => {
   const liveKey = liveKeyFor(USER_QUOTA_LABEL, userId)
-  const [liveMacRaw, livePeriod] = await client.hmget(
+  const [liveMacRaw, livePeriod, macSettledRaw] = await client.hmget(
     liveKey,
     MAC_FIELD,
     MAC_PERIOD_FIELD,
+    settledFieldFor(MAC_FIELD),
   )
+  const settledSince = parseLiveCount(macSettledRaw ?? null) ?? 0
 
   const rolledOver = livePeriod !== null && livePeriod !== dbPeriodIso
 
@@ -263,13 +281,7 @@ const reconcileMac = async (
     })
 
     if (liveMacRaw !== String(ledgerMac) || livePeriod !== dbPeriodIso) {
-      await client.hset(
-        liveKey,
-        MAC_FIELD,
-        String(ledgerMac),
-        MAC_PERIOD_FIELD,
-        dbPeriodIso,
-      )
+      await overwriteLiveMac(liveKey, ledgerMac, dbPeriodIso, settledSince)
     }
     if (ledgerMac !== dbMacUsed) {
       await userQuotaService.persistMacUsed(userId, ledgerMac)
@@ -285,12 +297,11 @@ const reconcileMac = async (
   )
 
   if (action.setLiveMac !== null && action.stampPeriod) {
-    await client.hset(
+    await overwriteLiveMac(
       liveKey,
-      MAC_FIELD,
-      String(action.setLiveMac),
-      MAC_PERIOD_FIELD,
+      action.setLiveMac,
       dbPeriodIso,
+      settledSince,
     )
   } else if (action.stampPeriod) {
     await client.hset(liveKey, MAC_PERIOD_FIELD, dbPeriodIso)

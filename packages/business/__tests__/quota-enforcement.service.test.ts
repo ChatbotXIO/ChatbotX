@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const quotaEnforcementSettings = vi.hoisted(() => ({
+  QUOTA_MAC_ADMISSION: "lock" as "reserve" | "lock",
+}))
+vi.mock("../src/quota-enforcement/keys", () => ({
+  quotaEnforcementEnv: () => quotaEnforcementSettings,
+}))
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }) as unknown)
 const fakeTx = { __tx: true }
 const dbTransaction = vi.fn(
@@ -114,6 +120,7 @@ const asReseller = () => {
     ownerId: RESELLER,
     status: "active",
   })
+  quotaEnforcementSettings.QUOTA_MAC_ADMISSION = "lock"
 }
 
 const asCustomer = () => {

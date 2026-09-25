@@ -21,17 +21,26 @@ import {
   workspaceModel,
 } from "@chatbotx.io/database/schema"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
-import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
+import {
+  cacheConnections,
+  distributedStore,
+  settledFieldFor,
+} from "@chatbotx.io/redis"
 import { USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { isCloud } from "../keys"
 import { logger } from "../logger"
 import {
   LiveCounterStore,
+  type LiveReservation,
+  parseLiveCount,
   type QuotaMetric,
 } from "../quota-shared/live-counter-store"
 
-export type { QuotaMetric } from "../quota-shared/live-counter-store"
+export type {
+  LiveReservation,
+  QuotaMetric,
+} from "../quota-shared/live-counter-store"
 
 /**
  * Cross-repo contract key (read-only here). The enterprise billing layer writes
@@ -714,6 +723,39 @@ class UserQuotaService extends BaseService {
     await this.store.consume(userId, metric, 1)
   }
 
+  reserve(
+    userId: string,
+    metric: QuotaMetric,
+    quota: UserQuotaModel | null,
+  ): Promise<LiveReservation | null> {
+    const limit = quota ? this.readMetricValues(quota, metric).limit : null
+    return this.store.reserve(userId, metric, limit)
+  }
+
+  touchReservation(
+    userId: string,
+    metric: QuotaMetric,
+    reservation: LiveReservation,
+  ): Promise<boolean> {
+    return this.store.touchReservation(userId, metric, reservation)
+  }
+
+  commitReservation(
+    userId: string,
+    metric: QuotaMetric,
+    reservation: LiveReservation,
+  ): Promise<void> {
+    return this.store.commitReservation(userId, metric, reservation)
+  }
+
+  releaseReservation(
+    userId: string,
+    metric: QuotaMetric,
+    reservation: LiveReservation,
+  ): Promise<void> {
+    return this.store.releaseReservation(userId, metric, reservation)
+  }
+
   async release(userId: string, metric: QuotaMetric): Promise<void> {
     await this.releaseBy(userId, metric, 1)
   }
@@ -794,6 +836,9 @@ class UserQuotaService extends BaseService {
     tenantId: string,
   ): Promise<void> {
     const client = await cacheConnections.useExisting()
+    const liveKey = this.store.liveKey(ownerId)
+    const settledSince =
+      parseLiveCount(await client.hget(liveKey, settledFieldFor("mac"))) ?? 0
 
     const [
       { contactsUsed, workspacesUsed, channelsUsed },
@@ -856,8 +901,9 @@ class UserQuotaService extends BaseService {
     // so `macUsed` is period-correct without the stamp. Period resets are owned
     // by the private quota-worker, which advances `periodStart` and zeroes
     // `macUsed`; the next reconcile will pick up the new value from DB.
-    await client.hset(
-      this.store.liveKey(ownerId),
+    const multi = client.multi()
+    multi.hset(
+      liveKey,
       "contacts",
       String(contactsUsed),
       "teamMembers",
@@ -866,10 +912,13 @@ class UserQuotaService extends BaseService {
       String(workspacesUsed),
       "channels",
       String(channelsUsed),
-      "mac",
-      String(macUsed),
     )
-
+    await Promise.all([
+      multi.exec(),
+      distributedStore.hsetWithInflight(liveKey, "mac", macUsed, "set", {
+        settledSince,
+      }),
+    ])
     await this.store.invalidate(ownerId)
   }
 

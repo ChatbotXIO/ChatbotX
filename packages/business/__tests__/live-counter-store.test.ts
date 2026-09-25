@@ -37,11 +37,20 @@ const redisClient = {
 const cacheConnections = {
   useExisting: vi.fn(async () => redisClient),
 }
+const hsetWithInflight = vi.fn(
+  async (
+    _key: string,
+    _field: string,
+    base: number,
+    _mode: "set" | "setnx",
+  ) => ({ status: "written" as const, value: base }),
+)
 vi.mock("@chatbotx.io/redis", () => ({
   distributedStore: {
     get: vi.fn(async () => null),
     put: vi.fn(async () => undefined),
     delete: vi.fn(async () => undefined),
+    hsetWithInflight,
   },
   cacheConnections,
   invalidateCacheByTags: vi.fn(async () => undefined),
@@ -96,7 +105,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
     )
     // Every field present → no cold-start seed, no DB read.
     expect(findFirstQuota).not.toHaveBeenCalled()
-    expect(redisClient.hsetnx).not.toHaveBeenCalled()
+    expect(hsetWithInflight).not.toHaveBeenCalled()
   })
 
   test("cold-seeds a missing field from a single DB fetch", async () => {
@@ -117,10 +126,11 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
     })
     // One row fetch shared across all missing fields, and the field is seeded.
     expect(findFirstQuota).toHaveBeenCalledTimes(1)
-    expect(redisClient.hsetnx).toHaveBeenCalledWith(
+    expect(hsetWithInflight).toHaveBeenCalledWith(
       `user-quota-live:${USER}`,
       "mac",
-      "50",
+      50,
+      "setnx",
     )
   })
 

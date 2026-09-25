@@ -1,6 +1,11 @@
 import type Redis from "ioredis"
-import { describe, expect, test, vi } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import { distributedStoreFactory } from "../src/distributed-store"
+import { LIVE_RESERVATION_MAX_AGE_MS } from "../src/live-counter-scripts"
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe("distributedStoreFactory.exists", () => {
   test("returns true only when Redis reports the key exists", async () => {
@@ -101,6 +106,157 @@ describe("distributedStoreFactory.incrWithWindow", () => {
       "incrWithWindow",
       expect.objectContaining({ numberOfKeys: 1 }),
     )
+  })
+})
+
+describe("distributedStoreFactory reservation scripts", () => {
+  const makeFakeRedis = () => {
+    const commands = {
+      reserveWithinLimit: vi.fn(async () => [1, 4] as [number, number]),
+      touchReservation: vi.fn(async () => 1),
+      settleReservation: vi.fn(async () => 1),
+      releaseReservation: vi.fn(async () => 1),
+      hsetWithInflight: vi.fn(async () => 4),
+    }
+    const client = {
+      defineCommand: vi.fn(),
+      ...commands,
+    } as unknown as Redis
+    return { client, commands }
+  }
+
+  test("registers all live-counter commands once per client", async () => {
+    const { client } = makeFakeRedis()
+    const store = distributedStoreFactory(async () => client)
+
+    await store.reserveWithinLimit("quota:1", "mac", 10, "r-1")
+    await store.touchReservation("quota:1", "mac", "r-1")
+    await store.settleReservation("quota:1", "mac", "r-1")
+    await store.releaseReservation("quota:1", "mac", "r-1")
+    await store.hsetWithInflight("quota:1", "mac", 3, "set")
+    await store.reserveWithinLimit("quota:2", "mac", 10, "r-2")
+
+    expect(client.defineCommand).toHaveBeenCalledTimes(5)
+    expect(client.defineCommand.mock.calls.map(([command]) => command)).toEqual(
+      [
+        "reserveWithinLimit",
+        "touchReservation",
+        "settleReservation",
+        "releaseReservation",
+        "hsetWithInflight",
+      ],
+    )
+  })
+
+  test("maps reserve arguments, the unlimited sentinel, and current time", async () => {
+    const { client, commands } = makeFakeRedis()
+    const store = distributedStoreFactory(async () => client)
+    vi.useFakeTimers()
+    vi.setSystemTime(1234)
+
+    await store.reserveWithinLimit("quota:1", "mac", null, "r-1")
+
+    expect(commands.reserveWithinLimit).toHaveBeenCalledWith(
+      "quota:1",
+      "mac",
+      "-1",
+      "r-1",
+      "1234",
+    )
+  })
+
+  test.each([
+    { raw: [1, 4], expected: { status: "reserved", value: 4 } },
+    { raw: [0, 3], expected: { status: "refused", value: 3 } },
+    { raw: [-1, 0], expected: { status: "missing", value: 0 } },
+  ])("maps reserve status $raw.0", async ({ raw, expected }) => {
+    const { client, commands } = makeFakeRedis()
+    commands.reserveWithinLimit.mockResolvedValue(raw as [number, number])
+    const store = distributedStoreFactory(async () => client)
+
+    await expect(
+      store.reserveWithinLimit("quota:1", "mac", 10, "r-1"),
+    ).resolves.toEqual(expected)
+  })
+
+  test("maps touch, settle, and release results to booleans", async () => {
+    const { client, commands } = makeFakeRedis()
+    commands.touchReservation.mockResolvedValue(0)
+    commands.settleReservation.mockResolvedValue(1)
+    commands.releaseReservation.mockResolvedValue(0)
+    const store = distributedStoreFactory(async () => client)
+    vi.useFakeTimers()
+    vi.setSystemTime(1234)
+
+    await expect(store.touchReservation("quota:1", "mac", "r-1")).resolves.toBe(
+      false,
+    )
+    await expect(
+      store.settleReservation("quota:1", "mac", "r-1"),
+    ).resolves.toBe(true)
+    await expect(
+      store.releaseReservation("quota:1", "mac", "r-1"),
+    ).resolves.toBe(false)
+  })
+
+  test("maps hsetWithInflight arguments, prune cutoff, and empty sentinels", async () => {
+    const { client, commands } = makeFakeRedis()
+    const store = distributedStoreFactory(async () => client)
+    vi.useFakeTimers()
+    vi.setSystemTime(1234 + LIVE_RESERVATION_MAX_AGE_MS)
+
+    await store.hsetWithInflight("quota:1", "mac", 3, "setnx")
+
+    expect(commands.hsetWithInflight).toHaveBeenCalledWith(
+      "quota:1",
+      "mac",
+      "3",
+      "setnx",
+      "1234",
+      "",
+      "",
+      "",
+    )
+  })
+
+  test("passes optional extra and settled-since values", async () => {
+    const { client, commands } = makeFakeRedis()
+    const store = distributedStoreFactory(async () => client)
+    vi.useFakeTimers()
+    vi.setSystemTime(1234 + LIVE_RESERVATION_MAX_AGE_MS)
+
+    await store.hsetWithInflight("quota:1", "mac", 3, "set", {
+      extra: {
+        field: "macPeriodStart",
+        value: "2026-09-01T00:00:00.000Z",
+      },
+      settledSince: 7,
+    })
+
+    expect(commands.hsetWithInflight).toHaveBeenCalledWith(
+      "quota:1",
+      "mac",
+      "3",
+      "set",
+      "1234",
+      "macPeriodStart",
+      "2026-09-01T00:00:00.000Z",
+      "7",
+    )
+  })
+
+  test.each([
+    { raw: 4, expected: { status: "written", value: 4 } },
+    { raw: -1, expected: { status: "exists" } },
+    { raw: -2, expected: { status: "fenced" } },
+  ])("maps hsetWithInflight result $raw", async ({ raw, expected }) => {
+    const { client, commands } = makeFakeRedis()
+    commands.hsetWithInflight.mockResolvedValue(raw)
+    const store = distributedStoreFactory(async () => client)
+
+    await expect(
+      store.hsetWithInflight("quota:1", "mac", 3, "set"),
+    ).resolves.toEqual(expected)
   })
 })
 
