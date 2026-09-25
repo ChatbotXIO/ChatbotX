@@ -29,6 +29,9 @@ export function ChatRealtime() {
     })
 
   const handleNewMessage = useChatStore((state) => state.handleNewMessage)
+  const flushPendingConversationHeadRefresh = useChatStore(
+    (state) => state.flushPendingConversationHeadRefresh,
+  )
   const markMessagesDeleted = useChatStore((state) => state.markMessagesDeleted)
   const markMessageFailed = useChatStore((state) => state.markMessageFailed)
   const assignMessageCommentId = useChatStore(
@@ -67,6 +70,18 @@ export function ChatRealtime() {
         () => undefined,
       )
   }, [workspaceId, bubbleConversationToTop])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        flushPendingConversationHeadRefresh()
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [flushPendingConversationHeadRefresh])
 
   useEffect(() => {
     const bubbleNewEntries = (
