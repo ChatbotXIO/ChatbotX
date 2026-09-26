@@ -292,17 +292,16 @@ const getCommentMessagePostId = (
 }
 
 /**
- * Tag counters written onto the comment message by the comment-automation
- * worker, and only when that automation has `trackUserTags` on. Absent means
- * "not tracked" rather than zero, so it stays null — a flow branching on
- * `{{total_tagged}}` must be able to tell "nobody was tagged" from "we never
- * looked".
+ * Lifetime tag counters, accumulated on the contact by comment automations
+ * with `trackUserTags` on (see `contactService.incrementTagCounters`). The
+ * `typeof` guard is for a contact serialized into a job payload before the
+ * columns existed — an unknown total renders empty, not "undefined".
  */
-const getCommentMessageTagCount = (
-  message: MessageModel | null,
+const getContactTagCount = (
+  contact: ContactVariableContext["contact"],
   key: "totalTagged" | "totalNewTagged",
 ): string | null => {
-  const count = message?.contentAttributes?.[key]
+  const count: unknown = contact[key]
   return typeof count === "number" ? String(count) : null
 }
 
@@ -551,14 +550,10 @@ export const getSystemFieldValue = async (
     }
     case systemFieldTypes.enum.last_comment_id:
       return (await getLastUserComment(context))?.sourceId ?? null
-    case systemFieldTypes.enum.total_new_tagged: {
-      const message = await getLastUserComment(context)
-      return getCommentMessageTagCount(message, "totalNewTagged")
-    }
-    case systemFieldTypes.enum.total_tagged: {
-      const message = await getLastUserComment(context)
-      return getCommentMessageTagCount(message, "totalTagged")
-    }
+    case systemFieldTypes.enum.total_new_tagged:
+      return getContactTagCount(contact, "totalNewTagged")
+    case systemFieldTypes.enum.total_tagged:
+      return getContactTagCount(contact, "totalTagged")
     case systemFieldTypes.enum.last_latitude:
       return getContactLocationValue(contact, "latitude")
     case systemFieldTypes.enum.last_longitude:

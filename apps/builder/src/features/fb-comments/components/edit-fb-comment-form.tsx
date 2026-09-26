@@ -45,6 +45,7 @@ export function EditFbCommentForm({
       publicReply: normalizeReplyTexts(initialData.publicReply),
       includeKeywords: initialData.includeKeywords,
       excludeKeywords: initialData.excludeKeywords,
+      excludeKeywordsType: initialData.excludeKeywordsType,
       options: initialData.options,
       hideComments: initialData.hideComments,
       replyAfter: initialData.replyAfter,

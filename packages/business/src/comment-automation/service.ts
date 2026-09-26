@@ -10,7 +10,11 @@ import {
 } from "@chatbotx.io/database/client"
 import {
   type CommentAutomationType,
+  type CommentExcludeKeywordsType,
   type CommentHideComments,
+  type CommentIncludeKeywords,
+  type CommentReply,
+  commentAutomationChannelSupportsHideGif,
   commentAutomationTypes,
   type IgCommentAutomationType,
   igCommentAutomationTypes,
@@ -78,17 +82,15 @@ type FbCommentAutomationWriteData = Omit<
 
 type ThreadsCommentAutomationReply =
   | { type: "none"; value: null }
-  | { type: "text" | "flow" | "AIAgent"; value: string }
+  | { type: "text"; value: string; values?: { value: string }[] }
+  | { type: "flow" | "AIAgent"; value: string }
 
 type ThreadsCommentAutomationPost = {
   type: "all" | "postIds"
   value: string[]
 }
 
-type ThreadsCommentAutomationIncludeKeywords = {
-  type: "all" | "equal" | "contain"
-  value: string[]
-}
+type ThreadsCommentAutomationIncludeKeywords = CommentIncludeKeywords
 
 type ThreadsCommentAutomationOptions = {
   replyToNewContactsOnly: boolean
@@ -96,7 +98,7 @@ type ThreadsCommentAutomationOptions = {
   likeUserComment?: false
   replyToUsersWhoCommentedOnOtherPosts: boolean
   ignoreCommentReplies: boolean
-  trackUserTags?: false
+  trackUserTags?: boolean
 }
 
 type ThreadsCommentAutomationReplyAfter = {
@@ -120,7 +122,9 @@ type CreateThreadsCommentAutomationInput = {
   publicReply: ThreadsCommentAutomationReply
   includeKeywords: ThreadsCommentAutomationIncludeKeywords
   excludeKeywords: string[]
+  excludeKeywordsType?: CommentExcludeKeywordsType
   options: ThreadsCommentAutomationOptions
+  hideComments?: ThreadsCommentAutomationHideComments
   replyAfter: ThreadsCommentAutomationReplyAfter
   isActive?: boolean
 }
@@ -133,12 +137,29 @@ type UpdateThreadsCommentAutomationInput = Partial<
 }
 
 /**
+ * Threads can hide a top-level reply (`POST /{reply-id}/manage_reply`) and
+ * exposes a reply's `gif_url`, but has no image/video attachment lookup.
+ */
+type ThreadsCommentAutomationHideComments = {
+  all: boolean
+  hasPhoneNumber: boolean
+  hasImage?: false
+  hasVideo?: false
+  hasLink: boolean
+  hasKeywords: boolean
+  hasGif?: boolean
+  hasEmoji?: boolean
+  keywords: string[]
+  showCommentsAfter: CommentHideComments["showCommentsAfter"]
+}
+
+/**
  * TikTok sits between Threads and the Meta channels: it CAN like and hide a
  * comment (`business/comment/like/`, `business/comment/hide/`) and, through
  * Comment-to-Message, CAN answer one with a DM — but only for comments TikTok
  * itself flags as high intent, and never with a flow (see
- * `buildTiktokPrivateReply`). `trackUserTags` is off: TikTok's comment payload
- * carries no tagged users in any form, structured or in the text.
+ * `buildTiktokPrivateReply`). `trackUserTags` counts `@handle` mentions in the
+ * comment text — TikTok's payload carries no structured tag list.
  */
 type TiktokCommentAutomationOptions = {
   replyToNewContactsOnly: boolean
@@ -146,7 +167,7 @@ type TiktokCommentAutomationOptions = {
   likeUserComment: boolean
   replyToUsersWhoCommentedOnOtherPosts: boolean
   ignoreCommentReplies: boolean
-  trackUserTags?: false
+  trackUserTags?: boolean
 }
 
 /**
@@ -168,6 +189,9 @@ type TiktokCommentAutomationHideComments = {
   hasVideo?: false
   hasLink: boolean
   hasKeywords: boolean
+  /** Always false: TikTok exposes no attachment data to detect a GIF with. */
+  hasGif?: false
+  hasEmoji?: boolean
   keywords: string[]
   showCommentsAfter: CommentHideComments["showCommentsAfter"]
 }
@@ -179,6 +203,7 @@ type CreateTiktokCommentAutomationInput = {
   privateReply?: TiktokCommentAutomationPrivateReply
   includeKeywords: ThreadsCommentAutomationIncludeKeywords
   excludeKeywords: string[]
+  excludeKeywordsType?: CommentExcludeKeywordsType
   options: TiktokCommentAutomationOptions
   hideComments?: TiktokCommentAutomationHideComments
   replyAfter: ThreadsCommentAutomationReplyAfter
@@ -213,7 +238,7 @@ class CommentAutomationService extends BaseService {
       likeUserComment: false
       replyToUsersWhoCommentedOnOtherPosts: boolean
       ignoreCommentReplies: boolean
-      trackUserTags: false
+      trackUserTags: boolean
     },
     hideComments: {
       all: false,
@@ -222,18 +247,11 @@ class CommentAutomationService extends BaseService {
       hasVideo: false,
       hasLink: false,
       hasKeywords: false,
+      hasGif: false,
+      hasEmoji: false,
       keywords: [] as string[],
       showCommentsAfter: "none",
-    } as {
-      all: false
-      hasPhoneNumber: false
-      hasImage: false
-      hasVideo: false
-      hasLink: false
-      hasKeywords: false
-      keywords: string[]
-      showCommentsAfter: "none"
-    },
+    } as CommentHideComments,
     replyAfter: { type: "immediately", value: 0 } as {
       type: "immediately"
       value: number
@@ -248,6 +266,32 @@ class CommentAutomationService extends BaseService {
       replyToUsersWhoCommentedOnOtherPosts:
         input?.replyToUsersWhoCommentedOnOtherPosts ?? true,
       ignoreCommentReplies: input?.ignoreCommentReplies ?? true,
+      trackUserTags: input?.trackUserTags ?? false,
+    }
+  }
+
+  /**
+   * `hasImage`/`hasVideo` are pinned off: the attachment lookup behind them is
+   * Messenger-only. `hasGif` stays settable — Threads answers it from the
+   * reply's `gif_url`.
+   */
+  private buildThreadsHideComments(
+    input?: ThreadsCommentAutomationHideComments,
+  ): CommentHideComments {
+    if (!input) {
+      return this.threadsDefaults.hideComments
+    }
+    return {
+      all: input.all ?? false,
+      hasPhoneNumber: input.hasPhoneNumber ?? false,
+      hasImage: false,
+      hasVideo: false,
+      hasLink: input.hasLink ?? false,
+      hasKeywords: input.hasKeywords ?? false,
+      hasGif: input.hasGif ?? false,
+      hasEmoji: input.hasEmoji ?? false,
+      keywords: input.keywords ?? [],
+      showCommentsAfter: input.showCommentsAfter ?? "none",
     }
   }
 
@@ -265,6 +309,8 @@ class CommentAutomationService extends BaseService {
       hasVideo: false,
       hasLink: false,
       hasKeywords: false,
+      hasGif: false,
+      hasEmoji: false,
       keywords: [] as string[],
       showCommentsAfter: "none",
     } as CommentHideComments,
@@ -287,15 +333,10 @@ class CommentAutomationService extends BaseService {
       replyToUsersWhoCommentedOnOtherPosts:
         input?.replyToUsersWhoCommentedOnOtherPosts ?? true,
       ignoreCommentReplies: input?.ignoreCommentReplies ?? true,
-      trackUserTags: false as const,
+      trackUserTags: input?.trackUserTags ?? false,
     }
   }
 
-  /**
-   * `hasImage`/`hasVideo` are pinned off: they are answered by
-   * `comment-attachment.ts`, which only knows how to ask Messenger. Leaving
-   * them settable would render a switch that silently never matches.
-   */
   /**
    * Normalises the DM branch to what TikTok can deliver.
    *
@@ -314,6 +355,10 @@ class CommentAutomationService extends BaseService {
     return this.tiktokDefaults.privateReply
   }
 
+  /**
+   * `hasImage`/`hasVideo`/`hasGif` are pinned off: TikTok exposes no
+   * attachment data, so a switch for them would silently never match.
+   */
   private buildTiktokHideComments(
     input?: TiktokCommentAutomationHideComments,
   ): CommentHideComments {
@@ -327,6 +372,8 @@ class CommentAutomationService extends BaseService {
       hasVideo: false,
       hasLink: input.hasLink ?? false,
       hasKeywords: input.hasKeywords ?? false,
+      hasGif: false,
+      hasEmoji: input.hasEmoji ?? false,
       keywords: input.keywords ?? [],
       showCommentsAfter: input.showCommentsAfter ?? "none",
     }
@@ -645,6 +692,22 @@ class CommentAutomationService extends BaseService {
     return record
   }
 
+  /**
+   * Pins `hideComments.hasGif` off on a channel that cannot detect a GIF, so
+   * a request that sets it — by hand through the public API or MCP, or from a
+   * form that drifted — cannot store a switch that silently never matches.
+   * Same idea as `buildTiktokHideComments`, for the channels whose write data
+   * is otherwise passed through as-is.
+   */
+  private withSupportedHideComments<
+    T extends { hideComments?: CommentHideComments | null },
+  >(type: CommentAutomationType, data: T): T {
+    if (!data.hideComments || commentAutomationChannelSupportsHideGif(type)) {
+      return data
+    }
+    return { ...data, hideComments: { ...data.hideComments, hasGif: false } }
+  }
+
   async createInstagram(input: {
     workspaceId: string
     type: IgCommentAutomationType
@@ -656,7 +719,10 @@ class CommentAutomationService extends BaseService {
         id: createId(),
         workspaceId: input.workspaceId,
         type: input.type,
-        ...this.withNormalizedReplies(input.data),
+        ...this.withSupportedHideComments(
+          input.type,
+          this.withNormalizedReplies(input.data),
+        ),
       })
       .returning()
     return created
@@ -666,11 +732,17 @@ class CommentAutomationService extends BaseService {
     ctx: { workspaceId: string; id: string },
     data: Partial<FbCommentAutomationWriteData>,
   ): Promise<CommentAutomationModel> {
-    await this.findInstagramOrFail(ctx)
+    const existing = await this.findInstagramOrFail(ctx)
 
     const [updated] = await db
       .update(commentAutomationModel)
-      .set(this.withNormalizedReplies(data))
+      .set(
+        this.withSupportedHideComments(
+          // `findInstagramOrFail` only matches `igCommentAutomationTypes`.
+          existing.type as IgCommentAutomationType,
+          this.withNormalizedReplies(data),
+        ),
+      )
       .where(
         and(
           eq(commentAutomationModel.id, ctx.id),
@@ -776,11 +848,12 @@ class CommentAutomationService extends BaseService {
         name: data.name,
         post: data.post,
         privateReply: this.threadsDefaults.privateReply,
-        publicReply: data.publicReply,
+        publicReply: normalizeReplyTexts(data.publicReply as CommentReply),
         includeKeywords: data.includeKeywords,
         excludeKeywords: data.excludeKeywords,
+        excludeKeywordsType: data.excludeKeywordsType ?? "contain",
         options: this.buildThreadsOptions(data.options),
-        hideComments: this.threadsDefaults.hideComments,
+        hideComments: this.buildThreadsHideComments(data.hideComments),
         replyAfter: data.replyAfter ?? this.threadsDefaults.replyAfter,
       })
       .returning()
@@ -807,7 +880,7 @@ class CommentAutomationService extends BaseService {
       values.post = data.post
     }
     if (data.publicReply !== undefined) {
-      values.publicReply = data.publicReply
+      values.publicReply = normalizeReplyTexts(data.publicReply as CommentReply)
     }
     if (data.includeKeywords !== undefined) {
       values.includeKeywords = data.includeKeywords
@@ -815,8 +888,14 @@ class CommentAutomationService extends BaseService {
     if (data.excludeKeywords !== undefined) {
       values.excludeKeywords = data.excludeKeywords
     }
+    if (data.excludeKeywordsType !== undefined) {
+      values.excludeKeywordsType = data.excludeKeywordsType
+    }
     if (data.options !== undefined) {
       values.options = this.buildThreadsOptions(data.options)
+    }
+    if (data.hideComments !== undefined) {
+      values.hideComments = this.buildThreadsHideComments(data.hideComments)
     }
     if (data.replyAfter !== undefined) {
       values.replyAfter = data.replyAfter
@@ -917,9 +996,10 @@ class CommentAutomationService extends BaseService {
         name: data.name,
         post: data.post,
         privateReply: this.buildTiktokPrivateReply(data.privateReply),
-        publicReply: data.publicReply,
+        publicReply: normalizeReplyTexts(data.publicReply as CommentReply),
         includeKeywords: data.includeKeywords,
         excludeKeywords: data.excludeKeywords,
+        excludeKeywordsType: data.excludeKeywordsType ?? "contain",
         options: this.buildTiktokOptions(data.options),
         hideComments: this.buildTiktokHideComments(data.hideComments),
         replyAfter: data.replyAfter ?? this.tiktokDefaults.replyAfter,
@@ -948,7 +1028,7 @@ class CommentAutomationService extends BaseService {
       values.post = data.post
     }
     if (data.publicReply !== undefined) {
-      values.publicReply = data.publicReply
+      values.publicReply = normalizeReplyTexts(data.publicReply as CommentReply)
     }
     if (data.privateReply !== undefined) {
       values.privateReply = this.buildTiktokPrivateReply(data.privateReply)
@@ -958,6 +1038,9 @@ class CommentAutomationService extends BaseService {
     }
     if (data.excludeKeywords !== undefined) {
       values.excludeKeywords = data.excludeKeywords
+    }
+    if (data.excludeKeywordsType !== undefined) {
+      values.excludeKeywordsType = data.excludeKeywordsType
     }
     if (data.options !== undefined) {
       values.options = this.buildTiktokOptions(data.options)

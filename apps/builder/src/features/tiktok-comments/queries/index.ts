@@ -11,7 +11,8 @@ import { tiktokCommentResource } from "./../schema/resource"
  *
  * The row is the shared `CommentAutomation` one, so it can carry values no
  * TikTok automation can act on — a `postIds` variant the picker never writes, a
- * private reply. Normalising here keeps the resource schema honest about what
+ * `flow` private reply. `includeKeywords` (including `mentions`) passes through
+ * untouched via the spread. Normalising here keeps the resource schema honest about what
  * the channel does rather than about what the table can hold.
  */
 const toTiktokResource = (
@@ -42,19 +43,11 @@ const toTiktokResource = (
       : {
           type: record.publicReply.type,
           value: record.publicReply.value ?? "",
+          // Passed through, like `includeKeywords` via the spread: the edit
+          // form writes back what it reads, so dropping it erases every text
+          // after the first on the next save.
+          values: record.publicReply.values,
         },
-  includeKeywords: {
-    type:
-      record.includeKeywords.type === "equal" ||
-      record.includeKeywords.type === "contain"
-        ? record.includeKeywords.type
-        : "all",
-    value:
-      record.includeKeywords.type === "equal" ||
-      record.includeKeywords.type === "contain"
-        ? record.includeKeywords.value
-        : [],
-  },
 })
 
 export async function listTiktokComments(

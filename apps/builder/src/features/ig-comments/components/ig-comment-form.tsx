@@ -20,12 +20,6 @@ import {
   FormMessage,
 } from "@chatbotx.io/ui/components/ui/form"
 import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
-import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
@@ -34,7 +28,9 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
+import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateIgCommentRequest, IgCommentVariant } from "../schema/action"
 import { SelectInstagramPostsDialog } from "./select-instagram-posts-dialog"
@@ -82,10 +78,6 @@ export function IgCommentForm({
     control: form.control,
     name: "publicReply.type",
   })
-  const includeKeywordsType = useWatch({
-    control: form.control,
-    name: "includeKeywords.type",
-  })
   const replyAfterType = useWatch({
     control: form.control,
     name: "replyAfter.type",
@@ -110,18 +102,6 @@ export function IgCommentForm({
     {
       label: t("instagramCommentAutomation.postType.specificPosts"),
       value: "postIds",
-    },
-  ]
-
-  const includeKeywordsTypeOptions = [
-    { label: t("instagramCommentAutomation.keywordsType.all"), value: "all" },
-    {
-      label: t("instagramCommentAutomation.keywordsType.equal"),
-      value: "equal",
-    },
-    {
-      label: t("instagramCommentAutomation.keywordsType.contain"),
-      value: "contain",
     },
   ]
 
@@ -344,73 +324,28 @@ export function IgCommentForm({
           <CardTitle>{t("instagramCommentAutomation.card.filters")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-start gap-2">
-            <SelectField
-              description={t(
+          <ReplyToField
+            labels={{
+              type: t("instagramCommentAutomation.includeKeywordsType"),
+              typeDescription: t(
                 "instagramCommentAutomation.includeKeywordsTypeDescription",
-              )}
-              descriptionType="tooltip"
-              label={t("instagramCommentAutomation.includeKeywordsType")}
-              name="includeKeywords.type"
-              options={includeKeywordsTypeOptions}
-            />
-            {includeKeywordsType !== "all" && (
-              <div className="w-full">
-                <FormField
-                  control={form.control}
-                  name="includeKeywords.value"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("instagramCommentAutomation.includeKeywords")}
-                      </FormLabel>
-                      <FormControl>
-                        <TagsInputField
-                          name="includeKeywords.value"
-                          placeholder={t(
-                            "instagramCommentAutomation.keywordsPlaceholder",
-                          )}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-          </div>
+              ),
+              keywords: t("instagramCommentAutomation.includeKeywords"),
+              keywordsPlaceholder: t(
+                "instagramCommentAutomation.keywordsPlaceholder",
+              ),
+              all: t("instagramCommentAutomation.keywordsType.all"),
+              equal: t("instagramCommentAutomation.keywordsType.equal"),
+              contain: t("instagramCommentAutomation.keywordsType.contain"),
+            }}
+          />
 
-          <FormField
-            control={form.control}
-            name="excludeKeywords"
-            render={() => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-1">
-                  {t("instagramCommentAutomation.excludeKeywords")}
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
-                      }
-                    />
-                    <TooltipContent className="max-w-sm">
-                      {t(
-                        "instagramCommentAutomation.excludeKeywordsDescription",
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                </FormLabel>
-                <FormControl>
-                  <TagsInputField
-                    name="excludeKeywords"
-                    placeholder={t(
-                      "instagramCommentAutomation.keywordsPlaceholder",
-                    )}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+          <ExcludeKeywordsField
+            description={t(
+              "instagramCommentAutomation.excludeKeywordsDescription",
             )}
+            label={t("instagramCommentAutomation.excludeKeywords")}
+            placeholder={t("instagramCommentAutomation.keywordsPlaceholder")}
           />
 
           <div className="space-y-3 border-t pt-4">
@@ -526,13 +461,14 @@ export function IgCommentForm({
             name="hideComments.hasPhoneNumber"
             required
           />
-          {/* hasImage/hasVideo depend on attachment-type detection, which is
-              only implemented for Messenger today — hidden for both Instagram
-              variants rather than shown as a dead toggle. */}
           <SwitchField
             label={t("instagramCommentAutomation.hideComments.hasLink")}
             name="hideComments.hasLink"
             required
+          />
+          <SwitchField
+            label={t("commentAutomation.hideComments.hasEmoji")}
+            name="hideComments.hasEmoji"
           />
           <SwitchField
             label={t("instagramCommentAutomation.hideComments.hasKeywords")}

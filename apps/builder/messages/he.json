@@ -2753,13 +2753,13 @@
     "privateReply": "תשובה פרטית (תיבת דואר נכנס)",
     "privateReplyDescription": "שליחת הודעה פרטית לתיבת הדואר הנכנס של המגיב. בחרו סוכן AI, תבנית טקסט קבועה, תהליך צ'אטבוט או השבתה.",
     "publicReply": "תשובה ציבורית לתגובה",
-    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת.",
+    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת. יש תמיכה ב-spintax.",
     "replyMessage": "הודעת תשובה",
     "replyMessagePlaceholder": "הזנת הודעת תשובה...",
     "includeKeywordsType": "להשיב ל-",
     "includeKeywordsTypeDescription": "בחרו לאילו תגובות האוטומציה תשיב.",
     "includeKeywords": "מילות מפתח להתאמה",
-    "excludeKeywords": "אי-הכללת תגובות עם מילות מפתח אלה",
+    "excludeKeywords": "החרגת תגובות שמכילות",
     "excludeKeywordsDescription": "תגובות המכילות אחת ממילות המפתח האלה יזכו להתעלמות הן באוטומציית תיבת הדואר הנכנס והן בתשובה הציבורית.",
     "keywordsPlaceholder": "הקלידו ולחצו Enter...",
     "replyAfter": "להשיב אחרי",
@@ -2822,7 +2822,7 @@
       "ignoreCommentReplies": "אין להשיב לתשובות לתגובות",
       "ignoreCommentRepliesDescription": "דילוג על האוטומציה בתגובות שהן תשובות לתגובות אחרות ואינן תגובות ברמה העליונה.",
       "trackUserTags": "עקוב אם משתמש מתייג משתמשים אחרים",
-      "trackUserTagsDescription": "השתמש ב-'{{total_tagged}}' כדי לדעת כמה משתמשים תויגו. השתמש ב-'{{total_new_tagged}}' כדי לדעת כמה מהאנשים שתויגו אינם ברשימת אנשי הקשר."
+      "trackUserTagsDescription": "סופר את החשבונות שתויגו בכל תגובה ומוסיף אותם לסכומים המצטברים של איש הקשר בכל התגובות. השתמשו ב-'{{total_tagged}}' לכל החשבונות שתויגו וב-'{{total_new_tagged}}' לחשבונות שמעולם לא שלחו הודעה לדף שלכם או היו אנשי קשר."
     },
     "hideComments": {
       "all": "הסתרת כל התגובות",
@@ -2856,13 +2856,13 @@
     "privateReply": "תשובה פרטית (תיבת דואר נכנס)",
     "privateReplyDescription": "שליחת הודעה פרטית לתיבת הדואר הנכנס של המגיב. בחרו סוכן AI, תבנית טקסט קבועה, תהליך צ'אטבוט או השבתה.",
     "publicReply": "תשובה ציבורית לתגובה",
-    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת.",
+    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת. יש תמיכה ב-spintax.",
     "replyMessage": "הודעת תשובה",
     "replyMessagePlaceholder": "הזנת הודעת תשובה...",
     "includeKeywordsType": "להשיב ל-",
     "includeKeywordsTypeDescription": "בחרו לאילו תגובות האוטומציה תשיב.",
     "includeKeywords": "מילות מפתח להתאמה",
-    "excludeKeywords": "אי-הכללת תגובות עם מילות מפתח אלה",
+    "excludeKeywords": "החרגת תגובות שמכילות",
     "excludeKeywordsDescription": "תגובות המכילות אחת ממילות המפתח האלה יזכו להתעלמות הן באוטומציית תיבת הדואר הנכנס והן בתשובה הציבורית.",
     "keywordsPlaceholder": "הקלידו ולחצו Enter...",
     "replyAfter": "להשיב אחרי",
@@ -2924,7 +2924,7 @@
       "ignoreCommentReplies": "אין להשיב לתשובות לתגובות",
       "ignoreCommentRepliesDescription": "דילוג על האוטומציה בתגובות שהן תשובות לתגובות אחרות ואינן תגובות ברמה העליונה.",
       "trackUserTags": "עקוב אם משתמש מתייג משתמשים אחרים",
-      "trackUserTagsDescription": "השתמש ב-'{{total_tagged}}' כדי לדעת כמה משתמשים תויגו. השתמש ב-'{{total_new_tagged}}' כדי לדעת כמה מהאנשים שתויגו אינם ברשימת אנשי הקשר."
+      "trackUserTagsDescription": "סופר את החשבונות שתויגו בכל תגובה ומוסיף אותם לסכומים המצטברים של איש הקשר בכל התגובות. השתמשו ב-'{{total_tagged}}' לכל החשבונות שתויגו וב-'{{total_new_tagged}}' לחשבונות שמעולם לא שלחו הודעה לדף שלכם או היו אנשי קשר."
     },
     "hideComments": {
       "all": "הסתרת כל התגובות",
@@ -2960,13 +2960,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. עד 10 הודעות טקסט (תומך ב-spintax), כל אחת מתפרסמת כתגובה נפרדת.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "החרגת תגובות שמכילות",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -2975,7 +2975,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "הסתרת תגובות"
     },
     "postType": {
       "all": "All posts",
@@ -3017,7 +3018,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "הזינו לפחות הודעת תגובה אחת.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "ניתן להסתיר רק תגובות ברמה העליונה לפוסטים שלכם.",
+    "hideComments": {
+      "all": "הסתרת כל התגובות",
+      "hasPhoneNumber": "מכיל מספר טלפון",
+      "hasLink": "מכיל קישור",
+      "hasKeywords": "מכיל מילות מפתח",
+      "keywords": "מילות מפתח",
+      "showCommentsAfter": "הצגת תגובות אחרי"
+    },
+    "showCommentsAfter": {
+      "none": "לעולם לא"
     }
   },
   "tiktokCommentAutomation": {
@@ -3029,13 +3044,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. עד 10 הודעות טקסט (תומך ב-spintax), כל אחת מתפרסמת כתגובה נפרדת.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "החרגת תגובות שמכילות",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -3113,7 +3128,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "הזינו לפחות הודעת תגובה אחת."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
@@ -5614,7 +5630,26 @@
       "keywordsNotMatched": "מילות המפתח לא תאמו",
       "contactNotNew": "איש הקשר אינו חדש",
       "alreadyRepliedOnPost": "כבר הושבה תשובה בפוסט זה",
-      "engagedOnOtherPost": "כבר היה מעורב בפוסט אחר"
+      "engagedOnOtherPost": "כבר היה מעורב בפוסט אחר",
+      "mentionCountNotMatched": "מספר האזכורים לא תאם"
+    },
+    "replyTo": {
+      "mentions": "תגובות עם מספיק אזכורים",
+      "mentionCount": "מספר האנשים שתויגו",
+      "mentionCountDescription": "רק תגובות שמתייגות לפחות מספר זה של אנשים (@שם) תואמות.",
+      "mentionCountOption": "{count, plural, one {# אדם} other {# אנשים}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "תגובות שוות ל",
+      "contain": "תגובות שמכילות"
+    },
+    "hideComments": {
+      "hasGif": "מכיל GIF",
+      "hasEmoji": "מכיל אמוג'י"
+    },
+    "trackUserTags": {
+      "label": "עקוב אם משתמש מתייג משתמשים אחרים",
+      "descriptionText": "סופר את החשבונות שתויגו בכל תגובה ומוסיף אותם לסכומים המצטברים של איש הקשר בכל התגובות. השתמשו ב-'{{total_tagged}}' לכל החשבונות שתויגו וב-'{{total_new_tagged}}' לחשבונות שמעולם לא שלחו הודעה לדף שלכם או היו אנשי קשר."
     }
   },
   "condition": {

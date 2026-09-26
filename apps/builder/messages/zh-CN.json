@@ -873,7 +873,26 @@
       "keywordsNotMatched": "关键词不匹配",
       "contactNotNew": "联系人不是新用户",
       "alreadyRepliedOnPost": "已在该帖子回复过",
-      "engagedOnOtherPost": "已在其他帖子互动过"
+      "engagedOnOtherPost": "已在其他帖子互动过",
+      "mentionCountNotMatched": "提及人数不匹配"
+    },
+    "replyTo": {
+      "mentions": "提及人数足够的评论",
+      "mentionCount": "被标记人数",
+      "mentionCountDescription": "仅匹配标记了至少这么多人(@名称)的评论。",
+      "mentionCountOption": "{count, plural, one {# 人} other {# 人}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "评论等于",
+      "contain": "评论包含"
+    },
+    "hideComments": {
+      "hasGif": "包含 GIF",
+      "hasEmoji": "包含表情符号"
+    },
+    "trackUserTags": {
+      "label": "追踪用户是否标记了其他用户",
+      "descriptionText": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。"
     }
   },
   "channels": {
@@ -1505,7 +1524,7 @@
     "create": "创建自动化",
     "deactivated": "自动化已停用",
     "description": "自动处理联系人在 Facebook 贴文下的留言。",
-    "excludeKeywords": "排除包含这些关键字的留言",
+    "excludeKeywords": "排除包含以下内容的评论",
     "excludeKeywordsDescription": "若留言包含任一关键字，收件匣回复与公开回复自动化都会忽略该留言。",
     "hideComments": {
       "all": "隐藏所有留言",
@@ -1531,7 +1550,7 @@
       "ignoreCommentReplies": "忽略留言底下的回复",
       "ignoreCommentRepliesDescription": "若留言是对其他留言的回复，而非顶层留言，则跳过自动化处理。",
       "trackUserTags": "追踪用户是否标记了其他用户",
-      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少用户被标记。使用 '{{total_new_tagged}}' 查看被标记的人中有多少不在联系人列表中。",
+      "trackUserTagsDescription": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。",
       "likeUserComment": "对用户留言按赞",
       "likeUserCommentDescription": "自动对留言者的留言按赞。",
       "replyOncePerUserPerPost": "每则贴文对每位用户只回复一次",
@@ -1553,7 +1572,7 @@
     "privateReply": "私讯回复（收件匣）",
     "privateReplyDescription": "将私讯发送到留言者的收件匣。可选择 AI Agent、固定文本范本、聊天机器人流程，或停用。",
     "publicReply": "公开回复留言",
-    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。",
+    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。 支持 spintax。",
     "replies": "回复",
     "replyAfter": "回复时间",
     "replyAfterType": {
@@ -3527,7 +3546,7 @@
     "create": "创建自动化",
     "deactivated": "自动化已停用",
     "description": "自动处理联系人在 Instagram 贴文下的留言。",
-    "excludeKeywords": "排除包含这些关键字的留言",
+    "excludeKeywords": "排除包含以下内容的评论",
     "excludeKeywordsDescription": "若留言包含任一关键字，收件匣回复与公开回复自动化都会忽略该留言。",
     "hideComments": {
       "all": "隐藏所有留言",
@@ -3551,7 +3570,7 @@
       "ignoreCommentReplies": "忽略留言底下的回复",
       "ignoreCommentRepliesDescription": "若留言是对其他留言的回复，而非顶层留言，则跳过自动化处理。",
       "trackUserTags": "追踪用户是否标记了其他用户",
-      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少用户被标记。使用 '{{total_new_tagged}}' 查看被标记的人中有多少不在联系人列表中。",
+      "trackUserTagsDescription": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。",
       "likeUserComment": "对用户留言按赞",
       "likeUserCommentDescription": "自动对留言者的留言按赞。",
       "replyOncePerUserPerPost": "每则贴文对每位用户只回复一次",
@@ -3572,7 +3591,7 @@
     "privateReply": "私讯回复（收件匣）",
     "privateReplyDescription": "将私讯发送到留言者的收件匣。可选择 AI Agent、固定文本范本、聊天机器人流程，或停用。",
     "publicReply": "公开回复留言",
-    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。",
+    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。 支持 spintax。",
     "replies": "回复",
     "replyAfter": "回复时间",
     "replyAfterType": {
@@ -3624,13 +3643,13 @@
     "publicOnlyNote": "Threads 目前仅支持公开回复。",
     "trackCommentsOn": "追踪评论的对象",
     "publicReply": "公开回复评论",
-    "publicReplyDescription": "对符合条件的 Threads 评论发表公开回复。",
+    "publicReplyDescription": "对符合条件的 Threads 评论发表公开回复。 最多 10 条文本消息(支持 spintax),每条作为单独的回复发布。",
     "replyMessage": "回复消息",
     "replyFlow": "回复流程",
     "replyAIAgent": "回复 AI Agent",
     "includeKeywordsType": "回复对象",
     "includeKeywords": "要匹配的关键词",
-    "excludeKeywords": "排除包含这些关键词的评论",
+    "excludeKeywords": "排除包含以下内容的评论",
     "keywordsPlaceholder": "输入后按 Enter...",
     "replyAfter": "回复时间",
     "replyAfterValue": "时间值",
@@ -3639,7 +3658,8 @@
     "card": {
       "targeting": "目标与回复",
       "filters": "筛选条件与选项",
-      "replyTiming": "回复时机"
+      "replyTiming": "回复时机",
+      "hideComments": "隐藏留言"
     },
     "postType": {
       "all": "所有帖子",
@@ -3681,7 +3701,21 @@
       "keywordsRequired": "请为所选的匹配方式至少输入一个关键词。",
       "delayMustBePositive": "延迟时间必须大于零。",
       "delayMustBeZero": "所选的时机选项不支持延迟时间，请设为零。",
-      "atLeastOneFieldRequired": "请至少填写一个字段。"
+      "atLeastOneFieldRequired": "请至少填写一个字段。",
+      "replyTextRequired": "请至少输入一条回复消息。",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "只能隐藏您帖子下的顶级回复。",
+    "hideComments": {
+      "all": "隐藏所有留言",
+      "hasPhoneNumber": "包含电话号码",
+      "hasLink": "包含链接",
+      "hasKeywords": "包含关键字",
+      "keywords": "关键字",
+      "showCommentsAfter": "多久后重新显示留言"
+    },
+    "showCommentsAfter": {
+      "none": "永不"
     }
   },
   "tiktokCommentAutomation": {
@@ -3693,13 +3727,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. 最多 10 条文本消息(支持 spintax),每条作为单独的回复发布。",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "排除包含以下内容的评论",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -3777,7 +3811,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "请至少输入一条回复消息。"
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

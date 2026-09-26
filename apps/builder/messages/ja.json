@@ -553,7 +553,26 @@
       "keywordsNotMatched": "キーワード不一致",
       "contactNotNew": "新規の連絡先ではない",
       "alreadyRepliedOnPost": "この投稿では返信済み",
-      "engagedOnOtherPost": "他の投稿で既に反応済み"
+      "engagedOnOtherPost": "他の投稿で既に反応済み",
+      "mentionCountNotMatched": "メンション数が一致しませんでした"
+    },
+    "replyTo": {
+      "mentions": "十分なメンションがあるコメント",
+      "mentionCount": "タグ付けされた人数",
+      "mentionCountDescription": "この人数以上(@名前)をタグ付けしたコメントのみが一致します。",
+      "mentionCountOption": "{count, plural, one {#人} other {#人}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "次と等しいコメント",
+      "contain": "次を含むコメント"
+    },
+    "hideComments": {
+      "hasGif": "GIFを含む",
+      "hasEmoji": "絵文字を含む"
+    },
+    "trackUserTags": {
+      "label": "ユーザーが他のユーザーをタグ付けしたかを記録する",
+      "descriptionText": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     }
   },
   "condition": {
@@ -4671,13 +4690,13 @@
     "privateReply": "非公開返信（受信トレイ）",
     "privateReplyDescription": "コメントしたユーザーの受信トレイに非公開メッセージを送信します。AIエージェント、固定テキストテンプレート、チャットボットフロー、または無効を選択できます。",
     "publicReply": "コメントに公開返信",
-    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。",
+    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。 スピンタックスに対応しています。",
     "replyMessage": "返信メッセージ",
     "replyMessagePlaceholder": "返信メッセージを入力...",
     "includeKeywordsType": "返信対象",
     "includeKeywordsTypeDescription": "この自動化が返信するコメントを選択します。",
     "includeKeywords": "一致させるキーワード",
-    "excludeKeywords": "これらのキーワードを含むコメントを除外",
+    "excludeKeywords": "次を含むコメントを除外",
     "excludeKeywordsDescription": "これらのキーワードのいずれかを含むコメントは、受信トレイと公開返信の両方の自動化で無視されます。",
     "keywordsPlaceholder": "入力してEnterキーを押してください...",
     "replyAfter": "返信までの時間",
@@ -4740,7 +4759,7 @@
       "ignoreCommentReplies": "コメントへの返信には応答しない",
       "ignoreCommentRepliesDescription": "トップレベルのコメントではなく、他のコメントへの返信には自動化を適用しません。",
       "trackUserTags": "ユーザーが他のユーザーをタグ付けしたかを記録する",
-      "trackUserTagsDescription": "'{{total_tagged}}' で何人のユーザーがタグ付けされたかを確認できます。'{{total_new_tagged}}' でタグ付けされた人のうち連絡先リストにいない人数を確認できます。"
+      "trackUserTagsDescription": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     },
     "hideComments": {
       "all": "すべてのコメントを非表示",
@@ -4774,13 +4793,13 @@
     "privateReply": "非公開返信（受信トレイ）",
     "privateReplyDescription": "コメントしたユーザーの受信トレイに非公開メッセージを送信します。AIエージェント、固定テキストテンプレート、チャットボットフロー、または無効を選択できます。",
     "publicReply": "コメントに公開返信",
-    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。",
+    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。 スピンタックスに対応しています。",
     "replyMessage": "返信メッセージ",
     "replyMessagePlaceholder": "返信メッセージを入力...",
     "includeKeywordsType": "返信対象",
     "includeKeywordsTypeDescription": "この自動化が返信するコメントを選択します。",
     "includeKeywords": "一致させるキーワード",
-    "excludeKeywords": "これらのキーワードを含むコメントを除外",
+    "excludeKeywords": "次を含むコメントを除外",
     "excludeKeywordsDescription": "これらのキーワードのいずれかを含むコメントは、受信トレイと公開返信の両方の自動化で無視されます。",
     "keywordsPlaceholder": "入力してEnterキーを押してください...",
     "replyAfter": "返信までの時間",
@@ -4842,7 +4861,7 @@
       "ignoreCommentReplies": "コメントへの返信には応答しない",
       "ignoreCommentRepliesDescription": "トップレベルのコメントではなく、他のコメントへの返信には自動化を適用しません。",
       "trackUserTags": "ユーザーが他のユーザーをタグ付けしたかを記録する",
-      "trackUserTagsDescription": "'{{total_tagged}}' で何人のユーザーがタグ付けされたかを確認できます。'{{total_new_tagged}}' でタグ付けされた人のうち連絡先リストにいない人数を確認できます。"
+      "trackUserTagsDescription": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     },
     "hideComments": {
       "all": "すべてのコメントを非表示",
@@ -4878,13 +4897,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. 最大10件のテキストメッセージ(スピンタックス対応)、それぞれ別の返信として投稿されます。",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "次を含むコメントを除外",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4893,7 +4912,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "コメントを非表示"
     },
     "postType": {
       "all": "All posts",
@@ -4935,7 +4955,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "返信メッセージを1件以上入力してください。",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "非表示にできるのは投稿への最上位の返信のみです。",
+    "hideComments": {
+      "all": "すべてのコメントを非表示",
+      "hasPhoneNumber": "電話番号を含む",
+      "hasLink": "リンクを含む",
+      "hasKeywords": "キーワードを含む",
+      "keywords": "キーワード",
+      "showCommentsAfter": "コメントを再表示するまでの時間"
+    },
+    "showCommentsAfter": {
+      "none": "再表示しない"
     }
   },
   "tiktokCommentAutomation": {
@@ -4947,13 +4981,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. 最大10件のテキストメッセージ(スピンタックス対応)、それぞれ別の返信として投稿されます。",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "次を含むコメントを除外",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5031,7 +5065,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "返信メッセージを1件以上入力してください。"
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

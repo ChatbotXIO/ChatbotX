@@ -1379,7 +1379,26 @@
       "keywordsNotMatched": "Cuvintele cheie nu s-au potrivit",
       "contactNotNew": "Contactul nu este nou",
       "alreadyRepliedOnPost": "Deja s-a răspuns la această postare",
-      "engagedOnOtherPost": "A interacționat deja la altă postare"
+      "engagedOnOtherPost": "A interacționat deja la altă postare",
+      "mentionCountNotMatched": "Numărul de mențiuni nu s-a potrivit"
+    },
+    "replyTo": {
+      "mentions": "Comentarii cu suficiente mențiuni",
+      "mentionCount": "Număr de persoane etichetate",
+      "mentionCountDescription": "Se potrivesc doar comentariile care etichetează cel puțin acest număr de persoane (@nume).",
+      "mentionCountOption": "{count, plural, one {# persoană} other {# persoane}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Comentarii egale cu",
+      "contain": "Comentarii care conțin"
+    },
+    "hideComments": {
+      "hasGif": "Conține GIF",
+      "hasEmoji": "Conține emoji"
+    },
+    "trackUserTags": {
+      "label": "Urmărește dacă un utilizator etichetează alți utilizatori",
+      "descriptionText": "Numără conturile etichetate în fiecare comentariu și le adaugă la totalurile contactului pentru toate comentariile. Folosește '{{total_tagged}}' pentru toate conturile etichetate și '{{total_new_tagged}}' pentru conturile care nu au trimis niciodată mesaj paginii tale și nu au fost contacte."
     }
   },
   "condition": {
@@ -4811,7 +4830,7 @@
     "create": "Creează automatizare",
     "deactivated": "Automatizare dezactivată",
     "description": "Automatizează comentariile Facebook pentru contactele tale.",
-    "excludeKeywords": "Exclude comentariile cu aceste cuvinte cheie",
+    "excludeKeywords": "Exclude comentariile care conțin",
     "excludeKeywordsDescription": "Comentariile care conțin oricare dintre aceste cuvinte cheie vor fi ignorate atât de automatizarea prin mesaje primite, cât și de cea prin răspuns public.",
     "hideComments": {
       "all": "Ascunde toate comentariile",
@@ -4837,7 +4856,7 @@
       "ignoreCommentReplies": "Nu răspunde la răspunsurile la comentarii",
       "ignoreCommentRepliesDescription": "Omite automatizarea pentru comentariile care sunt răspunsuri la alte comentarii, nu comentarii de nivel superior.",
       "trackUserTags": "Urmărește dacă un utilizator etichetează alți utilizatori",
-      "trackUserTagsDescription": "Folosește '{{total_tagged}}' pentru a afla câți utilizatori au fost etichetați. Folosește '{{total_new_tagged}}' pentru a afla câte dintre persoanele etichetate nu sunt în lista de contacte.",
+      "trackUserTagsDescription": "Numără conturile etichetate în fiecare comentariu și le adaugă la totalurile contactului pentru toate comentariile. Folosește '{{total_tagged}}' pentru toate conturile etichetate și '{{total_new_tagged}}' pentru conturile care nu au trimis niciodată mesaj paginii tale și nu au fost contacte.",
       "likeUserComment": "Apreciază comentariul utilizatorului",
       "likeUserCommentDescription": "Reacționează automat cu un like la comentariul persoanei care a comentat.",
       "replyOncePerUserPerPost": "Răspunde o singură dată fiecărui utilizator per postare",
@@ -4859,7 +4878,7 @@
     "privateReply": "Răspuns privat (mesaje primite)",
     "privateReplyDescription": "Trimite un mesaj privat în mesajele primite ale persoanei care a comentat. Alege Agent IA, un șablon de text fix, un flux de chatbot sau dezactivează.",
     "publicReply": "Răspuns public la comentariu",
-    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text, Agent IA, un flux de chatbot sau niciun răspuns. Fiecare mesaj este publicat ca un răspuns separat.",
+    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text, Agent IA, un flux de chatbot sau niciun răspuns. Fiecare mesaj este publicat ca un răspuns separat. Spintax este acceptat.",
     "replies": "Răspunsuri",
     "replyAfter": "Răspunde după",
     "replyAfterType": {
@@ -4968,7 +4987,7 @@
     "create": "Creează automatizare",
     "deactivated": "Automatizare dezactivată",
     "description": "Automatizează comentariile Instagram pentru contactele tale.",
-    "excludeKeywords": "Exclude comentariile cu aceste cuvinte cheie",
+    "excludeKeywords": "Exclude comentariile care conțin",
     "excludeKeywordsDescription": "Comentariile care conțin oricare dintre aceste cuvinte cheie vor fi ignorate atât de automatizarea prin mesaje primite, cât și de cea prin răspuns public.",
     "hideComments": {
       "all": "Ascunde toate comentariile",
@@ -4992,7 +5011,7 @@
       "ignoreCommentReplies": "Nu răspunde la răspunsurile la comentarii",
       "ignoreCommentRepliesDescription": "Omite automatizarea pentru comentariile care sunt răspunsuri la alte comentarii, nu comentarii de nivel superior.",
       "trackUserTags": "Urmărește dacă un utilizator etichetează alți utilizatori",
-      "trackUserTagsDescription": "Folosește '{{total_tagged}}' pentru a afla câți utilizatori au fost etichetați. Folosește '{{total_new_tagged}}' pentru a afla câte dintre persoanele etichetate nu sunt în lista de contacte.",
+      "trackUserTagsDescription": "Numără conturile etichetate în fiecare comentariu și le adaugă la totalurile contactului pentru toate comentariile. Folosește '{{total_tagged}}' pentru toate conturile etichetate și '{{total_new_tagged}}' pentru conturile care nu au trimis niciodată mesaj paginii tale și nu au fost contacte.",
       "likeUserComment": "Apreciază comentariul utilizatorului",
       "likeUserCommentDescription": "Reacționează automat cu un like la comentariul persoanei care a comentat.",
       "replyOncePerUserPerPost": "Răspunde o singură dată fiecărui utilizator per postare",
@@ -5013,7 +5032,7 @@
     "privateReply": "Răspuns privat (mesaje primite)",
     "privateReplyDescription": "Trimite un mesaj privat în mesajele primite ale persoanei care a comentat. Alege Agent IA, un șablon de text fix, un flux de chatbot sau dezactivează.",
     "publicReply": "Răspuns public la comentariu",
-    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text, Agent IA, un flux de chatbot sau niciun răspuns. Fiecare mesaj este publicat ca un răspuns separat.",
+    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text, Agent IA, un flux de chatbot sau niciun răspuns. Fiecare mesaj este publicat ca un răspuns separat. Spintax este acceptat.",
     "replies": "Răspunsuri",
     "replyAfter": "Răspunde după",
     "replyAfterType": {
@@ -5065,13 +5084,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Până la 10 mesaje text (spintax acceptat), fiecare publicat ca răspuns separat.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Exclude comentariile care conțin",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5080,7 +5099,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Ascunde comentarii"
     },
     "postType": {
       "all": "All posts",
@@ -5122,7 +5142,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Introdu cel puțin un mesaj de răspuns.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Doar răspunsurile de prim nivel la postările tale pot fi ascunse.",
+    "hideComments": {
+      "all": "Ascunde toate comentariile",
+      "hasPhoneNumber": "Conține număr de telefon",
+      "hasLink": "Conține link",
+      "hasKeywords": "Conține cuvinte cheie",
+      "keywords": "Cuvinte cheie",
+      "showCommentsAfter": "Afișează comentariile după"
+    },
+    "showCommentsAfter": {
+      "none": "Niciodată"
     }
   },
   "tiktokCommentAutomation": {
@@ -5134,13 +5168,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Până la 10 mesaje text (spintax acceptat), fiecare publicat ca răspuns separat.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Exclude comentariile care conțin",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5218,7 +5252,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Introdu cel puțin un mesaj de răspuns."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

@@ -2,6 +2,7 @@ import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import {
   commentAutomationService,
   contactInboxService,
+  contactService,
   workspaceService,
 } from "@chatbotx.io/business"
 import type {
@@ -12,7 +13,9 @@ import type {
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type {
   CommentAutomationMissInsert,
+  CommentAutomationModel,
   ConversationModel,
+  MessageModel,
 } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { createId } from "@chatbotx.io/utils"
@@ -27,7 +30,9 @@ import {
   computeDelayMs,
   isCommentReply,
   matchKeywords,
+  matchMentionCount,
   matchPost,
+  needsMentionCount,
   willSendReply,
 } from "./automation-matching"
 import {
@@ -38,12 +43,17 @@ import {
   createAttachmentInfoResolver,
   needsAttachmentInfo,
 } from "./comment-attachment"
-import { createTagInfoResolver } from "./comment-tags"
+import {
+  type CommentTagInfo,
+  countMentions,
+  createCommentTagResolvers,
+} from "./comment-tags"
 import { enqueueDeferredPrivateReply } from "./deferred-private-reply"
 import {
   applyHideComments,
   hasHideCommentAction,
   supportsHideComments,
+  supportsHideForComment,
 } from "./hide-comments"
 import {
   executePrivateReply,
@@ -182,7 +192,7 @@ export async function processCommentAutomation(
     auth,
   })
 
-  const resolveTagInfo = createTagInfoResolver({
+  const { resolveMentions, resolveTagInfo } = createCommentTagResolvers({
     channelType,
     workspaceId,
     inboxId: integrationRow.inboxId,
@@ -192,6 +202,52 @@ export async function processCommentAutomation(
     integrationRow,
     auth,
   })
+
+  // The incoming comment's own message row, looked up at most once per run —
+  // tag tracking reads it before the loop, and every automation hangs its
+  // like/hide/parent threading off it inside.
+  const messageRepo = await createMessageRepository()
+  let commentMessage: MessageModel | null | undefined
+  const loadCommentMessage = async (): Promise<MessageModel | null> => {
+    if (commentMessage === undefined) {
+      commentMessage =
+        (await messageRepo.findBySourceId(
+          commentId,
+          conversationId,
+          workspaceId,
+          occurredAt,
+        )) ?? null
+    }
+    return commentMessage
+  }
+
+  // Tag tracking is counted ONCE per comment, not once per automation: the
+  // counters are lifetime totals on the contact, so two automations with the
+  // option on must not add the same comment twice. Only comments that pass an
+  // automation's post/reply/keyword filters are counted (see
+  // `tracksTagsForComment`), but it runs ahead of the per-user dedup on
+  // purpose. Awaited before any reply dispatches so `{{total_tagged}}` renders
+  // the total that includes this comment.
+  if (
+    automations.some((automation) =>
+      tracksTagsForComment(automation, workspace.timezone, {
+        postId,
+        commentId,
+        parentId,
+        message,
+      }),
+    )
+  ) {
+    await trackCommentTags({
+      workspaceId,
+      commentId,
+      postId,
+      contactId: contactInbox.contactId,
+      messageRepo,
+      loadCommentMessage,
+      resolveTagInfo,
+    })
+  }
 
   // Meta allows a single comment_id-anchored DM per comment, and that budget is
   // shared by every automation matching this one comment — so it is tracked
@@ -275,6 +331,7 @@ export async function processCommentAutomation(
           automation.includeKeywords,
           automation.excludeKeywords,
           message,
+          automation.excludeKeywordsType,
         )
       ) {
         logAutomationSkipped({
@@ -286,6 +343,20 @@ export async function processCommentAutomation(
         })
         collectMiss(automation.id, "keywordsNotMatched")
         continue
+      }
+      if (needsMentionCount(automation.includeKeywords)) {
+        const mentionCount = countMentions(await resolveMentions())
+        if (!matchMentionCount(automation.includeKeywords, mentionCount)) {
+          logAutomationSkipped({
+            automationId: automation.id,
+            commentId,
+            postId,
+            workspaceId,
+            reason: `comment tagged ${mentionCount} accounts, expected at least ${automation.includeKeywords.mentionCount ?? 1}`,
+          })
+          collectMiss(automation.id, "mentionCountNotMatched")
+          continue
+        }
       }
 
       if (automation.options.replyToNewContactsOnly) {
@@ -347,13 +418,7 @@ export async function processCommentAutomation(
 
       const delay = computeDelayMs(automation.replyAfter)
 
-      const messageRepo = await createMessageRepository()
-      const dbMessage = await messageRepo.findBySourceId(
-        commentId,
-        conversationId,
-        workspaceId,
-        occurredAt,
-      )
+      const dbMessage = await loadCommentMessage()
 
       let parentMessageId: string | null = null
       let parentMessageCreatedAt: Date | null = null
@@ -395,12 +460,24 @@ export async function processCommentAutomation(
         }
 
         if (hasHideCommentAction(automation.hideComments)) {
-          if (supportsHideComments(channelType)) {
-            const { hasImage, hasVideo } = needsAttachmentInfo(
+          if (
+            supportsHideComments(channelType) &&
+            !supportsHideForComment(
+              channelType,
+              isCommentReply(parentId, postId, commentId),
+            )
+          ) {
+            logUnsupportedCapability({
+              automationId: automation.id,
+              commentId,
+              capability: "hide nested reply unsupported",
+            })
+          } else if (supportsHideComments(channelType)) {
+            const { hasImage, hasVideo, hasGif } = needsAttachmentInfo(
               automation.hideComments,
             )
               ? await resolveAttachmentInfo()
-              : { hasImage: false, hasVideo: false }
+              : { hasImage: false, hasVideo: false, hasGif: false }
 
             applyHideComments(automation.hideComments, commentId, message, {
               conversation: conversationRef,
@@ -409,6 +486,7 @@ export async function processCommentAutomation(
               messageCreatedAt: dbMessage.createdAt,
               hasImage,
               hasVideo,
+              hasGif,
             }).catch((err: unknown) =>
               logger.error(
                 { err, automationId: automation.id, commentId },
@@ -428,35 +506,6 @@ export async function processCommentAutomation(
               commentId,
               capability: "hide or unhide comment unsupported",
             })
-          }
-        }
-
-        // Independent of hide-comment support/configuration above — tag
-        // tracking is its own capability. Awaited, unlike the like/hide
-        // fire-and-forget above: the reply below renders
-        // `{{total_tagged}}`/`{{total_new_tagged}}` by reading these back off
-        // this very row, so racing the send would render an empty value on
-        // the first comment and the right one only on a retry.
-        if (automation.options.trackUserTags) {
-          try {
-            const { totalTagged, totalNewTagged } = await resolveTagInfo()
-            await messageRepo.updateContentAttributes(
-              dbMessage.id,
-              workspaceId,
-              {
-                ...dbMessage.contentAttributes,
-                totalTagged,
-                totalNewTagged,
-              },
-              dbMessage.createdAt,
-            )
-          } catch (err) {
-            // Not a skip — the reply still goes out, just with the two tag
-            // variables unresolved. Logged because nothing else would show it.
-            logger.error(
-              { err, automationId: automation.id, commentId, postId },
-              "Failed to resolve user tags for comment",
-            )
           }
         }
       } else {
@@ -822,4 +871,113 @@ export function resolvePrivateReplyBlockedReason(props: {
   }
 
   return null
+}
+
+/**
+ * Whether this automation wants the comment's tags counted: the same schedule,
+ * post, reply and keyword filters the dispatch loop applies, so a comment no
+ * automation would act on never costs a tag lookup (a Graph call on
+ * Messenger). The per-user dedup (`replyOncePerUserPerPost`, new-contact
+ * checks) is left out on purpose — it is about replying, and must not stop a
+ * user's later comments from being counted. So is the mention-count filter,
+ * which needs the very lookup this gate exists to spare.
+ */
+function tracksTagsForComment(
+  automation: CommentAutomationModel,
+  timezone: string,
+  comment: {
+    postId: string
+    commentId: string
+    parentId: string | undefined
+    message: string | undefined
+  },
+): boolean {
+  const { postId, commentId, parentId, message } = comment
+  return (
+    automation.options.trackUserTags &&
+    commentAutomationService.isWithinSchedule(automation, timezone) &&
+    matchPost(automation.post, postId) &&
+    !(
+      automation.options.ignoreCommentReplies &&
+      isCommentReply(parentId, postId, commentId)
+    ) &&
+    matchKeywords(
+      automation.includeKeywords,
+      automation.excludeKeywords,
+      message,
+      automation.excludeKeywordsType,
+    )
+  )
+}
+
+/**
+ * Adds this comment's tag counts to the contact's lifetime counters.
+ *
+ * Once-per-comment is guaranteed by the comment message itself: the counts
+ * are claimed onto its `contentAttributes` BEFORE the contact is incremented,
+ * by an UPDATE that only matches while `totalTagged` is still absent — so the
+ * contact is incremented only when this run won the claim. A failed or
+ * lost claim returns `null` and skips the increment, and claiming first means
+ * a crash between the two writes loses one comment's count rather than
+ * doubling it on the retry. The claim is a `jsonb ||` merge, never a
+ * read-modify-write, so keys other jobs merge into the same row concurrently
+ * (e.g. `tiktokHighIntent`) survive it.
+ *
+ * Never throws: tag tracking is bookkeeping, and a failure here must not cost
+ * the comment its reply.
+ */
+async function trackCommentTags(props: {
+  workspaceId: string
+  commentId: string
+  postId: string
+  contactId: string
+  messageRepo: Awaited<ReturnType<typeof createMessageRepository>>
+  loadCommentMessage: () => Promise<MessageModel | null>
+  resolveTagInfo: () => Promise<CommentTagInfo>
+}): Promise<void> {
+  const { workspaceId, commentId, postId, contactId, messageRepo } = props
+  try {
+    const commentMessage = await props.loadCommentMessage()
+    if (!commentMessage) {
+      logger.warn(
+        { workspaceId, commentId, postId },
+        "Comment automation: incoming comment message row not found, skipping tag tracking",
+      )
+      return
+    }
+    // Cheap pre-check that spares the tag lookup on a retry; the claim below
+    // is what actually enforces once-per-comment.
+    if (typeof commentMessage.contentAttributes?.totalTagged === "number") {
+      return
+    }
+
+    const { totalTagged, totalNewTagged } = await props.resolveTagInfo()
+    const claimed = await messageRepo.claimContentAttributes({
+      messageId: commentMessage.id,
+      workspaceId,
+      createdAt: commentMessage.createdAt,
+      guardKey: "totalTagged",
+      overlay: { totalTagged, totalNewTagged },
+    })
+    if (!claimed) {
+      logger.warn(
+        { workspaceId, commentId, postId, messageId: commentMessage.id },
+        "Comment automation: tag counts not claimed (already counted or update failed), skipping counter increment",
+      )
+      return
+    }
+    await contactService.incrementTagCounters({
+      workspaceId,
+      contactId,
+      totalTagged,
+      totalNewTagged,
+    })
+  } catch (err) {
+    // Not a skip — the replies still go out, just without this comment in
+    // the totals. Logged because nothing else would show it.
+    logger.error(
+      { err, workspaceId, commentId, postId },
+      "Failed to track user tags for comment",
+    )
+  }
 }

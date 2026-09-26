@@ -9,6 +9,7 @@ import {
   text,
 } from "drizzle-orm/pg-core"
 import {
+  type CommentExcludeKeywordsType,
   type CommentHideComments,
   type CommentIncludeKeywords,
   type CommentOptions,
@@ -16,6 +17,7 @@ import {
   type CommentReply,
   type CommentReplyAfter,
   commentAutomationTypes,
+  commentExcludeKeywordsTypes,
 } from "../partials/comment-automation"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { folderModel } from "./folder"
@@ -24,6 +26,11 @@ import { workspaceModel } from "./workspace"
 export const commentAutomationType = pgEnum(
   "commentAutomationType",
   commentAutomationTypes.options as [string, ...string[]],
+)
+
+export const commentExcludeKeywordsType = pgEnum(
+  "commentExcludeKeywordsType",
+  commentExcludeKeywordsTypes.options as [string, ...string[]],
 )
 
 export const commentAutomationModel = pgTable(
@@ -113,6 +120,10 @@ export const commentAutomationModel = pgTable(
       .notNull()
       .default(sql`'{"type":"all","value":[]}'`),
     excludeKeywords: text().array().notNull().default(sql`ARRAY[]::text[]`),
+    excludeKeywordsType: commentExcludeKeywordsType()
+      .$type<CommentExcludeKeywordsType>()
+      .notNull()
+      .default("contain"),
     options: jsonb()
       .$type<CommentOptions>()
       .notNull()
@@ -123,7 +134,7 @@ export const commentAutomationModel = pgTable(
       .$type<CommentHideComments>()
       .notNull()
       .default(
-        sql`'{"all":false,"hasPhoneNumber":false,"hasImage":false,"hasVideo":false,"hasLink":false,"hasKeywords":false,"keywords":[],"showCommentsAfter":"none"}'`,
+        sql`'{"all":false,"hasPhoneNumber":false,"hasImage":false,"hasVideo":false,"hasLink":false,"hasKeywords":false,"hasGif":false,"hasEmoji":false,"keywords":[],"showCommentsAfter":"none"}'`,
       ),
     replyAfter: jsonb()
       .$type<CommentReplyAfter>()

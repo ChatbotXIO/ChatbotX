@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Schlüsselwörter passen nicht",
       "contactNotNew": "Kontakt ist nicht neu",
       "alreadyRepliedOnPost": "Bereits bei diesem Beitrag geantwortet",
-      "engagedOnOtherPost": "Bereits bei einem anderen Beitrag interagiert"
+      "engagedOnOtherPost": "Bereits bei einem anderen Beitrag interagiert",
+      "mentionCountNotMatched": "Anzahl der Erwähnungen stimmte nicht"
+    },
+    "replyTo": {
+      "mentions": "Kommentare mit genügend Erwähnungen",
+      "mentionCount": "Anzahl markierter Personen",
+      "mentionCountDescription": "Nur Kommentare, die mindestens so viele Personen (@Name) markieren, treffen zu.",
+      "mentionCountOption": "{count, plural, one {# Person} other {# Personen}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Kommentare gleich",
+      "contain": "Kommentare, die enthalten"
+    },
+    "hideComments": {
+      "hasGif": "Enthält GIF",
+      "hasEmoji": "Enthält Emoji"
+    },
+    "trackUserTags": {
+      "label": "Erfassen, ob ein Nutzer andere Nutzer markiert",
+      "descriptionText": "Zählt die in jedem Kommentar markierten Konten und addiert sie über alle Kommentare zu den Summen des Kontakts. Verwende '{{total_tagged}}' für alle markierten Konten und '{{total_new_tagged}}' für Konten, die deiner Seite nie geschrieben haben oder nie Kontakt waren."
     }
   },
   "condition": {
@@ -4692,13 +4711,13 @@
     "privateReply": "Private Antwort (Posteingang)",
     "privateReplyDescription": "Senden Sie eine private Nachricht an den Posteingang des Kommentierenden. Wählen Sie einen KI-Agenten, eine feste Textvorlage, einen Chatbot-Flow oder deaktivieren Sie die Antwort.",
     "publicReply": "Öffentliche Antwort auf Kommentar",
-    "publicReplyDescription": "Veröffentlichen Sie eine öffentliche Antwort direkt unter dem Kommentar. Unterstützt bis zu 10 Textvorlagen, einen KI-Agenten, einen Chatbot-Flow oder keine Antwort. Jede Nachricht wird als eigene Antwort gepostet.",
+    "publicReplyDescription": "Veröffentlichen Sie eine öffentliche Antwort direkt unter dem Kommentar. Unterstützt bis zu 10 Textvorlagen, einen KI-Agenten, einen Chatbot-Flow oder keine Antwort. Jede Nachricht wird als eigene Antwort gepostet. Spintax wird unterstützt.",
     "replyMessage": "Antwortnachricht",
     "replyMessagePlaceholder": "Antwortnachricht eingeben...",
     "includeKeywordsType": "Antworten auf",
     "includeKeywordsTypeDescription": "Wählen Sie, auf welche Kommentare diese Automatisierung antwortet.",
     "includeKeywords": "Zu suchende Schlüsselwörter",
-    "excludeKeywords": "Kommentare mit diesen Schlüsselwörtern ausschließen",
+    "excludeKeywords": "Kommentare ausschließen, die enthalten",
     "excludeKeywordsDescription": "Kommentare, die eines dieser Schlüsselwörter enthalten, werden sowohl von der Posteingangs- als auch der öffentlichen Antwortautomatisierung ignoriert.",
     "keywordsPlaceholder": "Eingeben und Enter drücken...",
     "replyAfter": "Antworten nach",
@@ -4761,7 +4780,7 @@
       "ignoreCommentReplies": "Nicht auf Antworten auf Kommentare reagieren",
       "ignoreCommentRepliesDescription": "Automatisierung für Kommentare überspringen, die Antworten auf andere Kommentare und keine Kommentare der obersten Ebene sind.",
       "trackUserTags": "Erfassen, ob ein Nutzer andere Nutzer markiert",
-      "trackUserTagsDescription": "Mit '{{total_tagged}}' erfährst du, wie viele Nutzer markiert wurden. Mit '{{total_new_tagged}}' erfährst du, wie viele der markierten Personen nicht in der Kontaktliste stehen."
+      "trackUserTagsDescription": "Zählt die in jedem Kommentar markierten Konten und addiert sie über alle Kommentare zu den Summen des Kontakts. Verwende '{{total_tagged}}' für alle markierten Konten und '{{total_new_tagged}}' für Konten, die deiner Seite nie geschrieben haben oder nie Kontakt waren."
     },
     "hideComments": {
       "all": "Alle Kommentare ausblenden",
@@ -4795,13 +4814,13 @@
     "privateReply": "Private Antwort (Posteingang)",
     "privateReplyDescription": "Senden Sie eine private Nachricht an den Posteingang des Kommentierenden. Wählen Sie einen KI-Agenten, eine feste Textvorlage, einen Chatbot-Flow oder deaktivieren Sie die Antwort.",
     "publicReply": "Öffentliche Antwort auf Kommentar",
-    "publicReplyDescription": "Veröffentlichen Sie eine öffentliche Antwort direkt unter dem Kommentar. Unterstützt bis zu 10 Textvorlagen, einen KI-Agenten, einen Chatbot-Flow oder keine Antwort. Jede Nachricht wird als eigene Antwort gepostet.",
+    "publicReplyDescription": "Veröffentlichen Sie eine öffentliche Antwort direkt unter dem Kommentar. Unterstützt bis zu 10 Textvorlagen, einen KI-Agenten, einen Chatbot-Flow oder keine Antwort. Jede Nachricht wird als eigene Antwort gepostet. Spintax wird unterstützt.",
     "replyMessage": "Antwortnachricht",
     "replyMessagePlaceholder": "Antwortnachricht eingeben...",
     "includeKeywordsType": "Antworten auf",
     "includeKeywordsTypeDescription": "Wählen Sie, auf welche Kommentare diese Automatisierung antwortet.",
     "includeKeywords": "Zu suchende Schlüsselwörter",
-    "excludeKeywords": "Kommentare mit diesen Schlüsselwörtern ausschließen",
+    "excludeKeywords": "Kommentare ausschließen, die enthalten",
     "excludeKeywordsDescription": "Kommentare, die eines dieser Schlüsselwörter enthalten, werden sowohl von der Posteingangs- als auch der öffentlichen Antwortautomatisierung ignoriert.",
     "keywordsPlaceholder": "Eingeben und Enter drücken...",
     "replyAfter": "Antworten nach",
@@ -4863,7 +4882,7 @@
       "ignoreCommentReplies": "Nicht auf Antworten auf Kommentare reagieren",
       "ignoreCommentRepliesDescription": "Automatisierung für Kommentare überspringen, die Antworten auf andere Kommentare und keine Kommentare der obersten Ebene sind.",
       "trackUserTags": "Erfassen, ob ein Nutzer andere Nutzer markiert",
-      "trackUserTagsDescription": "Mit '{{total_tagged}}' erfährst du, wie viele Nutzer markiert wurden. Mit '{{total_new_tagged}}' erfährst du, wie viele der markierten Personen nicht in der Kontaktliste stehen."
+      "trackUserTagsDescription": "Zählt die in jedem Kommentar markierten Konten und addiert sie über alle Kommentare zu den Summen des Kontakts. Verwende '{{total_tagged}}' für alle markierten Konten und '{{total_new_tagged}}' für Konten, die deiner Seite nie geschrieben haben oder nie Kontakt waren."
     },
     "hideComments": {
       "all": "Alle Kommentare ausblenden",
@@ -4899,13 +4918,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Bis zu 10 Textnachrichten (Spintax unterstützt), jede als eigene Antwort gepostet.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Kommentare ausschließen, die enthalten",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4914,7 +4933,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Kommentare ausblenden"
     },
     "postType": {
       "all": "All posts",
@@ -4956,7 +4976,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Gib mindestens eine Antwortnachricht ein.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Nur direkte Antworten auf deine Beiträge können ausgeblendet werden.",
+    "hideComments": {
+      "all": "Alle Kommentare ausblenden",
+      "hasPhoneNumber": "Enthält Telefonnummer",
+      "hasLink": "Enthält Link",
+      "hasKeywords": "Enthält Schlüsselwörter",
+      "keywords": "Schlüsselwörter",
+      "showCommentsAfter": "Kommentare anzeigen nach"
+    },
+    "showCommentsAfter": {
+      "none": "Nie"
     }
   },
   "tiktokCommentAutomation": {
@@ -4968,13 +5002,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Bis zu 10 Textnachrichten (Spintax unterstützt), jede als eigene Antwort gepostet.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Kommentare ausschließen, die enthalten",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5052,7 +5086,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Gib mindestens eine Antwortnachricht ein."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

@@ -38,6 +38,7 @@ export function CreateIgCommentForm({
     },
     includeKeywords: { type: "all" as const, value: [] },
     excludeKeywords: [],
+    excludeKeywordsType: "contain" as const,
     options: {
       replyToNewContactsOnly: false,
       replyOncePerUserPerPost: false,
@@ -53,6 +54,8 @@ export function CreateIgCommentForm({
       hasVideo: false,
       hasLink: false,
       hasKeywords: false,
+      hasGif: false,
+      hasEmoji: false,
       keywords: [],
       showCommentsAfter: "none" as const,
     },

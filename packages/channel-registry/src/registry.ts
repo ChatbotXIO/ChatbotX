@@ -92,7 +92,7 @@ export const allIntegrations = registeredIntegrations as unknown as Record<
   string,
   ResolvedIntegration | undefined
 > &
-  Pick<typeof registeredIntegrations, "messenger">
+  Pick<typeof registeredIntegrations, "messenger" | "threads">
 
 export const getRegisteredIntegration = (
   integrationType: string,

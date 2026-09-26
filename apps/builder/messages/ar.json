@@ -553,7 +553,26 @@
       "keywordsNotMatched": "الكلمات المفتاحية غير مطابقة",
       "contactNotNew": "جهة الاتصال ليست جديدة",
       "alreadyRepliedOnPost": "تم الرد مسبقًا على هذا المنشور",
-      "engagedOnOtherPost": "تفاعل مسبقًا على منشور آخر"
+      "engagedOnOtherPost": "تفاعل مسبقًا على منشور آخر",
+      "mentionCountNotMatched": "عدد الإشارات غير مطابق"
+    },
+    "replyTo": {
+      "mentions": "التعليقات التي تحتوي على عدد كافٍ من الإشارات",
+      "mentionCount": "عدد الأشخاص المشار إليهم",
+      "mentionCountDescription": "تطابق فقط التعليقات التي تشير إلى هذا العدد من الأشخاص (@الاسم) على الأقل.",
+      "mentionCountOption": "{count, plural, one {# شخص} other {# أشخاص}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "التعليقات المساوية لـ",
+      "contain": "التعليقات التي تحتوي على"
+    },
+    "hideComments": {
+      "hasGif": "يحتوي على GIF",
+      "hasEmoji": "يحتوي على رموز تعبيرية"
+    },
+    "trackUserTags": {
+      "label": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
+      "descriptionText": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     }
   },
   "condition": {
@@ -4692,13 +4711,13 @@
     "privateReply": "رد خاص (صندوق الوارد)",
     "privateReplyDescription": "أرسل رسالة خاصة إلى صندوق وارد صاحب التعليق. اختر وكيل ذكاء اصطناعي، أو قالب نص ثابت، أو مسار بوت، أو عطّل الرد.",
     "publicReply": "رد عام على التعليق",
-    "publicReplyDescription": "انشر ردًا عامًا أسفل التعليق مباشرةً. يدعم حتى 10 قوالب نصية، أو وكيل ذكاء اصطناعي، أو مسار بوت، أو عدم الرد. يتم نشر كل رسالة كرد منفصل.",
+    "publicReplyDescription": "انشر ردًا عامًا أسفل التعليق مباشرةً. يدعم حتى 10 قوالب نصية، أو وكيل ذكاء اصطناعي، أو مسار بوت، أو عدم الرد. يتم نشر كل رسالة كرد منفصل. يدعم spintax.",
     "replyMessage": "رسالة الرد",
     "replyMessagePlaceholder": "أدخل رسالة الرد...",
     "includeKeywordsType": "الرد على",
     "includeKeywordsTypeDescription": "اختر التعليقات التي تستجيب لها هذه الأتمتة.",
     "includeKeywords": "الكلمات المفتاحية المطلوب مطابقتها",
-    "excludeKeywords": "استبعاد التعليقات التي تحتوي على هذه الكلمات المفتاحية",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "excludeKeywordsDescription": "ستتجاهل أتمتة الرد في صندوق الوارد والرد العام أي تعليق يحتوي على إحدى هذه الكلمات المفتاحية.",
     "keywordsPlaceholder": "اكتب واضغط Enter...",
     "replyAfter": "الرد بعد",
@@ -4761,7 +4780,7 @@
       "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
       "ignoreCommentRepliesDescription": "تخطي الأتمتة للتعليقات التي تكون ردودًا على تعليقات أخرى وليست تعليقات رئيسية.",
       "trackUserTags": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
-      "trackUserTagsDescription": "استخدم '{{total_tagged}}' لمعرفة عدد المستخدمين الذين تمت الإشارة إليهم. استخدم '{{total_new_tagged}}' لمعرفة عدد الأشخاص المشار إليهم غير الموجودين في قائمة جهات الاتصال."
+      "trackUserTagsDescription": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     },
     "hideComments": {
       "all": "إخفاء جميع التعليقات",
@@ -5278,13 +5297,13 @@
     "privateReply": "رد خاص (البريد الوارد)",
     "privateReplyDescription": "إرسال رسالة خاصة إلى صندوق وارد المعلّق. اختر وكيل الذكاء الاصطناعي، أو نموذج نصي ثابت، أو مسار روبوت محادثة، أو التعطيل.",
     "publicReply": "رد علني على التعليق",
-    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد. يتم نشر كل رسالة كرد منفصل.",
+    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد. يتم نشر كل رسالة كرد منفصل. يدعم spintax.",
     "replyMessage": "رسالة الرد",
     "replyMessagePlaceholder": "أدخل رسالة الرد...",
     "includeKeywordsType": "الرد على",
     "includeKeywordsTypeDescription": "اختر التعليقات التي تستجيب لها هذه الأتمتة.",
     "includeKeywords": "الكلمات المفتاحية للمطابقة",
-    "excludeKeywords": "استبعاد التعليقات التي تحتوي على هذه الكلمات المفتاحية",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "excludeKeywordsDescription": "سيتم تجاهل التعليقات التي تحتوي على أي من هذه الكلمات المفتاحية من قبل أتمتة الرد الخاص والعلني.",
     "keywordsPlaceholder": "اكتب واضغط على Enter...",
     "replyAfter": "الرد بعد",
@@ -5346,7 +5365,7 @@
       "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
       "ignoreCommentRepliesDescription": "تجاوز الأتمتة للتعليقات التي هي ردود على تعليقات أخرى، وليست تعليقات من المستوى الأعلى.",
       "trackUserTags": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
-      "trackUserTagsDescription": "استخدم '{{total_tagged}}' لمعرفة عدد المستخدمين الذين تمت الإشارة إليهم. استخدم '{{total_new_tagged}}' لمعرفة عدد الأشخاص المشار إليهم غير الموجودين في قائمة جهات الاتصال."
+      "trackUserTagsDescription": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     },
     "hideComments": {
       "all": "إخفاء جميع التعليقات",
@@ -5382,13 +5401,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. حتى 10 رسائل نصية (يدعم spintax)، تُنشر كل منها كرد منفصل.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5397,7 +5416,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "إخفاء التعليقات"
     },
     "postType": {
       "all": "All posts",
@@ -5439,7 +5459,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "أدخل رسالة رد واحدة على الأقل.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "يمكن إخفاء الردود المباشرة على منشوراتك فقط.",
+    "hideComments": {
+      "all": "إخفاء جميع التعليقات",
+      "hasPhoneNumber": "يحتوي على رقم هاتف",
+      "hasLink": "يحتوي على رابط",
+      "hasKeywords": "يحتوي على كلمات مفتاحية",
+      "keywords": "الكلمات المفتاحية",
+      "showCommentsAfter": "إظهار التعليقات بعد"
+    },
+    "showCommentsAfter": {
+      "none": "أبدًا"
     }
   },
   "tiktokCommentAutomation": {
@@ -5451,13 +5485,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. حتى 10 رسائل نصية (يدعم spintax)، تُنشر كل منها كرد منفصل.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5535,7 +5569,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "أدخل رسالة رد واحدة على الأقل."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

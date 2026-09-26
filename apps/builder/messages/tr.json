@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Anahtar kelimeler eşleşmedi",
       "contactNotNew": "Kişi yeni değil",
       "alreadyRepliedOnPost": "Bu gönderide zaten yanıtlandı",
-      "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi"
+      "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi",
+      "mentionCountNotMatched": "Bahsetme sayısı eşleşmedi"
+    },
+    "replyTo": {
+      "mentions": "Yeterli bahsetme içeren yorumlar",
+      "mentionCount": "Etiketlenen kişi sayısı",
+      "mentionCountDescription": "Yalnızca en az bu sayıda kişiyi (@ad) etiketleyen yorumlar eşleşir.",
+      "mentionCountOption": "{count, plural, one {# kişi} other {# kişi}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Şuna eşit yorumlar",
+      "contain": "Şunu içeren yorumlar"
+    },
+    "hideComments": {
+      "hasGif": "GIF içerir",
+      "hasEmoji": "Emoji içerir"
+    },
+    "trackUserTags": {
+      "label": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
+      "descriptionText": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     }
   },
   "condition": {
@@ -4692,13 +4711,13 @@
     "privateReply": "Özel yanıt (gelen kutusu)",
     "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu, bir chatbot akışı seçin veya devre dışı bırakın.",
     "publicReply": "Yoruma genel yanıt",
-    "publicReplyDescription": "Yorumun hemen altında genel bir yanıt paylaşın. En fazla 10 metin şablonunu, AI Ajanını, bir chatbot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir.",
+    "publicReplyDescription": "Yorumun hemen altında genel bir yanıt paylaşın. En fazla 10 metin şablonunu, AI Ajanını, bir chatbot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir. Spintax desteklenir.",
     "replyMessage": "Yanıt mesajı",
     "replyMessagePlaceholder": "Yanıt mesajı girin...",
     "includeKeywordsType": "Şuna yanıt ver",
     "includeKeywordsTypeDescription": "Bu otomasyonun hangi yorumlara yanıt vereceğini seçin.",
     "includeKeywords": "Eşleşecek anahtar kelimeler",
-    "excludeKeywords": "Bu anahtar kelimeleri içeren yorumları hariç tut",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "excludeKeywordsDescription": "Bu anahtar kelimelerden herhangi birini içeren yorumlar hem gelen kutusu hem de genel yanıt otomasyonu tarafından yok sayılır.",
     "keywordsPlaceholder": "Yazın ve Enter'a basın...",
     "replyAfter": "Şu kadar süre sonra yanıtla",
@@ -4761,7 +4780,7 @@
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
       "ignoreCommentRepliesDescription": "Üst düzey yorumlar değil, başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
       "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
-      "trackUserTagsDescription": "Kaç kullanıcının etiketlendiğini öğrenmek için '{{total_tagged}}' kullanın. Etiketlenen kişilerden kaçının kişi listesinde olmadığını öğrenmek için '{{total_new_tagged}}' kullanın."
+      "trackUserTagsDescription": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",
@@ -4795,13 +4814,13 @@
     "privateReply": "Özel yanıt (gelen kutusu)",
     "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu, bir bot akışı seçin veya devre dışı bırakın.",
     "publicReply": "Yoruma genel yanıt",
-    "publicReplyDescription": "Yorumun hemen altına genel bir yanıt gönderin. En fazla 10 metin şablonunu, AI Ajanını, bir bot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir.",
+    "publicReplyDescription": "Yorumun hemen altına genel bir yanıt gönderin. En fazla 10 metin şablonunu, AI Ajanını, bir bot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir. Spintax desteklenir.",
     "replyMessage": "Yanıt mesajı",
     "replyMessagePlaceholder": "Yanıt mesajı girin...",
     "includeKeywordsType": "Şu yorumlara yanıt ver",
     "includeKeywordsTypeDescription": "Bu otomasyonun hangi yorumlara yanıt vereceğini seçin.",
     "includeKeywords": "Eşleşecek anahtar kelimeler",
-    "excludeKeywords": "Bu anahtar kelimeleri içeren yorumları hariç tut",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "excludeKeywordsDescription": "Bu anahtar kelimelerden herhangi birini içeren yorumlar hem gelen kutusu hem de genel yanıt otomasyonu tarafından yok sayılır.",
     "keywordsPlaceholder": "Yazın ve Enter'a basın...",
     "replyAfter": "Şundan sonra yanıtla",
@@ -4863,7 +4882,7 @@
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
       "ignoreCommentRepliesDescription": "Üst düzey yorumlar yerine başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
       "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
-      "trackUserTagsDescription": "Kaç kullanıcının etiketlendiğini öğrenmek için '{{total_tagged}}' kullanın. Etiketlenen kişilerden kaçının kişi listesinde olmadığını öğrenmek için '{{total_new_tagged}}' kullanın."
+      "trackUserTagsDescription": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",
@@ -4899,13 +4918,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. En fazla 10 metin mesajı (spintax desteklenir), her biri ayrı bir yanıt olarak paylaşılır.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4914,7 +4933,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Yorumları Gizle"
     },
     "postType": {
       "all": "All posts",
@@ -4956,7 +4976,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "En az bir yanıt mesajı girin.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Yalnızca gönderilerinize verilen üst düzey yanıtlar gizlenebilir.",
+    "hideComments": {
+      "all": "Tüm yorumları gizle",
+      "hasPhoneNumber": "Telefon numarası içeriyor",
+      "hasLink": "Bağlantı içeriyor",
+      "hasKeywords": "Anahtar kelime içeriyor",
+      "keywords": "Anahtar Kelimeler",
+      "showCommentsAfter": "Şu tarihten sonraki yorumları göster"
+    },
+    "showCommentsAfter": {
+      "none": "Asla"
     }
   },
   "tiktokCommentAutomation": {
@@ -4968,13 +5002,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. En fazla 10 metin mesajı (spintax desteklenir), her biri ayrı bir yanıt olarak paylaşılır.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5052,7 +5086,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "En az bir yanıt mesajı girin."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

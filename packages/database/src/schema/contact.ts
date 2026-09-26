@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm"
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -55,6 +56,8 @@ export const contactModel = pgTable(
     subscribedAt: timestamp(timestampConfig),
     broadcastSubscribedAt: timestamp(timestampConfig),
     blockedAt: timestamp(timestampConfig),
+    totalTagged: integer().notNull().default(0),
+    totalNewTagged: integer().notNull().default(0),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

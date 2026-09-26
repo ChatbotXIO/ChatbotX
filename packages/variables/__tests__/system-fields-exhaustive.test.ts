@@ -148,6 +148,8 @@ const { getSystemFieldValue } = await import("../src/utils")
 const contact = {
   id: "contact-1",
   workspaceId: "workspace-1",
+  totalTagged: 4,
+  totalNewTagged: 1,
   firstName: "Ada",
   lastName: "Lovelace",
   email: "ada@example.com",
@@ -221,11 +223,7 @@ const emptyContext = {
 }
 
 // Fields the resolver intentionally has no data source for yet.
-const ALWAYS_NULL: readonly string[] = [
-  systemFieldTypes.enum.last_order,
-  systemFieldTypes.enum.total_new_tagged,
-  systemFieldTypes.enum.total_tagged,
-]
+const ALWAYS_NULL: readonly string[] = [systemFieldTypes.enum.last_order]
 
 describe("getSystemFieldValue exhaustiveness", () => {
   beforeEach(() => {

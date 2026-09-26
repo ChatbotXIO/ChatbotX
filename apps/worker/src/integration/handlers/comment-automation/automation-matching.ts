@@ -1,4 +1,5 @@
 import {
+  type CommentExcludeKeywordsType,
   type CommentIncludeKeywords,
   type CommentPost,
   type CommentReply,
@@ -62,24 +63,57 @@ export function matchKeywords(
   includeKeywords: CommentIncludeKeywords,
   excludeKeywords: string[],
   message: string | undefined,
+  excludeKeywordsType: CommentExcludeKeywordsType = "contain",
 ): boolean {
   const text = normalizeForMatch(message ?? "")
-  if (includeKeywords.type !== "all" && includeKeywords.value.length > 0) {
+  const includeType = includeKeywords.type
+  if (
+    (includeType === "equal" || includeType === "contain") &&
+    includeKeywords.value.length > 0
+  ) {
     const kws = includeKeywords.value.map((k) => normalizeForMatch(k))
-    if (includeKeywords.type === "equal" && !kws.includes(text)) {
+    if (includeType === "equal" && !kws.includes(text)) {
       return false
     }
-    if (
-      includeKeywords.type === "contain" &&
-      !kws.some((k) => text.includes(k))
-    ) {
+    if (includeType === "contain" && !kws.some((k) => text.includes(k))) {
       return false
     }
   }
-  if (excludeKeywords.some((k) => text.includes(normalizeForMatch(k)))) {
-    return false
+  const excluded = excludeKeywords
+    .map((k) => normalizeForMatch(k.trim()))
+    .filter(Boolean)
+  if (excludeKeywordsType === "equal") {
+    // Whole comment, trimmed — "ok " is the same comment as "ok".
+    return !excluded.includes(text.trim())
   }
-  return true
+  return !excluded.some((k) => text.includes(k))
+}
+
+/**
+ * Whether the automation needs the comment's mention list to decide. Lets the
+ * orchestrator skip the (on Facebook, possibly Graph-backed) lookup for every
+ * automation that does not filter on mentions.
+ */
+export function needsMentionCount(
+  includeKeywords: CommentIncludeKeywords,
+): boolean {
+  return includeKeywords.type === "mentions"
+}
+
+/**
+ * "Comments when enough mentions": the comment must tag AT LEAST
+ * `mentionCount` accounts — two people configured means a comment tagging two
+ * or three qualifies, one tagging one does not. A `mentions` row with no count
+ * (hand-built request) defaults to 1.
+ */
+export function matchMentionCount(
+  includeKeywords: CommentIncludeKeywords,
+  mentionCount: number,
+): boolean {
+  if (includeKeywords.type !== "mentions") {
+    return true
+  }
+  return mentionCount >= (includeKeywords.mentionCount ?? 1)
 }
 
 // Facebook feed webhooks set parent_id on every comment: for a top-level

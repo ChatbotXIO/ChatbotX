@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Nøgleord matchede ikke",
       "contactNotNew": "Kontakten er ikke ny",
       "alreadyRepliedOnPost": "Allerede besvaret på dette opslag",
-      "engagedOnOtherPost": "Har allerede interageret på et andet opslag"
+      "engagedOnOtherPost": "Har allerede interageret på et andet opslag",
+      "mentionCountNotMatched": "Antal omtaler matchede ikke"
+    },
+    "replyTo": {
+      "mentions": "Kommentarer med nok omtaler",
+      "mentionCount": "Antal taggede personer",
+      "mentionCountDescription": "Kun kommentarer, der tagger mindst så mange personer (@navn), matcher.",
+      "mentionCountOption": "{count, plural, one {# person} other {# personer}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Kommentarer lig med",
+      "contain": "Kommentarer der indeholder"
+    },
+    "hideComments": {
+      "hasGif": "Indeholder GIF",
+      "hasEmoji": "Indeholder emoji"
+    },
+    "trackUserTags": {
+      "label": "Spor om en bruger tagger andre brugere",
+      "descriptionText": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
     }
   },
   "condition": {
@@ -4692,13 +4711,13 @@
     "privateReply": "Private svar (indbakke)",
     "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon, a chatbot flow, eller deaktivér.",
     "publicReply": "Public svar til kommentar",
-    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar.",
+    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar. Spintax understøttes.",
     "replyMessage": "Svar besked",
     "replyMessagePlaceholder": "Indtast svar besked...",
     "includeKeywordsType": "Svar til",
     "includeKeywordsTypeDescription": "Choose which kommentarer denne automatisering responds til.",
     "includeKeywords": "Nøgleord til match",
-    "excludeKeywords": "Exclude kommentarer med these nøgleord",
+    "excludeKeywords": "Udeluk kommentarer der indeholder",
     "excludeKeywordsDescription": "Kommentarer containing vilkårlig af these nøgleord vil være ignored af both indbakke og public svar automatisering.",
     "keywordsPlaceholder": "Type og press Indtast...",
     "replyAfter": "Svar efter",
@@ -4761,7 +4780,7 @@
       "ignoreCommentReplies": "Don't svar til replies til kommentarer",
       "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer.",
       "trackUserTags": "Spor om en bruger tagger andre brugere",
-      "trackUserTagsDescription": "Brug '{{total_tagged}}' til at se, hvor mange brugere der blev tagget. Brug '{{total_new_tagged}}' til at se, hvor mange af de taggede personer der ikke er på kontaktlisten."
+      "trackUserTagsDescription": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
     },
     "hideComments": {
       "all": "Hide alle kommentarer",
@@ -4795,13 +4814,13 @@
     "privateReply": "Private svar (indbakke)",
     "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon, a chatbot flow, eller deaktivér.",
     "publicReply": "Public svar til kommentar",
-    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar.",
+    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar. Spintax understøttes.",
     "replyMessage": "Svar besked",
     "replyMessagePlaceholder": "Indtast svar besked...",
     "includeKeywordsType": "Svar til",
     "includeKeywordsTypeDescription": "Choose which kommentarer denne automatisering responds til.",
     "includeKeywords": "Nøgleord til match",
-    "excludeKeywords": "Exclude kommentarer med these nøgleord",
+    "excludeKeywords": "Udeluk kommentarer der indeholder",
     "excludeKeywordsDescription": "Kommentarer containing vilkårlig af these nøgleord vil være ignored af both indbakke og public svar automatisering.",
     "keywordsPlaceholder": "Type og press Indtast...",
     "replyAfter": "Svar efter",
@@ -4863,7 +4882,7 @@
       "ignoreCommentReplies": "Don't svar til replies til kommentarer",
       "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer.",
       "trackUserTags": "Spor om en bruger tagger andre brugere",
-      "trackUserTagsDescription": "Brug '{{total_tagged}}' til at se, hvor mange brugere der blev tagget. Brug '{{total_new_tagged}}' til at se, hvor mange af de taggede personer der ikke er på kontaktlisten."
+      "trackUserTagsDescription": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
     },
     "hideComments": {
       "all": "Hide alle kommentarer",
@@ -4899,13 +4918,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Op til 10 tekstbeskeder (spintax understøttes), hver sendt som et separat svar.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Udeluk kommentarer der indeholder",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4914,7 +4933,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Hide Kommentarer"
     },
     "postType": {
       "all": "All posts",
@@ -4956,7 +4976,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Angiv mindst én svarbesked.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Kun svar på øverste niveau til dine opslag kan skjules.",
+    "hideComments": {
+      "all": "Hide alle kommentarer",
+      "hasPhoneNumber": "Contains telefon nummer",
+      "hasLink": "Contains link",
+      "hasKeywords": "Contains nøgleord",
+      "keywords": "Nøgleord",
+      "showCommentsAfter": "Show kommentarer efter"
+    },
+    "showCommentsAfter": {
+      "none": "Never"
     }
   },
   "tiktokCommentAutomation": {
@@ -4968,13 +5002,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Op til 10 tekstbeskeder (spintax understøttes), hver sendt som et separat svar.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Udeluk kommentarer der indeholder",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5052,7 +5086,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Angiv mindst én svarbesked."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
