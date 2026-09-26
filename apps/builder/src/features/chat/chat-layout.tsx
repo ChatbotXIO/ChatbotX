@@ -55,8 +55,23 @@ export const ChatLayout = (props: ChatLayoutProps) => {
 
   const [activeConversation, setActiveConversation] =
     useState<ConversationResource | null>(null)
-  const [isContactSheetOpen, setIsContactSheetOpen] = useState(false)
-  const previousContactSheetConversationIdRef = useRef(activeConversationId)
+  // The mobile contact sheet is bound to the conversation it was opened for:
+  // selecting a different thread closes it, while realtime `conversations`
+  // churn can never close it.
+  const [contactSheetConversationId, setContactSheetConversationId] = useState<
+    string | null
+  >(null)
+  if (
+    contactSheetConversationId !== null &&
+    contactSheetConversationId !== activeConversationId
+  ) {
+    // Reset during render (not in an effect) so returning to the original
+    // thread later does not reopen a sheet the user never reopened.
+    setContactSheetConversationId(null)
+  }
+  const isContactSheetOpen =
+    contactSheetConversationId !== null &&
+    contactSheetConversationId === activeConversationId
   const conversationIdParam = useConversationIdParam()
 
   // The shared call-recording `<audio>` element (`callPlaybackStore`) is a
@@ -124,16 +139,6 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     }
   }, [activeConversationId, conversations])
 
-  useEffect(() => {
-    if (
-      previousContactSheetConversationIdRef.current === activeConversationId
-    ) {
-      return
-    }
-    previousContactSheetConversationIdRef.current = activeConversationId
-    setIsContactSheetOpen(false)
-  }, [activeConversationId])
-
   const paneState: PaneState = {
     activeConversation,
     isResolvingConversation,
@@ -173,7 +178,9 @@ export const ChatLayout = (props: ChatLayoutProps) => {
                 conversationIdParam.clear()
                 setActiveConversationId(null)
               }}
-              onOpenContact={() => setIsContactSheetOpen(true)}
+              onOpenContact={() =>
+                setContactSheetConversationId(activeConversationId ?? null)
+              }
               workspaceId={workspaceId}
             />
           ) : (
@@ -186,7 +193,14 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             </div>
           )}
 
-          <Sheet onOpenChange={setIsContactSheetOpen} open={isContactSheetOpen}>
+          <Sheet
+            onOpenChange={(open) =>
+              setContactSheetConversationId(
+                open ? (activeConversationId ?? null) : null,
+              )
+            }
+            open={isContactSheetOpen}
+          >
             <SheetContent
               className="w-[85vw] overflow-y-auto px-4 py-3 sm:max-w-sm"
               side="right"

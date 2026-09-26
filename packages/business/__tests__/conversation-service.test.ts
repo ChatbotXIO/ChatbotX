@@ -85,6 +85,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
 vi.mock("../src/contact-inbox/service", () => ({
   contactInboxService: {
     invalidateTracking,
+    recordOutboundMessageCreated: vi.fn().mockResolvedValue(null),
     updateTracking,
   },
 }))
@@ -631,7 +632,6 @@ describe("conversationService.recordInboundActivity contactRepliedAt", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
-
   const baseProps = {
     workspaceId: "ws-1",
     conversationId: "conv-1",
@@ -668,5 +668,48 @@ describe("conversationService.recordInboundActivity contactRepliedAt", () => {
     await conversationService.recordInboundActivity({ ...baseProps, at })
 
     expect(set).toHaveBeenCalledWith({ lastActivityAt: at })
+  })
+})
+
+describe("conversationService outbound activity bump", () => {
+  const baseProps = {
+    workspaceId: "ws-1",
+    conversationId: "conv-1",
+    contactInboxId: "ci-1",
+    contactId: "contact-1",
+    at: new Date("2026-09-01T00:00:00.000Z"),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("advances lastActivityAt for an interactive message by default", async () => {
+    await conversationService.recordOutboundMessageActivity(baseProps)
+
+    expect(set).toHaveBeenCalledWith({ lastActivityAt: baseProps.at })
+  })
+
+  test("leaves lastActivityAt untouched for a bulk message", async () => {
+    await conversationService.recordOutboundMessageActivity({
+      ...baseProps,
+      bumpActivity: false,
+    })
+
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  test("still records flow-step state for a bulk flow step without bumping activity", async () => {
+    await conversationService.recordOutboundFlowStep({
+      ...baseProps,
+      bumpActivity: false,
+      lastStep: "step-1",
+      currentStep: "step-2",
+    })
+
+    expect(set).toHaveBeenCalledWith({
+      currentStep: "step-2",
+      lastStep: "step-1",
+    })
   })
 })

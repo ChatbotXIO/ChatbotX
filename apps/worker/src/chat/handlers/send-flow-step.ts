@@ -950,7 +950,6 @@ export async function sendFlowStep({
             triggerType: "message_bot_sent_flow",
           },
         })
-    const broadcasts: Promise<unknown>[] = []
 
     if (!isBulkOutbound) {
       publishToWorkspaceParty(conversation.workspaceId, {
@@ -959,6 +958,9 @@ export async function sendFlowStep({
       })
     }
 
+    // The guest webchat widget still needs bulk messages, so this send is
+    // never gated on isBulkOutbound.
+    const broadcasts: Promise<unknown>[] = []
     if (targetContactInbox.channel === channelTypes.enum.webchat) {
       broadcasts.push(
         broadcastToGuestParty(
@@ -974,8 +976,7 @@ export async function sendFlowStep({
       )
     }
 
-    await Promise.all([channelSend, ...broadcasts])
-    const channelResult = await channelSend
+    const [channelResult] = await Promise.all([channelSend, ...broadcasts])
     const providerMessageId = channelResult.messageIds[0]
 
     if (
@@ -1064,7 +1065,7 @@ export async function sendFlowStep({
       conversation.workspaceId,
       message?.createdAt,
       parsedError.message,
-      isBulkOutboundMetadata(metadata),
+      isBulkOutbound,
     )
 
     // Always terminal here, for the same reason the `message:failed` emit above

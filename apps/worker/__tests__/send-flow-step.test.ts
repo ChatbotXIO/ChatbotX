@@ -1658,6 +1658,23 @@ describe("sendChatMessage", () => {
     })
   })
 
+  test("keeps a bulk chat message out of realtime and the inbox sort", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "broadcast body",
+      metadata: { type: "broadcast", broadcastId: "b-1" } as never,
+    })
+
+    expect(mockRecordOutboundMessageActivity).toHaveBeenCalledWith(
+      expect.objectContaining({ bumpActivity: false }),
+    )
+    expect(mockBroadcast).not.toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ eventType: "messageCreated" }),
+    )
+  })
+
   test("falls back to text url when chat message media download fails", async () => {
     mockUploadFileFromUrl.mockRejectedValueOnce(
       new Error("Failed to download file: 403"),

@@ -112,8 +112,10 @@ async function startTriggerWorker() {
     }
     isShuttingDown = true
     try {
-      await flushAllPendingWorkspaceBroadcasts()
       await worker.close()
+      // After close(): drains events published by jobs that finished during
+      // the close drain, whose coalesce timers would never fire past exit.
+      await flushAllPendingWorkspaceBroadcasts()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[TriggerWorker] Error during shutdown")

@@ -270,7 +270,6 @@ export type ChatActions = {
   loadMoreMessages: (workspaceId: string, perPage: number) => Promise<void>
   loadInitialMessages: (workspaceId: string, perPage: number) => Promise<void>
   handleNewMessages: (messages: MessageResourceWithRelations[]) => void
-  handleNewMessage: (message: MessageResourceWithRelations) => void
   setReplyToMessage: (
     message: MessageResourceWithRelations | null,
     isPrivate?: boolean,
@@ -330,6 +329,24 @@ const latestActivityAt = <T extends Date | string>(
   new Date(current).getTime() > new Date(incoming).getTime()
     ? current
     : incoming
+
+// Returns a `set` patch replacing one message, or `null` when the id is not
+// loaded so the caller can hand back the untouched state and skip a render.
+const replaceMessageById = (
+  messages: MessageResourceWithRelations[],
+  messageId: string,
+  update: (
+    message: MessageResourceWithRelations,
+  ) => MessageResourceWithRelations,
+): { messages: MessageResourceWithRelations[] } | null => {
+  const messageIndex = messages.findIndex((message) => message.id === messageId)
+  if (messageIndex === -1) {
+    return null
+  }
+  const nextMessages = [...messages]
+  nextMessages[messageIndex] = update(messages[messageIndex])
+  return { messages: nextMessages }
+}
 
 const hasConversationIdInUrl = () =>
   !!new URLSearchParams(
@@ -881,20 +898,13 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       // deep merge, matching how the worker always sends the entity's complete
       // shape.
       updateMessageContentAttributes: (messageId, contentAttributes) => {
-        set((state) => {
-          const messageIndex = state.messages.findIndex(
-            (message) => message.id === messageId,
-          )
-          if (messageIndex === -1) {
-            return state
-          }
-          const messages = [...state.messages]
-          messages[messageIndex] = {
-            ...messages[messageIndex],
-            contentAttributes,
-          }
-          return { messages }
-        })
+        set(
+          (state) =>
+            replaceMessageById(state.messages, messageId, (message) => ({
+              ...message,
+              contentAttributes,
+            })) ?? state,
+        )
       },
 
       markMessagesDeleted: (messageIds: string[]) => {
@@ -930,96 +940,82 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         set((state) => {
           const matchesByClientId =
             clientId && state.messages.some((m) => m.clientId === clientId)
+          let changed = false
           const messages = state.messages.map((message) => {
             const matches = matchesByClientId
               ? message.clientId === clientId
               : message.id === messageId
-            return matches ? { ...message, sendError: error } : message
+            if (!matches) {
+              return message
+            }
+            changed = true
+            return { ...message, sendError: error }
           })
-          return messages.some(
-            (message, index) => message !== state.messages[index],
-          )
-            ? { messages }
-            : state
+          return changed ? { messages } : state
         })
       },
 
       assignMessageCommentId: (messageId, commentId) => {
-        set((state) => {
-          const messageIndex = state.messages.findIndex(
-            (message) => message.id === messageId,
-          )
-          if (messageIndex === -1) {
-            return state
-          }
-          const messages = [...state.messages]
-          messages[messageIndex] = {
-            ...messages[messageIndex],
-            sourceId: commentId,
-          }
-          return { messages }
-        })
+        set(
+          (state) =>
+            replaceMessageById(state.messages, messageId, (message) => ({
+              ...message,
+              sourceId: commentId,
+            })) ?? state,
+        )
       },
 
       updateMessageText: (messageId, newText, attachmentUpdate) => {
-        set((state) => {
-          const messageIndex = state.messages.findIndex(
-            (message) => message.id === messageId,
-          )
-          if (messageIndex === -1) {
-            return state
-          }
-          const messages = [...state.messages]
-          const message = messages[messageIndex]
-          const base = { ...message, text: newText }
-          if (!attachmentUpdate) {
-            messages[messageIndex] = base
-            return { messages }
-          }
-          if (attachmentUpdate.removedAttachment) {
-            messages[messageIndex] = { ...base, attachments: [] }
-            return { messages }
-          }
-          if (!attachmentUpdate.newAttachmentPath) {
-            messages[messageIndex] = base
-            return { messages }
-          }
-          const mimeType =
-            attachmentUpdate.newAttachmentMimeType ?? "application/octet-stream"
-          let fileType: "image" | "video" | "audio" | "file" = "file"
-          if (mimeType.startsWith("image/")) {
-            fileType = "image"
-          } else if (mimeType.startsWith("video/")) {
-            fileType = "video"
-          } else if (mimeType.startsWith("audio/")) {
-            fileType = "audio"
-          }
-          messages[messageIndex] = {
-            ...base,
-            attachments: [
-              {
-                id: "pending",
-                workspaceId: message.workspaceId,
-                conversationId: message.conversationId,
-                messageId: message.id,
-                messageCreatedAt: message.createdAt,
-                originPath: attachmentUpdate.newAttachmentPath,
-                fileType,
-                mimeType,
-                url: attachmentUpdate.newAttachmentPublicUrl ?? null,
-                name: null,
-                size: 0,
-                width: attachmentUpdate.newAttachmentWidth ?? null,
-                height: attachmentUpdate.newAttachmentHeight ?? null,
-                sourceId: null,
-                thumbnailPath: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              },
-            ],
-          }
-          return { messages }
-        })
+        set(
+          (state) =>
+            replaceMessageById(state.messages, messageId, (message) => {
+              const base = { ...message, text: newText }
+              if (!attachmentUpdate) {
+                return base
+              }
+              if (attachmentUpdate.removedAttachment) {
+                return { ...base, attachments: [] }
+              }
+              if (!attachmentUpdate.newAttachmentPath) {
+                return base
+              }
+              const mimeType =
+                attachmentUpdate.newAttachmentMimeType ??
+                "application/octet-stream"
+              let fileType: "image" | "video" | "audio" | "file" = "file"
+              if (mimeType.startsWith("image/")) {
+                fileType = "image"
+              } else if (mimeType.startsWith("video/")) {
+                fileType = "video"
+              } else if (mimeType.startsWith("audio/")) {
+                fileType = "audio"
+              }
+              return {
+                ...base,
+                attachments: [
+                  {
+                    id: "pending",
+                    workspaceId: message.workspaceId,
+                    conversationId: message.conversationId,
+                    messageId: message.id,
+                    messageCreatedAt: message.createdAt,
+                    originPath: attachmentUpdate.newAttachmentPath,
+                    fileType,
+                    mimeType,
+                    url: attachmentUpdate.newAttachmentPublicUrl ?? null,
+                    name: null,
+                    size: 0,
+                    width: attachmentUpdate.newAttachmentWidth ?? null,
+                    height: attachmentUpdate.newAttachmentHeight ?? null,
+                    sourceId: null,
+                    thumbnailPath: null,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  },
+                ],
+              }
+            }) ?? state,
+        )
       },
 
       loadMoreMessages: async (workspaceId: string, perPage: number) => {
@@ -1317,10 +1313,6 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         if (unmatchedWorkspaceId) {
           get().scheduleConversationHeadRefresh(unmatchedWorkspaceId)
         }
-      },
-
-      handleNewMessage: (message: MessageResourceWithRelations) => {
-        get().handleNewMessages([message])
       },
 
       loadActivePost: async (workspaceId: string) => {

@@ -658,7 +658,6 @@ async function startIntegrationWorker() {
     }
     isShuttingDown = true
     try {
-      await flushAllPendingWorkspaceBroadcasts()
       await worker.close()
       await Promise.all([
         callTranscriptionWorker.close(),
@@ -667,6 +666,9 @@ async function startIntegrationWorker() {
         closeIntegrationQueueEvents(),
         closeHeavyQueueEvents(),
       ])
+      // After every close(): drains events published by jobs that finished
+      // during the drain, whose coalesce timers would never fire past exit.
+      await flushAllPendingWorkspaceBroadcasts()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[IntegrationWorker] Error during shutdown")
