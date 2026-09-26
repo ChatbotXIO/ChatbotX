@@ -103,7 +103,10 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
-import { fetchThreadsCommentAttachments } from "./comment-media-attachment"
+import {
+  downloadCommentMediaAttachment,
+  fetchThreadsCommentAttachments,
+} from "./comment-media-attachment"
 import {
   getProfileRefreshSource,
   isInboundConversationMessage,
@@ -1303,6 +1306,18 @@ export const receiveComment = async (
       commentId: commentData.commentId,
       integrationRow,
     })
+  } else if (tiktokIdentity?.imageUrl) {
+    // Logged until a live response settles whether GIF comments carry one.
+    logger.info(
+      { commentId: commentData.commentId, imageUrl: tiktokIdentity.imageUrl },
+      "receiveComment: TikTok comment has an image",
+    )
+    const attachment = await downloadCommentMediaAttachment({
+      url: tiktokIdentity.imageUrl,
+      workspaceId: inbox.workspaceId,
+      commentId: commentData.commentId,
+    })
+    attachments = attachment ? [attachment] : []
   }
 
   const incomingMessage: IncomingMessage = {

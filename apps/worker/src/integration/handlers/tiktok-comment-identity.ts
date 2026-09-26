@@ -8,6 +8,12 @@ export type TiktokCommenterIdentity = {
   avatarUrl?: string
   /** True when the comment was written by the connected account itself. */
   isOwner: boolean
+  /**
+   * Non-expiring URL of the image in the comment. TikTok documents it only as
+   * "returned if the comment is an image"; whether a GIF comment carries one
+   * is unverified — the `comment.update` webhook for a GIF has text only.
+   */
+  imageUrl?: string
 }
 
 /**
@@ -62,6 +68,7 @@ export async function resolveTiktokCommenterIdentity(props: {
       username: comment.username,
       avatarUrl: comment.profile_image,
       isOwner: comment.owner === true,
+      imageUrl: comment.image_url || undefined,
     }
   } catch (err) {
     logger.warn(

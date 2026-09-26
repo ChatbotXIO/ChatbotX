@@ -408,7 +408,9 @@ vi.mock("../src/integration/handlers/tiktok-comment-identity", () => ({
 }))
 
 const mockFetchThreadsCommentAttachments = vi.fn().mockResolvedValue([])
+const mockDownloadCommentMediaAttachment = vi.fn()
 vi.mock("../src/integration/handlers/comment-media-attachment", () => ({
+  downloadCommentMediaAttachment: mockDownloadCommentMediaAttachment,
   fetchThreadsCommentAttachments: mockFetchThreadsCommentAttachments,
 }))
 
@@ -3623,6 +3625,71 @@ describe("contact source taxonomy", () => {
       expect.anything(),
       { jobId: "comment-auto-comment-tiktok-1", attempts: 1 },
     )
+  })
+
+  test("saves a TikTok image comment with its image attached", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue({
+      displayName: "Commenter",
+      isOwner: false,
+      imageUrl: "https://p16.tiktokcdn.test/comment-image.jpeg",
+    })
+    mockDownloadCommentMediaAttachment.mockResolvedValueOnce({
+      sourceId: "attachment-1",
+      fileType: "image",
+      mimeType: "image/jpeg",
+      originPath: "public/ws/ws-1/image",
+      size: 3,
+    })
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-image-1",
+        fromId: "+ABc1D2/E0fGhijkl",
+        postId: "video-1",
+      },
+    })
+
+    expect(mockDownloadCommentMediaAttachment).toHaveBeenCalledWith({
+      url: "https://p16.tiktokcdn.test/comment-image.jpeg",
+      workspaceId: "ws-1",
+      commentId: "comment-tiktok-image-1",
+    })
+    expect(mockCreateOrUpdateWithAttachments).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not download anything for a TikTok comment without an image", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue({
+      displayName: "Commenter",
+      isOwner: false,
+    })
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-text-1",
+        fromId: "+ABc1D2/E0fGhijkl",
+        message: "text only",
+        postId: "video-1",
+      },
+    })
+
+    expect(mockDownloadCommentMediaAttachment).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
   })
 
   // `owner` is the only self-authorship signal TikTok has — `fromId` and the
