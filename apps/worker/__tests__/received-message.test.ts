@@ -210,6 +210,7 @@ vi.mock("@chatbotx.io/business", () => ({
     cancelAppointmentByToken: mockAppointmentCancelByToken,
   },
   broadcastToWorkspaceParty: mockBroadcast,
+  publishToWorkspaceParty: mockBroadcast,
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,

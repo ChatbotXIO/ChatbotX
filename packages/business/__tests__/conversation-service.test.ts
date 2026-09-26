@@ -96,6 +96,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
   broadcastToWorkspaceParty,
+  publishToWorkspaceParty: broadcastToWorkspaceParty,
 }))
 
 // `conversationService` now imports `contactService` (for the location write
@@ -489,6 +490,25 @@ describe("conversationService.markReadByOutbound", () => {
         changes: { agentLastReadAt: readAt.toISOString() },
       },
     })
+  })
+
+  test("updates bulk outbound read state without a realtime event", async () => {
+    const readAt = new Date("2026-09-23T12:00:00.000Z")
+    returning.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    await expect(
+      conversationService.markReadByOutbound({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        inboxId: "inbox-1",
+        readAt,
+        silent: true,
+      }),
+    ).resolves.toBe(true)
+
+    expect(set).toHaveBeenCalledWith({ agentLastReadAt: readAt })
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+    expect(broadcastToWorkspaceParty).not.toHaveBeenCalled()
   })
 
   test("leaves a newer read timestamp alone without invalidating or broadcasting", async () => {

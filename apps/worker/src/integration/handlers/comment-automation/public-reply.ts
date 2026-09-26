@@ -1,4 +1,4 @@
-import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
+import { publishToWorkspaceParty } from "@chatbotx.io/business"
 import {
   type CommentReply,
   resolveReplyTexts,
@@ -101,15 +101,10 @@ export async function postPublicCommentReply(props: {
     createdAt: new Date(),
   }
   const message = await repo.create(messageInput)
-  broadcastToWorkspaceParty(props.workspaceId, {
+  publishToWorkspaceParty(props.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: message,
-  }).catch((err: unknown) =>
-    logger.error(
-      { err, commentId: props.commentId },
-      "Unable to emit realtime message",
-    ),
-  )
+  })
   const retryPolicy = commentReplyRetryPolicy(props.contactInbox)
   const queueOptions =
     props.delay === undefined

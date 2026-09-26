@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   conversationService,
+  flushAllPendingWorkspaceBroadcasts,
   whatsappCallPermissionService,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
@@ -657,6 +658,7 @@ async function startIntegrationWorker() {
     }
     isShuttingDown = true
     try {
+      await flushAllPendingWorkspaceBroadcasts()
       await worker.close()
       await Promise.all([
         callTranscriptionWorker.close(),

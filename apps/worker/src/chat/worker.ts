@@ -1,4 +1,7 @@
-import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
+import {
+  broadcastToWorkspaceParty,
+  flushAllPendingWorkspaceBroadcasts,
+} from "@chatbotx.io/business"
 import type { RealtimeEventData } from "@chatbotx.io/partysocket-config"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
@@ -156,6 +159,7 @@ async function startChatWorker() {
     }
     isShuttingDown = true
     try {
+      await flushAllPendingWorkspaceBroadcasts()
       await worker.close()
       process.exit(0)
     } catch (err) {

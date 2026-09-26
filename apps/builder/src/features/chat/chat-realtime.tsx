@@ -33,7 +33,7 @@ export function ChatRealtime() {
     applyAgentLastReadAt,
     assignMessageCommentId,
     bubbleConversationToTop,
-    handleNewMessage,
+    handleNewMessages,
     markMessagesDeleted,
     markMessageFailed,
     openConversation,
@@ -47,7 +47,7 @@ export function ChatRealtime() {
       applyAgentLastReadAt: state.applyAgentLastReadAt,
       assignMessageCommentId: state.assignMessageCommentId,
       bubbleConversationToTop: state.bubbleConversationToTop,
-      handleNewMessage: state.handleNewMessage,
+      handleNewMessages: state.handleNewMessages,
       markMessagesDeleted: state.markMessagesDeleted,
       markMessageFailed: state.markMessageFailed,
       openConversation: state.openConversation,
@@ -59,6 +59,28 @@ export function ChatRealtime() {
     })),
   )
   const conversationIdParam = useConversationIdParam()
+
+  const pendingCreatedMessagesRef = useRef<MessageResourceWithRelations[]>([])
+  const isMessageFlushQueuedRef = useRef(false)
+  const queueCreatedMessage = (message: MessageResourceWithRelations): void => {
+    pendingCreatedMessagesRef.current.push(message)
+    if (isMessageFlushQueuedRef.current) {
+      return
+    }
+
+    isMessageFlushQueuedRef.current = true
+    queueMicrotask(() => {
+      const messages = pendingCreatedMessagesRef.current
+      pendingCreatedMessagesRef.current = []
+      isMessageFlushQueuedRef.current = false
+      handleNewMessages(messages)
+      for (const createdMessage of messages) {
+        if (getWhatsappCallPermissionReply(createdMessage.contentAttributes)) {
+          invalidateOutboundCallMode(createdMessage.conversationId)
+        }
+      }
+    })
+  }
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -167,16 +189,7 @@ export function ChatRealtime() {
 
   const handlers: RealtimeHandlerMap = {
     messageCreated: (event) => {
-      const message = event.data as MessageResourceWithRelations
-      handleNewMessage(message)
-      // A customer's call-permission reply changes what the VoIP call button
-      // should do, but useOutboundCallMode caches its resolution per
-      // conversation and would otherwise keep showing the pre-accept affordance
-      // until a remount. Invalidate the query so the button reflects the new
-      // grant live.
-      if (getWhatsappCallPermissionReply(message.contentAttributes)) {
-        invalidateOutboundCallMode(message.conversationId)
-      }
+      queueCreatedMessage(event.data as MessageResourceWithRelations)
     },
     messageDeleted: (event) => {
       markMessagesDeleted(event.data.messageIds)

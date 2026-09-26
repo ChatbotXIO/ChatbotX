@@ -56,6 +56,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   const [activeConversation, setActiveConversation] =
     useState<ConversationResource | null>(null)
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false)
+  const previousContactSheetConversationIdRef = useRef(activeConversationId)
   const conversationIdParam = useConversationIdParam()
 
   // The shared call-recording `<audio>` element (`callPlaybackStore`) is a
@@ -121,11 +122,17 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     } else {
       setActiveConversation(null)
     }
-    // Closes the mobile contact sheet left over from a previous conversation:
-    // without this, going back and selecting a different thread could reopen
-    // it bound to the wrong contact.
-    setIsContactSheetOpen(false)
   }, [activeConversationId, conversations])
+
+  useEffect(() => {
+    if (
+      previousContactSheetConversationIdRef.current === activeConversationId
+    ) {
+      return
+    }
+    previousContactSheetConversationIdRef.current = activeConversationId
+    setIsContactSheetOpen(false)
+  }, [activeConversationId])
 
   const paneState: PaneState = {
     activeConversation,

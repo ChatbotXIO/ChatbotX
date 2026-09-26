@@ -26,7 +26,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
-import { broadcastToWorkspaceParty } from "../platform/realtime-broadcast"
+import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { getPublicFileUrl } from "../utils"
 
@@ -259,7 +259,7 @@ export const createOutgoing = async (props: {
     })),
   }
 
-  await broadcastToWorkspaceParty(messageWithAttachments.workspaceId, {
+  publishToWorkspaceParty(messageWithAttachments.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: {
       ...messageWithAttachments,

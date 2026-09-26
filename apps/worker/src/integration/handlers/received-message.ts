@@ -1,7 +1,6 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   appointmentService,
-  broadcastToWorkspaceParty,
   buildContext,
   type ContactInboxTrackingData,
   contactInboxService,
@@ -10,6 +9,7 @@ import {
   hasOnDemandProfileApi,
   hasRealAvatar,
   messageCleanupService,
+  publishToWorkspaceParty,
   quotaEnforcementService,
   recordProfileRefreshFailure,
   resolveTenantSettings,
@@ -960,14 +960,10 @@ const saveAndBroadcastMessage = async (props: {
   }
 
   if (isNew && !isOwnSendEcho) {
-    try {
-      await broadcastToWorkspaceParty(inbox.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: newMessage,
-      })
-    } catch (error) {
-      logger.warn({ err: error }, "Unable to emit realtime message")
-    }
+    publishToWorkspaceParty(inbox.workspaceId, {
+      eventType: RealtimeEventType.messageCreated,
+      data: newMessage,
+    })
   }
 
   // Push notification for a genuinely new inbound message only — this
@@ -1408,18 +1404,14 @@ export const updateIncomingComment = async (
     return
   }
 
-  try {
-    await broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageUpdated,
-      data: {
-        messageId: updated.id,
-        newText,
-        removedAttachment: false,
-      },
-    })
-  } catch (error) {
-    logger.warn(error, "updateIncomingComment: unable to broadcast")
-  }
+  publishToWorkspaceParty(inbox.workspaceId, {
+    eventType: RealtimeEventType.messageUpdated,
+    data: {
+      messageId: updated.id,
+      newText,
+      removedAttachment: false,
+    },
+  })
 }
 
 // When a commenter deletes their comment, soft-delete it (and any
@@ -1448,14 +1440,10 @@ export const deleteIncomingComment = async (
   }
 
   const messageIds = deleted.map((row) => row.id)
-  try {
-    await broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageDeleted,
-      data: { messageIds },
-    })
-  } catch (error) {
-    logger.warn(error, "deleteIncomingComment: unable to broadcast")
-  }
+  publishToWorkspaceParty(inbox.workspaceId, {
+    eventType: RealtimeEventType.messageDeleted,
+    data: { messageIds },
+  })
 }
 
 // When a contact unsends a previously-sent DM, soft-delete it in the DB and
@@ -1486,14 +1474,10 @@ export const deleteIncomingMessage = async (
   }
 
   const messageIds = deleted.map((row) => row.id)
-  try {
-    await broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageDeleted,
-      data: { messageIds },
-    })
-  } catch (error) {
-    logger.warn(error, "deleteIncomingMessage: unable to broadcast")
-  }
+  publishToWorkspaceParty(inbox.workspaceId, {
+    eventType: RealtimeEventType.messageDeleted,
+    data: { messageIds },
+  })
 }
 
 type ContactInboxWithContact = ContactInboxModel & { contact: ContactModel }
@@ -1591,14 +1575,10 @@ export const processMessageReaction = async (
   })
 
   if (isNew) {
-    try {
-      await broadcastToWorkspaceParty(inbox.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: reactionRow,
-      })
-    } catch (error) {
-      logger.warn(error, "processMessageReaction: unable to broadcast")
-    }
+    publishToWorkspaceParty(inbox.workspaceId, {
+      eventType: RealtimeEventType.messageCreated,
+      data: reactionRow,
+    })
     return
   }
 
@@ -1612,18 +1592,14 @@ export const processMessageReaction = async (
       reactionRow.createdAt,
     )
     if (updated) {
-      try {
-        await broadcastToWorkspaceParty(inbox.workspaceId, {
-          eventType: RealtimeEventType.messageUpdated,
-          data: {
-            messageId: updated.id,
-            newText: reactionText,
-            removedAttachment: false,
-          },
-        })
-      } catch (error) {
-        logger.warn(error, "processMessageReaction: unable to broadcast update")
-      }
+      publishToWorkspaceParty(inbox.workspaceId, {
+        eventType: RealtimeEventType.messageUpdated,
+        data: {
+          messageId: updated.id,
+          newText: reactionText,
+          removedAttachment: false,
+        },
+      })
     }
   }
 }

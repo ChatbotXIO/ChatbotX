@@ -102,6 +102,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+  publishToWorkspaceParty: vi.fn(),
   logProviderError: mockLogProviderError,
   flowService: { findBy: mockFlowFindBy },
   buildContext: vi.fn().mockResolvedValue({}),

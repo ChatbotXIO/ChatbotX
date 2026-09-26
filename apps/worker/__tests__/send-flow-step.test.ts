@@ -186,6 +186,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findByPublicLinkSlug: mockFindAppointmentCalendarBySlug,
   },
   broadcastToWorkspaceParty: mockBroadcast,
+  publishToWorkspaceParty: mockBroadcast,
   broadcastToGuestParty: vi.fn().mockResolvedValue(undefined),
   contactInboxService: {
     findByUncached: mockFindContactInbox,
@@ -573,6 +574,13 @@ describe("sendFlowStep", () => {
         contactInbox: expect.objectContaining({ id: "ci-broadcast" }),
         messageId: "msg-created",
       }),
+    )
+    expect(mockBroadcast).not.toHaveBeenCalled()
+    expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({ bumpActivity: false }),
+    )
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({ silent: true }),
     )
   })
 
@@ -1378,6 +1386,7 @@ describe("sendFlowStep", () => {
       contactInboxId: "ci-1",
       contactId: "contact-1",
       at: createdMessage.createdAt,
+      bumpActivity: true,
       lastStep: undefined,
       currentStep: "step-1",
     })
@@ -1393,6 +1402,7 @@ describe("sendFlowStep", () => {
       conversationId: "conv-1",
       inboxId: "inbox-1",
       readAt: createdMessage.createdAt,
+      silent: false,
     })
   })
 
@@ -1641,6 +1651,7 @@ describe("sendChatMessage", () => {
       contactInboxId: "ci-1",
       contactId: "contact-1",
       at: createdMessage.createdAt,
+      bumpActivity: true,
     })
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],

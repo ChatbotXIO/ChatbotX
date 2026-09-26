@@ -7,9 +7,9 @@ import {
 import {
   appointmentCalendarService,
   broadcastToGuestParty,
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
+  publishToWorkspaceParty,
   resolveMediaUrl,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
@@ -41,6 +41,7 @@ import {
   buttonTypes,
   encodeButtonPayload,
   extractMetadata,
+  isBulkOutboundMetadata,
   messageEventTypeSchema,
   type SendCardStepSchema,
   stepTypes,
@@ -51,7 +52,6 @@ import {
   IntegrationException,
   type MessageButtonTemplate,
   type MessageCardTemplate,
-  type OutgoingSendResult,
   parseSdkError,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
@@ -510,6 +510,7 @@ export async function sendFlowStep({
   if (!targetContactInbox) {
     return
   }
+  const isBulkOutbound = isBulkOutboundMetadata(metadata)
 
   // What the job actually carried. `metadata` is the carrier the button
   // encoders read; `commentAnchor` only decides delivery. Note the resolved
@@ -889,6 +890,7 @@ export async function sendFlowStep({
         contactInboxId: targetContactInbox.id,
         contactId: targetContactInbox.contactId,
         at: createdMessage.createdAt,
+        bumpActivity: !isBulkOutbound,
         lastStep: conversation.currentStep,
         currentStep: resolvedStep.id,
       })
@@ -948,21 +950,17 @@ export async function sendFlowStep({
             triggerType: "message_bot_sent_flow",
           },
         })
+    const broadcasts: Promise<unknown>[] = []
 
-    const promises: [
-      Promise<unknown>,
-      Promise<OutgoingSendResult>,
-      ...Promise<unknown>[],
-    ] = [
-      broadcastToWorkspaceParty(conversation.workspaceId, {
+    if (!isBulkOutbound) {
+      publishToWorkspaceParty(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
-      }),
-      channelSend,
-    ]
+      })
+    }
 
     if (targetContactInbox.channel === channelTypes.enum.webchat) {
-      promises.push(
+      broadcasts.push(
         broadcastToGuestParty(
           {
             workspaceId: conversation.workspaceId,
@@ -976,7 +974,8 @@ export async function sendFlowStep({
       )
     }
 
-    const [, channelResult] = await Promise.all(promises)
+    await Promise.all([channelSend, ...broadcasts])
+    const channelResult = await channelSend
     const providerMessageId = channelResult.messageIds[0]
 
     if (
@@ -989,6 +988,7 @@ export async function sendFlowStep({
         conversationId: conversation.id,
         inboxId: targetContactInbox.inboxId,
         readAt: message.createdAt,
+        silent: isBulkOutbound,
       })
     }
 
@@ -1064,6 +1064,7 @@ export async function sendFlowStep({
       conversation.workspaceId,
       message?.createdAt,
       parsedError.message,
+      isBulkOutboundMetadata(metadata),
     )
 
     // Always terminal here, for the same reason the `message:failed` emit above
@@ -1117,6 +1118,7 @@ export const sendChatMessage = async (
     trackingContext,
     metadata,
   } = props
+  const isBulkOutbound = isBulkOutboundMetadata(metadata)
 
   const contactInbox =
     targetContactInbox ??
@@ -1211,16 +1213,13 @@ export const sendChatMessage = async (
         contactInboxId: contactInbox.id,
         contactId: contactInbox.contactId,
         at: message.createdAt,
+        bumpActivity: !isBulkOutbound,
       })
     if (trackingInvalidation) {
       await contactInboxService.invalidateTracking(trackingInvalidation)
     }
 
     const promises: Promise<unknown>[] = [
-      broadcastToWorkspaceParty(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: message,
-      }),
       sendMessageToChannel(
         {
           conversation,
@@ -1233,6 +1232,12 @@ export const sendChatMessage = async (
         willRetryOnThrow,
       ),
     ]
+    if (!isBulkOutbound) {
+      publishToWorkspaceParty(conversation.workspaceId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: message,
+      })
+    }
 
     await Promise.all(promises)
 

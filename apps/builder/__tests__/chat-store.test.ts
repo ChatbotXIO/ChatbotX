@@ -986,6 +986,47 @@ describe("chat store conversation updates", () => {
     unsubscribe()
   })
 
+  test("handleNewMessages commits a realtime frame once", () => {
+    const store = createChatStore()
+    const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
+    const second = makeConversation("conv-2", new Date("2026-01-01T01:00:00Z"))
+    store.setState({ conversations: [first, second] as never })
+    const listener = vi.fn()
+    const unsubscribe = store.subscribe(listener)
+
+    store
+      .getState()
+      .handleNewMessages([
+        makeMessage("conv-1", new Date("2026-01-02T00:00:00Z")) as never,
+        makeMessage("conv-2", new Date("2026-01-02T00:01:00Z")) as never,
+      ])
+
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(
+      store.getState().conversations.map((conversation) => conversation.id),
+    ).toEqual(["conv-2", "conv-1"])
+    unsubscribe()
+  })
+
+  test("keeps the state reference for unmatched realtime mutations", () => {
+    const store = createChatStore()
+    const before = store.getState()
+
+    store.getState().updateMessageContentAttributes("missing", {})
+    store.getState().markMessagesDeleted(["missing"])
+    store.getState().markMessageFailed("missing", "client", "error")
+    store.getState().assignMessageCommentId("missing", "comment")
+    store.getState().updateMessageText("missing", "updated", {
+      newAttachmentPath: null,
+      removedAttachment: false,
+    })
+    store
+      .getState()
+      .applyAgentLastReadAt(["missing"], new Date("2026-01-01T00:00:00Z"))
+
+    expect(store.getState()).toBe(before)
+  })
+
   test("handleNewMessage directly appends a relation-compatible realtime message when no optimistic client id matches", () => {
     const store = createChatStore()
     const conversation = makeConversation(
@@ -1005,6 +1046,19 @@ describe("chat store conversation updates", () => {
 
     expect(store.getState().messages).toEqual([message])
     expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
+  })
+
+  test("updates an active thread before its conversation reaches the sidebar", () => {
+    const store = createChatStore()
+    const message = makeMessage(
+      "conv-not-yet-listed",
+      new Date("2026-01-02T00:00:00Z"),
+    )
+    store.setState({ activeConversationId: "conv-not-yet-listed" })
+
+    store.getState().handleNewMessages([message as never])
+
+    expect(store.getState().messages).toEqual([message])
   })
 })
 

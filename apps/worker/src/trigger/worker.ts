@@ -1,3 +1,4 @@
+import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
 import { extractContactInboxId } from "@chatbotx.io/events"
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { SdkException } from "@chatbotx.io/sdk"
@@ -111,6 +112,7 @@ async function startTriggerWorker() {
     }
     isShuttingDown = true
     try {
+      await flushAllPendingWorkspaceBroadcasts()
       await worker.close()
       process.exit(0)
     } catch (err) {

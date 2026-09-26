@@ -82,6 +82,13 @@ export const sendMessageNodeDefaultFn = (
 
 export const BROADCAST_PAYLOAD_TYPE = "broadcast"
 export const SEQUENCE_SCHEDULE_PAYLOAD_TYPE = "sequenceSchedule"
+export const isBulkOutboundMetadata = (metadata: unknown): boolean =>
+  typeof metadata === "object" &&
+  metadata !== null &&
+  "type" in metadata &&
+  (metadata.type === BROADCAST_PAYLOAD_TYPE ||
+    metadata.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE)
+
 export const COMMENT_AUTOMATION_PAYLOAD_TYPE = "commentAutomation"
 export const UPDATE_STATUS_PAYLOAD_TYPE = "updateStatus"
 export const FLOW_NODE_PAYLOAD_TYPE = "flowNode"

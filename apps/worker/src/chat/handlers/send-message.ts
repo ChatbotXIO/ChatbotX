@@ -1,8 +1,8 @@
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   contactService,
   conversationService,
+  publishToWorkspaceParty,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
@@ -18,6 +18,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import {
+  isBulkOutboundMetadata,
   type MetadataPayload,
   messageEventTypeSchema,
   stepTypes,
@@ -80,6 +81,7 @@ export const markConversationReadAfterDelivery = async (props: {
   conversationId: string
   inboxId: string
   readAt: Date
+  silent?: boolean
 }): Promise<void> => {
   try {
     await conversationService.markReadByOutbound(props)
@@ -108,6 +110,9 @@ export async function sendMessageToChannel(
     metadata,
     sendFrom,
   } = data
+  const isBulkOutbound =
+    isBulkOutboundMetadata(metadata) ||
+    isBulkOutboundMetadata(message.contentAttributes?.metadata)
 
   try {
     const { integration, ctx } =
@@ -214,7 +219,7 @@ export async function sendMessageToChannel(
           )
 
           // Notify the client so edit/delete buttons appear immediately without a refresh.
-          await broadcastToWorkspaceParty(conversation.workspaceId, {
+          publishToWorkspaceParty(conversation.workspaceId, {
             eventType: RealtimeEventType.messageIdAssigned,
             data: { messageId: message.id, commentId: replyId },
           })
@@ -225,6 +230,7 @@ export async function sendMessageToChannel(
               message.clientId,
               conversation.workspaceId,
               new Date(message.createdAt),
+              isBulkOutbound,
             )
           }
         } catch (err) {
@@ -253,6 +259,7 @@ export async function sendMessageToChannel(
           message.clientId,
           conversation.workspaceId,
           new Date(message.createdAt),
+          isBulkOutbound,
         )
       }
     }
@@ -270,6 +277,7 @@ export async function sendMessageToChannel(
         conversationId: conversation.id,
         inboxId: contactInbox.inboxId,
         readAt: new Date(message.createdAt),
+        silent: isBulkOutbound,
       })
     }
 
@@ -352,6 +360,7 @@ export async function sendMessageToChannel(
       conversation.workspaceId,
       message?.createdAt ? new Date(message.createdAt) : undefined,
       errorData.message,
+      isBulkOutbound,
     )
     // Terminal failures only: an attempt that is about to be retried must not
     // put a row in the automation's Error Logs for a reply that still lands.
@@ -583,6 +592,7 @@ export async function recordMessageSendError(
   workspaceId: string,
   createdAt: Date | undefined,
   errorMessage: string,
+  silent = false,
 ) {
   try {
     if (!(messageId && createdAt)) {
@@ -597,10 +607,12 @@ export async function recordMessageSendError(
       createdAt,
     )
 
-    await broadcastToWorkspaceParty(workspaceId, {
-      eventType: RealtimeEventType.messageFailed,
-      data: { messageId, clientId, error: truncatedError },
-    })
+    if (!silent) {
+      publishToWorkspaceParty(workspaceId, {
+        eventType: RealtimeEventType.messageFailed,
+        data: { messageId, clientId, error: truncatedError },
+      })
+    }
   } catch (err) {
     logger.error(err, "Failed to persist message sendError")
   }
@@ -611,6 +623,7 @@ async function clearMessageSendError(
   clientId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
+  silent = false,
 ) {
   try {
     if (!(messageId && createdAt)) {
@@ -619,10 +632,12 @@ async function clearMessageSendError(
     const repo = await createMessageRepository()
     await repo.updateSendError(messageId, null, workspaceId, createdAt)
 
-    await broadcastToWorkspaceParty(workspaceId, {
-      eventType: RealtimeEventType.messageFailed,
-      data: { messageId, clientId, error: null },
-    })
+    if (!silent) {
+      publishToWorkspaceParty(workspaceId, {
+        eventType: RealtimeEventType.messageFailed,
+        data: { messageId, clientId, error: null },
+      })
+    }
   } catch (err) {
     logger.error(
       err,
