@@ -1,10 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "85237ee2-c615-4acc-adda-d2e0e1f563c6",
+  "id": "8fcb173e-992a-48fe-8764-e2f39636f38b",
   "prevIds": [
-    "f26e15fc-ab70-49f0-a293-6578709fae1e",
-    "f3183b9d-1eb4-470c-8a42-606aa97c429e"
+    "97b4758c-c673-4ed4-ba9a-2579fdf7161b"
   ],
   "ddl": [
     {
@@ -366,6 +365,15 @@
     },
     {
       "values": [
+        "equal",
+        "contain"
+      ],
+      "name": "commentExcludeKeywordsType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
         "sent",
         "failed"
       ],
@@ -399,6 +407,7 @@
         "postNotMatched",
         "commentIsReply",
         "keywordsNotMatched",
+        "mentionCountNotMatched",
         "contactNotNew",
         "alreadyRepliedOnPost",
         "engagedOnOtherPost"
@@ -8170,6 +8179,19 @@
       "table": "CommentAutomation"
     },
     {
+      "type": "commentExcludeKeywordsType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'contain'",
+      "generated": null,
+      "identity": null,
+      "name": "excludeKeywordsType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentAutomation"
+    },
+    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
@@ -8187,7 +8209,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "'{\"all\":false,\"hasPhoneNumber\":false,\"hasImage\":false,\"hasVideo\":false,\"hasLink\":false,\"hasKeywords\":false,\"keywords\":[],\"showCommentsAfter\":\"none\"}'",
+      "default": "'{\"all\":false,\"hasPhoneNumber\":false,\"hasImage\":false,\"hasVideo\":false,\"hasLink\":false,\"hasKeywords\":false,\"hasGif\":false,\"hasEmoji\":false,\"keywords\":[],\"showCommentsAfter\":\"none\"}'",
       "generated": null,
       "identity": null,
       "name": "hideComments",
@@ -9026,6 +9048,32 @@
       "generated": null,
       "identity": null,
       "name": "blockedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Contact"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "totalTagged",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Contact"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "totalNewTagged",
       "entityType": "columns",
       "schema": "public",
       "table": "Contact"
