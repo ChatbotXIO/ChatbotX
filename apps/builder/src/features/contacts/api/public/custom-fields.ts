@@ -11,6 +11,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   findContactCustomField,
@@ -40,12 +41,7 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
       }),
     )
     .output(listPublicContactCustomFieldsResponse)
@@ -72,12 +68,7 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
         idOrName: z
           .string()
           .min(1)
@@ -118,12 +109,7 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
         idOrName: z
           .string()
           .min(1)
@@ -168,12 +154,7 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
         customFieldId: zodBigintAsString().describe(
           "Custom field id (numeric string). Get it from `customFields.list`.",
         ),
@@ -250,12 +231,7 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
         idOrName: z
           .string()
           .min(1)
@@ -287,12 +263,7 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
       }),
     )
     .errors(possibleErrorsOnDeletingResource)

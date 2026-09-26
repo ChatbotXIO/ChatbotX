@@ -15,10 +15,14 @@ import {
 } from "@/lib/workspace/authorize-workspace-access"
 import { base, type RequestApiToken } from "./context"
 
-const assertNotRateLimited = (workspaceId: string): Promise<void> =>
+const assertNotRateLimited = (
+  workspaceId: string,
+  resHeaders?: Headers,
+): Promise<void> =>
   assertApiNotRateLimited({
     scope: "workspace-token-rate-limit",
     key: workspaceId,
+    resHeaders,
   })
 
 // Generous ceiling: this bucket aggregates every workspace behind one egress
@@ -27,11 +31,15 @@ const assertNotRateLimited = (workspaceId: string): Promise<void> =>
 // limiter below can never see (an invalid token resolves to no workspace).
 const PREAUTH_REQUEST_LIMIT = 600
 
-const assertPreAuthNotRateLimited = (headers: Headers): Promise<void> =>
+const assertPreAuthNotRateLimited = (
+  headers: Headers,
+  resHeaders?: Headers,
+): Promise<void> =>
   assertApiNotRateLimited({
     scope: "workspace-token-preauth-rate-limit",
     key: getGuestClientIp(headers),
     limit: PREAUTH_REQUEST_LIMIT,
+    resHeaders,
   })
 
 const invalidTokenError = () =>
@@ -65,7 +73,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     // The IP-keyed gate must run BEFORE hashing/looking up the token: it
     // exists to stop unauthenticated token-guessing floods, and a request
     // already over the ceiling must not pay for a hash + DB/Redis lookup.
-    await assertPreAuthNotRateLimited(context.headers)
+    await assertPreAuthNotRateLimited(context.headers, context.resHeaders)
 
     const tokenHash = await hashToken(token)
     let auth: Awaited<
@@ -94,7 +102,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     }
     const { workspace, apiToken } = auth
 
-    await assertNotRateLimited(workspace.id)
+    await assertNotRateLimited(workspace.id, context.resHeaders)
 
     if (isWorkspaceScheduledForDeletion(workspace)) {
       throw new ORPCError("FORBIDDEN", {
@@ -153,6 +161,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           context: {
             workspace,
             apiToken: requestApiToken,
+            apiCredentialId: `api-token:${requestApiToken.id}`,
           },
         }),
     )

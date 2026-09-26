@@ -142,8 +142,27 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+vi.mock("../src/broadcast/plan-policy.service", () => ({
+  broadcastPlanPolicyService: {
+    appliesToChannel: vi.fn((channel: string) => channel === "messenger"),
+    hasRestrictions: vi.fn(() => false),
+    resolveForWorkspace: vi.fn().mockResolvedValue({
+      policy: { kind: "unrestricted" },
+      planName: null,
+    }),
+    restrictionFor: vi.fn(() => null),
+    assertSendRateAllowed: vi.fn(),
+    lockActivation: vi.fn().mockResolvedValue(undefined),
+    assertActiveSlotAvailable: vi.fn().mockResolvedValue(undefined),
+    resolveSendRateOverride: vi.fn(() => ({ sendRatePerMinute: 60 })),
+  },
+}))
+
 const { pruneEmailPhoneFilterConditions } = await import(
   "@chatbotx.io/database/queries"
+)
+const { broadcastPlanPolicyService } = await import(
+  "../src/broadcast/plan-policy.service"
 )
 const { broadcastService } = await import("../src/broadcast/service")
 
@@ -164,9 +183,37 @@ const sourceBroadcast = {
   name: "My Broadcast",
 }
 
+const restrictedContext = {
+  policy: {
+    kind: "restricted" as const,
+    maxSendRatePerMinute: 60,
+    maxActiveBroadcasts: 1,
+    channels: ["messenger" as const],
+    display: { sendRatePerMinute: 100, upgradeSpeedMultiplier: 20 },
+  },
+  planName: "Trial",
+}
+
 describe("broadcastService.resendWithPruning", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(broadcastPlanPolicyService.appliesToChannel).mockImplementation(
+      (channel) => channel === "messenger",
+    )
+    vi.mocked(broadcastPlanPolicyService.resolveForWorkspace).mockResolvedValue(
+      { policy: { kind: "unrestricted" }, planName: null },
+    )
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(null)
+    vi.mocked(broadcastPlanPolicyService.assertSendRateAllowed).mockReset()
+    vi.mocked(broadcastPlanPolicyService.lockActivation)
+      .mockReset()
+      .mockResolvedValue(undefined)
+    vi.mocked(broadcastPlanPolicyService.assertActiveSlotAvailable)
+      .mockReset()
+      .mockResolvedValue(undefined)
+    vi.mocked(
+      broadcastPlanPolicyService.resolveSendRateOverride,
+    ).mockReturnValue({ sendRatePerMinute: 60 })
     mockDbTransaction.mockImplementation(
       async (
         fn: (tx: {
@@ -390,6 +437,9 @@ describe("broadcastService.resendWithPruning", () => {
     ).rejects.toThrow("Broadcast is not sent")
 
     expect(mockDbTransaction).not.toHaveBeenCalled()
+    expect(
+      broadcastPlanPolicyService.resolveForWorkspace,
+    ).not.toHaveBeenCalled()
   })
 
   test("clones a 'sent' broadcast as a new scheduled-now broadcast, appending (Resend) to the name", async () => {
@@ -425,6 +475,9 @@ describe("broadcastService.resendWithPruning", () => {
       action: "launch",
       detail: "launched a broadcast (#new-broadcast-id)",
     })
+    expect(
+      broadcastPlanPolicyService.resolveForWorkspace,
+    ).not.toHaveBeenCalled()
   })
 
   test("copies a non-null send limit onto the resend", async () => {
@@ -462,6 +515,105 @@ describe("broadcastService.resendWithPruning", () => {
     ).resolves.toEqual({
       id: "new-broadcast-id",
       name: "My Broadcast (Resend)",
+    })
+  })
+
+  test("keeps a non-trial Messenger resend unchanged after identity reads", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      channel: "messenger",
+      integrationWhatsappId: null,
+      integrationMessengerId: "messenger-1",
+      sendRatePerMinute: null,
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(broadcastPlanPolicyService.resolveForWorkspace).toHaveBeenCalledWith(
+      WS,
+    )
+    expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+    expect(mockTxInsertValues.mock.calls[0][0].sendRatePerMinute).toBeNull()
+  })
+
+  test("rejects an over-cap source rate before inserting the resend", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      channel: "messenger",
+      sendRatePerMinute: 61,
+    })
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    vi.mocked(
+      broadcastPlanPolicyService.assertSendRateAllowed,
+    ).mockImplementation(() => {
+      throw new Error("send rate limited")
+    })
+
+    await expect(
+      broadcastService.resendWithPruning({
+        workspaceId: WS,
+        id: SOURCE_ID,
+        canViewEmailAndPhone: true,
+      }),
+    ).rejects.toThrow("send rate limited")
+
+    expect(mockTxInsertValues).not.toHaveBeenCalled()
+  })
+
+  test("rolls back the resend when the restricted slot is occupied", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      channel: "messenger",
+      sendRatePerMinute: null,
+    })
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    vi.mocked(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).mockRejectedValue(new Error("active slot limited"))
+
+    await expect(
+      broadcastService.resendWithPruning({
+        workspaceId: WS,
+        id: SOURCE_ID,
+        canViewEmailAndPhone: true,
+      }),
+    ).rejects.toThrow("active slot limited")
+
+    expect(mockTxInsertValues).not.toHaveBeenCalled()
+  })
+
+  test("stores the restricted rate override after locking and counting", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      channel: "messenger",
+      sendRatePerMinute: null,
+    })
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues.mock.calls[0][0].sendRatePerMinute).toBe(60)
+    expect(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).toHaveBeenCalledWith(expect.anything(), {
+      workspaceId: WS,
+      channel: "messenger",
+      ctx: restrictedContext,
+      excludeBroadcastId: undefined,
     })
   })
 })

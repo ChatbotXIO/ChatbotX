@@ -8,9 +8,10 @@ const createContext = (auth: MoosendAuthValue): Context<MoosendAuthValue> => ({
   storagePrefix: "",
   platform: {
     appUrl: "",
-    wsUrl: "",
+    publicRealtimeUrl: "",
+    internalRealtimeUrl: "",
     storageUrl: "",
-    getRealtimeAuthHeaders: async () => ({}),
+    getRealtimeBroadcastAuthHeaders: async () => ({}),
   },
 })
 

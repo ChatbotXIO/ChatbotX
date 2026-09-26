@@ -135,7 +135,6 @@ export const contactResponse = contactResource.and(
       .optional(),
   }),
 )
-export type ContactResponse = z.infer<typeof contactResponse>
 
 export const listContactsResponse = z.object({
   data: z.array(contactResponse),
@@ -144,6 +143,46 @@ export const listContactsResponse = z.object({
   totalCountCapped: z.boolean(),
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
+
+/**
+ * Column-level row for the private contacts table — the selected columns
+ * must match `contactRepository.listTableRows` 1:1. This compile-time guard
+ * is enforced by `listContacts`'s return type (`ListContactsTableResponse`
+ * from `list<ContactTableListRow>`), not by this schema alone.
+ */
+export const contactTableRowResource = contactResource
+  .pick({
+    id: true,
+    fullName: true,
+    avatar: true,
+    createdAt: true,
+  })
+  .extend({
+    contactInboxes: z.array(
+      contactInboxResource.pick({
+        channel: true,
+        source: true,
+        contactLastReadAt: true,
+      }),
+    ),
+    conversation: conversationResource
+      .pick({ id: true })
+      .extend({
+        assignedUser: userResource.pick({ name: true, email: true }).nullish(),
+      })
+      .nullable(),
+  })
+export type ContactTableRow = z.infer<typeof contactTableRowResource>
+
+export const listContactsTableResponse = z.object({
+  data: z.array(contactTableRowResource),
+  pageCount: z.number(),
+  totalCount: z.number(),
+  totalCountCapped: z.boolean(),
+})
+export type ListContactsTableResponse = z.infer<
+  typeof listContactsTableResponse
+>
 
 // Back-compat for the deprecated `contacts.findByCustomField` alias — use
 // `contacts.list` with a `contactFilter` instead.

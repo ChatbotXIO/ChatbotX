@@ -12,6 +12,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -28,12 +29,7 @@ export const contactsNotesPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
       }),
     )
     .output(listContactNotesPublicResponse)
@@ -63,12 +59,7 @@ export const contactsNotesPublicRouter = {
     .input(
       addContactNotePublicRequest.and(
         z.object({
-          identifier: z
-            .string()
-            .min(1)
-            .describe(
-              "Contact identifier: the numeric contact id, an email address, or a phone number.",
-            ),
+          identifier: publicContactIdentifier,
         }),
       ),
     )
@@ -103,12 +94,7 @@ export const contactsNotesPublicRouter = {
     .input(
       updateContactNotePublicRequest.and(
         z.object({
-          identifier: z
-            .string()
-            .min(1)
-            .describe(
-              "Contact identifier: the numeric contact id, an email address, or a phone number.",
-            ),
+          identifier: publicContactIdentifier,
           noteId: zodBigintAsString().describe("Note id (numeric string)."),
         }),
       ),
@@ -141,12 +127,7 @@ export const contactsNotesPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
         noteId: zodBigintAsString().describe("Note id (numeric string)."),
       }),
     )

@@ -97,6 +97,9 @@ export const broadcastModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    index("Broadcast_workspaceId_active_idx")
+      .on(table.workspaceId, table.channel)
+      .where(sql`"status" IN ('scheduled', 'sending') AND "deletedAt" IS NULL`),
     index("Broadcast_flowId_idx").using(
       "btree",
       table.flowId.asc().nullsLast(),

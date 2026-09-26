@@ -1,5 +1,5 @@
 import type { ContextQueue } from "./context"
-import type { IncomingContact, IncomingMessage } from "./message"
+import type { EchoOrigin, IncomingContact, IncomingMessage } from "./message"
 
 export * from "./context"
 export * from "./message"
@@ -57,6 +57,13 @@ export type ReceivedMessageResult = {
   referralSource?: string | null
   referral?: MessageReferral | null
   buttonTitle?: string | null
+  /**
+   * Origin of an outgoing echo, when the channel can tell. Unset or null
+   * means "not an echo" or "unknown", which the worker treats as first-party.
+   */
+  echoOrigin?: EchoOrigin | null
+  /** Sending app id on an echo, for diagnostics; null when not an echo or unknown. */
+  echoAppId?: string | null
 }
 
 /**

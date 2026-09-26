@@ -59,6 +59,7 @@ vi.mock("@chatbotx.io/business", () => ({
   ) => Boolean(workspace?.scheduledDeletionAt),
   inboxService: {
     distinctConnectedChannels: vi.fn(async () => []),
+    find: vi.fn(async () => ({ markReadOnOutbound: false })),
   },
   platformCredentialService: {
     resolveForOwner: vi.fn(async () => null),

@@ -336,6 +336,7 @@
       "message": "O seu último pagamento falhou. Atualize o método de pagamento para manter o espaço de trabalho ativo."
     },
     "trial": {
+      "planName": "Avaliação",
       "daysLeft": "Avaliação: faltam {days} dias",
       "endsTomorrow": "A avaliação termina amanhã",
       "expired": "A sua avaliação terminou — atualize o plano para manter o espaço de trabalho ativo",
@@ -449,8 +450,7 @@
       "audienceFilter": "Filtro de público",
       "noAudienceFilter": "Sem filtro de público",
       "template": "Modelo",
-      "integration": "Integração",
-      "sendLimit": "Limite"
+      "integration": "Integração"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Atualize o seu plano",
+      "sendRate": "O seu plano {plan} atual permite broadcasts com uma velocidade máxima de envio de {rate} mensagens por minuto. Atualize o plano para enviar broadcasts até {multiplier}x mais depressa.",
+      "activeBroadcasts": "O seu plano {plan} atual executa {max, plural, one {# broadcast} other {# broadcasts}} de cada vez. Atualize o plano para executar mais broadcasts em simultâneo."
+    },
     "sendLimit": {
       "title": "Limite",
       "hint": "Deixe em branco para enviar a todos os contactos correspondentes.",
+      "rateHint": "Deixe em branco para utilizar a taxa predefinida.",
+      "rangeSummary": "Contactos n.º{start} – n.º{end}",
+      "rangeFromSummary": "A partir do contacto n.º{start}",
       "rangeLabel": "Intervalo de contactos",
       "fromLabel": "De",
       "toLabel": "Até",
       "allPlaceholder": "Todos",
-      "rangeEndBeforeStart": "A posição final não pode ser anterior à posição inicial",
-      "rangeSummary": "Contactos n.º{start} – n.º{end}",
-      "rangeFromSummary": "A partir do contacto n.º{start}",
-      "rateSummary": "{rate} mensagens / minuto"
+      "rangeEndBeforeStart": "A posição final não pode ser anterior à posição inicial"
     }
   },
   "commentAutomation": {
@@ -758,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(opcional)",
     "marketingMessagesConfigId": {
       "label": "ID de configuração das Mensagens de marketing",
       "description": "ID de configuração do Facebook Login for Business utilizado para solicitar a permissão marketing_messages_messenger."
@@ -4230,6 +4236,14 @@
     "invalidInvitation": "Este convite é inválido ou expirou.",
     "workspaceUnavailable": "Este espaço de trabalho já não está disponível."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Marcar mensagens do bot como lidas",
+      "enabled": "Ativado",
+      "disabled": "Desativado",
+      "description": "Se ativado, o bot marca automaticamente as suas próprias mensagens como lidas"
+    }
+  },
   "inboxTeams": {
     "title": "Equipas da caixa de entrada"
   },
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "Introduza um Dataset ID válido (apenas números).",
       "whatsappNotFound": "Integração do WhatsApp não encontrada.",
       "testEventCodeRequired": "Guarde um código de evento de teste antes de enviar um evento de teste.",
-      "noContactForTest": "Ainda não existe um contacto elegível neste canal. Um evento de teste precisa de um contacto real para atribuição (no WhatsApp, um que veio de um anúncio click-to-WhatsApp).",
-      "invalidTestEventCode": "O código do evento de teste só pode conter letras, números, hífenes ou sublinhados (máx. 64)."
+      "invalidTestEventCode": "O código do evento de teste só pode conter letras, números, hífenes ou sublinhados (máx. 64).",
+      "invalidMessagingId": "O ID de mensagem só pode conter letras, dígitos, hífenes ou sublinhados (máx. 512).",
+      "capiDisconnected": "O Meta CAPI está desligado para este canal. Volte a ligá-lo antes de enviar um evento de teste."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "Código do evento de teste guardado.",
       "cleared": "Código do evento de teste limpo. Os eventos estão novamente ao vivo.",
       "send": "Enviar evento de teste",
-      "sent": "Evento de teste em fila. Aparece em Test events no Events Manager dentro de um minuto.",
-      "sendHint": "Envia um exemplo de Purchase (100 USD) para o contacto mais recente deste canal.",
+      "sent": "Evento de teste enviado. Aparece em Test events no Events Manager dentro de um minuto.",
+      "sendHint": "Envia um Purchase de exemplo (100 USD) para um ID de mensagem que introduzir. Não é usado nenhum contacto guardado.",
       "activeNotice": "O modo de teste está ativo: os eventos deste canal não são contabilizados nos relatórios até o código ser limpo.",
-      "openTestEvents": "Abrir Test events"
+      "openTestEvents": "Abrir Test events",
+      "dialogTitle": "Enviar evento de teste",
+      "dialogDescription": "Um Purchase de exemplo (100 USD) é enviado com o seu código de evento de teste. Cole o ID de mensagem de exemplo de Events Manager → Test events → Messaging → Graph API Explorer, para que nada seja atribuído a um contacto real.",
+      "messagingIdLabel": {
+        "messenger": "ID do contacto (page_scoped_user_id)",
+        "instagram": "ID do contacto (ig_sid)",
+        "whatsapp": "ID do clique (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Cole o valor de exemplo da Meta",
+      "messagingIdHint": "Apenas letras, dígitos, hífenes e sublinhados (máx. 512).",
+      "cancel": "Cancelar",
+      "confirmSend": "Enviar"
     }
   },
   "minigames": {

@@ -2278,6 +2278,14 @@
     "invalidInvitation": "הזמנה זו אינה תקינה או שפג תוקפה.",
     "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "סמן הודעות בוט כנקראו",
+      "enabled": "מופעל",
+      "disabled": "מושבת",
+      "description": "כשמופעל, הבוט מסמן אוטומטית את ההודעות שלו כנקראו"
+    }
+  },
   "inboxTeams": {
     "title": "צוותי תיבת דואר נכנס"
   },
@@ -3892,6 +3900,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(אופציונלי)",
     "marketingMessagesConfigId": {
       "label": "מזהה תצורה של הודעות שיווקיות",
       "description": "מזהה תצורה של Facebook Login for Business המשמש לבקשת ההרשאה marketing_messages_messenger."
@@ -5404,6 +5413,7 @@
       "message": "התשלום האחרון שלכם נכשל. עדכנו את אמצעי התשלום כדי להשאיר את סביבת העבודה פעילה."
     },
     "trial": {
+      "planName": "ניסיון",
       "daysLeft": "תקופת ניסיון: נותרו {days} ימים",
       "endsTomorrow": "תקופת הניסיון מסתיימת מחר",
       "expired": "תקופת הניסיון הסתיימה — שדרגו כדי להשאיר את סביבת העבודה פעילה",
@@ -5517,8 +5527,7 @@
       "audienceFilter": "מסנן קהל",
       "noAudienceFilter": "ללא מסנן קהל",
       "template": "תבנית",
-      "integration": "שילוב",
-      "sendLimit": "מגבלה"
+      "integration": "שילוב"
     },
     "filters": {
       "all": "All"
@@ -5577,17 +5586,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "שדרוג התוכנית",
+      "sendRate": "התוכנית הנוכחית שלך, {plan}, תומכת בשידורים במהירות של עד {rate} הודעות בדקה. יש לשדרג את התוכנית כדי לשלוח שידורים במהירות גבוהה עד פי {multiplier}.",
+      "activeBroadcasts": "התוכנית הנוכחית שלך, {plan}, מפעילה {max, plural, one {# שידור} other {# שידורים}} בו-זמנית. יש לשדרג את התוכנית כדי להפעיל יותר שידורים יחד."
+    },
     "sendLimit": {
       "title": "מגבלה",
       "hint": "השאר ריק כדי לשלוח לכל אנשי הקשר התואמים.",
+      "rateHint": "השאר ריק כדי להשתמש בקצב ברירת המחדל.",
+      "rangeSummary": "אנשי קשר מס׳{start} – מס׳{end}",
+      "rangeFromSummary": "החל מאיש קשר מס׳{start}",
       "rangeLabel": "טווח אנשי קשר",
       "fromLabel": "מ",
       "toLabel": "עד",
       "allPlaceholder": "הכול",
-      "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה",
-      "rangeSummary": "אנשי קשר מס׳{start} – מס׳{end}",
-      "rangeFromSummary": "החל מאיש קשר מס׳{start}",
-      "rateSummary": "{rate} הודעות / דקה"
+      "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה"
     }
   },
   "commentAutomation": {
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "הזן Dataset ID תקין (ספרות בלבד).",
       "whatsappNotFound": "שילוב WhatsApp לא נמצא.",
       "testEventCodeRequired": "שמור קוד אירוע בדיקה לפני שליחת אירוע בדיקה.",
-      "noContactForTest": "אין עדיין איש קשר מתאים בערוץ זה. אירוע בדיקה זקוק לאיש קשר אמיתי לשיוך (ב-WhatsApp, כזה שהגיע ממודעת click-to-WhatsApp).",
-      "invalidTestEventCode": "קוד אירוע הבדיקה יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 64 תווים)."
+      "invalidTestEventCode": "קוד אירוע הבדיקה יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 64 תווים).",
+      "invalidMessagingId": "מזהה ההודעות יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 512).",
+      "capiDisconnected": "Meta CAPI מנותק עבור ערוץ זה. חבר אותו מחדש לפני שליחת אירוע בדיקה."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "קוד אירוע הבדיקה נשמר.",
       "cleared": "קוד אירוע הבדיקה נוקה. האירועים חזרו להיות פעילים.",
       "send": "שלח אירוע בדיקה",
-      "sent": "אירוע הבדיקה נכנס לתור. הוא יופיע תחת Test events ב-Events Manager תוך דקה.",
-      "sendHint": "שולח אירוע Purchase לדוגמה אחד (100 USD) לאיש הקשר האחרון בערוץ זה.",
+      "sent": "אירוע הבדיקה נשלח. הוא יופיע תחת Test events ב-Events Manager בתוך דקה.",
+      "sendHint": "שולח אירוע Purchase לדוגמה אחד (100 USD) למזהה הודעות שתזין. לא נעשה שימוש באיש קשר שמור.",
       "activeNotice": "מצב בדיקה פעיל: אירועים מהערוץ הזה לא נספרים בדוחות עד שהקוד ינוקה.",
-      "openTestEvents": "פתח את Test events"
+      "openTestEvents": "פתח את Test events",
+      "dialogTitle": "שליחת אירוע בדיקה",
+      "dialogDescription": "אירוע Purchase לדוגמה אחד (100 USD) נשלח עם קוד אירוע הבדיקה שלך. הדבק את מזהה ההודעות לדוגמה מ-Events Manager → Test events → Messaging → Graph API Explorer, כך ששום דבר לא ישויך לאיש קשר אמיתי.",
+      "messagingIdLabel": {
+        "messenger": "מזהה איש קשר (page_scoped_user_id)",
+        "instagram": "מזהה איש קשר (ig_sid)",
+        "whatsapp": "מזהה קליק (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "הדבק את הערך לדוגמה מ-Meta",
+      "messagingIdHint": "אותיות, ספרות, מקפים וקווים תחתונים בלבד (עד 512).",
+      "cancel": "ביטול",
+      "confirmSend": "שליחה"
     }
   },
   "minigames": {

@@ -153,7 +153,7 @@ export const sequencesPublicRouter = {
       path: "/v1/sequences/{id}/steps",
       summary: "Create or update sequence step",
       description:
-        "Pass stepId to update an existing step; omit it to create a new one.",
+        "Use this to add or edit a delay/wait step or a send-flow step in a sequence. Pass stepId to update an existing step; omit it to create a new one.",
       tags: ["Sequences"],
     })
     .input(

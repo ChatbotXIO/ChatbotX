@@ -336,6 +336,7 @@
       "message": "Ihre letzte Zahlung ist fehlgeschlagen. Aktualisieren Sie Ihre Zahlungsmethode, damit Ihr Arbeitsbereich aktiv bleibt."
     },
     "trial": {
+      "planName": "Testphase",
       "daysLeft": "Testphase: Noch {days} Tage",
       "endsTomorrow": "Testphase endet morgen",
       "expired": "Ihre Testphase ist beendet — upgraden Sie, damit Ihr Arbeitsbereich aktiv bleibt",
@@ -449,8 +450,7 @@
       "audienceFilter": "Zielgruppenfilter",
       "noAudienceFilter": "Kein Zielgruppenfilter",
       "template": "Vorlage",
-      "integration": "Integration",
-      "sendLimit": "Limit"
+      "integration": "Integration"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Tarif upgraden",
+      "sendRate": "Ihr aktueller {plan}-Tarif unterstützt Broadcasts mit einer maximalen Sendegeschwindigkeit von {rate} Nachrichten pro Minute. Upgraden Sie Ihren Tarif, um Broadcasts bis zu {multiplier}x schneller zu senden.",
+      "activeBroadcasts": "Ihr aktueller {plan}-Tarif führt {max, plural, one {# Broadcast} other {# Broadcasts}} gleichzeitig aus. Upgraden Sie Ihren Tarif, um mehrere Broadcasts gleichzeitig auszuführen."
+    },
     "sendLimit": {
       "title": "Limit",
       "hint": "Leer lassen, um an alle passenden Kontakte zu senden.",
+      "rateHint": "Leer lassen, um die Standardrate zu verwenden.",
+      "rangeSummary": "Kontakte Nr. {start} – Nr. {end}",
+      "rangeFromSummary": "Ab Kontakt Nr. {start}",
       "rangeLabel": "Kontaktbereich",
       "fromLabel": "Von",
       "toLabel": "Bis",
       "allPlaceholder": "Alle",
-      "rangeEndBeforeStart": "Die Endposition darf nicht vor der Startposition liegen",
-      "rangeSummary": "Kontakte Nr. {start} – Nr. {end}",
-      "rangeFromSummary": "Ab Kontakt Nr. {start}",
-      "rateSummary": "{rate} Nachrichten / Minute"
+      "rangeEndBeforeStart": "Die Endposition darf nicht vor der Startposition liegen"
     }
   },
   "commentAutomation": {
@@ -758,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(optional)",
     "marketingMessagesConfigId": {
       "label": "Marketing-Messages-Konfigurations-ID",
       "description": "Konfigurations-ID von Facebook Login for Business, die zum Anfordern der Berechtigung marketing_messages_messenger verwendet wird."
@@ -4230,6 +4236,14 @@
     "invalidInvitation": "Diese Einladung ist ungültig oder abgelaufen.",
     "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Bot-Nachrichten als gelesen markieren",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert",
+      "description": "Wenn aktiviert, markiert der Bot seine eigenen Nachrichten automatisch als gelesen"
+    }
+  },
   "inboxTeams": {
     "title": "Posteingangsteams"
   },
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "Gib eine gültige Dataset-ID ein (nur Zahlen).",
       "whatsappNotFound": "WhatsApp-Integration nicht gefunden.",
       "testEventCodeRequired": "Speichere einen Testereignis-Code, bevor du ein Testereignis sendest.",
-      "noContactForTest": "Noch kein geeigneter Kontakt in diesem Kanal. Ein Testereignis braucht einen echten Kontakt zur Zuordnung (bei WhatsApp einen aus einer Click-to-WhatsApp-Anzeige).",
-      "invalidTestEventCode": "Der Testereignis-Code darf nur Buchstaben, Ziffern, Bindestriche oder Unterstriche enthalten (max. 64)."
+      "invalidTestEventCode": "Der Testereignis-Code darf nur Buchstaben, Ziffern, Bindestriche oder Unterstriche enthalten (max. 64).",
+      "invalidMessagingId": "Die Messaging-ID darf nur Buchstaben, Ziffern, Bindestriche oder Unterstriche enthalten (max. 512).",
+      "capiDisconnected": "Meta CAPI ist für diesen Kanal getrennt. Verbinde es erneut, bevor du ein Testereignis sendest."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "Testereignis-Code gespeichert.",
       "cleared": "Testereignis-Code gelöscht. Ereignisse sind wieder live.",
       "send": "Testereignis senden",
-      "sent": "Testereignis wurde eingereiht. Es erscheint innerhalb einer Minute unter Test events im Events Manager.",
-      "sendHint": "Sendet einen Beispiel-Purchase (100 USD) an den letzten Kontakt dieses Kanals.",
+      "sent": "Testereignis gesendet. Es erscheint innerhalb einer Minute unter Test events im Events Manager.",
+      "sendHint": "Sendet ein Beispiel-Purchase-Ereignis (100 USD) an eine von dir eingegebene Messaging-ID. Es wird kein gespeicherter Kontakt verwendet.",
       "activeNotice": "Testmodus ist aktiv: Ereignisse dieses Kanals werden erst wieder in Berichten gezählt, wenn der Code gelöscht wird.",
-      "openTestEvents": "Test events öffnen"
+      "openTestEvents": "Test events öffnen",
+      "dialogTitle": "Testereignis senden",
+      "dialogDescription": "Ein Beispiel-Purchase-Ereignis (100 USD) wird mit deinem Testereignis-Code gesendet. Füge die Beispiel-Messaging-ID aus Events Manager → Test events → Messaging → Graph API Explorer ein, damit nichts einem echten Kontakt zugeordnet wird.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt-ID (page_scoped_user_id)",
+        "instagram": "Kontakt-ID (ig_sid)",
+        "whatsapp": "Klick-ID (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Beispielwert von Meta einfügen",
+      "messagingIdHint": "Nur Buchstaben, Ziffern, Bindestriche und Unterstriche (max. 512).",
+      "cancel": "Abbrechen",
+      "confirmSend": "Senden"
     }
   },
   "minigames": {

@@ -1,3 +1,4 @@
+import { serializeRealtimeSubscriptionMessage } from "@chatbotx.io/partysocket-config"
 import {
   REALTIME_TOKEN_PURPOSE,
   signMemberConnectToken,
@@ -20,24 +21,31 @@ vi.mock("../src/lib/presence-report", () => ({
   reportWorkspacePresence: reportWorkspacePresenceMock,
 }))
 
+import { logger } from "../src/logger"
 import WorkspaceParty, {
   PRESENCE_REPORT_INTERVAL_MS,
 } from "../src/parties/workspaces"
 
 let connectionIdCounter = 0
 
+type FakeConnectionState = {
+  userId: string
+  protocol?: "v1" | "v2"
+  topics?: string[] | null
+}
+
 class FakeConnection {
   id = String(connectionIdCounter++)
   sent: string[] = []
   closed: { code?: number; reason?: string } | null = null
-  state: { userId: string } | null = null
+  state: FakeConnectionState | null = null
   send(message: string) {
     this.sent.push(message)
   }
   close(code?: number, reason?: string) {
     this.closed = { code, reason }
   }
-  setState(state: { userId: string } | null) {
+  setState(state: FakeConnectionState | null) {
     this.state = state
     return this.state
   }
@@ -229,6 +237,59 @@ describe("WorkspaceParty.onBeforeConnect", () => {
     expect(result).toBeInstanceOf(Response)
     expect((result as Response).status).toBe(401)
   })
+
+  it("threads X-Realtime-Protocol: v2 onto the request when ?protocol=v2 is requested", async () => {
+    const token = await signMemberConnectToken(
+      { workspaceId: "ws_1", userId: "u_1" },
+      SECRET,
+    )
+    const req = asRequest(
+      new Request(
+        `https://realtime.example.com/parties/workspaces/ws_1?token=${token}&protocol=v2`,
+      ),
+    )
+
+    const result = await WorkspaceParty.onBeforeConnect(req, asLobby("ws_1"))
+
+    expect((result as Party.Request).headers.get("X-Realtime-Protocol")).toBe(
+      "v2",
+    )
+  })
+
+  it("threads X-Realtime-Protocol: v1 when no ?protocol= is requested (default)", async () => {
+    const token = await signMemberConnectToken(
+      { workspaceId: "ws_1", userId: "u_1" },
+      SECRET,
+    )
+    const req = asRequest(
+      new Request(
+        `https://realtime.example.com/parties/workspaces/ws_1?token=${token}`,
+      ),
+    )
+
+    const result = await WorkspaceParty.onBeforeConnect(req, asLobby("ws_1"))
+
+    expect((result as Party.Request).headers.get("X-Realtime-Protocol")).toBe(
+      "v1",
+    )
+  })
+
+  it("rejects an unrecognized ?protocol= value with 400", async () => {
+    const token = await signMemberConnectToken(
+      { workspaceId: "ws_1", userId: "u_1" },
+      SECRET,
+    )
+    const req = asRequest(
+      new Request(
+        `https://realtime.example.com/parties/workspaces/ws_1?token=${token}&protocol=v99`,
+      ),
+    )
+
+    const result = await WorkspaceParty.onBeforeConnect(req, asLobby("ws_1"))
+
+    expect(result).toBeInstanceOf(Response)
+    expect((result as Response).status).toBe(400)
+  })
 })
 
 describe("WorkspaceParty#getConnectionTags", () => {
@@ -281,7 +342,7 @@ describe("WorkspaceParty#onRequest", () => {
       body: JSON.stringify(body),
     }) as unknown as Party.Request
 
-  it("broadcasts to the whole room when no target userId is given (existing behavior unchanged)", async () => {
+  it("delivers the raw event individually to every connection in the room when no target userId is given (per-connection v1 delivery — B2/B3)", async () => {
     const event = { eventType: "typing", data: { seconds: 1 } }
 
     const response = await party.onRequest(
@@ -289,9 +350,40 @@ describe("WorkspaceParty#onRequest", () => {
     )
 
     expect(response.status).toBe(200)
-    expect(room.broadcastCalls).toEqual([JSON.stringify(event)])
-    expect(connectionA1.sent).toEqual([])
-    expect(connectionB1.sent).toEqual([])
+    await expect(response.json()).resolves.toEqual({ interested: 3 })
+    expect(connectionA1.sent).toEqual([JSON.stringify(event)])
+    expect(connectionA2.sent).toEqual([JSON.stringify(event)])
+    expect(connectionB1.sent).toEqual([JSON.stringify(event)])
+  })
+
+  it("returns before a stalled presence report completes", async () => {
+    connectionA1.setState({ userId: "u_a" })
+    let resolveReport!: () => void
+    reportWorkspacePresenceMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveReport = resolve
+        }),
+    )
+
+    try {
+      const response = await party.onRequest(
+        postRequest("/parties/workspaces/ws_1", {
+          eventType: "typing",
+          data: { seconds: 1 },
+        }),
+      )
+
+      expect(response.status).toBe(200)
+      expect(connectionA1.sent).toHaveLength(1)
+      await vi.waitFor(() =>
+        expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", [
+          "u_a",
+        ]),
+      )
+    } finally {
+      resolveReport()
+    }
   })
 
   it("delivers only to the target user's tagged connections, never broadcasts", async () => {
@@ -344,6 +436,167 @@ describe("WorkspaceParty#onRequest", () => {
     expect(response.status).toBe(400)
     expect(connectionA1.closed).toBeNull()
   })
+
+  const postBatchRequest = (path: string, events: unknown[]) =>
+    new Request(`https://realtime.example.com${path}`, {
+      method: "POST",
+      headers: { "X-Realtime-Batch": "1" },
+      body: JSON.stringify({ batch: events }),
+    }) as unknown as Party.Request
+
+  it("delivers one batch frame per v2 connection, filtered to its subscribed topics only (B2/B3)", async () => {
+    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
+    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: ["voip"] })
+    connectionB1.setState({ userId: "u_b", protocol: "v1" })
+
+    const chatEvent = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+    const voipEvent = {
+      eventType: "whatsappCallClaimedElsewhere",
+      data: { whatsappCallId: "c_1", wacid: "w_1", answeredByUserId: "u_x" },
+    }
+
+    const response = await party.onRequest(
+      postBatchRequest("/parties/workspaces/ws_1", [chatEvent, voipEvent]),
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ interested: 3 })
+    expect(connectionA1.sent).toEqual([JSON.stringify({ batch: [chatEvent] })])
+    expect(connectionA2.sent).toEqual([JSON.stringify({ batch: [voipEvent] })])
+    expect(connectionB1.sent).toEqual([
+      JSON.stringify(chatEvent),
+      JSON.stringify(voipEvent),
+    ])
+  })
+  it("drops only unknown events from a valid batch and delivers known events", async () => {
+    const knownEvent = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+
+    const response = await party.onRequest(
+      postBatchRequest("/parties/workspaces/ws_1", [
+        knownEvent,
+        { eventType: "futureEvent", data: {} },
+      ]),
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ interested: 3 })
+    expect(connectionA1.sent).toEqual([JSON.stringify(knownEvent)])
+    expect(connectionA2.sent).toEqual([JSON.stringify(knownEvent)])
+    expect(connectionB1.sent).toEqual([JSON.stringify(knownEvent)])
+  })
+
+  it("fails open before a v2 connection's first subscribe frame, then filters by its subscribed topics", async () => {
+    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: null })
+    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
+    connectionB1.setState({ userId: "u_b", protocol: "v1" })
+    const chatEvent = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+    const voipEvent = {
+      eventType: "whatsappCallTransportIncoming",
+      data: { whatsappCallId: "c_1" },
+    }
+
+    await party.onRequest(
+      postRequest("/parties/workspaces/ws_1?userId=u_a", voipEvent),
+    )
+    await party.onRequest(postRequest("/parties/workspaces/ws_1", chatEvent))
+
+    expect(connectionA1.sent).toEqual([
+      JSON.stringify({ batch: [voipEvent] }),
+      JSON.stringify({ batch: [chatEvent] }),
+    ])
+
+    await party.onMessage(
+      serializeRealtimeSubscriptionMessage(["voip"]),
+      connectionA1 as unknown as Party.Connection,
+    )
+    await party.onRequest(postRequest("/parties/workspaces/ws_1", chatEvent))
+
+    expect(connectionA1.sent).toEqual([
+      JSON.stringify({ batch: [voipEvent] }),
+      JSON.stringify({ batch: [chatEvent] }),
+    ])
+  })
+
+  it("excludes a v2 connection with no matching subscribed topic from delivery and the interested count", async () => {
+    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: ["voip"] })
+    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: [] })
+    connectionB1.setState({ userId: "u_b", protocol: "v1" })
+    const chatEvent = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+
+    const response = await party.onRequest(
+      postRequest("/parties/workspaces/ws_1", chatEvent),
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ interested: 1 })
+    expect(connectionA1.sent).toEqual([])
+    expect(connectionA2.sent).toEqual([])
+    expect(connectionB1.sent).toEqual([JSON.stringify(chatEvent)])
+  })
+
+  it("drops only a malformed item from a batch, delivers the rest, and logs the drop", async () => {
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined)
+    const knownEvent = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+
+    const response = await party.onRequest(
+      postBatchRequest("/parties/workspaces/ws_1", [
+        { eventType: 42, data: {} },
+        knownEvent,
+        { eventType: "futureEvent", data: {} },
+      ]),
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ interested: 3 })
+    expect(connectionA1.sent).toEqual([JSON.stringify(knownEvent)])
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        delivered: 1,
+        dropped: [
+          { index: 0, eventType: null },
+          { index: 2, eventType: "futureEvent" },
+        ],
+      }),
+      expect.any(String),
+    )
+    warnSpy.mockRestore()
+  })
+
+  it("rejects a malformed batch envelope with 400 Bad Request", async () => {
+    const response = await party.onRequest(
+      postBatchRequest("/parties/workspaces/ws_1", ["not-an-event"]),
+    )
+
+    expect(response.status).toBe(400)
+    expect(connectionA1.sent).toEqual([])
+  })
+
+  it("rejects inherited object properties as event types with 400 Bad Request", async () => {
+    const response = await party.onRequest(
+      postRequest("/parties/workspaces/ws_1", {
+        eventType: "constructor",
+        data: {},
+      }),
+    )
+
+    expect(response.status).toBe(400)
+    expect(connectionA1.sent).toEqual([])
+  })
 })
 
 describe("WorkspaceParty presence reporting", () => {
@@ -361,7 +614,7 @@ describe("WorkspaceParty presence reporting", () => {
   })
 
   describe("onConnect", () => {
-    it("stores this connection's verified userId as connection state", async () => {
+    it("stores this connection's verified userId, plus default v1 protocol and empty topics, as connection state", async () => {
       const room = new FakeRoom("ws_1")
       const party = new WorkspaceParty(room as unknown as Party.Room)
       const connection = new FakeConnection()
@@ -371,7 +624,11 @@ describe("WorkspaceParty presence reporting", () => {
         connectionContext("u_1"),
       )
 
-      expect(connection.state).toEqual({ userId: "u_1" })
+      expect(connection.state).toEqual({
+        protocol: "v1",
+        topics: [],
+        userId: "u_1",
+      })
     })
 
     it("schedules the report alarm on the room's first connection", async () => {
@@ -659,6 +916,58 @@ describe("WorkspaceParty presence reporting", () => {
       expect(await room.storage.getAlarm()).toBe(freshAlarmAt)
     })
 
+    it("avoids a storage read when the in-memory freshness marker is current", async () => {
+      const room = new FakeRoom("ws_1")
+      const party = new WorkspaceParty(room as unknown as Party.Room)
+      const connection = new FakeConnection()
+      room.registerConnection(connection)
+
+      await party.onConnect(
+        connection as unknown as Party.Connection,
+        connectionContext("u_1"),
+      )
+      const get = vi.spyOn(room.storage, "get")
+
+      await party.onMessage(
+        serializePresencePingMessage(),
+        connection as unknown as Party.Connection,
+      )
+
+      expect(get).not.toHaveBeenCalled()
+    })
+
+    it("re-arms via a ping once the in-memory marker itself goes stale, on a warm instance with no intervening alarm tick", async () => {
+      const room = new FakeRoom("ws_1")
+      const party = new WorkspaceParty(room as unknown as Party.Room)
+      const connection = new FakeConnection()
+      room.registerConnection(connection)
+
+      const nowSpy = vi.spyOn(Date, "now")
+      const start = Date.now()
+      nowSpy.mockReturnValue(start)
+
+      await party.onConnect(
+        connection as unknown as Party.Connection,
+        connectionContext("u_1"),
+      )
+      expect(reportWorkspacePresenceMock).toHaveBeenCalledTimes(1)
+
+      // No onAlarm tick refreshes the marker in between: simulates a stalled
+      // loop discovered only by the next client ping.
+      nowSpy.mockReturnValue(start + PRESENCE_REPORT_INTERVAL_MS * 2)
+
+      await party.onMessage(
+        serializePresencePingMessage(),
+        connection as unknown as Party.Connection,
+      )
+
+      expect(reportWorkspacePresenceMock).toHaveBeenCalledTimes(2)
+      expect(reportWorkspacePresenceMock).toHaveBeenLastCalledWith("ws_1", [
+        "u_1",
+      ])
+
+      nowSpy.mockRestore()
+    })
     it("onRequest self-heals a stalled loop for a room with a connection, without waiting for a new connect", async () => {
       const room = new FakeRoom("ws_1")
       const connection = new FakeConnection()
@@ -679,7 +988,11 @@ describe("WorkspaceParty presence reporting", () => {
       )
 
       expect(response.status).toBe(200)
-      expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", ["u_1"])
+      await vi.waitFor(() =>
+        expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", [
+          "u_1",
+        ]),
+      )
     })
 
     it("onRequest never arms anything for a room with zero connections, even when the freshness marker is stale", async () => {
@@ -833,5 +1146,81 @@ describe("WorkspaceParty presence reporting", () => {
 
       expect(reportWorkspacePresenceMock).toHaveBeenCalledTimes(1)
     })
+  })
+})
+
+describe("WorkspaceParty#onMessage subscribe control frame (B3)", () => {
+  it("updates a v2 connection's subscribed topics", async () => {
+    const room = new FakeRoom("ws_1")
+    const party = new WorkspaceParty(room as unknown as Party.Room)
+    const connection = new FakeConnection()
+    connection.setState({ userId: "u_1", protocol: "v2", topics: [] })
+
+    await party.onMessage(
+      serializeRealtimeSubscriptionMessage(["chat", "voip"]),
+      connection as unknown as Party.Connection,
+    )
+
+    expect(connection.state).toEqual({
+      userId: "u_1",
+      protocol: "v2",
+      topics: ["chat", "voip"],
+    })
+  })
+
+  it("de-duplicates repeated topics in one subscribe message", async () => {
+    const room = new FakeRoom("ws_1")
+    const party = new WorkspaceParty(room as unknown as Party.Room)
+    const connection = new FakeConnection()
+    connection.setState({ userId: "u_1", protocol: "v2", topics: [] })
+
+    await party.onMessage(
+      serializeRealtimeSubscriptionMessage(["chat", "chat", "voip"]),
+      connection as unknown as Party.Connection,
+    )
+
+    expect(connection.state?.topics).toEqual(["chat", "voip"])
+  })
+
+  it("replaces the previous topic list rather than merging into it", async () => {
+    const room = new FakeRoom("ws_1")
+    const party = new WorkspaceParty(room as unknown as Party.Room)
+    const connection = new FakeConnection()
+    connection.setState({ userId: "u_1", protocol: "v2", topics: ["chat"] })
+
+    await party.onMessage(
+      serializeRealtimeSubscriptionMessage(["voip"]),
+      connection as unknown as Party.Connection,
+    )
+
+    expect(connection.state?.topics).toEqual(["voip"])
+  })
+
+  it("ignores a subscribe frame from a v1 connection — v1 never filters by topic", async () => {
+    const room = new FakeRoom("ws_1")
+    const party = new WorkspaceParty(room as unknown as Party.Room)
+    const connection = new FakeConnection()
+    connection.setState({ userId: "u_1", protocol: "v1" })
+
+    await party.onMessage(
+      serializeRealtimeSubscriptionMessage(["chat"]),
+      connection as unknown as Party.Connection,
+    )
+
+    expect(connection.state).toEqual({ userId: "u_1", protocol: "v1" })
+  })
+
+  it("ignores a subscribe frame from an unauthenticated connection", async () => {
+    const room = new FakeRoom("ws_1")
+    const party = new WorkspaceParty(room as unknown as Party.Room)
+    const connection = new FakeConnection()
+
+    await expect(
+      party.onMessage(
+        serializeRealtimeSubscriptionMessage(["chat"]),
+        connection as unknown as Party.Connection,
+      ),
+    ).resolves.toBeUndefined()
+    expect(connection.state).toBeNull()
   })
 })

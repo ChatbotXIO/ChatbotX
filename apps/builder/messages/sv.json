@@ -462,6 +462,7 @@
     },
     "title": "Fakturering",
     "trial": {
+      "planName": "Provperiod",
       "daysLeft": "Provperiod: {days} dagar kvar",
       "dismiss": "Stäng",
       "endsTomorrow": "Provperioden slutar i morgon",
@@ -501,8 +502,7 @@
       "noAudienceFilter": "Inget målgruppsfilter",
       "subaction": "Underåtgärd",
       "template": "Mall",
-      "title": "Utskickningsinformation",
-      "sendLimit": "Gräns"
+      "title": "Utskickningsinformation"
     },
     "flowType": {
       "flow": {
@@ -642,17 +642,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Uppgradera ditt abonnemang",
+      "sendRate": "Ditt nuvarande {plan}-abonnemang stöder broadcasts med en maximal sändningshastighet på {rate} meddelanden per minut. Uppgradera abonnemanget för att skicka broadcasts upp till {multiplier}x snabbare.",
+      "activeBroadcasts": "Ditt nuvarande {plan}-abonnemang kör {max, plural, one {# broadcast} other {# broadcasts}} åt gången. Uppgradera abonnemanget för att köra fler broadcasts samtidigt."
+    },
     "sendLimit": {
       "title": "Gräns",
       "hint": "Lämna tomt för att skicka till alla matchande kontakter.",
+      "rateHint": "Lämna tomt för att använda standardhastigheten.",
+      "rangeSummary": "Kontakter nr {start} – nr {end}",
+      "rangeFromSummary": "Från kontakt nr {start}",
       "rangeLabel": "Kontaktintervall",
       "fromLabel": "Från",
       "toLabel": "Till",
       "allPlaceholder": "Alla",
-      "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen",
-      "rangeSummary": "Kontakter nr {start} – nr {end}",
-      "rangeFromSummary": "Från kontakt nr {start}",
-      "rateSummary": "{rate} meddelanden / minut"
+      "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen"
     }
   },
   "commentAutomation": {
@@ -1634,6 +1639,7 @@
     "dashboardCta": "Visa i annonspanelen"
   },
   "fields": {
+    "optionalHint": "(valfritt)",
     "marketingMessagesConfigId": {
       "label": "Konfigurations-ID för marknadsföringsmeddelanden",
       "description": "Konfigurations-ID för Facebook Login for Business som används för att begära behörigheten marketing_messages_messenger."
@@ -3491,6 +3497,14 @@
   },
   "editProfile": {
     "title": "Redigera profil"
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Markera botmeddelanden som lästa",
+      "enabled": "Aktiverad",
+      "disabled": "Inaktiverad",
+      "description": "När detta är aktiverat markerar boten automatiskt sina egna meddelanden som lästa"
+    }
   },
   "inboxTeams": {
     "title": "Inkorgsteam"
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "Ange ett giltigt Dataset ID (endast siffror).",
       "whatsappNotFound": "WhatsApp-integrationen hittades inte.",
       "testEventCodeRequired": "Spara en testhändelsekod innan du skickar en testhändelse.",
-      "noContactForTest": "Ingen lämplig kontakt på den här kanalen än. En testhändelse behöver en riktig kontakt att kopplas till (för WhatsApp en som kom från en click-to-WhatsApp-annons).",
-      "invalidTestEventCode": "Testhändelsekoden får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 64)."
+      "invalidTestEventCode": "Testhändelsekoden får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 64).",
+      "invalidMessagingId": "Messaging-id får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 512).",
+      "capiDisconnected": "Meta CAPI är frånkopplat för den här kanalen. Anslut igen innan du skickar en testhändelse."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "Testhändelsekod sparad.",
       "cleared": "Testhändelsekod rensad. Händelser är live igen.",
       "send": "Skicka testhändelse",
-      "sent": "Testhändelse i kö. Den visas under Test events i Events Manager inom en minut.",
-      "sendHint": "Skickar en exempel-Purchase (100 USD) till kanalens senaste kontakt.",
+      "sent": "Testhändelse skickad. Den visas under Test events i Events Manager inom en minut.",
+      "sendHint": "Skickar ett exempel-Purchase (100 USD) till ett messaging-id som du anger. Ingen sparad kontakt används.",
       "activeNotice": "Testläge är på: händelser från den här kanalen räknas inte i rapporter förrän koden rensas.",
-      "openTestEvents": "Öppna Test events"
+      "openTestEvents": "Öppna Test events",
+      "dialogTitle": "Skicka testhändelse",
+      "dialogDescription": "Ett exempel-Purchase (100 USD) skickas med din testhändelsekod. Klistra in exempel-messaging-id:t från Events Manager → Test events → Messaging → Graph API Explorer, så att inget tillskrivs en riktig kontakt.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt-id (page_scoped_user_id)",
+        "instagram": "Kontakt-id (ig_sid)",
+        "whatsapp": "Klick-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Klistra in exempelvärdet från Meta",
+      "messagingIdHint": "Endast bokstäver, siffror, bindestreck och understreck (max 512).",
+      "cancel": "Avbryt",
+      "confirmSend": "Skicka"
     }
   },
   "minigames": {

@@ -13,7 +13,10 @@ type SaveHandler = (args: {
 }) => Promise<unknown>
 
 type SendHandler = (args: {
-  parsedInput: { channel: "messenger" | "instagram" | "whatsapp" }
+  parsedInput: {
+    channel: "messenger" | "instagram" | "whatsapp"
+    messagingId: string
+  }
   bindArgsParsedInputs: readonly [string, string]
 }) => Promise<unknown>
 
@@ -23,7 +26,7 @@ const mocks = vi.hoisted(() => ({
   instagramFindByIdForWorkspace: vi.fn(),
   whatsappFindByIdForWorkspace: vi.fn(),
   saveCapiTestEventCode: vi.fn(),
-  enqueueTestEvent: vi.fn(),
+  sendTestEvent: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -50,6 +53,10 @@ vi.mock("@chatbotx.io/business", () => {
   }
   return {
     CapiTestEventError,
+    capiDatasetResourceType: (
+      channel: "messenger" | "instagram" | "whatsapp",
+    ) =>
+      ({ messenger: "page", instagram: "igUser", whatsapp: "waba" })[channel],
     messengerIntegrationService: {
       findByIdForWorkspace: mocks.messengerFindByIdForWorkspace,
     },
@@ -61,10 +68,17 @@ vi.mock("@chatbotx.io/business", () => {
     },
     metaConversionsService: {
       saveCapiTestEventCode: mocks.saveCapiTestEventCode,
-      enqueueTestEvent: mocks.enqueueTestEvent,
+      sendTestEvent: mocks.sendTestEvent,
     },
   }
 })
+
+vi.mock("@chatbotx.io/integration-meta-conversions", () => ({
+  buildDatasetName: (name: string) => `${name} dataset`,
+  ensureDataset: vi.fn(),
+  sendConversionEvent: vi.fn(),
+  MetaConversionsException: class MetaConversionsException extends Error {},
+}))
 
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => `t:${key}`,
@@ -126,32 +140,93 @@ describe("CAPI test event actions", () => {
     expect(mocks.saveCapiTestEventCode).not.toHaveBeenCalled()
   })
 
-  test("send queues a test event and reports whether a row was created", async () => {
-    mocks.enqueueTestEvent.mockResolvedValue({ id: "mce-1" })
+  test("send posts one test event to the entered messaging id through the real sender", async () => {
+    const { sendConversionEvent } = await import(
+      "@chatbotx.io/integration-meta-conversions"
+    )
+    mocks.sendTestEvent.mockResolvedValue(undefined)
 
     await expect(
       send({
-        parsedInput: { channel: "messenger" },
+        parsedInput: { channel: "messenger", messagingId: "psid-1" },
         bindArgsParsedInputs: bound,
       }),
-    ).resolves.toEqual({ success: true, queued: true })
-    expect(mocks.enqueueTestEvent).toHaveBeenCalledWith({
+    ).resolves.toEqual({ success: true })
+    expect(mocks.sendTestEvent).toHaveBeenCalledWith({
       channel: "messenger",
       integration,
+      messagingId: "psid-1",
+      provisionDataset: expect.any(Function),
+      send: sendConversionEvent,
+    })
+  })
+
+  test("send provisions the channel's dataset with the resource type Meta expects", async () => {
+    const { ensureDataset } = await import(
+      "@chatbotx.io/integration-meta-conversions"
+    )
+    mocks.sendTestEvent.mockImplementation(
+      async ({
+        provisionDataset,
+      }: {
+        provisionDataset: (input: {
+          accessToken: string
+          resourceId: string
+          resourceName: string
+        }) => Promise<string>
+      }) => {
+        await provisionDataset({
+          accessToken: "tok",
+          resourceId: "waba-1",
+          resourceName: "Acme",
+        })
+      },
+    )
+
+    await send({
+      parsedInput: { channel: "whatsapp", messagingId: "ctwa-1" },
+      bindArgsParsedInputs: bound,
+    })
+
+    expect(ensureDataset).toHaveBeenCalledWith({
+      resourceType: "waba",
+      resourceId: "waba-1",
+      accessToken: "tok",
+      datasetName: "Acme dataset",
     })
   })
 
   test("send translates a CapiTestEventError reason for the toast", async () => {
     const { CapiTestEventError } = await import("@chatbotx.io/business")
-    mocks.enqueueTestEvent.mockRejectedValue(
-      new CapiTestEventError("noContactForTest"),
+    mocks.sendTestEvent.mockRejectedValue(
+      new CapiTestEventError("invalidMessagingId"),
     )
 
     await expect(
       send({
-        parsedInput: { channel: "messenger" },
+        parsedInput: { channel: "messenger", messagingId: "psid 1" },
         bindArgsParsedInputs: bound,
       }),
-    ).rejects.toThrow("t:noContactForTest")
+    ).rejects.toThrow("t:invalidMessagingId")
+  })
+
+  test("send surfaces Meta's own error message when the post is rejected", async () => {
+    const { MetaConversionsException } = await import(
+      "@chatbotx.io/integration-meta-conversions"
+    )
+    // The module mock above swaps in a plain message-taking Error subclass.
+    const MetaError = MetaConversionsException as unknown as new (
+      message: string,
+    ) => Error
+    mocks.sendTestEvent.mockRejectedValue(
+      new MetaError("(#100) Invalid parameter"),
+    )
+
+    await expect(
+      send({
+        parsedInput: { channel: "messenger", messagingId: "psid-1" },
+        bindArgsParsedInputs: bound,
+      }),
+    ).rejects.toThrow("(#100) Invalid parameter")
   })
 })

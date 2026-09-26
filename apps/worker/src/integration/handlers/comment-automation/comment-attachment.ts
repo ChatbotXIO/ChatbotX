@@ -1,6 +1,7 @@
 import { buildContext } from "@chatbotx.io/business"
 import type { CommentHideComments } from "@chatbotx.io/database/partials"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
+import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { allIntegrations } from "../../../services/integrations"
 import type { CommentAutomationChannelType } from "./channel-type"
@@ -71,7 +72,10 @@ export function createAttachmentInfoResolver(params: {
           ctx: await buildContext({
             workspaceId,
             integrationType: "threads",
-            integration: integrationRow,
+            integration: {
+              ...integrationRow,
+              auth: integrationRow.auth as ThreadsAuthValue,
+            },
           }),
           input: { replyId: commentId },
         })

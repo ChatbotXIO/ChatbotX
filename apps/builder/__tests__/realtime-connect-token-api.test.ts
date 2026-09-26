@@ -84,9 +84,7 @@ describe("mintWorkspaceConnectTokenAuthenticatedAPI", () => {
       { workspaceId: "ws_1", userId: "u_1" },
       "the-secret",
     )
-    expect(mocks.resolveBroadcastSecret).toHaveBeenCalledWith({
-      workspaceId: "ws_1",
-    })
+    expect(mocks.resolveBroadcastSecret).toHaveBeenCalledWith()
     expect(result).toEqual({ token: "signed-token" })
   })
 

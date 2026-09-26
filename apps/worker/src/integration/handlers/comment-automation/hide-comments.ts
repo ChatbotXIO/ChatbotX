@@ -4,6 +4,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
+import { normalizeForMatch } from "./automation-matching"
 import type { CommentAutomationChannelType } from "./channel-type"
 
 /**
@@ -138,14 +139,16 @@ export async function applyHideComments(
   },
 ) {
   const text = message ?? ""
-  const lowerText = text.toLowerCase()
+  const normalizedText = normalizeForMatch(text)
 
   const shouldHide =
     hideComments.all ||
     (hideComments.hasPhoneNumber && PHONE_RE.test(text)) ||
     (hideComments.hasLink && hasLink(text)) ||
     (hideComments.hasKeywords &&
-      hideComments.keywords.some((k) => lowerText.includes(k.toLowerCase()))) ||
+      hideComments.keywords.some((k) =>
+        normalizedText.includes(normalizeForMatch(k)),
+      )) ||
     (hideComments.hasImage && ctx.hasImage) ||
     (hideComments.hasVideo && ctx.hasVideo) ||
     (Boolean(hideComments.hasGif) && ctx.hasGif) ||

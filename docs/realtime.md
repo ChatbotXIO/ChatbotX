@@ -109,8 +109,8 @@ agents). Presence now flows entirely server-to-server:
   PartyKit/Durable-Object **alarm** (`room.storage.setAlarm`, the
   `partykit@0.0.115`/workerd runtime this repo runs supports it, confirmed
   against `node_modules/partykit/server.d.ts`) for
-  `PRESENCE_REPORT_INTERVAL_MS` (10s — see below) later. Every connection
-  after the first is a no-op here: the alarm is already armed.
+  `PRESENCE_REPORT_INTERVAL_MS` (10s — see below) later. Later connections
+  see the fresh in-memory marker and avoid another storage read or re-arm.
 - `onAlarm` collects the DISTINCT `userId`s across every open connection in
   the room (`room.getConnections()`, deduped — several tabs of the same
   user report as one), skips the report entirely when the room has gone
@@ -149,17 +149,19 @@ The alarm loop above can silently stop ticking (process restart timing, a
 supervisor handoff, a runtime-specific alarm-delivery gap) with no
 exception anywhere to notice. `WorkspaceParty` tracks this with a
 FRESHNESS marker instead of trusting `getAlarm() !== null` — a durable
-`presenceLastArmedAt` timestamp refreshed on every healthy `onAlarm` tick.
-`ensureReportLoopArmed` re-bootstraps (re-reports immediately, re-arms the
-alarm) whenever that marker is missing or older than
-`PRESENCE_REPORT_INTERVAL_MS * 1.5`, and is a no-op otherwise — so a
-healthy loop pays no extra cost. Three independent triggers call it, each
+`presenceLastArmedAt` timestamp refreshed on every healthy `onAlarm` tick
+and mirrored in memory. `ensureReportLoopArmed` re-bootstraps
+(re-reports immediately, re-arms the alarm) whenever that marker is
+missing or older than `PRESENCE_REPORT_INTERVAL_MS * 1.5`, and is a no-op
+otherwise — so a healthy loop pays no extra cost.
+Three independent triggers call it, each
 covering a gap the other two cannot:
 
 1. **`onConnect`** — a new connection (every realtime redeploy, every tab
    opening the inbox).
 2. **`onRequest`** — any inbound workspace-wide broadcast/targeted-send/
-   revoke request from the builder.
+   revoke request from the builder; it arms through the same serialized lock
+   in the background and never delays the request response.
 3. **`onMessage` (client keep-alive ping)** — a QUIET room (an
    already-open tab, no new connection, no inbound broadcast) has neither
    of the other two triggers. The builder client
@@ -338,71 +340,14 @@ re-exported from `apps/builder/src/lib/auth/permission-routes.ts`) rather
 than a conversation-aware service call; P2's fuller `CALL_ELIGIBILITY_RULES`
 replaces it.
 
-### Safe deploy order & rolling-deploy token compatibility (round-2 review, 2026-09-18)
+### Purpose-bound realtime tokens
 
-`verifyRealtimeToken` (`packages/partysocket-config/src/auth.ts`) rejects a
-token whose `purpose` claim does not match the purpose being verified —
-this is what stops a broadcast token from being replayed against the
-presence-report route or vice versa (MEDIUM-3). Taken literally, that also
-means a token minted by a NOT-yet-updated process — one still running code
-from before the `purpose` claim was introduced, i.e. production `main`
-before this branch — carries NO `purpose` claim at all and would fail
-verification outright. `apps/builder` and `apps/worker` are the only two
-processes that ever mint a `broadcast`-purpose token
-(`packages/partysocket-config/src/lib.ts`), so during any deploy where
-`apps/realtime` finishes rolling out before they do, EVERY inbound
-broadcast request to `apps/realtime` — including WhatsApp call
-ring/answer/ended events — would 401 for the whole rollout window.
-
-**There is no enforced or documented ordering that would make this
-unnecessary.** `scripts/deployment/upgrade.sh` stops and starts
-`builder worker realtime` as one undifferentiated group
-(`docker compose ... down builder worker realtime`, then
-`up -d builder worker realtime`); Docker Compose gives no ordering
-guarantee across services started in the same command, and any real
-staggered/rolling deploy (blue-green, k8s rolling update, etc.) can land in
-either order. Operators SHOULD still prefer rolling `apps/builder` and
-`apps/worker` out before `apps/realtime` where their deployment tooling
-allows it — it shortens how long the compatibility window below is
-actually exercised — but the code cannot assume this happens.
-
-**The fix is a narrow, self-closing compatibility window**, not a blanket
-exception:
-- Only `verifyBroadcastRequest` (`apps/realtime/src/lib/realtime-auth.ts`)
-  passes `{ allowLegacyMissingPurpose: true }` to `verifyRealtimeToken`. A
-  token with NO `purpose` claim verifies as if it matched, but a token
-  carrying the WRONG purpose is still rejected unconditionally.
-- `verifyMemberConnectToken` (the `onBeforeConnect` websocket-upgrade path)
-  and the presence-report route deliberately do NOT get this exception.
-  Both the `member-connect` and `presence-report` purposes are brand new to
-  this branch — production `main` never minted a JWT for either (the old
-  `onBeforeConnect` authenticated via a session cookie, `getAuthSession`,
-  not a JWT at all) — so no purpose-less token of either kind can ever
-  legitimately exist. Granting the exception there too would have been a
-  privilege escalation: `verifyMemberConnectToken` and `verifyBroadcastRequest`
-  bind to the IDENTICAL `workspace:<id>` audience shape for the same room
-  and the same shared `REALTIME_BROADCAST_SECRET`, so a purpose-less
-  member-connect token (had the exception applied there) could have been
-  replayed as a broadcast-authorized request — able to `room.broadcast`,
-  target-send, or revoke connections — a capability a plain per-member
-  connect token was never meant to carry.
-- The window is self-closing on wall-clock time, independent of any single
-  token's own `iat`/`exp`: `LEGACY_PURPOSE_WINDOW_CUTOFF`
-  (`packages/partysocket-config/src/auth.ts`), currently
-  `2026-09-25T00:00:00.000Z` (one week after this change), is checked on
-  every verification — once `Date.now()` passes it, the exception stops
-  being granted at all, regardless of `allowLegacyMissingPurpose`. This
-  guards against a stuck/zombie old-code pod that stays up far longer than
-  an ordinary rolling deploy and keeps minting fresh purpose-less tokens
-  indefinitely; an individual captured token is separately bounded to its
-  own 60s TTL either way.
-
-**Follow-up (tracked, not yet done):** once a full production rollout has
-gone out with the `purpose` claim in place (so no process can still be
-minting purpose-less broadcast tokens), remove
-`allowLegacyMissingPurpose`/`VerifyRealtimeTokenOptions` and
-`LEGACY_PURPOSE_WINDOW_CUTOFF` entirely, and make `verifyBroadcastRequest`
-strict like the other two paths.
+Every realtime token includes a `purpose` claim and
+`verifyRealtimeToken` (`packages/partysocket-config/src/auth.ts`) requires
+it to exactly match the requested operation. This prevents replay between
+the broadcast, member-connect, and presence-report paths, including the
+broadcast and member-connect paths that share a `workspace:<id>` audience
+and `REALTIME_BROADCAST_SECRET`.
 
 ### §3.3 connection-count load test — result
 
@@ -421,20 +366,12 @@ just a count), one broadcast.
 - **Result:** 150/150 connections established (~1.05s), targeted send
   reached exactly the selected connection id and no other, broadcast
   reached 150/150 connections. No connections refused or dropped.
-- **Caveat found while running this:** the Dockerfile deliberately does
-  NOT copy `.env` into the image (`# COPY --from=pre /app/.env .env`,
-  commented out) and relies on `docker-compose.yml`'s `env_file` to inject
-  vars into the container's process environment — but `partykit dev`'s own
-  env loading for the code it bundles into the workerd/Miniflare sandbox
-  reads a literal `.env` FILE in its working directory, not inherited
-  `process.env` (confirmed: `docker exec ... env` showed
-  `REALTIME_BROADCAST_SECRET` present, yet the container failed to boot
-  with `Invalid environment variables` until a physical `.env` file was
-  written into it). This is an infra gap in the `realtime` service's
-  Docker image unrelated to this presence-lease change; the container
-  used for this load test had a `.env` file manually written in for the
-  one run and was torn down (image kept, container removed) afterward.
-  Tracked as a follow-up, not fixed here (out of scope for this review).
+- **Runtime environment handoff:** the image does not copy `.env` at build
+  time. Instead, its entrypoint writes a mode-600 `.env` containing
+  `REALTIME_BROADCAST_SECRET` and `NEXT_PUBLIC_BUILDER_URL` from the
+  Compose-injected process environment before starting the pinned
+  `partykit` runtime. This supplies the workerd/Miniflare sandbox without
+  baking deployment secrets into the image.
 - This is evidence against §3.3's documented ~100-connection concern for
   this specific container image at 150 connections; it does not test
   Cloudflare's hosted Workers runtime, only self-hosted `partykit dev` (in
@@ -444,6 +381,13 @@ just a count), one broadcast.
   evidence (`docker compose ps` output, the target URL, and per-assertion
   results including the targeted recipient's identity) is in the
   scratchpad as `realtime-load-test-container.log`, not committed here.
+
+## Server-to-server broadcast endpoint
+
+Set `REALTIME_INTERNAL_URL` to the realtime HTTP base URL reachable from both
+the builder and worker. It is deployment-wide and MUST NOT use a tenant custom
+domain. When unset, broadcasts use the deployment's `NEXT_PUBLIC_BUILDER_URL`
+websocket path.
 
 ## Deployment: reverse proxy header requirements
 

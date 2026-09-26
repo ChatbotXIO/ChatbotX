@@ -1,5 +1,8 @@
 // @vitest-environment node
 
+import { mkdir, writeFile } from "node:fs/promises"
+import { dirname } from "node:path"
+
 import {
   type JSONSchema,
   OpenAPIGenerator,
@@ -161,6 +164,14 @@ beforeAll(async () => {
       publicSpecGenerateOptions("public-spec-operations.test"),
     ),
   )
+  if (process.env.MCP_EVAL_SPEC_OUTPUT) {
+    await mkdir(dirname(process.env.MCP_EVAL_SPEC_OUTPUT), { recursive: true })
+    await writeFile(
+      process.env.MCP_EVAL_SPEC_OUTPUT,
+      JSON.stringify(spec, null, 2),
+      "utf8",
+    )
+  }
 
   componentSchemas = (spec.components?.schemas ?? {}) as Record<string, unknown>
   specDocument = spec
@@ -388,6 +399,36 @@ describe("public API spec — operation naming guard", () => {
     })
 
     expect(missingInputDescriptions).toEqual([])
+  })
+
+  test("broadcast sendRatePerMinute documents the trial Messenger default and cap", () => {
+    const createBroadcast = operations.find(
+      (operation) => operation.operationId === "broadcasts.create",
+    )
+
+    expect(
+      createBroadcast?.bodySchema?.properties?.sendRatePerMinute?.description,
+    ).toBe(
+      "Maximum recipients handed off per dispatch minute (1-1000). Omit to use your plan's default (500; Messenger broadcasts on a trial plan use and cap at 60).",
+    )
+  })
+
+  test("broadcast schedule and resume document editable send rates", () => {
+    const schedule = operations.find(
+      (operation) => operation.operationId === "broadcasts.schedule",
+    )
+    const resume = operations.find(
+      (operation) => operation.operationId === "broadcasts.resume",
+    )
+    const description =
+      "Maximum recipients handed off per dispatch minute (1-1000). Omit to keep the stored rate; null clears it."
+
+    expect(
+      schedule?.bodySchema?.properties?.sendRatePerMinute?.description,
+    ).toBe(description)
+    expect(resume?.bodySchema?.properties?.sendRatePerMinute?.description).toBe(
+      description,
+    )
   })
 
   test("every /v1/channels/api/* operation requires only the channel token scheme", () => {
@@ -856,7 +897,7 @@ describe("public API spec — declared codes match what the mapper throws", () =
     "INTERNAL_SERVER_ERROR",
   ]
 
-  type ProcedureErrorMap = { path: string; codes: string[] }
+  type ProcedureErrorMap = { path: string; method: string; codes: string[] }
 
   function collectErrorMaps(
     node: unknown,
@@ -866,9 +907,15 @@ describe("public API spec — declared codes match what the mapper throws", () =
     if (!node || typeof node !== "object") {
       return
     }
-    const def = (node as Record<string, { errorMap?: object }>)["~orpc"]
+    const def = (
+      node as Record<string, { errorMap?: object; route?: { method?: string } }>
+    )["~orpc"]
     if (def?.errorMap) {
-      out.push({ path: path.join("."), codes: Object.keys(def.errorMap) })
+      out.push({
+        path: path.join("."),
+        method: (def.route?.method ?? "POST").toUpperCase(),
+        codes: Object.keys(def.errorMap),
+      })
       return
     }
     for (const [key, child] of Object.entries(node)) {
@@ -895,6 +942,36 @@ describe("public API spec — declared codes match what the mapper throws", () =
       .filter((entry) => entry.absent.length > 0)
 
     expect(missing).toEqual([])
+  })
+
+  test("only write procedures declare idempotency error codes", () => {
+    const idempotencyCodes = [
+      "idempotencyKeyInvalid",
+      "idempotencyKeyReused",
+      "idempotencyKeyConflict",
+    ]
+    const writeMethods = ["POST", "PUT", "PATCH", "DELETE"]
+    const writesMissingCodes = procedures
+      .filter((procedure) => writeMethods.includes(procedure.method))
+      .map((procedure) => ({
+        path: procedure.path,
+        absent: idempotencyCodes.filter(
+          (code) => !procedure.codes.includes(code),
+        ),
+      }))
+      .filter((procedure) => procedure.absent.length > 0)
+    const readsDeclaringCodes = procedures
+      .filter((procedure) => ["GET", "HEAD"].includes(procedure.method))
+      .map((procedure) => ({
+        path: procedure.path,
+        declared: idempotencyCodes.filter((code) =>
+          procedure.codes.includes(code),
+        ),
+      }))
+      .filter((procedure) => procedure.declared.length > 0)
+
+    expect(writesMissingCodes).toEqual([])
+    expect(readsDeclaringCodes).toEqual([])
   })
 
   test("no procedure re-declares a code commonApiErrors already provides", async () => {

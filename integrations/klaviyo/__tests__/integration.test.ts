@@ -14,9 +14,10 @@ const createContext = (auth: KlaviyoAuthValue): Context<KlaviyoAuthValue> => ({
   storagePrefix: "",
   platform: {
     appUrl: "",
-    wsUrl: "",
+    publicRealtimeUrl: "",
+    internalRealtimeUrl: "",
     storageUrl: "",
-    getRealtimeAuthHeaders: async () => ({}),
+    getRealtimeBroadcastAuthHeaders: async () => ({}),
   },
 })
 

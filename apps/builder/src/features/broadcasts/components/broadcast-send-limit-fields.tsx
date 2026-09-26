@@ -4,6 +4,8 @@ import {
   BROADCAST_AUDIENCE_POSITION_MIN,
   BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE,
   BROADCAST_MAX_SEND_RATE_PER_MINUTE,
+  type BroadcastPlanPolicy,
+  resolveApplicablePolicy,
 } from "@chatbotx.io/database/partials"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { useTranslations } from "next-intl"
@@ -16,12 +18,15 @@ const RANGE_FIELD_CLASS_NAME = "w-32 shrink-0"
 
 /**
  * The optional "Limit" block rendered under the contact filter for every
- * broadcast channel/subaction (see `create-broadcast-form.tsx`). Takes no
- * channel prop — it reads only `audienceRangeStart`/`audienceRangeEnd`/
- * `sendRatePerMinute` from the surrounding form, so it renders identically
- * regardless of which channel the broadcast targets.
+ * broadcast channel/subaction (see `create-broadcast-form.tsx`). The
+ * `planPolicy` prop and the channel selected in the surrounding form determine
+ * the send-rate placeholder; the audience range fields remain channel-agnostic.
  */
-export function BroadcastSendLimitFields() {
+export function BroadcastSendLimitFields({
+  planPolicy,
+}: {
+  planPolicy: BroadcastPlanPolicy
+}) {
   const t = useTranslations()
   const { formState, control, trigger } = useFormContext()
 
@@ -33,6 +38,14 @@ export function BroadcastSendLimitFields() {
     control,
     name: "audienceRangeEnd",
   })
+  // The untyped context is shared with the virtual `audienceRange` path
+  // below, so the watched value is narrowed here instead of typed there.
+  const watchedChannel: unknown = useWatch({ control, name: "channel" })
+  const sendRatePlaceholder =
+    resolveApplicablePolicy(
+      planPolicy,
+      typeof watchedChannel === "string" ? watchedChannel : "",
+    )?.maxSendRatePerMinute ?? BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE
 
   // In `mode: "onChange"`, react-hook-form's per-field validation only ever
   // copies the changed field's OWN error back into `formState.errors`
@@ -100,7 +113,7 @@ export function BroadcastSendLimitFields() {
           max={BROADCAST_MAX_SEND_RATE_PER_MINUTE}
           min={1}
           name="sendRatePerMinute"
-          placeholder={String(BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE)}
+          placeholder={String(sendRatePlaceholder)}
         />
       </div>
 

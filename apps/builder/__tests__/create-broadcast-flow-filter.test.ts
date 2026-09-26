@@ -17,6 +17,9 @@ vi.mock(
 vi.mock("@/features/broadcasts/components/broadcast-confirm-dialog", () => ({
   BroadcastConfirmDialog: () => null,
 }))
+vi.mock("@/features/broadcasts/components/broadcast-plan-limit-dialog", () => ({
+  BroadcastPlanLimitDialog: () => null,
+}))
 vi.mock("@/features/broadcasts/components/broadcast-flow-targets", () => ({
   BroadcastFlowTargets: () => null,
 }))

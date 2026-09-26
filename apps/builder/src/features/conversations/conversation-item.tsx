@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { formatDistanceToNowStrict, isAfter } from "date-fns"
+import { formatDistanceToNowStrict } from "date-fns"
 import {
   MailIcon,
   MessageCircleMoreIcon,
@@ -27,16 +27,15 @@ import {
   UsersRoundIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo } from "react"
-import { toast } from "sonner"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
 import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
-import { readConversationAction } from "./actions/read-conversation.action"
+import { useMarkConversationRead } from "./hooks/use-mark-conversation-read"
+import { isConversationUnread } from "./lib/is-conversation-unread"
 import {
   type CallPreviewKind,
   resolveCallPreviewKind,
@@ -169,8 +168,8 @@ export default function ConversationItem({
   onSelect,
 }: ConversationItemProps) {
   const t = useTranslations()
-  const { activeConversationId, readConversation } = useChatStore(
-    (state) => state,
+  const activeConversationId = useChatStore(
+    (state) => state.activeConversationId,
   )
   const isActive = conversation.id === activeConversationId
   // Narrowed to the matching call's id (not a boolean) so Answer/Reject can
@@ -200,11 +199,7 @@ export default function ConversationItem({
   const CallPreviewIcon = callPreviewKind
     ? CALL_PREVIEW_ICON_BY_KIND[callPreviewKind]
     : undefined
-  const isUnread = Boolean(
-    conversation.agentLastReadAt &&
-      conversation.contactLastReadAt &&
-      !isAfter(conversation.agentLastReadAt, conversation.contactLastReadAt),
-  )
+  const isUnread = isConversationUnread(conversation)
   // Show one "Ads" badge if ANY of this conversation's contactInboxes came
   // from a Meta ad (WhatsApp CTWA or Messenger/Instagram CTM/CTID) — mirrors
   // WATI's "CTWA" tag. `adReferral` is computed server-side per contactInbox
@@ -230,28 +225,12 @@ export default function ConversationItem({
     [conversation.contact, avatarUrl, isUnread],
   )
 
-  const { execute } = useAction(
-    readConversationAction.bind(
-      null,
-      conversation.workspaceId,
-      conversation.id,
-    ),
-    {
-      onSuccess: () => {
-        readConversation(conversation.id)
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
+  const markConversationRead = useMarkConversationRead()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: execute is not a dependency
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only the active transition triggers a read
   useEffect(() => {
     if (isActive) {
-      execute()
+      markConversationRead(conversation)
     }
   }, [isActive])
 
@@ -262,7 +241,12 @@ export default function ConversationItem({
           "h-auto w-full justify-center px-3 py-2 font-normal hover:bg-zinc-200 hover:text-foreground dark:hover:bg-muted",
           isActive ? "bg-zinc-200 dark:bg-muted!" : "",
         )}
-        onClick={() => onSelect()}
+        onClick={() => {
+          onSelect()
+          if (isActive) {
+            markConversationRead(conversation)
+          }
+        }}
         type="button"
         variant={isActive ? "secondary" : "ghost"}
       >
@@ -306,7 +290,14 @@ export default function ConversationItem({
 
         <div className="flex-1 overflow-hidden">
           <div className="flex items-center justify-between gap-1">
-            <span className="truncate text-start font-medium dark:text-gray-200">
+            <span
+              className={cn(
+                "truncate text-start",
+                isUnread
+                  ? "font-semibold text-foreground"
+                  : "font-medium text-muted-foreground",
+              )}
+            >
               {conversation.contact?.fullName}
             </span>
             <Tooltip>

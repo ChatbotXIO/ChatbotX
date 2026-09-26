@@ -35,6 +35,22 @@ function objectIdOf(id: string): string {
   return idx === -1 ? id : id.slice(0, idx)
 }
 
+// `café` and `cafe` are the same keyword to a commenter, but `.toLowerCase()`
+// alone leaves the accent in place, so an "include"/"exclude" keyword and the
+// comment text only match when both sides happen to use identical diacritics.
+// Same folding as `normalizeContactHeader` (packages/imports): NFD splits `é`
+// into `e` + U+0301, the Combining Diacritical Marks block (U+0300–U+036F) is
+// dropped, and `đ`, which has no decomposition, is mapped to `d`. The block is
+// deliberately narrow: `\p{Diacritic}` would also strip ASCII `^` and `` ` ``
+// (a "^^" keyword would become "" and match every comment) and kana marks.
+export function normalizeForMatch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+}
+
 export function matchPost(post: CommentPost, postId: string): boolean {
   if (post.type !== "postIds") {
     return true
@@ -49,13 +65,13 @@ export function matchKeywords(
   message: string | undefined,
   excludeKeywordsType: CommentExcludeKeywordsType = "contain",
 ): boolean {
-  const text = (message ?? "").toLowerCase()
+  const text = normalizeForMatch(message ?? "")
   const includeType = includeKeywords.type
   if (
     (includeType === "equal" || includeType === "contain") &&
     includeKeywords.value.length > 0
   ) {
-    const kws = includeKeywords.value.map((k) => k.toLowerCase())
+    const kws = includeKeywords.value.map((k) => normalizeForMatch(k))
     if (includeType === "equal" && !kws.includes(text)) {
       return false
     }
@@ -64,7 +80,7 @@ export function matchKeywords(
     }
   }
   const excluded = excludeKeywords
-    .map((k) => k.trim().toLowerCase())
+    .map((k) => normalizeForMatch(k.trim()))
     .filter(Boolean)
   if (excludeKeywordsType === "equal") {
     // Whole comment, trimmed — "ok " is the same comment as "ok".

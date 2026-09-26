@@ -30,6 +30,22 @@ redis.call('SET', KEYS[1], nextJson, 'PX', ttlMs)
 return 1
 `
 
+const COMPARE_AND_DELETE_JSON_LUA = `
+local current = redis.call('GET', KEYS[1])
+if not current then return 0 end
+
+local decodedCurrent = cjson.decode(current)
+local expected = cjson.decode(ARGV[1])
+for field, value in pairs(expected) do
+  if decodedCurrent[field] ~= value then
+    return 0
+  end
+end
+
+redis.call('DEL', KEYS[1])
+return 1
+`
+
 type CompareAndSwapClient = Redis & {
   compareAndSwapJson: (
     key: string,
@@ -37,6 +53,10 @@ type CompareAndSwapClient = Redis & {
     nextJson: string,
     ttlMs: string,
   ) => Promise<number>
+}
+
+type CompareAndDeleteClient = Redis & {
+  compareAndDeleteJson: (key: string, expectedJson: string) => Promise<number>
 }
 
 const clientsWithCompareAndSwap = new WeakSet<Redis>()
@@ -50,6 +70,19 @@ function withCompareAndSwap(client: Redis): CompareAndSwapClient {
     clientsWithCompareAndSwap.add(client)
   }
   return client as CompareAndSwapClient
+}
+
+const clientsWithCompareAndDelete = new WeakSet<Redis>()
+
+function withCompareAndDelete(client: Redis): CompareAndDeleteClient {
+  if (!clientsWithCompareAndDelete.has(client)) {
+    client.defineCommand("compareAndDeleteJson", {
+      numberOfKeys: 1,
+      lua: COMPARE_AND_DELETE_JSON_LUA,
+    })
+    clientsWithCompareAndDelete.add(client)
+  }
+  return client as CompareAndDeleteClient
 }
 
 /**
@@ -125,6 +158,23 @@ export const casStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
       expectedJson,
       JSON.stringify(next),
       String(ttlMs),
+    )
+    return result === 1
+  },
+
+  /**
+   * Atomically deletes the JSON record at key only if every field present in
+   * expected still matches the record currently stored. Returns whether the
+   * delete applied.
+   */
+  async compareAndDelete<T extends Record<string, unknown>>(
+    key: string,
+    expected: Partial<T>,
+  ): Promise<boolean> {
+    const redisClient = withCompareAndDelete(await getRedisClient())
+    const result = await redisClient.compareAndDeleteJson(
+      key,
+      JSON.stringify(expected),
     )
     return result === 1
   },

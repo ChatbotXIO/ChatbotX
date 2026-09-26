@@ -312,6 +312,33 @@ class ContactInboxService extends BaseService {
   }
 
   /**
+   * Uncached batch read for response hydration. A contacts page must resolve
+   * every avatar with one query rather than calling `listByContactId` once per
+   * row; the workspace scope also prevents cross-workspace ids from leaking.
+   */
+  async listByContactIds(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    contactIds: string[]
+  }): Promise<ContactInboxModel[]> {
+    const { tx = db, workspaceId, contactIds } = props
+    if (contactIds.length === 0) {
+      return []
+    }
+
+    return await tx
+      .select()
+      .from(contactInboxModel)
+      .where(
+        and(
+          inArray(contactInboxModel.contactId, contactIds),
+          this.workspaceScope(workspaceId),
+        ),
+      )
+      .orderBy(asc(contactInboxModel.id))
+  }
+
+  /**
    * Of the given candidate ids, the subsets already linked to this inbox by
    * `sourceId` OR by the scoped `sourceUserId` (e.g. a WhatsApp BSUID) —
    * covers a row whose scoped id was already backfilled onto an existing

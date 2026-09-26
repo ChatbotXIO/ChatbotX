@@ -10,8 +10,9 @@ export function useAttachmentUrl(
     return
   }
 
-  if (attachment.url) {
-    return attachment.url
+  // A server-resolved null is terminal; only legacy undefined shapes fall back.
+  if (attachment.url !== undefined) {
+    return attachment.url ?? undefined
   }
 
   if (attachment.originPath === null) {

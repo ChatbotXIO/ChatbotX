@@ -121,6 +121,7 @@ async function startChatWorker() {
                 "notifyExportResult job received but no handler is implemented",
               )
               return
+            // TODO: Remove after the rolling-deploy queue drain completes.
             case ChatJobAction.broadcastEvent:
               await broadcastToWorkspaceParty(
                 job.data.data.workspaceId,

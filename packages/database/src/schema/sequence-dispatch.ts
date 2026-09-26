@@ -134,5 +134,8 @@ export const sequenceDispatchModel = pgTable(
       .on(table.updatedAt)
       .where(sql`"status" in ('completed', 'failed', 'canceled')`),
     index("SequenceDispatch_contactId_idx").on(table.contactId),
+    // Covers the `ContactInbox -> SequenceDispatch` ON DELETE CASCADE check;
+    // built per partition + ATTACH (64 HASH partitions).
+    index("SequenceDispatch_contactInboxId_idx").on(table.contactInboxId),
   ],
 )

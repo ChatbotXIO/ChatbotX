@@ -402,6 +402,12 @@ const resolveBroadcastSendSlot = (
 
 /** Fallback recipients-per-tick when a broadcast sets no `sendRatePerMinute`; moved here from the worker. */
 export const BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE = 500
+/** Enforced cap for trial owners. */
+export const BROADCAST_TRIAL_SEND_RATE_PER_MINUTE = 60
+export const BROADCAST_TRIAL_MAX_ACTIVE = 1
+/** Numbers the upgrade dialog shows; product copy intentionally differs from the enforced cap. */
+export const BROADCAST_TRIAL_DISPLAYED_SEND_RATE_PER_MINUTE = 100
+export const BROADCAST_TRIAL_UPGRADE_SPEED_MULTIPLIER = 20
 /** Product ceiling on `sendRatePerMinute` — 2x today's batch size (see worker hand-off fan-out). */
 export const BROADCAST_MAX_SEND_RATE_PER_MINUTE = 1000
 /** Audience positions are 1-based (`audienceRangeStart`/`audienceRangeEnd`, "contact #N" in the UI). */
@@ -520,3 +526,16 @@ export const resolveBroadcastSendRatePerMinute = (
   broadcast: Pick<BroadcastSendLimit, "sendRatePerMinute">,
 ): number =>
   broadcast.sendRatePerMinute ?? BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE
+
+/** Submitted activation rate wins; omission preserves the stored column value. */
+export const resolveActivationSendRate = (input: {
+  submitted: number | null | undefined
+  stored: number | null
+}): number | null =>
+  input.submitted === undefined ? input.stored : input.submitted
+
+/** Column patch for a submitted activation rate; omission leaves the column untouched. */
+export const resolveSubmittedSendRatePatch = (
+  submitted: number | null | undefined,
+): { sendRatePerMinute: number | null } | undefined =>
+  submitted === undefined ? undefined : { sendRatePerMinute: submitted }

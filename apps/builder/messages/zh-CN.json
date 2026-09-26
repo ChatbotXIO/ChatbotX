@@ -649,6 +649,7 @@
     },
     "title": "计费",
     "trial": {
+      "planName": "试用",
       "daysLeft": "试用期：剩下 {days} 天",
       "dismiss": "关闭",
       "endsTomorrow": "试用期将于明天结束",
@@ -688,8 +689,7 @@
       "noAudienceFilter": "无受众过滤器",
       "subaction": "子操作",
       "template": "范本",
-      "title": "广播详细信息",
-      "sendLimit": "限制"
+      "title": "广播详细信息"
     },
     "flowType": {
       "flow": {
@@ -829,17 +829,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "升级您的套餐",
+      "sendRate": "您当前的{plan}套餐支持的群发最高速度为每分钟 {rate} 条消息。请升级套餐，群发速度最高可提升至 {multiplier} 倍。",
+      "activeBroadcasts": "您当前的{plan}套餐一次可运行 {max, plural, one {# 个群发任务} other {# 个群发任务}}。请升级套餐以同时运行更多群发任务。"
+    },
     "sendLimit": {
       "title": "限制",
       "hint": "留空以发送给所有匹配的联系人。",
+      "rateHint": "留空以使用默认发送速率。",
+      "rangeSummary": "联系人 #{start} – #{end}",
+      "rangeFromSummary": "从联系人 #{start} 起",
       "rangeLabel": "联系人范围",
       "fromLabel": "从",
       "toLabel": "到",
       "allPlaceholder": "全部",
-      "rangeEndBeforeStart": "结束位置不能早于开始位置",
-      "rangeSummary": "联系人 #{start} – #{end}",
-      "rangeFromSummary": "从联系人 #{start} 起",
-      "rateSummary": "每分钟 {rate} 条消息"
+      "rangeEndBeforeStart": "结束位置不能早于开始位置"
     }
   },
   "commentAutomation": {
@@ -1637,6 +1642,7 @@
     "dashboardCta": "在广告仪表盘中查看"
   },
   "fields": {
+    "optionalHint": "(可选)",
     "marketingMessagesConfigId": {
       "label": "营销消息配置 ID",
       "description": "用于请求 marketing_messages_messenger 权限的“Facebook 商务登录”配置 ID。"
@@ -3491,6 +3497,14 @@
     "title": "页面未找到",
     "description": "您访问的页面不存在，或可能已被移动。",
     "backToHome": "返回首页"
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "将机器人消息标记为已读",
+      "enabled": "已启用",
+      "disabled": "已停用",
+      "description": "启用后，机器人会自动将自己的消息标记为已读"
+    }
   },
   "inboxTeams": {
     "title": "收件匣团队"
@@ -5862,8 +5876,9 @@
       "invalidDatasetId": "请输入有效的 Dataset ID（仅数字）。",
       "whatsappNotFound": "未找到 WhatsApp 集成。",
       "testEventCodeRequired": "发送测试事件前请先保存测试事件代码。",
-      "noContactForTest": "此渠道尚无符合条件的联系人。测试事件需要归因到真实联系人（WhatsApp 需为来自 click-to-WhatsApp 广告的联系人）。",
-      "invalidTestEventCode": "测试事件代码只能包含字母、数字、连字符或下划线(最多 64 个字符)。"
+      "invalidTestEventCode": "测试事件代码只能包含字母、数字、连字符或下划线(最多 64 个字符)。",
+      "invalidMessagingId": "消息 ID 只能包含字母、数字、连字符或下划线（最多 512 个字符）。",
+      "capiDisconnected": "此渠道的 Meta CAPI 已断开连接。请先重新连接，再发送测试事件。"
     },
     "fields": {
       "eventType": {
@@ -6007,10 +6022,21 @@
       "saved": "测试事件代码已保存。",
       "cleared": "测试事件代码已清除。事件恢复正常上报。",
       "send": "发送测试事件",
-      "sent": "测试事件已加入队列,一分钟内会出现在 Events Manager 的 Test events 中。",
-      "sendHint": "向该渠道最近的联系人发送一个示例 Purchase 事件(100 USD)。",
+      "sent": "测试事件已发送。一分钟内会出现在 Events Manager 的 Test events 中。",
+      "sendHint": "向你输入的消息 ID 发送一条示例 Purchase（100 USD）。不会使用任何已保存的联系人。",
       "activeNotice": "测试模式已开启:在清除代码之前,该渠道的事件不计入报告。",
-      "openTestEvents": "打开 Test events"
+      "openTestEvents": "打开 Test events",
+      "dialogTitle": "发送测试事件",
+      "dialogDescription": "将携带你的测试事件代码发送一条示例 Purchase（100 USD）。请粘贴 Events Manager → Test events → Messaging → Graph API Explorer 中的示例消息 ID，以免归因到真实联系人。",
+      "messagingIdLabel": {
+        "messenger": "联系人 ID（page_scoped_user_id）",
+        "instagram": "联系人 ID（ig_sid）",
+        "whatsapp": "点击 ID（ctwa_clid）"
+      },
+      "messagingIdPlaceholder": "粘贴 Meta 提供的示例值",
+      "messagingIdHint": "仅限字母、数字、连字符和下划线（最多 512 个字符）。",
+      "cancel": "取消",
+      "confirmSend": "发送"
     }
   },
   "appointments": {

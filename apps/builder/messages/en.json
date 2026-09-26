@@ -336,6 +336,7 @@
       "message": "Your last payment failed. Update your payment method to keep your workspace active."
     },
     "trial": {
+      "planName": "Trial",
       "daysLeft": "Trial: {days} days left",
       "endsTomorrow": "Trial ends tomorrow",
       "expired": "Your trial has ended — upgrade to keep your workspace active",
@@ -449,8 +450,7 @@
       "audienceFilter": "Audience filter",
       "noAudienceFilter": "No audience filter",
       "template": "Template",
-      "integration": "Integration",
-      "sendLimit": "Limit"
+      "integration": "Integration"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Upgrade your plan",
+      "sendRate": "Your current {plan} plan supports broadcasts at a maximum sending speed of {rate} messages per minute. Please upgrade your plan to send broadcasts up to {multiplier}x faster.",
+      "activeBroadcasts": "Your current {plan} plan runs {max, plural, one {# broadcast} other {# broadcasts}} at a time. Please upgrade your plan to run more broadcasts at once."
+    },
     "sendLimit": {
       "title": "Limit",
       "hint": "Leave blank to send to every matching contact.",
+      "rateHint": "Leave blank to use the default rate.",
+      "rangeSummary": "Contacts #{start} – #{end}",
+      "rangeFromSummary": "From contact #{start}",
       "rangeLabel": "Contact range",
       "fromLabel": "From",
       "toLabel": "To",
       "allPlaceholder": "All",
-      "rangeEndBeforeStart": "The end position must not be before the start position",
-      "rangeSummary": "Contacts #{start} – #{end}",
-      "rangeFromSummary": "From contact #{start}",
-      "rateSummary": "{rate} messages / minute"
+      "rangeEndBeforeStart": "The end position must not be before the start position"
     }
   },
   "commentAutomation": {
@@ -900,6 +905,7 @@
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers."
   },
   "fields": {
+    "optionalHint": "(optional)",
     "marketingMessagesConfigId": {
       "label": "Marketing Messages Config ID",
       "description": "Facebook Login for Business configuration ID used to request the marketing_messages_messenger permission."
@@ -2422,8 +2428,9 @@
       "invalidDatasetId": "Enter a valid Dataset ID (numbers only).",
       "whatsappNotFound": "WhatsApp integration not found.",
       "testEventCodeRequired": "Save a test event code before sending a test event.",
-      "noContactForTest": "No eligible contact on this channel yet. A test event needs a real contact to attribute to (for WhatsApp, one that came from a click-to-WhatsApp ad).",
-      "invalidTestEventCode": "Test event code may only contain letters, digits, dashes or underscores (max 64)."
+      "invalidTestEventCode": "Test event code may only contain letters, digits, dashes or underscores (max 64).",
+      "invalidMessagingId": "Messaging ID may only contain letters, digits, dashes or underscores (max 512).",
+      "capiDisconnected": "Meta CAPI is disconnected for this channel. Reconnect it before sending a test event."
     },
     "fields": {
       "eventType": {
@@ -2567,10 +2574,21 @@
       "saved": "Test event code saved.",
       "cleared": "Test event code cleared. Events are live again.",
       "send": "Send test event",
-      "sent": "Test event queued. It appears under Test events in Events Manager within a minute.",
-      "sendHint": "Sends one sample Purchase (100 USD) to this channel's most recent contact.",
+      "sent": "Test event sent. It appears under Test events in Events Manager within a minute.",
+      "sendHint": "Sends one sample Purchase (100 USD) to a messaging id you enter. No stored contact is used.",
       "activeNotice": "Test mode is on: events from this channel are not counted in reports until the code is cleared.",
-      "openTestEvents": "Open Test events"
+      "openTestEvents": "Open Test events",
+      "dialogTitle": "Send test event",
+      "dialogDescription": "One sample Purchase (100 USD) is sent with your test event code. Paste the sample messaging id from Events Manager → Test events → Messaging → Graph API Explorer, so nothing is attributed to a real contact.",
+      "messagingIdLabel": {
+        "messenger": "Contact ID (page_scoped_user_id)",
+        "instagram": "Contact ID (ig_sid)",
+        "whatsapp": "Click ID (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Paste the sample value from Meta",
+      "messagingIdHint": "Letters, digits, dashes and underscores only (max 512).",
+      "cancel": "Cancel",
+      "confirmSend": "Send"
     }
   },
   "flows": {
@@ -4417,6 +4435,14 @@
     "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName}.",
     "invalidInvitation": "This invitation is invalid or has expired.",
     "workspaceUnavailable": "This workspace is no longer available."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Mark bot messages as read",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "description": "When enabled, the bot automatically marks its own messages as read"
+    }
   },
   "inboxTeams": {
     "title": "Inbox Teams"

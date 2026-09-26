@@ -10,6 +10,8 @@ export const PUBLIC_ROUTES = [
   "/l",
   "/dynamic-images",
   "/go",
+  "/media/attachment",
+  "/media/avatar",
   "/minigames",
   "/auth",
   "/api",

@@ -336,6 +336,7 @@
       "message": "Tu último pago ha fallado. Actualiza el método de pago para mantener activo tu espacio de trabajo."
     },
     "trial": {
+      "planName": "Prueba",
       "daysLeft": "Prueba: quedan {days} días",
       "endsTomorrow": "La prueba termina mañana",
       "expired": "Tu prueba ha terminado: mejora el plan para mantener activo tu espacio de trabajo",
@@ -449,8 +450,7 @@
       "audienceFilter": "Filtro de audiencia",
       "noAudienceFilter": "Sin filtro de audiencia",
       "template": "Plantilla",
-      "integration": "Integración",
-      "sendLimit": "Límite"
+      "integration": "Integración"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Mejora tu plan",
+      "sendRate": "Tu plan {plan} actual admite broadcasts con una velocidad máxima de envío de {rate} mensajes por minuto. Mejora tu plan para enviar broadcasts hasta {multiplier}x más rápido.",
+      "activeBroadcasts": "Tu plan {plan} actual ejecuta {max, plural, one {# broadcast} other {# broadcasts}} a la vez. Mejora tu plan para ejecutar más broadcasts simultáneamente."
+    },
     "sendLimit": {
       "title": "Límite",
       "hint": "Déjalo en blanco para enviar a todos los contactos que coincidan.",
+      "rateHint": "Déjalo en blanco para usar la velocidad predeterminada.",
+      "rangeSummary": "Contactos n.º{start} – n.º{end}",
+      "rangeFromSummary": "Desde el contacto n.º{start}",
       "rangeLabel": "Rango de contactos",
       "fromLabel": "Desde",
       "toLabel": "Hasta",
       "allPlaceholder": "Todos",
-      "rangeEndBeforeStart": "La posición final no debe ser anterior a la posición inicial",
-      "rangeSummary": "Contactos n.º{start} – n.º{end}",
-      "rangeFromSummary": "Desde el contacto n.º{start}",
-      "rateSummary": "{rate} mensajes / minuto"
+      "rangeEndBeforeStart": "La posición final no debe ser anterior a la posición inicial"
     }
   },
   "commentAutomation": {
@@ -900,6 +905,7 @@
     "deleteConfirmation": "¿Estás completamente seguro?\nEsta acción no se puede deshacer.\nSe eliminará permanentemente tu {feature} de nuestros servidores."
   },
   "fields": {
+    "optionalHint": "(opcional)",
     "marketingMessagesConfigId": {
       "label": "ID de configuración de Mensajes de marketing",
       "description": "ID de configuración de Facebook Login for Business que se usa para solicitar el permiso marketing_messages_messenger."
@@ -4230,6 +4236,14 @@
     "invalidInvitation": "This invitación es no válido o tiene caducado.",
     "workspaceUnavailable": "This espacio de trabajo es no longer disponible."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Marcar los mensajes del bot como leídos",
+      "enabled": "Activado",
+      "disabled": "Desactivado",
+      "description": "Si está activado, el bot marcará automáticamente sus propios mensajes como leídos"
+    }
+  },
   "inboxTeams": {
     "title": "Equipos de la bandeja de entrada"
   },
@@ -4687,212 +4701,212 @@
   },
   "facebookCommentAutomation": {
     "title": "Automatización de comentarios de Facebook",
-    "description": "Automate Facebook comentarios para tu contactoos.",
-    "create": "Crear Automatización",
+    "description": "Automatiza los comentarios de Facebook para tus contactos.",
+    "create": "Crear automatización",
     "replies": "Respuestas",
-    "activated": "Automatización activated",
-    "deactivated": "Automatización deactivated",
-    "trackCommentsOn": "Track comentarios on",
-    "trackCommentsOnDescription": "Apply este automatización un todos publicaciones en tu Página, o narrow it un specific publicaciones tú select.",
-    "privateReply": "Private Responder (inbox)",
-    "privateReplyDescription": "Enviar un private mensaje un el comentarioer's inbox. Elegir AI Agent, un fixed texto template, un chatbot flujo, o desactivar.",
-    "publicReply": "Public Responder un comentario",
-    "publicReplyDescription": "Publicación un public Responder directly under el comentario. Supports up un 10 texto templates, AI Agent, un chatbot flujo, o no respuesta. Cada mensaje se publica como una respuesta independiente. Admite spintax.",
-    "replyMessage": "Responder mensaje",
-    "replyMessagePlaceholder": "Introduce Responder mensaje...",
-    "includeKeywordsType": "Responder to",
-    "includeKeywordsTypeDescription": "Elegir which comentarios este automatización responds to.",
-    "includeKeywords": "Palabras clave un match",
+    "activated": "Automatización activada",
+    "deactivated": "Automatización desactivada",
+    "trackCommentsOn": "Rastrear comentarios en",
+    "trackCommentsOnDescription": "Aplica esta automatización a todas las publicaciones de tu página, o limítala a publicaciones específicas que selecciones.",
+    "privateReply": "Respuesta privada (bandeja de entrada)",
+    "privateReplyDescription": "Envía un mensaje privado a la bandeja de entrada de quien comentó. Elige agente de IA, una plantilla de texto fija, un flujo, o desactívalo.",
+    "publicReply": "Respuesta pública al comentario",
+    "publicReplyDescription": "Publica una respuesta pública directamente debajo del comentario. Admite hasta 10 plantillas de texto, agente de IA, un flujo, o ninguna respuesta. Cada mensaje se publica como una respuesta independiente. Admite spintax.",
+    "replyMessage": "Mensaje de respuesta",
+    "replyMessagePlaceholder": "Escribe el mensaje de respuesta...",
+    "includeKeywordsType": "Responder a",
+    "includeKeywordsTypeDescription": "Elige a qué comentarios responde esta automatización.",
+    "includeKeywords": "Palabras clave a coincidir",
     "excludeKeywords": "Excluir comentarios que contienen",
-    "excludeKeywordsDescription": "Comentarios containing cualquier de these palabras clave se be ignored by both inbox y public Responder automatización.",
-    "keywordsPlaceholder": "Tipo y press Enter...",
-    "replyAfter": "Responder después",
+    "excludeKeywordsDescription": "Los comentarios que contengan alguna de estas palabras clave serán ignorados tanto por la respuesta privada como por la respuesta pública.",
+    "keywordsPlaceholder": "Escribe y presiona Enter...",
+    "replyAfter": "Responder después de",
     "replyAfterValue": "Valor",
     "schedule": {
-      "title": "Establecer activo horas",
-      "description": "Elegir un start y end tiempo. si el end tiempo es earlier than el start tiempo, el schedule runs overnight.",
-      "startTime": "Start tiempo",
-      "endTime": "End tiempo",
+      "title": "Establecer horario activo",
+      "description": "Elige una hora de inicio y fin. Si la hora de fin es anterior a la de inicio, el horario se extiende durante la noche.",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de fin",
       "alwaysRun": "Ejecutar siempre",
       "save": "Guardar",
-      "invalidTimeRange": "Start y end tiempo must be different",
-      "timeRequired": "Por favor, Seleccionar both start y end tiempo"
+      "invalidTimeRange": "La hora de inicio y fin deben ser diferentes",
+      "timeRequired": "Selecciona tanto la hora de inicio como la de fin"
     },
     "card": {
-      "targeting": "Targeting & Respuesta",
-      "filters": "Filters & Opciones",
-      "replyTiming": "Responder Timing",
-      "hideComments": "Hide Comentarios"
+      "targeting": "Segmentación y respuesta",
+      "filters": "Filtros y opciones",
+      "replyTiming": "Tiempo de respuesta",
+      "hideComments": "Ocultar comentarios"
     },
     "postType": {
-      "all": "Todos publicaciones",
-      "published": "Publicado publicaciones",
-      "ads": "Ads publicaciones",
+      "all": "Todas las publicaciones",
+      "published": "Publicaciones publicadas",
+      "ads": "Publicaciones de anuncios",
       "reels": "Reels",
-      "specificPosts": "Specific publicaciones"
+      "specificPosts": "Publicaciones específicas"
     },
     "replyType": {
-      "text": "Texto mensaje",
+      "text": "Mensaje de texto",
       "flow": "Flujo",
       "AIAgent": "Agente de IA",
-      "none": "No respuesta"
+      "none": "Sin respuesta"
     },
     "keywordsType": {
-      "all": "Todos comentarios",
+      "all": "Todos los comentarios",
       "equal": "Coincidencia exacta",
       "contain": "Contiene"
     },
     "replyAfterType": {
       "immediately": "Inmediatamente",
-      "seconds": "Después X seconds",
-      "minutes": "Después X minutos",
-      "hours": "Después X horas",
-      "randomWithin3Minutes": "Random within 3 minutos",
-      "randomWithin5Minutes": "Random within 5 minutos",
-      "randomWithin10Minutes": "Random within 10 minutos",
-      "randomWithin20Minutes": "Random within 20 minutos",
-      "randomWithin30Minutes": "Random within 30 minutos",
-      "randomWithin60Minutes": "Random within 60 minutos"
+      "seconds": "Después de X segundos",
+      "minutes": "Después de X minutos",
+      "hours": "Después de X horas",
+      "randomWithin3Minutes": "Aleatorio dentro de 3 minutos",
+      "randomWithin5Minutes": "Aleatorio dentro de 5 minutos",
+      "randomWithin10Minutes": "Aleatorio dentro de 10 minutos",
+      "randomWithin20Minutes": "Aleatorio dentro de 20 minutos",
+      "randomWithin30Minutes": "Aleatorio dentro de 30 minutos",
+      "randomWithin60Minutes": "Aleatorio dentro de 60 minutos"
     },
     "options": {
-      "replyToNewContactsOnly": "Only Responder un nuevo contactoos",
-      "replyToNewContactsOnlyDescription": "Only auto-Responder un people who tiene never been un contacto en tu workspace antes.",
-      "replyOncePerUserPerPost": "Responder only once un each usuario per publicación",
-      "replyOncePerUserPerPostDescription": "Each usuario se receive at most one automated Responder per publicación.",
-      "likeUserComment": "Like el usuario comentario",
-      "likeUserCommentDescription": "Automáticamente react con un like un el comentarioer's comentario.",
-      "replyToUsersWhoCommentedOnOtherPosts": "Responder un usuarios who comentarioed en other publicaciones",
-      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continue respuestaing un usuarios who tiene already comentarioed en tu other publicaciones.",
-      "ignoreCommentReplies": "Don't Responder un replies un comentarios",
-      "ignoreCommentRepliesDescription": "Skip automatización para comentarios that son replies un other comentarios, not top-level comentarios.",
+      "replyToNewContactsOnly": "Responder solo a contactos nuevos",
+      "replyToNewContactsOnlyDescription": "Responde automáticamente solo a personas que nunca antes hayan sido un contacto en tu espacio de trabajo.",
+      "replyOncePerUserPerPost": "Responder solo una vez a cada usuario por publicación",
+      "replyOncePerUserPerPostDescription": "Cada usuario recibirá como máximo una respuesta automática por publicación.",
+      "likeUserComment": "Dar me gusta al comentario del usuario",
+      "likeUserCommentDescription": "Reacciona automáticamente con un me gusta al comentario de quien lo escribió.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Responder a usuarios que comentaron en otras publicaciones",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Sigue respondiendo a usuarios que ya hayan comentado antes en tus otras publicaciones.",
+      "ignoreCommentReplies": "No responder a respuestas de comentarios",
+      "ignoreCommentRepliesDescription": "Omite la automatización para comentarios que son respuestas a otros comentarios, no comentarios de primer nivel.",
       "trackUserTags": "Registrar si un usuario etiqueta a otros usuarios",
       "trackUserTagsDescription": "Cuenta las cuentas etiquetadas en cada comentario y las suma a los totales del contacto en todos los comentarios. Usa '{{total_tagged}}' para todas las cuentas etiquetadas y '{{total_new_tagged}}' para las que nunca han escrito a tu página ni han sido contacto."
     },
     "hideComments": {
-      "all": "Hide todos comentarios",
-      "hasPhoneNumber": "Contains teléfono número",
+      "all": "Ocultar todos los comentarios",
+      "hasPhoneNumber": "Contiene un número de teléfono",
       "hasImage": "Contiene una imagen",
       "hasVideo": "Contiene un vídeo",
-      "hasLink": "Contains enlace",
-      "hasKeywords": "Contains palabras clave",
+      "hasLink": "Contiene un enlace",
+      "hasKeywords": "Contiene palabras clave",
       "keywords": "Palabras clave",
-      "showCommentsAfter": "Show comentarios después"
+      "showCommentsAfter": "Mostrar comentarios después de"
     },
     "showCommentsAfter": {
       "none": "Nunca"
     },
-    "selectPosts": "Seleccionar Publicaciones",
-    "selectPageAll": "Todos páginas",
+    "selectPosts": "Seleccionar publicaciones",
+    "selectPageAll": "Todas las páginas",
     "chooseSpecificPosts": "Elegir publicaciones...",
-    "postIdTab": "Publicación ID",
-    "postIdPlaceholder": "Introduce publicación IDs, one per line...",
-    "noPostsFound": "No publicaciones found"
+    "postIdTab": "ID de la publicación",
+    "postIdPlaceholder": "Ingresa los ID de las publicaciones, uno por línea...",
+    "noPostsFound": "No se encontraron publicaciones"
   },
   "instagramCommentAutomation": {
     "title": "Automatización de comentarios de Instagram",
-    "description": "Automate Insetiquetaram comentarios para tu contactoos.",
-    "create": "Crear Automatización",
+    "description": "Automatiza los comentarios de Instagram para tus contactos.",
+    "create": "Crear automatización",
     "replies": "Respuestas",
-    "activated": "Automatización activated",
-    "deactivated": "Automatización deactivated",
-    "trackCommentsOn": "Track comentarios on",
-    "trackCommentsOnDescription": "Apply este automatización un todos publicaciones en tu connected cuenta, o narrow it un specific publicaciones tú select.",
-    "privateReply": "Private Responder (inbox)",
-    "privateReplyDescription": "Enviar un private mensaje un el comentarioer's inbox. Elegir AI Agent, un fixed texto template, un chatbot flujo, o desactivar.",
-    "publicReply": "Public Responder un comentario",
-    "publicReplyDescription": "Publicación un public Responder directly under el comentario. Supports up un 10 texto templates, AI Agent, un chatbot flujo, o no respuesta. Cada mensaje se publica como una respuesta independiente. Admite spintax.",
-    "replyMessage": "Responder mensaje",
-    "replyMessagePlaceholder": "Introduce Responder mensaje...",
-    "includeKeywordsType": "Responder to",
-    "includeKeywordsTypeDescription": "Elegir which comentarios este automatización responds to.",
-    "includeKeywords": "Palabras clave un match",
+    "activated": "Automatización activada",
+    "deactivated": "Automatización desactivada",
+    "trackCommentsOn": "Rastrear comentarios en",
+    "trackCommentsOnDescription": "Aplica esta automatización a todas las publicaciones de tu cuenta conectada, o limítala a publicaciones específicas que selecciones.",
+    "privateReply": "Respuesta privada (bandeja de entrada)",
+    "privateReplyDescription": "Envía un mensaje privado a la bandeja de entrada de quien comentó. Elige agente de IA, una plantilla de texto fija, un flujo, o desactívalo.",
+    "publicReply": "Respuesta pública al comentario",
+    "publicReplyDescription": "Publica una respuesta pública directamente debajo del comentario. Admite hasta 10 plantillas de texto, agente de IA, un flujo, o ninguna respuesta. Cada mensaje se publica como una respuesta independiente. Admite spintax.",
+    "replyMessage": "Mensaje de respuesta",
+    "replyMessagePlaceholder": "Escribe el mensaje de respuesta...",
+    "includeKeywordsType": "Responder a",
+    "includeKeywordsTypeDescription": "Elige a qué comentarios responde esta automatización.",
+    "includeKeywords": "Palabras clave a coincidir",
     "excludeKeywords": "Excluir comentarios que contienen",
-    "excludeKeywordsDescription": "Comentarios containing cualquier de these palabras clave se be ignored by both inbox y public Responder automatización.",
-    "keywordsPlaceholder": "Tipo y press Enter...",
-    "replyAfter": "Responder después",
+    "excludeKeywordsDescription": "Los comentarios que contengan alguna de estas palabras clave serán ignorados tanto por la respuesta privada como por la respuesta pública.",
+    "keywordsPlaceholder": "Escribe y presiona Enter...",
+    "replyAfter": "Responder después de",
     "replyAfterValue": "Valor",
     "schedule": {
-      "title": "Establecer activo horas",
-      "description": "Elegir un start y end tiempo. si el end tiempo es earlier than el start tiempo, el schedule runs overnight.",
-      "startTime": "Start tiempo",
-      "endTime": "End tiempo",
+      "title": "Establecer horario activo",
+      "description": "Elige una hora de inicio y fin. Si la hora de fin es anterior a la de inicio, el horario se extiende durante la noche.",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de fin",
       "alwaysRun": "Ejecutar siempre",
       "save": "Guardar",
-      "invalidTimeRange": "Start y end tiempo must be different",
-      "timeRequired": "Por favor, Seleccionar both start y end tiempo"
+      "invalidTimeRange": "La hora de inicio y fin deben ser diferentes",
+      "timeRequired": "Selecciona tanto la hora de inicio como la de fin"
     },
     "card": {
-      "targeting": "Targeting & Respuesta",
-      "filters": "Filters & Opciones",
-      "replyTiming": "Responder Timing",
-      "hideComments": "Hide Comentarios"
+      "targeting": "Segmentación y respuesta",
+      "filters": "Filtros y opciones",
+      "replyTiming": "Tiempo de respuesta",
+      "hideComments": "Ocultar comentarios"
     },
     "postType": {
-      "all": "Todos publicaciones",
-      "published": "Publicado publicaciones",
+      "all": "Todas las publicaciones",
+      "published": "Publicaciones publicadas",
       "reels": "Reels",
-      "specificPosts": "Specific publicaciones"
+      "specificPosts": "Publicaciones específicas"
     },
     "replyType": {
-      "text": "Texto mensaje",
+      "text": "Mensaje de texto",
       "flow": "Flujo",
       "AIAgent": "Agente de IA",
-      "none": "No respuesta"
+      "none": "Sin respuesta"
     },
     "keywordsType": {
-      "all": "Todos comentarios",
+      "all": "Todos los comentarios",
       "equal": "Coincidencia exacta",
       "contain": "Contiene"
     },
     "replyAfterType": {
       "immediately": "Inmediatamente",
-      "seconds": "Después X seconds",
-      "minutes": "Después X minutos",
-      "hours": "Después X horas",
-      "randomWithin3Minutes": "Random within 3 minutos",
-      "randomWithin5Minutes": "Random within 5 minutos",
-      "randomWithin10Minutes": "Random within 10 minutos",
-      "randomWithin20Minutes": "Random within 20 minutos",
-      "randomWithin30Minutes": "Random within 30 minutos",
-      "randomWithin60Minutes": "Random within 60 minutos"
+      "seconds": "Después de X segundos",
+      "minutes": "Después de X minutos",
+      "hours": "Después de X horas",
+      "randomWithin3Minutes": "Aleatorio dentro de 3 minutos",
+      "randomWithin5Minutes": "Aleatorio dentro de 5 minutos",
+      "randomWithin10Minutes": "Aleatorio dentro de 10 minutos",
+      "randomWithin20Minutes": "Aleatorio dentro de 20 minutos",
+      "randomWithin30Minutes": "Aleatorio dentro de 30 minutos",
+      "randomWithin60Minutes": "Aleatorio dentro de 60 minutos"
     },
     "options": {
-      "replyToNewContactsOnly": "Only Responder un nuevo contactoos",
-      "replyToNewContactsOnlyDescription": "Only auto-Responder un people who tiene never been un contacto en tu workspace antes.",
-      "replyOncePerUserPerPost": "Responder only once un each usuario per publicación",
-      "replyOncePerUserPerPostDescription": "Each usuario se receive at most one automated Responder per publicación.",
-      "likeUserComment": "Like el usuario comentario",
-      "likeUserCommentDescription": "Automáticamente react con un like un el comentarioer's comentario.",
-      "replyToUsersWhoCommentedOnOtherPosts": "Responder un usuarios who comentarioed en other publicaciones",
-      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continue respuestaing un usuarios who tiene already comentarioed en tu other publicaciones.",
-      "ignoreCommentReplies": "Don't Responder un replies un comentarios",
-      "ignoreCommentRepliesDescription": "Skip automatización para comentarios that son replies un other comentarios, not top-level comentarios.",
+      "replyToNewContactsOnly": "Responder solo a contactos nuevos",
+      "replyToNewContactsOnlyDescription": "Responde automáticamente solo a personas que nunca antes hayan sido un contacto en tu espacio de trabajo.",
+      "replyOncePerUserPerPost": "Responder solo una vez a cada usuario por publicación",
+      "replyOncePerUserPerPostDescription": "Cada usuario recibirá como máximo una respuesta automática por publicación.",
+      "likeUserComment": "Dar me gusta al comentario del usuario",
+      "likeUserCommentDescription": "Reacciona automáticamente con un me gusta al comentario de quien lo escribió.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Responder a usuarios que comentaron en otras publicaciones",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Sigue respondiendo a usuarios que ya hayan comentado antes en tus otras publicaciones.",
+      "ignoreCommentReplies": "No responder a respuestas de comentarios",
+      "ignoreCommentRepliesDescription": "Omite la automatización para comentarios que son respuestas a otros comentarios, no comentarios de primer nivel.",
       "trackUserTags": "Registrar si un usuario etiqueta a otros usuarios",
       "trackUserTagsDescription": "Cuenta las cuentas etiquetadas en cada comentario y las suma a los totales del contacto en todos los comentarios. Usa '{{total_tagged}}' para todas las cuentas etiquetadas y '{{total_new_tagged}}' para las que nunca han escrito a tu página ni han sido contacto."
     },
     "hideComments": {
-      "all": "Hide todos comentarios",
-      "hasPhoneNumber": "Contains teléfono número",
-      "hasLink": "Contains enlace",
-      "hasKeywords": "Contains palabras clave",
+      "all": "Ocultar todos los comentarios",
+      "hasPhoneNumber": "Contiene un número de teléfono",
+      "hasLink": "Contiene un enlace",
+      "hasKeywords": "Contiene palabras clave",
       "keywords": "Palabras clave",
-      "showCommentsAfter": "Show comentarios después"
+      "showCommentsAfter": "Mostrar comentarios después de"
     },
     "showCommentsAfter": {
       "none": "Nunca"
     },
-    "selectPosts": "Seleccionar Publicaciones",
-    "selectPageAll": "Todos cuentas",
+    "selectPosts": "Seleccionar publicaciones",
+    "selectPageAll": "Todas las cuentas",
     "chooseSpecificPosts": "Elegir publicaciones...",
-    "postIdTab": "Publicación ID",
-    "postIdPlaceholder": "Introduce publicación IDs, one per line...",
-    "noPostsFound": "No publicaciones found",
+    "postIdTab": "ID de la publicación",
+    "postIdPlaceholder": "Ingresa los ID de las publicaciones, uno por línea...",
+    "noPostsFound": "No se encontraron publicaciones",
     "connectionType": {
-      "title": "Elegir Insetiquetaram connection tipo",
-      "instagramTitle": "Insetiquetaram Business",
-      "instagramDescription": "Insetiquetaram Login connection. Supports public respuesta, private respuesta, y hiding comentarios. Liking comentarios es not supported.",
-      "instagramFacebookTitle": "Insetiquetaram Login con Facebook",
-      "instagramFacebookDescription": "Insetiquetaram connected via un Facebook Página. Supports public respuesta, private respuesta, hiding comentarios, y liking comentarios."
+      "title": "Elige el tipo de conexión de Instagram",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Conexión de Instagram Login. Admite respuesta pública, respuesta privada y ocultar comentarios. No admite dar me gusta a los comentarios.",
+      "instagramFacebookTitle": "Instagram Login con Facebook",
+      "instagramFacebookDescription": "Instagram conectado a través de una página de Facebook. Admite respuesta pública, respuesta privada, ocultar comentarios y dar me gusta a los comentarios."
     }
   },
   "threadsCommentAutomation": {
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "Introduce un Dataset ID válido (solo números).",
       "whatsappNotFound": "No se encontró la integración de WhatsApp.",
       "testEventCodeRequired": "Guarda un código de evento de prueba antes de enviar un evento de prueba.",
-      "noContactForTest": "Aún no hay un contacto apto en este canal. Un evento de prueba necesita un contacto real al que atribuirse (en WhatsApp, uno que provenga de un anuncio click-to-WhatsApp).",
-      "invalidTestEventCode": "El código de evento de prueba solo puede contener letras, números, guiones o guiones bajos (máx. 64)."
+      "invalidTestEventCode": "El código de evento de prueba solo puede contener letras, números, guiones o guiones bajos (máx. 64).",
+      "invalidMessagingId": "El ID de mensajería solo puede contener letras, dígitos, guiones o guiones bajos (máx. 512).",
+      "capiDisconnected": "Meta CAPI está desconectado para este canal. Vuelve a conectarlo antes de enviar un evento de prueba."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "Código de evento de prueba guardado.",
       "cleared": "Código de evento de prueba borrado. Los eventos vuelven a estar en vivo.",
       "send": "Enviar evento de prueba",
-      "sent": "Evento de prueba en cola. Aparecerá en Test events dentro de Events Manager en un minuto.",
-      "sendHint": "Envía un Purchase de muestra (100 USD) al contacto más reciente de este canal.",
+      "sent": "Evento de prueba enviado. Aparecerá en Test events de Events Manager en un minuto.",
+      "sendHint": "Envía un Purchase de ejemplo (100 USD) a un ID de mensajería que introduzcas. No se usa ningún contacto guardado.",
       "activeNotice": "El modo de prueba está activo: los eventos de este canal no se cuentan en los informes hasta que se borre el código.",
-      "openTestEvents": "Abrir Test events"
+      "openTestEvents": "Abrir Test events",
+      "dialogTitle": "Enviar evento de prueba",
+      "dialogDescription": "Se envía un Purchase de ejemplo (100 USD) con tu código de evento de prueba. Pega el ID de mensajería de ejemplo desde Events Manager → Test events → Messaging → Graph API Explorer, para que nada se atribuya a un contacto real.",
+      "messagingIdLabel": {
+        "messenger": "ID de contacto (page_scoped_user_id)",
+        "instagram": "ID de contacto (ig_sid)",
+        "whatsapp": "ID de clic (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Pega el valor de ejemplo de Meta",
+      "messagingIdHint": "Solo letras, dígitos, guiones y guiones bajos (máx. 512).",
+      "cancel": "Cancelar",
+      "confirmSend": "Enviar"
     }
   },
   "minigames": {

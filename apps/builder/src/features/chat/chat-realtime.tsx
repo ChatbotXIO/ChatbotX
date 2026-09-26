@@ -3,6 +3,7 @@
 import { getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef } from "react"
+import { useShallow } from "zustand/react/shallow"
 import type { RealtimeHandlerMap } from "@/features/realtime/types"
 import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-realtime-events"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -29,18 +30,47 @@ export function ChatRealtime() {
     })
 
   const {
+    applyAgentLastReadAt,
+    assignMessageCommentId,
+    bubbleConversationToTop,
     handleNewMessage,
     markMessagesDeleted,
     markMessageFailed,
-    assignMessageCommentId,
-    updateMessageText,
-    updateMessageContentAttributes,
+    openConversation,
+    resumeConversationHeadRefresh,
     updateContact,
     updateConversations,
-    bubbleConversationToTop,
-    openConversation,
-  } = useChatStore((state) => state)
+    updateMessageContentAttributes,
+    updateMessageText,
+  } = useChatStore(
+    useShallow((state) => ({
+      applyAgentLastReadAt: state.applyAgentLastReadAt,
+      assignMessageCommentId: state.assignMessageCommentId,
+      bubbleConversationToTop: state.bubbleConversationToTop,
+      handleNewMessage: state.handleNewMessage,
+      markMessagesDeleted: state.markMessagesDeleted,
+      markMessageFailed: state.markMessageFailed,
+      openConversation: state.openConversation,
+      resumeConversationHeadRefresh: state.resumeConversationHeadRefresh,
+      updateContact: state.updateContact,
+      updateConversations: state.updateConversations,
+      updateMessageContentAttributes: state.updateMessageContentAttributes,
+      updateMessageText: state.updateMessageText,
+    })),
+  )
   const conversationIdParam = useConversationIdParam()
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        resumeConversationHeadRefresh(workspaceId)
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [resumeConversationHeadRefresh, workspaceId])
 
   // Dedupes newly-ringing calls so each bubbles the conversation to top only
   // once. Held in a ref (not created inside the effect) so Strict Mode's
@@ -192,6 +222,19 @@ export function ChatRealtime() {
         assignedUser: null,
         assignedInboxTeam: null,
       })
+    },
+    conversationUpdated: (event) => {
+      const { conversationIds, changes } = event.data
+      // This channel only advances read state. Cross-tab mark-unread (null) is
+      // intentionally unsupported, matching the existing behavior.
+      if (!changes.agentLastReadAt) {
+        return
+      }
+      const agentLastReadAt = new Date(changes.agentLastReadAt)
+      if (Number.isNaN(agentLastReadAt.getTime())) {
+        return
+      }
+      applyAgentLastReadAt(conversationIds, agentLastReadAt)
     },
   }
 

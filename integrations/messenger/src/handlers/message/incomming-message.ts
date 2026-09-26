@@ -12,6 +12,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { getMessageAttachmentEntity } from "../../apis/attachment"
 import { MessengerException } from "../../exception"
+import { type MessengerEcho, parseEcho } from "../../lib/echo"
 import { logger } from "../../lib/logger"
 import {
   type MessengerAuthValue,
@@ -78,6 +79,33 @@ const getMessageLocation = (message: MessengerMessage) => {
   }
 }
 
+type MessageTextResolver = (
+  message: MessengerMessage,
+  echo: MessengerEcho,
+) => string | undefined
+
+/**
+ * Where a stored message's text comes from, in priority order. Add a resolver
+ * here to derive text from another payload shape.
+ */
+const messageTextResolvers: MessageTextResolver[] = [
+  (message) => message.text,
+  (_message, echo) => echo.templateTitle,
+]
+
+const resolveMessageText = (
+  message: MessengerMessage,
+  echo: MessengerEcho,
+): string | undefined => {
+  for (const resolve of messageTextResolvers) {
+    const text = resolve(message, echo)
+    if (text !== undefined) {
+      return text
+    }
+  }
+  return
+}
+
 export const receiveMessage: MessageHandlers<MessengerAuthValue>["receiveMessage"] =
   async (props) => {
     const { ctx, data } = props
@@ -109,6 +137,7 @@ const getMessageEntity = async (
   let referral: MessageReferral | null = null
   let buttonTitle: string | null = null
 
+  const echo = parseEcho(messaging.message)
   const sourceId =
     messaging.sender.id === ctx.auth.metadata.pageId
       ? messaging.recipient.id
@@ -125,7 +154,7 @@ const getMessageEntity = async (
         messaging.sender.id === ctx.auth.metadata.pageId
           ? messageTypes.enum.outgoing
           : messageTypes.enum.incoming,
-      text: messaging.message.text,
+      text: resolveMessageText(messaging.message, echo),
       contentType: location
         ? contentTypes.enum.location
         : contentTypes.enum.text,
@@ -182,5 +211,7 @@ const getMessageEntity = async (
     referral,
     buttonTitle,
     contact,
+    echoOrigin: echo.origin,
+    echoAppId: echo.appId,
   }
 }

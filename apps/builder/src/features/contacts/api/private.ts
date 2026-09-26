@@ -6,6 +6,7 @@ import { authorizedAPI } from "@/orpc"
 import {
   buildContactPermissionScope,
   requireContactPermissionScope,
+  requireContactPermissionScopeForMember,
 } from "../permissions"
 import { getContact } from "../queries/get-contact.query"
 import { getExportFile } from "../queries/get-export-file.query"
@@ -21,7 +22,7 @@ import {
   listContactInboxesAudiencePreviewRequest,
   listContactInboxesAudiencePreviewResponse,
   listContactsRequest,
-  listContactsResponse,
+  listContactsTableResponse,
 } from "../schema/query"
 
 export const contactsAuthenticatedAPI = {
@@ -57,10 +58,13 @@ export const contactsAuthenticatedAPI = {
     })
     .input(listContactsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(listContactsResponse)
-    .handler(async ({ input }) => {
-      const { workspaceId, ...rest } = input
-      return await listContacts({ ...rest, workspaceId })
+    .output(listContactsTableResponse)
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await listContacts(input, scope)
     }),
 
   countContactsAuthenticatedAPI: authorizedAPI
@@ -73,7 +77,13 @@ export const contactsAuthenticatedAPI = {
     .input(listContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ total: z.number() }))
-    .handler(async ({ input }) => await countContacts(input)),
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await countContacts(input, scope)
+    }),
 
   countContactInboxesAuthenticatedAPI: authorizedAPI
     .route({

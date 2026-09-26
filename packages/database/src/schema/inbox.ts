@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   pgTable,
   text,
@@ -27,6 +28,7 @@ export const inboxModel = pgTable(
         onUpdate: "cascade",
       }),
     status: text().notNull().default("connected"),
+    markReadOnOutbound: boolean().notNull().default(false),
     disconnectedAt: timestamp(timestampConfig),
     disconnectReason: text().$type<InboxDisconnectReason>(),
   },

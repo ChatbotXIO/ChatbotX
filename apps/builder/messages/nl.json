@@ -336,6 +336,7 @@
       "message": "Je laatste betaling is mislukt. Werk je betaalmethode bij om je werkruimte actief te houden."
     },
     "trial": {
+      "planName": "Proefperiode",
       "daysLeft": "Proefperiode: nog {days} dagen",
       "endsTomorrow": "Proefperiode eindigt morgen",
       "expired": "Je proefperiode is afgelopen — upgrade om je werkruimte actief te houden",
@@ -449,8 +450,7 @@
       "audienceFilter": "Doelgroepfilter",
       "noAudienceFilter": "Geen doelgroepfilter",
       "template": "Sjabloon",
-      "integration": "Integratie",
-      "sendLimit": "Limiet"
+      "integration": "Integratie"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Upgrade je abonnement",
+      "sendRate": "Je huidige {plan}-abonnement ondersteunt broadcasts met een maximale verzendsnelheid van {rate} berichten per minuut. Upgrade je abonnement om broadcasts tot {multiplier}x sneller te verzenden.",
+      "activeBroadcasts": "Je huidige {plan}-abonnement voert {max, plural, one {# broadcast} other {# broadcasts}} tegelijk uit. Upgrade je abonnement om meer broadcasts tegelijk uit te voeren."
+    },
     "sendLimit": {
       "title": "Limiet",
       "hint": "Laat leeg om naar alle overeenkomende contacten te verzenden.",
+      "rateHint": "Laat leeg om de standaardsnelheid te gebruiken.",
+      "rangeSummary": "Contacten #{start} – #{end}",
+      "rangeFromSummary": "Vanaf contact #{start}",
       "rangeLabel": "Contactbereik",
       "fromLabel": "Van",
       "toLabel": "Tot",
       "allPlaceholder": "Alle",
-      "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen",
-      "rangeSummary": "Contacten #{start} – #{end}",
-      "rangeFromSummary": "Vanaf contact #{start}",
-      "rateSummary": "{rate} berichten / minuut"
+      "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen"
     }
   },
   "commentAutomation": {
@@ -571,6 +576,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(optioneel)",
     "marketingMessagesConfigId": {
       "label": "Configuratie-ID voor marketingberichten",
       "description": "Configuratie-ID van Facebook Login for Business die wordt gebruikt om de marketing_messages_messenger-machtiging aan te vragen."
@@ -4230,6 +4236,14 @@
     "invalidInvitation": "Deze uitnodiging is ongeldig of verlopen.",
     "workspaceUnavailable": "Deze workspace is niet meer beschikbaar."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Botberichten als gelezen markeren",
+      "enabled": "Ingeschakeld",
+      "disabled": "Uitgeschakeld",
+      "description": "Indien ingeschakeld markeert de bot zijn eigen berichten automatisch als gelezen"
+    }
+  },
   "inboxTeams": {
     "title": "Inboxteams"
   },
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "Voer een geldig Dataset ID in (alleen cijfers).",
       "whatsappNotFound": "WhatsApp-integratie niet gevonden.",
       "testEventCodeRequired": "Sla een testgebeurteniscode op voordat je een testgebeurtenis verzendt.",
-      "noContactForTest": "Nog geen geschikt contact op dit kanaal. Een testgebeurtenis heeft een echt contact nodig om aan toe te wijzen (voor WhatsApp een contact uit een click-to-WhatsApp-advertentie).",
-      "invalidTestEventCode": "De testgebeurteniscode mag alleen letters, cijfers, koppeltekens of underscores bevatten (max. 64)."
+      "invalidTestEventCode": "De testgebeurteniscode mag alleen letters, cijfers, koppeltekens of underscores bevatten (max. 64).",
+      "invalidMessagingId": "Het messaging-id mag alleen letters, cijfers, koppeltekens of onderstrepingstekens bevatten (max. 512).",
+      "capiDisconnected": "Meta CAPI is losgekoppeld voor dit kanaal. Koppel het opnieuw voordat je een testgebeurtenis verzendt."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "Testgebeurteniscode opgeslagen.",
       "cleared": "Testgebeurteniscode gewist. Gebeurtenissen zijn weer live.",
       "send": "Testgebeurtenis verzenden",
-      "sent": "Testgebeurtenis in wachtrij geplaatst. Deze verschijnt binnen een minuut onder Test events in Events Manager.",
-      "sendHint": "Verstuurt één voorbeeld-Purchase (100 USD) naar het meest recente contact van dit kanaal.",
+      "sent": "Testgebeurtenis verzonden. Deze verschijnt binnen een minuut onder Test events in Events Manager.",
+      "sendHint": "Verstuurt één voorbeeld-Purchase (100 USD) naar een messaging-id dat je invoert. Er wordt geen opgeslagen contact gebruikt.",
       "activeNotice": "Testmodus staat aan: gebeurtenissen van dit kanaal worden pas weer meegeteld in rapporten zodra de code is gewist.",
-      "openTestEvents": "Test events openen"
+      "openTestEvents": "Test events openen",
+      "dialogTitle": "Testgebeurtenis verzenden",
+      "dialogDescription": "Eén voorbeeld-Purchase (100 USD) wordt verzonden met je testgebeurteniscode. Plak het voorbeeld-messaging-id uit Events Manager → Test events → Messaging → Graph API Explorer, zodat niets aan een echt contact wordt toegeschreven.",
+      "messagingIdLabel": {
+        "messenger": "Contact-id (page_scoped_user_id)",
+        "instagram": "Contact-id (ig_sid)",
+        "whatsapp": "Klik-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Plak de voorbeeldwaarde van Meta",
+      "messagingIdHint": "Alleen letters, cijfers, koppeltekens en onderstrepingstekens (max. 512).",
+      "cancel": "Annuleren",
+      "confirmSend": "Verzenden"
     }
   },
   "minigames": {

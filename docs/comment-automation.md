@@ -115,14 +115,14 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
 | `post` (`all` / `postIds`) | Which posts | `matchPost` — `all` always true; `postIds` matches via normalized trailing id. |
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
-| `includeKeywords` (`all`/`equal`/`contain`/`mentions`) | "Reply to" | `matchKeywords` — lowercased both sides. `equal` = whole comment equals a keyword; `contain` = substring. `mentions` ignores keywords: the comment must tag **at least** `includeKeywords.mentionCount` (1–5) accounts — `matchMentionCount`, miss reason `mentionCountNotMatched`. The mention list is the same one tag tracking uses (see [Tag tracking](#tag-tracking)). |
-| `excludeKeywords` + `excludeKeywordsType` (`equal`/`contain`, default `contain`) | Text must not match | `matchKeywords` — `contain` = substring, `equal` = the whole trimmed comment equals a keyword; lowercased both sides. |
+| `includeKeywords` (`all`/`equal`/`contain`/`mentions`) | "Reply to" | `matchKeywords` — both sides lowercased and accent-folded (`normalizeForMatch`). `equal` = whole comment equals a keyword; `contain` = substring. `mentions` ignores keywords: the comment must tag **at least** `includeKeywords.mentionCount` (1–5) accounts — `matchMentionCount`, miss reason `mentionCountNotMatched`. The mention list is the same one tag tracking uses (see [Tag tracking](#tag-tracking)). |
+| `excludeKeywords` + `excludeKeywordsType` (`equal`/`contain`, default `contain`) | Text must not match | `matchKeywords` — `contain` = substring, `equal` = the whole trimmed comment equals a keyword; lowercased and accent-folded both sides. |
 | `options.replyToNewContactsOnly` | Only first-time contacts | `getPriorContactInboxCount(contactId) > 1` → skip. Counts `ContactInbox` rows. |
 | `options.replyOncePerUserPerPost` | Once per user per post | `findDedup(automationId, contactId, postId)` exists → skip. |
 | `options.replyToUsersWhoCommentedOnOtherPosts` (default **true**) | If off, only engage each user on their first post | When `false`, `hasRepliedOnOtherPost` (a dedup row with a different `postId`) → skip. |
 | `options.likeUserComment` | Auto-like the comment | Runs only if the incoming comment's DB message was found (`findBySourceId`). |
 | `options.trackUserTags` | Count who the commenter tagged | Not a filter — never skips. Adds the comment's counts to `Contact.totalTagged`/`totalNewTagged`, which back `{{total_tagged}}`/`{{total_new_tagged}}`. Once per comment, ahead of the reply filters. See [Tag tracking](#tag-tracking). |
-| `hideComments.*` | Auto-hide matching comments | `applyHideComments` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case-insensitive), `hasImage`/`hasVideo`/`hasGif` (attachment lookup, see below), `hasEmoji` (`\p{Extended_Pictographic}` on the text). A row written before `hasGif`/`hasEmoji` existed lacks the keys — absent reads as off. |
+| `hideComments.*` | Auto-hide matching comments | `applyHideComments` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case- and accent-insensitive), `hasImage`/`hasVideo`/`hasGif` (attachment lookup, see below), `hasEmoji` (`\p{Extended_Pictographic}` on the text). A row written before `hasGif`/`hasEmoji` existed lacks the keys — absent reads as off. |
 | `hideComments.showCommentsAfter` | Auto-unhide delay | Enqueues a delayed unhide job (`jobId = unhide-comment-${commentId}`). |
 | `publicReply` / `privateReply` | The reply | See [Reply types](#reply-types). |
 | `replyAfter` | Delay before replying | `computeDelayMs` → passed as BullMQ `{ delay }`. |
@@ -633,7 +633,7 @@ covers: `isCommentReply`, reply filtering, `matchPost` normalization, the
 `replyToUsersWhoCommentedOnOtherPosts` gate, AIAgent enqueue (public/private), the
 `processCommentAIReply` delivery paths, per-channel private-reply routing (messenger /
 instagram / instagramFacebook) and flow-reply comment anchors, and hide-keyword
-case-insensitivity. Run:
+case- and accent-insensitivity. Run:
 
 ```bash
 pnpm --filter worker vitest run __tests__/comment-automation.test.ts

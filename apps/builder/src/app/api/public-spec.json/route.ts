@@ -7,6 +7,7 @@ import { getTenantSettings } from "@/features/tenant/utils"
 import {
   publicSpecGenerateOptions,
   withChannelApiTokenSecurity,
+  withIdempotencyKeyHeader,
 } from "@/lib/orpc/public-spec"
 import { publicRouter } from "@/routers/public"
 
@@ -51,7 +52,9 @@ async function buildSpecDocument(props: {
     },
   })
 
-  const document = spec ? withChannelApiTokenSecurity(spec) : spec
+  const document = spec
+    ? withIdempotencyKeyHeader(withChannelApiTokenSecurity(spec))
+    : spec
   return document ? JSON.stringify(document) : null
 }
 

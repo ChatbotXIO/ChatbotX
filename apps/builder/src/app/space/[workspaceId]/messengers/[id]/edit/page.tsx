@@ -1,3 +1,4 @@
+import { inboxService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 
 import { findIntegrationMessenger } from "@/features/integration-messenger/queries"
@@ -17,10 +18,14 @@ export default async function UpdateMessengerPage(props: {
     workspaceId,
     id,
   })
+  const inbox = await inboxService.find({
+    where: { id: integrationMessenger.inboxId, workspaceId },
+  })
 
   return (
     <UpdateMessengerForm
       integrationMessenger={integrationMessenger}
+      markReadOnOutbound={inbox?.markReadOnOutbound ?? false}
       workspaceId={workspaceId}
     />
   )

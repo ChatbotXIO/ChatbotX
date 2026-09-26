@@ -336,6 +336,7 @@
       "message": "前回の支払いに失敗しました。ワークスペースを引き続き利用するには、支払い方法を更新してください。"
     },
     "trial": {
+      "planName": "トライアル",
       "daysLeft": "トライアル：残り{days}日",
       "endsTomorrow": "トライアルは明日終了します",
       "expired": "トライアルは終了しました — ワークスペースを引き続き利用するにはアップグレードしてください",
@@ -449,8 +450,7 @@
       "audienceFilter": "オーディエンスフィルター",
       "noAudienceFilter": "オーディエンスフィルターなし",
       "template": "テンプレート",
-      "integration": "連携",
-      "sendLimit": "上限"
+      "integration": "連携"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "プランをアップグレード",
+      "sendRate": "現在の{plan}プランでは、ブロードキャストの最大送信速度は1分あたり{rate}件です。プランをアップグレードすると、ブロードキャストを最大{multiplier}倍高速に送信できます。",
+      "activeBroadcasts": "現在の{plan}プランでは、一度に{max, plural, one {#件のブロードキャスト} other {#件のブロードキャスト}}を実行できます。複数のブロードキャストを同時に実行するには、プランをアップグレードしてください。"
+    },
     "sendLimit": {
       "title": "上限",
       "hint": "空欄にすると、条件に一致するすべての連絡先に送信されます。",
+      "rateHint": "空欄にすると既定の送信速度が使用されます。",
+      "rangeSummary": "連絡先 #{start} – #{end}",
+      "rangeFromSummary": "連絡先番号 {start} から",
       "rangeLabel": "連絡先の範囲",
       "fromLabel": "開始",
       "toLabel": "終了",
       "allPlaceholder": "すべて",
-      "rangeEndBeforeStart": "終了位置は開始位置より前にできません",
-      "rangeSummary": "連絡先 #{start} – #{end}",
-      "rangeFromSummary": "連絡先番号 {start} から",
-      "rateSummary": "{rate} 件 / 分"
+      "rangeEndBeforeStart": "終了位置は開始位置より前にできません"
     }
   },
   "commentAutomation": {
@@ -758,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(任意)",
     "marketingMessagesConfigId": {
       "label": "マーケティングメッセージ構成ID",
       "description": "marketing_messages_messenger権限をリクエストするために使用するFacebookログイン（ビジネス用）の構成IDです。"
@@ -4209,6 +4215,14 @@
     "invalidInvitation": "この招待は無効か、有効期限が切れています。",
     "workspaceUnavailable": "このワークスペースは利用できなくなりました。"
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "ボットのメッセージを既読にする",
+      "enabled": "有効",
+      "disabled": "無効",
+      "description": "有効にすると、ボットが自身のメッセージを自動的に既読にします"
+    }
+  },
   "inboxTeams": {
     "title": "受信トレイチーム"
   },
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "有効なデータセットID（数字のみ）を入力してください。",
       "whatsappNotFound": "WhatsApp の連携が見つかりません。",
       "testEventCodeRequired": "テストイベントを送信する前にテストイベントコードを保存してください。",
-      "noContactForTest": "このチャネルにはまだ対象となる連絡先がありません。テストイベントには紐付け先となる実際の連絡先が必要です（WhatsApp の場合は click-to-WhatsApp 広告経由の連絡先）。",
-      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。"
+      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。",
+      "invalidMessagingId": "メッセージングIDに使えるのは英字、数字、ハイフン、アンダースコアのみです（最大512文字）。",
+      "capiDisconnected": "このチャネルのMeta CAPIは切断されています。テストイベントを送信する前に再接続してください。"
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "テストイベントコードを保存しました。",
       "cleared": "テストイベントコードをクリアしました。イベントは再びライブになります。",
       "send": "テストイベントを送信",
-      "sent": "テストイベントをキューに追加しました。1分以内に Events Manager の Test events に表示されます。",
-      "sendHint": "このチャネルの最新の連絡先にサンプルの Purchase（100 USD）を1件送信します。",
+      "sent": "テストイベントを送信しました。1分以内にEvents ManagerのTest eventsに表示されます。",
+      "sendHint": "入力したメッセージングIDにサンプルのPurchase（100 USD）を1件送信します。保存済みの連絡先は使用しません。",
       "activeNotice": "テストモードが有効です。コードをクリアするまで、このチャネルのイベントはレポートにカウントされません。",
-      "openTestEvents": "Test events を開く"
+      "openTestEvents": "Test events を開く",
+      "dialogTitle": "テストイベントを送信",
+      "dialogDescription": "テストイベントコード付きでサンプルのPurchase（100 USD）を1件送信します。実際の連絡先に紐付かないよう、Events Manager → Test events → Messaging → Graph API Explorer のサンプルメッセージングIDを貼り付けてください。",
+      "messagingIdLabel": {
+        "messenger": "連絡先ID（page_scoped_user_id）",
+        "instagram": "連絡先ID（ig_sid）",
+        "whatsapp": "クリックID（ctwa_clid）"
+      },
+      "messagingIdPlaceholder": "Metaのサンプル値を貼り付け",
+      "messagingIdHint": "英字、数字、ハイフン、アンダースコアのみ（最大512文字）。",
+      "cancel": "キャンセル",
+      "confirmSend": "送信"
     }
   },
   "minigames": {

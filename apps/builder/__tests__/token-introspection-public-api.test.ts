@@ -51,6 +51,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
+  BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
   ChatbotXException: class extends Error {},
 }))
 

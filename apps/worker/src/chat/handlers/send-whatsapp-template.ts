@@ -44,9 +44,14 @@ import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
 } from "../utils/retry"
-import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
+// Disabled — see the commented-out enqueueTemplateSentEvaluation call below.
+// import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
 import { convertButtonsToTemplate } from "./send-flow-step"
-import { sendFlowStepToChannel } from "./send-message"
+import {
+  isDeliveredDirectMessage,
+  markConversationReadAfterDelivery,
+  sendFlowStepToChannel,
+} from "./send-message"
 
 // Meta rejects (error 131062) an authentication-category template sent to a
 // Business-Scoped User ID (BSUID) recipient. Declared as data so the guard
@@ -309,7 +314,7 @@ export async function processWhatsappTemplate(
       await contactInboxService.invalidateTracking(trackingInvalidation)
     }
 
-    broadcastToWorkspaceParty(conversation.workspaceId, {
+    await broadcastToWorkspaceParty(conversation.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: newMessage,
     })
@@ -339,14 +344,31 @@ export async function processWhatsappTemplate(
       },
     })
 
-    await enqueueTemplateSentEvaluation({
-      workspaceId: conversation.workspaceId,
-      channel: "whatsapp",
-      integrationId: validated.inbox.integrationWhatsapp.id,
-      contactInboxId: contactInbox.id,
-      templateId: template.id,
-      messageId: newMessage.id,
-    })
+    // Same rule as a flow reply: a delivered bot DM honours the inbox's
+    // markReadOnOutbound option. Templates get no channel echo on WhatsApp, so
+    // the send result is the only delivery signal.
+    if (isDeliveredDirectMessage({ message: createdMessage, result })) {
+      await markConversationReadAfterDelivery({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        inboxId: contactInbox.inboxId,
+        readAt: createdMessage.createdAt,
+      })
+    }
+
+    // 2026-09-24: ads-conversion rule engine is hidden and unused. This
+    // follow-up job used to be enqueued after EVERY template send and only
+    // added load to the integration queue (one job + one attribution lookup
+    // per send, then exit). Kept commented out instead of deleted so it can
+    // be re-enabled if the rule engine ever ships again.
+    // await enqueueTemplateSentEvaluation({
+    //   workspaceId: conversation.workspaceId,
+    //   channel: "whatsapp",
+    //   integrationId: validated.inbox.integrationWhatsapp.id,
+    //   contactInboxId: contactInbox.id,
+    //   templateId: template.id,
+    //   messageId: newMessage.id,
+    // })
 
     await emit(messageEventTypeSchema.enum["message:sent"], {
       ...eventLogData,

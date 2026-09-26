@@ -103,7 +103,7 @@ export const createMessageRequest = z
       inboxId: zodBigintAsString()
         .optional()
         .describe(
-          "ID of the channel to send the message on. null to send message on the last interacted channel (if any).",
+          "Optional numeric channel inbox ID. Omit this field to use the existing inbox resolution fallback.",
         ),
       clientId: zodBigintAsString()
         .optional()

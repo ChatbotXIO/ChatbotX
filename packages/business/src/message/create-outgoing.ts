@@ -26,6 +26,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
+import { broadcastToWorkspaceParty } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { getPublicFileUrl } from "../utils"
 
@@ -258,26 +259,18 @@ export const createOutgoing = async (props: {
     })),
   }
 
+  await broadcastToWorkspaceParty(messageWithAttachments.workspaceId, {
+    eventType: RealtimeEventType.messageCreated,
+    data: {
+      ...messageWithAttachments,
+      clientId: parsedInput.clientId,
+    },
+  })
+
   const jobs: {
     jobType: (typeof ChatJobAction)[keyof typeof ChatJobAction]
     promise: Promise<unknown>
   }[] = [
-    {
-      jobType: ChatJobAction.broadcastEvent,
-      promise: chatQueue.add(ChatJobAction.broadcastEvent, {
-        type: ChatJobAction.broadcastEvent,
-        data: {
-          workspaceId: messageWithAttachments.workspaceId,
-          event: {
-            eventType: RealtimeEventType.messageCreated,
-            data: {
-              ...messageWithAttachments,
-              clientId: parsedInput.clientId,
-            },
-          },
-        },
-      }),
-    },
     {
       jobType: ChatJobAction.sendChannelMessage,
       promise: chatQueue.add(

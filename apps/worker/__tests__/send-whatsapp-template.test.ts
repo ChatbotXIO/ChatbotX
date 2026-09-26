@@ -22,6 +22,7 @@ const {
   mockEnqueueIntegrationJob,
   mockFindSendableBroadcast,
   mockResetContactForResume,
+  mockMarkReadByOutbound,
 } = vi.hoisted(() => {
   const mockRepositoryCreate = vi.fn().mockResolvedValue({
     id: "msg-created",
@@ -75,6 +76,7 @@ const {
     mockEnqueueIntegrationJob: vi.fn().mockResolvedValue(undefined),
     mockFindSendableBroadcast: vi.fn().mockResolvedValue({ id: "broadcast-1" }),
     mockResetContactForResume: vi.fn().mockResolvedValue(undefined),
+    mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
   }
 })
 
@@ -106,6 +108,7 @@ vi.mock("@chatbotx.io/business", () => ({
     invalidateTracking: mockInvalidateTracking,
   },
   conversationService: {
+    markReadByOutbound: mockMarkReadByOutbound,
     recordOutboundMessageActivity: mockRecordOutboundMessageActivity,
   },
   broadcastService: {
@@ -162,7 +165,15 @@ vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
+// The delivery helpers are stubbed with the real contract (sentCount > 0 →
+// delivered; mark-read forwards to conversationService.markReadByOutbound) so
+// this file checks the handler's wiring; the helpers themselves are covered by
+// send-message-handler.test.ts.
 vi.mock("../src/chat/handlers/send-message", () => ({
+  isDeliveredDirectMessage: ({ result }: { result: { sentCount: number } }) =>
+    result.sentCount > 0,
+  markConversationReadAfterDelivery: (props: unknown) =>
+    mockMarkReadByOutbound(props),
   sendFlowStepToChannel: mockSendFlowStep,
 }))
 
@@ -278,6 +289,25 @@ describe("processWhatsappTemplate", () => {
         conversationId: "conv-1",
       }),
     )
+    // Template sends honour the inbox option like any other bot message.
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: new Date("2026-01-01T00:00:00Z"),
+    })
+  })
+
+  test("does not mark the conversation read when the provider accepted nothing", async () => {
+    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [], sentCount: 0 })
+
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+    })
+
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 
   test("does NOT call db.insert directly for message creation — goes through the message repository", async () => {
@@ -418,42 +448,21 @@ describe("processWhatsappTemplate", () => {
     expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
   })
 
-  test("enqueues ads conversion evaluation after a successful template send", async () => {
+  // The ads-conversion rule engine is hidden and unused; the follow-up
+  // evaluation job used to be enqueued after every template send and only
+  // added load to the integration queue. It is disabled (commented out) in
+  // the handler — see enqueue-template-sent-evaluation.ts.
+  test("does not enqueue an ads conversion evaluation job after a template send", async () => {
     await processWhatsappTemplate({
       conversation: fakeConversation,
       contactInbox: fakeContactInbox,
       template: fakeTemplate,
     })
 
-    expect(mockEnqueueIntegrationJob).toHaveBeenCalledWith(
-      {
-        type: "evaluateTemplateSent",
-        data: {
-          workspaceId: "ws-1",
-          channel: "whatsapp",
-          integrationId: "iw-1",
-          contactInboxId: "ci-1",
-          templateId: "tmpl-wa-1",
-        },
-      },
-      { jobId: "ads-conversion-evaluate-template-msg-created" },
+    const enqueuedTypes = mockEnqueueIntegrationJob.mock.calls.map(
+      ([job]: [{ type: string }]) => job.type,
     )
-    expect(mockEnqueueIntegrationJob.mock.calls[0][1].jobId).not.toContain(":")
-  })
-
-  test("swallows ads conversion evaluation enqueue failures after send success", async () => {
-    mockEnqueueIntegrationJob.mockRejectedValueOnce(new Error("redis down"))
-
-    await expect(
-      processWhatsappTemplate({
-        conversation: fakeConversation,
-        contactInbox: fakeContactInbox,
-        template: fakeTemplate,
-      }),
-    ).resolves.toBeDefined()
-
-    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
-    expect(mockEnqueueIntegrationJob).toHaveBeenCalledTimes(1)
+    expect(enqueuedTypes).not.toContain("evaluateTemplateSent")
   })
 
   test("emits message:failed on error and rethrows", async () => {
@@ -587,6 +596,8 @@ describe("sendWhatsappTemplateMessage — stop/resume guard", () => {
 
     expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
     expect(mockResetContactForResume).not.toHaveBeenCalled()
+    // A broadcast template is a bot DM like any other: one mark-read per recipient.
+    expect(mockMarkReadByOutbound).toHaveBeenCalledTimes(1)
   })
 })
 

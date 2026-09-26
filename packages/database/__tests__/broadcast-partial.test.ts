@@ -19,10 +19,12 @@ import {
   isTargetsTemplateSendWithoutTemplate,
   normalizeBroadcastSendLimit,
   requiresRecentInteractionWindow,
+  resolveActivationSendRate,
   resolveAudiencePageWindow,
   resolveBroadcastAudienceRange,
   resolveBroadcastSendRatePerMinute,
   resolveBroadcastTerminalStatus,
+  resolveSubmittedSendRatePatch,
 } from "../src/partials/broadcast"
 
 describe("requiresRecentInteractionWindow", () => {
@@ -515,6 +517,24 @@ describe("resolveBroadcastSendRatePerMinute", () => {
   })
 })
 
+describe("resolveActivationSendRate", () => {
+  test("keeps the stored rate when no value is submitted", () => {
+    expect(
+      resolveActivationSendRate({ submitted: undefined, stored: 250 }),
+    ).toBe(250)
+  })
+
+  test("uses a submitted numeric rate", () => {
+    expect(resolveActivationSendRate({ submitted: 120, stored: 250 })).toBe(120)
+  })
+
+  test("uses submitted null to clear the stored rate", () => {
+    expect(resolveActivationSendRate({ submitted: null, stored: 250 })).toBe(
+      null,
+    )
+  })
+})
+
 describe("broadcastSendLimitSchema", () => {
   test("accepts null, undefined, and the max rate", () => {
     expect(
@@ -583,5 +603,23 @@ describe("broadcastSendLimitIssues", () => {
     expect(broadcastSendLimitIssues.rangeEndBeforeStart).toBe(
       "broadcastSendLimit.rangeEndBeforeStart",
     )
+  })
+})
+
+describe("resolveSubmittedSendRatePatch", () => {
+  test("returns no patch when the rate was not submitted", () => {
+    expect(resolveSubmittedSendRatePatch(undefined)).toBeUndefined()
+  })
+
+  test("returns a patch for a submitted number", () => {
+    expect(resolveSubmittedSendRatePatch(120)).toEqual({
+      sendRatePerMinute: 120,
+    })
+  })
+
+  test("returns a clearing patch for a submitted null", () => {
+    expect(resolveSubmittedSendRatePatch(null)).toEqual({
+      sendRatePerMinute: null,
+    })
   })
 })

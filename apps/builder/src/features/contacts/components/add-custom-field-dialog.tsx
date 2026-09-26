@@ -43,11 +43,13 @@ import { addContactCustomFieldRequest } from "../schema/contact-custom-field"
 type AddContactCustomFieldDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function AddContactCustomFieldDialog({
   trigger,
   ids,
+  onSuccess,
 }: AddContactCustomFieldDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -67,6 +69,7 @@ export default function AddContactCustomFieldDialog({
           )
           form.reset()
           setOpen(false)
+          onSuccess?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {

@@ -40,9 +40,11 @@ import {
   isTemplateSendWithoutPage,
   normalizeBroadcastSendLimit,
   requiresRecentInteractionWindow,
+  resolveActivationSendRate,
   resolveAudiencePageWindow,
   resolveBroadcastTargetMode,
   resolveBroadcastTemplateSend,
+  resolveSubmittedSendRatePatch,
   usesBroadcastTargets,
   withBroadcastTargets,
 } from "@chatbotx.io/database/partials"
@@ -100,6 +102,10 @@ import { contactInboxService } from "../contact-inbox/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
+import {
+  broadcastPlanPolicyService,
+  type RestrictedBroadcastPlanContext,
+} from "./plan-policy.service"
 import type {
   BroadcastAudienceInput,
   BroadcastAudiencePreviewRow,
@@ -416,6 +422,66 @@ const isContactFilterShape = (
 }
 
 class BroadcastService extends BaseService {
+  private async activateWithinPlan<T>(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      channel: string
+      restriction: RestrictedBroadcastPlanContext
+      sendRatePerMinute: number | null | undefined
+      excludeBroadcastId?: string
+    },
+    write: (override: { sendRatePerMinute: number }) => Promise<T>,
+  ): Promise<T> {
+    broadcastPlanPolicyService.assertSendRateAllowed(
+      input.restriction,
+      input.sendRatePerMinute,
+    )
+    await broadcastPlanPolicyService.lockActivation(tx, input.workspaceId)
+    await broadcastPlanPolicyService.assertActiveSlotAvailable(tx, {
+      workspaceId: input.workspaceId,
+      channel: input.channel,
+      ctx: input.restriction,
+      excludeBroadcastId: input.excludeBroadcastId,
+    })
+    return await write(
+      broadcastPlanPolicyService.resolveSendRateOverride(
+        input.restriction,
+        input.sendRatePerMinute,
+      ),
+    )
+  }
+
+  /**
+   * Restricted activation of a row the caller has already locked: the rate
+   * checked and stored is the submitted one, else the row's stored one.
+   */
+  private async activateRestrictedRow<T>(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      restriction: RestrictedBroadcastPlanContext
+      row: { id: string; channel: string; sendRatePerMinute: number | null }
+      submittedSendRate: number | null | undefined
+    },
+    write: (override: { sendRatePerMinute: number }) => Promise<T>,
+  ): Promise<T> {
+    return await this.activateWithinPlan(
+      tx,
+      {
+        workspaceId: input.workspaceId,
+        channel: input.row.channel,
+        restriction: input.restriction,
+        sendRatePerMinute: resolveActivationSendRate({
+          submitted: input.submittedSendRate,
+          stored: input.row.sendRatePerMinute,
+        }),
+        excludeBroadcastId: input.row.id,
+      },
+      write,
+    )
+  }
+
   /**
    * Paginated broadcast list with relations — shared by the public API
    * (`GET /v1/broadcasts`) and the builder's broadcasts page.
@@ -790,32 +856,89 @@ class BroadcastService extends BaseService {
     broadcastId: string
     schedulesType: BroadcastScheduleType
     schedulesAt: Date
+    sendRatePerMinute?: number | null
   }): Promise<{ id: string }> {
-    const result = await db.transaction(async (tx) => {
-      const [row] = await tx
-        .update(broadcastModel)
-        .set({
-          status: broadcastStatuses.enum.scheduled,
-          schedulesType: input.schedulesType,
-          schedulesAt: input.schedulesAt,
-        })
-        .where(this.draftScope(input.workspaceId, input.broadcastId))
-        .returning({
-          id: broadcastModel.id,
-          targetMode: broadcastModel.targetMode,
-        })
+    const planContext = await broadcastPlanPolicyService.resolveForWorkspace(
+      input.workspaceId,
+    )
 
-      if (!row) {
-        throw new ChatbotXException("Broadcast is not a draft")
+    const scope = this.draftScope(input.workspaceId, input.broadcastId)
+
+    const result = await db.transaction(async (tx) => {
+      const write = async (override?: { sendRatePerMinute: number | null }) => {
+        const [row] = await tx
+          .update(broadcastModel)
+          .set({
+            status: broadcastStatuses.enum.scheduled,
+            schedulesType: input.schedulesType,
+            schedulesAt: input.schedulesAt,
+            ...override,
+          })
+          .where(scope)
+          .returning({
+            id: broadcastModel.id,
+            targetMode: broadcastModel.targetMode,
+          })
+
+        if (!row) {
+          throw new ChatbotXException("Broadcast is not a draft")
+        }
+
+        return row
       }
 
       // A draft keeps every picked page, empty ones included, so it can be
       // reopened. Scheduling is the point of no return: a page left without a
-      // template (or flow) can deliver nothing, so it is dropped here — the
-      // same normalization `create`/`updateDraft` apply to a non-draft — and
-      // the worker never enrols, then fails, its recipients.
-      await this.dropUndeliverableTargets(tx, row)
+      // template (or flow) can deliver nothing, so it is dropped here.
+      const scheduleWithoutPlanLimits = async () => {
+        const row = await write(
+          resolveSubmittedSendRatePatch(input.sendRatePerMinute),
+        )
+        await this.dropUndeliverableTargets(tx, row)
+        return { id: row.id }
+      }
 
+      if (!broadcastPlanPolicyService.hasRestrictions(planContext)) {
+        return await scheduleWithoutPlanLimits()
+      }
+
+      const [draft] = await tx
+        .select({
+          id: broadcastModel.id,
+          channel: broadcastModel.channel,
+          sendRatePerMinute: broadcastModel.sendRatePerMinute,
+          targetMode: broadcastModel.targetMode,
+        })
+        .from(broadcastModel)
+        .where(scope)
+        .for("update")
+        .limit(1)
+
+      if (!draft) {
+        throw new ChatbotXException("Broadcast is not a draft")
+      }
+
+      const restriction = broadcastPlanPolicyService.restrictionFor(
+        planContext,
+        draft.channel,
+      )
+      if (!restriction) {
+        return await scheduleWithoutPlanLimits()
+      }
+
+      // Normalize first so target-validation errors keep precedence over plan limits.
+      await this.dropUndeliverableTargets(tx, draft)
+
+      const row = await this.activateRestrictedRow(
+        tx,
+        {
+          workspaceId: input.workspaceId,
+          restriction,
+          row: draft,
+          submittedSendRate: input.sendRatePerMinute,
+        },
+        write,
+      )
       return { id: row.id }
     })
 
@@ -952,29 +1075,78 @@ class BroadcastService extends BaseService {
   async resumeSending(input: {
     workspaceId: string
     broadcastId: string
+    sendRatePerMinute?: number | null
   }): Promise<{ id: string }> {
-    const [row] = await db
-      .update(broadcastModel)
-      .set({
-        status: broadcastStatuses.enum.sending,
-        handoffCompletedAt: null,
-        resumeCount: sql`${broadcastModel.resumeCount} + 1`,
-      })
-      .where(
-        and(
-          this.transitionScope(
-            input.workspaceId,
-            input.broadcastId,
-            "cancelled",
-          ),
-          isNotNull(broadcastModel.contactCount),
-        ),
-      )
-      .returning({ id: broadcastModel.id })
+    const planContext = await broadcastPlanPolicyService.resolveForWorkspace(
+      input.workspaceId,
+    )
+    const scope = and(
+      this.transitionScope(input.workspaceId, input.broadcastId, "cancelled"),
+      isNotNull(broadcastModel.contactCount),
+    )
+    const write = async (
+      tx: DatabaseClient,
+      override?: { sendRatePerMinute: number | null },
+    ) => {
+      const [row] = await tx
+        .update(broadcastModel)
+        .set({
+          status: broadcastStatuses.enum.sending,
+          handoffCompletedAt: null,
+          resumeCount: sql`${broadcastModel.resumeCount} + 1`,
+          ...override,
+        })
+        .where(scope)
+        .returning({ id: broadcastModel.id })
 
-    if (!row) {
-      throw new ChatbotXException("Broadcast is not stopped")
+      if (!row) {
+        throw new ChatbotXException("Broadcast is not stopped")
+      }
+      return row
     }
+
+    const submittedPatch = resolveSubmittedSendRatePatch(
+      input.sendRatePerMinute,
+    )
+    const resumeWithinPlan = async (tx: DatabaseClient) => {
+      const [stopped] = await tx
+        .select({
+          id: broadcastModel.id,
+          channel: broadcastModel.channel,
+          sendRatePerMinute: broadcastModel.sendRatePerMinute,
+        })
+        .from(broadcastModel)
+        .where(scope)
+        .for("update")
+        .limit(1)
+
+      if (!stopped) {
+        throw new ChatbotXException("Broadcast is not stopped")
+      }
+
+      const restriction = broadcastPlanPolicyService.restrictionFor(
+        planContext,
+        stopped.channel,
+      )
+      if (!restriction) {
+        return await write(tx, submittedPatch)
+      }
+
+      return await this.activateRestrictedRow(
+        tx,
+        {
+          workspaceId: input.workspaceId,
+          restriction,
+          row: stopped,
+          submittedSendRate: input.sendRatePerMinute,
+        },
+        (override) => write(tx, override),
+      )
+    }
+
+    const row = broadcastPlanPolicyService.hasRestrictions(planContext)
+      ? await db.transaction(resumeWithinPlan)
+      : await write(db, submittedPatch)
 
     await this.audit("broadcast_resumed", `resumed a broadcast (#${row.id})`)
 
@@ -1145,7 +1317,10 @@ class BroadcastService extends BaseService {
       ? broadcastStatuses.enum.draft
       : broadcastStatuses.enum.scheduled
 
-    const broadcast = await db.transaction(async (tx) => {
+    const insert = async (
+      tx: DatabaseClient,
+      override?: { sendRatePerMinute: number },
+    ) => {
       const [inserted] = await tx
         .insert(broadcastModel)
         .values({
@@ -1153,11 +1328,37 @@ class BroadcastService extends BaseService {
           name,
           status,
           ...this.buildBroadcastColumns(resolved, canViewEmailAndPhone),
+          ...override,
         })
         .returning()
 
       await this.replaceTargets(tx, inserted.id, resolved.targets ?? [])
       return inserted
+    }
+
+    const restriction =
+      !resolved.saveAsDraft &&
+      broadcastPlanPolicyService.appliesToChannel(resolved.channel)
+        ? broadcastPlanPolicyService.restrictionFor(
+            await broadcastPlanPolicyService.resolveForWorkspace(workspaceId),
+            resolved.channel,
+          )
+        : null
+
+    const broadcast = await db.transaction(async (tx) => {
+      if (!restriction) {
+        return await insert(tx)
+      }
+      return await this.activateWithinPlan(
+        tx,
+        {
+          workspaceId,
+          channel: resolved.channel,
+          restriction,
+          sendRatePerMinute: resolved.sendRatePerMinute,
+        },
+        async (override) => await insert(tx, override),
+      )
     })
 
     await this.audit("create", `created a new broadcast (#${broadcast.id})`)
@@ -1407,23 +1608,62 @@ class BroadcastService extends BaseService {
       ? broadcastStatuses.enum.draft
       : broadcastStatuses.enum.scheduled
 
-    const row = await db.transaction(async (tx) => {
-      const [updated] = await tx
-        .update(broadcastModel)
-        .set({
-          // An existing name is the agent's (renamed through `update`) - an
-          // edit only fills it in when it is blank.
-          name: sql`COALESCE(NULLIF(BTRIM(${broadcastModel.name}), ''), ${derivedName})`,
-          status,
-          ...this.buildBroadcastColumns(data, input.canViewEmailAndPhone),
-        })
-        .where(this.draftScope(workspaceId, input.broadcastId))
-        .returning({ id: broadcastModel.id })
+    const planContext =
+      !data.saveAsDraft &&
+      broadcastPlanPolicyService.appliesToChannel(data.channel)
+        ? await broadcastPlanPolicyService.resolveForWorkspace(workspaceId)
+        : null
+    const restriction = planContext
+      ? broadcastPlanPolicyService.restrictionFor(planContext, data.channel)
+      : null
 
-      if (updated) {
-        await this.replaceTargets(tx, updated.id, data.targets ?? [])
+    const row = await db.transaction(async (tx) => {
+      const write = async (override?: { sendRatePerMinute: number }) => {
+        const [updated] = await tx
+          .update(broadcastModel)
+          .set({
+            // An existing name is the agent's (renamed through `update`) - an
+            // edit only fills it in when it is blank.
+            name: sql`COALESCE(NULLIF(BTRIM(${broadcastModel.name}), ''), ${derivedName})`,
+            status,
+            ...this.buildBroadcastColumns(data, input.canViewEmailAndPhone),
+            ...override,
+          })
+          .where(this.draftScope(workspaceId, input.broadcastId))
+          .returning({ id: broadcastModel.id })
+
+        if (updated) {
+          await this.replaceTargets(tx, updated.id, data.targets ?? [])
+        }
+        return updated
       }
-      return updated
+
+      if (!restriction) {
+        return await write()
+      }
+
+      const [draft] = await tx
+        .select({ id: broadcastModel.id })
+        .from(broadcastModel)
+        .where(this.draftScope(workspaceId, input.broadcastId))
+        .for("update")
+        .limit(1)
+
+      if (!draft) {
+        throw new ChatbotXException("Broadcast is not a draft")
+      }
+
+      return await this.activateWithinPlan(
+        tx,
+        {
+          workspaceId,
+          channel: data.channel,
+          restriction,
+          sendRatePerMinute: data.sendRatePerMinute,
+          excludeBroadcastId: input.broadcastId,
+        },
+        write,
+      )
     })
 
     if (!row) {
@@ -2254,7 +2494,10 @@ class BroadcastService extends BaseService {
       input.canViewEmailAndPhone,
     )
 
-    const newBroadcast = await db.transaction(async (tx) => {
+    const insert = async (
+      tx: DatabaseClient,
+      override?: { sendRatePerMinute: number },
+    ) => {
       const inserted = await tx
         .insert(broadcastModel)
         .values({
@@ -2274,6 +2517,7 @@ class BroadcastService extends BaseService {
           ...normalizeBroadcastSendLimit(broadcast),
           name: `${broadcast.name} (Resend)`,
           id: createId(),
+          ...override,
         })
         .returning()
         .then((result) => result[0])
@@ -2284,6 +2528,33 @@ class BroadcastService extends BaseService {
       })
 
       return inserted
+    }
+
+    const restriction = broadcastPlanPolicyService.appliesToChannel(
+      broadcast.channel,
+    )
+      ? broadcastPlanPolicyService.restrictionFor(
+          await broadcastPlanPolicyService.resolveForWorkspace(
+            input.workspaceId,
+          ),
+          broadcast.channel,
+        )
+      : null
+
+    const newBroadcast = await db.transaction(async (tx) => {
+      if (!restriction) {
+        return await insert(tx)
+      }
+      return await this.activateWithinPlan(
+        tx,
+        {
+          workspaceId: input.workspaceId,
+          channel: broadcast.channel,
+          restriction,
+          sendRatePerMinute: broadcast.sendRatePerMinute,
+        },
+        async (override) => await insert(tx, override),
+      )
     })
 
     await this.audit("launch", `launched a broadcast (#${newBroadcast.id})`)

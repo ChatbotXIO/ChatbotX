@@ -18,6 +18,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 const bubbleConversationToTopMock = vi.fn().mockResolvedValue(undefined)
 const openConversationMock = vi.fn().mockResolvedValue(true)
 const chatStoreState = {
+  applyAgentLastReadAt: vi.fn(),
   handleNewMessage: vi.fn(),
   markMessagesDeleted: vi.fn(),
   markMessageFailed: vi.fn(),
@@ -28,10 +29,17 @@ const chatStoreState = {
   updateConversations: vi.fn(),
   bubbleConversationToTop: bubbleConversationToTopMock,
   openConversation: openConversationMock,
+  resumeConversationHeadRefresh: vi.fn(),
 }
+const wholeStoreSelectionMock = vi.fn()
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
-  useChatStore: (selector: (state: typeof chatStoreState) => unknown) =>
-    selector(chatStoreState),
+  useChatStore: (selector: (state: typeof chatStoreState) => unknown) => {
+    const selection = selector(chatStoreState)
+    if (selection === chatStoreState) {
+      wholeStoreSelectionMock()
+    }
+    return selection
+  },
 }))
 
 const conversationIdParamMock = { set: vi.fn(), clear: vi.fn() }
@@ -96,13 +104,20 @@ describe("ChatRealtime — chat event parity", () => {
       root.render(<ChatRealtime />)
     })
 
-  test("registers exactly the nine chat events, no more, no fewer", async () => {
+  test("subscribes only to stable actions instead of the whole chat store", async () => {
+    await render()
+
+    expect(wholeStoreSelectionMock).not.toHaveBeenCalled()
+  })
+
+  test("registers exactly the ten chat events, no more, no fewer", async () => {
     await render()
     expect(Object.keys(capturedHandlers ?? {}).sort()).toEqual(
       [
         "contactBlocked",
         "contactUnblocked",
         "conversationAssigned",
+        "conversationUpdated",
         "messageContentUpdated",
         "messageCreated",
         "messageDeleted",
@@ -110,6 +125,16 @@ describe("ChatRealtime — chat event parity", () => {
         "messageIdAssigned",
         "messageUpdated",
       ].sort(),
+    )
+  })
+
+  test("retries a deferred head refresh when the tab becomes visible", async () => {
+    await render()
+
+    act(() => document.dispatchEvent(new Event("visibilitychange")))
+
+    expect(chatStoreState.resumeConversationHeadRefresh).toHaveBeenCalledWith(
+      "workspace-1",
     )
   })
 
@@ -216,6 +241,45 @@ describe("ChatRealtime — chat event parity", () => {
         assignedInboxTeam: null,
       },
     )
+  })
+
+  test("conversationUpdated applies a valid agent read timestamp", async () => {
+    await render()
+    act(() =>
+      emit("conversationUpdated", {
+        conversationIds: ["conv-1", "conv-2"],
+        changes: { agentLastReadAt: "2026-09-23T10:00:00.000Z" },
+      }),
+    )
+
+    expect(chatStoreState.applyAgentLastReadAt).toHaveBeenCalledWith(
+      ["conv-1", "conv-2"],
+      new Date("2026-09-23T10:00:00.000Z"),
+    )
+  })
+
+  test("conversationUpdated ignores a null agent read timestamp", async () => {
+    await render()
+    act(() =>
+      emit("conversationUpdated", {
+        conversationIds: ["conv-1"],
+        changes: { agentLastReadAt: null },
+      }),
+    )
+
+    expect(chatStoreState.applyAgentLastReadAt).not.toHaveBeenCalled()
+  })
+
+  test("conversationUpdated ignores a malformed agent read timestamp", async () => {
+    await render()
+    act(() =>
+      emit("conversationUpdated", {
+        conversationIds: ["conv-1"],
+        changes: { agentLastReadAt: "not-a-date" },
+      }),
+    )
+
+    expect(chatStoreState.applyAgentLastReadAt).not.toHaveBeenCalled()
   })
 })
 

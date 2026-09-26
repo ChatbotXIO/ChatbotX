@@ -89,9 +89,9 @@ export const productsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/products/{id}",
-      summary: "Replace product",
+      summary: "Replace or rename product",
       description:
-        "Fully replaces the product, including its variant options, variants, and addons.",
+        "Use this to rename a product or change its price, variants, or addons. Fully replaces the product, including its variant options, variants, and addons.",
       successStatus: 204,
       tags: ["Products"],
     })

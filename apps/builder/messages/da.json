@@ -336,6 +336,7 @@
       "message": "Din seneste betaling mislykkedes. Opdater din betalingsmetode for at holde dit arbejdsområde aktivt."
     },
     "trial": {
+      "planName": "Prøveperiode",
       "daysLeft": "Prøveperiode: {days} dage tilbage",
       "endsTomorrow": "Prøveperioden slutter i morgen",
       "expired": "Din prøveperiode er udløbet — opgrader for at holde dit arbejdsområde aktivt",
@@ -449,8 +450,7 @@
       "audienceFilter": "Målgruppefilter",
       "noAudienceFilter": "Intet målgruppefilter",
       "template": "Skabelon",
-      "integration": "Integration",
-      "sendLimit": "Grænse"
+      "integration": "Integration"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Opgrader dit abonnement",
+      "sendRate": "Dit nuværende {plan}-abonnement understøtter broadcasts med en maksimal sendehastighed på {rate} beskeder pr. minut. Opgrader dit abonnement for at sende broadcasts op til {multiplier}x hurtigere.",
+      "activeBroadcasts": "Dit nuværende {plan}-abonnement kører {max, plural, one {# broadcast} other {# broadcasts}} ad gangen. Opgrader dit abonnement for at køre flere broadcasts samtidigt."
+    },
     "sendLimit": {
       "title": "Grænse",
       "hint": "Lad stå tomt for at sende til alle matchende kontakter.",
+      "rateHint": "Lad stå tomt for at bruge standardhastigheden.",
+      "rangeSummary": "Kontakter #{start} – #{end}",
+      "rangeFromSummary": "Fra kontakt #{start}",
       "rangeLabel": "Kontaktinterval",
       "fromLabel": "Fra",
       "toLabel": "Til",
       "allPlaceholder": "Alle",
-      "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen",
-      "rangeSummary": "Kontakter #{start} – #{end}",
-      "rangeFromSummary": "Fra kontakt #{start}",
-      "rateSummary": "{rate} beskeder / minut"
+      "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen"
     }
   },
   "commentAutomation": {
@@ -758,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(valgfri)",
     "marketingMessagesConfigId": {
       "label": "Konfigurations-ID for marketingbeskeder",
       "description": "Konfigurations-ID til Facebook Login for Business, der bruges til at anmode om tilladelsen marketing_messages_messenger."
@@ -4230,6 +4236,14 @@
     "invalidInvitation": "Denne invitation er ugyldig eller har udløbet.",
     "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Markér botbeskeder som læst",
+      "enabled": "Aktiveret",
+      "disabled": "Deaktiveret",
+      "description": "Når det er slået til, markerer botten automatisk sine egne beskeder som læst"
+    }
+  },
   "inboxTeams": {
     "title": "Indbakke Teams"
   },
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "Indtast et gyldigt Dataset ID (kun tal).",
       "whatsappNotFound": "WhatsApp-integration ikke fundet.",
       "testEventCodeRequired": "Gem en testhændelseskode, før du sender en testhændelse.",
-      "noContactForTest": "Ingen egnet kontakt på denne kanal endnu. En testhændelse kræver en rigtig kontakt at tilknytte (for WhatsApp en, der kom fra en click-to-WhatsApp-annonce).",
-      "invalidTestEventCode": "Testhændelseskoden må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 64)."
+      "invalidTestEventCode": "Testhændelseskoden må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 64).",
+      "invalidMessagingId": "Messaging-id må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 512).",
+      "capiDisconnected": "Meta CAPI er afbrudt for denne kanal. Tilslut igen, før du sender en testhændelse."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "Testhændelseskode gemt.",
       "cleared": "Testhændelseskode ryddet. Hændelser er live igen.",
       "send": "Send testhændelse",
-      "sent": "Testhændelse sat i kø. Den vises under Test events i Events Manager inden for et minut.",
-      "sendHint": "Sender ét eksempel på Purchase (100 USD) til denne kanals seneste kontakt.",
+      "sent": "Testhændelse sendt. Den vises under Test events i Events Manager inden for et minut.",
+      "sendHint": "Sender én eksempel-Purchase (100 USD) til et messaging-id, du indtaster. Ingen gemt kontakt bruges.",
       "activeNotice": "Testtilstand er slået til: hændelser fra denne kanal tælles ikke med i rapporter, før koden ryddes.",
-      "openTestEvents": "Åbn Test events"
+      "openTestEvents": "Åbn Test events",
+      "dialogTitle": "Send testhændelse",
+      "dialogDescription": "Én eksempel-Purchase (100 USD) sendes med din testhændelseskode. Indsæt eksempel-messaging-id'et fra Events Manager → Test events → Messaging → Graph API Explorer, så intet tilskrives en rigtig kontakt.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt-id (page_scoped_user_id)",
+        "instagram": "Kontakt-id (ig_sid)",
+        "whatsapp": "Klik-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Indsæt eksempelværdien fra Meta",
+      "messagingIdHint": "Kun bogstaver, tal, bindestreger og understregninger (maks. 512).",
+      "cancel": "Annuller",
+      "confirmSend": "Send"
     }
   },
   "minigames": {

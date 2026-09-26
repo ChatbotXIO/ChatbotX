@@ -24,7 +24,6 @@ import {
   resolveUsageThrottle,
   sleepForUsageThrottle,
 } from "../coexist/usage-throttle"
-import { enqueueContactAvatarJobs } from "../contact/enqueue-avatar-jobs"
 import type { ContactScanErrorClassification } from "./adapter"
 import { contactScanAdapters } from "./adapter"
 
@@ -309,9 +308,9 @@ export const runContactScan = async (
         }
       }
 
-      // Contacts for this page are already durably committed at this point —
-      // quota accounting and avatar backfill are both best-effort from here
-      // on and must never fail or skip the page.
+      // Contacts for this page are already durably committed at this point.
+      // Quota accounting is best-effort and must never fail or skip the page;
+      // avatars hydrate lazily through the media proxy when viewed.
       if (pageResult && pageResult.importedContacts > 0 && ownerId) {
         await quotaEnforcementService
           .incrementBy({
@@ -325,25 +324,6 @@ export const runContactScan = async (
               "[contact-scan] quota increment failed — continuing (info-only)",
             )
           })
-      }
-
-      if (pageResult) {
-        // Only genuinely NEW contacts need an avatar backfill (existing
-        // links were already backfilled, or intentionally have none, on a
-        // prior page/run). Per-contact jobs mirror coexist's parity
-        // behavior; a batched profile fetch (v1 fetched ~50 profiles per
-        // Graph batch request) is a recommended future optimization for very
-        // large scans — not implemented here.
-        await enqueueContactAvatarJobs({
-          workspaceId,
-          contactInboxIds: pageResult.newContactInboxIds,
-          logContext: { runId, pageNumber },
-        }).catch((error) => {
-          logger.error(
-            { err: error, runId, pageNumber },
-            "[contact-scan] avatar enqueue failed — continuing",
-          )
-        })
       }
 
       oldestProcessed = filtered.oldestProcessed

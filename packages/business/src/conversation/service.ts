@@ -3,7 +3,10 @@ import {
   type DatabaseClient,
   db,
   eq,
+  exists,
   inArray,
+  isNull,
+  lt,
   or,
   type SQL,
   sql,
@@ -14,7 +17,7 @@ import {
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import { conversationModel, inboxModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
   ContactCustomFieldModel,
@@ -39,15 +42,10 @@ import {
   emitConversationTransferredToHuman,
   emitConversationUnassigned,
 } from "@chatbotx.io/events"
-import {
-  type RealtimeEventConversationUpdatedChanges,
-  RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import {
-  ChatJobAction,
-  chatQueue,
   NotificationJobAction,
   notificationQueue,
 } from "@chatbotx.io/worker-config"
@@ -61,6 +59,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
+import { broadcastToWorkspaceParty } from "../platform/realtime-broadcast"
 import { workspaceMemberService } from "../workspace-member/service"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
@@ -629,8 +628,8 @@ class ConversationService extends BaseService {
       // while a comment automation resolves it) won the partial unique index —
       // `Conversation_contactId_dm_key` for DMs, otherwise
       // `Conversation_contactId_sourceId_key` — so the insert produced no row.
-      // Re-read rather than fail: the winner already broadcast
-      // `conversationCreated`, so this path must not broadcast again.
+      // Re-read rather than fail: the winner already created the conversation,
+      // so this path has no additional side effect.
       const concurrent = await findExisting()
       if (!concurrent) {
         throw new Error("Conversation not found")
@@ -643,11 +642,6 @@ class ConversationService extends BaseService {
           })
         : concurrent
     }
-
-    await this.broadcastConversationEvent(workspaceId, {
-      eventType: RealtimeEventType.conversationCreated,
-      data: created,
-    })
 
     return created
   }
@@ -678,14 +672,6 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids })
-
-    await this.broadcastConversationEvent(workspaceId, {
-      eventType: RealtimeEventType.conversationUpdated,
-      data: {
-        conversationIds: ids,
-        changes: { archivedAt: archivedAt?.toISOString() ?? null },
-      },
-    })
 
     const eventType = archivedAt
       ? "conversation:archived"
@@ -1005,14 +991,7 @@ class ConversationService extends BaseService {
 
     await this.invalidate({ workspaceId, ids })
 
-    await this.broadcastConversationEvent(workspaceId, {
-      eventType: RealtimeEventType.conversationUpdated,
-      data: {
-        conversationIds: ids,
-        changes: { assignedUserId, assignedInboxTeamId },
-      },
-    })
-    await this.broadcastConversationEvent(workspaceId, {
+    await broadcastToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.conversationAssigned,
       data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
     })
@@ -1134,11 +1113,6 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids })
-
-    await this.broadcastConversationEvent(workspaceId, {
-      eventType: RealtimeEventType.conversationUpdated,
-      data: { conversationIds: ids, changes: { botEnabled } },
-    })
   }
 
   async updateFollowed(props: {
@@ -1168,11 +1142,6 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
-
-    await this.broadcastConversationEvent(workspaceId, {
-      eventType: RealtimeEventType.conversationUpdated,
-      data: { conversationIds: [id], changes: { followed } },
-    })
 
     if (followed) {
       await emitConversationFollowUp(workspaceId, contactId, id, props.userId)
@@ -1242,8 +1211,12 @@ class ConversationService extends BaseService {
         workspaceId,
       },
     )
-    const lastMessage = last2Messages.at(-1)
-    const agentLastReadAt = lastMessage ? lastMessage.createdAt : null
+    // Newest first: the cursor lands on the second-newest incoming message so
+    // only the latest one is unread. With a single message there is nothing
+    // to anchor on — anchoring on that message would make `lastActivityAt >
+    // agentLastReadAt` false and leave the row read — so it becomes never-read.
+    const agentLastReadAt =
+      last2Messages.length >= 2 ? (last2Messages[1]?.createdAt ?? null) : null
 
     await this.updateReadStatus({ workspaceId, id, agentLastReadAt, tx })
 
@@ -1267,14 +1240,69 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
-
-    await this.broadcastConversationEvent(workspaceId, {
+    await broadcastToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.conversationUpdated,
       data: {
         conversationIds: [id],
         changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
       },
     })
+  }
+
+  /**
+   * Advances agent read state only, so retries and delayed outbound events
+   * cannot overwrite a newer read. The inbox preference is checked inside the
+   * same statement to avoid racing a separate gate read; successful advances
+   * broadcast the same best-effort realtime update as manual reads.
+   */
+  async markReadByOutbound(props: {
+    workspaceId: string
+    conversationId: string
+    inboxId: string
+    readAt: Date
+  }): Promise<boolean> {
+    const { workspaceId, conversationId, inboxId, readAt } = props
+    const updated = await db
+      .update(conversationModel)
+      .set({ agentLastReadAt: readAt })
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+          or(
+            isNull(conversationModel.agentLastReadAt),
+            lt(conversationModel.agentLastReadAt, readAt),
+          ),
+          exists(
+            db
+              .select({ value: sql<number>`1` })
+              .from(inboxModel)
+              .where(
+                and(
+                  eq(inboxModel.id, inboxId),
+                  eq(inboxModel.workspaceId, workspaceId),
+                  eq(inboxModel.markReadOnOutbound, true),
+                ),
+              ),
+          ),
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    if (updated.length === 0) {
+      return false
+    }
+
+    await this.invalidate({ workspaceId, ids: [conversationId] })
+    await broadcastToWorkspaceParty(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: [conversationId],
+        changes: { agentLastReadAt: readAt.toISOString() },
+      },
+    })
+
+    return true
   }
 
   /**
@@ -1556,49 +1584,6 @@ class ConversationService extends BaseService {
     })
 
     return true
-  }
-
-  // ─── Realtime ────────────────────────────────────────────────────────────
-
-  /**
-   * Best-effort realtime broadcast via the chat queue (same path used by
-   * message create/edit/delete). Never blocks or fails the caller's mutation
-   * — errors are logged and swallowed.
-   */
-  private async broadcastConversationEvent(
-    workspaceId: string,
-    event:
-      | {
-          eventType: typeof RealtimeEventType.conversationCreated
-          data: unknown
-        }
-      | {
-          eventType: typeof RealtimeEventType.conversationUpdated
-          data: {
-            conversationIds: string[]
-            changes: RealtimeEventConversationUpdatedChanges
-          }
-        }
-      | {
-          eventType: typeof RealtimeEventType.conversationAssigned
-          data: {
-            conversationIds: string[]
-            assignedUserId: string | null
-            assignedInboxTeamId: string | null
-          }
-        },
-  ): Promise<void> {
-    try {
-      await chatQueue.add(ChatJobAction.broadcastEvent, {
-        type: ChatJobAction.broadcastEvent,
-        data: { workspaceId, event },
-      })
-    } catch (err) {
-      logger.warn(
-        { err, workspaceId, eventType: event.eventType },
-        "conversation realtime broadcast enqueue failed",
-      )
-    }
   }
 
   // ─── Cache ───────────────────────────────────────────────────────────────

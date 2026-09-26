@@ -336,6 +336,7 @@
       "message": "فشلت آخر عملية دفع. قم بتحديث طريقة الدفع للحفاظ على نشاط مساحة عملك."
     },
     "trial": {
+      "planName": "تجريبية",
       "daysLeft": "التجربة: تبقّى {days} يوم/أيام",
       "endsTomorrow": "تنتهي الفترة التجريبية غدًا",
       "expired": "انتهت فترتك التجريبية — قم بالترقية للحفاظ على نشاط مساحة عملك",
@@ -449,8 +450,7 @@
       "audienceFilter": "تصفية الجمهور",
       "noAudienceFilter": "لا توجد تصفية للجمهور",
       "template": "القالب",
-      "integration": "التكامل",
-      "sendLimit": "الحد"
+      "integration": "التكامل"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "ترقية خطتك",
+      "sendRate": "تدعم خطتك الحالية {plan} حملات البث بسرعة إرسال قصوى تبلغ {rate} رسالة في الدقيقة. يُرجى ترقية خطتك لإرسال حملات البث بسرعة تصل إلى {multiplier} ضعفًا.",
+      "activeBroadcasts": "تُشغّل خطتك الحالية {plan} عدد {max, plural, one {# حملة بث} other {# حملة بث}} في الوقت نفسه. يُرجى ترقية خطتك لتشغيل المزيد من حملات البث معًا."
+    },
     "sendLimit": {
       "title": "الحد",
       "hint": "اتركه فارغًا للإرسال إلى جميع جهات الاتصال المطابقة.",
+      "rateHint": "اتركه فارغًا لاستخدام المعدل الافتراضي.",
+      "rangeSummary": "جهات الاتصال #{start} – #{end}",
+      "rangeFromSummary": "ابتداءً من جهة الاتصال رقم {start}",
       "rangeLabel": "نطاق جهات الاتصال",
       "fromLabel": "من",
       "toLabel": "إلى",
       "allPlaceholder": "الكل",
-      "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية",
-      "rangeSummary": "جهات الاتصال #{start} – #{end}",
-      "rangeFromSummary": "ابتداءً من جهة الاتصال رقم {start}",
-      "rateSummary": "{rate} رسالة / دقيقة"
+      "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية"
     }
   },
   "commentAutomation": {
@@ -900,6 +905,7 @@
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا."
   },
   "fields": {
+    "optionalHint": "(اختياري)",
     "marketingMessagesConfigId": {
       "label": "معرّف تكوين الرسائل التسويقية",
       "description": "معرّف تكوين تسجيل الدخول من فيسبوك للأعمال المستخدم لطلب صلاحية marketing_messages_messenger."
@@ -4230,6 +4236,14 @@
     "invalidInvitation": "هذه الدعوة غير صالحة أو انتهت صلاحيتها.",
     "workspaceUnavailable": "مساحة العمل هذه لم تعد متاحة."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "وضع علامة مقروءة على رسائل البوت",
+      "enabled": "مفعّل",
+      "disabled": "معطّل",
+      "description": "عند التفعيل، يقوم البوت تلقائيًا بوضع علامة مقروءة على رسائله"
+    }
+  },
   "inboxTeams": {
     "title": "فرق صندوق الوارد"
   },
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "أدخل معرّف مجموعة بيانات صالحًا (أرقام فقط).",
       "whatsappNotFound": "لم يتم العثور على اتصال WhatsApp.",
       "testEventCodeRequired": "احفظ رمز حدث اختبار قبل إرسال حدث اختبار.",
-      "noContactForTest": "لا توجد جهة اتصال مؤهلة على هذه القناة بعد. يحتاج الحدث التجريبي إلى جهة اتصال حقيقية لربطه بها (في WhatsApp، يجب أن تأتي من إعلان click-to-WhatsApp).",
-      "invalidTestEventCode": "يجب ألا يحتوي رمز حدث الاختبار إلا على أحرف وأرقام وشرطات أو شرطات سفلية (بحد أقصى 64)."
+      "invalidTestEventCode": "يجب ألا يحتوي رمز حدث الاختبار إلا على أحرف وأرقام وشرطات أو شرطات سفلية (بحد أقصى 64).",
+      "invalidMessagingId": "يجوز أن يحتوي معرّف المراسلة على أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
+      "capiDisconnected": "تم قطع اتصال Meta CAPI لهذه القناة. أعد الاتصال قبل إرسال حدث اختبار."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "تم حفظ رمز حدث الاختبار.",
       "cleared": "تم مسح رمز حدث الاختبار. الأحداث نشطة مجددًا.",
       "send": "إرسال حدث اختبار",
-      "sent": "تم إدراج حدث الاختبار في قائمة الانتظار. سيظهر ضمن Test events في Events Manager خلال دقيقة.",
-      "sendHint": "يرسل حدث Purchase تجريبيًا واحدًا (100 USD) إلى أحدث جهة اتصال في هذه القناة.",
+      "sent": "تم إرسال حدث الاختبار. سيظهر ضمن Test events في Events Manager خلال دقيقة.",
+      "sendHint": "يرسل حدث Purchase نموذجيًا واحدًا (100 USD) إلى معرّف مراسلة تدخله أنت. لا يُستخدم أي جهة اتصال محفوظة.",
       "activeNotice": "وضع الاختبار مفعّل: لا تُحتسب أحداث هذه القناة في التقارير حتى يتم مسح الرمز.",
-      "openTestEvents": "فتح Test events"
+      "openTestEvents": "فتح Test events",
+      "dialogTitle": "إرسال حدث اختبار",
+      "dialogDescription": "سيتم إرسال حدث Purchase نموذجي واحد (100 USD) مع رمز حدث الاختبار الخاص بك. الصق معرّف المراسلة النموذجي من Events Manager → Test events → Messaging → Graph API Explorer، حتى لا يُنسب أي شيء إلى جهة اتصال حقيقية.",
+      "messagingIdLabel": {
+        "messenger": "معرّف جهة الاتصال (page_scoped_user_id)",
+        "instagram": "معرّف جهة الاتصال (ig_sid)",
+        "whatsapp": "معرّف النقرة (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "الصق القيمة النموذجية من Meta",
+      "messagingIdHint": "أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
+      "cancel": "إلغاء",
+      "confirmSend": "إرسال"
     }
   },
   "minigames": {

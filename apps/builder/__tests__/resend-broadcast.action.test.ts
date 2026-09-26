@@ -1,5 +1,7 @@
 // @vitest-environment node
 
+import { broadcastPlanLimitException } from "@chatbotx.io/business/errors"
+import { TRIAL_BROADCAST_PLAN_POLICY } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const { mockResendWithPruning, mockGetCurrentUserAndTargetWorkspace } =
@@ -86,5 +88,19 @@ describe("resendBroadcastAction", () => {
         bindArgsParsedInputs: [WORKSPACE_ID, BROADCAST_ID],
       }),
     ).rejects.toThrow("Broadcast is not sent")
+  })
+
+  test("returns a plan-limit outcome for the business exception", async () => {
+    const error = broadcastPlanLimitException("sendRate", {
+      policy: TRIAL_BROADCAST_PLAN_POLICY,
+      planName: "Trial",
+    })
+    mockResendWithPruning.mockRejectedValue(error)
+
+    await expect(
+      resendBroadcastAction({
+        bindArgsParsedInputs: [WORKSPACE_ID, BROADCAST_ID],
+      }),
+    ).resolves.toEqual({ outcome: "planLimit", limit: error.data })
   })
 })

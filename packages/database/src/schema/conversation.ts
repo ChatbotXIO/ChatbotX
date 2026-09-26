@@ -66,6 +66,7 @@ export const conversationModel = pgTable(
     uniqueIndex("Conversation_contactId_dm_key")
       .on(table.contactId)
       .where(sql`${table.sourceId} IS NULL`),
+    index("Conversation_contactId_idx").on(table.contactId),
     index("Conversation_aiContextLastMessageId_idx").on(
       table.aiContextLastMessageId,
     ),

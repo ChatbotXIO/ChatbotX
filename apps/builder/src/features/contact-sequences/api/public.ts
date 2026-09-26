@@ -12,6 +12,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -29,12 +30,7 @@ export const contactsSequencesPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
       }),
     )
     .output(listContactSequencesPublicResponse)
@@ -66,12 +62,7 @@ export const contactsSequencesPublicRouter = {
     .input(
       contactSequenceIdsPublicRequest.and(
         z.object({
-          identifier: z
-            .string()
-            .min(1)
-            .describe(
-              "Contact identifier: the numeric contact id, an email address, or a phone number.",
-            ),
+          identifier: publicContactIdentifier,
         }),
       ),
     )
@@ -102,12 +93,7 @@ export const contactsSequencesPublicRouter = {
     .input(
       contactSequenceIdsPublicRequest.and(
         z.object({
-          identifier: z
-            .string()
-            .min(1)
-            .describe(
-              "Contact identifier: the numeric contact id, an email address, or a phone number.",
-            ),
+          identifier: publicContactIdentifier,
         }),
       ),
     )
@@ -139,12 +125,7 @@ export const contactsSequencesPublicRouter = {
     .input(
       setContactSequencesPublicRequest.and(
         z.object({
-          identifier: z
-            .string()
-            .min(1)
-            .describe(
-              "Contact identifier: the numeric contact id, an email address, or a phone number.",
-            ),
+          identifier: publicContactIdentifier,
         }),
       ),
     )

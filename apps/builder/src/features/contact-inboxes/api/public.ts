@@ -2,6 +2,7 @@ import { contactInboxService, contactService } from "@chatbotx.io/business"
 import { z } from "zod"
 import { listContactInboxesPublicResponse } from "@/features/contact-inboxes/schema/public"
 import { possibleErrorsOnFindingResource } from "@/lib/orpc/orpc-error-helper"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -18,12 +19,7 @@ export const contactsInboxesPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
       }),
     )
     .output(listContactInboxesPublicResponse)

@@ -1,4 +1,7 @@
-import { integrationWhatsappService } from "@chatbotx.io/business"
+import {
+  broadcastPlanPolicyService,
+  integrationWhatsappService,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -49,6 +52,8 @@ export default async function CreateBroadcastPage({
   const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
     workspaceId,
   })
+  const { policy: planPolicy } =
+    await broadcastPlanPolicyService.resolveForWorkspace(workspaceId)
 
   return (
     <IntegrationStoreProvider workspaceId={workspaceId}>
@@ -67,6 +72,7 @@ export default async function CreateBroadcastPage({
               initialChannel={prefill.channel}
               initialContactFilter={prefill.contactFilter}
               initialInboxIds={initialInboxIds}
+              planPolicy={planPolicy}
               workspaceId={workspaceId}
             />
           </ContactStoreProvider>

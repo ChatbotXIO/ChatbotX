@@ -1,3 +1,4 @@
+import { inboxService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
@@ -21,10 +22,16 @@ export default async function WebchatEditPage({
     id: data.id,
     workspaceId: data.workspaceId,
   })
+  const inbox = await inboxService.find({
+    where: { id: integrationWebchat.inboxId, workspaceId: data.workspaceId },
+  })
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <UpdateWebchatForm integrationWebchat={integrationWebchat} />
+      <UpdateWebchatForm
+        integrationWebchat={integrationWebchat}
+        markReadOnOutbound={inbox?.markReadOnOutbound ?? false}
+      />
     </Suspense>
   )
 }

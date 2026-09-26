@@ -27,6 +27,7 @@ const {
   mockWorkspaceFind,
   mockQuotaIncrement,
   mockContactUpdate,
+  mockSetAvatarIfEmptyOrSentinel,
   mockUpdateTracking,
   mockInvalidateTracking,
   mockRecordInboundActivity,
@@ -42,6 +43,7 @@ const {
   mockRecordProfileRefreshFailure,
   mockResolveIntegrationContextFromContactInbox,
   mockUploaderPutObject,
+  mockMarkReadByOutbound,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
 
@@ -72,6 +74,7 @@ const {
     mockUpdateContactFromMessage: vi.fn().mockResolvedValue(undefined),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactUpdate: vi.fn().mockResolvedValue({}),
+    mockSetAvatarIfEmptyOrSentinel: vi.fn().mockResolvedValue(undefined),
     mockConversationFindOrCreate: vi.fn(),
     mockAutomatedResponseEnqueueFlowAction: vi
       .fn()
@@ -125,6 +128,7 @@ const {
       ctx: { workspaceId: "ws-1" },
     }),
     mockUploaderPutObject: vi.fn().mockResolvedValue(undefined),
+    mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
   }
 })
 
@@ -211,6 +215,8 @@ vi.mock("@chatbotx.io/business", () => ({
   updateContactFromMessage: mockUpdateContactFromMessage,
   hasOnDemandProfileApi: (channel: string) =>
     CONTACT_PROFILE_NAME_CAPABILITIES[channel]?.onDemand ?? false,
+  hasRealAvatar: (avatar: string | null | undefined) =>
+    !!avatar && !avatar.startsWith("public/img/no_avatar.jpg?time="),
   resolveInboundProfileNameSource: (channel: string) =>
     CONTACT_PROFILE_NAME_CAPABILITIES[channel]?.inbound ?? null,
   hasEmptyProfileName: (contact: {
@@ -227,9 +233,11 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: {
     unblockIfBlocked: mockContactUnblockIfBlocked,
     update: mockContactUpdate,
+    setAvatarIfEmptyOrSentinel: mockSetAvatarIfEmptyOrSentinel,
   },
   conversationService: {
     findOrCreate: mockConversationFindOrCreate,
+    markReadByOutbound: mockMarkReadByOutbound,
     recordInboundActivity: mockRecordInboundActivity,
   },
   workspaceService: {
@@ -284,6 +292,7 @@ vi.mock("@chatbotx.io/sdk", () => ({
     return await lookup({ sourceUserId: identity.sourceUserId })
   },
   messageTypes: { enum: { incoming: "incoming", outgoing: "outgoing" } },
+  echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
   SdkException: class SdkException extends Error {},
   // Mirror of the real pure predicate — the module is fully mocked, so the
   // actual one-liner is restated here.
@@ -574,6 +583,7 @@ describe("receiveMessage — message repository branch", () => {
       contactInboxId: "ci-1",
     })
     mockWorkspaceIsActiveNow.mockReturnValue(true)
+    mockMarkReadByOutbound.mockResolvedValue(true)
   })
 
   test("calls repository.createOrUpdate() when message has no attachments", async () => {
@@ -634,7 +644,7 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockCreateOrUpdate).not.toHaveBeenCalled()
   })
 
-  test("updates contact inbox and conversation activity timestamps when incoming message is new", async () => {
+  test("records activity without marking read when an inbound message is new", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },
       contact: { sourceId: "psid-123", firstName: "Test" },
@@ -669,6 +679,7 @@ describe("receiveMessage — message repository branch", () => {
       contactLocation: null,
       at: fakeCreatedMessage.createdAt,
     })
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 
   test("emits message:received with origin: 'inbound' and isFirstIncomingMessage: true for a contact's first inbound message", async () => {
@@ -727,7 +738,8 @@ describe("receiveMessage — message repository branch", () => {
     )
   })
 
-  test("updates conversation activity but not lastIncomingMessageAt for outgoing webhook echo", async () => {
+  test("marks a new outgoing echo read when no recent outgoing row matches", async () => {
+    mockFindLastByConversation.mockResolvedValueOnce([])
     mockRunChannelHandler.mockResolvedValue({
       message: {
         ...baseIncomingMessage,
@@ -773,6 +785,343 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockEmit).toHaveBeenCalledWith(
       "message:received",
       expect.not.objectContaining({ origin: "inbound" }),
+    )
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: fakeCreatedMessage.createdAt,
+    })
+    expect(mockBroadcast).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageCreated",
+      data: expect.objectContaining({
+        id: fakeCreatedMessage.id,
+        messageType: "outgoing",
+      }),
+    })
+  })
+
+  test("logs and swallows mark-read failures for outgoing echoes", async () => {
+    const error = new Error("database unavailable")
+    mockFindLastByConversation.mockResolvedValueOnce([])
+    mockMarkReadByOutbound.mockRejectedValueOnce(error)
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await expect(receiveMessage(baseProps)).resolves.toBeDefined()
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        err: error,
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        inboxId: "inbox-1",
+        readAt: fakeCreatedMessage.createdAt,
+      },
+      "markReadByOutbound after an outgoing echo failed",
+    )
+  })
+
+  test("treats matching text with a provider source id as a native outgoing echo", async () => {
+    mockFindLastByConversation.mockResolvedValue([
+      {
+        id: "msg-native-send",
+        sourceId: "provider-message-id",
+        text: fakeCreatedMessage.text,
+      },
+    ])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: fakeCreatedMessage.createdAt,
+    })
+    expect(mockBroadcast).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageCreated",
+      data: expect.objectContaining({
+        id: fakeCreatedMessage.id,
+        messageType: "outgoing",
+      }),
+    })
+  })
+
+  test("skips activity and mark-read for a pending own media send with the same attachment types", async () => {
+    mockFindLastByConversation.mockResolvedValue([
+      {
+        id: "msg-media-send",
+        sourceId: null,
+        text: null,
+        attachments: [{ fileType: "image" }],
+      },
+    ])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        text: undefined,
+        contentType: "image",
+        attachments: [{ url: "https://cdn.example/echo.jpg", type: "image" }],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      result: {
+        ...fakeCreatedMessage,
+        messageType: "outgoing",
+        text: null,
+        contentType: "image",
+        attachments: [{ fileType: "image" }],
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+    expect(mockBroadcast).not.toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ eventType: "messageCreated" }),
+    )
+  })
+
+  test("treats a media echo whose attachment types differ from the pending own send as native", async () => {
+    mockFindLastByConversation.mockResolvedValue([
+      {
+        id: "msg-media-send",
+        sourceId: null,
+        text: null,
+        attachments: [{ fileType: "video" }],
+      },
+    ])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        text: undefined,
+        contentType: "image",
+        attachments: [{ url: "https://cdn.example/echo.jpg", type: "image" }],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      result: {
+        ...fakeCreatedMessage,
+        messageType: "outgoing",
+        text: null,
+        contentType: "image",
+        attachments: [{ fileType: "image" }],
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).toHaveBeenCalledTimes(1)
+  })
+
+  test("treats matching null text without attachments as a native outgoing echo", async () => {
+    mockFindLastByConversation.mockResolvedValue([
+      { id: "msg-media-send", sourceId: null, text: null, attachments: [] },
+    ])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        text: undefined,
+        contentType: "image",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: {
+        ...fakeCreatedMessage,
+        messageType: "outgoing",
+        text: null,
+        contentType: "image",
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-1",
+      readAt: fakeCreatedMessage.createdAt,
+    })
+  })
+
+  test("skips activity and mark-read for matching text with no provider source id", async () => {
+    const matchingOwnSend = {
+      id: "msg-chatbotx-send",
+      sourceId: null,
+      text: fakeCreatedMessage.text,
+    }
+    mockFindLastByConversation
+      .mockResolvedValueOnce([matchingOwnSend])
+      .mockResolvedValueOnce([matchingOwnSend])
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: expect.any(String),
+        messageType: "outgoing",
+      }),
+    )
+    expect(mockRecordInboundActivity).not.toHaveBeenCalled()
+    expect(mockInvalidateTracking).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+    expect(mockBroadcast).not.toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ eventType: "messageCreated" }),
+    )
+  })
+
+  test("does not mark the conversation read for a duplicate outgoing echo", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: false,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockFindLastByConversation).not.toHaveBeenCalled()
+    expect(mockRecordInboundActivity).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+  })
+
+  test("does not mark the conversation read for an outgoing comment echo", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        type: "comment",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: {
+        ...fakeCreatedMessage,
+        messageType: "outgoing",
+        type: "comment",
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+  })
+
+  test("logs a self-send lookup failure, keeps activity, and fails closed on mark-read", async () => {
+    const error = new Error("shard unavailable")
+    mockFindLastByConversation.mockRejectedValueOnce(error)
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await expect(receiveMessage(baseProps)).resolves.toBeDefined()
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledTimes(1)
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        err: error,
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        messageId: fakeCreatedMessage.id,
+      },
+      "Unable to match outgoing echo to an own send",
     )
   })
 
@@ -831,6 +1180,7 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockRecordInboundActivity).not.toHaveBeenCalled()
     expect(mockUpdateTracking).not.toHaveBeenCalled()
+    expect(mockBroadcast).not.toHaveBeenCalled()
   })
 
   test("does NOT call createMessageRepository when message is null", async () => {
@@ -1215,19 +1565,16 @@ describe("receiveMessage — new contact MAC gate", () => {
     )
   })
 
-  test("still fetches getProfile for an outgoing webhook echo when creating a new contact", async () => {
-    // A page-initiated echo (e.g. an agent replying to a story mention
-    // directly on Instagram) can be the FIRST time we see that contact.
-    // Skipping getProfile here would leave the contact without a name/avatar
-    // forever, since later inbound messages reuse the existing contactInbox
-    // and never re-fetch the profile.
+  test("skips a third-party echo for an unknown contact without creating a contact, fetching a profile, or writing a message", async () => {
+    // A third-party tool broadcasting from the same page fans out one echo
+    // per recipient. Creating a contact for each costs a Graph profile call
+    // plus three inserts and backed up the queue, so an echo the channel
+    // classified as third-party for a contact this inbox has never seen is
+    // dropped; the contact is created on their first inbound message instead.
     mockRunChannelHandler.mockImplementation(
       (_domain: string, action: string) => {
         if (action === "getProfile") {
-          return Promise.resolve({
-            firstName: "Story Replier",
-            avatar: "https://example.com/avatar.jpg",
-          })
+          return Promise.resolve({ firstName: "Should not be fetched" })
         }
         return Promise.resolve({
           message: {
@@ -1239,6 +1586,41 @@ describe("receiveMessage — new contact MAC gate", () => {
           postbackAction: null,
           quickReplyAction: null,
           ref: null,
+          echoOrigin: "thirdParty",
+        })
+      },
+    )
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result).toBeNull()
+    expect(mockRunChannelHandler).not.toHaveBeenCalledWith(
+      "contact",
+      "getProfile",
+      expect.anything(),
+    )
+    expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdate).not.toHaveBeenCalled()
+  })
+
+  test("still creates the contact for a first-party echo (echoOrigin: firstParty) to an unknown contact", async () => {
+    mockRunChannelHandler.mockImplementation(
+      (_domain: string, action: string) => {
+        if (action === "getProfile") {
+          return Promise.resolve({ firstName: "Agent Thread" })
+        }
+        return Promise.resolve({
+          message: {
+            ...baseIncomingMessage,
+            messageType: "outgoing",
+            attachments: [],
+          },
+          contact: { sourceId: "psid-123" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+          echoOrigin: "firstParty",
         })
       },
     )
@@ -1246,11 +1628,9 @@ describe("receiveMessage — new contact MAC gate", () => {
       ok: true,
       value: {
         newContact: {
+          ...fakeContact,
           id: "contact-new",
-          workspaceId: "ws-1",
-          firstName: "Story Replier",
-          phoneNumber: null,
-          email: null,
+          firstName: "Agent Thread",
           blockedAt: null,
           createdAt: new Date("2026-06-21T00:00:00Z"),
         },
@@ -1263,19 +1643,227 @@ describe("receiveMessage — new contact MAC gate", () => {
       },
     })
 
-    await receiveMessage(baseProps)
+    const result = await receiveMessage(baseProps)
 
+    expect(result).not.toBeNull()
     expect(mockRunChannelHandler).toHaveBeenCalledWith(
       "contact",
       "getProfile",
       expect.objectContaining({ data: { sourceId: "psid-123" } }),
     )
-    const rows = await runCapturedNewContactCreate()
-    expect(rows).toContainEqual(
-      expect.objectContaining({
-        firstName: "Story Replier",
-        avatar: "https://example.com/avatar.jpg",
-      }),
+    expect(mockCreateNewContactWithMac).toHaveBeenCalled()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: "outgoing" }),
+    )
+  })
+
+  describe("parser → worker contract with the real Messenger parser", () => {
+    const messengerEchoPayload = (appId: number) => ({
+      object: "page",
+      entry: [
+        {
+          id: "page-1",
+          time: 1,
+          messaging: [
+            {
+              sender: { id: "page-1" },
+              recipient: { id: "psid-123" },
+              timestamp: 1,
+              message: {
+                mid: "mid-echo-1",
+                is_echo: true,
+                app_id: appId,
+                text: "hi",
+              },
+            },
+          ],
+        },
+      ],
+    })
+
+    beforeEach(async () => {
+      const { receiveMessage: parseMessengerMessage } = await import(
+        "../../../integrations/messenger/src/handlers/message/incomming-message"
+      )
+      mockBuildContext.mockResolvedValue({
+        workspaceId: "ws-1",
+        auth: { metadata: { pageId: "page-1" } },
+      })
+      mockRunChannelHandler.mockImplementation(
+        (_domain: string, action: string, props: unknown) => {
+          if (action === "receiveMessage") {
+            return parseMessengerMessage(props as never)
+          }
+          if (action === "getProfile") {
+            return Promise.resolve({ firstName: "Page Inbox Agent" })
+          }
+          return Promise.resolve(undefined)
+        },
+      )
+      mockCreateNewContactWithMac.mockResolvedValue({
+        ok: true,
+        value: {
+          newContact: {
+            ...fakeContact,
+            id: "contact-new",
+            blockedAt: null,
+            createdAt: new Date("2026-06-21T00:00:00Z"),
+          },
+          contactInbox: {
+            ...fakeContactInbox,
+            id: "ci-new",
+            contactId: "contact-new",
+          },
+          conversation: fakeConversation,
+        },
+      })
+    })
+
+    test("a real Page Inbox echo (app_id 26390203743090) still creates the contact", async () => {
+      const result = await receiveMessage({
+        ...baseProps,
+        payload: messengerEchoPayload(26_390_203_743_090),
+      })
+
+      expect(result).not.toBeNull()
+      expect(mockCreateNewContactWithMac).toHaveBeenCalled()
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ messageType: "outgoing", text: "hi" }),
+      )
+    })
+
+    test("a real third-party echo for an unknown contact is dropped", async () => {
+      const result = await receiveMessage({
+        ...baseProps,
+        payload: messengerEchoPayload(1_517_776_481_860_111),
+      })
+
+      expect(result).toBeNull()
+      expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+      expect(mockCreateOrUpdate).not.toHaveBeenCalled()
+    })
+  })
+
+  test("still creates the contact for an unclassified outgoing echo (channel parser sets no echoOrigin)", async () => {
+    // Channels that do not classify echoes (e.g. a Zalo OA send) keep the
+    // create path; the harness only registers messenger + telegram, so
+    // telegram stands in for them.
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "telegram" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "tg-user-1" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    const result = await receiveMessage({
+      ...baseProps,
+      integrationType: "telegram",
+    })
+
+    expect(result).not.toBeNull()
+    expect(mockCreateNewContactWithMac).toHaveBeenCalled()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: "outgoing" }),
+    )
+  })
+
+  test("still processes a third-party echo when the contact already exists", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: fakeContact,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+      echoOrigin: "thirdParty",
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result).not.toBeNull()
+    expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+    // The gate's lookup is reused by contact detection: one query, not two.
+    expect(mockFindContactInbox).toHaveBeenCalledTimes(1)
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: "outgoing" }),
+    )
+  })
+
+  test("still creates the contact for a third-party story-reply echo (direction is flipped to incoming)", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        contentAttributes: {
+          type: "story_reply",
+          story: { id: "story-1", url: "https://example.com/story-1" },
+        },
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+      echoOrigin: "thirdParty",
+    })
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result).not.toBeNull()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: "incoming" }),
     )
   })
 
@@ -1653,6 +2241,12 @@ describe("receiveMessage — new contact MAC gate", () => {
   })
 
   test("does not persist location from outgoing channel echoes", async () => {
+    // Echoes for unknown contacts are dropped outright (see the skip test
+    // above), so exercise the known-contact path to cover location handling.
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: fakeContact,
+    })
     mockRunChannelHandler.mockResolvedValue({
       message: {
         ...baseIncomingMessage,
@@ -3041,9 +3635,9 @@ describe("contact source taxonomy", () => {
       expect.anything(),
       { ACL: "public-read", ContentType: "image/jpeg" },
     )
-    expect(mockContactUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId: "ws-1" }),
+    expect(mockSetAvatarIfEmptyOrSentinel).toHaveBeenCalledWith(
       expect.objectContaining({
+        workspaceId: "ws-1",
         avatar: expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
       }),
     )
@@ -3084,6 +3678,57 @@ describe("contact source taxonomy", () => {
 
     expect(fetch).not.toHaveBeenCalled()
     expect(mockUploaderPutObject).not.toHaveBeenCalled()
+  })
+
+  test("re-hosts the avatar when the contact has a no-avatar sentinel", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "threads" },
+      integrationRow: {
+        ...fakeIntegrationRow,
+        auth: { tokens: { accessToken: "threads-token" } },
+      },
+    } as never)
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: {
+        ...fakeContact,
+        avatar: "public/img/no_avatar.jpg?time=1234",
+      },
+    })
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(new Uint8Array([1, 2, 3]), {
+          status: 200,
+          headers: { "content-type": "image/jpeg" },
+        }),
+      ),
+    )
+
+    await receiveComment({
+      integrationType: "threads",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-threads-avatar-sentinel",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        fromAvatarUrl: "https://scontent.cdninstagram.com/avatar.jpg",
+        message: "hello again",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(mockUploaderPutObject).toHaveBeenCalledTimes(1)
+    expect(mockSetAvatarIfEmptyOrSentinel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        avatar: expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
+      }),
+    )
   })
 })
 
@@ -3541,7 +4186,7 @@ describe("receiveMessage — outbound automated response on message echoes", () 
 
     await receiveMessage(baseProps)
 
-    expect(mockFindLastByConversation).not.toHaveBeenCalled()
+    expect(mockFindLastByConversation).toHaveBeenCalledTimes(1)
     expect(outboundCheckCalls()).toHaveLength(0)
   })
 })

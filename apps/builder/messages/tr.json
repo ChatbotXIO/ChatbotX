@@ -336,6 +336,7 @@
       "message": "Son ödemeniz başarısız oldu. Çalışma alanınızı etkin tutmak için ödeme yönteminizi güncelleyin."
     },
     "trial": {
+      "planName": "Deneme",
       "daysLeft": "Deneme: {days} gün kaldı",
       "endsTomorrow": "Deneme yarın sona eriyor",
       "expired": "Deneme süreniz sona erdi — çalışma alanınızı etkin tutmak için planınızı yükseltin",
@@ -449,8 +450,7 @@
       "audienceFilter": "Hedef kitle filtresi",
       "noAudienceFilter": "Hedef kitle filtresi yok",
       "template": "Şablon",
-      "integration": "Entegrasyon",
-      "sendLimit": "Sınır"
+      "integration": "Entegrasyon"
     },
     "filters": {
       "all": "All"
@@ -509,17 +509,22 @@
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     },
+    "planLimitDialog": {
+      "title": "Planınızı yükseltin",
+      "sendRate": "Mevcut {plan} planınız broadcast gönderimlerini dakikada en fazla {rate} mesaj hızında destekler. Broadcast gönderimlerini {multiplier}x daha hızlı yapmak için planınızı yükseltin.",
+      "activeBroadcasts": "Mevcut {plan} planınız aynı anda {max, plural, one {# broadcast} other {# broadcast}} çalıştırır. Aynı anda daha fazla broadcast çalıştırmak için planınızı yükseltin."
+    },
     "sendLimit": {
       "title": "Sınır",
       "hint": "Eşleşen tüm kişilere göndermek için boş bırakın.",
+      "rateHint": "Varsayılan hızı kullanmak için boş bırakın.",
+      "rangeSummary": "Kişiler #{start} – #{end}",
+      "rangeFromSummary": "Kişi #{start}'den itibaren",
       "rangeLabel": "Kişi aralığı",
       "fromLabel": "Başlangıç",
       "toLabel": "Bitiş",
       "allPlaceholder": "Tümü",
-      "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz",
-      "rangeSummary": "Kişiler #{start} – #{end}",
-      "rangeFromSummary": "Kişi #{start}'den itibaren",
-      "rateSummary": "Dakikada {rate} mesaj"
+      "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz"
     }
   },
   "commentAutomation": {
@@ -900,6 +905,7 @@
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir."
   },
   "fields": {
+    "optionalHint": "(isteğe bağlı)",
     "marketingMessagesConfigId": {
       "label": "Pazarlama Mesajları Yapılandırma Kimliği",
       "description": "marketing_messages_messenger iznini istemek için kullanılan Facebook Login for Business yapılandırma kimliği."
@@ -4230,6 +4236,14 @@
     "invalidInvitation": "Bu davet geçersiz veya süresi dolmuş.",
     "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor."
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Bot mesajlarını okundu olarak işaretle",
+      "enabled": "Etkin",
+      "disabled": "Devre dışı",
+      "description": "Etkinleştirildiğinde bot kendi mesajlarını otomatik olarak okundu olarak işaretler"
+    }
+  },
   "inboxTeams": {
     "title": "Gelen Kutusu Ekipleri"
   },
@@ -6149,8 +6163,9 @@
       "invalidDatasetId": "Geçerli bir Dataset ID girin (yalnızca rakamlar).",
       "whatsappNotFound": "WhatsApp entegrasyonu bulunamadı.",
       "testEventCodeRequired": "Bir test etkinliği göndermeden önce test etkinliği kodunu kaydedin.",
-      "noContactForTest": "Bu kanalda henüz uygun bir kişi yok. Test etkinliği, ilişkilendirilecek gerçek bir kişi gerektirir (WhatsApp için click-to-WhatsApp reklamından gelen bir kişi).",
-      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64)."
+      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64).",
+      "invalidMessagingId": "Mesajlaşma kimliği yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 512).",
+      "capiDisconnected": "Bu kanal için Meta CAPI bağlantısı kesildi. Test etkinliği göndermeden önce yeniden bağlayın."
     },
     "fields": {
       "eventType": {
@@ -6294,10 +6309,21 @@
       "saved": "Test etkinliği kodu kaydedildi.",
       "cleared": "Test etkinliği kodu temizlendi. Etkinlikler tekrar canlı.",
       "send": "Test etkinliği gönder",
-      "sent": "Test etkinliği sıraya alındı. Bir dakika içinde Events Manager içindeki Test events altında görünür.",
-      "sendHint": "Bu kanalın en son kişisine örnek bir Purchase (100 USD) gönderir.",
+      "sent": "Test etkinliği gönderildi. Bir dakika içinde Events Manager'daki Test events altında görünür.",
+      "sendHint": "Girdiğiniz bir mesajlaşma kimliğine örnek bir Purchase (100 USD) gönderir. Kayıtlı hiçbir kişi kullanılmaz.",
       "activeNotice": "Test modu açık: kod temizlenene kadar bu kanaldaki etkinlikler raporlarda sayılmaz.",
-      "openTestEvents": "Test events'i aç"
+      "openTestEvents": "Test events'i aç",
+      "dialogTitle": "Test etkinliği gönder",
+      "dialogDescription": "Test etkinlik kodunuzla örnek bir Purchase (100 USD) gönderilir. Gerçek bir kişiye atfedilmemesi için örnek mesajlaşma kimliğini Events Manager → Test events → Messaging → Graph API Explorer'dan yapıştırın.",
+      "messagingIdLabel": {
+        "messenger": "Kişi kimliği (page_scoped_user_id)",
+        "instagram": "Kişi kimliği (ig_sid)",
+        "whatsapp": "Tıklama kimliği (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Meta'daki örnek değeri yapıştırın",
+      "messagingIdHint": "Yalnızca harf, rakam, tire ve alt çizgi (en fazla 512).",
+      "cancel": "İptal",
+      "confirmSend": "Gönder"
     }
   },
   "minigames": {
