@@ -29,8 +29,10 @@ import {
   type IntegrationType,
 } from "@chatbotx.io/database/partials"
 import {
+  type CreateMessageInput,
   contactInboxRepository,
   createMessageRepository,
+  type IMessageRepository,
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import {
@@ -61,7 +63,11 @@ import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  type RealtimeEventData,
+  RealtimeEventType,
+} from "@chatbotx.io/partysocket-config"
+import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
@@ -805,11 +811,14 @@ const attachmentSignature = (
     .sort()
     .join(",")
 
-// Creates or updates the message row (deduplicates webhook retries via sourceId),
-// updates contactInbox/conversation activity timestamps for new rows,
-// broadcasts the realtime event to the UI, and emits `message:received` to trigger flows.
-// Shared by `receiveMessage` and `receiveComment`.
-const saveAndBroadcastMessage = async (props: {
+type SavedMessage = MessageWithAttachments
+
+type SaveMessageResult = {
+  message: SavedMessage
+  isNew: boolean
+}
+
+type SaveAndBroadcastMessageProps = {
   inbox: InboxModel
   contactInbox: ContactInboxModel
   conversation: ConversationModel
@@ -818,198 +827,281 @@ const saveAndBroadcastMessage = async (props: {
   contactLocation?: ContactLocation | null
   createdAt?: Date
   storageUrl: string
-}): Promise<{
-  message: MessageWithAttachments
-  isNew: boolean
-}> => {
-  const {
-    inbox,
-    contactInbox,
-    conversation,
-    incomingMessage,
-    contactInboxTracking,
-    contactLocation,
-    createdAt,
-    storageUrl,
-  } = props
-  const repository = await createMessageRepository()
+}
 
-  // Computed from the pre-update `contactInbox` snapshot this function was
-  // called with — before persistNewMessageSideEffects' updateTracking runs —
-  // because ContactInbox.lastIncomingMessageAt/firstInteractionAt get set by
-  // outbound sends too (see contact-inbox/service.ts) and can't be used to
-  // infer "first inbound message" after the tracking update has landed.
-  const isInboundMessage = incomingMessage.messageType !== "outgoing"
-  const isFirstIncomingMessage =
-    isInboundMessage && contactInbox.lastIncomingMessageAt === null
+type MessageInput = CreateMessageInput & {
+  type: string
+  parentId: string | null
+}
+type AttachmentInputs = Parameters<
+  IMessageRepository["createOrUpdateWithAttachments"]
+>[1]
 
-  const messageInput = {
-    id: createId(),
-    conversationId: conversation.id,
-    contactInboxId: contactInbox.id,
-    senderType:
-      incomingMessage.messageType === "outgoing"
-        ? ("user" as const)
-        : ("contact" as const),
-    workspaceId: inbox.workspaceId,
-    sourceId: incomingMessage.sourceId,
-    senderId:
-      incomingMessage.messageType === "outgoing"
-        ? null
-        : contactInbox.contactId,
-    messageType: incomingMessage.messageType,
-    text: incomingMessage.text,
-    contentType: incomingMessage.contentType,
-    contentAttributes: incomingMessage.contentAttributes,
-    type: incomingMessage.type ?? "message",
-    parentId: incomingMessage.parentId ?? null,
-    createdAt: createdAt ?? new Date(),
+const safeBroadcast = async (
+  workspaceId: string,
+  event: RealtimeEventData,
+  context: string,
+): Promise<void> => {
+  try {
+    await broadcastToWorkspaceParty(workspaceId, event)
+  } catch (err) {
+    logger.warn({ err }, `${context}: unable to broadcast`)
   }
+}
 
-  const attachmentInputs =
-    incomingMessage.attachments?.map((attachment: IncomingAttachment) => ({
-      ...attachment,
-      workspaceId: inbox.workspaceId,
-      conversationId: conversation.id,
-    })) ?? []
+const buildMessageInput = ({
+  inbox,
+  contactInbox,
+  conversation,
+  incomingMessage,
+  createdAt,
+  inbound,
+}: SaveAndBroadcastMessageProps & { inbound: boolean }): MessageInput => ({
+  id: createId(),
+  conversationId: conversation.id,
+  contactInboxId: contactInbox.id,
+  senderType: inbound ? "contact" : "user",
+  workspaceId: inbox.workspaceId,
+  sourceId: incomingMessage.sourceId,
+  senderId: inbound ? contactInbox.contactId : null,
+  messageType: incomingMessage.messageType,
+  text: incomingMessage.text,
+  contentType: incomingMessage.contentType,
+  contentAttributes: incomingMessage.contentAttributes,
+  type: incomingMessage.type ?? "message",
+  parentId: incomingMessage.parentId ?? null,
+  createdAt: createdAt ?? new Date(),
+})
 
-  let messageWithAttachments: MessageWithAttachments
-  let isNew: boolean
+const buildAttachmentInputs = ({
+  incomingMessage,
+  workspaceId,
+  conversationId,
+}: {
+  incomingMessage: IncomingMessage
+  workspaceId: string
+  conversationId: string
+}): AttachmentInputs =>
+  incomingMessage.attachments?.map((attachment: IncomingAttachment) => ({
+    ...attachment,
+    workspaceId,
+    conversationId,
+  })) ?? []
 
+const upsertMessage = async ({
+  repository,
+  messageInput,
+  attachmentInputs,
+}: {
+  repository: IMessageRepository
+  messageInput: MessageInput
+  attachmentInputs: AttachmentInputs
+}): Promise<SaveMessageResult> => {
   if (attachmentInputs.length > 0) {
-    const result = await repository.createOrUpdateWithAttachments(
-      messageInput,
-      attachmentInputs,
-    )
-    messageWithAttachments = result.result
-    isNew = result.isNew
-  } else {
-    const result = await repository.createOrUpdate(messageInput)
-    messageWithAttachments = { ...result.message, attachments: [] }
-    isNew = result.isNew
+    const { result: message, isNew } =
+      await repository.createOrUpdateWithAttachments(
+        messageInput,
+        attachmentInputs,
+      )
+    return { message, isNew }
   }
 
-  const newMessage = messageWithAttachments
+  const { message, isNew } = await repository.createOrUpdate(messageInput)
+  return { message: { ...message, attachments: [] }, isNew }
+}
+
+const enqueueIncomingNotification = async ({
+  workspaceId,
+  conversationId,
+  message,
+}: {
+  workspaceId: string
+  conversationId: string
+  message: SavedMessage
+}): Promise<void> => {
+  try {
+    await notificationQueue.add(
+      NotificationJobAction.notifyIncomingMessage,
+      {
+        type: NotificationJobAction.notifyIncomingMessage,
+        data: {
+          workspaceId,
+          conversationId,
+          messageId: message.id,
+          messageText: message.text?.slice(0, 140),
+          contentType: message.contentType,
+          attachmentCount: message.attachments.length,
+        },
+      },
+      { jobId: `notify-incoming-${message.id}` },
+    )
+  } catch (err) {
+    logger.warn({ err }, "Unable to enqueue incoming message notification")
+  }
+}
+
+const emitMessageReceived = ({
+  inbox,
+  contactInbox,
+  message,
+  inbound,
+  isFirstIncomingMessage,
+}: {
+  inbox: InboxModel
+  contactInbox: ContactInboxModel
+  message: SavedMessage
+  inbound: boolean
+  isFirstIncomingMessage: boolean
+}): void => {
+  emit(messageEventTypeSchema.enum["message:received"], {
+    workspaceId: inbox.workspaceId,
+    contactId: contactInbox.contactId,
+    contactInboxId: contactInbox.id,
+    channel: inbox.channel,
+    inboxId: inbox.id,
+    occurredAt: message.createdAt,
+    sourceId: message.sourceId ?? undefined,
+    origin: inbound ? "inbound" : undefined,
+    messageId: message.id,
+    isFirstIncomingMessage,
+  })
+}
+
+const persistMessage = async (
+  props: SaveAndBroadcastMessageProps,
+): Promise<SaveMessageResult> => {
+  const { inbox, contactInbox, conversation, incomingMessage } = props
+  const repository = await createMessageRepository()
+  const inbound = incomingMessage.messageType !== "outgoing"
+
+  // Computed from the pre-update contactInbox snapshot because outbound sends
+  // also set its incoming timestamps, so it cannot reliably infer first inbound
+  // interaction after persistNewMessageSideEffects updates tracking.
+  const isFirstIncomingMessage =
+    inbound && contactInbox.lastIncomingMessageAt === null
+  const messageInput = buildMessageInput({ ...props, inbound })
+  const attachmentInputs = buildAttachmentInputs({
+    incomingMessage,
+    workspaceId: inbox.workspaceId,
+    conversationId: conversation.id,
+  })
+  const { message, isNew } = await upsertMessage({
+    repository,
+    messageInput,
+    attachmentInputs,
+  })
+
   let isOwnSendEcho = false
-  // Fail closed on read state: when the echo cannot be classified, activity
-  // is still recorded (pre-feature behaviour) but the conversation is not
-  // marked read. An own send already decided its read state on the send path,
-  // so only an echo positively identified as a native-tool send may read here.
   let canMarkReadByEcho = true
+  const isOutgoingDirectMessageEcho =
+    !inbound && (incomingMessage.type ?? "message") === "message"
 
-  if (isNew) {
-    const isOutgoingDirectMessageEcho =
-      !isInboundMessage && (incomingMessage.type ?? "message") === "message"
-
-    if (isOutgoingDirectMessageEcho) {
-      try {
-        isOwnSendEcho = await isEchoOfOwnSend(
-          {
-            conversation,
-            message: newMessage,
-          },
-          { pendingOnly: true },
-        )
-      } catch (err) {
-        canMarkReadByEcho = false
-        logger.warn(
-          {
-            err,
-            workspaceId: inbox.workspaceId,
-            conversationId: conversation.id,
-            messageId: newMessage.id,
-          },
-          "Unable to match outgoing echo to an own send",
-        )
-      }
-    }
-
-    // Duplicate rows of our own sends skip these effects and the realtime
-    // messageCreated broadcast because the send path already recorded activity
-    // and read state with its gating; replaying either would leave the live
-    // client newer and unread while the server conversation remains read.
-    if (!isOwnSendEcho) {
-      await persistNewMessageSideEffects({
-        inbox,
-        contactInbox,
-        conversation,
-        incomingMessage,
-        message: newMessage,
-        storageUrl,
-        contactInboxTracking,
-        contactLocation,
-      })
-
-      if (isOutgoingDirectMessageEcho && canMarkReadByEcho) {
-        const markReadProps = {
+  if (isNew && isOutgoingDirectMessageEcho) {
+    try {
+      isOwnSendEcho = await isEchoOfOwnSend(
+        { conversation, message },
+        { pendingOnly: true },
+      )
+    } catch (err) {
+      canMarkReadByEcho = false
+      logger.warn(
+        {
+          err,
           workspaceId: inbox.workspaceId,
           conversationId: conversation.id,
-          inboxId: inbox.id,
-          readAt: newMessage.createdAt,
-        }
-        try {
-          await conversationService.markReadByOutbound(markReadProps)
-        } catch (err) {
-          logger.warn(
-            { err, ...markReadProps },
-            "markReadByOutbound after an outgoing echo failed",
-          )
-        }
+          messageId: message.id,
+        },
+        "Unable to match outgoing echo to an own send",
+      )
+    }
+  }
+
+  if (isNew && !isOwnSendEcho) {
+    await persistNewMessageSideEffects({ ...props, message })
+
+    if (isOutgoingDirectMessageEcho && canMarkReadByEcho) {
+      const markReadProps = {
+        workspaceId: inbox.workspaceId,
+        conversationId: conversation.id,
+        inboxId: inbox.id,
+        readAt: message.createdAt,
+      }
+      try {
+        await conversationService.markReadByOutbound(markReadProps)
+      } catch (err) {
+        logger.warn(
+          { err, ...markReadProps },
+          "markReadByOutbound after an outgoing echo failed",
+        )
       }
     }
   }
 
   if (isNew && !isOwnSendEcho) {
-    try {
-      await broadcastToWorkspaceParty(inbox.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: newMessage,
-      })
-    } catch (error) {
-      logger.warn({ err: error }, "Unable to emit realtime message")
-    }
+    await safeBroadcast(
+      inbox.workspaceId,
+      { eventType: RealtimeEventType.messageCreated, data: message },
+      "persistMessage",
+    )
   }
 
-  // Push notification for a genuinely new inbound message only — this
-  // guard is independent from the realtime broadcast eligibility above.
-  if (isNew && isInboundMessage) {
-    try {
-      await notificationQueue.add(
-        NotificationJobAction.notifyIncomingMessage,
-        {
-          type: NotificationJobAction.notifyIncomingMessage,
-          data: {
-            workspaceId: inbox.workspaceId,
-            conversationId: conversation.id,
-            messageId: newMessage.id,
-            messageText: newMessage.text?.slice(0, 140),
-            contentType: newMessage.contentType,
-            attachmentCount: newMessage.attachments.length,
-          },
-        },
-        { jobId: `notify-incoming-${newMessage.id}` },
-      )
-    } catch (error) {
-      logger.warn(error, "Unable to enqueue incoming message notification")
-    }
+  if (isNew && inbound) {
+    await enqueueIncomingNotification({
+      workspaceId: inbox.workspaceId,
+      conversationId: conversation.id,
+      message,
+    })
   }
 
   if (isNew) {
-    emit(messageEventTypeSchema.enum["message:received"], {
-      workspaceId: inbox.workspaceId,
-      contactId: contactInbox.contactId,
-      contactInboxId: contactInbox.id,
-      channel: inbox.channel,
-      inboxId: inbox.id,
-      occurredAt: newMessage.createdAt,
-      sourceId: newMessage.sourceId ?? undefined,
-      origin: isInboundMessage ? "inbound" : undefined,
-      messageId: newMessage.id,
+    emitMessageReceived({
+      inbox,
+      contactInbox,
+      message,
+      inbound,
       isFirstIncomingMessage,
     })
   }
 
-  return { message: newMessage, isNew }
+  return { message, isNew }
+}
+
+// Creates or updates the message row (deduplicates webhook retries via sourceId),
+// updates contactInbox/conversation activity timestamps for new rows,
+// broadcasts the realtime event to the UI, and emits `message:received` to trigger flows.
+// Shared by `receiveMessage` and `receiveComment`.
+const saveAndBroadcastMessage = async (
+  props: SaveAndBroadcastMessageProps,
+): Promise<SaveMessageResult> => {
+  const lockKey = `ingress:conv:${props.conversation.id}`
+
+  // Serializes the insert → tracking → realtime → notification → event-bus
+  // critical section. The repository's msg:upsert dedup lock is taken inside
+  // this one, so the catch must verify that the outer lock failed.
+  try {
+    return await distributedLock.runExclusive({
+      key: lockKey,
+      timeoutInSeconds: 30,
+      retryTimeoutInSeconds: 30,
+      fn: () => persistMessage(props),
+    })
+  } catch (error) {
+    // An acquisition failure of this lock degrades to unlocked processing
+    // because integration jobs get two attempts and a throw could drop an
+    // inbound message. A DB error or the repository's msg:upsert lock failing
+    // inside persist must propagate so BullMQ retries: rerunning would repeat
+    // the unconditional realtime broadcast. With a sourceId, the rerun hits
+    // dedup so notification and emit are skipped; without one, it inserts twice.
+    if (!isLockAcquisitionError(error, lockKey)) {
+      throw error
+    }
+
+    logger.warn(
+      { err: error, conversationId: props.conversation.id },
+      "Unable to acquire ingress lock for conversation; processing unlocked",
+    )
+    return await persistMessage(props)
+  }
 }
 
 const persistNewMessageSideEffects = async (props: {
@@ -1400,18 +1492,18 @@ export const updateIncomingComment = async (
     return
   }
 
-  try {
-    await broadcastToWorkspaceParty(inbox.workspaceId, {
+  await safeBroadcast(
+    inbox.workspaceId,
+    {
       eventType: RealtimeEventType.messageUpdated,
       data: {
         messageId: updated.id,
         newText,
         removedAttachment: false,
       },
-    })
-  } catch (error) {
-    logger.warn(error, "updateIncomingComment: unable to broadcast")
-  }
+    },
+    "updateIncomingComment",
+  )
 }
 
 // When a commenter deletes their comment, soft-delete it (and any
@@ -1439,15 +1531,14 @@ export const deleteIncomingComment = async (
     return
   }
 
-  const messageIds = deleted.map((row) => row.id)
-  try {
-    await broadcastToWorkspaceParty(inbox.workspaceId, {
+  await safeBroadcast(
+    inbox.workspaceId,
+    {
       eventType: RealtimeEventType.messageDeleted,
-      data: { messageIds },
-    })
-  } catch (error) {
-    logger.warn(error, "deleteIncomingComment: unable to broadcast")
-  }
+      data: { messageIds: deleted.map((row) => row.id) },
+    },
+    "deleteIncomingComment",
+  )
 }
 
 // When a contact unsends a previously-sent DM, soft-delete it in the DB and
@@ -1477,15 +1568,14 @@ export const deleteIncomingMessage = async (
     return
   }
 
-  const messageIds = deleted.map((row) => row.id)
-  try {
-    await broadcastToWorkspaceParty(inbox.workspaceId, {
+  await safeBroadcast(
+    inbox.workspaceId,
+    {
       eventType: RealtimeEventType.messageDeleted,
-      data: { messageIds },
-    })
-  } catch (error) {
-    logger.warn(error, "deleteIncomingMessage: unable to broadcast")
-  }
+      data: { messageIds: deleted.map((row) => row.id) },
+    },
+    "deleteIncomingMessage",
+  )
 }
 
 type ContactInboxWithContact = ContactInboxModel & { contact: ContactModel }
@@ -1550,18 +1640,9 @@ export const processMessageReaction = async (
     sourceId: null,
   })
 
-  // Deliberately bypasses saveAndBroadcastMessage: that helper treats any
-  // non-"outgoing" messageType as a genuine inbound message, which would
-  // refresh ContactInbox.lastIncomingMessageAt (corrupting the messaging-window
-  // check) and fire the unconditional message:received event that MAC billing
-  // and ads-conversion listeners consume with no way to exclude an activity
-  // row. A reaction only ever inserts/updates one lightweight activity
-  // message — persist + broadcast, nothing else.
+  // Deliberately bypasses saveAndBroadcastMessage: reactions do not advance
+  // inbound activity or emit message:received, which affects MAC billing.
   const repository = await createMessageRepository()
-  // Stable (no wall-clock component) so a BullMQ retry of this same job
-  // upserts the same activity row instead of creating a duplicate. Must not
-  // reuse the reacted-to message's mid: that would collide with
-  // createOrUpdate's dedup-by-sourceId and corrupt the original message.
   const reactionSourceId = `${messageId}-reaction-${action}`
   const reactionText =
     action === "react"
@@ -1583,19 +1664,17 @@ export const processMessageReaction = async (
   })
 
   if (isNew) {
-    try {
-      await broadcastToWorkspaceParty(inbox.workspaceId, {
+    await safeBroadcast(
+      inbox.workspaceId,
+      {
         eventType: RealtimeEventType.messageCreated,
         data: reactionRow,
-      })
-    } catch (error) {
-      logger.warn(error, "processMessageReaction: unable to broadcast")
-    }
+      },
+      "processMessageReaction",
+    )
     return
   }
 
-  // Same action reused within createOrUpdate's dedup window (e.g. a changed
-  // emoji) — update the existing row instead of silently ignoring it.
   if (reactionRow.text !== reactionText) {
     const updated = await repository.updateMessageText(
       reactionRow.id,
@@ -1604,18 +1683,18 @@ export const processMessageReaction = async (
       reactionRow.createdAt,
     )
     if (updated) {
-      try {
-        await broadcastToWorkspaceParty(inbox.workspaceId, {
+      await safeBroadcast(
+        inbox.workspaceId,
+        {
           eventType: RealtimeEventType.messageUpdated,
           data: {
             messageId: updated.id,
             newText: reactionText,
             removedAttachment: false,
           },
-        })
-      } catch (error) {
-        logger.warn(error, "processMessageReaction: unable to broadcast update")
-      }
+        },
+        "processMessageReaction",
+      )
     }
   }
 }

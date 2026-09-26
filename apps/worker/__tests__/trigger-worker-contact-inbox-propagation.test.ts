@@ -63,6 +63,7 @@ vi.mock("bullmq", () => {
 vi.mock("@chatbotx.io/worker-config", () => ({
   defaultWorkerOptions: {},
   getRedisConnection: () => ({}),
+  getQueueConnection: () => ({}),
   queueNames: { enum: { trigger: "trigger" } },
   TriggerJobAction: { evaluateTriggers: "evaluateTriggers" },
 }))

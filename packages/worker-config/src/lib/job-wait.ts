@@ -1,6 +1,6 @@
 import type { Job } from "bullmq"
 import { QueueEvents } from "bullmq"
-import { getRedisConnection } from "./connection"
+import { getQueueConnection } from "./connection"
 import { queueNames } from "./types"
 
 // Bounds the wait so a stalled/backlogged integration worker can never block
@@ -51,7 +51,7 @@ function getIntegrationQueueEvents(): QueueEvents {
   }
 
   integrationQueueEvents = new QueueEvents(queueNames.enum.integration, {
-    connection: getRedisConnection().duplicate(),
+    connection: getQueueConnection(queueNames.enum.integration).duplicate(),
   })
   return integrationQueueEvents
 }
@@ -69,7 +69,7 @@ export function getHeavyQueueEvents(): QueueEvents {
   }
 
   heavyQueueEvents = new QueueEvents(queueNames.enum.heavy, {
-    connection: getRedisConnection().duplicate(),
+    connection: getQueueConnection(queueNames.enum.heavy).duplicate(),
   })
   return heavyQueueEvents
 }
@@ -171,27 +171,6 @@ export async function waitForIntegrationJobCompletion(
 // timeout would silently return undefined and look like success.
 // waitForJobResult is the strict counterpart: it rejects on timeout or job
 // failure.
-
-const queueEventsByName = new Map<string, QueueEvents>()
-
-/**
- * Lazily creates (and memoizes per queue name) a QueueEvents instance — the
- * same lazy-create pattern as getIntegrationQueueEvents, generalized for any
- * per-name queue. Memoized instances live for the process lifetime; there is no
- * close-on-shutdown path since the set is bounded by distinct queue names, not
- * request volume.
- */
-export function createQueueEvents(queueName: string): QueueEvents {
-  const existing = queueEventsByName.get(queueName)
-  if (existing) {
-    return existing
-  }
-  const queueEvents = new QueueEvents(queueName, {
-    connection: getRedisConnection().duplicate(),
-  })
-  queueEventsByName.set(queueName, queueEvents)
-  return queueEvents
-}
 
 /**
  * Strict wait: resolves with the job's result, or rejects on timeout or job

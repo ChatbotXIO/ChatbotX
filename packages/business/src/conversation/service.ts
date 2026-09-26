@@ -49,6 +49,7 @@ import {
   NotificationJobAction,
   notificationQueue,
 } from "@chatbotx.io/worker-config"
+import type { PgUpdateSetSource } from "drizzle-orm/pg-core"
 import { BaseService } from "../base.service"
 import { contactService } from "../contact"
 import type {
@@ -1429,12 +1430,13 @@ class ConversationService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     const { workspaceId, conversationId, tx = db } = props
-    const data: Partial<typeof conversationModel.$inferInsert> = {}
+    const data: PgUpdateSetSource<typeof conversationModel> = {}
     if ("currentStep" in props) {
       data.currentStep = props.currentStep
     }
-    if ("lastActivityAt" in props) {
-      data.lastActivityAt = props.lastActivityAt
+    if (props.lastActivityAt !== undefined) {
+      // Postgres GREATEST ignores NULL operands, so a NULL column advances to the new value.
+      data.lastActivityAt = sql`GREATEST(${conversationModel.lastActivityAt}, ${props.lastActivityAt})`
     }
     if ("lastStep" in props) {
       data.lastStep = props.lastStep

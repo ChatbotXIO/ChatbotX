@@ -3,7 +3,7 @@ import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -147,6 +147,6 @@ export type AIJobProcessStoryReplyAutomation = z.infer<
 export const aiAgentQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<AIJobData>(queueNames.enum.aiAgent, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.aiAgent),
       defaultJobOptions,
     })

@@ -22,6 +22,7 @@ vi.mock("../src/lib/connection", () => ({
   },
   fakeQueue: { add: vi.fn() },
   getRedisConnection: () => ({}),
+  getQueueConnection: () => ({}),
   isNoRedisEnv: () => false,
 }))
 

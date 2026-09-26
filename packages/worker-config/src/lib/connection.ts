@@ -1,8 +1,12 @@
 import { createRedisConnection } from "@chatbotx.io/redis"
 import type { default as IORedis, RedisOptions } from "ioredis"
 import { keys } from "../keys"
+import type { QueueName } from "./types"
 
-let permanentRedis: IORedis | null = null
+const connectionsByGroup: Record<QueueGroup, IORedis | null> = {
+  hot: null,
+  bulk: null,
+}
 const env = keys()
 
 /**
@@ -17,9 +21,40 @@ export function isNoRedisEnv(): boolean {
   )
 }
 
-export function getRedisConnection() {
-  if (permanentRedis) {
-    return permanentRedis
+export type QueueGroup = "hot" | "bulk"
+
+export const queueGroupByName: Record<QueueName, QueueGroup> = {
+  integration: "hot",
+  chat: "hot",
+  aiAgent: "bulk",
+  heavy: "bulk",
+  schedule: "bulk",
+  trigger: "bulk",
+  webhook: "bulk",
+  default: "bulk",
+  // Uses sequenceConnections directly.
+  sequenceScheduler: "hot",
+  // Has no Queue or Worker.
+  broadcast: "hot",
+  quota: "bulk",
+  notification: "hot",
+  callTranscription: "hot",
+  whatsappVoipSignaling: "hot",
+  low: "hot",
+}
+
+function resolveGroupUrl(group: QueueGroup): string {
+  const queueUrl = env.REDIS_QUEUE_URL ?? env.REDIS_URL
+  if (group === "bulk") {
+    return env.REDIS_QUEUE_BULK_URL ?? queueUrl
+  }
+  return queueUrl
+}
+
+export function getRedisConnection(group: QueueGroup = "hot") {
+  const existing = connectionsByGroup[group]
+  if (existing) {
+    return existing
   }
 
   const options: RedisOptions = {
@@ -43,10 +78,14 @@ export function getRedisConnection() {
     },
   }
 
-  permanentRedis = createRedisConnection(env.REDIS_URL, options)
+  const connection = createRedisConnection(resolveGroupUrl(group), options)
+  connectionsByGroup[group] = connection
 
-  return permanentRedis
+  return connection
 }
+
+export const getQueueConnection = (name: QueueName) =>
+  getRedisConnection(queueGroupByName[name])
 
 export const defaultJobOptions = {
   attempts: 2,

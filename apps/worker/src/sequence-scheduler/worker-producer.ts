@@ -21,6 +21,13 @@ interface SchedulerConfig {
   tickIntervalMs: number
 }
 
+type DispatchSource = "schedule" | "retry"
+
+type ClaimedDispatch = {
+  dispatchId: string
+  source: DispatchSource
+}
+
 export class SchedulerWorker {
   private readonly config: SchedulerConfig
   private _scheduler: SchedulerClient | null = null
@@ -78,9 +85,8 @@ export class SchedulerWorker {
 
     const redisClient = await sequenceConnections.useExisting()
     this._scheduler = new SchedulerClient(redisClient)
-    this._producer = await createProducer({
+    this._producer = createProducer({
       topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
-      clientId: "sequence-scheduler",
     })
 
     this.running = true
@@ -99,7 +105,7 @@ export class SchedulerWorker {
       try {
         await this.processBucket(bucket)
       } catch (error) {
-        logger.error(error, `Error processing bucket ${bucket}`)
+        logger.error({ err: error, bucket }, "Error processing bucket")
       }
 
       if (this.running) {
@@ -131,54 +137,124 @@ export class SchedulerWorker {
       return
     }
 
-    const claimed: { dispatchId: string; bucket: number }[] = []
-
-    await Promise.all([
-      ...scheduleCandidates.map(async (dispatchId) => {
-        try {
-          await this.scheduler.withLock(
-            bucket,
-            dispatchId,
-            this.config.lockTtlMs / 1000,
-            async () => {
-              await this.scheduler.removeFromSchedule(bucket, dispatchId)
-              claimed.push({
-                dispatchId,
-                bucket,
-              })
-            },
-          )
-        } catch {
-          // Lock not acquired, skip this dispatch
-        }
+    const [scheduledClaims, retryClaims] = await Promise.all([
+      this.claimCandidates({
+        bucket,
+        ids: scheduleCandidates,
+        source: "schedule",
+        remove: (dispatchId) =>
+          this.scheduler.removeFromSchedule(bucket, dispatchId),
       }),
-      ...retryCandidates.map(async (dispatchId) => {
-        try {
-          await this.scheduler.withLock(
-            bucket,
-            dispatchId,
-            this.config.lockTtlMs / 1000,
-            async () => {
-              await this.scheduler.removeFromRetry(bucket, dispatchId)
-              claimed.push({
-                dispatchId,
-                bucket,
-              })
-            },
-          )
-        } catch {
-          // Lock not acquired, skip this dispatch
-        }
+      this.claimCandidates({
+        bucket,
+        ids: retryCandidates,
+        source: "retry",
+        remove: (dispatchId) =>
+          this.scheduler.removeFromRetry(bucket, dispatchId),
       }),
     ])
+    const claimed = [...scheduledClaims, ...retryClaims]
 
-    if (claimed.length > 0) {
-      await this.publishDispatches(claimed)
+    if (claimed.length === 0) {
+      return
+    }
+
+    try {
+      await this.publishDispatches(bucket, claimed)
+    } catch (err) {
+      logger.error(
+        { err, bucket, count: claimed.length },
+        "Failed to publish claimed dispatches; re-inserting for retry on next tick",
+      )
+      await this.reinsertClaimed(bucket, claimed)
+    }
+  }
+
+  private async claimCandidates({
+    bucket,
+    ids,
+    source,
+    remove,
+  }: {
+    bucket: number
+    ids: string[]
+    source: DispatchSource
+    remove: (dispatchId: string) => Promise<void>
+  }): Promise<ClaimedDispatch[]> {
+    const claims = await Promise.all(
+      ids.map(async (dispatchId) => {
+        try {
+          await this.scheduler.withLock(
+            bucket,
+            dispatchId,
+            this.config.lockTtlMs / 1000,
+            () => remove(dispatchId),
+          )
+          return { dispatchId, source }
+        } catch (error) {
+          logger.debug(
+            { err: error, dispatchId, bucket },
+            "Dispatch claim skipped",
+          )
+          return
+        }
+      }),
+    )
+
+    return claims.flatMap((claim) => (claim ? [claim] : []))
+  }
+
+  private async reinsertClaimed(
+    bucket: number,
+    claimed: ClaimedDispatch[],
+  ): Promise<void> {
+    const nowRetryMs = Date.now()
+    const scheduleEntries = claimed
+      .filter((entry) => entry.source === "schedule")
+      .map((entry) => ({
+        bucket,
+        dispatchId: entry.dispatchId,
+        runAtMs: nowRetryMs,
+      }))
+    const retryEntries = claimed.filter((entry) => entry.source === "retry")
+    const reinsertions = [
+      {
+        dispatchIds: scheduleEntries.map((entry) => entry.dispatchId),
+        promise: this.scheduler.batchAddToSchedule(scheduleEntries),
+      },
+      ...retryEntries.map((entry) => ({
+        dispatchIds: [entry.dispatchId],
+        promise: this.scheduler.addToRetry(
+          bucket,
+          entry.dispatchId,
+          nowRetryMs,
+        ),
+      })),
+    ]
+    const results = await Promise.allSettled(
+      reinsertions.map((reinsertion) => reinsertion.promise),
+    )
+    const failed = results.flatMap((result, index) =>
+      result.status === "rejected"
+        ? [{ err: result.reason, dispatchIds: reinsertions[index].dispatchIds }]
+        : [],
+    )
+
+    if (failed.length > 0) {
+      logger.error(
+        {
+          err: failed[0].err,
+          bucket,
+          dispatchIds: failed.flatMap((failure) => failure.dispatchIds),
+        },
+        "Failed to re-insert claimed dispatches after publish failure; these dispatches are lost from scheduling until the hourly reconcile timer recovers them",
+      )
     }
   }
 
   async publishDispatches(
-    dispatches: { dispatchId: string; bucket: number }[],
+    bucket: number,
+    dispatches: Pick<ClaimedDispatch, "dispatchId">[],
   ) {
     const dispatchIds = dispatches.map((dispatch) => dispatch.dispatchId)
     const pendingDispatches =
@@ -200,7 +276,7 @@ export class SchedulerWorker {
         value: JSON.stringify({
           dispatchId: dispatch.dispatchId,
           claimedAt: Date.now(),
-          bucket: dispatch.bucket,
+          bucket,
           workspaceId,
         }),
       }

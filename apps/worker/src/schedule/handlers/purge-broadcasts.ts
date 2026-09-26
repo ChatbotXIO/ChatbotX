@@ -6,7 +6,11 @@ import {
   purgeBroadcastRecipients,
 } from "@chatbotx.io/database/repositories"
 import { getChildLogger } from "@chatbotx.io/logger"
-import { distributedLock, distributedStore } from "@chatbotx.io/redis"
+import {
+  distributedLock,
+  distributedStore,
+  isLockAcquisitionError,
+} from "@chatbotx.io/redis"
 import { mapWithConcurrency } from "@chatbotx.io/utils"
 import { PURGE_BROADCAST_CONCURRENCY } from "@chatbotx.io/worker-config"
 
@@ -61,7 +65,7 @@ export async function purgeBroadcasts(): Promise<void> {
       fn: runPurge,
     })
   } catch (err) {
-    if (isLockAcquisitionFailure(err)) {
+    if (isLockAcquisitionError(err, LOCK_KEY)) {
       if (await isPurgeBroadcastsLockHeld()) {
         log.warn(
           { err },
@@ -171,17 +175,4 @@ async function purgeOne(
 
   const hardDeleted = await hardDeleteBroadcast(broadcastId)
   return { deleted, stopReason, hardDeleted }
-}
-
-function isLockAcquisitionFailure(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "name" in err &&
-    "code" in err &&
-    "key" in err &&
-    err.name === "LockAcquisitionError" &&
-    err.code === "LOCK_ACQUISITION_FAILED" &&
-    err.key === LOCK_KEY
-  )
 }

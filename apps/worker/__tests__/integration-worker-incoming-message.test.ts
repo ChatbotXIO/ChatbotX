@@ -45,6 +45,8 @@ const {
   mockConversationFindOrCreate,
   mockGetWhatsappCallPermissionReply,
   mockRecordCallPermissionReply,
+  mockDistributedLockRunExclusive,
+  mockBroadcastToWorkspaceParty,
   workerState,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
@@ -97,6 +99,12 @@ const {
     mockConversationFindOrCreate: vi.fn(),
     mockGetWhatsappCallPermissionReply: vi.fn(),
     mockRecordCallPermissionReply: vi.fn().mockResolvedValue(undefined),
+    // Pass-through by default: matches every other test file's
+    // `distributedLock` convention (see e.g. `drip-handler.test.ts`).
+    mockDistributedLockRunExclusive: vi.fn(
+      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+    ),
+    mockBroadcastToWorkspaceParty: vi.fn(),
     workerState: { capturedWorkers: [] as CapturedWorker[] },
   }
 })
@@ -309,7 +317,7 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
-  broadcastToWorkspaceParty: vi.fn(),
+  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
@@ -364,6 +372,21 @@ vi.mock("@chatbotx.io/business", () => ({
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
   },
 }))
+
+const lockAcquisitionError = (key: string) =>
+  Object.assign(new Error("lock acquisition timed out"), {
+    name: "LockAcquisitionError",
+    code: "LOCK_ACQUISITION_FAILED",
+    key,
+  })
+
+vi.mock("@chatbotx.io/redis", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    distributedLock: { runExclusive: mockDistributedLockRunExclusive },
+  }
+})
 
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: vi.fn().mockResolvedValue(undefined),
@@ -429,6 +452,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     removeOnFail: { count: 5000 },
   },
   getRedisConnection: () => ({}),
+  getQueueConnection: () => ({}),
   closeHeavyQueueEvents: vi.fn().mockResolvedValue(undefined),
   closeIntegrationQueueEvents: vi.fn().mockResolvedValue(undefined),
   getHeavyJobCompletionWaitTimeoutMs: vi.fn().mockReturnValue(10 * 60 * 1000),
@@ -559,6 +583,11 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     mockConversationFindOrCreate.mockReset()
     mockGetWhatsappCallPermissionReply.mockReset()
     mockRecordCallPermissionReply.mockClear()
+    mockDistributedLockRunExclusive.mockReset()
+    mockDistributedLockRunExclusive.mockImplementation(
+      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+    )
+    mockBroadcastToWorkspaceParty.mockClear()
 
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -732,5 +761,119 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     expect(mockRecordCallPermissionReply).toHaveBeenCalledWith(
       expect.objectContaining({ response: "reject", isPermanent: false }),
     )
+  })
+
+  // ---------------------------------------------------------------------
+  // Step 3a regression: `saveAndBroadcastMessage` serializes its insert →
+  // broadcast critical section per conversation via `distributedLock`, and
+  // degrades to unlocked processing (never drops the message) when the
+  // lock cannot be acquired.
+  // ---------------------------------------------------------------------
+
+  test("wraps message persistence in the per-conversation ingress lock", async () => {
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(mockDistributedLockRunExclusive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: "ingress:conv:conv-1",
+        timeoutInSeconds: 30,
+        retryTimeoutInSeconds: 30,
+        fn: expect.any(Function),
+      }),
+    )
+    // The insert and the realtime broadcast both happen inside the locked
+    // section: the default pass-through mock only calls `mockCreateOrUpdate`
+    // and `mockBroadcastToWorkspaceParty` via its `fn`, so their having run
+    // at all proves they executed inside `runExclusive`, not around it.
+    expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledOnce()
+    expect(
+      mockDistributedLockRunExclusive.mock.invocationCallOrder[0],
+    ).toBeLessThan(mockCreateOrUpdate.mock.invocationCallOrder[0])
+  })
+
+  test("degrades to unlocked processing and still persists + broadcasts exactly once when the lock cannot be acquired", async () => {
+    mockDistributedLockRunExclusive.mockRejectedValueOnce(
+      lockAcquisitionError("ingress:conv:conv-1"),
+    )
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(mockDistributedLockRunExclusive).toHaveBeenCalledOnce()
+    expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledOnce()
+  })
+
+  test("propagates a persist() failure instead of re-running unlocked, even though it surfaces through the same runExclusive rejection path", async () => {
+    // Regression: the lock-degrade catch must only degrade on an actual
+    // lock-acquisition failure. A failure inside `fn` itself (DB error,
+    // conflict, etc.) after the lock was already held looks identical to a
+    // rejected `runExclusive` from the call site's perspective — without the
+    // isLockAcquisitionError guard, this would silently retry persist()
+    // unlocked and duplicate the insert/broadcast/notification/event side
+    // effects instead of letting BullMQ retry the job.
+    const persistError = new Error("db write failed")
+    mockCreateOrUpdate.mockRejectedValueOnce(persistError)
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await expect(
+      integrationWorker?.processor({
+        data: {
+          type: "incomingMessage",
+          data: {
+            integrationType: "messenger",
+            integrationIdentifier: "inbox-1",
+            payload: {},
+          },
+        },
+      }),
+    ).rejects.toThrow(persistError)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
+    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+  })
+
+  test("propagates a nested repository lock failure without broadcasting", async () => {
+    const innerLockError = lockAcquisitionError("msg:upsert:conv-1:source-1")
+    mockCreateOrUpdate.mockRejectedValueOnce(innerLockError)
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await expect(
+      integrationWorker?.processor({
+        data: {
+          type: "incomingMessage",
+          data: {
+            integrationType: "messenger",
+            integrationIdentifier: "inbox-1",
+            payload: {},
+          },
+        },
+      }),
+    ).rejects.toBe(innerLockError)
+
+    expect(mockDistributedLockRunExclusive).toHaveBeenCalledOnce()
+    expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
+    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
   })
 })

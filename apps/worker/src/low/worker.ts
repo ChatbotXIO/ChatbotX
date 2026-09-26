@@ -1,7 +1,7 @@
 import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   LowJobAction,
   type LowJobData,
   queueNames,
@@ -68,7 +68,7 @@ async function startLowWorker() {
       })
     },
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.low),
       ...defaultWorkerOptions,
       concurrency: env.LOW_WORKER_CONCURRENCY,
     },

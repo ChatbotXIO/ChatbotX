@@ -38,6 +38,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     ...actual,
     defaultWorkerOptions: {},
     getRedisConnection: vi.fn(),
+    getQueueConnection: vi.fn(),
     integrationQueue: { add: mocks.integrationQueueAdd },
     queueNames: { enum: { heavy: "heavy" } },
   }

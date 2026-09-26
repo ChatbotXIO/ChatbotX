@@ -1,6 +1,10 @@
 import { workspaceService } from "@chatbotx.io/business"
 import { getChildLogger } from "@chatbotx.io/logger"
-import { distributedLock, distributedStore } from "@chatbotx.io/redis"
+import {
+  distributedLock,
+  distributedStore,
+  isLockAcquisitionError,
+} from "@chatbotx.io/redis"
 import { allIntegrations } from "../../services/integrations"
 
 const LOCK_KEY = "schedule:purge-workspaces"
@@ -32,7 +36,7 @@ export async function purgeWorkspaces(): Promise<void> {
       },
     })
   } catch (err) {
-    if (isLockAcquisitionFailure(err) && (await isPurgeLockHeld())) {
+    if (isLockAcquisitionError(err, LOCK_KEY) && (await isPurgeLockHeld())) {
       log.warn(
         { err },
         "purgeWorkspaces: skipped because another purge still holds the lock",
@@ -44,19 +48,6 @@ export async function purgeWorkspaces(): Promise<void> {
   } finally {
     isPurgeWorkspacesRunning = false
   }
-}
-
-function isLockAcquisitionFailure(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "name" in err &&
-    "code" in err &&
-    "key" in err &&
-    err.name === "LockAcquisitionError" &&
-    err.code === "LOCK_ACQUISITION_FAILED" &&
-    err.key === LOCK_KEY
-  )
 }
 
 async function isPurgeLockHeld(): Promise<boolean> {

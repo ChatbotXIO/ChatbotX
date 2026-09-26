@@ -2,7 +2,7 @@ import { Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -51,6 +51,6 @@ export type QuotaJobData =
 export const quotaQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<QuotaJobData>(queueNames.enum.quota, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.quota),
       defaultJobOptions,
     })

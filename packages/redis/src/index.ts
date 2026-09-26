@@ -20,18 +20,15 @@ export { presenceStoreFactory } from "./presence-store"
 export const presenceStore = presenceStoreFactory(cacheConnections.useExisting)
 
 export { cacheConnections } from "./connections/cache-connection"
-export { distributedLockFactory } from "./distributed-lock"
+export {
+  distributedLockFactory,
+  isLockAcquisitionError,
+} from "./distributed-lock"
 export const distributedLock = distributedLockFactory(cacheConnections.create)
-// Re-exported so callers can catch a failed (non-blocking) lock acquisition
-// distinctly from a failure inside the locked `fn` itself, without adding
-// `redlock-universal` as a direct dependency of every package that uses
-// `distributedLock`.
-export { LockAcquisitionError } from "redlock-universal"
 export const distributedStore = distributedStoreFactory(
   cacheConnections.useExisting,
 )
 
-export { queueConnections } from "./connections/queue-connection"
 export { sequenceConnections } from "./connections/sequence-connection"
 export { createRedisConnection } from "./redis-client"
 export const distributedSequenceStore = distributedStoreFactory(

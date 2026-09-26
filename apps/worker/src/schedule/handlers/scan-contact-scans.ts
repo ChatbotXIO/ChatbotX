@@ -1,7 +1,11 @@
 import { contactScanService } from "@chatbotx.io/business"
 import { CONTACT_SCAN_MAX_ATTEMPTS } from "@chatbotx.io/business/contact-scan"
 import { getChildLogger } from "@chatbotx.io/logger"
-import { distributedLock, distributedStore } from "@chatbotx.io/redis"
+import {
+  distributedLock,
+  distributedStore,
+  isLockAcquisitionError,
+} from "@chatbotx.io/redis"
 import {
   buildContactScanJobId,
   IntegrationJobAction,
@@ -15,26 +19,13 @@ const BATCH = 500
 
 const log = getChildLogger("scan-contact-scans")
 
-function isLockAcquisitionFailure(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "name" in err &&
-    "code" in err &&
-    "key" in err &&
-    err.name === "LockAcquisitionError" &&
-    err.code === "LOCK_ACQUISITION_FAILED" &&
-    err.key === LOCK_KEY
-  )
-}
-
 /**
  * Runs every minute (`register-schedules.ts`). Sweeps stuck Automatic
  * Customer Scan runs, then dispatches every due run to the integration
  * queue — mirrors `scan-coexist-runs.ts`'s `scanCoexistRuns` structure, minus
  * the per-channel recovery passes (contact scan carries no channel-specific
- * recovery state today). `distributedLock`/`isLockAcquisitionFailure` pattern
- * copied verbatim from `clear-expired-support-access.ts`.
+ * recovery state today). It skips an overlapping run using the shared
+ * `distributedLock` error guard.
  */
 export async function scanContactScans(): Promise<void> {
   try {
@@ -87,7 +78,7 @@ export async function scanContactScans(): Promise<void> {
     })
   } catch (err) {
     if (
-      isLockAcquisitionFailure(err) &&
+      isLockAcquisitionError(err, LOCK_KEY) &&
       (await distributedStore.exists(LOCK_KEY))
     ) {
       log.warn(
