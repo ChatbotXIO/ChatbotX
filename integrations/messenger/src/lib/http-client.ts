@@ -117,6 +117,7 @@ type HttpClientConfig = {
 type GetOptions = {
   headers?: Record<string, string>
   searchParams?: Record<string, string>
+  retry?: number
 }
 
 type PostOptions = {

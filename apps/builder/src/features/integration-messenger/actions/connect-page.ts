@@ -10,6 +10,7 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   getUserPages,
   integration as integrationMessenger,
+  logMessengerWelcomeProfile,
 } from "@chatbotx.io/integration-messenger"
 import {
   exchangeLongLivedToken,
@@ -133,6 +134,11 @@ async function subscribeAndPersistPage({
         ctx: brandingCtx,
         title: BRANDING_TITLE,
         url: brandingMenuEntry.url,
+      })
+
+      await logMessengerWelcomeProfile({
+        ctx: brandingCtx,
+        reason: "pageConnected",
       })
 
       await updateWorkspaceLogo({
