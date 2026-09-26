@@ -138,6 +138,26 @@ describe("withCache", () => {
     expect(mocks.distributedStore.expire).toHaveBeenCalledWith("tags:ws-1", 60)
   })
 
+  test("deduplicates concurrent cache misses for the same key", async () => {
+    const sourceStarted = Promise.withResolvers<void>()
+    const sourceUnblock = Promise.withResolvers<void>()
+    const source = vi.fn(async () => {
+      sourceStarted.resolve()
+      await sourceUnblock.promise
+      return { id: "1" }
+    })
+
+    const resultsPromise = Promise.all(
+      Array.from({ length: 100 }, () => withCache("workspaces:burst", source)),
+    )
+    await sourceStarted.promise
+    sourceUnblock.resolve()
+    const results = await resultsPromise
+
+    expect(source).toHaveBeenCalledTimes(1)
+    expect(results).toEqual(new Array(100).fill({ id: "1" }))
+  })
+
   test("does not cache null or undefined results", async () => {
     const result = await withCache("workspaces:missing", () =>
       Promise.resolve(undefined),
