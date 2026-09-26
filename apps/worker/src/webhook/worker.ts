@@ -11,6 +11,7 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
 const webhookMatcher = new WebhookMatcherService()
@@ -59,22 +60,9 @@ async function startWebhookWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[WebhookWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  onShutdown("webhook", async () => {
+    await worker.close()
+  })
 }
 
-startWebhookWorker()
+runWorker("webhook", startWebhookWorker)

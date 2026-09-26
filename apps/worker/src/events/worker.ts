@@ -1,5 +1,7 @@
 import { startWorker, stopWorker } from "@chatbotx.io/event-bus/worker"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { logger } from "../lib/logger"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { analyticsDashboardEvents } from "./analytics"
 import errorLogEventListener from "./error-log"
 import flowEventListener from "./flow"
@@ -8,9 +10,9 @@ import messageEventListener from "./message"
 async function startEventWorker() {
   try {
     await ensureBootstrapped()
-    console.log("Event worker bootstrapped successfully")
+    logger.info("Event worker bootstrapped successfully")
   } catch (err) {
-    console.error("Failed to bootstrap event worker", err)
+    logger.error({ err }, "Failed to bootstrap event worker")
     process.exit(1)
   }
 
@@ -22,35 +24,8 @@ async function startEventWorker() {
   ])
 }
 
-startEventWorker()
+runWorker("events", startEventWorker)
 
-let isShuttingDown = false
-async function shutdown(signal: "SIGINT" | "SIGTERM") {
-  if (isShuttingDown) {
-    console.log(`[EventWorker] Already shutting down, ignoring ${signal}`)
-    return
-  }
-
-  isShuttingDown = true
-
-  try {
-    await stopWorker()
-    process.exit(0)
-  } catch (error) {
-    console.error("[EventWorker] Error during shutdown", error)
-    process.exit(1)
-  }
-}
-
-process.once("SIGINT", shutdown)
-process.once("SIGTERM", shutdown)
-
-process.on("uncaughtException", (error) => {
-  console.error("[EventWorker] Uncaught exception", error)
-  shutdown("SIGTERM")
-})
-
-process.on("unhandledRejection", (reason) => {
-  console.error("[EventWorker] Unhandled rejection", reason)
-  shutdown("SIGTERM")
-})
+// uncaughtException / unhandledRejection are handled process-wide by
+// lib/shutdown, for every worker sharing this process.
+onShutdown("events", stopWorker)

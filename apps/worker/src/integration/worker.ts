@@ -35,6 +35,7 @@ import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { integrationService } from "../services/integrations"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
@@ -650,32 +651,16 @@ async function startIntegrationWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      await Promise.all([
-        callTranscriptionWorker.close(),
-        whatsappVoipSignalingWorker.close(),
-        closeChatQueueEvents(),
-        closeIntegrationQueueEvents(),
-        closeHeavyQueueEvents(),
-      ])
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[IntegrationWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  onShutdown("integration", async () => {
+    await worker.close()
+    await Promise.all([
+      callTranscriptionWorker.close(),
+      whatsappVoipSignalingWorker.close(),
+      closeChatQueueEvents(),
+      closeIntegrationQueueEvents(),
+      closeHeavyQueueEvents(),
+    ])
+  })
 }
 
-startIntegrationWorker().catch((err) => {
-  logger.error({ err }, "Failed to start integration worker")
-  process.exit(1)
-})
+runWorker("integration", startIntegrationWorker)

@@ -25,6 +25,10 @@ RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
 RUN SKIP_ENV_CHECK=true pnpm turbo run build --filter=worker
+# The entrypoint runs with `--enable-source-maps`; full maps cost +511MB heap,
+# first-party-only maps +114MB. `turbo prune` omits root scripts; copy it back.
+COPY scripts/prune-sourcemaps.mjs scripts/prune-sourcemaps.mjs
+RUN node scripts/prune-sourcemaps.mjs apps/worker/dist
 
 FROM base AS release
 RUN apt update && \
@@ -39,4 +43,6 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 STOPSIGNAL SIGTERM
-CMD ["worker", "all"]
+# Core queues + schedule in one process (~500MB). Use `worker all` for one
+# process per worker, or `worker <name>` to run a single queue per container.
+CMD ["worker", "standalone"]

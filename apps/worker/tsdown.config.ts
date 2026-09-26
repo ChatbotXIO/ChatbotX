@@ -3,6 +3,10 @@ import { defineConfig } from "tsdown"
 export default defineConfig({
   format: ["esm"],
   entry: [
+    // Single-process bundles: core consumers (`worker core`), and core plus
+    // schedule (`worker standalone`, the image default).
+    "src/core.ts",
+    "src/standalone.ts",
     "src/chat/worker.ts",
     "src/integration/worker.ts",
     "src/ai-agent/worker.ts",

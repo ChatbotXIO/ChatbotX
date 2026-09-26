@@ -44,17 +44,34 @@ ENV BETTER_AUTH_URL="http://localhost:3000"
 #   Not persisted across CI runs — `turbo.json` excludes `.next/cache/**` from the
 #   build outputs, so restoring it can never turn a turbo cache miss into a hit;
 #   it only ever warmed an already-executing build, at a much higher CI cost.
+#   Hence NEXT_BUILD_FS_CACHE defaults to false. On a machine that rebuilds the
+#   image repeatedly (docker-compose.dev.yml sets it true) BuildKit keeps this
+#   mount between builds: a warm `next build` measured 14s / 5.0GB peak memory
+#   instead of 58s / 11.7GB.
 # - TURBO_* secret mounts: optional Turbo remote cache (self-hosted
 #   turborepo-remote-cache or Vercel). When the secrets are not provided the
 #   env vars stay unset and turbo builds without a remote cache — a full
 #   remote-cache hit restores `.next/**` and skips `next build` entirely. This is
 #   the only mechanism that can actually skip the build; wiring it up is a
 #   secrets-only change.
+ARG NEXT_BUILD_FS_CACHE=false
+#
+# Source maps: standalone output ships only ~250 of ~4,000 server maps, so most
+# production frames never resolved. The prune step rewrites every map to
+# first-party code (2.3GB -> ~120MB) and copies it beside its chunk, so
+# `--enable-source-maps` maps the whole server for ~+20-65MB RSS. It runs in
+# the SAME `RUN` as the build so the 2.3GB of raw maps never get committed to
+# a layer — CI runs on GitHub-hosted runners with limited disk.
+# `turbo prune` omits root scripts; copy it back.
+COPY scripts/prune-sourcemaps.mjs scripts/prune-sourcemaps.mjs
 RUN --mount=type=cache,target=/app/apps/builder/.next/cache \
   --mount=type=secret,id=TURBO_API,env=TURBO_API \
   --mount=type=secret,id=TURBO_TOKEN,env=TURBO_TOKEN \
   --mount=type=secret,id=TURBO_TEAM,env=TURBO_TEAM \
-  SKIP_ENV_CHECK=true pnpm turbo run build --filter=builder
+  NEXT_BUILD_FS_CACHE="$NEXT_BUILD_FS_CACHE" SKIP_ENV_CHECK=true \
+  pnpm turbo run build --filter=builder \
+  && node scripts/prune-sourcemaps.mjs apps/builder/.next/server \
+    --copy-to apps/builder/.next/standalone/apps/builder/.next/server
 
 # Standalone image has no pnpm workspace; bundle a tiny migration runner (drizzle-orm + pg only).
 RUN apt-get update && apt-get install -y --no-install-recommends jq \

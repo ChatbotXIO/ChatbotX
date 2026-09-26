@@ -3,6 +3,7 @@ import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { onShutdown, runWorker } from "../lib/shutdown"
 
 const BOOTSTRAP_WINDOW_HOURS = 24
 const BOOTSTRAP_INTERVAL_MS_DEFAULT = 3_600_000
@@ -298,8 +299,6 @@ const reconcile = new ReconcileJob({
 })
 const shouldAutoStart = process.env.NODE_ENV !== "test" && !process.env.VITEST
 
-let isShuttingDown = false
-
 async function startReconcileWorker() {
   await ensureBootstrapped()
   await reconcile.start()
@@ -314,35 +313,6 @@ function stopReconcileWorker() {
 }
 
 if (shouldAutoStart) {
-  startReconcileWorker().catch((error) => {
-    logger.error(error, "Error starting reconcile worker")
-    process.exitCode = 1
-  })
-}
-
-const handleShutdownSignal = (signal: "SIGINT" | "SIGTERM") => {
-  if (isShuttingDown) {
-    return
-  }
-  isShuttingDown = true
-
-  logger.info({ signal }, "Shutdown signal received")
-
-  try {
-    stopReconcileWorker()
-    process.exit(0)
-  } catch (error) {
-    logger.error(error, "Error during reconcile worker shutdown")
-    process.exit(1)
-  }
-}
-
-if (shouldAutoStart) {
-  process.on("SIGINT", () => {
-    handleShutdownSignal("SIGINT")
-  })
-
-  process.on("SIGTERM", () => {
-    handleShutdownSignal("SIGTERM")
-  })
+  runWorker("sequence-scheduler", startReconcileWorker)
+  onShutdown("sequence-scheduler", stopReconcileWorker)
 }

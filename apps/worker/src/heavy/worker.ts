@@ -25,6 +25,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { analyzeImage } from "./handlers/analyze-image"
 import { editImageOutput } from "./handlers/edit-image"
 import {
@@ -398,28 +399,9 @@ async function startHeavyWorker() {
     logger.warn({ jobId }, "Heavy job stalled")
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      process.exit(0)
-    } catch (err) {
-      logger.error(
-        { err: normalizeError(err) },
-        "[HeavyWorker] Error during shutdown",
-      )
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  onShutdown("heavy", async () => {
+    await worker.close()
+  })
 }
 
-startHeavyWorker().catch((err) => {
-  logger.error({ err: normalizeError(err) }, "Failed to start Heavy worker")
-  process.exit(1)
-})
+runWorker("heavy", startHeavyWorker)

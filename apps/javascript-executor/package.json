@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc --noEmit",
-    "dev": "dotenv -e ../../.env -- tsx --watch src/index.ts",
+    "dev": "tsx watch --env-file-if-exists=../../.env src/index.ts",
+    "dev:all": "pnpm dev",
     "start": "node dist/index.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"

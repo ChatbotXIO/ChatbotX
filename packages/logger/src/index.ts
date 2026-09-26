@@ -1,4 +1,5 @@
 import pino, { type Logger } from "pino"
+import { sourceMapStack } from "./source-mapped-stack"
 
 // Re-export the reusable log-safety helpers so a single import from
 // `@chatbotx.io/logger` covers safe diagnostic logging end to end:
@@ -17,6 +18,14 @@ const baseLogger = pino({
     },
   },
   timestamp: pino.stdTimeFunctions.isoTime, // Use ISO 8601 format
+  serializers: {
+    err: (err: Error) => {
+      const serialized = pino.stdSerializers.err(err)
+      return typeof serialized?.stack === "string"
+        ? { ...serialized, stack: sourceMapStack(serialized.stack) }
+        : serialized
+    },
+  },
 })
 
 export const getChildLogger = (name: string) =>

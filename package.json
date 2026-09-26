@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "turbo dev --filter=builder --filter=worker --filter=realtime --filter=javascript-executor",
+    "dev:all": "turbo dev:all --filter=builder --filter=worker --filter=realtime --filter=javascript-executor",
     "fix": "ultracite fix --unsafe",
     "lint": "pnpm check:agent-instructions && turbo run lint && ultracite check",
     "sync:agent-instructions": "node scripts/sync-agent-instructions.mjs --write",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
     "@chatbotx.io/vitest-config": "workspace:*",
+    "@jridgewell/sourcemap-codec": "^1.5.5",
     "@types/node": "^24.10.4",
     "dependency-cruiser": "^17.3.10",
     "knip": "^6.25.0",
