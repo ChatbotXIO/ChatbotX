@@ -148,7 +148,8 @@ export async function processCommentAutomation(
   // An `IntegrationNotFoundError` from the lookup below needs nothing extra
   // here: `runWithOrphanedIntegrationCleanup` (see `integration/job-context.ts`)
   // already disconnects the orphaned integration and marks the job
-  // unrecoverable, which is a better answer than an error-log row.
+  // unrecoverable, which is a better answer than an error-log row. (Channels in
+  // `isExpectedOrphan` complete the job instead; none has comment automation.)
   let context: Awaited<ReturnType<typeof loadCommentAutomationContext>>
   try {
     context = await loadCommentAutomationContext({

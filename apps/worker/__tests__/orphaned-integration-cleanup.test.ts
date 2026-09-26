@@ -33,9 +33,25 @@ vi.mock("../src/lib/logger", () => ({
   },
 }))
 
-const { handleOrphanedIntegration, IntegrationNotFoundError } = await import(
-  "../src/services/orphaned-integration-cleanup"
-)
+const {
+  handleOrphanedIntegration,
+  IntegrationNotFoundError,
+  isExpectedOrphan,
+} = await import("../src/services/orphaned-integration-cleanup")
+
+describe("isExpectedOrphan", () => {
+  test("treats a missing Zalo OA as expected traffic", () => {
+    expect(isExpectedOrphan(new IntegrationNotFoundError("zalo", "oa-1"))).toBe(
+      true,
+    )
+  })
+
+  test("treats channels with a cleanup strategy as real orphans", () => {
+    expect(
+      isExpectedOrphan(new IntegrationNotFoundError("messenger", "page-1")),
+    ).toBe(false)
+  })
+})
 
 describe("handleOrphanedIntegration", () => {
   beforeEach(() => {
