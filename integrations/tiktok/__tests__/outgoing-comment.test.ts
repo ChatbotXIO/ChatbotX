@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest"
 
-const replyToTiktokComment = vi.fn()
-vi.mock("../src/apis/comment", () => ({ replyToTiktokComment }))
+const replyToComment = vi.fn()
+vi.mock("../src/apis/comment", () => ({ replyToComment }))
 
 const { sendComment } = await import("../src/handlers/comment/outgoing-comment")
 
@@ -36,11 +36,11 @@ const send = (props: {
 
 describe("sendComment video id resolution", () => {
   test("uses the post id stamped on the comment message", async () => {
-    replyToTiktokComment.mockResolvedValue({ comment_id: "reply-1" })
+    replyToComment.mockResolvedValue({ comment_id: "reply-1" })
 
     await send({ postIdOnMessage: VIDEO_ID, sourceConversationId: null })
 
-    expect(replyToTiktokComment).toHaveBeenCalledWith(
+    expect(replyToComment).toHaveBeenCalledWith(
       "token",
       expect.objectContaining({ videoId: VIDEO_ID, commentId: COMMENT_ID }),
     )
@@ -51,7 +51,7 @@ describe("sendComment video id resolution", () => {
   // to fail every reply with "without the video id" even though the comment
   // message itself carried it all along.
   test("does not depend on the conversation carrying the post id", async () => {
-    replyToTiktokComment.mockResolvedValue({ comment_id: "reply-1" })
+    replyToComment.mockResolvedValue({ comment_id: "reply-1" })
 
     await expect(
       send({ postIdOnMessage: VIDEO_ID, sourceConversationId: null }),
@@ -61,11 +61,11 @@ describe("sendComment video id resolution", () => {
   // Anything enqueued before the post id was threaded through still has to go
   // out, so the conversation stays a fallback rather than being dropped.
   test("falls back to the conversation when the message has no post id", async () => {
-    replyToTiktokComment.mockResolvedValue({ comment_id: "reply-1" })
+    replyToComment.mockResolvedValue({ comment_id: "reply-1" })
 
     await send({ sourceConversationId: VIDEO_ID })
 
-    expect(replyToTiktokComment).toHaveBeenCalledWith(
+    expect(replyToComment).toHaveBeenCalledWith(
       "token",
       expect.objectContaining({ videoId: VIDEO_ID }),
     )

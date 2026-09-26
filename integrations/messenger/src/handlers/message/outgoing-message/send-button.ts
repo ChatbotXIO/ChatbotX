@@ -71,7 +71,7 @@ export function getButtonTemplate(props: {
   }
 }
 
-export function convertFacebookButtons({
+export function convertButtons({
   flowId,
   flowVersionId,
   buttons,

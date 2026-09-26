@@ -14,7 +14,7 @@ import {
   listPageMessageTemplates,
 } from "./apis/message-templates"
 import {
-  deleteMessengerProfileFields,
+  deleteProfileFields,
   exchangeLongLivedToken,
   syncPersonas,
   unsubscribePageFromAppWebhook,
@@ -82,7 +82,7 @@ const config: IntegrationDefinition<
   },
   disconnect: async (auth: MessengerAuthValue): Promise<void> => {
     try {
-      await deleteMessengerProfileFields({
+      await deleteProfileFields({
         ctx: { auth },
         fields: ["persistent_menu"],
       })

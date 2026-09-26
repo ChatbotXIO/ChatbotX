@@ -1127,7 +1127,7 @@ async function downloadCommenterAvatar(props: {
  * Channels whose public comment reply is not idempotent, so the automation job
  * must never be retried.
  *
- * Threads' `sendCommentReply` creates a fresh media container per call, and
+ * Threads' `replyToComment` creates a fresh media container per call, and
  * TikTok's `business/comment/reply/create/` takes no client-side key — on both,
  * a retry after a partial failure posts a SECOND visible reply with no id to
  * resume from. That is also why `waitForReplyContainerReady` must not treat an

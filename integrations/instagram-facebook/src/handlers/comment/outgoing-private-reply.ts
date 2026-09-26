@@ -3,11 +3,11 @@ import {
   ChannelErrorCategory,
   type CommentHandlers,
 } from "@chatbotx.io/sdk"
-import { sendPrivateReplyMessage } from "../../../apis/comment"
-import { mapToChannelError } from "../../../lib/error-mapper"
-import { logger } from "../../../lib/logger"
-import type { InstagramAuthValue } from "../../../schemas"
-import { convertMessageToInstagramMessage } from "../../message/outgoing-message"
+import { sendPrivateReplyMessage } from "../../apis/comment"
+import { mapToChannelError } from "../../lib/error-mapper"
+import { logger } from "../../lib/logger"
+import type { InstagramAuthValue } from "../../schema"
+import { convertMessage } from "../message/outgoing-message"
 
 export const sendPrivateReply: CommentHandlers<InstagramAuthValue>["sendPrivateReply"] =
   async (props) => {
@@ -27,7 +27,7 @@ export const sendPrivateReply: CommentHandlers<InstagramAuthValue>["sendPrivateR
     // Same text/attachment-to-Send-API-message conversion the regular
     // sendMessage handler uses — one yielded item per text/attachment, since
     // Meta's Send API only accepts one of either per call.
-    const instagramMessages = [...convertMessageToInstagramMessage(message)]
+    const instagramMessages = [...convertMessage(message)]
     if (instagramMessages.length === 0) {
       logger.warn(
         { replyToCommentId },

@@ -1,5 +1,5 @@
 import ky from "ky"
-import { BUSINESS_API_BASE_URL } from "../constants"
+import { BUSINESS_API_URL } from "../constants"
 import { rescue, TiktokAPIException } from "../exception"
 import {
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
@@ -11,8 +11,8 @@ import type { BusinessApiResponse } from "../schema"
 const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 // Business API OAuth — required for Business Messaging API tokens
 // https://business-api.tiktok.com/portal/docs?id=1832184159540418
-const TIKTOK_TOKEN_URL = `${BUSINESS_API_BASE_URL}tt_user/oauth2/token/`
-const TIKTOK_REFRESH_URL = `${BUSINESS_API_BASE_URL}tt_user/oauth2/refresh_token/`
+const TIKTOK_TOKEN_URL = `${BUSINESS_API_URL}tt_user/oauth2/token/`
+const TIKTOK_REFRESH_URL = `${BUSINESS_API_URL}tt_user/oauth2/refresh_token/`
 
 // The authorize request asks for every scope the app is approved for; the
 // three lists differ only in what a MISSING grant costs. Core is refused at

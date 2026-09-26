@@ -105,7 +105,7 @@ export const listTiktokCommentReplies = (
   })
 
 /** A new top-level comment on an owned video, as the business. */
-export const createTiktokComment = (
+export const createComment = (
   accessToken: string,
   params: {
     businessId: string
@@ -141,7 +141,7 @@ export const createTiktokComment = (
  * NOT idempotent — a retry posts a second reply under the same comment, which
  * is why the comment-automation retry policy has to cap TikTok at one attempt.
  */
-export const replyToTiktokComment = (
+export const replyToComment = (
   accessToken: string,
   params: {
     businessId: string
@@ -174,7 +174,7 @@ export const replyToTiktokComment = (
   })
 
 /** Like or unlike a comment as the business. Takes no `video_id`. */
-export const likeTiktokComment = (
+export const likeComment = (
   accessToken: string,
   params: {
     businessId: string
@@ -199,7 +199,7 @@ export const likeTiktokComment = (
   })
 
 /** Hide a comment from everyone but its author, or restore it. */
-export const hideTiktokComment = (
+export const hideComment = (
   accessToken: string,
   params: {
     businessId: string
@@ -226,7 +226,7 @@ export const hideTiktokComment = (
   })
 
 /** Permanently delete a comment on an owned video. Takes no `video_id`. */
-export const deleteTiktokComment = (
+export const deleteComment = (
   accessToken: string,
   params: { businessId: string; commentId: string },
 ): Promise<void> =>
@@ -249,10 +249,10 @@ export const deleteTiktokComment = (
  * Uploads an image for a comment or reply.
  *
  * The returned `image_uri` (plus its width/height) is what
- * `createTiktokComment` / `replyToTiktokComment` take — a comment cannot carry
+ * `createComment` / `replyToComment` take — a comment cannot carry
  * a raw image, only an already-uploaded reference.
  */
-export const uploadTiktokCommentImage = (
+export const uploadCommentImage = (
   accessToken: string,
   params: { businessId: string; imageUrl: string },
 ): Promise<TiktokCommentImageUploadResult> =>

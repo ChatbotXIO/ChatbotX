@@ -26,7 +26,7 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 | Attachment info (image/video for hide) | `apps/worker/src/integration/handlers/comment-automation/comment-attachment.ts` |
 | Receive comment + enqueue automation | `apps/worker/src/integration/handlers/received-message.ts` (`receiveComment`) |
 | Webhook parse + enqueue | `integrations/messenger/src/handlers/webhook.ts`, `integrations/instagram/src/handlers/webhook.ts`, `integrations/instagram-facebook/src/handlers/webhook.ts` |
-| Webhook value schema | `integrations/messenger/src/schema.ts` (`messengerFeedCommentValueSchema`), `integrations/instagram{,-facebook}/src/schemas.ts` (`instagramCommentEventValueSchema`) |
+| Webhook value schema | `integrations/messenger/src/schema.ts` (`messengerFeedCommentValueSchema`), `integrations/instagram{,-facebook}/src/schema.ts` (`instagramCommentEventValueSchema`) |
 | DB queries (match/dedup/schedule) | `packages/business/src/comment-automation/service.ts` |
 | Schema + option/reply Zod partials | `packages/database/src/schema/comment-automation.ts`, `.../partials/comment-automation.ts` |
 | Dedup ledger | `packages/database/src/schema/comment-automation-reply.ts` |

@@ -12,7 +12,7 @@ import {
 } from "../schema"
 import { getMessageAttachmentEntity } from "./attachment"
 
-export const sendComment = (
+export const replyToComment = (
   auth: MessengerAuthValue,
   commentId: string,
   message: string | null,
@@ -117,7 +117,7 @@ export const likeComment = (
  * arbitrary message payload (text, image, attachment, quick replies, …) —
  * used by flow-based private replies to deliver the *first* outgoing message
  * of the run. `FacebookSendMessageRequest["recipient"]` has no `comment_id`
- * variant, so this posts a raw payload rather than reusing `sendPageMessage`.
+ * variant, so this posts a raw payload rather than reusing `sendMessage`.
  *
  * Stamps `message.metadata` like every other Messenger send path so the
  * message_echo webhook (`handlers/webhook.ts`) recognizes and skips our own

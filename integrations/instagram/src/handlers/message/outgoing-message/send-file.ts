@@ -4,9 +4,9 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { uploadAttachment } from "../../../apis/attachment"
-import type { InstagramAuthValue } from "../../../schemas"
+import type { InstagramAuthValue } from "../../../schema"
+import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
 import { convertMediaType } from "./send-attachment"
-import { convertCanonicalInstagramQuickReplies } from "./send-quick-replies"
 
 /**
  * An upload failure is deliberately left to propagate: `sendFlowStep` maps it
@@ -37,7 +37,7 @@ export async function* convertFlowStepFile(
     },
     ...(quickReplies.length > 0
       ? {
-          quick_replies: convertCanonicalInstagramQuickReplies(quickReplies),
+          quick_replies: convertCanonicalQuickReplies(quickReplies),
         }
       : {}),
   }

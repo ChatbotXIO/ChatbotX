@@ -1,4 +1,4 @@
-import { deleteComment, hideComment, likeComment } from "./comment-state"
+import { deleteComment, hideComment, likeComment } from "./comment"
 import { sendComment } from "./outgoing-comment"
 import { sendPrivateReply } from "./outgoing-private-reply"
 
@@ -20,7 +20,7 @@ import { sendPrivateReply } from "./outgoing-private-reply"
 export const commentHandlers = {
   sendComment,
   sendPrivateReply,
+  deleteComment,
   likeComment,
   hideComment,
-  deleteComment,
 }

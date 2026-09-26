@@ -5,10 +5,10 @@ import {
   createReplyContainer,
   getReplyCreationStatus,
   publishReplyContainer,
-  sendCommentReply,
+  replyToComment,
 } from "../src/apis/comment"
 import {
-  THREADS_GRAPH_API_URL,
+  API_URL,
   THREADS_REPLY_PUBLISH_POLL_INTERVAL_MS,
   THREADS_REPLY_PUBLISH_TIMEOUT_MS,
 } from "../src/constants"
@@ -40,7 +40,7 @@ describe("threads comment api", () => {
   test("maps create/status/publish endpoints and returns the published reply id", async () => {
     server.use(
       http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
+        `${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
         async ({ request }) => {
           const body = await request.text()
           expect(body).toContain("media_type=TEXT")
@@ -50,14 +50,14 @@ describe("threads comment api", () => {
           return HttpResponse.json({ id: "creation-1" })
         },
       ),
-      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-1`, ({ request }) => {
+      http.get(`${API_URL}/v1.0/creation-1`, ({ request }) => {
         const url = new URL(request.url)
         expect(url.searchParams.get("fields")).toBe("status,error_message")
         expect(url.searchParams.get("access_token")).toBe("threads-token")
         return HttpResponse.json({ status: "finished" })
       }),
       http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
+        `${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
         async ({ request }) => {
           const body = await request.text()
           expect(body).toContain("creation_id=creation-1")
@@ -68,17 +68,16 @@ describe("threads comment api", () => {
     )
 
     await expect(
-      sendCommentReply(auth, "comment-123", "hello world"),
+      replyToComment(auth, "comment-123", "hello world"),
     ).resolves.toEqual({ id: "reply-1" })
   })
 
   test("fails when reply creation status becomes ERROR", async () => {
     server.use(
-      http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
-        () => HttpResponse.json({ id: "creation-error" }),
+      http.post(`${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`, () =>
+        HttpResponse.json({ id: "creation-error" }),
       ),
-      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-error`, () =>
+      http.get(`${API_URL}/v1.0/creation-error`, () =>
         HttpResponse.json({
           status: "ERROR",
           error_message: "Reply cannot be published",
@@ -87,17 +86,16 @@ describe("threads comment api", () => {
     )
 
     await expect(
-      sendCommentReply(auth, "comment-123", "hello world"),
+      replyToComment(auth, "comment-123", "hello world"),
     ).rejects.toThrow("Reply cannot be published")
   })
 
   test("fails when reply creation status becomes EXPIRED", async () => {
     server.use(
-      http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
-        () => HttpResponse.json({ id: "creation-expired" }),
+      http.post(`${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`, () =>
+        HttpResponse.json({ id: "creation-expired" }),
       ),
-      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-expired`, () =>
+      http.get(`${API_URL}/v1.0/creation-expired`, () =>
         HttpResponse.json({
           status: "expired",
           error_message: "Reply creation expired",
@@ -106,27 +104,26 @@ describe("threads comment api", () => {
     )
 
     await expect(
-      sendCommentReply(auth, "comment-123", "hello world"),
+      replyToComment(auth, "comment-123", "hello world"),
     ).rejects.toThrow("Reply creation expired")
   })
 
   test("treats PUBLISHED as ready instead of an unsupported status", async () => {
     server.use(
-      http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
-        () => HttpResponse.json({ id: "creation-published" }),
+      http.post(`${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`, () =>
+        HttpResponse.json({ id: "creation-published" }),
       ),
-      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-published`, () =>
+      http.get(`${API_URL}/v1.0/creation-published`, () =>
         HttpResponse.json({ status: "PUBLISHED" }),
       ),
       http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
+        `${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
         () => HttpResponse.json({ id: "reply-published" }),
       ),
     )
 
     await expect(
-      sendCommentReply(auth, "comment-123", "hello world"),
+      replyToComment(auth, "comment-123", "hello world"),
     ).resolves.toEqual({ id: "reply-published" })
   })
 
@@ -136,22 +133,21 @@ describe("threads comment api", () => {
   test("keeps polling when the first status response carries no status field", async () => {
     let poll = 0
     server.use(
-      http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
-        () => HttpResponse.json({ id: "creation-late" }),
+      http.post(`${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`, () =>
+        HttpResponse.json({ id: "creation-late" }),
       ),
-      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-late`, () => {
+      http.get(`${API_URL}/v1.0/creation-late`, () => {
         poll += 1
         return HttpResponse.json(poll === 1 ? {} : { status: "FINISHED" })
       }),
       http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
+        `${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
         () => HttpResponse.json({ id: "reply-late" }),
       ),
     )
 
     await expect(
-      sendCommentReply(auth, "comment-123", "hello world", {
+      replyToComment(auth, "comment-123", "hello world", {
         pollIntervalMs: 0,
         sleep: () => Promise.resolve(),
       }),
@@ -163,11 +159,10 @@ describe("threads comment api", () => {
     vi.useFakeTimers()
 
     server.use(
-      http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
-        () => HttpResponse.json({ id: "creation-timeout" }),
+      http.post(`${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`, () =>
+        HttpResponse.json({ id: "creation-timeout" }),
       ),
-      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-timeout`, () =>
+      http.get(`${API_URL}/v1.0/creation-timeout`, () =>
         HttpResponse.json({
           status: "IN_PROGRESS",
         }),
@@ -175,7 +170,7 @@ describe("threads comment api", () => {
     )
 
     const promise = expect(
-      sendCommentReply(auth, "comment-123", "hello world", {
+      replyToComment(auth, "comment-123", "hello world", {
         timeoutMs: THREADS_REPLY_PUBLISH_TIMEOUT_MS,
         pollIntervalMs: THREADS_REPLY_PUBLISH_POLL_INTERVAL_MS,
       }),
@@ -191,7 +186,7 @@ describe("threads comment api", () => {
 
     server.use(
       http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
+        `${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
         () => {
           requestCount += 1
           return HttpResponse.json(
@@ -215,7 +210,7 @@ describe("threads comment api", () => {
 
     server.use(
       http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
+        `${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
         () => {
           requestCount += 1
           return HttpResponse.json(
@@ -235,7 +230,7 @@ describe("threads comment api", () => {
   test("sanitizes secrets from provider errors and derived channel errors", async () => {
     server.use(
       http.get(
-        `${THREADS_GRAPH_API_URL}/v1.0/creation-secret`,
+        `${API_URL}/v1.0/creation-secret`,
         () =>
           new HttpResponse("boom", {
             status: 500,
@@ -300,15 +295,14 @@ describe("threads sendComment handler", () => {
 
   test("returns the published reply id from the handler", async () => {
     server.use(
-      http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
-        () => HttpResponse.json({ id: "creation-handler" }),
+      http.post(`${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`, () =>
+        HttpResponse.json({ id: "creation-handler" }),
       ),
-      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-handler`, () =>
+      http.get(`${API_URL}/v1.0/creation-handler`, () =>
         HttpResponse.json({ status: "FINISHED" }),
       ),
       http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
+        `${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
         () => HttpResponse.json({ id: "reply-handler" }),
       ),
     )
@@ -332,12 +326,11 @@ describe("threads sendComment handler", () => {
 
   test("logger payload does not include provider secrets", async () => {
     server.use(
-      http.post(
-        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
-        () => HttpResponse.json({ id: "creation-log-secret" }),
+      http.post(`${API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`, () =>
+        HttpResponse.json({ id: "creation-log-secret" }),
       ),
       http.get(
-        `${THREADS_GRAPH_API_URL}/v1.0/creation-log-secret`,
+        `${API_URL}/v1.0/creation-log-secret`,
         () =>
           new HttpResponse("boom", {
             status: 500,

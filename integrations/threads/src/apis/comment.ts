@@ -144,7 +144,7 @@ export async function waitForReplyContainerReady(
   }
 }
 
-export async function sendCommentReply(
+export async function replyToComment(
   auth: ThreadsAuthValue,
   replyToCommentId: string,
   text: string,
@@ -164,7 +164,7 @@ type ManageReplyResponse = {
  * allows this on TOP-LEVEL replies — a nested one comes back as an API error,
  * which the caller surfaces like any other channel failure.
  */
-export const setReplyHidden = (
+export const hideComment = (
   auth: ThreadsAuthValue,
   replyId: string,
   hidden: boolean,

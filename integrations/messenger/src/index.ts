@@ -4,7 +4,7 @@ export {
   editComment,
   hideComment,
   likeComment,
-  sendComment,
+  replyToComment,
   sendPrivateReply,
 } from "./apis/comment"
 export {

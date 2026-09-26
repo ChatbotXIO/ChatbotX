@@ -160,17 +160,18 @@ deliberately excluded to avoid false-positive disconnects, matching `integration
 ```
 src/
   integration.ts                     ← IntegrationDefinition config
-  schemas.ts                         ← Zod schemas + TypeScript types
+  schema.ts                          ← Zod schemas + TypeScript types
   constants.ts                       ← API_URL, DEFAULT_API_VERSION (v23.0)
   exception.ts                       ← InstagramException hierarchy + rescue()
   index.ts                           ← public exports
   apis/
     auth.ts                          ← generateAuthUrl, exchangeCodeForToken, getUserInstagramAccounts
-    page.ts                          ← sendInstagramMessage, subscribe/unsubscribe, profile management
-    comment.ts                       ← sendComment, deleteComment, hideComment, likeComment
+    page.ts                          ← subscribe/unsubscribe, profile management
+    message.ts                       ← sendMessage
+    comment.ts                       ← replyToComment, deleteComment, hideComment, likeComment
     post.ts                          ← getPostDetails (action exposed to the platform)
     contact-profile.ts               ← fetch contact name/avatar
-    attachment.ts                    ← upload attachment by URL
+    attachment.ts                    ← upload attachment by URL, download incoming attachments
     user.ts                          ← fetch Instagram user info
   handlers/
     webhook.ts                       ← signature verification, event routing
@@ -178,8 +179,9 @@ src/
       incoming-message.ts            ← receiveMessage
       outgoing-message/              ← sendMessage, sendFlowStep, per-type converters
     comment/
-      actions.ts                     ← deleteComment, hideComment, likeComment, editComment (no-op)
-      outgoing-comment/index.ts      ← sendComment
+      comment.ts                     ← deleteComment, hideComment, likeComment, editComment (no-op)
+      outgoing-comment.ts            ← sendComment
+      outgoing-private-reply.ts      ← sendPrivateReply
     contact.ts                       ← resolveContact
     conversation.ts                  ← resolveConversation
     bot.ts                           ← bot profile helpers
@@ -196,7 +198,7 @@ src/
 
 Default: `v23.0` (`DEFAULT_API_VERSION` in `constants.ts`). The version is stored in `auth.metadata.version` so it can be pinned per integration instance.
 
-> **Known inconsistency:** `apis/page.ts` (`sendInstagramMessage`, the `messenger_profile` helpers)
+> **Known inconsistency:** `apis/message.ts` (`sendMessage`) and the `messenger_profile` helpers in `apis/page.ts`
 > reads the version off `auth.version`, which the connect flow never writes — it only writes
 > `auth.metadata.version`. Those calls therefore always fall back to `DEFAULT_API_VERSION`, while
 > `apis/comment.ts` and `apis/attachment.ts` (which read `auth.metadata.version`) use the version the

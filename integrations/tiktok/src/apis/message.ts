@@ -17,45 +17,6 @@ type SendMessageResult = {
   }
 }
 
-type UploadMediaResult = {
-  media_id?: string
-}
-
-export const uploadTiktokMedia = (
-  accessToken: string,
-  businessId: string,
-  imageUrl: string,
-): Promise<string> =>
-  rescue("business/message/media/upload", async () => {
-    const imageResponse = await fetch(imageUrl)
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch image: ${imageUrl}`)
-    }
-    const blob = await imageResponse.blob()
-
-    const form = new FormData()
-    form.append("business_id", businessId)
-    form.append("file", blob)
-    form.append("media_type", "IMAGE")
-
-    const client = createTiktokBusinessClient(accessToken)
-    const response = await client.postFormData<
-      BusinessApiResponse<UploadMediaResult>
-    >("business/message/media/upload/", form)
-
-    if (response.code !== 0) {
-      throw new TiktokAPIException(
-        response.message ?? "TikTok media upload failed",
-      )
-    }
-
-    const mediaId = response.data?.media_id
-    if (!mediaId) {
-      throw new Error("No media_id in TikTok upload response")
-    }
-    return mediaId
-  })
-
 /**
  * Length limit `business/message/send/` enforces on `text.body`, spaces and
  * emojis included. Checked here rather than left to the API so an over-long
@@ -63,7 +24,7 @@ export const uploadTiktokMedia = (
  */
 const TIKTOK_MESSAGE_TEXT_LIMIT = 6000
 
-export const sendTiktokMessage = (
+export const sendMessage = (
   accessToken: string,
   payload: TiktokSendMessageRequest,
 ): Promise<string | undefined> =>
@@ -104,7 +65,7 @@ export const sendTiktokMessage = (
  * here, so a rejection arrives as a `TiktokAPIException` carrying TikTok's own
  * wording — callers must surface it rather than flatten it into "send failed".
  */
-export const sendTiktokCommentPrivateReply = (
+export const sendPrivateReplyMessage = (
   accessToken: string,
   params: { businessId: string; commentId: string; text: string },
 ): Promise<string | undefined> => {
@@ -116,7 +77,7 @@ export const sendTiktokCommentPrivateReply = (
     )
   }
 
-  return sendTiktokMessage(accessToken, {
+  return sendMessage(accessToken, {
     business_id: params.businessId,
     direct_reply: {
       reply_type: "COMMENT_REPLY",
@@ -138,7 +99,7 @@ export const sendPrivateReply = (
   commentId: string,
   text: string,
 ): Promise<string | undefined> =>
-  sendTiktokCommentPrivateReply(auth.tokens.accessToken, {
+  sendPrivateReplyMessage(auth.tokens.accessToken, {
     businessId: auth.metadata.openId,
     commentId,
     text,

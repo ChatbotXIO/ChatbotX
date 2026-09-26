@@ -1,6 +1,6 @@
 import type { SendMultipleImagesStepSchema } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
-import type { InstagramAuthValue } from "../../../schemas"
+import type { InstagramAuthValue } from "../../../schema"
 
 /**
  * One Send API call carrying several bare image attachments. Unlike the

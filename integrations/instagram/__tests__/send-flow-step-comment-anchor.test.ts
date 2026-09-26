@@ -7,8 +7,8 @@ const { mockSendInstagramMessage, mockSendPrivateReplyMessage } = vi.hoisted(
   }),
 )
 
-vi.mock("../src/apis/page", () => ({
-  sendInstagramMessage: mockSendInstagramMessage,
+vi.mock("../src/apis/message", () => ({
+  sendMessage: mockSendInstagramMessage,
 }))
 
 vi.mock("../src/apis/comment", () => ({
@@ -37,7 +37,7 @@ const freshContact = {
 } as never
 
 // Outside the 24-hour response window: a normal automated send must be
-// rejected by resolveInstagramMessagingPolicy, an anchored one must not.
+// rejected by resolveMessagingPolicy, an anchored one must not.
 const staleContact = {
   id: "contact-1",
   sourceId: "igsid-1",

@@ -3,9 +3,9 @@ import {
   ChannelErrorCategory,
   type CommentHandlers,
 } from "@chatbotx.io/sdk"
-import { sendComment as sendCommentApi } from "../../../apis/comment"
-import { mapToChannelError } from "../../../lib/error-mapper"
-import type { MessengerAuthValue } from "../../../schema"
+import { replyToComment } from "../../apis/comment"
+import { mapToChannelError } from "../../lib/error-mapper"
+import type { MessengerAuthValue } from "../../schema"
 
 export const sendComment: CommentHandlers<MessengerAuthValue>["sendComment"] =
   async (props) => {
@@ -28,7 +28,7 @@ export const sendComment: CommentHandlers<MessengerAuthValue>["sendComment"] =
     }
 
     try {
-      const result = await sendCommentApi(
+      const result = await replyToComment(
         ctx.auth,
         replyToCommentId,
         message.text,

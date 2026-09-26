@@ -5,7 +5,7 @@ export {
 } from "./apis/direct-reply"
 export {
   sendPrivateReply,
-  sendTiktokCommentPrivateReply,
+  sendPrivateReplyMessage,
 } from "./apis/message"
 export { findTiktokVideo } from "./apis/video"
 export {

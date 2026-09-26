@@ -1,5 +1,5 @@
 import ky from "ky"
-import { BUSINESS_API_BASE_URL } from "../constants"
+import { BUSINESS_API_URL } from "../constants"
 import { rescue, TiktokAPIException } from "../exception"
 
 type WebhookUpdateResponse = {
@@ -57,7 +57,7 @@ export const subscribeWebhook = (
 ): Promise<void> =>
   rescue("business/webhook/update", async () => {
     const response = await ky
-      .post(`${BUSINESS_API_BASE_URL}business/webhook/update/`, {
+      .post(`${BUSINESS_API_URL}business/webhook/update/`, {
         json: {
           app_id: clientId,
           secret: clientSecret,

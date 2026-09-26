@@ -4,7 +4,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { uploadAttachment } from "../../../apis/attachment"
-import type { InstagramAuthValue } from "../../../schemas"
+import type { InstagramAuthValue } from "../../../schema"
 import { convertMediaType } from "./send-attachment"
 
 /**

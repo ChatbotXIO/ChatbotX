@@ -10,8 +10,8 @@ const {
   mockUploadAttachment: vi.fn(),
 }))
 
-vi.mock("../src/apis/page", () => ({
-  sendInstagramMessage: mockSendInstagramMessage,
+vi.mock("../src/apis/message", () => ({
+  sendMessage: mockSendInstagramMessage,
 }))
 
 vi.mock("../src/apis/comment", () => ({
@@ -38,7 +38,7 @@ const ctx = {
   },
 } as never
 
-// Inside the 24-hour window, so `resolveInstagramMessagingPolicy` lets a
+// Inside the 24-hour window, so `resolveMessagingPolicy` lets a
 // normal (non-anchored) automated send through.
 const contact = {
   id: "contact-1",

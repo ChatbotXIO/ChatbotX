@@ -1,6 +1,6 @@
 import type { ContactHandlers } from "@chatbotx.io/sdk"
 import { getContactProfilePicUrl, getUserProfile } from "../apis/user"
-import type { InstagramAuthValue } from "../schemas"
+import type { InstagramAuthValue } from "../schema"
 
 export const contactHandlers: Partial<ContactHandlers<InstagramAuthValue>> = {
   getProfile: async ({ ctx, data: { sourceId } }) =>

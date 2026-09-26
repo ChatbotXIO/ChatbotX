@@ -3,34 +3,11 @@ import {
   ChannelErrorCategory,
   type CommentHandlers,
 } from "@chatbotx.io/sdk"
-import { replyToTiktokComment } from "../../apis/comment"
+import { replyToComment } from "../../apis/comment"
 import { mapToChannelError } from "../../lib/error-mapper"
+import { requirePostId } from "../../lib/guards"
 import { logger } from "../../lib/logger"
 import type { TiktokAuthValue } from "../../schema"
-
-/**
- * The video a comment belongs to.
- *
- * Every TikTok comment write except `like` and `delete` needs it. It is read
- * from the comment message's own `contentAttributes.postId`, stamped by
- * `receiveComment` at ingest, with the comment conversation's
- * `sourceConversationId` as the fallback — that is `Conversation.sourceId`,
- * which holds the post id by the repo-wide convention but is a slot TikTok
- * also normalizes for its DM conversations, so it can legitimately be empty.
- */
-export function requirePostId(
-  postId: string | null | undefined,
-  action: string,
-): string {
-  if (!postId) {
-    throw new ChannelError(
-      `Cannot ${action} a TikTok comment without the video id. The comment conversation must be anchored to the post it belongs to.`,
-      ChannelErrorCategory.PAYLOAD_INVALID,
-      { code: "tiktok_missing_video_id" },
-    )
-  }
-  return postId
-}
 
 export const sendComment: CommentHandlers<TiktokAuthValue>["sendComment"] =
   async (props) => {
@@ -79,7 +56,7 @@ export const sendComment: CommentHandlers<TiktokAuthValue>["sendComment"] =
     )
 
     try {
-      const created = await replyToTiktokComment(ctx.auth.tokens.accessToken, {
+      const created = await replyToComment(ctx.auth.tokens.accessToken, {
         businessId: ctx.auth.metadata.openId,
         videoId,
         commentId: replyToCommentId,

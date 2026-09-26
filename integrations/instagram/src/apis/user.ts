@@ -4,7 +4,7 @@ import { fetchMediaWithLimits } from "@chatbotx.io/utils/media-download"
 import { rescue } from "../exception"
 import { instagramBusinessClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
-import type { InstagramAuthValue, InstagramUserProfile } from "../schemas"
+import type { InstagramAuthValue, InstagramUserProfile } from "../schema"
 
 const fetchUserProfile = async ({
   ctx,

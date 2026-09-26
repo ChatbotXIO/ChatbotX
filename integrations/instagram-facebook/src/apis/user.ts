@@ -5,7 +5,7 @@ import { API_URL } from "../constants"
 import { InstagramAPIException, rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
-import type { InstagramAuthValue, InstagramUserProfile } from "../schemas"
+import type { InstagramAuthValue, InstagramUserProfile } from "../schema"
 
 const GRAPH_NONEXISTING_FIELD_ERROR_CODE = 100
 

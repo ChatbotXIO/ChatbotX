@@ -6,8 +6,11 @@ const { mockSendTiktokMessage, mockUploadTiktokMedia } = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/apis/message", () => ({
-  sendTiktokMessage: mockSendTiktokMessage,
-  uploadTiktokMedia: mockUploadTiktokMedia,
+  sendMessage: mockSendTiktokMessage,
+}))
+
+vi.mock("../src/apis/attachment", () => ({
+  uploadAttachment: mockUploadTiktokMedia,
 }))
 
 vi.mock("../src/lib/logger", () => ({

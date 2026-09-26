@@ -2,7 +2,7 @@ import type { Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { instagramBusinessClient } from "../lib/http-client"
-import type { InstagramAuthValue } from "../schemas"
+import type { InstagramAuthValue } from "../schema"
 
 export type InstagramMediaDetails = {
   caption?: string
@@ -30,7 +30,7 @@ type InstagramPaginatedResponse<T> = {
 /**
  * Lists the authenticated Instagram account's own media. On graph.instagram.com
  * (Instagram Login) the account is addressed via the `me` alias — matching
- * sendInstagramMessage — so this uses `me/media`. Only the first page is
+ * `sendMessage` (`apis/message.ts`) — so this uses `me/media`. Only the first page is
  * returned, mirroring the Messenger `listPublishedPosts` behaviour.
  */
 export const listInstagramMedia = (props: {

@@ -1,11 +1,10 @@
 import {
-  type Context,
   contentTypes,
   type IncomingContact,
   type IncomingMessage,
+  type MessageHandlers,
   type MessageSharedPostEntity,
   messageTypes,
-  type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
 import { TiktokException } from "../../exception"
 import { logger } from "../../lib/logger"
@@ -57,109 +56,100 @@ function detectImageMimeType(url: string): string {
   return (ext && mimeMap[ext]) ?? "image/jpeg"
 }
 
-// biome-ignore lint/suspicious/useAwait: MessageHandlers interface requires async
-export const receiveMessage = async ({
-  ctx: _ctx,
-  data,
-}: {
-  ctx: Context<TiktokAuthValue>
-  data: {
-    integrationType: string
-    integrationIdentifier: string
-    payload: unknown
+export const receiveMessage: MessageHandlers<TiktokAuthValue>["receiveMessage"] =
+  // biome-ignore lint/suspicious/useAwait: MessageHandlers interface requires async
+  async ({ ctx: _ctx, data }) => {
+    const event = tiktokWebhookEventSchema.parse(data.payload)
+
+    let contentData: unknown
+    try {
+      contentData = JSON.parse(event.content)
+    } catch (err) {
+      throw new TiktokException(
+        `Failed to parse message content: ${err instanceof Error ? err.message : String(err)}`,
+      )
+    }
+
+    const messageContent = tiktokDmMessageContentSchema.safeParse(contentData)
+    if (!messageContent.success) {
+      throw new TiktokException("Unrecognized message content format")
+    }
+
+    const content = messageContent.data
+
+    // im_send_msg is an echo: the business sent this message via API
+    const isEcho = event.event === "im_send_msg"
+
+    const sharedPost =
+      content.type === "share_post" ? resolveSharedPost(content) : undefined
+
+    const incomingMessage: IncomingMessage = {
+      sourceId: content.message_id ?? String(event.create_time),
+      messageType: isEcho
+        ? messageTypes.enum.outgoing
+        : messageTypes.enum.incoming,
+      text: content.type === "text" ? content.text?.body : sharedPost?.text,
+      contentType: contentTypes.enum.text,
+      contentAttributes: sharedPost?.contentAttributes,
+      attachments:
+        content.type === "image" && content.media_url
+          ? [
+              {
+                sourceId: content.message_id ?? String(event.create_time),
+                fileType: "image" as const,
+                mimeType: detectImageMimeType(content.media_url),
+                originPath: content.media_url,
+                size: 0,
+                url: content.media_url,
+              },
+            ]
+          : [],
+    }
+
+    // A content type this handler cannot render still produces a message row —
+    // an empty one that nonetheless fires `message:received` for every flow and
+    // automation listening. That is how `share_post` went unnoticed, so the shape
+    // itself is what gets flagged rather than a list of known types, which would
+    // have to be remembered again the next time TikTok adds one.
+    if (!(incomingMessage.text || incomingMessage.attachments?.length)) {
+      logger.warn(
+        { contentType: content.type, messageId: content.message_id },
+        "TikTok DM produced an empty message row — unrendered content type",
+      )
+    }
+
+    // For echo (outgoing) messages, the business is from_user so the customer is
+    // to_user. `content.unique_identifier` is the same globally unique user id
+    // the `comment.update` webhook carries — which is what makes a commenter and
+    // a DM sender resolve to ONE contact — but it is deliberately not read here:
+    // on an echo the roles reverse and TikTok does not document whose id it then
+    // holds, so reading it would risk keying the contact to the business itself.
+    // `from_user`/`to_user` say which side is which; this stays the only source.
+    const customerOpenId = isEcho
+      ? (content.to_user?.id ?? content.to ?? content.from_user.id)
+      : content.from_user.id
+
+    const contact: IncomingContact = {
+      sourceId: customerOpenId,
+      // TikTok's conversation_id addresses the DM at send time, but it must not
+      // key the conversation row: `Conversation.sourceId` is reserved for comment
+      // threads (the video id), and a contact can have both.
+      channelConversationId: content.conversation_id,
+      firstName: isEcho
+        ? (content.to ?? content.to_user?.id ?? content.from_user.id)
+        : (content.from ?? content.from_user.id),
+      lastName: "",
+    }
+
+    return {
+      message: incomingMessage,
+      contact,
+      postbackAction:
+        content.reply_source_payload?.reply_source_unique_id &&
+        !content.reply_source_payload.reply_source_unique_id.startsWith("http")
+          ? content.reply_source_payload.reply_source_unique_id
+          : null,
+      quickReplyAction: null,
+      ref: null,
+    }
   }
-}): Promise<ReceivedMessageResult> => {
-  const event = tiktokWebhookEventSchema.parse(data.payload)
-
-  let contentData: unknown
-  try {
-    contentData = JSON.parse(event.content)
-  } catch (err) {
-    throw new TiktokException(
-      `Failed to parse message content: ${err instanceof Error ? err.message : String(err)}`,
-    )
-  }
-
-  const messageContent = tiktokDmMessageContentSchema.safeParse(contentData)
-  if (!messageContent.success) {
-    throw new TiktokException("Unrecognized message content format")
-  }
-
-  const content = messageContent.data
-
-  // im_send_msg is an echo: the business sent this message via API
-  const isEcho = event.event === "im_send_msg"
-
-  const sharedPost =
-    content.type === "share_post" ? resolveSharedPost(content) : undefined
-
-  const incomingMessage: IncomingMessage = {
-    sourceId: content.message_id ?? String(event.create_time),
-    messageType: isEcho
-      ? messageTypes.enum.outgoing
-      : messageTypes.enum.incoming,
-    text: content.type === "text" ? content.text?.body : sharedPost?.text,
-    contentType: contentTypes.enum.text,
-    contentAttributes: sharedPost?.contentAttributes,
-    attachments:
-      content.type === "image" && content.media_url
-        ? [
-            {
-              sourceId: content.message_id ?? String(event.create_time),
-              fileType: "image" as const,
-              mimeType: detectImageMimeType(content.media_url),
-              originPath: content.media_url,
-              size: 0,
-              url: content.media_url,
-            },
-          ]
-        : [],
-  }
-
-  // A content type this handler cannot render still produces a message row —
-  // an empty one that nonetheless fires `message:received` for every flow and
-  // automation listening. That is how `share_post` went unnoticed, so the shape
-  // itself is what gets flagged rather than a list of known types, which would
-  // have to be remembered again the next time TikTok adds one.
-  if (!(incomingMessage.text || incomingMessage.attachments?.length)) {
-    logger.warn(
-      { contentType: content.type, messageId: content.message_id },
-      "TikTok DM produced an empty message row — unrendered content type",
-    )
-  }
-
-  // For echo (outgoing) messages, the business is from_user so the customer is
-  // to_user. `content.unique_identifier` is the same globally unique user id
-  // the `comment.update` webhook carries — which is what makes a commenter and
-  // a DM sender resolve to ONE contact — but it is deliberately not read here:
-  // on an echo the roles reverse and TikTok does not document whose id it then
-  // holds, so reading it would risk keying the contact to the business itself.
-  // `from_user`/`to_user` say which side is which; this stays the only source.
-  const customerOpenId = isEcho
-    ? (content.to_user?.id ?? content.to ?? content.from_user.id)
-    : content.from_user.id
-
-  const contact: IncomingContact = {
-    sourceId: customerOpenId,
-    // TikTok's conversation_id addresses the DM at send time, but it must not
-    // key the conversation row: `Conversation.sourceId` is reserved for comment
-    // threads (the video id), and a contact can have both.
-    channelConversationId: content.conversation_id,
-    firstName: isEcho
-      ? (content.to ?? content.to_user?.id ?? content.from_user.id)
-      : (content.from ?? content.from_user.id),
-    lastName: "",
-  }
-
-  return {
-    message: incomingMessage,
-    contact,
-    postbackAction:
-      content.reply_source_payload?.reply_source_unique_id &&
-      !content.reply_source_payload.reply_source_unique_id.startsWith("http")
-        ? content.reply_source_payload.reply_source_unique_id
-        : null,
-    quickReplyAction: null,
-    ref: null,
-  }
-}

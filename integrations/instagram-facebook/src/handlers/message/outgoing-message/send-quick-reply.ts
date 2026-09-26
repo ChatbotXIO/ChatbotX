@@ -11,7 +11,7 @@ import type {
   InstagramMessageAttachment,
   InstagramQuickReply,
   InstagramSendMessage,
-} from "../../../schemas"
+} from "../../../schema"
 
 export function* convertFlowStepQuickReply(
   props: SendFlowStepProps<InstagramAuthValue, SendQuickReplyStepSchema>,
@@ -24,7 +24,7 @@ export function* convertFlowStepQuickReply(
       text: step.message,
     }
   } else {
-    const buttons = convertInstagramQuickReplies({
+    const buttons = convertQuickReplies({
       flowId: props.data.flowId,
       flowVersionId: props.data.flowVersionId,
       buttons: step.buttons,
@@ -38,7 +38,7 @@ export function* convertFlowStepQuickReply(
   }
 }
 
-export function convertInstagramQuickReplies(props: {
+export function convertQuickReplies(props: {
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]

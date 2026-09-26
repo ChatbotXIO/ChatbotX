@@ -2,11 +2,10 @@ import type { CommentHandlers } from "@chatbotx.io/sdk"
 import {
   deleteComment as deleteCommentApi,
   hideComment as hideCommentApi,
-  likeComment as likeCommentApi,
 } from "../../apis/comment"
 import { mapToChannelError } from "../../lib/error-mapper"
 import { logger } from "../../lib/logger"
-import type { InstagramAuthValue } from "../../schemas"
+import type { InstagramAuthValue } from "../../schema"
 
 export const deleteComment: CommentHandlers<InstagramAuthValue>["deleteComment"] =
   async ({ ctx, data }) => {
@@ -33,23 +32,19 @@ export const hideComment: CommentHandlers<InstagramAuthValue>["hideComment"] =
   }
 
 export const likeComment: CommentHandlers<InstagramAuthValue>["likeComment"] =
-  async ({ ctx, data }) => {
-    try {
-      await likeCommentApi(ctx.auth, data.commentId, data.liked)
-      logger.info(
-        `Comment ${data.liked ? "liked" : "unliked"}: ${data.commentId}`,
-      )
-    } catch (error) {
-      logger.error(error, "An error occurred while liking the comment")
-      throw mapToChannelError(error)
-    }
+  ({ data }) => {
+    logger.info(
+      { commentId: data.commentId },
+      "likeComment: Instagram does not support liking comments via API, skipping",
+    )
+    return Promise.resolve()
   }
 
 export const editComment: CommentHandlers<InstagramAuthValue>["editComment"] =
   ({ data }) => {
     logger.info(
       { commentId: data.commentId },
-      "editComment: Facebook does not support editing comments via API, skipping",
+      "editComment: Instagram does not support editing comments via API, skipping",
     )
     return Promise.resolve()
   }

@@ -43,7 +43,7 @@ Key files:
 | Concern | File |
 |---|---|
 | Webhook parse + enqueue | [`integrations/messenger/src/handlers/webhook.ts`](../integrations/messenger/src/handlers/webhook.ts), [`integrations/instagram/src/handlers/webhook.ts`](../integrations/instagram/src/handlers/webhook.ts), [`integrations/instagram-facebook/src/handlers/webhook.ts`](../integrations/instagram-facebook/src/handlers/webhook.ts) |
-| Webhook value schema | [`integrations/messenger/src/schema.ts`](../integrations/messenger/src/schema.ts) (`messengerFeedCommentValueSchema`), `integrations/instagram{,-facebook}/src/schemas.ts` (`instagramCommentEventValueSchema`) |
+| Webhook value schema | [`integrations/messenger/src/schema.ts`](../integrations/messenger/src/schema.ts) (`messengerFeedCommentValueSchema`), `integrations/instagram{,-facebook}/src/schema.ts` (`instagramCommentEventValueSchema`) |
 | Receive + enqueue automation | [`apps/worker/src/integration/handlers/received-message.ts`](../apps/worker/src/integration/handlers/received-message.ts) (`receiveComment`) |
 | Automation loop + filters + dispatch | [`apps/worker/src/integration/handlers/comment-automation/index.ts`](../apps/worker/src/integration/handlers/comment-automation/index.ts) |
 | Per-channel private DM dispatch | [`apps/worker/src/integration/handlers/comment-automation/private-reply.ts`](../apps/worker/src/integration/handlers/comment-automation/private-reply.ts) (`PRIVATE_REPLY_TEXT_SENDERS`) |
@@ -536,7 +536,7 @@ hidden in the inbox and then fail at the channel.
   `executePrivateReply`'s defence-in-depth check must be passed the same `channelType`.
 - **A channel whose public reply is not idempotent must never retry the automation job.**
   `SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS` (`received-message.ts`) caps `threads` and
-  `tiktok` at `attempts: 1`: Threads' `sendCommentReply` opens a fresh media container per
+  `tiktok` at `attempts: 1`: Threads' `replyToComment` opens a fresh media container per
   call and TikTok's `business/comment/reply/create/` takes no client-side key, so a retry
   after a partial failure posts a SECOND visible reply with no id to resume from. It is an
   allowlist, so a new channel keeps the default retry policy — only add one there once you
@@ -573,7 +573,7 @@ hidden in the inbox and then fail at the channel.
   deliver media in answer to a comment, use a **private** reply: the comment_id-anchored Send
   API takes attachments and templates. (Corroborated by
   [openreply](https://github.com/diwenne/openreply), an Instagram-Login project whose
-  `sendCommentReply` likewise posts only `{ message }`, and which routes everything richer
+  `replyToComment` likewise posts only `{ message }`, and which routes everything richer
   through a `recipient: { comment_id }` button template.)
 - **Everything in a public reply flow is public — including sub-flows.** The `public` anchor
   is never consumed, so every message step of the run posts under the post, and that includes

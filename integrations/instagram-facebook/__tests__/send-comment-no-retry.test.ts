@@ -1,8 +1,8 @@
 import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test } from "vitest"
-import { hideComment, sendComment } from "../src/apis/comment"
+import { hideComment, replyToComment } from "../src/apis/comment"
 import { DEFAULT_API_VERSION } from "../src/constants"
-import type { InstagramAuthValue } from "../src/schemas"
+import type { InstagramAuthValue } from "../src/schema"
 
 const ACCESS_TOKEN = "IG_TOKEN"
 const COMMENT_ID = "comment-123"
@@ -20,7 +20,7 @@ function failWith500() {
   )
 }
 
-describe("sendComment (non-idempotent create)", () => {
+describe("replyToComment (non-idempotent create)", () => {
   test("does not retry on a 500 — a single failed attempt must not risk creating a duplicate live reply", async () => {
     let requestCount = 0
     server.use(
@@ -30,7 +30,7 @@ describe("sendComment (non-idempotent create)", () => {
       }),
     )
 
-    await expect(sendComment(auth, COMMENT_ID, "hello")).rejects.toThrow()
+    await expect(replyToComment(auth, COMMENT_ID, "hello")).rejects.toThrow()
     expect(requestCount).toBe(1)
   })
 })

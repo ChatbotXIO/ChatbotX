@@ -1,5 +1,5 @@
 import type { CommentHandlers } from "@chatbotx.io/sdk"
-import { setReplyHidden } from "../../apis/comment"
+import { hideComment as hideCommentApi } from "../../apis/comment"
 import { mapToChannelError } from "../../lib/error-mapper"
 import { getSafeErrorDetails } from "../../lib/error-sanitizer"
 import { logger } from "../../lib/logger"
@@ -13,7 +13,7 @@ export const hideComment: CommentHandlers<ThreadsAuthValue>["hideComment"] =
     } = props
 
     try {
-      await setReplyHidden(ctx.auth, commentId, hidden)
+      await hideCommentApi(ctx.auth, commentId, hidden)
     } catch (error) {
       const channelError = mapToChannelError(error)
       const safeError = getSafeErrorDetails(error)

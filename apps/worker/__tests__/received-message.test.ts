@@ -1717,7 +1717,7 @@ describe("receiveMessage — new contact MAC gate", () => {
 
     beforeEach(async () => {
       const { receiveMessage: parseMessengerMessage } = await import(
-        "../../../integrations/messenger/src/handlers/message/incomming-message"
+        "../../../integrations/messenger/src/handlers/message/incoming-message"
       )
       mockBuildContext.mockResolvedValue({
         workspaceId: "ws-1",

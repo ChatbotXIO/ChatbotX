@@ -2,7 +2,7 @@ import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test } from "vitest"
 import { sendPrivateReply } from "../src/apis/comment"
 import { API_URL, DEFAULT_API_VERSION } from "../src/constants"
-import type { InstagramAuthValue } from "../src/schemas"
+import type { InstagramAuthValue } from "../src/schema"
 
 const ACCESS_TOKEN = "IG_TOKEN"
 const IG_ID = "ig-business-account-id"

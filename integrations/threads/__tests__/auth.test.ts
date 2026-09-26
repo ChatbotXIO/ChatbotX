@@ -7,7 +7,7 @@ import {
   getThreadsProfile,
   refreshAccessToken,
 } from "../src/apis/auth"
-import { DEFAULT_API_VERSION, THREADS_GRAPH_API_URL } from "../src/constants"
+import { API_URL, DEFAULT_API_VERSION } from "../src/constants"
 
 describe("threads auth", () => {
   test("generateAuthUrl uses official threads.com domain and required scopes", () => {
@@ -27,19 +27,16 @@ describe("threads auth", () => {
 
   test("exchangeCodeForToken exchanges short-lived token for long-lived token", async () => {
     server.use(
-      http.post(
-        `${THREADS_GRAPH_API_URL}/oauth/access_token`,
-        async ({ request }) => {
-          const body = await request.text()
-          expect(body).toContain("client_id=client-id")
-          expect(body).toContain("grant_type=authorization_code")
-          return HttpResponse.json({
-            access_token: "short-lived-token",
-            expires_in: 3600,
-          })
-        },
-      ),
-      http.get(`${THREADS_GRAPH_API_URL}/access_token`, ({ request }) => {
+      http.post(`${API_URL}/oauth/access_token`, async ({ request }) => {
+        const body = await request.text()
+        expect(body).toContain("client_id=client-id")
+        expect(body).toContain("grant_type=authorization_code")
+        return HttpResponse.json({
+          access_token: "short-lived-token",
+          expires_in: 3600,
+        })
+      }),
+      http.get(`${API_URL}/access_token`, ({ request }) => {
         const url = new URL(request.url)
         expect(url.searchParams.get("grant_type")).toBe("th_exchange_token")
         expect(url.searchParams.get("client_secret")).toBe("client-secret")
@@ -64,18 +61,15 @@ describe("threads auth", () => {
 
   test("refreshAccessToken uses th_refresh_token grant", async () => {
     server.use(
-      http.get(
-        `${THREADS_GRAPH_API_URL}/refresh_access_token`,
-        ({ request }) => {
-          const url = new URL(request.url)
-          expect(url.searchParams.get("grant_type")).toBe("th_refresh_token")
-          expect(url.searchParams.get("access_token")).toBe("old-token")
-          return HttpResponse.json({
-            access_token: "new-token",
-            expires_in: 7200,
-          })
-        },
-      ),
+      http.get(`${API_URL}/refresh_access_token`, ({ request }) => {
+        const url = new URL(request.url)
+        expect(url.searchParams.get("grant_type")).toBe("th_refresh_token")
+        expect(url.searchParams.get("access_token")).toBe("old-token")
+        return HttpResponse.json({
+          access_token: "new-token",
+          expires_in: 7200,
+        })
+      }),
     )
 
     await expect(
@@ -87,7 +81,7 @@ describe("threads auth", () => {
 
   test("refreshAccessToken leaves expiresAt undefined when provider omits expires_in", async () => {
     server.use(
-      http.get(`${THREADS_GRAPH_API_URL}/refresh_access_token`, () =>
+      http.get(`${API_URL}/refresh_access_token`, () =>
         HttpResponse.json({
           access_token: "new-token",
         }),
@@ -106,7 +100,7 @@ describe("threads auth", () => {
 
   test("getThreadsProfile reads me profile from graph.threads.com", async () => {
     server.use(
-      http.get(`${THREADS_GRAPH_API_URL}/v1.0/me`, ({ request }) => {
+      http.get(`${API_URL}/v1.0/me`, ({ request }) => {
         const url = new URL(request.url)
         expect(url.searchParams.get("access_token")).toBe("threads-token")
         return HttpResponse.json({
