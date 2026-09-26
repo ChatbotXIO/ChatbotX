@@ -1517,6 +1517,7 @@
     "changeLikeState": "更改類似狀態",
     "changeHideState": "更改隱藏狀態",
     "commentHidden": "此留言已隱藏",
+    "commentMediaUnavailable": "此留言包含無法顯示的 GIF、貼圖或圖片",
     "messageDeleted": "該訊息已被刪除。",
     "sendFailed": "傳送失敗",
     "repliedToStory": "回覆了你的故事",

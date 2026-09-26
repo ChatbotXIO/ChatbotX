@@ -3249,6 +3249,7 @@
     "changeLikeState": "Beğeni durumunu değiştir",
     "changeHideState": "Gizleme durumunu değiştir",
     "commentHidden": "Bu yorum gizlendi",
+    "commentMediaUnavailable": "Bu yorum görüntülenemeyen bir GIF, çıkartma veya görsel içeriyor",
     "messageDeleted": "Mesaj silindi.",
     "sendFailed": "Gönderilemedi",
     "repliedToStory": "Hikayenize yanıt verdi",

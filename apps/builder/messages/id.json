@@ -3249,6 +3249,7 @@
     "changeLikeState": "Ubah status suka",
     "changeHideState": "Ubah status sembunyikan",
     "commentHidden": "Komentar ini disembunyikan",
+    "commentMediaUnavailable": "Komentar ini berisi GIF, stiker, atau gambar yang tidak dapat ditampilkan",
     "messageDeleted": "Pesan telah dihapus.",
     "sendFailed": "Gagal mengirim",
     "repliedToStory": "Membalas story Anda",

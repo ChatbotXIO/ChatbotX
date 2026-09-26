@@ -3249,6 +3249,7 @@
     "changeLikeState": "Schimbă starea de apreciere",
     "changeHideState": "Schimbă starea de ascundere",
     "commentHidden": "Acest comentariu a fost ascuns",
+    "commentMediaUnavailable": "Acest comentariu conține un GIF, un sticker sau o imagine care nu poate fi afișată",
     "messageDeleted": "Mesajul a fost șters.",
     "sendFailed": "Trimiterea a eșuat",
     "repliedToStory": "A răspuns la story-ul tău",

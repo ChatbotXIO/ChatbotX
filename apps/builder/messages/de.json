@@ -3249,6 +3249,7 @@
     "changeLikeState": "Gefällt-mir-Status ändern",
     "changeHideState": "Sichtbarkeitsstatus ändern",
     "commentHidden": "Dieser Kommentar wurde ausgeblendet",
+    "commentMediaUnavailable": "Dieser Kommentar enthält ein GIF, einen Sticker oder ein Bild, das nicht angezeigt werden kann",
     "messageDeleted": "Die Nachricht wurde gelöscht.",
     "sendFailed": "Senden fehlgeschlagen",
     "repliedToStory": "Hat auf deine Story geantwortet",

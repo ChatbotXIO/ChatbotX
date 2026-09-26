@@ -3249,6 +3249,7 @@
     "changeLikeState": "Vind-ik-leukstatus wijzigen",
     "changeHideState": "Verbergstatus wijzigen",
     "commentHidden": "Deze opmerking is verborgen",
+    "commentMediaUnavailable": "Deze reactie bevat een GIF, sticker of afbeelding die niet kan worden weergegeven",
     "messageDeleted": "Het bericht is verwijderd.",
     "sendFailed": "Verzenden mislukt",
     "repliedToStory": "Heeft op je story gereageerd",

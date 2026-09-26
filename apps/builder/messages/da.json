@@ -3249,6 +3249,7 @@
     "changeLikeState": "Change like state",
     "changeHideState": "Change hide state",
     "commentHidden": "Denne kommentar var hidden",
+    "commentMediaUnavailable": "Denne kommentar indeholder en GIF, et klistermærke eller et billede, der ikke kan vises",
     "messageDeleted": "Den besked har been slettet.",
     "sendFailed": "Afsendelse mislykkedes",
     "repliedToStory": "Svarede på din story",

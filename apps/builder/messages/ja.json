@@ -3228,6 +3228,7 @@
     "changeLikeState": "「いいね！」の状態を変更",
     "changeHideState": "非表示状態を変更",
     "commentHidden": "このコメントは非表示になりました",
+    "commentMediaUnavailable": "このコメントには表示できないGIF、スタンプ、または画像が含まれています",
     "messageDeleted": "メッセージは削除されました。",
     "sendFailed": "送信に失敗しました",
     "repliedToStory": "あなたのストーリーに返信しました",

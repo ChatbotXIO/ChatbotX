@@ -4015,6 +4015,7 @@
     "changeHideState": "Ändra dölj-status",
     "changeLikeState": "Ändra gilla-status",
     "commentHidden": "Den här kommentaren har dolts",
+    "commentMediaUnavailable": "Den här kommentaren innehåller en GIF, ett klistermärke eller en bild som inte kan visas",
     "connectFailed": "Det gick inte att ansluta {feature}",
     "connectSuccess": "{feature} har anslutits",
     "connectedSuccess": "{feature} har anslutits",
