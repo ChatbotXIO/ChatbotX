@@ -407,6 +407,11 @@ vi.mock("../src/integration/handlers/tiktok-comment-identity", () => ({
   resolveTiktokCommenterIdentity: mockResolveTiktokCommenterIdentity,
 }))
 
+const mockFetchThreadsCommentAttachments = vi.fn().mockResolvedValue([])
+vi.mock("../src/integration/handlers/comment-media-attachment", () => ({
+  fetchThreadsCommentAttachments: mockFetchThreadsCommentAttachments,
+}))
+
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
@@ -3546,6 +3551,43 @@ describe("contact source taxonomy", () => {
       },
       { jobId: "comment-auto-comment-threads-1", attempts: 1 },
     )
+  })
+
+  test("saves a Threads GIF reply with its GIF attached", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "threads" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockFetchThreadsCommentAttachments.mockResolvedValueOnce([
+      {
+        sourceId: "attachment-1",
+        fileType: "image",
+        mimeType: "image/gif",
+        originPath: "public/ws/ws-1/gif",
+        size: 3,
+      },
+    ])
+
+    await receiveComment({
+      integrationType: "threads",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-threads-gif-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        postId: "post-1",
+      },
+    })
+
+    expect(mockFetchThreadsCommentAttachments).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      commentId: "comment-threads-gif-1",
+      integrationRow: fakeIntegrationRow,
+    })
+    expect(mockCreateOrUpdateWithAttachments).toHaveBeenCalledTimes(1)
+    expect(mockCreateOrUpdate).not.toHaveBeenCalled()
   })
 
   // TikTok's public reply is not idempotent either: a retry posts a second

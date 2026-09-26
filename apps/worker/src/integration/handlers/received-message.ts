@@ -103,6 +103,7 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
+import { fetchThreadsCommentAttachments } from "./comment-media-attachment"
 import {
   getProfileRefreshSource,
   isInboundConversationMessage,
@@ -1296,6 +1297,12 @@ export const receiveComment = async (
     if (result?.attachment) {
       attachments = [result.attachment]
     }
+  } else if (integrationType === "threads") {
+    attachments = await fetchThreadsCommentAttachments({
+      workspaceId: inbox.workspaceId,
+      commentId: commentData.commentId,
+      integrationRow,
+    })
   }
 
   const incomingMessage: IncomingMessage = {
