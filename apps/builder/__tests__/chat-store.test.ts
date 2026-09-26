@@ -554,7 +554,7 @@ describe("chat store conversation updates", () => {
     ])
   })
 
-  test("handleNewMessage moves an existing conversation to the top and refreshes lastActivityAt", async () => {
+  test("handleNewMessages moves an existing conversation to the top and refreshes lastActivityAt", async () => {
     const store = createChatStore()
     const oldFirst = makeConversation(
       "conv-1",
@@ -565,7 +565,7 @@ describe("chat store conversation updates", () => {
     store.setState({ conversations: originalList as never })
 
     const message = makeMessage("conv-2", new Date("2026-01-02T00:00:00Z"))
-    await store.getState().handleNewMessage(message as never)
+    await store.getState().handleNewMessages([message as never])
 
     const conversations = store.getState().conversations
     expect(conversations).not.toBe(originalList)
@@ -575,7 +575,7 @@ describe("chat store conversation updates", () => {
     expect(conversations[1]).toBe(oldFirst)
   })
 
-  test("handleNewMessage refreshes the filtered head and inserts only new conversation ids", async () => {
+  test("handleNewMessages refreshes the filtered head and inserts only new conversation ids", async () => {
     const store = createChatStore()
     const existing = makeConversation(
       "conv-1",
@@ -596,7 +596,7 @@ describe("chat store conversation updates", () => {
     mockConversationPage([fetched, duplicate])
 
     const message = makeMessage("conv-new", new Date("2026-01-02T00:00:00Z"))
-    store.getState().handleNewMessage(message as never)
+    store.getState().handleNewMessages([message as never])
 
     await vi.waitFor(() =>
       expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
@@ -625,16 +625,16 @@ describe("chat store conversation updates", () => {
 
       store
         .getState()
-        .handleNewMessage(
+        .handleNewMessages([
           makeMessage("conv-new-1", new Date("2026-01-02T00:00:00Z")) as never,
-        )
+        ])
       await vi.advanceTimersByTimeAsync(0)
 
       store
         .getState()
-        .handleNewMessage(
+        .handleNewMessages([
           makeMessage("conv-new-2", new Date("2026-01-02T00:00:01Z")) as never,
-        )
+        ])
       expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
         1,
       )
@@ -658,9 +658,9 @@ describe("chat store conversation updates", () => {
 
     store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeMessage("conv-new", new Date("2026-01-02T00:00:00Z")) as never,
-      )
+      ])
     expect(mockListConversationsByPOSTAuthenticatedAPI).not.toHaveBeenCalled()
 
     visibilitySpy.mockReturnValue("visible")
@@ -700,9 +700,9 @@ describe("chat store conversation updates", () => {
 
     store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeMessage("conv-new", new Date("2026-01-02T00:00:00Z")) as never,
-      )
+      ])
 
     await vi.waitFor(() =>
       expect(loggerWarnMock).toHaveBeenCalledWith(
@@ -752,9 +752,9 @@ describe("chat store conversation updates", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeMessage(background.id, new Date("2026-01-03T00:00:00Z")) as never,
-      )
+      ])
 
     expect(store.getState().conversations.map((item) => item.id)).toEqual([
       background.id,
@@ -780,9 +780,9 @@ describe("chat store conversation updates", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeMessage(active.id, new Date("2026-01-03T00:00:00Z")) as never,
-      )
+      ])
 
     expect(store.getState().conversations.map((item) => item.id)).toEqual([
       active.id,
@@ -804,9 +804,9 @@ describe("chat store conversation updates", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeMessage(target.id, new Date("2026-01-03T00:00:00Z")) as never,
-      )
+      ])
 
     expect(store.getState().conversations.map((item) => item.id)).toEqual([
       target.id,
@@ -848,7 +848,7 @@ describe("chat store conversation updates", () => {
 
     const state = store.getState()
     expect(state.conversations.map((c) => c.id)).toEqual(["conv-2", "conv-1"])
-    // Unlike handleNewMessage, this is a purely visual reorder:
+    // Unlike handleNewMessages, this is a purely visual reorder:
     // no fabricated `lastActivityAt` and no message payload attached.
     expect(state.conversations[0].lastActivityAt).toEqual(target.lastActivityAt)
     expect(state.conversations[0].messages).toEqual(target.messages)
@@ -960,7 +960,7 @@ describe("chat store conversation updates", () => {
     ])
     expect(store.getState().conversations[0]?.messages).toEqual([message])
   })
-  test("handleNewMessage applies patch, read state, and move-to-top in one state update", () => {
+  test("handleNewMessages applies patch, read state, and move-to-top in one state update", () => {
     const store = createChatStore()
     const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
     const target = makeConversation("conv-2", new Date("2026-01-01T01:00:00Z"))
@@ -973,7 +973,7 @@ describe("chat store conversation updates", () => {
       "user",
     )
 
-    store.getState().handleNewMessage(message as never)
+    store.getState().handleNewMessages([message as never])
 
     expect(listener).toHaveBeenCalledTimes(1)
     const [updatedConversation] = store.getState().conversations
@@ -986,7 +986,48 @@ describe("chat store conversation updates", () => {
     unsubscribe()
   })
 
-  test("handleNewMessage directly appends a relation-compatible realtime message when no optimistic client id matches", () => {
+  test("handleNewMessages commits a realtime frame once", () => {
+    const store = createChatStore()
+    const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
+    const second = makeConversation("conv-2", new Date("2026-01-01T01:00:00Z"))
+    store.setState({ conversations: [first, second] as never })
+    const listener = vi.fn()
+    const unsubscribe = store.subscribe(listener)
+
+    store
+      .getState()
+      .handleNewMessages([
+        makeMessage("conv-1", new Date("2026-01-02T00:00:00Z")) as never,
+        makeMessage("conv-2", new Date("2026-01-02T00:01:00Z")) as never,
+      ])
+
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(
+      store.getState().conversations.map((conversation) => conversation.id),
+    ).toEqual(["conv-2", "conv-1"])
+    unsubscribe()
+  })
+
+  test("keeps the state reference for unmatched realtime mutations", () => {
+    const store = createChatStore()
+    const before = store.getState()
+
+    store.getState().updateMessageContentAttributes("missing", {})
+    store.getState().markMessagesDeleted(["missing"])
+    store.getState().markMessageFailed("missing", "client", "error")
+    store.getState().assignMessageCommentId("missing", "comment")
+    store.getState().updateMessageText("missing", "updated", {
+      newAttachmentPath: null,
+      removedAttachment: false,
+    })
+    store
+      .getState()
+      .applyAgentLastReadAt(["missing"], new Date("2026-01-01T00:00:00Z"))
+
+    expect(store.getState()).toBe(before)
+  })
+
+  test("handleNewMessages directly appends a relation-compatible realtime message when no optimistic client id matches", () => {
     const store = createChatStore()
     const conversation = makeConversation(
       "conv-1",
@@ -1001,10 +1042,23 @@ describe("chat store conversation updates", () => {
       activeConversationId: "conv-1",
     })
 
-    store.getState().handleNewMessage(message as never)
+    store.getState().handleNewMessages([message as never])
 
     expect(store.getState().messages).toEqual([message])
     expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
+  })
+
+  test("updates an active thread before its conversation reaches the sidebar", () => {
+    const store = createChatStore()
+    const message = makeMessage(
+      "conv-not-yet-listed",
+      new Date("2026-01-02T00:00:00Z"),
+    )
+    store.setState({ activeConversationId: "conv-not-yet-listed" })
+
+    store.getState().handleNewMessages([message as never])
+
+    expect(store.getState().messages).toEqual([message])
   })
 })
 
@@ -1095,7 +1149,7 @@ describe("chat store realtime agent read timestamps", () => {
   })
 })
 
-describe("chat store handleNewMessage read state", () => {
+describe("chat store handleNewMessages read state", () => {
   const AGENT_LAST_READ_AT = new Date("2026-01-01T00:00:00Z")
 
   const makeUnreadStore = (activeConversationId: string | null = null) => {
@@ -1135,13 +1189,13 @@ describe("chat store handleNewMessage read state", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeOutgoingMessage(
           "conv-1",
           new Date("2026-01-01T02:00:00Z"),
           senderType,
         ) as never,
-      )
+      ])
 
     expect(readStateOf(store)).toEqual({
       agentLastReadAt: AGENT_LAST_READ_AT,
@@ -1157,13 +1211,13 @@ describe("chat store handleNewMessage read state", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeOutgoingMessage(
           "conv-1",
           new Date("2026-01-01T02:00:00Z"),
           senderType,
         ) as never,
-      )
+      ])
 
     // The server stamps agentLastReadAt with the message's own timestamp, so
     // the client mirrors it instead of the wall clock: a delayed outgoing
@@ -1193,13 +1247,13 @@ describe("chat store handleNewMessage read state", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeOutgoingMessage(
           "conv-1",
           new Date("2026-01-01T02:00:00Z"),
           "user",
         ) as never,
-      )
+      ])
 
     const conversation = store
       .getState()
@@ -1213,14 +1267,14 @@ describe("chat store handleNewMessage read state", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeOutgoingMessage(
           "conv-1",
           new Date("2026-01-01T02:00:00Z"),
           "user",
           null,
         ) as never,
-      )
+      ])
 
     expect(readStateOf(store)).toEqual({
       agentLastReadAt: AGENT_LAST_READ_AT,
@@ -1233,9 +1287,9 @@ describe("chat store handleNewMessage read state", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeMessage("conv-1", new Date("2026-01-01T02:00:00Z")) as never,
-      )
+      ])
 
     expect(readStateOf(store)).toEqual({
       agentLastReadAt: AGENT_LAST_READ_AT,
@@ -1248,9 +1302,9 @@ describe("chat store handleNewMessage read state", () => {
 
     await store
       .getState()
-      .handleNewMessage(
+      .handleNewMessages([
         makeMessage("conv-1", new Date("2026-01-01T02:00:00Z")) as never,
-      )
+      ])
 
     expect(readStateOf(store)).toEqual({
       agentLastReadAt: AGENT_LAST_READ_AT,
@@ -1262,7 +1316,7 @@ describe("chat store handleNewMessage read state", () => {
 // A WhatsApp call Meta counts as a contact touch opens the 24h window, so the
 // inbox must unlock the reply box the moment its card lands — not only after
 // a reload re-reads the column the finalize moved.
-describe("chat store handleNewMessage messaging window", () => {
+describe("chat store handleNewMessages messaging window", () => {
   const PREVIOUS_WINDOW = new Date("2026-09-17T08:00:00Z")
   const CALL_RANG_AT = "2026-09-18T09:55:00.000Z"
 
@@ -1313,7 +1367,7 @@ describe("chat store handleNewMessage messaging window", () => {
   test("a call card carrying the stamp opens the window from the stamped moment", async () => {
     const store = makeStore(PREVIOUS_WINDOW)
 
-    await store.getState().handleNewMessage(makeCallCard(CALL_RANG_AT))
+    await store.getState().handleNewMessages([makeCallCard(CALL_RANG_AT)])
 
     expect(
       conversationOf(store).contactInboxes[0]?.lastIncomingMessageAt,
@@ -1323,7 +1377,7 @@ describe("chat store handleNewMessage messaging window", () => {
   test("a call card is not the contact replying — last-seen timestamps stay put", async () => {
     const store = makeStore(PREVIOUS_WINDOW)
 
-    await store.getState().handleNewMessage(makeCallCard(CALL_RANG_AT))
+    await store.getState().handleNewMessages([makeCallCard(CALL_RANG_AT)])
 
     expect(conversationOf(store).contactRepliedAt).toBeNull()
   })
@@ -1331,7 +1385,7 @@ describe("chat store handleNewMessage messaging window", () => {
   test("a call card without the stamp leaves the window alone", async () => {
     const store = makeStore(PREVIOUS_WINDOW)
 
-    await store.getState().handleNewMessage(makeCallCard())
+    await store.getState().handleNewMessages([makeCallCard()])
 
     expect(
       conversationOf(store).contactInboxes[0]?.lastIncomingMessageAt,
@@ -1342,7 +1396,7 @@ describe("chat store handleNewMessage messaging window", () => {
     const newer = new Date("2026-09-18T11:00:00Z")
     const store = makeStore(newer)
 
-    await store.getState().handleNewMessage(makeCallCard(CALL_RANG_AT))
+    await store.getState().handleNewMessages([makeCallCard(CALL_RANG_AT)])
 
     expect(
       conversationOf(store).contactInboxes[0]?.lastIncomingMessageAt,
@@ -1355,7 +1409,7 @@ describe("chat store handleNewMessage messaging window", () => {
 
     await store
       .getState()
-      .handleNewMessage(makeMessage("conv-1", sentAt) as never)
+      .handleNewMessages([makeMessage("conv-1", sentAt) as never])
 
     const conversation = conversationOf(store)
     expect(conversation.contactInboxes[0]?.lastIncomingMessageAt).toEqual(

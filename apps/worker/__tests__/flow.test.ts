@@ -423,10 +423,11 @@ describe("flow action target resolution", () => {
     expect(integrationQueueAdd).toHaveBeenCalled()
     const [action, job] = integrationQueueAdd.mock.calls[0] as unknown as [
       string,
-      { data: { nodeId: string } },
+      { data: { nodeId: string; isBulkBroadcast?: boolean } },
     ]
     expect(action).toBe("sendFlow")
     expect(job.data.nodeId).toBe("node-2")
+    expect(job.data.isBulkBroadcast).toBeUndefined()
   }
 
   test("runFlowPostback advances the flow for a node quick reply", async () => {
@@ -1102,6 +1103,25 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
     expect(action).toBe("sendFlow")
     expect(job.data.startFromStepId).toBe("step-2")
     expect(job.data.nodeId).toBe("node-1")
+  })
+
+  test("preserves bulk outbound state for the next step in an initial broadcast flow", async () => {
+    const step1 = { ...makeStep("sendText"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      isBulkBroadcast: true,
+      triggerNextNode: false,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { isBulkBroadcast?: boolean } },
+    ]
+    expect(job.data.isBulkBroadcast).toBe(true)
   })
 
   test("runs beforeStep on initial entry (startFromStepId undefined)", async () => {

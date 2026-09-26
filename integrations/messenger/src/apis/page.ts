@@ -373,6 +373,88 @@ export const getPersistentMenu = (props: {
   })
 }
 
+/** Messenger profile fields read back after the welcome setup may have changed. */
+const MESSENGER_WELCOME_PROFILE_FIELDS = [
+  "get_started",
+  "ice_breakers",
+  "greeting",
+] as const
+
+type MessengerWelcomeProfileField =
+  (typeof MESSENGER_WELCOME_PROFILE_FIELDS)[number]
+
+/**
+ * Only logged, never interpreted, so values stay `unknown`: Meta returns
+ * `ice_breakers` in either the legacy or the per-locale format depending on
+ * how they were set.
+ */
+export type MessengerWelcomeProfile = Partial<
+  Record<MessengerWelcomeProfileField, unknown>
+>
+
+/** Why the welcome profile is being read back; carried into the log line. */
+export type MessengerWelcomeProfileCheckReason =
+  | "pageConnected"
+  | "profileUpdated"
+  | "tokenRefreshed"
+
+/**
+ * GET `/me/messenger_profile` for the welcome fields. Meta wraps the result in
+ * a `data` array (Messenger Profile API reference, "Retrieve Properties").
+ *
+ * Single attempt (`retry: 0`): this is a diagnostic read, and the Messenger
+ * Profile API is limited to 10 calls per 10 minutes per Page, so retrying a
+ * 429 would only burn the page's budget and stretch the calling flow.
+ */
+export const getMessengerWelcomeProfile = (props: {
+  ctx: Pick<Context<MessengerAuthValue>, "auth">
+}): Promise<MessengerWelcomeProfile> => {
+  const { ctx } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+  const endpoint = `${version}/me/messenger_profile`
+
+  return rescue(endpoint, async () => {
+    const response: { data?: MessengerWelcomeProfile[] } =
+      await facebookGraphClient.get(endpoint, {
+        headers: {
+          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+        },
+        searchParams: {
+          fields: MESSENGER_WELCOME_PROFILE_FIELDS.join(","),
+        },
+        retry: 0,
+      })
+
+    return response.data?.[0] ?? {}
+  })
+}
+
+/**
+ * Best-effort read-back of the page's welcome profile for diagnostics. Never
+ * throws or rejects — not even on a malformed `auth` — so it can't fail the
+ * connect, settings-save, or token-refresh flow that triggered it.
+ *
+ * The failure itself is already logged once by the http client / `rescue`;
+ * this only adds the page and trigger context at debug level.
+ */
+export const logMessengerWelcomeProfile = async (props: {
+  ctx: Pick<Context<MessengerAuthValue>, "auth">
+  reason: MessengerWelcomeProfileCheckReason
+}): Promise<void> => {
+  const { ctx, reason } = props
+  const pageId = ctx.auth?.metadata?.pageId
+
+  try {
+    const profile = await getMessengerWelcomeProfile({ ctx })
+    logger.info({ pageId, reason, profile }, "Messenger welcome profile")
+  } catch (error) {
+    logger.debug(
+      { err: error, pageId, reason },
+      "Skipped Messenger welcome profile read-back",
+    )
+  }
+}
+
 export const deleteProfileFields = (props: {
   ctx: Pick<Context<MessengerAuthValue>, "auth">
   fields: string[]

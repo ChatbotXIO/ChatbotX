@@ -16,6 +16,7 @@ import {
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import {
   integration as integrationMessenger,
+  logMessengerWelcomeProfile,
   type MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
@@ -322,6 +323,11 @@ async function refreshInstagramFacebookIntegrations(
   return toSummary(results)
 }
 
+type MessengerRefreshOutcome = {
+  result: RefreshResult
+  refreshedAuth?: MessengerAuthValue
+}
+
 async function refreshOneMessenger(
   id: string,
   workspaceId: string,
@@ -330,42 +336,56 @@ async function refreshOneMessenger(
     return "skipped"
   }
 
-  return await distributedLock.runExclusive({
-    key: `auth:refresh:messenger:${id}`,
-    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-    fn: async () => {
-      try {
-        const integration =
-          await messengerIntegrationService.findByIdForWorkspace({
+  const { result, refreshedAuth } =
+    await distributedLock.runExclusive<MessengerRefreshOutcome>({
+      key: `auth:refresh:messenger:${id}`,
+      timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
+      fn: async () => {
+        try {
+          const integration =
+            await messengerIntegrationService.findByIdForWorkspace({
+              id,
+              workspaceId,
+            })
+          if (!integration) {
+            return { result: "skipped" }
+          }
+
+          const auth = integration.auth as MessengerAuthValue
+          const newAuth = (await integrationMessenger.refreshAuth?.({
+            auth,
+          })) as MessengerAuthValue
+          await messengerIntegrationService.updateAuth({
             id,
             workspaceId,
+            auth: newAuth,
           })
-        if (!integration) {
-          return "skipped"
+          await auditService.record({
+            workspaceId,
+            action: "refresh",
+            detail: "refreshed the Messenger channel token",
+          })
+          return { result: "refreshed", refreshedAuth: newAuth }
+        } catch (error) {
+          await messengerIntegrationService.markTokenRefreshError(
+            id,
+            error instanceof Error ? error.message : String(error),
+          )
+          return { result: "failed" }
         }
+      },
+    })
 
-        const auth = integration.auth as MessengerAuthValue
-        const newAuth = await integrationMessenger.refreshAuth?.({ auth })
-        await messengerIntegrationService.updateAuth({
-          id,
-          workspaceId,
-          auth: newAuth as MessengerAuthValue,
-        })
-        await auditService.record({
-          workspaceId,
-          action: "refresh",
-          detail: "refreshed the Messenger channel token",
-        })
-        return "refreshed"
-      } catch (error) {
-        await messengerIntegrationService.markTokenRefreshError(
-          id,
-          error instanceof Error ? error.message : String(error),
-        )
-        return "failed"
-      }
-    },
-  })
+  // Diagnostic Graph read kept outside the lock so it never extends the
+  // refresh critical section; it never rejects, so `result` stands.
+  if (refreshedAuth) {
+    await logMessengerWelcomeProfile({
+      ctx: { auth: refreshedAuth },
+      reason: "tokenRefreshed",
+    })
+  }
+
+  return result
 }
 
 async function refreshMessengerIntegrations(

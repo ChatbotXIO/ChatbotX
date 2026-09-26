@@ -2,7 +2,9 @@ import type * as PartysocketConfig from "@chatbotx.io/partysocket-config"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import {
   broadcastToWorkspaceParty,
+  flushAllPendingWorkspaceBroadcasts,
   flushPendingWorkspaceBroadcasts,
+  publishToWorkspaceParty,
   resetRealtimeBroadcastStateForTests,
   WORKSPACE_BROADCAST_MAX_BYTES,
   WORKSPACE_BROADCAST_MAX_EVENTS,
@@ -131,6 +133,22 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
     expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
   })
 
+  test("keeps the coalesce window at 25 ms during a burst", async () => {
+    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
+    await vi.advanceTimersByTimeAsync(25)
+    await first
+
+    const burst = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
+    await vi.advanceTimersByTimeAsync(24)
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(2)
+    await flushPendingWorkspaceBroadcasts("workspace_1")
+    await burst
+
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(2)
+  })
+
   test("coalesces all events queued during the window into one batch request", async () => {
     const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
     const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
@@ -165,6 +183,19 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
       unknown[],
     ]
     expect(batch).toHaveLength(WORKSPACE_BROADCAST_MAX_EVENTS)
+  })
+
+  test("flushes a pending batch immediately when a VoIP event arrives", async () => {
+    const pending = broadcastToWorkspaceParty("workspace_1", typingEvent)
+    const voip = broadcastToWorkspaceParty("workspace_1", voipEvent)
+
+    await Promise.all([pending, voip])
+
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
+      expect.anything(),
+      "workspace_1",
+      [typingEvent, voipEvent],
+    )
   })
 
   test("serializes an overflow flush before the next batch", async () => {
@@ -222,6 +253,28 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
       flushPendingWorkspaceBroadcasts("workspace_never_used"),
     ).resolves.toBeNull()
     expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
+  })
+
+  test("flushAllPendingWorkspaceBroadcasts drains every workspace", async () => {
+    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
+    const second = broadcastToWorkspaceParty("workspace_2", contactBlockedEvent)
+
+    await flushAllPendingWorkspaceBroadcasts()
+    await Promise.all([first, second])
+
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(2)
+  })
+
+  test("publishes without making a caller await relay delivery", async () => {
+    const result = publishToWorkspaceParty("workspace_1", typingEvent)
+    await vi.runOnlyPendingTimersAsync()
+
+    expect(result).toBeUndefined()
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
+      expect.anything(),
+      "workspace_1",
+      [typingEvent],
+    )
   })
 })
 

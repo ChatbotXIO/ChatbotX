@@ -526,6 +526,7 @@ async function sendMessage(
     flowVersionId,
     step: promptStep,
     metadata: props.metadata,
+    isBulkBroadcast: props.isBulkBroadcast,
     ...(props.appointmentId ? { appointmentId: props.appointmentId } : {}),
     // The prompt is this step's outgoing message, so it carries the run's
     // comment anchor like any other message-producing step (see
@@ -604,6 +605,7 @@ async function sendDateTimePrompt(
       ],
       trackingContext: props.trackingContext,
       metadata,
+      isBulkBroadcast: props.isBulkBroadcast,
     },
   })
 }
@@ -657,6 +659,7 @@ async function sendWhatsappLocationRequestPrompt(
       ],
       trackingContext: props.trackingContext,
       metadata,
+      isBulkBroadcast: props.isBulkBroadcast,
     },
   })
 

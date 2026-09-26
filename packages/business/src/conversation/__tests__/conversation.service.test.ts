@@ -102,6 +102,7 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
 
 vi.mock("../../platform/realtime-broadcast", () => ({
   broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+  publishToWorkspaceParty: mocks.broadcastToWorkspaceParty,
 }))
 
 // `conversationService` now imports `contactService` (for the location write

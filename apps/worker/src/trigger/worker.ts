@@ -1,3 +1,4 @@
+import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
 import { extractContactInboxId } from "@chatbotx.io/events"
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { SdkException } from "@chatbotx.io/sdk"
@@ -112,6 +113,9 @@ async function startTriggerWorker() {
     isShuttingDown = true
     try {
       await worker.close()
+      // After close(): drains events published by jobs that finished during
+      // the close drain, whose coalesce timers would never fire past exit.
+      await flushAllPendingWorkspaceBroadcasts()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[TriggerWorker] Error during shutdown")

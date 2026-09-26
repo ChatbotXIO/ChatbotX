@@ -471,6 +471,27 @@ describe("WorkspaceParty#onRequest", () => {
       JSON.stringify(voipEvent),
     ])
   })
+
+  it("serializes a v2 batch once for connections with the same topic set", async () => {
+    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
+    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
+    connectionB1.setState({ userId: "u_b", protocol: "v2", topics: ["voip"] })
+    const event = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+    }
+    const request = postBatchRequest("/parties/workspaces/ws_1", [event])
+    const stringifySpy = vi.spyOn(JSON, "stringify")
+
+    await party.onRequest(request)
+
+    const serializedBatches = stringifySpy.mock.calls.filter(
+      ([value]) =>
+        typeof value === "object" && value !== null && "batch" in value,
+    )
+    expect(serializedBatches).toHaveLength(1)
+    stringifySpy.mockRestore()
+  })
   it("drops only unknown events from a valid batch and delivers known events", async () => {
     const knownEvent = {
       eventType: "messageDeleted",

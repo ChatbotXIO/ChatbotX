@@ -59,7 +59,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
-import { broadcastToWorkspaceParty } from "../platform/realtime-broadcast"
+import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
 import { workspaceMemberService } from "../workspace-member/service"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
@@ -991,7 +991,7 @@ class ConversationService extends BaseService {
 
     await this.invalidate({ workspaceId, ids })
 
-    await broadcastToWorkspaceParty(workspaceId, {
+    publishToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.conversationAssigned,
       data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
     })
@@ -1279,7 +1279,7 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
-    await broadcastToWorkspaceParty(workspaceId, {
+    publishToWorkspaceParty(workspaceId, {
       eventType: RealtimeEventType.conversationUpdated,
       data: {
         conversationIds: [id],
@@ -1299,8 +1299,9 @@ class ConversationService extends BaseService {
     conversationId: string
     inboxId: string
     readAt: Date
+    silent?: boolean
   }): Promise<boolean> {
-    const { workspaceId, conversationId, inboxId, readAt } = props
+    const { conversationId, inboxId, readAt, silent, workspaceId } = props
     const updated = await db
       .update(conversationModel)
       .set({ agentLastReadAt: readAt })
@@ -1333,13 +1334,15 @@ class ConversationService extends BaseService {
     }
 
     await this.invalidate({ workspaceId, ids: [conversationId] })
-    await broadcastToWorkspaceParty(workspaceId, {
-      eventType: RealtimeEventType.conversationUpdated,
-      data: {
-        conversationIds: [conversationId],
-        changes: { agentLastReadAt: readAt.toISOString() },
-      },
-    })
+    if (!silent) {
+      publishToWorkspaceParty(workspaceId, {
+        eventType: RealtimeEventType.conversationUpdated,
+        data: {
+          conversationIds: [conversationId],
+          changes: { agentLastReadAt: readAt.toISOString() },
+        },
+      })
+    }
 
     return true
   }
@@ -1747,6 +1750,7 @@ class ConversationService extends BaseService {
     contactInboxId: string
     contactId: string
     at: Date
+    bumpActivity?: boolean
     lastStep?: string | null
     currentStep?: string | null
   }): Promise<ContactInboxTrackingInvalidation | null> {
@@ -1756,6 +1760,7 @@ class ConversationService extends BaseService {
       contactInboxId,
       contactId,
       at,
+      bumpActivity = true,
       lastStep,
       currentStep,
     } = props
@@ -1774,7 +1779,7 @@ class ConversationService extends BaseService {
         tx,
         workspaceId,
         conversationId,
-        lastActivityAt: at,
+        ...(bumpActivity ? { lastActivityAt: at } : {}),
         lastStep,
         currentStep,
       })
@@ -1801,8 +1806,16 @@ class ConversationService extends BaseService {
     contactInboxId: string
     contactId: string
     at: Date
+    bumpActivity?: boolean
   }): Promise<ContactInboxTrackingInvalidation | null> {
-    const { workspaceId, conversationId, contactInboxId, contactId, at } = props
+    const {
+      workspaceId,
+      conversationId,
+      contactInboxId,
+      contactId,
+      at,
+      bumpActivity = true,
+    } = props
 
     return await db.transaction(async (tx) => {
       const invalidation =
@@ -1818,7 +1831,7 @@ class ConversationService extends BaseService {
         tx,
         workspaceId,
         conversationId,
-        lastActivityAt: at,
+        ...(bumpActivity ? { lastActivityAt: at } : {}),
       })
 
       return invalidation

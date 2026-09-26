@@ -97,6 +97,7 @@ vi.mock("@chatbotx.io/variables", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn(),
+  publishToWorkspaceParty: vi.fn(),
   contactInboxService: {
     recordSendFailure: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),

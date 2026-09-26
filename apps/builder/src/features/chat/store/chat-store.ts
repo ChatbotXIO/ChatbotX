@@ -269,7 +269,7 @@ export type ChatActions = {
   ) => void
   loadMoreMessages: (workspaceId: string, perPage: number) => Promise<void>
   loadInitialMessages: (workspaceId: string, perPage: number) => Promise<void>
-  handleNewMessage: (message: MessageResourceWithRelations) => void
+  handleNewMessages: (messages: MessageResourceWithRelations[]) => void
   setReplyToMessage: (
     message: MessageResourceWithRelations | null,
     isPrivate?: boolean,
@@ -329,6 +329,24 @@ const latestActivityAt = <T extends Date | string>(
   new Date(current).getTime() > new Date(incoming).getTime()
     ? current
     : incoming
+
+// Returns a `set` patch replacing one message, or `null` when the id is not
+// loaded so the caller can hand back the untouched state and skip a render.
+const replaceMessageById = (
+  messages: MessageResourceWithRelations[],
+  messageId: string,
+  update: (
+    message: MessageResourceWithRelations,
+  ) => MessageResourceWithRelations,
+): { messages: MessageResourceWithRelations[] } | null => {
+  const messageIndex = messages.findIndex((message) => message.id === messageId)
+  if (messageIndex === -1) {
+    return null
+  }
+  const nextMessages = [...messages]
+  nextMessages[messageIndex] = update(messages[messageIndex])
+  return { messages: nextMessages }
+}
 
 const hasConversationIdInUrl = () =>
   !!new URLSearchParams(
@@ -783,8 +801,9 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           return
         }
         const targetIds = new Set(conversationIds)
-        set((state) => ({
-          conversations: state.conversations.map((conversation) => {
+        set((state) => {
+          let changed = false
+          const conversations = state.conversations.map((conversation) => {
             if (!targetIds.has(conversation.id)) {
               return conversation
             }
@@ -792,9 +811,11 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             if (current !== null && new Date(current) >= agentLastReadAt) {
               return conversation
             }
+            changed = true
             return { ...conversation, agentLastReadAt }
-          }),
-        }))
+          })
+          return changed ? { conversations } : state
+        })
       },
 
       resetState: () => {
@@ -877,23 +898,29 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       // deep merge, matching how the worker always sends the entity's complete
       // shape.
       updateMessageContentAttributes: (messageId, contentAttributes) => {
-        set((state) => ({
-          messages: state.messages.map((message): typeof message =>
-            message.id === messageId
-              ? { ...message, contentAttributes }
-              : message,
-          ),
-        }))
+        set(
+          (state) =>
+            replaceMessageById(state.messages, messageId, (message) => ({
+              ...message,
+              contentAttributes,
+            })) ?? state,
+        )
       },
 
       markMessagesDeleted: (messageIds: string[]) => {
         const idSet = new Set(messageIds)
         const now = new Date()
-        set((state) => ({
-          messages: state.messages.map((message) =>
-            idSet.has(message.id) ? { ...message, deletedAt: now } : message,
-          ),
-        }))
+        set((state) => {
+          let changed = false
+          const messages = state.messages.map((message) => {
+            if (!idSet.has(message.id)) {
+              return message
+            }
+            changed = true
+            return { ...message, deletedAt: now }
+          })
+          return changed ? { messages } : state
+        })
       },
 
       markMessagesRestored: (messageIds: string[]) => {
@@ -913,44 +940,45 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         set((state) => {
           const matchesByClientId =
             clientId && state.messages.some((m) => m.clientId === clientId)
-          return {
-            messages: state.messages.map((message) =>
-              (
-                matchesByClientId
-                  ? message.clientId === clientId
-                  : message.id === messageId
-              )
-                ? { ...message, sendError: error }
-                : message,
-            ),
-          }
+          let changed = false
+          const messages = state.messages.map((message) => {
+            const matches = matchesByClientId
+              ? message.clientId === clientId
+              : message.id === messageId
+            if (!matches) {
+              return message
+            }
+            changed = true
+            return { ...message, sendError: error }
+          })
+          return changed ? { messages } : state
         })
       },
 
       assignMessageCommentId: (messageId, commentId) => {
-        set((state) => ({
-          messages: state.messages.map((message): typeof message =>
-            message.id === messageId
-              ? { ...message, sourceId: commentId }
-              : message,
-          ),
-        }))
+        set(
+          (state) =>
+            replaceMessageById(state.messages, messageId, (message) => ({
+              ...message,
+              sourceId: commentId,
+            })) ?? state,
+        )
       },
 
       updateMessageText: (messageId, newText, attachmentUpdate) => {
-        set((state) => ({
-          messages: state.messages.map((message): typeof message => {
-            if (message.id !== messageId) {
-              return message
-            }
-            const base = { ...message, text: newText }
-            if (!attachmentUpdate) {
-              return base
-            }
-            if (attachmentUpdate.removedAttachment) {
-              return { ...base, attachments: [] }
-            }
-            if (attachmentUpdate.newAttachmentPath) {
+        set(
+          (state) =>
+            replaceMessageById(state.messages, messageId, (message) => {
+              const base = { ...message, text: newText }
+              if (!attachmentUpdate) {
+                return base
+              }
+              if (attachmentUpdate.removedAttachment) {
+                return { ...base, attachments: [] }
+              }
+              if (!attachmentUpdate.newAttachmentPath) {
+                return base
+              }
               const mimeType =
                 attachmentUpdate.newAttachmentMimeType ??
                 "application/octet-stream"
@@ -986,10 +1014,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                   },
                 ],
               }
-            }
-            return base
-          }),
-        }))
+            }) ?? state,
+        )
       },
 
       loadMoreMessages: async (workspaceId: string, perPage: number) => {
@@ -1161,77 +1187,132 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         })
       },
 
-      handleNewMessage: (message: MessageResourceWithRelations) => {
-        const { messages, activeConversationId, appendMessage } = get()
-        let matchedConversation = false
-
-        set((state) => {
-          const conversationIndex = state.conversations.findIndex(
-            (conversation) => conversation.id === message.conversationId,
-          )
-          if (conversationIndex === -1) {
-            return state
-          }
-
-          matchedConversation = true
-          const updatedConversations = [...state.conversations]
-          const currentConversation = updatedConversations[conversationIndex]
-          const conversationPatch = conversationPatchForMessage(
-            currentConversation,
-            message,
-          )
-          const readStatePatch = readStatePatchForMessage(
-            currentConversation,
-            message,
-          )
-          const conversation = {
-            ...currentConversation,
-            ...(conversationPatch ?? {}),
-            ...readStatePatch,
-            messages: [message],
-            lastActivityAt: latestActivityAt(
-              currentConversation.lastActivityAt,
-              message.createdAt,
-            ),
-          }
-
-          updatedConversations.splice(conversationIndex, 1)
-          return { conversations: [conversation, ...updatedConversations] }
-        })
-
-        if (!matchedConversation) {
-          get().scheduleConversationHeadRefresh(message.workspaceId)
-        }
-
-        if (message.conversationId !== activeConversationId) {
+      handleNewMessages: (incomingMessages) => {
+        if (incomingMessages.length === 0) {
           return
         }
 
-        if (message.clientId) {
-          const messageIndex = messages.findIndex(
-            (currentMessage) => currentMessage.clientId === message.clientId,
+        let unmatchedWorkspaceId: string | null = null
+        set((state) => {
+          const conversationsById = new Map(
+            state.conversations.map(
+              (conversation) => [conversation.id, conversation] as const,
+            ),
           )
+          const lastMessageIndexByConversationId = new Map<string, number>()
+          let messages: MessageResourceWithRelations[] | null = null
+          let messageIndexById = new Map<string, number>()
+          let messageIndexByClientId = new Map<string, number>()
 
-          if (messageIndex > -1) {
-            const newMessages = [...messages]
-            newMessages[messageIndex] = {
-              ...newMessages[messageIndex],
-              ...message,
-              // messageCreated's payload is captured before the async send job
-              // runs, so its sendError is always null at broadcast time — keep
-              // a sendError already recorded by markMessageFailed instead of
-              // letting this stale snapshot clobber it.
-              sendError:
-                newMessages[messageIndex].sendError ?? message.sendError,
+          for (const [messageIndex, message] of incomingMessages.entries()) {
+            const currentConversation = conversationsById.get(
+              message.conversationId,
+            )
+            if (currentConversation) {
+              const conversationPatch = conversationPatchForMessage(
+                currentConversation,
+                message,
+              )
+              const readStatePatch = readStatePatchForMessage(
+                currentConversation,
+                message,
+              )
+              conversationsById.set(message.conversationId, {
+                ...currentConversation,
+                ...(conversationPatch ?? {}),
+                ...readStatePatch,
+                messages: [message],
+                lastActivityAt: latestActivityAt(
+                  currentConversation.lastActivityAt,
+                  message.createdAt,
+                ),
+              })
+              lastMessageIndexByConversationId.set(
+                message.conversationId,
+                messageIndex,
+              )
+            } else {
+              unmatchedWorkspaceId ??= message.workspaceId
             }
-            set({ messages: newMessages })
-            return
-          }
-        }
 
-        // Every relation added by MessageResourceWithRelations is optional, so
-        // the realtime base-message payload is safe to append without a refetch.
-        appendMessage(message)
+            if (message.conversationId !== state.activeConversationId) {
+              continue
+            }
+            if (!messages) {
+              messages = [...state.messages]
+              messageIndexById = new Map()
+              messageIndexByClientId = new Map()
+              for (const [index, currentMessage] of messages.entries()) {
+                messageIndexById.set(currentMessage.id, index)
+                if (currentMessage.clientId) {
+                  messageIndexByClientId.set(currentMessage.clientId, index)
+                }
+              }
+            }
+
+            const matchingClientMessageIndex = message.clientId
+              ? messageIndexByClientId.get(message.clientId)
+              : undefined
+            if (matchingClientMessageIndex !== undefined) {
+              const currentMessage = messages[matchingClientMessageIndex]
+              messages[matchingClientMessageIndex] = {
+                ...currentMessage,
+                ...message,
+                sendError: currentMessage.sendError ?? message.sendError,
+              }
+              messageIndexById.delete(currentMessage.id)
+              messageIndexById.set(message.id, matchingClientMessageIndex)
+              continue
+            }
+            if (messageIndexById.has(message.id)) {
+              continue
+            }
+
+            const messageTime = new Date(message.createdAt).getTime()
+            const insertIndex = messages.findIndex(
+              (currentMessage) =>
+                new Date(currentMessage.createdAt).getTime() > messageTime,
+            )
+            const targetIndex =
+              insertIndex === -1 ? messages.length : insertIndex
+            messages.splice(targetIndex, 0, message)
+            for (let index = targetIndex; index < messages.length; index += 1) {
+              const currentMessage = messages[index]
+              messageIndexById.set(currentMessage.id, index)
+              if (currentMessage.clientId) {
+                messageIndexByClientId.set(currentMessage.clientId, index)
+              }
+            }
+          }
+
+          if (lastMessageIndexByConversationId.size === 0 && !messages) {
+            return state
+          }
+
+          const movedConversationIds = [
+            ...lastMessageIndexByConversationId.entries(),
+          ]
+            .sort(([, leftIndex], [, rightIndex]) => rightIndex - leftIndex)
+            .map(([conversationId]) => conversationId)
+          const movedConversationIdSet = new Set(movedConversationIds)
+          const conversations = [
+            ...movedConversationIds.flatMap((conversationId) => {
+              const conversation = conversationsById.get(conversationId)
+              return conversation ? [conversation] : []
+            }),
+            ...state.conversations.filter(
+              (conversation) => !movedConversationIdSet.has(conversation.id),
+            ),
+          ]
+          return {
+            conversations,
+            ...(messages ? { messages } : {}),
+          }
+        })
+
+        if (unmatchedWorkspaceId) {
+          get().scheduleConversationHeadRefresh(unmatchedWorkspaceId)
+        }
       },
 
       loadActivePost: async (workspaceId: string) => {

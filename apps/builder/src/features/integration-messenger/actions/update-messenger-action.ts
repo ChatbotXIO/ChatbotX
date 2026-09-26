@@ -19,10 +19,12 @@ import {
   ensureMessengerWhitelistedDomain,
   integration as integrationMessenger,
   isRegisteredPersona,
+  logMessengerWelcomeProfile,
   type MessengerProfileRequest,
   messengerMenusToCallToActions,
 } from "@chatbotx.io/integration-messenger"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
+import { distributedStore } from "@chatbotx.io/redis"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { normalizeError } from "universal-error-normalizer"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
@@ -184,6 +186,12 @@ export const updateMessenger = async (
             "Failed to update Messenger profile after settings update",
           )
         })
+      if (await claimWelcomeProfileRead(botContext.auth.metadata?.pageId)) {
+        await logMessengerWelcomeProfile({
+          ctx: botContext,
+          reason: "profileUpdated",
+        })
+      }
     }
   } catch (error) {
     // Preserve explicit, actionable messages (e.g. persona registration); only
@@ -193,6 +201,42 @@ export const updateMessenger = async (
     }
     logger.debug(error, "Failed to update Facebook page")
     throw new ChatbotXException("Failed to update Facebook page")
+  }
+}
+
+/**
+ * The Messenger Profile API allows 10 calls per 10 minutes per Page, and a
+ * settings save already spends several of them, so the diagnostic read-back
+ * runs at most once per page in this window.
+ */
+const WELCOME_PROFILE_READ_TTL_SECONDS = 5 * 60
+
+const welcomeProfileReadKey = (pageId: string): string =>
+  `messenger:welcome-profile-read:${pageId}`
+
+/**
+ * Atomically claims the page's read-back slot (`SET NX EX`), so concurrent
+ * saves for the same page yield exactly one Graph read. Fails closed: with no
+ * page id or an unreachable Redis the read is skipped, never the save.
+ */
+const claimWelcomeProfileRead = async (
+  pageId: string | undefined,
+): Promise<boolean> => {
+  if (!pageId) {
+    return false
+  }
+  try {
+    return await distributedStore.setNumberIfNotExists(
+      welcomeProfileReadKey(pageId),
+      1,
+      WELCOME_PROFILE_READ_TTL_SECONDS,
+    )
+  } catch (error) {
+    logger.warn(
+      { err: normalizeError(error), pageId },
+      "Skipped Messenger welcome profile read-back: throttle unavailable",
+    )
+    return false
   }
 }
 
