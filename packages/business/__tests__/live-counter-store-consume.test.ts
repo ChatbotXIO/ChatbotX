@@ -1,3 +1,4 @@
+import type { UserQuotaModel } from "@chatbotx.io/database/types"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
@@ -18,7 +19,9 @@ const update = vi.fn(() => ({ set: setUpdate }))
 const findFirstQuota = vi.fn(async () => null as unknown)
 const eq = vi.fn()
 const reconcileCounts: number[] = []
+const reconcileCallOrder: string[] = []
 const select = vi.fn(() => {
+  reconcileCallOrder.push("durable-query")
   const chain: Record<string, unknown> = {}
   chain.from = vi.fn(() => chain)
   chain.innerJoin = vi.fn(() => chain)
@@ -82,17 +85,42 @@ const redisClient = {
   hmget: vi.fn(async () => [] as (string | null)[]),
   hsetnx: vi.fn(async () => 1),
   // A present value so the live counter resolves without cold-seeding from the DB.
-  hget: vi.fn(async () => "5"),
+  hget: vi.fn((_key: string, field: string) => {
+    if (field === "macSettled") {
+      reconcileCallOrder.push("settled-baseline")
+      return Promise.resolve("4")
+    }
+    return Promise.resolve("5")
+  }),
   hincrby: vi.fn(async () => 6),
   hset: vi.fn(async () => 1),
+  multi: vi.fn(),
+}
+const redisMulti = {
+  hset: vi.fn(),
+  hsetnx: vi.fn(),
+  hincrby: vi.fn(),
+  exec: vi.fn(async () => []),
 }
 const cacheConnections = { useExisting: vi.fn(async () => redisClient) }
 const distributedStore = {
-  get: vi.fn(async () => null),
+  get: vi.fn(async (): Promise<unknown> => null),
   put: vi.fn(async () => undefined),
   delete: vi.fn(async () => undefined),
+  reserveWithinLimit: vi.fn(async () => ({
+    status: "reserved" as const,
+    value: 1,
+  })),
+  touchReservation: vi.fn(async () => true),
+  settleReservation: vi.fn(async () => true),
+  releaseReservation: vi.fn(async () => true),
+  hsetWithInflight: vi.fn(async () => ({
+    status: "written" as const,
+    value: 0,
+  })),
 }
-vi.mock("@chatbotx.io/redis", () => ({
+vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/redis")>()),
   distributedStore,
   cacheConnections,
   invalidateCacheByTags: vi.fn(async () => undefined),
@@ -101,13 +129,35 @@ vi.mock("@chatbotx.io/redis", () => ({
 const { userQuotaService } = await import("../src/user-quota/service")
 
 const USER = "user-1"
-
 beforeEach(() => {
   vi.clearAllMocks()
   reconcileCounts.length = 0
+  reconcileCallOrder.length = 0
   findFirstQuota.mockResolvedValue(null)
+  distributedStore.get.mockResolvedValue(null)
   cacheConnections.useExisting.mockResolvedValue(redisClient)
-  redisClient.hget.mockResolvedValue("5")
+  redisClient.hget.mockImplementation((_key: string, field: string) => {
+    if (field === "macSettled") {
+      reconcileCallOrder.push("settled-baseline")
+      return Promise.resolve("4")
+    }
+    return Promise.resolve("5")
+  })
+  redisClient.multi.mockReturnValue(redisMulti)
+  redisMulti.hset.mockReturnValue(redisMulti)
+  redisMulti.hsetnx.mockReturnValue(redisMulti)
+  redisMulti.hincrby.mockReturnValue(redisMulti)
+  distributedStore.reserveWithinLimit.mockResolvedValue({
+    status: "reserved",
+    value: 1,
+  })
+  distributedStore.touchReservation.mockResolvedValue(true)
+  distributedStore.settleReservation.mockResolvedValue(true)
+  distributedStore.releaseReservation.mockResolvedValue(true)
+  distributedStore.hsetWithInflight.mockResolvedValue({
+    status: "written",
+    value: 0,
+  })
 })
 
 describe("userQuotaService write-through", () => {
@@ -182,6 +232,122 @@ describe("userQuotaService write-through", () => {
     expect(update).not.toHaveBeenCalled()
     expect(insert).not.toHaveBeenCalled()
   })
+
+  test("reserve uses the required quota row's metric limit", async () => {
+    distributedStore.reserveWithinLimit.mockResolvedValue({
+      status: "reserved",
+      value: 6,
+    })
+    const quota = { macLimit: 10 } as UserQuotaModel
+
+    await expect(
+      userQuotaService.reserve(USER, "mac", quota),
+    ).resolves.toMatchObject({ value: 6 })
+
+    expect(distributedStore.reserveWithinLimit).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      10,
+      expect.any(String),
+    )
+  })
+
+  test("reserve does not load a required quota row again", async () => {
+    const quota = { macLimit: 10 } as UserQuotaModel
+
+    await userQuotaService.reserve(USER, "mac", quota)
+
+    expect(distributedStore.get).not.toHaveBeenCalled()
+    expect(findFirstQuota).not.toHaveBeenCalled()
+    expect(distributedStore.reserveWithinLimit).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      10,
+      expect.any(String),
+    )
+  })
+
+  test("reserve treats a null quota as unlimited without loading it again", async () => {
+    await userQuotaService.reserve(USER, "workspaces", null)
+
+    expect(distributedStore.get).not.toHaveBeenCalled()
+    expect(findFirstQuota).not.toHaveBeenCalled()
+    expect(distributedStore.reserveWithinLimit).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "workspaces",
+      null,
+      expect.any(String),
+    )
+  })
+
+  test("reserve treats a null metric limit as unlimited", async () => {
+    const quota = { workspacesLimit: null } as UserQuotaModel
+
+    await userQuotaService.reserve(USER, "workspaces", quota)
+
+    expect(distributedStore.reserveWithinLimit).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "workspaces",
+      null,
+      expect.any(String),
+    )
+  })
+
+  test("reserve passes the configured non-MAC limit", async () => {
+    const quota = { workspacesLimit: 3 } as UserQuotaModel
+
+    await userQuotaService.reserve(USER, "workspaces", quota)
+
+    expect(distributedStore.reserveWithinLimit).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "workspaces",
+      3,
+      expect.any(String),
+    )
+  })
+
+  test("touchReservation passes through the reservation", async () => {
+    await expect(
+      userQuotaService.touchReservation(USER, "mac", {
+        id: "reservation-1",
+        value: 1,
+      }),
+    ).resolves.toBe(true)
+    expect(distributedStore.touchReservation).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      "reservation-1",
+    )
+  })
+
+  test("commitReservation persists and settles the reservation", async () => {
+    await userQuotaService.commitReservation(USER, "mac", {
+      id: "reservation-1",
+      value: 1,
+    })
+
+    expect(distributedStore.settleReservation).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      "reservation-1",
+    )
+    expect(insert).toHaveBeenCalledOnce()
+    expect(distributedStore.delete).toHaveBeenCalledWith(`user-quota:${USER}`)
+  })
+
+  test("releaseReservation passes through without durable release", async () => {
+    await userQuotaService.releaseReservation(USER, "mac", {
+      id: "reservation-1",
+      value: 1,
+    })
+
+    expect(distributedStore.releaseReservation).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      "reservation-1",
+    )
+    expect(update).not.toHaveBeenCalled()
+  })
 })
 
 describe("userQuotaService.reconcileOwnerPoolUsage", () => {
@@ -207,7 +373,7 @@ describe("userQuotaService.reconcileOwnerPoolUsage", () => {
         set: expect.objectContaining({ teamMembersUsed: 2 }),
       }),
     )
-    expect(redisClient.hset).toHaveBeenCalledWith(
+    expect(redisMulti.hset).toHaveBeenCalledWith(
       "user-quota-live:owner-1",
       "contacts",
       "0",
@@ -217,9 +383,17 @@ describe("userQuotaService.reconcileOwnerPoolUsage", () => {
       "2",
       "channels",
       "0",
-      "mac",
-      "0",
     )
+    expect(distributedStore.hsetWithInflight).toHaveBeenCalledWith(
+      "user-quota-live:owner-1",
+      "mac",
+      0,
+      "set",
+      { settledSince: 4 },
+    )
+    expect(reconcileCallOrder[0]).toBe("settled-baseline")
+    expect(reconcileCallOrder).toContain("durable-query")
+    expect(redisMulti.exec).toHaveBeenCalledOnce()
   })
 })
 

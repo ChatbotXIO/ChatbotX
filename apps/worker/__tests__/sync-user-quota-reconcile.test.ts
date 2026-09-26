@@ -20,7 +20,9 @@ const state = {
   // Truthy once reconcileUserSelfUsage ran for a user (the self-count path).
   selfReconciledUsers: [] as string[],
   hsetCalls: [] as unknown[][],
-  hmgetResult: [null, null] as (string | null)[],
+  hsetWithInflightCalls: [] as unknown[][],
+  hmgetResult: [null, null, null] as (string | null)[],
+  macReconcileCallOrder: [] as string[],
   // Owner MAC count returned by the (mocked) ContactActiveMonthly ledger.
   ledgerMac: 0,
   // Existence filter: `null` means every id in the batch exists; a Set restricts
@@ -117,17 +119,33 @@ const redisClient = {
     state.hsetCalls.push(args)
     return Promise.resolve()
   }),
-  hmget: vi.fn(async () => state.hmgetResult),
+  hmget: vi.fn((...args: unknown[]) => {
+    if (args.includes("macSettled")) {
+      state.macReconcileCallOrder.push("hmget")
+    }
+    return Promise.resolve(state.hmgetResult)
+  }),
   // Default: no live keys in Redis (simulates cold start for syncUserQuota tests)
   scan: vi.fn(async () => ["0", [] as string[]]),
 }
 
-vi.mock("@chatbotx.io/redis", () => ({
+vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/redis")>()),
+  LIVE_RESERVATION_MAX_AGE_MS: 15 * 60_000,
   cacheConnections: { useExisting: vi.fn(async () => redisClient) },
-  distributedStore: { delete: vi.fn(async () => undefined) },
+  distributedStore: {
+    delete: vi.fn(async () => undefined),
+    hsetWithInflight: vi.fn((...args: unknown[]) => {
+      state.hsetWithInflightCalls.push(args)
+      return Promise.resolve({ status: "written", value: 0 })
+    }),
+  },
 }))
 
-const countActiveContactsForOwner = vi.fn(async () => state.ledgerMac)
+const countActiveContactsForOwner = vi.fn(() => {
+  state.macReconcileCallOrder.push("ledger-query")
+  return Promise.resolve(state.ledgerMac)
+})
 vi.mock("@chatbotx.io/analytics", () => ({
   macRepository: { countActiveContactsForOwner },
 }))
@@ -166,7 +184,9 @@ describe("reconcileUser — the non-reseller path delegates the self-count", () 
     state.persistedMac = []
     state.selfReconciledUsers = []
     state.hsetCalls = []
-    state.hmgetResult = [null, null]
+    state.hsetWithInflightCalls = []
+    state.hmgetResult = [null, null, null]
+    state.macReconcileCallOrder = []
     state.ledgerMac = 0
     redisClient.hset.mockClear()
     countActiveContactsForOwner.mockClear()
@@ -202,6 +222,8 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
     state.persistedMac = []
     state.selfReconciledUsers = []
     state.hsetCalls = []
+    state.hsetWithInflightCalls = []
+    state.macReconcileCallOrder = []
     redisClient.hset.mockClear()
     countActiveContactsForOwner.mockClear()
     state.ledgerMac = 0
@@ -209,7 +231,7 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
   test("resetting plan in its current period re-grounds macUsed on the ledger count", async () => {
     // Live counter drifted low (a lost Redis increment); DB is also stale.
-    state.hmgetResult = ["3", PERIOD]
+    state.hmgetResult = ["3", PERIOD, "4"]
     state.ledgerMac = 7
     state.stored = {
       macUsed: 5,
@@ -224,19 +246,68 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
       expect.objectContaining({ ownerId: "user-1", cumulative: false }),
     )
     // The live counter is re-grounded on the ledger truth.
-    expect(state.hsetCalls).toContainEqual([
+    expect(state.hsetWithInflightCalls).toContainEqual([
       "user-quota-live:user-1",
       "mac",
-      "7",
-      "macPeriodStart",
-      PERIOD,
+      7,
+      "set",
+      {
+        extra: { field: "macPeriodStart", value: PERIOD },
+        settledSince: 4,
+      },
     ])
+    expect(redisClient.hmget).toHaveBeenCalledWith(
+      "user-quota-live:user-1",
+      "mac",
+      "macPeriodStart",
+      "macSettled",
+    )
+    expect(state.macReconcileCallOrder).toEqual(["hmget", "ledger-query"])
     // macUsed is persisted to the ledger count (self-heals the drift).
     expect(state.persistedMac).toContain(7)
   })
 
+  test("rollover replaces MAC while preserving in-flight reservations", async () => {
+    const NEXT_PERIOD = "2026-07-01T00:00:00.000Z"
+    state.hmgetResult = ["40", PERIOD, "6"]
+    state.stored = {
+      macUsed: 0,
+      periodStart: new Date(NEXT_PERIOD),
+      periodEnd: new Date("2026-08-01T00:00:00.000Z"),
+      monthlyBotMessagesPeriodStart: null,
+    }
+
+    await reconcileUser("user-1")
+
+    expect(state.hsetWithInflightCalls).toContainEqual([
+      "user-quota-live:user-1",
+      "mac",
+      0,
+      "set",
+      {
+        extra: { field: "macPeriodStart", value: NEXT_PERIOD },
+        settledSince: 6,
+      },
+    ])
+  })
+
+  test("skips an overwrite when live already equals the ledger", async () => {
+    state.hmgetResult = ["7", PERIOD, "2"]
+    state.ledgerMac = 7
+    state.stored = {
+      macUsed: 5,
+      periodStart: new Date(PERIOD),
+      periodEnd: new Date("2026-07-01T00:00:00.000Z"),
+      monthlyBotMessagesPeriodStart: null,
+    }
+
+    await reconcileUser("user-1")
+
+    expect(state.hsetWithInflightCalls).toHaveLength(0)
+  })
+
   test("lifetime plan (no periodEnd) keeps the accumulate path, not the ledger", async () => {
-    state.hmgetResult = ["10", PERIOD]
+    state.hmgetResult = ["10", PERIOD, "2"]
     state.ledgerMac = 4
     state.stored = {
       macUsed: 10,

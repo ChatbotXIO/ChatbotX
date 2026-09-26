@@ -33,6 +33,11 @@ export const distributedStore = distributedStoreFactory(
 
 export { queueConnections } from "./connections/queue-connection"
 export { sequenceConnections } from "./connections/sequence-connection"
+export {
+  inflightFieldFor,
+  reservationFieldFor,
+  settledFieldFor,
+} from "./live-counter-scripts"
 export { createRedisConnection } from "./redis-client"
 export const distributedSequenceStore = distributedStoreFactory(
   sequenceConnections.useExisting,

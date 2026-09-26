@@ -2926,6 +2926,9 @@ importers:
       '@chatbotx.io/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
       typescript:
         specifier: ^5
         version: 5.9.3
