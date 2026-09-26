@@ -210,4 +210,160 @@ describe("receiveMessage", () => {
     ).rejects.toThrow()
     expect(testCtx.uploader.putObject).not.toHaveBeenCalled()
   })
+
+  describe("animations and stickers", () => {
+    const mediaMessagePayload = (media: Record<string, unknown>) => ({
+      update_id: 1,
+      message: {
+        message_id: 11,
+        from: { id: 100, is_bot: false, first_name: "Ada" },
+        chat: { id: 100, type: "private" },
+        date: 1_765_440_000,
+        ...media,
+      },
+    })
+
+    const receiveMedia = (
+      testCtx: ReturnType<typeof buildCtx>,
+      media: Record<string, unknown>,
+    ) =>
+      receiveMessage({
+        ctx: testCtx as never,
+        data: {
+          integrationType: "telegram",
+          integrationIdentifier: "bot-1",
+          payload: mediaMessagePayload(media),
+        },
+      })
+
+    const stubDownload = () => {
+      vi.mocked(getTelegramFileUrl).mockImplementation(
+        async (_auth, fileId) => `https://api.telegram.org/file/bot/${fileId}`,
+      )
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockImplementation(
+            async () =>
+              new Response(new Uint8Array([1, 2, 3]), { status: 200 }),
+          ),
+      )
+    }
+
+    test("stores an animation once as a gif, ignoring the duplicate document", async () => {
+      stubDownload()
+      const testCtx = buildCtx()
+      const gifFile = {
+        file_id: "gif-file",
+        file_unique_id: "gif-unique",
+        mime_type: "video/mp4",
+      }
+
+      const result = await receiveMedia(testCtx, {
+        animation: gifFile,
+        document: gifFile,
+      })
+
+      expect(result.message?.attachments).toEqual([
+        expect.objectContaining({ fileType: "gif", mimeType: "video/mp4" }),
+      ])
+      expect(getTelegramFileUrl).toHaveBeenCalledTimes(1)
+      expect(testCtx.uploader.putObject).toHaveBeenCalledTimes(1)
+    })
+
+    test("stores a static sticker as a webp image with its size", async () => {
+      stubDownload()
+
+      const result = await receiveMedia(buildCtx(), {
+        sticker: {
+          file_id: "sticker-file",
+          file_unique_id: "sticker-unique",
+          width: 512,
+          height: 512,
+          is_animated: false,
+          is_video: false,
+        },
+      })
+
+      expect(result.message?.attachments).toEqual([
+        expect.objectContaining({
+          fileType: "image",
+          mimeType: "image/webp",
+          width: 512,
+          height: 512,
+        }),
+      ])
+    })
+
+    test("stores a video sticker as a looping gif", async () => {
+      stubDownload()
+
+      const result = await receiveMedia(buildCtx(), {
+        sticker: {
+          file_id: "video-sticker",
+          file_unique_id: "video-sticker-unique",
+          width: 512,
+          height: 512,
+          is_animated: false,
+          is_video: true,
+        },
+      })
+
+      expect(result.message?.attachments).toEqual([
+        expect.objectContaining({ fileType: "gif", mimeType: "video/webm" }),
+      ])
+    })
+
+    test("stores the thumbnail of an animated .tgs sticker", async () => {
+      stubDownload()
+
+      const result = await receiveMedia(buildCtx(), {
+        sticker: {
+          file_id: "tgs-sticker",
+          file_unique_id: "tgs-unique",
+          width: 512,
+          height: 512,
+          is_animated: true,
+          is_video: false,
+          thumbnail: {
+            file_id: "tgs-thumb",
+            file_unique_id: "tgs-thumb-unique",
+            width: 128,
+            height: 128,
+          },
+        },
+      })
+
+      expect(getTelegramFileUrl).toHaveBeenCalledWith(
+        expect.anything(),
+        "tgs-thumb",
+      )
+      expect(result.message?.attachments).toEqual([
+        expect.objectContaining({
+          fileType: "image",
+          mimeType: "image/webp",
+          width: 128,
+        }),
+      ])
+    })
+
+    test("skips an animated .tgs sticker without a thumbnail", async () => {
+      stubDownload()
+
+      const result = await receiveMedia(buildCtx(), {
+        sticker: {
+          file_id: "tgs-sticker",
+          file_unique_id: "tgs-unique",
+          width: 512,
+          height: 512,
+          is_animated: true,
+          is_video: false,
+        },
+      })
+
+      expect(result.message?.attachments).toEqual([])
+      expect(getTelegramFileUrl).not.toHaveBeenCalled()
+    })
+  })
 })
