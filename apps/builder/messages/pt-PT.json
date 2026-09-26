@@ -3249,6 +3249,7 @@
     "changeLikeState": "Alterar estado do gosto",
     "changeHideState": "Alterar estado de ocultação",
     "commentHidden": "Este comentário foi ocultado",
+    "commentMediaUnavailable": "Este comentário contém um GIF, autocolante ou imagem que não pode ser apresentado",
     "messageDeleted": "A mensagem foi eliminada.",
     "sendFailed": "Falha ao enviar",
     "repliedToStory": "Respondeu ao seu story",

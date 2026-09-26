@@ -4015,6 +4015,7 @@
     "changeHideState": "更改隐藏状态",
     "changeLikeState": "更改类似状态",
     "commentHidden": "此留言已隐藏",
+    "commentMediaUnavailable": "此评论包含无法显示的 GIF、贴纸或图片",
     "connectFailed": "{feature} 连接失败",
     "connectSuccess": "{feature} 连接成功",
     "connectedSuccess": "{feature} 连接成功",

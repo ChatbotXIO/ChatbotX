@@ -3249,6 +3249,7 @@
     "changeLikeState": "Thay đổi trạng thái thích",
     "changeHideState": "Thay đổi trạng thái ẩn",
     "commentHidden": "Bình luận này đã bị ẩn",
+    "commentMediaUnavailable": "Bình luận này chứa GIF, sticker hoặc ảnh không hiển thị được",
     "messageDeleted": "Tin nhắn này đã bị xoá.",
     "sendFailed": "Gửi thất bại",
     "repliedToStory": "Đã trả lời story của bạn",

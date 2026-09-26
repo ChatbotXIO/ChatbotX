@@ -3249,6 +3249,7 @@
     "changeLikeState": "Cambia stato del Mi piace",
     "changeHideState": "Cambia stato di visibilità",
     "commentHidden": "Questo commento è stato nascosto",
+    "commentMediaUnavailable": "Questo commento contiene una GIF, uno sticker o un'immagine che non può essere visualizzata",
     "messageDeleted": "Il messaggio è stato eliminato.",
     "sendFailed": "Invio non riuscito",
     "repliedToStory": "Ha risposto alla tua storia",

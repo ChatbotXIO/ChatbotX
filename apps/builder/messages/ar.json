@@ -3249,6 +3249,7 @@
     "changeLikeState": "تغيير حالة الإعجاب",
     "changeHideState": "تغيير حالة الإخفاء",
     "commentHidden": "تم إخفاء هذا التعليق",
+    "commentMediaUnavailable": "يحتوي هذا التعليق على صورة GIF أو ملصق أو صورة لا يمكن عرضها",
     "messageDeleted": "تم حذف الرسالة.",
     "sendFailed": "فشل الإرسال",
     "repliedToStory": "رد على قصتك",

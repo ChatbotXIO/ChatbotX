@@ -3228,6 +3228,7 @@
     "changeLikeState": "Alterar estado da curtida",
     "changeHideState": "Alterar estado de ocultação",
     "commentHidden": "Este comentário foi ocultado",
+    "commentMediaUnavailable": "Este comentário contém um GIF, figurinha ou imagem que não pode ser exibido",
     "messageDeleted": "A mensagem foi excluída.",
     "sendFailed": "Falha ao enviar",
     "repliedToStory": "Respondeu ao seu story",

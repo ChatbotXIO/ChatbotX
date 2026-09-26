@@ -3449,6 +3449,7 @@
     "changeLikeState": "Change like state",
     "changeHideState": "Change hide state",
     "commentHidden": "This comment was hidden",
+    "commentMediaUnavailable": "This comment contains a GIF, sticker or image that can't be displayed",
     "messageDeleted": "The message has been deleted.",
     "sendFailed": "Failed to send",
     "repliedToStory": "Replied to your story",

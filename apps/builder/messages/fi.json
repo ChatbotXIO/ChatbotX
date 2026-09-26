@@ -3249,6 +3249,7 @@
     "changeLikeState": "Vaihda tykkäystilaa",
     "changeHideState": "Vaihda piilotustilaa",
     "commentHidden": "Tämä kommentti piilotettiin",
+    "commentMediaUnavailable": "Tämä kommentti sisältää GIF-kuvan, tarran tai kuvan, jota ei voi näyttää",
     "messageDeleted": "Viesti on poistettu.",
     "sendFailed": "Lähetys epäonnistui",
     "repliedToStory": "Vastasi tarinaasi",

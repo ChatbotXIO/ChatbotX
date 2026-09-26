@@ -176,45 +176,42 @@ export const MessageItem = (props: MessageItemProps) => {
       >
         {storyReply && <StoryReplyContext story={storyReply.story} />}
         {isComment ? (
-          (message.text ||
-            (message.attachments && message.attachments.length > 0)) && (
-            <div
-              className={cn(
-                "relative text-sm",
-                variants[variant],
-                isDeleted && "opacity-50",
-                isHidden && "opacity-50",
-              )}
-            >
-              {!isEditing &&
-                (isDeleted || (message.text && message.text.length > 0)) && (
-                  <pre className="wrap-break-word whitespace-pre-line font-sans">
-                    <CommentText
-                      deletedLabel={t("messageDeleted")}
-                      hiddenLabel={t("commentHidden")}
-                      isDeleted={isDeleted}
-                      isHidden={isHidden}
-                      text={message.text}
-                    />
-                  </pre>
-                )}
-              {!(isEditing || isDeleted) && hasAttachments && (
-                <RenderAttachments message={message} />
-              )}
-              {isEditing && onEdit && (
-                <MessageActionsEditor
-                  message={message}
-                  onEdit={onEdit}
-                  onEditingChange={setIsEditing}
+          <div
+            className={cn(
+              "relative text-sm",
+              variants[variant],
+              isDeleted && "opacity-50",
+              isHidden && "opacity-50",
+            )}
+          >
+            {!isEditing && (isDeleted || message.text || !hasAttachments) && (
+              <pre className="wrap-break-word whitespace-pre-line font-sans">
+                <CommentText
+                  deletedLabel={t("messageDeleted")}
+                  hiddenLabel={t("commentHidden")}
+                  isDeleted={isDeleted}
+                  isHidden={isHidden}
+                  mediaUnavailableLabel={t("commentMediaUnavailable")}
+                  text={message.text}
                 />
-              )}
-              {isLiked && (
-                <span className="absolute -end-2 -bottom-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
-                  <ThumbsUp className="size-3" />
-                </span>
-              )}
-            </div>
-          )
+              </pre>
+            )}
+            {!(isEditing || isDeleted) && hasAttachments && (
+              <RenderAttachments message={message} />
+            )}
+            {isEditing && onEdit && (
+              <MessageActionsEditor
+                message={message}
+                onEdit={onEdit}
+                onEditingChange={setIsEditing}
+              />
+            )}
+            {isLiked && (
+              <span className="absolute -end-2 -bottom-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                <ThumbsUp className="size-3" />
+              </span>
+            )}
+          </div>
         ) : (
           <>
             {(isDeleted || (message.text && message.text.length > 0)) &&
@@ -338,19 +335,37 @@ export const MessageItem = (props: MessageItemProps) => {
   )
 }
 
+// A comment with neither text nor attachment carried media the channel does
+// not expose (e.g. an Instagram GIF comment), so it gets a note instead of an
+// empty bubble.
 const CommentText = (props: {
   deletedLabel: string
   hiddenLabel: string
+  mediaUnavailableLabel: string
   isDeleted: boolean
   isHidden: boolean
   text: string | null
 }) => {
-  const { deletedLabel, hiddenLabel, isDeleted, isHidden, text } = props
+  const {
+    deletedLabel,
+    hiddenLabel,
+    mediaUnavailableLabel,
+    isDeleted,
+    isHidden,
+    text,
+  } = props
   if (isDeleted) {
     return <span className="text-xs italic">{deletedLabel}</span>
   }
   if (isHidden) {
     return <span className="text-xs italic">{hiddenLabel}</span>
+  }
+  if (!text) {
+    return (
+      <span className="text-muted-foreground text-xs italic">
+        {mediaUnavailableLabel}
+      </span>
+    )
   }
   return text
 }

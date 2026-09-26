@@ -33,6 +33,13 @@ vi.mock("@/features/messages/components/whatsapp-call-card", () => ({
   WhatsappCallCard: () => <div data-slot="whatsapp-call-card">audioCall</div>,
 }))
 
+// Comment bubbles render the like/hide/reply actions, which need the chat
+// store; stub them to keep this test about what the bubble itself shows.
+vi.mock("@/features/messages/components/message-actions", () => ({
+  MessageActions: () => null,
+  MessageActionsEditor: () => null,
+}))
+
 let container: HTMLDivElement | null = null
 let root: Root | null = null
 
@@ -279,5 +286,54 @@ describe("MessageItem attachment rendering — gif", () => {
     expect(video?.querySelector("source")?.getAttribute("type")).toBe(
       "video/mp4",
     )
+  })
+})
+
+describe("MessageItem comment without text", () => {
+  test("shows a note for a comment whose media the channel does not expose", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          type: "comment",
+          messageType: "incoming",
+          text: null,
+          attachments: [],
+        })}
+      />,
+    )
+
+    expect(el.textContent).toContain("commentMediaUnavailable")
+  })
+
+  test("shows the attachment instead of the note when the media was downloaded", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          type: "comment",
+          messageType: "incoming",
+          text: null,
+          attachments: [makeImageAttachment("comment-gif")],
+        })}
+      />,
+    )
+
+    expect(el.textContent).not.toContain("commentMediaUnavailable")
+    expect(el.querySelector("img")).not.toBeNull()
+  })
+
+  test("keeps the deleted label for a deleted media-only comment", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          type: "comment",
+          messageType: "incoming",
+          text: null,
+          deletedAt: new Date("2024-01-02T00:00:00Z"),
+        })}
+      />,
+    )
+
+    expect(el.textContent).toContain("messageDeleted")
+    expect(el.textContent).not.toContain("commentMediaUnavailable")
   })
 })

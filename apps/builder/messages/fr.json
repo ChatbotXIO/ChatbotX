@@ -3249,6 +3249,7 @@
     "changeLikeState": "Modifier l’état J’aime",
     "changeHideState": "Modifier l’état masqué",
     "commentHidden": "Ce commentaire a été masqué",
+    "commentMediaUnavailable": "Ce commentaire contient un GIF, un sticker ou une image qui ne peut pas être affiché",
     "messageDeleted": "Le message a été supprimé.",
     "sendFailed": "Échec de l'envoi",
     "repliedToStory": "A répondu à votre story",
