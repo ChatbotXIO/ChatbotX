@@ -432,6 +432,46 @@ const RenderImageGridItem = (props: { attachment: AttachmentResource }) => {
   )
 }
 
+// `unoptimized` keeps the original bytes, so an animated GIF/WebP still plays.
+const RenderImageAttachment = (props: {
+  attachment: AttachmentResource
+  attachmentUrl: string
+  attachmentLabel: string
+}) => {
+  const { attachment, attachmentUrl, attachmentLabel } = props
+
+  if (!(attachment.width && attachment.height)) {
+    return (
+      <Link href={attachmentUrl} target="_blank">
+        <div
+          className="relative max-w-full overflow-hidden rounded-xl sm:max-w-80"
+          style={{ aspectRatio: "4/3" }}
+        >
+          <Image
+            alt={attachmentLabel}
+            className="object-contain"
+            fill
+            src={attachmentUrl}
+            unoptimized
+          />
+        </div>
+      </Link>
+    )
+  }
+  return (
+    <Link href={attachmentUrl} target="_blank">
+      <Image
+        alt={attachmentLabel}
+        className="max-w-full rounded-xl sm:max-w-80"
+        height={attachment.height}
+        src={attachmentUrl}
+        unoptimized
+        width={attachment.width}
+      />
+    </Link>
+  )
+}
+
 const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
   const { attachment } = props
   const attachmentUrl = useAttachmentUrl(attachment)
@@ -448,38 +488,38 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
   }
 
   switch (attachment.fileType) {
-    case "image": {
-      if (!(attachment.width && attachment.height)) {
+    case "image":
+      return (
+        <RenderImageAttachment
+          attachment={attachment}
+          attachmentLabel={attachmentLabel}
+          attachmentUrl={attachmentUrl}
+        />
+      )
+    case "gif":
+      // A GIF delivered as a video clip (Telegram animations, video stickers)
+      // plays the way the GIF would: muted, looping, without controls.
+      if (attachment.mimeType.startsWith("video/")) {
         return (
-          <Link href={attachmentUrl} target="_blank">
-            <div
-              className="relative max-w-full overflow-hidden rounded-xl sm:max-w-80"
-              style={{ aspectRatio: "4/3" }}
-            >
-              <Image
-                alt={attachmentLabel}
-                className="object-contain"
-                fill
-                src={attachmentUrl}
-                unoptimized
-              />
-            </div>
-          </Link>
+          <video
+            autoPlay
+            className="max-w-full rounded-xl sm:max-w-80"
+            loop
+            muted
+            playsInline
+          >
+            <track default kind="captions" />
+            <source src={attachmentUrl} type={attachment.mimeType} />
+          </video>
         )
       }
       return (
-        <Link href={attachmentUrl} target="_blank">
-          <Image
-            alt={attachmentLabel}
-            className="max-w-full rounded-xl sm:max-w-80"
-            height={attachment.height}
-            src={attachmentUrl}
-            unoptimized
-            width={attachment.width}
-          />
-        </Link>
+        <RenderImageAttachment
+          attachment={attachment}
+          attachmentLabel={attachmentLabel}
+          attachmentUrl={attachmentUrl}
+        />
       )
-    }
     case "video":
       return (
         <video controls height="240" preload="none" width="320">

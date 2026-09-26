@@ -244,3 +244,40 @@ describe("MessageItem attachment rendering — multiple images", () => {
     expect(el.textContent).toContain("file-1.pdf")
   })
 })
+
+describe("MessageItem attachment rendering — gif", () => {
+  test("renders an image/gif attachment as an image", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          attachments: [makeProxyAttachment("gif-1", "gif", "image/gif")],
+        })}
+      />,
+    )
+
+    expect(el.querySelector("img")?.getAttribute("src")).toBe(
+      "https://builder.example.com/media/attachment/gif-1-token",
+    )
+    expect(el.querySelector("video")).toBeNull()
+  })
+
+  test("autoplays a video gif muted and on loop, without controls", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          attachments: [makeProxyAttachment("gif-2", "gif", "video/mp4")],
+        })}
+      />,
+    )
+
+    const video = el.querySelector("video")
+    expect(video).not.toBeNull()
+    expect(video?.autoplay).toBe(true)
+    expect(video?.loop).toBe(true)
+    expect(video?.muted).toBe(true)
+    expect(video?.hasAttribute("controls")).toBe(false)
+    expect(video?.querySelector("source")?.getAttribute("type")).toBe(
+      "video/mp4",
+    )
+  })
+})

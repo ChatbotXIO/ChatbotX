@@ -90,7 +90,7 @@ export const coexistRunType = pgEnum(
  */
 export type PendingCoexistAttachment = {
   sourceId: string
-  fileType: "image" | "audio" | "video" | "file"
+  fileType: "image" | "audio" | "video" | "gif" | "file"
   mimeType: string
   originPath: string
   size: number
