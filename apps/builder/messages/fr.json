@@ -2363,6 +2363,8 @@
       "transferConversationToHuman": "Transférer la conversation à un humain",
       "unarchiveConversation": "Désarchiver la conversation",
       "unassignConversation": "Désattribuer la conversation",
+      "markConversationAsUnread": "Marquer la conversation comme non lue",
+      "markConversationAsRead": "Marquer la conversation comme lue",
       "unfollowConversation": "Ne plus suivre la conversation",
       "unsubscribeBroadcast": "Se désabonner de la diffusion",
       "getUserData": "Obtenir les données de l’utilisateur",

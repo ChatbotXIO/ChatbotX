@@ -6,6 +6,7 @@ import {
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { gte, type SQL } from "@chatbotx.io/database/client"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import {
   type ArchiveConversationStepSchema,
@@ -16,6 +17,8 @@ import {
   type DisableBotStepSchema,
   type EnableBotStepSchema,
   type FollowConversationStepSchema,
+  type MarkConversationAsReadStepSchema,
+  type MarkConversationAsUnreadStepSchema,
   type TypingStepSchema,
   type UnarchiveConversationStepSchema,
   type UnassignConversationStepSchema,
@@ -23,9 +26,11 @@ import {
 } from "@chatbotx.io/flow-config"
 import { subHours } from "date-fns"
 import {
-  allIntegrations,
-  resolveIntegrationContextFromContactInbox,
-} from "../../services/integrations"
+  resolveWhatsappMessageSourceId,
+  sendTypingToChannel,
+} from "../../chat/handlers/send-message"
+import { logger } from "../../lib/logger"
+import { resolveIntegrationContextFromContactInbox } from "../../services/integrations"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
 
@@ -235,6 +240,123 @@ export async function stepUnassignConversation({
   })
 }
 
+export async function stepMarkConversationAsUnread({
+  conversation,
+}: ExecuteStepProps<MarkConversationAsUnreadStepSchema>) {
+  await conversationService.markUnread({
+    workspaceId: conversation.workspaceId,
+    id: conversation.id,
+  })
+}
+
+// Channels whose "Seen" receipt the Mark Read step sends. Explicit on purpose:
+// the `api` channel also implements `agentMarkAsRead` but is out of scope, so
+// "has a handler" is not the right test.
+const READ_RECEIPT_CHANNELS: ReadonlySet<string> = new Set([
+  channelTypes.enum.messenger,
+  channelTypes.enum.instagram,
+  channelTypes.enum.whatsapp,
+])
+
+// Shared by the Mark Read receipt and the Typing step: a step's props carry
+// the flow's current contactInbox, but not every trigger sets one (e.g. an
+// automation firing outside a message context), so fall back to the
+// contact's most recently active one.
+async function resolveContactInbox(
+  contactInbox: Awaited<
+    ReturnType<typeof contactInboxService.findRecentByContactId>
+  >,
+  workspaceId: string,
+  contactId: string,
+) {
+  return (
+    contactInbox ||
+    (await contactInboxService.findRecentByContactId({
+      workspaceId,
+      contactId,
+    }))
+  )
+}
+
+export async function stepMarkConversationAsRead(
+  props: ExecuteStepProps<MarkConversationAsReadStepSchema>,
+) {
+  const { conversation } = props
+
+  await conversationService.updateReadStatus({
+    workspaceId: conversation.workspaceId,
+    id: conversation.id,
+    agentLastReadAt: new Date(),
+  })
+
+  // Comment threads (`sourceId` = post id) are not a DM the contact opened.
+  if (conversation.sourceId !== null) {
+    return
+  }
+
+  await sendReadReceipt(props)
+}
+
+/** Best-effort channel "Seen" receipt: never throws, the flow continues. */
+async function sendReadReceipt(
+  props: ExecuteStepProps<MarkConversationAsReadStepSchema>,
+) {
+  const { conversation } = props
+  let channel: string | undefined
+
+  try {
+    const contactInbox = await resolveContactInbox(
+      props.contactInbox,
+      conversation.workspaceId,
+      conversation.contactId,
+    )
+    if (!contactInbox) {
+      return
+    }
+    channel = contactInbox.channel
+    if (!READ_RECEIPT_CHANNELS.has(contactInbox.channel)) {
+      return
+    }
+
+    const isWhatsapp = contactInbox.channel === channelTypes.enum.whatsapp
+    const messageSourceId = await resolveWhatsappMessageSourceId({
+      conversation,
+      contactInbox,
+    })
+    if (isWhatsapp && !messageSourceId) {
+      logger.debug(
+        {
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+        },
+        "stepMarkConversationAsRead: no incoming WhatsApp message to mark read",
+      )
+      return
+    }
+
+    const { integration, ctx } =
+      await resolveIntegrationContextFromContactInbox({
+        workspaceId: conversation.workspaceId,
+        contactInbox,
+      })
+
+    await integration.runChannelHandler("conversation", "agentMarkAsRead", {
+      ctx,
+      data: { contact: contactInbox, messageSourceId },
+    })
+  } catch (err) {
+    logger.warn(
+      {
+        err,
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        channel,
+      },
+      "stepMarkConversationAsRead: channel receipt failed",
+    )
+  }
+}
+
 export async function stepFollowConversation({
   conversation,
 }: ExecuteStepProps<FollowConversationStepSchema>) {
@@ -300,32 +422,21 @@ export const stepSendTyping = async (
 ) => {
   const { conversation, contactInbox: baseContactInbox } = props
 
-  const contactInbox =
-    baseContactInbox ||
-    (await contactInboxService.findRecentByContactId({
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-    }))
+  const contactInbox = await resolveContactInbox(
+    baseContactInbox,
+    conversation.workspaceId,
+    conversation.contactId,
+  )
 
   if (!contactInbox) {
     return
   }
 
-  if (!allIntegrations[contactInbox.channel]) {
-    return
-  }
-
-  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
-    workspaceId: conversation.workspaceId,
+  // Shared path so the WhatsApp wamid lookup lives in one place.
+  await sendTypingToChannel({
+    conversation,
     contactInbox,
-  })
-
-  await integration.runChannelHandler("conversation", "sendTyping", {
-    ctx,
-    data: {
-      contact: contactInbox,
-      typing: true,
-      seconds: props.step.seconds,
-    },
+    typing: true,
+    seconds: props.step.seconds,
   })
 }

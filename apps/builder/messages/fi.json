@@ -2363,6 +2363,8 @@
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
       "unarchiveConversation": "Palauta keskustelu arkistosta",
       "unassignConversation": "Poista keskustelun määritys",
+      "markConversationAsUnread": "Merkitse keskustelu lukemattomaksi",
+      "markConversationAsRead": "Merkitse keskustelu luetuksi",
       "unfollowConversation": "Lopeta keskustelun seuranta",
       "unsubscribeBroadcast": "Peru joukkolähetys",
       "getUserData": "Hae käyttäjätiedot",

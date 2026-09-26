@@ -113,6 +113,8 @@
       "transferConversationToHuman": "Transferă conversația către un operator",
       "unarchiveConversation": "Scoate conversația din arhivă",
       "unassignConversation": "Anulează atribuirea conversației",
+      "markConversationAsUnread": "Marchează conversația ca necitită",
+      "markConversationAsRead": "Marchează conversația ca citită",
       "unfollowConversation": "Nu mai urmări conversația",
       "unsubscribeBroadcast": "Dezabonează de la difuzare",
       "getUserData": "Obține datele utilizatorului",

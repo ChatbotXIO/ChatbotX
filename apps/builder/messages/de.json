@@ -2363,6 +2363,8 @@
       "transferConversationToHuman": "Unterhaltung an Mitarbeiter übergeben",
       "unarchiveConversation": "Unterhaltung aus Archiv entfernen",
       "unassignConversation": "Zuweisung der Unterhaltung aufheben",
+      "markConversationAsUnread": "Konversation als ungelesen markieren",
+      "markConversationAsRead": "Konversation als gelesen markieren",
       "unfollowConversation": "Wiedervorlage der Unterhaltung aufheben",
       "unsubscribeBroadcast": "Broadcast abbestellen",
       "getUserData": "Benutzerdaten abrufen",

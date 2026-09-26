@@ -1285,6 +1285,7 @@ describe("chat store handleNewMessage messaging window", () => {
       .getState()
       .conversations.find((c) => c.id === "conv-1") as unknown as {
       contactRepliedAt: Date | null
+      contactLastReadAt?: Date | null
       contactInboxes: { lastIncomingMessageAt: Date | null }[]
     }
 
@@ -1361,6 +1362,7 @@ describe("chat store handleNewMessage messaging window", () => {
       sentAt,
     )
     expect(conversation.contactRepliedAt).toEqual(sentAt)
+    expect(conversation.contactLastReadAt).toEqual(sentAt)
   })
 })
 

@@ -2363,6 +2363,8 @@
       "transferConversationToHuman": "会話を担当者に転送",
       "unarchiveConversation": "会話をアーカイブから戻す",
       "unassignConversation": "会話の割り当てを解除",
+      "markConversationAsUnread": "会話を未読にする",
+      "markConversationAsRead": "会話を既読にする",
       "unfollowConversation": "会話のフォローを解除",
       "unsubscribeBroadcast": "一斉配信を解除",
       "getUserData": "ユーザーデータを取得",

@@ -1223,6 +1223,45 @@ class ConversationService extends BaseService {
     return { agentLastReadAt }
   }
 
+  /**
+   * Channel message id (e.g. a WhatsApp wamid) of the newest incoming message
+   * this conversation received on `contactInboxId`. Read receipts and typing
+   * indicators that must reference a real message use it. Looks back 30 days,
+   * matching WhatsApp's mark-as-read guidance.
+   */
+  async findLastIncomingMessageSourceId(props: {
+    conversation: Pick<
+      ConversationModel,
+      "id" | "workspaceId" | "lastActivityAt" | "createdAt"
+    >
+    contactInboxId: string
+  }): Promise<string | undefined> {
+    const { conversation, contactInboxId } = props
+    const messageRepository = await createMessageRepository()
+    const messages = await messageRepository.findLastByConversation(
+      conversation.id,
+      {
+        workspaceId: conversation.workspaceId,
+        messageTypes: ["incoming"],
+        limit: 10,
+        withAttachments: false,
+        // Anchor on this conversation's own lastActivityAt, not a shared
+        // ContactInbox's lastMessageAt (see the sharded-scan note elsewhere).
+        sinceTime: getSafeSinceTime(
+          conversation.lastActivityAt ?? conversation.createdAt,
+          30 * 24 * 60 * 60 * 1000,
+        ),
+      },
+    )
+
+    return (
+      messages.find(
+        (message) =>
+          message.contactInboxId === contactInboxId && message.sourceId,
+      )?.sourceId ?? undefined
+    )
+  }
+
   async updateReadStatus(props: {
     workspaceId: string
     id: string
@@ -1426,15 +1465,28 @@ class ConversationService extends BaseService {
     currentStep?: string | null
     lastActivityAt?: Date
     lastStep?: string | null
+    contactRepliedAt?: Date
     tx?: DatabaseClient
   }): Promise<void> {
     const { workspaceId, conversationId, tx = db } = props
-    const data: Partial<typeof conversationModel.$inferInsert> = {}
+    const data: Omit<
+      Partial<typeof conversationModel.$inferInsert>,
+      "contactRepliedAt"
+    > & {
+      contactRepliedAt?: Date | SQL
+    } = {}
     if ("currentStep" in props) {
       data.currentStep = props.currentStep
     }
     if ("lastActivityAt" in props) {
       data.lastActivityAt = props.lastActivityAt
+    }
+    if ("contactRepliedAt" in props && props.contactRepliedAt) {
+      // Advance-only: a delayed/retried older webhook processed after a
+      // newer one must never move this column backwards (which would hide
+      // an already-seen unread message). Postgres GREATEST ignores NULLs;
+      // the COALESCE is kept only for readability.
+      data.contactRepliedAt = sql`GREATEST(COALESCE(${conversationModel.contactRepliedAt}, ${props.contactRepliedAt}), ${props.contactRepliedAt})`
     }
     if ("lastStep" in props) {
       data.lastStep = props.lastStep
@@ -1640,6 +1692,8 @@ class ConversationService extends BaseService {
     tracking: ContactInboxTrackingData
     contactLocation?: ContactModel["location"] | null
     at: Date
+    /** Set only for contact-authored messages; drives the "No admin reply" filter. */
+    contactRepliedAt?: Date
   }): Promise<ContactInboxTrackingInvalidation | null> {
     const {
       workspaceId,
@@ -1649,6 +1703,7 @@ class ConversationService extends BaseService {
       tracking,
       contactLocation,
       at,
+      contactRepliedAt,
     } = props
 
     return await db.transaction(async (tx) => {
@@ -1673,6 +1728,7 @@ class ConversationService extends BaseService {
         workspaceId,
         conversationId,
         lastActivityAt: at,
+        ...(contactRepliedAt ? { contactRepliedAt } : {}),
       })
 
       return invalidation

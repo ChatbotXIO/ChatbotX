@@ -236,6 +236,8 @@ export type ConversationHandlers<IAuth extends AuthValue> = {
         contact: OutgoingContact
         typing: boolean
         seconds?: number
+        /** Channel id of the message to anchor on (WhatsApp wamid). */
+        messageSourceId?: string
       }
     },
     void
@@ -256,6 +258,8 @@ export type ConversationHandlers<IAuth extends AuthValue> = {
       ctx: Context<IAuth>
       data: {
         contact: OutgoingContact
+        /** Channel id of the newest incoming message (WhatsApp wamid). */
+        messageSourceId?: string
       }
     },
     void
