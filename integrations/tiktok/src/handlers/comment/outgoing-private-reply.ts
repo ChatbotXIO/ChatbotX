@@ -3,7 +3,7 @@ import {
   ChannelErrorCategory,
   type CommentHandlers,
 } from "@chatbotx.io/sdk"
-import { sendTiktokCommentPrivateReply } from "../../apis/message"
+import { sendPrivateReplyMessage } from "../../apis/message"
 import { mapToChannelError } from "../../lib/error-mapper"
 import { logger } from "../../lib/logger"
 import type { TiktokAuthValue } from "../../schema"
@@ -15,7 +15,7 @@ import type { TiktokAuthValue } from "../../schema"
  * `comment_id` is the address — which is the whole reason a business can reach
  * a commenter who has never messaged it. What it needs instead is TikTok's
  * permission: Comment-to-Message enabled on the account, the comment flagged
- * high intent, and the send conditions in `sendTiktokCommentPrivateReply`.
+ * high intent, and the send conditions in `sendPrivateReplyMessage`.
  *
  * Text only. TikTok's documented `direct_reply` payload is `message_type:
  * "TEXT"`, so an attachment is rejected rather than dropped — reporting a reply
@@ -53,7 +53,7 @@ export const sendPrivateReply: CommentHandlers<TiktokAuthValue>["sendPrivateRepl
     }
 
     try {
-      const messageId = await sendTiktokCommentPrivateReply(
+      const messageId = await sendPrivateReplyMessage(
         ctx.auth.tokens.accessToken,
         {
           businessId: ctx.auth.metadata.openId,

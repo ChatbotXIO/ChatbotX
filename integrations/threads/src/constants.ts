@@ -1,4 +1,4 @@
-export const THREADS_GRAPH_API_URL = "https://graph.threads.com"
+export const API_URL = "https://graph.threads.com"
 export const THREADS_OAUTH_URL = "https://threads.com"
 export const DEFAULT_API_VERSION = "v1.0"
 export const THREADS_REPLY_PUBLISH_TIMEOUT_MS = 30_000

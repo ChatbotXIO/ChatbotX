@@ -2,7 +2,7 @@ import type { Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
-import type { InstagramAuthValue } from "../schemas"
+import type { InstagramAuthValue } from "../schema"
 
 export type InstagramMediaDetails = {
   caption?: string

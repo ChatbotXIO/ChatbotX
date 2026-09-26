@@ -7,11 +7,10 @@ vi.mock("../src/lib/http-client", () => ({
   createTiktokBusinessClient: () => ({ post, postFormData }),
 }))
 
-const { sendTiktokMessage, uploadTiktokMedia } = await import(
-  "../src/apis/message"
-)
+const { sendMessage } = await import("../src/apis/message")
+const { uploadAttachment } = await import("../src/apis/attachment")
 
-describe("sendTiktokMessage", () => {
+describe("sendMessage", () => {
   test("throws when TikTok rejects the send with a non-zero code", async () => {
     post.mockResolvedValueOnce({
       code: 40_001,
@@ -20,7 +19,7 @@ describe("sendTiktokMessage", () => {
     })
 
     await expect(
-      sendTiktokMessage("token", {
+      sendMessage("token", {
         business_id: "biz-1",
         recipient: { open_id: "open-1" },
         message_type: "TEXT",
@@ -36,7 +35,7 @@ describe("sendTiktokMessage", () => {
     })
 
     await expect(
-      sendTiktokMessage("token", {
+      sendMessage("token", {
         business_id: "biz-1",
         recipient: { open_id: "open-1" },
         message_type: "TEXT",
@@ -46,7 +45,7 @@ describe("sendTiktokMessage", () => {
   })
 })
 
-describe("uploadTiktokMedia", () => {
+describe("uploadAttachment", () => {
   test("throws when TikTok rejects the upload with a non-zero code", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -59,7 +58,7 @@ describe("uploadTiktokMedia", () => {
     })
 
     await expect(
-      uploadTiktokMedia("token", "biz-1", "https://example.com/image.png"),
+      uploadAttachment("token", "biz-1", "https://example.com/image.png"),
     ).rejects.toThrow("Unsupported media type")
   })
 })

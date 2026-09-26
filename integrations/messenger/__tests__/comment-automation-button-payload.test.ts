@@ -7,7 +7,7 @@ import { describe, expect, test, vi } from "vitest"
 import { getButtonTemplate } from "../src/handlers/message/outgoing-message/send-button"
 import { convertFlowStepMediaV2 } from "../src/handlers/message/outgoing-message/send-media-v2"
 import { buildMessengerTemplateComponents } from "../src/handlers/message/outgoing-message/send-messenger-template"
-import { convertFacebookQuickReplies } from "../src/handlers/message/outgoing-message/send-quick-reply"
+import { convertQuickReplies } from "../src/handlers/message/outgoing-message/send-quick-reply"
 
 vi.mock("../src/apis/attachment", () => ({
   uploadAttachment: vi.fn().mockResolvedValue({ attachment_id: "att-1" }),
@@ -86,7 +86,7 @@ describe("comment automation attribution on a Messenger step button", () => {
 
 describe("comment automation attribution on a Messenger quick reply", () => {
   test("the tapped payload carries the automation id", () => {
-    const [quickReply] = convertFacebookQuickReplies({
+    const [quickReply] = convertQuickReplies({
       flowId: "11638426147094528",
       buttons: [button],
       metadata: COMMENT_AUTOMATION_METADATA,
@@ -99,7 +99,7 @@ describe("comment automation attribution on a Messenger quick reply", () => {
 })
 
 // An image/video step WITH buttons is not sent inline — it routes to the media
-// template, a fourth encoder path reached through `convertFacebookButtons`.
+// template, a fourth encoder path reached through `convertButtons`.
 // That call site was the one that forgot to forward `metadata`, so these taps
 // reported nothing to comment automation, broadcasts or sequences alike, with
 // no compile error and an identical-looking message in the inbox.

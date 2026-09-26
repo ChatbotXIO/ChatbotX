@@ -5,7 +5,7 @@ vi.mock("../src/lib/http-client", () => ({
   createTiktokBusinessClient: () => ({ post }),
 }))
 
-const { sendTiktokCommentPrivateReply } = await import("../src/apis/message")
+const { sendPrivateReplyMessage } = await import("../src/apis/message")
 const { sendPrivateReply } = await import(
   "../src/handlers/comment/outgoing-private-reply"
 )
@@ -24,14 +24,14 @@ const ctx = {
   },
 } as never
 
-describe("sendTiktokCommentPrivateReply", () => {
+describe("sendPrivateReplyMessage", () => {
   test("addresses the DM by comment id and omits recipient fields entirely", async () => {
     post.mockResolvedValueOnce({
       code: 0,
       data: { message: { message_id: "msg-1" } },
     })
 
-    await sendTiktokCommentPrivateReply("token", {
+    await sendPrivateReplyMessage("token", {
       businessId: BUSINESS_ID,
       commentId: COMMENT_ID,
       text: "hi",
@@ -60,7 +60,7 @@ describe("sendTiktokCommentPrivateReply", () => {
     })
 
     await expect(
-      sendTiktokCommentPrivateReply("token", {
+      sendPrivateReplyMessage("token", {
         businessId: BUSINESS_ID,
         commentId: COMMENT_ID,
         text: "hi",
@@ -79,7 +79,7 @@ describe("sendTiktokCommentPrivateReply", () => {
     })
 
     await expect(
-      sendTiktokCommentPrivateReply("token", {
+      sendPrivateReplyMessage("token", {
         businessId: BUSINESS_ID,
         commentId: COMMENT_ID,
         text: "hi",
@@ -91,7 +91,7 @@ describe("sendTiktokCommentPrivateReply", () => {
 
   test("refuses text over the 6000-character limit without calling the API", async () => {
     await expect(
-      sendTiktokCommentPrivateReply("token", {
+      sendPrivateReplyMessage("token", {
         businessId: BUSINESS_ID,
         commentId: COMMENT_ID,
         text: "a".repeat(6001),

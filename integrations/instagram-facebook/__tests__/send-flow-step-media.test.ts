@@ -10,8 +10,8 @@ const {
   mockUploadAttachment: vi.fn(),
 }))
 
-vi.mock("../src/apis/page", () => ({
-  sendInstagramMessage: mockSendInstagramMessage,
+vi.mock("../src/apis/message", () => ({
+  sendMessage: mockSendInstagramMessage,
 }))
 
 vi.mock("../src/apis/comment", () => ({

@@ -6,19 +6,19 @@ import {
 } from "../apis/label"
 import {
   addBranding,
-  deleteMessengerProfileFields,
-  getPagePictureUrl,
-  updateMessengerProfile,
+  deleteProfileFields as deleteProfileFieldsApi,
+  getAccountPictureUrl,
+  updateProfile as updateProfileApi,
 } from "../apis/page"
 import type { MessengerAuthValue } from "../schema"
 
 export const botHandlers: BotHandlers<MessengerAuthValue> = {
   updateProfile: async ({ ctx, data }) =>
-    await updateMessengerProfile({ ctx, params: data }),
+    await updateProfileApi({ ctx, params: data }),
   addBranding: async ({ ctx, title, url }) => addBranding({ ctx, title, url }),
   deleteProfileFields: async ({ ctx, fields }) =>
-    deleteMessengerProfileFields({ ctx, fields }),
-  getProfilePictureUrl: async ({ ctx }) => getPagePictureUrl({ ctx }),
+    deleteProfileFieldsApi({ ctx, fields }),
+  getProfilePictureUrl: async ({ ctx }) => getAccountPictureUrl({ ctx }),
   createLabel: async ({ ctx, data }) => {
     const { id } = await createCustomLabel({
       ctx,

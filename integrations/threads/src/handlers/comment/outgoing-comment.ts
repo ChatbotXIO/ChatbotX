@@ -3,7 +3,7 @@ import {
   ChannelErrorCategory,
   type CommentHandlers,
 } from "@chatbotx.io/sdk"
-import { sendCommentReply } from "../../apis/comment"
+import { replyToComment } from "../../apis/comment"
 import { mapToChannelError } from "../../lib/error-mapper"
 import { getSafeErrorDetails } from "../../lib/error-sanitizer"
 import { logger } from "../../lib/logger"
@@ -33,7 +33,7 @@ export const sendComment: CommentHandlers<ThreadsAuthValue>["sendComment"] =
     }
 
     try {
-      const result = await sendCommentReply(ctx.auth, replyToCommentId, text)
+      const result = await replyToComment(ctx.auth, replyToCommentId, text)
       return { messageIds: result.id ? [result.id] : [], sentCount: 1 }
     } catch (error) {
       const channelError = mapToChannelError(error)

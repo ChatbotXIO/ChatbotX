@@ -7,9 +7,9 @@ import {
   type InstagramMessageAttachmentPayload,
   type InstagramSendMessage,
   type InstagramSendMessageResponse,
-} from "../schemas"
+} from "../schema"
 
-export const sendComment = (
+export const replyToComment = (
   auth: InstagramAuthValue,
   commentId: string,
   message: string | null,
@@ -68,7 +68,7 @@ export const hideComment = (
  * message payload (text, attachment, quick replies, …) — used by flow-based
  * private replies to deliver the *first* outgoing message of the run. On
  * graph.instagram.com (Instagram Login), messages are sent through the
- * `me/messages` endpoint — matching sendInstagramMessage — using the comment
+ * `me/messages` endpoint — matching `sendMessage` in `apis/message.ts` — using the comment
  * id as the recipient reference (Meta's comment_id-anchored Send API, which
  * bypasses the normal messaging-window requirement).
  *

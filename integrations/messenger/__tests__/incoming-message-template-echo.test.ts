@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { receiveMessage } from "../src/handlers/message/incomming-message"
+import { receiveMessage } from "../src/handlers/message/incoming-message"
 
 const receiveEcho = async (message: Record<string, unknown>) =>
   await receiveMessage({

@@ -5,7 +5,7 @@ import {
 } from "@chatbotx.io/sdk"
 import type { FacebookQuickReply } from "../../../schema"
 
-export function convertCanonicalFacebookQuickReplies(
+export function convertCanonicalQuickReplies(
   buttons: MessageButtonTemplate[],
 ): FacebookQuickReply[] {
   return buttons.map((button): FacebookQuickReply => {

@@ -2,7 +2,7 @@ import type { SendMultipleImagesStepSchema } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { logger } from "../../../lib/logger"
 import type { MessengerAuthValue } from "../../../schema"
-import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
+import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
 
 /**
  * One Send API call carrying several bare image attachments — Meta's
@@ -24,7 +24,7 @@ export function* convertFlowStepMultipleImages(
         payload: { url: image.url },
       })),
       ...(quickReplies.length > 0
-        ? { quick_replies: convertCanonicalFacebookQuickReplies(quickReplies) }
+        ? { quick_replies: convertCanonicalQuickReplies(quickReplies) }
         : {}),
     }
   } catch (error) {

@@ -7,7 +7,7 @@ import type {
   MessengerAuthValue,
 } from "../schema"
 
-export const sendPageMessage = (
+export const sendMessage = (
   auth: MessengerAuthValue,
   payload: FacebookSendMessageRequest,
 ): Promise<FacebookSendMessageResponse> => {

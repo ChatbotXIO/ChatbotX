@@ -12,7 +12,7 @@ const {
 }))
 
 vi.mock("../src/apis/message", () => ({
-  sendPageMessage: mockSendPageMessage,
+  sendMessage: mockSendPageMessage,
 }))
 
 vi.mock("../src/apis/comment", () => ({

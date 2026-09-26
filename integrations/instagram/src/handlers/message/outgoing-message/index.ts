@@ -23,7 +23,7 @@ import {
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
 import { sendPrivateReplyMessage } from "../../../apis/comment"
-import { sendInstagramMessage } from "../../../apis/page"
+import { sendMessage as sendMessageApi } from "../../../apis/message"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import {
@@ -32,16 +32,14 @@ import {
   type InstagramMessageAttachmentPayload,
   type InstagramSendMessage,
   type InstagramSendMessageRequest,
-} from "../../../schemas"
+} from "../../../schema"
+import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
 import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
-import {
-  convertFlowStepMedia,
-  convertFlowStepMultipleImages,
-} from "./send-media"
-import { convertCanonicalInstagramQuickReplies } from "./send-quick-replies"
+import { convertFlowStepMedia } from "./send-media"
+import { convertFlowStepMultipleImages } from "./send-multiple-images"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
@@ -50,7 +48,7 @@ type InstagramMessagingPolicy = {
   tag?: "HUMAN_AGENT"
 }
 
-export function resolveInstagramMessagingPolicy(props: {
+export function resolveMessagingPolicy(props: {
   contact: OutgoingContact
   now?: Date | number
   sendFrom?: "inbox"
@@ -110,19 +108,18 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       data: { contact, message, quickReplies, sendFrom },
     } = props
 
-    const policy = resolveInstagramMessagingPolicy({ contact, sendFrom })
+    const policy = resolveMessagingPolicy({ contact, sendFrom })
     const messageIds: string[] = []
     let sentCount = 0
     try {
-      const instagramMessages = [...convertMessageToInstagramMessage(message)]
+      const instagramMessages = [...convertMessage(message)]
       const lastMessage = instagramMessages.at(-1)
       if (lastMessage && quickReplies && quickReplies.length > 0) {
-        lastMessage.quick_replies =
-          convertCanonicalInstagramQuickReplies(quickReplies)
+        lastMessage.quick_replies = convertCanonicalQuickReplies(quickReplies)
       }
       for (const instagramMessage of instagramMessages) {
         const payload = buildMessagePayload(contact, instagramMessage, policy)
-        const response = await sendInstagramMessage(ctx.auth, payload)
+        const response = await sendMessageApi(ctx.auth, payload)
         sentCount += 1
         if (response.message_id) {
           messageIds.push(response.message_id)
@@ -143,7 +140,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
     }
   }
 
-export function* convertMessageToInstagramMessage(
+export function* convertMessage(
   message: OutgoingMessage,
 ): Generator<InstagramSendMessage> {
   if (message.contentType === contentTypes.enum.text) {
@@ -233,7 +230,7 @@ const buildMessagePayload = (
   }
 }
 
-export async function* convertFlowStepToInstagramMessage(
+export async function* convertFlowStep(
   props: SendFlowStepProps<InstagramAuthValue>,
 ): AsyncGenerator<InstagramMessageAttachmentPayload | InstagramSendMessage> {
   const {
@@ -296,75 +293,72 @@ export async function* convertFlowStepToInstagramMessage(
   }
 }
 
-export const sendFlowStep = async (
-  props: SendFlowStepProps<InstagramAuthValue>,
-) => {
-  const {
-    ctx,
-    data: { contact, sendFrom, commentAnchor },
-  } = props
-  const messageIds: string[] = []
-  let sentCount = 0
-  try {
-    // Resolved lazily (and at most once): an up-front resolve would throw
-    // `instagram_response_window_expired` and kill a comment-anchored first
-    // send, which is exempt from the 24-hour window (Meta's comment_id
-    // recipient uses the 7-day comment window instead).
-    let policy: InstagramMessagingPolicy | undefined
-    const getPolicy = () =>
-      (policy ??= resolveInstagramMessagingPolicy({ contact, sendFrom }))
-    // Claimed by the first Instagram message yielded below, if an unspent
-    // private comment anchor is present — a single flow step can yield more
-    // than one message (e.g. text + attachments), so only the very first send
-    // uses the comment_id-anchored API. Everything after it — in this step or
-    // a later one, which arrives with `spent: true` — takes the normal path,
-    // gated by the guard below.
-    // A "public" anchor is never honored here — it's delivered via the
-    // comment channel's sendComment, not this message channel's sendFlowStep
-    // (see send-flow-step.ts). This check is defense-in-depth against a
-    // public anchor ever reaching this handler by mistake.
-    const isCommentPrivateRun = commentAnchor?.replyChannel === "private"
-    let anchorCommentId =
-      isCommentPrivateRun && !commentAnchor.spent
-        ? commentAnchor.commentId
-        : undefined
-    for await (const instagramMessage of convertFlowStepToInstagramMessage(
-      props,
-    )) {
-      // The comment bought exactly one anchored DM and it is gone; a normal DM
-      // only reaches the contact if they have messaged in the last 24h.
-      if (isCommentPrivateRun && !anchorCommentId) {
-        assertCommentPrivateReplyFollowUpDeliverable({
-          commentId: commentAnchor.commentId,
-          lastIncomingMessageAt: contact.lastIncomingMessageAt,
-        })
+export const sendFlowStep: MessageHandlers<InstagramAuthValue>["sendFlowStep"] =
+  async (props: SendFlowStepProps<InstagramAuthValue>) => {
+    const {
+      ctx,
+      data: { contact, sendFrom, commentAnchor },
+    } = props
+    const messageIds: string[] = []
+    let sentCount = 0
+    try {
+      // Resolved lazily (and at most once): an up-front resolve would throw
+      // `instagram_response_window_expired` and kill a comment-anchored first
+      // send, which is exempt from the 24-hour window (Meta's comment_id
+      // recipient uses the 7-day comment window instead).
+      let policy: InstagramMessagingPolicy | undefined
+      const getPolicy = () =>
+        (policy ??= resolveMessagingPolicy({ contact, sendFrom }))
+      // Claimed by the first Instagram message yielded below, if an unspent
+      // private comment anchor is present — a single flow step can yield more
+      // than one message (e.g. text + attachments), so only the very first send
+      // uses the comment_id-anchored API. Everything after it — in this step or
+      // a later one, which arrives with `spent: true` — takes the normal path,
+      // gated by the guard below.
+      // A "public" anchor is never honored here — it's delivered via the
+      // comment channel's sendComment, not this message channel's sendFlowStep
+      // (see send-flow-step.ts). This check is defense-in-depth against a
+      // public anchor ever reaching this handler by mistake.
+      const isCommentPrivateRun = commentAnchor?.replyChannel === "private"
+      let anchorCommentId =
+        isCommentPrivateRun && !commentAnchor.spent
+          ? commentAnchor.commentId
+          : undefined
+      for await (const instagramMessage of convertFlowStep(props)) {
+        // The comment bought exactly one anchored DM and it is gone; a normal DM
+        // only reaches the contact if they have messaged in the last 24h.
+        if (isCommentPrivateRun && !anchorCommentId) {
+          assertCommentPrivateReplyFollowUpDeliverable({
+            commentId: commentAnchor.commentId,
+            lastIncomingMessageAt: contact.lastIncomingMessageAt,
+          })
+        }
+        const response = anchorCommentId
+          ? await sendPrivateReplyMessage(
+              ctx.auth,
+              anchorCommentId,
+              instagramMessage,
+            )
+          : await sendMessageApi(
+              ctx.auth,
+              buildMessagePayload(contact, instagramMessage, getPolicy()),
+            )
+        anchorCommentId = undefined
+        sentCount += 1
+        if (response.message_id) {
+          messageIds.push(response.message_id)
+        }
+        logger.info(`Message sent for IGSID: ${contact.sourceId}`)
       }
-      const response = anchorCommentId
-        ? await sendPrivateReplyMessage(
-            ctx.auth,
-            anchorCommentId,
-            instagramMessage,
-          )
-        : await sendInstagramMessage(
-            ctx.auth,
-            buildMessagePayload(contact, instagramMessage, getPolicy()),
-          )
-      anchorCommentId = undefined
-      sentCount += 1
-      if (response.message_id) {
-        messageIds.push(response.message_id)
-      }
-      logger.info(`Message sent for IGSID: ${contact.sourceId}`)
+    } catch (error) {
+      logger.error(error, "An error occurred while sending the message")
+      throw mapToChannelError(error)
     }
-  } catch (error) {
-    logger.error(error, "An error occurred while sending the message")
-    throw mapToChannelError(error)
-  }
 
-  // Return the Send API message id(s) so the worker can persist messageIds[0]
-  // as the Message row's sourceId (coexist echo dedup — see sendMessage).
-  return {
-    messageIds,
-    sentCount,
+    // Return the Send API message id(s) so the worker can persist messageIds[0]
+    // as the Message row's sourceId (coexist echo dedup — see sendMessage).
+    return {
+      messageIds,
+      sentCount,
+    }
   }
-}

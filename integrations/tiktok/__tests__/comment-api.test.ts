@@ -9,14 +9,14 @@ vi.mock("../src/lib/http-client", () => ({
 }))
 
 const {
-  createTiktokComment,
-  deleteTiktokComment,
-  hideTiktokComment,
-  likeTiktokComment,
+  createComment,
+  deleteComment,
+  hideComment,
+  likeComment,
   listTiktokCommentReplies,
   listTiktokComments,
-  replyToTiktokComment,
-  uploadTiktokCommentImage,
+  replyToComment,
+  uploadCommentImage,
 } = await import("../src/apis/comment")
 
 beforeEach(() => {
@@ -111,13 +111,13 @@ describe("listTiktokCommentReplies", () => {
   })
 })
 
-describe("createTiktokComment", () => {
+describe("createComment", () => {
   test("posts the text and returns the created comment", async () => {
     const created = { comment_id: "c-1", video_id: "video-1" }
     post.mockResolvedValueOnce({ code: 0, data: created })
 
     await expect(
-      createTiktokComment("token", {
+      createComment("token", {
         businessId: "biz-1",
         videoId: "video-1",
         text: "hello",
@@ -137,14 +137,14 @@ describe("createTiktokComment", () => {
   })
 })
 
-describe("replyToTiktokComment", () => {
+describe("replyToComment", () => {
   test("anchors the reply to the comment it answers", async () => {
     post.mockResolvedValueOnce({
       code: 0,
       data: { comment_id: "reply-1", video_id: "video-1" },
     })
 
-    await replyToTiktokComment("token", {
+    await replyToComment("token", {
       businessId: "biz-1",
       videoId: "video-1",
       commentId: "comment-1",
@@ -175,7 +175,7 @@ describe("replyToTiktokComment", () => {
     })
 
     await expect(
-      replyToTiktokComment("token", {
+      replyToComment("token", {
         businessId: "biz-1",
         videoId: "video-1",
         commentId: "comment-1",
@@ -185,12 +185,12 @@ describe("replyToTiktokComment", () => {
   })
 })
 
-describe("likeTiktokComment", () => {
+describe("likeComment", () => {
   // `business/comment/like/` is the one comment endpoint with no video_id.
   test("sends no video_id", async () => {
     post.mockResolvedValueOnce({ code: 0, data: null })
 
-    await likeTiktokComment("token", {
+    await likeComment("token", {
       businessId: "biz-1",
       commentId: "comment-1",
       action: "LIKE",
@@ -206,11 +206,11 @@ describe("likeTiktokComment", () => {
   })
 })
 
-describe("hideTiktokComment", () => {
+describe("hideComment", () => {
   test("sends the video id alongside the comment id", async () => {
     post.mockResolvedValueOnce({ code: 0, data: null })
 
-    await hideTiktokComment("token", {
+    await hideComment("token", {
       businessId: "biz-1",
       videoId: "video-1",
       commentId: "comment-1",
@@ -235,7 +235,7 @@ describe("hideTiktokComment", () => {
     })
 
     await expect(
-      hideTiktokComment("token", {
+      hideComment("token", {
         businessId: "biz-1",
         videoId: "video-1",
         commentId: "comment-1",
@@ -245,11 +245,11 @@ describe("hideTiktokComment", () => {
   })
 })
 
-describe("deleteTiktokComment", () => {
+describe("deleteComment", () => {
   test("sends no video_id", async () => {
     post.mockResolvedValueOnce({ code: 0, data: null })
 
-    await deleteTiktokComment("token", {
+    await deleteComment("token", {
       businessId: "biz-1",
       commentId: "comment-1",
     })
@@ -260,7 +260,7 @@ describe("deleteTiktokComment", () => {
   })
 })
 
-describe("uploadTiktokCommentImage", () => {
+describe("uploadCommentImage", () => {
   const stubFetchOk = () => {
     vi.stubGlobal(
       "fetch",
@@ -279,7 +279,7 @@ describe("uploadTiktokCommentImage", () => {
     })
 
     await expect(
-      uploadTiktokCommentImage("token", {
+      uploadCommentImage("token", {
         businessId: "biz-1",
         imageUrl: "https://example.com/a.png",
       }),
@@ -291,7 +291,7 @@ describe("uploadTiktokCommentImage", () => {
     postFormData.mockResolvedValueOnce({ code: 0, data: {} })
 
     await expect(
-      uploadTiktokCommentImage("token", {
+      uploadCommentImage("token", {
         businessId: "biz-1",
         imageUrl: "https://example.com/a.png",
       }),
@@ -302,7 +302,7 @@ describe("uploadTiktokCommentImage", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }))
 
     await expect(
-      uploadTiktokCommentImage("token", {
+      uploadCommentImage("token", {
         businessId: "biz-1",
         imageUrl: "https://example.com/a.png",
       }),

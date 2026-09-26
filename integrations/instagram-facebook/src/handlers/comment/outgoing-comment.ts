@@ -3,10 +3,10 @@ import {
   ChannelErrorCategory,
   type CommentHandlers,
 } from "@chatbotx.io/sdk"
-import { sendComment as sendCommentApi } from "../../../apis/comment"
-import { mapToChannelError } from "../../../lib/error-mapper"
-import { logger } from "../../../lib/logger"
-import type { InstagramAuthValue } from "../../../schemas"
+import { replyToComment } from "../../apis/comment"
+import { mapToChannelError } from "../../lib/error-mapper"
+import { logger } from "../../lib/logger"
+import type { InstagramAuthValue } from "../../schema"
 
 export const sendComment: CommentHandlers<InstagramAuthValue>["sendComment"] =
   async (props) => {
@@ -53,7 +53,7 @@ export const sendComment: CommentHandlers<InstagramAuthValue>["sendComment"] =
     }
 
     try {
-      const result = await sendCommentApi(
+      const result = await replyToComment(
         ctx.auth,
         replyToCommentId,
         message.text,

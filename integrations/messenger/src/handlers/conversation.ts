@@ -1,5 +1,5 @@
 import { type ConversationHandlers, SdkException } from "@chatbotx.io/sdk"
-import { sendPageMessage } from "../apis/message"
+import { sendMessage } from "../apis/message"
 import type { MessengerAuthValue } from "../schema"
 
 const sendTyping: ConversationHandlers<MessengerAuthValue>["sendTyping"] =
@@ -15,7 +15,7 @@ const sendTyping: ConversationHandlers<MessengerAuthValue>["sendTyping"] =
       throw new SdkException("Missing recipient ID in conversation")
     }
 
-    await sendPageMessage(ctx.auth, {
+    await sendMessage(ctx.auth, {
       recipient: { id: recipientId },
       sender_action: typing ? "typing_on" : "typing_off",
     })
@@ -33,7 +33,7 @@ const agentMarkAsRead: ConversationHandlers<MessengerAuthValue>["agentMarkAsRead
       throw new SdkException("Missing recipient ID in conversation")
     }
 
-    await sendPageMessage(ctx.auth, {
+    await sendMessage(ctx.auth, {
       recipient: { id: recipientId },
       sender_action: "mark_seen",
     })

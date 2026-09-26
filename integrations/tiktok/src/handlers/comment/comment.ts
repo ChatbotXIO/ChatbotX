@@ -1,13 +1,13 @@
 import type { CommentHandlers } from "@chatbotx.io/sdk"
 import {
-  deleteTiktokComment,
-  hideTiktokComment,
-  likeTiktokComment,
+  deleteComment as deleteCommentApi,
+  hideComment as hideCommentApi,
+  likeComment as likeCommentApi,
 } from "../../apis/comment"
 import { mapToChannelError } from "../../lib/error-mapper"
+import { requirePostId } from "../../lib/guards"
 import { logger } from "../../lib/logger"
 import type { TiktokAuthValue } from "../../schema"
-import { requirePostId } from "./outgoing-comment"
 
 export const likeComment: CommentHandlers<TiktokAuthValue>["likeComment"] =
   async (props) => {
@@ -19,7 +19,7 @@ export const likeComment: CommentHandlers<TiktokAuthValue>["likeComment"] =
     try {
       // `business/comment/like/` is addressed by comment id alone — unlike
       // hide, it takes no video id.
-      await likeTiktokComment(ctx.auth.tokens.accessToken, {
+      await likeCommentApi(ctx.auth.tokens.accessToken, {
         businessId: ctx.auth.metadata.openId,
         commentId,
         action: liked ? "LIKE" : "UNLIKE",
@@ -44,7 +44,7 @@ export const hideComment: CommentHandlers<TiktokAuthValue>["hideComment"] =
     const videoId = requirePostId(postId, hidden ? "hide" : "unhide")
 
     try {
-      await hideTiktokComment(ctx.auth.tokens.accessToken, {
+      await hideCommentApi(ctx.auth.tokens.accessToken, {
         businessId: ctx.auth.metadata.openId,
         videoId,
         commentId,
@@ -73,7 +73,7 @@ export const deleteComment: CommentHandlers<TiktokAuthValue>["deleteComment"] =
     } = props
 
     try {
-      await deleteTiktokComment(ctx.auth.tokens.accessToken, {
+      await deleteCommentApi(ctx.auth.tokens.accessToken, {
         businessId: ctx.auth.metadata.openId,
         commentId,
       })

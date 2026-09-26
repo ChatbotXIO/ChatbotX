@@ -27,7 +27,7 @@ import {
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
 import { sendPrivateReplyMessage } from "../../../apis/comment"
-import { sendPageMessage } from "../../../apis/message"
+import { sendMessage as sendMessageApi } from "../../../apis/message"
 import { ensureMessengerWhitelistedDomain } from "../../../apis/page"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
@@ -40,6 +40,7 @@ import {
   type MessengerAuthValue,
   type MessengerIntegrationDetail,
 } from "../../../schema"
+import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
 import { resolveMessengerPersonaId } from "./persona"
 import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepCarousel } from "./send-carousel"
@@ -48,7 +49,6 @@ import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMediaV2 } from "./send-media-v2"
 import { buildMessengerTemplateSendRequest } from "./send-messenger-template"
 import { convertFlowStepMultipleImages } from "./send-multiple-images"
-import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
@@ -111,7 +111,7 @@ const sendPageMessageWithMessengerExtensionWhitelistRetry = async (
   await ensureMessengerExtensionUrlDomain(ctx, messengerExtensionUrl)
 
   try {
-    return await sendPageMessage(ctx.auth, payload)
+    return await sendMessageApi(ctx.auth, payload)
   } catch (error) {
     if (!isMessengerExtensionDomainNotWhitelistedError(error)) {
       throw error
@@ -122,7 +122,7 @@ const sendPageMessageWithMessengerExtensionWhitelistRetry = async (
       )
     }
     await ensureMessengerExtensionUrlDomain(ctx, messengerExtensionUrl)
-    return await sendPageMessage(ctx.auth, payload)
+    return await sendMessageApi(ctx.auth, payload)
   }
 }
 
@@ -136,15 +136,15 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
     const messageIds: string[] = []
     let sentCount = 0
     try {
-      const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
-      const facebookMessages = [...convertMessageToFacebookMessage(message)]
+      const policy = resolveMessagingPolicy({ contact, sendFrom })
+      const facebookMessages = [...convertMessage(message)]
       const lastMessage = facebookMessages.at(-1)
       const nativeQuickReplies = (quickReplies ?? []).filter(
         (button) => button.buttonType !== "url",
       )
       if (lastMessage && nativeQuickReplies.length > 0) {
         lastMessage.quick_replies =
-          convertCanonicalFacebookQuickReplies(nativeQuickReplies)
+          convertCanonicalQuickReplies(nativeQuickReplies)
       }
       for (const facebookMessage of facebookMessages) {
         const payload = buildMessagePayload({
@@ -224,7 +224,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
         }
       }
 
-      const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
+      const policy = resolveMessagingPolicy({ contact, sendFrom })
       // Claimed by the first Facebook message yielded below, if an unspent
       // private comment anchor is present — a single flow step can yield more
       // than one Facebook message (e.g. text + attachments), so only the very
@@ -240,9 +240,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
         isCommentPrivateRun && !commentAnchor.spent
           ? commentAnchor.commentId
           : undefined
-      for await (const facebookMessage of convertFlowStepToFacebookMessage(
-        props,
-      )) {
+      for await (const facebookMessage of convertFlowStep(props)) {
         // The comment bought exactly one anchored DM and it is gone; a normal
         // DM only reaches the contact if they have messaged in the last 24h.
         if (isCommentPrivateRun && !anchorCommentId) {
@@ -291,11 +289,11 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
     }
   }
 
-export function* convertMessageToFacebookMessage(
+export function* convertMessage(
   message: OutgoingMessage,
 ): Generator<FacebookMessage> {
   if (message.contentType === contentTypes.enum.text) {
-    const templateButtons = getButtonTemplate(message)
+    const templateButtons = getMessageTemplateButtons(message)
     if (message.text && templateButtons.length > 0) {
       yield {
         attachment: {
@@ -372,7 +370,9 @@ export function* convertMessageToFacebookMessage(
   }
 }
 
-const getButtonTemplate = (message: OutgoingMessage): FacebookButton[] => {
+const getMessageTemplateButtons = (
+  message: OutgoingMessage,
+): FacebookButton[] => {
   const attrs = message.contentAttributes
   if (!(attrs && typeof attrs === "object")) {
     return []
@@ -471,7 +471,7 @@ const buildMessagePayload = (props: {
   }
 }
 
-export function resolveMessengerMessagingPolicy(props: {
+export function resolveMessagingPolicy(props: {
   contact: OutgoingContact
   now?: Date | number
   sendFrom?: "inbox"
@@ -513,7 +513,7 @@ export function resolveMessengerMessagingPolicy(props: {
   )
 }
 
-async function* convertFlowStepToFacebookMessage(
+async function* convertFlowStep(
   props: SendFlowStepProps<MessengerAuthValue>,
 ): AsyncGenerator<FacebookMessageAttachmentPayload | FacebookMessage> {
   const {

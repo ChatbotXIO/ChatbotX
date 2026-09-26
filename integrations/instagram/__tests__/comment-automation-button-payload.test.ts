@@ -5,7 +5,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
 import { getButtonTemplate } from "../src/handlers/message/outgoing-message/send-button"
-import { convertInstagramQuickReplies } from "../src/handlers/message/outgoing-message/send-quick-reply"
+import { convertQuickReplies } from "../src/handlers/message/outgoing-message/send-quick-reply"
 
 /**
  * The payload encoded here is the one the contact actually taps. The worker's
@@ -59,7 +59,7 @@ describe("comment automation attribution on an Instagram step button", () => {
 
 describe("comment automation attribution on an Instagram quick reply", () => {
   test("the tapped payload carries the automation id", () => {
-    const [quickReply] = convertInstagramQuickReplies({
+    const [quickReply] = convertQuickReplies({
       flowId: "11638426147094528",
       buttons: [button],
       metadata: COMMENT_AUTOMATION_METADATA,

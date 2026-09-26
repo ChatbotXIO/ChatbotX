@@ -3,13 +3,13 @@ import {
   ChannelErrorCategory,
   type CommentHandlers,
 } from "@chatbotx.io/sdk"
-import { sendPrivateReplyMessage } from "../../../apis/comment"
-import { mapToChannelError } from "../../../lib/error-mapper"
-import { logger } from "../../../lib/logger"
-import type { MessengerAuthValue } from "../../../schema"
-import { convertMessageToFacebookMessage } from "../../message/outgoing-message"
+import { sendPrivateReplyMessage } from "../../apis/comment"
+import { mapToChannelError } from "../../lib/error-mapper"
+import { logger } from "../../lib/logger"
+import type { InstagramAuthValue } from "../../schema"
+import { convertMessage } from "../message/outgoing-message"
 
-export const sendPrivateReply: CommentHandlers<MessengerAuthValue>["sendPrivateReply"] =
+export const sendPrivateReply: CommentHandlers<InstagramAuthValue>["sendPrivateReply"] =
   async (props) => {
     const {
       ctx,
@@ -27,8 +27,8 @@ export const sendPrivateReply: CommentHandlers<MessengerAuthValue>["sendPrivateR
     // Same text/attachment-to-Send-API-message conversion the regular
     // sendMessage handler uses — one yielded item per text/attachment, since
     // Meta's Send API only accepts one of either per call.
-    const facebookMessages = [...convertMessageToFacebookMessage(message)]
-    if (facebookMessages.length === 0) {
+    const instagramMessages = [...convertMessage(message)]
+    if (instagramMessages.length === 0) {
       logger.warn(
         { replyToCommentId },
         "sendPrivateReply: message has no text or attachments — skipping API call",
@@ -39,11 +39,11 @@ export const sendPrivateReply: CommentHandlers<MessengerAuthValue>["sendPrivateR
     const messageIds: string[] = []
     let sentCount = 0
     try {
-      for (const facebookMessage of facebookMessages) {
+      for (const instagramMessage of instagramMessages) {
         const result = await sendPrivateReplyMessage(
           ctx.auth,
           replyToCommentId,
-          facebookMessage,
+          instagramMessage,
         )
         sentCount += 1
         if (result.message_id) {

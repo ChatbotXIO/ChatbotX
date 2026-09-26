@@ -80,7 +80,7 @@ export const exchangeLongLivedToken = (
   })
 }
 
-export const getPagePictureUrl = async (props: {
+export const getAccountPictureUrl = async (props: {
   ctx: Context<MessengerAuthValue>
 }): Promise<string | undefined> => {
   const { ctx } = props
@@ -154,7 +154,7 @@ export const unsubscribePageFromAppWebhook = (props: {
   })
 }
 
-export const updateMessengerProfile = (props: {
+export const updateProfile = (props: {
   ctx: Context<MessengerAuthValue>
   params: MessengerProfileRequest
 }): Promise<void> => {
@@ -225,7 +225,7 @@ export const ensureMessengerWhitelistedDomain = async (props: {
     return
   }
 
-  await updateMessengerProfile({
+  await updateProfile({
     ctx: props.ctx,
     params: {
       whitelisted_domains: [...whitelistedDomains, domain],
@@ -373,7 +373,7 @@ export const getPersistentMenu = (props: {
   })
 }
 
-export const deleteMessengerProfileFields = (props: {
+export const deleteProfileFields = (props: {
   ctx: Pick<Context<MessengerAuthValue>, "auth">
   fields: string[]
 }): Promise<void> => {
@@ -404,7 +404,7 @@ export const addBranding = async (props: {
   const { persistentMenu } = await getPersistentMenu({ ctx })
 
   if (!persistentMenu || persistentMenu.length === 0) {
-    await updateMessengerProfile({
+    await updateProfile({
       ctx,
       params: {
         get_started: {
@@ -460,7 +460,7 @@ export const addBranding = async (props: {
     return menu
   })
 
-  await updateMessengerProfile({
+  await updateProfile({
     ctx,
     params: {
       persistent_menu: updatedMenu,

@@ -1,7 +1,7 @@
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { instagramBusinessClient } from "../lib/http-client"
-import type { InstagramContactProfile } from "../schemas"
+import type { InstagramContactProfile } from "../schema"
 
 type RawContactProfileResponse = {
   id: string

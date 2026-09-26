@@ -6,7 +6,7 @@ const { mockSendComment } = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/apis/comment", () => ({
-  sendComment: mockSendComment,
+  replyToComment: mockSendComment,
 }))
 
 vi.mock("../src/lib/logger", () => ({

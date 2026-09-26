@@ -24,7 +24,7 @@ export function* convertFlowStepQuickReply(
       text: step.message,
     }
   } else {
-    const buttons = convertFacebookQuickReplies({
+    const buttons = convertQuickReplies({
       flowId: props.data.flowId,
       flowVersionId: props.data.flowVersionId,
       buttons: step.buttons,
@@ -38,7 +38,7 @@ export function* convertFlowStepQuickReply(
   }
 }
 
-export function convertFacebookQuickReplies(props: {
+export function convertQuickReplies(props: {
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]

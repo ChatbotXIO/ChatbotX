@@ -2,9 +2,9 @@ import {
   getCanonicalReplyPayload,
   type MessageButtonTemplate,
 } from "@chatbotx.io/sdk"
-import type { InstagramQuickReply } from "../../../schemas"
+import type { InstagramQuickReply } from "../../../schema"
 
-export function convertCanonicalInstagramQuickReplies(
+export function convertCanonicalQuickReplies(
   buttons: MessageButtonTemplate[],
 ): InstagramQuickReply[] {
   return buttons.map((button) => ({
