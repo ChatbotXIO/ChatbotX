@@ -437,11 +437,10 @@ export function TiktokCommentForm({
                 name="hideComments.hasLink"
                 required
               />
-              {/* No GIF switch: TikTok exposes no attachment data. Emoji is
-                  read from the comment text. */}
               <SwitchField
                 label={t("commentAutomation.hideComments.hasEmoji")}
                 name="hideComments.hasEmoji"
+                required
               />
               <SwitchField
                 label={t("tiktokCommentAutomation.hide.hasKeywords")}
