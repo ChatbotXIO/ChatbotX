@@ -12,7 +12,7 @@
     "@edenchazard/tiny-chunk-array": "^1.0.1",
     "@types/node": "^24.10.4",
     "cross-fetch": "^4.1.0",
-    "image-size": "^2.0.2",
+    "image-size": "^2.0.3",
     "ky": "^2.0.2",
     "libphonenumber-js": "^1.12.42",
     "remeda": "^2.34.0",

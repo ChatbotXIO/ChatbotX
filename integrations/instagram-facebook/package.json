@@ -11,7 +11,7 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "cross-fetch": "^4.1.0",
-    "image-size": "^2.0.2",
+    "image-size": "^2.0.3",
     "ky": "^2.0.2",
     "remeda": "^2.34.0",
     "zod": "^4.3.6"
