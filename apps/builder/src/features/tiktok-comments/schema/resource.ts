@@ -1,4 +1,9 @@
 import {
+  commentExcludeKeywordsTypes,
+  commentHideCommentsSchema,
+  commentIncludeKeywordsSchema,
+} from "@chatbotx.io/database/partials"
+import {
   commentAutomationModel,
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
@@ -12,6 +17,7 @@ const tiktokReplySchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("text"),
     value: z.string(),
+    values: z.array(z.object({ value: z.string() })).optional(),
   }),
   z.object({
     type: z.literal("flow"),
@@ -41,11 +47,9 @@ export const tiktokCommentResource = createSelectSchema(
       z.object({ type: z.literal("AIAgent"), value: z.string() }),
     ]),
     publicReply: tiktokReplySchema,
-    includeKeywords: z.object({
-      type: z.enum(["all", "equal", "contain"]),
-      value: z.array(z.string()),
-    }),
+    includeKeywords: commentIncludeKeywordsSchema,
     excludeKeywords: z.array(z.string()),
+    excludeKeywordsType: commentExcludeKeywordsTypes,
     options: z.object({
       replyToNewContactsOnly: z.boolean(),
       replyOncePerUserPerPost: z.boolean(),
@@ -53,35 +57,9 @@ export const tiktokCommentResource = createSelectSchema(
       likeUserComment: z.boolean(),
       replyToUsersWhoCommentedOnOtherPosts: z.boolean(),
       ignoreCommentReplies: z.boolean(),
-      // Pinned off: TikTok's comment payload carries no tagged users at all.
       trackUserTags: z.boolean(),
     }),
-    hideComments: z.object({
-      all: z.boolean(),
-      hasPhoneNumber: z.boolean(),
-      // Answered by `comment-attachment.ts`, which only knows how to ask
-      // Messenger — kept readable so legacy rows still parse, never settable.
-      hasImage: z.boolean(),
-      hasVideo: z.boolean(),
-      hasLink: z.boolean(),
-      hasKeywords: z.boolean(),
-      keywords: z.array(z.string()),
-      showCommentsAfter: z.enum([
-        "none",
-        "6h",
-        "12h",
-        "1d",
-        "2d",
-        "3d",
-        "4d",
-        "5d",
-        "6d",
-        "7d",
-        "8d",
-        "9d",
-        "10d",
-      ]),
-    }),
+    hideComments: commentHideCommentsSchema,
     replyAfter: z.object({
       type: z.enum([
         "immediately",

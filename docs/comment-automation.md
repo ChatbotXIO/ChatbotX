@@ -115,14 +115,14 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
 | `post` (`all` / `postIds`) | Which posts | `matchPost` — `all` always true; `postIds` matches via normalized trailing id. |
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
-| `includeKeywords` (`all`/`equal`/`contain`) | Text must match | `matchKeywords` — lowercased both sides. `equal` = whole comment equals a keyword; `contain` = substring. |
-| `excludeKeywords` | Text must not contain | `matchKeywords` — substring, lowercased. |
+| `includeKeywords` (`all`/`equal`/`contain`/`mentions`) | "Reply to" | `matchKeywords` — lowercased both sides. `equal` = whole comment equals a keyword; `contain` = substring. `mentions` ignores keywords: the comment must tag **at least** `includeKeywords.mentionCount` (1–5) accounts — `matchMentionCount`, miss reason `mentionCountNotMatched`. The mention list is the same one tag tracking uses (see [Tag tracking](#tag-tracking)). |
+| `excludeKeywords` + `excludeKeywordsType` (`equal`/`contain`, default `contain`) | Text must not match | `matchKeywords` — `contain` = substring, `equal` = the whole trimmed comment equals a keyword; lowercased both sides. |
 | `options.replyToNewContactsOnly` | Only first-time contacts | `getPriorContactInboxCount(contactId) > 1` → skip. Counts `ContactInbox` rows. |
 | `options.replyOncePerUserPerPost` | Once per user per post | `findDedup(automationId, contactId, postId)` exists → skip. |
 | `options.replyToUsersWhoCommentedOnOtherPosts` (default **true**) | If off, only engage each user on their first post | When `false`, `hasRepliedOnOtherPost` (a dedup row with a different `postId`) → skip. |
 | `options.likeUserComment` | Auto-like the comment | Runs only if the incoming comment's DB message was found (`findBySourceId`). |
-| `options.trackUserTags` | Count who the commenter tagged | Not a filter — never skips. Resolves `{{total_tagged}}`/`{{total_new_tagged}}` and stamps them onto the comment message's `contentAttributes`. See [Tag tracking](#tag-tracking). |
-| `hideComments.*` | Auto-hide matching comments | `applyHideComments` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case-insensitive), `hasImage`/`hasVideo`. |
+| `options.trackUserTags` | Count who the commenter tagged | Not a filter — never skips. Adds the comment's counts to `Contact.totalTagged`/`totalNewTagged`, which back `{{total_tagged}}`/`{{total_new_tagged}}`. Once per comment, ahead of the reply filters. See [Tag tracking](#tag-tracking). |
+| `hideComments.*` | Auto-hide matching comments | `applyHideComments` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case-insensitive), `hasImage`/`hasVideo`/`hasGif` (attachment lookup, see below), `hasEmoji` (`\p{Extended_Pictographic}` on the text). A row written before `hasGif`/`hasEmoji` existed lacks the keys — absent reads as off. |
 | `hideComments.showCommentsAfter` | Auto-unhide delay | Enqueues a delayed unhide job (`jobId = unhide-comment-${commentId}`). |
 | `publicReply` / `privateReply` | The reply | See [Reply types](#reply-types). |
 | `replyAfter` | Delay before replying | `computeDelayMs` → passed as BullMQ `{ delay }`. |
@@ -431,36 +431,70 @@ tag their friends:
 
 | Variable | Meaning |
 |---|---|
-| `{{total_tagged}}` | How many people the commenter tagged in that comment |
-| `{{total_new_tagged}}` | How many of them are not yet contacts in this inbox |
+| `{{total_tagged}}` | How many accounts the contact has tagged, summed over every counted comment |
+| `{{total_new_tagged}}` | How many of those were not yet contacts in this inbox (never messaged the page, never in its contact list) |
 
-Both are scoped to the contact's **latest comment**, exactly like `{{last_fb_comment}}`,
-`{{last_post_id}}` and `{{last_comment_id}}` — they are not lifetime totals. The counters
-live in the comment message's `contentAttributes` (no new column), written by
-`processCommentAutomation` before the reply is dispatched and read back by
-`getSystemFieldValue` through `getLastUserComment`. An absent key resolves to `null`, so a
-flow can tell "nobody was tagged" (`0`) from "this automation never tracked tags".
+Both are **lifetime running totals** stored on `Contact.totalTagged` / `Contact.totalNewTagged`
+(integer, `DEFAULT 0`), read by `getSystemFieldValue` straight off the contact. They are
+moved only by `contactService.incrementTagCounters` — a DB-side `col = col + n`, never
+read-modify-write.
 
-The resolver is `comment-automation/comment-tags.ts`, memoized per comment so several
-matching automations cost one lookup. **The two channels resolve completely differently:**
+Counting happens **once per comment**, not once per automation, and **before** the reply
+filters: if any active automation with the option on is within schedule and targets the
+post, `trackCommentTags` (`comment-automation/index.ts`) runs before the loop. It stamps
+`totalTagged`/`totalNewTagged` onto the comment message's `contentAttributes` first and then
+increments the contact; a message that already carries the stamp is skipped. The job id is
+`comment-auto-{commentId}`, so a retry runs after the first attempt, never beside it — and
+stamping first means a crash between the two writes loses one comment's count rather than
+doubling it. Running ahead of the filters is deliberate: "reply once per user per post" is
+about replying and must not stop a repeat commenter's tags from being counted. It is still
+`await`ed before any reply dispatches, so the reply renders the total including this
+comment.
+
+The resolver is `comment-automation/comment-tags.ts` (`createCommentTagResolvers`),
+memoized per comment; the same mention list also answers the `mentions` "Reply to"
+filter. **Only Facebook is exact:**
 
 - **Facebook** reads `message_tags` off the `feed` webhook — real user ids, exact counts —
   and falls back to `GET /{comment-id}?fields=message_tags` when the webhook omitted the
   key. Known contacts are matched on `ContactInbox.sourceId`.
-- **Instagram** has neither: its comment webhook carries no tagged-user list and the IG
-  Comment node has no `message_tags`. Mentions are parsed as `@handle` from the comment
-  text and matched against `ContactInbox.sourceUsername`.
+- **Instagram, Threads, TikTok** carry no tagged-user list anywhere (webhook or API).
+  Mentions are parsed as `@handle` from the comment text (`extractInstagramMentions`) and
+  matched against `ContactInbox.sourceUsername` — and, on Threads, also against
+  `sourceId`, because Threads keys contacts by the lowercased username and never fills
+  `sourceUsername` (`usernameIsSourceId`). TikTok's `sourceUsername` is lowercased on write
+  for the same exact-match reason.
 
-Two Instagram-only caveats follow from that, and both are expected behaviour:
+Two text-heuristic caveats follow, and both are expected behaviour:
 
-1. A handle that belongs to no real account still counts as a tagged person — Meta gives
-   nothing to validate it against.
-2. `{{total_new_tagged}}` over-counts for contacts whose `sourceUsername` is still null.
-   The column is filled going forward from the comment webhook (`fromUsername`) and from
-   `getUserProfile`; contacts last seen before that shipped are counted as new until they
-   interact again. There is no safe backfill — IG contacts stored the handle in
-   `firstName`, but `getUserProfile` overwrites it with the display name, so a row where
-   `firstName` is still a handle cannot be told apart from one where it is a real name.
+1. A handle that belongs to no real account still counts as a tagged person — nothing is
+   available to validate it against.
+2. `{{total_new_tagged}}` over-counts for Instagram contacts whose `sourceUsername` is
+   still null. The column is filled going forward from the comment webhook
+   (`fromUsername`) and from `getUserProfile`; contacts last seen before that shipped are
+   counted as new until they interact again. There is no safe backfill — IG contacts
+   stored the handle in `firstName`, but `getUserProfile` overwrites it with the display
+   name, so a row where `firstName` is still a handle cannot be told apart from one where
+   it is a real name.
+
+## Hide: GIF and emoji
+
+`hasEmoji` is a regex on the comment text and works on every channel that can hide.
+`hasGif` needs attachment data, which only two channels expose — the builder shows the
+switch only there, and the service pins `hasGif` off on Instagram writes
+(`commentAutomationChannelSupportsHideGif` in `@chatbotx.io/database/partials`):
+
+| Channel | GIF source |
+|---|---|
+| messenger | `GET /{comment-id}?fields=attachment` → `attachment.type` starting with `animated_image` |
+| threads | `GET /{reply-id}?fields=gif_url` (`getReplyGifUrl`) — a GIF reply is still `TEXT_POST` by `media_type`, and the reply webhook does not carry `gif_url` |
+| instagram, instagramFacebook, tiktok | none — comment text only |
+
+Threads hides via `POST /{reply-id}/manage_reply?hide=` (scope `threads_manage_replies`),
+which Meta only allows on **top-level** replies. The worker therefore skips hiding a nested
+Threads reply (`supportsHideForComment` in `hide-comments.ts`, logged as
+`hide nested reply unsupported`) instead of enqueuing a state change that would mark it
+hidden in the inbox and then fail at the channel.
 
 ## Known gaps & pitfalls
 
@@ -558,7 +592,7 @@ Two Instagram-only caveats follow from that, and both are expected behaviour:
   comment private replies matter most: `URL_QUICK_REPLY_CAPABLE_CHANNELS` excludes it, so
   an Instagram `getUserData` always falls through to the text prompt. Messenger is the
   exposed one. Extending that job type is a larger change.
-- **`options.trackUserTags` on Instagram is a text heuristic** — see
+- **`options.trackUserTags` outside Facebook is a text heuristic** — see
   [Tag tracking](#tag-tracking) for the two limitations that do not apply to Facebook.
 - **`getPriorContactInboxCount` counts `ContactInbox` rows**, so a contact who DM'd via
   another inbox is treated as "not new."

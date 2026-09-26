@@ -925,6 +925,41 @@ class ContactService extends BaseService {
   }
 
   /**
+   * Adds one comment's tag counts to the lifetime counters behind
+   * `{{total_tagged}}`/`{{total_new_tagged}}`. A DB-side `col + n`, never
+   * read-modify-write, so two comments from the same contact counted at once
+   * both land. Once-per-comment is the caller's job (the comment automation
+   * stamps the comment message before calling this).
+   */
+  async incrementTagCounters(
+    props: {
+      workspaceId: string
+      contactId: string
+      totalTagged: number
+      totalNewTagged: number
+    },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const { workspaceId, contactId, totalTagged, totalNewTagged } = props
+    if (totalTagged <= 0 && totalNewTagged <= 0) {
+      return
+    }
+    await tx
+      .update(contactModel)
+      .set({
+        totalTagged: sql`${contactModel.totalTagged} + ${totalTagged}`,
+        totalNewTagged: sql`${contactModel.totalNewTagged} + ${totalNewTagged}`,
+      })
+      .where(
+        and(
+          eq(contactModel.id, contactId),
+          eq(contactModel.workspaceId, workspaceId),
+        ),
+      )
+    await this.invalidate({ workspaceId, ids: [contactId] })
+  }
+
+  /**
    * Conditional broadcast subscribe — the `isNull(broadcastSubscribedAt)`
    * predicate is a TOCTOU guard and MUST stay in the WHERE clause (mirrors
    * `updateIfProfileNameEmpty`).

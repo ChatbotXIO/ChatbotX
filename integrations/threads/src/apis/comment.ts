@@ -154,3 +154,61 @@ export async function sendCommentReply(
   await waitForReplyContainerReady(auth, container.id, options)
   return await publishReplyContainer(auth, container.id)
 }
+
+type ManageReplyResponse = {
+  success?: boolean
+}
+
+/**
+ * Hide or unhide a reply under one of the account's own posts. Threads only
+ * allows this on TOP-LEVEL replies — a nested one comes back as an API error,
+ * which the caller surfaces like any other channel failure.
+ */
+export const setReplyHidden = (
+  auth: ThreadsAuthValue,
+  replyId: string,
+  hidden: boolean,
+): Promise<ManageReplyResponse> => {
+  const version = getVersion(auth)
+  const endpoint = `${version}/${replyId}/manage_reply`
+
+  return rescue(
+    endpoint,
+    async () =>
+      await threadsGraphClient.post<ManageReplyResponse>(endpoint, {
+        body: new URLSearchParams({
+          hide: String(hidden),
+          access_token: auth.tokens.accessToken,
+        }),
+      }),
+  )
+}
+
+type ReplyGifResponse = {
+  gif_url?: string
+}
+
+/**
+ * The GIF attached to a reply, or null. A GIF reply is still `TEXT_POST` by
+ * `media_type`, so `gif_url` is the only field that tells one apart — and the
+ * reply webhook does not carry it.
+ */
+export const getReplyGifUrl = async (
+  auth: ThreadsAuthValue,
+  replyId: string,
+): Promise<string | null> => {
+  const version = getVersion(auth)
+  const endpoint = `${version}/${replyId}`
+
+  const response = await rescue(
+    endpoint,
+    async () =>
+      await threadsGraphClient.get<ReplyGifResponse>(endpoint, {
+        searchParams: {
+          fields: "gif_url",
+          access_token: auth.tokens.accessToken,
+        },
+      }),
+  )
+  return response.gif_url || null
+}

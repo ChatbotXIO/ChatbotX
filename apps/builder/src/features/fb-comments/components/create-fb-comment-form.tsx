@@ -23,6 +23,7 @@ const defaultValues = {
   publicReply: { type: "none" as const, value: null, values: [{ value: "" }] },
   includeKeywords: { type: "all" as const, value: [] },
   excludeKeywords: [],
+  excludeKeywordsType: "contain" as const,
   options: {
     replyToNewContactsOnly: false,
     replyOncePerUserPerPost: false,
@@ -38,6 +39,8 @@ const defaultValues = {
     hasVideo: false,
     hasLink: false,
     hasKeywords: false,
+    hasGif: false,
+    hasEmoji: false,
     keywords: [],
     showCommentsAfter: "none" as const,
   },

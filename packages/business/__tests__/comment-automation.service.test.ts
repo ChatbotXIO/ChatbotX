@@ -49,6 +49,16 @@ vi.mock("@chatbotx.io/database/partials", () => ({
       threads: "threads",
     },
   },
+  // Same contract as the real one: a `text` reply gains a `values` list
+  // mirroring `value`; every other type passes through untouched.
+  normalizeReplyTexts: (reply: {
+    type: string
+    value: string | null
+    values?: { value: string }[]
+  }) =>
+    reply.type === "text" && !reply.values
+      ? { ...reply, values: [{ value: reply.value ?? "" }] }
+      : reply,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -122,9 +132,12 @@ describe("commentAutomationService threads CRUD", () => {
           hasVideo: false,
           hasLink: false,
           hasKeywords: false,
+          hasGif: false,
+          hasEmoji: false,
           keywords: [],
           showCommentsAfter: "none",
         },
+        excludeKeywordsType: "contain",
         options: {
           replyToNewContactsOnly: true,
           replyOncePerUserPerPost: true,

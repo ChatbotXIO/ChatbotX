@@ -23,6 +23,8 @@ export const commentAutomationMissReasons = z.enum([
   "commentIsReply",
   /** `includeKeywords` did not match, or `excludeKeywords` did. */
   "keywordsNotMatched",
+  /** "Reply to" is `mentions` and the comment tagged a different number. */
+  "mentionCountNotMatched",
   /** `replyToNewContactsOnly` on and the contact already had other inboxes. */
   "contactNotNew",
   /** `replyOncePerUserPerPost` on and this user was already answered here. */

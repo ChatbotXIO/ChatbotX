@@ -35,6 +35,9 @@ import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
+import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
+import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateTiktokCommentRequest } from "../schema/action"
 
@@ -130,7 +133,9 @@ export function TiktokCommentForm({
   }, [form, postType])
 
   useEffect(() => {
-    if (includeKeywordsType === "all") {
+    // Neither `all` nor `mentions` reads keywords; a stale list would only
+    // fail validation for a field the user can no longer see.
+    if (includeKeywordsType === "all" || includeKeywordsType === "mentions") {
       form.setValue("includeKeywords.value", [], {
         shouldDirty: true,
         shouldValidate: true,
@@ -259,10 +264,11 @@ export function TiktokCommentForm({
           />
 
           {replyType === "text" ? (
-            <TextareaField
+            <ReplyTextsField
+              channel="tiktok"
               label={t("tiktokCommentAutomation.replyMessage")}
-              name="publicReply.value"
-              required
+              name="publicReply"
+              placeholder={t("tiktokCommentAutomation.replyMessage")}
             />
           ) : null}
           {replyType === "flow" ? (
@@ -346,68 +352,22 @@ export function TiktokCommentForm({
           <CardTitle>{t("tiktokCommentAutomation.card.filters")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <SelectField
-            label={t("tiktokCommentAutomation.includeKeywordsType")}
-            name="includeKeywords.type"
-            options={[
-              {
-                label: t("tiktokCommentAutomation.keywordsType.all"),
-                value: "all",
-              },
-              {
-                label: t("tiktokCommentAutomation.keywordsType.equal"),
-                value: "equal",
-              },
-              {
-                label: t("tiktokCommentAutomation.keywordsType.contain"),
-                value: "contain",
-              },
-            ]}
-            required
+          <ReplyToField
+            labels={{
+              type: t("tiktokCommentAutomation.includeKeywordsType"),
+              keywords: t("tiktokCommentAutomation.includeKeywords"),
+              keywordsPlaceholder: t(
+                "tiktokCommentAutomation.keywordsPlaceholder",
+              ),
+              all: t("tiktokCommentAutomation.keywordsType.all"),
+              equal: t("tiktokCommentAutomation.keywordsType.equal"),
+              contain: t("tiktokCommentAutomation.keywordsType.contain"),
+            }}
           />
 
-          {includeKeywordsType === "all" ? null : (
-            <FormField
-              control={form.control}
-              name="includeKeywords.value"
-              render={() => (
-                <FormItem>
-                  <FormLabel>
-                    {t("tiktokCommentAutomation.includeKeywords")}
-                  </FormLabel>
-                  <FormControl>
-                    <TagsInputField
-                      name="includeKeywords.value"
-                      placeholder={t(
-                        "tiktokCommentAutomation.keywordsPlaceholder",
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-
-          <FormField
-            control={form.control}
-            name="excludeKeywords"
-            render={() => (
-              <FormItem>
-                <FormLabel>
-                  {t("tiktokCommentAutomation.excludeKeywords")}
-                </FormLabel>
-                <FormControl>
-                  <TagsInputField
-                    name="excludeKeywords"
-                    placeholder={t(
-                      "tiktokCommentAutomation.keywordsPlaceholder",
-                    )}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <ExcludeKeywordsField
+            label={t("tiktokCommentAutomation.excludeKeywords")}
+            placeholder={t("tiktokCommentAutomation.keywordsPlaceholder")}
           />
 
           <SwitchField
@@ -440,6 +400,12 @@ export function TiktokCommentForm({
             name="options.likeUserComment"
             required
           />
+          <SwitchField
+            description={t("commentAutomation.trackUserTags.descriptionText")}
+            descriptionType="tooltip"
+            label={t("commentAutomation.trackUserTags.label")}
+            name="options.trackUserTags"
+          />
         </CardContent>
       </Card>
 
@@ -470,6 +436,12 @@ export function TiktokCommentForm({
                 label={t("tiktokCommentAutomation.hide.hasLink")}
                 name="hideComments.hasLink"
                 required
+              />
+              {/* No GIF switch: TikTok exposes no attachment data. Emoji is
+                  read from the comment text. */}
+              <SwitchField
+                label={t("commentAutomation.hideComments.hasEmoji")}
+                name="hideComments.hasEmoji"
               />
               <SwitchField
                 label={t("tiktokCommentAutomation.hide.hasKeywords")}

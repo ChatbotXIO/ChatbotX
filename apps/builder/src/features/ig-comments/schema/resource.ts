@@ -1,4 +1,5 @@
 import {
+  commentExcludeKeywordsTypes,
   commentHideCommentsSchema,
   commentIncludeKeywordsSchema,
   commentOptionsSchema,
@@ -21,6 +22,7 @@ export const igCommentResource = createSelectSchema(commentAutomationModel, {
   publicReply: commentReplySchema,
   includeKeywords: commentIncludeKeywordsSchema,
   excludeKeywords: z.array(z.string()),
+  excludeKeywordsType: commentExcludeKeywordsTypes,
   options: commentOptionsSchema,
   hideComments: commentHideCommentsSchema,
   replyAfter: commentReplyAfterSchema,

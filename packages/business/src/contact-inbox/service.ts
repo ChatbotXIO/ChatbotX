@@ -371,8 +371,21 @@ class ContactInboxService extends BaseService {
     inboxId: string
     sourceIds: string[]
     sourceUsernames: string[]
+    /**
+     * Also match a handle against `sourceId`. Threads keys its contacts by
+     * the lowercased username (there is no numeric user id on its comment
+     * webhook) and never fills `sourceUsername`, so without this every tag
+     * on Threads would count as a new person.
+     */
+    usernameIsSourceId?: boolean
   }): Promise<number> {
-    const { tx = db, inboxId, sourceIds, sourceUsernames } = props
+    const {
+      tx = db,
+      inboxId,
+      sourceIds,
+      sourceUsernames,
+      usernameIsSourceId = false,
+    } = props
     if (sourceIds.length === 0 && sourceUsernames.length === 0) {
       return 0
     }
@@ -383,6 +396,9 @@ class ContactInboxService extends BaseService {
         : []),
       ...(sourceUsernames.length > 0
         ? [inArray(contactInboxModel.sourceUsername, sourceUsernames)]
+        : []),
+      ...(usernameIsSourceId && sourceUsernames.length > 0
+        ? [inArray(contactInboxModel.sourceId, sourceUsernames)]
         : []),
     ]
 
@@ -403,7 +419,11 @@ class ContactInboxService extends BaseService {
 
     return (
       sourceIds.filter((sourceId) => knownSourceIds.has(sourceId)).length +
-      sourceUsernames.filter((username) => knownUsernames.has(username)).length
+      sourceUsernames.filter(
+        (username) =>
+          knownUsernames.has(username) ||
+          (usernameIsSourceId && knownSourceIds.has(username)),
+      ).length
     )
   }
 

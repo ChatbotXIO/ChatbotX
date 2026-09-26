@@ -53,6 +53,26 @@ export function commentAutomationChannelSupportsPrivateReply(
   return COMMENT_AUTOMATION_CHANNELS_WITH_PRIVATE_REPLY.has(type)
 }
 
+/**
+ * The channels that expose enough about a comment to tell it carries a GIF:
+ * Facebook's comment `attachment.type` (`animated_image_*`) and Threads'
+ * reply `gif_url`. Instagram and TikTok deliver comment text only, so the
+ * builder hides the switch there and the service pins `hasGif` off on write —
+ * otherwise a public-API or MCP client could store a switch that never
+ * matches.
+ *
+ * An allowlist, like the private-reply one above: a new channel defaults to
+ * "cannot".
+ */
+const COMMENT_AUTOMATION_CHANNELS_WITH_GIF_DETECTION =
+  new Set<CommentAutomationType>(["messenger", "threads"])
+
+export function commentAutomationChannelSupportsHideGif(
+  type: CommentAutomationType,
+): boolean {
+  return COMMENT_AUTOMATION_CHANNELS_WITH_GIF_DETECTION.has(type)
+}
+
 export const commentPostSchema = z.object({
   type: z.enum(["published", "ads", "reels", "postIds", "all"]),
   value: z.array(z.string()),
@@ -118,12 +138,36 @@ export const normalizeReplyTexts = (reply: CommentReply): CommentReply => {
   return { ...reply, values: [{ value: reply.value ?? "" }] }
 }
 
+/** Upper bound on the "enough mentions" filter, mirrored by the builder form. */
+export const COMMENT_MENTION_COUNT_MAX = 5
+
+export const commentIncludeKeywordsTypes = z.enum([
+  "all",
+  "equal",
+  "contain",
+  "mentions",
+])
+export type CommentIncludeKeywordsType = z.infer<
+  typeof commentIncludeKeywordsTypes
+>
+
 export const commentIncludeKeywordsSchema = z.object({
-  type: z.enum(["all", "equal", "contain"]),
+  type: commentIncludeKeywordsTypes,
   value: z.array(z.string()),
+  /** Only read when `type` is `mentions`. */
+  mentionCount: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(COMMENT_MENTION_COUNT_MAX)
+    .optional(),
 })
 export type CommentIncludeKeywords = z.infer<
   typeof commentIncludeKeywordsSchema
+>
+export const commentExcludeKeywordsTypes = z.enum(["equal", "contain"])
+export type CommentExcludeKeywordsType = z.infer<
+  typeof commentExcludeKeywordsTypes
 >
 
 export const commentOptionsSchema = z.object({
@@ -143,6 +187,13 @@ export const commentHideCommentsSchema = z.object({
   hasVideo: z.boolean(),
   hasLink: z.boolean(),
   hasKeywords: z.boolean(),
+  /**
+   * Optional because every row written before these existed lacks the key —
+   * absent reads as off. GIF detection needs attachment data only some
+   * channels expose (see `commentAutomationChannelSupportsHideGif`).
+   */
+  hasGif: z.boolean().optional(),
+  hasEmoji: z.boolean().optional(),
   keywords: z.array(z.string()),
   showCommentsAfter: z.enum([
     "none",

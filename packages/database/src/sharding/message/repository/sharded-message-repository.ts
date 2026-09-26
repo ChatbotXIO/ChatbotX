@@ -14,6 +14,7 @@ import {
   isNull,
   lt,
   or,
+  type SQL,
   sql,
 } from "drizzle-orm"
 import {
@@ -677,15 +678,44 @@ export class ShardedMessageRepository implements IMessageRepository {
     return null
   }
 
+  claimContentAttributes(params: {
+    messageId: string
+    workspaceId: string
+    createdAt: Date
+    guardKey: string
+    overlay: Record<string, unknown>
+  }): Promise<{ id: string } | null> {
+    const { messageId, workspaceId, createdAt, guardKey, overlay } = params
+    // `-> key IS NULL` rather than the `?` operator: also true when the
+    // column itself is NULL, and no driver can mistake it for a placeholder.
+    return this.updateAcrossShards(
+      messageId,
+      workspaceId,
+      {
+        contentAttributes: sql`COALESCE(${messageModel.contentAttributes}, '{}'::jsonb) || ${JSON.stringify(overlay)}::jsonb`,
+        updatedAt: new Date(),
+      },
+      "claimContentAttributes",
+      createdAt,
+      sql`${messageModel.contentAttributes} -> ${guardKey} IS NULL`,
+    )
+  }
+
   // Targets the 1-2 shards covering the message's createdAt plus the write
   // shard (for back-dated imports). When createdAt is unknown it is resolved
   // first via a lightweight SELECT, avoiding a full shard scan.
   private async updateAcrossShards(
     messageId: string,
     workspaceId: string,
-    patch: Partial<typeof messageModel.$inferInsert>,
+    // A column may be set to a SQL expression (e.g. a `jsonb ||` merge).
+    patch: {
+      [K in keyof typeof messageModel.$inferInsert]?:
+        | (typeof messageModel.$inferInsert)[K]
+        | SQL
+    },
     caller: string,
     createdAt: Date,
+    extraWhere?: SQL,
   ): Promise<{ id: string } | null> {
     const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
     const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
@@ -706,6 +736,7 @@ export class ShardedMessageRepository implements IMessageRepository {
                 eq(messageModel.id, messageId),
                 eq(messageModel.workspaceId, workspaceId),
                 eq(messageModel.createdAt, createdAt),
+                extraWhere,
               ),
             )
             .returning({ id: messageModel.id })
