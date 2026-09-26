@@ -55,12 +55,23 @@ ENV BETTER_AUTH_URL="http://localhost:3000"
 #   the only mechanism that can actually skip the build; wiring it up is a
 #   secrets-only change.
 ARG NEXT_BUILD_FS_CACHE=false
+#
+# Source maps: standalone output ships only ~250 of ~4,000 server maps, so most
+# production frames never resolved. The prune step rewrites every map to
+# first-party code (2.3GB -> ~120MB) and copies it beside its chunk, so
+# `--enable-source-maps` maps the whole server for ~+20-65MB RSS. It runs in
+# the SAME `RUN` as the build so the 2.3GB of raw maps never get committed to
+# a layer — CI runs on GitHub-hosted runners with limited disk.
+# `turbo prune` omits root scripts; copy it back.
+COPY scripts/prune-sourcemaps.mjs scripts/prune-sourcemaps.mjs
 RUN --mount=type=cache,target=/app/apps/builder/.next/cache \
   --mount=type=secret,id=TURBO_API,env=TURBO_API \
   --mount=type=secret,id=TURBO_TOKEN,env=TURBO_TOKEN \
   --mount=type=secret,id=TURBO_TEAM,env=TURBO_TEAM \
   NEXT_BUILD_FS_CACHE="$NEXT_BUILD_FS_CACHE" SKIP_ENV_CHECK=true \
-  pnpm turbo run build --filter=builder
+  pnpm turbo run build --filter=builder \
+  && node scripts/prune-sourcemaps.mjs apps/builder/.next/server \
+    --copy-to apps/builder/.next/standalone/apps/builder/.next/server
 
 # Standalone image has no pnpm workspace; bundle a tiny migration runner (drizzle-orm + pg only).
 RUN apt-get update && apt-get install -y --no-install-recommends jq \

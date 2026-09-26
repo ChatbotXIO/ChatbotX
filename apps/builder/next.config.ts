@@ -1,5 +1,4 @@
 import type { NextConfig } from "next"
-import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import createNextIntlPlugin from "next-intl/plugin"
 import { env } from "@/env"
 
@@ -193,16 +192,8 @@ const nextConfig: NextConfig = {
   },
 }
 
-// `next build` emitted 4,069 server source maps (2.3GB) of which standalone
-// output ships only 250 page-level files — the chunk maps never reach the
-// image, so generating them only cost build memory and time. `next dev` keeps
-// them for the error overlay. Keyed on the phase, not NODE_ENV, because `.env`
-// can override NODE_ENV for `next build`.
-export default (phase: string): NextConfig =>
-  withNextIntl({
-    ...nextConfig,
-    experimental: {
-      ...nextConfig.experimental,
-      turbopackSourceMaps: phase !== PHASE_PRODUCTION_BUILD,
-    },
-  })
+// Server source maps stay ON for `next build` (~0.6GB extra build peak): the
+// Docker image prunes them to first-party code and copies every chunk map into
+// the standalone output (scripts/prune-sourcemaps.mjs), so production stack
+// traces under `--enable-source-maps` resolve to `.ts` files for ~+20-65MB RSS.
+export default withNextIntl(nextConfig)

@@ -25,6 +25,10 @@ RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
 RUN SKIP_ENV_CHECK=true pnpm turbo run build --filter=worker
+# The entrypoint runs with `--enable-source-maps`; full maps cost +511MB heap,
+# first-party-only maps +114MB. `turbo prune` omits root scripts; copy it back.
+COPY scripts/prune-sourcemaps.mjs scripts/prune-sourcemaps.mjs
+RUN node scripts/prune-sourcemaps.mjs apps/worker/dist
 
 FROM base AS release
 RUN apt update && \
