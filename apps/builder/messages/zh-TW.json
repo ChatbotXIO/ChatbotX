@@ -2219,7 +2219,26 @@
       "keywordsNotMatched": "關鍵字不符",
       "contactNotNew": "聯絡人不是新用戶",
       "alreadyRepliedOnPost": "已在該貼文回覆過",
-      "engagedOnOtherPost": "已在其他貼文互動過"
+      "engagedOnOtherPost": "已在其他貼文互動過",
+      "mentionCountNotMatched": "提及人數不符"
+    },
+    "replyTo": {
+      "mentions": "提及人數足夠的留言",
+      "mentionCount": "被標記人數",
+      "mentionCountDescription": "僅符合標記了至少這麼多人(@名稱)的留言。",
+      "mentionCountOption": "{count, plural, one {# 人} other {# 人}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "留言等於",
+      "contain": "留言包含"
+    },
+    "hideComments": {
+      "hasGif": "包含 GIF",
+      "hasEmoji": "包含表情符號"
+    },
+    "trackUserTags": {
+      "label": "追蹤使用者是否標記了其他使用者",
+      "descriptionText": "統計每則留言中被標記的帳號數,並在所有留言中累加到聯絡人的總數。使用 '{{total_tagged}}' 表示所有被標記的帳號,使用 '{{total_new_tagged}}' 表示從未傳訊息給您的粉絲專頁或從未成為聯絡人的帳號。"
     }
   },
   "condition": {
@@ -2665,6 +2684,8 @@
       "transferConversationToHuman": "將對話轉移給人類",
       "unarchiveConversation": "取消封存對話",
       "unassignConversation": "取消分配對話",
+      "markConversationAsUnread": "將對話標示為未讀",
+      "markConversationAsRead": "將對話標示為已讀",
       "unfollowConversation": "取消追蹤對話",
       "unsubscribeBroadcast": "退訂廣播",
       "getUserData": "取得使用者資料",
@@ -4725,13 +4746,13 @@
     "privateReply": "私訊回覆（收件匣）",
     "privateReplyDescription": "將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本、聊天機器人流程，或停用。",
     "publicReply": "公開回覆留言",
-    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本、AI Agent、聊天機器人流程，或不回覆。 每則訊息都會以獨立的回覆發佈。",
+    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本、AI Agent、聊天機器人流程，或不回覆。 每則訊息都會以獨立的回覆發佈。 支援 spintax。",
     "replyMessage": "回覆訊息",
     "replyMessagePlaceholder": "輸入回覆訊息...",
     "includeKeywordsType": "回覆對象",
     "includeKeywordsTypeDescription": "選擇此自動化要回應哪些留言。",
     "includeKeywords": "要比對的關鍵字",
-    "excludeKeywords": "排除包含這些關鍵字的留言",
+    "excludeKeywords": "排除包含以下內容的留言",
     "excludeKeywordsDescription": "若留言包含任一關鍵字，收件匣回覆與公開回覆自動化都會忽略該留言。",
     "keywordsPlaceholder": "輸入後按 Enter...",
     "replyAfter": "回覆時間",
@@ -4794,7 +4815,7 @@
       "ignoreCommentReplies": "忽略留言底下的回覆",
       "ignoreCommentRepliesDescription": "若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。",
       "trackUserTags": "追蹤使用者是否標記了其他使用者",
-      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少使用者被標記。使用 '{{total_new_tagged}}' 查看被標記的人當中有多少不在聯絡人清單中。"
+      "trackUserTagsDescription": "統計每則留言中被標記的帳號數,並在所有留言中累加到聯絡人的總數。使用 '{{total_tagged}}' 表示所有被標記的帳號,使用 '{{total_new_tagged}}' 表示從未傳訊息給您的粉絲專頁或從未成為聯絡人的帳號。"
     },
     "hideComments": {
       "all": "隱藏所有留言",
@@ -4828,13 +4849,13 @@
     "privateReply": "私訊回覆（收件匣）",
     "privateReplyDescription": "將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本、聊天機器人流程，或停用。",
     "publicReply": "公開回覆留言",
-    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本、AI Agent、聊天機器人流程，或不回覆。 每則訊息都會以獨立的回覆發佈。",
+    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本、AI Agent、聊天機器人流程，或不回覆。 每則訊息都會以獨立的回覆發佈。 支援 spintax。",
     "replyMessage": "回覆訊息",
     "replyMessagePlaceholder": "輸入回覆訊息...",
     "includeKeywordsType": "回覆對象",
     "includeKeywordsTypeDescription": "選擇此自動化要回應哪些留言。",
     "includeKeywords": "要比對的關鍵字",
-    "excludeKeywords": "排除包含這些關鍵字的留言",
+    "excludeKeywords": "排除包含以下內容的留言",
     "excludeKeywordsDescription": "若留言包含任一關鍵字，收件匣回覆與公開回覆自動化都會忽略該留言。",
     "keywordsPlaceholder": "輸入後按 Enter...",
     "replyAfter": "回覆時間",
@@ -4896,7 +4917,7 @@
       "ignoreCommentReplies": "忽略留言底下的回覆",
       "ignoreCommentRepliesDescription": "若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。",
       "trackUserTags": "追蹤使用者是否標記了其他使用者",
-      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少使用者被標記。使用 '{{total_new_tagged}}' 查看被標記的人當中有多少不在聯絡人清單中。"
+      "trackUserTagsDescription": "統計每則留言中被標記的帳號數,並在所有留言中累加到聯絡人的總數。使用 '{{total_tagged}}' 表示所有被標記的帳號,使用 '{{total_new_tagged}}' 表示從未傳訊息給您的粉絲專頁或從未成為聯絡人的帳號。"
     },
     "hideComments": {
       "all": "隱藏所有留言",
@@ -4932,13 +4953,13 @@
     "publicOnlyNote": "Threads 目前僅支援公開回覆。",
     "trackCommentsOn": "追蹤留言的對象",
     "publicReply": "公開回覆留言",
-    "publicReplyDescription": "對符合條件的 Threads 留言發表公開回覆。",
+    "publicReplyDescription": "對符合條件的 Threads 留言發表公開回覆。 最多 10 則文字訊息(支援 spintax),每則會以個別回覆發布。",
     "replyMessage": "回覆訊息",
     "replyFlow": "回覆流程",
     "replyAIAgent": "回覆 AI Agent",
     "includeKeywordsType": "回覆對象",
     "includeKeywords": "要比對的關鍵字",
-    "excludeKeywords": "排除包含這些關鍵字的留言",
+    "excludeKeywords": "排除包含以下內容的留言",
     "keywordsPlaceholder": "輸入後按 Enter...",
     "replyAfter": "回覆時間",
     "replyAfterValue": "時間值",
@@ -4947,7 +4968,8 @@
     "card": {
       "targeting": "目標與回覆",
       "filters": "篩選條件與選項",
-      "replyTiming": "回覆時機"
+      "replyTiming": "回覆時機",
+      "hideComments": "隱藏留言"
     },
     "postType": {
       "all": "所有貼文",
@@ -4989,7 +5011,21 @@
       "keywordsRequired": "請為所選的比對方式至少輸入一個關鍵字。",
       "delayMustBePositive": "延遲時間必須大於零。",
       "delayMustBeZero": "所選的時機選項不支援延遲時間，請設為零。",
-      "atLeastOneFieldRequired": "請至少填寫一個欄位。"
+      "atLeastOneFieldRequired": "請至少填寫一個欄位。",
+      "replyTextRequired": "請至少輸入一則回覆訊息。",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "只能隱藏您貼文下的頂層回覆。",
+    "hideComments": {
+      "all": "隱藏所有留言",
+      "hasPhoneNumber": "包含電話號碼",
+      "hasLink": "包含連結",
+      "hasKeywords": "包含關鍵字",
+      "keywords": "關鍵字",
+      "showCommentsAfter": "多久後重新顯示留言"
+    },
+    "showCommentsAfter": {
+      "none": "永不"
     }
   },
   "tiktokCommentAutomation": {
@@ -5001,13 +5037,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. 最多 10 則文字訊息(支援 spintax),每則會以個別回覆發布。",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "排除包含以下內容的留言",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5085,7 +5121,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "請至少輸入一則回覆訊息。"
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Trefwoorden kwamen niet overeen",
       "contactNotNew": "Contact is niet nieuw",
       "alreadyRepliedOnPost": "Al beantwoord op dit bericht",
-      "engagedOnOtherPost": "Al gereageerd op een ander bericht"
+      "engagedOnOtherPost": "Al gereageerd op een ander bericht",
+      "mentionCountNotMatched": "Aantal vermeldingen kwam niet overeen"
+    },
+    "replyTo": {
+      "mentions": "Reacties met genoeg vermeldingen",
+      "mentionCount": "Aantal getagde personen",
+      "mentionCountDescription": "Alleen reacties die minstens zoveel personen (@naam) taggen, komen overeen.",
+      "mentionCountOption": "{count, plural, one {# persoon} other {# personen}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Reacties gelijk aan",
+      "contain": "Reacties die bevatten"
+    },
+    "hideComments": {
+      "hasGif": "Bevat GIF",
+      "hasEmoji": "Bevat emoji"
+    },
+    "trackUserTags": {
+      "label": "Bijhouden of een gebruiker andere gebruikers tagt",
+      "descriptionText": "Telt de accounts die in elke reactie worden getagd en telt ze op bij de totalen van het contact over alle reacties. Gebruik '{{total_tagged}}' voor alle getagde accounts en '{{total_new_tagged}}' voor accounts die je pagina nooit een bericht hebben gestuurd of nooit contact zijn geweest."
     }
   },
   "fields": {
@@ -2344,6 +2363,8 @@
       "transferConversationToHuman": "Gesprek overdragen aan medewerker",
       "unarchiveConversation": "Gesprek uit archief halen",
       "unassignConversation": "Toewijzing van gesprek opheffen",
+      "markConversationAsUnread": "Gesprek markeren als ongelezen",
+      "markConversationAsRead": "Gesprek markeren als gelezen",
       "unfollowConversation": "Gesprek niet meer volgen",
       "unsubscribeBroadcast": "Afmelden voor broadcast",
       "getUserData": "Gebruikersgegevens ophalen",
@@ -4692,13 +4713,13 @@
     "privateReply": "Privéantwoord (inbox)",
     "privateReplyDescription": "Stuur een privébericht naar de inbox van degene die de opmerking plaatste. Kies een AI-agent, een vaste tekstsjabloon, een chatbotflow of schakel dit uit.",
     "publicReply": "Openbaar antwoord op opmerking",
-    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst.",
+    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst. Spintax wordt ondersteund.",
     "replyMessage": "Antwoordbericht",
     "replyMessagePlaceholder": "Voer een antwoordbericht in...",
     "includeKeywordsType": "Antwoorden op",
     "includeKeywordsTypeDescription": "Kies op welke opmerkingen deze automatisering reageert.",
     "includeKeywords": "Trefwoorden om te vinden",
-    "excludeKeywords": "Opmerkingen met deze trefwoorden uitsluiten",
+    "excludeKeywords": "Reacties uitsluiten die bevatten",
     "excludeKeywordsDescription": "Opmerkingen die een van deze trefwoorden bevatten, worden door zowel de inbox- als de openbare antwoordautomatisering genegeerd.",
     "keywordsPlaceholder": "Typ en druk op Enter...",
     "replyAfter": "Antwoorden na",
@@ -4761,7 +4782,7 @@
       "ignoreCommentReplies": "Antwoorden op opmerkingen niet beantwoorden",
       "ignoreCommentRepliesDescription": "Sla de automatisering over voor opmerkingen die een antwoord zijn op andere opmerkingen en verwerk alleen opmerkingen op het hoogste niveau.",
       "trackUserTags": "Bijhouden of een gebruiker andere gebruikers tagt",
-      "trackUserTagsDescription": "Gebruik '{{total_tagged}}' om te zien hoeveel gebruikers zijn getagd. Gebruik '{{total_new_tagged}}' om te zien hoeveel van de getagde personen niet in de contactenlijst staan."
+      "trackUserTagsDescription": "Telt de accounts die in elke reactie worden getagd en telt ze op bij de totalen van het contact over alle reacties. Gebruik '{{total_tagged}}' voor alle getagde accounts en '{{total_new_tagged}}' voor accounts die je pagina nooit een bericht hebben gestuurd of nooit contact zijn geweest."
     },
     "hideComments": {
       "all": "Alle opmerkingen verbergen",
@@ -4795,13 +4816,13 @@
     "privateReply": "Privéantwoord (inbox)",
     "privateReplyDescription": "Stuur een privébericht naar de inbox van degene die de opmerking plaatste. Kies een AI-agent, een vaste tekstsjabloon, een chatbotflow of schakel dit uit.",
     "publicReply": "Openbaar antwoord op opmerking",
-    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst.",
+    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst. Spintax wordt ondersteund.",
     "replyMessage": "Antwoordbericht",
     "replyMessagePlaceholder": "Voer een antwoordbericht in...",
     "includeKeywordsType": "Antwoorden op",
     "includeKeywordsTypeDescription": "Kies op welke opmerkingen deze automatisering reageert.",
     "includeKeywords": "Trefwoorden om te vinden",
-    "excludeKeywords": "Opmerkingen met deze trefwoorden uitsluiten",
+    "excludeKeywords": "Reacties uitsluiten die bevatten",
     "excludeKeywordsDescription": "Opmerkingen die een van deze trefwoorden bevatten, worden door zowel de inbox- als de openbare antwoordautomatisering genegeerd.",
     "keywordsPlaceholder": "Typ en druk op Enter...",
     "replyAfter": "Antwoorden na",
@@ -4863,7 +4884,7 @@
       "ignoreCommentReplies": "Antwoorden op opmerkingen niet beantwoorden",
       "ignoreCommentRepliesDescription": "Sla de automatisering over voor opmerkingen die een antwoord zijn op andere opmerkingen en verwerk alleen opmerkingen op het hoogste niveau.",
       "trackUserTags": "Bijhouden of een gebruiker andere gebruikers tagt",
-      "trackUserTagsDescription": "Gebruik '{{total_tagged}}' om te zien hoeveel gebruikers zijn getagd. Gebruik '{{total_new_tagged}}' om te zien hoeveel van de getagde personen niet in de contactenlijst staan."
+      "trackUserTagsDescription": "Telt de accounts die in elke reactie worden getagd en telt ze op bij de totalen van het contact over alle reacties. Gebruik '{{total_tagged}}' voor alle getagde accounts en '{{total_new_tagged}}' voor accounts die je pagina nooit een bericht hebben gestuurd of nooit contact zijn geweest."
     },
     "hideComments": {
       "all": "Alle opmerkingen verbergen",
@@ -4899,13 +4920,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Maximaal 10 tekstberichten (spintax ondersteund), elk geplaatst als afzonderlijk antwoord.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Reacties uitsluiten die bevatten",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4914,7 +4935,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Opmerkingen verbergen"
     },
     "postType": {
       "all": "All posts",
@@ -4956,7 +4978,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Voer minstens één antwoordbericht in.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Alleen antwoorden op het hoogste niveau op je berichten kunnen worden verborgen.",
+    "hideComments": {
+      "all": "Alle opmerkingen verbergen",
+      "hasPhoneNumber": "Bevat telefoonnummer",
+      "hasLink": "Bevat link",
+      "hasKeywords": "Bevat trefwoorden",
+      "keywords": "Trefwoorden",
+      "showCommentsAfter": "Opmerkingen weergeven na"
+    },
+    "showCommentsAfter": {
+      "none": "Nooit"
     }
   },
   "tiktokCommentAutomation": {
@@ -4968,13 +5004,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Maximaal 10 tekstberichten (spintax ondersteund), elk geplaatst als afzonderlijk antwoord.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Reacties uitsluiten die bevatten",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5052,7 +5088,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Voer minstens één antwoordbericht in."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

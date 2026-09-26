@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Mots-clés non correspondants",
       "contactNotNew": "Le contact n'est pas nouveau",
       "alreadyRepliedOnPost": "Déjà répondu sur cette publication",
-      "engagedOnOtherPost": "A déjà interagi sur une autre publication"
+      "engagedOnOtherPost": "A déjà interagi sur une autre publication",
+      "mentionCountNotMatched": "Le nombre de mentions ne correspondait pas"
+    },
+    "replyTo": {
+      "mentions": "Commentaires avec suffisamment de mentions",
+      "mentionCount": "Nombre de personnes identifiées",
+      "mentionCountDescription": "Seuls les commentaires identifiant au moins ce nombre de personnes (@nom) correspondent.",
+      "mentionCountOption": "{count, plural, one {# personne} other {# personnes}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Commentaires égaux à",
+      "contain": "Commentaires contenant"
+    },
+    "hideComments": {
+      "hasGif": "Contient un GIF",
+      "hasEmoji": "Contient un emoji"
+    },
+    "trackUserTags": {
+      "label": "Suivre si un utilisateur identifie d'autres utilisateurs",
+      "descriptionText": "Compte les comptes identifiés dans chaque commentaire et les ajoute aux totaux du contact sur l'ensemble des commentaires. Utilisez '{{total_tagged}}' pour tous les comptes identifiés et '{{total_new_tagged}}' pour ceux qui n'ont jamais écrit à votre page ni été contacts."
     }
   },
   "condition": {
@@ -2344,6 +2363,8 @@
       "transferConversationToHuman": "Transférer la conversation à un humain",
       "unarchiveConversation": "Désarchiver la conversation",
       "unassignConversation": "Désattribuer la conversation",
+      "markConversationAsUnread": "Marquer la conversation comme non lue",
+      "markConversationAsRead": "Marquer la conversation comme lue",
       "unfollowConversation": "Ne plus suivre la conversation",
       "unsubscribeBroadcast": "Se désabonner de la diffusion",
       "getUserData": "Obtenir les données de l’utilisateur",
@@ -4692,13 +4713,13 @@
     "privateReply": "Réponse privée (boîte de réception)",
     "privateReplyDescription": "Envoyez un message privé dans la boîte de réception de l’auteur du commentaire. Choisissez un agent IA, un modèle de texte fixe, un flux de chatbot ou désactivez la réponse.",
     "publicReply": "Réponse publique au commentaire",
-    "publicReplyDescription": "Publiez une réponse directement sous le commentaire. Prend en charge jusqu’à 10 modèles de texte, un agent IA, un flux de chatbot ou aucune réponse. Chaque message est publié comme une réponse distincte.",
+    "publicReplyDescription": "Publiez une réponse directement sous le commentaire. Prend en charge jusqu’à 10 modèles de texte, un agent IA, un flux de chatbot ou aucune réponse. Chaque message est publié comme une réponse distincte. Le spintax est pris en charge.",
     "replyMessage": "Message de réponse",
     "replyMessagePlaceholder": "Saisissez le message de réponse...",
     "includeKeywordsType": "Répondre à",
     "includeKeywordsTypeDescription": "Choisissez les commentaires auxquels cette automatisation répond.",
     "includeKeywords": "Mots-clés à rechercher",
-    "excludeKeywords": "Exclure les commentaires contenant ces mots-clés",
+    "excludeKeywords": "Exclure les commentaires contenant",
     "excludeKeywordsDescription": "Les commentaires contenant l’un de ces mots-clés seront ignorés par les réponses privées et publiques automatisées.",
     "keywordsPlaceholder": "Saisissez puis appuyez sur Entrée...",
     "replyAfter": "Répondre après",
@@ -4761,7 +4782,7 @@
       "ignoreCommentReplies": "Ne pas répondre aux réponses aux commentaires",
       "ignoreCommentRepliesDescription": "Ignorer l’automatisation pour les réponses à d’autres commentaires plutôt que les commentaires de premier niveau.",
       "trackUserTags": "Suivre si un utilisateur identifie d'autres utilisateurs",
-      "trackUserTagsDescription": "Utilisez '{{total_tagged}}' pour savoir combien d'utilisateurs ont été identifiés. Utilisez '{{total_new_tagged}}' pour savoir combien de personnes identifiées ne figurent pas dans la liste de contacts."
+      "trackUserTagsDescription": "Compte les comptes identifiés dans chaque commentaire et les ajoute aux totaux du contact sur l'ensemble des commentaires. Utilisez '{{total_tagged}}' pour tous les comptes identifiés et '{{total_new_tagged}}' pour ceux qui n'ont jamais écrit à votre page ni été contacts."
     },
     "hideComments": {
       "all": "Masquer tous les commentaires",
@@ -4795,13 +4816,13 @@
     "privateReply": "Réponse privée (boîte de réception)",
     "privateReplyDescription": "Envoyez un message privé dans la boîte de réception de l’auteur du commentaire. Choisissez un agent IA, un modèle de texte fixe, un flux de chatbot ou désactivez la réponse.",
     "publicReply": "Réponse publique au commentaire",
-    "publicReplyDescription": "Publiez une réponse directement sous le commentaire. Prend en charge jusqu’à 10 modèles de texte, un agent IA, un flux de chatbot ou aucune réponse. Chaque message est publié comme une réponse distincte.",
+    "publicReplyDescription": "Publiez une réponse directement sous le commentaire. Prend en charge jusqu’à 10 modèles de texte, un agent IA, un flux de chatbot ou aucune réponse. Chaque message est publié comme une réponse distincte. Le spintax est pris en charge.",
     "replyMessage": "Message de réponse",
     "replyMessagePlaceholder": "Saisissez le message de réponse...",
     "includeKeywordsType": "Répondre à",
     "includeKeywordsTypeDescription": "Choisissez les commentaires auxquels cette automatisation répond.",
     "includeKeywords": "Mots-clés à rechercher",
-    "excludeKeywords": "Exclure les commentaires contenant ces mots-clés",
+    "excludeKeywords": "Exclure les commentaires contenant",
     "excludeKeywordsDescription": "Les commentaires contenant l’un de ces mots-clés seront ignorés par les réponses privées et publiques automatisées.",
     "keywordsPlaceholder": "Saisissez puis appuyez sur Entrée...",
     "replyAfter": "Répondre après",
@@ -4863,7 +4884,7 @@
       "ignoreCommentReplies": "Ne pas répondre aux réponses aux commentaires",
       "ignoreCommentRepliesDescription": "Ignorer l’automatisation pour les réponses à d’autres commentaires plutôt que les commentaires de premier niveau.",
       "trackUserTags": "Suivre si un utilisateur identifie d'autres utilisateurs",
-      "trackUserTagsDescription": "Utilisez '{{total_tagged}}' pour savoir combien d'utilisateurs ont été identifiés. Utilisez '{{total_new_tagged}}' pour savoir combien de personnes identifiées ne figurent pas dans la liste de contacts."
+      "trackUserTagsDescription": "Compte les comptes identifiés dans chaque commentaire et les ajoute aux totaux du contact sur l'ensemble des commentaires. Utilisez '{{total_tagged}}' pour tous les comptes identifiés et '{{total_new_tagged}}' pour ceux qui n'ont jamais écrit à votre page ni été contacts."
     },
     "hideComments": {
       "all": "Masquer tous les commentaires",
@@ -4899,13 +4920,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Jusqu'à 10 messages texte (spintax pris en charge), chacun publié comme une réponse distincte.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Exclure les commentaires contenant",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4914,7 +4935,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Masquer les commentaires"
     },
     "postType": {
       "all": "All posts",
@@ -4956,7 +4978,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Saisissez au moins un message de réponse.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Seules les réponses de premier niveau à vos publications peuvent être masquées.",
+    "hideComments": {
+      "all": "Masquer tous les commentaires",
+      "hasPhoneNumber": "Contient un numéro de téléphone",
+      "hasLink": "Contient un lien",
+      "hasKeywords": "Contient des mots-clés",
+      "keywords": "Mots-clés",
+      "showCommentsAfter": "Afficher les commentaires après"
+    },
+    "showCommentsAfter": {
+      "none": "Jamais"
     }
   },
   "tiktokCommentAutomation": {
@@ -4968,13 +5004,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Jusqu'à 10 messages texte (spintax pris en charge), chacun publié comme une réponse distincte.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Exclure les commentaires contenant",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5052,7 +5088,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Saisissez au moins un message de réponse."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

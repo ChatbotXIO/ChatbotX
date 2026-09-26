@@ -20,12 +20,6 @@ import {
   FormMessage,
 } from "@chatbotx.io/ui/components/ui/form"
 import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
-import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
@@ -34,7 +28,9 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
+import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateFbCommentRequest } from "../schema/action"
 import { SelectFacebookPostsDialog } from "./select-facebook-posts-dialog"
@@ -80,10 +76,6 @@ export function FbCommentForm({
     control: form.control,
     name: "publicReply.type",
   })
-  const includeKeywordsType = useWatch({
-    control: form.control,
-    name: "includeKeywords.type",
-  })
   const replyAfterType = useWatch({
     control: form.control,
     name: "replyAfter.type",
@@ -108,18 +100,6 @@ export function FbCommentForm({
     {
       label: t("facebookCommentAutomation.postType.specificPosts"),
       value: "postIds",
-    },
-  ]
-
-  const includeKeywordsTypeOptions = [
-    { label: t("facebookCommentAutomation.keywordsType.all"), value: "all" },
-    {
-      label: t("facebookCommentAutomation.keywordsType.equal"),
-      value: "equal",
-    },
-    {
-      label: t("facebookCommentAutomation.keywordsType.contain"),
-      value: "contain",
     },
   ]
 
@@ -336,73 +316,28 @@ export function FbCommentForm({
           <CardTitle>{t("facebookCommentAutomation.card.filters")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-start gap-2">
-            <SelectField
-              description={t(
+          <ReplyToField
+            labels={{
+              type: t("facebookCommentAutomation.includeKeywordsType"),
+              typeDescription: t(
                 "facebookCommentAutomation.includeKeywordsTypeDescription",
-              )}
-              descriptionType="tooltip"
-              label={t("facebookCommentAutomation.includeKeywordsType")}
-              name="includeKeywords.type"
-              options={includeKeywordsTypeOptions}
-            />
-            {includeKeywordsType !== "all" && (
-              <div className="w-full">
-                <FormField
-                  control={form.control}
-                  name="includeKeywords.value"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("facebookCommentAutomation.includeKeywords")}
-                      </FormLabel>
-                      <FormControl>
-                        <TagsInputField
-                          name="includeKeywords.value"
-                          placeholder={t(
-                            "facebookCommentAutomation.keywordsPlaceholder",
-                          )}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-          </div>
+              ),
+              keywords: t("facebookCommentAutomation.includeKeywords"),
+              keywordsPlaceholder: t(
+                "facebookCommentAutomation.keywordsPlaceholder",
+              ),
+              all: t("facebookCommentAutomation.keywordsType.all"),
+              equal: t("facebookCommentAutomation.keywordsType.equal"),
+              contain: t("facebookCommentAutomation.keywordsType.contain"),
+            }}
+          />
 
-          <FormField
-            control={form.control}
-            name="excludeKeywords"
-            render={() => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-1">
-                  {t("facebookCommentAutomation.excludeKeywords")}
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
-                      }
-                    />
-                    <TooltipContent className="max-w-sm">
-                      {t(
-                        "facebookCommentAutomation.excludeKeywordsDescription",
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                </FormLabel>
-                <FormControl>
-                  <TagsInputField
-                    name="excludeKeywords"
-                    placeholder={t(
-                      "facebookCommentAutomation.keywordsPlaceholder",
-                    )}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+          <ExcludeKeywordsField
+            description={t(
+              "facebookCommentAutomation.excludeKeywordsDescription",
             )}
+            label={t("facebookCommentAutomation.excludeKeywords")}
+            placeholder={t("facebookCommentAutomation.keywordsPlaceholder")}
           />
 
           <div className="space-y-3 border-t pt-4">
@@ -521,6 +456,16 @@ export function FbCommentForm({
           <SwitchField
             label={t("facebookCommentAutomation.hideComments.hasVideo")}
             name="hideComments.hasVideo"
+            required
+          />
+          <SwitchField
+            label={t("commentAutomation.hideComments.hasGif")}
+            name="hideComments.hasGif"
+            required
+          />
+          <SwitchField
+            label={t("commentAutomation.hideComments.hasEmoji")}
+            name="hideComments.hasEmoji"
             required
           />
           <SwitchField

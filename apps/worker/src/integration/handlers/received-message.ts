@@ -1044,6 +1044,11 @@ const persistNewMessageSideEffects = async (props: {
     },
     contactLocation,
     at: message.createdAt,
+    // Contact-authored (DM or comment) — drives the inbox unread rule.
+    // Outgoing echoes (agent replies from the native app) must not count.
+    ...(incomingMessage.messageType === "outgoing"
+      ? {}
+      : { contactRepliedAt: message.createdAt }),
   })
 
   if (trackingInvalidation) {
@@ -1207,7 +1212,10 @@ export const receiveComment = async (
     // Instagram only: the handle is the sole way to match an `@mention` in a
     // comment back to a known contact, since its webhook carries no tagged-user
     // ids. Facebook sends no username here and matches on `sourceId` instead.
-    sourceUsername: tiktokIdentity?.username ?? commentData.fromUsername,
+    // Lowercased because the mention matcher compares exactly and handles are
+    // case-insensitive — TikTok's comment lookup returns them as typed.
+    sourceUsername:
+      tiktokIdentity?.username?.toLowerCase() ?? commentData.fromUsername,
   }
 
   const commenterAvatarUrl =

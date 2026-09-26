@@ -1,4 +1,5 @@
 import {
+  commentExcludeKeywordsTypes,
   commentHideCommentsSchema,
   commentIncludeKeywordsSchema,
   commentOptionsSchema,
@@ -74,6 +75,14 @@ export const createIgCommentRequest = z.object({
   excludeKeywords: z
     .array(z.string())
     .describe("Never trigger when the comment matches these keywords."),
+  // Optional, never defaulted: `updateFbCommentRequest` is this schema made
+  // `.partial()`, and a default would reset the stored match type on every
+  // PATCH that did not mention it. The column defaults to `contain`.
+  excludeKeywordsType: commentExcludeKeywordsTypes
+    .optional()
+    .describe(
+      "How `excludeKeywords` match: `equal` (the whole comment) or `contain` (anywhere in it).",
+    ),
   options: commentOptionsSchema.describe(
     "Matching and trigger behavior options.",
   ),

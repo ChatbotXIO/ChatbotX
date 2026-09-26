@@ -1,4 +1,5 @@
 import {
+  commentExcludeKeywordsTypes,
   commentHideCommentsSchema,
   commentIncludeKeywordsSchema,
   commentOptionsSchema,
@@ -71,6 +72,11 @@ export const createFbCommentRequest = z.object({
   excludeKeywords: z
     .array(z.string())
     .describe("Never trigger when the comment matches these keywords."),
+  excludeKeywordsType: commentExcludeKeywordsTypes
+    .optional()
+    .describe(
+      "How `excludeKeywords` match: `equal` (the whole comment) or `contain` (anywhere in it).",
+    ),
   options: commentOptionsSchema.describe(
     "Matching and trigger behavior options.",
   ),

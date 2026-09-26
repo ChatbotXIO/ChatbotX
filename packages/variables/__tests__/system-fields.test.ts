@@ -722,95 +722,48 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBe("https://example.com/ad")
   })
 
-  // The comment-automation worker writes these onto the comment message, and
-  // only when that automation has `trackUserTags` on.
+  // Lifetime totals accumulated on the contact by the comment-automation
+  // worker when an automation has `trackUserTags` on.
   describe("tag counters", () => {
-    const messageCreatedAt = new Date("2026-01-04T03:04:05.000Z")
-    const trackingInbox = {
-      ...contactInbox,
-      lastCommentMessageId: "message-1",
-      lastCommentMessageAt: messageCreatedAt,
-    } as ContactInboxModel
-
-    const mockCommentMessage = (
-      contentAttributes: Record<string, unknown>,
-    ): void => {
-      mockMessageFindById.mockResolvedValue({
-        id: "message-1",
-        createdAt: messageCreatedAt,
-        sourceId: "user-comment-1",
-        text: "tagging my friends",
-        contentAttributes,
-        type: "comment",
-        messageType: "incoming",
-      })
-    }
-
-    test("resolve from the comment message the worker stamped", async () => {
-      mockCommentMessage({
-        postId: "post-1",
-        totalTagged: 3,
-        totalNewTagged: 2,
-      })
+    test("resolve the contact's accumulated totals", async () => {
+      const tracked = { ...contact, totalTagged: 7, totalNewTagged: 3 }
 
       await expect(
         getSystemFieldValue(
-          createContext({ contactInbox: trackingInbox }),
+          createContext({ contact: tracked }),
           systemFieldTypes.enum.total_tagged,
         ),
-      ).resolves.toBe("3")
+      ).resolves.toBe("7")
       await expect(
         getSystemFieldValue(
-          createContext({ contactInbox: trackingInbox }),
+          createContext({ contact: tracked }),
           systemFieldTypes.enum.total_new_tagged,
         ),
-      ).resolves.toBe("2")
+      ).resolves.toBe("3")
     })
 
-    // Zero is a real answer ("nobody was tagged") and must survive as "0" —
-    // returning null here would render an empty string in the reply instead.
-    test("keep a zero count distinct from an absent one", async () => {
-      mockCommentMessage({
-        postId: "post-1",
-        totalTagged: 0,
-        totalNewTagged: 0,
-      })
-
+    // Zero is a real answer ("nobody was tagged yet") and must survive as "0"
+    // — returning null here would render an empty string in the reply.
+    test("keep a zero count as '0'", async () => {
       await expect(
         getSystemFieldValue(
-          createContext({ contactInbox: trackingInbox }),
+          createContext({
+            contact: { ...contact, totalTagged: 0, totalNewTagged: 0 },
+          }),
           systemFieldTypes.enum.total_tagged,
         ),
       ).resolves.toBe("0")
     })
 
-    test("stay null when the automation never tracked tags", async () => {
-      mockCommentMessage({ postId: "post-1" })
+    // A contact serialized into a job payload before the columns existed.
+    test("stay null when the contact carries no counters", async () => {
+      const legacy = { ...contact } as Record<string, unknown>
+      legacy.totalTagged = undefined
+      legacy.totalNewTagged = undefined
 
       await expect(
         getSystemFieldValue(
-          createContext({ contactInbox: trackingInbox }),
-          systemFieldTypes.enum.total_tagged,
-        ),
-      ).resolves.toBeNull()
-      await expect(
-        getSystemFieldValue(
-          createContext({ contactInbox: trackingInbox }),
-          systemFieldTypes.enum.total_new_tagged,
-        ),
-      ).resolves.toBeNull()
-    })
-
-    test("stay null when the contact has no comment at all", async () => {
-      await expect(
-        getSystemFieldValue(
-          createContext(),
-          systemFieldTypes.enum.total_new_tagged,
-        ),
-      ).resolves.toBeNull()
-      await expect(
-        getSystemFieldValue(
-          createContext(),
+          createContext({ contact: legacy as ContactModel }),
           systemFieldTypes.enum.total_tagged,
         ),
       ).resolves.toBeNull()

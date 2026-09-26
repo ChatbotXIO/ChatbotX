@@ -606,3 +606,47 @@ describe("conversationService.markReadByOutbound", () => {
     expect(set).toHaveBeenLastCalledWith({ agentLastReadAt: null })
   })
 })
+
+describe("conversationService.recordInboundActivity contactRepliedAt", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const baseProps = {
+    workspaceId: "ws-1",
+    conversationId: "conv-1",
+    contactInboxId: "ci-1",
+    contactId: "contact-1",
+    tracking: {},
+  }
+
+  test("writes contactRepliedAt as an advance-only GREATEST expression", async () => {
+    const at = new Date("2026-09-24T10:00:00.000Z")
+
+    await conversationService.recordInboundActivity({
+      ...baseProps,
+      at,
+      contactRepliedAt: at,
+    })
+
+    const setArg = set.mock.calls[0][0] as {
+      lastActivityAt: Date
+      contactRepliedAt: unknown
+    }
+    expect(setArg.lastActivityAt).toEqual(at)
+
+    const sqlText = collectSqlText(setArg.contactRepliedAt)
+    expect(sqlText).toContain("GREATEST")
+
+    const params = collectSqlParams(setArg.contactRepliedAt)
+    expect(params).toContainEqual(at)
+  })
+
+  test("leaves contactRepliedAt untouched when omitted (e.g. outgoing echo)", async () => {
+    const at = new Date("2026-09-24T10:00:00.000Z")
+
+    await conversationService.recordInboundActivity({ ...baseProps, at })
+
+    expect(set).toHaveBeenCalledWith({ lastActivityAt: at })
+  })
+})

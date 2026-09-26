@@ -678,6 +678,7 @@ describe("receiveMessage — message repository branch", () => {
       },
       contactLocation: null,
       at: fakeCreatedMessage.createdAt,
+      contactRepliedAt: fakeCreatedMessage.createdAt,
     })
     expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
@@ -777,6 +778,9 @@ describe("receiveMessage — message repository branch", () => {
           lastIncomingMessageAt: expect.any(Date),
         }),
       }),
+    )
+    expect(mockRecordInboundActivity).not.toHaveBeenCalledWith(
+      expect.objectContaining({ contactRepliedAt: expect.any(Date) }),
     )
     // An outgoing webhook echo (e.g. an agent's native-app reply synced back
     // in) is not a genuine contact-authored message, so it must not carry the
@@ -1122,6 +1126,28 @@ describe("receiveMessage — message repository branch", () => {
         messageId: fakeCreatedMessage.id,
       },
       "Unable to match outgoing echo to an own send",
+    )
+  })
+
+  test("a contact comment also stamps contactRepliedAt on its comment-thread conversation", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, type: "comment", attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactRepliedAt: fakeCreatedMessage.createdAt,
+      }),
     )
   })
 
@@ -2237,6 +2263,7 @@ describe("receiveMessage — new contact MAC gate", () => {
       },
       contactLocation: { latitude: 10.75, longitude: 106.66 },
       at: fakeCreatedMessage.createdAt,
+      contactRepliedAt: fakeCreatedMessage.createdAt,
     })
   })
 
@@ -3404,6 +3431,7 @@ describe("contact source taxonomy", () => {
       },
       contactLocation: undefined,
       at: fakeCreatedMessage.createdAt,
+      contactRepliedAt: fakeCreatedMessage.createdAt,
     })
     expect(
       vi

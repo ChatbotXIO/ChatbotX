@@ -11,6 +11,36 @@ import type {
 } from "../schema/action"
 import { threadsCommentResource } from "../schema/resource"
 
+/**
+ * Narrows a stored row to the shape Threads actually supports. The one mapper
+ * both the list and the get read through, so the two cannot disagree.
+ *
+ * `includeKeywords` and a text reply's `values` pass through untouched: the
+ * edit form writes back whatever it reads, so dropping either here would erase
+ * a `mentions` filter or every text after the first on the next save.
+ */
+const toThreadsResource = (
+  record: Awaited<
+    ReturnType<typeof commentAutomationService.getThreadsAutomation>
+  > &
+    object,
+) => ({
+  ...record,
+  post: {
+    type: record.post.type === "postIds" ? "postIds" : "all",
+    value: record.post.type === "postIds" ? record.post.value : [],
+  },
+  privateReply: { type: "none", value: null },
+  publicReply:
+    record.publicReply.type === "none"
+      ? { type: "none", value: null }
+      : {
+          type: record.publicReply.type,
+          value: record.publicReply.value ?? "",
+          values: record.publicReply.values,
+        },
+})
+
 export async function listThreadsComments(
   input: ListThreadsCommentsRequest,
 ): Promise<ListThreadsCommentsResponse> {
@@ -30,35 +60,7 @@ export async function listThreadsComments(
   )
 
   return {
-    data: threadsCommentResource.array().parse(
-      data.map((item) => ({
-        ...item,
-        post: {
-          type: item.post.type === "postIds" ? "postIds" : "all",
-          value: item.post.type === "postIds" ? item.post.value : [],
-        },
-        privateReply: { type: "none", value: null },
-        publicReply:
-          item.publicReply.type === "none"
-            ? { type: "none", value: null }
-            : {
-                type: item.publicReply.type,
-                value: item.publicReply.value ?? "",
-              },
-        includeKeywords: {
-          type:
-            item.includeKeywords.type === "equal" ||
-            item.includeKeywords.type === "contain"
-              ? item.includeKeywords.type
-              : "all",
-          value:
-            item.includeKeywords.type === "equal" ||
-            item.includeKeywords.type === "contain"
-              ? item.includeKeywords.value
-              : [],
-        },
-      })),
-    ),
+    data: threadsCommentResource.array().parse(data.map(toThreadsResource)),
     pageCount: Math.ceil(total / pagination.limit),
   }
 }
@@ -75,31 +77,5 @@ export async function getThreadsComment(workspaceId: string, id: string) {
     throw new Error("Threads Comment Automation not found")
   }
 
-  return threadsCommentResource.parse({
-    ...record,
-    post: {
-      type: record.post.type === "postIds" ? "postIds" : "all",
-      value: record.post.type === "postIds" ? record.post.value : [],
-    },
-    privateReply: { type: "none", value: null },
-    publicReply:
-      record.publicReply.type === "none"
-        ? { type: "none", value: null }
-        : {
-            type: record.publicReply.type,
-            value: record.publicReply.value ?? "",
-          },
-    includeKeywords: {
-      type:
-        record.includeKeywords.type === "equal" ||
-        record.includeKeywords.type === "contain"
-          ? record.includeKeywords.type
-          : "all",
-      value:
-        record.includeKeywords.type === "equal" ||
-        record.includeKeywords.type === "contain"
-          ? record.includeKeywords.value
-          : [],
-    },
-  })
+  return threadsCommentResource.parse(toThreadsResource(record))
 }

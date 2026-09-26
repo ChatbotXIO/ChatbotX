@@ -1,3 +1,9 @@
+import {
+  COMMENT_REPLY_MAX_TEXTS,
+  commentExcludeKeywordsTypes,
+  commentIncludeKeywordsSchema,
+  resolveReplyTexts,
+} from "@chatbotx.io/database/partials"
 import type { CommentAutomationModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -25,6 +31,7 @@ const tiktokCommentValidationKeyNames = [
   "keywordsRequired",
   "delayMustBePositive",
   "delayMustBeZero",
+  "replyTextRequired",
   "hideKeywordsRequired",
   "atLeastOneFieldRequired",
 ] as const
@@ -70,12 +77,25 @@ const trimmedArray = (maxItems: number, maxLength: number) =>
 export function createTiktokCommentRequestSchema(
   validationMessages: TiktokCommentValidationMessages = defaultTiktokCommentValidationMessages,
 ) {
+  // A `text` public reply is a list of up to COMMENT_REPLY_MAX_TEXTS
+  // messages, each posted as its own comment reply — `value` mirrors the
+  // first one (see `normalizeReplyTexts`). At least one must be non-empty.
   const tiktokReplySchema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("none"), value: z.null() }),
-    z.object({
-      type: z.literal("text"),
-      value: z.string().trim().min(1).max(MAX_REPLY_LENGTH),
-    }),
+    z
+      .object({
+        type: z.literal("text"),
+        value: z.string().trim().max(MAX_REPLY_LENGTH),
+        values: z
+          .array(z.object({ value: z.string().trim().max(MAX_REPLY_LENGTH) }))
+          .max(COMMENT_REPLY_MAX_TEXTS)
+          .optional(),
+      })
+      .refine(
+        (reply) =>
+          resolveReplyTexts({ ...reply, value: reply.value }).length > 0,
+        { message: validationMessages.replyTextRequired, path: ["values"] },
+      ),
     z.object({
       type: z.literal("flow"),
       value: zodBigintAsString(),
@@ -127,12 +147,16 @@ export function createTiktokCommentRequestSchema(
       }
     })
 
-  const tiktokIncludeKeywordsSchema = z
-    .object({
-      type: z.enum(["all", "equal", "contain"]),
-      value: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
-    })
+  // The shared schema owns the include types and the `mentionCount` rule, so
+  // the worker, the Meta channels and this form cannot drift; only `value`
+  // gets this form's length limits on top.
+  const tiktokIncludeKeywordsSchema = commentIncludeKeywordsSchema
+    .extend({ value: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH) })
     .superRefine((value, ctx) => {
+      // `mentions` ignores keywords entirely — the worker never reads them.
+      if (value.type === "mentions") {
+        return
+      }
       if (value.type === "all" && value.value.length > 0) {
         ctx.addIssue({
           code: "custom",
@@ -150,24 +174,27 @@ export function createTiktokCommentRequestSchema(
     })
 
   // `likeUserComment` is here and not on the Threads schema because TikTok
-  // really can like a comment. `trackUserTags` stays off the schema entirely —
-  // TikTok sends no tagged users, so the service pins it false.
+  // really can like a comment. `trackUserTags` counts `@handle`s in the text —
+  // TikTok sends no structured tag list.
   const tiktokOptionsSchema = z.object({
     replyToNewContactsOnly: z.boolean(),
     replyOncePerUserPerPost: z.boolean(),
     likeUserComment: z.boolean(),
     replyToUsersWhoCommentedOnOtherPosts: z.boolean(),
     ignoreCommentReplies: z.boolean(),
+    trackUserTags: z.boolean().optional(),
   })
 
-  // `hasImage`/`hasVideo` are absent on purpose: the attachment lookup that
-  // answers them is messenger-only, so a TikTok switch would never match.
+  // `hasImage`/`hasVideo`/`hasGif` are absent on purpose: TikTok exposes no
+  // attachment data, so those switches would never match. Emoji is read from
+  // the text.
   const tiktokHideCommentsSchema = z
     .object({
       all: z.boolean(),
       hasPhoneNumber: z.boolean(),
       hasLink: z.boolean(),
       hasKeywords: z.boolean(),
+      hasEmoji: z.boolean().optional(),
       keywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
       showCommentsAfter: z.enum([
         "none",
@@ -240,6 +267,10 @@ export function createTiktokCommentRequestSchema(
     privateReply: tiktokPrivateReplySchema,
     includeKeywords: tiktokIncludeKeywordsSchema,
     excludeKeywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
+    // Optional, never defaulted here: the update schema is this one made
+    // `.partial()`, and a default would reset the stored match type on every
+    // PATCH that did not mention it. The column defaults to `contain`.
+    excludeKeywordsType: commentExcludeKeywordsTypes.optional(),
     options: tiktokOptionsSchema,
     hideComments: tiktokHideCommentsSchema,
     replyAfter: tiktokReplyAfterSchema,

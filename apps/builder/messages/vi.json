@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Sai từ khoá",
       "contactNotNew": "Contact không mới",
       "alreadyRepliedOnPost": "Đã trả lời ở bài viết này",
-      "engagedOnOtherPost": "Đã tương tác ở bài viết khác"
+      "engagedOnOtherPost": "Đã tương tác ở bài viết khác",
+      "mentionCountNotMatched": "Số lượt nhắc tên không khớp"
+    },
+    "replyTo": {
+      "mentions": "Bình luận có đủ số người được nhắc tên",
+      "mentionCount": "Số người được tag",
+      "mentionCountDescription": "Chỉ bình luận tag từ số người này trở lên (@tên) mới thỏa điều kiện.",
+      "mentionCountOption": "{count, plural, one {# người} other {# người}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Bình luận bằng",
+      "contain": "Bình luận có chứa"
+    },
+    "hideComments": {
+      "hasGif": "Chứa GIF",
+      "hasEmoji": "Chứa Emoji"
+    },
+    "trackUserTags": {
+      "label": "Theo dõi khi người dùng gắn thẻ người khác",
+      "descriptionText": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     }
   },
   "condition": {
@@ -2486,6 +2505,8 @@
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
       "unarchiveConversation": "Bỏ lưu trữ cuộc trò chuyện",
       "unassignConversation": "Bỏ gán cuộc trò chuyện",
+      "markConversationAsUnread": "Đánh dấu cuộc trò chuyện là chưa đọc",
+      "markConversationAsRead": "Đánh dấu cuộc trò chuyện là đã đọc",
       "unfollowConversation": "Bỏ theo dõi cuộc trò chuyện",
       "unsubscribeBroadcast": "Hủy đăng ký phát sóng",
       "getUserData": "Lấy đầu vào người dùng",
@@ -4731,13 +4752,13 @@
     "privateReply": "Trả lời riêng tư (inbox)",
     "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định, chatbot flow, hoặc tắt.",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng.",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng. Hỗ trợ spintax.",
     "replyMessage": "Nội dung trả lời",
     "replyMessagePlaceholder": "Nhập nội dung trả lời...",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywordsTypeDescription": "Chọn loại bình luận nào sẽ kích hoạt tự động hóa này.",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "excludeKeywordsDescription": "Bình luận chứa bất kỳ từ khóa nào trong danh sách này sẽ bị bỏ qua bởi cả inbox và phản hồi công khai.",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
@@ -4800,7 +4821,7 @@
       "ignoreCommentReplies": "Không trả lời các reply bình luận",
       "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
       "trackUserTags": "Theo dõi khi người dùng gắn thẻ người khác",
-      "trackUserTagsDescription": "Dùng '{{total_tagged}}' để biết có bao nhiêu người được gắn thẻ. Dùng '{{total_new_tagged}}' để biết có bao nhiêu người được gắn thẻ chưa nằm trong danh sách liên hệ."
+      "trackUserTagsDescription": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     },
     "hideComments": {
       "all": "Ẩn tất cả bình luận",
@@ -4834,13 +4855,13 @@
     "privateReply": "Trả lời riêng tư (inbox)",
     "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định, chatbot flow, hoặc tắt.",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng.",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng. Hỗ trợ spintax.",
     "replyMessage": "Nội dung trả lời",
     "replyMessagePlaceholder": "Nhập nội dung trả lời...",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywordsTypeDescription": "Chọn loại bình luận nào sẽ kích hoạt tự động hóa này.",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "excludeKeywordsDescription": "Bình luận chứa bất kỳ từ khóa nào trong danh sách này sẽ bị bỏ qua bởi cả inbox và phản hồi công khai.",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
@@ -4902,7 +4923,7 @@
       "ignoreCommentReplies": "Không trả lời các reply bình luận",
       "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
       "trackUserTags": "Theo dõi khi người dùng gắn thẻ người khác",
-      "trackUserTagsDescription": "Dùng '{{total_tagged}}' để biết có bao nhiêu người được gắn thẻ. Dùng '{{total_new_tagged}}' để biết có bao nhiêu người được gắn thẻ chưa nằm trong danh sách liên hệ."
+      "trackUserTagsDescription": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     },
     "hideComments": {
       "all": "Ẩn tất cả bình luận",
@@ -4938,13 +4959,13 @@
     "publicOnlyNote": "Threads hiện chỉ hỗ trợ phản hồi công khai.",
     "trackCommentsOn": "Theo dõi bình luận trên",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Gửi phản hồi công khai cho các bình luận Threads phù hợp.",
+    "publicReplyDescription": "Gửi phản hồi công khai cho các bình luận Threads phù hợp. Tối đa 10 tin nhắn văn bản (hỗ trợ spintax), mỗi tin được đăng thành một trả lời riêng.",
     "replyMessage": "Nội dung trả lời",
     "replyFlow": "Flow trả lời",
     "replyAIAgent": "AI Agent trả lời",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
     "replyAfterValue": "Giá trị",
@@ -4953,7 +4974,8 @@
     "card": {
       "targeting": "Nhắm mục tiêu & Trả lời",
       "filters": "Bộ lọc & Tùy chọn",
-      "replyTiming": "Thời điểm trả lời"
+      "replyTiming": "Thời điểm trả lời",
+      "hideComments": "Ẩn bình luận"
     },
     "postType": {
       "all": "Tất cả bài viết",
@@ -4995,7 +5017,21 @@
       "keywordsRequired": "Hãy nhập ít nhất một từ khóa cho kiểu khớp đã chọn.",
       "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
       "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời gian đã chọn.",
-      "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật."
+      "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật.",
+      "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời.",
+      "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa."
+    },
+    "hideCommentsDescription": "Chỉ có thể ẩn các trả lời cấp cao nhất trên bài viết của bạn.",
+    "hideComments": {
+      "all": "Ẩn tất cả bình luận",
+      "hasPhoneNumber": "Chứa số điện thoại",
+      "hasLink": "Chứa liên kết",
+      "hasKeywords": "Chứa từ khóa",
+      "keywords": "Từ khóa",
+      "showCommentsAfter": "Hiện bình luận sau"
+    },
+    "showCommentsAfter": {
+      "none": "Không bao giờ"
     }
   },
   "tiktokCommentAutomation": {
@@ -5007,13 +5043,13 @@
     "deliveryDelayNote": "TikTok gửi sự kiện bình luận trong vòng năm phút, nên phản hồi không tức thì. Độ trễ bạn đặt sẽ cộng thêm vào khoảng đó.",
     "trackCommentsOn": "Theo dõi bình luận trên",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Gửi trả lời công khai cho các bình luận TikTok khớp điều kiện.",
+    "publicReplyDescription": "Gửi trả lời công khai cho các bình luận TikTok khớp điều kiện. Tối đa 10 tin nhắn văn bản (hỗ trợ spintax), mỗi tin được đăng thành một trả lời riêng.",
     "replyMessage": "Nội dung trả lời",
     "replyFlow": "Kịch bản trả lời",
     "replyAIAgent": "AI Agent trả lời",
     "includeKeywordsType": "Trả lời khi",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Bỏ qua bình luận chứa các từ khóa này",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "keywordsPlaceholder": "Nhập rồi nhấn Enter...",
     "replyAfter": "Trả lời sau",
     "replyAfterValue": "Giá trị",
@@ -5091,7 +5127,8 @@
       "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
       "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời điểm đã chọn.",
       "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa.",
-      "atLeastOneFieldRequired": "Cần ít nhất một trường."
+      "atLeastOneFieldRequired": "Cần ít nhất một trường.",
+      "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời."
     },
     "privateReply": "Trả lời riêng (Comment-to-Message)",
     "privateReplyDescription": "Gửi tin nhắn riêng cho người bình luận. TikTok chỉ cho phép với bình luận được TikTok đánh dấu là có ý định mua cao, nên sẽ không chạy với mọi bình luận khớp điều kiện.",

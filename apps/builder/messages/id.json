@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Kata kunci tidak cocok",
       "contactNotNew": "Kontak bukan baru",
       "alreadyRepliedOnPost": "Sudah dibalas di postingan ini",
-      "engagedOnOtherPost": "Sudah berinteraksi di postingan lain"
+      "engagedOnOtherPost": "Sudah berinteraksi di postingan lain",
+      "mentionCountNotMatched": "Jumlah sebutan tidak cocok"
+    },
+    "replyTo": {
+      "mentions": "Komentar dengan cukup sebutan",
+      "mentionCount": "Jumlah orang yang ditandai",
+      "mentionCountDescription": "Hanya komentar yang menandai setidaknya sejumlah orang ini (@nama) yang cocok.",
+      "mentionCountOption": "{count, plural, one {# orang} other {# orang}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Komentar sama dengan",
+      "contain": "Komentar yang mengandung"
+    },
+    "hideComments": {
+      "hasGif": "Berisi GIF",
+      "hasEmoji": "Berisi emoji"
+    },
+    "trackUserTags": {
+      "label": "Lacak jika pengguna menandai pengguna lain",
+      "descriptionText": "Menghitung akun yang ditandai di setiap komentar dan menambahkannya ke total kontak dari semua komentar. Gunakan '{{total_tagged}}' untuk semua akun yang ditandai dan '{{total_new_tagged}}' untuk akun yang belum pernah mengirim pesan ke halaman Anda atau menjadi kontak."
     }
   },
   "condition": {
@@ -2344,6 +2363,8 @@
       "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
       "unarchiveConversation": "Keluarkan Percakapan dari Arsip",
       "unassignConversation": "Batalkan Penetapan Percakapan",
+      "markConversationAsUnread": "Tandai Percakapan sebagai Belum Dibaca",
+      "markConversationAsRead": "Tandai Percakapan sebagai Dibaca",
       "unfollowConversation": "Berhenti Mengikuti Percakapan",
       "unsubscribeBroadcast": "Berhenti Berlangganan Siaran",
       "getUserData": "Ambil Data Pengguna",
@@ -4692,13 +4713,13 @@
     "privateReply": "Balasan pribadi (kotak masuk)",
     "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap, alur chatbot, atau nonaktifkan.",
     "publicReply": "Balasan publik untuk komentar",
-    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah.",
+    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah. Mendukung spintax.",
     "replyMessage": "Pesan balasan",
     "replyMessagePlaceholder": "Masukkan pesan balasan...",
     "includeKeywordsType": "Balas",
     "includeKeywordsTypeDescription": "Pilih komentar yang akan ditanggapi otomatisasi ini.",
     "includeKeywords": "Kata kunci yang dicocokkan",
-    "excludeKeywords": "Kecualikan komentar dengan kata kunci ini",
+    "excludeKeywords": "Kecualikan komentar yang mengandung",
     "excludeKeywordsDescription": "Komentar yang berisi salah satu kata kunci ini akan diabaikan oleh otomatisasi balasan kotak masuk dan publik.",
     "keywordsPlaceholder": "Ketik dan tekan Enter...",
     "replyAfter": "Balas setelah",
@@ -4761,7 +4782,7 @@
       "ignoreCommentReplies": "Jangan balas balasan komentar",
       "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas.",
       "trackUserTags": "Lacak jika pengguna menandai pengguna lain",
-      "trackUserTagsDescription": "Gunakan '{{total_tagged}}' untuk mengetahui berapa banyak pengguna yang ditandai. Gunakan '{{total_new_tagged}}' untuk mengetahui berapa banyak orang yang ditandai belum ada di daftar kontak."
+      "trackUserTagsDescription": "Menghitung akun yang ditandai di setiap komentar dan menambahkannya ke total kontak dari semua komentar. Gunakan '{{total_tagged}}' untuk semua akun yang ditandai dan '{{total_new_tagged}}' untuk akun yang belum pernah mengirim pesan ke halaman Anda atau menjadi kontak."
     },
     "hideComments": {
       "all": "Sembunyikan semua komentar",
@@ -4795,13 +4816,13 @@
     "privateReply": "Balasan pribadi (kotak masuk)",
     "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap, alur chatbot, atau nonaktifkan.",
     "publicReply": "Balasan publik untuk komentar",
-    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah.",
+    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah. Mendukung spintax.",
     "replyMessage": "Pesan balasan",
     "replyMessagePlaceholder": "Masukkan pesan balasan...",
     "includeKeywordsType": "Balas",
     "includeKeywordsTypeDescription": "Pilih komentar yang akan ditanggapi otomatisasi ini.",
     "includeKeywords": "Kata kunci yang dicocokkan",
-    "excludeKeywords": "Kecualikan komentar dengan kata kunci ini",
+    "excludeKeywords": "Kecualikan komentar yang mengandung",
     "excludeKeywordsDescription": "Komentar yang berisi salah satu kata kunci ini akan diabaikan oleh otomatisasi balasan kotak masuk dan publik.",
     "keywordsPlaceholder": "Ketik dan tekan Enter...",
     "replyAfter": "Balas setelah",
@@ -4863,7 +4884,7 @@
       "ignoreCommentReplies": "Jangan balas balasan komentar",
       "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas.",
       "trackUserTags": "Lacak jika pengguna menandai pengguna lain",
-      "trackUserTagsDescription": "Gunakan '{{total_tagged}}' untuk mengetahui berapa banyak pengguna yang ditandai. Gunakan '{{total_new_tagged}}' untuk mengetahui berapa banyak orang yang ditandai belum ada di daftar kontak."
+      "trackUserTagsDescription": "Menghitung akun yang ditandai di setiap komentar dan menambahkannya ke total kontak dari semua komentar. Gunakan '{{total_tagged}}' untuk semua akun yang ditandai dan '{{total_new_tagged}}' untuk akun yang belum pernah mengirim pesan ke halaman Anda atau menjadi kontak."
     },
     "hideComments": {
       "all": "Sembunyikan semua komentar",
@@ -4899,13 +4920,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Hingga 10 pesan teks (mendukung spintax), masing-masing diposting sebagai balasan terpisah.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Kecualikan komentar yang mengandung",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4914,7 +4935,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Sembunyikan Komentar"
     },
     "postType": {
       "all": "All posts",
@@ -4956,7 +4978,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Masukkan setidaknya satu pesan balasan.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Hanya balasan tingkat atas pada postingan Anda yang dapat disembunyikan.",
+    "hideComments": {
+      "all": "Sembunyikan semua komentar",
+      "hasPhoneNumber": "Mengandung nomor telepon",
+      "hasLink": "Mengandung tautan",
+      "hasKeywords": "Mengandung kata kunci",
+      "keywords": "Kata Kunci",
+      "showCommentsAfter": "Tampilkan komentar setelah"
+    },
+    "showCommentsAfter": {
+      "none": "Jangan pernah"
     }
   },
   "tiktokCommentAutomation": {
@@ -4968,13 +5004,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Hingga 10 pesan teks (mendukung spintax), masing-masing diposting sebagai balasan terpisah.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Kecualikan komentar yang mengandung",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5052,7 +5088,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Masukkan setidaknya satu pesan balasan."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

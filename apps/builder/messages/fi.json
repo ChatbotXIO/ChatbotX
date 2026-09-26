@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Avainsanat eivät täsmänneet",
       "contactNotNew": "Kontakti ei ole uusi",
       "alreadyRepliedOnPost": "Jo vastattu tässä julkaisussa",
-      "engagedOnOtherPost": "Jo vuorovaikutuksessa toisessa julkaisussa"
+      "engagedOnOtherPost": "Jo vuorovaikutuksessa toisessa julkaisussa",
+      "mentionCountNotMatched": "Mainintojen määrä ei täsmännyt"
+    },
+    "replyTo": {
+      "mentions": "Kommentit, joissa on tarpeeksi mainintoja",
+      "mentionCount": "Merkittyjen henkilöiden määrä",
+      "mentionCountDescription": "Vain kommentit, jotka merkitsevät vähintään näin monta henkilöä (@nimi), täsmäävät.",
+      "mentionCountOption": "{count, plural, one {# henkilö} other {# henkilöä}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Kommentit, jotka ovat yhtä kuin",
+      "contain": "Kommentit, jotka sisältävät"
+    },
+    "hideComments": {
+      "hasGif": "Sisältää GIF-kuvan",
+      "hasEmoji": "Sisältää emojin"
+    },
+    "trackUserTags": {
+      "label": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
+      "descriptionText": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
     }
   },
   "condition": {
@@ -2344,6 +2363,8 @@
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
       "unarchiveConversation": "Palauta keskustelu arkistosta",
       "unassignConversation": "Poista keskustelun määritys",
+      "markConversationAsUnread": "Merkitse keskustelu lukemattomaksi",
+      "markConversationAsRead": "Merkitse keskustelu luetuksi",
       "unfollowConversation": "Lopeta keskustelun seuranta",
       "unsubscribeBroadcast": "Peru joukkolähetys",
       "getUserData": "Hae käyttäjätiedot",
@@ -4692,13 +4713,13 @@
     "privateReply": "Yksityinen vastaus (saapuneet)",
     "privateReplyDescription": "Lähetä yksityisviesti kommentoijan saapuneet-kansioon. Valitse AI-agentti, kiinteä tekstimalli, chatbot-flow tai poista käytöstä.",
     "publicReply": "Julkinen vastaus kommenttiin",
-    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan.",
+    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan. Spintax on tuettu.",
     "replyMessage": "Vastausviesti",
     "replyMessagePlaceholder": "Kirjoita vastausviesti...",
     "includeKeywordsType": "Vastaa",
     "includeKeywordsTypeDescription": "Valitse kommentit, joihin tämä automaatio vastaa.",
     "includeKeywords": "Täsmättävät avainsanat",
-    "excludeKeywords": "Ohita näitä avainsanoja sisältävät kommentit",
+    "excludeKeywords": "Sulje pois kommentit, jotka sisältävät",
     "excludeKeywordsDescription": "Minkä tahansa näistä avainsanoista sisältävät kommentit ohitetaan sekä saapuneet- että julkisen vastauksen automaatiossa.",
     "keywordsPlaceholder": "Kirjoita ja paina Enter...",
     "replyAfter": "Vastaa viiveellä",
@@ -4761,7 +4782,7 @@
       "ignoreCommentReplies": "Älä vastaa kommenttien vastauksiin",
       "ignoreCommentRepliesDescription": "Ohita automaatio kommenteille, jotka ovat vastauksia muihin kommentteihin eivätkä ylätason kommentteja.",
       "trackUserTags": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
-      "trackUserTagsDescription": "Käytä '{{total_tagged}}' nähdäksesi, kuinka monta käyttäjää merkittiin. Käytä '{{total_new_tagged}}' nähdäksesi, kuinka moni merkityistä henkilöistä ei ole yhteystietoluettelossa."
+      "trackUserTagsDescription": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
     },
     "hideComments": {
       "all": "Piilota kaikki kommentit",
@@ -4795,13 +4816,13 @@
     "privateReply": "Yksityinen vastaus (saapuneet)",
     "privateReplyDescription": "Lähetä yksityisviesti kommentoijan saapuneet-kansioon. Valitse AI-agentti, kiinteä tekstimalli, chatbot-flow tai poista käytöstä.",
     "publicReply": "Julkinen vastaus kommenttiin",
-    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan.",
+    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan. Spintax on tuettu.",
     "replyMessage": "Vastausviesti",
     "replyMessagePlaceholder": "Kirjoita vastausviesti...",
     "includeKeywordsType": "Vastaa",
     "includeKeywordsTypeDescription": "Valitse kommentit, joihin tämä automaatio vastaa.",
     "includeKeywords": "Täsmättävät avainsanat",
-    "excludeKeywords": "Ohita näitä avainsanoja sisältävät kommentit",
+    "excludeKeywords": "Sulje pois kommentit, jotka sisältävät",
     "excludeKeywordsDescription": "Minkä tahansa näistä avainsanoista sisältävät kommentit ohitetaan sekä saapuneet- että julkisen vastauksen automaatiossa.",
     "keywordsPlaceholder": "Kirjoita ja paina Enter...",
     "replyAfter": "Vastaa viiveellä",
@@ -4863,7 +4884,7 @@
       "ignoreCommentReplies": "Älä vastaa kommenttien vastauksiin",
       "ignoreCommentRepliesDescription": "Ohita automaatio kommenteille, jotka ovat vastauksia muihin kommentteihin eivätkä ylätason kommentteja.",
       "trackUserTags": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
-      "trackUserTagsDescription": "Käytä '{{total_tagged}}' nähdäksesi, kuinka monta käyttäjää merkittiin. Käytä '{{total_new_tagged}}' nähdäksesi, kuinka moni merkityistä henkilöistä ei ole yhteystietoluettelossa."
+      "trackUserTagsDescription": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
     },
     "hideComments": {
       "all": "Piilota kaikki kommentit",
@@ -4899,13 +4920,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Enintään 10 tekstiviestiä (spintax tuettu), kukin julkaistaan erillisenä vastauksena.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Sulje pois kommentit, jotka sisältävät",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4914,7 +4935,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Piilota kommentit"
     },
     "postType": {
       "all": "All posts",
@@ -4956,7 +4978,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Anna vähintään yksi vastausviesti.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Vain julkaisujesi ylimmän tason vastaukset voidaan piilottaa.",
+    "hideComments": {
+      "all": "Piilota kaikki kommentit",
+      "hasPhoneNumber": "Sisältää puhelinnumeron",
+      "hasLink": "Sisältää linkin",
+      "hasKeywords": "Sisältää avainsanoja",
+      "keywords": "Avainsanat",
+      "showCommentsAfter": "Näytä kommentit viiveellä"
+    },
+    "showCommentsAfter": {
+      "none": "Ei koskaan"
     }
   },
   "tiktokCommentAutomation": {
@@ -4968,13 +5004,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Enintään 10 tekstiviestiä (spintax tuettu), kukin julkaistaan erillisenä vastauksena.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Sulje pois kommentit, jotka sisältävät",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5052,7 +5088,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Anna vähintään yksi vastausviesti."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

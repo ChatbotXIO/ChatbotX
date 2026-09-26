@@ -110,11 +110,14 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    | public reply | ✅ | ✅ | ✅ | ✅ | ✅ |
    | private DM reply (`PRIVATE_REPLY_TEXT_SENDERS`) | ✅ | ✅ | ✅ | ❌ | ⚠️ |
    | like (`supportsCommentLike`) | ✅ | ✅ | ✅ | ❌ | ✅ |
-   | hide (`supportsHideComments`) | ✅ | ✅ | ✅ | ❌ | ✅ |
+   | hide (`supportsHideComments`) | ✅ | ✅ | ✅ | ✅ | ✅ |
    | attachment lookup (`hasImage`/`hasVideo`) | ✅ | ❌ | ❌ | ❌ | ❌ |
-   | tag tracking (`trackUserTags`) | ✅ | ✅ | ✅ | ❌ | ❌ |
+   | GIF hide (`commentAutomationChannelSupportsHideGif`) | ✅ | ❌ | ❌ | ✅ | ❌ |
+   | tag tracking / `mentions` filter | ✅ exact | ✅ text | ✅ text | ✅ text | ✅ text |
 
-   Threads has no DM API at all. TikTok's ⚠️ is **conditional**, not partial: through
+   Threads has no DM API at all; it hides only TOP-LEVEL replies (`manage_reply` — the worker
+   skips nested ones via `supportsHideForComment`) and
+   answers `hasGif` from the reply's `gif_url`. TikTok's ⚠️ is **conditional**, not partial: through
    Comment-to-Message it CAN answer a comment with a DM addressed by `comment_id` alone,
    but only for comments TikTok's own classifier flagged as high intent (the
    `im_receive_high_intent_comment` webhook, which rides the `DIRECT_MESSAGE`
@@ -170,21 +173,23 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    nothing, because a handler can fail before its send and `getUserData` declares only
    `[success, skip]`, so an error does not branch and the run continues to the next step.
 
-8. **`options.trackUserTags` is the one option that is not a filter, and the two channels
-   resolve it by completely different mechanisms.** It never skips — it stamps
-   `totalTagged`/`totalNewTagged` onto the comment message's `contentAttributes`, which is
-   where `{{total_tagged}}`/`{{total_new_tagged}}` read them from via `getLastUserComment`
-   (the same path as `{{last_post_id}}`, so both are **last-comment scoped, not lifetime
-   totals**, and the write must stay `await`ed *before* the reply dispatches or the first
-   comment renders an empty value and only a retry looks right). Facebook gets real user
-   ids from the webhook's `message_tags` (Graph fallback when absent) and matches
-   `ContactInbox.sourceId`; **Instagram has no tagged-user data at all** — no webhook
-   field, no `message_tags` on the IG Comment node — so it regexes `@handle` out of the
-   text and matches `ContactInbox.sourceUsername`. Don't "fix" the IG branch by looking
-   for a structured field; it does not exist (verified against production payloads). An
-   absent key resolving to `null` rather than `0` is deliberate: a flow must be able to
-   tell "nobody was tagged" from "this automation never tracked". See `comment-tags.ts`
-   and the docs' Tag tracking section for the two IG accuracy caveats.
+8. **`options.trackUserTags` is the one option that is not a filter, and its totals are
+   lifetime, per contact.** It never skips — it adds the comment's counts to
+   `Contact.totalTagged`/`totalNewTagged` (`contactService.incrementTagCounters`, an atomic
+   `col + n`), which is what `{{total_tagged}}`/`{{total_new_tagged}}` read. Two rules
+   keep the totals honest: (a) it runs **once per comment, before the loop** — never
+   inside it, or two automations with the option on double-count, and never after the
+   reply filters, or "reply once per user per post" stops a repeat commenter being
+   counted; (b) the comment message's `contentAttributes` is stamped **before** the
+   contact is incremented and a stamped message is skipped — that stamp is the only
+   thing making a BullMQ retry a no-op. Keep it `await`ed before the reply dispatches.
+   Facebook resolves tags to real user ids (`message_tags`, Graph fallback) and matches
+   `ContactInbox.sourceId`; **Instagram, Threads and TikTok have no tagged-user data at
+   all**, so `@handle` is regexed out of the text and matched against
+   `sourceUsername` (plus `sourceId` on Threads, which keys contacts by username). Don't
+   "fix" those by looking for a structured field; it does not exist. The same mention
+   list backs the `includeKeywords.type: "mentions"` filter (exact count, 1–5). See
+   `comment-tags.ts` and the docs' Tag tracking section.
 
 9. **Instagram comment replies carry text only.** `POST /{ig-comment-id}/replies` has no
    `attachment_url` — that is Facebook-Page-only (`integrations/messenger`). Both Instagram

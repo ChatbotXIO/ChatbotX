@@ -31,7 +31,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: (...args: unknown[]) => ({ sql: args }),
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({
+vi.mock("@chatbotx.io/database/partials", async () => ({
+  // The real allowlist, so the pin below is tested against what ships. Read
+  // from the source file, not the barrel, which pulls in `@chatbotx.io/utils`
+  // (mocked below).
+  commentAutomationChannelSupportsHideGif: (
+    await vi.importActual<
+      typeof import("../../database/src/partials/comment-automation")
+    >("../../database/src/partials/comment-automation")
+  ).commentAutomationChannelSupportsHideGif,
   commentAutomationTypes: { enum: { messenger: "messenger" } },
   igCommentAutomationTypes: {
     options: ["instagram", "instagramFacebook"],
@@ -220,6 +228,90 @@ describe("commentAutomationService — type-scoped writes", () => {
       expect.objectContaining({
         type: "instagramFacebook",
         workspaceId: "1",
+      }),
+    )
+  })
+})
+
+// Instagram delivers comment text only, so a stored `hasGif` could never
+// match — a public-API or MCP client must not be able to persist one.
+describe("commentAutomationService — hasGif capability pin", () => {
+  const hideComments = {
+    all: false,
+    hasPhoneNumber: false,
+    hasImage: false,
+    hasVideo: false,
+    hasLink: false,
+    hasKeywords: false,
+    hasGif: true,
+    hasEmoji: false,
+    keywords: [],
+    showCommentsAfter: "none" as const,
+  }
+
+  test("createInstagram stores hasGif as false", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagram",
+      data: { name: "hello", hideComments },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hideComments: expect.objectContaining({ hasGif: false }),
+      }),
+    )
+  })
+
+  test("updateInstagram stores hasGif as false", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "instagramFacebook" })
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await commentAutomationService.updateInstagram(
+      { workspaceId: "1", id: "9" },
+      { hideComments },
+    )
+
+    expect(set).toHaveBeenCalledWith({
+      hideComments: { ...hideComments, hasGif: false },
+    })
+  })
+
+  test("updateInstagram leaves a write without hideComments untouched", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "instagram" })
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await commentAutomationService.updateInstagram(
+      { workspaceId: "1", id: "9" },
+      { name: "x" },
+    )
+
+    expect(set).toHaveBeenCalledWith({ name: "x" })
+  })
+
+  test("createMessenger keeps hasGif, which Facebook can detect", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createMessenger({
+      workspaceId: "1",
+      data: { name: "hello", hideComments },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hideComments: expect.objectContaining({ hasGif: true }),
       }),
     )
   })

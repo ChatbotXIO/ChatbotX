@@ -36,6 +36,8 @@ import { klaviyoSyncProfileSchema } from "./steps/klaviyo-sync-profile"
 import { mailchimpAddMemberSchema } from "./steps/mailchimp-add-member"
 import { mailerLiteAddSubscriberSchema } from "./steps/mailer-lite-add-subscriber"
 import { makeStepSchema } from "./steps/make"
+import { markConversationAsReadStepSchema } from "./steps/mark-conversation-as-read"
+import { markConversationAsUnreadStepSchema } from "./steps/mark-conversation-as-unread"
 import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { moosendCreateContactSchema } from "./steps/moosend-create-contact"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
@@ -71,6 +73,8 @@ const inboxSteps = [
   assignConversationStepSchema,
   autoAssignConversationStepSchema,
   unassignConversationStepSchema,
+  markConversationAsUnreadStepSchema,
+  markConversationAsReadStepSchema,
   followConversationStepSchema,
   unfollowConversationStepSchema,
   archiveConversationStepSchema,

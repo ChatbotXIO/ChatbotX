@@ -26,6 +26,7 @@ import {
   Layers2,
   LayersPlus,
   MailIcon,
+  MailOpenIcon,
   MegaphoneIcon,
   MessageCircleMoreIcon,
   MessageCirclePlusIcon,
@@ -340,6 +341,16 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.unassignConversation"),
         icon: MessageCircleXIcon,
         stepType: stepTypes.enum.unassignConversation,
+      },
+      {
+        label: t("flows.actions.markConversationAsUnread"),
+        icon: MailIcon,
+        stepType: stepTypes.enum.markConversationAsUnread,
+      },
+      {
+        label: t("flows.actions.markConversationAsRead"),
+        icon: MailOpenIcon,
+        stepType: stepTypes.enum.markConversationAsRead,
       },
       {
         label: t("flows.actions.followConversation"),

@@ -553,7 +553,26 @@
       "keywordsNotMatched": "Keywords did not match",
       "contactNotNew": "Contact is not new",
       "alreadyRepliedOnPost": "Already replied on this post",
-      "engagedOnOtherPost": "Already engaged on another post"
+      "engagedOnOtherPost": "Already engaged on another post",
+      "mentionCountNotMatched": "Mention count did not match"
+    },
+    "replyTo": {
+      "mentions": "Comments when enough mentions",
+      "mentionCount": "Number of people tagged",
+      "mentionCountDescription": "Only comments that tag at least this many people (@name) match.",
+      "mentionCountOption": "{count, plural, one {# person} other {# people}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Comments equal to",
+      "contain": "Comments that contain"
+    },
+    "hideComments": {
+      "hasGif": "Contains GIF",
+      "hasEmoji": "Contains Emoji"
+    },
+    "trackUserTags": {
+      "label": "Track if a user tags other users",
+      "descriptionText": "Counts the accounts tagged in each comment and adds them to the contact's running totals across all comments. Use '{{total_tagged}}' for every tagged account and '{{total_new_tagged}}' for accounts that have never messaged your page or been a contact."
     }
   },
   "condition": {
@@ -2689,6 +2708,8 @@
       "transferConversationToHuman": "Transfer Conversation to Human",
       "unarchiveConversation": "Unarchive Conversation",
       "unassignConversation": "Unassign Conversation",
+      "markConversationAsUnread": "Mark Conversation as Unread",
+      "markConversationAsRead": "Mark Conversation as Read",
       "unfollowConversation": "Unfollow Conversation",
       "unsubscribeBroadcast": "Unsubscribe Broadcast",
       "getUserData": "Get User Data",
@@ -4935,13 +4956,13 @@
     "privateReply": "Private reply (inbox)",
     "privateReplyDescription": "Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template, a chatbot flow, or disable.",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates, AI Agent, a chatbot flow, or no reply. Each message is posted as a separate reply.",
+    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates, AI Agent, a chatbot flow, or no reply. Each message is posted as a separate reply. Spintax is supported.",
     "replyMessage": "Reply message",
     "replyMessagePlaceholder": "Enter reply message...",
     "includeKeywordsType": "Reply to",
     "includeKeywordsTypeDescription": "Choose which comments this automation responds to.",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Exclude comments containing",
     "excludeKeywordsDescription": "Comments containing any of these keywords will be ignored by both inbox and public reply automation.",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
@@ -5004,7 +5025,7 @@
       "ignoreCommentReplies": "Don't reply to replies to comments",
       "ignoreCommentRepliesDescription": "Skip automation for comments that are replies to other comments, not top-level comments.",
       "trackUserTags": "Track if a user tags other users",
-      "trackUserTagsDescription": "Use '{{total_tagged}}' to find out many users was tagged. Use '{{total_new_tagged}}' to know how many people that aren't list of contacts have been tagged."
+      "trackUserTagsDescription": "Counts the accounts tagged in each comment and adds them to the contact's running totals across all comments. Use '{{total_tagged}}' for every tagged account and '{{total_new_tagged}}' for accounts that have never messaged your page or been a contact."
     },
     "hideComments": {
       "all": "Hide all comments",
@@ -5038,13 +5059,13 @@
     "privateReply": "Private reply (inbox)",
     "privateReplyDescription": "Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template, a chatbot flow, or disable.",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates, AI Agent, a chatbot flow, or no reply. Each message is posted as a separate reply.",
+    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates, AI Agent, a chatbot flow, or no reply. Each message is posted as a separate reply. Spintax is supported.",
     "replyMessage": "Reply message",
     "replyMessagePlaceholder": "Enter reply message...",
     "includeKeywordsType": "Reply to",
     "includeKeywordsTypeDescription": "Choose which comments this automation responds to.",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Exclude comments containing",
     "excludeKeywordsDescription": "Comments containing any of these keywords will be ignored by both inbox and public reply automation.",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
@@ -5106,7 +5127,7 @@
       "ignoreCommentReplies": "Don't reply to replies to comments",
       "ignoreCommentRepliesDescription": "Skip automation for comments that are replies to other comments, not top-level comments.",
       "trackUserTags": "Track if a user tags other users",
-      "trackUserTagsDescription": "Use '{{total_tagged}}' to find out many users was tagged. Use '{{total_new_tagged}}' to know how many people that aren't list of contacts have been tagged."
+      "trackUserTagsDescription": "Counts the accounts tagged in each comment and adds them to the contact's running totals across all comments. Use '{{total_tagged}}' for every tagged account and '{{total_new_tagged}}' for accounts that have never messaged your page or been a contact."
     },
     "hideComments": {
       "all": "Hide all comments",
@@ -5142,13 +5163,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Up to 10 text messages (spintax supported), each posted as a separate reply.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Exclude comments containing",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5157,7 +5178,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Hide Comments"
     },
     "postType": {
       "all": "All posts",
@@ -5199,7 +5221,21 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Enter at least one reply message.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Only top-level replies to your posts can be hidden.",
+    "hideComments": {
+      "all": "Hide all comments",
+      "hasPhoneNumber": "Contains phone number",
+      "hasLink": "Contains link",
+      "hasKeywords": "Contains keywords",
+      "keywords": "Keywords",
+      "showCommentsAfter": "Show comments after"
+    },
+    "showCommentsAfter": {
+      "none": "Never"
     }
   },
   "tiktokCommentAutomation": {
@@ -5211,13 +5247,13 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Up to 10 text messages (spintax supported), each posted as a separate reply.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Exclude comments containing",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5295,7 +5331,8 @@
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Enter at least one reply message."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",

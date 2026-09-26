@@ -11,10 +11,9 @@ import type { CommentAutomationChannelType } from "./channel-type"
  * Whether the channel can hide (and later unhide) a comment.
  *
  * Hiding maps to Meta's `POST /{comment-id}?is_hidden=true` for Facebook and
- * Instagram comments, and to `business/comment/hide/` on TikTok. The Threads
- * API exposes no moderation endpoint, so a Threads automation configured to
- * hide comments logs an unsupported-capability line rather than enqueuing a
- * state change the channel would reject.
+ * Instagram comments, to `business/comment/hide/` on TikTok, and to
+ * `POST /{reply-id}/manage_reply` on Threads (top-level replies only — see
+ * {@link supportsHideForComment}).
  *
  * An allowlist rather than a chain of `!==`: a channel added without a decision
  * here should default to "cannot", not inherit the capability by omission.
@@ -23,6 +22,7 @@ const CHANNELS_WITH_HIDE_COMMENTS = new Set<CommentAutomationChannelType>([
   "messenger",
   "instagram",
   "instagramFacebook",
+  "threads",
   "tiktok",
 ])
 
@@ -30,6 +30,42 @@ export function supportsHideComments(
   channelType: CommentAutomationChannelType,
 ): boolean {
   return CHANNELS_WITH_HIDE_COMMENTS.has(channelType)
+}
+
+/**
+ * Channels whose hide endpoint only accepts a top-level comment. Threads'
+ * `manage_reply` always rejects a nested reply — and the state change writes
+ * `attributes.hidden` to the DB before calling the channel, so letting one
+ * through leaves the inbox showing a hidden reply that is still public, plus a
+ * failing job and a failing unhide job later.
+ */
+const CHANNELS_HIDING_TOP_LEVEL_ONLY = new Set<CommentAutomationChannelType>([
+  "threads",
+])
+
+/** Whether this specific comment can be hidden on its channel. */
+export function supportsHideForComment(
+  channelType: CommentAutomationChannelType,
+  isReply: boolean,
+): boolean {
+  return (
+    supportsHideComments(channelType) &&
+    !(isReply && CHANNELS_HIDING_TOP_LEVEL_ONLY.has(channelType))
+  )
+}
+
+/**
+ * Any emoji that renders as one (😀, ❤️, 👍🏽 …). Not `\p{Emoji}`, which also
+ * covers the plain digits and `#`/`*` that only render as emoji inside a
+ * keycap sequence — a phone number would read as an emoji comment. Not bare
+ * `\p{Extended_Pictographic}` either, which also covers text-default symbols
+ * (©, ®, ™, ‼, ↔, ℹ) that appear in ordinary comments: those count only when
+ * followed by the U+FE0F emoji-presentation selector (e.g. ❤️ = ❤ + U+FE0F).
+ */
+const EMOJI_RE = /\p{Emoji_Presentation}|\p{Extended_Pictographic}️/u
+
+export function hasEmoji(text: string): boolean {
+  return EMOJI_RE.test(text)
 }
 
 /**
@@ -48,6 +84,8 @@ export function hasHideCommentAction(
     hideComments.hasVideo ||
     hideComments.hasLink ||
     hideComments.hasKeywords ||
+    Boolean(hideComments.hasGif) ||
+    Boolean(hideComments.hasEmoji) ||
     hideComments.showCommentsAfter !== "none"
   )
 }
@@ -97,6 +135,7 @@ export async function applyHideComments(
     messageCreatedAt: Date
     hasImage: boolean
     hasVideo: boolean
+    hasGif: boolean
   },
 ) {
   const text = message ?? ""
@@ -111,7 +150,9 @@ export async function applyHideComments(
         normalizedText.includes(normalizeForMatch(k)),
       )) ||
     (hideComments.hasImage && ctx.hasImage) ||
-    (hideComments.hasVideo && ctx.hasVideo)
+    (hideComments.hasVideo && ctx.hasVideo) ||
+    (Boolean(hideComments.hasGif) && ctx.hasGif) ||
+    (Boolean(hideComments.hasEmoji) && hasEmoji(text))
 
   if (!shouldHide) {
     return
