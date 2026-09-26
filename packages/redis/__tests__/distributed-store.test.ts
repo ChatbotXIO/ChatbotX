@@ -148,11 +148,11 @@ describe("distributedStoreFactory reservation scripts", () => {
     )
   })
 
-  test("maps reserve arguments, the unlimited sentinel, and current time", async () => {
+  test("maps reserve arguments, timestamps, and the unlimited sentinel", async () => {
     const { client, commands } = makeFakeRedis()
     const store = distributedStoreFactory(async () => client)
     vi.useFakeTimers()
-    vi.setSystemTime(1234)
+    vi.setSystemTime(1234 + LIVE_RESERVATION_MAX_AGE_MS)
 
     await store.reserveWithinLimit("quota:1", "mac", null, "r-1")
 
@@ -161,6 +161,7 @@ describe("distributedStoreFactory reservation scripts", () => {
       "mac",
       "-1",
       "r-1",
+      String(1234 + LIVE_RESERVATION_MAX_AGE_MS),
       "1234",
     )
   })

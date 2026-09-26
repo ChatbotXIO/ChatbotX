@@ -79,6 +79,9 @@ export const runNewContactTransaction = <T>(
   args: RunNewContactTransactionArgs<T>,
 ): Promise<NewContactTransactionResult<T>> =>
   db.transaction(async (tx) => {
+    if (args.touchReservations && !(await args.touchReservations())) {
+      throw new ReservationLostError()
+    }
     await setLocalStatementTimeout(tx, MAC_CREATE_STATEMENT_TIMEOUT)
     const created = await args.create(tx)
     let didCount = false

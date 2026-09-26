@@ -7,7 +7,7 @@ import {
   settledFieldFor,
 } from "../../redis/src/live-counter-scripts"
 
-const LIVE_RESERVATION_MAX_AGE_MS = vi.hoisted(() => 15 * 60_000)
+const LIVE_RESERVATION_MAX_AGE_MS = vi.hoisted(() => 10_000)
 const idState = vi.hoisted(() => ({ next: 0 }))
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
@@ -79,6 +79,50 @@ const fakeReserveWithinLimit = (
     return Promise.resolve({ status: "reserved" as const, value: current })
   }
   if (limit !== null && current + 1 > limit) {
+    if (inflight > 0) {
+      const prefix = `${field}:r:`
+      const cutoff = Date.now() - LIVE_RESERVATION_MAX_AGE_MS
+      const stale: string[] = []
+      for (const [hashField, value] of Object.entries(hash)) {
+        if (!hashField.startsWith(prefix)) {
+          continue
+        }
+        const at = luaToNumber(value)
+        if (at === null || !Number.isInteger(at)) {
+          throw new Error(
+            "ERR live counter reservation timestamp is not an integer",
+          )
+        }
+        if (at < cutoff) {
+          stale.push(hashField)
+        }
+      }
+      if (stale.length > 0) {
+        const reclaimedCurrent = current - stale.length
+        const reclaimedInflight = inflight - stale.length
+        if (reclaimedCurrent < 0 || reclaimedInflight < 0) {
+          throw new Error("ERR live counter field is not an integer")
+        }
+        for (const hashField of stale) {
+          delete hash[hashField]
+        }
+        if (reclaimedCurrent + 1 <= limit) {
+          hash[field] = String(reclaimedCurrent + 1)
+          hash[inflightField] = String(reclaimedInflight + 1)
+          hash[reservationField] = String(Date.now())
+          return Promise.resolve({
+            status: "reserved" as const,
+            value: reclaimedCurrent + 1,
+          })
+        }
+        hash[field] = String(reclaimedCurrent)
+        hash[inflightField] = String(reclaimedInflight)
+        return Promise.resolve({
+          status: "refused" as const,
+          value: reclaimedCurrent,
+        })
+      }
+    }
     return Promise.resolve({ status: "refused" as const, value: current })
   }
   hash[field] = String(current + 1)
@@ -528,6 +572,41 @@ describe("LiveCounterStore reservations", () => {
 
     expect(hashFor(LIVE_KEY).mac).toBe("1")
     expect(hashFor(LIVE_KEY).macInflight).toBe("0")
+  })
+
+  test("a refused reserve reclaims stale reservations before retrying admission", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(LIVE_RESERVATION_MAX_AGE_MS + 2000)
+    const hash = hashFor(LIVE_KEY)
+    hash.mac = "2"
+    hash.macInflight = "2"
+    hash[reservationFieldFor("mac", "stale")] = "1999"
+    hash[reservationFieldFor("mac", "fresh")] = "2000"
+
+    await expect(store.reserve(USER, "mac", 2)).resolves.toEqual({
+      id: "reservation-1",
+      value: 2,
+    })
+    expect(hash.mac).toBe("2")
+    expect(hash.macInflight).toBe("2")
+    expect(hash[reservationFieldFor("mac", "stale")]).toBeUndefined()
+    expect(hash[reservationFieldFor("mac", "fresh")]).toBe("2000")
+  })
+
+  test("a refused reserve validates all timestamps before reclaiming", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(LIVE_RESERVATION_MAX_AGE_MS + 2000)
+    const hash = hashFor(LIVE_KEY)
+    hash.mac = "2"
+    hash.macInflight = "2"
+    hash[reservationFieldFor("mac", "stale")] = "1999"
+    hash[reservationFieldFor("mac", "bad")] = "bad"
+    const before = { ...hash }
+
+    await expect(store.reserve(USER, "mac", 2)).rejects.toThrow(
+      "ERR live counter reservation timestamp is not an integer",
+    )
+    expect(hash).toEqual(before)
   })
 
   test("settling after a durable-ledger overwrite keeps the live count", async () => {

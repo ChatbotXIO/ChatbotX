@@ -1,6 +1,6 @@
 import type Redis from "ioredis"
 
-export const LIVE_RESERVATION_MAX_AGE_MS = 15 * 60_000
+export const LIVE_RESERVATION_MAX_AGE_MS = 10_000
 
 const RESERVATION_FIELD_SEPARATOR = ":r:"
 const INFLIGHT_FIELD_SUFFIX = "Inflight"
@@ -38,6 +38,24 @@ export type HsetWithInflightResult =
 const LUA_TOINT =
   "local function toint(v) local n = tonumber(v) if n and n == math.floor(n) then return n end return nil end"
 
+const LUA_COLLECT_STALE_RESERVATION_FIELDS = `
+local stale, survivingInflight = {}, 0
+local all = redis.call('HGETALL', KEYS[1])
+for i = 1, #all, 2 do
+  if string.sub(all[i], 1, #prefix) == prefix then
+    local at = toint(all[i + 1])
+    if not at then
+      return redis.error_reply('ERR live counter reservation timestamp is not an integer')
+    end
+    if at < cutoff then stale[#stale + 1] = all[i] else survivingInflight = survivingInflight + 1 end
+  end
+end`
+
+const LUA_DELETE_STALE_RESERVATION_FIELDS = `
+for i = 1, #stale, 1000 do
+  redis.call('HDEL', KEYS[1], unpack(stale, i, math.min(i + 999, #stale)))
+end`
+
 const liveCounterScripts = {
   reserveWithinLimit: `
 ${LUA_TOINT}
@@ -54,7 +72,28 @@ if v[3] then
 end
 if not toint(ARGV[4]) then return redis.error_reply('ERR live counter reservation timestamp is not an integer') end
 local limit = tonumber(ARGV[2])
-if limit >= 0 and current + 1 > limit then return { 0, current } end
+if limit >= 0 and current + 1 > limit then
+  if inflight > 0 then
+    local prefix, cutoff = f .. '${RESERVATION_FIELD_SEPARATOR}', toint(ARGV[5])
+    if not cutoff then return redis.error_reply('ERR live counter reservation timestamp is not an integer') end
+    ${LUA_COLLECT_STALE_RESERVATION_FIELDS}
+    local staleCount = #stale
+    if staleCount > 0 then
+      local reclaimedCurrent, reclaimedInflight = current - staleCount, inflight - staleCount
+      if reclaimedCurrent < 0 or reclaimedInflight < 0 then
+        return redis.error_reply('ERR live counter field is not an integer')
+      end
+      ${LUA_DELETE_STALE_RESERVATION_FIELDS}
+      if reclaimedCurrent + 1 <= limit then
+        redis.call('HSET', KEYS[1], f, reclaimedCurrent + 1, f .. '${INFLIGHT_FIELD_SUFFIX}', reclaimedInflight + 1, r, ARGV[4])
+        return { 1, reclaimedCurrent + 1 }
+      end
+      redis.call('HSET', KEYS[1], f, reclaimedCurrent, f .. '${INFLIGHT_FIELD_SUFFIX}', reclaimedInflight)
+      return { 0, reclaimedCurrent }
+    end
+  end
+  return { 0, current }
+end
 redis.call('HSET', KEYS[1], f, current + 1, f .. '${INFLIGHT_FIELD_SUFFIX}', inflight + 1, r, ARGV[4])
 return { 1, current + 1 }
 `,
@@ -115,23 +154,12 @@ if ARGV[7] ~= '' then
   if settled < settledSince then return -2 end
   delta = settled - settledSince
 end
-local prefix, cutoff, stale, inflight = ARGV[1] .. '${RESERVATION_FIELD_SEPARATOR}', toint(ARGV[4]), {}, 0
+local prefix, cutoff = ARGV[1] .. '${RESERVATION_FIELD_SEPARATOR}', toint(ARGV[4])
 if not cutoff then return redis.error_reply('ERR live counter reservation timestamp is not an integer') end
-local all = redis.call('HGETALL', KEYS[1])
-for i = 1, #all, 2 do
-  if string.sub(all[i], 1, #prefix) == prefix then
-    local at = toint(all[i + 1])
-    if not at then
-      return redis.error_reply('ERR live counter reservation timestamp is not an integer')
-    end
-    if at < cutoff then stale[#stale + 1] = all[i] else inflight = inflight + 1 end
-  end
-end
-for i = 1, #stale, 1000 do
-  redis.call('HDEL', KEYS[1], unpack(stale, i, math.min(i + 999, #stale)))
-end
-local value = base + delta + inflight
-redis.call('HSET', KEYS[1], ARGV[1] .. '${INFLIGHT_FIELD_SUFFIX}', inflight, ARGV[1], value)
+${LUA_COLLECT_STALE_RESERVATION_FIELDS}
+${LUA_DELETE_STALE_RESERVATION_FIELDS}
+local value = base + delta + survivingInflight
+redis.call('HSET', KEYS[1], ARGV[1] .. '${INFLIGHT_FIELD_SUFFIX}', survivingInflight, ARGV[1], value)
 if ARGV[5] ~= '' then redis.call('HSET', KEYS[1], ARGV[5], ARGV[6]) end
 return value
 `,
@@ -158,6 +186,7 @@ type LiveCounterClient = Redis & {
     limit: string,
     reservationId: string,
     nowMs: string,
+    pruneBeforeMs: string,
   ) => Promise<[status: ReserveStatusCode, value: number]>
   touchReservation: (
     key: string,
@@ -209,12 +238,14 @@ export const liveCounterStoreFactory = (
     reservationId: string,
   ): Promise<ReserveWithinLimitResult> {
     const client = withLiveCounterScripts(await getRedisClient())
+    const nowMs = Date.now()
     const [status, value] = await client.reserveWithinLimit(
       key,
       field,
       String(limit ?? -1),
       reservationId,
-      String(Date.now()),
+      String(nowMs),
+      String(nowMs - LIVE_RESERVATION_MAX_AGE_MS),
     )
     return { status: RESERVE_STATUS_BY_CODE[status], value }
   },

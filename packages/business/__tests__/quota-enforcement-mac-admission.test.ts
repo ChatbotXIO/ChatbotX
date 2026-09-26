@@ -519,18 +519,19 @@ describe("quotaEnforcementService.createNewContactWithMac reservation", () => {
     expect(userQuotaService.commitReservation).not.toHaveBeenCalled()
   })
 
-  test("touches every reserved level as the transaction's last statement", async () => {
+  test("touches every reserved level at transaction start and end", async () => {
     asCustomer()
     const poolReservation = { id: "pool-reservation", value: 1 }
     const userReservation = { id: "user-reservation", value: 1 }
     userQuotaService.reserve.mockImplementation(async (userId: string) =>
       userId === RESELLER ? poolReservation : userReservation,
     )
+    const create = makeCreate()
 
     await quotaEnforcementService.createNewContactWithMac({
       ownerId: CUSTOMER,
       workspaceId: "ws-1",
-      create: makeCreate(),
+      create,
     })
 
     expect(userQuotaService.touchReservation).toHaveBeenNthCalledWith(
@@ -546,25 +547,44 @@ describe("quotaEnforcementService.createNewContactWithMac reservation", () => {
       userReservation,
     )
     expect(
+      userQuotaService.touchReservation.mock.invocationCallOrder[1],
+    ).toBeLessThan(create.mock.invocationCallOrder[0] as number)
+    expect(userQuotaService.touchReservation).toHaveBeenNthCalledWith(
+      3,
+      RESELLER,
+      "mac",
+      poolReservation,
+    )
+    expect(userQuotaService.touchReservation).toHaveBeenNthCalledWith(
+      4,
+      CUSTOMER,
+      "mac",
+      userReservation,
+    )
+    expect(userQuotaService.touchReservation).toHaveBeenCalledTimes(4)
+    expect(
       macTrackingService.claimNewActiveContact.mock.invocationCallOrder[0],
     ).toBeLessThan(
-      userQuotaService.touchReservation.mock.invocationCallOrder[0] as number,
+      userQuotaService.touchReservation.mock.invocationCallOrder[2] as number,
     )
   })
 
   test("throws ReservationLostError so the transaction rolls back when touch fails", async () => {
     asRootUser()
     userQuotaService.touchReservation.mockResolvedValue(false)
+    const create = makeCreate()
 
     await expect(
       quotaEnforcementService.createNewContactWithMac({
         ownerId: ROOT_USER,
         workspaceId: "ws-1",
-        create: makeCreate(),
+        create,
       }),
     ).rejects.toMatchObject({ name: "ReservationLostError" })
 
     expect(dbTransaction).toHaveBeenCalledOnce()
+    expect(create).not.toHaveBeenCalled()
+    expect(macTrackingService.claimNewActiveContact).not.toHaveBeenCalled()
     expect(userQuotaService.commitReservation).not.toHaveBeenCalled()
     expect(userQuotaService.releaseReservation).toHaveBeenCalledWith(
       ROOT_USER,

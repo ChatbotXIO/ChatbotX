@@ -87,6 +87,114 @@ describe.skipIf(!redisUrl)(
       ).resolves.toEqual(["1", "1", "1000"])
     })
 
+    test("reserve at the limit reclaims only stale reservations", async () => {
+      const key = uniqueKey()
+      vi.setSystemTime(LIVE_RESERVATION_MAX_AGE_MS + 2000)
+      await client.hset(
+        key,
+        "mac",
+        "2",
+        "macInflight",
+        "2",
+        "mac:r:stale",
+        "1999",
+        "mac:r:fresh",
+        "2000",
+      )
+
+      await expect(
+        store.reserveWithinLimit(key, "mac", 2, "r-new"),
+      ).resolves.toEqual({ status: "reserved", value: 2 })
+      await expect(
+        client.hmget(
+          key,
+          "mac",
+          "macInflight",
+          "mac:r:stale",
+          "mac:r:fresh",
+          "mac:r:r-new",
+        ),
+      ).resolves.toEqual([
+        "2",
+        "2",
+        null,
+        "2000",
+        String(LIVE_RESERVATION_MAX_AGE_MS + 2000),
+      ])
+    })
+
+    test("reserve at the limit leaves fresh reservations unchanged", async () => {
+      const key = uniqueKey()
+      vi.setSystemTime(LIVE_RESERVATION_MAX_AGE_MS + 2000)
+      await client.hset(
+        key,
+        "mac",
+        "2",
+        "macInflight",
+        "2",
+        "mac:r:fresh-1",
+        "2000",
+        "mac:r:fresh-2",
+        "2001",
+      )
+      const before = await client.hgetall(key)
+
+      await expect(
+        store.reserveWithinLimit(key, "mac", 2, "r-new"),
+      ).resolves.toEqual({ status: "refused", value: 2 })
+      await expect(client.hgetall(key)).resolves.toEqual(before)
+    })
+
+    test("reserve reclaim validates every timestamp before writing", async () => {
+      const key = uniqueKey()
+      vi.setSystemTime(LIVE_RESERVATION_MAX_AGE_MS + 2000)
+      await client.hset(
+        key,
+        "mac",
+        "2",
+        "macInflight",
+        "2",
+        "mac:r:stale",
+        "1999",
+        "mac:r:bad",
+        "bad",
+      )
+      const before = await client.hgetall(key)
+
+      await expect(
+        store.reserveWithinLimit(key, "mac", 2, "r-new"),
+      ).rejects.toThrow(
+        "ERR live counter reservation timestamp is not an integer",
+      )
+      await expect(client.hgetall(key)).resolves.toEqual(before)
+    })
+
+    test("reserve below the limit leaves stale reservations untouched", async () => {
+      const key = uniqueKey()
+      vi.setSystemTime(LIVE_RESERVATION_MAX_AGE_MS + 2000)
+      await client.hset(
+        key,
+        "mac",
+        "1",
+        "macInflight",
+        "1",
+        "mac:r:stale",
+        "1999",
+      )
+
+      await expect(
+        store.reserveWithinLimit(key, "mac", 2, "r-new"),
+      ).resolves.toEqual({ status: "reserved", value: 2 })
+      await expect(
+        client.hmget(key, "mac", "macInflight", "mac:r:stale", "mac:r:r-new"),
+      ).resolves.toEqual([
+        "2",
+        "2",
+        "1999",
+        String(LIVE_RESERVATION_MAX_AGE_MS + 2000),
+      ])
+    })
+
     test.each([
       "reserve",
       "settle",
