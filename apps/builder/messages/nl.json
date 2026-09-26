@@ -557,6 +557,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(optioneel)",
     "marketingMessagesConfigId": {
       "label": "Configuratie-ID voor marketingberichten",
       "description": "Configuratie-ID van Facebook Login for Business die wordt gebruikt om de marketing_messages_messenger-machtiging aan te vragen."

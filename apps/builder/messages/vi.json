@@ -886,6 +886,7 @@
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi."
   },
   "fields": {
+    "optionalHint": "(không bắt buộc)",
     "marketingMessagesConfigId": {
       "label": "ID cấu hình Marketing Messages",
       "description": "ID cấu hình Facebook Login for Business dùng để yêu cầu quyền marketing_messages_messenger."

@@ -744,6 +744,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(valinnainen)",
     "marketingMessagesConfigId": {
       "label": "Markkinointiviestien määritystunnus",
       "description": "Facebook Login for Business -määritystunnus, jolla pyydetään marketing_messages_messenger-lupaa."

@@ -3884,6 +3884,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(אופציונלי)",
     "marketingMessagesConfigId": {
       "label": "מזהה תצורה של הודעות שיווקיות",
       "description": "מזהה תצורה של Facebook Login for Business המשמש לבקשת ההרשאה marketing_messages_messenger."

@@ -1620,6 +1620,7 @@
     "dashboardCta": "Visa i annonspanelen"
   },
   "fields": {
+    "optionalHint": "(valfritt)",
     "marketingMessagesConfigId": {
       "label": "Konfigurations-ID för marknadsföringsmeddelanden",
       "description": "Konfigurations-ID för Facebook Login for Business som används för att begära behörigheten marketing_messages_messenger."

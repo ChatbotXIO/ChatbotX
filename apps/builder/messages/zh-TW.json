@@ -1,5 +1,6 @@
 {
   "fields": {
+    "optionalHint": "(可選)",
     "marketingMessagesConfigId": {
       "label": "行銷訊息設定 ID",
       "description": "用於請求 marketing_messages_messenger 權限的「Facebook 商務登入」設定 ID。"

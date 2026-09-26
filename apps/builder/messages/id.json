@@ -744,6 +744,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(opsional)",
     "marketingMessagesConfigId": {
       "label": "ID Konfigurasi Marketing Messages",
       "description": "ID konfigurasi Facebook Login for Business yang digunakan untuk meminta izin marketing_messages_messenger."
