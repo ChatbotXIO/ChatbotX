@@ -1,8 +1,8 @@
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
   flowService,
+  publishToWorkspaceParty,
 } from "@chatbotx.io/business"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
@@ -11,14 +11,15 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
   type ButtonStepProps,
   buttonStepDefaultFn,
   buttonTypes,
   extractMessengerTemplateParams,
+  isBulkOutboundMetadata,
   type MessengerTemplateComponent,
   type MessengerTemplateParams,
+  type MetadataPayload,
   messageEventTypeSchema,
   type SendMessengerTemplateMessageStepSchema,
   startExternalFlowStepDefaultFn,
@@ -63,6 +64,7 @@ export interface ProcessMessengerTemplateParams {
     id: string
     versionId?: string
   }
+  isBulkBroadcast?: boolean
   metadata?: MetadataPayload
   step?: SendMessengerTemplateMessageStepSchema
   template: SendMessengerTemplateMessageStepSchema["template"]
@@ -153,8 +155,13 @@ export async function processMessengerTemplate(
     step,
     trackingContext,
     metadata,
+    isBulkBroadcast,
     willRetryOnThrow = false,
   } = params
+  const isBulkOutbound = isBulkOutboundMetadata(
+    metadata,
+    isBulkBroadcast || broadcastId !== undefined,
+  )
 
   const eventLogData = {
     context: {
@@ -257,15 +264,18 @@ export async function processMessengerTemplate(
         contactInboxId: contactInbox.id,
         contactId: contactInbox.contactId,
         at: createdMessage.createdAt,
+        bumpActivity: !isBulkOutbound,
       })
     if (trackingInvalidation) {
       await contactInboxService.invalidateTracking(trackingInvalidation)
     }
 
-    await broadcastToWorkspaceParty(conversation.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: newMessage,
-    })
+    if (!isBulkOutbound) {
+      publishToWorkspaceParty(conversation.workspaceId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: newMessage,
+      })
+    }
 
     const result = await sendFlowStepToChannel({
       conversation,
@@ -296,6 +306,7 @@ export async function processMessengerTemplate(
         conversationId: conversation.id,
         inboxId: contactInbox.inboxId,
         readAt: createdMessage.createdAt,
+        silent: isBulkOutbound,
       })
     }
 
@@ -498,6 +509,7 @@ export async function sendMessengerTemplateMessage(
       },
       broadcastId,
       metadata,
+      isBulkBroadcast: broadcastId !== undefined,
       // Pass contextFlow so unconfigured buttons are encoded with a valid flowId.
       ...(contextFlow && { flow: { id: contextFlow.id } }),
       ...(stepButtons.length > 0 && {

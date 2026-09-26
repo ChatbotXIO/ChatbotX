@@ -151,6 +151,7 @@ describe("appointmentScheduling handler", () => {
 
     const result = await appointmentScheduling({
       ...baseProps,
+      isBulkBroadcast: true,
       // A "book" step entered via a quick-reply/button has targetId set to
       // the button's own id, not the containing node's id — the resume token
       // must use targetNodeId (which is always the containing node) instead.
@@ -184,6 +185,7 @@ describe("appointmentScheduling handler", () => {
     expect(chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
       type: "sendChatMessage",
       data: expect.objectContaining({
+        isBulkBroadcast: true,
         text: "Chọn thời gian đặt lịch",
         quickReplies: [
           expect.objectContaining({
@@ -255,6 +257,7 @@ describe("appointmentScheduling handler", () => {
 
     const result = await appointmentScheduling({
       ...baseProps,
+      isBulkBroadcast: true,
       step: checkAvailabilityStep,
     } as never)
 
@@ -282,6 +285,7 @@ describe("appointmentScheduling handler", () => {
     expect(chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
       type: "sendChatMessage",
       data: expect.objectContaining({
+        isBulkBroadcast: true,
         text: "Chọn khoảng ngày cần kiểm tra lịch trống",
         quickReplies: [
           expect.objectContaining({

@@ -39,6 +39,7 @@ export type ExecuteMultipleStepsProps = {
   steps: BaseStepSchema[]
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
+  isBulkBroadcast?: boolean
   quickReplies?: ButtonStepProps[]
   sendFrom?: "inbox"
   nodeVisits?: NodeVisits
@@ -285,6 +286,7 @@ export async function sendFlow(
         flowId: flowVersion.flowId,
         nodeId: connectedNodeId,
         metadata: props.metadata,
+        isBulkBroadcast: props.isBulkBroadcast,
         appointmentId: props.appointmentId,
         sendFrom: props.sendFrom,
         nodeVisits: props.nodeVisits,

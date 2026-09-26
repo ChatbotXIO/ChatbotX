@@ -58,6 +58,7 @@ vi.mock("../src/platform/settings", () => ({
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
   broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  publishToWorkspaceParty: mockBroadcastToWorkspaceParty,
 }))
 
 vi.mock("../src/utils", () => ({
@@ -155,36 +156,6 @@ describe("messageService.createOutgoing", () => {
         data: expect.objectContaining({ clientId: "client-1", id: "msg-1" }),
       }),
     )
-  })
-
-  test("waits for the realtime broadcast before enqueueing channel delivery", async () => {
-    let resolveBroadcast: (() => void) | undefined
-    const broadcastPromise = new Promise<void>((resolve) => {
-      resolveBroadcast = resolve
-    })
-    const broadcastStarted = new Promise<void>((resolve) => {
-      mockBroadcastToWorkspaceParty.mockImplementationOnce(() => {
-        resolve()
-        return broadcastPromise
-      })
-    })
-
-    const outgoing = createOutgoing({
-      conversation: conversation as never,
-      contactInbox: contactInbox as never,
-      input: { text: "hello" },
-    })
-
-    await broadcastStarted
-    expect(mockChatQueueAdd).not.toHaveBeenCalled()
-
-    if (!resolveBroadcast) {
-      throw new Error("Broadcast resolver was not initialized")
-    }
-    resolveBroadcast()
-    await outgoing
-
-    expect(mockChatQueueAdd).toHaveBeenCalledOnce()
   })
 
   test("uses attempts=1 for manual Threads comment replies", async () => {

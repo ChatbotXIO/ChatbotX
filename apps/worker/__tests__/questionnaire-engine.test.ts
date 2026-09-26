@@ -120,7 +120,18 @@ describe("runQuestionnaireEngine", () => {
   })
 
   test("sends question image in the same chat job and stores zero attempts on first send", async () => {
-    await expect(runQuestionnaireEngine(makeProps())).resolves.toEqual({
+    await expect(
+      runQuestionnaireEngine(
+        makeProps({
+          isBulkBroadcast: true,
+          metadata: {
+            type: "broadcast",
+            broadcastId: "broadcast-1",
+            contactInboxId: "contact-inbox-1",
+          },
+        }),
+      ),
+    ).resolves.toEqual({
       status: "wait",
       result: null,
     })
@@ -128,6 +139,12 @@ describe("runQuestionnaireEngine", () => {
     expect(mocks.chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
       type: "sendChatMessage",
       data: expect.objectContaining({
+        isBulkBroadcast: true,
+        metadata: {
+          type: "broadcast",
+          broadcastId: "broadcast-1",
+          contactInboxId: "contact-inbox-1",
+        },
         text: "What is your email?",
         url: "https://example.com/question.png",
       }),

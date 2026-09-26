@@ -103,6 +103,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
+  publishToWorkspaceParty: mockBroadcast,
   contactInboxService: {
     recordSendFailure: mockRecordSendFailure,
     invalidateTracking: mockInvalidateTracking,
@@ -295,6 +296,7 @@ describe("processWhatsappTemplate", () => {
       conversationId: "conv-1",
       inboxId: "inbox-1",
       readAt: new Date("2026-01-01T00:00:00Z"),
+      silent: false,
     })
   })
 
@@ -330,6 +332,29 @@ describe("processWhatsappTemplate", () => {
     expect(mockBroadcast).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({ eventType: "messageCreated" }),
+    )
+  })
+
+  test("keeps bulk template persistence and delivery silent", async () => {
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+      metadata: {
+        type: "sequenceSchedule",
+        sequenceStepId: "sequence-step-1",
+        sequenceId: "sequence-1",
+        dispatchId: "dispatch-1",
+        contactInboxId: "ci-1",
+      },
+    })
+
+    expect(mockBroadcast).not.toHaveBeenCalled()
+    expect(mockRecordOutboundMessageActivity).toHaveBeenCalledWith(
+      expect.objectContaining({ bumpActivity: false }),
+    )
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({ silent: true }),
     )
   })
 
@@ -419,6 +444,7 @@ describe("processWhatsappTemplate", () => {
       contactInboxId: "ci-1",
       contactId: undefined,
       at: createdAt,
+      bumpActivity: true,
     })
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],

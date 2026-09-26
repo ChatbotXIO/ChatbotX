@@ -1003,6 +1003,17 @@ describe("getUserData — date/datetime webview prompt (RF09/RF10)", () => {
     ])
   })
 
+  test("keeps an initial broadcast date prompt in bulk delivery", async () => {
+    const props = makeProps(ReplyFormat.date)
+    props.isBulkBroadcast = true
+
+    await getUserData(props)
+
+    expect(findChatJobCall("sendChatMessage").data).toMatchObject({
+      isBulkBroadcast: true,
+    })
+  })
+
   test("uses the Vietnamese label when workspace.language is vi", async () => {
     workspaceFindById.mockResolvedValueOnce({ language: "vi" })
     const props = makeProps(ReplyFormat.datetime)

@@ -116,6 +116,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   }
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
+  isBulkBroadcast?: boolean
   sendFrom?: "inbox"
   nodeVisits?: NodeVisits
   triggerMessageId?: string
@@ -296,6 +297,8 @@ export const runFlowNode = async (
       },
       trackingContext,
       metadata,
+      isBulkBroadcast:
+        props.isBulkBroadcast ?? props.initialBroadcastDispatch === true,
       sendFrom,
       nodeVisits: props.nodeVisits,
       commentAnchor,
@@ -475,6 +478,7 @@ export async function runStepsAndQuickReplies(
               : undefined,
           startFromStepId: nextStep.id,
           metadata: props.metadata,
+          isBulkBroadcast: props.isBulkBroadcast,
           appointmentId: props.appointmentId,
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
@@ -537,6 +541,7 @@ export async function runStepsAndQuickReplies(
         flowVersionId: props.useLatestFlowVersion ? undefined : flowVersion.id,
         nodeId: nextNode.id,
         metadata: props.metadata,
+        isBulkBroadcast: props.isBulkBroadcast,
         appointmentId: props.appointmentId,
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
@@ -662,6 +667,7 @@ async function* executeMultipleStepsGenerator(
                 : props.flowVersion.id,
               nodeId: connectedNodeId,
               metadata: props.metadata,
+              isBulkBroadcast: props.isBulkBroadcast,
               appointmentId: props.appointmentId,
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,

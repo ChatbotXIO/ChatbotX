@@ -19,7 +19,7 @@ const bubbleConversationToTopMock = vi.fn().mockResolvedValue(undefined)
 const openConversationMock = vi.fn().mockResolvedValue(true)
 const chatStoreState = {
   applyAgentLastReadAt: vi.fn(),
-  handleNewMessage: vi.fn(),
+  handleNewMessages: vi.fn(),
   markMessagesDeleted: vi.fn(),
   markMessageFailed: vi.fn(),
   assignMessageCommentId: vi.fn(),
@@ -306,7 +306,7 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
       root.render(<ChatRealtime />)
     })
 
-  test("a customer's accept reply refetches the button's call-mode query for that conversation", async () => {
+  test("batches a call-permission reply into one message store update", async () => {
     await render()
 
     const message = {
@@ -317,11 +317,17 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
         response: "accept",
       },
     }
-    act(() => {
+    await act(async () => {
       emit("messageCreated", message)
+      emit("messageCreated", { ...message, id: "message-2" })
+      await Promise.resolve()
     })
 
-    expect(chatStoreState.handleNewMessage).toHaveBeenCalledWith(message)
+    expect(chatStoreState.handleNewMessages).toHaveBeenCalledTimes(1)
+    expect(chatStoreState.handleNewMessages).toHaveBeenCalledWith([
+      message,
+      { ...message, id: "message-2" },
+    ])
     expect(invalidateQueriesMock).toHaveBeenCalledWith({
       queryKey: [
         "whatsapp-outbound-call-mode",
@@ -331,7 +337,7 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
     })
   })
 
-  test("a plain text message does not invalidate the call-mode query", async () => {
+  test("does not invalidate the call-mode query for a plain text message", async () => {
     await render()
 
     const message = {
@@ -339,12 +345,40 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
       conversationId: "conversation-42",
       contentAttributes: { type: "text" },
     }
-    act(() => {
+    await act(async () => {
       emit("messageCreated", message)
+      await Promise.resolve()
     })
 
-    expect(chatStoreState.handleNewMessage).toHaveBeenCalledWith(message)
+    expect(chatStoreState.handleNewMessages).toHaveBeenCalledWith([message])
     expect(invalidateQueriesMock).not.toHaveBeenCalled()
+  })
+
+  test("flushes a created message before its same-batch failure", async () => {
+    await render()
+
+    const message = {
+      id: "message-3",
+      conversationId: "conversation-42",
+      contentAttributes: { type: "text" },
+    }
+    act(() => {
+      emit("messageCreated", message)
+      emit("messageFailed", {
+        messageId: "message-3",
+        error: "provider rejected",
+      })
+    })
+
+    expect(chatStoreState.handleNewMessages).toHaveBeenCalledWith([message])
+    expect(chatStoreState.markMessageFailed).toHaveBeenCalledWith(
+      "message-3",
+      undefined,
+      "provider rejected",
+    )
+    expect(
+      chatStoreState.handleNewMessages.mock.invocationCallOrder[0],
+    ).toBeLessThan(chatStoreState.markMessageFailed.mock.invocationCallOrder[0])
   })
 })
 

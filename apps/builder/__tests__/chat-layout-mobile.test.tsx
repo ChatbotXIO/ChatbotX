@@ -120,6 +120,13 @@ describe("ChatLayout", () => {
   const find = (id: string) =>
     container.querySelector<HTMLElement>(`[data-testid="${id}"]`)
 
+  // The sheet portals to <body> and stays mounted through its exit animation,
+  // so read its open state rather than whether its content is in the DOM.
+  const isContactSheetOpen = () =>
+    document
+      .querySelector('[data-slot="sheet-content"]')
+      ?.hasAttribute("data-open") ?? false
+
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     storeState.activeConversationId = null
@@ -286,6 +293,50 @@ describe("ChatLayout", () => {
     expect(find("open-contact")).not.toBeNull()
     // The sheet is closed until asked for, so the panel is not mounted yet.
     expect(find("contact-pane")).toBeNull()
+  })
+
+  test("keeps the mobile contact sheet open across conversation list updates", () => {
+    storeState.activeConversationId = "c1"
+    storeState.conversations = [{ id: "c1" }]
+    setViewportWidth(375)
+    render()
+
+    act(() => {
+      find("open-contact")?.click()
+    })
+    expect(
+      document.querySelector('[data-testid="contact-pane"]'),
+    ).not.toBeNull()
+
+    // A realtime message replaces the conversations array; the sheet is bound
+    // to the active conversation, not to the list identity.
+    storeState.conversations = [{ id: "c1" }, { id: "c2" }]
+    render()
+    expect(
+      document.querySelector('[data-testid="contact-pane"]'),
+    ).not.toBeNull()
+
+    storeState.conversations = []
+  })
+
+  test("closes the mobile contact sheet for another thread and keeps it closed on return", () => {
+    storeState.activeConversationId = "c1"
+    storeState.conversations = [{ id: "c1" }, { id: "c2" }]
+    setViewportWidth(375)
+    render()
+
+    act(() => {
+      find("open-contact")?.click()
+    })
+    storeState.activeConversationId = "c2"
+    render()
+    expect(isContactSheetOpen()).toBe(false)
+
+    storeState.activeConversationId = "c1"
+    render()
+    expect(isContactSheetOpen()).toBe(false)
+
+    storeState.conversations = []
   })
 
   test("renders all three panes side by side from md up", () => {

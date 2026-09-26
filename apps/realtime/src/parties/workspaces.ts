@@ -400,12 +400,19 @@ export default class WorkspaceParty implements Party.Server {
     connections: Iterable<Party.Connection<WorkspaceConnectionState>>,
     events: readonly WorkspaceRealtimeEvent[],
   ): number {
+    const serializedBatchesByTopicSet = new Map<string, string>()
+    const serializedEvents = new Map<WorkspaceRealtimeEvent, string>()
     let interested = 0
     for (const connection of connections) {
       const state = connection.state
       if (state?.protocol !== RealtimeProtocol.v2) {
         for (const event of events) {
-          connection.send(JSON.stringify(event))
+          let serializedEvent = serializedEvents.get(event)
+          if (!serializedEvent) {
+            serializedEvent = JSON.stringify(event)
+            serializedEvents.set(event, serializedEvent)
+          }
+          connection.send(serializedEvent)
         }
         interested += 1
         continue
@@ -423,7 +430,14 @@ export default class WorkspaceParty implements Party.Server {
       if (matchingEvents.length === 0) {
         continue
       }
-      connection.send(JSON.stringify({ batch: matchingEvents }))
+
+      const topicSetKey = topics === null ? "*" : [...topics].sort().join(",")
+      let serializedBatch = serializedBatchesByTopicSet.get(topicSetKey)
+      if (!serializedBatch) {
+        serializedBatch = JSON.stringify({ batch: matchingEvents })
+        serializedBatchesByTopicSet.set(topicSetKey, serializedBatch)
+      }
+      connection.send(serializedBatch)
       interested += 1
     }
     return interested

@@ -27,7 +27,7 @@ const BATCH_ENVELOPE_BYTES = new TextEncoder().encode('{"batch":[]}').byteLength
 type PendingWorkspaceBroadcast = {
   byteLength: number
   events: RealtimeEventData[]
-  timer: ReturnType<typeof setTimeout>
+  timer: NodeJS.Timeout
   waiters: {
     resolve: (interested: number | null) => void
   }[]
@@ -204,6 +204,16 @@ export const resetRealtimeBroadcastStateForTests = (): void => {
   chatNegativeCache.clear()
 }
 
+export const flushAllPendingWorkspaceBroadcasts = async (): Promise<void> => {
+  const pendingWorkspaceIds = [...pendingByWorkspace.keys()]
+  await Promise.all(
+    pendingWorkspaceIds.map((workspaceId) =>
+      flushPendingWorkspaceBroadcasts(workspaceId),
+    ),
+  )
+  await Promise.all(inFlightByWorkspace.values())
+}
+
 export const broadcastToWorkspaceParty = (
   workspaceId: string,
   event: RealtimeEventData,
@@ -239,10 +249,26 @@ export const broadcastToWorkspaceParty = (
     pending.waiters.push({ resolve })
   })
 
-  if (pending.events.length === WORKSPACE_BROADCAST_MAX_EVENTS) {
+  if (
+    REALTIME_EVENT_TOPICS[event.eventType].topics.includes("voip") ||
+    pending.events.length === WORKSPACE_BROADCAST_MAX_EVENTS
+  ) {
     flushPendingWorkspaceBroadcasts(workspaceId)
   }
   return result
+}
+
+export const publishToWorkspaceParty = (
+  workspaceId: string,
+  event: RealtimeEventData,
+): void => {
+  const delivery = broadcastToWorkspaceParty(workspaceId, event)
+  delivery.catch((err) => {
+    logger.error(
+      { err, eventType: event.eventType, workspaceId },
+      "Failed to publish realtime event",
+    )
+  })
 }
 
 /**

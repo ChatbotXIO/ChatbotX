@@ -62,6 +62,7 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
   conversationService: { markReadByOutbound: mockMarkReadByOutbound },
   broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  publishToWorkspaceParty: mockBroadcastToWorkspaceParty,
   whatsappCallPermissionService: {
     recordPermanentGrant: mockRecordPermanentGrant,
   },
@@ -236,6 +237,7 @@ describe("chat send-message handlers", () => {
       conversationId: "conv-1",
       inboxId: "inbox-1",
       readAt: createdAt,
+      silent: false,
     })
   })
 
@@ -315,15 +317,17 @@ describe("chat send-message handlers", () => {
       conversationId: "conv-1",
       inboxId: "inbox-1",
       readAt: createdAt,
+      silent: false,
     })
   })
 
   // The option means "the bot's own messages count as read"; a broadcast is a
   // bot message like any other, so excluding it would leave every recipient
   // conversation bold with the option on.
-  test("marks the conversation read for a broadcast send", async () => {
+  test("marks a broadcast send read without a realtime conversation update", async () => {
     await sendMessageToChannel({
       conversation: conversation as never,
+      isBulkBroadcast: true,
       contactInbox: contactInbox as never,
       message: {
         id: "msg-broadcast",
@@ -337,13 +341,18 @@ describe("chat send-message handlers", () => {
         text: "broadcast",
         createdAt: new Date("2026-07-09T08:37:21.108Z"),
       } as never,
-      metadata: { broadcastId: "broadcast-1" },
+      metadata: {
+        type: "broadcast",
+        broadcastId: "broadcast-1",
+        contactInboxId: "ci-1",
+      },
     })
 
     expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
       expect.objectContaining({
         conversationId: "conv-1",
         readAt: new Date("2026-07-09T08:37:21.108Z"),
+        silent: true,
       }),
     )
   })
@@ -379,6 +388,7 @@ describe("chat send-message handlers", () => {
         conversationId: "conv-1",
         inboxId: "inbox-1",
         readAt: createdAt,
+        silent: false,
       },
       "markReadByOutbound after a delivered send failed",
     )
@@ -807,6 +817,89 @@ describe("chat send-message handlers", () => {
     })
   })
 
+  test("persists but does not publish a bulk outbound send error", async () => {
+    mockRunChannelHandler.mockRejectedValueOnce(
+      new ChannelError(
+        "provider rejected",
+        ChannelErrorCategory.PAYLOAD_INVALID,
+        { code: "provider_rejected" },
+      ),
+    )
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      isBulkBroadcast: true,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-bulk-error",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "bot",
+        text: "broadcast",
+        contentAttributes: {
+          metadata: {
+            type: "broadcast",
+            broadcastId: "broadcast-1",
+            contactInboxId: "ci-1",
+          },
+        },
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockUpdateSendError).toHaveBeenCalledWith(
+      "msg-bulk-error",
+      "sdk error",
+      "ws-1",
+      expect.any(Date),
+    )
+    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+  })
+
+  test("publishes a broadcast continuation send error", async () => {
+    mockRunChannelHandler.mockRejectedValueOnce(
+      new ChannelError(
+        "provider rejected",
+        ChannelErrorCategory.PAYLOAD_INVALID,
+        { code: "provider_rejected" },
+      ),
+    )
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-broadcast-continuation",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "bot",
+        text: "follow-up",
+        contentAttributes: {
+          metadata: {
+            type: "broadcast",
+            broadcastId: "broadcast-1",
+            contactInboxId: "ci-1",
+          },
+        },
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageFailed",
+      data: {
+        messageId: "msg-broadcast-continuation",
+        error: "sdk error",
+      },
+    })
+  })
+
   test("does not persist a sendError on a successful send", async () => {
     await sendMessageToChannel({
       conversation: conversation as never,
@@ -860,6 +953,46 @@ describe("chat send-message handlers", () => {
       eventType: "messageFailed",
       data: { messageId: "msg-1", clientId: "client-1", error: null },
     })
+  })
+
+  test("clears a bulk send error without publishing it", async () => {
+    const createdAt = new Date("2026-07-09T08:37:21.108Z")
+
+    await sendMessageToChannel(
+      {
+        conversation: conversation as never,
+        isBulkBroadcast: true,
+        contactInbox: contactInbox as never,
+        message: {
+          id: "msg-bulk-retry",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "bot",
+          text: "broadcast",
+          clientId: "client-1",
+          contentAttributes: {
+            metadata: {
+              type: "broadcast",
+              broadcastId: "broadcast-1",
+              contactInboxId: "ci-1",
+            },
+          },
+          createdAt,
+        } as never,
+      },
+      1,
+    )
+
+    expect(mockUpdateSendError).toHaveBeenCalledWith(
+      "msg-bulk-retry",
+      null,
+      "ws-1",
+      createdAt,
+    )
+    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
   })
 
   test("does not clear sendError on a first-attempt (non-retry) successful send", async () => {

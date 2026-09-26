@@ -92,6 +92,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
+  publishToWorkspaceParty: mockBroadcast,
   contactInboxService: {
     recordSendFailure: mockRecordSendFailure,
     invalidateTracking: mockInvalidateTracking,
@@ -329,6 +330,7 @@ describe("processMessengerTemplate", () => {
       contactInboxId: "ci-1",
       contactId: undefined,
       at: createdAt,
+      bumpActivity: true,
     })
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],
