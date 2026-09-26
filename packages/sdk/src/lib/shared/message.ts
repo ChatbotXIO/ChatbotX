@@ -408,7 +408,7 @@ export const MessageEntitySchema = z.custom<IncomingMessage>(
 
 export type IncomingAttachment = {
   sourceId: string
-  fileType: FileType
+  fileType: IncomingFileType
   mimeType: string
   originPath: string
   size: number
@@ -575,3 +575,9 @@ export type ContentType = z.infer<typeof contentTypes>
 
 export const fileTypes = z.enum(["image", "audio", "video", "file"])
 export type FileType = z.infer<typeof fileTypes>
+
+// Inbound only. `gif` marks an animated clip the inbox autoplays on loop — an
+// image/gif file or a video rendition of one (Telegram animations, video
+// stickers). Outbound stays on `fileTypes`: channel send APIs take no "gif".
+export const incomingFileTypes = z.enum([...fileTypes.options, "gif"])
+export type IncomingFileType = z.infer<typeof incomingFileTypes>
