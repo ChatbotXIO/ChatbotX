@@ -65,10 +65,15 @@ export const useInvalidateInboxes = () => {
   )
 }
 
+// Shared fallback while the query is pending or has failed. A fresh `[]` on
+// every render would change the identity of the result each time, and any
+// effect keyed on it that sets state (e.g. `NodeEditorMenu`) loops forever.
+const EMPTY_INBOXES: NonNullable<ReturnType<typeof useInboxes>["data"]> = []
+
 export const useInboxList = (options?: { enabled?: boolean }) => {
   const workspaceId = useWorkspaceId()
   const { data } = useInboxes(workspaceId, options)
-  return data ?? []
+  return data ?? EMPTY_INBOXES
 }
 
 export const useConfiguredInboxTypeOptions = (options?: {
