@@ -9,7 +9,7 @@ import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown } from "../lib/shutdown"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -216,7 +216,4 @@ async function startScheduleWorker() {
   })
 }
 
-startScheduleWorker().catch((err) => {
-  logger.error("Failed to start schedule worker", err)
-  process.exit(1)
-})
+runWorker("schedule", startScheduleWorker)

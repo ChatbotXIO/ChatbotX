@@ -1,14 +1,16 @@
 // The worker image's default command (`worker standalone`): every core queue
-// consumer plus the schedule (cron) worker in ONE Node process, so a
-// self-hosted install gets broadcast schedules, trial expiry and the purge
-// crons from a single container (~500MB, vs ~3.9GB for `worker all`).
+// consumer, the schedule (cron) worker and the sequence workers in ONE Node
+// process, so a self-hosted install gets broadcast schedules, trial expiry,
+// the purge crons and sequence delivery from a single container.
 //
 // Schedule is safe here even with several replicas: its crons are BullMQ job
 // schedulers persisted in Redis (`upsertJobScheduler`), not in-process timers.
-// It stays out of `core.ts` because `pnpm dev` should not run production-like
-// crons against local data.
-//
-// The sequence-scheduler workers need Kafka, which a default install does not
-// run — start them with `worker sequence-*` alongside a broker.
+// The sequence workers run on BullMQ + Redis too (`createProducer`/
+// `createConsumer` only support bullmq), and claim buckets under a Redis lock.
+// Both stay out of `core.ts` because `pnpm dev` should not run production-like
+// crons and sequence sends against local data.
 import "./core"
 import "./schedule/worker"
+import "./sequence-scheduler/worker"
+import "./sequence-scheduler/worker-producer"
+import "./sequence-scheduler/worker-consumer"

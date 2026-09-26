@@ -35,7 +35,7 @@ import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown } from "../lib/shutdown"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { integrationService } from "../services/integrations"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
@@ -663,7 +663,4 @@ async function startIntegrationWorker() {
   })
 }
 
-startIntegrationWorker().catch((err) => {
-  logger.error({ err }, "Failed to start integration worker")
-  process.exit(1)
-})
+runWorker("integration", startIntegrationWorker)

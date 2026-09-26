@@ -9,7 +9,7 @@ import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
-import { onShutdown } from "../lib/shutdown"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { sendPushForNotificationJob } from "./handlers/send-push"
 
 async function startNotificationWorker() {
@@ -46,4 +46,4 @@ async function startNotificationWorker() {
   })
 }
 
-startNotificationWorker()
+runWorker("notification", startNotificationWorker)

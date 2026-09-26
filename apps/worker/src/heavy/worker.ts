@@ -25,7 +25,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown } from "../lib/shutdown"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { analyzeImage } from "./handlers/analyze-image"
 import { editImageOutput } from "./handlers/edit-image"
 import {
@@ -404,7 +404,4 @@ async function startHeavyWorker() {
   })
 }
 
-startHeavyWorker().catch((err) => {
-  logger.error({ err: normalizeError(err) }, "Failed to start Heavy worker")
-  process.exit(1)
-})
+runWorker("heavy", startHeavyWorker)

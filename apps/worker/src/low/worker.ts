@@ -13,7 +13,7 @@ import { updateContactAvatar } from "../integration/handlers/contact/update-avat
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown } from "../lib/shutdown"
+import { onShutdown, runWorker } from "../lib/shutdown"
 
 /**
  * Consumer for the `low` workload-class queue: light, high-volume, low-priority
@@ -86,7 +86,4 @@ async function startLowWorker() {
   })
 }
 
-startLowWorker().catch((err) => {
-  logger.error({ err }, "Failed to start low worker")
-  process.exit(1)
-})
+runWorker("low", startLowWorker)
