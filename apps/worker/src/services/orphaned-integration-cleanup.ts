@@ -67,6 +67,19 @@ const ORPHAN_CLEANUP_STRATEGIES: Partial<
   },
 }
 
+/**
+ * Channels that keep delivering webhooks after a disconnect because the
+ * subscription is per-app and cannot be revoked per account (Zalo OAs). A
+ * missing integration there is expected traffic, not an orphan to clean up.
+ */
+const EXPECTED_ORPHAN_CHANNELS: ReadonlySet<IntegrationType> = new Set([
+  integrationTypes.enum.zalo,
+])
+
+export function isExpectedOrphan(error: IntegrationNotFoundError): boolean {
+  return EXPECTED_ORPHAN_CHANNELS.has(error.channel)
+}
+
 function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
