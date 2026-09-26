@@ -9,6 +9,7 @@ import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown } from "../lib/shutdown"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -210,22 +211,9 @@ async function startScheduleWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[ScheduleWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  onShutdown("schedule", async () => {
+    await worker.close()
+  })
 }
 
 startScheduleWorker().catch((err) => {

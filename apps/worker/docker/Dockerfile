@@ -39,4 +39,6 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 STOPSIGNAL SIGTERM
-CMD ["worker", "all"]
+# Core queues + schedule in one process (~500MB). Use `worker all` for one
+# process per worker, or `worker <name>` to run a single queue per container.
+CMD ["worker", "standalone"]

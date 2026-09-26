@@ -9,6 +9,7 @@ import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { onShutdown } from "../lib/shutdown"
 import { sendPushForNotificationJob } from "./handlers/send-push"
 
 async function startNotificationWorker() {
@@ -40,22 +41,9 @@ async function startNotificationWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[NotificationWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  onShutdown("notification", async () => {
+    await worker.close()
+  })
 }
 
 startNotificationWorker()

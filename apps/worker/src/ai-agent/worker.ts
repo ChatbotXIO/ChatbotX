@@ -27,6 +27,7 @@ import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown } from "../lib/shutdown"
 import { processConversationSource } from "./handlers/process-conversation-source"
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
@@ -178,26 +179,10 @@ async function startAIAgentWorker() {
     )
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      await Promise.all([closeChatQueueEvents(), closeHeavyQueueEvents()])
-      process.exit(0)
-    } catch (err) {
-      logger.error(
-        { err: normalizeError(err) },
-        "[AIAgentWorker] Error during shutdown",
-      )
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  onShutdown("ai-agent", async () => {
+    await worker.close()
+    await Promise.all([closeChatQueueEvents(), closeHeavyQueueEvents()])
+  })
 }
 
 startAIAgentWorker()

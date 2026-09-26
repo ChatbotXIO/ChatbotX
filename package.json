@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "turbo dev --filter=builder --filter=worker --filter=realtime --filter=javascript-executor",
+    "dev:all": "turbo dev:all --filter=builder --filter=worker --filter=realtime --filter=javascript-executor",
     "fix": "ultracite fix --unsafe",
     "lint": "pnpm check:agent-instructions && turbo run lint && ultracite check",
     "sync:agent-instructions": "node scripts/sync-agent-instructions.mjs --write",

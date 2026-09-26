@@ -6,7 +6,13 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "passThroughEnv": ["BETTER_AUTH_SECRET", "BETTER_AUTH_URL"]
+      "passThroughEnv": [
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        // Toggles Turbopack's build cache (apps/builder/next.config.ts). It
+        // changes build speed/memory, not the output, so it stays out of the hash.
+        "NEXT_BUILD_FS_CACHE"
+      ]
     },
     // No `dependsOn: ["^lint"]`: Biome lints every file independently, so the
     // fan-in conveyed no ordering. Worse, only builder defines a real `lint`
@@ -46,6 +52,10 @@
       "passThroughEnv": ["VITEST_MAX_WORKERS"]
     },
     "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:all": {
       "cache": false,
       "persistent": true
     },

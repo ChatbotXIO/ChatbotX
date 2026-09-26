@@ -1,5 +1,6 @@
 import { startWorker, stopWorker } from "@chatbotx.io/event-bus/worker"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { onShutdown, requestShutdown } from "../lib/shutdown"
 import { analyticsDashboardEvents } from "./analytics"
 import errorLogEventListener from "./error-log"
 import flowEventListener from "./flow"
@@ -24,33 +25,14 @@ async function startEventWorker() {
 
 startEventWorker()
 
-let isShuttingDown = false
-async function shutdown(signal: "SIGINT" | "SIGTERM") {
-  if (isShuttingDown) {
-    console.log(`[EventWorker] Already shutting down, ignoring ${signal}`)
-    return
-  }
-
-  isShuttingDown = true
-
-  try {
-    await stopWorker()
-    process.exit(0)
-  } catch (error) {
-    console.error("[EventWorker] Error during shutdown", error)
-    process.exit(1)
-  }
-}
-
-process.once("SIGINT", shutdown)
-process.once("SIGTERM", shutdown)
+onShutdown("events", stopWorker)
 
 process.on("uncaughtException", (error) => {
   console.error("[EventWorker] Uncaught exception", error)
-  shutdown("SIGTERM")
+  requestShutdown("uncaughtException")
 })
 
 process.on("unhandledRejection", (reason) => {
   console.error("[EventWorker] Unhandled rejection", reason)
-  shutdown("SIGTERM")
+  requestShutdown("unhandledRejection")
 })

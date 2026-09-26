@@ -26,6 +26,9 @@ services:
     build:
       context: .
       dockerfile: apps/builder/docker/Dockerfile
+      args:
+        # Rebuilds reuse Turbopack's cache from the BuildKit mount (see Dockerfile).
+        NEXT_BUILD_FS_CACHE: "true"
     ports:
       - "3123:3000"
     depends_on:
@@ -45,7 +48,9 @@ services:
       - RUN_DB_SEED=true
       - REALTIME_INTERNAL_URL=http://realtime:1999
 
-  # BullMQ Worker
+  # BullMQ Worker: the image default `worker standalone` — every core queue
+  # consumer plus the schedule (cron) worker in ONE process, instead of one
+  # process per worker (`worker all`, ~3.9GB).
   worker:
     <<: *worker-common
     networks:
@@ -63,6 +68,22 @@ services:
     environment:
       - JAVASCRIPT_EXECUTOR_URL=http://javascript-executor:3210
       - REALTIME_INTERNAL_URL=http://realtime:1999
+
+  # Sequence scheduler needs Kafka (KAFKA_BROKERS), which this stack does not
+  # run — see packages/kafka/docker-compose.yml. Opt in with
+  # `docker compose --profile sequence up`.
+  worker-sequence-scheduler:
+    <<: *worker-common
+    profiles: ["sequence"]
+    command: ["worker", "sequence-scheduler"]
+  worker-sequence-producer:
+    <<: *worker-common
+    profiles: ["sequence"]
+    command: ["worker", "sequence-producer"]
+  worker-sequence-consumer:
+    <<: *worker-common
+    profiles: ["sequence"]
+    command: ["worker", "sequence-consumer"]
 
   javascript-executor:
     platform: linux/amd64

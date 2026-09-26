@@ -189,13 +189,28 @@ To have the project up and running, please follow the [Quick Start Guide](https:
 ## Development Commands
 
 ```bash
-pnpm dev              # run turbo dev
+pnpm dev              # Builder, realtime, executor, and core worker consumers
+pnpm dev:all          # same stack, plus schedule and Kafka sequence workers
 pnpm build            # build all packages/apps through Turborepo
 pnpm lint             # run Ultracite lint
 pnpm fix              # run Ultracite fix
 pnpm check:circular   # check circular dependencies
 pnpm check:unused     # check unused files and dependencies
 ```
+
+`pnpm dev` excludes schedule and sequence workers because they execute
+production-like cron and Kafka workloads against local data. Use `pnpm dev:all`
+only while changing those systems.
+
+The core worker consumers run in one `tsx watch` process
+(`apps/worker/src/core.ts`) instead of one per queue: ~1.5GB instead of ~8GB.
+Use `pnpm --filter worker worker:<name>` to run a single queue on its own.
+
+The worker image defaults to `worker standalone`: every core queue plus the
+schedule (cron) worker in one process. `worker core` (no schedule), `worker all`
+(one process per worker, ~3.9GB) and `worker <name>` remain available. The
+Kafka-backed sequence workers are not in the default; `docker-compose.dev.yml`
+runs them behind `--profile sequence`.
 
 Useful package-level commands:
 

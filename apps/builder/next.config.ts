@@ -1,4 +1,5 @@
 import type { NextConfig } from "next"
+import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import createNextIntlPlugin from "next-intl/plugin"
 import { env } from "@/env"
 
@@ -44,10 +45,22 @@ const nextConfig: NextConfig = {
     // per-file subpaths and its root export is not a re-export barrel, so
     // there is nothing for this optimization to rewrite.
     optimizePackageImports: ["@icons-pack/react-simple-icons"],
-    // turbopackServerFastRefresh: false,
-    // The Docker build starts from a clean layer and `.next/cache` is not
-    // persisted across CI runs, so this cache is written and never read.
-    turbopackFileSystemCacheForBuild: false,
+    // Opt-in (NEXT_BUILD_FS_CACHE=true). `.next/cache` is not persisted across
+    // CI runs, where writing it costs ~60s for nothing. Where it IS reused —
+    // local Docker builds keep it in a BuildKit cache mount — a warm build
+    // took 14s / 5.0GB peak instead of 58s / 11.7GB.
+    turbopackFileSystemCacheForBuild:
+      process.env.NEXT_BUILD_FS_CACHE === "true",
+    // Evict compiled tasks to the on-disk cache after every snapshot instead of
+    // letting "auto" keep them resident. Measured for `next dev` on a cold
+    // cache: native memory 927MB -> 575MB, RSS 7.1GB -> 4.9GB; warm restarts
+    // compile just as fast. Keep the dev filesystem cache ON — disabling it
+    // pushed native memory to 6.2GB.
+    turbopackMemoryEviction: "full",
+    // `next build` "collecting page data" / static generation forks one worker
+    // per CPU (11 here), each loading the server bundle: 8.9GB peak. Two
+    // workers: 5.5GB, same wall time — there are only ~40 static pages.
+    cpus: 2,
   },
   poweredByHeader: false,
   async rewrites() {
@@ -180,4 +193,16 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default withNextIntl(nextConfig)
+// `next build` emitted 4,069 server source maps (2.3GB) of which standalone
+// output ships only 250 page-level files — the chunk maps never reach the
+// image, so generating them only cost build memory and time. `next dev` keeps
+// them for the error overlay. Keyed on the phase, not NODE_ENV, because `.env`
+// can override NODE_ENV for `next build`.
+export default (phase: string): NextConfig =>
+  withNextIntl({
+    ...nextConfig,
+    experimental: {
+      ...nextConfig.experimental,
+      turbopackSourceMaps: phase !== PHASE_PRODUCTION_BUILD,
+    },
+  })
