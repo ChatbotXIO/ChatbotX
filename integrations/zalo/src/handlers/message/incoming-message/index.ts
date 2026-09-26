@@ -109,6 +109,21 @@ const getMessageEntity = async (
     case "user_send_audio":
       message.attachments = await getMessageAttachments(ctx, event.message)
       break
+    // Undocumented by Zalo but confirmed in production: a GIF arrives as
+    // `attachments[{ type: "gif", payload: { url, thumbnail } }]` with no
+    // text, so it must be downloaded or the whole message is dropped below.
+    case "user_send_gif":
+    case "oa_send_gif":
+    case "user_send_video":
+    case "oa_send_video":
+      message.attachments = await getMessageAttachments(ctx, event.message)
+      if (message.attachments.length === 0) {
+        logger.warn(
+          { eventName: event.event_name, msgId: event.message.msg_id },
+          "Zalo media message produced no attachment",
+        )
+      }
+      break
     case "user_send_location": {
       const attachment = event.message?.attachments?.[0]
       message = {
