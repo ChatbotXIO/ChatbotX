@@ -26,6 +26,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { generateAIReplyText } from "../automated-response/replies"
+import { normalizeForMatch } from "../comment-automation/automation-matching"
 
 function matchStory(story: IgStoryTarget, storyId: string): boolean {
   if (story.type !== "storyIds") {
@@ -43,8 +44,8 @@ function matchIncludeKeywords(
   if (includeKeywords.type === "all") {
     return true
   }
-  const text = (message ?? "").toLowerCase()
-  const keywords = includeKeywords.value.map((k) => k.toLowerCase())
+  const text = normalizeForMatch(message ?? "")
+  const keywords = includeKeywords.value.map((k) => normalizeForMatch(k))
   if (includeKeywords.type === "equal") {
     return keywords.includes(text)
   }
