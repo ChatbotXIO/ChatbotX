@@ -82,12 +82,15 @@ export const sendMessageNodeDefaultFn = (
 
 export const BROADCAST_PAYLOAD_TYPE = "broadcast"
 export const SEQUENCE_SCHEDULE_PAYLOAD_TYPE = "sequenceSchedule"
-export const isBulkOutboundMetadata = (metadata: unknown): boolean =>
+export const isBulkOutboundMetadata = (
+  metadata: unknown,
+  isBulkBroadcast = false,
+): boolean =>
   typeof metadata === "object" &&
   metadata !== null &&
   "type" in metadata &&
-  (metadata.type === BROADCAST_PAYLOAD_TYPE ||
-    metadata.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE)
+  (metadata.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE ||
+    (metadata.type === BROADCAST_PAYLOAD_TYPE && isBulkBroadcast))
 
 export const COMMENT_AUTOMATION_PAYLOAD_TYPE = "commentAutomation"
 export const UPDATE_STATUS_PAYLOAD_TYPE = "updateStatus"

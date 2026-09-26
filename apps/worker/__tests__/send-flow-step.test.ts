@@ -545,6 +545,7 @@ describe("sendFlowStep", () => {
     await sendFlowStep({
       ...baseParams,
       contactInboxId: "ci-broadcast",
+      isBulkBroadcast: true,
       metadata: {
         type: "broadcast",
         broadcastId: "broadcast-1",
@@ -575,6 +576,49 @@ describe("sendFlowStep", () => {
         messageId: "msg-created",
       }),
     )
+    expect(mockBroadcast).not.toHaveBeenCalled()
+    expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({ bumpActivity: false }),
+    )
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({ silent: true }),
+    )
+  })
+
+  test("publishes a broadcast button continuation with preserved metadata", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      metadata: {
+        type: "broadcast",
+        broadcastId: "broadcast-1",
+        contactInboxId: "ci-1",
+      },
+    })
+
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ eventType: "messageCreated" }),
+    )
+    expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({ bumpActivity: true }),
+    )
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({ silent: false }),
+    )
+  })
+
+  test("keeps a second automatic broadcast step out of realtime and the inbox sort", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      isBulkBroadcast: true,
+      metadata: {
+        type: "broadcast",
+        broadcastId: "broadcast-1",
+        contactInboxId: "ci-1",
+      },
+      step: { ...sendTextStep, id: "step-2" },
+    })
+
     expect(mockBroadcast).not.toHaveBeenCalled()
     expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
       expect.objectContaining({ bumpActivity: false }),
@@ -1658,21 +1702,36 @@ describe("sendChatMessage", () => {
     })
   })
 
-  test("keeps a bulk chat message out of realtime and the inbox sort", async () => {
+  test("keeps a broadcast continuation visible in realtime and the inbox sort", async () => {
     await sendChatMessage({
       conversation: fakeConversation as never,
       contactInbox: fakeContactInbox as never,
-      text: "broadcast body",
+      text: "broadcast follow-up",
       metadata: { type: "broadcast", broadcastId: "b-1" } as never,
+    })
+
+    expect(mockRecordOutboundMessageActivity).toHaveBeenCalledWith(
+      expect.objectContaining({ bumpActivity: true }),
+    )
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ eventType: "messageCreated" }),
+    )
+  })
+
+  test("keeps an initial broadcast chat prompt out of realtime and the inbox sort", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "broadcast prompt",
+      metadata: { type: "broadcast", broadcastId: "b-1" } as never,
+      isBulkBroadcast: true,
     })
 
     expect(mockRecordOutboundMessageActivity).toHaveBeenCalledWith(
       expect.objectContaining({ bumpActivity: false }),
     )
-    expect(mockBroadcast).not.toHaveBeenCalledWith(
-      "ws-1",
-      expect.objectContaining({ eventType: "messageCreated" }),
-    )
+    expect(mockBroadcast).not.toHaveBeenCalled()
   })
 
   test("falls back to text url when chat message media download fails", async () => {

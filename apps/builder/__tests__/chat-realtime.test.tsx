@@ -353,6 +353,33 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
     expect(chatStoreState.handleNewMessages).toHaveBeenCalledWith([message])
     expect(invalidateQueriesMock).not.toHaveBeenCalled()
   })
+
+  test("flushes a created message before its same-batch failure", async () => {
+    await render()
+
+    const message = {
+      id: "message-3",
+      conversationId: "conversation-42",
+      contentAttributes: { type: "text" },
+    }
+    act(() => {
+      emit("messageCreated", message)
+      emit("messageFailed", {
+        messageId: "message-3",
+        error: "provider rejected",
+      })
+    })
+
+    expect(chatStoreState.handleNewMessages).toHaveBeenCalledWith([message])
+    expect(chatStoreState.markMessageFailed).toHaveBeenCalledWith(
+      "message-3",
+      undefined,
+      "provider rejected",
+    )
+    expect(
+      chatStoreState.handleNewMessages.mock.invocationCallOrder[0],
+    ).toBeLessThan(chatStoreState.markMessageFailed.mock.invocationCallOrder[0])
+  })
 })
 
 describe("ChatRealtime — bubble-to-top on ringing", () => {

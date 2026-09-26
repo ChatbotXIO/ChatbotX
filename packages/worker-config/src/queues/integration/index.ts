@@ -222,6 +222,11 @@ export type IntegrationJobRunFlowNode = {
      * never a duplicate send).
      */
     initialBroadcastDispatch?: boolean
+    /**
+     * Preserves bulk delivery across automatic flow continuations. It must not
+     * be set for a flow started by an inbound button or quick reply.
+     */
+    isBulkBroadcast?: boolean
     appointmentId?: string
     sendFrom?: "inbox"
     origin?: "channel"

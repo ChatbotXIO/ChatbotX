@@ -128,6 +128,23 @@ describe("handleAIExtractData", () => {
     })
   })
 
+  test("keeps an automatic broadcast extraction failure in bulk delivery", async () => {
+    const metadata = { type: "broadcast", broadcastId: "broadcast-1" }
+
+    await handleAIExtractData({
+      ...makeProps(),
+      metadata,
+      isBulkBroadcast: true,
+    })
+
+    expect(mocks.sendMessageWithRender).toHaveBeenCalledWith(
+      "conv-1",
+      "Error extracting data",
+      undefined,
+      { metadata, isBulkBroadcast: true },
+    )
+  })
+
   // The step knows which vendor it ran against; recording every AI failure as
   // OpenAI is the mis-attribution `ErrorLog` exists to avoid.
   test("attributes the failure to the vendor the step actually ran against", async () => {

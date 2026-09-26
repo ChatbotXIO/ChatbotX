@@ -62,6 +62,7 @@ export type ChatJobSendChannelMessage = {
     }
     quickReplies?: MessageButtonTemplate[]
     metadata?: MetadataPayload
+    isBulkBroadcast?: boolean
     sendFrom?: "inbox"
   }
 }
@@ -90,6 +91,11 @@ export type ChatJobSendFlowStep = {
       | WhatsappCallButtonStepSchema
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    /**
+     * Preserves bulk delivery across automatic flow continuations. It is
+     * absent when an inbound button or quick reply starts the flow.
+     */
+    isBulkBroadcast?: boolean
     appointmentId?: string
     richResponse?: {
       executionId: string
@@ -113,6 +119,8 @@ export type ChatJobSendChatMessage = {
     quickReplies?: MessageButtonTemplate[]
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    /** Marks an automatic bulk-broadcast delivery, including a flow's first prompt. */
+    isBulkBroadcast?: boolean
   }
 }
 

@@ -489,6 +489,7 @@ export async function sendFlowStep({
   step,
   trackingContext,
   metadata,
+  isBulkBroadcast,
   richResponse,
   quickReplies,
   sendFrom,
@@ -510,7 +511,7 @@ export async function sendFlowStep({
   if (!targetContactInbox) {
     return
   }
-  const isBulkOutbound = isBulkOutboundMetadata(metadata)
+  const isBulkOutbound = isBulkOutboundMetadata(metadata, isBulkBroadcast)
 
   // What the job actually carried. `metadata` is the carrier the button
   // encoders read; `commentAnchor` only decides delivery. Note the resolved
@@ -554,6 +555,7 @@ export async function sendFlowStep({
         step,
         trackingContext,
         metadata,
+        isBulkBroadcast,
       })
     } catch (error) {
       logger.error(
@@ -602,6 +604,7 @@ export async function sendFlowStep({
         step,
         trackingContext,
         metadata,
+        isBulkBroadcast,
       })
     } catch (error) {
       logger.error(
@@ -912,6 +915,7 @@ export async function sendFlowStep({
             message,
             quickReplies: canonicalQuickReplies,
             metadata,
+            isBulkBroadcast,
             sendFrom,
           },
           0,
@@ -1118,8 +1122,9 @@ export const sendChatMessage = async (
     quickReplies,
     trackingContext,
     metadata,
+    isBulkBroadcast,
   } = props
-  const isBulkOutbound = isBulkOutboundMetadata(metadata)
+  const isBulkOutbound = isBulkOutboundMetadata(metadata, isBulkBroadcast)
 
   const contactInbox =
     targetContactInbox ??

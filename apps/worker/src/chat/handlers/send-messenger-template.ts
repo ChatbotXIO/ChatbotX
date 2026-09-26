@@ -64,6 +64,7 @@ export interface ProcessMessengerTemplateParams {
     id: string
     versionId?: string
   }
+  isBulkBroadcast?: boolean
   metadata?: MetadataPayload
   step?: SendMessengerTemplateMessageStepSchema
   template: SendMessengerTemplateMessageStepSchema["template"]
@@ -154,9 +155,13 @@ export async function processMessengerTemplate(
     step,
     trackingContext,
     metadata,
+    isBulkBroadcast,
     willRetryOnThrow = false,
   } = params
-  const isBulkOutbound = isBulkOutboundMetadata(metadata)
+  const isBulkOutbound = isBulkOutboundMetadata(
+    metadata,
+    isBulkBroadcast || broadcastId !== undefined,
+  )
 
   const eventLogData = {
     context: {
@@ -504,6 +509,7 @@ export async function sendMessengerTemplateMessage(
       },
       broadcastId,
       metadata,
+      isBulkBroadcast: broadcastId !== undefined,
       // Pass contextFlow so unconfigured buttons are encoded with a valid flowId.
       ...(contextFlow && { flow: { id: contextFlow.id } }),
       ...(stepButtons.length > 0 && {

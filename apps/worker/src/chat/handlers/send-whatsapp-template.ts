@@ -94,6 +94,7 @@ export interface ProcessWhatsappTemplateParams {
     versionId?: string
     buttons: SendWaTemplateMessageStepSchema["buttons"]
   }
+  isBulkBroadcast?: boolean
   metadata?: MetadataPayload
   step?: SendWaTemplateMessageStepSchema
   template: SendWaTemplateMessageStepSchema["template"]
@@ -185,9 +186,13 @@ export async function processWhatsappTemplate(
     step,
     trackingContext,
     metadata,
+    isBulkBroadcast,
     willRetryOnThrow = false,
   } = params
-  const isBulkOutbound = isBulkOutboundMetadata(metadata)
+  const isBulkOutbound = isBulkOutboundMetadata(
+    metadata,
+    isBulkBroadcast || broadcastId !== undefined,
+  )
 
   const eventLogData = {
     context: {
@@ -521,6 +526,7 @@ export async function sendWhatsappTemplateMessage(
         params: templateParams,
       },
       broadcastId,
+      isBulkBroadcast: broadcastId !== undefined,
       metadata,
     })
 

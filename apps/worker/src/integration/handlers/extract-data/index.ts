@@ -111,6 +111,8 @@ export async function handleAIExtractData({
   contactInbox,
   conversation,
   step,
+  metadata,
+  isBulkBroadcast,
 }: ExecuteStepProps<AIExtractDataSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
@@ -260,10 +262,15 @@ ${schemaDescription}`
       "Error in handleAIExtractData",
     )
 
-    const job = await sendMessageWithRender(
-      conversation.id,
-      "Error extracting data",
-    )
+    const job =
+      metadata || isBulkBroadcast
+        ? await sendMessageWithRender(
+            conversation.id,
+            "Error extracting data",
+            undefined,
+            { metadata, isBulkBroadcast },
+          )
+        : await sendMessageWithRender(conversation.id, "Error extracting data")
     await waitForChatJobCompletion(job, { conversationId: conversation.id })
 
     return {

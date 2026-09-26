@@ -327,6 +327,7 @@ describe("chat send-message handlers", () => {
   test("marks a broadcast send read without a realtime conversation update", async () => {
     await sendMessageToChannel({
       conversation: conversation as never,
+      isBulkBroadcast: true,
       contactInbox: contactInbox as never,
       message: {
         id: "msg-broadcast",
@@ -827,6 +828,7 @@ describe("chat send-message handlers", () => {
 
     await sendMessageToChannel({
       conversation: conversation as never,
+      isBulkBroadcast: true,
       contactInbox: contactInbox as never,
       message: {
         id: "msg-bulk-error",
@@ -855,6 +857,47 @@ describe("chat send-message handlers", () => {
       expect.any(Date),
     )
     expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+  })
+
+  test("publishes a broadcast continuation send error", async () => {
+    mockRunChannelHandler.mockRejectedValueOnce(
+      new ChannelError(
+        "provider rejected",
+        ChannelErrorCategory.PAYLOAD_INVALID,
+        { code: "provider_rejected" },
+      ),
+    )
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-broadcast-continuation",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "bot",
+        text: "follow-up",
+        contentAttributes: {
+          metadata: {
+            type: "broadcast",
+            broadcastId: "broadcast-1",
+            contactInboxId: "ci-1",
+          },
+        },
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageFailed",
+      data: {
+        messageId: "msg-broadcast-continuation",
+        error: "sdk error",
+      },
+    })
   })
 
   test("does not persist a sendError on a successful send", async () => {
@@ -918,6 +961,7 @@ describe("chat send-message handlers", () => {
     await sendMessageToChannel(
       {
         conversation: conversation as never,
+        isBulkBroadcast: true,
         contactInbox: contactInbox as never,
         message: {
           id: "msg-bulk-retry",

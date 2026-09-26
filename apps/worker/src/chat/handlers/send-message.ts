@@ -108,11 +108,12 @@ export async function sendMessageToChannel(
     message,
     quickReplies,
     metadata,
+    isBulkBroadcast,
     sendFrom,
   } = data
   const isBulkOutbound =
-    isBulkOutboundMetadata(metadata) ||
-    isBulkOutboundMetadata(message.contentAttributes?.metadata)
+    isBulkOutboundMetadata(metadata, isBulkBroadcast) ||
+    isBulkOutboundMetadata(message.contentAttributes?.metadata, isBulkBroadcast)
 
   try {
     const { integration, ctx } =

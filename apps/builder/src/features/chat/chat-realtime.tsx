@@ -62,6 +62,22 @@ export function ChatRealtime() {
 
   const pendingCreatedMessagesRef = useRef<MessageResourceWithRelations[]>([])
   const isMessageFlushQueuedRef = useRef(false)
+  const flushPendingCreatedMessages = (): void => {
+    if (!isMessageFlushQueuedRef.current) {
+      return
+    }
+
+    const messages = pendingCreatedMessagesRef.current
+    pendingCreatedMessagesRef.current = []
+    isMessageFlushQueuedRef.current = false
+    handleNewMessages(messages)
+    for (const createdMessage of messages) {
+      if (getWhatsappCallPermissionReply(createdMessage.contentAttributes)) {
+        invalidateOutboundCallMode(createdMessage.conversationId)
+      }
+    }
+  }
+
   const queueCreatedMessage = (message: MessageResourceWithRelations): void => {
     pendingCreatedMessagesRef.current.push(message)
     if (isMessageFlushQueuedRef.current) {
@@ -69,17 +85,7 @@ export function ChatRealtime() {
     }
 
     isMessageFlushQueuedRef.current = true
-    queueMicrotask(() => {
-      const messages = pendingCreatedMessagesRef.current
-      pendingCreatedMessagesRef.current = []
-      isMessageFlushQueuedRef.current = false
-      handleNewMessages(messages)
-      for (const createdMessage of messages) {
-        if (getWhatsappCallPermissionReply(createdMessage.contentAttributes)) {
-          invalidateOutboundCallMode(createdMessage.conversationId)
-        }
-      }
-    })
+    queueMicrotask(flushPendingCreatedMessages)
   }
 
   useEffect(() => {
@@ -192,12 +198,15 @@ export function ChatRealtime() {
       queueCreatedMessage(event.data as MessageResourceWithRelations)
     },
     messageDeleted: (event) => {
+      flushPendingCreatedMessages()
       markMessagesDeleted(event.data.messageIds)
     },
     messageIdAssigned: (event) => {
+      flushPendingCreatedMessages()
       assignMessageCommentId(event.data.messageId, event.data.commentId)
     },
     messageFailed: (event) => {
+      flushPendingCreatedMessages()
       markMessageFailed(
         event.data.messageId,
         event.data.clientId,
@@ -205,6 +214,7 @@ export function ChatRealtime() {
       )
     },
     messageUpdated: (event) => {
+      flushPendingCreatedMessages()
       const { data } = event
       updateMessageText(data.messageId, data.newText, {
         newAttachmentPath: data.newAttachmentPath ?? null,
@@ -216,6 +226,7 @@ export function ChatRealtime() {
       })
     },
     messageContentUpdated: (event) => {
+      flushPendingCreatedMessages()
       updateMessageContentAttributes(
         event.data.messageId,
         event.data.contentAttributes,

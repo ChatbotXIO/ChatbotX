@@ -133,24 +133,20 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
     expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
   })
 
-  test("extends a burst to 250 ms and returns to 25 ms after one quiet second", async () => {
+  test("keeps the coalesce window at 25 ms during a burst", async () => {
     const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
     await vi.advanceTimersByTimeAsync(25)
     await first
 
     const burst = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
-    await vi.advanceTimersByTimeAsync(249)
+    await vi.advanceTimersByTimeAsync(24)
     expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(1)
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(2)
+    await flushPendingWorkspaceBroadcasts("workspace_1")
     await burst
 
-    await vi.advanceTimersByTimeAsync(1000)
-    const quiet = broadcastToWorkspaceParty("workspace_1", messageCreatedEvent)
-    await vi.advanceTimersByTimeAsync(24)
     expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(2)
-    await vi.advanceTimersByTimeAsync(1)
-    await quiet
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(3)
   })
 
   test("coalesces all events queued during the window into one batch request", async () => {

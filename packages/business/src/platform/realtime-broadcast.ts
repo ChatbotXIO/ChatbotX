@@ -19,8 +19,6 @@ import {
 } from "./settings"
 
 export const WORKSPACE_BROADCAST_COALESCE_MS = 25
-export const WORKSPACE_BROADCAST_BURST_COALESCE_MS = 250
-export const WORKSPACE_BROADCAST_BURST_DETECT_MS = 1000
 export const WORKSPACE_BROADCAST_MAX_EVENTS = 64
 export const WORKSPACE_BROADCAST_MAX_BYTES = 256 * 1024
 
@@ -35,15 +33,9 @@ type PendingWorkspaceBroadcast = {
   }[]
 }
 
-type RecentWorkspaceFlush = {
-  occurredAt: number
-  timer: NodeJS.Timeout
-}
-
 const pendingByWorkspace = new Map<string, PendingWorkspaceBroadcast>()
 const inFlightByWorkspace = new Map<string, Promise<void>>()
 const chatNegativeCache = new Map<string, number>()
-const recentFlushByWorkspace = new Map<string, RecentWorkspaceFlush>()
 
 let cachedTarget: BroadcastTarget | undefined
 
@@ -113,34 +105,6 @@ const recordRelayInterest = (
   )
 }
 
-const getWorkspaceCoalesceMs = (workspaceId: string): number => {
-  const recentFlush = recentFlushByWorkspace.get(workspaceId)
-  if (
-    !recentFlush ||
-    Date.now() - recentFlush.occurredAt >= WORKSPACE_BROADCAST_BURST_DETECT_MS
-  ) {
-    return WORKSPACE_BROADCAST_COALESCE_MS
-  }
-
-  return WORKSPACE_BROADCAST_BURST_COALESCE_MS
-}
-
-const recordWorkspaceFlush = (workspaceId: string): void => {
-  const existing = recentFlushByWorkspace.get(workspaceId)
-  if (existing) {
-    clearTimeout(existing.timer)
-  }
-
-  const occurredAt = Date.now()
-  const timer = setTimeout(() => {
-    const recentFlush = recentFlushByWorkspace.get(workspaceId)
-    if (recentFlush?.occurredAt === occurredAt) {
-      recentFlushByWorkspace.delete(workspaceId)
-    }
-  }, WORKSPACE_BROADCAST_BURST_DETECT_MS)
-  recentFlushByWorkspace.set(workspaceId, { occurredAt, timer })
-}
-
 const sendWorkspaceEvents = async (
   workspaceId: string,
   events: RealtimeEventData | readonly RealtimeEventData[],
@@ -176,7 +140,7 @@ const createPendingWorkspaceBroadcast = (
     events: [],
     timer: setTimeout(() => {
       flushPendingWorkspaceBroadcasts(workspaceId)
-    }, getWorkspaceCoalesceMs(workspaceId)),
+    }, WORKSPACE_BROADCAST_COALESCE_MS),
     waiters: [],
   }
   pendingByWorkspace.set(workspaceId, pending)
@@ -200,8 +164,6 @@ export function flushPendingWorkspaceBroadcasts(
   if (pending.events.length === 0) {
     return Promise.resolve(null)
   }
-
-  recordWorkspaceFlush(workspaceId)
 
   const previousSend = inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
   const flush = previousSend
@@ -240,10 +202,6 @@ export const resetRealtimeBroadcastStateForTests = (): void => {
   pendingByWorkspace.clear()
   inFlightByWorkspace.clear()
   chatNegativeCache.clear()
-  for (const recentFlush of recentFlushByWorkspace.values()) {
-    clearTimeout(recentFlush.timer)
-  }
-  recentFlushByWorkspace.clear()
 }
 
 export const flushAllPendingWorkspaceBroadcasts = async (): Promise<void> => {
