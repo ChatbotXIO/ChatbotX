@@ -469,6 +469,7 @@ export function IgCommentForm({
           <SwitchField
             label={t("commentAutomation.hideComments.hasEmoji")}
             name="hideComments.hasEmoji"
+            required
           />
           <SwitchField
             label={t("instagramCommentAutomation.hideComments.hasKeywords")}

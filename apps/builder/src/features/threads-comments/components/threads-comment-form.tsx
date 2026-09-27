@@ -393,26 +393,32 @@ export function ThreadsCommentForm({
           <SwitchField
             label={t("threadsCommentAutomation.hideComments.all")}
             name="hideComments.all"
+            required
           />
           <SwitchField
             label={t("threadsCommentAutomation.hideComments.hasPhoneNumber")}
             name="hideComments.hasPhoneNumber"
+            required
           />
           <SwitchField
             label={t("threadsCommentAutomation.hideComments.hasLink")}
             name="hideComments.hasLink"
+            required
           />
           <SwitchField
             label={t("commentAutomation.hideComments.hasGif")}
             name="hideComments.hasGif"
+            required
           />
           <SwitchField
             label={t("commentAutomation.hideComments.hasEmoji")}
             name="hideComments.hasEmoji"
+            required
           />
           <SwitchField
             label={t("threadsCommentAutomation.hideComments.hasKeywords")}
             name="hideComments.hasKeywords"
+            required
           />
           {hideKeywords ? (
             <FormField
