@@ -1275,6 +1275,19 @@
     "contactId": {
       "label": "Kişi Kimliği"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo Kullanıcı Kimliği",
+      "telegramChatId": "Telegram Sohbet Kimliği",
+      "tiktokUserId": "TikTok Kullanıcı Kimliği",
+      "threadsUsername": "Threads Kullanıcı Adı",
+      "webchatGuestId": "Webchat Ziyaretçi Kimliği",
+      "externalId": "Harici Kimlik",
+      "channelId": "Kanal Kimliği"
+    },
     "flow": {
       "label": "Akış"
     },

@@ -61,6 +61,7 @@ import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { EditContactField } from "./edit-contact-field"
+import { resolveSourceIdentity } from "./lib/channel-identity"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
 import type { ContactEditableField } from "./schema/resource"
@@ -170,7 +171,7 @@ const scopedIdentityRowsByChannel: Partial<
     {
       key: "sourceUserId",
       icon: FingerprintIcon,
-      labelKey: "fields.waUserId.label",
+      labelKey: "fields.channelIdentity.bsuid",
     },
     {
       key: "sourceUsername",
@@ -178,6 +179,26 @@ const scopedIdentityRowsByChannel: Partial<
       labelKey: "fields.waUserName.label",
     },
   ],
+}
+
+const buildSourceIdField = (
+  contactInbox: ContactInboxResource | undefined,
+  t: (key: string) => string,
+): ContactEditableField[] => {
+  const identity = resolveSourceIdentity(contactInbox)
+  if (!identity) {
+    return []
+  }
+  return [
+    {
+      key: "sourceId",
+      icon: FingerprintIcon,
+      label: t(identity.labelKey),
+      value: identity.value,
+      type: "shortText",
+      readOnly: true,
+    },
+  ]
 }
 
 const buildScopedIdentityFields = (
@@ -191,9 +212,7 @@ const buildScopedIdentityFields = (
   const rows = scopedIdentityRowsByChannel[parsedChannel.data] ?? []
   return rows.flatMap((row): ContactEditableField[] => {
     const value = contactInbox[row.key]
-    // Skip absent values, and a value that IS the Contact ID shown above
-    // (a scoped-id-keyed contact) — no duplicate row.
-    if (!value || value === contactInbox.sourceId) {
+    if (!value) {
       return []
     }
     return [
@@ -538,10 +557,10 @@ export const ContactDetail = ({
 
       if (conversation?.contact) {
         const activeContactInbox = conversation.contactInboxes[0]
-        const channelContactId = activeContactInbox?.sourceId
         // The ad the contact clicked from (any ad-attributed inbox), shown as
-        // a link right under Contact ID. Guarded to http(s) so a non-navigable
-        // / `javascript:` referral value never becomes an anchor href.
+        // a link under the channel identity rows. Guarded to http(s) so a
+        // non-navigable / `javascript:` referral value never becomes an anchor
+        // href.
         const rawAdSourceUrl = conversation.contactInboxes.find(
           (contactInbox) => contactInbox.adReferral?.sourceUrl,
         )?.adReferral?.sourceUrl
@@ -551,13 +570,15 @@ export const ContactDetail = ({
             : null
         const tmpContactFields: ContactEditableField[] = [
           {
-            key: "channelContactId",
+            key: "contactId",
             icon: IdCardIcon,
             label: t("fields.contactId.label"),
-            value: channelContactId,
+            value: conversation.contact.id,
             type: "shortText",
             readOnly: true,
           },
+          ...buildSourceIdField(activeContactInbox, t),
+          ...buildScopedIdentityFields(activeContactInbox, t),
           ...(adSourceUrl
             ? [
                 {
@@ -571,7 +592,6 @@ export const ContactDetail = ({
                 },
               ]
             : []),
-          ...buildScopedIdentityFields(activeContactInbox, t),
           {
             key: "language",
             icon: LanguagesIcon,

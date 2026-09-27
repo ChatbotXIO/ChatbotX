@@ -1284,6 +1284,19 @@
     "contactId": {
       "label": "Contact ID"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo User ID",
+      "telegramChatId": "Telegram Chat ID",
+      "tiktokUserId": "TikTok User ID",
+      "threadsUsername": "Threads Username",
+      "webchatGuestId": "Webchat Guest ID",
+      "externalId": "External ID",
+      "channelId": "Channel ID"
+    },
     "flow": {
       "label": "Flow"
     },

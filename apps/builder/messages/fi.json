@@ -1133,6 +1133,19 @@
     "contactId": {
       "label": "Yhteystiedon tunnus"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo-käyttäjätunnus",
+      "telegramChatId": "Telegram-keskustelutunnus",
+      "tiktokUserId": "TikTok-käyttäjätunnus",
+      "threadsUsername": "Threads-käyttäjänimi",
+      "webchatGuestId": "Webchat-vierastunnus",
+      "externalId": "Ulkoinen tunnus",
+      "channelId": "Kanavan tunnus"
+    },
     "flow": {
       "label": "Flow"
     },

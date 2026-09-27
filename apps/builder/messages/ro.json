@@ -1961,6 +1961,19 @@
     "contactId": {
       "label": "ID contact"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "ID utilizator Zalo",
+      "telegramChatId": "ID chat Telegram",
+      "tiktokUserId": "ID utilizator TikTok",
+      "threadsUsername": "Nume utilizator Threads",
+      "webchatGuestId": "ID vizitator Webchat",
+      "externalId": "ID extern",
+      "channelId": "ID canal"
+    },
     "flow": {
       "label": "Flux"
     },

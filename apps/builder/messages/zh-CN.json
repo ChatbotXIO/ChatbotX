@@ -1840,6 +1840,19 @@
     "contactId": {
       "label": "联系人 ID"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo 用户 ID",
+      "telegramChatId": "Telegram 聊天 ID",
+      "tiktokUserId": "TikTok 用户 ID",
+      "threadsUsername": "Threads 用户名",
+      "webchatGuestId": "网页聊天访客 ID",
+      "externalId": "外部 ID",
+      "channelId": "渠道 ID"
+    },
     "contactNote": {
       "label": "联系人备注"
     },

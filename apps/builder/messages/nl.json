@@ -946,6 +946,19 @@
     "contactId": {
       "label": "Contact-ID"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo-gebruikers-ID",
+      "telegramChatId": "Telegram-chat-ID",
+      "tiktokUserId": "TikTok-gebruikers-ID",
+      "threadsUsername": "Threads-gebruikersnaam",
+      "webchatGuestId": "Webchat-gast-ID",
+      "externalId": "Externe ID",
+      "channelId": "Kanaal-ID"
+    },
     "flow": {
       "label": "Flow"
     },
