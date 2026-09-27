@@ -1,3 +1,4 @@
+import { verifyGuestConnectToken } from "@chatbotx.io/partysocket-config"
 import type * as Party from "partykit/server"
 import { env } from "../env"
 import { verifyBroadcastRequest } from "../lib/realtime-auth"
@@ -6,15 +7,24 @@ export default class GuestConversationParty implements Party.Server {
   // biome-ignore lint/style/noParameterProperties: wip
   constructor(readonly room: Party.Room) {}
 
-  // onConnect(
-  //   connection: Party.Connection,
-  //   { request }: Party.ConnectionContext,
-  // ) {
-  // const userId = request.headers.get("X-GUEST-CONVERSATION-ID")
-  // if (!userId) {
-  //   return connection.close(1008, "Unauthorized")
-  // }
-  // }
+  static async onBeforeConnect(req: Party.Request, lobby: Party.Lobby) {
+    const token = new URL(req.url).searchParams.get("token")
+    if (!token) {
+      return new Response("Unauthorized", { status: 401 })
+    }
+
+    try {
+      await verifyGuestConnectToken(
+        token,
+        lobby.id,
+        env.REALTIME_BROADCAST_SECRET,
+      )
+    } catch {
+      return new Response("Unauthorized", { status: 401 })
+    }
+
+    return req
+  }
 
   async onRequest(req: Party.Request) {
     const payload = await req.json()

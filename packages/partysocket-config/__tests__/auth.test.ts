@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest"
 import {
   extractBearerToken,
   REALTIME_TOKEN_PURPOSE,
+  signGuestConnectToken,
   signMemberConnectToken,
   signRealtimeToken,
+  verifyGuestConnectToken,
   verifyMemberConnectToken,
   verifyRealtimeToken,
 } from "../src/auth"
@@ -138,18 +140,42 @@ describe("signRealtimeToken / verifyRealtimeToken", () => {
 describe("signMemberConnectToken / verifyMemberConnectToken", () => {
   it("verifies a token minted for the same workspace room", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
 
     await expect(
       verifyMemberConnectToken(token, "ws_1", SECRET),
-    ).resolves.toEqual({ userId: "u_1" })
+    ).resolves.toEqual({
+      userId: "u_1",
+      chatScope: "all",
+      teamIds: [],
+    })
+  })
+
+  it("preserves assigned-team scope in a member token", async () => {
+    const token = await signMemberConnectToken(
+      {
+        workspaceId: "ws_1",
+        userId: "u_1",
+        chatScope: "assigned",
+        teamIds: ["team_1", "team_2"],
+      },
+      SECRET,
+    )
+
+    await expect(
+      verifyMemberConnectToken(token, "ws_1", SECRET),
+    ).resolves.toEqual({
+      userId: "u_1",
+      chatScope: "assigned",
+      teamIds: ["team_1", "team_2"],
+    })
   })
 
   it("rejects a cross-room replay — token minted for a different workspace", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
 
@@ -174,7 +200,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
 
   it("rejects a token signed with a different secret", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
 
@@ -198,7 +224,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
 
   it("a freshly minted member-connect token must never verify as a broadcast request — no cross-purpose confusion even though both share the workspace:<id> audience shape", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
 
@@ -221,6 +247,34 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
 
     await expect(
       verifyMemberConnectToken(token, "ws_1", SECRET),
+    ).rejects.toThrow()
+  })
+})
+
+describe("signGuestConnectToken / verifyGuestConnectToken", () => {
+  it("rejects a guest token replayed against another conversation room", async () => {
+    const token = await signGuestConnectToken(
+      { guestConversationId: "guest-conversation-1" },
+      SECRET,
+    )
+
+    await expect(
+      verifyGuestConnectToken(token, "guest-conversation-2", SECRET),
+    ).rejects.toThrow()
+  })
+
+  it("rejects an expired guest token", async () => {
+    const token = await new SignJWT({
+      guestConversationId: "guest-conversation-1",
+      purpose: REALTIME_TOKEN_PURPOSE.guestConnect,
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setAudience("guest:guest-conversation-1")
+      .setExpirationTime("-10s")
+      .sign(new TextEncoder().encode(SECRET))
+
+    await expect(
+      verifyGuestConnectToken(token, "guest-conversation-1", SECRET),
     ).rejects.toThrow()
   })
 })

@@ -639,6 +639,9 @@ importers:
       '@chatbotx.io/partysocket-config':
         specifier: workspace:*
         version: link:../../packages/partysocket-config
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
@@ -651,6 +654,9 @@ importers:
       partykit:
         specifier: 0.0.115
         version: 0.0.115
+      uWebSockets.js:
+        specifier: github:uNetworking/uWebSockets.js#v20.70.0
+        version: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/b1092c70692ddbcc87464a77da44848614f6342a
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -667,6 +673,9 @@ importers:
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0
+      tsx:
+        specifier: ^4.23.0
+        version: 4.23.0
       vitest:
         specifier: ^4.1.0
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -11215,6 +11224,10 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  uWebSockets.js@https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/b1092c70692ddbcc87464a77da44848614f6342a:
+    resolution: {gitHosted: true, integrity: sha512-imizeoZ5qzl4yNm/MNOlg5K/vatTvGqqbmYjzrhmCHREov1zBKMUEf+NkAJDDLl2DfRrJbEbBkcGyBwjdg4ibw==, tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/b1092c70692ddbcc87464a77da44848614f6342a}
+    version: 20.70.0
+
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
@@ -19549,6 +19562,8 @@ snapshots:
       mime-types: 3.0.2
 
   typescript@5.9.3: {}
+
+  uWebSockets.js@https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/b1092c70692ddbcc87464a77da44848614f6342a: {}
 
   uc.micro@2.1.0: {}
 

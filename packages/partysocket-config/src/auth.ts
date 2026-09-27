@@ -22,6 +22,8 @@ export const REALTIME_TOKEN_PURPOSE = {
   broadcast: "broadcast",
   /** A member's short-lived room-connect token (`signMemberConnectToken`). */
   memberConnect: "member-connect",
+  /** A guest's short-lived room-connect token. */
+  guestConnect: "guest-connect",
   /** The realtime server's periodic presence report to the builder. */
   presenceReport: "presence-report",
 } as const
@@ -94,8 +96,13 @@ export const verifyRealtimeToken = async (
   return payload
 }
 
+export const realtimeChatScopes = z.enum(["all", "assigned", "none"])
+export type RealtimeChatScope = z.infer<typeof realtimeChatScopes>
+
 const memberClaimsSchema = z.object({
   userId: z.string().min(1),
+  chatScope: realtimeChatScopes,
+  teamIds: z.array(z.string().min(1)).default([]),
 })
 
 /** Claims carried by a room-connect token: the verified member's user id. */
@@ -108,14 +115,23 @@ export type RealtimeMemberClaims = z.infer<typeof memberClaimsSchema>
  * after checking workspace membership) should call this.
  */
 export const signMemberConnectToken = async (
-  member: { workspaceId: string; userId: string },
+  member: {
+    workspaceId: string
+    userId: string
+    chatScope: RealtimeChatScope
+    teamIds?: string[]
+  },
   secret: string,
 ): Promise<string> =>
   signRealtimeToken(
     { kind: "workspace", id: member.workspaceId },
     REALTIME_TOKEN_PURPOSE.memberConnect,
     secret,
-    { userId: member.userId },
+    {
+      userId: member.userId,
+      chatScope: member.chatScope,
+      teamIds: member.teamIds ?? [],
+    },
   )
 
 /**
@@ -139,6 +155,34 @@ export const verifyMemberConnectToken = async (
   )
   return memberClaimsSchema.parse(payload)
 }
+
+const guestClaimsSchema = z.object({ guestConversationId: z.string().min(1) })
+export type RealtimeGuestClaims = z.infer<typeof guestClaimsSchema>
+
+export const signGuestConnectToken = async (
+  guest: { guestConversationId: string },
+  secret: string,
+): Promise<string> =>
+  signRealtimeToken(
+    { kind: "guest", id: guest.guestConversationId },
+    REALTIME_TOKEN_PURPOSE.guestConnect,
+    secret,
+    { guestConversationId: guest.guestConversationId },
+  )
+
+export const verifyGuestConnectToken = async (
+  token: string,
+  guestConversationId: string,
+  secret: string,
+): Promise<RealtimeGuestClaims> =>
+  guestClaimsSchema.parse(
+    await verifyRealtimeToken(
+      token,
+      { kind: "guest", id: guestConversationId },
+      REALTIME_TOKEN_PURPOSE.guestConnect,
+      secret,
+    ),
+  )
 
 export const extractBearerToken = (
   authorizationHeader: string | null,

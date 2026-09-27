@@ -216,6 +216,10 @@ export const resolveBroadcastSecret = (): string =>
 export const resolveRealtimeDeliveryGate = (): boolean =>
   integrationContextEnv().REALTIME_DELIVERY_GATE
 
+/** Resolve the validated Redis endpoint used by the realtime stream publisher. */
+export const resolveRealtimeRedisUrl = (): string =>
+  integrationContextEnv().REDIS_URL
+
 /**
  * Resolve the HTTP endpoint used by server-side realtime broadcasts.
  * This endpoint is deployment-wide on purpose — never tenant-specific or a

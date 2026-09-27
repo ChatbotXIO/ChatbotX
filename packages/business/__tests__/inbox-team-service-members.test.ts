@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   teamMemberFindMany: vi.fn(),
   userFindMany: vi.fn(),
   listUserIdsByTeamId: vi.fn(),
+  revokeWorkspaceMemberConnections: vi.fn().mockResolvedValue(null),
 }))
 
 const WORKSPACE_ID = "ws-1"
@@ -73,6 +74,10 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: vi.fn(),
 }))
 
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  revokeWorkspaceMemberConnections: mocks.revokeWorkspaceMemberConnections,
+}))
+
 const { inboxTeamService } = await import(
   "../src/enterprise/inbox-team/service"
 )
@@ -125,6 +130,15 @@ describe("InboxTeamService member validation against duplicate membership rows",
         data: { name: "Support", userIds: ["member-1", "member-2"] },
       }),
     ).resolves.toBeDefined()
+    expect(mocks.revokeWorkspaceMemberConnections).toHaveBeenCalledTimes(2)
+    expect(mocks.revokeWorkspaceMemberConnections).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+    })
+    expect(mocks.revokeWorkspaceMemberConnections).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-2",
+    })
   })
 
   test("addMembers rejects a non-member even when a duplicate row pads the count", async () => {

@@ -3,10 +3,10 @@
 One socket per browser tab, per workspace: `WorkspaceRealtimeProvider`
 (`apps/builder/src/features/realtime/workspace-realtime-provider.tsx`) is
 mounted once, around `{children}`, in
-`apps/builder/src/app/space/[workspaceId]/layout.tsx`. Nobody else may call
-`usePartySocket` for the `workspaces` party — every feature subscribes
-through the hooks below instead. The guest webchat (`guests` party) is a
-separate, unrelated socket and is out of scope here.
+`apps/builder/src/app/space/[workspaceId]/layout.tsx`. It owns a native
+`RealtimeSocket` connection to the Redis Streams gateway; every feature
+subscribes through the hooks below. Guest webchat uses the same transport on
+its own guest route.
 
 ## Subscribing to events
 
@@ -36,10 +36,10 @@ export function MyFeatureRealtime() {
   changing identity across renders (a fresh closure capturing new props)
   never re-subscribes; the latest handler is always the one invoked.
 - Unregisters automatically on unmount.
-- Never open a `usePartySocket` connection yourself. If you need the
-  connection's own lifecycle (e.g. to show a "reconnecting…" indicator), use
-  `useWorkspaceRealtimeStatus()` — it never gates whether your subscription
-  is registered.
+- Never open another workspace realtime connection yourself. If you need the
+  connection lifecycle (for example, a reconnect indicator), use
+  `useWorkspaceRealtimeStatus()` — it never gates whether your subscription is
+  registered.
 
 ## Validation
 
@@ -382,12 +382,30 @@ just a count), one broadcast.
   results including the targeted recipient's identity) is in the
   scratchpad as `realtime-load-test-container.log`, not committed here.
 
-## Server-to-server broadcast endpoint
+## Redis Streams gateway
 
-Set `REALTIME_INTERNAL_URL` to the realtime HTTP base URL reachable from both
-the builder and worker. It is deployment-wide and MUST NOT use a tenant custom
-domain. When unset, broadcasts use the deployment's `NEXT_PUBLIC_BUILDER_URL`
-websocket path.
+`apps/realtime/src/main.ts` starts the uWebSockets gateway. It validates
+`REDIS_URL`, `REALTIME_BROADCAST_SECRET`, a stable consumer identity, and the
+configured `REALTIME_STREAM_SHARDS` before listening. `/health` reports process
+liveness; `/ready` stays unavailable until every owned consumer group exists.
+
+Business producers append a typed record to the workspace shard and retain the
+PartyKit HTTP write as a temporary non-blocking fallback. Redis append failures
+are logged but never delay that fallback. The gateway consumes each owned shard
+through a Redis consumer group, claims stale pending entries, routes each event
+individually, and acknowledges only after dispatch.
+
+Browser clients connect to `/rt/workspaces/:workspaceId` or
+`/rt/guests/:guestConversationId`. Temporary `/parties/workspaces/:id` and
+`/parties/guests/:id` aliases keep an already-built PartySocket bundle
+connectable during rollout. The aliases, PartyKit write path, server files, and
+`partysocket` dependency may be removed only after the staging dual-write,
+stream-lag, bundle-alias, load, and access-leak release gates pass.
+
+Workspace frames include their Redis Stream id as `seq`; the provider persists
+it and sends it as `lastSeq` on the next connection. The gateway replays a
+bounded window and closes with `4002` when the requested sequence is invalid,
+expired, or too far behind.
 
 ## Deployment: reverse proxy header requirements
 

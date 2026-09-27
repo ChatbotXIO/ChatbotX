@@ -98,6 +98,10 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
     conversationUpdated: "conversationUpdated",
     conversationAssigned: "conversationAssigned",
   },
+  routeForAssignment: vi.fn(() => ({
+    assignedTeamIds: [],
+    assignedUserIds: [],
+  })),
 }))
 
 vi.mock("../../platform/realtime-broadcast", () => ({
@@ -447,14 +451,17 @@ describe("ConversationService.updateAssignment", () => {
       `conversations:${WORKSPACE_ID}`,
       "conversations:conv-1",
     ])
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(WORKSPACE_ID, {
-      eventType: "conversationAssigned",
-      data: {
-        conversationIds: ["conv-1"],
-        assignedUserId: "user-2",
-        assignedInboxTeamId: null,
-      },
-    })
+    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
+      WORKSPACE_ID,
+      expect.objectContaining({
+        eventType: "conversationAssigned",
+        data: {
+          conversationIds: ["conv-1"],
+          assignedUserId: "user-2",
+          assignedInboxTeamId: null,
+        },
+      }),
+    )
     expect(notificationQueue.addBulk).toHaveBeenCalledWith([
       {
         name: "notifyConversationAssigned",

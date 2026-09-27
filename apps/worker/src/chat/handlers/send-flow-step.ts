@@ -47,7 +47,10 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { logDiagnostic } from "@chatbotx.io/logger"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/partysocket-config"
 import {
   IntegrationException,
   type MessageButtonTemplate,
@@ -959,6 +962,11 @@ export async function sendFlowStep({
       publishToWorkspaceParty(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
+        route: routeForConversation({
+          inboxId: targetContactInbox.inboxId,
+          assignedUserId: conversation.assignedUserId,
+          assignedInboxTeamId: conversation.assignedInboxTeamId,
+        }),
       })
     }
 
@@ -1233,6 +1241,7 @@ export const sendChatMessage = async (
           message,
           quickReplies,
           metadata,
+          isBulkBroadcast,
         },
         0,
         willRetryOnThrow,
@@ -1242,6 +1251,11 @@ export const sendChatMessage = async (
       publishToWorkspaceParty(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
+        route: routeForConversation({
+          inboxId: contactInbox.inboxId,
+          assignedUserId: conversation.assignedUserId,
+          assignedInboxTeamId: conversation.assignedInboxTeamId,
+        }),
       })
     }
 

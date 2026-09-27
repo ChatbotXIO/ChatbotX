@@ -20,6 +20,7 @@ import { emitCallEnded, emitMissedAudioCall } from "@chatbotx.io/events"
 import {
   RealtimeEventType,
   type RealtimeEventWhatsappCallTransportEnded,
+  routeForConversation,
 } from "@chatbotx.io/partysocket-config"
 import {
   getWhatsappCallEntity,
@@ -391,9 +392,17 @@ export const finalizeCallSideEffects = async (
   }
 
   try {
+    const conversation = await conversationService.findBy({
+      where: { id: call.conversationId, workspaceId: call.workspaceId },
+    })
     await broadcastToWorkspaceParty(call.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: { ...message, attachments: [] },
+      route: routeForConversation({
+        inboxId: call.inboxId,
+        assignedUserId: conversation?.assignedUserId,
+        assignedInboxTeamId: conversation?.assignedInboxTeamId,
+      }),
     })
   } catch (error) {
     logger.warn({ err: error }, "Whatsapp call: unable to emit realtime event")
@@ -562,10 +571,17 @@ export const enrichCallActivityMessage = async (props: {
     getWhatsappCallEntity(merged.contentAttributes) ??
     defaultCallEntity(call, overrides)
 
+  const conversation = await conversationService.findBy({
+    where: { id: call.conversationId, workspaceId: call.workspaceId },
+  })
   try {
     await broadcastToWorkspaceParty(call.workspaceId, {
       eventType: RealtimeEventType.messageContentUpdated,
       data: { messageId: merged.id, contentAttributes: entity },
+      route: routeForConversation({
+        assignedUserId: conversation?.assignedUserId,
+        assignedInboxTeamId: conversation?.assignedInboxTeamId,
+      }),
     })
   } catch (error) {
     logger.warn(

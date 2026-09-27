@@ -13,6 +13,7 @@ export const integrationContextEnv = () =>
       REALTIME_BROADCAST_SECRET: z.string().min(32),
       REALTIME_INTERNAL_URL: z.url().optional(),
       REALTIME_DELIVERY_GATE: z.stringbool().optional().default(true),
+      REDIS_URL: z.url(),
     },
     runtimeEnv: process.env,
     skipValidation: process.env.SKIP_ENV_CHECK === "true",

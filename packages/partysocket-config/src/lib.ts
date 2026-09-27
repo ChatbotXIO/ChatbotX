@@ -190,6 +190,7 @@ export async function revokeWorkspaceMemberConnections(
   try {
     return await ky.post(`parties/workspaces/${workspaceId}`, {
       baseUrl: target.url,
+      timeout: REALTIME_BROADCAST_TIMEOUT_MS,
       searchParams: { action: "revoke", userId: targetUserId },
       headers: {
         Authorization: await buildBroadcastAuthHeader(

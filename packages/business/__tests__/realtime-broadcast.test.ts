@@ -12,17 +12,25 @@ import {
 
 const {
   broadcastToWorkspacePartyLow,
+  createRedisConnection,
   loggerError,
+  loggerInfo,
+  realtimeStreamXadd,
   resolveBroadcastSecret,
   resolveRealtimeBroadcastUrl,
   resolveRealtimeDeliveryGate,
+  resolveRealtimeRedisUrl,
   resolveTenantSettings,
 } = vi.hoisted(() => ({
   broadcastToWorkspacePartyLow: vi.fn(),
+  createRedisConnection: vi.fn(),
   loggerError: vi.fn(),
+  loggerInfo: vi.fn(),
+  realtimeStreamXadd: vi.fn(),
   resolveBroadcastSecret: vi.fn(),
   resolveRealtimeBroadcastUrl: vi.fn(),
   resolveRealtimeDeliveryGate: vi.fn(),
+  resolveRealtimeRedisUrl: vi.fn(),
   resolveTenantSettings: vi.fn(),
 }))
 
@@ -33,15 +41,20 @@ vi.mock("@chatbotx.io/partysocket-config", async () => {
   return { ...actual, broadcastToWorkspaceParty: broadcastToWorkspacePartyLow }
 })
 
+vi.mock("@chatbotx.io/redis", () => ({
+  createRedisConnection,
+}))
+
 vi.mock("../src/platform/settings", () => ({
   resolveBroadcastSecret,
   resolveRealtimeBroadcastUrl,
   resolveRealtimeDeliveryGate,
+  resolveRealtimeRedisUrl,
   resolveTenantSettings,
 }))
 
 vi.mock("../src/logger", () => ({
-  logger: { error: loggerError },
+  logger: { error: loggerError, info: loggerInfo },
 }))
 const typingEvent = {
   eventType: "typing",
@@ -81,15 +94,22 @@ const voipEvent = {
 beforeEach(() => {
   vi.useFakeTimers()
   broadcastToWorkspacePartyLow.mockReset()
+  createRedisConnection.mockReset()
   resolveBroadcastSecret.mockReset()
   resolveRealtimeBroadcastUrl.mockReset()
   resolveRealtimeDeliveryGate.mockReset()
+  resolveRealtimeRedisUrl.mockReset()
   resolveTenantSettings.mockReset()
   loggerError.mockReset()
+  loggerInfo.mockReset()
+  realtimeStreamXadd.mockReset()
   broadcastToWorkspacePartyLow.mockResolvedValue(1)
+  createRedisConnection.mockReturnValue({ xadd: realtimeStreamXadd })
+  realtimeStreamXadd.mockResolvedValue("1-0")
   resolveBroadcastSecret.mockReturnValue("s".repeat(32))
   resolveRealtimeBroadcastUrl.mockReturnValue("http://realtime:1999")
   resolveRealtimeDeliveryGate.mockReturnValue(true)
+  resolveRealtimeRedisUrl.mockReturnValue("redis://realtime.test:6379")
   resetRealtimeBroadcastStateForTests()
 })
 
@@ -167,6 +187,41 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
       expect.anything(),
       "workspace_1",
       [typingEvent, contactBlockedEvent, conversationAssignedEvent],
+    )
+  })
+
+  test("appends one stream record for a coalesced workspace batch", async () => {
+    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
+    const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
+
+    await vi.runOnlyPendingTimersAsync()
+    await Promise.all([first, second])
+
+    expect(createRedisConnection).toHaveBeenCalledWith(
+      "redis://realtime.test:6379",
+    )
+    expect(realtimeStreamXadd).toHaveBeenCalledTimes(1)
+    expect(realtimeStreamXadd.mock.calls[0]?.slice(-2)).toEqual([
+      "record",
+      JSON.stringify({
+        events: [typingEvent, contactBlockedEvent],
+        kind: "workspace-events",
+        workspaceId: "workspace_1",
+      }),
+    ])
+  })
+
+  test("keeps PartyKit delivery when Redis stream publishing fails", async () => {
+    realtimeStreamXadd.mockRejectedValueOnce(new Error("redis unavailable"))
+
+    await expect(
+      broadcastAndFlush("workspace_1", messageCreatedEvent),
+    ).resolves.toBe(1)
+
+    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
+      expect.anything(),
+      "workspace_1",
+      [messageCreatedEvent],
     )
   })
 
@@ -274,6 +329,34 @@ describe("broadcastToWorkspaceParty aggregator (B1)", () => {
       expect.anything(),
       "workspace_1",
       [typingEvent],
+    )
+  })
+})
+
+describe("realtime relay metrics", () => {
+  test("records one coalesced flush with the batch event counts", async () => {
+    broadcastToWorkspacePartyLow.mockResolvedValue(3)
+    const queued = Array.from({ length: 5 }, () =>
+      broadcastToWorkspaceParty("workspace_1", messageCreatedEvent),
+    )
+
+    await vi.advanceTimersByTimeAsync(25)
+    await Promise.all(queued)
+    await vi.advanceTimersByTimeAsync(1100)
+    await flushAllPendingWorkspaceBroadcasts()
+
+    expect(loggerInfo).toHaveBeenCalledTimes(1)
+    expect(loggerInfo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventTypes: { messageCreated: 5 },
+        events: 5,
+        flushes: 1,
+        maxBatchEvents: 5,
+        maxInterested: 3,
+        metric: "realtime_relay",
+        workspaceId: "workspace_1",
+      }),
+      "realtime_relay_metric",
     )
   })
 })

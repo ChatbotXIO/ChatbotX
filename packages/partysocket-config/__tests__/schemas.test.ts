@@ -12,6 +12,8 @@ import {
   realtimeEventEnvelopeSchema,
   realtimeProtocolSchema,
   realtimeSubscriptionMessageSchema,
+  routeForAssignment,
+  routeForConversation,
   serializeRealtimeSubscriptionMessage,
   whatsappCallClaimedElsewhereSchema,
 } from "../src/schemas"
@@ -233,15 +235,51 @@ describe("realtime event envelopes", () => {
     const event = { eventType: RealtimeEventType.messageCreated, data: {} }
 
     expect(realtimeEventEnvelopeSchema.parse(event)).toEqual(event)
-    expect(realtimeBatchEnvelopeSchema.parse({ batch: [event] })).toEqual({
+    expect(
+      realtimeBatchEnvelopeSchema.parse({ batch: [event], seq: "123-0" }),
+    ).toEqual({
       batch: [event],
+      seq: "123-0",
     })
+    expect(() =>
+      realtimeBatchEnvelopeSchema.parse({ batch: [event], seq: "invalid" }),
+    ).toThrow()
   })
 
   test("keeps unrecognized event types available to forward-compatible clients", () => {
     const event = { eventType: "constructor", data: {} }
 
     expect(realtimeEventEnvelopeSchema.parse(event)).toEqual(event)
+  })
+})
+
+describe("realtime event routes", () => {
+  test("builds a permission route from an already-loaded conversation", () => {
+    expect(
+      routeForConversation({
+        inboxId: "inbox-1",
+        assignedUserId: "user-1",
+        assignedInboxTeamId: "team-1",
+      }),
+    ).toEqual({
+      inboxId: "inbox-1",
+      assignedUserIds: ["user-1"],
+      assignedTeamIds: ["team-1"],
+    })
+  })
+
+  test("keeps every previous assignee in a bulk assignment route", () => {
+    expect(
+      routeForAssignment({
+        assignedUserId: "new-user",
+        assignedInboxTeamId: "new-team",
+        previousAssignedUserIds: ["old-user-1", null, "old-user-2"],
+        previousAssignedInboxTeamIds: ["old-team-1", "old-team-2"],
+      }),
+    ).toEqual({
+      assignedUserIds: ["old-user-1", "old-user-2", "new-user"],
+      assignedTeamIds: ["old-team-1", "old-team-2", "new-team"],
+    })
   })
 })
 

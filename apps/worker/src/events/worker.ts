@@ -1,3 +1,4 @@
+import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
 import { startWorker, stopWorker } from "@chatbotx.io/event-bus/worker"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { analyticsDashboardEvents } from "./analytics"
@@ -35,6 +36,7 @@ async function shutdown(signal: "SIGINT" | "SIGTERM") {
 
   try {
     await stopWorker()
+    await flushAllPendingWorkspaceBroadcasts()
     process.exit(0)
   } catch (error) {
     console.error("[EventWorker] Error during shutdown", error)

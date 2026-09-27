@@ -32,6 +32,9 @@ type FakeConnectionState = {
   userId: string
   protocol?: "v1" | "v2"
   topics?: string[] | null
+  topicSetKey?: string
+  chatScope?: "all" | "assigned" | "none"
+  teamIds?: string[]
 }
 
 class FakeConnection {
@@ -46,7 +49,7 @@ class FakeConnection {
     this.closed = { code, reason }
   }
   setState(state: FakeConnectionState | null) {
-    this.state = state
+    this.state = state ? { chatScope: "all", teamIds: [], ...state } : null
     return this.state
   }
 }
@@ -140,7 +143,7 @@ const asConnectionContext = (
 describe("WorkspaceParty.onBeforeConnect", () => {
   it("accepts a token minted for this room and threads the verified userId onto the request", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
     const req = asRequest(
@@ -157,7 +160,7 @@ describe("WorkspaceParty.onBeforeConnect", () => {
 
   it("rejects a cross-room replay — token minted for a different workspace", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_other", userId: "u_1" },
+      { workspaceId: "ws_other", userId: "u_1", chatScope: "all" },
       SECRET,
     )
     const req = asRequest(
@@ -203,7 +206,7 @@ describe("WorkspaceParty.onBeforeConnect", () => {
 
   it("rejects a token signed with a different secret", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       "different-secret-32-chars-long!!",
     )
     const req = asRequest(
@@ -240,7 +243,7 @@ describe("WorkspaceParty.onBeforeConnect", () => {
 
   it("threads X-Realtime-Protocol: v2 onto the request when ?protocol=v2 is requested", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
     const req = asRequest(
@@ -258,7 +261,7 @@ describe("WorkspaceParty.onBeforeConnect", () => {
 
   it("threads X-Realtime-Protocol: v1 when no ?protocol= is requested (default)", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
     const req = asRequest(
@@ -276,7 +279,7 @@ describe("WorkspaceParty.onBeforeConnect", () => {
 
   it("rejects an unrecognized ?protocol= value with 400", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1" },
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
     const req = asRequest(
@@ -328,8 +331,11 @@ describe("WorkspaceParty#onRequest", () => {
   beforeEach(() => {
     room = new FakeRoom("ws_1")
     connectionA1 = new FakeConnection()
+    connectionA1.setState({ userId: "u_a" })
     connectionA2 = new FakeConnection()
+    connectionA2.setState({ userId: "u_a" })
     connectionB1 = new FakeConnection()
+    connectionB1.setState({ userId: "u_b" })
     room.registerTaggedConnection("user:u_a", connectionA1)
     room.registerTaggedConnection("user:u_a", connectionA2)
     room.registerTaggedConnection("user:u_b", connectionB1)
@@ -379,6 +385,7 @@ describe("WorkspaceParty#onRequest", () => {
       await vi.waitFor(() =>
         expect(reportWorkspacePresenceMock).toHaveBeenCalledWith("ws_1", [
           "u_a",
+          "u_b",
         ]),
       )
     } finally {
@@ -445,8 +452,18 @@ describe("WorkspaceParty#onRequest", () => {
     }) as unknown as Party.Request
 
   it("delivers one batch frame per v2 connection, filtered to its subscribed topics only (B2/B3)", async () => {
-    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
-    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: ["voip"] })
+    connectionA1.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: ["chat"],
+      topicSetKey: "chat",
+    })
+    connectionA2.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: ["voip"],
+      topicSetKey: "voip",
+    })
     connectionB1.setState({ userId: "u_b", protocol: "v1" })
 
     const chatEvent = {
@@ -473,9 +490,24 @@ describe("WorkspaceParty#onRequest", () => {
   })
 
   it("serializes a v2 batch once for connections with the same topic set", async () => {
-    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
-    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
-    connectionB1.setState({ userId: "u_b", protocol: "v2", topics: ["voip"] })
+    connectionA1.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: ["chat"],
+      topicSetKey: "chat",
+    })
+    connectionA2.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: ["chat"],
+      topicSetKey: "chat",
+    })
+    connectionB1.setState({
+      userId: "u_b",
+      protocol: "v2",
+      topics: ["voip"],
+      topicSetKey: "voip",
+    })
     const event = {
       eventType: "messageDeleted",
       data: { messageIds: ["m1"] },
@@ -491,6 +523,33 @@ describe("WorkspaceParty#onRequest", () => {
     )
     expect(serializedBatches).toHaveLength(1)
     stringifySpy.mockRestore()
+  })
+
+  it("does not reuse an assigned member's batch for a different member", async () => {
+    connectionA1.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: ["chat"],
+      topicSetKey: "chat",
+      chatScope: "assigned",
+    })
+    connectionB1.setState({
+      userId: "u_b",
+      protocol: "v2",
+      topics: ["chat"],
+      topicSetKey: "chat",
+      chatScope: "assigned",
+    })
+    const event = {
+      eventType: "messageDeleted",
+      data: { messageIds: ["m1"] },
+      route: { assignedTeamIds: [], assignedUserIds: ["u_a"] },
+    }
+
+    await party.onRequest(postBatchRequest("/parties/workspaces/ws_1", [event]))
+
+    expect(connectionA1.sent).toEqual([JSON.stringify({ batch: [event] })])
+    expect(connectionB1.sent).toEqual([])
   })
   it("drops only unknown events from a valid batch and delivers known events", async () => {
     const knownEvent = {
@@ -513,8 +572,18 @@ describe("WorkspaceParty#onRequest", () => {
   })
 
   it("fails open before a v2 connection's first subscribe frame, then filters by its subscribed topics", async () => {
-    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: null })
-    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: ["chat"] })
+    connectionA1.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: null,
+      topicSetKey: "*",
+    })
+    connectionA2.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: ["chat"],
+      topicSetKey: "chat",
+    })
     connectionB1.setState({ userId: "u_b", protocol: "v1" })
     const chatEvent = {
       eventType: "messageDeleted",
@@ -548,8 +617,18 @@ describe("WorkspaceParty#onRequest", () => {
   })
 
   it("excludes a v2 connection with no matching subscribed topic from delivery and the interested count", async () => {
-    connectionA1.setState({ userId: "u_a", protocol: "v2", topics: ["voip"] })
-    connectionA2.setState({ userId: "u_a", protocol: "v2", topics: [] })
+    connectionA1.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: ["voip"],
+      topicSetKey: "voip",
+    })
+    connectionA2.setState({
+      userId: "u_a",
+      protocol: "v2",
+      topics: [],
+      topicSetKey: "",
+    })
     connectionB1.setState({ userId: "u_b", protocol: "v1" })
     const chatEvent = {
       eventType: "messageDeleted",
@@ -625,7 +704,9 @@ describe("WorkspaceParty presence reporting", () => {
     ({
       request: new Request(
         "https://realtime.example.com/parties/workspaces/ws_1",
-        { headers: { "X-User-ID": userId } },
+        {
+          headers: { "X-Chat-Scope": "all", "X-User-ID": userId },
+        },
       ),
     }) as unknown as Party.ConnectionContext
 
@@ -648,7 +729,10 @@ describe("WorkspaceParty presence reporting", () => {
       expect(connection.state).toEqual({
         protocol: "v1",
         topics: [],
+        topicSetKey: "",
         userId: "u_1",
+        chatScope: "all",
+        teamIds: [],
       })
     })
 
@@ -1175,7 +1259,12 @@ describe("WorkspaceParty#onMessage subscribe control frame (B3)", () => {
     const room = new FakeRoom("ws_1")
     const party = new WorkspaceParty(room as unknown as Party.Room)
     const connection = new FakeConnection()
-    connection.setState({ userId: "u_1", protocol: "v2", topics: [] })
+    connection.setState({
+      userId: "u_1",
+      protocol: "v2",
+      topics: [],
+      topicSetKey: "",
+    })
 
     await party.onMessage(
       serializeRealtimeSubscriptionMessage(["chat", "voip"]),
@@ -1186,6 +1275,9 @@ describe("WorkspaceParty#onMessage subscribe control frame (B3)", () => {
       userId: "u_1",
       protocol: "v2",
       topics: ["chat", "voip"],
+      topicSetKey: "chat,voip",
+      chatScope: "all",
+      teamIds: [],
     })
   })
 
@@ -1193,7 +1285,12 @@ describe("WorkspaceParty#onMessage subscribe control frame (B3)", () => {
     const room = new FakeRoom("ws_1")
     const party = new WorkspaceParty(room as unknown as Party.Room)
     const connection = new FakeConnection()
-    connection.setState({ userId: "u_1", protocol: "v2", topics: [] })
+    connection.setState({
+      userId: "u_1",
+      protocol: "v2",
+      topics: [],
+      topicSetKey: "",
+    })
 
     await party.onMessage(
       serializeRealtimeSubscriptionMessage(["chat", "chat", "voip"]),
@@ -1207,7 +1304,12 @@ describe("WorkspaceParty#onMessage subscribe control frame (B3)", () => {
     const room = new FakeRoom("ws_1")
     const party = new WorkspaceParty(room as unknown as Party.Room)
     const connection = new FakeConnection()
-    connection.setState({ userId: "u_1", protocol: "v2", topics: ["chat"] })
+    connection.setState({
+      userId: "u_1",
+      protocol: "v2",
+      topics: ["chat"],
+      topicSetKey: "chat",
+    })
 
     await party.onMessage(
       serializeRealtimeSubscriptionMessage(["voip"]),
@@ -1228,7 +1330,12 @@ describe("WorkspaceParty#onMessage subscribe control frame (B3)", () => {
       connection as unknown as Party.Connection,
     )
 
-    expect(connection.state).toEqual({ userId: "u_1", protocol: "v1" })
+    expect(connection.state).toEqual({
+      userId: "u_1",
+      protocol: "v1",
+      chatScope: "all",
+      teamIds: [],
+    })
   })
 
   it("ignores a subscribe frame from an unauthenticated connection", async () => {

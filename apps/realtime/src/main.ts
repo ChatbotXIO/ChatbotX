@@ -1,0 +1,45 @@
+import { createRedisConnection } from "@chatbotx.io/redis"
+import { createRealtimeGateway } from "./gateway"
+import { resolveRealtimeGatewayConfig } from "./gateway-config"
+import { logger } from "./logger"
+
+export const main = async (): Promise<void> => {
+  const config = resolveRealtimeGatewayConfig()
+  const gateway = createRealtimeGateway({
+    consumerGroup: config.consumerGroup,
+    consumerName: config.consumerName,
+    redis: createRedisConnection(config.redisUrl),
+    secret: config.secret,
+    shards: config.shards,
+  })
+  let shuttingDown = false
+
+  const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
+    if (shuttingDown) {
+      return
+    }
+    shuttingDown = true
+    logger.info({ signal }, "Stopping realtime gateway")
+    await gateway.close()
+  }
+
+  process.once("SIGINT", shutdown.bind(null, "SIGINT"))
+  process.once("SIGTERM", shutdown.bind(null, "SIGTERM"))
+
+  await gateway.listen(config.host, config.port)
+  logger.info(
+    {
+      consumerGroup: config.consumerGroup,
+      consumerName: config.consumerName,
+      host: config.host,
+      port: config.port,
+      shards: config.shards,
+    },
+    "Realtime gateway listening",
+  )
+}
+
+main().catch((error: unknown) => {
+  logger.error({ err: error }, "Realtime gateway failed to start")
+  process.exitCode = 1
+})

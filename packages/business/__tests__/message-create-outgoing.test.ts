@@ -23,6 +23,10 @@ vi.mock("@chatbotx.io/filesystem", () => ({
 
 vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(() => ({
+    assignedTeamIds: [],
+    assignedUserIds: [],
+  })),
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {

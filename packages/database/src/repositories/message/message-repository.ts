@@ -276,7 +276,7 @@ export interface IMessageRepository {
     sourceId: string,
     workspaceId: string,
     createdAt: Date,
-  ): Promise<{ id: string }[]>
+  ): Promise<{ conversationId: string; id: string }[]>
 
   findAIContextMessages(
     options: FindAIContextMessagesOptions,
@@ -395,7 +395,7 @@ export interface IMessageRepository {
     workspaceId: string,
     newText: string,
     createdAt: Date,
-  ): Promise<{ id: string } | null>
+  ): Promise<{ conversationId: string; id: string } | null>
 
   updateSendError(
     id: string,
@@ -415,5 +415,5 @@ export interface IMessageRepository {
     sourceId: string,
     workspaceId: string,
     newText: string,
-  ): Promise<{ id: string } | null>
+  ): Promise<{ conversationId: string; id: string } | null>
 }

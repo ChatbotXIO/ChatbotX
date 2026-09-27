@@ -575,6 +575,34 @@ describe("chat store conversation updates", () => {
     expect(conversations[1]).toBe(oldFirst)
   })
 
+  test("keeps the newest conversation preview and position when an older realtime message arrives late", async () => {
+    const store = createChatStore()
+    const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
+    const newestMessage = makeMessage(
+      "conv-2",
+      new Date("2026-01-03T00:00:00Z"),
+    )
+    const target = {
+      ...makeConversation("conv-2", newestMessage.createdAt),
+      messages: [newestMessage],
+    }
+    store.setState({ conversations: [target, first] as never })
+
+    const delayedMessage = makeMessage(
+      "conv-2",
+      new Date("2026-01-02T00:00:00Z"),
+    )
+    await store.getState().handleNewMessages([delayedMessage as never])
+
+    const [conversation] = store.getState().conversations
+    expect(conversation?.messages).toEqual([newestMessage])
+    expect(conversation?.lastActivityAt).toBe(newestMessage.createdAt)
+    expect(store.getState().conversations.map((item) => item.id)).toEqual([
+      "conv-2",
+      "conv-1",
+    ])
+  })
+
   test("handleNewMessages refreshes the filtered head and inserts only new conversation ids", async () => {
     const store = createChatStore()
     const existing = makeConversation(
@@ -613,7 +641,34 @@ describe("chat store conversation updates", () => {
       }),
       expect.any(Object),
     )
-    expect(store.getState().conversations).toEqual([fetched, existing])
+    expect(store.getState().conversations).toEqual([fetched, duplicate])
+  })
+
+  test("resyncRealtime refreshes the conversation head and replaces the active thread's first page", async () => {
+    const store = createChatStore()
+    const staleMessage = makeMessage("conv-1", new Date("2026-01-01T00:00:00Z"))
+    const freshMessage = makeMessage("conv-1", new Date("2026-01-02T00:00:00Z"))
+    store.setState({
+      activeConversationId: "conv-1",
+      messages: [staleMessage] as never,
+      messagesConversationId: "conv-1",
+    })
+    mockConversationPage([])
+    mockListMessagesAuthenticatedAPI.mockResolvedValue({
+      data: [freshMessage],
+      nextCursor: "cursor-1",
+    })
+
+    await store.getState().resyncRealtime("ws-1")
+
+    expect(mockListMessagesAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      perPage: 20,
+      cursor: "",
+      conversationId: "conv-1",
+    })
+    expect(store.getState().messages).toEqual([freshMessage])
+    expect(store.getState().nextCursorMessage).toBe("cursor-1")
   })
 
   test("missing conversation updates schedule one trailing head refresh at the end of the throttle window", async () => {
@@ -639,7 +694,7 @@ describe("chat store conversation updates", () => {
         1,
       )
 
-      await vi.advanceTimersByTimeAsync(5000)
+      await vi.advanceTimersByTimeAsync(15_000)
 
       expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
         2,

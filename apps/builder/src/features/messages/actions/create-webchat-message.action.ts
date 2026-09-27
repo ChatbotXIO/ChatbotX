@@ -36,7 +36,10 @@ import { emitContactCreated } from "@chatbotx.io/events"
 import { setWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
@@ -320,6 +323,11 @@ export async function handleCreateWebchatMessage({
         ...newMessage,
         clientId: parsedInput.clientId,
       },
+      route: routeForConversation({
+        inboxId: contactInbox.inboxId,
+        assignedUserId: conversation.assignedUserId,
+        assignedInboxTeamId: conversation.assignedInboxTeamId,
+      }),
     })
 
     const promises: Promise<unknown>[] = []

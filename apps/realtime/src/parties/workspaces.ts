@@ -2,12 +2,16 @@ import {
   REALTIME_EVENT_TOPICS,
   type RealtimeEventEnvelope,
   RealtimeProtocol,
-  type RealtimeTopic,
+  RealtimeTopic,
   realtimeEventEnvelopeSchema,
   realtimeProtocolSchema,
   realtimeSubscriptionMessageSchema,
 } from "@chatbotx.io/partysocket-config"
-import { verifyMemberConnectToken } from "@chatbotx.io/partysocket-config/auth"
+import {
+  type RealtimeChatScope,
+  realtimeChatScopes,
+  verifyMemberConnectToken,
+} from "@chatbotx.io/partysocket-config/auth"
 import {
   PRESENCE_REPORT_INTERVAL_MS,
   presencePingMessageSchema,
@@ -18,6 +22,11 @@ import { env } from "../env"
 import { toUserConnectionTag } from "../lib/connection-tags"
 import { reportWorkspacePresence } from "../lib/presence-report"
 import { verifyBroadcastRequest } from "../lib/realtime-auth"
+import {
+  REALTIME_METRIC_WINDOW_MS,
+  type RealtimeServerWindow,
+  recordRealtimeServerWindow,
+} from "../lib/realtime-metrics"
 import { logger } from "../logger"
 
 const REVOKE_ACTION = "revoke"
@@ -28,6 +37,8 @@ const REVOKE_CLOSE_REASON = "Revoked"
 const PROTOCOL_QUERY_PARAM = "protocol"
 const PROTOCOL_HEADER = "X-Realtime-Protocol"
 const BATCH_HEADER = "X-Realtime-Batch"
+const CHAT_SCOPE_HEADER = "X-Chat-Scope"
+const TEAM_IDS_HEADER = "X-Realtime-Team-Ids"
 
 /** Batch body shape only; items are validated individually. */
 const realtimeBatchBodySchema = z.object({ batch: z.array(z.unknown()) })
@@ -61,7 +72,10 @@ type WorkspaceConnectionState = {
    * explicitly opts out of every topic and receives no events.
    */
   topics: RealtimeTopic[] | null
+  topicSetKey: string
   userId: string
+  chatScope: RealtimeChatScope
+  teamIds: string[]
 }
 
 type WorkspaceRealtimeEvent = RealtimeEventEnvelope & {
@@ -81,6 +95,28 @@ type DroppedBatchItem = {
 type ExtractedWorkspaceEvents = {
   events: WorkspaceRealtimeEvent[]
   dropped: DroppedBatchItem[]
+}
+
+type RealtimeServerMetricPatch = {
+  bytesOut?: number
+  connections?: number
+  deliveries?: number
+  dropped?: number
+  events?: number
+  requests?: number
+}
+
+const isRealtimeTopic = (topic: string): topic is RealtimeTopic =>
+  Object.values(RealtimeTopic).includes(topic as RealtimeTopic)
+
+const parseConnectTopics = (
+  request: Pick<Party.Request, "url">,
+): RealtimeTopic[] | null => {
+  const topicsParam = new URL(request.url).searchParams.get("topics")
+  if (topicsParam === null) {
+    return null
+  }
+  return [...new Set(topicsParam.split(",").filter(isRealtimeTopic))].sort()
 }
 
 const toDroppedBatchItem = (item: unknown, index: number): DroppedBatchItem => {
@@ -150,6 +186,55 @@ export default class WorkspaceParty implements Party.Server {
    */
   private lastArmedAtMemo: number | undefined
 
+  private realtimeMetricWindow: RealtimeServerWindow | undefined
+
+  private accumulateRealtimeServerMetric({
+    bytesOut = 0,
+    connections,
+    deliveries = 0,
+    dropped = 0,
+    events = 0,
+    requests = 0,
+  }: RealtimeServerMetricPatch): void {
+    const now = Date.now()
+    let window = this.realtimeMetricWindow
+    if (!window || now - window.windowStartedAt >= REALTIME_METRIC_WINDOW_MS) {
+      if (window) {
+        recordRealtimeServerWindow(window)
+      }
+      window = {
+        bytesOut: 0,
+        connections: 0,
+        deliveries: 0,
+        dropped: 0,
+        events: 0,
+        maxConnections: 0,
+        requests: 0,
+        windowStartedAt: now,
+        workspaceId: this.room.id,
+      }
+      this.realtimeMetricWindow = window
+    }
+
+    window.bytesOut += bytesOut
+    window.deliveries += deliveries
+    window.dropped += dropped
+    window.events += events
+    window.requests += requests
+    if (connections !== undefined) {
+      window.connections = connections
+      window.maxConnections = Math.max(window.maxConnections, connections)
+    }
+  }
+
+  private flushRealtimeServerMetric(): void {
+    if (!this.realtimeMetricWindow) {
+      return
+    }
+    recordRealtimeServerWindow(this.realtimeMetricWindow)
+    this.realtimeMetricWindow = undefined
+  }
+
   private async recordArmedAt(now: number): Promise<void> {
     await this.room.storage.put(PRESENCE_LAST_ARMED_AT_STORAGE_KEY, now)
     this.lastArmedAtMemo = now
@@ -164,10 +249,15 @@ export default class WorkspaceParty implements Party.Server {
     { request }: Party.ConnectionContext,
   ) {
     const userId = request.headers.get("X-User-ID")
-    if (!userId) {
+    const chatScopeResult = realtimeChatScopes.safeParse(
+      request.headers.get(CHAT_SCOPE_HEADER),
+    )
+    if (!(userId && chatScopeResult.success)) {
       connection.close(1008, "Unauthorized")
       return
     }
+    const teamIds =
+      request.headers.get(TEAM_IDS_HEADER)?.split(",").filter(Boolean) ?? []
 
     const protocolResult = realtimeProtocolSchema.safeParse(
       request.headers.get(PROTOCOL_HEADER),
@@ -175,10 +265,15 @@ export default class WorkspaceParty implements Party.Server {
     const protocol = protocolResult.success
       ? protocolResult.data
       : RealtimeProtocol.v1
+    const topics =
+      protocol === RealtimeProtocol.v2 ? parseConnectTopics(request) : []
     connection.setState({
       protocol,
-      topics: protocol === RealtimeProtocol.v2 ? null : [],
+      topics,
+      topicSetKey: topics === null ? "*" : topics.join(","),
       userId,
+      chatScope: chatScopeResult.data,
+      teamIds,
     } satisfies WorkspaceConnectionState)
 
     await this.armReportLoopSerialized(userId)
@@ -209,20 +304,21 @@ export default class WorkspaceParty implements Party.Server {
    * caller never sees it unarmed.
    */
   private async ensureReportLoopArmed(seedUserId?: string): Promise<void> {
+    const now = Date.now()
+    const memoizedLastArmedAt = this.lastArmedAtMemo
+    if (
+      !seedUserId &&
+      memoizedLastArmedAt !== undefined &&
+      now - memoizedLastArmedAt < REPORT_LOOP_STALE_THRESHOLD_MS
+    ) {
+      return
+    }
+
     const userIds = new Set(this.collectConnectedUserIds())
     if (seedUserId) {
       userIds.add(seedUserId)
     }
     if (userIds.size === 0) {
-      return
-    }
-
-    const now = Date.now()
-    const memoizedLastArmedAt = this.lastArmedAtMemo
-    if (
-      memoizedLastArmedAt !== undefined &&
-      now - memoizedLastArmedAt < REPORT_LOOP_STALE_THRESHOLD_MS
-    ) {
       return
     }
 
@@ -288,9 +384,11 @@ export default class WorkspaceParty implements Party.Server {
     const subscription = realtimeSubscriptionMessageSchema.safeParse(parsed)
     if (subscription.success) {
       if (senderState.protocol === "v2") {
+        const topics = [...new Set(subscription.data.topics)].sort()
         sender.setState({
           ...senderState,
-          topics: [...new Set(subscription.data.topics)],
+          topics,
+          topicSetKey: topics.join(","),
         } satisfies WorkspaceConnectionState)
       }
       return
@@ -310,6 +408,7 @@ export default class WorkspaceParty implements Party.Server {
    * or skips it.
    */
   async onAlarm() {
+    this.flushRealtimeServerMetric()
     const userIds = this.collectConnectedUserIds()
     if (userIds.length === 0) {
       return
@@ -344,6 +443,7 @@ export default class WorkspaceParty implements Party.Server {
    * member's connections, `?userId=` sends only to them.
    */
   async onRequest(req: Party.Request) {
+    this.accumulateRealtimeServerMetric({ requests: 1 })
     // Best-effort recovery for a stalled report loop; never blocks the request.
     this.armReportLoopSerialized().catch((error) => {
       logger.error(
@@ -402,17 +502,48 @@ export default class WorkspaceParty implements Party.Server {
   ): number {
     const serializedBatchesByTopicSet = new Map<string, string>()
     const serializedEvents = new Map<WorkspaceRealtimeEvent, string>()
+    let bytesOut = 0
+    let connectionCount = 0
+    let deliveries = 0
+    let dropped = 0
     let interested = 0
     for (const connection of connections) {
+      connectionCount += 1
       const state = connection.state
+      const chatScope = state?.chatScope ?? "none"
+      const scopedEvents =
+        chatScope === "all"
+          ? events
+          : events.filter((event) => {
+              if (
+                chatScope === "none" ||
+                REALTIME_EVENT_TOPICS[event.eventType].scope === "workspace"
+              ) {
+                return chatScope !== "none"
+              }
+              return (
+                chatScope === "assigned" &&
+                (event.route?.assignedUserIds.includes(state?.userId ?? "") ===
+                  true ||
+                  event.route?.assignedTeamIds.some((teamId) =>
+                    state?.teamIds.includes(teamId),
+                  ) === true)
+              )
+            })
+      if (scopedEvents.length === 0) {
+        dropped += events.length
+        continue
+      }
       if (state?.protocol !== RealtimeProtocol.v2) {
-        for (const event of events) {
+        for (const event of scopedEvents) {
           let serializedEvent = serializedEvents.get(event)
           if (!serializedEvent) {
             serializedEvent = JSON.stringify(event)
             serializedEvents.set(event, serializedEvent)
           }
           connection.send(serializedEvent)
+          bytesOut += serializedEvent.length
+          deliveries += 1
         }
         interested += 1
         continue
@@ -421,25 +552,44 @@ export default class WorkspaceParty implements Party.Server {
       const topics = state.topics
       const matchingEvents =
         topics === null
-          ? events
-          : events.filter((event) =>
+          ? scopedEvents
+          : scopedEvents.filter((event) =>
               REALTIME_EVENT_TOPICS[event.eventType].topics.some((topic) =>
                 topics.includes(topic),
               ),
             )
+      dropped += events.length - matchingEvents.length
       if (matchingEvents.length === 0) {
         continue
       }
 
-      const topicSetKey = topics === null ? "*" : [...topics].sort().join(",")
-      let serializedBatch = serializedBatchesByTopicSet.get(topicSetKey)
+      // Topic filters only describe what a connection asked to observe. The
+      // serialized payload also depends on its authorization claims; reusing a
+      // batch across different members would bypass the per-connection route
+      // filter above.
+      const batchCacheKey = [
+        state.topicSetKey,
+        chatScope,
+        state.userId,
+        state.teamIds.join(","),
+      ].join(":")
+      let serializedBatch = serializedBatchesByTopicSet.get(batchCacheKey)
       if (!serializedBatch) {
         serializedBatch = JSON.stringify({ batch: matchingEvents })
-        serializedBatchesByTopicSet.set(topicSetKey, serializedBatch)
+        serializedBatchesByTopicSet.set(batchCacheKey, serializedBatch)
       }
       connection.send(serializedBatch)
+      bytesOut += serializedBatch.length
+      deliveries += 1
       interested += 1
     }
+    this.accumulateRealtimeServerMetric({
+      bytesOut,
+      connections: connectionCount,
+      deliveries,
+      dropped,
+      events: events.length,
+    })
     return interested
   }
 
@@ -483,12 +633,14 @@ export default class WorkspaceParty implements Party.Server {
     }
 
     try {
-      const { userId } = await verifyMemberConnectToken(
+      const { chatScope, teamIds, userId } = await verifyMemberConnectToken(
         token,
         lobby.id,
         env.REALTIME_BROADCAST_SECRET,
       )
       req.headers.set("X-User-ID", userId)
+      req.headers.set(CHAT_SCOPE_HEADER, chatScope)
+      req.headers.set(TEAM_IDS_HEADER, teamIds.join(","))
       req.headers.set(
         PROTOCOL_HEADER,
         protocolResult.data ?? RealtimeProtocol.v1,

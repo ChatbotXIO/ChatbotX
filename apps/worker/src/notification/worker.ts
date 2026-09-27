@@ -1,4 +1,7 @@
-import { withBlockedOwnerGuard } from "@chatbotx.io/business"
+import {
+  flushAllPendingWorkspaceBroadcasts,
+  withBlockedOwnerGuard,
+} from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -48,6 +51,7 @@ async function startNotificationWorker() {
     isShuttingDown = true
     try {
       await worker.close()
+      await flushAllPendingWorkspaceBroadcasts()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[NotificationWorker] Error during shutdown")

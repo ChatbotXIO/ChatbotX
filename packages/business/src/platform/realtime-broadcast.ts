@@ -13,6 +13,15 @@ import {
 } from "@chatbotx.io/partysocket-config"
 import { logger } from "../logger"
 import {
+  REALTIME_METRIC_WINDOW_MS,
+  type RealtimeRelayWindow,
+  recordRealtimeRelayWindow,
+} from "./realtime-metrics"
+import {
+  publishRealtimeStreamRecord,
+  resetRealtimeStreamPublisherForTests,
+} from "./realtime-stream-publisher"
+import {
   resolveBroadcastSecret,
   resolveRealtimeBroadcastUrl,
   resolveRealtimeDeliveryGate,
@@ -36,8 +45,79 @@ type PendingWorkspaceBroadcast = {
 const pendingByWorkspace = new Map<string, PendingWorkspaceBroadcast>()
 const inFlightByWorkspace = new Map<string, Promise<void>>()
 const chatNegativeCache = new Map<string, number>()
+const metricWindowByWorkspace = new Map<string, RealtimeRelayWindow>()
 
 let cachedTarget: BroadcastTarget | undefined
+
+type RealtimeRelayMetricPatch = {
+  bytes?: number
+  errors?: number
+  eventTypes?: readonly RealtimeEventData[]
+  events?: number
+  flushes?: number
+  interested?: number | null
+  suppressed?: number
+}
+
+const createRealtimeRelayWindow = (
+  workspaceId: string,
+  windowStartedAt: number,
+): RealtimeRelayWindow => ({
+  bytes: 0,
+  errors: 0,
+  eventTypes: {},
+  events: 0,
+  flushes: 0,
+  maxBatchEvents: 0,
+  maxInterested: 0,
+  suppressed: 0,
+  windowStartedAt,
+  workspaceId,
+})
+
+const accumulateRealtimeRelayMetric = (
+  workspaceId: string,
+  {
+    bytes = 0,
+    errors = 0,
+    eventTypes = [],
+    events = 0,
+    flushes = 0,
+    interested,
+    suppressed = 0,
+  }: RealtimeRelayMetricPatch,
+): void => {
+  const now = Date.now()
+  let window = metricWindowByWorkspace.get(workspaceId)
+  if (!window || now - window.windowStartedAt >= REALTIME_METRIC_WINDOW_MS) {
+    if (window) {
+      recordRealtimeRelayWindow(window)
+    }
+    window = createRealtimeRelayWindow(workspaceId, now)
+    metricWindowByWorkspace.set(workspaceId, window)
+  }
+
+  window.bytes += bytes
+  window.errors += errors
+  window.events += events
+  window.flushes += flushes
+  window.suppressed += suppressed
+  window.maxBatchEvents = Math.max(window.maxBatchEvents, events)
+  if (interested !== undefined && interested !== null) {
+    window.maxInterested = Math.max(window.maxInterested, interested)
+  }
+  for (const event of eventTypes) {
+    window.eventTypes[event.eventType] =
+      (window.eventTypes[event.eventType] ?? 0) + 1
+  }
+}
+
+const flushRealtimeRelayMetricWindows = (): void => {
+  for (const window of metricWindowByWorkspace.values()) {
+    recordRealtimeRelayWindow(window)
+  }
+  metricWindowByWorkspace.clear()
+}
 
 export const resolveRealtimeBroadcastTarget = (): BroadcastTarget =>
   (cachedTarget ??= {
@@ -108,17 +188,44 @@ const recordRelayInterest = (
 const sendWorkspaceEvents = async (
   workspaceId: string,
   events: RealtimeEventData | readonly RealtimeEventData[],
+  byteLength: number,
 ): Promise<number | null> => {
   const eventList = Array.isArray(events) ? events : [events]
   try {
+    try {
+      await publishRealtimeStreamRecord({
+        events: eventList,
+        kind: "workspace-events",
+        workspaceId,
+      })
+    } catch (err) {
+      logger.error(
+        { err, workspaceId },
+        "Failed to append realtime stream event",
+      )
+    }
     const interested = await broadcastToWorkspacePartyLow(
       resolveRealtimeBroadcastTarget(),
       workspaceId,
       events,
     )
     recordRelayInterest(workspaceId, eventList, interested)
+    accumulateRealtimeRelayMetric(workspaceId, {
+      bytes: byteLength,
+      eventTypes: eventList,
+      events: eventList.length,
+      flushes: 1,
+      interested,
+    })
     return interested
   } catch (err) {
+    accumulateRealtimeRelayMetric(workspaceId, {
+      bytes: byteLength,
+      errors: 1,
+      eventTypes: eventList,
+      events: eventList.length,
+      flushes: 1,
+    })
     logger.error(
       {
         err,
@@ -167,7 +274,9 @@ export function flushPendingWorkspaceBroadcasts(
 
   const previousSend = inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
   const flush = previousSend
-    .then(() => sendWorkspaceEvents(workspaceId, pending.events))
+    .then(() =>
+      sendWorkspaceEvents(workspaceId, pending.events, pending.byteLength),
+    )
     .then(
       (interested) => {
         for (const waiter of pending.waiters) {
@@ -202,6 +311,8 @@ export const resetRealtimeBroadcastStateForTests = (): void => {
   pendingByWorkspace.clear()
   inFlightByWorkspace.clear()
   chatNegativeCache.clear()
+  metricWindowByWorkspace.clear()
+  resetRealtimeStreamPublisherForTests()
 }
 
 export const flushAllPendingWorkspaceBroadcasts = async (): Promise<void> => {
@@ -212,6 +323,7 @@ export const flushAllPendingWorkspaceBroadcasts = async (): Promise<void> => {
     ),
   )
   await Promise.all(inFlightByWorkspace.values())
+  flushRealtimeRelayMetricWindows()
 }
 
 export const broadcastToWorkspaceParty = (
@@ -219,6 +331,7 @@ export const broadcastToWorkspaceParty = (
   event: RealtimeEventData,
 ): Promise<number | null> => {
   if (isChatDeliverySuppressed(workspaceId, event)) {
+    accumulateRealtimeRelayMetric(workspaceId, { suppressed: 1 })
     return Promise.resolve(0)
   }
 
@@ -280,6 +393,14 @@ export const sendToWorkspaceMember = (
   args: { workspaceId: string; userId: string },
   json: RealtimeEventData,
 ) => {
+  publishRealtimeStreamRecord({
+    event: json,
+    kind: "member-send",
+    workspaceId: args.workspaceId,
+    userId: args.userId,
+  }).catch((err) => {
+    logger.error({ err, ...args }, "Failed to append realtime member send")
+  })
   const target = resolveRealtimeBroadcastTarget()
   return sendToWorkspaceMemberLow(target, args.workspaceId, args.userId, json)
 }
@@ -293,6 +414,13 @@ export const revokeWorkspaceMemberConnections = (args: {
   workspaceId: string
   userId: string
 }) => {
+  publishRealtimeStreamRecord({
+    kind: "member-revoke",
+    workspaceId: args.workspaceId,
+    userId: args.userId,
+  }).catch((err) => {
+    logger.error({ err, ...args }, "Failed to append realtime member revoke")
+  })
   const target = resolveRealtimeBroadcastTarget()
   return revokeWorkspaceMemberConnectionsLow(
     target,
@@ -305,6 +433,14 @@ export const broadcastToGuestParty = (
   args: { workspaceId: string; guestConversationId: string },
   json: RealtimeEventData,
 ) => {
+  publishRealtimeStreamRecord({
+    event: json,
+    guestConversationId: args.guestConversationId,
+    kind: "guest-event",
+    workspaceId: args.workspaceId,
+  }).catch((err) => {
+    logger.error({ err, ...args }, "Failed to append realtime guest event")
+  })
   const target = resolveRealtimeBroadcastTarget()
   return broadcastToGuestPartyLow(target, args.guestConversationId, json)
 }

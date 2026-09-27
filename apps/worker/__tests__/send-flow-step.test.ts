@@ -228,6 +228,21 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 
 vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(
+    ({
+      assignedInboxTeamId,
+      assignedUserId,
+      inboxId,
+    }: {
+      assignedInboxTeamId?: string | null
+      assignedUserId?: string | null
+      inboxId?: string | null
+    }) => ({
+      assignedTeamIds: assignedInboxTeamId ? [assignedInboxTeamId] : [],
+      assignedUserIds: assignedUserId ? [assignedUserId] : [],
+      inboxId,
+    }),
+  ),
 }))
 
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
@@ -1700,6 +1715,22 @@ describe("sendChatMessage", () => {
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],
     })
+  })
+
+  test("uses the resolved fallback inbox when routing the realtime message", async () => {
+    mockFindContactInbox.mockResolvedValue(fakeContactInbox)
+
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      text: "hello from chat",
+    })
+
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        route: expect.objectContaining({ inboxId: fakeContactInbox.inboxId }),
+      }),
+    )
   })
 
   test("keeps a broadcast continuation visible in realtime and the inbox sort", async () => {

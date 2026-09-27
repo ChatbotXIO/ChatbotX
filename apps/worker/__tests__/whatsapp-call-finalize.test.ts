@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   voipMarkTerminated: vi.fn(),
   voipDeleteOffer: vi.fn(),
   findNameAndEmail: vi.fn(),
+  conversationFindBy: vi.fn().mockResolvedValue(null),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
@@ -30,7 +31,10 @@ vi.mock("@chatbotx.io/business", () => ({
     updateTracking: mocks.updateTracking,
     invalidateTracking: mocks.invalidateTracking,
   },
-  conversationService: { updateFlowStepState: mocks.updateFlowStepState },
+  conversationService: {
+    findBy: mocks.conversationFindBy,
+    updateFlowStepState: mocks.updateFlowStepState,
+  },
   userService: {
     findNameAndEmail: mocks.findNameAndEmail,
   },
@@ -67,6 +71,10 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
     whatsappCallTransportEnded: "whatsappCallTransportEnded",
     messageContentUpdated: "messageContentUpdated",
   },
+  routeForConversation: vi.fn(() => ({
+    assignedTeamIds: [],
+    assignedUserIds: [],
+  })),
 }))
 
 vi.mock("../src/lib/logger", () => ({ logger: mocks.logger }))
@@ -1055,13 +1063,16 @@ describe("enrichCallActivityMessage", () => {
       "ws-1",
       { hasRecording: true },
     )
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
-      eventType: "messageContentUpdated",
-      data: {
-        messageId: "msg-1",
-        contentAttributes: expect.objectContaining({ hasRecording: true }),
-      },
-    })
+    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        eventType: "messageContentUpdated",
+        data: {
+          messageId: "msg-1",
+          contentAttributes: expect.objectContaining({ hasRecording: true }),
+        },
+      }),
+    )
   })
 
   test("two concurrent enrichments racing on disjoint flags (recording + transcript) both converge to true", async () => {

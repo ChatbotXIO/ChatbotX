@@ -46,6 +46,7 @@ export const REALTIME_DELIVERY_NEGATIVE_TTL_MS = 2000
 
 export type RealtimeEventTopicDefinition = {
   durability: "durable" | "ephemeral"
+  scope: "conversation" | "workspace"
   topics: readonly RealtimeTopic[]
 }
 
@@ -54,78 +55,97 @@ export const REALTIME_EVENT_TOPICS: {
 } = {
   [RealtimeEventType.messageCreated]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.messageDeleted]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.messageUpdated]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.messageContentUpdated]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.messageIdAssigned]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.messageFailed]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.typing]: {
     durability: "ephemeral",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.contactBlocked]: {
     durability: "durable",
+    scope: "workspace",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.contactUnblocked]: {
     durability: "durable",
+    scope: "workspace",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.conversationAssigned]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat, RealtimeTopic.voip],
   },
   [RealtimeEventType.notifyExportResult]: {
     durability: "durable",
+    scope: "workspace",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.conversationCreated]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.conversationUpdated]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.chat],
   },
   [RealtimeEventType.whatsappCallTransportIncoming]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.voip],
   },
   [RealtimeEventType.whatsappCallTransportEnded]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.voip],
   },
   [RealtimeEventType.whatsappCallClaimedElsewhere]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.voip],
   },
   [RealtimeEventType.whatsappCallOutboundAnswer]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.voip],
   },
   [RealtimeEventType.whatsappCallOutboundStatus]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.voip],
   },
   [RealtimeEventType.whatsappCallPermissionUpdated]: {
     durability: "durable",
+    scope: "conversation",
     topics: [RealtimeTopic.voip],
   },
 }
@@ -134,14 +154,81 @@ export const REALTIME_EVENT_TOPICS: {
  * Shared wire envelope validation. It intentionally validates only the
  * envelope; consumers validate event data against their event-specific schema.
  */
+
+export type RealtimeEventRoute = {
+  assignedTeamIds: string[]
+  assignedUserIds: string[]
+  inboxId?: string
+}
+
+export const realtimeEventRouteSchema = z.object({
+  assignedTeamIds: z.array(z.string()).default([]),
+  assignedUserIds: z.array(z.string()),
+  inboxId: z.string().optional(),
+})
+
+export const routeForAssignedUsers = (
+  ...assignedUserIds: (string | null | undefined)[]
+): RealtimeEventRoute => ({
+  assignedTeamIds: [],
+  assignedUserIds: [
+    ...new Set(assignedUserIds.filter((id): id is string => Boolean(id))),
+  ],
+})
+
+export const routeForConversation = ({
+  assignedInboxTeamId,
+  assignedUserId,
+  inboxId,
+}: {
+  assignedInboxTeamId?: null | string
+  assignedUserId?: null | string
+  inboxId?: null | string
+}): RealtimeEventRoute => ({
+  inboxId: inboxId ?? undefined,
+  assignedTeamIds: assignedInboxTeamId ? [assignedInboxTeamId] : [],
+  assignedUserIds: assignedUserId ? [assignedUserId] : [],
+})
+
+export const routeForAssignment = ({
+  assignedInboxTeamId,
+  assignedUserId,
+  previousAssignedInboxTeamIds,
+  previousAssignedUserIds,
+}: {
+  assignedInboxTeamId?: null | string
+  assignedUserId?: null | string
+  previousAssignedInboxTeamIds?: (null | string | undefined)[]
+  previousAssignedUserIds?: (null | string | undefined)[]
+}): RealtimeEventRoute => ({
+  assignedTeamIds: [
+    ...new Set(
+      [...(previousAssignedInboxTeamIds ?? []), assignedInboxTeamId].filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ],
+  assignedUserIds: [
+    ...new Set(
+      [...(previousAssignedUserIds ?? []), assignedUserId].filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ],
+})
 export const realtimeEventEnvelopeSchema = z.object({
   eventType: z.string(),
   data: z.unknown(),
+  route: realtimeEventRouteSchema.optional(),
 })
 export type RealtimeEventEnvelope = z.infer<typeof realtimeEventEnvelopeSchema>
 
 export const realtimeBatchEnvelopeSchema = z.object({
   batch: z.array(realtimeEventEnvelopeSchema),
+  seq: z
+    .string()
+    .regex(/^\d+-\d+$/)
+    .optional(),
 })
 
 export const realtimeSubscriptionMessageSchema = z.object({
@@ -430,7 +517,7 @@ export type RealtimeEventWhatsappCallPermissionUpdated = {
   data: WhatsappCallPermissionUpdatedData
 }
 
-export type RealtimeEventData =
+export type RealtimeEventData = (
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
   | RealtimeEventMessageIdAssigned
@@ -449,3 +536,6 @@ export type RealtimeEventData =
   | RealtimeEventWhatsappCallOutboundAnswer
   | RealtimeEventWhatsappCallOutboundStatus
   | RealtimeEventWhatsappCallPermissionUpdated
+) & {
+  route?: RealtimeEventRoute
+}

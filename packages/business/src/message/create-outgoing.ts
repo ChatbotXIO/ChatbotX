@@ -14,7 +14,10 @@ import {
   uploader,
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
@@ -265,6 +268,11 @@ export const createOutgoing = async (props: {
       ...messageWithAttachments,
       clientId: parsedInput.clientId,
     },
+    route: routeForConversation({
+      inboxId: contactInbox.inboxId,
+      assignedUserId: targetConversation.assignedUserId,
+      assignedInboxTeamId: targetConversation.assignedInboxTeamId,
+    }),
   })
 
   const jobs: {

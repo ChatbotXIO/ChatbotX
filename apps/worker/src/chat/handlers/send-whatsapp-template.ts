@@ -20,7 +20,10 @@ import {
   stepTypes,
   type TemplateComponent,
 } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/partysocket-config"
 import {
   ChannelError,
   ChannelErrorCategory,
@@ -326,6 +329,11 @@ export async function processWhatsappTemplate(
       publishToWorkspaceParty(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
+        route: routeForConversation({
+          inboxId: contactInbox.inboxId,
+          assignedUserId: conversation.assignedUserId,
+          assignedInboxTeamId: conversation.assignedInboxTeamId,
+        }),
       })
     }
 

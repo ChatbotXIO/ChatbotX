@@ -1,8 +1,4 @@
-import {
-  broadcastToWorkspaceParty,
-  flushAllPendingWorkspaceBroadcasts,
-} from "@chatbotx.io/business"
-import type { RealtimeEventData } from "@chatbotx.io/partysocket-config"
+import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
@@ -122,13 +118,6 @@ async function startChatWorker() {
               logger.warn(
                 { jobId: job.id },
                 "notifyExportResult job received but no handler is implemented",
-              )
-              return
-            // TODO: Remove after the rolling-deploy queue drain completes.
-            case ChatJobAction.broadcastEvent:
-              await broadcastToWorkspaceParty(
-                job.data.data.workspaceId,
-                job.data.data.event as RealtimeEventData,
               )
               return
             case ChatJobAction.checkOutboundAutomatedResponse:
