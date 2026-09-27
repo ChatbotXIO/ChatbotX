@@ -1,7 +1,7 @@
 "use server"
 
 import {
-  revokeWorkspaceMemberConnections,
+  revokeWorkspaceMemberRealtimeConnections,
   workspaceMemberCacheTag,
   workspaceMemberService,
 } from "@chatbotx.io/business"
@@ -12,6 +12,7 @@ import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { logger } from "@/lib/log"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
 export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
@@ -61,10 +62,15 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
     // this workspace room — their next connect attempt is rejected anyway
     // (the mint endpoint re-checks membership), but an existing socket
     // would otherwise keep receiving events until it happens to reconnect.
-    // Best-effort: `revokeWorkspaceMemberConnections` swallows its own
-    // network failures, so this never blocks the deletion.
-    await revokeWorkspaceMemberConnections({
-      workspaceId,
-      userId: workspaceMember.userId,
-    })
+    try {
+      await revokeWorkspaceMemberRealtimeConnections({
+        workspaceId,
+        userId: workspaceMember.userId,
+      })
+    } catch (error) {
+      logger.warn(
+        { error, userId: workspaceMember.userId, workspaceId },
+        "Failed to revoke removed member realtime connections",
+      )
+    }
   })

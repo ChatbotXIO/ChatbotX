@@ -1,6 +1,6 @@
 import { keys as database } from "@chatbotx.io/database/keys"
 import { keys as mail } from "@chatbotx.io/mail/keys"
-import { keys as partysocket } from "@chatbotx.io/partysocket-config/keys"
+import { keys as realtime } from "@chatbotx.io/realtime-protocol/keys"
 import { createEnv } from "@t3-oss/env-nextjs"
 import { z } from "zod"
 import { clientEnv } from "./lib/client-env"
@@ -10,7 +10,7 @@ const editionRule = z
   .default("community")
 
 export const env = createEnv({
-  extends: [partysocket(), database(), mail()],
+  extends: [realtime(), database(), mail()],
   server: {
     PLATFORM_ADMIN_EMAIL: z.email().optional(),
     BETTER_AUTH_SECRET: z

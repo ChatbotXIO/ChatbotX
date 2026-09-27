@@ -1,4 +1,4 @@
-import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -219,7 +219,7 @@ async function startScheduleWorker() {
     isShuttingDown = true
     try {
       await worker.close()
-      await flushAllPendingWorkspaceBroadcasts()
+      await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[ScheduleWorker] Error during shutdown")

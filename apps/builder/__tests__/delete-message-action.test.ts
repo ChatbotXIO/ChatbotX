@@ -19,7 +19,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
   contactInboxService: { findBy: mockContactInboxFindBy },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
 }))
@@ -36,7 +36,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   }),
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageDeleted: "messageDeleted" },
 }))
 

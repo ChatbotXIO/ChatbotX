@@ -3,11 +3,11 @@ import {
   extractBearerToken,
   REALTIME_TOKEN_PURPOSE,
   verifyRealtimeToken,
-} from "@chatbotx.io/partysocket-config/auth"
+} from "@chatbotx.io/realtime-protocol/auth"
 import {
   hashPresenceUserIds,
   truncatePresenceUserIds,
-} from "@chatbotx.io/partysocket-config/presence"
+} from "@chatbotx.io/realtime-protocol/presence"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"

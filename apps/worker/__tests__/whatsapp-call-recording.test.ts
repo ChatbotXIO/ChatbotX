@@ -11,7 +11,8 @@ const mocks = vi.hoisted(() => ({
   findBySourceId: vi.fn(),
   updateContentBySourceId: vi.fn(),
   mergeContentAttributesBySourceId: vi.fn(),
-  broadcastToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
+  conversationFindBy: vi.fn().mockResolvedValue(null),
   contactInboxFindBy: vi.fn(),
   getRecordingSignedUrl: vi.fn(),
   emitCallRecorded: vi.fn(),
@@ -24,9 +25,10 @@ vi.mock("@chatbotx.io/business", () => ({
     attachRecording: mocks.attachRecording,
     releaseRecordingStamp: mocks.releaseRecordingStamp,
   },
-  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
   contactInboxService: { findBy: mocks.contactInboxFindBy },
   callRecordingService: { getRecordingSignedUrl: mocks.getRecordingSignedUrl },
+  conversationService: { findBy: mocks.conversationFindBy },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({

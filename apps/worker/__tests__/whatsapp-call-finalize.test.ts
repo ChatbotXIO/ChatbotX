@@ -7,8 +7,8 @@ const mocks = vi.hoisted(() => ({
   mergeContentAttributesBySourceId: vi.fn(),
   findByInboxIdForWorkspace: vi.fn(),
   finalizeById: vi.fn(),
-  broadcastToWorkspaceParty: vi.fn(),
-  sendToWorkspaceMember: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
+  publishWorkspaceMemberRealtimeEvent: vi.fn(),
   updateFlowStepState: vi.fn(),
   contactInboxFindBy: vi.fn(),
   updateTracking: vi.fn(),
@@ -24,8 +24,9 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
-  sendToWorkspaceMember: mocks.sendToWorkspaceMember,
+  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
+  publishWorkspaceMemberRealtimeEvent:
+    mocks.publishWorkspaceMemberRealtimeEvent,
   contactInboxService: {
     findBy: mocks.contactInboxFindBy,
     updateTracking: mocks.updateTracking,
@@ -65,7 +66,7 @@ vi.mock("@chatbotx.io/events", () => ({
   emitMissedAudioCall: mocks.emitMissedAudioCall,
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: {
     messageCreated: "messageCreated",
     whatsappCallTransportEnded: "whatsappCallTransportEnded",
@@ -392,7 +393,7 @@ describe("finalizeCallSideEffects", () => {
       expect.objectContaining({ contactRepliedAt: expect.any(Date) }),
     )
     expect(mocks.updateTracking).toHaveBeenCalled()
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({ eventType: "messageCreated" }),
     )
@@ -403,7 +404,7 @@ describe("finalizeCallSideEffects", () => {
     expect(mocks.emitMissedAudioCall).not.toHaveBeenCalled()
     // No control record for this call, so nobody is targeted with the
     // ended event even though the signaling cleanup still runs.
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("a canceled entity persists status failed with outcome canceled — read BEFORE the display collapse", async () => {
@@ -611,7 +612,7 @@ describe("finalizeCallSideEffects", () => {
     })
 
     expect(mocks.finalizeById).toHaveBeenCalled()
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
     expect(mocks.updateFlowStepState).not.toHaveBeenCalled()
     expect(mocks.updateTracking).not.toHaveBeenCalled()
     expect(mocks.emitCallEnded).not.toHaveBeenCalled()
@@ -653,7 +654,7 @@ describe("finalizeCallSideEffects", () => {
   })
 
   test("a realtime broadcast failure is swallowed, never thrown", async () => {
-    mocks.broadcastToWorkspaceParty.mockRejectedValueOnce(new Error("down"))
+    mocks.publishWorkspaceRealtimeEvent.mockRejectedValueOnce(new Error("down"))
 
     await expect(
       finalizeCallSideEffects({
@@ -811,7 +812,7 @@ describe("finalizeCallSideEffects ended emit", () => {
       allowFromAccepted: true,
     })
     expect(mocks.voipDeleteOffer).toHaveBeenCalledWith("wacid.ABC")
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
       { workspaceId: "ws-1", userId: "agent-1" },
       {
         eventType: "whatsappCallTransportEnded",
@@ -825,7 +826,7 @@ describe("finalizeCallSideEffects ended emit", () => {
     )
     // The claimed-call path is targeted only — never a workspace-wide
     // broadcast of the ended event.
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({ eventType: "whatsappCallTransportEnded" }),
     )
@@ -849,11 +850,11 @@ describe("finalizeCallSideEffects ended emit", () => {
     })
 
     expect(mocks.voipDeleteOffer).toHaveBeenCalledWith("wacid.ABC")
-    // An empty userId is never passed to `sendToWorkspaceMember` (that would
-    // fan out via a different, unintended path) — the workspace broadcast is
-    // explicit instead.
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    // An empty userId is never passed to `publishWorkspaceMemberRealtimeEvent`
+    // (that would fan out via a different, unintended path) — the workspace
+    // publish is explicit instead.
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "whatsappCallTransportEnded",
       data: {
         transport: "voip",
@@ -879,7 +880,7 @@ describe("finalizeCallSideEffects ended emit", () => {
 
     expect(mocks.voipMarkTerminated).toHaveBeenCalled()
     expect(mocks.voipDeleteOffer).toHaveBeenCalled()
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("a call that never got a wacid never triggers the ended emit", async () => {
@@ -895,7 +896,7 @@ describe("finalizeCallSideEffects ended emit", () => {
     expect(mocks.voipReadControl).not.toHaveBeenCalled()
     expect(mocks.voipMarkTerminated).not.toHaveBeenCalled()
     expect(mocks.voipDeleteOffer).not.toHaveBeenCalled()
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("a send failure is swallowed, never thrown", async () => {
@@ -905,7 +906,9 @@ describe("finalizeCallSideEffects ended emit", () => {
       deadlineAt: 123,
       fenceToken: "fence-1",
     })
-    mocks.sendToWorkspaceMember.mockRejectedValueOnce(new Error("down"))
+    mocks.publishWorkspaceMemberRealtimeEvent.mockRejectedValueOnce(
+      new Error("down"),
+    )
 
     await expect(
       finalizeCallSideEffects({
@@ -931,7 +934,7 @@ describe("finalizeCallSideEffects ended emit", () => {
     // `emitVoipCallEnded` runs (and broadcasts) before the unrelated
     // `messageCreated` broadcast later in `finalizeCallSideEffects` — only
     // the first (ended-event) broadcast rejects here.
-    mocks.broadcastToWorkspaceParty
+    mocks.publishWorkspaceRealtimeEvent
       .mockRejectedValueOnce(new Error("down"))
       .mockResolvedValueOnce(undefined)
 
@@ -967,11 +970,11 @@ describe("finalizeCallSideEffects ended emit", () => {
       },
     })
 
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
       { workspaceId: "ws-1", userId: "initiator-1" },
       expect.objectContaining({ eventType: "whatsappCallTransportEnded" }),
     )
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({ eventType: "whatsappCallTransportEnded" }),
     )
@@ -1000,12 +1003,12 @@ describe("finalizeCallSideEffects ended emit", () => {
 
     expect(mocks.voipMarkTerminated).toHaveBeenCalled()
     expect(mocks.voipDeleteOffer).toHaveBeenCalled()
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({ eventType: "whatsappCallTransportEnded" }),
     )
     // Everything that is not transport cleanup stays first-delivery only.
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledTimes(1)
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledTimes(1)
     expect(mocks.updateFlowStepState).not.toHaveBeenCalled()
   })
 })
@@ -1063,7 +1066,7 @@ describe("enrichCallActivityMessage", () => {
       "ws-1",
       { hasRecording: true },
     )
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
         eventType: "messageContentUpdated",
@@ -1128,7 +1131,7 @@ describe("enrichCallActivityMessage", () => {
     // The last broadcast reflects BOTH flags true — neither writer's merge
     // dropped the other's already-applied flag.
     const lastCallData =
-      mocks.broadcastToWorkspaceParty.mock.calls.at(-1)?.[1].data
+      mocks.publishWorkspaceRealtimeEvent.mock.calls.at(-1)?.[1].data
     expect(lastCallData.contentAttributes).toMatchObject({
       hasRecording: true,
       hasTranscript: true,
@@ -1149,7 +1152,7 @@ describe("enrichCallActivityMessage", () => {
     ).rejects.toBeInstanceOf(WhatsappCallEnrichmentPendingError)
 
     expect(mocks.mergeContentAttributesBySourceId).not.toHaveBeenCalled()
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   }, 10_000)
 
   test("converges once the finalize message shows up mid-wait", async () => {
@@ -1185,7 +1188,7 @@ describe("enrichCallActivityMessage", () => {
       id: "msg-1",
       contentAttributes: { type: "whatsapp_call", hasRecording: true },
     })
-    mocks.broadcastToWorkspaceParty.mockRejectedValueOnce(new Error("down"))
+    mocks.publishWorkspaceRealtimeEvent.mockRejectedValueOnce(new Error("down"))
 
     await expect(
       enrichCallActivityMessage({

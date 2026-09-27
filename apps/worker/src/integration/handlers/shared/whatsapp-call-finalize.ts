@@ -1,8 +1,8 @@
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
-  sendToWorkspaceMember,
+  publishWorkspaceMemberRealtimeEvent,
+  publishWorkspaceRealtimeEvent,
   userService,
   whatsappVoipCallService,
   whatsappVoipSignalingService,
@@ -21,7 +21,7 @@ import {
   RealtimeEventType,
   type RealtimeEventWhatsappCallTransportEnded,
   routeForConversation,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import {
   getWhatsappCallEntity,
   type MessageWhatsappCallEntity,
@@ -183,10 +183,10 @@ const emitCallEndedToAgent = async (
     // Unclaimed call: broadcast so every rung agent's dialog clears immediately
     // instead of waiting out its own ~55s deadline timer.
     if (control.reservedUserId === "") {
-      await broadcastToWorkspaceParty(call.workspaceId, eventPayload)
+      await publishWorkspaceRealtimeEvent(call.workspaceId, eventPayload)
       return
     }
-    await sendToWorkspaceMember(
+    await publishWorkspaceMemberRealtimeEvent(
       { workspaceId: call.workspaceId, userId: control.reservedUserId },
       eventPayload,
     )
@@ -395,7 +395,7 @@ export const finalizeCallSideEffects = async (
     const conversation = await conversationService.findBy({
       where: { id: call.conversationId, workspaceId: call.workspaceId },
     })
-    await broadcastToWorkspaceParty(call.workspaceId, {
+    await publishWorkspaceRealtimeEvent(call.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: { ...message, attachments: [] },
       route: routeForConversation({
@@ -575,7 +575,7 @@ export const enrichCallActivityMessage = async (props: {
     where: { id: call.conversationId, workspaceId: call.workspaceId },
   })
   try {
-    await broadcastToWorkspaceParty(call.workspaceId, {
+    await publishWorkspaceRealtimeEvent(call.workspaceId, {
       eventType: RealtimeEventType.messageContentUpdated,
       data: { messageId: merged.id, contentAttributes: entity },
       route: routeForConversation({

@@ -1,5 +1,4 @@
 import type { ConversationHandlers } from "@chatbotx.io/sdk"
-import ky from "ky"
 import type { WebchatAuthValue } from "../schema"
 
 export const sendTyping: ConversationHandlers<WebchatAuthValue>["sendTyping"] =
@@ -9,23 +8,10 @@ export const sendTyping: ConversationHandlers<WebchatAuthValue>["sendTyping"] =
       data: { contact, typing },
     } = props
 
-    const headers = await ctx.platform.getRealtimeBroadcastAuthHeaders({
-      kind: "guest",
-      id: contact.sourceId,
+    await ctx.platform.publishGuestRealtimeEvent(contact.sourceId, {
+      eventType: "typing",
+      data: { typing },
     })
-
-    await ky
-      .post(`parties/guests/${contact.sourceId}`, {
-        baseUrl: ctx.platform.internalRealtimeUrl,
-        headers,
-        json: {
-          eventType: "typing",
-          data: {
-            typing,
-          },
-        },
-      })
-      .json()
   }
 
 export const conversationHandlers = {

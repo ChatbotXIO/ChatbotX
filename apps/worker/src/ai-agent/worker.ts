@@ -1,4 +1,4 @@
-import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import {
   AIJobAction,
@@ -187,7 +187,7 @@ async function startAIAgentWorker() {
     isShuttingDown = true
     try {
       await worker.close()
-      await flushAllPendingWorkspaceBroadcasts()
+      await flushAllPendingWorkspaceRealtimeEvents()
       await Promise.all([closeChatQueueEvents(), closeHeavyQueueEvents()])
       process.exit(0)
     } catch (err) {

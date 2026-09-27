@@ -2,7 +2,7 @@ import {
   contactInboxService,
   conversationService,
   flowService,
-  publishToWorkspaceParty,
+  queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
@@ -28,7 +28,7 @@ import {
 import {
   RealtimeEventType,
   routeForConversation,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import {
   ChannelError,
   ChannelErrorCategory,
@@ -274,7 +274,7 @@ export async function processMessengerTemplate(
     }
 
     if (!isBulkOutbound) {
-      publishToWorkspaceParty(conversation.workspaceId, {
+      queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
         route: routeForConversation({

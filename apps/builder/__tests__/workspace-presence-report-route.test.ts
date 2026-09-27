@@ -3,8 +3,8 @@
 import {
   REALTIME_TOKEN_PURPOSE,
   signRealtimeToken,
-} from "@chatbotx.io/partysocket-config/auth"
-import { hashPresenceUserIds } from "@chatbotx.io/partysocket-config/presence"
+} from "@chatbotx.io/realtime-protocol/auth"
+import { hashPresenceUserIds } from "@chatbotx.io/realtime-protocol/presence"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const SECRET = "a".repeat(32)
@@ -156,11 +156,11 @@ describe("POST /api/workspace-presence/report", () => {
     expect(mocks.heartbeatMany).not.toHaveBeenCalled()
   })
 
-  test("rejects with 401 when the token's purpose is not presence-report (a broadcast token must not work here, MEDIUM-3)", async () => {
+  test("rejects with 401 when the token's purpose is not presence-report (a member-connect token must not work here, MEDIUM-3)", async () => {
     const token = await signPresenceToken({
       workspaceId: "1",
       userIds: ["2"],
-      purpose: REALTIME_TOKEN_PURPOSE.broadcast,
+      purpose: REALTIME_TOKEN_PURPOSE.memberConnect,
     })
 
     const response = await POST(
@@ -244,7 +244,7 @@ describe("POST /api/workspace-presence/report", () => {
 
   test("truncates an over-cap userIds batch instead of rejecting it, and matches the token hashed over the same truncated set (LOW-7)", async () => {
     const { MAX_PRESENCE_USER_IDS_PER_REPORT } = await import(
-      "@chatbotx.io/partysocket-config/presence"
+      "@chatbotx.io/realtime-protocol/presence"
     )
     const overCapUserIds = Array.from(
       { length: MAX_PRESENCE_USER_IDS_PER_REPORT + 5 },

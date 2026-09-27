@@ -1,6 +1,6 @@
 import {
   conversationService,
-  publishToWorkspaceParty,
+  queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import {
   type CommentReply,
@@ -17,7 +17,7 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   RealtimeEventType,
   routeForConversation,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
@@ -110,7 +110,7 @@ export async function postPublicCommentReply(props: {
   const conversation = await conversationService.findBy({
     where: { id: props.conversationId, workspaceId: props.workspaceId },
   })
-  publishToWorkspaceParty(props.workspaceId, {
+  queueWorkspaceRealtimeEvent(props.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: message,
     route: routeForConversation({

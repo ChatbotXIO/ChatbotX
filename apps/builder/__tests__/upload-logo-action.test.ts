@@ -111,9 +111,8 @@ function createCtx() {
     platform: {
       appUrl: "https://app.example.com",
       publicRealtimeUrl: "wss://realtime.example.com",
-      internalRealtimeUrl: "https://realtime.example.com",
       storageUrl: "https://storage.example.com",
-      getRealtimeBroadcastAuthHeaders: vi.fn(async () => ({})),
+      publishGuestRealtimeEvent: vi.fn(async () => undefined),
     },
   }
 }

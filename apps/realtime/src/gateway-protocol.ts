@@ -2,13 +2,13 @@ import type {
   RealtimeChatScope,
   RealtimeEventData,
   RealtimeEventRoute,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 
 export {
   getRealtimeStreamKey,
   getRealtimeStreamShard,
   REALTIME_STREAM_SHARD_COUNT,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 
 const workspaceTopic = (workspaceId: string, suffix: string): string =>
   `ws:${workspaceId}:${suffix}`

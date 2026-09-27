@@ -3,7 +3,7 @@ import {
   inboxTeamService,
   resolveBroadcastSecret,
 } from "@chatbotx.io/business"
-import { signMemberConnectToken } from "@chatbotx.io/partysocket-config/auth"
+import { signMemberConnectToken } from "@chatbotx.io/realtime-protocol/auth"
 import { z } from "zod"
 import { getAssignedContactsUserId } from "@/features/contacts/permissions"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"

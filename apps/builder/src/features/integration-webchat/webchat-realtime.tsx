@@ -5,7 +5,7 @@ import {
   RealtimeSocket,
   realtimeBatchEnvelopeSchema,
   realtimeEventEnvelopeSchema,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import { useEffect } from "react"
 import { getClientEmbeddingOrigin } from "@/features/integration-webchat/lib/authorized-domain"
 import { logger } from "@/lib/log"

@@ -1,5 +1,5 @@
 {
-  "name": "@chatbotx.io/partysocket-config",
+  "name": "@chatbotx.io/realtime-protocol",
   "version": "0.1.0",
   "type": "module",
   "devDependencies": {
@@ -10,10 +10,8 @@
     "vitest": "^4.1.0"
   },
   "dependencies": {
-    "@chatbotx.io/logger": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "jose": "^6.2.3",
-    "ky": "^2.0.2",
     "zod": "^4.3.6"
   },
   "exports": {

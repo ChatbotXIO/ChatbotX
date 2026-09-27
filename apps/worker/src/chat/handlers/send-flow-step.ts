@@ -6,10 +6,10 @@ import {
 } from "@chatbotx.io/analytics"
 import {
   appointmentCalendarService,
-  broadcastToGuestParty,
   contactInboxService,
   conversationService,
-  publishToWorkspaceParty,
+  publishGuestRealtimeEvent,
+  queueWorkspaceRealtimeEvent,
   resolveMediaUrl,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
@@ -50,7 +50,7 @@ import { logDiagnostic } from "@chatbotx.io/logger"
 import {
   RealtimeEventType,
   routeForConversation,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import {
   IntegrationException,
   type MessageButtonTemplate,
@@ -959,7 +959,7 @@ export async function sendFlowStep({
         })
 
     if (!isBulkOutbound) {
-      publishToWorkspaceParty(conversation.workspaceId, {
+      queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
         route: routeForConversation({
@@ -975,7 +975,7 @@ export async function sendFlowStep({
     const broadcasts: Promise<unknown>[] = []
     if (targetContactInbox.channel === channelTypes.enum.webchat) {
       broadcasts.push(
-        broadcastToGuestParty(
+        publishGuestRealtimeEvent(
           {
             workspaceId: conversation.workspaceId,
             guestConversationId: targetContactInbox.sourceId,
@@ -1248,7 +1248,7 @@ export const sendChatMessage = async (
       ),
     ]
     if (!isBulkOutbound) {
-      publishToWorkspaceParty(conversation.workspaceId, {
+      queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
         route: routeForConversation({

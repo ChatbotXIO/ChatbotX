@@ -2,12 +2,12 @@
 
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   contactService,
   conversationService,
   isWorkspaceScheduledForDeletion,
   messageCleanupService,
+  publishWorkspaceRealtimeEvent,
   quotaEnforcementService,
   resolveTenantSettings,
   workspaceService,
@@ -39,7 +39,7 @@ import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import {
   RealtimeEventType,
   routeForConversation,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
@@ -317,7 +317,7 @@ export async function handleCreateWebchatMessage({
       sourceId: newMessage.sourceId ?? undefined,
     })
 
-    await broadcastToWorkspaceParty(newMessage.workspaceId, {
+    await publishWorkspaceRealtimeEvent(newMessage.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: {
         ...newMessage,

@@ -2,7 +2,7 @@ import {
   integrationWebchatService,
   resolveBroadcastSecret,
 } from "@chatbotx.io/business"
-import { signGuestConnectToken } from "@chatbotx.io/partysocket-config"
+import { signGuestConnectToken } from "@chatbotx.io/realtime-protocol"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"

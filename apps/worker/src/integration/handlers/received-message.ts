@@ -9,7 +9,7 @@ import {
   hasOnDemandProfileApi,
   hasRealAvatar,
   messageCleanupService,
-  publishToWorkspaceParty,
+  queueWorkspaceRealtimeEvent,
   quotaEnforcementService,
   recordProfileRefreshFailure,
   resolveTenantSettings,
@@ -64,7 +64,7 @@ import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import {
   RealtimeEventType,
   routeForConversation,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
@@ -967,7 +967,7 @@ const saveAndBroadcastMessage = async (props: {
   }
 
   if (isNew && !isOwnSendEcho) {
-    publishToWorkspaceParty(inbox.workspaceId, {
+    queueWorkspaceRealtimeEvent(inbox.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: newMessage,
       route: routeForConversation({
@@ -1437,7 +1437,7 @@ export const updateIncomingComment = async (
   const conversation = await conversationService.findBy({
     where: { id: updated.conversationId, workspaceId: inbox.workspaceId },
   })
-  publishToWorkspaceParty(inbox.workspaceId, {
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageUpdated,
     data: {
       messageId: updated.id,
@@ -1481,7 +1481,7 @@ export const deleteIncomingComment = async (
   const conversation = await conversationService.findBy({
     where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
   })
-  publishToWorkspaceParty(inbox.workspaceId, {
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
     route: routeForConversation({
@@ -1523,7 +1523,7 @@ export const deleteIncomingMessage = async (
   const conversation = await conversationService.findBy({
     where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
   })
-  publishToWorkspaceParty(inbox.workspaceId, {
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
     route: routeForConversation({
@@ -1629,7 +1629,7 @@ export const processMessageReaction = async (
   })
 
   if (isNew) {
-    publishToWorkspaceParty(inbox.workspaceId, {
+    queueWorkspaceRealtimeEvent(inbox.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: reactionRow,
       route: routeForConversation({
@@ -1651,7 +1651,7 @@ export const processMessageReaction = async (
       reactionRow.createdAt,
     )
     if (updated) {
-      publishToWorkspaceParty(inbox.workspaceId, {
+      queueWorkspaceRealtimeEvent(inbox.workspaceId, {
         eventType: RealtimeEventType.messageUpdated,
         data: {
           messageId: updated.id,

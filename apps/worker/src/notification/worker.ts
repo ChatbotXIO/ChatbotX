@@ -1,5 +1,5 @@
 import {
-  flushAllPendingWorkspaceBroadcasts,
+  flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import {
@@ -51,7 +51,7 @@ async function startNotificationWorker() {
     isShuttingDown = true
     try {
       await worker.close()
-      await flushAllPendingWorkspaceBroadcasts()
+      await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[NotificationWorker] Error during shutdown")

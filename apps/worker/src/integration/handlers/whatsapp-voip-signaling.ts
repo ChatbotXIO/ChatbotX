@@ -1,6 +1,6 @@
 import {
+  publishWorkspaceMemberRealtimeEvent,
   resolveWhatsappCallerName,
-  sendToWorkspaceMember,
   whatsappVoipCallService,
   whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
@@ -20,7 +20,7 @@ import {
   type RealtimeEventWhatsappCallOutboundAnswer,
   type RealtimeEventWhatsappCallTransportEnded,
   type RealtimeEventWhatsappCallTransportIncoming,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import { isWithinCallHours } from "@chatbotx.io/utils/whatsapp-call-hours"
 import {
   WhatsappVoipSignalingJobAction,
@@ -294,8 +294,8 @@ const endedStatusOf = (
     : null
 
 /**
- * Delivers the offer to every rung agent. `sendToWorkspaceMember` never throws,
- * so a falsy result is the failure signal.
+ * Delivers the incoming offer to every selected agent. A failed stream append
+ * is logged per target without preventing other offers from being published.
  */
 const ringAgents = async (input: {
   workspaceId: string
@@ -304,14 +304,15 @@ const ringAgents = async (input: {
 }): Promise<void> => {
   await Promise.all(
     input.targets.map(async (userId) => {
-      const result = await sendToWorkspaceMember(
-        { workspaceId: input.workspaceId, userId },
-        input.event,
-      )
-      if (!result) {
+      try {
+        await publishWorkspaceMemberRealtimeEvent(
+          { workspaceId: input.workspaceId, userId },
+          input.event,
+        )
+      } catch (err) {
         logger.warn(
-          { wacid: input.event.data.wacid, userId },
-          "Whatsapp VoIP: unable to deliver the offer realtime event",
+          { err, wacid: input.event.data.wacid, userId },
+          "Whatsapp VoIP: unable to publish the offer realtime event",
         )
       }
     }),
@@ -344,7 +345,10 @@ const notifyRungAgentsIfEnded = async (input: {
   }
   await Promise.all(
     input.targets.map((userId) =>
-      sendToWorkspaceMember({ workspaceId: input.workspaceId, userId }, event),
+      publishWorkspaceMemberRealtimeEvent(
+        { workspaceId: input.workspaceId, userId },
+        event,
+      ),
     ),
   )
 }
@@ -566,17 +570,18 @@ const handleOutboundAnswer = async (
     session: { sdpType: "answer", sdp: answer.sdp },
   }
 
-  const result = await sendToWorkspaceMember(
-    { workspaceId, userId: initiatorUserId },
-    {
-      eventType: RealtimeEventType.whatsappCallOutboundAnswer,
-      data: eventData,
-    },
-  )
-  if (!result) {
+  try {
+    await publishWorkspaceMemberRealtimeEvent(
+      { workspaceId, userId: initiatorUserId },
+      {
+        eventType: RealtimeEventType.whatsappCallOutboundAnswer,
+        data: eventData,
+      },
+    )
+  } catch (err) {
     logger.warn(
-      { attemptId, userId: initiatorUserId },
-      "Whatsapp VoIP: unable to deliver the outbound answer realtime event",
+      { attemptId, err, userId: initiatorUserId },
+      "Whatsapp VoIP: unable to publish the outbound answer realtime event",
     )
   }
 

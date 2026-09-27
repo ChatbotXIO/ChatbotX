@@ -1,7 +1,7 @@
 import {
   getRealtimeStreamKey,
   type RealtimeStreamRecord,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import { createRedisConnection, type Redis } from "@chatbotx.io/redis"
 import { resolveRealtimeRedisUrl } from "./settings"
 

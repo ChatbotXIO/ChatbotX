@@ -130,7 +130,7 @@
 - pnpm 10 workspaces
 - Turborepo
 - Next.js 16 and React 19 for `apps/builder`
-- PartyKit / PartySocket for realtime messaging
+- Native uWebSockets gateway with Redis Streams for realtime messaging
 - Drizzle ORM with PostgreSQL and pgvector
 - Redis and BullMQ for queues and worker coordination
 - RustFS / S3-compatible storage for uploaded assets

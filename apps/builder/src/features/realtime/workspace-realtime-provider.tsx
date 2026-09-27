@@ -7,7 +7,7 @@ import {
   RealtimeSocket,
   realtimeBatchEnvelopeSchema,
   realtimeEventEnvelopeSchema,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import {
   createContext,
   type ReactNode,

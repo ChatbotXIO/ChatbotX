@@ -15,11 +15,9 @@ const CLOCK_TOLERANCE_SECONDS = 5
 /**
  * Every purpose a realtime token can be minted for. Bound into the payload and
  * checked on verify, so a token minted for one purpose can never be replayed
- * against another — the two workspace purposes share an audience.
+ * against another.
  */
 export const REALTIME_TOKEN_PURPOSE = {
-  /** The existing builder -> party broadcast path (`onBeforeRequest`). */
-  broadcast: "broadcast",
   /** A member's short-lived room-connect token (`signMemberConnectToken`). */
   memberConnect: "member-connect",
   /** A guest's short-lived room-connect token. */

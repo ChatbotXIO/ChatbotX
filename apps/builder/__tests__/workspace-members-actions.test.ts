@@ -67,7 +67,8 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: {
     hasReachedLimit: mockQuotaHasReachedLimit,
   },
-  revokeWorkspaceMemberConnections: mockRevokeWorkspaceMemberConnections,
+  revokeWorkspaceMemberRealtimeConnections:
+    mockRevokeWorkspaceMemberConnections,
   userService: {
     findNameAndEmail: mockFindNameAndEmail,
   },

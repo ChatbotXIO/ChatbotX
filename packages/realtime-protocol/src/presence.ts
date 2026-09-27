@@ -4,7 +4,6 @@
  * every reported member expired on every cycle. Imported by `apps/realtime` and
  * `packages/business`.
  */
-import { z } from "zod"
 
 /** How long one presence report keeps a reported user online in Redis. */
 export const PRESENCE_TTL_MS = 20_000
@@ -33,32 +32,6 @@ export const MAX_PRESENCE_USER_IDS_PER_REPORT = 5000
 /** Truncates to `MAX_PRESENCE_USER_IDS_PER_REPORT`; never throws. */
 export function truncatePresenceUserIds(userIds: readonly string[]): string[] {
   return userIds.slice(0, MAX_PRESENCE_USER_IDS_PER_REPORT)
-}
-
-/**
- * Keep-alive frame closing the one gap in server-reported presence:
- * `ensureReportLoopArmed` only fires from `onConnect`/`onRequest`, so a quiet
- * room otherwise never re-arms the alarm. Not an HTTP heartbeat, to avoid
- * per-tab request cost; `ensureReportLoopArmed()` is a no-op while fresh.
- */
-export const PRESENCE_PING_MESSAGE_TYPE = "presence-ping" as const
-
-/**
- * Validates an inbound socket frame as a presence ping — the only client-server
- * message this socket carries. Anything else must be ignored, never treated as
- * a liveness signal.
- */
-export const presencePingMessageSchema = z.object({
-  type: z.literal(PRESENCE_PING_MESSAGE_TYPE),
-})
-
-export type PresencePingMessage = z.infer<typeof presencePingMessageSchema>
-
-/** The exact wire frame the client sends, paired with the schema above. */
-export function serializePresencePingMessage(): string {
-  return JSON.stringify({
-    type: PRESENCE_PING_MESSAGE_TYPE,
-  } satisfies PresencePingMessage)
 }
 
 /**

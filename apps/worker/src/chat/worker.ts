@@ -1,4 +1,4 @@
-import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
@@ -151,7 +151,7 @@ async function startChatWorker() {
       await worker.close()
       // After close(): drains events published by jobs that finished during
       // the close drain, whose coalesce timers would never fire past exit.
-      await flushAllPendingWorkspaceBroadcasts()
+      await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[ChatWorker] Error during shutdown")

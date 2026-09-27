@@ -23,7 +23,7 @@ const {
   preAcceptCallMock,
   acceptCallMock,
   terminateCallMock,
-  broadcastToWorkspacePartyMock,
+  publishWorkspaceRealtimeEventMock,
   claimForCallAgentMock,
   canCallConversationMock,
 } = vi.hoisted(() => ({
@@ -41,7 +41,7 @@ const {
   preAcceptCallMock: vi.fn(),
   acceptCallMock: vi.fn(),
   terminateCallMock: vi.fn(),
-  broadcastToWorkspacePartyMock: vi.fn(),
+  publishWorkspaceRealtimeEventMock: vi.fn(),
   claimForCallAgentMock: vi.fn(),
   canCallConversationMock: vi.fn(),
 }))
@@ -121,7 +121,7 @@ vi.mock("@chatbotx.io/business", () => ({
   diagnoseAnswerShape: actualDiagnoseAnswerShape,
   contactInboxService: { findBy: findContactInboxMock },
   contactService: { findBy: findContactMock },
-  broadcastToWorkspaceParty: broadcastToWorkspacePartyMock,
+  publishWorkspaceRealtimeEvent: publishWorkspaceRealtimeEventMock,
   conversationService: { claimForCallAgent: claimForCallAgentMock },
   CALL_ASSIGNMENT_TRIGGER_HANDLERS: {
     answered: "whatsappCallAnswered",
@@ -129,7 +129,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: {
     whatsappCallClaimedElsewhere: "whatsappCallClaimedElsewhere",
   },
@@ -219,7 +219,7 @@ describe("answerWhatsappVoipCallAction", () => {
     markAcceptedByAgentMock.mockResolvedValue(true)
     terminateCallMock.mockResolvedValue(undefined)
     releaseClaimMock.mockResolvedValue(true)
-    broadcastToWorkspacePartyMock.mockResolvedValue(undefined)
+    publishWorkspaceRealtimeEventMock.mockResolvedValue(undefined)
     claimForCallAgentMock.mockResolvedValue([])
   })
 
@@ -301,14 +301,17 @@ describe("answerWhatsappVoipCallAction", () => {
       browserRecordingEnabled: false,
       recordingRequested: false,
     })
-    expect(broadcastToWorkspacePartyMock).toHaveBeenCalledWith("workspace-1", {
-      eventType: "whatsappCallClaimedElsewhere",
-      data: {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        answeredByUserId: "agent-1",
+    expect(publishWorkspaceRealtimeEventMock).toHaveBeenCalledWith(
+      "workspace-1",
+      {
+        eventType: "whatsappCallClaimedElsewhere",
+        data: {
+          whatsappCallId: "call-1",
+          wacid: "wacid-1",
+          answeredByUserId: "agent-1",
+        },
       },
-    })
+    )
   })
 
   test("auto-assigns the conversation to the answering agent only after markAcceptedByAgent succeeds", async () => {
@@ -356,7 +359,7 @@ describe("answerWhatsappVoipCallAction", () => {
 
     const markOrder = markAcceptedByAgentMock.mock.invocationCallOrder[0]
     const broadcastOrder =
-      broadcastToWorkspacePartyMock.mock.invocationCallOrder[0]
+      publishWorkspaceRealtimeEventMock.mock.invocationCallOrder[0]
     const claimOrder = claimForCallAgentMock.mock.invocationCallOrder[0]
     expect(markOrder).toBeLessThan(claimOrder)
     expect(broadcastOrder).toBeLessThan(claimOrder)
@@ -390,7 +393,7 @@ describe("answerWhatsappVoipCallAction", () => {
       fenceToken: "fence-1",
     })
     expect(commitAcceptedMock).not.toHaveBeenCalled()
-    expect(broadcastToWorkspacePartyMock).not.toHaveBeenCalled()
+    expect(publishWorkspaceRealtimeEventMock).not.toHaveBeenCalled()
   })
 
   test("a releaseClaim failure never masks the original accept error", async () => {

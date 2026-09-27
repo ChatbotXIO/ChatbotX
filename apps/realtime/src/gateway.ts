@@ -7,8 +7,8 @@ import {
   realtimeStreamRecordSchema,
   verifyGuestConnectToken,
   verifyMemberConnectToken,
-} from "@chatbotx.io/partysocket-config"
-import { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/partysocket-config/presence"
+} from "@chatbotx.io/realtime-protocol"
+import { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/realtime-protocol/presence"
 import type { Redis } from "@chatbotx.io/redis"
 import {
   getWorkspaceConnectionTopics,
@@ -526,8 +526,6 @@ export const createRealtimeGateway = ({
   })
   registerWorkspaceSocket("/rt/workspaces/:workspaceId")
   registerGuestSocket("/rt/guests/:guestConversationId")
-  registerWorkspaceSocket("/parties/workspaces/:workspaceId")
-  registerGuestSocket("/parties/guests/:guestConversationId")
 
   return {
     async close() {

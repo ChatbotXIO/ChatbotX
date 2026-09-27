@@ -1,5 +1,5 @@
 import {
-  sendToWorkspaceMember,
+  publishWorkspaceMemberRealtimeEvent,
   whatsappCallLifecycleService,
   whatsappVoipCallService,
 } from "@chatbotx.io/business"
@@ -16,7 +16,7 @@ import {
 import {
   RealtimeEventType,
   type RealtimeEventWhatsappCallOutboundStatus,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import {
   CALL_CANCELED_BY_BUSINESS_LAST_ERROR,
   type MessageWhatsappCallEntity,
@@ -102,19 +102,13 @@ const notifyOutboundStatus = async (
   }
 
   try {
-    const result = await sendToWorkspaceMember(
+    await publishWorkspaceMemberRealtimeEvent(
       { workspaceId: call.workspaceId, userId: call.answeredByUserId },
       {
         eventType: RealtimeEventType.whatsappCallOutboundStatus,
         data: eventData,
       },
     )
-    if (!result) {
-      logger.warn(
-        { whatsappCallId: call.id, status, userId: call.answeredByUserId },
-        "Whatsapp VoIP: unable to deliver the outbound status realtime event",
-      )
-    }
   } catch (err: unknown) {
     logger.warn(
       { err, whatsappCallId: call.id, status },

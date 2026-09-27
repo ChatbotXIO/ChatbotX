@@ -1,14 +1,14 @@
 "use server"
 
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
+  publishWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { getImageDimensions, uploader } from "@chatbotx.io/filesystem"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -118,7 +118,7 @@ export const editMessage = async (props: {
     ])
   }
 
-  await broadcastToWorkspaceParty(workspaceId, {
+  await publishWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageUpdated,
     data: {
       messageId,

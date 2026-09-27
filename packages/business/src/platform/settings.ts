@@ -212,28 +212,9 @@ export const resolveWorkspaceAppUrl = async (args: {
 export const resolveBroadcastSecret = (): string =>
   integrationContextEnv().REALTIME_BROADCAST_SECRET
 
-/** Whether zero-interest relay responses may suppress ephemeral typing events. */
-export const resolveRealtimeDeliveryGate = (): boolean =>
-  integrationContextEnv().REALTIME_DELIVERY_GATE
-
 /** Resolve the validated Redis endpoint used by the realtime stream publisher. */
 export const resolveRealtimeRedisUrl = (): string =>
   integrationContextEnv().REDIS_URL
-
-/**
- * Resolve the HTTP endpoint used by server-side realtime broadcasts.
- * This endpoint is deployment-wide on purpose — never tenant-specific or a
- * custom domain.
- */
-export const resolveRealtimeBroadcastUrl = (): string => {
-  const env = integrationContextEnv()
-  const url =
-    env.REALTIME_INTERNAL_URL ??
-    deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
-      forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS),
-    }).publicRealtimeUrl
-  return url.endsWith("/") ? url : `${url}/`
-}
 
 /**
  * Resolve tenant settings for a reseller/owner directly, without a request

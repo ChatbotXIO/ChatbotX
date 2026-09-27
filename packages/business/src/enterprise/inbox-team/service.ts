@@ -19,7 +19,8 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../../base.service"
 import { ChatbotXException, notFoundException } from "../../errors"
-import { revokeWorkspaceMemberConnections } from "../../platform/realtime-broadcast"
+import { logger } from "../../logger"
+import { revokeWorkspaceMemberRealtimeConnections } from "../../platform/realtime-broadcast"
 import { workspaceMemberService } from "../../workspace-member/service"
 
 type InboxTeamWithMembers = InboxTeamModel & {
@@ -116,6 +117,27 @@ class InboxTeamService extends BaseService {
     }
   }
 
+  private async revokeMemberRealtimeConnections(
+    workspaceId: string,
+    userIds: Iterable<string>,
+  ): Promise<void> {
+    await Promise.all(
+      Array.from(userIds, async (userId) => {
+        try {
+          await revokeWorkspaceMemberRealtimeConnections({
+            workspaceId,
+            userId,
+          })
+        } catch (error) {
+          logger.warn(
+            { err: error, userId, workspaceId },
+            "Failed to revoke inbox team member realtime connections",
+          )
+        }
+      }),
+    )
+  }
+
   async create(props: {
     workspaceId: string
     data: { name: string; userIds: string[] }
@@ -157,11 +179,7 @@ class InboxTeamService extends BaseService {
       return created
     })
     await this.invalidate({ workspaceId })
-    await Promise.all(
-      data.userIds.map((userId) =>
-        revokeWorkspaceMemberConnections({ workspaceId, userId }),
-      ),
-    )
+    await this.revokeMemberRealtimeConnections(workspaceId, data.userIds)
     await this.audit("create", `created a new team (#${inboxTeamId})`)
     return team
   }
@@ -216,11 +234,7 @@ class InboxTeamService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId })
-    await Promise.all(
-      [...memberUserIds].map((userId) =>
-        revokeWorkspaceMemberConnections({ workspaceId, userId }),
-      ),
-    )
+    await this.revokeMemberRealtimeConnections(workspaceId, memberUserIds)
 
     await this.audit(
       "delete",
@@ -267,14 +281,7 @@ class InboxTeamService extends BaseService {
       }
     })
     await this.invalidate({ workspaceId: ctx.workspaceId })
-    await Promise.all(
-      addedUserIds.map((userId) =>
-        revokeWorkspaceMemberConnections({
-          workspaceId: ctx.workspaceId,
-          userId,
-        }),
-      ),
-    )
+    await this.revokeMemberRealtimeConnections(ctx.workspaceId, addedUserIds)
 
     if (addedUsers.length > 0) {
       await this.audit(
@@ -308,13 +315,9 @@ class InboxTeamService extends BaseService {
       )
       .returning({ id: inboxTeamMemberModel.id })
     await this.invalidate({ workspaceId: ctx.workspaceId })
-    await Promise.all(
-      membersToRemove.map((member) =>
-        revokeWorkspaceMemberConnections({
-          workspaceId: ctx.workspaceId,
-          userId: member.userId,
-        }),
-      ),
+    await this.revokeMemberRealtimeConnections(
+      ctx.workspaceId,
+      membersToRemove.map((member) => member.userId),
     )
 
     if (deleted.length > 0) {
@@ -355,13 +358,9 @@ class InboxTeamService extends BaseService {
       )
       .returning({ id: inboxTeamMemberModel.id })
     await this.invalidate({ workspaceId: ctx.workspaceId })
-    await Promise.all(
-      membersToRemove.map((member) =>
-        revokeWorkspaceMemberConnections({
-          workspaceId: ctx.workspaceId,
-          userId: member.userId,
-        }),
-      ),
+    await this.revokeMemberRealtimeConnections(
+      ctx.workspaceId,
+      membersToRemove.map((member) => member.userId),
     )
 
     if (deleted.length > 0) {

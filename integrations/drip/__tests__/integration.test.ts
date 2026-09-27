@@ -16,9 +16,8 @@ const createContext = (auth: DripAuthValue): Context<DripAuthValue> => ({
   platform: {
     appUrl: "",
     publicRealtimeUrl: "",
-    internalRealtimeUrl: "",
     storageUrl: "",
-    getRealtimeBroadcastAuthHeaders: async () => ({}),
+    publishGuestRealtimeEvent: async () => undefined,
   },
 })
 

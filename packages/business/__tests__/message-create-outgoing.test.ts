@@ -7,7 +7,7 @@ const mockRepositoryCreate = vi.fn()
 const mockCreateMessageRepository = vi.fn()
 const mockChatQueueAdd = vi.fn()
 const mockResolveTenantSettings = vi.fn()
-const mockBroadcastToWorkspaceParty = vi.fn()
+const mockQueueWorkspaceRealtimeEvent = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
@@ -21,7 +21,7 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   uploadMultipleFiles: vi.fn(async () => []),
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
   routeForConversation: vi.fn(() => ({
     assignedTeamIds: [],
@@ -61,8 +61,7 @@ vi.mock("../src/platform/settings", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
-  publishToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
 }))
 
 vi.mock("../src/utils", () => ({
@@ -104,7 +103,7 @@ describe("messageService.createOutgoing", () => {
       createWithAttachments: vi.fn(),
     })
     mockChatQueueAdd.mockResolvedValue(undefined)
-    mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
+    mockQueueWorkspaceRealtimeEvent.mockResolvedValue(undefined)
   })
 
   test("uses one shared timestamp for the message and conversation agent-replied fields", async () => {
@@ -153,7 +152,7 @@ describe("messageService.createOutgoing", () => {
       input: { text: "hello", clientId: "client-1" },
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
         eventType: "messageCreated",

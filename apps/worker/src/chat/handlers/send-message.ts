@@ -2,7 +2,7 @@ import {
   contactInboxService,
   contactService,
   conversationService,
-  publishToWorkspaceParty,
+  queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
@@ -23,7 +23,7 @@ import {
   messageEventTypeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import {
   type CommentAnchor,
   type MessageButtonTemplate,
@@ -220,7 +220,7 @@ export async function sendMessageToChannel(
           )
 
           // Notify the client so edit/delete buttons appear immediately without a refresh.
-          publishToWorkspaceParty(conversation.workspaceId, {
+          queueWorkspaceRealtimeEvent(conversation.workspaceId, {
             eventType: RealtimeEventType.messageIdAssigned,
             data: { messageId: message.id, commentId: replyId },
           })
@@ -609,7 +609,7 @@ export async function recordMessageSendError(
     )
 
     if (!silent) {
-      publishToWorkspaceParty(workspaceId, {
+      queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.messageFailed,
         data: { messageId, clientId, error: truncatedError },
       })
@@ -634,7 +634,7 @@ async function clearMessageSendError(
     await repo.updateSendError(messageId, null, workspaceId, createdAt)
 
     if (!silent) {
-      publishToWorkspaceParty(workspaceId, {
+      queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.messageFailed,
         data: { messageId, clientId, error: null },
       })

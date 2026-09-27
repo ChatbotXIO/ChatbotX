@@ -38,7 +38,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 // wired in as a class field (module-scope import), not because any test here
 // exercises it — this file only covers the pre-existing read/delete methods.
 vi.mock("@chatbotx.io/filesystem", () => ({}))
-vi.mock("@chatbotx.io/partysocket-config", () => ({}))
+vi.mock("@chatbotx.io/realtime-protocol", () => ({}))
 vi.mock("@chatbotx.io/worker-config", () => ({}))
 vi.mock("../src/contact-inbox/service", () => ({ contactInboxService: {} }))
 vi.mock("../src/conversation/service", () => ({ conversationService: {} }))

@@ -1,4 +1,4 @@
-import { REALTIME_STREAM_SHARD_COUNT } from "@chatbotx.io/partysocket-config"
+import { REALTIME_STREAM_SHARD_COUNT } from "@chatbotx.io/realtime-protocol"
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 

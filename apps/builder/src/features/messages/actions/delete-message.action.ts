@@ -1,13 +1,13 @@
 "use server"
 
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
+  publishWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -52,7 +52,7 @@ export const deleteMessage = async (props: {
     : await repository.deleteById(message.id, workspaceId, message.createdAt)
   const messageIds = deleted.map((row) => row.id)
 
-  await broadcastToWorkspaceParty(workspaceId, {
+  await publishWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
   })

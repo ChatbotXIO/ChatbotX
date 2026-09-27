@@ -58,7 +58,7 @@ vi.mock("@chatbotx.io/business", () => ({
   inboxTeamService: mocks.inboxTeamService,
   resolveBroadcastSecret: mocks.resolveBroadcastSecret,
 }))
-vi.mock("@chatbotx.io/partysocket-config/auth", () => ({
+vi.mock("@chatbotx.io/realtime-protocol/auth", () => ({
   signMemberConnectToken: mocks.signMemberConnectToken,
 }))
 vi.mock("@/features/contacts/permissions", () => ({

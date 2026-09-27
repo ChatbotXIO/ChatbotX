@@ -45,7 +45,7 @@ import {
 import {
   RealtimeEventType,
   routeForAssignment,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -62,7 +62,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
-import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
 import { workspaceMemberService } from "../workspace-member/service"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
@@ -1032,7 +1032,7 @@ class ConversationService extends BaseService {
     await this.invalidate({ workspaceId, ids })
 
     if (!silent) {
-      publishToWorkspaceParty(workspaceId, {
+      queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.conversationAssigned,
         data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
         route: routeForAssignment({
@@ -1340,7 +1340,7 @@ class ConversationService extends BaseService {
       )
     await this.invalidate({ workspaceId, ids: [id] })
     if (!silent) {
-      publishToWorkspaceParty(workspaceId, {
+      queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.conversationUpdated,
         data: {
           conversationIds: [id],
@@ -1397,7 +1397,7 @@ class ConversationService extends BaseService {
 
     await this.invalidate({ workspaceId, ids: [conversationId] })
     if (!silent) {
-      publishToWorkspaceParty(workspaceId, {
+      queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.conversationUpdated,
         data: {
           conversationIds: [conversationId],

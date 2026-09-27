@@ -185,9 +185,9 @@ vi.mock("@chatbotx.io/business", () => ({
   appointmentCalendarService: {
     findByPublicLinkSlug: mockFindAppointmentCalendarBySlug,
   },
-  broadcastToWorkspaceParty: mockBroadcast,
-  publishToWorkspaceParty: mockBroadcast,
-  broadcastToGuestParty: vi.fn().mockResolvedValue(undefined),
+  publishWorkspaceRealtimeEvent: mockBroadcast,
+  queueWorkspaceRealtimeEvent: mockBroadcast,
+  publishGuestRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   contactInboxService: {
     findByUncached: mockFindContactInbox,
     findRecentByContactId: mockFindContactInbox,
@@ -226,7 +226,7 @@ vi.mock("@chatbotx.io/event-bus", () => ({
   emit: mockEmit,
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
   routeForConversation: vi.fn(
     ({
