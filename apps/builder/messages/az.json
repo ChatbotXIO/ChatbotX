@@ -336,6 +336,7 @@
       "message": "Son ödənişiniz uğursuz oldu. İş sahənizi aktiv saxlamaq üçün ödəniş üsulunuzu yeniləyin."
     },
     "trial": {
+      "planName": "Sınaq",
       "daysLeft": "Sınaq müddəti: {days} gün qalıb",
       "endsTomorrow": "Sınaq müddəti sabah bitir",
       "expired": "Sınaq müddətiniz bitib. İş sahənizi aktiv saxlamaq üçün tarif planınızı yüksəldin",
@@ -507,6 +508,23 @@
     "resumeDialog": {
       "title": "Kütləvi göndərişə davam et",
       "description": "\"{name}\" hələ onu almamış alıcılara göndərilməyə davam edəcək."
+    },
+    "planLimitDialog": {
+      "title": "Planınızı yüksəldin",
+      "sendRate": "Hazırkı {plan} planınız kütləvi göndərişlərdə dəqiqədə ən çox {rate} mesaj göndərməyə imkan verir. Kütləvi göndərişləri {multiplier} dəfə daha sürətli göndərmək üçün planınızı yüksəldin.",
+      "activeBroadcasts": "Hazırkı {plan} planınız eyni vaxtda {max, plural, one {# kütləvi göndəriş} other {# kütləvi göndəriş}} icra etməyə imkan verir. Eyni vaxtda daha çox kütləvi göndəriş icra etmək üçün planınızı yüksəldin."
+    },
+    "sendLimit": {
+      "title": "Göndəriş limiti",
+      "hint": "Bütün uyğun kontaktlara göndərmək üçün boş saxlayın.",
+      "rateHint": "Standart sürətdən istifadə etmək üçün boş saxlayın.",
+      "rangeSummary": "#{start} – #{end} nömrəli kontaktlar",
+      "rangeFromSummary": "#{start} nömrəli kontaktdan başlayaraq",
+      "rangeLabel": "Kontakt aralığı",
+      "fromLabel": "Başlanğıc",
+      "toLabel": "Son",
+      "allPlaceholder": "Hamısı",
+      "rangeEndBeforeStart": "Son mövqe başlanğıc mövqeyindən əvvəl olmamalıdır"
     }
   },
   "commentAutomation": {
@@ -535,7 +553,26 @@
       "keywordsNotMatched": "Açar sözlər uyğun gəlmədi",
       "contactNotNew": "Kontakt yeni deyil",
       "alreadyRepliedOnPost": "Bu paylaşıma artıq cavab verilib",
-      "engagedOnOtherPost": "Başqa paylaşımla artıq qarşılıqlı əlaqə qurulub"
+      "engagedOnOtherPost": "Başqa paylaşımla artıq qarşılıqlı əlaqə qurulub",
+      "mentionCountNotMatched": "Etiketlənən şəxslərin sayı uyğun gəlmədi"
+    },
+    "replyTo": {
+      "mentions": "Kifayət qədər şəxsin etiketləndiyi şərhlər",
+      "mentionCount": "Etiketlənən şəxslərin sayı",
+      "mentionCountDescription": "Yalnız ən azı bu sayda şəxsin etiketləndiyi (@name) şərhlər uyğun sayılır.",
+      "mentionCountOption": "{count, plural, one {# nəfər} other {# nəfər}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Bunlarla tam uyğun gələn şərhlər",
+      "contain": "Bunları ehtiva edən şərhlər"
+    },
+    "hideComments": {
+      "hasGif": "GIF var",
+      "hasEmoji": "Emoji var"
+    },
+    "trackUserTags": {
+      "label": "İstifadəçinin digər istifadəçiləri etiketləməsini izlə",
+      "descriptionText": "Hər şərhdə etiketlənən hesabları sayır və kontaktın bütün şərhlər üzrə ümumi sayına əlavə edir. Etiketlənən bütün hesablar üçün '{{total_tagged}}' dəyişənindən, səhifənizə heç vaxt mesaj göndərməmiş və ya kontakt olmamış hesablar üçün '{{total_new_tagged}}' dəyişənindən istifadə edin."
     }
   },
   "condition": {
@@ -737,6 +774,10 @@
       "whatsapp": "Bu WhatsApp nömrəsi artıq başqa iş sahəsinə qoşulub.",
       "zalo": "Bu Zalo OA artıq başqa iş sahəsinə qoşulub."
     },
+    "missingScopes": {
+      "generic": "Qoşulma ləğv edildi: bəzi icazələr verilmədi. Yenidən qoşulun və tələb olunan bütün icazələri qəbul edin.",
+      "tiktok": "TikTok-a qoşulma ləğv edildi: bəzi icazələr verilmədi. Yenidən qoşulun və tələb olunan bütün icazələri qəbul edin."
+    },
     "reconnect": {
       "success": "Kanal uğurla yenidən qoşuldu.",
       "errors": {
@@ -864,6 +905,7 @@
     "deleteConfirmation": "Tam əminsiniz?\nBu əməliyyatı geri almaq mümkün deyil.\nBu əməliyyat {feature} elementinizi serverlərimizdən həmişəlik siləcək."
   },
   "fields": {
+    "optionalHint": "(istəyə bağlı)",
     "marketingMessagesConfigId": {
       "label": "Marketinq mesajlarının konfiqurasiya ID-si",
       "description": "marketing_messages_messenger icazəsini istəmək üçün istifadə olunan Facebook Login for Business konfiqurasiya ID-si."
@@ -2143,11 +2185,16 @@
       "clientId": "Müştəri ID-si",
       "clientSecret": "Müştərinin məxfi açarı",
       "displayName": "Göstərilən ad",
+      "needsReauthorizationForComments": "Bu qoşulmaya şərh avtomatlaşdırması əlavə edilməzdən əvvəl icazə verilib. Şərh hadisələrini almağa başlamaq üçün yenidən qoşulun.",
       "connectInstructions": {
         "step1": "<link>developers.tiktok.com</link> saytında TikTok tətbiqi yaradın.",
         "step2": "Hesabınıza icazə verin və <strong>giriş tokenini</strong>, <strong>open ID-ni</strong> və <strong>müştərinin məxfi açarını</strong> kopyalayın.",
         "step3": "Qoşulmaq üçün giriş məlumatlarını aşağıya yapışdırın."
-      }
+      },
+      "commentToMessage": "Şərhdən mesaja",
+      "commentToMessageDescription": "Bu hesaba yüksək maraq ifadə edən şərhlərə birbaşa mesajla cavab verməyə imkan verir. Şəxsi cavab göndərən TikTok şərh avtomatlaşdırmaları üçün tələb olunur.",
+      "commentToMessageEligibility": "Yalnız Vyetnam, İndoneziya və ya Taylandda qeydiyyatdan keçmiş, sahibi 18 yaşdan yuxarı olan, qeydiyyatdan keçmiş müəssisəyə məxsus və ya mesajlaşma reklamları yayımlamış, mesajlaşma icazələri isə \"Sorğular\" olaraq təyin edilmiş biznes hesabları üçün əlçatandır.",
+      "commentToMessageUnknown": "Hələ TikTok vasitəsilə yoxlanılmayıb — cari parametri öyrənmək üçün yeniləyin."
     },
     "drip": {
       "label": "Drip"
@@ -2339,6 +2386,9 @@
     },
     "lastCallTranscript": {
       "label": "Son zəngin mətnə çevrilmiş yazısı"
+    },
+    "sendRatePerMinute": {
+      "label": "Dəqiqədə mesaj sayı"
     }
   },
   "metaConversions": {
@@ -2378,8 +2428,9 @@
       "invalidDatasetId": "Etibarlı məlumat dəsti ID-si daxil edin (yalnız rəqəmlər).",
       "whatsappNotFound": "WhatsApp inteqrasiyası tapılmadı.",
       "testEventCodeRequired": "Sınaq hadisəsi göndərməzdən əvvəl sınaq hadisəsi kodunu yadda saxlayın.",
-      "noContactForTest": "Bu kanalda hələ uyğun kontakt yoxdur. Sınaq hadisəsini əlaqələndirmək üçün real kontakt lazımdır (WhatsApp üçün WhatsApp-a keçid verən reklamdan gələn kontakt).",
-      "invalidTestEventCode": "Sınaq hadisəsi kodunda yalnız hərflər, rəqəmlər, defislər və ya alt xətlər ola bilər (ən çox 64 simvol)."
+      "invalidTestEventCode": "Sınaq hadisəsi kodunda yalnız hərflər, rəqəmlər, defislər və ya alt xətlər ola bilər (ən çox 64 simvol).",
+      "invalidMessagingId": "Mesajlaşma ID-si yalnız hərflər, rəqəmlər, defislər və ya alt xətlərdən ibarət ola bilər (ən çox 512 simvol).",
+      "capiDisconnected": "Bu kanal üçün Meta CAPI ilə əlaqə kəsilib. Sınaq hadisəsi göndərməzdən əvvəl yenidən qoşulun."
     },
     "fields": {
       "eventType": {
@@ -2526,7 +2577,18 @@
       "sent": "Sınaq hadisəsi növbəyə əlavə edildi. Bir dəqiqə ərzində Events Manager-in Sınaq hadisələri bölməsində görünəcək.",
       "sendHint": "Bu kanalın ən son kontaktına bir nümunə satınalma hadisəsi (100 USD) göndərir.",
       "activeNotice": "Sınaq rejimi aktivdir: kod təmizlənənədək bu kanaldan gələn hadisələr hesabatlarda nəzərə alınmır.",
-      "openTestEvents": "Sınaq hadisələrini aç"
+      "openTestEvents": "Sınaq hadisələrini aç",
+      "dialogTitle": "Sınaq hadisəsi göndər",
+      "dialogDescription": "Sınaq hadisəsi kodunuzla bir nümunə satınalma hadisəsi (100 USD) göndərilir. Heç bir hadisənin real kontakta aid edilməməsi üçün Events Manager → Sınaq hadisələri → Mesajlaşma → Graph API Explorer bölməsindən nümunə mesajlaşma ID-sini yapışdırın.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt ID-si (page_scoped_user_id)",
+        "instagram": "Kontakt ID-si (ig_sid)",
+        "whatsapp": "Klik ID-si (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Meta-dan nümunə dəyəri yapışdırın",
+      "messagingIdHint": "Yalnız hərflər, rəqəmlər, defislər və alt xətlər (ən çox 512 simvol).",
+      "cancel": "Ləğv et",
+      "confirmSend": "Göndər"
     }
   },
   "flows": {
@@ -2646,6 +2708,8 @@
       "transferConversationToHuman": "Söhbəti operatora ötür",
       "unarchiveConversation": "Söhbəti arxivdən çıxar",
       "unassignConversation": "Söhbətin təyinatını ləğv et",
+      "markConversationAsUnread": "Söhbəti oxunmamış kimi işarələ",
+      "markConversationAsRead": "Söhbəti oxunmuş kimi işarələ",
       "unfollowConversation": "Söhbəti izləməyi dayandır",
       "unsubscribeBroadcast": "Kütləvi göndəriş abunəliyindən çıx",
       "getUserData": "İstifadəçi məlumatlarını al",
@@ -3385,6 +3449,7 @@
     "changeLikeState": "Bəyənmə vəziyyətini dəyiş",
     "changeHideState": "Gizlədilmə vəziyyətini dəyiş",
     "commentHidden": "Bu şərh gizlədilib",
+    "commentMediaUnavailable": "Bu şərhdə göstərilməsi mümkün olmayan GIF, stiker və ya şəkil var",
     "messageDeleted": "Mesaj silinib.",
     "sendFailed": "Göndərmək mümkün olmadı",
     "repliedToStory": "Hekayənizə cavab verdi",
@@ -3425,7 +3490,10 @@
     "deleteFeature": "Sil: {feature}",
     "resetFeature": "Sıfırla: {feature}",
     "resetConfirmation": "Bu əməliyyat seçilmiş {feature} üçün dəyərləri təmizləyərək yenidən boşaldacaq.\nBu əməliyyatı geri qaytarmaq mümkün deyil.",
+    "resetAllConfirmation": "Bu kontaktın {feature} üzrə bütün dəyərləri təmizlənərək boşaldılacaq.\nBu əməliyyat geri qaytarıla bilməz.",
     "resetSuccess": "{feature} uğurla sıfırlandı",
+    "clearFeature": "{feature} üzrə dəyərləri təmizlə",
+    "clearSuccess": "{feature} uğurla təmizləndi",
     "deleteConfirmation": "Tam əminsiniz?\nBu əməliyyatı geri qaytarmaq mümkün deyil.\nBu əməliyyat {feature} məlumatlarını serverlərimizdən həmişəlik siləcək.",
     "addFeature": "{feature} əlavə et",
     "signOutConfirmation": "Çıxış etmək istədiyinizə əminsiniz?",
@@ -3476,6 +3544,7 @@
     "historyDepth": "({count})",
     "none": "Yoxdur",
     "tiktokCardTitleTooLong": "TikTok bu mesajı qısaldacaq: düymələr əlavə edildikdə yalnız ilk 40 simvol göndərilir. Mesajı qısaldın və ya düymələri çıxarın.",
+    "sendTextTooLongForChannel": "Bu mesajın uzunluğu kanalın icazə verdiyi limiti aşır. Mesajı qısaldın və ya bu qovşaq üçün daha yüksək limiti olan kanal seçin.",
     "waTemplateMpmNoProducts": "Dərc etməzdən əvvəl bu çoxməhsullu düyməyə ən azı bir məhsul əlavə edin.",
     "waTemplateMpmTooManySections": "Çoxməhsullu düymədə ən çox 10 bölmə ola bilər. Dərc etməzdən əvvəl bəzi bölmələri çıxarın.",
     "waTemplateMpmTooManyProducts": "Çoxməhsullu düymədə ümumilikdə ən çox 30 məhsul ola bilər. Dərc etməzdən əvvəl bəzi məhsulları çıxarın.",
@@ -3565,6 +3634,7 @@
       "noConnectablePagesDescription": "Siz bu səhifənin administratoru deyilsiniz",
       "bmLookupFailedTitle": "Business Manager səhifələri çatışmaya bilər",
       "bmLookupFailedDescription": "Business Manager vasitəsilə idarə olunan səhifələrin siyahıda görünməsi üçün Messenger-i yenidən qoşun və Business Manager-ə giriş icazəsi verin.",
+      "loadFailed": "Facebook səhifələrinizi yükləmək mümkün olmadı",
       "alreadyConnectedNote": "Bu səhifə artıq qoşulub",
       "notAdminNote": "Siz bu səhifənin administratoru deyilsiniz",
       "tryAgain": "Yenidən qoşmağa cəhd et"
@@ -4291,6 +4361,7 @@
         "statusNoAnswer": "Cavab yoxdur",
         "eyebrowCallEnded": "Zəng bitdi",
         "statusConnectionLost": "Əlaqə kəsildi",
+        "answerFailed": "Zəngə cavab vermək mümkün olmadı. Mikrofonun qoşulduğunu və brauzerinizdə istifadəsinə icazə verildiyini yoxlayın, sonra yenidən cəhd edin.",
         "ringingListTitle": "{count, plural, one {Daxil olan # zəng} other {Daxil olan # zəng}}"
       },
       "capability": {
@@ -4367,6 +4438,14 @@
     "chatbotInvitationDescription2": "{userName} sizi {chatbotName} botuna qoşulmağa dəvət edib.",
     "invalidInvitation": "Bu dəvət etibarsızdır və ya müddəti bitib.",
     "workspaceUnavailable": "Bu iş sahəsi artıq əlçatan deyil."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Bot mesajlarını oxunmuş kimi işarələ",
+      "enabled": "Aktivdir",
+      "disabled": "Deaktiv",
+      "description": "Aktiv olduqda bot öz mesajlarını avtomatik olaraq oxunmuş kimi işarələyir"
+    }
   },
   "inboxTeams": {
     "title": "Gələnlər qutusu komandaları"
@@ -4774,7 +4853,8 @@
     "afterText": "Sonra"
   },
   "tools": {
-    "title": "Alətlər"
+    "title": "Alətlər",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -5099,7 +5179,8 @@
     "card": {
       "targeting": "Hədəfləmə və cavab",
       "filters": "Süzgəclər və seçimlər",
-      "replyTiming": "Cavab vaxtı"
+      "replyTiming": "Cavab vaxtı",
+      "hideComments": "Şərhləri gizlət"
     },
     "postType": {
       "all": "Bütün paylaşımlar",
@@ -5141,8 +5222,124 @@
       "keywordsRequired": "Seçilmiş uyğunluq növü üçün ən azı bir açar söz daxil edin.",
       "delayMustBePositive": "Gecikmə dəyəri sıfırdan böyük olmalıdır.",
       "delayMustBeZero": "Seçilmiş vaxt seçimi üçün gecikmə dəyəri sıfır olmalıdır.",
-      "atLeastOneFieldRequired": "Ən azı bir sahə məcburidir."
+      "atLeastOneFieldRequired": "Ən azı bir sahə məcburidir.",
+      "replyTextRequired": "Ən azı bir cavab mesajı daxil edin.",
+      "hideKeywordsRequired": "Şərhləri açar sözə görə gizlətmək üçün ən azı bir açar söz daxil edin."
+    },
+    "hideCommentsDescription": "Yalnız paylaşımlarınıza birbaşa verilən cavablar gizlədilə bilər.",
+    "hideComments": {
+      "all": "Bütün şərhləri gizlət",
+      "hasPhoneNumber": "Telefon nömrəsi var",
+      "hasLink": "Keçid var",
+      "hasKeywords": "Açar sözlər var",
+      "keywords": "Açar sözlər",
+      "showCommentsAfter": "Şərhlərin göstərilməsindən əvvəl gözləmə müddəti"
+    },
+    "showCommentsAfter": {
+      "none": "Heç vaxt"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok şərhlərinin avtomatlaşdırılması",
+    "description": "TikTok videolarınızın altındakı şərhlərə cavab verməyi, onları bəyənməyi və gizlətməyi avtomatlaşdırın.",
+    "create": "Avtomatlaşdırma yarat",
+    "replies": "Cavablar",
+    "empty": "Hələ TikTok şərh avtomatlaşdırması yoxdur.",
+    "deliveryDelayNote": "TikTok şərh hadisələrini beş dəqiqə ərzində çatdırır, buna görə cavablar dərhal göndərilmir. Təyin etdiyiniz cavab gecikməsi bu müddətə əlavə olunur.",
+    "trackCommentsOn": "Şərhləri izləniləcək videolar",
+    "publicReply": "Şərhə ictimai cavab",
+    "publicReplyDescription": "Uyğun TikTok şərhlərinə ictimai cavab göndərin. Hər biri ayrıca cavab kimi paylaşılmaqla 10-a qədər mətn mesajı göndərilə bilər (mətn variantları sintaksisi dəstəklənir).",
+    "replyMessage": "Cavab mesajı",
+    "replyFlow": "Cavab axını",
+    "replyAIAgent": "Cavab verən AI agenti",
+    "includeKeywordsType": "Cavab veriləcək məzmun",
+    "includeKeywords": "Uyğunlaşdırılacaq açar sözlər",
+    "excludeKeywords": "Bu açar sözlər olan şərhləri istisna et",
+    "keywordsPlaceholder": "Yazın və daxil etmə düyməsini basın...",
+    "replyAfter": "Cavabdan əvvəl gözləmə müddəti",
+    "replyAfterValue": "Dəyər",
+    "specificPostIds": "Müəyyən videoların ID-ləri",
+    "postIdPlaceholder": "Video ID-lərini daxil edin və daxil etmə düyməsini basın...",
+    "hideCommentsDescription": "Gizlədilmiş şərhlər yalnız müəlliflərinə görünür.",
+    "card": {
+      "targeting": "Hədəfləmə və cavab",
+      "filters": "Süzgəclər və seçimlər",
+      "hideComments": "Şərhləri gizlət",
+      "replyTiming": "Cavab vaxtı"
+    },
+    "postType": {
+      "all": "Bütün videolar",
+      "specificPosts": "Müəyyən videolar"
+    },
+    "replyType": {
+      "text": "Mətn mesajı",
+      "flow": "Axın",
+      "AIAgent": "AI agenti",
+      "none": "Cavab yoxdur"
+    },
+    "keywordsType": {
+      "all": "Bütün şərhlər",
+      "equal": "Tam uyğunluq",
+      "contain": "Ehtiva edir"
+    },
+    "replyAfterType": {
+      "immediately": "Dərhal",
+      "seconds": "X saniyə sonra",
+      "minutes": "X dəqiqə sonra",
+      "hours": "X saat sonra",
+      "randomWithin3Minutes": "3 dəqiqə ərzində təsadüfi vaxtda",
+      "randomWithin5Minutes": "5 dəqiqə ərzində təsadüfi vaxtda",
+      "randomWithin10Minutes": "10 dəqiqə ərzində təsadüfi vaxtda",
+      "randomWithin20Minutes": "20 dəqiqə ərzində təsadüfi vaxtda",
+      "randomWithin30Minutes": "30 dəqiqə ərzində təsadüfi vaxtda",
+      "randomWithin60Minutes": "60 dəqiqə ərzində təsadüfi vaxtda"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Yalnız yeni kontaktlara cavab ver",
+      "replyOncePerUserPerPost": "Hər istifadəçiyə hər video üzrə yalnız bir dəfə cavab ver",
+      "replyToUsersWhoCommentedOnOtherPosts": "Digər videolara şərh yazmış istifadəçilərə cavab ver",
+      "ignoreCommentReplies": "Şərhlərə verilən cavabları cavablama",
+      "likeUserComment": "İstifadəçinin şərhini bəyən"
+    },
+    "hide": {
+      "all": "Bütün şərhləri gizlət",
+      "hasPhoneNumber": "Telefon nömrəsi ehtiva edən şərhləri gizlət",
+      "hasLink": "Keçid ehtiva edən şərhləri gizlət",
+      "hasKeywords": "Açar sözlər ehtiva edən şərhləri gizlət",
+      "keywords": "Gizlətmək üçün açar sözlər",
+      "showCommentsAfter": "Gizli şərhləri yenidən göstərməzdən əvvəl gözləmə müddəti"
+    },
+    "showCommentsAfter": {
+      "none": "Heç vaxt",
+      "6h": "6 saat",
+      "12h": "12 saat",
+      "1d": "1 gün",
+      "2d": "2 gün",
+      "3d": "3 gün",
+      "4d": "4 gün",
+      "5d": "5 gün",
+      "6d": "6 gün",
+      "7d": "7 gün",
+      "8d": "8 gün",
+      "9d": "9 gün",
+      "10d": "10 gün"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Bütün videolar hədəfləndikdə video ID-ləri boş olmalıdır.",
+      "postIdsRequired": "Müəyyən videoları hədəflədikdə ən azı bir video ID-si seçin.",
+      "keywordsMustBeEmptyForAll": "Bütün şərhlər uyğun sayıldıqda açar sözlər boş olmalıdır.",
+      "keywordsRequired": "Seçilmiş uyğunluq növü üçün ən azı bir açar söz daxil edin.",
+      "delayMustBePositive": "Gecikmə dəyəri sıfırdan böyük olmalıdır.",
+      "delayMustBeZero": "Seçilmiş vaxt seçimi üçün gecikmə dəyəri sıfır olmalıdır.",
+      "hideKeywordsRequired": "Şərhləri açar sözə görə gizlətmək üçün ən azı bir açar söz daxil edin.",
+      "atLeastOneFieldRequired": "Ən azı bir sahə doldurulmalıdır.",
+      "replyTextRequired": "Ən azı bir cavab mesajı daxil edin."
+    },
+    "privateReply": "Şəxsi cavab (şərhdən mesaja)",
+    "privateReplyDescription": "Şərh müəllifinə birbaşa mesaj göndərin. TikTok buna yalnız yüksək maraq ifadə etdiyini müəyyənləşdirdiyi şərhlər üçün icazə verir, buna görə hər uyğun şərh üçün mesaj göndərilməyəcək.",
+    "privateReplyMessage": "Şəxsi cavab mesajı",
+    "privateReplyHighIntentTitle": "Hansı şərhlərə mesaj göndərilə biləcəyini TikTok müəyyən edir",
+    "privateReplyHighIntentNotice": "Qoşulmuş TikTok hesabında şərhdən mesaja funksiyası aktiv olmalı və hesab Vyetnam, İndoneziya və ya Taylandda qeydiyyatdan keçmiş biznes hesabı olmalıdır. TikTok birbaşa mesajı yalnız yüksək maraq ifadə etdiyini müəyyənləşdirdiyi, videoya birbaşa yazılmış şərhlər üçün, 48 saat ərzində və hər şərhə bir dəfə göndərir. Şərh müəllifi son 24 saat ərzində sizə artıq mesaj göndəribsə, mesaj göndərilmir."
   },
   "instagramStoryAutomation": {
     "title": "Instagram hekayə cavablarının avtomatlaşdırılması",
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "Bot sahələri"
+  },
+  "openLink": {
+    "title": "Keçidi aç",
+    "invalidTitle": "Etibarsız keçid.",
+    "invalidDescription": "Bu keçid etibarsızdır və ya vaxtı bitib.",
+    "openZaloGroup": "Zalo qrupunu aç",
+    "openZalo": "Zalo-nu aç",
+    "openMessenger": "Messenger-i aç"
   }
 }
