@@ -22,6 +22,7 @@ export const env = createEnv({
     // WhatsApp VoIP calling (docs/whatsapp-calling.md) ICE/TURN relay.
     TURN_URL: z.string().optional(),
     TURN_STATIC_SECRET: z.string().optional(),
+    REALTIME_PROXY_URL: z.url().optional().default("http://localhost:1999"),
   },
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),
@@ -32,10 +33,6 @@ export const env = createEnv({
     // NEXT_PUBLIC_BUILDER_URL via getBrokerUrl().
     NEXT_PUBLIC_BROKER_URL: z.url().optional(),
     NEXT_PUBLIC_EDITION: editionRule,
-    NEXT_PUBLIC_INTERNAL_WS_URL: z
-      .url()
-      .optional()
-      .default("http://localhost:1999"),
     NEXT_PUBLIC_INTERNAL_STORAGE_URL: z
       .url()
       .optional()
@@ -56,8 +53,6 @@ export const env = createEnv({
     NEXT_PUBLIC_BUILDER_URL:
       clientEnv("NEXT_PUBLIC_BUILDER_URL") || "http://localhost:3123",
     NEXT_PUBLIC_BROKER_URL: clientEnv("NEXT_PUBLIC_BROKER_URL"),
-    NEXT_PUBLIC_INTERNAL_WS_URL:
-      clientEnv("NEXT_PUBLIC_INTERNAL_WS_URL") || "http://localhost:1999",
     NEXT_PUBLIC_INTERNAL_STORAGE_URL:
       clientEnv("NEXT_PUBLIC_INTERNAL_STORAGE_URL") ||
       "http://localhost:9000/chatbotx/",

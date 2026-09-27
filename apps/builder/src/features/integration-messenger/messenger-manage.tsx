@@ -15,7 +15,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
-import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { MessengerDisconnect } from "./components/messenger-disconnect"
 import { MessengerReconnect } from "./components/messenger-reconnect"
@@ -37,7 +37,7 @@ export function MessengerManage({
   const [{ data: integrationMessengers }] = use(promises)
   const t = useTranslations()
 
-  useChannelDuplicatedError("messenger")
+  useChannelConnectError("messenger")
   useChannelReconnectResult()
   if (!publicConfig?.clientId) {
     return (

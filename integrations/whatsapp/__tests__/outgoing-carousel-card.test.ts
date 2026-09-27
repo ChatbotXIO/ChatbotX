@@ -225,7 +225,7 @@ describe("whatsapp outgoing card", () => {
         }),
       }),
     )
-    expect(result).toEqual({ messageIds: ["wamid.provider-1"] })
+    expect(result).toEqual({ messageIds: ["wamid.provider-1"], sentCount: 1 })
   })
 
   test("omits the header when the card has no uploaded image", async () => {
@@ -675,7 +675,7 @@ describe("whatsapp outgoing card", () => {
         ],
       },
     })
-    expect(result).toEqual({ messageIds: ["wamid.raw-1"] })
+    expect(result).toEqual({ messageIds: ["wamid.raw-1"], sentCount: 1 })
   })
 
   test.each([
@@ -700,6 +700,7 @@ describe("whatsapp outgoing card", () => {
 
     await expect(sendRawMessage()).resolves.toEqual({
       messageIds: ["wamid.forward-compatible"],
+      sentCount: 1,
     })
   })
 
@@ -710,6 +711,7 @@ describe("whatsapp outgoing card", () => {
 
     await expect(sendCards([makeCard(), makeCard()])).resolves.toEqual({
       messageIds: [],
+      sentCount: 1,
     })
     expect(mockLogger.warn).toHaveBeenCalled()
   })

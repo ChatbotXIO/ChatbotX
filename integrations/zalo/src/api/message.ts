@@ -9,6 +9,7 @@ import imageSize from "image-size"
 import { ZALO_API_ENDPOINTS } from "../constants"
 import { handleZaloError, ZaloException } from "../lib/exception"
 import { ZaloHttpClient } from "../lib/http-client"
+import { logger } from "../lib/logger"
 import type { ZaloAuthValue } from "../schema/definition"
 import type {
   MessageAttachment,
@@ -77,10 +78,17 @@ export const getMessageAttachmentEntity = ({
     } = {}
 
     if (mimeType.startsWith("image/")) {
-      const arrayBytes = new Uint8Array(bytes)
-      const dimensions = imageSize(arrayBytes)
-      imageProperties.width = dimensions.width
-      imageProperties.height = dimensions.height
+      try {
+        const arrayBytes = new Uint8Array(bytes)
+        const dimensions = imageSize(arrayBytes)
+        imageProperties.width = dimensions.width
+        imageProperties.height = dimensions.height
+      } catch (error) {
+        logger.warn(
+          { err: error },
+          "Failed to read attachment image dimensions",
+        )
+      }
     }
 
     return {

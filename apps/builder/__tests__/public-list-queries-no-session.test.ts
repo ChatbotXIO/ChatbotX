@@ -39,6 +39,30 @@ const mocks = vi.hoisted(() => ({
     .fn()
     .mockResolvedValue({ data: [], pageCount: 0 }),
   listErrorLogsService: vi.fn().mockResolvedValue({ data: [], pageCount: 0 }),
+  resolveMediaUrl: vi.fn(
+    async (
+      ref: {
+        avatar?: string | null
+        channel?: string
+        contactInboxId?: string
+        kind: "attachment" | "avatar"
+      },
+      finalize: (key: string) => string | Promise<string>,
+    ) => {
+      if (ref.kind !== "avatar") {
+        return null
+      }
+      if (ref.avatar) {
+        return await finalize(ref.avatar)
+      }
+      return ref.channel && ["messenger", "instagram"].includes(ref.channel)
+        ? `https://app.example.com/media/avatar/${ref.contactInboxId}`
+        : null
+    },
+  ),
+  resolveTenantSettings: vi
+    .fn()
+    .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -85,12 +109,15 @@ vi.mock("@chatbotx.io/utils/error-log", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  AVATAR_HYDRATION_CHANNELS: new Set(["messenger", "instagram"]),
   inboxTeamService: { listByWorkspace: mocks.listByWorkspace },
   conversationService: {
     findManyQuery: mocks.findManyQuery,
     findWithFullRelations: mocks.findWithFullRelations,
   },
   messageService: { findByIdWithUrls: mocks.findByIdWithUrls },
+  resolveMediaUrl: mocks.resolveMediaUrl,
+  resolveTenantSettings: mocks.resolveTenantSettings,
   broadcastService: {
     list: async (input: { page?: number; perPage?: number }) => {
       const pagination = {

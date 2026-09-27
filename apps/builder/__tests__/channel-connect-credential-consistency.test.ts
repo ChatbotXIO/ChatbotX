@@ -141,6 +141,7 @@ vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
   integration: { runChannelHandler: vi.fn() },
+  logMessengerWelcomeProfile: vi.fn(),
   getUserPages: vi.fn(async () => ({
     pages: [
       {

@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 import type { ReactNode } from "react"
+import { FormOptionalLabelBridge } from "@/components/form-optional-label-bridge"
 import { PublicEnvScript } from "@/components/public-env-script"
 import { SupportChatScript } from "@/components/support-chat-script"
 import { TimezoneSync } from "@/components/timezone-sync"
@@ -82,10 +83,12 @@ export default async function RootLayout({ children }: Props) {
           <DirectionProvider direction={dir}>
             <UiProvider>
               <NextIntlClientProvider>
-                <QueryProvider>
-                  <TimezoneSync timezone={timezone} />
-                  {children}
-                </QueryProvider>
+                <FormOptionalLabelBridge>
+                  <QueryProvider>
+                    <TimezoneSync timezone={timezone} />
+                    {children}
+                  </QueryProvider>
+                </FormOptionalLabelBridge>
               </NextIntlClientProvider>
             </UiProvider>
           </DirectionProvider>

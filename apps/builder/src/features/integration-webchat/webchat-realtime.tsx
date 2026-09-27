@@ -14,13 +14,13 @@ type WebchatRealtimeProps = {
 }
 
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
-  const { wsUrl } = useTenantSettings()
+  const { publicRealtimeUrl } = useTenantSettings()
   const { handleNewMessage, setIsTyping } = useGuestSessionStore(
     (state) => state,
   )
 
   usePartySocket({
-    host: wsUrl,
+    host: publicRealtimeUrl,
     room: guestConversationId,
     party: "guests",
 

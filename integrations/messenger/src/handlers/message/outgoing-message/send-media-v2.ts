@@ -4,9 +4,9 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import type { FacebookMessage, MessengerAuthValue } from "../../../schema"
+import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
 import { convertMediaType, getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepMedia } from "./send-media"
-import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
 
 type MediaStepProps = SendFlowStepProps<
   MessengerAuthValue,
@@ -41,7 +41,7 @@ function* convertInlineMedia(
       convertMediaType(step.stepType),
     ),
     ...(quickReplies.length > 0
-      ? { quick_replies: convertCanonicalFacebookQuickReplies(quickReplies) }
+      ? { quick_replies: convertCanonicalQuickReplies(quickReplies) }
       : {}),
   }
 }

@@ -47,16 +47,26 @@ export const uploadAttachment = (
 export const getMessageAttachmentEntity = async ({
   ctx,
   attachment,
+  authorize = true,
+  requireMedia = false,
 }: {
   ctx: Context<MessengerAuthValue>
   attachment: MessengerAttachment
+  // False for a URL outside Facebook's CDN, so the page token never leaks to a
+  // third-party host.
+  authorize?: boolean
+  // Rejects a non image/video response (e.g. an HTML landing page) before it
+  // is uploaded to storage.
+  requireMedia?: boolean
 }): Promise<IncomingAttachment | undefined> => {
   if (!attachment.payload.url) {
     throw new Error("No attachment URL found")
   }
   const response = await fetch(attachment.payload.url as string, {
     headers: {
-      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      ...(authorize
+        ? { Authorization: `Bearer ${ctx.auth.tokens.accessToken}` }
+        : {}),
       "User-Agent": "node",
     },
   })
@@ -66,10 +76,16 @@ export const getMessageAttachmentEntity = async ({
     )
   }
 
-  const originPath = `${ctx.storagePrefix}/${createId()}`
-  const bytes = await response.arrayBuffer()
   const mimeType = response.headers.get("content-type") ?? "image/png"
   const fileType = guessFileTypeFromMimeType(mimeType)
+  if (requireMedia && fileType !== "image" && fileType !== "video") {
+    throw new Error(
+      `Attachment is not an image or video (${mimeType}): ${attachment.payload.url}`,
+    )
+  }
+
+  const originPath = `${ctx.storagePrefix}/${createId()}`
+  const bytes = await response.arrayBuffer()
 
   await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
     ACL: "public-read",

@@ -7,8 +7,6 @@ import {
   formatConditionValueDisplay,
 } from "@/features/contact-filter/components/contact-filter-config"
 import { useContactFilterConfigs } from "@/features/contact-filter/components/use-contact-filter-configs"
-import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
-import { useWorkspaceId } from "@/hooks/routing"
 import { StateHandle } from "../base/step-state-handles"
 
 type ConditionStepViewerProps = {
@@ -136,14 +134,8 @@ const ConditionStepViewerContent = ({ data }: ConditionStepViewerProps) => {
   )
 }
 
-const ConditionStepViewer = ({ data }: ConditionStepViewerProps) => {
-  const workspaceId = useWorkspaceId()
-
-  return (
-    <SequenceStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      <ConditionStepViewerContent data={data} />
-    </SequenceStoreProvider>
-  )
-}
+const ConditionStepViewer = ({ data }: ConditionStepViewerProps) => (
+  <ConditionStepViewerContent data={data} />
+)
 
 export default ConditionStepViewer

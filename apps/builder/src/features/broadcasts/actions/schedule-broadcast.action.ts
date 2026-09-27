@@ -4,6 +4,7 @@ import { broadcastService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { resolveScheduleTime, scheduleBroadcastSchema } from "../schema/action"
+import { withBroadcastPlanLimitOutcome } from "./broadcast-plan-limit-outcome"
 
 export const scheduleBroadcastAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -17,10 +18,13 @@ export const scheduleBroadcastAction = workspaceActionClient
     // The service owns the draft-status guard and the audit record (only
     // when `schedulesType === "now"`) — shared with the public API's
     // `schedule` route.
-    return await broadcastService.scheduleDraft({
-      workspaceId,
-      broadcastId: id,
-      schedulesType: parsedInput.schedulesType,
-      schedulesAt: resolveScheduleTime(parsedInput),
-    })
+    return await withBroadcastPlanLimitOutcome(() =>
+      broadcastService.scheduleDraft({
+        workspaceId,
+        broadcastId: id,
+        schedulesType: parsedInput.schedulesType,
+        schedulesAt: resolveScheduleTime(parsedInput),
+        sendRatePerMinute: parsedInput.sendRatePerMinute,
+      }),
+    )
   })

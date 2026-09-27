@@ -1,4 +1,5 @@
 import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { vi } from "vitest"
@@ -190,13 +191,18 @@ export function createCardHarness() {
       container = document.createElement("div")
       document.body.append(container)
       root = createRoot(container)
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      })
       act(() => {
         root.render(
-          <WhatsappCreate
-            oauthCallbackUrl={OAUTH_CALLBACK_URL}
-            settings={SETTINGS}
-            workspaceId="ws-1"
-          />,
+          <QueryClientProvider client={queryClient}>
+            <WhatsappCreate
+              oauthCallbackUrl={OAUTH_CALLBACK_URL}
+              settings={SETTINGS}
+              workspaceId="ws-1"
+            />
+          </QueryClientProvider>,
         )
       })
     },

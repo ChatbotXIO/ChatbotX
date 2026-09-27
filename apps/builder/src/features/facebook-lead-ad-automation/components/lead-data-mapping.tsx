@@ -10,8 +10,10 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { ArrowRightIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-field"
-import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import {
+  useCustomFieldSelectOptions,
+  useInvalidateCustomFields,
+} from "@/features/custom-fields/provider/custom-field-hook"
 
 // Reserved system fields offered as mapping targets (plus every workspace
 // custom field), derived from the shared FB standard-field map so the two
@@ -26,9 +28,7 @@ export function LeadDataMapping({
   workspaceId: string
 }) {
   const t = useTranslations()
-  const getAllCustomFields = useCustomFieldStore(
-    (state) => state.getAllCustomFields,
-  )
+  const invalidateCustomFields = useInvalidateCustomFields()
 
   // A leading "None" option makes each row clearable back to unmapped —
   // ComboboxField never toggles a selection off on its own.
@@ -52,7 +52,7 @@ export function LeadDataMapping({
           </span>
           <CreateCustomFieldDialog
             folderId={null}
-            onSuccess={getAllCustomFields}
+            onSuccess={invalidateCustomFields}
             triggerButton={
               <Button className="h-auto p-0" variant="link">
                 {t("actions.add")}

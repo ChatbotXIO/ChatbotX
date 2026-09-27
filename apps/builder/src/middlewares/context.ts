@@ -3,6 +3,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { os } from "@orpc/server"
+import type { ResponseHeadersPluginContext } from "@orpc/server/plugins"
 import type { SessionUser } from "@/lib/auth/utils"
 
 // Handlers only ever need `.permission`/`.scopes` off the authenticated
@@ -16,7 +17,7 @@ export type RequestApiToken = Pick<
   "id" | "workspaceId" | "permission" | "scopes" | "isDefault"
 >
 
-export type BaseContext = {
+export type BaseContext = ResponseHeadersPluginContext & {
   headers: Headers
   url?: string
   session?: {
@@ -26,6 +27,12 @@ export type BaseContext = {
   user?: SessionUser
   workspace?: WorkspaceModel
   apiToken?: RequestApiToken
+  /**
+   * Stable identity of the workspace or channel API credential that
+   * authenticated this request. The public API idempotency middleware scopes
+   * keys to it.
+   */
+  apiCredentialId?: string
 }
 
 export const base = os.$context<BaseContext>()

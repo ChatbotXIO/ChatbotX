@@ -6,10 +6,7 @@ import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-re
 import { useWorkspaceId } from "@/hooks/routing"
 import { authClient } from "@/lib/auth/auth-client"
 import { outboundCallModeQueryKeys } from "./outbound-call-mode-query-key"
-import {
-  useWhatsappVoipCallStore,
-  WhatsappVoipCallPhase,
-} from "./voip-call-store"
+import { useWhatsappVoipCallStore } from "./voip-call-store"
 
 /**
  * Registers the WhatsApp VoIP/call-routing realtime events on the shared
@@ -26,13 +23,15 @@ export function WhatsappCallRealtime() {
     (state) => state.enqueueRinging,
   )
   const removeRinging = useWhatsappVoipCallStore((state) => state.removeRinging)
+  const dismissRinging = useWhatsappVoipCallStore(
+    (state) => state.dismissRinging,
+  )
   const removeRingingByConversationIds = useWhatsappVoipCallStore(
     (state) => state.removeRingingByConversationIds,
   )
   const handleVoipCallEnded = useWhatsappVoipCallStore(
     (state) => state.handleEnded,
   )
-  const resetVoipCall = useWhatsappVoipCallStore((state) => state.reset)
   const setPendingOutboundAnswer = useWhatsappVoipCallStore(
     (state) => state.setPendingOutboundAnswer,
   )
@@ -90,23 +89,13 @@ export function WhatsappCallRealtime() {
         .catch(() => undefined)
     },
     whatsappCallClaimedElsewhere: (event) => {
-      const { data } = event
       // Ring-all: broadcast workspace-wide once another rung agent's accept
-      // succeeds. Drop the basket entry unconditionally (no-op if absent).
-      removeRinging(data.whatsappCallId)
-      // Only a losing agent still incomingRinging for this call clears its
-      // dialog - the winner must ignore its own event or this would clear
-      // the dialog out from under its in-flight accept. Silent local dismiss:
-      // losing a ring-all race isn't a terminal call event for this agent, so
-      // it bypasses handleEnded's lingering panel/message.
-      const currentCall = useWhatsappVoipCallStore.getState().call
-      if (
-        currentCall?.whatsappCallId === data.whatsappCallId &&
-        currentCall.phase === WhatsappVoipCallPhase.incomingRinging &&
-        currentUserId !== data.answeredByUserId
-      ) {
-        resetVoipCall()
-      }
+      // succeeds. The tab that won is already past incomingRinging -
+      // answerIncoming moves it to answering before its first await - so the
+      // phase alone protects its in-flight accept. Filtering on the user as
+      // well would leave the winner's other tabs ringing, since they share its
+      // user id.
+      dismissRinging(event.data.whatsappCallId)
     },
     // A conversation can be reassigned while still ringing this agent (the
     // worker's ring set predates the reassignment). Drop the basket entries

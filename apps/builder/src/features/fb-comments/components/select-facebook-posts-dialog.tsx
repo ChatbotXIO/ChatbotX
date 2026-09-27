@@ -158,7 +158,7 @@ function PostGrid({
 }) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {SKELETON_KEYS.map((key) => (
           <Skeleton className="h-36 w-full rounded-md" key={key} />
         ))}
@@ -175,7 +175,7 @@ function PostGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {posts.map((post) => (
         <PostCard
           key={post.id}
@@ -234,7 +234,7 @@ export function SelectFacebookPostsDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {t("facebookCommentAutomation.selectPosts")}

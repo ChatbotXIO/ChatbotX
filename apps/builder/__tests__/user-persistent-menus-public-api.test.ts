@@ -60,6 +60,7 @@ vi.mock("@chatbotx.io/business", () => ({ userPersistentMenuService }))
 vi.mock("@chatbotx.io/database/partials", async () => {
   const { z } = await import("zod")
   return {
+    broadcastPlanLimitDataSchema: z.object({}),
     messengerPersistentMenuSchema: z.object({}),
   }
 })

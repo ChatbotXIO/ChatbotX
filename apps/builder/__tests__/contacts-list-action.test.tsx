@@ -1,16 +1,18 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import type { Table } from "@tanstack/react-table"
 import type { ReactElement, ReactNode } from "react"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { ContactListAction } from "@/features/contacts/contacts-list-action"
-import type { ContactResponse } from "@/features/contacts/schema/query"
+import type { ContactTableRow } from "@/features/contacts/schema/query"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
 vi.mock("next/navigation", () => ({
+  useParams: () => ({ workspaceId: "ws-1" }),
   useRouter: () => ({ refresh: vi.fn() }),
 }))
 
@@ -30,10 +32,8 @@ vi.mock("next/link", () => ({
 }))
 
 let inboxes: { channel: string }[] = []
-vi.mock("@/features/inboxes/provider/inbox-store-context", () => ({
-  useInboxStore: (
-    selector: (state: { inboxes: { channel: string }[] }) => unknown,
-  ) => selector({ inboxes }),
+vi.mock("@/features/inboxes/provider/inbox-hook", () => ({
+  useInboxList: () => inboxes,
 }))
 
 // No portal/open-state machinery — always renders every menu item, which is
@@ -139,12 +139,20 @@ function render() {
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   const table = {
     getFilteredSelectedRowModel: () => ({ rows: [] }),
     getIsAllPageRowsSelected: () => false,
-  } as unknown as Table<ContactResponse>
+    resetRowSelection: vi.fn(),
+  } as unknown as Table<ContactTableRow>
   act(() => {
-    root?.render(<ContactListAction table={table} workspaceId="ws-1" />)
+    root?.render(
+      <QueryClientProvider client={queryClient}>
+        <ContactListAction table={table} workspaceId="ws-1" />
+      </QueryClientProvider>,
+    )
   })
   // biome-ignore lint/style/noNonNullAssertion: assigned synchronously above
   return container!

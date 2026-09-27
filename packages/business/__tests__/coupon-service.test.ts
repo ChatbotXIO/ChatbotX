@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { couponService } from "../src/coupon/service"
 
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
@@ -17,9 +18,10 @@ const mocks = vi.hoisted(() => ({
   updateTopic: vi.fn(),
   getExportFile: vi.fn(),
   isUniqueViolationError: vi.fn(),
+  listIssuedCouponsForContact: vi.fn(),
+  contactFindByIdOrFail: vi.fn(),
   selectWorkspace: vi.fn(),
 }))
-
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     transaction: mocks.transaction,
@@ -58,9 +60,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     isTopicIssueable: (...args: unknown[]) => mocks.isTopicIssueable(...args),
     findTopic: (...args: unknown[]) => mocks.findTopic(...args),
     findTopicByName: (...args: unknown[]) => mocks.findTopicByName(...args),
-    createTopic: (...args: unknown[]) => mocks.createTopic(...args),
     updateTopic: (...args: unknown[]) => mocks.updateTopic(...args),
     getExportFile: (...args: unknown[]) => mocks.getExportFile(...args),
+    listIssuedCouponsForContact: (...args: unknown[]) =>
+      mocks.listIssuedCouponsForContact(...args),
   },
 }))
 
@@ -72,7 +75,12 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(),
 }))
 
-const { couponService } = await import("../src/coupon/service")
+vi.mock("../src/contact/service", () => ({
+  contactService: {
+    findByIdOrFail: (...args: unknown[]) =>
+      mocks.contactFindByIdOrFail(...args),
+  },
+}))
 
 describe("couponService.importBatch", () => {
   beforeEach(() => {
@@ -336,6 +344,42 @@ describe("couponService topic validation", () => {
         expiresAt: expect.any(Date),
       }),
     )
+  })
+})
+
+describe("couponService.listIssuedCouponsForContact", () => {
+  const input = { workspaceId: "workspace-1", contactId: "contact-1" }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("checks restricted contact access before reading issued coupons", async () => {
+    const denied = new Error("Contact not found")
+    mocks.contactFindByIdOrFail.mockRejectedValue(denied)
+
+    await expect(
+      couponService.listIssuedCouponsForContact({
+        ...input,
+        accessScope: { restrictToAssignedUserId: "user-1" },
+      }),
+    ).rejects.toThrow(denied)
+
+    expect(mocks.contactFindByIdOrFail).toHaveBeenCalledWith({
+      workspaceId: input.workspaceId,
+      id: input.contactId,
+      accessScope: { restrictToAssignedUserId: "user-1" },
+    })
+    expect(mocks.listIssuedCouponsForContact).not.toHaveBeenCalled()
+  })
+
+  test("skips the contact lookup for unrestricted requests", async () => {
+    mocks.listIssuedCouponsForContact.mockResolvedValue([])
+
+    await couponService.listIssuedCouponsForContact(input)
+
+    expect(mocks.contactFindByIdOrFail).not.toHaveBeenCalled()
+    expect(mocks.listIssuedCouponsForContact).toHaveBeenCalledWith(input)
   })
 })
 

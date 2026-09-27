@@ -7,6 +7,7 @@ import {
   ChartTooltipContent,
 } from "@chatbotx.io/ui/components/ui/chart"
 import { AreaChart as AC, Area, XAxis, YAxis } from "recharts"
+import { useChartCardProvider } from "./chart-card-context"
 import ChartHeader from "./chart-header"
 
 type AreaChartProps = {
@@ -22,8 +23,9 @@ export default function AreaChart({
   data,
   helpText,
 }: AreaChartProps) {
-  return (
-    <Card>
+  const hasCardProvider = useChartCardProvider()
+  const content = (
+    <>
       <ChartHeader helpText={helpText} title={title} />
 
       <CardContent>
@@ -45,6 +47,8 @@ export default function AreaChart({
           </AC>
         </ChartContainer>
       </CardContent>
-    </Card>
+    </>
   )
+
+  return hasCardProvider ? content : <Card>{content}</Card>
 }

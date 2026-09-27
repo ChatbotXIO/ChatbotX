@@ -12,6 +12,13 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
+vi.mock("next/image", () => ({
+  default: ({ alt, src }: { alt: string; src: string }) => (
+    // biome-ignore lint/performance/noImgElement: test double exposes the src passed to Next Image
+    <img alt={alt} height={120} src={src} width={120} />
+  ),
+}))
+
 // MediaLibraryTrigger imports "use server" query modules at module scope
 // that drag in a live pg Pool under vitest; stub it to keep this test about
 // attachment rendering.
@@ -24,6 +31,13 @@ vi.mock("@/features/media-library/components/media-library-trigger", () => ({
 // same reason (its own contents are covered by whatsapp-call-card.test.tsx).
 vi.mock("@/features/messages/components/whatsapp-call-card", () => ({
   WhatsappCallCard: () => <div data-slot="whatsapp-call-card">audioCall</div>,
+}))
+
+// Comment bubbles render the like/hide/reply actions, which need the chat
+// store; stub them to keep this test about what the bubble itself shows.
+vi.mock("@/features/messages/components/message-actions", () => ({
+  MessageActions: () => null,
+  MessageActionsEditor: () => null,
 }))
 
 let container: HTMLDivElement | null = null
@@ -92,7 +106,82 @@ const makeFileAttachment = (id: string) =>
     originPath: `public/${id}.pdf`,
   }) as unknown as AttachmentResource
 
+const makeProxyAttachment = (
+  id: string,
+  fileType: AttachmentResource["fileType"],
+  mimeType: string,
+) =>
+  ({
+    id,
+    fileType,
+    mimeType,
+    url: `https://builder.example.com/media/attachment/${id}-token`,
+    name: `${id}.${fileType}`,
+    originPath: `pending/${id}`,
+    width: fileType === "image" ? 400 : null,
+    height: fileType === "image" ? 300 : null,
+  }) as unknown as AttachmentResource
+
 describe("MessageItem attachment rendering — multiple images", () => {
+  test("an explicit null server URL renders the existing placeholder instead of rebuilding the origin path", () => {
+    const attachment = {
+      ...makeImageAttachment("failed-image"),
+      originPath: "failed:unresolvable",
+      url: null,
+    } as unknown as AttachmentResource
+
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          attachments: [attachment],
+        })}
+      />,
+    )
+
+    expect(el.querySelector("img")).toBeNull()
+    expect(el.querySelector('a[href*="failed:unresolvable"]')).toBeNull()
+    expect(el.textContent).toContain("failed-image.png")
+  })
+
+  test("image, video, audio, and file render their absolute server URLs unchanged", () => {
+    const image = makeProxyAttachment("image", "image", "image/jpeg")
+    const video = makeProxyAttachment("video", "video", "video/mp4")
+    const audio = makeProxyAttachment("audio", "audio", "audio/mpeg")
+    const file = makeProxyAttachment("file", "file", "application/pdf")
+
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({ attachments: [image, video, audio, file] })}
+      />,
+    )
+
+    expect(el.querySelector("img")?.getAttribute("src")).toBe(image.url)
+    expect(el.querySelector("video source")?.getAttribute("src")).toBe(
+      video.url,
+    )
+    expect(el.querySelector("audio source")?.getAttribute("src")).toBe(
+      audio.url,
+    )
+    expect(
+      el.querySelector(`a[href="${file.url}"]`)?.getAttribute("href"),
+    ).toBe(file.url)
+  })
+
+  test("image-grid items render their absolute server URLs unchanged", () => {
+    const first = makeProxyAttachment("image-1", "image", "image/jpeg")
+    const second = makeProxyAttachment("image-2", "image", "image/jpeg")
+
+    const el = renderComponent(
+      <MessageItem message={makeMessage({ attachments: [first, second] })} />,
+    )
+
+    expect(
+      Array.from(el.querySelectorAll("img"), (image) =>
+        image.getAttribute("src"),
+      ),
+    ).toEqual([first.url, second.url])
+  })
+
   test("a single image renders without the grid wrapper", () => {
     const el = renderComponent(
       <MessageItem
@@ -160,5 +249,91 @@ describe("MessageItem attachment rendering — multiple images", () => {
     const grid = el.querySelector('[data-slot="attachment-image-grid"]')
     expect(grid?.querySelectorAll("img")).toHaveLength(2)
     expect(el.textContent).toContain("file-1.pdf")
+  })
+})
+
+describe("MessageItem attachment rendering — gif", () => {
+  test("renders an image/gif attachment as an image", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          attachments: [makeProxyAttachment("gif-1", "gif", "image/gif")],
+        })}
+      />,
+    )
+
+    expect(el.querySelector("img")?.getAttribute("src")).toBe(
+      "https://builder.example.com/media/attachment/gif-1-token",
+    )
+    expect(el.querySelector("video")).toBeNull()
+  })
+
+  test("autoplays a video gif muted and on loop, without controls", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          attachments: [makeProxyAttachment("gif-2", "gif", "video/mp4")],
+        })}
+      />,
+    )
+
+    const video = el.querySelector("video")
+    expect(video).not.toBeNull()
+    expect(video?.autoplay).toBe(true)
+    expect(video?.loop).toBe(true)
+    expect(video?.muted).toBe(true)
+    expect(video?.hasAttribute("controls")).toBe(false)
+    expect(video?.querySelector("source")?.getAttribute("type")).toBe(
+      "video/mp4",
+    )
+  })
+})
+
+describe("MessageItem comment without text", () => {
+  test("shows a note for a comment whose media the channel does not expose", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          type: "comment",
+          messageType: "incoming",
+          text: null,
+          attachments: [],
+        })}
+      />,
+    )
+
+    expect(el.textContent).toContain("commentMediaUnavailable")
+  })
+
+  test("shows the attachment instead of the note when the media was downloaded", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          type: "comment",
+          messageType: "incoming",
+          text: null,
+          attachments: [makeImageAttachment("comment-gif")],
+        })}
+      />,
+    )
+
+    expect(el.textContent).not.toContain("commentMediaUnavailable")
+    expect(el.querySelector("img")).not.toBeNull()
+  })
+
+  test("keeps the deleted label for a deleted media-only comment", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          type: "comment",
+          messageType: "incoming",
+          text: null,
+          deletedAt: new Date("2024-01-02T00:00:00Z"),
+        })}
+      />,
+    )
+
+    expect(el.textContent).toContain("messageDeleted")
+    expect(el.textContent).not.toContain("commentMediaUnavailable")
   })
 })

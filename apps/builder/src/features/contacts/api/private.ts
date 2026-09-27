@@ -1,8 +1,13 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { requireContactPermissionScope } from "../permissions"
+import {
+  buildContactPermissionScope,
+  requireContactPermissionScope,
+  requireContactPermissionScopeForMember,
+} from "../permissions"
 import { getContact } from "../queries/get-contact.query"
 import { getExportFile } from "../queries/get-export-file.query"
 import {
@@ -17,7 +22,7 @@ import {
   listContactInboxesAudiencePreviewRequest,
   listContactInboxesAudiencePreviewResponse,
   listContactsRequest,
-  listContactsResponse,
+  listContactsTableResponse,
 } from "../schema/query"
 
 export const contactsAuthenticatedAPI = {
@@ -31,9 +36,17 @@ export const contactsAuthenticatedAPI = {
     .input(getContactRequest)
     .output(getContactResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const { workspaceId, contactId } = input
-      return await getContact({ workspaceId, contactId })
+      const scope = buildContactPermissionScope({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      if (!scope) {
+        throw notFoundException("Contact not found")
+      }
+
+      return await getContact({ workspaceId, contactId }, scope)
     }),
 
   listContactsByPOSTAuthenticatedAPI: authorizedAPI
@@ -45,10 +58,13 @@ export const contactsAuthenticatedAPI = {
     })
     .input(listContactsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(listContactsResponse)
-    .handler(async ({ input }) => {
-      const { workspaceId, ...rest } = input
-      return await listContacts({ ...rest, workspaceId })
+    .output(listContactsTableResponse)
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await listContacts(input, scope)
     }),
 
   countContactsAuthenticatedAPI: authorizedAPI
@@ -61,7 +77,13 @@ export const contactsAuthenticatedAPI = {
     .input(listContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ total: z.number() }))
-    .handler(async ({ input }) => await countContacts(input)),
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await countContacts(input, scope)
+    }),
 
   countContactInboxesAuthenticatedAPI: authorizedAPI
     .route({

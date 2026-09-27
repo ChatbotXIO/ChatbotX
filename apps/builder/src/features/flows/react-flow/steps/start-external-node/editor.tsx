@@ -8,8 +8,9 @@ import { useFormContext, useWatch } from "react-hook-form"
 import {
   getFlowNodesOptions,
   useFlowSelectOptions,
+  useFlows,
 } from "@/features/flows/provider/flow-hook"
-import { useFlowStore } from "@/features/flows/provider/flow-store-context"
+import { useWorkspaceId } from "@/hooks/routing"
 import { useStepStore } from "../../stores/step-store-provider"
 import { BaseStepEditor } from "../base/editor"
 
@@ -24,7 +25,7 @@ const StartExternalNodeStepEditor = (
 
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
-  const flows = useFlowStore((state) => state.flows)
+  const { data: flows = [] } = useFlows(useWorkspaceId())
   const activeFlowId = useStepStore((state) => state.activeFlowId)
   const { control } = useFormContext()
 

@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import type { FlowResource } from "@/features/flows/schema/resource"
 import { orpc } from "@/lib/orpc/query"
 import { restoreFlowVersionAction } from "../../actions/restore-flow-version-action"
@@ -36,6 +37,7 @@ export function FlowVersionsDialog({
 }: FlowVersionsDialogProps) {
   const t = useTranslations()
   const [restoringId, setRestoringId] = useState<string | null>(null)
+  const invalidateFlows = useInvalidateFlows()
 
   const {
     data: versions = [],
@@ -53,6 +55,7 @@ export function FlowVersionsDialog({
     {
       onSuccess: ({ data }) => {
         toast.success(t("messages.restoreVersionSuccess"))
+        invalidateFlows()
         refetch()
         onOpenChange(false)
         setRestoringId(null)

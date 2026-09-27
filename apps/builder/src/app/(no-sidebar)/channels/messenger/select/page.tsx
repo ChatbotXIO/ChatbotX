@@ -1,6 +1,10 @@
 import { messengerIntegrationService } from "@chatbotx.io/business"
-import { getUserPages } from "@chatbotx.io/integration-messenger"
+import {
+  getUserPages,
+  mapToChannelError,
+} from "@chatbotx.io/integration-messenger"
 import type { ConnectableFacebookPage } from "@chatbotx.io/integration-messenger/schema"
+import { UNKNOWN_ERROR } from "@chatbotx.io/sdk"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import {
@@ -9,11 +13,15 @@ import {
 } from "@/features/channel-connect/lib/picker-items"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import type { MessengerPickerItem } from "@/features/integration-messenger/components/messenger-pages"
-import { SelectPage } from "@/features/integration-messenger/components/select-account"
+import {
+  type PagesLoadError,
+  SelectPage,
+} from "@/features/integration-messenger/components/select-account"
 import {
   FB_MESSENGER_PENDING_AUTH_COOKIE,
   readPendingAuth,
 } from "@/lib/facebook-pending-auth"
+import { logger } from "@/lib/log"
 
 export const dynamic = "force-dynamic"
 
@@ -54,6 +62,55 @@ function toPickerItem(
   }
 }
 
+type UserPagesResult = Awaited<ReturnType<typeof getUserPages>> & {
+  loadError?: PagesLoadError
+}
+
+/**
+ * `mapToChannelError` keeps Graph's numeric `error.code` and falls back to
+ * `UNKNOWN_ERROR.code` when there was no Graph error body to read (timeout,
+ * DNS, malformed JSON). Any other code means the message is Meta's, not ours.
+ */
+function readProviderMessage(channelError: {
+  code: string | number
+  message: string
+}): string | undefined {
+  const hasGraphCode = channelError.code !== UNKNOWN_ERROR.code
+  return hasGraphCode && channelError.message ? channelError.message : undefined
+}
+
+/**
+ * Graph sometimes refuses `/me/accounts` outright — e.g.
+ * `{"error":{"code":1,"message":"Please reduce the amount of data you're
+ * asking for, then retry your request"}}` for users with many pages. That is
+ * the user's Facebook state, not a bug in this route, so it renders as an
+ * empty picker carrying Meta's sentence instead of tripping the route error
+ * boundary ("Something went wrong").
+ */
+async function loadUserPages(
+  userToken: string,
+  version: string,
+): Promise<UserPagesResult> {
+  try {
+    return await getUserPages(userToken, version)
+  } catch (error) {
+    const channelError = mapToChannelError(error)
+    logger.error(
+      {
+        err: error,
+        code: channelError.code,
+        category: channelError.category,
+      },
+      "Failed to list Facebook Pages for Messenger connect",
+    )
+    return {
+      pages: [],
+      bmLookupFailed: false,
+      loadError: { providerMessage: readProviderMessage(channelError) },
+    }
+  }
+}
+
 export default async function MessengerSelectPage() {
   const pendingAuth = await readPendingAuth(FB_MESSENGER_PENDING_AUTH_COOKIE)
 
@@ -61,10 +118,21 @@ export default async function MessengerSelectPage() {
     redirect("/channels/create")
   }
 
-  const { pages, bmLookupFailed } = await getUserPages(
+  const { pages, bmLookupFailed, loadError } = await loadUserPages(
     pendingAuth.userToken,
     pendingAuth.version,
   )
+
+  if (loadError !== undefined) {
+    return (
+      <SelectPage
+        bmLookupFailed={false}
+        items={[]}
+        loadError={loadError}
+        workspaceId={pendingAuth.workspaceId}
+      />
+    )
+  }
 
   const connectedPageIds =
     await messengerIntegrationService.findConnectedPageIds(

@@ -1,13 +1,24 @@
-import { contactInboxService, contactService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  contactService,
+  conversationService,
+  publishToWorkspaceParty,
+} from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
+import {
+  channelTypes,
+  resolveChannelConversationId,
+} from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { whatsappFlowModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
+  MessageModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import {
+  isBulkOutboundMetadata,
   type MetadataPayload,
   messageEventTypeSchema,
   stepTypes,
@@ -16,6 +27,7 @@ import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   type CommentAnchor,
   type MessageButtonTemplate,
+  type OutgoingSendResult,
   parseSdkError,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
@@ -37,12 +49,49 @@ import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
-import { broadcastChatEvent } from "../utils/broadcast-chat-event"
 import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
 } from "../utils/retry"
 import { reconcileChannelSendError } from "./channel-send-error-reconcilers"
+
+// Keep private comment replies aligned with sendMessageToChannel's isPrivateReply
+// routing below and packages/business/src/message/create-outgoing.ts's DM routing.
+const isDirectMessage = (
+  message: Pick<MessageModel, "type" | "contentAttributes">,
+): boolean =>
+  message.type !== "comment" ||
+  message.contentAttributes?.isPrivateReply === true
+
+// Broadcasts and templates are deliberately NOT excluded: the inbox option
+// means "the bot's own direct messages count as read", and every bot send —
+// flow reply, broadcast, template — is one. Excluding any of them would leave
+// those conversations bold with the option on, which is exactly what it exists
+// to prevent. Public comment replies are excluded because they are not DMs.
+export const isDeliveredDirectMessage = ({
+  message,
+  result,
+}: {
+  message: Pick<MessageModel, "type" | "contentAttributes">
+  result: OutgoingSendResult
+}): boolean => result.sentCount > 0 && isDirectMessage(message)
+
+export const markConversationReadAfterDelivery = async (props: {
+  workspaceId: string
+  conversationId: string
+  inboxId: string
+  readAt: Date
+  silent?: boolean
+}): Promise<void> => {
+  try {
+    await conversationService.markReadByOutbound(props)
+  } catch (err) {
+    logger.warn(
+      { err, ...props },
+      "markReadByOutbound after a delivered send failed",
+    )
+  }
+}
 
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
@@ -52,15 +101,19 @@ export async function sendMessageToChannel(
   // re-emits. Defaults to terminal, so an unaware caller records the failure
   // rather than losing it.
   willRetryOnThrow = false,
-): Promise<{ messageIds: string[] }> {
+): Promise<OutgoingSendResult> {
   const {
     conversation,
     contactInbox,
     message,
     quickReplies,
     metadata,
+    isBulkBroadcast,
     sendFrom,
   } = data
+  const isBulkOutbound =
+    isBulkOutboundMetadata(metadata, isBulkBroadcast) ||
+    isBulkOutboundMetadata(message.contentAttributes?.metadata, isBulkBroadcast)
 
   try {
     const { integration, ctx } =
@@ -87,6 +140,19 @@ export async function sendMessageToChannel(
             parentMsg?.sourceId ??
             message.contentAttributes?.replyToCommentId ??
             null,
+          // The post the parent comment belongs to, carried the same way
+          // `changeMessageStateOnChannel` carries it for `hideComment`.
+          // TikTok's reply endpoint is addressed by (video_id, comment_id),
+          // and `receiveComment` stamps the video id onto the incoming comment
+          // itself — a stronger source than the conversation, which a channel
+          // that reuses `sourceId` for something else can leave without one.
+          // Meta ignores it.
+          postId:
+            (typeof parentMsg?.contentAttributes?.postId === "string"
+              ? parentMsg.contentAttributes.postId
+              : undefined) ??
+            message.contentAttributes?.postId ??
+            null,
         },
       }
     }
@@ -96,7 +162,7 @@ export async function sendMessageToChannel(
       data: {
         contact: {
           ...contactInbox,
-          sourceConversationId: conversation.sourceId,
+          sourceConversationId: resolveChannelConversationId(conversation),
         },
         message: handlerMessage,
         quickReplies: isComment ? undefined : quickReplies,
@@ -108,8 +174,15 @@ export async function sendMessageToChannel(
     const isPrivateReply =
       isComment && handlerMessage.contentAttributes?.isPrivateReply === true
 
-    let result: Awaited<ReturnType<typeof integration.runChannelHandler>>
+    let result: OutgoingSendResult
     if (isPrivateReply) {
+      // Only offered by the Inbox on a channel that implements the handler —
+      // see `canPrivateReplyToComment` in the builder. Threads has no DM API,
+      // and TikTok accepts one only for a comment it flagged as high intent.
+      //
+      // On TikTok this DM also comes back as an `im_send_msg` echo and is
+      // stored a second time, on the DM conversation rather than the comment
+      // one. Two rows for one send is the expected shape there, not a bug.
       result = await integration.runChannelHandler(
         "comment",
         "sendPrivateReply",
@@ -147,7 +220,7 @@ export async function sendMessageToChannel(
           )
 
           // Notify the client so edit/delete buttons appear immediately without a refresh.
-          await broadcastChatEvent(conversation.workspaceId, {
+          publishToWorkspaceParty(conversation.workspaceId, {
             eventType: RealtimeEventType.messageIdAssigned,
             data: { messageId: message.id, commentId: replyId },
           })
@@ -158,6 +231,7 @@ export async function sendMessageToChannel(
               message.clientId,
               conversation.workspaceId,
               new Date(message.createdAt),
+              isBulkOutbound,
             )
           }
         } catch (err) {
@@ -186,6 +260,7 @@ export async function sendMessageToChannel(
           message.clientId,
           conversation.workspaceId,
           new Date(message.createdAt),
+          isBulkOutbound,
         )
       }
     }
@@ -196,6 +271,16 @@ export async function sendMessageToChannel(
       workspaceId: conversation.workspaceId,
       at: message.createdAt ?? new Date(),
     })
+
+    if (isDeliveredDirectMessage({ message, result })) {
+      await markConversationReadAfterDelivery({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        inboxId: contactInbox.inboxId,
+        readAt: new Date(message.createdAt),
+        silent: isBulkOutbound,
+      })
+    }
 
     // The other half of the cross-queue anchor: the integration worker recorded
     // the attempt optimistically and only this handler knows the Graph API
@@ -222,26 +307,18 @@ export async function sendMessageToChannel(
     // stay structurally paired or the gate is enforced against a counter that
     // never moves. Human-sent messages (senderType !== "bot") are unaffected.
     if (message.senderType === "bot") {
-      emit("analytics:dashboard", {
-        eventType: "message:bot_sent",
+      await emitBotMessageSentEvents({
         workspaceId: conversation.workspaceId,
-        contactId: contactInbox.contactId,
-        senderType: "bot",
-        occurredAt: new Date(),
-        source: contactInbox.source,
-        sourceId: contactInbox.sourceId,
-        channel: contactInbox.channel,
-        metadata: {
-          triggerContext: {
-            triggerSource: "worker",
-            triggerHandler: "sendMessageToChannel",
-            triggerType: "message_bot_sent_channel",
-          },
+        contactInbox,
+        result,
+        trigger: {
+          triggerHandler: "sendMessageToChannel",
+          triggerType: "message_bot_sent_channel",
         },
       })
     }
 
-    return { messageIds: result.messageIds }
+    return result
   } catch (error) {
     // A reconciled failure is a permanent, known outcome: it is still
     // recorded below, but never rethrown into a retry.
@@ -284,6 +361,7 @@ export async function sendMessageToChannel(
       conversation.workspaceId,
       message?.createdAt ? new Date(message.createdAt) : undefined,
       errorData.message,
+      isBulkOutbound,
     )
     // Terminal failures only: an attempt that is about to be retried must not
     // put a row in the automation's Error Logs for a reply that still lands.
@@ -297,7 +375,7 @@ export async function sendMessageToChannel(
       isReconciledSendError ||
       shouldSuppressRetryableChannelError(error, contactInbox.channel)
     ) {
-      return { messageIds: [] }
+      return { messageIds: [], sentCount: 0 }
     }
     throw error
   }
@@ -441,12 +519,43 @@ export async function changeMessageStateOnChannel(
     calls.push(
       integration.runChannelHandler("comment", "hideComment", {
         ctx,
-        data: { commentId: found.sourceId, hidden },
+        data: {
+          commentId: found.sourceId,
+          hidden,
+          // TikTok's hide endpoint is addressed by (video_id, comment_id);
+          // Meta's by comment id alone and ignores this.
+          postId:
+            typeof found.contentAttributes?.postId === "string"
+              ? found.contentAttributes.postId
+              : undefined,
+        },
       }),
     )
   }
 
   await Promise.all(calls)
+}
+
+/**
+ * WhatsApp has no standalone typing/read API: both the typing indicator and
+ * the "Seen" receipt ride on marking a real inbound message read, so both
+ * callers (this file's `sendTypingToChannel` and the Mark Read step handler)
+ * need that message's wamid. Other channels don't anchor on a message id.
+ */
+export async function resolveWhatsappMessageSourceId(props: {
+  conversation: Pick<
+    ConversationModel,
+    "id" | "workspaceId" | "lastActivityAt" | "createdAt"
+  >
+  contactInbox: Pick<ContactInboxModel, "id" | "channel">
+}): Promise<string | undefined> {
+  const { conversation, contactInbox } = props
+  return contactInbox.channel === channelTypes.enum.whatsapp
+    ? await conversationService.findLastIncomingMessageSourceId({
+        conversation,
+        contactInboxId: contactInbox.id,
+      })
+    : undefined
 }
 
 export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
@@ -465,9 +574,14 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
     contactInbox,
   })
 
+  const messageSourceId = await resolveWhatsappMessageSourceId({
+    conversation,
+    contactInbox,
+  })
+
   await integration.runChannelHandler("conversation", "sendTyping", {
     ctx,
-    data: { contact: contactInbox, typing, seconds },
+    data: { contact: contactInbox, typing, seconds, messageSourceId },
   })
 }
 
@@ -479,6 +593,7 @@ export async function recordMessageSendError(
   workspaceId: string,
   createdAt: Date | undefined,
   errorMessage: string,
+  silent = false,
 ) {
   try {
     if (!(messageId && createdAt)) {
@@ -493,10 +608,12 @@ export async function recordMessageSendError(
       createdAt,
     )
 
-    await broadcastChatEvent(workspaceId, {
-      eventType: RealtimeEventType.messageFailed,
-      data: { messageId, clientId, error: truncatedError },
-    })
+    if (!silent) {
+      publishToWorkspaceParty(workspaceId, {
+        eventType: RealtimeEventType.messageFailed,
+        data: { messageId, clientId, error: truncatedError },
+      })
+    }
   } catch (err) {
     logger.error(err, "Failed to persist message sendError")
   }
@@ -507,6 +624,7 @@ async function clearMessageSendError(
   clientId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
+  silent = false,
 ) {
   try {
     if (!(messageId && createdAt)) {
@@ -515,10 +633,12 @@ async function clearMessageSendError(
     const repo = await createMessageRepository()
     await repo.updateSendError(messageId, null, workspaceId, createdAt)
 
-    await broadcastChatEvent(workspaceId, {
-      eventType: RealtimeEventType.messageFailed,
-      data: { messageId, clientId, error: null },
-    })
+    if (!silent) {
+      publishToWorkspaceParty(workspaceId, {
+        eventType: RealtimeEventType.messageFailed,
+        data: { messageId, clientId, error: null },
+      })
+    }
   } catch (err) {
     logger.error(
       err,
@@ -531,7 +651,7 @@ async function updateMessageSourceId(
   messageId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
-  result: { messageIds: string[] },
+  result: OutgoingSendResult,
 ) {
   try {
     const firstMessageId = result?.messageIds?.[0]
@@ -549,6 +669,67 @@ async function updateMessageSourceId(
   }
 }
 
+type BotSentTrigger = {
+  triggerHandler: string
+  triggerType: string
+}
+
+/**
+ * Fires after the channel has already accepted the send — a rejection here
+ * must never propagate into the caller's catch block, or a delivered message
+ * gets recorded as failed and BullMQ redelivers it, sending it twice.
+ */
+async function emitBotMessageSentEvents(input: {
+  workspaceId: string
+  contactInbox: Pick<
+    ContactInboxModel,
+    "contactId" | "channel" | "source" | "sourceId"
+  >
+  result: OutgoingSendResult
+  trigger: BotSentTrigger
+}) {
+  const { workspaceId, contactInbox, result, trigger } = input
+  const { sentCount, messageIds } = result
+
+  try {
+    await Promise.all(
+      Array.from({ length: sentCount }, (_, index) =>
+        emit("analytics:dashboard", {
+          eventType: "message:bot_sent",
+          workspaceId,
+          contactId: contactInbox.contactId,
+          senderType: "bot",
+          occurredAt: new Date(),
+          source: contactInbox.source,
+          sourceId: contactInbox.sourceId,
+          channel: contactInbox.channel,
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: trigger.triggerHandler,
+              triggerType: trigger.triggerType,
+            },
+            ...(messageIds[index]
+              ? {
+                  sentPayload: {
+                    index,
+                    count: sentCount,
+                    providerMessageId: messageIds[index],
+                  },
+                }
+              : {}),
+          },
+        }),
+      ),
+    )
+  } catch (err) {
+    logger.error(
+      { err, workspaceId, contactId: contactInbox.contactId, sentCount },
+      "Failed to emit bot-sent analytics after a successful send",
+    )
+  }
+}
+
 export async function sendFlowStepToChannel({
   conversation,
   contactInbox,
@@ -562,6 +743,7 @@ export async function sendFlowStepToChannel({
   messageCreatedAt,
   sendFrom,
   commentAnchor,
+  botSentAnalytics,
 }: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -575,7 +757,8 @@ export async function sendFlowStepToChannel({
   messageCreatedAt?: Date
   sendFrom?: "inbox"
   commentAnchor?: CommentAnchor
-}): Promise<{ messageIds: string[] }> {
+  botSentAnalytics: BotSentTrigger
+}): Promise<OutgoingSendResult> {
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
     contactInbox,
@@ -610,7 +793,7 @@ export async function sendFlowStepToChannel({
       data: {
         contact: {
           ...contactInbox,
-          sourceConversationId: conversation.sourceId,
+          sourceConversationId: resolveChannelConversationId(conversation),
         },
         flowId,
         flowVersionId,
@@ -635,6 +818,13 @@ export async function sendFlowStepToChannel({
     contactId: contactInbox.contactId,
     workspaceId: conversation.workspaceId,
     at: new Date(),
+  })
+
+  await emitBotMessageSentEvents({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+    result,
+    trigger: botSentAnalytics,
   })
 
   return result

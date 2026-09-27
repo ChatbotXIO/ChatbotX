@@ -39,16 +39,25 @@ export function buildReconnectRedirectUrl(
   return isAbsolute ? url.toString() : `${url.pathname}${url.search}`
 }
 
+export const CHANNEL_CONNECT_ERRORS = [
+  /** The account is already connected, here or in another workspace. */
+  "duplicated",
+  /** The user withheld a permission the channel cannot work without. */
+  "missingScopes",
+] as const
+
+export type ChannelConnectError = (typeof CHANNEL_CONNECT_ERRORS)[number]
+
 /**
  * The connect-flow counterpart of `buildReconnectRedirectUrl`: relays back to
  * the originating (possibly branded) referer with the `?error=` param that
- * `useChannelDuplicatedError` reads. Channels whose connect runs in a server
+ * `useChannelConnectError` reads. Channels whose connect runs in a server
  * action redirect to a fixed settings path instead; an OAuth callback cannot,
  * because the branded origin only survives in the referer.
  */
 export function buildChannelErrorRedirectUrl(
   safeReferer: string,
-  error: "duplicated",
+  error: ChannelConnectError,
 ): string {
   const isAbsolute = ABSOLUTE_URL_PATTERN.test(safeReferer)
   const url = new URL(safeReferer, getBrokerOrigin())

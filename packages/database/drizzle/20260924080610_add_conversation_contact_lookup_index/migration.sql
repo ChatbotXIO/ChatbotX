@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "Conversation_contactId_idx" ON "Conversation" ("contactId");

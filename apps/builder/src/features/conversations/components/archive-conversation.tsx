@@ -22,11 +22,13 @@ import { archiveConversationAction } from "../actions/archive-conversation.actio
 type ArchiveConversationDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function ArchiveConversationDialog({
   trigger,
   ids,
+  onSuccess,
 }: ArchiveConversationDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -42,6 +44,7 @@ export default function ArchiveConversationDialog({
           }),
         )
         setOpen(false)
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {

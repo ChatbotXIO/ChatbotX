@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { toast } from "sonner"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { createSmtpAction } from "../actions/create-smtp.action"
 import { createSmtpRequest } from "../schema/mutation"
 import { smtpProviderLabels } from "../schema/resource"
@@ -33,6 +34,7 @@ export const CreateSmtpForm = ({
 }: CreateSmtpFormProps) => {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
 
   const providerOptions = useMemo(
     () =>
@@ -54,6 +56,7 @@ export const CreateSmtpForm = ({
               feature: "SMTP",
             }),
           )
+          invalidateInboxes()
           onSuccess?.()
           router.refresh()
         },

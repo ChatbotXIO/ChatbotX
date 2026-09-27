@@ -46,14 +46,14 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
-const fbCommentAutomationService = {
+const commentAutomationService = {
   list: vi.fn(),
   findMessengerOrFail: vi.fn(),
   createMessenger: vi.fn(),
   updateMessenger: vi.fn(),
   deleteMessenger: vi.fn(),
 }
-vi.mock("@chatbotx.io/business", () => ({ fbCommentAutomationService }))
+vi.mock("@chatbotx.io/business", () => ({ commentAutomationService }))
 
 const listFacebookPostsForAutomation = vi.fn()
 vi.mock("@/features/fb-comments/lib/facebook-posts", () => ({
@@ -89,7 +89,7 @@ describe("GET /v1/fb-comments", () => {
 
   test("lists workspace FB comment automations across every folder", async () => {
     const response = { data: [{ id: "fb-comment-1" }], pageCount: 1 }
-    fbCommentAutomationService.list.mockResolvedValueOnce(response)
+    commentAutomationService.list.mockResolvedValueOnce(response)
 
     await expect(
       procedure.handler?.({
@@ -98,7 +98,7 @@ describe("GET /v1/fb-comments", () => {
       }),
     ).resolves.toEqual(response)
 
-    expect(fbCommentAutomationService.list).toHaveBeenCalledWith({
+    expect(commentAutomationService.list).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       page: 1,
       perPage: 50,
@@ -114,18 +114,16 @@ describe("GET /v1/fb-comments/{id}", () => {
 
   test("gets a single FB comment automation in the token workspace", async () => {
     const record = { id: "fb-comment-1", name: "Welcome" }
-    fbCommentAutomationService.findMessengerOrFail.mockResolvedValueOnce(record)
+    commentAutomationService.findMessengerOrFail.mockResolvedValueOnce(record)
 
     await expect(
       procedure.handler?.({ context, input: { id: "fb-comment-1" } }),
     ).resolves.toEqual(record)
 
-    expect(fbCommentAutomationService.findMessengerOrFail).toHaveBeenCalledWith(
-      {
-        workspaceId: "workspace-1",
-        id: "fb-comment-1",
-      },
-    )
+    expect(commentAutomationService.findMessengerOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "fb-comment-1",
+    })
   })
 })
 
@@ -135,13 +133,13 @@ describe("POST /v1/fb-comments", () => {
   test("creates an automation in the token workspace", async () => {
     const input = { name: "Welcome commenters" }
     const record = { id: "fb-comment-1", ...input }
-    fbCommentAutomationService.createMessenger.mockResolvedValueOnce(record)
+    commentAutomationService.createMessenger.mockResolvedValueOnce(record)
 
     await expect(procedure.handler?.({ context, input })).resolves.toEqual(
       record,
     )
 
-    expect(fbCommentAutomationService.createMessenger).toHaveBeenCalledWith({
+    expect(commentAutomationService.createMessenger).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       data: input,
     })
@@ -154,13 +152,13 @@ describe("PATCH /v1/fb-comments/{id}", () => {
   test("updates an automation in the token workspace", async () => {
     const input = { id: "fb-comment-1", name: "Updated automation" }
     const record = { ...input }
-    fbCommentAutomationService.updateMessenger.mockResolvedValueOnce(record)
+    commentAutomationService.updateMessenger.mockResolvedValueOnce(record)
 
     await expect(procedure.handler?.({ context, input })).resolves.toEqual(
       record,
     )
 
-    expect(fbCommentAutomationService.updateMessenger).toHaveBeenCalledWith(
+    expect(commentAutomationService.updateMessenger).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "fb-comment-1" },
       { name: "Updated automation" },
     )
@@ -171,20 +169,20 @@ describe("DELETE /v1/fb-comments/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/fb-comments/{id}")
 
   test("deletes an automation in the token workspace", async () => {
-    fbCommentAutomationService.deleteMessenger.mockResolvedValueOnce(undefined)
+    commentAutomationService.deleteMessenger.mockResolvedValueOnce(undefined)
 
     await expect(
       procedure.handler?.({ context, input: { id: "fb-comment-1" } }),
     ).resolves.toBeUndefined()
 
-    expect(fbCommentAutomationService.deleteMessenger).toHaveBeenCalledWith({
+    expect(commentAutomationService.deleteMessenger).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "fb-comment-1",
     })
   })
 
   test("surfaces the declared not-found error from deletion", async () => {
-    fbCommentAutomationService.deleteMessenger.mockRejectedValueOnce(
+    commentAutomationService.deleteMessenger.mockRejectedValueOnce(
       new Error("FB Comment Automation not found"),
     )
 
@@ -192,7 +190,7 @@ describe("DELETE /v1/fb-comments/{id}", () => {
       procedure.handler?.({ context, input: { id: "missing" } }),
     ).rejects.toThrow("FB Comment Automation not found")
 
-    expect(fbCommentAutomationService.deleteMessenger).toHaveBeenCalledWith({
+    expect(commentAutomationService.deleteMessenger).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "missing",
     })

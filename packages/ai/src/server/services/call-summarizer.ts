@@ -57,10 +57,18 @@ export type CallSummaryResult = {
   actionItems?: string[]
 }
 
+/**
+ * `.nullable()` rather than `.optional()`: OpenAI structured outputs run in
+ * strict mode by default and require every property to be listed as
+ * required, so an optional field makes OpenAI reject the whole schema
+ * (`invalid_json_schema`). `null` is the documented way to let the model say
+ * "none" — see the AI SDK's OpenAI provider notes on strict structured
+ * outputs. It is normalised back to an absent field before returning.
+ */
 const callSummarySchema = z.object({
   summary: z.string(),
-  keyPoints: z.array(z.string()).optional(),
-  actionItems: z.array(z.string()).optional(),
+  keyPoints: z.array(z.string()).nullable(),
+  actionItems: z.array(z.string()).nullable(),
 })
 
 /** Thrown when the caller-selected provider is not (or no longer) connected. */
@@ -98,16 +106,20 @@ export async function generateCallSummary(props: {
       prompt: [
         "Summarize the following phone call transcript for a customer support agent.",
         "Provide a concise summary, a short list of key discussion points, and any concrete action items.",
-        "If the transcript has no clear action items, omit that field rather than inventing one.",
+        "If the transcript has no clear key points or action items, return null for that field rather than inventing one.",
         "",
         transcriptText,
       ].join("\n"),
       abortSignal: controller.signal,
     })
-    return object
+    return {
+      summary: object.summary,
+      ...(object.keyPoints ? { keyPoints: object.keyPoints } : {}),
+      ...(object.actionItems ? { actionItems: object.actionItems } : {}),
+    }
   } catch (error) {
     logger.error(
-      { error, workspaceId, provider },
+      { err: error, workspaceId, provider },
       "[call-summarizer] Failed to generate call summary",
     )
     throw error

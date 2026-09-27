@@ -1,14 +1,14 @@
 import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test } from "vitest"
 import { unsubscribePageFromInstagramWebhook } from "../src/apis/page"
-import { DEFAULT_API_VERSION, INSTAGRAM_API_URL } from "../src/constants"
+import { API_URL, DEFAULT_API_VERSION } from "../src/constants"
 
 describe("unsubscribePageFromInstagramWebhook", () => {
   test("DELETEs the ig subscribed_apps endpoint with the user access token in the header", async () => {
     let captured: Request | null = null
     server.use(
       http.delete(
-        `${INSTAGRAM_API_URL}/${DEFAULT_API_VERSION}/ig-1/subscribed_apps`,
+        `${API_URL}/${DEFAULT_API_VERSION}/ig-1/subscribed_apps`,
         ({ request }) => {
           captured = request
           return HttpResponse.json({ success: true })
@@ -34,7 +34,7 @@ describe("unsubscribePageFromInstagramWebhook", () => {
   test("throws when Graph returns HTTP 200 with success false", async () => {
     server.use(
       http.delete(
-        `${INSTAGRAM_API_URL}/${DEFAULT_API_VERSION}/ig-2/subscribed_apps`,
+        `${API_URL}/${DEFAULT_API_VERSION}/ig-2/subscribed_apps`,
         () => HttpResponse.json({ success: false }),
       ),
     )

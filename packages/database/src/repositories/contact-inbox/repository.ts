@@ -287,39 +287,6 @@ export const contactInboxRepository = {
   },
 
   /**
-   * The most recently active contact-inbox in one inbox — the recipient a
-   * "Send test event" CAPI check is attributed to, since Meta requires a real
-   * page-scoped id / phone number even for test events. `requireCtwaClid`
-   * narrows to click-to-WhatsApp-attributed rows, the only ones Meta accepts
-   * for a WhatsApp business-messaging event.
-   */
-  async findMostRecentByInbox(
-    input: { inboxId: string; workspaceId: string; requireCtwaClid?: boolean },
-    tx: DatabaseClient = db,
-  ): Promise<ContactInboxWorkspaceRow | null> {
-    const [row] = await tx
-      .select(contactInboxWorkspaceRowColumns)
-      .from(contactInboxModel)
-      .innerJoin(
-        inboxModel,
-        and(
-          eq(inboxModel.id, contactInboxModel.inboxId),
-          eq(inboxModel.workspaceId, input.workspaceId),
-        ),
-      )
-      .where(
-        and(
-          eq(contactInboxModel.inboxId, input.inboxId),
-          input.requireCtwaClid ? ctwaReferralCondition() : undefined,
-        ),
-      )
-      .orderBy(mostRecentMessageFirst())
-      .limit(1)
-
-    return row ?? null
-  },
-
-  /**
    * Every WhatsApp contact-inbox for a contact that carries CTWA (click-to-
    * WhatsApp ad) attribution, paired with the WhatsApp integration that owns
    * it. Used by the `tagApplied` conversion-trigger hook points: a tag is

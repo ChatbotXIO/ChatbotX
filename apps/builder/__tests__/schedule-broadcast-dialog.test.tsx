@@ -1,9 +1,10 @@
 import type { BroadcastModel } from "@chatbotx.io/database/types"
-import { act, useCallback } from "react"
+import { act, useCallback, useState } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { useForm, useFormContext } from "react-hook-form"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { ScheduleBroadcastDialog } from "@/features/broadcasts/components/schedule-broadcast-dialog"
+import type { BroadcastPlanLimitOutcome } from "@/features/broadcasts/lib/broadcast-plan-limit"
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -12,6 +13,11 @@ vi.mock("next-intl", () => ({
 
 vi.mock("sonner", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
+}))
+
+vi.mock("@/enterprise/features/billing/upgrade-plan-dialog", () => ({
+  UpgradePlanDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="pricing-dialog">pricing</div> : null,
 }))
 
 // The dialog only `.bind()`s this before handing it to the (mocked) hook
@@ -25,25 +31,66 @@ vi.mock("@/features/broadcasts/actions/schedule-broadcast.action", () => ({
 // from `formProps`, `resetFormAndAction` = RHF's plain `reset()`) so the
 // dialog's own `useEffect` resync logic — the thing under test — runs
 // unmodified. `handleSubmitWithAction` is a no-op since no test here submits.
+const actionCallbacks = vi.hoisted(() => ({
+  onSuccess: undefined as ((args: { data?: unknown }) => void) | undefined,
+  execute: vi.fn(),
+}))
+
 vi.mock("@next-safe-action/adapter-react-hook-form/hooks", () => ({
   useHookFormAction: (
     _action: unknown,
     _resolver: unknown,
-    props?: { formProps?: { defaultValues?: Record<string, unknown> } },
+    props?: {
+      actionProps?: { onSuccess?: (args: { data?: unknown }) => void }
+      formProps?: { defaultValues?: Record<string, unknown> }
+    },
   ) => {
-    const form = useForm({ defaultValues: props?.formProps?.defaultValues })
+    actionCallbacks.onSuccess = props?.actionProps?.onSuccess
+    const form = useForm({
+      defaultValues: props?.formProps?.defaultValues,
+      resolver: _resolver as never,
+    })
     const { reset } = form
     return {
       form,
-      handleSubmitWithAction: (event?: { preventDefault?: () => void }) => {
-        event?.preventDefault?.()
-        return Promise.resolve()
-      },
+      handleSubmitWithAction: form.handleSubmit(actionCallbacks.execute),
       // Memoized like the real adapter's `resetFormAndAction` (stable
       // `resetForm`/`resetAction` refs) — an inline closure here would
       // change identity every render and loop the dialog's `useEffect`.
       resetFormAndAction: useCallback(() => reset(), [reset]),
     }
+  },
+}))
+
+const numberFieldProps = vi.hoisted(() => ({
+  current: null as Record<string, unknown> | null,
+}))
+
+vi.mock("@chatbotx.io/ui/components/form/input-number-field", () => ({
+  InputNumberField: (props: { name: string; placeholder?: string }) => {
+    numberFieldProps.current = props
+    const { name } = props
+    const { setValue, watch } = useFormContext()
+    const value = watch(name)
+    return (
+      <>
+        <button
+          data-testid={`field-${name}`}
+          data-value={String(value ?? "")}
+          onClick={() => setValue(name, 250, { shouldDirty: true })}
+          type="button"
+        >
+          {String(value ?? "")}
+        </button>
+        <button
+          data-testid={`clear-${name}`}
+          onClick={() => setValue(name, undefined, { shouldDirty: true })}
+          type="button"
+        >
+          clear
+        </button>
+      </>
+    )
   },
 }))
 
@@ -126,8 +173,27 @@ vi.mock("@chatbotx.io/ui/components/ui/button", () => ({
   ),
 }))
 
-const BROADCAST_A = { id: "bc-a", name: "Broadcast A" } as BroadcastModel
-const BROADCAST_B = { id: "bc-b", name: "Broadcast B" } as BroadcastModel
+const BROADCAST_A = {
+  id: "bc-a",
+  name: "Broadcast A",
+  sendRatePerMinute: 120,
+} as BroadcastModel
+const BROADCAST_B = {
+  id: "bc-b",
+  name: "Broadcast B",
+  sendRatePerMinute: null,
+} as BroadcastModel
+const PLAN_LIMIT_OUTCOME: BroadcastPlanLimitOutcome = {
+  outcome: "planLimit",
+  limit: {
+    reason: "activeBroadcasts",
+    planName: "Trial",
+    maxSendRatePerMinute: 60,
+    maxActiveBroadcasts: 1,
+    displayedSendRatePerMinute: 100,
+    upgradeSpeedMultiplier: 20,
+  },
+}
 
 let container: HTMLDivElement | null = null
 let root: Root | null = null
@@ -167,7 +233,21 @@ afterEach(() => {
   container = null
   root = null
   pickerProps.current = null
+  numberFieldProps.current = null
+  actionCallbacks.onSuccess = undefined
+  actionCallbacks.execute.mockReset()
 })
+
+function PlanLimitHarness() {
+  const [open, setOpen] = useState(true)
+  return (
+    <ScheduleBroadcastDialog
+      broadcast={BROADCAST_A}
+      onOpenChange={setOpen}
+      open={open}
+    />
+  )
+}
 
 describe("ScheduleBroadcastDialog reopen reset", () => {
   test("resets to defaults when reopened for a different broadcast after being cancelled mid-edit", () => {
@@ -177,9 +257,15 @@ describe("ScheduleBroadcastDialog reopen reset", () => {
       el.querySelector<HTMLButtonElement>('[data-testid="field-schedulesType"]')
     const dateField = () =>
       el.querySelector<HTMLButtonElement>('[data-testid="field-schedulesAt"]')
+    const rateField = () =>
+      el.querySelector<HTMLButtonElement>(
+        '[data-testid="field-sendRatePerMinute"]',
+      )
 
     expect(scheduleTypeField()?.dataset.value).toBe("now")
     expect(dateField()).toBeNull()
+    expect(rateField()?.dataset.value).toBe("120")
+    expect(numberFieldProps.current?.placeholder).toBe("120")
 
     // Pick "future" and a date for broadcast A, then cancel without submitting.
     act(() => {
@@ -209,6 +295,56 @@ describe("ScheduleBroadcastDialog reopen reset", () => {
     // The stale "future" + date selection must not leak into broadcast B's dialog.
     expect(reopenedScheduleTypeField()?.dataset.value).toBe("now")
     expect(reopenedDateField()).toBeNull()
+    expect(
+      reopened.querySelector<HTMLButtonElement>(
+        '[data-testid="field-sendRatePerMinute"]',
+      )?.dataset.value,
+    ).toBe("")
+    expect(numberFieldProps.current?.placeholder).toBe("500")
+  })
+})
+
+describe("ScheduleBroadcastDialog send rate", () => {
+  test("submits a typed rate", async () => {
+    const el = renderDialog({ broadcast: BROADCAST_A, open: true })
+
+    act(() => {
+      el.querySelector<HTMLButtonElement>(
+        '[data-testid="field-sendRatePerMinute"]',
+      )?.click()
+    })
+    await act(async () => {
+      el.querySelector("form")?.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      )
+      await Promise.resolve()
+    })
+
+    expect(actionCallbacks.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ sendRatePerMinute: 250 }),
+      expect.anything(),
+    )
+  })
+
+  test("submits null when the prefilled rate is cleared", async () => {
+    const el = renderDialog({ broadcast: BROADCAST_A, open: true })
+
+    act(() => {
+      el.querySelector<HTMLButtonElement>(
+        '[data-testid="clear-sendRatePerMinute"]',
+      )?.click()
+    })
+    await act(async () => {
+      el.querySelector("form")?.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      )
+      await Promise.resolve()
+    })
+
+    expect(actionCallbacks.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ sendRatePerMinute: null }),
+      expect.anything(),
+    )
   })
 })
 
@@ -229,5 +365,23 @@ describe("ScheduleBroadcastDialog send time", () => {
     // `afterEach` clears the recorder, so a `null` here means the picker never
     // mounted — which fails this assertion just as loudly as a wrong format.
     expect(pickerProps.current?.saveFormat).toBe("iso")
+  })
+})
+
+describe("ScheduleBroadcastDialog plan limit", () => {
+  test("closes the schedule dialog before showing the plan-limit dialog", () => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    container = document.createElement("div")
+    document.body.append(container)
+    root = createRoot(container)
+    act(() => root?.render(<PlanLimitHarness />))
+
+    act(() => actionCallbacks.onSuccess?.({ data: PLAN_LIMIT_OUTCOME }))
+
+    const dialogs = container.querySelectorAll('[data-testid="dialog"]')
+    expect(dialogs).toHaveLength(1)
+    expect(dialogs[0]?.textContent).toContain(
+      "broadcasts.planLimitDialog.title",
+    )
   })
 })

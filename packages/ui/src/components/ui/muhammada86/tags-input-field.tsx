@@ -1,6 +1,7 @@
 "use client";
 
-// Locally patched for RTL; reapply after refreshing from the upstream shadcn registry.
+// Locally patched for RTL and to keep autoFocus off by default; reapply after
+// refreshing from the upstream shadcn registry.
 
 import {
   FormControl,
@@ -61,7 +62,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
   className,
   maxTags,
   maxLength = 100,
-  autoFocus = true,
+  autoFocus = false,
   startIcon,
   endIcon,
   allowDuplicates = false,

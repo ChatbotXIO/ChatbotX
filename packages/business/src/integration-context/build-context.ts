@@ -2,49 +2,41 @@ import {
   uploader as defaultUploader,
   getStoragePrefix,
 } from "@chatbotx.io/filesystem"
-import {
-  REALTIME_TOKEN_PURPOSE,
-  signRealtimeToken,
-} from "@chatbotx.io/partysocket-config/auth"
+import { buildBroadcastAuthHeader } from "@chatbotx.io/partysocket-config"
 import type { AuthStore, AuthValue, Context } from "@chatbotx.io/sdk"
-import {
-  resolveBroadcastSecret,
-  resolveTenantSettings,
-} from "../platform/settings"
+import { resolveRealtimeBroadcastTarget } from "../platform/realtime-broadcast"
+import { resolveTenantSettings } from "../platform/settings"
 import { type AuthStoreIntegrationRow, makeAuthStore } from "./auth-store"
 
-type GetRealtimeAuthHeaders =
-  Context<AuthValue>["platform"]["getRealtimeAuthHeaders"]
+type GetRealtimeBroadcastAuthHeaders =
+  Context<AuthValue>["platform"]["getRealtimeBroadcastAuthHeaders"]
 
-const buildGetRealtimeAuthHeaders =
-  (secret: string): GetRealtimeAuthHeaders =>
-  async (target) => {
-    const token = await signRealtimeToken(
-      target,
-      REALTIME_TOKEN_PURPOSE.broadcast,
-      secret,
-    )
-    return { Authorization: `Bearer ${token}` }
-  }
+const buildGetRealtimeBroadcastAuthHeaders =
+  (secret: string): GetRealtimeBroadcastAuthHeaders =>
+  async (target) => ({
+    Authorization: await buildBroadcastAuthHeader(target, secret),
+  })
 
 export type PlatformData = {
   appUrl: string
-  wsUrl: string
+  internalRealtimeUrl: string
+  publicRealtimeUrl: string
   storageUrl: string
-  getRealtimeAuthHeaders: GetRealtimeAuthHeaders
+  getRealtimeBroadcastAuthHeaders: GetRealtimeBroadcastAuthHeaders
 }
 
 const resolvePlatformData = async (
   workspaceId: string,
 ): Promise<PlatformData> => {
-  const [tenantSettings, realtimeSecret] = await Promise.all([
-    resolveTenantSettings({ workspaceId }),
-    resolveBroadcastSecret({ workspaceId }),
-  ])
+  const realtimeTarget = resolveRealtimeBroadcastTarget()
+  const tenantSettings = await resolveTenantSettings({ workspaceId })
 
   return {
     ...tenantSettings,
-    getRealtimeAuthHeaders: buildGetRealtimeAuthHeaders(realtimeSecret),
+    internalRealtimeUrl: realtimeTarget.url,
+    getRealtimeBroadcastAuthHeaders: buildGetRealtimeBroadcastAuthHeaders(
+      realtimeTarget.secret,
+    ),
   }
 }
 

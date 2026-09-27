@@ -10,7 +10,9 @@ import { formatShortDate } from "../../utils/date-format"
 export function BotMessagesByResultChart() {
   const t = useTranslations()
   const locale = useLocale()
-  const { botMessagesByResult } = useAnalysisStore((state) => state)
+  const botMessagesByResult = useAnalysisStore(
+    (state) => state.botMessagesByResult,
+  )
 
   const data = useMemo(() => {
     const successLabel = t("analytics.success")

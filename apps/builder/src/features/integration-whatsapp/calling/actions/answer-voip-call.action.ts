@@ -385,10 +385,11 @@ export const answerWhatsappVoipCallAction = callingActionClient
         return { outcome: "callEnded" }
       }
 
-      // Best-effort: tell every other rung agent's dialog to stop ringing
-      // immediately rather than waiting out the deadline. The winning agent's
-      // own client ignores this via answeredByUserId. A broadcast failure must
-      // never fail the accept already won.
+      // Best-effort: tell every other ringing dialog - other agents' and this
+      // agent's other tabs - to stop immediately rather than waiting out the
+      // deadline. The tab that answered ignores it because it is already past
+      // incomingRinging. A broadcast failure must never fail the accept
+      // already won.
       await broadcastToWorkspaceParty(workspaceId, {
         eventType: RealtimeEventType.whatsappCallClaimedElsewhere,
         data: {

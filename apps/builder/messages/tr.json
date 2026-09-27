@@ -336,6 +336,7 @@
       "message": "Son ödemeniz başarısız oldu. Çalışma alanınızı etkin tutmak için ödeme yönteminizi güncelleyin."
     },
     "trial": {
+      "planName": "Deneme",
       "daysLeft": "Deneme: {days} gün kaldı",
       "endsTomorrow": "Deneme yarın sona eriyor",
       "expired": "Deneme süreniz sona erdi — çalışma alanınızı etkin tutmak için planınızı yükseltin",
@@ -507,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Planınızı yükseltin",
+      "sendRate": "Mevcut {plan} planınız broadcast gönderimlerini dakikada en fazla {rate} mesaj hızında destekler. Broadcast gönderimlerini {multiplier}x daha hızlı yapmak için planınızı yükseltin.",
+      "activeBroadcasts": "Mevcut {plan} planınız aynı anda {max, plural, one {# broadcast} other {# broadcast}} çalıştırır. Aynı anda daha fazla broadcast çalıştırmak için planınızı yükseltin."
+    },
+    "sendLimit": {
+      "title": "Sınır",
+      "hint": "Eşleşen tüm kişilere göndermek için boş bırakın.",
+      "rateHint": "Varsayılan hızı kullanmak için boş bırakın.",
+      "rangeSummary": "Kişiler #{start} – #{end}",
+      "rangeFromSummary": "Kişi #{start}'den itibaren",
+      "rangeLabel": "Kişi aralığı",
+      "fromLabel": "Başlangıç",
+      "toLabel": "Bitiş",
+      "allPlaceholder": "Tümü",
+      "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz"
     }
   },
   "commentAutomation": {
@@ -535,7 +553,26 @@
       "keywordsNotMatched": "Anahtar kelimeler eşleşmedi",
       "contactNotNew": "Kişi yeni değil",
       "alreadyRepliedOnPost": "Bu gönderide zaten yanıtlandı",
-      "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi"
+      "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi",
+      "mentionCountNotMatched": "Bahsetme sayısı eşleşmedi"
+    },
+    "replyTo": {
+      "mentions": "Yeterli bahsetme içeren yorumlar",
+      "mentionCount": "Etiketlenen kişi sayısı",
+      "mentionCountDescription": "Yalnızca en az bu sayıda kişiyi (@ad) etiketleyen yorumlar eşleşir.",
+      "mentionCountOption": "{count, plural, one {# kişi} other {# kişi}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Şuna eşit yorumlar",
+      "contain": "Şunu içeren yorumlar"
+    },
+    "hideComments": {
+      "hasGif": "GIF içerir",
+      "hasEmoji": "Emoji içerir"
+    },
+    "trackUserTags": {
+      "label": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
+      "descriptionText": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     }
   },
   "condition": {
@@ -737,6 +774,10 @@
       "whatsapp": "Bu WhatsApp numarası zaten başka bir çalışma alanına bağlı.",
       "zalo": "Bu Zalo OA zaten başka bir çalışma alanına bağlı."
     },
+    "missingScopes": {
+      "generic": "Bağlantı iptal edildi: bazı izinler verilmedi. Lütfen yeniden bağlanın ve istenen tüm izinleri kabul edin.",
+      "tiktok": "TikTok bağlantısı iptal edildi: bazı izinler verilmedi. Lütfen yeniden bağlanın ve istenen tüm izinleri kabul edin."
+    },
     "reconnect": {
       "success": "Kanal başarıyla yeniden bağlandı.",
       "errors": {
@@ -864,6 +905,7 @@
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir."
   },
   "fields": {
+    "optionalHint": "(isteğe bağlı)",
     "marketingMessagesConfigId": {
       "label": "Pazarlama Mesajları Yapılandırma Kimliği",
       "description": "marketing_messages_messenger iznini istemek için kullanılan Facebook Login for Business yapılandırma kimliği."
@@ -2134,11 +2176,16 @@
       "clientId": "İstemci Kimliği",
       "clientSecret": "İstemci Gizli Anahtarı",
       "displayName": "Görünen Ad",
+      "needsReauthorizationForComments": "Bu bağlantı yorum otomasyonundan önce yetkilendirildi. Yorum olaylarını almaya başlamak için yeniden bağlayın.",
       "connectInstructions": {
         "step1": "<link>developers.tiktok.com</link> adresinden bir TikTok uygulaması oluşturun.",
         "step2": "Hesabınızı yetkilendirin ve <strong>erişim anahtarını</strong>, <strong>açık kimliği</strong> ve <strong>istemci gizli anahtarını</strong> kopyalayın.",
         "step3": "Bağlanmak için kimlik bilgilerini aşağıya yapıştırın."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Damla"
@@ -2339,6 +2386,9 @@
     },
     "lastCallTranscript": {
       "label": "Son arama transkripti"
+    },
+    "sendRatePerMinute": {
+      "label": "Dakikadaki mesaj sayısı"
     }
   },
   "flows": {
@@ -2455,6 +2505,8 @@
       "transferConversationToHuman": "Konuşmayı İnsana Aktar",
       "unarchiveConversation": "Konuşmayı Arşivden Çıkar",
       "unassignConversation": "Konuşma Atamasını Kaldır",
+      "markConversationAsUnread": "Konuşmayı Okunmadı Olarak İşaretle",
+      "markConversationAsRead": "Konuşmayı Okundu Olarak İşaretle",
       "unfollowConversation": "Konuşma Takibini Bırak",
       "unsubscribeBroadcast": "Yayın Aboneliğinden Çık",
       "getUserData": "Kullanıcı Verisini Al",
@@ -3197,6 +3249,7 @@
     "changeLikeState": "Beğeni durumunu değiştir",
     "changeHideState": "Gizleme durumunu değiştir",
     "commentHidden": "Bu yorum gizlendi",
+    "commentMediaUnavailable": "Bu yorum görüntülenemeyen bir GIF, çıkartma veya görsel içeriyor",
     "messageDeleted": "Mesaj silindi.",
     "sendFailed": "Gönderilemedi",
     "repliedToStory": "Hikayenize yanıt verdi",
@@ -3237,7 +3290,10 @@
     "deleteFeature": "{feature} Sil",
     "resetFeature": "{feature} sıfırla",
     "resetConfirmation": "Bu, seçilen {feature} değerlerini boşaltacaktır.\nBu işlem geri alınamaz.",
+    "resetAllConfirmation": "Bu, bu kişiye ait tüm {feature} değerlerini boşaltacaktır.\nBu işlem geri alınamaz.",
     "resetSuccess": "{feature} başarıyla sıfırlandı",
+    "clearFeature": "{feature} temizle",
+    "clearSuccess": "{feature} başarıyla temizlendi",
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir.",
     "addFeature": "{feature} Ekle",
     "signOutConfirmation": "Oturumu kapatmak istediğinizden emin misiniz?",
@@ -3288,6 +3344,7 @@
     "historyDepth": "({count})",
     "none": "Yok",
     "tiktokCardTitleTooLong": "TikTok bu mesajı kısaltacak: butonlar eklendiğinde yalnızca ilk 40 karakter gönderilir. Mesajı kısaltın veya butonları kaldırın.",
+    "sendTextTooLongForChannel": "Bu mesaj, bu kanalın izin verdiğinden daha uzun. Mesajı kısaltın veya bu bloğu daha yüksek sınırı olan bir kanala yönlendirin.",
     "waTemplateMpmNoProducts": "Yayınlamadan önce bu çoklu ürün butonuna en az bir ürün ekleyin.",
     "waTemplateMpmTooManySections": "Çoklu ürün butonunda en fazla 10 bölüm olabilir. Yayınlamadan önce bazı bölümleri kaldırın.",
     "waTemplateMpmTooManyProducts": "Çoklu ürün butonunda toplamda en fazla 30 ürün olabilir. Yayınlamadan önce bazı ürünleri kaldırın.",
@@ -3377,6 +3434,7 @@
       "noConnectablePagesDescription": "Bu Sayfanın yöneticisi değilsiniz",
       "bmLookupFailedTitle": "İşletme Yöneticisi sayfaları eksik olabilir",
       "bmLookupFailedDescription": "Bir İşletme Yöneticisi üzerinden yönetilen sayfaların listelenebilmesi için Messenger'ı yeniden bağlayın ve İşletme Yöneticisi erişimi verin.",
+      "loadFailed": "Facebook Sayfaların yüklenemedi",
       "alreadyConnectedNote": "Bu sayfa zaten bağlı",
       "notAdminNote": "Bu Sayfanın yöneticisi değilsiniz",
       "tryAgain": "Yeniden bağlanmayı dene"
@@ -4074,6 +4132,7 @@
         "statusNoAnswer": "Yanıt yok",
         "eyebrowCallEnded": "ARAMA SONA ERDİ",
         "statusConnectionLost": "Bağlantı kesildi",
+        "answerFailed": "Arama yanıtlanamadı. Bir mikrofonun bağlı olduğunu ve tarayıcıda izin verildiğini kontrol edip tekrar deneyin.",
         "ringingListTitle": "{count, plural, one {# gelen arama} other {# gelen arama}}"
       },
       "capability": {
@@ -4179,6 +4238,14 @@
     "chatbotInvitationDescription2": "{userName}, sizi {chatbotName}'a katılmaya davet etti.",
     "invalidInvitation": "Bu davet geçersiz veya süresi dolmuş.",
     "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Bot mesajlarını okundu olarak işaretle",
+      "enabled": "Etkin",
+      "disabled": "Devre dışı",
+      "description": "Etkinleştirildiğinde bot kendi mesajlarını otomatik olarak okundu olarak işaretler"
+    }
   },
   "inboxTeams": {
     "title": "Gelen Kutusu Ekipleri"
@@ -4543,7 +4610,8 @@
     "afterText": "Sonra"
   },
   "tools": {
-    "title": "Araçlar"
+    "title": "Araçlar",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4646,13 +4714,13 @@
     "privateReply": "Özel yanıt (gelen kutusu)",
     "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu, bir chatbot akışı seçin veya devre dışı bırakın.",
     "publicReply": "Yoruma genel yanıt",
-    "publicReplyDescription": "Yorumun hemen altında genel bir yanıt paylaşın. En fazla 10 metin şablonunu, AI Ajanını, bir chatbot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir.",
+    "publicReplyDescription": "Yorumun hemen altında genel bir yanıt paylaşın. En fazla 10 metin şablonunu, AI Ajanını, bir chatbot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir. Spintax desteklenir.",
     "replyMessage": "Yanıt mesajı",
     "replyMessagePlaceholder": "Yanıt mesajı girin...",
     "includeKeywordsType": "Şuna yanıt ver",
     "includeKeywordsTypeDescription": "Bu otomasyonun hangi yorumlara yanıt vereceğini seçin.",
     "includeKeywords": "Eşleşecek anahtar kelimeler",
-    "excludeKeywords": "Bu anahtar kelimeleri içeren yorumları hariç tut",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "excludeKeywordsDescription": "Bu anahtar kelimelerden herhangi birini içeren yorumlar hem gelen kutusu hem de genel yanıt otomasyonu tarafından yok sayılır.",
     "keywordsPlaceholder": "Yazın ve Enter'a basın...",
     "replyAfter": "Şu kadar süre sonra yanıtla",
@@ -4715,7 +4783,7 @@
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
       "ignoreCommentRepliesDescription": "Üst düzey yorumlar değil, başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
       "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
-      "trackUserTagsDescription": "Kaç kullanıcının etiketlendiğini öğrenmek için '{{total_tagged}}' kullanın. Etiketlenen kişilerden kaçının kişi listesinde olmadığını öğrenmek için '{{total_new_tagged}}' kullanın."
+      "trackUserTagsDescription": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",
@@ -4749,13 +4817,13 @@
     "privateReply": "Özel yanıt (gelen kutusu)",
     "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu, bir bot akışı seçin veya devre dışı bırakın.",
     "publicReply": "Yoruma genel yanıt",
-    "publicReplyDescription": "Yorumun hemen altına genel bir yanıt gönderin. En fazla 10 metin şablonunu, AI Ajanını, bir bot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir.",
+    "publicReplyDescription": "Yorumun hemen altına genel bir yanıt gönderin. En fazla 10 metin şablonunu, AI Ajanını, bir bot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir. Spintax desteklenir.",
     "replyMessage": "Yanıt mesajı",
     "replyMessagePlaceholder": "Yanıt mesajı girin...",
     "includeKeywordsType": "Şu yorumlara yanıt ver",
     "includeKeywordsTypeDescription": "Bu otomasyonun hangi yorumlara yanıt vereceğini seçin.",
     "includeKeywords": "Eşleşecek anahtar kelimeler",
-    "excludeKeywords": "Bu anahtar kelimeleri içeren yorumları hariç tut",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "excludeKeywordsDescription": "Bu anahtar kelimelerden herhangi birini içeren yorumlar hem gelen kutusu hem de genel yanıt otomasyonu tarafından yok sayılır.",
     "keywordsPlaceholder": "Yazın ve Enter'a basın...",
     "replyAfter": "Şundan sonra yanıtla",
@@ -4817,7 +4885,7 @@
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
       "ignoreCommentRepliesDescription": "Üst düzey yorumlar yerine başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
       "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
-      "trackUserTagsDescription": "Kaç kullanıcının etiketlendiğini öğrenmek için '{{total_tagged}}' kullanın. Etiketlenen kişilerden kaçının kişi listesinde olmadığını öğrenmek için '{{total_new_tagged}}' kullanın."
+      "trackUserTagsDescription": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",
@@ -4853,13 +4921,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. En fazla 10 metin mesajı (spintax desteklenir), her biri ayrı bir yanıt olarak paylaşılır.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4868,7 +4936,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Yorumları Gizle"
     },
     "postType": {
       "all": "All posts",
@@ -4910,8 +4979,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "En az bir yanıt mesajı girin.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Yalnızca gönderilerinize verilen üst düzey yanıtlar gizlenebilir.",
+    "hideComments": {
+      "all": "Tüm yorumları gizle",
+      "hasPhoneNumber": "Telefon numarası içeriyor",
+      "hasLink": "Bağlantı içeriyor",
+      "hasKeywords": "Anahtar kelime içeriyor",
+      "keywords": "Anahtar Kelimeler",
+      "showCommentsAfter": "Şu tarihten sonraki yorumları göster"
+    },
+    "showCommentsAfter": {
+      "none": "Asla"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. En fazla 10 metin mesajı (spintax desteklenir), her biri ayrı bir yanıt olarak paylaşılır.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "En az bir yanıt mesajı girin."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Instagram Hikaye Yanıt Otomasyonu",
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "Geçerli bir Dataset ID girin (yalnızca rakamlar).",
       "whatsappNotFound": "WhatsApp entegrasyonu bulunamadı.",
       "testEventCodeRequired": "Bir test etkinliği göndermeden önce test etkinliği kodunu kaydedin.",
-      "noContactForTest": "Bu kanalda henüz uygun bir kişi yok. Test etkinliği, ilişkilendirilecek gerçek bir kişi gerektirir (WhatsApp için click-to-WhatsApp reklamından gelen bir kişi).",
-      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64)."
+      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64).",
+      "invalidMessagingId": "Mesajlaşma kimliği yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 512).",
+      "capiDisconnected": "Bu kanal için Meta CAPI bağlantısı kesildi. Test etkinliği göndermeden önce yeniden bağlayın."
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "Test etkinliği kodu kaydedildi.",
       "cleared": "Test etkinliği kodu temizlendi. Etkinlikler tekrar canlı.",
       "send": "Test etkinliği gönder",
-      "sent": "Test etkinliği sıraya alındı. Bir dakika içinde Events Manager içindeki Test events altında görünür.",
-      "sendHint": "Bu kanalın en son kişisine örnek bir Purchase (100 USD) gönderir.",
+      "sent": "Test etkinliği gönderildi. Bir dakika içinde Events Manager'daki Test events altında görünür.",
+      "sendHint": "Girdiğiniz bir mesajlaşma kimliğine örnek bir Purchase (100 USD) gönderir. Kayıtlı hiçbir kişi kullanılmaz.",
       "activeNotice": "Test modu açık: kod temizlenene kadar bu kanaldaki etkinlikler raporlarda sayılmaz.",
-      "openTestEvents": "Test events'i aç"
+      "openTestEvents": "Test events'i aç",
+      "dialogTitle": "Test etkinliği gönder",
+      "dialogDescription": "Test etkinlik kodunuzla örnek bir Purchase (100 USD) gönderilir. Gerçek bir kişiye atfedilmemesi için örnek mesajlaşma kimliğini Events Manager → Test events → Messaging → Graph API Explorer'dan yapıştırın.",
+      "messagingIdLabel": {
+        "messenger": "Kişi kimliği (page_scoped_user_id)",
+        "instagram": "Kişi kimliği (ig_sid)",
+        "whatsapp": "Tıklama kimliği (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Meta'daki örnek değeri yapıştırın",
+      "messagingIdHint": "Yalnızca harf, rakam, tire ve alt çizgi (en fazla 512).",
+      "cancel": "İptal",
+      "confirmSend": "Gönder"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "Bot Alanları"
+  },
+  "openLink": {
+    "title": "Bağlantıyı aç",
+    "invalidTitle": "Geçersiz bağlantı.",
+    "invalidDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
+    "openZaloGroup": "Zalo grubunu aç",
+    "openZalo": "Zalo'yu aç",
+    "openMessenger": "Messenger'ı aç"
   }
 }

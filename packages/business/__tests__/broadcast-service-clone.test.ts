@@ -92,6 +92,18 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
+vi.mock("../src/broadcast/plan-policy.service", () => ({
+  broadcastPlanPolicyService: {
+    appliesToChannel: (channel: string) => channel === "messenger",
+    hasRestrictions: () => false,
+    resolveForWorkspace: vi.fn().mockResolvedValue({
+      policy: { kind: "unrestricted" },
+      planName: null,
+    }),
+    restrictionFor: vi.fn(() => null),
+  },
+}))
+
 const { broadcastService } = await import("../src/broadcast/service")
 
 const CONTACT_FILTER = {
@@ -156,10 +168,30 @@ describe("broadcastService.cloneBroadcast", () => {
       integrationWhatsappId: null,
       integrationMessengerId: null,
       contactFilter: CONTACT_FILTER,
+      audienceRangeStart: null,
+      audienceRangeEnd: null,
+      sendRatePerMinute: null,
       schedulesType: "future",
       schedulesAt: source.schedulesAt,
     })
     expect(result.id).toBe("clone-1")
+  })
+
+  test("copies a non-null send limit onto the clone", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...source,
+      audienceRangeStart: 10,
+      audienceRangeEnd: 100,
+      sendRatePerMinute: 750,
+    })
+
+    await clone()
+
+    expect(broadcastInsert.mock.calls[0][0]).toMatchObject({
+      audienceRangeStart: 10,
+      audienceRangeEnd: 100,
+      sendRatePerMinute: 750,
+    })
   })
 
   test("numbers the copy after the highest existing (Copy N) of the same base", async () => {

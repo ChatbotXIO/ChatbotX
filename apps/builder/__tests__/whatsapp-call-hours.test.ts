@@ -6,6 +6,7 @@ import {
   CALL_HOURS_DAYS,
   formatMetaCallTime,
   parseMetaCallTime,
+  toCallHoursSnapshot,
   toMetaCallHours,
   upcomingHolidays,
 } from "../src/features/integration-whatsapp/calling/lib/call-hours"
@@ -106,6 +107,21 @@ describe("buildCallHoursFormValues", () => {
       { openMinute: 68, closeMinute: 620 },
       { openMinute: 780, closeMinute: 1020 },
     ])
+  })
+
+  test("treats a schedule Meta returned without weekly hours as empty days", () => {
+    const values = buildCallHoursFormValues(
+      {
+        status: "ENABLED",
+        timezone_id: "America/Manaus",
+      },
+      "Asia/Ho_Chi_Minh",
+    )
+
+    expect(values.enabled).toBe(true)
+    expect(values.timezoneId).toBe("America/Manaus")
+    expect(values.days).toHaveLength(CALL_HOURS_DAYS.length)
+    expect(values.days.every((day) => day.ranges.length === 0)).toBe(true)
   })
 })
 
@@ -260,5 +276,35 @@ describe("callHoursFormSchema", () => {
       callHoursFormSchema.safeParse({ ...base, days: [...days].reverse() })
         .success,
     ).toBe(false)
+  })
+})
+
+describe("toCallHoursSnapshot", () => {
+  test("maps Meta's schedule into the stored snapshot shape", () => {
+    const snapshot = toCallHoursSnapshot({
+      status: "ENABLED",
+      timezone_id: "America/Manaus",
+      weekly_operating_hours: [
+        { day_of_week: "MONDAY", open_time: "0900", close_time: "1700" },
+      ],
+    })
+
+    expect(snapshot).toEqual({
+      status: "ENABLED",
+      timezoneId: "America/Manaus",
+      weeklyOperatingHours: [
+        { dayOfWeek: "MONDAY", openTime: "0900", closeTime: "1700" },
+      ],
+      holidaySchedule: undefined,
+    })
+  })
+
+  test("tolerates a schedule Meta returned without weekly hours", () => {
+    const snapshot = toCallHoursSnapshot({
+      status: "DISABLED",
+      timezone_id: "America/Manaus",
+    })
+
+    expect(snapshot.weeklyOperatingHours).toEqual([])
   })
 })

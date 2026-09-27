@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
+  capiTestMessagingIdSchema,
   defaultEventNameByCatalog,
   metaCapiActionSourcePolicy,
   metaCapiActionSourceValues,
@@ -107,5 +108,23 @@ describe("metaCapiValueSchema / metaCapiCurrencySchema", () => {
     expect(metaCapiCurrencySchema.parse(" usd ")).toBe("USD")
     expect(metaCapiCurrencySchema.safeParse("US").success).toBe(false)
     expect(metaCapiCurrencySchema.safeParse("USDT").success).toBe(false)
+  })
+})
+
+describe("capiTestMessagingIdSchema", () => {
+  test("accepts the alphabet Meta's Test events samples use and trims whitespace", () => {
+    expect(capiTestMessagingIdSchema.parse("  ARAkLkA8rml-FeiCkt_EJQ ")).toBe(
+      "ARAkLkA8rml-FeiCkt_EJQ",
+    )
+  })
+
+  test.each([
+    "",
+    "   ",
+    "psid 1",
+    "id;drop",
+    "x".repeat(513),
+  ])("rejects %j", (value) => {
+    expect(capiTestMessagingIdSchema.safeParse(value).success).toBe(false)
   })
 })

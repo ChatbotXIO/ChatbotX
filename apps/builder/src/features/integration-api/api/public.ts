@@ -6,8 +6,15 @@ import { possibleErrorsOnCreatingResource } from "@/lib/orpc/orpc-error-helper"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { channelApiTokenAPI } from "@/orpc"
 
-const assertNotRateLimited = (inboxId: string): Promise<void> =>
-  assertApiNotRateLimited({ scope: "channel-api-rate-limit", key: inboxId })
+const assertNotRateLimited = (
+  inboxId: string,
+  resHeaders?: Headers,
+): Promise<void> =>
+  assertApiNotRateLimited({
+    scope: "channel-api-rate-limit",
+    key: inboxId,
+    resHeaders,
+  })
 
 export const channelsPublicRouter = {
   sendMessage: channelApiTokenAPI
@@ -29,7 +36,7 @@ export const channelsPublicRouter = {
     )
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      await assertNotRateLimited(context.inbox.id)
+      await assertNotRateLimited(context.inbox.id, context.resHeaders)
 
       await enqueueIntegrationJob({
         type: "incomingMessage",
@@ -67,7 +74,7 @@ export const channelsPublicRouter = {
     )
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      await assertNotRateLimited(context.inbox.id)
+      await assertNotRateLimited(context.inbox.id, context.resHeaders)
 
       // No downstream consumer for inbound "contact is typing" today (no
       // matching IntegrationJobAction/worker handler) — accepted and
@@ -100,7 +107,7 @@ export const channelsPublicRouter = {
     )
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      await assertNotRateLimited(context.inbox.id)
+      await assertNotRateLimited(context.inbox.id, context.resHeaders)
 
       await enqueueIntegrationJob({
         type: "contactMarkAsRead",
@@ -143,7 +150,7 @@ export const channelsPublicRouter = {
     )
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      await assertNotRateLimited(context.inbox.id)
+      await assertNotRateLimited(context.inbox.id, context.resHeaders)
 
       await enqueueIntegrationJob({
         type: "messageStatus",

@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { formatDistanceToNowStrict, isAfter } from "date-fns"
+import { formatDistanceToNowStrict } from "date-fns"
 import {
   MailIcon,
   MessageCircleMoreIcon,
@@ -27,16 +27,15 @@ import {
   UsersRoundIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo } from "react"
-import { toast } from "sonner"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
 import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
-import { readConversationAction } from "./actions/read-conversation.action"
+import { useMarkConversationRead } from "./hooks/use-mark-conversation-read"
+import { isConversationUnread } from "./lib/is-conversation-unread"
 import {
   type CallPreviewKind,
   resolveCallPreviewKind,
@@ -57,6 +56,7 @@ const CALL_PREVIEW_ICON_BY_KIND: Record<CallPreviewKind, typeof PhoneIcon> = {
 }
 
 type ConversationItemProps = {
+  assigneeOptionNameByValue: ReadonlyMap<string, string>
   conversation: ListConversationItemResource
   onSelect: () => void
 }
@@ -64,12 +64,15 @@ type ConversationItemProps = {
 const assignedIcon = (
   conversation: ListConversationItemResource,
   assignedAvatarUrl: string | undefined,
+  assignedUserOptionName: string | null,
+  assignedInboxTeamOptionName: string | null,
   t: ReturnType<typeof useTranslations>,
 ) => {
   if (conversation.assignedUserId) {
     const assignedUserName =
       conversation.assignedUser?.name ||
       conversation.assignedUser?.email ||
+      assignedUserOptionName ||
       t("assignAdmin.user")
 
     return (
@@ -80,7 +83,7 @@ const assignedIcon = (
               <AvatarImage src={assignedAvatarUrl ?? ""} />
 
               <AvatarFallback className="text-[0.5rem]">
-                {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
+                {assignedUserName.slice(0, 2)}
               </AvatarFallback>
             </Avatar>
           }
@@ -104,7 +107,9 @@ const assignedIcon = (
         <TooltipContent align="center" side="bottom">
           {t("assignAdmin.assignedTo", {
             name:
-              conversation.assignedInboxTeam?.name ?? t("fields.team.label"),
+              conversation.assignedInboxTeam?.name ??
+              assignedInboxTeamOptionName ??
+              t("fields.team.label"),
           })}
         </TooltipContent>
       </Tooltip>
@@ -158,12 +163,13 @@ function AdBadgePill({
 }
 
 export default function ConversationItem({
+  assigneeOptionNameByValue,
   conversation,
   onSelect,
 }: ConversationItemProps) {
   const t = useTranslations()
-  const { activeConversationId, readConversation } = useChatStore(
-    (state) => state,
+  const activeConversationId = useChatStore(
+    (state) => state.activeConversationId,
   )
   const isActive = conversation.id === activeConversationId
   // Narrowed to the matching call's id (not a boolean) so Answer/Reject can
@@ -183,16 +189,17 @@ export default function ConversationItem({
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
   const assignedAvatarUrl = useUserAvatarUrl(conversation.assignedUser?.image)
+  const assignedUserOptionName =
+    assigneeOptionNameByValue.get(`u_${conversation.assignedUserId}`) ?? null
+  const assignedInboxTeamOptionName =
+    assigneeOptionNameByValue.get(`t_${conversation.assignedInboxTeamId}`) ??
+    null
   const previewText = resolveLastMessagePreview(conversation.messages?.[0], t)
   const callPreviewKind = resolveCallPreviewKind(conversation.messages?.[0])
   const CallPreviewIcon = callPreviewKind
     ? CALL_PREVIEW_ICON_BY_KIND[callPreviewKind]
     : undefined
-  const isUnread = Boolean(
-    conversation.agentLastReadAt &&
-      conversation.contactLastReadAt &&
-      !isAfter(conversation.agentLastReadAt, conversation.contactLastReadAt),
-  )
+  const isUnread = isConversationUnread(conversation)
   // Show one "Ads" badge if ANY of this conversation's contactInboxes came
   // from a Meta ad (WhatsApp CTWA or Messenger/Instagram CTM/CTID) — mirrors
   // WATI's "CTWA" tag. `adReferral` is computed server-side per contactInbox
@@ -218,28 +225,12 @@ export default function ConversationItem({
     [conversation.contact, avatarUrl, isUnread],
   )
 
-  const { execute } = useAction(
-    readConversationAction.bind(
-      null,
-      conversation.workspaceId,
-      conversation.id,
-    ),
-    {
-      onSuccess: () => {
-        readConversation(conversation.id)
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
+  const markConversationRead = useMarkConversationRead()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: execute is not a dependency
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only the active transition triggers a read
   useEffect(() => {
     if (isActive) {
-      execute()
+      markConversationRead(conversation)
     }
   }, [isActive])
 
@@ -250,14 +241,25 @@ export default function ConversationItem({
           "h-auto w-full justify-center px-3 py-2 font-normal hover:bg-zinc-200 hover:text-foreground dark:hover:bg-muted",
           isActive ? "bg-zinc-200 dark:bg-muted!" : "",
         )}
-        onClick={() => onSelect()}
+        onClick={() => {
+          onSelect()
+          if (isActive) {
+            markConversationRead(conversation)
+          }
+        }}
         type="button"
         variant={isActive ? "secondary" : "ghost"}
       >
         <div className="relative">
           {contactAvatar}
           <div className="absolute start-0 bottom-0 transform">
-            {assignedIcon(conversation, assignedAvatarUrl, t)}
+            {assignedIcon(
+              conversation,
+              assignedAvatarUrl,
+              assignedUserOptionName,
+              assignedInboxTeamOptionName,
+              t,
+            )}
           </div>
           <div className="absolute end-0 bottom-0 transform">
             {conversation.contactInboxes?.map((contactInbox) => (
@@ -288,7 +290,14 @@ export default function ConversationItem({
 
         <div className="flex-1 overflow-hidden">
           <div className="flex items-center justify-between gap-1">
-            <span className="truncate text-start font-medium dark:text-gray-200">
+            <span
+              className={cn(
+                "truncate text-start",
+                isUnread
+                  ? "font-semibold text-foreground"
+                  : "font-medium text-muted-foreground",
+              )}
+            >
               {conversation.contact?.fullName}
             </span>
             <Tooltip>

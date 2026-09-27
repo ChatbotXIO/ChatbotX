@@ -27,6 +27,29 @@ const channelIdentityRules = {
 const usesMessagingIdentity = (actionSource: MetaCapiActionSource): boolean =>
   metaCapiActionSourcePolicy[actionSource].usesMessagingIdentity
 
+/** The Meta resource a channel's CAPI dataset is created under. */
+export type CapiDatasetResourceType = "page" | "igUser" | "waba"
+
+const capiDatasetResourceTypeByChannel = {
+  messenger: "page",
+  instagram: "igUser",
+  whatsapp: "waba",
+} as const satisfies Record<MetaConversionsChannel, CapiDatasetResourceType>
+
+/** The Meta resource a channel's dataset hangs off — page, IG user, or WABA. */
+export const capiDatasetResourceType = (
+  channel: MetaConversionsChannel,
+): CapiDatasetResourceType => capiDatasetResourceTypeByChannel[channel]
+
+/**
+ * A user-intent CAPI disconnect blocks every send (live and test). Property
+ * guard, not a channel switch: `capiDisconnectedAt` exists on every
+ * connect-capable channel, and this stays correct if a channel ever lacks it.
+ */
+export const isCapiDisconnected = (integration: {
+  capiDisconnectedAt?: Date | null
+}): boolean => Boolean(integration.capiDisconnectedAt)
+
 /** Whether an event on this channel/action source needs a `ctwa_clid` to be sendable. */
 export const capiEventRequiresCtwaClid = (
   channel: MetaConversionsChannel,

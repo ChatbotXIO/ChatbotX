@@ -31,7 +31,10 @@ import {
   CustomFieldSelect,
 } from "@/features/custom-fields/custom-field-select"
 import { findFieldByReference } from "@/features/custom-fields/lib/find-field-by-reference"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import {
+  useBotFields,
+  useCustomFields,
+} from "@/features/custom-fields/provider/custom-field-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import { getBrowserTimezone } from "../../contact-filter/lib/timezone"
 import { addContactCustomFieldAction } from "../actions/add-contact-custom-field.action"
@@ -40,11 +43,13 @@ import { addContactCustomFieldRequest } from "../schema/contact-custom-field"
 type AddContactCustomFieldDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function AddContactCustomFieldDialog({
   trigger,
   ids,
+  onSuccess,
 }: AddContactCustomFieldDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -64,6 +69,7 @@ export default function AddContactCustomFieldDialog({
           )
           form.reset()
           setOpen(false)
+          onSuccess?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -148,7 +154,10 @@ export const SetCustomField = ({
 }) => {
   const form = useFormContext()
   const t = useTranslations()
-  const { customFields, botFields } = useCustomFieldStore((state) => state)
+  const workspaceId = useWorkspaceId()
+  const customFields = useCustomFields(workspaceId).data ?? []
+  const botFields =
+    useBotFields(workspaceId, { enabled: includeBotFields }).data ?? []
 
   const getFieldName = (field: string) => {
     if (!parentName) {

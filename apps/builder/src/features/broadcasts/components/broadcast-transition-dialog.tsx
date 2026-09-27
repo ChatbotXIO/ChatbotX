@@ -15,6 +15,8 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import type { BroadcastPlanLimitOutcome } from "../lib/broadcast-plan-limit"
+import { isBroadcastPlanLimitOutcome } from "../lib/broadcast-plan-limit"
 
 export interface BroadcastTransitionDialogConfig {
   confirmLabelKey: string
@@ -34,18 +36,27 @@ export interface BroadcastTransitionDialogConfig {
 export function useBroadcastTransitionActionCallbacks({
   onOpenChange,
   onSuccess,
+  onPlanLimit,
 }: {
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
+  onPlanLimit?: (outcome: BroadcastPlanLimitOutcome) => void
 }): {
-  onSuccess: () => void
+  onSuccess: ({ data }: { data?: unknown }) => void
   onError: (args: { error: { serverError?: string } }) => void
 } {
   const t = useTranslations()
   const router = useRouter()
 
   return {
-    onSuccess: () => {
+    onSuccess: ({ data } = {}) => {
+      // Nothing was applied server-side, so this must never reach the
+      // success toast even when the caller has no upgrade dialog wired.
+      if (isBroadcastPlanLimitOutcome(data)) {
+        onOpenChange(false)
+        onPlanLimit?.(data)
+        return
+      }
       toast.success(
         t("messages.updatedSuccess", {
           feature: t("fields.broadcast.label"),

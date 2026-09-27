@@ -1,6 +1,6 @@
 import {
-  fbCommentIncludeKeywordsSchema,
-  fbCommentReplySchema,
+  commentIncludeKeywordsSchema,
+  commentReplySchema,
   igStoryAutomationTypes,
   igStoryTargetSchema,
 } from "@chatbotx.io/database/partials"
@@ -59,10 +59,10 @@ export const createIgStoryRequest = z.object({
   story: igStoryTargetSchema.describe(
     "Instagram story to watch for replies/mentions. Get it from `igStories.listStories`.",
   ),
-  reply: fbCommentReplySchema.describe(
+  reply: commentReplySchema.describe(
     "Private message reply sent to the contact.",
   ),
-  includeKeywords: fbCommentIncludeKeywordsSchema.describe(
+  includeKeywords: commentIncludeKeywordsSchema.describe(
     "Only trigger when the reply matches these keywords.",
   ),
 })

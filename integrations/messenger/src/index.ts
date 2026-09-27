@@ -4,11 +4,12 @@ export {
   editComment,
   hideComment,
   likeComment,
-  sendComment,
+  replyToComment,
   sendPrivateReply,
 } from "./apis/comment"
 export {
   ensureMessengerWhitelistedDomain,
+  logMessengerWelcomeProfile,
   normalizeMessengerWhitelistedDomain,
 } from "./apis/page"
 export { getPostDetails } from "./apis/post"

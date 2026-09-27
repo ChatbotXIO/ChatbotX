@@ -39,6 +39,7 @@ type GetColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<FlowResource> | null>
   >
+  invalidateFlows: () => void
   locale: string
 }
 
@@ -46,6 +47,7 @@ export function getFlowColumns({
   t,
   setRowAction,
   locale,
+  invalidateFlows,
 }: GetColumnsProps): ColumnDef<FlowResource>[] {
   return [
     {
@@ -126,6 +128,7 @@ export function getFlowColumns({
           {
             onSuccess: () => {
               row.original.active = !row.original.active
+              invalidateFlows()
             },
           },
         )
@@ -164,6 +167,7 @@ export function getFlowColumns({
           {
             onSuccess: () => {
               row.original.enableInInbox = !row.original.enableInInbox
+              invalidateFlows()
             },
           },
         )

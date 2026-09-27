@@ -405,6 +405,8 @@
       "transferConversationToHuman": "העברת שיחה לנציג אנושי",
       "unarchiveConversation": "הוצאת שיחה מהארכיון",
       "unassignConversation": "ביטול הקצאת שיחה",
+      "markConversationAsUnread": "סמן שיחה כלא נקראה",
+      "markConversationAsRead": "סמן שיחה כנקראה",
       "unfollowConversation": "הפסקת מעקב אחר שיחה",
       "unsubscribeBroadcast": "ביטול הרשמה לשידור",
       "getUserData": "קבלת נתוני משתמש",
@@ -1129,6 +1131,10 @@
       "whatsapp": "מספר WhatsApp זה כבר מחובר לסביבת עבודה אחרת.",
       "zalo": "חשבון Zalo OA זה כבר מחובר לסביבת עבודה אחרת."
     },
+    "missingScopes": {
+      "generic": "החיבור בוטל: חלק מההרשאות לא אושרו. התחבר שוב ואשר את כל ההרשאות המבוקשות.",
+      "tiktok": "החיבור ל-TikTok בוטל: חלק מההרשאות לא אושרו. התחבר שוב ואשר את כל ההרשאות המבוקשות."
+    },
     "reconnect": {
       "success": "הערוץ חובר מחדש בהצלחה.",
       "errors": {
@@ -1285,6 +1291,7 @@
     "changeLikeState": "שינוי מצב לייק",
     "changeHideState": "שינוי מצב הסתרה",
     "commentHidden": "תגובה זו הוסתרה",
+    "commentMediaUnavailable": "תגובה זו מכילה GIF, מדבקה או תמונה שלא ניתן להציג",
     "messageDeleted": "ההודעה נמחקה.",
     "sendFailed": "השליחה נכשלה",
     "repliedToStory": "הגיב לסטורי שלך",
@@ -1325,7 +1332,10 @@
     "deleteFeature": "מחיקת {feature}",
     "resetFeature": "איפוס {feature}",
     "resetConfirmation": "פעולה זו תנקה את הערכים של {feature} שנבחרו.\nלא ניתן לבטל פעולה זו.",
+    "resetAllConfirmation": "פעולה זו תנקה את הערכים של כל {feature} של איש קשר זה.\nלא ניתן לבטל פעולה זו.",
     "resetSuccess": "{feature} אופס בהצלחה",
+    "clearFeature": "ניקוי {feature}",
+    "clearSuccess": "{feature} נוקה בהצלחה",
     "deleteConfirmation": "האם אתם בטוחים לחלוטין?\nלא ניתן לבטל פעולה זו.\nפעולה זו תמחק לצמיתות את {feature} מהשרתים שלנו.",
     "addFeature": "הוספת {feature}",
     "signOutConfirmation": "האם לצאת מהחשבון?",
@@ -1376,6 +1386,7 @@
     "historyDepth": "({count})",
     "none": "ללא",
     "tiktokCardTitleTooLong": "טיקטוק יקצר את ההודעה הזו: כאשר מצורפים כפתורים, נשלחים רק 40 התווים הראשונים. קצר את ההודעה או הסר את הכפתורים.",
+    "sendTextTooLongForChannel": "ההודעה ארוכה ממה שהערוץ הזה מאפשר. קצר אותה או הפנה את הבלוק הזה לערוץ עם מגבלה גבוהה יותר.",
     "waTemplateMpmNoProducts": "הוסף לפחות מוצר אחד לכפתור רב-המוצרים הזה לפני הפרסום.",
     "waTemplateMpmTooManySections": "לכפתור רב-מוצרים יכולים להיות עד 10 מקטעים לכל היותר. הסר מקטעים לפני הפרסום.",
     "waTemplateMpmTooManyProducts": "לכפתור רב-מוצרים יכולים להיות עד 30 מוצרים בסך הכל. הסר מוצרים לפני הפרסום.",
@@ -1439,6 +1450,7 @@
       "noConnectablePagesDescription": "אינך מנהל של דף זה",
       "bmLookupFailedTitle": "ייתכן שחסרים דפי Business Manager",
       "bmLookupFailedDescription": "חברו מחדש את Messenger והעניקו גישה ל-Business Manager כדי שניתן יהיה להציג דפים המנוהלים דרכו.",
+      "loadFailed": "לא ניתן לטעון את דפי הפייסבוק שלך",
       "alreadyConnectedNote": "דף זה כבר מחובר",
       "notAdminNote": "אינך מנהל של דף זה",
       "tryAgain": "ניסיון חיבור מחדש"
@@ -2162,6 +2174,7 @@
         "statusNoAnswer": "אין מענה",
         "eyebrowCallEnded": "השיחה הסתיימה",
         "statusConnectionLost": "החיבור אבד",
+        "answerFailed": "‏לא ניתן לענות לשיחה. בדקו שמיקרופון מחובר ומאושר בדפדפן, ונסו שוב.",
         "ringingListTitle": "{count, plural, one {# שיחה נכנסת} other {# שיחות נכנסות}}"
       },
       "capability": {
@@ -2267,6 +2280,14 @@
     "chatbotInvitationDescription2": "{userName} הזמין אתכם להצטרף אל {chatbotName}.",
     "invalidInvitation": "הזמנה זו אינה תקינה או שפג תוקפה.",
     "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "סמן הודעות בוט כנקראו",
+      "enabled": "מופעל",
+      "disabled": "מושבת",
+      "description": "כשמופעל, הבוט מסמן אוטומטית את ההודעות שלו כנקראו"
+    }
   },
   "inboxTeams": {
     "title": "צוותי תיבת דואר נכנס"
@@ -2631,7 +2652,8 @@
     "afterText": "אחרי"
   },
   "tools": {
-    "title": "כלים"
+    "title": "כלים",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -2734,13 +2756,13 @@
     "privateReply": "תשובה פרטית (תיבת דואר נכנס)",
     "privateReplyDescription": "שליחת הודעה פרטית לתיבת הדואר הנכנס של המגיב. בחרו סוכן AI, תבנית טקסט קבועה, תהליך צ'אטבוט או השבתה.",
     "publicReply": "תשובה ציבורית לתגובה",
-    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת.",
+    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת. יש תמיכה ב-spintax.",
     "replyMessage": "הודעת תשובה",
     "replyMessagePlaceholder": "הזנת הודעת תשובה...",
     "includeKeywordsType": "להשיב ל-",
     "includeKeywordsTypeDescription": "בחרו לאילו תגובות האוטומציה תשיב.",
     "includeKeywords": "מילות מפתח להתאמה",
-    "excludeKeywords": "אי-הכללת תגובות עם מילות מפתח אלה",
+    "excludeKeywords": "החרגת תגובות שמכילות",
     "excludeKeywordsDescription": "תגובות המכילות אחת ממילות המפתח האלה יזכו להתעלמות הן באוטומציית תיבת הדואר הנכנס והן בתשובה הציבורית.",
     "keywordsPlaceholder": "הקלידו ולחצו Enter...",
     "replyAfter": "להשיב אחרי",
@@ -2803,7 +2825,7 @@
       "ignoreCommentReplies": "אין להשיב לתשובות לתגובות",
       "ignoreCommentRepliesDescription": "דילוג על האוטומציה בתגובות שהן תשובות לתגובות אחרות ואינן תגובות ברמה העליונה.",
       "trackUserTags": "עקוב אם משתמש מתייג משתמשים אחרים",
-      "trackUserTagsDescription": "השתמש ב-'{{total_tagged}}' כדי לדעת כמה משתמשים תויגו. השתמש ב-'{{total_new_tagged}}' כדי לדעת כמה מהאנשים שתויגו אינם ברשימת אנשי הקשר."
+      "trackUserTagsDescription": "סופר את החשבונות שתויגו בכל תגובה ומוסיף אותם לסכומים המצטברים של איש הקשר בכל התגובות. השתמשו ב-'{{total_tagged}}' לכל החשבונות שתויגו וב-'{{total_new_tagged}}' לחשבונות שמעולם לא שלחו הודעה לדף שלכם או היו אנשי קשר."
     },
     "hideComments": {
       "all": "הסתרת כל התגובות",
@@ -2837,13 +2859,13 @@
     "privateReply": "תשובה פרטית (תיבת דואר נכנס)",
     "privateReplyDescription": "שליחת הודעה פרטית לתיבת הדואר הנכנס של המגיב. בחרו סוכן AI, תבנית טקסט קבועה, תהליך צ'אטבוט או השבתה.",
     "publicReply": "תשובה ציבורית לתגובה",
-    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת.",
+    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת. יש תמיכה ב-spintax.",
     "replyMessage": "הודעת תשובה",
     "replyMessagePlaceholder": "הזנת הודעת תשובה...",
     "includeKeywordsType": "להשיב ל-",
     "includeKeywordsTypeDescription": "בחרו לאילו תגובות האוטומציה תשיב.",
     "includeKeywords": "מילות מפתח להתאמה",
-    "excludeKeywords": "אי-הכללת תגובות עם מילות מפתח אלה",
+    "excludeKeywords": "החרגת תגובות שמכילות",
     "excludeKeywordsDescription": "תגובות המכילות אחת ממילות המפתח האלה יזכו להתעלמות הן באוטומציית תיבת הדואר הנכנס והן בתשובה הציבורית.",
     "keywordsPlaceholder": "הקלידו ולחצו Enter...",
     "replyAfter": "להשיב אחרי",
@@ -2905,7 +2927,7 @@
       "ignoreCommentReplies": "אין להשיב לתשובות לתגובות",
       "ignoreCommentRepliesDescription": "דילוג על האוטומציה בתגובות שהן תשובות לתגובות אחרות ואינן תגובות ברמה העליונה.",
       "trackUserTags": "עקוב אם משתמש מתייג משתמשים אחרים",
-      "trackUserTagsDescription": "השתמש ב-'{{total_tagged}}' כדי לדעת כמה משתמשים תויגו. השתמש ב-'{{total_new_tagged}}' כדי לדעת כמה מהאנשים שתויגו אינם ברשימת אנשי הקשר."
+      "trackUserTagsDescription": "סופר את החשבונות שתויגו בכל תגובה ומוסיף אותם לסכומים המצטברים של איש הקשר בכל התגובות. השתמשו ב-'{{total_tagged}}' לכל החשבונות שתויגו וב-'{{total_new_tagged}}' לחשבונות שמעולם לא שלחו הודעה לדף שלכם או היו אנשי קשר."
     },
     "hideComments": {
       "all": "הסתרת כל התגובות",
@@ -2941,13 +2963,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. עד 10 הודעות טקסט (תומך ב-spintax), כל אחת מתפרסמת כתגובה נפרדת.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "החרגת תגובות שמכילות",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -2956,7 +2978,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "הסתרת תגובות"
     },
     "postType": {
       "all": "All posts",
@@ -2998,8 +3021,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "הזינו לפחות הודעת תגובה אחת.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "ניתן להסתיר רק תגובות ברמה העליונה לפוסטים שלכם.",
+    "hideComments": {
+      "all": "הסתרת כל התגובות",
+      "hasPhoneNumber": "מכיל מספר טלפון",
+      "hasLink": "מכיל קישור",
+      "hasKeywords": "מכיל מילות מפתח",
+      "keywords": "מילות מפתח",
+      "showCommentsAfter": "הצגת תגובות אחרי"
+    },
+    "showCommentsAfter": {
+      "none": "לעולם לא"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. עד 10 הודעות טקסט (תומך ב-spintax), כל אחת מתפרסמת כתגובה נפרדת.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "החרגת תגובות שמכילות",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "הזינו לפחות הודעת תגובה אחת."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "אוטומציה למענה לסטורי באינסטגרם",
@@ -3764,6 +3903,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(אופציונלי)",
     "marketingMessagesConfigId": {
       "label": "מזהה תצורה של הודעות שיווקיות",
       "description": "מזהה תצורה של Facebook Login for Business המשמש לבקשת ההרשאה marketing_messages_messenger."
@@ -5034,11 +5174,16 @@
       "clientId": "מזהה לקוח",
       "clientSecret": "סוד לקוח",
       "displayName": "שם תצוגה",
+      "needsReauthorizationForComments": "החיבור הזה אושר לפני אוטומציית התגובות. חבר מחדש כדי להתחיל לקבל אירועי תגובות.",
       "connectInstructions": {
         "step1": "צרו אפליקציית TikTok בכתובת <link>developers.tiktok.com</link>.",
         "step2": "אשרו את החשבון והעתיקו את <strong>אסימון הגישה</strong>, <strong>המזהה הפתוח</strong> ו<strong>סוד הלקוח</strong>.",
         "step3": "הדביקו את פרטי הכניסה למטה כדי להתחבר."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Drip"
@@ -5239,6 +5384,9 @@
     },
     "lastCallTranscript": {
       "label": "תמלול השיחה האחרון"
+    },
+    "sendRatePerMinute": {
+      "label": "הודעות לדקה"
     }
   },
   "billing": {
@@ -5268,6 +5416,7 @@
       "message": "התשלום האחרון שלכם נכשל. עדכנו את אמצעי התשלום כדי להשאיר את סביבת העבודה פעילה."
     },
     "trial": {
+      "planName": "ניסיון",
       "daysLeft": "תקופת ניסיון: נותרו {days} ימים",
       "endsTomorrow": "תקופת הניסיון מסתיימת מחר",
       "expired": "תקופת הניסיון הסתיימה — שדרגו כדי להשאיר את סביבת העבודה פעילה",
@@ -5439,6 +5588,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "שדרוג התוכנית",
+      "sendRate": "התוכנית הנוכחית שלך, {plan}, תומכת בשידורים במהירות של עד {rate} הודעות בדקה. יש לשדרג את התוכנית כדי לשלוח שידורים במהירות גבוהה עד פי {multiplier}.",
+      "activeBroadcasts": "התוכנית הנוכחית שלך, {plan}, מפעילה {max, plural, one {# שידור} other {# שידורים}} בו-זמנית. יש לשדרג את התוכנית כדי להפעיל יותר שידורים יחד."
+    },
+    "sendLimit": {
+      "title": "מגבלה",
+      "hint": "השאר ריק כדי לשלוח לכל אנשי הקשר התואמים.",
+      "rateHint": "השאר ריק כדי להשתמש בקצב ברירת המחדל.",
+      "rangeSummary": "אנשי קשר מס׳{start} – מס׳{end}",
+      "rangeFromSummary": "החל מאיש קשר מס׳{start}",
+      "rangeLabel": "טווח אנשי קשר",
+      "fromLabel": "מ",
+      "toLabel": "עד",
+      "allPlaceholder": "הכול",
+      "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה"
     }
   },
   "commentAutomation": {
@@ -5467,7 +5633,26 @@
       "keywordsNotMatched": "מילות המפתח לא תאמו",
       "contactNotNew": "איש הקשר אינו חדש",
       "alreadyRepliedOnPost": "כבר הושבה תשובה בפוסט זה",
-      "engagedOnOtherPost": "כבר היה מעורב בפוסט אחר"
+      "engagedOnOtherPost": "כבר היה מעורב בפוסט אחר",
+      "mentionCountNotMatched": "מספר האזכורים לא תאם"
+    },
+    "replyTo": {
+      "mentions": "תגובות עם מספיק אזכורים",
+      "mentionCount": "מספר האנשים שתויגו",
+      "mentionCountDescription": "רק תגובות שמתייגות לפחות מספר זה של אנשים (@שם) תואמות.",
+      "mentionCountOption": "{count, plural, one {# אדם} other {# אנשים}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "תגובות שוות ל",
+      "contain": "תגובות שמכילות"
+    },
+    "hideComments": {
+      "hasGif": "מכיל GIF",
+      "hasEmoji": "מכיל אמוג'י"
+    },
+    "trackUserTags": {
+      "label": "עקוב אם משתמש מתייג משתמשים אחרים",
+      "descriptionText": "סופר את החשבונות שתויגו בכל תגובה ומוסיף אותם לסכומים המצטברים של איש הקשר בכל התגובות. השתמשו ב-'{{total_tagged}}' לכל החשבונות שתויגו וב-'{{total_new_tagged}}' לחשבונות שמעולם לא שלחו הודעה לדף שלכם או היו אנשי קשר."
     }
   },
   "condition": {
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "הזן Dataset ID תקין (ספרות בלבד).",
       "whatsappNotFound": "שילוב WhatsApp לא נמצא.",
       "testEventCodeRequired": "שמור קוד אירוע בדיקה לפני שליחת אירוע בדיקה.",
-      "noContactForTest": "אין עדיין איש קשר מתאים בערוץ זה. אירוע בדיקה זקוק לאיש קשר אמיתי לשיוך (ב-WhatsApp, כזה שהגיע ממודעת click-to-WhatsApp).",
-      "invalidTestEventCode": "קוד אירוע הבדיקה יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 64 תווים)."
+      "invalidTestEventCode": "קוד אירוע הבדיקה יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 64 תווים).",
+      "invalidMessagingId": "מזהה ההודעות יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 512).",
+      "capiDisconnected": "Meta CAPI מנותק עבור ערוץ זה. חבר אותו מחדש לפני שליחת אירוע בדיקה."
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "קוד אירוע הבדיקה נשמר.",
       "cleared": "קוד אירוע הבדיקה נוקה. האירועים חזרו להיות פעילים.",
       "send": "שלח אירוע בדיקה",
-      "sent": "אירוע הבדיקה נכנס לתור. הוא יופיע תחת Test events ב-Events Manager תוך דקה.",
-      "sendHint": "שולח אירוע Purchase לדוגמה אחד (100 USD) לאיש הקשר האחרון בערוץ זה.",
+      "sent": "אירוע הבדיקה נשלח. הוא יופיע תחת Test events ב-Events Manager בתוך דקה.",
+      "sendHint": "שולח אירוע Purchase לדוגמה אחד (100 USD) למזהה הודעות שתזין. לא נעשה שימוש באיש קשר שמור.",
       "activeNotice": "מצב בדיקה פעיל: אירועים מהערוץ הזה לא נספרים בדוחות עד שהקוד ינוקה.",
-      "openTestEvents": "פתח את Test events"
+      "openTestEvents": "פתח את Test events",
+      "dialogTitle": "שליחת אירוע בדיקה",
+      "dialogDescription": "אירוע Purchase לדוגמה אחד (100 USD) נשלח עם קוד אירוע הבדיקה שלך. הדבק את מזהה ההודעות לדוגמה מ-Events Manager → Test events → Messaging → Graph API Explorer, כך ששום דבר לא ישויך לאיש קשר אמיתי.",
+      "messagingIdLabel": {
+        "messenger": "מזהה איש קשר (page_scoped_user_id)",
+        "instagram": "מזהה איש קשר (ig_sid)",
+        "whatsapp": "מזהה קליק (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "הדבק את הערך לדוגמה מ-Meta",
+      "messagingIdHint": "אותיות, ספרות, מקפים וקווים תחתונים בלבד (עד 512).",
+      "cancel": "ביטול",
+      "confirmSend": "שליחה"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "שדות בוט"
+  },
+  "openLink": {
+    "title": "פתיחת קישור",
+    "invalidTitle": "קישור לא תקין.",
+    "invalidDescription": "הקישור אינו תקין או שפג תוקפו.",
+    "openZaloGroup": "פתיחת קבוצת Zalo",
+    "openZalo": "פתיחת Zalo",
+    "openMessenger": "פתיחת Messenger"
   }
 }

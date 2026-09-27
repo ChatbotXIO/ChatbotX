@@ -10,4 +10,4 @@ export {
 } from "./apis/post"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
-export * from "./schemas"
+export * from "./schema"

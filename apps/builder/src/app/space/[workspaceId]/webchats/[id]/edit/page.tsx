@@ -1,6 +1,7 @@
+import { inboxService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { UpdateWebchatForm } from "@/features/integration-webchat/components/update-webchat-form"
 import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
@@ -21,12 +22,16 @@ export default async function WebchatEditPage({
     id: data.id,
     workspaceId: data.workspaceId,
   })
+  const inbox = await inboxService.find({
+    where: { id: integrationWebchat.inboxId, workspaceId: data.workspaceId },
+  })
 
   return (
-    <FlowStoreProvider workspaceId={data.workspaceId}>
-      <Suspense fallback={<div>Loading...</div>}>
-        <UpdateWebchatForm integrationWebchat={integrationWebchat} />
-      </Suspense>
-    </FlowStoreProvider>
+    <Suspense fallback={<div>Loading...</div>}>
+      <UpdateWebchatForm
+        integrationWebchat={integrationWebchat}
+        markReadOnOutbound={inbox?.markReadOnOutbound ?? false}
+      />
+    </Suspense>
   )
 }

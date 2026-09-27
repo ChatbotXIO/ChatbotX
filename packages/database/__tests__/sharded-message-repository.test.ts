@@ -1,4 +1,4 @@
-import { startOfHour } from "date-fns"
+import { endOfHour, startOfHour } from "date-fns"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { MessageShardUnavailableError } from "../src/errors"
 import type {
@@ -391,9 +391,12 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     ).rejects.toThrow("sinceTime is required")
   })
 
-  test("findAttachmentById falls back from write shard to read shards and returns createdAt", async () => {
+  test("findAttachmentById returns attachment and parent-message lookup fields", async () => {
     const attachment = {
       id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt: new Date("2026-01-03T00:00:00Z"),
+      sourceId: "source-attachment-1",
       originPath: "wa-media:123",
       mimeType: "image/png",
       createdAt: new Date("2026-01-03T00:00:00Z"),
@@ -418,8 +421,239 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     })
 
     expect(result).toEqual(attachment)
+    expect(rangeClient.select).toHaveBeenCalledWith({
+      id: attachmentModel.id,
+      messageId: attachmentModel.messageId,
+      messageCreatedAt: attachmentModel.messageCreatedAt,
+      sourceId: attachmentModel.sourceId,
+      originPath: attachmentModel.originPath,
+      mimeType: attachmentModel.mimeType,
+      createdAt: attachmentModel.createdAt,
+    })
     expect(shardManager.getShardForWrite).toHaveBeenCalledWith("ws-1")
     expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+  })
+
+  test("findAttachmentById targets the shard window around the messageCreatedAt hint", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const attachment = {
+      id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt,
+      sourceId: "source-attachment-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: messageCreatedAt,
+    }
+    const writeClient = makeSelectClient([])
+    const windowClient = makeSelectClient([attachment])
+    const windowShard = makeShardInfo("tr:window", "window")
+    const clients = new Map([["window", windowClient]])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi.fn().mockResolvedValue([windowShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    expect(result).toEqual(attachment)
+    // Probed the day-padded window around the hint (start bucketed to the hour),
+    // not the 7-day recent-history fallback.
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledTimes(1)
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledWith(
+      startOfHour(new Date(messageCreatedAt.getTime() - 24 * 60 * 60 * 1000)),
+      endOfHour(new Date(messageCreatedAt.getTime() + 24 * 60 * 60 * 1000)),
+    )
+    // The recent-history fallback (which unions the write shard) never ran.
+    expect(shardManager.getWriteShardInfo).not.toHaveBeenCalled()
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+  })
+
+  test("findAttachmentById falls back to the recent-history scan when the hint window misses", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const attachment = {
+      id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt,
+      sourceId: "source-attachment-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: messageCreatedAt,
+    }
+    const writeClient = makeSelectClient([])
+    const windowClient = makeSelectClient([])
+    const fallbackClient = makeSelectClient([attachment])
+    const windowShard = makeShardInfo("tr:window", "window")
+    const fallbackShard = makeShardInfo("tr:fallback", "fallback")
+    const clients = new Map([
+      ["window", windowClient],
+      ["fallback", fallbackClient],
+      ["write", writeClient],
+    ])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValueOnce([windowShard])
+        .mockResolvedValueOnce([fallbackShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    expect(result).toEqual(attachment)
+    // Window probe first (padded hint range), then the recent-history fallback.
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledTimes(2)
+    expect(shardManager.getShardsForTimeRange).toHaveBeenNthCalledWith(
+      1,
+      startOfHour(new Date(messageCreatedAt.getTime() - 24 * 60 * 60 * 1000)),
+      endOfHour(new Date(messageCreatedAt.getTime() + 24 * 60 * 60 * 1000)),
+    )
+    // Second call is the recent-history range, a different window than the
+    // hint's — proving order, not just count.
+    const windowStart = startOfHour(
+      new Date(messageCreatedAt.getTime() - 24 * 60 * 60 * 1000),
+    ).getTime()
+    expect(
+      shardManager.getShardsForTimeRange.mock.calls[1][0].getTime(),
+    ).not.toBe(windowStart)
+    expect(shardManager.getWriteShardInfo).toHaveBeenCalledWith("ws-1")
+  })
+
+  test("findAttachmentById uses the fallback when the hint window resolves to no shards", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const attachment = {
+      id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt,
+      sourceId: "source-attachment-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: messageCreatedAt,
+    }
+    const writeClient = makeSelectClient([])
+    const fallbackClient = makeSelectClient([attachment])
+    const fallbackShard = makeShardInfo("tr:fallback", "fallback")
+    const clients = new Map([["fallback", fallbackClient]])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValueOnce([]) // hint window: no shard covers it
+        .mockResolvedValueOnce([fallbackShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    expect(result).toEqual(attachment)
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledTimes(2)
+  })
+
+  test("findAttachmentById queries an overlapping shard only once across window and fallback", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const writeClient = makeSelectClient([])
+    // Same physical shard appears in both the window and the fallback set.
+    const sharedClient = makeSelectClient([])
+    const sharedShard = makeShardInfo("tr:shared", "shared")
+    const clients = new Map([["shared", sharedClient]])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValueOnce([sharedShard])
+        .mockResolvedValueOnce([sharedShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "missing",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    expect(result).toBeNull()
+    // A successful (empty) probe of "shared" in the window is not repeated by
+    // the fallback.
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+  })
+
+  test("findAttachmentById retries a transiently failed shard in the fallback", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const attachment = {
+      id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt,
+      sourceId: "source-attachment-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: messageCreatedAt,
+    }
+    const writeClient = makeSelectClient([])
+    const flakyShard = makeShardInfo("tr:flaky", "flaky")
+    let reads = 0
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValueOnce([flakyShard])
+        .mockResolvedValueOnce([flakyShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (_shard: { id: string }, fn: (value: unknown) => Promise<unknown>) => {
+          reads += 1
+          if (reads === 1) {
+            // First (window) attempt fails transiently.
+            return Promise.reject(new Error("connection reset"))
+          }
+          return fn(makeSelectClient([attachment]))
+        },
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    // The failed shard was NOT marked probed, so the fallback retried it.
+    expect(result).toEqual(attachment)
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(2)
   })
 
   test("updateAttachment fans across read shards and includes createdAt for pruning", async () => {
@@ -1739,5 +1973,330 @@ describe("ShardedMessageRepository.deleteBySourceId", () => {
     // Only the narrow parent search + the children search — no full-history
     // fallback scan when the hint already found the row.
     expect(getShardsForTimeRange).toHaveBeenCalledTimes(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Primary-key collision safety net
+//
+// Regression (production, 2026-09-24): two processes minted the same snowflake
+// id in the same millisecond, so INSERT ... ON CONFLICT (contactInboxId,
+// sourceId, createdAt) DO NOTHING still failed with 23505 on the primary key
+// (id, createdAt) — the arbiter index is the dedup key, not the PK — and the
+// whole job died. The write paths now regenerate the id and retry once when
+// the violated constraint is the Message primary key; any other error, and any
+// other unique violation, is still surfaced unchanged.
+// ---------------------------------------------------------------------------
+
+const NUMERIC_ID = /^\d+$/
+const FAILED_QUERY = /Failed query/
+
+function makePkConflictError(constraint = "1451_Message_pkey") {
+  const cause = Object.assign(
+    new Error("duplicate key value violates unique constraint"),
+    { code: "23505", constraint },
+  )
+  return Object.assign(new Error("Failed query: insert into Message"), {
+    cause,
+  })
+}
+
+describe("ShardedMessageRepository primary-key collision safety net", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("createOrUpdate regenerates the id and retries once when the insert hits the primary key", async () => {
+    const message = makeMessage({ id: "11708385501429760" })
+    const insertedRow = { ...existingRow, id: "fresh-id" }
+    const shardDb = makeInsertShardDb([insertedRow])
+    shardDb.chain.returning
+      .mockRejectedValueOnce(makePkConflictError())
+      .mockResolvedValueOnce([insertedRow])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    const result = await repo.createOrUpdate(message)
+
+    expect(result.isNew).toBe(true)
+    expect(result.message).toEqual(insertedRow)
+    expect(shardDb.insert).toHaveBeenCalledTimes(2)
+    const [firstValues] = shardDb.chain.values.mock.calls[0] as [
+      CreateMessageInput,
+    ]
+    const [retryValues] = shardDb.chain.values.mock.calls[1] as [
+      CreateMessageInput,
+    ]
+    expect(firstValues.id).toBe("11708385501429760")
+    expect(retryValues.id).not.toBe("11708385501429760")
+    expect(retryValues.id).toMatch(NUMERIC_ID)
+    expect(retryValues.createdAt).toEqual(message.createdAt)
+    expect(retryValues.sourceId).toBe(message.sourceId)
+  })
+
+  test("createOrUpdate does not retry a second primary-key collision", async () => {
+    const shardDb = makeInsertShardDb([])
+    shardDb.chain.returning
+      .mockRejectedValueOnce(makePkConflictError())
+      .mockRejectedValueOnce(makePkConflictError())
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    await expect(repo.createOrUpdate(makeMessage())).rejects.toThrow(
+      FAILED_QUERY,
+    )
+    expect(shardDb.insert).toHaveBeenCalledTimes(2)
+  })
+
+  test("createOrUpdate surfaces a unique violation on a non-primary-key constraint unchanged", async () => {
+    const shardDb = makeInsertShardDb([])
+    shardDb.chain.returning.mockRejectedValueOnce(
+      makePkConflictError("Message_some_other_unique_idx"),
+    )
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    await expect(repo.createOrUpdate(makeMessage())).rejects.toThrow(
+      FAILED_QUERY,
+    )
+    expect(shardDb.insert).toHaveBeenCalledTimes(1)
+  })
+
+  test("create regenerates the id and retries once on a primary-key collision", async () => {
+    const insertedRow = { ...existingRow, id: "fresh-id" }
+    const shardDb = makeInsertShardDb([insertedRow])
+    shardDb.chain.returning
+      .mockRejectedValueOnce(makePkConflictError())
+      .mockResolvedValueOnce([insertedRow])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    const result = await repo.create(makeMessage({ id: "colliding" }))
+
+    expect(result).toEqual(insertedRow)
+    expect(shardDb.insert).toHaveBeenCalledTimes(2)
+    const [retryValues] = shardDb.chain.values.mock.calls[1] as [
+      CreateMessageInput,
+    ]
+    expect(retryValues.id).not.toBe("colliding")
+  })
+
+  test("createOrUpdateWithAttachments regenerates the id and re-runs the transaction on a primary-key collision", async () => {
+    const message = makeMessage({ id: "colliding" })
+    const insertedRow = { ...existingRow, id: "fresh-id" }
+    const txChain = {
+      values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockReturnThis(),
+      returning: vi
+        .fn()
+        .mockRejectedValueOnce(makePkConflictError())
+        .mockResolvedValueOnce([insertedRow])
+        .mockResolvedValueOnce([]), // attachment insert on the retry
+    }
+    const tx = { insert: vi.fn().mockReturnValue(txChain) }
+    const shardDb = {
+      transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) =>
+        fn(tx),
+      ),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    const result = await repo.createOrUpdateWithAttachments(message, [
+      {
+        id: "att-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        fileType: "image",
+      } as never,
+    ])
+
+    expect(result.isNew).toBe(true)
+    expect(result.result.id).toBe("fresh-id")
+    expect(shardDb.transaction).toHaveBeenCalledTimes(2)
+    const [retryValues] = txChain.values.mock.calls[1] as [CreateMessageInput]
+    expect(retryValues.id).not.toBe("colliding")
+    expect(retryValues.createdAt).toEqual(message.createdAt)
+    // Attachments on the retry point at the row that was actually inserted.
+    const [attachmentValues] = txChain.values.mock.calls[2] as [
+      { messageId: string }[],
+    ]
+    expect(attachmentValues[0].messageId).toBe("fresh-id")
+  })
+})
+
+describe("ShardedMessageRepository.createWithAttachments primary-key collision safety net", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("regenerates the id and re-runs the transaction once on a primary-key collision", async () => {
+    const message = makeMessage({ id: "colliding", sourceId: null })
+    const insertedRow = { ...existingRow, id: "fresh-id", sourceId: null }
+    const txChain = {
+      values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockReturnThis(),
+      returning: vi
+        .fn()
+        .mockRejectedValueOnce(makePkConflictError())
+        .mockResolvedValueOnce([insertedRow])
+        .mockResolvedValueOnce([{ id: "att-1", messageId: "fresh-id" }]),
+    }
+    const tx = { insert: vi.fn().mockReturnValue(txChain) }
+    const shardDb = {
+      transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) =>
+        fn(tx),
+      ),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    const result = await repo.createWithAttachments(message, [
+      {
+        id: "att-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        fileType: "image",
+      } as never,
+    ])
+
+    expect(result.id).toBe("fresh-id")
+    expect(shardDb.transaction).toHaveBeenCalledTimes(2)
+    // Plain create path: never ON CONFLICT DO NOTHING.
+    expect(txChain.onConflictDoNothing).not.toHaveBeenCalled()
+    const [retryValues] = txChain.values.mock.calls[1] as [CreateMessageInput]
+    expect(retryValues.id).not.toBe("colliding")
+    expect(retryValues.createdAt).toEqual(message.createdAt)
+    const [attachmentValues] = txChain.values.mock.calls[2] as [
+      { messageId: string }[],
+    ]
+    expect(attachmentValues[0].messageId).toBe("fresh-id")
+  })
+
+  test("surfaces any other insert error unchanged without re-running the transaction", async () => {
+    const txChain = {
+      values: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockRejectedValueOnce(new Error("connection reset")),
+    }
+    const tx = { insert: vi.fn().mockReturnValue(txChain) }
+    const shardDb = {
+      transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) =>
+        fn(tx),
+      ),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    await expect(
+      repo.createWithAttachments(makeMessage({ sourceId: null }), []),
+    ).rejects.toThrow("connection reset")
+    expect(shardDb.transaction).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("ShardedMessageRepository primary-key recovery after a transport retry", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // "Commit succeeded, connection reset before the response": withShardRetry
+  // re-sends the same row, the primary key rejects it, and that rejection must
+  // NOT be mistaken for a cross-process id collision — minting a fresh id there
+  // would insert the same logical message twice. The old behaviour (surface
+  // the error) is preserved.
+  test("create surfaces a primary-key violation that follows a transport retry instead of minting a fresh id", async () => {
+    const connectionReset = Object.assign(new Error("read ECONNRESET"), {
+      code: "ECONNRESET",
+    })
+    const shardDb = makeInsertShardDb([])
+    shardDb.chain.returning
+      .mockRejectedValueOnce(connectionReset)
+      .mockRejectedValueOnce(makePkConflictError())
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    await expect(repo.create(makeMessage({ id: "original" }))).rejects.toThrow(
+      FAILED_QUERY,
+    )
+    expect(shardDb.insert).toHaveBeenCalledTimes(2)
+    for (const [values] of shardDb.chain.values.mock.calls as [
+      CreateMessageInput,
+    ][]) {
+      expect(values.id).toBe("original")
+    }
+  })
+
+  test("create still recovers from a first-attempt primary-key collision after which the fresh insert needs a transport retry", async () => {
+    const connectionReset = Object.assign(new Error("read ECONNRESET"), {
+      code: "ECONNRESET",
+    })
+    const insertedRow = { ...existingRow, id: "fresh-id" }
+    const shardDb = makeInsertShardDb([])
+    shardDb.chain.returning
+      .mockRejectedValueOnce(makePkConflictError()) // genuine collision
+      .mockRejectedValueOnce(connectionReset) // fresh-id insert: transient
+      .mockResolvedValueOnce([insertedRow]) // retried fresh-id insert lands
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    const result = await repo.create(makeMessage({ id: "original" }))
+
+    expect(result).toEqual(insertedRow)
+    expect(shardDb.insert).toHaveBeenCalledTimes(3)
+    const ids = (shardDb.chain.values.mock.calls as [CreateMessageInput][]).map(
+      ([values]) => values.id,
+    )
+    expect(ids[0]).toBe("original")
+    expect(ids[1]).not.toBe("original")
+    expect(ids[2]).toBe(ids[1])
   })
 })

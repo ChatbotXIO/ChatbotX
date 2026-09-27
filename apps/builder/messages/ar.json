@@ -336,6 +336,7 @@
       "message": "فشلت آخر عملية دفع. قم بتحديث طريقة الدفع للحفاظ على نشاط مساحة عملك."
     },
     "trial": {
+      "planName": "تجريبية",
       "daysLeft": "التجربة: تبقّى {days} يوم/أيام",
       "endsTomorrow": "تنتهي الفترة التجريبية غدًا",
       "expired": "انتهت فترتك التجريبية — قم بالترقية للحفاظ على نشاط مساحة عملك",
@@ -507,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "ترقية خطتك",
+      "sendRate": "تدعم خطتك الحالية {plan} حملات البث بسرعة إرسال قصوى تبلغ {rate} رسالة في الدقيقة. يُرجى ترقية خطتك لإرسال حملات البث بسرعة تصل إلى {multiplier} ضعفًا.",
+      "activeBroadcasts": "تُشغّل خطتك الحالية {plan} عدد {max, plural, one {# حملة بث} other {# حملة بث}} في الوقت نفسه. يُرجى ترقية خطتك لتشغيل المزيد من حملات البث معًا."
+    },
+    "sendLimit": {
+      "title": "الحد",
+      "hint": "اتركه فارغًا للإرسال إلى جميع جهات الاتصال المطابقة.",
+      "rateHint": "اتركه فارغًا لاستخدام المعدل الافتراضي.",
+      "rangeSummary": "جهات الاتصال #{start} – #{end}",
+      "rangeFromSummary": "ابتداءً من جهة الاتصال رقم {start}",
+      "rangeLabel": "نطاق جهات الاتصال",
+      "fromLabel": "من",
+      "toLabel": "إلى",
+      "allPlaceholder": "الكل",
+      "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية"
     }
   },
   "commentAutomation": {
@@ -535,7 +553,26 @@
       "keywordsNotMatched": "الكلمات المفتاحية غير مطابقة",
       "contactNotNew": "جهة الاتصال ليست جديدة",
       "alreadyRepliedOnPost": "تم الرد مسبقًا على هذا المنشور",
-      "engagedOnOtherPost": "تفاعل مسبقًا على منشور آخر"
+      "engagedOnOtherPost": "تفاعل مسبقًا على منشور آخر",
+      "mentionCountNotMatched": "عدد الإشارات غير مطابق"
+    },
+    "replyTo": {
+      "mentions": "التعليقات التي تحتوي على عدد كافٍ من الإشارات",
+      "mentionCount": "عدد الأشخاص المشار إليهم",
+      "mentionCountDescription": "تطابق فقط التعليقات التي تشير إلى هذا العدد من الأشخاص (@الاسم) على الأقل.",
+      "mentionCountOption": "{count, plural, one {# شخص} other {# أشخاص}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "التعليقات المساوية لـ",
+      "contain": "التعليقات التي تحتوي على"
+    },
+    "hideComments": {
+      "hasGif": "يحتوي على GIF",
+      "hasEmoji": "يحتوي على رموز تعبيرية"
+    },
+    "trackUserTags": {
+      "label": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
+      "descriptionText": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     }
   },
   "condition": {
@@ -737,6 +774,10 @@
       "whatsapp": "رقم واتساب هذا متصل بالفعل بمساحة عمل أخرى.",
       "zalo": "حساب Zalo OA هذا متصل بالفعل بمساحة عمل أخرى."
     },
+    "missingScopes": {
+      "generic": "تم إلغاء الاتصال: لم يتم منح بعض الأذونات. يرجى الاتصال مرة أخرى وقبول كل إذن مطلوب.",
+      "tiktok": "تم إلغاء الاتصال بـ TikTok: لم يتم منح بعض الأذونات. يرجى الاتصال مرة أخرى وقبول كل إذن مطلوب."
+    },
     "reconnect": {
       "success": "تمت إعادة توصيل القناة بنجاح.",
       "errors": {
@@ -864,6 +905,7 @@
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا."
   },
   "fields": {
+    "optionalHint": "(اختياري)",
     "marketingMessagesConfigId": {
       "label": "معرّف تكوين الرسائل التسويقية",
       "description": "معرّف تكوين تسجيل الدخول من فيسبوك للأعمال المستخدم لطلب صلاحية marketing_messages_messenger."
@@ -2134,11 +2176,16 @@
       "clientId": "معرّف العميل",
       "clientSecret": "سر العميل",
       "displayName": "اسم العرض",
+      "needsReauthorizationForComments": "تم تفويض هذا الاتصال قبل أتمتة التعليقات. أعد الاتصال لبدء تلقي أحداث التعليقات.",
       "connectInstructions": {
         "step1": "أنشئ تطبيق TikTok على <link>developers.tiktok.com</link>.",
         "step2": "امنح حسابك الصلاحية وانسخ <strong>رمز الوصول</strong> و<strong>المعرّف المفتوح</strong> و<strong>سر العميل</strong>.",
         "step3": "الصق بيانات الاعتماد أدناه للاتصال."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Drip"
@@ -2339,6 +2386,9 @@
     },
     "lastCallTranscript": {
       "label": "آخر تفريغ مكالمة"
+    },
+    "sendRatePerMinute": {
+      "label": "الرسائل في الدقيقة"
     }
   },
   "flows": {
@@ -2455,6 +2505,8 @@
       "transferConversationToHuman": "نقل المحادثة إلى موظف بشري",
       "unarchiveConversation": "إلغاء أرشفة المحادثة",
       "unassignConversation": "إلغاء إسناد المحادثة",
+      "markConversationAsUnread": "تحديد المحادثة كغير مقروءة",
+      "markConversationAsRead": "تحديد المحادثة كمقروءة",
       "unfollowConversation": "إلغاء متابعة المحادثة",
       "unsubscribeBroadcast": "إلغاء الاشتراك في البث",
       "getUserData": "الحصول على بيانات المستخدم",
@@ -3197,6 +3249,7 @@
     "changeLikeState": "تغيير حالة الإعجاب",
     "changeHideState": "تغيير حالة الإخفاء",
     "commentHidden": "تم إخفاء هذا التعليق",
+    "commentMediaUnavailable": "يحتوي هذا التعليق على صورة GIF أو ملصق أو صورة لا يمكن عرضها",
     "messageDeleted": "تم حذف الرسالة.",
     "sendFailed": "فشل الإرسال",
     "repliedToStory": "رد على قصتك",
@@ -3237,7 +3290,10 @@
     "deleteFeature": "حذف {feature}",
     "resetFeature": "إعادة تعيين {feature}",
     "resetConfirmation": "سيؤدي هذا إلى مسح قيم {feature} المحددة وإعادتها فارغة.\nلا يمكن التراجع عن هذا الإجراء.",
+    "resetAllConfirmation": "سيؤدي هذا إلى مسح جميع قيم {feature} لجهة الاتصال هذه وإعادتها فارغة.\nلا يمكن التراجع عن هذا الإجراء.",
     "resetSuccess": "تمت إعادة تعيين {feature} بنجاح",
+    "clearFeature": "مسح {feature}",
+    "clearSuccess": "تم مسح {feature} بنجاح",
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا.",
     "addFeature": "إضافة {feature}",
     "signOutConfirmation": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
@@ -3288,6 +3344,7 @@
     "historyDepth": "({count})",
     "none": "لا شيء",
     "tiktokCardTitleTooLong": "سيقوم TikTok بتقصير هذه الرسالة: عند إرفاق أزرار، يتم إرسال أول 40 حرفًا فقط. قم بتقصير الرسالة أو إزالة الأزرار.",
+    "sendTextTooLongForChannel": "هذه الرسالة أطول مما تسمح به هذه القناة. اختصرها أو وجّه هذه العقدة إلى قناة ذات حد أعلى.",
     "waTemplateMpmNoProducts": "أضف منتجًا واحدًا على الأقل إلى زر المنتجات المتعددة هذا قبل النشر.",
     "waTemplateMpmTooManySections": "يمكن أن يحتوي زر المنتجات المتعددة على 10 أقسام كحد أقصى. أزل بعض الأقسام قبل النشر.",
     "waTemplateMpmTooManyProducts": "يمكن أن يحتوي زر المنتجات المتعددة على 30 منتجًا كحد أقصى إجمالاً. أزل بعض المنتجات قبل النشر.",
@@ -3377,6 +3434,7 @@
       "noConnectablePagesDescription": "أنت لست مسؤولاً عن هذه الصفحة",
       "bmLookupFailedTitle": "قد تكون بعض صفحات مدير الأعمال غير ظاهرة",
       "bmLookupFailedDescription": "أعد ربط Messenger وامنح صلاحية الوصول إلى مدير الأعمال حتى يمكن عرض الصفحات المُدارة من خلاله.",
+      "loadFailed": "تعذّر تحميل صفحات فيسبوك الخاصة بك",
       "alreadyConnectedNote": "هذه الصفحة مرتبطة بالفعل",
       "notAdminNote": "أنت لست مسؤولاً عن هذه الصفحة",
       "tryAgain": "محاولة إعادة الاتصال"
@@ -4074,6 +4132,7 @@
         "statusNoAnswer": "لا يوجد رد",
         "eyebrowCallEnded": "انتهت المكالمة",
         "statusConnectionLost": "انقطع الاتصال",
+        "answerFailed": "تعذّر الرد على المكالمة. تحقق من توصيل الميكروفون والسماح به في المتصفح، ثم حاول مرة أخرى.",
         "ringingListTitle": "{count, plural, one {# مكالمة واردة} other {# مكالمات واردة}}"
       },
       "capability": {
@@ -4179,6 +4238,14 @@
     "chatbotInvitationDescription2": "دعاك {userName} للانضمام إلى {chatbotName}.",
     "invalidInvitation": "هذه الدعوة غير صالحة أو انتهت صلاحيتها.",
     "workspaceUnavailable": "مساحة العمل هذه لم تعد متاحة."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "وضع علامة مقروءة على رسائل البوت",
+      "enabled": "مفعّل",
+      "disabled": "معطّل",
+      "description": "عند التفعيل، يقوم البوت تلقائيًا بوضع علامة مقروءة على رسائله"
+    }
   },
   "inboxTeams": {
     "title": "فرق صندوق الوارد"
@@ -4543,7 +4610,8 @@
     "afterText": "بعد"
   },
   "tools": {
-    "title": "الأدوات"
+    "title": "الأدوات",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4646,13 +4714,13 @@
     "privateReply": "رد خاص (صندوق الوارد)",
     "privateReplyDescription": "أرسل رسالة خاصة إلى صندوق وارد صاحب التعليق. اختر وكيل ذكاء اصطناعي، أو قالب نص ثابت، أو مسار بوت، أو عطّل الرد.",
     "publicReply": "رد عام على التعليق",
-    "publicReplyDescription": "انشر ردًا عامًا أسفل التعليق مباشرةً. يدعم حتى 10 قوالب نصية، أو وكيل ذكاء اصطناعي، أو مسار بوت، أو عدم الرد. يتم نشر كل رسالة كرد منفصل.",
+    "publicReplyDescription": "انشر ردًا عامًا أسفل التعليق مباشرةً. يدعم حتى 10 قوالب نصية، أو وكيل ذكاء اصطناعي، أو مسار بوت، أو عدم الرد. يتم نشر كل رسالة كرد منفصل. يدعم spintax.",
     "replyMessage": "رسالة الرد",
     "replyMessagePlaceholder": "أدخل رسالة الرد...",
     "includeKeywordsType": "الرد على",
     "includeKeywordsTypeDescription": "اختر التعليقات التي تستجيب لها هذه الأتمتة.",
     "includeKeywords": "الكلمات المفتاحية المطلوب مطابقتها",
-    "excludeKeywords": "استبعاد التعليقات التي تحتوي على هذه الكلمات المفتاحية",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "excludeKeywordsDescription": "ستتجاهل أتمتة الرد في صندوق الوارد والرد العام أي تعليق يحتوي على إحدى هذه الكلمات المفتاحية.",
     "keywordsPlaceholder": "اكتب واضغط Enter...",
     "replyAfter": "الرد بعد",
@@ -4715,7 +4783,7 @@
       "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
       "ignoreCommentRepliesDescription": "تخطي الأتمتة للتعليقات التي تكون ردودًا على تعليقات أخرى وليست تعليقات رئيسية.",
       "trackUserTags": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
-      "trackUserTagsDescription": "استخدم '{{total_tagged}}' لمعرفة عدد المستخدمين الذين تمت الإشارة إليهم. استخدم '{{total_new_tagged}}' لمعرفة عدد الأشخاص المشار إليهم غير الموجودين في قائمة جهات الاتصال."
+      "trackUserTagsDescription": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     },
     "hideComments": {
       "all": "إخفاء جميع التعليقات",
@@ -5232,13 +5300,13 @@
     "privateReply": "رد خاص (البريد الوارد)",
     "privateReplyDescription": "إرسال رسالة خاصة إلى صندوق وارد المعلّق. اختر وكيل الذكاء الاصطناعي، أو نموذج نصي ثابت، أو مسار روبوت محادثة، أو التعطيل.",
     "publicReply": "رد علني على التعليق",
-    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد. يتم نشر كل رسالة كرد منفصل.",
+    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد. يتم نشر كل رسالة كرد منفصل. يدعم spintax.",
     "replyMessage": "رسالة الرد",
     "replyMessagePlaceholder": "أدخل رسالة الرد...",
     "includeKeywordsType": "الرد على",
     "includeKeywordsTypeDescription": "اختر التعليقات التي تستجيب لها هذه الأتمتة.",
     "includeKeywords": "الكلمات المفتاحية للمطابقة",
-    "excludeKeywords": "استبعاد التعليقات التي تحتوي على هذه الكلمات المفتاحية",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "excludeKeywordsDescription": "سيتم تجاهل التعليقات التي تحتوي على أي من هذه الكلمات المفتاحية من قبل أتمتة الرد الخاص والعلني.",
     "keywordsPlaceholder": "اكتب واضغط على Enter...",
     "replyAfter": "الرد بعد",
@@ -5300,7 +5368,7 @@
       "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
       "ignoreCommentRepliesDescription": "تجاوز الأتمتة للتعليقات التي هي ردود على تعليقات أخرى، وليست تعليقات من المستوى الأعلى.",
       "trackUserTags": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
-      "trackUserTagsDescription": "استخدم '{{total_tagged}}' لمعرفة عدد المستخدمين الذين تمت الإشارة إليهم. استخدم '{{total_new_tagged}}' لمعرفة عدد الأشخاص المشار إليهم غير الموجودين في قائمة جهات الاتصال."
+      "trackUserTagsDescription": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     },
     "hideComments": {
       "all": "إخفاء جميع التعليقات",
@@ -5336,13 +5404,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. حتى 10 رسائل نصية (يدعم spintax)، تُنشر كل منها كرد منفصل.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5351,7 +5419,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "إخفاء التعليقات"
     },
     "postType": {
       "all": "All posts",
@@ -5393,8 +5462,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "أدخل رسالة رد واحدة على الأقل.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "يمكن إخفاء الردود المباشرة على منشوراتك فقط.",
+    "hideComments": {
+      "all": "إخفاء جميع التعليقات",
+      "hasPhoneNumber": "يحتوي على رقم هاتف",
+      "hasLink": "يحتوي على رابط",
+      "hasKeywords": "يحتوي على كلمات مفتاحية",
+      "keywords": "الكلمات المفتاحية",
+      "showCommentsAfter": "إظهار التعليقات بعد"
+    },
+    "showCommentsAfter": {
+      "none": "أبدًا"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. حتى 10 رسائل نصية (يدعم spintax)، تُنشر كل منها كرد منفصل.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "أدخل رسالة رد واحدة على الأقل."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "أتمتة الرد على قصص إنستغرام",
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "أدخل معرّف مجموعة بيانات صالحًا (أرقام فقط).",
       "whatsappNotFound": "لم يتم العثور على اتصال WhatsApp.",
       "testEventCodeRequired": "احفظ رمز حدث اختبار قبل إرسال حدث اختبار.",
-      "noContactForTest": "لا توجد جهة اتصال مؤهلة على هذه القناة بعد. يحتاج الحدث التجريبي إلى جهة اتصال حقيقية لربطه بها (في WhatsApp، يجب أن تأتي من إعلان click-to-WhatsApp).",
-      "invalidTestEventCode": "يجب ألا يحتوي رمز حدث الاختبار إلا على أحرف وأرقام وشرطات أو شرطات سفلية (بحد أقصى 64)."
+      "invalidTestEventCode": "يجب ألا يحتوي رمز حدث الاختبار إلا على أحرف وأرقام وشرطات أو شرطات سفلية (بحد أقصى 64).",
+      "invalidMessagingId": "يجوز أن يحتوي معرّف المراسلة على أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
+      "capiDisconnected": "تم قطع اتصال Meta CAPI لهذه القناة. أعد الاتصال قبل إرسال حدث اختبار."
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "تم حفظ رمز حدث الاختبار.",
       "cleared": "تم مسح رمز حدث الاختبار. الأحداث نشطة مجددًا.",
       "send": "إرسال حدث اختبار",
-      "sent": "تم إدراج حدث الاختبار في قائمة الانتظار. سيظهر ضمن Test events في Events Manager خلال دقيقة.",
-      "sendHint": "يرسل حدث Purchase تجريبيًا واحدًا (100 USD) إلى أحدث جهة اتصال في هذه القناة.",
+      "sent": "تم إرسال حدث الاختبار. سيظهر ضمن Test events في Events Manager خلال دقيقة.",
+      "sendHint": "يرسل حدث Purchase نموذجيًا واحدًا (100 USD) إلى معرّف مراسلة تدخله أنت. لا يُستخدم أي جهة اتصال محفوظة.",
       "activeNotice": "وضع الاختبار مفعّل: لا تُحتسب أحداث هذه القناة في التقارير حتى يتم مسح الرمز.",
-      "openTestEvents": "فتح Test events"
+      "openTestEvents": "فتح Test events",
+      "dialogTitle": "إرسال حدث اختبار",
+      "dialogDescription": "سيتم إرسال حدث Purchase نموذجي واحد (100 USD) مع رمز حدث الاختبار الخاص بك. الصق معرّف المراسلة النموذجي من Events Manager → Test events → Messaging → Graph API Explorer، حتى لا يُنسب أي شيء إلى جهة اتصال حقيقية.",
+      "messagingIdLabel": {
+        "messenger": "معرّف جهة الاتصال (page_scoped_user_id)",
+        "instagram": "معرّف جهة الاتصال (ig_sid)",
+        "whatsapp": "معرّف النقرة (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "الصق القيمة النموذجية من Meta",
+      "messagingIdHint": "أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
+      "cancel": "إلغاء",
+      "confirmSend": "إرسال"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "حقول البوت"
+  },
+  "openLink": {
+    "title": "فتح الرابط",
+    "invalidTitle": "رابط غير صالح.",
+    "invalidDescription": "هذا الرابط غير صالح أو انتهت صلاحيته.",
+    "openZaloGroup": "فتح مجموعة Zalo",
+    "openZalo": "فتح Zalo",
+    "openMessenger": "فتح Messenger"
   }
 }

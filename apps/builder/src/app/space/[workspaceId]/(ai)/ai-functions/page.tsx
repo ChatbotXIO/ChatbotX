@@ -4,8 +4,6 @@ import { Suspense } from "react"
 import { AIFunctionsTable } from "@/features/ai-functions/ai-functions-table"
 import { listAIFunctions } from "@/features/ai-functions/queries"
 import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 type AIFunctionsPageProps = {
   params: Promise<{ workspaceId: string }>
@@ -30,11 +28,7 @@ export default async function AIFunctionsPage({
       <AITab />
 
       <Suspense>
-        <FlowStoreProvider workspaceId={workspaceId}>
-          <CustomFieldStoreProvider workspaceId={workspaceId}>
-            <AIFunctionsTable promises={promises} workspaceId={workspaceId} />
-          </CustomFieldStoreProvider>
-        </FlowStoreProvider>
+        <AIFunctionsTable promises={promises} workspaceId={workspaceId} />
       </Suspense>
     </div>
   )

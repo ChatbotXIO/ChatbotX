@@ -48,6 +48,8 @@ export const stepTypes = z.enum([
   "assignConversation",
   "autoAssignConversation",
   "unassignConversation",
+  "markConversationAsUnread",
+  "markConversationAsRead",
   "followConversation",
   "unfollowConversation",
   "archiveConversation",

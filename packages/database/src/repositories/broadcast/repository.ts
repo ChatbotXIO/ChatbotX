@@ -1,5 +1,17 @@
-import { type DatabaseClient, db, eq, relationsFilterToSQL } from "../../client"
-import { withBroadcastTargets } from "../../partials/broadcast"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  isNull,
+  ne,
+  relationsFilterToSQL,
+} from "../../client"
+import {
+  type BroadcastStatus,
+  withBroadcastTargets,
+} from "../../partials/broadcast"
 import { broadcastModel, contactsOnBroadcastsModel } from "../../schema"
 import {
   getPaginationWithDefaults,
@@ -74,6 +86,29 @@ export const broadcastRepository = {
     return await tx.$count(
       broadcastModel,
       relationsFilterToSQL(broadcastModel, where),
+    )
+  },
+
+  async countActive(
+    input: {
+      workspaceId: string
+      channel: string
+      statuses: readonly BroadcastStatus[]
+      excludeId?: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    return await tx.$count(
+      broadcastModel,
+      and(
+        eq(broadcastModel.workspaceId, input.workspaceId),
+        eq(broadcastModel.channel, input.channel),
+        inArray(broadcastModel.status, [...input.statuses]),
+        isNull(broadcastModel.deletedAt),
+        input.excludeId === undefined
+          ? undefined
+          : ne(broadcastModel.id, input.excludeId),
+      ),
     )
   },
 

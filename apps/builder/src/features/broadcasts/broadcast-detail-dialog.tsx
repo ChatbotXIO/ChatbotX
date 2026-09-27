@@ -4,6 +4,7 @@ import {
   broadcastSendsTemplate,
   broadcastSubactions,
   channelTypes,
+  resolveBroadcastSendRatePerMinute,
 } from "@chatbotx.io/database/partials"
 import {
   Dialog,
@@ -28,6 +29,7 @@ import {
   resolveBroadcastPageNames,
 } from "./lib/broadcast-detail-pages"
 import { resolveBroadcastInboxLabelKey } from "./lib/broadcast-inbox-label"
+import { describeBroadcastAudienceRange } from "./lib/broadcast-send-limit"
 import { resolveBroadcastScheduleTypeMessageKey } from "./lib/schedule-type-options"
 import type { BroadcastResourceWithRelations } from "./schema/resource"
 
@@ -73,6 +75,8 @@ export function BroadcastDetailDialog({
     ? channel.data
     : channelTypes.enum.omnichannel
   const subaction = broadcastSubactions.safeParse(broadcast.subaction)
+  const audienceRange = describeBroadcastAudienceRange(broadcast, t)
+  const sendRatePerMinute = resolveBroadcastSendRatePerMinute(broadcast)
   // Names each page the way the create form's page picker does.
   const pageLabelKey = resolveBroadcastInboxLabelKey(channelValue)
 
@@ -143,6 +147,14 @@ export function BroadcastDetailDialog({
                   ? "-"
                   : formatter.number(broadcast.contactCount)
               }
+            />
+            <BroadcastDetailField
+              label={t("broadcasts.sendLimit.rangeLabel")}
+              value={audienceRange}
+            />
+            <BroadcastDetailField
+              label={t("fields.sendRatePerMinute.label")}
+              value={formatter.number(sendRatePerMinute)}
             />
           </div>
 

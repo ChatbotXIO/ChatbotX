@@ -163,6 +163,28 @@ describe("public scheduled-deletion route guards", () => {
     expect(mockSystemGetMePrivacyData).not.toHaveBeenCalled()
   })
 
+  test("GDPR me page injects synchronous avatar mirroring", async () => {
+    mockSystemGetMePrivacyData.mockResolvedValue({ language: "en" })
+
+    await MePage({
+      searchParams: Promise.resolve({
+        w: "workspace-1",
+        u: "source-1",
+        ib: "integration-1",
+        id: "form-1",
+        hash: "hash-1",
+      }),
+    })
+
+    expect(mockSystemGetMePrivacyData).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      sourceId: "source-1",
+      integrationId: "integration-1",
+      formId: "form-1",
+      hash: "hash-1",
+    })
+  })
+
   test("unsubscribe renders unavailable and skips mutation when the workspace is scheduled for deletion", async () => {
     mockLoadServableWorkspace.mockResolvedValue({ servable: false })
 

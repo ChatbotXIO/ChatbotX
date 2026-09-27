@@ -31,6 +31,7 @@ export type ChangeFolderDialogProps = {
   open: boolean
   trigger?: ReactElement
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
 export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
@@ -42,6 +43,7 @@ export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
     folderType,
     open,
     onOpenChange,
+    onSuccess,
   } = props
 
   const router = useRouter()
@@ -66,6 +68,7 @@ export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
           onClose={() => onOpenChange(false)}
           onSuccess={() => {
             onOpenChange(false)
+            onSuccess?.()
             router.refresh()
           }}
           workspaceId={workspaceId}

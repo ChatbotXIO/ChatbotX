@@ -135,18 +135,18 @@ export type FacebookMarketingMessageModel =
   typeof schema.facebookMarketingMessageModel.$inferSelect
 export type FacebookMarketingMessagesAuthModel =
   typeof schema.facebookMarketingMessagesAuthModel.$inferSelect
-export type FBCommentAutomationModel =
-  typeof schema.fbCommentAutomationModel.$inferSelect
-export type FBCommentAutomationReplyModel =
-  typeof schema.fbCommentAutomationReplyModel.$inferSelect
-export type FBCommentAutomationEventModel =
-  typeof schema.fbCommentAutomationEventModel.$inferSelect
-export type FBCommentAutomationEventInsert =
-  typeof schema.fbCommentAutomationEventModel.$inferInsert
-export type FBCommentAutomationMissModel =
-  typeof schema.fbCommentAutomationMissModel.$inferSelect
-export type FBCommentAutomationMissInsert =
-  typeof schema.fbCommentAutomationMissModel.$inferInsert
+export type CommentAutomationModel =
+  typeof schema.commentAutomationModel.$inferSelect
+export type CommentAutomationReplyModel =
+  typeof schema.commentAutomationReplyModel.$inferSelect
+export type CommentAutomationEventModel =
+  typeof schema.commentAutomationEventModel.$inferSelect
+export type CommentAutomationEventInsert =
+  typeof schema.commentAutomationEventModel.$inferInsert
+export type CommentAutomationMissModel =
+  typeof schema.commentAutomationMissModel.$inferSelect
+export type CommentAutomationMissInsert =
+  typeof schema.commentAutomationMissModel.$inferInsert
 export type IgStoryAutomationModel =
   typeof schema.igStoryAutomationModel.$inferSelect
 export type AuditLogModel = typeof schema.auditLogModel.$inferSelect

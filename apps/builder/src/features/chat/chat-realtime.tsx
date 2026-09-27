@@ -3,6 +3,7 @@
 import { getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef } from "react"
+import { useShallow } from "zustand/react/shallow"
 import type { RealtimeHandlerMap } from "@/features/realtime/types"
 import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-realtime-events"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -29,18 +30,75 @@ export function ChatRealtime() {
     })
 
   const {
-    handleNewMessage,
+    applyAgentLastReadAt,
+    assignMessageCommentId,
+    bubbleConversationToTop,
+    handleNewMessages,
     markMessagesDeleted,
     markMessageFailed,
-    assignMessageCommentId,
-    updateMessageText,
-    updateMessageContentAttributes,
+    openConversation,
+    resumeConversationHeadRefresh,
     updateContact,
     updateConversations,
-    bubbleConversationToTop,
-    openConversation,
-  } = useChatStore((state) => state)
+    updateMessageContentAttributes,
+    updateMessageText,
+  } = useChatStore(
+    useShallow((state) => ({
+      applyAgentLastReadAt: state.applyAgentLastReadAt,
+      assignMessageCommentId: state.assignMessageCommentId,
+      bubbleConversationToTop: state.bubbleConversationToTop,
+      handleNewMessages: state.handleNewMessages,
+      markMessagesDeleted: state.markMessagesDeleted,
+      markMessageFailed: state.markMessageFailed,
+      openConversation: state.openConversation,
+      resumeConversationHeadRefresh: state.resumeConversationHeadRefresh,
+      updateContact: state.updateContact,
+      updateConversations: state.updateConversations,
+      updateMessageContentAttributes: state.updateMessageContentAttributes,
+      updateMessageText: state.updateMessageText,
+    })),
+  )
   const conversationIdParam = useConversationIdParam()
+
+  const pendingCreatedMessagesRef = useRef<MessageResourceWithRelations[]>([])
+  const isMessageFlushQueuedRef = useRef(false)
+  const flushPendingCreatedMessages = (): void => {
+    if (!isMessageFlushQueuedRef.current) {
+      return
+    }
+
+    const messages = pendingCreatedMessagesRef.current
+    pendingCreatedMessagesRef.current = []
+    isMessageFlushQueuedRef.current = false
+    handleNewMessages(messages)
+    for (const createdMessage of messages) {
+      if (getWhatsappCallPermissionReply(createdMessage.contentAttributes)) {
+        invalidateOutboundCallMode(createdMessage.conversationId)
+      }
+    }
+  }
+
+  const queueCreatedMessage = (message: MessageResourceWithRelations): void => {
+    pendingCreatedMessagesRef.current.push(message)
+    if (isMessageFlushQueuedRef.current) {
+      return
+    }
+
+    isMessageFlushQueuedRef.current = true
+    queueMicrotask(flushPendingCreatedMessages)
+  }
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        resumeConversationHeadRefresh(workspaceId)
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [resumeConversationHeadRefresh, workspaceId])
 
   // Dedupes newly-ringing calls so each bubbles the conversation to top only
   // once. Held in a ref (not created inside the effect) so Strict Mode's
@@ -137,24 +195,18 @@ export function ChatRealtime() {
 
   const handlers: RealtimeHandlerMap = {
     messageCreated: (event) => {
-      const message = event.data as MessageResourceWithRelations
-      handleNewMessage(message)
-      // A customer's call-permission reply changes what the VoIP call button
-      // should do, but useOutboundCallMode caches its resolution per
-      // conversation and would otherwise keep showing the pre-accept affordance
-      // until a remount. Invalidate the query so the button reflects the new
-      // grant live.
-      if (getWhatsappCallPermissionReply(message.contentAttributes)) {
-        invalidateOutboundCallMode(message.conversationId)
-      }
+      queueCreatedMessage(event.data as MessageResourceWithRelations)
     },
     messageDeleted: (event) => {
+      flushPendingCreatedMessages()
       markMessagesDeleted(event.data.messageIds)
     },
     messageIdAssigned: (event) => {
+      flushPendingCreatedMessages()
       assignMessageCommentId(event.data.messageId, event.data.commentId)
     },
     messageFailed: (event) => {
+      flushPendingCreatedMessages()
       markMessageFailed(
         event.data.messageId,
         event.data.clientId,
@@ -162,6 +214,7 @@ export function ChatRealtime() {
       )
     },
     messageUpdated: (event) => {
+      flushPendingCreatedMessages()
       const { data } = event
       updateMessageText(data.messageId, data.newText, {
         newAttachmentPath: data.newAttachmentPath ?? null,
@@ -173,6 +226,7 @@ export function ChatRealtime() {
       })
     },
     messageContentUpdated: (event) => {
+      flushPendingCreatedMessages()
       updateMessageContentAttributes(
         event.data.messageId,
         event.data.contentAttributes,
@@ -189,7 +243,22 @@ export function ChatRealtime() {
       updateConversations(data.conversationIds, {
         assignedUserId: data.assignedUserId,
         assignedInboxTeamId: data.assignedInboxTeamId,
+        assignedUser: null,
+        assignedInboxTeam: null,
       })
+    },
+    conversationUpdated: (event) => {
+      const { conversationIds, changes } = event.data
+      // This channel only advances read state. Cross-tab mark-unread (null) is
+      // intentionally unsupported, matching the existing behavior.
+      if (!changes.agentLastReadAt) {
+        return
+      }
+      const agentLastReadAt = new Date(changes.agentLastReadAt)
+      if (Number.isNaN(agentLastReadAt.getTime())) {
+        return
+      }
+      applyAgentLastReadAt(conversationIds, agentLastReadAt)
     },
   }
 

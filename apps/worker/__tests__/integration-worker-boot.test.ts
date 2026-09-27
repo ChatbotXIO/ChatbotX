@@ -174,6 +174,13 @@ vi.mock("../src/integration/handlers/comment-automation", () => ({
 vi.mock("../src/integration/handlers/comment-automation/ai-reply", () => ({
   processCommentAIReply: vi.fn(),
 }))
+vi.mock(
+  "../src/integration/handlers/comment-automation/deferred-private-reply",
+  () => ({ runDeferredCommentPrivateReply: vi.fn() }),
+)
+vi.mock("../src/integration/handlers/tiktok-high-intent-comment", () => ({
+  receiveTiktokHighIntentComment: vi.fn(),
+}))
 vi.mock("../src/integration/handlers/contact/update-avatar", () => ({
   updateContactAvatar: vi.fn(),
 }))

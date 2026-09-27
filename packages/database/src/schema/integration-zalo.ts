@@ -50,6 +50,10 @@ export const integrationZaloModel = pgTable(
       "btree",
       table.fallbackFlowId.asc().nullsLast(),
     ),
+    index("IntegrationZalo_oaId_idx").using(
+      "btree",
+      table.oaId.asc().nullsLast(),
+    ),
     uniqueIndex("IntegrationZalo_inboxId_key").using(
       "btree",
       table.inboxId.asc().nullsLast(),

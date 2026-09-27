@@ -336,6 +336,7 @@
       "message": "Thanh toán gần nhất của bạn không thành công. Cập nhật phương thức thanh toán để tiếp tục sử dụng workspace."
     },
     "trial": {
+      "planName": "Dùng thử",
       "daysLeft": "Dùng thử: còn {days} ngày",
       "endsTomorrow": "Dùng thử kết thúc vào ngày mai",
       "expired": "Bản dùng thử đã kết thúc — nâng cấp để tiếp tục sử dụng workspace",
@@ -507,6 +508,23 @@
     "resumeDialog": {
       "title": "Tiếp tục broadcast",
       "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin."
+    },
+    "planLimitDialog": {
+      "title": "Nâng cấp gói của bạn",
+      "sendRate": "Gói {plan} hiện tại của bạn gửi broadcast với tốc độ tối đa {rate} tin mỗi phút. Vui lòng nâng cấp để gửi broadcast nhanh hơn tới {multiplier} lần.",
+      "activeBroadcasts": "Gói {plan} hiện tại của bạn chỉ chạy {max, plural, one {# broadcast} other {# broadcast}} tại một thời điểm. Vui lòng nâng cấp để chạy nhiều broadcast cùng lúc."
+    },
+    "sendLimit": {
+      "title": "Giới hạn",
+      "hint": "Để trống để gửi cho tất cả liên hệ phù hợp.",
+      "rateHint": "Để trống để dùng tốc độ mặc định.",
+      "rangeSummary": "Liên hệ #{start} – #{end}",
+      "rangeFromSummary": "Từ liên hệ số {start}",
+      "rangeLabel": "Phạm vi liên hệ",
+      "fromLabel": "Từ",
+      "toLabel": "Đến",
+      "allPlaceholder": "Tất cả",
+      "rangeEndBeforeStart": "Vị trí kết thúc không được trước vị trí bắt đầu"
     }
   },
   "commentAutomation": {
@@ -535,7 +553,26 @@
       "keywordsNotMatched": "Sai từ khoá",
       "contactNotNew": "Contact không mới",
       "alreadyRepliedOnPost": "Đã trả lời ở bài viết này",
-      "engagedOnOtherPost": "Đã tương tác ở bài viết khác"
+      "engagedOnOtherPost": "Đã tương tác ở bài viết khác",
+      "mentionCountNotMatched": "Số lượt nhắc tên không khớp"
+    },
+    "replyTo": {
+      "mentions": "Bình luận có đủ số người được nhắc tên",
+      "mentionCount": "Số người được tag",
+      "mentionCountDescription": "Chỉ bình luận tag từ số người này trở lên (@tên) mới thỏa điều kiện.",
+      "mentionCountOption": "{count, plural, one {# người} other {# người}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Bình luận bằng",
+      "contain": "Bình luận có chứa"
+    },
+    "hideComments": {
+      "hasGif": "Chứa GIF",
+      "hasEmoji": "Chứa Emoji"
+    },
+    "trackUserTags": {
+      "label": "Theo dõi khi người dùng gắn thẻ người khác",
+      "descriptionText": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     }
   },
   "condition": {
@@ -737,6 +774,10 @@
       "whatsapp": "Số WhatsApp này đã được kết nối với một workspace khác.",
       "zalo": "Zalo OA này đã được kết nối với một workspace khác."
     },
+    "missingScopes": {
+      "generic": "Đã hủy kết nối: một số quyền chưa được cấp. Hãy kết nối lại và chấp nhận toàn bộ quyền được yêu cầu.",
+      "tiktok": "Đã hủy kết nối TikTok: một số quyền chưa được cấp. Hãy kết nối lại và chấp nhận toàn bộ quyền được yêu cầu."
+    },
     "reconnect": {
       "success": "Kết nối lại kênh thành công.",
       "errors": {
@@ -864,6 +905,7 @@
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi."
   },
   "fields": {
+    "optionalHint": "(không bắt buộc)",
     "marketingMessagesConfigId": {
       "label": "ID cấu hình Marketing Messages",
       "description": "ID cấu hình Facebook Login for Business dùng để yêu cầu quyền marketing_messages_messenger."
@@ -2137,11 +2179,16 @@
       "clientId": "Client ID",
       "clientSecret": "Client Secret",
       "displayName": "Tên hiển thị",
+      "needsReauthorizationForComments": "Kết nối này được cấp quyền trước khi có tự động hóa bình luận. Hãy kết nối lại để bắt đầu nhận sự kiện bình luận.",
       "connectInstructions": {
         "step1": "Tạo ứng dụng TikTok tại <link>developers.tiktok.com</link>.",
         "step2": "Cấp quyền tài khoản và sao chép <strong>access token</strong>, <strong>open ID</strong> và <strong>client secret</strong>.",
         "step3": "Dán thông tin xác thực bên dưới để kết nối."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Cho phép tài khoản này trả lời bình luận có ý định mua cao bằng tin nhắn riêng. Bắt buộc với automation bình luận TikTok dùng trả lời riêng.",
+      "commentToMessageEligibility": "Chỉ áp dụng cho Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan, chủ tài khoản trên 18 tuổi, đã đăng ký kinh doanh hoặc đã chạy Messaging Ads, và đặt quyền nhắn tin thành \"Requests\".",
+      "commentToMessageUnknown": "Chưa kiểm tra với TikTok — bấm làm mới để đọc trạng thái hiện tại."
     },
     "drip": {
       "label": "Drip"
@@ -2339,6 +2386,9 @@
     },
     "lastCallTranscript": {
       "label": "Bản chép lời cuộc gọi gần nhất"
+    },
+    "sendRatePerMinute": {
+      "label": "Số tin nhắn mỗi phút"
     }
   },
   "flows": {
@@ -2455,6 +2505,8 @@
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
       "unarchiveConversation": "Bỏ lưu trữ cuộc trò chuyện",
       "unassignConversation": "Bỏ gán cuộc trò chuyện",
+      "markConversationAsUnread": "Đánh dấu cuộc trò chuyện là chưa đọc",
+      "markConversationAsRead": "Đánh dấu cuộc trò chuyện là đã đọc",
       "unfollowConversation": "Bỏ theo dõi cuộc trò chuyện",
       "unsubscribeBroadcast": "Hủy đăng ký phát sóng",
       "getUserData": "Lấy đầu vào người dùng",
@@ -3197,6 +3249,7 @@
     "changeLikeState": "Thay đổi trạng thái thích",
     "changeHideState": "Thay đổi trạng thái ẩn",
     "commentHidden": "Bình luận này đã bị ẩn",
+    "commentMediaUnavailable": "Bình luận này chứa GIF, sticker hoặc ảnh không hiển thị được",
     "messageDeleted": "Tin nhắn này đã bị xoá.",
     "sendFailed": "Gửi thất bại",
     "repliedToStory": "Đã trả lời story của bạn",
@@ -3236,7 +3289,10 @@
     "deleteFeature": "Xóa {feature}",
     "resetFeature": "Đặt lại {feature}",
     "resetConfirmation": "Thao tác này sẽ xóa giá trị của {feature} đã chọn về rỗng.\nHành động này không thể hoàn tác.",
+    "resetAllConfirmation": "Thao tác này sẽ xóa toàn bộ giá trị {feature} của liên hệ này về rỗng.\nHành động này không thể hoàn tác.",
     "resetSuccess": "Đã đặt lại {feature} thành công",
+    "clearFeature": "Xóa {feature}",
+    "clearSuccess": "Đã xóa {feature} thành công",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
     "addFeature": "Thêm {feature}",
     "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
@@ -3288,6 +3344,7 @@
     "historyDepth": "({count})",
     "none": "Không có",
     "tiktokCardTitleTooLong": "TikTok sẽ cắt ngắn tin nhắn này: khi có gắn nút, chỉ 40 ký tự đầu được gửi đi. Hãy rút ngắn nội dung hoặc gỡ bớt nút.",
+    "sendTextTooLongForChannel": "Tin nhắn dài hơn giới hạn của kênh này. Hãy rút ngắn nội dung, hoặc trỏ khối này sang kênh có giới hạn lớn hơn.",
     "waTemplateMpmNoProducts": "Thêm ít nhất một sản phẩm vào nút đa sản phẩm này trước khi xuất bản.",
     "waTemplateMpmTooManySections": "Nút đa sản phẩm chỉ được có tối đa 10 phần. Hãy xóa bớt phần trước khi xuất bản.",
     "waTemplateMpmTooManyProducts": "Nút đa sản phẩm chỉ được có tối đa 30 sản phẩm. Hãy xóa bớt sản phẩm trước khi xuất bản.",
@@ -3377,6 +3434,7 @@
       "noConnectablePagesDescription": "Bạn không phải là Admin của Page này",
       "bmLookupFailedTitle": "Có thể thiếu trang trong Business Manager",
       "bmLookupFailedDescription": "Hãy kết nối lại Messenger và cấp quyền Business Manager để liệt kê các trang được quản lý qua Business Manager.",
+      "loadFailed": "Không tải được danh sách Trang Facebook",
       "alreadyConnectedNote": "Trang này đã được kết nối",
       "notAdminNote": "Bạn không phải là Admin của Page này",
       "tryAgain": "Kết nối lại"
@@ -4074,6 +4132,7 @@
         "statusNoAnswer": "Không có phản hồi",
         "eyebrowCallEnded": "CUỘC GỌI ĐÃ KẾT THÚC",
         "statusConnectionLost": "Mất kết nối",
+        "answerFailed": "Không nghe được cuộc gọi. Hãy kiểm tra micro đã được kết nối và cho phép trong trình duyệt, rồi thử lại.",
         "ringingListTitle": "{count, plural, one {# cuộc gọi đến} other {# cuộc gọi đến}}"
       },
       "capability": {
@@ -4179,6 +4238,14 @@
     "chatbotInvitationDescription2": "{userName} đã mời bạn tham gia {chatbotName}.",
     "invalidInvitation": "Lời mời này không hợp lệ hoặc đã hết hạn.",
     "workspaceUnavailable": "Không gian làm việc này không còn khả dụng."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Đánh dấu tin nhắn bot là đã đọc",
+      "enabled": "Đang bật",
+      "disabled": "Đang tắt",
+      "description": "Nếu bật thì bot sẽ tự động đánh dấu tin nhắn bot là đã đọc"
+    }
   },
   "inboxTeams": {
     "title": "Nhóm hộp thư"
@@ -4579,7 +4646,8 @@
     "title": "Chăm sóc"
   },
   "tools": {
-    "title": "Công cụ"
+    "title": "Công cụ",
+    "beta": "Beta"
   },
   "users": {
     "title": "Người dùng"
@@ -4685,13 +4753,13 @@
     "privateReply": "Trả lời riêng tư (inbox)",
     "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định, chatbot flow, hoặc tắt.",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng.",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng. Hỗ trợ spintax.",
     "replyMessage": "Nội dung trả lời",
     "replyMessagePlaceholder": "Nhập nội dung trả lời...",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywordsTypeDescription": "Chọn loại bình luận nào sẽ kích hoạt tự động hóa này.",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "excludeKeywordsDescription": "Bình luận chứa bất kỳ từ khóa nào trong danh sách này sẽ bị bỏ qua bởi cả inbox và phản hồi công khai.",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
@@ -4754,7 +4822,7 @@
       "ignoreCommentReplies": "Không trả lời các reply bình luận",
       "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
       "trackUserTags": "Theo dõi khi người dùng gắn thẻ người khác",
-      "trackUserTagsDescription": "Dùng '{{total_tagged}}' để biết có bao nhiêu người được gắn thẻ. Dùng '{{total_new_tagged}}' để biết có bao nhiêu người được gắn thẻ chưa nằm trong danh sách liên hệ."
+      "trackUserTagsDescription": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     },
     "hideComments": {
       "all": "Ẩn tất cả bình luận",
@@ -4788,13 +4856,13 @@
     "privateReply": "Trả lời riêng tư (inbox)",
     "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định, chatbot flow, hoặc tắt.",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng.",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng. Hỗ trợ spintax.",
     "replyMessage": "Nội dung trả lời",
     "replyMessagePlaceholder": "Nhập nội dung trả lời...",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywordsTypeDescription": "Chọn loại bình luận nào sẽ kích hoạt tự động hóa này.",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "excludeKeywordsDescription": "Bình luận chứa bất kỳ từ khóa nào trong danh sách này sẽ bị bỏ qua bởi cả inbox và phản hồi công khai.",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
@@ -4856,7 +4924,7 @@
       "ignoreCommentReplies": "Không trả lời các reply bình luận",
       "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
       "trackUserTags": "Theo dõi khi người dùng gắn thẻ người khác",
-      "trackUserTagsDescription": "Dùng '{{total_tagged}}' để biết có bao nhiêu người được gắn thẻ. Dùng '{{total_new_tagged}}' để biết có bao nhiêu người được gắn thẻ chưa nằm trong danh sách liên hệ."
+      "trackUserTagsDescription": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     },
     "hideComments": {
       "all": "Ẩn tất cả bình luận",
@@ -4892,13 +4960,13 @@
     "publicOnlyNote": "Threads hiện chỉ hỗ trợ phản hồi công khai.",
     "trackCommentsOn": "Theo dõi bình luận trên",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Gửi phản hồi công khai cho các bình luận Threads phù hợp.",
+    "publicReplyDescription": "Gửi phản hồi công khai cho các bình luận Threads phù hợp. Tối đa 10 tin nhắn văn bản (hỗ trợ spintax), mỗi tin được đăng thành một trả lời riêng.",
     "replyMessage": "Nội dung trả lời",
     "replyFlow": "Flow trả lời",
     "replyAIAgent": "AI Agent trả lời",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
     "replyAfterValue": "Giá trị",
@@ -4907,7 +4975,8 @@
     "card": {
       "targeting": "Nhắm mục tiêu & Trả lời",
       "filters": "Bộ lọc & Tùy chọn",
-      "replyTiming": "Thời điểm trả lời"
+      "replyTiming": "Thời điểm trả lời",
+      "hideComments": "Ẩn bình luận"
     },
     "postType": {
       "all": "Tất cả bài viết",
@@ -4949,8 +5018,124 @@
       "keywordsRequired": "Hãy nhập ít nhất một từ khóa cho kiểu khớp đã chọn.",
       "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
       "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời gian đã chọn.",
-      "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật."
+      "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật.",
+      "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời.",
+      "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa."
+    },
+    "hideCommentsDescription": "Chỉ có thể ẩn các trả lời cấp cao nhất trên bài viết của bạn.",
+    "hideComments": {
+      "all": "Ẩn tất cả bình luận",
+      "hasPhoneNumber": "Chứa số điện thoại",
+      "hasLink": "Chứa liên kết",
+      "hasKeywords": "Chứa từ khóa",
+      "keywords": "Từ khóa",
+      "showCommentsAfter": "Hiện bình luận sau"
+    },
+    "showCommentsAfter": {
+      "none": "Không bao giờ"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "Tự động hóa bình luận TikTok",
+    "description": "Tự động trả lời, thích và ẩn bình luận dưới video TikTok của bạn.",
+    "create": "Tạo tự động hóa",
+    "replies": "Lượt trả lời",
+    "empty": "Chưa có tự động hóa bình luận TikTok nào.",
+    "deliveryDelayNote": "TikTok gửi sự kiện bình luận trong vòng năm phút, nên phản hồi không tức thì. Độ trễ bạn đặt sẽ cộng thêm vào khoảng đó.",
+    "trackCommentsOn": "Theo dõi bình luận trên",
+    "publicReply": "Trả lời công khai bình luận",
+    "publicReplyDescription": "Gửi trả lời công khai cho các bình luận TikTok khớp điều kiện. Tối đa 10 tin nhắn văn bản (hỗ trợ spintax), mỗi tin được đăng thành một trả lời riêng.",
+    "replyMessage": "Nội dung trả lời",
+    "replyFlow": "Kịch bản trả lời",
+    "replyAIAgent": "AI Agent trả lời",
+    "includeKeywordsType": "Trả lời khi",
+    "includeKeywords": "Từ khóa cần khớp",
+    "excludeKeywords": "Loại trừ bình luận chứa",
+    "keywordsPlaceholder": "Nhập rồi nhấn Enter...",
+    "replyAfter": "Trả lời sau",
+    "replyAfterValue": "Giá trị",
+    "specificPostIds": "ID video cụ thể",
+    "postIdPlaceholder": "Nhập ID video rồi nhấn Enter...",
+    "hideCommentsDescription": "Bình luận bị ẩn chỉ còn người viết nhìn thấy.",
+    "card": {
+      "targeting": "Phạm vi & Trả lời",
+      "filters": "Bộ lọc & Tùy chọn",
+      "hideComments": "Ẩn bình luận",
+      "replyTiming": "Thời điểm trả lời"
+    },
+    "postType": {
+      "all": "Tất cả video",
+      "specificPosts": "Video cụ thể"
+    },
+    "replyType": {
+      "text": "Tin nhắn văn bản",
+      "flow": "Kịch bản",
+      "AIAgent": "AI Agent",
+      "none": "Không trả lời"
+    },
+    "keywordsType": {
+      "all": "Mọi bình luận",
+      "equal": "Khớp chính xác",
+      "contain": "Có chứa"
+    },
+    "replyAfterType": {
+      "immediately": "Ngay lập tức",
+      "seconds": "Sau X giây",
+      "minutes": "Sau X phút",
+      "hours": "Sau X giờ",
+      "randomWithin3Minutes": "Ngẫu nhiên trong 3 phút",
+      "randomWithin5Minutes": "Ngẫu nhiên trong 5 phút",
+      "randomWithin10Minutes": "Ngẫu nhiên trong 10 phút",
+      "randomWithin20Minutes": "Ngẫu nhiên trong 20 phút",
+      "randomWithin30Minutes": "Ngẫu nhiên trong 30 phút",
+      "randomWithin60Minutes": "Ngẫu nhiên trong 60 phút"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Chỉ trả lời liên hệ mới",
+      "replyOncePerUserPerPost": "Chỉ trả lời mỗi người một lần trên mỗi video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Trả lời người đã bình luận ở video khác",
+      "ignoreCommentReplies": "Không trả lời phản hồi của bình luận",
+      "likeUserComment": "Thích bình luận của người dùng"
+    },
+    "hide": {
+      "all": "Ẩn mọi bình luận",
+      "hasPhoneNumber": "Ẩn bình luận có số điện thoại",
+      "hasLink": "Ẩn bình luận có liên kết",
+      "hasKeywords": "Ẩn bình luận chứa từ khóa",
+      "keywords": "Từ khóa cần ẩn",
+      "showCommentsAfter": "Hiện lại bình luận đã ẩn sau"
+    },
+    "showCommentsAfter": {
+      "none": "Không bao giờ",
+      "6h": "6 giờ",
+      "12h": "12 giờ",
+      "1d": "1 ngày",
+      "2d": "2 ngày",
+      "3d": "3 ngày",
+      "4d": "4 ngày",
+      "5d": "5 ngày",
+      "6d": "6 ngày",
+      "7d": "7 ngày",
+      "8d": "8 ngày",
+      "9d": "9 ngày",
+      "10d": "10 ngày"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Phải để trống ID video khi áp dụng cho tất cả video.",
+      "postIdsRequired": "Chọn ít nhất một ID video khi áp dụng cho video cụ thể.",
+      "keywordsMustBeEmptyForAll": "Phải để trống từ khóa khi áp dụng cho mọi bình luận.",
+      "keywordsRequired": "Nhập ít nhất một từ khóa cho kiểu khớp đã chọn.",
+      "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
+      "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời điểm đã chọn.",
+      "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa.",
+      "atLeastOneFieldRequired": "Cần ít nhất một trường.",
+      "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời."
+    },
+    "privateReply": "Trả lời riêng (Comment-to-Message)",
+    "privateReplyDescription": "Gửi tin nhắn riêng cho người bình luận. TikTok chỉ cho phép với bình luận được TikTok đánh dấu là có ý định mua cao, nên sẽ không chạy với mọi bình luận khớp điều kiện.",
+    "privateReplyMessage": "Nội dung tin nhắn riêng",
+    "privateReplyHighIntentTitle": "TikTok quyết định bình luận nào được nhắn tin",
+    "privateReplyHighIntentNotice": "Tài khoản TikTok đã kết nối phải bật Comment-to-Message, và phải là Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan. TikTok chỉ gửi tin nhắn riêng cho bình luận cấp 1 mà TikTok đánh dấu là có ý định mua cao, trong vòng 48 giờ, mỗi bình luận một lần, và không gửi nếu người bình luận đã nhắn tin cho bạn trong 24 giờ qua."
   },
   "instagramStoryAutomation": {
     "title": "Tự động hóa trả lời Story Instagram",
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "Nhập Dataset ID hợp lệ (chỉ gồm chữ số).",
       "whatsappNotFound": "Không tìm thấy tích hợp WhatsApp.",
       "testEventCodeRequired": "Hãy lưu mã sự kiện thử trước khi gửi sự kiện thử.",
-      "noContactForTest": "Kênh này chưa có liên hệ phù hợp. Sự kiện thử cần một liên hệ thật để gán vào (với WhatsApp, liên hệ phải đến từ quảng cáo click-to-WhatsApp).",
-      "invalidTestEventCode": "Mã sự kiện thử chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 64 ký tự)."
+      "invalidTestEventCode": "Mã sự kiện thử chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 64 ký tự).",
+      "invalidMessagingId": "ID nhắn tin chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 512 ký tự).",
+      "capiDisconnected": "Meta CAPI của kênh này đang ngắt kết nối. Hãy kết nối lại trước khi gửi sự kiện thử."
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "Đã lưu mã sự kiện thử.",
       "cleared": "Đã xoá mã sự kiện thử. Sự kiện gửi thật trở lại.",
       "send": "Gửi sự kiện thử",
-      "sent": "Đã xếp hàng sự kiện thử. Nó sẽ hiện trong Test events của Events Manager trong khoảng một phút.",
-      "sendHint": "Gửi một sự kiện Purchase mẫu (100 USD) tới liên hệ gần nhất của kênh này.",
+      "sent": "Đã gửi sự kiện thử. Nó sẽ hiện trong Test events của Events Manager trong khoảng một phút.",
+      "sendHint": "Gửi một sự kiện Purchase mẫu (100 USD) tới ID nhắn tin bạn nhập. Không dùng liên hệ nào đã lưu.",
       "activeNotice": "Đang ở chế độ thử: sự kiện của kênh này không được tính vào báo cáo cho tới khi xoá mã.",
-      "openTestEvents": "Mở Test events"
+      "openTestEvents": "Mở Test events",
+      "dialogTitle": "Gửi sự kiện thử",
+      "dialogDescription": "Một sự kiện Purchase mẫu (100 USD) sẽ được gửi kèm mã sự kiện thử của bạn. Dán ID nhắn tin mẫu lấy từ Events Manager → Test events → Messaging → Graph API Explorer, để không gán nhầm vào liên hệ thật.",
+      "messagingIdLabel": {
+        "messenger": "ID liên hệ (page_scoped_user_id)",
+        "instagram": "ID liên hệ (ig_sid)",
+        "whatsapp": "ID click quảng cáo (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Dán giá trị mẫu từ Meta",
+      "messagingIdHint": "Chỉ gồm chữ, số, gạch ngang và gạch dưới (tối đa 512 ký tự).",
+      "cancel": "Huỷ",
+      "confirmSend": "Gửi"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "Trường bot"
+  },
+  "openLink": {
+    "title": "Mở liên kết",
+    "invalidTitle": "Liên kết không hợp lệ.",
+    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
+    "openZaloGroup": "Mở nhóm Zalo",
+    "openZalo": "Mở Zalo",
+    "openMessenger": "Mở Messenger"
   }
 }

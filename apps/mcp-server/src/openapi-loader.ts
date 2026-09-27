@@ -30,6 +30,7 @@ interface OpenAPIOperation {
   }
   security?: Record<string, string[]>[]
   summary?: string
+  tags?: string[]
   "x-mcp"?: McpOperationMeta
 }
 
@@ -108,6 +109,7 @@ export interface DynamicTool {
   pathTemplate: string
   queryParamNames: string[]
   scope?: string
+  tags: string[]
   visibility: "default" | "hidden"
 }
 
@@ -330,6 +332,7 @@ function parseOperation(
     pathTemplate,
     queryParamNames,
     scope: meta?.scope,
+    tags: operation.tags ?? [],
     visibility: meta?.visibility === "default" ? "default" : "hidden",
   }
 }

@@ -336,6 +336,7 @@
       "message": "O seu último pagamento falhou. Atualize o método de pagamento para manter o espaço de trabalho ativo."
     },
     "trial": {
+      "planName": "Avaliação",
       "daysLeft": "Avaliação: faltam {days} dias",
       "endsTomorrow": "A avaliação termina amanhã",
       "expired": "A sua avaliação terminou — atualize o plano para manter o espaço de trabalho ativo",
@@ -507,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Atualize o seu plano",
+      "sendRate": "O seu plano {plan} atual permite broadcasts com uma velocidade máxima de envio de {rate} mensagens por minuto. Atualize o plano para enviar broadcasts até {multiplier}x mais depressa.",
+      "activeBroadcasts": "O seu plano {plan} atual executa {max, plural, one {# broadcast} other {# broadcasts}} de cada vez. Atualize o plano para executar mais broadcasts em simultâneo."
+    },
+    "sendLimit": {
+      "title": "Limite",
+      "hint": "Deixe em branco para enviar a todos os contactos correspondentes.",
+      "rateHint": "Deixe em branco para utilizar a taxa predefinida.",
+      "rangeSummary": "Contactos n.º{start} – n.º{end}",
+      "rangeFromSummary": "A partir do contacto n.º{start}",
+      "rangeLabel": "Intervalo de contactos",
+      "fromLabel": "De",
+      "toLabel": "Até",
+      "allPlaceholder": "Todos",
+      "rangeEndBeforeStart": "A posição final não pode ser anterior à posição inicial"
     }
   },
   "commentAutomation": {
@@ -535,7 +553,26 @@
       "keywordsNotMatched": "Palavras-chave não corresponderam",
       "contactNotNew": "O contacto não é novo",
       "alreadyRepliedOnPost": "Já respondido nesta publicação",
-      "engagedOnOtherPost": "Já interagiu noutra publicação"
+      "engagedOnOtherPost": "Já interagiu noutra publicação",
+      "mentionCountNotMatched": "O número de menções não correspondeu"
+    },
+    "replyTo": {
+      "mentions": "Comentários com menções suficientes",
+      "mentionCount": "Número de pessoas identificadas",
+      "mentionCountDescription": "Só correspondem os comentários que identificam pelo menos este número de pessoas (@nome).",
+      "mentionCountOption": "{count, plural, one {# pessoa} other {# pessoas}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Comentários iguais a",
+      "contain": "Comentários que contêm"
+    },
+    "hideComments": {
+      "hasGif": "Contém GIF",
+      "hasEmoji": "Contém emoji"
+    },
+    "trackUserTags": {
+      "label": "Registar se um utilizador marca outros utilizadores",
+      "descriptionText": "Conta as contas identificadas em cada comentário e soma-as aos totais do contacto em todos os comentários. Utilize '{{total_tagged}}' para todas as contas identificadas e '{{total_new_tagged}}' para contas que nunca enviaram mensagem à sua página nem foram contactos."
     }
   },
   "condition": {
@@ -726,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(opcional)",
     "marketingMessagesConfigId": {
       "label": "ID de configuração das Mensagens de marketing",
       "description": "ID de configuração do Facebook Login for Business utilizado para solicitar a permissão marketing_messages_messenger."
@@ -1996,11 +2034,16 @@
       "clientId": "ID do cliente",
       "clientSecret": "Segredo do cliente",
       "displayName": "Nome a apresentar",
+      "needsReauthorizationForComments": "Esta ligação foi autorizada antes da automação de comentários. Volte a ligar para começar a receber eventos de comentário.",
       "connectInstructions": {
         "step1": "Crie uma aplicação TikTok em <link>developers.tiktok.com</link>.",
         "step2": "Autorize a sua conta e copie o <strong>token de acesso</strong>, o <strong>ID aberto</strong> e o <strong>segredo do cliente</strong>.",
         "step3": "Cole as credenciais abaixo para estabelecer ligação."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Drip"
@@ -2201,6 +2244,9 @@
     },
     "lastCallTranscript": {
       "label": "Última transcrição de chamada"
+    },
+    "sendRatePerMinute": {
+      "label": "Mensagens por minuto"
     }
   },
   "flows": {
@@ -2317,6 +2363,8 @@
       "transferConversationToHuman": "Transferir conversa para uma pessoa",
       "unarchiveConversation": "Desarquivar conversa",
       "unassignConversation": "Remover atribuição da conversa",
+      "markConversationAsUnread": "Marcar conversa como não lida",
+      "markConversationAsRead": "Marcar conversa como lida",
       "unfollowConversation": "Deixar de seguir conversa",
       "unsubscribeBroadcast": "Cancelar subscrição da difusão",
       "getUserData": "Obter dados do utilizador",
@@ -3041,6 +3089,10 @@
       "whatsapp": "Este número do WhatsApp já está ligado a outro espaço de trabalho.",
       "zalo": "Esta OA do Zalo já está ligada a outro espaço de trabalho."
     },
+    "missingScopes": {
+      "generic": "Ligação cancelada: algumas permissões não foram concedidas. Ligue novamente e aceite todas as permissões solicitadas.",
+      "tiktok": "Ligação ao TikTok cancelada: algumas permissões não foram concedidas. Ligue novamente e aceite todas as permissões solicitadas."
+    },
     "reconnect": {
       "success": "Canal novamente ligado com sucesso.",
       "errors": {
@@ -3197,6 +3249,7 @@
     "changeLikeState": "Alterar estado do gosto",
     "changeHideState": "Alterar estado de ocultação",
     "commentHidden": "Este comentário foi ocultado",
+    "commentMediaUnavailable": "Este comentário contém um GIF, autocolante ou imagem que não pode ser apresentado",
     "messageDeleted": "A mensagem foi eliminada.",
     "sendFailed": "Falha ao enviar",
     "repliedToStory": "Respondeu ao seu story",
@@ -3237,7 +3290,10 @@
     "deleteFeature": "Eliminar {feature}",
     "resetFeature": "Repor {feature}",
     "resetConfirmation": "Isto irá limpar os valores dos {feature} selecionados.\nEsta ação não pode ser anulada.",
+    "resetAllConfirmation": "Isto irá limpar os valores de todos os {feature} deste contacto.\nEsta ação não pode ser anulada.",
     "resetSuccess": "{feature} reposto com sucesso",
+    "clearFeature": "Limpar {feature}",
+    "clearSuccess": "{feature} limpo com sucesso",
     "deleteConfirmation": "Tem a certeza absoluta?\nEsta ação não pode ser anulada.\nIsto eliminará permanentemente {feature} dos nossos servidores.",
     "addFeature": "Adicionar {feature}",
     "signOutConfirmation": "Tem a certeza de que pretende terminar sessão?",
@@ -3288,6 +3344,7 @@
     "historyDepth": "({count})",
     "none": "Nenhum",
     "tiktokCardTitleTooLong": "O TikTok vai cortar esta mensagem: com botões associados, apenas os primeiros 40 caracteres são enviados. Encurte a mensagem ou remova os botões.",
+    "sendTextTooLongForChannel": "Esta mensagem é maior do que este canal permite. Encurte-a ou aponte este bloco para um canal com um limite mais elevado.",
     "waTemplateMpmNoProducts": "Adicione pelo menos um produto a este botão multiproduto antes de publicar.",
     "waTemplateMpmTooManySections": "Um botão multiproduto pode ter no máximo 10 secções. Remova algumas secções antes de publicar.",
     "waTemplateMpmTooManyProducts": "Um botão multiproduto pode ter no máximo 30 produtos no total. Remova alguns produtos antes de publicar.",
@@ -3377,6 +3434,7 @@
       "noConnectablePagesDescription": "Não é administrador desta Página",
       "bmLookupFailedTitle": "Poderão faltar páginas do Gestor de Negócios",
       "bmLookupFailedDescription": "Volte a ligar o Messenger e conceda acesso ao Gestor de Negócios para que as páginas geridas através dele possam ser apresentadas.",
+      "loadFailed": "Não foi possível carregar as suas Páginas do Facebook",
       "alreadyConnectedNote": "Esta página já está ligada",
       "notAdminNote": "Não é administrador desta Página",
       "tryAgain": "Tentar ligar novamente"
@@ -4074,6 +4132,7 @@
         "statusNoAnswer": "Sem resposta",
         "eyebrowCallEnded": "CHAMADA TERMINADA",
         "statusConnectionLost": "Ligação perdida",
+        "answerFailed": "Não foi possível atender a chamada. Verifique se há um microfone ligado e permitido no navegador e tente novamente.",
         "ringingListTitle": "{count, plural, one {# chamada a receber} other {# chamadas a receber}}"
       },
       "capability": {
@@ -4179,6 +4238,14 @@
     "chatbotInvitationDescription2": "{userName} convidou-o a juntar-se a {chatbotName}.",
     "invalidInvitation": "Este convite é inválido ou expirou.",
     "workspaceUnavailable": "Este espaço de trabalho já não está disponível."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Marcar mensagens do bot como lidas",
+      "enabled": "Ativado",
+      "disabled": "Desativado",
+      "description": "Se ativado, o bot marca automaticamente as suas próprias mensagens como lidas"
+    }
   },
   "inboxTeams": {
     "title": "Equipas da caixa de entrada"
@@ -4539,7 +4606,8 @@
     "afterText": "Depois"
   },
   "tools": {
-    "title": "Ferramentas"
+    "title": "Ferramentas",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4642,13 +4710,13 @@
     "privateReply": "Resposta privada (caixa de entrada)",
     "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada do autor do comentário. Escolha um agente de IA, um modelo de texto fixo, um fluxo do chatbot ou desative a resposta.",
     "publicReply": "Resposta pública ao comentário",
-    "publicReplyDescription": "Publique uma resposta pública diretamente sob o comentário. Suporta até 10 modelos de texto, um agente de IA, um fluxo do chatbot ou nenhuma resposta. Cada mensagem é publicada como uma resposta separada.",
+    "publicReplyDescription": "Publique uma resposta pública diretamente sob o comentário. Suporta até 10 modelos de texto, um agente de IA, um fluxo do chatbot ou nenhuma resposta. Cada mensagem é publicada como uma resposta separada. Suporta spintax.",
     "replyMessage": "Mensagem de resposta",
     "replyMessagePlaceholder": "Introduza a mensagem de resposta...",
     "includeKeywordsType": "Responder a",
     "includeKeywordsTypeDescription": "Escolha os comentários aos quais esta automatização responde.",
     "includeKeywords": "Palavras-chave a corresponder",
-    "excludeKeywords": "Excluir comentários com estas palavras-chave",
+    "excludeKeywords": "Excluir comentários que contêm",
     "excludeKeywordsDescription": "Os comentários que contenham qualquer uma destas palavras-chave serão ignorados pelas automatizações de resposta privada e pública.",
     "keywordsPlaceholder": "Escreva e prima Enter...",
     "replyAfter": "Responder após",
@@ -4711,7 +4779,7 @@
       "ignoreCommentReplies": "Não responder a respostas a comentários",
       "ignoreCommentRepliesDescription": "Ignorar a automatização em comentários que sejam respostas a outros comentários e não comentários de nível superior.",
       "trackUserTags": "Registar se um utilizador marca outros utilizadores",
-      "trackUserTagsDescription": "Use '{{total_tagged}}' para saber quantos utilizadores foram marcados. Use '{{total_new_tagged}}' para saber quantas das pessoas marcadas não estão na lista de contactos."
+      "trackUserTagsDescription": "Conta as contas identificadas em cada comentário e soma-as aos totais do contacto em todos os comentários. Utilize '{{total_tagged}}' para todas as contas identificadas e '{{total_new_tagged}}' para contas que nunca enviaram mensagem à sua página nem foram contactos."
     },
     "hideComments": {
       "all": "Ocultar todos os comentários",
@@ -4745,13 +4813,13 @@
     "privateReply": "Resposta privada (caixa de entrada)",
     "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada do autor do comentário. Escolha um agente de IA, um modelo de texto fixo, um fluxo do chatbot ou desative a resposta.",
     "publicReply": "Resposta pública ao comentário",
-    "publicReplyDescription": "Publique uma resposta pública diretamente sob o comentário. Suporta até 10 modelos de texto, um agente de IA, um fluxo do chatbot ou nenhuma resposta. Cada mensagem é publicada como uma resposta separada.",
+    "publicReplyDescription": "Publique uma resposta pública diretamente sob o comentário. Suporta até 10 modelos de texto, um agente de IA, um fluxo do chatbot ou nenhuma resposta. Cada mensagem é publicada como uma resposta separada. Suporta spintax.",
     "replyMessage": "Mensagem de resposta",
     "replyMessagePlaceholder": "Introduza a mensagem de resposta...",
     "includeKeywordsType": "Responder a",
     "includeKeywordsTypeDescription": "Escolha os comentários aos quais esta automatização responde.",
     "includeKeywords": "Palavras-chave a corresponder",
-    "excludeKeywords": "Excluir comentários com estas palavras-chave",
+    "excludeKeywords": "Excluir comentários que contêm",
     "excludeKeywordsDescription": "Os comentários que contenham qualquer uma destas palavras-chave serão ignorados pelas automatizações de resposta privada e pública.",
     "keywordsPlaceholder": "Escreva e prima Enter...",
     "replyAfter": "Responder após",
@@ -4813,7 +4881,7 @@
       "ignoreCommentReplies": "Não responder a respostas a comentários",
       "ignoreCommentRepliesDescription": "Ignorar a automatização em comentários que sejam respostas a outros comentários e não comentários de nível superior.",
       "trackUserTags": "Registar se um utilizador marca outros utilizadores",
-      "trackUserTagsDescription": "Use '{{total_tagged}}' para saber quantos utilizadores foram marcados. Use '{{total_new_tagged}}' para saber quantas das pessoas marcadas não estão na lista de contactos."
+      "trackUserTagsDescription": "Conta as contas identificadas em cada comentário e soma-as aos totais do contacto em todos os comentários. Utilize '{{total_tagged}}' para todas as contas identificadas e '{{total_new_tagged}}' para contas que nunca enviaram mensagem à sua página nem foram contactos."
     },
     "hideComments": {
       "all": "Ocultar todos os comentários",
@@ -4849,13 +4917,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Até 10 mensagens de texto (suporta spintax), cada uma publicada como uma resposta separada.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Excluir comentários que contêm",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4864,7 +4932,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Ocultar comentários"
     },
     "postType": {
       "all": "All posts",
@@ -4906,8 +4975,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Introduza pelo menos uma mensagem de resposta.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Apenas as respostas de primeiro nível às suas publicações podem ser ocultadas.",
+    "hideComments": {
+      "all": "Ocultar todos os comentários",
+      "hasPhoneNumber": "Contém um número de telefone",
+      "hasLink": "Contém uma ligação",
+      "hasKeywords": "Contém palavras-chave",
+      "keywords": "Palavras-chave",
+      "showCommentsAfter": "Mostrar comentários após"
+    },
+    "showCommentsAfter": {
+      "none": "Nunca"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Até 10 mensagens de texto (suporta spintax), cada uma publicada como uma resposta separada.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Excluir comentários que contêm",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Introduza pelo menos uma mensagem de resposta."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Automação de resposta a Stories do Instagram",
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "Introduza um Dataset ID válido (apenas números).",
       "whatsappNotFound": "Integração do WhatsApp não encontrada.",
       "testEventCodeRequired": "Guarde um código de evento de teste antes de enviar um evento de teste.",
-      "noContactForTest": "Ainda não existe um contacto elegível neste canal. Um evento de teste precisa de um contacto real para atribuição (no WhatsApp, um que veio de um anúncio click-to-WhatsApp).",
-      "invalidTestEventCode": "O código do evento de teste só pode conter letras, números, hífenes ou sublinhados (máx. 64)."
+      "invalidTestEventCode": "O código do evento de teste só pode conter letras, números, hífenes ou sublinhados (máx. 64).",
+      "invalidMessagingId": "O ID de mensagem só pode conter letras, dígitos, hífenes ou sublinhados (máx. 512).",
+      "capiDisconnected": "O Meta CAPI está desligado para este canal. Volte a ligá-lo antes de enviar um evento de teste."
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "Código do evento de teste guardado.",
       "cleared": "Código do evento de teste limpo. Os eventos estão novamente ao vivo.",
       "send": "Enviar evento de teste",
-      "sent": "Evento de teste em fila. Aparece em Test events no Events Manager dentro de um minuto.",
-      "sendHint": "Envia um exemplo de Purchase (100 USD) para o contacto mais recente deste canal.",
+      "sent": "Evento de teste enviado. Aparece em Test events no Events Manager dentro de um minuto.",
+      "sendHint": "Envia um Purchase de exemplo (100 USD) para um ID de mensagem que introduzir. Não é usado nenhum contacto guardado.",
       "activeNotice": "O modo de teste está ativo: os eventos deste canal não são contabilizados nos relatórios até o código ser limpo.",
-      "openTestEvents": "Abrir Test events"
+      "openTestEvents": "Abrir Test events",
+      "dialogTitle": "Enviar evento de teste",
+      "dialogDescription": "Um Purchase de exemplo (100 USD) é enviado com o seu código de evento de teste. Cole o ID de mensagem de exemplo de Events Manager → Test events → Messaging → Graph API Explorer, para que nada seja atribuído a um contacto real.",
+      "messagingIdLabel": {
+        "messenger": "ID do contacto (page_scoped_user_id)",
+        "instagram": "ID do contacto (ig_sid)",
+        "whatsapp": "ID do clique (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Cole o valor de exemplo da Meta",
+      "messagingIdHint": "Apenas letras, dígitos, hífenes e sublinhados (máx. 512).",
+      "cancel": "Cancelar",
+      "confirmSend": "Enviar"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "Campos do bot"
+  },
+  "openLink": {
+    "title": "Abrir ligação",
+    "invalidTitle": "Ligação inválida.",
+    "invalidDescription": "Esta ligação é inválida ou expirou.",
+    "openZaloGroup": "Abrir grupo do Zalo",
+    "openZalo": "Abrir Zalo",
+    "openMessenger": "Abrir Messenger"
   }
 }

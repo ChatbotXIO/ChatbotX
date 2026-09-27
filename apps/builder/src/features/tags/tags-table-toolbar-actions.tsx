@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
+import { useInvalidateTags } from "./provider/tag-hook"
 
 type TagsTableToolbarActionsProps = {
   table: Table<TagModel>
@@ -19,6 +20,7 @@ export function TagsTableToolbarActions({
   workspaceId,
 }: TagsTableToolbarActionsProps) {
   const t = useTranslations()
+  const invalidateTags = useInvalidateTags()
   const [openChangeFolder, setOpenChangeFolder] = useState(false)
 
   return (
@@ -39,6 +41,10 @@ export function TagsTableToolbarActions({
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original.id)}
             onOpenChange={setOpenChangeFolder}
+            onSuccess={() => {
+              table.toggleAllRowsSelected(false)
+              invalidateTags()
+            }}
             open={openChangeFolder}
             trigger={
               <Button type="button" variant="outline">

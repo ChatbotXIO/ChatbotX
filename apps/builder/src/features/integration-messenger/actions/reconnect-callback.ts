@@ -151,9 +151,10 @@ export async function reconnectMessengerHandler(props: {
         auth,
         platform: {
           appUrl,
-          wsUrl: "",
+          publicRealtimeUrl: "",
+          internalRealtimeUrl: "",
           storageUrl: "",
-          getRealtimeAuthHeaders: async () => ({}),
+          getRealtimeBroadcastAuthHeaders: async () => ({}),
         },
         storagePrefix: "",
       },

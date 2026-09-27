@@ -5,7 +5,9 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
+import type { BroadcastPlanLimitOutcome } from "../lib/broadcast-plan-limit"
 import { createBroadcastRequest } from "../schema/action"
+import { withBroadcastPlanLimitOutcome } from "./broadcast-plan-limit-outcome"
 import { withBroadcastValidationErrors } from "./broadcast-validation-error"
 
 /**
@@ -38,14 +40,16 @@ export const updateDraftBroadcastAction = workspaceActionClient
     // unmatchable, and the launch audit — shared with the public API's
     // `updateDraft` route. A rejected payload surfaces as the same
     // field-level error as on create.
-    const result: UpdateDraftBroadcastResult =
+    const result: UpdateDraftBroadcastResult | BroadcastPlanLimitOutcome =
       await withBroadcastValidationErrors(() =>
-        broadcastService.updateDraft({
-          workspaceId,
-          broadcastId: id,
-          canViewEmailAndPhone,
-          data: parsedInput,
-        }),
+        withBroadcastPlanLimitOutcome(() =>
+          broadcastService.updateDraft({
+            workspaceId,
+            broadcastId: id,
+            canViewEmailAndPhone,
+            data: parsedInput,
+          }),
+        ),
       )
 
     return result

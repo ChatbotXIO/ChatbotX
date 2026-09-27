@@ -1,5 +1,5 @@
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
-import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
+import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
 
 export function* convertFlowStepGif(
   url: string,
@@ -14,7 +14,7 @@ export function* convertFlowStepGif(
       },
     },
     ...(quickReplies.length > 0
-      ? { quick_replies: convertCanonicalFacebookQuickReplies(quickReplies) }
+      ? { quick_replies: convertCanonicalQuickReplies(quickReplies) }
       : {}),
   }
 }

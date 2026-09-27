@@ -45,6 +45,8 @@ import { klaviyoSyncProfileStep } from "./klaviyo-sync-profile"
 import { mailchimpAddMemberStep } from "./mailchimp-add-member"
 import { mailerLiteAddSubscriberStep } from "./mailer-lite-add-subscriber"
 import { makeStep } from "./make"
+import { markConversationAsReadStep } from "./mark-conversation-as-read"
+import { markConversationAsUnreadStep } from "./mark-conversation-as-unread"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { moosendCreateContactStep } from "./moosend-create-contact"
 import { openWebsiteStep } from "./open-website"
@@ -121,6 +123,8 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.assignConversation]: assignConversationStep,
   [stepTypes.enum.autoAssignConversation]: autoAssignConversationStep,
   [stepTypes.enum.unassignConversation]: unassignConversationStep,
+  [stepTypes.enum.markConversationAsUnread]: markConversationAsUnreadStep,
+  [stepTypes.enum.markConversationAsRead]: markConversationAsReadStep,
   [stepTypes.enum.addContactNotes]: addContactNotesStep,
   [stepTypes.enum.followConversation]: followConversationStep,
   [stepTypes.enum.unfollowConversation]: unfollowConversationStep,

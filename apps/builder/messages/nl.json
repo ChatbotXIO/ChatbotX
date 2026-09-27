@@ -336,6 +336,7 @@
       "message": "Je laatste betaling is mislukt. Werk je betaalmethode bij om je werkruimte actief te houden."
     },
     "trial": {
+      "planName": "Proefperiode",
       "daysLeft": "Proefperiode: nog {days} dagen",
       "endsTomorrow": "Proefperiode eindigt morgen",
       "expired": "Je proefperiode is afgelopen — upgrade om je werkruimte actief te houden",
@@ -507,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Upgrade je abonnement",
+      "sendRate": "Je huidige {plan}-abonnement ondersteunt broadcasts met een maximale verzendsnelheid van {rate} berichten per minuut. Upgrade je abonnement om broadcasts tot {multiplier}x sneller te verzenden.",
+      "activeBroadcasts": "Je huidige {plan}-abonnement voert {max, plural, one {# broadcast} other {# broadcasts}} tegelijk uit. Upgrade je abonnement om meer broadcasts tegelijk uit te voeren."
+    },
+    "sendLimit": {
+      "title": "Limiet",
+      "hint": "Laat leeg om naar alle overeenkomende contacten te verzenden.",
+      "rateHint": "Laat leeg om de standaardsnelheid te gebruiken.",
+      "rangeSummary": "Contacten #{start} – #{end}",
+      "rangeFromSummary": "Vanaf contact #{start}",
+      "rangeLabel": "Contactbereik",
+      "fromLabel": "Van",
+      "toLabel": "Tot",
+      "allPlaceholder": "Alle",
+      "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen"
     }
   },
   "commentAutomation": {
@@ -535,10 +553,30 @@
       "keywordsNotMatched": "Trefwoorden kwamen niet overeen",
       "contactNotNew": "Contact is niet nieuw",
       "alreadyRepliedOnPost": "Al beantwoord op dit bericht",
-      "engagedOnOtherPost": "Al gereageerd op een ander bericht"
+      "engagedOnOtherPost": "Al gereageerd op een ander bericht",
+      "mentionCountNotMatched": "Aantal vermeldingen kwam niet overeen"
+    },
+    "replyTo": {
+      "mentions": "Reacties met genoeg vermeldingen",
+      "mentionCount": "Aantal getagde personen",
+      "mentionCountDescription": "Alleen reacties die minstens zoveel personen (@naam) taggen, komen overeen.",
+      "mentionCountOption": "{count, plural, one {# persoon} other {# personen}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Reacties gelijk aan",
+      "contain": "Reacties die bevatten"
+    },
+    "hideComments": {
+      "hasGif": "Bevat GIF",
+      "hasEmoji": "Bevat emoji"
+    },
+    "trackUserTags": {
+      "label": "Bijhouden of een gebruiker andere gebruikers tagt",
+      "descriptionText": "Telt de accounts die in elke reactie worden getagd en telt ze op bij de totalen van het contact over alle reacties. Gebruik '{{total_tagged}}' voor alle getagde accounts en '{{total_new_tagged}}' voor accounts die je pagina nooit een bericht hebben gestuurd of nooit contact zijn geweest."
     }
   },
   "fields": {
+    "optionalHint": "(optioneel)",
     "marketingMessagesConfigId": {
       "label": "Configuratie-ID voor marketingberichten",
       "description": "Configuratie-ID van Facebook Login for Business die wordt gebruikt om de marketing_messages_messenger-machtiging aan te vragen."
@@ -1809,11 +1847,16 @@
       "clientId": "Client-ID",
       "clientSecret": "Clientgeheim",
       "displayName": "Weergavenaam",
+      "needsReauthorizationForComments": "Deze verbinding is geautoriseerd vóór commentaarautomatisering. Verbind opnieuw om commentaargebeurtenissen te ontvangen.",
       "connectInstructions": {
         "step1": "Maak een TikTok-app aan op <link>developers.tiktok.com</link>.",
         "step2": "Autoriseer je account en kopieer het <strong>toegangstoken</strong>, de <strong>open ID</strong> en het <strong>clientgeheim</strong>.",
         "step3": "Plak de inloggegevens hieronder om verbinding te maken."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Drip"
@@ -2014,6 +2057,9 @@
     },
     "lastCallTranscript": {
       "label": "Laatste gesprekstranscript"
+    },
+    "sendRatePerMinute": {
+      "label": "Berichten per minuut"
     }
   },
   "condition": {
@@ -2317,6 +2363,8 @@
       "transferConversationToHuman": "Gesprek overdragen aan medewerker",
       "unarchiveConversation": "Gesprek uit archief halen",
       "unassignConversation": "Toewijzing van gesprek opheffen",
+      "markConversationAsUnread": "Gesprek markeren als ongelezen",
+      "markConversationAsRead": "Gesprek markeren als gelezen",
       "unfollowConversation": "Gesprek niet meer volgen",
       "unsubscribeBroadcast": "Afmelden voor broadcast",
       "getUserData": "Gebruikersgegevens ophalen",
@@ -3041,6 +3089,10 @@
       "whatsapp": "Dit WhatsApp-nummer is al gekoppeld aan een andere workspace.",
       "zalo": "Deze Zalo OA is al gekoppeld aan een andere workspace."
     },
+    "missingScopes": {
+      "generic": "Verbinding geannuleerd: sommige machtigingen zijn niet verleend. Maak opnieuw verbinding en accepteer alle gevraagde machtigingen.",
+      "tiktok": "TikTok-verbinding geannuleerd: sommige machtigingen zijn niet verleend. Maak opnieuw verbinding en accepteer alle gevraagde machtigingen."
+    },
     "reconnect": {
       "success": "Kanaal opnieuw gekoppeld.",
       "errors": {
@@ -3197,6 +3249,7 @@
     "changeLikeState": "Vind-ik-leukstatus wijzigen",
     "changeHideState": "Verbergstatus wijzigen",
     "commentHidden": "Deze opmerking is verborgen",
+    "commentMediaUnavailable": "Deze reactie bevat een GIF, sticker of afbeelding die niet kan worden weergegeven",
     "messageDeleted": "Het bericht is verwijderd.",
     "sendFailed": "Verzenden mislukt",
     "repliedToStory": "Heeft op je story gereageerd",
@@ -3237,7 +3290,10 @@
     "deleteFeature": "{feature} verwijderen",
     "resetFeature": "{feature} resetten",
     "resetConfirmation": "Hiermee worden de waarden van de geselecteerde {feature} leeggemaakt.\nDeze actie kan niet ongedaan worden gemaakt.",
+    "resetAllConfirmation": "Hiermee worden de waarden van alle {feature} van dit contact leeggemaakt.\nDeze actie kan niet ongedaan worden gemaakt.",
     "resetSuccess": "{feature} succesvol gereset",
+    "clearFeature": "{feature} wissen",
+    "clearSuccess": "{feature} succesvol gewist",
     "deleteConfirmation": "Weet je het absoluut zeker?\nDeze actie kan niet ongedaan worden gemaakt.\nHiermee wordt je {feature} permanent van onze servers verwijderd.",
     "addFeature": "{feature} toevoegen",
     "signOutConfirmation": "Weet je zeker dat je wilt uitloggen?",
@@ -3288,6 +3344,7 @@
     "historyDepth": "({count})",
     "none": "Geen",
     "tiktokCardTitleTooLong": "TikTok verkort dit bericht: als er knoppen zijn toegevoegd, worden alleen de eerste 40 tekens verzonden. Verkort het bericht of verwijder de knoppen.",
+    "sendTextTooLongForChannel": "Dit bericht is langer dan dit kanaal toestaat. Kort het in of richt dit blok op een kanaal met een hogere limiet.",
     "waTemplateMpmNoProducts": "Voeg minstens één product toe aan deze multi-productknop voordat je publiceert.",
     "waTemplateMpmTooManySections": "Een multi-productknop kan maximaal 10 secties hebben. Verwijder enkele secties voordat je publiceert.",
     "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",
@@ -3377,6 +3434,7 @@
       "noConnectablePagesDescription": "U bent geen beheerder van deze pagina",
       "bmLookupFailedTitle": "Pagina's uit Bedrijfsmanager ontbreken mogelijk",
       "bmLookupFailedDescription": "Koppel Messenger opnieuw en verleen toegang tot Bedrijfsmanager zodat pagina's die via Bedrijfsmanager worden beheerd kunnen worden vermeld.",
+      "loadFailed": "Je Facebook-pagina's konden niet worden geladen",
       "alreadyConnectedNote": "Deze pagina is al gekoppeld",
       "notAdminNote": "U bent geen beheerder van deze pagina",
       "tryAgain": "Probeer opnieuw te koppelen"
@@ -4074,6 +4132,7 @@
         "statusNoAnswer": "Geen antwoord",
         "eyebrowCallEnded": "OPROEP BEËINDIGD",
         "statusConnectionLost": "Verbinding verbroken",
+        "answerFailed": "De oproep kon niet worden beantwoord. Controleer of een microfoon is aangesloten en toegestaan in je browser en probeer het opnieuw.",
         "ringingListTitle": "{count, plural, one {# inkomende oproep} other {# inkomende oproepen}}"
       },
       "capability": {
@@ -4179,6 +4238,14 @@
     "chatbotInvitationDescription2": "{userName} heeft je uitgenodigd om lid te worden van {chatbotName}.",
     "invalidInvitation": "Deze uitnodiging is ongeldig of verlopen.",
     "workspaceUnavailable": "Deze workspace is niet meer beschikbaar."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Botberichten als gelezen markeren",
+      "enabled": "Ingeschakeld",
+      "disabled": "Uitgeschakeld",
+      "description": "Indien ingeschakeld markeert de bot zijn eigen berichten automatisch als gelezen"
+    }
   },
   "inboxTeams": {
     "title": "Inboxteams"
@@ -4543,7 +4610,8 @@
     "afterText": "Na"
   },
   "tools": {
-    "title": "Hulpmiddelen"
+    "title": "Hulpmiddelen",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4646,13 +4714,13 @@
     "privateReply": "Privéantwoord (inbox)",
     "privateReplyDescription": "Stuur een privébericht naar de inbox van degene die de opmerking plaatste. Kies een AI-agent, een vaste tekstsjabloon, een chatbotflow of schakel dit uit.",
     "publicReply": "Openbaar antwoord op opmerking",
-    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst.",
+    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst. Spintax wordt ondersteund.",
     "replyMessage": "Antwoordbericht",
     "replyMessagePlaceholder": "Voer een antwoordbericht in...",
     "includeKeywordsType": "Antwoorden op",
     "includeKeywordsTypeDescription": "Kies op welke opmerkingen deze automatisering reageert.",
     "includeKeywords": "Trefwoorden om te vinden",
-    "excludeKeywords": "Opmerkingen met deze trefwoorden uitsluiten",
+    "excludeKeywords": "Reacties uitsluiten die bevatten",
     "excludeKeywordsDescription": "Opmerkingen die een van deze trefwoorden bevatten, worden door zowel de inbox- als de openbare antwoordautomatisering genegeerd.",
     "keywordsPlaceholder": "Typ en druk op Enter...",
     "replyAfter": "Antwoorden na",
@@ -4715,7 +4783,7 @@
       "ignoreCommentReplies": "Antwoorden op opmerkingen niet beantwoorden",
       "ignoreCommentRepliesDescription": "Sla de automatisering over voor opmerkingen die een antwoord zijn op andere opmerkingen en verwerk alleen opmerkingen op het hoogste niveau.",
       "trackUserTags": "Bijhouden of een gebruiker andere gebruikers tagt",
-      "trackUserTagsDescription": "Gebruik '{{total_tagged}}' om te zien hoeveel gebruikers zijn getagd. Gebruik '{{total_new_tagged}}' om te zien hoeveel van de getagde personen niet in de contactenlijst staan."
+      "trackUserTagsDescription": "Telt de accounts die in elke reactie worden getagd en telt ze op bij de totalen van het contact over alle reacties. Gebruik '{{total_tagged}}' voor alle getagde accounts en '{{total_new_tagged}}' voor accounts die je pagina nooit een bericht hebben gestuurd of nooit contact zijn geweest."
     },
     "hideComments": {
       "all": "Alle opmerkingen verbergen",
@@ -4749,13 +4817,13 @@
     "privateReply": "Privéantwoord (inbox)",
     "privateReplyDescription": "Stuur een privébericht naar de inbox van degene die de opmerking plaatste. Kies een AI-agent, een vaste tekstsjabloon, een chatbotflow of schakel dit uit.",
     "publicReply": "Openbaar antwoord op opmerking",
-    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst.",
+    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst. Spintax wordt ondersteund.",
     "replyMessage": "Antwoordbericht",
     "replyMessagePlaceholder": "Voer een antwoordbericht in...",
     "includeKeywordsType": "Antwoorden op",
     "includeKeywordsTypeDescription": "Kies op welke opmerkingen deze automatisering reageert.",
     "includeKeywords": "Trefwoorden om te vinden",
-    "excludeKeywords": "Opmerkingen met deze trefwoorden uitsluiten",
+    "excludeKeywords": "Reacties uitsluiten die bevatten",
     "excludeKeywordsDescription": "Opmerkingen die een van deze trefwoorden bevatten, worden door zowel de inbox- als de openbare antwoordautomatisering genegeerd.",
     "keywordsPlaceholder": "Typ en druk op Enter...",
     "replyAfter": "Antwoorden na",
@@ -4817,7 +4885,7 @@
       "ignoreCommentReplies": "Antwoorden op opmerkingen niet beantwoorden",
       "ignoreCommentRepliesDescription": "Sla de automatisering over voor opmerkingen die een antwoord zijn op andere opmerkingen en verwerk alleen opmerkingen op het hoogste niveau.",
       "trackUserTags": "Bijhouden of een gebruiker andere gebruikers tagt",
-      "trackUserTagsDescription": "Gebruik '{{total_tagged}}' om te zien hoeveel gebruikers zijn getagd. Gebruik '{{total_new_tagged}}' om te zien hoeveel van de getagde personen niet in de contactenlijst staan."
+      "trackUserTagsDescription": "Telt de accounts die in elke reactie worden getagd en telt ze op bij de totalen van het contact over alle reacties. Gebruik '{{total_tagged}}' voor alle getagde accounts en '{{total_new_tagged}}' voor accounts die je pagina nooit een bericht hebben gestuurd of nooit contact zijn geweest."
     },
     "hideComments": {
       "all": "Alle opmerkingen verbergen",
@@ -4853,13 +4921,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Maximaal 10 tekstberichten (spintax ondersteund), elk geplaatst als afzonderlijk antwoord.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Reacties uitsluiten die bevatten",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4868,7 +4936,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Opmerkingen verbergen"
     },
     "postType": {
       "all": "All posts",
@@ -4910,8 +4979,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Voer minstens één antwoordbericht in.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Alleen antwoorden op het hoogste niveau op je berichten kunnen worden verborgen.",
+    "hideComments": {
+      "all": "Alle opmerkingen verbergen",
+      "hasPhoneNumber": "Bevat telefoonnummer",
+      "hasLink": "Bevat link",
+      "hasKeywords": "Bevat trefwoorden",
+      "keywords": "Trefwoorden",
+      "showCommentsAfter": "Opmerkingen weergeven na"
+    },
+    "showCommentsAfter": {
+      "none": "Nooit"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Maximaal 10 tekstberichten (spintax ondersteund), elk geplaatst als afzonderlijk antwoord.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Reacties uitsluiten die bevatten",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Voer minstens één antwoordbericht in."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Instagram Story-reactie-automatisering",
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "Voer een geldig Dataset ID in (alleen cijfers).",
       "whatsappNotFound": "WhatsApp-integratie niet gevonden.",
       "testEventCodeRequired": "Sla een testgebeurteniscode op voordat je een testgebeurtenis verzendt.",
-      "noContactForTest": "Nog geen geschikt contact op dit kanaal. Een testgebeurtenis heeft een echt contact nodig om aan toe te wijzen (voor WhatsApp een contact uit een click-to-WhatsApp-advertentie).",
-      "invalidTestEventCode": "De testgebeurteniscode mag alleen letters, cijfers, koppeltekens of underscores bevatten (max. 64)."
+      "invalidTestEventCode": "De testgebeurteniscode mag alleen letters, cijfers, koppeltekens of underscores bevatten (max. 64).",
+      "invalidMessagingId": "Het messaging-id mag alleen letters, cijfers, koppeltekens of onderstrepingstekens bevatten (max. 512).",
+      "capiDisconnected": "Meta CAPI is losgekoppeld voor dit kanaal. Koppel het opnieuw voordat je een testgebeurtenis verzendt."
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "Testgebeurteniscode opgeslagen.",
       "cleared": "Testgebeurteniscode gewist. Gebeurtenissen zijn weer live.",
       "send": "Testgebeurtenis verzenden",
-      "sent": "Testgebeurtenis in wachtrij geplaatst. Deze verschijnt binnen een minuut onder Test events in Events Manager.",
-      "sendHint": "Verstuurt één voorbeeld-Purchase (100 USD) naar het meest recente contact van dit kanaal.",
+      "sent": "Testgebeurtenis verzonden. Deze verschijnt binnen een minuut onder Test events in Events Manager.",
+      "sendHint": "Verstuurt één voorbeeld-Purchase (100 USD) naar een messaging-id dat je invoert. Er wordt geen opgeslagen contact gebruikt.",
       "activeNotice": "Testmodus staat aan: gebeurtenissen van dit kanaal worden pas weer meegeteld in rapporten zodra de code is gewist.",
-      "openTestEvents": "Test events openen"
+      "openTestEvents": "Test events openen",
+      "dialogTitle": "Testgebeurtenis verzenden",
+      "dialogDescription": "Eén voorbeeld-Purchase (100 USD) wordt verzonden met je testgebeurteniscode. Plak het voorbeeld-messaging-id uit Events Manager → Test events → Messaging → Graph API Explorer, zodat niets aan een echt contact wordt toegeschreven.",
+      "messagingIdLabel": {
+        "messenger": "Contact-id (page_scoped_user_id)",
+        "instagram": "Contact-id (ig_sid)",
+        "whatsapp": "Klik-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Plak de voorbeeldwaarde van Meta",
+      "messagingIdHint": "Alleen letters, cijfers, koppeltekens en onderstrepingstekens (max. 512).",
+      "cancel": "Annuleren",
+      "confirmSend": "Verzenden"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "Botvelden"
+  },
+  "openLink": {
+    "title": "Link openen",
+    "invalidTitle": "Ongeldige link.",
+    "invalidDescription": "Deze link is ongeldig of verlopen.",
+    "openZaloGroup": "Zalo-groep openen",
+    "openZalo": "Zalo openen",
+    "openMessenger": "Messenger openen"
   }
 }

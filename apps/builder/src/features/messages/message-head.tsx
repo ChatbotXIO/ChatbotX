@@ -20,6 +20,7 @@ import { isConversationActive } from "../conversations/utils/bot-state"
 import { findContactInboxByChannel } from "../conversations/utils/contact-inbox"
 import { useOutboundCallMode } from "../integration-whatsapp/calling/voip/use-outbound-call-mode"
 import { WhatsappVoipCallButton } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-button"
+import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 
 /**
  * `onBack` and `onOpenContact` are supplied only by the mobile inbox layout,
@@ -47,6 +48,8 @@ export default function MessageHead({
     (c) => c.id === activeConversationId,
   )
 
+  const voipCallContext = useOptionalWhatsappVoipCallContext()
+
   // Resolves in the background — never blocks this header's own render (the
   // VoIP call button below renders synchronously from data already in
   // scope). The query only decides what a CLICK on the VoIP button does — if
@@ -54,6 +57,8 @@ export default function MessageHead({
   const outboundCallMode = useOutboundCallMode(
     workspaceId,
     activeConversation?.id,
+    undefined,
+    { enabled: Boolean(voipCallContext) },
   )
 
   // Whether this conversation has a WhatsApp contact inbox at all — the

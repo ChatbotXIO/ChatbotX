@@ -5,8 +5,8 @@ import type {
 import { aiAgentsAdapter } from "./ai-agents"
 import { aiFunctionsAdapter } from "./ai-functions"
 import { calendarsAdapter } from "./calendars"
+import { commentAutomationsAdapter } from "./comment-automations"
 import { entryPointLinksAdapter } from "./entry-point-links"
-import { fbCommentAutomationsAdapter } from "./fb-comment-automations"
 import { flowsAdapter } from "./flows"
 import { keywordsAdapter } from "./keywords"
 import { productsAdapter } from "./products"
@@ -40,7 +40,7 @@ export const templateAdapterRegistry = {
   keywords: keywordsAdapter,
   entryPointLinks: entryPointLinksAdapter,
   triggers: triggersAdapter,
-  fbCommentAutomations: fbCommentAutomationsAdapter,
+  fbCommentAutomations: commentAutomationsAdapter,
 } satisfies Record<TemplateResourceCategory, ResourceAdapter>
 
 /**

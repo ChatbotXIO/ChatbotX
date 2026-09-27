@@ -5,12 +5,9 @@ import {
   metaConversionsService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import {
-  buildDatasetName,
-  ensureDataset,
-} from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
+import { capiDatasetProvisioner } from "@/features/meta-conversions/lib/provision-capi-dataset"
 import { surfaceCapiError } from "@/features/meta-conversions/lib/surface-capi-error"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -39,13 +36,7 @@ export const provisionInstagramCapiDatasetAction = workspaceActionClient
         await metaConversionsService.provisionDatasetNow({
           channel: "instagram",
           integration,
-          provisionDataset: ({ accessToken, resourceId, resourceName }) =>
-            ensureDataset({
-              resourceType: "igUser",
-              resourceId,
-              accessToken,
-              datasetName: buildDatasetName(resourceName),
-            }),
+          provisionDataset: capiDatasetProvisioner("instagram"),
         })
       } catch (error) {
         surfaceCapiError(error)

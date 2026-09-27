@@ -4,10 +4,10 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { bulkUpdateIdsRequest, successResponse } from "@/features/common/schema"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
-import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { CONVERSATIONS_LIST_POST_PATH } from "../lib/api-paths"
 import { getPostDetailsQuery } from "../queries/get-post-details.query"
 import {
   findConversation,
@@ -26,20 +26,13 @@ const workspaceIdAndIdRequest = z.object({
   id: zodBigintAsString(),
 })
 
-const resolveIncludeEmailAndPhone = async (workspaceId: string) => {
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  return userAndWorkspace
-    ? canViewContactEmailAndPhone(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-      )
-    : false
-}
-
 const postDetailsSchema = z.object({
   text: z.string().optional(),
   picture: z.string().optional(),
   from: z.object({ id: z.string(), name: z.string() }).optional(),
-  createdAt: z.string(),
+  // Optional: TikTok can name the author and link the video without being able
+  // to say when it was posted.
+  createdAt: z.string().optional(),
   link: z.string().optional(),
 })
 
@@ -55,10 +48,10 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
     .handler(
-      async ({ input }) =>
+      async ({ input, context }) =>
         await listConversations(input, {
-          includeEmailAndPhone: await resolveIncludeEmailAndPhone(
-            input.workspaceId,
+          includeEmailAndPhone: canViewContactEmailAndPhone(
+            context.workspaceMember.permissions,
           ),
         }),
     ),
@@ -66,7 +59,7 @@ export const conversationsAuthenticatedAPI = {
   listConversationsByPOSTAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/workspaces/{workspaceId}/conversations/list",
+      path: CONVERSATIONS_LIST_POST_PATH,
       summary: "List conversations by cursor pagination using POST request",
       tags: ["Conversations"],
     })
@@ -74,10 +67,10 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
     .handler(
-      async ({ input }) =>
+      async ({ input, context }) =>
         await listConversations(input, {
-          includeEmailAndPhone: await resolveIncludeEmailAndPhone(
-            input.workspaceId,
+          includeEmailAndPhone: canViewContactEmailAndPhone(
+            context.workspaceMember.permissions,
           ),
         }),
     ),
@@ -112,7 +105,12 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(postDetailsSchema)
     .handler(async ({ input }) =>
-      getPostDetailsQuery(input.inboxId, input.postId, input.channel),
+      getPostDetailsQuery({
+        workspaceId: input.workspaceId,
+        inboxId: input.inboxId,
+        postId: input.postId,
+        channel: input.channel,
+      }),
     ),
 
   assignConversationsAuthenticatedAPI: authorizedAPI

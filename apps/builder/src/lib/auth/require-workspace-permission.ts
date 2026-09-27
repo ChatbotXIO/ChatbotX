@@ -2,7 +2,10 @@
 
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-import { canAccessContactsSection } from "@/features/contacts/permissions"
+import {
+  buildContactPermissionScope,
+  type ContactPermissionScope,
+} from "@/features/contacts/permissions"
 import {
   hasWorkspacePermission,
   type WorkspacePermissionKey,
@@ -39,27 +42,28 @@ export async function requireWorkspacePermission(
 
 export async function requireContactsAccess(
   workspaceId: string,
-): Promise<void> {
+): Promise<ContactPermissionScope> {
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  const canAccess = userAndWorkspace
-    ? canAccessContactsSection(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-      )
-    : false
+  const contactScope = userAndWorkspace
+    ? buildContactPermissionScope({
+        permissions: userAndWorkspace.targetWorkspaceMember.permissions,
+        userId: userAndWorkspace.user.id,
+      })
+    : null
 
-  if (!canAccess) {
+  if (!(userAndWorkspace && contactScope)) {
     notFound()
   }
 
-  if (userAndWorkspace) {
-    await enforceWorkspaceNotScheduledForDeletionFromRequest(
-      userAndWorkspace.targetWorkspace,
-      hasWorkspacePermission(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-        "superAdmin",
-      ),
-    )
-  }
+  await enforceWorkspaceNotScheduledForDeletionFromRequest(
+    userAndWorkspace.targetWorkspace,
+    hasWorkspacePermission(
+      userAndWorkspace.targetWorkspaceMember.permissions,
+      "superAdmin",
+    ),
+  )
+
+  return contactScope
 }
 
 export async function resolveGuardedWorkspaceId(

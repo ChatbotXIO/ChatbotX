@@ -28,6 +28,7 @@ import {
 } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { logger } from "../logger"
+import { resolveContactAvatarUrl } from "../media"
 import { messageService } from "../message/service"
 import { resolveTenantSettings } from "../platform/settings"
 import { tagService } from "../tag/service"
@@ -175,9 +176,13 @@ class SystemFieldService extends BaseService {
     return {
       contact: {
         id: context.contact.id,
-        avatarUrl: toPublicStorageUrl(
-          context.contact.avatar,
-          settings.storageUrl,
+        avatarUrl: await resolveContactAvatarUrl(
+          {
+            workspaceId: context.payload.workspaceId,
+            contact: context.contact,
+            contactInbox: context.contactInbox,
+          },
+          (key) => toPublicStorageUrl(key, settings.storageUrl),
         ),
         email: context.contact.email,
         firstName: context.contact.firstName,
@@ -225,9 +230,13 @@ class SystemFieldService extends BaseService {
         locale: context.contact.locale,
         timezone: context.contact.timezone,
         gender: resolveGenderLabel(workspace.language, context.contact.gender),
-        profile_pic: toPublicStorageUrl(
-          context.contact.avatar,
-          settings.storageUrl,
+        profile_pic: await resolveContactAvatarUrl(
+          {
+            workspaceId: context.payload.workspaceId,
+            contact: context.contact,
+            contactInbox: context.contactInbox,
+          },
+          (key) => toPublicStorageUrl(key, settings.storageUrl),
         ),
       },
       messages,

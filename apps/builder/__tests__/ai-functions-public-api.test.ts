@@ -58,6 +58,7 @@ const aiFunctionService = {
 vi.mock("@chatbotx.io/business", () => ({ aiFunctionService }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
+  BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
   notFoundException: (message: string) => new Error(message),
 }))
 

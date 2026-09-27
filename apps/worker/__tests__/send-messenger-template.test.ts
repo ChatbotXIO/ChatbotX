@@ -8,6 +8,10 @@ import {
   vi,
 } from "vitest"
 
+const { mockMarkReadByOutbound } = vi.hoisted(() => ({
+  mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
+}))
+
 function makeEmptySelectChain(): Promise<never[]> & Record<string, unknown> {
   const chain = Promise.resolve<never[]>([]) as Promise<never[]> &
     Record<string, unknown>
@@ -70,7 +74,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
 }))
 
+// The delivery helpers are stubbed with the real contract (sentCount > 0 →
+// delivered; mark-read forwards to conversationService.markReadByOutbound) so
+// this file checks the handler's wiring; the helpers themselves are covered by
+// send-message-handler.test.ts.
 vi.mock("../src/chat/handlers/send-message", () => ({
+  isDeliveredDirectMessage: ({ result }: { result: { sentCount: number } }) =>
+    result.sentCount > 0,
+  markConversationReadAfterDelivery: (props: unknown) =>
+    mockMarkReadByOutbound(props),
   sendFlowStepToChannel: vi.fn(),
 }))
 
@@ -85,11 +97,13 @@ vi.mock("@chatbotx.io/variables", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn(),
+  publishToWorkspaceParty: vi.fn(),
   contactInboxService: {
     recordSendFailure: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
   },
   conversationService: {
+    markReadByOutbound: mockMarkReadByOutbound,
     recordOutboundMessageActivity: vi
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
@@ -171,7 +185,10 @@ describe("processMessengerTemplate — sourceId persistence", () => {
 
   test("persists providerMessageId to messageModel.sourceId when send succeeds", async () => {
     const PROVIDER_ID = "mid.ABC123"
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [PROVIDER_ID] })
+    mockSendFlowStep.mockResolvedValueOnce({
+      messageIds: [PROVIDER_ID],
+      sentCount: 1,
+    })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -182,10 +199,20 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     expect(mockDbUpdate).toHaveBeenCalled()
     const setCall = mockDbUpdate.mock.results[0].value.set
     expect(setCall).toHaveBeenCalledWith({ sourceId: PROVIDER_ID })
+    // Template sends honour the inbox option like any other bot message.
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        readAt: new Date("2026-01-01T00:00:00Z"),
+      }),
+    )
   })
 
   test("emits message:sent with inboxId for MAC tracking", async () => {
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: ["mid.ABC123"] })
+    mockSendFlowStep.mockResolvedValueOnce({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
+    })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -202,10 +229,22 @@ describe("processMessengerTemplate — sourceId persistence", () => {
         }),
       }),
     )
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "analytics:dashboard",
+      expect.objectContaining({ eventType: "message:bot_sent" }),
+    )
+    expect(mockSendFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botSentAnalytics: {
+          triggerHandler: "processMessengerTemplate",
+          triggerType: "message_bot_sent_messenger_template",
+        },
+      }),
+    )
   })
 
   test("does NOT persist sourceId when providerMessageId is undefined", async () => {
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [] })
+    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [], sentCount: 0 })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -214,10 +253,11 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     })
 
     expect(mockDbUpdate).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 })
 
-describe("processMessengerTemplate — ads conversion template-sent enqueue (Amendment A1)", () => {
+describe("processMessengerTemplate — ads conversion template-sent enqueue (disabled)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockValidate.mockResolvedValue(VALIDATED)
@@ -225,34 +265,15 @@ describe("processMessengerTemplate — ads conversion template-sent enqueue (Ame
       ({ templateParams }: { templateParams: unknown }) =>
         Promise.resolve(templateParams),
     )
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["mid.ABC123"] })
-  })
-
-  test("enqueues an evaluateTemplateSent job for the messenger channel after a successful send", async () => {
-    await processMessengerTemplate({
-      conversation: CONVERSATION as never,
-      contactInbox: CONTACT_INBOX as never,
-      template: TEMPLATE,
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
     })
-
-    expect(mockEnqueueIntegrationJob).toHaveBeenCalledWith(
-      {
-        type: "evaluateTemplateSent",
-        data: {
-          workspaceId: "ws-1",
-          channel: "messenger",
-          integrationId: "intg-1",
-          contactInboxId: "ci-1",
-          templateId: "tmpl-1",
-        },
-      },
-      { jobId: "ads-conversion-evaluate-template-msg-1" },
-    )
   })
 
-  test("never fails the send when the enqueue rejects", async () => {
-    mockEnqueueIntegrationJob.mockRejectedValueOnce(new Error("redis down"))
-
+  // The ads-conversion rule engine is hidden and unused; the follow-up
+  // evaluation job is disabled (commented out) in the handler.
+  test("does not enqueue an evaluateTemplateSent job after a successful send", async () => {
     await expect(
       processMessengerTemplate({
         conversation: CONVERSATION as never,
@@ -260,6 +281,11 @@ describe("processMessengerTemplate — ads conversion template-sent enqueue (Ame
         template: TEMPLATE,
       }),
     ).resolves.toMatchObject({ messageId: "msg-1" })
+
+    const enqueuedTypes = mockEnqueueIntegrationJob.mock.calls.map(
+      ([job]: [{ type: string }]) => job.type,
+    )
+    expect(enqueuedTypes).not.toContain("evaluateTemplateSent")
   })
 })
 
@@ -296,7 +322,10 @@ describe("processMessengerTemplate — header variable guard", () => {
       ({ templateParams }: { templateParams: unknown }) =>
         Promise.resolve(templateParams),
     )
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["mid.ABC123"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
+    })
   })
 
   test.each([

@@ -1,0 +1,1 @@
+ALTER TABLE "Inbox" ADD COLUMN "markReadOnOutbound" boolean DEFAULT false NOT NULL;

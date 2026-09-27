@@ -7,6 +7,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { deleteSmtpAction } from "../actions/delete-smtp.action"
 import type { IntegrationSmtpResource } from "../schema/resource"
 
@@ -17,6 +18,7 @@ type SmtpDisconnectProps = {
 export const SmtpDisconnect = ({ integrationSmtp }: SmtpDisconnectProps) => {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
   const [open, setOpen] = useState(false)
   const { workspaceId } = useParams<{ workspaceId: string }>()
 
@@ -25,6 +27,7 @@ export const SmtpDisconnect = ({ integrationSmtp }: SmtpDisconnectProps) => {
     {
       onSuccess: () => {
         setOpen(false)
+        invalidateInboxes()
         router.refresh()
         toast.success(t("messages.disconnectSuccess", { feature: "SMTP" }))
       },

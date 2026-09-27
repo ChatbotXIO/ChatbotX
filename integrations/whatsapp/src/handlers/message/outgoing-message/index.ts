@@ -299,6 +299,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
     } = props
     const whatsappClient = getWhatsappClient(ctx.auth)
     const messageIds: string[] = []
+    let sentCount = 0
     const recipientParams = resolveRecipientParams(contact)
     const isBsuidKeyedRecipient = isBsuidRecipient(recipientParams)
 
@@ -347,6 +348,8 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
           throw mapToChannelError(serverError.error)
         }
 
+        sentCount += 1
+
         const messageId = (sendResponse as ServerSentMessageResponse)
           ?.messages?.[0]?.id
         if (messageId) {
@@ -375,6 +378,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
     // as the Message row's sourceId (coexist echo dedup — see sendFlowStep).
     return {
       messageIds,
+      sentCount,
     }
   }
 
@@ -386,6 +390,7 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
     } = props
     const whatsappClient = getWhatsappClient(ctx.auth)
     const messageIds: string[] = []
+    let sentCount = 0
     const recipientParams = resolveRecipientParams(contact)
     const isBsuidKeyedRecipient = isBsuidRecipient(recipientParams)
 
@@ -426,6 +431,8 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
           throw mapToChannelError(serverError.error)
         }
 
+        sentCount += 1
+
         const messageId = (sendResponse as ServerSentMessageResponse)
           ?.messages?.[0]?.id
         if (messageId) {
@@ -449,5 +456,5 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
       throw mapToChannelError(error)
     }
 
-    return { messageIds }
+    return { messageIds, sentCount }
   }

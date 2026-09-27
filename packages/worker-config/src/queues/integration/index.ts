@@ -1,3 +1,4 @@
+import type { CommentReply } from "@chatbotx.io/database/partials"
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -28,6 +29,8 @@ export const IntegrationJobAction = {
   runRef: "runRef",
   incomingMessage: "incomingMessage",
   incomingComment: "incomingComment",
+  tiktokHighIntentComment: "tiktokHighIntentComment",
+  deferredCommentPrivateReply: "deferredCommentPrivateReply",
   updateIncomingComment: "updateIncomingComment",
   deleteIncomingComment: "deleteIncomingComment",
   deleteIncomingMessage: "deleteIncomingMessage",
@@ -219,6 +222,11 @@ export type IntegrationJobRunFlowNode = {
      * never a duplicate send).
      */
     initialBroadcastDispatch?: boolean
+    /**
+     * Preserves bulk delivery across automatic flow continuations. It must not
+     * be set for a flow started by an inbound button or quick reply.
+     */
+    isBulkBroadcast?: boolean
     appointmentId?: string
     sendFrom?: "inbox"
     origin?: "channel"
@@ -766,6 +774,82 @@ export type IntegrationJobProcessCommentAutomation = {
   }
 }
 
+/**
+ * TikTok flagged a comment as high intent, which is the only way to obtain a
+ * `comment_id` its Comment-to-Message DM will accept.
+ *
+ * Deliberately thin: the event carries no post id, so the handler's whole job is
+ * to stamp the flag onto the comment already ingested from `comment.update` and
+ * let the automation path read it. Nothing here identifies an automation.
+ */
+export type IntegrationJobTiktokHighIntentComment = {
+  type: typeof IntegrationJobAction.tiktokHighIntentComment
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    commentId: string
+    commentText?: string
+    uniqueIdentifier?: string
+    isFollower?: boolean
+    /** Epoch seconds — when the comment was written, not when it was flagged. */
+    commentedAt: number
+  }
+}
+
+/**
+ * A private reply the automation matched but could not send yet, because the
+ * channel only permits a DM once it has flagged the comment high intent and
+ * that flag had not arrived.
+ *
+ * Carries the whole candidate rather than a row id. The automation pass is the
+ * only place that knows which automation matched, and re-deriving it later
+ * would re-run `replyOncePerUserPerPost` against the dedup row this very
+ * comment just wrote — declining every time. The job re-checks the flag on a
+ * bounded schedule and either sends or records one blocked event.
+ */
+export type IntegrationJobDeferredCommentPrivateReply = {
+  type: typeof IntegrationJobAction.deferredCommentPrivateReply
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    workspaceId: string
+    automationId: string
+    channelType:
+      | "messenger"
+      | "instagram"
+      | "instagramFacebook"
+      | "threads"
+      | "tiktok"
+    commentId: string
+    postId: string
+    conversationId: string
+    contactInboxId: string
+    message?: string
+    /** Epoch seconds, as `processCommentAutomation` received it. */
+    createdTime: number
+    /** ISO-8601; the `occurredAt` every analytics row for this comment shares. */
+    occurredAtIso: string
+    privateReply: CommentReply
+    dedup?: {
+      automationId: string
+      contactId: string
+      postId: string
+      workspaceId: string
+    }
+    /**
+     * The automation's `replyAfter`, in ms, exactly as the inline path received
+     * it. Optional because jobs enqueued before this field existed are still in
+     * flight; the handler reads it as `?? 0`, which is what they did anyway.
+     *
+     * The handler spends what is LEFT of it, not the whole thing — the deferral
+     * wait already ran down part of the clock.
+     */
+    delay?: number
+    /** Index into the handler's re-check schedule; 0 on the first enqueue. */
+    attempt: number
+  }
+}
+
 export type IntegrationJobCommentAIReply = {
   type: typeof IntegrationJobAction.commentAIReply
   data: {
@@ -777,7 +861,12 @@ export type IntegrationJobCommentAIReply = {
     commentId: string
     agentId: string
     replyChannel: "public" | "private"
-    channelType: "messenger" | "instagram" | "instagramFacebook" | "threads"
+    channelType:
+      | "messenger"
+      | "instagram"
+      | "instagramFacebook"
+      | "threads"
+      | "tiktok"
     message?: string
     parentMessageId?: string | null
     parentMessageCreatedAt?: string | null
@@ -873,6 +962,8 @@ export type IntegrationJobData =
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange
   | IntegrationJobProcessCommentAutomation
+  | IntegrationJobTiktokHighIntentComment
+  | IntegrationJobDeferredCommentPrivateReply
   | IntegrationJobCommentAIReply
   | IntegrationJobProcessLeadgen
   | IntegrationJobProcessStoryReplyAutomation

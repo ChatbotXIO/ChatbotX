@@ -1,4 +1,7 @@
-import { conversationService } from "@chatbotx.io/business"
+import {
+  conversationService,
+  resolveContactAvatarUrl,
+} from "@chatbotx.io/business"
 import { resolveAdReferral } from "@chatbotx.io/business/ads-conversion/channel-fields"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
@@ -32,6 +35,27 @@ const mapConversationContactInboxes = (
     ...rest,
     adReferral: resolveAdReferral(referral),
   }))
+
+const resolveConversationContact = async <T extends { avatar: string | null }>(
+  contact: T | null,
+  contactInboxes: readonly (ContactInboxModel & { inbox: InboxModel })[],
+  workspaceId: string,
+): Promise<T | null> => {
+  if (!contact) {
+    return null
+  }
+  return {
+    ...contact,
+    avatar: await resolveContactAvatarUrl(
+      {
+        workspaceId,
+        contact,
+        contactInboxes,
+      },
+      (key) => key,
+    ),
+  }
+}
 
 const conversationCursorSchema = z.object({
   lastActivityAt: z.coerce.date().nullable(),
@@ -121,17 +145,23 @@ export const listConversations = async (
     : null
 
   return {
-    data: page.map((c) => {
-      const lastMessage = lastMessagesByConversationId.get(c.id)
-      return {
-        ...c,
-        contact: c.contact ?? null,
-        contactInboxes: mapConversationContactInboxes(c.contactInboxes),
-        assignedUser: c.assignedUser ?? null,
-        assignedInboxTeam: c.assignedInboxTeam ?? null,
-        messages: lastMessage ? [lastMessage] : [],
-      }
-    }),
+    data: await Promise.all(
+      page.map(async (c) => {
+        const lastMessage = lastMessagesByConversationId.get(c.id)
+        return {
+          ...c,
+          contact: await resolveConversationContact(
+            c.contact ?? null,
+            c.contactInboxes,
+            workspaceId,
+          ),
+          contactInboxes: mapConversationContactInboxes(c.contactInboxes),
+          assignedUser: c.assignedUser ?? null,
+          assignedInboxTeam: c.assignedInboxTeam ?? null,
+          messages: lastMessage ? [lastMessage] : [],
+        }
+      }),
+    ),
     nextCursor,
     prevCursor,
   }
@@ -172,6 +202,11 @@ export const findConversation = async (
   return {
     data: {
       ...conversation,
+      contact: await resolveConversationContact(
+        conversation.contact,
+        conversation.contactInboxes,
+        input.workspaceId,
+      ),
       contactInboxes: mapConversationContactInboxes(
         conversation.contactInboxes,
       ),

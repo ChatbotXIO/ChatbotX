@@ -14,7 +14,8 @@
   </a>
 </p>
 
-<h3 align="center"><strong><a href="https://app.chatbotx.io/?ref=github">NEW: get 90 Days Free on ChatbotX Cloud! 🚀</a></strong></h3>
+<h3 align="center"><strong><a href="https://app.chatbotx.io/?ref=github">NEW: get 14 Days Free on ChatbotX Cloud</a></strong></h3>
+<h3 align="center"><strong><a href="https://github.com/ChatbotXIO/chatbotx-agent">NEW: get 500+ MCP and CLI Tools for Your AI Agents</a></strong></h3>
 
 <p align="center">
   <strong>Agentic chat marketing platform built for OpenClaw, Hermes, and Claude</strong>
@@ -202,8 +203,8 @@ Useful package-level commands:
 pnpm --filter builder dev
 pnpm --filter worker dev
 pnpm --filter realtime dev
-pnpm --filter chatbotx-cli dev:cli
-pnpm --filter chatbotx-mcp-server dev:mcp
+pnpm --filter chatbotx dev:cli
+pnpm --filter chatbotx-mcp dev:mcp
 pnpm --filter @chatbotx.io/database db:studio
 ```
 

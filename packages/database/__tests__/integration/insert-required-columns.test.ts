@@ -46,21 +46,7 @@ import {
   integrationWhatsappModel,
   whatsappSignupSessionModel,
 } from "../../src/schema"
-
-/** The `setup-env` sentinel: a real database never listens on port 1. */
-const NON_ROUTABLE_PORT = "1"
-
-function realDatabaseUrl(): string | null {
-  const url = process.env.DATABASE_URL
-  if (!url) {
-    return null
-  }
-  try {
-    return new URL(url).port === NON_ROUTABLE_PORT ? null : url
-  } catch {
-    return null
-  }
-}
+import { realDatabaseUrl } from "./database-url"
 
 const databaseUrl = realDatabaseUrl()
 

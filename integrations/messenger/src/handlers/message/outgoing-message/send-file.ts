@@ -6,8 +6,8 @@ import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { uploadAttachment } from "../../../apis/attachment"
 import { logger } from "../../../lib/logger"
 import type { MessengerAuthValue } from "../../../schema"
+import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
 import { convertMediaType } from "./send-attachment"
-import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
 
 export async function* convertFlowStepFile(
   props: SendFlowStepProps<
@@ -31,7 +31,7 @@ export async function* convertFlowStepFile(
         },
       },
       ...(quickReplies.length > 0
-        ? { quick_replies: convertCanonicalFacebookQuickReplies(quickReplies) }
+        ? { quick_replies: convertCanonicalQuickReplies(quickReplies) }
         : {}),
     }
   } catch (error) {

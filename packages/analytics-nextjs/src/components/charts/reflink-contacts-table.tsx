@@ -39,13 +39,13 @@ function getInitial(contact: FlowNodeContactData): string {
 export function ReflinkContactsTable() {
   const t = useTranslations()
   const locale = useLocale()
-  const {
-    reflinkContacts: contacts,
-    reflinkContactsPage: page,
-    reflinkContactsPageCount: pageCount,
-    setReflinkContactsPage,
-    loading,
-  } = useAnalysisStore((state) => state)
+  const contacts = useAnalysisStore((state) => state.reflinkContacts)
+  const page = useAnalysisStore((state) => state.reflinkContactsPage)
+  const pageCount = useAnalysisStore((state) => state.reflinkContactsPageCount)
+  const setReflinkContactsPage = useAnalysisStore(
+    (state) => state.setReflinkContactsPage,
+  )
+  const loading = useAnalysisStore((state) => state.loading)
 
   return (
     <div className="flex flex-col gap-2">

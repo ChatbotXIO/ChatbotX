@@ -1,8 +1,8 @@
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
   flowService,
+  publishToWorkspaceParty,
 } from "@chatbotx.io/business"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
@@ -11,14 +11,15 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
   type ButtonStepProps,
   buttonStepDefaultFn,
   buttonTypes,
   extractMessengerTemplateParams,
+  isBulkOutboundMetadata,
   type MessengerTemplateComponent,
   type MessengerTemplateParams,
+  type MetadataPayload,
   messageEventTypeSchema,
   type SendMessengerTemplateMessageStepSchema,
   startExternalFlowStepDefaultFn,
@@ -47,8 +48,13 @@ import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
 } from "../utils/retry"
-import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
-import { sendFlowStepToChannel } from "./send-message"
+// Disabled — see the commented-out enqueueTemplateSentEvaluation call below.
+// import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
+import {
+  isDeliveredDirectMessage,
+  markConversationReadAfterDelivery,
+  sendFlowStepToChannel,
+} from "./send-message"
 
 export interface ProcessMessengerTemplateParams {
   broadcastId?: string
@@ -58,6 +64,7 @@ export interface ProcessMessengerTemplateParams {
     id: string
     versionId?: string
   }
+  isBulkBroadcast?: boolean
   metadata?: MetadataPayload
   step?: SendMessengerTemplateMessageStepSchema
   template: SendMessengerTemplateMessageStepSchema["template"]
@@ -148,8 +155,13 @@ export async function processMessengerTemplate(
     step,
     trackingContext,
     metadata,
+    isBulkBroadcast,
     willRetryOnThrow = false,
   } = params
+  const isBulkOutbound = isBulkOutboundMetadata(
+    metadata,
+    isBulkBroadcast || broadcastId !== undefined,
+  )
 
   const eventLogData = {
     context: {
@@ -252,15 +264,18 @@ export async function processMessengerTemplate(
         contactInboxId: contactInbox.id,
         contactId: contactInbox.contactId,
         at: createdMessage.createdAt,
+        bumpActivity: !isBulkOutbound,
       })
     if (trackingInvalidation) {
       await contactInboxService.invalidateTracking(trackingInvalidation)
     }
 
-    broadcastToWorkspaceParty(conversation.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: newMessage,
-    })
+    if (!isBulkOutbound) {
+      publishToWorkspaceParty(conversation.workspaceId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: newMessage,
+      })
+    }
 
     const result = await sendFlowStepToChannel({
       conversation,
@@ -276,49 +291,43 @@ export async function processMessengerTemplate(
       },
       metadata,
       messageId: newMessage.id,
+      botSentAnalytics: {
+        triggerHandler: "processMessengerTemplate",
+        triggerType: "message_bot_sent_messenger_template",
+      },
     })
 
-    // Amendment A1: extends the `templateSent` conversion trigger to
-    // Messenger. Unconditional (no `hasEnabledTriggerRule` pre-check) — same
-    // as the WhatsApp call site; the evaluator's own cheap attribution
-    // lookup is the real gate. Never fails the send: enqueue errors are
-    // logged and swallowed inside the helper.
-    await enqueueTemplateSentEvaluation({
-      workspaceId: conversation.workspaceId,
-      channel: "messenger",
-      integrationId: validated.inbox.integrationMessenger.id,
-      contactInboxId: contactInbox.id,
-      templateId: template.id,
-      messageId: newMessage.id,
-    })
+    // Same rule as a flow reply: a delivered bot DM honours the inbox's
+    // markReadOnOutbound option. Own-send echoes are ignored by the receive
+    // path, so the send result is the only delivery signal.
+    if (isDeliveredDirectMessage({ message: createdMessage, result })) {
+      await markConversationReadAfterDelivery({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        inboxId: contactInbox.inboxId,
+        readAt: createdMessage.createdAt,
+        silent: isBulkOutbound,
+      })
+    }
+
+    // 2026-09-24: ads-conversion rule engine is hidden and unused. This
+    // follow-up job used to be enqueued after EVERY template send and only
+    // added load to the integration queue (one job + one attribution lookup
+    // per send, then exit). Kept commented out instead of deleted so it can
+    // be re-enabled if the rule engine ever ships again.
+    // await enqueueTemplateSentEvaluation({
+    //   workspaceId: conversation.workspaceId,
+    //   channel: "messenger",
+    //   integrationId: validated.inbox.integrationMessenger.id,
+    //   contactInboxId: contactInbox.id,
+    //   templateId: template.id,
+    //   messageId: newMessage.id,
+    // })
 
     await emit(messageEventTypeSchema.enum["message:sent"], {
       ...eventLogData,
       action: { messageId: newMessage.id, flowId: flow?.id || "" },
       occurredAt: new Date(),
-    })
-
-    // Bot-message quota accounting: `chat/worker.ts`'s pre-send gate blocks
-    // `sendMessengerTemplateMessage` jobs, but nothing previously counted a
-    // successful send here — the quota gate and the quota meter must stay
-    // structurally paired or the gate is enforced against a counter that
-    // never moves.
-    emit("analytics:dashboard", {
-      eventType: "message:bot_sent",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      senderType: "bot",
-      occurredAt: new Date(),
-      source: contactInbox.source,
-      sourceId: contactInbox.sourceId,
-      channel: contactInbox.channel,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "processMessengerTemplate",
-          triggerType: "message_bot_sent_messenger_template",
-        },
-      },
     })
 
     const providerMessageId = result?.messageIds?.[0]
@@ -500,6 +509,7 @@ export async function sendMessengerTemplateMessage(
       },
       broadcastId,
       metadata,
+      isBulkBroadcast: broadcastId !== undefined,
       // Pass contextFlow so unconfigured buttons are encoded with a valid flowId.
       ...(contextFlow && { flow: { id: contextFlow.id } }),
       ...(stepButtons.length > 0 && {

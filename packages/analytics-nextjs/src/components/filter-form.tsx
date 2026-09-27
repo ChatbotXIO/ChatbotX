@@ -34,7 +34,7 @@ export default function AnalysisFilterForm({
   maxRangeDays,
   onChange,
 }: AnalysisFilterFormProps) {
-  const { setRange: setAnalysisRange } = useAnalysisStore((state) => state)
+  const setAnalysisRange = useAnalysisStore((state) => state.setRange)
 
   return (
     <DateRangePresetFilter

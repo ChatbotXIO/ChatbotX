@@ -183,6 +183,13 @@ vi.mock("../src/integration/handlers/comment-automation", () => ({
 vi.mock("../src/integration/handlers/comment-automation/ai-reply", () => ({
   processCommentAIReply: vi.fn(),
 }))
+vi.mock(
+  "../src/integration/handlers/comment-automation/deferred-private-reply",
+  () => ({ runDeferredCommentPrivateReply: vi.fn() }),
+)
+vi.mock("../src/integration/handlers/tiktok-high-intent-comment", () => ({
+  receiveTiktokHighIntentComment: vi.fn(),
+}))
 vi.mock("../src/integration/handlers/contact/update-avatar", () => ({
   updateContactAvatar: vi.fn(),
 }))
@@ -303,6 +310,7 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
   broadcastToWorkspaceParty: vi.fn(),
+  publishToWorkspaceParty: vi.fn(),
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
@@ -373,6 +381,7 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
 
 vi.mock("@chatbotx.io/sdk", () => ({
   contentTypes: { enum: { text: "text", location: "location" } },
+  echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
   resolveWithSourceUserIdFallback: async <T>(
     identity: { sourceId: string; sourceUserId?: string | null },
     lookup: (

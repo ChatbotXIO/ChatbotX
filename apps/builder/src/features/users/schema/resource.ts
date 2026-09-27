@@ -12,7 +12,7 @@ export type UserCollection = {
 }
 
 export function getUserName(
-  user: UserResource | null | undefined,
+  user: Pick<UserResource, "name" | "email"> | null | undefined,
   defaultName = "-",
 ) {
   if (!user) {

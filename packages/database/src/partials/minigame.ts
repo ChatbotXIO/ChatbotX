@@ -184,6 +184,18 @@ const DEFAULT_MINIGAME_OUTCOME_MESSAGE: z.infer<
   typeof minigameOutcomeMessageSchema
 > = { enabled: false, mode: "text", text: "" }
 
+/**
+ * Minigame-local placeholder for the drawn prize's name, usable in the result
+ * dialog's `title`/`description` and in `outcomeMessage.text`.
+ *
+ * It lives here rather than beside either renderer because the two cannot
+ * import each other: the dialog is a client component and the outcome-message
+ * renderer sits in `@chatbotx.io/business`, which would drag the whole package
+ * into the browser bundle. This schema module is the one place both already
+ * depend on.
+ */
+export const MINIGAME_PRIZE_NAME_TOKEN = "{{prize_name}}"
+
 export const minigameWinningMessageSettingsSchema = z.object({
   title: z.string().max(150).default(""),
   description: z.string().max(1000).default(""),

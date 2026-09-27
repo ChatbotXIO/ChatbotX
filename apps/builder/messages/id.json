@@ -336,6 +336,7 @@
       "message": "Pembayaran terakhir Anda gagal. Perbarui metode pembayaran agar workspace tetap aktif."
     },
     "trial": {
+      "planName": "Uji coba",
       "daysLeft": "Uji coba: tersisa {days} hari",
       "endsTomorrow": "Uji coba berakhir besok",
       "expired": "Masa uji coba Anda telah berakhir — tingkatkan paket agar workspace tetap aktif",
@@ -507,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Tingkatkan paket Anda",
+      "sendRate": "Paket {plan} Anda saat ini mendukung broadcast dengan kecepatan pengiriman maksimum {rate} pesan per menit. Tingkatkan paket Anda untuk mengirim broadcast hingga {multiplier}x lebih cepat.",
+      "activeBroadcasts": "Paket {plan} Anda saat ini menjalankan {max, plural, one {# broadcast} other {# broadcast}} sekaligus. Tingkatkan paket Anda untuk menjalankan lebih banyak broadcast secara bersamaan."
+    },
+    "sendLimit": {
+      "title": "Batas",
+      "hint": "Kosongkan untuk mengirim ke semua kontak yang cocok.",
+      "rateHint": "Kosongkan untuk menggunakan laju bawaan.",
+      "rangeSummary": "Kontak #{start} – #{end}",
+      "rangeFromSummary": "Mulai dari kontak #{start}",
+      "rangeLabel": "Rentang kontak",
+      "fromLabel": "Dari",
+      "toLabel": "Sampai",
+      "allPlaceholder": "Semua",
+      "rangeEndBeforeStart": "Posisi akhir tidak boleh sebelum posisi awal"
     }
   },
   "commentAutomation": {
@@ -535,7 +553,26 @@
       "keywordsNotMatched": "Kata kunci tidak cocok",
       "contactNotNew": "Kontak bukan baru",
       "alreadyRepliedOnPost": "Sudah dibalas di postingan ini",
-      "engagedOnOtherPost": "Sudah berinteraksi di postingan lain"
+      "engagedOnOtherPost": "Sudah berinteraksi di postingan lain",
+      "mentionCountNotMatched": "Jumlah sebutan tidak cocok"
+    },
+    "replyTo": {
+      "mentions": "Komentar dengan cukup sebutan",
+      "mentionCount": "Jumlah orang yang ditandai",
+      "mentionCountDescription": "Hanya komentar yang menandai setidaknya sejumlah orang ini (@nama) yang cocok.",
+      "mentionCountOption": "{count, plural, one {# orang} other {# orang}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Komentar sama dengan",
+      "contain": "Komentar yang mengandung"
+    },
+    "hideComments": {
+      "hasGif": "Berisi GIF",
+      "hasEmoji": "Berisi emoji"
+    },
+    "trackUserTags": {
+      "label": "Lacak jika pengguna menandai pengguna lain",
+      "descriptionText": "Menghitung akun yang ditandai di setiap komentar dan menambahkannya ke total kontak dari semua komentar. Gunakan '{{total_tagged}}' untuk semua akun yang ditandai dan '{{total_new_tagged}}' untuk akun yang belum pernah mengirim pesan ke halaman Anda atau menjadi kontak."
     }
   },
   "condition": {
@@ -726,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(opsional)",
     "marketingMessagesConfigId": {
       "label": "ID Konfigurasi Marketing Messages",
       "description": "ID konfigurasi Facebook Login for Business yang digunakan untuk meminta izin marketing_messages_messenger."
@@ -1996,11 +2034,16 @@
       "clientId": "ID Klien",
       "clientSecret": "Rahasia Klien",
       "displayName": "Nama Tampilan",
+      "needsReauthorizationForComments": "Koneksi ini diotorisasi sebelum otomatisasi komentar. Hubungkan ulang untuk mulai menerima peristiwa komentar.",
       "connectInstructions": {
         "step1": "Buat aplikasi TikTok di <link>developers.tiktok.com</link>.",
         "step2": "Otorisasi akun Anda lalu salin <strong>token akses</strong>, <strong>open ID</strong>, dan <strong>rahasia klien</strong>.",
         "step3": "Tempel kredensial di bawah ini untuk menghubungkan."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Drip"
@@ -2201,6 +2244,9 @@
     },
     "lastCallTranscript": {
       "label": "Transkrip panggilan terakhir"
+    },
+    "sendRatePerMinute": {
+      "label": "Pesan per menit"
     }
   },
   "flows": {
@@ -2317,6 +2363,8 @@
       "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
       "unarchiveConversation": "Keluarkan Percakapan dari Arsip",
       "unassignConversation": "Batalkan Penetapan Percakapan",
+      "markConversationAsUnread": "Tandai Percakapan sebagai Belum Dibaca",
+      "markConversationAsRead": "Tandai Percakapan sebagai Dibaca",
       "unfollowConversation": "Berhenti Mengikuti Percakapan",
       "unsubscribeBroadcast": "Berhenti Berlangganan Siaran",
       "getUserData": "Ambil Data Pengguna",
@@ -3041,6 +3089,10 @@
       "whatsapp": "Nomor WhatsApp ini sudah terhubung ke ruang kerja lain.",
       "zalo": "Zalo OA ini sudah terhubung ke ruang kerja lain."
     },
+    "missingScopes": {
+      "generic": "Koneksi dibatalkan: sebagian izin tidak diberikan. Silakan hubungkan lagi dan setujui semua izin yang diminta.",
+      "tiktok": "Koneksi TikTok dibatalkan: sebagian izin tidak diberikan. Silakan hubungkan lagi dan setujui semua izin yang diminta."
+    },
     "reconnect": {
       "success": "Saluran berhasil dihubungkan kembali.",
       "errors": {
@@ -3197,6 +3249,7 @@
     "changeLikeState": "Ubah status suka",
     "changeHideState": "Ubah status sembunyikan",
     "commentHidden": "Komentar ini disembunyikan",
+    "commentMediaUnavailable": "Komentar ini berisi GIF, stiker, atau gambar yang tidak dapat ditampilkan",
     "messageDeleted": "Pesan telah dihapus.",
     "sendFailed": "Gagal mengirim",
     "repliedToStory": "Membalas story Anda",
@@ -3237,7 +3290,10 @@
     "deleteFeature": "Hapus {feature}",
     "resetFeature": "Atur ulang {feature}",
     "resetConfirmation": "Tindakan ini akan mengosongkan nilai {feature} yang dipilih.\nTindakan ini tidak dapat dibatalkan.",
+    "resetAllConfirmation": "Tindakan ini akan mengosongkan nilai semua {feature} dari kontak ini.\nTindakan ini tidak dapat dibatalkan.",
     "resetSuccess": "{feature} berhasil diatur ulang",
+    "clearFeature": "Kosongkan {feature}",
+    "clearSuccess": "{feature} berhasil dikosongkan",
     "deleteConfirmation": "Apakah Anda benar-benar yakin?\nTindakan ini tidak dapat dibatalkan.\nTindakan ini akan menghapus {feature} Anda secara permanen dari server kami.",
     "addFeature": "Tambah {feature}",
     "signOutConfirmation": "Apakah Anda yakin ingin keluar?",
@@ -3288,6 +3344,7 @@
     "historyDepth": "({count})",
     "none": "Tidak ada",
     "tiktokCardTitleTooLong": "TikTok akan memotong pesan ini: saat tombol dilampirkan, hanya 40 karakter pertama yang dikirim. Persingkat pesan atau hapus tombolnya.",
+    "sendTextTooLongForChannel": "Pesan ini lebih panjang dari yang diizinkan saluran ini. Persingkat pesan, atau arahkan blok ini ke saluran dengan batas lebih tinggi.",
     "waTemplateMpmNoProducts": "Tambahkan setidaknya satu produk ke tombol multi-produk ini sebelum memublikasikan.",
     "waTemplateMpmTooManySections": "Tombol multi-produk dapat memiliki maksimal 10 bagian. Hapus beberapa bagian sebelum memublikasikan.",
     "waTemplateMpmTooManyProducts": "Tombol multi-produk dapat memiliki maksimal total 30 produk. Hapus beberapa produk sebelum memublikasikan.",
@@ -3377,6 +3434,7 @@
       "noConnectablePagesDescription": "Anda bukan admin Halaman ini",
       "bmLookupFailedTitle": "Halaman Business Manager mungkin tidak ditampilkan",
       "bmLookupFailedDescription": "Hubungkan kembali Messenger dan berikan akses Business Manager agar halaman yang dikelola melalui Business Manager dapat ditampilkan.",
+      "loadFailed": "Tidak dapat memuat Halaman Facebook Anda",
       "alreadyConnectedNote": "Halaman ini sudah terhubung",
       "notAdminNote": "Anda bukan admin Halaman ini",
       "tryAgain": "Coba hubungkan kembali"
@@ -4074,6 +4132,7 @@
         "statusNoAnswer": "Tidak ada jawaban",
         "eyebrowCallEnded": "PANGGILAN BERAKHIR",
         "statusConnectionLost": "Koneksi terputus",
+        "answerFailed": "Tidak dapat menjawab panggilan. Pastikan mikrofon tersambung dan diizinkan di browser, lalu coba lagi.",
         "ringingListTitle": "{count, plural, one {# panggilan masuk} other {# panggilan masuk}}"
       },
       "capability": {
@@ -4179,6 +4238,14 @@
     "chatbotInvitationDescription2": "{userName} mengundang Anda untuk bergabung dengan {chatbotName}.",
     "invalidInvitation": "Undangan ini tidak valid atau telah kedaluwarsa.",
     "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Tandai pesan bot sebagai sudah dibaca",
+      "enabled": "Aktif",
+      "disabled": "Nonaktif",
+      "description": "Jika diaktifkan, bot akan otomatis menandai pesannya sebagai sudah dibaca"
+    }
   },
   "inboxTeams": {
     "title": "Tim Kotak Masuk"
@@ -4543,7 +4610,8 @@
     "afterText": "Setelah"
   },
   "tools": {
-    "title": "Alat"
+    "title": "Alat",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4646,13 +4714,13 @@
     "privateReply": "Balasan pribadi (kotak masuk)",
     "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap, alur chatbot, atau nonaktifkan.",
     "publicReply": "Balasan publik untuk komentar",
-    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah.",
+    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah. Mendukung spintax.",
     "replyMessage": "Pesan balasan",
     "replyMessagePlaceholder": "Masukkan pesan balasan...",
     "includeKeywordsType": "Balas",
     "includeKeywordsTypeDescription": "Pilih komentar yang akan ditanggapi otomatisasi ini.",
     "includeKeywords": "Kata kunci yang dicocokkan",
-    "excludeKeywords": "Kecualikan komentar dengan kata kunci ini",
+    "excludeKeywords": "Kecualikan komentar yang mengandung",
     "excludeKeywordsDescription": "Komentar yang berisi salah satu kata kunci ini akan diabaikan oleh otomatisasi balasan kotak masuk dan publik.",
     "keywordsPlaceholder": "Ketik dan tekan Enter...",
     "replyAfter": "Balas setelah",
@@ -4715,7 +4783,7 @@
       "ignoreCommentReplies": "Jangan balas balasan komentar",
       "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas.",
       "trackUserTags": "Lacak jika pengguna menandai pengguna lain",
-      "trackUserTagsDescription": "Gunakan '{{total_tagged}}' untuk mengetahui berapa banyak pengguna yang ditandai. Gunakan '{{total_new_tagged}}' untuk mengetahui berapa banyak orang yang ditandai belum ada di daftar kontak."
+      "trackUserTagsDescription": "Menghitung akun yang ditandai di setiap komentar dan menambahkannya ke total kontak dari semua komentar. Gunakan '{{total_tagged}}' untuk semua akun yang ditandai dan '{{total_new_tagged}}' untuk akun yang belum pernah mengirim pesan ke halaman Anda atau menjadi kontak."
     },
     "hideComments": {
       "all": "Sembunyikan semua komentar",
@@ -4749,13 +4817,13 @@
     "privateReply": "Balasan pribadi (kotak masuk)",
     "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap, alur chatbot, atau nonaktifkan.",
     "publicReply": "Balasan publik untuk komentar",
-    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah.",
+    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah. Mendukung spintax.",
     "replyMessage": "Pesan balasan",
     "replyMessagePlaceholder": "Masukkan pesan balasan...",
     "includeKeywordsType": "Balas",
     "includeKeywordsTypeDescription": "Pilih komentar yang akan ditanggapi otomatisasi ini.",
     "includeKeywords": "Kata kunci yang dicocokkan",
-    "excludeKeywords": "Kecualikan komentar dengan kata kunci ini",
+    "excludeKeywords": "Kecualikan komentar yang mengandung",
     "excludeKeywordsDescription": "Komentar yang berisi salah satu kata kunci ini akan diabaikan oleh otomatisasi balasan kotak masuk dan publik.",
     "keywordsPlaceholder": "Ketik dan tekan Enter...",
     "replyAfter": "Balas setelah",
@@ -4817,7 +4885,7 @@
       "ignoreCommentReplies": "Jangan balas balasan komentar",
       "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas.",
       "trackUserTags": "Lacak jika pengguna menandai pengguna lain",
-      "trackUserTagsDescription": "Gunakan '{{total_tagged}}' untuk mengetahui berapa banyak pengguna yang ditandai. Gunakan '{{total_new_tagged}}' untuk mengetahui berapa banyak orang yang ditandai belum ada di daftar kontak."
+      "trackUserTagsDescription": "Menghitung akun yang ditandai di setiap komentar dan menambahkannya ke total kontak dari semua komentar. Gunakan '{{total_tagged}}' untuk semua akun yang ditandai dan '{{total_new_tagged}}' untuk akun yang belum pernah mengirim pesan ke halaman Anda atau menjadi kontak."
     },
     "hideComments": {
       "all": "Sembunyikan semua komentar",
@@ -4853,13 +4921,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Hingga 10 pesan teks (mendukung spintax), masing-masing diposting sebagai balasan terpisah.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Kecualikan komentar yang mengandung",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4868,7 +4936,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Sembunyikan Komentar"
     },
     "postType": {
       "all": "All posts",
@@ -4910,8 +4979,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Masukkan setidaknya satu pesan balasan.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Hanya balasan tingkat atas pada postingan Anda yang dapat disembunyikan.",
+    "hideComments": {
+      "all": "Sembunyikan semua komentar",
+      "hasPhoneNumber": "Mengandung nomor telepon",
+      "hasLink": "Mengandung tautan",
+      "hasKeywords": "Mengandung kata kunci",
+      "keywords": "Kata Kunci",
+      "showCommentsAfter": "Tampilkan komentar setelah"
+    },
+    "showCommentsAfter": {
+      "none": "Jangan pernah"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Hingga 10 pesan teks (mendukung spintax), masing-masing diposting sebagai balasan terpisah.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Kecualikan komentar yang mengandung",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Masukkan setidaknya satu pesan balasan."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Otomatisasi Balasan Story Instagram",
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "Masukkan Dataset ID yang valid (hanya angka).",
       "whatsappNotFound": "Integrasi WhatsApp tidak ditemukan.",
       "testEventCodeRequired": "Simpan kode peristiwa uji sebelum mengirim peristiwa uji.",
-      "noContactForTest": "Belum ada kontak yang memenuhi syarat di saluran ini. Peristiwa uji memerlukan kontak nyata untuk dikaitkan (untuk WhatsApp, kontak yang berasal dari iklan click-to-WhatsApp).",
-      "invalidTestEventCode": "Kode peristiwa uji hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 64)."
+      "invalidTestEventCode": "Kode peristiwa uji hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 64).",
+      "invalidMessagingId": "ID pesan hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 512).",
+      "capiDisconnected": "Meta CAPI terputus untuk saluran ini. Hubungkan kembali sebelum mengirim event uji."
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "Kode peristiwa uji tersimpan.",
       "cleared": "Kode peristiwa uji dihapus. Peristiwa aktif kembali.",
       "send": "Kirim peristiwa uji",
-      "sent": "Peristiwa uji masuk antrean. Peristiwa ini akan muncul di Test events pada Events Manager dalam waktu satu menit.",
-      "sendHint": "Mengirim satu contoh Purchase (100 USD) ke kontak terbaru pada saluran ini.",
+      "sent": "Event uji terkirim. Akan muncul di Test events pada Events Manager dalam satu menit.",
+      "sendHint": "Mengirim satu contoh Purchase (100 USD) ke ID pesan yang Anda masukkan. Tidak ada kontak tersimpan yang digunakan.",
       "activeNotice": "Mode uji aktif: peristiwa dari saluran ini tidak dihitung dalam laporan sampai kode dihapus.",
-      "openTestEvents": "Buka Test events"
+      "openTestEvents": "Buka Test events",
+      "dialogTitle": "Kirim event uji",
+      "dialogDescription": "Satu contoh Purchase (100 USD) dikirim dengan kode event uji Anda. Tempel ID pesan contoh dari Events Manager → Test events → Messaging → Graph API Explorer, agar tidak ada yang diatribusikan ke kontak asli.",
+      "messagingIdLabel": {
+        "messenger": "ID kontak (page_scoped_user_id)",
+        "instagram": "ID kontak (ig_sid)",
+        "whatsapp": "ID klik (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Tempel nilai contoh dari Meta",
+      "messagingIdHint": "Hanya huruf, angka, tanda hubung, dan garis bawah (maks. 512).",
+      "cancel": "Batal",
+      "confirmSend": "Kirim"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "Kolom Bot"
+  },
+  "openLink": {
+    "title": "Buka tautan",
+    "invalidTitle": "Tautan tidak valid.",
+    "invalidDescription": "Tautan ini tidak valid atau sudah kedaluwarsa.",
+    "openZaloGroup": "Buka grup Zalo",
+    "openZalo": "Buka Zalo",
+    "openMessenger": "Buka Messenger"
   }
 }

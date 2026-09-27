@@ -7,7 +7,7 @@ import { useAnalysisStore } from "../../provider/analysis-store-context"
 
 export function ContactsByCountryChart() {
   const t = useTranslations()
-  const { contactsByCountry } = useAnalysisStore((state) => state)
+  const contactsByCountry = useAnalysisStore((state) => state.contactsByCountry)
 
   const data = useMemo(
     () =>

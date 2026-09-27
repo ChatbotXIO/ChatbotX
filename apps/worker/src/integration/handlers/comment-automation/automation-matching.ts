@@ -1,8 +1,9 @@
 import {
-  type FBCommentIncludeKeywords,
-  type FBCommentPost,
-  type FBCommentReply,
-  type FBCommentReplyAfter,
+  type CommentExcludeKeywordsType,
+  type CommentIncludeKeywords,
+  type CommentPost,
+  type CommentReply,
+  type CommentReplyAfter,
   resolveReplyTexts,
 } from "@chatbotx.io/database/partials"
 
@@ -34,7 +35,23 @@ function objectIdOf(id: string): string {
   return idx === -1 ? id : id.slice(0, idx)
 }
 
-export function matchPost(post: FBCommentPost, postId: string): boolean {
+// `café` and `cafe` are the same keyword to a commenter, but `.toLowerCase()`
+// alone leaves the accent in place, so an "include"/"exclude" keyword and the
+// comment text only match when both sides happen to use identical diacritics.
+// Same folding as `normalizeContactHeader` (packages/imports): NFD splits `é`
+// into `e` + U+0301, the Combining Diacritical Marks block (U+0300–U+036F) is
+// dropped, and `đ`, which has no decomposition, is mapped to `d`. The block is
+// deliberately narrow: `\p{Diacritic}` would also strip ASCII `^` and `` ` ``
+// (a "^^" keyword would become "" and match every comment) and kana marks.
+export function normalizeForMatch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+}
+
+export function matchPost(post: CommentPost, postId: string): boolean {
   if (post.type !== "postIds") {
     return true
   }
@@ -43,27 +60,60 @@ export function matchPost(post: FBCommentPost, postId: string): boolean {
 }
 
 export function matchKeywords(
-  includeKeywords: FBCommentIncludeKeywords,
+  includeKeywords: CommentIncludeKeywords,
   excludeKeywords: string[],
   message: string | undefined,
+  excludeKeywordsType: CommentExcludeKeywordsType = "contain",
 ): boolean {
-  const text = (message ?? "").toLowerCase()
-  if (includeKeywords.type !== "all" && includeKeywords.value.length > 0) {
-    const kws = includeKeywords.value.map((k) => k.toLowerCase())
-    if (includeKeywords.type === "equal" && !kws.includes(text)) {
+  const text = normalizeForMatch(message ?? "")
+  const includeType = includeKeywords.type
+  if (
+    (includeType === "equal" || includeType === "contain") &&
+    includeKeywords.value.length > 0
+  ) {
+    const kws = includeKeywords.value.map((k) => normalizeForMatch(k))
+    if (includeType === "equal" && !kws.includes(text)) {
       return false
     }
-    if (
-      includeKeywords.type === "contain" &&
-      !kws.some((k) => text.includes(k))
-    ) {
+    if (includeType === "contain" && !kws.some((k) => text.includes(k))) {
       return false
     }
   }
-  if (excludeKeywords.some((k) => text.includes(k.toLowerCase()))) {
-    return false
+  const excluded = excludeKeywords
+    .map((k) => normalizeForMatch(k.trim()))
+    .filter(Boolean)
+  if (excludeKeywordsType === "equal") {
+    // Whole comment, trimmed — "ok " is the same comment as "ok".
+    return !excluded.includes(text.trim())
   }
-  return true
+  return !excluded.some((k) => text.includes(k))
+}
+
+/**
+ * Whether the automation needs the comment's mention list to decide. Lets the
+ * orchestrator skip the (on Facebook, possibly Graph-backed) lookup for every
+ * automation that does not filter on mentions.
+ */
+export function needsMentionCount(
+  includeKeywords: CommentIncludeKeywords,
+): boolean {
+  return includeKeywords.type === "mentions"
+}
+
+/**
+ * "Comments when enough mentions": the comment must tag AT LEAST
+ * `mentionCount` accounts — two people configured means a comment tagging two
+ * or three qualifies, one tagging one does not. A `mentions` row with no count
+ * (hand-built request) defaults to 1.
+ */
+export function matchMentionCount(
+  includeKeywords: CommentIncludeKeywords,
+  mentionCount: number,
+): boolean {
+  if (includeKeywords.type !== "mentions") {
+    return true
+  }
+  return mentionCount >= (includeKeywords.mentionCount ?? 1)
 }
 
 // Facebook feed webhooks set parent_id on every comment: for a top-level
@@ -105,7 +155,7 @@ export function isCommentReply(
   return parent !== objectIdOf(commentId)
 }
 
-export function willSendReply(reply: FBCommentReply): boolean {
+export function willSendReply(reply: CommentReply): boolean {
   if (reply.type === "none") {
     return false
   }
@@ -119,7 +169,7 @@ export function willSendReply(reply: FBCommentReply): boolean {
   return Boolean(reply.value)
 }
 
-export function computeDelayMs(replyAfter: FBCommentReplyAfter): number {
+export function computeDelayMs(replyAfter: CommentReplyAfter): number {
   if (replyAfter.type === "immediately") {
     return 0
   }

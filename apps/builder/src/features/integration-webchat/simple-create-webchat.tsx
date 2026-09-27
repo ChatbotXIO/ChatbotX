@@ -15,6 +15,7 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { createWebchatAction } from "./actions/create-webchat.action"
 import { createWebchatRequest } from "./schema/mutation"
 
@@ -25,6 +26,7 @@ type SimpleCreateWebchatProps = {
 export function SimpleCreateWebchat({ workspaceId }: SimpleCreateWebchatProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     createWebchatAction,
@@ -37,6 +39,7 @@ export function SimpleCreateWebchat({ workspaceId }: SimpleCreateWebchatProps) {
               feature: t("fields.webchat.label"),
             }),
           )
+          invalidateInboxes()
           if (data.workspaceId) {
             return router.push(`/space/${data.workspaceId}/settings/channels`)
           }

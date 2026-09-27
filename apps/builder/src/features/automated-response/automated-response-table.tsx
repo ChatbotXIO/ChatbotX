@@ -38,7 +38,8 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import React, { use, useMemo } from "react"
 import { toast } from "sonner"
-import { useFlowStore } from "../flows/provider/flow-store-context"
+import { useWorkspaceId } from "@/hooks/routing"
+import { useFlows } from "../flows/provider/flow-hook"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { enableAutomatedResponseAction } from "./actions/enable-automated-response-action"
 import { AutomatedResponseTableToolbarActions } from "./automated-response-table-toolbar-actions"
@@ -67,7 +68,7 @@ export function AutomatedResponsesTable({
   const folderType = automatedResponseFolderTypeByType[type]
 
   const [{ data, pageCount }] = use(promises)
-  const { flows: allFlows } = useFlowStore((state) => state)
+  const { data: allFlows = [] } = useFlows(useWorkspaceId())
 
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<AutomatedResponseResource> | null>(null)

@@ -33,6 +33,18 @@ vi.mock("../../audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.dispatchAuditRecord,
 }))
 
+vi.mock("../plan-policy.service", () => ({
+  broadcastPlanPolicyService: {
+    appliesToChannel: (channel: string) => channel === "messenger",
+    hasRestrictions: () => false,
+    resolveForWorkspace: vi.fn().mockResolvedValue({
+      policy: { kind: "unrestricted" },
+      planName: null,
+    }),
+    restrictionFor: vi.fn(() => null),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {
     id: "Broadcast.id",
@@ -140,7 +152,10 @@ vi.mock("@chatbotx.io/database/client", () => {
     isNull: (value: unknown) => ({ __isNull: value }),
     isNotNull: vi.fn(),
     ne: vi.fn(),
-    sql: vi.fn(),
+    sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+      __sql: strings.join("?"),
+      values,
+    }),
   }
 })
 
@@ -468,6 +483,62 @@ describe("broadcastService.create", () => {
     )
   })
 
+  test("persists the three send-limit columns when the payload carries them", async () => {
+    await broadcastService.create({
+      workspaceId: "ws-1",
+      canViewEmailAndPhone: true,
+      ...baseData,
+      targets: twoTargets,
+      audienceRangeStart: 10,
+      audienceRangeEnd: 60,
+      sendRatePerMinute: 250,
+    })
+
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        audienceRangeStart: 10,
+        audienceRangeEnd: 60,
+        sendRatePerMinute: 250,
+      }),
+    )
+  })
+
+  test("nulls the three send-limit columns when the payload carries none", async () => {
+    await broadcastService.create({
+      workspaceId: "ws-1",
+      canViewEmailAndPhone: true,
+      ...baseData,
+      targets: twoTargets,
+    })
+
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        audienceRangeStart: null,
+        audienceRangeEnd: null,
+        sendRatePerMinute: null,
+      }),
+    )
+  })
+
+  test("rejects an unordered audience range, pointing at audienceRangeEnd", async () => {
+    await expect(
+      broadcastService.create({
+        workspaceId: "ws-1",
+        canViewEmailAndPhone: true,
+        ...baseData,
+        targets: twoTargets,
+        audienceRangeStart: 50,
+        audienceRangeEnd: 10,
+      }),
+    ).rejects.toMatchObject({
+      message: "The end position must not be before the start position",
+      field: "audienceRangeEnd",
+    })
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
   test("rejects a template send that names no page at all, pointing at the page picker", async () => {
     await expect(
       broadcastService.create({
@@ -694,7 +765,10 @@ describe("broadcastService.updateDraft", () => {
     expect(mocks.transaction).toHaveBeenCalledTimes(1)
     expect(mocks.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "Page inbox-a - promo / Page inbox-b - welcome",
+        // Fills a blank name only - an existing one is kept.
+        name: expect.objectContaining({
+          values: [undefined, "Page inbox-a - promo / Page inbox-b - welcome"],
+        }),
         templateId: null,
         templateData: null,
       }),
@@ -706,6 +780,38 @@ describe("broadcastService.updateDraft", () => {
       expect.objectContaining({ inboxId: "inbox-a", templateId: "template-a" }),
       expect.objectContaining({ inboxId: "inbox-b", templateId: "template-b" }),
     ])
+  })
+
+  test("persists the three send-limit columns on a draft update", async () => {
+    mocks.inboxFindMany.mockResolvedValue([
+      { id: "inbox-a" },
+      { id: "inbox-b" },
+    ])
+    mocks.selectRows = [
+      whatsappTemplateRow("template-a", "inbox-a"),
+      whatsappTemplateRow("template-b", "inbox-b", "welcome"),
+    ]
+
+    await broadcastService.updateDraft({
+      workspaceId: "ws-1",
+      broadcastId: "broadcast-1",
+      canViewEmailAndPhone: true,
+      data: {
+        ...baseData,
+        targets: twoTargets,
+        audienceRangeStart: 5,
+        audienceRangeEnd: null,
+        sendRatePerMinute: 1000,
+      },
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audienceRangeStart: 5,
+        audienceRangeEnd: null,
+        sendRatePerMinute: 1000,
+      }),
+    )
   })
 
   test("rejects when a target's template belongs to another page", async () => {

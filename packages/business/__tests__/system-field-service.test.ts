@@ -13,9 +13,14 @@ const mocks = vi.hoisted(() => ({
   hardDeleteAllByContactInbox: vi.fn(),
   listIncomingTextsByContactInbox: vi.fn(),
   resolveTenantSettings: vi.fn(),
+  signMediaToken: vi.fn().mockResolvedValue("signed-media-token"),
   verifyMeLink: vi.fn(),
   workspaceFindById: vi.fn(),
   conversationFindByUncached: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/encryption", () => ({
+  signMediaToken: mocks.signMediaToken,
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -66,6 +71,7 @@ vi.mock("../src/message/service", () => ({
 
 vi.mock("../src/platform/settings", () => ({
   resolveTenantSettings: mocks.resolveTenantSettings,
+  resolveWorkspaceAppUrl: vi.fn(async () => "https://app.example.com"),
 }))
 
 vi.mock("../src/tag/service", () => ({
@@ -77,6 +83,10 @@ vi.mock("../src/tag/service", () => ({
 
 vi.mock("../src/workspace/service", () => ({
   workspaceService: { findById: mocks.workspaceFindById },
+}))
+
+vi.mock("../src/keys", () => ({
+  keys: () => ({ NEXT_PUBLIC_BUILDER_URL: "https://app.example.com" }),
 }))
 
 const { resolveGenderLabel, systemFieldService } = await import(
@@ -189,6 +199,60 @@ describe("systemFieldService privacy message window", () => {
       sinceTime: firstInteractionAt,
       workspaceId: payload.workspaceId,
     })
+  })
+
+  test("getMePrivacyData returns a self-healing proxy URL for a pending avatar", async () => {
+    const result = await systemFieldService.getMePrivacyData(params)
+
+    expect(result?.contact.avatarUrl).toBe(
+      "https://app.example.com/media/avatar/signed-media-token",
+    )
+  })
+
+  test("buildMeExport returns a self-healing proxy URL for a pending avatar", async () => {
+    const result = await systemFieldService.buildMeExport(params)
+
+    expect(result?.data.profile_pic).toBe(
+      "https://app.example.com/media/avatar/signed-media-token",
+    )
+  })
+
+  test("privacy data and export keep a mirrored avatar's public URL unchanged", async () => {
+    mocks.contactFindById.mockResolvedValue({
+      ...contact,
+      avatar: "public/space/workspace-1/avatars/a.png",
+    })
+
+    const [privacyData, exportData] = await Promise.all([
+      systemFieldService.getMePrivacyData(params),
+      systemFieldService.buildMeExport(params),
+    ])
+
+    expect(privacyData?.contact.avatarUrl).toBe(
+      "https://files.example.com/public/space/workspace-1/avatars/a.png",
+    )
+    expect(exportData?.data.profile_pic).toBe(
+      "https://files.example.com/public/space/workspace-1/avatars/a.png",
+    )
+  })
+
+  test("privacy data and export return null for a WhatsApp contact without an avatar", async () => {
+    vi.spyOn(systemFieldService, "findById").mockResolvedValue({
+      ...row,
+      payload: { ...payload, channel: "whatsapp" },
+    } as never)
+    mocks.contactInboxFindByUncached.mockResolvedValue({
+      ...contactInbox,
+      channel: "whatsapp",
+    })
+
+    const [privacyData, exportData] = await Promise.all([
+      systemFieldService.getMePrivacyData(params),
+      systemFieldService.buildMeExport(params),
+    ])
+
+    expect(privacyData?.contact.avatarUrl).toBeNull()
+    expect(exportData?.data.profile_pic).toBeNull()
   })
 
   test("buildMeExport rejects malformed stored payloads before loading contact data", async () => {

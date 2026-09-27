@@ -39,4 +39,7 @@ export const publicBroadcastResource = createSelectSchema(broadcastModel).pick({
   schedulesAt: true,
   flowId: true,
   contactCount: true,
+  audienceRangeStart: true,
+  audienceRangeEnd: true,
+  sendRatePerMinute: true,
 })

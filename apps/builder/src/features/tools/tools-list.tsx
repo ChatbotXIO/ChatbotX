@@ -1,12 +1,14 @@
 "use client"
 
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   SiFacebook,
   SiInstagram,
   SiThreads,
+  SiTiktok,
 } from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
@@ -89,6 +91,17 @@ export const TOOLS_CONFIG = [
     // same gate that hides the channel itself. Drop the flag once approved.
     previewOnly: true,
     getLink: (id: string) => `/space/${id}/threads-comments`,
+  },
+  {
+    id: "tiktok-comment",
+    labelKey: "tiktokCommentAutomation.title",
+    descriptionKey: "tiktokCommentAutomation.description",
+    icon: SiTiktok,
+    // TikTok delivers comment events within five minutes rather than in real
+    // time, and the write scopes are still pending approval — the card is
+    // marked Beta so the delay reads as a known limitation, not a fault.
+    beta: true,
+    getLink: (id: string) => `/space/${id}/tiktok-comments`,
   },
   {
     id: "reflinks",
@@ -254,6 +267,7 @@ export const ToolsList = ({
         label: t(config.labelKey),
         description: t(config.descriptionKey),
         icon: config.icon,
+        beta: "beta" in config ? Boolean(config.beta) : false,
         link:
           "getLink" in config && config.getLink
             ? config.getLink(workspaceId.toString())
@@ -308,7 +322,14 @@ export const ToolsList = ({
                 <tool.icon className="text-primary" size={30} />
               </div>
               <div className="text-center">
-                <h3 className="font-semibold">{tool.label}</h3>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <h3 className="font-semibold">{tool.label}</h3>
+                  {tool.beta ? (
+                    <Badge className="uppercase" variant="secondary">
+                      {t("tools.beta")}
+                    </Badge>
+                  ) : null}
+                </div>
                 <p className="text-muted-foreground text-sm">
                   {tool.description}
                 </p>

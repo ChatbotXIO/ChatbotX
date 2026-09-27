@@ -8,7 +8,13 @@ type TagsForm = {
   tags: string[]
 }
 
-const TagsInputHarness = ({ tags = [] }: { tags?: string[] }) => {
+const TagsInputHarness = ({
+  tags = [],
+  autoFocus,
+}: {
+  tags?: string[]
+  autoFocus?: boolean
+}) => {
   const form = useForm<TagsForm>({
     defaultValues: {
       tags,
@@ -18,6 +24,7 @@ const TagsInputHarness = ({ tags = [] }: { tags?: string[] }) => {
   return (
     <FormProvider {...form}>
       <TagsInputField<TagsForm>
+        autoFocus={autoFocus}
         label="Tags"
         name="tags"
         suggestions={["alpha", "beta", "gamma"]}
@@ -92,5 +99,23 @@ describe("TagsInputField", () => {
     expect(selectedSuggestion?.disabled).toBe(true)
     expect(selectedSuggestion?.className).toContain("disabled:opacity-50")
     expect(availableSuggestion?.disabled).toBe(false)
+  })
+
+  test("does not take focus on mount by default", () => {
+    act(() => {
+      root.render(<TagsInputHarness />)
+    })
+
+    const input = container.querySelector("input")
+    expect(input).not.toBeNull()
+    expect(document.activeElement).not.toBe(input)
+  })
+
+  test("takes focus on mount when autoFocus is passed", () => {
+    act(() => {
+      root.render(<TagsInputHarness autoFocus />)
+    })
+
+    expect(document.activeElement).toBe(container.querySelector("input"))
   })
 })

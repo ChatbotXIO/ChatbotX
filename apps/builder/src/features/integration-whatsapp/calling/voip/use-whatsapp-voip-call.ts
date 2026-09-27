@@ -1,12 +1,16 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import { DEFAULT_SERVER_ERROR_MESSAGE } from "next-safe-action"
 import type { RefObject } from "react"
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { logger } from "@/lib/log"
-import { answerWhatsappVoipCallAction } from "../actions/answer-voip-call.action"
+import {
+  type AnswerWhatsappVoipCallResult,
+  answerWhatsappVoipCallAction,
+} from "../actions/answer-voip-call.action"
 import { getPendingIncomingVoipCallAction } from "../actions/get-pending-incoming-voip-call.action"
 import { hangupWhatsappVoipCallAction } from "../actions/hangup-voip-call.action"
 import { heartbeatActiveVoipCallAction } from "../actions/heartbeat-active-voip-call.action"
@@ -15,19 +19,22 @@ import { initiateOutboundVoipCallAction } from "../actions/initiate-outbound-voi
 import { outboundVoipTurnCredentialsAction } from "../actions/outbound-voip-turn-credentials.action"
 import { getWhatsappVoipTurnCredentialsAction } from "../actions/voip-turn-credentials.action"
 import { type CallRecorder, startCallRecorder } from "./call-recorder"
+import { type AnswerLockOutcome, runWithAnswerLock } from "./cross-tab-answer"
 import {
   isCallSlotFree,
+  STICKY_ENDED_STATUSES,
   useWhatsappVoipCallStore,
   type WhatsappVoipCall,
   WhatsappVoipCallDirection,
   WhatsappVoipCallPhase,
+  type WhatsappVoipEndedStatus,
 } from "./voip-call-store"
 import {
   attachMicrophone,
   captureMicrophoneStream,
   createOutboundOffer,
+  type MicrophoneCaptureFailure,
   registerConnectionHealthHandlers,
-  VOIP_AUDIO_CONSTRAINTS,
   waitForIceGatheringComplete,
 } from "./voip-peer-connection"
 
@@ -39,6 +46,38 @@ const PREPARING_TIMEOUT_MS = 30_000
 
 /** How long the `ended` phase stays visible before the slot auto-clears. */
 const ENDED_LINGER_MS = 2000
+
+/** What the panel says when answering reached the server but did not connect. */
+const ENDED_STATUS_BY_ANSWER_OUTCOME = {
+  cannotAnswer: "cannotAnswer",
+  callEnded: "callEnded",
+} as const satisfies Record<
+  Exclude<AnswerWhatsappVoipCallResult["outcome"], "accepted">,
+  WhatsappVoipEndedStatus
+>
+
+/**
+ * What the panel says when the microphone could not be captured. An
+ * unrecognised capture failure points the agent at their device, never at a
+ * vague "try again".
+ */
+const ENDED_STATUS_BY_MICROPHONE_FAILURE = {
+  micPermissionDenied: "micPermissionDenied",
+  micNotFound: "micNotFound",
+  callFailed: "answerFailed",
+} as const satisfies Record<MicrophoneCaptureFailure, WhatsappVoipEndedStatus>
+
+/**
+ * The server's reason, when it gave a specific one. The generic default says
+ * nothing the "check your microphone" fallback does not, so it is dropped in
+ * favour of that.
+ */
+const specificServerReason = (
+  serverError: string | undefined,
+): string | undefined =>
+  serverError && serverError !== DEFAULT_SERVER_ERROR_MESSAGE
+    ? serverError
+    : undefined
 
 /**
  * Best-effort hangup beacon on tab close while a call is `active`, so Meta's
@@ -387,7 +426,11 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   // holds that same call, since `ended` counts as free and may already be
   // replaced.
   useEffect(() => {
-    if (call?.phase !== WhatsappVoipCallPhase.ended) {
+    if (
+      call?.phase !== WhatsappVoipCallPhase.ended ||
+      // A failure the agent has to read stays until they dismiss it.
+      (call.endedStatus && STICKY_ENDED_STATUSES.has(call.endedStatus))
+    ) {
       return
     }
     const { whatsappCallId } = call
@@ -467,24 +510,31 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   }, [call, maybeStartRecorder])
 
   /**
-   * The answer flow, taking the call as a parameter: `answer` may promote a
-   * basket entry and must act on it in the same tick, before React re-renders
-   * the `call` closure.
+   * Ends a failed answer on screen instead of clearing it: releases any media
+   * already acquired, then leaves the panel showing why, so the ring never
+   * just vanishes.
    */
-  const answerIncoming = useCallback(
-    async (incomingCall: WhatsappVoipCall) => {
-      if (
-        !workspaceId ||
-        incomingCall.phase !== WhatsappVoipCallPhase.incomingRinging ||
-        // Unreachable for an `incomingRinging` call — every inbound call has an
-        // offer.
-        !incomingCall.offer
-      ) {
+  const failAnswer = useCallback(
+    (
+      whatsappCallId: string,
+      status: WhatsappVoipEndedStatus,
+      message?: string,
+    ) => {
+      teardown()
+      handleEnded(whatsappCallId, status, message)
+    },
+    [teardown, handleEnded],
+  )
+
+  /**
+   * Everything after this tab wins the answer lock: TURN, mic, SDP, then the
+   * server accept. Every failure ends on screen with its reason.
+   */
+  const attemptAnswer = useCallback(
+    async (whatsappCallId: string, offerSdp: string) => {
+      if (!workspaceId) {
         return
       }
-      const { whatsappCallId, offer } = incomingCall
-      setPhase(whatsappCallId, WhatsappVoipCallPhase.answering)
-
       try {
         const turnResult = await getWhatsappVoipTurnCredentialsAction(
           workspaceId,
@@ -492,7 +542,12 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         )
         const credentials = turnResult?.data
         if (!credentials) {
-          throw new Error("voip-turn-credentials-unavailable")
+          failAnswer(
+            whatsappCallId,
+            "answerFailed",
+            specificServerReason(turnResult?.serverError),
+          )
+          return
         }
         if (!credentials.turnConfigured) {
           logger.warn(
@@ -507,10 +562,23 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         )
 
         // Acquire the mic first, so a denial or missing device surfaces before
-        // the agent waits out the whole accept round-trip.
-        const localStream = await navigator.mediaDevices.getUserMedia(
-          VOIP_AUDIO_CONSTRAINTS,
-        )
+        // the agent waits out the whole accept round-trip. The same capture the
+        // outbound dial uses, so both directions name the same failures.
+        const microphone = await captureMicrophoneStream()
+        if ("failure" in microphone) {
+          if (microphone.error) {
+            logger.error(
+              { err: microphone.error, whatsappCallId },
+              "WhatsApp VoIP answer could not capture the microphone",
+            )
+          }
+          failAnswer(
+            whatsappCallId,
+            ENDED_STATUS_BY_MICROPHONE_FAILURE[microphone.failure],
+          )
+          return
+        }
+        const localStream = microphone.stream
         localStreamRef.current = localStream
 
         // The provider may have unmounted during the TURN fetch or mic prompt,
@@ -528,12 +596,11 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
             { whatsappCallId },
             "WhatsApp VoIP answer aborted — the microphone yielded no audio track",
           )
-          teardown()
-          handleEnded(whatsappCallId, "connectionLost")
+          failAnswer(whatsappCallId, "answerFailed")
           return
         }
 
-        await pc.setRemoteDescription({ type: "offer", sdp: offer.sdp })
+        await pc.setRemoteDescription({ type: "offer", sdp: offerSdp })
 
         const answerDescription = await pc.createAnswer()
         await pc.setLocalDescription(answerDescription)
@@ -583,28 +650,77 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         }
 
         // Could not answer, or the call ended — no media flowed.
-        teardown()
-        reset()
+        failAnswer(
+          whatsappCallId,
+          data ? ENDED_STATUS_BY_ANSWER_OUTCOME[data.outcome] : "answerFailed",
+          data ? undefined : specificServerReason(result?.serverError),
+        )
       } catch (error) {
         logger.error(
           { err: error, whatsappCallId },
           "WhatsApp VoIP answer flow failed",
         )
-        teardown()
-        reset()
+        failAnswer(whatsappCallId, "answerFailed")
       }
     },
     [
       workspaceId,
-      setPhase,
       markActive,
-      reset,
       teardown,
       maybeStartRecorder,
       setRecordingInStore,
       createCallPeerConnection,
-      handleEnded,
+      failAnswer,
     ],
+  )
+
+  /**
+   * The answer flow, taking the call as a parameter: `answer` may promote a
+   * basket entry and must act on it in the same tick, before React re-renders
+   * the `call` closure.
+   */
+  const answerIncoming = useCallback(
+    async (incomingCall: WhatsappVoipCall) => {
+      if (
+        !workspaceId ||
+        incomingCall.phase !== WhatsappVoipCallPhase.incomingRinging ||
+        // Unreachable for an `incomingRinging` call — every inbound call has an
+        // offer.
+        !incomingCall.offer
+      ) {
+        return
+      }
+      const { whatsappCallId, offer } = incomingCall
+      // Synchronous, before the first await: the claimed-elsewhere dismissal
+      // leaves a tab alone once it is past incomingRinging.
+      setPhase(whatsappCallId, WhatsappVoipCallPhase.answering)
+
+      let lock: AnswerLockOutcome<void>
+      try {
+        lock = await runWithAnswerLock(whatsappCallId, () =>
+          attemptAnswer(whatsappCallId, offer.sdp),
+        )
+      } catch (error) {
+        // Only the lock request itself can reject - `attemptAnswer` reports
+        // its own failures.
+        logger.error(
+          { err: error, whatsappCallId },
+          "WhatsApp VoIP answer lock request failed",
+        )
+        failAnswer(whatsappCallId, "answerFailed")
+        return
+      }
+      // Another tab of this browser is answering it - that tab shows the call,
+      // so this one just stops ringing.
+      if (
+        !lock.acquired &&
+        useWhatsappVoipCallStore.getState().call?.whatsappCallId ===
+          whatsappCallId
+      ) {
+        reset()
+      }
+    },
+    [workspaceId, setPhase, attemptAnswer, failAnswer, reset],
   )
 
   /**

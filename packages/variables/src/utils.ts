@@ -3,6 +3,7 @@ import {
   buildAppointmentUrl,
   conversationService,
   messageService,
+  resolveContactAvatarUrl,
   resolveTenantSettings,
   workspaceApiTokenService,
 } from "@chatbotx.io/business"
@@ -13,8 +14,8 @@ import {
 } from "@chatbotx.io/business/contact-locale"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
+import { ensureContactAvatarMirrored } from "@chatbotx.io/channel-registry/media-hydration"
 import {
-  type ChannelType,
   type ContactSource,
   contactSources,
   type SystemFieldType,
@@ -217,6 +218,21 @@ const getWorkspaceLogo = ({
   return workspace.logo
 }
 
+const resolveVariableContactAvatarUrl = async (
+  context: ContactVariableContext,
+): Promise<string | null> => {
+  const { contact, contactInbox } = context
+  return await resolveContactAvatarUrl(
+    {
+      workspaceId: contact.workspaceId,
+      contact,
+      contactInbox,
+    },
+    (key) => toPublicStorageUrl(key, contact.workspaceId),
+    ensureContactAvatarMirrored,
+  )
+}
+
 const getContactLocationValue = (
   contact: ContactVariableContext["contact"],
   key: "latitude" | "longitude",
@@ -240,7 +256,6 @@ const getFlowStepValue = async (
   const conversation = await conversationService.findDMByContact({
     workspaceId: context.contact.workspaceId,
     contactId: context.contact.id,
-    channel: context.contactInbox?.channel as ChannelType | undefined,
   })
   return conversation?.[key] ?? null
 }
@@ -277,17 +292,16 @@ const getCommentMessagePostId = (
 }
 
 /**
- * Tag counters written onto the comment message by the comment-automation
- * worker, and only when that automation has `trackUserTags` on. Absent means
- * "not tracked" rather than zero, so it stays null — a flow branching on
- * `{{total_tagged}}` must be able to tell "nobody was tagged" from "we never
- * looked".
+ * Lifetime tag counters, accumulated on the contact by comment automations
+ * with `trackUserTags` on (see `contactService.incrementTagCounters`). The
+ * `typeof` guard is for a contact serialized into a job payload before the
+ * columns existed — an unknown total renders empty, not "undefined".
  */
-const getCommentMessageTagCount = (
-  message: MessageModel | null,
+const getContactTagCount = (
+  contact: ContactVariableContext["contact"],
   key: "totalTagged" | "totalNewTagged",
 ): string | null => {
-  const count = message?.contentAttributes?.[key]
+  const count: unknown = contact[key]
   return typeof count === "number" ? String(count) : null
 }
 
@@ -337,7 +351,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.full_name:
       return [contact.firstName, contact.lastName].filter(Boolean).join(" ")
     case systemFieldTypes.enum.profile_pic:
-      return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
+      return await resolveVariableContactAvatarUrl(context)
     case systemFieldTypes.enum.gender:
       // Salutation follows the workspace language, not the contact's own
       // locale: a Vietnamese workspace greets every contact as Anh/Chị, and
@@ -428,7 +442,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.user_notes:
       return await listContactNotesString(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.avatar:
-      return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
+      return await resolveVariableContactAvatarUrl(context)
     case systemFieldTypes.enum.current_time:
       return formatWithFallback(new Date(), timezone, DATE_TIME_FORMAT)
     case systemFieldTypes.enum.workspace_name:
@@ -536,14 +550,10 @@ export const getSystemFieldValue = async (
     }
     case systemFieldTypes.enum.last_comment_id:
       return (await getLastUserComment(context))?.sourceId ?? null
-    case systemFieldTypes.enum.total_new_tagged: {
-      const message = await getLastUserComment(context)
-      return getCommentMessageTagCount(message, "totalNewTagged")
-    }
-    case systemFieldTypes.enum.total_tagged: {
-      const message = await getLastUserComment(context)
-      return getCommentMessageTagCount(message, "totalTagged")
-    }
+    case systemFieldTypes.enum.total_new_tagged:
+      return getContactTagCount(contact, "totalNewTagged")
+    case systemFieldTypes.enum.total_tagged:
+      return getContactTagCount(contact, "totalTagged")
     case systemFieldTypes.enum.last_latitude:
       return getContactLocationValue(contact, "latitude")
     case systemFieldTypes.enum.last_longitude:

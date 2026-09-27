@@ -40,6 +40,7 @@ import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
 import { createMessageRequest } from "../schema/mutation"
+import type { MessageResource } from "../schema/resource"
 import { FileUploadPreview } from "./file-upload"
 import { InputMenu } from "./input-menu"
 import { MediaFilePreview } from "./media-file-preview"
@@ -81,6 +82,7 @@ export const MessageInput = () => {
 
   const {
     appendMessage,
+    updateConversationViaMessage,
     activeConversationId,
     conversations,
     updateConversation,
@@ -156,7 +158,7 @@ export const MessageInput = () => {
               )
             ) {
               const typedInput = input as { text: string; clientId: string }
-              appendMessage({
+              const optimisticMessage: MessageResource = {
                 text: typedInput.text,
                 id: createId(),
                 createdAt: new Date(),
@@ -176,7 +178,9 @@ export const MessageInput = () => {
                 parentId: null,
                 attributes: null,
                 sendError: null,
-              })
+              }
+              appendMessage(optimisticMessage)
+              updateConversationViaMessage(optimisticMessage)
             }
 
             form.reset()

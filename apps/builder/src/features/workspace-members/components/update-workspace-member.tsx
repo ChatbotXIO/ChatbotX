@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { isCommunity } from "@/env"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import { updateWorkspaceMemberAction } from "../actions/update-workspace-member.action"
 import { getSuperAdminPermissions } from "../helpers"
 import { useWorkspaceMemberPermissionsCoupling } from "../hooks/use-permissions-coupling"
@@ -38,6 +39,7 @@ export function UpdateWorkspaceMemberDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateUsers = useInvalidateUsers()
 
   const onCancel = () => {
     onOpenChange(false)
@@ -45,6 +47,7 @@ export function UpdateWorkspaceMemberDialog({
 
   const onSuccess = () => {
     onOpenChange(false)
+    invalidateUsers()
     router.refresh()
   }
 

@@ -1,25 +1,55 @@
 import { describe, expect, test } from "vitest"
-import {
-  channelTypes,
-  dmConversationUsesSourceId,
-} from "../src/partials/channel"
+import { resolveChannelConversationId } from "../src/partials/channel"
 
-describe("dmConversationUsesSourceId", () => {
-  test("is true for TikTok, whose DM conversation is keyed by a non-null sourceId", () => {
-    expect(dmConversationUsesSourceId("tiktok")).toBe(true)
+describe("resolveChannelConversationId", () => {
+  test("reads the id from additionalAttributes", () => {
+    expect(
+      resolveChannelConversationId({
+        sourceId: null,
+        additionalAttributes: { channelConversationId: "conv-1" },
+      }),
+    ).toBe("conv-1")
   })
 
-  test("is false for every channel whose DM conversation has a null sourceId", () => {
-    for (const channel of channelTypes.options) {
-      if (channel === "tiktok") {
-        continue
-      }
-      expect(dmConversationUsesSourceId(channel)).toBe(false)
-    }
+  test("prefers additionalAttributes over a legacy sourceId", () => {
+    expect(
+      resolveChannelConversationId({
+        sourceId: "legacy-conv",
+        additionalAttributes: { channelConversationId: "conv-1" },
+      }),
+    ).toBe("conv-1")
   })
 
-  test("is false when the channel is unknown", () => {
-    expect(dmConversationUsesSourceId(null)).toBe(false)
-    expect(dmConversationUsesSourceId(undefined)).toBe(false)
+  test("falls back to sourceId for rows the backfill has not reached", () => {
+    expect(
+      resolveChannelConversationId({
+        sourceId: "legacy-conv",
+        additionalAttributes: null,
+      }),
+    ).toBe("legacy-conv")
+  })
+
+  test("ignores a non-string or empty stored value", () => {
+    expect(
+      resolveChannelConversationId({
+        sourceId: "legacy-conv",
+        additionalAttributes: { channelConversationId: 42 },
+      }),
+    ).toBe("legacy-conv")
+    expect(
+      resolveChannelConversationId({
+        sourceId: "legacy-conv",
+        additionalAttributes: { channelConversationId: "" },
+      }),
+    ).toBe("legacy-conv")
+  })
+
+  test("returns null for a DM conversation that carries neither", () => {
+    expect(
+      resolveChannelConversationId({
+        sourceId: null,
+        additionalAttributes: {},
+      }),
+    ).toBeNull()
   })
 })

@@ -312,6 +312,33 @@ class ContactInboxService extends BaseService {
   }
 
   /**
+   * Uncached batch read for response hydration. A contacts page must resolve
+   * every avatar with one query rather than calling `listByContactId` once per
+   * row; the workspace scope also prevents cross-workspace ids from leaking.
+   */
+  async listByContactIds(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    contactIds: string[]
+  }): Promise<ContactInboxModel[]> {
+    const { tx = db, workspaceId, contactIds } = props
+    if (contactIds.length === 0) {
+      return []
+    }
+
+    return await tx
+      .select()
+      .from(contactInboxModel)
+      .where(
+        and(
+          inArray(contactInboxModel.contactId, contactIds),
+          this.workspaceScope(workspaceId),
+        ),
+      )
+      .orderBy(asc(contactInboxModel.id))
+  }
+
+  /**
    * Of the given candidate ids, the subsets already linked to this inbox by
    * `sourceId` OR by the scoped `sourceUserId` (e.g. a WhatsApp BSUID) —
    * covers a row whose scoped id was already backfilled onto an existing
@@ -371,8 +398,21 @@ class ContactInboxService extends BaseService {
     inboxId: string
     sourceIds: string[]
     sourceUsernames: string[]
+    /**
+     * Also match a handle against `sourceId`. Threads keys its contacts by
+     * the lowercased username (there is no numeric user id on its comment
+     * webhook) and never fills `sourceUsername`, so without this every tag
+     * on Threads would count as a new person.
+     */
+    usernameIsSourceId?: boolean
   }): Promise<number> {
-    const { tx = db, inboxId, sourceIds, sourceUsernames } = props
+    const {
+      tx = db,
+      inboxId,
+      sourceIds,
+      sourceUsernames,
+      usernameIsSourceId = false,
+    } = props
     if (sourceIds.length === 0 && sourceUsernames.length === 0) {
       return 0
     }
@@ -383,6 +423,9 @@ class ContactInboxService extends BaseService {
         : []),
       ...(sourceUsernames.length > 0
         ? [inArray(contactInboxModel.sourceUsername, sourceUsernames)]
+        : []),
+      ...(usernameIsSourceId && sourceUsernames.length > 0
+        ? [inArray(contactInboxModel.sourceId, sourceUsernames)]
         : []),
     ]
 
@@ -403,7 +446,11 @@ class ContactInboxService extends BaseService {
 
     return (
       sourceIds.filter((sourceId) => knownSourceIds.has(sourceId)).length +
-      sourceUsernames.filter((username) => knownUsernames.has(username)).length
+      sourceUsernames.filter(
+        (username) =>
+          knownUsernames.has(username) ||
+          (usernameIsSourceId && knownSourceIds.has(username)),
+      ).length
     )
   }
 

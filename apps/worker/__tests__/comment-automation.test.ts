@@ -29,6 +29,7 @@ const {
   mockSendPrivateReply,
   mockSendInstagramPrivateReply,
   mockSendInstagramFacebookPrivateReply,
+  mockSendTiktokPrivateReply,
   mockGenerateAIReplyText,
   mockLoggerInfo,
   mockLoggerWarn,
@@ -36,8 +37,10 @@ const {
   mockContactVariableReplaceAll,
   mockMessengerRunAction,
   mockCountExistingTaggedIdentities,
-  mockUpdateContentAttributes,
+  mockIncrementTagCounters,
+  mockClaimContentAttributes,
   mockNeedsAttachmentInfo,
+  mockResolveAttachmentInfo,
 } = vi.hoisted(() => ({
   mockFindContactInboxBy: vi.fn(),
   mockFindActiveAutomations: vi.fn(),
@@ -63,6 +66,7 @@ const {
   mockSendPrivateReply: vi.fn(),
   mockSendInstagramPrivateReply: vi.fn(),
   mockSendInstagramFacebookPrivateReply: vi.fn(),
+  mockSendTiktokPrivateReply: vi.fn(),
   mockGenerateAIReplyText: vi.fn(),
   mockLoggerInfo: vi.fn(),
   mockLoggerWarn: vi.fn(),
@@ -70,8 +74,10 @@ const {
   mockContactVariableReplaceAll: vi.fn(),
   mockMessengerRunAction: vi.fn(),
   mockCountExistingTaggedIdentities: vi.fn(),
-  mockUpdateContentAttributes: vi.fn(),
+  mockIncrementTagCounters: vi.fn(),
+  mockClaimContentAttributes: vi.fn(),
   mockNeedsAttachmentInfo: vi.fn(),
+  mockResolveAttachmentInfo: vi.fn(),
 }))
 
 const mockLogProviderError = vi.fn().mockResolvedValue(undefined)
@@ -96,6 +102,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+  publishToWorkspaceParty: vi.fn(),
   logProviderError: mockLogProviderError,
   flowService: { findBy: mockFlowFindBy },
   buildContext: vi.fn().mockResolvedValue({}),
@@ -103,13 +110,14 @@ vi.mock("@chatbotx.io/business", () => ({
     findBy: mockFindContactInboxBy,
     countExistingTaggedIdentities: mockCountExistingTaggedIdentities,
   },
+  contactService: { incrementTagCounters: mockIncrementTagCounters },
   aiAgentService: { findBy: mockAiAgentFindBy },
   conversationService: {
     findBy: mockConversationFindBy,
     findDMByContact: mockConversationFindDMByContact,
     findOrCreate: mockConversationFindOrCreate,
   },
-  fbCommentAutomationService: {
+  commentAutomationService: {
     findActiveAutomations: mockFindActiveAutomations,
     isWithinSchedule: mockIsWithinSchedule,
     findDedup: mockFindDedup,
@@ -141,6 +149,10 @@ vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   sendPrivateReply: mockSendInstagramFacebookPrivateReply,
 }))
 
+vi.mock("@chatbotx.io/integration-tiktok", () => ({
+  sendPrivateReply: mockSendTiktokPrivateReply,
+}))
+
 vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
 }))
@@ -165,6 +177,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: {
     processCommentAutomation: "processCommentAutomation",
     sendFlow: "sendFlow",
+    deferredCommentPrivateReply: "deferredCommentPrivateReply",
   },
   integrationQueue: { add: mockIntegrationQueueAdd },
 }))
@@ -195,9 +208,7 @@ vi.mock(
   () => ({
     createAttachmentInfoResolver: vi
       .fn()
-      .mockReturnValue(
-        vi.fn().mockResolvedValue({ hasImage: false, hasVideo: false }),
-      ),
+      .mockReturnValue(mockResolveAttachmentInfo),
     needsAttachmentInfo: mockNeedsAttachmentInfo,
   }),
 )
@@ -231,6 +242,13 @@ const { processCommentAIReply } = await import(
 const { IntegrationNotFoundError } = await import(
   "../src/services/orphaned-integration-cleanup"
 )
+// Both halves of the private-reply capability, for the parity test: the
+// dispatch-side map here, the counter-side predicate in the partials.
+const { supportsPrivateReply } = await import(
+  "../src/integration/handlers/comment-automation/private-reply"
+)
+const { commentAutomationChannelSupportsPrivateReply, commentAutomationTypes } =
+  await import("@chatbotx.io/database/partials")
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -260,8 +278,9 @@ type AutomationOverrides = {
   id?: string
   options?: Record<string, boolean>
   post?: { type: string; value: string[] }
-  includeKeywords?: { type: string; value: string[] }
+  includeKeywords?: { type: string; value: string[]; mentionCount?: number }
   excludeKeywords?: string[]
+  excludeKeywordsType?: "equal" | "contain"
   publicReply?: { type: string; value: string | null }
   privateReply?: { type: string; value: string | null }
   hideComments?: Record<string, unknown>
@@ -274,6 +293,7 @@ function buildAutomation(overrides: AutomationOverrides = {}) {
     post: overrides.post ?? { type: "all", value: [] },
     includeKeywords: overrides.includeKeywords ?? { type: "all", value: [] },
     excludeKeywords: overrides.excludeKeywords ?? [],
+    excludeKeywordsType: overrides.excludeKeywordsType ?? "contain",
     publicReply: overrides.publicReply ?? { type: "none", value: null },
     privateReply: overrides.privateReply ?? { type: "none", value: null },
     options: {
@@ -371,10 +391,10 @@ beforeEach(() => {
   mockCreateMessageRepository.mockResolvedValue({
     findBySourceId: vi.fn().mockResolvedValue(null),
     create: mockMessageCreate,
-    updateContentAttributes: mockUpdateContentAttributes,
+    claimContentAttributes: mockClaimContentAttributes,
   })
   mockCountExistingTaggedIdentities.mockResolvedValue(0)
-  mockUpdateContentAttributes.mockResolvedValue({ id: "message-1" })
+  mockClaimContentAttributes.mockResolvedValue({ id: "message-1" })
   mockMessengerRunAction.mockResolvedValue([])
   mockInsertDedup.mockResolvedValue(undefined)
   mockDeleteDedup.mockResolvedValue(undefined)
@@ -389,6 +409,11 @@ beforeEach(() => {
   mockContactVariableGetAll.mockResolvedValue({})
   mockContactVariableReplaceAll.mockImplementation(({ text }) => text)
   mockNeedsAttachmentInfo.mockReturnValue(false)
+  mockResolveAttachmentInfo.mockResolvedValue({
+    hasImage: false,
+    hasVideo: false,
+    hasGif: false,
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -563,9 +588,10 @@ describe("processCommentAutomation threads support", () => {
       expect.objectContaining({ type: "sendChannelMessage" }),
       { delay: 0, attempts: 1 },
     )
-    // Replies counts DMs, not comment replies (see index.ts) — a public-only
-    // dispatch must not bump it.
-    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    // Threads has no DM, so the public reply IS the reply and Replies counts
+    // it (see index.ts). On a channel that has a DM this same dispatch would
+    // move nothing.
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 
   test("public flow reply still enqueues sendFlow with a public comment anchor", async () => {
@@ -596,9 +622,10 @@ describe("processCommentAutomation threads support", () => {
       }),
       { delay: 0, attempts: 1 },
     )
-    // Replies counts DMs, not comment replies (see index.ts) — a public-only
-    // dispatch must not bump it.
-    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    // Threads has no DM, so the public reply IS the reply and Replies counts
+    // it (see index.ts). On a channel that has a DM this same dispatch would
+    // move nothing.
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 
   test("public AI reply still enqueues commentAIReply on the threads channel", async () => {
@@ -630,9 +657,10 @@ describe("processCommentAutomation threads support", () => {
         jobId: `comment-ai-reply-automation-1-${COMMENT_ID}-public`,
       }),
     )
-    // Replies counts DMs, not comment replies (see index.ts) — a public-only
-    // dispatch must not bump it.
-    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    // Threads has no DM, so the public reply IS the reply and Replies counts
+    // it (see index.ts). On a channel that has a DM this same dispatch would
+    // move nothing.
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 
   test("unsupported private reply is skipped on threads but public success still dedups", async () => {
@@ -662,9 +690,9 @@ describe("processCommentAutomation threads support", () => {
       postId: POST_ID,
       workspaceId: "workspace-1",
     })
-    // Replies counts DMs, not comment replies (see index.ts) — a public-only
-    // dispatch (private unsupported on this channel) must not bump it.
-    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    // The public branch dispatched, and on a channel with no DM that is what
+    // Replies counts — the unsupported private branch changes nothing.
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 
   test("private-only unsupported threads config does not dedup or increment", async () => {
@@ -683,17 +711,43 @@ describe("processCommentAutomation threads support", () => {
     expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
   })
 
-  test("unsupported like, hide, and attachment lookup are logged and never enqueued on threads", async () => {
-    mockNeedsAttachmentInfo.mockReturnValue(true)
+  test("unsupported like is logged and never enqueued on threads", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { likeUserComment: true } }),
+    ])
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "threads" }) as any,
+    )
+
+    expect(mockChatQueueAdd).not.toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        data: expect.objectContaining({ liked: true }),
+      }),
+    )
+    expect(mockLoggerInfo).toHaveBeenCalledWith(
+      {
+        automationId: "automation-1",
+        commentId: COMMENT_ID,
+        capability: "like comment unsupported",
+      },
+      "Comment automation capability unsupported",
+    )
+  })
+
+  // Threads hides a top-level reply through `POST /{reply-id}/manage_reply`.
+  test("hides a matching comment on threads", async () => {
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({
-        options: { likeUserComment: true },
-        hideComments: {
-          hasImage: true,
-          hasKeywords: true,
-          keywords: ["spam"],
-          showCommentsAfter: "1d",
-        },
+        hideComments: { hasKeywords: true, keywords: ["spam"] },
       }),
     ])
     mockCreateMessageRepository.mockResolvedValue({
@@ -705,40 +759,427 @@ describe("processCommentAutomation threads support", () => {
     })
 
     await processCommentAutomation(
-      buildJobData({
-        integrationType: "threads",
-        message: "spam image",
-      }) as any,
+      buildJobData({ integrationType: "threads", message: "spam" }) as any,
     )
 
-    expect(mockChatQueueAdd).not.toHaveBeenCalledWith(
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        data: expect.objectContaining({ hidden: true }),
+      }),
+    )
+    expect(mockLoggerInfo).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        capability: "hide or unhide comment unsupported",
+      }),
+      "Comment automation capability unsupported",
+    )
+  })
+})
+
+describe("processCommentAutomation tiktok support", () => {
+  test("queries active automations with channelType tiktok", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "hi" } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok", parentId: POST_ID }) as any,
+    )
+
+    expect(mockFindActiveAutomations).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      channelType: "tiktok",
+    })
+  })
+
+  test("public text reply posts a public comment reply", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "Hi TikTok" } }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "comment",
+        text: "Hi TikTok",
+        contentAttributes: {
+          replyToCommentId: COMMENT_ID,
+          commentAutomation: {
+            automationId: "automation-1",
+            replyChannel: "public",
+          },
+        },
+      }),
+    )
+  })
+
+  // TikTok's reply endpoint creates a fresh reply on every call, so a BullMQ
+  // retry would double-post under the same comment.
+  test("dispatches the public reply with a single attempt", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "Hi TikTok" } }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChannelMessage",
+      expect.anything(),
+      expect.objectContaining({ attempts: 1 }),
+    )
+  })
+
+  // Unlike Threads, TikTok HAS both endpoints — the capability-unsupported
+  // branches must not fire.
+  test("likes and hides run instead of logging unsupported", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        options: { likeUserComment: true },
+        hideComments: {
+          hasKeywords: true,
+          keywords: ["spam"],
+          showCommentsAfter: "1d",
+        },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok", message: "spam" }) as any,
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
       "changeChannelMessageState",
       expect.anything(),
+      expect.anything(),
     )
-    expect(mockLoggerInfo).toHaveBeenCalledWith(
-      {
-        automationId: "automation-1",
-        commentId: COMMENT_ID,
-        capability: "like comment unsupported",
-      },
+    expect(mockLoggerInfo).not.toHaveBeenCalledWith(
+      expect.objectContaining({ capability: "like comment unsupported" }),
       "Comment automation capability unsupported",
     )
-    expect(mockLoggerInfo).toHaveBeenCalledWith(
-      {
-        automationId: "automation-1",
-        commentId: COMMENT_ID,
-        capability: "attachment lookup unsupported",
-      },
-      "Comment automation capability unsupported",
-    )
-    expect(mockLoggerInfo).toHaveBeenCalledWith(
-      {
-        automationId: "automation-1",
-        commentId: COMMENT_ID,
+    expect(mockLoggerInfo).not.toHaveBeenCalledWith(
+      expect.objectContaining({
         capability: "hide or unhide comment unsupported",
-      },
+      }),
       "Comment automation capability unsupported",
     )
+  })
+
+  // Comment-to-Message gave TikTok a comment-anchored DM, but only for comments
+  // TikTok itself flags as high intent — reported on a separate webhook that may
+  // arrive after this pass, or never. So the branch is handed to the deferred
+  // job rather than sent or declared unsupported.
+  test("defers the private reply when the comment is not flagged high intent", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockSendTiktokPrivateReply).not.toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "deferredCommentPrivateReply",
+      expect.objectContaining({
+        type: "deferredCommentPrivateReply",
+        data: expect.objectContaining({
+          automationId: "automation-1",
+          channelType: "tiktok",
+          commentId: COMMENT_ID,
+          attempt: 0,
+        }),
+      }),
+      expect.objectContaining({ attempts: 1 }),
+    )
+    // Nothing was attempted, so no analytics row yet — an event row means the
+    // automation tried, and the deferred job opens it if and when it sends.
+    expect(mockRecordEvent).not.toHaveBeenCalled()
+  })
+
+  // The comment's single DM budget is spoken for the moment it is deferred, so
+  // the contact's next comment must not queue a second one.
+  test("a deferred private reply still writes the dedup row", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockInsertDedup).toHaveBeenCalled()
+  })
+
+  test("sends inline when the comment is already flagged high intent", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+        contentAttributes: {
+          postId: POST_ID,
+          tiktokHighIntent: { at: "2026-07-10T00:00:00Z" },
+        },
+      }),
+      create: mockMessageCreate,
+      claimContentAttributes: mockClaimContentAttributes,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockSendTiktokPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "psst",
+    )
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "deferredCommentPrivateReply",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  // A flow needs a conversation for step 2 onwards, and Comment-to-Message
+  // grants exactly one comment-anchored message. Dropping it beats sending
+  // step 1 and then failing every step after it.
+  test("a flow private reply is skipped rather than half-sent", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "flow", value: "flow-1" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+        contentAttributes: {
+          postId: POST_ID,
+          tiktokHighIntent: { at: "2026-07-10T00:00:00Z" },
+        },
+      }),
+      create: mockMessageCreate,
+      claimContentAttributes: mockClaimContentAttributes,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "sendFlow",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  // TikTok now has a comment-anchored DM, so Replies measures the DM like it
+  // does on Meta. A public-only automation therefore reads zero — the same
+  // answer a Messenger automation with no private branch has always given.
+  test("a public reply alone does not count toward Replies", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "Hi TikTok" } }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  // A deferral has sent nothing yet, so it must not move the counter either —
+  // the deferred job increments it if and when the DM actually goes out.
+  test("a deferred private reply does not count toward Replies", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  test("an automation that dispatches nothing still counts nothing", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        options: { likeUserComment: true },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  // `executePrivateReply` rejects a flow DM on this channel outright, so the
+  // defer branch must reject it too. Deferring one claims the comment's single
+  // DM budget — blocking another automation's deliverable `text` DM — and then
+  // records nothing when the executor declines it minutes later. Only a legacy
+  // row reaches this: new writes normalize `flow` away.
+  //
+  // Treated as an unsupported capability, like a private reply on Threads: the
+  // channel cannot carry this reply, so nothing was attempted and nothing earns
+  // a `failed` row. Record one and a legacy flow automation reads 100% Failed
+  // for a branch that never left the building.
+  test("a flow private reply is skipped as unsupported, not deferred", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "flow", value: "flow-1" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "deferredCommentPrivateReply",
+      expect.anything(),
+      expect.anything(),
+    )
+    expect(mockRecordEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ replyChannel: "private" }),
+    )
+  })
+
+  // The budget is claimed by a deferral, so a flow that never defers must leave
+  // it for an automation that can actually use it.
+  test("a flow private reply leaves the comment's DM budget unclaimed", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-flow",
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "flow", value: "flow-1" },
+      }),
+      buildAutomation({
+        id: "automation-text",
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "deferredCommentPrivateReply",
+      expect.objectContaining({
+        data: expect.objectContaining({ automationId: "automation-text" }),
+      }),
+      expect.anything(),
+    )
+  })
+})
+
+// The analytics counters ask the same question from `packages/analytics`,
+// which cannot import the senders map above without pulling every Meta
+// integration into the analytics package. Let the two drift and a channel's
+// replies are dispatched one way and counted the other.
+describe("private-reply capability parity", () => {
+  test("the shared predicate agrees with the senders map on every channel", () => {
+    for (const channelType of commentAutomationTypes.options) {
+      expect(commentAutomationChannelSupportsPrivateReply(channelType)).toBe(
+        supportsPrivateReply(channelType),
+      )
+    }
   })
 })
 
@@ -1059,6 +1500,70 @@ describe("processCommentAutomation text reply variable resolution", () => {
       expect.objectContaining({ text: "Hi {{contact.firstName}}" }),
     )
   })
+
+  // `applySpintax` draws with Math.random; 0 always selects the first branch.
+  const pickFirstBranch = () => vi.spyOn(Math, "random").mockReturnValue(0)
+
+  test("private reply spintax is resolved before the variable pass", async () => {
+    pickFirstBranch()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: {
+          type: "text",
+          value: "{Hi|Hello} {{contact.firstName}}",
+        },
+      }),
+    ])
+    mockContactVariableReplaceAll.mockResolvedValue("Hi Jane")
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
+      text: "Hi {{contact.firstName}}",
+      variables: {},
+    })
+  })
+
+  test("public reply spintax is resolved before the variable pass", async () => {
+    pickFirstBranch()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: {
+          type: "text",
+          value: "{Hi|Hello} {{contact.firstName}}",
+        },
+      }),
+    ])
+    mockContactVariableReplaceAll.mockResolvedValue("Hi Jane")
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
+      text: "Hi {{contact.firstName}}",
+      variables: {},
+    })
+  })
+
+  // Spintax sits outside the try/catch, so a reply still varies on the path
+  // where contact data could not be loaded and the raw text is what ships.
+  test("public reply still spins when variable resolution fails", async () => {
+    pickFirstBranch()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: {
+          type: "text",
+          value: "{Hi|Hello} {{contact.firstName}}",
+        },
+      }),
+    ])
+    mockContactVariableGetAll.mockRejectedValue(new Error("db down"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Hi {{contact.firstName}}" }),
+    )
+  })
 })
 
 describe("processCommentAutomation flow private reply", () => {
@@ -1165,7 +1670,6 @@ describe("processCommentAutomation flow private reply DM conversation", () => {
     expect(mockConversationFindDMByContact).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactId: "contact-1",
-      channel: "messenger",
     })
     expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
       "sendFlow",
@@ -1437,7 +1941,7 @@ describe("processCommentAutomation private reply 7-day window", () => {
     // The gate now lives in the caller, so the skip is logged there.
     expect(mockLoggerInfo).toHaveBeenCalledWith(
       expect.objectContaining({
-        reason: "comment older than the 7-day private reply window",
+        reason: "comment older than Meta's 7-day private reply window",
       }),
       "Comment automation skipped",
     )
@@ -1830,7 +2334,7 @@ describe("processCommentAIReply", () => {
     })
   })
 
-  // A skip is not a failure: `FBCommentAutomationEvent` only counts work the
+  // A skip is not a failure: `CommentAutomationEvent` only counts work the
   // automation actually attempted, so a deliberate decline must leave no row
   // rather than one Error Logs entry per off-hours comment.
   describe("skip vs failure on the analytics event", () => {
@@ -2050,6 +2554,33 @@ describe("applyHideComments case-insensitivity", () => {
       }),
     )
   })
+
+  test("hides a comment matching a keyword regardless of accents", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        hideComments: { hasKeywords: true, keywords: ["promoción"] },
+      }),
+    ])
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ message: "PROMOCION aqui" }) as any,
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        type: "changeChannelMessageState",
+        data: expect.objectContaining({ hidden: true }),
+      }),
+    )
+  })
 })
 
 describe("applyHideComments link detection", () => {
@@ -2086,6 +2617,132 @@ describe("applyHideComments link detection", () => {
       "changeChannelMessageState",
       expect.anything(),
     )
+  })
+})
+
+describe("applyHideComments GIF and emoji", () => {
+  async function run(
+    hideComments: Record<string, unknown>,
+    message: string,
+    integrationType = "messenger",
+  ) {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ hideComments }),
+    ])
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+    })
+    await processCommentAutomation(
+      buildJobData({ integrationType, message }) as any,
+    )
+  }
+
+  const hidden = () =>
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        data: expect.objectContaining({ hidden: true }),
+      }),
+    )
+
+  test("hides a comment containing an emoji", async () => {
+    await run({ hasEmoji: true }, "love it 😍")
+    hidden()
+  })
+
+  test("hides an emoji comment on TikTok", async () => {
+    await run({ hasEmoji: true }, "🔥🔥", "tiktok")
+    hidden()
+  })
+
+  // Digits and `#` are in Unicode's `Emoji` set (keycap bases) — a phone
+  // number must not read as an emoji comment.
+  test("does not treat digits or # as emoji", async () => {
+    await run({ hasEmoji: true }, "call 0901 234 567 #1")
+    expect(mockChatQueueAdd).not.toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.anything(),
+    )
+  })
+
+  // `Extended_Pictographic` also covers text-default symbols that appear in
+  // ordinary product comments; they are emoji only with the U+FE0F selector.
+  test.each([
+    "Nike™ shoes still in stock?",
+    "© 2026 shop",
+    "‼ sale ↔ ℹ info",
+  ])("does not treat a text symbol as emoji: %s", async (message) => {
+    await run({ hasEmoji: true }, message)
+    expect(mockChatQueueAdd).not.toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.anything(),
+    )
+  })
+
+  test.each([
+    "love ❤️",
+    "👍🏽",
+  ])("hides an emoji-presentation comment: %s", async (message) => {
+    await run({ hasEmoji: true }, message)
+    hidden()
+  })
+
+  test("hides a comment the attachment lookup reports as a GIF", async () => {
+    mockNeedsAttachmentInfo.mockReturnValue(true)
+    mockResolveAttachmentInfo.mockResolvedValue({
+      hasImage: false,
+      hasVideo: false,
+      hasGif: true,
+    })
+    await run({ hasGif: true }, "")
+    hidden()
+  })
+
+  test("leaves a GIF-less comment visible", async () => {
+    mockNeedsAttachmentInfo.mockReturnValue(true)
+    await run({ hasGif: true }, "nice")
+    expect(mockChatQueueAdd).not.toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.anything(),
+    )
+  })
+
+  // Threads' `manage_reply` rejects a nested reply, and the state change marks
+  // the row hidden before calling the channel — so it must never be enqueued.
+  async function runThreads(parentId: string | undefined) {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        options: { ignoreCommentReplies: false },
+        hideComments: { all: true },
+      }),
+    ])
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+    })
+    await processCommentAutomation(
+      buildJobData({ integrationType: "threads", parentId }) as any,
+    )
+  }
+
+  test("does not hide a nested Threads reply", async () => {
+    await runThreads(OTHER_COMMENT_ID)
+    expect(mockChatQueueAdd).not.toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.anything(),
+    )
+  })
+
+  test("still hides a top-level Threads reply", async () => {
+    await runThreads(POST_ID)
+    hidden()
   })
 })
 
@@ -2513,7 +3170,7 @@ describe("processCommentAutomation trackUserTags", () => {
         contentAttributes: { postId: POST_ID },
       }),
       create: mockMessageCreate,
-      updateContentAttributes: mockUpdateContentAttributes,
+      claimContentAttributes: mockClaimContentAttributes,
     })
   }
 
@@ -2528,7 +3185,7 @@ describe("processCommentAutomation trackUserTags", () => {
     )
 
     expect(mockCountExistingTaggedIdentities).not.toHaveBeenCalled()
-    expect(mockUpdateContentAttributes).not.toHaveBeenCalled()
+    expect(mockClaimContentAttributes).not.toHaveBeenCalled()
   })
 
   test("writes both counters onto the comment message when the option is on", async () => {
@@ -2542,17 +3199,20 @@ describe("processCommentAutomation trackUserTags", () => {
       buildJobData({ tags: [{ id: "user-a" }, { id: "user-b" }] }) as any,
     )
 
-    expect(mockUpdateContentAttributes).toHaveBeenCalledWith(
-      "message-1",
-      "workspace-1",
-      { postId: POST_ID, totalTagged: 2, totalNewTagged: 1 },
-      expect.any(Date),
-    )
+    expect(mockClaimContentAttributes).toHaveBeenCalledWith({
+      messageId: "message-1",
+      workspaceId: "workspace-1",
+      createdAt: expect.any(Date),
+      guardKey: "totalTagged",
+      overlay: { totalTagged: 2, totalNewTagged: 1 },
+    })
   })
 
-  // Dropping `postId` here would silently break `{{last_post_id}}` and
-  // `{{last_commented_post_text}}`, which read the same jsonb column.
-  test("keeps the existing content attributes intact", async () => {
+  // A merge overlay, never the whole object rebuilt from the snapshot read
+  // earlier: keys another job merges in meanwhile (`tiktokHighIntent`, which
+  // gates the Comment-to-Message DM) and `postId` (behind `{{last_post_id}}`)
+  // must survive the write.
+  test("writes only its own keys, so concurrent keys on the row survive", async () => {
     withCommentMessageRow()
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({ options: { trackUserTags: true } }),
@@ -2562,8 +3222,64 @@ describe("processCommentAutomation trackUserTags", () => {
       buildJobData({ tags: [{ id: "user-a" }] }) as any,
     )
 
-    const [, , attributes] = mockUpdateContentAttributes.mock.calls[0]
-    expect(attributes).toMatchObject({ postId: POST_ID })
+    const [{ overlay }] = mockClaimContentAttributes.mock.calls[0]
+    expect(Object.keys(overlay).sort()).toEqual([
+      "totalNewTagged",
+      "totalTagged",
+    ])
+  })
+
+  // `null` covers both a lost race and a failed shard update: either way the
+  // comment is not stamped, so incrementing would double-count on a retry.
+  test("does not increment the contact when the claim is not won", async () => {
+    withCommentMessageRow()
+    mockClaimContentAttributes.mockResolvedValueOnce(null)
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { trackUserTags: true } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }] }) as any,
+    )
+
+    expect(mockClaimContentAttributes).toHaveBeenCalledTimes(1)
+    expect(mockIncrementTagCounters).not.toHaveBeenCalled()
+  })
+
+  test("does not look up tags for a comment no automation's keywords match", async () => {
+    withCommentMessageRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        options: { trackUserTags: true },
+        includeKeywords: { type: "contain", value: ["price"] },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ message: "hello", tags: [{ id: "user-a" }] }) as any,
+    )
+
+    expect(mockCountExistingTaggedIdentities).not.toHaveBeenCalled()
+    expect(mockClaimContentAttributes).not.toHaveBeenCalled()
+  })
+
+  test("does not look up tags for a reply when the automation ignores replies", async () => {
+    withCommentMessageRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        options: { trackUserTags: true, ignoreCommentReplies: true },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        parentId: OTHER_COMMENT_ID,
+        tags: [{ id: "user-a" }],
+      }) as any,
+    )
+
+    expect(mockCountExistingTaggedIdentities).not.toHaveBeenCalled()
+    expect(mockClaimContentAttributes).not.toHaveBeenCalled()
   })
 
   test("records zeroes when nobody was tagged, so the variables read 0 not blank", async () => {
@@ -2574,11 +3290,10 @@ describe("processCommentAutomation trackUserTags", () => {
 
     await processCommentAutomation(buildJobData({ tags: [] }) as any)
 
-    expect(mockUpdateContentAttributes).toHaveBeenCalledWith(
-      "message-1",
-      "workspace-1",
-      { postId: POST_ID, totalTagged: 0, totalNewTagged: 0 },
-      expect.any(Date),
+    expect(mockClaimContentAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({
+        overlay: { totalTagged: 0, totalNewTagged: 0 },
+      }),
     )
   })
 
@@ -2603,6 +3318,196 @@ describe("processCommentAutomation trackUserTags", () => {
       expect.anything(),
       expect.anything(),
     )
+  })
+
+  test("adds the comment's counts to the contact's lifetime totals", async () => {
+    withCommentMessageRow()
+    mockCountExistingTaggedIdentities.mockResolvedValue(1)
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { trackUserTags: true } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }, { id: "user-b" }] }) as any,
+    )
+
+    expect(mockIncrementTagCounters).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      totalTagged: 2,
+      totalNewTagged: 1,
+    })
+  })
+
+  // The totals are per contact, not per automation — two automations with
+  // the option on must not add the same comment twice.
+  test("counts a comment once however many automations track it", async () => {
+    withCommentMessageRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ id: "automation-1", options: { trackUserTags: true } }),
+      buildAutomation({ id: "automation-2", options: { trackUserTags: true } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }] }) as any,
+    )
+
+    expect(mockIncrementTagCounters).toHaveBeenCalledTimes(1)
+    expect(mockClaimContentAttributes).toHaveBeenCalledTimes(1)
+  })
+
+  // A BullMQ retry of the same comment finds the stamp and adds nothing.
+  test("skips a comment already stamped by an earlier attempt", async () => {
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+        contentAttributes: {
+          postId: POST_ID,
+          totalTagged: 1,
+          totalNewTagged: 0,
+        },
+      }),
+      create: mockMessageCreate,
+      claimContentAttributes: mockClaimContentAttributes,
+    })
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { trackUserTags: true } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }] }) as any,
+    )
+
+    expect(mockIncrementTagCounters).not.toHaveBeenCalled()
+    expect(mockClaimContentAttributes).not.toHaveBeenCalled()
+  })
+
+  // Tracking is about the comment, not the reply: "reply once per user per
+  // post" must not stop a repeat commenter's tags from being counted.
+  test("still counts a comment the reply filters declined", async () => {
+    withCommentMessageRow()
+    mockFindDedup.mockResolvedValue({ id: "dedup-1" })
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        options: { trackUserTags: true, replyOncePerUserPerPost: true },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }] }) as any,
+    )
+
+    expect(mockIncrementTagCounters).toHaveBeenCalledTimes(1)
+  })
+
+  test("counts @handles in the text on TikTok", async () => {
+    withCommentMessageRow()
+    mockCountExistingTaggedIdentities.mockResolvedValue(0)
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { trackUserTags: true } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        integrationType: "tiktok",
+        message: "@alice @bob look",
+      }) as any,
+    )
+
+    expect(mockIncrementTagCounters).toHaveBeenCalledWith(
+      expect.objectContaining({ totalTagged: 2, totalNewTagged: 2 }),
+    )
+  })
+})
+
+describe("processCommentAutomation mention count filter", () => {
+  test("replies when the comment tags the configured number", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        includeKeywords: { type: "mentions", value: [], mentionCount: 2 },
+        publicReply: { type: "text", value: "thanks" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }, { id: "user-b" }] }) as any,
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChannelMessage",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  // "Enough" is a minimum, not an exact count.
+  test("replies when the comment tags more than the configured number", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        includeKeywords: { type: "mentions", value: [], mentionCount: 1 },
+        publicReply: { type: "text", value: "thanks" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        integrationType: "instagram",
+        message: "@alice @bob",
+      }) as any,
+    )
+
+    expect(mockMessageCreate).toHaveBeenCalled()
+  })
+
+  test("declines a comment tagging fewer than the configured number", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        includeKeywords: { type: "mentions", value: [], mentionCount: 2 },
+        publicReply: { type: "text", value: "thanks" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        integrationType: "instagram",
+        message: "@alice only",
+      }) as any,
+    )
+
+    expect(mockMessageCreate).not.toHaveBeenCalled()
+  })
+})
+
+describe("processCommentAutomation exclude keyword match type", () => {
+  test("equal excludes only a comment that is exactly the keyword", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        excludeKeywords: ["ok"],
+        excludeKeywordsType: "equal",
+        publicReply: { type: "text", value: "thanks" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ message: "ok, how much?" }) as any,
+    )
+
+    expect(mockMessageCreate).toHaveBeenCalled()
+  })
+
+  test("equal still excludes the exact keyword", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        excludeKeywords: ["OK"],
+        excludeKeywordsType: "equal",
+        publicReply: { type: "text", value: "thanks" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData({ message: " ok " }) as any)
+
+    expect(mockMessageCreate).not.toHaveBeenCalled()
   })
 })
 
@@ -2754,6 +3659,13 @@ describe("processCommentAutomation misses", () => {
       reason: "keywordsNotMatched",
       automation: { includeKeywords: { type: "contain", value: ["buy"] } },
       job: { message: "just browsing" },
+    },
+    {
+      reason: "mentionCountNotMatched",
+      automation: {
+        includeKeywords: { type: "mentions", value: [], mentionCount: 2 },
+      },
+      job: { tags: [{ id: "user-a" }] },
     },
     {
       reason: "contactNotNew",

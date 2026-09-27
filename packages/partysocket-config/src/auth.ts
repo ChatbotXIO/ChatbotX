@@ -2,7 +2,7 @@ import { type JWTPayload, jwtVerify, SignJWT } from "jose"
 import { z } from "zod"
 
 const ALGORITHM = "HS256"
-const TOKEN_TTL_SECONDS = 60
+export const REALTIME_TOKEN_TTL_SECONDS = 60
 const BEARER_SCHEME = "Bearer"
 
 /**
@@ -11,15 +11,6 @@ const BEARER_SCHEME = "Bearer"
  * 60s token TTL so it doesn't widen the replay window.
  */
 const CLOCK_TOLERANCE_SECONDS = 5
-
-/**
- * Wall-clock cutoff that closes the rolling-deploy compatibility window below.
- * `exp` already bounds a purpose-less token to 60s, but a stuck old-format pod
- * could keep minting fresh ones indefinitely — so the exception expires on wall
- * time regardless of the cleanup ticket. One week past the change that
- * introduced it; see `docs/realtime.md`.
- */
-export const LEGACY_PURPOSE_WINDOW_CUTOFF = new Date("2026-09-25T00:00:00.000Z")
 
 /**
  * Every purpose a realtime token can be minted for. Bound into the payload and
@@ -48,8 +39,18 @@ export interface RealtimeAudience {
 const formatAudience = ({ kind, id }: RealtimeAudience): string =>
   `${kind}:${id}`
 
-const encodeSecret = (secret: string): Uint8Array =>
-  new TextEncoder().encode(secret)
+const encodedSecrets = new Map<string, Uint8Array>()
+
+const encodeSecret = (secret: string): Uint8Array => {
+  const encodedSecret = encodedSecrets.get(secret)
+  if (encodedSecret) {
+    return encodedSecret
+  }
+
+  const encoded = new TextEncoder().encode(secret)
+  encodedSecrets.set(secret, encoded)
+  return encoded
+}
 
 /**
  * Extra claims carried in the JWT payload alongside the `aud` room binding. A
@@ -68,22 +69,8 @@ export const signRealtimeToken = async (
     .setProtectedHeader({ alg: ALGORITHM })
     .setIssuedAt()
     .setAudience(formatAudience(audience))
-    .setExpirationTime(`${TOKEN_TTL_SECONDS}s`)
+    .setExpirationTime(`${REALTIME_TOKEN_TTL_SECONDS}s`)
     .sign(encodeSecret(secret))
-
-/** Extra, per-call verification options for `verifyRealtimeToken`. */
-export interface VerifyRealtimeTokenOptions {
-  /**
-   * Accepts a token with no `purpose` claim, for the rolling-deploy window
-   * where an old pod may still mint purpose-less `broadcast` tokens. Only
-   * `verifyBroadcastRequest` opts in — `member-connect`/`presence-report`
-   * share the same audience and never had purpose-less tokens, so opting
-   * them in would allow cross-purpose replay. Self-closes at
-   * `LEGACY_PURPOSE_WINDOW_CUTOFF`.
-   * TODO(2026-09-18): delete once no pre-`purpose` process can be running.
-   */
-  allowLegacyMissingPurpose?: boolean
-}
 
 /**
  * Verifies signature, expiry, `aud` (the room binding every caller relies on)
@@ -95,27 +82,14 @@ export const verifyRealtimeToken = async (
   audience: RealtimeAudience,
   purpose: RealtimeTokenPurpose,
   secret: string,
-  options: VerifyRealtimeTokenOptions = {},
 ): Promise<JWTPayload> => {
   const { payload } = await jwtVerify(token, encodeSecret(secret), {
     algorithms: [ALGORITHM],
     audience: formatAudience(audience),
     clockTolerance: CLOCK_TOLERANCE_SECONDS,
   })
-  const isWithinLegacyWindow =
-    options.allowLegacyMissingPurpose === true &&
-    Date.now() < LEGACY_PURPOSE_WINDOW_CUTOFF.getTime()
-  const isLegacyMissingPurpose =
-    isWithinLegacyWindow && payload.purpose === undefined
-  if (!isLegacyMissingPurpose && payload.purpose !== purpose) {
-    // A purpose-less token rejected because the window has closed is told apart
-    // from an outright bad one, so an operator reading the log knows a stuck
-    // pre-`purpose` pod — not an attacker — is the cause.
-    throw new Error(
-      payload.purpose === undefined && options.allowLegacyMissingPurpose
-        ? "Realtime token has no purpose claim and the legacy compatibility window has closed"
-        : "Unexpected realtime token purpose",
-    )
+  if (payload.purpose !== purpose) {
+    throw new Error("Unexpected realtime token purpose")
   }
   return payload
 }

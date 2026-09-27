@@ -4,8 +4,8 @@ const { mockSendInstagramMessage } = vi.hoisted(() => ({
   mockSendInstagramMessage: vi.fn(),
 }))
 
-vi.mock("../src/apis/page", () => ({
-  sendInstagramMessage: mockSendInstagramMessage,
+vi.mock("../src/apis/message", () => ({
+  sendMessage: mockSendInstagramMessage,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -64,6 +64,6 @@ describe("instagram-facebook sendMessage — multiple image attachments in one c
       },
     ])
     expect(payload.message.attachment).toBeUndefined()
-    expect(result).toEqual({ messageIds: ["ig_provider-1"] })
+    expect(result).toEqual({ messageIds: ["ig_provider-1"], sentCount: 1 })
   })
 })

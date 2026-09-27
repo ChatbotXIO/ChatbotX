@@ -1,24 +1,28 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
+import { Loader2Icon } from "lucide-react"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
+import { Suspense } from "react"
 import { FullBleed } from "@/components/full-bleed"
 import { ChatLayout } from "@/features/chat/chat-layout"
+import { getInboxInitialState } from "@/features/chat/queries/get-inbox-initial-state.query"
 import { ChatStoreProvider } from "@/features/chat/store/chat-store-provider"
-import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
-import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
-import { SavedReplyStoreProvider } from "@/features/saved-replies/provider/saved-reply-store-context"
-import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
-import { UserStoreProvider } from "@/features/users/provider/user-store-context"
+import {
+  buildContactPermissionScope,
+  type ContactPermissionScope,
+} from "@/features/contacts/permissions"
 import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 type InboxPageProps = {
   params: Promise<{ workspaceId: string }>
+  searchParams?: Promise<{ conversationId?: string }>
 }
 
-export default async function InboxPage({ params }: InboxPageProps) {
+export default async function InboxPage({
+  params,
+  searchParams,
+}: InboxPageProps) {
   const workspaceId = getIdFromParams(await params, "workspaceId")
   if (!workspaceId) {
     return notFound()
@@ -32,34 +36,64 @@ export default async function InboxPage({ params }: InboxPageProps) {
   if (!userAndWorkspace) {
     return notFound()
   }
-  const canViewEmailAndPhone = canViewContactEmailAndPhone(
-    userAndWorkspace.targetWorkspaceMember.permissions,
-  )
+  const { user, targetWorkspaceMember } = userAndWorkspace
+  const contactPermissionScope = buildContactPermissionScope({
+    permissions: targetWorkspaceMember.permissions,
+    userId: user.id,
+  })
+  if (!contactPermissionScope) {
+    return notFound()
+  }
+
+  const conversationId = (await searchParams)?.conversationId
 
   return (
     <FullBleed>
-      <ChatStoreProvider>
-        <InboxStoreProvider workspaceId={workspaceId}>
-          <UserStoreProvider workspaceId={workspaceId}>
-            <CustomFieldStoreProvider workspaceId={workspaceId}>
-              <SavedReplyStoreProvider
-                autoInitialize={false}
-                workspaceId={workspaceId}
-              >
-                <SequenceStoreProvider workspaceId={workspaceId}>
-                  <FlowStoreProvider workspaceId={workspaceId}>
-                    <ChatLayout
-                      canViewEmailAndPhone={canViewEmailAndPhone}
-                      layout={savedLayout}
-                      workspaceId={workspaceId}
-                    />
-                  </FlowStoreProvider>
-                </SequenceStoreProvider>
-              </SavedReplyStoreProvider>
-            </CustomFieldStoreProvider>
-          </UserStoreProvider>
-        </InboxStoreProvider>
-      </ChatStoreProvider>
+      <Suspense
+        fallback={
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <Loader2Icon className="animate-spin" />
+          </div>
+        }
+      >
+        <InboxContent
+          canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
+          contactPermissionScope={contactPermissionScope}
+          conversationId={conversationId}
+          layout={savedLayout}
+          workspaceId={workspaceId}
+        />
+      </Suspense>
     </FullBleed>
+  )
+}
+
+async function InboxContent({
+  canViewEmailAndPhone,
+  contactPermissionScope,
+  conversationId,
+  layout,
+  workspaceId,
+}: {
+  canViewEmailAndPhone: boolean
+  contactPermissionScope: ContactPermissionScope
+  conversationId?: string
+  layout: [number, number, number]
+  workspaceId: string
+}) {
+  const initialState = await getInboxInitialState({
+    workspaceId,
+    conversationId,
+    contactPermissionScope,
+  })
+
+  return (
+    <ChatStoreProvider initialState={initialState ?? undefined}>
+      <ChatLayout
+        canViewEmailAndPhone={canViewEmailAndPhone}
+        layout={layout}
+        workspaceId={workspaceId}
+      />
+    </ChatStoreProvider>
   )
 }

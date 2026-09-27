@@ -19,8 +19,16 @@ export async function generateTiktokRedirectUri(
     "/integrations/tiktok/callback",
   )
   const baseUrl = await getOriginFromHeader()
+  // The channels settings page, not the bare `/space/{id}` landing — that page
+  // redirects to whichever section the member can access and drops the query
+  // string on the way, so an `?error=` the callback relays back would never
+  // reach `useChannelConnectError`. The index preserves every param but
+  // `channel` when it forwards to `settings/channels/tiktok`. Matches Threads.
   const referer = workspaceId
-    ? new URL(`/space/${workspaceId}`, baseUrl).toString()
+    ? new URL(
+        `/space/${workspaceId}/settings/channels?channel=tiktok`,
+        baseUrl,
+      ).toString()
     : baseUrl
 
   return generateAuthUrl({

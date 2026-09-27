@@ -1,5 +1,5 @@
 import ky, { isHTTPError, type KyInstance, type Options } from "ky"
-import { API_BASE_URL, BUSINESS_API_BASE_URL } from "../constants"
+import { API_URL, BUSINESS_API_URL } from "../constants"
 import { parseOriginError, TiktokAPIException } from "../exception"
 import { logger } from "./logger"
 
@@ -72,14 +72,14 @@ abstract class BaseTiktokHttpClient {
 
 class TiktokHttpClient extends BaseTiktokHttpClient {
   constructor(accessToken: string) {
-    super(API_BASE_URL, { Authorization: `Bearer ${accessToken}` })
+    super(API_URL, { Authorization: `Bearer ${accessToken}` })
   }
 }
 
 // Business API client — uses business-api.tiktok.com with Access-Token header (not Bearer)
 class TiktokBusinessHttpClient extends BaseTiktokHttpClient {
   constructor(accessToken: string) {
-    super(BUSINESS_API_BASE_URL, { "Access-Token": accessToken })
+    super(BUSINESS_API_URL, { "Access-Token": accessToken })
   }
 
   postFormData<T>(endpoint: string, body: FormData): Promise<T> {

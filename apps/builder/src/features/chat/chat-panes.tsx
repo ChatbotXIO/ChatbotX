@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import { disableBotAction } from "../conversations/actions/disable-bot.action"
 import ConversationList from "../conversations/conversation-list"
+import { useThreadReadTracking } from "../conversations/hooks/use-thread-read-tracking"
 import type { ConversationResource } from "../conversations/schema/resource"
 import {
   BOT_DISABLE_DURATION_MS,
@@ -94,6 +95,7 @@ export function MessageThreadPane({
 }) {
   const t = useTranslations()
   const updateConversation = useChatStore((state) => state.updateConversation)
+  const threadReadHandlers = useThreadReadTracking(activeConversation)
 
   const { execute: disableBot, isExecuting: isDisablingBot } = useAction(
     disableBotAction.bind(null, workspaceId),
@@ -120,7 +122,10 @@ export function MessageThreadPane({
         <Loader2Icon className="mx-auto my-4 animate-spin" />
       )}
       {activeConversation && (
-        <div className="flex h-full min-h-0 w-full flex-col">
+        <div
+          className="flex h-full min-h-0 w-full flex-col"
+          {...threadReadHandlers}
+        >
           <MessageHead onBack={onBack} onOpenContact={onOpenContact} />
           {isConversationActive(activeConversation) && (
             <Button

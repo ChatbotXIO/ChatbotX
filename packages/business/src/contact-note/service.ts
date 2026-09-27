@@ -103,13 +103,22 @@ class ContactNoteService extends BaseService {
     tx?: DatabaseClient
     workspaceId: string
     contactId: string
+    accessScope?: ContactAccessScope
   }): Promise<ContactNoteModel[]> {
-    const { tx = db, workspaceId, contactId } = props
+    const { tx = db, workspaceId, contactId, accessScope } = props
 
     // `ContactNote` has no `workspaceId` column of its own — scope through
     // the parent contact the same way create/update/delete do, so a caller
     // can't list notes on another workspace's contact by guessing its id.
-    await contactService.findByIdOrFail({ workspaceId, id: contactId, tx })
+    // `accessScope` additionally enforces the "only assigned contacts"
+    // permission the way `getContact` does — otherwise a restricted member
+    // could read notes on a contact they cannot otherwise open.
+    await contactService.findByIdOrFail({
+      workspaceId,
+      id: contactId,
+      accessScope,
+      tx,
+    })
 
     return await withCache(
       `contacts:${contactId}:contact-notes`,

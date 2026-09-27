@@ -2,7 +2,7 @@ import { readdir, readFile, stat } from "node:fs/promises"
 import path from "node:path"
 
 /**
- * Validates `.agents/skills/` — the runbooks AI agents load before writing code.
+ * Validates `.agents/skills/`, the runbooks AI agents load before writing code.
  *
  * Nothing else in the repo checks these files, so a malformed skill (bad
  * frontmatter, a directory/name mismatch, a dangling symlink, or a skill missing
@@ -52,14 +52,14 @@ const parseFrontmatter = (content) => {
   return fields
 }
 
-const checkSkill = async (name) => {
-  const relativePath = `${SKILLS_DIR}/${name}/SKILL.md`
+const checkSkill = async (skillsDir, name) => {
+  const relativePath = `${skillsDir}/${name}/SKILL.md`
   let content
 
   try {
     content = await readFile(path.join(root, relativePath), "utf8")
   } catch {
-    report(`${SKILLS_DIR}/${name}`, "missing SKILL.md")
+    report(`${skillsDir}/${name}`, "missing SKILL.md")
     return
   }
 
@@ -113,17 +113,19 @@ const findDanglingSymlinks = async (dir) => {
   }
 }
 
-const main = async () => {
-  const entries = await readdir(path.join(root, SKILLS_DIR), {
-    withFileTypes: true,
-  })
-  const skills = entries
+const listSkillDirs = async (dir) => {
+  const entries = await readdir(path.join(root, dir), { withFileTypes: true })
+  return entries
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort()
+}
+
+const main = async () => {
+  const skills = await listSkillDirs(SKILLS_DIR)
 
   for (const name of skills) {
-    await checkSkill(name)
+    await checkSkill(SKILLS_DIR, name)
   }
 
   for (const dir of SYMLINK_ROOTS) {

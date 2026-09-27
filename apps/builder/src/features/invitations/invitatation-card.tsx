@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import { useWorkspaceLogoUrl } from "../workspaces/helpers"
 import { acceptInvitationAction } from "./actions/accept-invitation"
 
@@ -31,12 +32,14 @@ export function InvitationCard({
 }) {
   const router = useRouter()
   const t = useTranslations()
+  const invalidateUsers = useInvalidateUsers()
   const canJoin = workspace
     ? !isWorkspaceScheduledForDeletion(workspace)
     : false
 
   const { execute, isPending } = useAction(acceptInvitationAction, {
     onSuccess: () => {
+      invalidateUsers()
       router.push("/")
     },
     onError: ({ error }) => {

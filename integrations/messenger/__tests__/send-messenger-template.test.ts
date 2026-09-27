@@ -20,7 +20,7 @@ const { mockSendPageMessage } = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/apis/message", () => ({
-  sendPageMessage: mockSendPageMessage,
+  sendMessage: mockSendPageMessage,
 }))
 
 // Minimal props factory for buildMessengerTemplateSendRequest
@@ -619,7 +619,7 @@ describe("sendFlowStep", () => {
           sendFrom: "inbox",
         }),
       ),
-    ).resolves.toEqual({ messageIds: [] })
+    ).resolves.toEqual({ messageIds: [], sentCount: 1 })
 
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
     const [, payload] = mockSendPageMessage.mock.calls[0]

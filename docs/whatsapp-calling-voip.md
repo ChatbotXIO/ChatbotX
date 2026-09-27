@@ -430,8 +430,8 @@ the shared finalizer emit the transport-tagged ended event.
 - **Publishing is derived from what the UPDATE returned, not from caller input.**
   `publishAssignmentChanges` (private, extracted from the pre-existing
   `updateAssignment`) is the single place that turns a set of assigned/updated
-  conversation rows into cache invalidation, the `conversationUpdated` /
-  `conversationAssigned` realtime broadcasts, the assignment notification job, and the
+  conversation rows into cache invalidation, the `conversationAssigned` realtime
+  broadcast, the assignment notification job, and the
   `conversation:assigned`/`conversation:unassigned` analytics event — in that fixed
   order. Both `updateAssignment` and `claimForCallAgent` call it with the rows their
   own UPDATE actually returned; when that set is empty (the claim lost the race, or

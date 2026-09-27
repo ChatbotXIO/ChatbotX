@@ -78,7 +78,7 @@ export const buildCallHoursFormValues = (
     timezoneId: knownTimezone(callHours.timezone_id, workspaceTimezone),
     days: CALL_HOURS_DAYS.map((dayOfWeek) => ({
       dayOfWeek,
-      ranges: callHours.weekly_operating_hours
+      ranges: (callHours.weekly_operating_hours ?? [])
         .filter((entry) => entry.day_of_week === dayOfWeek)
         .flatMap((entry) => {
           const openMinute = parseMetaCallTime(entry.open_time)
@@ -156,11 +156,13 @@ export const toCallHoursSnapshot = (
 ): WhatsappCallHoursSnapshot => ({
   status: callHours.status,
   timezoneId: callHours.timezone_id,
-  weeklyOperatingHours: callHours.weekly_operating_hours.map((window) => ({
-    dayOfWeek: window.day_of_week,
-    openTime: window.open_time,
-    closeTime: window.close_time,
-  })),
+  weeklyOperatingHours: (callHours.weekly_operating_hours ?? []).map(
+    (window) => ({
+      dayOfWeek: window.day_of_week,
+      openTime: window.open_time,
+      closeTime: window.close_time,
+    }),
+  ),
   holidaySchedule: callHours.holiday_schedule?.map((holiday) => ({
     date: holiday.date,
     startTime: holiday.start_time,

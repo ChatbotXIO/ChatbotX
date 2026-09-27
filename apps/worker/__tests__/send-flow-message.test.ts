@@ -109,6 +109,20 @@ describe("sendFlowMessage", () => {
     })
   })
 
+  test("propagates bulk broadcast state to the flow step", async () => {
+    await sendFlowMessage({
+      ...makeProps(),
+      isBulkBroadcast: true,
+    })
+
+    expect(mocks.chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({ isBulkBroadcast: true }),
+      }),
+    )
+  })
+
   test("omits flowVersionId when the run is using the latest flow version", async () => {
     await sendFlowMessage({ ...makeProps(), useLatestFlowVersion: true })
 

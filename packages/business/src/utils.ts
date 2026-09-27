@@ -5,12 +5,21 @@ import { getPublicFileUrl } from "@chatbotx.io/utils"
 export { getPublicFileUrl } from "@chatbotx.io/utils"
 export * from "./inbox/utils"
 
-const HTTP_URL_RE = /^https?:\/\//i
+export const HTTP_URL_RE = /^https?:\/\//i
 
-export const toPublicStorageUrl = (
+export function toPublicStorageUrl(path: string, baseUrl: string): string
+export function toPublicStorageUrl(
+  path: null | undefined,
+  baseUrl: string,
+): null
+export function toPublicStorageUrl(
   path: string | null | undefined,
   baseUrl: string,
-): string | null => {
+): string | null
+export function toPublicStorageUrl(
+  path: string | null | undefined,
+  baseUrl: string,
+): string | null {
   if (!path) {
     return null
   }

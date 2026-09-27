@@ -336,6 +336,7 @@
       "message": "前回の支払いに失敗しました。ワークスペースを引き続き利用するには、支払い方法を更新してください。"
     },
     "trial": {
+      "planName": "トライアル",
       "daysLeft": "トライアル：残り{days}日",
       "endsTomorrow": "トライアルは明日終了します",
       "expired": "トライアルは終了しました — ワークスペースを引き続き利用するにはアップグレードしてください",
@@ -507,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "プランをアップグレード",
+      "sendRate": "現在の{plan}プランでは、ブロードキャストの最大送信速度は1分あたり{rate}件です。プランをアップグレードすると、ブロードキャストを最大{multiplier}倍高速に送信できます。",
+      "activeBroadcasts": "現在の{plan}プランでは、一度に{max, plural, one {#件のブロードキャスト} other {#件のブロードキャスト}}を実行できます。複数のブロードキャストを同時に実行するには、プランをアップグレードしてください。"
+    },
+    "sendLimit": {
+      "title": "上限",
+      "hint": "空欄にすると、条件に一致するすべての連絡先に送信されます。",
+      "rateHint": "空欄にすると既定の送信速度が使用されます。",
+      "rangeSummary": "連絡先 #{start} – #{end}",
+      "rangeFromSummary": "連絡先番号 {start} から",
+      "rangeLabel": "連絡先の範囲",
+      "fromLabel": "開始",
+      "toLabel": "終了",
+      "allPlaceholder": "すべて",
+      "rangeEndBeforeStart": "終了位置は開始位置より前にできません"
     }
   },
   "commentAutomation": {
@@ -535,7 +553,26 @@
       "keywordsNotMatched": "キーワード不一致",
       "contactNotNew": "新規の連絡先ではない",
       "alreadyRepliedOnPost": "この投稿では返信済み",
-      "engagedOnOtherPost": "他の投稿で既に反応済み"
+      "engagedOnOtherPost": "他の投稿で既に反応済み",
+      "mentionCountNotMatched": "メンション数が一致しませんでした"
+    },
+    "replyTo": {
+      "mentions": "十分なメンションがあるコメント",
+      "mentionCount": "タグ付けされた人数",
+      "mentionCountDescription": "この人数以上(@名前)をタグ付けしたコメントのみが一致します。",
+      "mentionCountOption": "{count, plural, one {#人} other {#人}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "次と等しいコメント",
+      "contain": "次を含むコメント"
+    },
+    "hideComments": {
+      "hasGif": "GIFを含む",
+      "hasEmoji": "絵文字を含む"
+    },
+    "trackUserTags": {
+      "label": "ユーザーが他のユーザーをタグ付けしたかを記録する",
+      "descriptionText": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     }
   },
   "condition": {
@@ -726,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(任意)",
     "marketingMessagesConfigId": {
       "label": "マーケティングメッセージ構成ID",
       "description": "marketing_messages_messenger権限をリクエストするために使用するFacebookログイン（ビジネス用）の構成IDです。"
@@ -1996,11 +2034,16 @@
       "clientId": "クライアントID",
       "clientSecret": "クライアントシークレット",
       "displayName": "表示名",
+      "needsReauthorizationForComments": "この接続はコメント自動化の前に承認されました。コメントイベントの受信を開始するには再接続してください。",
       "connectInstructions": {
         "step1": "<link>developers.tiktok.com</link>でTikTokアプリを作成します。",
         "step2": "アカウントを認証し、<strong>アクセストークン</strong>、<strong>Open ID</strong>、<strong>クライアントシークレット</strong>をコピーします。",
         "step3": "接続するには、以下に認証情報を貼り付けます。"
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "ドリップ"
@@ -2201,6 +2244,9 @@
     },
     "lastCallTranscript": {
       "label": "最後の通話文字起こし"
+    },
+    "sendRatePerMinute": {
+      "label": "1分あたりの送信数"
     }
   },
   "flows": {
@@ -2317,6 +2363,8 @@
       "transferConversationToHuman": "会話を担当者に転送",
       "unarchiveConversation": "会話をアーカイブから戻す",
       "unassignConversation": "会話の割り当てを解除",
+      "markConversationAsUnread": "会話を未読にする",
+      "markConversationAsRead": "会話を既読にする",
       "unfollowConversation": "会話のフォローを解除",
       "unsubscribeBroadcast": "一斉配信を解除",
       "getUserData": "ユーザーデータを取得",
@@ -3020,6 +3068,10 @@
       "whatsapp": "このWhatsApp番号はすでに別のワークスペースに接続されています。",
       "zalo": "このZalo OAはすでに別のワークスペースに接続されています。"
     },
+    "missingScopes": {
+      "generic": "接続をキャンセルしました。一部の権限が許可されていません。もう一度接続し、要求されたすべての権限を許可してください。",
+      "tiktok": "TikTok の接続をキャンセルしました。一部の権限が許可されていません。もう一度接続し、要求されたすべての権限を許可してください。"
+    },
     "reconnect": {
       "success": "チャネルを再接続しました。",
       "errors": {
@@ -3176,6 +3228,7 @@
     "changeLikeState": "「いいね！」の状態を変更",
     "changeHideState": "非表示状態を変更",
     "commentHidden": "このコメントは非表示になりました",
+    "commentMediaUnavailable": "このコメントには表示できないGIF、スタンプ、または画像が含まれています",
     "messageDeleted": "メッセージは削除されました。",
     "sendFailed": "送信に失敗しました",
     "repliedToStory": "あなたのストーリーに返信しました",
@@ -3216,7 +3269,10 @@
     "deleteFeature": "{feature}を削除",
     "resetFeature": "{feature}をリセット",
     "resetConfirmation": "選択した{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
+    "resetAllConfirmation": "この連絡先のすべての{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
     "resetSuccess": "{feature}をリセットしました",
+    "clearFeature": "{feature}をクリア",
+    "clearSuccess": "{feature}をクリアしました",
     "deleteConfirmation": "本当によろしいですか？\nこの操作は元に戻せません。\n{feature}はサーバーから完全に削除されます。",
     "addFeature": "{feature}を追加",
     "signOutConfirmation": "サインアウトしてもよろしいですか？",
@@ -3267,6 +3323,7 @@
     "historyDepth": "（{count}）",
     "none": "なし",
     "tiktokCardTitleTooLong": "TikTokはこのメッセージを短縮します。ボタンが付いている場合、最初の40文字のみ送信されます。メッセージを短くするか、ボタンを削除してください。",
+    "sendTextTooLongForChannel": "このメッセージはこのチャネルの上限を超えています。内容を短くするか、上限がより大きいチャネルにこのブロックを向けてください。",
     "waTemplateMpmNoProducts": "公開前に、このマルチ商品ボタンに少なくとも1つの商品を追加してください。",
     "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
@@ -3356,6 +3413,7 @@
       "noConnectablePagesDescription": "あなたはこのページの管理者ではありません",
       "bmLookupFailedTitle": "ビジネスマネージャのページが一部表示されていない可能性があります",
       "bmLookupFailedDescription": "Messengerを再接続し、ビジネスマネージャへのアクセスを許可すると、ビジネスマネージャで管理されているページを一覧表示できます。",
+      "loadFailed": "Facebookページを読み込めませんでした",
       "alreadyConnectedNote": "このページはすでに接続されています",
       "notAdminNote": "あなたはこのページの管理者ではありません",
       "tryAgain": "再接続を試す"
@@ -4053,6 +4111,7 @@
         "statusNoAnswer": "応答なし",
         "eyebrowCallEnded": "通話終了",
         "statusConnectionLost": "接続が失われました",
+        "answerFailed": "通話に応答できませんでした。マイクが接続され、ブラウザで許可されていることを確認してから、もう一度お試しください。",
         "ringingListTitle": "{count, plural, one {#件の着信} other {#件の着信}}"
       },
       "capability": {
@@ -4158,6 +4217,14 @@
     "chatbotInvitationDescription2": "{userName}さんから{chatbotName}への招待が届いています。",
     "invalidInvitation": "この招待は無効か、有効期限が切れています。",
     "workspaceUnavailable": "このワークスペースは利用できなくなりました。"
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "ボットのメッセージを既読にする",
+      "enabled": "有効",
+      "disabled": "無効",
+      "description": "有効にすると、ボットが自身のメッセージを自動的に既読にします"
+    }
   },
   "inboxTeams": {
     "title": "受信トレイチーム"
@@ -4522,7 +4589,8 @@
     "afterText": "後"
   },
   "tools": {
-    "title": "ツール"
+    "title": "ツール",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4625,13 +4693,13 @@
     "privateReply": "非公開返信（受信トレイ）",
     "privateReplyDescription": "コメントしたユーザーの受信トレイに非公開メッセージを送信します。AIエージェント、固定テキストテンプレート、チャットボットフロー、または無効を選択できます。",
     "publicReply": "コメントに公開返信",
-    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。",
+    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。 スピンタックスに対応しています。",
     "replyMessage": "返信メッセージ",
     "replyMessagePlaceholder": "返信メッセージを入力...",
     "includeKeywordsType": "返信対象",
     "includeKeywordsTypeDescription": "この自動化が返信するコメントを選択します。",
     "includeKeywords": "一致させるキーワード",
-    "excludeKeywords": "これらのキーワードを含むコメントを除外",
+    "excludeKeywords": "次を含むコメントを除外",
     "excludeKeywordsDescription": "これらのキーワードのいずれかを含むコメントは、受信トレイと公開返信の両方の自動化で無視されます。",
     "keywordsPlaceholder": "入力してEnterキーを押してください...",
     "replyAfter": "返信までの時間",
@@ -4694,7 +4762,7 @@
       "ignoreCommentReplies": "コメントへの返信には応答しない",
       "ignoreCommentRepliesDescription": "トップレベルのコメントではなく、他のコメントへの返信には自動化を適用しません。",
       "trackUserTags": "ユーザーが他のユーザーをタグ付けしたかを記録する",
-      "trackUserTagsDescription": "'{{total_tagged}}' で何人のユーザーがタグ付けされたかを確認できます。'{{total_new_tagged}}' でタグ付けされた人のうち連絡先リストにいない人数を確認できます。"
+      "trackUserTagsDescription": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     },
     "hideComments": {
       "all": "すべてのコメントを非表示",
@@ -4728,13 +4796,13 @@
     "privateReply": "非公開返信（受信トレイ）",
     "privateReplyDescription": "コメントしたユーザーの受信トレイに非公開メッセージを送信します。AIエージェント、固定テキストテンプレート、チャットボットフロー、または無効を選択できます。",
     "publicReply": "コメントに公開返信",
-    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。",
+    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。 スピンタックスに対応しています。",
     "replyMessage": "返信メッセージ",
     "replyMessagePlaceholder": "返信メッセージを入力...",
     "includeKeywordsType": "返信対象",
     "includeKeywordsTypeDescription": "この自動化が返信するコメントを選択します。",
     "includeKeywords": "一致させるキーワード",
-    "excludeKeywords": "これらのキーワードを含むコメントを除外",
+    "excludeKeywords": "次を含むコメントを除外",
     "excludeKeywordsDescription": "これらのキーワードのいずれかを含むコメントは、受信トレイと公開返信の両方の自動化で無視されます。",
     "keywordsPlaceholder": "入力してEnterキーを押してください...",
     "replyAfter": "返信までの時間",
@@ -4796,7 +4864,7 @@
       "ignoreCommentReplies": "コメントへの返信には応答しない",
       "ignoreCommentRepliesDescription": "トップレベルのコメントではなく、他のコメントへの返信には自動化を適用しません。",
       "trackUserTags": "ユーザーが他のユーザーをタグ付けしたかを記録する",
-      "trackUserTagsDescription": "'{{total_tagged}}' で何人のユーザーがタグ付けされたかを確認できます。'{{total_new_tagged}}' でタグ付けされた人のうち連絡先リストにいない人数を確認できます。"
+      "trackUserTagsDescription": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     },
     "hideComments": {
       "all": "すべてのコメントを非表示",
@@ -4832,13 +4900,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. 最大10件のテキストメッセージ(スピンタックス対応)、それぞれ別の返信として投稿されます。",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "次を含むコメントを除外",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4847,7 +4915,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "コメントを非表示"
     },
     "postType": {
       "all": "All posts",
@@ -4889,8 +4958,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "返信メッセージを1件以上入力してください。",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "非表示にできるのは投稿への最上位の返信のみです。",
+    "hideComments": {
+      "all": "すべてのコメントを非表示",
+      "hasPhoneNumber": "電話番号を含む",
+      "hasLink": "リンクを含む",
+      "hasKeywords": "キーワードを含む",
+      "keywords": "キーワード",
+      "showCommentsAfter": "コメントを再表示するまでの時間"
+    },
+    "showCommentsAfter": {
+      "none": "再表示しない"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. 最大10件のテキストメッセージ(スピンタックス対応)、それぞれ別の返信として投稿されます。",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "次を含むコメントを除外",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "返信メッセージを1件以上入力してください。"
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Instagramストーリー返信オートメーション",
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "有効なデータセットID（数字のみ）を入力してください。",
       "whatsappNotFound": "WhatsApp の連携が見つかりません。",
       "testEventCodeRequired": "テストイベントを送信する前にテストイベントコードを保存してください。",
-      "noContactForTest": "このチャネルにはまだ対象となる連絡先がありません。テストイベントには紐付け先となる実際の連絡先が必要です（WhatsApp の場合は click-to-WhatsApp 広告経由の連絡先）。",
-      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。"
+      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。",
+      "invalidMessagingId": "メッセージングIDに使えるのは英字、数字、ハイフン、アンダースコアのみです（最大512文字）。",
+      "capiDisconnected": "このチャネルのMeta CAPIは切断されています。テストイベントを送信する前に再接続してください。"
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "テストイベントコードを保存しました。",
       "cleared": "テストイベントコードをクリアしました。イベントは再びライブになります。",
       "send": "テストイベントを送信",
-      "sent": "テストイベントをキューに追加しました。1分以内に Events Manager の Test events に表示されます。",
-      "sendHint": "このチャネルの最新の連絡先にサンプルの Purchase（100 USD）を1件送信します。",
+      "sent": "テストイベントを送信しました。1分以内にEvents ManagerのTest eventsに表示されます。",
+      "sendHint": "入力したメッセージングIDにサンプルのPurchase（100 USD）を1件送信します。保存済みの連絡先は使用しません。",
       "activeNotice": "テストモードが有効です。コードをクリアするまで、このチャネルのイベントはレポートにカウントされません。",
-      "openTestEvents": "Test events を開く"
+      "openTestEvents": "Test events を開く",
+      "dialogTitle": "テストイベントを送信",
+      "dialogDescription": "テストイベントコード付きでサンプルのPurchase（100 USD）を1件送信します。実際の連絡先に紐付かないよう、Events Manager → Test events → Messaging → Graph API Explorer のサンプルメッセージングIDを貼り付けてください。",
+      "messagingIdLabel": {
+        "messenger": "連絡先ID（page_scoped_user_id）",
+        "instagram": "連絡先ID（ig_sid）",
+        "whatsapp": "クリックID（ctwa_clid）"
+      },
+      "messagingIdPlaceholder": "Metaのサンプル値を貼り付け",
+      "messagingIdHint": "英字、数字、ハイフン、アンダースコアのみ（最大512文字）。",
+      "cancel": "キャンセル",
+      "confirmSend": "送信"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "ボットフィールド"
+  },
+  "openLink": {
+    "title": "リンクを開く",
+    "invalidTitle": "無効なリンクです。",
+    "invalidDescription": "このリンクは無効か、有効期限が切れています。",
+    "openZaloGroup": "Zaloグループを開く",
+    "openZalo": "Zaloを開く",
+    "openMessenger": "Messengerを開く"
   }
 }

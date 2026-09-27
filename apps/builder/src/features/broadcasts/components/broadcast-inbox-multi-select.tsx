@@ -5,7 +5,7 @@ import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-f
 import { inboxStatuses } from "@chatbotx.io/utils/conversation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
+import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import { resolveBroadcastInboxLabelKey } from "../lib/broadcast-inbox-label"
 
 type BroadcastInboxMultiSelectProps = {
@@ -20,7 +20,7 @@ export function BroadcastInboxMultiSelect({
   name = "inboxIds",
 }: BroadcastInboxMultiSelectProps) {
   const t = useTranslations()
-  const inboxes = useInboxStore((state) => state.inboxes)
+  const inboxes = useInboxList()
 
   const options = useMemo(
     () =>

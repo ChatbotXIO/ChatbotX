@@ -1,6 +1,6 @@
 import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { receiveMessage } from "../src/handlers/message/incomming-message"
+import { receiveMessage } from "../src/handlers/message/incoming-message"
 
 const AUTH = {
   clientId: "app-123",

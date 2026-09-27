@@ -14,8 +14,8 @@ type LinkConfig = {
  * chat), but the ref is dropped on arrival — so any surface whose whole
  * purpose is delivering a ref must gate on this.
  *
- * messenger  integrations/messenger/src/handlers/message/incomming-message.ts
- * instagram  integrations/instagram/src/handlers/message/incomming-message.ts
+ * messenger  integrations/messenger/src/handlers/message/incoming-message.ts
+ * instagram  integrations/instagram/src/handlers/message/incoming-message.ts
  *            integrations/instagram-facebook/src/handlers/message/incoming-message.ts
  * telegram   integrations/telegram/src/handlers/message/incoming-message.ts (`/start <param>`)
  * whatsapp   integrations/whatsapp/src/handlers/message/incomming-message.ts (`/ref-` prefix)

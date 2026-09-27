@@ -1,3 +1,5 @@
+import { BROADCAST_PLAN_LIMIT_CODE } from "@chatbotx.io/business/errors"
+import { broadcastPlanLimitDataSchema } from "@chatbotx.io/database/partials"
 import type { ErrorMap } from "@orpc/server"
 import { z } from "zod"
 import { DENIAL_MESSAGES } from "@/lib/workspace/authorize-workspace-access"
@@ -11,6 +13,16 @@ const businessError = {
   message: "An error occurred while processing your request",
   status: 400,
 }
+
+const broadcastPlanLimit = {
+  message: "Broadcast exceeds the workspace plan limits",
+  status: 403,
+  data: broadcastPlanLimitDataSchema,
+}
+
+export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
+  BROADCAST_PLAN_LIMIT_CODE,
+])
 
 /**
  * A loose schema for oRPC's own `BAD_REQUEST` issue shape. `validateORPCError`
@@ -88,6 +100,27 @@ export const commonApiErrors = {
   },
 } satisfies ErrorMap
 
+/**
+ * Thrown by `apiIdempotencyMiddleware` on any route a caller may send
+ * `Idempotency-Key` to — every non-GET/HEAD public route. These are spread
+ * into write-shaped sets instead of `commonApiErrors`, which also feeds read
+ * routes where the middleware returns early.
+ */
+export const possibleIdempotencyErrors = {
+  idempotencyKeyInvalid: {
+    message: "Idempotency-Key must be 1-255 characters",
+    status: 422,
+  },
+  idempotencyKeyReused: {
+    message: "This Idempotency-Key was already used with a different request",
+    status: 422,
+  },
+  idempotencyKeyConflict: {
+    message: "A request with this Idempotency-Key is still in progress",
+    status: 409,
+  },
+} satisfies ErrorMap
+
 export const possibleErrorsOnFindingResource = {
   notFound,
   businessError,
@@ -104,16 +137,32 @@ export const possibleErrorsOnListingResource = {
  */
 export const possibleErrorsOnCreatingResource = {
   businessError,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingBroadcast = {
+  businessError,
+  broadcastPlanLimit,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingResource = {
   notFound,
   businessError,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnActivatingBroadcast = {
+  notFound,
+  businessError,
+  broadcastPlanLimit,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnDeletingResource = {
   notFound,
   businessError,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 /**
@@ -159,6 +208,7 @@ export const possibleErrorsOnBookingAppointment = {
   appointmentAlreadyScheduled,
   appointmentNotCancellable,
   appointmentDeleteBlocked,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 /**
@@ -176,6 +226,7 @@ export const possibleErrorsOnDisconnectingExternalCalendar = {
   notFound,
   businessError,
   connectionInUse,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 /**
@@ -200,6 +251,7 @@ const duplicateReminder = {
 export const possibleErrorsOnCreatingAppointmentCalendar = {
   businessError,
   nameAlreadyExists,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingAppointmentCalendar = {
@@ -207,6 +259,7 @@ export const possibleErrorsOnMutatingAppointmentCalendar = {
   businessError,
   nameAlreadyExists,
   duplicateReminder,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 /**
@@ -238,6 +291,7 @@ export const possibleErrorsOnSchedulingContactScan = {
     message: "A scan is already running for this inbox.",
     status: 409,
   },
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 /**
@@ -253,12 +307,14 @@ const minigameNameAlreadyExists = {
 export const possibleErrorsOnCreatingMinigame = {
   businessError,
   nameAlreadyExists: minigameNameAlreadyExists,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingMinigame = {
   notFound,
   businessError,
   nameAlreadyExists: minigameNameAlreadyExists,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 /**
@@ -277,10 +333,12 @@ export const possibleErrorsOnCreatingEmailTopic = {
   notFound,
   businessError,
   nameTaken,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingEmailTopic = {
   notFound,
   businessError,
   nameTaken,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap

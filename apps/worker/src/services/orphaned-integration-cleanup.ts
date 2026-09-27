@@ -3,6 +3,7 @@ import {
   type MetaAppCredentialType,
   platformCredentialService,
 } from "@chatbotx.io/business"
+import type { IntegrationNotFoundError } from "@chatbotx.io/channel-registry/errors"
 import {
   type IntegrationType,
   integrationTypes,
@@ -17,17 +18,7 @@ import { logger } from "../lib/logger"
  * subscription can be cleaned up (see `handleOrphanedIntegration`). Both fields
  * are public ids — safe to log.
  */
-export class IntegrationNotFoundError extends Error {
-  readonly channel: IntegrationType
-  readonly identifier: string
-
-  constructor(channel: IntegrationType, identifier: string) {
-    super(`Integration not found: ${channel} ${identifier}`)
-    this.name = "IntegrationNotFoundError"
-    this.channel = channel
-    this.identifier = identifier
-  }
-}
+export { IntegrationNotFoundError } from "@chatbotx.io/channel-registry/errors"
 
 type OrphanUnsubscribe = (props: {
   identifier: string
@@ -74,6 +65,19 @@ const ORPHAN_CLEANUP_STRATEGIES: Partial<
       // Threads Phase 1: no outbound unsubscribe API wired yet.
     },
   },
+}
+
+/**
+ * Channels that keep delivering webhooks after a disconnect because the
+ * subscription is per-app and cannot be revoked per account (Zalo OAs). A
+ * missing integration there is expected traffic, not an orphan to clean up.
+ */
+const EXPECTED_ORPHAN_CHANNELS: ReadonlySet<IntegrationType> = new Set([
+  integrationTypes.enum.zalo,
+])
+
+export function isExpectedOrphan(error: IntegrationNotFoundError): boolean {
+  return EXPECTED_ORPHAN_CHANNELS.has(error.channel)
 }
 
 function toErrorMessage(error: unknown): string {

@@ -5,8 +5,9 @@ import { isCloud } from "@/env"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
+import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
-import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
+import { getWorkspaceBlockStateForRender } from "@/lib/workspace-quota"
 
 type DashboardLayoutProps = {
   children: ReactNode
@@ -34,12 +35,13 @@ export default async function DashboardLayout({
   ) {
     return notFound()
   }
+  enforcePasswordCurrent(userAndWorkspace.user)
 
   const cloud = isCloud()
   const { targetWorkspace } = userAndWorkspace
   const [inboxesResult, { blocked, blockReason }] = await Promise.all([
     listInboxes({ workspaceId, includes: ["integration"] }),
-    resolveWorkspaceBlockState(targetWorkspace.ownerId),
+    getWorkspaceBlockStateForRender(targetWorkspace.ownerId),
   ])
   const inboxes = inboxesResult.data.filter((inbox) => inbox.channel !== "smtp")
   const isSuperAdmin = hasWorkspacePermission(

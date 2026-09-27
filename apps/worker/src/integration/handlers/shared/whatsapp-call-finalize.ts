@@ -364,6 +364,10 @@ export const finalizeCallSideEffects = async (
     workspaceId: call.workspaceId,
     conversationId: call.conversationId,
     lastActivityAt: message.createdAt,
+    // A call the contact placed is contact activity the agent has not seen.
+    ...(call.direction === "userInitiated"
+      ? { contactRepliedAt: message.createdAt }
+      : {}),
   })
 
   const contactInbox = await contactInboxService.findBy({

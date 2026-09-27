@@ -5,7 +5,7 @@ const { mockSendPageMessage } = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/apis/message", () => ({
-  sendPageMessage: mockSendPageMessage,
+  sendMessage: mockSendPageMessage,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -51,7 +51,7 @@ describe("messenger outgoing handlers return provider message ids", () => {
     } as never)
 
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_provider-1"] })
+    expect(result).toEqual({ messageIds: ["m_provider-1"], sentCount: 1 })
   })
 
   test("sendFlowStep (sendText) returns the Send API message_id", async () => {
@@ -70,6 +70,6 @@ describe("messenger outgoing handlers return provider message ids", () => {
     } as never)
 
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_provider-1"] })
+    expect(result).toEqual({ messageIds: ["m_provider-1"], sentCount: 1 })
   })
 })

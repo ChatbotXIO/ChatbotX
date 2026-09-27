@@ -10,8 +10,10 @@ import {
   FormMessage,
 } from "@chatbotx.io/ui/components/ui/form"
 import { cn } from "@chatbotx.io/ui/lib/utils"
+import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
+import { CharacterCounter } from "@/components/character-counter"
 import { TiptapEditor } from "./tiptap-editor"
 
 export type TiptapEditorFieldProps = {
@@ -27,6 +29,8 @@ export type TiptapEditorFieldProps = {
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   description?: string
+  /** When set, renders a live `used/limit` character counter below the editor. */
+  maxLength?: number
 }
 
 export const TiptapEditorField = ({
@@ -42,8 +46,10 @@ export const TiptapEditorField = ({
   includeBotFieldVariables = false,
   showEmojiPicker = true,
   enableEmoji = true,
+  maxLength,
 }: TiptapEditorFieldProps) => {
   const { control, getValues } = useFormContext()
+  const t = useTranslations("fields")
 
   const [initValue, setInitValue] = useState<string | undefined>(undefined)
 
@@ -63,7 +69,7 @@ export const TiptapEditorField = ({
               {label}
               {!required && (
                 <span className="self-start font-normal text-xxs">
-                  (optional)
+                  {t("optionalHint")}
                 </span>
               )}
             </FormLabel>
@@ -79,6 +85,15 @@ export const TiptapEditorField = ({
               onChange={field.onChange}
               placeholder={placeholder}
               showEmojiPicker={showEmojiPicker}
+              toolbarEnd={
+                maxLength ? (
+                  <CharacterCounter
+                    max={maxLength}
+                    value={field.value}
+                    variant="inverted"
+                  />
+                ) : null
+              }
             />
           </FormControl>
           {description ? (

@@ -1,13 +1,14 @@
 import {
-  fbCommentHideCommentsSchema,
-  fbCommentIncludeKeywordsSchema,
-  fbCommentOptionsSchema,
-  fbCommentPostSchema,
-  fbCommentReplyAfterSchema,
-  fbCommentReplySchema,
+  commentExcludeKeywordsTypes,
+  commentHideCommentsSchema,
+  commentIncludeKeywordsSchema,
+  commentOptionsSchema,
+  commentPostSchema,
+  commentReplyAfterSchema,
+  commentReplySchema,
   igCommentAutomationTypes,
 } from "@chatbotx.io/database/partials"
-import type { FBCommentAutomationModel } from "@chatbotx.io/database/types"
+import type { CommentAutomationModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
@@ -37,7 +38,7 @@ export const listIgCommentsSearchParamsCache = createSearchParamsCache({
   name: parseAsString.withDefault(""),
   isActive: parseAsBoolean,
   folderId: parseAsBigInt,
-  sort: getSortingStateParser<FBCommentAutomationModel>().withDefault([
+  sort: getSortingStateParser<CommentAutomationModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
 })
@@ -59,28 +60,36 @@ export const createIgCommentRequest = z.object({
   folderId: zodBigintAsString()
     .nullish()
     .describe("Folder to place the automation in, or null for root-level."),
-  post: fbCommentPostSchema.describe(
+  post: commentPostSchema.describe(
     "Instagram media to watch for comments. Get it from `igComments.listMedia`.",
   ),
-  privateReply: fbCommentReplySchema.describe(
+  privateReply: commentReplySchema.describe(
     "Private message reply sent to the commenter, if any.",
   ),
-  publicReply: fbCommentReplySchema.describe(
+  publicReply: commentReplySchema.describe(
     "Public comment reply posted under the comment, if any.",
   ),
-  includeKeywords: fbCommentIncludeKeywordsSchema.describe(
+  includeKeywords: commentIncludeKeywordsSchema.describe(
     "Only trigger when the comment matches these keywords.",
   ),
   excludeKeywords: z
     .array(z.string())
     .describe("Never trigger when the comment matches these keywords."),
-  options: fbCommentOptionsSchema.describe(
+  // Optional, never defaulted: `updateFbCommentRequest` is this schema made
+  // `.partial()`, and a default would reset the stored match type on every
+  // PATCH that did not mention it. The column defaults to `contain`.
+  excludeKeywordsType: commentExcludeKeywordsTypes
+    .optional()
+    .describe(
+      "How `excludeKeywords` match: `equal` (the whole comment) or `contain` (anywhere in it).",
+    ),
+  options: commentOptionsSchema.describe(
     "Matching and trigger behavior options.",
   ),
-  hideComments: fbCommentHideCommentsSchema.describe(
+  hideComments: commentHideCommentsSchema.describe(
     "Whether to hide matching comments after replying.",
   ),
-  replyAfter: fbCommentReplyAfterSchema.describe(
+  replyAfter: commentReplyAfterSchema.describe(
     "Delay before sending the reply.",
   ),
 })

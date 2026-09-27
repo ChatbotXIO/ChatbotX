@@ -1,5 +1,5 @@
 {
-  "name": "chatbotx",
+  "name": "chatbotx-monorepo",
   "private": true,
   "scripts": {
     "build": "turbo build",

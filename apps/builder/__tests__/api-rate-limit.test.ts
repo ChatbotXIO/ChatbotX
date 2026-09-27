@@ -225,7 +225,7 @@ describe("assertApiNotRateLimited", () => {
     ).resolves.toBeUndefined()
   })
 
-  test("throws a tooManyRequests exception with a 429 status when limited", async () => {
+  test("throws a tooManyRequests exception with a 429 status and retry header when limited", async () => {
     await Promise.all(
       Array.from({ length: REQUEST_LIMIT }, () =>
         checkApiRateLimit({
@@ -237,16 +237,19 @@ describe("assertApiNotRateLimited", () => {
       ),
     )
 
+    const resHeaders = new Headers()
     await expect(
       assertApiNotRateLimited({
         scope: "channel-api-rate-limit",
         key: "inbox-limited",
         store,
         now: 0,
+        resHeaders,
       }),
     ).rejects.toMatchObject({
       code: "tooManyRequests",
       httpStatusCode: 429,
     })
+    expect(resHeaders.get("Retry-After")).toBe("10")
   })
 })

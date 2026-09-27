@@ -9,8 +9,13 @@ import {
 import type {
   ChannelType,
   CustomFieldType,
+  FillableContactKey,
 } from "@chatbotx.io/database/partials"
-import { channelTypes, customFieldTypes } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  customFieldTypes,
+  fillableContactKeys,
+} from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
@@ -55,8 +60,8 @@ import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
-import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
+import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
 import type { ContactEditableField } from "./schema/resource"
 import { useAvatarUrl } from "./utils"
@@ -367,14 +372,16 @@ function ContactPanelCallEntry({
 export const ContactDetail = ({
   activeConversationId,
   contact,
+  onCustomFieldsReset = () => undefined,
 }: {
   activeConversationId: string | null
   contact: GetContactResponse | null
+  onCustomFieldsReset?: () => void
 }) => {
   const t = useTranslations()
 
   const workspaceId = useWorkspaceId()
-  const { conversations } = useChatStore((state) => state)
+  const { conversations, updateContact } = useChatStore((state) => state)
   const avatarUrl = useAvatarUrl(contact)
   const [timezone, setTimezone] = useState("UTC")
 
@@ -417,9 +424,6 @@ export const ContactDetail = ({
 
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
-
-  const { customFields, initialized: initializedCustomFields } =
-    useCustomFieldStore((state) => state)
 
   const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
 
@@ -471,6 +475,17 @@ export const ContactDetail = ({
     )
   }
 
+  // Reset clears every custom-field VALUE, so every custom-field row goes away
+  // — same as deleting them one by one. Keyed on the row flag, not on
+  // `contact.customFields`: a field added and saved in this session is not in
+  // the cached contact yet, but its value is in the database and must reset.
+  const handleCustomFieldsReset = () => {
+    setContactFields((previous) =>
+      previous.filter((field) => !field.isCustomField),
+    )
+    onCustomFieldsReset()
+  }
+
   const handleCustomFieldUpdated = (fieldKey: string, value: string) => {
     setContactFields((previous) =>
       previous.map((field) =>
@@ -485,42 +500,38 @@ export const ContactDetail = ({
           : field,
       ),
     )
+    // Only fillable columns (name/email/phone/gender/timezone) live on
+    // ContactResource / conversation.contact — arbitrary custom fields are
+    // stored separately and never read from the chat store, so patching it
+    // for those would be a no-op key that never matches.
+    if (
+      contact &&
+      fillableContactKeys.includes(fieldKey as FillableContactKey)
+    ) {
+      updateContact(contact.id, { [fieldKey]: value })
+    }
   }
 
-  const handleChooseCustomField = (customFieldId: string) => {
-    const targetCustomField = customFieldMap.get(customFieldId)
-    if (!targetCustomField) {
-      return
-    }
+  const handleChooseCustomField = (field: {
+    id: string
+    name: string
+    type: CustomFieldType
+  }) => {
     setContactFields((previous) => [
       ...previous,
       {
-        key: customFieldId,
-        icon: customFieldIconsMap[targetCustomField.type],
-        label: targetCustomField.name,
+        key: field.id,
+        icon: customFieldIconsMap[field.type],
+        label: field.name,
         value: "",
-        type: targetCustomField.type,
+        type: field.type,
+        isCustomField: true,
       },
     ])
   }
 
-  const customFieldMap = useMemo(() => {
-    const map = new Map<string, { name: string; type: CustomFieldType }>()
-    for (const field of customFields) {
-      const parsedType = customFieldTypes.safeParse(field.type)
-      if (!parsedType.success) {
-        continue
-      }
-      map.set(field.id.toString(), {
-        name: field.name,
-        type: parsedType.data,
-      })
-    }
-    return map
-  }, [customFields])
-
   useEffect(() => {
-    if (activeConversationId && initializedCustomFields) {
+    if (activeConversationId) {
       const conversation = conversations.find(
         (item) => item.id === activeConversationId,
       )
@@ -622,30 +633,33 @@ export const ContactDetail = ({
         ]
 
         for (const contactCustomField of contact?.customFields ?? []) {
-          const targetCustomField = customFieldMap.get(contactCustomField.id)
-          if (targetCustomField) {
-            tmpContactFields.push({
-              key: contactCustomField.id,
-              icon: customFieldIconsMap[targetCustomField.type],
-              label: targetCustomField.name,
-              value: formatCustomFieldDisplayValue(
-                targetCustomField.type,
-                contactCustomField.value,
-                timezone,
-                {
-                  false: t("fields.boolean.false"),
-                  true: t("fields.boolean.true"),
-                },
-              ),
-              formValue: isTemporalCustomFieldType(targetCustomField.type)
-                ? resolveTemporalCustomFieldFormValue(
-                    targetCustomField.type,
-                    contactCustomField.value,
-                  )
-                : contactCustomField.value,
-              type: targetCustomField.type,
-            })
+          const parsedType = customFieldTypes.safeParse(contactCustomField.type)
+          if (!parsedType.success) {
+            continue
           }
+          const type = parsedType.data
+          tmpContactFields.push({
+            key: contactCustomField.id,
+            icon: customFieldIconsMap[type],
+            label: contactCustomField.name,
+            value: formatCustomFieldDisplayValue(
+              type,
+              contactCustomField.value,
+              timezone,
+              {
+                false: t("fields.boolean.false"),
+                true: t("fields.boolean.true"),
+              },
+            ),
+            formValue: isTemporalCustomFieldType(type)
+              ? resolveTemporalCustomFieldFormValue(
+                  type,
+                  contactCustomField.value,
+                )
+              : contactCustomField.value,
+            type,
+            isCustomField: true,
+          })
         }
 
         setContactFields(tmpContactFields)
@@ -658,9 +672,7 @@ export const ContactDetail = ({
   }, [
     activeConversationId,
     conversations,
-    initializedCustomFields,
     contact,
-    customFieldMap,
     genderOptions,
     languageOptions,
     timezone,
@@ -776,11 +788,19 @@ export const ContactDetail = ({
             </div>
           )
         })}
-        <ContactCustomFieldManage
-          disabledIds={contactFields.map((field) => field.key)}
-          onChooseCustomField={handleChooseCustomField}
-          workspaceId={workspaceId}
-        />
+        <div className="flex items-center justify-between gap-6">
+          <ContactCustomFieldManage
+            disabledIds={contactFields.map((field) => field.key)}
+            onChooseCustomField={handleChooseCustomField}
+            workspaceId={workspaceId}
+          />
+          <ResetContactCustomFieldsDialog
+            contactId={contact.id}
+            disabled={!contactFields.some((field) => field.isCustomField)}
+            onSuccess={handleCustomFieldsReset}
+            workspaceId={workspaceId}
+          />
+        </div>
       </div>
 
       <EditContactField

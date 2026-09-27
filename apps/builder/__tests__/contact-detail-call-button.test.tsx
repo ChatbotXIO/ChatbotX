@@ -117,22 +117,12 @@ vi.mock("@/features/custom-fields/contact-custom-field-manage", () => ({
   ContactCustomFieldManage: () => null,
 }))
 
-vi.mock("@/features/contacts/edit-contact-field", () => ({
-  EditContactField: () => null,
+vi.mock("@/features/contacts/reset-contact-custom-fields-dialog", () => ({
+  ResetContactCustomFieldsDialog: () => null,
 }))
 
-// A STABLE object/array — see the `next-intl` mock's comment above for why:
-// `ContactDetail`'s effect depends on `customFieldMap`, itself derived from
-// `customFields` via `useMemo`, so a fresh `[]` on every call loops the same
-// way a fresh `t` does.
-const stableCustomFieldState = {
-  customFields: [] as unknown[],
-  initialized: true,
-}
-vi.mock("@/features/custom-fields/provider/custom-field-store-context", () => ({
-  useCustomFieldStore: (
-    selector: (state: typeof stableCustomFieldState) => unknown,
-  ) => selector(stableCustomFieldState),
+vi.mock("@/features/contacts/edit-contact-field", () => ({
+  EditContactField: () => null,
 }))
 
 const { ContactDetail } = await import("@/features/contacts/contact-detail")

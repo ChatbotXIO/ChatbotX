@@ -9,7 +9,7 @@ import { RECONNECT_ERROR_REASONS } from "@/lib/channel-reconnect"
 /**
  * Surface the outcome of an OAuth reconnect (see `@/lib/channel-reconnect`)
  * when the callback redirects back with `?reconnect=success|error&reason=...`.
- * Mirrors `useChannelDuplicatedError`.
+ * Mirrors `useChannelConnectError`.
  */
 export function useChannelReconnectResult() {
   const t = useTranslations("channels")

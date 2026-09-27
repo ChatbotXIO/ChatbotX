@@ -60,7 +60,10 @@ describe("updateContactSequenceAction", () => {
       restrictToAssignedUserId: "user-1",
     })
     updateContactSequencesSpy.mockResolvedValue([
-      { id: "enrollment-1", sequence: { id: "sequence-1" } },
+      {
+        id: "enrollment-1",
+        sequence: { id: "sequence-1", name: "Welcome sequence" },
+      },
     ])
   })
 
@@ -81,7 +84,7 @@ describe("updateContactSequenceAction", () => {
       sequenceIds: ["sequence-1"],
     })
     expect(result).toEqual([
-      { id: "enrollment-1", sequence: { id: "sequence-1" } },
+      { sequence: { id: "sequence-1", name: "Welcome sequence" } },
     ])
   })
 })

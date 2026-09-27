@@ -14,6 +14,7 @@ import { CopyPlus, Loader } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { duplicateFlowAction } from "./actions/duplicate-flow.action"
 import type { FlowResource } from "./schema/resource"
 
@@ -33,6 +34,7 @@ export function DuplicateFlowDialog({
   onSuccess,
 }: DuplicateFlowDialogProps) {
   const t = useTranslations()
+  const invalidateFlows = useInvalidateFlows()
 
   const { execute, isPending } = useAction(
     duplicateFlowAction.bind(null, workspaceId, flow?.id ?? ""),
@@ -43,6 +45,7 @@ export function DuplicateFlowDialog({
             feature: t("fields.flow.label"),
           }),
         )
+        invalidateFlows()
         onOpenChange(false)
         if (duplicatedFlowId) {
           onSuccess?.(duplicatedFlowId)

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest"
 import {
   PENDING_CONVERSATION_OPEN_MAX_AGE_MS,
+  STICKY_ENDED_STATUSES,
   useWhatsappVoipCallStore,
   WhatsappVoipCallPhase,
   type WhatsappVoipIncomingData,
@@ -140,6 +141,38 @@ describe("useWhatsappVoipCallStore", () => {
     expect(call).not.toBeNull()
     expect(call?.phase).toBe(WhatsappVoipCallPhase.ended)
     expect(call?.endedStatus).toBe("rejected")
+  })
+
+  test("handleEnded keeps the server's own reason alongside the status", () => {
+    seedRingingSlot(incomingData)
+
+    useWhatsappVoipCallStore
+      .getState()
+      .handleEnded("call-1", "answerFailed", "Access denied")
+
+    const call = useWhatsappVoipCallStore.getState().call
+    expect(call?.endedStatus).toBe("answerFailed")
+    expect(call?.endedMessage).toBe("Access denied")
+  })
+
+  test("only answer failures are sticky - normal endings keep the short linger", () => {
+    for (const status of [
+      "cannotAnswer",
+      "callEnded",
+      "micPermissionDenied",
+      "micNotFound",
+      "answerFailed",
+    ] as const) {
+      expect(STICKY_ENDED_STATUSES.has(status)).toBe(true)
+    }
+    for (const status of [
+      "completed",
+      "rejected",
+      "failed",
+      "connectionLost",
+    ] as const) {
+      expect(STICKY_ENDED_STATUSES.has(status)).toBe(false)
+    }
   })
 
   test("handleEnded defaults endedStatus to 'completed' when omitted", () => {
@@ -702,6 +735,42 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
 
   // `conversationAssigned` drops every basket entry for a reassigned
   // conversation in one store update.
+  test("dismissRinging stops a ringing slot and its basket entry", () => {
+    seedRingingSlot(incomingData)
+    useWhatsappVoipCallStore.getState().enqueueRinging({
+      ...incomingData,
+      whatsappCallId: "call-2",
+    })
+
+    useWhatsappVoipCallStore.getState().dismissRinging("call-1")
+    useWhatsappVoipCallStore.getState().dismissRinging("call-2")
+
+    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toEqual([])
+  })
+
+  test("dismissRinging leaves the tab that is answering alone", () => {
+    seedRingingSlot(incomingData)
+    useWhatsappVoipCallStore
+      .getState()
+      .setPhase("call-1", WhatsappVoipCallPhase.answering)
+
+    useWhatsappVoipCallStore.getState().dismissRinging("call-1")
+
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.answering,
+    )
+  })
+
+  test("dismissRinging is a no-op for a call this tab does not hold", () => {
+    seedRingingSlot(incomingData)
+    const before = useWhatsappVoipCallStore.getState()
+
+    useWhatsappVoipCallStore.getState().dismissRinging("call-missing")
+
+    expect(useWhatsappVoipCallStore.getState()).toBe(before)
+  })
+
   test("removeRingingByConversationIds drops every entry for the given conversation ids in one update", () => {
     const ringC = {
       ...incomingData,

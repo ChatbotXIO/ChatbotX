@@ -2,7 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { findDynamicImage } from "@/features/dynamic-images/queries"
 import { UpdateDynamicImageForm } from "@/features/dynamic-images/update-dynamic-image-form"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
@@ -44,13 +44,11 @@ export default async function EditDynamicImagePage({
           { label: t("actions.edit"), href: "" },
         ]}
       />
-      <CustomFieldStoreProvider workspaceId={workspaceId}>
-        <UpdateDynamicImageForm
-          dynamicImage={dynamicImage}
-          publicUrl={publicUrl}
-          workspaceId={workspaceId}
-        />
-      </CustomFieldStoreProvider>
+      <UpdateDynamicImageForm
+        dynamicImage={dynamicImage}
+        publicUrl={publicUrl}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

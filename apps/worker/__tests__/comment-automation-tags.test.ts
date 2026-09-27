@@ -16,7 +16,7 @@ vi.mock("../src/services/integrations", () => ({
   },
 }))
 
-const { createTagInfoResolver, extractInstagramMentions } = await import(
+const { createCommentTagResolvers, extractInstagramMentions } = await import(
   "../src/integration/handlers/comment-automation/comment-tags"
 )
 
@@ -34,7 +34,7 @@ function buildResolver(
     tags?: { id: string; name?: string }[]
   } = {},
 ) {
-  return createTagInfoResolver({
+  return createCommentTagResolvers({
     channelType: (overrides.channelType ?? "messenger") as never,
     workspaceId: "workspace-1",
     inboxId: "inbox-1",
@@ -43,7 +43,7 @@ function buildResolver(
     tags: overrides.tags,
     integrationRow: INTEGRATION_ROW,
     auth: AUTH,
-  })
+  }).resolveTagInfo
 }
 
 beforeEach(() => {
@@ -100,7 +100,7 @@ describe("extractInstagramMentions", () => {
   })
 })
 
-describe("createTagInfoResolver on messenger", () => {
+describe("resolveTagInfo on messenger", () => {
   test("counts the tags the webhook already carried, without a Graph call", async () => {
     mockCountExistingTaggedIdentities.mockResolvedValue(1)
 
@@ -114,6 +114,7 @@ describe("createTagInfoResolver on messenger", () => {
       inboxId: "inbox-1",
       sourceIds: ["user-a", "user-b"],
       sourceUsernames: [],
+      usernameIsSourceId: false,
     })
   })
 
@@ -154,7 +155,7 @@ describe("createTagInfoResolver on messenger", () => {
   })
 })
 
-describe("createTagInfoResolver on instagram", () => {
+describe("resolveTagInfo on instagram", () => {
   test("resolves handles from the comment text and never calls Graph", async () => {
     mockCountExistingTaggedIdentities.mockResolvedValue(1)
 
@@ -169,6 +170,7 @@ describe("createTagInfoResolver on instagram", () => {
       inboxId: "inbox-1",
       sourceIds: [],
       sourceUsernames: ["alice", "bob"],
+      usernameIsSourceId: false,
     })
   })
 
@@ -183,7 +185,7 @@ describe("createTagInfoResolver on instagram", () => {
   })
 })
 
-describe("createTagInfoResolver memoization", () => {
+describe("resolveTagInfo memoization", () => {
   // Several automations can match one comment; each would otherwise repeat the
   // Graph call and the contact lookup.
   test("resolves once however many times it is called", async () => {

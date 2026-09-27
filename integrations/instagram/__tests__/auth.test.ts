@@ -1,13 +1,13 @@
 import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test } from "vitest"
 import { getInstagramAccount } from "../src/apis/auth"
-import { INSTAGRAM_API_URL } from "../src/constants"
+import { API_URL } from "../src/constants"
 
 const ACCESS_TOKEN = "instagram-user-access-token"
 
 function mockMeResponse(accountType: string | undefined) {
   server.use(
-    http.get(`${INSTAGRAM_API_URL}/me`, ({ request }) => {
+    http.get(`${API_URL}/me`, ({ request }) => {
       expect(new URL(request.url).searchParams.get("access_token")).toBe(
         ACCESS_TOKEN,
       )

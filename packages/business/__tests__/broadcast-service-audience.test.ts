@@ -24,6 +24,18 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   likeContains: (value: string) => value,
 }))
 
+vi.mock("../src/broadcast/plan-policy.service", () => ({
+  broadcastPlanPolicyService: {
+    appliesToChannel: (channel: string) => channel === "messenger",
+    hasRestrictions: () => false,
+    resolveForWorkspace: vi.fn().mockResolvedValue({
+      policy: { kind: "unrestricted" },
+      planName: null,
+    }),
+    restrictionFor: vi.fn(() => null),
+  },
+}))
+
 const { broadcastService } = await import("../src/broadcast/service")
 
 describe("broadcastService.listAudience deletedAt gate", () => {

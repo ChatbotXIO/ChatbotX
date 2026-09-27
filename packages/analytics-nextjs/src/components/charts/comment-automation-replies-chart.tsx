@@ -9,11 +9,11 @@ export function CommentAutomationRepliesChart() {
   const t = useTranslations()
   const locale = useLocale()
 
-  const {
-    commentAutomationReplyStats: replyStats,
-    from,
-    to,
-  } = useAnalysisStore((state) => state)
+  const replyStats = useAnalysisStore(
+    (state) => state.commentAutomationReplyStats,
+  )
+  const from = useAnalysisStore((state) => state.from)
+  const to = useAnalysisStore((state) => state.to)
 
   return (
     <AreaChart

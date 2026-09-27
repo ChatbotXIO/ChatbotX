@@ -26,6 +26,7 @@
     "@chatbotx.io/auth": "workspace:*",
     "@chatbotx.io/automated-response": "workspace:*",
     "@chatbotx.io/business": "workspace:*",
+    "@chatbotx.io/channel-registry": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/encryption": "workspace:*",
     "@chatbotx.io/event-bus": "workspace:*",

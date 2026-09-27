@@ -280,6 +280,31 @@ describe("webchat guest rate limit", () => {
     expect(result.limited).toBe(true)
   })
 
+  test("supports a higher endpoint-specific IP budget", async () => {
+    const store = createMemoryRateLimitStore()
+    let result = { limited: false, retryAfter: 0 }
+
+    for (let index = 0; index < 600; index += 1) {
+      result = await checkGuestRateLimit({
+        clientIp: "workspace-1",
+        ipLimit: 600,
+        sessionLimit: 20,
+        store,
+        webchatId: "media-proxy",
+      })
+    }
+    expect(result.limited).toBe(false)
+
+    result = await checkGuestRateLimit({
+      clientIp: "workspace-1",
+      ipLimit: 600,
+      sessionLimit: 20,
+      store,
+      webchatId: "media-proxy",
+    })
+    expect(result.limited).toBe(true)
+  })
+
   test("uses a local fallback limiter when the backing store throws", async () => {
     const failingStore = {
       incrementCounter: vi.fn(() => Promise.reject(new Error("redis down"))),

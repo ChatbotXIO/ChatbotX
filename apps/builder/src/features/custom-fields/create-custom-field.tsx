@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactElement, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
 import { createCustomFieldRequest } from "./schema/action"
 
@@ -105,6 +106,7 @@ function CreateCustomFieldForm({
   onClose?: () => void
 }) {
   const t = useTranslations()
+  const invalidateCustomFields = useInvalidateCustomFields()
 
   const customFieldTypeOptions = useMemo(
     () => [
@@ -148,6 +150,7 @@ function CreateCustomFieldForm({
                 feature: t("fields.customField.label"),
               }),
             )
+            invalidateCustomFields()
 
             resetFormAndAction()
             onSuccess?.()

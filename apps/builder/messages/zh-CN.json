@@ -649,6 +649,7 @@
     },
     "title": "计费",
     "trial": {
+      "planName": "试用",
       "daysLeft": "试用期：剩下 {days} 天",
       "dismiss": "关闭",
       "endsTomorrow": "试用期将于明天结束",
@@ -827,6 +828,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "升级您的套餐",
+      "sendRate": "您当前的{plan}套餐支持的群发最高速度为每分钟 {rate} 条消息。请升级套餐，群发速度最高可提升至 {multiplier} 倍。",
+      "activeBroadcasts": "您当前的{plan}套餐一次可运行 {max, plural, one {# 个群发任务} other {# 个群发任务}}。请升级套餐以同时运行更多群发任务。"
+    },
+    "sendLimit": {
+      "title": "限制",
+      "hint": "留空以发送给所有匹配的联系人。",
+      "rateHint": "留空以使用默认发送速率。",
+      "rangeSummary": "联系人 #{start} – #{end}",
+      "rangeFromSummary": "从联系人 #{start} 起",
+      "rangeLabel": "联系人范围",
+      "fromLabel": "从",
+      "toLabel": "到",
+      "allPlaceholder": "全部",
+      "rangeEndBeforeStart": "结束位置不能早于开始位置"
     }
   },
   "commentAutomation": {
@@ -855,7 +873,26 @@
       "keywordsNotMatched": "关键词不匹配",
       "contactNotNew": "联系人不是新用户",
       "alreadyRepliedOnPost": "已在该帖子回复过",
-      "engagedOnOtherPost": "已在其他帖子互动过"
+      "engagedOnOtherPost": "已在其他帖子互动过",
+      "mentionCountNotMatched": "提及人数不匹配"
+    },
+    "replyTo": {
+      "mentions": "提及人数足够的评论",
+      "mentionCount": "被标记人数",
+      "mentionCountDescription": "仅匹配标记了至少这么多人(@名称)的评论。",
+      "mentionCountOption": "{count, plural, one {# 人} other {# 人}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "评论等于",
+      "contain": "评论包含"
+    },
+    "hideComments": {
+      "hasGif": "包含 GIF",
+      "hasEmoji": "包含表情符号"
+    },
+    "trackUserTags": {
+      "label": "追踪用户是否标记了其他用户",
+      "descriptionText": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。"
     }
   },
   "channels": {
@@ -868,6 +905,10 @@
       "tiktok": "此TikTok帐户已连接到另一个工作区。",
       "whatsapp": "此 WhatsApp 号码已连接到另一个工作区。",
       "zalo": "此Zalo OA 已连接到另一个工作区。"
+    },
+    "missingScopes": {
+      "generic": "连接已取消：部分权限未授予。请重新连接并接受所有请求的权限。",
+      "tiktok": "TikTok 连接已取消：部分权限未授予。请重新连接并接受所有请求的权限。"
     },
     "reconnect": {
       "errors": {
@@ -1483,7 +1524,7 @@
     "create": "创建自动化",
     "deactivated": "自动化已停用",
     "description": "自动处理联系人在 Facebook 贴文下的留言。",
-    "excludeKeywords": "排除包含这些关键字的留言",
+    "excludeKeywords": "排除包含以下内容的评论",
     "excludeKeywordsDescription": "若留言包含任一关键字，收件匣回复与公开回复自动化都会忽略该留言。",
     "hideComments": {
       "all": "隐藏所有留言",
@@ -1509,7 +1550,7 @@
       "ignoreCommentReplies": "忽略留言底下的回复",
       "ignoreCommentRepliesDescription": "若留言是对其他留言的回复，而非顶层留言，则跳过自动化处理。",
       "trackUserTags": "追踪用户是否标记了其他用户",
-      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少用户被标记。使用 '{{total_new_tagged}}' 查看被标记的人中有多少不在联系人列表中。",
+      "trackUserTagsDescription": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。",
       "likeUserComment": "对用户留言按赞",
       "likeUserCommentDescription": "自动对留言者的留言按赞。",
       "replyOncePerUserPerPost": "每则贴文对每位用户只回复一次",
@@ -1531,7 +1572,7 @@
     "privateReply": "私讯回复（收件匣）",
     "privateReplyDescription": "将私讯发送到留言者的收件匣。可选择 AI Agent、固定文本范本、聊天机器人流程，或停用。",
     "publicReply": "公开回复留言",
-    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。",
+    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。 支持 spintax。",
     "replies": "回复",
     "replyAfter": "回复时间",
     "replyAfterType": {
@@ -1601,6 +1642,7 @@
     "dashboardCta": "在广告仪表盘中查看"
   },
   "fields": {
+    "optionalHint": "(可选)",
     "marketingMessagesConfigId": {
       "label": "营销消息配置 ID",
       "description": "用于请求 marketing_messages_messenger 权限的“Facebook 商务登录”配置 ID。"
@@ -2836,8 +2878,13 @@
         "step3": "粘贴下面的凭证以进行连接。"
       },
       "displayName": "显示名称",
+      "needsReauthorizationForComments": "此连接是在评论自动化之前授权的。请重新连接以开始接收评论事件。",
       "label": "TikTok",
-      "openId": "打开ID"
+      "openId": "打开ID",
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "timezone": {
       "description": "联系人将套用此时区。",
@@ -3076,6 +3123,9 @@
     },
     "lastCallTranscript": {
       "label": "最近通话转写"
+    },
+    "sendRatePerMinute": {
+      "label": "每分钟发送消息数"
     }
   },
   "flowAnalytics": {
@@ -3191,6 +3241,8 @@
       "typing": "打字",
       "unarchiveConversation": "取消封存对话",
       "unassignConversation": "取消分配对话",
+      "markConversationAsUnread": "将会话标记为未读",
+      "markConversationAsRead": "将会话标记为已读",
       "unfollowConversation": "取消追踪对话",
       "unsubscribeBroadcast": "退订广播",
       "unsubscribeSequence": "退订串行",
@@ -3448,6 +3500,14 @@
     "description": "您访问的页面不存在，或可能已被移动。",
     "backToHome": "返回首页"
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "将机器人消息标记为已读",
+      "enabled": "已启用",
+      "disabled": "已停用",
+      "description": "启用后，机器人会自动将自己的消息标记为已读"
+    }
+  },
   "inboxTeams": {
     "title": "收件匣团队"
   },
@@ -3488,7 +3548,7 @@
     "create": "创建自动化",
     "deactivated": "自动化已停用",
     "description": "自动处理联系人在 Instagram 贴文下的留言。",
-    "excludeKeywords": "排除包含这些关键字的留言",
+    "excludeKeywords": "排除包含以下内容的评论",
     "excludeKeywordsDescription": "若留言包含任一关键字，收件匣回复与公开回复自动化都会忽略该留言。",
     "hideComments": {
       "all": "隐藏所有留言",
@@ -3512,7 +3572,7 @@
       "ignoreCommentReplies": "忽略留言底下的回复",
       "ignoreCommentRepliesDescription": "若留言是对其他留言的回复，而非顶层留言，则跳过自动化处理。",
       "trackUserTags": "追踪用户是否标记了其他用户",
-      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少用户被标记。使用 '{{total_new_tagged}}' 查看被标记的人中有多少不在联系人列表中。",
+      "trackUserTagsDescription": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。",
       "likeUserComment": "对用户留言按赞",
       "likeUserCommentDescription": "自动对留言者的留言按赞。",
       "replyOncePerUserPerPost": "每则贴文对每位用户只回复一次",
@@ -3533,7 +3593,7 @@
     "privateReply": "私讯回复（收件匣）",
     "privateReplyDescription": "将私讯发送到留言者的收件匣。可选择 AI Agent、固定文本范本、聊天机器人流程，或停用。",
     "publicReply": "公开回复留言",
-    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。",
+    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。 支持 spintax。",
     "replies": "回复",
     "replyAfter": "回复时间",
     "replyAfterType": {
@@ -3585,13 +3645,13 @@
     "publicOnlyNote": "Threads 目前仅支持公开回复。",
     "trackCommentsOn": "追踪评论的对象",
     "publicReply": "公开回复评论",
-    "publicReplyDescription": "对符合条件的 Threads 评论发表公开回复。",
+    "publicReplyDescription": "对符合条件的 Threads 评论发表公开回复。 最多 10 条文本消息(支持 spintax),每条作为单独的回复发布。",
     "replyMessage": "回复消息",
     "replyFlow": "回复流程",
     "replyAIAgent": "回复 AI Agent",
     "includeKeywordsType": "回复对象",
     "includeKeywords": "要匹配的关键词",
-    "excludeKeywords": "排除包含这些关键词的评论",
+    "excludeKeywords": "排除包含以下内容的评论",
     "keywordsPlaceholder": "输入后按 Enter...",
     "replyAfter": "回复时间",
     "replyAfterValue": "时间值",
@@ -3600,7 +3660,8 @@
     "card": {
       "targeting": "目标与回复",
       "filters": "筛选条件与选项",
-      "replyTiming": "回复时机"
+      "replyTiming": "回复时机",
+      "hideComments": "隐藏留言"
     },
     "postType": {
       "all": "所有帖子",
@@ -3642,8 +3703,124 @@
       "keywordsRequired": "请为所选的匹配方式至少输入一个关键词。",
       "delayMustBePositive": "延迟时间必须大于零。",
       "delayMustBeZero": "所选的时机选项不支持延迟时间，请设为零。",
-      "atLeastOneFieldRequired": "请至少填写一个字段。"
+      "atLeastOneFieldRequired": "请至少填写一个字段。",
+      "replyTextRequired": "请至少输入一条回复消息。",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "只能隐藏您帖子下的顶级回复。",
+    "hideComments": {
+      "all": "隐藏所有留言",
+      "hasPhoneNumber": "包含电话号码",
+      "hasLink": "包含链接",
+      "hasKeywords": "包含关键字",
+      "keywords": "关键字",
+      "showCommentsAfter": "多久后重新显示留言"
+    },
+    "showCommentsAfter": {
+      "none": "永不"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. 最多 10 条文本消息(支持 spintax),每条作为单独的回复发布。",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "排除包含以下内容的评论",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "请至少输入一条回复消息。"
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "activated": "自动化已激活",
@@ -3838,6 +4015,7 @@
     "changeHideState": "更改隐藏状态",
     "changeLikeState": "更改类似状态",
     "commentHidden": "此留言已隐藏",
+    "commentMediaUnavailable": "此评论包含无法显示的 GIF、贴纸或图片",
     "connectFailed": "{feature} 连接失败",
     "connectSuccess": "{feature} 连接成功",
     "connectedSuccess": "{feature} 连接成功",
@@ -3855,7 +4033,10 @@
     "deleteFeature": "删除 {feature}",
     "resetFeature": "重置{feature}",
     "resetConfirmation": "这将清空所选{feature}的值。\n此操作无法撤销。",
+    "resetAllConfirmation": "这将清空该联系人所有{feature}的值。\n此操作无法撤销。",
     "resetSuccess": "{feature}重置成功",
+    "clearFeature": "清除{feature}",
+    "clearSuccess": "{feature}清除成功",
     "deleteFileComingSoon": "删除文件功能即将推出",
     "deleteMessageSuccess": "消息已删除",
     "deleteNodeError": "无法删除该区块。请再试一次。",
@@ -3946,6 +4127,7 @@
     "whatsappCarouselButtonsMismatch": "在 WhatsApp 上，轮播需要在每张卡片上使用相同的按钮：每张卡片上有一个链接按钮，或每张卡片上有相同数量的回应按钮",
     "whatsappCarouselLinkButtonNotAlone": "在 WhatsApp 中，带有链接按钮的轮播卡片不能同时包含其他按钮。请移除此卡片上的其他按钮，或将链接按钮改成其他动作。",
     "tiktokCardTitleTooLong": "TikTok 会截断这条消息：附加按钮后，只会发送前 40 个字符。请缩短消息内容或移除按钮。",
+    "sendTextTooLongForChannel": "这条消息超过了该渠道允许的长度。请缩短内容，或将此节点指向限制更高的渠道。",
     "waTemplateMpmNoProducts": "发布前请至少为此多商品按钮添加一个商品。",
     "waTemplateMpmTooManySections": "多商品按钮最多可包含 10 个版块。请在发布前移除部分版块。",
     "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",
@@ -4026,6 +4208,7 @@
     "selectPage": {
       "alreadyConnectedNote": "该页面已连接",
       "bmLookupFailedDescription": "重新连接Messenger 并授予商务管理平台访问权限，以便可以列出通过商务管理平台管理的页面。",
+      "loadFailed": "无法加载你的 Facebook 主页",
       "bmLookupFailedTitle": "业务管理平台页面可能遗失",
       "noConnectablePagesDescription": "您不是此页面的管理员",
       "noConnectablePagesTitle": "没有可连接的页面",
@@ -4918,7 +5101,8 @@
     "title": "TikTok"
   },
   "tools": {
-    "title": "工具"
+    "title": "工具",
+    "beta": "Beta"
   },
   "trigger": {
     "actions": {
@@ -5511,6 +5695,7 @@
         "statusNoAnswer": "无应答",
         "eyebrowCallEnded": "通话已结束",
         "statusConnectionLost": "连接已断开",
+        "answerFailed": "无法接听通话。请确认麦克风已连接并已在浏览器中授权，然后重试。",
         "ringingListTitle": "{count, plural, one {# 个来电} other {# 个来电}}"
       },
       "capability": {
@@ -5694,8 +5879,9 @@
       "invalidDatasetId": "请输入有效的 Dataset ID（仅数字）。",
       "whatsappNotFound": "未找到 WhatsApp 集成。",
       "testEventCodeRequired": "发送测试事件前请先保存测试事件代码。",
-      "noContactForTest": "此渠道尚无符合条件的联系人。测试事件需要归因到真实联系人（WhatsApp 需为来自 click-to-WhatsApp 广告的联系人）。",
-      "invalidTestEventCode": "测试事件代码只能包含字母、数字、连字符或下划线(最多 64 个字符)。"
+      "invalidTestEventCode": "测试事件代码只能包含字母、数字、连字符或下划线(最多 64 个字符)。",
+      "invalidMessagingId": "消息 ID 只能包含字母、数字、连字符或下划线（最多 512 个字符）。",
+      "capiDisconnected": "此渠道的 Meta CAPI 已断开连接。请先重新连接，再发送测试事件。"
     },
     "fields": {
       "eventType": {
@@ -5839,10 +6025,21 @@
       "saved": "测试事件代码已保存。",
       "cleared": "测试事件代码已清除。事件恢复正常上报。",
       "send": "发送测试事件",
-      "sent": "测试事件已加入队列,一分钟内会出现在 Events Manager 的 Test events 中。",
-      "sendHint": "向该渠道最近的联系人发送一个示例 Purchase 事件(100 USD)。",
+      "sent": "测试事件已发送。一分钟内会出现在 Events Manager 的 Test events 中。",
+      "sendHint": "向你输入的消息 ID 发送一条示例 Purchase（100 USD）。不会使用任何已保存的联系人。",
       "activeNotice": "测试模式已开启:在清除代码之前,该渠道的事件不计入报告。",
-      "openTestEvents": "打开 Test events"
+      "openTestEvents": "打开 Test events",
+      "dialogTitle": "发送测试事件",
+      "dialogDescription": "将携带你的测试事件代码发送一条示例 Purchase（100 USD）。请粘贴 Events Manager → Test events → Messaging → Graph API Explorer 中的示例消息 ID，以免归因到真实联系人。",
+      "messagingIdLabel": {
+        "messenger": "联系人 ID（page_scoped_user_id）",
+        "instagram": "联系人 ID（ig_sid）",
+        "whatsapp": "点击 ID（ctwa_clid）"
+      },
+      "messagingIdPlaceholder": "粘贴 Meta 提供的示例值",
+      "messagingIdHint": "仅限字母、数字、连字符和下划线（最多 512 个字符）。",
+      "cancel": "取消",
+      "confirmSend": "发送"
     }
   },
   "appointments": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "机器人字段"
+  },
+  "openLink": {
+    "title": "打开链接",
+    "invalidTitle": "链接无效。",
+    "invalidDescription": "此链接无效或已过期。",
+    "openZaloGroup": "打开 Zalo 群组",
+    "openZalo": "打开 Zalo",
+    "openMessenger": "打开 Messenger"
   }
 }

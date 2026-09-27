@@ -51,7 +51,7 @@ describe("zalo outgoing handlers return provider message ids", () => {
     } as never)
 
     expect(mockSendMessageToZaloOA).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_provider-1"] })
+    expect(result).toEqual({ messageIds: ["m_provider-1"], sentCount: 1 })
   })
 
   test("sendFlowStep (sendText) returns the Send API message_id", async () => {
@@ -70,7 +70,7 @@ describe("zalo outgoing handlers return provider message ids", () => {
     } as never)
 
     expect(mockSendMessageToZaloOA).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_provider-1"] })
+    expect(result).toEqual({ messageIds: ["m_provider-1"], sentCount: 1 })
   })
 
   test("sendMessage tolerates a response without data.message_id", async () => {
@@ -92,6 +92,6 @@ describe("zalo outgoing handlers return provider message ids", () => {
       },
     } as never)
 
-    expect(result).toEqual({ messageIds: [] })
+    expect(result).toEqual({ messageIds: [], sentCount: 1 })
   })
 })

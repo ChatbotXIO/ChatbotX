@@ -51,10 +51,6 @@ vi.mock("@/lib/platform-credential-owner", () => ({
   resolveOwnerForWorkspace: vi.fn(async () => "owner-1"),
 }))
 
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  FlowStoreProvider: ({ children }: { children: React.ReactNode }) => children,
-}))
-
 vi.mock(
   "@/features/integration-webchat/components/create-webchat-form",
   () => ({

@@ -24,6 +24,7 @@ import {
   type WhatsappVoipCall,
   WhatsappVoipCallDirection,
   WhatsappVoipCallPhase,
+  type WhatsappVoipEndedStatus,
 } from "./voip-call-store"
 import { WhatsappIncomingCallCard } from "./whatsapp-incoming-call-card"
 import { WhatsappRingingCallsList } from "./whatsapp-ringing-calls-list"
@@ -68,6 +69,25 @@ function getEyebrowKey(call: WhatsappVoipCall): string {
 }
 
 /**
+ * The final sentence for each way a call can end other than normally. Typed
+ * over every non-`completed` status, so a new one fails to compile until it is
+ * given a sentence rather than silently rendering nothing.
+ */
+const ENDED_STATUS_KEYS: Record<
+  Exclude<WhatsappVoipEndedStatus, "completed">,
+  string
+> = {
+  rejected: "whatsapp.calls.panel.statusDeclined",
+  failed: "whatsapp.calls.panel.statusCallFailed",
+  connectionLost: "whatsapp.calls.panel.statusConnectionLost",
+  cannotAnswer: "whatsapp.calls.errors.voipCannotAnswer",
+  callEnded: "whatsapp.calls.errors.voipCallEnded",
+  micPermissionDenied: "whatsapp.calls.outbound.micPermissionDenied",
+  micNotFound: "whatsapp.calls.outbound.micNotFound",
+  answerFailed: "whatsapp.calls.panel.answerFailed",
+}
+
+/**
  * True for an outbound call that never reached active before ending - Meta's no
  * answer case, derived client-side from the absence of startedAt.
  */
@@ -95,21 +115,15 @@ function getStatusKey(call: WhatsappVoipCall): string {
     case WhatsappVoipCallPhase.incomingRinging:
       return "whatsapp.calls.incomingCall"
     case WhatsappVoipCallPhase.ended:
-      switch (call.endedStatus) {
-        case "rejected":
-          return "whatsapp.calls.panel.statusDeclined"
-        case "failed":
-          return "whatsapp.calls.panel.statusCallFailed"
-        case "connectionLost":
-          return "whatsapp.calls.panel.statusConnectionLost"
-        default:
-          // An outbound dial that never connected is No answer; anything else
-          // is a normal Call ended, with the duration suffix rendered
-          // separately when startedAt is present.
-          return isNoAnswer(call)
-            ? "whatsapp.calls.panel.statusNoAnswer"
-            : "whatsapp.calls.panel.statusCallEnded"
+      if (call.endedStatus && call.endedStatus !== "completed") {
+        return ENDED_STATUS_KEYS[call.endedStatus]
       }
+      // An outbound dial that never connected is No answer; anything else is
+      // a normal Call ended, with the duration suffix rendered separately when
+      // startedAt is present.
+      return isNoAnswer(call)
+        ? "whatsapp.calls.panel.statusNoAnswer"
+        : "whatsapp.calls.panel.statusCallEnded"
     default:
       return ""
   }
@@ -371,7 +385,9 @@ export function WhatsappCallPanel() {
                  * rendered outside this container so it is never re-announced
                  * every second. */}
                 <span aria-live="polite" className="text-emerald-100">
-                  {statusKey ? t(statusKey) : null}
+                  {/* The server's own reason wins when it gave one. */}
+                  {(isEnded && call.endedMessage) ||
+                    (statusKey ? t(statusKey) : null)}
                   {/* "Call ended · mm:ss" — only when the call
                    * actually connected (startedAt set); a never-answered outbound
                    * dial renders the plain "No answer" status above with no

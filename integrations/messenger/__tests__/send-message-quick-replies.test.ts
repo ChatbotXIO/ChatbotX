@@ -7,7 +7,7 @@ const { mockSendPageMessage } = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/apis/message", () => ({
-  sendPageMessage: mockSendPageMessage,
+  sendMessage: mockSendPageMessage,
 }))
 
 const postbackQuickReply: MessageButtonTemplate = {

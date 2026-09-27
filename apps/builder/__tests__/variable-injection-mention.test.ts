@@ -87,6 +87,21 @@ describe("variable injection mention", () => {
     ).toContain('data-label="Coupon 1"')
   })
 
+  // The suggestion trigger is `{{`, and the hydration regex needs two braces
+  // too, so a single-brace spintax block is ordinary text on both legs of the
+  // round trip. Without that, an author's `{Hi|Hello}` would be swallowed into
+  // a chip on reload and never reach the worker's spintax pass.
+  it("keeps a single-brace spintax block as plain text, alongside a real variable", () => {
+    const html = plainTextToParagraphHtmlWithVariableMentions(
+      "{Hi|Hello} {{raw:Full Name}}",
+      [RAW_CUSTOM_FIELD_OPTION],
+    )
+
+    expect(html).toContain("{Hi|Hello} ")
+    expect(html).toContain('data-id="raw:Full Name"')
+    expect(html).not.toContain('data-id="Hi|Hello"')
+  })
+
   it("hydrates saved raw custom-field variable text into a labeled mention node", () => {
     expect(
       plainTextToParagraphHtmlWithVariableMentions("Name: {{raw:Full Name}}", [

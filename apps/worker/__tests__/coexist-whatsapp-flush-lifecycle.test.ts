@@ -151,6 +151,11 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     coexistAttachmentDownload: "coexistAttachmentDownload",
   },
   integrationQueue: { add: mockQueueAdd, addBulk: vi.fn() },
+  LowJobAction: {
+    coexistAttachmentDownload: "coexistAttachmentDownload",
+    updateContactAvatar: "updateContactAvatar",
+  },
+  lowQueue: { add: vi.fn(), addBulk: vi.fn() },
 }))
 
 // Carries the real schema forward and overrides only the models these tests

@@ -1,6 +1,6 @@
 import { type ConversationHandlers, SdkException } from "@chatbotx.io/sdk"
-import { sendInstagramMessage } from "../apis/page"
-import type { InstagramAuthValue } from "../schemas"
+import { sendMessage } from "../apis/message"
+import type { InstagramAuthValue } from "../schema"
 
 const sendTyping: ConversationHandlers<InstagramAuthValue>["sendTyping"] =
   async (props) => {
@@ -15,7 +15,7 @@ const sendTyping: ConversationHandlers<InstagramAuthValue>["sendTyping"] =
       throw new SdkException("Missing recipient ID in conversation")
     }
 
-    await sendInstagramMessage(ctx.auth, {
+    await sendMessage(ctx.auth, {
       recipient: { id: recipientId },
       sender_action: typing ? "typing_on" : "typing_off",
       messaging_type: "RESPONSE",
@@ -34,7 +34,7 @@ const agentMarkAsRead: ConversationHandlers<InstagramAuthValue>["agentMarkAsRead
       throw new SdkException("Missing recipient ID in conversation")
     }
 
-    await sendInstagramMessage(ctx.auth, {
+    await sendMessage(ctx.auth, {
       recipient: { id: recipientId },
       sender_action: "mark_seen",
     })

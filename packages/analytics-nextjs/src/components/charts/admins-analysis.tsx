@@ -1,14 +1,10 @@
 "use client"
 
 import type { HumanAgentStats } from "@chatbotx.io/analytics"
+import ChartHeader from "@chatbotx.io/ui/components/charts/chart-header"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
+import { CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef } from "@chatbotx.io/ui/types/data-table"
 import { useTranslations } from "next-intl"
@@ -122,10 +118,8 @@ export function AdminsAnalysis() {
   })
 
   return (
-    <Card className="w-full md:col-span-2">
-      <CardHeader>
-        <CardTitle>{t("analytics.admins")}</CardTitle>
-      </CardHeader>
+    <>
+      <ChartHeader title={t("analytics.admins")} />
       <CardContent>
         <DataTable
           labels={{
@@ -143,6 +137,6 @@ export function AdminsAnalysis() {
           table={table}
         />
       </CardContent>
-    </Card>
+    </>
   )
 }

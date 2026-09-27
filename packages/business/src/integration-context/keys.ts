@@ -11,6 +11,8 @@ export const integrationContextEnv = () =>
       NEXT_PUBLIC_STORAGE_URL: z.url().optional(),
       FORCE_PUBLIC_HTTPS: z.stringbool().optional().default(false),
       REALTIME_BROADCAST_SECRET: z.string().min(32),
+      REALTIME_INTERNAL_URL: z.url().optional(),
+      REALTIME_DELIVERY_GATE: z.stringbool().optional().default(true),
     },
     runtimeEnv: process.env,
     skipValidation: process.env.SKIP_ENV_CHECK === "true",

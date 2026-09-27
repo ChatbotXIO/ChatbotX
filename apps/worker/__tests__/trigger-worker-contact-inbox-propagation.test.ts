@@ -60,14 +60,16 @@ vi.mock("bullmq", () => {
   return { Worker: WorkerMock }
 })
 
-vi.mock("@chatbotx.io/worker-config", () => ({
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
+  ...(await importOriginal()),
   defaultWorkerOptions: {},
   getRedisConnection: () => ({}),
   queueNames: { enum: { trigger: "trigger" } },
   TriggerJobAction: { evaluateTriggers: "evaluateTriggers" },
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => ({
+  ...(await importOriginal()),
   SdkException: class SdkException extends Error {},
 }))
 

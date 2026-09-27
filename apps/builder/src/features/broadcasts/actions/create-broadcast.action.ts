@@ -1,13 +1,13 @@
 "use server"
 
 import { broadcastService } from "@chatbotx.io/business"
-import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
-import { isValidationException } from "@/lib/errors/validation-exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBroadcastRequest } from "../schema/action"
+import { withBroadcastPlanLimitOutcome } from "./broadcast-plan-limit-outcome"
+import { withBroadcastValidationErrors } from "./broadcast-validation-error"
 
 export const createBroadcastAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -25,22 +25,13 @@ export const createBroadcastAction = workspaceActionClient
         )
       : false
 
-    try {
-      return await broadcastService.create({
-        ...parsedInput,
-        workspaceId,
-        canViewEmailAndPhone,
-      })
-    } catch (error) {
-      if (isValidationException(error) && error.field) {
-        return returnValidationErrors(createBroadcastRequest, {
-          _errors: ["Validation Exception"],
-          [error.field]: {
-            _errors: [error.message],
-          },
-        })
-      }
-
-      throw error
-    }
+    return await withBroadcastValidationErrors(() =>
+      withBroadcastPlanLimitOutcome(() =>
+        broadcastService.create({
+          ...parsedInput,
+          workspaceId,
+          canViewEmailAndPhone,
+        }),
+      ),
+    )
   })

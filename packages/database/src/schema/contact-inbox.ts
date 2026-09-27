@@ -109,6 +109,15 @@ export const contactInboxModel = pgTable(
         table.sourceUserId.asc().nullsLast(),
       )
       .where(sql`${table.sourceUserId} IS NOT NULL`),
+    // Lets "the N-th contact of a page in id order" (broadcast audience
+    // window/order, see partials/broadcast.ts) be an ordered index range scan
+    // for a single-inbox audience, instead of the planner choosing between
+    // walking the whole PK in id order and sorting one inbox's rows.
+    index("ContactInbox_inboxId_id_idx").using(
+      "btree",
+      table.inboxId.asc().nullsLast(),
+      table.id.asc().nullsLast(),
+    ),
     index("ContactInbox_contactId_lastIncomingMessageAt_idx").using(
       "btree",
       table.contactId.asc().nullsLast(),

@@ -25,6 +25,16 @@ export type IncomingContact = {
    * Display-only, never used as a matching key.
    */
   sourceUsername?: string
+  /**
+   * The channel's own conversation identifier, for channels that require one to
+   * address an outbound DM (TikTok's `conversation_id`). Stored on
+   * `Conversation.additionalAttributes.channelConversationId` — deliberately NOT
+   * `sourceConversationId`, which keys the conversation row and is reserved for
+   * comment threads (the post id). Keeping the two apart is what lets a channel
+   * have both a DM and comment threads for the same contact; see
+   * `packages/database/src/partials/channel.ts`.
+   */
+  channelConversationId?: string
 }
 
 /** The `{ sourceId, sourceUserId }` slice shared by contact-inbox rows and SDK contacts. */
@@ -111,6 +121,15 @@ export type OutgoingMessage = {
 }
 
 export const messageTypes = z.enum(["outgoing", "incoming", "activity"])
+
+/**
+ * Who sent the message a channel is echoing back to us. A channel parser
+ * classifies its own echoes; the shared worker only acts on the enum.
+ * - `firstParty`: the channel's own inbox (e.g. Facebook Page Inbox).
+ * - `thirdParty`: another app connected to the same channel account.
+ */
+export const echoOrigins = z.enum(["firstParty", "thirdParty"])
+export type EchoOrigin = z.infer<typeof echoOrigins>
 export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {
@@ -125,6 +144,7 @@ export type IncomingMessage = {
     | MessageTemplateEntity
     | MessageWhatsappFlowResponseEntity
     | MessageStoryReplyEntity
+    | MessageSharedPostEntity
     | MessageWhatsappCallEntity
     | MessageWhatsappCallPermissionReplyEntity
     | { [x: string]: unknown }
@@ -150,6 +170,25 @@ export type MessageStoryReplyEntity = {
   type: "story_reply"
   story: {
     id: string
+    url?: string
+  }
+}
+
+/**
+ * Carried on a message whose payload is a shared post rather than text or an
+ * attachment (TikTok's `type: "share_post"` DM). The message's `text` holds the
+ * link so it is readable and clickable in the inbox today; this keeps the ids
+ * intact so a richer preview can be rendered later without re-parsing the text.
+ *
+ * `url` is the channel's own link for the share, verbatim — TikTok sends a
+ * player URL with its own tracking params, and rewriting it into a
+ * `tiktok.com/@user/video/<id>` guess would mean inventing an author handle the
+ * webhook never carries.
+ */
+export type MessageSharedPostEntity = {
+  type: "shared_post"
+  sharedPost: {
+    postId: string
     url?: string
   }
 }
@@ -369,7 +408,7 @@ export const MessageEntitySchema = z.custom<IncomingMessage>(
 
 export type IncomingAttachment = {
   sourceId: string
-  fileType: FileType
+  fileType: IncomingFileType
   mimeType: string
   originPath: string
   size: number
@@ -536,3 +575,9 @@ export type ContentType = z.infer<typeof contentTypes>
 
 export const fileTypes = z.enum(["image", "audio", "video", "file"])
 export type FileType = z.infer<typeof fileTypes>
+
+// Inbound only. `gif` marks an animated clip the inbox autoplays on loop — an
+// image/gif file or a video rendition of one (Telegram animations, video
+// stickers). Outbound stays on `fileTypes`: channel send APIs take no "gif".
+export const incomingFileTypes = z.enum([...fileTypes.options, "gif"])
+export type IncomingFileType = z.infer<typeof incomingFileTypes>

@@ -6,6 +6,7 @@ import { deleteSequenceStepAction } from "../actions/delete-sequence-step.action
 import { upsertSequenceStepAction } from "../actions/upsert-sequence-step.action"
 import type { DelayChange, DelayUnit } from "../lib/delay"
 import { delayViewToStored } from "../lib/delay"
+import { useInvalidateSequences } from "../provider/sequence-hook"
 
 type SavePayload = {
   stepId?: string
@@ -106,6 +107,7 @@ export function useSequenceStep({
 }: UseSequenceStepProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateSequences = useInvalidateSequences()
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
   const pendingSavesRef = useRef(0)
   // FIFO save queue: a payload built before the CREATE step's response comes
@@ -134,6 +136,7 @@ export function useSequenceStep({
           if (isCreate) {
             createdStepIdRef.current = result.data.stepId
           }
+          invalidateSequences()
           onSaved?.()
           return true
         }
@@ -146,7 +149,7 @@ export function useSequenceStep({
         return false
       }
     },
-    [workspaceId, onSaved, t],
+    [workspaceId, onSaved, t, invalidateSequences],
   )
 
   // Deliberately not `async`: validation and payload building run
@@ -221,6 +224,7 @@ export function useSequenceStep({
         toast.success(
           t("messages.deletedSuccess", { feature: t("sequences.step") }),
         )
+        invalidateSequences()
         router.refresh()
       } else {
         toast.error(t("messages.deleteFailed"))
@@ -229,7 +233,7 @@ export function useSequenceStep({
       console.error("Error deleting step:", error)
       toast.error(t("messages.deleteFailed"))
     }
-  }, [step?.id, workspaceId, sequenceId, t, router])
+  }, [step?.id, workspaceId, sequenceId, t, router, invalidateSequences])
 
   const handleSelectFlow = useCallback(
     async (flowId: string) => {

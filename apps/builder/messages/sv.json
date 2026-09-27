@@ -462,6 +462,7 @@
     },
     "title": "Fakturering",
     "trial": {
+      "planName": "Provperiod",
       "daysLeft": "Provperiod: {days} dagar kvar",
       "dismiss": "Stäng",
       "endsTomorrow": "Provperioden slutar i morgon",
@@ -640,6 +641,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Uppgradera ditt abonnemang",
+      "sendRate": "Ditt nuvarande {plan}-abonnemang stöder broadcasts med en maximal sändningshastighet på {rate} meddelanden per minut. Uppgradera abonnemanget för att skicka broadcasts upp till {multiplier}x snabbare.",
+      "activeBroadcasts": "Ditt nuvarande {plan}-abonnemang kör {max, plural, one {# broadcast} other {# broadcasts}} åt gången. Uppgradera abonnemanget för att köra fler broadcasts samtidigt."
+    },
+    "sendLimit": {
+      "title": "Gräns",
+      "hint": "Lämna tomt för att skicka till alla matchande kontakter.",
+      "rateHint": "Lämna tomt för att använda standardhastigheten.",
+      "rangeSummary": "Kontakter nr {start} – nr {end}",
+      "rangeFromSummary": "Från kontakt nr {start}",
+      "rangeLabel": "Kontaktintervall",
+      "fromLabel": "Från",
+      "toLabel": "Till",
+      "allPlaceholder": "Alla",
+      "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen"
     }
   },
   "commentAutomation": {
@@ -668,7 +686,26 @@
       "keywordsNotMatched": "Nyckelorden matchade inte",
       "contactNotNew": "Kontakten är inte ny",
       "alreadyRepliedOnPost": "Redan besvarad på detta inlägg",
-      "engagedOnOtherPost": "Har redan interagerat på ett annat inlägg"
+      "engagedOnOtherPost": "Har redan interagerat på ett annat inlägg",
+      "mentionCountNotMatched": "Antalet omnämnanden stämde inte"
+    },
+    "replyTo": {
+      "mentions": "Kommentarer med tillräckligt många omnämnanden",
+      "mentionCount": "Antal taggade personer",
+      "mentionCountDescription": "Endast kommentarer som taggar minst så här många personer (@namn) matchar.",
+      "mentionCountOption": "{count, plural, one {# person} other {# personer}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Kommentarer lika med",
+      "contain": "Kommentarer som innehåller"
+    },
+    "hideComments": {
+      "hasGif": "Innehåller GIF",
+      "hasEmoji": "Innehåller emoji"
+    },
+    "trackUserTags": {
+      "label": "Spåra om en användare taggar andra användare",
+      "descriptionText": "Räknar kontona som taggas i varje kommentar och lägger till dem i kontaktens totaler över alla kommentarer. Använd '{{total_tagged}}' för alla taggade konton och '{{total_new_tagged}}' för konton som aldrig har skrivit till din sida eller varit kontakter."
     }
   },
   "channels": {
@@ -681,6 +718,10 @@
       "tiktok": "Det här TikTok-kontot är redan anslutet till en annan arbetsyta.",
       "whatsapp": "Det här WhatsApp-numret är redan anslutet till en annan arbetsyta.",
       "zalo": "Det här Zalo OA-kontot är redan anslutet till en annan arbetsyta."
+    },
+    "missingScopes": {
+      "generic": "Anslutningen avbröts: vissa behörigheter beviljades inte. Anslut igen och godkänn alla begärda behörigheter.",
+      "tiktok": "TikTok-anslutningen avbröts: vissa behörigheter beviljades inte. Anslut igen och godkänn alla begärda behörigheter."
     },
     "reconnect": {
       "errors": {
@@ -1480,7 +1521,7 @@
     "create": "Skapa automatisering",
     "deactivated": "Automatiseringen har inaktiverats",
     "description": "Automatisera Facebook-kommentarer för dina kontakter.",
-    "excludeKeywords": "Uteslut kommentarer med dessa nyckelord",
+    "excludeKeywords": "Uteslut kommentarer som innehåller",
     "excludeKeywordsDescription": "Kommentarer som innehåller något av dessa nyckelord ignoreras av både inkorgsautomatiseringen och den offentliga svarsautomatiseringen.",
     "hideComments": {
       "all": "Dölj alla kommentarer",
@@ -1506,7 +1547,7 @@
       "ignoreCommentReplies": "Svara inte på svar på kommentarer",
       "ignoreCommentRepliesDescription": "Hoppa över automatisering för kommentarer som är svar på andra kommentarer och inte kommentarer på toppnivå.",
       "trackUserTags": "Spåra om en användare taggar andra användare",
-      "trackUserTagsDescription": "Använd '{{total_tagged}}' för att se hur många användare som taggades. Använd '{{total_new_tagged}}' för att se hur många av de taggade personerna som inte finns i kontaktlistan.",
+      "trackUserTagsDescription": "Räknar kontona som taggas i varje kommentar och lägger till dem i kontaktens totaler över alla kommentarer. Använd '{{total_tagged}}' för alla taggade konton och '{{total_new_tagged}}' för konton som aldrig har skrivit till din sida eller varit kontakter.",
       "likeUserComment": "Gilla användarens kommentar",
       "likeUserCommentDescription": "Reagera automatiskt med en gilla-markering på kommentatorns kommentar.",
       "replyOncePerUserPerPost": "Svara endast en gång per användare och inlägg",
@@ -1528,7 +1569,7 @@
     "privateReply": "Privat svar (inkorg)",
     "privateReplyDescription": "Skicka ett privat meddelande till kommentatorns inkorg. Välj en AI-agent, en fast textmall, ett chattbotflöde eller inaktivera.",
     "publicReply": "Offentligt svar på kommentar",
-    "publicReplyDescription": "Publicera ett offentligt svar direkt under kommentaren. Stöder upp till 10 textmallar, en AI-agent, ett chattbotflöde eller inget svar. Varje meddelande publiceras som ett separat svar.",
+    "publicReplyDescription": "Publicera ett offentligt svar direkt under kommentaren. Stöder upp till 10 textmallar, en AI-agent, ett chattbotflöde eller inget svar. Varje meddelande publiceras som ett separat svar. Spintax stöds.",
     "replies": "Svar",
     "replyAfter": "Svara efter",
     "replyAfterType": {
@@ -1598,6 +1639,7 @@
     "dashboardCta": "Visa i annonspanelen"
   },
   "fields": {
+    "optionalHint": "(valfritt)",
     "marketingMessagesConfigId": {
       "label": "Konfigurations-ID för marknadsföringsmeddelanden",
       "description": "Konfigurations-ID för Facebook Login for Business som används för att begära behörigheten marketing_messages_messenger."
@@ -2833,8 +2875,13 @@
         "step3": "Klistra in inloggningsuppgifterna nedan för att ansluta."
       },
       "displayName": "Visningsnamn",
+      "needsReauthorizationForComments": "Den här anslutningen godkändes före kommentarsautomatisering. Anslut igen för att börja ta emot kommentarshändelser.",
       "label": "TikTok",
-      "openId": "Öppet ID"
+      "openId": "Öppet ID",
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "timezone": {
       "description": "Kontakter tilldelas den här tidszonen när kontaktens tidszon är okänd.",
@@ -3073,6 +3120,9 @@
     },
     "lastCallTranscript": {
       "label": "Senaste samtalstranskription"
+    },
+    "sendRatePerMinute": {
+      "label": "Meddelanden per minut"
     }
   },
   "flowAnalytics": {
@@ -3188,6 +3238,8 @@
       "typing": "Skriver",
       "unarchiveConversation": "Återställ konversation från arkivet",
       "unassignConversation": "Ta bort tilldelning av konversation",
+      "markConversationAsUnread": "Markera konversation som oläst",
+      "markConversationAsRead": "Markera konversation som läst",
       "unfollowConversation": "Sluta följa konversation",
       "unsubscribeBroadcast": "Avsluta prenumeration på utskick",
       "unsubscribeSequence": "Avsluta prenumeration på sekvens",
@@ -3448,6 +3500,14 @@
   "editProfile": {
     "title": "Redigera profil"
   },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Markera botmeddelanden som lästa",
+      "enabled": "Aktiverad",
+      "disabled": "Inaktiverad",
+      "description": "När detta är aktiverat markerar boten automatiskt sina egna meddelanden som lästa"
+    }
+  },
   "inboxTeams": {
     "title": "Inkorgsteam"
   },
@@ -3488,7 +3548,7 @@
     "create": "Skapa automatisering",
     "deactivated": "Automatiseringen har inaktiverats",
     "description": "Automatisera Instagram-kommentarer för dina kontakter.",
-    "excludeKeywords": "Uteslut kommentarer med dessa nyckelord",
+    "excludeKeywords": "Uteslut kommentarer som innehåller",
     "excludeKeywordsDescription": "Kommentarer som innehåller något av dessa nyckelord ignoreras av både inkorgsautomatiseringen och den offentliga svarsautomatiseringen.",
     "hideComments": {
       "all": "Dölj alla kommentarer",
@@ -3512,7 +3572,7 @@
       "ignoreCommentReplies": "Svara inte på svar på kommentarer",
       "ignoreCommentRepliesDescription": "Hoppa över automatisering för kommentarer som är svar på andra kommentarer och inte kommentarer på toppnivå.",
       "trackUserTags": "Spåra om en användare taggar andra användare",
-      "trackUserTagsDescription": "Använd '{{total_tagged}}' för att se hur många användare som taggades. Använd '{{total_new_tagged}}' för att se hur många av de taggade personerna som inte finns i kontaktlistan.",
+      "trackUserTagsDescription": "Räknar kontona som taggas i varje kommentar och lägger till dem i kontaktens totaler över alla kommentarer. Använd '{{total_tagged}}' för alla taggade konton och '{{total_new_tagged}}' för konton som aldrig har skrivit till din sida eller varit kontakter.",
       "likeUserComment": "Gilla användarens kommentar",
       "likeUserCommentDescription": "Reagera automatiskt med en gilla-markering på kommentatorns kommentar.",
       "replyOncePerUserPerPost": "Svara endast en gång per användare och inlägg",
@@ -3533,7 +3593,7 @@
     "privateReply": "Privat svar (inkorg)",
     "privateReplyDescription": "Skicka ett privat meddelande till kommentatorns inkorg. Välj en AI-agent, en fast textmall, ett chattbotflöde eller inaktivera.",
     "publicReply": "Offentligt svar på kommentar",
-    "publicReplyDescription": "Publicera ett offentligt svar direkt under kommentaren. Stöder upp till 10 textmallar, en AI-agent, ett chattbotflöde eller inget svar. Varje meddelande publiceras som ett separat svar.",
+    "publicReplyDescription": "Publicera ett offentligt svar direkt under kommentaren. Stöder upp till 10 textmallar, en AI-agent, ett chattbotflöde eller inget svar. Varje meddelande publiceras som ett separat svar. Spintax stöds.",
     "replies": "Svar",
     "replyAfter": "Svara efter",
     "replyAfterType": {
@@ -3585,13 +3645,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Upp till 10 textmeddelanden (spintax stöds), vart och ett publicerat som ett separat svar.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Uteslut kommentarer som innehåller",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -3600,7 +3660,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Dölj kommentarer"
     },
     "postType": {
       "all": "All posts",
@@ -3642,8 +3703,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Ange minst ett svarsmeddelande.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Endast svar på översta nivån till dina inlägg kan döljas.",
+    "hideComments": {
+      "all": "Dölj alla kommentarer",
+      "hasPhoneNumber": "Innehåller telefonnummer",
+      "hasLink": "Innehåller länk",
+      "hasKeywords": "Innehåller nyckelord",
+      "keywords": "Nyckelord",
+      "showCommentsAfter": "Visa kommentarer efter"
+    },
+    "showCommentsAfter": {
+      "none": "Aldrig"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Upp till 10 textmeddelanden (spintax stöds), vart och ett publicerat som ett separat svar.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Uteslut kommentarer som innehåller",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Ange minst ett svarsmeddelande."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Automatisering av Instagram Story-svar",
@@ -3838,6 +4015,7 @@
     "changeHideState": "Ändra dölj-status",
     "changeLikeState": "Ändra gilla-status",
     "commentHidden": "Den här kommentaren har dolts",
+    "commentMediaUnavailable": "Den här kommentaren innehåller en GIF, ett klistermärke eller en bild som inte kan visas",
     "connectFailed": "Det gick inte att ansluta {feature}",
     "connectSuccess": "{feature} har anslutits",
     "connectedSuccess": "{feature} har anslutits",
@@ -3855,7 +4033,10 @@
     "deleteFeature": "Ta bort {feature}",
     "resetFeature": "Återställ {feature}",
     "resetConfirmation": "Detta rensar värdena för de valda {feature}.\nDenna åtgärd kan inte ångras.",
+    "resetAllConfirmation": "Detta rensar värdena för alla {feature} för denna kontakt.\nDenna åtgärd kan inte ångras.",
     "resetSuccess": "{feature} återställdes",
+    "clearFeature": "Rensa {feature}",
+    "clearSuccess": "{feature} rensades",
     "deleteFileComingSoon": "Funktionen för att ta bort filer kommer snart",
     "deleteMessageSuccess": "Meddelandet har tagits bort",
     "deleteNodeError": "Det gick inte att ta bort blocket. Försök igen.",
@@ -3946,6 +4127,7 @@
     "viewPost": "Visa inlägg",
     "none": "Ingen",
     "tiktokCardTitleTooLong": "TikTok kommer att korta ner det här meddelandet: med knappar kopplade skickas bara de första 40 tecknen. Korta ner meddelandet eller ta bort knapparna.",
+    "sendTextTooLongForChannel": "Det här meddelandet är längre än vad kanalen tillåter. Korta ner det eller rikta det här blocket mot en kanal med högre gräns.",
     "waTemplateMpmNoProducts": "Lägg till minst en produkt i den här flerproduktsknappen innan publicering.",
     "waTemplateMpmTooManySections": "En flerproduktsknapp kan ha högst 10 sektioner. Ta bort några sektioner innan publicering.",
     "waTemplateMpmTooManyProducts": "En flerproduktsknapp kan ha högst 30 produkter totalt. Ta bort några produkter innan publicering.",
@@ -4026,6 +4208,7 @@
     "selectPage": {
       "alreadyConnectedNote": "Den här sidan är redan ansluten",
       "bmLookupFailedDescription": "Återanslut Messenger och bevilja åtkomst till Business Manager så att sidor som hanteras där kan visas.",
+      "loadFailed": "Det gick inte att läsa in dina Facebook-sidor",
       "bmLookupFailedTitle": "Business Manager-sidor kan saknas",
       "noConnectablePagesDescription": "Du är inte administratör för den här sidan",
       "noConnectablePagesTitle": "Inga sidor tillgängliga att ansluta",
@@ -4918,7 +5101,8 @@
     "title": "TikTok"
   },
   "tools": {
-    "title": "Verktyg"
+    "title": "Verktyg",
+    "beta": "Beta"
   },
   "trigger": {
     "actions": {
@@ -5511,6 +5695,7 @@
         "statusNoAnswer": "Inget svar",
         "eyebrowCallEnded": "SAMTAL AVSLUTAT",
         "statusConnectionLost": "Anslutningen förlorades",
+        "answerFailed": "Samtalet kunde inte besvaras. Kontrollera att en mikrofon är ansluten och tillåten i webbläsaren och försök igen.",
         "ringingListTitle": "{count, plural, one {# inkommande samtal} other {# inkommande samtal}}"
       },
       "capability": {
@@ -5981,8 +6166,9 @@
       "invalidDatasetId": "Ange ett giltigt Dataset ID (endast siffror).",
       "whatsappNotFound": "WhatsApp-integrationen hittades inte.",
       "testEventCodeRequired": "Spara en testhändelsekod innan du skickar en testhändelse.",
-      "noContactForTest": "Ingen lämplig kontakt på den här kanalen än. En testhändelse behöver en riktig kontakt att kopplas till (för WhatsApp en som kom från en click-to-WhatsApp-annons).",
-      "invalidTestEventCode": "Testhändelsekoden får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 64)."
+      "invalidTestEventCode": "Testhändelsekoden får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 64).",
+      "invalidMessagingId": "Messaging-id får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 512).",
+      "capiDisconnected": "Meta CAPI är frånkopplat för den här kanalen. Anslut igen innan du skickar en testhändelse."
     },
     "fields": {
       "eventType": {
@@ -6126,10 +6312,21 @@
       "saved": "Testhändelsekod sparad.",
       "cleared": "Testhändelsekod rensad. Händelser är live igen.",
       "send": "Skicka testhändelse",
-      "sent": "Testhändelse i kö. Den visas under Test events i Events Manager inom en minut.",
-      "sendHint": "Skickar en exempel-Purchase (100 USD) till kanalens senaste kontakt.",
+      "sent": "Testhändelse skickad. Den visas under Test events i Events Manager inom en minut.",
+      "sendHint": "Skickar ett exempel-Purchase (100 USD) till ett messaging-id som du anger. Ingen sparad kontakt används.",
       "activeNotice": "Testläge är på: händelser från den här kanalen räknas inte i rapporter förrän koden rensas.",
-      "openTestEvents": "Öppna Test events"
+      "openTestEvents": "Öppna Test events",
+      "dialogTitle": "Skicka testhändelse",
+      "dialogDescription": "Ett exempel-Purchase (100 USD) skickas med din testhändelsekod. Klistra in exempel-messaging-id:t från Events Manager → Test events → Messaging → Graph API Explorer, så att inget tillskrivs en riktig kontakt.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt-id (page_scoped_user_id)",
+        "instagram": "Kontakt-id (ig_sid)",
+        "whatsapp": "Klick-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Klistra in exempelvärdet från Meta",
+      "messagingIdHint": "Endast bokstäver, siffror, bindestreck och understreck (max 512).",
+      "cancel": "Avbryt",
+      "confirmSend": "Skicka"
     }
   },
   "minigames": {
@@ -6490,5 +6687,13 @@
   },
   "accountFields": {
     "title": "Botfält"
+  },
+  "openLink": {
+    "title": "Öppna länk",
+    "invalidTitle": "Ogiltig länk.",
+    "invalidDescription": "Den här länken är ogiltig eller har upphört att gälla.",
+    "openZaloGroup": "Öppna Zalo-grupp",
+    "openZalo": "Öppna Zalo",
+    "openMessenger": "Öppna Messenger"
   }
 }

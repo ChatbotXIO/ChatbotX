@@ -25,7 +25,7 @@ export const sendMessage: MessageHandlers<ApiAuthValue>["sendMessage"] = async (
 
   if (!ctx.auth.callbackUrl) {
     // Inbound-only channels (no callback URL configured) are valid, not an error.
-    return { messageIds: [] }
+    return { messageIds: [], sentCount: 0 }
   }
 
   const response = await postSignedEnvelope({
@@ -48,7 +48,10 @@ export const sendMessage: MessageHandlers<ApiAuthValue>["sendMessage"] = async (
     },
   })
 
-  return { messageIds: response?.messageId ? [response.messageId] : [] }
+  return {
+    messageIds: response?.messageId ? [response.messageId] : [],
+    sentCount: 1,
+  }
 }
 
 /**
@@ -65,7 +68,7 @@ export const sendFlowStep: MessageHandlers<ApiAuthValue>["sendFlowStep"] =
     } = props
 
     if (!ctx.auth.callbackUrl) {
-      return { messageIds: [] }
+      return { messageIds: [], sentCount: 0 }
     }
 
     const { text, contentAttributes } = mapFlowStepToEnvelope(step)
@@ -87,7 +90,10 @@ export const sendFlowStep: MessageHandlers<ApiAuthValue>["sendFlowStep"] =
       },
     })
 
-    return { messageIds: response?.messageId ? [response.messageId] : [] }
+    return {
+      messageIds: response?.messageId ? [response.messageId] : [],
+      sentCount: 1,
+    }
   }
 
 const fileTypeForStep = (

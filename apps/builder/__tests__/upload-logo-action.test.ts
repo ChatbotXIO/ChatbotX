@@ -110,9 +110,10 @@ function createCtx() {
     auth: { authType: "none" as const },
     platform: {
       appUrl: "https://app.example.com",
-      wsUrl: "wss://realtime.example.com",
+      publicRealtimeUrl: "wss://realtime.example.com",
+      internalRealtimeUrl: "https://realtime.example.com",
       storageUrl: "https://storage.example.com",
-      getRealtimeAuthHeaders: vi.fn(async () => ({})),
+      getRealtimeBroadcastAuthHeaders: vi.fn(async () => ({})),
     },
   }
 }

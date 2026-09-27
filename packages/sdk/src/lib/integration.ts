@@ -77,6 +77,11 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     commentAnchor?: CommentAnchor
   }
 }
+export type OutgoingSendResult = {
+  messageIds: string[]
+  /** Number of discrete channel messages accepted by the provider. */
+  sentCount: number
+}
 
 export type MessageHandlers<
   IAuth extends AuthValue,
@@ -93,9 +98,7 @@ export type MessageHandlers<
         sendFrom?: "inbox"
       }
     },
-    {
-      messageIds: string[]
-    }
+    OutgoingSendResult
   >
   receiveMessage: Handler<
     {
@@ -124,9 +127,7 @@ export type MessageHandlers<
         commentAnchor?: CommentAnchor
       }
     },
-    {
-      messageIds: string[]
-    }
+    OutgoingSendResult
   >
   handleMessageStatus?: Handler<
     {
@@ -138,6 +139,15 @@ export type MessageHandlers<
       }
     },
     ReceivedMessageResult | null
+  >
+  getMessageMediaUrls: Handler<
+    {
+      ctx: Context<IAuth>
+      data: { graphMessageId: string }
+    },
+    // `sourceId` is the provider attachment id, so hydration can match fresh
+    // media to stored attachments by identity instead of array position.
+    Array<{ sourceId: string; url: string; mimeType: string | null }>
   >
 }
 
@@ -152,9 +162,7 @@ export type CommentHandlers<IAuth extends AuthValue> = {
         sendFrom?: "inbox"
       }
     },
-    {
-      messageIds: string[]
-    }
+    OutgoingSendResult
   >
   // Sends a comment-anchored private reply DM instead of a public comment
   // reply. Same input/output shape as sendComment — `message.contentAttributes.
@@ -169,9 +177,7 @@ export type CommentHandlers<IAuth extends AuthValue> = {
         sendFrom?: "inbox"
       }
     },
-    {
-      messageIds: string[]
-    }
+    OutgoingSendResult
   >
   deleteComment: Handler<
     {
@@ -209,6 +215,13 @@ export type CommentHandlers<IAuth extends AuthValue> = {
       data: {
         commentId: string
         hidden: boolean
+        /**
+         * The post the comment sits under, for channels whose hide endpoint
+         * needs it alongside the comment id (TikTok). Meta's does not, so this
+         * is optional and ignored there. Sourced from the comment message's
+         * `contentAttributes.postId`.
+         */
+        postId?: string
       }
     },
     void
@@ -223,6 +236,8 @@ export type ConversationHandlers<IAuth extends AuthValue> = {
         contact: OutgoingContact
         typing: boolean
         seconds?: number
+        /** Channel id of the message to anchor on (WhatsApp wamid). */
+        messageSourceId?: string
       }
     },
     void
@@ -243,6 +258,8 @@ export type ConversationHandlers<IAuth extends AuthValue> = {
       ctx: Context<IAuth>
       data: {
         contact: OutgoingContact
+        /** Channel id of the newest incoming message (WhatsApp wamid). */
+        messageSourceId?: string
       }
     },
     void
@@ -290,6 +307,10 @@ export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
     { ctx: Context<IAuth>; data: { sourceId: string } },
     IncomingContact
+  >
+  getContactProfilePicUrl: Handler<
+    { ctx: Context<IAuth>; data: { sourceId: string } },
+    string | null
   >
   update: Handler<
     // biome-ignore lint/suspicious/noExplicitAny: safe pass any data

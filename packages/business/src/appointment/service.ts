@@ -26,7 +26,7 @@ import {
 import { appointmentExternalCalendarService } from "../appointment-external-calendar"
 import { appointmentReminderService } from "../appointment-reminder"
 import { BaseService } from "../base.service"
-import { contactService } from "../contact"
+import { type ContactAccessScope, contactService } from "../contact"
 import { conversationService } from "../conversation"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
@@ -204,7 +204,18 @@ class AppointmentService extends BaseService {
     workspaceId: string
     contactId: string
     limit?: number
+    accessScope?: ContactAccessScope
   }) {
+    // Repositories already scope by workspace; only restricted members need a
+    // parent-contact lookup to enforce their assigned-contact access.
+    if (input.accessScope?.restrictToAssignedUserId) {
+      await contactService.findByIdOrFail({
+        workspaceId: input.workspaceId,
+        id: input.contactId,
+        accessScope: input.accessScope,
+      })
+    }
+
     const appointments = await appointmentRepository.listByContact(input)
     const { appUrl } = await resolveTenantSettings({
       workspaceId: input.workspaceId,

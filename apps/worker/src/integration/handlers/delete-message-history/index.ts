@@ -1,7 +1,6 @@
 import { aiContextStore } from "@chatbotx.io/ai/server"
 import { conversationService } from "@chatbotx.io/business"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
-import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
   getSafeSinceTime,
@@ -33,7 +32,6 @@ export async function handleAIDeleteMessageHistory({
       const dmConversation = await conversationService.findDMByContact({
         workspaceId: conversation.workspaceId,
         contactId: conversation.contactId,
-        channel: channelTypes.safeParse(contactInbox.channel).data,
       })
 
       if (!dmConversation || dmConversation.id === conversation.id) {

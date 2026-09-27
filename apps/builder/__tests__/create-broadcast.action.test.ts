@@ -1,13 +1,22 @@
 // @vitest-environment node
 
-import { validationException } from "@chatbotx.io/business/errors"
+import { broadcastPlanLimitException } from "@chatbotx.io/business/errors"
+import { TRIAL_BROADCAST_PLAN_POLICY } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  MockBroadcastValidationException,
   mockCreate,
   mockReturnValidationErrors,
   mockGetCurrentUserAndTargetWorkspace,
 } = vi.hoisted(() => ({
+  MockBroadcastValidationException: class MockBroadcastValidationException extends Error {
+    readonly field: string
+    constructor(message: string, field: string) {
+      super(message)
+      this.field = field
+    }
+  },
   mockCreate: vi.fn(),
   mockReturnValidationErrors: vi.fn((_schema: unknown, errs: unknown) => ({
     __validationError: errs,
@@ -27,6 +36,7 @@ vi.mock("@/lib/safe-action", () => {
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastService: { create: mockCreate },
+  BroadcastValidationException: MockBroadcastValidationException,
 }))
 
 vi.mock("next-safe-action", () => ({
@@ -67,7 +77,7 @@ const baseInput = {
 }
 
 const validationError = (field: string, message: string) =>
-  validationException(field, message)
+  new MockBroadcastValidationException(message, field)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -290,5 +300,20 @@ describe("createBroadcastAction — happy path", () => {
         parsedInput: { ...baseInput, flowId: "flow-1" },
       }),
     ).rejects.toThrow("boom")
+  })
+
+  test("returns a plan-limit outcome for the business exception", async () => {
+    const error = broadcastPlanLimitException("sendRate", {
+      policy: TRIAL_BROADCAST_PLAN_POLICY,
+      planName: "Trial",
+    })
+    mockCreate.mockRejectedValue(error)
+
+    await expect(
+      callAction({
+        bindArgsParsedInputs: [WORKSPACE_ID],
+        parsedInput: { ...baseInput, flowId: "flow-1" },
+      }),
+    ).resolves.toEqual({ outcome: "planLimit", limit: error.data })
   })
 })

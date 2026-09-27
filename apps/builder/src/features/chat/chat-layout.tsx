@@ -16,7 +16,7 @@ import {
 import { useIsMobileState } from "@chatbotx.io/ui/hooks/use-mobile"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import type { ConversationResource } from "../conversations/schema/resource"
 import { useCallPlaybackStore } from "../messages/store/call-playback-store"
@@ -49,12 +49,29 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     isLoadingConversation,
     isBootstrappingUrlConversation,
     activeConversationId,
+    activeConversationAutoSelected,
     setActiveConversationId,
   } = useChatStore((state) => state)
 
   const [activeConversation, setActiveConversation] =
     useState<ConversationResource | null>(null)
-  const [isContactSheetOpen, setIsContactSheetOpen] = useState(false)
+  // The mobile contact sheet is bound to the conversation it was opened for:
+  // selecting a different thread closes it, while realtime `conversations`
+  // churn can never close it.
+  const [contactSheetConversationId, setContactSheetConversationId] = useState<
+    string | null
+  >(null)
+  if (
+    contactSheetConversationId !== null &&
+    contactSheetConversationId !== activeConversationId
+  ) {
+    // Reset during render (not in an effect) so returning to the original
+    // thread later does not reopen a sheet the user never reopened.
+    setContactSheetConversationId(null)
+  }
+  const isContactSheetOpen =
+    contactSheetConversationId !== null &&
+    contactSheetConversationId === activeConversationId
   const conversationIdParam = useConversationIdParam()
 
   // The shared call-recording `<audio>` element (`callPlaybackStore`) is a
@@ -73,6 +90,30 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   // JS — and rendering waits for the first measurement rather than guessing
   // desktop and remounting everything a frame later.
   const isMobile = useIsMobileState()
+  // On mobile, suppress an auto-selected first conversation so the list
+  // shows first; genuine deep links are never auto-closed. Applied only once,
+  // at the first resolved measurement — otherwise a mid-session resize or
+  // tablet rotation across the breakpoint would wipe out a conversation the
+  // user has been actively reading, since `activeConversationAutoSelected`
+  // stays `true` for the rest of the desktop session until another
+  // conversation is picked.
+  const hasAppliedInitialMobileSuppressionRef = useRef(false)
+  useEffect(() => {
+    if (
+      isMobile === undefined ||
+      hasAppliedInitialMobileSuppressionRef.current
+    ) {
+      return
+    }
+    hasAppliedInitialMobileSuppressionRef.current = true
+    if (isMobile && activeConversationAutoSelected) {
+      setActiveConversationId(null)
+    }
+  }, [activeConversationAutoSelected, isMobile, setActiveConversationId])
+
+  const mobileActiveConversationId = activeConversationAutoSelected
+    ? null
+    : activeConversationId
 
   const isResolvingConversation =
     (isFirstLoadConversation && isLoadingConversation) ||
@@ -96,10 +137,6 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     } else {
       setActiveConversation(null)
     }
-    // Closes the mobile contact sheet left over from a previous conversation:
-    // without this, going back and selecting a different thread could reopen
-    // it bound to the wrong contact.
-    setIsContactSheetOpen(false)
   }, [activeConversationId, conversations])
 
   const paneState: PaneState = {
@@ -134,14 +171,16 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         // Fills the height `FullBleed` derives from the shell rather than
         // naming a viewport unit of its own — see the desktop group below.
         <div className="flex min-h-0 flex-1 flex-col">
-          {activeConversationId ? (
+          {mobileActiveConversationId ? (
             <MessageThreadPane
               {...paneState}
               onBack={() => {
                 conversationIdParam.clear()
                 setActiveConversationId(null)
               }}
-              onOpenContact={() => setIsContactSheetOpen(true)}
+              onOpenContact={() =>
+                setContactSheetConversationId(activeConversationId ?? null)
+              }
               workspaceId={workspaceId}
             />
           ) : (
@@ -154,7 +193,14 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             </div>
           )}
 
-          <Sheet onOpenChange={setIsContactSheetOpen} open={isContactSheetOpen}>
+          <Sheet
+            onOpenChange={(open) =>
+              setContactSheetConversationId(
+                open ? (activeConversationId ?? null) : null,
+              )
+            }
+            open={isContactSheetOpen}
+          >
             <SheetContent
               className="w-[85vw] overflow-y-auto px-4 py-3 sm:max-w-sm"
               side="right"

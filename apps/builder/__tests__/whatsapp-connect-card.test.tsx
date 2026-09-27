@@ -74,6 +74,7 @@ vi.mock("@/features/shared/coexist-popup", () => ({
 // procedures 404 there.
 vi.mock("@/lib/orpc/orpc", () => ({
   client: {
+    inboxesAPI: { listAllInboxesAuthenticatedAPI: {} },
     integrationWhatsappAPIs: {
       setCoexistWhatsappAPI,
       listWhatsappPhoneNumbersInternalAPI,

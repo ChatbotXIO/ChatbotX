@@ -401,6 +401,39 @@ describe("WhatsappCallPanel", () => {
     )
   })
 
+  test.each([
+    ["cannotAnswer", "whatsapp.calls.errors.voipCannotAnswer"],
+    ["callEnded", "whatsapp.calls.errors.voipCallEnded"],
+    ["micPermissionDenied", "whatsapp.calls.outbound.micPermissionDenied"],
+    ["micNotFound", "whatsapp.calls.outbound.micNotFound"],
+    ["answerFailed", "whatsapp.calls.panel.answerFailed"],
+  ] as const)("a %s answer failure shows its own sentence", async (endedStatus, key) => {
+    useWhatsappVoipCallStore.setState({
+      call: { ...connectionLostCall, endedStatus },
+    })
+    await render()
+
+    expect(document.body.textContent).toContain(key)
+  })
+
+  test("the server's own reason replaces the status sentence", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: {
+        ...connectionLostCall,
+        endedStatus: "answerFailed",
+        endedMessage: "This call was answered by another agent",
+      },
+    })
+    await render()
+
+    expect(document.body.textContent).toContain(
+      "This call was answered by another agent",
+    )
+    expect(document.body.textContent).not.toContain(
+      "whatsapp.calls.panel.answerFailed",
+    )
+  })
+
   test("clicking dismiss on the ended message calls dismissEnded()", async () => {
     useWhatsappVoipCallStore.setState({ call: endedCall })
     await render()

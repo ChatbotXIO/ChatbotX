@@ -1,10 +1,18 @@
 import { describe, expect, test } from "vitest"
 import {
+  REALTIME_EVENT_TOPICS,
   RealtimeEventType,
+  RealtimeProtocol,
+  RealtimeTopic,
+  realtimeBatchEnvelopeSchema,
   realtimeCallTransportEndedSchema,
   realtimeCallTransportIncomingSchema,
   realtimeCallTransportOutboundAnswerVoipSchema,
   realtimeCallTransportOutboundStatusVoipSchema,
+  realtimeEventEnvelopeSchema,
+  realtimeProtocolSchema,
+  realtimeSubscriptionMessageSchema,
+  serializeRealtimeSubscriptionMessage,
   whatsappCallClaimedElsewhereSchema,
 } from "../src/schemas"
 
@@ -190,5 +198,104 @@ describe("realtimeCallTransportOutboundStatusVoipSchema", () => {
     expect(RealtimeEventType.whatsappCallOutboundStatus).toBe(
       "whatsappCallOutboundStatus",
     )
+  })
+})
+
+describe("REALTIME_EVENT_TOPICS", () => {
+  test("every RealtimeEventType has at least one registered topic and an explicit durability", () => {
+    for (const eventType of Object.values(RealtimeEventType)) {
+      const event = REALTIME_EVENT_TOPICS[eventType]
+      expect(event?.topics.length).toBeGreaterThan(0)
+      expect(["durable", "ephemeral"]).toContain(event?.durability)
+    }
+  })
+
+  test("every registered topic is a known RealtimeTopic value", () => {
+    const knownTopics = new Set(Object.values(RealtimeTopic))
+    for (const event of Object.values(REALTIME_EVENT_TOPICS)) {
+      for (const topic of event.topics) {
+        expect(knownTopics.has(topic)).toBe(true)
+      }
+    }
+  })
+
+  test("only typing is ephemeral and conversationAssigned carries both topics", () => {
+    expect(REALTIME_EVENT_TOPICS.typing.durability).toBe("ephemeral")
+    expect(REALTIME_EVENT_TOPICS.conversationAssigned).toMatchObject({
+      durability: "durable",
+      topics: expect.arrayContaining([RealtimeTopic.chat, RealtimeTopic.voip]),
+    })
+  })
+})
+
+describe("realtime event envelopes", () => {
+  test("accepts known event types in single and batch envelopes", () => {
+    const event = { eventType: RealtimeEventType.messageCreated, data: {} }
+
+    expect(realtimeEventEnvelopeSchema.parse(event)).toEqual(event)
+    expect(realtimeBatchEnvelopeSchema.parse({ batch: [event] })).toEqual({
+      batch: [event],
+    })
+  })
+
+  test("keeps unrecognized event types available to forward-compatible clients", () => {
+    const event = { eventType: "constructor", data: {} }
+
+    expect(realtimeEventEnvelopeSchema.parse(event)).toEqual(event)
+  })
+})
+
+describe("realtimeProtocolSchema", () => {
+  test("accepts the declared protocol values only", () => {
+    expect(realtimeProtocolSchema.parse(RealtimeProtocol.v1)).toBe("v1")
+    expect(realtimeProtocolSchema.parse(RealtimeProtocol.v2)).toBe("v2")
+    expect(() => realtimeProtocolSchema.parse("v3")).toThrow()
+  })
+})
+
+describe("realtimeSubscriptionMessageSchema", () => {
+  test("parses a valid subscribe frame", () => {
+    const payload = { type: "subscribe", topics: ["chat", "voip"] }
+
+    expect(realtimeSubscriptionMessageSchema.parse(payload)).toEqual(payload)
+  })
+
+  test("parses an empty topic list", () => {
+    const payload = { type: "subscribe", topics: [] }
+
+    expect(realtimeSubscriptionMessageSchema.parse(payload)).toEqual(payload)
+  })
+
+  test("rejects an unknown topic", () => {
+    expect(() =>
+      realtimeSubscriptionMessageSchema.parse({
+        type: "subscribe",
+        topics: ["billing"],
+      }),
+    ).toThrow()
+  })
+
+  test("rejects a wrong message type", () => {
+    expect(() =>
+      realtimeSubscriptionMessageSchema.parse({
+        type: "presence-ping",
+        topics: [],
+      }),
+    ).toThrow()
+  })
+})
+
+describe("serializeRealtimeSubscriptionMessage", () => {
+  test("round-trips through the schema it pairs with", () => {
+    const wire = serializeRealtimeSubscriptionMessage([
+      RealtimeTopic.chat,
+      RealtimeTopic.voip,
+    ])
+
+    const parsed = realtimeSubscriptionMessageSchema.parse(JSON.parse(wire))
+    expect(parsed).toEqual({
+      type: "subscribe",
+      topics: ["chat", "voip"],
+    })
   })
 })
