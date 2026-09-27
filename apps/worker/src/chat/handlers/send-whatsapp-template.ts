@@ -330,7 +330,6 @@ export async function processWhatsappTemplate(
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
         route: routeForConversation({
-          inboxId: contactInbox.inboxId,
           assignedUserId: conversation.assignedUserId,
           assignedInboxTeamId: conversation.assignedInboxTeamId,
         }),

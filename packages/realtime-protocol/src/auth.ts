@@ -29,7 +29,7 @@ export const REALTIME_TOKEN_PURPOSE = {
 export type RealtimeTokenPurpose =
   (typeof REALTIME_TOKEN_PURPOSE)[keyof typeof REALTIME_TOKEN_PURPOSE]
 
-export type RealtimeAudienceKind = "workspace" | "guest" | "user"
+export type RealtimeAudienceKind = "workspace" | "guest"
 
 export interface RealtimeAudience {
   id: string
@@ -154,18 +154,21 @@ export const verifyMemberConnectToken = async (
   return memberClaimsSchema.parse(payload)
 }
 
-const guestClaimsSchema = z.object({ guestConversationId: z.string().min(1) })
+const guestClaimsSchema = z.object({
+  guestConversationId: z.string().min(1),
+  workspaceId: z.string().min(1),
+})
 export type RealtimeGuestClaims = z.infer<typeof guestClaimsSchema>
 
 export const signGuestConnectToken = async (
-  guest: { guestConversationId: string },
+  guest: { guestConversationId: string; workspaceId: string },
   secret: string,
 ): Promise<string> =>
   signRealtimeToken(
     { kind: "guest", id: guest.guestConversationId },
     REALTIME_TOKEN_PURPOSE.guestConnect,
     secret,
-    { guestConversationId: guest.guestConversationId },
+    guest,
   )
 
 export const verifyGuestConnectToken = async (

@@ -114,7 +114,6 @@ export async function postPublicCommentReply(props: {
     eventType: RealtimeEventType.messageCreated,
     data: message,
     route: routeForConversation({
-      inboxId: props.contactInbox.inboxId,
       assignedUserId: conversation?.assignedUserId,
       assignedInboxTeamId: conversation?.assignedInboxTeamId,
     }),

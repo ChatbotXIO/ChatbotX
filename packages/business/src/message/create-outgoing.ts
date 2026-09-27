@@ -269,7 +269,6 @@ export const createOutgoing = async (props: {
       clientId: parsedInput.clientId,
     },
     route: routeForConversation({
-      inboxId: contactInbox.inboxId,
       assignedUserId: targetConversation.assignedUserId,
       assignedInboxTeamId: targetConversation.assignedInboxTeamId,
     }),

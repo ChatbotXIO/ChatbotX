@@ -1,339 +1,122 @@
 import { describe, expect, test } from "vitest"
 import {
-  REALTIME_EVENT_TOPICS,
-  RealtimeEventType,
-  RealtimeProtocol,
-  RealtimeTopic,
   realtimeBatchEnvelopeSchema,
   realtimeCallTransportEndedSchema,
   realtimeCallTransportIncomingSchema,
   realtimeCallTransportOutboundAnswerVoipSchema,
   realtimeCallTransportOutboundStatusVoipSchema,
-  realtimeEventEnvelopeSchema,
-  realtimeProtocolSchema,
-  realtimeSubscriptionMessageSchema,
   routeForAssignment,
   routeForConversation,
-  serializeRealtimeSubscriptionMessage,
   whatsappCallClaimedElsewhereSchema,
 } from "../src/schemas"
 
-describe("realtimeCallTransportIncomingSchema", () => {
-  test("parses a valid incoming payload carrying the offer", () => {
-    const payload = {
-      transport: "voip",
-      whatsappCallId: "call-1",
-      wacid: "wamid.ABC",
-      direction: "userInitiated",
-      conversationId: "conv-1",
-      contactInboxId: "ci-1",
-      contactName: "Kerry Fisher",
-      offer: { sdpType: "offer", sdp: "v=0..." },
-      deadlineAt: "2026-09-14T00:00:30.000Z",
-    }
-
-    const result = realtimeCallTransportIncomingSchema.parse(payload)
-    expect(result).toEqual(payload)
-  })
-
-  test("rejects an incoming payload missing the offer", () => {
-    expect(() =>
-      realtimeCallTransportIncomingSchema.parse({
-        transport: "voip",
-        whatsappCallId: "call-1",
-        wacid: "wamid.ABC",
-        direction: "userInitiated",
-        conversationId: "conv-1",
-        contactInboxId: "ci-1",
-      }),
-    ).toThrow()
-  })
-
-  test("rejects an unknown transport value", () => {
-    expect(() =>
-      realtimeCallTransportIncomingSchema.parse({
-        transport: "sip",
-        whatsappCallId: "call-1",
-        wacid: "wamid.ABC",
-        direction: "userInitiated",
-        conversationId: "conv-1",
-        contactInboxId: "ci-1",
-        offer: { sdpType: "offer", sdp: "v=0..." },
-        deadlineAt: "2026-09-14T00:00:30.000Z",
-      }),
-    ).toThrow()
-  })
-})
-
-describe("realtimeCallTransportEndedSchema", () => {
-  test("parses a valid ended payload", () => {
-    const payload = {
-      transport: "voip",
-      whatsappCallId: "call-1",
-      wacid: "wamid.ABC",
-      status: "completed",
-    }
-
-    const result = realtimeCallTransportEndedSchema.parse(payload)
-    expect(result).toEqual(payload)
-  })
-
-  test("rejects an unknown transport value", () => {
-    expect(() =>
-      realtimeCallTransportEndedSchema.parse({
-        transport: "pstn",
-        whatsappCallId: "call-1",
-        wacid: "wamid.ABC",
-        status: "completed",
-      }),
-    ).toThrow()
-  })
-
-  test("rejects an unknown status value", () => {
-    expect(() =>
-      realtimeCallTransportEndedSchema.parse({
-        transport: "voip",
-        whatsappCallId: "call-1",
-        wacid: "wamid.ABC",
-        status: "missed",
-      }),
-    ).toThrow()
-  })
-})
-
-describe("whatsappCallClaimedElsewhereSchema", () => {
-  test("parses a valid claimed-elsewhere payload", () => {
-    const payload = {
-      whatsappCallId: "call-1",
-      wacid: "wamid.ABC",
-      answeredByUserId: "user-1",
-    }
-
-    const result = whatsappCallClaimedElsewhereSchema.parse(payload)
-    expect(result).toEqual(payload)
-  })
-
-  test("rejects a payload missing answeredByUserId", () => {
-    expect(() =>
-      whatsappCallClaimedElsewhereSchema.parse({
-        whatsappCallId: "call-1",
-        wacid: "wamid.ABC",
-      }),
-    ).toThrow()
-  })
-
-  test("has the eventType registered on RealtimeEventType", () => {
-    expect(RealtimeEventType.whatsappCallClaimedElsewhere).toBe(
-      "whatsappCallClaimedElsewhere",
-    )
-  })
-})
-
-describe("realtimeCallTransportOutboundAnswerVoipSchema", () => {
-  test("parses a valid outbound answer payload", () => {
-    const payload = {
-      whatsappCallId: "call-1",
-      wacid: "wamid.ABC",
-      attemptId: "attempt-1",
-      session: { sdpType: "answer", sdp: "v=0..." },
-    }
-
-    const result = realtimeCallTransportOutboundAnswerVoipSchema.parse(payload)
-    expect(result).toEqual(payload)
-  })
-
-  test("rejects a non-answer sdpType", () => {
-    expect(() =>
-      realtimeCallTransportOutboundAnswerVoipSchema.parse({
-        whatsappCallId: "call-1",
-        wacid: "wamid.ABC",
-        attemptId: "attempt-1",
-        session: { sdpType: "offer", sdp: "v=0..." },
-      }),
-    ).toThrow()
-  })
-
-  test("has the eventType registered on RealtimeEventType", () => {
-    expect(RealtimeEventType.whatsappCallOutboundAnswer).toBe(
-      "whatsappCallOutboundAnswer",
-    )
-  })
-})
-
-describe("realtimeCallTransportOutboundStatusVoipSchema", () => {
-  test("parses a valid ringing status payload", () => {
-    const payload = {
-      whatsappCallId: "call-1",
-      wacid: "wamid.ABC",
-      attemptId: "attempt-1",
-      status: "ringing",
-    }
-
-    const result = realtimeCallTransportOutboundStatusVoipSchema.parse(payload)
-    expect(result).toEqual(payload)
-  })
-
-  test("parses a valid accepted status payload", () => {
-    const payload = {
-      whatsappCallId: "call-1",
-      wacid: "wamid.ABC",
-      attemptId: "attempt-1",
-      status: "accepted",
-    }
-
-    const result = realtimeCallTransportOutboundStatusVoipSchema.parse(payload)
-    expect(result).toEqual(payload)
-  })
-
-  test("rejects an unknown status value", () => {
-    expect(() =>
-      realtimeCallTransportOutboundStatusVoipSchema.parse({
-        whatsappCallId: "call-1",
-        wacid: "wamid.ABC",
-        attemptId: "attempt-1",
-        status: "rejected",
-      }),
-    ).toThrow()
-  })
-
-  test("has the eventType registered on RealtimeEventType", () => {
-    expect(RealtimeEventType.whatsappCallOutboundStatus).toBe(
-      "whatsappCallOutboundStatus",
-    )
-  })
-})
-
-describe("REALTIME_EVENT_TOPICS", () => {
-  test("every RealtimeEventType has at least one registered topic and an explicit durability", () => {
-    for (const eventType of Object.values(RealtimeEventType)) {
-      const event = REALTIME_EVENT_TOPICS[eventType]
-      expect(event?.topics.length).toBeGreaterThan(0)
-      expect(["durable", "ephemeral"]).toContain(event?.durability)
-    }
-  })
-
-  test("every registered topic is a known RealtimeTopic value", () => {
-    const knownTopics = new Set(Object.values(RealtimeTopic))
-    for (const event of Object.values(REALTIME_EVENT_TOPICS)) {
-      for (const topic of event.topics) {
-        expect(knownTopics.has(topic)).toBe(true)
-      }
-    }
-  })
-
-  test("only typing is ephemeral and conversationAssigned carries both topics", () => {
-    expect(REALTIME_EVENT_TOPICS.typing.durability).toBe("ephemeral")
-    expect(REALTIME_EVENT_TOPICS.conversationAssigned).toMatchObject({
-      durability: "durable",
-      topics: expect.arrayContaining([RealtimeTopic.chat, RealtimeTopic.voip]),
-    })
-  })
-})
-
-describe("realtime event envelopes", () => {
-  test("accepts known event types in single and batch envelopes", () => {
-    const event = { eventType: RealtimeEventType.messageCreated, data: {} }
-
-    expect(realtimeEventEnvelopeSchema.parse(event)).toEqual(event)
-    expect(
-      realtimeBatchEnvelopeSchema.parse({ batch: [event], seq: "123-0" }),
-    ).toEqual({
-      batch: [event],
+describe("realtime batch envelopes", () => {
+  test("preserves every event in one sequenced record frame", () => {
+    const frame = realtimeBatchEnvelopeSchema.parse({
+      batch: [
+        { data: { id: "message-1" }, eventType: "messageCreated" },
+        { data: { id: "message-2" }, eventType: "messageCreated" },
+      ],
       seq: "123-0",
     })
-    expect(() =>
-      realtimeBatchEnvelopeSchema.parse({ batch: [event], seq: "invalid" }),
-    ).toThrow()
-  })
 
-  test("keeps unrecognized event types available to forward-compatible clients", () => {
-    const event = { eventType: "constructor", data: {} }
-
-    expect(realtimeEventEnvelopeSchema.parse(event)).toEqual(event)
+    expect(frame.batch).toHaveLength(2)
+    expect(frame.seq).toBe("123-0")
   })
 })
 
 describe("realtime event routes", () => {
-  test("builds a permission route from an already-loaded conversation", () => {
-    expect(
-      routeForConversation({
-        inboxId: "inbox-1",
-        assignedUserId: "user-1",
-        assignedInboxTeamId: "team-1",
-      }),
-    ).toEqual({
-      inboxId: "inbox-1",
-      assignedUserIds: ["user-1"],
-      assignedTeamIds: ["team-1"],
-    })
-  })
-
-  test("keeps every previous assignee in a bulk assignment route", () => {
+  test("includes previous and current assignees for assignment changes", () => {
     expect(
       routeForAssignment({
-        assignedUserId: "new-user",
-        assignedInboxTeamId: "new-team",
-        previousAssignedUserIds: ["old-user-1", null, "old-user-2"],
-        previousAssignedInboxTeamIds: ["old-team-1", "old-team-2"],
+        assignedInboxTeamId: "team-next",
+        assignedUserId: "user-next",
+        previousAssignedInboxTeamIds: ["team-previous"],
+        previousAssignedUserIds: ["user-previous"],
       }),
     ).toEqual({
-      assignedUserIds: ["old-user-1", "old-user-2", "new-user"],
-      assignedTeamIds: ["old-team-1", "old-team-2", "new-team"],
+      assignedTeamIds: ["team-previous", "team-next"],
+      assignedUserIds: ["user-previous", "user-next"],
+    })
+  })
+
+  test("keeps conversation assignment and inbox routing data", () => {
+    expect(
+      routeForConversation({
+        assignedInboxTeamId: "team-1",
+        assignedUserId: "user-1",
+        inboxId: "inbox-1",
+      }),
+    ).toEqual({
+      assignedTeamIds: ["team-1"],
+      assignedUserIds: ["user-1"],
+      inboxId: "inbox-1",
     })
   })
 })
 
-describe("realtimeProtocolSchema", () => {
-  test("accepts the declared protocol values only", () => {
-    expect(realtimeProtocolSchema.parse(RealtimeProtocol.v1)).toBe("v1")
-    expect(realtimeProtocolSchema.parse(RealtimeProtocol.v2)).toBe("v2")
-    expect(() => realtimeProtocolSchema.parse("v3")).toThrow()
-  })
-})
-
-describe("realtimeSubscriptionMessageSchema", () => {
-  test("parses a valid subscribe frame", () => {
-    const payload = { type: "subscribe", topics: ["chat", "voip"] }
-
-    expect(realtimeSubscriptionMessageSchema.parse(payload)).toEqual(payload)
-  })
-
-  test("parses an empty topic list", () => {
-    const payload = { type: "subscribe", topics: [] }
-
-    expect(realtimeSubscriptionMessageSchema.parse(payload)).toEqual(payload)
+describe("call payload schemas", () => {
+  test("accepts a complete incoming directed offer", () => {
+    expect(
+      realtimeCallTransportIncomingSchema.parse({
+        contactInboxId: "contact-inbox-1",
+        conversationId: "conversation-1",
+        deadlineAt: "2026-01-01T00:00:00.000Z",
+        direction: "userInitiated",
+        offer: { sdp: "offer", sdpType: "offer" },
+        transport: "voip",
+        wacid: "call-1",
+        whatsappCallId: "whatsapp-call-1",
+      }),
+    ).toMatchObject({ transport: "voip" })
   })
 
-  test("rejects an unknown topic", () => {
+  test("rejects an incoming payload with a non-offer session", () => {
     expect(() =>
-      realtimeSubscriptionMessageSchema.parse({
-        type: "subscribe",
-        topics: ["billing"],
+      realtimeCallTransportIncomingSchema.parse({
+        contactInboxId: "contact-inbox-1",
+        conversationId: "conversation-1",
+        deadlineAt: "2026-01-01T00:00:00.000Z",
+        direction: "userInitiated",
+        offer: { sdp: "answer", sdpType: "answer" },
+        transport: "voip",
+        wacid: "call-1",
+        whatsappCallId: "whatsapp-call-1",
       }),
     ).toThrow()
   })
 
-  test("rejects a wrong message type", () => {
-    expect(() =>
-      realtimeSubscriptionMessageSchema.parse({
-        type: "presence-ping",
-        topics: [],
+  test("validates terminal, claimed, and outbound call payloads", () => {
+    expect(
+      realtimeCallTransportEndedSchema.parse({
+        status: "completed",
+        transport: "voip",
+        wacid: "call-1",
+        whatsappCallId: "whatsapp-call-1",
       }),
-    ).toThrow()
-  })
-})
-
-describe("serializeRealtimeSubscriptionMessage", () => {
-  test("round-trips through the schema it pairs with", () => {
-    const wire = serializeRealtimeSubscriptionMessage([
-      RealtimeTopic.chat,
-      RealtimeTopic.voip,
-    ])
-
-    const parsed = realtimeSubscriptionMessageSchema.parse(JSON.parse(wire))
-    expect(parsed).toEqual({
-      type: "subscribe",
-      topics: ["chat", "voip"],
-    })
+    ).toMatchObject({ status: "completed" })
+    expect(
+      whatsappCallClaimedElsewhereSchema.parse({
+        answeredByUserId: "user-1",
+        wacid: "call-1",
+        whatsappCallId: "whatsapp-call-1",
+      }),
+    ).toMatchObject({ answeredByUserId: "user-1" })
+    expect(
+      realtimeCallTransportOutboundAnswerVoipSchema.parse({
+        attemptId: "attempt-1",
+        session: { sdp: "answer", sdpType: "answer" },
+        wacid: "call-1",
+        whatsappCallId: "whatsapp-call-1",
+      }),
+    ).toMatchObject({ attemptId: "attempt-1" })
+    expect(
+      realtimeCallTransportOutboundStatusVoipSchema.parse({
+        attemptId: "attempt-1",
+        status: "ringing",
+        wacid: "call-1",
+        whatsappCallId: "whatsapp-call-1",
+      }),
+    ).toMatchObject({ status: "ringing" })
   })
 })

@@ -6,7 +6,6 @@ import {
   RealtimeEventType,
   RealtimeSocket,
   realtimeBatchEnvelopeSchema,
-  realtimeEventEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
 import {
   createContext,
@@ -47,8 +46,6 @@ export type WorkspaceRealtimeConnectionStatus =
 const KNOWN_REALTIME_EVENT_NAMES: ReadonlySet<string> = new Set(
   Object.values(RealtimeEventType),
 )
-
-const STREAM_ID_PATTERN = /^\d+-\d+$/
 
 const isStreamSequenceAfter = (
   candidate: string,
@@ -129,8 +126,8 @@ type WorkspaceRealtimeContextValue = {
     eventTypes: RealtimeEventName[],
     getHandlers: () => RealtimeHandlerMap,
   ) => () => void
+  resyncCount: number
   status: WorkspaceRealtimeConnectionStatus
-  reconnectCount: number
 }
 
 const WorkspaceRealtimeContext =
@@ -168,97 +165,61 @@ export function WorkspaceRealtimeProvider({
   )
   const [status, setStatus] =
     useState<WorkspaceRealtimeConnectionStatus>("connecting")
-  const [reconnectCount, setReconnectCount] = useState(0)
-  const hasOpenedOnceRef = useRef(false)
+  const [resyncCount, setResyncCount] = useState(0)
   const lastProcessedSeqRef = useRef<string | null>(null)
-  // React Strict Mode (dev only) double-invokes mount effects: setup, cleanup,
-  // setup again. Resetting this marker ensures the synthetic remount is not
-  // surfaced as a user-visible reconnect.
-  useEffect(
-    () => () => {
-      hasOpenedOnceRef.current = false
+
+  const processRealtimeEvent = useCallback(
+    (frame: { data: unknown; eventType: string }): void => {
+      const { eventType: eventTypeString, data } = frame
+      if (!isKnownRealtimeEventName(eventTypeString)) {
+        return
+      }
+      const eventType = eventTypeString
+
+      const listeners = listenersRef.current.get(eventType)
+      if (!listeners || listeners.size === 0) {
+        return
+      }
+
+      const schema = REALTIME_EVENT_SCHEMAS[eventType]
+      if (schema) {
+        const result = schema.safeParse(data)
+        if (!result.success) {
+          logRealtimeWarning({
+            error: result.error,
+            eventType,
+            message: "Workspace realtime: event failed schema validation",
+            reason: "schema-invalid",
+            suppressionMessage:
+              "Workspace realtime: further schema-validation warnings suppressed for this window",
+          })
+          return
+        }
+      }
+
+      const dispatchedEvent = {
+        eventType,
+        data,
+      } as unknown as RealtimeEventData
+
+      for (const listener of listeners) {
+        try {
+          listener(dispatchedEvent)
+        } catch (error) {
+          logRealtimeWarning({
+            error,
+            eventType,
+            message:
+              "Workspace realtime: a listener threw while handling an event",
+            reason: "listener-threw",
+            suppressionMessage:
+              "Workspace realtime: further listener-threw warnings suppressed for this window",
+          })
+        }
+      }
     },
     [],
   )
-
-  /**
-   * Validates and dispatches one already-JSON-parsed frame: envelope shape ->
-   * narrow `eventType` (unknown names silently ignored for forward-compat) ->
-   * validate `data` against `REALTIME_EVENT_SCHEMAS` when present -> dispatch
-   * to listeners, each in its own try/catch so one throwing listener doesn't
-   * block the rest. Shared by the single-event (v1) and batch (v2) frame
-   * shapes — a v2 batch calls this once per contained event.
-   */
-  const processRealtimeFrame = useCallback((frame: unknown): void => {
-    const envelopeResult = realtimeEventEnvelopeSchema.safeParse(frame)
-    if (!envelopeResult.success) {
-      logRealtimeWarning({
-        error: envelopeResult.error,
-        message:
-          "Workspace realtime: message frame is not a valid event envelope",
-        reason: "invalid-envelope",
-        suppressionMessage:
-          "Workspace realtime: further invalid-envelope warnings suppressed for this window",
-      })
-      return
-    }
-
-    const { eventType: eventTypeString, data } = envelopeResult.data
-    if (!isKnownRealtimeEventName(eventTypeString)) {
-      // Unknown to this build — forward-compatible, no warning noise.
-      return
-    }
-    const eventType = eventTypeString
-
-    const listeners = listenersRef.current.get(eventType)
-    if (!listeners || listeners.size === 0) {
-      // Nobody subscribed — also silently ignored.
-      return
-    }
-
-    const schema = REALTIME_EVENT_SCHEMAS[eventType]
-    if (schema) {
-      const result = schema.safeParse(data)
-      if (!result.success) {
-        logRealtimeWarning({
-          error: result.error,
-          eventType,
-          message: "Workspace realtime: event failed schema validation",
-          reason: "schema-invalid",
-          suppressionMessage:
-            "Workspace realtime: further schema-validation warnings suppressed for this window",
-        })
-        return
-      }
-    }
-
-    // TS can't correlate this runtime-narrowed string with one union
-    // member, hence the assertion. Only events with a schema in
-    // `REALTIME_EVENT_SCHEMAS` have `data` validated here.
-    const dispatchedEvent = {
-      eventType,
-      data,
-    } as unknown as RealtimeEventData
-
-    for (const listener of listeners) {
-      try {
-        listener(dispatchedEvent)
-      } catch (error) {
-        // Keyed by `eventType` (already narrowed, bounded by
-        // `RealtimeEventType`) — a listener that throws on every dispatch of
-        // one busy event never drowns out warnings for an unrelated one.
-        logRealtimeWarning({
-          error,
-          eventType,
-          message:
-            "Workspace realtime: a listener threw while handling an event",
-          reason: "listener-threw",
-          suppressionMessage:
-            "Workspace realtime: further listener-threw warnings suppressed for this window",
-        })
-      }
-    }
-  }, [])
 
   const processSocketMessage = useCallback(
     (data: string): void => {
@@ -276,45 +237,41 @@ export function WorkspaceRealtimeProvider({
         return
       }
 
-      const batchResult = realtimeBatchEnvelopeSchema.safeParse(parsedJson)
-      if (batchResult.success) {
-        const { batch, seq } = batchResult.data
-        if (
-          seq &&
-          lastProcessedSeqRef.current &&
-          !isStreamSequenceAfter(seq, lastProcessedSeqRef.current)
-        ) {
-          return
-        }
-        if (seq) {
-          lastProcessedSeqRef.current = seq
-        }
-        for (const frame of batch) {
-          processRealtimeFrame(frame)
-        }
+      if (parsedJson && typeof parsedJson === "object" && "hb" in parsedJson) {
         return
       }
-
-      processRealtimeFrame(parsedJson)
+      const batchResult = realtimeBatchEnvelopeSchema.safeParse(parsedJson)
+      if (!batchResult.success) {
+        logRealtimeWarning({
+          error: batchResult.error,
+          message: "Workspace realtime: message frame is not a valid batch",
+          reason: "invalid-batch",
+          suppressionMessage:
+            "Workspace realtime: further invalid-batch warnings suppressed for this window",
+        })
+        return
+      }
+      const { batch, seq } = batchResult.data
+      if (
+        seq &&
+        lastProcessedSeqRef.current &&
+        !isStreamSequenceAfter(seq, lastProcessedSeqRef.current)
+      ) {
+        return
+      }
+      if (seq) {
+        lastProcessedSeqRef.current = seq
+      }
+      for (const frame of batch) {
+        processRealtimeEvent(frame)
+      }
     },
-    [processRealtimeFrame],
+    [processRealtimeEvent],
   )
 
   useEffect(() => {
     let disposed = false
-    const lastSeqStorageKey = `realtime:last-seq:${workspaceId}`
-    const persistedLastSeq = localStorage.getItem(lastSeqStorageKey)
-    lastProcessedSeqRef.current =
-      persistedLastSeq && STREAM_ID_PATTERN.test(persistedLastSeq)
-        ? persistedLastSeq
-        : null
-    const persistLastSeq = (): void => {
-      const lastProcessedSeq = lastProcessedSeqRef.current
-      if (!lastProcessedSeq) {
-        return
-      }
-      localStorage.setItem(lastSeqStorageKey, lastProcessedSeq)
-    }
+    lastProcessedSeqRef.current = null
     setStatus("connecting")
     const socket = new RealtimeSocket({
       getUrl: async () => {
@@ -327,7 +284,7 @@ export function WorkspaceRealtimeProvider({
           publicRealtimeUrl,
         )
         socketUrl.searchParams.set("token", token)
-        const lastSeq = localStorage.getItem(lastSeqStorageKey)
+        const lastSeq = lastProcessedSeqRef.current
         if (lastSeq) {
           socketUrl.searchParams.set("lastSeq", lastSeq)
         }
@@ -341,37 +298,31 @@ export function WorkspaceRealtimeProvider({
           code === REALTIME_CLOSE_CODE.revoked ? "closed" : "connecting",
         )
       },
-      onMessage: (data) => {
-        processSocketMessage(data)
-        persistLastSeq()
-      },
+      onMessage: processSocketMessage,
       onOpen: () => {
-        if (hasOpenedOnceRef.current) {
-          setReconnectCount((count) => count + 1)
-        }
-        hasOpenedOnceRef.current = true
         setStatus("open")
       },
       onResync: () => {
         if (!disposed) {
+          setResyncCount((count) => count + 1)
           setStatus("resyncing")
         }
       },
     })
-    const handleOnline = () => socket.handleOnline()
+    const reconnectNow = () => socket.reconnectNow()
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        socket.handleVisibilityVisible()
+        reconnectNow()
       }
     }
 
-    window.addEventListener("online", handleOnline)
+    window.addEventListener("online", reconnectNow)
     document.addEventListener("visibilitychange", handleVisibilityChange)
     socket.connect()
 
     return () => {
       disposed = true
-      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("online", reconnectNow)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
       socket.close()
     }
@@ -422,8 +373,8 @@ export function WorkspaceRealtimeProvider({
   // `useWorkspaceRealtimeEvents` goes through `subscribeHandlers`, never
   // `subscribe` directly.
   const value = useMemo<WorkspaceRealtimeContextValue>(
-    () => ({ subscribeHandlers, status, reconnectCount }),
-    [subscribeHandlers, status, reconnectCount],
+    () => ({ resyncCount, status, subscribeHandlers }),
+    [resyncCount, status, subscribeHandlers],
   )
 
   return (

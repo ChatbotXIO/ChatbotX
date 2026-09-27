@@ -1106,6 +1106,9 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           }
           const refreshedMessages = data.reverse()
           set((state) => {
+            const currentMessagesById = new Map(
+              state.messages.map((message) => [message.id, message]),
+            )
             const refreshedMessageIds = new Set(
               refreshedMessages.map((message) => message.id),
             )
@@ -1119,9 +1122,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             const messages = [
               ...refreshedMessages.map((message) => {
                 const previousMessage = messagesBeforeResync.get(message.id)
-                const currentMessage = state.messages.find(
-                  (current) => current.id === message.id,
-                )
+                const currentMessage = currentMessagesById.get(message.id)
                 return currentMessage && currentMessage !== previousMessage
                   ? currentMessage
                   : message

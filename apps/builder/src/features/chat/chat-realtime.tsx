@@ -18,12 +18,10 @@ import { useChatStore } from "./store/chat-store-provider"
 /** Cap for the bubble-to-top dedupe set below. */
 const SEEN_WHATSAPP_CALL_IDS_CAPACITY = 500
 
-const HIDDEN_REALTIME_RESYNC_MS = 30_000
-
 /** Registers this component's chat event handlers against the shared workspace realtime socket. */
 export function ChatRealtime() {
   const workspaceId = useWorkspaceId()
-  const { reconnectCount } = useWorkspaceRealtimeContext()
+  const { resyncCount } = useWorkspaceRealtimeContext()
   const queryClient = useQueryClient()
   const invalidateOutboundCallMode = (conversationId: string) =>
     queryClient.invalidateQueries({
@@ -94,37 +92,24 @@ export function ChatRealtime() {
     queueMicrotask(flushPendingCreatedMessages)
   }
 
-  const hiddenSinceRef = useRef<number | null>(null)
-
   useEffect(() => {
-    if (reconnectCount === 0) {
+    if (resyncCount === 0) {
       return
     }
     resyncRealtime(workspaceId)
-  }, [reconnectCount, resyncRealtime, workspaceId])
+  }, [resyncCount, resyncRealtime, workspaceId])
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        hiddenSinceRef.current = Date.now()
-        return
+      if (document.visibilityState === "visible") {
+        resumeConversationHeadRefresh(workspaceId)
       }
-      const hiddenSince = hiddenSinceRef.current
-      hiddenSinceRef.current = null
-      if (
-        hiddenSince !== null &&
-        Date.now() - hiddenSince >= HIDDEN_REALTIME_RESYNC_MS
-      ) {
-        resyncRealtime(workspaceId)
-        return
-      }
-      resumeConversationHeadRefresh(workspaceId)
     }
     document.addEventListener("visibilitychange", handleVisibilityChange)
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [resyncRealtime, resumeConversationHeadRefresh, workspaceId])
+  }, [resumeConversationHeadRefresh, workspaceId])
 
   // Dedupes newly-ringing calls so each bubbles the conversation to top only
   // once. Held in a ref (not created inside the effect) so Strict Mode's

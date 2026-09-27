@@ -2,121 +2,37 @@ import uWS from "uWebSockets.js"
 import {
   getRealtimeStreamKey,
   type RealtimeMemberClaims,
-  realtimeBatchEnvelopeSchema,
-  realtimeStreamEntrySchema,
-  realtimeStreamRecordSchema,
   verifyGuestConnectToken,
   verifyMemberConnectToken,
 } from "@chatbotx.io/realtime-protocol"
 import { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/realtime-protocol/presence"
 import type { Redis } from "@chatbotx.io/redis"
 import {
-  getWorkspaceConnectionTopics,
-  getWorkspaceEventTopics,
-} from "./gateway-protocol"
+  createRealtimeDelivery,
+  type GuestSocketData,
+  REALTIME_CLOSE_CODE,
+  type StreamRecordEntry,
+  type WorkspaceSocketData,
+} from "./delivery"
 import { reportWorkspacePresence } from "./lib/presence-report"
 import { logger } from "./logger"
+import {
+  createStreamReader,
+  isStreamIdBefore,
+  parseStreamRecord,
+  type StreamEntry,
+} from "./stream-reader"
 
 const SLOW_CONSUMER_BUFFER_BYTES = 512_000
-const STREAM_READ_BLOCK_MS = 1000
-const STREAM_READ_COUNT = 100
-const PENDING_CLAIM_IDLE_MS = 60_000
 const MAX_REPLAY_ENTRIES = 500
+const PRESENCE_REPORT_CONCURRENCY = 16
+const PRESENCE_REPORT_COALESCE_MS = 1000
 const STREAM_ID_PATTERN = /^\d+-\d+$/
-const REALTIME_CLOSE_CODE = { resync: 4002, revoked: 4001 } as const
 
-type WorkspaceSocketData = RealtimeMemberClaims & {
-  lastSeq?: string
-  workspaceId: string
-}
-type GuestSocketData = { guestConversationId: string }
-type StreamFieldList = [string, string][] | string[]
-type StreamEntry = [string, StreamFieldList]
-type StreamReadResult = [string, StreamEntry[]][]
-type WorkspaceSocket = {
-  end: (code?: number, reason?: string) => void
-  getUserData: () => WorkspaceSocketData
-  send: (data: string) => void
-}
-
-type StreamRecord =
-  | {
-      events: unknown[]
-      kind: "workspace-events"
-      workspaceId: string
-    }
-  | {
-      event: unknown
-      guestConversationId: string
-      kind: "guest-event"
-      workspaceId: string
-    }
-  | {
-      event: unknown
-      kind: "member-send"
-      userId: string
-      workspaceId: string
-    }
-  | { kind: "member-revoke"; userId: string; workspaceId: string }
-  | { kind: "presence-heartbeat"; userIds: string[]; workspaceId: string }
-
-const toFieldMap = (fields: StreamFieldList): Map<string, string> => {
-  if (fields.length === 0) {
-    return new Map()
-  }
-  if (Array.isArray(fields[0])) {
-    return new Map(fields as [string, string][])
-  }
-
-  const flattenedFields = fields as string[]
-  const fieldMap = new Map<string, string>()
-  for (let index = 0; index < flattenedFields.length; index += 2) {
-    const key = flattenedFields[index]
-    const value = flattenedFields[index + 1]
-    if (key !== undefined && value !== undefined) {
-      fieldMap.set(key, value)
-    }
-  }
-  return fieldMap
-}
-
-const encodeBatch = (events: unknown[], seq?: string): string =>
-  JSON.stringify({
-    batch: events,
-    ...(seq ? { seq } : {}),
-  })
-
-const parseStreamRecord = (fields: StreamFieldList): StreamRecord | null => {
-  const values = toFieldMap(fields)
-  const serializedRecord = values.get("record")
-  try {
-    if (serializedRecord) {
-      return realtimeStreamRecordSchema.parse(JSON.parse(serializedRecord))
-    }
-
-    return {
-      ...realtimeStreamEntrySchema.parse({
-        events: JSON.parse(values.get("events") ?? "null"),
-        workspaceId: values.get("workspaceId"),
-      }),
-      kind: "workspace-events",
-    }
-  } catch (error) {
-    logger.warn({ err: error }, "Ignoring invalid realtime stream entry")
-    return null
-  }
-}
-
-const memberKey = (workspaceId: string, userId: string): string =>
-  `${workspaceId}:${userId}`
-
-const isStreamIdBefore = (left: string, right: string): boolean => {
-  const [leftMilliseconds, leftSequence] = left.split("-").map(BigInt)
-  const [rightMilliseconds, rightSequence] = right.split("-").map(BigInt)
-  return (
-    leftMilliseconds < rightMilliseconds ||
-    (leftMilliseconds === rightMilliseconds && leftSequence < rightSequence)
-  )
+type ReplayResult = {
+  closeReason?: string
+  entries: StreamRecordEntry[]
+  lastStreamId?: string
 }
 
 export type RealtimeGateway = {
@@ -124,290 +40,169 @@ export type RealtimeGateway = {
   listen: (host: string, port: number) => Promise<void>
 }
 
+export const loadReplay = async ({
+  lastSeq,
+  redis,
+  workspaceId,
+}: {
+  lastSeq?: string
+  redis: Redis
+  workspaceId: string
+}): Promise<ReplayResult> => {
+  if (!lastSeq) {
+    return { entries: [] }
+  }
+  if (!STREAM_ID_PATTERN.test(lastSeq)) {
+    return { closeReason: "invalid-last-seq", entries: [] }
+  }
+
+  const streamKey = getRealtimeStreamKey(workspaceId)
+  const [oldestEntries, newestEntries] = (await Promise.all([
+    redis.xrange(streamKey, "-", "+", "COUNT", 1),
+    redis.xrevrange(streamKey, "+", "-", "COUNT", 1),
+  ])) as [StreamEntry[], StreamEntry[]]
+  const oldestEntry = oldestEntries[0]
+  const newestEntry = newestEntries[0]
+  if (oldestEntry && isStreamIdBefore(lastSeq, oldestEntry[0])) {
+    return { closeReason: "replay-window-expired", entries: [] }
+  }
+  if (
+    (!newestEntry && lastSeq !== "0-0") ||
+    (newestEntry && isStreamIdBefore(newestEntry[0], lastSeq))
+  ) {
+    return { closeReason: "replay-cursor-ahead", entries: [] }
+  }
+
+  const entries = (await redis.xrange(
+    streamKey,
+    `(${lastSeq}`,
+    "+",
+    "COUNT",
+    MAX_REPLAY_ENTRIES + 1,
+  )) as StreamEntry[]
+  if (entries.length > MAX_REPLAY_ENTRIES) {
+    return { closeReason: "replay-window-too-large", entries: [] }
+  }
+
+  const currentOldestEntries = (await redis.xrange(
+    streamKey,
+    "-",
+    "+",
+    "COUNT",
+    1,
+  )) as StreamEntry[]
+  const currentOldestEntry = currentOldestEntries[0]
+  if (currentOldestEntry && isStreamIdBefore(lastSeq, currentOldestEntry[0])) {
+    return { closeReason: "replay-window-expired", entries: [] }
+  }
+
+  const parsedEntries: StreamRecordEntry[] = []
+  for (const [id, fields] of entries) {
+    const record = parseStreamRecord(fields)
+    if (!record) {
+      logger.warn({ id, workspaceId }, "Ignoring invalid realtime stream entry")
+      continue
+    }
+    if (record.workspaceId === workspaceId) {
+      parsedEntries.push({ id, record })
+    }
+  }
+  return {
+    entries: parsedEntries,
+    lastStreamId: entries.at(-1)?.[0] ?? lastSeq,
+  }
+}
+
 export const createRealtimeGateway = ({
-  consumerGroup,
-  consumerName,
   redis,
   secret,
-  shards,
 }: {
-  consumerGroup: string
-  consumerName: string
   redis: Redis
   secret: string
-  shards: number[]
 }): RealtimeGateway => {
   const app = uWS.App()
-  const streamKeys = shards.map((shard) => `rt:{${shard}}`)
-  const connectionsByMember = new Map<string, Set<WorkspaceSocket>>()
+  const delivery = createRealtimeDelivery(app)
   const connectedUsersByWorkspace = new Map<string, Set<string>>()
-  let presenceHeartbeat: NodeJS.Timeout | null = null
+  const presenceTimers = new Map<string, NodeJS.Timeout>()
+  let heartbeat: NodeJS.Timeout | undefined
+  let presenceHeartbeat: NodeJS.Timeout | undefined
   let ready = false
   let stopped = false
-  let streamLoops: Promise<void> | null = null
 
-  const addConnection = (socket: WorkspaceSocket): void => {
-    const { workspaceId, userId } = socket.getUserData()
-    const key = memberKey(workspaceId, userId)
-    const sockets = connectionsByMember.get(key) ?? new Set<WorkspaceSocket>()
-    sockets.add(socket)
-    connectionsByMember.set(key, sockets)
+  const reportLocalPresence = async (workspaceIds: string[]): Promise<void> => {
+    for (
+      let index = 0;
+      index < workspaceIds.length;
+      index += PRESENCE_REPORT_CONCURRENCY
+    ) {
+      await Promise.all(
+        workspaceIds
+          .slice(index, index + PRESENCE_REPORT_CONCURRENCY)
+          .map(
+            async (workspaceId) =>
+              await reportWorkspacePresence(workspaceId, [
+                ...(connectedUsersByWorkspace.get(workspaceId) ?? []),
+              ]),
+          ),
+      )
+    }
+  }
+
+  const markPresenceDirty = (workspaceId: string): void => {
+    const existingTimer = presenceTimers.get(workspaceId)
+    if (existingTimer) {
+      clearTimeout(existingTimer)
+    }
+    presenceTimers.set(
+      workspaceId,
+      setTimeout(() => {
+        presenceTimers.delete(workspaceId)
+        reportLocalPresence([workspaceId]).catch((error) => {
+          logger.error(
+            { err: error, workspaceId },
+            "Failed to report workspace presence",
+          )
+        })
+      }, PRESENCE_REPORT_COALESCE_MS),
+    )
+  }
+
+  const streamReader = createStreamReader({
+    onEntries: (entries) => {
+      for (const entry of entries) {
+        delivery.dispatch(entry)
+      }
+    },
+    onError: (error) => {
+      ready = false
+      if (!stopped) {
+        logger.error({ err: error }, "Realtime Redis Streams reader failed")
+      }
+    },
+    onReady: () => {
+      ready = true
+    },
+    redis,
+  })
+
+  const addConnectedUser = (workspaceId: string, userId: string): void => {
     const users =
       connectedUsersByWorkspace.get(workspaceId) ?? new Set<string>()
     users.add(userId)
     connectedUsersByWorkspace.set(workspaceId, users)
+    markPresenceDirty(workspaceId)
   }
 
-  const removeConnection = (socket: WorkspaceSocket): void => {
-    const { workspaceId, userId } = socket.getUserData()
-    const key = memberKey(workspaceId, userId)
-    const sockets = connectionsByMember.get(key)
-    if (!sockets) {
-      return
-    }
-    sockets.delete(socket)
-    if (sockets.size > 0) {
-      return
-    }
-    connectionsByMember.delete(key)
+  const removeConnectedUser = (workspaceId: string, userId: string): void => {
     const users = connectedUsersByWorkspace.get(workspaceId)
-    users?.delete(userId)
-    if (users?.size === 0) {
+    if (!users) {
+      return
+    }
+    users.delete(userId)
+    if (users.size === 0) {
       connectedUsersByWorkspace.delete(workspaceId)
     }
-  }
-
-  const reportLocalPresence = async (): Promise<void> => {
-    await Promise.all(
-      Array.from(
-        connectedUsersByWorkspace,
-        async ([workspaceId, userIds]) =>
-          await reportWorkspacePresence(workspaceId, [...userIds]),
-      ),
-    )
-  }
-
-  const sendWorkspaceEvent = (
-    socket: WorkspaceSocket,
-    event: unknown,
-    seq: string,
-  ): void => {
-    const parsedEvent = realtimeBatchEnvelopeSchema.safeParse({
-      batch: [event],
-    })
-    if (!parsedEvent.success) {
-      return
-    }
-    const allowedTopics = new Set(
-      getWorkspaceConnectionTopics(socket.getUserData()),
-    )
-    const eventTopics = getWorkspaceEventTopics(
-      socket.getUserData().workspaceId,
-      parsedEvent.data.batch[0],
-    )
-    if (!eventTopics.some((topic) => allowedTopics.has(topic))) {
-      return
-    }
-    socket.send(encodeBatch([parsedEvent.data.batch[0]], seq))
-  }
-
-  const publishWorkspaceEvent = (
-    workspaceId: string,
-    event: unknown,
-    seq: string,
-  ): void => {
-    const parsedEvent = realtimeBatchEnvelopeSchema.safeParse({
-      batch: [event],
-    })
-    if (!parsedEvent.success) {
-      return
-    }
-    const frame = encodeBatch([parsedEvent.data.batch[0]], seq)
-    for (const topic of getWorkspaceEventTopics(
-      workspaceId,
-      parsedEvent.data.batch[0],
-    )) {
-      app.publish(topic, frame)
-    }
-  }
-
-  const dispatchStreamRecord = (record: StreamRecord, seq: string): void => {
-    switch (record.kind) {
-      case "workspace-events":
-        for (const event of record.events) {
-          publishWorkspaceEvent(record.workspaceId, event, seq)
-        }
-        return
-      case "guest-event":
-        app.publish(
-          `guest:${record.guestConversationId}`,
-          encodeBatch([record.event], seq),
-        )
-        return
-      case "member-send":
-        app.publish(
-          `ws:${record.workspaceId}:user:${record.userId}`,
-          encodeBatch([record.event], seq),
-        )
-        return
-      case "member-revoke": {
-        const sockets = connectionsByMember.get(
-          memberKey(record.workspaceId, record.userId),
-        )
-        if (!sockets) {
-          return
-        }
-        for (const socket of sockets) {
-          socket.end(REALTIME_CLOSE_CODE.revoked, "revoked")
-        }
-        return
-      }
-      case "presence-heartbeat":
-        return
-      default:
-        return
-    }
-  }
-
-  const replayWorkspaceSocket = async (
-    socket: WorkspaceSocket,
-  ): Promise<void> => {
-    const { lastSeq, workspaceId } = socket.getUserData()
-    if (!lastSeq) {
-      return
-    }
-    if (!STREAM_ID_PATTERN.test(lastSeq)) {
-      socket.end(REALTIME_CLOSE_CODE.resync, "invalid-last-seq")
-      return
-    }
-
-    const streamKey = getRealtimeStreamKey(workspaceId)
-    const oldestEntries = (await redis.xrange(
-      streamKey,
-      "-",
-      "+",
-      "COUNT",
-      1,
-    )) as StreamEntry[]
-    const oldestEntry = oldestEntries[0]
-    if (oldestEntry && isStreamIdBefore(lastSeq, oldestEntry[0])) {
-      socket.end(REALTIME_CLOSE_CODE.resync, "replay-window-expired")
-      return
-    }
-
-    const entries = (await redis.xrange(
-      streamKey,
-      `(${lastSeq}`,
-      "+",
-      "COUNT",
-      MAX_REPLAY_ENTRIES + 1,
-    )) as StreamEntry[]
-    if (entries.length > MAX_REPLAY_ENTRIES) {
-      socket.end(REALTIME_CLOSE_CODE.resync, "replay-window-too-large")
-      return
-    }
-    for (const [entryId, fields] of entries) {
-      const record = parseStreamRecord(fields)
-      if (!record || record.workspaceId !== workspaceId) {
-        continue
-      }
-      if (record.kind === "workspace-events") {
-        for (const event of record.events) {
-          sendWorkspaceEvent(socket, event, entryId)
-        }
-        continue
-      }
-      if (
-        record.kind === "member-send" &&
-        record.userId === socket.getUserData().userId
-      ) {
-        socket.send(encodeBatch([record.event], entryId))
-      }
-      if (
-        record.kind === "member-revoke" &&
-        record.userId === socket.getUserData().userId
-      ) {
-        socket.end(REALTIME_CLOSE_CODE.revoked, "revoked")
-      }
-    }
-  }
-
-  const consumeEntries = async (
-    streamKey: string,
-    entries: StreamEntry[],
-  ): Promise<void> => {
-    const acknowledgedIds: string[] = []
-    for (const [entryId, fields] of entries) {
-      const record = parseStreamRecord(fields)
-      if (record) {
-        dispatchStreamRecord(record, entryId)
-      }
-      acknowledgedIds.push(entryId)
-    }
-    if (acknowledgedIds.length > 0) {
-      await redis.xack(streamKey, consumerGroup, ...acknowledgedIds)
-    }
-  }
-
-  const recoverPendingEntries = async (
-    reader: Redis,
-    streamKey: string,
-  ): Promise<void> => {
-    const [, entries] = (await reader.xautoclaim(
-      streamKey,
-      consumerGroup,
-      consumerName,
-      PENDING_CLAIM_IDLE_MS,
-      "0-0",
-      "COUNT",
-      STREAM_READ_COUNT,
-    )) as [string, StreamEntry[], string[]]
-    if (entries.length > 0) {
-      await consumeEntries(streamKey, entries)
-    }
-  }
-
-  const consumeStream = async (streamKey: string): Promise<void> => {
-    const reader = redis.duplicate()
-    try {
-      await recoverPendingEntries(reader, streamKey)
-      while (!stopped) {
-        const response = (await reader.call(
-          "XREADGROUP",
-          "GROUP",
-          consumerGroup,
-          consumerName,
-          "BLOCK",
-          STREAM_READ_BLOCK_MS,
-          "COUNT",
-          STREAM_READ_COUNT,
-          "STREAMS",
-          streamKey,
-          ">",
-        )) as StreamReadResult | null
-        if (!response) {
-          continue
-        }
-        for (const [, entries] of response) {
-          await consumeEntries(streamKey, entries)
-        }
-      }
-    } finally {
-      reader.disconnect()
-    }
-  }
-
-  const initializeConsumerGroups = async (): Promise<void> => {
-    for (const streamKey of streamKeys) {
-      try {
-        await redis.xgroup("CREATE", streamKey, consumerGroup, "$", "MKSTREAM")
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        if (!message.includes("BUSYGROUP")) {
-          throw error
-        }
-      }
-    }
+    markPresenceDirty(workspaceId)
   }
 
   const registerWorkspaceSocket = (path: string): void => {
@@ -430,40 +225,109 @@ export const createRealtimeGateway = ({
           res.writeStatus("401 Unauthorized").end()
           return
         }
-        verifyMemberConnectToken(token, workspaceId, secret)
-          .then((claims) => {
+
+        ;(async () => {
+          let claims: RealtimeMemberClaims
+          try {
+            claims = await verifyMemberConnectToken(token, workspaceId, secret)
+          } catch {
+            if (!aborted) {
+              res.writeStatus("401 Unauthorized").end()
+            }
+            return
+          }
+
+          let activated = false
+          try {
+            const activationLastId =
+              await streamReader.activateWorkspace(workspaceId)
+            activated = true
+            const replay = await loadReplay({ lastSeq, redis, workspaceId })
             if (aborted) {
+              streamReader.releaseWorkspace(workspaceId)
               return
             }
             res.cork(() => {
               res.upgrade(
-                { ...claims, lastSeq: lastSeq || undefined, workspaceId },
+                {
+                  ...claims,
+                  closeReason: replay.closeReason,
+                  closed: false,
+                  replayCutoff: replay.lastStreamId ?? activationLastId,
+                  replayEntries: replay.entries,
+                  workspaceId,
+                },
                 websocketKey,
                 websocketProtocol,
                 websocketExtensions,
                 context,
               )
             })
-          })
-          .catch(() => {
-            if (!aborted) {
-              res.writeStatus("401 Unauthorized").end()
+          } catch (error) {
+            if (aborted) {
+              if (activated) {
+                streamReader.releaseWorkspace(workspaceId)
+              }
+              return
             }
-          })
+            logger.warn(
+              { err: error, workspaceId },
+              "Realtime socket replay failed",
+            )
+            res.cork(() => {
+              res.upgrade(
+                {
+                  ...claims,
+                  closeReason: "replay-failed",
+                  closed: false,
+                  replayEntries: [],
+                  workspaceId,
+                },
+                websocketKey,
+                websocketProtocol,
+                websocketExtensions,
+                context,
+              )
+            })
+          }
+        })().catch((error) => {
+          logger.error(
+            { err: error, workspaceId },
+            "Unhandled workspace realtime upgrade failure",
+          )
+        })
       },
-      open: async (socket) => {
-        addConnection(socket)
-        for (const topic of getWorkspaceConnectionTopics(
-          socket.getUserData(),
-        )) {
-          socket.subscribe(topic)
+      open: (socket) => {
+        const socketData = socket.getUserData()
+        const firstUserSocket = delivery.addWorkspaceSocket(socket)
+        delivery.subscribeWorkspaceSocket(socket)
+        if (socketData.closeReason) {
+          socketData.closed = true
+          socket.end(REALTIME_CLOSE_CODE.resync, socketData.closeReason)
+          return
         }
-        await replayWorkspaceSocket(socket)
-        await reportLocalPresence()
+        if (!delivery.replayWorkspaceSocket(socket)) {
+          return
+        }
+        const gapEntries = streamReader
+          .getRecentEntries(socketData.workspaceId, socketData.replayCutoff)
+          .filter(
+            (entry) => entry.record.workspaceId === socketData.workspaceId,
+          )
+        if (!delivery.replayWorkspaceSocket(socket, gapEntries)) {
+          return
+        }
+        if (firstUserSocket) {
+          addConnectedUser(socketData.workspaceId, socketData.userId)
+        }
       },
-      close: async (socket) => {
-        removeConnection(socket)
-        await reportLocalPresence()
+      close: (socket) => {
+        const socketData = socket.getUserData()
+        socketData.closed = true
+        streamReader.releaseWorkspace(socketData.workspaceId)
+        if (delivery.removeWorkspaceSocket(socket)) {
+          removeConnectedUser(socketData.workspaceId, socketData.userId)
+        }
       },
     })
   }
@@ -487,29 +351,66 @@ export const createRealtimeGateway = ({
           res.writeStatus("401 Unauthorized").end()
           return
         }
-        verifyGuestConnectToken(token, guestConversationId, secret)
-          .then(() => {
+
+        ;(async () => {
+          try {
+            const claims = await verifyGuestConnectToken(
+              token,
+              guestConversationId,
+              secret,
+            )
+            const activationLastId = await streamReader.activateWorkspace(
+              claims.workspaceId,
+            )
             if (aborted) {
+              streamReader.releaseWorkspace(claims.workspaceId)
               return
             }
             res.cork(() => {
               res.upgrade(
-                { guestConversationId },
+                {
+                  ...claims,
+                  closed: false,
+                  replayCutoff: activationLastId,
+                  replayEntries: [],
+                },
                 websocketKey,
                 websocketProtocol,
                 websocketExtensions,
                 context,
               )
             })
-          })
-          .catch(() => {
+          } catch {
             if (!aborted) {
               res.writeStatus("401 Unauthorized").end()
             }
-          })
+          }
+        })().catch((error) => {
+          logger.error(
+            { err: error, guestConversationId },
+            "Unhandled guest realtime upgrade failure",
+          )
+        })
       },
       open: (socket) => {
-        socket.subscribe(`guest:${socket.getUserData().guestConversationId}`)
+        const socketData = socket.getUserData()
+        delivery.subscribeGuestSocket(socket)
+        delivery.replayGuestSocket(socket)
+        const gapEntries = streamReader
+          .getRecentEntries(socketData.workspaceId, socketData.replayCutoff)
+          .filter(
+            (entry) =>
+              entry.record.kind === "guest-event" &&
+              entry.record.workspaceId === socketData.workspaceId &&
+              entry.record.guestConversationId ===
+                socketData.guestConversationId,
+          )
+        delivery.replayGuestSocket(socket, gapEntries)
+      },
+      close: (socket) => {
+        const socketData = socket.getUserData()
+        socketData.closed = true
+        streamReader.releaseWorkspace(socketData.workspaceId)
       },
     })
   }
@@ -528,43 +429,41 @@ export const createRealtimeGateway = ({
   registerGuestSocket("/rt/guests/:guestConversationId")
 
   return {
-    async close() {
+    close: async () => {
       stopped = true
       ready = false
-      if (presenceHeartbeat) {
-        clearInterval(presenceHeartbeat)
-        presenceHeartbeat = null
+      clearInterval(heartbeat)
+      clearInterval(presenceHeartbeat)
+      for (const timer of presenceTimers.values()) {
+        clearTimeout(timer)
       }
+      presenceTimers.clear()
       app.close()
-      await streamLoops
+      await streamReader.close()
       redis.disconnect()
     },
-    async listen(host, port) {
-      await initializeConsumerGroups()
-      await new Promise<void>((resolve, reject) => {
-        app.listen(host, port, (listenSocket) => {
-          if (!listenSocket) {
-            reject(new Error(`Unable to listen on ${host}:${port}`))
-            return
-          }
-          resolve()
-        })
+    listen: async (host, port) => {
+      const { promise, reject, resolve } = Promise.withResolvers<void>()
+      app.listen(host, port, (listenSocket) => {
+        if (!listenSocket) {
+          reject(new Error(`Unable to listen on ${host}:${port}`))
+          return
+        }
+        resolve()
       })
+      await promise
       ready = true
-      presenceHeartbeat = setInterval(async () => {
-        await reportLocalPresence()
+      heartbeat = setInterval(() => {
+        app.publish("hb", JSON.stringify({ hb: 1 }))
+      }, 25_000)
+      presenceHeartbeat = setInterval(() => {
+        reportLocalPresence([...connectedUsersByWorkspace.keys()]).catch(
+          (error) => {
+            logger.error({ err: error }, "Failed to report workspace presence")
+          },
+        )
       }, PRESENCE_REPORT_INTERVAL_MS)
-      streamLoops = Promise.all(streamKeys.map(consumeStream))
-        .then(() => undefined)
-        .catch((error: unknown) => {
-          ready = false
-          if (!stopped) {
-            logger.error(
-              { err: error },
-              "Realtime Redis Streams consumer stopped",
-            )
-          }
-        })
+      streamReader.start()
     },
   }
 }

@@ -1,8 +1,8 @@
 import type { RealtimeEventData } from "@chatbotx.io/realtime-protocol"
-import { REALTIME_EVENT_TOPICS } from "@chatbotx.io/realtime-protocol"
 import { logger } from "../logger"
 import {
   publishRealtimeStreamRecord,
+  publishSerializedRealtimeStreamRecord,
   resetRealtimeStreamPublisherForTests,
 } from "./realtime-stream-publisher"
 
@@ -10,11 +10,21 @@ export const WORKSPACE_REALTIME_COALESCE_MS = 25
 export const WORKSPACE_REALTIME_MAX_EVENTS = 64
 export const WORKSPACE_REALTIME_MAX_BYTES = 256 * 1024
 
-const BATCH_ENVELOPE_BYTES = new TextEncoder().encode('{"batch":[]}').byteLength
+const BATCH_ENVELOPE_BYTES = Buffer.byteLength('{"batch":[]}')
+const IMMEDIATE_FLUSH_EVENT_TYPES = new Set([
+  "conversationAssigned",
+  "whatsappCallClaimedElsewhere",
+  "whatsappCallOutboundAnswer",
+  "whatsappCallOutboundStatus",
+  "whatsappCallPermissionUpdated",
+  "whatsappCallTransportEnded",
+  "whatsappCallTransportIncoming",
+])
 
 type PendingWorkspaceRealtimeEvents = {
   byteLength: number
   events: RealtimeEventData[]
+  serializedEvents: string[]
   timer: NodeJS.Timeout
   waiters: {
     reject: (error: unknown) => void
@@ -27,13 +37,10 @@ const inFlightByWorkspace = new Map<string, Promise<void>>()
 
 const appendWorkspaceRealtimeEvents = async (
   workspaceId: string,
-  events: RealtimeEventData[],
+  pending: PendingWorkspaceRealtimeEvents,
 ): Promise<void> => {
-  await publishRealtimeStreamRecord({
-    events,
-    kind: "workspace-events",
-    workspaceId,
-  })
+  const serializedRecord = `{"events":[${pending.serializedEvents.join(",")}],"kind":"workspace-events","workspaceId":${JSON.stringify(workspaceId)}}`
+  await publishSerializedRealtimeStreamRecord(workspaceId, serializedRecord)
 }
 
 const createPendingWorkspaceRealtimeEvents = (
@@ -42,11 +49,12 @@ const createPendingWorkspaceRealtimeEvents = (
   const pending: PendingWorkspaceRealtimeEvents = {
     byteLength: BATCH_ENVELOPE_BYTES,
     events: [],
+    serializedEvents: [],
     timer: setTimeout(
       () =>
         flushPendingWorkspaceRealtimeEvents(workspaceId).catch((error) => {
           logger.error(
-            { error, workspaceId },
+            { err: error, workspaceId },
             "Failed to publish realtime events",
           )
         }),
@@ -79,7 +87,7 @@ export const flushPendingWorkspaceRealtimeEvents = (
   const previousAppend =
     inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
   const append = previousAppend.then(() =>
-    appendWorkspaceRealtimeEvents(workspaceId, pending.events),
+    appendWorkspaceRealtimeEvents(workspaceId, pending),
   )
   append.then(
     () => {
@@ -139,9 +147,8 @@ export const publishWorkspaceRealtimeEvent = (
     pendingByWorkspace.get(workspaceId) ??
     createPendingWorkspaceRealtimeEvents(workspaceId)
 
-  const serializedEventBytes = new TextEncoder().encode(
-    JSON.stringify(event),
-  ).byteLength
+  const serializedEvent = JSON.stringify(event)
+  const serializedEventBytes = Buffer.byteLength(serializedEvent)
   const separatorBytes = pending.events.length > 0 ? 1 : 0
   const wouldExceedBytes =
     pending.byteLength + separatorBytes + serializedEventBytes >
@@ -156,13 +163,13 @@ export const publishWorkspaceRealtimeEvent = (
 
   const nextSeparatorBytes = pending.events.length > 0 ? 1 : 0
   pending.events.push(event)
+  pending.serializedEvents.push(serializedEvent)
   pending.byteLength += nextSeparatorBytes + serializedEventBytes
-  const delivery = new Promise<void>((resolve, reject) => {
-    pending.waiters.push({ reject, resolve })
-  })
+  const { promise: delivery, reject, resolve } = Promise.withResolvers<void>()
+  pending.waiters.push({ reject, resolve })
 
   if (
-    REALTIME_EVENT_TOPICS[event.eventType].topics.includes("voip") ||
+    IMMEDIATE_FLUSH_EVENT_TYPES.has(event.eventType) ||
     pending.events.length === WORKSPACE_REALTIME_MAX_EVENTS
   ) {
     flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined)
@@ -180,7 +187,7 @@ export const queueWorkspaceRealtimeEvent = (
 ): void => {
   publishWorkspaceRealtimeEvent(workspaceId, event).catch((error) => {
     logger.error(
-      { error, eventType: event.eventType, workspaceId },
+      { err: error, eventType: event.eventType, workspaceId },
       "Failed to publish realtime event",
     )
   })

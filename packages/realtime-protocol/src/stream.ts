@@ -47,29 +47,15 @@ const realtimeMemberRevokeStreamRecordSchema = z.object({
   workspaceId: z.string().min(1),
 })
 
-const realtimePresenceHeartbeatStreamRecordSchema = z.object({
-  kind: z.literal("presence-heartbeat"),
-  userIds: z.array(z.string().min(1)).max(10_000),
-  workspaceId: z.string().min(1),
-})
-
 /**
  * A Redis Stream record has exactly one delivery route. Workspace batches are
- * coalesced before publishing; guest, member-control, and presence records
- * retain their individual semantics.
+ * coalesced before publishing; guest and member-control records retain their
+ * individual semantics.
  */
 export const realtimeStreamRecordSchema = z.discriminatedUnion("kind", [
   realtimeWorkspaceEventsStreamRecordSchema,
   realtimeGuestEventStreamRecordSchema,
   realtimeMemberSendStreamRecordSchema,
   realtimeMemberRevokeStreamRecordSchema,
-  realtimePresenceHeartbeatStreamRecordSchema,
 ])
 export type RealtimeStreamRecord = z.infer<typeof realtimeStreamRecordSchema>
-
-/** Legacy workspace-batch payload accepted while the gateway rolls out. */
-export const realtimeStreamEntrySchema = z.object({
-  events: z.array(realtimeEventEnvelopeSchema).min(1),
-  workspaceId: z.string().min(1),
-})
-export type RealtimeStreamEntry = z.infer<typeof realtimeStreamEntrySchema>

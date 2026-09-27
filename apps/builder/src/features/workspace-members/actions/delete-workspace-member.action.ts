@@ -69,7 +69,7 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       })
     } catch (error) {
       logger.warn(
-        { error, userId: workspaceMember.userId, workspaceId },
+        { err: error, userId: workspaceMember.userId, workspaceId },
         "Failed to revoke removed member realtime connections",
       )
     }

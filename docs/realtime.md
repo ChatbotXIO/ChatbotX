@@ -1,52 +1,43 @@
 # Realtime
 
-ChatbotX uses a native uWebSockets gateway and Redis Streams. The realtime
-transport has no edge-room compatibility layer.
+ChatbotX serves workspace and webchat realtime traffic through a native
+uWebSockets gateway backed by Redis Streams.
 
-## Connection model
+## Connection and delivery
 
-A browser tab opens one native WebSocket for its workspace:
+- Member tabs connect to `/rt/workspaces/:workspaceId` with a short-lived
+  workspace-bound token. Guest tabs connect to `/rt/guests/:guestConversationId`
+  with a token bound to both the conversation and its workspace.
+- Full-access members receive one `{"batch":[…],"seq":"<stream-id>"}` frame per
+  workspace record. Assigned-only members receive one filtered frame per record;
+  unrouted events are full-access only. Directed member events use the local
+  member-connection map and revocations close with code `4001`.
+- Every socket subscribes to the gateway's `hb` topic. The gateway publishes a
+  heartbeat every 25 seconds; clients close only after 60 seconds without any
+  frame.
 
-- Members connect to `/rt/workspaces/:workspaceId` with a short-lived member
-  token.
-- Webchat guests connect to `/rt/guests/:guestConversationId` with a
-  guest-scoped token.
-- The gateway verifies the token audience and claims before upgrade. Member
-  claims include `userId`, chat scope, and assigned team IDs.
-- Browser clients use `RealtimeSocket` from `@chatbotx.io/realtime-protocol`.
+The contract is at-least-once. `seq` is strictly increasing per socket; clients
+deduplicate only complete record frames, not individual events in a batch.
 
-Workspace events are delivered only when their route permits the connected
-member. Directed member events and revocations are not workspace broadcasts.
+## Streams and recovery
 
-## Delivery and recovery
+The gateway activates only shards with local workspace or guest sockets. One
+Redis connection runs `XREAD BLOCK 1000 COUNT 200` across active shards; no
+consumer group is used. Every replica therefore observes the same records, so
+load-balancer workspace affinity is an optional efficiency optimization, not a
+correctness requirement.
 
-Business code appends typed records to a Redis Stream shard through
-`packages/business/src/platform/realtime-stream-publisher.ts`. The gateway
-consumes the stream and emits frames with the Redis record id in `seq`.
+On upgrade, the gateway loads up to 500 records after the supplied `lastSeq`.
+It subscribes synchronously before sending replay and then sends the active
+shard's recent-buffer gap fill, preserving order without touching a closed
+socket. Invalid, expired, or oversized replay windows close with `4002`; the
+client performs an authoritative resync only for that close code.
 
-Clients persist their last processed sequence and request replay after it on a
-new connection. The UI deduplicates replayed frames and resyncs the authoritative
-conversation head and active thread after reconnect. A client that cannot keep
-up must be closed for resync rather than silently losing frames.
-
-The delivery contract is at-least-once with idempotent client handling; the
-canonical conversation and message data remains the source of truth.
-
-## Event contract
-
-`@chatbotx.io/realtime-protocol` owns event schemas, routes, token helpers,
-stream-record schemas, the native socket helper, and presence constants.
-
-- Producers create `RealtimeEventData` with `routeForConversation` or
-  `routeForAssignment` when the event is conversation-scoped.
-- Client handlers validate known event payloads with schemas from
-  `realtime-protocol` before dispatch.
-- Unknown event names are ignored to support staggered deployments.
+Publishers trim streams with `MINID ~ now-5-minutes`. This bounds retention by
+the replay window rather than by a per-shard entry count.
 
 ## Presence
 
-Each gateway periodically reports its locally connected workspace members to
-the Builder presence endpoint. `PRESENCE_REPORT_INTERVAL_MS` and
-`PRESENCE_TTL_MS` are owned by `@chatbotx.io/realtime-protocol/presence`; the
-interval remains at most half the TTL. This reporting path is transport-neutral
-and does not use a browser-specific protocol.
+The gateway reports presence after a user's first local socket opens or last
+local socket closes. Reports are coalesced per workspace for one second, and
+the periodic report is concurrency-bounded.

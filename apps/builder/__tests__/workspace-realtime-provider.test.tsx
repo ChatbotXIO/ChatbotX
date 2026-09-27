@@ -156,13 +156,48 @@ describe("WorkspaceRealtimeProvider", () => {
       eventType: "contactBlocked",
       data: { contactId: "c1" },
     })
-    expect(localStorage.getItem("realtime:last-seq:workspace-1")).toBe("1-0")
   })
+  test("keeps the replay cursor per provider instance", async () => {
+    vi.useFakeTimers()
+    try {
+      await render(null)
+      const firstSocket = await waitForSocket()
 
-  test("reports a resync state after the gateway closes the native socket", async () => {
+      act(() => {
+        firstSocket.receive(
+          JSON.stringify({
+            batch: [
+              { data: { messageIds: ["m1"] }, eventType: "messageDeleted" },
+            ],
+            seq: "9-0",
+          }),
+        )
+      })
+      await act(async () => {
+        firstSocket.close()
+        await vi.runAllTimersAsync()
+      })
+
+      const reconnectSocket = await waitForSocket()
+      expect(reconnectSocket.url).toContain("lastSeq=9-0")
+
+      await act(() => root.unmount())
+      root = createRoot(container)
+      await render(null)
+
+      const freshProviderSocket = await waitForSocket()
+      expect(freshProviderSocket.url).not.toContain("lastSeq=")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  test("increments resync count after the gateway closes the native socket", async () => {
+    const resyncCounts: number[] = []
     const statuses: string[] = []
     function StatusReader() {
-      statuses.push(useWorkspaceRealtimeContext().status)
+      const { resyncCount, status } = useWorkspaceRealtimeContext()
+      resyncCounts.push(resyncCount)
+      statuses.push(status)
       return null
     }
 
@@ -172,6 +207,7 @@ describe("WorkspaceRealtimeProvider", () => {
     act(() => socket.close(4002, "resync"))
 
     expect(statuses.at(-1)).toBe("resyncing")
+    expect(resyncCounts.at(-1)).toBe(1)
   })
 
   test("keeps malformed gateway frames out of subscribers", async () => {
@@ -220,7 +256,6 @@ describe("WorkspaceRealtimeProvider", () => {
     })
 
     expect(handler).toHaveBeenCalledTimes(1)
-    expect(localStorage.getItem("realtime:last-seq:workspace-1")).toBe("2-0")
     expect(handler).toHaveBeenCalledWith({
       eventType: "messageDeleted",
       data: { messageIds: ["m1"] },
@@ -255,6 +290,7 @@ describe("WorkspaceRealtimeProvider", () => {
             { eventType: "futureEvent", data: {} },
             { eventType: "messageDeleted", data: { messageIds: ["m1"] } },
           ],
+          seq: "3-0",
         }),
       )
     })
@@ -280,6 +316,7 @@ describe("WorkspaceRealtimeProvider", () => {
       socket.receive(
         JSON.stringify({
           batch: [{ eventType: "whatsappCallTransportIncoming", data: {} }],
+          seq: "4-0",
         }),
       )
     })

@@ -36,10 +36,8 @@ export function truncatePresenceUserIds(userIds: readonly string[]): string[] {
 
 /**
  * Binds a presence-report token to its body: the realtime side hashes the ids
- * it's about to POST into a `bodyHash` claim, and the builder route recomputes
- * it over what arrived and rejects a mismatch. Sorted first so argument order
- * never matters. Uses Web Crypto — `node:crypto` doesn't exist in the realtime
- * runtime.
+ * it posts into a `bodyHash` claim, and the builder route recomputes it over
+ * the received body. Sorted first so argument order never matters.
  */
 export async function hashPresenceUserIds(
   userIds: readonly string[],

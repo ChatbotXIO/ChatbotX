@@ -16,7 +16,6 @@
     "@chatbotx.io/realtime-protocol": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
-    "jose": "^6.2.3",
     "ky": "^2.0.2",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.70.0",
     "zod": "^4.3.6"

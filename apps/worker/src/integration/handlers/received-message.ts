@@ -971,7 +971,6 @@ const saveAndBroadcastMessage = async (props: {
       eventType: RealtimeEventType.messageCreated,
       data: newMessage,
       route: routeForConversation({
-        inboxId: inbox.id,
         assignedUserId: conversation.assignedUserId,
         assignedInboxTeamId: conversation.assignedInboxTeamId,
       }),
@@ -1445,7 +1444,6 @@ export const updateIncomingComment = async (
       removedAttachment: false,
     },
     route: routeForConversation({
-      inboxId: inbox.id,
       assignedUserId: conversation?.assignedUserId,
       assignedInboxTeamId: conversation?.assignedInboxTeamId,
     }),
@@ -1485,7 +1483,6 @@ export const deleteIncomingComment = async (
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
     route: routeForConversation({
-      inboxId: inbox.id,
       assignedUserId: conversation?.assignedUserId,
       assignedInboxTeamId: conversation?.assignedInboxTeamId,
     }),
@@ -1527,7 +1524,6 @@ export const deleteIncomingMessage = async (
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
     route: routeForConversation({
-      inboxId: inbox.id,
       assignedUserId: conversation?.assignedUserId,
       assignedInboxTeamId: conversation?.assignedInboxTeamId,
     }),
@@ -1633,7 +1629,6 @@ export const processMessageReaction = async (
       eventType: RealtimeEventType.messageCreated,
       data: reactionRow,
       route: routeForConversation({
-        inboxId: inbox.id,
         assignedUserId: conversation.assignedUserId,
         assignedInboxTeamId: conversation.assignedInboxTeamId,
       }),
@@ -1659,7 +1654,6 @@ export const processMessageReaction = async (
           removedAttachment: false,
         },
         route: routeForConversation({
-          inboxId: inbox.id,
           assignedUserId: conversation.assignedUserId,
           assignedInboxTeamId: conversation.assignedInboxTeamId,
         }),

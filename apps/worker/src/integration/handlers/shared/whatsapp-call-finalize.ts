@@ -399,7 +399,6 @@ export const finalizeCallSideEffects = async (
       eventType: RealtimeEventType.messageCreated,
       data: { ...message, attachments: [] },
       route: routeForConversation({
-        inboxId: call.inboxId,
         assignedUserId: conversation?.assignedUserId,
         assignedInboxTeamId: conversation?.assignedInboxTeamId,
       }),

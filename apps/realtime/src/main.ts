@@ -6,11 +6,8 @@ import { logger } from "./logger"
 export const main = async (): Promise<void> => {
   const config = resolveRealtimeGatewayConfig()
   const gateway = createRealtimeGateway({
-    consumerGroup: config.consumerGroup,
-    consumerName: config.consumerName,
     redis: createRedisConnection(config.redisUrl),
     secret: config.secret,
-    shards: config.shards,
   })
   let shuttingDown = false
 
@@ -29,11 +26,8 @@ export const main = async (): Promise<void> => {
   await gateway.listen(config.host, config.port)
   logger.info(
     {
-      consumerGroup: config.consumerGroup,
-      consumerName: config.consumerName,
       host: config.host,
       port: config.port,
-      shards: config.shards,
     },
     "Realtime gateway listening",
   )

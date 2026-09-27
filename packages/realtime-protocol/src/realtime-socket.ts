@@ -10,10 +10,7 @@ type RealtimeWebSocket = {
   onerror: (() => void) | null
   onmessage: ((event: { data: string }) => void) | null
   onopen: (() => void) | null
-  readyState: number
-  send: (data: string) => void
 }
-
 export type RealtimeSocketOptions = {
   getUrl: () => Promise<string>
   heartbeatTimeoutMs?: number
@@ -27,8 +24,7 @@ export type RealtimeSocketOptions = {
   webSocketFactory?: (url: string) => RealtimeWebSocket
 }
 
-const OPEN = 1
-const DEFAULT_HEARTBEAT_TIMEOUT_MS = 45_000
+const DEFAULT_HEARTBEAT_TIMEOUT_MS = 60_000
 const DEFAULT_MAX_RECONNECT_DELAY_MS = 30_000
 const DEFAULT_RECONNECT_BASE_DELAY_MS = 500
 
@@ -130,22 +126,9 @@ export class RealtimeSocket {
     this.#socket = null
   }
 
-  handleOnline = (): void => {
+  reconnectNow = (): void => {
     this.#clearReconnect()
     this.connect()
-  }
-
-  handleVisibilityVisible = (): void => {
-    this.#clearReconnect()
-    this.connect()
-  }
-
-  send = (data: string): boolean => {
-    if (this.#socket?.readyState !== OPEN) {
-      return false
-    }
-    this.#socket.send(data)
-    return true
   }
 
   #armHeartbeat(socket: RealtimeWebSocket): void {

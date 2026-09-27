@@ -252,12 +252,21 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
 })
 
 describe("signGuestConnectToken / verifyGuestConnectToken", () => {
-  it("rejects a guest token replayed against another conversation room", async () => {
+  it("binds the guest token to its conversation and workspace", async () => {
     const token = await signGuestConnectToken(
-      { guestConversationId: "guest-conversation-1" },
+      {
+        guestConversationId: "guest-conversation-1",
+        workspaceId: "workspace-1",
+      },
       SECRET,
     )
 
+    await expect(
+      verifyGuestConnectToken(token, "guest-conversation-1", SECRET),
+    ).resolves.toEqual({
+      guestConversationId: "guest-conversation-1",
+      workspaceId: "workspace-1",
+    })
     await expect(
       verifyGuestConnectToken(token, "guest-conversation-2", SECRET),
     ).rejects.toThrow()

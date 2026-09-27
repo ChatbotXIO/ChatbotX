@@ -4,9 +4,9 @@ import {
   RealtimeEventType,
   RealtimeSocket,
   realtimeBatchEnvelopeSchema,
-  realtimeEventEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
 import { useEffect } from "react"
+import { useShallow } from "zustand/react/shallow"
 import { getClientEmbeddingOrigin } from "@/features/integration-webchat/lib/authorized-domain"
 import { logger } from "@/lib/log"
 import type { MessageResource } from "../messages/schema/resource"
@@ -20,18 +20,26 @@ type WebchatRealtimeProps = {
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
   const { publicRealtimeUrl } = useTenantSettings()
   const { accessToken, config, handleNewMessage, setIsTyping } =
-    useGuestSessionStore((state) => state)
+    useGuestSessionStore(
+      useShallow((state) => ({
+        accessToken: state.accessToken,
+        config: state.config,
+        handleNewMessage: state.handleNewMessage,
+        setIsTyping: state.setIsTyping,
+      })),
+    )
 
   useEffect(() => {
+    if (!accessToken) {
+      return
+    }
     const handleMessage = (data: string): void => {
       try {
-        const parsed = JSON.parse(data) as unknown
-        const batch = realtimeBatchEnvelopeSchema.safeParse(parsed)
-        const singleEvent = realtimeEventEnvelopeSchema.safeParse(parsed)
-        let events = batch.success ? batch.data.batch : []
-        if (singleEvent.success) {
-          events = [singleEvent.data]
+        const batch = realtimeBatchEnvelopeSchema.safeParse(JSON.parse(data))
+        if (!batch.success) {
+          return
         }
+        const events = batch.data.batch
         for (const event of events) {
           switch (event.eventType) {
             case RealtimeEventType.messageCreated: {
@@ -104,5 +112,5 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     setIsTyping,
   ])
 
-  return <div />
+  return null
 }

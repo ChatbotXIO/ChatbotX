@@ -278,7 +278,6 @@ export async function processMessengerTemplate(
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
         route: routeForConversation({
-          inboxId: contactInbox.inboxId,
           assignedUserId: conversation.assignedUserId,
           assignedInboxTeamId: conversation.assignedInboxTeamId,
         }),

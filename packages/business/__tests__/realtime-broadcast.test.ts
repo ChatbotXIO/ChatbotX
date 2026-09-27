@@ -8,12 +8,15 @@ import {
   revokeWorkspaceMemberRealtimeConnections,
 } from "../src/platform/realtime-broadcast"
 
-const { publishRealtimeStreamRecord } = vi.hoisted(() => ({
-  publishRealtimeStreamRecord: vi.fn(),
-}))
+const { publishRealtimeStreamRecord, publishSerializedRealtimeStreamRecord } =
+  vi.hoisted(() => ({
+    publishRealtimeStreamRecord: vi.fn(),
+    publishSerializedRealtimeStreamRecord: vi.fn(),
+  }))
 
 vi.mock("../src/platform/realtime-stream-publisher", () => ({
   publishRealtimeStreamRecord,
+  publishSerializedRealtimeStreamRecord,
   resetRealtimeStreamPublisherForTests: vi.fn(),
 }))
 
@@ -26,6 +29,8 @@ beforeEach(() => {
   vi.useFakeTimers()
   publishRealtimeStreamRecord.mockReset()
   publishRealtimeStreamRecord.mockResolvedValue(undefined)
+  publishSerializedRealtimeStreamRecord.mockReset()
+  publishSerializedRealtimeStreamRecord.mockResolvedValue(undefined)
   resetRealtimePublishStateForTests()
 })
 
@@ -45,11 +50,10 @@ describe("realtime stream broadcast", () => {
       undefined,
     ])
 
-    expect(publishRealtimeStreamRecord).toHaveBeenCalledWith({
-      events: [typingEvent, typingEvent],
-      kind: "workspace-events",
-      workspaceId: "workspace_1",
-    })
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
+      "workspace_1",
+      '{"events":[{"data":{"typing":true},"eventType":"typing"},{"data":{"typing":true},"eventType":"typing"}],"kind":"workspace-events","workspaceId":"workspace_1"}',
+    )
   })
 
   test("flushes pending workspace records before shutdown", async () => {
@@ -58,7 +62,7 @@ describe("realtime stream broadcast", () => {
     await flushAllPendingWorkspaceRealtimeEvents()
     await expect(delivery).resolves.toBeUndefined()
 
-    expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(1)
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledTimes(1)
   })
 
   test("publishes directed member, revocation, and guest records directly", async () => {

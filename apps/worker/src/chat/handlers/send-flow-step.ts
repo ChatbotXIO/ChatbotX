@@ -963,7 +963,6 @@ export async function sendFlowStep({
         eventType: RealtimeEventType.messageCreated,
         data: message,
         route: routeForConversation({
-          inboxId: targetContactInbox.inboxId,
           assignedUserId: conversation.assignedUserId,
           assignedInboxTeamId: conversation.assignedInboxTeamId,
         }),
@@ -1252,9 +1251,9 @@ export const sendChatMessage = async (
         eventType: RealtimeEventType.messageCreated,
         data: message,
         route: routeForConversation({
-          inboxId: contactInbox.inboxId,
           assignedUserId: conversation.assignedUserId,
           assignedInboxTeamId: conversation.assignedInboxTeamId,
+          inboxId: contactInbox.inboxId,
         }),
       })
     }

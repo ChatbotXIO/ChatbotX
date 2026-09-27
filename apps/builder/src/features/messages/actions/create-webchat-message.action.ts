@@ -324,7 +324,6 @@ export async function handleCreateWebchatMessage({
         clientId: parsedInput.clientId,
       },
       route: routeForConversation({
-        inboxId: contactInbox.inboxId,
         assignedUserId: conversation.assignedUserId,
         assignedInboxTeamId: conversation.assignedInboxTeamId,
       }),
