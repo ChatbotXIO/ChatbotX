@@ -4,7 +4,6 @@
  * every reported member expired on every cycle. Imported by `apps/realtime` and
  * `packages/business`.
  */
-import { z } from "zod"
 
 /** How long one presence report keeps a reported user online in Redis. */
 export const PRESENCE_TTL_MS = 20_000
@@ -36,37 +35,9 @@ export function truncatePresenceUserIds(userIds: readonly string[]): string[] {
 }
 
 /**
- * Keep-alive frame closing the one gap in server-reported presence:
- * `ensureReportLoopArmed` only fires from `onConnect`/`onRequest`, so a quiet
- * room otherwise never re-arms the alarm. Not an HTTP heartbeat, to avoid
- * per-tab request cost; `ensureReportLoopArmed()` is a no-op while fresh.
- */
-export const PRESENCE_PING_MESSAGE_TYPE = "presence-ping" as const
-
-/**
- * Validates an inbound socket frame as a presence ping — the only client-server
- * message this socket carries. Anything else must be ignored, never treated as
- * a liveness signal.
- */
-export const presencePingMessageSchema = z.object({
-  type: z.literal(PRESENCE_PING_MESSAGE_TYPE),
-})
-
-export type PresencePingMessage = z.infer<typeof presencePingMessageSchema>
-
-/** The exact wire frame the client sends, paired with the schema above. */
-export function serializePresencePingMessage(): string {
-  return JSON.stringify({
-    type: PRESENCE_PING_MESSAGE_TYPE,
-  } satisfies PresencePingMessage)
-}
-
-/**
  * Binds a presence-report token to its body: the realtime side hashes the ids
- * it's about to POST into a `bodyHash` claim, and the builder route recomputes
- * it over what arrived and rejects a mismatch. Sorted first so argument order
- * never matters. Uses Web Crypto — `node:crypto` doesn't exist in the realtime
- * runtime.
+ * it posts into a `bodyHash` claim, and the builder route recomputes it over
+ * the received body. Sorted first so argument order never matters.
  */
 export async function hashPresenceUserIds(
   userIds: readonly string[],

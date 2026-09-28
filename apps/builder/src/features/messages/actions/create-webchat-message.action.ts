@@ -2,12 +2,12 @@
 
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   contactService,
   conversationService,
   isWorkspaceScheduledForDeletion,
   messageCleanupService,
+  publishWorkspaceRealtimeEvent,
   quotaEnforcementService,
   resolveTenantSettings,
   workspaceService,
@@ -36,7 +36,10 @@ import { emitContactCreated } from "@chatbotx.io/events"
 import { setWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
@@ -314,12 +317,16 @@ export async function handleCreateWebchatMessage({
       sourceId: newMessage.sourceId ?? undefined,
     })
 
-    await broadcastToWorkspaceParty(newMessage.workspaceId, {
+    await publishWorkspaceRealtimeEvent(newMessage.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: {
         ...newMessage,
         clientId: parsedInput.clientId,
       },
+      route: routeForConversation({
+        assignedUserId: conversation.assignedUserId,
+        assignedInboxTeamId: conversation.assignedInboxTeamId,
+      }),
     })
 
     const promises: Promise<unknown>[] = []

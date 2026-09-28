@@ -72,7 +72,7 @@
     "@chatbotx.io/integration-zalo": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",
-    "@chatbotx.io/partysocket-config": "workspace:*",
+    "@chatbotx.io/realtime-protocol": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/scheduler": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",

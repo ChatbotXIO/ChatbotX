@@ -43,7 +43,6 @@ services:
     environment:
       - RUN_DB_MIGRATE=true
       - RUN_DB_SEED=true
-      - REALTIME_INTERNAL_URL=http://realtime:1999
 
   # BullMQ Worker
   worker:
@@ -62,7 +61,6 @@ services:
         condition: service_healthy
     environment:
       - JAVASCRIPT_EXECUTOR_URL=http://javascript-executor:3210
-      - REALTIME_INTERNAL_URL=http://realtime:1999
 
   javascript-executor:
     platform: linux/amd64
@@ -102,6 +100,11 @@ services:
       dockerfile: apps/realtime/docker/Dockerfile
     ports:
       - "1999:1999"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379
 
 networks:
   javascript-executor-network:

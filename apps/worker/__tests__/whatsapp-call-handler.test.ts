@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
   finalizeCallSideEffects: vi.fn(),
   markOutboundRinging: vi.fn(),
   markOutboundAccepted: vi.fn(),
-  sendToWorkspaceMember: vi.fn(),
+  publishWorkspaceMemberRealtimeEvent: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
@@ -32,7 +32,8 @@ vi.mock("@chatbotx.io/business", () => ({
     markAcceptedByAgent: mocks.markAcceptedIfActive,
     attachMetaCallId: mocks.attachWacid,
   },
-  sendToWorkspaceMember: mocks.sendToWorkspaceMember,
+  publishWorkspaceMemberRealtimeEvent:
+    mocks.publishWorkspaceMemberRealtimeEvent,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -150,7 +151,7 @@ describe("handleWhatsappCallEvent", () => {
       ...outboundCallRow,
       status: "accepted",
     })
-    mocks.sendToWorkspaceMember.mockResolvedValue({ ok: true })
+    mocks.publishWorkspaceMemberRealtimeEvent.mockResolvedValue(undefined)
   })
 
   describe("connect", () => {
@@ -594,7 +595,7 @@ describe("handleWhatsappCallEvent", () => {
         wacid: "wacid.OUT",
       })
       expect(mocks.markAcceptedIfActive).not.toHaveBeenCalled()
-      expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+      expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
         { workspaceId: "ws-1", userId: "initiator-1" },
         {
           eventType: "whatsappCallOutboundStatus",
@@ -625,7 +626,7 @@ describe("handleWhatsappCallEvent", () => {
         wacid: "wacid.OUT",
       })
       expect(mocks.updateInterimStatus).not.toHaveBeenCalled()
-      expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+      expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
         { workspaceId: "ws-1", userId: "initiator-1" },
         {
           eventType: "whatsappCallOutboundStatus",
@@ -656,34 +657,13 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.markAcceptedIfActive).not.toHaveBeenCalled()
       expect(mocks.markOutboundAccepted).not.toHaveBeenCalled()
       expect(mocks.logger.warn).toHaveBeenCalled()
-      expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
-    })
-
-    test("a realtime send failure for the outbound status event is swallowed (warn) without failing the handler", async () => {
-      mocks.sendToWorkspaceMember.mockResolvedValue(null)
-
-      await expect(
-        handleWhatsappCallEvent({
-          ...baseData,
-          payload: {
-            phoneNumberId: "phone-1",
-            event: { kind: "status", wacid: "wacid.OUT", status: "RINGING" },
-          },
-        }),
-      ).resolves.toBeUndefined()
-
-      expect(mocks.sendToWorkspaceMember).toHaveBeenCalled()
-      expect(mocks.logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({
-          whatsappCallId: "call-out-1",
-          status: "ringing",
-        }),
-        expect.stringContaining("unable to deliver"),
-      )
+      expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     })
 
     test("a realtime send throw for the outbound status event is swallowed (warn) without failing the handler", async () => {
-      mocks.sendToWorkspaceMember.mockRejectedValue(new Error("network down"))
+      mocks.publishWorkspaceMemberRealtimeEvent.mockRejectedValue(
+        new Error("network down"),
+      )
 
       await expect(
         handleWhatsappCallEvent({

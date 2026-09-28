@@ -42,7 +42,10 @@ import {
   emitConversationTransferredToHuman,
   emitConversationUnassigned,
 } from "@chatbotx.io/events"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForAssignment,
+} from "@chatbotx.io/realtime-protocol"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -59,7 +62,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
-import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
 import { workspaceMemberService } from "../workspace-member/service"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
@@ -895,10 +898,18 @@ class ConversationService extends BaseService {
     workspaceId: string
     conversation: { id: string; contactId: string }
     assignedId: string
+    silent?: boolean
     triggerContext: TriggerContext
     tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, conversation, assignedId, triggerContext, tx } = props
+    const {
+      workspaceId,
+      conversation,
+      assignedId,
+      silent,
+      triggerContext,
+      tx,
+    } = props
 
     const updatedData = await this.resolveAssignmentTarget(
       workspaceId,
@@ -915,6 +926,7 @@ class ConversationService extends BaseService {
       conversations: [conversation],
       assignedUserId: updatedData.assignedUserId,
       assignedInboxTeamId: updatedData.assignedInboxTeamId,
+      silent,
       triggerContext,
       tx,
     })
@@ -922,10 +934,16 @@ class ConversationService extends BaseService {
 
   async updateAssignment(props: {
     workspaceId: string
-    conversations: { id: string; contactId: string }[]
+    conversations: {
+      id: string
+      contactId: string
+      assignedInboxTeamId?: string | null
+      assignedUserId?: string | null
+    }[]
     assignedUserId: string | null
     assignedInboxTeamId: string | null
     assignedBy?: string
+    silent?: boolean
     triggerContext: TriggerContext
     tx?: DatabaseClient
   }): Promise<ConversationModel[]> {
@@ -935,6 +953,7 @@ class ConversationService extends BaseService {
       assignedUserId,
       assignedInboxTeamId,
       assignedBy,
+      silent,
       triggerContext,
       tx = db,
     } = props
@@ -950,12 +969,26 @@ class ConversationService extends BaseService {
       )
       .returning()
 
+    const previousAssignmentByConversationId = new Map(
+      conversations.map((conversation) => [conversation.id, conversation]),
+    )
     await this.publishAssignmentChanges({
       workspaceId,
-      conversations: updated,
+      conversations: updated.map((conversation) => {
+        const previousAssignment = previousAssignmentByConversationId.get(
+          conversation.id,
+        )
+        return {
+          id: conversation.id,
+          contactId: conversation.contactId,
+          previousAssignedInboxTeamId: previousAssignment?.assignedInboxTeamId,
+          previousAssignedUserId: previousAssignment?.assignedUserId,
+        }
+      }),
       assignedUserId,
       assignedInboxTeamId,
       assignedBy,
+      silent,
       triggerContext,
     })
 
@@ -970,10 +1003,16 @@ class ConversationService extends BaseService {
    */
   private async publishAssignmentChanges(props: {
     workspaceId: string
-    conversations: { id: string; contactId: string }[]
+    conversations: {
+      id: string
+      contactId: string
+      previousAssignedInboxTeamId?: string | null
+      previousAssignedUserId?: string | null
+    }[]
     assignedUserId: string | null
     assignedInboxTeamId: string | null
     assignedBy?: string
+    silent?: boolean
     triggerContext: TriggerContext
   }): Promise<void> {
     const {
@@ -982,6 +1021,7 @@ class ConversationService extends BaseService {
       assignedUserId,
       assignedInboxTeamId,
       assignedBy,
+      silent,
       triggerContext,
     } = props
     if (conversations.length === 0) {
@@ -991,10 +1031,22 @@ class ConversationService extends BaseService {
 
     await this.invalidate({ workspaceId, ids })
 
-    publishToWorkspaceParty(workspaceId, {
-      eventType: RealtimeEventType.conversationAssigned,
-      data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
-    })
+    if (!silent) {
+      queueWorkspaceRealtimeEvent(workspaceId, {
+        eventType: RealtimeEventType.conversationAssigned,
+        data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
+        route: routeForAssignment({
+          assignedUserId,
+          assignedInboxTeamId,
+          previousAssignedUserIds: conversations.map(
+            ({ previousAssignedUserId }) => previousAssignedUserId,
+          ),
+          previousAssignedInboxTeamIds: conversations.map(
+            ({ previousAssignedInboxTeamId }) => previousAssignedInboxTeamId,
+          ),
+        }),
+      })
+    }
 
     if (assignedUserId && assignedUserId !== assignedBy) {
       try {
@@ -1184,9 +1236,10 @@ class ConversationService extends BaseService {
   async markUnread(props: {
     workspaceId: string
     id: string
+    silent?: boolean
     tx?: DatabaseClient
   }): Promise<{ agentLastReadAt: Date | null }> {
-    const { workspaceId, id, tx } = props
+    const { workspaceId, id, silent, tx } = props
     const conversation = await this.findByOrFail({
       where: { id, workspaceId },
       tx,
@@ -1218,7 +1271,13 @@ class ConversationService extends BaseService {
     const agentLastReadAt =
       last2Messages.length >= 2 ? (last2Messages[1]?.createdAt ?? null) : null
 
-    await this.updateReadStatus({ workspaceId, id, agentLastReadAt, tx })
+    await this.updateReadStatus({
+      workspaceId,
+      id,
+      agentLastReadAt,
+      silent,
+      tx,
+    })
 
     return { agentLastReadAt }
   }
@@ -1266,9 +1325,10 @@ class ConversationService extends BaseService {
     workspaceId: string
     id: string
     agentLastReadAt: Date | null
+    silent?: boolean
     tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, id, agentLastReadAt, tx = db } = props
+    const { workspaceId, id, agentLastReadAt, silent, tx = db } = props
     await tx
       .update(conversationModel)
       .set({ agentLastReadAt })
@@ -1279,13 +1339,15 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
-    publishToWorkspaceParty(workspaceId, {
-      eventType: RealtimeEventType.conversationUpdated,
-      data: {
-        conversationIds: [id],
-        changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
-      },
-    })
+    if (!silent) {
+      queueWorkspaceRealtimeEvent(workspaceId, {
+        eventType: RealtimeEventType.conversationUpdated,
+        data: {
+          conversationIds: [id],
+          changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
+        },
+      })
+    }
   }
 
   /**
@@ -1335,7 +1397,7 @@ class ConversationService extends BaseService {
 
     await this.invalidate({ workspaceId, ids: [conversationId] })
     if (!silent) {
-      publishToWorkspaceParty(workspaceId, {
+      queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.conversationUpdated,
         data: {
           conversationIds: [conversationId],

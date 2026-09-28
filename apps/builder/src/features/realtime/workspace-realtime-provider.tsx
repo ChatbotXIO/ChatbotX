@@ -1,21 +1,12 @@
 "use client"
 
-import type {
-  RealtimeEventData,
-  RealtimeTopic,
-} from "@chatbotx.io/partysocket-config"
 import {
-  REALTIME_EVENT_TOPICS,
+  REALTIME_CLOSE_CODE,
+  type RealtimeEventData,
   RealtimeEventType,
+  RealtimeSocket,
   realtimeBatchEnvelopeSchema,
-  realtimeEventEnvelopeSchema,
-  serializeRealtimeSubscriptionMessage,
-} from "@chatbotx.io/partysocket-config"
-import {
-  PRESENCE_REPORT_INTERVAL_MS,
-  serializePresencePingMessage,
-} from "@chatbotx.io/partysocket-config/presence"
-import usePartySocket from "partysocket/react"
+} from "@chatbotx.io/realtime-protocol"
 import {
   createContext,
   type ReactNode,
@@ -39,10 +30,13 @@ import type {
 } from "./types"
 
 /**
- * Connection lifecycle of the single workspace socket — mirrors `PartySocket`'s
- * readyState, collapsed to the three states a subscriber actually needs.
+ * Connection lifecycle of the single workspace socket.
  */
-export type WorkspaceRealtimeConnectionStatus = "connecting" | "open" | "closed"
+export type WorkspaceRealtimeConnectionStatus =
+  | "connecting"
+  | "open"
+  | "closed"
+  | "resyncing"
 
 /**
  * Every event this build's `workspaces` party can emit, as a `Set` for O(1)
@@ -52,6 +46,24 @@ export type WorkspaceRealtimeConnectionStatus = "connecting" | "open" | "closed"
 const KNOWN_REALTIME_EVENT_NAMES: ReadonlySet<string> = new Set(
   Object.values(RealtimeEventType),
 )
+
+const isStreamSequenceAfter = (
+  candidate: string,
+  previous: string,
+): boolean => {
+  const [candidateMilliseconds, candidateSequence] = candidate
+    .split("-")
+    .map(BigInt)
+  const [previousMilliseconds, previousSequence] = previous
+    .split("-")
+    .map(BigInt)
+
+  return (
+    candidateMilliseconds > previousMilliseconds ||
+    (candidateMilliseconds === previousMilliseconds &&
+      candidateSequence > previousSequence)
+  )
+}
 
 /**
  * Real type guard (no `as`) — narrows an arbitrary string from a parsed frame
@@ -114,8 +126,8 @@ type WorkspaceRealtimeContextValue = {
     eventTypes: RealtimeEventName[],
     getHandlers: () => RealtimeHandlerMap,
   ) => () => void
+  resyncCount: number
   status: WorkspaceRealtimeConnectionStatus
-  reconnectCount: number
 }
 
 const WorkspaceRealtimeContext =
@@ -153,147 +165,67 @@ export function WorkspaceRealtimeProvider({
   )
   const [status, setStatus] =
     useState<WorkspaceRealtimeConnectionStatus>("connecting")
-  const [reconnectCount, setReconnectCount] = useState(0)
-  const hasOpenedOnceRef = useRef(false)
-  // Set synchronously in `onOpen`/`onClose` so socket-message senders never
-  // read a stale render's `status` — those senders (`sendCurrentTopicsRef`)
-  // must observe the live connection state, not a closed-over one.
-  const isOpenRef = useRef(false)
-  // Forward-declared: `onOpen` below needs to call the real sender, but the
-  // sender itself needs `socket`, which `usePartySocket` has not returned yet
-  // at this point in the render. Assigned once `socket` exists (same pattern
-  // as `bubbleRingingConversationRef` in chat-realtime.tsx).
-  const sendCurrentTopicsRef = useRef<() => void>(() => undefined)
+  const [resyncCount, setResyncCount] = useState(0)
+  const lastProcessedSeqRef = useRef<string | null>(null)
 
-  // React Strict Mode (dev only) double-invokes mount effects: setup, cleanup,
-  // setup again. Without this, the second synthetic mount's `onOpen` would see
-  // `hasOpenedOnceRef.current` already `true` from the first (torn down) mount
-  // and misreport it as a reconnect. This cleanup resets the flag between the
-  // two synthetic mounts.
-  useEffect(
-    () => () => {
-      hasOpenedOnceRef.current = false
+  const processRealtimeEvent = useCallback(
+    (frame: { data: unknown; eventType: string }): void => {
+      const { eventType: eventTypeString, data } = frame
+      if (!isKnownRealtimeEventName(eventTypeString)) {
+        return
+      }
+      const eventType = eventTypeString
+
+      const listeners = listenersRef.current.get(eventType)
+      if (!listeners || listeners.size === 0) {
+        return
+      }
+
+      const schema = REALTIME_EVENT_SCHEMAS[eventType]
+      if (schema) {
+        const result = schema.safeParse(data)
+        if (!result.success) {
+          logRealtimeWarning({
+            error: result.error,
+            eventType,
+            message: "Workspace realtime: event failed schema validation",
+            reason: "schema-invalid",
+            suppressionMessage:
+              "Workspace realtime: further schema-validation warnings suppressed for this window",
+          })
+          return
+        }
+      }
+
+      const dispatchedEvent = {
+        eventType,
+        data,
+      } as unknown as RealtimeEventData
+
+      for (const listener of listeners) {
+        try {
+          listener(dispatchedEvent)
+        } catch (error) {
+          logRealtimeWarning({
+            error,
+            eventType,
+            message:
+              "Workspace realtime: a listener threw while handling an event",
+            reason: "listener-threw",
+            suppressionMessage:
+              "Workspace realtime: further listener-threw warnings suppressed for this window",
+          })
+        }
+      }
     },
     [],
   )
 
-  /**
-   * Validates and dispatches one already-JSON-parsed frame: envelope shape ->
-   * narrow `eventType` (unknown names silently ignored for forward-compat) ->
-   * validate `data` against `REALTIME_EVENT_SCHEMAS` when present -> dispatch
-   * to listeners, each in its own try/catch so one throwing listener doesn't
-   * block the rest. Shared by the single-event (v1) and batch (v2) frame
-   * shapes — a v2 batch calls this once per contained event.
-   */
-  const processRealtimeFrame = (frame: unknown): void => {
-    const envelopeResult = realtimeEventEnvelopeSchema.safeParse(frame)
-    if (!envelopeResult.success) {
-      logRealtimeWarning({
-        error: envelopeResult.error,
-        message:
-          "Workspace realtime: message frame is not a valid event envelope",
-        reason: "invalid-envelope",
-        suppressionMessage:
-          "Workspace realtime: further invalid-envelope warnings suppressed for this window",
-      })
-      return
-    }
-
-    const { eventType: eventTypeString, data } = envelopeResult.data
-    if (!isKnownRealtimeEventName(eventTypeString)) {
-      // Unknown to this build — forward-compatible, no warning noise.
-      return
-    }
-    const eventType = eventTypeString
-
-    const listeners = listenersRef.current.get(eventType)
-    if (!listeners || listeners.size === 0) {
-      // Nobody subscribed — also silently ignored.
-      return
-    }
-
-    const schema = REALTIME_EVENT_SCHEMAS[eventType]
-    if (schema) {
-      const result = schema.safeParse(data)
-      if (!result.success) {
-        logRealtimeWarning({
-          error: result.error,
-          eventType,
-          message: "Workspace realtime: event failed schema validation",
-          reason: "schema-invalid",
-          suppressionMessage:
-            "Workspace realtime: further schema-validation warnings suppressed for this window",
-        })
-        return
-      }
-    }
-
-    // TS can't correlate this runtime-narrowed string with one union
-    // member, hence the assertion. Only events with a schema in
-    // `REALTIME_EVENT_SCHEMAS` have `data` validated here.
-    const dispatchedEvent = {
-      eventType,
-      data,
-    } as unknown as RealtimeEventData
-
-    for (const listener of listeners) {
-      try {
-        listener(dispatchedEvent)
-      } catch (error) {
-        // Keyed by `eventType` (already narrowed, bounded by
-        // `RealtimeEventType`) — a listener that throws on every dispatch of
-        // one busy event never drowns out warnings for an unrelated one.
-        logRealtimeWarning({
-          error,
-          eventType,
-          message:
-            "Workspace realtime: a listener threw while handling an event",
-          reason: "listener-threw",
-          suppressionMessage:
-            "Workspace realtime: further listener-threw warnings suppressed for this window",
-        })
-      }
-    }
-  }
-
-  const socket = usePartySocket({
-    host: publicRealtimeUrl,
-    room: workspaceId,
-    party: "workspaces",
-
-    query: async () => {
-      // Short-lived token bound to this member and workspace room — the
-      // `workspaces` party rejects the upgrade for any other room.
-      const { token } =
-        await client.realtimeAPI.mintWorkspaceConnectTokenAuthenticatedAPI({
-          workspaceId,
-        })
-
-      return { protocol: "v2", token }
-    },
-
-    onOpen: () => {
-      if (hasOpenedOnceRef.current) {
-        setReconnectCount((count) => count + 1)
-      }
-      hasOpenedOnceRef.current = true
-      isOpenRef.current = true
-      setStatus("open")
-
-      // The server's per-connection topic state starts empty, so every open
-      // must immediately re-send this tab's current subscriptions.
-      sendCurrentTopicsRef.current()
-    },
-
-    onClose: () => {
-      isOpenRef.current = false
-      setStatus("closed")
-    },
-
-    onMessage(event) {
+  const processSocketMessage = useCallback(
+    (data: string): void => {
       let parsedJson: unknown
       try {
-        parsedJson = JSON.parse(event.data)
+        parsedJson = JSON.parse(data)
       } catch (error) {
         logRealtimeWarning({
           error,
@@ -305,67 +237,96 @@ export function WorkspaceRealtimeProvider({
         return
       }
 
-      // Protocol v2 always wraps deliverable events in one batch frame, even
-      // for a single event. A v1 frame (or a malformed batch envelope) falls
-      // through to the single-frame path below.
-      const batchResult = realtimeBatchEnvelopeSchema.safeParse(parsedJson)
-      if (batchResult.success) {
-        for (const frame of batchResult.data.batch) {
-          processRealtimeFrame(frame)
-        }
+      if (parsedJson && typeof parsedJson === "object" && "hb" in parsedJson) {
         return
       }
-
-      processRealtimeFrame(parsedJson)
+      const batchResult = realtimeBatchEnvelopeSchema.safeParse(parsedJson)
+      if (!batchResult.success) {
+        logRealtimeWarning({
+          error: batchResult.error,
+          message: "Workspace realtime: message frame is not a valid batch",
+          reason: "invalid-batch",
+          suppressionMessage:
+            "Workspace realtime: further invalid-batch warnings suppressed for this window",
+        })
+        return
+      }
+      const { batch, seq } = batchResult.data
+      if (
+        seq &&
+        lastProcessedSeqRef.current &&
+        !isStreamSequenceAfter(seq, lastProcessedSeqRef.current)
+      ) {
+        return
+      }
+      if (seq) {
+        lastProcessedSeqRef.current = seq
+      }
+      for (const frame of batch) {
+        processRealtimeEvent(frame)
+      }
     },
-  })
+    [processRealtimeEvent],
+  )
 
-  /**
-   * Union of every topic implied by a currently-registered event-type
-   * listener — "inferred/refcounted from registered realtime handlers": a
-   * topic stays subscribed as long as at least one handler for one of its
-   * event names is registered (the existing per-event-type `Set` in
-   * `listenersRef` already IS that refcount), and drops out the instant the
-   * last one unregisters.
-   */
-  const computeSubscribedTopics = (): RealtimeTopic[] => {
-    const topics = new Set<RealtimeTopic>()
-    for (const [eventType, listeners] of listenersRef.current) {
-      if (listeners.size === 0) {
-        continue
-      }
-      for (const topic of REALTIME_EVENT_TOPICS[eventType].topics) {
-        topics.add(topic)
-      }
-    }
-    return [...topics]
-  }
-
-  // Resolved now that `socket` exists — see the forward declaration above
-  // `usePartySocket`. Reassigned every render so it always closes over the
-  // latest `socket`; cheap, and `listenersRef`/`isOpenRef` are read fresh on
-  // every call regardless.
-  sendCurrentTopicsRef.current = () => {
-    if (!isOpenRef.current) {
-      return
-    }
-    socket.send(serializeRealtimeSubscriptionMessage(computeSubscribedTopics()))
-  }
-
-  // Presence ping frame on the same cadence as the party's report interval —
-  // a quiet room (no new connections, no broadcasts) has no other self-heal
-  // trigger to re-arm the party's presence report loop.
   useEffect(() => {
-    if (status !== "open") {
-      return
+    let disposed = false
+    lastProcessedSeqRef.current = null
+    setStatus("connecting")
+    const socket = new RealtimeSocket({
+      getUrl: async () => {
+        const { token } =
+          await client.realtimeAPI.mintWorkspaceConnectTokenAuthenticatedAPI({
+            workspaceId,
+          })
+        const socketUrl = new URL(
+          `/rt/workspaces/${encodeURIComponent(workspaceId)}`,
+          publicRealtimeUrl,
+        )
+        socketUrl.searchParams.set("token", token)
+        const lastSeq = lastProcessedSeqRef.current
+        if (lastSeq) {
+          socketUrl.searchParams.set("lastSeq", lastSeq)
+        }
+        return socketUrl.toString()
+      },
+      onClose: ({ code }) => {
+        if (disposed) {
+          return
+        }
+        setStatus(
+          code === REALTIME_CLOSE_CODE.revoked ? "closed" : "connecting",
+        )
+      },
+      onMessage: processSocketMessage,
+      onOpen: () => {
+        setStatus("open")
+      },
+      onResync: () => {
+        if (!disposed) {
+          setResyncCount((count) => count + 1)
+          setStatus("resyncing")
+        }
+      },
+    })
+    const reconnectNow = () => socket.reconnectNow()
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        reconnectNow()
+      }
     }
-    const intervalId = setInterval(() => {
-      socket.send(serializePresencePingMessage())
-    }, PRESENCE_REPORT_INTERVAL_MS)
+
+    window.addEventListener("online", reconnectNow)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    socket.connect()
+
     return () => {
-      clearInterval(intervalId)
+      disposed = true
+      window.removeEventListener("online", reconnectNow)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      socket.close()
     }
-  }, [status, socket])
+  }, [processSocketMessage, publicRealtimeUrl, workspaceId])
 
   const subscribe = useCallback<WorkspaceRealtimeSubscribe>(
     (eventType, listener) => {
@@ -380,14 +341,8 @@ export function WorkspaceRealtimeProvider({
       // exact `eventType`.
       const erased = listener as unknown as ErasedRealtimeListener
       listeners.add(erased)
-      // A newly-registered handler may add a topic this connection has not
-      // yet subscribed to (or reintroduce one whose last handler just
-      // unregistered elsewhere in the same tick) — resync immediately.
-      sendCurrentTopicsRef.current()
-
       return () => {
         listeners?.delete(erased)
-        sendCurrentTopicsRef.current()
       }
     },
     [],
@@ -418,8 +373,8 @@ export function WorkspaceRealtimeProvider({
   // `useWorkspaceRealtimeEvents` goes through `subscribeHandlers`, never
   // `subscribe` directly.
   const value = useMemo<WorkspaceRealtimeContextValue>(
-    () => ({ subscribeHandlers, status, reconnectCount }),
-    [subscribeHandlers, status, reconnectCount],
+    () => ({ resyncCount, status, subscribeHandlers }),
+    [resyncCount, status, subscribeHandlers],
   )
 
   return (

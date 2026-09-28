@@ -1,4 +1,7 @@
-import { publishToWorkspaceParty } from "@chatbotx.io/business"
+import {
+  conversationService,
+  queueWorkspaceRealtimeEvent,
+} from "@chatbotx.io/business"
 import {
   type CommentReply,
   resolveReplyTexts,
@@ -11,7 +14,10 @@ import type {
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { COMMENT_AUTOMATION_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
@@ -101,9 +107,16 @@ export async function postPublicCommentReply(props: {
     createdAt: new Date(),
   }
   const message = await repo.create(messageInput)
-  publishToWorkspaceParty(props.workspaceId, {
+  const conversation = await conversationService.findBy({
+    where: { id: props.conversationId, workspaceId: props.workspaceId },
+  })
+  queueWorkspaceRealtimeEvent(props.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: message,
+    route: routeForConversation({
+      assignedUserId: conversation?.assignedUserId,
+      assignedInboxTeamId: conversation?.assignedInboxTeamId,
+    }),
   })
   const retryPolicy = commentReplyRetryPolicy(props.contactInbox)
   const queueOptions =

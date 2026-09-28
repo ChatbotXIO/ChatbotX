@@ -1,11 +1,11 @@
 import {
   REALTIME_TOKEN_PURPOSE,
   signRealtimeToken,
-} from "@chatbotx.io/partysocket-config/auth"
+} from "@chatbotx.io/realtime-protocol/auth"
 import {
   hashPresenceUserIds,
   truncatePresenceUserIds,
-} from "@chatbotx.io/partysocket-config/presence"
+} from "@chatbotx.io/realtime-protocol/presence"
 import ky from "ky"
 import { env } from "../env"
 import { logger } from "../logger"

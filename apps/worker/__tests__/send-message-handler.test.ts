@@ -61,8 +61,8 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
   conversationService: { markReadByOutbound: mockMarkReadByOutbound },
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
-  publishToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
   whatsappCallPermissionService: {
     recordPermanentGrant: mockRecordPermanentGrant,
   },

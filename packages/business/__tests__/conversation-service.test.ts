@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  broadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent,
   execute,
   chatQueueAdd,
   conversationFindFirst,
@@ -22,7 +22,7 @@ const {
   const set = vi.fn(() => ({ where }))
   const update = vi.fn(() => ({ set }))
   return {
-    broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+    queueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
     chatQueueAdd: vi.fn().mockResolvedValue(undefined),
     conversationFindFirst: vi.fn(),
     createMessageRepository: vi.fn(),
@@ -96,8 +96,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  broadcastToWorkspaceParty,
-  publishToWorkspaceParty: broadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent,
 }))
 
 // `conversationService` now imports `contactService` (for the location write
@@ -429,7 +428,7 @@ describe("conversationService.updateReadStatus", () => {
       agentLastReadAt,
     })
 
-    expect(broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "conversationUpdated",
       data: {
         conversationIds: ["conv-1"],
@@ -484,7 +483,7 @@ describe("conversationService.markReadByOutbound", () => {
       "conversations:ws-1",
       "conversations:conv-1",
     ])
-    expect(broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "conversationUpdated",
       data: {
         conversationIds: ["conv-1"],
@@ -509,7 +508,7 @@ describe("conversationService.markReadByOutbound", () => {
 
     expect(set).toHaveBeenCalledWith({ agentLastReadAt: readAt })
     expect(invalidateCacheByTags).toHaveBeenCalled()
-    expect(broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("leaves a newer read timestamp alone without invalidating or broadcasting", async () => {
@@ -528,7 +527,7 @@ describe("conversationService.markReadByOutbound", () => {
     expect(collectSqlValues(whereExpression)).toContain(readAt)
     expect(collectSqlText(whereExpression)).toContain(" < ")
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("a delivery confirmed after a manual mark-unread re-reads up to the reply", async () => {

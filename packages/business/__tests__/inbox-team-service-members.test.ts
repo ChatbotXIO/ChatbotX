@@ -7,6 +7,10 @@ const mocks = vi.hoisted(() => ({
   teamMemberFindMany: vi.fn(),
   userFindMany: vi.fn(),
   listUserIdsByTeamId: vi.fn(),
+  dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
+  revokeWorkspaceMemberRealtimeConnections: vi
+    .fn()
+    .mockResolvedValue(undefined),
 }))
 
 const WORKSPACE_ID = "ws-1"
@@ -70,7 +74,12 @@ vi.mock("../src/workspace-member/service", () => ({
 }))
 
 vi.mock("../src/audit/dispatcher", () => ({
-  dispatchAuditRecord: vi.fn(),
+  dispatchAuditRecord: mocks.dispatchAuditRecord,
+}))
+
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  revokeWorkspaceMemberRealtimeConnections:
+    mocks.revokeWorkspaceMemberRealtimeConnections,
 }))
 
 const { inboxTeamService } = await import(
@@ -125,6 +134,39 @@ describe("InboxTeamService member validation against duplicate membership rows",
         data: { name: "Support", userIds: ["member-1", "member-2"] },
       }),
     ).resolves.toBeDefined()
+    expect(
+      mocks.revokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledTimes(2)
+    expect(mocks.revokeWorkspaceMemberRealtimeConnections).toHaveBeenCalledWith(
+      {
+        workspaceId: WORKSPACE_ID,
+        userId: "member-1",
+      },
+    )
+    expect(mocks.revokeWorkspaceMemberRealtimeConnections).toHaveBeenCalledWith(
+      {
+        workspaceId: WORKSPACE_ID,
+        userId: "member-2",
+      },
+    )
+  })
+
+  test("still audits a created team when realtime revocation fails", async () => {
+    mocks.listExistingUserIds.mockResolvedValue([{ userId: "member-1" }])
+    mocks.revokeWorkspaceMemberRealtimeConnections.mockRejectedValueOnce(
+      new Error("Redis unavailable"),
+    )
+
+    await expect(
+      inboxTeamService.create({
+        workspaceId: WORKSPACE_ID,
+        data: { name: "Support", userIds: ["member-1"] },
+      }),
+    ).resolves.toMatchObject({ id: TEAM_ID })
+
+    expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "create" }),
+    )
   })
 
   test("addMembers rejects a non-member even when a duplicate row pads the count", async () => {

@@ -11,10 +11,7 @@ export const RealtimeEventType = {
   contactBlocked: "contactBlocked",
   contactUnblocked: "contactUnblocked",
   conversationAssigned: "conversationAssigned",
-  notifyExportResult: "notifyExportResult",
   conversationUpdated: "conversationUpdated",
-  // Reserved for wire compatibility; servers no longer emit this event.
-  conversationCreated: "conversationCreated",
   whatsappCallTransportIncoming: "whatsappCallTransportIncoming",
   whatsappCallTransportEnded: "whatsappCallTransportEnded",
   whatsappCallClaimedElsewhere: "whatsappCallClaimedElsewhere",
@@ -23,146 +20,74 @@ export const RealtimeEventType = {
   whatsappCallPermissionUpdated: "whatsappCallPermissionUpdated",
 } as const
 
-export const RealtimeTopic = {
-  chat: "chat",
-  voip: "voip",
-} as const
-
-export type RealtimeTopic = (typeof RealtimeTopic)[keyof typeof RealtimeTopic]
-
-export const RealtimeProtocol = {
-  v1: "v1",
-  v2: "v2",
-} as const
-
-export const realtimeProtocolSchema = z.enum(RealtimeProtocol)
-export type RealtimeProtocol = z.infer<typeof realtimeProtocolSchema>
-
-/**
- * A zero-interest relay response suppresses ephemeral typing traffic for this
- * long. Durable events always continue to the relay.
- */
-export const REALTIME_DELIVERY_NEGATIVE_TTL_MS = 2000
-
-export type RealtimeEventTopicDefinition = {
-  durability: "durable" | "ephemeral"
-  topics: readonly RealtimeTopic[]
-}
-
-export const REALTIME_EVENT_TOPICS: {
-  readonly [K in (typeof RealtimeEventType)[keyof typeof RealtimeEventType]]: RealtimeEventTopicDefinition
-} = {
-  [RealtimeEventType.messageCreated]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.messageDeleted]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.messageUpdated]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.messageContentUpdated]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.messageIdAssigned]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.messageFailed]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.typing]: {
-    durability: "ephemeral",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.contactBlocked]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.contactUnblocked]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.conversationAssigned]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat, RealtimeTopic.voip],
-  },
-  [RealtimeEventType.notifyExportResult]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.conversationCreated]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.conversationUpdated]: {
-    durability: "durable",
-    topics: [RealtimeTopic.chat],
-  },
-  [RealtimeEventType.whatsappCallTransportIncoming]: {
-    durability: "durable",
-    topics: [RealtimeTopic.voip],
-  },
-  [RealtimeEventType.whatsappCallTransportEnded]: {
-    durability: "durable",
-    topics: [RealtimeTopic.voip],
-  },
-  [RealtimeEventType.whatsappCallClaimedElsewhere]: {
-    durability: "durable",
-    topics: [RealtimeTopic.voip],
-  },
-  [RealtimeEventType.whatsappCallOutboundAnswer]: {
-    durability: "durable",
-    topics: [RealtimeTopic.voip],
-  },
-  [RealtimeEventType.whatsappCallOutboundStatus]: {
-    durability: "durable",
-    topics: [RealtimeTopic.voip],
-  },
-  [RealtimeEventType.whatsappCallPermissionUpdated]: {
-    durability: "durable",
-    topics: [RealtimeTopic.voip],
-  },
-}
-
 /**
  * Shared wire envelope validation. It intentionally validates only the
  * envelope; consumers validate event data against their event-specific schema.
  */
+
+export type RealtimeEventRoute = {
+  assignedTeamIds: string[]
+  assignedUserIds: string[]
+  inboxId?: string
+}
+
+export const realtimeEventRouteSchema = z.object({
+  assignedTeamIds: z.array(z.string()).default([]),
+  assignedUserIds: z.array(z.string()),
+  inboxId: z.string().optional(),
+})
+
+export const routeForConversation = ({
+  assignedInboxTeamId,
+  assignedUserId,
+  inboxId,
+}: {
+  assignedInboxTeamId?: null | string
+  assignedUserId?: null | string
+  inboxId?: null | string
+}): RealtimeEventRoute => ({
+  assignedTeamIds: assignedInboxTeamId ? [assignedInboxTeamId] : [],
+  assignedUserIds: assignedUserId ? [assignedUserId] : [],
+  ...(inboxId ? { inboxId } : {}),
+})
+
+export const routeForAssignment = ({
+  assignedInboxTeamId,
+  assignedUserId,
+  previousAssignedInboxTeamIds,
+  previousAssignedUserIds,
+}: {
+  assignedInboxTeamId?: null | string
+  assignedUserId?: null | string
+  previousAssignedInboxTeamIds?: (null | string | undefined)[]
+  previousAssignedUserIds?: (null | string | undefined)[]
+}): RealtimeEventRoute => ({
+  assignedTeamIds: [
+    ...new Set(
+      [...(previousAssignedInboxTeamIds ?? []), assignedInboxTeamId].filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ],
+  assignedUserIds: [
+    ...new Set(
+      [...(previousAssignedUserIds ?? []), assignedUserId].filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ],
+})
 export const realtimeEventEnvelopeSchema = z.object({
   eventType: z.string(),
   data: z.unknown(),
+  route: realtimeEventRouteSchema.optional(),
 })
 export type RealtimeEventEnvelope = z.infer<typeof realtimeEventEnvelopeSchema>
 
 export const realtimeBatchEnvelopeSchema = z.object({
   batch: z.array(realtimeEventEnvelopeSchema),
+  seq: z.string().regex(/^\d+-\d+$/),
 })
-
-export const realtimeSubscriptionMessageSchema = z.object({
-  type: z.literal("subscribe"),
-  // Repeats are accepted and de-duplicated by the Party; keeping a small
-  // frame bound still prevents untrusted websocket clients from sending an
-  // arbitrarily large topic array.
-  topics: z.array(z.enum(RealtimeTopic)).max(16),
-})
-
-export type RealtimeSubscriptionMessage = z.infer<
-  typeof realtimeSubscriptionMessageSchema
->
-
-export const serializeRealtimeSubscriptionMessage = (
-  topics: readonly RealtimeTopic[],
-): string =>
-  JSON.stringify({
-    type: "subscribe",
-    topics: [...topics],
-  } satisfies RealtimeSubscriptionMessage)
 
 export type RealtimeEventCreateMessage = {
   eventType: typeof RealtimeEventType.messageCreated
@@ -247,23 +172,6 @@ export type RealtimeEventConversationAssigned = {
     assignedUserId: string | null
     assignedInboxTeamId: string | null
   }
-}
-
-export type RealtimeEventNotifyExportResult = {
-  eventType: typeof RealtimeEventType.notifyExportResult
-  data: {
-    outputPath: string
-    status: "pending" | "processing" | "completed" | "failed"
-    error?: string
-  }
-}
-
-export type RealtimeEventConversationCreated = {
-  eventType: typeof RealtimeEventType.conversationCreated
-  // Full conversation row — shape owned by @chatbotx.io/business's
-  // ConversationModel; kept as `unknown` here to avoid a dependency from this
-  // package (imported client-side) on the database schema package.
-  data: unknown
 }
 
 export type RealtimeEventConversationUpdatedChanges = {
@@ -430,7 +338,7 @@ export type RealtimeEventWhatsappCallPermissionUpdated = {
   data: WhatsappCallPermissionUpdatedData
 }
 
-export type RealtimeEventData =
+export type RealtimeEventData = (
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
   | RealtimeEventMessageIdAssigned
@@ -440,8 +348,6 @@ export type RealtimeEventData =
   | RealtimeEventContactCommon
   | RealtimeEventConversationAssigned
   | RealtimeEventTyping
-  | RealtimeEventNotifyExportResult
-  | RealtimeEventConversationCreated
   | RealtimeEventConversationUpdated
   | RealtimeEventWhatsappCallTransportIncoming
   | RealtimeEventWhatsappCallTransportEnded
@@ -449,3 +355,6 @@ export type RealtimeEventData =
   | RealtimeEventWhatsappCallOutboundAnswer
   | RealtimeEventWhatsappCallOutboundStatus
   | RealtimeEventWhatsappCallPermissionUpdated
+) & {
+  route?: RealtimeEventRoute
+}

@@ -309,8 +309,8 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
-  broadcastToWorkspaceParty: vi.fn(),
-  publishToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
+  queueWorkspaceRealtimeEvent: vi.fn(),
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
@@ -375,8 +375,9 @@ vi.mock("@chatbotx.io/events", () => ({
   setWebhookExecutionContext: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/sdk", () => ({

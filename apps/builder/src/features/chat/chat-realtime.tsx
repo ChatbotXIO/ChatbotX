@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import type { RealtimeHandlerMap } from "@/features/realtime/types"
 import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-realtime-events"
+import { useWorkspaceRealtimeContext } from "@/features/realtime/workspace-realtime-provider"
 import { useWorkspaceId } from "@/hooks/routing"
 import { createBoundedSeenSet } from "@/lib/bounded-seen-set"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
@@ -20,6 +21,7 @@ const SEEN_WHATSAPP_CALL_IDS_CAPACITY = 500
 /** Registers this component's chat event handlers against the shared workspace realtime socket. */
 export function ChatRealtime() {
   const workspaceId = useWorkspaceId()
+  const { resyncCount } = useWorkspaceRealtimeContext()
   const queryClient = useQueryClient()
   const invalidateOutboundCallMode = (conversationId: string) =>
     queryClient.invalidateQueries({
@@ -37,6 +39,7 @@ export function ChatRealtime() {
     markMessagesDeleted,
     markMessageFailed,
     openConversation,
+    resyncRealtime,
     resumeConversationHeadRefresh,
     updateContact,
     updateConversations,
@@ -51,6 +54,7 @@ export function ChatRealtime() {
       markMessagesDeleted: state.markMessagesDeleted,
       markMessageFailed: state.markMessageFailed,
       openConversation: state.openConversation,
+      resyncRealtime: state.resyncRealtime,
       resumeConversationHeadRefresh: state.resumeConversationHeadRefresh,
       updateContact: state.updateContact,
       updateConversations: state.updateConversations,
@@ -87,6 +91,13 @@ export function ChatRealtime() {
     isMessageFlushQueuedRef.current = true
     queueMicrotask(flushPendingCreatedMessages)
   }
+
+  useEffect(() => {
+    if (resyncCount === 0) {
+      return
+    }
+    resyncRealtime(workspaceId)
+  }, [resyncCount, resyncRealtime, workspaceId])
 
   useEffect(() => {
     const handleVisibilityChange = () => {

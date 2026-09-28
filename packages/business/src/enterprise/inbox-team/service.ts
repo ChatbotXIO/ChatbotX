@@ -19,6 +19,8 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../../base.service"
 import { ChatbotXException, notFoundException } from "../../errors"
+import { logger } from "../../logger"
+import { revokeWorkspaceMemberRealtimeConnections } from "../../platform/realtime-broadcast"
 import { workspaceMemberService } from "../../workspace-member/service"
 
 type InboxTeamWithMembers = InboxTeamModel & {
@@ -60,6 +62,14 @@ class InboxTeamService extends BaseService {
     inboxTeamId: string
   }): Promise<string[]> {
     return inboxTeamMemberRepository.listUserIdsByTeamId(props)
+  }
+
+  /** Workspace-scoped team ids a member belongs to for assigned-chat routing. */
+  listTeamIdsByUserId(props: {
+    workspaceId: string
+    userId: string
+  }): Promise<string[]> {
+    return inboxTeamMemberRepository.listTeamIdsByUserId(props)
   }
 
   // ─── Reads (NOT cached — write-path guard) ───────────────────────────────
@@ -107,6 +117,27 @@ class InboxTeamService extends BaseService {
     }
   }
 
+  private async revokeMemberRealtimeConnections(
+    workspaceId: string,
+    userIds: Iterable<string>,
+  ): Promise<void> {
+    await Promise.all(
+      Array.from(userIds, async (userId) => {
+        try {
+          await revokeWorkspaceMemberRealtimeConnections({
+            workspaceId,
+            userId,
+          })
+        } catch (error) {
+          logger.warn(
+            { err: error, userId, workspaceId },
+            "Failed to revoke inbox team member realtime connections",
+          )
+        }
+      }),
+    )
+  }
+
   async create(props: {
     workspaceId: string
     data: { name: string; userIds: string[] }
@@ -148,6 +179,7 @@ class InboxTeamService extends BaseService {
       return created
     })
     await this.invalidate({ workspaceId })
+    await this.revokeMemberRealtimeConnections(workspaceId, data.userIds)
     await this.audit("create", `created a new team (#${inboxTeamId})`)
     return team
   }
@@ -180,6 +212,18 @@ class InboxTeamService extends BaseService {
     if (teams.length === 0) {
       throw notFoundException("Inbox team not found")
     }
+    const memberUserIds = new Set(
+      (
+        await Promise.all(
+          teams.map((team) =>
+            inboxTeamMemberRepository.listUserIdsByTeamId({
+              workspaceId,
+              inboxTeamId: team.id,
+            }),
+          ),
+        )
+      ).flat(),
+    )
 
     await db
       .delete(inboxTeamModel)
@@ -190,13 +234,12 @@ class InboxTeamService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId })
+    await this.revokeMemberRealtimeConnections(workspaceId, memberUserIds)
 
-    if (teams.length > 0) {
-      await this.audit(
-        "delete",
-        `deleted team${teams.length > 1 ? "s" : ""} (${teams.map((team) => `#${team.id}`).join(", ")})`,
-      )
-    }
+    await this.audit(
+      "delete",
+      `deleted team${teams.length > 1 ? "s" : ""} (${teams.map((team) => `#${team.id}`).join(", ")})`,
+    )
   }
 
   async addMembers(
@@ -208,6 +251,7 @@ class InboxTeamService extends BaseService {
       workspaceId: ctx.workspaceId,
       userIds,
     })
+    let addedUserIds: string[] = []
     let addedUsers: Array<{ name: string | null; email: string }> = []
     await db.transaction(async (tx) => {
       const existingMembers = await tx.query.inboxTeamMemberModel.findMany({
@@ -221,6 +265,7 @@ class InboxTeamService extends BaseService {
         existingMembers.map((member) => member.userId),
       )
       const newUserIds = userIds.filter((id) => !existingUserIds.has(id))
+      addedUserIds = newUserIds
       if (newUserIds.length > 0) {
         await tx.insert(inboxTeamMemberModel).values(
           newUserIds.map((userId) => ({
@@ -236,6 +281,7 @@ class InboxTeamService extends BaseService {
       }
     })
     await this.invalidate({ workspaceId: ctx.workspaceId })
+    await this.revokeMemberRealtimeConnections(ctx.workspaceId, addedUserIds)
 
     if (addedUsers.length > 0) {
       await this.audit(
@@ -269,6 +315,10 @@ class InboxTeamService extends BaseService {
       )
       .returning({ id: inboxTeamMemberModel.id })
     await this.invalidate({ workspaceId: ctx.workspaceId })
+    await this.revokeMemberRealtimeConnections(
+      ctx.workspaceId,
+      membersToRemove.map((member) => member.userId),
+    )
 
     if (deleted.length > 0) {
       await this.audit(
@@ -308,6 +358,10 @@ class InboxTeamService extends BaseService {
       )
       .returning({ id: inboxTeamMemberModel.id })
     await this.invalidate({ workspaceId: ctx.workspaceId })
+    await this.revokeMemberRealtimeConnections(
+      ctx.workspaceId,
+      membersToRemove.map((member) => member.userId),
+    )
 
     if (deleted.length > 0) {
       await this.audit(

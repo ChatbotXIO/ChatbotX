@@ -6,10 +6,10 @@ import {
 } from "@chatbotx.io/analytics"
 import {
   appointmentCalendarService,
-  broadcastToGuestParty,
   contactInboxService,
   conversationService,
-  publishToWorkspaceParty,
+  publishGuestRealtimeEvent,
+  queueWorkspaceRealtimeEvent,
   resolveMediaUrl,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
@@ -47,7 +47,10 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { logDiagnostic } from "@chatbotx.io/logger"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import {
   IntegrationException,
   type MessageButtonTemplate,
@@ -956,9 +959,13 @@ export async function sendFlowStep({
         })
 
     if (!isBulkOutbound) {
-      publishToWorkspaceParty(conversation.workspaceId, {
+      queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
+        route: routeForConversation({
+          assignedUserId: conversation.assignedUserId,
+          assignedInboxTeamId: conversation.assignedInboxTeamId,
+        }),
       })
     }
 
@@ -967,7 +974,7 @@ export async function sendFlowStep({
     const broadcasts: Promise<unknown>[] = []
     if (targetContactInbox.channel === channelTypes.enum.webchat) {
       broadcasts.push(
-        broadcastToGuestParty(
+        publishGuestRealtimeEvent(
           {
             workspaceId: conversation.workspaceId,
             guestConversationId: targetContactInbox.sourceId,
@@ -1233,15 +1240,21 @@ export const sendChatMessage = async (
           message,
           quickReplies,
           metadata,
+          isBulkBroadcast,
         },
         0,
         willRetryOnThrow,
       ),
     ]
     if (!isBulkOutbound) {
-      publishToWorkspaceParty(conversation.workspaceId, {
+      queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
+        route: routeForConversation({
+          assignedUserId: conversation.assignedUserId,
+          assignedInboxTeamId: conversation.assignedInboxTeamId,
+          inboxId: contactInbox.inboxId,
+        }),
       })
     }
 

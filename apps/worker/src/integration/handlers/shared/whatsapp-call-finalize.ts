@@ -1,8 +1,8 @@
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
-  sendToWorkspaceMember,
+  publishWorkspaceMemberRealtimeEvent,
+  publishWorkspaceRealtimeEvent,
   userService,
   whatsappVoipCallService,
   whatsappVoipSignalingService,
@@ -20,7 +20,8 @@ import { emitCallEnded, emitMissedAudioCall } from "@chatbotx.io/events"
 import {
   RealtimeEventType,
   type RealtimeEventWhatsappCallTransportEnded,
-} from "@chatbotx.io/partysocket-config"
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import {
   getWhatsappCallEntity,
   type MessageWhatsappCallEntity,
@@ -182,10 +183,10 @@ const emitCallEndedToAgent = async (
     // Unclaimed call: broadcast so every rung agent's dialog clears immediately
     // instead of waiting out its own ~55s deadline timer.
     if (control.reservedUserId === "") {
-      await broadcastToWorkspaceParty(call.workspaceId, eventPayload)
+      await publishWorkspaceRealtimeEvent(call.workspaceId, eventPayload)
       return
     }
-    await sendToWorkspaceMember(
+    await publishWorkspaceMemberRealtimeEvent(
       { workspaceId: call.workspaceId, userId: control.reservedUserId },
       eventPayload,
     )
@@ -391,9 +392,16 @@ export const finalizeCallSideEffects = async (
   }
 
   try {
-    await broadcastToWorkspaceParty(call.workspaceId, {
+    const conversation = await conversationService.findBy({
+      where: { id: call.conversationId, workspaceId: call.workspaceId },
+    })
+    await publishWorkspaceRealtimeEvent(call.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: { ...message, attachments: [] },
+      route: routeForConversation({
+        assignedUserId: conversation?.assignedUserId,
+        assignedInboxTeamId: conversation?.assignedInboxTeamId,
+      }),
     })
   } catch (error) {
     logger.warn({ err: error }, "Whatsapp call: unable to emit realtime event")
@@ -562,10 +570,17 @@ export const enrichCallActivityMessage = async (props: {
     getWhatsappCallEntity(merged.contentAttributes) ??
     defaultCallEntity(call, overrides)
 
+  const conversation = await conversationService.findBy({
+    where: { id: call.conversationId, workspaceId: call.workspaceId },
+  })
   try {
-    await broadcastToWorkspaceParty(call.workspaceId, {
+    await publishWorkspaceRealtimeEvent(call.workspaceId, {
       eventType: RealtimeEventType.messageContentUpdated,
       data: { messageId: merged.id, contentAttributes: entity },
+      route: routeForConversation({
+        assignedUserId: conversation?.assignedUserId,
+        assignedInboxTeamId: conversation?.assignedInboxTeamId,
+      }),
     })
   } catch (error) {
     logger.warn(

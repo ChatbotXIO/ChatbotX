@@ -115,7 +115,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }
@@ -263,8 +263,9 @@ vi.mock("@chatbotx.io/flow-config", async (importOriginal) => {
   }
 })
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {

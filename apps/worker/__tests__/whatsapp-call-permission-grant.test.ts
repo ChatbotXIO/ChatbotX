@@ -3,13 +3,13 @@ import { ChannelError, ChannelErrorCategory } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  broadcastToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
   recordPermanentGrant: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
   whatsappCallPermissionService: {
     recordPermanentGrant: mocks.recordPermanentGrant,
   },
@@ -34,7 +34,7 @@ describe("reconcileChannelSendError", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.recordPermanentGrant.mockResolvedValue(undefined)
-    mocks.broadcastToWorkspaceParty.mockResolvedValue(undefined)
+    mocks.publishWorkspaceRealtimeEvent.mockResolvedValue(undefined)
   })
 
   test("records a permanent grant, refreshes open threads and reports reconciled for a WhatsApp call_permission_request failing with 138017", async () => {
@@ -51,7 +51,7 @@ describe("reconcileChannelSendError", () => {
       contactInboxId: "ci-1",
       grantedAt: expect.any(Date),
     })
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "whatsappCallPermissionUpdated",
       data: { conversationId: "conv-1" },
     })
@@ -67,7 +67,7 @@ describe("reconcileChannelSendError", () => {
 
     expect(isReconciled).toBe(false)
     expect(mocks.recordPermanentGrant).not.toHaveBeenCalled()
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("ignores a message that is not a call_permission_request", async () => {
@@ -117,6 +117,6 @@ describe("reconcileChannelSendError", () => {
         contentAttributes: permissionRequestAttrs,
       }),
     ).rejects.toThrow("db down")
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 })

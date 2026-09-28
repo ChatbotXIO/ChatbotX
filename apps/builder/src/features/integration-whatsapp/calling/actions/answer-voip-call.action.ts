@@ -1,13 +1,13 @@
 "use server"
 
 import {
-  broadcastToWorkspaceParty,
   canCallConversation,
   canSendAudio,
   contactInboxService,
   contactService,
   diagnoseAnswerShape,
   isAnswerDeadlineExpired,
+  publishWorkspaceRealtimeEvent,
   summarizeIceCandidates,
   whatsappVoipCallService,
 } from "@chatbotx.io/business"
@@ -24,7 +24,7 @@ import {
   type WhatsappCallAnnouncementOptions,
   type WhatsappCallSdpAnswerInput,
 } from "@chatbotx.io/integration-whatsapp/api/calling"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
@@ -390,7 +390,7 @@ export const answerWhatsappVoipCallAction = callingActionClient
       // deadline. The tab that answered ignores it because it is already past
       // incomingRinging. A broadcast failure must never fail the accept
       // already won.
-      await broadcastToWorkspaceParty(workspaceId, {
+      await publishWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.whatsappCallClaimedElsewhere,
         data: {
           whatsappCallId,

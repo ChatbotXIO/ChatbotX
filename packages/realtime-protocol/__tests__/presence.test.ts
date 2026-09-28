@@ -2,11 +2,8 @@ import { describe, expect, it } from "vitest"
 import {
   hashPresenceUserIds,
   MAX_PRESENCE_USER_IDS_PER_REPORT,
-  PRESENCE_PING_MESSAGE_TYPE,
   PRESENCE_REPORT_INTERVAL_MS,
   PRESENCE_TTL_MS,
-  presencePingMessageSchema,
-  serializePresencePingMessage,
   truncatePresenceUserIds,
 } from "../src/presence"
 
@@ -54,33 +51,5 @@ describe("hashPresenceUserIds", () => {
     const hash = await hashPresenceUserIds(["a", "b"])
 
     expect(hash).toMatch(HEX_SHA256_RE)
-  })
-})
-
-describe("presence ping message (client keep-alive liveness signal)", () => {
-  it("serializes to a frame that round-trips through the schema", () => {
-    const frame = serializePresencePingMessage()
-
-    const parsed = presencePingMessageSchema.safeParse(JSON.parse(frame))
-
-    expect(parsed.success).toBe(true)
-    expect(parsed.success && parsed.data.type).toBe(PRESENCE_PING_MESSAGE_TYPE)
-  })
-
-  it("rejects a frame with the wrong type literal", () => {
-    const result = presencePingMessageSchema.safeParse({ type: "not-a-ping" })
-
-    expect(result.success).toBe(false)
-  })
-
-  it("rejects malformed/unrelated payloads", () => {
-    expect(presencePingMessageSchema.safeParse(null).success).toBe(false)
-    expect(presencePingMessageSchema.safeParse("presence-ping").success).toBe(
-      false,
-    )
-    expect(presencePingMessageSchema.safeParse({}).success).toBe(false)
-    expect(
-      presencePingMessageSchema.safeParse({ eventType: "typing" }).success,
-    ).toBe(false)
   })
 })

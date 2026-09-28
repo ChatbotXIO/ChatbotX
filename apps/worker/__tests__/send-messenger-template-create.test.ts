@@ -91,8 +91,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: mockBroadcast,
-  publishToWorkspaceParty: mockBroadcast,
+  publishWorkspaceRealtimeEvent: mockBroadcast,
+  queueWorkspaceRealtimeEvent: mockBroadcast,
   contactInboxService: {
     recordSendFailure: mockRecordSendFailure,
     invalidateTracking: mockInvalidateTracking,
@@ -113,8 +113,9 @@ vi.mock("@chatbotx.io/event-bus", () => ({
   emit: mockEmit,
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {

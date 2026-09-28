@@ -21,9 +21,8 @@ const createContext = (
   platform: {
     appUrl: "",
     publicRealtimeUrl: "",
-    internalRealtimeUrl: "",
     storageUrl: "",
-    getRealtimeBroadcastAuthHeaders: async () => ({}),
+    publishGuestRealtimeEvent: async () => undefined,
   },
 })
 

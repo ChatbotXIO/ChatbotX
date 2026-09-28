@@ -1,37 +1,35 @@
-# Implement websocket
+# WebSocket transport
 
-### Browser connect websocket
-
-```mermaid
-sequenceDiagram
-  participant Browser
-  participant NextServer
-  participant Partysocket
-
-  Browser->>Partysocket: connect
-  Partysocket->>NextServer: GET /api/auth/session <br/> Cookie: xxxxxxxxxxxxx
-  NextServer-->>Partysocket: return Session | null
-  critical has Session
-    Partysocket-->>Browser: connected
-  option Session not found
-    Partysocket-->>Browser: not connected
-  end
-```
-
-### Broadcast messages
+## Browser connection
 
 ```mermaid
 sequenceDiagram
   participant Browser
-  participant NextServer
-  participant Partysocket
+  participant Builder
+  participant Gateway
 
-  NextServer->>NextServer: sign 60s JWT, reused up to 45s per audience <br> aud=room:id, HS256(REALTIME_BROADCAST_SECRET)
-  NextServer->>Partysocket: POST /parties/xxx <br> Authorization: Bearer <jwt>
-  critical JWT verifies and aud matches room
-    Partysocket-->>Browser: return ok
-    Partysocket->>Browser: broadcast messages
-  option JWT invalid, expired, or wrong audience
-    Partysocket-->>NextServer: 401 Unauthorized
-  end
+  Browser->>Builder: mint workspace or guest connect token
+  Builder-->>Browser: short-lived JWT
+  Browser->>Gateway: GET /rt/workspaces/:workspaceId?token=JWT
+  Gateway->>Gateway: verify audience, expiry, and claims
+  Gateway-->>Browser: native WebSocket established
 ```
+
+## Event delivery
+
+```mermaid
+sequenceDiagram
+  participant Producer
+  participant Redis as Redis Stream
+  participant Gateway
+  participant Browser
+
+  Producer->>Redis: XADD typed realtime record
+  Gateway->>Redis: consume owned shard
+  Gateway->>Browser: { seq, batch }
+  Browser->>Browser: deduplicate and persist seq
+```
+
+The WebSocket is a replayable projection. The database remains authoritative;
+a client that detects a gap or receives a resync close fetches its current
+conversation head and active thread.
