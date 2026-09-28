@@ -1,4 +1,7 @@
-import { conversationService } from "@chatbotx.io/business"
+import {
+  conversationService,
+  recordDeliveredPrivateReply,
+} from "@chatbotx.io/business"
 import type { CommentReply } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
@@ -27,6 +30,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { emitBotMessageSentEvents } from "../../../chat/handlers/send-message"
 import { logger } from "../../../lib/logger"
 import { TIKTOK_HIGH_INTENT_ATTRIBUTE } from "../tiktok-high-intent-comment"
 import type { CommentAutomationChannelType } from "./channel-type"
@@ -234,7 +238,8 @@ async function resolveDirectMessageConversationId(ctx: {
     })
     return created.id
   } catch (err) {
-    // Fall back to the pre-#1063 behaviour (flow starts, on the wrong
+    // Flow-only fallback — never reuse this to decide where a message row is
+    // written. Fall back to the pre-#1063 behaviour (flow starts, on the wrong
     // conversation) rather than throwing: the caller would mark the dispatch
     // failed, skip the dedup row, and a job retry would post the public reply
     // a second time.
@@ -244,6 +249,80 @@ async function resolveDirectMessageConversationId(ctx: {
     )
     return ctx.conversationId
   }
+}
+
+/**
+ * Channels whose inline private DM would otherwise never reach the inbox.
+ *
+ * Meta's Send API echoes the DM back, but every Meta send path stamps
+ * `metadata` so the echo is skipped as our own — and the inline send writes no
+ * `Message` row, so a contact whose first ever interaction is this comment got
+ * no DM conversation at all. TikTok is left out on purpose: its `im_send_msg`
+ * echo carries no such marker and is ingested, so a row written here would
+ * show the DM twice.
+ */
+const CHANNELS_RECORDING_INLINE_PRIVATE_REPLY =
+  new Set<CommentAutomationChannelType>([
+    "messenger",
+    "instagram",
+    "instagramFacebook",
+  ])
+
+function readSentMessageId(sendResult: unknown): string | null {
+  if (typeof sendResult !== "object" || sendResult === null) {
+    return null
+  }
+  const messageId = (sendResult as { message_id?: unknown }).message_id
+  return typeof messageId === "string" ? messageId : null
+}
+
+/**
+ * Writes an inline-sent private DM (text or AIAgent reply) onto the contact's
+ * DM conversation, creating that conversation when this comment is the
+ * contact's first interaction, so the DM shows in the inbox the way a flow
+ * reply's does — and counts it as a bot message sent, as the flow reply's
+ * first message already is.
+ *
+ * Best-effort: the DM already left, so nothing here throws — a throw would
+ * fail the job and a retry would send the DM (and the public reply) a second
+ * time.
+ */
+export async function recordInlinePrivateReply(props: {
+  channelType: CommentAutomationChannelType
+  commentId: string
+  contactInbox: ContactInboxModel
+  workspaceId: string
+  text: string
+  sendResult: unknown
+}): Promise<void> {
+  if (!CHANNELS_RECORDING_INLINE_PRIVATE_REPLY.has(props.channelType)) {
+    return
+  }
+
+  const sourceId = readSentMessageId(props.sendResult)
+  const message = await recordDeliveredPrivateReply({
+    workspaceId: props.workspaceId,
+    contactInbox: props.contactInbox,
+    text: props.text,
+    sourceId,
+  })
+  if (!message) {
+    logger.warn(
+      { commentId: props.commentId, workspaceId: props.workspaceId },
+      "Private reply was sent but not recorded in the inbox",
+    )
+    return
+  }
+
+  await emitBotMessageSentEvents({
+    workspaceId: props.workspaceId,
+    contactInbox: props.contactInbox,
+    result: { sentCount: 1, messageIds: sourceId ? [sourceId] : [] },
+    trigger: {
+      triggerHandler: "commentAutomationPrivateReply",
+      triggerType: "message_bot_sent_comment_private_reply",
+    },
+  })
 }
 
 /**
@@ -347,13 +426,28 @@ export async function executePrivateReply(
       )
     }
 
-    await sendText(ctx.auth, ctx.commentId, text)
+    const sendResult = await sendText(ctx.auth, ctx.commentId, text)
     // Delivered from birth rather than settled by a follow-up `markDelivered`:
-    // this send leaves no `Message` row for a webhook to match (it goes
-    // straight out through the comment_id-anchored Send API), and the caller
-    // has not written the analytics row yet — so an UPDATE here would match
-    // nothing at all. See `deliveredAt` on `CommentReplyOutcome`.
-    return { replyType: "text", replyText: text, deliveredAt: new Date() }
+    // no webhook settles this send (it goes straight out through the
+    // comment_id-anchored Send API, and its echo is skipped as our own), and
+    // the caller has not written the analytics row yet — so an UPDATE here
+    // would match nothing at all. See `deliveredAt` on `CommentReplyOutcome`.
+    return {
+      replyType: "text",
+      replyText: text,
+      deliveredAt: new Date(),
+      // Run by the caller once the dedup row exists — see `recordInInbox` on
+      // `CommentReplyOutcome`.
+      recordInInbox: () =>
+        recordInlinePrivateReply({
+          channelType: ctx.channelType,
+          commentId: ctx.commentId,
+          contactInbox: ctx.contactInbox,
+          workspaceId: ctx.workspaceId,
+          text,
+          sendResult,
+        }),
+    }
   }
 
   if (privateReply.type === "flow" && privateReply.value) {
