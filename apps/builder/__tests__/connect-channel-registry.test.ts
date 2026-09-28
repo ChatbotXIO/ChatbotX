@@ -6,6 +6,7 @@ import {
   CONNECT_CONCURRENCY,
   CONNECT_PICKER_CHANNELS,
   type ConnectChannelConfig,
+  getConnectRetryHref,
   INSTAGRAM_DIRECT_CONNECT_ROUTE,
 } from "@/features/channel-connect/lib/registry"
 import {
@@ -38,6 +39,21 @@ function hasKey(key: string): boolean {
   }
   return typeof node === "string"
 }
+
+describe("getConnectRetryHref", () => {
+  test("builds workspace-aware retry hrefs without empty query parameters", () => {
+    expect(getConnectRetryHref("ws-1")).toBe(
+      "/channels/create?workspaceId=ws-1",
+    )
+    expect(getConnectRetryHref()).toBe("/channels/create")
+    expect(getConnectRetryHref(null)).toBe("/channels/create")
+    expect(getConnectRetryHref("")).toBe("/channels/create")
+    const encodedHref = getConnectRetryHref("workspace / abc")
+    expect(
+      new URL(`http://localhost${encodedHref}`).searchParams.get("workspaceId"),
+    ).toBe("workspace / abc")
+  })
+})
 
 describe("channel-connect registry — every message key exists in en.json", () => {
   test.each(

@@ -19,8 +19,8 @@ import type { MessageKey } from "../lib/message-key"
 import type { ConnectPickerItem } from "../lib/picker-items"
 import {
   CONNECT_CHANNEL_REGISTRY,
-  CONNECT_RETRY_HREF,
   type ConnectPickerChannel,
+  getConnectRetryHref,
 } from "../lib/registry"
 import type { ConnectActionResultWire } from "../schema"
 import {
@@ -157,7 +157,7 @@ export function ConnectPickerScreen<
           </Link>
           <Link
             className={buttonVariants({ size: "sm" })}
-            href={CONNECT_RETRY_HREF}
+            href={getConnectRetryHref(workspaceId)}
           >
             {t(config.tryAgainKey)}
           </Link>
@@ -179,7 +179,11 @@ export function ConnectPickerScreen<
   return (
     <div className="space-y-4">
       {flow.state.kind === "singleSessionError" && (
-        <ConnectSessionErrorAlert channel={channel} code={flow.state.code} />
+        <ConnectSessionErrorAlert
+          channel={channel}
+          code={flow.state.code}
+          workspaceId={workspaceId}
+        />
       )}
 
       {extraAlert}

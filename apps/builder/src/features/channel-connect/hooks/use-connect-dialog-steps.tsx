@@ -83,6 +83,7 @@ export type ConnectDialogExtraStep = Omit<
 
 export type UseConnectDialogStepsOptions<TItem extends ConnectPickerItem> = {
   channel: ConnectPickerChannel
+  workspaceId: string
   items: readonly TItem[]
   connectOne: (item: TItem) => Promise<ConnectActionResultWire>
   /** Reached once every step is done (or skipped). Never navigates itself. */
@@ -163,6 +164,7 @@ function buildConnectingStep<TItem extends ConnectPickerItem>({
   batch,
   channel,
   finished,
+  workspaceId,
   items,
   onRetryOne,
   onRetryFailed,
@@ -170,6 +172,7 @@ function buildConnectingStep<TItem extends ConnectPickerItem>({
   batch: UseConnectBatchResult
   channel: ConnectPickerChannel
   finished: boolean
+  workspaceId: string
   items: readonly TItem[]
   onRetryOne: (id: string) => void
   onRetryFailed: () => void
@@ -185,6 +188,7 @@ function buildConnectingStep<TItem extends ConnectPickerItem>({
         items={items}
         onRetryOne={onRetryOne}
         titleRef={ctx.titleRef}
+        workspaceId={workspaceId}
       />
     ),
     renderFooter: (ctx) => (
@@ -291,6 +295,7 @@ function useFocusOnStepChange(
 
 export function useConnectDialogSteps<TItem extends ConnectPickerItem>({
   channel,
+  workspaceId,
   items,
   connectOne,
   onFinished,
@@ -350,6 +355,7 @@ export function useConnectDialogSteps<TItem extends ConnectPickerItem>({
     items,
     onRetryOne: retryOne,
     onRetryFailed: retryFailed,
+    workspaceId,
   })
   // `connectingStep` is a freshly-built local every render (it closes over
   // this render's own helpers), so memoizing this array would gain nothing —

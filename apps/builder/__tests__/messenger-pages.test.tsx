@@ -138,6 +138,11 @@ describe("MessengerPages", () => {
       button.textContent?.includes("actions.continue"),
     )
 
+  const tryAgainLink = () =>
+    Array.from(container.querySelectorAll("a")).find(
+      (link) => link.textContent === "messenger.selectPage.tryAgain",
+    )
+
   test("renders a disabled checkbox with the notAdminNote description for a non-admin page", () => {
     renderPages([selectableItem, notAdminItem])
 
@@ -160,6 +165,19 @@ describe("MessengerPages", () => {
     )
     expect(container.textContent).toContain(
       "messenger.selectPage.noConnectablePagesDescription",
+    )
+    const retryLink = tryAgainLink()
+    expect(retryLink?.getAttribute("href")).toBe(
+      "/channels/create?workspaceId=ws-1",
+    )
+  })
+
+  test("empty picker retry preserves workspace ID", () => {
+    renderPages([])
+
+    const retryLink = tryAgainLink()
+    expect(retryLink?.getAttribute("href")).toBe(
+      "/channels/create?workspaceId=ws-1",
     )
   })
 
@@ -350,10 +368,10 @@ describe("MessengerPages", () => {
     expect(container.textContent).toContain(
       "channels.connectMany.sessionError.sessionExpired",
     )
-    const tryAgainLink = Array.from(container.querySelectorAll("a")).find(
-      (link) => link.textContent === "messenger.selectPage.tryAgain",
+    expect(tryAgainLink()).not.toBeUndefined()
+    expect(tryAgainLink()?.getAttribute("href")).toBe(
+      "/channels/create?workspaceId=ws-1",
     )
-    expect(tryAgainLink).not.toBeUndefined()
     // The form (and its checkboxes) stays mounted — the operator can still
     // retry the selection instead of being dead-ended.
     expect(checkboxes().length).toBeGreaterThan(0)

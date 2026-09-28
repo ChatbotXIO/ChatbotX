@@ -21,7 +21,7 @@ import type {
 } from "../hooks/use-connect-batch"
 import type { ConnectPickerItem } from "../lib/picker-items"
 import type { ConnectPickerChannel } from "../lib/registry"
-import { CONNECT_CHANNEL_REGISTRY, CONNECT_RETRY_HREF } from "../lib/registry"
+import { CONNECT_CHANNEL_REGISTRY, getConnectRetryHref } from "../lib/registry"
 import {
   type RowVisualState,
   rowNote,
@@ -45,6 +45,7 @@ function rowVisualState(row: RowState | undefined): RowVisualState {
 
 export type ConnectingStepBodyProps<TItem extends ConnectPickerItem> = {
   channel: ConnectPickerChannel
+  workspaceId: string
   finished: boolean
   batch: UseConnectBatchResult
   items: readonly TItem[]
@@ -55,6 +56,7 @@ export type ConnectingStepBodyProps<TItem extends ConnectPickerItem> = {
 /** The connecting step's title/progress/row-list body — the dialog's default step, before any channel extra step is reached. */
 export function ConnectingStepBody<TItem extends ConnectPickerItem>({
   channel,
+  workspaceId,
   finished,
   batch,
   items,
@@ -111,7 +113,7 @@ export function ConnectingStepBody<TItem extends ConnectPickerItem>({
           <AlertDescription>
             <a
               className="underline decoration-dotted underline-offset-2"
-              href={CONNECT_RETRY_HREF}
+              href={getConnectRetryHref(workspaceId)}
             >
               {t(CONNECT_CHANNEL_REGISTRY[channel].tryAgainKey)}
             </a>
