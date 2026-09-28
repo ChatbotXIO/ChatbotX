@@ -293,7 +293,9 @@ describe("ConnectManyDialog — footer and steps", () => {
       buttonByText("channels.connectMany.goToChannels"),
     ).not.toBeUndefined()
     expect(
-      document.body.querySelector('a[href="/channels/create?workspaceId=ws-1"]'),
+      document.body.querySelector(
+        'a[href="/channels/create?workspaceId=ws-1"]',
+      ),
     ).not.toBeNull()
   })
 
@@ -314,10 +316,10 @@ describe("ConnectManyDialog — footer and steps", () => {
       await flush()
     })
 
-    expect(document.body.querySelector('a[href="/channels/create"]')).not.toBeNull()
     expect(
-      document.body.querySelector('a[href*="workspaceId="]'),
-    ).toBeNull()
+      document.body.querySelector('a[href="/channels/create"]'),
+    ).not.toBeNull()
+    expect(document.body.querySelector('a[href*="workspaceId="]')).toBeNull()
   })
 
   test("Progress carries the motion-reduce class and the connecting spinner carries motion-safe:animate-spin", async () => {

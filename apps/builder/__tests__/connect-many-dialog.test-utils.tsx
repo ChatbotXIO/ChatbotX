@@ -198,7 +198,7 @@ export function renderConnectManyDialog(
           resolveCoexistWorkspaceId={props.resolveCoexistWorkspaceId}
           workspaceId={props.workspaceId ?? "ws-1"}
         />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     )
   })
 }

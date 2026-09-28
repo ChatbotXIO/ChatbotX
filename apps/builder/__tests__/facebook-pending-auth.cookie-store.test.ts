@@ -239,5 +239,10 @@ describe("the pending-auth cookie's Path covers every path that reads it", () =>
 
   test("the session-expired retry route receives the cookie", () => {
     expect(pathMatches(getConnectRetryHref(), writtenCookiePath())).toBe(true)
+    const workspaceRetryPathname = new URL(
+      getConnectRetryHref("ws-1"),
+      "http://localhost",
+    ).pathname
+    expect(pathMatches(workspaceRetryPathname, writtenCookiePath())).toBe(true)
   })
 })
