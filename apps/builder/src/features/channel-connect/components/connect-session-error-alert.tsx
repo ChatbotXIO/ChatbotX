@@ -28,7 +28,7 @@ export function ConnectSessionErrorAlert({
 }: {
   channel: ConnectPickerChannel
   code: ConnectSessionErrorCode
-  workspaceId?: string | null
+  workspaceId: string
 }) {
   const t = useTranslations()
 

@@ -19,7 +19,7 @@ export const CONNECT_PICKER_CHANNELS = [
 ] as const
 export type ConnectPickerChannel = (typeof CONNECT_PICKER_CHANNELS)[number]
 
-/** Route every channel's "session expired, try again" link points to. */
+/** Shared so no caller hard-codes every channel's retry route; empty or missing IDs use the bare route for WhatsApp before its workspace exists. */
 export function getConnectRetryHref(workspaceId?: string | null): string {
   return workspaceId
     ? `/channels/create?${new URLSearchParams({ workspaceId })}`

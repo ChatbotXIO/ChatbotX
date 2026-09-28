@@ -82,7 +82,7 @@ export type ConnectDialogExtraStep = Omit<
 
 export type UseConnectDialogStepsOptions<TItem extends ConnectPickerItem> = {
   channel: ConnectPickerChannel
-  workspaceId?: string | null
+  workspaceId: string
   items: readonly TItem[]
   connectOne: (item: TItem) => Promise<ConnectActionResultWire>
   /** Reached once every step is done (or skipped). Never navigates itself. */
@@ -171,6 +171,7 @@ function buildConnectingStep<TItem extends ConnectPickerItem>({
   batch: UseConnectBatchResult
   channel: ConnectPickerChannel
   finished: boolean
+  workspaceId: string
   items: readonly TItem[]
   onRetryOne: (id: string) => void
   onRetryFailed: () => void

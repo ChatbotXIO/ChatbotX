@@ -40,7 +40,7 @@ function hasKey(key: string): boolean {
   return typeof node === "string"
 }
 
-describe("channel-connect registry — every message key exists in en.json", () => {
+describe("getConnectRetryHref", () => {
   test("builds workspace-aware retry hrefs without empty query parameters", () => {
     expect(getConnectRetryHref("ws-1")).toBe(
       "/channels/create?workspaceId=ws-1",
@@ -49,10 +49,13 @@ describe("channel-connect registry — every message key exists in en.json", () 
     expect(getConnectRetryHref(null)).toBe("/channels/create")
     expect(getConnectRetryHref("")).toBe("/channels/create")
     const encodedHref = getConnectRetryHref("workspace / abc")
-    expect(new URL(`http://localhost${encodedHref}`).searchParams.get("workspaceId")).toBe(
-      "workspace / abc",
-    )
+    expect(
+      new URL(`http://localhost${encodedHref}`).searchParams.get("workspaceId"),
+    ).toBe("workspace / abc")
   })
+})
+
+describe("channel-connect registry — every message key exists in en.json", () => {
   test.each(
     CONNECT_PICKER_CHANNELS,
   )("%s registry keys (duplicatedKey, coexistDescriptionKey, featureLabelKey, tryAgainKey)", (channel) => {

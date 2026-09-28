@@ -21,10 +21,7 @@ import type {
 } from "../hooks/use-connect-batch"
 import type { ConnectPickerItem } from "../lib/picker-items"
 import type { ConnectPickerChannel } from "../lib/registry"
-import {
-  CONNECT_CHANNEL_REGISTRY,
-  getConnectRetryHref,
-} from "../lib/registry"
+import { CONNECT_CHANNEL_REGISTRY, getConnectRetryHref } from "../lib/registry"
 import {
   type RowVisualState,
   rowNote,
@@ -48,7 +45,7 @@ function rowVisualState(row: RowState | undefined): RowVisualState {
 
 export type ConnectingStepBodyProps<TItem extends ConnectPickerItem> = {
   channel: ConnectPickerChannel
-  workspaceId?: string | null
+  workspaceId: string
   finished: boolean
   batch: UseConnectBatchResult
   items: readonly TItem[]
