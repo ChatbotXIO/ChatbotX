@@ -4,8 +4,14 @@ import {
 } from "@chatbotx.io/business"
 import { resolveAdReferral } from "@chatbotx.io/business/ads-conversion/channel-fields"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
-import type { ContactInboxModel, InboxModel } from "@chatbotx.io/database/types"
+import {
+  contactInboxOperationalColumns,
+  createMessageRepository,
+} from "@chatbotx.io/database/repositories"
+import type {
+  ContactInboxOperationalModel,
+  InboxModel,
+} from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { endOfHour } from "date-fns"
 import z from "zod"
@@ -26,19 +32,35 @@ const DEFAULT_PER_PAGE = 20
 // `findConversation`) so a raw `contactInbox.referral` — an arbitrary webhook
 // payload — never reaches the oRPC response and both paths produce the exact
 // same `conversationContactInboxResource` shape (output validation requires
-// this). `referral` is destructured out (never spread) so it cannot leak
-// even transiently in the mapped object.
+// this). The explicit projection keeps internal jsonb columns out of the
+// response object entirely rather than relying on output validation to strip them.
 const mapConversationContactInboxes = (
-  contactInboxes: readonly (ContactInboxModel & { inbox: InboxModel })[],
+  contactInboxes: readonly (ContactInboxOperationalModel & {
+    inbox: InboxModel
+  })[],
 ): ConversationContactInboxResource[] =>
-  contactInboxes.map(({ referral, ...rest }) => ({
-    ...rest,
-    adReferral: resolveAdReferral(referral),
+  contactInboxes.map((contactInbox) => ({
+    id: contactInbox.id,
+    contactId: contactInbox.contactId,
+    inboxId: contactInbox.inboxId,
+    channel: contactInbox.channel,
+    source: contactInbox.source,
+    sourceId: contactInbox.sourceId,
+    sourceUserId: contactInbox.sourceUserId,
+    sourceUsername: contactInbox.sourceUsername,
+    language: contactInbox.language,
+    lastMessageAt: contactInbox.lastMessageAt,
+    lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
+    contactLastReadAt: contactInbox.contactLastReadAt,
+    inbox: contactInbox.inbox,
+    adReferral: resolveAdReferral(contactInbox.referral),
   }))
 
 const resolveConversationContact = async <T extends { avatar: string | null }>(
   contact: T | null,
-  contactInboxes: readonly (ContactInboxModel & { inbox: InboxModel })[],
+  contactInboxes: readonly (ContactInboxOperationalModel & {
+    inbox: InboxModel
+  })[],
   workspaceId: string,
 ): Promise<T | null> => {
   if (!contact) {
@@ -92,7 +114,10 @@ export const listConversations = async (
     limit: limit + 1,
     with: {
       contact: true,
-      contactInboxes: { with: { inbox: true } },
+      contactInboxes: {
+        columns: contactInboxOperationalColumns,
+        with: { inbox: true },
+      },
       assignedUser: true,
       assignedInboxTeam: true,
     },

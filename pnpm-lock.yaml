@@ -1814,6 +1814,9 @@ importers:
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@chatbotx.io/worker-config':
+        specifier: workspace:*
+        version: link:../../packages/worker-config
       '@edenchazard/tiny-chunk-array':
         specifier: ^1.0.1
         version: 1.0.1

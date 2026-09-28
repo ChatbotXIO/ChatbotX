@@ -15,6 +15,7 @@ import { asString } from "./value"
 const rawContactSchema = z.object({
   wa_id: z.string().optional(),
   user_id: z.string().optional(),
+  parent_user_id: z.string().optional(),
   profile: z
     .object({
       name: z.string().optional(),
@@ -27,6 +28,14 @@ const rawMessageChangeSchema = z.object({
   value: z
     .object({
       contacts: z.array(rawContactSchema).optional(),
+      messages: z
+        .array(
+          z.object({
+            from_user_id: z.string().optional(),
+            from_parent_user_id: z.string().optional(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
 })
@@ -43,17 +52,16 @@ const rawMessagePostDataSchema = z.object({
 
 export type WhatsappRawUserIdentity = {
   sourceUserId?: string
+  sourceParentUserId?: string
   sourceUsername?: string
 }
 
 /**
- * Extracts the Business-Scoped User ID (BSUID, `contacts[0].user_id`) and
- * username (`contacts[0].profile.username`) from a raw `messages` webhook
- * payload. Returns `{}` when the fields are absent or `raw` itself is
- * absent (no warning — a caller that never threads `raw` through is
- * identical to pre-BSUID behavior), and `{}` with a warn log when `raw` IS
- * present but shaped unexpectedly, so drift from Meta's contract stays
- * observable without false-positiving on ordinary absence.
+ * Extracts the BSUID, parent BSUID, and username from a raw `messages`
+ * webhook payload. `contacts[0]` wins; message-level `from_user_id` and
+ * `from_parent_user_id` are fallbacks for payloads without contact identity
+ * fields. Returns `{}` when the fields or `raw` are absent, and warns only
+ * when a present payload is malformed.
  */
 export const extractWhatsappUserIdentity = (
   raw: unknown,
@@ -75,12 +83,18 @@ export const extractWhatsappUserIdentity = (
   // reads exactly entry[0].changes[0].messages[0] and emits on.message ONCE
   // per webhook POST, so contacts[0] is always the sender of the one message
   // this extraction runs for (verified against whatsapp-api-js@6.2.1 source).
-  const contact = parsed.data.entry?.[0]?.changes?.[0]?.value?.contacts?.[0]
-  const sourceUserId = asString(contact?.user_id)
+  const value = parsed.data.entry?.[0]?.changes?.[0]?.value
+  const contact = value?.contacts?.[0]
+  const message = value?.messages?.[0]
+  const sourceUserId =
+    asString(contact?.user_id) ?? asString(message?.from_user_id)
+  const sourceParentUserId =
+    asString(contact?.parent_user_id) ?? asString(message?.from_parent_user_id)
   const sourceUsername = asString(contact?.profile?.username)
 
   return {
     ...(sourceUserId ? { sourceUserId } : {}),
+    ...(sourceParentUserId ? { sourceParentUserId } : {}),
     ...(sourceUsername ? { sourceUsername } : {}),
   }
 }

@@ -281,6 +281,7 @@ const resolveCallParticipants = async (
     incomingContact: {
       sourceId,
       sourceUserId: userId,
+      sourceParentUserId: matchedContact?.parentUserId,
       sourceUsername: matchedContact?.username,
       firstName: matchedContact?.name,
     },

@@ -9,6 +9,7 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
+    "@chatbotx.io/worker-config": "workspace:*",
     "@edenchazard/tiny-chunk-array": "^1.0.1",
     "@types/node": "^24.10.4",
     "cross-fetch": "^4.1.0",

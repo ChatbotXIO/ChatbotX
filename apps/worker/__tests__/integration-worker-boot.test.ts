@@ -25,6 +25,7 @@ const workerState = vi.hoisted(() => ({
   dispatchAdsConversionJob: vi.fn(async () => undefined),
   ensureBootstrapped: vi.fn(async () => undefined),
   getStoryReply: vi.fn(),
+  handleWhatsappIdentityChange: vi.fn(async () => undefined),
   receiveMessage: vi.fn(),
   workerClose: vi.fn(async () => undefined),
   workerOn: vi.fn(),
@@ -77,6 +78,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     sendConversionEvent: "sendConversionEvent",
     syncRetargetAudience: "syncRetargetAudience",
     whatsappCallEvent: "whatsappCallEvent",
+    whatsappIdentityChange: "whatsappIdentityChange",
   },
   integrationQueue: { add: vi.fn() },
   queueNames: {
@@ -228,6 +230,9 @@ vi.mock("../src/integration/handlers/wait-resume", () => ({
 }))
 vi.mock("../src/integration/handlers/whatsapp-call", () => ({
   handleWhatsappCallEvent: vi.fn(async () => undefined),
+}))
+vi.mock("../src/integration/handlers/whatsapp-identity-change", () => ({
+  handleWhatsappIdentityChange: workerState.handleWhatsappIdentityChange,
 }))
 
 vi.mock("../src/integration/handlers/whatsapp-voip-signaling", () => ({
@@ -422,6 +427,49 @@ describe("whatsappCallEvent (the main integration queue's isBlockedWorkspace gat
     expect(isBlockedWorkspace).toHaveBeenCalledWith("ws-frozen")
     expect(handleWhatsappCallEvent).not.toHaveBeenCalled()
     expect(result).toBeUndefined()
+  })
+})
+
+describe("whatsappIdentityChange integration worker dispatch", () => {
+  const job = {
+    type: "whatsappIdentityChange",
+    data: {
+      integrationType: "whatsapp",
+      integrationIdentifier: "phone-1",
+      payload: {
+        phoneNumberId: "phone-1",
+        messageId: "wamid.1",
+        change: {
+          kind: "userIdChanged",
+          previousUserId: "bsuid-old",
+          userId: "bsuid-new",
+        },
+      },
+    },
+  }
+
+  test("dispatches the normalized payload to the identity handler", async () => {
+    workerState.handleWhatsappIdentityChange.mockClear()
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({ data: job })
+
+    expect(workerState.handleWhatsappIdentityChange).toHaveBeenCalledWith(
+      job.data,
+    )
+  })
+
+  test("a blocked owner completes without invoking the identity handler", async () => {
+    const { isBlockedWorkspace } = await import(
+      "../src/lib/is-blocked-workspace"
+    )
+    vi.mocked(isBlockedWorkspace).mockResolvedValueOnce(true)
+    workerState.handleWhatsappIdentityChange.mockClear()
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({ data: job })
+
+    expect(workerState.handleWhatsappIdentityChange).not.toHaveBeenCalled()
   })
 })
 

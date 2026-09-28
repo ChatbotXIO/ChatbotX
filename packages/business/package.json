@@ -14,6 +14,7 @@
     "./contact-custom-field": "./src/contact-custom-field/index.ts",
     "./contact-custom-field-value": "./src/contact-custom-field/value-service.ts",
     "./contact-inbox": "./src/contact-inbox/index.ts",
+    "./contact-inbox/identity-rotation": "./src/contact-inbox/identity-rotation.ts",
     "./contact-locale": "./src/contact-locale/index.ts",
     "./contact-profile-rules": "./src/contact/profile-refresh/rules.ts",
     "./contact-utils": "./src/contact/utils.ts",

@@ -14,6 +14,7 @@ import {
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
   assignUserIfUnassigned,
+  contactInboxOperationalColumns,
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
@@ -512,7 +513,10 @@ class ConversationService extends BaseService {
             tags: true,
           },
         },
-        contactInboxes: { with: { inbox: true } },
+        contactInboxes: {
+          columns: contactInboxOperationalColumns,
+          with: { inbox: true },
+        },
         messages: true,
         assignedUser: true,
         assignedInboxTeam: true,

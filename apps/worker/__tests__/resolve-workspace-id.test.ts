@@ -67,6 +67,26 @@ describe("resolveWorkspaceId", () => {
     ).resolves.toBe("workspace-from-integration")
   })
 
+  test("resolves a WhatsApp identity-change job through its integration identifier", async () => {
+    identify.mockResolvedValue({
+      inbox: { workspaceId: "workspace-from-whatsapp" },
+    })
+    await expect(
+      resolveWorkspaceId({
+        integrationType: "whatsapp",
+        integrationIdentifier: "phone-number-id-1",
+        payload: {
+          messageId: "wamid.1",
+          change: {
+            kind: "userIdChanged",
+            previousUserId: "old",
+            userId: "new",
+          },
+        },
+      }),
+    ).resolves.toBe("workspace-from-whatsapp")
+  })
+
   test("resolves an import id", async () => {
     importFindWorkspaceId.mockResolvedValue("workspace-from-import")
     await expect(resolveWorkspaceId({ importId: "import-1" })).resolves.toBe(

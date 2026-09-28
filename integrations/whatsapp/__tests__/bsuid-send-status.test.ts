@@ -106,6 +106,15 @@ describe("resolveRecipientParams (D4 send-path resolver)", () => {
     ).toEqual({ recipient: "user.9373001" })
   })
 
+  test("a hidden-phone rotation sends to the new BSUID recipient", () => {
+    expect(
+      resolveRecipientParams({
+        sourceId: "bsuid-new",
+        sourceUserId: "bsuid-new",
+      }),
+    ).toEqual({ recipient: "bsuid-new" })
+  })
+
   test("a phone-keyed row that also carries a distinct sourceUserId still sends via `to`", () => {
     // sourceId !== sourceUserId → phone-keyed row with a backfilled BSUID
     // (D2/D3 dedup case); the primary identity for sending stays the phone.
@@ -115,6 +124,15 @@ describe("resolveRecipientParams (D4 send-path resolver)", () => {
         sourceUserId: "user.9373001",
       }),
     ).toEqual({ to: "84900000001" })
+  })
+
+  test("a parent-repaired phone-keyed identity sends to the new phone", () => {
+    expect(
+      resolveRecipientParams({
+        sourceId: "84900000002",
+        sourceUserId: "user.9373002",
+      }),
+    ).toEqual({ to: "84900000002" })
   })
 
   test("no sourceUserId at all sends via `to`", () => {

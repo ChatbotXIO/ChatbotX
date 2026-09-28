@@ -7,3 +7,13 @@
  */
 export const asString = (value: unknown): string | null =>
   typeof value === "string" && value.length > 0 ? value : null
+
+/** Reads the top-level entries from an untrusted Meta webhook body. */
+export const readWebhookEntries = (rawBody: unknown): unknown[] => {
+  if (typeof rawBody !== "object" || rawBody === null) {
+    return []
+  }
+
+  const entries = (rawBody as { entry?: unknown }).entry
+  return Array.isArray(entries) ? entries : []
+}

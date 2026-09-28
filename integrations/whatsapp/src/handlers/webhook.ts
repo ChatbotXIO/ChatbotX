@@ -5,6 +5,7 @@ import {
   SdkException,
 } from "@chatbotx.io/sdk"
 import { sha256Hex, verifyHmacSha256Signature } from "@chatbotx.io/utils/crypto"
+import type { WhatsappIdentityChangePayload } from "@chatbotx.io/worker-config"
 import type { OnMessageArgs, OnStatusArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import type { GetParams } from "whatsapp-api-js/types"
@@ -22,6 +23,11 @@ import {
 import { logger } from "../lib/logger"
 import { extractWhatsappStatusRecipientUserId } from "../lib/raw-identity"
 import { resolveSignaturePolicy } from "../lib/signature-policy"
+import {
+  extractIdentityChangePayloads,
+  isSystemMessage,
+} from "../lib/system-messages"
+import { asString, readWebhookEntries } from "../lib/value"
 import type { WhatsappConfig } from "../schema"
 
 /** One buffered Coexistence history slice keyed by its phone number. */
@@ -87,15 +93,6 @@ export const extractCoexistPayloads = (rawBody: unknown): CoexistPayload[] => {
     }
   }
   return payloads
-}
-
-const readWebhookEntries = (rawBody: unknown): unknown[] => {
-  if (typeof rawBody !== "object" || rawBody === null) {
-    return []
-  }
-
-  const entries = (rawBody as { entry?: unknown }).entry
-  return Array.isArray(entries) ? entries : []
 }
 
 type AutomaticEventFieldExtractor = (props: {
@@ -285,13 +282,12 @@ type MessagesChangeValue = {
  * Splits a `messages` change into one value per `messages[]`/`statuses[]` item,
  * each with its own contact. Other shapes are returned unchanged.
  */
-const readStringField = (value: unknown, key: string): string | undefined => {
-  const field =
+const readStringField = (value: unknown, key: string): string | undefined =>
+  asString(
     typeof value === "object" && value !== null
       ? (value as Record<string, unknown>)[key]
-      : undefined
-  return typeof field === "string" && field.length > 0 ? field : undefined
-}
+      : undefined,
+  ) ?? undefined
 
 /**
  * The contact for one message of a batch, matched by identity
@@ -347,7 +343,12 @@ const splitMessagesChangeValue = (
     }
   }
 
-  return results.length > 0 ? results : [value]
+  if (results.length > 0) {
+    return results
+  }
+  return Array.isArray(value.messages) || Array.isArray(value.statuses)
+    ? []
+    : [value]
 }
 
 /**
@@ -402,7 +403,13 @@ const buildMessagesChangeBuffers = (
         continue
       }
 
-      for (const singleValue of splitMessagesChangeValue(typedValue)) {
+      const nonSystemValue = {
+        ...typedValue,
+        messages: Array.isArray(typedValue.messages)
+          ? typedValue.messages.filter((message) => !isSystemMessage(message))
+          : typedValue.messages,
+      }
+      for (const singleValue of splitMessagesChangeValue(nonSystemValue)) {
         const body = {
           object,
           entry: [
@@ -431,11 +438,13 @@ const parsePostPayloads = (
   coexistPayloads: CoexistPayload[]
   automaticEventPayloads: AutomaticEventPayload[]
   callEventPayloads: WhatsappCallEventPayload[]
+  identityChangePayloads: WhatsappIdentityChangePayload[]
   messagesChangeBuffers: ArrayBuffer[]
 } => {
   let coexistPayloads: CoexistPayload[] = []
   let automaticEventPayloads: AutomaticEventPayload[] = []
   let callEventPayloads: WhatsappCallEventPayload[] = []
+  let identityChangePayloads: WhatsappIdentityChangePayload[] = []
   let messagesChangeBuffers: ArrayBuffer[] = []
   try {
     const rawBodyText = new TextDecoder().decode(rawBodyBuffer)
@@ -457,6 +466,14 @@ const parsePostPayloads = (
         "Whatsapp call event extraction failed; webhook will still acknowledge",
       )
     }
+    try {
+      identityChangePayloads = extractIdentityChangePayloads(rawBody)
+    } catch (err) {
+      logger.error(
+        { err },
+        "Whatsapp identity change extraction failed; webhook will still acknowledge",
+      )
+    }
     messagesChangeBuffers = buildMessagesChangeBuffers(
       rawBody,
       pinnedPhoneNumberId,
@@ -469,6 +486,7 @@ const parsePostPayloads = (
     coexistPayloads,
     automaticEventPayloads,
     callEventPayloads,
+    identityChangePayloads,
     messagesChangeBuffers,
   }
 }
@@ -894,6 +912,41 @@ const enqueueNativeCallCapture = async (
  */
 const REDELIVERABLE_JOB_OPTIONS = { removeOnFail: true } as const
 
+const enqueueIdentityChangePayloads = async (
+  queue: WebhookQueue,
+  identityChangePayloads: WhatsappIdentityChangePayload[],
+): Promise<void> => {
+  for (const payload of identityChangePayloads) {
+    try {
+      await queue?.add(
+        "whatsappIdentityChange",
+        {
+          type: "whatsappIdentityChange",
+          data: {
+            integrationType: "whatsapp",
+            integrationIdentifier: payload.phoneNumberId,
+            payload,
+          },
+        },
+        {
+          jobId: `wa-sys-${toBullMqSafeIdSegment(payload.phoneNumberId)}-${toBullMqSafeIdSegment(payload.messageId)}`,
+          ...REDELIVERABLE_JOB_OPTIONS,
+        },
+      )
+    } catch (err) {
+      logger.error(
+        {
+          err,
+          messageId: payload.messageId,
+          phoneNumberId: payload.phoneNumberId,
+        },
+        "Whatsapp identity change enqueue failed",
+      )
+      throw err
+    }
+  }
+}
+
 const dispatchWebhookResult = async (
   queue: WebhookQueue,
   result:
@@ -1005,6 +1058,7 @@ export const webhookHandler = async (
         coexistPayloads,
         automaticEventPayloads,
         callEventPayloads,
+        identityChangePayloads,
         messagesChangeBuffers,
       } = parsePostPayloads(signatureOutcome.rawBodyBuffer, pinnedPhoneNumberId)
 
@@ -1022,6 +1076,11 @@ export const webhookHandler = async (
         callEventPayloads,
         pinnedPhoneNumberId,
         "callEvent",
+      )
+      const boundIdentityChangePayloads = dropMismatchedPhoneNumberId(
+        identityChangePayloads,
+        pinnedPhoneNumberId,
+        "identityChange",
       )
 
       // Feed the SDK one single-item body per `messages` item — it only reads
@@ -1057,6 +1116,10 @@ export const webhookHandler = async (
       await enqueueCallEventPayloads(props.queue, boundCallEventPayloads)
       await enqueueVoipConnectSignaling(boundCallEventPayloads)
       await enqueueNativeCallCapture(boundCallEventPayloads)
+      await enqueueIdentityChangePayloads(
+        props.queue,
+        boundIdentityChangePayloads,
+      )
       for (const result of results) {
         await dispatchWebhookResult(props.queue, result)
       }
