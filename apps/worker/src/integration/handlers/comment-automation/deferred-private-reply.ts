@@ -288,6 +288,18 @@ export async function runDeferredCommentPrivateReply(
     outcome,
   })
 
+  // The dedup row was written when this reply was deferred.
+  if (outcome.recordInInbox) {
+    try {
+      await outcome.recordInInbox()
+    } catch (err) {
+      logger.warn(
+        { err, automationId, commentId },
+        "Failed to record the private reply in the inbox",
+      )
+    }
+  }
+
   // Deliberately here rather than in the main pass: on this channel the
   // counters measure the DM, and until now nothing had gone out to count.
   await commentAutomationService.incrementRepliesCount(automationId)

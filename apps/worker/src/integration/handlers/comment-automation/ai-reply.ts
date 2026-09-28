@@ -6,6 +6,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
+import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import type { AIJobCommentAIReply } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { integrationService } from "../../../services/integrations"
@@ -19,6 +20,7 @@ import { rollbackCommentDedup } from "./dedup"
 import {
   PRIVATE_REPLY_TEXT_SENDERS,
   type PrivateReplyAuth,
+  recordInlinePrivateReply,
 } from "./private-reply"
 import { postPublicCommentReply } from "./public-reply"
 
@@ -300,22 +302,75 @@ async function generateAndDeliverAIReply(
         data.integrationIdentifier,
       )
 
-    await sendPrivateReplyText(
+    const sendResult = await sendPrivateReplyText(
       integrationRow.auth as PrivateReplyAuth,
       data.commentId,
       generated.text,
     )
-    // Inline send, no `Message` row: same reason `executePrivateReply` settles
-    // delivery here rather than waiting for a webhook. The public branch above
-    // is settled by the chat worker instead, once the Graph call lands.
+    await settleDeliveredPrivateAIReply({
+      data,
+      contactInbox,
+      text: generated.text,
+      sendResult,
+    })
+    return
+  }
+
+  await settleAIReplySent({ data, text: generated.text })
+}
+
+/**
+ * Bookkeeping for a private DM that already left. None of it may fail the
+ * job: a throw here would make BullMQ retry, regenerate the text and send the
+ * contact a second DM (with a second inbox row). A step that fails is logged
+ * and the rest still run — a stale analytics row beats a duplicate DM.
+ */
+async function settleDeliveredPrivateAIReply(props: {
+  data: AIJobCommentAIReply["data"]
+  contactInbox: ContactInboxModel
+  text: string
+  sendResult: unknown
+}): Promise<void> {
+  const { data, contactInbox, text, sendResult } = props
+  const logContext = {
+    automationId: data.automationId,
+    commentId: data.commentId,
+    workspaceId: data.workspaceId,
+  }
+
+  try {
+    // Inline send that no webhook settles: same reason `executePrivateReply`
+    // settles delivery here. The public branch is settled by the chat worker
+    // instead, once the Graph call lands.
     await commentAutomationAnalyticsService.markDelivered({
       automationId: data.automationId,
       commentId: data.commentId,
       replyChannel: "private",
     })
+  } catch (err) {
+    logger.error(
+      { err, ...logContext },
+      "Failed to mark a sent AI private reply delivered",
+    )
   }
 
-  await settleAIReplySent({ data, text: generated.text })
+  try {
+    await settleAIReplySent({ data, text })
+  } catch (err) {
+    logger.error(
+      { err, ...logContext },
+      "Failed to settle a sent AI private reply",
+    )
+  }
+
+  await recordInlinePrivateReply({
+    channelType: data.channelType,
+    commentId: data.commentId,
+    contactInbox,
+    workspaceId: data.workspaceId,
+    text,
+    sendResult,
+  })
 }
 
 /** Lands the generated text on the event row the dispatcher opened. */

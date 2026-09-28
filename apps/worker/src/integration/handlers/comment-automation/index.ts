@@ -783,6 +783,17 @@ export async function processCommentAutomation(
         await commentAutomationService.insertDedup(dedup)
       }
 
+      if (privateOutcome?.recordInInbox) {
+        try {
+          await privateOutcome.recordInInbox()
+        } catch (err) {
+          logger.warn(
+            { err, automationId: automation.id, commentId },
+            "Failed to record the private reply in the inbox",
+          )
+        }
+      }
+
       // Replies has the same scope as the delivery columns beside it, and that
       // scope is per CHANNEL, not per automation: where a comment-anchored DM
       // exists it counts DMs, so a Messenger automation replying publicly only

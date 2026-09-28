@@ -36,6 +36,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findOrCreate: vi.fn(),
   },
   logProviderError: vi.fn(),
+  recordDeliveredPrivateReply: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -83,6 +84,10 @@ vi.mock("../src/services/integrations", () => ({
   integrationService: {
     identifyInboxAndIntegrationAuthFromIdentifier: mockIdentifyInbox,
   },
+}))
+
+vi.mock("../src/chat/handlers/send-message", () => ({
+  emitBotMessageSentEvents: vi.fn(),
 }))
 
 vi.mock("../src/lib/logger", () => ({

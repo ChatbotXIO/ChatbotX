@@ -89,6 +89,10 @@ const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
 const mockDiscardEvent = vi.fn().mockResolvedValue(undefined)
 const mockMarkDelivered = vi.fn().mockResolvedValue(undefined)
 const mockRecordMisses = vi.fn().mockResolvedValue(undefined)
+const mockRecordDeliveredPrivateReply = vi
+  .fn()
+  .mockResolvedValue({ id: "private-reply-message-1" })
+const mockEmitBotMessageSentEvents = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/analytics", () => ({
   commentAutomationAnalyticsService: {
@@ -117,6 +121,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findDMByContact: mockConversationFindDMByContact,
     findOrCreate: mockConversationFindOrCreate,
   },
+  recordDeliveredPrivateReply: mockRecordDeliveredPrivateReply,
   commentAutomationService: {
     findActiveAutomations: mockFindActiveAutomations,
     isWithinSchedule: mockIsWithinSchedule,
@@ -182,6 +187,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   integrationQueue: { add: mockIntegrationQueueAdd },
 }))
 
+vi.mock("../src/chat/handlers/send-message", () => ({
+  emitBotMessageSentEvents: mockEmitBotMessageSentEvents,
+}))
+
 vi.mock("../src/lib/logger", () => ({
   logger: {
     error: vi.fn(),
@@ -244,7 +253,7 @@ const { IntegrationNotFoundError } = await import(
 )
 // Both halves of the private-reply capability, for the parity test: the
 // dispatch-side map here, the counter-side predicate in the partials.
-const { supportsPrivateReply } = await import(
+const { recordInlinePrivateReply, supportsPrivateReply } = await import(
   "../src/integration/handlers/comment-automation/private-reply"
 )
 const { commentAutomationChannelSupportsPrivateReply, commentAutomationTypes } =
@@ -2169,6 +2178,52 @@ describe("processCommentAIReply", () => {
     expect(mockChatQueueAdd).not.toHaveBeenCalled()
   })
 
+  test("private (messenger): records the AI DM in the inbox and counts it as a bot message", async () => {
+    mockSendPrivateReply.mockResolvedValue({
+      recipient_id: "psid-1",
+      message_id: "mid-ai",
+    })
+
+    await processCommentAIReply(
+      buildAIJobData({ replyChannel: "private" }) as any,
+    )
+
+    expect(mockRecordDeliveredPrivateReply).toHaveBeenCalledTimes(1)
+    expect(mockRecordDeliveredPrivateReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        text: "AI answer",
+        sourceId: "mid-ai",
+      }),
+    )
+    expect(mockEmitBotMessageSentEvents).toHaveBeenCalledTimes(1)
+    expect(mockEmitBotMessageSentEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        result: { sentCount: 1, messageIds: ["mid-ai"] },
+      }),
+    )
+  })
+
+  test("private: a failing markDelivered after the send does not fail the job", async () => {
+    mockMarkDelivered.mockRejectedValueOnce(new Error("analytics down"))
+
+    await expect(
+      processCommentAIReply(
+        buildAIJobData({ replyChannel: "private" }) as any,
+        true,
+      ),
+    ).resolves.toBeUndefined()
+
+    expect(mockSendPrivateReply).toHaveBeenCalledTimes(1)
+    expect(mockRecordDeliveredPrivateReply).toHaveBeenCalledTimes(1)
+    expect(mockSettleEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "sent", replyText: "AI answer" }),
+    )
+    expect(mockSettleEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed" }),
+    )
+  })
+
   test("private (instagram): sends an AI-generated DM through the Instagram Login endpoint", async () => {
     await processCommentAIReply(
       buildAIJobData({
@@ -3157,6 +3212,89 @@ describe("processCommentAutomation private text reply delivery", () => {
     expect(mockRecordEvent).toHaveBeenCalledWith(
       expect.objectContaining({ replyChannel: "private", deliveredAt: null }),
     )
+  })
+})
+
+// The inline text/AIAgent DM leaves no echo to ingest (Meta's echo carries our
+// metadata and is skipped), so it has to write its own row — otherwise a
+// contact whose first interaction is the comment never gets a DM conversation.
+describe("processCommentAutomation private text reply in the inbox", () => {
+  const privateTextAutomation = () =>
+    buildAutomation({
+      privateReply: { type: "text", value: "private answer" },
+      publicReply: { type: "none", value: null },
+    })
+
+  beforeEach(() => {
+    mockSendPrivateReply.mockResolvedValue({
+      recipient_id: "psid-1",
+      message_id: "mid-1",
+    })
+  })
+
+  test("records the DM through the message service and counts it as a bot message", async () => {
+    mockFindActiveAutomations.mockResolvedValue([privateTextAutomation()])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordDeliveredPrivateReply).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactInbox: expect.objectContaining({ id: "contact-inbox-1" }),
+      text: "private answer",
+      sourceId: "mid-1",
+    })
+    expect(mockEmitBotMessageSentEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        result: { sentCount: 1, messageIds: ["mid-1"] },
+      }),
+    )
+  })
+
+  test("records the DM only after the dedup row is written", async () => {
+    mockFindActiveAutomations.mockResolvedValue([privateTextAutomation()])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    const [dedupOrder] = mockInsertDedup.mock.invocationCallOrder
+    const [recordOrder] =
+      mockRecordDeliveredPrivateReply.mock.invocationCallOrder
+    expect(dedupOrder).toBeLessThan(recordOrder)
+  })
+
+  test("a DM the service could not record counts no bot message but still counts as sent", async () => {
+    mockFindActiveAutomations.mockResolvedValue([privateTextAutomation()])
+    mockRecordDeliveredPrivateReply.mockResolvedValueOnce(null)
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockEmitBotMessageSentEvents).not.toHaveBeenCalled()
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "private",
+        replyType: "text",
+        deliveredAt: expect.any(Date),
+      }),
+    )
+    expect(mockInsertDedup).toHaveBeenCalled()
+  })
+
+  test("tiktok writes no row: its own echo already lands the DM", async () => {
+    await recordInlinePrivateReply({
+      channelType: "tiktok",
+      commentId: COMMENT_ID,
+      contactInbox: {
+        id: "contact-inbox-1",
+        contactId: "contact-1",
+        channel: "tiktok",
+      } as any,
+      workspaceId: "workspace-1",
+      text: "private answer",
+      sendResult: { message_id: "mid-1" },
+    })
+
+    expect(mockRecordDeliveredPrivateReply).not.toHaveBeenCalled()
+    expect(mockEmitBotMessageSentEvents).not.toHaveBeenCalled()
   })
 })
 

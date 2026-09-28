@@ -669,7 +669,7 @@ async function updateMessageSourceId(
   }
 }
 
-type BotSentTrigger = {
+export type BotSentTrigger = {
   triggerHandler: string
   triggerType: string
 }
@@ -679,7 +679,7 @@ type BotSentTrigger = {
  * must never propagate into the caller's catch block, or a delivered message
  * gets recorded as failed and BullMQ redelivers it, sending it twice.
  */
-async function emitBotMessageSentEvents(input: {
+export async function emitBotMessageSentEvents(input: {
   workspaceId: string
   contactInbox: Pick<
     ContactInboxModel,

@@ -1,3 +1,4 @@
+import type { UserQuotaModel } from "@chatbotx.io/database/types"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
@@ -88,15 +89,22 @@ const redisClient = {
 }
 const cacheConnections = { useExisting: vi.fn(async () => redisClient) }
 const distributedStore = {
+  admitWithinLimit: vi.fn(async () => ({
+    status: "admitted" as const,
+    value: 6,
+  })),
+  decrementFloor: vi.fn(async () => 2 as number | null),
   get: vi.fn(async () => null),
   put: vi.fn(async () => undefined),
   delete: vi.fn(async () => undefined),
 }
+const logger = { warn: vi.fn() }
 vi.mock("@chatbotx.io/redis", () => ({
   distributedStore,
   cacheConnections,
   invalidateCacheByTags: vi.fn(async () => undefined),
 }))
+vi.mock("../src/logger", () => ({ logger }))
 
 const { userQuotaService } = await import("../src/user-quota/service")
 
@@ -108,6 +116,93 @@ beforeEach(() => {
   findFirstQuota.mockResolvedValue(null)
   cacheConnections.useExisting.mockResolvedValue(redisClient)
   redisClient.hget.mockResolvedValue("5")
+  distributedStore.admitWithinLimit.mockResolvedValue({
+    status: "admitted",
+    value: 6,
+  })
+  distributedStore.decrementFloor.mockResolvedValue(2)
+})
+
+describe("userQuotaService admission", () => {
+  test("returns the admitted live value", async () => {
+    await expect(userQuotaService.admit(USER, "mac", null)).resolves.toBe(6)
+
+    expect(distributedStore.admitWithinLimit).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      null,
+    )
+  })
+
+  test("returns null when the live counter refuses admission", async () => {
+    distributedStore.admitWithinLimit.mockResolvedValue({
+      status: "refused",
+      value: 10,
+    })
+
+    await expect(userQuotaService.admit(USER, "mac", null)).resolves.toBeNull()
+  })
+
+  test("cold-seeds a missing counter and retries once", async () => {
+    distributedStore.admitWithinLimit
+      .mockResolvedValueOnce({ status: "missing", value: 0 })
+      .mockResolvedValueOnce({ status: "admitted", value: 6 })
+    redisClient.hget.mockResolvedValueOnce(null).mockResolvedValueOnce("5")
+    findFirstQuota.mockResolvedValue({ macUsed: 5 })
+
+    await expect(userQuotaService.admit(USER, "mac", null)).resolves.toBe(6)
+
+    expect(findFirstQuota).toHaveBeenCalledTimes(1)
+    expect(redisClient.hsetnx).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      "5",
+    )
+    expect(distributedStore.admitWithinLimit).toHaveBeenCalledTimes(2)
+  })
+
+  test("throws with the store label when the counter is still missing after seeding", async () => {
+    distributedStore.admitWithinLimit.mockResolvedValue({
+      status: "missing",
+      value: 0,
+    })
+
+    await expect(userQuotaService.admit(USER, "mac", null)).rejects.toThrow(
+      "user-quota",
+    )
+    expect(distributedStore.admitWithinLimit).toHaveBeenCalledTimes(2)
+  })
+
+  test("propagates Redis admission errors", async () => {
+    const error = new Error("redis down")
+    distributedStore.admitWithinLimit.mockRejectedValueOnce(error)
+
+    await expect(userQuotaService.admit(USER, "mac", null)).rejects.toBe(error)
+  })
+
+  test("uses the preloaded quota limit without re-reading the row", async () => {
+    const quota = { macLimit: 12 } as unknown as UserQuotaModel
+
+    await userQuotaService.admit(USER, "mac", quota)
+
+    expect(distributedStore.admitWithinLimit).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      12,
+    )
+    expect(findFirstQuota).not.toHaveBeenCalled()
+  })
+
+  test("treats a missing preloaded quota row as unlimited", async () => {
+    await userQuotaService.admit(USER, "mac", null)
+
+    expect(distributedStore.admitWithinLimit).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      null,
+    )
+    expect(findFirstQuota).not.toHaveBeenCalled()
+  })
 })
 
 describe("userQuotaService write-through", () => {
@@ -152,21 +247,25 @@ describe("userQuotaService write-through", () => {
     expect(insert).not.toHaveBeenCalled()
   })
 
-  test("release floors Redis and the durable counter at zero without inserting", async () => {
-    redisClient.hincrby.mockResolvedValueOnce(-2)
+  test("release atomically floors Redis and durably decrements before invalidating", async () => {
+    distributedStore.decrementFloor.mockResolvedValueOnce(0)
 
-    await userQuotaService.releaseBy(USER, "teamMembers", 3)
+    await userQuotaService.release(USER, "teamMembers")
 
-    expect(redisClient.hincrby).toHaveBeenCalledWith(
+    expect(redisClient.hget).toHaveBeenCalledWith(
       `user-quota-live:${USER}`,
       "teamMembers",
-      -3,
     )
-    expect(redisClient.hset).toHaveBeenCalledWith(
+    expect(distributedStore.decrementFloor).toHaveBeenCalledWith(
       `user-quota-live:${USER}`,
       "teamMembers",
-      "0",
+      1,
     )
+    expect(redisClient.hget.mock.invocationCallOrder[0]).toBeLessThan(
+      distributedStore.decrementFloor.mock.invocationCallOrder[0] as number,
+    )
+    expect(redisClient.hincrby).not.toHaveBeenCalled()
+    expect(redisClient.hset).not.toHaveBeenCalled()
     expect(update).toHaveBeenCalledTimes(1)
     expect(setUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ updatedAt: expect.anything() }),
@@ -175,12 +274,66 @@ describe("userQuotaService write-through", () => {
     expect(distributedStore.delete).toHaveBeenCalledWith(`user-quota:${USER}`)
   })
 
+  test("decrement ignores a vanished counter with a warning", async () => {
+    distributedStore.decrementFloor.mockResolvedValueOnce(null)
+
+    await userQuotaService.revokeAdmission(USER, "mac")
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ id: USER, metric: "mac" }),
+      expect.stringContaining("missing after cold seed"),
+    )
+    expect(update).not.toHaveBeenCalled()
+    expect(distributedStore.delete).not.toHaveBeenCalled()
+  })
+
+  test("decrement swallows Redis errors and warns as before", async () => {
+    const error = new Error("redis down")
+    distributedStore.decrementFloor.mockRejectedValueOnce(error)
+
+    await expect(
+      userQuotaService.revokeAdmission(USER, "mac"),
+    ).resolves.toBeUndefined()
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      { err: error },
+      expect.stringContaining("counter will reconcile on next sync"),
+    )
+  })
+
   test("release with a non-positive count is a no-op", async () => {
     await userQuotaService.releaseBy(USER, "teamMembers", 0)
 
-    expect(redisClient.hincrby).not.toHaveBeenCalled()
+    expect(distributedStore.decrementFloor).not.toHaveBeenCalled()
     expect(update).not.toHaveBeenCalled()
     expect(insert).not.toHaveBeenCalled()
+  })
+})
+
+describe("userQuotaService admission settlement", () => {
+  test("commitAdmission persists +1 and invalidates without touching Redis counters", async () => {
+    await userQuotaService.commitAdmission(USER, "mac")
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: USER, macUsed: 1 }),
+    )
+    expect(distributedStore.delete).toHaveBeenCalledWith(`user-quota:${USER}`)
+    expect(distributedStore.admitWithinLimit).not.toHaveBeenCalled()
+    expect(distributedStore.decrementFloor).not.toHaveBeenCalled()
+    expect(redisClient.hincrby).not.toHaveBeenCalled()
+  })
+
+  test("revokeAdmission decrements the live counter by one only", async () => {
+    await userQuotaService.revokeAdmission(USER, "mac")
+
+    expect(distributedStore.decrementFloor).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "mac",
+      1,
+    )
+    expect(update).not.toHaveBeenCalled()
+    expect(insert).not.toHaveBeenCalled()
+    expect(distributedStore.delete).not.toHaveBeenCalled()
   })
 })
 

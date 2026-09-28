@@ -1884,11 +1884,15 @@ const createNewContactAndContactInbox = async (props: {
     throw new Error("Workspace not found")
   }
 
-  // MAC (monthly active contacts) is the billing hard gate. Gate + insert +
-  // consume run atomically so concurrent inbound messages for new contacts
-  // cannot overrun the limit; the `ContactActiveMonthly` presence row written
-  // inside the transaction makes the `message:received` event emitted later a
-  // dedup no-op (no double count). `contacts` stays the info-only metric.
+  // New contact. The workspace owner is owner-derived, never request-derived.
+  // MAC (monthly active contacts) is the billing gate and a soft cap on
+  // resetting plans: admit atomically in Redis, create in a separate
+  // transaction, then commit or revoke the slot. Lifetime / period-less owners
+  // and `QUOTA_MAC_ADMISSION=lock` keep the distributed-lock gate. The
+  // `ContactActiveMonthly` presence row written inside the same
+  // transaction makes the `message:received` event emitted later a dedup no-op
+  // (no double count). The info-only `contacts` metric is recorded inside
+  // `createNewContactWithMac`.
   // Contact + ContactInbox creation share this one transaction (D8): a losing
   // insert's unique-violation rolls back both rows together — no orphan
   // Contact — and is recovered by the caller's try/catch above.

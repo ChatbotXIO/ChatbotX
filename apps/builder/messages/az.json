@@ -1284,6 +1284,19 @@
     "contactId": {
       "label": "Kontakt ID-si"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo istifadəçi ID",
+      "telegramChatId": "Telegram çat ID",
+      "tiktokUserId": "TikTok istifadəçi ID",
+      "threadsUsername": "Threads istifadəçi adı",
+      "webchatGuestId": "Webchat qonaq ID",
+      "externalId": "Xarici ID",
+      "channelId": "Kanal ID"
+    },
     "flow": {
       "label": "Axın"
     },

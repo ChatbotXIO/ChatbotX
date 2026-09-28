@@ -1,4 +1,5 @@
 import type Redis from "ioredis"
+import { liveCounterScriptsFactory } from "./live-counter-scripts"
 
 // Server-side Redis (Lua) script: atomically increments a counter only when
 // the key already exists. Registered once per client via `defineCommand`.
@@ -61,6 +62,8 @@ function withIncrWithWindow(client: Redis): IncrWithWindowClient {
 export const distributedStoreFactory = (
   getRedisClient: () => Promise<Redis>,
 ) => ({
+  ...liveCounterScriptsFactory(getRedisClient),
+
   async put(key: string, value: unknown, ttlInSeconds?: number): Promise<void> {
     const serializedValue = JSON.stringify(value)
     const redisClient = await getRedisClient()
