@@ -139,11 +139,6 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     order: 3,
     callable: false,
   },
-  // Threads is fully implemented but still waiting on Meta's Threads API
-  // approval, so the product UI hides it from everyone outside a preview
-  // allowlist. That gate depends on the signed-in user, so it cannot live in
-  // this static registry — see
-  // `apps/builder/src/lib/workspace/preview-channels.ts`.
   threads: {
     creatable: true,
     manageable: true,

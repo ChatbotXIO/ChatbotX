@@ -4,11 +4,10 @@ import { CREATABLE_CHANNELS } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// Threads ships behind a preview allowlist while Meta's Threads API approval
-// is pending: every channel entry point (create picker, settings accordion +
-// route, platform hidden-channels admin) and the Threads comment-automation
-// tool card must stay hidden for everyone except the allowlisted accounts,
-// and must come back in full for those accounts.
+// Threads was released to everyone once Meta approved the Threads API, so no
+// channel sits behind the preview allowlist any more: every user — allowlisted
+// or not — gets the full channel list and every Tools card. The allowlist
+// mechanism stays in place for the next channel awaiting provider approval.
 // ---------------------------------------------------------------------------
 
 const { mockGetCurrentUser } = vi.hoisted(() => ({
@@ -34,27 +33,25 @@ beforeEach(() => {
 })
 
 describe("preview channels", () => {
-  test("threads is the pending-approval channel", () => {
-    expect(PREVIEW_CHANNELS).toContain("threads")
+  test("no channel is pending approval", () => {
+    expect(PREVIEW_CHANNELS).toEqual([])
   })
 
-  test("a regular user loses threads from a channel list", async () => {
+  test("a regular user sees threads", async () => {
     signInAs("member@example.com")
-
-    const channels = await filterPreviewChannels(CREATABLE_CHANNELS)
-
-    expect(channels).not.toContain("threads")
-    // Nothing else is dropped.
-    expect(channels).toEqual(
-      CREATABLE_CHANNELS.filter((channel) => channel !== "threads"),
-    )
-  })
-
-  test("the allowlisted account keeps threads", async () => {
-    signInAs("support@ahachat.com")
 
     await expect(filterPreviewChannels(CREATABLE_CHANNELS)).resolves.toEqual([
       ...CREATABLE_CHANNELS,
+    ])
+    expect(CREATABLE_CHANNELS).toContain("threads")
+  })
+
+  test("an anonymous request still sees threads", async () => {
+    signInAs(null)
+
+    expect(await canSeePreviewChannels()).toBe(false)
+    await expect(filterPreviewChannels(["threads"])).resolves.toEqual([
+      "threads",
     ])
   })
 
@@ -62,13 +59,6 @@ describe("preview channels", () => {
     signInAs("  Support@AhaChat.com ")
 
     await expect(canSeePreviewChannels()).resolves.toBe(true)
-  })
-
-  test("an anonymous request is fail-closed", async () => {
-    signInAs(null)
-
-    expect(await canSeePreviewChannels()).toBe(false)
-    await expect(filterPreviewChannels(["threads"])).resolves.toEqual([])
   })
 
   test("filtering leaves the caller's array untouched", async () => {
@@ -81,29 +71,22 @@ describe("preview channels", () => {
   })
 })
 
-describe("threads-comment tool card", () => {
-  const entry = TOOLS_CONFIG.find((config) => config.id === "threads-comment")
-
-  test("is flagged previewOnly", () => {
-    expect(entry && "previewOnly" in entry ? entry.previewOnly : false).toBe(
-      true,
-    )
+describe("tool cards", () => {
+  test("the threads-comment card is listed", () => {
+    expect(TOOLS_CONFIG.map((config) => config.id)).toContain("threads-comment")
   })
 
-  test("is hidden without preview access and shown with it", () => {
-    expect(canShowPreviewTool(true, false)).toBe(false)
-    expect(canShowPreviewTool(true, true)).toBe(true)
-  })
-
-  test("cards without the flag are unaffected", () => {
-    expect(canShowPreviewTool(false, false)).toBe(true)
-  })
-
-  test("threads-comment is the only previewOnly card", () => {
+  test("no card is previewOnly", () => {
     const previewCards = TOOLS_CONFIG.filter(
       (config) => "previewOnly" in config,
     ).map((config) => config.id)
 
-    expect(previewCards).toEqual(["threads-comment"])
+    expect(previewCards).toEqual([])
+  })
+
+  test("canShowPreviewTool still gates flagged cards", () => {
+    expect(canShowPreviewTool(true, false)).toBe(false)
+    expect(canShowPreviewTool(true, true)).toBe(true)
+    expect(canShowPreviewTool(false, false)).toBe(true)
   })
 })

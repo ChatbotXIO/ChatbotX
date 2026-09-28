@@ -3,15 +3,15 @@ import { cache } from "react"
 import { getCurrentUser } from "@/lib/auth/utils"
 
 /**
- * Channels whose provider approval is still pending (today: Threads, awaiting
- * Meta's Threads API review). They are fully implemented, so they stay in
+ * Channels whose provider approval is still pending (today: none — Threads was
+ * released to everyone). They are fully implemented, so they stay in
  * `CHANNEL_CAPABILITIES` as normal creatable/manageable channels; this list
  * only keeps their *entry points* out of the product UI until approval lands.
  *
  * Empty this list once every channel in it is approved — nothing else needs
  * to change.
  */
-export const PREVIEW_CHANNELS: readonly ChannelType[] = ["threads"]
+export const PREVIEW_CHANNELS: readonly ChannelType[] = []
 
 /**
  * Accounts allowed to see `PREVIEW_CHANNELS` while approval is pending, so the
