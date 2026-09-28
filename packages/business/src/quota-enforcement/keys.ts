@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
-export const macAdmissionStrategies = ["atomic", "lock"] as const
+const macAdmissionStrategies = ["atomic", "lock"] as const
 export type MacAdmissionStrategy = (typeof macAdmissionStrategies)[number]
 const macAdmissionStrategySchema = z.enum(macAdmissionStrategies)
 

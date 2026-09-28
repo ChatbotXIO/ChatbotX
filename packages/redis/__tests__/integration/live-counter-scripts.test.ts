@@ -155,15 +155,30 @@ describe.skipIf(!redisUrl)("live counter scripts against Redis", () => {
     await expect(client.hexists(key, "mac")).resolves.toBe(0)
   })
 
-  test("decrementFloor never leaves a negative value for a later increment", async () => {
+  test("decrementFloor does not lose concurrent increments", async () => {
     const key = uniqueKey()
-    await client.hset(key, "mac", "0")
+    await client.hset(key, "mac", "100")
+    // A second connection so the increments genuinely interleave with the
+    // scripts instead of queueing behind them on one socket.
+    const other = new Redis(redisUrl as string)
 
-    // The floor is applied inside the same script as the decrement, so no
-    // intermediate negative value exists for another command to observe.
-    await expect(store.decrementFloor(key, "mac", 2)).resolves.toBe(0)
-    await expect(client.hincrby(key, "mac", 1)).resolves.toBe(1)
-    await expect(client.hget(key, "mac")).resolves.toBe("1")
+    try {
+      // Connect first, otherwise the increments sit in the offline queue until
+      // every decrement has already run.
+      await other.ping()
+      await Promise.all(
+        Array.from({ length: 50 }, () => [
+          store.decrementFloor(key, "mac", 1),
+          other.hincrby(key, "mac", 1),
+        ]).flat(),
+      )
+    } finally {
+      await other.quit()
+    }
+
+    // The floor is never reached (the value stays >= 50), so any lost update
+    // from a non-atomic read-then-write would show up as a value other than 100.
+    await expect(client.hget(key, "mac")).resolves.toBe("100")
   })
 
   test("decrementFloor rejects a non-integer field without writing", async () => {
