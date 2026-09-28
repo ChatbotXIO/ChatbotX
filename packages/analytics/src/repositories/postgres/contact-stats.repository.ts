@@ -597,6 +597,27 @@ export class ContactStatsRepository extends BaseRepository {
     return this.getContactsByDimension(props, "channel")
   }
 
+  async getAllContactsByChannel(
+    props: TimeRangeQuery,
+  ): Promise<ContactsByDimension[]> {
+    const { workspaceId } = props
+
+    const result = await db.execute(sql`
+      SELECT
+        i."channel" AS dimension,
+        COALESCE(SUM(ics."totalContacts"), 0)::int AS count,
+        COALESCE(SUM(ics."totalContacts"), 0)::int AS "uniqueContacts"
+      FROM "InboxContactStat" ics
+      INNER JOIN "Inbox" i ON i.id = ics."inboxId"
+      WHERE i."workspaceId" = ${workspaceId}
+        AND i."channel" != ''
+      GROUP BY i."channel"
+      ORDER BY count DESC
+    `)
+
+    return result.rows as ContactsByDimension[]
+  }
+
   private async getContactsByDimension(
     props: TimeRangeQuery,
     dimension: "country" | "channel",

@@ -61,6 +61,7 @@ export type AnalysisState = {
   botMessagesByResult: BotMessageStats[]
   messagesBySender: MessagesBySenderStats[]
   contactsByChannel: ContactsByDimension[]
+  allContactsByChannel: ContactsByDimension[]
   contactsByCountry: ContactsByDimension[]
   contactsBySource: ContactsByDimension[]
   conversationHandoffs: ConversationHandoffStats[]
@@ -121,6 +122,7 @@ export type AnalysisActions = {
   getBotMessagesByResult: () => Promise<void>
   getMessagesBySender: () => Promise<void>
   getContactsByChannel: () => Promise<void>
+  getAllContactsByChannel: () => Promise<void>
   getContactsByCountry: () => Promise<void>
   getContactsBySource: () => Promise<void>
   getConversationHandoffs: () => Promise<void>
@@ -174,6 +176,7 @@ const DASHBOARD_LOAD_ACTIONS = {
     "getContactCounts",
     "getNewContactCounts",
     "getContactsByChannel",
+    "getAllContactsByChannel",
     "getContactsBySource",
     "getContactsByCountry",
     "getBlockedContactCounts",
@@ -266,6 +269,7 @@ export const createAnalysisStore = (
       botMessagesByResult: [],
       messagesBySender: [],
       contactsByChannel: [],
+      allContactsByChannel: [],
       contactsByCountry: [],
       contactsBySource: [],
       conversationHandoffs: [],
@@ -506,6 +510,13 @@ export const createAnalysisStore = (
               dimension: "channel",
             }),
           ({ data: contactsByChannel }) => ({ contactsByChannel }),
+        ),
+
+      getAllContactsByChannel: () =>
+        runGuarded(
+          "getAllContactsByChannel",
+          () => get().api.allContactsByChannelAnalyticsAPI(rangeParams()),
+          ({ data: allContactsByChannel }) => ({ allContactsByChannel }),
         ),
 
       getContactsByCountry: () =>

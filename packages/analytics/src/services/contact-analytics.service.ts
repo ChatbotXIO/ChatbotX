@@ -85,6 +85,12 @@ export class ContactAnalyticsService {
     return contactStatsRepository.getContactsByChannel(props)
   }
 
+  getAllContactsByChannel(
+    props: TimeRangeQuery,
+  ): Promise<ContactsByDimension[]> {
+    return contactStatsRepository.getAllContactsByChannel(props)
+  }
+
   getContactsBySource(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
     return contactStatsRepository.getContactsBySource(props)
   }

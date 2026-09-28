@@ -251,6 +251,24 @@ export const analyticsContactRoutes = os.router({
         throw error
       }
     }),
+  allContactsByChannelAnalyticsAPI: os
+    .route({
+      method: "GET",
+      path: "/analytics/all-contacts-by-channel",
+      summary: "Get all contacts by channel",
+      tags: ["Analytics"],
+    })
+    .input(timeRangeQuerySchema)
+    .output(getContactsByDimensionStatsResponseSchema)
+    .handler(async ({ input }) => {
+      try {
+        const data = await contactAnalyticsService.getAllContactsByChannel(input)
+        return { data }
+      } catch (error) {
+        logger.error({ err: error }, "[analytics:allContactsByChannel] failed")
+        throw error
+      }
+    }),
   messagesByAdminAnalyticsAPI: os
     .route({
       method: "GET",

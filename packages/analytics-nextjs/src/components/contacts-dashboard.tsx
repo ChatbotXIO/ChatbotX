@@ -44,7 +44,7 @@ export function ContactsDashboard({
             <DashboardPanel action="getNewContactCounts">
               <NewContactCountsChart />
             </DashboardPanel>
-            <DashboardPanel action="getContactsByChannel">
+            <DashboardPanel action="getAllContactsByChannel">
               <AllContactsByChannelChart />
             </DashboardPanel>
             <DashboardPanel action="getContactsByChannel">
