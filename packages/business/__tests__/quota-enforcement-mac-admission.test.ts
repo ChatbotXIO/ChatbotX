@@ -149,6 +149,13 @@ beforeEach(() => {
 })
 
 describe("quotaEnforcementService.createNewContactWithMac atomic", () => {
+  test("does not read quota settings at import", async () => {
+    vi.resetModules()
+    await import("../src/quota-enforcement/service")
+
+    expect(quotaEnforcementEnv).not.toHaveBeenCalled()
+  })
+
   test("does not reparse quota settings on the admission hot path", async () => {
     asRootUser()
 
@@ -163,7 +170,7 @@ describe("quotaEnforcementService.createNewContactWithMac atomic", () => {
       create: makeCreate(),
     })
 
-    expect(quotaEnforcementEnv).not.toHaveBeenCalled()
+    expect(quotaEnforcementEnv.mock.calls.length).toBeLessThanOrEqual(1)
   })
 
   test("admits, creates, and commits once for a non-pooled owner", async () => {

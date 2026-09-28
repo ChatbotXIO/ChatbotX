@@ -39,7 +39,13 @@ const ALL_METRICS: readonly QuotaMetric[] = [
 ]
 
 const LOCK_TIMEOUT_SECONDS = 30
-const quotaEnforcementSettings = quotaEnforcementEnv()
+// Read on first use, not at import: t3-env refuses server variables when this
+// module is imported transitively from a browser-like (jsdom) test.
+let quotaEnforcementSettings: ReturnType<typeof quotaEnforcementEnv> | undefined
+const getQuotaEnforcementSettings = () => {
+  quotaEnforcementSettings ??= quotaEnforcementEnv()
+  return quotaEnforcementSettings
+}
 
 export type { ConsumeLevel } from "./mac-admission"
 export type ConsumeResult = { ok: boolean; level?: ConsumeLevel }
@@ -533,7 +539,7 @@ class QuotaEnforcementService {
     // reads, two of them inside the lock.
     const ctx = await this.resolveContext(ownerId)
     const { levels, strategy } = await resolveMacAdmissionPreference({
-      preferred: quotaEnforcementSettings.QUOTA_MAC_ADMISSION,
+      preferred: getQuotaEnforcementSettings().QUOTA_MAC_ADMISSION,
       loadLevels: () => this.loadLevels(ctx, ownerId),
     })
     return this.macAdmitters[strategy]({
