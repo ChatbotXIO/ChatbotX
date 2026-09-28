@@ -1275,6 +1275,19 @@
     "contactId": {
       "label": "معرّف جهة الاتصال"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "معرّف مستخدم Zalo",
+      "telegramChatId": "معرّف دردشة Telegram",
+      "tiktokUserId": "معرّف مستخدم TikTok",
+      "threadsUsername": "اسم مستخدم Threads",
+      "webchatGuestId": "معرّف زائر Webchat",
+      "externalId": "المعرّف الخارجي",
+      "channelId": "معرّف القناة"
+    },
     "flow": {
       "label": "المسار"
     },

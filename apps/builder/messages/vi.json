@@ -1276,6 +1276,19 @@
     "contactId": {
       "label": "ID Liên hệ"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "ID người dùng Zalo",
+      "telegramChatId": "Chat ID Telegram",
+      "tiktokUserId": "ID người dùng TikTok",
+      "threadsUsername": "Tên người dùng Threads",
+      "webchatGuestId": "ID khách Webchat",
+      "externalId": "ID bên ngoài",
+      "channelId": "ID kênh"
+    },
     "flow": {
       "label": "Luồng"
     },

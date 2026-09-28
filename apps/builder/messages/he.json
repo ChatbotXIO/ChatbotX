@@ -4273,6 +4273,19 @@
     "contactId": {
       "label": "מזהה איש קשר"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "מזהה משתמש ב-Zalo",
+      "telegramChatId": "מזהה צ'אט ב-Telegram",
+      "tiktokUserId": "מזהה משתמש ב-TikTok",
+      "threadsUsername": "שם משתמש ב-Threads",
+      "webchatGuestId": "מזהה אורח ב-Webchat",
+      "externalId": "מזהה חיצוני",
+      "channelId": "מזהה ערוץ"
+    },
     "flow": {
       "label": "תהליך"
     },

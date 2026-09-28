@@ -1837,6 +1837,19 @@
     "contactId": {
       "label": "Kontakt-ID"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo-användar-ID",
+      "telegramChatId": "Telegram-chatt-ID",
+      "tiktokUserId": "TikTok-användar-ID",
+      "threadsUsername": "Threads-användarnamn",
+      "webchatGuestId": "Webbchatt-gäst-ID",
+      "externalId": "Externt ID",
+      "channelId": "Kanal-ID"
+    },
     "contactNote": {
       "label": "Kontaktanteckning"
     },

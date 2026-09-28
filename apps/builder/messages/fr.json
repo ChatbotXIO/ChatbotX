@@ -1133,6 +1133,19 @@
     "contactId": {
       "label": "Identifiant du contact"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "ID utilisateur Zalo",
+      "telegramChatId": "ID de chat Telegram",
+      "tiktokUserId": "ID utilisateur TikTok",
+      "threadsUsername": "Nom d’utilisateur Threads",
+      "webchatGuestId": "ID visiteur Webchat",
+      "externalId": "ID externe",
+      "channelId": "ID du canal"
+    },
     "flow": {
       "label": "Flux"
     },

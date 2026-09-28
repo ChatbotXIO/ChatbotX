@@ -378,6 +378,19 @@
     "contactId": {
       "label": "聯絡人 ID"
     },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo 使用者 ID",
+      "telegramChatId": "Telegram 聊天 ID",
+      "tiktokUserId": "TikTok 使用者 ID",
+      "threadsUsername": "Threads 使用者名稱",
+      "webchatGuestId": "網頁聊天訪客 ID",
+      "externalId": "外部 ID",
+      "channelId": "頻道 ID"
+    },
     "flow": {
       "label": "流程"
     },
