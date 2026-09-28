@@ -21,13 +21,14 @@ import {
 } from "@chatbotx.io/ui/components/ui/form"
 import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useInboxList, useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
@@ -56,6 +57,8 @@ export function IgCommentForm({
 }: IgCommentFormProps) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
+  const inboxOptions = useInboxOptionsByChannel("instagram")
+  const inboxes = useInboxList()
   const { options: aiAgentOptions, isError: isAIAgentsError } =
     useAIAgentSelectOptions(useWorkspaceId())
 
@@ -69,6 +72,16 @@ export function IgCommentForm({
 
   const postType = useWatch({ control: form.control, name: "post.type" })
   const postValue = useWatch({ control: form.control, name: "post.value" })
+  const inboxId = useWatch({ control: form.control, name: "inboxId" })
+  const previousInboxId = useRef(inboxId)
+  const selectedAccountId = inboxes.find((inbox) => inbox.id === inboxId)?.sourceId
+
+  useEffect(() => {
+    if (previousInboxId.current !== inboxId) {
+      form.setValue("post.value", [], { shouldValidate: true })
+      previousInboxId.current = inboxId
+    }
+  }, [form, inboxId])
 
   const privateReplyType = useWatch({
     control: form.control,
@@ -186,6 +199,14 @@ export function IgCommentForm({
   return (
     <form className="m-auto w-full max-w-200 space-y-6" onSubmit={onSubmit}>
       <InputField label={t("fields.name.label")} name="name" required />
+      <SelectField
+        allowClear
+        clearLabel={t("channelFilter.allAccounts")}
+        label={t("fields.inbox.label")}
+        name="inboxId"
+        options={inboxOptions}
+        placeholder={t("actions.pleaseSelect")}
+      />
 
       <Card>
         <CardHeader>
@@ -222,6 +243,7 @@ export function IgCommentForm({
                 }
                 onOpenChange={setSelectPostsOpen}
                 open={selectPostsOpen}
+                accountId={selectedAccountId}
                 value={postValue}
               />
             </>

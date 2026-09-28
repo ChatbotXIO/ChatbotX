@@ -120,6 +120,7 @@ beforeEach(() => {
   mockFindContactInboxBy.mockResolvedValue({
     id: "contact-inbox-1",
     contactId: "contact-1",
+    inboxId: "inbox-a",
   })
   mockWorkspaceFindById.mockResolvedValue({ timezone: "UTC" })
   mockIsWithinSchedule.mockReturnValue(true)
@@ -142,9 +143,19 @@ describe("processStoryReplyAutomation text reply variable resolution", () => {
 
     await processStoryReplyAutomation(buildJobData())
 
+    expect(mockFindActiveAutomations).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      channelType: "instagram",
+      inboxId: "inbox-a",
+    })
+
     expect(mockContactVariableGetAll).toHaveBeenCalledWith({
       contactId: "contact-1",
-      contactInbox: { id: "contact-inbox-1", contactId: "contact-1" },
+      contactInbox: {
+        id: "contact-inbox-1",
+        contactId: "contact-1",
+        inboxId: "inbox-a",
+      },
     })
     expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
       text: "Hi {{contact.firstName}}",
@@ -154,7 +165,11 @@ describe("processStoryReplyAutomation text reply variable resolution", () => {
       type: "sendChatMessage",
       data: {
         conversation: { id: "conversation-1", workspaceId: "workspace-1" },
-        contactInbox: { id: "contact-inbox-1", contactId: "contact-1" },
+        contactInbox: {
+          id: "contact-inbox-1",
+          contactId: "contact-1",
+          inboxId: "inbox-a",
+        },
         text: "Hi Jane",
       },
     })

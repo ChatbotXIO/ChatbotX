@@ -57,6 +57,7 @@ export function EditThreadsCommentForm({
     mode: "onChange",
     defaultValues: {
       name: initialData.name,
+      inboxId: initialData.inboxId ?? null,
       post: initialData.post,
       publicReply: toFormPublicReply(initialData.publicReply),
       includeKeywords: initialData.includeKeywords,

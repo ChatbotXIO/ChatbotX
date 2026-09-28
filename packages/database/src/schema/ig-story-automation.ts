@@ -18,6 +18,7 @@ import {
 } from "../partials/ig-story-automation"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { folderModel } from "./folder"
+import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
 
 export const igStoryAutomationType = pgEnum(
@@ -36,6 +37,10 @@ export const igStoryAutomationModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
+    inboxId: bigintAsString().references(() => inboxModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     folderId: bigintAsString().references(() => folderModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
@@ -66,6 +71,10 @@ export const igStoryAutomationModel = pgTable(
     index("IgStoryAutomation_folderId_idx").using(
       "btree",
       table.folderId.asc().nullsLast(),
+    ),
+    index("IgStoryAutomation_inboxId_idx").using(
+      "btree",
+      table.inboxId.asc().nullsLast(),
     ),
   ],
 )

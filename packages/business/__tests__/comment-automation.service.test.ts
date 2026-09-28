@@ -20,6 +20,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
         findFirst: mocks.findFirst,
         findMany: mocks.findMany,
       },
+      inboxModel: { findFirst: mocks.findFirst },
     },
     $count: mocks.count,
     insert: vi.fn(() => ({
@@ -35,6 +36,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...conditions: unknown[]) => ({ and: conditions }),
   desc: (value: unknown) => ({ desc: value }),
   eq: (column: unknown, value: unknown) => ({ eq: [column, value] }),
+  isNull: (column: unknown) => ({ isNull: column }),
+  or: (...conditions: unknown[]) => ({ or: conditions }),
   ne: (column: unknown, value: unknown) => ({ ne: [column, value] }),
   relationsFilterToSQL: vi.fn((_table: unknown, where: unknown) => where),
   sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
@@ -47,6 +50,10 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   commentAutomationTypes: {
     enum: {
       threads: "threads",
+      messenger: "messenger",
+      instagram: "instagram",
+      instagramFacebook: "instagramFacebook",
+      tiktok: "tiktok",
     },
   },
   // Same contract as the real one: a `text` reply gains a `values` list
@@ -68,6 +75,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     workspaceId: "CommentAutomation.workspaceId",
     type: "CommentAutomation.type",
     createdAt: "CommentAutomation.createdAt",
+    inboxId: "CommentAutomation.inboxId",
   },
   commentAutomationReplyModel: {
     automationId: "CommentAutomationReply.automationId",
@@ -97,6 +105,40 @@ describe("commentAutomationService threads CRUD", () => {
     mocks.updateSet.mockReturnValue({ where: mocks.updateWhere })
     mocks.deleteReturning.mockResolvedValue([{ id: "thread-1" }])
     mocks.deleteWhere.mockReturnValue({ returning: mocks.deleteReturning })
+  })
+
+  test("findActiveAutomations matches scoped and legacy rows at query boundary", async () => {
+    const rows = [
+      { id: "a", workspaceId: "workspace-1", type: "messenger", isActive: true, inboxId: "inbox-a" },
+      { id: "b", workspaceId: "workspace-1", type: "messenger", isActive: true, inboxId: "inbox-b" },
+      { id: "legacy", workspaceId: "workspace-1", type: "messenger", isActive: true, inboxId: null },
+      { id: "wrong-workspace", workspaceId: "workspace-2", type: "messenger", isActive: true, inboxId: "inbox-a" },
+      { id: "wrong-type", workspaceId: "workspace-1", type: "instagram", isActive: true, inboxId: "inbox-a" },
+      { id: "inactive", workspaceId: "workspace-1", type: "messenger", isActive: false, inboxId: "inbox-a" },
+    ]
+    mocks.findMany.mockImplementation(({ where }) =>
+      rows.filter(
+        (row) =>
+          row.workspaceId === where.workspaceId &&
+          row.type === where.type &&
+          row.isActive === where.isActive &&
+          where.inboxId.OR.some((condition: { isNull?: boolean; eq?: string }) =>
+            condition.isNull === true
+              ? row.inboxId === null
+              : row.inboxId === condition.eq,
+          ),
+      ),
+    )
+    await commentAutomationService.findActiveAutomations({
+      workspaceId: "workspace-1",
+      channelType: "messenger",
+      inboxId: "inbox-a",
+    })
+
+    expect(mocks.findMany.mock.results[0]?.value).toEqual([
+      { id: "a", workspaceId: "workspace-1", type: "messenger", isActive: true, inboxId: "inbox-a" },
+      { id: "legacy", workspaceId: "workspace-1", type: "messenger", isActive: true, inboxId: null },
+    ])
   })
 
   test("create hardcodes threads-only defaults", async () => {
@@ -148,6 +190,102 @@ describe("commentAutomationService threads CRUD", () => {
         },
       }),
     )
+  })
+
+  test("persists Threads inbox scope and preserves partial update semantics", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "inbox-a", workspaceId: "workspace-1", channel: "threads" })
+
+    await commentAutomationService.createThreadsAutomation({
+      workspaceId: "workspace-1",
+      data: {
+        name: "Scoped Threads",
+        inboxId: "inbox-a",
+        post: { type: "all", value: [] },
+        publicReply: { type: "none", value: null },
+        includeKeywords: { type: "all", value: [] },
+        excludeKeywords: [],
+        options: {
+          replyToNewContactsOnly: false,
+          replyOncePerUserPerPost: false,
+          likeUserComment: false,
+          replyToUsersWhoCommentedOnOtherPosts: true,
+          ignoreCommentReplies: true,
+        },
+        replyAfter: { type: "immediately", value: 0 },
+      },
+    })
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ inboxId: "inbox-a" }),
+    )
+
+    await commentAutomationService.updateThreadsAutomation({
+      workspaceId: "workspace-1",
+      id: "thread-1",
+      data: { inboxId: "inbox-b" },
+    })
+    expect(mocks.updateSet).toHaveBeenCalledWith({ inboxId: "inbox-b" })
+
+    await commentAutomationService.updateThreadsAutomation({
+      workspaceId: "workspace-1",
+      id: "thread-1",
+      data: { name: "unchanged scope" },
+    })
+    expect(mocks.updateSet).toHaveBeenCalledWith({ name: "unchanged scope" })
+
+    await commentAutomationService.updateThreadsAutomation({
+      workspaceId: "workspace-1",
+      id: "thread-1",
+      data: { inboxId: null },
+    })
+    expect(mocks.updateSet).toHaveBeenCalledWith({ inboxId: null })
+  })
+
+  test("rejects a Threads inbox outside workspace", async () => {
+    mocks.findFirst.mockResolvedValue(null)
+
+    await expect(
+      commentAutomationService.updateThreadsAutomation({
+        workspaceId: "workspace-1",
+        id: "thread-1",
+        data: { inboxId: "foreign-inbox" },
+      }),
+    ).rejects.toMatchObject({ field: "inboxId" })
+  })
+
+  test("persists TikTok inbox scope on create and update", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "inbox-a", workspaceId: "workspace-1", channel: "tiktok" })
+    const data = {
+      name: "Scoped TikTok",
+      inboxId: "inbox-a",
+      post: { type: "all" as const, value: [] },
+      publicReply: { type: "none" as const, value: null },
+      privateReply: { type: "none" as const, value: null },
+      includeKeywords: { type: "all" as const, value: [] },
+      excludeKeywords: [],
+      options: {
+        replyToNewContactsOnly: false,
+        replyOncePerUserPerPost: false,
+        likeUserComment: false,
+        replyToUsersWhoCommentedOnOtherPosts: true,
+        ignoreCommentReplies: true,
+      },
+      replyAfter: { type: "immediately" as const, value: 0 },
+    }
+
+    await commentAutomationService.createTiktokAutomation({
+      workspaceId: "workspace-1",
+      data,
+    })
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ inboxId: "inbox-a" }),
+    )
+
+    await commentAutomationService.updateTiktokAutomation({
+      workspaceId: "workspace-1",
+      id: "tiktok-1",
+      data: { inboxId: null },
+    })
+    expect(mocks.updateSet).toHaveBeenCalledWith({ inboxId: null })
   })
 
   test("update only allows supported mutable fields", async () => {

@@ -21,6 +21,7 @@ import {
 } from "../partials/comment-automation"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { folderModel } from "./folder"
+import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
 
 export const commentAutomationType = pgEnum(
@@ -44,6 +45,10 @@ export const commentAutomationModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
+    inboxId: bigintAsString().references(() => inboxModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     folderId: bigintAsString().references(() => folderModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
@@ -149,6 +154,10 @@ export const commentAutomationModel = pgTable(
     index("CommentAutomation_folderId_idx").using(
       "btree",
       table.folderId.asc().nullsLast(),
+    ),
+    index("CommentAutomation_inboxId_idx").using(
+      "btree",
+      table.inboxId.asc().nullsLast(),
     ),
   ],
 )

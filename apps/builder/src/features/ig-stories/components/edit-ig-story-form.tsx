@@ -35,6 +35,7 @@ export function EditIgStoryForm({
     defaultValues: {
       name: initialData.name,
       type: variant,
+      inboxId: initialData.inboxId ?? null,
       folderId: initialData.folderId ?? undefined,
       story: initialData.story,
       reply: initialData.reply,

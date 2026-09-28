@@ -30,6 +30,7 @@ export function CreateIgCommentForm({
     type: variant,
     folderId: undefined,
     post: { type: "all" as const, value: [] },
+    inboxId: null,
     privateReply: { type: "text" as const, value: "" },
     publicReply: {
       type: "none" as const,

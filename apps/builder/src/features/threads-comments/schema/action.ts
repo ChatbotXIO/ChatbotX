@@ -239,6 +239,7 @@ export function createThreadsCommentRequestSchema(
 
   return z.object({
     name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
+    inboxId: z.string().nullable().default(null),
     post: threadsPostSchema,
     publicReply: threadsReplySchema,
     includeKeywords: threadsIncludeKeywordsSchema,

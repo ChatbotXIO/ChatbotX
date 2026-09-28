@@ -354,7 +354,7 @@ function buildJobData(
 beforeEach(() => {
   vi.clearAllMocks()
   mockIdentifyInboxAndIntegrationAuth.mockResolvedValue({
-    integrationRow: { auth: { accessToken: "token" } },
+    integrationRow: { auth: { accessToken: "token" }, inboxId: "inbox-a" },
   })
   mockFindContactInboxBy.mockResolvedValue({
     id: "contact-inbox-1",
@@ -553,6 +553,7 @@ describe("processCommentAutomation threads support", () => {
     expect(mockFindActiveAutomations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       channelType: "threads",
+      inboxId: "inbox-a",
     })
   })
 
@@ -790,6 +791,7 @@ describe("processCommentAutomation tiktok support", () => {
     expect(mockFindActiveAutomations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       channelType: "tiktok",
+      inboxId: "inbox-a",
     })
   })
 
