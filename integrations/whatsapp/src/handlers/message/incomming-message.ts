@@ -127,9 +127,10 @@ const parseButtonMessage: WhatsappMessageParser<"button"> = (message) => {
  * (`packages/flow-config/src/routable-handle.ts:296`), this repo's existing
  * pattern for "look up the handler for a discriminant".
  *
- * Unlisted types (`reaction`, `system`, `request_welcome`, and anything Meta
- * adds later) fall through to the generic label in `receiveMessage` below,
- * matching the old `default` branch exactly.
+ * System messages are filtered and queued separately by the webhook handler.
+ * Other unlisted types (`reaction`, `request_welcome`, and anything Meta adds
+ * later) fall through to the generic label in `receiveMessage` below, matching
+ * the old `default` branch exactly.
  */
 const messageParsers: {
   readonly [Type in ServerMessageTypes["type"]]?: WhatsappMessageParser<Type>
@@ -163,9 +164,8 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       messageType: messageTypes.enum.incoming,
       contentType: contentTypes.enum.text,
     }
-    const { sourceUserId, sourceUsername } = extractWhatsappUserIdentity(
-      data.raw,
-    )
+    const { sourceUserId, sourceParentUserId, sourceUsername } =
+      extractWhatsappUserIdentity(data.raw)
     // Username adopters: Meta sends an empty `from` (phone hidden) alongside
     // a BSUID in `contacts[0].user_id`. Fall back to the BSUID as the
     // contact's identity so the row is BSUID-keyed instead of empty-keyed
@@ -175,6 +175,7 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       sourceId: asString(data.from) ?? sourceUserId ?? "",
       firstName: data.name,
       ...(sourceUserId ? { sourceUserId } : {}),
+      ...(sourceParentUserId ? { sourceParentUserId } : {}),
       ...(sourceUsername ? { sourceUsername } : {}),
     }
 

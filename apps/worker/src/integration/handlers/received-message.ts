@@ -3,9 +3,11 @@ import {
   appointmentService,
   buildContext,
   type ContactInboxTrackingData,
+  type ContactInboxWithContact,
   contactInboxService,
   contactService,
   conversationService,
+  getContactInboxIdentityConflictConstraint,
   hasOnDemandProfileApi,
   hasRealAvatar,
   messageCleanupService,
@@ -13,6 +15,7 @@ import {
   quotaEnforcementService,
   recordProfileRefreshFailure,
   resolveTenantSettings,
+  syncExistingContactIdentity,
   updateContactFromMessage,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -21,7 +24,6 @@ import {
   finalizeContactProfile,
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
-import { isUniqueViolationError } from "@chatbotx.io/database/client"
 import {
   type ChannelType,
   type ContactSource,
@@ -33,12 +35,7 @@ import {
   createMessageRepository,
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
-import {
-  CONTACT_INBOX_SOURCE_ID_KEY,
-  CONTACT_INBOX_SOURCE_USER_ID_KEY,
-  contactInboxModel,
-  contactModel,
-} from "@chatbotx.io/database/schema"
+import { contactInboxModel, contactModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
   ContactInboxModel,
@@ -76,8 +73,10 @@ import {
   type MessageWhatsappFlowResponseEntity,
   messageTypes,
   type ReceivedMessageResult,
-  resolveWithSourceUserIdFallback,
+  resolveSourceScopedIdentityMatch,
   SdkException,
+  type SourceScopedIdentityMatch,
+  type SourceScopedIdentityMatchedBy,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -305,10 +304,10 @@ export const receiveMessage = async (
     message: rawIncomingMessage,
     echoOrigin: parsedMessage.echoOrigin,
   })
-  const existingContactInbox = isThirdPartyEchoMessage
+  const existingContactMatch = isThirdPartyEchoMessage
     ? await resolveExistingContactInbox({ inbox, incomingContact })
     : undefined
-  if (isThirdPartyEchoMessage && !existingContactInbox) {
+  if (isThirdPartyEchoMessage && !existingContactMatch) {
     logger.debug(
       {
         inboxId: inbox.id,
@@ -331,7 +330,7 @@ export const receiveMessage = async (
       source:
         metaReferralToContactSource(referralSource) ??
         contactSources.enum.inboundMessage,
-      existingContactInbox,
+      existingContactMatch,
     }),
     resolvePostbackButtonLabel({
       postbackAction,
@@ -1502,8 +1501,6 @@ export const deleteIncomingMessage = async (
   })
 }
 
-type ContactInboxWithContact = ContactInboxModel & { contact: ContactModel }
-
 type ContactInboxResolverProps = {
   inbox: InboxModel
   incomingContact: IncomingContact
@@ -1511,13 +1508,13 @@ type ContactInboxResolverProps = {
 
 // Ordered identity lookup via the shared fallback contract: sourceId first
 // (today's behavior, unchanged — a phone-keyed match never falls through),
-// then the scoped user id (e.g. a WhatsApp BSUID) when the payload carries
-// one. Both columns are backed by unique indexes on (inboxId, …).
+// then the scoped user id (e.g. a WhatsApp BSUID), then its parent scoped id
+// when present. All columns are backed by unique indexes on (inboxId, …).
 const resolveExistingContactInbox = async ({
   inbox,
   incomingContact,
-}: ContactInboxResolverProps): Promise<ContactInboxWithContact | undefined> =>
-  await resolveWithSourceUserIdFallback(incomingContact, (where) =>
+}: ContactInboxResolverProps) =>
+  await resolveSourceScopedIdentityMatch(incomingContact, (where) =>
     contactInboxRepository.findWithContact({
       where: { inboxId: inbox.id, channel: inbox.channel, ...where },
     }),
@@ -1546,17 +1543,18 @@ export const processMessageReaction = async (
       integrationIdentifier,
     )
 
-  const existingContactInbox = await resolveExistingContactInbox({
+  const existingContactMatch = await resolveExistingContactInbox({
     inbox,
     incomingContact: { sourceId: contactSourceId },
   })
-  if (!existingContactInbox) {
+  if (!existingContactMatch) {
     logger.warn(
       { contactSourceId, messageId },
       "processMessageReaction: contact not found — skipping",
     )
     return
   }
+  const existingContactInbox = existingContactMatch.row
 
   const conversation = await conversationService.findOrCreate({
     workspaceId: inbox.workspaceId,
@@ -1634,36 +1632,41 @@ const buildExistingContactMatch = async (props: {
   incomingContact: IncomingContact
   conversationSourceId: string | null
   existing: ContactInboxWithContact
+  matchedBy: SourceScopedIdentityMatchedBy
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
   conversation: ConversationModel
   isNewContact: false
 }> => {
-  const { inbox, incomingContact, conversationSourceId, existing } = props
+  const { inbox, incomingContact, conversationSourceId, existing, matchedBy } =
+    props
   const { contact, ...contactInbox } = existing
 
+  const identitySync = await syncExistingContactIdentity({
+    workspaceId: inbox.workspaceId,
+    contact,
+    contactInbox,
+    incomingContact,
+    matchedBy,
+  })
   const { contactInbox: syncedContactInbox, learnedPrimaryIdentity } =
-    await contactInboxService.syncScopedIdentity({
-      contactInbox,
-      incomingContact,
-    })
+    identitySync
 
-  // Phone learned later on a BSUID-keyed row (D3): write it to
-  // Contact.phoneNumber only — never rewrite ContactInbox.sourceId. Kept at
-  // this call site (not inside the contact-inbox service) so contactService
-  // stays a caller-level composition, not a cross-domain import.
-  let syncedContact = contact
+  // Preserve the established reveal rule: when a scoped-id-keyed row later
+  // exposes its primary identity, save it exactly as the main branch does.
+  // D6 phone transitions are handled atomically inside the business layer.
+  let syncedContact = identitySync.contact
   if (learnedPrimaryIdentity) {
     try {
       syncedContact = await contactService.update(
         { workspaceId: inbox.workspaceId, id: contact.id },
-        { phoneNumber: learnedPrimaryIdentity },
+        { phoneNumber: learnedPrimaryIdentity.value },
       )
     } catch (error) {
       logger.warn(
         {
-          error,
+          err: error,
           contactId: contact.id,
           contactInboxId: syncedContactInbox.id,
         },
@@ -1687,16 +1690,6 @@ const buildExistingContactMatch = async (props: {
   }
 }
 
-const CONTACT_INBOX_IDENTITY_CONSTRAINTS = [
-  CONTACT_INBOX_SOURCE_ID_KEY,
-  CONTACT_INBOX_SOURCE_USER_ID_KEY,
-] as const
-
-const isContactInboxIdentityRace = (error: unknown): boolean =>
-  CONTACT_INBOX_IDENTITY_CONSTRAINTS.some((constraint) =>
-    isUniqueViolationError(error, constraint),
-  )
-
 export const detectContactAndConversation = async (props: {
   inbox: InboxModel
   incomingContact: IncomingContact
@@ -1707,8 +1700,8 @@ export const detectContactAndConversation = async (props: {
     [x: string]: unknown
   }
   source: ContactSource
-  /** A row the caller already resolved for this identity; skips the lookup. */
-  existingContactInbox?: ContactInboxWithContact
+  /** A match the caller already resolved for this identity; skips the lookup. */
+  existingContactMatch?: SourceScopedIdentityMatch<ContactInboxWithContact>
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
@@ -1717,8 +1710,8 @@ export const detectContactAndConversation = async (props: {
 }> => {
   const { incomingContact, inbox, integrationRow, source } = props
 
-  const existingContactInbox =
-    props.existingContactInbox ??
+  const existingContactMatch =
+    props.existingContactMatch ??
     (await resolveExistingContactInbox({ inbox, incomingContact }))
 
   // The conversation source id (e.g. a Facebook post id for comments) keys the
@@ -1729,12 +1722,13 @@ export const detectContactAndConversation = async (props: {
   // Returning contact: no quota gate (MAC only counts brand-new contacts).
   // `findOrCreate` resolves the existing conversation or opens a fresh one when
   // the source id is new (e.g. a comment on a different post).
-  if (existingContactInbox) {
+  if (existingContactMatch) {
     return await buildExistingContactMatch({
       inbox,
       incomingContact,
       conversationSourceId,
-      existing: existingContactInbox,
+      existing: existingContactMatch.row,
+      matchedBy: existingContactMatch.matchedBy,
     })
   }
 
@@ -1755,15 +1749,15 @@ export const detectContactAndConversation = async (props: {
   } catch (error) {
     // D8: two concurrent first-messages from the same identity can both pass
     // the resolver-chain miss above. The loser hits a unique-violation on
-    // either `(inboxId, sourceId)` or the new partial `(inboxId,
-    // sourceUserId)` index; its transaction rolls back (no orphan Contact, no
-    // MAC double-count). Re-run the resolver chain and return the winning
-    // row instead of dead-lettering the job.
-    if (!isContactInboxIdentityRace(error)) {
+    // any `(inboxId, identity)` unique index; its transaction rolls back (no
+    // orphan Contact, no MAC double-count). Re-run the resolver chain and
+    // return the winning row instead of dead-lettering the job.
+    const constraint = getContactInboxIdentityConflictConstraint(error)
+    if (!constraint) {
       throw error
     }
     logger.warn(
-      { inboxId: inbox.id, sourceId: incomingContact.sourceId },
+      { constraint, inboxId: inbox.id, sourceId: incomingContact.sourceId },
       "ContactInbox creation race detected; resolving winning row",
     )
     const winner = await resolveExistingContactInbox({
@@ -1777,7 +1771,8 @@ export const detectContactAndConversation = async (props: {
       inbox,
       incomingContact,
       conversationSourceId,
-      existing: winner,
+      existing: winner.row,
+      matchedBy: winner.matchedBy,
     })
   }
 }
@@ -1926,6 +1921,7 @@ const createNewContactAndContactInbox = async (props: {
           source,
           sourceId: incomingContact.sourceId,
           sourceUserId: incomingContact.sourceUserId ?? null,
+          sourceParentUserId: incomingContact.sourceParentUserId ?? null,
           sourceUsername: incomingContact.sourceUsername ?? null,
           channel: inbox.channel,
           language: finalizedProfile.language,

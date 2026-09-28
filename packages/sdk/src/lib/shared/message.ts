@@ -21,6 +21,11 @@ export type IncomingContact = {
    */
   sourceUserId?: string
   /**
+   * Parent channel-scoped user id used only as an identity matching fallback.
+   * Never use this value to address outbound messages.
+   */
+  sourceParentUserId?: string
+  /**
    * Channel handle/username for this contact (e.g. WhatsApp `@username`).
    * Display-only, never used as a matching key.
    */
@@ -37,22 +42,52 @@ export type IncomingContact = {
   channelConversationId?: string
 }
 
-/** The `{ sourceId, sourceUserId }` slice shared by contact-inbox rows and SDK contacts. */
+/** The channel-scoped identity slice shared by contact-inbox rows and SDK contacts. */
 export type SourceScopedIdentity = {
   sourceId: string
   sourceUserId?: string | null
+  sourceParentUserId?: string | null
 }
+
+export type SourceScopedIdentityMatchedBy =
+  | "sourceId"
+  | "sourceUserId"
+  | "sourceParentUserId"
+
+export type SourceScopedIdentityMatch<T> = {
+  row: T
+  matchedBy: SourceScopedIdentityMatchedBy
+}
+
+export type SourceScopedIdentityLookup<T> = (
+  where:
+    | { sourceId: string }
+    | { sourceUserId: string }
+    | { sourceParentUserId: string },
+) => Promise<T | undefined>
 
 /**
  * An identity is "scoped-user-id keyed" when its primary `sourceId` IS its
- * channel-scoped user id (e.g. a WhatsApp BSUID) — set once at contact
- * creation for users whose phone number is hidden, and never rewritten.
- * Such identities must be addressed by the scoped id on outbound sends.
+ * channel-scoped user id (e.g. a WhatsApp BSUID). Such identities must be
+ * addressed by the scoped id on outbound sends; an identity rotation may
+ * atomically advance both fields while preserving this invariant.
  */
 export const isSourceUserIdKeyedIdentity = (
   identity: SourceScopedIdentity,
 ): boolean =>
   Boolean(identity.sourceUserId) && identity.sourceId === identity.sourceUserId
+
+/** Whether a non-empty primary identity differs from every scoped identity. */
+export const isDistinctPrimaryIdentity = (
+  value: string | null | undefined,
+  ...scopedIds: Array<string | null | undefined>
+): boolean => {
+  const primaryIdentity = value?.trim()
+  return (
+    Boolean(primaryIdentity) &&
+    scopedIds.every((scopedId) => scopedId?.trim() !== primaryIdentity)
+  )
+}
 
 /**
  * Whether an outbound send must address this identity by its scoped user id
@@ -69,22 +104,35 @@ export const shouldAddressBySourceUserId = (
 
 /**
  * The ordered contact-inbox identity lookup every consumer shares: probe the
- * primary `sourceId` first, then the scoped user id (e.g. a WhatsApp BSUID)
- * only when the first probe missed and a scoped id exists. Callers supply the
- * actual query, so each site keeps its own relations and extra filters —
- * only the ordering contract lives here and cannot drift between them.
+ * primary `sourceId` first, then the scoped user id, then its parent scoped id.
+ * Callers supply the actual query, so each site keeps its own relations and
+ * extra filters — only the ordering contract lives here and cannot drift.
  */
-export const resolveWithSourceUserIdFallback = async <T>(
+export const resolveSourceScopedIdentityMatch = async <T>(
   identity: SourceScopedIdentity,
-  lookup: (
-    where: { sourceId: string } | { sourceUserId: string },
-  ) => Promise<T | undefined>,
-): Promise<T | undefined> => {
+  lookup: SourceScopedIdentityLookup<T>,
+): Promise<SourceScopedIdentityMatch<T> | undefined> => {
   const bySourceId = await lookup({ sourceId: identity.sourceId })
-  if (bySourceId || !identity.sourceUserId) {
-    return bySourceId
+  if (bySourceId) {
+    return { row: bySourceId, matchedBy: "sourceId" }
   }
-  return await lookup({ sourceUserId: identity.sourceUserId })
+  if (identity.sourceUserId) {
+    const bySourceUserId = await lookup({
+      sourceUserId: identity.sourceUserId,
+    })
+    if (bySourceUserId) {
+      return { row: bySourceUserId, matchedBy: "sourceUserId" }
+    }
+  }
+  if (identity.sourceParentUserId) {
+    const bySourceParentUserId = await lookup({
+      sourceParentUserId: identity.sourceParentUserId,
+    })
+    if (bySourceParentUserId) {
+      return { row: bySourceParentUserId, matchedBy: "sourceParentUserId" }
+    }
+  }
+  return
 }
 
 export type OutgoingContact = {

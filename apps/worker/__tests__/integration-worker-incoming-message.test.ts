@@ -325,6 +325,23 @@ vi.mock("@chatbotx.io/business", () => ({
   contactProfileRefreshService: { refresh: mockContactProfileRefresh },
   whatsappCallPermissionService: { recordReply: mockRecordCallPermissionReply },
   recordProfileRefreshFailure: vi.fn().mockResolvedValue(undefined),
+  syncExistingContactIdentity: async (props: {
+    contact: unknown
+    contactInbox: unknown
+    incomingContact: unknown
+    matchedBy: string
+  }) => {
+    const sync = await mockSyncScopedIdentity({
+      contactInbox: props.contactInbox,
+      incomingContact: props.incomingContact,
+      matchedBy: props.matchedBy,
+    })
+    return {
+      contactInbox: sync.contactInbox,
+      contact: props.contact,
+      learnedPrimaryIdentity: sync.learnedPrimaryIdentity,
+    }
+  },
   contactInboxService: {
     updateTracking: vi
       .fn()
@@ -382,17 +399,24 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
 vi.mock("@chatbotx.io/sdk", () => ({
   contentTypes: { enum: { text: "text", location: "location" } },
   echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
-  resolveWithSourceUserIdFallback: async <T>(
+  resolveSourceScopedIdentityMatch: async <T>(
     identity: { sourceId: string; sourceUserId?: string | null },
     lookup: (
       where: { sourceId: string } | { sourceUserId: string },
     ) => Promise<T | undefined>,
-  ): Promise<T | undefined> => {
+  ) => {
     const bySourceId = await lookup({ sourceId: identity.sourceId })
     if (bySourceId || !identity.sourceUserId) {
       return bySourceId
+        ? { row: bySourceId, matchedBy: "sourceId" as const }
+        : undefined
     }
-    return await lookup({ sourceUserId: identity.sourceUserId })
+    const bySourceUserId = await lookup({
+      sourceUserId: identity.sourceUserId,
+    })
+    return bySourceUserId
+      ? { row: bySourceUserId, matchedBy: "sourceUserId" as const }
+      : undefined
   },
   messageTypes: { enum: { incoming: "incoming", outgoing: "outgoing" } },
   SdkException: class SdkException extends Error {},
