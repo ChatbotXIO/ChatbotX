@@ -104,6 +104,80 @@ describe("distributedStoreFactory.incrWithWindow", () => {
   })
 })
 
+describe("distributedStoreFactory live counter scripts", () => {
+  function makeFakeRedisWithLiveCounterScripts() {
+    const admitWithinLimit = vi.fn()
+    const decrementFloor = vi.fn()
+    const client = {
+      admitWithinLimit,
+      decrementFloor,
+      defineCommand: vi.fn(),
+    } as unknown as Redis
+
+    return { admitWithinLimit, client, decrementFloor }
+  }
+
+  test("registers every live counter command once per client", async () => {
+    const { admitWithinLimit, client, decrementFloor } =
+      makeFakeRedisWithLiveCounterScripts()
+    admitWithinLimit.mockResolvedValue([1, 1])
+    decrementFloor.mockResolvedValue(0)
+    const store = distributedStoreFactory(async () => client)
+
+    await store.admitWithinLimit("quota:user-1", "mac", 10)
+    await store.decrementFloor("quota:user-1", "mac", 1)
+    await store.admitWithinLimit("quota:user-2", "mac", 10)
+
+    expect(client.defineCommand).toHaveBeenCalledTimes(2)
+    expect(client.defineCommand).toHaveBeenCalledWith(
+      "admitWithinLimit",
+      expect.objectContaining({ numberOfKeys: 1 }),
+    )
+    expect(client.defineCommand).toHaveBeenCalledWith(
+      "decrementFloor",
+      expect.objectContaining({ numberOfKeys: 1 }),
+    )
+  })
+
+  test("maps arguments to strings and null limit to unlimited", async () => {
+    const { admitWithinLimit, client, decrementFloor } =
+      makeFakeRedisWithLiveCounterScripts()
+    admitWithinLimit.mockResolvedValue([1, 4])
+    decrementFloor.mockResolvedValue(2)
+    const store = distributedStoreFactory(async () => client)
+
+    await store.admitWithinLimit("quota:user-1", "mac", null)
+    await store.decrementFloor("quota:user-1", "mac", 2)
+
+    expect(admitWithinLimit).toHaveBeenCalledWith("quota:user-1", "mac", "-1")
+    expect(decrementFloor).toHaveBeenCalledWith("quota:user-1", "mac", "2")
+  })
+
+  test.each([
+    { code: 1, status: "admitted" },
+    { code: 0, status: "refused" },
+    { code: -1, status: "missing" },
+  ] as const)("maps result code $code to $status", async ({ code, status }) => {
+    const { admitWithinLimit, client } = makeFakeRedisWithLiveCounterScripts()
+    admitWithinLimit.mockResolvedValue([code, 7])
+    const store = distributedStoreFactory(async () => client)
+
+    await expect(
+      store.admitWithinLimit("quota:user-1", "mac", 10),
+    ).resolves.toEqual({ status, value: 7 })
+  })
+
+  test("maps a missing decrement result to null", async () => {
+    const { client, decrementFloor } = makeFakeRedisWithLiveCounterScripts()
+    decrementFloor.mockResolvedValue(-1)
+    const store = distributedStoreFactory(async () => client)
+
+    await expect(
+      store.decrementFloor("quota:user-1", "mac", 1),
+    ).resolves.toBeNull()
+  })
+})
+
 describe("distributedStoreFactory.setNumber", () => {
   test("always writes via plain SET key val EX ttl (no NX)", async () => {
     const set = vi.fn(async () => "OK")

@@ -705,6 +705,19 @@ class UserQuotaService extends BaseService {
   }
 
   /**
+   * Atomically admit one live unit using a quota row already loaded by the
+   * caller. A missing row is unlimited; no quota row is fetched here.
+   */
+  admit(
+    userId: string,
+    metric: QuotaMetric,
+    quota: UserQuotaModel | null,
+  ): Promise<number | null> {
+    const { limit } = this.metricValues(quota, metric)
+    return this.store.admit(userId, metric, limit)
+  }
+
+  /**
    * Write-through a +1 usage increment to BOTH the DB column and the Redis live
    * counter, then bust the row cache — so the gate (`hasCapacity`, DB-read) and
    * the display (`getLiveUsage`, Redis-read) never disagree. The shared store
@@ -712,6 +725,17 @@ class UserQuotaService extends BaseService {
    */
   async consume(userId: string, metric: QuotaMetric): Promise<void> {
     await this.store.consume(userId, metric, 1)
+  }
+
+  /** Persist an admitted unit and invalidate the quota row cache. */
+  async commitAdmission(userId: string, metric: QuotaMetric): Promise<void> {
+    await this.store.upsertMetricBy(userId, metric, 1)
+    await this.store.invalidate(userId)
+  }
+
+  /** Best-effort release of one previously admitted live unit. */
+  async revokeAdmission(userId: string, metric: QuotaMetric): Promise<void> {
+    await this.store.decrementBy(userId, metric, 1)
   }
 
   async release(userId: string, metric: QuotaMetric): Promise<void> {

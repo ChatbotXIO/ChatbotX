@@ -3,6 +3,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const AVATAR_STORAGE_PATH_PATTERN = /^public\/space\/ws-1\/avatars\//
 
+const mockLockContentionPolicy = vi.hoisted(() => ({
+  lockWaitSeconds: 10,
+  maxDeferrals: 8,
+  baseDelayMs: 2000,
+  maxDelayMs: 30_000,
+}))
+
 // ---------------------------------------------------------------------------
 // Hoist mock references
 // ---------------------------------------------------------------------------
@@ -435,6 +442,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
+vi.mock("../src/lib/lock-contention-deferral", () => ({
+  LOCK_CONTENTION_POLICY: mockLockContentionPolicy,
 }))
 
 vi.mock("../src/lib/db", () => ({
@@ -1659,7 +1670,11 @@ describe("receiveMessage — new contact MAC gate", () => {
       newContact,
     )
     expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
-      expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+      expect.objectContaining({
+        ownerId: "owner-1",
+        workspaceId: "ws-1",
+        lockWaitSeconds: mockLockContentionPolicy.lockWaitSeconds,
+      }),
     )
     // `contacts` is recorded inside createNewContactWithMac now, so the handler
     // must not increment it separately (avoids double-counting).

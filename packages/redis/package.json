@@ -18,12 +18,14 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
+    "dotenv-cli": "^11.0.0",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
+    "test:redis": "dotenv -e ../../.env -- vitest run --dir __tests__/integration",
     "test:watch": "vitest"
   }
 }

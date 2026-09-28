@@ -695,12 +695,17 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     await handleCreateWebchatMessage({ parsedInput: input })
 
     expect(mockWorkspaceFind).toHaveBeenCalledWith({ where: { id: "ws-1" } })
-    // MAC is gated + consumed atomically with the insert (owner-derived). The
+    // MAC is the owner-derived billing gate and a soft cap on resetting plans:
+    // Redis admission, transactional create, then commit/revoke. Lifetime /
+    // period-less owners and the env lock switch use the distributed lock. The
     // info-only `contacts` counter is recorded inside this chokepoint too, so
     // the action no longer increments it separately (that would double-count).
     expect(mockCreateNewContactWithMac).toHaveBeenCalledTimes(1)
     expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
       expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+    expect(mockCreateNewContactWithMac.mock.calls[0]?.[0]).not.toHaveProperty(
+      "lockWaitSeconds",
     )
     expect(insertBuilder.values).toHaveBeenCalledWith(
       expect.objectContaining({
