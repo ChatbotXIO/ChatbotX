@@ -1,4 +1,5 @@
 import ar from "../../messages/ar.json"
+import az from "../../messages/az.json"
 import da from "../../messages/da.json"
 import de from "../../messages/de.json"
 import en from "../../messages/en.json"
@@ -22,6 +23,7 @@ import type { Locale } from "./config"
 
 export const messagesByLocale: Record<Locale, Record<string, unknown>> = {
   ar,
+  az,
   da,
   de,
   en,
