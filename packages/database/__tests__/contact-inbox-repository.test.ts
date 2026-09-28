@@ -31,6 +31,98 @@ function createQueryChain(result: unknown[]): Chain {
   return chain
 }
 
+describe("contactInboxRepository.updateIdentityGuarded", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("returns the updated row from a guarded identity compare-and-swap", async () => {
+    const updated = {
+      id: "ci-1",
+      sourceId: "user.bsuid-new",
+      sourceUserId: "user.bsuid-new",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    const chain = {
+      update: vi.fn(),
+      set: vi.fn(),
+      where: vi.fn(),
+      returning: vi.fn(),
+    }
+    chain.update.mockReturnValue(chain)
+    chain.set.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.returning.mockResolvedValue([updated])
+
+    const row = await contactInboxRepository.updateIdentityGuarded(
+      {
+        id: "ci-1",
+        guard: {
+          sourceUserId: "user.bsuid-old",
+          sourceParentUserId: "parent.bsuid-1",
+        },
+        set: {
+          sourceId: "user.bsuid-new",
+          sourceUserId: "user.bsuid-new",
+        },
+      },
+      { update: chain.update } as never,
+    )
+
+    expect(chain.update).toHaveBeenCalledWith(contactInboxModel)
+    expect(chain.set).toHaveBeenCalledWith({
+      sourceId: "user.bsuid-new",
+      sourceUserId: "user.bsuid-new",
+    })
+    expect(chain.where).toHaveBeenCalledTimes(1)
+    expect(row).toEqual(updated)
+  })
+
+  test("returns undefined when the stored identity no longer matches the guard", async () => {
+    const chain = {
+      update: vi.fn(),
+      set: vi.fn(),
+      where: vi.fn(),
+      returning: vi.fn(),
+    }
+    chain.update.mockReturnValue(chain)
+    chain.set.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.returning.mockResolvedValue([])
+
+    await expect(
+      contactInboxRepository.updateIdentityGuarded(
+        {
+          id: "ci-1",
+          guard: {
+            sourceUserId: null,
+            sourceParentUserId: "parent.bsuid-1",
+          },
+          set: { sourceUserId: "user.bsuid-new" },
+        },
+        { update: chain.update } as never,
+      ),
+    ).resolves.toBeUndefined()
+  })
+
+  test("throws without issuing an update when called without an identity guard", async () => {
+    const update = vi.fn()
+
+    await expect(
+      contactInboxRepository.updateIdentityGuarded(
+        {
+          id: "ci-1",
+          guard: {} as never,
+          set: { sourceUserId: "user.bsuid-new" },
+        },
+        { update } as never,
+      ),
+    ).rejects.toThrow("ContactInbox identity update requires a guard")
+
+    expect(update).not.toHaveBeenCalled()
+  })
+})
+
 describe("contactInboxRepository.findByIdForWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks()

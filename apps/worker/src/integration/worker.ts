@@ -79,6 +79,7 @@ import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call
 import { handleWhatsappCallNativeTranscriptFetch } from "./handlers/whatsapp-call-native-transcript"
 import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
 import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
+import { handleWhatsappIdentityChange } from "./handlers/whatsapp-identity-change"
 import {
   finalizeExhaustedHandleConnect,
   handleWhatsappVoipSignalingJob,
@@ -416,6 +417,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.whatsappCallEvent: {
               await handleWhatsappCallEvent(job.data.data)
+              return
+            }
+            case IntegrationJobAction.whatsappIdentityChange: {
+              await handleWhatsappIdentityChange(job.data.data)
               return
             }
             case IntegrationJobAction.whatsappCallRecordingReady: {

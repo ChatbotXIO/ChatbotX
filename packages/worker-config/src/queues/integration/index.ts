@@ -55,6 +55,7 @@ export const IntegrationJobAction = {
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
   adsAutomaticEvent: "adsAutomaticEvent",
+  whatsappIdentityChange: "whatsappIdentityChange",
   whatsappCallEvent: "whatsappCallEvent",
   whatsappCallRecordingReady: "whatsappCallRecordingReady",
   whatsappCallNativeRecordingFetch: "whatsappCallNativeRecordingFetch",
@@ -517,6 +518,39 @@ export type IntegrationJobWhatsappCallEvent = {
   }
 }
 
+export type WhatsappIdentityChange =
+  | {
+      kind: "userIdChanged"
+      previousUserId?: string
+      userId: string
+      previousParentUserId?: string
+      parentUserId?: string
+      previousPhone?: string
+      newPhone?: string
+    }
+  | {
+      kind: "phoneChanged"
+      previousPhone: string
+      newPhone: string
+      userId?: string
+    }
+
+export type WhatsappIdentityChangePayload = {
+  phoneNumberId: string
+  messageId: string
+  timestamp?: string
+  change: WhatsappIdentityChange
+}
+
+export type IntegrationJobWhatsappIdentityChange = {
+  type: typeof IntegrationJobAction.whatsappIdentityChange
+  data: {
+    integrationType: "whatsapp"
+    integrationIdentifier: string
+    payload: WhatsappIdentityChangePayload
+  }
+}
+
 /**
  * A call recording landed in object storage. The handler stamps it onto the
  * WhatsappCall row (by DB callId, never an external id), drops an audio message
@@ -955,6 +989,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobAdsAutomaticEvent
+  | IntegrationJobWhatsappIdentityChange
   | IntegrationJobWhatsappCallEvent
   | IntegrationJobWhatsappCallRecordingReady
   | IntegrationJobWhatsappCallNativeRecordingFetch

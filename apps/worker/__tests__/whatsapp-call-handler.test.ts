@@ -330,6 +330,66 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
+    test("a hidden-phone parent rotation delegates the BSUID only as route identity", async () => {
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          contact: {
+            userId: "bsuid-new",
+            parentUserId: "parent-bsuid-1",
+            name: "No Phone Exposed",
+          },
+          event: {
+            kind: "connect",
+            wacid: "wacid.HIDDEN-PARENT",
+            direction: "userInitiated",
+            fromUserId: "bsuid-new",
+          },
+        },
+      })
+
+      expect(mocks.detectContactAndConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          incomingContact: {
+            sourceId: "bsuid-new",
+            sourceUserId: "bsuid-new",
+            sourceParentUserId: "parent-bsuid-1",
+            sourceUsername: undefined,
+            firstName: "No Phone Exposed",
+          },
+        }),
+      )
+    })
+
+    test("passes the matched contact parentUserId through as sourceParentUserId", async () => {
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          contact: {
+            waId: "84349566550",
+            userId: "VN.1506778474525162",
+            parentUserId: "VN.parent.1506778474525162",
+          },
+          event: {
+            kind: "connect",
+            wacid: "wacid.PARENT-1",
+            direction: "userInitiated",
+            fromUserId: "VN.1506778474525162",
+          },
+        },
+      })
+
+      expect(mocks.detectContactAndConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          incomingContact: expect.objectContaining({
+            sourceParentUserId: "VN.parent.1506778474525162",
+          }),
+        }),
+      )
+    })
+
     test("redelivered connect does not re-fire the incomingCall event", async () => {
       mocks.createIfAbsent.mockResolvedValue({ call: callRow, isNew: false })
 

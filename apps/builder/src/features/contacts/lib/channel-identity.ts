@@ -1,4 +1,5 @@
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
+import { isSourceUserIdKeyedIdentity } from "@chatbotx.io/sdk"
 import type { ContactInboxResource } from "../../contact-inboxes/schema/resource"
 
 /**
@@ -8,22 +9,58 @@ import type { ContactInboxResource } from "../../contact-inboxes/schema/resource
  * `api` by the caller's own id. `omnichannel` never owns a ContactInbox, so it
  * only gets the generic label.
  */
-export const sourceIdLabelKeyByChannel = {
-  [channelTypes.enum.messenger]: "fields.channelIdentity.psid",
-  [channelTypes.enum.instagram]: "fields.channelIdentity.igsid",
-  [channelTypes.enum.whatsapp]: "fields.channelIdentity.whatsappId",
-  [channelTypes.enum.zalo]: "fields.channelIdentity.zaloUserId",
-  [channelTypes.enum.telegram]: "fields.channelIdentity.telegramChatId",
-  [channelTypes.enum.tiktok]: "fields.channelIdentity.tiktokUserId",
-  [channelTypes.enum.threads]: "fields.channelIdentity.threadsUsername",
-  [channelTypes.enum.webchat]: "fields.channelIdentity.webchatGuestId",
-  [channelTypes.enum.api]: "fields.channelIdentity.externalId",
-  [channelTypes.enum.smtp]: "fields.email.label",
-  [channelTypes.enum.omnichannel]: "fields.channelIdentity.channelId",
-} as const satisfies Record<ChannelType, string>
+export const sourceIdentityConfigByChannel = {
+  [channelTypes.enum.messenger]: {
+    labelKey: "fields.channelIdentity.psid",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.instagram]: {
+    labelKey: "fields.channelIdentity.igsid",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.whatsapp]: {
+    labelKey: "fields.channelIdentity.whatsappId",
+    hideWhenSourceUserIdKeyed: true,
+  },
+  [channelTypes.enum.zalo]: {
+    labelKey: "fields.channelIdentity.zaloUserId",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.telegram]: {
+    labelKey: "fields.channelIdentity.telegramChatId",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.tiktok]: {
+    labelKey: "fields.channelIdentity.tiktokUserId",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.threads]: {
+    labelKey: "fields.channelIdentity.threadsUsername",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.webchat]: {
+    labelKey: "fields.channelIdentity.webchatGuestId",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.api]: {
+    labelKey: "fields.channelIdentity.externalId",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.smtp]: {
+    labelKey: "fields.email.label",
+    hideWhenSourceUserIdKeyed: false,
+  },
+  [channelTypes.enum.omnichannel]: {
+    labelKey: "fields.channelIdentity.channelId",
+    hideWhenSourceUserIdKeyed: false,
+  },
+} as const satisfies Record<
+  ChannelType,
+  { labelKey: string; hideWhenSourceUserIdKeyed: boolean }
+>
 
 export type SourceIdLabelKey =
-  (typeof sourceIdLabelKeyByChannel)[keyof typeof sourceIdLabelKeyByChannel]
+  (typeof sourceIdentityConfigByChannel)[keyof typeof sourceIdentityConfigByChannel]["labelKey"]
 
 /**
  * The channel-side id row for the contact panel, or null when there is
@@ -44,11 +81,12 @@ export const resolveSourceIdentity = (
   const channel = parsedChannel.success
     ? parsedChannel.data
     : channelTypes.enum.omnichannel
+  const config = sourceIdentityConfigByChannel[channel]
   if (
-    channel === channelTypes.enum.whatsapp &&
-    sourceId === contactInbox.sourceUserId
+    config.hideWhenSourceUserIdKeyed &&
+    isSourceUserIdKeyedIdentity({ ...contactInbox, sourceId })
   ) {
     return null
   }
-  return { labelKey: sourceIdLabelKeyByChannel[channel], value: sourceId }
+  return { labelKey: config.labelKey, value: sourceId }
 }

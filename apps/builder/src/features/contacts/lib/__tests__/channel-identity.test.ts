@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest"
 import en from "../../../../../messages/en.json"
 import {
   resolveSourceIdentity,
-  sourceIdLabelKeyByChannel,
+  sourceIdentityConfigByChannel,
 } from "../channel-identity"
 
 const lookup = (key: string): unknown =>
@@ -71,6 +71,19 @@ describe("resolveSourceIdentity", () => {
     expect(identity).toBeNull()
   })
 
+  test("does not apply WhatsApp BSUID hiding to another channel", () => {
+    const identity = resolveSourceIdentity({
+      channel: "messenger",
+      sourceId: "same-id",
+      sourceUserId: "same-id",
+    })
+
+    expect(identity).toEqual({
+      labelKey: "fields.channelIdentity.psid",
+      value: "same-id",
+    })
+  })
+
   test("falls back to the generic label for an unknown channel", () => {
     const identity = resolveSourceIdentity({
       channel: "carrier-pigeon",
@@ -82,12 +95,20 @@ describe("resolveSourceIdentity", () => {
   })
 })
 
-describe("sourceIdLabelKeyByChannel", () => {
+describe("sourceIdentityConfigByChannel", () => {
   test("every label key exists in en.json", () => {
-    const missing = Object.values(sourceIdLabelKeyByChannel).filter(
-      (key) => typeof lookup(key) !== "string",
+    const missing = Object.values(sourceIdentityConfigByChannel).filter(
+      ({ labelKey }) => typeof lookup(labelKey) !== "string",
     )
 
     expect(missing).toEqual([])
+  })
+
+  test("only WhatsApp hides a sourceUserId-keyed primary identity", () => {
+    const hiddenChannels = Object.entries(sourceIdentityConfigByChannel)
+      .filter(([, config]) => config.hideWhenSourceUserIdKeyed)
+      .map(([channel]) => channel)
+
+    expect(hiddenChannels).toEqual(["whatsapp"])
   })
 })

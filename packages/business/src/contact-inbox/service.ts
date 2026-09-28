@@ -12,9 +12,15 @@ import {
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
-import { contactInboxRepository } from "@chatbotx.io/database/repositories"
+import {
+  type ContactInboxIdentityFields,
+  type ContactInboxIdentityGuard,
+  contactInboxRepository,
+} from "@chatbotx.io/database/repositories"
 import type { ContactInboxReferral } from "@chatbotx.io/database/schema"
 import {
+  CONTACT_INBOX_SOURCE_ID_KEY,
+  CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY,
   CONTACT_INBOX_SOURCE_USER_ID_KEY,
   contactInboxModel,
   contactModel,
@@ -25,13 +31,41 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
-import {
-  type IncomingContact,
-  isSourceUserIdKeyedIdentity,
+import type {
+  IncomingContact,
+  SourceScopedIdentityMatchedBy,
 } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import { PROFILE_NAME_BLANK_CHARACTERS } from "../contact/profile-refresh/rules"
 import { logger } from "../logger"
+import {
+  type ContactInboxBackfillField,
+  type ContactInboxIdentityField,
+  type ContactInboxIdentityMatch,
+  type ContactInboxIdentitySet,
+  type ContactInboxPhoneTransition,
+  type ContactInboxWithContact,
+  isValidPhoneChangeInput,
+  isValidRotationChange,
+  normalizePhoneChangeInput,
+  normalizeRotationChange,
+  type PhoneChangeInput,
+  type PhoneChangeMatch,
+  type PhoneChangePlan,
+  type RotationChange,
+  resolveLearnedPrimaryIdentity,
+  resolveParentFallbackRotationPlan,
+  resolvePhoneChangePlan,
+  resolveRotationPlan,
+  resolveRotationSet,
+  resolveScopedIdentityBackfillPlan,
+  shouldAdvanceFromParentMatch,
+} from "./identity-rotation"
+
+export type {
+  ContactInboxPhoneTransition,
+  ContactInboxWithContact,
+} from "./identity-rotation"
 
 // Lower bound for message lookups/deletions scoped to a contact-inbox: the
 // first moment the inbox could have received a message.
@@ -114,29 +148,112 @@ const compactReferral = (
   return nextReferral
 }
 
-/**
- * A scoped-user-id-keyed row (e.g. WhatsApp BSUID-keyed) may later see the
- * contact's primary identity — the phone — appear in a payload. Returns that
- * newly-learned identity for the caller to write to `Contact.phoneNumber`;
- * `ContactInbox.sourceId` itself is never rewritten.
- */
-const resolveLearnedPrimaryIdentity = (
-  contactInbox: ContactInboxModel,
-  incomingContact: IncomingContact,
-): string | undefined => {
-  if (!isSourceUserIdKeyedIdentity(contactInbox)) {
-    return
+type ContactInboxBackfillResult = {
+  contactInbox: ContactInboxModel
+  invalidation: ContactInboxTrackingInvalidation | null
+}
+
+export type ContactInboxIdentityConstraint =
+  | typeof CONTACT_INBOX_SOURCE_ID_KEY
+  | typeof CONTACT_INBOX_SOURCE_USER_ID_KEY
+  | typeof CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY
+
+const getIdentityFieldByConstraint = (
+  constraint: ContactInboxIdentityConstraint,
+): ContactInboxIdentityField => {
+  const fields = {
+    [CONTACT_INBOX_SOURCE_ID_KEY]: "sourceId",
+    [CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY]: "sourceParentUserId",
+    [CONTACT_INBOX_SOURCE_USER_ID_KEY]: "sourceUserId",
+  } as const satisfies Record<
+    ContactInboxIdentityConstraint,
+    ContactInboxIdentityField
+  >
+  return fields[constraint]
+}
+
+const CONTACT_INBOX_BACKFILL_CONFIG = {
+  sourceUserId: {
+    column: contactInboxModel.sourceUserId,
+    conflictLogMessage:
+      "ContactInbox.sourceUserId backfill skipped: already claimed by another row in this inbox",
+    constraint: () => CONTACT_INBOX_SOURCE_USER_ID_KEY,
+  },
+  sourceParentUserId: {
+    column: contactInboxModel.sourceParentUserId,
+    conflictLogMessage:
+      "ContactInbox.sourceParentUserId backfill skipped: already claimed by another row in this inbox",
+    constraint: () => CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY,
+  },
+} as const satisfies Record<
+  ContactInboxBackfillField,
+  {
+    column: (typeof contactInboxModel)[ContactInboxBackfillField]
+    conflictLogMessage: string
+    constraint: () => ContactInboxIdentityConstraint
   }
-  if (!incomingContact.sourceId) {
-    return
-  }
-  if (incomingContact.sourceId === contactInbox.sourceId) {
-    return
-  }
-  if (incomingContact.sourceId === incomingContact.sourceUserId) {
-    return
-  }
-  return incomingContact.sourceId
+>
+
+export type LearnedPrimaryIdentity = { value: string }
+
+export type ScopedIdentitySyncResult = {
+  contactInbox: ContactInboxModel
+  invalidation: ContactInboxTrackingInvalidation | null
+  learnedPrimaryIdentity?: LearnedPrimaryIdentity
+  phoneTransition?: ContactInboxPhoneTransition
+}
+
+export type ContactInboxIdentityChangeResult =
+  | {
+      status: "applied" | "alreadyApplied" | "stale"
+      contactInbox: ContactInboxWithContact
+      phoneTransition?: ContactInboxPhoneTransition
+    }
+  | {
+      status: "conflict"
+      contactInbox: ContactInboxWithContact
+      constraint: ContactInboxIdentityConstraint
+    }
+  | { status: "invalid" | "notFound" }
+
+const withPhoneTransition = (
+  result: ContactInboxIdentityChangeResult,
+  phoneTransition: ContactInboxPhoneTransition | undefined,
+): ContactInboxIdentityChangeResult =>
+  phoneTransition &&
+  (result.status === "applied" || result.status === "alreadyApplied")
+    ? { ...result, phoneTransition }
+    : result
+
+type GuardedIdentityUpdateResult = Awaited<
+  ReturnType<ContactInboxService["rotateScopedUserIdGuarded"]>
+>
+
+const toIdentityChangeResult = (
+  original: ContactInboxWithContact,
+  result: GuardedIdentityUpdateResult,
+  transition?: ContactInboxPhoneTransition,
+): ContactInboxIdentityChangeResult => {
+  const contactInbox = { ...result.contactInbox, contact: original.contact }
+  return withPhoneTransition(
+    result.status === "conflict"
+      ? { status: "conflict", contactInbox, constraint: result.constraint }
+      : { status: result.status, contactInbox },
+    transition,
+  )
+}
+
+export const getContactInboxIdentityConflictConstraint = (
+  error: unknown,
+): ContactInboxIdentityConstraint | undefined => {
+  const constraints: readonly ContactInboxIdentityConstraint[] = [
+    CONTACT_INBOX_SOURCE_ID_KEY,
+    CONTACT_INBOX_SOURCE_USER_ID_KEY,
+    CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY,
+  ]
+  return constraints.find((constraint) =>
+    isUniqueViolationError(error, constraint),
+  )
 }
 
 /**
@@ -853,14 +970,18 @@ class ContactInboxService extends BaseService {
 
   /**
    * Backfills identity fields Meta reveals AFTER a ContactInbox row already
-   * exists (a returning WhatsApp Business-Scoped User ID adopter, or a phone
-   * that becomes visible on a previously BSUID-keyed row). Channel-agnostic:
+   * exists (for example, a returning WhatsApp Business-Scoped User ID adopter,
+   * or a phone that becomes visible on a previously scoped-id-keyed row).
+   * Channel-agnostic:
    * driven entirely by comparing `incomingContact` to the already-resolved
    * `contactInbox` row, no channel-specific naming or branching.
    *
-   * `ContactInbox.sourceId` is NEVER rewritten — a row's primary identity is
-   * fixed at creation (stability rule; a resolver-chain match already proved
-   * `sourceId` or `sourceUserId` still matches this row).
+   * `ContactInbox.sourceId` is normally fixed at creation. The sole exception
+   * is D6: a parent-identity match may advance a scoped-id-keyed row, or
+   * atomically re-key a primary-id-keyed row to the incoming route identity,
+   * through the shared guarded rotation primitive. That route may itself be a
+   * scoped id; a phone transition is reported only when the incoming source id
+   * is distinct from the incoming scoped user id.
    *
    * - `sourceUserId`: backfilled only when currently null. Guarded by the
    *   partial unique index `(inboxId, sourceUserId)`; a losing race (the id
@@ -868,93 +989,477 @@ class ContactInboxService extends BaseService {
    *   with a structured warn log — cross-row contact merge is a documented
    *   follow-up, not handled here.
    * - `sourceUsername`: upserted on change (display-only, never a key).
-   * - Phone learned later on a BSUID-keyed row (`sourceId === sourceUserId`):
+   * - Primary identity learned later on a scoped-id-keyed row
+   *   (`sourceId === sourceUserId`):
    *   when the incoming payload's own `sourceId` differs from both the row's
    *   `sourceId` and its `sourceUserId`, it is a newly-visible primary
    *   identity (e.g. a phone) — returned as `learnedPrimaryIdentity` for the
-   *   caller to write to `Contact.phoneNumber` via `contactService.update`
-   *   (kept out of this service to avoid a cross-domain import cycle);
-   *   never written into `ContactInbox.sourceId`.
+   *   caller to write to `Contact.phoneNumber` (kept out of this service to
+   *   avoid a cross-domain import cycle); never written into
+   *   `ContactInbox.sourceId`.
    */
   async syncScopedIdentity(props: {
     tx?: DatabaseClient
     contactInbox: ContactInboxModel
     incomingContact: IncomingContact
-  }): Promise<{
-    contactInbox: ContactInboxModel
-    learnedPrimaryIdentity?: string
-  }> {
-    const { tx = db, incomingContact } = props
-    let contactInbox = props.contactInbox
-
-    const updateRow = async (
-      set: Partial<Pick<ContactInboxModel, "sourceUserId" | "sourceUsername">>,
-      options?: { onlyWhenSourceUserIdNull?: boolean },
-    ): Promise<boolean> => {
-      const [updated] = await tx
-        .update(contactInboxModel)
-        .set(set)
-        .where(
-          and(
-            eq(contactInboxModel.id, contactInbox.id),
-            options?.onlyWhenSourceUserIdNull
-              ? isNull(contactInboxModel.sourceUserId)
-              : undefined,
-          ),
-        )
-        .returning()
-      if (updated) {
-        contactInbox = updated
-      }
-      return updated !== undefined
-    }
-
-    const backfillSourceUserId =
-      Boolean(incomingContact.sourceUserId) && !contactInbox.sourceUserId
-    const upsertSourceUsername =
-      Boolean(incomingContact.sourceUsername) &&
-      incomingContact.sourceUsername !== contactInbox.sourceUsername
-    const usernameSet = { sourceUsername: incomingContact.sourceUsername }
-
-    // One combined UPDATE for the common "identity reveal" message that
-    // carries both fields. `applied` stays false when the scoped-id claim is
-    // lost to a concurrent writer (guard row gone, or unique violation) —
-    // the single fallback below then preserves the username on its own.
-    let applied = false
-    if (backfillSourceUserId) {
-      try {
-        applied = await updateRow(
-          {
-            sourceUserId: incomingContact.sourceUserId,
-            ...(upsertSourceUsername ? usernameSet : {}),
-          },
-          { onlyWhenSourceUserIdNull: true },
-        )
-      } catch (error) {
-        if (!isUniqueViolationError(error, CONTACT_INBOX_SOURCE_USER_ID_KEY)) {
-          throw error
-        }
-        logger.warn(
-          {
-            contactInboxId: contactInbox.id,
-            inboxId: contactInbox.inboxId,
-            sourceUserId: incomingContact.sourceUserId,
-          },
-          "ContactInbox.sourceUserId backfill skipped: already claimed by another row in this inbox",
-        )
-      }
-    }
-    if (!applied && upsertSourceUsername) {
-      await updateRow(usernameSet)
-    }
+    matchedBy?: SourceScopedIdentityMatchedBy
+  }): Promise<ScopedIdentitySyncResult> {
+    const { incomingContact, matchedBy = "sourceId" } = props
+    const shouldAdvance = shouldAdvanceFromParentMatch({
+      row: props.contactInbox,
+      incomingContact,
+      matchedBy,
+    })
+    const rotation: ScopedIdentitySyncResult =
+      shouldAdvance && incomingContact.sourceUserId
+        ? await this.advanceParentMatchedIdentity({
+            ...props,
+            incomingContact: {
+              ...incomingContact,
+              sourceUserId: incomingContact.sourceUserId,
+            },
+          })
+        : { contactInbox: props.contactInbox, invalidation: null }
+    const backfillPlan = resolveScopedIdentityBackfillPlan({
+      row: rotation.contactInbox,
+      incomingContact,
+      skipSourceUserId: shouldAdvance,
+    })
+    const backfill =
+      backfillPlan.pendingFields.length > 0 || backfillPlan.sourceUsername
+        ? await this.backfillScopedIdentity({
+            tx: props.tx,
+            contactInbox: rotation.contactInbox,
+            incomingContact,
+            ...backfillPlan,
+          })
+        : undefined
 
     return {
-      contactInbox,
-      learnedPrimaryIdentity: resolveLearnedPrimaryIdentity(
-        contactInbox,
-        incomingContact,
-      ),
+      contactInbox: backfill?.contactInbox ?? rotation.contactInbox,
+      invalidation: backfill?.invalidation ?? rotation.invalidation,
+      learnedPrimaryIdentity:
+        rotation.learnedPrimaryIdentity ??
+        (shouldAdvance
+          ? undefined
+          : resolveLearnedPrimaryIdentity(
+              backfill?.contactInbox ?? rotation.contactInbox,
+              incomingContact,
+            )),
+      ...(rotation.phoneTransition
+        ? { phoneTransition: rotation.phoneTransition }
+        : {}),
     }
+  }
+
+  private async advanceParentMatchedIdentity(props: {
+    tx?: DatabaseClient
+    contactInbox: ContactInboxModel
+    incomingContact: IncomingContact & { sourceUserId: string }
+  }): Promise<ScopedIdentitySyncResult> {
+    const plan = resolveParentFallbackRotationPlan(
+      props.contactInbox,
+      props.incomingContact,
+    )
+    if (plan.outcome === "alreadyApplied") {
+      return { contactInbox: props.contactInbox, invalidation: null }
+    }
+    const result = await this.rotateScopedUserIdGuarded({
+      tx: props.tx,
+      contactInbox: props.contactInbox,
+      guard: plan.guard,
+      set: plan.set,
+      conflictLogMessage:
+        "ContactInbox parent-fallback identity rotation skipped: identity already claimed by another row in this inbox",
+    })
+    const phoneTransition =
+      result.status === "applied" ? plan.reportPhoneTransition : undefined
+    return {
+      contactInbox: result.contactInbox,
+      invalidation: result.invalidation,
+      ...(phoneTransition ? { phoneTransition } : {}),
+    }
+  }
+
+  /**
+   * Compare-and-swap primitive for scoped-user-id rotation. Phase 3's explicit
+   * identity-change handler reuses this method; callers decide how to resolve
+   * the row, while this method owns D2, conflict handling, and invalidation.
+   */
+  async rotateScopedUserIdGuarded(props: {
+    tx?: DatabaseClient
+    contactInbox: ContactInboxModel
+    guard: ContactInboxIdentityGuard
+    set: ContactInboxIdentitySet
+    conflictLogMessage: string
+  }): Promise<
+    | {
+        contactInbox: ContactInboxModel
+        invalidation: ContactInboxTrackingInvalidation | null
+        status: "applied" | "stale"
+      }
+    | {
+        contactInbox: ContactInboxModel
+        constraint: ContactInboxIdentityConstraint
+        invalidation: null
+        status: "conflict"
+      }
+  > {
+    const { contactInbox } = props
+    const set = resolveRotationSet(contactInbox, props.set)
+    if (Object.keys(set).length === 0) {
+      return { contactInbox, invalidation: null, status: "applied" }
+    }
+    const guard: ContactInboxIdentityGuard =
+      set.sourceId === undefined
+        ? props.guard
+        : { ...props.guard, sourceId: contactInbox.sourceId }
+
+    return await this.applyGuardedIdentityUpdate({
+      tx: props.tx,
+      contactInbox,
+      guard,
+      set,
+      conflictLogMessage: props.conflictLogMessage,
+    })
+  }
+
+  private async applyGuardedIdentityUpdate(props: {
+    tx?: DatabaseClient
+    contactInbox: ContactInboxModel
+    guard: ContactInboxIdentityGuard
+    set: ContactInboxIdentitySet
+    conflictLogMessage: string
+  }): Promise<
+    | {
+        contactInbox: ContactInboxModel
+        invalidation: ContactInboxTrackingInvalidation | null
+        status: "applied" | "stale"
+      }
+    | {
+        contactInbox: ContactInboxModel
+        constraint: ContactInboxIdentityConstraint
+        invalidation: null
+        status: "conflict"
+      }
+  > {
+    const { contactInbox, guard, set, tx = db } = props
+
+    try {
+      const updateIdentity = (client: DatabaseClient) =>
+        contactInboxRepository.updateIdentityGuarded(
+          { id: contactInbox.id, guard, set },
+          client,
+        )
+      const updated = props.tx
+        ? await props.tx.transaction(updateIdentity)
+        : await updateIdentity(tx)
+      if (!updated) {
+        const currentContactInbox = await this.findByUncached({
+          tx,
+          where: { id: contactInbox.id },
+        })
+        return {
+          contactInbox: currentContactInbox ?? contactInbox,
+          invalidation: null,
+          status: "stale",
+        }
+      }
+      const invalidation = this.createTrackingInvalidation(updated.contactId)
+      if (!props.tx) {
+        await this.invalidateTracking(invalidation)
+      }
+      return { contactInbox: updated, invalidation, status: "applied" }
+    } catch (error) {
+      const constraint = getContactInboxIdentityConflictConstraint(error)
+      if (!constraint) {
+        throw error
+      }
+      const conflictingField = getIdentityFieldByConstraint(constraint)
+      const conflictingValue = set[conflictingField]
+      const conflictingContactInbox = conflictingValue
+        ? await contactInboxRepository.findWithContact(
+            {
+              where: {
+                inboxId: contactInbox.inboxId,
+                [conflictingField]: conflictingValue,
+              },
+            },
+            tx,
+          )
+        : undefined
+      logger.warn(
+        {
+          err: error,
+          contactInboxId: contactInbox.id,
+          conflictingContactInboxId: conflictingContactInbox?.id,
+          conflictingValue,
+          constraint,
+          inboxId: contactInbox.inboxId,
+        },
+        props.conflictLogMessage,
+      )
+      return {
+        contactInbox,
+        constraint,
+        invalidation: null,
+        status: "conflict",
+      }
+    }
+  }
+
+  async rotateScopedUserId(props: {
+    inboxId: string
+    previousUserId?: string
+    userId: string
+    previousParentUserId?: string
+    parentUserId?: string
+    previousPhone?: string
+    newPhone?: string
+  }): Promise<ContactInboxIdentityChangeResult> {
+    const change = normalizeRotationChange(props)
+    if (!isValidRotationChange(change)) {
+      return { status: "invalid" }
+    }
+    const match = await this.findRotationMatch(props.inboxId, change)
+    if (!match) {
+      return { status: "notFound" }
+    }
+    const plan = resolveRotationPlan({
+      row: match.row,
+      matchKind: match.kind,
+      matchedBy: match.field,
+      matchedValue: match.value,
+      change,
+    })
+    if (plan.outcome === "stale") {
+      return { status: "stale", contactInbox: match.row }
+    }
+    if (plan.outcome === "alreadyApplied") {
+      return withPhoneTransition(
+        { status: "alreadyApplied", contactInbox: match.row },
+        plan.reportPhoneTransition,
+      )
+    }
+    const result = await this.rotateScopedUserIdGuarded({
+      contactInbox: match.row,
+      guard: plan.guard,
+      set: plan.set,
+      conflictLogMessage:
+        "ContactInbox scoped user id rotation skipped: identity already claimed by another row in this inbox",
+    })
+    return toIdentityChangeResult(match.row, result, plan.reportPhoneTransition)
+  }
+
+  private async findRotationMatch(
+    inboxId: string,
+    change: RotationChange,
+  ): Promise<
+    (ContactInboxIdentityMatch & { kind: "current" | "previous" }) | undefined
+  > {
+    const previous = await this.findIdentityWithContact(
+      inboxId,
+      [
+        { field: "sourceUserId", value: change.previousUserId },
+        { field: "sourceId", value: change.previousUserId },
+        { field: "sourceParentUserId", value: change.previousParentUserId },
+        { field: "sourceId", value: change.previousPhone },
+      ],
+      db,
+    )
+    if (previous) {
+      return { ...previous, kind: "previous" }
+    }
+    const current = await this.findIdentityWithContact(
+      inboxId,
+      [
+        { field: "sourceUserId", value: change.userId },
+        { field: "sourceId", value: change.userId },
+        { field: "sourceParentUserId", value: change.parentUserId },
+        { field: "sourceId", value: change.newPhone },
+      ],
+      db,
+    )
+    return current ? { ...current, kind: "current" } : undefined
+  }
+
+  async changePrimaryPhone(props: {
+    inboxId: string
+    previousPhone: string
+    newPhone: string
+    userId?: string
+  }): Promise<ContactInboxIdentityChangeResult> {
+    const input = normalizePhoneChangeInput(props)
+    if (!isValidPhoneChangeInput(input)) {
+      return { status: "invalid" }
+    }
+    const match = await this.findPhoneChangeMatch(props.inboxId, input)
+    if (!match) {
+      return { status: "notFound" }
+    }
+    const plan = resolvePhoneChangePlan(match, input)
+    if (plan.outcome === "invalid") {
+      return { status: "invalid" }
+    }
+    if (plan.outcome === "stale") {
+      return { status: "stale", contactInbox: match.row }
+    }
+    if (plan.outcome !== "write") {
+      return {
+        status: plan.outcome,
+        contactInbox: match.row,
+        phoneTransition: plan.phoneTransition,
+      }
+    }
+    return await this.applyPhoneChangePlan(match, plan)
+  }
+
+  private async applyPhoneChangePlan(
+    match: PhoneChangeMatch,
+    plan: Extract<PhoneChangePlan, { outcome: "write" }>,
+  ): Promise<ContactInboxIdentityChangeResult> {
+    const result = await this.applyGuardedIdentityUpdate({
+      contactInbox: match.row,
+      guard: plan.guard,
+      set: plan.set,
+      conflictLogMessage:
+        "ContactInbox primary identity change skipped: identity already claimed by another row in this inbox",
+    })
+    return toIdentityChangeResult(match.row, result, plan.phoneTransition)
+  }
+
+  private async findPhoneChangeMatch(
+    inboxId: string,
+    input: PhoneChangeInput,
+  ): Promise<PhoneChangeMatch | undefined> {
+    const previous = await this.findIdentityWithContact(
+      inboxId,
+      [
+        { field: "sourceId", value: input.previousPhone },
+        { field: "sourceUserId", value: input.userId },
+      ],
+      db,
+    )
+    if (previous) {
+      return { ...previous, kind: "previous" }
+    }
+    const current = await this.findIdentityWithContact(
+      inboxId,
+      [{ field: "sourceId", value: input.newPhone }],
+      db,
+    )
+    return current ? { ...current, kind: "current" } : undefined
+  }
+
+  private async findIdentityWithContact(
+    inboxId: string,
+    probes: Array<{
+      field: keyof ContactInboxIdentityFields
+      value?: string
+    }>,
+    tx: DatabaseClient,
+  ): Promise<
+    | {
+        field: keyof ContactInboxIdentityFields
+        row: ContactInboxWithContact
+        value: string
+      }
+    | undefined
+  > {
+    for (const probe of probes) {
+      if (!probe.value) {
+        continue
+      }
+      const row = await contactInboxRepository.findWithContact(
+        { where: { inboxId, [probe.field]: probe.value } },
+        tx,
+      )
+      if (row) {
+        return { field: probe.field, row, value: probe.value }
+      }
+    }
+  }
+
+  private async backfillScopedIdentity(props: {
+    tx?: DatabaseClient
+    contactInbox: ContactInboxModel
+    incomingContact: IncomingContact
+    pendingFields: ContactInboxBackfillField[]
+    sourceUsername?: string
+  }): Promise<ContactInboxBackfillResult> {
+    const { contactInbox, incomingContact, sourceUsername, tx = db } = props
+    const pendingFields = new Set(props.pendingFields)
+    const maxAttempts = pendingFields.size + 1
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const set: Partial<
+        Pick<
+          ContactInboxModel,
+          "sourceParentUserId" | "sourceUserId" | "sourceUsername"
+        >
+      > = {}
+      if (pendingFields.has("sourceUserId")) {
+        set.sourceUserId = incomingContact.sourceUserId
+      }
+      if (pendingFields.has("sourceParentUserId")) {
+        set.sourceParentUserId = incomingContact.sourceParentUserId
+      }
+      if (sourceUsername) {
+        set.sourceUsername = sourceUsername
+      }
+      if (Object.keys(set).length === 0) {
+        break
+      }
+
+      try {
+        const [updated] = await tx
+          .update(contactInboxModel)
+          .set(set)
+          .where(
+            and(
+              eq(contactInboxModel.id, contactInbox.id),
+              ...[...pendingFields].map((field) =>
+                isNull(CONTACT_INBOX_BACKFILL_CONFIG[field].column),
+              ),
+            ),
+          )
+          .returning()
+        if (!updated && sourceUsername && pendingFields.size > 0) {
+          pendingFields.clear()
+          continue
+        }
+        if (!updated) {
+          break
+        }
+        const invalidation = this.createTrackingInvalidation(updated.contactId)
+        if (!props.tx) {
+          await this.invalidateTracking(invalidation)
+        }
+        return { contactInbox: updated, invalidation }
+      } catch (error) {
+        const constraint = getContactInboxIdentityConflictConstraint(error)
+        const conflictedField = [...pendingFields].find(
+          (field) =>
+            CONTACT_INBOX_BACKFILL_CONFIG[field].constraint() === constraint,
+        )
+        if (!conflictedField) {
+          throw error
+        }
+        const config = CONTACT_INBOX_BACKFILL_CONFIG[conflictedField]
+        logger.warn(
+          {
+            err: error,
+            contactInboxId: contactInbox.id,
+            inboxId: contactInbox.inboxId,
+            [conflictedField]: incomingContact[conflictedField],
+          },
+          config.conflictLogMessage,
+        )
+        pendingFields.delete(conflictedField)
+      }
+    }
+
+    return { contactInbox, invalidation: null }
   }
 
   async invalidateTracking(

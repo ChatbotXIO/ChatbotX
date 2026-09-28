@@ -12,16 +12,34 @@ vi.mock("../src/client", () => ({
 
 const { logger } = await import("../src/lib/logger")
 
-const buildRaw = (contact: {
-  waId?: string
-  userId?: string
-  username?: string
-}) =>
-  buildRawMessagesEnvelope({
+const buildRaw = (
+  contact: {
+    waId?: string
+    userId?: string
+    parentUserId?: string
+    username?: string
+  },
+  message?: { fromUserId?: string; fromParentUserId?: string },
+) => {
+  const raw = buildRawMessagesEnvelope({
     wa_id: contact.waId ?? "",
     user_id: contact.userId,
+    parent_user_id: contact.parentUserId,
     profile: { username: contact.username },
   })
+  const value = (
+    raw.entry as { changes: { value: Record<string, unknown> }[] }[]
+  )[0]?.changes[0]?.value
+  if (value && message) {
+    value.messages = [
+      {
+        from_user_id: message.fromUserId,
+        from_parent_user_id: message.fromParentUserId,
+      },
+    ]
+  }
+  return raw
+}
 
 const buildProps = (props: {
   from: string
@@ -83,6 +101,62 @@ describe("WhatsApp receiveMessage — BSUID contact identity (D2/P3)", () => {
 
     expect(result.contact.sourceId).toBe("84901234567")
     expect(result.contact.sourceUserId).toBe("user.9373002")
+  })
+
+  test("captures parent_user_id from contacts[0]", async () => {
+    const result = await receiveMessage(
+      buildProps({
+        from: "84901234567",
+        raw: buildRaw({
+          waId: "84901234567",
+          userId: "user.9373002",
+          parentUserId: "parent.9373002",
+        }),
+      }),
+    )
+
+    expect(result.contact.sourceParentUserId).toBe("parent.9373002")
+  })
+
+  test("falls back to messages[0] identity fields when contacts[0] omits them", async () => {
+    const result = await receiveMessage(
+      buildProps({
+        from: "",
+        raw: buildRaw(
+          { waId: "" },
+          {
+            fromUserId: "user.message-fallback",
+            fromParentUserId: "parent.message-fallback",
+          },
+        ),
+      }),
+    )
+
+    expect(result.contact.sourceId).toBe("user.message-fallback")
+    expect(result.contact.sourceUserId).toBe("user.message-fallback")
+    expect(result.contact.sourceParentUserId).toBe("parent.message-fallback")
+  })
+
+  test("contacts[0] identity wins over messages[0] fallback fields", async () => {
+    const result = await receiveMessage(
+      buildProps({
+        from: "84901234567",
+        raw: buildRaw(
+          {
+            waId: "84901234567",
+            userId: "user.contact",
+            parentUserId: "parent.contact",
+          },
+          {
+            fromUserId: "user.message",
+            fromParentUserId: "parent.message",
+          },
+        ),
+      }),
+    )
+
+    expect(result.contact.sourceUserId).toBe("user.contact")
+    expect(result.contact.sourceParentUserId).toBe("parent.contact")
   })
 
   test("classic payload (no username adoption): new columns are absent, no regression", async () => {

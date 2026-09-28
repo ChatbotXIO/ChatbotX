@@ -8,6 +8,7 @@ import {
   db,
   eq,
   inArray,
+  isNull,
   type SQL,
   sql,
 } from "../../client"
@@ -107,6 +108,26 @@ export type ContactInboxWorkspaceRow = Pick<
   "id" | "channel" | "inboxId" | "sourceId"
 >
 
+export type ContactInboxIdentityFields = Pick<
+  ContactInboxModel,
+  "sourceId" | "sourceUserId" | "sourceParentUserId"
+>
+
+type RequireAtLeastOne<T> = {
+  [Key in keyof T]-?: Required<Pick<T, Key>> & Partial<Omit<T, Key>>
+}[keyof T]
+
+export type ContactInboxIdentityGuard =
+  RequireAtLeastOne<ContactInboxIdentityFields>
+
+const contactInboxIdentityColumns = {
+  sourceId: contactInboxModel.sourceId,
+  sourceParentUserId: contactInboxModel.sourceParentUserId,
+  sourceUserId: contactInboxModel.sourceUserId,
+} satisfies Record<keyof ContactInboxIdentityFields, unknown>
+
+type ContactInboxIdentitySet = Partial<ContactInboxIdentityFields>
+
 /**
  * The projection producing a {@link ContactInboxWorkspaceRow}. Shared by the
  * four queries that return one, so the row type and the columns actually
@@ -130,6 +151,39 @@ export type ContactInboxBySourceIdRow = Pick<
 >
 
 export const contactInboxRepository = {
+  async updateIdentityGuarded(
+    input: {
+      id: string
+      guard: ContactInboxIdentityGuard
+      set: ContactInboxIdentitySet
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | undefined> {
+    const guardConditions = (
+      Object.entries(input.guard) as [
+        keyof ContactInboxIdentityFields,
+        string | null | undefined,
+      ][]
+    ).flatMap(([field, value]) => {
+      if (value === undefined) {
+        return []
+      }
+      const column = contactInboxIdentityColumns[field]
+      return [value === null ? isNull(column) : eq(column, value)]
+    })
+    if (guardConditions.length === 0) {
+      throw new Error("ContactInbox identity update requires a guard")
+    }
+
+    const [updated] = await tx
+      .update(contactInboxModel)
+      .set(input.set)
+      .where(and(eq(contactInboxModel.id, input.id), ...guardConditions))
+      .returning()
+
+    return updated
+  },
+
   listWithInboxNameByContactId(
     input: { contactId: string; workspaceId: string },
     tx: DatabaseClient = db,
@@ -422,7 +476,7 @@ export const contactInboxRepository = {
    * Resolve a contact inbox with its `conversation` + `contact` relations,
    * by an arbitrary `where` (e.g. `{ inboxId, sourceId }` or
    * `{ inboxId, sourceUserId }`) — used by `message-status.ts`'s
-   * `resolveStatusContactInbox` behind `resolveWithSourceUserIdFallback`.
+   * `resolveStatusContactInbox` behind `resolveSourceScopedIdentityMatch`.
    * Keep the caller's probe order/spread exactly as-is; this repo method
    * only executes one shape of the query.
    */
@@ -445,7 +499,7 @@ export const contactInboxRepository = {
   /**
    * Resolve a contact inbox with its `contact` relation, by an arbitrary
    * `where` — used by `received-message.ts`'s `resolveExistingContactInbox`
-   * behind `resolveWithSourceUserIdFallback`. Keep the caller's
+   * behind `resolveSourceScopedIdentityMatch`. Keep the caller's
    * `{ inboxId, channel, ...where }` spread and probe order exactly as-is.
    */
   findWithContact(
