@@ -169,6 +169,10 @@ export type WebhookExecutionModel =
 export type ExternalWebhookModel =
   typeof schema.externalWebhookModel.$inferSelect
 export type ContactInboxModel = typeof schema.contactInboxModel.$inferSelect
+export type ContactInboxOperationalModel = Omit<
+  ContactInboxModel,
+  "sourceIdentityHistory"
+>
 export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 export type ReflinkModel = typeof schema.reflinkModel.$inferSelect

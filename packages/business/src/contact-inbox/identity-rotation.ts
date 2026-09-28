@@ -4,6 +4,7 @@ import type {
 } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
+  ContactInboxOperationalModel,
   ContactModel,
 } from "@chatbotx.io/database/types"
 import {
@@ -19,6 +20,22 @@ export type ContactInboxWithContact = ContactInboxModel & {
 export type ContactInboxIdentityField = keyof ContactInboxIdentityFields
 
 export type ContactInboxIdentitySet = Partial<ContactInboxIdentityFields>
+
+export const shouldAppendContactInboxIdentityHistory = (props: {
+  row: ContactInboxOperationalModel
+  set: ContactInboxIdentitySet
+}): boolean =>
+  (["sourceId", "sourceUserId", "sourceParentUserId"] as const).some(
+    (field) => {
+      const previousValue = props.row[field]
+      const nextValue = props.set[field]
+      return (
+        Boolean(previousValue) &&
+        nextValue !== undefined &&
+        nextValue !== previousValue
+      )
+    },
+  )
 
 export type ContactInboxIdentityMatch = {
   field: ContactInboxIdentityField
@@ -110,7 +127,7 @@ export const hasDistinctPrimaryIdentity = (
   )
 
 export const resolveLearnedPrimaryIdentity = (
-  contactInbox: ContactInboxModel,
+  contactInbox: ContactInboxOperationalModel,
   incomingContact: IncomingContact,
 ): { value: string } | undefined => {
   if (
@@ -126,7 +143,7 @@ export const resolveLearnedPrimaryIdentity = (
 }
 
 export const shouldAdvanceFromParentMatch = (props: {
-  row: ContactInboxModel
+  row: ContactInboxOperationalModel
   incomingContact: IncomingContact
   matchedBy: string
 }): props is typeof props & {
@@ -138,7 +155,7 @@ export const shouldAdvanceFromParentMatch = (props: {
   Boolean(props.row.sourceParentUserId)
 
 export const resolveScopedIdentityBackfillPlan = (props: {
-  row: ContactInboxModel
+  row: ContactInboxOperationalModel
   incomingContact: IncomingContact
   skipSourceUserId: boolean
 }): ScopedIdentityBackfillPlan => ({
@@ -161,7 +178,7 @@ export const resolveScopedIdentityBackfillPlan = (props: {
 })
 
 export const resolveRotationSet = (
-  row: ContactInboxModel,
+  row: ContactInboxOperationalModel,
   target: ContactInboxIdentitySet,
 ): ContactInboxIdentitySet => ({
   ...(target.sourceId === undefined || target.sourceId === row.sourceId
@@ -178,7 +195,7 @@ export const resolveRotationSet = (
 })
 
 const isRotationScopedIdKeyed = (
-  row: ContactInboxModel,
+  row: ContactInboxOperationalModel,
   change: RotationChange,
 ): boolean =>
   row.sourceId === "" ||
@@ -208,7 +225,7 @@ const resolveRotationTarget = (
 })
 
 const resolveRotationGuard = (
-  row: ContactInboxModel,
+  row: ContactInboxOperationalModel,
   match: Pick<PhoneChangeMatch, "field" | "value">,
   set: ContactInboxIdentitySet,
 ): ContactInboxIdentityGuard => {
@@ -235,7 +252,7 @@ const resolveRotationGuard = (
 }
 
 type IdentityTargetStatePlanProps = {
-  row: ContactInboxModel
+  row: ContactInboxOperationalModel
   observedMatch: Pick<PhoneChangeMatch, "field" | "value">
   targetIdentity: ContactInboxIdentitySet
   phoneObservation: {
@@ -271,7 +288,7 @@ const resolveIdentityTargetStatePlan = (
 
 /** Builds the D6 target state from a parent-fallback observation. */
 export const resolveParentFallbackRotationPlan = (
-  row: ContactInboxModel,
+  row: ContactInboxOperationalModel,
   incomingContact: IncomingContact & { sourceUserId: string },
 ): Exclude<RotationPlan, { outcome: "stale" }> => {
   const scopedIdKeyed = !row.sourceId || isSourceUserIdKeyedIdentity(row)

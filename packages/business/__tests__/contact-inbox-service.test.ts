@@ -115,6 +115,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // `contactInboxRepository`'s real contact-filter query graph (needs the real
 // schema, conflicting with the narrow mock below).
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxOperationalColumns: { sourceIdentityHistory: false },
   contactInboxRepository: {
     findWithContact: mockFindWithContact,
     updateIdentityGuarded: mockUpdateIdentityGuarded,
@@ -122,6 +123,11 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  CONTACT_INBOX_IDENTITY_CHANGE_REASONS: {
+    parentFallback: "parentFallback",
+    phoneChanged: "phoneChanged",
+    userIdChanged: "userIdChanged",
+  },
   CONTACT_INBOX_SOURCE_ID_KEY: "ContactInbox_inboxId_sourceId_key",
   CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY:
     "ContactInbox_inboxId_sourceParentUserId_key",
@@ -721,7 +727,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
       })
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -732,7 +738,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
           sourceId: "84900000002",
           sourceUserId: "user.bsuid-new",
         },
-      },
+      }),
       expect.anything(),
     )
     expect(contactInbox.sourceId).toBe("84900000002")
@@ -770,7 +776,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
       })
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -781,7 +787,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
           sourceId: "user.bsuid-new",
           sourceUserId: "user.bsuid-new",
         },
-      },
+      }),
       expect.anything(),
     )
     expect(contactInbox.sourceId).toBe("user.bsuid-new")
@@ -875,6 +881,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
         guard: { sourceUserId: "user.bsuid-old" },
         set: { sourceUserId: "user.bsuid-new" },
         conflictLogMessage: "rotation conflict",
+        reason: "userIdChanged",
       }),
     ).resolves.toEqual({
       contactInbox: current,
@@ -882,7 +889,10 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
       status: "stale",
     })
 
-    expect(mockDbFindFirst).toHaveBeenCalledWith({ where: { id: "ci-1" } })
+    expect(mockDbFindFirst).toHaveBeenCalledWith({
+      where: { id: "ci-1" },
+      columns: { sourceIdentityHistory: false },
+    })
   })
 
   test("returns applied without issuing an update when the requested set is already present", async () => {
@@ -897,6 +907,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
         guard: { sourceUserId: "user.bsuid-current" },
         set: { sourceUserId: "user.bsuid-current" },
         conflictLogMessage: "rotation conflict",
+        reason: "userIdChanged",
       }),
     ).resolves.toEqual({
       contactInbox: existing,
@@ -925,6 +936,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
         guard: { sourceUserId: "user.bsuid-old" },
         set: { sourceUserId: "user.bsuid-taken" },
         conflictLogMessage: "rotation conflict",
+        reason: "userIdChanged",
       }),
     ).resolves.toEqual({
       contactInbox: existing,
@@ -981,6 +993,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
       guard: { sourceUserId: "user.bsuid-old" },
       set: { sourceUserId: "user.bsuid-new" },
       conflictLogMessage: "rotation conflict",
+      reason: "userIdChanged",
     })
 
     expect(result.invalidation).toEqual({

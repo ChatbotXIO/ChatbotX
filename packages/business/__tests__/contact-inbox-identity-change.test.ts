@@ -37,6 +37,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxOperationalColumns: { sourceIdentityHistory: false },
   contactInboxRepository: {
     findWithContact: mockFindWithContact,
     updateIdentityGuarded: mockUpdateIdentityGuarded,
@@ -44,6 +45,11 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  CONTACT_INBOX_IDENTITY_CHANGE_REASONS: {
+    parentFallback: "parentFallback",
+    phoneChanged: "phoneChanged",
+    userIdChanged: "userIdChanged",
+  },
   CONTACT_INBOX_SOURCE_ID_KEY: "ContactInbox_inboxId_sourceId_key",
   CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY:
     "ContactInbox_inboxId_sourceParentUserId_key",
@@ -69,9 +75,8 @@ vi.mock("../src/logger", () => ({
 }))
 
 const { contactInboxService } = await import("../src/contact-inbox/service")
-const { resolveRotationPlan } = await import(
-  "../src/contact-inbox/identity-rotation"
-)
+const { resolveRotationPlan, shouldAppendContactInboxIdentityHistory } =
+  await import("../src/contact-inbox/identity-rotation")
 
 const contact = {
   id: "contact-1",
@@ -93,6 +98,43 @@ const bsuidKeyed = {
   ...phoneKeyed,
   sourceId: "bsuid-old",
 }
+
+describe("shouldAppendContactInboxIdentityHistory", () => {
+  test("requests one atomic append when an existing identity is replaced", () => {
+    expect(
+      shouldAppendContactInboxIdentityHistory({
+        row: phoneKeyed,
+        set: {
+          sourceId: "84900000002",
+          sourceUserId: "bsuid-new",
+          sourceParentUserId: "parent-new",
+        },
+      }),
+    ).toBe(true)
+  })
+
+  test("does not append for null backfills, username-only writes, or no-ops", () => {
+    const row = {
+      ...phoneKeyed,
+      sourceUserId: null,
+      sourceParentUserId: null,
+      sourceIdentityHistory: null,
+    }
+
+    expect(
+      shouldAppendContactInboxIdentityHistory({
+        row,
+        set: { sourceUserId: "bsuid-new", sourceParentUserId: "parent-new" },
+      }),
+    ).toBe(false)
+    expect(
+      shouldAppendContactInboxIdentityHistory({
+        row,
+        set: {},
+      }),
+    ).toBe(false)
+  })
+})
 
 const resolveRecipientParamsSemantics = (identity: {
   sourceId: string
@@ -643,7 +685,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
 
     expect(result.status).toBe("applied")
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -655,7 +697,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
           sourceUserId: "bsuid-new",
           sourceParentUserId: "parent-new",
         },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -726,7 +768,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledTimes(1)
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -736,7 +778,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
           sourceId: "84900000002",
           sourceUserId: "bsuid-new",
         },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -765,7 +807,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
     })
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -775,7 +817,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
           sourceId: "bsuid-new",
           sourceUserId: "bsuid-new",
         },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -835,7 +877,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
     })
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -845,7 +887,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
           sourceId: "bsuid-new",
           sourceUserId: "bsuid-new",
         },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -921,7 +963,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
     ).resolves.toMatchObject({ status: "applied" })
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -930,7 +972,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
         set: {
           sourceId: "84900000002",
         },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -961,7 +1003,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
     ).resolves.toMatchObject({ status: "applied" })
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -970,7 +1012,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
         set: {
           sourceId: "84900000002",
         },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -1087,14 +1129,14 @@ describe("contactInboxService.rotateScopedUserId", () => {
       ],
     )
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceParentUserId: "parent-old",
           sourceUserId: "bsuid-new",
         },
         set: { sourceParentUserId: "parent-new" },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -1177,11 +1219,11 @@ describe("contactInboxService.rotateScopedUserId", () => {
     })
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: { sourceUserId: "bsuid-new" },
         set: { sourceParentUserId: "parent-new" },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -1218,7 +1260,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
     })
 
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -1228,7 +1270,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
           sourceId: "bsuid-new",
           sourceParentUserId: "parent-new",
         },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -1444,7 +1486,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
     })
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledTimes(1)
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
@@ -1454,7 +1496,7 @@ describe("contactInboxService.rotateScopedUserId", () => {
           sourceId: "84900000002",
           sourceUserId: "bsuid-new",
         },
-      },
+      }),
       expect.anything(),
     )
     expect(mockFindWithContact).toHaveBeenLastCalledWith(
@@ -1578,14 +1620,14 @@ describe("contactInboxService.changePrimaryPhone", () => {
       }),
     ).resolves.toMatchObject({ status: "applied" })
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
           sourceUserId: "bsuid-old",
         },
         set: { sourceId: "84900000002" },
-      },
+      }),
       expect.anything(),
     )
   })
@@ -1612,14 +1654,14 @@ describe("contactInboxService.changePrimaryPhone", () => {
       contactInbox: concurrentlyBackfilled,
     })
     expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         id: "ci-1",
         guard: {
           sourceId: "84900000001",
           sourceUserId: null,
         },
         set: { sourceId: "84900000002" },
-      },
+      }),
       expect.anything(),
     )
   })

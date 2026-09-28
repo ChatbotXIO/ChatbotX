@@ -15,10 +15,15 @@ import {
 import {
   type ContactInboxIdentityFields,
   type ContactInboxIdentityGuard,
+  contactInboxOperationalColumns,
   contactInboxRepository,
 } from "@chatbotx.io/database/repositories"
-import type { ContactInboxReferral } from "@chatbotx.io/database/schema"
+import type {
+  ContactInboxIdentityChangeReason,
+  ContactInboxReferral,
+} from "@chatbotx.io/database/schema"
 import {
+  CONTACT_INBOX_IDENTITY_CHANGE_REASONS,
   CONTACT_INBOX_SOURCE_ID_KEY,
   CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY,
   CONTACT_INBOX_SOURCE_USER_ID_KEY,
@@ -60,6 +65,7 @@ import {
   resolveRotationSet,
   resolveScopedIdentityBackfillPlan,
   shouldAdvanceFromParentMatch,
+  shouldAppendContactInboxIdentityHistory,
 } from "./identity-rotation"
 
 export type {
@@ -289,9 +295,10 @@ class ContactInboxService extends BaseService {
   }): Promise<ContactInboxModel | undefined> {
     const { tx = db, where } = props
 
-    return await tx.query.contactInboxModel.findFirst({
+    return (await tx.query.contactInboxModel.findFirst({
       where,
-    })
+      columns: contactInboxOperationalColumns,
+    })) as ContactInboxModel | undefined
   }
 
   /**
@@ -406,16 +413,14 @@ class ContactInboxService extends BaseService {
     return await withCache(
       cacheKey,
       async () =>
-        await tx
-          .select()
-          .from(contactInboxModel)
-          .where(
-            and(
-              eq(contactInboxModel.contactId, contactId),
-              this.workspaceScope(workspaceId),
-            ),
-          )
-          .orderBy(asc(contactInboxModel.id)),
+        (await tx.query.contactInboxModel.findMany({
+          where: {
+            contactId,
+            inbox: { workspaceId },
+          },
+          columns: contactInboxOperationalColumns,
+          orderBy: { id: "asc" },
+        })) as ContactInboxModel[],
       {
         // Tag with both the workspace-scoped key (so this cache entry can be
         // invalidated on its own) and the shared per-contact tag that the
@@ -1071,6 +1076,7 @@ class ContactInboxService extends BaseService {
       set: plan.set,
       conflictLogMessage:
         "ContactInbox parent-fallback identity rotation skipped: identity already claimed by another row in this inbox",
+      reason: CONTACT_INBOX_IDENTITY_CHANGE_REASONS.parentFallback,
     })
     const phoneTransition =
       result.status === "applied" ? plan.reportPhoneTransition : undefined
@@ -1092,6 +1098,7 @@ class ContactInboxService extends BaseService {
     guard: ContactInboxIdentityGuard
     set: ContactInboxIdentitySet
     conflictLogMessage: string
+    reason: ContactInboxIdentityChangeReason
   }): Promise<
     | {
         contactInbox: ContactInboxModel
@@ -1121,6 +1128,7 @@ class ContactInboxService extends BaseService {
       guard,
       set,
       conflictLogMessage: props.conflictLogMessage,
+      reason: props.reason,
     })
   }
 
@@ -1130,6 +1138,7 @@ class ContactInboxService extends BaseService {
     guard: ContactInboxIdentityGuard
     set: ContactInboxIdentitySet
     conflictLogMessage: string
+    reason: ContactInboxIdentityChangeReason
   }): Promise<
     | {
         contactInbox: ContactInboxModel
@@ -1143,12 +1152,28 @@ class ContactInboxService extends BaseService {
         status: "conflict"
       }
   > {
-    const { contactInbox, guard, set, tx = db } = props
+    const { contactInbox, guard, reason, set, tx = db } = props
+    const appendIdentityHistory = shouldAppendContactInboxIdentityHistory({
+      row: contactInbox,
+      set,
+    })
 
     try {
       const updateIdentity = (client: DatabaseClient) =>
         contactInboxRepository.updateIdentityGuarded(
-          { id: contactInbox.id, guard, set },
+          {
+            id: contactInbox.id,
+            guard,
+            set,
+            ...(appendIdentityHistory
+              ? {
+                  appendIdentityHistory: {
+                    changedAt: new Date().toISOString(),
+                    reason,
+                  },
+                }
+              : {}),
+          },
           client,
         )
       const updated = props.tx
@@ -1247,6 +1272,7 @@ class ContactInboxService extends BaseService {
       set: plan.set,
       conflictLogMessage:
         "ContactInbox scoped user id rotation skipped: identity already claimed by another row in this inbox",
+      reason: CONTACT_INBOX_IDENTITY_CHANGE_REASONS.userIdChanged,
     })
     return toIdentityChangeResult(match.row, result, plan.reportPhoneTransition)
   }
@@ -1324,6 +1350,7 @@ class ContactInboxService extends BaseService {
       set: plan.set,
       conflictLogMessage:
         "ContactInbox primary identity change skipped: identity already claimed by another row in this inbox",
+      reason: CONTACT_INBOX_IDENTITY_CHANGE_REASONS.phoneChanged,
     })
     return toIdentityChangeResult(match.row, result, plan.phoneTransition)
   }

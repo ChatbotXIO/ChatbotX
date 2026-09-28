@@ -57,6 +57,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxOperationalColumns: { sourceIdentityHistory: false },
   createMessageRepository: mocks.createMessageRepository,
   getSafeSinceTime: mocks.getSafeSinceTime,
 }))
@@ -87,6 +88,15 @@ const adAttributedContactInbox = {
   lastIncomingMessageAt: null,
   contactLastReadAt: null,
   inbox: { name: "WhatsApp Inbox" },
+  sourceIdentityHistory: [
+    {
+      sourceId: "old-source-1",
+      sourceUserId: null,
+      sourceParentUserId: null,
+      changedAt: "2026-09-28T05:00:00.000Z",
+      reason: "userIdChanged",
+    },
+  ],
   referral: {
     ctwaClid: "clid-123",
     adTitle: "Summer Sale",
@@ -142,7 +152,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
     expect(mappedContactInboxes[1]?.adReferral).toBeNull()
   })
 
-  test("listConversations strips the raw referral field from the mapped output", async () => {
+  test("listConversations strips internal jsonb fields from the mapped output", async () => {
     const conversation = {
       id: "conv-1",
       contactId: "contact-1",
@@ -161,6 +171,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
 
     const mappedContactInbox = result.data[0]?.contactInboxes[0]
     expect(mappedContactInbox).not.toHaveProperty("referral")
+    expect(mappedContactInbox).not.toHaveProperty("sourceIdentityHistory")
   })
 
   test("findConversation maps an ad-attributed contactInbox to a non-null adReferral", async () => {
@@ -183,7 +194,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
     expect(mappedContactInboxes[1]?.adReferral).toBeNull()
   })
 
-  test("findConversation strips the raw referral field from the mapped output", async () => {
+  test("findConversation strips internal jsonb fields from the mapped output", async () => {
     const conversation = {
       id: "conv-1",
       workspaceId: "ws-1",
@@ -197,6 +208,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
 
     const mappedContactInbox = result.data.contactInboxes[0]
     expect(mappedContactInbox).not.toHaveProperty("referral")
+    expect(mappedContactInbox).not.toHaveProperty("sourceIdentityHistory")
   })
 
   test("produces the identical contactInbox shape on both the list and find paths", async () => {

@@ -37,6 +37,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxOperationalColumns: { sourceIdentityHistory: false },
   contactInboxRepository: {
     findWithContact: mockFindWithContact,
     updateIdentityGuarded: mockUpdateIdentityGuarded,
@@ -44,6 +45,11 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  CONTACT_INBOX_IDENTITY_CHANGE_REASONS: {
+    parentFallback: "parentFallback",
+    phoneChanged: "phoneChanged",
+    userIdChanged: "userIdChanged",
+  },
   CONTACT_INBOX_SOURCE_ID_KEY: "ContactInbox_inboxId_sourceId_key",
   CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY:
     "ContactInbox_inboxId_sourceParentUserId_key",
@@ -81,6 +87,16 @@ const UNRELATED_PARENT = "parent-unrelated"
 
 type IdentityField = "sourceId" | "sourceParentUserId" | "sourceUserId"
 
+type IdentityChangeReason = "parentFallback" | "phoneChanged" | "userIdChanged"
+
+type IdentityHistoryEntry = {
+  sourceId: string
+  sourceUserId: string | null
+  sourceParentUserId: string | null
+  changedAt: string
+  reason: IdentityChangeReason
+}
+
 type IdentityRow = {
   id: string
   inboxId: string
@@ -89,6 +105,7 @@ type IdentityRow = {
   sourceUserId: string | null
   sourceParentUserId: string | null
   sourceUsername: string | null
+  sourceIdentityHistory: IdentityHistoryEntry[] | null
   contact: {
     id: string
     phoneNumber: string | null
@@ -104,6 +121,11 @@ type Write = {
   before: IdentityRow
   guard: IdentitySet
   set: IdentitySet
+  appendIdentityHistory?: {
+    changedAt: string
+    reason: IdentityChangeReason
+  }
+  sourceIdentityHistory?: IdentityHistoryEntry[]
 }
 
 type UserIdChangedCase = {
@@ -158,6 +180,14 @@ const contact = {
   workspaceId: "workspace-1",
 }
 
+const fullIdentityHistory = Array.from({ length: 10 }, (_, index) => ({
+  sourceId: `historical-source-${index}`,
+  sourceUserId: null,
+  sourceParentUserId: null,
+  changedAt: `2026-09-28T04:00:${String(index).padStart(2, "0")}.000Z`,
+  reason: "phoneChanged" as const,
+}))
+
 const row = (props: {
   sourceId: string
   sourceUserId: string | null
@@ -167,6 +197,7 @@ const row = (props: {
   inboxId: "inbox-1",
   contactId: "contact-1",
   sourceUsername: null,
+  sourceIdentityHistory: fullIdentityHistory,
   contact,
   ...props,
 })
@@ -363,12 +394,45 @@ const installInMemoryRepository = (storedRow: IdentityRow): void => {
       rowMatchesWhere(activeRow, where) ? activeRow : undefined,
   )
   mockUpdateIdentityGuarded.mockImplementation(
-    ({ guard, set }: { guard: IdentitySet; set: IdentitySet }) => {
+    ({
+      appendIdentityHistory,
+      guard,
+      set,
+    }: {
+      appendIdentityHistory?: {
+        changedAt: string
+        reason: IdentityChangeReason
+      }
+      guard: IdentitySet
+      set: IdentitySet
+    }) => {
       if (!rowMatchesWhere(activeRow, guard)) {
         return
       }
-      writes.push({ before: { ...activeRow }, guard, set })
-      activeRow = { ...activeRow, ...set }
+      const sourceIdentityHistory = appendIdentityHistory
+        ? [
+            ...(activeRow.sourceIdentityHistory ?? []),
+            {
+              sourceId: activeRow.sourceId,
+              sourceUserId: activeRow.sourceUserId,
+              sourceParentUserId: activeRow.sourceParentUserId,
+              changedAt: appendIdentityHistory.changedAt,
+              reason: appendIdentityHistory.reason,
+            },
+          ].slice(-10)
+        : undefined
+      writes.push({
+        before: { ...activeRow },
+        guard,
+        set,
+        ...(appendIdentityHistory ? { appendIdentityHistory } : {}),
+        ...(sourceIdentityHistory ? { sourceIdentityHistory } : {}),
+      })
+      activeRow = {
+        ...activeRow,
+        ...set,
+        ...(sourceIdentityHistory ? { sourceIdentityHistory } : {}),
+      }
       return activeRow
     },
   )
@@ -493,6 +557,77 @@ const checkWriteCas = (
   }
 }
 
+const expectedReasonByEvent = {
+  d6OrdinaryMessage: "parentFallback",
+  phoneChanged: "phoneChanged",
+  userIdChanged: "userIdChanged",
+} as const satisfies Record<MatrixCase["eventKind"], IdentityChangeReason>
+
+const checkHistory = (
+  matrixCase: MatrixCase,
+  caseViolations: Violation[],
+  eventWrites: Write[],
+): void => {
+  for (const write of eventWrites) {
+    const replacesExistingIdentity = (
+      ["sourceId", "sourceUserId", "sourceParentUserId"] as const
+    ).some((field) => {
+      const previousValue = write.before[field]
+      const nextValue = write.set[field]
+      return (
+        Boolean(previousValue) &&
+        nextValue !== undefined &&
+        nextValue !== previousValue
+      )
+    })
+    const history = write.sourceIdentityHistory
+    if (!replacesExistingIdentity) {
+      if (write.appendIdentityHistory !== undefined || history !== undefined) {
+        addViolation(caseViolations, matrixCase, {
+          invariant: "I6",
+          rootCause: "a backfill or no-op appends identity history",
+          expected: "sourceIdentityHistory omitted",
+          actual: JSON.stringify(history),
+        })
+      }
+      continue
+    }
+
+    const latest = history?.at(-1)
+    const expectedLatest = {
+      sourceId: write.before.sourceId,
+      sourceUserId: write.before.sourceUserId,
+      sourceParentUserId: write.before.sourceParentUserId,
+      reason: expectedReasonByEvent[matrixCase.eventKind],
+    }
+    const expectedHistory = latest
+      ? [
+          ...(write.before.sourceIdentityHistory ?? []),
+          {
+            sourceId: expectedLatest.sourceId,
+            sourceUserId: expectedLatest.sourceUserId,
+            sourceParentUserId: expectedLatest.sourceParentUserId,
+            changedAt: latest.changedAt,
+            reason: expectedLatest.reason,
+          },
+        ].slice(-10)
+      : undefined
+    if (
+      !(history && latest) ||
+      write.appendIdentityHistory?.reason !== expectedLatest.reason ||
+      JSON.stringify(history) !== JSON.stringify(expectedHistory) ||
+      Number.isNaN(Date.parse(latest.changedAt))
+    ) {
+      addViolation(caseViolations, matrixCase, {
+        invariant: "I6",
+        rootCause: "an applied identity replacement records incorrect history",
+        expected: JSON.stringify({ ...expectedLatest, maximumLength: 10 }),
+        actual: JSON.stringify(history),
+      })
+    }
+  }
+}
+
 const isProtectedUnrelatedMatch = (matrixCase: MatrixCase): boolean => {
   if (matrixCase.row.sourceUserId !== UNRELATED_BSUID || !matchedWhere) {
     return false
@@ -555,6 +690,7 @@ const runUserIdChanged = async (
       ? result.phoneTransition?.newPhone
       : undefined
   checkWriteCas(matrixCase, caseViolations, eventWrites)
+  checkHistory(matrixCase, caseViolations, eventWrites)
   checkPhoneProposal(matrixCase, caseViolations, phoneProposal)
   checkUnrelatedIdentity(matrixCase, caseViolations, eventWrites, phoneProposal)
   if (result.status === "applied" || result.status === "alreadyApplied") {
@@ -581,6 +717,7 @@ const runPhoneChanged = async (
       ? result.phoneTransition?.newPhone
       : undefined
   checkWriteCas(matrixCase, caseViolations, eventWrites)
+  checkHistory(matrixCase, caseViolations, eventWrites)
   checkPhoneProposal(matrixCase, caseViolations, phoneProposal)
   checkUnrelatedIdentity(matrixCase, caseViolations, eventWrites, phoneProposal)
   if (result.status === "applied" || result.status === "alreadyApplied") {
@@ -605,6 +742,7 @@ const runD6 = async (
   const eventWrites = [...writes]
   const phoneProposal = result.learnedPrimaryIdentity?.value
   checkWriteCas(matrixCase, caseViolations, eventWrites)
+  checkHistory(matrixCase, caseViolations, eventWrites)
   checkPhoneProposal(matrixCase, caseViolations, phoneProposal)
   checkRouting(matrixCase, caseViolations, Boolean(phoneProposal))
   for (const write of eventWrites) {
@@ -667,6 +805,14 @@ describe(`WhatsApp identity-rotation invariant matrix (${matrixCases.length} pro
         rootCause: "replaying the production event writes again",
         expected: "no replay write",
         actual: JSON.stringify(writes.map((write) => write.set)),
+      })
+    }
+    if ((activeRow.sourceIdentityHistory?.length ?? 0) > 10) {
+      addViolation(caseViolations, matrixCase, {
+        invariant: "I6",
+        rootCause: "identity history exceeds its retention limit",
+        expected: "at most 10 entries",
+        actual: String(activeRow.sourceIdentityHistory?.length),
       })
     }
     allViolations.push(...caseViolations)

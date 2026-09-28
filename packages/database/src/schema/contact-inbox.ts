@@ -35,6 +35,23 @@ export type ContactInboxReferral = {
   raw?: Record<string, unknown>
 }
 
+export const CONTACT_INBOX_IDENTITY_CHANGE_REASONS = {
+  phoneChanged: "phoneChanged",
+  userIdChanged: "userIdChanged",
+  parentFallback: "parentFallback",
+} as const
+
+export type ContactInboxIdentityChangeReason =
+  (typeof CONTACT_INBOX_IDENTITY_CHANGE_REASONS)[keyof typeof CONTACT_INBOX_IDENTITY_CHANGE_REASONS]
+
+export type ContactInboxIdentityHistoryEntry = {
+  sourceId: string
+  sourceUserId: string | null
+  sourceParentUserId: string | null
+  changedAt: string
+  reason: ContactInboxIdentityChangeReason
+}
+
 export const lastUserInputTypeEnum = pgEnum(
   "lastUserInputType",
   lastUserInputTypes.options as [string, ...string[]],
@@ -100,6 +117,7 @@ export const contactInboxModel = pgTable(
     // Channel handle/username for this contact (e.g. WhatsApp `@username`).
     // Display-only, never used as a matching key.
     sourceUsername: text(),
+    sourceIdentityHistory: jsonb().$type<ContactInboxIdentityHistoryEntry[]>(),
   },
   (table) => [
     uniqueIndex(CONTACT_INBOX_SOURCE_ID_KEY).using(

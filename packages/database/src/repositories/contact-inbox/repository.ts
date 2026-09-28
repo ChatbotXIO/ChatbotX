@@ -15,6 +15,8 @@ import {
 import { adConversationPredicate } from "../../queries/ad-referral"
 import type { AdsConversionChannel } from "../../schema"
 import {
+  type ContactInboxIdentityChangeReason,
+  type ContactInboxIdentityHistoryEntry,
   contactInboxModel,
   inboxModel,
   integrationInstagramModel,
@@ -120,6 +122,14 @@ type RequireAtLeastOne<T> = {
 export type ContactInboxIdentityGuard =
   RequireAtLeastOne<ContactInboxIdentityFields>
 
+export const CONTACT_INBOX_IDENTITY_HISTORY_LIMIT = 10
+
+// Ordinary message/cache reads do not need the audit trail. Callers keep their
+// established model signatures until queue and channel DTOs can be narrowed.
+export const contactInboxOperationalColumns = {
+  sourceIdentityHistory: false,
+} as const
+
 const contactInboxIdentityColumns = {
   sourceId: contactInboxModel.sourceId,
   sourceParentUserId: contactInboxModel.sourceParentUserId,
@@ -127,6 +137,30 @@ const contactInboxIdentityColumns = {
 } satisfies Record<keyof ContactInboxIdentityFields, unknown>
 
 type ContactInboxIdentitySet = Partial<ContactInboxIdentityFields>
+
+const appendIdentityHistoryExpression = (input: {
+  changedAt: string
+  reason: ContactInboxIdentityChangeReason
+}) => sql<ContactInboxIdentityHistoryEntry[]>`(
+  SELECT COALESCE(jsonb_agg("entry" ORDER BY "ordinality"), '[]'::jsonb)
+  FROM (
+    SELECT "entry", "ordinality"
+    FROM jsonb_array_elements(
+      COALESCE(${contactInboxModel.sourceIdentityHistory}, '[]'::jsonb) ||
+      jsonb_build_array(
+        jsonb_build_object(
+          'sourceId', ${contactInboxModel.sourceId},
+          'sourceUserId', ${contactInboxModel.sourceUserId},
+          'sourceParentUserId', ${contactInboxModel.sourceParentUserId},
+          'changedAt', ${input.changedAt}::text,
+          'reason', ${input.reason}::text
+        )
+      )
+    ) WITH ORDINALITY AS "history"("entry", "ordinality")
+    ORDER BY "ordinality" DESC
+    LIMIT ${CONTACT_INBOX_IDENTITY_HISTORY_LIMIT}::int
+  ) AS "newestHistory"
+)`
 
 /**
  * The projection producing a {@link ContactInboxWorkspaceRow}. Shared by the
@@ -156,6 +190,10 @@ export const contactInboxRepository = {
       id: string
       guard: ContactInboxIdentityGuard
       set: ContactInboxIdentitySet
+      appendIdentityHistory?: {
+        changedAt: string
+        reason: ContactInboxIdentityChangeReason
+      }
     },
     tx: DatabaseClient = db,
   ): Promise<ContactInboxModel | undefined> {
@@ -177,7 +215,16 @@ export const contactInboxRepository = {
 
     const [updated] = await tx
       .update(contactInboxModel)
-      .set(input.set)
+      .set({
+        ...input.set,
+        ...(input.appendIdentityHistory
+          ? {
+              sourceIdentityHistory: appendIdentityHistoryExpression(
+                input.appendIdentityHistory,
+              ),
+            }
+          : {}),
+      })
       .where(and(eq(contactInboxModel.id, input.id), ...guardConditions))
       .returning()
 
@@ -492,8 +539,15 @@ export const contactInboxRepository = {
   > {
     return tx.query.contactInboxModel.findFirst({
       where: props.where,
+      columns: contactInboxOperationalColumns,
       with: { conversation: true, contact: true },
-    })
+    }) as Promise<
+      | (ContactInboxModel & {
+          conversation: ConversationModel | null
+          contact: ContactModel
+        })
+      | undefined
+    >
   },
 
   /**
@@ -508,8 +562,9 @@ export const contactInboxRepository = {
   ): Promise<(ContactInboxModel & { contact: ContactModel }) | undefined> {
     return tx.query.contactInboxModel.findFirst({
       where: props.where,
+      columns: contactInboxOperationalColumns,
       with: { contact: true },
-    })
+    }) as Promise<(ContactInboxModel & { contact: ContactModel }) | undefined>
   },
 
   /**
@@ -621,14 +676,15 @@ export const contactInboxRepository = {
    * `workspaceId` filter (the caller has only a `contactId` in scope at this
    * point). Distinct from `contactInboxService.listByContactId`, which
    * requires `workspaceId` and is cached — this is an uncached, unscoped
-   * full-row read.
+   * operational-row read.
    */
   async listByContactId(
     input: { contactId: string },
     tx: DatabaseClient = db,
   ): Promise<ContactInboxModel[]> {
-    return await tx.query.contactInboxModel.findMany({
+    return (await tx.query.contactInboxModel.findMany({
       where: { contactId: input.contactId },
-    })
+      columns: contactInboxOperationalColumns,
+    })) as ContactInboxModel[]
   },
 }
