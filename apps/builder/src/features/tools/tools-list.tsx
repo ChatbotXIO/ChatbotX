@@ -86,10 +86,6 @@ export const TOOLS_CONFIG = [
     labelKey: "threadsCommentAutomation.title",
     descriptionKey: "threadsCommentAutomation.description",
     icon: SiThreads,
-    // Threads is still awaiting Meta's API approval, so this card only shows
-    // for the preview allowlist (`lib/workspace/preview-channels.ts`), the
-    // same gate that hides the channel itself. Drop the flag once approved.
-    previewOnly: true,
     getLink: (id: string) => `/space/${id}/threads-comments`,
   },
   {
