@@ -2,6 +2,11 @@
   "name": "chatbotx-mcp",
   "version": "0.0.0-dev",
   "description": "MCP Server for ChatbotX — gives AI agents access to your ChatbotX workspace via the Model Context Protocol",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChatbotXIO/ChatbotX.git",
+    "directory": "apps/mcp-server"
+  },
   "keywords": [
     "mcp",
     "chatbotx",
@@ -13,7 +18,7 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "bin": {
-    "chatbotx-mcp": "./dist/index.mjs"
+    "chatbotx-mcp": "dist/index.mjs"
   },
   "exports": {
     ".": {
