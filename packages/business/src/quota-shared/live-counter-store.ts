@@ -244,6 +244,37 @@ export class LiveCounterStore<TRow> {
     await this.invalidate(id)
   }
 
+  /**
+   * Atomically admit one live unit within `limit`. A missing field is cold-seeded
+   * through the existing DB-backed path and retried once. Refusals return
+   * `null`; Redis failures and a second missing result propagate to the caller.
+   */
+  async admit(
+    id: string,
+    metric: QuotaMetric,
+    limit: number | null,
+  ): Promise<number | null> {
+    const key = this.liveKey(id)
+    let result = await distributedStore.admitWithinLimit(key, metric, limit)
+
+    if (result.status === "missing") {
+      await this.getLiveCount(id, metric)
+      result = await distributedStore.admitWithinLimit(key, metric, limit)
+    }
+
+    if (result.status === "missing") {
+      throw new Error(
+        `${this.config.label}: live counter missing after cold seed for ${metric}`,
+      )
+    }
+
+    const valueByStatus = {
+      admitted: result.value,
+      refused: null,
+    } as const
+    return valueByStatus[result.status]
+  }
+
   /** Increment the live counter (cold-seeding first so it starts from the DB base). */
   async incrementBy(
     id: string,
@@ -279,11 +310,17 @@ export class LiveCounterStore<TRow> {
       return
     }
     try {
-      const client = await cacheConnections.useExisting()
       await this.getLiveCount(id, metric)
-      const next = await client.hincrby(this.liveKey(id), metric, -count)
-      if (next < 0) {
-        await client.hset(this.liveKey(id), metric, "0")
+      const next = await distributedStore.decrementFloor(
+        this.liveKey(id),
+        metric,
+        count,
+      )
+      if (next === null) {
+        logger.warn(
+          { id, metric },
+          `${this.config.label}: live counter missing after cold seed; decrement ignored`,
+        )
       }
     } catch (err) {
       logger.warn(
