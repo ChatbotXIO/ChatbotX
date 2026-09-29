@@ -84,6 +84,10 @@ vi.mock("@/features/users/provider/user-hook", () => {
   }
 })
 
+vi.mock("@/features/contact-filter/components/use-filter-value-labels", () => ({
+  useFilterValueLabels: () => undefined,
+}))
+
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-id",
 }))

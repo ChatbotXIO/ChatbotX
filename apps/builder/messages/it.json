@@ -2076,6 +2076,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Sconosciuto",
     "yes": "Sì",
     "no": "No",
     "valuePlaceholder": "...",

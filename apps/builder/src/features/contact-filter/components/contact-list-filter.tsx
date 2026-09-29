@@ -63,7 +63,7 @@ export function ContactListFilterPanel({
 }: ContactListFilterPanelProps) {
   const t = useTranslations()
   const { configs, conditionOptions, operatorLabelByValue } =
-    useContactFilterConfigs(inboxChannel)
+    useContactFilterConfigs(inboxChannel, false, filter.conditions)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const filteredConfigs = useMemo(
     () =>

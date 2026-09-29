@@ -68,6 +68,11 @@ export const router = {
   tagsAPI: lazy(() =>
     import("@/features/tags/api").then((m) => ({ default: m.tagsAPI })),
   ),
+  contactFilterAPI: lazy(() =>
+    import("@/features/contact-filter/api").then((m) => ({
+      default: m.contactFilterAPI,
+    })),
+  ),
   customFieldsAPI: lazy(() =>
     import("@/features/custom-fields/api").then((m) => ({
       default: m.customFieldsAPI,

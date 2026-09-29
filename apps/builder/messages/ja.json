@@ -576,6 +576,7 @@
     }
   },
   "condition": {
+    "unknownValue": "不明",
     "yes": "はい",
     "no": "いいえ",
     "valuePlaceholder": "...",

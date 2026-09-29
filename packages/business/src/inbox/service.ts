@@ -30,6 +30,7 @@ import { BaseService } from "../base.service"
 import { channelLimitReachedException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import { workspaceUsageService } from "../workspace-usage/service"
 import type {
   ListAllConnectedInboxesRequest,
@@ -557,6 +558,14 @@ class InboxService extends BaseService {
       where: { id },
       with: { integrationWhatsapp: true },
     })
+  }
+
+  /** Existing rows only, including disconnected inboxes. */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(inboxModel, input)
   }
 }
 export const inboxService = new InboxService()

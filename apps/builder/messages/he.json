@@ -5712,6 +5712,7 @@
     }
   },
   "condition": {
+    "unknownValue": "לא ידוע",
     "yes": "כן",
     "no": "לא",
     "valuePlaceholder": "...",

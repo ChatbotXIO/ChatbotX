@@ -618,6 +618,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Không xác định",
     "yes": "Có",
     "no": "Không",
     "valuePlaceholder": "...",

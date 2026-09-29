@@ -25,6 +25,7 @@ import {
 } from "../contact-inbox/map-stats-contact-row"
 import { contactInboxService } from "../contact-inbox/service"
 import { notFoundException, validationException } from "../errors"
+import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import {
   handleStepCreationImpact,
   handleStepUpdateImpact,
@@ -450,6 +451,14 @@ class SequenceService extends BaseService {
     )
 
     return { stepId: step.id }
+  }
+
+  /** Existing rows only — `id`s absent from the result no longer exist. */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(sequenceModel, input)
   }
 }
 
