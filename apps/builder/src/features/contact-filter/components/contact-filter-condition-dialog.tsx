@@ -38,6 +38,7 @@ import {
   type ConditionOption,
   type ContactFilterConditionFormDraft,
   type FieldConfig,
+  getBooleanOptions,
   getFieldOptions,
 } from "./contact-filter-config"
 import { CONTACT_FILTER_DIALOG_SIZE_CLASS } from "./contact-filter-dialog-layout"
@@ -261,15 +262,7 @@ const FILTER_VALUE_INPUT_CONFIG = {
 const BooleanValueField = () => {
   const t = useTranslations()
 
-  return (
-    <SelectField
-      name="value"
-      options={[
-        { label: t("fields.boolean.true"), value: "true" },
-        { label: t("fields.boolean.false"), value: "false" },
-      ]}
-    />
-  )
+  return <SelectField name="value" options={getBooleanOptions(t)} />
 }
 
 const FilterValueInput = ({

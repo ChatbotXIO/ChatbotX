@@ -1,5 +1,6 @@
 "use client"
 
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useCouponTopicOptions } from "@/features/coupons/provider/use-coupon-topic-options"
@@ -52,7 +53,15 @@ export const useContactFilterConfigs = (
   const botFields =
     useBotFields(workspaceId, { enabled: includeBotFields }).data ?? []
   const flowVersionOptions = useFlowSelectOptions()
-  const broadcastOptions = useBroadcastSelectOptions()
+  // `omnichannel` here means "all inboxes", not the broadcast channel, so it
+  // falls back to the hook's default like an unknown channel does.
+  const parsedChannel = channelTypes.safeParse(inboxChannel)
+  const broadcastChannel =
+    parsedChannel.success &&
+    parsedChannel.data !== channelTypes.enum.omnichannel
+      ? parsedChannel.data
+      : undefined
+  const broadcastOptions = useBroadcastSelectOptions(broadcastChannel)
   const sequences = useSequenceOptions()
   const sequenceOptions = useMemo(
     () =>

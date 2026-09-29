@@ -162,7 +162,10 @@ export function BroadcastDetailDialog({
             <h3 className="font-medium text-sm">
               {t("broadcasts.detail.audienceFilter")}
             </h3>
-            <ContactFilterSummary contactFilter={contactFilter} />
+            <ContactFilterSummary
+              contactFilter={contactFilter}
+              inboxChannel={channelValue}
+            />
           </section>
 
           {/* A broadcast delivers either templates or flows, never both. */}
