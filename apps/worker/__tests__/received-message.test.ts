@@ -10,6 +10,10 @@ const mockLockContentionPolicy = vi.hoisted(() => ({
   maxDelayMs: 30_000,
 }))
 
+const mockWorkerEnv = vi.hoisted(() => ({
+  THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED: false,
+}))
+
 // ---------------------------------------------------------------------------
 // Hoist mock references
 // ---------------------------------------------------------------------------
@@ -31,6 +35,7 @@ const {
   mockAutomatedResponseEnqueueFlowAction,
   mockIntegrationQueueAdd,
   mockCreateNewContactWithMac,
+  mockCreateContactWithoutMac,
   mockWorkspaceFind,
   mockQuotaIncrement,
   mockContactUpdate,
@@ -116,7 +121,10 @@ const {
     mockRunChannelHandler,
     mockBroadcast: vi.fn(),
     mockEmit: vi.fn().mockResolvedValue(undefined),
-    mockBuildContext: vi.fn().mockResolvedValue({ workspaceId: "ws-1" }),
+    mockBuildContext: vi.fn().mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    }),
     mockresolveTenantSettings: vi
       .fn()
       .mockResolvedValue({ storageUrl: "https://files.example.test" }),
@@ -131,6 +139,7 @@ const {
       .mockResolvedValue(undefined),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockCreateNewContactWithMac: vi.fn(),
+    mockCreateContactWithoutMac: vi.fn(),
     mockWorkspaceFind: vi.fn().mockResolvedValue(null),
     mockWorkspaceIsActiveNow: vi.fn().mockReturnValue(true),
     mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
@@ -314,6 +323,7 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: {
     increment: mockQuotaIncrement,
     createNewContactWithMac: mockCreateNewContactWithMac,
+    createContactWithoutMac: mockCreateContactWithoutMac,
   },
   userQuotaService: {
     isLimitReached: vi.fn().mockResolvedValue(false),
@@ -380,6 +390,13 @@ vi.mock("@chatbotx.io/sdk", () => ({
   },
   messageTypes: { enum: { incoming: "incoming", outgoing: "outgoing" } },
   echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
+  resolveChannelMessageCreatedAt: (timestampMs: number, now = new Date()) => {
+    const earliest = now.getTime() - 7 * 24 * 60 * 60 * 1000
+    const latest = now.getTime() + 5 * 60 * 1000
+    return timestampMs >= earliest && timestampMs <= latest
+      ? new Date(timestampMs)
+      : null
+  },
   SdkException: class SdkException extends Error {},
   // Mirror of the real pure predicate — the module is fully mocked, so the
   // actual one-liner is restated here.
@@ -443,6 +460,8 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
+
+vi.mock("../src/env", () => ({ env: mockWorkerEnv }))
 
 vi.mock("../src/lib/lock-contention-deferral", () => ({
   LOCK_CONTENTION_POLICY: mockLockContentionPolicy,
@@ -517,6 +536,10 @@ const { allIntegrations, integrationService } = await import(
   "../src/services/integrations"
 )
 
+beforeEach(() => {
+  mockWorkerEnv.THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED = false
+})
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
@@ -584,7 +607,7 @@ const baseProps = {
   payload: {},
 }
 
-type CreateNewContactWithMacArgs = {
+type CreateNewContactArgs = {
   create: (tx: {
     insert: (model: unknown) => {
       values: (row: Record<string, unknown>) => {
@@ -594,13 +617,15 @@ type CreateNewContactWithMacArgs = {
   }) => Promise<unknown>
 }
 
-const runCapturedNewContactCreate = async () => {
+const runCapturedNewContactCreate = async (
+  creator = mockCreateNewContactWithMac,
+) => {
   const rows: Record<string, unknown>[] = []
-  const args = mockCreateNewContactWithMac.mock.calls.at(-1)?.[0] as
-    | CreateNewContactWithMacArgs
+  const args = creator.mock.calls.at(-1)?.[0] as
+    | CreateNewContactArgs
     | undefined
   if (!args) {
-    throw new Error("Expected createNewContactWithMac to be called")
+    throw new Error("Expected new-contact creator to be called")
   }
 
   await args.create({
@@ -651,7 +676,10 @@ describe("receiveMessage — message repository branch", () => {
       integrationRow: fakeIntegrationRow,
     } as never)
 
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -697,6 +725,190 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+  })
+
+  test("reuses the integration resolved by the worker and platform data from buildContext", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    const resolvedIntegration = {
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+      workspace: { id: "ws-1" },
+    } as never
+
+    await receiveMessage(baseProps, resolvedIntegration)
+
+    expect(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).not.toHaveBeenCalled()
+    expect(mockBuildContext).toHaveBeenCalledOnce()
+    expect(mockresolveTenantSettings).not.toHaveBeenCalled()
+    expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1" }),
+    )
+  })
+
+  test("persists an outgoing echo with the channel-authoritative timestamp", async () => {
+    const channelCreatedAt = new Date("2026-09-24T23:59:00.000Z")
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        createdAt: channelCreatedAt,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ createdAt: channelCreatedAt }),
+      { skipDedupLock: true },
+    )
+  })
+
+  test("keeps an outgoing message without a channel timestamp on the locked path", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageType: "outgoing",
+        createdAt: expect.any(Date),
+      }),
+    )
+  })
+
+  test("keeps inbound messages on the locked cross-shard create-or-update path", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: "incoming" }),
+    )
+  })
+
+  test("broadcasts a new message once", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockBroadcast).toHaveBeenCalledOnce()
+  })
+
+  test("does not rebroadcast a deduplicated redelivery", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.message).toBeNull()
+    expect(mockBroadcast).not.toHaveBeenCalled()
+  })
+
+  test("does not repeat side effects for a redelivered outgoing echo", async () => {
+    const channelCreatedAt = new Date("2026-09-24T23:59:00.000Z")
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        createdAt: channelCreatedAt,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    const storedEcho = {
+      ...fakeCreatedMessage,
+      messageType: "outgoing" as const,
+      createdAt: channelCreatedAt,
+    }
+    mockCreateOrUpdate
+      .mockResolvedValueOnce({ message: storedEcho, isNew: true })
+      .mockResolvedValueOnce({ message: storedEcho, isNew: false })
+
+    await receiveMessage(baseProps)
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        sourceId: baseIncomingMessage.sourceId,
+        createdAt: channelCreatedAt,
+      }),
+      { skipDedupLock: true },
+    )
+    expect(mockBroadcast).toHaveBeenCalledOnce()
+    expect(mockRecordInboundActivity).toHaveBeenCalledOnce()
+    expect(mockUpdateTracking).not.toHaveBeenCalled()
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "message:received",
+      expect.anything(),
+    )
+  })
+
+  test("uses processing time when an inbound message has no channel timestamp", async () => {
+    const metaTimestamp = new Date("2026-09-24T23:59:00.000Z")
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ createdAt: expect.any(Date) }),
+    )
+    expect(mockCreateOrUpdate.mock.calls[0]?.[0].createdAt).not.toEqual(
+      metaTimestamp,
+    )
   })
 
   test("auto-unblocks on inbound messages using the loaded contact", async () => {
@@ -880,13 +1092,10 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockRecordInboundActivity).not.toHaveBeenCalledWith(
       expect.objectContaining({ contactRepliedAt: expect.any(Date) }),
     )
-    // An outgoing webhook echo (e.g. an agent's native-app reply synced back
-    // in) is not a genuine contact-authored message, so it must not carry the
-    // `origin: "inbound"` discriminant the ads-conversion contactReplied
-    // listener keys off of.
-    expect(mockEmit).toHaveBeenCalledWith(
+    // Echoes count neither MAC/hourly activity nor contactReplied conversions.
+    expect(mockEmit).not.toHaveBeenCalledWith(
       "message:received",
-      expect.not.objectContaining({ origin: "inbound" }),
+      expect.anything(),
     )
     expect(mockMarkReadByOutbound).toHaveBeenCalledWith({
       workspaceId: "ws-1",
@@ -1609,7 +1818,10 @@ describe("receiveMessage — new contact MAC gate", () => {
       inbox: fakeInbox,
       integrationRow: fakeIntegrationRow,
     } as never)
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -1728,15 +1940,119 @@ describe("receiveMessage — new contact MAC gate", () => {
       expect.anything(),
     )
     expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+    expect(mockCreateContactWithoutMac).not.toHaveBeenCalled()
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
     expect(mockCreateOrUpdate).not.toHaveBeenCalled()
   })
 
-  test("still creates the contact for a first-party echo (echoOrigin: firstParty) to an unknown contact", async () => {
+  test("creates and stores a third-party echo without MAC when low-queue routing is enabled", async () => {
+    mockWorkerEnv.THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED = true
     mockRunChannelHandler.mockImplementation(
-      (_domain: string, action: string) => {
+      (
+        _domain: string,
+        action: string,
+        input?: { data?: { avatar?: boolean } },
+      ) => {
         if (action === "getProfile") {
-          return Promise.resolve({ firstName: "Agent Thread" })
+          return Promise.resolve({
+            firstName: "Third Party Echo",
+            ...(input?.data?.avatar === false
+              ? {}
+              : { avatar: "https://example.com/avatar.jpg" }),
+          })
+        }
+        return Promise.resolve({
+          message: {
+            ...baseIncomingMessage,
+            messageType: "outgoing",
+            attachments: [],
+          },
+          contact: { sourceId: "psid-123" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+          echoOrigin: "thirdParty",
+        })
+      },
+    )
+    mockCreateContactWithoutMac.mockResolvedValue({
+      newContact: {
+        ...fakeContact,
+        id: "contact-new",
+        firstName: "Third Party Echo",
+        blockedAt: null,
+        createdAt: new Date("2026-06-21T00:00:00Z"),
+      },
+      contactInbox: {
+        ...fakeContactInbox,
+        id: "ci-new",
+        contactId: "contact-new",
+      },
+      conversation: fakeConversation,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result).not.toBeNull()
+    expect(mockFindContactInbox).toHaveBeenCalledTimes(1)
+    expect(mockCreateContactWithoutMac).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+    expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+    expect(mockRunChannelHandler).toHaveBeenCalledWith(
+      "contact",
+      "getProfile",
+      expect.objectContaining({
+        data: { sourceId: "psid-123", avatar: false },
+      }),
+    )
+    const rows = await runCapturedNewContactCreate(mockCreateContactWithoutMac)
+    expect(rows).toContainEqual(
+      expect.objectContaining({ firstName: "Third Party Echo" }),
+    )
+    expect(rows).not.toContainEqual(
+      expect.objectContaining({ avatar: expect.anything() }),
+    )
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: "outgoing" }),
+    )
+    const { emitContactCreated } = await import("@chatbotx.io/events")
+    expect(emitContactCreated).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-new",
+      "Third Party Echo",
+      undefined,
+      undefined,
+      "ci-new",
+    )
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "message:received",
+      expect.anything(),
+    )
+  })
+
+  test.each([
+    false,
+    true,
+  ])("still creates the contact for a first-party echo to an unknown contact when the low-queue flag is %s", async (lowQueueEnabled) => {
+    mockWorkerEnv.THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED = lowQueueEnabled
+    mockRunChannelHandler.mockImplementation(
+      (
+        _domain: string,
+        action: string,
+        input?: { data?: { avatar?: boolean } },
+      ) => {
+        if (action === "getProfile") {
+          return Promise.resolve({
+            firstName: "Agent Thread",
+            ...(input?.data?.avatar === false
+              ? {}
+              : { avatar: "https://example.com/avatar.jpg" }),
+          })
         }
         return Promise.resolve({
           message: {
@@ -1752,36 +2068,70 @@ describe("receiveMessage — new contact MAC gate", () => {
         })
       },
     )
-    mockCreateNewContactWithMac.mockResolvedValue({
-      ok: true,
-      value: {
-        newContact: {
-          ...fakeContact,
-          id: "contact-new",
-          firstName: "Agent Thread",
-          blockedAt: null,
-          createdAt: new Date("2026-06-21T00:00:00Z"),
-        },
-        contactInbox: {
-          ...fakeContactInbox,
-          id: "ci-new",
-          contactId: "contact-new",
-        },
-        conversation: fakeConversation,
+    mockCreateContactWithoutMac.mockResolvedValue({
+      newContact: {
+        id: "contact-new",
+        workspaceId: "ws-1",
+        firstName: "Agent Thread",
+        phoneNumber: null,
+        email: null,
+        blockedAt: null,
+        createdAt: new Date("2026-06-21T00:00:00Z"),
       },
+      contactInbox: {
+        ...fakeContactInbox,
+        id: "ci-new",
+        contactId: "contact-new",
+      },
+      conversation: fakeConversation,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
     })
 
     const result = await receiveMessage(baseProps)
 
     expect(result).not.toBeNull()
+    expect(mockBuildContext).toHaveBeenCalledOnce()
+    expect(mockresolveTenantSettings).not.toHaveBeenCalled()
+    expect(mockCreateContactWithoutMac).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+    expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
     expect(mockRunChannelHandler).toHaveBeenCalledWith(
       "contact",
       "getProfile",
-      expect.objectContaining({ data: { sourceId: "psid-123" } }),
+      expect.objectContaining({
+        data: { sourceId: "psid-123", avatar: false },
+      }),
     )
-    expect(mockCreateNewContactWithMac).toHaveBeenCalled()
+    const rows = await runCapturedNewContactCreate(mockCreateContactWithoutMac)
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        firstName: "Agent Thread",
+      }),
+    )
+    expect(rows).not.toContainEqual(
+      expect.objectContaining({
+        avatar: expect.anything(),
+      }),
+    )
     expect(mockCreateOrUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ messageType: "outgoing" }),
+    )
+    const { emitContactCreated } = await import("@chatbotx.io/events")
+    expect(emitContactCreated).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-new",
+      "Agent Thread",
+      undefined,
+      undefined,
+      "ci-new",
+    )
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "message:received",
+      expect.anything(),
     )
   })
 
@@ -1816,6 +2166,7 @@ describe("receiveMessage — new contact MAC gate", () => {
       mockBuildContext.mockResolvedValue({
         workspaceId: "ws-1",
         auth: { metadata: { pageId: "page-1" } },
+        platform: { storageUrl: "https://files.example.test" },
       })
       mockRunChannelHandler.mockImplementation(
         (_domain: string, action: string, props: unknown) => {
@@ -1828,22 +2179,20 @@ describe("receiveMessage — new contact MAC gate", () => {
           return Promise.resolve(undefined)
         },
       )
-      mockCreateNewContactWithMac.mockResolvedValue({
-        ok: true,
-        value: {
-          newContact: {
-            ...fakeContact,
-            id: "contact-new",
-            blockedAt: null,
-            createdAt: new Date("2026-06-21T00:00:00Z"),
-          },
-          contactInbox: {
-            ...fakeContactInbox,
-            id: "ci-new",
-            contactId: "contact-new",
-          },
-          conversation: fakeConversation,
+      mockCreateContactWithoutMac.mockResolvedValue({
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          firstName: "Page Inbox Agent",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
         },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
       })
     })
 
@@ -1854,7 +2203,8 @@ describe("receiveMessage — new contact MAC gate", () => {
       })
 
       expect(result).not.toBeNull()
-      expect(mockCreateNewContactWithMac).toHaveBeenCalled()
+      expect(mockCreateContactWithoutMac).toHaveBeenCalled()
+      expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
       expect(mockCreateOrUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ messageType: "outgoing", text: "hi" }),
       )
@@ -1868,62 +2218,84 @@ describe("receiveMessage — new contact MAC gate", () => {
 
       expect(result).toBeNull()
       expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+      expect(mockCreateContactWithoutMac).not.toHaveBeenCalled()
       expect(mockCreateOrUpdate).not.toHaveBeenCalled()
     })
   })
 
-  test("still creates the contact for an unclassified outgoing echo (channel parser sets no echoOrigin)", async () => {
-    // Channels that do not classify echoes (e.g. a Zalo OA send) keep the
-    // create path; the harness only registers messenger + telegram, so
-    // telegram stands in for them.
-    vi.mocked(
-      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
-    ).mockResolvedValue({
-      inbox: { ...fakeInbox, channel: "telegram" },
-      integrationRow: fakeIntegrationRow,
-    } as never)
-    mockRunChannelHandler.mockResolvedValue({
-      message: {
-        ...baseIncomingMessage,
-        messageType: "outgoing",
-        attachments: [],
+  test.each([
+    false,
+    true,
+  ])("creates an unknown unclassified echo recipient without MAC when the low-queue flag is %s", async (lowQueueEnabled) => {
+    mockWorkerEnv.THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED = lowQueueEnabled
+    mockRunChannelHandler.mockImplementation(
+      (
+        _domain: string,
+        action: string,
+        input?: { data?: { avatar?: boolean } },
+      ) => {
+        if (action === "getProfile") {
+          return Promise.resolve({
+            firstName: "Unclassified Echo",
+            ...(input?.data?.avatar === false
+              ? {}
+              : { avatar: "https://example.com/avatar.jpg" }),
+          })
+        }
+        return Promise.resolve({
+          message: {
+            ...baseIncomingMessage,
+            messageType: "outgoing",
+            attachments: [],
+          },
+          contact: { sourceId: "psid-123" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+          echoOrigin: null,
+        })
       },
-      contact: { sourceId: "tg-user-1" },
-      postbackAction: null,
-      quickReplyAction: null,
-      ref: null,
-    })
-    mockCreateNewContactWithMac.mockResolvedValue({
-      ok: true,
-      value: {
-        newContact: {
-          ...fakeContact,
-          id: "contact-new",
-          blockedAt: null,
-          createdAt: new Date("2026-06-21T00:00:00Z"),
-        },
-        contactInbox: {
-          ...fakeContactInbox,
-          id: "ci-new",
-          contactId: "contact-new",
-        },
-        conversation: fakeConversation,
+    )
+    mockCreateContactWithoutMac.mockResolvedValue({
+      newContact: {
+        ...fakeContact,
+        id: "contact-new",
+        firstName: "Unclassified Echo",
+        blockedAt: null,
+        createdAt: new Date("2026-06-21T00:00:00Z"),
       },
+      contactInbox: {
+        ...fakeContactInbox,
+        id: "ci-new",
+        contactId: "contact-new",
+      },
+      conversation: fakeConversation,
     })
 
-    const result = await receiveMessage({
-      ...baseProps,
-      integrationType: "telegram",
-    })
+    const result = await receiveMessage(baseProps)
 
     expect(result).not.toBeNull()
-    expect(mockCreateNewContactWithMac).toHaveBeenCalled()
+    expect(mockCreateContactWithoutMac).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+    expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+    expect(mockRunChannelHandler).toHaveBeenCalledWith(
+      "contact",
+      "getProfile",
+      expect.objectContaining({
+        data: { sourceId: "psid-123", avatar: false },
+      }),
+    )
     expect(mockCreateOrUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ messageType: "outgoing" }),
     )
   })
 
-  test("still processes a third-party echo when the contact already exists", async () => {
+  test.each([
+    false,
+    true,
+  ])("still processes a third-party echo when the contact already exists and the low-queue flag is %s", async (lowQueueEnabled) => {
+    mockWorkerEnv.THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED = lowQueueEnabled
     mockFindContactInbox.mockResolvedValue({
       ...fakeContactInbox,
       contact: fakeContact,
@@ -1989,7 +2361,11 @@ describe("receiveMessage — new contact MAC gate", () => {
     )
   })
 
-  test("still creates the contact for a third-party story-reply echo (direction is flipped to incoming)", async () => {
+  test.each([
+    false,
+    true,
+  ])("still MAC-gates a third-party story-reply echo with the low-queue flag %s", async (lowQueueEnabled) => {
+    mockWorkerEnv.THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED = lowQueueEnabled
     mockRunChannelHandler.mockResolvedValue({
       message: {
         ...baseIncomingMessage,
@@ -2027,6 +2403,13 @@ describe("receiveMessage — new contact MAC gate", () => {
     const result = await receiveMessage(baseProps)
 
     expect(result).not.toBeNull()
+    expect(mockCreateNewContactWithMac).toHaveBeenCalled()
+    expect(mockCreateContactWithoutMac).not.toHaveBeenCalled()
+    expect(mockRunChannelHandler).toHaveBeenCalledWith(
+      "contact",
+      "getProfile",
+      expect.objectContaining({ data: { sourceId: "psid-123" } }),
+    )
     expect(mockCreateOrUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ messageType: "incoming" }),
     )
@@ -2078,6 +2461,13 @@ describe("receiveMessage — new contact MAC gate", () => {
 
     await receiveMessage(baseProps)
 
+    expect(mockCreateNewContactWithMac).toHaveBeenCalledTimes(1)
+    expect(mockCreateContactWithoutMac).not.toHaveBeenCalled()
+    expect(mockRunChannelHandler).toHaveBeenCalledWith(
+      "contact",
+      "getProfile",
+      expect.objectContaining({ data: { sourceId: "psid-123" } }),
+    )
     expect(mockCreateOrUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         messageType: "incoming",
@@ -2085,6 +2475,79 @@ describe("receiveMessage — new contact MAC gate", () => {
         senderId: "contact-new",
       }),
     )
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:received",
+      expect.objectContaining({ origin: "inbound" }),
+    )
+  })
+
+  test("recovers an unknown echo recipient when no-MAC creation loses the identity race", async () => {
+    const winnerContactInbox = {
+      ...fakeContactInbox,
+      id: "ci-winner",
+      contactId: "contact-winner",
+      contact: { ...fakeContact, id: "contact-winner" },
+    }
+    mockFindContactInbox
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(winnerContactInbox)
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    const raceError = Object.assign(new Error("duplicate key value"), {
+      code: "23505",
+    })
+    mockCreateContactWithoutMac.mockRejectedValueOnce(raceError)
+    mockIsUniqueViolationError.mockReturnValue(true)
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateContactWithoutMac).toHaveBeenCalledTimes(1)
+    expect(mockIsUniqueViolationError).toHaveBeenCalled()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ contactInboxId: "ci-winner" }),
+    )
+  })
+
+  test.each([
+    false,
+    true,
+  ])("keeps an inbound new contact behind the MAC gate when the low-queue flag is %s", async (lowQueueEnabled) => {
+    mockWorkerEnv.THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED = lowQueueEnabled
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateNewContactWithMac).toHaveBeenCalledTimes(1)
+    expect(mockCreateContactWithoutMac).not.toHaveBeenCalled()
   })
 
   test("creates the contact without profile data when getProfile rejects (e.g. consent error)", async () => {
@@ -2473,7 +2936,10 @@ describe("receiveMessage — referral-only events", () => {
       integrationRow: fakeIntegrationRow,
     } as never)
 
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -2609,7 +3075,10 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       integrationRow: fakeIntegrationRow,
     } as never)
 
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -3499,7 +3968,10 @@ describe("contact source taxonomy", () => {
       inbox: fakeInbox,
       integrationRow: fakeIntegrationRow,
     } as never)
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockCreateMessageRepository.mockResolvedValue({
       createOrUpdate: mockCreateOrUpdate,
       createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
@@ -4089,7 +4561,10 @@ describe("receiveMessage — BSUID resolver chain (D3)", () => {
       inbox: { ...fakeInbox, channel: "whatsapp" },
       integrationRow: fakeIntegrationRow,
     } as never)
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -4530,7 +5005,10 @@ describe("receiveMessage — new BSUID-keyed contact creation (D2/D8/§8.1)", ()
       inbox: { ...fakeInbox, channel: "whatsapp" },
       integrationRow: fakeIntegrationRow,
     } as never)
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })
@@ -4831,7 +5309,10 @@ describe("receiveMessage — outbound automated response on message echoes", () 
       integrationRow: fakeIntegrationRow,
     } as never)
 
-    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockBuildContext.mockResolvedValue({
+      platform: { storageUrl: "https://files.example.test" },
+      workspaceId: "ws-1",
+    })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://files.example.test",
     })

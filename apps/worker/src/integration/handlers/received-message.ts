@@ -34,6 +34,7 @@ import {
   contactInboxRepository,
   createMessageRepository,
   type MessageWithAttachments,
+  type RecentOutgoingMessageRow,
 } from "@chatbotx.io/database/repositories"
 import { contactInboxModel, contactModel } from "@chatbotx.io/database/schema"
 import type {
@@ -95,8 +96,10 @@ import {
 } from "@chatbotx.io/worker-config"
 import { UnrecoverableError } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
+import { env } from "../../env"
 import { LOCK_CONTENTION_POLICY } from "../../lib/lock-contention-deferral"
 import { logger } from "../../lib/logger"
+import type { ResolvedJobIntegration } from "../../lib/resolve-workspace-id"
 import {
   allIntegrations,
   integrationService,
@@ -115,6 +118,12 @@ import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
 type ContactInboxTracking = ContactInboxTrackingData
+type NewContactQuota = "mac" | "skip"
+type NewContactTransaction = Parameters<
+  Parameters<
+    typeof quotaEnforcementService.createContactWithoutMac
+  >[0]["create"]
+>[0]
 
 type ContactLocation = {
   latitude: number
@@ -141,6 +150,14 @@ const correctStoryReplyDirectionForNewContact = (
   }
   return message
 }
+
+const newContactQuotaFor = (
+  message: IncomingMessage | null,
+): NewContactQuota =>
+  message?.messageType === messageTypes.enum.outgoing &&
+  !getStoryReply(message.contentAttributes)
+    ? "skip"
+    : "mac"
 
 const APPOINTMENT_CANCEL_FEEDBACK_COPY = {
   en: {
@@ -195,12 +212,9 @@ export const metaReferralToContactSource = (
 }
 
 /**
- * A third-party echo (another app's send mirrored back by the channel, as
- * classified by the channel parser via `echoOrigin`) must not open a contact
- * on its own. First-party or unclassified echoes keep the create path so an
- * agent's first outbound thread still appears. Story-reply echoes are also
- * excluded: Meta delivers a customer's first story reply as an echo from the
- * page id, and `correctStoryReplyDirectionForNewContact` flips it to incoming.
+ * Identifies an outgoing, non-story-reply message the channel classified as third-party.
+ * Story replies are excluded because Meta can deliver a customer's first
+ * reply as an echo before `correctStoryReplyDirectionForNewContact` flips it.
  */
 const isThirdPartyEcho = (props: {
   message: IncomingMessage | null
@@ -210,8 +224,18 @@ const isThirdPartyEcho = (props: {
   props.message?.messageType === messageTypes.enum.outgoing &&
   !getStoryReply(props.message.contentAttributes)
 
+const shouldSkipUnknownThirdPartyEcho = (props: {
+  isThirdPartyEchoMessage: boolean
+  hasExistingContact: boolean
+  lowQueueEnabled: boolean
+}): boolean =>
+  !props.lowQueueEnabled &&
+  props.isThirdPartyEchoMessage &&
+  !props.hasExistingContact
+
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
+  resolvedIntegration?: ResolvedJobIntegration,
 ): Promise<{
   message: MessageWithAttachments | null
   conversation: ConversationModel
@@ -230,10 +254,11 @@ export const receiveMessage = async (
   }
 
   const dbIntegration =
-    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+    resolvedIntegration ??
+    (await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
       integrationType as IntegrationType,
       integrationIdentifier,
-    )
+    ))
   const { inbox, integrationRow } = dbIntegration
   let integration = allIntegrations[integrationType]
   if (!integration) {
@@ -252,14 +277,12 @@ export const receiveMessage = async (
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   const isWorkspaceActive = workspaceService.isActiveNow(workspace)
 
-  const { storageUrl } = await resolveTenantSettings({
-    workspaceId: inbox.workspaceId,
-  })
   const ctx = await buildContext({
     workspaceId: inbox.workspaceId,
     integrationType,
     integration: integrationRow,
   })
+  const { storageUrl } = ctx.platform
 
   const parsedMessage = await integration.runChannelHandler(
     "message",
@@ -292,22 +315,26 @@ export const receiveMessage = async (
     integrationIdentifier,
   })
 
-  // Third-party echoes for a contact this inbox has never seen are dropped
-  // before any contact, profile-fetch, or message write. Such tools fan out
-  // one echo per recipient; creating a contact for each one costs a Graph
-  // profile call plus three inserts and was backing up the queue. The contact
-  // is created on their first inbound message instead. The row resolved here
-  // is handed to `detectContactAndConversation` so the lookup runs once.
-  // Known gap: an echo racing the contact's very first inbound job can miss
-  // this lookup and be dropped; that one outgoing row is then never stored.
+  // D9 temporary guard: while low-queue routing is disabled, third-party
+  // echoes for unknown contacts are dropped before profile or message writes
+  // to protect the integration queue from broadcast fan-out. Once routing is
+  // enabled, fallbacks and non-plain echoes follow D4's no-MAC creation path.
+  // The resolved row is reused by `detectContactAndConversation`, so the
+  // identity lookup still runs only once.
   const isThirdPartyEchoMessage = isThirdPartyEcho({
     message: rawIncomingMessage,
     echoOrigin: parsedMessage.echoOrigin,
   })
   const existingContactMatch = isThirdPartyEchoMessage
-    ? await resolveExistingContactInbox({ inbox, incomingContact })
+    ? ((await resolveExistingContactInbox({ inbox, incomingContact })) ?? null)
     : undefined
-  if (isThirdPartyEchoMessage && !existingContactMatch) {
+  if (
+    shouldSkipUnknownThirdPartyEcho({
+      isThirdPartyEchoMessage,
+      hasExistingContact: Boolean(existingContactMatch),
+      lowQueueEnabled: env.THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED,
+    })
+  ) {
     logger.debug(
       {
         inboxId: inbox.id,
@@ -327,6 +354,8 @@ export const receiveMessage = async (
       incomingContact,
       inbox,
       integrationRow,
+      integrationContext: ctx,
+      newContactQuota: newContactQuotaFor(rawIncomingMessage),
       source:
         metaReferralToContactSource(referralSource) ??
         contactSources.enum.inboundMessage,
@@ -401,6 +430,7 @@ export const receiveMessage = async (
         contactInbox,
         conversation,
         incomingMessage,
+        createdAt: incomingMessage.createdAt,
         storageUrl,
         ...systemFieldUpdates,
       })
@@ -721,10 +751,10 @@ async function sendAppointmentCancelFeedback(input: {
  * longer window would start suppressing genuine agent replies that happen to
  * repeat something the bot said.
  */
-const SELF_SENT_ECHO_WINDOW_MS = 2 * 60 * 1000
+export const SELF_SENT_ECHO_WINDOW_MS = 2 * 60 * 1000
 
 /** Outgoing rows to compare against — enough to cover a multi-message reply. */
-const SELF_SENT_ECHO_LOOKBACK = 10
+export const SELF_SENT_ECHO_LOOKBACK = 10
 
 /**
  * Mirrors the `user &&` gate on the inbox call site
@@ -750,15 +780,14 @@ const SELF_SENT_ECHO_LOOKBACK = 10
  * echo before this helper runs, and its text must be non-null so unrelated
  * media rows cannot match through `null === null`.
  */
-const isEchoOfOwnSend = async (
+export const isEchoOfOwnSend = async (
   props: {
     conversation: ConversationModel
-    message: MessageWithAttachments
+    message: MessageModel & { attachments?: AttachmentModel[] }
   },
   options: { pendingOnly?: boolean } = {},
 ): Promise<boolean> => {
-  const { conversation, message } = props
-  const { pendingOnly = false } = options
+  const { conversation } = props
   const repository = await createMessageRepository()
   const recentOutgoing = await repository.findLastByConversation(
     conversation.id,
@@ -770,8 +799,35 @@ const isEchoOfOwnSend = async (
     },
   )
 
+  return isEchoOfOwnSendFromRecentOutgoing(
+    props,
+    recentOutgoing.map((candidate) => ({
+      ...candidate,
+      conversationId: candidate.conversationId ?? conversation.id,
+    })),
+    options,
+  )
+}
+
+type OwnSendCandidate = RecentOutgoingMessageRow & {
+  attachments?: AttachmentModel[]
+  sourceId?: string | null
+}
+
+export const isEchoOfOwnSendFromRecentOutgoing = (
+  props: {
+    conversation: Pick<ConversationModel, "id">
+    message: MessageModel & { attachments?: AttachmentModel[] }
+  },
+  recentOutgoing: OwnSendCandidate[],
+  options: { pendingOnly?: boolean } = {},
+): boolean => {
+  const { conversation, message } = props
+  const { pendingOnly = false } = options
+
   return recentOutgoing.some(
     (candidate) =>
+      candidate.conversationId === conversation.id &&
       candidate.id !== message.id &&
       (pendingOnly
         ? candidate.sourceId === null &&
@@ -787,16 +843,16 @@ const isEchoOfOwnSend = async (
  * would pair unrelated media rows).
  */
 const isSameOwnSendContent = (
-  candidate: MessageWithAttachments,
-  message: MessageWithAttachments,
+  candidate: OwnSendCandidate,
+  message: MessageModel & { attachments?: AttachmentModel[] },
 ): boolean => {
   if (candidate.text !== null || message.text !== null) {
     return candidate.text !== null && candidate.text === message.text
   }
-  const candidateSignature = attachmentSignature(candidate.attachments)
+  const candidateSignature = attachmentSignature(candidate.attachments ?? [])
   return (
     candidateSignature !== "" &&
-    candidateSignature === attachmentSignature(message.attachments)
+    candidateSignature === attachmentSignature(message.attachments ?? [])
   )
 }
 
@@ -810,7 +866,8 @@ const attachmentSignature = (
 
 // Creates or updates the message row (deduplicates webhook retries via sourceId),
 // updates contactInbox/conversation activity timestamps for new rows,
-// broadcasts the realtime event to the UI, and emits `message:received` to trigger flows.
+// broadcasts the realtime event to the UI, and emits `message:received` for
+// genuinely inbound rows.
 // Shared by `receiveMessage` and `receiveComment`.
 const saveAndBroadcastMessage = async (props: {
   inbox: InboxModel
@@ -887,7 +944,12 @@ const saveAndBroadcastMessage = async (props: {
     messageWithAttachments = result.result
     isNew = result.isNew
   } else {
-    const result = await repository.createOrUpdate(messageInput)
+    const canSkipDedupLock =
+      incomingMessage.messageType === "outgoing" &&
+      incomingMessage.createdAt !== undefined
+    const result = canSkipDedupLock
+      ? await repository.createOrUpdate(messageInput, { skipDedupLock: true })
+      : await repository.createOrUpdate(messageInput)
     messageWithAttachments = { ...result.message, attachments: [] }
     isNew = result.isNew
   }
@@ -993,7 +1055,7 @@ const saveAndBroadcastMessage = async (props: {
     }
   }
 
-  if (isNew) {
+  if (isNew && isInboundMessage) {
     emit(messageEventTypeSchema.enum["message:received"], {
       workspaceId: inbox.workspaceId,
       contactId: contactInbox.contactId,
@@ -1002,7 +1064,7 @@ const saveAndBroadcastMessage = async (props: {
       inboxId: inbox.id,
       occurredAt: newMessage.createdAt,
       sourceId: newMessage.sourceId ?? undefined,
-      origin: isInboundMessage ? "inbound" : undefined,
+      origin: "inbound",
       messageId: newMessage.id,
       isFirstIncomingMessage,
     })
@@ -1709,19 +1771,29 @@ export const detectContactAndConversation = async (props: {
     [x: string]: unknown
   }
   source: ContactSource
-  /** A match the caller already resolved for this identity; skips the lookup. */
-  existingContactMatch?: SourceScopedIdentityMatch<ContactInboxWithContact>
+  /** A match or miss the caller already resolved; skips the lookup. */
+  existingContactMatch?: SourceScopedIdentityMatch<ContactInboxWithContact> | null
+  newContactQuota?: NewContactQuota
+  integrationContext?: Awaited<ReturnType<typeof buildContext>>
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
   conversation: ConversationModel
   isNewContact: boolean
 }> => {
-  const { incomingContact, inbox, integrationRow, source } = props
+  const {
+    incomingContact,
+    inbox,
+    integrationRow,
+    source,
+    newContactQuota = "mac",
+    integrationContext,
+  } = props
 
   const existingContactMatch =
-    props.existingContactMatch ??
-    (await resolveExistingContactInbox({ inbox, incomingContact }))
+    props.existingContactMatch === undefined
+      ? await resolveExistingContactInbox({ inbox, incomingContact })
+      : (props.existingContactMatch ?? undefined)
 
   // The conversation source id (e.g. a Facebook post id for comments) keys the
   // conversation; it is null for ordinary DMs. Carried on the conversation row,
@@ -1752,6 +1824,8 @@ export const detectContactAndConversation = async (props: {
       integrationRow,
       incomingContact,
       source,
+      newContactQuota,
+      integrationContext,
       conversationSourceId,
       isBsuidKeyedIncomingContact,
     })
@@ -1796,6 +1870,8 @@ const createNewContactAndContactInbox = async (props: {
   }
   incomingContact: IncomingContact
   source: ContactSource
+  newContactQuota: NewContactQuota
+  integrationContext?: Awaited<ReturnType<typeof buildContext>>
   conversationSourceId: string | null
   isBsuidKeyedIncomingContact: boolean
 }): Promise<{
@@ -1809,6 +1885,8 @@ const createNewContactAndContactInbox = async (props: {
     integrationRow,
     incomingContact,
     source,
+    newContactQuota,
+    integrationContext,
     conversationSourceId,
     isBsuidKeyedIncomingContact,
   } = props
@@ -1824,18 +1902,23 @@ const createNewContactAndContactInbox = async (props: {
         : inbox.channel
     const profileIntegration = allIntegrations[integrationType]
     if (profileIntegration) {
-      const profileCtx = await buildContext({
-        workspaceId: inbox.workspaceId,
-        integrationType,
-        integration: integrationRow,
-      })
+      const profileCtx =
+        integrationContext ??
+        (await buildContext({
+          workspaceId: inbox.workspaceId,
+          integrationType,
+          integration: integrationRow,
+        }))
       try {
         const userProfile = await profileIntegration.runChannelHandler(
           "contact",
           "getProfile",
           {
             ctx: profileCtx,
-            data: { sourceId: incomingContact.sourceId },
+            data:
+              newContactQuota === "skip"
+                ? { sourceId: incomingContact.sourceId, avatar: false }
+                : { sourceId: incomingContact.sourceId },
           },
         )
         contactData = {
@@ -1893,105 +1976,126 @@ const createNewContactAndContactInbox = async (props: {
     throw new Error("Workspace not found")
   }
 
-  // New contact. The workspace owner is owner-derived, never request-derived.
-  // MAC (monthly active contacts) is the billing gate and a soft cap on
-  // resetting plans: admit atomically in Redis, create in a separate
-  // transaction, then commit or revoke the slot. Lifetime / period-less owners
-  // and `QUOTA_MAC_ADMISSION=lock` keep the distributed-lock gate. The
-  // `ContactActiveMonthly` presence row written inside the same
-  // transaction makes the `message:received` event emitted later a dedup no-op
-  // (no double count). The info-only `contacts` metric is recorded inside
-  // `createNewContactWithMac`.
   // Contact + ContactInbox creation share this one transaction (D8): a losing
   // insert's unique-violation rolls back both rows together — no orphan
   // Contact — and is recovered by the caller's try/catch above.
-  const result = await quotaEnforcementService.createNewContactWithMac({
-    ownerId: ws.ownerId,
-    workspaceId: inbox.workspaceId,
-    // This job is wrapped in `deferOnLockContention`: losing the lock parks
-    // the job instead of failing it, so wait briefly rather than pin a slot.
-    lockWaitSeconds: LOCK_CONTENTION_POLICY.lockWaitSeconds,
-    create: async (tx) => {
-      const newContact = await tx
-        .insert(contactModel)
-        .values({
-          id: createId(),
-          ...contactData,
-        })
-        .returning()
-        .then((rows) => rows[0])
-      if (!newContact) {
-        throw new Error("Contact not found")
-      }
-
-      const contactInbox = await tx
-        .insert(contactInboxModel)
-        .values({
-          id: createId(),
-          inboxId: inbox.id,
-          contactId: newContact.id,
-          originalContactId: newContact.id,
-          source,
-          sourceId: incomingContact.sourceId,
-          sourceUserId: incomingContact.sourceUserId ?? null,
-          sourceParentUserId: incomingContact.sourceParentUserId ?? null,
-          sourceUsername: incomingContact.sourceUsername ?? null,
-          channel: inbox.channel,
-          language: finalizedProfile.language,
-        })
-        .returning()
-        .then((rows) => rows[0])
-      if (!contactInbox) {
-        throw new Error("Contact inbox not found")
-      }
-
-      // A re-created contact keeps its history: cancel any pending message
-      // cleanup recorded when a contact with this inbox identity was deleted.
-      await messageCleanupService.cancelByInboxSource({
-        inboxId: inbox.id,
-        sourceIds: [contactInbox.sourceId],
-        tx,
+  const createRows = async (tx: NewContactTransaction) => {
+    const newContact = await tx
+      .insert(contactModel)
+      .values({
+        id: createId(),
+        ...contactData,
       })
+      .returning()
+      .then((rows) => rows[0])
+    if (!newContact) {
+      throw new Error("Contact not found")
+    }
 
-      const conversation = await conversationService.findOrCreate({
-        workspaceId: inbox.workspaceId,
-        contactId: newContact.id,
-        sourceId: conversationSourceId,
-        channelConversationId: incomingContact.channelConversationId,
-        tx,
-      })
-
-      return {
-        value: { newContact, contactInbox, conversation },
-        contactId: newContact.id,
-        contactInboxId: contactInbox.id,
+    const contactInbox = await tx
+      .insert(contactInboxModel)
+      .values({
+        id: createId(),
         inboxId: inbox.id,
-      }
-    },
-  })
-
-  if (!result.ok) {
-    // The MAC (billing) cap is a deterministic business outcome, not a
-    // transient failure: retrying never succeeds. Throw UnrecoverableError so
-    // BullMQ fails the job once without retry/backoff instead of dead-lettering
-    // the inbound message after exhausting attempts. Logged at `error` (with
-    // enough context to identify the dropped contact) so a brand-new
-    // contact's first-ever message being silently dropped is discoverable via
-    // alerting, not just the account-level MAC banner (which only reflects
-    // the aggregate cap, not this specific drop).
-    logger.error(
-      {
-        workspaceId: inbox.workspaceId,
-        ownerId: ws.ownerId,
-        channel: inbox.channel,
+        contactId: newContact.id,
+        originalContactId: newContact.id,
+        source,
         sourceId: incomingContact.sourceId,
-      },
-      "Inbound new-contact rejected: MAC limit reached",
-    )
-    throw new UnrecoverableError("contact_mac_limit_reached")
+        sourceUserId: incomingContact.sourceUserId ?? null,
+        sourceParentUserId: incomingContact.sourceParentUserId ?? null,
+        sourceUsername: incomingContact.sourceUsername ?? null,
+        channel: inbox.channel,
+        language: finalizedProfile.language,
+      })
+      .returning()
+      .then((rows) => rows[0])
+    if (!contactInbox) {
+      throw new Error("Contact inbox not found")
+    }
+
+    await messageCleanupService.cancelByInboxSource({
+      inboxId: inbox.id,
+      sourceIds: [contactInbox.sourceId],
+      tx,
+    })
+
+    const conversation = await conversationService.findOrCreate({
+      workspaceId: inbox.workspaceId,
+      contactId: newContact.id,
+      sourceId: conversationSourceId,
+      channelConversationId: incomingContact.channelConversationId,
+      tx,
+    })
+
+    return { newContact, contactInbox, conversation }
   }
 
-  const { newContact, contactInbox, conversation } = result.value
+  const createRowsBehindMacGate = async () => {
+    // New contact. The workspace owner is owner-derived, never request-derived.
+    // MAC (monthly active contacts) is the billing gate and a soft cap on
+    // resetting plans: admit atomically in Redis, create in a separate
+    // transaction, then commit or revoke the slot. Lifetime / period-less owners
+    // and `QUOTA_MAC_ADMISSION=lock` keep the distributed-lock gate. The
+    // `ContactActiveMonthly` presence row written inside the same
+    // transaction makes the `message:received` event emitted later a dedup no-op
+    // (no double count). The info-only `contacts` metric is recorded inside
+    // `createNewContactWithMac`.
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: ws.ownerId,
+      workspaceId: inbox.workspaceId,
+      // This job is wrapped in `deferOnLockContention`: losing the lock parks
+      // the job instead of failing it, so wait briefly rather than pin a slot.
+      lockWaitSeconds: LOCK_CONTENTION_POLICY.lockWaitSeconds,
+      create: async (tx) => {
+        const rows = await createRows(tx)
+        return {
+          value: rows,
+          contactId: rows.newContact.id,
+          contactInboxId: rows.contactInbox.id,
+          inboxId: inbox.id,
+        }
+      },
+    })
+
+    if (!result.ok) {
+      // The MAC (billing) cap is a deterministic business outcome, not a
+      // transient failure: retrying never succeeds. Throw UnrecoverableError so
+      // BullMQ fails the job once without retry/backoff instead of dead-lettering
+      // the inbound message after exhausting attempts. Logged at `error` (with
+      // enough context to identify the dropped contact) so a brand-new
+      // contact's first-ever message being silently dropped is discoverable via
+      // alerting, not just the account-level MAC banner (which only reflects
+      // the aggregate cap, not this specific drop).
+      logger.error(
+        {
+          workspaceId: inbox.workspaceId,
+          ownerId: ws.ownerId,
+          channel: inbox.channel,
+          sourceId: incomingContact.sourceId,
+        },
+        "Inbound new-contact rejected: MAC limit reached",
+      )
+      throw new UnrecoverableError("contact_mac_limit_reached")
+    }
+
+    return result.value
+  }
+
+  let createdRows: Awaited<ReturnType<typeof createRows>>
+  if (newContactQuota === "skip") {
+    // An outgoing echo recipient (except a story reply) is a contact but has no
+    // contact-authored activity yet, so it is not monthly-active. MAC starts only
+    // when the contact writes back.
+    createdRows = await quotaEnforcementService.createContactWithoutMac({
+      ownerId: ws.ownerId,
+      workspaceId: inbox.workspaceId,
+      create: createRows,
+    })
+  } else {
+    createdRows = await createRowsBehindMacGate()
+  }
+
+  const { newContact, contactInbox, conversation } = createdRows
 
   await emitContactCreated(
     newContact.workspaceId,

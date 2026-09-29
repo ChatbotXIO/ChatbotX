@@ -185,6 +185,55 @@ export const contactRepository = {
     })
   },
   /**
+   * Apply profiles fetched before a concurrent contact-inbox insert lost its
+   * race. Named contacts are deliberately immutable on this recovery path.
+   */
+  async bulkPatchProfiles(
+    props: {
+      workspaceId: string
+      profiles: Array<{
+        contactId: string
+        firstName?: string
+        lastName?: string
+        gender?: string
+        locale?: string
+        timezone?: string
+      }>
+    },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    if (props.profiles.length === 0) {
+      return
+    }
+
+    const values = props.profiles.map(
+      (profile) => sql`(
+        ${profile.contactId}::bigint,
+        ${profile.firstName ?? null}::text,
+        ${profile.lastName ?? null}::text,
+        ${profile.gender ?? null}::text,
+        ${profile.locale ?? null}::text,
+        ${profile.timezone ?? null}::text
+      )`,
+    )
+    await tx.execute(sql`
+      UPDATE "Contact" AS t
+      SET
+        "firstName" = v."firstName",
+        "lastName" = v."lastName",
+        "gender" = v."gender"::"gender",
+        "locale" = v."locale",
+        "timezone" = v."timezone"
+      FROM (VALUES ${sql.join(values, sql`, `)}) AS v(
+        "id", "firstName", "lastName", "gender", "locale", "timezone"
+      )
+      WHERE t."workspaceId" = ${props.workspaceId}
+        AND t."id" = v."id"
+        AND t."firstName" IS NULL
+        AND t."lastName" IS NULL
+    `)
+  },
+  /**
    * Atomically transition contacts to blocked, scoped to one workspace.
    *
    * The `isNull(blockedAt)` guard in the WHERE is load-bearing: callers use

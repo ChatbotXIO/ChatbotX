@@ -11,7 +11,9 @@ export type {
   FindLastByConversationOptions,
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
+  FindManyOnWriteShardBySourceIdsParams,
   FindMessageByIdParams,
+  FindRecentOutgoingByConversationsParams,
   FindRichResponseByButtonParams,
   FindTriggerMessageOptions,
   HardDeleteAllByContactInboxParams,
@@ -24,6 +26,7 @@ export type {
   PaginatedMessages,
   Pagination,
   PaginationCursor,
+  RecentOutgoingMessageRow,
   UpdateAttachmentParams,
 } from "./message-repository"
 export * from "./message-repository.factory"

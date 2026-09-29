@@ -1,15 +1,63 @@
-import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
+import {
+  type ContextQueue,
+  type EchoCollectorPort,
+  echoOrigins,
+  type HandleRequestProps,
+} from "@chatbotx.io/sdk"
 import z from "zod"
 import { MessengerWebhookException } from "../exception"
+import { parseEcho as classifyEcho } from "../lib/echo"
 import { logger } from "../lib/logger"
 import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import {
   incomingWebhookEventSchema,
   MESSENGER_MESSAGE_METADATA,
   type MessengerConfig,
+  type MessengerMessagingEvent,
   messengerFeedCommentValueSchema,
   messengerLeadgenValueSchema,
 } from "../schema"
+
+const PLAIN_ECHO_ATTACHMENT_TYPES = new Set([
+  "image",
+  "video",
+  "audio",
+  "file",
+  "template",
+])
+
+const isPlainEcho = (
+  messagingEvent: MessengerMessagingEvent,
+  entryId: string,
+): boolean => {
+  const { message } = messagingEvent
+  return (
+    message?.is_echo === true &&
+    message.metadata !== MESSENGER_MESSAGE_METADATA &&
+    !message.quick_reply &&
+    !messagingEvent.referral &&
+    !message.referral &&
+    !messagingEvent.postback?.referral &&
+    !messagingEvent.postback &&
+    !message.reply_to &&
+    !message.is_deleted &&
+    !messagingEvent.reaction &&
+    !messagingEvent.read &&
+    !messagingEvent.delivery &&
+    messagingEvent.sender.id === entryId &&
+    (message.attachments?.every((attachment) =>
+      PLAIN_ECHO_ATTACHMENT_TYPES.has(attachment.type),
+    ) ??
+      true)
+  )
+}
+
+const isThirdPartyPlainEcho = (
+  messagingEvent: MessengerMessagingEvent,
+  entryId: string,
+): boolean =>
+  isPlainEcho(messagingEvent, entryId) &&
+  classifyEcho(messagingEvent.message).origin === echoOrigins.enum.thirdParty
 
 const verifyWebhookSignature = async (
   payload: string,
@@ -35,6 +83,7 @@ const handleWebhookEvent = async (
   req: Request,
   config: MessengerConfig,
   queue: ContextQueue,
+  echoCollector?: EchoCollectorPort,
 ): Promise<void> => {
   try {
     const body = await req.text()
@@ -285,6 +334,46 @@ const handleWebhookEvent = async (
           continue
         }
 
+        if (echoCollector && isThirdPartyPlainEcho(messagingEvent, entry.id)) {
+          const scope = { channel: "messenger", identifier: entry.id }
+          let pushResult: Awaited<
+            ReturnType<typeof echoCollector.push>
+          > | null = null
+          try {
+            pushResult = await echoCollector.push({
+              ...scope,
+              item: {
+                entryId: entry.id,
+                entryTime: entry.time,
+                messaging: messagingEvent,
+              },
+            })
+          } catch (error) {
+            logger.error(
+              { err: error, entryId: entry.id },
+              "Messenger echo collector failed; using the single-event path",
+            )
+          }
+          if (pushResult?.accepted) {
+            try {
+              await echoCollector.schedule(scope)
+            } catch (error) {
+              // The accepted item is durable in Redis; the sweeper owns recovery.
+              logger.error(
+                { err: error, entryId: entry.id },
+                "Messenger echo collector scheduling failed; awaiting sweeper recovery",
+              )
+            }
+            continue
+          }
+          if (pushResult) {
+            logger.warn(
+              { entryId: entry.id, reason: pushResult.reason },
+              "Messenger echo collector rejected the event; using the single-event path",
+            )
+          }
+        }
+
         await queue?.add("incomingMessage", {
           type: "incomingMessage",
           data: {
@@ -334,6 +423,7 @@ export const webhookHandler = async ({
   config,
   req,
   queue,
+  echoCollector,
 }: HandleRequestProps<MessengerConfig>): Promise<string> => {
   try {
     if (req.method === "GET") {
@@ -341,7 +431,12 @@ export const webhookHandler = async ({
     }
 
     if (req.method === "POST") {
-      await handleWebhookEvent(req, config, queue as ContextQueue)
+      await handleWebhookEvent(
+        req,
+        config,
+        queue as ContextQueue,
+        echoCollector,
+      )
 
       return "ok"
     }

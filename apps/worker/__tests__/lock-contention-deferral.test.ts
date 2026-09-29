@@ -30,10 +30,20 @@ const makeJob = (
 })
 
 const lockError = () => new LockAcquisitionError("Failed to acquire lock")
+const REDLOCK_RETRY_DELAY_MS = 200
 
 beforeEach(() => {
   vi.clearAllMocks()
   vi.useRealTimers()
+})
+
+test("waits one second before deferring lock contention", () => {
+  expect(LOCK_CONTENTION_POLICY.lockWaitSeconds).toBe(1)
+  expect(
+    Math.ceil(
+      (LOCK_CONTENTION_POLICY.lockWaitSeconds * 1000) / REDLOCK_RETRY_DELAY_MS,
+    ),
+  ).toBe(5)
 })
 
 describe("deferralsSoFar", () => {

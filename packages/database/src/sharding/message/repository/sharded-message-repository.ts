@@ -13,6 +13,7 @@ import {
   isNotNull,
   isNull,
   lt,
+  lte,
   or,
   type SQL,
   sql,
@@ -30,13 +31,16 @@ import type {
   CreateAttachmentInput,
   CreateMessageInput,
   CreateMessageResult,
+  CreateOrUpdateMessageOptions,
   DistributedLock,
   FindAIContextMessagesOptions,
   FindAttachmentByIdParams,
   FindLastByConversationOptions,
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
+  FindManyOnWriteShardBySourceIdsParams,
   FindMessageByIdParams,
+  FindRecentOutgoingByConversationsParams,
   FindRichResponseByButtonParams,
   FindTriggerMessageOptions,
   HardDeleteAllByContactInboxParams,
@@ -48,6 +52,7 @@ import type {
   MessageWithAttachments,
   PaginatedMessages,
   PaginationCursor,
+  RecentOutgoingMessageRow,
   UpdateAttachmentParams,
 } from "../../../repositories/message/message-repository"
 import type { RichResponseContentAttributes } from "../../../schema"
@@ -474,9 +479,76 @@ export class ShardedMessageRepository implements IMessageRepository {
     return (row as MessageModel) ?? null
   }
 
-  async bulkCreate(
-    messages: CreateMessageInput[],
-  ): Promise<{ id: string; sourceId: string | null }[]> {
+  private async insertOrResolveConflict(
+    message: CreateMessageInput,
+    findConflict: () => Promise<MessageModel | null>,
+  ): Promise<CreateMessageResult> {
+    let created: MessageModel | null
+    try {
+      created = await this.insertIgnoringConflict(message)
+    } catch (error) {
+      this.logSaveFailure("createOrUpdate", message, error)
+      throw error
+    }
+    if (created) {
+      return { message: created, isNew: true }
+    }
+
+    const raced = await findConflict()
+    logger.info(
+      {
+        conversationId: message.conversationId,
+        sourceId: message.sourceId,
+        workspaceId: message.workspaceId,
+      },
+      "Duplicate message skipped (dedup conflict)",
+    )
+    if (raced) {
+      return { message: raced, isNew: false }
+    }
+
+    logger.warn(
+      {
+        conversationId: message.conversationId,
+        sourceId: message.sourceId,
+        workspaceId: message.workspaceId,
+      },
+      "Dedup conflict but row unreadable even on the write shard",
+    )
+    return { message: message as unknown as MessageModel, isNew: false }
+  }
+
+  async findManyOnWriteShardBySourceIds({
+    contactInboxIds,
+    sourceIds,
+    workspaceId,
+    sinceTime,
+  }: FindManyOnWriteShardBySourceIdsParams): Promise<MessageSourceRow[]> {
+    if (contactInboxIds.length === 0 || sourceIds.length === 0) {
+      return []
+    }
+
+    const writeClient = await this.shardManager.getShardForWrite(workspaceId)
+    return (await writeClient
+      .select({
+        id: messageModel.id,
+        conversationId: messageModel.conversationId,
+        contactInboxId: messageModel.contactInboxId,
+        sourceId: messageModel.sourceId,
+        createdAt: messageModel.createdAt,
+      })
+      .from(messageModel)
+      .where(
+        and(
+          eq(messageModel.workspaceId, workspaceId),
+          inArray(messageModel.contactInboxId, contactInboxIds),
+          inArray(messageModel.sourceId, sourceIds),
+          gte(messageModel.createdAt, sinceTime),
+        ),
+      )) as MessageSourceRow[]
+  }
+
+  async bulkCreate(messages: CreateMessageInput[]): Promise<MessageModel[]> {
     if (messages.length === 0) {
       return []
     }
@@ -492,7 +564,7 @@ export class ShardedMessageRepository implements IMessageRepository {
       const shardDb = await this.shardManager.getShardForWrite(workspaceId)
 
       const CHUNK_SIZE = 1000
-      const inserted: { id: string; sourceId: string | null }[] = []
+      const inserted: MessageModel[] = []
 
       for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
         const chunk = messages.slice(i, i + CHUNK_SIZE)
@@ -506,12 +578,9 @@ export class ShardedMessageRepository implements IMessageRepository {
               messageModel.createdAt,
             ],
           })
-          .returning({
-            id: messageModel.id,
-            sourceId: messageModel.sourceId,
-          })
+          .returning()
         for (const row of rows) {
-          inserted.push({ id: row.id, sourceId: row.sourceId })
+          inserted.push(row as MessageModel)
         }
       }
 
@@ -1222,7 +1291,7 @@ export class ShardedMessageRepository implements IMessageRepository {
 
   async bulkCreateAttachments(
     attachments: BulkCreateAttachmentInput[],
-  ): Promise<{ id: string }[]> {
+  ): Promise<AttachmentModel[]> {
     if (attachments.length === 0) {
       return []
     }
@@ -1250,14 +1319,72 @@ export class ShardedMessageRepository implements IMessageRepository {
             name: a.name,
           })),
         )
-        .returning({ id: attachmentModel.id })
+        .returning()
+    })
+  }
+
+  async findAttachmentSourceIdsByMessageIds(props: {
+    workspaceId: string
+    messages: Array<{ messageId: string; messageCreatedAt: Date }>
+  }): Promise<
+    Array<{
+      messageId: string
+      messageCreatedAt: Date
+      sourceId: string | null
+    }>
+  > {
+    if (props.messages.length === 0) {
+      return []
+    }
+
+    return await withShardRetry(async () => {
+      const shardDb = await this.shardManager.getShardForWrite(
+        props.workspaceId,
+      )
+      return await shardDb
+        .selectDistinct({
+          messageId: attachmentModel.messageId,
+          messageCreatedAt: attachmentModel.messageCreatedAt,
+          sourceId: attachmentModel.sourceId,
+        })
+        .from(attachmentModel)
+        .where(
+          and(
+            eq(attachmentModel.workspaceId, props.workspaceId),
+            or(
+              ...props.messages.map(({ messageId, messageCreatedAt }) =>
+                and(
+                  eq(attachmentModel.messageId, messageId),
+                  eq(attachmentModel.messageCreatedAt, messageCreatedAt),
+                ),
+              ),
+            ),
+          ),
+        )
     })
   }
 
   async createOrUpdate(
     message: CreateMessageInput,
+    options?: CreateOrUpdateMessageOptions,
   ): Promise<CreateMessageResult> {
     if (message.sourceId && message.conversationId && message.workspaceId) {
+      if (options?.skipDedupLock && message.messageType === "outgoing") {
+        const existing = await this.findBySourceId(
+          message.sourceId,
+          message.conversationId,
+          message.workspaceId,
+          getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
+        )
+        if (existing) {
+          return { message: existing, isNew: false }
+        }
+
+        return await this.insertOrResolveConflict(message, () =>
+          this.findOnWriteShardBySource(message),
+        )
+      }
+
       const lockKey = this.buildLockKey(
         message.conversationId,
         message.sourceId,
@@ -1274,54 +1401,16 @@ export class ShardedMessageRepository implements IMessageRepository {
           return { message: existing, isNew: false }
         }
 
-        // Only a genuine DB error (e.g. TimescaleDB decompression, connection
-        // loss) should throw here; a dedup conflict is a normal, expected
-        // outcome handled below — not an error.
-        let created: MessageModel | null
-        try {
-          created = await this.insertIgnoringConflict(message)
-        } catch (error) {
-          this.logSaveFailure("createOrUpdate", message, error)
-          throw error
-        }
-        if (created) {
-          return { message: created, isNew: true }
-        }
-
-        // Conflict: the dedup index already holds this message (echo redelivery,
-        // or read-replica lag on the guard read above). Idempotent no-op — log
-        // at info and return the existing row instead of throwing. Try a replica
-        // read first; if it still lags, read the write shard (primary), which is
-        // guaranteed to see the row the conflict proved exists.
-        const raced =
-          (await this.findBySourceId(
-            message.sourceId as string,
-            message.conversationId,
-            message.workspaceId,
-            getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
-          )) ?? (await this.findOnWriteShardBySource(message))
-        logger.info(
-          {
-            conversationId: message.conversationId,
-            sourceId: message.sourceId,
-            workspaceId: message.workspaceId,
-          },
-          "Duplicate message skipped (dedup conflict)",
+        return await this.insertOrResolveConflict(
+          message,
+          async () =>
+            (await this.findBySourceId(
+              message.sourceId as string,
+              message.conversationId,
+              message.workspaceId,
+              getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
+            )) ?? (await this.findOnWriteShardBySource(message)),
         )
-        if (raced) {
-          return { message: raced, isNew: false }
-        }
-        // Unreachable in practice (the primary must see a committed conflicting
-        // row). Non-throwing best-effort so the flow still advances in order.
-        logger.warn(
-          {
-            conversationId: message.conversationId,
-            sourceId: message.sourceId,
-            workspaceId: message.workspaceId,
-          },
-          "Dedup conflict but row unreadable even on the write shard",
-        )
-        return { message: message as unknown as MessageModel, isNew: false }
       }
 
       return this.executeWithLock(lockKey, doCreateOrUpdate)
@@ -1992,6 +2081,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     sourceIds,
     workspaceId,
     sinceTime,
+    strict = false,
   }: FindManyBySourceIdsParams): Promise<MessageSourceRow[]> {
     if (contactInboxIds.length === 0 || sourceIds.length === 0) {
       return []
@@ -2036,6 +2126,9 @@ export class ShardedMessageRepository implements IMessageRepository {
             { err: error, shardId: shardInfo.shard.id },
             "Shard query failed in findManyBySourceIds",
           )
+          if (strict) {
+            throw error
+          }
           return []
         }
       }),
@@ -2463,6 +2556,103 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
 
     return shardResults.flat().sort(compareMessageDesc).slice(0, options.limit)
+  }
+
+  async findRecentOutgoingByConversations({
+    conversationIds,
+    messageTypes,
+    perConversationLimit,
+    sinceTime,
+    workspaceId,
+  }: FindRecentOutgoingByConversationsParams): Promise<
+    RecentOutgoingMessageRow[]
+  > {
+    const uniqueConversationIds = [...new Set(conversationIds)]
+    if (uniqueConversationIds.length === 0) {
+      return []
+    }
+
+    let shards: MessageShardTimeRangeInfo[]
+    try {
+      shards = await this.getConversationReadShards(sinceTime, workspaceId)
+    } catch (error) {
+      throw this.toStorageError(
+        "select shards for recent outgoing messages by conversations",
+        error,
+      )
+    }
+    if (shards.length === 0) {
+      throw new MessageShardUnavailableError(
+        "No message shards are available for recent outgoing-message read",
+      )
+    }
+
+    const shardResults = await Promise.all(
+      shards.map(async (shardInfo) => {
+        try {
+          return await this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            async (shardClient) => {
+              const rowNumber =
+                sql<number>`row_number() over (partition by ${messageModel.conversationId} order by ${messageModel.createdAt} desc, ${messageModel.id} desc)`.as(
+                  "rowNumber",
+                )
+              const rankedMessages = shardClient
+                .select({
+                  id: messageModel.id,
+                  conversationId: messageModel.conversationId,
+                  text: messageModel.text,
+                  createdAt: messageModel.createdAt,
+                  rowNumber,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.workspaceId, workspaceId),
+                    inArray(messageModel.conversationId, uniqueConversationIds),
+                    gte(messageModel.createdAt, sinceTime),
+                    inArray(messageModel.messageType, messageTypes),
+                  ),
+                )
+                .as("rankedMessages")
+
+              return await shardClient
+                .select({
+                  id: rankedMessages.id,
+                  conversationId: rankedMessages.conversationId,
+                  text: rankedMessages.text,
+                  createdAt: rankedMessages.createdAt,
+                })
+                .from(rankedMessages)
+                .where(lte(rankedMessages.rowNumber, perConversationLimit))
+                .orderBy(
+                  desc(rankedMessages.createdAt),
+                  desc(rankedMessages.id),
+                )
+            },
+          )
+        } catch (error) {
+          throw this.toStorageError(
+            "find recent outgoing messages by conversations",
+            error,
+          )
+        }
+      }),
+    )
+
+    const rowsPerConversation = new Map<string, number>()
+    return shardResults
+      .flat()
+      .sort(compareMessageDesc)
+      .filter(({ conversationId }) => {
+        const rowCount = rowsPerConversation.get(conversationId) ?? 0
+        if (rowCount >= perConversationLimit) {
+          return false
+        }
+        rowsPerConversation.set(conversationId, rowCount + 1)
+        return true
+      })
+      .map(({ id, conversationId, text }) => ({ id, conversationId, text }))
   }
 
   async findManyByIds(

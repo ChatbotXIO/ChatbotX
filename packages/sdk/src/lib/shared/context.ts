@@ -15,6 +15,15 @@ export type ContextQueue = {
   add(name: string, payload: any, opts?: any): Promise<any>
 }
 
+export type EchoCollectorPort = {
+  push(event: {
+    channel: string
+    identifier: string
+    item: Record<string, unknown>
+  }): Promise<{ accepted: boolean; reason?: string }>
+  schedule(scope: { channel: string; identifier: string }): Promise<void>
+}
+
 export type AuthStore<AO extends AuthValue = AuthValue> = {
   load: () => Promise<AO>
   save: (auth: AO) => Promise<void>

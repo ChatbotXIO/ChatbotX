@@ -19,11 +19,15 @@ const {
   mockWorkspaceUsageIncrement,
   mockEmit,
   mockEmitContactCreated,
+  mockLoggerError,
+  mockQuotaIncrementBy,
 } = vi.hoisted(() => ({
   mockResolveOrCreateContactLinks: vi.fn(),
   mockWorkspaceUsageIncrement: vi.fn().mockResolvedValue(undefined),
   mockEmit: vi.fn(() => Promise.resolve()),
   mockEmitContactCreated: vi.fn(() => Promise.resolve()),
+  mockLoggerError: vi.fn(),
+  mockQuotaIncrementBy: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("../src/coexist-import/service", () => ({
@@ -38,9 +42,16 @@ vi.mock("../src/workspace-usage/service", () => ({
   },
 }))
 
+vi.mock("../src/quota-enforcement/service", () => ({
+  quotaEnforcementService: { incrementBy: mockQuotaIncrementBy },
+}))
+
 vi.mock("@chatbotx.io/event-bus", () => ({ emit: mockEmit }))
 vi.mock("@chatbotx.io/events", () => ({
   emitContactCreated: mockEmitContactCreated,
+}))
+vi.mock("../src/logger", () => ({
+  logger: { error: mockLoggerError, warn: vi.fn() },
 }))
 
 const { bulkImportChannelContacts } = await import(
@@ -104,6 +115,7 @@ describe("bulkImportChannelContacts", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockWorkspaceUsageIncrement.mockResolvedValue(undefined)
+    mockQuotaIncrementBy.mockResolvedValue(undefined)
   })
 
   it("returns zero counts without calling resolveOrCreateContactLinks for an empty batch", async () => {
@@ -207,6 +219,56 @@ describe("bulkImportChannelContacts", () => {
     })
   })
 
+  it("increments owner and pool-aware contact quota once when explicitly requested", async () => {
+    stubNewContactsResolution([
+      {
+        sourceId: "src-1",
+        contactId: "id-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+      {
+        sourceId: "src-2",
+        contactId: "id-2",
+        contactInboxId: "ci-2",
+        conversationId: "conv-2",
+      },
+    ])
+
+    await bulkImportChannelContacts({
+      inbox,
+      workspaceId,
+      ownerId: "owner-1",
+      contacts: [contact("src-1"), contact("src-2")],
+    })
+
+    expect(mockQuotaIncrementBy).toHaveBeenCalledOnce()
+    expect(mockQuotaIncrementBy).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "contacts",
+      count: 2,
+    })
+  })
+
+  it("keeps owner-level quota accounting disabled for existing callers", async () => {
+    stubNewContactsResolution([
+      {
+        sourceId: "src-1",
+        contactId: "id-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+    ])
+
+    await bulkImportChannelContacts({
+      inbox,
+      workspaceId,
+      contacts: [contact("src-1")],
+    })
+
+    expect(mockQuotaIncrementBy).not.toHaveBeenCalled()
+  })
+
   it("newContactInboxIds narrows contactInboxIds to only the newly-created sourceIds", async () => {
     mockResolveOrCreateContactLinks.mockResolvedValueOnce({
       importedContacts: 1,
@@ -296,6 +358,57 @@ describe("bulkImportChannelContacts", () => {
     )
   })
 
+  it("waits for all new-contact emissions and keeps their failures non-fatal", async () => {
+    stubNewContactsResolution([
+      {
+        sourceId: "src-1",
+        contactId: "id-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+    ])
+    let rejectContactCreated: ((reason: Error) => void) | undefined
+    let rejectAnalytics: ((reason: Error) => void) | undefined
+    mockEmitContactCreated.mockReturnValueOnce(
+      new Promise((_resolve, reject) => {
+        rejectContactCreated = reject
+      }),
+    )
+    mockEmit.mockReturnValueOnce(
+      new Promise((_resolve, reject) => {
+        rejectAnalytics = reject
+      }),
+    )
+
+    let settled = false
+    const resultPromise = bulkImportChannelContacts({
+      inbox,
+      workspaceId,
+      contacts: [contact("src-1")],
+    }).then((result) => {
+      settled = true
+      return result
+    })
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(settled).toBe(false)
+
+    const contactError = new Error("contact event unavailable")
+    const analyticsError = new Error("analytics unavailable")
+    rejectContactCreated?.(contactError)
+    rejectAnalytics?.(analyticsError)
+
+    await expect(resultPromise).resolves.toMatchObject({ importedContacts: 1 })
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      { err: contactError },
+      "[bulk-import] Failed to emit contactCreated event",
+    )
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      { err: analyticsError },
+      "[bulk-import] Failed to emit contact:created",
+    )
+  })
+
   it("increments workspace usage (info-only) for newly-created contacts", async () => {
     stubNewContactsResolution([
       {
@@ -342,8 +455,10 @@ describe("bulkImportChannelContacts", () => {
     })
 
     expect(result.importedContacts).toBe(0)
+    expect(result.newContactInboxIds).toEqual(new Map())
     expect(mockWorkspaceUsageIncrement).not.toHaveBeenCalled()
     expect(mockEmitContactCreated).not.toHaveBeenCalled()
+    expect(mockEmit).not.toHaveBeenCalled()
   })
 
   it("swallows a workspace-usage increment failure without throwing", async () => {

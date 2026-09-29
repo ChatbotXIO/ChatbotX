@@ -104,6 +104,7 @@ export const deleteUserPersistentMenu = (props: {
 const fetchUserProfile = async (props: {
   ctx: Context<MessengerAuthValue>
   sourceId: string
+  avatar?: boolean
 }): Promise<FacebookUserProfile> =>
   await facebookGraphClient.get<FacebookUserProfile>(
     `${props.ctx.auth.metadata.version}/${props.sourceId}`,
@@ -112,7 +113,10 @@ const fetchUserProfile = async (props: {
         Authorization: `Bearer ${props.ctx.auth.tokens.accessToken}`,
       },
       searchParams: {
-        fields: "first_name,last_name,profile_pic,locale,timezone,gender",
+        fields:
+          props.avatar === false
+            ? "first_name,last_name,locale,timezone,gender"
+            : "first_name,last_name,profile_pic,locale,timezone,gender",
       },
     },
   )
@@ -153,11 +157,19 @@ const isPageNodeFieldError = (error: unknown): boolean => {
 const fetchPublicUserProfile = async (props: {
   ctx: Context<MessengerAuthValue>
   sourceId: string
+  avatar?: boolean
 }): Promise<FacebookPublicUserProfile> => {
+  const userFields =
+    props.avatar === false
+      ? "first_name,last_name,name"
+      : PUBLIC_USER_PROFILE_FIELDS
+  const pageFields =
+    props.avatar === false ? "name" : PUBLIC_PAGE_PROFILE_FIELDS
+
   try {
     return await fetchPublicProfileFields({
       ...props,
-      fields: PUBLIC_USER_PROFILE_FIELDS,
+      fields: userFields,
     })
   } catch (error) {
     if (!isPageNodeFieldError(error)) {
@@ -165,7 +177,7 @@ const fetchPublicUserProfile = async (props: {
     }
     return await fetchPublicProfileFields({
       ...props,
-      fields: PUBLIC_PAGE_PROFILE_FIELDS,
+      fields: pageFields,
     })
   }
 }
@@ -184,6 +196,7 @@ const getPublicPictureUrl = (
 const fetchProfileWithPublicFallback = async (props: {
   ctx: Context<MessengerAuthValue>
   sourceId: string
+  avatar?: boolean
 }): Promise<{ profile: FacebookUserProfile; pictureUrl?: string }> => {
   let messengerProfile: FacebookUserProfile | undefined
   let messengerError: unknown
@@ -193,7 +206,7 @@ const fetchProfileWithPublicFallback = async (props: {
     messengerError = error
   }
 
-  if (messengerProfile?.profile_pic) {
+  if (props.avatar !== false && messengerProfile?.profile_pic) {
     return {
       profile: messengerProfile,
       pictureUrl: messengerProfile.profile_pic,
@@ -224,18 +237,20 @@ const fetchProfileWithPublicFallback = async (props: {
         publicProfile.name,
       last_name: messengerProfile?.last_name ?? publicProfile.last_name,
     },
-    pictureUrl: getPublicPictureUrl(publicProfile),
+    pictureUrl:
+      props.avatar === false ? undefined : getPublicPictureUrl(publicProfile),
   }
 }
 
 export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
-  ({ data: { sourceId }, ctx }) => {
+  ({ data: { sourceId, avatar }, ctx }) => {
     const endpoint = `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`
 
     return rescue(endpoint, async () => {
       const { profile, pictureUrl } = await fetchProfileWithPublicFallback({
         ctx,
         sourceId,
+        avatar,
       })
 
       const result: IncomingContact = {
