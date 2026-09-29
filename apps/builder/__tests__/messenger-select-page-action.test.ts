@@ -31,6 +31,7 @@ const {
   getUserPagesMock,
   loggerWarnMock,
   loggerErrorMock,
+  logMessengerWelcomeProfileMock,
   persistIntegrationUserInfoMock,
   resolveConnectSessionMock,
   runChannelHandlerMock,
@@ -46,6 +47,7 @@ const {
   getUserPagesMock: vi.fn(),
   loggerWarnMock: vi.fn(),
   loggerErrorMock: vi.fn(),
+  logMessengerWelcomeProfileMock: vi.fn(),
   persistIntegrationUserInfoMock: vi.fn(),
   resolveConnectSessionMock: vi.fn(),
   runChannelHandlerMock: vi.fn(),
@@ -92,6 +94,7 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/integration-messenger", () => ({
   getUserPages: getUserPagesMock,
   integration: { runChannelHandler: runChannelHandlerMock },
+  logMessengerWelcomeProfile: logMessengerWelcomeProfileMock,
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
@@ -362,6 +365,9 @@ describe("connectMessengerPage", () => {
       channelType: "messenger",
       integrationId: "integration-1",
     })
+    expect(logMessengerWelcomeProfileMock).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "pageConnected" }),
+    )
 
     const order = [
       getUserPagesMock,
@@ -369,6 +375,7 @@ describe("connectMessengerPage", () => {
       subscribePageToAppWebhookMock,
       connectPageMock,
       runChannelHandlerMock,
+      logMessengerWelcomeProfileMock,
       updateWorkspaceLogoMock,
       persistIntegrationUserInfoMock,
       enqueueChannelScanMock,

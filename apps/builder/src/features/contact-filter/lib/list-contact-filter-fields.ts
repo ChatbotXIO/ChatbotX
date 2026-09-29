@@ -3,7 +3,10 @@ import {
   customFieldService,
   tagService,
 } from "@chatbotx.io/business"
-import { CONTACT_FILTER_FIELD_DEFINITIONS } from "@/features/contact-filter/schema"
+import {
+  CONTACT_FILTER_FIELD_DEFINITIONS,
+  convertCustomFieldTypeToConditionType,
+} from "@/features/contact-filter/schema"
 import type { ListContactFilterFieldsPublicResponse } from "@/features/contact-filter/schema/public"
 import { enabledOperatorsForStaticField } from "@/features/contact-filter/schema/static-field-filter"
 
@@ -27,6 +30,17 @@ export async function listContactFilterFieldsForAPI(props: {
     tagService.listActive({ workspaceId }),
   ])
 
+  const toFilterField = (field: {
+    id: string
+    name: string
+    type: string
+  }) => ({
+    id: field.id,
+    name: field.name,
+    type: field.type,
+    valueType: convertCustomFieldTypeToConditionType(field.type),
+  })
+
   const staticFields = CONTACT_FILTER_FIELD_DEFINITIONS.filter(
     (def): def is typeof def & { hidden?: false } =>
       !("hidden" in def && def.hidden),
@@ -37,5 +51,10 @@ export async function listContactFilterFieldsForAPI(props: {
     operators: enabledOperatorsForStaticField(def.field) as string[],
   }))
 
-  return { staticFields, customFields, botFields, tags }
+  return {
+    staticFields,
+    customFields: customFields.map(toFilterField),
+    botFields: botFields.map(toFilterField),
+    tags,
+  }
 }

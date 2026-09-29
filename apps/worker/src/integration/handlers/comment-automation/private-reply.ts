@@ -1,8 +1,8 @@
-import { conversationService } from "@chatbotx.io/business"
-import type {
-  ChannelType,
-  FBCommentReply,
-} from "@chatbotx.io/database/partials"
+import {
+  conversationService,
+  recordDeliveredPrivateReply,
+} from "@chatbotx.io/business"
+import type { CommentReply } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { COMMENT_AUTOMATION_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
@@ -18,6 +18,11 @@ import {
   type MessengerAuthValue,
   sendPrivateReply,
 } from "@chatbotx.io/integration-messenger"
+import {
+  sendPrivateReply as sendTiktokPrivateReply,
+  type TiktokAuthValue,
+} from "@chatbotx.io/integration-tiktok"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
   AIJobAction,
@@ -25,21 +30,53 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { emitBotMessageSentEvents } from "../../../chat/handlers/send-message"
 import { logger } from "../../../lib/logger"
+import { TIKTOK_HIGH_INTENT_ATTRIBUTE } from "../tiktok-high-intent-comment"
 import type { CommentAutomationChannelType } from "./channel-type"
 import type { CommentAutomationDedup } from "./dedup"
 import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
 
-/**
- * Meta accepts a comment_id-anchored DM only within 7 days of the comment's
- * creation (Instagram Live is stricter still: during the broadcast only). Past
- * that the Send API rejects the call, so a backlogged queue or a long
- * `replyAfter` would surface as an opaque channel error instead of a skip.
- */
-const PRIVATE_REPLY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000
 
 /**
- * Whether the DM would leave after Meta's 7-day comment window has closed.
+ * How long after a comment its channel still accepts a comment-anchored DM.
+ *
+ * Meta allows 7 days (Instagram Live is stricter still: during the broadcast
+ * only). TikTok allows 48 hours. Past that the Send API rejects the call, so a
+ * backlogged queue or a long `replyAfter` would surface as an opaque channel
+ * error instead of a skip.
+ *
+ * Threads has no DM at all, so its entry is never consulted — zero rather than
+ * a number that would read as a real allowance.
+ */
+const PRIVATE_REPLY_WINDOW_MS_BY_CHANNEL: Record<
+  CommentAutomationChannelType,
+  number
+> = {
+  messenger: 7 * DAY_MS,
+  instagram: 7 * DAY_MS,
+  instagramFacebook: 7 * DAY_MS,
+  threads: 0,
+  tiktok: 2 * DAY_MS,
+}
+
+/** The window in words, for an `errorDetail` a workspace has to act on. */
+const PRIVATE_REPLY_WINDOW_LABEL: Record<CommentAutomationChannelType, string> =
+  {
+    messenger: "Meta's 7-day private reply window",
+    instagram: "Meta's 7-day private reply window",
+    instagramFacebook: "Meta's 7-day private reply window",
+    threads: "the private reply window",
+    tiktok: "TikTok's 48-hour Comment-to-Message window",
+  }
+
+export const privateReplyWindowLabel = (
+  channelType: CommentAutomationChannelType,
+): string => PRIVATE_REPLY_WINDOW_LABEL[channelType]
+
+/**
+ * Whether the DM would leave after the channel's comment window has closed.
  *
  * `delay` is part of the answer because the DM only leaves once the job's delay
  * has elapsed, so a comment still inside the window *now* can fall outside it by
@@ -48,20 +85,55 @@ const PRIVATE_REPLY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
  * Exported because the caller gates on this before dispatching, so it can
  * record the blocked delivery on the automation's analytics timeline —
  * `executePrivateReply` still checks it too, but by then there is no caller
- * context to record with.
+ * context to record with. Both sides must pass the same `channelType` or the
+ * "defence in depth" check below stops agreeing with the gate.
  */
 export function isOutsidePrivateReplyWindow(props: {
+  channelType: CommentAutomationChannelType
   createdTime: number
   delay: number
 }): boolean {
   const commentAgeAtSendMs = Date.now() + props.delay - props.createdTime * 1000
-  return commentAgeAtSendMs > PRIVATE_REPLY_WINDOW_MS
+  return (
+    commentAgeAtSendMs > PRIVATE_REPLY_WINDOW_MS_BY_CHANNEL[props.channelType]
+  )
+}
+
+/**
+ * Channels whose DM is permitted only for a comment the channel itself singled
+ * out, rather than for any comment the automation matched.
+ *
+ * TikTok is the only one: Comment-to-Message accepts a `comment_id` only after
+ * its own classifier flags the comment as high intent, reported on a separate
+ * webhook that may arrive long after — or never. So the private branch cannot
+ * be dispatched on the `comment.update` pass the way Meta's is; it is deferred
+ * until the flag shows up. An allowlist, so a new channel keeps the ordinary
+ * immediate behaviour unless someone opts it in deliberately.
+ */
+const CHANNELS_WITH_CONDITIONAL_PRIVATE_REPLY = new Set<string>(["tiktok"])
+
+export function privateReplyRequiresHighIntent(
+  channelType: CommentAutomationChannelType,
+): boolean {
+  return CHANNELS_WITH_CONDITIONAL_PRIVATE_REPLY.has(channelType)
+}
+
+/**
+ * Whether TikTok has flagged this comment as high intent, read off the comment
+ * message's own `contentAttributes` where the `im_receive_high_intent_comment`
+ * handler merges it.
+ */
+export function isCommentFlaggedHighIntent(
+  contentAttributes: Record<string, unknown> | null | undefined,
+): boolean {
+  return Boolean(contentAttributes?.[TIKTOK_HIGH_INTENT_ATTRIBUTE])
 }
 
 export type PrivateReplyAuth =
   | MessengerAuthValue
   | InstagramAuthValue
   | InstagramFacebookAuthValue
+  | TiktokAuthValue
 
 export type PrivateReplyTextSender = (
   auth: PrivateReplyAuth,
@@ -99,9 +171,29 @@ export const PRIVATE_REPLY_TEXT_SENDERS: Record<
   // comment can only be answered publicly. Every private-reply path — text,
   // flow and AIAgent alike — therefore skips on Threads.
   threads: null,
+  // Comment-to-Message: `direct_reply` on `business/message/send/` addresses
+  // the DM by comment id, so unlike every other TikTok send it needs no
+  // existing `conversation_id`. It is NOT the unconditional capability the Meta
+  // channels have — TikTok only accepts a comment its own classifier flagged as
+  // high intent — which is why `privateReplyRequiresHighIntent` gates dispatch
+  // separately from this map.
+  tiktok: (auth, commentId, text) =>
+    sendTiktokPrivateReply(auth as TiktokAuthValue, commentId, text),
 }
 
-/** Whether the channel can answer a comment with a private DM. */
+/**
+ * Whether the channel can answer a comment with a private DM.
+ *
+ * Still read off the senders map, because dispatch is what "supported" means
+ * here. `packages/analytics` needs the same answer to decide whether a public
+ * reply moves the lifetime counters (`countsTowardStats`) and cannot import
+ * this module — it would pull every Meta integration into the analytics
+ * package — so the capability is duplicated as
+ * `commentAutomationChannelSupportsPrivateReply` in `@chatbotx.io/database/partials`.
+ * `comment-automation.test.ts` asserts the two agree for every channel: let
+ * them drift and a channel's replies are dispatched one way and counted the
+ * other.
+ */
 export function supportsPrivateReply(
   channelType: CommentAutomationChannelType,
 ): boolean {
@@ -119,10 +211,10 @@ export function supportsPrivateReply(
  * comment_id-anchored Send API.
  *
  * The `sourceId: null` fallback covers a contact whose first ever interaction
- * is this comment. It holds because every comment-automation channel
- * (messenger, instagram, instagramFacebook) keys its DM conversation with a
- * null sourceId — revisit it if a channel like TikTok, whose DM lives on a
- * non-null sourceId, ever grows comment automation.
+ * is this comment. It holds on every channel: the DM conversation is keyed by a
+ * null sourceId everywhere, and a channel that needs its own conversation id to
+ * address the DM (TikTok) carries it on
+ * `additionalAttributes.channelConversationId` instead of in `sourceId`.
  */
 async function resolveDirectMessageConversationId(ctx: {
   commentId: string
@@ -134,7 +226,6 @@ async function resolveDirectMessageConversationId(ctx: {
     const existing = await conversationService.findDMByContact({
       workspaceId: ctx.workspaceId,
       contactId: ctx.contactInbox.contactId,
-      channel: ctx.contactInbox.channel as ChannelType,
     })
     if (existing) {
       return existing.id
@@ -147,7 +238,8 @@ async function resolveDirectMessageConversationId(ctx: {
     })
     return created.id
   } catch (err) {
-    // Fall back to the pre-#1063 behaviour (flow starts, on the wrong
+    // Flow-only fallback — never reuse this to decide where a message row is
+    // written. Fall back to the pre-#1063 behaviour (flow starts, on the wrong
     // conversation) rather than throwing: the caller would mark the dispatch
     // failed, skip the dedup row, and a job retry would post the public reply
     // a second time.
@@ -160,13 +252,87 @@ async function resolveDirectMessageConversationId(ctx: {
 }
 
 /**
+ * Channels whose inline private DM would otherwise never reach the inbox.
+ *
+ * Meta's Send API echoes the DM back, but every Meta send path stamps
+ * `metadata` so the echo is skipped as our own — and the inline send writes no
+ * `Message` row, so a contact whose first ever interaction is this comment got
+ * no DM conversation at all. TikTok is left out on purpose: its `im_send_msg`
+ * echo carries no such marker and is ingested, so a row written here would
+ * show the DM twice.
+ */
+const CHANNELS_RECORDING_INLINE_PRIVATE_REPLY =
+  new Set<CommentAutomationChannelType>([
+    "messenger",
+    "instagram",
+    "instagramFacebook",
+  ])
+
+function readSentMessageId(sendResult: unknown): string | null {
+  if (typeof sendResult !== "object" || sendResult === null) {
+    return null
+  }
+  const messageId = (sendResult as { message_id?: unknown }).message_id
+  return typeof messageId === "string" ? messageId : null
+}
+
+/**
+ * Writes an inline-sent private DM (text or AIAgent reply) onto the contact's
+ * DM conversation, creating that conversation when this comment is the
+ * contact's first interaction, so the DM shows in the inbox the way a flow
+ * reply's does — and counts it as a bot message sent, as the flow reply's
+ * first message already is.
+ *
+ * Best-effort: the DM already left, so nothing here throws — a throw would
+ * fail the job and a retry would send the DM (and the public reply) a second
+ * time.
+ */
+export async function recordInlinePrivateReply(props: {
+  channelType: CommentAutomationChannelType
+  commentId: string
+  contactInbox: ContactInboxModel
+  workspaceId: string
+  text: string
+  sendResult: unknown
+}): Promise<void> {
+  if (!CHANNELS_RECORDING_INLINE_PRIVATE_REPLY.has(props.channelType)) {
+    return
+  }
+
+  const sourceId = readSentMessageId(props.sendResult)
+  const message = await recordDeliveredPrivateReply({
+    workspaceId: props.workspaceId,
+    contactInbox: props.contactInbox,
+    text: props.text,
+    sourceId,
+  })
+  if (!message) {
+    logger.warn(
+      { commentId: props.commentId, workspaceId: props.workspaceId },
+      "Private reply was sent but not recorded in the inbox",
+    )
+    return
+  }
+
+  await emitBotMessageSentEvents({
+    workspaceId: props.workspaceId,
+    contactInbox: props.contactInbox,
+    result: { sentCount: 1, messageIds: sourceId ? [sourceId] : [] },
+    trigger: {
+      triggerHandler: "commentAutomationPrivateReply",
+      triggerType: "message_bot_sent_comment_private_reply",
+    },
+  })
+}
+
+/**
  * Returns what was dispatched, or `null` when nothing was. The caller uses that
  * — not the automation's configuration — to decide whether to write the dedup
  * row and whether the comment's single private-reply budget has been spent. The
  * outcome also carries the text for the analytics event.
  */
 export async function executePrivateReply(
-  privateReply: FBCommentReply,
+  privateReply: CommentReply,
   ctx: {
     auth: PrivateReplyAuth
     integrationType: string
@@ -193,6 +359,7 @@ export async function executePrivateReply(
   // gate. Same predicate either way, so the two can never disagree.
   if (
     isOutsidePrivateReplyWindow({
+      channelType: ctx.channelType,
       createdTime: ctx.createdTime,
       delay: ctx.delay,
     })
@@ -202,7 +369,7 @@ export async function executePrivateReply(
         automationId: ctx.automationId,
         commentId: ctx.commentId,
         workspaceId: ctx.workspaceId,
-        reason: "comment older than the 7-day private reply window",
+        reason: `comment older than ${privateReplyWindowLabel(ctx.channelType)}`,
       },
       "Comment automation private reply skipped",
     )
@@ -217,15 +384,39 @@ export async function executePrivateReply(
     return null
   }
 
+  // A flow cannot run over a conditional channel's DM. TikTok grants exactly
+  // one comment-anchored message per comment and its `sendFlowStep` needs a
+  // `conversation_id` for every step — which does not exist until the contact
+  // replies — so step 2 onwards would fail with `tiktok_missing_conversation_id`
+  // after step 1 had already gone out. Belt-and-braces behind the form, which
+  // does not offer `flow` on these channels at all.
+  if (
+    privateReply.type === "flow" &&
+    privateReplyRequiresHighIntent(ctx.channelType)
+  ) {
+    logger.info(
+      {
+        automationId: ctx.automationId,
+        commentId: ctx.commentId,
+        channelType: ctx.channelType,
+      },
+      "Comment automation private reply skipped: flow replies are not deliverable on this channel",
+    )
+    return null
+  }
+
   if (privateReply.type === "text" && privateReply.value) {
-    let text = privateReply.value
+    // Spun before the variable pass, and outside the try/catch, so a reply
+    // still varies when contact data fails to load and the raw text ships.
+    const spunValue = applySpintax(privateReply.value)
+    let text = spunValue
     try {
       const variables = await contactVariableService.getAll({
         contactId: ctx.contactInbox.contactId,
         contactInbox: ctx.contactInbox,
       })
       text = await contactVariableService.replaceAll({
-        text: privateReply.value,
+        text: spunValue,
         variables,
       })
     } catch (err) {
@@ -235,13 +426,28 @@ export async function executePrivateReply(
       )
     }
 
-    await sendText(ctx.auth, ctx.commentId, text)
+    const sendResult = await sendText(ctx.auth, ctx.commentId, text)
     // Delivered from birth rather than settled by a follow-up `markDelivered`:
-    // this send leaves no `Message` row for a webhook to match (it goes
-    // straight out through the comment_id-anchored Send API), and the caller
-    // has not written the analytics row yet — so an UPDATE here would match
-    // nothing at all. See `deliveredAt` on `CommentReplyOutcome`.
-    return { replyType: "text", replyText: text, deliveredAt: new Date() }
+    // no webhook settles this send (it goes straight out through the
+    // comment_id-anchored Send API, and its echo is skipped as our own), and
+    // the caller has not written the analytics row yet — so an UPDATE here
+    // would match nothing at all. See `deliveredAt` on `CommentReplyOutcome`.
+    return {
+      replyType: "text",
+      replyText: text,
+      deliveredAt: new Date(),
+      // Run by the caller once the dedup row exists — see `recordInInbox` on
+      // `CommentReplyOutcome`.
+      recordInInbox: () =>
+        recordInlinePrivateReply({
+          channelType: ctx.channelType,
+          commentId: ctx.commentId,
+          contactInbox: ctx.contactInbox,
+          workspaceId: ctx.workspaceId,
+          text,
+          sendResult,
+        }),
+    }
   }
 
   if (privateReply.type === "flow" && privateReply.value) {

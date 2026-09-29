@@ -46,6 +46,10 @@ export function buildSupportMembership(props: {
       newOrder: false,
     },
     permissions: FULL_WORKSPACE_MEMBER_PERMISSIONS,
+    // No real row exists to update, so this stamp stays null; live online
+    // status comes entirely from Redis (workspacePresenceService), keyed by
+    // userId regardless of membership type.
+    onlineSince: null,
   }
 }
 

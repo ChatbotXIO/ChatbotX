@@ -122,7 +122,7 @@ export const minigamesPublicRouter = {
       })
     }),
 
-  patch: workspaceTokenAuthAPI
+  updatePartial: workspaceTokenAuthAPI
     .route({
       method: "PATCH",
       path: "/v1/minigames/{id}",

@@ -169,12 +169,25 @@ export interface BulkPatchContentAttributesParams {
 
 export interface FindAttachmentByIdParams {
   id: string
+  /**
+   * Parent message createdAt. On a sharded deployment it lets the lookup target
+   * the shard time-window that holds the row instead of scanning a fixed
+   * recent-history range, so attachments older than that range stay reachable.
+   * Ignored when sharding is disabled (the single main DB holds every row).
+   */
+  messageCreatedAt?: Date
   workspaceId: string
 }
 
 export type AttachmentLookupRow = Pick<
   AttachmentModel,
-  "id" | "originPath" | "mimeType" | "createdAt"
+  | "id"
+  | "messageId"
+  | "messageCreatedAt"
+  | "sourceId"
+  | "originPath"
+  | "mimeType"
+  | "createdAt"
 >
 
 export interface UpdateAttachmentParams {
@@ -210,6 +223,22 @@ export interface IMessageRepository {
   bulkPatchContentAttributes(
     params: BulkPatchContentAttributesParams,
   ): Promise<void>
+
+  /**
+   * Atomically merges `overlay` into one message's `contentAttributes` via a
+   * DB-side `jsonb ||` UPDATE, but only while `guardKey` is still absent — a
+   * claim, for bookkeeping that must happen once per message. Two workers
+   * racing on the same row: exactly one gets the row back, the other `null`.
+   * Also `null` when no row matched or every shard update failed, so a `null`
+   * always means "not claimed" and the caller must not act on it.
+   */
+  claimContentAttributes(params: {
+    messageId: string
+    workspaceId: string
+    createdAt: Date
+    guardKey: string
+    overlay: Record<string, unknown>
+  }): Promise<{ id: string } | null>
 
   create(message: CreateMessageInput): Promise<MessageModel>
 
@@ -301,11 +330,35 @@ export interface IMessageRepository {
     params: HardDeleteAllByContactInboxParams,
   ): Promise<HardDeleteAllByContactInboxResult>
 
+  /** Whether a message already carries an attachment of this type — lets a
+   * retryable pipeline re-run its attach step without duplicating the file. */
+  hasAttachmentOfType(props: {
+    workspaceId: string
+    messageId: string
+    messageCreatedAt: Date
+    fileType: BulkCreateAttachmentInput["fileType"]
+  }): Promise<boolean>
+
   listByConversation(query: ListMessagesQuery): Promise<PaginatedMessages>
 
   listIncomingTextsByContactInbox(
     params: ListIncomingTextsByContactInboxParams,
   ): Promise<string[]>
+
+  /**
+   * Atomically merges `overlay` into `contentAttributes` via a DB-side `jsonb ||`
+   * UPDATE, never read-modify-write — two webhooks racing on disjoint keys (e.g.
+   * `hasRecording` vs `hasTranscript`) each merge without clobbering the other.
+   * Returns the merged `contentAttributes`, or `null` if no row matched.
+   */
+  mergeContentAttributesBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    overlay: Record<string, unknown>,
+  ): Promise<{
+    id: string
+    contentAttributes: Record<string, unknown> | null
+  } | null>
 
   updateAttachment(params: UpdateAttachmentParams): Promise<void>
 
@@ -319,6 +372,15 @@ export interface IMessageRepository {
     workspaceId: string,
     contentAttributes: Record<string, unknown>,
     createdAt: Date,
+  ): Promise<{ id: string } | null>
+
+  updateContentBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    patch: {
+      text?: string | null
+      contentAttributes?: Record<string, unknown> | null
+    },
   ): Promise<{ id: string } | null>
 
   updateMessageAttributes(

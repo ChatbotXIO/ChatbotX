@@ -410,4 +410,33 @@ export const registerSchedules = async () => {
       },
     )
   }
+
+  // WhatsApp calling.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeExpiredCallRecordings,
+    {
+      pattern: "0 5 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeExpiredCallRecordings,
+      data: {
+        type: ScheduleJobData.purgeExpiredCallRecordings,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.sweepStaleWhatsappCalls,
+    {
+      pattern: "*/5 * * * *",
+    },
+    {
+      name: ScheduleJobData.sweepStaleWhatsappCalls,
+      data: {
+        type: ScheduleJobData.sweepStaleWhatsappCalls,
+        data: {},
+      },
+    },
+  )
 }

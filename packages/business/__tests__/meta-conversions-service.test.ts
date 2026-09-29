@@ -19,7 +19,6 @@ const mocks = vi.hoisted(() => ({
   messengerUpdateDatasetIdIfNull: vi.fn(),
   messengerUpdateDatasetId: vi.fn(),
   messengerUpdateCapiTestEventCode: vi.fn(),
-  findMostRecentByInbox: vi.fn(),
   messengerUpdateCapiAccessToken: vi.fn(),
   messengerClearCapiAccessToken: vi.fn(),
   instagramFindWorkspaceIntegration: vi.fn(),
@@ -55,9 +54,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findWorkspaceEvent: mocks.findWorkspaceEvent,
     insertIgnoreDuplicate: mocks.insertIgnoreDuplicate,
     updateCapiStatus: mocks.metaCapiUpdateCapiStatus,
-  },
-  contactInboxRepository: {
-    findMostRecentByInbox: mocks.findMostRecentByInbox,
   },
   integrationMessengerRepository: {
     updateCapiTestEventCode: mocks.messengerUpdateCapiTestEventCode,
@@ -186,8 +182,15 @@ const whatsappIntegration = {
   capiAccessToken: null,
 }
 
-// `test:<fresh id>:<contactInboxId>:<dedup segment>` — see `buildSourceKey`.
-const TEST_SOURCE_KEY_PATTERN = /^test:[^:]+:ci-9:/
+// `test:<fresh id>` — the event_id a "Send test event" is posted with.
+const TEST_EVENT_ID_PATTERN = /^test:/
+
+// A messenger integration that has everything "Send test event" needs.
+const testableMessengerIntegration = {
+  ...messengerIntegration,
+  capiTestEventCode: "TEST1",
+  datasetId: "ds-1",
+}
 
 describe("MetaConversionsService", () => {
   beforeEach(() => {
@@ -1304,76 +1307,161 @@ describe("MetaConversionsService", () => {
       expect(mocks.messengerUpdateCapiTestEventCode).not.toHaveBeenCalled()
     })
 
-    test("enqueueTestEvent refuses to run without a saved test code", async () => {
+    test("sendTestEvent refuses to run without a saved test code", async () => {
+      const send = vi.fn()
+
       await expect(
-        metaConversionsService.enqueueTestEvent({
+        metaConversionsService.sendTestEvent({
           channel: "messenger",
           integration: messengerIntegration,
+          messagingId: "psid-1",
+          provisionDataset: vi.fn(),
+          send,
         }),
       ).rejects.toMatchObject({
         name: "CapiTestEventError",
         reason: "testEventCodeRequired",
       })
-      expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+      expect(send).not.toHaveBeenCalled()
     })
 
-    test("enqueueTestEvent fails clearly when the inbox has no contact yet", async () => {
-      mocks.findMostRecentByInbox.mockResolvedValue(null)
+    test("sendTestEvent refuses to post for an integration whose CAPI was disconnected", async () => {
+      const send = vi.fn()
+      const provisionDataset = vi.fn()
 
       await expect(
-        metaConversionsService.enqueueTestEvent({
+        metaConversionsService.sendTestEvent({
           channel: "messenger",
-          integration: { ...messengerIntegration, capiTestEventCode: "TEST1" },
+          integration: {
+            ...testableMessengerIntegration,
+            capiDisconnectedAt: new Date("2026-09-01T00:00:00.000Z"),
+          },
+          messagingId: "psid-1",
+          provisionDataset,
+          send,
         }),
-      ).rejects.toMatchObject({ reason: "noContactForTest" })
-      expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+      ).rejects.toMatchObject({
+        name: "CapiTestEventError",
+        reason: "capiDisconnected",
+      })
+      expect(send).not.toHaveBeenCalled()
+      expect(provisionDataset).not.toHaveBeenCalled()
     })
 
-    test("enqueueTestEvent queues one sample Purchase for the inbox's most recent contact", async () => {
-      mocks.findMostRecentByInbox.mockResolvedValue({
-        id: "ci-9",
+    test("sendTestEvent rejects a messaging id with unexpected characters", async () => {
+      const send = vi.fn()
+
+      await expect(
+        metaConversionsService.sendTestEvent({
+          channel: "messenger",
+          integration: testableMessengerIntegration,
+          messagingId: "psid 1;",
+          provisionDataset: vi.fn(),
+          send,
+        }),
+      ).rejects.toMatchObject({
+        name: "CapiTestEventError",
+        reason: "invalidMessagingId",
+      })
+      expect(send).not.toHaveBeenCalled()
+    })
+
+    test("sendTestEvent sends one sample Purchase to the entered page-scoped user id", async () => {
+      const send = vi.fn().mockResolvedValue(undefined)
+
+      await metaConversionsService.sendTestEvent({
         channel: "messenger",
-        inboxId: "inbox-1",
+        integration: testableMessengerIntegration,
+        messagingId: " psid-1 ",
+        provisionDataset: vi.fn(),
+        send,
       })
 
-      const event = await metaConversionsService.enqueueTestEvent({
-        channel: "messenger",
-        integration: { ...messengerIntegration, capiTestEventCode: "TEST1" },
-      })
-
-      expect(mocks.findMostRecentByInbox).toHaveBeenCalledWith({
-        inboxId: "inbox-1",
-        workspaceId: "ws-1",
-        requireCtwaClid: false,
-      })
-      expect(event).toEqual(
-        expect.objectContaining({
-          source: "manualTest",
-          contactInboxId: "ci-9",
+      expect(send).toHaveBeenCalledTimes(1)
+      const [input] = send.mock.calls[0]
+      expect(input).toEqual({
+        datasetId: "ds-1",
+        accessToken: "messenger-token",
+        testEventCode: "TEST1",
+        event: {
           eventName: "Purchase",
-          actionSource: "business_messaging",
+          occurredAt: expect.any(Date),
+          eventId: expect.stringMatching(TEST_EVENT_ID_PATTERN),
+          messagingChannel: "messenger",
+          pageId: "page-1",
+          pageScopedUserId: "psid-1",
           value: "100",
           currency: "USD",
-        }),
+        },
+      })
+    })
+
+    test("sendTestEvent never stores a row, queues a job, or attaches a contact", async () => {
+      const send = vi.fn().mockResolvedValue(undefined)
+
+      await metaConversionsService.sendTestEvent({
+        channel: "messenger",
+        integration: testableMessengerIntegration,
+        messagingId: "psid-1",
+        provisionDataset: vi.fn(),
+        send,
+      })
+
+      expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+      expect(mocks.enqueueIntegrationJob).not.toHaveBeenCalled()
+      expect(send.mock.calls[0][0].event).not.toHaveProperty("userData")
+    })
+
+    test("sendTestEvent provisions a dataset first when none is stored yet", async () => {
+      mocks.messengerUpdateDatasetIdIfNull.mockResolvedValueOnce({
+        ...testableMessengerIntegration,
+        datasetId: "fresh",
+      })
+      const provisionDataset = vi.fn().mockResolvedValue("fresh")
+      const send = vi.fn().mockResolvedValue(undefined)
+
+      await metaConversionsService.sendTestEvent({
+        channel: "messenger",
+        integration: { ...testableMessengerIntegration, datasetId: null },
+        messagingId: "psid-1",
+        provisionDataset,
+        send,
+      })
+
+      expect(provisionDataset).toHaveBeenCalledTimes(1)
+      expect(send).toHaveBeenCalledWith(
+        expect.objectContaining({ datasetId: "fresh" }),
       )
-      expect(event?.sourceKey).toMatch(TEST_SOURCE_KEY_PATTERN)
-      expect(mocks.enqueueIntegrationJob).toHaveBeenCalledTimes(1)
     })
   })
 
   describe("test events on WhatsApp", () => {
-    test("enqueueTestEvent only considers click-to-WhatsApp-attributed contacts", async () => {
-      mocks.findMostRecentByInbox.mockResolvedValue(null)
+    test("sendTestEvent identifies the person by the entered ctwa_clid and the WABA", async () => {
+      const send = vi.fn().mockResolvedValue(undefined)
 
-      await expect(
-        metaConversionsService.enqueueTestEvent({
-          channel: "whatsapp",
-          integration: { ...whatsappIntegration, capiTestEventCode: "TEST1" },
+      await metaConversionsService.sendTestEvent({
+        channel: "whatsapp",
+        integration: {
+          ...whatsappIntegration,
+          capiTestEventCode: "TEST1",
+          datasetId: "ds-wa",
+        },
+        messagingId: "ARAkLkA8rmlFeiCktEJQ-QTw",
+        provisionDataset: vi.fn(),
+        send,
+      })
+
+      expect(send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasetId: "ds-wa",
+          accessToken: "whatsapp-token",
+          testEventCode: "TEST1",
+          event: expect.objectContaining({
+            messagingChannel: "whatsapp",
+            wabaId: "waba-1",
+            ctwaClid: "ARAkLkA8rmlFeiCktEJQ-QTw",
+          }),
         }),
-      ).rejects.toMatchObject({ reason: "noContactForTest" })
-
-      expect(mocks.findMostRecentByInbox).toHaveBeenCalledWith(
-        expect.objectContaining({ requireCtwaClid: true }),
       )
     })
   })

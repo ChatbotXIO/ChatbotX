@@ -82,7 +82,6 @@ const listContacts = vi.fn()
 const countContacts = vi.fn()
 const resolveContactId = vi.fn()
 const findPublicContactOrFail = vi.fn()
-const listByCustomFieldValue = vi.fn()
 
 const createContact = vi.fn()
 
@@ -109,7 +108,6 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => {
       createWithInbox: createContact,
       deleteAndRecord: deleteContact,
       updateFieldsAndCustomFields: updateContactFields,
-      listByCustomFieldValue,
       blockAndRecord,
       unblockAndRecord,
       upsertByIdentifier,
@@ -164,33 +162,6 @@ describe("GET /v1/contacts", () => {
       scope: "unscoped",
       include: ["tags"],
       withCount: false,
-    })
-  })
-})
-
-describe("POST /v1/contacts/search", () => {
-  const procedure = findProcedure("POST", "/v1/contacts/search")
-
-  test("delegates to the same contactService.list as GET /v1/contacts", async () => {
-    listContacts.mockResolvedValueOnce({
-      data: [],
-      pageCount: 0,
-      totalCount: 0,
-      totalCountCapped: false,
-    })
-
-    await procedure.handler?.({
-      context: { workspace: { id: "workspace-1" } },
-      input: { page: 1, perPage: 20 },
-    })
-
-    expect(listContacts).toHaveBeenCalledWith({
-      page: 1,
-      perPage: 20,
-      workspaceId: "workspace-1",
-      scope: "unscoped",
-      include: undefined,
-      withCount: undefined,
     })
   })
 })
@@ -268,8 +239,8 @@ describe("POST /v1/contacts", () => {
   })
 })
 
-describe("PUT /v1/contacts/{identifier}", () => {
-  const procedure = findProcedure("PUT", "/v1/contacts/{identifier}")
+describe("PATCH /v1/contacts/{identifier}", () => {
+  const procedure = findProcedure("PATCH", "/v1/contacts/{identifier}")
 
   test("resolves the contact id via resolveIdByIdentifier before updating fields", async () => {
     resolveContactId.mockResolvedValueOnce("contact-1")

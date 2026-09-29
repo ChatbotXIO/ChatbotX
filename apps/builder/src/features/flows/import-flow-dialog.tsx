@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { ImportDropzone } from "@/features/import/components/import-dropzone"
 import type { UploadResult } from "@/features/import/hooks/use-presigned-upload"
 import { importFlowAction } from "./actions/import-flow.action"
@@ -33,6 +34,7 @@ export function ImportFlowDialog({
   folderId,
 }: ImportFlowDialogProps) {
   const t = useTranslations()
+  const invalidateFlows = useInvalidateFlows()
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<UploadResult | null>(null)
   const { execute, isPending } = useAction(
@@ -40,6 +42,7 @@ export function ImportFlowDialog({
     {
       onSuccess: () => {
         toast.success(t("flows.actions.importStarted"))
+        invalidateFlows()
         setOpen(false)
         setFile(null)
       },

@@ -8,7 +8,7 @@ import {
   type InstagramConfig,
   instagramCommentEventValueSchema,
   instagramWebhookEventSchema,
-} from "../schemas"
+} from "../schema"
 
 const verifyWebhookSignature = async (
   payload: string,

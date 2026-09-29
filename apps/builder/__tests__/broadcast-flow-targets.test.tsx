@@ -13,9 +13,8 @@ const inboxes = [
   { id: "inbox-a", name: "Shop A" },
   { id: "inbox-b", name: "Shop B" },
 ]
-vi.mock("@/features/inboxes/provider/inbox-store-context", () => ({
-  useInboxStore: (selector: (state: { inboxes: typeof inboxes }) => unknown) =>
-    selector({ inboxes }),
+vi.mock("@/features/inboxes/provider/inbox-hook", () => ({
+  useInboxList: () => inboxes,
 }))
 
 const flow = (id: string, name: string, templateId: string) => ({
@@ -48,10 +47,6 @@ const flows = [
   flow("fb", "Promo B", "tpl-a"),
   flow("fc", "Promo C", "tpl-b"),
 ]
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  useFlowStore: (selector: (state: { flows: typeof flows }) => unknown) =>
-    selector({ flows }),
-}))
 
 const summary = (id: string, inboxId: string) => ({
   id,
@@ -127,7 +122,7 @@ function render(defaultValues: FormValues) {
   act(() => {
     root?.render(
       <Harness defaultValues={defaultValues}>
-        <BroadcastFlowTargets channel="whatsapp" />
+        <BroadcastFlowTargets channel="whatsapp" flows={flows} />
       </Harness>,
     )
   })

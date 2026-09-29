@@ -40,14 +40,16 @@ export const messageIdPathParam = z.object({
 
 // The sharded message store needs `createdAt` to locate a message's shard —
 // it must come from the id/createdAt pair returned by `messages.list`, not
-// guessed by the caller. On GET and DELETE routes oRPC maps this to a query
-// parameter (e.g. `?createdAt=...`), not a request body.
+// guessed by the caller. On the GET route oRPC maps this to a query
+// parameter; on the DELETE route it is a request body field (oRPC only
+// maps non-path input into query parameters for GET — every other method,
+// including DELETE, gets a JSON body).
 export const messageIdWithCreatedAtParam = messageIdPathParam.and(
   z.object({
     createdAt: z.coerce
       .date()
       .describe(
-        "The message's createdAt timestamp, exactly as returned by GET /v1/conversations/{conversationId}/messages. Required to locate the message in sharded storage. Sent as a query parameter.",
+        "The message's createdAt timestamp, exactly as returned by GET /v1/conversations/{conversationId}/messages. Required to locate the message in sharded storage.",
       ),
   }),
 )

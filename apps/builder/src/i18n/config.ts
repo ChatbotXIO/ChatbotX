@@ -1,5 +1,6 @@
 export const locales = [
   "ar",
+  "az",
   "da",
   "de",
   "en",
@@ -29,6 +30,7 @@ export const localeMeta: Record<
   { nativeLabel: string; dir: "ltr" | "rtl" }
 > = {
   ar: { nativeLabel: "العربية", dir: "rtl" },
+  az: { nativeLabel: "Azərbaycanca", dir: "ltr" },
   da: { nativeLabel: "Dansk", dir: "ltr" },
   de: { nativeLabel: "Deutsch", dir: "ltr" },
   en: { nativeLabel: "English", dir: "ltr" },

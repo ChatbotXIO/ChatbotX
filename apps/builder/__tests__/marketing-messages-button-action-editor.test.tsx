@@ -19,14 +19,12 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
-// The flow/node pickers read the flow store, which this editor only consumes.
-// Stub the sources so the test stays about the action shape.
+// The flow/node pickers read query-backed flow data, which this editor only
+// consumes. Stub the sources so the test stays about the action shape.
 vi.mock("@/features/flows/provider/flow-hook", () => ({
+  useFlows: () => ({ data: [{ id: "10", flowVersions: [] }] }),
   useFlowSelectOptions: () => [{ value: "10", label: "Flow A" }],
   getFlowNodesOptions: () => [{ value: "20", label: "Node A" }],
-}))
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  useFlowStore: () => [{ id: "10", flowVersions: [] }],
 }))
 
 /**

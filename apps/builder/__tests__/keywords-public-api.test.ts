@@ -190,8 +190,8 @@ describe("POST /v1/keywords", () => {
   })
 })
 
-describe("PUT /v1/keywords/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/keywords/{id}")
+describe("PATCH /v1/keywords/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/keywords/{id}")
 
   test("delegates to automatedResponseService.update without a redundant pre-check", async () => {
     automatedResponseService.update.mockResolvedValueOnce({

@@ -15,8 +15,8 @@ type SettingsChannelsPageProps = {
 // `?channel=<x>` is the legacy deep-link shape OAuth return flows and older
 // bookmarks use (`/settings/channels?channel=messenger`). Kept as a safety
 // net: valid channels redirect to the real route `settings/channels/<x>`,
-// preserving any remaining query params (`error=duplicated` drives the
-// duplicated-connection toast via `useChannelDuplicatedError`).
+// preserving any remaining query params (`error=duplicated` and `error=missingScopes` drive the
+// connect-error toast via `useChannelConnectError`).
 export default async function SettingsChannelsIndexPage(
   props: SettingsChannelsPageProps,
 ) {

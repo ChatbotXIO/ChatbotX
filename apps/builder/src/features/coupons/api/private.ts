@@ -1,4 +1,5 @@
 import { couponService } from "@chatbotx.io/business"
+import { requireContactPermissionScopeForMember } from "@/features/contacts/permissions"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { getCouponExportFile } from "../queries/get-export-file.query"
@@ -190,8 +191,18 @@ export const couponsAuthenticatedAPI = {
     .input(listContactCouponsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listContactCouponsResponse)
-    .handler(
-      async ({ input }) =>
-        await couponService.listIssuedCouponsForContact(input),
-    ),
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+
+      return await couponService.listIssuedCouponsForContact({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        accessScope: {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+        },
+      })
+    }),
 }

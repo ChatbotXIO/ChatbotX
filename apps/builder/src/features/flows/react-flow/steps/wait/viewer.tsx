@@ -7,7 +7,8 @@ import {
   waitStepOffsetOperators,
 } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import { useCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 
 type WaitStepViewerProps = {
   data: WaitStepSchema
@@ -17,7 +18,7 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
   const { data } = props
 
   const t = useTranslations()
-  const { customFields } = useCustomFieldStore((state) => state)
+  const customFields = useCustomFields(useWorkspaceId()).data ?? []
 
   const customField =
     data.delayType === waitStepDelayTypes.enum.date &&

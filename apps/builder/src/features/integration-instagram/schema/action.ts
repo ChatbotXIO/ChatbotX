@@ -37,5 +37,6 @@ export const updateInstagramRequest = z.object({
   welcomeFlowId: z.string().nullable(),
   conversationStarters: z.array(conversationStarterSchema),
   persistentMenus: z.array(persistentMenuSchema),
+  markReadOnOutbound: z.boolean().optional(),
 })
 export type UpdateInstagramRequest = z.infer<typeof updateInstagramRequest>

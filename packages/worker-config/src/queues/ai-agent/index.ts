@@ -77,6 +77,7 @@ const aiJobCommentAIReplySchema = z.object({
       "instagram",
       "instagramFacebook",
       "threads",
+      "tiktok",
     ]),
     message: z.string().optional(),
     parentMessageId: z.string().nullable().optional(),

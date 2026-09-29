@@ -1,4 +1,17 @@
-import { type DatabaseClient, db, eq, relationsFilterToSQL } from "../../client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  isNull,
+  ne,
+  relationsFilterToSQL,
+} from "../../client"
+import {
+  type BroadcastStatus,
+  withBroadcastTargets,
+} from "../../partials/broadcast"
 import { broadcastModel, contactsOnBroadcastsModel } from "../../schema"
 import {
   getPaginationWithDefaults,
@@ -27,9 +40,10 @@ const buildWhere = (input: BroadcastListInput) => ({
 
 export const broadcastRepository = {
   /**
-   * Paginated broadcast list with the 3 slim relations the list page shows.
-   * The `with` literal stays inline for Drizzle's type inference to survive
-   * into `BroadcastResourceWithRelations`.
+   * Paginated broadcast list with the slim relations the list page shows,
+   * including each target page (with its flow) that the "view" dialog reads
+   * for a multi-page broadcast. The `with` literal stays inline for Drizzle's
+   * type inference to survive into `BroadcastResourceWithRelations`.
    */
   async listWithRelations(input: BroadcastListInput, tx: DatabaseClient = db) {
     const where = buildWhere(input)
@@ -57,6 +71,7 @@ export const broadcastRepository = {
             name: true,
           },
         },
+        ...withBroadcastTargets,
       },
       ...pagination,
       orderBy,
@@ -71,6 +86,29 @@ export const broadcastRepository = {
     return await tx.$count(
       broadcastModel,
       relationsFilterToSQL(broadcastModel, where),
+    )
+  },
+
+  async countActive(
+    input: {
+      workspaceId: string
+      channel: string
+      statuses: readonly BroadcastStatus[]
+      excludeId?: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    return await tx.$count(
+      broadcastModel,
+      and(
+        eq(broadcastModel.workspaceId, input.workspaceId),
+        eq(broadcastModel.channel, input.channel),
+        inArray(broadcastModel.status, [...input.statuses]),
+        isNull(broadcastModel.deletedAt),
+        input.excludeId === undefined
+          ? undefined
+          : ne(broadcastModel.id, input.excludeId),
+      ),
     )
   },
 

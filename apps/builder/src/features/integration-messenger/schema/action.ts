@@ -15,6 +15,7 @@ export const updateMessengerRequest = z.object({
   persistentMenus: z.array(messengerPersistentMenuSchema),
   personas: z.array(messengerPersonaSchema),
   conversationStarters: z.array(messengerConversationStarterSchema),
+  markReadOnOutbound: z.boolean().optional(),
 })
 
 export type UpdateMessengerRequest = z.infer<typeof updateMessengerRequest>

@@ -8,6 +8,7 @@ import { ContactsByChannelChart } from "./charts/contacts-by-channel-chart"
 import { ContactsByCountryChart } from "./charts/contacts-by-country-chart"
 import { ContactsBySourceChart } from "./charts/contacts-by-source-chart"
 import { NewContactCountsChart } from "./charts/new-contact-counts-chart"
+import { DashboardPanel } from "./dashboard-panel"
 import AnalysisFilterForm from "./filter-form"
 import InboxStatsList from "./inbox-stats-list"
 
@@ -22,7 +23,10 @@ export function ContactsDashboard({
   nav?: ReactNode
 }) {
   return (
-    <AnalysisStoreProvider defaultSearchParams={defaultSearchParams}>
+    <AnalysisStoreProvider
+      defaultSearchParams={defaultSearchParams}
+      type="contacts"
+    >
       <AnalysisFilterForm
         defaultPreset="last7"
         workspaceCreatedAt={workspaceCreatedAt}
@@ -34,13 +38,27 @@ export function ContactsDashboard({
           <InboxStatsList />
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <ContactCountsChart />
-            <NewContactCountsChart />
-            <AllContactsByChannelChart />
-            <ContactsByChannelChart />
-            <ContactsBySourceChart />
-            <ContactsByCountryChart />
-            <BlockedContactsChart />
+            <DashboardPanel action="getContactCounts">
+              <ContactCountsChart />
+            </DashboardPanel>
+            <DashboardPanel action="getNewContactCounts">
+              <NewContactCountsChart />
+            </DashboardPanel>
+            <DashboardPanel action="getContactsByChannel">
+              <AllContactsByChannelChart />
+            </DashboardPanel>
+            <DashboardPanel action="getContactsByChannel">
+              <ContactsByChannelChart />
+            </DashboardPanel>
+            <DashboardPanel action="getContactsBySource">
+              <ContactsBySourceChart />
+            </DashboardPanel>
+            <DashboardPanel action="getContactsByCountry">
+              <ContactsByCountryChart />
+            </DashboardPanel>
+            <DashboardPanel action="getBlockedContactCounts">
+              <BlockedContactsChart />
+            </DashboardPanel>
           </div>
         </div>
       </div>

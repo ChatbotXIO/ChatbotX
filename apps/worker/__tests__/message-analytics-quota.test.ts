@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   incrementBy: vi.fn(),
+  incrementUsage: vi.fn(),
   recordEvents: vi.fn(),
   findById: vi.fn(),
 }))
@@ -12,6 +13,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: { incrementBy: mocks.incrementBy },
   workspaceService: { findById: mocks.findById },
+  workspaceUsageService: { increment: mocks.incrementUsage },
 }))
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn() },
@@ -31,6 +33,7 @@ describe("handleBotMessageSent quota accounting", () => {
     vi.clearAllMocks()
     mocks.recordEvents.mockResolvedValue(undefined)
     mocks.incrementBy.mockResolvedValue(undefined)
+    mocks.incrementUsage.mockResolvedValue(undefined)
     mocks.findById.mockImplementation(({ id }: { id: string }) =>
       Promise.resolve({ ownerId: `owner-${id}` }),
     )
@@ -64,6 +67,17 @@ describe("handleBotMessageSent quota accounting", () => {
       metric: "monthlyBotMessages",
       count: 1,
     })
+    expect(mocks.incrementUsage).toHaveBeenCalledTimes(2)
+    expect(mocks.incrementUsage).toHaveBeenCalledWith(
+      "workspace-1",
+      "botMessages",
+      2,
+    )
+    expect(mocks.incrementUsage).toHaveBeenCalledWith(
+      "workspace-2",
+      "botMessages",
+      1,
+    )
   })
 
   it("swallows quota failures after recording analytics", async () => {

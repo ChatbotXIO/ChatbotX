@@ -37,7 +37,7 @@ export function ContactNameCell({
   avatarClassName?: string
   maxWidthClassName?: string
 }) {
-  const avatarUrl = useAvatarUrl(contact as Parameters<typeof useAvatarUrl>[0])
+  const avatarUrl = useAvatarUrl(contact)
   const name = contact.fullName ?? unknownContactLabel
   const inboxHref = conversationId
     ? `/space/${workspaceId}/inbox?conversationId=${conversationId}`

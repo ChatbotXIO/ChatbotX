@@ -116,6 +116,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   }
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
+  isBulkBroadcast?: boolean
   sendFrom?: "inbox"
   nodeVisits?: NodeVisits
   triggerMessageId?: string
@@ -296,6 +297,8 @@ export const runFlowNode = async (
       },
       trackingContext,
       metadata,
+      isBulkBroadcast:
+        props.isBulkBroadcast ?? props.initialBroadcastDispatch === true,
       sendFrom,
       nodeVisits: props.nodeVisits,
       commentAnchor,
@@ -475,6 +478,7 @@ export async function runStepsAndQuickReplies(
               : undefined,
           startFromStepId: nextStep.id,
           metadata: props.metadata,
+          isBulkBroadcast: props.isBulkBroadcast,
           appointmentId: props.appointmentId,
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
@@ -537,6 +541,7 @@ export async function runStepsAndQuickReplies(
         flowVersionId: props.useLatestFlowVersion ? undefined : flowVersion.id,
         nodeId: nextNode.id,
         metadata: props.metadata,
+        isBulkBroadcast: props.isBulkBroadcast,
         appointmentId: props.appointmentId,
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
@@ -592,6 +597,16 @@ async function* executeMultipleStepsGenerator(
       step.stepType as StepType,
     )
     const stepAnchor = isMessageProducingStep ? anchorAvailable : undefined
+
+    const rawResult = await flowStepHandlers[step.stepType as StepType]?.({
+      ...rest,
+      commentAnchor: stepAnchor,
+      step: stepWithNodeId,
+    })
+
+    // void handlers are treated as implicit success (fire-and-forget, no routing)
+    const result = rawResult ?? { status: "success" as const, result: null }
+
     // Only a `private` anchor is one-shot: Meta allows a single
     // comment_id-anchored DM per comment (a second one fails with "The comment
     // is invalid for a private reply"), so the first message-producing step
@@ -606,22 +621,24 @@ async function* executeMultipleStepsGenerator(
     // channel handler needs it to know this run started from a comment, so a
     // follow-up outside the contact's 24-hour window fails with a readable
     // reason instead of an opaque Send API rejection.
+    //
+    // The claim happens HERE, after the handler has run, and never on an
+    // `error` result. Claiming up-front burned the comment's single anchored DM
+    // on a step that ended up sending nothing: a handler can fail before its
+    // send (`getUserData` writes its challenge row first, and that DB write can
+    // fail), and since `getUserData` declares only `[success, skip]` states an
+    // error does not branch — so the loop moved on to the next step with a
+    // spent anchor and the guard rejected a follow-up for a private reply that
+    // was never actually sent. Must stay after the `await` above; the branch
+    // dispatch below reads `anchorAvailable`.
     if (
       isMessageProducingStep &&
+      result.status !== "error" &&
       anchorAvailable?.replyChannel === "private" &&
       !anchorAvailable.spent
     ) {
       anchorAvailable = { ...anchorAvailable, spent: true }
     }
-
-    const rawResult = await flowStepHandlers[step.stepType as StepType]?.({
-      ...rest,
-      commentAnchor: stepAnchor,
-      step: stepWithNodeId,
-    })
-
-    // void handlers are treated as implicit success (fire-and-forget, no routing)
-    const result = rawResult ?? { status: "success" as const, result: null }
 
     // Route to a connected node based on the step's outcome state
     let branched = false
@@ -650,6 +667,7 @@ async function* executeMultipleStepsGenerator(
                 : props.flowVersion.id,
               nodeId: connectedNodeId,
               metadata: props.metadata,
+              isBulkBroadcast: props.isBulkBroadcast,
               appointmentId: props.appointmentId,
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,

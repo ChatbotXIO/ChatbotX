@@ -1,6 +1,7 @@
 "use client"
 
 import type { MinigamePlayResult } from "@chatbotx.io/business/minigame"
+import { MINIGAME_PRIZE_NAME_TOKEN } from "@chatbotx.io/database/partials"
 import type { MinigameModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -12,7 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { useTranslations } from "next-intl"
+import { useMemo } from "react"
 
 type ResultDialogProps = {
   open: boolean
@@ -29,28 +32,45 @@ export function ResultDialog({
 }: ResultDialogProps) {
   const t = useTranslations()
 
-  if (!result) {
+  // Memoised on the result, not computed inline, because `applySpintax` draws
+  // at random: recomputing on every render would re-roll the branch while the
+  // dialog animates open and the player would watch the wording change.
+  // Runs before the `!result` guard so the hook order stays fixed.
+  const copy = useMemo(() => {
+    if (!result) {
+      return null
+    }
+
+    const isPrize = result.type === "prize"
+    const label = isPrize
+      ? result.prize.name
+      : minigame.prizeSettings.nonWinning.title
+    const settings = isPrize
+      ? minigame.winningMessageSettings
+      : minigame.nonWinningMessageSettings
+    // Spintax first, so only author copy is ever spun — a prize name carrying
+    // a `{a|b}` is data and must render verbatim. Same order as the outcome
+    // message the worker sends (`renderOutcomeText`).
+    const render = (value: string) =>
+      applySpintax(value).replaceAll(MINIGAME_PRIZE_NAME_TOKEN, label)
+
+    return {
+      isPrize,
+      label,
+      imageUrl: isPrize
+        ? result.prize.icon.url
+        : minigame.prizeSettings.nonWinning.loseImage.url,
+      title: render(settings.title),
+      description: render(settings.description),
+    }
+  }, [result, minigame])
+
+  if (!copy) {
     return null
   }
 
-  const isPrize = result.type === "prize"
-  const imageUrl = isPrize
-    ? result.prize.icon.url
-    : minigame.prizeSettings.nonWinning.loseImage.url
-  const label = isPrize
-    ? result.prize.name
-    : minigame.prizeSettings.nonWinning.title
-  const title = (
-    isPrize
-      ? minigame.winningMessageSettings.title
-      : minigame.nonWinningMessageSettings.title
-  ).replaceAll("{{prize_name}}", label)
-  const description = (
-    isPrize
-      ? minigame.winningMessageSettings.description
-      : minigame.nonWinningMessageSettings.description
-  ).replaceAll("{{prize_name}}", label)
-  const closeLabel = isPrize
+  const { imageUrl, label, title, description } = copy
+  const closeLabel = copy.isPrize
     ? minigame.winningMessageSettings.acceptButtonText ||
       t("minigames.play.close")
     : t("minigames.play.close")

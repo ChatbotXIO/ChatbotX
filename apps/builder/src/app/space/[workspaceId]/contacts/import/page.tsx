@@ -1,9 +1,8 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { ImportContactsForm } from "@/features/contacts/import-contact-form"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { ImportForm } from "@/features/import/components/import-form"
-import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 
 export default async function ImportContactsPage({
@@ -18,12 +17,8 @@ export default async function ImportContactsPage({
   await requireContactsAccess(workspaceId)
 
   return (
-    <InboxStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      <CustomFieldStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-        <ImportForm>
-          <ImportContactsForm workspaceId={workspaceId} />
-        </ImportForm>
-      </CustomFieldStoreProvider>
-    </InboxStoreProvider>
+    <ImportForm>
+      <ImportContactsForm workspaceId={workspaceId} />
+    </ImportForm>
   )
 }

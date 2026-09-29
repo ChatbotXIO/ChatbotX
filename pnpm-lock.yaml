@@ -63,14 +63,14 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0(@date-fns/tz@1.5.0)(@types/react@19.2.14)(date-fns@4.4.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@bull-board/api':
-        specifier: ^8.1.2
-        version: 8.1.2(@bull-board/ui@8.1.2)
+        specifier: ^9.10.1
+        version: 9.10.1(@bull-board/ui@9.10.1(bullmq@5.78.0)(typescript@5.9.3))(bullmq@5.78.0)(typescript@5.9.3)
       '@bull-board/hono':
-        specifier: ^8.1.2
-        version: 8.1.2(hono@4.13.5)
+        specifier: ^9.10.1
+        version: 9.10.1(bullmq@5.78.0)(hono@4.13.5)(typescript@5.9.3)
       '@bull-board/ui':
-        specifier: ^8.1.2
-        version: 8.1.2
+        specifier: ^9.10.1
+        version: 9.10.1(bullmq@5.78.0)(typescript@5.9.3)
       '@chatbotx.io/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -89,6 +89,9 @@ importers:
       '@chatbotx.io/business':
         specifier: workspace:*
         version: link:../../packages/business
+      '@chatbotx.io/channel-registry':
+        specifier: workspace:*
+        version: link:../../packages/channel-registry
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -258,26 +261,26 @@ importers:
         specifier: ^2.0.6
         version: 2.0.6(@hookform/resolvers@5.4.0(react-hook-form@7.77.0(react@19.2.5)))(next-safe-action@8.5.3(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-hook-form@7.77.0(react@19.2.5))(react@19.2.5)
       '@orpc/client':
-        specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)
+        specifier: ^1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)
       '@orpc/json-schema':
-        specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
+        specifier: ^1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
       '@orpc/openapi':
-        specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
+        specifier: ^1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
       '@orpc/server':
-        specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
+        specifier: ^1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
       '@orpc/tanstack-query':
-        specifier: 1.14.5
-        version: 1.14.5(@opentelemetry/api@1.9.1)(@orpc/client@1.14.5(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.102.8)
+        specifier: 1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)(@orpc/client@1.15.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.102.8)
       '@orpc/zod':
-        specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.5(@opentelemetry/api@1.9.1))(@orpc/server@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)
+        specifier: ^1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)(@orpc/contract@1.15.4(@opentelemetry/api@1.9.1))(@orpc/server@1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       '@tanstack/react-query':
         specifier: ^5.102.8
         version: 5.102.8(react@19.2.5)
@@ -490,8 +493,8 @@ importers:
         specifier: ^13.1.3
         version: 13.1.3
       postcss:
-        specifier: ^8.5.16
-        version: 8.5.16
+        specifier: ^8.5.28
+        version: 8.5.28
       prettier:
         specifier: ^3.9.4
         version: 3.9.4
@@ -509,7 +512,7 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       yargs:
         specifier: ^18.0.0
         version: 18.0.0
@@ -546,7 +549,7 @@ importers:
         version: link:../../packages/logger
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -589,7 +592,7 @@ importers:
         version: 1.29.0(zod@4.4.3)
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -597,9 +600,21 @@ importers:
         specifier: ^4.3.6
         version: 4.4.3
     devDependencies:
+      '@ai-sdk/openai':
+        specifier: ^3.0.54
+        version: 3.0.68(zod@4.4.3)
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
+      '@orpc/zod':
+        specifier: ^1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)(@orpc/contract@1.15.4(@opentelemetry/api@1.9.1))(@orpc/server@1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)
       '@types/node':
         specifier: 24.x
         version: 24.13.1
+      ai:
+        specifier: ^6.0.170
+        version: 6.0.197(zod@4.4.3)
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0
@@ -626,7 +641,7 @@ importers:
         version: link:../../packages/partysocket-config
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       jose:
         specifier: ^6.2.3
         version: 6.2.3
@@ -685,6 +700,9 @@ importers:
       '@chatbotx.io/business':
         specifier: workspace:*
         version: link:../../packages/business
+      '@chatbotx.io/channel-registry':
+        specifier: workspace:*
+        version: link:../../packages/channel-registry
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -822,7 +840,7 @@ importers:
         version: 1.34.0
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       ai:
         specifier: ^6.0.170
         version: 6.0.197(zod@4.4.3)
@@ -845,8 +863,8 @@ importers:
         specifier: ^9.0.5
         version: 9.0.5
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.0.3
+        version: 2.0.3
       ioredis:
         specifier: 5.10.1
         version: 5.10.1
@@ -1226,8 +1244,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.0.3
+        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1278,8 +1296,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.0.3
+        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1423,8 +1441,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.0.3
+        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1551,13 +1569,13 @@ importers:
     dependencies:
       '@ai-sdk/openai':
         specifier: ^3.0.54
-        version: 3.0.68(zod@4.5.4)
+        version: 3.0.68(zod@4.6.5)
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       ai:
         specifier: ^6.0.170
-        version: 6.0.197(zod@4.5.4)
+        version: 6.0.197(zod@4.6.5)
     devDependencies:
       '@chatbotx.io/typescript-config':
         specifier: workspace:*
@@ -1796,6 +1814,9 @@ importers:
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@chatbotx.io/worker-config':
+        specifier: workspace:*
+        version: link:../../packages/worker-config
       '@edenchazard/tiny-chunk-array':
         specifier: ^1.0.1
         version: 1.0.1
@@ -1806,8 +1827,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.0.3
+        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1858,8 +1879,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.0.3
+        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1932,7 +1953,7 @@ importers:
         version: 2.9.1(ai@6.0.197(zod@4.4.3))(zod@4.4.3)
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       ai:
         specifier: ^6.0.170
         version: 6.0.197(zod@4.4.3)
@@ -2035,14 +2056,14 @@ importers:
         specifier: ^5.2.2
         version: 5.4.0(react-hook-form@7.77.0(react@19.2.5))
       '@orpc/client':
-        specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)
+        specifier: ^1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)
       '@orpc/server':
-        specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
+        specifier: ^1.15.4
+        version: 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
@@ -2112,7 +2133,7 @@ importers:
         version: link:../utils
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       better-auth:
         specifier: ^1.6.22
         version: 1.6.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(next@16.3.5(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(pg@8.21.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@4.1.8)
@@ -2156,6 +2177,9 @@ importers:
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../redis
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@chatbotx.io/variables':
         specifier: workspace:*
         version: link:../variables
@@ -2164,7 +2188,7 @@ importers:
         version: link:../worker-config
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -2217,6 +2241,9 @@ importers:
       '@chatbotx.io/integration-google-calendar':
         specifier: workspace:*
         version: link:../../integrations/google-calendar
+      '@chatbotx.io/integration-tiktok':
+        specifier: workspace:*
+        version: link:../../integrations/tiktok
       '@chatbotx.io/javascript-sandbox':
         specifier: workspace:*
         version: link:../javascript-sandbox
@@ -2249,7 +2276,7 @@ importers:
         version: 1.0.6
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0
@@ -2261,10 +2288,10 @@ importers:
         version: 10.1.0
       drizzle-orm:
         specifier: 1.0.0-beta.22
-        version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(zod@4.4.3)
+        version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.0.3
+        version: 2.0.3
       jose:
         specifier: ^6.2.3
         version: 6.2.3
@@ -2296,6 +2323,124 @@ importers:
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/channel-registry:
+    dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../business
+      '@chatbotx.io/database':
+        specifier: workspace:*
+        version: link:../database
+      '@chatbotx.io/filesystem':
+        specifier: workspace:*
+        version: link:../filesystem
+      '@chatbotx.io/integration-active-campaign':
+        specifier: workspace:*
+        version: link:../../integrations/active-campaign
+      '@chatbotx.io/integration-api':
+        specifier: workspace:*
+        version: link:../../integrations/api
+      '@chatbotx.io/integration-chatbotx':
+        specifier: workspace:*
+        version: link:../../integrations/chatbotx
+      '@chatbotx.io/integration-drip':
+        specifier: workspace:*
+        version: link:../../integrations/drip
+      '@chatbotx.io/integration-facebook-ads':
+        specifier: workspace:*
+        version: link:../../integrations/facebook-ads
+      '@chatbotx.io/integration-get-response':
+        specifier: workspace:*
+        version: link:../../integrations/get-response
+      '@chatbotx.io/integration-google-calendar':
+        specifier: workspace:*
+        version: link:../../integrations/google-calendar
+      '@chatbotx.io/integration-google-sheets':
+        specifier: workspace:*
+        version: link:../../integrations/google-sheets
+      '@chatbotx.io/integration-instagram':
+        specifier: workspace:*
+        version: link:../../integrations/instagram
+      '@chatbotx.io/integration-instagram-facebook':
+        specifier: workspace:*
+        version: link:../../integrations/instagram-facebook
+      '@chatbotx.io/integration-klaviyo':
+        specifier: workspace:*
+        version: link:../../integrations/klaviyo
+      '@chatbotx.io/integration-mailchimp':
+        specifier: workspace:*
+        version: link:../../integrations/mailchimp
+      '@chatbotx.io/integration-mailer-lite':
+        specifier: workspace:*
+        version: link:../../integrations/mailer-lite
+      '@chatbotx.io/integration-messenger':
+        specifier: workspace:*
+        version: link:../../integrations/messenger
+      '@chatbotx.io/integration-moosend':
+        specifier: workspace:*
+        version: link:../../integrations/moosend
+      '@chatbotx.io/integration-sendgrid':
+        specifier: workspace:*
+        version: link:../../integrations/sendgrid
+      '@chatbotx.io/integration-smtp':
+        specifier: workspace:*
+        version: link:../../integrations/smtp
+      '@chatbotx.io/integration-telegram':
+        specifier: workspace:*
+        version: link:../../integrations/telegram
+      '@chatbotx.io/integration-threads':
+        specifier: workspace:*
+        version: link:../../integrations/threads
+      '@chatbotx.io/integration-tiktok':
+        specifier: workspace:*
+        version: link:../../integrations/tiktok
+      '@chatbotx.io/integration-webchat':
+        specifier: workspace:*
+        version: link:../../integrations/webchat
+      '@chatbotx.io/integration-whatsapp':
+        specifier: workspace:*
+        version: link:../../integrations/whatsapp
+      '@chatbotx.io/integration-zalo':
+        specifier: workspace:*
+        version: link:../../integrations/zalo
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../logger
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../redis
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../utils
+      image-size:
+        specifier: ^2.0.3
+        version: 2.0.3
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@chatbotx.io/vitest-config':
+        specifier: workspace:*
+        version: link:../vitest-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.13.1
+      tsdown:
+        specifier: 0.22.3
+        version: 0.22.3(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@5.9.3)(unrun@0.2.39)
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -2322,7 +2467,7 @@ importers:
         version: link:../utils
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       countries-list:
         specifier: ^3.3.0
         version: 3.3.0
@@ -2334,7 +2479,7 @@ importers:
         version: 3.2.0(date-fns@4.4.0)
       drizzle-orm:
         specifier: 1.0.0-beta.22
-        version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(zod@4.4.3)
+        version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       pg:
         specifier: ^8.20.0
         version: 8.21.0
@@ -2342,6 +2487,9 @@ importers:
         specifier: ^4.3.6
         version: 4.4.3
     devDependencies:
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@chatbotx.io/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
@@ -2371,7 +2519,7 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -2470,13 +2618,13 @@ importers:
         version: link:../utils
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       aws4fetch:
         specifier: ^1.0.20
         version: 1.0.20
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.0.3
+        version: 2.0.3
       probe-image-size:
         specifier: ^7.2.3
         version: 7.3.0
@@ -2609,7 +2757,7 @@ importers:
         version: 1.34.0
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       async-mutex:
         specifier: ^0.5.0
         version: 0.5.0
@@ -2659,7 +2807,7 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       mjml:
         specifier: ^5.2.0
         version: 5.3.0(svgo@4.0.1)(typescript@5.9.3)
@@ -2724,7 +2872,7 @@ importers:
         version: link:../logger
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       jose:
         specifier: ^6.2.3
         version: 6.2.3
@@ -2758,7 +2906,7 @@ importers:
         version: link:../logger
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       async-mutex:
         specifier: ^0.5.0
         version: 0.5.0
@@ -2781,6 +2929,9 @@ importers:
       '@chatbotx.io/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -3029,8 +3180,8 @@ importers:
         specifier: 16.3.5
         version: 16.3.5(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       postcss:
-        specifier: ^8.5.16
-        version: 8.5.16
+        specifier: ^8.5.28
+        version: 8.5.28
       tailwindcss:
         specifier: ^4.3.2
         version: 4.3.2
@@ -3045,7 +3196,7 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0
@@ -3080,6 +3231,9 @@ importers:
       '@chatbotx.io/business':
         specifier: workspace:*
         version: link:../business
+      '@chatbotx.io/channel-registry':
+        specifier: workspace:*
+        version: link:../channel-registry
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
@@ -3180,7 +3334,7 @@ importers:
         version: link:../sdk
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
       '@types/node':
         specifier: 24.x
         version: 24.13.1
@@ -3682,18 +3836,25 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@bull-board/api@8.1.2':
-    resolution: {integrity: sha512-6NGYCIRhHJmmoCwAFA1z4lPpR/D/BdOjyERd2MMeG4Samu05FSjzKKdN55S3ga30EcXeENfYzmNn6IDmVz5OTg==}
+  '@bull-board/api@9.10.1':
+    resolution: {integrity: sha512-yaFVInFvQAKHQwW7xxdoWQaC2xW1f8JOAZ5k6Zl8GQBTnlhm6UmeRQUr2Gb6wMgfl5v61p2eSupPow2CEvz0ng==}
     peerDependencies:
-      '@bull-board/ui': 8.1.2
+      '@bull-board/ui': 9.10.1
+      bull: ^4.16.5
+      bullmq: ^5.56.0 || ^6.0.0
+    peerDependenciesMeta:
+      bull:
+        optional: true
+      bullmq:
+        optional: true
 
-  '@bull-board/hono@8.1.2':
-    resolution: {integrity: sha512-HV/KhonVWv0cTp6ZRh8ZEZUdJikCme4AGHb3AjRTRozcvbYhX+vSHRVMyqUPARJq59hSwjPMnNUSVQ3YhLDrWQ==}
+  '@bull-board/hono@9.10.1':
+    resolution: {integrity: sha512-4jf8wp7aM+NqsUlxEEqkHC0vJQexcCJeE6jgzpRJuXyOdRlSakFwGuLXEfGzMkqxnRnSiDigSidLGyYN5fDEEg==}
     peerDependencies:
       hono: ^4
 
-  '@bull-board/ui@8.1.2':
-    resolution: {integrity: sha512-gC5u9XUSiRile4/VC+WHXtaPvfZV4Mrrz8MSvPe32Hjl2MXStfSuEOb+9Tw/WMpNSZ442tGpFZLz0RDh1Yo3jg==}
+  '@bull-board/ui@9.10.1':
+    resolution: {integrity: sha512-1E0zbLaljf+Zhx3nDUotzsG2Dz7/4i72nWCxKkFwxfz65MKXfObo2mXWMuIDoXAeWSa3sm7hlPj3h3scts4DaQ==}
 
   '@clack/core@1.4.3':
     resolution: {integrity: sha512-/kr3UWNtdJfxZtPgDqUOmG2pvwlmcLGheex5yiZKdwbzZJxhV+HMNR9QNmyY5cGwTNV6LrR7Jtp+KjhUAP1qBQ==}
@@ -3742,8 +3903,8 @@ packages:
   '@codemirror/commands@6.10.3':
     resolution: {integrity: sha512-JFRiqhKu+bvSkDLI+rUhJwSxQxYb759W5GBezE8Uc8mHLqC9aV/9aTC7yJSqCtB3F00pylrLCwnyS91Ap5ej4Q==}
 
-  '@codemirror/commands@6.11.0':
-    resolution: {integrity: sha512-/K4Rl5BN0OtTiPWmJCdqODu38XnDMsDxKY5rgrPnCkutPTJf2wVbkoixLfealF5Kwse/s8P8M5jAiURiwSwnFA==}
+  '@codemirror/commands@6.11.1':
+    resolution: {integrity: sha512-O/4hG3SC1YwcmQ0d2UVNDs+AsaNWd1iHVxbTeEBuqH+6bExAiPK3iS/BvpY6rZGURALv4ZD3sIgcCmRvw3ehBg==}
 
   '@codemirror/lang-css@6.3.1':
     resolution: {integrity: sha512-kr5fwBGiGtmz6l0LSJIbno9QrifNMUusivHbnA1H6Dmqy4HZFte3UAICix1VuKo0lMPKQr2rqB+0BkKi/S3Ejg==}
@@ -3917,9 +4078,6 @@ packages:
 
   '@emnapi/runtime@1.11.1':
     resolution: {integrity: sha512-vgj7R3y3Wgx24IQaGPA/R6YFXLHVMOZ0uVEyIQPaWs+rd1AzfEMXlAC22FYwO1XkKR6NPsq7mUandH8oIRdZFw==}
-
-  '@emnapi/runtime@1.11.2':
-    resolution: {integrity: sha512-kyOl3X0DuTiT1h2ft8r2fYO8JYtU9a9Xis/zBSiGArNaagCOWx90N1k2wxp18czFDH+OgcWGb5ZP/XMt3dcyPA==}
 
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
@@ -4960,11 +5118,17 @@ packages:
   '@lezer/common@1.5.2':
     resolution: {integrity: sha512-sxQE460fPZyU3sdc8lafxiPwJHBzZRy/udNFynGQky1SePYBdhkBl1kOagA9uT3pxR8K09bOrmTUqA9wb/PjSQ==}
 
+  '@lezer/common@1.5.3':
+    resolution: {integrity: sha512-H0iErY4e43LpXbYDyBci5W4v/RwTgGV3YzYOlJPiGZ8RY8w51kVE+xLn1tg3Z6UmSfyETvtsUK3r7YsgDQEI7Q==}
+
   '@lezer/css@1.3.3':
     resolution: {integrity: sha512-RzBo8r+/6QJeow7aPHIpGVIH59xTcJXp399820gZoMo9noQDRVpJLheIBUicYwKcsbOYoBRoLZlf2720dG/4Tg==}
 
   '@lezer/highlight@1.2.3':
     resolution: {integrity: sha512-qXdH7UqTvGfdVBINrgKhDsVTJTxactNNxLk7+UMwZhU13lMHaOBlJe9Vqp907ya56Y3+ed2tlqzys7jDkTmW0g==}
+
+  '@lezer/highlight@1.2.5':
+    resolution: {integrity: sha512-O1GMVKgtf5YspFaRzpmqkVgMtIk2HG9uMAbH6wdAIdNh3TVzCsch/+cRi+6l2//UGDKe6NB9BW3cvuR5ezMQ0w==}
 
   '@lezer/html@1.3.13':
     resolution: {integrity: sha512-oI7n6NJml729m7pjm9lvLvmXbdoMoi2f+1pwSDJkl9d68zGr7a9Btz8NdHTGQZtW2DA25ybeuv/SyDb9D5tseg==}
@@ -5336,26 +5500,26 @@ packages:
     resolution: {integrity: sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg==}
     engines: {node: '>=14'}
 
-  '@orpc/client@1.14.5':
-    resolution: {integrity: sha512-7kDiGJDyiwdHUnWJGGY2/evUenfAjvw6skrfuIKX+ZNtNrJecNNl3ytURmWOoZbcNZ4bX/1NKViO8BrtPgY0KA==}
+  '@orpc/client@1.15.4':
+    resolution: {integrity: sha512-8Iv2K8Rj8hf6xHCTxmQ+gxgiY6EATDossQk4gdt3oSbGVV0x2RSeLtRK9Zry+KVsmOqPJfnLahfRp7H2rQ/Vgg==}
 
-  '@orpc/contract@1.14.5':
-    resolution: {integrity: sha512-DARmTs1w5Z+bRtccMptc+d/k2DmZCY2pqtHhF3I2DxmN5IXEp9nch+MO/b5cnq1khjxy4XK6CIFL2psXyaXYTQ==}
+  '@orpc/contract@1.15.4':
+    resolution: {integrity: sha512-mxH+kuIsKz7BGsoqDHShnMjKG7GvCMGpvxTtJnkpbowIp2iBz8XiWosiWBybZcUl1Dy9W77TyOk6pNqG5I4D6w==}
 
-  '@orpc/interop@1.14.5':
-    resolution: {integrity: sha512-0cZuUVmBCkX1AsyjhDb5nG+odE/Zggl+kr3LZo3x+X4czUWlSSmPMomJ0sqtQdzv1LVyIRHmfHMWt5/9dY4BDQ==}
+  '@orpc/interop@1.15.4':
+    resolution: {integrity: sha512-ZCTNPenr1clZ2RBCJxsCsvS3eS8MJIDSx/LH1AIAKj9RjvfOXI/BnjHmgD4jUEIa6FcG+c2LV/1IXVJpC6NoTw==}
 
-  '@orpc/json-schema@1.14.5':
-    resolution: {integrity: sha512-8vabQ3eWFpdk+ivwTm5lCy7mhFaTa7BlatjUIO0hiGlixgjtSc41v6zqK8bzV2QsyvPrHDuD1Q4Uasjzmk77+A==}
+  '@orpc/json-schema@1.15.4':
+    resolution: {integrity: sha512-UIPzRBWuSkWejOJwIAGFkW8H0iOvqobGJnVGRbpKOGAw1kiJW2EqHQ+2ZhE2o/cTi/A+HnQj0YG9tmrk5Vytnw==}
 
-  '@orpc/openapi-client@1.14.5':
-    resolution: {integrity: sha512-wfxXmQSXHdEsMjMr+mMxg6NKbtsyBCeCvbTAWdo9mr4I59HErGaiH/lVEuPpIH5G980Y5kewcdHexm+hNBefFw==}
+  '@orpc/openapi-client@1.15.4':
+    resolution: {integrity: sha512-z+8gRUp9bhVuA2tFlzJDCaUbLV/whZec25fmYb0VtP2N6iPfY0d7hYZvX47F/WrcuwaLCTqkbVAzK8Xb2cKF/w==}
 
-  '@orpc/openapi@1.14.5':
-    resolution: {integrity: sha512-/wbjotmAbOKRxKEWW31jIp8/WwcbwTKEPtny+BNWGD2PrLWK+xiVKkmjjGFxbqIgETk3MZ2vLGRi1iwA6kZVyg==}
+  '@orpc/openapi@1.15.4':
+    resolution: {integrity: sha512-+J2skkYlqcB7O9nUJ9rhV1IvisimIwxyn21nAWP/jvSg5PN/klqSO2r6XkxiAaCukw/QE5BFMbN8c0ZdLrMEnw==}
 
-  '@orpc/server@1.14.5':
-    resolution: {integrity: sha512-+yT4LEPnGdYCveBVPUwAwSTSuwsIsU7QywGEu+ug51KYKwtm5qCPNBMyoA7R1/J/Q4Q5a+qaHWBTDq8bElT0Ew==}
+  '@orpc/server@1.15.4':
+    resolution: {integrity: sha512-Ccs2Pdwql2XRtk7bzkiZohoYuUVNcffydbswhz75rdepCQt0HmKosfVhsqjAqCKDDB7c84ct7Q7c5Z/xQak7pQ==}
     peerDependencies:
       crossws: '>=0.3.4'
       ws: '>=8.18.1'
@@ -5365,48 +5529,48 @@ packages:
       ws:
         optional: true
 
-  '@orpc/shared@1.14.5':
-    resolution: {integrity: sha512-D3rYULnYfTYC/ZcgSP6A2Fdypwkfm/vZQ7i2ycXXXfYNrnpAINQJfN32p6+M8GTDqmNkt0R7eALV1rrvxjmZCg==}
+  '@orpc/shared@1.15.4':
+    resolution: {integrity: sha512-syNylxXmv1WnroSDUvtYjuvu0YMAYzkLTjFPa0CggnaF3DH2YmAnRS5GGGzSPRAbhMtRAXArIoM7GVrRNKHxng==}
     peerDependencies:
       '@opentelemetry/api': '>=1.9.0'
     peerDependenciesMeta:
       '@opentelemetry/api':
         optional: true
 
-  '@orpc/standard-server-aws-lambda@1.14.5':
-    resolution: {integrity: sha512-qHMSWp5d85WZzch2BAL8egrz7xQNorAElHNXC1S4q5W/Ssib5Krv5zLAXVKki4IUxwAHqfrO/EYnWgEdufQzNQ==}
+  '@orpc/standard-server-aws-lambda@1.15.4':
+    resolution: {integrity: sha512-Vq5nNhq/XSM3DPsI1MLEbMraP+++hb0btsS8IfdAj5eXTYvDzpTA5rZ+gMhhgnVuZvZcQbmBojTgtu41X8t4sA==}
 
-  '@orpc/standard-server-fastify@1.14.5':
-    resolution: {integrity: sha512-agxnwypSaS/LUkUFRzVxy+wO2EMBD0+paZw9SXk2rAsW+Gxl9/XTUundUqUoukusdhgZ7R2Fp7gQLt2p0wH3Qg==}
+  '@orpc/standard-server-fastify@1.15.4':
+    resolution: {integrity: sha512-OkBWAUQhtssTrfaV3FF8X/gdJL7otS1MvfTBuxKoRKpf6u7CQB9QpdY76OSg407N/hvN8wzSW2lSbhlKljOxkQ==}
     peerDependencies:
       fastify: '>=5.6.1'
     peerDependenciesMeta:
       fastify:
         optional: true
 
-  '@orpc/standard-server-fetch@1.14.5':
-    resolution: {integrity: sha512-7h83p6/TgogOpaTuEXMVMB+UkMuAMUyFQ0zw4HM2B5/XSiEOzVO1YyFzuC2EmeuuLIV11sEI3vcw5oWbNAQROQ==}
+  '@orpc/standard-server-fetch@1.15.4':
+    resolution: {integrity: sha512-u6zQDx/tUgNUWDQstJMbWkCKsecp9j+4WHWoPmNNuk2PyRdD6FEmvJJs23CAKa5njKu2V8aMzuuL9AW3jechuw==}
 
-  '@orpc/standard-server-node@1.14.5':
-    resolution: {integrity: sha512-GrRGpCaZ8uQQRRCPCq/IWf30k/22gVsske3EP/vU93cQ8I+ArKHhmvnRQIiG2y4V/QvSTwvGpj/X279LmdnV4A==}
+  '@orpc/standard-server-node@1.15.4':
+    resolution: {integrity: sha512-is6T03n1y6nx+g9ve0ip+F1BXbnR104r3NEGVUcGmkuLCqtxqbXCCjyzJTXWwGArTdEcxDOT4cW/zx/EORGN0g==}
 
-  '@orpc/standard-server-peer@1.14.5':
-    resolution: {integrity: sha512-zp2QyfVzw4/Be5/D1NWB+r7+WDerxC39XZYsvD1+I1sT13P5HlVWfZpBIlF6eEig416O4wMwHYLOfnN4Ngom0g==}
+  '@orpc/standard-server-peer@1.15.4':
+    resolution: {integrity: sha512-qWH7gf+8Iv2oXVIQZIQIvAyk2LYUHcj0CXF+AKF5WzHU22vJInD4FKbl8+UesVU+nT8O+BrVmOXzrQ40TqngpQ==}
 
-  '@orpc/standard-server@1.14.5':
-    resolution: {integrity: sha512-bCd1BkShxknFjIDixUEjOj3fvP4hxN0IIV/hvTdtk6sdWApadBjw3UuK3iprkECgoBt/31zTOKwgHB/wnnUfhw==}
+  '@orpc/standard-server@1.15.4':
+    resolution: {integrity: sha512-woaFpUJavYPiqRQ0Eh716jOHRZ7o84mPpmEPS79bBUJNDilGEj2OBSjbHV2ez4FYdVnEnlbg+rYy7sX3PwwENA==}
 
-  '@orpc/tanstack-query@1.14.5':
-    resolution: {integrity: sha512-EFZtCrI7Y+H7sg3C2asvju8wtz4g/sdfWvl2XWC+O9qo0xmjCLLPx1t3mohBY45icTiLi+hMDV1fxINvmBHSEg==}
+  '@orpc/tanstack-query@1.15.4':
+    resolution: {integrity: sha512-oP4XuCI5AuelIhhv722sGXzZNYTH4Y6ueS4H4TtIICdG9Q6tJeiERqyEk0dm3ebh3yo+iM/NVmcRkpUrgzIZzw==}
     peerDependencies:
-      '@orpc/client': 1.14.5
+      '@orpc/client': 1.15.4
       '@tanstack/query-core': '>=5.80.2'
 
-  '@orpc/zod@1.14.5':
-    resolution: {integrity: sha512-Al0Tim0CxO7o4UkZCmIPWJyNXnB0f0qL2YzB/MA0E65ss7qJydBmvyPUES9b3z8GeXgPQAmIOYl/Jq2jtx8DfQ==}
+  '@orpc/zod@1.15.4':
+    resolution: {integrity: sha512-k7W5yvagfcGztACr7qpB7Yyp3iMF9BzCJX9uDH9EEouuM2gt/WzsGtkDw//LTpPPsJQerltdKrdGfaWnbrGBhQ==}
     peerDependencies:
-      '@orpc/contract': 1.14.5
-      '@orpc/server': 1.14.5
+      '@orpc/contract': 1.15.4
+      '@orpc/server': 1.15.4
       zod: ^4.3.6
 
   '@oxc-parser/binding-android-arm-eabi@0.137.0':
@@ -6624,9 +6788,6 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@tybys/wasm-util@0.10.2':
-    resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
-
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
 
@@ -6899,6 +7060,7 @@ packages:
   '@xmldom/xmldom@0.8.13':
     resolution: {integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xobotyi/scrollbar-width@1.9.5':
     resolution: {integrity: sha512-N8tkAACJx2ww8vFMneJmaAgmjAG1tnVBZJRLRcx061tmsLRZHSEZSLuGWnwPtunsSLvSqXQ2wfp7Mgqg1I+2dQ==}
@@ -7511,6 +7673,7 @@ packages:
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
     engines: {node: '>=12.0.0'}
+    deprecated: v4 is no longer maintained, upgrade to v5
 
   cross-fetch@4.1.0:
     resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
@@ -7823,10 +7986,12 @@ packages:
 
   drizzle-kit@1.0.0-beta.22:
     resolution: {integrity: sha512-9HTZuQRljQKTgCx4UhiGn8KYYfHGk4+B/bRR1714W67kz0qgJvdrG527i8rQD8uUyET9UTGR1u8syySJD4znGw==}
+    deprecated: The 1.0.0-beta line is superseded by the 1.0 release candidate. Install drizzle-kit@rc instead.
     hasBin: true
 
   drizzle-orm@1.0.0-beta.22:
     resolution: {integrity: sha512-F+DZyVIvH0oVKa/w08Cle1xfoH+pc+htIXHG/frnMLG72aby9NYYr9oc+9XvghnoO4umxFItduz0OMmQJMnenw==}
+    deprecated: The 1.0.0-beta line is superseded by the 1.0 release candidate. Install drizzle-orm@rc instead.
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -8359,6 +8524,7 @@ packages:
   fstream@1.0.12:
     resolution: {integrity: sha512-WvJ193OHa0GHPEL+AycEJgxvBEwyfRkN1vhjca23OaPVMCaLCXTd5qAu82AjTcgP1UJmytkOKb63Ypde7raDIg==}
     engines: {node: '>=0.6'}
+    deprecated: This package is no longer supported.
 
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
@@ -8418,11 +8584,13 @@ packages:
 
   glob@10.5.0:
     resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@11.1.0:
     resolution: {integrity: sha512-vuNwKSaKiqm7g0THUBu2x7ckSs3XJLXE+2ssL7/MfTGPLLcrJQ/4Uq1CjPTtO5cCIiRxqvN6Twy1qOwhL0Xjcw==}
     engines: {node: 20 || >=22}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@13.0.6:
@@ -8431,6 +8599,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-directory@4.0.1:
     resolution: {integrity: sha512-wHTUcDUoZ1H5/0iVqEudYW4/kAlN5cZ3j/bXn0Dpbizl9iaUVeWSHqiOjsgk6OW2bkLclbBjzewBz6weQ1zA2Q==}
@@ -8603,9 +8772,9 @@ packages:
     resolution: {integrity: sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==}
     engines: {node: '>= 4'}
 
-  image-size@2.0.2:
-    resolution: {integrity: sha512-IRqXKlaXwgSMAMtpNzZa1ZAe8m+Sa1770Dhk8VkSsP9LS+iHD62Zd8FQKs8fbPiagBE7BzoFX23cxFnwshpV6w==}
-    engines: {node: '>=16.x'}
+  image-size@2.0.3:
+    resolution: {integrity: sha512-9BJAtVCBth+76NwqnEfWr3PiRnYhbquk6K/USuQ1GQajz5NgLzO7tNsnoNjHfO7LuftgkBf+CCH6j28hjMbIYQ==}
+    engines: {node: '>=18'}
     hasBin: true
 
   immediate@3.0.6:
@@ -8624,6 +8793,7 @@ packages:
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -8654,6 +8824,7 @@ packages:
 
   intersection-observer@0.12.2:
     resolution: {integrity: sha512-7m1vEcPCxXYI8HqnL8CKI6siDyD+eIWSwgB3DZA+ZTogxk9I4CDnj4wilt9x/+/QbHI4YG5YZNmC6458/e9Ktg==}
+    deprecated: The Intersection Observer polyfill is no longer needed and can safely be removed. Intersection Observer has been Baseline since 2019.
 
   intl-messageformat@11.2.8:
     resolution: {integrity: sha512-l323RCl3qJDVQ8U9j74ut/hVMdg3VPsOHpVMDvFfz9qiq4dPO5ooVYFNVUzzrpgG39a+RLzcXyJb8VFgIU+tUA==}
@@ -9105,6 +9276,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.isfunction@3.0.9:
     resolution: {integrity: sha512-AirXNj15uRIMMPihnkInB4i3NHeb4iBtNg9WRWuK2o31S+ePwwNmDPaTL3o7dTJ+VXNZim7rFs4rxN4YU1oUJw==}
@@ -9442,11 +9614,6 @@ packages:
       react: '*'
       react-dom: '*'
 
-  nanoid@3.3.12:
-    resolution: {integrity: sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
   nanoid@3.3.18:
     resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -9527,6 +9694,7 @@ packages:
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
+    deprecated: Use your platform's native DOMException instead
 
   node-ensure@0.0.0:
     resolution: {integrity: sha512-DRI60hzo2oKN1ma0ckc6nQWlHU69RH6xN0sjQTjMpChPfTYvKZdcQFfdYK2RWbJcKyUizSIy/l8OTGxMAM1QDw==}
@@ -10039,10 +10207,6 @@ packages:
   postcss-value-parser@4.2.0:
     resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
 
-  postcss@8.5.16:
-    resolution: {integrity: sha512-vuwillviilfKZsg0VGj5R/YwwcHx4SLsIOI/7K6mQkWx+l5cUHTjj5g0AasTBcyXsbfTgrwsUNmVUb5xVwyPwg==}
-    engines: {node: ^10 || ^12 || >=14}
-
   postcss@8.5.23:
     resolution: {integrity: sha512-g50586zr4bZmwFiTlflMu8E0bDTb5I5gertgwAKmsdUlTQIhZtunzUlD1WSzwcVWPoAVpsrA6vlfCD7oXvRwgg==}
     engines: {node: ^10 || ^12 || >=14}
@@ -10440,6 +10604,7 @@ packages:
 
   rimraf@2.7.1:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
   rimraf@5.0.10:
@@ -10584,9 +10749,6 @@ packages:
 
   set-blocking@2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
-
-  set-cookie-parser@3.1.0:
-    resolution: {integrity: sha512-kjnC1DXBHcxaOaOXBHBeRtltsDG2nUiUni+jP92M9gYdW12rsmx92UsfpH7o5tDRs7I1ZZPSQJQGv3UaRfCiuw==}
 
   set-cookie-parser@3.1.2:
     resolution: {integrity: sha512-5/r/lTwbJ3zQ+qwdUFZYeRNqda7P5HD8zQKqlSjdGt1/S0cjLAphHusj4Y58ahDtWn/g32xrIS58/ikOvwl0Lw==}
@@ -10993,6 +11155,7 @@ packages:
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
     engines: {node: ^18 || >=20}
+    deprecated: unmaintained
     hasBin: true
     peerDependencies:
       typescript: ^5
@@ -11059,6 +11222,10 @@ packages:
 
   tw-animate-css@1.4.0:
     resolution: {integrity: sha512-7bziOlRqH0hJx80h/3mbicLW7o8qLsH5+RaLR2t+OHM3D0JlWGODQKQ4cxbK7WlvmUxpcj6Kgu6EKqjrGFe3QQ==}
+
+  type-fest@5.10.0:
+    resolution: {integrity: sha512-NoSdpq/WEiAg5sjmBkmV/hfxv6HJH4NqPNrqjtSO5CwRmpsDfaf4begxW34KdJykH/l1yHtwBWQkCRdoXO8mPA==}
+    engines: {node: '>=20'}
 
   type-fest@5.7.0:
     resolution: {integrity: sha512-1URUxUqfHFM1c+zfSPsa3gnkO7Aq21qyH75SIduNYz4SzY964rn1X2vCMQaHSHhktiw+0kPa2iyb6PUpXqB6Vg==}
@@ -11189,14 +11356,24 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuniq@1.3.22:
     resolution: {integrity: sha512-/ayVZ6Zl7ddZURh7UJ/PyUN8jADn+iQf2G3FTZVZ2Frkr0GiIPnQy7w/GLR/yYqbX3Bsi655Oi9nnSy3FIJylg==}
+
+  valibot@1.5.0:
+    resolution: {integrity: sha512-nil6AkP2TChWL43Z5uJ6GTxX01CUA+g8LWUM+N/rB9NBbkUMaUsi9PUNzlUPgoKASgmx9f7eGOYpJ04/fSa6FQ==}
+    peerDependencies:
+      typescript: ^5
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   valid-data-url@3.0.1:
     resolution: {integrity: sha512-jOWVmzVceKlVVdwjNSenT4PbGghU0SBIizAev8ofZVgivk/TVHXSbNL8LP6M3spZvkR9/QolkyJavGSX5Cs0UA==}
@@ -11369,6 +11546,7 @@ packages:
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -11529,8 +11707,8 @@ packages:
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
-  zod@4.5.4:
-    resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
+  zod@4.6.5:
+    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
 
   zustand@4.5.7:
     resolution: {integrity: sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==}
@@ -11586,12 +11764,12 @@ snapshots:
       '@vercel/oidc': 3.2.0
       zod: 4.4.3
 
-  '@ai-sdk/gateway@3.0.125(zod@4.5.4)':
+  '@ai-sdk/gateway@3.0.125(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.5.4)
+      '@ai-sdk/provider-utils': 4.0.27(zod@4.6.5)
       '@vercel/oidc': 3.2.0
-      zod: 4.5.4
+      zod: 4.6.5
 
   '@ai-sdk/google@3.0.80(zod@4.4.3)':
     dependencies:
@@ -11619,11 +11797,11 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.27(zod@4.4.3)
       zod: 4.4.3
 
-  '@ai-sdk/openai@3.0.68(zod@4.5.4)':
+  '@ai-sdk/openai@3.0.68(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.5.4)
-      zod: 4.5.4
+      '@ai-sdk/provider-utils': 4.0.27(zod@4.6.5)
+      zod: 4.6.5
 
   '@ai-sdk/provider-utils@4.0.27(zod@4.4.3)':
     dependencies:
@@ -11632,12 +11810,12 @@ snapshots:
       eventsource-parser: 3.1.0
       zod: 4.4.3
 
-  '@ai-sdk/provider-utils@4.0.27(zod@4.5.4)':
+  '@ai-sdk/provider-utils@4.0.27(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
-      zod: 4.5.4
+      zod: 4.6.5
 
   '@ai-sdk/provider-utils@4.0.35(zod@4.4.3)':
     dependencies:
@@ -12180,21 +12358,34 @@ snapshots:
   '@biomejs/cli-win32-x64@2.4.16':
     optional: true
 
-  '@bull-board/api@8.1.2(@bull-board/ui@8.1.2)':
+  '@bull-board/api@9.10.1(@bull-board/ui@9.10.1(bullmq@5.78.0)(typescript@5.9.3))(bullmq@5.78.0)(typescript@5.9.3)':
     dependencies:
-      '@bull-board/ui': 8.1.2
+      '@bull-board/ui': 9.10.1(bullmq@5.78.0)(typescript@5.9.3)
       redis-info: 3.1.0
+      valibot: 1.5.0(typescript@5.9.3)
+    optionalDependencies:
+      bullmq: 5.78.0
+    transitivePeerDependencies:
+      - typescript
 
-  '@bull-board/hono@8.1.2(hono@4.13.5)':
+  '@bull-board/hono@9.10.1(bullmq@5.78.0)(hono@4.13.5)(typescript@5.9.3)':
     dependencies:
-      '@bull-board/api': 8.1.2(@bull-board/ui@8.1.2)
-      '@bull-board/ui': 8.1.2
+      '@bull-board/api': 9.10.1(@bull-board/ui@9.10.1(bullmq@5.78.0)(typescript@5.9.3))(bullmq@5.78.0)(typescript@5.9.3)
+      '@bull-board/ui': 9.10.1(bullmq@5.78.0)(typescript@5.9.3)
       ejs: 6.0.1
       hono: 4.13.5
+    transitivePeerDependencies:
+      - bull
+      - bullmq
+      - typescript
 
-  '@bull-board/ui@8.1.2':
+  '@bull-board/ui@9.10.1(bullmq@5.78.0)(typescript@5.9.3)':
     dependencies:
-      '@bull-board/api': 8.1.2(@bull-board/ui@8.1.2)
+      '@bull-board/api': 9.10.1(@bull-board/ui@9.10.1(bullmq@5.78.0)(typescript@5.9.3))(bullmq@5.78.0)(typescript@5.9.3)
+    transitivePeerDependencies:
+      - bull
+      - bullmq
+      - typescript
 
   '@clack/core@1.4.3':
     dependencies:
@@ -12239,12 +12430,12 @@ snapshots:
       '@codemirror/view': 6.43.0
       '@lezer/common': 1.5.2
 
-  '@codemirror/commands@6.11.0':
+  '@codemirror/commands@6.11.1':
     dependencies:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.7.0
       '@codemirror/view': 6.43.0
-      '@lezer/common': 1.5.2
+      '@lezer/common': 1.5.3
 
   '@codemirror/lang-css@6.3.1':
     dependencies:
@@ -12306,7 +12497,7 @@ snapshots:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.7.0
       '@codemirror/view': 6.43.0
-      '@lezer/highlight': 1.2.3
+      '@lezer/highlight': 1.2.5
 
   '@codemirror/view@6.43.0':
     dependencies:
@@ -12452,11 +12643,6 @@ snapshots:
     optional: true
 
   '@emnapi/runtime@1.11.1':
-    dependencies:
-      tslib: 2.8.1
-    optional: true
-
-  '@emnapi/runtime@1.11.2':
     dependencies:
       tslib: 2.8.1
     optional: true
@@ -13154,6 +13340,8 @@ snapshots:
 
   '@lezer/common@1.5.2': {}
 
+  '@lezer/common@1.5.3': {}
+
   '@lezer/css@1.3.3':
     dependencies:
       '@lezer/common': 1.5.2
@@ -13163,6 +13351,10 @@ snapshots:
   '@lezer/highlight@1.2.3':
     dependencies:
       '@lezer/common': 1.5.2
+
+  '@lezer/highlight@1.2.5':
+    dependencies:
+      '@lezer/common': 1.5.3
 
   '@lezer/html@1.3.13':
     dependencies:
@@ -13215,7 +13407,7 @@ snapshots:
       express: 5.2.1
       express-rate-limit: 8.5.2(express@5.2.1)
       hono: 4.13.5
-      jose: 6.2.3
+      jose: 6.2.8
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
@@ -13303,8 +13495,8 @@ snapshots:
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
       '@emnapi/core': 1.11.2
-      '@emnapi/runtime': 1.11.2
-      '@tybys/wasm-util': 0.10.2
+      '@emnapi/runtime': 1.11.3
+      '@tybys/wasm-util': 0.10.3
     optional: true
 
   '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)':
@@ -13325,6 +13517,13 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.10.0
       '@emnapi/runtime': 1.10.0
+      '@tybys/wasm-util': 0.10.3
+    optional: true
+
+  '@napi-rs/wasm-runtime@1.2.4(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
+    dependencies:
+      '@emnapi/core': 1.11.1
+      '@emnapi/runtime': 1.11.1
       '@tybys/wasm-util': 0.10.3
     optional: true
 
@@ -13467,33 +13666,33 @@ snapshots:
 
   '@opentelemetry/semantic-conventions@1.43.0': {}
 
-  '@orpc/client@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/client@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-fetch': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-peer': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-fetch': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-peer': 1.15.4(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/contract@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/contract@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/client': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/client': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
       '@standard-schema/spec': 1.1.0
       openapi-types: 12.1.3
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/interop@1.14.5': {}
+  '@orpc/interop@1.15.4': {}
 
-  '@orpc/json-schema@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)':
+  '@orpc/json-schema@1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)':
     dependencies:
-      '@orpc/contract': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/interop': 1.14.5
-      '@orpc/openapi': 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
-      '@orpc/server': 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/contract': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/interop': 1.15.4
+      '@orpc/openapi': 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
+      '@orpc/server': 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
       json-schema-typed: 8.0.2
     transitivePeerDependencies:
       - '@opentelemetry/api'
@@ -13501,24 +13700,24 @@ snapshots:
       - fastify
       - ws
 
-  '@orpc/openapi-client@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/openapi-client@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/client': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/contract': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/client': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/contract': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/openapi@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)':
+  '@orpc/openapi@1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)':
     dependencies:
-      '@orpc/client': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/contract': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/interop': 1.14.5
-      '@orpc/openapi-client': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/server': 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/client': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/contract': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/interop': 1.15.4
+      '@orpc/openapi-client': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/server': 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
       json-schema-typed: 8.0.2
       rou3: 0.7.12
     transitivePeerDependencies:
@@ -13527,18 +13726,18 @@ snapshots:
       - fastify
       - ws
 
-  '@orpc/server@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)':
+  '@orpc/server@1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)':
     dependencies:
-      '@orpc/client': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/contract': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/interop': 1.14.5
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-aws-lambda': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-fastify': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-fetch': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-node': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-peer': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/client': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/contract': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/interop': 1.15.4
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-aws-lambda': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-fastify': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-fetch': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-node': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-peer': 1.15.4(@opentelemetry/api@1.9.1)
       cookie: 1.1.1
     optionalDependencies:
       ws: 8.21.0
@@ -13546,73 +13745,73 @@ snapshots:
       - '@opentelemetry/api'
       - fastify
 
-  '@orpc/shared@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/shared@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
       radash: 12.1.1
-      type-fest: 5.7.0
+      type-fest: 5.10.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
 
-  '@orpc/standard-server-aws-lambda@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/standard-server-aws-lambda@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-fetch': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-node': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-fetch': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-node': 1.15.4(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/standard-server-fastify@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/standard-server-fastify@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-node': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-node': 1.15.4(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/standard-server-fetch@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/standard-server-fetch@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/standard-server-node@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/standard-server-node@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server-fetch': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server-fetch': 1.15.4(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/standard-server-peer@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/standard-server-peer@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/standard-server': 1.15.4(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/standard-server@1.14.5(@opentelemetry/api@1.9.1)':
+  '@orpc/standard-server@1.15.4(@opentelemetry/api@1.9.1)':
     dependencies:
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/tanstack-query@1.14.5(@opentelemetry/api@1.9.1)(@orpc/client@1.14.5(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.102.8)':
+  '@orpc/tanstack-query@1.15.4(@opentelemetry/api@1.9.1)(@orpc/client@1.15.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.102.8)':
     dependencies:
-      '@orpc/client': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/client': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
       '@tanstack/query-core': 5.102.8
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/zod@1.14.5(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.5(@opentelemetry/api@1.9.1))(@orpc/server@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)':
+  '@orpc/zod@1.15.4(@opentelemetry/api@1.9.1)(@orpc/contract@1.15.4(@opentelemetry/api@1.9.1))(@orpc/server@1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)':
     dependencies:
-      '@orpc/contract': 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/json-schema': 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
-      '@orpc/openapi': 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
-      '@orpc/server': 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
-      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/contract': 1.15.4(@opentelemetry/api@1.9.1)
+      '@orpc/json-schema': 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
+      '@orpc/openapi': 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
+      '@orpc/server': 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
+      '@orpc/shared': 1.15.4(@opentelemetry/api@1.9.1)
       escape-string-regexp: 5.0.0
       wildcard-match: 5.1.4
       zod: 4.4.3
@@ -13942,7 +14141,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.11.1
       '@emnapi/runtime': 1.11.1
-      '@napi-rs/wasm-runtime': 1.1.6(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
+      '@napi-rs/wasm-runtime': 1.2.4(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
     optional: true
 
   '@rolldown/binding-win32-arm64-msvc@1.0.0-rc.17':
@@ -14182,16 +14381,18 @@ snapshots:
     dependencies:
       '@swc/counter': 0.1.3
 
-  '@t3-oss/env-core@0.13.11(typescript@5.9.3)(zod@4.4.3)':
+  '@t3-oss/env-core@0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)':
     optionalDependencies:
       typescript: 5.9.3
+      valibot: 1.5.0(typescript@5.9.3)
       zod: 4.4.3
 
-  '@t3-oss/env-nextjs@0.13.11(typescript@5.9.3)(zod@4.4.3)':
+  '@t3-oss/env-nextjs@0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)':
     dependencies:
-      '@t3-oss/env-core': 0.13.11(typescript@5.9.3)(zod@4.4.3)
+      '@t3-oss/env-core': 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3)
     optionalDependencies:
       typescript: 5.9.3
+      valibot: 1.5.0(typescript@5.9.3)
       zod: 4.4.3
 
   '@tabby_ai/hijri-converter@1.0.5': {}
@@ -14262,7 +14463,7 @@ snapshots:
       '@alloc/quick-lru': 5.2.0
       '@tailwindcss/node': 4.3.2
       '@tailwindcss/oxide': 4.3.2
-      postcss: 8.5.16
+      postcss: 8.5.28
       tailwindcss: 4.3.2
 
   '@tanstack/query-core@5.102.8': {}
@@ -14494,11 +14695,6 @@ snapshots:
     optional: true
 
   '@turbo/windows-arm64@2.10.4':
-    optional: true
-
-  '@tybys/wasm-util@0.10.2':
-    dependencies:
-      tslib: 2.8.1
     optional: true
 
   '@tybys/wasm-util@0.10.3':
@@ -14902,13 +15098,13 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       zod: 4.4.3
 
-  ai@6.0.197(zod@4.5.4):
+  ai@6.0.197(zod@4.6.5):
     dependencies:
-      '@ai-sdk/gateway': 3.0.125(zod@4.5.4)
+      '@ai-sdk/gateway': 3.0.125(zod@4.6.5)
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.5.4)
+      '@ai-sdk/provider-utils': 4.0.27(zod@4.6.5)
       '@opentelemetry/api': 1.9.1
-      zod: 4.5.4
+      zod: 4.6.5
 
   ajv-formats@3.0.1(ajv@8.20.0):
     optionalDependencies:
@@ -15309,7 +15505,7 @@ snapshots:
   codemirror@6.0.2:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
-      '@codemirror/commands': 6.11.0
+      '@codemirror/commands': 6.11.1
       '@codemirror/language': 6.12.3
       '@codemirror/lint': 6.9.6
       '@codemirror/search': 6.7.0
@@ -15773,12 +15969,13 @@ snapshots:
       get-tsconfig: 4.14.0
       jiti: 2.7.0
 
-  drizzle-orm@1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(zod@4.4.3):
+  drizzle-orm@1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.4.3):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20240718.0
       '@opentelemetry/api': 1.9.1
       '@types/pg': 8.20.0
       pg: 8.21.0
+      valibot: 1.5.0(typescript@5.9.3)
       zod: 4.4.3
 
   dts-resolver@3.0.0(oxc-resolver@11.21.3):
@@ -16460,7 +16657,7 @@ snapshots:
   headers-polyfill@5.0.1:
     dependencies:
       '@types/set-cookie-parser': 2.4.10
-      set-cookie-parser: 3.1.0
+      set-cookie-parser: 3.1.2
 
   help-me@5.0.0: {}
 
@@ -16579,7 +16776,7 @@ snapshots:
 
   ignore@7.0.5: {}
 
-  image-size@2.0.2: {}
+  image-size@2.0.3: {}
 
   immediate@3.0.6: {}
 
@@ -17754,8 +17951,6 @@ snapshots:
       stacktrace-js: 2.0.2
       stylis: 4.4.0
 
-  nanoid@3.3.12: {}
-
   nanoid@3.3.18: {}
 
   nanoid@3.3.19: {}
@@ -18344,21 +18539,15 @@ snapshots:
 
   postcss-value-parser@4.2.0: {}
 
-  postcss@8.5.16:
-    dependencies:
-      nanoid: 3.3.12
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
-
   postcss@8.5.23:
     dependencies:
-      nanoid: 3.3.19
+      nanoid: 3.3.18
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
   postcss@8.5.28:
     dependencies:
-      nanoid: 3.3.18
+      nanoid: 3.3.19
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -18966,8 +19155,6 @@ snapshots:
 
   set-blocking@2.0.0: {}
 
-  set-cookie-parser@3.1.0: {}
-
   set-cookie-parser@3.1.2: {}
 
   set-function-length@1.2.2:
@@ -19360,7 +19547,7 @@ snapshots:
       hookable: 6.1.1
       import-without-cache: 0.4.0
       obug: 2.1.3
-      picomatch: 4.0.4
+      picomatch: 4.0.5
       rolldown: 1.1.4
       rolldown-plugin-dts: 0.26.0(oxc-resolver@11.21.3)(rolldown@1.1.4)(typescript@5.9.3)
       semver: 7.8.5
@@ -19398,6 +19585,10 @@ snapshots:
       '@turbo/windows-arm64': 2.10.4
 
   tw-animate-css@1.4.0: {}
+
+  type-fest@5.10.0:
+    dependencies:
+      tagged-tag: 1.0.0
 
   type-fest@5.7.0:
     dependencies:
@@ -19533,6 +19724,10 @@ snapshots:
       any-base: 1.1.0
       lodash.merge: 4.6.2
       lodash.throttle: 4.1.1
+
+  valibot@1.5.0(typescript@5.9.3):
+    optionalDependencies:
+      typescript: 5.9.3
 
   valid-data-url@3.0.1: {}
 
@@ -19864,7 +20059,7 @@ snapshots:
 
   zod@4.4.3: {}
 
-  zod@4.5.4: {}
+  zod@4.6.5: {}
 
   zustand@4.5.7(@types/react@19.2.14)(immer@11.1.15)(react@19.2.5):
     dependencies:

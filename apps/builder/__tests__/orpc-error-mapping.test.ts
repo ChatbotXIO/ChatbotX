@@ -1,5 +1,9 @@
 // @vitest-environment node
 
+import {
+  broadcastPlanLimitDataSchema,
+  TRIAL_BROADCAST_PLAN_POLICY,
+} from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const { mockLoggerError, mockLoggerWarn } = vi.hoisted(() => ({
@@ -19,21 +23,6 @@ vi.mock("@/middlewares/workspace-token-auth", () => ({
   workspaceTokenAuthMidddleware: {},
 }))
 
-vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {
-    code: string
-    httpStatusCode: number
-    constructor(message: string, code = "systemError", httpStatusCode = 400) {
-      super(message)
-      this.name = "ChatbotXException"
-      this.code = code
-      this.httpStatusCode = httpStatusCode
-    }
-  },
-  toPublicErrorMessage: (error: Error, fallback: string) =>
-    error.message || fallback,
-}))
-
 vi.mock("@chatbotx.io/database/errors", () => ({
   ModelNotfoundException: class ModelNotfoundException extends Error {},
 }))
@@ -45,6 +34,10 @@ vi.mock("@chatbotx.io/sdk", () => ({
       super(message)
       this.name = "SdkException"
       this.httpStatusCode = httpStatusCode
+    }
+
+    getOriginError() {
+      return
     }
   },
 }))
@@ -61,7 +54,8 @@ vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
   },
 }))
 
-const { ChatbotXException } = await import("@chatbotx.io/business/errors")
+const { broadcastPlanLimitException, ChatbotXException, validationException } =
+  await import("@chatbotx.io/business/errors")
 const { ModelNotfoundException } = await import("@chatbotx.io/database/errors")
 const { FlowAuthoringException } = await import("@chatbotx.io/flow-config")
 const { SdkException } = await import("@chatbotx.io/sdk")
@@ -127,6 +121,46 @@ describe("mapKnownOrpcErrors", () => {
       expect.objectContaining({ code: "validation", status: 422 }),
     )
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
+  })
+
+  test("forwards schema-valid data for a broadcastPlanLimit exception", () => {
+    const error = broadcastPlanLimitException("sendRate", {
+      policy: TRIAL_BROADCAST_PLAN_POLICY,
+      planName: "Trial",
+    })
+
+    let mapped: unknown
+    try {
+      mapKnownOrpcErrors(error)
+    } catch (caught) {
+      mapped = caught
+    }
+
+    expect(mapped).toMatchObject({
+      code: "broadcastPlanLimit",
+      status: 403,
+      data: error.data,
+    })
+    expect(
+      broadcastPlanLimitDataSchema.safeParse(
+        (mapped as InstanceType<typeof ORPCError>).data,
+      ).success,
+    ).toBe(true)
+  })
+
+  test("does not forward validationException data", () => {
+    const error = validationException("name", "Name already taken", {
+      max: 1,
+    })
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({
+        code: "validation",
+        status: 422,
+        message: "Name already taken (max=1)",
+        data: undefined,
+      }),
+    )
   })
 
   test("maps a tooManyRequests ChatbotXException to a 429 error", () => {

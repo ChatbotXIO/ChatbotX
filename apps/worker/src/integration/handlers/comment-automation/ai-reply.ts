@@ -6,6 +6,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
+import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import type { AIJobCommentAIReply } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { integrationService } from "../../../services/integrations"
@@ -14,12 +15,25 @@ import {
   createGuardedCommentInputMessage,
   generateAIReplyText,
 } from "../automated-response/replies"
+import type { CommentAutomationChannelType } from "./channel-type"
 import { rollbackCommentDedup } from "./dedup"
 import {
   PRIVATE_REPLY_TEXT_SENDERS,
   type PrivateReplyAuth,
+  recordInlinePrivateReply,
 } from "./private-reply"
 import { postPublicCommentReply } from "./public-reply"
+
+/**
+ * Channels whose comments reach the agent inside an explicit untrusted-data
+ * envelope. Meta-channel comments keep the raw shape they have always been sent
+ * with, so this stays an allowlist rather than a negated check — a new channel
+ * defaults to the guarded path only once someone decides it should.
+ */
+const GUARDED_COMMENT_CHANNELS = new Set<CommentAutomationChannelType>([
+  "threads",
+  "tiktok",
+])
 
 /**
  * Generate an AI agent reply for a Facebook comment and deliver it on the
@@ -45,7 +59,7 @@ import { postPublicCommentReply } from "./public-reply"
  *   on the analytics page as a successful reply — the exact class of failure
  *   the Error Logs panel exists to surface.
  * - `skipped` — the automation deliberately declined (outside business hours,
- *   nothing to answer). The row is DELETED. `FBCommentAutomationEvent` only
+ *   nothing to answer). The row is DELETED. `CommentAutomationEvent` only
  *   counts work the automation actually attempted (see the partial's docblock),
  *   so a skip must leave no trace rather than one Error Logs row per off-hours
  *   comment.
@@ -224,10 +238,10 @@ async function generateAndDeliverAIReply(
     conversation,
     contactInbox,
     messages: [
-      // Threads comments are wrapped in an explicit untrusted-data envelope
-      // before reaching the agent. Meta-channel comments keep the raw shape
-      // they have always been sent with.
-      data.channelType === "threads"
+      // Threads and TikTok comments are wrapped in an explicit untrusted-data
+      // envelope before reaching the agent. Meta-channel comments keep the raw
+      // shape they have always been sent with.
+      GUARDED_COMMENT_CHANNELS.has(data.channelType)
         ? createGuardedCommentInputMessage({
             channel: data.channelType,
             comment: message,
@@ -288,22 +302,75 @@ async function generateAndDeliverAIReply(
         data.integrationIdentifier,
       )
 
-    await sendPrivateReplyText(
+    const sendResult = await sendPrivateReplyText(
       integrationRow.auth as PrivateReplyAuth,
       data.commentId,
       generated.text,
     )
-    // Inline send, no `Message` row: same reason `executePrivateReply` settles
-    // delivery here rather than waiting for a webhook. The public branch above
-    // is settled by the chat worker instead, once the Graph call lands.
+    await settleDeliveredPrivateAIReply({
+      data,
+      contactInbox,
+      text: generated.text,
+      sendResult,
+    })
+    return
+  }
+
+  await settleAIReplySent({ data, text: generated.text })
+}
+
+/**
+ * Bookkeeping for a private DM that already left. None of it may fail the
+ * job: a throw here would make BullMQ retry, regenerate the text and send the
+ * contact a second DM (with a second inbox row). A step that fails is logged
+ * and the rest still run — a stale analytics row beats a duplicate DM.
+ */
+async function settleDeliveredPrivateAIReply(props: {
+  data: AIJobCommentAIReply["data"]
+  contactInbox: ContactInboxModel
+  text: string
+  sendResult: unknown
+}): Promise<void> {
+  const { data, contactInbox, text, sendResult } = props
+  const logContext = {
+    automationId: data.automationId,
+    commentId: data.commentId,
+    workspaceId: data.workspaceId,
+  }
+
+  try {
+    // Inline send that no webhook settles: same reason `executePrivateReply`
+    // settles delivery here. The public branch is settled by the chat worker
+    // instead, once the Graph call lands.
     await commentAutomationAnalyticsService.markDelivered({
       automationId: data.automationId,
       commentId: data.commentId,
       replyChannel: "private",
     })
+  } catch (err) {
+    logger.error(
+      { err, ...logContext },
+      "Failed to mark a sent AI private reply delivered",
+    )
   }
 
-  await settleAIReplySent({ data, text: generated.text })
+  try {
+    await settleAIReplySent({ data, text })
+  } catch (err) {
+    logger.error(
+      { err, ...logContext },
+      "Failed to settle a sent AI private reply",
+    )
+  }
+
+  await recordInlinePrivateReply({
+    channelType: data.channelType,
+    commentId: data.commentId,
+    contactInbox,
+    workspaceId: data.workspaceId,
+    text,
+    sendResult,
+  })
 }
 
 /** Lands the generated text on the event row the dispatcher opened. */

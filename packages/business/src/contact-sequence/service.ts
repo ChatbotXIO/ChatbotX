@@ -292,8 +292,19 @@ class ContactSequenceService extends BaseService {
     workspaceId: string
     contactId: string
     tx?: DrizzleClient
+    accessScope?: ContactAccessScope
   }): Promise<{ sequenceId: string; sequenceName: string }[]> {
-    const { workspaceId, contactId, tx = db } = props
+    const { workspaceId, contactId, tx = db, accessScope } = props
+
+    // Enforce the "only assigned contacts" permission the same way
+    // `getContact` does — `contactsOnSequenceModel` has no assignment of its
+    // own, so scope it by first asserting access to the parent contact.
+    await contactService.findByIdOrFail({
+      workspaceId,
+      id: contactId,
+      accessScope,
+      tx,
+    })
 
     const enrollments = await tx.query.contactsOnSequenceModel.findMany({
       where: { workspaceId, contactId },

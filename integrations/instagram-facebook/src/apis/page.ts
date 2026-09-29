@@ -1,21 +1,8 @@
-import {
-  type Context,
-  guessFileTypeFromMimeType,
-  type IncomingAttachment,
-} from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
-import fetch from "cross-fetch"
-import imageSize from "image-size"
+import type { Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { InstagramAPIException, rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
-import type {
-  InstagramAttachment,
-  InstagramAuthValue,
-  InstagramProfileRequest,
-  InstagramSendMessageRequest,
-  InstagramSendMessageResponse,
-} from "../schemas"
+import type { InstagramAuthValue, InstagramProfileRequest } from "../schema"
 
 export const INSTAGRAM_SUBSCRIBE_FIELDS = [
   "messages",
@@ -55,7 +42,7 @@ export const exchangeLongLivedToken = (
   })
 }
 
-export const getInstagramProfilePictureUrl = async (props: {
+export const getAccountPictureUrl = async (props: {
   ctx: Context<InstagramAuthValue>
 }): Promise<string | undefined> => {
   const { ctx } = props
@@ -133,75 +120,7 @@ export const unsubscribePageFromInstagramWebhook = (props: {
   })
 }
 
-export const sendInstagramMessage = (
-  auth: InstagramAuthValue,
-  payload: InstagramSendMessageRequest,
-): Promise<InstagramSendMessageResponse> => {
-  const { version = DEFAULT_API_VERSION } = auth
-  const endpoint = `${version}/me/messages`
-
-  return rescue(endpoint, () =>
-    instagramGraphClient.post<InstagramSendMessageResponse>(endpoint, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${auth.tokens.accessToken}`,
-      },
-      json: payload,
-      retry: 0,
-    }),
-  )
-}
-
-export const getMessageAttachmentEntity = async ({
-  ctx,
-  attachment,
-}: {
-  ctx: Context<InstagramAuthValue>
-  attachment: InstagramAttachment
-}): Promise<IncomingAttachment | undefined> => {
-  if (!attachment.payload.url) {
-    throw new Error("No attachment URL found")
-  }
-  const response = await fetch(attachment.payload.url as string, {
-    headers: {
-      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-      "User-Agent": "node",
-    },
-  })
-  if (response.ok && response.body) {
-    const originPath = `${ctx.storagePrefix}/${createId()}`
-    const bytes = await response.arrayBuffer()
-    const mimeType = response.headers.get("content-type") ?? "image/png"
-    const fileType = guessFileTypeFromMimeType(mimeType)
-
-    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-      ACL: "public-read",
-      ContentType: mimeType,
-    })
-
-    const imageProperties: {
-      width?: number
-      height?: number
-    } = {}
-    if (mimeType.startsWith("image/")) {
-      const arrayBytes = new Uint8Array(bytes)
-      const dimensions = imageSize(arrayBytes)
-      imageProperties.width = dimensions.width
-      imageProperties.height = dimensions.height
-    }
-
-    return {
-      sourceId: createId(),
-      originPath,
-      fileType,
-      mimeType,
-      size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
-      ...imageProperties,
-    }
-  }
-}
-
-export const deleteInstagramProfileFields = (props: {
+export const deleteProfileFields = (props: {
   ctx: Context<InstagramAuthValue>
   fields: string[]
 }): Promise<void> => {
@@ -223,7 +142,7 @@ export const deleteInstagramProfileFields = (props: {
   )
 }
 
-export const updateInstagramProfile = (props: {
+export const updateProfile = (props: {
   ctx: Context<InstagramAuthValue>
   params: InstagramProfileRequest
 }): Promise<void> => {
@@ -250,7 +169,7 @@ export const updateInstagramProfile = (props: {
   })
 }
 
-export const getInstagramPersistentMenu = (props: {
+export const getPersistentMenu = (props: {
   ctx: Context<InstagramAuthValue>
 }): Promise<{
   persistentMenu?: InstagramProfileRequest["persistent_menu"]
@@ -286,7 +205,7 @@ export const addBranding = async (props: {
   const { ctx } = props
   const { version = DEFAULT_API_VERSION } = ctx.auth
 
-  const { persistentMenu } = await getInstagramPersistentMenu({ ctx })
+  const { persistentMenu } = await getPersistentMenu({ ctx })
 
   const queries = new URLSearchParams({
     platform: "instagram",

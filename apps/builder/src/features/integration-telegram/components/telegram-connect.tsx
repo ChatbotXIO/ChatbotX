@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl"
 import type { ReactElement, ReactNode } from "react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { connectTelegramAction } from "../actions/connect.action"
 import { connectTelegramRequest } from "../schema/request"
 
@@ -52,6 +53,7 @@ export function TelegramConnect({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
   const [open, setOpen] = useState(autoOpen)
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -61,6 +63,7 @@ export function TelegramConnect({
       actionProps: {
         onSuccess: () => {
           setOpen(false)
+          invalidateInboxes()
           if (workspaceId) {
             router.push(`/space/${workspaceId}/settings/channels/telegram`)
           } else {

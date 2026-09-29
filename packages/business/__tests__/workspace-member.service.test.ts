@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => {
     deleteWhere,
     dispatchAuditRecord: vi.fn(),
     findFirst: vi.fn(),
+    listPermissionsByUserIds: vi.fn(),
+    markOnlineBulk: vi.fn(),
   }
 })
 
@@ -39,6 +41,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceMemberModel: {
     id: "workspaceMember.id",
     workspaceId: "workspaceMember.workspaceId",
+  },
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  workspaceMemberRepository: {
+    listPermissionsByUserIds: mocks.listPermissionsByUserIds,
+    markOnlineBulk: mocks.markOnlineBulk,
   },
 }))
 
@@ -79,6 +88,52 @@ describe("workspaceMemberService.delete", () => {
     expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith({
       action: "delete",
       detail: "removed Ada from workspace",
+    })
+  })
+})
+
+// Pins the ring-target read as a pure delegation to the repository —
+// no caching, no transformation — so a future change to either layer can't
+// silently drift without a failing test here.
+describe("workspaceMemberService.listPermissionsByUserIds", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("delegates straight to workspaceMemberRepository.listPermissionsByUserIds with the same props and returns its result unchanged", async () => {
+    const rows = [{ userId: "u1", permissions: { contacts: true } }]
+    mocks.listPermissionsByUserIds.mockResolvedValue(rows)
+
+    const result = await workspaceMemberService.listPermissionsByUserIds({
+      workspaceId: "ws-1",
+      userIds: ["u1", "u2"],
+    })
+
+    expect(mocks.listPermissionsByUserIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      userIds: ["u1", "u2"],
+    })
+    expect(mocks.listPermissionsByUserIds).toHaveBeenCalledTimes(1)
+    expect(result).toBe(rows)
+  })
+})
+
+describe("workspaceMemberService.markOnlineBulk", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("delegates straight to workspaceMemberRepository.markOnlineBulk", async () => {
+    mocks.markOnlineBulk.mockResolvedValue(undefined)
+
+    await workspaceMemberService.markOnlineBulk({
+      workspaceId: "ws-1",
+      userIds: ["u1", "u2"],
+    })
+
+    expect(mocks.markOnlineBulk).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      userIds: ["u1", "u2"],
     })
   })
 })

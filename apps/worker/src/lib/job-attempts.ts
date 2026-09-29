@@ -11,3 +11,15 @@ import type { Job } from "bullmq"
  */
 export const isFinalAttempt = (job: Job): boolean =>
   job.attemptsMade + 1 >= (job.opts.attempts ?? 1)
+
+/**
+ * Counterpart to {@link isFinalAttempt}: use this from a worker's `failed`
+ * event (BullMQ has already counted the failed attempt), and
+ * {@link isFinalAttempt} from inside a handler (it has not) — mixing them up
+ * reports a job finished one attempt early. `failed` fires on every attempt,
+ * so for a queue like `whatsappVoipSignaling` where retries are expected
+ * (until a separate job creates the call row), logging each as an error
+ * makes a healthy race look like an outage.
+ */
+export const hasExhaustedAttempts = (job: Job): boolean =>
+  job.attemptsMade >= (job.opts.attempts ?? 1)

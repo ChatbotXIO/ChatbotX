@@ -59,6 +59,7 @@ vi.mock("@chatbotx.io/business", () => ({
   ) => Boolean(workspace?.scheduledDeletionAt),
   inboxService: {
     distinctConnectedChannels: vi.fn(async () => []),
+    find: vi.fn(async () => ({ markReadOnOutbound: false })),
   },
   platformCredentialService: {
     resolveForOwner: vi.fn(async () => null),
@@ -80,6 +81,15 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+// The pending-approval channel allowlist (Threads) reads the session. These
+// suites cover tenant channel policy, not that gate, so it is stubbed as
+// "previewer" and passes every channel through untouched.
+vi.mock("@/lib/workspace/preview-channels", () => ({
+  PREVIEW_CHANNELS: ["threads"],
+  canSeePreviewChannels: vi.fn(async () => true),
+  filterPreviewChannels: vi.fn(async (channels: string[]) => [...channels]),
+}))
+
 vi.mock("@/lib/platform-credential-owner", () => ({
   resolvePlatformOwnerId: vi.fn(async () => "owner-1"),
   resolveOwnerForWorkspace: vi.fn(async () => "owner-1"),
@@ -87,6 +97,10 @@ vi.mock("@/lib/platform-credential-owner", () => ({
 
 vi.mock("@/lib/workspace-quota", () => ({
   resolveWorkspaceBlockState: vi.fn(async () => ({
+    blocked: false,
+    blockReason: null,
+  })),
+  getWorkspaceBlockStateForRender: vi.fn(async () => ({
     blocked: false,
     blockReason: null,
   })),
@@ -141,14 +155,6 @@ vi.mock("@/features/integration-whatsapp/components/whatsapp-create", () => ({
 
 vi.mock("@/features/integration-zalo/libs/zalo", () => ({
   generateZaloRedirectUri: vi.fn(async () => ""),
-}))
-
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  FlowStoreProvider: ({ children }: { children: unknown }) => children,
-}))
-
-vi.mock("@/features/custom-fields/provider/custom-field-store-context", () => ({
-  CustomFieldStoreProvider: ({ children }: { children: unknown }) => children,
 }))
 
 vi.mock(
@@ -287,6 +293,7 @@ describe("channel route guards", () => {
 
   test("hides the dashboard add-channel card for non-superAdmins", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { mustChangePassword: false },
       targetWorkspace: { ownerId: "owner-1" },
       targetWorkspaceMember: {
         permissions: {
@@ -313,6 +320,7 @@ describe("channel route guards", () => {
 
   test("shows the dashboard add-channel card for superAdmins", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { mustChangePassword: false },
       targetWorkspace: { ownerId: "owner-1" },
       targetWorkspaceMember: {
         permissions: {

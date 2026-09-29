@@ -1,4 +1,7 @@
-import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
+import {
+  broadcastToWorkspaceParty,
+  flushAllPendingWorkspaceBroadcasts,
+} from "@chatbotx.io/business"
 import type { RealtimeEventData } from "@chatbotx.io/partysocket-config"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
@@ -121,6 +124,7 @@ async function startChatWorker() {
                 "notifyExportResult job received but no handler is implemented",
               )
               return
+            // TODO: Remove after the rolling-deploy queue drain completes.
             case ChatJobAction.broadcastEvent:
               await broadcastToWorkspaceParty(
                 job.data.data.workspaceId,
@@ -156,6 +160,9 @@ async function startChatWorker() {
     isShuttingDown = true
     try {
       await worker.close()
+      // After close(): drains events published by jobs that finished during
+      // the close drain, whose coalesce timers would never fire past exit.
+      await flushAllPendingWorkspaceBroadcasts()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[ChatWorker] Error during shutdown")

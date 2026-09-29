@@ -2,6 +2,7 @@ import { contactService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { possibleErrorsOnMutatingResource } from "@/lib/orpc/orpc-error-helper"
+import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { refreshContactProfile } from "../../lib/refresh-contact-profile"
 import { refreshContactProfilePublicResponse } from "../../schema/public/refresh-profile"
@@ -20,12 +21,7 @@ export const contactsRefreshProfilePublicRouter = {
     })
     .input(
       z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
+        identifier: publicContactIdentifier,
         contactInboxId: zodBigintAsString().describe(
           "Id (numeric string) of the contact's channel inbox connection to refresh from.",
         ),

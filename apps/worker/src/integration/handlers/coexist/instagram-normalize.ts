@@ -98,13 +98,16 @@ const toIncomingAttachment = (
     raw.video_data?.url ??
     raw.file_url ??
     null
-  if (!url) {
+  if (!(url && raw.id)) {
+    // Require both a URL and a provider id: on-demand hydration re-derives and
+    // matches media by id, so an id-less row can never be lazily mirrored and
+    // would only become a dead-end pending attachment.
     return null
   }
   const mimeType = raw.mime_type ?? "application/octet-stream"
   const dimensions = raw.image_data ?? raw.video_data
   return {
-    sourceId: raw.id ?? url,
+    sourceId: raw.id,
     fileType: guessFileTypeFromMimeType(mimeType),
     mimeType,
     originPath: url,

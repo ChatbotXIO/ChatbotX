@@ -113,7 +113,7 @@ test("registers each media-library route", () => {
   ).toEqual([
     ["GET", "/v1/media-library/folders"],
     ["POST", "/v1/media-library/folders"],
-    ["PATCH", "/v1/media-library/folders/{folderId}"],
+    ["PUT", "/v1/media-library/folders/{folderId}"],
     ["DELETE", "/v1/media-library/folders/{folderId}"],
     ["POST", "/v1/media-library/files/upload-url"],
     ["GET", "/v1/media-library/files"],
@@ -165,7 +165,7 @@ describe("folder routes", () => {
 
   test("renames a workspace folder", async () => {
     const procedure = findProcedure(
-      "PATCH",
+      "PUT",
       "/v1/media-library/folders/{folderId}",
     )
 

@@ -127,6 +127,7 @@ const handleWebhookEvent = async (
                   fromId: value.from.id,
                   fromName: value.from.name,
                   message: value.message,
+                  videoUrl: value.video,
                   tags: value.message_tags?.map(({ id, name }) => ({
                     id,
                     name,

@@ -7,6 +7,7 @@ import {
   findOrFail,
   inArray,
   isNull,
+  or,
   sql,
 } from "@chatbotx.io/database/client"
 import {
@@ -39,6 +40,7 @@ import { BaseService } from "../base.service"
 import { getContactInboxSinceTime } from "../contact-inbox/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
+import { NO_AVATAR_SENTINEL_KEY } from "../media/no-avatar-sentinel"
 import { messageCleanupService } from "../message-cleanup/service"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
@@ -63,7 +65,7 @@ import {
  * (public API) surface — see `./list`. Re-exported here so callers get it
  * from the same barrel as `contactService`.
  */
-export { UNSCOPED } from "./list"
+export { type ContactTableListRow, UNSCOPED } from "./list"
 
 import { PROFILE_NAME_BLANK_CHARACTERS } from "./profile-refresh/rules"
 import { updateFieldsAndCustomFields } from "./update-fields"
@@ -72,6 +74,11 @@ import { parseContactIdentifier } from "./utils"
 // One DELETE per chunk keeps each statement's lock scope and cascade work
 // bounded (mirrors CONTACT_CHUNK_SIZE in tag/service.ts).
 const CONTACT_DELETE_CHUNK_SIZE = 50
+
+const digitsOnly = (value: string): string => value.replace(/\D/g, "")
+
+const preservePhoneStyle = (storedPhone: string | null, newPhone: string) =>
+  storedPhone?.trim().startsWith("+") ? `+${digitsOnly(newPhone)}` : newPhone
 
 type ContactWriteData = Partial<
   Pick<
@@ -473,6 +480,91 @@ class ContactService extends BaseService {
       )
     }
     return updated
+  }
+
+  /**
+   * Adopt a channel-reported phone transition without overwriting a concurrent
+   * operator or message update. Eligibility uses digit equality, while the
+   * write guards the exact stored value observed by this method.
+   */
+  async adoptPhoneNumberIfSafe(props: {
+    workspaceId: string
+    id: string
+    previousPhone?: string
+    newPhone: string
+  }): Promise<ContactModel | undefined> {
+    const adoption = await this.adoptPhoneNumberIfSafeInTransaction(props, db)
+    if (!adoption) {
+      return
+    }
+    await this.finalizePhoneNumberAdoption({
+      workspaceId: props.workspaceId,
+      id: props.id,
+      ...adoption,
+    })
+    return adoption.updated
+  }
+
+  async adoptPhoneNumberIfSafeInTransaction(
+    props: {
+      workspaceId: string
+      id: string
+      previousPhone?: string
+      newPhone: string
+    },
+    tx: DatabaseClient,
+  ): Promise<{ existing: ContactModel; updated: ContactModel } | undefined> {
+    const existing = await this.findByIdOrFail({
+      workspaceId: props.workspaceId,
+      id: props.id,
+      tx,
+    })
+    const storedPhone = existing.phoneNumber
+    const canAdopt =
+      !storedPhone ||
+      (props.previousPhone !== undefined &&
+        digitsOnly(storedPhone) === digitsOnly(props.previousPhone))
+    if (!canAdopt) {
+      return
+    }
+
+    const phoneNumber = preservePhoneStyle(storedPhone, props.newPhone)
+    const exactStoredPhoneGuard =
+      storedPhone === null
+        ? isNull(contactModel.phoneNumber)
+        : eq(contactModel.phoneNumber, storedPhone)
+    const [updated] = await tx
+      .update(contactModel)
+      .set({ phoneNumber })
+      .where(
+        and(
+          eq(contactModel.id, props.id),
+          eq(contactModel.workspaceId, props.workspaceId),
+          exactStoredPhoneGuard,
+        ),
+      )
+      .returning()
+
+    if (!updated) {
+      return
+    }
+
+    return { existing, updated }
+  }
+
+  async finalizePhoneNumberAdoption(props: {
+    workspaceId: string
+    id: string
+    existing: ContactModel
+    updated: ContactModel
+  }): Promise<void> {
+    await this.invalidate({ workspaceId: props.workspaceId, ids: [props.id] })
+    await emitContactInfoChangeEvents(
+      props.workspaceId,
+      props.id,
+      props.existing,
+      props.updated,
+    )
   }
 
   /**
@@ -925,6 +1017,41 @@ class ContactService extends BaseService {
   }
 
   /**
+   * Adds one comment's tag counts to the lifetime counters behind
+   * `{{total_tagged}}`/`{{total_new_tagged}}`. A DB-side `col + n`, never
+   * read-modify-write, so two comments from the same contact counted at once
+   * both land. Once-per-comment is the caller's job (the comment automation
+   * stamps the comment message before calling this).
+   */
+  async incrementTagCounters(
+    props: {
+      workspaceId: string
+      contactId: string
+      totalTagged: number
+      totalNewTagged: number
+    },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const { workspaceId, contactId, totalTagged, totalNewTagged } = props
+    if (totalTagged <= 0 && totalNewTagged <= 0) {
+      return
+    }
+    await tx
+      .update(contactModel)
+      .set({
+        totalTagged: sql`${contactModel.totalTagged} + ${totalTagged}`,
+        totalNewTagged: sql`${contactModel.totalNewTagged} + ${totalNewTagged}`,
+      })
+      .where(
+        and(
+          eq(contactModel.id, contactId),
+          eq(contactModel.workspaceId, workspaceId),
+        ),
+      )
+    await this.invalidate({ workspaceId, ids: [contactId] })
+  }
+
+  /**
    * Conditional broadcast subscribe — the `isNull(broadcastSubscribedAt)`
    * predicate is a TOCTOU guard and MUST stay in the WHERE clause (mirrors
    * `updateIfProfileNameEmpty`).
@@ -972,7 +1099,7 @@ class ContactService extends BaseService {
     tx: DatabaseClient = db,
   ): Promise<void> {
     const { workspaceId, contactId, avatar } = props
-    await tx
+    const [updated] = await tx
       .update(contactModel)
       .set({ avatar, updatedAt: new Date() })
       .where(
@@ -982,6 +1109,38 @@ class ContactService extends BaseService {
           isNull(contactModel.avatar),
         ),
       )
+      .returning({ id: contactModel.id })
+    if (updated) {
+      await this.invalidate({ workspaceId, ids: [contactId] })
+    }
+  }
+
+  /**
+   * Conditional avatar write that also permits replacing the negative-cache
+   * sentinel while protecting a real avatar from concurrent refreshes.
+   */
+  async setAvatarIfEmptyOrSentinel(
+    props: { workspaceId: string; contactId: string; avatar: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const { workspaceId, contactId, avatar } = props
+    const [updated] = await tx
+      .update(contactModel)
+      .set({ avatar, updatedAt: new Date() })
+      .where(
+        and(
+          eq(contactModel.id, contactId),
+          eq(contactModel.workspaceId, workspaceId),
+          or(
+            isNull(contactModel.avatar),
+            sql`${contactModel.avatar} LIKE ${`${NO_AVATAR_SENTINEL_KEY.replace(/_/g, "\\_")}?time=%`} ESCAPE '\\'`,
+          ),
+        ),
+      )
+      .returning({ id: contactModel.id })
+    if (updated) {
+      await this.invalidate({ workspaceId, ids: [contactId] })
+    }
   }
 
   /**

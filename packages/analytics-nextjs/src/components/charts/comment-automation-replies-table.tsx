@@ -24,11 +24,11 @@ const DEFAULT_ROWS_PER_PAGE = 10
 export function CommentAutomationRepliesTable() {
   const t = useTranslations()
   const locale = useLocale()
-  const {
-    commentAutomationReplyStats: replyStats,
-    from,
-    to,
-  } = useAnalysisStore((state) => state)
+  const replyStats = useAnalysisStore(
+    (state) => state.commentAutomationReplyStats,
+  )
+  const from = useAnalysisStore((state) => state.from)
+  const to = useAnalysisStore((state) => state.to)
 
   const [keyword, setKeyword] = useState("")
   const [page, setPage] = useState(1)

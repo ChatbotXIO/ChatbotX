@@ -1,6 +1,6 @@
 export const MAX_BUTTONS = 3
 
-export const INSTAGRAM_API_URL = "https://graph.instagram.com"
+export const API_URL = "https://graph.instagram.com"
 
 export const INSTAGRAM_OAUTH_URL = "https://api.instagram.com"
 

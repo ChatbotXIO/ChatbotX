@@ -12,9 +12,12 @@ const {
   mockDbSet,
   mockDbUpdate,
   mockInArray,
+  mockInvalidateCacheByTags,
   mockLoggerWarn,
   mockOr,
   mockIsUniqueViolationError,
+  mockFindWithContact,
+  mockUpdateIdentityGuarded,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const mockDbWhere = vi.fn()
@@ -65,9 +68,12 @@ const {
       field,
       values,
     })),
+    mockInvalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
     mockLoggerWarn,
     mockOr: vi.fn((...conditions: unknown[]) => ({ or: conditions })),
     mockIsUniqueViolationError: vi.fn().mockReturnValue(false),
+    mockFindWithContact: vi.fn(),
+    mockUpdateIdentityGuarded: vi.fn(),
   }
 })
 
@@ -108,9 +114,23 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // once any subpath is imported, which otherwise pulls in
 // `contactInboxRepository`'s real contact-filter query graph (needs the real
 // schema, conflicting with the narrow mock below).
-vi.mock("@chatbotx.io/database/repositories", () => ({}))
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxOperationalColumns: { sourceIdentityHistory: false },
+  contactInboxRepository: {
+    findWithContact: mockFindWithContact,
+    updateIdentityGuarded: mockUpdateIdentityGuarded,
+  },
+}))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  CONTACT_INBOX_IDENTITY_CHANGE_REASONS: {
+    parentFallback: "parentFallback",
+    phoneChanged: "phoneChanged",
+    userIdChanged: "userIdChanged",
+  },
+  CONTACT_INBOX_SOURCE_ID_KEY: "ContactInbox_inboxId_sourceId_key",
+  CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY:
+    "ContactInbox_inboxId_sourceParentUserId_key",
   CONTACT_INBOX_SOURCE_USER_ID_KEY: "ContactInbox_inboxId_sourceUserId_key",
   contactModel: {
     id: "contactId",
@@ -127,13 +147,14 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     lastUserInputType: "lastUserInputType",
     referral: "referral",
     sourceId: "sourceId",
+    sourceParentUserId: "sourceParentUserId",
     sourceUserId: "sourceUserId",
     sourceUsername: "sourceUsername",
   },
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags: vi.fn(),
+  invalidateCacheByTags: mockInvalidateCacheByTags,
   withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
 }))
 
@@ -526,6 +547,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
     inboxId: "inbox-1",
     contactId: "contact-1",
     sourceId: "84900000001",
+    sourceParentUserId: null,
     sourceUserId: null,
     sourceUsername: null,
   } as never
@@ -533,6 +555,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
   beforeEach(() => {
     vi.clearAllMocks()
     mockIsUniqueViolationError.mockReturnValue(false)
+    mockUpdateIdentityGuarded.mockReset()
   })
 
   test("backfills sourceUserId when currently null", async () => {
@@ -552,6 +575,589 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
     expect(mockDbSet).toHaveBeenCalledWith({ sourceUserId: "user.bsuid-1" })
     expect(contactInbox.sourceUserId).toBe("user.bsuid-1")
     expect(learnedPrimaryIdentity).toBeUndefined()
+  })
+
+  test("backfills sourceParentUserId when currently null", async () => {
+    mockDbReturning.mockResolvedValueOnce([
+      { ...baseContactInbox, sourceParentUserId: "parent.bsuid-1" },
+    ])
+
+    const { contactInbox } = await contactInboxService.syncScopedIdentity({
+      contactInbox: baseContactInbox,
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceParentUserId: "parent.bsuid-1",
+      },
+      matchedBy: "sourceId",
+    })
+
+    expect(mockDbSet).toHaveBeenCalledWith({
+      sourceParentUserId: "parent.bsuid-1",
+    })
+    expect(contactInbox.sourceParentUserId).toBe("parent.bsuid-1")
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
+      "contacts:contact-1:contact-inboxes",
+    ])
+  })
+
+  test("a parent-key conflict warns with err without losing the sourceUserId backfill", async () => {
+    const parentConflict = new Error("duplicate parent identity")
+    mockDbReturning
+      .mockRejectedValueOnce(parentConflict)
+      .mockResolvedValueOnce([
+        { ...baseContactInbox, sourceUserId: "user.bsuid-1" },
+      ])
+    mockIsUniqueViolationError.mockImplementation(
+      (error: unknown, constraint?: string) =>
+        error === parentConflict &&
+        constraint === "ContactInbox_inboxId_sourceParentUserId_key",
+    )
+
+    const { contactInbox } = await contactInboxService.syncScopedIdentity({
+      contactInbox: baseContactInbox,
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceUserId: "user.bsuid-1",
+        sourceParentUserId: "parent.taken",
+      },
+      matchedBy: "sourceId",
+    })
+
+    expect(contactInbox.sourceUserId).toBe("user.bsuid-1")
+    expect(contactInbox.sourceParentUserId).toBeNull()
+    expect(mockDbSet).toHaveBeenNthCalledWith(1, {
+      sourceParentUserId: "parent.taken",
+      sourceUserId: "user.bsuid-1",
+    })
+    expect(mockDbSet).toHaveBeenNthCalledWith(2, {
+      sourceUserId: "user.bsuid-1",
+    })
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: parentConflict }),
+      "ContactInbox.sourceParentUserId backfill skipped: already claimed by another row in this inbox",
+    )
+  })
+
+  test("a sourceUserId-key conflict retries the combined reveal without losing the parent backfill", async () => {
+    const sourceUserIdConflict = new Error("duplicate scoped identity")
+    mockDbReturning
+      .mockRejectedValueOnce(sourceUserIdConflict)
+      .mockResolvedValueOnce([
+        {
+          ...baseContactInbox,
+          sourceParentUserId: "parent.bsuid-1",
+        },
+      ])
+    mockIsUniqueViolationError.mockImplementation(
+      (error: unknown, constraint?: string) =>
+        error === sourceUserIdConflict &&
+        constraint === "ContactInbox_inboxId_sourceUserId_key",
+    )
+
+    const { contactInbox } = await contactInboxService.syncScopedIdentity({
+      contactInbox: baseContactInbox,
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceUserId: "user.bsuid-taken",
+        sourceParentUserId: "parent.bsuid-1",
+      },
+    })
+
+    expect(contactInbox.sourceUserId).toBeNull()
+    expect(contactInbox.sourceParentUserId).toBe("parent.bsuid-1")
+    expect(mockDbSet).toHaveBeenNthCalledWith(1, {
+      sourceParentUserId: "parent.bsuid-1",
+      sourceUserId: "user.bsuid-taken",
+    })
+    expect(mockDbSet).toHaveBeenNthCalledWith(2, {
+      sourceParentUserId: "parent.bsuid-1",
+    })
+  })
+
+  test("backfills both revealed identities and username with one update and one invalidation", async () => {
+    mockDbReturning.mockResolvedValueOnce([
+      {
+        ...baseContactInbox,
+        sourceParentUserId: "parent.bsuid-1",
+        sourceUserId: "user.bsuid-1",
+        sourceUsername: "@handle",
+      },
+    ])
+
+    await contactInboxService.syncScopedIdentity({
+      contactInbox: baseContactInbox,
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceParentUserId: "parent.bsuid-1",
+        sourceUserId: "user.bsuid-1",
+        sourceUsername: "@handle",
+      },
+    })
+
+    expect(mockDbUpdate).toHaveBeenCalledTimes(1)
+    expect(mockDbSet).toHaveBeenCalledWith({
+      sourceParentUserId: "parent.bsuid-1",
+      sourceUserId: "user.bsuid-1",
+      sourceUsername: "@handle",
+    })
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledTimes(1)
+  })
+
+  test("advances sourceId and sourceUserId on a phone-keyed row matched by parent", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    mockUpdateIdentityGuarded.mockResolvedValue({
+      ...existing,
+      sourceId: "84900000002",
+      sourceUserId: "user.bsuid-new",
+    })
+
+    const { contactInbox, phoneTransition } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: existing,
+        incomingContact: {
+          sourceId: "84900000002",
+          sourceUserId: "user.bsuid-new",
+          sourceParentUserId: "parent.bsuid-1",
+        },
+        matchedBy: "sourceParentUserId",
+      })
+
+    expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "ci-1",
+        guard: {
+          sourceId: "84900000001",
+          sourceParentUserId: "parent.bsuid-1",
+          sourceUserId: "user.bsuid-old",
+        },
+        set: {
+          sourceId: "84900000002",
+          sourceUserId: "user.bsuid-new",
+        },
+      }),
+      expect.anything(),
+    )
+    expect(contactInbox.sourceId).toBe("84900000002")
+    expect(contactInbox.sourceUserId).toBe("user.bsuid-new")
+    expect(phoneTransition).toEqual({
+      previousPhone: "84900000001",
+      newPhone: "84900000002",
+    })
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
+      "contacts:contact-1:contact-inboxes",
+    ])
+  })
+
+  test("rekeys a phone-keyed row to a hidden BSUID without reporting a phone transition", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    mockUpdateIdentityGuarded.mockResolvedValue({
+      ...existing,
+      sourceId: "user.bsuid-new",
+      sourceUserId: "user.bsuid-new",
+    })
+
+    const { contactInbox, learnedPrimaryIdentity } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: existing,
+        incomingContact: {
+          sourceId: "user.bsuid-new",
+          sourceUserId: "user.bsuid-new",
+          sourceParentUserId: "parent.bsuid-1",
+        },
+        matchedBy: "sourceParentUserId",
+      })
+
+    expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "ci-1",
+        guard: {
+          sourceId: "84900000001",
+          sourceParentUserId: "parent.bsuid-1",
+          sourceUserId: "user.bsuid-old",
+        },
+        set: {
+          sourceId: "user.bsuid-new",
+          sourceUserId: "user.bsuid-new",
+        },
+      }),
+      expect.anything(),
+    )
+    expect(contactInbox.sourceId).toBe("user.bsuid-new")
+    expect(contactInbox.sourceUserId).toBe("user.bsuid-new")
+    expect(learnedPrimaryIdentity).toBeUndefined()
+  })
+
+  test("does no further writes for a hidden-phone message after the BSUID re-key", async () => {
+    const alreadyRekeyed = {
+      ...baseContactInbox,
+      sourceId: "user.bsuid-new",
+      sourceUserId: "user.bsuid-new",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+
+    const { contactInbox, learnedPrimaryIdentity } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: alreadyRekeyed,
+        incomingContact: {
+          sourceId: "user.bsuid-new",
+          sourceUserId: "user.bsuid-new",
+          sourceParentUserId: "parent.bsuid-1",
+        },
+        matchedBy: "sourceId",
+      })
+
+    expect(contactInbox).toEqual(alreadyRekeyed)
+    expect(learnedPrimaryIdentity).toBeUndefined()
+    expect(mockUpdateIdentityGuarded).not.toHaveBeenCalled()
+    expect(mockDbUpdate).not.toHaveBeenCalled()
+  })
+
+  test("advances sourceId and sourceUserId on a BSUID-keyed row matched by parent", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceId: "user.bsuid-old",
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    mockUpdateIdentityGuarded.mockResolvedValue({
+      ...existing,
+      sourceId: "user.bsuid-new",
+      sourceUserId: "user.bsuid-new",
+    })
+
+    const { contactInbox, learnedPrimaryIdentity } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: existing,
+        incomingContact: {
+          sourceId: "user.bsuid-new",
+          sourceUserId: "user.bsuid-new",
+          sourceParentUserId: "parent.bsuid-1",
+        },
+        matchedBy: "sourceParentUserId",
+      })
+
+    expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guard: {
+          sourceId: "user.bsuid-old",
+          sourceParentUserId: "parent.bsuid-1",
+          sourceUserId: "user.bsuid-old",
+        },
+        set: {
+          sourceId: "user.bsuid-new",
+          sourceUserId: "user.bsuid-new",
+        },
+      }),
+      expect.anything(),
+    )
+    expect(contactInbox.sourceId).toBe("user.bsuid-new")
+    expect(learnedPrimaryIdentity).toBeUndefined()
+  })
+
+  test("returns the current database row when a guarded rotation is stale", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    const current = {
+      ...existing,
+      sourceUserId: "user.bsuid-concurrent",
+    }
+    mockUpdateIdentityGuarded.mockResolvedValue(undefined)
+    mockDbFindFirst.mockResolvedValueOnce(current)
+
+    await expect(
+      contactInboxService.rotateScopedUserIdGuarded({
+        contactInbox: existing,
+        guard: { sourceUserId: "user.bsuid-old" },
+        set: { sourceUserId: "user.bsuid-new" },
+        conflictLogMessage: "rotation conflict",
+        reason: "userIdChanged",
+      }),
+    ).resolves.toEqual({
+      contactInbox: current,
+      invalidation: null,
+      status: "stale",
+    })
+
+    expect(mockDbFindFirst).toHaveBeenCalledWith({
+      where: { id: "ci-1" },
+      columns: { sourceIdentityHistory: false },
+    })
+  })
+
+  test("returns applied without issuing an update when the requested set is already present", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-current",
+    }
+
+    await expect(
+      contactInboxService.rotateScopedUserIdGuarded({
+        contactInbox: existing,
+        guard: { sourceUserId: "user.bsuid-current" },
+        set: { sourceUserId: "user.bsuid-current" },
+        conflictLogMessage: "rotation conflict",
+        reason: "userIdChanged",
+      }),
+    ).resolves.toEqual({
+      contactInbox: existing,
+      invalidation: null,
+      status: "applied",
+    })
+    expect(mockUpdateIdentityGuarded).not.toHaveBeenCalled()
+  })
+
+  test("returns and logs the identity constraint that caused a rotation conflict", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-old",
+    }
+    const conflict = new Error("duplicate scoped identity")
+    mockUpdateIdentityGuarded.mockRejectedValue(conflict)
+    mockIsUniqueViolationError.mockImplementation(
+      (error: unknown, constraint?: string) =>
+        error === conflict &&
+        constraint === "ContactInbox_inboxId_sourceUserId_key",
+    )
+
+    await expect(
+      contactInboxService.rotateScopedUserIdGuarded({
+        contactInbox: existing,
+        guard: { sourceUserId: "user.bsuid-old" },
+        set: { sourceUserId: "user.bsuid-taken" },
+        conflictLogMessage: "rotation conflict",
+        reason: "userIdChanged",
+      }),
+    ).resolves.toEqual({
+      contactInbox: existing,
+      constraint: "ContactInbox_inboxId_sourceUserId_key",
+      invalidation: null,
+      status: "conflict",
+    })
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        constraint: "ContactInbox_inboxId_sourceUserId_key",
+        err: conflict,
+      }),
+      "rotation conflict",
+    )
+  })
+
+  test("returns identity-backfill invalidation without applying it inside a caller-supplied transaction", async () => {
+    mockDbReturning.mockResolvedValueOnce([
+      { ...baseContactInbox, sourceParentUserId: "parent.bsuid-1" },
+    ])
+    const tx = { update: mockDbUpdate }
+
+    const result = await contactInboxService.syncScopedIdentity({
+      tx: tx as never,
+      contactInbox: baseContactInbox,
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceParentUserId: "parent.bsuid-1",
+      },
+    })
+
+    expect(result.invalidation).toEqual({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
+    })
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test("returns guarded-rotation invalidation without applying it inside a caller-supplied transaction", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-old",
+    }
+    mockUpdateIdentityGuarded.mockResolvedValue({
+      ...existing,
+      sourceUserId: "user.bsuid-new",
+    })
+    const tx = {
+      transaction: (run: (innerTx: unknown) => unknown) => run({}),
+    } as never
+
+    const result = await contactInboxService.rotateScopedUserIdGuarded({
+      tx,
+      contactInbox: existing,
+      guard: { sourceUserId: "user.bsuid-old" },
+      set: { sourceUserId: "user.bsuid-new" },
+      conflictLogMessage: "rotation conflict",
+      reason: "userIdChanged",
+    })
+
+    expect(result.invalidation).toEqual({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
+    })
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    "sourceId",
+    "sourceUserId",
+  ] as const)("does not advance when the row was matched by %s", async (matchedBy) => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+
+    const { contactInbox } = await contactInboxService.syncScopedIdentity({
+      contactInbox: existing,
+      incomingContact: {
+        sourceId: "84900000002",
+        sourceUserId: "user.bsuid-new",
+        sourceParentUserId: "parent.bsuid-1",
+      },
+      matchedBy,
+    })
+
+    expect(mockUpdateIdentityGuarded).not.toHaveBeenCalled()
+    expect(contactInbox.sourceUserId).toBe("user.bsuid-old")
+  })
+
+  test("warns and keeps the row when the new BSUID is owned by another row", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    const conflict = new Error("duplicate BSUID")
+    mockUpdateIdentityGuarded.mockRejectedValue(conflict)
+    mockIsUniqueViolationError.mockImplementation(
+      (error: unknown) => error === conflict,
+    )
+
+    const { contactInbox, learnedPrimaryIdentity } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: existing,
+        incomingContact: {
+          sourceId: "84900000002",
+          sourceUserId: "user.bsuid-taken",
+          sourceParentUserId: "parent.bsuid-1",
+        },
+        matchedBy: "sourceParentUserId",
+      })
+
+    expect(contactInbox).toEqual(existing)
+    expect(learnedPrimaryIdentity).toBeUndefined()
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: conflict }),
+      expect.stringContaining("rotation skipped"),
+    )
+  })
+
+  test("does not learn a phone when a BSUID-keyed parent rotation conflicts", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceId: "user.bsuid-old",
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    const conflict = new Error("duplicate BSUID")
+    mockUpdateIdentityGuarded.mockRejectedValue(conflict)
+    mockIsUniqueViolationError.mockImplementation(
+      (error: unknown) => error === conflict,
+    )
+
+    const result = await contactInboxService.syncScopedIdentity({
+      contactInbox: existing,
+      incomingContact: {
+        sourceId: "84900000002",
+        sourceUserId: "user.bsuid-new",
+        sourceParentUserId: "parent.bsuid-1",
+      },
+      matchedBy: "sourceParentUserId",
+    })
+
+    expect(result.learnedPrimaryIdentity).toBeUndefined()
+  })
+
+  test("does not learn a phone when a BSUID-keyed parent rotation is stale", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceId: "user.bsuid-old",
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    mockUpdateIdentityGuarded.mockResolvedValue(undefined)
+    mockDbFindFirst.mockResolvedValueOnce(existing)
+
+    const result = await contactInboxService.syncScopedIdentity({
+      contactInbox: existing,
+      incomingContact: {
+        sourceId: "84900000002",
+        sourceUserId: "user.bsuid-new",
+        sourceParentUserId: "parent.bsuid-1",
+      },
+      matchedBy: "sourceParentUserId",
+    })
+
+    expect(result.learnedPrimaryIdentity).toBeUndefined()
+  })
+
+  test("always guards the old sourceId during a parent rotation", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceId: "",
+      sourceUserId: "user.bsuid-old",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    mockUpdateIdentityGuarded.mockResolvedValue({
+      ...existing,
+      sourceId: "user.bsuid-new",
+      sourceUserId: "user.bsuid-new",
+    })
+
+    await contactInboxService.syncScopedIdentity({
+      contactInbox: existing,
+      incomingContact: {
+        sourceId: "",
+        sourceUserId: "user.bsuid-new",
+        sourceParentUserId: "parent.bsuid-1",
+      },
+      matchedBy: "sourceParentUserId",
+    })
+
+    expect(mockUpdateIdentityGuarded).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guard: expect.objectContaining({ sourceId: "" }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("does not retry with a weaker null-only guard when the parent rotation is stale", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    mockUpdateIdentityGuarded.mockResolvedValue(undefined)
+    mockDbFindFirst.mockResolvedValueOnce(existing)
+
+    const { contactInbox } = await contactInboxService.syncScopedIdentity({
+      contactInbox: existing,
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceUserId: "user.bsuid-new",
+        sourceParentUserId: "parent.bsuid-1",
+      },
+      matchedBy: "sourceParentUserId",
+    })
+
+    expect(contactInbox).toEqual(existing)
+    expect(mockDbUpdate).not.toHaveBeenCalled()
   })
 
   test("does not touch sourceUserId when the row already has one", async () => {
@@ -576,7 +1182,10 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
     mockDbReturning.mockRejectedValueOnce(
       Object.assign(new Error("duplicate key value"), { code: "23505" }),
     )
-    mockIsUniqueViolationError.mockReturnValue(true)
+    mockIsUniqueViolationError.mockImplementation(
+      (_error: unknown, constraint?: string) =>
+        constraint === "ContactInbox_inboxId_sourceUserId_key",
+    )
 
     const { contactInbox, learnedPrimaryIdentity } =
       await contactInboxService.syncScopedIdentity({
@@ -655,7 +1264,7 @@ describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", 
         },
       })
 
-    expect(learnedPrimaryIdentity).toBe("84900000002")
+    expect(learnedPrimaryIdentity).toEqual({ value: "84900000002" })
   })
 
   test("never returns learnedPrimaryIdentity for a phone-keyed row (regression safety)", async () => {

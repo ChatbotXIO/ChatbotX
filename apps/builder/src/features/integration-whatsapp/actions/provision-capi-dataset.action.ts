@@ -5,12 +5,9 @@ import {
   metaConversionsService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import {
-  buildDatasetName,
-  ensureDataset,
-} from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
+import { capiDatasetProvisioner } from "@/features/meta-conversions/lib/provision-capi-dataset"
 import { surfaceCapiError } from "@/features/meta-conversions/lib/surface-capi-error"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -40,16 +37,7 @@ export const provisionWhatsappCapiDatasetAction = workspaceActionClient
         await metaConversionsService.provisionDatasetNow({
           channel: "whatsapp",
           integration,
-          // `accessToken` is the per-channel dataset-creation token resolved by
-          // the adapter (WhatsApp's agency System User token for embedded-signup
-          // connections), so Meta attributes the "Creator" to the business.
-          provisionDataset: ({ accessToken, resourceId, resourceName }) =>
-            ensureDataset({
-              resourceType: "waba",
-              resourceId,
-              accessToken,
-              datasetName: buildDatasetName(resourceName),
-            }),
+          provisionDataset: capiDatasetProvisioner("whatsapp"),
         })
       } catch (error) {
         surfaceCapiError(error)

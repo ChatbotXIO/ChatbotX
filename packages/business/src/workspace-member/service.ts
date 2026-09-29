@@ -6,6 +6,10 @@ import {
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
+import {
+  type WorkspaceMemberPermissionsRow,
+  workspaceMemberRepository,
+} from "@chatbotx.io/database/repositories"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import type {
   UserModel,
@@ -242,6 +246,35 @@ export class WorkspaceMemberService extends BaseService {
         ],
       },
     )
+  }
+
+  /**
+   * Bounded, uncached projection over WorkspaceMember.permissions for exactly
+   * userIds — the ring-target snapshot's permissions read, which only needs
+   * permissions for the already-bounded set of online user ids rather than the
+   * whole cached roster listByWorkspaceId loads.
+   */
+  async listPermissionsByUserIds(props: {
+    workspaceId: string
+    userIds: string[]
+    tx?: DatabaseClient
+  }): Promise<WorkspaceMemberPermissionsRow[]> {
+    return await workspaceMemberRepository.listPermissionsByUserIds(props)
+  }
+
+  /**
+   * Durable "last came online" stamp for reporting only — Redis stays the sole
+   * source of truth for live presence, so there's no matching "mark offline"
+   * write. Silent no-op for a synthetic platform-support session (no real
+   * WorkspaceMember row). Does not invalidate listByWorkspaceId's cache tag, so
+   * a cached roster read can briefly serve a stale onlineSince/updatedAt.
+   */
+  async markOnlineBulk(props: {
+    workspaceId: string
+    userIds: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    await workspaceMemberRepository.markOnlineBulk(props)
   }
 
   async findByWorkspaceIdAndUserId(input: {

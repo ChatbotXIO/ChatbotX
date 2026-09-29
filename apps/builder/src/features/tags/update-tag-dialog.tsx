@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
 import { updateTagAction } from "./actions/update-tag-action"
 import { updateTagSchema } from "./schema/action"
 
@@ -41,6 +42,7 @@ export function UpdateTagDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateTags = useInvalidateTags()
 
   const {
     form,
@@ -61,6 +63,7 @@ export function UpdateTagDialog({
           resetFormAndAction()
           onOpenChange(false)
           router.refresh()
+          invalidateTags()
         },
         onError: ({ error }) => {
           if (error.serverError) {

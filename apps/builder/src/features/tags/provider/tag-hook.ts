@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 import { maxPerPage } from "@/lib/shared-request"
@@ -19,7 +19,10 @@ export const useTags = (
 /** Call after create/update/delete so every reader refetches. */
 export const useInvalidateTags = () => {
   const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: orpc.tagsAPI.key() })
+  return useCallback(
+    () => queryClient.invalidateQueries({ queryKey: orpc.tagsAPI.key() }),
+    [queryClient],
+  )
 }
 
 export const useTagOptions = (): string[] => {

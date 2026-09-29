@@ -336,6 +336,7 @@
       "message": "Thanh toán gần nhất của bạn không thành công. Cập nhật phương thức thanh toán để tiếp tục sử dụng workspace."
     },
     "trial": {
+      "planName": "Dùng thử",
       "daysLeft": "Dùng thử: còn {days} ngày",
       "endsTomorrow": "Dùng thử kết thúc vào ngày mai",
       "expired": "Bản dùng thử đã kết thúc — nâng cấp để tiếp tục sử dụng workspace",
@@ -449,7 +450,6 @@
       "audienceFilter": "Bộ lọc người nhận",
       "noAudienceFilter": "Không có bộ lọc người nhận",
       "template": "Template",
-      "noTemplate": "Không có template",
       "integration": "Tích hợp"
     },
     "filters": {
@@ -508,6 +508,23 @@
     "resumeDialog": {
       "title": "Tiếp tục broadcast",
       "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin."
+    },
+    "planLimitDialog": {
+      "title": "Nâng cấp gói của bạn",
+      "sendRate": "Gói {plan} hiện tại của bạn gửi broadcast với tốc độ tối đa {rate} tin mỗi phút. Vui lòng nâng cấp để gửi broadcast nhanh hơn tới {multiplier} lần.",
+      "activeBroadcasts": "Gói {plan} hiện tại của bạn chỉ chạy {max, plural, one {# broadcast} other {# broadcast}} tại một thời điểm. Vui lòng nâng cấp để chạy nhiều broadcast cùng lúc."
+    },
+    "sendLimit": {
+      "title": "Giới hạn",
+      "hint": "Để trống để gửi cho tất cả liên hệ phù hợp.",
+      "rateHint": "Để trống để dùng tốc độ mặc định.",
+      "rangeSummary": "Liên hệ #{start} – #{end}",
+      "rangeFromSummary": "Từ liên hệ số {start}",
+      "rangeLabel": "Phạm vi liên hệ",
+      "fromLabel": "Từ",
+      "toLabel": "Đến",
+      "allPlaceholder": "Tất cả",
+      "rangeEndBeforeStart": "Vị trí kết thúc không được trước vị trí bắt đầu"
     }
   },
   "commentAutomation": {
@@ -536,7 +553,26 @@
       "keywordsNotMatched": "Sai từ khoá",
       "contactNotNew": "Contact không mới",
       "alreadyRepliedOnPost": "Đã trả lời ở bài viết này",
-      "engagedOnOtherPost": "Đã tương tác ở bài viết khác"
+      "engagedOnOtherPost": "Đã tương tác ở bài viết khác",
+      "mentionCountNotMatched": "Số lượt nhắc tên không khớp"
+    },
+    "replyTo": {
+      "mentions": "Bình luận có đủ số người được nhắc tên",
+      "mentionCount": "Số người được tag",
+      "mentionCountDescription": "Chỉ bình luận tag từ số người này trở lên (@tên) mới thỏa điều kiện.",
+      "mentionCountOption": "{count, plural, one {# người} other {# người}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Bình luận bằng",
+      "contain": "Bình luận có chứa"
+    },
+    "hideComments": {
+      "hasGif": "Chứa GIF",
+      "hasEmoji": "Chứa Emoji"
+    },
+    "trackUserTags": {
+      "label": "Theo dõi khi người dùng gắn thẻ người khác",
+      "descriptionText": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     }
   },
   "condition": {
@@ -738,6 +774,10 @@
       "whatsapp": "Số WhatsApp này đã được kết nối với một workspace khác.",
       "zalo": "Zalo OA này đã được kết nối với một workspace khác."
     },
+    "missingScopes": {
+      "generic": "Đã hủy kết nối: một số quyền chưa được cấp. Hãy kết nối lại và chấp nhận toàn bộ quyền được yêu cầu.",
+      "tiktok": "Đã hủy kết nối TikTok: một số quyền chưa được cấp. Hãy kết nối lại và chấp nhận toàn bộ quyền được yêu cầu."
+    },
     "reconnect": {
       "success": "Kết nối lại kênh thành công.",
       "errors": {
@@ -865,6 +905,7 @@
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi."
   },
   "fields": {
+    "optionalHint": "(không bắt buộc)",
     "marketingMessagesConfigId": {
       "label": "ID cấu hình Marketing Messages",
       "description": "ID cấu hình Facebook Login for Business dùng để yêu cầu quyền marketing_messages_messenger."
@@ -1234,6 +1275,19 @@
     },
     "contactId": {
       "label": "ID Liên hệ"
+    },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "ID người dùng Zalo",
+      "telegramChatId": "Chat ID Telegram",
+      "tiktokUserId": "ID người dùng TikTok",
+      "threadsUsername": "Tên người dùng Threads",
+      "webchatGuestId": "ID khách Webchat",
+      "externalId": "ID bên ngoài",
+      "channelId": "ID kênh"
     },
     "flow": {
       "label": "Luồng"
@@ -2138,11 +2192,16 @@
       "clientId": "Client ID",
       "clientSecret": "Client Secret",
       "displayName": "Tên hiển thị",
+      "needsReauthorizationForComments": "Kết nối này được cấp quyền trước khi có tự động hóa bình luận. Hãy kết nối lại để bắt đầu nhận sự kiện bình luận.",
       "connectInstructions": {
         "step1": "Tạo ứng dụng TikTok tại <link>developers.tiktok.com</link>.",
         "step2": "Cấp quyền tài khoản và sao chép <strong>access token</strong>, <strong>open ID</strong> và <strong>client secret</strong>.",
         "step3": "Dán thông tin xác thực bên dưới để kết nối."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Cho phép tài khoản này trả lời bình luận có ý định mua cao bằng tin nhắn riêng. Bắt buộc với automation bình luận TikTok dùng trả lời riêng.",
+      "commentToMessageEligibility": "Chỉ áp dụng cho Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan, chủ tài khoản trên 18 tuổi, đã đăng ký kinh doanh hoặc đã chạy Messaging Ads, và đặt quyền nhắn tin thành \"Requests\".",
+      "commentToMessageUnknown": "Chưa kiểm tra với TikTok — bấm làm mới để đọc trạng thái hiện tại."
     },
     "drip": {
       "label": "Drip"
@@ -2330,6 +2389,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta App Secret (tuỳ chọn)",
+      "description": "Kích hoạt xác minh chữ ký webhook cho kết nối thủ công này. Tìm nó trong trang quản trị Meta App của bạn, tại Settings > Basic."
+    },
+    "lastCallRecorded": {
+      "label": "Bản ghi âm cuộc gọi gần nhất"
+    },
+    "lastCallTranscript": {
+      "label": "Bản chép lời cuộc gọi gần nhất"
+    },
+    "sendRatePerMinute": {
+      "label": "Số tin nhắn mỗi phút"
     }
   },
   "flows": {
@@ -2446,6 +2518,8 @@
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
       "unarchiveConversation": "Bỏ lưu trữ cuộc trò chuyện",
       "unassignConversation": "Bỏ gán cuộc trò chuyện",
+      "markConversationAsUnread": "Đánh dấu cuộc trò chuyện là chưa đọc",
+      "markConversationAsRead": "Đánh dấu cuộc trò chuyện là đã đọc",
       "unfollowConversation": "Bỏ theo dõi cuộc trò chuyện",
       "unsubscribeBroadcast": "Hủy đăng ký phát sóng",
       "getUserData": "Lấy đầu vào người dùng",
@@ -2470,7 +2544,9 @@
       "import": "Nhập luồng",
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
-      "importJsonOnly": "Chỉ tệp JSON"
+      "importJsonOnly": "Chỉ tệp JSON",
+      "whatsappCallButton": "Gọi qua WhatsApp",
+      "metaConversions": "API Chuyển đổi Meta"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2586,6 +2662,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Kênh này không gửi được loại media này — bước sẽ bị bỏ qua. Hãy xoá bước, hoặc đổi node sang kênh có hỗ trợ.",
       "buttonsSkippedOnChannel": "Kênh này không gửi được nút kèm tin nhắn media — các nút sẽ bị bỏ qua. Hãy đặt chúng ở bước văn bản ngay sau."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Chỉnh sửa nút",
+      "buttonLabel": "Nhãn nút"
     }
   },
   "folders": {
@@ -2807,7 +2887,8 @@
       "adAccountFilter": {
         "all": "Tất cả tài khoản quảng cáo",
         "label": "Tài khoản quảng cáo",
-        "unavailable": "Không tải được tài khoản quảng cáo — hãy kiểm tra kết nối Ads của tích hợp này, hoặc kết nối Facebook Ads của workspace, trong phần cài đặt."
+        "unavailable": "Không tải được tài khoản quảng cáo — hãy kiểm tra kết nối Ads của tích hợp này, hoặc kết nối Facebook Ads của workspace, trong phần cài đặt.",
+        "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo."
       },
       "channelFilter": {
         "label": "Kênh",
@@ -3181,6 +3262,7 @@
     "changeLikeState": "Thay đổi trạng thái thích",
     "changeHideState": "Thay đổi trạng thái ẩn",
     "commentHidden": "Bình luận này đã bị ẩn",
+    "commentMediaUnavailable": "Bình luận này chứa GIF, sticker hoặc ảnh không hiển thị được",
     "messageDeleted": "Tin nhắn này đã bị xoá.",
     "sendFailed": "Gửi thất bại",
     "repliedToStory": "Đã trả lời story của bạn",
@@ -3220,7 +3302,10 @@
     "deleteFeature": "Xóa {feature}",
     "resetFeature": "Đặt lại {feature}",
     "resetConfirmation": "Thao tác này sẽ xóa giá trị của {feature} đã chọn về rỗng.\nHành động này không thể hoàn tác.",
+    "resetAllConfirmation": "Thao tác này sẽ xóa toàn bộ giá trị {feature} của liên hệ này về rỗng.\nHành động này không thể hoàn tác.",
     "resetSuccess": "Đã đặt lại {feature} thành công",
+    "clearFeature": "Xóa {feature}",
+    "clearSuccess": "Đã xóa {feature} thành công",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
     "addFeature": "Thêm {feature}",
     "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
@@ -3272,13 +3357,27 @@
     "historyDepth": "({count})",
     "none": "Không có",
     "tiktokCardTitleTooLong": "TikTok sẽ cắt ngắn tin nhắn này: khi có gắn nút, chỉ 40 ký tự đầu được gửi đi. Hãy rút ngắn nội dung hoặc gỡ bớt nút.",
+    "sendTextTooLongForChannel": "Tin nhắn dài hơn giới hạn của kênh này. Hãy rút ngắn nội dung, hoặc trỏ khối này sang kênh có giới hạn lớn hơn.",
     "waTemplateMpmNoProducts": "Thêm ít nhất một sản phẩm vào nút đa sản phẩm này trước khi xuất bản.",
     "waTemplateMpmTooManySections": "Nút đa sản phẩm chỉ được có tối đa 10 phần. Hãy xóa bớt phần trước khi xuất bản.",
     "waTemplateMpmTooManyProducts": "Nút đa sản phẩm chỉ được có tối đa 30 sản phẩm. Hãy xóa bớt sản phẩm trước khi xuất bản.",
     "waTemplateLtoExpirationRequired": "Chọn thời điểm hết hạn cho ưu đãi có thời hạn trước khi gửi.",
     "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó.",
     "mediaStepUnsupported": "Kênh này không gửi được loại media này. Hãy xoá bước, hoặc trỏ node này sang kênh có hỗ trợ.",
-    "mediaButtonsUnsupported": "Kênh này không gửi được nút kèm tin nhắn media. Hãy xoá các nút, hoặc chuyển sang một bước văn bản ngay sau bước này."
+    "mediaButtonsUnsupported": "Kênh này không gửi được nút kèm tin nhắn media. Hãy xoá các nút, hoặc chuyển sang một bước văn bản ngay sau bước này.",
+    "voiceCall": "Cuộc gọi thoại",
+    "voiceCallDuration": "Cuộc gọi thoại · {duration}",
+    "missedVoiceCall": "Cuộc gọi thoại nhỡ",
+    "declinedVoiceCall": "Cuộc gọi thoại bị từ chối",
+    "voiceCallFailed": "Cuộc gọi thoại thất bại",
+    "unansweredVoiceCall": "Không có người nghe máy",
+    "canceledVoiceCall": "Cuộc gọi đã huỷ",
+    "acceptedCallPermission": "Đã chấp nhận yêu cầu cấp quyền gọi",
+    "declinedCallPermission": "Đã từ chối yêu cầu cấp quyền gọi",
+    "sendHumanAgentTag": "Gửi một tin nhắn với thẻ HUMAN_AGENT",
+    "warning": "Warning!",
+    "humanAgentWarningDescription": "Bạn chỉ có thể trả lời tin nhắn của người dùng trong vòng 7 ngày khi vấn đề không thể giải quyết trong vòng 24 giờ. Ví dụ: cuối tuần, ngày lễ, hoặc các trường hợp cần hơn một ngày để xử lý. Không sử dụng tùy chọn này cho bất kỳ lý do nào khác vì có thể ảnh hưởng đến Trang Facebook hoặc tài khoản Instagram của bạn. Nếu bạn không chắc chắn, đừng tiếp tục.",
+    "callFailed": "Sự cố cuộc gọi"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",
@@ -3348,6 +3447,7 @@
       "noConnectablePagesDescription": "Bạn không phải là Admin của Page này",
       "bmLookupFailedTitle": "Có thể thiếu trang trong Business Manager",
       "bmLookupFailedDescription": "Hãy kết nối lại Messenger và cấp quyền Business Manager để liệt kê các trang được quản lý qua Business Manager.",
+      "loadFailed": "Không tải được danh sách Trang Facebook",
       "alreadyConnectedNote": "Trang này đã được kết nối",
       "notAdminNote": "Bạn không phải là Admin của Page này",
       "tryAgain": "Kết nối lại"
@@ -3741,7 +3841,8 @@
       "profile": "Hồ sơ",
       "usefulLinks": "Liên kết hữu ích",
       "conversionsApi": "Tối ưu quảng cáo",
-      "settings": "Cài đặt"
+      "settings": "Cài đặt",
+      "calls": "Cuộc gọi"
     },
     "accountHealths": {
       "title": "Quản lý tài khoản WhatsApp của bạn",
@@ -3873,6 +3974,259 @@
     "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác",
     "selectPage": {
       "tryAgain": "Kết nối lại"
+    },
+    "manualAppSecretMissingNotice": "Chữ ký webhook chưa được xác minh cho đến khi bạn thêm Meta App Secret.",
+    "calls": {
+      "title": "Cuộc gọi WhatsApp",
+      "description": "Cho phép khách hàng gọi cho doanh nghiệp qua WhatsApp và điều khiển cách hoạt động của tính năng gọi cho số này.",
+      "enableLabel": "Bật tính năng gọi",
+      "enableHelper": "Bật tính năng gọi WhatsApp cho số này.",
+      "iconVisibilityLabel": "Hiện nút gọi cho khách",
+      "iconVisibilityHelper": "Hiện nút gọi trong ứng dụng WhatsApp của khách. Không ảnh hưởng tới inbox.",
+      "callbackPermissionLabel": "Xin phép gọi lại",
+      "callbackPermissionHelper": "Sau cuộc gọi nhỡ hoặc đã kết thúc, xin phép khách để gọi lại.",
+      "propagationNote": "Meta áp dụng thay đổi ngay, nhưng ứng dụng WhatsApp của khách có thể mất tới 7 ngày mới cập nhật.",
+      "loadFailed": "Không tải được cài đặt cuộc gọi từ Meta. Kiểm tra kết nối của số này và thử lại.",
+      "errors": {
+        "notFound": "Không tìm thấy tích hợp WhatsApp",
+        "notWhatsappConversation": "Hội thoại này không thuộc kênh WhatsApp",
+        "callNotFound": "Không tìm thấy cuộc gọi",
+        "callNotReady": "Cuộc gọi chưa sẵn sàng để nghe — thử lại",
+        "inAppCallingUnavailable": "Máy chủ này chưa cấu hình gọi trong ứng dụng",
+        "noCallPermission": "Khách hàng chưa cấp quyền gọi",
+        "permissionRequestLimitReached": "WhatsApp chỉ cho phép gửi 2 yêu cầu xin phép gọi cho mỗi liên hệ trong 7 ngày. Liên hệ này đã đạt giới hạn — vui lòng thử lại sau.",
+        "audioConnectFailed": "Không kết nối được âm thanh cuộc gọi",
+        "updateFailed": "Meta đã từ chối thay đổi cài đặt cuộc gọi",
+        "savedOnMetaOnly": "Meta đã lưu thay đổi nhưng workspace này thì chưa. Hãy lưu lại để hoàn tất.",
+        "bicUnavailable": "Tính năng gọi từ doanh nghiệp chưa hỗ trợ cho quốc gia này",
+        "callAlreadyInProgress": "Đã có một cuộc gọi đến khách hàng này đang diễn ra",
+        "hangupFailed": "Không thể kết thúc cuộc gọi",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Không thể từ chối cuộc gọi WhatsApp",
+        "voipHangupFailed": "Không thể kết thúc cuộc gọi WhatsApp",
+        "voipNotReservedAgent": "Bạn không phải là nhân viên được phân công cho cuộc gọi này",
+        "voipCallAccessDenied": "Bạn không có quyền xử lý cuộc gọi này",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Cuộc gọi đó không còn đổ chuông nữa",
+        "transcriptionRequiresRecording": "Hãy bật ghi âm cuộc gọi trước khi bật chép lời.",
+        "supportSessionCallingBlocked": "Không thể gọi điện trong phiên hỗ trợ nền tảng.",
+        "callingAccessDenied": "Bạn không có quyền truy cập tính năng gọi điện trong không gian làm việc này.",
+        "callArtifactAccessDenied": "Bạn không có quyền xem cuộc gọi này.",
+        "callHistoryAccessDenied": "Bạn không có quyền truy cập lịch sử cuộc gọi trong không gian làm việc này."
+      },
+      "permissionRequestTitle": "Xin quyền gọi điện",
+      "permissionRequestDescription": "Hỏi khách hàng này cho phép doanh nghiệp gọi qua WhatsApp. Meta giới hạn 1 yêu cầu mỗi 24 giờ và 2 yêu cầu mỗi 7 ngày cho mỗi khách hàng.",
+      "permissionRequestBodyLabel": "Tin nhắn",
+      "permissionRequestDefaultBody": "Chúng tôi muốn gọi cho bạn qua WhatsApp để hỗ trợ nhanh hơn. Bạn có cho phép chúng tôi gọi không?",
+      "permissionRequestSent": "Đã gửi yêu cầu xin quyền gọi",
+      "inAppCallingLabel": "Gọi trong ứng dụng (beta)",
+      "inAppCallingHelper": "Định tuyến cuộc gọi WhatsApp của số này vào inbox để agent nghe máy ngay trên trình duyệt.",
+      "recordingLabel": "Ghi âm cuộc gọi",
+      "recordingHelper": "Lưu âm thanh của cuộc gọi nghe hoặc gọi từ inbox vào hội thoại.",
+      "recordingInProgress": "Đã yêu cầu ghi âm",
+      "incomingCall": "Cuộc gọi WhatsApp đến…",
+      "unknownCaller": "Người gọi không xác định",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta đã từ chối thay đổi",
+      "callContact": "Gọi qua WhatsApp",
+      "dialing": "Đang gọi…",
+      "startCall": "Bắt đầu gọi WhatsApp",
+      "retentionLabel": "Thời gian lưu ghi âm (ngày)",
+      "retentionHelper": "Ghi âm cuộc gọi được lưu trong bao lâu trước khi bị xóa vĩnh viễn.",
+      "transcriptionLabel": "Chuyển văn bản cuộc gọi",
+      "transcriptionHelper": "Thêm bản ghi chữ cho mỗi cuộc gọi đã ghi âm. Cần bật ghi âm.",
+      "preflight": {
+        "title": "Điều kiện gọi điện",
+        "appSubscriptionMissing": "Hãy cấu hình webhook WhatsApp cho app này trong App Dashboard của Meta trước, sau đó thử lại.",
+        "appSubscriptionFailed": "Không xác minh được việc app đăng ký webhook 'calls'. Vui lòng thử lại sau.",
+        "callsNotSubscribed": "App này chưa đăng ký trường webhook 'calls', nên các sự kiện cuộc gọi không thể đến ChatbotX (lỗi Meta 138018: chưa đủ điều kiện kỹ thuật — cần có ít nhất một app đăng ký với WABA cũng có trường webhook calls).",
+        "fixButton": "Sửa",
+        "fixSuccess": "App đã được đăng ký webhook cuộc gọi WhatsApp.",
+        "manualIntegrationNotice": "Số này được kết nối thủ công và không có thông tin app ở đây. Hãy đăng ký trường webhook 'calls' cho app của bạn trong App Dashboard của Meta.",
+        "coexistenceWarning": "Số này đang dùng chế độ coexistence với ứng dụng WhatsApp Business, Meta không hỗ trợ tính năng gọi điện ở chế độ này. Hãy chuyển số này sang chỉ dùng Cloud API."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Hiện bản ghi lời nói",
+        "hideTranscript": "Ẩn bản ghi lời nói"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp chưa bật tính năng gọi do doanh nghiệp khởi tạo cho số này. Điều này phụ thuộc vào khu vực và điều kiện tài khoản phía Meta nên không thể bật tại đây.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Quyền truy cập micrô đã bị từ chối. Hãy cho phép truy cập micrô trong cài đặt trình duyệt và thử lại.",
+        "micNotFound": "Không tìm thấy micrô. Hãy kết nối micrô và thử lại.",
+        "callAccessDenied": "Bạn không có quyền gọi cho liên hệ này."
+      },
+      "card": {
+        "audioCall": "Gọi thoại",
+        "recordingUnavailable": "Bản ghi âm không còn khả dụng",
+        "recordingNotCaptured": "Cuộc gọi này không có bản ghi âm",
+        "recordingProcessing": "Đang xử lý bản ghi âm…",
+        "moreOptions": "Tùy chọn khác",
+        "download": "Tải xuống",
+        "openCallInformation": "Mở thông tin cuộc gọi",
+        "transcript": "Bản ghi lời nói",
+        "aiSummary": "Tóm tắt AI",
+        "transcriptUnavailable": "Bản ghi lời nói chưa có",
+        "summaryUnavailable": "Tóm tắt AI chưa có",
+        "play": "Phát",
+        "pause": "Tạm dừng",
+        "seek": "Tìm vị trí",
+        "mute": "Tắt tiếng",
+        "unmute": "Bật tiếng",
+        "playbackFailed": "Phát lại không thành công",
+        "answeredBy": "Nghe bởi {name}",
+        "calledBy": "Gọi bởi {name}",
+        "callFailed": "Sự cố cuộc gọi",
+        "callBack": "Gọi lại"
+      },
+      "sheet": {
+        "title": "Thông tin cuộc gọi",
+        "summaryTab": "Tóm tắt AI",
+        "transcriptTab": "Bản ghi",
+        "searchLabel": "Tìm kiếm trong bản ghi",
+        "searchPlaceholder": "Tìm kiếm trong bản ghi…",
+        "transcriptUnavailable": "Không có bản ghi cho ngôn ngữ của cuộc gọi này",
+        "transcriptError": "Không thể tải bản chép lời. Kiểm tra kết nối của bạn và thử lại.",
+        "noSearchResults": "Không có đoạn nào khớp",
+        "playSegment": "Phát từ đây",
+        "summaryKeyPoints": "Điểm chính",
+        "summaryActionItems": "Việc cần làm",
+        "regenerate": "Tạo lại",
+        "regenerateConfirmTitle": "Tạo lại tóm tắt AI?",
+        "regenerateConfirmDescription": "Việc này sẽ thay thế tóm tắt hiện tại bằng một tóm tắt vừa được tạo.",
+        "summaryEmpty": "Chưa có tóm tắt AI cho cuộc gọi này.",
+        "generateSummary": "Tạo tóm tắt"
+      },
+      "summaryDialog": {
+        "title": "Tạo tóm tắt AI",
+        "description": "Chọn một nhà cung cấp AI đã kết nối để tóm tắt cuộc gọi này.",
+        "noProviderTitle": "Chưa kết nối nhà cung cấp AI",
+        "noProviderDescription": "Kết nối một tích hợp AI để tạo tóm tắt cuộc gọi.",
+        "connectLink": "Đi tới cài đặt AI",
+        "generate": "Tạo",
+        "generating": "Đang tạo…",
+        "generateFailed": "Không thể tạo tóm tắt. Vui lòng thử lại.",
+        "retry": "Thử lại",
+        "emptyTranscriptTooltip": "Cuộc gọi này chưa có bản ghi để tóm tắt"
+      },
+      "panel": {
+        "eyebrowCalling": "ĐANG GỌI…",
+        "eyebrowIncoming": "CUỘC GỌI ĐẾN",
+        "eyebrowOnCall": "ĐANG GỌI",
+        "statusPreparing": "Đang chuẩn bị…",
+        "statusWaitingForMic": "Đang chờ quyền truy cập micrô…",
+        "statusDeclined": "Đã từ chối",
+        "statusCallFailed": "Cuộc gọi không thành công",
+        "statusCallEnded": "Cuộc gọi đã kết thúc",
+        "end": "Kết thúc",
+        "minimize": "Thu nhỏ",
+        "goToConversation": "Đi tới cuộc trò chuyện",
+        "expand": "Mở rộng",
+        "dismiss": "Đóng",
+        "statusNoAnswer": "Không có phản hồi",
+        "eyebrowCallEnded": "CUỘC GỌI ĐÃ KẾT THÚC",
+        "statusConnectionLost": "Mất kết nối",
+        "answerFailed": "Không nghe được cuộc gọi. Hãy kiểm tra micro đã được kết nối và cho phép trong trình duyệt, rồi thử lại.",
+        "ringingListTitle": "{count, plural, one {# cuộc gọi đến} other {# cuộc gọi đến}}"
+      },
+      "capability": {
+        "title": "Điều kiện gọi điện",
+        "enableCalling": "Bật gọi điện trong Cài đặt > Kênh > WhatsApp > Cuộc gọi.",
+        "reconnectChannel": "Vào Cài đặt > Kênh và kết nối lại kênh WhatsApp.",
+        "ok": "OK",
+        "micPermissionTitle": "Quyền truy cập micrô",
+        "dialFailureTitle": "Không thể thực hiện cuộc gọi"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Số được kết nối thủ công",
+        "callsSubscription": "Số WhatsApp này được kết nối thủ công. Hãy đảm bảo app Meta của bạn đã đăng ký trường webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — nếu không, cuộc gọi đi sẽ không kết nối được và cuộc gọi đến sẽ không đổ chuông.",
+        "unsignedWebhook": "Số này cũng chưa cấu hình Meta App Secret, do đó các webhook đến không được xác minh chữ ký.",
+        "callAnyway": "Vẫn gọi"
+      },
+      "replaceConfirm": {
+        "title": "Kết thúc cuộc gọi với {current}?",
+        "description": "Bạn đang nói chuyện với {current}. Nghe máy {incoming} sẽ kết thúc cuộc gọi này ngay lập tức.",
+        "confirm": "Kết thúc & nghe máy",
+        "cancel": "Tiếp tục cuộc gọi"
+      },
+      "answerCaller": "Nghe cuộc gọi từ {name}",
+      "rejectCaller": "Từ chối cuộc gọi từ {name}",
+      "hours": {
+        "title": "Giờ nhận cuộc gọi",
+        "description": "Khách chỉ gọi được cho số này trong các khung giờ bên dưới. Ngoài giờ, WhatsApp sẽ gợi ý khách nhắn tin, hoặc yêu cầu gọi lại nếu đã bật xin quyền gọi lại, và cho biết thời gian có thể gọi tiếp theo.",
+        "enabledLabel": "Chỉ nhận cuộc gọi trong giờ làm việc",
+        "timezoneLabel": "Múi giờ",
+        "closed": "Nghỉ",
+        "openTimeLabel": "{day}: giờ bắt đầu",
+        "closeTimeLabel": "{day}: giờ kết thúc",
+        "addRangeLabel": "Thêm khung giờ cho {day}",
+        "removeRangeLabel": "Xóa khung giờ của {day}",
+        "overnightHint": "Mỗi ngày kết thúc lúc 23:59. Nếu làm việc qua nửa đêm, hãy thêm phần giờ còn lại vào ngày hôm sau.",
+        "days": {
+          "monday": "Thứ Hai",
+          "tuesday": "Thứ Ba",
+          "wednesday": "Thứ Tư",
+          "thursday": "Thứ Năm",
+          "friday": "Thứ Sáu",
+          "saturday": "Thứ Bảy",
+          "sunday": "Chủ Nhật"
+        },
+        "errors": {
+          "rangeOrder": "Giờ kết thúc phải sau giờ bắt đầu.",
+          "rangeOverlap": "Các khung giờ trong ngày này bị chồng lên nhau.",
+          "noOpenHours": "Hãy thêm khung giờ cho ít nhất một ngày."
+        }
+      },
+      "inboundLabel": "Nhận cuộc gọi đến",
+      "inboundHelper": "Cho khách gọi vào. Tắt thì vẫn gọi ra được nhưng inbox không đổ chuông.",
+      "page": {
+        "title": "Cuộc gọi",
+        "subtitle": "Lịch sử cuộc gọi của không gian làm việc này",
+        "emptyTitle": "Chưa có cuộc gọi nào",
+        "emptyDescription": "Cuộc gọi sẽ xuất hiện ở đây khi nhóm của bạn bắt đầu gọi hoặc nhận cuộc gọi WhatsApp.",
+        "loadMore": "Tải thêm",
+        "allActivity": "Tất cả cuộc gọi",
+        "filterMissed": "Nhỡ",
+        "filterNoReply": "Không trả lời",
+        "allInboxes": "Tất cả hộp thư đến",
+        "allAgents": "Tất cả nhân viên",
+        "columnContact": "Liên hệ",
+        "columnInbox": "Hộp thư đến",
+        "columnDirection": "Chiều",
+        "columnAgent": "Nhân viên",
+        "columnDuration": "Thời lượng",
+        "columnDate": "Ngày",
+        "directionInbound": "Gọi đến",
+        "directionOutbound": "Gọi đi",
+        "kindOngoing": "Đang diễn ra",
+        "kindAnsweredInbound": "Đã trả lời",
+        "kindAnsweredOutbound": "Đã trả lời",
+        "openConversation": "Mở cuộc trò chuyện",
+        "unknownContact": "Liên hệ không xác định",
+        "emptyFilteredTitle": "Không có cuộc gọi nào khớp với bộ lọc này",
+        "emptyFilteredDescription": "Hãy thử một bộ lọc khác hoặc xóa bộ lọc để xem tất cả cuộc gọi.",
+        "loadMoreError": "Không thể tải thêm cuộc gọi. Vui lòng thử lại.",
+        "callInformation": "Thông tin cuộc gọi"
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4239,8 @@
       "toggleSuccess": "Đã cập nhật cài đặt đồng bộ nhãn.",
       "enabledSince": "Đã bật từ {date}",
       "disabled": "Đã tắt"
-    }
+    },
+    "refreshPermissions": "Làm mới quyền"
   },
   "telegram": {
     "description": "Tích hợp này cho phép bạn tạo bot Telegram.",
@@ -3896,6 +4251,14 @@
     "chatbotInvitationDescription2": "{userName} đã mời bạn tham gia {chatbotName}.",
     "invalidInvitation": "Lời mời này không hợp lệ hoặc đã hết hạn.",
     "workspaceUnavailable": "Không gian làm việc này không còn khả dụng."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Đánh dấu tin nhắn bot là đã đọc",
+      "enabled": "Đang bật",
+      "disabled": "Đang tắt",
+      "description": "Nếu bật thì bot sẽ tự động đánh dấu tin nhắn bot là đã đọc"
+    }
   },
   "inboxTeams": {
     "title": "Nhóm hộp thư"
@@ -3939,7 +4302,9 @@
       "productRemovedFromCart": "Sản phẩm xóa khỏi giỏ",
       "productOrdered": "Sản phẩm đã đặt",
       "contactReferredANewContact": "Liên hệ giới thiệu liên hệ mới",
-      "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có"
+      "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có",
+      "callRecorded": "Cuộc gọi đã ghi âm",
+      "callTranscribed": "Cuộc gọi đã chuyển văn bản"
     },
     "actions": {
       "addTag": "Thêm thẻ",
@@ -4294,7 +4659,8 @@
     "title": "Chăm sóc"
   },
   "tools": {
-    "title": "Công cụ"
+    "title": "Công cụ",
+    "beta": "Beta"
   },
   "users": {
     "title": "Người dùng"
@@ -4400,13 +4766,13 @@
     "privateReply": "Trả lời riêng tư (inbox)",
     "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định, chatbot flow, hoặc tắt.",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng.",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng. Hỗ trợ spintax.",
     "replyMessage": "Nội dung trả lời",
     "replyMessagePlaceholder": "Nhập nội dung trả lời...",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywordsTypeDescription": "Chọn loại bình luận nào sẽ kích hoạt tự động hóa này.",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "excludeKeywordsDescription": "Bình luận chứa bất kỳ từ khóa nào trong danh sách này sẽ bị bỏ qua bởi cả inbox và phản hồi công khai.",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
@@ -4469,7 +4835,7 @@
       "ignoreCommentReplies": "Không trả lời các reply bình luận",
       "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
       "trackUserTags": "Theo dõi khi người dùng gắn thẻ người khác",
-      "trackUserTagsDescription": "Dùng '{{total_tagged}}' để biết có bao nhiêu người được gắn thẻ. Dùng '{{total_new_tagged}}' để biết có bao nhiêu người được gắn thẻ chưa nằm trong danh sách liên hệ."
+      "trackUserTagsDescription": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     },
     "hideComments": {
       "all": "Ẩn tất cả bình luận",
@@ -4503,13 +4869,13 @@
     "privateReply": "Trả lời riêng tư (inbox)",
     "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định, chatbot flow, hoặc tắt.",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng.",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng. Hỗ trợ spintax.",
     "replyMessage": "Nội dung trả lời",
     "replyMessagePlaceholder": "Nhập nội dung trả lời...",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywordsTypeDescription": "Chọn loại bình luận nào sẽ kích hoạt tự động hóa này.",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "excludeKeywordsDescription": "Bình luận chứa bất kỳ từ khóa nào trong danh sách này sẽ bị bỏ qua bởi cả inbox và phản hồi công khai.",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
@@ -4571,7 +4937,7 @@
       "ignoreCommentReplies": "Không trả lời các reply bình luận",
       "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
       "trackUserTags": "Theo dõi khi người dùng gắn thẻ người khác",
-      "trackUserTagsDescription": "Dùng '{{total_tagged}}' để biết có bao nhiêu người được gắn thẻ. Dùng '{{total_new_tagged}}' để biết có bao nhiêu người được gắn thẻ chưa nằm trong danh sách liên hệ."
+      "trackUserTagsDescription": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     },
     "hideComments": {
       "all": "Ẩn tất cả bình luận",
@@ -4607,13 +4973,13 @@
     "publicOnlyNote": "Threads hiện chỉ hỗ trợ phản hồi công khai.",
     "trackCommentsOn": "Theo dõi bình luận trên",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Gửi phản hồi công khai cho các bình luận Threads phù hợp.",
+    "publicReplyDescription": "Gửi phản hồi công khai cho các bình luận Threads phù hợp. Tối đa 10 tin nhắn văn bản (hỗ trợ spintax), mỗi tin được đăng thành một trả lời riêng.",
     "replyMessage": "Nội dung trả lời",
     "replyFlow": "Flow trả lời",
     "replyAIAgent": "AI Agent trả lời",
     "includeKeywordsType": "Trả lời cho",
     "includeKeywords": "Từ khóa cần khớp",
-    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywords": "Loại trừ bình luận chứa",
     "keywordsPlaceholder": "Nhập và nhấn Enter...",
     "replyAfter": "Trả lời sau",
     "replyAfterValue": "Giá trị",
@@ -4622,7 +4988,8 @@
     "card": {
       "targeting": "Nhắm mục tiêu & Trả lời",
       "filters": "Bộ lọc & Tùy chọn",
-      "replyTiming": "Thời điểm trả lời"
+      "replyTiming": "Thời điểm trả lời",
+      "hideComments": "Ẩn bình luận"
     },
     "postType": {
       "all": "Tất cả bài viết",
@@ -4664,8 +5031,124 @@
       "keywordsRequired": "Hãy nhập ít nhất một từ khóa cho kiểu khớp đã chọn.",
       "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
       "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời gian đã chọn.",
-      "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật."
+      "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật.",
+      "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời.",
+      "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa."
+    },
+    "hideCommentsDescription": "Chỉ có thể ẩn các trả lời cấp cao nhất trên bài viết của bạn.",
+    "hideComments": {
+      "all": "Ẩn tất cả bình luận",
+      "hasPhoneNumber": "Chứa số điện thoại",
+      "hasLink": "Chứa liên kết",
+      "hasKeywords": "Chứa từ khóa",
+      "keywords": "Từ khóa",
+      "showCommentsAfter": "Hiện bình luận sau"
+    },
+    "showCommentsAfter": {
+      "none": "Không bao giờ"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "Tự động hóa bình luận TikTok",
+    "description": "Tự động trả lời, thích và ẩn bình luận dưới video TikTok của bạn.",
+    "create": "Tạo tự động hóa",
+    "replies": "Lượt trả lời",
+    "empty": "Chưa có tự động hóa bình luận TikTok nào.",
+    "deliveryDelayNote": "TikTok gửi sự kiện bình luận trong vòng năm phút, nên phản hồi không tức thì. Độ trễ bạn đặt sẽ cộng thêm vào khoảng đó.",
+    "trackCommentsOn": "Theo dõi bình luận trên",
+    "publicReply": "Trả lời công khai bình luận",
+    "publicReplyDescription": "Gửi trả lời công khai cho các bình luận TikTok khớp điều kiện. Tối đa 10 tin nhắn văn bản (hỗ trợ spintax), mỗi tin được đăng thành một trả lời riêng.",
+    "replyMessage": "Nội dung trả lời",
+    "replyFlow": "Kịch bản trả lời",
+    "replyAIAgent": "AI Agent trả lời",
+    "includeKeywordsType": "Trả lời khi",
+    "includeKeywords": "Từ khóa cần khớp",
+    "excludeKeywords": "Loại trừ bình luận chứa",
+    "keywordsPlaceholder": "Nhập rồi nhấn Enter...",
+    "replyAfter": "Trả lời sau",
+    "replyAfterValue": "Giá trị",
+    "specificPostIds": "ID video cụ thể",
+    "postIdPlaceholder": "Nhập ID video rồi nhấn Enter...",
+    "hideCommentsDescription": "Bình luận bị ẩn chỉ còn người viết nhìn thấy.",
+    "card": {
+      "targeting": "Phạm vi & Trả lời",
+      "filters": "Bộ lọc & Tùy chọn",
+      "hideComments": "Ẩn bình luận",
+      "replyTiming": "Thời điểm trả lời"
+    },
+    "postType": {
+      "all": "Tất cả video",
+      "specificPosts": "Video cụ thể"
+    },
+    "replyType": {
+      "text": "Tin nhắn văn bản",
+      "flow": "Kịch bản",
+      "AIAgent": "AI Agent",
+      "none": "Không trả lời"
+    },
+    "keywordsType": {
+      "all": "Mọi bình luận",
+      "equal": "Khớp chính xác",
+      "contain": "Có chứa"
+    },
+    "replyAfterType": {
+      "immediately": "Ngay lập tức",
+      "seconds": "Sau X giây",
+      "minutes": "Sau X phút",
+      "hours": "Sau X giờ",
+      "randomWithin3Minutes": "Ngẫu nhiên trong 3 phút",
+      "randomWithin5Minutes": "Ngẫu nhiên trong 5 phút",
+      "randomWithin10Minutes": "Ngẫu nhiên trong 10 phút",
+      "randomWithin20Minutes": "Ngẫu nhiên trong 20 phút",
+      "randomWithin30Minutes": "Ngẫu nhiên trong 30 phút",
+      "randomWithin60Minutes": "Ngẫu nhiên trong 60 phút"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Chỉ trả lời liên hệ mới",
+      "replyOncePerUserPerPost": "Chỉ trả lời mỗi người một lần trên mỗi video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Trả lời người đã bình luận ở video khác",
+      "ignoreCommentReplies": "Không trả lời phản hồi của bình luận",
+      "likeUserComment": "Thích bình luận của người dùng"
+    },
+    "hide": {
+      "all": "Ẩn mọi bình luận",
+      "hasPhoneNumber": "Ẩn bình luận có số điện thoại",
+      "hasLink": "Ẩn bình luận có liên kết",
+      "hasKeywords": "Ẩn bình luận chứa từ khóa",
+      "keywords": "Từ khóa cần ẩn",
+      "showCommentsAfter": "Hiện lại bình luận đã ẩn sau"
+    },
+    "showCommentsAfter": {
+      "none": "Không bao giờ",
+      "6h": "6 giờ",
+      "12h": "12 giờ",
+      "1d": "1 ngày",
+      "2d": "2 ngày",
+      "3d": "3 ngày",
+      "4d": "4 ngày",
+      "5d": "5 ngày",
+      "6d": "6 ngày",
+      "7d": "7 ngày",
+      "8d": "8 ngày",
+      "9d": "9 ngày",
+      "10d": "10 ngày"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Phải để trống ID video khi áp dụng cho tất cả video.",
+      "postIdsRequired": "Chọn ít nhất một ID video khi áp dụng cho video cụ thể.",
+      "keywordsMustBeEmptyForAll": "Phải để trống từ khóa khi áp dụng cho mọi bình luận.",
+      "keywordsRequired": "Nhập ít nhất một từ khóa cho kiểu khớp đã chọn.",
+      "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
+      "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời điểm đã chọn.",
+      "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa.",
+      "atLeastOneFieldRequired": "Cần ít nhất một trường.",
+      "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời."
+    },
+    "privateReply": "Trả lời riêng (Comment-to-Message)",
+    "privateReplyDescription": "Gửi tin nhắn riêng cho người bình luận. TikTok chỉ cho phép với bình luận được TikTok đánh dấu là có ý định mua cao, nên sẽ không chạy với mọi bình luận khớp điều kiện.",
+    "privateReplyMessage": "Nội dung tin nhắn riêng",
+    "privateReplyHighIntentTitle": "TikTok quyết định bình luận nào được nhắn tin",
+    "privateReplyHighIntentNotice": "Tài khoản TikTok đã kết nối phải bật Comment-to-Message, và phải là Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan. TikTok chỉ gửi tin nhắn riêng cho bình luận cấp 1 mà TikTok đánh dấu là có ý định mua cao, trong vòng 48 giờ, mỗi bình luận một lần, và không gửi nếu người bình luận đã nhắn tin cho bạn trong 24 giờ qua."
   },
   "instagramStoryAutomation": {
     "title": "Tự động hóa trả lời Story Instagram",
@@ -5667,7 +6150,8 @@
     "connectViaFacebook": "Kết nối qua Facebook",
     "unsupportedExplanation": "Tài khoản Instagram này được kết nối bằng Instagram Business Login. Hãy kết nối tài khoản qua Facebook để dùng Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Sự kiện WhatsApp chỉ được gửi cho các hội thoại bắt đầu từ quảng cáo click-to-WhatsApp."
+      "whatsappNote": "Sự kiện WhatsApp chỉ được gửi cho các hội thoại bắt đầu từ quảng cáo click-to-WhatsApp.",
+      "description": "Đưa sự kiện LeadSubmitted cho Messenger, Instagram hoặc WhatsApp vào hàng đợi."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5695,8 +6179,9 @@
       "invalidDatasetId": "Nhập Dataset ID hợp lệ (chỉ gồm chữ số).",
       "whatsappNotFound": "Không tìm thấy tích hợp WhatsApp.",
       "testEventCodeRequired": "Hãy lưu mã sự kiện thử trước khi gửi sự kiện thử.",
-      "noContactForTest": "Kênh này chưa có liên hệ phù hợp. Sự kiện thử cần một liên hệ thật để gán vào (với WhatsApp, liên hệ phải đến từ quảng cáo click-to-WhatsApp).",
-      "invalidTestEventCode": "Mã sự kiện thử chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 64 ký tự)."
+      "invalidTestEventCode": "Mã sự kiện thử chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 64 ký tự).",
+      "invalidMessagingId": "ID nhắn tin chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 512 ký tự).",
+      "capiDisconnected": "Meta CAPI của kênh này đang ngắt kết nối. Hãy kết nối lại trước khi gửi sự kiện thử."
     },
     "fields": {
       "eventType": {
@@ -5840,10 +6325,21 @@
       "saved": "Đã lưu mã sự kiện thử.",
       "cleared": "Đã xoá mã sự kiện thử. Sự kiện gửi thật trở lại.",
       "send": "Gửi sự kiện thử",
-      "sent": "Đã xếp hàng sự kiện thử. Nó sẽ hiện trong Test events của Events Manager trong khoảng một phút.",
-      "sendHint": "Gửi một sự kiện Purchase mẫu (100 USD) tới liên hệ gần nhất của kênh này.",
+      "sent": "Đã gửi sự kiện thử. Nó sẽ hiện trong Test events của Events Manager trong khoảng một phút.",
+      "sendHint": "Gửi một sự kiện Purchase mẫu (100 USD) tới ID nhắn tin bạn nhập. Không dùng liên hệ nào đã lưu.",
       "activeNotice": "Đang ở chế độ thử: sự kiện của kênh này không được tính vào báo cáo cho tới khi xoá mã.",
-      "openTestEvents": "Mở Test events"
+      "openTestEvents": "Mở Test events",
+      "dialogTitle": "Gửi sự kiện thử",
+      "dialogDescription": "Một sự kiện Purchase mẫu (100 USD) sẽ được gửi kèm mã sự kiện thử của bạn. Dán ID nhắn tin mẫu lấy từ Events Manager → Test events → Messaging → Graph API Explorer, để không gán nhầm vào liên hệ thật.",
+      "messagingIdLabel": {
+        "messenger": "ID liên hệ (page_scoped_user_id)",
+        "instagram": "ID liên hệ (ig_sid)",
+        "whatsapp": "ID click quảng cáo (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Dán giá trị mẫu từ Meta",
+      "messagingIdHint": "Chỉ gồm chữ, số, gạch ngang và gạch dưới (tối đa 512 ký tự).",
+      "cancel": "Huỷ",
+      "confirmSend": "Gửi"
     }
   },
   "minigames": {
@@ -6204,5 +6700,13 @@
   },
   "accountFields": {
     "title": "Trường bot"
+  },
+  "openLink": {
+    "title": "Mở liên kết",
+    "invalidTitle": "Liên kết không hợp lệ.",
+    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
+    "openZaloGroup": "Mở nhóm Zalo",
+    "openZalo": "Mở Zalo",
+    "openMessenger": "Mở Messenger"
   }
 }

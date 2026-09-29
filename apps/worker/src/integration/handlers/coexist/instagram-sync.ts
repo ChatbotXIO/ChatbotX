@@ -154,7 +154,6 @@ const runInstagramCoexistPull = async <
       pageNumber += 1
 
       const activityUpdates: CoexistActivityUpdate[] = []
-      const attachmentIds: string[] = []
       let pageImportedContacts = 0
       let pageImportedMessages = 0
       let pageSkipped = 0
@@ -303,8 +302,6 @@ const runInstagramCoexistPull = async <
 
                 pageImportedMessages += imported.importedMessages
                 pageSkipped += imported.skippedMessages
-                attachmentIds.push(...imported.insertedAttachmentIds)
-
                 const aiMarkerMessageId = context.integration
                   .coexistAiReadsSyncedHistory
                   ? null
@@ -357,30 +354,9 @@ const runInstagramCoexistPull = async <
       skippedTotal += pageSkipped
       failedTotal += pageFailed
 
-      if (attachmentIds.length > 0) {
-        await integrationQueue.addBulk(
-          attachmentIds.map((attachmentId) => ({
-            name: IntegrationJobAction.coexistAttachmentDownload,
-            data: {
-              type: IntegrationJobAction.coexistAttachmentDownload,
-              data: {
-                attachmentId,
-                workspaceId,
-                channel: "instagram" as const,
-                integrationId,
-              },
-            },
-            opts: {
-              jobId: `att-${attachmentId}`,
-              attempts: 5,
-              backoff: { type: "exponential", delay: 30_000 },
-              removeOnComplete: true,
-              removeOnFail: { count: 100 },
-            },
-          })),
-        )
-      }
-
+      // Attachment bytes hydrate lazily through the media proxy. The resume
+      // watermark therefore advances after message/attachment INSERT success,
+      // independently of any later download or mirror attempt.
       await coexistService.updateProgress({
         runId,
         fields: {

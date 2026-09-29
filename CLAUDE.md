@@ -17,12 +17,13 @@
 | New feature / page | `feature-scaffold` |
 | Builder UI component, form, table, dialog, or any user-facing string | `builder-ui-i18n` |
 | New API endpoint | `orpc-api` |
+| New public API endpoint that should surface in the CLI/MCP, or CLI/MCP docs/skill drift | `cli-mcp-docs` |
 | Business logic, new service method, any DB read/write from app code | `business-data-access` |
 | New DB table or migration | `drizzle-database` |
 | New background job or queue | `worker-development` |
 | New channel integration | `integration-channel` |
 | Contact filter field/operator, filter SQL, or contact-based audience | `contact-filter` |
-| Facebook/Messenger comment automation (auto-reply/like/hide on Page post comments) | `fb-comment-automation` |
+| Comment automation (auto-reply/like/hide on post comments — Messenger, Instagram, Threads, TikTok) | `comment-automation` |
 | Minigame tool (Jackpot CRUD, prize draw, public play link/token, extending to a new minigame type) | `minigame` |
 | New flow step with states (success/error/skip routing) | `flow-step-development` |
 | Dev/build/lint commands | `turborepo-workflow` |

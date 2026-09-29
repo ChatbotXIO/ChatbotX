@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  deleteMessengerProfileFields: vi.fn(),
+  deleteProfileFields: vi.fn(),
   syncPersonas: vi.fn(),
   unsubscribePageFromAppWebhook: vi.fn(),
   loggerWarn: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock("../src/apis/page", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/apis/page")>()
   return {
     ...actual,
-    deleteMessengerProfileFields: mocks.deleteMessengerProfileFields,
+    deleteProfileFields: mocks.deleteProfileFields,
     syncPersonas: mocks.syncPersonas,
     unsubscribePageFromAppWebhook: mocks.unsubscribePageFromAppWebhook,
   }
@@ -41,18 +41,18 @@ const auth = {
 describe("Messenger disconnect", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.deleteMessengerProfileFields.mockResolvedValue(undefined)
+    mocks.deleteProfileFields.mockResolvedValue(undefined)
     mocks.unsubscribePageFromAppWebhook.mockResolvedValue(undefined)
   })
 
   test("continues to app-token unsubscribe when persistent menu cleanup fails", async () => {
-    mocks.deleteMessengerProfileFields.mockRejectedValueOnce(
+    mocks.deleteProfileFields.mockRejectedValueOnce(
       new Error("menu cleanup failed"),
     )
 
     await integration.disconnect?.(auth)
 
-    expect(mocks.deleteMessengerProfileFields).toHaveBeenCalledWith({
+    expect(mocks.deleteProfileFields).toHaveBeenCalledWith({
       ctx: { auth },
       fields: ["persistent_menu"],
     })

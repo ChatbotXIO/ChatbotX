@@ -65,22 +65,31 @@ describe("listContactFilterFieldsForAPI", () => {
     )
   })
 
-  test("passes through workspace custom fields, bot fields, and tags", async () => {
+  test("derives each custom/bot field's valueType from its raw CustomFieldType", async () => {
     customFieldList.mockResolvedValue({
-      data: [{ id: "cf-1", name: "Company", type: "text" }],
+      data: [
+        { id: "cf-1", name: "Company", type: "shortText" },
+        { id: "cf-2", name: "Signup date", type: "date" },
+      ],
     })
     botFieldList.mockResolvedValue({
-      data: [{ id: "bf-1", name: "LastIntent", type: "text" }],
+      data: [{ id: "bf-1", name: "LastIntent", type: "number" }],
     })
     tagListActive.mockResolvedValue([{ id: "tag-1", name: "VIP" }])
 
     const result = await listContactFilterFieldsForAPI({ workspaceId: "ws-1" })
 
     expect(result.customFields).toEqual([
-      { id: "cf-1", name: "Company", type: "text" },
+      { id: "cf-1", name: "Company", type: "shortText", valueType: "text" },
+      {
+        id: "cf-2",
+        name: "Signup date",
+        type: "date",
+        valueType: "datetime",
+      },
     ])
     expect(result.botFields).toEqual([
-      { id: "bf-1", name: "LastIntent", type: "text" },
+      { id: "bf-1", name: "LastIntent", type: "number", valueType: "number" },
     ])
     expect(result.tags).toEqual([{ id: "tag-1", name: "VIP" }])
   })

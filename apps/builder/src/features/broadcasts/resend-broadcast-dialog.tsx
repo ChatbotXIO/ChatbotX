@@ -16,6 +16,9 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { resendBroadcastAction } from "./actions/resend-broadcast.action"
+import { BroadcastPlanLimitDialog } from "./components/broadcast-plan-limit-dialog"
+import { useBroadcastPlanLimit } from "./hooks/use-broadcast-plan-limit"
+import { isBroadcastPlanLimitOutcome } from "./lib/broadcast-plan-limit"
 
 export function ResendBroadcastDialog({
   broadcast,
@@ -29,6 +32,7 @@ export function ResendBroadcastDialog({
   onSuccess?: () => void
 }) {
   const t = useTranslations()
+  const planLimit = useBroadcastPlanLimit()
 
   const { execute, isPending } = useAction(
     resendBroadcastAction.bind(
@@ -37,7 +41,12 @@ export function ResendBroadcastDialog({
       broadcast?.id ?? "",
     ),
     {
-      onSuccess: () => {
+      onSuccess: ({ data }) => {
+        if (isBroadcastPlanLimitOutcome(data)) {
+          onOpenChange(false)
+          planLimit.show(data)
+          return
+        }
         toast.success(t("messages.resendSuccess"))
         onOpenChange(false)
         onSuccess?.()
@@ -51,34 +60,41 @@ export function ResendBroadcastDialog({
   )
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
-        <DialogHeader>
-          <DialogTitle>
-            {t("messages.resendFeature", {
-              feature: t("fields.broadcast.label"),
-            })}
-          </DialogTitle>
-          <DialogDescription>
-            {t("messages.resendFeatureDescription", {
-              feature: t("fields.broadcast.label"),
-            })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="justify-end">
-          <DialogClose
-            render={
-              <Button size="sm" type="button" variant="ghost">
-                {t("actions.cancel")}
-              </Button>
-            }
-          />
-          <Button disabled={isPending} onClick={() => execute()} size="sm">
-            {isPending && <Loader2Icon className="animate-spin" />}
-            {t("actions.confirm")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog onOpenChange={onOpenChange} open={open}>
+        <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+          <DialogHeader>
+            <DialogTitle>
+              {t("messages.resendFeature", {
+                feature: t("fields.broadcast.label"),
+              })}
+            </DialogTitle>
+            <DialogDescription>
+              {t("messages.resendFeatureDescription", {
+                feature: t("fields.broadcast.label"),
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="justify-end">
+            <DialogClose
+              render={
+                <Button size="sm" type="button" variant="ghost">
+                  {t("actions.cancel")}
+                </Button>
+              }
+            />
+            <Button disabled={isPending} onClick={() => execute()} size="sm">
+              {isPending && <Loader2Icon className="animate-spin" />}
+              {t("actions.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <BroadcastPlanLimitDialog
+        onDismiss={planLimit.dismiss}
+        onOpenPricing={planLimit.openPricing}
+        state={planLimit.state}
+      />
+    </>
   )
 }

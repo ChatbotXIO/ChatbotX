@@ -40,6 +40,7 @@ import CustomFieldTypeLabel from "./components/custom-field-label"
 import { CreateCustomFieldDialog } from "./create-custom-field"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
+import { useInvalidateCustomFields } from "./provider/custom-field-hook"
 import type { listCustomFieldsRSC } from "./queries"
 import type { CustomFieldResource } from "./schema/resource"
 import { UpdateCustomFieldDialog } from "./update-custom-field-dialog"
@@ -56,6 +57,7 @@ export function CustomFieldsTable({
   folderId,
 }: FieldsTableProps) {
   const t = useTranslations()
+  const invalidateCustomFields = useInvalidateCustomFields()
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<CustomFieldResource> | null>(null)
@@ -295,6 +297,7 @@ export function CustomFieldsTable({
             rowAction?.row.original ? [rowAction?.row.original.id] : null
           }
           onOpenChange={() => setRowAction(null)}
+          onSuccess={invalidateCustomFields}
           open={rowAction?.variant === "move"}
           workspaceId={workspaceId}
         />

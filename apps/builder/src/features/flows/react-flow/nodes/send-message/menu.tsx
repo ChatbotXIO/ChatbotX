@@ -9,6 +9,7 @@ import {
   ListIcon,
   MessageSquareIcon,
   PaperclipIcon,
+  PhoneIcon,
   PictureInPicture2Icon,
   TextIcon,
   TimerIcon,
@@ -89,6 +90,11 @@ const ALL_MENU_ITEMS = (
     icon: ListIcon,
     stepType: stepTypes.enum.whatsappOptionList,
   },
+  whatsappCallButton: {
+    label: t("flows.actions.whatsappCallButton"),
+    icon: PhoneIcon,
+    stepType: stepTypes.enum.whatsappCallButton,
+  },
   typing: {
     label: t("flows.actions.typing"),
     icon: TimerIcon,
@@ -145,6 +151,7 @@ const WHATSAPP_MENU_ORDER = [
   "sendTemplateMessage",
   "whatsappFlow",
   "whatsappOptionList",
+  "whatsappCallButton",
   "typing",
   "sendFile",
   "actions",
@@ -180,8 +187,14 @@ const MENU_ORDER_BY_CHANNEL: Record<string, readonly string[]> = {
   [channelTypes.enum.tiktok]: TIKTOK_MENU_ORDER,
 }
 
-const isInboxDependentMenuKey = (key: string) =>
-  key === "sendTemplateMessage" || key === "whatsappFlow"
+/**
+ * WhatsApp-only steps that must not be offered on omnichannel nodes: they
+ * send nothing on other channels, but (unlike the option list) would still
+ * persist a fully-worded outgoing message locally — a convincing phantom
+ * send. The worker guards this too; hiding the menu entry prevents authoring
+ * it in the first place.
+ */
+const OMNICHANNEL_EXCLUDED_ITEMS = new Set(["whatsappCallButton"])
 
 export const sendMessageEditorMenus = (
   t: TranslationFn,
@@ -192,10 +205,7 @@ export const sendMessageEditorMenus = (
 
   if (channel === channelTypes.enum.omnichannel) {
     return Object.entries(allMenuItems)
-      .filter(
-        ([key]) =>
-          !(menuData?.inboxesUnavailable && isInboxDependentMenuKey(key)),
-      )
+      .filter(([key]) => !OMNICHANNEL_EXCLUDED_ITEMS.has(key))
       .map(([, item]) => item)
   }
 
@@ -204,12 +214,7 @@ export const sendMessageEditorMenus = (
       ? MENU_ORDER_BY_CHANNEL[channel]
       : BASE_MENU_ORDER
 
-  return menuOrder
-    .filter(
-      (key) =>
-        !(menuData?.inboxesUnavailable && isInboxDependentMenuKey(key)),
-    )
-    .map((key) => allMenuItems[key])
+  return menuOrder.map((key) => allMenuItems[key])
 }
 
 export const sendMessageEditorMenusWithButton = (

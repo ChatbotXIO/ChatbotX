@@ -102,8 +102,8 @@ manual test used the same body. **Decision: reuse the helper unchanged.**
 
 ### 1.3 Industry reference (GitHub, checked 2026-09-03)
 
-- Chatwoot `app/services/facebook/send_on_facebook_service.rb` — single
-  attachment: `{ attachment: { type, payload: { url } } }`, no upload, no
+- Established open-source inbox platforms send a single attachment as
+  `{ attachment: { type, payload: { url } } }`, with no upload and no
   template.
 - Bottender — `sendImage` = plain attachment; `sendMediaTemplate` is a separate
   API used only when the caller explicitly wants a template.

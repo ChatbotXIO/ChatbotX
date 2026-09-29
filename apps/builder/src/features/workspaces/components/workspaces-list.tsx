@@ -197,7 +197,11 @@ const WorkspacesList = async ({
   const createLabel = t("actions.createFeature", {
     feature: t("fields.workspace.label"),
   })
-  const showCreateCard = !isCommunity()
+  // Community hides the card once a workspace exists (self-hosted installs
+  // are meant to stay single-workspace), but a user with ZERO workspaces has
+  // no other path to `/channels/create` anywhere on this page — hiding it
+  // here leaves them stuck on a static "no workspaces" message forever.
+  const showCreateCard = !isCommunity() || workspaces.length === 0
   const ownerIds = new Set(ownerWorkspaceIds)
   const superAdminIds = new Set(superAdminWorkspaceIds)
   const ownerLabel = t("home.owner")

@@ -21,6 +21,11 @@ export const env = createEnv({
       .min(1)
       .max(200)
       .default(10),
+    // Light-but-bulky, low-priority jobs (Coexist/Customer-Scan media backfill)
+    // run on their own `low` queue/worker so a historical-import burst never
+    // starves the latency-sensitive integration queue. I/O-bound → higher
+    // default than integration; tune per node bandwidth / Graph rate limits.
+    LOW_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(200).default(30),
     AI_AGENT_WORKER_CONCURRENCY: z.coerce
       .number()
       .int()
@@ -92,6 +97,15 @@ export const env = createEnv({
     // Kill switch — Expo needs no credential to send, so unlike FCM there is
     // no natural "unset = disabled" signal. Operators flip this explicitly.
     EXPO_PUSH_ENABLED: z.stringbool().default(true),
+
+    // Rate-limits the opt-in call-transcription queue so a call
+    // spike cannot burn the AI budget.
+    CALL_TRANSCRIBE_PER_MIN: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .default(10),
   },
   runtimeEnv: process.env,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",

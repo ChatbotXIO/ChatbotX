@@ -21,28 +21,73 @@ export type IncomingContact = {
    */
   sourceUserId?: string
   /**
+   * Parent channel-scoped user id used only as an identity matching fallback.
+   * Never use this value to address outbound messages.
+   */
+  sourceParentUserId?: string
+  /**
    * Channel handle/username for this contact (e.g. WhatsApp `@username`).
    * Display-only, never used as a matching key.
    */
   sourceUsername?: string
+  /**
+   * The channel's own conversation identifier, for channels that require one to
+   * address an outbound DM (TikTok's `conversation_id`). Stored on
+   * `Conversation.additionalAttributes.channelConversationId` — deliberately NOT
+   * `sourceConversationId`, which keys the conversation row and is reserved for
+   * comment threads (the post id). Keeping the two apart is what lets a channel
+   * have both a DM and comment threads for the same contact; see
+   * `packages/database/src/partials/channel.ts`.
+   */
+  channelConversationId?: string
 }
 
-/** The `{ sourceId, sourceUserId }` slice shared by contact-inbox rows and SDK contacts. */
+/** The channel-scoped identity slice shared by contact-inbox rows and SDK contacts. */
 export type SourceScopedIdentity = {
   sourceId: string
   sourceUserId?: string | null
+  sourceParentUserId?: string | null
 }
+
+export type SourceScopedIdentityMatchedBy =
+  | "sourceId"
+  | "sourceUserId"
+  | "sourceParentUserId"
+
+export type SourceScopedIdentityMatch<T> = {
+  row: T
+  matchedBy: SourceScopedIdentityMatchedBy
+}
+
+export type SourceScopedIdentityLookup<T> = (
+  where:
+    | { sourceId: string }
+    | { sourceUserId: string }
+    | { sourceParentUserId: string },
+) => Promise<T | undefined>
 
 /**
  * An identity is "scoped-user-id keyed" when its primary `sourceId` IS its
- * channel-scoped user id (e.g. a WhatsApp BSUID) — set once at contact
- * creation for users whose phone number is hidden, and never rewritten.
- * Such identities must be addressed by the scoped id on outbound sends.
+ * channel-scoped user id (e.g. a WhatsApp BSUID). Such identities must be
+ * addressed by the scoped id on outbound sends; an identity rotation may
+ * atomically advance both fields while preserving this invariant.
  */
 export const isSourceUserIdKeyedIdentity = (
   identity: SourceScopedIdentity,
 ): boolean =>
   Boolean(identity.sourceUserId) && identity.sourceId === identity.sourceUserId
+
+/** Whether a non-empty primary identity differs from every scoped identity. */
+export const isDistinctPrimaryIdentity = (
+  value: string | null | undefined,
+  ...scopedIds: Array<string | null | undefined>
+): boolean => {
+  const primaryIdentity = value?.trim()
+  return (
+    Boolean(primaryIdentity) &&
+    scopedIds.every((scopedId) => scopedId?.trim() !== primaryIdentity)
+  )
+}
 
 /**
  * Whether an outbound send must address this identity by its scoped user id
@@ -59,22 +104,35 @@ export const shouldAddressBySourceUserId = (
 
 /**
  * The ordered contact-inbox identity lookup every consumer shares: probe the
- * primary `sourceId` first, then the scoped user id (e.g. a WhatsApp BSUID)
- * only when the first probe missed and a scoped id exists. Callers supply the
- * actual query, so each site keeps its own relations and extra filters —
- * only the ordering contract lives here and cannot drift between them.
+ * primary `sourceId` first, then the scoped user id, then its parent scoped id.
+ * Callers supply the actual query, so each site keeps its own relations and
+ * extra filters — only the ordering contract lives here and cannot drift.
  */
-export const resolveWithSourceUserIdFallback = async <T>(
+export const resolveSourceScopedIdentityMatch = async <T>(
   identity: SourceScopedIdentity,
-  lookup: (
-    where: { sourceId: string } | { sourceUserId: string },
-  ) => Promise<T | undefined>,
-): Promise<T | undefined> => {
+  lookup: SourceScopedIdentityLookup<T>,
+): Promise<SourceScopedIdentityMatch<T> | undefined> => {
   const bySourceId = await lookup({ sourceId: identity.sourceId })
-  if (bySourceId || !identity.sourceUserId) {
-    return bySourceId
+  if (bySourceId) {
+    return { row: bySourceId, matchedBy: "sourceId" }
   }
-  return await lookup({ sourceUserId: identity.sourceUserId })
+  if (identity.sourceUserId) {
+    const bySourceUserId = await lookup({
+      sourceUserId: identity.sourceUserId,
+    })
+    if (bySourceUserId) {
+      return { row: bySourceUserId, matchedBy: "sourceUserId" }
+    }
+  }
+  if (identity.sourceParentUserId) {
+    const bySourceParentUserId = await lookup({
+      sourceParentUserId: identity.sourceParentUserId,
+    })
+    if (bySourceParentUserId) {
+      return { row: bySourceParentUserId, matchedBy: "sourceParentUserId" }
+    }
+  }
+  return
 }
 
 export type OutgoingContact = {
@@ -111,6 +169,15 @@ export type OutgoingMessage = {
 }
 
 export const messageTypes = z.enum(["outgoing", "incoming", "activity"])
+
+/**
+ * Who sent the message a channel is echoing back to us. A channel parser
+ * classifies its own echoes; the shared worker only acts on the enum.
+ * - `firstParty`: the channel's own inbox (e.g. Facebook Page Inbox).
+ * - `thirdParty`: another app connected to the same channel account.
+ */
+export const echoOrigins = z.enum(["firstParty", "thirdParty"])
+export type EchoOrigin = z.infer<typeof echoOrigins>
 export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {
@@ -125,6 +192,9 @@ export type IncomingMessage = {
     | MessageTemplateEntity
     | MessageWhatsappFlowResponseEntity
     | MessageStoryReplyEntity
+    | MessageSharedPostEntity
+    | MessageWhatsappCallEntity
+    | MessageWhatsappCallPermissionReplyEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
@@ -153,6 +223,130 @@ export type MessageStoryReplyEntity = {
 }
 
 /**
+ * Carried on a message whose payload is a shared post rather than text or an
+ * attachment (TikTok's `type: "share_post"` DM). The message's `text` holds the
+ * link so it is readable and clickable in the inbox today; this keeps the ids
+ * intact so a richer preview can be rendered later without re-parsing the text.
+ *
+ * `url` is the channel's own link for the share, verbatim — TikTok sends a
+ * player URL with its own tracking params, and rewriting it into a
+ * `tiktok.com/@user/video/<id>` guess would mean inventing an author handle the
+ * webhook never carries.
+ */
+export type MessageSharedPostEntity = {
+  type: "shared_post"
+  sharedPost: {
+    postId: string
+    url?: string
+  }
+}
+
+/**
+ * Written when a WhatsApp call terminates. The single progressive activity message for a
+ * call — recording/transcript/summary handlers enrich it in place via messageContentUpdated
+ * rather than creating a second message. callId is the DB WhatsappCall.id.
+ */
+export type MessageWhatsappCallEntity = {
+  type: "whatsapp_call"
+  direction: "userInitiated" | "businessInitiated"
+  /**
+   * canceled is a display-only refinement of a not-answered outbound call
+   * (agent hung up before pickup, vs failed meaning the customer never
+   * answered). Not a DB WhatsappCall.status value; derived from the business-
+   * cancel marker on the row.
+   */
+  status: "completed" | "failed" | "rejected" | "canceled"
+  /** Billed talk time (Meta duration): answer to hangup. */
+  durationSeconds?: number
+  /**
+   * Time-to-answer (ring wait) from placement to answer. Absent when the answer
+   * timestamp is unknown.
+   */
+  answerSeconds?: number
+  /** DB WhatsappCall.id. */
+  callId?: string
+  /**
+   * ISO time this call opened or refreshed the 24-hour customer service window;
+   * absent when it did not. A user's call always opens it; a business call only
+   * once accepted.
+   */
+  customerServiceWindowOpenedAt?: string
+  hasRecording?: boolean
+  /**
+   * Whether a recording was requested (the number's Record calls setting at
+   * hangup time). Gates the processing placeholder so a call that never
+   * requested recording shows no player row.
+   */
+  recordingRequested?: boolean
+  /** Requested at hangup time, per workspace/integration setting. */
+  transcriptionRequested?: boolean
+  hasTranscript?: boolean
+  hasSummary?: boolean
+  recordingExpired?: boolean
+  /**
+   * True when this call will never have a recording even though the number
+   * records calls (Meta refused the announcement, or capture never started).
+   * Distinct from recordingExpired (existed, then aged out).
+   */
+  recordingUnavailable?: boolean
+  /**
+   * Snapshotted at finalize time, never re-resolved, so a later rename or
+   * deletion can't rewrite history. Also populated for outbound VoIP calls with
+   * the INITIATING agent, not necessarily who answered - the card derives its
+   * label from direction instead.
+   */
+  agentUserId?: string
+  /**
+   * Display-name snapshot paired with agentUserId, resolved once at finalize.
+   * Absent if the id couldn't be resolved - card renders no agent line rather
+   * than an empty label.
+   */
+  agentName?: string
+  /**
+   * Meta's raw diagnosis for why the call ended badly, carried verbatim from
+   * the terminate webhook (e.g. a media-drop code when answered but no audio
+   * was received). May be just an error code with no explanation. Absent when
+   * there was no terminate-reported error.
+   */
+  failureReason?: string
+}
+
+/**
+ * Carried on the message written when a contact answers a business-calling
+ * permission request. Worker persists the grant state; inbox renders a
+ * localized label.
+ */
+export type MessageWhatsappCallPermissionReplyEntity = {
+  type: "whatsapp_call_permission_reply"
+  response: "accept" | "reject"
+  isPermanent?: boolean
+  /** Unix seconds; absent for permanent grants. */
+  expirationTimestamp?: number
+  responseSource?: string
+}
+
+/**
+ * Marks an outgoing message as a business-calling permission request; the
+ * WhatsApp send handler renders it as the call_permission_request interactive
+ * instead of plain text.
+ */
+export type MessageWhatsappCallPermissionRequestEntity = {
+  type: "whatsapp_call_permission_request"
+}
+
+export const getWhatsappCallPermissionRequest = (
+  contentAttributes: unknown,
+): MessageWhatsappCallPermissionRequestEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_call_permission_request"
+    ? (contentAttributes as MessageWhatsappCallPermissionRequestEntity)
+    : undefined
+}
+
+/**
  * Extracts the story-reply payload from a message's contentAttributes,
  * accepting both the current `{ type: "story_reply", story }` shape and the
  * legacy `{ storyReply }` shape some already-persisted rows still carry.
@@ -173,13 +367,96 @@ export const getStoryReply = (
   return attrs.type === "story_reply" ? attrs.story : attrs.storyReply
 }
 
+/**
+ * Centralized so the worker (writer) and inbox renderer (reader) cannot drift
+ * on the shape check.
+ */
+export const getWhatsappCallEntity = (
+  contentAttributes: unknown,
+): MessageWhatsappCallEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_call"
+    ? (contentAttributes as MessageWhatsappCallEntity)
+    : undefined
+}
+
+/**
+ * A contact's message always opens the window; an activity card only when it
+ * explicitly carries the moment - the server decides so callers never re-derive
+ * channel window policy.
+ */
+export const resolveMessagingWindowOpenedAt = (message: {
+  messageType: string
+  createdAt: Date | string
+  contentAttributes?: unknown
+}): Date | null => {
+  const openedAt =
+    message.messageType === "incoming"
+      ? message.createdAt
+      : getWhatsappCallEntity(message.contentAttributes)
+          ?.customerServiceWindowOpenedAt
+  return openedAt ? new Date(openedAt) : null
+}
+
+/**
+ * Sentinel written to WhatsappCall.lastError by the agent-hangup path for an
+ * outbound call that was never answered - distinguishes business-cancelled from
+ * customer-never-picked-up (both otherwise land on status failed). Exact-match
+ * discriminator only, never shown to users.
+ */
+export const CALL_CANCELED_BY_BUSINESS_LAST_ERROR = "canceled_by_business"
+
+export type WhatsappCallActivityLabelKey =
+  | "declinedVoiceCall"
+  | "missedVoiceCall"
+  | "unansweredVoiceCall"
+  | "canceledVoiceCall"
+
+/**
+ * Single source of truth for a non-completed call outcome's label (completed is excluded —
+ * it renders the full player card, not a flat label). Wording is direction-aware: labeling a
+ * not-answered outbound call "missed" would wrongly blame the business.
+ */
+export const resolveWhatsappCallActivityLabelKey = (
+  status: Exclude<MessageWhatsappCallEntity["status"], "completed">,
+  direction: MessageWhatsappCallEntity["direction"],
+): WhatsappCallActivityLabelKey => {
+  if (status === "canceled") {
+    // The agent hung up before the call connected - never "no answer" or
+    // "missed".
+    return "canceledVoiceCall"
+  }
+  if (status === "rejected") {
+    return "declinedVoiceCall"
+  }
+  return direction === "userInitiated"
+    ? "missedVoiceCall"
+    : "unansweredVoiceCall"
+}
+
+export const getWhatsappCallPermissionReply = (
+  contentAttributes: unknown,
+): MessageWhatsappCallPermissionReplyEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string; response?: unknown }
+  return attrs.type === "whatsapp_call_permission_reply" &&
+    (attrs.response === "accept" || attrs.response === "reject")
+    ? (contentAttributes as MessageWhatsappCallPermissionReplyEntity)
+    : undefined
+}
+
 export const MessageEntitySchema = z.custom<IncomingMessage>(
   (data) => typeof data === "object",
 )
 
 export type IncomingAttachment = {
   sourceId: string
-  fileType: FileType
+  fileType: IncomingFileType
   mimeType: string
   originPath: string
   size: number
@@ -346,3 +623,9 @@ export type ContentType = z.infer<typeof contentTypes>
 
 export const fileTypes = z.enum(["image", "audio", "video", "file"])
 export type FileType = z.infer<typeof fileTypes>
+
+// Inbound only. `gif` marks an animated clip the inbox autoplays on loop — an
+// image/gif file or a video rendition of one (Telegram animations, video
+// stickers). Outbound stays on `fileTypes`: channel send APIs take no "gif".
+export const incomingFileTypes = z.enum([...fileTypes.options, "gif"])
+export type IncomingFileType = z.infer<typeof incomingFileTypes>

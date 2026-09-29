@@ -9,7 +9,7 @@ import {
   telegramIntegrationService,
   zaloIntegrationService,
 } from "@chatbotx.io/business"
-import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram/schemas"
+import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram/schema"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"

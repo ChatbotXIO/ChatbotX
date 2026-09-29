@@ -84,8 +84,11 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     unreadConversationAction.bind(null, workspaceId, conversation.id),
     {
       onSuccess: (result) => {
+        // null is a real value here (single-message conversation → never
+        // read); turning it into "now" would show the row as read locally.
+        const agentLastReadAt = result.data?.agentLastReadAt
         updateConversation(conversation.id, {
-          agentLastReadAt: new Date(result.data?.agentLastReadAt ?? new Date()),
+          agentLastReadAt: agentLastReadAt ? new Date(agentLastReadAt) : null,
         })
       },
       onError: ({ error }) => {

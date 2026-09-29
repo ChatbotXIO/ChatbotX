@@ -9,7 +9,7 @@ import { listAIMcpServers } from "../queries"
 import {
   listAIMcpServersRequest,
   listAIMcpServersResponse,
-  validateAIMcpServerRequest,
+  validatePrivateAIMcpServerRequest,
 } from "../schema/action"
 
 export const aiMcpServersAuthenticatedAPI = {
@@ -20,7 +20,7 @@ export const aiMcpServersAuthenticatedAPI = {
       summary: "Validate an MCP server",
       tags: ["AI"],
     })
-    .input(validateAIMcpServerRequest.and(withWorkspaceIdSchema))
+    .input(validatePrivateAIMcpServerRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.any())
     .handler(async ({ input }) => {

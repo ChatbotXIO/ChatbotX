@@ -8,12 +8,15 @@ import {
   db,
   eq,
   inArray,
+  isNull,
   type SQL,
   sql,
 } from "../../client"
 import { adConversationPredicate } from "../../queries/ad-referral"
 import type { AdsConversionChannel } from "../../schema"
 import {
+  type ContactInboxIdentityChangeReason,
+  type ContactInboxIdentityHistoryEntry,
   contactInboxModel,
   inboxModel,
   integrationInstagramModel,
@@ -107,6 +110,58 @@ export type ContactInboxWorkspaceRow = Pick<
   "id" | "channel" | "inboxId" | "sourceId"
 >
 
+export type ContactInboxIdentityFields = Pick<
+  ContactInboxModel,
+  "sourceId" | "sourceUserId" | "sourceParentUserId"
+>
+
+type RequireAtLeastOne<T> = {
+  [Key in keyof T]-?: Required<Pick<T, Key>> & Partial<Omit<T, Key>>
+}[keyof T]
+
+export type ContactInboxIdentityGuard =
+  RequireAtLeastOne<ContactInboxIdentityFields>
+
+export const CONTACT_INBOX_IDENTITY_HISTORY_LIMIT = 10
+
+// Ordinary message/cache reads do not need the audit trail. Callers keep their
+// established model signatures until queue and channel DTOs can be narrowed.
+export const contactInboxOperationalColumns = {
+  sourceIdentityHistory: false,
+} as const
+
+const contactInboxIdentityColumns = {
+  sourceId: contactInboxModel.sourceId,
+  sourceParentUserId: contactInboxModel.sourceParentUserId,
+  sourceUserId: contactInboxModel.sourceUserId,
+} satisfies Record<keyof ContactInboxIdentityFields, unknown>
+
+type ContactInboxIdentitySet = Partial<ContactInboxIdentityFields>
+
+const appendIdentityHistoryExpression = (input: {
+  changedAt: string
+  reason: ContactInboxIdentityChangeReason
+}) => sql<ContactInboxIdentityHistoryEntry[]>`(
+  SELECT COALESCE(jsonb_agg("entry" ORDER BY "ordinality"), '[]'::jsonb)
+  FROM (
+    SELECT "entry", "ordinality"
+    FROM jsonb_array_elements(
+      COALESCE(${contactInboxModel.sourceIdentityHistory}, '[]'::jsonb) ||
+      jsonb_build_array(
+        jsonb_build_object(
+          'sourceId', ${contactInboxModel.sourceId},
+          'sourceUserId', ${contactInboxModel.sourceUserId},
+          'sourceParentUserId', ${contactInboxModel.sourceParentUserId},
+          'changedAt', ${input.changedAt}::text,
+          'reason', ${input.reason}::text
+        )
+      )
+    ) WITH ORDINALITY AS "history"("entry", "ordinality")
+    ORDER BY "ordinality" DESC
+    LIMIT ${CONTACT_INBOX_IDENTITY_HISTORY_LIMIT}::int
+  ) AS "newestHistory"
+)`
+
 /**
  * The projection producing a {@link ContactInboxWorkspaceRow}. Shared by the
  * four queries that return one, so the row type and the columns actually
@@ -130,6 +185,52 @@ export type ContactInboxBySourceIdRow = Pick<
 >
 
 export const contactInboxRepository = {
+  async updateIdentityGuarded(
+    input: {
+      id: string
+      guard: ContactInboxIdentityGuard
+      set: ContactInboxIdentitySet
+      appendIdentityHistory?: {
+        changedAt: string
+        reason: ContactInboxIdentityChangeReason
+      }
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | undefined> {
+    const guardConditions = (
+      Object.entries(input.guard) as [
+        keyof ContactInboxIdentityFields,
+        string | null | undefined,
+      ][]
+    ).flatMap(([field, value]) => {
+      if (value === undefined) {
+        return []
+      }
+      const column = contactInboxIdentityColumns[field]
+      return [value === null ? isNull(column) : eq(column, value)]
+    })
+    if (guardConditions.length === 0) {
+      throw new Error("ContactInbox identity update requires a guard")
+    }
+
+    const [updated] = await tx
+      .update(contactInboxModel)
+      .set({
+        ...input.set,
+        ...(input.appendIdentityHistory
+          ? {
+              sourceIdentityHistory: appendIdentityHistoryExpression(
+                input.appendIdentityHistory,
+              ),
+            }
+          : {}),
+      })
+      .where(and(eq(contactInboxModel.id, input.id), ...guardConditions))
+      .returning()
+
+    return updated
+  },
+
   listWithInboxNameByContactId(
     input: { contactId: string; workspaceId: string },
     tx: DatabaseClient = db,
@@ -287,39 +388,6 @@ export const contactInboxRepository = {
   },
 
   /**
-   * The most recently active contact-inbox in one inbox — the recipient a
-   * "Send test event" CAPI check is attributed to, since Meta requires a real
-   * page-scoped id / phone number even for test events. `requireCtwaClid`
-   * narrows to click-to-WhatsApp-attributed rows, the only ones Meta accepts
-   * for a WhatsApp business-messaging event.
-   */
-  async findMostRecentByInbox(
-    input: { inboxId: string; workspaceId: string; requireCtwaClid?: boolean },
-    tx: DatabaseClient = db,
-  ): Promise<ContactInboxWorkspaceRow | null> {
-    const [row] = await tx
-      .select(contactInboxWorkspaceRowColumns)
-      .from(contactInboxModel)
-      .innerJoin(
-        inboxModel,
-        and(
-          eq(inboxModel.id, contactInboxModel.inboxId),
-          eq(inboxModel.workspaceId, input.workspaceId),
-        ),
-      )
-      .where(
-        and(
-          eq(contactInboxModel.inboxId, input.inboxId),
-          input.requireCtwaClid ? ctwaReferralCondition() : undefined,
-        ),
-      )
-      .orderBy(mostRecentMessageFirst())
-      .limit(1)
-
-    return row ?? null
-  },
-
-  /**
    * Every WhatsApp contact-inbox for a contact that carries CTWA (click-to-
    * WhatsApp ad) attribution, paired with the WhatsApp integration that owns
    * it. Used by the `tagApplied` conversion-trigger hook points: a tag is
@@ -455,7 +523,7 @@ export const contactInboxRepository = {
    * Resolve a contact inbox with its `conversation` + `contact` relations,
    * by an arbitrary `where` (e.g. `{ inboxId, sourceId }` or
    * `{ inboxId, sourceUserId }`) — used by `message-status.ts`'s
-   * `resolveStatusContactInbox` behind `resolveWithSourceUserIdFallback`.
+   * `resolveStatusContactInbox` behind `resolveSourceScopedIdentityMatch`.
    * Keep the caller's probe order/spread exactly as-is; this repo method
    * only executes one shape of the query.
    */
@@ -471,14 +539,21 @@ export const contactInboxRepository = {
   > {
     return tx.query.contactInboxModel.findFirst({
       where: props.where,
+      columns: contactInboxOperationalColumns,
       with: { conversation: true, contact: true },
-    })
+    }) as Promise<
+      | (ContactInboxModel & {
+          conversation: ConversationModel | null
+          contact: ContactModel
+        })
+      | undefined
+    >
   },
 
   /**
    * Resolve a contact inbox with its `contact` relation, by an arbitrary
    * `where` — used by `received-message.ts`'s `resolveExistingContactInbox`
-   * behind `resolveWithSourceUserIdFallback`. Keep the caller's
+   * behind `resolveSourceScopedIdentityMatch`. Keep the caller's
    * `{ inboxId, channel, ...where }` spread and probe order exactly as-is.
    */
   findWithContact(
@@ -487,8 +562,9 @@ export const contactInboxRepository = {
   ): Promise<(ContactInboxModel & { contact: ContactModel }) | undefined> {
     return tx.query.contactInboxModel.findFirst({
       where: props.where,
+      columns: contactInboxOperationalColumns,
       with: { contact: true },
-    })
+    }) as Promise<(ContactInboxModel & { contact: ContactModel }) | undefined>
   },
 
   /**
@@ -600,14 +676,15 @@ export const contactInboxRepository = {
    * `workspaceId` filter (the caller has only a `contactId` in scope at this
    * point). Distinct from `contactInboxService.listByContactId`, which
    * requires `workspaceId` and is cached — this is an uncached, unscoped
-   * full-row read.
+   * operational-row read.
    */
   async listByContactId(
     input: { contactId: string },
     tx: DatabaseClient = db,
   ): Promise<ContactInboxModel[]> {
-    return await tx.query.contactInboxModel.findMany({
+    return (await tx.query.contactInboxModel.findMany({
       where: { contactId: input.contactId },
-    })
+      columns: contactInboxOperationalColumns,
+    })) as ContactInboxModel[]
   },
 }

@@ -59,7 +59,10 @@ const couponService = {
   markCouponUsed: vi.fn(),
   listIssuedCouponsForContact: vi.fn(),
 }
-const contactService = { findByIdOrFail: vi.fn() }
+const contactService = {
+  findByIdOrFail: vi.fn(),
+  resolveIdByIdentifier: vi.fn(),
+}
 
 vi.mock("@chatbotx.io/business", () => ({ couponService, contactService }))
 
@@ -229,26 +232,26 @@ describe("POST /v1/coupon-topics/{id}/mark-used", () => {
   })
 })
 
-describe("GET /v1/contacts/{contactId}/coupons", () => {
-  const procedure = findProcedure("GET", "/v1/contacts/{contactId}/coupons")
+describe("GET /v1/contacts/{identifier}/coupons", () => {
+  const procedure = findProcedure("GET", "/v1/contacts/{identifier}/coupons")
 
   test("404s when the contact does not exist", async () => {
-    contactService.findByIdOrFail.mockRejectedValueOnce(
+    contactService.resolveIdByIdentifier.mockRejectedValueOnce(
       new Error("Contact not found"),
     )
 
     await expect(
       procedure.handler?.({
         context: { workspace: { id: "workspace-1" } },
-        input: { contactId: "missing" },
+        input: { identifier: "missing" },
       }),
     ).rejects.toThrow("Contact not found")
 
     expect(couponService.listIssuedCouponsForContact).not.toHaveBeenCalled()
   })
 
-  test("lists coupons issued to the contact", async () => {
-    contactService.findByIdOrFail.mockResolvedValueOnce({ id: "contact-1" })
+  test("lists coupons issued to the contact, resolved by identifier", async () => {
+    contactService.resolveIdByIdentifier.mockResolvedValueOnce("contact-1")
     couponService.listIssuedCouponsForContact.mockResolvedValueOnce([
       { id: "cpn-1" },
     ])
@@ -256,10 +259,14 @@ describe("GET /v1/contacts/{contactId}/coupons", () => {
     await expect(
       procedure.handler?.({
         context: { workspace: { id: "workspace-1" } },
-        input: { contactId: "contact-1" },
+        input: { identifier: "contact@example.com" },
       }),
     ).resolves.toEqual({ data: [{ id: "cpn-1" }] })
 
+    expect(contactService.resolveIdByIdentifier).toHaveBeenCalledWith({
+      identifier: "contact@example.com",
+      workspaceId: "workspace-1",
+    })
     expect(couponService.listIssuedCouponsForContact).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactId: "contact-1",
@@ -305,10 +312,10 @@ describe("coupon topic routes forward workspace-scoped arguments", () => {
     })
   })
 
-  test("PATCH /v1/coupon-topics/{id} maps id to topicId", async () => {
+  test("PUT /v1/coupon-topics/{id} maps id to topicId", async () => {
     couponService.updateTopic.mockResolvedValueOnce({ id: "t-1" })
 
-    await findProcedure("PATCH", "/v1/coupon-topics/{id}").handler?.({
+    await findProcedure("PUT", "/v1/coupon-topics/{id}").handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { id: "t-1", name: "Renamed" },
     })

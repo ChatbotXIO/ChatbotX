@@ -1,3 +1,8 @@
+import type {
+  BroadcastPlanLimitData,
+  BroadcastPlanLimitReason,
+  RestrictedBroadcastPlanPolicy,
+} from "@chatbotx.io/database/partials"
 import { SdkException } from "@chatbotx.io/sdk"
 import { DrizzleQueryError } from "drizzle-orm"
 
@@ -195,6 +200,43 @@ export const validationException = (
   return error
 }
 
+export const BROADCAST_PLAN_LIMIT_CODE = "broadcastPlanLimit"
+
+const broadcastPlanLimitMessages: Record<
+  BroadcastPlanLimitReason,
+  (policy: RestrictedBroadcastPlanPolicy) => string
+> = {
+  sendRate: (policy) =>
+    `The current plan sends broadcasts at up to ${policy.maxSendRatePerMinute} messages per minute`,
+  activeBroadcasts: (policy) =>
+    `The current plan runs up to ${policy.maxActiveBroadcasts} broadcast(s) at a time`,
+}
+
+export const broadcastPlanLimitException = (
+  reason: BroadcastPlanLimitReason,
+  ctx: {
+    policy: RestrictedBroadcastPlanPolicy
+    planName: string | null
+  },
+) => {
+  const error = new ChatbotXException(
+    broadcastPlanLimitMessages[reason](ctx.policy),
+    BROADCAST_PLAN_LIMIT_CODE,
+    403,
+  )
+  const planName = trimmedText(ctx.planName)
+  const data = {
+    reason,
+    ...(planName ? { planName } : {}),
+    maxSendRatePerMinute: ctx.policy.maxSendRatePerMinute,
+    maxActiveBroadcasts: ctx.policy.maxActiveBroadcasts,
+    displayedSendRatePerMinute: ctx.policy.display.sendRatePerMinute,
+    upgradeSpeedMultiplier: ctx.policy.display.upgradeSpeedMultiplier,
+  } satisfies BroadcastPlanLimitData
+  error.data = data
+  return error
+}
+
 export const channelDuplicatedException = () =>
   new ChatbotXException(
     "This account is already connected to another workspace.",
@@ -249,6 +291,20 @@ export const channelLimitReachedException = () =>
   new ChatbotXException(
     "Channel limit reached for this plan",
     "channelLimitReached",
+  )
+
+/**
+ * A second "Generate/Regenerate summary" request arrived while another one
+ * for the SAME call is still in flight (the in-flight lock in
+ * `whatsappCallSummaryService.attachSummary` failed to acquire). 409 rather
+ * than a generic error so a caller can show "already generating" instead of
+ * a hard failure.
+ */
+export const summaryAlreadyGeneratingException = () =>
+  new ChatbotXException(
+    "A summary is already being generated for this call.",
+    "summaryAlreadyGenerating",
+    409,
   )
 
 export const workspaceLimitReachedException = () =>

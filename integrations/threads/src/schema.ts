@@ -37,4 +37,8 @@ export type ThreadsActions<IAuth extends ThreadsAuthValue = ThreadsAuthValue> =
       { ctx: Context<IAuth>; input: { postId: string } },
       ThreadsPostDetails
     >
+    getReplyGifUrl: Handler<
+      { ctx: Context<IAuth>; input: { replyId: string } },
+      string | null
+    >
   }

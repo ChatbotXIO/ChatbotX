@@ -2,7 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { CreateQrCodeForm } from "@/features/qr-codes/create-qr-code-form"
 
 export default async function CreateQrCodePage({
@@ -32,9 +32,7 @@ export default async function CreateQrCodePage({
           { label: t("actions.create"), href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
-        <CreateQrCodeForm workspaceId={workspaceId} />
-      </FlowStoreProvider>
+      <CreateQrCodeForm workspaceId={workspaceId} />
     </div>
   )
 }

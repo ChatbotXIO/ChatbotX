@@ -72,6 +72,7 @@ const BASE_VALUES: CreateIgCommentRequest = {
   publicReply: { type: "none", value: null },
   includeKeywords: { type: "all", value: [] },
   excludeKeywords: [],
+  excludeKeywordsType: "contain",
   options: {
     replyToNewContactsOnly: false,
     replyOncePerUserPerPost: false,
@@ -168,6 +169,16 @@ describe("IgCommentForm capability gating", () => {
     )
     expect(container.textContent).not.toContain(
       "instagramCommentAutomation.hideComments.hasVideo",
+    )
+  })
+
+  test("offers emoji hiding but never GIF (Instagram exposes no attachment data)", () => {
+    renderVariant("instagram")
+    expect(container.textContent).toContain(
+      "commentAutomation.hideComments.hasEmoji",
+    )
+    expect(container.textContent).not.toContain(
+      "commentAutomation.hideComments.hasGif",
     )
   })
 })

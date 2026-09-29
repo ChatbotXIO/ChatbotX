@@ -1,6 +1,6 @@
-import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
+import { publishToWorkspaceParty } from "@chatbotx.io/business"
 import {
-  type FBCommentReply,
+  type CommentReply,
   resolveReplyTexts,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
@@ -12,6 +12,7 @@ import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { COMMENT_AUTOMATION_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
   AIJobAction,
@@ -35,16 +36,23 @@ const PUBLIC_REPLY_SPACING_MS = 3000
 
 /**
  * Extra BullMQ options for a comment reply dispatched on this contact's
- * channel. Threads' reply endpoint takes no idempotency key and rate-limits
- * aggressively, so a BullMQ retry would double-post the same public reply —
- * Threads jobs therefore run with a single attempt. Every other channel keeps
- * the queue's default retry policy (returns `undefined`, spreading to
- * nothing).
+ * channel.
+ *
+ * Threads' reply endpoint takes no idempotency key and rate-limits
+ * aggressively; TikTok's `business/comment/reply/create/` likewise creates a
+ * fresh reply on every call. On either, a BullMQ retry would double-post the
+ * same public reply under the comment, so those jobs run with a single attempt.
+ * Every other channel keeps the queue's default retry policy (returns
+ * `undefined`, spreading to nothing).
  */
+const SINGLE_ATTEMPT_REPLY_CHANNELS = new Set(["threads", "tiktok"])
+
 function commentReplyRetryPolicy(
   contactInbox: ContactInboxModel,
 ): { attempts: number } | undefined {
-  return contactInbox.channel === "threads" ? { attempts: 1 } : undefined
+  return SINGLE_ATTEMPT_REPLY_CHANNELS.has(contactInbox.channel)
+    ? { attempts: 1 }
+    : undefined
 }
 
 /**
@@ -93,15 +101,10 @@ export async function postPublicCommentReply(props: {
     createdAt: new Date(),
   }
   const message = await repo.create(messageInput)
-  broadcastToWorkspaceParty(props.workspaceId, {
+  publishToWorkspaceParty(props.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: message,
-  }).catch((err: unknown) =>
-    logger.error(
-      { err, commentId: props.commentId },
-      "Unable to emit realtime message",
-    ),
-  )
+  })
   const retryPolicy = commentReplyRetryPolicy(props.contactInbox)
   const queueOptions =
     props.delay === undefined
@@ -134,7 +137,7 @@ export async function postPublicCommentReply(props: {
  * outcome also carries the text for the analytics event.
  */
 export async function executePublicReply(
-  publicReply: FBCommentReply,
+  publicReply: CommentReply,
   ctx: {
     auth: MessengerAuthValue
     integrationType: string
@@ -183,11 +186,14 @@ export async function executePublicReply(
 
     const sent: string[] = []
     for (const [index, rawText] of texts.entries()) {
-      let text = rawText
+      // Spun before the variable pass, and outside the `variables` guard, so a
+      // reply still varies when contact data failed to load above.
+      const spunText = applySpintax(rawText)
+      let text = spunText
       if (variables) {
         try {
           text = await contactVariableService.replaceAll({
-            text: rawText,
+            text: spunText,
             variables,
           })
         } catch (err) {

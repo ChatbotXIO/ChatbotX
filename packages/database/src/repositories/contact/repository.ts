@@ -51,6 +51,8 @@ export const contactRepository = {
       with: PUBLIC_CONTACT_RELATIONS,
     })
   },
+  // Back-compat for the deprecated `contacts.findByCustomField` alias — use
+  // `contacts.list` with a `contactFilter` instead.
   async listPublicByCustomField(
     input: {
       where: Record<string, unknown>
@@ -74,12 +76,43 @@ export const contactRepository = {
       with: PUBLIC_CONTACT_RELATIONS,
     })
   },
-  listForTable(input: ContactListInput, tx: DatabaseClient = db) {
+  listWithInboxesAndConversation(
+    input: ContactListInput,
+    tx: DatabaseClient = db,
+  ) {
     return tx.query.contactModel.findMany({
       ...input,
       with: {
         contactInboxes: { with: { inbox: true } },
         conversation: { with: { assignedUser: true, assignedInboxTeam: true } },
+      },
+    })
+  },
+  listTableRows(input: ContactListInput, tx: DatabaseClient = db) {
+    return tx.query.contactModel.findMany({
+      ...input,
+      columns: {
+        id: true,
+        fullName: true,
+        avatar: true,
+        createdAt: true,
+      },
+      with: {
+        contactInboxes: {
+          columns: {
+            channel: true,
+            source: true,
+            contactLastReadAt: true,
+          },
+        },
+        conversation: {
+          columns: { id: true },
+          with: {
+            assignedUser: {
+              columns: { name: true, email: true },
+            },
+          },
+        },
       },
     })
   },
@@ -92,8 +125,6 @@ export const contactRepository = {
       with: {
         tags: true,
         contactCustomFields: { with: { customField: true } },
-        contactNotes: true,
-        contactsOnSequences: { with: { sequence: true } },
         conversation: true,
       },
     })

@@ -27,11 +27,13 @@ import { removeContactSequenceRequest } from "../schema/contact-sequence"
 type RemoveContactSequenceDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function RemoveContactSequenceDialog({
   trigger,
   ids,
+  onSuccess,
 }: RemoveContactSequenceDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -57,6 +59,7 @@ export default function RemoveContactSequenceDialog({
             )
             setOpen(false)
             resetFormAndAction()
+            onSuccess?.()
           },
           onError: ({ error }) => {
             if (error.serverError) {

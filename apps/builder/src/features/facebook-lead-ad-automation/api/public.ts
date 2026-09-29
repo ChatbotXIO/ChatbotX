@@ -99,7 +99,7 @@ export const facebookLeadAdsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/facebook-lead-ads/{id}",
       summary: "Update Facebook Lead Ads automation",
       description:

@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { updateFlowAction } from "../../actions/update-flow-action"
 import { updateFlowSchema } from "../../schema/action"
 
@@ -34,6 +35,7 @@ export function RenameFlowDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateFlows = useInvalidateFlows()
 
   const {
     form,
@@ -53,6 +55,7 @@ export function RenameFlowDialog({
           )
           resetFormAndAction()
           onOpenChange(false)
+          invalidateFlows()
           router.refresh()
         },
         onError: ({ error }) => {

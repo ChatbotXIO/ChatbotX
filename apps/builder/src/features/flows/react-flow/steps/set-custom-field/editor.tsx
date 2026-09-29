@@ -29,7 +29,11 @@ import {
   CustomFieldSelect,
 } from "@/features/custom-fields/custom-field-select"
 import { findFieldByReference } from "@/features/custom-fields/lib/find-field-by-reference"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import {
+  useBotFields,
+  useCustomFields,
+} from "@/features/custom-fields/provider/custom-field-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import { useParentStepCommit } from "../base/use-parent-step-commit"
 
 const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
@@ -47,7 +51,9 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
 
   // The selected field's type drives the temporal hint. `inputFieldId` is
   // either a customField id/name (legacy lookup) or a `bot_field:<id>` token.
-  const { customFields, botFields } = useCustomFieldStore((state) => state)
+  const workspaceId = useWorkspaceId()
+  const customFields = useCustomFields(workspaceId).data ?? []
+  const botFields = useBotFields(workspaceId, { enabled: true }).data ?? []
   const selectedFieldId = customFieldForm.watch("inputFieldId")
   const selectedFieldType = findFieldByReference(selectedFieldId, {
     customFields,

@@ -14,7 +14,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
-import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import type { listIntegrationInstagrams } from "../queries"
 import { AddInstagramDialog } from "./add-instagram-dialog"
@@ -37,7 +37,7 @@ export function InstagramManage({
   const [{ data: integrationInstagrams }] = use(promises)
   const t = useTranslations()
 
-  useChannelDuplicatedError("instagram")
+  useChannelConnectError("instagram")
   useChannelReconnectResult()
 
   if (!publicConfig?.clientId) {

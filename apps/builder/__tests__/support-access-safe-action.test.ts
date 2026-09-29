@@ -57,10 +57,15 @@ vi.mock("next/headers", () => ({
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { error: vi.fn() },
+  logger: { error: vi.fn(), warn: vi.fn() },
 }))
 
-const { workspaceActionClientAllowExpired } = await import("@/lib/safe-action")
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn(() => Promise.resolve((key: string) => key)),
+}))
+
+const { callHistoryActionClient, workspaceActionClientAllowExpired } =
+  await import("@/lib/safe-action")
 const { workspaceIdrequestParams } = await import("@/features/common/schema")
 
 const user = { id: "user-1", mustChangePassword: false }
@@ -73,6 +78,22 @@ function buildProbeAction() {
 
 async function callProbeAction(workspaceId: string) {
   const action = buildProbeAction()
+  return await (
+    action as unknown as (
+      workspaceId: string,
+      input: unknown,
+    ) => Promise<{ data?: Record<string, unknown>; serverError?: string }>
+  )(workspaceId, undefined)
+}
+
+function buildCallHistoryProbeAction() {
+  return callHistoryActionClient
+    .bindArgsSchemas(workspaceIdrequestParams)
+    .action(async ({ ctx }: { ctx: Record<string, unknown> }) => ctx)
+}
+
+async function callCallHistoryProbeAction(workspaceId: string) {
+  const action = buildCallHistoryProbeAction()
   return await (
     action as unknown as (
       workspaceId: string,
@@ -132,5 +153,123 @@ describe("workspaceActionClientAllowExpired — platform support access", () => 
 
     expect(result.data).toBeUndefined()
     expect(result.serverError).toBeDefined()
+  })
+
+  // `ctx.userId` was dropped — every consumer (the call-artifact actions,
+  // `listWhatsappCallsAction`) reads `ctx.user.id` instead, the
+  // same field `authActionClient` already exposes to every other action.
+  test("does not expose a redundant ctx.userId — ctx.user.id is the one place the caller's id lives", async () => {
+    mocks.resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "123", ownerId: "owner-1" },
+      member: { permissions: { superAdmin: true } },
+      isSupportSession: true,
+    })
+
+    const result = await callProbeAction("123")
+
+    expect(result.data?.userId).toBeUndefined()
+    expect(result.data?.user).toMatchObject({ id: "user-1" })
+  })
+
+  // `workspaceActionClientAllowExpired` is the read client every
+  // call-artifact action AND the Calls page/history action are built on —
+  // it must never call the owner-quota/expiry gate
+  // (`checkWorkspaceOwnerAccess`, which only `workspaceActionClient` layers
+  // on top). A support session or an expired/owner-blocked workspace must
+  // both still be able to read call history and artifacts.
+  test("never runs the owner-quota/expiry gate — a read succeeds for an expired/owner-blocked workspace", async () => {
+    mocks.resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "123", ownerId: "owner-1" },
+      member: { permissions: { contacts: true } },
+      isSupportSession: false,
+    })
+    // If this middleware ever called the gate, a denial here would surface
+    // as a thrown/serverError result instead of a successful read.
+    mocks.checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+
+    const result = await callProbeAction("123")
+
+    expect(mocks.checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+    expect(result.data).toMatchObject({ workspaceId: "123" })
+    expect(result.serverError).toBeUndefined()
+  })
+})
+
+// `callHistoryActionClient` gates the Calls page's
+// list action on `hasContactsAccess || analytics` — distinct from
+// `requireContactsAccess`, which admits only `contacts`/`onlyAssignedContacts`
+// and would wrongly shut out an analytics-only viewer from call history.
+describe("callHistoryActionClient — requireCallHistoryAccess gate", () => {
+  test("allows a contacts member", async () => {
+    mocks.resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "123", ownerId: "owner-1" },
+      member: { permissions: { contacts: true } },
+      isSupportSession: false,
+    })
+
+    const result = await callCallHistoryProbeAction("123")
+
+    expect(result.data).toMatchObject({ workspaceId: "123" })
+    expect(result.serverError).toBeUndefined()
+  })
+
+  test("allows an analytics-only member (no calling access, but call-history read access)", async () => {
+    mocks.resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "123", ownerId: "owner-1" },
+      member: { permissions: { analytics: true } },
+      isSupportSession: false,
+    })
+
+    const result = await callCallHistoryProbeAction("123")
+
+    expect(result.data).toMatchObject({ workspaceId: "123" })
+    expect(result.serverError).toBeUndefined()
+  })
+
+  test("denies a member with neither contacts/onlyAssignedContacts nor analytics", async () => {
+    mocks.resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "123", ownerId: "owner-1" },
+      member: { permissions: {} },
+      isSupportSession: false,
+    })
+
+    const result = await callCallHistoryProbeAction("123")
+
+    expect(result.data).toBeUndefined()
+    expect(result.serverError).toBeDefined()
+  })
+
+  test("allows a platform support session's synthetic superAdmin membership (read access, unaffected by D8)", async () => {
+    mocks.resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "123", ownerId: "owner-1" },
+      member: { permissions: { superAdmin: true } },
+      isSupportSession: true,
+    })
+
+    const result = await callCallHistoryProbeAction("123")
+
+    expect(result.data).toMatchObject({
+      workspaceId: "123",
+      isSupportSession: true,
+    })
+    expect(result.serverError).toBeUndefined()
+  })
+
+  // Built on `workspaceActionClientAllowExpired`, so it must never
+  // run the owner-quota/expiry gate — history stays readable for an
+  // expired/owner-blocked workspace.
+  test("never runs the owner-quota/expiry gate for an expired/owner-blocked workspace", async () => {
+    mocks.resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "123", ownerId: "owner-1" },
+      member: { permissions: { contacts: true } },
+      isSupportSession: false,
+    })
+    mocks.checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+
+    const result = await callCallHistoryProbeAction("123")
+
+    expect(mocks.checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+    expect(result.data).toMatchObject({ workspaceId: "123" })
+    expect(result.serverError).toBeUndefined()
   })
 })

@@ -7,9 +7,9 @@ import {
   type InstagramMessageAttachmentPayload,
   type InstagramSendMessage,
   type InstagramSendMessageResponse,
-} from "../schemas"
+} from "../schema"
 
-export const sendComment = (
+export const replyToComment = (
   auth: InstagramAuthValue,
   commentId: string,
   message: string | null,

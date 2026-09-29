@@ -28,6 +28,10 @@ import { botFieldRelations } from "./bot-field"
 import { broadcastRelations } from "./broadcast"
 import { broadcastTargetRelations } from "./broadcast-target"
 import { coexistSyncRunRelations } from "./coexist-sync-run"
+import { commentAutomationRelations } from "./comment-automation"
+import { commentAutomationEventRelations } from "./comment-automation-event"
+import { commentAutomationMissRelations } from "./comment-automation-miss"
+import { commentAutomationReplyRelations } from "./comment-automation-reply"
 import { contactRelations } from "./contact"
 import { contactCustomFieldRelations } from "./contact-custom-field"
 import { contactInboxRelations } from "./contact-inbox"
@@ -56,10 +60,6 @@ import { facebookLeadAdsAutomationRelations } from "./facebook-lead-ads-automati
 import { facebookLeadAdsLeadRelations } from "./facebook-lead-ads-lead"
 import { facebookMarketingMessageRelations } from "./facebook-marketing-message"
 import { facebookMarketingMessagesAuthRelations } from "./facebook-marketing-messages-auth"
-import { fbCommentAutomationRelations } from "./fb-comment-automation"
-import { fbCommentAutomationEventRelations } from "./fb-comment-automation-event"
-import { fbCommentAutomationMissRelations } from "./fb-comment-automation-miss"
-import { fbCommentAutomationReplyRelations } from "./fb-comment-automation-reply"
 import { fileRelations } from "./file"
 import { flowRelations } from "./flow"
 import { flowAnalyticsSessionRelations } from "./flow-analytics-session"
@@ -139,6 +139,8 @@ import { userPersistentMenuRelations } from "./user-persistent-menu"
 import { webhookRelations } from "./webhook"
 import { webhookExecutionRelations } from "./webhook-execution"
 import { whatsappBusinessAccountRelations } from "./whatsapp-business-account"
+import { whatsappCallRelations } from "./whatsapp-call"
+import { whatsappCallPermissionRelations } from "./whatsapp-call-permission"
 import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
 import { whatsappSignupSessionRelations } from "./whatsapp-signup-session"
@@ -210,13 +212,15 @@ export const relations = {
   ...facebookLeadAdsLeadRelations,
   ...facebookMarketingMessageRelations,
   ...facebookMarketingMessagesAuthRelations,
-  ...fbCommentAutomationRelations,
-  ...fbCommentAutomationEventRelations,
-  ...fbCommentAutomationMissRelations,
-  ...fbCommentAutomationReplyRelations,
+  ...commentAutomationRelations,
+  ...commentAutomationEventRelations,
+  ...commentAutomationMissRelations,
+  ...commentAutomationReplyRelations,
   ...auditLogRelations,
   ...sessionRelations,
   ...spreadsheetRelations,
+  ...whatsappCallRelations,
+  ...whatsappCallPermissionRelations,
   ...whatsappFlowRelations,
   ...whatsappBusinessAccountRelations,
   ...integrationWhatsappRelations,

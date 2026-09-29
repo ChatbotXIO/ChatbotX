@@ -7,7 +7,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
 import { getAttachmentTemplate } from "./handlers/message/outgoing-message/send-attachment"
-import { convertFacebookButtons } from "./handlers/message/outgoing-message/send-button"
+import { convertButtons } from "./handlers/message/outgoing-message/send-button"
 import type { FacebookMessage, FacebookQuickReply } from "./schema"
 
 /**
@@ -89,7 +89,7 @@ export function convertStartNodeToMessengerAdsJson(props: {
    * live sends never diverge, applying the variable rewrite to each label.
    */
   const buildButtons = (buttons: ButtonStepProps[]) =>
-    convertFacebookButtons({
+    convertButtons({
       flowId,
       flowVersionId,
       buttons,

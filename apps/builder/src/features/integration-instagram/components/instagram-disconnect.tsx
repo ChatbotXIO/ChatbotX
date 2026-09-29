@@ -7,6 +7,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { disconnectInstagramAction } from "../actions/disconnect-instagram.action"
 
 export function InstagramDisconnect({
@@ -16,6 +17,7 @@ export function InstagramDisconnect({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
   const [open, setOpen] = useState<boolean>(false)
   const { workspaceId } = useParams<{ workspaceId: string }>()
 
@@ -28,6 +30,7 @@ export function InstagramDisconnect({
       ),
       {
         onSuccess: () => {
+          invalidateInboxes()
           router.refresh()
         },
         onError: ({ error }) => {

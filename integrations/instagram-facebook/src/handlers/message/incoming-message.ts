@@ -5,12 +5,13 @@ import {
   type IncomingAttachment,
   type IncomingContact,
   type IncomingMessage,
+  type MessageHandlers,
   type MessageReferral,
   messageTypes,
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
 
-import { getMessageAttachmentEntity } from "../../apis/page"
+import { getMessageAttachmentEntity } from "../../apis/attachment"
 import { InstagramException } from "../../exception"
 import { logger } from "../../lib/logger"
 import {
@@ -18,7 +19,7 @@ import {
   type InstagramMessage,
   type InstagramMessagingEvent,
   instagramWebhookEventSchema,
-} from "../../schemas"
+} from "../../schema"
 
 const getMessageAttachments = async (
   ctx: Context<InstagramAuthValue>,
@@ -51,32 +52,23 @@ const getMessageAttachments = async (
   }
 }
 
-export const receiveMessage = async ({
-  ctx,
-  data,
-}: {
-  ctx: Context<InstagramAuthValue>
-  data: {
-    integrationType: string
-    integrationIdentifier: string
-    payload: unknown
+export const receiveMessage: MessageHandlers<InstagramAuthValue>["receiveMessage"] =
+  async ({ ctx, data }) => {
+    const validatedData = instagramWebhookEventSchema.parse(data.payload)
+
+    const entry = validatedData.entry[0]
+
+    if (!entry.messaging?.[0]) {
+      throw new InstagramException("No messaging found")
+    }
+
+    const messaging = entry.messaging[0]
+    if (!(messaging.message || messaging.postback || messaging.referral)) {
+      throw new InstagramException("No message found")
+    }
+
+    return await getMessageEntity(ctx, messaging)
   }
-}): Promise<ReceivedMessageResult> => {
-  const validatedData = instagramWebhookEventSchema.parse(data.payload)
-
-  const entry = validatedData.entry[0]
-
-  if (!entry.messaging?.[0]) {
-    throw new InstagramException("No messaging found")
-  }
-
-  const messaging = entry.messaging[0]
-  if (!(messaging.message || messaging.postback || messaging.referral)) {
-    throw new InstagramException("No message found")
-  }
-
-  return await getMessageEntity(ctx, messaging)
-}
 
 const getMessageEntity = async (
   ctx: Context<InstagramAuthValue>,

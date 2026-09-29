@@ -1,3 +1,4 @@
+import { ChannelError, ChannelErrorCategory } from "@chatbotx.io/sdk"
 import {
   beforeEach,
   describe,
@@ -6,6 +7,10 @@ import {
   test,
   vi,
 } from "vitest"
+
+const { mockMarkReadByOutbound } = vi.hoisted(() => ({
+  mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
+}))
 
 function makeEmptySelectChain(): Promise<never[]> & Record<string, unknown> {
   const chain = Promise.resolve<never[]>([]) as Promise<never[]> &
@@ -69,7 +74,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
 }))
 
+// The delivery helpers are stubbed with the real contract (sentCount > 0 →
+// delivered; mark-read forwards to conversationService.markReadByOutbound) so
+// this file checks the handler's wiring; the helpers themselves are covered by
+// send-message-handler.test.ts.
 vi.mock("../src/chat/handlers/send-message", () => ({
+  isDeliveredDirectMessage: ({ result }: { result: { sentCount: number } }) =>
+    result.sentCount > 0,
+  markConversationReadAfterDelivery: (props: unknown) =>
+    mockMarkReadByOutbound(props),
   sendFlowStepToChannel: vi.fn(),
 }))
 
@@ -84,11 +97,13 @@ vi.mock("@chatbotx.io/variables", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn(),
+  publishToWorkspaceParty: vi.fn(),
   contactInboxService: {
     recordSendFailure: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
   },
   conversationService: {
+    markReadByOutbound: mockMarkReadByOutbound,
     recordOutboundMessageActivity: vi
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
@@ -170,7 +185,10 @@ describe("processMessengerTemplate — sourceId persistence", () => {
 
   test("persists providerMessageId to messageModel.sourceId when send succeeds", async () => {
     const PROVIDER_ID = "mid.ABC123"
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [PROVIDER_ID] })
+    mockSendFlowStep.mockResolvedValueOnce({
+      messageIds: [PROVIDER_ID],
+      sentCount: 1,
+    })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -181,10 +199,20 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     expect(mockDbUpdate).toHaveBeenCalled()
     const setCall = mockDbUpdate.mock.results[0].value.set
     expect(setCall).toHaveBeenCalledWith({ sourceId: PROVIDER_ID })
+    // Template sends honour the inbox option like any other bot message.
+    expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        readAt: new Date("2026-01-01T00:00:00Z"),
+      }),
+    )
   })
 
   test("emits message:sent with inboxId for MAC tracking", async () => {
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: ["mid.ABC123"] })
+    mockSendFlowStep.mockResolvedValueOnce({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
+    })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -201,10 +229,22 @@ describe("processMessengerTemplate — sourceId persistence", () => {
         }),
       }),
     )
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "analytics:dashboard",
+      expect.objectContaining({ eventType: "message:bot_sent" }),
+    )
+    expect(mockSendFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botSentAnalytics: {
+          triggerHandler: "processMessengerTemplate",
+          triggerType: "message_bot_sent_messenger_template",
+        },
+      }),
+    )
   })
 
   test("does NOT persist sourceId when providerMessageId is undefined", async () => {
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [] })
+    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [], sentCount: 0 })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -213,10 +253,11 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     })
 
     expect(mockDbUpdate).not.toHaveBeenCalled()
+    expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
   })
 })
 
-describe("processMessengerTemplate — ads conversion template-sent enqueue (Amendment A1)", () => {
+describe("processMessengerTemplate — ads conversion template-sent enqueue (disabled)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockValidate.mockResolvedValue(VALIDATED)
@@ -224,34 +265,15 @@ describe("processMessengerTemplate — ads conversion template-sent enqueue (Ame
       ({ templateParams }: { templateParams: unknown }) =>
         Promise.resolve(templateParams),
     )
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["mid.ABC123"] })
-  })
-
-  test("enqueues an evaluateTemplateSent job for the messenger channel after a successful send", async () => {
-    await processMessengerTemplate({
-      conversation: CONVERSATION as never,
-      contactInbox: CONTACT_INBOX as never,
-      template: TEMPLATE,
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
     })
-
-    expect(mockEnqueueIntegrationJob).toHaveBeenCalledWith(
-      {
-        type: "evaluateTemplateSent",
-        data: {
-          workspaceId: "ws-1",
-          channel: "messenger",
-          integrationId: "intg-1",
-          contactInboxId: "ci-1",
-          templateId: "tmpl-1",
-        },
-      },
-      { jobId: "ads-conversion-evaluate-template-msg-1" },
-    )
   })
 
-  test("never fails the send when the enqueue rejects", async () => {
-    mockEnqueueIntegrationJob.mockRejectedValueOnce(new Error("redis down"))
-
+  // The ads-conversion rule engine is hidden and unused; the follow-up
+  // evaluation job is disabled (commented out) in the handler.
+  test("does not enqueue an evaluateTemplateSent job after a successful send", async () => {
     await expect(
       processMessengerTemplate({
         conversation: CONVERSATION as never,
@@ -259,5 +281,134 @@ describe("processMessengerTemplate — ads conversion template-sent enqueue (Ame
         template: TEMPLATE,
       }),
     ).resolves.toMatchObject({ messageId: "msg-1" })
+
+    const enqueuedTypes = mockEnqueueIntegrationJob.mock.calls.map(
+      ([job]: [{ type: string }]) => job.type,
+    )
+    expect(enqueuedTypes).not.toContain("evaluateTemplateSent")
+  })
+})
+
+describe("processMessengerTemplate — header variable guard", () => {
+  const IMAGE_HEADER_WITH_VARIABLE = {
+    type: "HEADER",
+    format: "IMAGE",
+    text: "{{1}}",
+    example: {
+      header_text: ["The goods is imported"],
+      header_handle: ["https://scontent.example.com/header.png"],
+    },
+  }
+  const BODY_WITH_VARIABLE = { type: "BODY", text: "Hello {{1}}" }
+
+  const validatedWith = (components: unknown[]) => ({
+    ...VALIDATED,
+    template: { ...VALIDATED.template, components },
+  })
+
+  const sendWithParams = (params: typeof TEMPLATE.params) =>
+    processMessengerTemplate({
+      conversation: CONVERSATION as never,
+      contactInbox: CONTACT_INBOX as never,
+      template: { ...TEMPLATE, params },
+    })
+
+  const sentParams = () =>
+    mockSendFlowStep.mock.calls[0][0].step.template.params
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockReplace.mockImplementation(
+      ({ templateParams }: { templateParams: unknown }) =>
+        Promise.resolve(templateParams),
+    )
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
+    })
+  })
+
+  test.each([
+    ["an IMAGE header", IMAGE_HEADER_WITH_VARIABLE],
+    ["a TEXT header", { type: "HEADER", format: "TEXT", text: "Hi {{1}}" }],
+  ])("fails fast when stored params lack the variable of %s", async (_label, header) => {
+    mockValidate.mockResolvedValue(validatedWith([header, BODY_WITH_VARIABLE]))
+
+    const send = sendWithParams({ body: [{ text: "Hi" }] })
+
+    await expect(send).rejects.toBeInstanceOf(ChannelError)
+    await expect(send).rejects.toMatchObject({
+      category: ChannelErrorCategory.PAYLOAD_INVALID,
+      isRetryable: false,
+      code: 100,
+      subCode: 1_893_029,
+    })
+    // No provider call and no orphan outgoing message row.
+    expect(mockSendFlowStep).not.toHaveBeenCalled()
+    expect(db.insert).not.toHaveBeenCalled()
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({ willRetry: false }),
+    )
+  })
+
+  test("fails fast when the only header entry is not a text param", async () => {
+    mockValidate.mockResolvedValue(validatedWith([IMAGE_HEADER_WITH_VARIABLE]))
+
+    await expect(
+      sendWithParams({
+        header: [{ type: "image", image: { link: "https://x.test/a.png" } }],
+      }),
+    ).rejects.toBeInstanceOf(ChannelError)
+    expect(mockSendFlowStep).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ["an image-only header", { type: "HEADER", format: "IMAGE" }],
+    [
+      "a static text header",
+      { type: "HEADER", format: "TEXT", text: "Order update" },
+    ],
+  ])("sends %s without any header param", async (_label, header) => {
+    mockValidate.mockResolvedValue(validatedWith([header, BODY_WITH_VARIABLE]))
+
+    await sendWithParams({ body: [{ text: "Hi" }] })
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+    expect(sentParams().header).toBeUndefined()
+  })
+
+  test("sends the header text parameter when it is provided", async () => {
+    mockValidate.mockResolvedValue(
+      validatedWith([IMAGE_HEADER_WITH_VARIABLE, BODY_WITH_VARIABLE]),
+    )
+
+    await sendWithParams({
+      header: [{ type: "text", text: "The goods is imported" }],
+      body: [{ text: "Hi" }],
+    })
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+    expect(sentParams().header).toEqual([
+      { type: "text", text: "The goods is imported" },
+    ])
+  })
+
+  test("still fills template URL buttons missing from stored params", async () => {
+    mockValidate.mockResolvedValue(
+      validatedWith([
+        BODY_WITH_VARIABLE,
+        {
+          type: "BUTTONS",
+          buttons: [{ type: "URL", text: "Open", url: "https://x.test/jobs" }],
+        },
+      ]),
+    )
+
+    await sendWithParams({ body: [{ text: "Hi" }] })
+
+    expect(sentParams().button).toEqual([
+      { sub_type: "url", index: 0, text: "https://x.test/jobs" },
+    ])
   })
 })

@@ -1,3 +1,5 @@
+export * from "./bot-field-variable"
+export * from "./bot-field-variable-resolver"
 export * from "./contact-variable"
 export * from "./coupon-variable"
 export * from "./deep-replace-contact-variables"

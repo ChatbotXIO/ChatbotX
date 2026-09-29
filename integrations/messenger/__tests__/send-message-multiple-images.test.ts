@@ -5,7 +5,7 @@ const { mockSendPageMessage } = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/apis/message", () => ({
-  sendPageMessage: mockSendPageMessage,
+  sendMessage: mockSendPageMessage,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -85,7 +85,7 @@ describe("messenger sendMessage — multiple image attachments in one composed m
       },
     ])
     expect(payload.message.attachment).toBeUndefined()
-    expect(result).toEqual({ messageIds: ["m_1"] })
+    expect(result).toEqual({ messageIds: ["m_1"], sentCount: 1 })
   })
 
   test("a single image still uses the singular attachment form", async () => {

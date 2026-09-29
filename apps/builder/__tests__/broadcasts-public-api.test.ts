@@ -1,5 +1,7 @@
 // @vitest-environment node
 
+import { broadcastPlanLimitException } from "@chatbotx.io/business/errors"
+import { TRIAL_BROADCAST_PLAN_POLICY } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // Mirrors analytics-public-api.test.ts: stub the real db client so the
@@ -19,6 +21,8 @@ type RouteConfig = {
 }
 
 type CapturedProcedure = {
+  errors?: unknown
+  input?: { safeParse: (value: unknown) => { success: boolean } }
   route: RouteConfig
   handler?: (...args: unknown[]) => unknown
 }
@@ -31,9 +35,15 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
     capturedProcedures.push(record)
 
     const chain = {
-      input: vi.fn(() => chain),
+      input: vi.fn((schema: CapturedProcedure["input"]) => {
+        record.input = schema
+        return chain
+      }),
       output: vi.fn(() => chain),
-      errors: vi.fn(() => chain),
+      errors: vi.fn((errors: unknown) => {
+        record.errors = errors
+        return chain
+      }),
       handler: vi.fn((fn: (...args: unknown[]) => unknown) => {
         record.handler = fn
         return { handler: fn }
@@ -70,6 +80,7 @@ const broadcastService = {
   stopSending: vi.fn(),
   resumeSending: vi.fn(),
   resendWithPruning: vi.fn(),
+  cloneBroadcast: vi.fn(),
   softDeleteBroadcasts: vi.fn(),
 }
 
@@ -78,6 +89,10 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 await import("@/features/broadcasts/api/public")
+const {
+  possibleErrorsOnActivatingBroadcast,
+  possibleErrorsOnCreatingBroadcast,
+} = await import("@/lib/orpc/orpc-error-helper")
 
 const findProcedure = (method: string, path: string) => {
   const found = capturedProcedures.find(
@@ -93,6 +108,55 @@ const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
 
 beforeEach(() => {
   vi.clearAllMocks()
+})
+
+test("declares broadcastPlanLimit on every activating route", () => {
+  const routes = [
+    findProcedure("POST", "/v1/broadcasts"),
+    findProcedure("PUT", "/v1/broadcasts/{id}/draft"),
+    findProcedure("POST", "/v1/broadcasts/{id}/schedule"),
+    findProcedure("POST", "/v1/broadcasts/{id}/resume"),
+    findProcedure("POST", "/v1/broadcasts/{id}/resend"),
+  ]
+
+  expect(routes[0]?.errors).toBe(possibleErrorsOnCreatingBroadcast)
+  for (const route of routes.slice(1)) {
+    expect(route.errors).toBe(possibleErrorsOnActivatingBroadcast)
+  }
+  for (const route of routes) {
+    expect(route.errors).toHaveProperty("broadcastPlanLimit")
+  }
+})
+
+test.each([
+  ["POST", "/v1/broadcasts", "create", { channel: "messenger" }],
+  [
+    "PUT",
+    "/v1/broadcasts/{id}/draft",
+    "updateDraft",
+    { id: "b-1", channel: "messenger" },
+  ],
+  [
+    "POST",
+    "/v1/broadcasts/{id}/schedule",
+    "scheduleDraft",
+    { id: "b-1", schedulesType: "now", schedulesAt: null },
+  ],
+  ["POST", "/v1/broadcasts/{id}/resume", "resumeSending", { id: "b-1" }],
+  ["POST", "/v1/broadcasts/{id}/resend", "resendWithPruning", { id: "b-1" }],
+] as const)("%s %s propagates the plan-limit exception from %s", async (method, path, serviceMethod, input) => {
+  const error = broadcastPlanLimitException("sendRate", {
+    policy: TRIAL_BROADCAST_PLAN_POLICY,
+    planName: "Trial",
+  })
+  broadcastService[serviceMethod].mockRejectedValueOnce(error)
+
+  await expect(
+    findProcedure(method, path).handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input,
+    }),
+  ).rejects.toBe(error)
 })
 
 test("registers the broadcasts public router under the broadcasts scope", () => {
@@ -120,10 +184,23 @@ describe("POST /v1/broadcasts", () => {
     )
     expect(result).toEqual({ id: "b-1" })
   })
+
+  test("forwards saveAsDraft: true unchanged", async () => {
+    broadcastService.create.mockResolvedValueOnce({ id: "b-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { channel: "messenger", saveAsDraft: true },
+    })
+
+    expect(broadcastService.create).toHaveBeenCalledWith(
+      expect.objectContaining({ saveAsDraft: true }),
+    )
+  })
 })
 
-describe("PATCH /v1/broadcasts/{id}", () => {
-  const procedure = findProcedure("PATCH", "/v1/broadcasts/{id}")
+describe("PUT /v1/broadcasts/{id}", () => {
+  const procedure = findProcedure("PUT", "/v1/broadcasts/{id}")
 
   test("renames the broadcast then re-fetches it from context's workspace", async () => {
     broadcastService.update.mockResolvedValueOnce(undefined)
@@ -171,6 +248,24 @@ describe("PUT /v1/broadcasts/{id}/draft", () => {
     })
     expect(result).toEqual({ id: "b-1", status: "draft" })
   })
+
+  test("forwards saveAsDraft: true unchanged", async () => {
+    broadcastService.updateDraft.mockResolvedValueOnce({
+      id: "b-1",
+      status: "draft",
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { id: "b-1", channel: "messenger", saveAsDraft: true },
+    })
+
+    expect(broadcastService.updateDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ saveAsDraft: true }),
+      }),
+    )
+  })
 })
 
 describe("POST /v1/broadcasts/{id}/schedule", () => {
@@ -206,6 +301,24 @@ describe("POST /v1/broadcasts/{id}/schedule", () => {
 
     const call = broadcastService.scheduleDraft.mock.calls[0][0]
     expect(call.schedulesAt.toISOString()).toBe("2030-01-01T09:30:00.000Z")
+  })
+
+  test("forwards the optional send rate", async () => {
+    broadcastService.scheduleDraft.mockResolvedValueOnce({ id: "b-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: {
+        id: "b-1",
+        schedulesType: "now",
+        schedulesAt: null,
+        sendRatePerMinute: 120,
+      },
+    })
+
+    expect(broadcastService.scheduleDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ sendRatePerMinute: 120 }),
+    )
   })
 })
 
@@ -249,17 +362,27 @@ describe("POST /v1/broadcasts/{id}/stop", () => {
 describe("POST /v1/broadcasts/{id}/resume", () => {
   const procedure = findProcedure("POST", "/v1/broadcasts/{id}/resume")
 
+  test("declares the optional nullable send rate input", () => {
+    expect(
+      procedure.input?.safeParse({ id: "1", sendRatePerMinute: null }).success,
+    ).toBe(true)
+    expect(
+      procedure.input?.safeParse({ id: "1", sendRatePerMinute: 1001 }).success,
+    ).toBe(false)
+  })
+
   test("delegates to resumeSending scoped to context's workspace", async () => {
     broadcastService.resumeSending.mockResolvedValueOnce({ id: "b-1" })
 
     await procedure.handler?.({
       context: { workspace: { id: "ws-1" } },
-      input: { id: "b-1" },
+      input: { id: "b-1", sendRatePerMinute: 120 },
     })
 
     expect(broadcastService.resumeSending).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       broadcastId: "b-1",
+      sendRatePerMinute: 120,
     })
   })
 })
@@ -280,6 +403,49 @@ describe("POST /v1/broadcasts/{id}/resend", () => {
     expect(broadcastService.resendWithPruning).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       id: "b-1",
+      canViewEmailAndPhone: true,
+    })
+    expect(result).toEqual({ id: "b-2" })
+  })
+})
+
+describe("POST /v1/broadcasts/{id}/duplicate", () => {
+  const procedure = findProcedure("POST", "/v1/broadcasts/{id}/duplicate")
+
+  test("delegates to cloneBroadcast treating the token caller as fully privileged", async () => {
+    broadcastService.cloneBroadcast.mockResolvedValueOnce({ id: "b-2" })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { id: "b-1" },
+    })
+
+    expect(broadcastService.cloneBroadcast).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      canViewEmailAndPhone: true,
+    })
+    expect(result).toEqual({ id: "b-2" })
+  })
+})
+
+// Deprecated back-compat alias for the pre-consolidation `/clone` path —
+// same handler as `broadcasts.duplicate` above, verified here so the two
+// can never silently drift onto different service calls.
+describe("POST /v1/broadcasts/{id}/clone (deprecated alias)", () => {
+  const procedure = findProcedure("POST", "/v1/broadcasts/{id}/clone")
+
+  test("delegates to the same cloneBroadcast call as broadcasts.duplicate", async () => {
+    broadcastService.cloneBroadcast.mockResolvedValueOnce({ id: "b-2" })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { id: "b-1" },
+    })
+
+    expect(broadcastService.cloneBroadcast).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
       canViewEmailAndPhone: true,
     })
     expect(result).toEqual({ id: "b-2" })

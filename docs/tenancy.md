@@ -168,11 +168,13 @@ custom domain:
 | Google Sheets | `{origin}/integrations/google-sheets/callback` |
 | Google Calendar | `{origin}/integrations/google-calendar/callback` |
 | TikTok | `{origin}/integrations/tiktok/callback` |
+| Threads | `{origin}/integrations/threads/callback` |
 | Messenger | `{origin}/integrations/messenger/callback` |
 | Instagram | `{origin}/integrations/instagram/callback` |
 | Zalo | `{origin}/integrations/zalo/callback` |
 | WhatsApp webhook | `{origin}/integrations/whatsapp/webhook` |
 | TikTok webhook | `{origin}/integrations/tiktok/webhook` |
+| Threads webhook | `{origin}/integrations/threads/webhook` |
 
 (The WhatsApp manual-connect flow registers a per-integration variant,
 `{origin}/integrations/whatsapp/webhook/{integrationId}`, sent to Meta as

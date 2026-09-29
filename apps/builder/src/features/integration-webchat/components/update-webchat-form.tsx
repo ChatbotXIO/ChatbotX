@@ -33,6 +33,8 @@ import { useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { MarkReadOnOutboundField } from "@/features/inboxes/components/mark-read-on-outbound-field"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import { updateWebchatAction } from "../actions/update-webchat.action"
 import { updateWebchatRequest } from "../schema/mutation"
@@ -41,14 +43,17 @@ import PersistentMenuField from "./persistent-menu-field"
 
 type UpdateWebchatFormProps = {
   integrationWebchat: IntegrationWebchatModel | null
+  markReadOnOutbound: boolean
 }
 
 export function UpdateWebchatForm({
   integrationWebchat,
+  markReadOnOutbound,
 }: UpdateWebchatFormProps) {
   const workspaceId = useWorkspaceId()
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
 
   const flowOptions = useFlowSelectOptions()
 
@@ -84,6 +89,7 @@ export function UpdateWebchatForm({
               feature: t("fields.webchat.label"),
             }),
           )
+          invalidateInboxes()
           router.push(`/space/${workspaceId}/settings/channels`)
         },
         onError: ({ error }) => {
@@ -103,6 +109,7 @@ export function UpdateWebchatForm({
           showLogo: true,
           hideMessageInput: false,
           customCss: "",
+          markReadOnOutbound,
         },
       },
     },
@@ -124,10 +131,11 @@ export function UpdateWebchatForm({
         conversationStarters: conversationStartersArray,
         persistentMenus: persistentMenusArray,
         customCss: customCss ?? "",
+        markReadOnOutbound,
         ...rest,
       })
     }
-  }, [integrationWebchat, form])
+  }, [integrationWebchat, markReadOnOutbound, form])
 
   const {
     fields: conversationStarters,
@@ -266,6 +274,7 @@ export function UpdateWebchatForm({
           name="customCss"
           placeholder="body { background-color: #000; }"
         />
+        {integrationWebchat && <MarkReadOnOutboundField />}
         <DialogFooter>
           <Button
             onClick={() =>

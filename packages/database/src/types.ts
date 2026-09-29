@@ -135,18 +135,18 @@ export type FacebookMarketingMessageModel =
   typeof schema.facebookMarketingMessageModel.$inferSelect
 export type FacebookMarketingMessagesAuthModel =
   typeof schema.facebookMarketingMessagesAuthModel.$inferSelect
-export type FBCommentAutomationModel =
-  typeof schema.fbCommentAutomationModel.$inferSelect
-export type FBCommentAutomationReplyModel =
-  typeof schema.fbCommentAutomationReplyModel.$inferSelect
-export type FBCommentAutomationEventModel =
-  typeof schema.fbCommentAutomationEventModel.$inferSelect
-export type FBCommentAutomationEventInsert =
-  typeof schema.fbCommentAutomationEventModel.$inferInsert
-export type FBCommentAutomationMissModel =
-  typeof schema.fbCommentAutomationMissModel.$inferSelect
-export type FBCommentAutomationMissInsert =
-  typeof schema.fbCommentAutomationMissModel.$inferInsert
+export type CommentAutomationModel =
+  typeof schema.commentAutomationModel.$inferSelect
+export type CommentAutomationReplyModel =
+  typeof schema.commentAutomationReplyModel.$inferSelect
+export type CommentAutomationEventModel =
+  typeof schema.commentAutomationEventModel.$inferSelect
+export type CommentAutomationEventInsert =
+  typeof schema.commentAutomationEventModel.$inferInsert
+export type CommentAutomationMissModel =
+  typeof schema.commentAutomationMissModel.$inferSelect
+export type CommentAutomationMissInsert =
+  typeof schema.commentAutomationMissModel.$inferInsert
 export type IgStoryAutomationModel =
   typeof schema.igStoryAutomationModel.$inferSelect
 export type AuditLogModel = typeof schema.auditLogModel.$inferSelect
@@ -169,6 +169,10 @@ export type WebhookExecutionModel =
 export type ExternalWebhookModel =
   typeof schema.externalWebhookModel.$inferSelect
 export type ContactInboxModel = typeof schema.contactInboxModel.$inferSelect
+export type ContactInboxOperationalModel = Omit<
+  ContactInboxModel,
+  "sourceIdentityHistory"
+>
 export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
@@ -187,6 +191,9 @@ export type WhatsappMessageTemplateModel =
 export type MessengerMessageTemplateModel =
   typeof schema.messengerMessageTemplateModel.$inferSelect
 export type WhatsappFlowModel = typeof schema.whatsappFlowModel.$inferSelect
+export type WhatsappCallModel = typeof schema.whatsappCallModel.$inferSelect
+export type WhatsappCallPermissionModel =
+  typeof schema.whatsappCallPermissionModel.$inferSelect
 export type FlowAnalyticsSessionModel =
   typeof schema.flowAnalyticsSessionModel.$inferSelect
 export type FlowNodeStatModel = typeof schema.flowNodeStatModel.$inferSelect

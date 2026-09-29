@@ -1,3 +1,4 @@
+import { formFieldTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 
 const contactFilterFieldPublicResource = z.object({
@@ -21,6 +22,9 @@ const contactFilterCustomFieldPublicResource = z.object({
   id: z.string(),
   name: z.string(),
   type: z.string(),
+  valueType: formFieldTypes.describe(
+    "Value type to put in a `contactFilter` condition's `valueType` for this field.",
+  ),
 })
 
 const contactFilterTagPublicResource = z.object({

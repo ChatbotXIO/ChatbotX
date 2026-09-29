@@ -4,8 +4,8 @@ const { mockSendInstagramMessage } = vi.hoisted(() => ({
   mockSendInstagramMessage: vi.fn(),
 }))
 
-vi.mock("../src/apis/page", () => ({
-  sendInstagramMessage: mockSendInstagramMessage,
+vi.mock("../src/apis/message", () => ({
+  sendMessage: mockSendInstagramMessage,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -51,6 +51,6 @@ describe("instagram sendFlowStep — sendMultipleImages", () => {
       { type: "image", payload: { url: "https://example.com/a.png" } },
       { type: "image", payload: { url: "https://example.com/b.png" } },
     ])
-    expect(result).toEqual({ messageIds: ["ig_provider-1"] })
+    expect(result).toEqual({ messageIds: ["ig_provider-1"], sentCount: 1 })
   })
 })

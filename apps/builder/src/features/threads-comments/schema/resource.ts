@@ -1,6 +1,11 @@
 import {
+  commentExcludeKeywordsTypes,
+  commentHideCommentsSchema,
+  commentIncludeKeywordsSchema,
+} from "@chatbotx.io/database/partials"
+import {
+  commentAutomationModel,
   createSelectSchema,
-  fbCommentAutomationModel,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
 
@@ -12,6 +17,7 @@ const threadsReplySchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("text"),
     value: z.string(),
+    values: z.array(z.object({ value: z.string() })).optional(),
   }),
   z.object({
     type: z.literal("flow"),
@@ -24,7 +30,7 @@ const threadsReplySchema = z.discriminatedUnion("type", [
 ])
 
 export const threadsCommentResource = createSelectSchema(
-  fbCommentAutomationModel,
+  commentAutomationModel,
   {
     id: z.string(),
     workspaceId: z.string(),
@@ -37,11 +43,9 @@ export const threadsCommentResource = createSelectSchema(
       value: z.null(),
     }),
     publicReply: threadsReplySchema,
-    includeKeywords: z.object({
-      type: z.enum(["all", "equal", "contain"]),
-      value: z.array(z.string()),
-    }),
+    includeKeywords: commentIncludeKeywordsSchema,
     excludeKeywords: z.array(z.string()),
+    excludeKeywordsType: commentExcludeKeywordsTypes,
     options: z.object({
       replyToNewContactsOnly: z.boolean(),
       replyOncePerUserPerPost: z.boolean(),
@@ -50,16 +54,7 @@ export const threadsCommentResource = createSelectSchema(
       ignoreCommentReplies: z.boolean(),
       trackUserTags: z.boolean(),
     }),
-    hideComments: z.object({
-      all: z.boolean(),
-      hasPhoneNumber: z.boolean(),
-      hasImage: z.boolean(),
-      hasVideo: z.boolean(),
-      hasLink: z.boolean(),
-      hasKeywords: z.boolean(),
-      keywords: z.array(z.string()),
-      showCommentsAfter: z.literal("none"),
-    }),
+    hideComments: commentHideCommentsSchema,
     replyAfter: z.object({
       type: z.enum([
         "immediately",

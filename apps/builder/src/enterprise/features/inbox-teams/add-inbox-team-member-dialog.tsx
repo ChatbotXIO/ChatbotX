@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import type { ListWorkspaceMembersResponse } from "@/features/workspace-members/schema/query"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
 import { addInboxTeamMemberRequest } from "./schema/action"
@@ -37,6 +38,7 @@ export function AddInboxTeamMemberDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateUsers = useInvalidateUsers()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     addInboxTeamMemberAction.bind(null, workspaceId, inboxTeam?.id ?? ""),
@@ -50,6 +52,7 @@ export function AddInboxTeamMemberDialog({
             }),
           )
           onOpenChange(false)
+          invalidateUsers()
           router.refresh()
         },
         onError: ({ error }) => {

@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  type BroadcastPlanPolicy,
   type BroadcastScheduleType,
   type BroadcastSubaction,
   broadcastChannelCapabilities,
@@ -22,6 +23,7 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { useDebouncedCallback } from "@chatbotx.io/ui/hooks/use-debounced-callback"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -36,6 +38,9 @@ import { createBroadcastAction } from "@/features/broadcasts/actions/create-broa
 import { updateDraftBroadcastAction } from "@/features/broadcasts/actions/update-draft-broadcast.action"
 import { BroadcastAudiencePreviewDialog } from "@/features/broadcasts/components/broadcast-audience-preview-dialog"
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
+import { BroadcastPlanLimitDialog } from "@/features/broadcasts/components/broadcast-plan-limit-dialog"
+import { useBroadcastPlanLimit } from "@/features/broadcasts/hooks/use-broadcast-plan-limit"
+import { isBroadcastPlanLimitOutcome } from "@/features/broadcasts/lib/broadcast-plan-limit"
 import {
   type BroadcastTargetRequest,
   createBroadcastRequest,
@@ -44,14 +49,17 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { ContactFilter } from "../contact-filter"
 import type { ContactFilterCriteria } from "../contact-filter/schema"
 import { useContactStore } from "../contacts/provider/contact-store-context"
-import { useFlowStore } from "../flows/provider/flow-store-context"
+import { type FlowStateFilter, useFlows } from "../flows/provider/flow-hook"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
-import { useInboxStore } from "../inboxes/provider/inbox-store-context"
+import { useInboxList } from "../inboxes/provider/inbox-hook"
 import { BroadcastFlowTargets } from "./components/broadcast-flow-targets"
 import { BroadcastFlowTypeSelector } from "./components/broadcast-flow-type-selector"
 import { BroadcastInboxMultiSelect } from "./components/broadcast-inbox-multi-select"
+import { BroadcastSendLimitFields } from "./components/broadcast-send-limit-fields"
 import { BroadcastTemplateTargets } from "./components/broadcast-template-targets"
 import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
+import type { FlowForTargets } from "./lib/broadcast-flow-targets"
+import { resolveWindowedReceiversCount } from "./lib/broadcast-send-limit"
 import {
   hasSameTargetReferences,
   resolveAudienceInboxIds,
@@ -71,6 +79,22 @@ type BroadcastConfig = {
     name: string
     description: string
   }[]
+}
+
+export const buildBroadcastFlowFilter = (
+  subaction: BroadcastSubaction | undefined,
+  integrationWhatsappIds: string[],
+): FlowStateFilter => {
+  if (subaction === broadcastSubactions.enum.whatsappTemplateMessage) {
+    return {
+      startType: stepTypes.enum.sendWaTemplateMessage,
+      integrationWhatsappIds,
+    }
+  }
+  if (subaction === broadcastSubactions.enum.messengerTemplateMessage) {
+    return { startType: stepTypes.enum.sendMessengerTemplateMessage }
+  }
+  return {}
 }
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) =>
@@ -108,6 +132,7 @@ type CreateBroadcastFormProps = {
    * only the bound action and the success toast differ.
    */
   editDraft?: EditBroadcastDraft
+  planPolicy: BroadcastPlanPolicy
 }
 
 export function CreateBroadcastForm({
@@ -117,15 +142,14 @@ export function CreateBroadcastForm({
   initialInboxIds,
   initialContactFilter,
   editDraft,
+  planPolicy,
 }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
 
-  const { appendFilter, resetFilter, getAllActiveFlows } = useFlowStore(
-    (state) => state,
-  )
-
   const isEditing = Boolean(editDraft)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const planLimit = useBroadcastPlanLimit()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     editDraft
@@ -135,12 +159,18 @@ export function CreateBroadcastForm({
     {
       actionProps: {
         onSuccess: ({ data }) => {
+          if (isBroadcastPlanLimitOutcome(data)) {
+            setConfirmOpen(false)
+            planLimit.show(data)
+            return
+          }
+          const status = data && "status" in data ? data.status : undefined
           toast.success(
             t(
               isEditing ? "messages.updatedSuccess" : "messages.createdSuccess",
               {
                 feature: t(
-                  data?.status === "draft"
+                  status === "draft"
                     ? "broadcasts.status.draft"
                     : "fields.broadcast.label",
                 ),
@@ -198,32 +228,17 @@ export function CreateBroadcastForm({
     watchedInboxIds ?? [],
   )
 
-  useEffect(() => {
-    if (watchedSubAction === broadcastSubactions.enum.whatsappTemplateMessage) {
-      appendFilter({
-        startType: stepTypes.enum.sendWaTemplateMessage,
-        integrationWhatsappIds: selectedWhatsappIntegrationIds,
-      })
-      getAllActiveFlows()
-    } else if (
-      watchedSubAction === broadcastSubactions.enum.messengerTemplateMessage
-    ) {
-      appendFilter({
-        startType: stepTypes.enum.sendMessengerTemplateMessage,
-      })
-      getAllActiveFlows()
-    } else {
-      resetFilter()
-      getAllActiveFlows()
-    }
-    return
-  }, [
-    watchedSubAction,
-    selectedWhatsappIntegrationIds,
-    appendFilter,
-    resetFilter,
-    getAllActiveFlows,
-  ])
+  // Deriving the whole filter replaces the old merge-based store filter:
+  // Messenger must not retain WhatsApp integration ids after a subaction switch.
+  const flowFilter = useMemo(
+    () =>
+      buildBroadcastFlowFilter(
+        watchedSubAction,
+        selectedWhatsappIntegrationIds,
+      ),
+    [watchedSubAction, selectedWhatsappIntegrationIds],
+  )
+  const { data: flows = [] } = useFlows(workspaceId, { filter: flowFilter })
 
   return (
     <div className="flex flex-col items-center overflow-y-auto px-10 py-10">
@@ -243,25 +258,34 @@ export function CreateBroadcastForm({
             <CreateBroadcastChooseFlow
               canViewEmailAndPhone={canViewEmailAndPhone}
               channel={watchedChannel}
+              confirmOpen={confirmOpen}
+              flows={flows}
               hydrated={
                 editDraft && { targets: editDraft.defaultValues.targets }
               }
+              onConfirmOpenChange={setConfirmOpen}
               onSaveAsDraft={handleSaveAsDraft}
+              planPolicy={planPolicy}
               subaction={watchedSubAction}
             />
           )}
         </form>
       </Form>
+      <BroadcastPlanLimitDialog
+        onDismiss={planLimit.dismiss}
+        onOpenPricing={planLimit.openPricing}
+        state={planLimit.state}
+      />
     </div>
   )
 }
 
 /**
  * WhatsApp integration ids of the selected pages, memoised by value so the
- * flow-filter effect only re-runs when the selection actually changes.
+ * derived flow filter only changes when the selection actually changes.
  */
 function useSelectedWhatsappIntegrationIds(inboxIds: string[]): string[] {
-  const inboxes = useInboxStore((state) => state.inboxes)
+  const inboxes = useInboxList()
   const key = inboxIds.join(",")
   // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands in for `inboxIds` by value
   return useMemo(
@@ -401,13 +425,17 @@ function CreateBroadcastChooseSubaction({ channel }: { channel: ChannelType }) {
 type CreateBroadcastChooseFlowProps = {
   canViewEmailAndPhone: boolean
   channel: ChannelType
+  flows: FlowForTargets[]
   /**
    * Targets an edited draft was hydrated with, so each page's template effect
    * can tell a still-hydrated selection from one the user changed. Absent when
    * creating.
    */
   hydrated?: { targets: BroadcastTargetRequest[] }
+  confirmOpen: boolean
+  onConfirmOpenChange: (open: boolean) => void
   onSaveAsDraft: () => Promise<void>
+  planPolicy: BroadcastPlanPolicy
   subaction: BroadcastSubaction
 }
 
@@ -430,8 +458,6 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     () => buildBroadcastScheduleTypeOptions(t),
     [t],
   )
-
-  const { flows } = useFlowStore((state) => state)
   const [subactionInfo, setSubactionInfo] = useState<{
     value: BroadcastSubaction
     name: string
@@ -458,6 +484,14 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const watchedTargets = (useWatch({ control, name: "targets" }) ??
     []) as BroadcastTargetRequest[]
   const watchedContactFilter = useWatch({ control, name: "contactFilter" })
+  const watchedAudienceRangeStart = useWatch({
+    control,
+    name: "audienceRangeStart",
+  }) as number | undefined
+  const watchedAudienceRangeEnd = useWatch({
+    control,
+    name: "audienceRangeEnd",
+  }) as number | undefined
 
   const isTemplateSubaction = isTemplateBroadcastSubaction(props.subaction)
   const sendsTemplate = watchedTemplateType === broadcastFlowTypes.enum.template
@@ -531,7 +565,18 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     loadingInboxesCount ||
     completedReceiversCountQueryKey !== receiversCountQueryKey
 
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  // The range fields never change *which* rows match — only how many are
+  // taken — so they are never sent to the (expensive) count route; the
+  // unwindowed total above is fetched exactly as before, and clamped to the
+  // range here. Typing in the range fields costs zero requests.
+  const windowedReceiversCount = useMemo(
+    () =>
+      resolveWindowedReceiversCount(count || 0, {
+        audienceRangeStart: watchedAudienceRangeStart,
+        audienceRangeEnd: watchedAudienceRangeEnd,
+      }),
+    [count, watchedAudienceRangeStart, watchedAudienceRangeEnd],
+  )
 
   const excludeFields = useMemo(
     () =>
@@ -626,7 +671,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           )}
 
           {isTemplateSubaction && !sendsTemplate && (
-            <BroadcastFlowTargets channel={props.channel} />
+            <BroadcastFlowTargets channel={props.channel} flows={props.flows} />
           )}
 
           {!(isTemplateSubaction || sendsTemplate) && (
@@ -635,7 +680,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               key="flowId"
               label={t("fields.flowId.label")}
               name="flowId"
-              options={flows.map((flow) => ({
+              options={props.flows.map((flow) => ({
                 label: flow.name,
                 value: flow.id,
               }))}
@@ -696,13 +741,17 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             inboxChannel={props.channel}
             parentName="contactFilter"
           />
+
+          <Separator />
+
+          <BroadcastSendLimitFields planPolicy={props.planPolicy} />
         </CardContent>
       </Card>
 
       <div className="flex items-center justify-between">
         <Button
           className="h-auto px-0 text-gray-500 text-sm"
-          disabled={isReceiversCountLoading || !count}
+          disabled={isReceiversCountLoading || !windowedReceiversCount}
           onClick={() => setAudiencePreviewOpen(true)}
           type="button"
           variant="link"
@@ -714,7 +763,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             </span>
           ) : (
             t("broadcasts.receiversCount", {
-              count: count || 0,
+              count: windowedReceiversCount,
             })
           )}
         </Button>
@@ -736,7 +785,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             disabled={!formState.isValid || formState.isSubmitting}
             onClick={() => {
               setValue("saveAsDraft", false, { shouldDirty: false })
-              setConfirmOpen(true)
+              props.onConfirmOpenChange(true)
             }}
             type="button"
           >
@@ -745,15 +794,17 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           </Button>
 
           <BroadcastConfirmDialog
-            count={count || 0}
+            count={windowedReceiversCount}
             isReceiversCountLoading={isReceiversCountLoading}
             isSubmitting={formState.isSubmitting}
             isValid={formState.isValid}
-            onOpenChange={setConfirmOpen}
+            onOpenChange={props.onConfirmOpenChange}
             onPreviewReceivers={() => setAudiencePreviewOpen(true)}
-            open={confirmOpen}
+            open={props.confirmOpen}
           />
           <BroadcastAudiencePreviewDialog
+            audienceRangeEnd={watchedAudienceRangeEnd}
+            audienceRangeStart={watchedAudienceRangeStart}
             channel={props.channel}
             contactFilter={watchedContactFilter}
             inboxIds={audienceInboxIds}
@@ -762,7 +813,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             onOpenChange={setAudiencePreviewOpen}
             open={audiencePreviewOpen}
             subaction={props.subaction}
-            total={count || 0}
+            total={windowedReceiversCount}
             workspaceId={workspaceId}
           />
         </div>

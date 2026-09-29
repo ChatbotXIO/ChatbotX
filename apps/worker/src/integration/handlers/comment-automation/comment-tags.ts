@@ -53,15 +53,21 @@ function uniqueTagIds(tags: CommentTag[] | undefined): string[] {
 }
 
 /**
- * Returns a memoized resolver for the tag counters behind `{{total_tagged}}`
- * and `{{total_new_tagged}}`, fetched at most once per incoming comment no
- * matter how many automations have `trackUserTags` on.
- *
- * The two channels resolve through completely different mechanisms and only
- * the Facebook one is exact — see `extractInstagramMentions`. Both end at the
- * same question: which of these people do we already know in this inbox?
+ * Who a comment tagged, as the two identity kinds the inbox can be matched on:
+ * real user ids (Facebook) or lowercased handles parsed from the text (every
+ * other channel). Deduped, so `sourceIds.length + sourceUsernames.length` is
+ * the number of distinct accounts tagged.
  */
-export function createTagInfoResolver(params: {
+export type CommentMentions = {
+  sourceIds: string[]
+  sourceUsernames: string[]
+}
+
+export function countMentions(mentions: CommentMentions): number {
+  return mentions.sourceIds.length + mentions.sourceUsernames.length
+}
+
+type CommentTagResolverParams = {
   channelType: CommentAutomationChannelType
   workspaceId: string
   inboxId: string
@@ -75,7 +81,24 @@ export function createTagInfoResolver(params: {
     [x: string]: unknown
   }
   auth: MessengerAuthValue
-}): () => Promise<CommentTagInfo> {
+}
+
+/**
+ * Returns memoized resolvers for the comment's mentions and the tag counters
+ * behind `{{total_tagged}}`/`{{total_new_tagged}}`. Both are fetched at most
+ * once per incoming comment no matter how many automations need them — the
+ * "enough mentions" filter and tag tracking share the same mention list.
+ *
+ * Only Facebook is exact: it resolves tags to real user ids. Instagram,
+ * Threads and TikTok carry no tagged-user data at all, so their mentions are
+ * `@handle`s regexed out of the text — see `extractInstagramMentions`. Both
+ * end at the same question: which of these people do we already know in this
+ * inbox?
+ */
+export function createCommentTagResolvers(params: CommentTagResolverParams): {
+  resolveMentions: () => Promise<CommentMentions>
+  resolveTagInfo: () => Promise<CommentTagInfo>
+} {
   const {
     channelType,
     workspaceId,
@@ -86,52 +109,67 @@ export function createTagInfoResolver(params: {
     integrationRow,
     auth,
   } = params
-  let cached: CommentTagInfo | undefined
+  let cachedMentions: CommentMentions | undefined
+  let cachedTagInfo: CommentTagInfo | undefined
 
-  return async () => {
-    if (cached) {
-      return cached
+  const resolveMentions = async (): Promise<CommentMentions> => {
+    if (cachedMentions) {
+      return cachedMentions
     }
 
-    let sourceIds: string[] = []
-    let sourceUsernames: string[] = []
-
-    if (channelType === "messenger") {
-      sourceIds = uniqueTagIds(tags)
-      // The feed webhook omits `message_tags` entirely for an untagged
-      // comment, so an empty list is ambiguous and costs one Graph call to
-      // disambiguate. Only comments that reach an automation with the option
-      // on get here, so this is not paid on the general comment path.
-      if (sourceIds.length === 0) {
-        const fetched = await allIntegrations.messenger
-          ?.runAction("getCommentMessageTags", {
-            ctx: await buildContext({
-              workspaceId,
-              integrationType: "messenger",
-              integration: { ...integrationRow, auth },
-            }),
-            input: { commentId },
-          })
-          .catch(() => null)
-        sourceIds = uniqueTagIds(fetched ?? undefined)
+    if (channelType !== "messenger") {
+      cachedMentions = {
+        sourceIds: [],
+        sourceUsernames: extractInstagramMentions(message),
       }
-    } else {
-      sourceUsernames = extractInstagramMentions(message)
+      return cachedMentions
     }
 
-    const totalTagged = sourceIds.length + sourceUsernames.length
+    let sourceIds = uniqueTagIds(tags)
+    // The feed webhook omits `message_tags` entirely for an untagged comment,
+    // so an empty list is ambiguous and costs one Graph call to disambiguate.
+    // Only comments that reach an automation needing mentions get here, so
+    // this is not paid on the general comment path.
+    if (sourceIds.length === 0) {
+      const fetched = await allIntegrations.messenger
+        ?.runAction("getCommentMessageTags", {
+          ctx: await buildContext({
+            workspaceId,
+            integrationType: "messenger",
+            integration: { ...integrationRow, auth },
+          }),
+          input: { commentId },
+        })
+        .catch(() => null)
+      sourceIds = uniqueTagIds(fetched ?? undefined)
+    }
+    cachedMentions = { sourceIds, sourceUsernames: [] }
+    return cachedMentions
+  }
+
+  const resolveTagInfo = async (): Promise<CommentTagInfo> => {
+    if (cachedTagInfo) {
+      return cachedTagInfo
+    }
+
+    const mentions = await resolveMentions()
+    const totalTagged = countMentions(mentions)
     if (totalTagged === 0) {
-      cached = { totalTagged: 0, totalNewTagged: 0 }
-      return cached
+      cachedTagInfo = { totalTagged: 0, totalNewTagged: 0 }
+      return cachedTagInfo
     }
 
     const known = await contactInboxService.countExistingTaggedIdentities({
       inboxId,
-      sourceIds,
-      sourceUsernames,
+      sourceIds: mentions.sourceIds,
+      sourceUsernames: mentions.sourceUsernames,
+      // Threads keys its contacts by the lowercased username.
+      usernameIsSourceId: channelType === "threads",
     })
 
-    cached = { totalTagged, totalNewTagged: totalTagged - known }
-    return cached
+    cachedTagInfo = { totalTagged, totalNewTagged: totalTagged - known }
+    return cachedTagInfo
   }
+
+  return { resolveMentions, resolveTagInfo }
 }

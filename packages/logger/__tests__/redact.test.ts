@@ -43,6 +43,50 @@ describe("redactSecrets", () => {
     expect(result.entries[0].value).toBe(1)
   })
 
+  test("redacts the SDP value nested in a WhatsApp calling session under calls[] (the `sdp` key, not the whole session)", () => {
+    const sentinel = "v=0 SENTINEL-SDP-OFFER-DO-NOT-LOG"
+    const result = redactSecrets({
+      entry: [
+        {
+          changes: [
+            {
+              field: "calls",
+              value: {
+                calls: [
+                  {
+                    id: "wacid.ABC",
+                    event: "connect",
+                    session: { sdp_type: "offer", sdp: sentinel },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    }) as {
+      entry: Array<{
+        changes: Array<{
+          value: {
+            calls: Array<{
+              id: string
+              session: { sdp_type: string; sdp: string }
+            }>
+          }
+        }>
+      }>
+    }
+
+    const call = result.entry[0].changes[0].value.calls[0]
+    // Only the `sdp` value is redacted — the `session` wrapper itself is kept
+    // (adding `session` to the global key set was too broad a blast radius; the
+    // SDP is the actual secret). See `packages/logger/src/redact.ts`.
+    expect(call.session.sdp).toBe("[redacted]")
+    expect(call.session.sdp_type).toBe("offer")
+    expect(call.id).toBe("wacid.ABC")
+    expect(JSON.stringify(result)).not.toContain(sentinel)
+  })
+
   test("passes primitives through untouched", () => {
     expect(redactSecrets(42)).toBe(42)
     expect(redactSecrets("hello")).toBe("hello")

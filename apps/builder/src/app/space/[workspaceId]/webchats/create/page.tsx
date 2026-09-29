@@ -1,7 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { CreateWebchatForm } from "@/features/integration-webchat/components/create-webchat-form"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
@@ -22,9 +22,7 @@ export default async function CreateWebchatPage({
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <FlowStoreProvider workspaceId={workspaceId}>
-        <CreateWebchatForm workspaceId={workspaceId} />
-      </FlowStoreProvider>
+      <CreateWebchatForm workspaceId={workspaceId} />
     </Suspense>
   )
 }

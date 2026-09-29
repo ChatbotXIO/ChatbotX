@@ -75,4 +75,11 @@ export const listProductsPublicResponse = z.object({
 })
 
 export const createProductPublicRequest = productFormRequest
-export const updateProductPublicRequest = productFormRequest
+// PUT is a full replacement: `name` must be explicitly given (no
+// server-filled default) so a caller cannot silently wipe it by omission.
+// Every other field keeps `productFormRequest`'s default-on-omit behavior —
+// unlike `name`, resetting them to their default when unspecified is the
+// correct "replace" semantics, not a partial-update foot-gun.
+export const updateProductPublicRequest = productFormRequest.extend({
+  name: z.string().trim().min(1).max(255).describe("Product name."),
+})

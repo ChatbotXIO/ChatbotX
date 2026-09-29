@@ -27,11 +27,13 @@ import { deleteContactCustomFieldsRequest } from "../schema/contact-custom-field
 type ClearContactCustomFieldDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function ClearContactCustomFieldDialog({
   trigger,
   ids,
+  onSuccess,
 }: ClearContactCustomFieldDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -51,6 +53,7 @@ export default function ClearContactCustomFieldDialog({
             }),
           )
           setOpen(false)
+          onSuccess?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {

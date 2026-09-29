@@ -35,6 +35,23 @@ export type ContactInboxReferral = {
   raw?: Record<string, unknown>
 }
 
+export const CONTACT_INBOX_IDENTITY_CHANGE_REASONS = {
+  phoneChanged: "phoneChanged",
+  userIdChanged: "userIdChanged",
+  parentFallback: "parentFallback",
+} as const
+
+export type ContactInboxIdentityChangeReason =
+  (typeof CONTACT_INBOX_IDENTITY_CHANGE_REASONS)[keyof typeof CONTACT_INBOX_IDENTITY_CHANGE_REASONS]
+
+export type ContactInboxIdentityHistoryEntry = {
+  sourceId: string
+  sourceUserId: string | null
+  sourceParentUserId: string | null
+  changedAt: string
+  reason: ContactInboxIdentityChangeReason
+}
+
 export const lastUserInputTypeEnum = pgEnum(
   "lastUserInputType",
   lastUserInputTypes.options as [string, ...string[]],
@@ -47,6 +64,8 @@ export const lastUserInputTypeEnum = pgEnum(
 export const CONTACT_INBOX_SOURCE_ID_KEY = "ContactInbox_inboxId_sourceId_key"
 export const CONTACT_INBOX_SOURCE_USER_ID_KEY =
   "ContactInbox_inboxId_sourceUserId_key"
+export const CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY =
+  "ContactInbox_inboxId_sourceParentUserId_key"
 
 export const contactInboxModel = pgTable(
   "ContactInbox",
@@ -92,9 +111,13 @@ export const contactInboxModel = pgTable(
     // (e.g. WhatsApp Business-Scoped User ID). Channel-agnostic name — any
     // channel with a secondary scoped identity reuses this column.
     sourceUserId: text(),
+    // Parent channel-scoped user id used only for identity matching. Never
+    // displayed or used to address outbound sends.
+    sourceParentUserId: text(),
     // Channel handle/username for this contact (e.g. WhatsApp `@username`).
     // Display-only, never used as a matching key.
     sourceUsername: text(),
+    sourceIdentityHistory: jsonb().$type<ContactInboxIdentityHistoryEntry[]>(),
   },
   (table) => [
     uniqueIndex(CONTACT_INBOX_SOURCE_ID_KEY).using(
@@ -109,6 +132,22 @@ export const contactInboxModel = pgTable(
         table.sourceUserId.asc().nullsLast(),
       )
       .where(sql`${table.sourceUserId} IS NOT NULL`),
+    uniqueIndex(CONTACT_INBOX_SOURCE_PARENT_USER_ID_KEY)
+      .using(
+        "btree",
+        table.inboxId.asc().nullsLast(),
+        table.sourceParentUserId.asc().nullsLast(),
+      )
+      .where(sql`${table.sourceParentUserId} IS NOT NULL`),
+    // Lets "the N-th contact of a page in id order" (broadcast audience
+    // window/order, see partials/broadcast.ts) be an ordered index range scan
+    // for a single-inbox audience, instead of the planner choosing between
+    // walking the whole PK in id order and sorting one inbox's rows.
+    index("ContactInbox_inboxId_id_idx").using(
+      "btree",
+      table.inboxId.asc().nullsLast(),
+      table.id.asc().nullsLast(),
+    ),
     index("ContactInbox_contactId_lastIncomingMessageAt_idx").using(
       "btree",
       table.contactId.asc().nullsLast(),

@@ -336,6 +336,7 @@
       "message": "فشلت آخر عملية دفع. قم بتحديث طريقة الدفع للحفاظ على نشاط مساحة عملك."
     },
     "trial": {
+      "planName": "تجريبية",
       "daysLeft": "التجربة: تبقّى {days} يوم/أيام",
       "endsTomorrow": "تنتهي الفترة التجريبية غدًا",
       "expired": "انتهت فترتك التجريبية — قم بالترقية للحفاظ على نشاط مساحة عملك",
@@ -449,7 +450,6 @@
       "audienceFilter": "تصفية الجمهور",
       "noAudienceFilter": "لا توجد تصفية للجمهور",
       "template": "القالب",
-      "noTemplate": "لا يوجد قالب",
       "integration": "التكامل"
     },
     "filters": {
@@ -508,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "ترقية خطتك",
+      "sendRate": "تدعم خطتك الحالية {plan} حملات البث بسرعة إرسال قصوى تبلغ {rate} رسالة في الدقيقة. يُرجى ترقية خطتك لإرسال حملات البث بسرعة تصل إلى {multiplier} ضعفًا.",
+      "activeBroadcasts": "تُشغّل خطتك الحالية {plan} عدد {max, plural, one {# حملة بث} other {# حملة بث}} في الوقت نفسه. يُرجى ترقية خطتك لتشغيل المزيد من حملات البث معًا."
+    },
+    "sendLimit": {
+      "title": "الحد",
+      "hint": "اتركه فارغًا للإرسال إلى جميع جهات الاتصال المطابقة.",
+      "rateHint": "اتركه فارغًا لاستخدام المعدل الافتراضي.",
+      "rangeSummary": "جهات الاتصال #{start} – #{end}",
+      "rangeFromSummary": "ابتداءً من جهة الاتصال رقم {start}",
+      "rangeLabel": "نطاق جهات الاتصال",
+      "fromLabel": "من",
+      "toLabel": "إلى",
+      "allPlaceholder": "الكل",
+      "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية"
     }
   },
   "commentAutomation": {
@@ -536,7 +553,26 @@
       "keywordsNotMatched": "الكلمات المفتاحية غير مطابقة",
       "contactNotNew": "جهة الاتصال ليست جديدة",
       "alreadyRepliedOnPost": "تم الرد مسبقًا على هذا المنشور",
-      "engagedOnOtherPost": "تفاعل مسبقًا على منشور آخر"
+      "engagedOnOtherPost": "تفاعل مسبقًا على منشور آخر",
+      "mentionCountNotMatched": "عدد الإشارات غير مطابق"
+    },
+    "replyTo": {
+      "mentions": "التعليقات التي تحتوي على عدد كافٍ من الإشارات",
+      "mentionCount": "عدد الأشخاص المشار إليهم",
+      "mentionCountDescription": "تطابق فقط التعليقات التي تشير إلى هذا العدد من الأشخاص (@الاسم) على الأقل.",
+      "mentionCountOption": "{count, plural, one {# شخص} other {# أشخاص}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "التعليقات المساوية لـ",
+      "contain": "التعليقات التي تحتوي على"
+    },
+    "hideComments": {
+      "hasGif": "يحتوي على GIF",
+      "hasEmoji": "يحتوي على رموز تعبيرية"
+    },
+    "trackUserTags": {
+      "label": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
+      "descriptionText": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     }
   },
   "condition": {
@@ -738,6 +774,10 @@
       "whatsapp": "رقم واتساب هذا متصل بالفعل بمساحة عمل أخرى.",
       "zalo": "حساب Zalo OA هذا متصل بالفعل بمساحة عمل أخرى."
     },
+    "missingScopes": {
+      "generic": "تم إلغاء الاتصال: لم يتم منح بعض الأذونات. يرجى الاتصال مرة أخرى وقبول كل إذن مطلوب.",
+      "tiktok": "تم إلغاء الاتصال بـ TikTok: لم يتم منح بعض الأذونات. يرجى الاتصال مرة أخرى وقبول كل إذن مطلوب."
+    },
     "reconnect": {
       "success": "تمت إعادة توصيل القناة بنجاح.",
       "errors": {
@@ -865,6 +905,7 @@
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا."
   },
   "fields": {
+    "optionalHint": "(اختياري)",
     "marketingMessagesConfigId": {
       "label": "معرّف تكوين الرسائل التسويقية",
       "description": "معرّف تكوين تسجيل الدخول من فيسبوك للأعمال المستخدم لطلب صلاحية marketing_messages_messenger."
@@ -1233,6 +1274,19 @@
     },
     "contactId": {
       "label": "معرّف جهة الاتصال"
+    },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "معرّف مستخدم Zalo",
+      "telegramChatId": "معرّف دردشة Telegram",
+      "tiktokUserId": "معرّف مستخدم TikTok",
+      "threadsUsername": "اسم مستخدم Threads",
+      "webchatGuestId": "معرّف زائر Webchat",
+      "externalId": "المعرّف الخارجي",
+      "channelId": "معرّف القناة"
     },
     "flow": {
       "label": "المسار"
@@ -2135,11 +2189,16 @@
       "clientId": "معرّف العميل",
       "clientSecret": "سر العميل",
       "displayName": "اسم العرض",
+      "needsReauthorizationForComments": "تم تفويض هذا الاتصال قبل أتمتة التعليقات. أعد الاتصال لبدء تلقي أحداث التعليقات.",
       "connectInstructions": {
         "step1": "أنشئ تطبيق TikTok على <link>developers.tiktok.com</link>.",
         "step2": "امنح حسابك الصلاحية وانسخ <strong>رمز الوصول</strong> و<strong>المعرّف المفتوح</strong> و<strong>سر العميل</strong>.",
         "step3": "الصق بيانات الاعتماد أدناه للاتصال."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Drip"
@@ -2330,6 +2389,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "سر تطبيق Meta (اختياري)",
+      "description": "يفعّل التحقق من توقيع الـ webhook لهذا الاتصال اليدوي. يمكنك العثور عليه في لوحة تحكم تطبيق Meta ضمن الإعدادات > أساسي."
+    },
+    "lastCallRecorded": {
+      "label": "آخر تسجيل مكالمة"
+    },
+    "lastCallTranscript": {
+      "label": "آخر تفريغ مكالمة"
+    },
+    "sendRatePerMinute": {
+      "label": "الرسائل في الدقيقة"
     }
   },
   "flows": {
@@ -2446,6 +2518,8 @@
       "transferConversationToHuman": "نقل المحادثة إلى موظف بشري",
       "unarchiveConversation": "إلغاء أرشفة المحادثة",
       "unassignConversation": "إلغاء إسناد المحادثة",
+      "markConversationAsUnread": "تحديد المحادثة كغير مقروءة",
+      "markConversationAsRead": "تحديد المحادثة كمقروءة",
       "unfollowConversation": "إلغاء متابعة المحادثة",
       "unsubscribeBroadcast": "إلغاء الاشتراك في البث",
       "getUserData": "الحصول على بيانات المستخدم",
@@ -2470,7 +2544,9 @@
       "import": "استيراد التدفق",
       "export": "تصدير",
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
-      "importJsonOnly": "ملفات JSON فقط"
+      "importJsonOnly": "ملفات JSON فقط",
+      "whatsappCallButton": "الاتصال عبر واتساب",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2586,6 +2662,10 @@
     "media": {
       "stepUnsupportedOnChannel": "لا يمكن لهذه القناة إرسال هذا النوع من الوسائط — سيتم تخطي الخطوة. أزِلها أو غيِّر قناة العقدة إلى قناة تدعمها.",
       "buttonsSkippedOnChannel": "لا يمكن لهذه القناة إرسال أزرار مع رسالة وسائط — سيتم تخطيها. أضِفها إلى خطوة نصية تالية بدلاً من ذلك."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "تعديل الزر",
+      "buttonLabel": "تسمية الزر"
     }
   },
   "folders": {
@@ -2807,7 +2887,8 @@
       "adAccountFilter": {
         "all": "جميع الحسابات الإعلانية",
         "label": "الحساب الإعلاني",
-        "unavailable": "تعذّر تحميل حسابات الإعلانات — تحقّق من اتصال الإعلانات الخاص بهذا التكامل، أو اتصال Facebook Ads الخاص بمساحة العمل، في الإعدادات."
+        "unavailable": "تعذّر تحميل حسابات الإعلانات — تحقّق من اتصال الإعلانات الخاص بهذا التكامل، أو اتصال Facebook Ads الخاص بمساحة العمل، في الإعدادات.",
+        "note": "تُخفى الإعلانات ذات التحويلات ولكن بإنفاق صفري أو توصيل صفري في النطاق الزمني المحدد عند التصفية حسب الحساب الإعلاني."
       },
       "channelFilter": {
         "label": "القناة",
@@ -3181,6 +3262,7 @@
     "changeLikeState": "تغيير حالة الإعجاب",
     "changeHideState": "تغيير حالة الإخفاء",
     "commentHidden": "تم إخفاء هذا التعليق",
+    "commentMediaUnavailable": "يحتوي هذا التعليق على صورة GIF أو ملصق أو صورة لا يمكن عرضها",
     "messageDeleted": "تم حذف الرسالة.",
     "sendFailed": "فشل الإرسال",
     "repliedToStory": "رد على قصتك",
@@ -3221,7 +3303,10 @@
     "deleteFeature": "حذف {feature}",
     "resetFeature": "إعادة تعيين {feature}",
     "resetConfirmation": "سيؤدي هذا إلى مسح قيم {feature} المحددة وإعادتها فارغة.\nلا يمكن التراجع عن هذا الإجراء.",
+    "resetAllConfirmation": "سيؤدي هذا إلى مسح جميع قيم {feature} لجهة الاتصال هذه وإعادتها فارغة.\nلا يمكن التراجع عن هذا الإجراء.",
     "resetSuccess": "تمت إعادة تعيين {feature} بنجاح",
+    "clearFeature": "مسح {feature}",
+    "clearSuccess": "تم مسح {feature} بنجاح",
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا.",
     "addFeature": "إضافة {feature}",
     "signOutConfirmation": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
@@ -3272,13 +3357,27 @@
     "historyDepth": "({count})",
     "none": "لا شيء",
     "tiktokCardTitleTooLong": "سيقوم TikTok بتقصير هذه الرسالة: عند إرفاق أزرار، يتم إرسال أول 40 حرفًا فقط. قم بتقصير الرسالة أو إزالة الأزرار.",
+    "sendTextTooLongForChannel": "هذه الرسالة أطول مما تسمح به هذه القناة. اختصرها أو وجّه هذه العقدة إلى قناة ذات حد أعلى.",
     "waTemplateMpmNoProducts": "أضف منتجًا واحدًا على الأقل إلى زر المنتجات المتعددة هذا قبل النشر.",
     "waTemplateMpmTooManySections": "يمكن أن يحتوي زر المنتجات المتعددة على 10 أقسام كحد أقصى. أزل بعض الأقسام قبل النشر.",
     "waTemplateMpmTooManyProducts": "يمكن أن يحتوي زر المنتجات المتعددة على 30 منتجًا كحد أقصى إجمالاً. أزل بعض المنتجات قبل النشر.",
     "waTemplateLtoExpirationRequired": "اختر تاريخ انتهاء العرض المحدود المدة قبل الإرسال.",
     "waTemplateMpmIncompleteProducts": "يحتاج كل قسم إلى منتج واحد محدد على الأقل — احذف الصفوف الفارغة أو اختر منتجًا لها.",
     "mediaStepUnsupported": "لا يمكن لهذه القناة إرسال هذا النوع من الوسائط. أزِل الخطوة أو وجِّه هذه العقدة إلى قناة تدعمها.",
-    "mediaButtonsUnsupported": "لا يمكن لهذه القناة إرسال أزرار مع رسالة وسائط. أزِل الأزرار أو انقلها إلى خطوة نصية بعد هذه الخطوة."
+    "mediaButtonsUnsupported": "لا يمكن لهذه القناة إرسال أزرار مع رسالة وسائط. أزِل الأزرار أو انقلها إلى خطوة نصية بعد هذه الخطوة.",
+    "voiceCall": "مكالمة صوتية",
+    "voiceCallDuration": "مكالمة صوتية · {duration}",
+    "missedVoiceCall": "مكالمة صوتية فائتة",
+    "declinedVoiceCall": "مكالمة صوتية مرفوضة",
+    "voiceCallFailed": "مكالمة صوتية فاشلة",
+    "unansweredVoiceCall": "لا يوجد رد",
+    "canceledVoiceCall": "مكالمة ملغاة",
+    "acceptedCallPermission": "تم قبول طلب إذن الاتصال",
+    "declinedCallPermission": "تم رفض طلب إذن الاتصال",
+    "sendHumanAgentTag": "إرسال رسالة واحدة باستخدام وسم HUMAN_AGENT",
+    "warning": "تحذير!",
+    "humanAgentWarningDescription": "لا يجوز لك الرد على رسالة المستخدم خلال 7 أيام إلا عندما يتعذر حل المشكلة بشكل معقول خلال 24 ساعة. تشمل الأمثلة عطلات نهاية الأسبوع والعطلات الرسمية والحالات التي تتطلب أكثر من يوم لإكمالها. لا تستخدم هذا الخيار لأي سبب آخر، فقد يعرّض صفحة Facebook أو حساب Instagram الخاص بك للخطر. إذا لم تكن متأكدًا، فلا تتابع.",
+    "callFailed": "مشكلة في المكالمة"
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",
@@ -3348,6 +3447,7 @@
       "noConnectablePagesDescription": "أنت لست مسؤولاً عن هذه الصفحة",
       "bmLookupFailedTitle": "قد تكون بعض صفحات مدير الأعمال غير ظاهرة",
       "bmLookupFailedDescription": "أعد ربط Messenger وامنح صلاحية الوصول إلى مدير الأعمال حتى يمكن عرض الصفحات المُدارة من خلاله.",
+      "loadFailed": "تعذّر تحميل صفحات فيسبوك الخاصة بك",
       "alreadyConnectedNote": "هذه الصفحة مرتبطة بالفعل",
       "notAdminNote": "أنت لست مسؤولاً عن هذه الصفحة",
       "tryAgain": "محاولة إعادة الاتصال"
@@ -3741,7 +3841,8 @@
       "profile": "الملف التعريفي",
       "usefulLinks": "روابط مفيدة",
       "conversionsApi": "تحسين الإعلانات",
-      "settings": "الإعدادات"
+      "settings": "الإعدادات",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "إدارة حساب WhatsApp",
@@ -3873,6 +3974,259 @@
     "transferPhoneNumber": "نقل رقم الهاتف من مزوّد WhatsApp آخر",
     "selectPage": {
       "tryAgain": "محاولة إعادة الاتصال"
+    },
+    "manualAppSecretMissingNotice": "لن يتم التحقق من توقيعات webhook حتى تضيف سر تطبيق Meta الخاص بك.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "يسمح واتساب بإرسال طلبين فقط لإذن الاتصال لكل جهة اتصال خلال 7 أيام. وصلت جهة الاتصال هذه إلى الحد الأقصى — حاول مرة أخرى لاحقًا.",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "رفضت Meta تغيير إعدادات المكالمات",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
+        "bicUnavailable": "الاتصال الذي يبدأه النشاط التجاري غير متاح لهذا البلد",
+        "callAlreadyInProgress": "توجد مكالمة جارية مع جهة الاتصال هذه",
+        "hangupFailed": "تعذّر إنهاء المكالمة",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "تعذر رفض مكالمة واتساب",
+        "voipHangupFailed": "تعذر إنهاء مكالمة واتساب",
+        "voipNotReservedAgent": "أنت لست الوكيل المخصص لهذه المكالمة",
+        "voipCallAccessDenied": "ليس لديك إذن للتعامل مع هذه المكالمة",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "لم تعد تلك المكالمة ترن",
+        "transcriptionRequiresRecording": "فعّل تسجيل المكالمات قبل تفعيل النسخ النصي.",
+        "supportSessionCallingBlocked": "الاتصال غير متاح أثناء جلسة دعم المنصة.",
+        "callingAccessDenied": "ليس لديك إمكانية الوصول إلى الاتصال في مساحة العمل هذه.",
+        "callArtifactAccessDenied": "ليس لديك إذن لعرض هذه المكالمة.",
+        "callHistoryAccessDenied": "ليس لديك إمكانية الوصول إلى سجل المكالمات في مساحة العمل هذه."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "سجّل المكالمات التي يُرد عليها أو تُجرى من صندوق الوارد وأضف التسجيل إلى المحادثة.",
+      "recordingInProgress": "طُلب التسجيل",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "رفضت Meta هذا التغيير",
+      "callContact": "الاتصال عبر WhatsApp",
+      "dialing": "جارٍ الاتصال…",
+      "startCall": "بدء مكالمة WhatsApp",
+      "retentionLabel": "مدة الاحتفاظ بالتسجيلات (أيام)",
+      "retentionHelper": "المدة التي يتم الاحتفاظ فيها بتسجيلات المكالمات قبل حذفها نهائيًا.",
+      "transcriptionLabel": "تحويل المكالمات إلى نص",
+      "transcriptionHelper": "أضف نصًا مكتوبًا لكل مكالمة مسجّلة إلى المحادثة.",
+      "preflight": {
+        "title": "أهلية المكالمات",
+        "appSubscriptionMissing": "قم بتكوين webhook الخاص بـ WhatsApp لهذا التطبيق في لوحة تحكم تطبيق Meta أولاً، ثم حاول مرة أخرى.",
+        "appSubscriptionFailed": "تعذّر التحقق من اشتراك التطبيق في webhook الخاص بـ 'calls'. حاول مرة أخرى بعد قليل.",
+        "callsNotSubscribed": "هذا التطبيق غير مشترك في حقل webhook الخاص بـ 'calls'، لذا لا يمكن لأحداث المكالمات الوصول إلى ChatbotX (خطأ Meta 138018: المتطلبات التقنية غير مستوفاة — تأكد من أن تطبيقًا واحدًا على الأقل مشتركًا في WABA يحتوي أيضًا على حقل webhook الخاص بالمكالمات).",
+        "fixButton": "إصلاح",
+        "fixSuccess": "التطبيق مشترك الآن في webhooks مكالمات WhatsApp.",
+        "manualIntegrationNotice": "تم توصيل هذا الرقم يدويًا وليس لديه بيانات اعتماد تطبيق هنا. اشترك في حقل webhook الخاص بـ 'calls' لتطبيقك في لوحة تحكم تطبيق Meta.",
+        "coexistenceWarning": "يستخدم هذا الرقم تعايش تطبيق WhatsApp Business، وهو أمر لا تدعمه Meta للمكالمات. انقله إلى Cloud API فقط."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "إظهار النص",
+        "hideTranscript": "إخفاء النص"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "لم تفعّل واتساب المكالمات التي تبدأها الشركة لهذا الرقم. يعتمد ذلك على توفّر الخدمة في بلدك وأهلية الحساب لدى Meta، لذا لا يمكن تفعيله من هنا.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "تم رفض الوصول إلى الميكروفون. فعّل الوصول من إعدادات المتصفح وحاول مرة أخرى.",
+        "micNotFound": "لم يتم العثور على ميكروفون. قم بتوصيل ميكروفون وحاول مرة أخرى.",
+        "callAccessDenied": "ليس لديك إذن للاتصال بجهة الاتصال هذه."
+      },
+      "card": {
+        "audioCall": "مكالمة صوتية",
+        "recordingUnavailable": "التسجيل غير متوفر بعد الآن",
+        "recordingNotCaptured": "التسجيل غير متاح لهذه المكالمة",
+        "recordingProcessing": "المكالمة قيد المعالجة…",
+        "moreOptions": "خيارات أخرى",
+        "download": "تنزيل",
+        "openCallInformation": "فتح معلومات المكالمة",
+        "transcript": "النص المكتوب",
+        "aiSummary": "ملخص الذكاء الاصطناعي",
+        "transcriptUnavailable": "النص المكتوب غير متاح بعد",
+        "summaryUnavailable": "ملخص الذكاء الاصطناعي غير متاح بعد",
+        "play": "تشغيل",
+        "pause": "إيقاف مؤقت",
+        "seek": "الانتقال",
+        "mute": "كتم الصوت",
+        "unmute": "إلغاء كتم الصوت",
+        "playbackFailed": "فشل التشغيل",
+        "answeredBy": "تم الرد بواسطة {name}",
+        "calledBy": "تم الاتصال بواسطة {name}",
+        "callFailed": "مشكلة في المكالمة",
+        "callBack": "معاودة الاتصال"
+      },
+      "sheet": {
+        "title": "معلومات المكالمة",
+        "summaryTab": "ملخص الذكاء الاصطناعي",
+        "transcriptTab": "النص المكتوب",
+        "searchLabel": "البحث في النص المكتوب",
+        "searchPlaceholder": "البحث في النص المكتوب…",
+        "transcriptUnavailable": "النص المكتوب المكتوب في هذه المكالمة ليس متوفرا",
+        "transcriptError": "تعذّر تحميل النص. تحقق من اتصالك وحاول مرة أخرى.",
+        "noSearchResults": "لا توجد أجزاء مطابقة",
+        "playSegment": "تشفيل من هنا",
+        "summaryKeyPoints": "النقاط الرئيسية",
+        "summaryActionItems": "عناصر العمل",
+        "regenerate": "إعادة الإنشاء",
+        "regenerateConfirmTitle": "هل تريد إعادة إنشاء ملخص الذكاء الاصطناعي؟",
+        "regenerateConfirmDescription": "سيتم استبدال الملخص الحالي بملخص جديد يتم إنشاؤه.",
+        "summaryEmpty": "لا يوجد ملخص ذكاء اصطناعي لهذه المكالمة بعد.",
+        "generateSummary": "إنشاء ملخص"
+      },
+      "summaryDialog": {
+        "title": "إنشاء ملخص بالذكاء الاصطناعي",
+        "description": "اختر مزود ذكاء اصطناعي محدد لتلخيص هذه المكالمة.",
+        "noProviderTitle": "لا يوجد مزود ذكاء اصطناعي محدد",
+        "noProviderDescription": "قم بربط تكامل ذكاء اصطناعي لإنشاء ملخصات المكالمات.",
+        "connectLink": "الانتقال إلى إعدادات الذكاء الاصطناعي",
+        "generate": "إنشاء",
+        "generating": "جارٍ الإنشاء…",
+        "generateFailed": "تعذر إنشاء الملخص. حاول مرة أخرى.",
+        "retry": "إعادة المحاولة",
+        "emptyTranscriptTooltip": "لا يوجد نص مكتوب لهذه المكالمة لتلخيصه بعد"
+      },
+      "panel": {
+        "eyebrowCalling": "جاري الاتصال…",
+        "eyebrowIncoming": "مكالمة واردة",
+        "eyebrowOnCall": "في مكالمة",
+        "statusPreparing": "التحضير…",
+        "statusWaitingForMic": "في انتظار الوصول إلى الميكروفون…",
+        "statusDeclined": "مرفوضة",
+        "statusCallFailed": "فشلت المكالمة",
+        "statusCallEnded": "انتهت المكالمة",
+        "end": "إنهاء",
+        "minimize": "تصغير",
+        "goToConversation": "الانتقال إلى المحادثة",
+        "expand": "توسيع",
+        "dismiss": "إغلاق",
+        "statusNoAnswer": "لا يوجد رد",
+        "eyebrowCallEnded": "انتهت المكالمة",
+        "statusConnectionLost": "انقطع الاتصال",
+        "answerFailed": "تعذّر الرد على المكالمة. تحقق من توصيل الميكروفون والسماح به في المتصفح، ثم حاول مرة أخرى.",
+        "ringingListTitle": "{count, plural, one {# مكالمة واردة} other {# مكالمات واردة}}"
+      },
+      "capability": {
+        "title": "أهلية الاتصال",
+        "enableCalling": "فعّل الاتصال من الإعدادات > القنوات > واتساب > المكالمات.",
+        "reconnectChannel": "يرجى الانتقال إلى الإعدادات > القنوات وإعادة ربط قناة واتساب.",
+        "ok": "حسناً",
+        "micPermissionTitle": "إذن الميكروفون",
+        "dialFailureTitle": "تعذّر إجراء المكالمة"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "رقم متصل يدويًا",
+        "callsSubscription": "تم توصيل رقم واتساب هذا يدويًا. تأكد من أن تطبيق Meta الخاص بك مشترك في حقل webhook الخاص بـ calls (لوحة تحكم تطبيق Meta ← WhatsApp ← Configuration ← Webhook fields ← calls) — وإلا فلن تتصل المكالمات الصادرة ولن ترن المكالمات الواردة.",
+        "unsignedWebhook": "هذا الرقم أيضًا لا يحتوي على مفتاح Meta App Secret مُهيأ، لذا لا يتم التحقق من توقيع الـ webhooks الواردة إليه.",
+        "callAnyway": "الاتصال على أي حال"
+      },
+      "replaceConfirm": {
+        "title": "إنهاء المكالمة مع {current}؟",
+        "description": "أنت في مكالمة مع {current}. الرد على {incoming} سينهي تلك المكالمة فورًا.",
+        "confirm": "إنهاء والرد",
+        "cancel": "متابعة المكالمة"
+      },
+      "answerCaller": "الرد على مكالمة من {name}",
+      "rejectCaller": "رفض مكالمة من {name}",
+      "hours": {
+        "title": "ساعات المكالمات",
+        "description": "لا يمكن للعملاء الاتصال بهذا الرقم إلا خلال هذه الساعات. خارجها، يعرض WhatsApp عليهم الدردشة بدلًا من ذلك، أو طلب معاودة الاتصال إذا كانت طلبات معاودة الاتصال مفعّلة، ويُظهر لهم موعد الاتصال التالي المتاح.",
+        "enabledLabel": "قبول المكالمات خلال ساعات المكالمات فقط",
+        "timezoneLabel": "المنطقة الزمنية",
+        "closed": "مغلق",
+        "openTimeLabel": "{day}: يفتح الساعة",
+        "closeTimeLabel": "{day}: يغلق الساعة",
+        "addRangeLabel": "إضافة ساعات يوم {day}",
+        "removeRangeLabel": "إزالة ساعات يوم {day}",
+        "overnightHint": "ينتهي كل يوم الساعة 23:59. للبقاء متاحًا بعد منتصف الليل، أضف الساعات المتبقية إلى اليوم التالي.",
+        "days": {
+          "monday": "الاثنين",
+          "tuesday": "الثلاثاء",
+          "wednesday": "الأربعاء",
+          "thursday": "الخميس",
+          "friday": "الجمعة",
+          "saturday": "السبت",
+          "sunday": "الأحد"
+        },
+        "errors": {
+          "rangeOrder": "يجب أن يكون وقت الإغلاق بعد وقت الفتح.",
+          "rangeOverlap": "الساعات في هذا اليوم متداخلة.",
+          "noOpenHours": "أضف ساعات ليوم واحد على الأقل."
+        }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "المكالمات",
+        "subtitle": "سجل المكالمات لمساحة العمل هذه",
+        "emptyTitle": "لا توجد مكالمات بعد",
+        "emptyDescription": "ستظهر المكالمات هنا بمجرد أن يبدأ فريقك بإجراء أو استقبال مكالمات واتساب.",
+        "loadMore": "تحميل المزيد",
+        "allActivity": "جميع المكالمات",
+        "filterMissed": "فائتة",
+        "filterNoReply": "بدون رد",
+        "allInboxes": "جميع صناديق الوارد",
+        "allAgents": "جميع الوكلاء",
+        "columnContact": "جهة الاتصال",
+        "columnInbox": "صندوق الوارد",
+        "columnDirection": "الاتجاه",
+        "columnAgent": "الوكيل",
+        "columnDuration": "المدة",
+        "columnDate": "التاريخ",
+        "directionInbound": "واردة",
+        "directionOutbound": "صادرة",
+        "kindOngoing": "جارية",
+        "kindAnsweredInbound": "تم الرد",
+        "kindAnsweredOutbound": "تم الرد",
+        "openConversation": "فتح المحادثة",
+        "unknownContact": "جهة اتصال غير معروفة",
+        "emptyFilteredTitle": "لا توجد مكالمات مطابقة لهذا الفلتر",
+        "emptyFilteredDescription": "جرّب فلترًا آخر، أو امسح الفلتر لعرض جميع المكالمات.",
+        "loadMoreError": "تعذر تحميل مزيد من المكالمات. يرجى المحاولة مرة أخرى.",
+        "callInformation": "معلومات المكالمة"
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4239,8 @@
       "toggleSuccess": "تم تحديث إعداد مزامنة الوسوم.",
       "enabledSince": "مفعّلة منذ {date}",
       "disabled": "معطّلة"
-    }
+    },
+    "refreshPermissions": "تحديث الأذونات"
   },
   "telegram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Telegram.",
@@ -3896,6 +4251,14 @@
     "chatbotInvitationDescription2": "دعاك {userName} للانضمام إلى {chatbotName}.",
     "invalidInvitation": "هذه الدعوة غير صالحة أو انتهت صلاحيتها.",
     "workspaceUnavailable": "مساحة العمل هذه لم تعد متاحة."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "وضع علامة مقروءة على رسائل البوت",
+      "enabled": "مفعّل",
+      "disabled": "معطّل",
+      "description": "عند التفعيل، يقوم البوت تلقائيًا بوضع علامة مقروءة على رسائله"
+    }
   },
   "inboxTeams": {
     "title": "فرق صندوق الوارد"
@@ -4022,7 +4385,9 @@
       "productRemovedFromCart": "تمت إزالة منتج من السلة",
       "productOrdered": "تم طلب منتج",
       "contactReferredANewContact": "أحالت جهة الاتصال جهة اتصال جديدة",
-      "contactReferredExistingContact": "أحالت جهة الاتصال جهة اتصال موجودة"
+      "contactReferredExistingContact": "أحالت جهة الاتصال جهة اتصال موجودة",
+      "callRecorded": "تم تسجيل المكالمة",
+      "callTranscribed": "تم تفريغ المكالمة"
     },
     "actions": {
       "addTag": "إضافة وسم",
@@ -4258,7 +4623,8 @@
     "afterText": "بعد"
   },
   "tools": {
-    "title": "الأدوات"
+    "title": "الأدوات",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4361,13 +4727,13 @@
     "privateReply": "رد خاص (صندوق الوارد)",
     "privateReplyDescription": "أرسل رسالة خاصة إلى صندوق وارد صاحب التعليق. اختر وكيل ذكاء اصطناعي، أو قالب نص ثابت، أو مسار بوت، أو عطّل الرد.",
     "publicReply": "رد عام على التعليق",
-    "publicReplyDescription": "انشر ردًا عامًا أسفل التعليق مباشرةً. يدعم حتى 10 قوالب نصية، أو وكيل ذكاء اصطناعي، أو مسار بوت، أو عدم الرد. يتم نشر كل رسالة كرد منفصل.",
+    "publicReplyDescription": "انشر ردًا عامًا أسفل التعليق مباشرةً. يدعم حتى 10 قوالب نصية، أو وكيل ذكاء اصطناعي، أو مسار بوت، أو عدم الرد. يتم نشر كل رسالة كرد منفصل. يدعم spintax.",
     "replyMessage": "رسالة الرد",
     "replyMessagePlaceholder": "أدخل رسالة الرد...",
     "includeKeywordsType": "الرد على",
     "includeKeywordsTypeDescription": "اختر التعليقات التي تستجيب لها هذه الأتمتة.",
     "includeKeywords": "الكلمات المفتاحية المطلوب مطابقتها",
-    "excludeKeywords": "استبعاد التعليقات التي تحتوي على هذه الكلمات المفتاحية",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "excludeKeywordsDescription": "ستتجاهل أتمتة الرد في صندوق الوارد والرد العام أي تعليق يحتوي على إحدى هذه الكلمات المفتاحية.",
     "keywordsPlaceholder": "اكتب واضغط Enter...",
     "replyAfter": "الرد بعد",
@@ -4430,7 +4796,7 @@
       "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
       "ignoreCommentRepliesDescription": "تخطي الأتمتة للتعليقات التي تكون ردودًا على تعليقات أخرى وليست تعليقات رئيسية.",
       "trackUserTags": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
-      "trackUserTagsDescription": "استخدم '{{total_tagged}}' لمعرفة عدد المستخدمين الذين تمت الإشارة إليهم. استخدم '{{total_new_tagged}}' لمعرفة عدد الأشخاص المشار إليهم غير الموجودين في قائمة جهات الاتصال."
+      "trackUserTagsDescription": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     },
     "hideComments": {
       "all": "إخفاء جميع التعليقات",
@@ -4947,13 +5313,13 @@
     "privateReply": "رد خاص (البريد الوارد)",
     "privateReplyDescription": "إرسال رسالة خاصة إلى صندوق وارد المعلّق. اختر وكيل الذكاء الاصطناعي، أو نموذج نصي ثابت، أو مسار روبوت محادثة، أو التعطيل.",
     "publicReply": "رد علني على التعليق",
-    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد. يتم نشر كل رسالة كرد منفصل.",
+    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد. يتم نشر كل رسالة كرد منفصل. يدعم spintax.",
     "replyMessage": "رسالة الرد",
     "replyMessagePlaceholder": "أدخل رسالة الرد...",
     "includeKeywordsType": "الرد على",
     "includeKeywordsTypeDescription": "اختر التعليقات التي تستجيب لها هذه الأتمتة.",
     "includeKeywords": "الكلمات المفتاحية للمطابقة",
-    "excludeKeywords": "استبعاد التعليقات التي تحتوي على هذه الكلمات المفتاحية",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "excludeKeywordsDescription": "سيتم تجاهل التعليقات التي تحتوي على أي من هذه الكلمات المفتاحية من قبل أتمتة الرد الخاص والعلني.",
     "keywordsPlaceholder": "اكتب واضغط على Enter...",
     "replyAfter": "الرد بعد",
@@ -5015,7 +5381,7 @@
       "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
       "ignoreCommentRepliesDescription": "تجاوز الأتمتة للتعليقات التي هي ردود على تعليقات أخرى، وليست تعليقات من المستوى الأعلى.",
       "trackUserTags": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
-      "trackUserTagsDescription": "استخدم '{{total_tagged}}' لمعرفة عدد المستخدمين الذين تمت الإشارة إليهم. استخدم '{{total_new_tagged}}' لمعرفة عدد الأشخاص المشار إليهم غير الموجودين في قائمة جهات الاتصال."
+      "trackUserTagsDescription": "يحسب الحسابات المشار إليها في كل تعليق ويضيفها إلى إجماليات جهة الاتصال عبر جميع التعليقات. استخدم '{{total_tagged}}' لكل الحسابات المشار إليها و'{{total_new_tagged}}' للحسابات التي لم تراسل صفحتك أو لم تكن جهة اتصال من قبل."
     },
     "hideComments": {
       "all": "إخفاء جميع التعليقات",
@@ -5051,13 +5417,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. حتى 10 رسائل نصية (يدعم spintax)، تُنشر كل منها كرد منفصل.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -5066,7 +5432,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "إخفاء التعليقات"
     },
     "postType": {
       "all": "All posts",
@@ -5108,8 +5475,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "أدخل رسالة رد واحدة على الأقل.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "يمكن إخفاء الردود المباشرة على منشوراتك فقط.",
+    "hideComments": {
+      "all": "إخفاء جميع التعليقات",
+      "hasPhoneNumber": "يحتوي على رقم هاتف",
+      "hasLink": "يحتوي على رابط",
+      "hasKeywords": "يحتوي على كلمات مفتاحية",
+      "keywords": "الكلمات المفتاحية",
+      "showCommentsAfter": "إظهار التعليقات بعد"
+    },
+    "showCommentsAfter": {
+      "none": "أبدًا"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. حتى 10 رسائل نصية (يدعم spintax)، تُنشر كل منها كرد منفصل.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "أدخل رسالة رد واحدة على الأقل."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "أتمتة الرد على قصص إنستغرام",
@@ -5667,7 +6150,8 @@
     "connectViaFacebook": "ربط عبر Facebook",
     "unsupportedExplanation": "تم ربط حساب Instagram هذا باستخدام تسجيل دخول Instagram للأعمال. اربط الحساب عبر Facebook لاستخدام Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "تُرسل أحداث WhatsApp فقط للمحادثات التي بدأت من إعلان النقر للمحادثة عبر WhatsApp."
+      "whatsappNote": "تُرسل أحداث WhatsApp فقط للمحادثات التي بدأت من إعلان النقر للمحادثة عبر WhatsApp.",
+      "description": "إضافة حدث LeadSubmitted إلى قائمة الانتظار لـ Messenger أو Instagram أو WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5695,8 +6179,9 @@
       "invalidDatasetId": "أدخل معرّف مجموعة بيانات صالحًا (أرقام فقط).",
       "whatsappNotFound": "لم يتم العثور على اتصال WhatsApp.",
       "testEventCodeRequired": "احفظ رمز حدث اختبار قبل إرسال حدث اختبار.",
-      "noContactForTest": "لا توجد جهة اتصال مؤهلة على هذه القناة بعد. يحتاج الحدث التجريبي إلى جهة اتصال حقيقية لربطه بها (في WhatsApp، يجب أن تأتي من إعلان click-to-WhatsApp).",
-      "invalidTestEventCode": "يجب ألا يحتوي رمز حدث الاختبار إلا على أحرف وأرقام وشرطات أو شرطات سفلية (بحد أقصى 64)."
+      "invalidTestEventCode": "يجب ألا يحتوي رمز حدث الاختبار إلا على أحرف وأرقام وشرطات أو شرطات سفلية (بحد أقصى 64).",
+      "invalidMessagingId": "يجوز أن يحتوي معرّف المراسلة على أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
+      "capiDisconnected": "تم قطع اتصال Meta CAPI لهذه القناة. أعد الاتصال قبل إرسال حدث اختبار."
     },
     "fields": {
       "eventType": {
@@ -5840,10 +6325,21 @@
       "saved": "تم حفظ رمز حدث الاختبار.",
       "cleared": "تم مسح رمز حدث الاختبار. الأحداث نشطة مجددًا.",
       "send": "إرسال حدث اختبار",
-      "sent": "تم إدراج حدث الاختبار في قائمة الانتظار. سيظهر ضمن Test events في Events Manager خلال دقيقة.",
-      "sendHint": "يرسل حدث Purchase تجريبيًا واحدًا (100 USD) إلى أحدث جهة اتصال في هذه القناة.",
+      "sent": "تم إرسال حدث الاختبار. سيظهر ضمن Test events في Events Manager خلال دقيقة.",
+      "sendHint": "يرسل حدث Purchase نموذجيًا واحدًا (100 USD) إلى معرّف مراسلة تدخله أنت. لا يُستخدم أي جهة اتصال محفوظة.",
       "activeNotice": "وضع الاختبار مفعّل: لا تُحتسب أحداث هذه القناة في التقارير حتى يتم مسح الرمز.",
-      "openTestEvents": "فتح Test events"
+      "openTestEvents": "فتح Test events",
+      "dialogTitle": "إرسال حدث اختبار",
+      "dialogDescription": "سيتم إرسال حدث Purchase نموذجي واحد (100 USD) مع رمز حدث الاختبار الخاص بك. الصق معرّف المراسلة النموذجي من Events Manager → Test events → Messaging → Graph API Explorer، حتى لا يُنسب أي شيء إلى جهة اتصال حقيقية.",
+      "messagingIdLabel": {
+        "messenger": "معرّف جهة الاتصال (page_scoped_user_id)",
+        "instagram": "معرّف جهة الاتصال (ig_sid)",
+        "whatsapp": "معرّف النقرة (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "الصق القيمة النموذجية من Meta",
+      "messagingIdHint": "أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
+      "cancel": "إلغاء",
+      "confirmSend": "إرسال"
     }
   },
   "minigames": {
@@ -6204,5 +6700,13 @@
   },
   "accountFields": {
     "title": "حقول البوت"
+  },
+  "openLink": {
+    "title": "فتح الرابط",
+    "invalidTitle": "رابط غير صالح.",
+    "invalidDescription": "هذا الرابط غير صالح أو انتهت صلاحيته.",
+    "openZaloGroup": "فتح مجموعة Zalo",
+    "openZalo": "فتح Zalo",
+    "openMessenger": "فتح Messenger"
   }
 }

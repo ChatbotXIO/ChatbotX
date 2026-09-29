@@ -9,9 +9,9 @@ import {
   text,
 } from "drizzle-orm/pg-core"
 import type {
-  FBCommentIncludeKeywords,
-  FBCommentReply,
-} from "../partials/fb-comment-automation"
+  CommentIncludeKeywords,
+  CommentReply,
+} from "../partials/comment-automation"
 import {
   type IgStoryTarget,
   igStoryAutomationTypes,
@@ -50,11 +50,11 @@ export const igStoryAutomationModel = pgTable(
       .notNull()
       .default(sql`'{"type":"all","value":[]}'`),
     reply: jsonb()
-      .$type<FBCommentReply>()
+      .$type<CommentReply>()
       .notNull()
       .default(sql`'{"type":"none","value":null}'`),
     includeKeywords: jsonb()
-      .$type<FBCommentIncludeKeywords>()
+      .$type<CommentIncludeKeywords>()
       .notNull()
       .default(sql`'{"type":"all","value":[]}'`),
   },

@@ -1,14 +1,19 @@
 "use client"
 
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { useCouponTopicOptions } from "@/features/coupons/provider/use-coupon-topic-options"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import {
+  useBotFields,
+  useCustomFields,
+} from "@/features/custom-fields/provider/custom-field-hook"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import {
   type ConditionOption,
   type FieldConfig,
@@ -43,18 +48,20 @@ export const useContactFilterConfigs = (
 
   const tagOptions = useTagSelectOptions()
   const inboxOptions = useInboxOptionsByChannel(inboxChannel)
-  const customFields = useCustomFieldStore((state) => state.customFields)
-  const botFields = useCustomFieldStore((state) => state.botFields)
-  const ensureBotFieldsLoaded = useCustomFieldStore(
-    (state) => state.ensureBotFieldsLoaded,
-  )
-  useEffect(() => {
-    if (includeBotFields) {
-      ensureBotFieldsLoaded()
-    }
-  }, [includeBotFields, ensureBotFieldsLoaded])
+  const workspaceId = useWorkspaceId()
+  const customFields = useCustomFields(workspaceId).data ?? []
+  const botFields =
+    useBotFields(workspaceId, { enabled: includeBotFields }).data ?? []
   const flowVersionOptions = useFlowSelectOptions()
-  const broadcastOptions = useBroadcastSelectOptions()
+  // `omnichannel` here means "all inboxes", not the broadcast channel, so it
+  // falls back to the hook's default like an unknown channel does.
+  const parsedChannel = channelTypes.safeParse(inboxChannel)
+  const broadcastChannel =
+    parsedChannel.success &&
+    parsedChannel.data !== channelTypes.enum.omnichannel
+      ? parsedChannel.data
+      : undefined
+  const broadcastOptions = useBroadcastSelectOptions(broadcastChannel)
   const sequences = useSequenceOptions()
   const sequenceOptions = useMemo(
     () =>

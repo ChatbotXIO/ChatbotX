@@ -44,6 +44,8 @@ vi.mock("@/lib/auth/assert-workspace-super-admin", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  capiDatasetResourceType: (channel: "messenger" | "instagram" | "whatsapp") =>
+    ({ messenger: "page", instagram: "igUser", whatsapp: "waba" })[channel],
   integrationWhatsappService: {
     findByIdForWorkspace: mockWhatsappFindByIdForWorkspace,
   },

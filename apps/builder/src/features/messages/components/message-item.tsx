@@ -6,6 +6,10 @@ import type {
   MessageTemplateEntity,
 } from "@chatbotx.io/sdk"
 import {
+  getWhatsappCallEntity,
+  getWhatsappCallPermissionReply,
+} from "@chatbotx.io/sdk"
+import {
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -27,12 +31,13 @@ import {
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
-  AlertCircleIcon,
   BotIcon,
   ExternalLinkIcon,
   ImageIcon,
   LockIcon,
   PaperclipIcon,
+  PhoneIcon,
+  PhoneOffIcon,
   ReplyIcon,
   ThumbsUp,
 } from "lucide-react"
@@ -45,6 +50,8 @@ import { useAttachmentUrl } from "@/features/attachments/utils"
 import type { MessageResourceWithRelations } from "../schema/resource"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
+import { MessageErrorBadge } from "./message-error-badge"
+import { WhatsappCallCard } from "./whatsapp-call-card"
 
 type MessageItemProps = {
   message: MessageResourceWithRelations
@@ -73,6 +80,13 @@ type MessageItemProps = {
   onPostback?: (button: MessageButtonTemplate) => void
   onReply?: (comment: { commentId: string; text: string }) => void
   onPrivateReply?: (comment: { commentId: string; text: string }) => void
+  /**
+   * Whether THIS comment may be answered with a DM. A predicate rather than a
+   * boolean because TikTok decides per comment, not per channel — see
+   * `canPrivateReplyToComment`. Omitted means "allowed", so the Meta channels
+   * and the guest view keep their existing behaviour.
+   */
+  canPrivateReply?: (message: MessageItemProps["message"]) => boolean
 }
 
 export const MessageItem = (props: MessageItemProps) => {
@@ -84,6 +98,7 @@ export const MessageItem = (props: MessageItemProps) => {
     onChangeHide,
     onReply,
     onPrivateReply,
+    canPrivateReply,
     onDelete,
     onEdit,
   } = props
@@ -119,6 +134,25 @@ export const MessageItem = (props: MessageItemProps) => {
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
   const storyReply = getStoryReplyEntity(message.contentAttributes)
+  // Call rows render localized labels from contentAttributes; the stored
+  // text is only an English fallback for previews and must not double-render.
+  const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
+  const callPermissionReply = getWhatsappCallPermissionReply(
+    message.contentAttributes,
+  )
+  const suppressRawText = Boolean(whatsappCall || callPermissionReply)
+
+  // A call card defaults to the centered `full` variant, but a call still has
+  // a direction: business-initiated sits right, customer-initiated sits left
+  // (flipped by `guestDisplay`, like `incoming`/`outgoing` above).
+  if (whatsappCall) {
+    const isBusinessInitiated = whatsappCall.direction === "businessInitiated"
+    if (isBusinessInitiated) {
+      variant = guestDisplay ? "left" : "right"
+    } else {
+      variant = guestDisplay ? "right" : "left"
+    }
+  }
 
   return (
     <MessageBubble
@@ -126,7 +160,7 @@ export const MessageItem = (props: MessageItemProps) => {
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
       variant={variant}
     >
-      {variant === "left" && avatarUrl && (
+      {variant === "left" && avatarUrl && !whatsappCall && (
         <Avatar className="mt-2 size-7 self-start">
           <AvatarImage alt="" src={avatarUrl} />
           <AvatarFallback>
@@ -134,70 +168,73 @@ export const MessageItem = (props: MessageItemProps) => {
           </AvatarFallback>
         </Avatar>
       )}
-      <div className="flex min-h-11 max-w-[70%] flex-col gap-1">
+      <div
+        className={cn(
+          "flex min-h-11 max-w-[70%] flex-col gap-1",
+          variant === "full" && "mx-auto",
+        )}
+      >
         {storyReply && <StoryReplyContext story={storyReply.story} />}
         {isComment ? (
-          (message.text ||
-            (message.attachments && message.attachments.length > 0)) && (
-            <div
-              className={cn(
-                "relative text-sm",
-                variants[variant],
-                isDeleted && "opacity-50",
-                isHidden && "opacity-50",
-              )}
-            >
-              {!isEditing &&
-                (isDeleted || (message.text && message.text.length > 0)) && (
-                  <pre className="wrap-break-word whitespace-pre-line font-sans">
-                    <CommentText
-                      deletedLabel={t("messageDeleted")}
-                      hiddenLabel={t("commentHidden")}
-                      isDeleted={isDeleted}
-                      isHidden={isHidden}
-                      text={message.text}
-                    />
-                  </pre>
-                )}
-              {!(isEditing || isDeleted) && hasAttachments && (
-                <RenderAttachments message={message} />
-              )}
-              {isEditing && onEdit && (
-                <MessageActionsEditor
-                  message={message}
-                  onEdit={onEdit}
-                  onEditingChange={setIsEditing}
+          <div
+            className={cn(
+              "relative text-sm",
+              variants[variant],
+              isDeleted && "opacity-50",
+              isHidden && "opacity-50",
+            )}
+          >
+            {!isEditing && (isDeleted || message.text || !hasAttachments) && (
+              <pre className="wrap-break-word whitespace-pre-line font-sans">
+                <CommentText
+                  deletedLabel={t("messageDeleted")}
+                  hiddenLabel={t("commentHidden")}
+                  isDeleted={isDeleted}
+                  isHidden={isHidden}
+                  mediaUnavailableLabel={t("commentMediaUnavailable")}
+                  text={message.text}
                 />
-              )}
-              {isLiked && (
-                <span className="absolute -end-2 -bottom-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
-                  <ThumbsUp className="size-3" />
-                </span>
-              )}
-            </div>
-          )
+              </pre>
+            )}
+            {!(isEditing || isDeleted) && hasAttachments && (
+              <RenderAttachments message={message} />
+            )}
+            {isEditing && onEdit && (
+              <MessageActionsEditor
+                message={message}
+                onEdit={onEdit}
+                onEditingChange={setIsEditing}
+              />
+            )}
+            {isLiked && (
+              <span className="absolute -end-2 -bottom-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                <ThumbsUp className="size-3" />
+              </span>
+            )}
+          </div>
         ) : (
           <>
-            {(isDeleted || (message.text && message.text.length > 0)) && (
-              <div
-                className={cn(
-                  "text-sm",
-                  variants[variant],
-                  isDeleted && "opacity-50",
-                )}
-              >
-                <pre className="wrap-break-word whitespace-pre-line font-sans">
-                  {isDeleted ? (
-                    <span className="text-xs italic">
-                      {t("messageDeleted")}
-                    </span>
-                  ) : (
-                    message.text
+            {(isDeleted || (message.text && message.text.length > 0)) &&
+              !suppressRawText && (
+                <div
+                  className={cn(
+                    "text-sm",
+                    variants[variant],
+                    isDeleted && "opacity-50",
                   )}
-                </pre>
-              </div>
-            )}
-            {!isDeleted && hasAttachments && (
+                >
+                  <pre className="wrap-break-word whitespace-pre-line font-sans">
+                    {isDeleted ? (
+                      <span className="text-xs italic">
+                        {t("messageDeleted")}
+                      </span>
+                    ) : (
+                      message.text
+                    )}
+                  </pre>
+                </div>
+              )}
+            {!isDeleted && hasAttachments && !whatsappCall && (
               <RenderAttachments message={message} />
             )}
           </>
@@ -207,20 +244,18 @@ export const MessageItem = (props: MessageItemProps) => {
 
       <div className="flex">
         {message.messageType === "outgoing" && message.sendError && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="flex items-center self-center px-1 text-destructive">
-                  <AlertCircleIcon aria-hidden className="size-4" />
-                </span>
-              }
-            />
-            <TooltipContent>
-              <p>
-                {t("sendFailed")}: {message.sendError}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+          <MessageErrorBadge
+            detail={message.sendError}
+            label={t("sendFailed")}
+          />
+        )}
+        {/* Meta can terminate an ANSWERED call with no audio (e.g. error
+            138021), so this badge isn't gated on the call having been missed. */}
+        {whatsappCall?.failureReason && (
+          <MessageErrorBadge
+            detail={whatsappCall.failureReason}
+            label={t("callFailed")}
+          />
         )}
         {isComment && !isEditing && message.messageType === "incoming" && (
           <Button
@@ -258,6 +293,7 @@ export const MessageItem = (props: MessageItemProps) => {
         {isComment &&
           !isEditing &&
           onPrivateReply &&
+          (canPrivateReply?.(message) ?? true) &&
           message.messageType === "incoming" &&
           message.sourceId && (
             <Tooltip>
@@ -299,19 +335,37 @@ export const MessageItem = (props: MessageItemProps) => {
   )
 }
 
+// A comment with neither text nor attachment carried media the channel does
+// not expose (e.g. an Instagram GIF comment), so it gets a note instead of an
+// empty bubble.
 const CommentText = (props: {
   deletedLabel: string
   hiddenLabel: string
+  mediaUnavailableLabel: string
   isDeleted: boolean
   isHidden: boolean
   text: string | null
 }) => {
-  const { deletedLabel, hiddenLabel, isDeleted, isHidden, text } = props
+  const {
+    deletedLabel,
+    hiddenLabel,
+    mediaUnavailableLabel,
+    isDeleted,
+    isHidden,
+    text,
+  } = props
   if (isDeleted) {
     return <span className="text-xs italic">{deletedLabel}</span>
   }
   if (isHidden) {
     return <span className="text-xs italic">{hiddenLabel}</span>
+  }
+  if (!text) {
+    return (
+      <span className="text-muted-foreground text-xs italic">
+        {mediaUnavailableLabel}
+      </span>
+    )
   }
   return text
 }
@@ -385,9 +439,50 @@ const RenderImageGridItem = (props: { attachment: AttachmentResource }) => {
           className="h-full w-full object-cover"
           height={120}
           src={attachmentUrl}
+          unoptimized
           width={120}
         />
       </div>
+    </Link>
+  )
+}
+
+// `unoptimized` keeps the original bytes, so an animated GIF/WebP still plays.
+const RenderImageAttachment = (props: {
+  attachment: AttachmentResource
+  attachmentUrl: string
+  attachmentLabel: string
+}) => {
+  const { attachment, attachmentUrl, attachmentLabel } = props
+
+  if (!(attachment.width && attachment.height)) {
+    return (
+      <Link href={attachmentUrl} target="_blank">
+        <div
+          className="relative max-w-full overflow-hidden rounded-xl sm:max-w-80"
+          style={{ aspectRatio: "4/3" }}
+        >
+          <Image
+            alt={attachmentLabel}
+            className="object-contain"
+            fill
+            src={attachmentUrl}
+            unoptimized
+          />
+        </div>
+      </Link>
+    )
+  }
+  return (
+    <Link href={attachmentUrl} target="_blank">
+      <Image
+        alt={attachmentLabel}
+        className="max-w-full rounded-xl sm:max-w-80"
+        height={attachment.height}
+        src={attachmentUrl}
+        unoptimized
+        width={attachment.width}
+      />
     </Link>
   )
 }
@@ -408,36 +503,38 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
   }
 
   switch (attachment.fileType) {
-    case "image": {
-      if (!(attachment.width && attachment.height)) {
+    case "image":
+      return (
+        <RenderImageAttachment
+          attachment={attachment}
+          attachmentLabel={attachmentLabel}
+          attachmentUrl={attachmentUrl}
+        />
+      )
+    case "gif":
+      // A GIF delivered as a video clip (Telegram animations, video stickers)
+      // plays the way the GIF would: muted, looping, without controls.
+      if (attachment.mimeType.startsWith("video/")) {
         return (
-          <Link href={attachmentUrl} target="_blank">
-            <div
-              className="relative max-w-full overflow-hidden rounded-xl sm:max-w-80"
-              style={{ aspectRatio: "4/3" }}
-            >
-              <Image
-                alt={attachmentLabel}
-                className="object-contain"
-                fill
-                src={attachmentUrl}
-              />
-            </div>
-          </Link>
+          <video
+            autoPlay
+            className="max-w-full rounded-xl sm:max-w-80"
+            loop
+            muted
+            playsInline
+          >
+            <track default kind="captions" />
+            <source src={attachmentUrl} type={attachment.mimeType} />
+          </video>
         )
       }
       return (
-        <Link href={attachmentUrl} target="_blank">
-          <Image
-            alt={attachmentLabel}
-            className="max-w-full rounded-xl sm:max-w-80"
-            height={attachment.height}
-            src={attachmentUrl}
-            width={attachment.width}
-          />
-        </Link>
+        <RenderImageAttachment
+          attachment={attachment}
+          attachmentLabel={attachmentLabel}
+          attachmentUrl={attachmentUrl}
+        />
       )
-    }
     case "video":
       return (
         <video controls height="240" preload="none" width="320">
@@ -447,7 +544,9 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
       )
     case "audio":
       return (
-        <audio controls preload="none">
+        // `preload="metadata"` (not "none") so the player shows the clip's
+        // total duration at rest instead of 0:00 / 0:00.
+        <audio controls preload="metadata">
           <track default kind="captions" />
           <source src={attachmentUrl} type={attachment.mimeType} />
         </audio>
@@ -504,8 +603,52 @@ const StoryReplyContext = (props: {
   )
 }
 
+const WhatsappCallPermissionReply = ({
+  response,
+}: {
+  response: "accept" | "reject"
+}) => {
+  const t = useTranslations("messages")
+  const isAccepted = response === "accept"
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-3 text-sm">
+      {isAccepted ? (
+        <PhoneIcon aria-hidden className="size-3.5" />
+      ) : (
+        <PhoneOffIcon aria-hidden className="size-3.5" />
+      )}
+      <span>
+        {isAccepted ? t("acceptedCallPermission") : t("declinedCallPermission")}
+      </span>
+    </div>
+  )
+}
+
 const RenderContentAttributes = (props: MessageItemProps) => {
   const { message, onPostback } = props
+  const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
+  if (whatsappCall) {
+    return (
+      <WhatsappCallCard
+        call={whatsappCall}
+        callEndedAt={message.createdAt}
+        contactName={message.contact?.fullName}
+        conversationId={message.conversationId}
+        hasRecordingAttachment={Boolean(message.attachments?.length)}
+      />
+    )
+  }
+
+  const callPermissionReply = getWhatsappCallPermissionReply(
+    message.contentAttributes,
+  )
+  if (callPermissionReply) {
+    return (
+      <WhatsappCallPermissionReply response={callPermissionReply.response} />
+    )
+  }
+
   const contentAttributes = message.contentAttributes as
     | MessageTemplateEntity
     | undefined

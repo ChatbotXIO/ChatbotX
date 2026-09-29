@@ -1,5 +1,6 @@
 import type { HTTPMethod } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { CONVERSATIONS_LIST_POST_PATH } from "@/features/conversations/lib/api-paths"
 
 const { getAccessState, isAtLimit, isCloud } = vi.hoisted(() => ({
   getAccessState: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 vi.mock("@/env", () => ({ isCloud }))
 
 const {
+  assertWorkspaceOwnerAccessForMethod,
   checkWorkspaceOwnerAccess,
   isReadOnlyTokenAllowedMethod,
   isWorkspaceMutationMethod,
@@ -117,6 +119,36 @@ describe("checkWorkspaceOwnerAccess", () => {
   })
 })
 
+describe("assertWorkspaceOwnerAccessForMethod", () => {
+  test("allows the conversation list POST but denies other POST routes", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({
+      blocked: true,
+      reason: "status",
+      planName: null,
+      status: "expired",
+      trialEndsAt: null,
+    })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        path: CONVERSATIONS_LIST_POST_PATH,
+        ownerId: "owner-1",
+      }),
+    ).resolves.toBeUndefined()
+    expect(getAccessState).not.toHaveBeenCalled()
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        path: "/workspaces/{workspaceId}/conversations/assign",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toMatchObject({ code: "trialExpired" })
+  })
+})
+
 describe("isWorkspaceMutationMethod", () => {
   test.each<[HTTPMethod | undefined, boolean]>([
     ["GET", false],
@@ -158,6 +190,40 @@ describe("isReadOnlyTokenAllowedMethod", () => {
   test("rejects POST with no path at all", () => {
     expect(isReadOnlyTokenAllowedMethod("POST")).toBe(false)
     expect(isReadOnlyTokenAllowedMethod("POST", undefined)).toBe(false)
+  })
+
+  test("rejects POST to the conversations list path — it is allow-listed for the trial gate only, not for read_only tokens", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", CONVERSATIONS_LIST_POST_PATH),
+    ).toBe(false)
+  })
+})
+
+describe("assertWorkspaceOwnerAccessForMethod", () => {
+  test("allows the conversations list POST path for a trial-expired workspace", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path: "/workspaces/{workspaceId}/conversations/list",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("blocks a different POST path for a trial-expired workspace", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path: "/workspaces/{workspaceId}/conversations/archive",
+      }),
+    ).rejects.toMatchObject({ code: "trialExpired", status: 403 })
   })
 })
 

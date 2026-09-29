@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { broadcastPlanLimitException } from "@chatbotx.io/business/errors"
+import { TRIAL_BROADCAST_PLAN_POLICY } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type Handler = (args: {
@@ -161,6 +163,23 @@ describe("scheduleBroadcastSchema", () => {
       }).success,
     ).toBe(true)
   })
+
+  test("accepts a nullable send rate and rejects values above the product ceiling", () => {
+    expect(
+      scheduleBroadcastSchema.safeParse({
+        schedulesType: "now",
+        schedulesAt: null,
+        sendRatePerMinute: null,
+      }).success,
+    ).toBe(true)
+    expect(
+      scheduleBroadcastSchema.safeParse({
+        schedulesType: "now",
+        schedulesAt: null,
+        sendRatePerMinute: 1001,
+      }).success,
+    ).toBe(false)
+  })
 })
 
 describe("scheduleBroadcastAction", () => {
@@ -196,6 +215,38 @@ describe("scheduleBroadcastAction", () => {
     expect(scheduleDraft.mock.calls[0][0].schedulesAt.toISOString()).toBe(
       "2030-01-01T09:30:00.000Z",
     )
+  })
+
+  test("forwards the submitted send rate", async () => {
+    scheduleDraft.mockResolvedValue({ id: "b-1" })
+
+    await scheduleHandler({
+      bindArgsParsedInputs: ["ws-1", "b-1"],
+      parsedInput: {
+        schedulesType: "now",
+        schedulesAt: null,
+        sendRatePerMinute: 120,
+      },
+    })
+
+    expect(scheduleDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ sendRatePerMinute: 120 }),
+    )
+  })
+
+  test("returns a plan-limit outcome for the business exception", async () => {
+    const error = broadcastPlanLimitException("activeBroadcasts", {
+      policy: TRIAL_BROADCAST_PLAN_POLICY,
+      planName: "Trial",
+    })
+    scheduleDraft.mockRejectedValue(error)
+
+    await expect(
+      scheduleHandler({
+        bindArgsParsedInputs: ["ws-1", "b-1"],
+        parsedInput: { schedulesType: "now", schedulesAt: null },
+      }),
+    ).resolves.toEqual({ outcome: "planLimit", limit: error.data })
   })
 })
 
@@ -280,6 +331,21 @@ describe("updateDraftBroadcastAction", () => {
     })
 
     expect(result).toEqual({ id: "b-1", status: "scheduled" })
+  })
+
+  test("returns a plan-limit outcome for the business exception", async () => {
+    const error = broadcastPlanLimitException("sendRate", {
+      policy: TRIAL_BROADCAST_PLAN_POLICY,
+      planName: "Trial",
+    })
+    updateDraft.mockRejectedValue(error)
+
+    await expect(
+      updateHandler({
+        bindArgsParsedInputs: ["ws-1", "b-1"],
+        parsedInput: { ...parsedInput, saveAsDraft: false },
+      }),
+    ).resolves.toEqual({ outcome: "planLimit", limit: error.data })
   })
 
   test("treats a member without contact-info permission as canViewEmailAndPhone false", async () => {

@@ -1,5 +1,6 @@
 {
   "fields": {
+    "optionalHint": "(facoltativo)",
     "marketingMessagesConfigId": {
       "label": "ID configurazione Messaggi di marketing",
       "description": "ID configurazione di Facebook Login for Business utilizzato per richiedere l'autorizzazione marketing_messages_messenger."
@@ -368,6 +369,19 @@
     },
     "contactId": {
       "label": "ID contatto"
+    },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "ID utente Zalo",
+      "telegramChatId": "ID chat Telegram",
+      "tiktokUserId": "ID utente TikTok",
+      "threadsUsername": "Nome utente Threads",
+      "webchatGuestId": "ID ospite Webchat",
+      "externalId": "ID esterno",
+      "channelId": "ID canale"
     },
     "flow": {
       "label": "Flusso"
@@ -1270,11 +1284,16 @@
       "clientId": "ID client",
       "clientSecret": "Segreto client",
       "displayName": "Nome visualizzato",
+      "needsReauthorizationForComments": "Questa connessione è stata autorizzata prima dell'automazione dei commenti. Riconnettila per iniziare a ricevere gli eventi dei commenti.",
       "connectInstructions": {
         "step1": "Crea un'app TikTok su <link>developers.tiktok.com</link>.",
         "step2": "Autorizza il tuo account e copia il <strong>token di accesso</strong>, l’<strong>Open ID</strong> e il <strong>segreto client</strong>.",
         "step3": "Incolla qui sotto le credenziali per collegarti."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Drip"
@@ -1465,6 +1484,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Segreto app Meta (opzionale)",
+      "description": "Attiva la verifica della firma del webhook per questa connessione manuale. Puoi trovarlo nella dashboard della tua app Meta, in Impostazioni > Generali."
+    },
+    "lastCallRecorded": {
+      "label": "Ultima registrazione chiamata"
+    },
+    "lastCallTranscript": {
+      "label": "Ultima trascrizione chiamata"
+    },
+    "sendRatePerMinute": {
+      "label": "Messaggi al minuto"
     }
   },
   "actions": {
@@ -1804,6 +1836,7 @@
       "message": "L'ultimo pagamento non è riuscito. Aggiorna il metodo di pagamento per mantenere attivo il tuo spazio di lavoro."
     },
     "trial": {
+      "planName": "Prova",
       "daysLeft": "Prova: {days} giorni rimanenti",
       "endsTomorrow": "La prova termina domani",
       "expired": "Il periodo di prova è terminato — aggiorna il piano per mantenere attivo il tuo spazio di lavoro",
@@ -1917,7 +1950,6 @@
       "audienceFilter": "Filtro del pubblico",
       "noAudienceFilter": "Nessun filtro del pubblico",
       "template": "Modello",
-      "noTemplate": "Nessun modello",
       "integration": "Integrazione"
     },
     "filters": {
@@ -1976,6 +2008,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Aggiorna il tuo piano",
+      "sendRate": "Il tuo piano {plan} attuale supporta broadcast con una velocità massima di invio di {rate} messaggi al minuto. Aggiorna il piano per inviare broadcast fino a {multiplier}x più velocemente.",
+      "activeBroadcasts": "Il tuo piano {plan} attuale esegue {max, plural, one {# broadcast} other {# broadcast}} alla volta. Aggiorna il piano per eseguire più broadcast contemporaneamente."
+    },
+    "sendLimit": {
+      "title": "Limite",
+      "hint": "Lascia vuoto per inviare a tutti i contatti corrispondenti.",
+      "rateHint": "Lascia vuoto per usare la velocità predefinita.",
+      "rangeSummary": "Contatti n.{start} – n.{end}",
+      "rangeFromSummary": "A partire dal contatto n.{start}",
+      "rangeLabel": "Intervallo contatti",
+      "fromLabel": "Da",
+      "toLabel": "A",
+      "allPlaceholder": "Tutti",
+      "rangeEndBeforeStart": "La posizione finale non può essere precedente alla posizione iniziale"
     }
   },
   "commentAutomation": {
@@ -2004,7 +2053,26 @@
       "keywordsNotMatched": "Parole chiave non corrispondenti",
       "contactNotNew": "Il contatto non è nuovo",
       "alreadyRepliedOnPost": "Già risposto su questo post",
-      "engagedOnOtherPost": "Ha già interagito su un altro post"
+      "engagedOnOtherPost": "Ha già interagito su un altro post",
+      "mentionCountNotMatched": "Il numero di menzioni non corrispondeva"
+    },
+    "replyTo": {
+      "mentions": "Commenti con abbastanza menzioni",
+      "mentionCount": "Numero di persone taggate",
+      "mentionCountDescription": "Corrispondono solo i commenti che taggano almeno questo numero di persone (@nome).",
+      "mentionCountOption": "{count, plural, one {# persona} other {# persone}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Commenti uguali a",
+      "contain": "Commenti che contengono"
+    },
+    "hideComments": {
+      "hasGif": "Contiene GIF",
+      "hasEmoji": "Contiene emoji"
+    },
+    "trackUserTags": {
+      "label": "Traccia se un utente tagga altri utenti",
+      "descriptionText": "Conta gli account taggati in ogni commento e li somma ai totali del contatto su tutti i commenti. Usa '{{total_tagged}}' per tutti gli account taggati e '{{total_new_tagged}}' per quelli che non hanno mai scritto alla tua pagina né sono stati contatti."
     }
   },
   "condition": {
@@ -2308,6 +2376,8 @@
       "transferConversationToHuman": "Trasferisci conversazione a un operatore",
       "unarchiveConversation": "Rimuovi conversazione dall'archivio",
       "unassignConversation": "Annulla assegnazione della conversazione",
+      "markConversationAsUnread": "Segna conversazione come non letta",
+      "markConversationAsRead": "Segna conversazione come letta",
       "unfollowConversation": "Smetti di seguire la conversazione",
       "unsubscribeBroadcast": "Annulla iscrizione al broadcast",
       "getUserData": "Ottieni dati dell'utente",
@@ -2332,7 +2402,9 @@
       "import": "Importa flusso",
       "export": "Esporta",
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
-      "importJsonOnly": "Solo file JSON"
+      "importJsonOnly": "Solo file JSON",
+      "whatsappCallButton": "Chiama su WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -2448,6 +2520,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Questo canale non può inviare questo tipo di contenuto: il passaggio viene ignorato. Rimuovilo o imposta il nodo su un canale che lo supporta.",
       "buttonsSkippedOnChannel": "Questo canale non può inviare pulsanti con un messaggio multimediale: lì vengono ignorati. Inseriscili invece in un passaggio di testo successivo."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Modifica pulsante",
+      "buttonLabel": "Etichetta del pulsante"
     }
   },
   "folders": {
@@ -2669,7 +2745,8 @@
       "adAccountFilter": {
         "all": "Tutti gli account pubblicitari",
         "label": "Account pubblicitario",
-        "unavailable": "Impossibile caricare gli account pubblicitari: controlla la connessione Ads di questa integrazione, oppure la connessione Facebook Ads del workspace, nelle impostazioni."
+        "unavailable": "Impossibile caricare gli account pubblicitari: controlla la connessione Ads di questa integrazione, oppure la connessione Facebook Ads del workspace, nelle impostazioni.",
+        "note": "Le inserzioni con conversioni ma senza spesa o senza distribuzione nell'intervallo di date selezionato vengono nascoste durante il filtro per account pubblicitario."
       },
       "channelFilter": {
         "label": "Canale",
@@ -3025,6 +3102,10 @@
       "whatsapp": "Questo numero WhatsApp è già collegato a un'altra area di lavoro.",
       "zalo": "Questo Zalo OA è già collegato a un'altra area di lavoro."
     },
+    "missingScopes": {
+      "generic": "Connessione annullata: alcune autorizzazioni non sono state concesse. Riconnettiti e accetta tutte le autorizzazioni richieste.",
+      "tiktok": "Connessione a TikTok annullata: alcune autorizzazioni non sono state concesse. Riconnettiti e accetta tutte le autorizzazioni richieste."
+    },
     "reconnect": {
       "success": "Canale ricollegato correttamente.",
       "errors": {
@@ -3181,6 +3262,7 @@
     "changeLikeState": "Cambia stato del Mi piace",
     "changeHideState": "Cambia stato di visibilità",
     "commentHidden": "Questo commento è stato nascosto",
+    "commentMediaUnavailable": "Questo commento contiene una GIF, uno sticker o un'immagine che non può essere visualizzata",
     "messageDeleted": "Il messaggio è stato eliminato.",
     "sendFailed": "Invio non riuscito",
     "repliedToStory": "Ha risposto alla tua storia",
@@ -3221,7 +3303,10 @@
     "deleteFeature": "Elimina {feature}",
     "resetFeature": "Reimposta {feature}",
     "resetConfirmation": "Questo cancellerà i valori dei {feature} selezionati.\nQuesta azione non può essere annullata.",
+    "resetAllConfirmation": "Questo cancellerà i valori di tutti i {feature} di questo contatto.\nQuesta azione non può essere annullata.",
     "resetSuccess": "{feature} reimpostato con successo",
+    "clearFeature": "Cancella {feature}",
+    "clearSuccess": "{feature} cancellato con successo",
     "deleteConfirmation": "Sei assolutamente sicuro?\nQuesta azione non può essere annullata.\nIl tuo {feature} verrà eliminato definitivamente dai nostri server.",
     "addFeature": "Aggiungi {feature}",
     "signOutConfirmation": "Vuoi davvero uscire?",
@@ -3272,13 +3357,27 @@
     "historyDepth": "({count})",
     "none": "Nessuno",
     "tiktokCardTitleTooLong": "TikTok abbrevierà questo messaggio: con i pulsanti allegati, vengono inviati solo i primi 40 caratteri. Accorcia il messaggio o rimuovi i pulsanti.",
+    "sendTextTooLongForChannel": "Questo messaggio supera il limite consentito da questo canale. Accorcialo oppure indirizza questo blocco a un canale con un limite più alto.",
     "waTemplateMpmNoProducts": "Aggiungi almeno un prodotto a questo pulsante multi-prodotto prima di pubblicare.",
     "waTemplateMpmTooManySections": "Un pulsante multi-prodotto può avere al massimo 10 sezioni. Rimuovi alcune sezioni prima di pubblicare.",
     "waTemplateMpmTooManyProducts": "Un pulsante multi-prodotto può avere al massimo 30 prodotti in totale. Rimuovi alcuni prodotti prima di pubblicare.",
     "waTemplateLtoExpirationRequired": "Scegli una data di scadenza per l'offerta a tempo limitato prima di inviare.",
     "waTemplateMpmIncompleteProducts": "Ogni sezione richiede almeno un prodotto selezionato: rimuovi le righe vuote o scegli un prodotto.",
     "mediaStepUnsupported": "Questo canale non può inviare questo tipo di contenuto. Rimuovi il passaggio o imposta questo nodo su un canale che lo supporta.",
-    "mediaButtonsUnsupported": "Questo canale non può inviare pulsanti con un messaggio multimediale. Rimuovi i pulsanti o spostali in un passaggio di testo successivo."
+    "mediaButtonsUnsupported": "Questo canale non può inviare pulsanti con un messaggio multimediale. Rimuovi i pulsanti o spostali in un passaggio di testo successivo.",
+    "voiceCall": "Chiamata vocale",
+    "voiceCallDuration": "Chiamata vocale · {duration}",
+    "missedVoiceCall": "Chiamata vocale persa",
+    "declinedVoiceCall": "Chiamata vocale rifiutata",
+    "voiceCallFailed": "Chiamata vocale non riuscita",
+    "unansweredVoiceCall": "Nessuna risposta",
+    "canceledVoiceCall": "Chiamata annullata",
+    "acceptedCallPermission": "Ha accettato la richiesta di autorizzazione alla chiamata",
+    "declinedCallPermission": "Ha rifiutato la richiesta di autorizzazione alla chiamata",
+    "sendHumanAgentTag": "Invia un messaggio con il tag HUMAN_AGENT",
+    "warning": "Attenzione!",
+    "humanAgentWarningDescription": "Puoi rispondere al messaggio di un utente entro 7 giorni solo quando non è ragionevolmente possibile risolvere il problema entro 24 ore. Ad esempio durante fine settimana e festività o nei casi che richiedono più di un giorno. Non usare questa opzione per altri motivi, poiché potresti mettere a rischio la tua Pagina Facebook o il tuo account Instagram. Se hai dubbi, non continuare.",
+    "callFailed": "Problema di chiamata"
   },
   "instagram": {
     "description": "Questa integrazione ti consente di creare bot Instagram.",
@@ -3348,6 +3447,7 @@
       "noConnectablePagesDescription": "Non sei amministratore di questa Pagina",
       "bmLookupFailedTitle": "Alcune Pagine di Business Manager potrebbero non essere disponibili",
       "bmLookupFailedDescription": "Ricollega Messenger e concedi l'accesso a Business Manager affinché possano essere elencate le Pagine gestite tramite Business Manager.",
+      "loadFailed": "Impossibile caricare le tue Pagine Facebook",
       "alreadyConnectedNote": "Questa Pagina è già collegata",
       "notAdminNote": "Non sei amministratore di questa Pagina",
       "tryAgain": "Prova a ricollegarti"
@@ -3741,7 +3841,8 @@
       "profile": "Profilo",
       "usefulLinks": "Link utili",
       "conversionsApi": "Ottimizzazione annunci",
-      "settings": "Impostazioni"
+      "settings": "Impostazioni",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Gestisci il tuo account WhatsApp",
@@ -3873,6 +3974,259 @@
     "transferPhoneNumber": "Trasferisci il numero di telefono da un altro provider WhatsApp",
     "selectPage": {
       "tryAgain": "Prova a ricollegarti"
+    },
+    "manualAppSecretMissingNotice": "Le firme dei webhook non vengono verificate finché non aggiungi il tuo segreto app Meta.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp consente solo 2 richieste di autorizzazione alla chiamata per contatto ogni 7 giorni. Questo contatto ha raggiunto il limite: riprova più tardi.",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta ha rifiutato la modifica delle impostazioni di chiamata",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
+        "bicUnavailable": "Le chiamate avviate dall'azienda non sono disponibili per questo paese",
+        "callAlreadyInProgress": "È già in corso una chiamata con questo contatto",
+        "hangupFailed": "Impossibile terminare la chiamata",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Impossibile rifiutare la chiamata WhatsApp",
+        "voipHangupFailed": "Impossibile terminare la chiamata WhatsApp",
+        "voipNotReservedAgent": "Non sei l'agente assegnato a questa chiamata",
+        "voipCallAccessDenied": "Non hai il permesso di gestire questa chiamata",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Quella chiamata non sta più squillando",
+        "transcriptionRequiresRecording": "Attiva la registrazione delle chiamate prima di attivare la trascrizione.",
+        "supportSessionCallingBlocked": "Le chiamate non sono disponibili durante una sessione di supporto della piattaforma.",
+        "callingAccessDenied": "Non hai accesso alle chiamate in questo workspace.",
+        "callArtifactAccessDenied": "Non hai il permesso di visualizzare questa chiamata.",
+        "callHistoryAccessDenied": "Non hai accesso alla cronologia delle chiamate in questo spazio di lavoro."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Registra le chiamate ricevute o effettuate dalla inbox e aggiunge la registrazione alla conversazione.",
+      "recordingInProgress": "Registrazione richiesta",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta ha rifiutato la modifica",
+      "callContact": "Chiama su WhatsApp",
+      "dialing": "Chiamata in corso…",
+      "startCall": "Avvia chiamata WhatsApp",
+      "retentionLabel": "Conservazione delle registrazioni (giorni)",
+      "retentionHelper": "Per quanto tempo vengono conservate le registrazioni delle chiamate prima di essere eliminate definitivamente.",
+      "transcriptionLabel": "Trascrivi chiamate",
+      "transcriptionHelper": "Aggiunge alla conversazione la trascrizione di ogni chiamata registrata.",
+      "preflight": {
+        "title": "Idoneità alle chiamate",
+        "appSubscriptionMissing": "Configura prima il webhook di WhatsApp per questa app nella dashboard delle app Meta, quindi riprova.",
+        "appSubscriptionFailed": "Impossibile verificare l'iscrizione al webhook 'calls' dell'app. Riprova a breve.",
+        "callsNotSubscribed": "Questa app non è iscritta al campo webhook 'calls', quindi gli eventi di chiamata non possono raggiungere ChatbotX (errore Meta 138018: i prerequisiti tecnici non sono soddisfatti — assicurati che almeno un'app iscritta al WABA disponga anche del campo webhook delle chiamate).",
+        "fixButton": "Correggi",
+        "fixSuccess": "L'app è ora iscritta ai webhook delle chiamate WhatsApp.",
+        "manualIntegrationNotice": "Questo numero è stato connesso manualmente e non dispone di credenziali app qui. Iscrivi il campo webhook 'calls' della tua app nella dashboard delle app Meta.",
+        "coexistenceWarning": "Questo numero utilizza la coesistenza con l'app WhatsApp Business, non supportata da Meta per le chiamate. Spostalo su Cloud API soltanto."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Mostra trascrizione",
+        "hideTranscript": "Nascondi trascrizione"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp non ha abilitato le chiamate avviate dall'azienda per questo numero. Dipende dalla disponibilità nel tuo Paese e dall'idoneità dell'account presso Meta, quindi non può essere attivata qui.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Accesso al microfono negato. Consenti l'accesso nelle impostazioni del browser e riprova.",
+        "micNotFound": "Nessun microfono trovato. Collega un microfono e riprova.",
+        "callAccessDenied": "Non hai il permesso di chiamare questo contatto."
+      },
+      "card": {
+        "audioCall": "Chiamata audio",
+        "recordingUnavailable": "Registrazione non più disponibile",
+        "recordingNotCaptured": "Registrazione non disponibile per questa chiamata",
+        "recordingProcessing": "Elaborazione della registrazione…",
+        "moreOptions": "Altre opzioni",
+        "download": "Scarica",
+        "openCallInformation": "Apri informazioni chiamata",
+        "transcript": "Trascrizione",
+        "aiSummary": "Riepilogo IA",
+        "transcriptUnavailable": "Trascrizione non ancora disponibile",
+        "summaryUnavailable": "Riepilogo IA non ancora disponibile",
+        "play": "Riproduci",
+        "pause": "Pausa",
+        "seek": "Cerca",
+        "mute": "Muto",
+        "unmute": "Attiva audio",
+        "playbackFailed": "Riproduzione non riuscita",
+        "answeredBy": "Risposta da {name}",
+        "calledBy": "Chiamata da {name}",
+        "callFailed": "Problema di chiamata",
+        "callBack": "Richiama"
+      },
+      "sheet": {
+        "title": "Informazioni sulla chiamata",
+        "summaryTab": "Riepilogo IA",
+        "transcriptTab": "Trascrizione",
+        "searchLabel": "Cerca nella trascrizione",
+        "searchPlaceholder": "Cerca nella trascrizione…",
+        "transcriptUnavailable": "Trascrizione non disponibile per la lingua di questa chiamata",
+        "transcriptError": "Impossibile caricare la trascrizione. Controlla la connessione e riprova.",
+        "noSearchResults": "Nessun segmento corrispondente",
+        "playSegment": "Riproduci da qui",
+        "summaryKeyPoints": "Punti chiave",
+        "summaryActionItems": "Azioni da svolgere",
+        "regenerate": "Rigenera",
+        "regenerateConfirmTitle": "Rigenerare il riepilogo IA?",
+        "regenerateConfirmDescription": "Questo sostituirà il riepilogo attuale con uno nuovo generato.",
+        "summaryEmpty": "Non è ancora disponibile un riepilogo IA per questa chiamata.",
+        "generateSummary": "Genera riepilogo"
+      },
+      "summaryDialog": {
+        "title": "Genera riepilogo IA",
+        "description": "Scegli un provider IA connesso per riassumere questa chiamata.",
+        "noProviderTitle": "Nessun provider IA connesso",
+        "noProviderDescription": "Collega un'integrazione IA per generare i riepiloghi delle chiamate.",
+        "connectLink": "Vai alle impostazioni IA",
+        "generate": "Genera",
+        "generating": "Generazione in corso…",
+        "generateFailed": "Impossibile generare il riepilogo. Riprova.",
+        "retry": "Riprova",
+        "emptyTranscriptTooltip": "Questa chiamata non ha ancora una trascrizione da riassumere"
+      },
+      "panel": {
+        "eyebrowCalling": "CHIAMATA IN CORSO…",
+        "eyebrowIncoming": "CHIAMATA IN ARRIVO",
+        "eyebrowOnCall": "IN CHIAMATA",
+        "statusPreparing": "Preparazione…",
+        "statusWaitingForMic": "In attesa dell'accesso al microfono…",
+        "statusDeclined": "Rifiutata",
+        "statusCallFailed": "Chiamata non riuscita",
+        "statusCallEnded": "Chiamata terminata",
+        "end": "Termina",
+        "minimize": "Riduci",
+        "goToConversation": "Vai alla conversazione",
+        "expand": "Espandi",
+        "dismiss": "Chiudi",
+        "statusNoAnswer": "Nessuna risposta",
+        "eyebrowCallEnded": "CHIAMATA TERMINATA",
+        "statusConnectionLost": "Connessione persa",
+        "answerFailed": "Impossibile rispondere alla chiamata. Verifica che un microfono sia collegato e consentito nel browser, poi riprova.",
+        "ringingListTitle": "{count, plural, one {# chiamata in arrivo} other {# chiamate in arrivo}}"
+      },
+      "capability": {
+        "title": "Idoneità alle chiamate",
+        "enableCalling": "Attiva le chiamate in Impostazioni > Canali > WhatsApp > Chiamate.",
+        "reconnectChannel": "Vai su Impostazioni > Canali e riconnetti il canale WhatsApp.",
+        "ok": "OK",
+        "micPermissionTitle": "Autorizzazione microfono",
+        "dialFailureTitle": "Impossibile effettuare la chiamata"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Numero connesso manualmente",
+        "callsSubscription": "Questo numero WhatsApp è stato connesso manualmente. Assicurati che la tua app Meta sia iscritta al campo webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls), altrimenti le chiamate in uscita non si connetteranno e quelle in entrata non squilleranno.",
+        "unsignedWebhook": "Questo numero non ha nemmeno un Meta App Secret configurato, quindi i suoi webhook in entrata non sono verificati tramite firma.",
+        "callAnyway": "Chiama comunque"
+      },
+      "replaceConfirm": {
+        "title": "Terminare la chiamata con {current}?",
+        "description": "Sei in chiamata con {current}. Rispondere a {incoming} terminerà subito quella chiamata.",
+        "confirm": "Termina e rispondi",
+        "cancel": "Resta in chiamata"
+      },
+      "answerCaller": "Rispondi alla chiamata di {name}",
+      "rejectCaller": "Rifiuta la chiamata di {name}",
+      "hours": {
+        "title": "Orari delle chiamate",
+        "description": "I clienti possono chiamare questo numero solo in questi orari. Al di fuori, WhatsApp propone di chattare o, se le richieste di richiamata sono attive, di chiedere una richiamata, e mostra quando potranno chiamare di nuovo.",
+        "enabledLabel": "Accetta chiamate solo negli orari delle chiamate",
+        "timezoneLabel": "Fuso orario",
+        "closed": "Chiuso",
+        "openTimeLabel": "{day}: apre alle",
+        "closeTimeLabel": "{day}: chiude alle",
+        "addRangeLabel": "Aggiungi orari per {day}",
+        "removeRangeLabel": "Rimuovi orari di {day}",
+        "overnightHint": "Ogni giorno termina alle 23:59. Per restare aperti dopo mezzanotte, aggiungi le ore restanti al giorno successivo.",
+        "days": {
+          "monday": "Lunedì",
+          "tuesday": "Martedì",
+          "wednesday": "Mercoledì",
+          "thursday": "Giovedì",
+          "friday": "Venerdì",
+          "saturday": "Sabato",
+          "sunday": "Domenica"
+        },
+        "errors": {
+          "rangeOrder": "L'orario di chiusura deve essere successivo a quello di apertura.",
+          "rangeOverlap": "Gli orari di questo giorno si sovrappongono.",
+          "noOpenHours": "Aggiungi degli orari ad almeno un giorno."
+        }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Chiamate",
+        "subtitle": "Cronologia delle chiamate per questo spazio di lavoro",
+        "emptyTitle": "Nessuna chiamata ancora",
+        "emptyDescription": "Le chiamate appariranno qui non appena il tuo team inizierà a effettuare o ricevere chiamate WhatsApp.",
+        "loadMore": "Carica altro",
+        "allActivity": "Tutte le chiamate",
+        "filterMissed": "Perse",
+        "filterNoReply": "Nessuna risposta",
+        "allInboxes": "Tutte le caselle di posta",
+        "allAgents": "Tutti gli agenti",
+        "columnContact": "Contatto",
+        "columnInbox": "Posta in arrivo",
+        "columnDirection": "Direzione",
+        "columnAgent": "Agente",
+        "columnDuration": "Durata",
+        "columnDate": "Data",
+        "directionInbound": "In entrata",
+        "directionOutbound": "In uscita",
+        "kindOngoing": "In corso",
+        "kindAnsweredInbound": "Risposta",
+        "kindAnsweredOutbound": "Risposta",
+        "openConversation": "Apri conversazione",
+        "unknownContact": "Contatto sconosciuto",
+        "emptyFilteredTitle": "Nessuna chiamata corrisponde a questo filtro",
+        "emptyFilteredDescription": "Prova un altro filtro oppure rimuovilo per vedere tutte le chiamate.",
+        "loadMoreError": "Impossibile caricare altre chiamate. Riprova.",
+        "callInformation": "Informazioni sulla chiamata"
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4239,8 @@
       "toggleSuccess": "Impostazione di sincronizzazione dei tag aggiornata.",
       "enabledSince": "Attiva dal {date}",
       "disabled": "Disattivata"
-    }
+    },
+    "refreshPermissions": "Aggiorna autorizzazioni"
   },
   "telegram": {
     "description": "Questa integrazione ti consente di creare bot Telegram.",
@@ -3896,6 +4251,14 @@
     "chatbotInvitationDescription2": "{userName} ti ha invitato a unirti a {chatbotName}.",
     "invalidInvitation": "Questo invito non è valido o è scaduto.",
     "workspaceUnavailable": "Questa area di lavoro non è più disponibile."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Segna i messaggi del bot come letti",
+      "enabled": "Attivato",
+      "disabled": "Disattivato",
+      "description": "Se attivo, il bot segna automaticamente i propri messaggi come letti"
+    }
   },
   "inboxTeams": {
     "title": "Team della posta in arrivo"
@@ -4022,7 +4385,9 @@
       "productRemovedFromCart": "Prodotto rimosso dal carrello",
       "productOrdered": "Prodotto ordinato",
       "contactReferredANewContact": "Il contatto ha segnalato un nuovo contatto",
-      "contactReferredExistingContact": "Il contatto ha segnalato un contatto esistente"
+      "contactReferredExistingContact": "Il contatto ha segnalato un contatto esistente",
+      "callRecorded": "Chiamata registrata",
+      "callTranscribed": "Chiamata trascritta"
     },
     "actions": {
       "addTag": "Aggiungi tag",
@@ -4258,7 +4623,8 @@
     "afterText": "Dopo"
   },
   "tools": {
-    "title": "Strumenti"
+    "title": "Strumenti",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4361,13 +4727,13 @@
     "privateReply": "Risposta privata (posta in arrivo)",
     "privateReplyDescription": "Invia un messaggio privato alla posta in arrivo dell'autore del commento. Scegli un agente IA, un modello di testo fisso, un flusso del chatbot oppure disabilita la risposta.",
     "publicReply": "Risposta pubblica al commento",
-    "publicReplyDescription": "Pubblica una risposta direttamente sotto il commento. Supporta fino a 10 modelli di testo, un agente IA, un flusso del chatbot oppure nessuna risposta. Ogni messaggio viene pubblicato come risposta separata.",
+    "publicReplyDescription": "Pubblica una risposta direttamente sotto il commento. Supporta fino a 10 modelli di testo, un agente IA, un flusso del chatbot oppure nessuna risposta. Ogni messaggio viene pubblicato come risposta separata. Spintax supportato.",
     "replyMessage": "Messaggio di risposta",
     "replyMessagePlaceholder": "Inserisci il messaggio di risposta...",
     "includeKeywordsType": "Rispondi a",
     "includeKeywordsTypeDescription": "Scegli a quali commenti risponde questa automazione.",
     "includeKeywords": "Parole chiave da trovare",
-    "excludeKeywords": "Escludi i commenti con queste parole chiave",
+    "excludeKeywords": "Escludi commenti che contengono",
     "excludeKeywordsDescription": "I commenti contenenti una di queste parole chiave verranno ignorati sia dall'automazione delle risposte private sia da quella delle risposte pubbliche.",
     "keywordsPlaceholder": "Digita e premi Invio...",
     "replyAfter": "Rispondi dopo",
@@ -4430,7 +4796,7 @@
       "ignoreCommentReplies": "Non rispondere alle risposte ai commenti",
       "ignoreCommentRepliesDescription": "Ignora l'automazione per i commenti che sono risposte ad altri commenti e non commenti di primo livello.",
       "trackUserTags": "Traccia se un utente tagga altri utenti",
-      "trackUserTagsDescription": "Usa '{{total_tagged}}' per sapere quanti utenti sono stati taggati. Usa '{{total_new_tagged}}' per sapere quante delle persone taggate non sono nell'elenco dei contatti."
+      "trackUserTagsDescription": "Conta gli account taggati in ogni commento e li somma ai totali del contatto su tutti i commenti. Usa '{{total_tagged}}' per tutti gli account taggati e '{{total_new_tagged}}' per quelli che non hanno mai scritto alla tua pagina né sono stati contatti."
     },
     "hideComments": {
       "all": "Nascondi tutti i commenti",
@@ -4464,13 +4830,13 @@
     "privateReply": "Risposta privata (posta in arrivo)",
     "privateReplyDescription": "Invia un messaggio privato alla posta in arrivo dell'autore del commento. Scegli un agente IA, un modello di testo fisso, un flusso del chatbot oppure disabilita la risposta.",
     "publicReply": "Risposta pubblica al commento",
-    "publicReplyDescription": "Pubblica una risposta direttamente sotto il commento. Supporta fino a 10 modelli di testo, un agente IA, un flusso del chatbot oppure nessuna risposta. Ogni messaggio viene pubblicato come risposta separata.",
+    "publicReplyDescription": "Pubblica una risposta direttamente sotto il commento. Supporta fino a 10 modelli di testo, un agente IA, un flusso del chatbot oppure nessuna risposta. Ogni messaggio viene pubblicato come risposta separata. Spintax supportato.",
     "replyMessage": "Messaggio di risposta",
     "replyMessagePlaceholder": "Inserisci il messaggio di risposta...",
     "includeKeywordsType": "Rispondi a",
     "includeKeywordsTypeDescription": "Scegli a quali commenti risponde questa automazione.",
     "includeKeywords": "Parole chiave da trovare",
-    "excludeKeywords": "Escludi i commenti con queste parole chiave",
+    "excludeKeywords": "Escludi commenti che contengono",
     "excludeKeywordsDescription": "I commenti contenenti una di queste parole chiave verranno ignorati sia dall'automazione delle risposte private sia da quella delle risposte pubbliche.",
     "keywordsPlaceholder": "Digita e premi Invio...",
     "replyAfter": "Rispondi dopo",
@@ -4532,7 +4898,7 @@
       "ignoreCommentReplies": "Non rispondere alle risposte ai commenti",
       "ignoreCommentRepliesDescription": "Ignora l'automazione per i commenti che sono risposte ad altri commenti e non commenti di primo livello.",
       "trackUserTags": "Traccia se un utente tagga altri utenti",
-      "trackUserTagsDescription": "Usa '{{total_tagged}}' per sapere quanti utenti sono stati taggati. Usa '{{total_new_tagged}}' per sapere quante delle persone taggate non sono nell'elenco dei contatti."
+      "trackUserTagsDescription": "Conta gli account taggati in ogni commento e li somma ai totali del contatto su tutti i commenti. Usa '{{total_tagged}}' per tutti gli account taggati e '{{total_new_tagged}}' per quelli che non hanno mai scritto alla tua pagina né sono stati contatti."
     },
     "hideComments": {
       "all": "Nascondi tutti i commenti",
@@ -4568,13 +4934,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Fino a 10 messaggi di testo (spintax supportato), ognuno pubblicato come risposta separata.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Escludi commenti che contengono",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4583,7 +4949,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Nascondi commenti"
     },
     "postType": {
       "all": "All posts",
@@ -4625,8 +4992,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Inserisci almeno un messaggio di risposta.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Solo le risposte di primo livello ai tuoi post possono essere nascoste.",
+    "hideComments": {
+      "all": "Nascondi tutti i commenti",
+      "hasPhoneNumber": "Contiene un numero di telefono",
+      "hasLink": "Contiene un link",
+      "hasKeywords": "Contiene parole chiave",
+      "keywords": "Parole chiave",
+      "showCommentsAfter": "Mostra i commenti dopo"
+    },
+    "showCommentsAfter": {
+      "none": "Mai"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Fino a 10 messaggi di testo (spintax supportato), ognuno pubblicato come risposta separata.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Escludi commenti che contengono",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Inserisci almeno un messaggio di risposta."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Automazione risposte alle Storie di Instagram",
@@ -5667,7 +6150,8 @@
     "connectViaFacebook": "Connetti tramite Facebook",
     "unsupportedExplanation": "Questo account Instagram è stato connesso con Instagram Business Login. Connetti l'account tramite Facebook per usare Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Gli eventi WhatsApp vengono inviati solo per le conversazioni avviate da un annuncio click-to-WhatsApp."
+      "whatsappNote": "Gli eventi WhatsApp vengono inviati solo per le conversazioni avviate da un annuncio click-to-WhatsApp.",
+      "description": "Accoda un evento LeadSubmitted per Messenger, Instagram o WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5695,8 +6179,9 @@
       "invalidDatasetId": "Inserisci un Dataset ID valido (solo numeri).",
       "whatsappNotFound": "Integrazione WhatsApp non trovata.",
       "testEventCodeRequired": "Salva un codice evento di test prima di inviare un evento di test.",
-      "noContactForTest": "Nessun contatto idoneo su questo canale. Un evento di test richiede un contatto reale a cui essere attribuito (per WhatsApp, uno proveniente da un annuncio click-to-WhatsApp).",
-      "invalidTestEventCode": "Il codice evento di test può contenere solo lettere, numeri, trattini o trattini bassi (max 64)."
+      "invalidTestEventCode": "Il codice evento di test può contenere solo lettere, numeri, trattini o trattini bassi (max 64).",
+      "invalidMessagingId": "L'ID di messaggistica può contenere solo lettere, cifre, trattini o trattini bassi (max 512).",
+      "capiDisconnected": "Meta CAPI è disconnesso per questo canale. Ricollegalo prima di inviare un evento di test."
     },
     "fields": {
       "eventType": {
@@ -5840,10 +6325,21 @@
       "saved": "Codice evento di test salvato.",
       "cleared": "Codice evento di test cancellato. Gli eventi sono di nuovo attivi.",
       "send": "Invia evento di test",
-      "sent": "Evento di test in coda. Comparirà in Test events su Events Manager entro un minuto.",
-      "sendHint": "Invia un esempio di Purchase (100 USD) al contatto più recente di questo canale.",
+      "sent": "Evento di test inviato. Comparirà in Test events di Events Manager entro un minuto.",
+      "sendHint": "Invia un Purchase di esempio (100 USD) a un ID di messaggistica che inserisci. Nessun contatto salvato viene usato.",
       "activeNotice": "La modalità test è attiva: gli eventi di questo canale non vengono conteggiati nei report finché il codice non viene cancellato.",
-      "openTestEvents": "Apri Test events"
+      "openTestEvents": "Apri Test events",
+      "dialogTitle": "Invia evento di test",
+      "dialogDescription": "Un Purchase di esempio (100 USD) viene inviato con il tuo codice evento di test. Incolla l'ID di messaggistica di esempio da Events Manager → Test events → Messaging → Graph API Explorer, così nulla viene attribuito a un contatto reale.",
+      "messagingIdLabel": {
+        "messenger": "ID contatto (page_scoped_user_id)",
+        "instagram": "ID contatto (ig_sid)",
+        "whatsapp": "ID clic (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Incolla il valore di esempio da Meta",
+      "messagingIdHint": "Solo lettere, cifre, trattini e trattini bassi (max 512).",
+      "cancel": "Annulla",
+      "confirmSend": "Invia"
     }
   },
   "minigames": {
@@ -6204,5 +6700,13 @@
   },
   "accountFields": {
     "title": "Campi del bot"
+  },
+  "openLink": {
+    "title": "Apri link",
+    "invalidTitle": "Link non valido.",
+    "invalidDescription": "Questo link non è valido o è scaduto.",
+    "openZaloGroup": "Apri gruppo Zalo",
+    "openZalo": "Apri Zalo",
+    "openMessenger": "Apri Messenger"
   }
 }

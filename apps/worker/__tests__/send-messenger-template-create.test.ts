@@ -92,6 +92,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
+  publishToWorkspaceParty: mockBroadcast,
   contactInboxService: {
     recordSendFailure: mockRecordSendFailure,
     invalidateTracking: mockInvalidateTracking,
@@ -142,7 +143,12 @@ vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
+// Delivery helpers stubbed with their real contract; this file only checks
+// message creation, so the mark-read forward is a no-op here.
 vi.mock("../src/chat/handlers/send-message", () => ({
+  isDeliveredDirectMessage: ({ result }: { result: { sentCount: number } }) =>
+    result.sentCount > 0,
+  markConversationReadAfterDelivery: vi.fn().mockResolvedValue(undefined),
   sendFlowStepToChannel: mockSendFlowStep,
 }))
 
@@ -324,6 +330,7 @@ describe("processMessengerTemplate", () => {
       contactInboxId: "ci-1",
       contactId: undefined,
       at: createdAt,
+      bumpActivity: true,
     })
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],

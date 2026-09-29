@@ -1,5 +1,6 @@
 import {
   extractBearerToken,
+  REALTIME_TOKEN_PURPOSE,
   type RealtimeAudienceKind,
   verifyRealtimeToken,
 } from "@chatbotx.io/partysocket-config/auth"
@@ -12,6 +13,7 @@ const getRoomIdFromUrl = (url: string): string | undefined => {
   return segments[PARTY_PATH_ROOM_INDEX]
 }
 
+/** Verifies an inbound broadcast request from the builder. */
 export const verifyBroadcastRequest = async (
   req: Party.Request,
   audienceKind: RealtimeAudienceKind,
@@ -28,7 +30,12 @@ export const verifyBroadcastRequest = async (
   }
 
   try {
-    await verifyRealtimeToken(token, { kind: audienceKind, id: roomId }, secret)
+    await verifyRealtimeToken(
+      token,
+      { kind: audienceKind, id: roomId },
+      REALTIME_TOKEN_PURPOSE.broadcast,
+      secret,
+    )
   } catch {
     return new Response("Unauthorized", { status: 401 })
   }

@@ -1,4 +1,4 @@
-import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Command,
@@ -14,15 +14,26 @@ import {
 } from "@chatbotx.io/ui/components/ui/popover"
 import { PlusCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
 import { CreateCustomFieldDialog } from "./create-custom-field"
-import { useCustomFieldSelectOptions } from "./provider/custom-field-hook"
-import { useCustomFieldStore } from "./provider/custom-field-store-context"
+import {
+  useCustomFieldSelectOptions,
+  useCustomFields,
+  useInvalidateCustomFields,
+} from "./provider/custom-field-hook"
 
 type ContactCustomFieldManageProps = {
   workspaceId: string
   disabledIds: string[]
-  onChooseCustomField: (customFieldId: string) => void
+  onChooseCustomField: (field: {
+    id: string
+    name: string
+    type: CustomFieldType
+  }) => void
+}
+
+type ContactCustomFieldPickerContentProps = ContactCustomFieldManageProps & {
+  onClose: () => void
 }
 
 export function ContactCustomFieldManage({
@@ -31,21 +42,7 @@ export function ContactCustomFieldManage({
   onChooseCustomField,
 }: ContactCustomFieldManageProps) {
   const t = useTranslations()
-
   const [open, setOpen] = useState(false)
-  const [options, setOptions] = useState<SelectOption[]>([])
-
-  const { getAllCustomFields } = useCustomFieldStore((state) => state)
-  const customFieldOptions = useCustomFieldSelectOptions({
-    includeReserved: false,
-  })
-
-  useEffect(() => {
-    const filteredOptions = customFieldOptions.filter(
-      (option) => !disabledIds.includes(option.value),
-    )
-    setOptions(filteredOptions)
-  }, [customFieldOptions, disabledIds])
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
@@ -63,44 +60,91 @@ export function ContactCustomFieldManage({
         }
       />
       <PopoverContent>
-        <div className="mb-3 flex items-center">
-          <p className="flex-1 font-medium">{t("fields.customField.label")}</p>
-          <CreateCustomFieldDialog
-            folderId={null}
-            onSuccess={() => {
-              getAllCustomFields()
-              setOpen(false)
-            }}
-            triggerButton={
-              <Button size="sm" type="button" variant="outline">
-                <PlusCircleIcon />
-                {t("actions.add")}
-              </Button>
-            }
+        {open ? (
+          <ContactCustomFieldPickerContent
+            disabledIds={disabledIds}
+            onChooseCustomField={onChooseCustomField}
+            onClose={() => setOpen(false)}
             workspaceId={workspaceId}
           />
-        </div>
-
-        <Command className="rounded-lg border">
-          <CommandInput className="h-9" placeholder={t("actions.search")} />
-          <CommandList>
-            <CommandEmpty>{t("actions.noRecordFound")}</CommandEmpty>
-            {options.map((option) => (
-              <CommandItem
-                key={option.value}
-                onSelect={() => {
-                  onChooseCustomField(option.value)
-                  setOpen(false)
-                }}
-                value={option.value}
-              >
-                {option.icon && <option.icon className="h-4 w-4" />}
-                {option.label}
-              </CommandItem>
-            ))}
-          </CommandList>
-        </Command>
+        ) : null}
       </PopoverContent>
     </Popover>
+  )
+}
+
+function ContactCustomFieldPickerContent({
+  workspaceId,
+  disabledIds,
+  onChooseCustomField,
+  onClose,
+}: ContactCustomFieldPickerContentProps) {
+  const t = useTranslations()
+  const { data: customFields = [] } = useCustomFields(workspaceId)
+  const customFieldOptions = useCustomFieldSelectOptions({
+    includeReserved: false,
+  })
+  const invalidateCustomFields = useInvalidateCustomFields()
+  const options = useMemo(
+    () =>
+      customFieldOptions.filter(
+        (option) => !disabledIds.includes(option.value),
+      ),
+    [customFieldOptions, disabledIds],
+  )
+
+  const handleChooseCustomField = (customFieldId: string) => {
+    const customField = customFields.find((field) => field.id === customFieldId)
+    if (!customField) {
+      return
+    }
+
+    onChooseCustomField({
+      id: customField.id,
+      name: customField.name,
+      type: customField.type,
+    })
+    onClose()
+  }
+
+  const handleCreateCustomFieldSuccess = () => {
+    invalidateCustomFields()
+    onClose()
+  }
+
+  return (
+    <>
+      <div className="mb-3 flex items-center">
+        <p className="flex-1 font-medium">{t("fields.customField.label")}</p>
+        <CreateCustomFieldDialog
+          folderId={null}
+          onSuccess={handleCreateCustomFieldSuccess}
+          triggerButton={
+            <Button size="sm" type="button" variant="outline">
+              <PlusCircleIcon />
+              {t("actions.add")}
+            </Button>
+          }
+          workspaceId={workspaceId}
+        />
+      </div>
+
+      <Command className="rounded-lg border">
+        <CommandInput className="h-9" placeholder={t("actions.search")} />
+        <CommandList>
+          <CommandEmpty>{t("actions.noRecordFound")}</CommandEmpty>
+          {options.map((option) => (
+            <CommandItem
+              key={option.value}
+              onSelect={() => handleChooseCustomField(option.value)}
+              value={option.value}
+            >
+              {option.icon && <option.icon className="h-4 w-4" />}
+              {option.label}
+            </CommandItem>
+          ))}
+        </CommandList>
+      </Command>
+    </>
   )
 }

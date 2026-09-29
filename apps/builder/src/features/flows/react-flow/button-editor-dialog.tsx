@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  BUTTON_LABEL_MAX,
   type ButtonStepInput,
   type ButtonStepProps,
   type ButtonType,
@@ -12,6 +11,7 @@ import {
   type OpenWebsiteStepSchema,
   openWebsiteStepDefaultFn,
   performActionNodeDefaultFn,
+  resolveSendTextLengthLimits,
   type StartAnotherNodeStepSchema,
   type StartExternalFlowStepSchema,
   type StartExternalNodeStepSchema,
@@ -58,6 +58,19 @@ import { allSteps, DynamicStepEditor } from "./steps"
 import { allButtonsConfig } from "./steps/button-config"
 import { SpreadsheetDialogProvider } from "./steps/spreadsheet/components/spreadsheet-dialog-context"
 import { useStepStore } from "./stores/step-store-provider"
+
+/**
+ * The channel a node sends on, or `undefined` for a node type that carries no
+ * `chooseChannel` beforeStep. Narrowed with `in` because `FlowNode["data"]` is
+ * a union that React Flow's `Node<Data>` does not discriminate by `type`.
+ */
+function resolveNodeChannel(node: FlowNode | null): string | undefined {
+  const details = node?.data?.details
+  const beforeStep =
+    details && "beforeStep" in details ? details.beforeStep : null
+
+  return beforeStep && "channel" in beforeStep ? beforeStep.channel : undefined
+}
 
 function AllButtonOptions({
   onChooseButton,
@@ -255,6 +268,20 @@ export function ButtonEditorDialog() {
   const { setValue, getValues, control } = form
   const buttonType = useWatch({ control, name: "buttonType" })
   const buttonId = useWatch({ control, name: "id" })
+
+  // The dialog lives outside the node's form (frame.tsx), so the channel is
+  // read off the selected node rather than watched — `buttonPath` is already
+  // rooted at `data.details`, and it also says whether this is a node-level
+  // quick reply or a button attached to a step. The visible counter sits on
+  // the button itself (steps/button/editor.tsx); this only caps the input.
+  const isQuickReply = buttonPath?.startsWith("data.details.quickReplies")
+  const labelMax = useMemo(() => {
+    const limits = resolveSendTextLengthLimits({
+      channel: resolveNodeChannel(activeNode),
+    })
+
+    return isQuickReply ? limits.quickReplyLabel : limits.buttonLabel
+  }, [activeNode, isQuickReply])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
@@ -481,7 +508,7 @@ export function ButtonEditorDialog() {
               <InputField
                 disabled={!!buttonEditorConfig?.lockLabel}
                 label={t("fields.name.label")}
-                maxLength={BUTTON_LABEL_MAX}
+                maxLength={labelMax}
                 name="label"
                 required
               />

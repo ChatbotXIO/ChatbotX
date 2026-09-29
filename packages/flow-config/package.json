@@ -17,7 +17,8 @@
     "zod": "^4.3.6"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./field-reference": "./src/field-reference.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

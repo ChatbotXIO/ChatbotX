@@ -228,7 +228,6 @@ describe("every ads submodule declares the ads scope", () => {
         "getRule",
         "createRule",
         "updateRule",
-        "toggleRuleStatus",
         "deleteRule",
         "getFunnel",
         "getFunnelTimeseries",

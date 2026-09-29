@@ -1,4 +1,20 @@
+// Imported from the `workspace-member/permissions` subpath, NOT the
+// top-level `@chatbotx.io/business` barrel — that barrel transitively pulls
+// in `packages/database`'s `db` client and breaks in a client-flavored
+// test/bundle environment. Re-exported unchanged for existing callers.
+import {
+  hasContactsAccess,
+  hasWorkspacePermission,
+  type PermissionsInput,
+} from "@chatbotx.io/business/workspace-member/permissions"
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
+
+export {
+  hasContactsAccess,
+  hasWorkspacePermission,
+  type PermissionsInput,
+  type WorkspacePermissionKey,
+} from "@chatbotx.io/business/workspace-member/permissions"
 
 export const PERMISSION_NAV = {
   dashboard: "analytics",
@@ -8,31 +24,6 @@ export const PERMISSION_NAV = {
   sequences: "broadcast",
   products: "ecommerce",
 } as const satisfies Record<string, keyof WorkspaceMemberPermissions>
-
-export type WorkspacePermissionKey = keyof WorkspaceMemberPermissions
-
-type PermissionsInput = WorkspaceMemberPermissions | Record<string, unknown>
-
-// The `permissions` jsonb column defaults to `{}`, so at runtime any flag can be
-// absent even though the type claims every key is present. The `Record` union is
-// intentional: it accepts a possibly-partial object, and the strict `=== true`
-// checks fail closed on missing/undefined keys.
-export function hasWorkspacePermission(
-  permissions: PermissionsInput,
-  key: WorkspacePermissionKey,
-): boolean {
-  return permissions.superAdmin === true || permissions[key] === true
-}
-
-// Shared "Contacts / Inbox" access rule used by both the /contacts and /inbox
-// sections: full contacts access OR assigned-only access; superAdmin bypasses
-// via hasWorkspacePermission.
-export function hasContactsAccess(permissions: PermissionsInput): boolean {
-  return (
-    hasWorkspacePermission(permissions, "contacts") ||
-    hasWorkspacePermission(permissions, "onlyAssignedContacts")
-  )
-}
 
 // Landing candidates in sidebar nav priority order: every PERMISSION_NAV
 // segment plus `inbox`, which shares the contacts-access rule. Deriving the

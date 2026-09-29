@@ -1,4 +1,5 @@
 import {
+  broadcastAudienceRangeSchema,
   broadcastSubactions,
   channelTypes,
 } from "@chatbotx.io/database/partials"
@@ -7,7 +8,6 @@ import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
 import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
-import { contactOnSequenceWithRelations } from "@/features/contact-sequences/schema"
 import { conversationResource } from "@/features/conversations/schema/resource"
 import { inboxResource } from "@/features/inboxes/schema/resource"
 import { tagResource } from "@/features/tags/schema/resource"
@@ -93,6 +93,7 @@ export type ListContactsRequest = z.infer<typeof listContactsRequest>
 export const listContactInboxesAudiencePreviewRequest =
   listContactsRequest.extend({
     perPage: z.coerce.number().int().min(1).max(50).nullish(),
+    ...broadcastAudienceRangeSchema.shape,
   })
 export type ListContactInboxesAudiencePreviewRequest = z.infer<
   typeof listContactInboxesAudiencePreviewRequest
@@ -134,7 +135,6 @@ export const contactResponse = contactResource.and(
       .optional(),
   }),
 )
-export type ContactResponse = z.infer<typeof contactResponse>
 
 export const listContactsResponse = z.object({
   data: z.array(contactResponse),
@@ -144,14 +144,51 @@ export const listContactsResponse = z.object({
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
 
+/**
+ * Column-level row for the private contacts table — the selected columns
+ * must match `contactRepository.listTableRows` 1:1. This compile-time guard
+ * is enforced by `listContacts`'s return type (`ListContactsTableResponse`
+ * from `list<ContactTableListRow>`), not by this schema alone.
+ */
+export const contactTableRowResource = contactResource
+  .pick({
+    id: true,
+    fullName: true,
+    avatar: true,
+    createdAt: true,
+  })
+  .extend({
+    contactInboxes: z.array(
+      contactInboxResource.pick({
+        channel: true,
+        source: true,
+        contactLastReadAt: true,
+      }),
+    ),
+    conversation: conversationResource
+      .pick({ id: true })
+      .extend({
+        assignedUser: userResource.pick({ name: true, email: true }).nullish(),
+      })
+      .nullable(),
+  })
+export type ContactTableRow = z.infer<typeof contactTableRowResource>
+
+export const listContactsTableResponse = z.object({
+  data: z.array(contactTableRowResource),
+  pageCount: z.number(),
+  totalCount: z.number(),
+  totalCountCapped: z.boolean(),
+})
+export type ListContactsTableResponse = z.infer<
+  typeof listContactsTableResponse
+>
+
+// Back-compat for the deprecated `contacts.findByCustomField` alias — use
+// `contacts.list` with a `contactFilter` instead.
 export const publicListContactsResponse = z.object({
   data: z.array(contactResponse),
 })
-
-export const findContactRequest = contactResource
-  .pick({ id: true, workspaceId: true })
-  .partial()
-export type FindContactRequest = z.infer<typeof findContactRequest>
 
 export const publicListContactsByCustomFieldRequest = z.object({
   customFieldId: z
@@ -168,6 +205,11 @@ export type PublicListContactsByCustomFieldRequest = z.infer<
   typeof publicListContactsByCustomFieldRequest
 >
 
+export const findContactRequest = contactResource
+  .pick({ id: true, workspaceId: true })
+  .partial()
+export type FindContactRequest = z.infer<typeof findContactRequest>
+
 export const getContactRequest = z.object({
   workspaceId: zodBigintAsString(),
   contactId: zodBigintAsString(),
@@ -178,8 +220,6 @@ export const getContactResponse = contactResource.and(
   z.object({
     tags: z.array(tagResource),
     customFields: z.array(publicContactCustomFieldResource),
-    contactNotes: z.array(contactNoteResource),
-    contactsOnSequences: z.array(contactOnSequenceWithRelations),
   }),
 )
 export type GetContactResponse = z.infer<typeof getContactResponse>

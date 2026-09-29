@@ -1,11 +1,10 @@
 import {
+  inboxService,
   integrationService,
   isPlatformAdmin,
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
-  resolveWorkspaceAccess,
-  workspaceMemberService,
 } from "@chatbotx.io/business"
 import {
   SidebarInset,
@@ -14,6 +13,7 @@ import {
   SidebarTrigger,
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { getIdFromParams } from "@chatbotx.io/utils"
+import { CALL_CAPABLE_CHANNELS } from "@chatbotx.io/utils/channel"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -24,16 +24,21 @@ import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
 import { SupportAccessBanner } from "@/components/support-access-banner"
 import { TokenRefreshErrorDialog } from "@/components/token-refresh-error-dialog"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
+import { WorkspaceRealtimeShell } from "@/components/workspace-realtime-shell"
 import { isCloud } from "@/env"
 import { AnalyticsApiProvider } from "@/features/analytics/components/analytics-api-provider"
 import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-topic-store-context"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
-import { getCurrentUser } from "@/lib/auth/utils"
+import {
+  getCurrentUserAndAllLinkedWorkspaces,
+  getCurrentUserAndTargetWorkspace,
+} from "@/lib/auth/utils"
 import { buildWorkspaceQuotaMetrics } from "@/lib/quota-metrics"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
-import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
+import { resolveWorkspaceRealtimeGates } from "@/lib/workspace/resolve-workspace-realtime-gates"
+import { getWorkspaceBlockStateForRender } from "@/lib/workspace-quota"
 
 export default async function WorkspaceLayout({
   children,
@@ -47,43 +52,41 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
-  const user = await getCurrentUser()
-  if (!user) {
+  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+  if (!userAndWorkspaces) {
+    return notFound()
+  }
+  enforcePasswordCurrent(userAndWorkspaces.user)
+
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  if (!userAndWorkspace) {
     return notFound()
   }
 
-  enforcePasswordCurrent(user)
+  const {
+    user,
+    targetWorkspace,
+    targetWorkspaceMember,
+    isSupportSession,
+    allWorkspaces: memberWorkspaces,
+  } = userAndWorkspace
 
   // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
 
-  // Check if user is a member of the workspace
-  const [allWorkspaceMembers, { storageUrl }, platformAdmin] =
-    await Promise.all([
-      workspaceMemberService.listByUserId({ userId: user.id }),
-      getTenantSettings(),
-      isPlatformAdmin(user),
-    ])
-  const realMember = allWorkspaceMembers.find(
-    (workspaceMember) => workspaceMember.workspace.id === workspaceId,
-  )
-  const access = await resolveWorkspaceAccess({ realMember, workspaceId, user })
-  if (!access) {
-    return notFound()
-  }
-  const {
-    workspace: targetWorkspace,
-    member: targetWorkspaceMember,
-    isSupportSession,
-  } = access
+  const [{ storageUrl }, platformAdmin] = await Promise.all([
+    getTenantSettings(),
+    isPlatformAdmin(user),
+  ])
 
   const [
     { blocked, blockReason, quota, trialEndsAt },
     usage,
     tokenRefreshErrors,
+    hasCallCapableChannel,
   ] = await Promise.all([
-    resolveWorkspaceBlockState(targetWorkspace.ownerId),
+    getWorkspaceBlockStateForRender(targetWorkspace.ownerId),
     cloud
       ? quotaEnforcementService.getWorkspaceUsageSummary({
           userId: targetWorkspace.ownerId,
@@ -91,6 +94,13 @@ export default async function WorkspaceLayout({
         })
       : null,
     integrationService.findTokenRefreshErrorsByWorkspaceId(workspaceId),
+    // Gates the sidebar's Calls entry only (see `callHistoryNavVisible`):
+    // a workspace that has never connected a call-capable channel can never
+    // have call rows, so the entry would lead to a permanently empty page.
+    inboxService.hasAnyChannel({
+      workspaceId,
+      channels: CALL_CAPABLE_CHANNELS,
+    }),
   ])
 
   await enforceWorkspaceNotScheduledForDeletionFromRequest(
@@ -98,20 +108,18 @@ export default async function WorkspaceLayout({
     hasWorkspacePermission(targetWorkspaceMember.permissions, "superAdmin"),
   )
 
-  const resolveLogoUrl = (logo: string | null) =>
-    logo ? new URL(logo, storageUrl).toString() : null
-
-  const memberWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
-    ...workspaceMember.workspace,
-    logo: resolveLogoUrl(workspaceMember.workspace.logo),
-  }))
   // A support session's workspace has no real membership row, so it is never
-  // in `allWorkspaceMembers` — append it so the sidebar switcher still shows
-  // the workspace currently being viewed.
+  // in the canonical workspace list — append it so the sidebar switcher still
+  // shows the workspace currently being viewed.
   const allWorkspaces = isSupportSession
     ? [
         ...memberWorkspaces,
-        { ...targetWorkspace, logo: resolveLogoUrl(targetWorkspace.logo) },
+        {
+          ...targetWorkspace,
+          logo: targetWorkspace.logo
+            ? new URL(targetWorkspace.logo, storageUrl).toString()
+            : null,
+        },
       ]
     : memberWorkspaces
 
@@ -127,6 +135,15 @@ export default async function WorkspaceLayout({
 
   const scheduledForDeletion = isWorkspaceScheduledForDeletion(targetWorkspace)
 
+  const realtimeGates = resolveWorkspaceRealtimeGates({
+    permissions: targetWorkspaceMember.permissions,
+    isSupportSession,
+    scheduledForDeletion,
+    cloud,
+    blocked,
+    hasCallCapableChannel,
+  })
+
   return (
     // `has-data-full-bleed:h-svh` caps the shell at the viewport for pages
     // that own the whole screen (the inbox — see `components/full-bleed.tsx`).
@@ -141,6 +158,7 @@ export default async function WorkspaceLayout({
     >
       <AppSidebar
         allWorkspaces={allWorkspaces}
+        callHistoryNavVisible={realtimeGates.callHistoryNavVisible}
         isPlatformAdmin={platformAdmin}
         isSuperAdmin={isSuperAdmin(user)}
         permissions={targetWorkspaceMember.permissions}
@@ -178,7 +196,13 @@ export default async function WorkspaceLayout({
               autoInitialize={false}
               workspaceId={workspaceId}
             >
-              {children}
+              <WorkspaceRealtimeShell
+                callHistoryEnabled={realtimeGates.callHistoryEnabled}
+                callingEnabled={realtimeGates.callingEnabled}
+                realtimeEnabled={realtimeGates.realtimeEnabled}
+              >
+                {children}
+              </WorkspaceRealtimeShell>
             </CouponTopicStoreProvider>
           </AnalyticsApiProvider>
         </main>

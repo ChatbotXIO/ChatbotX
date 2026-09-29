@@ -29,7 +29,7 @@ export function deriveUrls(
 
   return {
     appUrl: base,
-    wsUrl: `${base}${WS_PATH}`,
+    publicRealtimeUrl: `${base}${WS_PATH}`,
     storageUrl,
   }
 }

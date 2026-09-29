@@ -1,4 +1,4 @@
-import { uploadTiktokMedia } from "../../../apis/message"
+import { uploadAttachment } from "../../../apis/attachment"
 import type { TiktokSendMessageRequest } from "../../../schema"
 
 export const uploadAndBuildImagePayload = async (
@@ -7,7 +7,7 @@ export const uploadAndBuildImagePayload = async (
   conversationId: string,
   imageUrl: string,
 ): Promise<TiktokSendMessageRequest> => {
-  const mediaId = await uploadTiktokMedia(accessToken, businessId, imageUrl)
+  const mediaId = await uploadAttachment(accessToken, businessId, imageUrl)
   return {
     business_id: businessId,
     recipient_type: "CONVERSATION",

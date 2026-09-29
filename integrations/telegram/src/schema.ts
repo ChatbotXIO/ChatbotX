@@ -62,11 +62,16 @@ export const telegramFileSchema = z.object({
 })
 export type TelegramFile = z.infer<typeof telegramFileSchema>
 
+// A static sticker is a .webp, `is_video` a .webm and `is_animated` a Lottie
+// .tgs that no browser renders — only its `thumbnail` can be shown for that one.
 export const telegramStickerSchema = z.object({
   file_id: z.string(),
   file_unique_id: z.string(),
   width: z.number(),
   height: z.number(),
+  is_animated: z.boolean().optional(),
+  is_video: z.boolean().optional(),
+  thumbnail: telegramPhotoSizeSchema.optional(),
 })
 export type TelegramSticker = z.infer<typeof telegramStickerSchema>
 
@@ -82,6 +87,8 @@ export const telegramMessageSchema = z.object({
   audio: telegramFileSchema.optional(),
   video: telegramFileSchema.optional(),
   voice: telegramFileSchema.optional(),
+  /** A GIF (sent as mp4). Telegram also fills `document` for the same file. */
+  animation: telegramFileSchema.optional(),
   sticker: telegramStickerSchema.optional(),
 })
 export type TelegramMessage = z.infer<typeof telegramMessageSchema>

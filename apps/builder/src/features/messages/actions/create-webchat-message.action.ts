@@ -2,6 +2,7 @@
 
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
+  broadcastToWorkspaceParty,
   contactInboxService,
   contactService,
   conversationService,
@@ -38,8 +39,6 @@ import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
 import {
-  ChatJobAction,
-  chatQueue,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
@@ -315,22 +314,15 @@ export async function handleCreateWebchatMessage({
       sourceId: newMessage.sourceId ?? undefined,
     })
 
+    await broadcastToWorkspaceParty(newMessage.workspaceId, {
+      eventType: RealtimeEventType.messageCreated,
+      data: {
+        ...newMessage,
+        clientId: parsedInput.clientId,
+      },
+    })
+
     const promises: Promise<unknown>[] = []
-    promises.push(
-      chatQueue.add(ChatJobAction.broadcastEvent, {
-        type: ChatJobAction.broadcastEvent,
-        data: {
-          workspaceId: newMessage.workspaceId,
-          event: {
-            eventType: RealtimeEventType.messageCreated,
-            data: {
-              ...newMessage,
-              clientId: parsedInput.clientId,
-            },
-          },
-        },
-      }),
-    )
 
     const additionalAttributes =
       conversation.additionalAttributes as unknown as ConversationAttributes
@@ -440,12 +432,14 @@ async function getConversationFromInput(
   }
 
   // New contact. Resolve the owner (owner-derived, never request-derived) and
-  // gate on MAC — the billing hard limit — atomically with the insert so
-  // concurrent first-message requests cannot both pass the gate and overrun the
-  // limit. MAC is consumed here (not via the async message event) and the
-  // `ContactActiveMonthly` presence row written inside the same transaction so
-  // the later `message:received` event dedups instead of double-counting. The
-  // info-only `contacts` metric is recorded inside `createNewContactWithMac`.
+  // gate on MAC for billing. It is a soft cap on resetting plans: admit
+  // atomically in Redis, create in a separate transaction, then commit or
+  // revoke the slot. Lifetime / period-less owners and
+  // `QUOTA_MAC_ADMISSION=lock` keep the distributed-lock gate. MAC is consumed
+  // here (not via the async message event) and the
+  // `ContactActiveMonthly` presence row is written inside the same transaction
+  // so the later `message:received` event dedups instead of double-counting.
+  // The info-only `contacts` metric is recorded inside `createNewContactWithMac`.
   const ws = workspace
   if (!ws) {
     throw new ChatbotXException("Workspace not found", "notFound", 404)

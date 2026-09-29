@@ -81,7 +81,7 @@ export const mediaLibraryPublicRouter = {
 
   renameFolder: workspaceTokenAuthAPI
     .route({
-      method: "PATCH",
+      method: "PUT",
       path: "/v1/media-library/folders/{folderId}",
       summary: "Rename media library folder",
       description:

@@ -1,4 +1,4 @@
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -36,7 +36,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
-        await fbCommentAutomationService.list({
+        await commentAutomationService.list({
           ...input,
           workspaceId: context.workspace.id,
           includeAllFolders: true,
@@ -49,7 +49,7 @@ export const fbCommentsPublicRouter = {
       path: "/v1/fb-comments/{id}",
       summary: "Get FB comment automation",
       description:
-        "Returns one automation's trigger and reply settings. Use `fbComments.list` to find its id first.",
+        "Use this to inspect comment automation settings: public reply text and hide-comments condition. Returns one automation's trigger and reply settings. Use `fbComments.list` to find its id first.",
       tags: ["FB Comments"],
     })
     .input(getFbCommentPublicRequest)
@@ -57,7 +57,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
-        await fbCommentAutomationService.findMessengerOrFail({
+        await commentAutomationService.findMessengerOrFail({
           workspaceId: context.workspace.id,
           id: input.id,
         }),
@@ -78,7 +78,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
-        await fbCommentAutomationService.createMessenger({
+        await commentAutomationService.createMessenger({
           workspaceId: context.workspace.id,
           data: input,
         }),
@@ -86,11 +86,11 @@ export const fbCommentsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/fb-comments/{id}",
       summary: "Update FB comment automation",
       description:
-        "Changes an existing automation's trigger or reply settings. Call `fbComments.get` to inspect current values first.",
+        "Use this to change comment automation's public reply text or hide-comments condition. Call `fbComments.get` to inspect current values first.",
       tags: ["FB Comments"],
     })
     .input(updateFbCommentPublicRequest)
@@ -98,7 +98,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      return await fbCommentAutomationService.updateMessenger(
+      return await commentAutomationService.updateMessenger(
         { workspaceId: context.workspace.id, id },
         data,
       )
@@ -117,7 +117,7 @@ export const fbCommentsPublicRouter = {
     .input(deleteFbCommentPublicRequest)
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await fbCommentAutomationService.deleteMessenger({
+      await commentAutomationService.deleteMessenger({
         workspaceId: context.workspace.id,
         id: input.id,
       })
@@ -129,7 +129,7 @@ export const fbCommentsPublicRouter = {
       path: "/v1/fb-comments/facebook-posts",
       summary: "List Facebook posts eligible for FB comment automation",
       description:
-        "Returns posts from the workspace's connected Facebook pages that `fbComments.create` can target.",
+        "Use this to list posts to choose from before setting up comment automation. Returns posts from the workspace's connected Facebook pages that `fbComments.create` can target.",
       tags: ["FB Comments"],
     })
     .output(listFacebookPostsPublicResponse)

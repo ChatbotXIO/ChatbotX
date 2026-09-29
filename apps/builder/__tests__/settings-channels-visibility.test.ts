@@ -15,11 +15,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ever narrows CREATABLE_CHANNELS (which never includes smtp).
 // ---------------------------------------------------------------------------
 
-const { mockResolveVisibleChannels, mockDistinctConnectedChannels } =
-  vi.hoisted(() => ({
-    mockResolveVisibleChannels: vi.fn(),
-    mockDistinctConnectedChannels: vi.fn(),
-  }))
+const {
+  mockResolveVisibleChannels,
+  mockDistinctConnectedChannels,
+  mockFilterPreviewChannels,
+} = vi.hoisted(() => ({
+  mockResolveVisibleChannels: vi.fn(),
+  mockDistinctConnectedChannels: vi.fn(),
+  mockFilterPreviewChannels: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
   inboxService: {
@@ -31,6 +35,16 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     find: vi.fn(async () => ({ id: "ws-1", ownerId: "owner-1" })),
   },
+}))
+
+// The pending-approval channel allowlist (Threads) reads the session. Most of
+// these cases cover tenant channel policy rather than that gate, so the mock
+// defaults to a "previewer" that passes every channel through untouched; the
+// grandfathering case overrides it to drop threads.
+vi.mock("@/lib/workspace/preview-channels", () => ({
+  PREVIEW_CHANNELS: ["threads"],
+  canSeePreviewChannels: vi.fn(async () => true),
+  filterPreviewChannels: mockFilterPreviewChannels,
 }))
 
 vi.mock("@/lib/platform-credential-owner", () => ({
@@ -67,6 +81,9 @@ const { default: SettingsChannelsLayout } = await import(
 describe("settings channels layout visibility", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockFilterPreviewChannels.mockImplementation(async (channels: string[]) => [
+      ...channels,
+    ])
   })
 
   test("smtp always renders even when it has no connected inbox and creatable-channel policy is empty", async () => {
@@ -95,5 +112,33 @@ describe("settings channels layout visibility", () => {
     expect(html).toContain(">whatsapp<")
     expect(html).toContain(">zalo<")
     expect(html).not.toContain(">tiktok<")
+  })
+
+  test("grandfathers a connected pending-approval channel for a non-allowlisted user", async () => {
+    // Threads is hidden from everyone outside the preview allowlist, but a
+    // workspace that connected one during the preview must keep its settings
+    // row — that page is the only place ThreadsDisconnect renders, so dropping
+    // it would leave a live inbox with no way to disconnect it.
+    mockFilterPreviewChannels.mockImplementation(async (channels: string[]) =>
+      channels.filter((channel) => channel !== "threads"),
+    )
+    mockResolveVisibleChannels.mockResolvedValue(["threads", "whatsapp"])
+    mockDistinctConnectedChannels.mockResolvedValue(["threads"])
+
+    const { resolveChannelPolicy } = await import(
+      "../src/lib/workspace/resolve-visible-channels"
+    )
+    const policy = await resolveChannelPolicy("ws-1")
+
+    // Not offered for creation...
+    expect(policy?.creatable).not.toContain("threads")
+    // ...but still visible, so `requireVisibleChannel` does not 404 it.
+    expect(policy?.visibleChannels).toContain("threads")
+
+    const tree = await SettingsChannelsLayout({
+      params: Promise.resolve({ workspaceId: "ws-1" }),
+    })
+
+    expect(renderToStaticMarkup(tree)).toContain(">threads<")
   })
 })

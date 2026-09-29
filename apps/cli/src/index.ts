@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import type { Argv } from "yargs"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
@@ -239,7 +240,7 @@ const main = async (): Promise<void> => {
     .demandCommand(1, "You need at least one command")
     .help()
     .alias("h", "help")
-    .version("0.1.0")
+    .version(packageJson.version)
     .alias("v", "version")
     .parseAsync()
 }

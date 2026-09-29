@@ -19,7 +19,7 @@ import type {
   InstagramActions,
   InstagramAuthValue,
   InstagramConfig,
-} from "./schemas"
+} from "./schema"
 
 const config: IntegrationDefinition<
   InstagramConfig,

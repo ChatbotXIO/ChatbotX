@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest"
 import {
+  DEFAULT_NEW_STEP_DELAY,
+  DEFAULT_NEW_STEP_DELAY_HOURS,
   delayViewToStored,
   isDelayUnit,
   isDelayValueInRange,
@@ -541,5 +543,33 @@ describe("delayViewToStored", () => {
       delayUnit: "days",
       specificDateTime: null,
     })
+  })
+})
+
+describe("DEFAULT_NEW_STEP_DELAY", () => {
+  test("defaults a new step to 3 hours, not 1 day", () => {
+    expect(DEFAULT_NEW_STEP_DELAY).toEqual({
+      delayDays: 0,
+      delayMinutes: 180,
+      delayUnit: "hours",
+    })
+    expect(DEFAULT_NEW_STEP_DELAY_HOURS).toBe(3)
+  })
+
+  test("is internally consistent and displays as 3 hours", () => {
+    expect(
+      isStoredDelayConsistent({
+        delayDays: DEFAULT_NEW_STEP_DELAY.delayDays,
+        delayMinutes: DEFAULT_NEW_STEP_DELAY.delayMinutes,
+        delayUnit: DEFAULT_NEW_STEP_DELAY.delayUnit,
+      }),
+    ).toBe(true)
+
+    const view = stepToDelayView({
+      delayDays: DEFAULT_NEW_STEP_DELAY.delayDays,
+      delayMinutes: DEFAULT_NEW_STEP_DELAY.delayMinutes,
+      delayUnit: DEFAULT_NEW_STEP_DELAY.delayUnit,
+    })
+    expect(view).toMatchObject({ unit: "hours", value: 3 })
   })
 })

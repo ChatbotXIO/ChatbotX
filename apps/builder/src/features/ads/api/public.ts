@@ -112,11 +112,11 @@ const adsConversionRulesPublicRouter = {
 
   updateRule: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/ads/conversion-rules/{id}",
       summary: "Update Ads conversion rule",
       description:
-        "Changes an existing conversion rule's configuration. Call `ads.getRule` to inspect current values first.",
+        "Changes an existing conversion rule's configuration. Fields omitted from the body are left unchanged. This is also how a rule is enabled or disabled: pass `enabled` on its own to toggle status without touching other fields. Call `ads.getRule` to inspect current values first.",
       tags: ["Ads"],
     })
     .input(adsConversionRuleIdParams.and(updateAdsConversionRulePublicRequest))
@@ -129,13 +129,40 @@ const adsConversionRulesPublicRouter = {
       }),
     ),
 
+  // Deprecated — use `ads.updateRule` instead. Kept for backward
+  // compatibility with the pre-consolidation `PUT` method on this path;
+  // hidden from MCP/CLI tool listings.
+  updateRuleLegacy: workspaceTokenAuthAPI
+    .route({
+      method: "PUT",
+      path: "/v1/ads/conversion-rules/{id}",
+      summary: "Update Ads conversion rule",
+      description:
+        "Deprecated — this route used PUT to replace the whole rule; use `ads.updateRule` (PATCH) instead, which leaves omitted fields unchanged.",
+      tags: ["Ads"],
+      deprecated: true,
+    })
+    .input(adsConversionRuleIdParams.and(updateAdsConversionRulePublicRequest))
+    .output(adsConversionRulePublicResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) =>
+      adsConversionService.update({
+        ...input,
+        workspaceId: context.workspace.id,
+      }),
+    ),
+
+  // Deprecated — use `ads.updateRule` with just `enabled` instead. Kept for
+  // backward compatibility with the pre-consolidation `/status` path;
+  // hidden from MCP/CLI tool listings.
   toggleRuleStatus: workspaceTokenAuthAPI
     .route({
       method: "PATCH",
       path: "/v1/ads/conversion-rules/{id}/status",
       summary: "Enable or disable Ads conversion rule",
       description:
-        "Toggles whether a conversion rule is active without changing its other fields.",
+        "Deprecated — toggling status is now just `ads.updateRule` with only `enabled` in the body; this dedicated `/status` route no longer exists on the canonical surface.",
+      deprecated: true,
       tags: ["Ads"],
     })
     .input(adsConversionRuleIdParams.and(toggleAdsConversionRulePublicRequest))

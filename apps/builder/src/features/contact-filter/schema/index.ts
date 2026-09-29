@@ -46,6 +46,7 @@ export {
 } from "./ctwa-retarget-filter"
 export {
   type CustomFieldCondition,
+  convertCustomFieldTypeToConditionType,
   customFieldConditionSchema,
 } from "./custom-field-filter"
 export {

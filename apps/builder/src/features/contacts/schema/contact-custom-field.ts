@@ -37,6 +37,13 @@ export type DeleteContactCustomFieldsRequest = z.infer<
   typeof deleteContactCustomFieldsRequest
 >
 
+export const resetContactCustomFieldsRequest = z.object({
+  contactId: zodBigintAsString(),
+})
+export type ResetContactCustomFieldsRequest = z.infer<
+  typeof resetContactCustomFieldsRequest
+>
+
 export const listContactCustomFieldsRequest = z.object({
   workspaceId: zodBigintAsString(),
   contactId: zodBigintAsString(),

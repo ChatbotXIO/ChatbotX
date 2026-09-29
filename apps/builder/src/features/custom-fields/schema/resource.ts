@@ -1,3 +1,4 @@
+import { customFieldTypes } from "@chatbotx.io/database/partials"
 import {
   createSelectSchema,
   customFieldModel,
@@ -8,7 +9,7 @@ export const customFieldResource = createSelectSchema(customFieldModel, {
   id: z.string(),
   workspaceId: z.string(),
   folderId: z.string().nullable(),
-  // type: z.string(),
+  type: customFieldTypes,
 })
 export type CustomFieldResource = z.infer<typeof customFieldResource>
 

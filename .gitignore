@@ -61,3 +61,7 @@ CLAUDE.md
 
 .pnpm-store/
 .plans/
+
+# MCP business-evaluation harness output (episodes, manifests, server
+# snapshots) — regenerated per run via `pnpm --filter chatbotx-mcp eval:business`.
+apps/mcp-server/evals/out/

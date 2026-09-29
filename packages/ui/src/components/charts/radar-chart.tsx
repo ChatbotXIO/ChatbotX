@@ -13,6 +13,7 @@ import {
   Radar,
   RadarChart as RC,
 } from "recharts"
+import { useChartCardProvider } from "./chart-card-context"
 import ChartHeader from "./chart-header"
 import { OPACITY } from "./constants"
 
@@ -35,6 +36,7 @@ export function RadarChart({
   data,
   helpText,
 }: CustomRadarChartProps) {
+  const hasCardProvider = useChartCardProvider()
   const maxValue = data.reduce(
     (max, item) => (item.value > max ? item.value : max),
     0,
@@ -43,9 +45,8 @@ export function RadarChart({
     ...item,
     fullMark: maxValue,
   }))
-
-  return (
-    <Card className="flex-1">
+  const content = (
+    <>
       <ChartHeader helpText={helpText} title={title} />
       <CardContent>
         <ChartContainer
@@ -67,6 +68,8 @@ export function RadarChart({
           </RC>
         </ChartContainer>
       </CardContent>
-    </Card>
+    </>
   )
+
+  return hasCardProvider ? content : <Card className="flex-1">{content}</Card>
 }

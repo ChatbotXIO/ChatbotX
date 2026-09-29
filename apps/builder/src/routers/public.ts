@@ -36,7 +36,10 @@ import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
 import { smtpIntegrationsPublicRouter } from "@/features/integration-smtp/api/public"
 import { webchatsPublicRouter } from "@/features/integration-webchat/api/public"
-import { templateMessagesPublicRouter } from "@/features/integration-whatsapp/message-templates/api/public"
+import {
+  templateMessagesPublicRouter,
+  whatsappTemplatesPublicRouter,
+} from "@/features/integration-whatsapp/message-templates/api/public"
 import { zaloChannelsPublicRouter } from "@/features/integration-zalo/api/public"
 import { integrationsPublicRouter } from "@/features/integrations/api/public"
 import { mediaLibraryPublicRouter } from "@/features/media-library/api/public"
@@ -114,6 +117,7 @@ export const publicRouter = {
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,
   webhooks: webhooksPublicRouter,
+  whatsappTemplates: whatsappTemplatesPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,
 }

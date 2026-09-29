@@ -336,6 +336,7 @@
       "message": "Din seneste betaling mislykkedes. Opdater din betalingsmetode for at holde dit arbejdsområde aktivt."
     },
     "trial": {
+      "planName": "Prøveperiode",
       "daysLeft": "Prøveperiode: {days} dage tilbage",
       "endsTomorrow": "Prøveperioden slutter i morgen",
       "expired": "Din prøveperiode er udløbet — opgrader for at holde dit arbejdsområde aktivt",
@@ -449,7 +450,6 @@
       "audienceFilter": "Målgruppefilter",
       "noAudienceFilter": "Intet målgruppefilter",
       "template": "Skabelon",
-      "noTemplate": "Ingen skabelon",
       "integration": "Integration"
     },
     "filters": {
@@ -508,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Opgrader dit abonnement",
+      "sendRate": "Dit nuværende {plan}-abonnement understøtter broadcasts med en maksimal sendehastighed på {rate} beskeder pr. minut. Opgrader dit abonnement for at sende broadcasts op til {multiplier}x hurtigere.",
+      "activeBroadcasts": "Dit nuværende {plan}-abonnement kører {max, plural, one {# broadcast} other {# broadcasts}} ad gangen. Opgrader dit abonnement for at køre flere broadcasts samtidigt."
+    },
+    "sendLimit": {
+      "title": "Grænse",
+      "hint": "Lad stå tomt for at sende til alle matchende kontakter.",
+      "rateHint": "Lad stå tomt for at bruge standardhastigheden.",
+      "rangeSummary": "Kontakter #{start} – #{end}",
+      "rangeFromSummary": "Fra kontakt #{start}",
+      "rangeLabel": "Kontaktinterval",
+      "fromLabel": "Fra",
+      "toLabel": "Til",
+      "allPlaceholder": "Alle",
+      "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen"
     }
   },
   "commentAutomation": {
@@ -536,7 +553,26 @@
       "keywordsNotMatched": "Nøgleord matchede ikke",
       "contactNotNew": "Kontakten er ikke ny",
       "alreadyRepliedOnPost": "Allerede besvaret på dette opslag",
-      "engagedOnOtherPost": "Har allerede interageret på et andet opslag"
+      "engagedOnOtherPost": "Har allerede interageret på et andet opslag",
+      "mentionCountNotMatched": "Antal omtaler matchede ikke"
+    },
+    "replyTo": {
+      "mentions": "Kommentarer med nok omtaler",
+      "mentionCount": "Antal taggede personer",
+      "mentionCountDescription": "Kun kommentarer, der tagger mindst så mange personer (@navn), matcher.",
+      "mentionCountOption": "{count, plural, one {# person} other {# personer}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Kommentarer lig med",
+      "contain": "Kommentarer der indeholder"
+    },
+    "hideComments": {
+      "hasGif": "Indeholder GIF",
+      "hasEmoji": "Indeholder emoji"
+    },
+    "trackUserTags": {
+      "label": "Spor om en bruger tagger andre brugere",
+      "descriptionText": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
     }
   },
   "condition": {
@@ -727,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(valgfri)",
     "marketingMessagesConfigId": {
       "label": "Konfigurations-ID for marketingbeskeder",
       "description": "Konfigurations-ID til Facebook Login for Business, der bruges til at anmode om tilladelsen marketing_messages_messenger."
@@ -1095,6 +1132,19 @@
     },
     "contactId": {
       "label": "Kontakt Id"
+    },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo Bruger-ID",
+      "telegramChatId": "Telegram Chat-ID",
+      "tiktokUserId": "TikTok Bruger-ID",
+      "threadsUsername": "Threads-brugernavn",
+      "webchatGuestId": "Webchat Gæste-ID",
+      "externalId": "Eksternt ID",
+      "channelId": "Kanal-ID"
     },
     "flow": {
       "label": "Flow"
@@ -1997,11 +2047,16 @@
       "clientId": "Client Id",
       "clientSecret": "Client Secret",
       "displayName": "Display Navn",
+      "needsReauthorizationForComments": "Denne forbindelse blev godkendt før kommentarautomatisering. Tilslut igen for at begynde at modtage kommentarhændelser.",
       "connectInstructions": {
         "step1": "Opret a TikTok app at <link>developers.tiktok.com</link>.",
         "step2": "Authorize din account og kopiér den <strong>access token</strong>, <strong>åbn Id</strong>, og <strong>client secret</strong>.",
         "step3": "Paste den credentials below til forbind."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Drip"
@@ -2192,6 +2247,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta App Secret (valgfrit)",
+      "description": "Aktiverer webhook-signaturverificering for denne manuelle forbindelse. Find den i din Meta-apps dashboard under Indstillinger > Grundlæggende."
+    },
+    "lastCallRecorded": {
+      "label": "Seneste opkaldsoptagelse"
+    },
+    "lastCallTranscript": {
+      "label": "Seneste opkaldstransskription"
+    },
+    "sendRatePerMinute": {
+      "label": "Beskeder pr. minut"
     }
   },
   "flows": {
@@ -2308,6 +2376,8 @@
       "transferConversationToHuman": "Transfer Samtale til Menneskelig",
       "unarchiveConversation": "Fjern fra arkiv Samtale",
       "unassignConversation": "Unassign Samtale",
+      "markConversationAsUnread": "Marker samtale som ulæst",
+      "markConversationAsRead": "Marker samtale som læst",
       "unfollowConversation": "Unfollow Samtale",
       "unsubscribeBroadcast": "Unsubscribe Broadcast",
       "getUserData": "Get Bruger Data",
@@ -2332,7 +2402,9 @@
       "import": "Importer flow",
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
-      "importJsonOnly": "Kun JSON-filer"
+      "importJsonOnly": "Kun JSON-filer",
+      "whatsappCallButton": "Ring på WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2448,6 +2520,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Denne kanal kan ikke sende denne medietype – trinnet springes over der. Fjern det, eller skift noden til en kanal der understøtter det.",
       "buttonsSkippedOnChannel": "Denne kanal kan ikke sende knapper sammen med en mediebesked – de springes over der. Læg dem i stedet på et efterfølgende teksttrin."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Rediger Knap",
+      "buttonLabel": "Knap Etiket"
     }
   },
   "folders": {
@@ -2669,7 +2745,8 @@
       "adAccountFilter": {
         "all": "Alle annoncekonti",
         "label": "Annoncekonto",
-        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne."
+        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne.",
+        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -3000,10 +3077,10 @@
     }
   },
   "home": {
-    "welcomeBack": "Welcome tilbage, {name}",
-    "subtitle": "Pick en arbejdsområde til jump tilbage i, eller opret en ny one.",
-    "noWorkspaces": "Du don't have vilkårlig arbejdsområder yet.",
-    "owner": "Owner"
+    "welcomeBack": "Velkommen tilbage, {name}",
+    "subtitle": "Vælg et arbejdsområde for at fortsætte, eller opret et nyt.",
+    "noWorkspaces": "Du har endnu ingen arbejdsområder.",
+    "owner": "Ejer"
   },
   "notFound": {
     "title": "Siden blev ikke fundet",
@@ -3024,6 +3101,10 @@
       "tiktok": "Denne TikTok konto er allerede forbundet til another arbejdsområde.",
       "whatsapp": "Denne WhatsApp nummer er allerede forbundet til another arbejdsområde.",
       "zalo": "Denne Zalo OA er allerede forbundet til another arbejdsområde."
+    },
+    "missingScopes": {
+      "generic": "Forbindelsen blev annulleret: nogle tilladelser blev ikke givet. Tilslut igen, og accepter alle anmodede tilladelser.",
+      "tiktok": "TikTok-forbindelsen blev annulleret: nogle tilladelser blev ikke givet. Tilslut igen, og accepter alle anmodede tilladelser."
     },
     "reconnect": {
       "success": "Kanal reconnected successfully.",
@@ -3181,6 +3262,7 @@
     "changeLikeState": "Change like state",
     "changeHideState": "Change hide state",
     "commentHidden": "Denne kommentar var hidden",
+    "commentMediaUnavailable": "Denne kommentar indeholder en GIF, et klistermærke eller et billede, der ikke kan vises",
     "messageDeleted": "Den besked har been slettet.",
     "sendFailed": "Afsendelse mislykkedes",
     "repliedToStory": "Svarede på din story",
@@ -3221,7 +3303,10 @@
     "deleteFeature": "Slet {feature}",
     "resetFeature": "Nulstil {feature}",
     "resetConfirmation": "Dette vil rydde værdierne for de valgte {feature}, så de bliver tomme.\nDenne handling kan ikke fortrydes.",
+    "resetAllConfirmation": "Dette vil rydde værdierne for alle {feature} for denne kontakt, så de bliver tomme.\nDenne handling kan ikke fortrydes.",
     "resetSuccess": "{feature} nulstillet",
+    "clearFeature": "Ryd {feature}",
+    "clearSuccess": "{feature} ryddet",
     "deleteConfirmation": "Er du absolutely sure?\nDenne action kan ikke være undone.\nDenne vil permanently slet din {feature} fra our servers.",
     "addFeature": "Tilføj {feature}",
     "signOutConfirmation": "Er du sikker du want til log out?",
@@ -3272,13 +3357,27 @@
     "historyDepth": "({count})",
     "none": "Ingen",
     "tiktokCardTitleTooLong": "TikTok vil forkorte denne besked: når der er tilføjet knapper, sendes kun de første 40 tegn. Forkort beskeden, eller fjern knapperne.",
+    "sendTextTooLongForChannel": "Denne besked er længere, end kanalen tillader. Forkort den, eller peg denne blok mod en kanal med en højere grænse.",
     "waTemplateMpmNoProducts": "Tilføj mindst ét produkt til denne multiprodukt-knap før udgivelse.",
     "waTemplateMpmTooManySections": "En multiprodukt-knap kan højst have 10 sektioner. Fjern nogle sektioner før udgivelse.",
     "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
     "mediaStepUnsupported": "Denne kanal kan ikke sende denne medietype. Fjern trinnet, eller peg noden mod en kanal der understøtter det.",
-    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette."
+    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
+    "voiceCall": "Taleopkald",
+    "voiceCallDuration": "Taleopkald · {duration}",
+    "missedVoiceCall": "Ubesvaret taleopkald",
+    "declinedVoiceCall": "Afvist taleopkald",
+    "voiceCallFailed": "Mislykket taleopkald",
+    "unansweredVoiceCall": "Intet svar",
+    "canceledVoiceCall": "Annulleret opkald",
+    "acceptedCallPermission": "Accepterede anmodning om opkaldstilladelse",
+    "declinedCallPermission": "Afviste anmodning om opkaldstilladelse",
+    "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
+    "warning": "Warning!",
+    "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt.",
+    "callFailed": "Opkaldsproblem"
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -3348,6 +3447,7 @@
       "noConnectablePagesDescription": "Du er ikke administrator for denne side",
       "bmLookupFailedTitle": "Business Manager pages may være missing",
       "bmLookupFailedDescription": "Forbind igen Messenger og grant Business Manager access so pages managed through a Business Manager kan være listed.",
+      "loadFailed": "Kunne ikke indlæse dine Facebook-sider",
       "alreadyConnectedNote": "Denne page er allerede forbundet",
       "notAdminNote": "Du er ikke administrator for denne side",
       "tryAgain": "Try reconnecting"
@@ -3741,7 +3841,8 @@
       "profile": "Profil",
       "usefulLinks": "Useful Links",
       "conversionsApi": "Ads Optimization",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Administrer din WhatsApp konto",
@@ -3873,6 +3974,259 @@
     "transferPhoneNumber": "Overfør telefon fra another Whatsapp udbyder",
     "selectPage": {
       "tryAgain": "Try reconnecting"
+    },
+    "manualAppSecretMissingNotice": "Webhook-signaturer bliver ikke verificeret, før du tilføjer din Meta App Secret.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp tillader kun 2 anmodninger om opkaldstilladelse pr. kontakt hver 7. dag. Denne kontakt har nået grænsen — prøv igen senere.",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta afviste ændringen af opkaldsindstillingerne",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
+        "bicUnavailable": "Virksomhedsinitieret opkald er ikke tilgængeligt for dette land",
+        "callAlreadyInProgress": "Der er allerede et opkald i gang til denne kontakt",
+        "hangupFailed": "Kunne ikke afslutte opkaldet",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Kunne ikke afvise WhatsApp-opkaldet",
+        "voipHangupFailed": "Kunne ikke afslutte WhatsApp-opkaldet",
+        "voipNotReservedAgent": "Du er ikke den agent, der er tildelt dette opkald",
+        "voipCallAccessDenied": "Du har ikke tilladelse til at håndtere dette opkald",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Det opkald ringer ikke længere",
+        "transcriptionRequiresRecording": "Slå optagelse af opkald til, før du slår transskription til.",
+        "supportSessionCallingBlocked": "Opkald er ikke tilgængeligt under en supportsession for platformen.",
+        "callingAccessDenied": "Du har ikke adgang til opkald i dette arbejdsområde.",
+        "callArtifactAccessDenied": "Du har ikke tilladelse til at se dette opkald.",
+        "callHistoryAccessDenied": "Du har ikke adgang til opkaldshistorik i denne arbejdsplads."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Optag opkald, der besvares eller foretages i indbakken, og føj optagelsen til samtalen.",
+      "recordingInProgress": "Optagelse anmodet",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta afviste ændringen",
+      "callContact": "Ring via WhatsApp",
+      "dialing": "Ringer op…",
+      "startCall": "Start WhatsApp-opkald",
+      "retentionLabel": "Opbevaring af optagelser (dage)",
+      "retentionHelper": "Hvor længe optagelser af opkald opbevares, før de slettes permanent.",
+      "transcriptionLabel": "Transskriber opkald",
+      "transcriptionHelper": "Føj en transskription af hvert optaget opkald til samtalen.",
+      "preflight": {
+        "title": "Opkaldsberettigelse",
+        "appSubscriptionMissing": "Konfigurer først WhatsApp-webhooken for denne app i Meta App Dashboard, og forsøg derefter igen.",
+        "appSubscriptionFailed": "Kunne ikke bekræfte appens 'calls'-webhook-abonnement. Forsøg igen om lidt.",
+        "callsNotSubscribed": "Denne app abonnerer ikke på 'calls'-webhookfeltet, så opkaldshændelser kan ikke nå ChatbotX (Meta-fejl 138018: tekniske forudsætninger er ikke opfyldt — sørg for, at mindst én app, der abonnerer på WABA'en, også har opkalds-webhookfeltet).",
+        "fixButton": "Ret",
+        "fixSuccess": "Appen abonnerer nu på WhatsApp-opkalds-webhooks.",
+        "manualIntegrationNotice": "Dette nummer blev forbundet manuelt og har ingen app-legitimationsoplysninger her. Abonnér på 'calls'-webhookfeltet for din app i Meta App Dashboard.",
+        "coexistenceWarning": "Dette nummer bruger coexistence med WhatsApp Business-appen, hvilket Meta ikke understøtter til opkald. Flyt det til kun Cloud API."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Vis transskription",
+        "hideTranscript": "Skjul transskription"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp har ikke aktiveret virksomhedsinitierede opkald for dette nummer. Det afhænger af tilgængelighed i landet og kontoberettigelse hos Meta og kan derfor ikke slås til her.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Mikrofonadgang blev nægtet. Tillad mikrofonadgang i browserindstillingerne, og forsøg igen.",
+        "micNotFound": "Ingen mikrofon blev fundet. Tilslut en mikrofon, og forsøg igen.",
+        "callAccessDenied": "Du har ikke tilladelse til at ringe til denne kontakt."
+      },
+      "card": {
+        "audioCall": "Lydopkald",
+        "recordingUnavailable": "Optagelsen er ikke længere tilgængelig",
+        "recordingNotCaptured": "Optagelse ikke tilgængelig for dette opkald",
+        "recordingProcessing": "Optagelse behandles…",
+        "moreOptions": "Flere valgmuligheder",
+        "download": "Download",
+        "openCallInformation": "Åbn opkaldsoplysninger",
+        "transcript": "Udskrift",
+        "aiSummary": "AI-resumé",
+        "transcriptUnavailable": "Udskrift ikke tilgængelig endnu",
+        "summaryUnavailable": "AI-resumé ikke tilgængeligt endnu",
+        "play": "Afspil",
+        "pause": "Pause",
+        "seek": "Søg",
+        "mute": "Lydløs",
+        "unmute": "Fjern lydløs",
+        "playbackFailed": "Afspilning mislykkedes",
+        "answeredBy": "Besvaret af {name}",
+        "calledBy": "Ringet op af {name}",
+        "callFailed": "Opkaldsproblem",
+        "callBack": "Ring tilbage"
+      },
+      "sheet": {
+        "title": "Opkaldsoplysninger",
+        "summaryTab": "AI-resúmé",
+        "transcriptTab": "Transskription",
+        "searchLabel": "Søg i transskription",
+        "searchPlaceholder": "Søg i transskription…",
+        "transcriptUnavailable": "Transskription ikke tilgængelig for dette opkalds sprog",
+        "transcriptError": "Kunne ikke indlæse udskriften. Kontroller din forbindelse, og prøv igen.",
+        "noSearchResults": "Ingen matchende afsnit",
+        "playSegment": "Afspil herfra",
+        "summaryKeyPoints": "Vigtige punkter",
+        "summaryActionItems": "Handlingspunkter",
+        "regenerate": "Regenerér",
+        "regenerateConfirmTitle": "Regenerér AI-resúmé?",
+        "regenerateConfirmDescription": "Dette udskifter det nuværende resúmé med et nyt genereret resúmé.",
+        "summaryEmpty": "Der er endnu ikke noget AI-resúmé for dette opkald.",
+        "generateSummary": "Generér resúmé"
+      },
+      "summaryDialog": {
+        "title": "Generér AI-resúmé",
+        "description": "Vælg en tilsluttet AI-udbyder til at opsummere dette opkald.",
+        "noProviderTitle": "Ingen AI-udbyder tilsluttet",
+        "noProviderDescription": "Tilslut en AI-integration for at generere opkaldsresúméer.",
+        "connectLink": "Gå til AI-indstillinger",
+        "generate": "Generér",
+        "generating": "Genererer…",
+        "generateFailed": "Kunne ikke generere resúméet. Prøv igen.",
+        "retry": "Prøv igen",
+        "emptyTranscriptTooltip": "Dette opkald har endnu ingen transskription at opsummere"
+      },
+      "panel": {
+        "eyebrowCalling": "RINGER OP…",
+        "eyebrowIncoming": "INDGÅENDE OPKALD",
+        "eyebrowOnCall": "I OPKALD",
+        "statusPreparing": "Forbereder…",
+        "statusWaitingForMic": "Venter på mikrofonadgang…",
+        "statusDeclined": "Afvist",
+        "statusCallFailed": "Opkald mislykkedes",
+        "statusCallEnded": "Opkald afsluttet",
+        "end": "Afslut",
+        "minimize": "Minimer",
+        "goToConversation": "Gå til samtalen",
+        "expand": "Udvid",
+        "dismiss": "Afvis",
+        "statusNoAnswer": "Intet svar",
+        "eyebrowCallEnded": "OPKALD AFSLUTTET",
+        "statusConnectionLost": "Forbindelsen blev afbrudt",
+        "answerFailed": "Opkaldet kunne ikke besvares. Kontrollér, at en mikrofon er tilsluttet og tilladt i din browser, og prøv igen.",
+        "ringingListTitle": "{count, plural, one {# indgående opkald} other {# indgående opkald}}"
+      },
+      "capability": {
+        "title": "Opkaldsberettigelse",
+        "enableCalling": "Aktivér opkald under Indstillinger > Kanaler > WhatsApp > Opkald.",
+        "reconnectChannel": "Gå til Indstillinger > Kanaler og genopret forbindelsen til WhatsApp-kanalen.",
+        "ok": "OK",
+        "micPermissionTitle": "Mikrofontilladelse",
+        "dialFailureTitle": "Opkaldet kunne ikke oprettes"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuelt tilsluttet nummer",
+        "callsSubscription": "Dette WhatsApp-nummer blev tilsluttet manuelt. Sørg for, at din Meta-app abonnerer på calls-webhookfeltet (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — ellers kan udgående opkald ikke oprette forbindelse, og indgående opkald ringer ikke.",
+        "unsignedWebhook": "Dette nummer har heller ikke en Meta App Secret konfigureret, så dets indgående webhooks er ikke signaturverificeret.",
+        "callAnyway": "Ring alligevel"
+      },
+      "replaceConfirm": {
+        "title": "Afslut opkaldet med {current}?",
+        "description": "Du er i et opkald med {current}. Hvis du besvarer {incoming}, afsluttes det opkald med det samme.",
+        "confirm": "Afslut og besvar",
+        "cancel": "Bliv i opkaldet"
+      },
+      "answerCaller": "Besvar opkald fra {name}",
+      "rejectCaller": "Afvis opkald fra {name}",
+      "hours": {
+        "title": "Opkaldstider",
+        "description": "Kunder kan kun ringe til dette nummer inden for disse tider. Uden for dem tilbyder WhatsApp i stedet at chatte eller, hvis anmodninger om at blive ringet op er slået til, at bede om at blive ringet op, og viser, hvornår de kan ringe næste gang.",
+        "enabledLabel": "Tag kun imod opkald inden for opkaldstiderne",
+        "timezoneLabel": "Tidszone",
+        "closed": "Lukket",
+        "openTimeLabel": "{day}: åbner kl.",
+        "closeTimeLabel": "{day}: lukker kl.",
+        "addRangeLabel": "Tilføj tider for {day}",
+        "removeRangeLabel": "Fjern tider for {day}",
+        "overnightHint": "Hver dag slutter kl. 23:59. For at holde åbent efter midnat skal du føje de resterende timer til næste dag.",
+        "days": {
+          "monday": "Mandag",
+          "tuesday": "Tirsdag",
+          "wednesday": "Onsdag",
+          "thursday": "Torsdag",
+          "friday": "Fredag",
+          "saturday": "Lørdag",
+          "sunday": "Søndag"
+        },
+        "errors": {
+          "rangeOrder": "Lukketiden skal ligge efter åbningstiden.",
+          "rangeOverlap": "Tiderne på denne dag overlapper.",
+          "noOpenHours": "Tilføj tider til mindst én dag."
+        }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Opkald",
+        "subtitle": "Opkaldshistorik for denne arbejdsplads",
+        "emptyTitle": "Ingen opkald endnu",
+        "emptyDescription": "Opkald vises her, når dit team begynder at foretage eller modtage WhatsApp-opkald.",
+        "loadMore": "Indlæs flere",
+        "allActivity": "Alle opkald",
+        "filterMissed": "Mistet",
+        "filterNoReply": "Intet svar",
+        "allInboxes": "Alle indbakker",
+        "allAgents": "Alle agenter",
+        "columnContact": "Kontakt",
+        "columnInbox": "Indbakke",
+        "columnDirection": "Retning",
+        "columnAgent": "Agent",
+        "columnDuration": "Varighed",
+        "columnDate": "Dato",
+        "directionInbound": "Indgående",
+        "directionOutbound": "Udgående",
+        "kindOngoing": "I gang",
+        "kindAnsweredInbound": "Besvaret",
+        "kindAnsweredOutbound": "Besvaret",
+        "openConversation": "Åbn samtale",
+        "unknownContact": "Ukendt kontakt",
+        "emptyFilteredTitle": "Ingen opkald matcher dette filter",
+        "emptyFilteredDescription": "Prøv et andet filter, eller ryd det for at se alle opkald.",
+        "loadMoreError": "Kunne ikke indlæse flere opkald. Prøv igen.",
+        "callInformation": "Opkaldsoplysninger"
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4239,8 @@
       "toggleSuccess": "Tag synkroniser setting updated.",
       "enabledSince": "Aktiveret since {date}",
       "disabled": "Deaktiveret"
-    }
+    },
+    "refreshPermissions": "Refresh tilladelser"
   },
   "telegram": {
     "description": "Denne integration lets du opret Telegram bots.",
@@ -3896,6 +4251,14 @@
     "chatbotInvitationDescription2": "{userName} har invited du til join {chatbotName}.",
     "invalidInvitation": "Denne invitation er ugyldig eller har udløbet.",
     "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Markér botbeskeder som læst",
+      "enabled": "Aktiveret",
+      "disabled": "Deaktiveret",
+      "description": "Når det er slået til, markerer botten automatisk sine egne beskeder som læst"
+    }
   },
   "inboxTeams": {
     "title": "Indbakke Teams"
@@ -4022,7 +4385,9 @@
       "productRemovedFromCart": "Product Removed Fra Cart",
       "productOrdered": "Product Ordered",
       "contactReferredANewContact": "Kontakt Referred A Ny Kontakt",
-      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt"
+      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt",
+      "callRecorded": "Opkald optaget",
+      "callTranscribed": "Opkald transskriberet"
     },
     "actions": {
       "addTag": "Tilføj tag",
@@ -4258,7 +4623,8 @@
     "afterText": "Efter"
   },
   "tools": {
-    "title": "Værktøjer"
+    "title": "Værktøjer",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4361,13 +4727,13 @@
     "privateReply": "Private svar (indbakke)",
     "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon, a chatbot flow, eller deaktivér.",
     "publicReply": "Public svar til kommentar",
-    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar.",
+    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar. Spintax understøttes.",
     "replyMessage": "Svar besked",
     "replyMessagePlaceholder": "Indtast svar besked...",
     "includeKeywordsType": "Svar til",
     "includeKeywordsTypeDescription": "Choose which kommentarer denne automatisering responds til.",
     "includeKeywords": "Nøgleord til match",
-    "excludeKeywords": "Exclude kommentarer med these nøgleord",
+    "excludeKeywords": "Udeluk kommentarer der indeholder",
     "excludeKeywordsDescription": "Kommentarer containing vilkårlig af these nøgleord vil være ignored af both indbakke og public svar automatisering.",
     "keywordsPlaceholder": "Type og press Indtast...",
     "replyAfter": "Svar efter",
@@ -4430,7 +4796,7 @@
       "ignoreCommentReplies": "Don't svar til replies til kommentarer",
       "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer.",
       "trackUserTags": "Spor om en bruger tagger andre brugere",
-      "trackUserTagsDescription": "Brug '{{total_tagged}}' til at se, hvor mange brugere der blev tagget. Brug '{{total_new_tagged}}' til at se, hvor mange af de taggede personer der ikke er på kontaktlisten."
+      "trackUserTagsDescription": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
     },
     "hideComments": {
       "all": "Hide alle kommentarer",
@@ -4464,13 +4830,13 @@
     "privateReply": "Private svar (indbakke)",
     "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon, a chatbot flow, eller deaktivér.",
     "publicReply": "Public svar til kommentar",
-    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar.",
+    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar. Spintax understøttes.",
     "replyMessage": "Svar besked",
     "replyMessagePlaceholder": "Indtast svar besked...",
     "includeKeywordsType": "Svar til",
     "includeKeywordsTypeDescription": "Choose which kommentarer denne automatisering responds til.",
     "includeKeywords": "Nøgleord til match",
-    "excludeKeywords": "Exclude kommentarer med these nøgleord",
+    "excludeKeywords": "Udeluk kommentarer der indeholder",
     "excludeKeywordsDescription": "Kommentarer containing vilkårlig af these nøgleord vil være ignored af both indbakke og public svar automatisering.",
     "keywordsPlaceholder": "Type og press Indtast...",
     "replyAfter": "Svar efter",
@@ -4532,7 +4898,7 @@
       "ignoreCommentReplies": "Don't svar til replies til kommentarer",
       "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer.",
       "trackUserTags": "Spor om en bruger tagger andre brugere",
-      "trackUserTagsDescription": "Brug '{{total_tagged}}' til at se, hvor mange brugere der blev tagget. Brug '{{total_new_tagged}}' til at se, hvor mange af de taggede personer der ikke er på kontaktlisten."
+      "trackUserTagsDescription": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
     },
     "hideComments": {
       "all": "Hide alle kommentarer",
@@ -4568,13 +4934,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Op til 10 tekstbeskeder (spintax understøttes), hver sendt som et separat svar.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Udeluk kommentarer der indeholder",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4583,7 +4949,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Hide Kommentarer"
     },
     "postType": {
       "all": "All posts",
@@ -4625,8 +4992,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Angiv mindst én svarbesked.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Kun svar på øverste niveau til dine opslag kan skjules.",
+    "hideComments": {
+      "all": "Hide alle kommentarer",
+      "hasPhoneNumber": "Contains telefon nummer",
+      "hasLink": "Contains link",
+      "hasKeywords": "Contains nøgleord",
+      "keywords": "Nøgleord",
+      "showCommentsAfter": "Show kommentarer efter"
+    },
+    "showCommentsAfter": {
+      "none": "Never"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Op til 10 tekstbeskeder (spintax understøttes), hver sendt som et separat svar.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Udeluk kommentarer der indeholder",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Angiv mindst én svarbesked."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Automatisering af Instagram Story-svar",
@@ -5667,7 +6150,8 @@
     "connectViaFacebook": "Forbind via Facebook",
     "unsupportedExplanation": "Denne Instagram-konto blev forbundet med Instagram Business Login. Forbind kontoen via Facebook for at bruge Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce."
+      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce.",
+      "description": "Sæt en LeadSubmitted-hændelse i kø til Messenger, Instagram eller WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5695,8 +6179,9 @@
       "invalidDatasetId": "Indtast et gyldigt Dataset ID (kun tal).",
       "whatsappNotFound": "WhatsApp-integration ikke fundet.",
       "testEventCodeRequired": "Gem en testhændelseskode, før du sender en testhændelse.",
-      "noContactForTest": "Ingen egnet kontakt på denne kanal endnu. En testhændelse kræver en rigtig kontakt at tilknytte (for WhatsApp en, der kom fra en click-to-WhatsApp-annonce).",
-      "invalidTestEventCode": "Testhændelseskoden må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 64)."
+      "invalidTestEventCode": "Testhændelseskoden må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 64).",
+      "invalidMessagingId": "Messaging-id må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 512).",
+      "capiDisconnected": "Meta CAPI er afbrudt for denne kanal. Tilslut igen, før du sender en testhændelse."
     },
     "fields": {
       "eventType": {
@@ -5840,10 +6325,21 @@
       "saved": "Testhændelseskode gemt.",
       "cleared": "Testhændelseskode ryddet. Hændelser er live igen.",
       "send": "Send testhændelse",
-      "sent": "Testhændelse sat i kø. Den vises under Test events i Events Manager inden for et minut.",
-      "sendHint": "Sender ét eksempel på Purchase (100 USD) til denne kanals seneste kontakt.",
+      "sent": "Testhændelse sendt. Den vises under Test events i Events Manager inden for et minut.",
+      "sendHint": "Sender én eksempel-Purchase (100 USD) til et messaging-id, du indtaster. Ingen gemt kontakt bruges.",
       "activeNotice": "Testtilstand er slået til: hændelser fra denne kanal tælles ikke med i rapporter, før koden ryddes.",
-      "openTestEvents": "Åbn Test events"
+      "openTestEvents": "Åbn Test events",
+      "dialogTitle": "Send testhændelse",
+      "dialogDescription": "Én eksempel-Purchase (100 USD) sendes med din testhændelseskode. Indsæt eksempel-messaging-id'et fra Events Manager → Test events → Messaging → Graph API Explorer, så intet tilskrives en rigtig kontakt.",
+      "messagingIdLabel": {
+        "messenger": "Kontakt-id (page_scoped_user_id)",
+        "instagram": "Kontakt-id (ig_sid)",
+        "whatsapp": "Klik-id (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Indsæt eksempelværdien fra Meta",
+      "messagingIdHint": "Kun bogstaver, tal, bindestreger og understregninger (maks. 512).",
+      "cancel": "Annuller",
+      "confirmSend": "Send"
     }
   },
   "minigames": {
@@ -6204,5 +6700,13 @@
   },
   "accountFields": {
     "title": "Bot Felter"
+  },
+  "openLink": {
+    "title": "Åbn link",
+    "invalidTitle": "Ugyldigt link.",
+    "invalidDescription": "Dette link er ugyldigt eller udløbet.",
+    "openZaloGroup": "Åbn Zalo-gruppe",
+    "openZalo": "Åbn Zalo",
+    "openMessenger": "Åbn Messenger"
   }
 }

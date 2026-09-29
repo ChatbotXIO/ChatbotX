@@ -11,7 +11,10 @@ import {
   messageEventTypeSchema,
   UPDATE_STATUS_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
-import { resolveWithSourceUserIdFallback, SdkException } from "@chatbotx.io/sdk"
+import {
+  resolveSourceScopedIdentityMatch,
+  SdkException,
+} from "@chatbotx.io/sdk"
 import {
   IntegrationJobAction,
   type IntegrationJobMessageStatus,
@@ -28,6 +31,7 @@ import { runFlowPostback } from "./flow"
 type StatusContactInboxWhere = { inboxId: string } & (
   | { sourceId: string }
   | { sourceUserId: string }
+  | { sourceParentUserId: string }
 )
 
 const findStatusContactInbox = (where: StatusContactInboxWhere) =>
@@ -49,10 +53,11 @@ const resolveStatusContactInbox = async (
   if (!recipientIdentity) {
     return
   }
-  return await resolveWithSourceUserIdFallback(
+  const match = await resolveSourceScopedIdentityMatch(
     { sourceId: recipientIdentity, sourceUserId: recipientIdentity },
     (where) => findStatusContactInbox({ inboxId, ...where }),
   )
+  return match?.row
 }
 
 export const handleMessageStatus = async (

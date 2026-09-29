@@ -1,6 +1,6 @@
 import { ChannelError } from "@chatbotx.io/sdk"
 import { describe, expect, test } from "vitest"
-import { resolveMessengerMessagingPolicy } from "../src/handlers/message/outgoing-message"
+import { resolveMessagingPolicy } from "../src/handlers/message/outgoing-message"
 
 const now = new Date("2026-06-09T00:00:00.000Z")
 
@@ -10,10 +10,10 @@ const makeContact = (lastIncomingMessageAt?: Date | string | null) => ({
   lastIncomingMessageAt,
 })
 
-describe("resolveMessengerMessagingPolicy", () => {
+describe("resolveMessagingPolicy", () => {
   test("uses RESPONSE for non-inbox sends", () => {
     expect(
-      resolveMessengerMessagingPolicy({
+      resolveMessagingPolicy({
         contact: makeContact(null),
         now,
       }),
@@ -22,7 +22,7 @@ describe("resolveMessengerMessagingPolicy", () => {
 
   test("uses RESPONSE for inbox sends inside 24 hours", () => {
     expect(
-      resolveMessengerMessagingPolicy({
+      resolveMessagingPolicy({
         contact: makeContact(new Date("2026-06-08T01:00:00.000Z")),
         now,
         sendFrom: "inbox",
@@ -32,7 +32,7 @@ describe("resolveMessengerMessagingPolicy", () => {
 
   test("handles serialized timestamps from BullMQ payloads", () => {
     expect(
-      resolveMessengerMessagingPolicy({
+      resolveMessagingPolicy({
         contact: makeContact("2026-06-08T01:00:00.000Z"),
         now,
         sendFrom: "inbox",
@@ -42,7 +42,7 @@ describe("resolveMessengerMessagingPolicy", () => {
 
   test("uses HUMAN_AGENT between 24 hours and 7 days", () => {
     expect(
-      resolveMessengerMessagingPolicy({
+      resolveMessagingPolicy({
         contact: makeContact(new Date("2026-06-07T23:00:00.000Z")),
         now,
         sendFrom: "inbox",
@@ -52,7 +52,7 @@ describe("resolveMessengerMessagingPolicy", () => {
 
   test("uses RESPONSE for inbox sends without a valid last incoming timestamp", () => {
     expect(
-      resolveMessengerMessagingPolicy({
+      resolveMessagingPolicy({
         contact: makeContact(null),
         now,
         sendFrom: "inbox",
@@ -62,7 +62,7 @@ describe("resolveMessengerMessagingPolicy", () => {
 
   test("uses RESPONSE for inbox sends with an invalid last incoming timestamp", () => {
     expect(
-      resolveMessengerMessagingPolicy({
+      resolveMessagingPolicy({
         contact: makeContact("not-a-date"),
         now,
         sendFrom: "inbox",
@@ -72,7 +72,7 @@ describe("resolveMessengerMessagingPolicy", () => {
 
   test("throws for inbox sends after the 7-day human-agent window", () => {
     expect(() =>
-      resolveMessengerMessagingPolicy({
+      resolveMessagingPolicy({
         contact: makeContact(new Date("2026-06-01T23:59:59.000Z")),
         now,
         sendFrom: "inbox",

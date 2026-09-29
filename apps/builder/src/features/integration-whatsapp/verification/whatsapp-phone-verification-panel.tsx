@@ -31,6 +31,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import {
   requestWhatsappVerificationCodeAction,
   verifyWhatsappPhoneCodeAction,
@@ -185,6 +186,7 @@ function useVerifyPhoneCodeForm({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
 
   return useHookFormAction(
     verifyWhatsappPhoneCodeAction.bind(null, workspaceId),
@@ -194,6 +196,7 @@ function useVerifyPhoneCodeForm({
         onError: toastServerError,
         onSuccess: () => {
           toast.success(t("whatsapp.phoneVerification.messages.verified"))
+          invalidateInboxes()
           router.refresh()
           onVerified?.()
         },

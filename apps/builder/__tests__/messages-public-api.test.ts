@@ -60,6 +60,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
+  BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
   notFoundException: (message: string) => new Error(message),
 }))
 
@@ -234,9 +235,9 @@ describe("POST /v1/conversations/{conversationId}/messages", () => {
   })
 })
 
-describe("PATCH /v1/conversations/{conversationId}/messages/{messageId}", () => {
+describe("PUT /v1/conversations/{conversationId}/messages/{messageId}", () => {
   const procedure = findProcedure(
-    "PATCH",
+    "PUT",
     "/v1/conversations/{conversationId}/messages/{messageId}",
   )
 

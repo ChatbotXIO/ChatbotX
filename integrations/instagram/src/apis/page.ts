@@ -1,22 +1,8 @@
-import {
-  type Context,
-  guessFileTypeFromMimeType,
-  type IncomingAttachment,
-} from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
-import fetch from "cross-fetch"
-import imageSize from "image-size"
+import type { Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { InstagramAPIException, rescue } from "../exception"
 import { instagramBusinessClient } from "../lib/http-client"
-import { logger } from "../lib/logger"
-import type {
-  InstagramAttachment,
-  InstagramAuthValue,
-  InstagramProfileRequest,
-  InstagramSendMessageRequest,
-  InstagramSendMessageResponse,
-} from "../schemas"
+import type { InstagramAuthValue, InstagramProfileRequest } from "../schema"
 
 export const INSTAGRAM_SUBSCRIBE_FIELDS = [
   "messages",
@@ -47,7 +33,7 @@ export const refreshLongLivedToken = (
   )
 }
 
-export const getInstagramProfilePictureUrl = async (props: {
+export const getAccountPictureUrl = async (props: {
   ctx: Context<InstagramAuthValue>
 }): Promise<string | undefined> => {
   const { ctx } = props
@@ -124,83 +110,7 @@ export const unsubscribePageFromInstagramWebhook = (props: {
   })
 }
 
-export const sendInstagramMessage = (
-  auth: InstagramAuthValue,
-  payload: InstagramSendMessageRequest,
-): Promise<InstagramSendMessageResponse> => {
-  const version = auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/messages`
-
-  return rescue(endpoint, () =>
-    instagramBusinessClient.post<InstagramSendMessageResponse>(endpoint, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${auth.tokens.accessToken}`,
-      },
-      json: payload,
-      retry: 0,
-    }),
-  )
-}
-
-export const getMessageAttachmentEntity = async ({
-  ctx,
-  attachment,
-}: {
-  ctx: Context<InstagramAuthValue>
-  attachment: InstagramAttachment
-}): Promise<IncomingAttachment | undefined> => {
-  if (!attachment.payload.url) {
-    throw new Error("No attachment URL found")
-  }
-  const response = await fetch(attachment.payload.url as string, {
-    headers: {
-      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-      "User-Agent": "node",
-    },
-  })
-  if (!(response.ok && response.body)) {
-    throw new Error(
-      `Failed to download attachment (status ${response.status} ${response.statusText}): ${attachment.payload.url}`,
-    )
-  }
-
-  const originPath = `${ctx.storagePrefix}/${createId()}`
-  const bytes = await response.arrayBuffer()
-  const mimeType = response.headers.get("content-type") ?? "image/png"
-  const fileType = guessFileTypeFromMimeType(mimeType)
-
-  await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-    ACL: "public-read",
-    ContentType: mimeType,
-  })
-
-  const imageProperties: {
-    width?: number
-    height?: number
-  } = {}
-  if (mimeType.startsWith("image/")) {
-    try {
-      const arrayBytes = new Uint8Array(bytes)
-      const dimensions = imageSize(arrayBytes)
-      imageProperties.width = dimensions.width
-      imageProperties.height = dimensions.height
-    } catch (error) {
-      logger.warn(error, "Failed to read attachment image dimensions")
-    }
-  }
-
-  return {
-    sourceId: createId(),
-    originPath,
-    fileType,
-    mimeType,
-    size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
-    ...imageProperties,
-  }
-}
-
-export const deleteInstagramProfileFields = (props: {
+export const deleteProfileFields = (props: {
   ctx: Context<InstagramAuthValue>
   fields: string[]
 }): Promise<void> => {
@@ -222,7 +132,7 @@ export const deleteInstagramProfileFields = (props: {
   )
 }
 
-export const updateInstagramProfile = (props: {
+export const updateProfile = (props: {
   ctx: Context<InstagramAuthValue>
   params: InstagramProfileRequest
 }): Promise<void> => {
@@ -249,7 +159,7 @@ export const updateInstagramProfile = (props: {
   })
 }
 
-export const getInstagramPersistentMenu = (props: {
+export const getPersistentMenu = (props: {
   ctx: Context<InstagramAuthValue>
 }): Promise<{
   persistentMenu?: InstagramProfileRequest["persistent_menu"]
@@ -285,7 +195,7 @@ export const addBranding = async (props: {
   const { ctx } = props
   const version = ctx.auth.metadata.version ?? DEFAULT_API_VERSION
 
-  const { persistentMenu } = await getInstagramPersistentMenu({ ctx })
+  const { persistentMenu } = await getPersistentMenu({ ctx })
 
   const queries = new URLSearchParams({
     platform: "instagram",

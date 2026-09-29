@@ -1,22 +1,6 @@
-import { WHATSAPP_CAPI_SCOPE } from "@chatbotx.io/business"
-import {
-  type DebugTokenGranularScope,
-  debugTokenOrThrow,
-} from "@chatbotx.io/integration-whatsapp/api/auth"
-
-export function grantedScopesForWaba(
-  granularScopes: DebugTokenGranularScope[] | undefined,
-  wabaId: string,
-): string[] {
-  return (granularScopes ?? [])
-    .filter(
-      (scope) =>
-        !scope.target_ids ||
-        scope.target_ids.length === 0 ||
-        scope.target_ids.includes(wabaId),
-    )
-    .map((scope) => scope.scope)
-}
+import { WHATSAPP_CAPI_SCOPE } from "@chatbotx.io/business/integration-whatsapp/auth-schema"
+import { debugTokenOrThrow } from "@chatbotx.io/integration-whatsapp/api/auth"
+import { grantedScopesForWaba } from "@chatbotx.io/integration-whatsapp/api/granted-scopes"
 
 export async function getWhatsappGrantedScopes(params: {
   accessToken: string

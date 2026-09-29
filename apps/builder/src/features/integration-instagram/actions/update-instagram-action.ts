@@ -2,6 +2,7 @@
 
 import {
   buildContext,
+  inboxService,
   instagramIntegrationService,
 } from "@chatbotx.io/business"
 import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
@@ -53,7 +54,7 @@ export const updateInstagramAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
       try {
-        await db.transaction(async (tx) => {
+        const inboxId = await db.transaction(async (tx) => {
           const integrationInstagramData = await findIntegrationInstagram({
             workspaceId: ctx.workspace.id,
             id,
@@ -119,7 +120,17 @@ export const updateInstagramAction = workspaceActionClient
               )
             }
           }
+
+          return integrationInstagramData.inboxId
         })
+
+        if (parsedInput.markReadOnOutbound !== undefined) {
+          await inboxService.updateMarkReadOnOutbound({
+            workspaceId: ctx.workspace.id,
+            id: inboxId,
+            enabled: parsedInput.markReadOnOutbound,
+          })
+        }
       } catch (error) {
         logger.error({ err: error }, "Failed to update Instagram integration")
         throw new ChatbotXException("Failed to update Instagram integration")

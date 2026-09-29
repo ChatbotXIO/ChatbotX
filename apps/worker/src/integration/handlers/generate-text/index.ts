@@ -13,6 +13,7 @@ import { saveResultToCustomField } from "../../utils/contact"
 import { type ExecuteStepProps, logStepProviderError } from "../flow-utils"
 import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
+import { createMcpTokenResolver } from "../shared/resolve-mcp-token"
 import type { ExecuteStepResult } from "../step"
 import { buildAIMessages } from "./messages"
 
@@ -83,6 +84,7 @@ export async function handleAIGenerateText({
       mcp: {
         McpClient,
         normalizeMcpContent,
+        resolveToken: createMcpTokenResolver(conversation.workspaceId),
       },
     })
     cleanupToolset = cleanup

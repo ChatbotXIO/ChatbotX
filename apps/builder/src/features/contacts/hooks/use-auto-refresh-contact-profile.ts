@@ -162,6 +162,11 @@ export function useAutoRefreshContactProfile(
     }
   }, [])
 
+  // Keep the nameless-contact refresh: it hydrates profile fields beyond the
+  // avatar. This hook attempts it once per contact per mount. A simultaneous
+  // avatar proxy request is jobId-deduped, no-ops once the avatar is set, and
+  // writes through setAvatarIfEmpty. Profile refresh is an unconditional last
+  // writer, so the bounded overlap can orphan at most one avatars/<id> object.
   useEffect(() => {
     // Track which contact the panel is currently showing regardless of
     // eligibility — a later-resolving attempt for a PREVIOUS contact must

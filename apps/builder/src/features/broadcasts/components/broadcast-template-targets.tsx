@@ -6,7 +6,7 @@ import type {
 } from "@chatbotx.io/database/partials"
 import { useMemo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
+import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import type { BroadcastPage } from "../lib/broadcast-target-groups"
 import type { BroadcastTargetRequest } from "../schema/action"
 import { BroadcastTargetCard } from "./broadcast-target-card"
@@ -30,7 +30,7 @@ export function BroadcastTemplateTargets({
   hydratedTargets,
 }: BroadcastTemplateTargetsProps) {
   const { control } = useFormContext()
-  const inboxes = useInboxStore((state) => state.inboxes)
+  const inboxes = useInboxList()
 
   const inboxIds = (useWatch({ control, name: "inboxIds" }) ?? []) as string[]
   const targets = (useWatch({ control, name: "targets" }) ??

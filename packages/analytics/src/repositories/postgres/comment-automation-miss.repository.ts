@@ -9,8 +9,8 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import type { CommentAutomationMissReason } from "@chatbotx.io/database/partials"
-import { fbCommentAutomationMissModel } from "@chatbotx.io/database/schema"
-import type { FBCommentAutomationMissInsert } from "@chatbotx.io/database/types"
+import { commentAutomationMissModel } from "@chatbotx.io/database/schema"
+import type { CommentAutomationMissInsert } from "@chatbotx.io/database/types"
 import type { ContactEventData } from "../../schemas/common"
 import { BaseRepository } from "./base.repository"
 
@@ -22,7 +22,7 @@ export type CommentAutomationMissRow = ContactEventData & {
 }
 
 /**
- * Query layer over `FBCommentAutomationMiss` — the comments an automation was
+ * Query layer over `CommentAutomationMiss` — the comments an automation was
  * shown and declined to answer.
  *
  * Separate from `CommentAutomationStatsRepository` because the two tables
@@ -44,7 +44,7 @@ export class CommentAutomationMissRepository extends BaseRepository {
    * Returns the rows that were ACTUALLY written, exactly as
    * `CommentAutomationStatsRepository.insertEvents` does. `onConflictDoNothing`
    * makes a BullMQ retry or a redelivered webhook return nothing, and that is
-   * what keeps `FBCommentAutomation.missedCount` honest — the caller increments
+   * what keeps `CommentAutomation.missedCount` honest — the caller increments
    * once per returned row, never once per call.
    *
    * Written as one multi-row insert on purpose: a single comment is shown to
@@ -52,22 +52,22 @@ export class CommentAutomationMissRepository extends BaseRepository {
    * one statement per automation per comment.
    */
   async insertMisses(
-    rows: FBCommentAutomationMissInsert[],
+    rows: CommentAutomationMissInsert[],
   ): Promise<{ automationId: string }[]> {
     if (rows.length === 0) {
       return []
     }
     return await db
-      .insert(fbCommentAutomationMissModel)
+      .insert(commentAutomationMissModel)
       .values(rows)
       .onConflictDoNothing({
         target: [
-          fbCommentAutomationMissModel.automationId,
-          fbCommentAutomationMissModel.commentId,
+          commentAutomationMissModel.automationId,
+          commentAutomationMissModel.commentId,
         ],
       })
       .returning({
-        automationId: fbCommentAutomationMissModel.automationId,
+        automationId: commentAutomationMissModel.automationId,
       })
   }
 
@@ -90,7 +90,7 @@ export class CommentAutomationMissRepository extends BaseRepository {
   }> {
     const { workspaceId, automationId, page, perPage } = input
     const offset = (page - 1) * perPage
-    const miss = fbCommentAutomationMissModel
+    const miss = commentAutomationMissModel
 
     // A row with no inbox cannot be hydrated into a contact card, so it is
     // filtered here rather than dropped after paging — otherwise a page of
@@ -157,7 +157,7 @@ export class CommentAutomationMissRepository extends BaseRepository {
     limit: number
     excludeContactIds?: string[]
   }): Promise<{ id: string; contactId: string }[]> {
-    const miss = fbCommentAutomationMissModel
+    const miss = commentAutomationMissModel
 
     const rows = await db
       .selectDistinct({ contactId: miss.contactId })

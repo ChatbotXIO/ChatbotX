@@ -57,26 +57,30 @@ export const contactActiveMonthlyModel = pgTable(
 
 ## Execution flow
 
-### Path A — brand-new contact (synchronous hard gate)
+### Path A — brand-new contact (synchronous gate)
 
 Triggered from:
-- `apps/builder/src/features/messages/actions/create-webchat-message.action.ts:450`
+- `apps/builder/src/features/messages/actions/create-webchat-message.action.ts:448`
   (webchat first message from a new guest)
-- `apps/worker/src/integration/handlers/received-message.ts:887`
+- `apps/worker/src/integration/handlers/received-message.ts:1899`
   (any channel inbound message from a brand-new contact — Messenger, Instagram,
-  WhatsApp, Telegram, Zalo, TikTok, comments, etc., via `detectContactAndConversation`)
-- `packages/business/src/contact/service.ts:475`
-  (`upsertByIdentifier`, used by public API / contact-import "create contact" flows)
+  WhatsApp, Telegram, Zalo, TikTok, Threads, comments, etc., via `detectContactAndConversation`)
 
-All three call `quotaEnforcementService.createNewContactWithMac`
-(`packages/business/src/quota-enforcement/service.ts:257`):
+Both call `quotaEnforcementService.createNewContactWithMac`
+(`packages/business/src/quota-enforcement/service.ts:511`):
 
-1. Resolves the workspace owner and takes a **distributed lock** keyed on the
-   owner/tenant's MAC quota (`lockKeyFor`, `service.ts:100-104`) — concurrent inbound
-   messages for the same owner can't both pass the gate.
-2. Inside the lock: checks `dualRemainingSlotsForCtx` (tighter of user-level and
-   pool/reseller-level remaining MAC slots). If `0`, rejects with
-   `{ ok: false, level }` — **no DB rows created at all** (hard gate, not soft).
+1. Resolves the workspace owner and the quota rows to gate (the user row, plus the
+   reseller pool row when pooled), then picks an admission strategy
+   (`resolveMacAdmissionPreference`, `quota-enforcement/mac-admission.ts`):
+   - **`atomic`** (default, every level has a resetting period): one Redis script per
+     level (`admitWithinLimit`, pool first) increments the live `mac` counter only if
+     it is below the limit. No lock is taken. This is a **soft cap**: a reconcile or
+     a lost Redis hash during a burst can let a few in-flight admissions through.
+   - **`lock`** (a lifetime or period-less level, or `QUOTA_MAC_ADMISSION=lock`):
+     takes a **distributed lock** keyed on the owner/tenant's MAC quota (`lockKeyFor`)
+     and checks `dualRemainingSlotsForCtx` inside it.
+2. If a level is full, rejects with `{ ok: false, level }` — **no DB rows created
+   at all**. On the atomic path any level already admitted is given back.
 3. If capacity exists: runs the caller-supplied `create(tx)` (contact/contactInbox/
    conversation inserts) **and**, in the same transaction, calls
    `macTrackingService.claimNewActiveContact`
@@ -89,10 +93,14 @@ All three call `quotaEnforcementService.createNewContactWithMac`
    - Increments `WorkspaceMac.macCount` by the actual number of newly-inserted rows
      (`addWorkspaceMacCount`, `mac.repository.ts:200-232`) — **not** a flat `+1**, so
      a conflicted (already-counted) insert correctly contributes `0`.
-4. After the transaction commits: increments live Redis quota counters
-   (`incrementByForCtx` → `userQuotaService.incrementBy`) for the owner (and
-   sub-account if pooled) and bumps the workspace MAC display cache
-   (`incrementWorkspaceMacCache`).
+4. After the transaction commits, when the contact was counted:
+   - atomic: persists `macUsed + 1` for each admitted level
+     (`userQuotaService.commitAdmission`); the live counter already holds the slot.
+     If the transaction fails or the ledger already counted the contact, the slot
+     is given back (`revokeAdmission`, an atomic decrement floored at 0);
+   - lock: increments the live and durable counters (`incrementByForCtx`) for the
+     owner (and sub-account if pooled).
+   Both then bump the workspace MAC display cache (`incrementWorkspaceMacCache`).
 5. Also increments the info-only `contacts` metric
    (`packages/business/src/quota-enforcement/service.ts:333`) unconditionally for
    every brand-new contact, independent of MAC period/limit.
@@ -139,7 +147,7 @@ All three call `quotaEnforcementService.createNewContactWithMac`
      increments `user-quota-live:<userId>` field `mac` for the owning user(s). The
      live field is cold-seeded from `UserQuota.macUsed` with `hsetnx` before the
      `HINCRBY`, so a cold or evicted Redis field cannot make the live counter — and
-     therefore the new-contact hard gate — start below the durable base. This is a
+     therefore the new-contact gate — start below the durable base. This is a
      **live counter only**, not written back to `UserQuota.macUsed` synchronously
      (reconciled later by the worker cron).
 
@@ -254,8 +262,8 @@ contact-creation time (Path A) is what makes the subsequent `message:received` e
 | `packages/analytics/src/lib/mac-period.ts` | `anchoredPeriod` (billing-month math), cache-key/TTL helpers |
 | `packages/analytics/src/schemas/mac.ts` | Zod schemas/types for MAC events |
 | `packages/analytics-nextjs/src/routes/mac.ts` | Public oRPC route exposing workspace MAC count |
-| `packages/business/src/quota-enforcement/service.ts` | `createNewContactWithMac` — the hard gate + atomic claim; pool/tenant resolution |
-| `packages/business/src/contact/service.ts` | `upsertByIdentifier` — public-API/contact-import new-contact path using the gate |
+| `packages/business/src/quota-enforcement/service.ts` | `createNewContactWithMac` — the new-contact gate (atomic or lock admission, `mac-admission.ts`) + ledger claim; pool/tenant resolution |
+| `packages/business/src/contact/service.ts` | `upsertByIdentifier` — public-API/contact-import new-contact path; creates through `createContactWithoutMac`, not the MAC gate |
 | `apps/worker/src/integration/handlers/received-message.ts` | `detectContactAndConversation` — channel inbound-message new-contact path using the gate; also emits `message:received` |
 | `apps/builder/src/features/messages/actions/create-webchat-message.action.ts` | Webchat first-message new-contact path using the gate; also emits `message:received` |
 | `apps/worker/src/events/message/listener.ts` | Wires `message:sent`/`message:received` to the tracking service |

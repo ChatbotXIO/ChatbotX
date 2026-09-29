@@ -6,6 +6,7 @@ const {
   insertBuilder,
   mockAutomatedResponseEnqueue,
   mockAutomatedResponseEnqueueFlowAction,
+  mockBroadcastToWorkspaceParty,
   mockChatQueueAdd,
   mockContactFindById,
   mockContactUnblockIfBlocked,
@@ -59,6 +60,7 @@ const {
     mockContactInboxFindLatest: vi.fn(),
     mockContactInboxUpdateTracking: vi.fn().mockResolvedValue(null),
     mockConversationFindBy: vi.fn(),
+    mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockConversationEnsureActive: vi.fn().mockResolvedValue(false),
     mockCreateMessageRepository: vi.fn().mockResolvedValue({
@@ -113,6 +115,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }
@@ -330,6 +333,7 @@ const resetCommonMocks = () => {
     createWithAttachments: vi.fn(),
   })
   mockChatQueueAdd.mockResolvedValue(undefined)
+  mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
   tx.insert.mockReturnValue(insertBuilder)
   insertBuilder.values.mockReturnValue(insertBuilder)
   insertBuilder.returning.mockReset()
@@ -371,6 +375,29 @@ describe("handleCreateWebchatMessage", () => {
       lastActivityAt: messageInput.createdAt,
       contactRepliedAt: messageInput.createdAt,
     })
+  })
+
+  test("broadcasts the created message with the client's clientId for optimistic reconciliation", async () => {
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        text: "hello",
+        workspaceId: "ws-1",
+        webchatId: "webchat-1",
+        guestConversationId: "guest-1",
+        clientId: "client-1",
+      },
+    })
+
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        eventType: "messageCreated",
+        data: expect.objectContaining({
+          id: "msg-1",
+          clientId: "client-1",
+        }),
+      }),
+    )
   })
 
   test("rejects messages when the workspace is scheduled for deletion", async () => {
@@ -668,12 +695,17 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     await handleCreateWebchatMessage({ parsedInput: input })
 
     expect(mockWorkspaceFind).toHaveBeenCalledWith({ where: { id: "ws-1" } })
-    // MAC is gated + consumed atomically with the insert (owner-derived). The
+    // MAC is the owner-derived billing gate and a soft cap on resetting plans:
+    // Redis admission, transactional create, then commit/revoke. Lifetime /
+    // period-less owners and the env lock switch use the distributed lock. The
     // info-only `contacts` counter is recorded inside this chokepoint too, so
     // the action no longer increments it separately (that would double-count).
     expect(mockCreateNewContactWithMac).toHaveBeenCalledTimes(1)
     expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
       expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+    expect(mockCreateNewContactWithMac.mock.calls[0]?.[0]).not.toHaveProperty(
+      "lockWaitSeconds",
     )
     expect(insertBuilder.values).toHaveBeenCalledWith(
       expect.objectContaining({

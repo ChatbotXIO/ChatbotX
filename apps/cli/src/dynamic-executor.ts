@@ -6,7 +6,7 @@ function buildQueryString(params: Record<string, string>): string {
   return qs ? `?${qs}` : ""
 }
 
-const NO_BODY_METHODS = new Set(["GET", "HEAD", "DELETE"])
+const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
 export async function executeDynamicCommand(
   tool: DynamicTool,

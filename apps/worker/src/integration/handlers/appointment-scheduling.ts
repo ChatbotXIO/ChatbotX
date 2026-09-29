@@ -406,6 +406,7 @@ export async function appointmentScheduling(
             ],
             trackingContext: props.trackingContext,
             metadata,
+            isBulkBroadcast: props.isBulkBroadcast,
           },
         })
 
@@ -499,6 +500,7 @@ export async function appointmentScheduling(
               ],
               trackingContext: props.trackingContext,
               metadata,
+              isBulkBroadcast: props.isBulkBroadcast,
             },
           })
 

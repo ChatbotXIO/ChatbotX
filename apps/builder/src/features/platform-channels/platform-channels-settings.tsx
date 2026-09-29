@@ -48,12 +48,20 @@ type PlatformChannelsSettingsProps = {
    * a reseller can narrow what the platform allows but never widen it.
    */
   platformHiddenChannels?: ChannelType[]
+  /**
+   * Channels to list. Defaults to every creatable channel; the pages pass a
+   * list already narrowed by `filterPreviewChannels` so a channel awaiting
+   * provider approval is not offered here either — same convention as
+   * `visibleChannels` / `offeredChannels`.
+   */
+  offeredChannels?: ChannelType[]
 }
 
 export function PlatformChannelsSettings({
   hiddenChannels,
   scope = "tenant",
   platformHiddenChannels = [],
+  offeredChannels = CREATABLE_CHANNELS,
 }: PlatformChannelsSettingsProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -113,7 +121,7 @@ export function PlatformChannelsSettings({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <ul className="flex flex-col gap-3">
-            {CREATABLE_CHANNELS.map((channel) => {
+            {offeredChannels.map((channel) => {
               const forcedByPlatform =
                 scope === "tenant" && platformHiddenSet.has(channel)
               const checked =

@@ -203,18 +203,15 @@ describe("POST /v1/ads/campaigns", () => {
   })
 })
 
-describe("POST /v1/ads/campaigns/{operationId}/publish", () => {
-  const procedure = findProcedure(
-    "POST",
-    "/v1/ads/campaigns/{operationId}/publish",
-  )
+describe("POST /v1/ads/campaigns/{id}/publish", () => {
+  const procedure = findProcedure("POST", "/v1/ads/campaigns/{id}/publish")
 
   test("publishes with no session user in context", async () => {
     messagingAdCampaignService.publish.mockResolvedValueOnce(OPERATION_RECORD)
 
     const result = await procedure.handler?.({
       context: { workspace: { id: "1001" } },
-      input: { operationId: "op-1" },
+      input: { id: "op-1" },
     })
 
     expect(messagingAdCampaignService.publish).toHaveBeenCalledWith({

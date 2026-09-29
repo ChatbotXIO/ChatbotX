@@ -26,6 +26,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
+import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { getPublicFileUrl } from "../utils"
 
@@ -50,6 +51,12 @@ type CreateOutgoingInput = (
   replyToMessageId?: string
   replyToMessageCreatedAt?: Date
   isPrivateReply?: boolean
+  /**
+   * Explicit content attributes for the created message row (e.g. the
+   * WhatsApp `call_permission_request` marker read by the outgoing-message
+   * handler). Overrides the `isPrivateReply`-derived default when set.
+   */
+  contentAttributes?: Record<string, unknown> | null
 }
 
 /**
@@ -208,9 +215,9 @@ export const createOutgoing = async (props: {
       ? ("comment" as const)
       : ("message" as const),
     parentId,
-    contentAttributes: parsedInput.isPrivateReply
-      ? { isPrivateReply: true }
-      : null,
+    contentAttributes:
+      parsedInput.contentAttributes ??
+      (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
   }
 
   const attachmentInputs = uploadedFiles.map((file) => ({
@@ -252,26 +259,18 @@ export const createOutgoing = async (props: {
     })),
   }
 
+  publishToWorkspaceParty(messageWithAttachments.workspaceId, {
+    eventType: RealtimeEventType.messageCreated,
+    data: {
+      ...messageWithAttachments,
+      clientId: parsedInput.clientId,
+    },
+  })
+
   const jobs: {
     jobType: (typeof ChatJobAction)[keyof typeof ChatJobAction]
     promise: Promise<unknown>
   }[] = [
-    {
-      jobType: ChatJobAction.broadcastEvent,
-      promise: chatQueue.add(ChatJobAction.broadcastEvent, {
-        type: ChatJobAction.broadcastEvent,
-        data: {
-          workspaceId: messageWithAttachments.workspaceId,
-          event: {
-            eventType: RealtimeEventType.messageCreated,
-            data: {
-              ...messageWithAttachments,
-              clientId: parsedInput.clientId,
-            },
-          },
-        },
-      }),
-    },
     {
       jobType: ChatJobAction.sendChannelMessage,
       promise: chatQueue.add(

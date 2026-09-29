@@ -43,6 +43,8 @@ const {
   mockResolveIncomingTextRouting,
   mockAutomatedResponseEnqueue,
   mockConversationFindOrCreate,
+  mockGetWhatsappCallPermissionReply,
+  mockRecordCallPermissionReply,
   workerState,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
@@ -93,6 +95,8 @@ const {
     mockResolveIncomingTextRouting: vi.fn(),
     mockAutomatedResponseEnqueue: vi.fn().mockResolvedValue(undefined),
     mockConversationFindOrCreate: vi.fn(),
+    mockGetWhatsappCallPermissionReply: vi.fn(),
+    mockRecordCallPermissionReply: vi.fn().mockResolvedValue(undefined),
     workerState: { capturedWorkers: [] as CapturedWorker[] },
   }
 })
@@ -178,6 +182,13 @@ vi.mock("../src/integration/handlers/comment-automation", () => ({
 }))
 vi.mock("../src/integration/handlers/comment-automation/ai-reply", () => ({
   processCommentAIReply: vi.fn(),
+}))
+vi.mock(
+  "../src/integration/handlers/comment-automation/deferred-private-reply",
+  () => ({ runDeferredCommentPrivateReply: vi.fn() }),
+)
+vi.mock("../src/integration/handlers/tiktok-high-intent-comment", () => ({
+  receiveTiktokHighIntentComment: vi.fn(),
 }))
 vi.mock("../src/integration/handlers/contact/update-avatar", () => ({
   updateContactAvatar: vi.fn(),
@@ -299,6 +310,7 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
   broadcastToWorkspaceParty: vi.fn(),
+  publishToWorkspaceParty: vi.fn(),
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
@@ -311,7 +323,25 @@ vi.mock("@chatbotx.io/business", () => ({
     lastName?: string | null
   }) => !(contact.firstName?.trim() || contact.lastName?.trim()),
   contactProfileRefreshService: { refresh: mockContactProfileRefresh },
+  whatsappCallPermissionService: { recordReply: mockRecordCallPermissionReply },
   recordProfileRefreshFailure: vi.fn().mockResolvedValue(undefined),
+  syncExistingContactIdentity: async (props: {
+    contact: unknown
+    contactInbox: unknown
+    incomingContact: unknown
+    matchedBy: string
+  }) => {
+    const sync = await mockSyncScopedIdentity({
+      contactInbox: props.contactInbox,
+      incomingContact: props.incomingContact,
+      matchedBy: props.matchedBy,
+    })
+    return {
+      contactInbox: sync.contactInbox,
+      contact: props.contact,
+      learnedPrimaryIdentity: sync.learnedPrimaryIdentity,
+    }
+  },
   contactInboxService: {
     updateTracking: vi
       .fn()
@@ -366,19 +396,28 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/sdk")>()),
   contentTypes: { enum: { text: "text", location: "location" } },
-  resolveWithSourceUserIdFallback: async <T>(
+  echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
+  resolveSourceScopedIdentityMatch: async <T>(
     identity: { sourceId: string; sourceUserId?: string | null },
     lookup: (
       where: { sourceId: string } | { sourceUserId: string },
     ) => Promise<T | undefined>,
-  ): Promise<T | undefined> => {
+  ) => {
     const bySourceId = await lookup({ sourceId: identity.sourceId })
     if (bySourceId || !identity.sourceUserId) {
       return bySourceId
+        ? { row: bySourceId, matchedBy: "sourceId" as const }
+        : undefined
     }
-    return await lookup({ sourceUserId: identity.sourceUserId })
+    const bySourceUserId = await lookup({
+      sourceUserId: identity.sourceUserId,
+    })
+    return bySourceUserId
+      ? { row: bySourceUserId, matchedBy: "sourceUserId" as const }
+      : undefined
   },
   messageTypes: { enum: { incoming: "incoming", outgoing: "outgoing" } },
   SdkException: class SdkException extends Error {},
@@ -389,6 +428,7 @@ vi.mock("@chatbotx.io/sdk", () => ({
     Boolean(identity.sourceUserId) &&
     identity.sourceId === identity.sourceUserId,
   getStoryReply: () => undefined,
+  getWhatsappCallPermissionReply: mockGetWhatsappCallPermissionReply,
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -459,9 +499,21 @@ vi.mock("../src/services/integrations", () => ({
 // ---------------------------------------------------------------------------
 
 await import("../src/integration/worker")
+// The integration worker process now boots three BullMQ workers: the shared
+// `integration` queue, the rate-limited `callTranscription` queue, and the
+// dedicated `whatsappVoipSignaling` queue.
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(1)
+  expect(workerState.capturedWorkers).toHaveLength(3)
 })
+const findIntegrationWorker = () => {
+  const captured = workerState.capturedWorkers.find(
+    (worker) => worker.queueName === "integration",
+  )
+  if (!captured) {
+    throw new Error("integration worker was not registered")
+  }
+  return captured
+}
 const { integrationService } = await import("../src/services/integrations")
 
 const fakeInbox = {
@@ -531,6 +583,8 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     mockDbTransaction.mockClear()
     mockContactUpdate.mockClear()
     mockConversationFindOrCreate.mockReset()
+    mockGetWhatsappCallPermissionReply.mockReset()
+    mockRecordCallPermissionReply.mockClear()
 
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -595,7 +649,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
   })
 
   test("the refresh's contactService.update resolves before automatedResponseService.enqueue is invoked", async () => {
-    const [integrationWorker] = workerState.capturedWorkers
+    const integrationWorker = findIntegrationWorker()
 
     await integrationWorker?.processor({
       data: {
@@ -633,7 +687,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
       ...fakeContactInbox,
       contact: { ...fakeContact, firstName: "Already Named" },
     })
-    const [integrationWorker] = workerState.capturedWorkers
+    const integrationWorker = findIntegrationWorker()
 
     await integrationWorker?.processor({
       data: {
@@ -648,5 +702,123 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
 
     expect(mockContactProfileRefresh).not.toHaveBeenCalled()
     expect(mockAutomatedResponseEnqueue).toHaveBeenCalled()
+    expect(mockRecordCallPermissionReply).not.toHaveBeenCalled()
+  })
+
+  test("a Click-to-Messenger ad tap whose text is only in referral.text is stored as text and dispatched to automations", async () => {
+    const adText = "Register to visit the project"
+    const { integration: messengerIntegration } = await import(
+      "@chatbotx.io/integration-messenger"
+    )
+    // Parse with the REAL Messenger handler so the channel payload shape,
+    // not a hand-built parsed message, is what reaches the worker.
+    mockRunChannelHandler.mockImplementation(
+      (domain: string, action: string, props: { data: unknown }) => {
+        if (action === "getProfile") {
+          return Promise.resolve({ firstName: "Jane", lastName: "Doe" })
+        }
+        return messengerIntegration.runChannelHandler(domain, action, {
+          ...props,
+          ctx: { auth: { metadata: { pageId: "page-1" } } },
+        } as never)
+      },
+    )
+    const integrationWorker = findIntegrationWorker()
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {
+            object: "page",
+            entry: [
+              {
+                id: "page-1",
+                time: 1,
+                messaging: [
+                  {
+                    sender: { id: "psid-123" },
+                    recipient: { id: "page-1" },
+                    timestamp: 1,
+                    message: {
+                      mid: "msg-src-1",
+                      referral: {
+                        ad_id: "ad-1",
+                        source: "ADS",
+                        type: "OPEN_THREAD",
+                        text: adText,
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    })
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: adText }),
+    )
+    expect(mockResolveIncomingTextRouting).toHaveBeenCalled()
+    expect(mockAutomatedResponseEnqueue).toHaveBeenCalled()
+  })
+
+  test("a contact's call permission reply is recorded and never dispatched to automations", async () => {
+    // Keyed on the message content, not the channel — the harness channel is fine.
+    mockGetWhatsappCallPermissionReply.mockReturnValue({
+      type: "whatsapp_call_permission_reply",
+      response: "accept",
+      isPermanent: false,
+      expirationTimestamp: 1_789_000_000,
+    })
+    const integrationWorker = findIntegrationWorker()
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(mockRecordCallPermissionReply).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInboxId: "ci-1",
+      response: "accept",
+      isPermanent: false,
+      expirationTimestamp: 1_789_000_000,
+      respondedAt: fakeCreatedMessage.createdAt,
+    })
+    expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+  })
+
+  test("a permission reply without an isPermanent flag is stored as temporary", async () => {
+    mockGetWhatsappCallPermissionReply.mockReturnValue({
+      type: "whatsapp_call_permission_reply",
+      response: "reject",
+    })
+    const integrationWorker = findIntegrationWorker()
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(mockRecordCallPermissionReply).toHaveBeenCalledWith(
+      expect.objectContaining({ response: "reject", isPermanent: false }),
+    )
   })
 })

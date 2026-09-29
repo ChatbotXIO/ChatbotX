@@ -109,3 +109,52 @@ describe("ToolsList — permission gating for the click-to-message-ads card", ()
     expect(navigation.push).toHaveBeenCalledWith("/space/ws1/messaging-ads")
   })
 })
+
+describe("ToolsList — Beta badge", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    container = document.createElement("div")
+    document.body.append(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+  })
+
+  const cardFor = (label: string) => {
+    const card = container.querySelector<HTMLElement>(`[aria-label="${label}"]`)
+    if (!card) {
+      throw new Error(`${label} card not rendered`)
+    }
+    return card
+  }
+
+  test("marks the TikTok comment automation card as Beta", () => {
+    act(() => {
+      root.render(<ToolsList permissions={fullPermissions} />)
+    })
+
+    expect(cardFor("tiktokCommentAutomation.title").textContent).toContain(
+      "tools.beta",
+    )
+  })
+
+  // The badge is opt-in per card, so a card without the flag must not inherit
+  // it — otherwise every tool would silently read as Beta.
+  test("leaves cards without the flag unbadged", () => {
+    act(() => {
+      root.render(<ToolsList permissions={fullPermissions} />)
+    })
+
+    expect(
+      cardFor("facebookCommentAutomation.title").textContent,
+    ).not.toContain("tools.beta")
+  })
+})

@@ -6,6 +6,21 @@ import { tenantService } from "../enterprise/tenant/service"
 import { logger } from "../logger"
 import { type QuotaMetric, userQuotaService } from "../user-quota/service"
 import { workspaceUsageService } from "../workspace-usage/service"
+import { quotaEnforcementEnv } from "./keys"
+import {
+  type ConsumeLevel,
+  type CreateNewContactResult,
+  type MacAdmissionArgs,
+  type MacAdmissionResult,
+  type MacAdmissionStrategy,
+  type MacAdmitter,
+  type MacPostCommitArgs,
+  type NewContactTransactionResult,
+  type QuotaContext,
+  type QuotaLevel,
+  resolveMacAdmissionPreference,
+  runNewContactTransaction,
+} from "./mac-admission"
 
 // No write path here invalidates by tag — a user's tenantId is effectively
 // immutable in practice (set once at signup/creation), so a short TTL alone
@@ -24,8 +39,15 @@ const ALL_METRICS: readonly QuotaMetric[] = [
 ]
 
 const LOCK_TIMEOUT_SECONDS = 30
+// Read on first use, not at import: t3-env refuses server variables when this
+// module is imported transitively from a browser-like (jsdom) test.
+let quotaEnforcementSettings: ReturnType<typeof quotaEnforcementEnv> | undefined
+const getQuotaEnforcementSettings = () => {
+  quotaEnforcementSettings ??= quotaEnforcementEnv()
+  return quotaEnforcementSettings
+}
 
-export type ConsumeLevel = "user" | "pool"
+export type { ConsumeLevel } from "./mac-admission"
 export type ConsumeResult = { ok: boolean; level?: ConsumeLevel }
 
 /** Per-metric effective usage + limit for display, matching what is enforced. */
@@ -43,12 +65,6 @@ export type WorkspaceQuotaUsageSummary = Omit<
     used: number
     limit: number | null
   }
-}
-
-type QuotaContext = {
-  tenantId: string
-  /** Tenant owner (reseller). `null` for the root tenant (no pool). */
-  ownerId: string | null
 }
 
 /** `null` (unlimited) acts as +∞ when taking the tighter of two limits. */
@@ -78,6 +94,11 @@ const minRemaining = (a: number | null, b: number | null): number | null => {
  * write-through (see `LiveCounterStore.consume`).
  */
 class QuotaEnforcementService {
+  private readonly macAdmitters: Record<MacAdmissionStrategy, MacAdmitter> = {
+    atomic: (args) => this.admitAtomically(args),
+    lock: (args) => this.admitWithLock(args),
+  }
+
   /**
    * Resolve the owner-derived tenant for an actor and that tenant's reseller.
    * Mirrors `workspaceService.resolveTenantForOwner` (inlined to avoid a
@@ -120,6 +141,29 @@ class QuotaEnforcementService {
     ctx: QuotaContext,
   ): ctx is { tenantId: string; ownerId: string } {
     return ctx.tenantId !== ROOT_TENANT_ID && ctx.ownerId !== null
+  }
+
+  /** Ordered quota rows affected by a consumption for this context. */
+  private levelsForCtx(
+    ctx: QuotaContext,
+    userId: string,
+  ): Omit<QuotaLevel, "quota">[] {
+    if (!this.isPooled(ctx)) {
+      return [{ userId, level: "user" }]
+    }
+    return [
+      { userId: ctx.ownerId, level: "pool" },
+      ...(userId === ctx.ownerId ? [] : [{ userId, level: "user" as const }]),
+    ]
+  }
+
+  private loadLevels(ctx: QuotaContext, userId: string): Promise<QuotaLevel[]> {
+    return Promise.all(
+      this.levelsForCtx(ctx, userId).map(async (level) => ({
+        ...level,
+        quota: await userQuotaService.getForUser(level.userId),
+      })),
+    )
   }
 
   /** The lock key that serializes check-then-consume for a resolved context. */
@@ -297,21 +341,174 @@ class QuotaEnforcementService {
     }
   }
 
+  private async runPostCommitCounters(args: MacPostCommitArgs): Promise<void> {
+    if (args.counted) {
+      await macTrackingService.incrementWorkspaceMacCache(args.workspaceId, 1)
+      // Display-only breakdown, mirroring the `contacts` pattern below.
+      // Never let a failure here affect the authoritative MAC counters above.
+      await workspaceUsageService
+        .increment(args.workspaceId, "mac")
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId: args.workspaceId },
+            "workspace usage mac increment failed",
+          )
+        })
+    }
+
+    // Info-only total-contacts counter: every brand-new contact counts,
+    // independent of the MAC period/limit. Recorded HERE so the single
+    // new-contact chokepoint owns all per-new-contact metrics and no caller
+    // can forget to bump `contacts` (callers previously did this by hand,
+    // and the bulk-import path forgot it entirely).
+    await this.incrementByForCtx(args.ctx, args.ownerId, "contacts", 1)
+    // The workspace row is a display-only breakdown. Never let a failure
+    // here affect the authoritative UserQuota increment above.
+    await workspaceUsageService
+      .increment(args.workspaceId, "contacts")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId: args.workspaceId },
+          "workspace usage contact increment failed",
+        )
+      })
+  }
+
+  private admitWithLock<T>(
+    args: MacAdmissionArgs<T>,
+  ): Promise<MacAdmissionResult<T>> {
+    return distributedLock.runExclusive({
+      key: this.lockKeyFor(args.ctx, args.ownerId, "mac"),
+      timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
+      retryTimeoutInSeconds: args.lockWaitSeconds,
+      fn: async (): Promise<MacAdmissionResult<T>> => {
+        const remaining = await this.dualRemainingSlotsForCtx(
+          args.ctx,
+          args.ownerId,
+          "mac",
+        )
+        if (remaining === 0) {
+          return {
+            ok: false,
+            level: await this.macExhaustedLevelForCtx(args.ctx),
+          }
+        }
+
+        // The owner billing-period anchor. Without it there is no MAC period to
+        // record presence against (mirrors the async tracker, which skips
+        // period-less owners), but a finite `remaining` still means a configured
+        // MAC limit exists and must be consumed via the live quota counter.
+        // It is refreshed inside the lock so a rollover while waiting cannot
+        // write the ledger row under the old period.
+        const quota = await userQuotaService.getForUser(args.ownerId)
+        const periodStart = quota?.periodStart ?? null
+        const { value, counted } = await runNewContactTransaction({
+          ...args,
+          periodStart,
+        })
+
+        const shouldConsumeMac = counted || (!periodStart && remaining !== null)
+        if (shouldConsumeMac) {
+          await this.incrementByForCtx(args.ctx, args.ownerId, "mac", 1)
+        }
+        await this.runPostCommitCounters({ ...args, counted })
+        return { ok: true, value }
+      },
+    })
+  }
+
+  private async revokeAdmissions(
+    levels: QuotaLevel[],
+    args: Pick<MacAdmissionArgs<unknown>, "ownerId" | "workspaceId">,
+  ): Promise<void> {
+    for (const level of levels.toReversed()) {
+      try {
+        await userQuotaService.revokeAdmission(level.userId, "mac")
+      } catch (err) {
+        logger.warn(
+          {
+            err,
+            level: level.level,
+            ownerId: args.ownerId,
+            workspaceId: args.workspaceId,
+          },
+          "MAC admission revoke failed",
+        )
+      }
+    }
+  }
+
+  private async admitAtomically<T>(
+    args: MacAdmissionArgs<T>,
+  ): Promise<MacAdmissionResult<T>> {
+    const admitted: QuotaLevel[] = []
+    for (const level of args.levels) {
+      let value: number | null
+      try {
+        value = await userQuotaService.admit(level.userId, "mac", level.quota)
+      } catch (err) {
+        await this.revokeAdmissions(admitted, args)
+        throw err
+      }
+      if (value === null) {
+        await this.revokeAdmissions(admitted, args)
+        return { ok: false, level: level.level }
+      }
+      admitted.push(level)
+    }
+
+    const periodStart =
+      args.levels.find((level) => level.userId === args.ownerId)?.quota
+        ?.periodStart ?? null
+    let transactionResult: NewContactTransactionResult<T>
+    try {
+      transactionResult = await runNewContactTransaction({
+        ...args,
+        periodStart,
+      })
+    } catch (err) {
+      await this.revokeAdmissions(admitted, args)
+      throw err
+    }
+
+    if (transactionResult.counted) {
+      try {
+        for (const level of admitted) {
+          await userQuotaService.commitAdmission(level.userId, "mac")
+        }
+      } catch (err) {
+        logger.error(
+          { err, ownerId: args.ownerId, workspaceId: args.workspaceId },
+          "MAC admission commit failed after contact creation",
+        )
+        throw err
+      }
+    } else {
+      await this.revokeAdmissions(admitted, args)
+    }
+
+    await this.runPostCommitCounters({
+      ...args,
+      counted: transactionResult.counted,
+    })
+    return { ok: true, value: transactionResult.value }
+  }
+
   /**
-   * Atomically gate, create, and consume a MAC slot for a BRAND-NEW contact.
+   * Gate and create a BRAND-NEW contact against its MAC allowance.
    *
-   * MAC (monthly-active-contacts) is the billing hard gate. Unlike the
-   * info-only `contacts` metric (incremented out-of-band), a new contact must
-   * not be created at all once the MAC limit is reached. This serializes the
-   * remaining-slots check + insert + increment under the same distributed lock
-   * the contact-import path uses, so concurrent new-contact requests cannot
-   * both pass the gate and overrun the limit.
+   * MAC (monthly-active-contacts) is the billing gate. Unlike the info-only
+   * `contacts` metric (incremented out-of-band), a new contact is refused once
+   * the gate reports the limit reached. Resetting plans use a soft cap: admit
+   * atomically in Redis, create in a separate transaction, then commit or revoke
+   * the slot. Lifetime / period-less owners and `QUOTA_MAC_ADMISSION=lock`
+   * retain the distributed-lock path.
    *
    * The `create` callback performs the actual contact/contactInbox/conversation
    * inserts inside the provided transaction and returns the new ids. On success
    * a `ContactActiveMonthly` presence row is written in the SAME transaction so
    * the later message analytics event for this contact dedups (does not
-   * double-count), and the user+pool live MAC counters are incremented after
+   * double-count), and admitted user+pool MAC counters are persisted after
    * commit.
    *
    * Returns `{ ok: false, level }` (and creates nothing) when the limit is
@@ -322,101 +519,37 @@ class QuotaEnforcementService {
     ownerId: string
     workspaceId: string
     occurredAt?: Date
-    create: (tx: Transaction) => Promise<{
-      value: T
-      contactId: string
-      contactInboxId: string
-      inboxId: string
-    }>
-  }): Promise<{ ok: true; value: T } | { ok: false; level: ConsumeLevel }> {
+    /**
+     * How long to poll for the per-owner MAC lock before giving up with a
+     * `LockAcquisitionError`. Defaults to the lock TTL (30s). A caller that can
+     * park and retry itself cheaply (a queue job that defers on contention)
+     * should pass a short wait so a losing waiter frees its worker slot
+     * quickly; a synchronous caller keeps the default and waits.
+     */
+    lockWaitSeconds?: number
+    create: (tx: Transaction) => Promise<CreateNewContactResult<T>>
+  }): Promise<MacAdmissionResult<T>> {
     const { ownerId, workspaceId, create } = args
     const occurredAt = args.occurredAt ?? new Date()
+    const lockWaitSeconds = args.lockWaitSeconds ?? LOCK_TIMEOUT_SECONDS
     // Resolve the owner's quota context ONCE for the whole operation and thread
     // it through the lock key, remaining check, exhaustion level, and both
     // counter increments — the new-contact path is hot (every inbound message
     // from a new contact), and re-resolving would issue 3-4 identical owner-row
     // reads, two of them inside the lock.
     const ctx = await this.resolveContext(ownerId)
-    const lockKey = this.lockKeyFor(ctx, ownerId, "mac")
-
-    return distributedLock.runExclusive({
-      key: lockKey,
-      timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
-      fn: async (): Promise<
-        { ok: true; value: T } | { ok: false; level: ConsumeLevel }
-      > => {
-        const remaining = await this.dualRemainingSlotsForCtx(
-          ctx,
-          ownerId,
-          "mac",
-        )
-        if (remaining === 0) {
-          return { ok: false, level: await this.macExhaustedLevelForCtx(ctx) }
-        }
-
-        // The owner billing-period anchor. Without it there is no MAC period to
-        // record presence against (mirrors the async tracker, which skips
-        // period-less owners), but a finite `remaining` still means a configured
-        // MAC limit exists and must be consumed via the live quota counter.
-        const quota = await userQuotaService.getForUser(ownerId)
-        const periodStart = quota?.periodStart ?? null
-
-        const { value, counted } = await db.transaction(async (tx) => {
-          const created = await create(tx)
-          let didCount = false
-          if (periodStart) {
-            const claim = await macTrackingService.claimNewActiveContact(
-              {
-                workspaceId,
-                contactId: created.contactId,
-                contactInboxId: created.contactInboxId,
-                inboxId: created.inboxId,
-                periodStart,
-                occurredAt,
-              },
-              tx,
-            )
-            didCount = claim.counted
-          }
-          return { value: created.value, counted: didCount }
-        })
-
-        const shouldConsumeMac = counted || (!periodStart && remaining !== null)
-        if (shouldConsumeMac) {
-          await this.incrementByForCtx(ctx, ownerId, "mac", 1)
-        }
-        if (counted) {
-          await macTrackingService.incrementWorkspaceMacCache(workspaceId, 1)
-          // Display-only breakdown, mirroring the `contacts` pattern below.
-          // Never let a failure here affect the authoritative MAC counters above.
-          await workspaceUsageService
-            .increment(workspaceId, "mac")
-            .catch((err) => {
-              logger.warn(
-                { err, workspaceId },
-                "workspace usage mac increment failed",
-              )
-            })
-        }
-        // Info-only total-contacts counter: every brand-new contact counts,
-        // independent of the MAC period/limit. Recorded HERE so the single
-        // new-contact chokepoint owns all per-new-contact metrics and no caller
-        // can forget to bump `contacts` (callers previously did this by hand,
-        // and the bulk-import path forgot it entirely).
-        await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
-        // The workspace row is a display-only breakdown. Never let a failure
-        // here affect the authoritative UserQuota increment above.
-        await workspaceUsageService
-          .increment(workspaceId, "contacts")
-          .catch((err) => {
-            logger.warn(
-              { err, workspaceId },
-              "workspace usage contact increment failed",
-            )
-          })
-
-        return { ok: true, value }
-      },
+    const { levels, strategy } = await resolveMacAdmissionPreference({
+      preferred: getQuotaEnforcementSettings().QUOTA_MAC_ADMISSION,
+      loadLevels: () => this.loadLevels(ctx, ownerId),
+    })
+    return this.macAdmitters[strategy]({
+      ctx,
+      levels,
+      ownerId,
+      workspaceId,
+      occurredAt,
+      lockWaitSeconds,
+      create,
     })
   }
 

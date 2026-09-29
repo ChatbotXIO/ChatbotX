@@ -84,6 +84,7 @@ export const listReelsPosts = (props: {
     const res = await facebookGraphClient.get<
       FacebookPaginatedResponse<{
         id: string
+        post_id?: string
         description?: string
         picture?: string
         created_time: string
@@ -92,12 +93,16 @@ export const listReelsPosts = (props: {
     >(endpoint, {
       headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
       searchParams: {
-        fields: "id,description,picture,created_time,permalink_url",
+        fields: "id,post_id,description,picture,created_time,permalink_url",
         limit: "100",
       },
     })
+    // A reel's video id is not the id of the post it lives in, and the `feed`
+    // webhook reports comments by that post id. Store the post id so a
+    // reel-scoped automation matches its comments; the video id is only a
+    // fallback for a reel Facebook returns without one.
     return res.data.map((item) => ({
-      id: item.id,
+      id: item.post_id ?? item.id,
       message: item.description,
       full_picture: item.picture,
       created_time: item.created_time,

@@ -1,12 +1,108 @@
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 import {
   getCanonicalReplyPayload,
+  isDistinctPrimaryIdentity,
   isWhatsappNativeLocationRequest,
   type MessageButtonTemplate,
   NATIVE_LOCATION_REQUEST_CHANNELS,
+  resolveMessagingWindowOpenedAt,
+  resolveSourceScopedIdentityMatch,
   URL_QUICK_REPLY_CAPABLE_CHANNELS,
   WHATSAPP_NATIVE_LOCATION_REQUEST,
 } from "../src"
+
+describe("isDistinctPrimaryIdentity", () => {
+  test.each([
+    undefined,
+    null,
+    "",
+    "   ",
+  ])("rejects an empty primary identity: %o", (value) => {
+    expect(isDistinctPrimaryIdentity(value, "bsuid-1")).toBe(false)
+  })
+
+  test("compares trimmed primary and scoped identities", () => {
+    expect(isDistinctPrimaryIdentity("  bsuid-1  ", "bsuid-1")).toBe(false)
+    expect(isDistinctPrimaryIdentity("84900000001", " 84900000001 ")).toBe(
+      false,
+    )
+  })
+
+  test("accepts a non-empty primary identity distinct from every scoped identity", () => {
+    expect(
+      isDistinctPrimaryIdentity(
+        " 84900000001 ",
+        undefined,
+        null,
+        "",
+        "bsuid-1",
+      ),
+    ).toBe(true)
+  })
+})
+
+describe("resolveSourceScopedIdentityMatch", () => {
+  test("probes sourceParentUserId only after sourceId and sourceUserId miss", async () => {
+    const lookup = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ id: "contact-inbox-1" })
+
+    await expect(
+      resolveSourceScopedIdentityMatch(
+        {
+          sourceId: "84900000001",
+          sourceUserId: "bsuid-new",
+          sourceParentUserId: "parent-bsuid",
+        },
+        lookup,
+      ),
+    ).resolves.toEqual({
+      row: { id: "contact-inbox-1" },
+      matchedBy: "sourceParentUserId",
+    })
+    expect(lookup.mock.calls).toEqual([
+      [{ sourceId: "84900000001" }],
+      [{ sourceUserId: "bsuid-new" }],
+      [{ sourceParentUserId: "parent-bsuid" }],
+    ])
+  })
+
+  test("skips the parent probe when sourceParentUserId is absent", async () => {
+    const lookup = vi.fn().mockResolvedValue(undefined)
+
+    await expect(
+      resolveSourceScopedIdentityMatch(
+        { sourceId: "84900000001", sourceUserId: "bsuid-new" },
+        lookup,
+      ),
+    ).resolves.toBeUndefined()
+    expect(lookup).toHaveBeenCalledTimes(2)
+  })
+
+  test("a sourceUserId hit short-circuits the parent probe", async () => {
+    const lookup = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ id: "contact-inbox-1" })
+
+    await expect(
+      resolveSourceScopedIdentityMatch(
+        {
+          sourceId: "84900000001",
+          sourceUserId: "bsuid-current",
+          sourceParentUserId: "parent-bsuid",
+        },
+        lookup,
+      ),
+    ).resolves.toEqual({
+      row: { id: "contact-inbox-1" },
+      matchedBy: "sourceUserId",
+    })
+    expect(lookup).toHaveBeenCalledTimes(2)
+  })
+})
 
 describe("getCanonicalReplyPayload", () => {
   test("returns postback for a postback button", () => {
@@ -93,5 +189,68 @@ describe("isWhatsappNativeLocationRequest", () => {
 
     expect(isWhatsappNativeLocationRequest([button])).toBe(false)
     expect(isWhatsappNativeLocationRequest(undefined)).toBe(false)
+  })
+})
+
+describe("resolveMessagingWindowOpenedAt", () => {
+  const createdAt = new Date("2026-09-18T10:00:00Z")
+
+  test("a contact's message opens the window when it arrived", () => {
+    expect(
+      resolveMessagingWindowOpenedAt({ messageType: "incoming", createdAt }),
+    ).toEqual(createdAt)
+  })
+
+  test("accepts the string form a realtime payload delivers", () => {
+    expect(
+      resolveMessagingWindowOpenedAt({
+        messageType: "incoming",
+        createdAt: createdAt.toISOString(),
+      }),
+    ).toEqual(createdAt)
+  })
+
+  test("a call card opens it at the moment the server stamped, not when the card was written", () => {
+    const openedAt = "2026-09-18T09:55:00.000Z"
+    expect(
+      resolveMessagingWindowOpenedAt({
+        messageType: "activity",
+        createdAt,
+        contentAttributes: {
+          type: "whatsapp_call",
+          direction: "userInitiated",
+          status: "failed",
+          customerServiceWindowOpenedAt: openedAt,
+        },
+      }),
+    ).toEqual(new Date(openedAt))
+  })
+
+  test("a call card without the stamp opens nothing", () => {
+    expect(
+      resolveMessagingWindowOpenedAt({
+        messageType: "activity",
+        createdAt,
+        contentAttributes: {
+          type: "whatsapp_call",
+          direction: "businessInitiated",
+          status: "failed",
+        },
+      }),
+    ).toBeNull()
+  })
+
+  test.each([
+    ["outgoing", undefined],
+    ["activity", { type: "note" }],
+    ["activity", undefined],
+  ])("a %s message with %o opens nothing", (messageType, contentAttributes) => {
+    expect(
+      resolveMessagingWindowOpenedAt({
+        messageType,
+        createdAt,
+        contentAttributes,
+      }),
+    ).toBeNull()
   })
 })

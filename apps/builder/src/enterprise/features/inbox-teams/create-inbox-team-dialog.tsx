@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import type { ListWorkspaceMembersResponse } from "@/features/workspace-members/schema/query"
 import { createInboxTeamAction } from "./actions/create-inbox-team.action"
 import { createInboxTeamRequest } from "./schema/action"
@@ -33,6 +34,7 @@ export function CreateInboxTeamDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateUsers = useInvalidateUsers()
 
   const [open, setOpen] = useState(false)
 
@@ -51,6 +53,7 @@ export function CreateInboxTeamDialog({
 
             setOpen(false)
             resetFormAndAction()
+            invalidateUsers()
             router.refresh()
           },
           onError: ({ error }) => {

@@ -1,5 +1,5 @@
 import { flowService } from "@chatbotx.io/business"
-import type { FBCommentReplyType } from "@chatbotx.io/database/partials"
+import type { CommentReplyType } from "@chatbotx.io/database/partials"
 import { logger } from "../../../lib/logger"
 
 /**
@@ -16,7 +16,7 @@ import { logger } from "../../../lib/logger"
  *   `processCommentAIReply` fills it in on the same event row
  */
 export type CommentReplyOutcome = {
-  replyType: FBCommentReplyType
+  replyType: CommentReplyType
   replyText: string | null
   /**
    * Set only when the send already completed synchronously (a `text` reply,
@@ -37,6 +37,16 @@ export type CommentReplyOutcome = {
    * this. Ordering is structural rather than a race the delay happens to win.
    */
   dispatch?: () => Promise<void>
+  /**
+   * Writes an already-delivered inline DM (`text`) into the inbox. Never
+   * throws.
+   *
+   * Run by the caller only after the dedup row is written: it costs several DB
+   * round-trips, and awaiting it before `insertDedup` widens the window in
+   * which a redelivered webhook for the same comment passes `findDedup` and
+   * sends a second DM.
+   */
+  recordInInbox?: () => Promise<void>
 }
 
 /**

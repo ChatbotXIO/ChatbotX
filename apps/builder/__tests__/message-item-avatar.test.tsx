@@ -19,6 +19,14 @@ vi.mock("@/features/media-library/components/media-library-trigger", () => ({
   MediaLibraryTrigger: () => null,
 }))
 
+// Same chain as media-library-trigger above: the real card pulls in
+// `useOutboundCallMode`/`useWhatsappCallStarter`, which reach the same
+// `"use server"` calling actions. Call card contents are covered by
+// whatsapp-call-card.test.tsx; this test is only about avatar gating.
+vi.mock("@/features/messages/components/whatsapp-call-card", () => ({
+  WhatsappCallCard: () => <div data-slot="whatsapp-call-card">audioCall</div>,
+}))
+
 // Base UI's Avatar.Image only mounts once the underlying <img> actually
 // fires a load/error event (see useImageLoadingStatus), which jsdom never
 // dispatches for a src that isn't really fetched. Mock it down to plain

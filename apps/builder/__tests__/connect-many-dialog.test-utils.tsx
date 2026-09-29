@@ -1,4 +1,5 @@
 import { DialogTitle } from "@chatbotx.io/ui/components/ui/dialog"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, type RefObject } from "react"
 import type { Root } from "react-dom/client"
 import { vi } from "vitest"
@@ -165,6 +166,7 @@ export function fakeExtraStep(): ConnectDialogExtraStep {
 
 export type RenderConnectManyDialogProps = {
   channel?: "messenger" | "instagram" | "whatsapp"
+  workspaceId?: string
   items: ConnectPickerItem[]
   connectOne: (item: ConnectPickerItem) => Promise<ConnectActionResultWire>
   onFinished?: () => void
@@ -178,19 +180,25 @@ export function renderConnectManyDialog(
   root: Root,
   props: RenderConnectManyDialogProps,
 ) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+
   act(() => {
     root.render(
-      <ConnectManyDialog
-        channel={props.channel ?? "messenger"}
-        connectOne={props.connectOne}
-        extraSteps={props.extraSteps}
-        finalFocusRef={props.finalFocusRef}
-        items={props.items}
-        onClose={props.onClose ?? vi.fn()}
-        onFinished={props.onFinished ?? vi.fn()}
-        resolveCoexistWorkspaceId={props.resolveCoexistWorkspaceId}
-        workspaceId="ws-1"
-      />,
+      <QueryClientProvider client={queryClient}>
+        <ConnectManyDialog
+          channel={props.channel ?? "messenger"}
+          connectOne={props.connectOne}
+          extraSteps={props.extraSteps}
+          finalFocusRef={props.finalFocusRef}
+          items={props.items}
+          onClose={props.onClose ?? vi.fn()}
+          onFinished={props.onFinished ?? vi.fn()}
+          resolveCoexistWorkspaceId={props.resolveCoexistWorkspaceId}
+          workspaceId={props.workspaceId ?? "ws-1"}
+        />
+      </QueryClientProvider>,
     )
   })
 }

@@ -336,6 +336,7 @@
       "message": "Viimeisin maksusi epäonnistui. Pidä työtilasi aktiivisena päivittämällä maksutapasi."
     },
     "trial": {
+      "planName": "Kokeilu",
       "daysLeft": "Kokeilu: {days} päivää jäljellä",
       "endsTomorrow": "Kokeilu päättyy huomenna",
       "expired": "Kokeilusi on päättynyt — pidä työtilasi aktiivisena päivittämällä tilauksesi",
@@ -449,7 +450,6 @@
       "audienceFilter": "Yleisösuodatin",
       "noAudienceFilter": "Ei yleisösuodatinta",
       "template": "Malli",
-      "noTemplate": "Ei mallia",
       "integration": "Integraatio"
     },
     "filters": {
@@ -508,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Päivitä tilauksesi",
+      "sendRate": "Nykyinen {plan}-tilauksesi tukee lähetyksiä enintään nopeudella {rate} viestiä minuutissa. Päivitä tilauksesi lähettääksesi broadcasteja jopa {multiplier}x nopeammin.",
+      "activeBroadcasts": "Nykyisellä {plan}-tilauksellasi voi olla käynnissä {max, plural, one {# broadcast} other {# broadcastia}} kerrallaan. Päivitä tilauksesi käyttääksesi useampia broadcasteja samanaikaisesti."
+    },
+    "sendLimit": {
+      "title": "Raja",
+      "hint": "Jätä tyhjäksi lähettääksesi kaikille vastaaville yhteystiedoille.",
+      "rateHint": "Jätä tyhjäksi käyttääksesi oletusnopeutta.",
+      "rangeSummary": "Yhteystiedot #{start} – #{end}",
+      "rangeFromSummary": "Alkaen yhteystiedosta #{start}",
+      "rangeLabel": "Yhteystietoväli",
+      "fromLabel": "Alkaen",
+      "toLabel": "Asti",
+      "allPlaceholder": "Kaikki",
+      "rangeEndBeforeStart": "Loppusijainti ei voi olla ennen alkusijaintia"
     }
   },
   "commentAutomation": {
@@ -536,7 +553,26 @@
       "keywordsNotMatched": "Avainsanat eivät täsmänneet",
       "contactNotNew": "Kontakti ei ole uusi",
       "alreadyRepliedOnPost": "Jo vastattu tässä julkaisussa",
-      "engagedOnOtherPost": "Jo vuorovaikutuksessa toisessa julkaisussa"
+      "engagedOnOtherPost": "Jo vuorovaikutuksessa toisessa julkaisussa",
+      "mentionCountNotMatched": "Mainintojen määrä ei täsmännyt"
+    },
+    "replyTo": {
+      "mentions": "Kommentit, joissa on tarpeeksi mainintoja",
+      "mentionCount": "Merkittyjen henkilöiden määrä",
+      "mentionCountDescription": "Vain kommentit, jotka merkitsevät vähintään näin monta henkilöä (@nimi), täsmäävät.",
+      "mentionCountOption": "{count, plural, one {# henkilö} other {# henkilöä}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Kommentit, jotka ovat yhtä kuin",
+      "contain": "Kommentit, jotka sisältävät"
+    },
+    "hideComments": {
+      "hasGif": "Sisältää GIF-kuvan",
+      "hasEmoji": "Sisältää emojin"
+    },
+    "trackUserTags": {
+      "label": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
+      "descriptionText": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
     }
   },
   "condition": {
@@ -727,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(valinnainen)",
     "marketingMessagesConfigId": {
       "label": "Markkinointiviestien määritystunnus",
       "description": "Facebook Login for Business -määritystunnus, jolla pyydetään marketing_messages_messenger-lupaa."
@@ -1095,6 +1132,19 @@
     },
     "contactId": {
       "label": "Yhteystiedon tunnus"
+    },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo-käyttäjätunnus",
+      "telegramChatId": "Telegram-keskustelutunnus",
+      "tiktokUserId": "TikTok-käyttäjätunnus",
+      "threadsUsername": "Threads-käyttäjänimi",
+      "webchatGuestId": "Webchat-vierastunnus",
+      "externalId": "Ulkoinen tunnus",
+      "channelId": "Kanavan tunnus"
     },
     "flow": {
       "label": "Flow"
@@ -1997,11 +2047,16 @@
       "clientId": "Asiakastunnus",
       "clientSecret": "Asiakassalaisuus",
       "displayName": "Näyttönimi",
+      "needsReauthorizationForComments": "Tämä yhteys valtuutettiin ennen kommenttiautomaatiota. Yhdistä uudelleen aloittaaksesi kommenttitapahtumien vastaanoton.",
       "connectInstructions": {
         "step1": "Luo TikTok-sovellus osoitteessa <link>developers.tiktok.com</link>.",
         "step2": "Valtuuta tilisi ja kopioi <strong>käyttöoikeustunnus</strong>, <strong>avoin tunnus</strong> ja <strong>asiakassalaisuus</strong>.",
         "step3": "Yhdistä liittämällä tunnistetiedot alle."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Tiputus"
@@ -2192,6 +2247,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta-sovelluksen salaisuus (valinnainen)",
+      "description": "Ottaa käyttöön webhook-allekirjoituksen varmistuksen tälle manuaaliselle yhteydelle. Löydät sen Meta-sovelluksesi hallintapaneelista kohdasta Asetukset > Perustiedot."
+    },
+    "lastCallRecorded": {
+      "label": "Viimeisin puhelutallenne"
+    },
+    "lastCallTranscript": {
+      "label": "Viimeisin puhelulitterointi"
+    },
+    "sendRatePerMinute": {
+      "label": "Viestejä minuutissa"
     }
   },
   "flows": {
@@ -2308,6 +2376,8 @@
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
       "unarchiveConversation": "Palauta keskustelu arkistosta",
       "unassignConversation": "Poista keskustelun määritys",
+      "markConversationAsUnread": "Merkitse keskustelu lukemattomaksi",
+      "markConversationAsRead": "Merkitse keskustelu luetuksi",
       "unfollowConversation": "Lopeta keskustelun seuranta",
       "unsubscribeBroadcast": "Peru joukkolähetys",
       "getUserData": "Hae käyttäjätiedot",
@@ -2332,7 +2402,9 @@
       "import": "Tuo vuo",
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
-      "importJsonOnly": "Vain JSON-tiedostot"
+      "importJsonOnly": "Vain JSON-tiedostot",
+      "whatsappCallButton": "Soita WhatsAppissa",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2448,6 +2520,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Tämä kanava ei voi lähettää tätä mediatyyppiä – vaihe ohitetaan siellä. Poista se tai vaihda solmun kanava sellaiseen, joka tukee sitä.",
       "buttonsSkippedOnChannel": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana – ne ohitetaan siellä. Sijoita ne sen sijaan seuraavaan tekstivaiheeseen."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Muokkaa painiketta",
+      "buttonLabel": "Painikkeen teksti"
     }
   },
   "folders": {
@@ -2669,7 +2745,8 @@
       "adAccountFilter": {
         "all": "Kaikki mainostilit",
         "label": "Mainostili",
-        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista."
+        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista.",
+        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
       },
       "channelFilter": {
         "label": "Kanava",
@@ -3025,6 +3102,10 @@
       "whatsapp": "Tämä WhatsApp-numero on jo yhdistetty toiseen työtilaan.",
       "zalo": "Tämä Zalo OA on jo yhdistetty toiseen työtilaan."
     },
+    "missingScopes": {
+      "generic": "Yhteys peruutettiin: joitakin käyttöoikeuksia ei myönnetty. Yhdistä uudelleen ja hyväksy kaikki pyydetyt käyttöoikeudet.",
+      "tiktok": "TikTok-yhteys peruutettiin: joitakin käyttöoikeuksia ei myönnetty. Yhdistä uudelleen ja hyväksy kaikki pyydetyt käyttöoikeudet."
+    },
     "reconnect": {
       "success": "Kanava yhdistettiin uudelleen.",
       "errors": {
@@ -3181,6 +3262,7 @@
     "changeLikeState": "Vaihda tykkäystilaa",
     "changeHideState": "Vaihda piilotustilaa",
     "commentHidden": "Tämä kommentti piilotettiin",
+    "commentMediaUnavailable": "Tämä kommentti sisältää GIF-kuvan, tarran tai kuvan, jota ei voi näyttää",
     "messageDeleted": "Viesti on poistettu.",
     "sendFailed": "Lähetys epäonnistui",
     "repliedToStory": "Vastasi tarinaasi",
@@ -3221,7 +3303,10 @@
     "deleteFeature": "Poista {feature}",
     "resetFeature": "Nollaa {feature}",
     "resetConfirmation": "Tämä tyhjentää valittujen {feature} arvot.\nTätä toimintoa ei voi kumota.",
+    "resetAllConfirmation": "Tämä tyhjentää tämän yhteystiedon kaikkien {feature} arvot.\nTätä toimintoa ei voi kumota.",
     "resetSuccess": "{feature} nollattu onnistuneesti",
+    "clearFeature": "Tyhjennä {feature}",
+    "clearSuccess": "{feature} tyhjennetty onnistuneesti",
     "deleteConfirmation": "Oletko aivan varma?\nTätä toimintoa ei voi kumota.\nTämä poistaa kohteen {feature} pysyvästi palvelimiltamme.",
     "addFeature": "Lisää {feature}",
     "signOutConfirmation": "Haluatko varmasti kirjautua ulos?",
@@ -3272,13 +3357,27 @@
     "historyDepth": "({count})",
     "none": "Ei mitään",
     "tiktokCardTitleTooLong": "TikTok lyhentää tätä viestiä: kun painikkeita on liitetty, vain ensimmäiset 40 merkkiä lähetetään. Lyhennä viestiä tai poista painikkeet.",
+    "sendTextTooLongForChannel": "Tämä viesti on pidempi kuin kanava sallii. Lyhennä sitä tai ohjaa tämä lohko kanavalle, jolla on suurempi raja.",
     "waTemplateMpmNoProducts": "Lisää vähintään yksi tuote tähän usean tuotteen painikkeeseen ennen julkaisua.",
     "waTemplateMpmTooManySections": "Usean tuotteen painikkeessa voi olla enintään 10 osiota. Poista osioita ennen julkaisua.",
     "waTemplateMpmTooManyProducts": "Usean tuotteen painikkeessa voi olla yhteensä enintään 30 tuotetta. Poista tuotteita ennen julkaisua.",
     "waTemplateLtoExpirationRequired": "Valitse määräaikaisen tarjouksen päättymisaika ennen lähettämistä.",
     "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote.",
     "mediaStepUnsupported": "Tämä kanava ei voi lähettää tätä mediatyyppiä. Poista vaihe tai osoita tämä solmu kanavalle, joka tukee sitä.",
-    "mediaButtonsUnsupported": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana. Poista painikkeet tai siirrä ne tämän jälkeiseen tekstivaiheeseen."
+    "mediaButtonsUnsupported": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana. Poista painikkeet tai siirrä ne tämän jälkeiseen tekstivaiheeseen.",
+    "voiceCall": "Äänipuhelu",
+    "voiceCallDuration": "Äänipuhelu · {duration}",
+    "missedVoiceCall": "Vastaamaton äänipuhelu",
+    "declinedVoiceCall": "Hylätty äänipuhelu",
+    "voiceCallFailed": "Epäonnistunut äänipuhelu",
+    "unansweredVoiceCall": "Ei vastausta",
+    "canceledVoiceCall": "Peruutettu puhelu",
+    "acceptedCallPermission": "Hyväksyi soittolupapyynnön",
+    "declinedCallPermission": "Hylkäsi soittolupapyynnön",
+    "sendHumanAgentTag": "Lähetä yksi viesti HUMAN_AGENT-tunnisteella",
+    "warning": "Varoitus!",
+    "humanAgentWarningDescription": "Voit vastata käyttäjän viestiin 7 päivän kuluessa vain, jos ongelmaa ei kohtuudella voi ratkaista 24 tunnissa. Esimerkkejä ovat viikonloput, pyhäpäivät tai tapaukset, joiden ratkaiseminen kestää yli päivän. Älä käytä tätä vaihtoehtoa muusta syystä, sillä se voi vaarantaa Facebook-sivusi tai Instagram-tilisi. Jos olet epävarma, älä jatka.",
+    "callFailed": "Puheluongelma"
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",
@@ -3348,6 +3447,7 @@
       "noConnectablePagesDescription": "Et ole tämän sivun ylläpitäjä",
       "bmLookupFailedTitle": "Business Manager -sivuja saattaa puuttua",
       "bmLookupFailedDescription": "Yhdistä Messenger uudelleen ja myönnä Business Manager -käyttöoikeus, jotta Business Managerin kautta hallinnoidut sivut voidaan näyttää.",
+      "loadFailed": "Facebook-sivujesi lataaminen epäonnistui",
       "alreadyConnectedNote": "Tämä sivu on jo yhdistetty",
       "notAdminNote": "Et ole tämän sivun ylläpitäjä",
       "tryAgain": "Yritä yhdistää uudelleen"
@@ -3741,7 +3841,8 @@
       "profile": "Profiili",
       "usefulLinks": "Hyödylliset linkit",
       "conversionsApi": "Mainosten optimointi",
-      "settings": "Asetukset"
+      "settings": "Asetukset",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Hallitse WhatsApp-tiliäsi",
@@ -3873,6 +3974,259 @@
     "transferPhoneNumber": "Siirrä puhelin toiselta WhatsApp-palveluntarjoajalta",
     "selectPage": {
       "tryAgain": "Yritä yhdistää uudelleen"
+    },
+    "manualAppSecretMissingNotice": "Webhook-allekirjoituksia ei vahvisteta, ennen kuin lisäät Meta-sovelluksen salaisuuden.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp sallii vain 2 soittolupapyyntöä yhteystietoa kohden 7 päivän aikana. Tämä yhteystieto on saavuttanut rajan — yritä myöhemmin uudelleen.",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta hylkäsi puheluasetusten muutoksen",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
+        "bicUnavailable": "Yrityksen aloittamat puhelut eivät ole käytettävissä tässä maassa",
+        "callAlreadyInProgress": "Puhelu tähän yhteystietoon on jo käynnissä",
+        "hangupFailed": "Puhelua ei voitu lopettaa",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "WhatsApp-puhelua ei voitu hylätä",
+        "voipHangupFailed": "WhatsApp-puhelua ei voitu lopettaa",
+        "voipNotReservedAgent": "Et ole tähän puheluun määritetty agentti",
+        "voipCallAccessDenied": "Sinulla ei ole oikeutta käsitellä tätä puhelua",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Tuo puhelu ei enää soi",
+        "transcriptionRequiresRecording": "Ota puheluiden tallennus käyttöön ennen litteroinnin käyttöönottoa.",
+        "supportSessionCallingBlocked": "Soittaminen ei ole käytettävissä alustan tukiistunnon aikana.",
+        "callingAccessDenied": "Sinulla ei ole pääsyä puheluihin tässä työtilassa.",
+        "callArtifactAccessDenied": "Sinulla ei ole oikeutta tarkastella tätä puhelua.",
+        "callHistoryAccessDenied": "Sinulla ei ole pääsyä tämän työtilan puheluhistoriaan."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Tallenna saapuneessa postissa vastatut tai soitetut puhelut ja lisää tallenne keskusteluun.",
+      "recordingInProgress": "Nauhoitus pyydetty",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta hylkäsi muutoksen",
+      "callContact": "Soita WhatsAppissa",
+      "dialing": "Soitetaan…",
+      "startCall": "Aloita WhatsApp-puhelu",
+      "retentionLabel": "Tallenteiden säilytysaika (päivää)",
+      "retentionHelper": "Kuinka pitkään puhelutallenteita säilytetään, ennen kuin ne poistetaan pysyvästi.",
+      "transcriptionLabel": "Tekstitä puhelut",
+      "transcriptionHelper": "Lisää keskusteluun litterointi jokaisesta tallennetusta puhelusta.",
+      "preflight": {
+        "title": "Puheluoikeus",
+        "appSubscriptionMissing": "Määritä ensin WhatsApp-webhook tälle sovellukselle Meta-sovelluspaneelissa ja yritä sitten uudelleen.",
+        "appSubscriptionFailed": "Sovelluksen 'calls'-webhook-tilausta ei voitu vahvistaa. Yritä pian uudelleen.",
+        "callsNotSubscribed": "Tämä sovellus ei ole tilannut 'calls'-webhook-kenttää, joten puhelutapahtumat eivät voi tavoittaa ChatbotX:ää (Meta-virhe 138018: tekniset edellytykset eivät täyty — varmista, että ainakin yhdellä WABA:an tilatulla sovelluksella on myös puhelujen webhook-kenttä).",
+        "fixButton": "Korjaa",
+        "fixSuccess": "Sovellus on nyt tilannut WhatsApp-puheluwebhookit.",
+        "manualIntegrationNotice": "Tämä numero yhdistettiin manuaalisesti, ja sillä ei ole sovellustunnuksia tässä. Tilaa 'calls'-webhook-kenttä sovellukselle Meta-sovelluspaneelissa.",
+        "coexistenceWarning": "Tämä numero käyttää rinnakkaiseloa WhatsApp Business -sovelluksen kanssa, jota Meta ei tue puheluissa. Siirrä se käyttämään vain Cloud APIa."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Näytä litteroitu teksti",
+        "hideTranscript": "Piilota litteroitu teksti"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp ei ole ottanut yrityksen aloittamia puheluita käyttöön tälle numerolle. Tämä riippuu maakohtaisesta saatavuudesta ja tilin kelpoisuudesta Metassa, joten sitä ei voi ottaa käyttöön täällä.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Mikrofonin käyttöoikeus evättiin. Salli käyttöoikeus selaimen asetuksista ja yritä uudelleen.",
+        "micNotFound": "Mikrofonia ei löytynyt. Liitä mikrofoni ja yritä uudelleen.",
+        "callAccessDenied": "Sinulla ei ole oikeutta soittaa tälle yhteystiedolle."
+      },
+      "card": {
+        "audioCall": "Äänipuhelu",
+        "recordingUnavailable": "Tallenne ei ole enää käytettävissä",
+        "recordingNotCaptured": "Tallennetta ei ole saatavilla tälle puhelulle",
+        "recordingProcessing": "Käsitellään tallennetta…",
+        "moreOptions": "Lisää vaihtoehtoja",
+        "download": "Lataa",
+        "openCallInformation": "Avaa puhelun tiedot",
+        "transcript": "Litteraatio",
+        "aiSummary": "AI-yhteenveto",
+        "transcriptUnavailable": "Litteraatio ei ole vielä valmis",
+        "summaryUnavailable": "AI-yhteenveto ei ole vielä valmis",
+        "play": "Toista",
+        "pause": "Tauko",
+        "seek": "Siirry kohtaan",
+        "mute": "Mykistä",
+        "unmute": "Poista mykistys",
+        "playbackFailed": "Toisto epäonnistui",
+        "answeredBy": "Vastaaja: {name}",
+        "calledBy": "Soittaja: {name}",
+        "callFailed": "Puheluongelma",
+        "callBack": "Soita takaisin"
+      },
+      "sheet": {
+        "title": "Puhelun tiedot",
+        "summaryTab": "Tekoälyn yhteenveto",
+        "transcriptTab": "Litterointi",
+        "searchLabel": "Hae litteroinnista",
+        "searchPlaceholder": "Hae litteroinnista…",
+        "transcriptUnavailable": "Litterointi ei ole käytettävissä tämän puhelun kielelle",
+        "transcriptError": "Litteraatiota ei voitu latata. Tarkista yhteytesi ja yritä uudelleen.",
+        "noSearchResults": "Ei täsmääviä osioita",
+        "playSegment": "Toista tästä kohdasta",
+        "summaryKeyPoints": "Keskeiset kohdat",
+        "summaryActionItems": "Toimenpiteet",
+        "regenerate": "Luo uudelleen",
+        "regenerateConfirmTitle": "Luodaanko tekoälyn yhteenveto uudelleen?",
+        "regenerateConfirmDescription": "Tämä korvaa nykyisen yhteenvedon uudella luodulla yhteenvedolla.",
+        "summaryEmpty": "Tälle puhelulle ei ole vieldä tekoälyn yhteenvetoa.",
+        "generateSummary": "Luo yhteenveto"
+      },
+      "summaryDialog": {
+        "title": "Luo tekoälyn yhteenveto",
+        "description": "Valitse yhdistetty tekoälypalveluntarjoaja tämän puhelun yhteenvetoa varten.",
+        "noProviderTitle": "Tekoälypalveluntarjoajaa ei ole yhdistetty",
+        "noProviderDescription": "Yhdistä tekoälyintegraatio puheluyhteenvetojen luomiseksi.",
+        "connectLink": "Siirry tekoälyasetuksiin",
+        "generate": "Luo",
+        "generating": "Luodaan…",
+        "generateFailed": "Yhteenvedon luominen epäonnistui. Yritä uudelleen.",
+        "retry": "Yritä uudelleen",
+        "emptyTranscriptTooltip": "Tällä puhelulla ei ole vieldä litterointia yhteenvetoa varten"
+      },
+      "panel": {
+        "eyebrowCalling": "SOITETAAN…",
+        "eyebrowIncoming": "SAAPUVA PUHELU",
+        "eyebrowOnCall": "PUHELUSSA",
+        "statusPreparing": "Valmistellaan…",
+        "statusWaitingForMic": "Odotetaan mikrofonin käyttöoikeutta…",
+        "statusDeclined": "Hylätty",
+        "statusCallFailed": "Puhelu epäonnistui",
+        "statusCallEnded": "Puhelu päättyi",
+        "end": "Lopeta",
+        "minimize": "Pienennä",
+        "goToConversation": "Siirry keskusteluun",
+        "expand": "Laajenna",
+        "dismiss": "Sulje",
+        "statusNoAnswer": "Ei vastausta",
+        "eyebrowCallEnded": "PUHELU PÄÄTTYI",
+        "statusConnectionLost": "Yhteys katkesi",
+        "answerFailed": "Puheluun ei voitu vastata. Tarkista, että mikrofoni on liitetty ja sallittu selaimessa, ja yritä uudelleen.",
+        "ringingListTitle": "{count, plural, one {# saapuva puhelu} other {# saapuvaa puhelua}}"
+      },
+      "capability": {
+        "title": "Puhelukelpoisuus",
+        "enableCalling": "Ota puhelut käyttöön kohdassa Asetukset > Kanavat > WhatsApp > Puhelut.",
+        "reconnectChannel": "Siirry kohtaan Asetukset > Kanavat ja yhdistä WhatsApp-kanava uudelleen.",
+        "ok": "OK",
+        "micPermissionTitle": "Mikrofonin käyttöoikeus",
+        "dialFailureTitle": "Puhelua ei voitu soittaa"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuaalisesti yhdistetty numero",
+        "callsSubscription": "Tämä WhatsApp-numero yhdistettiin manuaalisesti. Varmista, että Meta-sovelluksesi on tilannut calls-webhook-kentän (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — muuten lähtevät puhelut eivät muodosta yhteyttä eivätkä saapuvat puhelut soi.",
+        "unsignedWebhook": "Tälle numerolle ei myöskään ole määritetty Meta App Secret -avainta, joten sen saapuvia webhookeja ei allekirjoitusvarmenneta.",
+        "callAnyway": "Soita silti"
+      },
+      "replaceConfirm": {
+        "title": "Lopetetaanko puhelu henkilön {current} kanssa?",
+        "description": "Olet puhelussa henkilön {current} kanssa. Jos vastaat henkilölle {incoming}, tämä puhelu päättyy heti.",
+        "confirm": "Lopeta ja vastaa",
+        "cancel": "Jatka puhelua"
+      },
+      "answerCaller": "Vastaa puheluun henkilöltä {name}",
+      "rejectCaller": "Hylkää puhelu henkilöltä {name}",
+      "hours": {
+        "title": "Puheluajat",
+        "description": "Asiakkaat voivat soittaa tähän numeroon vain näinä aikoina. Niiden ulkopuolella WhatsApp tarjoaa sen sijaan chattia tai, jos takaisinsoittopyynnöt ovat käytössä, takaisinsoiton pyytämistä ja näyttää, milloin seuraavan kerran voi soittaa.",
+        "enabledLabel": "Ota puheluita vastaan vain puheluaikoina",
+        "timezoneLabel": "Aikavyöhyke",
+        "closed": "Suljettu",
+        "openTimeLabel": "{day}: aukeaa klo",
+        "closeTimeLabel": "{day}: sulkeutuu klo",
+        "addRangeLabel": "Lisää aikoja päivälle {day}",
+        "removeRangeLabel": "Poista aikoja päivältä {day}",
+        "overnightHint": "Jokainen päivä päättyy klo 23:59. Jos haluat pysyä auki keskiyön jälkeen, lisää loput tunnit seuraavalle päivälle.",
+        "days": {
+          "monday": "Maanantai",
+          "tuesday": "Tiistai",
+          "wednesday": "Keskiviikko",
+          "thursday": "Torstai",
+          "friday": "Perjantai",
+          "saturday": "Lauantai",
+          "sunday": "Sunnuntai"
+        },
+        "errors": {
+          "rangeOrder": "Sulkemisajan on oltava avaamisajan jälkeen.",
+          "rangeOverlap": "Tämän päivän ajat menevät päällekkäin.",
+          "noOpenHours": "Lisää aikoja vähintään yhdelle päivälle."
+        }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Puhelut",
+        "subtitle": "Tämän työtilan puheluhistoria",
+        "emptyTitle": "Ei vielä puheluita",
+        "emptyDescription": "Puhelut näkyvät täällä, kun tiimisi alkaa soittaa tai vastaanottaa WhatsApp-puheluita.",
+        "loadMore": "Lataa lisää",
+        "allActivity": "Kaikki puhelut",
+        "filterMissed": "Vastaamattomat",
+        "filterNoReply": "Ei vastausta",
+        "allInboxes": "Kaikki saapuneet",
+        "allAgents": "Kaikki agentit",
+        "columnContact": "Yhteystieto",
+        "columnInbox": "Saapuneet",
+        "columnDirection": "Suunta",
+        "columnAgent": "Agentti",
+        "columnDuration": "Kesto",
+        "columnDate": "Päivämäärä",
+        "directionInbound": "Saapuva",
+        "directionOutbound": "Lähtevä",
+        "kindOngoing": "Käynnissä",
+        "kindAnsweredInbound": "Vastattu",
+        "kindAnsweredOutbound": "Vastattu",
+        "openConversation": "Avaa keskustelu",
+        "unknownContact": "Tuntematon yhteystieto",
+        "emptyFilteredTitle": "Yksikään puhelu ei vastaa tätä suodatinta",
+        "emptyFilteredDescription": "Kokeile toista suodatinta tai poista se nähdäksesi kaikki puhelut.",
+        "loadMoreError": "Lisäpuheluiden lataaminen epäonnistui. Yritä uudelleen.",
+        "callInformation": "Puhelun tiedot"
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4239,8 @@
       "toggleSuccess": "Tunnisteiden synkronointiasetus päivitettiin.",
       "enabledSince": "Käytössä alkaen {date}",
       "disabled": "Ei käytössä"
-    }
+    },
+    "refreshPermissions": "Päivitä käyttöoikeudet"
   },
   "telegram": {
     "description": "Tämän integraation avulla voit luoda Telegram-botteja.",
@@ -3896,6 +4251,14 @@
     "chatbotInvitationDescription2": "{userName} on kutsunut sinut liittymään kohteeseen {chatbotName}.",
     "invalidInvitation": "Tämä kutsu on virheellinen tai vanhentunut.",
     "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Merkitse botin viestit luetuiksi",
+      "enabled": "Käytössä",
+      "disabled": "Pois käytöstä",
+      "description": "Kun tämä on käytössä, botti merkitsee omat viestinsä automaattisesti luetuiksi"
+    }
   },
   "inboxTeams": {
     "title": "Saapuneet-tiimit"
@@ -4022,7 +4385,9 @@
       "productRemovedFromCart": "Tuote poistettu ostoskorista",
       "productOrdered": "Tuote tilattu",
       "contactReferredANewContact": "Yhteystieto suositteli uutta yhteystietoa",
-      "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa"
+      "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa",
+      "callRecorded": "Puhelu tallennettu",
+      "callTranscribed": "Puhelu litteroitu"
     },
     "actions": {
       "addTag": "Lisää tunniste",
@@ -4258,7 +4623,8 @@
     "afterText": "Jälkeen"
   },
   "tools": {
-    "title": "Työkalut"
+    "title": "Työkalut",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4361,13 +4727,13 @@
     "privateReply": "Yksityinen vastaus (saapuneet)",
     "privateReplyDescription": "Lähetä yksityisviesti kommentoijan saapuneet-kansioon. Valitse AI-agentti, kiinteä tekstimalli, chatbot-flow tai poista käytöstä.",
     "publicReply": "Julkinen vastaus kommenttiin",
-    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan.",
+    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan. Spintax on tuettu.",
     "replyMessage": "Vastausviesti",
     "replyMessagePlaceholder": "Kirjoita vastausviesti...",
     "includeKeywordsType": "Vastaa",
     "includeKeywordsTypeDescription": "Valitse kommentit, joihin tämä automaatio vastaa.",
     "includeKeywords": "Täsmättävät avainsanat",
-    "excludeKeywords": "Ohita näitä avainsanoja sisältävät kommentit",
+    "excludeKeywords": "Sulje pois kommentit, jotka sisältävät",
     "excludeKeywordsDescription": "Minkä tahansa näistä avainsanoista sisältävät kommentit ohitetaan sekä saapuneet- että julkisen vastauksen automaatiossa.",
     "keywordsPlaceholder": "Kirjoita ja paina Enter...",
     "replyAfter": "Vastaa viiveellä",
@@ -4430,7 +4796,7 @@
       "ignoreCommentReplies": "Älä vastaa kommenttien vastauksiin",
       "ignoreCommentRepliesDescription": "Ohita automaatio kommenteille, jotka ovat vastauksia muihin kommentteihin eivätkä ylätason kommentteja.",
       "trackUserTags": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
-      "trackUserTagsDescription": "Käytä '{{total_tagged}}' nähdäksesi, kuinka monta käyttäjää merkittiin. Käytä '{{total_new_tagged}}' nähdäksesi, kuinka moni merkityistä henkilöistä ei ole yhteystietoluettelossa."
+      "trackUserTagsDescription": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
     },
     "hideComments": {
       "all": "Piilota kaikki kommentit",
@@ -4464,13 +4830,13 @@
     "privateReply": "Yksityinen vastaus (saapuneet)",
     "privateReplyDescription": "Lähetä yksityisviesti kommentoijan saapuneet-kansioon. Valitse AI-agentti, kiinteä tekstimalli, chatbot-flow tai poista käytöstä.",
     "publicReply": "Julkinen vastaus kommenttiin",
-    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan.",
+    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan. Spintax on tuettu.",
     "replyMessage": "Vastausviesti",
     "replyMessagePlaceholder": "Kirjoita vastausviesti...",
     "includeKeywordsType": "Vastaa",
     "includeKeywordsTypeDescription": "Valitse kommentit, joihin tämä automaatio vastaa.",
     "includeKeywords": "Täsmättävät avainsanat",
-    "excludeKeywords": "Ohita näitä avainsanoja sisältävät kommentit",
+    "excludeKeywords": "Sulje pois kommentit, jotka sisältävät",
     "excludeKeywordsDescription": "Minkä tahansa näistä avainsanoista sisältävät kommentit ohitetaan sekä saapuneet- että julkisen vastauksen automaatiossa.",
     "keywordsPlaceholder": "Kirjoita ja paina Enter...",
     "replyAfter": "Vastaa viiveellä",
@@ -4532,7 +4898,7 @@
       "ignoreCommentReplies": "Älä vastaa kommenttien vastauksiin",
       "ignoreCommentRepliesDescription": "Ohita automaatio kommenteille, jotka ovat vastauksia muihin kommentteihin eivätkä ylätason kommentteja.",
       "trackUserTags": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
-      "trackUserTagsDescription": "Käytä '{{total_tagged}}' nähdäksesi, kuinka monta käyttäjää merkittiin. Käytä '{{total_new_tagged}}' nähdäksesi, kuinka moni merkityistä henkilöistä ei ole yhteystietoluettelossa."
+      "trackUserTagsDescription": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
     },
     "hideComments": {
       "all": "Piilota kaikki kommentit",
@@ -4568,13 +4934,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. Enintään 10 tekstiviestiä (spintax tuettu), kukin julkaistaan erillisenä vastauksena.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Sulje pois kommentit, jotka sisältävät",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4583,7 +4949,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Piilota kommentit"
     },
     "postType": {
       "all": "All posts",
@@ -4625,8 +4992,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Anna vähintään yksi vastausviesti.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Vain julkaisujesi ylimmän tason vastaukset voidaan piilottaa.",
+    "hideComments": {
+      "all": "Piilota kaikki kommentit",
+      "hasPhoneNumber": "Sisältää puhelinnumeron",
+      "hasLink": "Sisältää linkin",
+      "hasKeywords": "Sisältää avainsanoja",
+      "keywords": "Avainsanat",
+      "showCommentsAfter": "Näytä kommentit viiveellä"
+    },
+    "showCommentsAfter": {
+      "none": "Ei koskaan"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. Enintään 10 tekstiviestiä (spintax tuettu), kukin julkaistaan erillisenä vastauksena.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Sulje pois kommentit, jotka sisältävät",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "Anna vähintään yksi vastausviesti."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Instagram-tarinavastausautomaatio",
@@ -5667,7 +6150,8 @@
     "connectViaFacebook": "Yhdistä Facebookin kautta",
     "unsupportedExplanation": "Tämä Instagram-tili yhdistettiin Instagram Business -kirjautumisella. Yhdistä tili Facebookin kautta käyttääksesi Meta Conversions API:a.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta."
+      "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta.",
+      "description": "Jonota LeadSubmitted-tapahtuma Messengerille, Instagramille tai WhatsAppille."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5695,8 +6179,9 @@
       "invalidDatasetId": "Anna kelvollinen Dataset ID (vain numeroita).",
       "whatsappNotFound": "WhatsApp-integraatiota ei löytynyt.",
       "testEventCodeRequired": "Tallenna testitapahtuman koodi ennen testitapahtuman lähettämistä.",
-      "noContactForTest": "Tällä kanavalla ei ole vielä sopivaa kontaktia. Testitapahtuma tarvitsee todellisen kontaktin (WhatsAppissa sellaisen, joka tuli click-to-WhatsApp-mainoksesta).",
-      "invalidTestEventCode": "Testitapahtuman koodi saa sisältää vain kirjaimia, numeroita, väliviivoja tai alaviivoja (enintään 64)."
+      "invalidTestEventCode": "Testitapahtuman koodi saa sisältää vain kirjaimia, numeroita, väliviivoja tai alaviivoja (enintään 64).",
+      "invalidMessagingId": "Viestintätunnus saa sisältää vain kirjaimia, numeroita, viivoja tai alaviivoja (enintään 512).",
+      "capiDisconnected": "Meta CAPI on katkaistu tältä kanavalta. Yhdistä se uudelleen ennen testitapahtuman lähettämistä."
     },
     "fields": {
       "eventType": {
@@ -5840,10 +6325,21 @@
       "saved": "Testitapahtuman koodi tallennettu.",
       "cleared": "Testitapahtuman koodi tyhjennetty. Tapahtumat ovat taas live-tilassa.",
       "send": "Lähetä testitapahtuma",
-      "sent": "Testitapahtuma lisätty jonoon. Se näkyy Test events -kohdassa Events Managerissa minuutin sisällä.",
-      "sendHint": "Lähettää yhden esimerkki-Purchase-tapahtuman (100 USD) tämän kanavan viimeisimmälle yhteystiedolle.",
+      "sent": "Testitapahtuma lähetetty. Se näkyy Events Managerin Test events -välilehdellä minuutin sisällä.",
+      "sendHint": "Lähettää yhden esimerkki-Purchase-tapahtuman (100 USD) syöttämääsi viestintätunnukseen. Tallennettua kontaktia ei käytetä.",
       "activeNotice": "Testitila on päällä: tämän kanavan tapahtumia ei lasketa raportteihin ennen kuin koodi poistetaan.",
-      "openTestEvents": "Avaa Test events"
+      "openTestEvents": "Avaa Test events",
+      "dialogTitle": "Lähetä testitapahtuma",
+      "dialogDescription": "Yksi esimerkki-Purchase (100 USD) lähetetään testitapahtumakoodillasi. Liitä esimerkkiviestintätunnus kohdasta Events Manager → Test events → Messaging → Graph API Explorer, jotta mitään ei kohdisteta oikeaan kontaktiin.",
+      "messagingIdLabel": {
+        "messenger": "Kontaktin tunnus (page_scoped_user_id)",
+        "instagram": "Kontaktin tunnus (ig_sid)",
+        "whatsapp": "Klikkaustunnus (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Liitä Metan esimerkkiarvo",
+      "messagingIdHint": "Vain kirjaimia, numeroita, viivoja ja alaviivoja (enintään 512).",
+      "cancel": "Peruuta",
+      "confirmSend": "Lähetä"
     }
   },
   "minigames": {
@@ -6204,5 +6700,13 @@
   },
   "accountFields": {
     "title": "Bottikentät"
+  },
+  "openLink": {
+    "title": "Avaa linkki",
+    "invalidTitle": "Virheellinen linkki.",
+    "invalidDescription": "Tämä linkki on virheellinen tai vanhentunut.",
+    "openZaloGroup": "Avaa Zalo-ryhmä",
+    "openZalo": "Avaa Zalo",
+    "openMessenger": "Avaa Messenger"
   }
 }

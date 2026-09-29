@@ -336,6 +336,7 @@
       "message": "前回の支払いに失敗しました。ワークスペースを引き続き利用するには、支払い方法を更新してください。"
     },
     "trial": {
+      "planName": "トライアル",
       "daysLeft": "トライアル：残り{days}日",
       "endsTomorrow": "トライアルは明日終了します",
       "expired": "トライアルは終了しました — ワークスペースを引き続き利用するにはアップグレードしてください",
@@ -449,7 +450,6 @@
       "audienceFilter": "オーディエンスフィルター",
       "noAudienceFilter": "オーディエンスフィルターなし",
       "template": "テンプレート",
-      "noTemplate": "テンプレートなし",
       "integration": "連携"
     },
     "filters": {
@@ -508,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "プランをアップグレード",
+      "sendRate": "現在の{plan}プランでは、ブロードキャストの最大送信速度は1分あたり{rate}件です。プランをアップグレードすると、ブロードキャストを最大{multiplier}倍高速に送信できます。",
+      "activeBroadcasts": "現在の{plan}プランでは、一度に{max, plural, one {#件のブロードキャスト} other {#件のブロードキャスト}}を実行できます。複数のブロードキャストを同時に実行するには、プランをアップグレードしてください。"
+    },
+    "sendLimit": {
+      "title": "上限",
+      "hint": "空欄にすると、条件に一致するすべての連絡先に送信されます。",
+      "rateHint": "空欄にすると既定の送信速度が使用されます。",
+      "rangeSummary": "連絡先 #{start} – #{end}",
+      "rangeFromSummary": "連絡先番号 {start} から",
+      "rangeLabel": "連絡先の範囲",
+      "fromLabel": "開始",
+      "toLabel": "終了",
+      "allPlaceholder": "すべて",
+      "rangeEndBeforeStart": "終了位置は開始位置より前にできません"
     }
   },
   "commentAutomation": {
@@ -536,7 +553,26 @@
       "keywordsNotMatched": "キーワード不一致",
       "contactNotNew": "新規の連絡先ではない",
       "alreadyRepliedOnPost": "この投稿では返信済み",
-      "engagedOnOtherPost": "他の投稿で既に反応済み"
+      "engagedOnOtherPost": "他の投稿で既に反応済み",
+      "mentionCountNotMatched": "メンション数が一致しませんでした"
+    },
+    "replyTo": {
+      "mentions": "十分なメンションがあるコメント",
+      "mentionCount": "タグ付けされた人数",
+      "mentionCountDescription": "この人数以上(@名前)をタグ付けしたコメントのみが一致します。",
+      "mentionCountOption": "{count, plural, one {#人} other {#人}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "次と等しいコメント",
+      "contain": "次を含むコメント"
+    },
+    "hideComments": {
+      "hasGif": "GIFを含む",
+      "hasEmoji": "絵文字を含む"
+    },
+    "trackUserTags": {
+      "label": "ユーザーが他のユーザーをタグ付けしたかを記録する",
+      "descriptionText": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     }
   },
   "condition": {
@@ -727,6 +763,7 @@
     }
   },
   "fields": {
+    "optionalHint": "(任意)",
     "marketingMessagesConfigId": {
       "label": "マーケティングメッセージ構成ID",
       "description": "marketing_messages_messenger権限をリクエストするために使用するFacebookログイン（ビジネス用）の構成IDです。"
@@ -1095,6 +1132,19 @@
     },
     "contactId": {
       "label": "連絡先ID"
+    },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "ZaloユーザーID",
+      "telegramChatId": "TelegramチャットID",
+      "tiktokUserId": "TikTokユーザーID",
+      "threadsUsername": "Threadsユーザー名",
+      "webchatGuestId": "WebチャットゲストID",
+      "externalId": "外部ID",
+      "channelId": "チャネルID"
     },
     "flow": {
       "label": "フロー"
@@ -1997,11 +2047,16 @@
       "clientId": "クライアントID",
       "clientSecret": "クライアントシークレット",
       "displayName": "表示名",
+      "needsReauthorizationForComments": "この接続はコメント自動化の前に承認されました。コメントイベントの受信を開始するには再接続してください。",
       "connectInstructions": {
         "step1": "<link>developers.tiktok.com</link>でTikTokアプリを作成します。",
         "step2": "アカウントを認証し、<strong>アクセストークン</strong>、<strong>Open ID</strong>、<strong>クライアントシークレット</strong>をコピーします。",
         "step3": "接続するには、以下に認証情報を貼り付けます。"
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "ドリップ"
@@ -2192,6 +2247,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta アプリシークレット（省略可）",
+      "description": "この手動接続のWebhook署名検証を有効にします。Metaアプリのダッシュボードの「設定 > 基本」で確認できます。"
+    },
+    "lastCallRecorded": {
+      "label": "最後の通話録音"
+    },
+    "lastCallTranscript": {
+      "label": "最後の通話文字起こし"
+    },
+    "sendRatePerMinute": {
+      "label": "1分あたりの送信数"
     }
   },
   "flows": {
@@ -2308,6 +2376,8 @@
       "transferConversationToHuman": "会話を担当者に転送",
       "unarchiveConversation": "会話をアーカイブから戻す",
       "unassignConversation": "会話の割り当てを解除",
+      "markConversationAsUnread": "会話を未読にする",
+      "markConversationAsRead": "会話を既読にする",
       "unfollowConversation": "会話のフォローを解除",
       "unsubscribeBroadcast": "一斉配信を解除",
       "getUserData": "ユーザーデータを取得",
@@ -2332,7 +2402,9 @@
       "import": "フローをインポート",
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
-      "importJsonOnly": "JSONファイルのみ"
+      "importJsonOnly": "JSONファイルのみ",
+      "whatsappCallButton": "WhatsAppで通話",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2448,6 +2520,10 @@
     "media": {
       "stepUnsupportedOnChannel": "このチャネルではこの種類のメディアを送信できず、ステップはスキップされます。ステップを削除するか、対応しているチャネルにノードを切り替えてください。",
       "buttonsSkippedOnChannel": "このチャネルではメディアメッセージと一緒にボタンを送信できず、ボタンはスキップされます。代わりに次のテキストステップに配置してください。"
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "ボタンを編集",
+      "buttonLabel": "ボタンラベル"
     }
   },
   "folders": {
@@ -2669,7 +2745,8 @@
       "adAccountFilter": {
         "all": "すべての広告アカウント",
         "label": "広告アカウント",
-        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。"
+        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。",
+        "note": "広告アカウントで絞り込む場合、選択した期間内でコンバージョンはあるが広告費または配信が0の広告は非表示になります。"
       },
       "channelFilter": {
         "label": "チャネル",
@@ -3004,6 +3081,10 @@
       "whatsapp": "このWhatsApp番号はすでに別のワークスペースに接続されています。",
       "zalo": "このZalo OAはすでに別のワークスペースに接続されています。"
     },
+    "missingScopes": {
+      "generic": "接続をキャンセルしました。一部の権限が許可されていません。もう一度接続し、要求されたすべての権限を許可してください。",
+      "tiktok": "TikTok の接続をキャンセルしました。一部の権限が許可されていません。もう一度接続し、要求されたすべての権限を許可してください。"
+    },
     "reconnect": {
       "success": "チャネルを再接続しました。",
       "errors": {
@@ -3160,6 +3241,7 @@
     "changeLikeState": "「いいね！」の状態を変更",
     "changeHideState": "非表示状態を変更",
     "commentHidden": "このコメントは非表示になりました",
+    "commentMediaUnavailable": "このコメントには表示できないGIF、スタンプ、または画像が含まれています",
     "messageDeleted": "メッセージは削除されました。",
     "sendFailed": "送信に失敗しました",
     "repliedToStory": "あなたのストーリーに返信しました",
@@ -3200,7 +3282,10 @@
     "deleteFeature": "{feature}を削除",
     "resetFeature": "{feature}をリセット",
     "resetConfirmation": "選択した{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
+    "resetAllConfirmation": "この連絡先のすべての{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
     "resetSuccess": "{feature}をリセットしました",
+    "clearFeature": "{feature}をクリア",
+    "clearSuccess": "{feature}をクリアしました",
     "deleteConfirmation": "本当によろしいですか？\nこの操作は元に戻せません。\n{feature}はサーバーから完全に削除されます。",
     "addFeature": "{feature}を追加",
     "signOutConfirmation": "サインアウトしてもよろしいですか？",
@@ -3251,13 +3336,27 @@
     "historyDepth": "（{count}）",
     "none": "なし",
     "tiktokCardTitleTooLong": "TikTokはこのメッセージを短縮します。ボタンが付いている場合、最初の40文字のみ送信されます。メッセージを短くするか、ボタンを削除してください。",
+    "sendTextTooLongForChannel": "このメッセージはこのチャネルの上限を超えています。内容を短くするか、上限がより大きいチャネルにこのブロックを向けてください。",
     "waTemplateMpmNoProducts": "公開前に、このマルチ商品ボタンに少なくとも1つの商品を追加してください。",
     "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
     "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
     "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
     "mediaStepUnsupported": "このチャネルではこの種類のメディアを送信できません。ステップを削除するか、対応しているチャネルにこのノードを向けてください。",
-    "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。"
+    "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。",
+    "voiceCall": "音声通話",
+    "voiceCallDuration": "音声通話 · {duration}",
+    "missedVoiceCall": "不在着信",
+    "declinedVoiceCall": "拒否された音声通話",
+    "voiceCallFailed": "失敗した音声通話",
+    "unansweredVoiceCall": "応答なし",
+    "canceledVoiceCall": "キャンセルされた通話",
+    "acceptedCallPermission": "通話許可リクエストを承認しました",
+    "declinedCallPermission": "通話許可リクエストを拒否しました",
+    "sendHumanAgentTag": "HUMAN_AGENTタグを付けてメッセージを1件送信",
+    "warning": "警告！",
+    "humanAgentWarningDescription": "問題を24時間以内に解決することが合理的に困難な場合に限り、ユーザーのメッセージに7日以内で返信できます。たとえば、週末、祝日、または完了までに1日以上かかるケースです。それ以外の理由でこのオプションを使用すると、FacebookページまたはInstagramアカウントが危険にさらされる可能性があります。確信がない場合は続行しないでください。",
+    "callFailed": "通話の問題"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -3327,6 +3426,7 @@
       "noConnectablePagesDescription": "あなたはこのページの管理者ではありません",
       "bmLookupFailedTitle": "ビジネスマネージャのページが一部表示されていない可能性があります",
       "bmLookupFailedDescription": "Messengerを再接続し、ビジネスマネージャへのアクセスを許可すると、ビジネスマネージャで管理されているページを一覧表示できます。",
+      "loadFailed": "Facebookページを読み込めませんでした",
       "alreadyConnectedNote": "このページはすでに接続されています",
       "notAdminNote": "あなたはこのページの管理者ではありません",
       "tryAgain": "再接続を試す"
@@ -3720,7 +3820,8 @@
       "profile": "プロフィール",
       "usefulLinks": "便利なリンク",
       "conversionsApi": "広告最適化",
-      "settings": "設定"
+      "settings": "設定",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "WhatsAppアカウントを管理",
@@ -3852,6 +3953,259 @@
     "transferPhoneNumber": "別のWhatsAppプロバイダーから電話番号を移行",
     "selectPage": {
       "tryAgain": "再接続を試す"
+    },
+    "manualAppSecretMissingNotice": "Meta アプリシークレットを追加するまで、Webhookの署名は検証されません。",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp では、1 件の連絡先につき 7 日間に 2 回までしか通話許可をリクエストできません。この連絡先は上限に達しています。しばらくしてから再度お試しください。",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Metaが通話設定の変更を拒否しました",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
+        "bicUnavailable": "この国では、企業が発信する通話は利用できません",
+        "callAlreadyInProgress": "この連絡先への通話は既に進行中です",
+        "hangupFailed": "通話を終了できませんでした",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "WhatsAppの通話を拒否できませんでした",
+        "voipHangupFailed": "WhatsAppの通話を終了できませんでした",
+        "voipNotReservedAgent": "あなたはこの通話に割り当てられたエージェントではありません",
+        "voipCallAccessDenied": "この通話を処理する権限がありません",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "その着信はすでに終了しています",
+        "transcriptionRequiresRecording": "文字起こしをオンにする前に、通話の録音をオンにしてください。",
+        "supportSessionCallingBlocked": "プラットフォームのサポートセッション中は通話をご利用いただけません。",
+        "callingAccessDenied": "このワークスペースでは通話へのアクセス権がありません。",
+        "callArtifactAccessDenied": "この通話を表示する権限がありません。",
+        "callHistoryAccessDenied": "このワークスペースの通話履歴にアクセスする権限がありません。"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "受信トレイで応答または発信した通話を録音し、録音を会話に追加します。",
+      "recordingInProgress": "録音をリクエストしました",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Metaが変更を拒否しました",
+      "callContact": "WhatsAppで発信",
+      "dialing": "発信中…",
+      "startCall": "WhatsApp通話を開始",
+      "retentionLabel": "録音の保存期間（日数）",
+      "retentionHelper": "通話の録音が完全に削除されるまでの保存期間。",
+      "transcriptionLabel": "通話を文字起こし",
+      "transcriptionHelper": "録音した各通話の文字起こしを会話に追加します。",
+      "preflight": {
+        "title": "通話の利用資格",
+        "appSubscriptionMissing": "まずMetaアプリダッシュボードでこのアプリのWhatsApp Webhookを設定してから、再度お試しください。",
+        "appSubscriptionFailed": "アプリの「calls」Webhookのサブスクリプションを確認できませんでした。しばらくしてから再度お試しください。",
+        "callsNotSubscribed": "このアプリは「calls」Webhookフィールドをサブスクライブしていないため、通話イベントがChatbotXに届きません（Metaエラー138018：技術的な前提条件が満たされていません。WABAにサブスクライブしているアプリのうち、少なくとも1つが通話Webhookフィールドを持つようにしてください）。",
+        "fixButton": "修正",
+        "fixSuccess": "アプリはWhatsApp通話Webhookに正常にサブスクライブされました。",
+        "manualIntegrationNotice": "この番号は手動で接続されており、ここにはアプリの認証情報がありません。Metaアプリダッシュボードでアプリの「calls」Webhookフィールドをサブスクライブしてください。",
+        "coexistenceWarning": "この番号はWhatsApp Businessアプリの併用（コイグジスタンス）を使用していますが、Metaは通話でこれをサポートしていません。Cloud APIのみに移行してください。"
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "文字起こしを表示",
+        "hideTranscript": "文字起こしを隠す"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "この番号では、WhatsApp のビジネス発信通話が有効になっていません。国ごとの提供状況と Meta でのアカウント要件によって決まるため、ここでは有効にできません。",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "マイクへのアクセスが拒否されました。ブラウザの設定でマイクへのアクセスを許可してから再試行してください。",
+        "micNotFound": "マイクが見つかりません。マイクを接続してから再試行してください。",
+        "callAccessDenied": "この連絡先に発信する権限がありません。"
+      },
+      "card": {
+        "audioCall": "音声通話",
+        "recordingUnavailable": "録音はもう利用できません",
+        "recordingNotCaptured": "この通話の録音は利用できません",
+        "recordingProcessing": "録音を処理中…",
+        "moreOptions": "その他のオプション",
+        "download": "ダウンロード",
+        "openCallInformation": "通話情報を開く",
+        "transcript": "文字起こし",
+        "aiSummary": "AI要約",
+        "transcriptUnavailable": "文字起こしはまだ利用できません",
+        "summaryUnavailable": "AI要約はまだ利用できません",
+        "play": "再生",
+        "pause": "一時停止",
+        "seek": "シーク",
+        "mute": "ミュート",
+        "unmute": "ミュート解除",
+        "playbackFailed": "再生に失敗しました",
+        "answeredBy": "応答者: {name}",
+        "calledBy": "発信者: {name}",
+        "callFailed": "通話の問題",
+        "callBack": "折り返し発信"
+      },
+      "sheet": {
+        "title": "通話情報",
+        "summaryTab": "AI要約",
+        "transcriptTab": "文字起こし",
+        "searchLabel": "文字起こしを検索",
+        "searchPlaceholder": "文字起こしを検索…",
+        "transcriptUnavailable": "この通話の言語では文字起こしを利用できません",
+        "transcriptError": "文字起こしを読み込めませんでした。接続を確認して再試行してください。",
+        "noSearchResults": "一致するセグマコヘなし",
+        "playSegment": "ここから再生",
+        "summaryKeyPoints": "主なポイント",
+        "summaryActionItems": "アドテァテタデタリト",
+        "regenerate": "再生成",
+        "regenerateConfirmTitle": "AI要約を再生成しますか？",
+        "regenerateConfirmDescription": "現在の要約は新しく生成された要約に置き換えられます。",
+        "summaryEmpty": "この通話のAI要約はまだありません。",
+        "generateSummary": "要約を生成"
+      },
+      "summaryDialog": {
+        "title": "AI要約を生成",
+        "description": "この通話を要約するために接続済みのAIプロバイダーを選択してください。",
+        "noProviderTitle": "接続されているAIプロバイダーがありません",
+        "noProviderDescription": "通話要約を生成するにはAI連携を接続してください。",
+        "connectLink": "AI設定に移動",
+        "generate": "生成",
+        "generating": "生成中…",
+        "generateFailed": "要約を生成できませんでした。もう一度お試しください。",
+        "retry": "再試行",
+        "emptyTranscriptTooltip": "この通話にはまだ要約できる文字起こしがありません"
+      },
+      "panel": {
+        "eyebrowCalling": "発信中…",
+        "eyebrowIncoming": "着信中",
+        "eyebrowOnCall": "通話中",
+        "statusPreparing": "準備中…",
+        "statusWaitingForMic": "マイクへのアクセスを待っています…",
+        "statusDeclined": "拒否されました",
+        "statusCallFailed": "通話に失敗しました",
+        "statusCallEnded": "通話が終了しました",
+        "end": "終了",
+        "minimize": "最小化",
+        "goToConversation": "会話に移動",
+        "expand": "展開",
+        "dismiss": "閉じる",
+        "statusNoAnswer": "応答なし",
+        "eyebrowCallEnded": "通話終了",
+        "statusConnectionLost": "接続が失われました",
+        "answerFailed": "通話に応答できませんでした。マイクが接続され、ブラウザで許可されていることを確認してから、もう一度お試しください。",
+        "ringingListTitle": "{count, plural, one {#件の着信} other {#件の着信}}"
+      },
+      "capability": {
+        "title": "通話の利用条件",
+        "enableCalling": "設定 > チャネル > WhatsApp > 通話 で通話を有効にしてください。",
+        "reconnectChannel": "設定 > チャネル に移動し、WhatsAppチャネルを再接続してください。",
+        "ok": "OK",
+        "micPermissionTitle": "マイクの許可",
+        "dialFailureTitle": "発信できませんでした"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "手動で接続された番号",
+        "callsSubscription": "このWhatsApp番号は手動で接続されています。Metaアプリがcalls Webhookフィールドをサブスクライブしていることを確認してください（Metaアプリダッシュボード → WhatsApp → Configuration → Webhook fields → calls）。そうしないと、発信通話は接続されず、着信通話も鳴りません。",
+        "unsignedWebhook": "この番号にはMeta App Secretも設定されていないため、受信Webhookは署名検証されていません。",
+        "callAnyway": "このまま発信する"
+      },
+      "replaceConfirm": {
+        "title": "{current} との通話を終了しますか?",
+        "description": "現在 {current} と通話中です。{incoming} に応答すると、この通話はすぐに終了します。",
+        "confirm": "終了して応答",
+        "cancel": "通話を続ける"
+      },
+      "answerCaller": "{name} からの着信に応答",
+      "rejectCaller": "{name} からの着信を拒否",
+      "hours": {
+        "title": "通話受付時間",
+        "description": "お客様はこの時間内にのみこの番号に電話をかけられます。時間外は、WhatsAppがチャット、またはコールバックリクエストがオンの場合はコールバックの依頼を提案し、次に通話できる時間を表示します。",
+        "enabledLabel": "通話受付時間内のみ通話を受け付ける",
+        "timezoneLabel": "タイムゾーン",
+        "closed": "休業",
+        "openTimeLabel": "{day}：開始時刻",
+        "closeTimeLabel": "{day}：終了時刻",
+        "addRangeLabel": "{day}に時間帯を追加",
+        "removeRangeLabel": "{day}の時間帯を削除",
+        "overnightHint": "各日は23:59で終わります。深夜0時以降も受け付ける場合は、残りの時間を翌日に追加してください。",
+        "days": {
+          "monday": "月曜日",
+          "tuesday": "火曜日",
+          "wednesday": "水曜日",
+          "thursday": "木曜日",
+          "friday": "金曜日",
+          "saturday": "土曜日",
+          "sunday": "日曜日"
+        },
+        "errors": {
+          "rangeOrder": "終了時刻は開始時刻より後にしてください。",
+          "rangeOverlap": "この日の時間帯が重なっています。",
+          "noOpenHours": "少なくとも1日に時間帯を追加してください。"
+        }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "通話",
+        "subtitle": "このワークスペースの通話履歴",
+        "emptyTitle": "通話はまだありません",
+        "emptyDescription": "チームがWhatsApp通話を発信または受信すると、ここに表示されます。",
+        "loadMore": "もっと読み込む",
+        "allActivity": "すべての通話",
+        "filterMissed": "不在着信",
+        "filterNoReply": "応答なし",
+        "allInboxes": "すべての受信箱",
+        "allAgents": "すべての担当者",
+        "columnContact": "連絡先",
+        "columnInbox": "受信箱",
+        "columnDirection": "方向",
+        "columnAgent": "担当者",
+        "columnDuration": "通話時間",
+        "columnDate": "日付",
+        "directionInbound": "着信",
+        "directionOutbound": "発信",
+        "kindOngoing": "進行中",
+        "kindAnsweredInbound": "応答済み",
+        "kindAnsweredOutbound": "応答済み",
+        "openConversation": "会話を開く",
+        "unknownContact": "不明な連絡先",
+        "emptyFilteredTitle": "このフィルターに一致する通話はありません",
+        "emptyFilteredDescription": "別のフィルターを試すか、フィルターを解除してすべての通話を表示してください。",
+        "loadMoreError": "通話をさらに読み込めませんでした。もう一度お試しください。",
+        "callInformation": "通話情報"
+      }
     }
   },
   "zalo": {
@@ -3864,7 +4218,8 @@
       "toggleSuccess": "タグ同期の設定を更新しました。",
       "enabledSince": "{date}から有効",
       "disabled": "無効"
-    }
+    },
+    "refreshPermissions": "権限を更新"
   },
   "telegram": {
     "description": "この連携を使用すると、Telegramボットを作成できます。",
@@ -3875,6 +4230,14 @@
     "chatbotInvitationDescription2": "{userName}さんから{chatbotName}への招待が届いています。",
     "invalidInvitation": "この招待は無効か、有効期限が切れています。",
     "workspaceUnavailable": "このワークスペースは利用できなくなりました。"
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "ボットのメッセージを既読にする",
+      "enabled": "有効",
+      "disabled": "無効",
+      "description": "有効にすると、ボットが自身のメッセージを自動的に既読にします"
+    }
   },
   "inboxTeams": {
     "title": "受信トレイチーム"
@@ -4001,7 +4364,9 @@
       "productRemovedFromCart": "商品がカートから削除された",
       "productOrdered": "商品が注文された",
       "contactReferredANewContact": "連絡先が新しい連絡先を紹介した",
-      "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した"
+      "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した",
+      "callRecorded": "通話が録音されました",
+      "callTranscribed": "通話が文字起こしされました"
     },
     "actions": {
       "addTag": "タグを追加",
@@ -4237,7 +4602,8 @@
     "afterText": "後"
   },
   "tools": {
-    "title": "ツール"
+    "title": "ツール",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4340,13 +4706,13 @@
     "privateReply": "非公開返信（受信トレイ）",
     "privateReplyDescription": "コメントしたユーザーの受信トレイに非公開メッセージを送信します。AIエージェント、固定テキストテンプレート、チャットボットフロー、または無効を選択できます。",
     "publicReply": "コメントに公開返信",
-    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。",
+    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。 スピンタックスに対応しています。",
     "replyMessage": "返信メッセージ",
     "replyMessagePlaceholder": "返信メッセージを入力...",
     "includeKeywordsType": "返信対象",
     "includeKeywordsTypeDescription": "この自動化が返信するコメントを選択します。",
     "includeKeywords": "一致させるキーワード",
-    "excludeKeywords": "これらのキーワードを含むコメントを除外",
+    "excludeKeywords": "次を含むコメントを除外",
     "excludeKeywordsDescription": "これらのキーワードのいずれかを含むコメントは、受信トレイと公開返信の両方の自動化で無視されます。",
     "keywordsPlaceholder": "入力してEnterキーを押してください...",
     "replyAfter": "返信までの時間",
@@ -4409,7 +4775,7 @@
       "ignoreCommentReplies": "コメントへの返信には応答しない",
       "ignoreCommentRepliesDescription": "トップレベルのコメントではなく、他のコメントへの返信には自動化を適用しません。",
       "trackUserTags": "ユーザーが他のユーザーをタグ付けしたかを記録する",
-      "trackUserTagsDescription": "'{{total_tagged}}' で何人のユーザーがタグ付けされたかを確認できます。'{{total_new_tagged}}' でタグ付けされた人のうち連絡先リストにいない人数を確認できます。"
+      "trackUserTagsDescription": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     },
     "hideComments": {
       "all": "すべてのコメントを非表示",
@@ -4443,13 +4809,13 @@
     "privateReply": "非公開返信（受信トレイ）",
     "privateReplyDescription": "コメントしたユーザーの受信トレイに非公開メッセージを送信します。AIエージェント、固定テキストテンプレート、チャットボットフロー、または無効を選択できます。",
     "publicReply": "コメントに公開返信",
-    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。",
+    "publicReplyDescription": "コメントの直下に公開返信を投稿します。最大10件のテキストテンプレート、AIエージェント、チャットボットフロー、または返信なしを選択できます。 各メッセージは個別の返信として投稿されます。 スピンタックスに対応しています。",
     "replyMessage": "返信メッセージ",
     "replyMessagePlaceholder": "返信メッセージを入力...",
     "includeKeywordsType": "返信対象",
     "includeKeywordsTypeDescription": "この自動化が返信するコメントを選択します。",
     "includeKeywords": "一致させるキーワード",
-    "excludeKeywords": "これらのキーワードを含むコメントを除外",
+    "excludeKeywords": "次を含むコメントを除外",
     "excludeKeywordsDescription": "これらのキーワードのいずれかを含むコメントは、受信トレイと公開返信の両方の自動化で無視されます。",
     "keywordsPlaceholder": "入力してEnterキーを押してください...",
     "replyAfter": "返信までの時間",
@@ -4511,7 +4877,7 @@
       "ignoreCommentReplies": "コメントへの返信には応答しない",
       "ignoreCommentRepliesDescription": "トップレベルのコメントではなく、他のコメントへの返信には自動化を適用しません。",
       "trackUserTags": "ユーザーが他のユーザーをタグ付けしたかを記録する",
-      "trackUserTagsDescription": "'{{total_tagged}}' で何人のユーザーがタグ付けされたかを確認できます。'{{total_new_tagged}}' でタグ付けされた人のうち連絡先リストにいない人数を確認できます。"
+      "trackUserTagsDescription": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     },
     "hideComments": {
       "all": "すべてのコメントを非表示",
@@ -4547,13 +4913,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. 最大10件のテキストメッセージ(スピンタックス対応)、それぞれ別の返信として投稿されます。",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "次を含むコメントを除外",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4562,7 +4928,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "コメントを非表示"
     },
     "postType": {
       "all": "All posts",
@@ -4604,8 +4971,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "返信メッセージを1件以上入力してください。",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "非表示にできるのは投稿への最上位の返信のみです。",
+    "hideComments": {
+      "all": "すべてのコメントを非表示",
+      "hasPhoneNumber": "電話番号を含む",
+      "hasLink": "リンクを含む",
+      "hasKeywords": "キーワードを含む",
+      "keywords": "キーワード",
+      "showCommentsAfter": "コメントを再表示するまでの時間"
+    },
+    "showCommentsAfter": {
+      "none": "再表示しない"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. 最大10件のテキストメッセージ(スピンタックス対応)、それぞれ別の返信として投稿されます。",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "次を含むコメントを除外",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "返信メッセージを1件以上入力してください。"
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Instagramストーリー返信オートメーション",
@@ -5667,7 +6150,8 @@
     "connectViaFacebook": "Facebook 経由で連携",
     "unsupportedExplanation": "この Instagram アカウントは Instagram ビジネスログインで連携されています。Meta Conversions API を利用するには、Facebook 経由でアカウントを連携してください。",
     "flowStep": {
-      "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。"
+      "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。",
+      "description": "Messenger、Instagram、WhatsApp 向けに LeadSubmitted イベントをキューに追加します。"
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5695,8 +6179,9 @@
       "invalidDatasetId": "有効なデータセットID（数字のみ）を入力してください。",
       "whatsappNotFound": "WhatsApp の連携が見つかりません。",
       "testEventCodeRequired": "テストイベントを送信する前にテストイベントコードを保存してください。",
-      "noContactForTest": "このチャネルにはまだ対象となる連絡先がありません。テストイベントには紐付け先となる実際の連絡先が必要です（WhatsApp の場合は click-to-WhatsApp 広告経由の連絡先）。",
-      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。"
+      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。",
+      "invalidMessagingId": "メッセージングIDに使えるのは英字、数字、ハイフン、アンダースコアのみです（最大512文字）。",
+      "capiDisconnected": "このチャネルのMeta CAPIは切断されています。テストイベントを送信する前に再接続してください。"
     },
     "fields": {
       "eventType": {
@@ -5840,10 +6325,21 @@
       "saved": "テストイベントコードを保存しました。",
       "cleared": "テストイベントコードをクリアしました。イベントは再びライブになります。",
       "send": "テストイベントを送信",
-      "sent": "テストイベントをキューに追加しました。1分以内に Events Manager の Test events に表示されます。",
-      "sendHint": "このチャネルの最新の連絡先にサンプルの Purchase（100 USD）を1件送信します。",
+      "sent": "テストイベントを送信しました。1分以内にEvents ManagerのTest eventsに表示されます。",
+      "sendHint": "入力したメッセージングIDにサンプルのPurchase（100 USD）を1件送信します。保存済みの連絡先は使用しません。",
       "activeNotice": "テストモードが有効です。コードをクリアするまで、このチャネルのイベントはレポートにカウントされません。",
-      "openTestEvents": "Test events を開く"
+      "openTestEvents": "Test events を開く",
+      "dialogTitle": "テストイベントを送信",
+      "dialogDescription": "テストイベントコード付きでサンプルのPurchase（100 USD）を1件送信します。実際の連絡先に紐付かないよう、Events Manager → Test events → Messaging → Graph API Explorer のサンプルメッセージングIDを貼り付けてください。",
+      "messagingIdLabel": {
+        "messenger": "連絡先ID（page_scoped_user_id）",
+        "instagram": "連絡先ID（ig_sid）",
+        "whatsapp": "クリックID（ctwa_clid）"
+      },
+      "messagingIdPlaceholder": "Metaのサンプル値を貼り付け",
+      "messagingIdHint": "英字、数字、ハイフン、アンダースコアのみ（最大512文字）。",
+      "cancel": "キャンセル",
+      "confirmSend": "送信"
     }
   },
   "minigames": {
@@ -6204,5 +6700,13 @@
   },
   "accountFields": {
     "title": "ボットフィールド"
+  },
+  "openLink": {
+    "title": "リンクを開く",
+    "invalidTitle": "無効なリンクです。",
+    "invalidDescription": "このリンクは無効か、有効期限が切れています。",
+    "openZaloGroup": "Zaloグループを開く",
+    "openZalo": "Zaloを開く",
+    "openMessenger": "Messengerを開く"
   }
 }

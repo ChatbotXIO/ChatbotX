@@ -7,10 +7,12 @@ import {
 import { refreshAccessToken } from "./apis/auth"
 import { TiktokAPIException } from "./exception"
 import { callbackHandler } from "./handlers/callback"
+import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
+import { parseTiktokScopes } from "./lib/scopes"
 import { buildTokenTimestamps } from "./lib/token-utils"
 import type { TiktokActions, TiktokAuthValue, TiktokConfig } from "./schema"
 
@@ -25,6 +27,7 @@ const config: IntegrationDefinition<
       message: messageHandlers,
       conversation: conversationHandlers,
       contact: contactHandlers,
+      comment: commentHandlers,
     },
   },
   actions: {},
@@ -46,6 +49,13 @@ const config: IntegrationDefinition<
           newTokens.expires_in,
           newTokens.refresh_expires_in,
         ),
+      },
+      // A refresh never grants a new scope, but it does report the current set
+      // — which is how a connection made before scopes were recorded stops
+      // being reported as "unknown" without the owner doing anything.
+      metadata: {
+        ...auth.metadata,
+        scopes: parseTiktokScopes(newTokens.scope),
       },
     }
   },

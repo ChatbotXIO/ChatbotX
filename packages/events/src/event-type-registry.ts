@@ -20,6 +20,11 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.unsubscribedFromSequence,
   triggerEventTypes.enum.contactReferredANewContact,
   triggerEventTypes.enum.contactReferredExistingContact,
+  triggerEventTypes.enum.incomingCall,
+  triggerEventTypes.enum.missedAudioCall,
+  triggerEventTypes.enum.callEnded,
+  triggerEventTypes.enum.callRecorded,
+  triggerEventTypes.enum.callTranscribed,
 ] as const
 
 export const SCANNER_VERIFIED_EVENT_TYPES = [

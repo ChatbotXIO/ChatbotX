@@ -61,5 +61,7 @@ export type SimpleCreateWebchatRequest = z.infer<
   typeof simpleCreateWebchatRequest
 >
 
-export const updateWebchatRequest = createWebchatRequest.partial()
+export const updateWebchatRequest = createWebchatRequest.partial().extend({
+  markReadOnOutbound: z.boolean().optional(),
+})
 export type UpdateWebchatRequest = z.infer<typeof updateWebchatRequest>

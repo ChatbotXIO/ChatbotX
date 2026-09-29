@@ -69,10 +69,8 @@ const MAX_DEFAULT_VISIBLE_OPERATIONS = 45
 
 const MCP_SERVER_ROOT = join(import.meta.dirname, "..", "..", "mcp-server")
 const MCP_README_PATH = join(MCP_SERVER_ROOT, "README.md")
-const MCP_SKILL_PATH = join(MCP_SERVER_ROOT, "SKILL.md")
 const MCP_README_TOOLS_HEADING = "## Available tools"
 const MCP_README_PREREQUISITES_HEADING = "## Prerequisites"
-const MCP_SKILL_CATEGORY_TABLE_HEADING = "| Category | Tool |"
 
 function sectionBetween(
   source: string,
@@ -103,15 +101,6 @@ function mcpToolNamesFromMarkdownTable(
     }
   }
   return toolNames
-}
-
-function mcpSkillCategoryTable(source: string): string {
-  const start = source.indexOf(MCP_SKILL_CATEGORY_TABLE_HEADING)
-  const end = source.indexOf("\n\n", start)
-  if (start === -1 || end === -1) {
-    throw new Error("Could not find the MCP SKILL.md category table.")
-  }
-  return source.slice(start, end)
 }
 
 let operations: McpSpecOperation[]
@@ -197,50 +186,31 @@ describe("default tool set", () => {
     expect(invalidDescriptions).toEqual([])
   })
 
-  test("README and SKILL list exactly the default MCP tools", () => {
+  test("README lists exactly the default MCP tools", () => {
     const defaultToolNames = new Set(
       defaultOperations().map((operation) =>
         operation.operationId.replace(/[._]/g, "").toLowerCase(),
       ),
     )
-    const documentedToolNames = {
-      README: mcpToolNamesFromMarkdownTable(
-        sectionBetween(
-          readFileSync(MCP_README_PATH, "utf8"),
-          MCP_README_TOOLS_HEADING,
-          MCP_README_PREREQUISITES_HEADING,
-        ),
-        1,
+    const documentedToolNames = mcpToolNamesFromMarkdownTable(
+      sectionBetween(
+        readFileSync(MCP_README_PATH, "utf8"),
+        MCP_README_TOOLS_HEADING,
+        MCP_README_PREREQUISITES_HEADING,
       ),
-      SKILL: mcpToolNamesFromMarkdownTable(
-        mcpSkillCategoryTable(readFileSync(MCP_SKILL_PATH, "utf8")),
-        2,
-      ),
-    }
-
-    const differences = Object.fromEntries(
-      Object.entries(documentedToolNames).map(([document, toolNames]) => [
-        document,
-        {
-          documentedButNotDefault: [...toolNames]
-            .filter((toolName) => !defaultToolNames.has(toolName))
-            .sort(),
-          defaultButNotDocumented: [...defaultToolNames]
-            .filter((toolName) => !toolNames.has(toolName))
-            .sort(),
-        },
-      ]),
+      1,
     )
 
-    expect(differences).toEqual({
-      README: {
-        documentedButNotDefault: [],
-        defaultButNotDocumented: [],
-      },
-      SKILL: {
-        documentedButNotDefault: [],
-        defaultButNotDocumented: [],
-      },
+    expect({
+      documentedButNotDefault: [...documentedToolNames]
+        .filter((toolName) => !defaultToolNames.has(toolName))
+        .sort(),
+      defaultButNotDocumented: [...defaultToolNames]
+        .filter((toolName) => !documentedToolNames.has(toolName))
+        .sort(),
+    }).toEqual({
+      documentedButNotDefault: [],
+      defaultButNotDocumented: [],
     })
   })
 
@@ -253,12 +223,5 @@ describe("default tool set", () => {
         .map((op) => op.operationId)
         .sort(),
     ).toMatchSnapshot()
-  })
-})
-
-describe("read-only-safe POST operations", () => {
-  test("contacts.search carries x-mcp.readOnlyHint: true so a read_only token still sees it", () => {
-    const op = operations.find((o) => o.operationId === "contacts.search")
-    expect(op?.["x-mcp"]?.readOnlyHint).toBe(true)
   })
 })

@@ -21,6 +21,7 @@ import {
   toAppAccessToken as toMessengerAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
 import { debugTokenOrThrow } from "@chatbotx.io/integration-whatsapp/api/auth"
+import { grantedScopesForWaba } from "@chatbotx.io/integration-whatsapp/api/granted-scopes"
 
 /**
  * Shared CAPI dataset resource type + integration resolvers + scope
@@ -36,12 +37,6 @@ import { debugTokenOrThrow } from "@chatbotx.io/integration-whatsapp/api/auth"
  * `apps/worker`, so a shared module at this layer gets the same "don't
  * duplicate" outcome without the cycle.
  */
-
-const datasetResourceTypeByChannel = {
-  messenger: "page",
-  instagram: "igUser",
-  whatsapp: "waba",
-} as const satisfies Record<MetaConversionsChannel, "page" | "igUser" | "waba">
 
 const integrationResolvers = {
   messenger: (input) => messengerIntegrationService.findByIdForWorkspace(input),
@@ -80,12 +75,6 @@ export async function findEventIntegration<
   )
 }
 
-export function datasetResourceType(
-  channel: MetaConversionsChannel,
-): "page" | "igUser" | "waba" {
-  return datasetResourceTypeByChannel[channel]
-}
-
 type MetaCapiScopeCheckerConfig = {
   credentialType: Extract<
     Parameters<typeof platformCredentialService.resolveForOwner>[0]["type"],
@@ -108,8 +97,8 @@ type MetaCapiScopeCheckerConfig = {
  * — structurally identical beyond which platform credential/debug-token/
  * scope-check functions to use, driven by the per-channel config below.
  * `checkWhatsappCapiScope` stays a separate function: it debugs the token
- * differently (`debugTokenOrThrow` + `granular_scopes`/`target_ids`, not a
- * `scopes` array + boolean scope-name check).
+ * differently (`debugTokenOrThrow` + `grantedScopesForWaba` over
+ * `granular_scopes`, not a `scopes` array + boolean scope-name check).
  */
 async function checkMetaCapiScope(
   input: CapiScopeCheckInput,
@@ -182,18 +171,10 @@ async function checkWhatsappCapiScope(
 
   const appAccessToken = `${credential.config.clientId}|${credential.config.clientSecret}`
   const token = await debugTokenOrThrow(input.accessToken, appAccessToken)
-  const capiScope = token?.granular_scopes?.find(
-    (scope) => scope.scope === WHATSAPP_CAPI_SCOPE,
-  )
-  if (!capiScope) {
-    return false
-  }
-
-  return (
-    !capiScope.target_ids ||
-    capiScope.target_ids.length === 0 ||
-    capiScope.target_ids.includes(input.resourceId)
-  )
+  return grantedScopesForWaba(
+    token?.granular_scopes,
+    input.resourceId,
+  ).includes(WHATSAPP_CAPI_SCOPE)
 }
 
 const scopeCheckers = {

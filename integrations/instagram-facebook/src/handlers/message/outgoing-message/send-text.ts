@@ -4,8 +4,8 @@ import type {
   InstagramAuthValue,
   InstagramMessageAttachment,
   InstagramSendMessage,
-} from "../../../schemas"
-import { convertInstagramButtons } from "./send-button"
+} from "../../../schema"
+import { convertButtons } from "./send-button"
 
 export function* convertFlowStepText(
   props: SendFlowStepProps<InstagramAuthValue, SendTextStepSchema>,
@@ -18,7 +18,7 @@ export function* convertFlowStepText(
       text: step.text,
     }
   } else {
-    const buttons = convertInstagramButtons({
+    const buttons = convertButtons({
       flowId: props.data.flowId,
       flowVersionId: props.data.flowVersionId,
       buttons: step.buttons,

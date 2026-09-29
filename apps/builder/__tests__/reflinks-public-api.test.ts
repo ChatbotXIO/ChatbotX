@@ -146,8 +146,8 @@ describe("POST /v1/ref-links", () => {
   })
 })
 
-describe("PUT /v1/ref-links/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/ref-links/{id}")
+describe("PATCH /v1/ref-links/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/ref-links/{id}")
 
   test("delegates to reflinkService.update", async () => {
     reflinkService.update.mockResolvedValueOnce({ id: "reflink-1" })

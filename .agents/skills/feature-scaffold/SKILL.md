@@ -27,12 +27,12 @@ features/<feature-name>/
     query.ts            → List/filter params
     action.ts           → Mutation inputs
     resource.ts         → Response shapes
-  provider/             → Zustand store + context (client-only state, if needed)
-    item-store.ts
-    item-store-provider.tsx
+  provider/             → TanStack Query hooks for server data
+    item-hook.ts         → useItems(), useInvalidateItems()
+    item-store.ts        → Zustand store only for client-only state (if needed)
+    item-store-context.tsx → Thin provider for route/workspace scoping, if needed
   components/           → UI components (if many)
-  hooks/                → Feature-specific hooks (if needed);
-                          use-<items>.ts → TanStack Query hooks for server lists
+  hooks/                → Feature-specific non-server-data hooks (if needed)
   item-table.tsx        → Root-level components (if few)
   create-item-dialog.tsx
 ```
@@ -381,6 +381,15 @@ export const useInvalidateItems = () => {
   return () => queryClient.invalidateQueries({ queryKey: orpc.<router>.key() })
 }
 ```
+
+**Mutations:** Call the resource invalidator in every successful create, update,
+delete, toggle, or move handler in addition to `router.refresh()`; invalidate
+before any `router.push`. Existing invalidators include
+`useInvalidateTags`, `useInvalidateInboxes`, `useInvalidateUsers`,
+`useInvalidateSequences`, `useInvalidateCustomFields`,
+`useInvalidateBotFields`, `useInvalidateFlows`, and `useSavedReplyCache`.
+When a shared dialog mutates on behalf of multiple resources, give it an
+`onSuccess` prop so each caller supplies its own invalidator.
 
 Use `useWorkspaceId()` (`@/hooks/routing`) to scope the query to the current
 workspace. Never put a fetched list, `loading`, or `error` in a zustand store —

@@ -39,8 +39,8 @@ export type MetaAdReferralInput = {
  * referral payload into the channel-agnostic `MessageReferral` shape used by
  * `ReceivedMessageResult`. Previously duplicated byte-for-byte as a local
  * `normalizeReferral` in
- * `integrations/instagram/src/handlers/message/incomming-message.ts`,
- * `integrations/messenger/src/handlers/message/incomming-message.ts`, and
+ * `integrations/instagram/src/handlers/message/incoming-message.ts`,
+ * `integrations/messenger/src/handlers/message/incoming-message.ts`, and
  * `integrations/instagram-facebook/src/handlers/message/incoming-message.ts`
  * — moved here since all three already import `deriveAdSourcePlatform` from
  * this module.

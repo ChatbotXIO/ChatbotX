@@ -85,7 +85,7 @@ export const reflinksPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/ref-links/{id}",
       summary: "Update ref link",
       description:

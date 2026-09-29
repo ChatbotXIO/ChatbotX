@@ -48,6 +48,15 @@ export const normalizeMcpContent = (content: JsonValue): JsonValue => {
   return content
 }
 
+const omitEmptyPagingToken = (args: JsonObject): JsonObject => {
+  if (args.paging_token !== "") {
+    return args
+  }
+
+  const { paging_token: _pagingToken, ...remainingArgs } = args
+  return remainingArgs
+}
+
 export class McpClient {
   private readonly url: string
   private readonly auth: AIMcpServerAuth
@@ -220,7 +229,10 @@ export class McpClient {
       mcpConstants.jsonRpcMethods.toolsCall,
       {
         name: toolName,
-        arguments: args,
+        // Initial page requests must omit an optional paging token. Models
+        // frequently serialize optional strings as an empty value, so
+        // normalize that transport detail before calling any MCP server.
+        arguments: omitEmptyPagingToken(args),
       },
       aiTimeouts.mcpCall,
     )
@@ -232,7 +244,10 @@ export class McpClient {
     }
 
     return {
-      isError: false,
+      // MCP tool errors are returned inside a valid JSON-RPC result, not as a
+      // JSON-RPC error response. Preserve that status so callers do not treat
+      // a failed tool invocation as an empty successful result.
+      isError: result.isError === true,
       content: result.content as JsonValue,
     }
   }

@@ -1,7 +1,5 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 export default async function IgCommentsLayout({
   children,
@@ -15,11 +13,5 @@ export default async function IgCommentsLayout({
     return notFound()
   }
 
-  return (
-    <CustomFieldStoreProvider workspaceId={workspaceId}>
-      <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-        {children}
-      </FlowStoreProvider>
-    </CustomFieldStoreProvider>
-  )
+  return children
 }

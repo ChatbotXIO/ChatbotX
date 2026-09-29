@@ -9,6 +9,7 @@ import {
   getMCPServerTools,
   type McpClientConstructor,
   type McpClientLike,
+  type McpTokenResolution,
   type SystemFunctionContext,
   type SystemToolExecutors,
 } from "./tools"
@@ -25,6 +26,7 @@ export interface ToolsetOptions {
   mcp?: {
     McpClient: McpClientConstructor
     normalizeMcpContent: (content: JsonValue) => JsonValue
+    resolveToken?: (token: string) => Promise<McpTokenResolution>
   }
   systemFunctionContextGetter?: () => Promise<SystemFunctionContext | null>
   systemToolExecutors?: SystemToolExecutors

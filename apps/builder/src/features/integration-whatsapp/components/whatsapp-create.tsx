@@ -16,6 +16,7 @@ import { CONNECT_PICKER_CARD_CLASS } from "@/features/channel-connect/components
 import { renderConnectFlowOverlay } from "@/features/channel-connect/components/connect-picker-screen"
 import { SESSION_ERROR_MESSAGE_KEYS } from "@/features/channel-connect/lib/row-status"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { useConnectFormVisibility } from "../hooks/use-connect-form-visibility"
 import { useWhatsappConnectFanout } from "../hooks/use-whatsapp-connect-fanout"
@@ -50,9 +51,13 @@ export default function WhatsappCreate({
 }: WhatsappCreateProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateInboxes = useInvalidateInboxes()
 
   const stages = useWhatsappConnectStages({
-    onRedirect: (redirectUrl) => router.push(redirectUrl),
+    onRedirect: (redirectUrl) => {
+      invalidateInboxes()
+      router.push(redirectUrl)
+    },
   })
 
   const {

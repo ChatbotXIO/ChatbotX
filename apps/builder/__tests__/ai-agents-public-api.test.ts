@@ -57,6 +57,7 @@ const aiAgentService = {
 vi.mock("@chatbotx.io/business", () => ({ aiAgentService }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
+  BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
   notFoundException: (message: string) => new Error(message),
 }))
 
@@ -180,8 +181,8 @@ describe("POST /v1/ai-agents", () => {
   })
 })
 
-describe("PUT /v1/ai-agents/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/ai-agents/{id}")
+describe("PATCH /v1/ai-agents/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/ai-agents/{id}")
 
   test("delegates to aiAgentService.updateAIAgent and returns its result", async () => {
     aiAgentService.updateAIAgent.mockResolvedValueOnce({ id: "agent-1" })

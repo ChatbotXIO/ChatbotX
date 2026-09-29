@@ -1,13 +1,13 @@
 import {
   aiAgentService,
+  commentAutomationService,
   contactInboxService,
-  fbCommentAutomationService,
   igStoryAutomationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import type {
-  FBCommentIncludeKeywords,
+  CommentIncludeKeywords,
   IgStoryTarget,
 } from "@chatbotx.io/database/partials"
 import type {
@@ -15,6 +15,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
   type AIJobProcessStoryReplyAutomation,
@@ -25,6 +26,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { generateAIReplyText } from "../automated-response/replies"
+import { normalizeForMatch } from "../comment-automation/automation-matching"
 
 function matchStory(story: IgStoryTarget, storyId: string): boolean {
   if (story.type !== "storyIds") {
@@ -36,14 +38,14 @@ function matchStory(story: IgStoryTarget, storyId: string): boolean {
 // Only the `includeKeywords` half of `comment-automation/index.ts`'s
 // `matchKeywords` applies here — this feature has no `excludeKeywords` field.
 function matchIncludeKeywords(
-  includeKeywords: FBCommentIncludeKeywords,
+  includeKeywords: CommentIncludeKeywords,
   message: string | undefined,
 ): boolean {
   if (includeKeywords.type === "all") {
     return true
   }
-  const text = (message ?? "").toLowerCase()
-  const keywords = includeKeywords.value.map((k) => k.toLowerCase())
+  const text = normalizeForMatch(message ?? "")
+  const keywords = includeKeywords.value.map((k) => normalizeForMatch(k))
   if (includeKeywords.type === "equal") {
     return keywords.includes(text)
   }
@@ -163,7 +165,7 @@ export async function processStoryReplyAutomation(
   for (const automation of automations) {
     try {
       if (
-        !fbCommentAutomationService.isWithinSchedule(
+        !commentAutomationService.isWithinSchedule(
           automation,
           workspace.timezone,
         )
@@ -204,14 +206,18 @@ export async function processStoryReplyAutomation(
       let dispatched = false
 
       if (reply.type === "text" && reply.value) {
-        let text = reply.value
+        // Spun before the variable pass, and outside the try/catch, so a reply
+        // still varies even when contact data fails to load and the raw text
+        // below is what ships.
+        const spunValue = applySpintax(reply.value)
+        let text = spunValue
         try {
           const variables = await contactVariableService.getAll({
             contactId: contactInbox.contactId,
             contactInbox,
           })
           text = await contactVariableService.replaceAll({
-            text: reply.value,
+            text: spunValue,
             variables,
           })
         } catch (err) {

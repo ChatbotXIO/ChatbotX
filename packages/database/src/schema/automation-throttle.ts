@@ -64,5 +64,9 @@ export const automationThrottleModel = pgTable(
       name: "AutomationThrottle_pkey",
     }),
     index("AutomationThrottle_lastTriggeredAt_idx").on(table.lastTriggeredAt),
+    // Covers the `ContactInbox -> AutomationThrottle` ON DELETE CASCADE check;
+    // the PK leads with workspaceId so it cannot serve a contactInboxId lookup.
+    // Built per partition + ATTACH (32 HASH partitions).
+    index("AutomationThrottle_contactInboxId_idx").on(table.contactInboxId),
   ],
 )

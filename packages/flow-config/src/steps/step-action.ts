@@ -48,6 +48,8 @@ export const stepTypes = z.enum([
   "assignConversation",
   "autoAssignConversation",
   "unassignConversation",
+  "markConversationAsUnread",
+  "markConversationAsRead",
   "followConversation",
   "unfollowConversation",
   "archiveConversation",
@@ -122,6 +124,7 @@ export const stepTypes = z.enum([
   // WhatsApp Template Message
   "sendWaTemplateMessage",
   "whatsappOptionList",
+  "whatsappCallButton",
   "whatsappFlow",
 
   "sendMessengerTemplateMessage",

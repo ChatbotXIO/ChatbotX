@@ -21,6 +21,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { createFlowAction } from "./actions/create-flow-action"
 import { createFlowSchema } from "./schema/action"
 
@@ -34,6 +35,7 @@ export function CreateFlowDialog({
   const t = useTranslations()
   const router = useRouter()
   const pathname = usePathname()
+  const invalidateFlows = useInvalidateFlows()
 
   const [open, setOpen] = useState(false)
 
@@ -52,6 +54,7 @@ export function CreateFlowDialog({
 
             setOpen(false)
             resetFormAndAction()
+            invalidateFlows()
 
             router.push(`${pathname}/${newFlow.id}`)
           },

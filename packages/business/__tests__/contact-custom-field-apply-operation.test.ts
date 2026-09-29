@@ -57,7 +57,9 @@ const txHandle = {
   }),
 }
 
-vi.mock("@chatbotx.io/business/errors", () => ({}))
+vi.mock("@chatbotx.io/business/errors", () => ({
+  notFoundException: (message: string) => new Error(message),
+}))
 
 vi.mock("../src/contact/service", () => ({
   contactService: { findManyByIds: mocks.findManyByIds },
@@ -218,6 +220,112 @@ describe("contactCustomFieldService.applyOperationToContacts — event ordering"
 
     expect(mocks.insertValues).not.toHaveBeenCalled()
     expect(mocks.updateSet).not.toHaveBeenCalled()
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+  })
+
+  // `contacts.setCustomFields` (deleted by the public-API consolidation;
+  // `contacts.applyCustomFieldOperations` is the surviving batch route)
+  // called `setValues`, whose `writeValues` step runs every value through
+  // `normalizeCustomFieldValueForStorage` (type coercion, temporal
+  // parsing/timezone resolution) before persisting.
+  // `applyOperationToContacts`/`applyOperations` predate this PR and never
+  // called that normalizer — they persist `computeUpdatedFieldValue`'s raw
+  // string as-is. This is not a regression introduced by the consolidation
+  // (the gap pre-existed on `main`), but it is a real behavioral difference
+  // between the two batch-write paths worth pinning: a caller migrating
+  // from `setCustomFields` to `applyCustomFieldOperations` for a
+  // date/datetime-typed field loses `setValues`'s temporal normalization.
+  test("persists the raw computed value without type/temporal normalization", async () => {
+    txHandle.query.contactCustomFieldModel.findMany = vi.fn(async () => [])
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      customFieldId: "cf-1",
+      operation: "set" as never,
+      value: "not-a-normalized-date",
+      sourceTimezone: "Asia/Ho_Chi_Minh",
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "not-a-normalized-date" }),
+    )
+  })
+})
+
+describe("contactCustomFieldService.applyOperations — batch atomicity", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    callLog.length = 0
+    mocks.findManyByIds.mockResolvedValue([{ id: "contact-1" }])
+    mocks.customFieldFindManyByIds.mockResolvedValue([
+      { id: "cf-1", name: "plan" },
+    ])
+    mocks.emitCustomFieldChanged.mockResolvedValue(undefined)
+    mocks.insertValues.mockClear()
+    mocks.insertValues.mockImplementation(() => {
+      callLog.push("write")
+    })
+    mocks.updateSet.mockClear()
+    mocks.updateSet.mockImplementation(() => {
+      callLog.push("write")
+    })
+    mocks.insertOnConflictDoUpdate.mockResolvedValue(undefined)
+    mocks.selectLimit.mockResolvedValue([])
+    txHandle.query.contactCustomFieldModel.findMany = vi.fn(async () => [])
+  })
+
+  test("runs every operation inside one outer transaction, all writes before commit", async () => {
+    await contactCustomFieldService.applyOperations({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      operations: [
+        { customFieldId: "cf-1", operation: "set" as never, value: "a" },
+        { customFieldId: "cf-1", operation: "append" as never, value: "b" },
+        { customFieldId: "cf-1", operation: "prepend" as never, value: "c" },
+      ],
+    })
+
+    // Exactly one commit for the whole batch (not one per operation), and
+    // every write happens before that single commit.
+    expect(callLog.filter((entry) => entry === "commit")).toHaveLength(1)
+    const commitIndex = callLog.indexOf("commit")
+    const writeIndices = callLog.reduce<number[]>((acc, entry, index) => {
+      if (entry === "write") {
+        acc.push(index)
+      }
+      return acc
+    }, [])
+    expect(writeIndices).toHaveLength(3)
+    for (const writeIndex of writeIndices) {
+      expect(writeIndex).toBeLessThan(commitIndex)
+    }
+    expect(mocks.emitCustomFieldChanged).toHaveBeenCalledTimes(3)
+  })
+
+  test("rolls back every earlier operation when a later one fails", async () => {
+    // First call (operation 1) resolves the field; second call (operation 2)
+    // simulates an unknown custom field, the same way the real repository
+    // returns no rows for a nonexistent id.
+    mocks.customFieldFindManyByIds
+      .mockResolvedValueOnce([{ id: "cf-1", name: "plan" }])
+      .mockResolvedValueOnce([])
+
+    await expect(
+      contactCustomFieldService.applyOperations({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        operations: [
+          { customFieldId: "cf-1", operation: "set" as never, value: "a" },
+          { customFieldId: "cf-bad", operation: "set" as never, value: "b" },
+        ],
+      }),
+    ).rejects.toThrow("Custom field not found")
+
+    // The whole batch is one transaction: a failure on the second operation
+    // must mean nothing committed and nothing was emitted, even though the
+    // first operation's write already ran against the (rolled-back) tx.
+    expect(callLog).not.toContain("commit")
     expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
   })
 })

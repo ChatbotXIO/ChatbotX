@@ -9,6 +9,7 @@ import {
   channelTypes,
   hasBroadcastSendForInbox,
   resolveBroadcastFlowSend,
+  resolveBroadcastSendRatePerMinute,
   resolveBroadcastTemplateSend,
   usesBroadcastTargets,
 } from "@chatbotx.io/database/partials"
@@ -21,6 +22,7 @@ import {
   type MessengerTemplateParams,
   type WaTemplateParams,
 } from "@chatbotx.io/flow-config"
+import { mapWithConcurrency } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
   chatQueue,
@@ -30,8 +32,13 @@ import {
 import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 import { logger } from "../../lib/logger"
 
-const DEFAULT_BROADCAST_RATE_LIMIT = 500
 const BROADCAST_SEND_JOB_RETENTION_SECONDS = 3600
+// Caps the fan-out of one hand-off batch's queue adds + markContactSentIfSending
+// updates. The pg pool is `max: 10` connections; at up to 1000 recipients an
+// unbounded Promise.all can queue far more concurrent connection requests
+// than the pool has slots and a waiter can time out instead of getting a
+// connection. See docs/plans/2026-09-20-broadcast-send-limit.md.
+const BROADCAST_HANDOFF_CONCURRENCY = 100
 
 /** The reasons a recipient cannot be enqueued; stored as the row's `errorContent`. */
 const NO_TEMPLATE_FOR_PAGE_REASON =
@@ -275,9 +282,30 @@ export const processBroadcastContacts = async (broadcastId: string) => {
   let totalProcessed = 0
 
   for (const broadcast of broadcasts) {
+    // Claims a lease that keeps two successful hand-off batches of the same
+    // broadcast at least 55s apart (see docs/plans/2026-09-20-broadcast-send-limit.md).
+    // The claim runs BEFORE the fetch on purpose: a refused tick must cost
+    // one Redis command and nothing else, since most ticks for a
+    // fast-cadenced broadcast will be refused. A refused claim hands off
+    // nothing this tick; the next reconcileBroadcasts tick (≤ 60s later)
+    // retries because handoffCompletedAt is still null.
+    const claimed = await broadcastService.claimDispatchWindow({
+      broadcastId: broadcast.id,
+    })
+
+    if (!claimed) {
+      logger.debug(
+        { broadcastId: broadcast.id },
+        "processBroadcastContacts: dispatch window lease still held, skipping this tick",
+      )
+      continue
+    }
+
+    const batchSize = resolveBroadcastSendRatePerMinute(broadcast)
+
     const contactsOnBroadcasts = await broadcastService.listPendingRecipients({
       broadcastId: broadcast.id,
-      limit: DEFAULT_BROADCAST_RATE_LIMIT,
+      limit: batchSize,
     })
 
     if (contactsOnBroadcasts.length === 0) {
@@ -288,45 +316,60 @@ export const processBroadcastContacts = async (broadcastId: string) => {
 
     let retryableFailure: unknown = null
 
-    await Promise.all(
-      contactsOnBroadcasts.map(async (contactOnBroadcast) => {
-        try {
-          const invalidReason = invalidBroadcastContact(
-            contactOnBroadcast,
-            broadcast,
-          )
+    const handOffRecipient = async (
+      contactOnBroadcast: ContactOnBroadcastForSend,
+    ): Promise<boolean> => {
+      const invalidReason = invalidBroadcastContact(
+        contactOnBroadcast,
+        broadcast,
+      )
 
-          if (invalidReason) {
-            await markContactFailed(contactOnBroadcast, invalidReason)
-            return
-          }
+      if (invalidReason) {
+        await markContactFailed(contactOnBroadcast, invalidReason)
+        return false
+      }
 
-          await enqueueBroadcastContact(broadcast, contactOnBroadcast)
-          // Conditioned on the broadcast still being `sending` (I1 lost-update
-          // fix): a stale in-flight job from a stopped/resumed run cannot
-          // resurrect a row that resume/cleanup has since reset or purged.
-          await broadcastService.markContactSentIfSending({
-            broadcastId: broadcast.id,
-            contactId: contactOnBroadcast.contactId,
-          })
+      await enqueueBroadcastContact(broadcast, contactOnBroadcast)
+      // Conditioned on the broadcast still being `sending` (I1 lost-update
+      // fix): a stale in-flight job from a stopped/resumed run cannot
+      // resurrect a row that resume/cleanup has since reset or purged.
+      await broadcastService.markContactSentIfSending({
+        broadcastId: broadcast.id,
+        contactId: contactOnBroadcast.contactId,
+      })
 
-          totalProcessed++
-        } catch (error) {
-          retryableFailure ??= error
-          logger.error(
-            { err: error, contactOnBroadcast },
-            "Retryable error sending broadcast contact",
-          )
-        }
-      }),
+      return true
+    }
+
+    const settledResults = await mapWithConcurrency(
+      contactsOnBroadcasts,
+      BROADCAST_HANDOFF_CONCURRENCY,
+      handOffRecipient,
     )
+
+    for (const [index, result] of settledResults.entries()) {
+      if (result.status === "rejected") {
+        retryableFailure ??= result.reason
+        logger.error(
+          {
+            err: result.reason,
+            contactOnBroadcast: contactsOnBroadcasts[index],
+          },
+          "Retryable error sending broadcast contact",
+        )
+        continue
+      }
+
+      if (result.value) {
+        totalProcessed++
+      }
+    }
 
     if (retryableFailure) {
       throw retryableFailure
     }
 
-    const fetchedFull =
-      contactsOnBroadcasts.length === DEFAULT_BROADCAST_RATE_LIMIT
+    const fetchedFull = contactsOnBroadcasts.length === batchSize
 
     // More rows remain; reconcileBroadcasts cron drives the next batch.
     // Keep a single driver so kick + cron share one jobId and cannot multiply.

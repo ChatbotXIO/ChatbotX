@@ -49,8 +49,8 @@ export function SelectFlowDialog({
 }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const flowOptions = useFlowSelectOptions()
-  const nodesSelectOptions = useFlowNodesSelectOptions()
+  const flowOptions = useFlowSelectOptions({ enabled: open })
+  const nodesSelectOptions = useFlowNodesSelectOptions({ enabled: open })
   const nodeIdToFlowIdMap = useMemo(() => {
     const map: Record<string, string> = {} // Record<nodeId, flowId>
 

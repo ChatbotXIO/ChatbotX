@@ -6,9 +6,7 @@ import {
   MAX_QUICK_REPLIES,
   stepTypes,
   upgradeNodeSteps,
-  nodeTypeSchema
 } from "@chatbotx.io/flow-config"
-import { channelTypes } from "@chatbotx.io/utils/channel"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -39,8 +37,9 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
-import { useInboxesState } from "@/features/inboxes/provider/inbox-hook"
+import { useCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
+import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
@@ -164,26 +163,13 @@ const NodeEditorMenu = memo(
     onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
-    const {
-      inboxes,
-      error: inboxesError,
-      loading: loadingInboxes,
-      initialized: inboxesInitialized,
-    } = useInboxesState()
+    const inboxes = useInboxList()
     const whatsappTemplates = useFlowTemplate((s) => s.whatsappTemplates)
     const whatsappFlows = useWhatsappFlow((s) => s.whatsappFlows)
     const messengerTemplates = useFlowTemplate((s) => s.messengerTemplates)
     const beforeStep = useWatch({ name: "beforeStep" })
-    const channel = beforeStep?.channel
-    const hasInboxDependentMenus =
-      nodeType === nodeTypeSchema.enum.sendMessage &&
-      (channel === channelTypes.enum.whatsapp ||
-        channel === channelTypes.enum.messenger ||
-        channel === channelTypes.enum.omnichannel)
 
     const [nodeMenus, setNodeMenus] = useState<MenuItem[]>([])
-    const inboxesUnavailable =
-      !inboxesInitialized || loadingInboxes || Boolean(inboxesError)
 
     useEffect(() => {
       const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
@@ -191,15 +177,11 @@ const NodeEditorMenu = memo(
         setNodeMenus(
           nodeConfig.menus(t, {
             inboxes,
-            templates: {
-              waTemplates: whatsappTemplates,
-              messengerTemplates,
-            },
+            templates: { waTemplates: whatsappTemplates, messengerTemplates },
             flows: { waFlows: whatsappFlows },
             beforeStep,
-            inboxesUnavailable,
           }),
-          )
+        )
       } else {
         setNodeMenus([])
       }
@@ -211,31 +193,25 @@ const NodeEditorMenu = memo(
       whatsappFlows,
       messengerTemplates,
       beforeStep,
-      inboxesUnavailable,
     ])
 
     return (
-      <>
-        {inboxesError && hasInboxDependentMenus && (
-          <ErrorAlert message={`${t("states.error")}: ${inboxesError}`} />
-        )}
-        {nodeMenus.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline">
-                  <PlusIcon />
-                  {t("actions.create")}
-                </Button>
-              }
-            />
+      nodeMenus.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="outline">
+                <PlusIcon />
+                {t("actions.create")}
+              </Button>
+            }
+          />
 
-            <DropdownMenuContent className="w-full">
-              <RecursiveDropdownMenu data={nodeMenus} onClick={onClick} />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </>
+          <DropdownMenuContent className="w-full">
+            <RecursiveDropdownMenu data={nodeMenus} onClick={onClick} />
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
     )
   },
 )
@@ -265,7 +241,7 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
   const t = useTranslations()
   const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
   const validator = nodeConfig?.validator.shape.data.shape.details
-  const customFields = useCustomFieldStore((state) => state.customFields)
+  const customFields = useCustomFields(useWorkspaceId()).data ?? []
   const customFieldLookup = useMemo(() => {
     const customFieldById = new Map(
       customFields.map((field) => [

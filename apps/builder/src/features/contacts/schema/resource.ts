@@ -23,4 +23,9 @@ export type ContactEditableField = {
   // When set, the read-only value renders as an external link (e.g. an ad
   // source URL). Only used for read-only fields.
   href?: string | null
+  // Marks a workspace custom-field row (as opposed to a built-in contact
+  // field). Drives the reset-custom-fields affordance, which must not depend
+  // on the contact's currently cached values — a freshly added field that has
+  // just been given a value is a custom field too.
+  isCustomField?: boolean
 }

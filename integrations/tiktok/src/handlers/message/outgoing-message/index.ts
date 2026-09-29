@@ -4,30 +4,14 @@ import {
   type SendTextStepSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import {
-  ChannelError,
-  ChannelErrorCategory,
-  type MessageHandlers,
-} from "@chatbotx.io/sdk"
-import { sendTiktokMessage } from "../../../apis/message"
+import type { MessageHandlers } from "@chatbotx.io/sdk"
+import { sendMessage as sendMessageApi } from "../../../apis/message"
 import { mapToChannelError } from "../../../lib/error-mapper"
+import { requireConversationId } from "../../../lib/guards"
 import { logger } from "../../../lib/logger"
 import type { TiktokAuthValue } from "../../../schema"
 import { uploadAndBuildImagePayload } from "./send-media"
 import { convertFlowStepText } from "./send-text"
-
-function requireConversationId(
-  sourceConversationId: string | null | undefined,
-): string {
-  if (!sourceConversationId) {
-    throw new ChannelError(
-      "TikTok requires a conversation_id to send messages (recipient_type: CONVERSATION). This contact has no sourceConversationId — wait for an inbound message or backfill the column.",
-      ChannelErrorCategory.INVALID_RECIPIENT,
-      { code: "tiktok_missing_conversation_id" },
-    )
-  }
-  return sourceConversationId
-}
 
 export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
   async (props) => {
@@ -38,18 +22,20 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
 
     const businessId = ctx.auth.metadata.openId
     const messageIds: string[] = []
+    let sentCount = 0
 
     try {
       const conversationId = requireConversationId(contact.sourceConversationId)
 
       if (message.text) {
-        const messageId = await sendTiktokMessage(ctx.auth.tokens.accessToken, {
+        const messageId = await sendMessageApi(ctx.auth.tokens.accessToken, {
           business_id: businessId,
           recipient_type: "CONVERSATION",
           recipient: conversationId,
           message_type: "TEXT",
           text: { body: message.text },
         })
+        sentCount += 1
         if (messageId) {
           messageIds.push(messageId)
         }
@@ -66,10 +52,11 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
             conversationId,
             attachment.url,
           )
-          const messageId = await sendTiktokMessage(
+          const messageId = await sendMessageApi(
             ctx.auth.tokens.accessToken,
             payload,
           )
+          sentCount += 1
           if (messageId) {
             messageIds.push(messageId)
           }
@@ -80,7 +67,7 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
       throw mapToChannelError(error)
     }
 
-    return { messageIds }
+    return { messageIds, sentCount }
   }
 
 export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
@@ -92,6 +79,7 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
 
     const businessId = ctx.auth.metadata.openId
     const messageIds: string[] = []
+    let sentCount = 0
 
     try {
       const conversationId = requireConversationId(contact.sourceConversationId)
@@ -107,10 +95,11 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
               >["sendFlowStep"]
             >[0],
           )) {
-            const messageId = await sendTiktokMessage(
+            const messageId = await sendMessageApi(
               ctx.auth.tokens.accessToken,
               payload,
             )
+            sentCount += 1
             if (messageId) {
               messageIds.push(messageId)
             }
@@ -124,10 +113,11 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
             conversationId,
             (step as SendImageStepSchema).url,
           )
-          const messageId = await sendTiktokMessage(
+          const messageId = await sendMessageApi(
             ctx.auth.tokens.accessToken,
             payload,
           )
+          sentCount += 1
           if (messageId) {
             messageIds.push(messageId)
           }
@@ -141,10 +131,11 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
               conversationId,
               image.url,
             )
-            const messageId = await sendTiktokMessage(
+            const messageId = await sendMessageApi(
               ctx.auth.tokens.accessToken,
               payload,
             )
+            sentCount += 1
             if (messageId) {
               messageIds.push(messageId)
             }
@@ -159,5 +150,5 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
       throw mapToChannelError(error)
     }
 
-    return { messageIds }
+    return { messageIds, sentCount }
   }

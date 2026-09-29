@@ -18,6 +18,7 @@ export const publicInboxResource = inboxResource.pick({
   name: true,
   channel: true,
   status: true,
+  sourceId: true,
 })
 
 export const publicListInboxResponse = z.object({
@@ -26,6 +27,10 @@ export const publicListInboxResponse = z.object({
 })
 export type PublicListInboxResponse = z.infer<typeof publicListInboxResponse>
 
+// Back-compat for the deprecated `GET /v1/channels` alias (see
+// `inboxesPublicRouter.listChannels`): the pre-consolidation response
+// exposed `sourceId` as `id`, which is not always numeric (e.g. TikTok uses
+// the account username).
 export const publicListInboxesResponse = z.object({
   data: z.array(
     inboxResource
@@ -35,8 +40,6 @@ export const publicListInboxesResponse = z.object({
         status: true,
       })
       .extend({
-        // The public API exposes sourceId as id, which is not always numeric
-        // (e.g. TikTok uses the account username)
         id: z.string(),
       }),
   ),

@@ -5,6 +5,7 @@ import {
   CHANNEL_API_TOKEN_SCHEME,
   PUBLIC_SECURITY_SCHEMES,
   publicSpecGenerateOptions,
+  withIdempotencyKeyHeader,
 } from "../src/lib/orpc/public-spec"
 
 describe("publicSpecGenerateOptions", () => {
@@ -37,5 +38,39 @@ describe("publicSpecGenerateOptions", () => {
     const options = publicSpecGenerateOptions("test")
 
     expect(options.components.securitySchemes).toBe(PUBLIC_SECURITY_SCHEMES)
+  })
+})
+
+describe("withIdempotencyKeyHeader", () => {
+  test("adds the header to write operations without changing reads or duplicating parameters", () => {
+    const spec = {
+      paths: {
+        "/v1/resources": {
+          delete: { responses: {}, parameters: [{ name: "id", in: "query" }] },
+          get: { responses: {} },
+          patch: { responses: {} },
+          post: { responses: {} },
+          put: { responses: {} },
+        },
+      },
+    } as unknown as Parameters<typeof withIdempotencyKeyHeader>[0]
+
+    withIdempotencyKeyHeader(spec)
+    withIdempotencyKeyHeader(spec)
+
+    const operations = spec.paths?.["/v1/resources"] as
+      | Record<string, { parameters?: Array<{ name?: string; in?: string }> }>
+      | undefined
+    expect(operations?.get?.parameters).toBeUndefined()
+    for (const method of ["post", "put", "patch", "delete"] as const) {
+      const parameters = operations?.[method]?.parameters ?? []
+      expect(
+        parameters.filter((parameter) => parameter.name === "Idempotency-Key"),
+      ).toHaveLength(1)
+    }
+    expect(operations?.delete?.parameters).toContainEqual({
+      name: "id",
+      in: "query",
+    })
   })
 })

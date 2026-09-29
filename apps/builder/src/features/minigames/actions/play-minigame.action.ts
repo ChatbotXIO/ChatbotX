@@ -7,6 +7,7 @@ import {
   minigameService,
 } from "@chatbotx.io/business/minigame"
 import { verifyMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
+import { contactVariableService } from "@chatbotx.io/variables"
 import { headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
 import {
@@ -84,6 +85,19 @@ export const playMinigameAction = actionClient
           contactId,
           contactInbox,
           minigame,
+          // Injected because `@chatbotx.io/variables` depends on
+          // `@chatbotx.io/business`, so the service cannot import it. The
+          // arrow keeps `contactVariableService` as the receiver, and the
+          // contact load happens inside — only a text-mode outcome message
+          // that is actually enabled ever calls this.
+          resolveContactVariables: async (text) =>
+            await contactVariableService.replaceAll({
+              text,
+              variables: await contactVariableService.getAll({
+                contactId,
+                contactInbox,
+              }),
+            }),
         }))
     } catch (error) {
       if (

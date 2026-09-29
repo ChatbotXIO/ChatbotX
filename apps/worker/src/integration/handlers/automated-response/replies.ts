@@ -52,6 +52,7 @@ import { logger } from "../../../lib/logger"
 import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
 import { sendMessageAndWait, sendMessageWithRender } from "../../utils/message"
 import { logProviderAttempt } from "../shared/provider-attempt-logger"
+import { createMcpTokenResolver } from "../shared/resolve-mcp-token"
 import { triggerDefaultReplyFlow } from "./default-reply"
 import { handleRichAIReply } from "./rich-reply"
 import { createDocumentReaderExecutor } from "./system-tools/document-reader"
@@ -426,6 +427,7 @@ function createReplyToolset(options: {
     mcp: {
       McpClient,
       normalizeMcpContent,
+      resolveToken: createMcpTokenResolver(conversation.workspaceId),
     },
   }).then((toolset) => ({
     cleanup: toolset.cleanup,

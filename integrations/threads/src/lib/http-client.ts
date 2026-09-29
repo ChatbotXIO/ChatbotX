@@ -1,5 +1,5 @@
 import ky, { type KyInstance } from "ky"
-import { THREADS_GRAPH_API_URL, THREADS_OAUTH_URL } from "../constants"
+import { API_URL, THREADS_OAUTH_URL } from "../constants"
 
 class ThreadsHttpClient {
   private readonly client: KyInstance
@@ -23,5 +23,5 @@ class ThreadsHttpClient {
   }
 }
 
-export const threadsGraphClient = new ThreadsHttpClient(THREADS_GRAPH_API_URL)
+export const threadsGraphClient = new ThreadsHttpClient(API_URL)
 export const threadsOAuthClient = new ThreadsHttpClient(THREADS_OAUTH_URL)

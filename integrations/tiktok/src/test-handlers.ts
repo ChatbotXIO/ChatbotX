@@ -1,20 +1,20 @@
 import { HttpResponse, http } from "msw"
-import { BUSINESS_API_BASE_URL } from "./constants"
+import { BUSINESS_API_URL } from "./constants"
 
 export const testHandlers = [
-  http.post(`${BUSINESS_API_BASE_URL}business/message/send/`, () =>
+  http.post(`${BUSINESS_API_URL}business/message/send/`, () =>
     HttpResponse.json({
       data: { message_id: "test-message-id" },
       error: { code: "ok", message: "" },
     }),
   ),
-  http.post(`${BUSINESS_API_BASE_URL}business/message/media/upload/`, () =>
+  http.post(`${BUSINESS_API_URL}business/message/media/upload/`, () =>
     HttpResponse.json({
       data: { media_id: "test-media-id" },
       error: { code: "ok", message: "" },
     }),
   ),
-  http.post(`${BUSINESS_API_BASE_URL}tt_user/oauth2/token/`, () =>
+  http.post(`${BUSINESS_API_URL}tt_user/oauth2/token/`, () =>
     HttpResponse.json({
       code: 0,
       data: {

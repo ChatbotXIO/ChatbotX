@@ -81,6 +81,16 @@ export const router = {
       default: m.contactsAPIs,
     })),
   ),
+  contactNotesAPI: lazy(() =>
+    import("@/features/contact-notes/api/private").then((m) => ({
+      default: m.contactNotesAuthenticatedAPI,
+    })),
+  ),
+  contactSequencesAPI: lazy(() =>
+    import("@/features/contact-sequences/api/private").then((m) => ({
+      default: m.contactSequencesAuthenticatedAPI,
+    })),
+  ),
   contactScanAPIs: lazy(() =>
     import("@/features/contact-scan/api").then((m) => ({
       default: m.contactScanAPIs,
@@ -268,6 +278,11 @@ export const router = {
   ),
   refLinksAPI: lazy(() =>
     import("@/features/reflinks/api").then((m) => ({ default: m.refLinksAPI })),
+  ),
+  realtimeAPI: lazy(() =>
+    import("@/features/realtime/api").then((m) => ({
+      default: m.realtimeAPI,
+    })),
   ),
   userPersistentMenusAPI: lazy(() =>
     import("@/features/user-persistent-menus/api").then((m) => ({

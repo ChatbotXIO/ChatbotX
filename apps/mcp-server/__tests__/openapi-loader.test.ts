@@ -9,7 +9,7 @@ describe("toSnakeCase", () => {
     ["botFields.bulkUpdate", "bot_fields_bulk_update"],
     ["workspaceMembers.get", "workspace_members_get"],
     ["externalWebhooks.delete", "external_webhooks_delete"],
-    ["contacts.findByCustomField", "contacts_find_by_custom_field"],
+    ["contacts.addTagsByName", "contacts_add_tags_by_name"],
   ])("%s -> %s", (input, expected) => {
     expect(toSnakeCase(input)).toBe(expected)
   })
@@ -74,10 +74,10 @@ describe("loadOpenApiSpec", () => {
               security: [{ channelApiToken: [] }],
             },
           },
-          "/v1/channels": {
+          "/v1/legacy-things": {
             get: {
-              operationId: "inboxes.listChannels",
-              summary: "List channels",
+              operationId: "legacyThings.list",
+              summary: "List legacy things",
               deprecated: true,
             },
           },
@@ -657,10 +657,10 @@ describe("getVisibleTools", () => {
             "x-mcp": { visibility: "default", scope: "automation" },
           },
         },
-        "/v1/contacts/search": {
+        "/v1/reports/query": {
           post: {
-            operationId: "contacts.search",
-            summary: "Search contacts",
+            operationId: "reports.query",
+            summary: "Query reports",
             "x-mcp": {
               visibility: "default",
               scope: "contacts",
@@ -705,8 +705,8 @@ describe("getVisibleTools", () => {
         .sort(),
     ).toEqual([
       "capabilities_get",
-      "contacts_search",
       "flows_list",
+      "reports_query",
       "tags_delete",
       "tags_list",
     ])
@@ -727,8 +727,8 @@ describe("getVisibleTools", () => {
         .sort(),
     ).toEqual([
       "capabilities_get",
-      "contacts_search",
       "flows_list",
+      "reports_query",
       "tags_delete",
       "tags_list",
     ])
@@ -771,11 +771,6 @@ describe("getVisibleTools", () => {
       })
         .map((t) => t.name)
         .sort(),
-    ).toEqual([
-      "capabilities_get",
-      "contacts_search",
-      "flows_list",
-      "tags_list",
-    ])
+    ).toEqual(["capabilities_get", "flows_list", "reports_query", "tags_list"])
   })
 })

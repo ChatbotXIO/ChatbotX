@@ -1,3 +1,4 @@
+import type * as MobileHook from "@chatbotx.io/ui/hooks/use-mobile"
 import { setViewportWidth } from "@chatbotx.io/vitest-config/setup-dom"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
@@ -11,11 +12,33 @@ vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
 
-const mockRouterReplace = vi.fn()
+const { mockMobileState } = vi.hoisted(() => ({
+  mockMobileState: {
+    isOverridden: false,
+    value: undefined as boolean | undefined,
+  },
+}))
+
+vi.mock("@chatbotx.io/ui/hooks/use-mobile", async (importOriginal) => {
+  const actual = await importOriginal<typeof MobileHook>()
+
+  return {
+    ...actual,
+    useIsMobileState: () => {
+      const isMobile = actual.useIsMobileState()
+      return mockMobileState.isOverridden ? mockMobileState.value : isMobile
+    },
+  }
+})
+
+vi.mock("@/features/messages/store/call-playback-store", () => ({
+  useCallPlaybackStore: {
+    getState: () => ({ reset: vi.fn() }),
+  },
+}))
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/space/w1/inbox",
-  useRouter: () => ({ replace: mockRouterReplace }),
   useSearchParams: () => new URLSearchParams("conversationId=c1"),
 }))
 
@@ -63,6 +86,7 @@ const storeState = {
   isLoadingConversation: false,
   isBootstrappingUrlConversation: false,
   activeConversationId: null as string | null,
+  activeConversationAutoSelected: false,
   setActiveConversationId: vi.fn((id: string | null) => {
     storeState.activeConversationId = id
   }),
@@ -96,10 +120,19 @@ describe("ChatLayout", () => {
   const find = (id: string) =>
     container.querySelector<HTMLElement>(`[data-testid="${id}"]`)
 
+  // The sheet portals to <body> and stays mounted through its exit animation,
+  // so read its open state rather than whether its content is in the DOM.
+  const isContactSheetOpen = () =>
+    document
+      .querySelector('[data-slot="sheet-content"]')
+      ?.hasAttribute("data-open") ?? false
+
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     storeState.activeConversationId = null
+    storeState.activeConversationAutoSelected = false
     storeState.setActiveConversationId.mockClear()
+    mockMobileState.isOverridden = false
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -111,7 +144,6 @@ describe("ChatLayout", () => {
     })
     container.remove()
     setViewportWidth(1024)
-    mockRouterReplace.mockClear()
   })
 
   test("shows only the conversation list on mobile with nothing selected", () => {
@@ -145,6 +177,74 @@ describe("ChatLayout", () => {
     expect(find("list-pane")?.getAttribute("data-auto-select")).toBe("false")
   })
 
+  test("suppresses an auto-selected conversation on mobile so the list shows first", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    setViewportWidth(375)
+    render()
+
+    expect(find("list-pane")).not.toBeNull()
+    expect(storeState.setActiveConversationId).toHaveBeenCalledWith(null)
+  })
+
+  test("does not clear an auto-selected conversation on a later resize to mobile", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    setViewportWidth(1440)
+    render()
+
+    act(() => {
+      setViewportWidth(375)
+    })
+    render()
+
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+
+    act(() => {
+      root.unmount()
+    })
+    root = createRoot(container)
+    storeState.activeConversationId = "c1"
+    storeState.setActiveConversationId.mockClear()
+    setViewportWidth(375)
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      setViewportWidth(1440)
+      setViewportWidth(375)
+    })
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
+  })
+
+  test("waits for the first mobile measurement before suppressing selection", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    mockMobileState.isOverridden = true
+    mockMobileState.value = undefined
+    render()
+
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+
+    mockMobileState.value = true
+    render()
+
+    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
+  })
+
+  test("keeps a deep-linked conversation open on mobile", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = false
+    setViewportWidth(375)
+    render()
+
+    expect(find("thread-pane")).not.toBeNull()
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalledWith(null)
+  })
+
   test("shows the thread with a back control once a conversation is active", () => {
     storeState.activeConversationId = "c1"
     setViewportWidth(375)
@@ -174,13 +274,15 @@ describe("ChatLayout", () => {
     setViewportWidth(375)
     render()
 
+    const replaceState = vi.spyOn(window.history, "replaceState")
     act(() => {
       find("back")?.dispatchEvent(
         new MouseEvent("click", { bubbles: true, cancelable: true }),
       )
     })
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/space/w1/inbox")
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/space/w1/inbox")
+    replaceState.mockRestore()
   })
 
   test("offers the contact panel behind a control instead of a third column", () => {
@@ -191,6 +293,50 @@ describe("ChatLayout", () => {
     expect(find("open-contact")).not.toBeNull()
     // The sheet is closed until asked for, so the panel is not mounted yet.
     expect(find("contact-pane")).toBeNull()
+  })
+
+  test("keeps the mobile contact sheet open across conversation list updates", () => {
+    storeState.activeConversationId = "c1"
+    storeState.conversations = [{ id: "c1" }]
+    setViewportWidth(375)
+    render()
+
+    act(() => {
+      find("open-contact")?.click()
+    })
+    expect(
+      document.querySelector('[data-testid="contact-pane"]'),
+    ).not.toBeNull()
+
+    // A realtime message replaces the conversations array; the sheet is bound
+    // to the active conversation, not to the list identity.
+    storeState.conversations = [{ id: "c1" }, { id: "c2" }]
+    render()
+    expect(
+      document.querySelector('[data-testid="contact-pane"]'),
+    ).not.toBeNull()
+
+    storeState.conversations = []
+  })
+
+  test("closes the mobile contact sheet for another thread and keeps it closed on return", () => {
+    storeState.activeConversationId = "c1"
+    storeState.conversations = [{ id: "c1" }, { id: "c2" }]
+    setViewportWidth(375)
+    render()
+
+    act(() => {
+      find("open-contact")?.click()
+    })
+    storeState.activeConversationId = "c2"
+    render()
+    expect(isContactSheetOpen()).toBe(false)
+
+    storeState.activeConversationId = "c1"
+    render()
+    expect(isContactSheetOpen()).toBe(false)
+
+    storeState.conversations = []
   })
 
   test("renders all three panes side by side from md up", () => {

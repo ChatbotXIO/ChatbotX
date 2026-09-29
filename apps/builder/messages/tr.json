@@ -336,6 +336,7 @@
       "message": "Son ödemeniz başarısız oldu. Çalışma alanınızı etkin tutmak için ödeme yönteminizi güncelleyin."
     },
     "trial": {
+      "planName": "Deneme",
       "daysLeft": "Deneme: {days} gün kaldı",
       "endsTomorrow": "Deneme yarın sona eriyor",
       "expired": "Deneme süreniz sona erdi — çalışma alanınızı etkin tutmak için planınızı yükseltin",
@@ -449,7 +450,6 @@
       "audienceFilter": "Hedef kitle filtresi",
       "noAudienceFilter": "Hedef kitle filtresi yok",
       "template": "Şablon",
-      "noTemplate": "Şablon yok",
       "integration": "Entegrasyon"
     },
     "filters": {
@@ -508,6 +508,23 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "planLimitDialog": {
+      "title": "Planınızı yükseltin",
+      "sendRate": "Mevcut {plan} planınız broadcast gönderimlerini dakikada en fazla {rate} mesaj hızında destekler. Broadcast gönderimlerini {multiplier}x daha hızlı yapmak için planınızı yükseltin.",
+      "activeBroadcasts": "Mevcut {plan} planınız aynı anda {max, plural, one {# broadcast} other {# broadcast}} çalıştırır. Aynı anda daha fazla broadcast çalıştırmak için planınızı yükseltin."
+    },
+    "sendLimit": {
+      "title": "Sınır",
+      "hint": "Eşleşen tüm kişilere göndermek için boş bırakın.",
+      "rateHint": "Varsayılan hızı kullanmak için boş bırakın.",
+      "rangeSummary": "Kişiler #{start} – #{end}",
+      "rangeFromSummary": "Kişi #{start}'den itibaren",
+      "rangeLabel": "Kişi aralığı",
+      "fromLabel": "Başlangıç",
+      "toLabel": "Bitiş",
+      "allPlaceholder": "Tümü",
+      "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz"
     }
   },
   "commentAutomation": {
@@ -536,7 +553,26 @@
       "keywordsNotMatched": "Anahtar kelimeler eşleşmedi",
       "contactNotNew": "Kişi yeni değil",
       "alreadyRepliedOnPost": "Bu gönderide zaten yanıtlandı",
-      "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi"
+      "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi",
+      "mentionCountNotMatched": "Bahsetme sayısı eşleşmedi"
+    },
+    "replyTo": {
+      "mentions": "Yeterli bahsetme içeren yorumlar",
+      "mentionCount": "Etiketlenen kişi sayısı",
+      "mentionCountDescription": "Yalnızca en az bu sayıda kişiyi (@ad) etiketleyen yorumlar eşleşir.",
+      "mentionCountOption": "{count, plural, one {# kişi} other {# kişi}}"
+    },
+    "excludeKeywordsType": {
+      "equal": "Şuna eşit yorumlar",
+      "contain": "Şunu içeren yorumlar"
+    },
+    "hideComments": {
+      "hasGif": "GIF içerir",
+      "hasEmoji": "Emoji içerir"
+    },
+    "trackUserTags": {
+      "label": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
+      "descriptionText": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     }
   },
   "condition": {
@@ -738,6 +774,10 @@
       "whatsapp": "Bu WhatsApp numarası zaten başka bir çalışma alanına bağlı.",
       "zalo": "Bu Zalo OA zaten başka bir çalışma alanına bağlı."
     },
+    "missingScopes": {
+      "generic": "Bağlantı iptal edildi: bazı izinler verilmedi. Lütfen yeniden bağlanın ve istenen tüm izinleri kabul edin.",
+      "tiktok": "TikTok bağlantısı iptal edildi: bazı izinler verilmedi. Lütfen yeniden bağlanın ve istenen tüm izinleri kabul edin."
+    },
     "reconnect": {
       "success": "Kanal başarıyla yeniden bağlandı.",
       "errors": {
@@ -865,6 +905,7 @@
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir."
   },
   "fields": {
+    "optionalHint": "(isteğe bağlı)",
     "marketingMessagesConfigId": {
       "label": "Pazarlama Mesajları Yapılandırma Kimliği",
       "description": "marketing_messages_messenger iznini istemek için kullanılan Facebook Login for Business yapılandırma kimliği."
@@ -1233,6 +1274,19 @@
     },
     "contactId": {
       "label": "Kişi Kimliği"
+    },
+    "channelIdentity": {
+      "psid": "PSID",
+      "igsid": "IGSID",
+      "whatsappId": "WhatsApp ID",
+      "bsuid": "BSUID",
+      "zaloUserId": "Zalo Kullanıcı Kimliği",
+      "telegramChatId": "Telegram Sohbet Kimliği",
+      "tiktokUserId": "TikTok Kullanıcı Kimliği",
+      "threadsUsername": "Threads Kullanıcı Adı",
+      "webchatGuestId": "Webchat Ziyaretçi Kimliği",
+      "externalId": "Harici Kimlik",
+      "channelId": "Kanal Kimliği"
     },
     "flow": {
       "label": "Akış"
@@ -2135,11 +2189,16 @@
       "clientId": "İstemci Kimliği",
       "clientSecret": "İstemci Gizli Anahtarı",
       "displayName": "Görünen Ad",
+      "needsReauthorizationForComments": "Bu bağlantı yorum otomasyonundan önce yetkilendirildi. Yorum olaylarını almaya başlamak için yeniden bağlayın.",
       "connectInstructions": {
         "step1": "<link>developers.tiktok.com</link> adresinden bir TikTok uygulaması oluşturun.",
         "step2": "Hesabınızı yetkilendirin ve <strong>erişim anahtarını</strong>, <strong>açık kimliği</strong> ve <strong>istemci gizli anahtarını</strong> kopyalayın.",
         "step3": "Bağlanmak için kimlik bilgilerini aşağıya yapıştırın."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Damla"
@@ -2330,6 +2389,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta Uygulama Gizli Anahtarı (isteğe bağlı)",
+      "description": "Bu manuel bağlantı için webhook imza doğrulamasını etkinleştirir. Meta Uygulaması panonuzda Ayarlar > Temel altında bulabilirsiniz."
+    },
+    "lastCallRecorded": {
+      "label": "Son arama kaydı"
+    },
+    "lastCallTranscript": {
+      "label": "Son arama transkripti"
+    },
+    "sendRatePerMinute": {
+      "label": "Dakikadaki mesaj sayısı"
     }
   },
   "flows": {
@@ -2446,6 +2518,8 @@
       "transferConversationToHuman": "Konuşmayı İnsana Aktar",
       "unarchiveConversation": "Konuşmayı Arşivden Çıkar",
       "unassignConversation": "Konuşma Atamasını Kaldır",
+      "markConversationAsUnread": "Konuşmayı Okunmadı Olarak İşaretle",
+      "markConversationAsRead": "Konuşmayı Okundu Olarak İşaretle",
       "unfollowConversation": "Konuşma Takibini Bırak",
       "unsubscribeBroadcast": "Yayın Aboneliğinden Çık",
       "getUserData": "Kullanıcı Verisini Al",
@@ -2470,7 +2544,9 @@
       "import": "Akışı içe aktar",
       "export": "Dışa aktar",
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
-      "importJsonOnly": "Yalnızca JSON dosyaları"
+      "importJsonOnly": "Yalnızca JSON dosyaları",
+      "whatsappCallButton": "WhatsApp'ta ara",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2586,6 +2662,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Bu kanal bu medya türünü gönderemez; adım orada atlanır. Adımı kaldırın veya düğümü bunu destekleyen bir kanala geçirin.",
       "buttonsSkippedOnChannel": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez; orada atlanır. Bunun yerine sonraki bir metin adımına ekleyin."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Butonu Düzenle",
+      "buttonLabel": "Buton Etiketi"
     }
   },
   "folders": {
@@ -2807,7 +2887,8 @@
       "adAccountFilter": {
         "all": "Tüm reklam hesapları",
         "label": "Reklam hesabı",
-        "unavailable": "Reklam hesapları yüklenemedi — bu entegrasyonun Ads bağlantısını veya çalışma alanının Facebook Ads bağlantısını ayarlardan kontrol edin."
+        "unavailable": "Reklam hesapları yüklenemedi — bu entegrasyonun Ads bağlantısını veya çalışma alanının Facebook Ads bağlantısını ayarlardan kontrol edin.",
+        "note": "Seçilen tarih aralığında dönüşümü olan ancak harcaması veya gösterimi sıfır olan reklamlar, reklam hesabına göre filtrelerken gizlenir."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -3181,6 +3262,7 @@
     "changeLikeState": "Beğeni durumunu değiştir",
     "changeHideState": "Gizleme durumunu değiştir",
     "commentHidden": "Bu yorum gizlendi",
+    "commentMediaUnavailable": "Bu yorum görüntülenemeyen bir GIF, çıkartma veya görsel içeriyor",
     "messageDeleted": "Mesaj silindi.",
     "sendFailed": "Gönderilemedi",
     "repliedToStory": "Hikayenize yanıt verdi",
@@ -3221,7 +3303,10 @@
     "deleteFeature": "{feature} Sil",
     "resetFeature": "{feature} sıfırla",
     "resetConfirmation": "Bu, seçilen {feature} değerlerini boşaltacaktır.\nBu işlem geri alınamaz.",
+    "resetAllConfirmation": "Bu, bu kişiye ait tüm {feature} değerlerini boşaltacaktır.\nBu işlem geri alınamaz.",
     "resetSuccess": "{feature} başarıyla sıfırlandı",
+    "clearFeature": "{feature} temizle",
+    "clearSuccess": "{feature} başarıyla temizlendi",
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir.",
     "addFeature": "{feature} Ekle",
     "signOutConfirmation": "Oturumu kapatmak istediğinizden emin misiniz?",
@@ -3272,13 +3357,27 @@
     "historyDepth": "({count})",
     "none": "Yok",
     "tiktokCardTitleTooLong": "TikTok bu mesajı kısaltacak: butonlar eklendiğinde yalnızca ilk 40 karakter gönderilir. Mesajı kısaltın veya butonları kaldırın.",
+    "sendTextTooLongForChannel": "Bu mesaj, bu kanalın izin verdiğinden daha uzun. Mesajı kısaltın veya bu bloğu daha yüksek sınırı olan bir kanala yönlendirin.",
     "waTemplateMpmNoProducts": "Yayınlamadan önce bu çoklu ürün butonuna en az bir ürün ekleyin.",
     "waTemplateMpmTooManySections": "Çoklu ürün butonunda en fazla 10 bölüm olabilir. Yayınlamadan önce bazı bölümleri kaldırın.",
     "waTemplateMpmTooManyProducts": "Çoklu ürün butonunda toplamda en fazla 30 ürün olabilir. Yayınlamadan önce bazı ürünleri kaldırın.",
     "waTemplateLtoExpirationRequired": "Göndermeden önce sınırlı süreli teklif için bir bitiş tarihi seçin.",
     "waTemplateMpmIncompleteProducts": "Her bölümde en az bir seçili ürün olmalı — boş satırları silin veya onlara ürün seçin.",
     "mediaStepUnsupported": "Bu kanal bu medya türünü gönderemez. Adımı kaldırın veya bu düğümü destekleyen bir kanala yönlendirin.",
-    "mediaButtonsUnsupported": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez. Düğmeleri kaldırın veya bundan sonraki bir metin adımına taşıyın."
+    "mediaButtonsUnsupported": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez. Düğmeleri kaldırın veya bundan sonraki bir metin adımına taşıyın.",
+    "voiceCall": "Sesli arama",
+    "voiceCallDuration": "Sesli arama · {duration}",
+    "missedVoiceCall": "Cevapsız sesli arama",
+    "declinedVoiceCall": "Reddedilen sesli arama",
+    "voiceCallFailed": "Başarısız sesli arama",
+    "unansweredVoiceCall": "Yanıt yok",
+    "canceledVoiceCall": "İptal edilen arama",
+    "acceptedCallPermission": "Arama izni isteğini kabul etti",
+    "declinedCallPermission": "Arama izni isteğini reddetti",
+    "sendHumanAgentTag": "HUMAN_AGENT etiketiyle bir mesaj gönder",
+    "warning": "Uyarı!",
+    "humanAgentWarningDescription": "Bir kullanıcının mesajına, sorunun 24 saat içinde makul şekilde çözülemediği durumlarda 7 gün içinde yanıt verebilirsiniz. Örnekler arasında hafta sonları, tatiller veya tamamlanması bir günden fazla süren durumlar yer alır. Bu seçeneği başka herhangi bir nedenle kullanmayın; aksi takdirde Facebook Sayfanız veya Instagram hesabınız risk altına girebilir. Emin değilseniz devam etmeyin.",
+    "callFailed": "Arama sorunu"
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",
@@ -3348,6 +3447,7 @@
       "noConnectablePagesDescription": "Bu Sayfanın yöneticisi değilsiniz",
       "bmLookupFailedTitle": "İşletme Yöneticisi sayfaları eksik olabilir",
       "bmLookupFailedDescription": "Bir İşletme Yöneticisi üzerinden yönetilen sayfaların listelenebilmesi için Messenger'ı yeniden bağlayın ve İşletme Yöneticisi erişimi verin.",
+      "loadFailed": "Facebook Sayfaların yüklenemedi",
       "alreadyConnectedNote": "Bu sayfa zaten bağlı",
       "notAdminNote": "Bu Sayfanın yöneticisi değilsiniz",
       "tryAgain": "Yeniden bağlanmayı dene"
@@ -3741,7 +3841,8 @@
       "profile": "Profil",
       "usefulLinks": "Faydalı Bağlantılar",
       "conversionsApi": "Reklam Optimizasyonu",
-      "settings": "Ayarlar"
+      "settings": "Ayarlar",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "WhatsApp hesabınızı yönetin",
@@ -3873,6 +3974,259 @@
     "transferPhoneNumber": "Telefonu başka bir WhatsApp sağlayıcısından aktar",
     "selectPage": {
       "tryAgain": "Yeniden bağlanmayı dene"
+    },
+    "manualAppSecretMissingNotice": "Meta Uygulama Gizli Anahtarınızı eklemeden webhook imzaları doğrulanmaz.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp, her 7 günde kişi başına yalnızca 2 arama izni isteğine izin verir. Bu kişi sınıra ulaştı — daha sonra tekrar deneyin.",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta, arama ayarları değişikliğini reddetti",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
+        "bicUnavailable": "İşletme tarafından başlatılan aramalar bu ülke için kullanılamıyor",
+        "callAlreadyInProgress": "Bu kişiyle zaten devam eden bir arama var",
+        "hangupFailed": "Arama sonlandırılamadı",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "WhatsApp araması reddedilemedi",
+        "voipHangupFailed": "WhatsApp araması sonlandırılamadı",
+        "voipNotReservedAgent": "Bu arama için atanan temsilci siz değilsiniz",
+        "voipCallAccessDenied": "Bu aramayı yönetme izniniz yok",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "O arama artık çalmıyor",
+        "transcriptionRequiresRecording": "Döküm özelliğini açmadan önce arama kaydını açın.",
+        "supportSessionCallingBlocked": "Platform destek oturumu sırasında arama kullanılamaz.",
+        "callingAccessDenied": "Bu çalışma alanında arama erişiminiz yok.",
+        "callArtifactAccessDenied": "Bu aramayı görüntüleme izniniz yok.",
+        "callHistoryAccessDenied": "Bu çalışma alanındaki arama geçmişine erişiminiz yok."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Gelen kutusunda yanıtlanan veya başlatılan aramaları kaydedin ve kaydı sohbete ekleyin.",
+      "recordingInProgress": "Kayıt istendi",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta değişikliği reddetti",
+      "callContact": "WhatsApp'tan Ara",
+      "dialing": "Aranıyor…",
+      "startCall": "WhatsApp Araması Başlat",
+      "retentionLabel": "Kayıt saklama süresi (gün)",
+      "retentionHelper": "Arama kayıtlarının kalıcı olarak silinmeden önce ne kadar süreyle saklanacağı.",
+      "transcriptionLabel": "Aramaları yazıya dök",
+      "transcriptionHelper": "Kaydedilen her aramanın dökümünü sohbete ekleyin.",
+      "preflight": {
+        "title": "Arama uygunluğu",
+        "appSubscriptionMissing": "Önce Meta Uygulama Panosunda bu uygulama için WhatsApp webhook'unu yapılandırın, ardından tekrar deneyin.",
+        "appSubscriptionFailed": "Uygulamanın 'calls' webhook aboneliği doğrulanamadı. Kısa süre sonra tekrar deneyin.",
+        "callsNotSubscribed": "Bu uygulama 'calls' webhook alanına abone değil, bu nedenle arama olayları ChatbotX'e ulaşamıyor (Meta hatası 138018: teknik ön koşullar karşılanmıyor — WABA'ya abone olan en az bir uygulamanın arama webhook alanına da sahip olduğundan emin olun).",
+        "fixButton": "Düzelt",
+        "fixSuccess": "Uygulama artık WhatsApp arama webhook'larına abone.",
+        "manualIntegrationNotice": "Bu numara manuel olarak bağlandı ve burada uygulama kimlik bilgisi yok. Meta Uygulama Panosunda uygulamanız için 'calls' webhook alanına abone olun.",
+        "coexistenceWarning": "Bu numara, Meta'nın aramalar için desteklemediği WhatsApp Business uygulaması birlikte kullanımını kullanıyor. Yalnızca Cloud API'ye taşıyın."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Dökümü göster",
+        "hideTranscript": "Dökümü gizle"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp, bu numara için işletme tarafından başlatılan aramaları etkinleştirmedi. Bu, ülkenizdeki kullanılabilirliğe ve Meta'daki hesap uygunluğuna bağlı olduğundan buradan açılamaz.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Mikrofon erişimi reddedildi. Tarayıcı ayarlarınızdan mikrofon erişimine izin verip yeniden deneyin.",
+        "micNotFound": "Mikrofon bulunamadı. Bir mikrofon bağlayıp yeniden deneyin.",
+        "callAccessDenied": "Bu kişiyi arama izniniz yok."
+      },
+      "card": {
+        "audioCall": "Sesli arama",
+        "recordingUnavailable": "Kayıt artık kullanılamıyor",
+        "recordingNotCaptured": "Bu arama için kayıt kullanılamıyor",
+        "recordingProcessing": "Kayıt işleniyor…",
+        "moreOptions": "Diğer seçenekler",
+        "download": "İndir",
+        "openCallInformation": "Arama bilgilerini aç",
+        "transcript": "Transkript",
+        "aiSummary": "Yapay Zeka Özeti",
+        "transcriptUnavailable": "Transkript henüz hazır değil",
+        "summaryUnavailable": "Yapay zeka özeti henüz hazır değil",
+        "play": "Oynat",
+        "pause": "Duraklat",
+        "seek": "Konum ara",
+        "mute": "Sessize al",
+        "unmute": "Sesi aç",
+        "playbackFailed": "Oynatma başarısız oldu",
+        "answeredBy": "Yanıtlayan: {name}",
+        "calledBy": "Arayan: {name}",
+        "callFailed": "Arama sorunu",
+        "callBack": "Geri ara"
+      },
+      "sheet": {
+        "title": "Arama Bilgileri",
+        "summaryTab": "AI Özeti",
+        "transcriptTab": "Transkript",
+        "searchLabel": "Transkriptte ara",
+        "searchPlaceholder": "Transkriptte ara…",
+        "transcriptUnavailable": "Bu aramanin dili için transkript kullanilamiyor",
+        "transcriptError": "Transkript yüklenemedi. Bağlantınızı kontrol edip yeniden deneyin.",
+        "noSearchResults": "Eşleşen bölüm bulunamadi",
+        "playSegment": "Buradan oynat",
+        "summaryKeyPoints": "Önemli noktalar",
+        "summaryActionItems": "Aksiyon öğeleri",
+        "regenerate": "Yeniden oluştur",
+        "regenerateConfirmTitle": "AI özeti yeniden oluşturulsun mu?",
+        "regenerateConfirmDescription": "Bu, mevcut özeti yeni oluşturulan bir özetle değiştirir.",
+        "summaryEmpty": "Bu arama için henüz bir AI özeti yok.",
+        "generateSummary": "Özet oluştur"
+      },
+      "summaryDialog": {
+        "title": "AI özeti oluştur",
+        "description": "Bu aramayi özetlemek için bağli bir AI sağlayicisi seçin.",
+        "noProviderTitle": "Bağli AI sağlayicisi yok",
+        "noProviderDescription": "Arama özetleri oluşturmak için bir AI entegrasyonu bağlayin.",
+        "connectLink": "AI ayarlarina git",
+        "generate": "Oluştur",
+        "generating": "Oluşturuluyor…",
+        "generateFailed": "Özet oluşturulamadi. Lütfen tekrar deneyin.",
+        "retry": "Yeniden dene",
+        "emptyTranscriptTooltip": "Bu aramanin henüz özetlenecek bir transkripti yok"
+      },
+      "panel": {
+        "eyebrowCalling": "ARANIYOR…",
+        "eyebrowIncoming": "GELEN ARAMA",
+        "eyebrowOnCall": "GÖRÜŞMEDE",
+        "statusPreparing": "Hazırlanıyor…",
+        "statusWaitingForMic": "Mikrofon erişimi bekleniyor…",
+        "statusDeclined": "Reddedildi",
+        "statusCallFailed": "Arama başarısız oldu",
+        "statusCallEnded": "Arama sona erdi",
+        "end": "Sonlandır",
+        "minimize": "Küçült",
+        "goToConversation": "Konuşmaya git",
+        "expand": "Genişlet",
+        "dismiss": "Kapat",
+        "statusNoAnswer": "Yanıt yok",
+        "eyebrowCallEnded": "ARAMA SONA ERDİ",
+        "statusConnectionLost": "Bağlantı kesildi",
+        "answerFailed": "Arama yanıtlanamadı. Bir mikrofonun bağlı olduğunu ve tarayıcıda izin verildiğini kontrol edip tekrar deneyin.",
+        "ringingListTitle": "{count, plural, one {# gelen arama} other {# gelen arama}}"
+      },
+      "capability": {
+        "title": "Arama uygunluğu",
+        "enableCalling": "Ayarlar > Kanallar > WhatsApp > Aramalar bölümünden aramaları etkinleştirin.",
+        "reconnectChannel": "Ayarlar > Kanallar bölümüne gidip WhatsApp kanalını yeniden bağlayın.",
+        "ok": "Tamam",
+        "micPermissionTitle": "Mikrofon izni",
+        "dialFailureTitle": "Arama başlatılamadı"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuel bağlanmış numara",
+        "callsSubscription": "Bu WhatsApp numarası manuel olarak bağlandı. Meta uygulamanızın calls webhook alanına abone olduğundan emin olun (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — aksi takdirde giden aramalar bağlanmaz ve gelen aramalar çalmaz.",
+        "unsignedWebhook": "Bu numaranın ayrıca yapılandırılmış bir Meta App Secret'ı yok, bu nedenle gelen webhook'ları imza doğrulaması yapılmıyor.",
+        "callAnyway": "Yine de ara"
+      },
+      "replaceConfirm": {
+        "title": "{current} ile görüşme sonlandırılsın mı?",
+        "description": "Şu anda {current} ile görüşüyorsunuz. {incoming} aramasını yanıtlarsanız bu görüşme hemen sona erer.",
+        "confirm": "Sonlandır ve yanıtla",
+        "cancel": "Görüşmede kal"
+      },
+      "answerCaller": "{name} kişisinden gelen aramayı yanıtla",
+      "rejectCaller": "{name} kişisinden gelen aramayı reddet",
+      "hours": {
+        "title": "Arama saatleri",
+        "description": "Müşteriler bu numarayı yalnızca bu saatlerde arayabilir. Bu saatlerin dışında WhatsApp bunun yerine sohbet etmeyi veya geri arama istekleri açıksa geri arama istemeyi önerir ve bir sonraki arama zamanını gösterir.",
+        "enabledLabel": "Aramaları yalnızca arama saatlerinde kabul et",
+        "timezoneLabel": "Saat dilimi",
+        "closed": "Kapalı",
+        "openTimeLabel": "{day}: açılış saati",
+        "closeTimeLabel": "{day}: kapanış saati",
+        "addRangeLabel": "{day} için saat ekle",
+        "removeRangeLabel": "{day} saatlerini kaldır",
+        "overnightHint": "Her gün 23:59'da biter. Gece yarısından sonra da açık kalmak için kalan saatleri ertesi güne ekleyin.",
+        "days": {
+          "monday": "Pazartesi",
+          "tuesday": "Salı",
+          "wednesday": "Çarşamba",
+          "thursday": "Perşembe",
+          "friday": "Cuma",
+          "saturday": "Cumartesi",
+          "sunday": "Pazar"
+        },
+        "errors": {
+          "rangeOrder": "Kapanış saati açılış saatinden sonra olmalıdır.",
+          "rangeOverlap": "Bu gündeki saatler çakışıyor.",
+          "noOpenHours": "En az bir güne saat ekleyin."
+        }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Aramalar",
+        "subtitle": "Bu çalışma alanının arama geçmişi",
+        "emptyTitle": "Henüz arama yok",
+        "emptyDescription": "Ekibiniz WhatsApp araması yapmaya veya almaya başladığında aramalar burada görünecek.",
+        "loadMore": "Daha fazla yükle",
+        "allActivity": "Tüm aramalar",
+        "filterMissed": "Cevapsız",
+        "filterNoReply": "Yanıt yok",
+        "allInboxes": "Tüm gelen kutuları",
+        "allAgents": "Tüm temsilciler",
+        "columnContact": "Kişi",
+        "columnInbox": "Gelen kutusu",
+        "columnDirection": "Yön",
+        "columnAgent": "Temsilci",
+        "columnDuration": "Süre",
+        "columnDate": "Tarih",
+        "directionInbound": "Gelen",
+        "directionOutbound": "Giden",
+        "kindOngoing": "Devam ediyor",
+        "kindAnsweredInbound": "Yanıtlandı",
+        "kindAnsweredOutbound": "Yanıtlandı",
+        "openConversation": "Konuşmayı aç",
+        "unknownContact": "Bilinmeyen kişi",
+        "emptyFilteredTitle": "Bu filtreyle eşleşen çağrı yok",
+        "emptyFilteredDescription": "Başka bir filtre deneyin veya tüm çağrıları görmek için filtreyi temizleyin.",
+        "loadMoreError": "Daha fazla çağrı yüklenemedi. Lütfen tekrar deneyin.",
+        "callInformation": "Çağrı bilgisi"
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4239,8 @@
       "toggleSuccess": "Etiket senkronizasyon ayarı güncellendi.",
       "enabledSince": "{date} tarihinden beri etkin",
       "disabled": "Devre dışı"
-    }
+    },
+    "refreshPermissions": "İzinleri yenile"
   },
   "telegram": {
     "description": "Bu entegrasyon, Telegram botları oluşturmanızı sağlar.",
@@ -3896,6 +4251,14 @@
     "chatbotInvitationDescription2": "{userName}, sizi {chatbotName}'a katılmaya davet etti.",
     "invalidInvitation": "Bu davet geçersiz veya süresi dolmuş.",
     "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor."
+  },
+  "inboxes": {
+    "markReadOnOutbound": {
+      "label": "Bot mesajlarını okundu olarak işaretle",
+      "enabled": "Etkin",
+      "disabled": "Devre dışı",
+      "description": "Etkinleştirildiğinde bot kendi mesajlarını otomatik olarak okundu olarak işaretler"
+    }
   },
   "inboxTeams": {
     "title": "Gelen Kutusu Ekipleri"
@@ -4022,7 +4385,9 @@
       "productRemovedFromCart": "Ürün Sepetten Kaldırıldı",
       "productOrdered": "Ürün Sipariş Edildi",
       "contactReferredANewContact": "Kişi Yeni Bir Kişi Yönlendirdi",
-      "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi"
+      "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi",
+      "callRecorded": "Arama kaydedildi",
+      "callTranscribed": "Arama yazıya döküldü"
     },
     "actions": {
       "addTag": "Etiket Ekle",
@@ -4258,7 +4623,8 @@
     "afterText": "Sonra"
   },
   "tools": {
-    "title": "Araçlar"
+    "title": "Araçlar",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4361,13 +4727,13 @@
     "privateReply": "Özel yanıt (gelen kutusu)",
     "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu, bir chatbot akışı seçin veya devre dışı bırakın.",
     "publicReply": "Yoruma genel yanıt",
-    "publicReplyDescription": "Yorumun hemen altında genel bir yanıt paylaşın. En fazla 10 metin şablonunu, AI Ajanını, bir chatbot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir.",
+    "publicReplyDescription": "Yorumun hemen altında genel bir yanıt paylaşın. En fazla 10 metin şablonunu, AI Ajanını, bir chatbot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir. Spintax desteklenir.",
     "replyMessage": "Yanıt mesajı",
     "replyMessagePlaceholder": "Yanıt mesajı girin...",
     "includeKeywordsType": "Şuna yanıt ver",
     "includeKeywordsTypeDescription": "Bu otomasyonun hangi yorumlara yanıt vereceğini seçin.",
     "includeKeywords": "Eşleşecek anahtar kelimeler",
-    "excludeKeywords": "Bu anahtar kelimeleri içeren yorumları hariç tut",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "excludeKeywordsDescription": "Bu anahtar kelimelerden herhangi birini içeren yorumlar hem gelen kutusu hem de genel yanıt otomasyonu tarafından yok sayılır.",
     "keywordsPlaceholder": "Yazın ve Enter'a basın...",
     "replyAfter": "Şu kadar süre sonra yanıtla",
@@ -4430,7 +4796,7 @@
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
       "ignoreCommentRepliesDescription": "Üst düzey yorumlar değil, başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
       "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
-      "trackUserTagsDescription": "Kaç kullanıcının etiketlendiğini öğrenmek için '{{total_tagged}}' kullanın. Etiketlenen kişilerden kaçının kişi listesinde olmadığını öğrenmek için '{{total_new_tagged}}' kullanın."
+      "trackUserTagsDescription": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",
@@ -4464,13 +4830,13 @@
     "privateReply": "Özel yanıt (gelen kutusu)",
     "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu, bir bot akışı seçin veya devre dışı bırakın.",
     "publicReply": "Yoruma genel yanıt",
-    "publicReplyDescription": "Yorumun hemen altına genel bir yanıt gönderin. En fazla 10 metin şablonunu, AI Ajanını, bir bot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir.",
+    "publicReplyDescription": "Yorumun hemen altına genel bir yanıt gönderin. En fazla 10 metin şablonunu, AI Ajanını, bir bot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir. Spintax desteklenir.",
     "replyMessage": "Yanıt mesajı",
     "replyMessagePlaceholder": "Yanıt mesajı girin...",
     "includeKeywordsType": "Şu yorumlara yanıt ver",
     "includeKeywordsTypeDescription": "Bu otomasyonun hangi yorumlara yanıt vereceğini seçin.",
     "includeKeywords": "Eşleşecek anahtar kelimeler",
-    "excludeKeywords": "Bu anahtar kelimeleri içeren yorumları hariç tut",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "excludeKeywordsDescription": "Bu anahtar kelimelerden herhangi birini içeren yorumlar hem gelen kutusu hem de genel yanıt otomasyonu tarafından yok sayılır.",
     "keywordsPlaceholder": "Yazın ve Enter'a basın...",
     "replyAfter": "Şundan sonra yanıtla",
@@ -4532,7 +4898,7 @@
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
       "ignoreCommentRepliesDescription": "Üst düzey yorumlar yerine başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
       "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
-      "trackUserTagsDescription": "Kaç kullanıcının etiketlendiğini öğrenmek için '{{total_tagged}}' kullanın. Etiketlenen kişilerden kaçının kişi listesinde olmadığını öğrenmek için '{{total_new_tagged}}' kullanın."
+      "trackUserTagsDescription": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",
@@ -4568,13 +4934,13 @@
     "publicOnlyNote": "Threads currently supports public replies only.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching Threads comments.",
+    "publicReplyDescription": "Send a public reply to matching Threads comments. En fazla 10 metin mesajı (spintax desteklenir), her biri ayrı bir yanıt olarak paylaşılır.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
     "includeKeywordsType": "Reply to",
     "includeKeywords": "Keywords to match",
-    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
     "keywordsPlaceholder": "Type and press Enter...",
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
@@ -4583,7 +4949,8 @@
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
-      "replyTiming": "Reply Timing"
+      "replyTiming": "Reply Timing",
+      "hideComments": "Yorumları Gizle"
     },
     "postType": {
       "all": "All posts",
@@ -4625,8 +4992,124 @@
       "keywordsRequired": "Enter at least one keyword for the selected match type.",
       "delayMustBePositive": "Delay value must be greater than zero.",
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
-      "atLeastOneFieldRequired": "At least one field is required."
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "En az bir yanıt mesajı girin.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+    },
+    "hideCommentsDescription": "Yalnızca gönderilerinize verilen üst düzey yanıtlar gizlenebilir.",
+    "hideComments": {
+      "all": "Tüm yorumları gizle",
+      "hasPhoneNumber": "Telefon numarası içeriyor",
+      "hasLink": "Bağlantı içeriyor",
+      "hasKeywords": "Anahtar kelime içeriyor",
+      "keywords": "Anahtar Kelimeler",
+      "showCommentsAfter": "Şu tarihten sonraki yorumları göster"
+    },
+    "showCommentsAfter": {
+      "none": "Asla"
     }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. En fazla 10 metin mesajı (spintax desteklenir), her biri ayrı bir yanıt olarak paylaşılır.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Şunu içeren yorumları hariç tut",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required.",
+      "replyTextRequired": "En az bir yanıt mesajı girin."
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Instagram Hikaye Yanıt Otomasyonu",
@@ -5667,7 +6150,8 @@
     "connectViaFacebook": "Facebook üzerinden bağlan",
     "unsupportedExplanation": "Bu Instagram hesabı Instagram Business Girişi ile bağlandı. Meta Conversions API'yi kullanmak için hesabı Facebook üzerinden bağlayın.",
     "flowStep": {
-      "whatsappNote": "WhatsApp etkinlikleri yalnızca click-to-WhatsApp reklamından başlayan konuşmalar için gönderilir."
+      "whatsappNote": "WhatsApp etkinlikleri yalnızca click-to-WhatsApp reklamından başlayan konuşmalar için gönderilir.",
+      "description": "Messenger, Instagram veya WhatsApp için bir LeadSubmitted etkinliği kuyruğa alın."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5695,8 +6179,9 @@
       "invalidDatasetId": "Geçerli bir Dataset ID girin (yalnızca rakamlar).",
       "whatsappNotFound": "WhatsApp entegrasyonu bulunamadı.",
       "testEventCodeRequired": "Bir test etkinliği göndermeden önce test etkinliği kodunu kaydedin.",
-      "noContactForTest": "Bu kanalda henüz uygun bir kişi yok. Test etkinliği, ilişkilendirilecek gerçek bir kişi gerektirir (WhatsApp için click-to-WhatsApp reklamından gelen bir kişi).",
-      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64)."
+      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64).",
+      "invalidMessagingId": "Mesajlaşma kimliği yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 512).",
+      "capiDisconnected": "Bu kanal için Meta CAPI bağlantısı kesildi. Test etkinliği göndermeden önce yeniden bağlayın."
     },
     "fields": {
       "eventType": {
@@ -5840,10 +6325,21 @@
       "saved": "Test etkinliği kodu kaydedildi.",
       "cleared": "Test etkinliği kodu temizlendi. Etkinlikler tekrar canlı.",
       "send": "Test etkinliği gönder",
-      "sent": "Test etkinliği sıraya alındı. Bir dakika içinde Events Manager içindeki Test events altında görünür.",
-      "sendHint": "Bu kanalın en son kişisine örnek bir Purchase (100 USD) gönderir.",
+      "sent": "Test etkinliği gönderildi. Bir dakika içinde Events Manager'daki Test events altında görünür.",
+      "sendHint": "Girdiğiniz bir mesajlaşma kimliğine örnek bir Purchase (100 USD) gönderir. Kayıtlı hiçbir kişi kullanılmaz.",
       "activeNotice": "Test modu açık: kod temizlenene kadar bu kanaldaki etkinlikler raporlarda sayılmaz.",
-      "openTestEvents": "Test events'i aç"
+      "openTestEvents": "Test events'i aç",
+      "dialogTitle": "Test etkinliği gönder",
+      "dialogDescription": "Test etkinlik kodunuzla örnek bir Purchase (100 USD) gönderilir. Gerçek bir kişiye atfedilmemesi için örnek mesajlaşma kimliğini Events Manager → Test events → Messaging → Graph API Explorer'dan yapıştırın.",
+      "messagingIdLabel": {
+        "messenger": "Kişi kimliği (page_scoped_user_id)",
+        "instagram": "Kişi kimliği (ig_sid)",
+        "whatsapp": "Tıklama kimliği (ctwa_clid)"
+      },
+      "messagingIdPlaceholder": "Meta'daki örnek değeri yapıştırın",
+      "messagingIdHint": "Yalnızca harf, rakam, tire ve alt çizgi (en fazla 512).",
+      "cancel": "İptal",
+      "confirmSend": "Gönder"
     }
   },
   "minigames": {
@@ -6204,5 +6700,13 @@
   },
   "accountFields": {
     "title": "Bot Alanları"
+  },
+  "openLink": {
+    "title": "Bağlantıyı aç",
+    "invalidTitle": "Geçersiz bağlantı.",
+    "invalidDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
+    "openZaloGroup": "Zalo grubunu aç",
+    "openZalo": "Zalo'yu aç",
+    "openMessenger": "Messenger'ı aç"
   }
 }

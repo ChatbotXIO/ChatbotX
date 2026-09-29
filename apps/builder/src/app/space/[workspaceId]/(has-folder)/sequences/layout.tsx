@@ -1,6 +1,6 @@
 import { folderTypes } from "@chatbotx.io/database/partials"
 import { type ReactNode, Suspense } from "react"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
@@ -24,11 +24,7 @@ export default async function FolderableLayout({
       workspaceId={workspaceId}
     >
       {folders}
-      <Suspense>
-        <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-          {children}
-        </FlowStoreProvider>
-      </Suspense>
+      <Suspense>{children}</Suspense>
     </FolderStoreProvider>
   )
 }

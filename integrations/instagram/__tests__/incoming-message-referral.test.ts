@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { receiveMessage } from "../src/handlers/message/incomming-message"
+import { receiveMessage } from "../src/handlers/message/incoming-message"
 
 describe("Instagram receiveMessage", () => {
   test("forwards referral source for contact source taxonomy mapping", async () => {

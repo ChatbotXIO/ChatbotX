@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { reconnectWhatsappAction } from "../actions/reconnect.action"
 import {
   buildFacebookOAuthDialogUrl,
@@ -45,6 +46,7 @@ export function WhatsappReconnectButton({
 }) {
   const router = useRouter()
   const t = useTranslations()
+  const invalidateInboxes = useInvalidateInboxes()
   const [isWaitingForCode, setIsWaitingForCodeState] = useState(false)
   const isWaitingForCodeRef = useRef(false)
   const setIsWaitingForCode = useCallback((waiting: boolean) => {
@@ -57,6 +59,7 @@ export function WhatsappReconnectButton({
       onSuccess: () => {
         setIsWaitingForCode(false)
         toast.success(t("ads.connectAccounts.reconnectSuccess"))
+        invalidateInboxes()
         router.refresh()
       },
       onError: ({ error }) => {

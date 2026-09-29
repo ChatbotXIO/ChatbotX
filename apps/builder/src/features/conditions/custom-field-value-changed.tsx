@@ -16,14 +16,15 @@ import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { Controller, useFormContext } from "react-hook-form"
+import { getConditionOptions } from "@/features/contact-filter/components/contact-filter-config"
+import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
 import {
   convertCustomFieldTypeToConditionType,
-  getConditionOptions,
-} from "@/features/contact-filter/components/contact-filter-config"
-import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
-import { mappingConditions } from "@/features/contact-filter/schema"
+  mappingConditions,
+} from "@/features/contact-filter/schema"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import { useCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 
 export const CustomFieldValueChanged = ({
   parentName,
@@ -33,7 +34,7 @@ export const CustomFieldValueChanged = ({
   const t = useTranslations()
   const conditionOptions = getConditionOptions(t)
   const form = useFormContext()
-  const { customFields } = useCustomFieldStore((state) => state)
+  const customFields = useCustomFields(useWorkspaceId()).data ?? []
 
   const customFieldId = form.watch(`${parentName}.sourceId`)
 

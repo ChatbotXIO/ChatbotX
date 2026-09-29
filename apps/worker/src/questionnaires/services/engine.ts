@@ -197,6 +197,8 @@ async function sendQuestion(
         (quickReplies ? data.question.title : questionText(data.question)),
       url: data.question.image?.url,
       quickReplies,
+      metadata: props.metadata,
+      isBulkBroadcast: props.isBulkBroadcast,
     },
   })
   await waitForChatJobCompletion(job, { conversationId: props.conversation.id })

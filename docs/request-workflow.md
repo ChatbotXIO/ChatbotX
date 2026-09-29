@@ -34,7 +34,7 @@ sequenceDiagram
   NextServer-->>Browser: JSON
 ```
 
-`GET /api/...` reaches only `publicRouter`; private, session-authed procedures are reachable via `/rpc`. Browser reads go through TanStack Query (`@/lib/orpc/query`), which dedupes and caches per query key before hitting `/rpc`.
+`GET /api/...` reaches only `publicRouter`; private, session-authed procedures are reachable via `/rpc`. Browser reads go through TanStack Query (`@/lib/orpc/query`), which dedupes and caches per query key before hitting `/rpc`; mutations must invalidate that key because `router.refresh()` only re-renders RSC.
 
 ### Background Jobs (BullMQ)
 

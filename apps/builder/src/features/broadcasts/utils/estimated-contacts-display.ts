@@ -2,6 +2,11 @@ export type EstimatedContactsDisplayState = "count" | "empty" | "loading"
 
 const ESTIMATING_BROADCAST_STATUSES = new Set<string>(["scheduled", "sending"])
 
+/** A broadcast the worker is still working on: its count and stats keep changing. */
+export function isBroadcastInProgress(status: string): boolean {
+  return ESTIMATING_BROADCAST_STATUSES.has(status)
+}
+
 export function getEstimatedContactsDisplayState(props: {
   contactCount: number | null
   status: string
@@ -10,5 +15,5 @@ export function getEstimatedContactsDisplayState(props: {
     return "count"
   }
 
-  return ESTIMATING_BROADCAST_STATUSES.has(props.status) ? "loading" : "empty"
+  return isBroadcastInProgress(props.status) ? "loading" : "empty"
 }

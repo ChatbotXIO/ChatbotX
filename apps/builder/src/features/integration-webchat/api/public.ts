@@ -121,7 +121,7 @@ export const webchatsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/webchats/{id}",
       summary: "Update webchat",
       description:

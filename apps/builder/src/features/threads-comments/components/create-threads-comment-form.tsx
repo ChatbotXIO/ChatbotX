@@ -21,11 +21,23 @@ const defaultValues = {
   publicReply: { type: "none" as const, value: null },
   includeKeywords: { type: "all" as const, value: [] },
   excludeKeywords: [],
+  excludeKeywordsType: "contain" as const,
   options: {
     replyToNewContactsOnly: false,
     replyOncePerUserPerPost: false,
     replyToUsersWhoCommentedOnOtherPosts: true,
     ignoreCommentReplies: true,
+    trackUserTags: false,
+  },
+  hideComments: {
+    all: false,
+    hasPhoneNumber: false,
+    hasLink: false,
+    hasKeywords: false,
+    hasGif: false,
+    hasEmoji: false,
+    keywords: [],
+    showCommentsAfter: "none" as const,
   },
   replyAfter: { type: "immediately" as const, value: 0 },
 }

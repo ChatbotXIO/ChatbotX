@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { receiveMessage } from "../src/handlers/message/incomming-message"
+import { receiveMessage } from "../src/handlers/message/incoming-message"
 
 describe("Messenger receiveMessage", () => {
   test("forwards referral source for contact source taxonomy mapping", async () => {
@@ -540,5 +540,130 @@ describe("Messenger receiveMessage", () => {
 
     expect(result.message?.text).toBe("hello")
     expect(result.referral).toBeNull()
+  })
+})
+
+describe("Messenger receiveMessage — CTM ad referral text", () => {
+  const receiveAdMessage = (message: Record<string, unknown>) =>
+    receiveMessage({
+      ctx: { auth: { metadata: { pageId: "page-1" } } } as never,
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "inbox-1",
+        payload: {
+          object: "page",
+          entry: [
+            {
+              id: "page-1",
+              time: 1,
+              messaging: [
+                {
+                  sender: { id: "psid-1" },
+                  recipient: { id: "page-1" },
+                  timestamp: 1,
+                  message: { mid: "mid-1", ...message },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+
+  const adReferral = {
+    ad_id: "ad-1",
+    source: "ADS",
+    type: "OPEN_THREAD",
+    text: "👉 Tell me more about this offer",
+  }
+
+  test("uses referral.text when the ad message carries no text of its own", async () => {
+    const result = await receiveAdMessage({ referral: adReferral })
+
+    expect(result.message?.text).toBe("👉 Tell me more about this offer")
+    expect(result.referralSource).toBe("ADS")
+  })
+
+  test("prefers the message's own text over referral.text", async () => {
+    const result = await receiveAdMessage({
+      text: "typed by user",
+      referral: adReferral,
+    })
+
+    expect(result.message?.text).toBe("typed by user")
+  })
+
+  test("does not turn an attachment message into referral.text", async () => {
+    const result = await receiveAdMessage({
+      attachments: [
+        {
+          type: "location",
+          payload: { coordinates: { lat: 10.7, long: 106.6 } },
+        },
+      ],
+      referral: adReferral,
+    })
+
+    expect(result.message?.text).toBeUndefined()
+  })
+
+  test("uses referral.text when attachments is an empty array", async () => {
+    const result = await receiveAdMessage({
+      attachments: [],
+      referral: adReferral,
+    })
+
+    expect(result.message?.text).toBe("👉 Tell me more about this offer")
+  })
+
+  test("keeps a ref ad on its ref flow only (no referral.text keyword routing)", async () => {
+    const result = await receiveAdMessage({
+      referral: { ...adReferral, ref: "ad-welcome" },
+    })
+
+    expect(result.message?.text).toBeUndefined()
+    expect(result.ref).toBe("ad-welcome")
+  })
+
+  test("drops only a malformed referral.text and keeps the ad attribution", async () => {
+    const result = await receiveAdMessage({
+      text: "hello",
+      referral: { ...adReferral, text: 123 },
+    })
+
+    expect(result.message?.text).toBe("hello")
+    expect(result.referralSource).toBe("ADS")
+  })
+
+  test("never gives an echo message the referral.text", async () => {
+    const result = await receiveAdMessage({
+      is_echo: true,
+      referral: adReferral,
+    })
+
+    expect(result.message?.text).toBeUndefined()
+  })
+
+  test("ignores referral.text for non OPEN_THREAD ads (e.g. lead ads)", async () => {
+    const result = await receiveAdMessage({
+      referral: { ...adReferral, type: "LEAD_COMPLETE" },
+    })
+
+    expect(result.message?.text).toBeUndefined()
+  })
+
+  test("ignores referral.text for non-ADS referrals", async () => {
+    const result = await receiveAdMessage({
+      referral: { ...adReferral, source: "SHORTLINK" },
+    })
+
+    expect(result.message?.text).toBeUndefined()
+  })
+
+  test("does not persist referral.text in the stored referral", async () => {
+    const result = await receiveAdMessage({ referral: adReferral })
+
+    expect(result.referral?.raw).not.toHaveProperty("text")
+    expect(result.referral?.raw).toMatchObject({ ad_id: "ad-1", source: "ADS" })
   })
 })

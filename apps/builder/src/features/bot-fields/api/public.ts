@@ -122,45 +122,7 @@ export const botFieldsPublicRouter = {
       path: "/v1/bot-fields",
       summary: "Set multiple bot field values",
       description:
-        "Changes several bot fields' values in one call, addressed by name. Use `botFields.list` to find valid field names first.",
-      successStatus: 204,
-      tags: ["Bot Fields"],
-    })
-    .input(
-      z.object({
-        fields: z
-          .array(
-            z.object({
-              key: z.string().max(255).describe("Bot field name."),
-              value: z
-                .string()
-                .max(255)
-                .describe("New value for the bot field."),
-            }),
-          )
-          .describe("Bot fields to update."),
-      }),
-    )
-    .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      await Promise.all(
-        input.fields.map(({ key, value }) =>
-          botFieldService.updateByKey({
-            workspaceId: context.workspace.id,
-            key,
-            data: { value },
-          }),
-        ),
-      )
-    }),
-
-  bulkUpdate: workspaceTokenAuthAPI
-    .route({
-      method: "PUT",
-      path: "/v1/bot-fields/bulk-update",
-      summary: "Bulk update bot field values",
-      description:
-        "Changes several bot fields' values in one call, addressed by id or name. Unlike `botFields.setMany`, each entry may target either an id or a name.",
+        "Changes several bot field values in one call, each entry addressed by id or name. Use `botFields.list` to find valid ids or names first.",
       successStatus: 204,
       tags: ["Bot Fields"],
     })
@@ -187,6 +149,17 @@ export const botFieldsPublicRouter = {
                   .transform(String)
                   .describe("New value for the bot field."),
               }),
+              // Back-compat with the pre-consolidation `setMany` shape (name
+              // only, keyed as `key`) so an existing caller's request body
+              // still validates after `botFields.bulkUpdate` was folded into
+              // this route — `key` behaves exactly like `name` below.
+              z.object({
+                key: z.string().max(255).describe("Bot field name."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
             ]),
           )
           .describe("Bot fields to update, each addressed by id or name."),
@@ -194,10 +167,83 @@ export const botFieldsPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
+      const resolveKey = (field: (typeof input.fields)[number]): string => {
+        if ("id" in field) {
+          return String(field.id)
+        }
+        return "name" in field ? field.name : field.key
+      }
       await botFieldService.bulkUpdateByKeys({
         workspaceId: context.workspace.id,
         updates: input.fields.map((field) => ({
-          key: "id" in field ? String(field.id) : field.name,
+          key: resolveKey(field),
+          value: field.value,
+        })),
+      })
+    }),
+
+  // Deprecated — use `botFields.setMany` instead. Kept for backward
+  // compatibility with the pre-consolidation `/bulk-update` path; hidden
+  // from MCP/CLI tool listings. Body shape mirrors `setMany`'s legacy `key`
+  // branch.
+  bulkUpdate: workspaceTokenAuthAPI
+    .route({
+      method: "PUT",
+      path: "/v1/bot-fields/bulk-update",
+      summary: "Bulk update bot field values",
+      description:
+        "Deprecated — `botFields.setMany` now accepts the same entries (by id or name) at `PUT /v1/bot-fields`; this dedicated `/bulk-update` path is kept only for callers that have not migrated.",
+      successStatus: 204,
+      deprecated: true,
+      tags: ["Bot Fields"],
+    })
+    .input(
+      z.object({
+        fields: z
+          .array(
+            z.union([
+              z.object({
+                id: z.coerce
+                  .number()
+                  .int()
+                  .positive()
+                  .describe("Bot field id. Get it from `botFields.list`."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
+              z.object({
+                name: z.string().max(255).describe("Bot field name."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
+              z.object({
+                key: z.string().max(255).describe("Bot field name."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
+            ]),
+          )
+          .describe("Bot fields to update, each addressed by id or name."),
+      }),
+    )
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const resolveKey = (field: (typeof input.fields)[number]): string => {
+        if ("id" in field) {
+          return String(field.id)
+        }
+        return "name" in field ? field.name : field.key
+      }
+      await botFieldService.bulkUpdateByKeys({
+        workspaceId: context.workspace.id,
+        updates: input.fields.map((field) => ({
+          key: resolveKey(field),
           value: field.value,
         })),
       })

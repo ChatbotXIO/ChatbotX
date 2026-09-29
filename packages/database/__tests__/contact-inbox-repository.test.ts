@@ -1,3 +1,4 @@
+import { PgDialect } from "drizzle-orm/pg-core"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { contactInboxRepository } from "../src/repositories/contact-inbox/repository"
 import {
@@ -30,6 +31,182 @@ function createQueryChain(result: unknown[]): Chain {
 
   return chain
 }
+
+describe("contactInboxRepository.updateIdentityGuarded", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("returns the updated row from a guarded identity compare-and-swap", async () => {
+    const updated = {
+      id: "ci-1",
+      sourceId: "user.bsuid-new",
+      sourceUserId: "user.bsuid-new",
+      sourceParentUserId: "parent.bsuid-1",
+    }
+    const chain = {
+      update: vi.fn(),
+      set: vi.fn(),
+      where: vi.fn(),
+      returning: vi.fn(),
+    }
+    chain.update.mockReturnValue(chain)
+    chain.set.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.returning.mockResolvedValue([updated])
+    const changedAt = "2026-09-28T05:00:00.000Z"
+
+    const row = await contactInboxRepository.updateIdentityGuarded(
+      {
+        id: "ci-1",
+        guard: {
+          sourceUserId: "user.bsuid-old",
+          sourceParentUserId: "parent.bsuid-1",
+        },
+        set: {
+          sourceId: "user.bsuid-new",
+          sourceUserId: "user.bsuid-new",
+        },
+        appendIdentityHistory: { changedAt, reason: "userIdChanged" },
+      },
+      { update: chain.update } as never,
+    )
+
+    expect(chain.update).toHaveBeenCalledWith(contactInboxModel)
+    expect(chain.set).toHaveBeenCalledWith({
+      sourceId: "user.bsuid-new",
+      sourceUserId: "user.bsuid-new",
+      sourceIdentityHistory: expect.anything(),
+    })
+    const setArg = chain.set.mock.calls[0]?.[0]
+    const rendered = new PgDialect().sqlToQuery(
+      setArg.sourceIdentityHistory as never,
+    )
+    const normalizedSql = rendered.sql.replace(/\s+/g, " ").trim()
+    expect(normalizedSql).toContain(
+      'COALESCE("ContactInbox"."sourceIdentityHistory", \'[]\'::jsonb)',
+    )
+    expect(normalizedSql).toContain(
+      'jsonb_build_object( \'sourceId\', "ContactInbox"."sourceId"',
+    )
+    expect(normalizedSql).toContain(
+      '\'sourceUserId\', "ContactInbox"."sourceUserId"',
+    )
+    expect(normalizedSql).toContain(
+      '\'sourceParentUserId\', "ContactInbox"."sourceParentUserId"',
+    )
+    expect(normalizedSql).toContain('ORDER BY "ordinality" DESC LIMIT $3')
+    expect(rendered.params).toEqual([changedAt, "userIdChanged", 10])
+    expect(chain.where).toHaveBeenCalledTimes(1)
+    expect(row).toEqual(updated)
+  })
+
+  test("derives each disjoint update history entry from the row at update time", async () => {
+    const sets: Record<string, unknown>[] = []
+    const createUpdateChain = () => {
+      const chain = {
+        set: vi.fn((value: Record<string, unknown>) => {
+          sets.push(value)
+          return chain
+        }),
+        where: vi.fn(() => chain),
+        returning: vi.fn().mockResolvedValue([{ id: "ci-1" }]),
+      }
+      return chain
+    }
+    const tx = {
+      update: vi
+        .fn()
+        .mockImplementationOnce(createUpdateChain)
+        .mockImplementationOnce(createUpdateChain),
+    }
+
+    await contactInboxRepository.updateIdentityGuarded(
+      {
+        id: "ci-1",
+        guard: { sourceUserId: "user.bsuid-old" },
+        set: { sourceUserId: "user.bsuid-new" },
+        appendIdentityHistory: {
+          changedAt: "2026-09-28T05:00:00.000Z",
+          reason: "userIdChanged",
+        },
+      },
+      tx as never,
+    )
+    await contactInboxRepository.updateIdentityGuarded(
+      {
+        id: "ci-1",
+        guard: { sourceId: "84900000001" },
+        set: { sourceId: "84900000002" },
+        appendIdentityHistory: {
+          changedAt: "2026-09-28T05:00:01.000Z",
+          reason: "phoneChanged",
+        },
+      },
+      tx as never,
+    )
+
+    expect(sets).toHaveLength(2)
+    for (const set of sets) {
+      const rendered = new PgDialect().sqlToQuery(
+        set.sourceIdentityHistory as never,
+      )
+      expect(rendered.sql).toContain(
+        'COALESCE("ContactInbox"."sourceIdentityHistory", \'[]\'::jsonb)',
+      )
+      expect(rendered.sql).toContain('"ContactInbox"."sourceId"')
+      expect(rendered.sql).toContain('"ContactInbox"."sourceUserId"')
+      expect(rendered.sql).toContain('"ContactInbox"."sourceParentUserId"')
+    }
+    expect(sets[0]?.sourceIdentityHistory).not.toBe(
+      sets[1]?.sourceIdentityHistory,
+    )
+  })
+
+  test("returns undefined when the stored identity no longer matches the guard", async () => {
+    const chain = {
+      update: vi.fn(),
+      set: vi.fn(),
+      where: vi.fn(),
+      returning: vi.fn(),
+    }
+    chain.update.mockReturnValue(chain)
+    chain.set.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.returning.mockResolvedValue([])
+
+    await expect(
+      contactInboxRepository.updateIdentityGuarded(
+        {
+          id: "ci-1",
+          guard: {
+            sourceUserId: null,
+            sourceParentUserId: "parent.bsuid-1",
+          },
+          set: { sourceUserId: "user.bsuid-new" },
+        },
+        { update: chain.update } as never,
+      ),
+    ).resolves.toBeUndefined()
+  })
+
+  test("throws without issuing an update when called without an identity guard", async () => {
+    const update = vi.fn()
+
+    await expect(
+      contactInboxRepository.updateIdentityGuarded(
+        {
+          id: "ci-1",
+          guard: {} as never,
+          set: { sourceUserId: "user.bsuid-new" },
+        },
+        { update } as never,
+      ),
+    ).rejects.toThrow("ContactInbox identity update requires a guard")
+
+    expect(update).not.toHaveBeenCalled()
+  })
+})
 
 describe("contactInboxRepository.findByIdForWorkspace", () => {
   beforeEach(() => {

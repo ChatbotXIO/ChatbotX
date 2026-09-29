@@ -136,4 +136,73 @@ describe("threads comment automation schema", () => {
       `translated:${threadsCommentValidationKeys.postIdsMustBeEmptyForAll}`,
     )
   })
+
+  const basePayload = {
+    name: "Auto reply",
+    post: { type: "all", value: [] },
+    publicReply: { type: "none", value: null },
+    includeKeywords: { type: "all", value: [] },
+    excludeKeywords: [],
+    options: {
+      replyToNewContactsOnly: false,
+      replyOncePerUserPerPost: false,
+      replyToUsersWhoCommentedOnOtherPosts: true,
+      ignoreCommentReplies: true,
+    },
+    replyAfter: { type: "immediately", value: 0 },
+  }
+
+  test("accepts several public reply texts", () => {
+    const parsed = createThreadsCommentRequest.parse({
+      ...basePayload,
+      publicReply: {
+        type: "text",
+        value: "",
+        values: [{ value: "{Hi|Hello}!" }, { value: "Check your inbox" }],
+      },
+    })
+
+    expect(parsed.publicReply).toMatchObject({
+      values: [{ value: "{Hi|Hello}!" }, { value: "Check your inbox" }],
+    })
+  })
+
+  test("rejects a text reply whose every message is blank", () => {
+    expect(() =>
+      createThreadsCommentRequest.parse({
+        ...basePayload,
+        publicReply: { type: "text", value: "", values: [{ value: "  " }] },
+      }),
+    ).toThrow(threadsCommentValidationKeys.replyTextRequired)
+  })
+
+  test("accepts a mentions filter without keywords", () => {
+    const parsed = createThreadsCommentRequest.parse({
+      ...basePayload,
+      includeKeywords: { type: "mentions", value: [], mentionCount: "2" },
+    })
+
+    expect(parsed.includeKeywords).toEqual({
+      type: "mentions",
+      value: [],
+      mentionCount: 2,
+    })
+  })
+
+  test("rejects a mention count above five", () => {
+    expect(() =>
+      createThreadsCommentRequest.parse({
+        ...basePayload,
+        includeKeywords: { type: "mentions", value: [], mentionCount: 6 },
+      }),
+    ).toThrow()
+  })
+
+  // The update schema is the create one made partial — a default on the
+  // match type would silently reset it on every unrelated PATCH.
+  test("does not invent an exclude match type on update", () => {
+    expect(updateThreadsCommentRequest.parse({ isActive: false })).toEqual({
+      isActive: false,
+    })
+  })
 })

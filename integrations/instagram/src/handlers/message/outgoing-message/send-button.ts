@@ -7,7 +7,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../../../constants"
-import type { InstagramButton } from "../../../schemas"
+import type { InstagramButton } from "../../../schema"
 
 export function getButtonTemplate(props: {
   flowId: string
@@ -43,7 +43,7 @@ export function getButtonTemplate(props: {
   }
 }
 
-export function convertInstagramButtons({
+export function convertButtons({
   flowId,
   flowVersionId,
   buttons,

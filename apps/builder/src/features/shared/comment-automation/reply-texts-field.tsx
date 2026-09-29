@@ -1,7 +1,7 @@
 "use client"
 
 import type { ChannelType } from "@chatbotx.io/database/partials"
-import { FB_COMMENT_REPLY_MAX_TEXTS } from "@chatbotx.io/database/partials"
+import { COMMENT_REPLY_MAX_TEXTS } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { FormLabel } from "@chatbotx.io/ui/components/ui/form"
 import { PlusIcon, TrashIcon } from "lucide-react"
@@ -22,7 +22,7 @@ type Props = {
  * The message list of a `text` public reply. Every entry is posted as its own
  * comment reply, so the order here is the order they appear under the comment.
  *
- * Capped at {@link FB_COMMENT_REPLY_MAX_TEXTS}; the add button disappears at
+ * Capped at {@link COMMENT_REPLY_MAX_TEXTS}; the add button disappears at
  * the ceiling rather than failing on submit.
  */
 export function ReplyTextsField({ name, label, placeholder, channel }: Props) {
@@ -79,7 +79,7 @@ export function ReplyTextsField({ name, label, placeholder, channel }: Props) {
         </div>
       ))}
 
-      {fields.length < FB_COMMENT_REPLY_MAX_TEXTS && (
+      {fields.length < COMMENT_REPLY_MAX_TEXTS && (
         <Button onClick={handleAdd} size="sm" type="button" variant="outline">
           <PlusIcon className="h-4 w-4" />
           {/* A dedicated key, not `addFeature` with the label interpolated:

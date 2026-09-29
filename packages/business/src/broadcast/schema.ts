@@ -1,4 +1,5 @@
 import type {
+  BroadcastAudienceRange,
   BroadcastSubaction,
   ChannelType,
 } from "@chatbotx.io/database/partials"
@@ -15,6 +16,8 @@ export type BroadcastAudienceInput = {
   canViewEmailAndPhone?: boolean
   subaction?: BroadcastSubaction | null
   restrictToAssignedUserId?: string
+  /** The 1-based position window over the ordered audience; null/undefined = whole audience. */
+  audienceRange?: BroadcastAudienceRange | null
 }
 
 export type BroadcastAudiencePreviewRow = {

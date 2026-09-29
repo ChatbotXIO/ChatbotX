@@ -1,11 +1,14 @@
 import {
   broadcastScheduleTypes,
+  broadcastSendLimitIssues,
+  broadcastSendLimitSchema,
   broadcastSendsFlow,
   broadcastSendsTemplate,
   broadcastSubactions,
   channelTypes,
   hasDuplicateBroadcastTarget,
   hasFlowAndTemplate,
+  isAudienceRangeOrdered,
   isTargetsFlowSendWithoutFlow,
   isTargetsTemplateSendWithoutTemplate,
   isTemplateSendWithoutPage,
@@ -122,10 +125,25 @@ export const createBroadcastRequest = z
     contactFilter: contactFilterRequest.shape.contactFilter.describe(
       "Structured filter selecting the recipient audience. See `contacts.listFilterFields`.",
     ),
+    audienceRangeStart:
+      broadcastSendLimitSchema.shape.audienceRangeStart.describe(
+        "1-based inclusive start of the ordered audience window (ascending contact inbox id). Omit to start from the first contact.",
+      ),
+    audienceRangeEnd: broadcastSendLimitSchema.shape.audienceRangeEnd.describe(
+      "1-based inclusive end of the ordered audience window. Omit to include through the last contact.",
+    ),
+    sendRatePerMinute:
+      broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
+        "Maximum recipients handed off per dispatch minute (1-1000). Omit to use your plan's default (500; Messenger broadcasts on a trial plan use and cap at 60).",
+      ),
     saveAsDraft: z
       .boolean()
       .optional()
       .describe("Save as a draft instead of scheduling/sending immediately."),
+  })
+  .refine(isAudienceRangeOrdered, {
+    path: ["audienceRange"],
+    message: broadcastSendLimitIssues.rangeEndBeforeStart,
   })
   .refine(
     (data) => !!(broadcastSendsFlow(data) || broadcastSendsTemplate(data)),
@@ -221,6 +239,10 @@ export const scheduleBroadcastSchema = z
       .string()
       .nullable()
       .describe("ISO 8601 send time, required when schedulesType is `future`."),
+    sendRatePerMinute:
+      broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
+        "Maximum recipients handed off per dispatch minute (1-1000). Omit to keep the stored rate; null clears it.",
+      ),
   })
   .superRefine((data, ctx) => {
     if (
@@ -235,6 +257,13 @@ export const scheduleBroadcastSchema = z
     }
   })
 export type ScheduleBroadcastSchema = z.infer<typeof scheduleBroadcastSchema>
+
+export const resumeBroadcastSchema = z.object({
+  sendRatePerMinute: broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
+    "Maximum recipients handed off per dispatch minute (1-1000). Omit to keep the stored rate; null clears it.",
+  ),
+})
+export type ResumeBroadcastSchema = z.infer<typeof resumeBroadcastSchema>
 
 // A `now` draft gets `schedulesAt = startOfMinute(now) <= now`, so
 // `enqueueBroadcast`'s `schedulesAt <= startTime AND status = scheduled` scan

@@ -34,6 +34,7 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
       data: { contact, message },
     } = props
     const messageIds: string[] = []
+    let sentCount = 0
     try {
       for await (const zaloMessage of convertMessageToZaloMessage(
         ctx.auth,
@@ -41,6 +42,7 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
       )) {
         const payload = buildMessagePayload(contact, zaloMessage)
         const response = await sendMessageToZaloOA(ctx.auth, payload)
+        sentCount += 1
         if (response.data?.message_id) {
           messageIds.push(response.data.message_id)
         }
@@ -55,6 +57,7 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
     // so the oa_send_* webhook echo dedups instead of inserting a duplicate.
     return {
       messageIds,
+      sentCount,
     }
   }
 
@@ -166,12 +169,14 @@ export const sendFlowStep: MessageHandlers<ZaloAuthValue>["sendFlowStep"] =
       data: { contact },
     } = props
     const messageIds: string[] = []
+    let sentCount = 0
     try {
       for await (const zaloMessage of convertFlowStepToZaloMessage(props)) {
         const response = await sendMessageToZaloOA(
           ctx.auth,
           buildMessagePayload(contact, zaloMessage),
         )
+        sentCount += 1
         if (response.data?.message_id) {
           messageIds.push(response.data.message_id)
         }
@@ -184,5 +189,6 @@ export const sendFlowStep: MessageHandlers<ZaloAuthValue>["sendFlowStep"] =
 
     return {
       messageIds,
+      sentCount,
     }
   }

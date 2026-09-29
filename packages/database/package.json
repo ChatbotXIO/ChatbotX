@@ -17,6 +17,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "@types/pg": "^8.20.0",
@@ -27,7 +28,7 @@
     "vitest": "^4.1.0"
   },
   "scripts": {
-    "check-types": "tsc --noEmit",
+    "check-types": "tsc --noEmit -p tsconfig.typecheck.json",
     "db:check": "dotenv -e ../../.env -- drizzle-kit check",
     "db:check-drift": "node ./scripts/check-schema-drift.mjs",
     "db:fix-chain": "node ./scripts/fix-migration-chain.mjs",

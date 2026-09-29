@@ -51,6 +51,7 @@ export const channelApiTokenAuthMidddleware = base.middleware(
         integrationApi,
         inbox,
         workspace,
+        apiCredentialId: `channel-api:${integrationApi.id}`,
       },
     })
   },

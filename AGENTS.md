@@ -20,11 +20,11 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 | `apps/builder`    | **Next.js** web app (product UI). Default dev URL often `http://localhost:3123` (see `.env.example`).                   |
 | `apps/worker`     | **BullMQ** (and related) background jobs: chat, AI, triggers, webhooks, analytics, sequences.                           |
 | `apps/realtime`   | Realtime server; builder exposes `NEXT_PUBLIC_REALTIME_URL` (e.g. `http://localhost:1999`).                             |
-| `apps/cli`        | Command-line client (`chatbotx-cli`).                                                                                   |
+| `apps/cli`        | Command-line client (`chatbotx`).                                                                                       |
 | `apps/mcp-server` | MCP server exposing public API surfaces.                                                                                |
 | `apps/javascript-executor` | Internal HTTP service that executes flow-step JavaScript in isolated-vm.                                      |
 | `packages/*`      | Shared libraries: `database` (Drizzle + PostgreSQL), `ui`, `sdk`, `worker-config`, `ai`, etc.            |
-| `integrations/*`  | Channel and vendor integrations (WhatsApp, Messenger, Telegram, Zalo, TikTok, webchat, SMTP, OpenAI, Google Sheets, …). |
+| `integrations/*`  | Channel and vendor integrations (WhatsApp, Messenger, Instagram, Threads, Telegram, Zalo, TikTok, webchat, SMTP, OpenAI, Google Sheets, …). |
 
 ## Stack (high level)
 
@@ -54,8 +54,8 @@ Targeted examples:
 pnpm --filter builder dev
 pnpm --filter worker dev
 pnpm --filter realtime dev
-pnpm --filter chatbotx-cli dev:cli
-pnpm --filter chatbotx-mcp-server dev:mcp
+pnpm --filter chatbotx dev:cli
+pnpm --filter chatbotx-mcp dev:mcp
 pnpm --filter @chatbotx.io/database db:studio
 ```
 
@@ -189,6 +189,8 @@ These are the most common mistakes — read before writing any code:
 19. **Platform support access is a synthetic membership, never a `WorkspaceMember` row.** `resolveWorkspaceAccess` (`packages/business/src/workspace-support-access/resolve-access.ts`) is the single async entry point every auth gate calls: it loads the workspace (via `workspaceService.findForAuth`, which — like `WorkspaceMemberService.findMembership` — intentionally skips `withCache` so `disable()` ends a session on the very next request even if cache invalidation failed) and delegates to `resolveWorkspaceMembership` (`packages/business/src/workspace-member/synthetic.ts`), which returns the real row if one exists, otherwise synthesizes one in-memory when the caller `isSuperAdmin(user)` and `isSupportAccessEnabled(workspace)` (true while `Workspace.supportAccessUntil` is set and in the future — the owner's opt-in from Settings → General). Nothing is ever inserted, so there is no grant/revoke/expire step — access starts and stops purely by re-evaluating `supportAccessUntil` on every request. A daily `clearExpiredSupportAccess` cron (`apps/worker/src/schedule/handlers/clear-expired-support-access.ts`) does clear the stale `supportAccessUntil` timestamp once it's in the past, but this is display/reporting hygiene only (e.g. the `/admin` workspaces list sort) — it never gates access, since reads already ignore a past timestamp. Every gate that resolves a caller's workspace membership (`workspaceAuthorizedMidddleware`, `workspaceActionClientAllowExpired`, the workspace layout, `getCurrentUserAndTargetWorkspace`) must route through this helper rather than querying `WorkspaceMember` directly, or a super admin's support session will silently 404. The resolved `isSupportSession` flag must gate any action that changes the support-access window itself (`toggleSupportAccessAction` rejects the call when true) — otherwise the synthetic membership's `superAdmin: true` permission would let a support session renew its own time-boxed access indefinitely. Because there is no row, a support session never appears in the members table, never counts toward `WorkspaceUsage.teamMembers`, and disabling the toggle (`WorkspaceSupportAccessService.disable`) alone ends every in-progress session immediately. See `docs/support-access.md`.
 
 20. **Structured logging: the key is `err`, not `error`.** Server-side code (actions, queries, API handlers, worker consumers, integrations) must use the structured logger, never `console`. Pino's serializer is keyed on `err`, so `logger.error({ error }, "...")` silently drops the stack trace while `logger.error({ err: error }, "...")` keeps it. Import the nearest child logger (`apps/worker/src/lib/logger.ts`, a feature's `lib/log`) or `getChildLogger` from `@chatbotx.io/logger` — there is no named `logger` export on that package. Client components may use `console` only for local debugging removed before merge.
+
+21. **TanStack Query mutations must invalidate.** `router.refresh()` only re-renders the RSC tree; it does not touch the browser-singleton QueryClient (`apps/builder/src/lib/query/query-client.ts`, `staleTime: 30_000`) that survives navigation. Every create, update, delete, toggle, or move of a TanStack-cached resource must call its invalidator (`useInvalidateTags`, `useInvalidateInboxes`, `useInvalidateUsers`, `useInvalidateSequences`, `useInvalidateCustomFields`, `useInvalidateBotFields`, `useInvalidateFlows`, `useSavedReplyCache`) or `setQueryData`. Invalidate before `router.push`. Shared mutation dialogs such as `ChangeFolderDialog` must expose `onSuccess` so callers can invalidate their resource. List payloads may contain derived fields (`flowVersions`, `folderId`, `stepsCount`), so invalidation is required even when the primary entity is unchanged.
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Git conventions
@@ -203,7 +205,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - White-label tenancy model: `docs/tenancy.md`
 - Workspace API tokens (hashing, scopes, `{{api_key}}` default token): `docs/developer/workspace-api-tokens.md`
 - Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI): `docs/ads-conversion-tracking.md`
-- Facebook comment automation: `docs/fb-comment-automation.md` (skill: `.agents/skills/fb-comment-automation/`)
+- Comment automation (all channels): `docs/comment-automation.md` (skill: `.agents/skills/comment-automation/`)
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`

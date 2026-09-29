@@ -129,8 +129,8 @@ describe("POST /v1/products", () => {
   })
 })
 
-describe("PATCH /v1/products/{id}", () => {
-  const procedure = findProcedure("PATCH", "/v1/products/{id}")
+describe("PUT /v1/products/{id}", () => {
+  const procedure = findProcedure("PUT", "/v1/products/{id}")
 
   test("replaces a product scoped to the token's workspace", async () => {
     productService.updateFull.mockResolvedValueOnce(undefined)

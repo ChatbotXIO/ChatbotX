@@ -6,15 +6,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@chatbotx.io/ui/components/ui/accordion"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { client } from "@/lib/orpc/orpc"
-import type { ContactAppointmentResource } from "../appointments/schema/resource"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { orpc } from "@/lib/orpc/query"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
-import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
-import UpdateContactSequenceField from "../contact-sequences/update-contact-sequence-field"
-import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
+import UpdateContactSequenceField, {
+  type ContactSequence,
+} from "../contact-sequences/update-contact-sequence-field"
 import type { TagResource } from "../tags/schema/resource"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import UpdateContactTagField from "./components/update-contact-tag-field"
@@ -27,6 +29,41 @@ type AccordionModule = {
   readonly content: React.ReactNode
 }
 
+const SectionQueryState = ({
+  isError,
+  isFetching,
+  isPending,
+  onRetry,
+}: {
+  isError: boolean
+  isFetching: boolean
+  isPending: boolean
+  onRetry: () => Promise<unknown>
+}) => {
+  const t = useTranslations()
+
+  if (isPending || isFetching) {
+    return (
+      <div className="flex justify-center px-2 py-4">
+        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center gap-2 px-2 text-muted-foreground text-sm">
+        <span>{t("messages.errorLoadingData")}</span>
+        <Button onClick={onRetry} size="sm" type="button" variant="ghost">
+          {t("actions.retry")}
+        </Button>
+      </div>
+    )
+  }
+
+  return null
+}
+
 export const ContactInboxPanel = ({
   workspaceId,
   activeConversationId,
@@ -36,7 +73,7 @@ export const ContactInboxPanel = ({
 }) => {
   const t = useTranslations()
 
-  const { conversations } = useChatStore((state) => state)
+  const { conversations, seededContact } = useChatStore((state) => state)
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
@@ -44,49 +81,38 @@ export const ContactInboxPanel = ({
   )
   const storeContact = activeConversation?.contact ?? null
 
-  const [contactData, setContactData] = useState<GetContactResponse | null>(
-    null,
-  )
+  const contactId = storeContact?.id
+  const contactQueryOptions =
+    orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
+      input: { workspaceId, contactId: contactId ?? "" },
+      enabled: Boolean(activeConversationId && contactId),
+      initialData:
+        seededContact && seededContact.id === contactId
+          ? seededContact
+          : undefined,
+    })
+  const { data: contactData = null } = useQuery(contactQueryOptions)
+  const queryClient = useQueryClient()
 
-  // Guards `getContactAuthenticatedAPI` against out-of-order resolution:
-  // the initial fetch (below) and the auto-refresh convergence re-fetch
-  // (`onProfileUpdated`) can both be in flight for the same contact, and
-  // whichever request was issued LAST must win regardless of which settles
-  // first — otherwise a slow initial fetch resolving after the refresh
-  // patch would silently overwrite the just-applied name/avatar.
-  const requestSeqRef = useRef(0)
-
-  const fetchContactData = useCallback(
-    (contactId: string, preserveOnError = false) => {
-      const seq = ++requestSeqRef.current
-      client.contactsAPIs
-        .getContactAuthenticatedAPI({ workspaceId, contactId })
-        .then((data) => {
-          if (requestSeqRef.current === seq) {
-            setContactData(data)
-          }
-        })
-        .catch(() => {
-          // On the INITIAL open fetch, a failure must clear stale data from
-          // the previous contact. On the auto-refresh convergence re-fetch
-          // (`preserveOnError: true`), the hook has already patched
-          // `contactData` with the fresh name/avatar — a transport blip on
-          // this re-fetch must not wipe that out; keeping the patched state
-          // is strictly better than showing nothing.
-          if (requestSeqRef.current === seq && !preserveOnError) {
-            setContactData(null)
-          }
-        })
+  const setContactData = useCallback(
+    (
+      updater: (
+        previousContact: GetContactResponse | null,
+      ) => GetContactResponse | null,
+    ) => {
+      queryClient.setQueryData(
+        contactQueryOptions.queryKey,
+        (previousContact) => updater(previousContact ?? null) ?? undefined,
+      )
     },
-    [workspaceId],
+    [contactQueryOptions.queryKey, queryClient],
   )
-
-  // Re-fetch the canonical contact once the auto-refresh applies an update,
-  // so `contactData` converges even if the initial fetch below is still in
-  // flight and resolves afterwards.
   const onProfileUpdated = useCallback(
-    (contactId: string) => fetchContactData(contactId, true),
-    [fetchContactData],
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: contactQueryOptions.queryKey,
+      }),
+    [contactQueryOptions.queryKey, queryClient],
   )
 
   useAutoRefreshContactProfile({
@@ -95,36 +121,12 @@ export const ContactInboxPanel = ({
     setContactData,
     onProfileUpdated,
   })
-  const [coupons, setCoupons] = useState<
-    Array<{ id: string; topicName: string; code: string; usedAt: Date | null }>
-  >([])
-  const [appointments, setAppointments] = useState<
-    ContactAppointmentResource[]
-  >([])
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeConversationId is a trigger-only dependency; the effect resets accordion state on conversation switch without reading the value itself
   useEffect(() => {
-    const contactId = storeContact?.id
-
-    if (!(activeConversationId && contactId)) {
-      requestSeqRef.current += 1
-      setContactData(null)
-      setCoupons([])
-      setAppointments([])
-      return
-    }
-
-    fetchContactData(contactId)
-
-    client.couponsAPI
-      .listContactCouponsAPI({ workspaceId, contactId })
-      .then(setCoupons)
-      .catch(() => setCoupons([]))
-
-    client.appointmentsAPI
-      .listContactAppointmentsAPI({ workspaceId, contactId })
-      .then(setAppointments)
-      .catch(() => setAppointments([]))
-  }, [activeConversationId, storeContact?.id, workspaceId, fetchContactData])
+    setOpenAccordionItems([])
+  }, [activeConversationId])
 
   const accordionModules: AccordionModule[] = useMemo(() => {
     if (!contactData) {
@@ -135,30 +137,20 @@ export const ContactInboxPanel = ({
       {
         keyName: t("coupons.title"),
         content: (
-          <div className="grid gap-2 px-2 text-sm">
-            {coupons.length > 0 ? (
-              coupons.map((coupon) => (
-                <div className="rounded-md border p-2" key={coupon.id}>
-                  <div className="font-medium">{coupon.topicName}</div>
-                  <div className="font-mono">{coupon.code}</div>
-                  <div className="text-muted-foreground">
-                    {coupon.usedAt
-                      ? t("coupons.usageStatuses.used")
-                      : t("coupons.usageStatuses.notUsed")}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-muted-foreground">
-                {t("coupons.messages.empty")}
-              </div>
-            )}
-          </div>
+          <ContactCouponsSection
+            contactId={contactData.id}
+            workspaceId={workspaceId}
+          />
         ),
       },
       {
         keyName: t("appointments.title"),
-        content: <ContactAppointmentsList appointments={appointments} />,
+        content: (
+          <ContactAppointmentsSection
+            contactId={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
       },
       {
         keyName: t("fields.tags.label"),
@@ -166,7 +158,11 @@ export const ContactInboxPanel = ({
           <UpdateContactTagField
             contact={contactData}
             onSuccess={(updatedTags: TagResource[]) => {
-              setContactData({ ...contactData, tags: updatedTags })
+              setContactData((previousContact) =>
+                previousContact
+                  ? { ...previousContact, tags: updatedTags }
+                  : null,
+              )
             }}
             tags={contactData.tags}
             workspaceId={workspaceId}
@@ -176,28 +172,15 @@ export const ContactInboxPanel = ({
       {
         keyName: t("sequences.title"),
         content: (
-          <SequenceStoreProvider
-            autoInitialize={true}
+          <ContactSequencesSection
+            contact={contactData}
+            contactId={contactData.id}
             workspaceId={workspaceId}
-          >
-            <UpdateContactSequenceField
-              contact={contactData}
-              onSuccess={(updatedSequences) => {
-                setContactData({
-                  ...contactData,
-                  contactsOnSequences:
-                    updatedSequences as ContactOnSequenceWithRelations[],
-                })
-              }}
-              sequences={
-                contactData.contactsOnSequences as ContactOnSequenceWithRelations[]
-              }
-            />
-          </SequenceStoreProvider>
+          />
         ),
       },
     ]
-  }, [contactData, workspaceId, t, coupons, appointments])
+  }, [contactData, workspaceId, t, setContactData])
 
   if (!storeContact) {
     return null
@@ -208,11 +191,27 @@ export const ContactInboxPanel = ({
       <ContactDetail
         activeConversationId={activeConversationId}
         contact={contactData}
+        onCustomFieldsReset={() =>
+          setContactData((previousContact) =>
+            previousContact
+              ? { ...previousContact, customFields: [] }
+              : previousContact,
+          )
+        }
       />
 
-      <ContactNotesManage contactNotes={contactData?.contactNotes ?? []} />
+      {contactData?.id ? (
+        <ContactNotesSection
+          contactId={contactData.id}
+          workspaceId={workspaceId}
+        />
+      ) : null}
 
-      <Accordion className="w-full">
+      <Accordion
+        className="w-full"
+        onValueChange={(value) => setOpenAccordionItems(value as string[])}
+        value={openAccordionItems}
+      >
         {accordionModules.map((module, index) => (
           <AccordionItem
             className="transition-all hover:data-[state=open]:rounded-none"
@@ -224,10 +223,190 @@ export const ContactInboxPanel = ({
             >
               <div className="flex items-center gap-2">{module.keyName}</div>
             </AccordionTrigger>
-            <AccordionContent>{module.content}</AccordionContent>
+            <AccordionContent>
+              {openAccordionItems.includes(module.keyName)
+                ? module.content
+                : null}
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
     </div>
   )
+}
+
+function ContactNotesSection({
+  workspaceId,
+  contactId,
+}: {
+  workspaceId: string
+  contactId: string
+}) {
+  const queryClient = useQueryClient()
+  const queryOptions =
+    orpc.contactNotesAPI.listContactNotesAuthenticatedAPI.queryOptions({
+      input: { workspaceId, contactId },
+    })
+  const { data, isError, isFetching, isPending, refetch } =
+    useQuery(queryOptions)
+
+  if (isPending || isError) {
+    return (
+      <SectionQueryState
+        isError={isError}
+        isFetching={isFetching}
+        isPending={isPending}
+        onRetry={() => refetch()}
+      />
+    )
+  }
+
+  return (
+    <ContactNotesManage
+      contactNotes={data?.data ?? []}
+      onNotesChange={(notes) => {
+        queryClient.setQueryData(queryOptions.queryKey, { data: notes })
+      }}
+    />
+  )
+}
+
+function ContactSequencesSection({
+  workspaceId,
+  contactId,
+  contact,
+}: {
+  workspaceId: string
+  contactId: string
+  contact: GetContactResponse
+}) {
+  const queryClient = useQueryClient()
+  const queryOptions =
+    orpc.contactSequencesAPI.listContactSequencesAuthenticatedAPI.queryOptions({
+      input: { workspaceId, contactId },
+    })
+  const { data, isError, isFetching, isPending, refetch } =
+    useQuery(queryOptions)
+  const sequences: ContactSequence[] = useMemo(
+    () =>
+      (data?.data ?? []).map((sequence) => ({
+        sequence: {
+          id: sequence.sequenceId,
+          name: sequence.sequenceName,
+        },
+      })),
+    [data?.data],
+  )
+
+  if (isPending || isError) {
+    return (
+      <SectionQueryState
+        isError={isError}
+        isFetching={isFetching}
+        isPending={isPending}
+        onRetry={() => refetch()}
+      />
+    )
+  }
+
+  return (
+    <UpdateContactSequenceField
+      contact={contact}
+      onSuccess={(updatedSequences: ContactSequence[]) => {
+        queryClient.setQueryData(queryOptions.queryKey, {
+          data: updatedSequences.map((sequence) => ({
+            sequenceId: sequence.sequence.id,
+            sequenceName: sequence.sequence.name,
+          })),
+        })
+      }}
+      sequences={sequences}
+    />
+  )
+}
+
+function ContactCouponsSection({
+  workspaceId,
+  contactId,
+}: {
+  workspaceId: string
+  contactId: string
+}) {
+  const t = useTranslations()
+  const queryOptions = orpc.couponsAPI.listContactCouponsAPI.queryOptions({
+    input: { workspaceId, contactId },
+  })
+  const {
+    data: coupons = [],
+    isError,
+    isFetching,
+    isPending,
+    refetch,
+  } = useQuery(queryOptions)
+
+  if (isPending || isError) {
+    return (
+      <SectionQueryState
+        isError={isError}
+        isFetching={isFetching}
+        isPending={isPending}
+        onRetry={() => refetch()}
+      />
+    )
+  }
+
+  return (
+    <div className="grid gap-2 px-2 text-sm">
+      {coupons.length > 0 ? (
+        coupons.map((coupon) => (
+          <div className="rounded-md border p-2" key={coupon.id}>
+            <div className="font-medium">{coupon.topicName}</div>
+            <div className="font-mono">{coupon.code}</div>
+            <div className="text-muted-foreground">
+              {coupon.usedAt
+                ? t("coupons.usageStatuses.used")
+                : t("coupons.usageStatuses.notUsed")}
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="text-muted-foreground">
+          {t("coupons.messages.empty")}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ContactAppointmentsSection({
+  workspaceId,
+  contactId,
+}: {
+  workspaceId: string
+  contactId: string
+}) {
+  const queryOptions =
+    orpc.appointmentsAPI.listContactAppointmentsAPI.queryOptions({
+      input: { workspaceId, contactId },
+    })
+  const {
+    data: appointments = [],
+    isError,
+    isFetching,
+    isPending,
+    refetch,
+  } = useQuery(queryOptions)
+
+  if (isPending || isError) {
+    return (
+      <SectionQueryState
+        isError={isError}
+        isFetching={isFetching}
+        isPending={isPending}
+        onRetry={() => refetch()}
+      />
+    )
+  }
+
+  return <ContactAppointmentsList appointments={appointments} />
 }
