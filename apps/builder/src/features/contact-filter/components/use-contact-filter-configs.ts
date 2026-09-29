@@ -1,6 +1,7 @@
 "use client"
 
 import { channelTypes } from "@chatbotx.io/database/partials"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useCouponTopicOptions } from "@/features/coupons/provider/use-coupon-topic-options"
@@ -9,10 +10,16 @@ import {
   useCustomFields,
 } from "@/features/custom-fields/provider/custom-field-hook"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
-import { useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
-import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
-import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
-import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
+import {
+  useInboxes,
+  useInboxOptionsByChannel,
+} from "@/features/inboxes/provider/inbox-hook"
+import {
+  useSequenceOptions,
+  useSequences,
+} from "@/features/sequences/provider/sequence-hook"
+import { useTagSelectOptions, useTags } from "@/features/tags/provider/tag-hook"
+import { useContactAssigneeOptionsWithStatus } from "@/features/users/provider/user-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import {
   type ConditionOption,
@@ -24,6 +31,13 @@ import {
   useBroadcastSelectOptions,
   useReflinkSelectOptions,
 } from "./use-workspace-option-sources"
+
+// An option list only counts once its query has succeeded; until then it stays
+// `undefined` so row labels don't flag every id unknown against an empty list.
+const whenLoaded = (
+  options: SelectOption[],
+  isLoaded: boolean,
+): SelectOption[] | undefined => (isLoaded ? options : undefined)
 
 type UseContactFilterConfigsResult = {
   configs: FieldConfig[]
@@ -46,9 +60,16 @@ export const useContactFilterConfigs = (
 ): UseContactFilterConfigsResult => {
   const t = useTranslations()
 
-  const tagOptions = useTagSelectOptions()
-  const inboxOptions = useInboxOptionsByChannel(inboxChannel)
   const workspaceId = useWorkspaceId()
+  // Same query keys as the option hooks below, so these share their cache.
+  const { isSuccess: isTagsLoaded } = useTags(workspaceId)
+  const { isSuccess: isInboxesLoaded } = useInboxes(workspaceId)
+  const { isSuccess: isSequencesLoaded } = useSequences(workspaceId)
+  const tagOptions = whenLoaded(useTagSelectOptions(), isTagsLoaded)
+  const inboxOptions = whenLoaded(
+    useInboxOptionsByChannel(inboxChannel),
+    isInboxesLoaded,
+  )
   const customFields = useCustomFields(workspaceId).data ?? []
   const botFields =
     useBotFields(workspaceId, { enabled: includeBotFields }).data ?? []
@@ -65,16 +86,23 @@ export const useContactFilterConfigs = (
   const sequences = useSequenceOptions()
   const sequenceOptions = useMemo(
     () =>
-      sequences.map((sequence) => ({
-        label: sequence.name,
-        value: sequence.id,
-      })),
-    [sequences],
+      whenLoaded(
+        sequences.map((sequence) => ({
+          label: sequence.name,
+          value: sequence.id,
+        })),
+        isSequencesLoaded,
+      ),
+    [sequences, isSequencesLoaded],
   )
   const reflinkOptions = useReflinkSelectOptions()
-  const assigneeOptions = useContactAssigneeOptions({
+  const assigneeState = useContactAssigneeOptionsWithStatus({
     includeUnassigned: true,
   })
+  const assigneeOptions = whenLoaded(
+    assigneeState.options,
+    assigneeState.isSuccess,
+  )
   const { options: couponTopicOptions } = useCouponTopicOptions()
 
   const configs = useMemo(

@@ -207,13 +207,13 @@ const resolveContactFilterOptions = (
   ctx: {
     t: (key: string) => string
     channelOptions: SelectOption[]
-    inboxOptions: SelectOption[]
-    tagOptions: SelectOption[]
-    flowVersionOptions: SelectOption[]
-    broadcastOptions: SelectOption[]
-    sequenceOptions: SelectOption[]
-    reflinkOptions: SelectOption[]
-    assigneeOptions: SelectOption[]
+    inboxOptions?: SelectOption[]
+    tagOptions?: SelectOption[]
+    flowVersionOptions?: SelectOption[]
+    broadcastOptions?: SelectOption[]
+    sequenceOptions?: SelectOption[]
+    reflinkOptions?: SelectOption[]
+    assigneeOptions?: SelectOption[]
   },
 ): SelectOption[] | undefined => {
   switch (optionSource) {
@@ -400,19 +400,24 @@ export const getFieldConfigs = ({
   inboxOptions,
   customFields,
   flowVersionOptions,
-  broadcastOptions = [],
-  sequenceOptions = [],
-  reflinkOptions = [],
-  assigneeOptions = [],
+  broadcastOptions,
+  sequenceOptions,
+  reflinkOptions,
+  assigneeOptions,
   couponTopicOptions = [],
   botFields = [],
   includeBotFields = false,
 }: {
   t: (key: string) => string
-  tagOptions: SelectOption[]
-  inboxOptions: SelectOption[]
+  /**
+   * Workspace-backed option lists stay `undefined` until their source has
+   * loaded, so values aren't flagged unknown against a list that isn't there
+   * yet. An empty array means loaded with nothing in it.
+   */
+  tagOptions?: SelectOption[]
+  inboxOptions?: SelectOption[]
   customFields: CustomFieldFilterOption[]
-  flowVersionOptions: SelectOption[]
+  flowVersionOptions?: SelectOption[]
   broadcastOptions?: SelectOption[]
   sequenceOptions?: SelectOption[]
   reflinkOptions?: SelectOption[]
@@ -661,9 +666,10 @@ export const formatConditionValueDisplay = (
   if (value === undefined) {
     return ""
   }
-  // No options yet (still loading, failed, or not option-backed): nothing to
-  // resolve against, so show the value as-is rather than flag it unknown.
-  if (!options?.length) {
+  // No option list (source not loaded yet, failed, or a free-text field):
+  // nothing to resolve against, so show the value as-is. An empty list is a
+  // loaded one, e.g. every tag deleted, and falls through to the unknown label.
+  if (!options) {
     return Array.isArray(value) ? value.join(", ") : value
   }
 

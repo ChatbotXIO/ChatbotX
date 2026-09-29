@@ -65,14 +65,20 @@ const useContactAssigneeOptionsState = (
   } = props || {}
 
   const workspaceId = useWorkspaceId()
-  const { data: workspaceMembers = [], isPending: isWorkspaceMembersPending } =
-    useWorkspaceMembers(workspaceId, {
-      enabled: props?.enabled,
-    })
-  const { data: inboxTeams = [], isPending: isInboxTeamsPending } =
-    useInboxTeams(workspaceId, {
-      enabled: props?.enabled,
-    })
+  const {
+    data: workspaceMembers = [],
+    isPending: isWorkspaceMembersPending,
+    isSuccess: isWorkspaceMembersSuccess,
+  } = useWorkspaceMembers(workspaceId, {
+    enabled: props?.enabled,
+  })
+  const {
+    data: inboxTeams = [],
+    isPending: isInboxTeamsPending,
+    isSuccess: isInboxTeamsSuccess,
+  } = useInboxTeams(workspaceId, {
+    enabled: props?.enabled,
+  })
   const options = useMemo(() => {
     const result: SelectOption[] = [
       {
@@ -118,6 +124,7 @@ const useContactAssigneeOptionsState = (
   return {
     options,
     isPending: isWorkspaceMembersPending || isInboxTeamsPending,
+    isSuccess: isWorkspaceMembersSuccess && isInboxTeamsSuccess,
   }
 }
 

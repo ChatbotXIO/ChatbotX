@@ -9,8 +9,10 @@ const {
   mockUseParams,
   privateListBroadcastOptionsAPI,
   listRefLinkOptionsAuthenticatedAPI,
+  tagsQueryState,
 } = vi.hoisted(() => ({
   mockUseParams: vi.fn(),
+  tagsQueryState: { isSuccess: true },
   privateListBroadcastOptionsAPI: vi.fn(),
   listRefLinkOptionsAuthenticatedAPI: vi.fn(),
 }))
@@ -59,6 +61,7 @@ vi.mock("@/features/flows/provider/flow-hook", () => {
 vi.mock("@/features/inboxes/provider/inbox-hook", () => {
   const options: never[] = []
   return {
+    useInboxes: () => ({ isSuccess: true }),
     useInboxOptionsByChannel: () => options,
   }
 })
@@ -67,12 +70,14 @@ vi.mock("@/features/sequences/provider/sequence-hook", () => {
   const options: never[] = []
   return {
     useSequenceOptions: () => options,
+    useSequences: () => ({ isSuccess: true }),
   }
 })
 
 vi.mock("@/features/tags/provider/tag-hook", () => {
   const options: never[] = []
   return {
+    useTags: () => tagsQueryState,
     useTagSelectOptions: () => options,
   }
 })
@@ -80,7 +85,7 @@ vi.mock("@/features/tags/provider/tag-hook", () => {
 vi.mock("@/features/users/provider/user-hook", () => {
   const options: never[] = []
   return {
-    useContactAssigneeOptions: () => options,
+    useContactAssigneeOptionsWithStatus: () => ({ options, isSuccess: true }),
   }
 })
 
@@ -108,10 +113,13 @@ function BroadcastProbe({
 
 function ContactFilterConfigsProbe({
   inboxChannel,
+  onRender,
 }: {
   inboxChannel?: string
+  onRender?: (configs: ReturnType<typeof useContactFilterConfigs>) => void
 }) {
-  useContactFilterConfigs(inboxChannel)
+  const configs = useContactFilterConfigs(inboxChannel)
+  onRender?.(configs)
   return null
 }
 
@@ -131,6 +139,7 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
 
   beforeEach(() => {
     vi.clearAllMocks()
+    tagsQueryState.isSuccess = true
     // Distinct workspace id per test run (all module-level caches are keyed
     // by workspaceId:source:searchParams) so tests never share a cache entry.
     mockUseParams.mockReturnValue({ workspaceId: `ws-${Math.random()}` })
@@ -209,6 +218,29 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
     expect(privateListBroadcastOptionsAPI).toHaveBeenCalledWith(
       expect.objectContaining({ channel: "messenger" }),
     )
+  })
+
+  test("useContactFilterConfigs leaves tag options unset until tags load, then passes the (possibly empty) list", () => {
+    let tagOptions: unknown = "unset"
+    const captureTagOptions = (
+      configs: ReturnType<typeof useContactFilterConfigs>,
+    ) => {
+      tagOptions = configs.configs.find(
+        (config) => config.name === "tags",
+      )?.options
+    }
+
+    tagsQueryState.isSuccess = false
+    act(() => {
+      root.render(<ContactFilterConfigsProbe onRender={captureTagOptions} />)
+    })
+    expect(tagOptions).toBeUndefined()
+
+    tagsQueryState.isSuccess = true
+    act(() => {
+      root.render(<ContactFilterConfigsProbe onRender={captureTagOptions} />)
+    })
+    expect(tagOptions).toEqual([])
   })
 
   test("useReflinkSelectOptions calls listRefLinkOptionsAuthenticatedAPI, not the broadcasts endpoint", async () => {
@@ -319,7 +351,8 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
       )
     })
 
-    expect(latest).toEqual([])
+    // Not loaded yet for the new channel: no list, not the old channel's one.
+    expect(latest).toBeUndefined()
 
     await act(async () => {
       resolveMessenger({

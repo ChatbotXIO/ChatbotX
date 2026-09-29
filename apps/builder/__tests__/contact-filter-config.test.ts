@@ -731,10 +731,12 @@ describe("contact filter field config helpers", () => {
         unknownLabel,
       ),
     ).toBe("VIP, condition.unknownValue")
-    // No options yet (loading or failed request): nothing to map against, so
-    // the value is not flagged unknown.
-    expect(formatConditionValueDisplay("tag-1", [], unknownLabel)).toBe("tag-1")
-    // Free-text fields have no option list, so their value stays as typed.
+    // Loaded but empty (every tag deleted): the value is unknown.
+    expect(formatConditionValueDisplay("tag-1", [], unknownLabel)).toBe(
+      "condition.unknownValue",
+    )
+    // No list at all — the source hasn't loaded, failed, or the field is free
+    // text — so there is nothing to resolve against and the value stays as-is.
     expect(formatConditionValueDisplay("titan", undefined, unknownLabel)).toBe(
       "titan",
     )

@@ -22,7 +22,8 @@ type OptionItemsCacheEntry = {
 
 type OptionItemsState = {
   cacheKey: string | undefined
-  items: OptionItem[]
+  // `undefined` until the request for `cacheKey` succeeds.
+  items: OptionItem[] | undefined
 }
 
 const OPTION_ITEMS_CACHE_TTL_MS = 60_000
@@ -133,7 +134,7 @@ const loadOptionItems = ({
 const useWorkspaceOptionEndpoint = (
   source: OptionSource,
   searchParams?: BroadcastSearchParams,
-): SelectOption[] => {
+): SelectOption[] | undefined => {
   const { workspaceId } = useParams<{ workspaceId?: string }>()
   const cacheKey = useMemo(
     () =>
@@ -144,12 +145,11 @@ const useWorkspaceOptionEndpoint = (
   )
   const [state, setState] = useState<OptionItemsState>({
     cacheKey: undefined,
-    items: [],
+    items: undefined,
   })
 
   useEffect(() => {
     if (!(workspaceId && cacheKey)) {
-      setState({ cacheKey, items: [] })
       return
     }
 
@@ -173,8 +173,10 @@ const useWorkspaceOptionEndpoint = (
         }
       })
       .catch(() => {
+        // A failed load has nothing to resolve against — callers show values
+        // as-is instead of treating every id as unknown.
         if (active) {
-          setState({ cacheKey, items: [] })
+          setState({ cacheKey, items: undefined })
         }
       })
 
@@ -184,14 +186,17 @@ const useWorkspaceOptionEndpoint = (
   }, [cacheKey, source, searchParams, workspaceId])
 
   return useMemo(
-    () => (state.cacheKey === cacheKey ? toSelectOptions(state.items) : []),
+    () =>
+      state.cacheKey === cacheKey && state.items
+        ? toSelectOptions(state.items)
+        : undefined,
     [cacheKey, state],
   )
 }
 
 export const useBroadcastSelectOptions = (
   channel?: ChannelType,
-): SelectOption[] => {
+): SelectOption[] | undefined => {
   const searchParams = useMemo<BroadcastSearchParams>(
     () => ({ channel: channel ?? channelTypes.enum.whatsapp }),
     [channel],
@@ -200,5 +205,5 @@ export const useBroadcastSelectOptions = (
   return useWorkspaceOptionEndpoint("broadcasts/options", searchParams)
 }
 
-export const useReflinkSelectOptions = (): SelectOption[] =>
+export const useReflinkSelectOptions = (): SelectOption[] | undefined =>
   useWorkspaceOptionEndpoint("ref-links/options")
