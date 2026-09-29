@@ -103,6 +103,32 @@ describe("resolveIncomingTextRouting", () => {
     ).resolves.toEqual({ type: "none" })
   })
 
+  test("routes inactive inbound text to the handoff re-entry classifier", async () => {
+    const isConversationActive = vi.fn(async () => false)
+
+    await expect(
+      resolveIncomingTextRouting({
+        conversation: conversation as never,
+        hasActionableInput: true,
+        hasText: true,
+        isConversationActive,
+      }),
+    ).resolves.toEqual({ type: "handoffReentry", conversation })
+  })
+
+  test("does not route attachment-only inactive input to the handoff classifier", async () => {
+    const isConversationActive = vi.fn(async () => false)
+
+    await expect(
+      resolveIncomingTextRouting({
+        conversation: conversation as never,
+        hasActionableInput: true,
+        hasText: false,
+        isConversationActive,
+      }),
+    ).resolves.toEqual({ type: "none" })
+  })
+
   test("skips messages with no actionable input without checking bot automation", async () => {
     const isConversationActive = vi.fn(async () => true)
 

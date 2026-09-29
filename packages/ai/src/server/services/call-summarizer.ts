@@ -31,7 +31,7 @@ const DEFAULT_SUMMARY_MODELS: Record<AIProvider, string> = {
   openai: "gpt-5.4-mini",
   gemini: "gemini-3.5-flash",
   claude: "claude-sonnet-4-6",
-  deepseek: "deepseek-v4-flash",
+  deepseek: "deepseek-flash",
   openrouter: "openai/gpt-5.4-mini",
 }
 

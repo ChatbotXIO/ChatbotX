@@ -1,9 +1,18 @@
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  customFieldService,
+  flowService,
+  inboxTeamService,
+  tagService,
+  workspaceMemberService,
+  workspaceService,
+} from "@chatbotx.io/business"
+import { isWorkspaceAdminMember } from "@chatbotx.io/business/workspace-member/predicates"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AIAgentsTable } from "@/features/ai-agents/ai-agent-table"
+import { loadAllActionOptions } from "@/features/ai-agents/lib/load-action-options"
 import { listAIAgents } from "@/features/ai-agents/queries"
 import { listAIAgentsRequest } from "@/features/ai-agents/schema/query"
 import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
@@ -29,6 +38,33 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
     }),
     listIntegrationOpenaiCompatible({ workspaceId }),
     workspaceService.findById({ id: workspaceId }),
+    Promise.all([
+      flowService.listPublishedOptions({ workspaceId }),
+      loadAllActionOptions((page) =>
+        tagService.list({ workspaceId, page, perPage: 100 }),
+      ),
+      loadAllActionOptions((page) =>
+        customFieldService.list({ workspaceId, page, perPage: 100 }),
+      ),
+      workspaceMemberService.listByWorkspaceId({ workspaceId }),
+      inboxTeamService.listByWorkspace({ workspaceId }),
+    ]).then(([flows, tags, customFields, members, inboxTeams]) => ({
+      flows: flows.map((flow) => ({ label: flow.name, value: flow.id })),
+      tags: tags.map((tag) => ({ label: tag.name, value: tag.id })),
+      customFields: customFields.map((field) => ({
+        label: field.name,
+        type: field.type,
+        value: field.id,
+      })),
+      admins: members.filter(isWorkspaceAdminMember).map((member) => ({
+        label: member.user.name ?? member.user.email,
+        value: member.userId,
+      })),
+      inboxTeams: inboxTeams.map((team) => ({
+        label: team.name,
+        value: team.id,
+      })),
+    })),
   ])
 
   return (

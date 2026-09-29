@@ -29,10 +29,9 @@ import { normalizeError } from "universal-error-normalizer"
 import { sendTypingToChannel } from "../../../chat/handlers/send-message"
 import { detectConversationAndContactInbox } from "../../../lib/db"
 import { logger } from "../../../lib/logger"
+import { TRIGGER_MESSAGE_LOOKBACK_MS } from "../shared/trigger-message"
 import { triggerDefaultReplyFlow } from "./default-reply"
 import { replyByAI } from "./replies"
-
-const TRIGGER_MESSAGE_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
 
 const SUPPORTED_DOCUMENT_MIME_TYPES = new Set<string>([
   ...PDF_MIME_TYPES,
@@ -301,6 +300,7 @@ export async function processAutomatedResponse(
         summary,
         defaultReplyFlowId: workspace.defaultReply,
         defaultReplyFrequency,
+        workspaceTimezone: workspace.timezone ?? undefined,
       })
     } finally {
       clearInterval(typingIntervalId)

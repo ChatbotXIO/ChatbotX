@@ -271,6 +271,13 @@ async function startIntegrationWorker() {
                   messageText: message.text ?? "",
                   workspaceId: routing.conversation.workspaceId,
                 })
+              } else if (routing.type === "handoffReentry") {
+                await automatedResponseService.enqueueHandoffReentry({
+                  conversationId: routing.conversation.id,
+                  contactInboxId: message.contactInboxId,
+                  messageId: message.id,
+                  workspaceId: routing.conversation.workspaceId,
+                })
               } else if (isNotPostbackOrQuickReply) {
                 // Track no response for messages without content or not from contact
                 // (postback/quickReply are tracked in their own handlers)

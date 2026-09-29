@@ -91,7 +91,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 }))
 
 vi.mock("@chatbotx.io/automated-response", () => ({
-  automatedResponseService: { enqueue: vi.fn() },
+  automatedResponseService: {
+    enqueue: vi.fn(),
+    enqueueHandoffReentry: vi.fn(),
+  },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({

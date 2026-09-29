@@ -6,7 +6,10 @@ import {
   openaiModels,
   openrouterModels,
 } from "@chatbotx.io/ai"
-import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import {
+  aiAgentActionRulesSchema,
+  aiMessageRoles,
+} from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { MAX_WEB_SEARCH_AUTHORIZED_DOMAINS } from "../lib/web-search-tool"
 
@@ -17,6 +20,13 @@ const webSearchAuthorizedDomainsSchema = z
     }),
   )
   .max(MAX_WEB_SEARCH_AUTHORIZED_DOMAINS)
+
+const actionPromptSchema = z
+  .string()
+  .trim()
+  .max(10_000)
+  .transform((value) => value || null)
+  .nullable()
 
 export const createAIAgentRequest = z.object({
   name: z.string().trim().min(1).max(255).describe("AI agent name."),
@@ -94,6 +104,12 @@ export const createAIAgentRequest = z.object({
     .describe(
       "Whether the agent may return rich (card/button) responses instead of plain text.",
     ),
+  actionPrompt: actionPromptSchema
+    .default(null)
+    .describe("Optional private instructions used while matching AI actions."),
+  actionRules: aiAgentActionRulesSchema
+    .default([])
+    .describe("Private AI action rules for inbound direct messages."),
 })
 export type CreateAIAgentRequest = z.infer<typeof createAIAgentRequest>
 
@@ -109,4 +125,10 @@ export const updateAIAgentRequest = createAIAgentRequest
       ),
   })
   .partial()
+  // Defaults are appropriate for a create, but must not silently erase a
+  // configured action prompt or rule list during a partial update.
+  .extend({
+    actionPrompt: actionPromptSchema.optional(),
+    actionRules: aiAgentActionRulesSchema.optional(),
+  })
 export type UpdateAIAgentRequest = z.infer<typeof updateAIAgentRequest>

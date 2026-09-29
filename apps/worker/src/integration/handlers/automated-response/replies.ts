@@ -9,6 +9,7 @@ import {
 import {
   type AIProviderInstance,
   aiContextService,
+  appendAIAgentActionToolProtocol,
   appendFabricationGuard,
   appendHandoffPolicy,
   appendKnowledgeBaseGuard,
@@ -19,10 +20,12 @@ import {
   normalizeMcpContent,
 } from "@chatbotx.io/ai/server"
 import type {
+  AIAgentActionRule,
   AIAgentModelConfig,
   AIAgentProviderModels,
   DefaultReplyFrequency,
 } from "@chatbotx.io/database/partials"
+import { aiAgentActionRulesSchema } from "@chatbotx.io/database/partials"
 import type {
   AIAgentModel,
   ContactInboxModel,
@@ -51,6 +54,8 @@ import {
 import { logger } from "../../../lib/logger"
 import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
 import { sendMessageAndWait, sendMessageWithRender } from "../../utils/message"
+import { buildAIAgentActionsPrompt } from "../ai-agent-actions/prompt"
+import { createAIAgentActionsTool } from "../ai-agent-actions/tool-executor"
 import { logProviderAttempt } from "../shared/provider-attempt-logger"
 import { createMcpTokenResolver } from "../shared/resolve-mcp-token"
 import { triggerDefaultReplyFlow } from "./default-reply"
@@ -76,6 +81,7 @@ export type ReplyByAIProps = {
   summary?: string
   defaultReplyFlowId?: string | null
   defaultReplyFrequency: DefaultReplyFrequency
+  workspaceTimezone?: string
 }
 
 export type ReplyByAIExecutionResult = {
@@ -84,6 +90,8 @@ export type ReplyByAIExecutionResult = {
   modelId: string
   usedFallbackText: boolean
   toolStats: {
+    actionToolAvailable: boolean
+    actionToolCalled: boolean
     steps: number
     toolCallsCount: number
     toolResultsCount: number
@@ -106,12 +114,18 @@ export async function replyByAI(
   const providers = aiAgent.models as AIAgentProviderModels
 
   const controller = new AbortController()
+  const executedRuleIds = new Set<string>()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
   try {
     for (const [index, providerInfo] of providers.entries()) {
       const attemptStartedAt = Date.now()
-      const result = await runAIReply(props, providerInfo, controller.signal)
+      const result = await runAIReply(
+        props,
+        providerInfo,
+        controller.signal,
+        executedRuleIds,
+      )
       const durationMs = Date.now() - attemptStartedAt
       // A `null` result can also mean the provider was intentionally skipped
       // (not configured / auto-reply off) or an empty completion / error —
@@ -284,7 +298,7 @@ export async function generateAIReplyText(
             provider,
             modelId: providerInfo.model,
             conversationId: conversation.id,
-            error: normalizeError(streamError),
+            err: normalizeError(streamError),
           },
           "[comment-ai-reply] processStreamingText threw error",
         )
@@ -316,6 +330,8 @@ function createReplyToolset(options: {
   provider: ReplyAIProvider
   providerInfo: AIAgentModelConfig
   providerInstance?: AIProviderInstance
+  actionRules?: AIAgentActionRule[]
+  executedRuleIds: Set<string>
   trackingContextRef: TrackingContextRef
 }) {
   const { conversation, aiAgent } = options.props
@@ -435,6 +451,24 @@ function createReplyToolset(options: {
       ...toolset.tools,
       ...(nativeWebSearchTool.tool
         ? { [systemFunctionNames.webSearch]: nativeWebSearchTool.tool }
+        : {}),
+      ...(options.actionRules && options.props.triggerMessageId
+        ? {
+            apply_ai_agent_actions: createAIAgentActionsTool({
+              rules: options.actionRules,
+              executedRuleIds: options.executedRuleIds,
+              context: {
+                workspaceId: conversation.workspaceId,
+                conversationId: conversation.id,
+                contactId: conversation.contactId,
+                contactInboxId: options.props.contactInbox.id,
+                channel: options.props.channel,
+                triggerMessageId: options.props.triggerMessageId,
+                workspaceTimezone: options.props.workspaceTimezone,
+                ruleId: "",
+              },
+            }),
+          }
         : {}),
     },
     webSearchOmitReason: nativeWebSearchTool.omitReason,
@@ -654,6 +688,7 @@ async function runAIReply(
   props: ReplyByAIProps,
   providerInfo: AIAgentModelConfig,
   abortSignal: AbortSignal,
+  executedRuleIds: Set<string>,
 ): Promise<null | ReplyByAIExecutionResult> {
   const { conversation, messages, aiAgent } = props
   const provider = getProviderName(providerInfo)
@@ -692,6 +727,33 @@ async function runAIReply(
       current: successTrackingContext,
     }
     const directSendTracker = { sent: false, sentText: "" }
+    const parsedActionRules = aiAgentActionRulesSchema.safeParse(
+      aiAgent.actionRules ?? [],
+    )
+    const actionRules =
+      parsedActionRules.success && props.triggerMessageId
+        ? parsedActionRules.data
+        : undefined
+    if (!parsedActionRules.success) {
+      logger.warn(
+        {
+          err: normalizeError(parsedActionRules.error),
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          reason: "malformed_action_rules",
+        },
+        "[ai-agent-actions] action tool disabled",
+      )
+    } else if (parsedActionRules.data.length > 0 && !props.triggerMessageId) {
+      logger.warn(
+        {
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          reason: "missing_trigger_message_id",
+        },
+        "[ai-agent-actions] action tool disabled",
+      )
+    }
     const toolset = await createReplyToolset({
       abortSignal,
       directSendTracker,
@@ -702,6 +764,8 @@ async function runAIReply(
       providerInfo,
       providerInstance: modelConfig.providerInstance,
       trackingContextRef,
+      actionRules: actionRules?.length ? actionRules : undefined,
+      executedRuleIds,
     })
     const tools = toolset.tools
     cleanup = toolset.cleanup
@@ -734,10 +798,22 @@ async function runAIReply(
       )
     }
 
+    const promptWithActions = actionRules?.length
+      ? `${completePrompt}\n\n${buildAIAgentActionsPrompt({
+          actionPrompt: aiAgent.actionPrompt,
+        })}`
+      : completePrompt
+    const promptWithActionProtocol = appendAIAgentActionToolProtocol(
+      promptWithActions,
+      Boolean(actionRules?.length),
+    )
     const guardedPrompt = appendUnavailableWebSearchPolicy(
       appendHandoffPolicy(
         appendKnowledgeBaseGuard(
-          appendFabricationGuard(appendToolOutputGuard(completePrompt), tools),
+          appendFabricationGuard(
+            appendToolOutputGuard(promptWithActionProtocol),
+            tools,
+          ),
           tools,
         ),
         tools,
@@ -819,7 +895,7 @@ async function runAIReply(
               toolName: toolCall?.toolName,
               toolCallId: toolCall?.toolCallId,
               durationMs,
-              error: normalizedError,
+              err: normalizedError,
               errorMessage: normalizedError.message,
             },
             "[automated-response] tool execution failed",
@@ -829,17 +905,42 @@ async function runAIReply(
       abortSignal,
     })
 
-    const buildToolStats = () => ({
-      steps: stepCount,
-      toolCallsCount,
-      toolResultsCount,
-      toolErrorsCount,
-      toolNames: Array.from(toolNamesSet).slice(0, 10),
-      finishReasons: finishReasons.slice(0, 10),
-    })
+    const buildToolStats = () => {
+      const toolNames = Array.from(toolNamesSet).slice(0, 10)
+      return {
+        actionToolAvailable: Boolean(actionRules?.length),
+        actionToolCalled: toolNamesSet.has("apply_ai_agent_actions"),
+        steps: stepCount,
+        toolCallsCount,
+        toolResultsCount,
+        toolErrorsCount,
+        toolNames,
+        finishReasons: finishReasons.slice(0, 10),
+      }
+    }
+
+    const logActionToolSelection = () => {
+      const toolStats = buildToolStats()
+      if (!toolStats.actionToolAvailable) {
+        return toolStats
+      }
+      logger.info(
+        {
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          contactId: conversation.contactId,
+          triggerMessageId: props.triggerMessageId,
+          provider,
+          modelId: selectedModelId,
+          ...toolStats,
+        },
+        "[ai-agent-actions] tool selection outcome",
+      )
+      return toolStats
+    }
 
     if (richModeEnabled) {
-      return handleRichAIReply({
+      const richResult = await handleRichAIReply({
         props,
         textStream: result.textStream,
         directSendTracker,
@@ -848,6 +949,8 @@ async function runAIReply(
         startTime,
         buildToolStats,
       })
+      logActionToolSelection()
+      return richResult
     }
 
     const { messageCount, fullText } = await processStreamingText(
@@ -872,7 +975,7 @@ async function runAIReply(
           provider,
           modelId: selectedModelId,
           conversationId: conversation.id,
-          error: normalizedError,
+          err: normalizedError,
         },
         "[automated-response] processStreamingText threw error",
       )
@@ -899,7 +1002,7 @@ async function runAIReply(
         provider,
         modelId: selectedModelId,
         usedFallbackText: false,
-        toolStats: buildToolStats(),
+        toolStats: logActionToolSelection(),
       }
     }
 
@@ -922,7 +1025,7 @@ async function runAIReply(
         provider,
         modelId: selectedModelId,
         usedFallbackText: false,
-        toolStats: buildToolStats(),
+        toolStats: logActionToolSelection(),
       }
     }
 
@@ -961,7 +1064,7 @@ async function runAIReply(
         provider,
         modelId: selectedModelId,
         usedFallbackText: true,
-        toolStats: buildToolStats(),
+        toolStats: logActionToolSelection(),
       }
     }
 
@@ -982,7 +1085,7 @@ async function runAIReply(
     const normalizedError = normalizeError(error)
     logger.error(
       {
-        error: normalizedError,
+        err: normalizedError,
         provider,
         conversationId: conversation.id,
         workspaceId: conversation.workspaceId,
@@ -997,7 +1100,7 @@ async function runAIReply(
       const normalizedError = normalizeError(cleanupError)
       logger.error(
         {
-          error: normalizedError,
+          err: normalizedError,
           provider,
           conversationId: conversation.id,
           workspaceId: conversation.workspaceId,

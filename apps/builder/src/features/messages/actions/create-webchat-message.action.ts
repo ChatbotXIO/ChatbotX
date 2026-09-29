@@ -348,17 +348,25 @@ export async function handleCreateWebchatMessage({
       )
     } else if (
       newMessage.text &&
-      !("postback" in parsedInput && parsedInput.postback) &&
-      (await conversationService.ensureActive(conversation))
+      !("postback" in parsedInput && parsedInput.postback)
     ) {
+      const isConversationActive =
+        await conversationService.ensureActive(conversation)
       promises.push(
-        automatedResponseService.enqueue({
-          conversationId: conversation.id,
-          contactInboxId: contactInbox.id,
-          messageId: newMessage.id,
-          messageText: newMessage.text,
-          workspaceId: conversation.workspaceId,
-        }),
+        isConversationActive
+          ? automatedResponseService.enqueue({
+              conversationId: conversation.id,
+              contactInboxId: contactInbox.id,
+              messageId: newMessage.id,
+              messageText: newMessage.text,
+              workspaceId: conversation.workspaceId,
+            })
+          : automatedResponseService.enqueueHandoffReentry({
+              conversationId: conversation.id,
+              contactInboxId: contactInbox.id,
+              messageId: newMessage.id,
+              workspaceId: conversation.workspaceId,
+            }),
       )
     }
 

@@ -180,6 +180,48 @@
     "title": "AI Agents",
     "name": "Agents"
   },
+  "aiAgentActions": {
+    "title": "Hành động AI",
+    "description": "Để AI tự động thực hiện hành động khi trò chuyện với khách hàng.",
+    "when": "Khi nào",
+    "whenPlaceholder": "Mô tả khi nào AI cần thực hiện việc này...",
+    "whatShouldAIDo": "AI cần thực hiện điều gì?",
+    "action": "Hành động {number}",
+    "actionType": "Loại hành động",
+    "addRule": "Thêm quy tắc hành động",
+    "addAction": "Thêm hành động",
+    "duplicateRule": "Nhân bản quy tắc",
+    "removeRule": "Xóa quy tắc",
+    "removeAction": "Xóa hành động",
+    "moveUp": "Di chuyển hành động lên",
+    "moveDown": "Di chuyển hành động xuống",
+    "flow": "Luồng",
+    "admin": "Quản trị viên",
+    "tag": "Thẻ",
+    "customField": "Trường tùy chỉnh",
+    "actionPrompt": {
+      "label": "Prompt hành động",
+      "description": "Hướng dẫn riêng tư chỉ dùng khi AI đánh giá các quy tắc hành động.",
+      "placeholder": "Thêm hướng dẫn tùy chọn để khớp quy tắc hành động...",
+      "open": "Cấu hình prompt hành động",
+      "reset": "Đặt lại"
+    },
+    "actionTypes": {
+      "sendFlow": "Gửi luồng",
+      "assignConversation": "Gán cuộc trò chuyện",
+      "removeAssignment": "Bỏ gán cuộc trò chuyện",
+      "transferToHuman": "Chuyển cho người phụ trách",
+      "addTag": "Thêm thẻ",
+      "removeTag": "Xóa thẻ",
+      "setCustomField": "Thiết lập trường tùy chỉnh",
+      "clearCustomField": "Xóa trường tùy chỉnh",
+      "markFollowUp": "Đánh dấu theo dõi",
+      "removeFollowUp": "Bỏ theo dõi",
+      "transferToBot": "Chuyển cho bot",
+      "archive": "Lưu trữ",
+      "blockContact": "Chặn liên hệ"
+    }
+  },
   "aiFiles": {
     "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",
     "title": "Knowledge",

@@ -114,4 +114,8 @@ describe.skipIf(!databaseUrl)("drizzle defaults vs database defaults", () => {
 
     expect(phantom.sort()).toEqual([...DEFAULTS_MISSING_FROM_DATABASE])
   })
+
+  test("AIAgent.actionRules has a database default", () => {
+    expect(databaseDefaults.get("AIAgent.actionRules")).toBe(true)
+  })
 })

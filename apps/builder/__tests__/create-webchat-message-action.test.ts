@@ -6,6 +6,7 @@ const {
   insertBuilder,
   mockAutomatedResponseEnqueue,
   mockAutomatedResponseEnqueueFlowAction,
+  mockAutomatedResponseEnqueueHandoffReentry,
   mockBroadcastToWorkspaceParty,
   mockChatQueueAdd,
   mockContactFindById,
@@ -53,6 +54,9 @@ const {
     insertBuilder,
     mockAutomatedResponseEnqueue: vi.fn().mockResolvedValue(undefined),
     mockAutomatedResponseEnqueueFlowAction: vi
+      .fn()
+      .mockResolvedValue(undefined),
+    mockAutomatedResponseEnqueueHandoffReentry: vi
       .fn()
       .mockResolvedValue(undefined),
     mockContactFindById: vi.fn(),
@@ -111,6 +115,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
   automatedResponseService: {
     enqueue: mockAutomatedResponseEnqueue,
     enqueueFlowAction: mockAutomatedResponseEnqueueFlowAction,
+    enqueueHandoffReentry: mockAutomatedResponseEnqueueHandoffReentry,
   },
 }))
 
@@ -486,6 +491,28 @@ describe("handleCreateWebchatMessage", () => {
       messageText: "hello",
       workspaceId: "ws-1",
     })
+    expect(mockAutomatedResponseEnqueueHandoffReentry).not.toHaveBeenCalled()
+  })
+
+  test("enqueues handoff re-entry instead of automated response for inactive text messages", async () => {
+    mockConversationEnsureActive.mockResolvedValue(false)
+
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        text: "hello",
+        workspaceId: "ws-1",
+        webchatId: "webchat-1",
+        guestConversationId: "guest-1",
+      },
+    })
+
+    expect(mockAutomatedResponseEnqueueHandoffReentry).toHaveBeenCalledWith({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      messageId: "msg-1",
+      workspaceId: "ws-1",
+    })
+    expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
   })
 
   test("enqueues webchat postbacks through flow action debounce", async () => {

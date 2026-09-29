@@ -256,6 +256,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
   automatedResponseService: {
     enqueue: mockAutomatedResponseEnqueue,
     enqueueFlowAction: vi.fn().mockResolvedValue(undefined),
+    enqueueHandoffReentry: vi.fn().mockResolvedValue(undefined),
   },
 }))
 
