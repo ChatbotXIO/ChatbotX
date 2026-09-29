@@ -1,6 +1,9 @@
 import { z } from "zod"
 
 export const claudeModels = z.enum([
+  "claude-fable-5-1",
+  "claude-opus-5-5",
+  "claude-sonnet-5",
   "claude-fable-5",
   "claude-opus-4-8",
   "claude-opus-4-6",
@@ -15,6 +18,18 @@ export const claudeAnalyzeImageModelOptions: {
   label: string
   value: ClaudeModel
 }[] = [
+  {
+    label: "Claude Fable 5.1",
+    value: claudeModels.enum["claude-fable-5-1"],
+  },
+  {
+    label: "Claude Opus 5.5",
+    value: claudeModels.enum["claude-opus-5-5"],
+  },
+  {
+    label: "Claude Sonnet 5",
+    value: claudeModels.enum["claude-sonnet-5"],
+  },
   {
     label: "Claude Fable 5",
     value: claudeModels.enum["claude-fable-5"],
@@ -38,6 +53,18 @@ export const claudeAnalyzeImageModelOptions: {
 ]
 
 export const claudeModelOptions: { label: string; value: ClaudeModel }[] = [
+  {
+    label: "Claude Fable 5.1",
+    value: claudeModels.enum["claude-fable-5-1"],
+  },
+  {
+    label: "Claude Opus 5.5",
+    value: claudeModels.enum["claude-opus-5-5"],
+  },
+  {
+    label: "Claude Sonnet 5",
+    value: claudeModels.enum["claude-sonnet-5"],
+  },
   {
     label: "Claude Fable 5",
     value: claudeModels.enum["claude-fable-5"],

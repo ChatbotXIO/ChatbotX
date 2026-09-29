@@ -100,6 +100,12 @@ const defaultDraftGraph = (): {
 }
 
 class FlowService extends BaseService {
+  async listPublishedOptions(input: {
+    workspaceId: string
+  }): Promise<Array<{ id: string; name: string }>> {
+    return await flowRepository.listPublishedOptions(input)
+  }
+
   async findBy(
     input: { workspaceId: string; id: string },
     tx?: DatabaseClient,

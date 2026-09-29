@@ -13,6 +13,9 @@ import { stepTypes } from "./step-action"
 export const aiExtractDataModels = {
   openai: {
     models: [
+      "gpt-6-astra",
+      "gpt-6-sol",
+      "gpt-6-luna",
       "gpt-5.5-pro",
       "gpt-5.5",
       "gpt-5.4-pro",
@@ -34,6 +37,10 @@ export const aiExtractDataModels = {
   },
   gemini: {
     models: [
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash-lite",
       "gemini-3.5-flash",
       "gemini-3.1-flash-lite",
       "gemini-3.1-pro-preview",
@@ -42,6 +49,9 @@ export const aiExtractDataModels = {
   },
   claude: {
     models: [
+      "claude-fable-5-1",
+      "claude-opus-5-5",
+      "claude-sonnet-5",
       "claude-fable-5",
       "claude-opus-4-8",
       "claude-opus-4-6",
@@ -53,6 +63,9 @@ export const aiExtractDataModels = {
   },
   openrouter: {
     models: [
+      "openai/gpt-6-astra",
+      "openai/gpt-6-sol",
+      "openai/gpt-6-luna",
       "openai/gpt-5.5-pro",
       "openai/gpt-5.5",
       "openai/gpt-5.4-pro",
@@ -66,12 +79,19 @@ export const aiExtractDataModels = {
       "openai/gpt-4o",
       "openai/gpt-4o-mini",
       "anthropic/claude-fable-5",
+      "anthropic/claude-fable-5.1",
+      "anthropic/claude-opus-5.5",
+      "anthropic/claude-sonnet-5",
       "anthropic/claude-opus-4.8",
       "anthropic/claude-opus-4.6",
       "anthropic/claude-sonnet-4.6",
       "anthropic/claude-sonnet-4.5",
       "anthropic/claude-haiku-4.5",
       "google/gemini-3.5-flash",
+      "google/gemini-3.8-flash",
+      "google/gemini-3.7-flash",
+      "google/gemini-3.6-flash",
+      "google/gemini-3.5-flash-lite",
       "google/gemini-3.1-pro-preview",
       "google/gemini-3.1-flash-lite",
       "google/gemini-2.5-flash",

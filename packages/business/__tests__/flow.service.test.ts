@@ -13,6 +13,7 @@ const {
   mockInsertReturning,
   mockInsertValues,
   mockInvalidateList,
+  mockListPublishedOptions,
   mockTopLevelFlowFindFirst,
   mockUpdate,
   mockUpdateSet,
@@ -42,6 +43,7 @@ const {
     mockInsertReturning,
     mockInsertValues,
     mockInvalidateList: vi.fn(),
+    mockListPublishedOptions: vi.fn(),
     mockTopLevelFlowFindFirst: vi.fn(),
     mockUpdate,
     mockUpdateSet,
@@ -79,7 +81,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // builders, which read schema models this file does not mock. flowService only
 // uses `listIdsByIds` (covered elsewhere), so a stub keeps that chain out.
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  flowRepository: { listIdsByIds: vi.fn(async () => []) },
+  flowRepository: {
+    listIdsByIds: vi.fn(async () => []),
+    listPublishedOptions: mockListPublishedOptions,
+  },
   whatsappMessageTemplateRepository: { listIdsByIntegration: vi.fn() },
 }))
 
@@ -145,6 +150,25 @@ vi.mock("../src/folder/service", () => ({
 }))
 
 const { flowService } = await import("../src/flow/service")
+
+describe("flowService.listPublishedOptions", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("delegates the workspace-scoped options read to the repository", async () => {
+    mockListPublishedOptions.mockResolvedValue([
+      { id: "flow-1", name: "Welcome" },
+    ])
+
+    await expect(
+      flowService.listPublishedOptions({ workspaceId: "ws-1" }),
+    ).resolves.toEqual([{ id: "flow-1", name: "Welcome" }])
+    expect(mockListPublishedOptions).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+    })
+  })
+})
 
 describe("flowService.duplicate", () => {
   afterEach(() => {

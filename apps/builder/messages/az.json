@@ -180,6 +180,48 @@
     "title": "AI agentləri",
     "name": "Agentlər"
   },
+  "aiAgentActions": {
+    "title": "Sİ Əməliyyatları",
+    "description": "Müştərilərlə danışarkən Sİ-nin avtomatik olaraq əməliyyatlar yerinə yetirməsinə icazə verin.",
+    "when": "Nə vaxt",
+    "whenPlaceholder": "Sİ-nin bunu nə vaxt etməli olduğunu təsvir edin...",
+    "whatShouldAIDo": "Sİ nə etməlidir?",
+    "action": "Əməliyyat {number}",
+    "actionType": "Əməliyyat növü",
+    "addRule": "Qayda əlavə et",
+    "addAction": "Əməliyyat əlavə et",
+    "duplicateRule": "Qaydanı dublikat et",
+    "removeRule": "Qaydanı sil",
+    "removeAction": "Əməliyyatı sil",
+    "moveUp": "Əməliyyatı yuxarı daşı",
+    "moveDown": "Əməliyyatı aşağı daşı",
+    "flow": "Axın",
+    "admin": "Admin",
+    "tag": "Teq",
+    "customField": "Fərdi sahə",
+    "actionPrompt": {
+      "label": "Əməliyyat təlimatı",
+      "description": "Yalnız Sİ əməliyyat qaydalarını qiymətləndirərkən istifadə olunan gizli təlimatlar.",
+      "placeholder": "Əməliyyat qaydalarının uyğunlaşdırılması üçün əlavə təlimatlar yazın...",
+      "open": "Əməliyyat təlimatını tənzimlə",
+      "reset": "Sıfırla"
+    },
+    "actionTypes": {
+      "sendFlow": "Axın göndər",
+      "assignConversation": "Söhbəti adminə təyin et",
+      "removeAssignment": "Təyinatı ləğv et",
+      "transferToHuman": "Söhbəti operatora ötür",
+      "addTag": "Teq əlavə et",
+      "removeTag": "Teqi sil",
+      "setCustomField": "Fərdi sahəni təyin et",
+      "clearCustomField": "Fərdi sahəni təmizlə",
+      "markFollowUp": "İzləməyə əlavə et",
+      "removeFollowUp": "İzləmədən çıxar",
+      "transferToBot": "Söhbəti bota ötür",
+      "archive": "Arxivlə",
+      "blockContact": "Kontaktı blokla"
+    }
+  },
   "aiFiles": {
     "description": "Agentlərinizə PDF-lərə, sənədlərə və digər mənbələrə giriş verin",
     "title": "Bilik",

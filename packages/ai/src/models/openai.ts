@@ -1,9 +1,15 @@
 import { z } from "zod"
 
-export const openaiEmbeddingModels = z.enum(["text-embedding-ada-002"])
+export const openaiEmbeddingModels = z.enum([
+  "text-embedding-ada-002",
+  "text-embedding-3-small",
+])
 export type OpenAIEmbeddingModel = z.infer<typeof openaiEmbeddingModels>
 
 export const openaiModels = z.enum([
+  "gpt-6-astra",
+  "gpt-6-sol",
+  "gpt-6-luna",
   "gpt-4-turbo",
   "gpt-4.1-mini",
   "gpt-4.1-nano",
@@ -31,6 +37,18 @@ export const openaiAnalyzeImageModelOptions: {
   label: string
   value: OpenAIModel
 }[] = [
+  {
+    label: "GPT-6 Astra",
+    value: openaiModels.enum["gpt-6-astra"],
+  },
+  {
+    label: "GPT-6 Sol",
+    value: openaiModels.enum["gpt-6-sol"],
+  },
+  {
+    label: "GPT-6 Luna",
+    value: openaiModels.enum["gpt-6-luna"],
+  },
   {
     label: "GPT-5.5",
     value: openaiModels.enum["gpt-5.5"],
@@ -86,6 +104,18 @@ export const openaiAnalyzeImageModelOptions: {
 ]
 
 export const openaiModelOptions: { label: string; value: OpenAIModel }[] = [
+  {
+    label: "GPT-6 Astra",
+    value: openaiModels.enum["gpt-6-astra"],
+  },
+  {
+    label: "GPT-6 Sol",
+    value: openaiModels.enum["gpt-6-sol"],
+  },
+  {
+    label: "GPT-6 Luna",
+    value: openaiModels.enum["gpt-6-luna"],
+  },
   {
     label: "GPT-5.5",
     value: openaiModels.enum["gpt-5.5"],
@@ -165,6 +195,8 @@ export const openaiModelOptions: { label: string; value: OpenAIModel }[] = [
 ]
 
 export const openaiImageModels = z.enum([
+  "gpt-image-2.5-sunburst",
+  "gpt-image-2.5-flare",
   "gpt-image-2",
   "gpt-image-1.5",
   "gpt-image-1",
@@ -176,6 +208,14 @@ export const openaiImageModelOptions: {
   label: string
   value: OpenAIImageModel
 }[] = [
+  {
+    label: "GPT Image 2.5 Sunburst",
+    value: openaiImageModels.enum["gpt-image-2.5-sunburst"],
+  },
+  {
+    label: "GPT Image 2.5 Flare",
+    value: openaiImageModels.enum["gpt-image-2.5-flare"],
+  },
   {
     label: "GPT Image 2",
     value: openaiImageModels.enum["gpt-image-2"],

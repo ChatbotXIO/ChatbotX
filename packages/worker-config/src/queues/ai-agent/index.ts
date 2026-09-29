@@ -18,6 +18,7 @@ export const AIJobAction = {
   processConversationSource: "processConversationSource",
   processConversationSourceEmbedding: "processConversationSourceEmbedding",
   processAutomatedResponse: "processAutomatedResponse",
+  processHandoffReentry: "processHandoffReentry",
   commentAIReply: "commentAIReply",
   processStoryReplyAutomation: "processStoryReplyAutomation",
 } as const
@@ -53,6 +54,15 @@ const aiJobProcessConversationSourceEmbeddingSchema = z.object({
 
 const aiJobProcessAutomatedResponseSchema = z.object({
   type: z.literal(AIJobAction.processAutomatedResponse),
+  data: z.object({
+    conversationId: z.string().min(1),
+    contactInboxId: z.string().min(1),
+    messageId: z.string().min(1),
+  }),
+})
+
+const aiJobProcessHandoffReentrySchema = z.object({
+  type: z.literal(AIJobAction.processHandoffReentry),
   data: z.object({
     conversationId: z.string().min(1),
     contactInboxId: z.string().min(1),
@@ -118,6 +128,7 @@ export const aiJobDataSchema = z.discriminatedUnion("type", [
   aiJobProcessConversationSourceSchema,
   aiJobProcessConversationSourceEmbeddingSchema,
   aiJobProcessAutomatedResponseSchema,
+  aiJobProcessHandoffReentrySchema,
   aiJobCommentAIReplySchema,
   aiJobProcessStoryReplyAutomationSchema,
 ])
@@ -138,6 +149,9 @@ export type AIJobProcessConversationSourceEmbedding = z.infer<
 >
 export type AIJobProcessAutomatedResponse = z.infer<
   typeof aiJobProcessAutomatedResponseSchema
+>
+export type AIJobProcessHandoffReentry = z.infer<
+  typeof aiJobProcessHandoffReentrySchema
 >
 export type AIJobCommentAIReply = z.infer<typeof aiJobCommentAIReplySchema>
 export type AIJobProcessStoryReplyAutomation = z.infer<

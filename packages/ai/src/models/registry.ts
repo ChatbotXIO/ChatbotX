@@ -43,7 +43,7 @@ export const aiChatProviders: readonly AiChatProviderConfig[] = [
   {
     provider: aiProviders.enum.deepseek,
     modelOptions: deepseekModelOptions,
-    defaultModel: deepseekModels.enum["deepseek-v4-flash"],
+    defaultModel: deepseekModels.enum["deepseek-flash"],
   },
   {
     provider: aiProviders.enum.openrouter,

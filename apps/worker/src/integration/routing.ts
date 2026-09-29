@@ -9,6 +9,7 @@ type IncomingRoutingDecision =
       challenge: NonNullable<ConversationAttributes["challenge"]>
     }
   | { type: "automatedResponse"; conversation: ConversationModel }
+  | { type: "handoffReentry"; conversation: ConversationModel }
 
 export async function resolveIncomingTextRouting(props: {
   conversation: ConversationModel
@@ -25,7 +26,15 @@ export async function resolveIncomingTextRouting(props: {
 
   const conversation = props.conversation
   if (!(await props.isConversationActive(conversation))) {
-    return { type: "none" }
+    const challenge = (
+      conversation.additionalAttributes as ConversationAttributes | undefined
+    )?.challenge
+    if (challenge) {
+      return { type: "none" }
+    }
+    return props.hasText
+      ? { type: "handoffReentry", conversation }
+      : { type: "none" }
   }
 
   const challenge = (

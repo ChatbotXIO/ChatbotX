@@ -3,6 +3,7 @@ import {
   AIJobAction,
   type AIJobData,
   type AIJobProcessAutomatedResponse,
+  type AIJobProcessHandoffReentry,
   aiJobDataSchema,
   closeHeavyQueueEvents,
   defaultWorkerOptions,
@@ -16,6 +17,7 @@ import { type Job, Worker } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
 import { env } from "../env"
+import { processHandoffReentry } from "../integration/handlers/ai-agent-actions/handoff-reentry"
 import { processAutomatedResponse } from "../integration/handlers/automated-response"
 import { processCommentAIReply } from "../integration/handlers/comment-automation/ai-reply"
 import { processStoryReplyAutomation } from "../integration/handlers/story-reply-automation"
@@ -37,6 +39,14 @@ async function processAutomatedResponseWithWebhookContext(
 ): Promise<void> {
   await runWithWebhookExecutionContext({ source: "webhook" }, () =>
     runWithOrphanedIntegrationCleanup(() => processAutomatedResponse(data)),
+  )
+}
+
+async function processHandoffReentryWithWebhookContext(
+  data: AIJobProcessHandoffReentry["data"],
+): Promise<void> {
+  await runWithWebhookExecutionContext({ source: "webhook" }, () =>
+    runWithOrphanedIntegrationCleanup(() => processHandoffReentry(data)),
   )
 }
 
@@ -100,6 +110,9 @@ async function startAIAgentWorker() {
               return
             case AIJobAction.processAutomatedResponse:
               await processAutomatedResponseWithWebhookContext(jobData.data)
+              return
+            case AIJobAction.processHandoffReentry:
+              await processHandoffReentryWithWebhookContext(jobData.data)
               return
             case AIJobAction.commentAIReply:
               await runWithOrphanedIntegrationCleanup(() =>

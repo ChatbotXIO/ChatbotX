@@ -123,6 +123,9 @@ export function getAIModel(model: AIIntegrationModel, provider: string) {
 }
 
 const legacyModelIdMap: Partial<Record<AIProvider, Record<string, string>>> = {
+  [aiProviders.enum.deepseek]: {
+    "deepseek-v4-flash": "deepseek-flash",
+  },
   [aiProviders.enum.claude]: {
     "claude-3-5-sonnet-20241022": "claude-sonnet-4-6",
     "claude-3-5-haiku-20241022": "claude-haiku-4-5-20251001",

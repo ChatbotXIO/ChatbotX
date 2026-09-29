@@ -37,6 +37,29 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 const { flowRepository } = await import("../src/repositories/flow/repository")
 
+describe("flowRepository.listPublishedOptions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findMany.mockResolvedValue([{ id: "flow-1", name: "Welcome" }])
+  })
+
+  test("selects only active published flows in the workspace", async () => {
+    const result = await flowRepository.listPublishedOptions({
+      workspaceId: "workspace-1",
+    })
+
+    expect(result).toEqual([{ id: "flow-1", name: "Welcome" }])
+    expect(mocks.findMany).toHaveBeenCalledWith({
+      where: {
+        workspaceId: "workspace-1",
+        active: true,
+        currentVersionId: { isNotNull: true },
+      },
+      columns: { id: true, name: true },
+    })
+  })
+})
+
 describe("flowRepository.listWithVersions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
