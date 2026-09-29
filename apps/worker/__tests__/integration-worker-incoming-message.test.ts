@@ -396,7 +396,8 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/sdk")>()),
   contentTypes: { enum: { text: "text", location: "location" } },
   echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
   resolveSourceScopedIdentityMatch: async <T>(
@@ -702,6 +703,68 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     expect(mockContactProfileRefresh).not.toHaveBeenCalled()
     expect(mockAutomatedResponseEnqueue).toHaveBeenCalled()
     expect(mockRecordCallPermissionReply).not.toHaveBeenCalled()
+  })
+
+  test("a Click-to-Messenger ad tap whose text is only in referral.text is stored as text and dispatched to automations", async () => {
+    const adText = "Register to visit the project"
+    const { integration: messengerIntegration } = await import(
+      "@chatbotx.io/integration-messenger"
+    )
+    // Parse with the REAL Messenger handler so the channel payload shape,
+    // not a hand-built parsed message, is what reaches the worker.
+    mockRunChannelHandler.mockImplementation(
+      (domain: string, action: string, props: { data: unknown }) => {
+        if (action === "getProfile") {
+          return Promise.resolve({ firstName: "Jane", lastName: "Doe" })
+        }
+        return messengerIntegration.runChannelHandler(domain, action, {
+          ...props,
+          ctx: { auth: { metadata: { pageId: "page-1" } } },
+        } as never)
+      },
+    )
+    const integrationWorker = findIntegrationWorker()
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {
+            object: "page",
+            entry: [
+              {
+                id: "page-1",
+                time: 1,
+                messaging: [
+                  {
+                    sender: { id: "psid-123" },
+                    recipient: { id: "page-1" },
+                    timestamp: 1,
+                    message: {
+                      mid: "msg-src-1",
+                      referral: {
+                        ad_id: "ad-1",
+                        source: "ADS",
+                        type: "OPEN_THREAD",
+                        text: adText,
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    })
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: adText }),
+    )
+    expect(mockResolveIncomingTextRouting).toHaveBeenCalled()
+    expect(mockAutomatedResponseEnqueue).toHaveBeenCalled()
   })
 
   test("a contact's call permission reply is recorded and never dispatched to automations", async () => {
