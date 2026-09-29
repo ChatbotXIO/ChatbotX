@@ -306,6 +306,10 @@ export const messengerFeedCommentValueSchema = z.object({
   from: z.object({ id: z.string(), name: z.string().optional() }),
   message: z.string().optional(),
   message_tags: z.array(messengerMessageTagSchema).optional(),
+  // URL of a video attached to the comment. Facebook sends a sibling `photo`
+  // for image comments too, but those are re-hosted from the Graph attachment
+  // (`getCommentAttachment`), which does not download videos.
+  video: z.string().optional(),
   created_time: z.number(),
 })
 export type MessengerFeedCommentValue = z.infer<

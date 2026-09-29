@@ -1294,6 +1294,15 @@ export const receiveComment = async (
       .catch(() => undefined)
     if (result?.attachment) {
       attachments = [result.attachment]
+    } else if (commentData.videoUrl) {
+      // The Graph attachment lookup re-hosts photos and GIFs only; a video
+      // comment's file arrives solely as the webhook's `video` URL.
+      const attachment = await downloadCommentMediaAttachment({
+        url: commentData.videoUrl,
+        workspaceId: inbox.workspaceId,
+        commentId: commentData.commentId,
+      })
+      attachments = attachment ? [attachment] : []
     }
   } else if (integrationType === "threads") {
     attachments = await fetchThreadsCommentAttachments({

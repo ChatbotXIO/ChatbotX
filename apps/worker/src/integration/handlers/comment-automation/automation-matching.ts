@@ -16,10 +16,11 @@ const RANDOM_DELAY_MINUTES: Record<string, number> = {
   randomWithin60Minutes: 60,
 }
 
-// Facebook post ids are composite `{pageId}_{storyId}`. The published/ads
-// pickers store that composite form, but the reels picker stores a bare id and
-// users pasting an id manually often omit the `{pageId}_` prefix. Compare on the
-// trailing story id (unique) so all three formats match the webhook `post_id`.
+// Facebook post ids are composite `{pageId}_{storyId}`. The published/ads/reels
+// pickers store that composite form (reels via the video's `post_id` — the bare
+// video id never equals the webhook's story id), but users pasting an id
+// manually often omit the `{pageId}_` prefix. Compare on the trailing story id
+// (unique) so both forms match the webhook `post_id`.
 function normalizePostId(id: string): string {
   const idx = id.indexOf("_")
   return idx === -1 ? id : id.slice(idx + 1)

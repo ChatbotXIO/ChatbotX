@@ -318,7 +318,9 @@ async function downloadFirstGifCandidate(
 /**
  * Fetches a comment's attachment and, for photo and GIF attachments, downloads
  * and uploads it to storage as an IncomingAttachment. Other attachment types
- * (video_inline, share, sticker) are reported by type only.
+ * (video_inline, share, sticker) are reported by type only — a video comment's
+ * file is taken from the `feed` webhook's `video` URL instead (see
+ * `receiveComment`).
  */
 export const getCommentAttachment = async (props: {
   ctx: Context<MessengerAuthValue>
