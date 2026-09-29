@@ -430,6 +430,39 @@ describe("contact filter field config helpers", () => {
     ).toEqual([{ label: "Unassigned", value: "unassigned" }])
   })
 
+  test("adds translated value options to static, custom, and bot boolean configs", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [{ id: "cf-bool", name: "Subscribed", type: "boolean" }],
+      botFields: [{ id: "bf-bool", name: "Enabled", type: "boolean" }],
+      includeBotFields: true,
+    })
+    const booleanOptions = [
+      { label: "fields.boolean.true", value: "true" },
+      { label: "fields.boolean.false", value: "false" },
+    ]
+
+    expect(
+      configs.find((config) => config.name === "blocked")?.options,
+    ).toEqual(booleanOptions)
+    expect(
+      configs.find((config) => config.name === "customField:cf-bool")?.options,
+    ).toEqual(booleanOptions)
+    expect(
+      configs.find((config) => config.name === "botField:bf-bool")?.options,
+    ).toEqual(booleanOptions)
+
+    for (const fieldName of ["customField:cf-bool", "botField:bf-bool"]) {
+      const options = configs.find(
+        (config) => config.name === fieldName,
+      )?.options
+      expect(formatConditionValueDisplay("{{x}}", options)).toBe("{{x}}")
+    }
+  })
+
   test("exposes the ctwaAds group with fromCtwaAd and ctwaConversion options", () => {
     const configs = getFieldConfigs({
       t,
@@ -654,5 +687,24 @@ describe("contact filter field config helpers", () => {
         [{ label: "VIP", value: "tag-1" }],
       ),
     ).toBe("VIP, missing")
+
+    expect(
+      formatConditionValueDisplay(
+        ["u_1", "t_1", "unassigned", "missing"],
+        [
+          { label: "Unassigned", value: "unassigned" },
+          {
+            label: "Agents",
+            value: "agents",
+            children: [{ label: "Alice", value: "u_1" }],
+          },
+          {
+            label: "Inbox Teams",
+            value: "inbox-teams",
+            children: [{ label: "Sales Team", value: "t_1" }],
+          },
+        ],
+      ),
+    ).toBe("Alice, Sales Team, Unassigned, missing")
   })
 })

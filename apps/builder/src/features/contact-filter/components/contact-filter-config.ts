@@ -144,6 +144,13 @@ const getContactSourceOptions = (t: (key: string) => string): SelectOption[] =>
     value: source,
   }))
 
+export const getBooleanOptions = (
+  t: (key: string) => string,
+): SelectOption[] => [
+  { label: t("fields.boolean.true"), value: "true" },
+  { label: t("fields.boolean.false"), value: "false" },
+]
+
 const CONTACT_INFO_TYPE_LABEL_KEYS = {
   phone: "fields.phone.label",
   email: "fields.email.label",
@@ -424,36 +431,54 @@ export const getFieldConfigs = ({
   includeBotFields?: boolean
 }): FieldConfig[] => {
   const channelOptions = getChannelMultiSelectOptions(t)
+  const booleanOptions = getBooleanOptions(t)
+  // Boolean fields have no option source of their own; attach the shared
+  // True/False labels so read-only rows render them translated.
+  const booleanOptionsFor = (formField: FormFieldType) =>
+    formField === formFieldTypes.enum.boolean ? booleanOptions : undefined
+  // Custom and bot fields share the same value-typing; only their id key,
+  // name prefix and group differ.
+  const toWorkspaceFieldProps = (field: CustomFieldFilterOption) => {
+    const formField = convertCustomFieldTypeToConditionType(field.type)
+    return {
+      customFieldType: field.type,
+      label: field.name,
+      formField,
+      options: booleanOptionsFor(formField),
+    }
+  }
 
   const staticConfigs: FieldConfig[] = CONTACT_FILTER_FIELD_DEFINITIONS.map(
-    (def: ContactFilterFieldDefinition) => ({
-      name: def.field,
-      formField: schemaKindToFormField(def.schemaKind),
-      group: getContactFilterFieldGroup(def.field),
-      hidden: def.hidden,
-      options: resolveContactFilterOptions(def.optionSource, {
-        t,
-        channelOptions,
-        inboxOptions,
-        tagOptions,
-        flowVersionOptions,
-        broadcastOptions,
-        sequenceOptions,
-        reflinkOptions,
-        assigneeOptions,
-      }),
-    }),
+    (def: ContactFilterFieldDefinition) => {
+      const formField = schemaKindToFormField(def.schemaKind)
+      return {
+        name: def.field,
+        formField,
+        group: getContactFilterFieldGroup(def.field),
+        hidden: def.hidden,
+        options:
+          resolveContactFilterOptions(def.optionSource, {
+            t,
+            channelOptions,
+            inboxOptions,
+            tagOptions,
+            flowVersionOptions,
+            broadcastOptions,
+            sequenceOptions,
+            reflinkOptions,
+            assigneeOptions,
+          }) ?? booleanOptionsFor(formField),
+      }
+    },
   )
 
   // Each workspace custom field becomes its own filter field, value-typed by the
   // custom field's type. Encoded as `customField:<id>` so the form/row can map
   // back to a `{ field: "customField", customFieldId }` condition.
   const customFieldConfigs: FieldConfig[] = customFields.map((field) => ({
+    ...toWorkspaceFieldProps(field),
     name: `customField:${field.id}`,
     customFieldId: field.id,
-    customFieldType: field.type,
-    label: field.name,
-    formField: convertCustomFieldTypeToConditionType(field.type),
     group: "customFields",
   }))
 
@@ -475,11 +500,9 @@ export const getFieldConfigs = ({
   // custom-field condition logic unchanged. Opt-in only (`includeBotFields`).
   const botFieldConfigs: FieldConfig[] = includeBotFields
     ? botFields.map((field) => ({
+        ...toWorkspaceFieldProps(field),
         name: `botField:${field.id}`,
         botFieldId: field.id,
-        customFieldType: field.type,
-        label: field.name,
-        formField: convertCustomFieldTypeToConditionType(field.type),
         group: "botFields",
       }))
     : []
@@ -601,6 +624,24 @@ export const formatCtwaRetargetChipLabel = (
   )
 }
 
+// Depth-first so grouped sources (e.g. assignee agents/teams under `children`)
+// resolve the same as flat ones.
+const findOptionLabel = (
+  options: SelectOption[],
+  value: string,
+): string | undefined => {
+  for (const option of options) {
+    if (option.value === value) {
+      return option.label
+    }
+    const childLabel =
+      option.children && findOptionLabel(option.children, value)
+    if (childLabel) {
+      return childLabel
+    }
+  }
+}
+
 export const formatConditionValueDisplay = (
   value: string | string[] | undefined,
   options?: SelectOption[],
@@ -612,12 +653,12 @@ export const formatConditionValueDisplay = (
     return Array.isArray(value) ? value.join(", ") : value
   }
 
-  const getLabel = (val: string) =>
-    options.find((opt) => opt.value === val)?.label ?? val
+  const getLabel = (optionValue: string) =>
+    findOptionLabel(options, optionValue) ?? optionValue
 
   if (Array.isArray(value)) {
     return value.map(getLabel).join(", ")
   }
 
-  return getLabel(value as string)
+  return getLabel(value)
 }

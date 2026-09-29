@@ -1,6 +1,6 @@
 "use client"
 
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -18,6 +18,11 @@ type BroadcastSearchParams = { channel: ChannelType }
 type OptionItemsCacheEntry = {
   items: OptionItem[]
   expiresAt: number
+}
+
+type OptionItemsState = {
+  cacheKey: string | undefined
+  items: OptionItem[]
 }
 
 const OPTION_ITEMS_CACHE_TTL_MS = 60_000
@@ -130,22 +135,27 @@ const useWorkspaceOptionEndpoint = (
   searchParams?: BroadcastSearchParams,
 ): SelectOption[] => {
   const { workspaceId } = useParams<{ workspaceId?: string }>()
-  const [items, setItems] = useState<OptionItem[]>([])
+  const cacheKey = useMemo(
+    () =>
+      workspaceId
+        ? buildOptionCacheKey({ workspaceId, source, searchParams })
+        : undefined,
+    [searchParams, source, workspaceId],
+  )
+  const [state, setState] = useState<OptionItemsState>({
+    cacheKey: undefined,
+    items: [],
+  })
 
   useEffect(() => {
-    if (!workspaceId) {
-      setItems([])
+    if (!(workspaceId && cacheKey)) {
+      setState({ cacheKey, items: [] })
       return
     }
 
-    const cacheKey = buildOptionCacheKey({
-      workspaceId,
-      source,
-      searchParams,
-    })
     const cachedItems = getCachedOptionItems(cacheKey)
     if (cachedItems) {
-      setItems(cachedItems)
+      setState({ cacheKey, items: cachedItems })
       return
     }
 
@@ -159,32 +169,36 @@ const useWorkspaceOptionEndpoint = (
     })
       .then((responseItems) => {
         if (active) {
-          setItems(responseItems)
+          setState({ cacheKey, items: responseItems })
         }
       })
       .catch(() => {
         if (active) {
-          setItems([])
+          setState({ cacheKey, items: [] })
         }
       })
 
     return () => {
       active = false
     }
-  }, [source, searchParams, workspaceId])
+  }, [cacheKey, source, searchParams, workspaceId])
 
-  return useMemo(() => toSelectOptions(items), [items])
-}
-
-const whatsappBroadcastSearchParams: BroadcastSearchParams = {
-  channel: "whatsapp",
-}
-
-export const useBroadcastSelectOptions = (): SelectOption[] =>
-  useWorkspaceOptionEndpoint(
-    "broadcasts/options",
-    whatsappBroadcastSearchParams,
+  return useMemo(
+    () => (state.cacheKey === cacheKey ? toSelectOptions(state.items) : []),
+    [cacheKey, state],
   )
+}
+
+export const useBroadcastSelectOptions = (
+  channel?: ChannelType,
+): SelectOption[] => {
+  const searchParams = useMemo<BroadcastSearchParams>(
+    () => ({ channel: channel ?? channelTypes.enum.whatsapp }),
+    [channel],
+  )
+
+  return useWorkspaceOptionEndpoint("broadcasts/options", searchParams)
+}
 
 export const useReflinkSelectOptions = (): SelectOption[] =>
   useWorkspaceOptionEndpoint("ref-links/options")

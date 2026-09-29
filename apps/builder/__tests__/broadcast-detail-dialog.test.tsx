@@ -4,9 +4,12 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type { BroadcastResourceWithRelations } from "@/features/broadcasts/schema/resource"
 
-const { mockListTemplateDetails } = vi.hoisted(() => ({
-  mockListTemplateDetails: vi.fn(),
-}))
+const { mockContactFilterSummary, mockListTemplateDetails } = vi.hoisted(
+  () => ({
+    mockContactFilterSummary: vi.fn(),
+    mockListTemplateDetails: vi.fn(),
+  }),
+)
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -37,7 +40,13 @@ vi.mock("@chatbotx.io/ui/components/ui/dialog", () => {
 })
 
 vi.mock("@/features/contact-filter/components/contact-filter-summary", () => ({
-  ContactFilterSummary: () => null,
+  ContactFilterSummary: (props: {
+    contactFilter: unknown
+    inboxChannel?: string
+  }) => {
+    mockContactFilterSummary(props)
+    return null
+  },
 }))
 
 vi.mock("@/features/inboxes/components/inbox-icon", () => ({
@@ -104,6 +113,7 @@ describe("BroadcastDetailDialog — per-page targets", () => {
   let root: Root
 
   beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
     mockListTemplateDetails.mockResolvedValue([])
     container = document.createElement("div")
@@ -162,6 +172,30 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     // A flow broadcast has no template section at all.
     expect(text).not.toContain("messages.featureNotFound")
     expect(mockListTemplateDetails).not.toHaveBeenCalled()
+  })
+
+  test("passes a valid broadcast channel unchanged to the audience summary", async () => {
+    await renderDialog({
+      ...BASE_BROADCAST,
+      channel: "messenger",
+      targets: [target("inbox-a", "Page A")],
+    } as BroadcastResourceWithRelations)
+
+    expect(mockContactFilterSummary).toHaveBeenCalledWith(
+      expect.objectContaining({ inboxChannel: "messenger" }),
+    )
+  })
+
+  test("passes the validated fallback channel to the audience summary", async () => {
+    await renderDialog({
+      ...BASE_BROADCAST,
+      channel: "unsupported-channel",
+      targets: [target("inbox-a", "Page A")],
+    } as BroadcastResourceWithRelations)
+
+    expect(mockContactFilterSummary).toHaveBeenCalledWith(
+      expect.objectContaining({ inboxChannel: "omnichannel" }),
+    )
   })
 
   test("loads the per-page templates of a template broadcast sent from targets", async () => {

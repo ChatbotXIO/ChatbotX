@@ -1,20 +1,22 @@
 "use client"
 
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { useTranslations } from "next-intl"
 import type { ContactFilterCriteria } from "../schema"
 import {
   formatConditionValueDisplay,
   formatCtwaRetargetChipLabel,
-  getConditionOptions,
-  getFieldConfigs,
 } from "./contact-filter-config"
+import { useContactFilterConfigs } from "./use-contact-filter-configs"
 
 type ContactFilterSummaryProps = {
   contactFilter?: ContactFilterCriteria | null
+  inboxChannel?: ChannelType
 }
 
 export function ContactFilterSummary({
   contactFilter,
+  inboxChannel,
 }: ContactFilterSummaryProps) {
   const t = useTranslations()
 
@@ -26,20 +28,23 @@ export function ContactFilterSummary({
     )
   }
 
-  const configs = getFieldConfigs({
-    t,
-    tagOptions: [],
-    inboxOptions: [],
-    customFields: [],
-    flowVersionOptions: [],
-    broadcastOptions: [],
-    sequenceOptions: [],
-    reflinkOptions: [],
-    assigneeOptions: [],
-  })
-  const operatorLabelByValue = new Map(
-    getConditionOptions(t).map((option) => [option.value, option.label]),
+  return (
+    <ContactFilterSummaryList
+      contactFilter={contactFilter}
+      inboxChannel={inboxChannel}
+    />
   )
+}
+
+// Split out so option queries only mount when there are conditions to label.
+function ContactFilterSummaryList({
+  contactFilter,
+  inboxChannel,
+}: ContactFilterSummaryProps & { contactFilter: ContactFilterCriteria }) {
+  const t = useTranslations()
+  const { configs, operatorLabelByValue } =
+    useContactFilterConfigs(inboxChannel)
+
   const operatorLabel =
     contactFilter.operator === "and"
       ? t("condition.operator.and")
