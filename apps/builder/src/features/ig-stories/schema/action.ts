@@ -50,6 +50,7 @@ export type IgStoryVariant = z.infer<typeof igStoryVariants>
 
 export const createIgStoryRequest = z.object({
   name: z.string().trim().min(1).max(255).describe("Automation name."),
+  inboxId: z.string().nullable().default(null),
   type: igStoryVariants.describe(
     "Instagram connection type, `instagram` (native login) or `instagramFacebook` (linked via a Facebook page).",
   ),

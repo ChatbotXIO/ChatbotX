@@ -158,6 +158,7 @@ export async function processStoryReplyAutomation(
     igStoryAutomationService.findActiveAutomations({
       workspaceId,
       channelType,
+      inboxId: contactInbox.inboxId,
     }),
     workspaceService.findById({ id: workspaceId }),
   ])

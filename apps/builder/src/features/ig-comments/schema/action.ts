@@ -54,6 +54,7 @@ export type IgCommentVariant = z.infer<typeof igCommentVariants>
 
 export const createIgCommentRequest = z.object({
   name: z.string().trim().min(1).max(255).describe("Automation name."),
+  inboxId: z.string().nullable().default(null),
   type: igCommentVariants.describe(
     "Instagram connection type, `instagram` (native login) or `instagramFacebook` (linked via a Facebook page).",
   ),

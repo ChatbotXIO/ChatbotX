@@ -57,6 +57,7 @@ export function EditTiktokCommentForm({
     mode: "onChange",
     defaultValues: {
       name: initialData.name,
+      inboxId: initialData.inboxId ?? null,
       post: initialData.post,
       publicReply: toFormPublicReply(initialData.publicReply),
       privateReply:

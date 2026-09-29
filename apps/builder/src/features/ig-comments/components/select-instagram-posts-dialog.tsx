@@ -196,11 +196,13 @@ export function SelectInstagramPostsDialog({
   onOpenChange,
   value,
   onChange,
+  accountId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   value: string[]
   onChange: (ids: string[]) => void
+  accountId?: string | null
 }) {
   const t = useTranslations()
 
@@ -214,8 +216,9 @@ export function SelectInstagramPostsDialog({
   useEffect(() => {
     if (open) {
       setSelectedIds(value)
+      setSelectedPageId(accountId ?? ALL_PAGES_VALUE)
     }
-  }, [open, value])
+  }, [open, value, accountId])
 
   const pagePosts =
     selectedPageId === ALL_PAGES_VALUE

@@ -50,6 +50,7 @@ export type ListFbCommentsResponse = z.infer<typeof listFbCommentsResponse>
 
 export const createFbCommentRequest = z.object({
   name: z.string().trim().min(1).max(255).describe("Automation name."),
+  inboxId: z.string().nullable().default(null),
   type: z
     .literal("messenger")
     .default("messenger")

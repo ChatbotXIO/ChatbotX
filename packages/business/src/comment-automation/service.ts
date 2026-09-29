@@ -34,7 +34,7 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
 import { resolveFolderIdFilter } from "../lib/folder-filter"
 import { assertDeletable } from "../template/installed-resource.service"
 
@@ -117,6 +117,7 @@ type ThreadsCommentAutomationReplyAfter = {
 }
 
 type CreateThreadsCommentAutomationInput = {
+  inboxId?: string | null
   name: string
   post: ThreadsCommentAutomationPost
   publicReply: ThreadsCommentAutomationReply
@@ -197,6 +198,7 @@ type TiktokCommentAutomationHideComments = {
 }
 
 type CreateTiktokCommentAutomationInput = {
+  inboxId?: string | null
   name: string
   post: ThreadsCommentAutomationPost
   publicReply: ThreadsCommentAutomationReply
@@ -382,14 +384,38 @@ class CommentAutomationService extends BaseService {
   findActiveAutomations(props: {
     workspaceId: string
     channelType: CommentAutomationType
+    inboxId: string
   }) {
     return db.query.commentAutomationModel.findMany({
       where: {
         workspaceId: props.workspaceId,
         isActive: true,
         type: props.channelType,
+        inboxId: { OR: [{ isNull: true }, { eq: props.inboxId }] },
       },
     })
+  }
+
+  private async validateInboxScope(
+    workspaceId: string,
+    inboxId: string | null | undefined,
+    type: CommentAutomationType,
+  ) {
+    if (inboxId == null) return
+    const channel =
+      type === commentAutomationTypes.enum.messenger
+        ? "messenger"
+        : type === commentAutomationTypes.enum.threads
+          ? "threads"
+          : type === commentAutomationTypes.enum.tiktok
+            ? "tiktok"
+            : "instagram"
+    const inbox = await db.query.inboxModel.findFirst({
+      where: { id: inboxId, workspaceId, channel },
+    })
+    if (!inbox) {
+      throw validationException("inboxId", "Selected account is invalid.")
+    }
   }
 
   isWithinSchedule(
@@ -594,6 +620,7 @@ class CommentAutomationService extends BaseService {
     workspaceId: string
     data: FbCommentAutomationWriteData
   }): Promise<CommentAutomationModel> {
+    await this.validateInboxScope(input.workspaceId, input.data.inboxId, commentAutomationTypes.enum.messenger)
     const [created] = await db
       .insert(commentAutomationModel)
       .values({
@@ -611,6 +638,7 @@ class CommentAutomationService extends BaseService {
     data: Partial<FbCommentAutomationWriteData>,
   ): Promise<CommentAutomationModel> {
     await this.findMessengerOrFail(ctx)
+    await this.validateInboxScope(ctx.workspaceId, data.inboxId, commentAutomationTypes.enum.messenger)
 
     const [updated] = await db
       .update(commentAutomationModel)
@@ -713,6 +741,7 @@ class CommentAutomationService extends BaseService {
     type: IgCommentAutomationType
     data: FbCommentAutomationWriteData
   }): Promise<CommentAutomationModel> {
+    await this.validateInboxScope(input.workspaceId, input.data.inboxId, input.type)
     const [created] = await db
       .insert(commentAutomationModel)
       .values({
@@ -733,6 +762,11 @@ class CommentAutomationService extends BaseService {
     data: Partial<FbCommentAutomationWriteData>,
   ): Promise<CommentAutomationModel> {
     const existing = await this.findInstagramOrFail(ctx)
+    await this.validateInboxScope(
+      ctx.workspaceId,
+      data.inboxId,
+      existing.type as CommentAutomationType,
+    )
 
     const [updated] = await db
       .update(commentAutomationModel)
@@ -838,12 +872,14 @@ class CommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, data, tx = db } = props
+    await this.validateInboxScope(workspaceId, data.inboxId, this.threadsType)
     const [record] = await tx
       .insert(commentAutomationModel)
       .values({
         id: createId(),
         workspaceId,
         type: this.threadsType,
+        inboxId: data.inboxId,
         isActive: data.isActive ?? true,
         name: data.name,
         post: data.post,
@@ -868,6 +904,7 @@ class CommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, id, data, tx = db } = props
+    await this.validateInboxScope(workspaceId, data.inboxId, this.threadsType)
     const values: Record<string, unknown> = {}
 
     if (data.name !== undefined) {
@@ -875,6 +912,9 @@ class CommentAutomationService extends BaseService {
     }
     if (data.isActive !== undefined) {
       values.isActive = data.isActive
+    }
+    if (data.inboxId !== undefined) {
+      values.inboxId = data.inboxId
     }
     if (data.post !== undefined) {
       values.post = data.post
@@ -986,12 +1026,14 @@ class CommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, data, tx = db } = props
+    await this.validateInboxScope(workspaceId, data.inboxId, this.tiktokType)
     const [record] = await tx
       .insert(commentAutomationModel)
       .values({
         id: createId(),
         workspaceId,
         type: this.tiktokType,
+        inboxId: data.inboxId,
         isActive: data.isActive ?? true,
         name: data.name,
         post: data.post,
@@ -1016,6 +1058,7 @@ class CommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, id, data, tx = db } = props
+    await this.validateInboxScope(workspaceId, data.inboxId, this.tiktokType)
     const values: Record<string, unknown> = {}
 
     if (data.name !== undefined) {
@@ -1023,6 +1066,9 @@ class CommentAutomationService extends BaseService {
     }
     if (data.isActive !== undefined) {
       values.isActive = data.isActive
+    }
+    if (data.inboxId !== undefined) {
+      values.inboxId = data.inboxId
     }
     if (data.post !== undefined) {
       values.post = data.post

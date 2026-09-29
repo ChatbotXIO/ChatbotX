@@ -189,11 +189,13 @@ export function SelectInstagramStoriesDialog({
   onOpenChange,
   value,
   onChange,
+  accountId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   value: string[]
   onChange: (ids: string[]) => void
+  accountId?: string | null
 }) {
   const t = useTranslations()
 
@@ -211,9 +213,9 @@ export function SelectInstagramStoriesDialog({
   useEffect(() => {
     if (open) {
       setSelectedIds(value)
-      pageFilterForm.reset({ pageId: ALL_PAGES_VALUE })
+      pageFilterForm.reset({ pageId: accountId ?? ALL_PAGES_VALUE })
     }
-  }, [open, value, pageFilterForm.reset])
+  }, [open, value, accountId, pageFilterForm.reset])
 
   const pageStories =
     selectedPageId === ALL_PAGES_VALUE

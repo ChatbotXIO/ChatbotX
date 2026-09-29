@@ -35,6 +35,7 @@ import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
@@ -87,6 +88,7 @@ export function TiktokCommentForm({
 }: Props) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
+  const inboxOptions = useInboxOptionsByChannel("tiktok")
   const { options: aiAgentOptions, isError: isAIAgentsError } =
     useAIAgentSelectOptions(useWorkspaceId())
   const replyType = useWatch({
@@ -185,6 +187,7 @@ export function TiktokCommentForm({
       <Card>
         <CardContent className="space-y-4 pt-6">
           <InputField label={t("fields.name.label")} name="name" required />
+          <SelectField allowClear clearLabel={t("channelFilter.allAccounts")} label={t("fields.inbox.label")} name="inboxId" options={inboxOptions} />
         </CardContent>
       </Card>
 

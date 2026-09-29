@@ -19,7 +19,7 @@ import {
 } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
 import { resolveFolderIdFilter } from "../lib/folder-filter"
 
 type ListIgStoriesInput = {
@@ -50,14 +50,27 @@ class IgStoryAutomationService extends BaseService {
   findActiveAutomations(props: {
     workspaceId: string
     channelType: "instagram" | "instagramFacebook"
+    inboxId: string
   }) {
     return db.query.igStoryAutomationModel.findMany({
       where: {
         workspaceId: props.workspaceId,
         isActive: true,
         type: props.channelType,
+        inboxId: { OR: [{ isNull: true }, { eq: props.inboxId }] },
       },
     })
+  }
+
+  private async validateInboxScope(
+    workspaceId: string,
+    inboxId: string | null | undefined,
+  ) {
+    if (inboxId == null) return
+    const inbox = await db.query.inboxModel.findFirst({
+      where: { id: inboxId, workspaceId, channel: "instagram" },
+    })
+    if (!inbox) throw validationException("inboxId", "Selected account is invalid.")
   }
 
   async incrementRepliesCount(automationId: string) {
@@ -129,6 +142,7 @@ class IgStoryAutomationService extends BaseService {
     type: IgStoryAutomationType
     data: IgStoryAutomationWriteData
   }): Promise<IgStoryAutomationModel> {
+    await this.validateInboxScope(input.workspaceId, input.data.inboxId)
     const [created] = await db
       .insert(igStoryAutomationModel)
       .values({
@@ -146,6 +160,7 @@ class IgStoryAutomationService extends BaseService {
     data: Partial<IgStoryAutomationWriteData>,
   ): Promise<IgStoryAutomationModel> {
     await this.findOrFail(ctx)
+    await this.validateInboxScope(ctx.workspaceId, data.inboxId)
 
     const [updated] = await db
       .update(igStoryAutomationModel)

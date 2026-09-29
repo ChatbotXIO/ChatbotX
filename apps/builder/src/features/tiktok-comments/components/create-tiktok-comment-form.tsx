@@ -17,6 +17,7 @@ import { TiktokCommentForm } from "./tiktok-comment-form"
 
 const defaultValues = {
   name: "",
+  inboxId: null,
   post: { type: "all" as const, value: [] },
   publicReply: { type: "none" as const, value: null },
   privateReply: { type: "none" as const, value: null },

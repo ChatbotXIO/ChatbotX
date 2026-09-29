@@ -102,6 +102,7 @@ async function loadCommentAutomationContext(props: {
   const automations = await commentAutomationService.findActiveAutomations({
     workspaceId: props.workspaceId,
     channelType: props.channelType,
+    inboxId: integrationRow.inboxId,
   })
 
   const workspace = await workspaceService.findById({ id: props.workspaceId })
@@ -256,9 +257,9 @@ export async function processCommentAutomation(
   let privateReplyClaimed = false
 
   // Every automation that declines this comment, flushed in ONE insert after
-  // the loop. `findActiveAutomations` scopes by workspace + channel, not by
-  // post, so a single comment is shown to every active automation on the
-  // channel — writing a row per decline inside the loop would fire one
+  // the loop. `findActiveAutomations` scopes by workspace + channel + inbox,
+  // not by post, so a single comment is shown to every matching automation on
+  // the account — writing a row per decline inside the loop would fire one
   // statement per automation per comment on a busy Page.
   const misses: CommentAutomationMissInsert[] = []
   const collectMiss = (
