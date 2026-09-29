@@ -20,14 +20,6 @@ const eventTypeToLabel: Record<CommentAutomationStatField, string> = {
   "comment:missed": "missed",
 }
 
-/** Dialogs that show the user's comment to the right of each contact. */
-const commentEventTypes = new Set<CommentAutomationStatField>([
-  "message:sent",
-  "message:delivered",
-  "message:seen",
-  "comment:missed",
-])
-
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -125,7 +117,7 @@ export const CommentAutomationContactsDialog = memo(
         onManualTag={onManualTag}
         onOpenChange={onOpenChange}
         open={open}
-        showComments={commentEventTypes.has(eventType)}
+        showComments={eventType === "comment:missed"}
         showErrors={eventType === "message:failed"}
         title={t(`commentAutomation.stats.${eventTypeToLabel[eventType]}`)}
         total={total}
