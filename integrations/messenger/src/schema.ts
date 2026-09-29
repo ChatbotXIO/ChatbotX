@@ -174,6 +174,11 @@ export const messengerReferralSchema = z.object({
   source: z.string(),
   type: z.string(),
   ad_id: z.string().optional(),
+  // Undocumented, but observed on CTM ads: the ice-breaker/prefilled question
+  // the user tapped. It can be the ONLY text of the message (no `message.text`).
+  // `.catch` so a malformed value drops only this field, never the referral
+  // (and, for `messaging.referral`/`postback.referral`, never the webhook).
+  text: z.string().optional().catch(undefined),
   // The URI of the site the message was sent from — the field Meta's
   // `messaging_referrals` reference documents (there is no `source_url` on
   // Messenger/Instagram; `source_url`/`source_platform` are kept only as

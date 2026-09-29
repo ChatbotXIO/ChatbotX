@@ -10,6 +10,10 @@ import {
   messageTypes,
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
+import {
+  metaReferralTypes,
+  PAID_AD_REFERRAL_SOURCE,
+} from "@chatbotx.io/utils/referral"
 import { getMessageAttachmentEntity } from "../../apis/attachment"
 import { MessengerException } from "../../exception"
 import { type MessengerEcho, parseEcho } from "../../lib/echo"
@@ -18,6 +22,7 @@ import {
   type MessengerAuthValue,
   type MessengerMessage,
   type MessengerMessagingEvent,
+  type MessengerReferral,
   messengerWebhookEventSchema,
 } from "../../schema"
 
@@ -88,8 +93,41 @@ type MessageTextResolver = (
  * Where a stored message's text comes from, in priority order. Add a resolver
  * here to derive text from another payload shape.
  */
+const isAdOpenThreadReferral = (referral?: MessengerReferral) =>
+  referral?.source === PAID_AD_REFERRAL_SOURCE.meta &&
+  referral.type === metaReferralTypes.enum.OPEN_THREAD
+
+/**
+ * Messages whose ad `referral.text` must NOT become the message text.
+ * Add a rule here to exclude another message shape.
+ */
+const adReferralTextExclusions: ((message: MessengerMessage) => boolean)[] = [
+  // Page-sent echo, never the user's tap.
+  (message) => Boolean(message.is_echo),
+  // An image/sticker keeps its own content instead of being rewritten as text.
+  (message) => Boolean(message.attachments?.length),
+  // Ads with a `ref` start their ref flow (`runRef`); the tapped question must
+  // not also trigger keyword automation for them.
+  (message) => Boolean(message.referral?.ref),
+]
+
+/**
+ * Click-to-Messenger ads may carry the user's tapped question only in
+ * `referral.text` (not documented by Meta, observed on real ad payloads).
+ */
+const resolveAdReferralText: MessageTextResolver = (message) => {
+  const isExcluded = adReferralTextExclusions.some((exclude) =>
+    exclude(message),
+  )
+  if (isExcluded || !isAdOpenThreadReferral(message.referral)) {
+    return
+  }
+  return message.referral?.text
+}
+
 const messageTextResolvers: MessageTextResolver[] = [
   (message) => message.text,
+  resolveAdReferralText,
   (_message, echo) => echo.templateTitle,
 ]
 
@@ -199,7 +237,10 @@ const getMessageEntity = async (
   if (rawReferral) {
     ref = rawReferral.ref ?? null
     referralSource = rawReferral.source
-    referral = normalizeMetaAdReferral(rawReferral)
+    // `text` only feeds the inbound message text (see resolveAdReferralText);
+    // keep it out of the stored referral so persisted tracking is unchanged.
+    const { text: _referralText, ...storedReferral } = rawReferral
+    referral = normalizeMetaAdReferral(storedReferral)
   }
 
   return {

@@ -14,6 +14,14 @@ import { z } from "zod"
 export const metaReferralSources = z.enum(["ADS", "SHORTLINK"])
 export type MetaReferralSource = z.infer<typeof metaReferralSources>
 
+/**
+ * `referral.type` on a Messenger/Instagram referral. Meta documents
+ * `OPEN_THREAD` as the only value for `messaging_referrals` and for the ad
+ * referral nested in a `messages` event.
+ */
+export const metaReferralTypes = z.enum(["OPEN_THREAD"])
+export type MetaReferralType = z.infer<typeof metaReferralTypes>
+
 /** The `referral.source` value that means "this came from a PAID ad". */
 export const PAID_AD_REFERRAL_SOURCE = {
   meta: metaReferralSources.enum.ADS,
