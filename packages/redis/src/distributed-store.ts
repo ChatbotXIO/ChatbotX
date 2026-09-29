@@ -59,6 +59,38 @@ function withIncrWithWindow(client: Redis): IncrWithWindowClient {
   return client as IncrWithWindowClient
 }
 
+// Reserves the next `span` milliseconds of a shared timeline in one atomic
+// step: the window starts at the later of `now` and where the last reservation
+// ended, and the key then points at this window's end. Callers that each
+// reserve a window this way never overlap, however many run at once. The key
+// expires a minute after the last reserved window ends.
+const RESERVE_TIME_WINDOW_LUA = `
+local now = tonumber(ARGV[1])
+local span = tonumber(ARGV[2])
+local reservedUntil = tonumber(redis.call('GET', KEYS[1]) or '0')
+local start = math.max(now, reservedUntil)
+local finish = start + span
+redis.call('SET', KEYS[1], tostring(finish), 'PX', finish - now + 60000)
+return tostring(start)
+`
+
+type ReserveTimeWindowClient = Redis & {
+  reserveTimeWindow: (key: string, now: string, span: string) => Promise<string>
+}
+
+const clientsWithReserveTimeWindow = new WeakSet<Redis>()
+
+function withReserveTimeWindow(client: Redis): ReserveTimeWindowClient {
+  if (!clientsWithReserveTimeWindow.has(client)) {
+    client.defineCommand("reserveTimeWindow", {
+      numberOfKeys: 1,
+      lua: RESERVE_TIME_WINDOW_LUA,
+    })
+    clientsWithReserveTimeWindow.add(client)
+  }
+  return client as ReserveTimeWindowClient
+}
+
 export const distributedStoreFactory = (
   getRedisClient: () => Promise<Redis>,
 ) => ({
@@ -358,6 +390,23 @@ export const distributedStoreFactory = (
   async incrWithWindow(key: string, ttlSeconds: number): Promise<number> {
     const redisClient = withIncrWithWindow(await getRedisClient())
     return await redisClient.incrWithWindow(key, String(ttlSeconds))
+  },
+
+  /**
+   * Reserves `spanMs` milliseconds on the timeline named by `key` and returns
+   * when the reserved window starts (epoch ms) — now, or when the previous
+   * reservation on that key ends, whichever is later. See
+   * `RESERVE_TIME_WINDOW_LUA`. Used to pace bulk work that shares an external
+   * rate limit across callers that do not know about each other.
+   */
+  async reserveTimeWindow(key: string, spanMs: number): Promise<number> {
+    const redisClient = withReserveTimeWindow(await getRedisClient())
+    const start = await redisClient.reserveTimeWindow(
+      key,
+      String(Date.now()),
+      String(Math.max(0, Math.ceil(spanMs))),
+    )
+    return Number(start)
   },
 })
 

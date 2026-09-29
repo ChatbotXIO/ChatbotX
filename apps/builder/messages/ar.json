@@ -5594,6 +5594,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "معالجة التعليقات الفائتة",
+    "processing": "جارٍ معالجة التعليقات الفائتة",
+    "title": "معالجة التعليقات الفائتة",
+    "description": "افحص تعليقات هذا المنشور خلال آخر 7 أيام وعالجها عبر أتمتة التعليقات هذه. سيتم تخطي التعليقات التي تمت معالجتها بالفعل. سيؤدي هذا إلى إرسال رسائل وردود حقيقية.",
+    "success": "تم فحص {scanned} تعليقًا: {skipped} تمت معالجتها مسبقًا، و{queued} في قائمة المعالجة، و{failed} فشلت.",
+    "errors": {
+      "notSinglePost": "متاح فقط للأتمتة التي تستهدف منشورًا واحدًا محددًا.",
+      "inactive": "فعّل هذه الأتمتة قبل معالجة التعليقات الفائتة.",
+      "outsideSchedule": "هذه الأتمتة خارج ساعات عملها. حاول مرة أخرى خلال جدولها.",
+      "workspaceInactive": "مساحة العمل هذه متوقفة أو خارج ساعات عملها، لذلك لن تتم معالجة أي تعليق. حاول مرة أخرى عندما تكون مساحة العمل نشطة.",
+      "alreadyRunning": "تتم معالجة التعليقات الفائتة لهذه الأتمتة بالفعل. حاول مرة أخرى بعد بضع دقائق.",
+      "integrationNotFound": "لم يتم العثور على حساب متصل لهذه القناة.",
+      "fetchFailed": "تعذّر تحميل تعليقات المنشور. تحقق من اتصال القناة وحاول مرة أخرى."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "أتمتة الرد على قصص إنستغرام",
     "description": "أتمتة الردود على ردود قصص إنستغرام لجهات الاتصال الخاصة بك.",

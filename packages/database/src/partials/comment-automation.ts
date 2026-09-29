@@ -79,6 +79,15 @@ export const commentPostSchema = z.object({
 })
 export type CommentPost = z.infer<typeof commentPostSchema>
 
+/**
+ * "Process missed comments" replays one post's recent comments, so it is only
+ * offered on an automation that targets exactly one specific post. Shared by
+ * the builder (to hide the action) and the service (to reject the call).
+ */
+export function canProcessMissedComments(post: CommentPost): boolean {
+  return post.type === "postIds" && post.value.length === 1
+}
+
 export const commentReplyTypes = z.enum(["AIAgent", "text", "flow", "none"])
 export type CommentReplyType = z.infer<typeof commentReplyTypes>
 

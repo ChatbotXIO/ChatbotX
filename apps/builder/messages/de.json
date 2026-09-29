@@ -5111,6 +5111,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Verpasste Kommentare verarbeiten",
+    "processing": "Verpasste Kommentare werden verarbeitet",
+    "title": "Verpasste Kommentare verarbeiten",
+    "description": "Scannt die Kommentare dieses Beitrags der letzten 7 Tage und verarbeitet sie mit dieser Kommentar-Automatisierung. Bereits verarbeitete Kommentare werden übersprungen. Dabei werden echte Nachrichten und Antworten gesendet.",
+    "success": "{scanned} Kommentare gescannt: {skipped} bereits verarbeitet, {queued} zur Verarbeitung eingereiht, {failed} fehlgeschlagen.",
+    "errors": {
+      "notSinglePost": "Nur für eine Automatisierung verfügbar, die genau einen bestimmten Beitrag betrifft.",
+      "inactive": "Aktiviere diese Automatisierung, bevor du verpasste Kommentare verarbeitest.",
+      "outsideSchedule": "Diese Automatisierung ist außerhalb ihrer aktiven Zeiten. Versuche es innerhalb ihres Zeitplans erneut.",
+      "workspaceInactive": "Dieser Workspace ist deaktiviert oder außerhalb seiner aktiven Zeiten, daher würde kein Kommentar verarbeitet. Versuche es erneut, wenn der Workspace aktiv ist.",
+      "alreadyRunning": "Für diese Automatisierung werden bereits verpasste Kommentare verarbeitet. Versuche es in ein paar Minuten erneut.",
+      "integrationNotFound": "Für diesen Kanal wurde kein verbundenes Konto gefunden.",
+      "fetchFailed": "Die Kommentare des Beitrags konnten nicht geladen werden. Prüfe die Kanalverbindung und versuche es erneut."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Instagram-Story-Antwort-Automatisierung",
     "description": "Automatisieren Sie Antworten auf Instagram-Story-Antworten für Ihre Kontakte.",

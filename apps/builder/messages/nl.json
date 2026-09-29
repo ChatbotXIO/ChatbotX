@@ -5111,6 +5111,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Gemiste reacties verwerken",
+    "processing": "Gemiste reacties worden verwerkt",
+    "title": "Gemiste reacties verwerken",
+    "description": "Scan de reacties op dit bericht van de afgelopen 7 dagen en verwerk ze met deze reactie-automatisering. Reacties die al verwerkt zijn, worden overgeslagen. Hiermee worden echte berichten en antwoorden verzonden.",
+    "success": "{scanned} reacties gescand: {skipped} al verwerkt, {queued} in de wachtrij voor verwerking, {failed} mislukt.",
+    "errors": {
+      "notSinglePost": "Alleen beschikbaar voor een automatisering die zich op precies één specifiek bericht richt.",
+      "inactive": "Zet deze automatisering aan voordat je gemiste reacties verwerkt.",
+      "outsideSchedule": "Deze automatisering valt buiten haar actieve uren. Probeer het opnieuw binnen haar planning.",
+      "workspaceInactive": "Deze workspace staat uit of valt buiten zijn actieve uren, dus er zou geen reactie worden verwerkt. Probeer het opnieuw wanneer de workspace actief is.",
+      "alreadyRunning": "Gemiste reacties voor deze automatisering worden al verwerkt. Probeer het over een paar minuten opnieuw.",
+      "integrationNotFound": "Er is geen gekoppeld account voor dit kanaal gevonden.",
+      "fetchFailed": "De reacties op het bericht konden niet worden geladen. Controleer de kanaalverbinding en probeer het opnieuw."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Instagram Story-reactie-automatisering",
     "description": "Automatiseer reacties op Instagram Story-reacties voor je contacten.",

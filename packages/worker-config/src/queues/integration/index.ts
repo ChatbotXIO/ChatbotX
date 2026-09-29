@@ -98,6 +98,15 @@ export type CommentTag = {
   name?: string
 }
 
+/**
+ * BullMQ priority for every send a missed-comment replay makes (replies, DMs,
+ * flows, AI replies, hide/unhide) on the shared `chat`, `integration` and
+ * `aiAgent` queues. Jobs without a priority run before any prioritized job, so
+ * a replay of thousands of comments always yields to live customer traffic.
+ * The replay itself runs on the `low` queue (`LowJobAction.replayMissedComment`).
+ */
+export const MISSED_COMMENT_REPLAY_PRIORITY = 10
+
 export type IntegrationJobReceiveComment = {
   type: typeof IntegrationJobAction.incomingComment
   data: {
@@ -122,6 +131,12 @@ export type IntegrationJobReceiveComment = {
       tags?: CommentTag[]
       createdTime: number
     }
+    /**
+     * Set by "process missed comments": the comment is replayed from the
+     * channel's comment list rather than a webhook, and only this automation
+     * runs on it. Absent on every webhook-driven comment.
+     */
+    replay?: { automationId: string }
   }
 }
 
@@ -805,6 +820,11 @@ export type IntegrationJobProcessCommentAutomation = {
     message?: string
     tags?: CommentTag[]
     createdTime: number
+    /**
+     * Run this one automation only — a replayed missed comment must not fire
+     * every other active automation on the channel. Absent on webhook comments.
+     */
+    onlyAutomationId?: string
   }
 }
 

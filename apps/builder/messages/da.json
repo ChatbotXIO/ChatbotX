@@ -5111,6 +5111,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Behandl oversete kommentarer",
+    "processing": "Behandler oversete kommentarer",
+    "title": "Behandl oversete kommentarer",
+    "description": "Scan dette opslags kommentarer fra de seneste 7 dage, og kør dem gennem denne kommentarautomatisering. Kommentarer, der allerede er behandlet, springes over. Dette sender rigtige beskeder og svar.",
+    "success": "Scannede {scanned} kommentarer: {skipped} allerede behandlet, {queued} sat i kø til behandling, {failed} mislykkedes.",
+    "errors": {
+      "notSinglePost": "Kun tilgængelig for en automatisering, der er rettet mod præcis ét bestemt opslag.",
+      "inactive": "Slå denne automatisering til, før du behandler oversete kommentarer.",
+      "outsideSchedule": "Denne automatisering er uden for sine aktive timer. Prøv igen inden for dens tidsplan.",
+      "workspaceInactive": "Dette workspace er slået fra eller uden for sine aktive timer, så ingen kommentarer ville blive behandlet. Prøv igen, når workspacet er aktivt.",
+      "alreadyRunning": "Oversete kommentarer behandles allerede for denne automatisering. Prøv igen om et par minutter.",
+      "integrationNotFound": "Der blev ikke fundet nogen tilsluttet konto for denne kanal.",
+      "fetchFailed": "Opslagets kommentarer kunne ikke indlæses. Tjek kanalforbindelsen, og prøv igen."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Automatisering af Instagram Story-svar",
     "description": "Automatiser svar på Instagram Story-svar for dine kontakter.",

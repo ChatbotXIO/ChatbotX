@@ -3835,6 +3835,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Bearbeta missade kommentarer",
+    "processing": "Bearbetar missade kommentarer",
+    "title": "Bearbeta missade kommentarer",
+    "description": "Skanna inläggets kommentarer från de senaste 7 dagarna och kör dem genom den här kommentarsautomatiseringen. Kommentarer som redan har bearbetats hoppas över. Detta skickar riktiga meddelanden och svar.",
+    "success": "Skannade {scanned} kommentarer: {skipped} redan bearbetade, {queued} köade för bearbetning, {failed} misslyckades.",
+    "errors": {
+      "notSinglePost": "Endast tillgängligt för en automatisering som riktar sig mot exakt ett specifikt inlägg.",
+      "inactive": "Aktivera den här automatiseringen innan du bearbetar missade kommentarer.",
+      "outsideSchedule": "Den här automatiseringen är utanför sina aktiva tider. Försök igen inom dess schema.",
+      "workspaceInactive": "Den här arbetsytan är avstängd eller utanför sina aktiva tider, så inga kommentarer skulle bearbetas. Försök igen när arbetsytan är aktiv.",
+      "alreadyRunning": "Missade kommentarer bearbetas redan för den här automatiseringen. Försök igen om några minuter.",
+      "integrationNotFound": "Inget anslutet konto hittades för den här kanalen.",
+      "fetchFailed": "Det gick inte att läsa in inläggets kommentarer. Kontrollera kanalanslutningen och försök igen."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Automatisering av Instagram Story-svar",
     "description": "Automatisera svar på Instagram Story-svar för dina kontakter.",

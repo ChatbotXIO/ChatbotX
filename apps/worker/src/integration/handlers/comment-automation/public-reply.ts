@@ -25,6 +25,7 @@ import {
 import { logger } from "../../../lib/logger"
 import type { CommentAutomationChannelType } from "./channel-type"
 import type { CommentAutomationDedup } from "./dedup"
+import { withReplayPriority } from "./replay-priority"
 import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
 
 /**
@@ -106,10 +107,11 @@ export async function postPublicCommentReply(props: {
     data: message,
   })
   const retryPolicy = commentReplyRetryPolicy(props.contactInbox)
-  const queueOptions =
+  const queueOptions = withReplayPriority(
     props.delay === undefined
       ? retryPolicy
-      : { delay: props.delay, ...retryPolicy }
+      : { delay: props.delay, ...retryPolicy },
+  )
   await chatQueue.add(
     ChatJobAction.sendChannelMessage,
     {
@@ -276,7 +278,10 @@ export async function executePublicReply(
               },
             },
           },
-          { delay: ctx.delay, ...commentReplyRetryPolicy(ctx.contactInbox) },
+          withReplayPriority({
+            delay: ctx.delay,
+            ...commentReplyRetryPolicy(ctx.contactInbox),
+          }),
         )
       },
     }
@@ -313,11 +318,11 @@ export async function executePublicReply(
               commentDedup: ctx.dedup,
             },
           },
-          {
+          withReplayPriority({
             delay: ctx.delay,
             jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-public`,
             ...commentReplyRetryPolicy(ctx.contactInbox),
-          },
+          }),
         )
       },
     }

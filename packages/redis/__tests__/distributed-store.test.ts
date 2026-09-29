@@ -202,3 +202,54 @@ describe("distributedStoreFactory.setNumber", () => {
     expect(set).toHaveBeenCalledTimes(2)
   })
 })
+
+describe("distributedStoreFactory.reserveTimeWindow", () => {
+  /**
+   * Reproduces `RESERVE_TIME_WINDOW_LUA` in JS (vitest cannot run Lua): the
+   * window starts at max(now, reservedUntil) and moves reservedUntil to its end.
+   */
+  function makeFakeRedisWithTimeline() {
+    const timelines = new Map<string, number>()
+    const client = {
+      defineCommand: vi.fn(),
+      reserveTimeWindow: vi.fn((key: string, now: string, span: string) => {
+        const start = Math.max(Number(now), timelines.get(key) ?? 0)
+        timelines.set(key, start + Number(span))
+        return Promise.resolve(String(start))
+      }),
+    } as unknown as Redis
+    return { client }
+  }
+
+  test("a free timeline starts now; the next caller starts where it ends", async () => {
+    vi.useFakeTimers({ now: 1_000_000 })
+    const { client } = makeFakeRedisWithTimeline()
+    const store = distributedStoreFactory(async () => client)
+
+    await expect(store.reserveTimeWindow("pace:page-1", 3000)).resolves.toBe(
+      1_000_000,
+    )
+    await expect(store.reserveTimeWindow("pace:page-1", 2000)).resolves.toBe(
+      1_003_000,
+    )
+    // Another key has its own timeline.
+    await expect(store.reserveTimeWindow("pace:page-2", 2000)).resolves.toBe(
+      1_000_000,
+    )
+    vi.useRealTimers()
+  })
+
+  test("registers the Lua command only once per client", async () => {
+    const { client } = makeFakeRedisWithTimeline()
+    const store = distributedStoreFactory(async () => client)
+
+    await store.reserveTimeWindow("pace:page-1", 1000)
+    await store.reserveTimeWindow("pace:page-1", 1000)
+
+    expect(client.defineCommand).toHaveBeenCalledTimes(1)
+    expect(client.defineCommand).toHaveBeenCalledWith(
+      "reserveTimeWindow",
+      expect.objectContaining({ numberOfKeys: 1 }),
+    )
+  })
+})

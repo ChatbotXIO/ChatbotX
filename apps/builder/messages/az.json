@@ -5354,6 +5354,22 @@
     "privateReplyHighIntentTitle": "Hansı şərhlərə mesaj göndərilə biləcəyini TikTok müəyyən edir",
     "privateReplyHighIntentNotice": "Qoşulmuş TikTok hesabında şərhdən mesaja funksiyası aktiv olmalı və hesab Vyetnam, İndoneziya və ya Taylandda qeydiyyatdan keçmiş biznes hesabı olmalıdır. TikTok birbaşa mesajı yalnız yüksək maraq ifadə etdiyini müəyyənləşdirdiyi, videoya birbaşa yazılmış şərhlər üçün, 48 saat ərzində və hər şərhə bir dəfə göndərir. Şərh müəllifi son 24 saat ərzində sizə artıq mesaj göndəribsə, mesaj göndərilmir."
   },
+  "commentAutomationMissedComments": {
+    "action": "Buraxılmış şərhləri emal et",
+    "processing": "Buraxılmış şərhlər emal olunur",
+    "title": "Buraxılmış şərhləri emal et",
+    "description": "Bu paylaşımın son 7 gündəki şərhlərini skan edin və bu şərh avtomatlaşdırması ilə emal edin. Artıq emal olunmuş şərhlər ötürüləcək. Bu əməliyyat real mesajlar və cavablar göndərir.",
+    "success": "{scanned} şərh skan edildi: {skipped} artıq emal olunub, {queued} emal üçün növbədədir, {failed} uğursuz oldu.",
+    "errors": {
+      "notSinglePost": "Yalnız dəqiq bir konkret paylaşımı hədəfləyən avtomatlaşdırma üçün mövcuddur.",
+      "inactive": "Buraxılmış şərhləri emal etməzdən əvvəl bu avtomatlaşdırmanı aktiv edin.",
+      "outsideSchedule": "Bu avtomatlaşdırma iş saatlarından kənardadır. Cədvəl vaxtında yenidən cəhd edin.",
+      "workspaceInactive": "Bu iş sahəsi söndürülüb və ya iş saatlarından kənardadır, ona görə heç bir şərh emal olunmayacaq. İş sahəsi aktiv olanda yenidən cəhd edin.",
+      "alreadyRunning": "Bu avtomatlaşdırma üçün buraxılmış şərhlər artıq emal olunur. Bir neçə dəqiqədən sonra yenidən cəhd edin.",
+      "integrationNotFound": "Bu kanal üçün qoşulmuş hesab tapılmadı.",
+      "fetchFailed": "Paylaşımın şərhləri yüklənmədi. Kanal bağlantısını yoxlayın və yenidən cəhd edin."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Instagram hekayə cavablarının avtomatlaşdırılması",
     "description": "Kontaktlarınız üçün Instagram hekayələrinə verilən cavabların cavablandırılmasını avtomatlaşdırın.",

@@ -5111,6 +5111,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Elabora commenti persi",
+    "processing": "Elaborazione dei commenti persi in corso",
+    "title": "Elabora commenti persi",
+    "description": "Analizza i commenti di questo post degli ultimi 7 giorni e li elabora con questa automazione dei commenti. I commenti già elaborati vengono saltati. Questa operazione invia messaggi e risposte reali.",
+    "success": "Analizzati {scanned} commenti: {skipped} già elaborati, {queued} in coda di elaborazione, {failed} non riusciti.",
+    "errors": {
+      "notSinglePost": "Disponibile solo per un'automazione che ha come destinazione esattamente un post specifico.",
+      "inactive": "Attiva questa automazione prima di elaborare i commenti persi.",
+      "outsideSchedule": "Questa automazione è fuori dal suo orario di attività. Riprova durante la sua programmazione.",
+      "workspaceInactive": "Questo workspace è disattivato o fuori dal suo orario di attività, quindi nessun commento verrebbe elaborato. Riprova quando il workspace è attivo.",
+      "alreadyRunning": "I commenti persi di questa automazione sono già in elaborazione. Riprova tra qualche minuto.",
+      "integrationNotFound": "Nessun account collegato trovato per questo canale.",
+      "fetchFailed": "Impossibile caricare i commenti del post. Controlla la connessione del canale e riprova."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Automazione risposte alle Storie di Instagram",
     "description": "Automatizza le risposte alle risposte alle Storie di Instagram per i tuoi contatti.",

@@ -5111,6 +5111,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Procesar comentarios omitidos",
+    "processing": "Procesando comentarios omitidos",
+    "title": "Procesar comentarios omitidos",
+    "description": "Analiza los comentarios de esta publicación de los últimos 7 días y procésalos con esta automatización de comentarios. Los comentarios ya procesados se omiten. Esto envía mensajes y respuestas reales.",
+    "success": "Se analizaron {scanned} comentarios: {skipped} ya procesados, {queued} en cola para procesar, {failed} con error.",
+    "errors": {
+      "notSinglePost": "Solo disponible para una automatización dirigida a exactamente una publicación específica.",
+      "inactive": "Activa esta automatización antes de procesar los comentarios omitidos.",
+      "outsideSchedule": "Esta automatización está fuera de su horario activo. Inténtalo de nuevo dentro de su horario.",
+      "workspaceInactive": "Este espacio de trabajo está desactivado o fuera de su horario activo, así que no se procesaría ningún comentario. Inténtalo de nuevo cuando esté activo.",
+      "alreadyRunning": "Ya se están procesando los comentarios omitidos de esta automatización. Inténtalo de nuevo en unos minutos.",
+      "integrationNotFound": "No se encontró ninguna cuenta conectada para este canal.",
+      "fetchFailed": "No se pudieron cargar los comentarios de la publicación. Revisa la conexión del canal e inténtalo de nuevo."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Automatización de respuestas a historias de Instagram",
     "description": "Automatiza las respuestas a las respuestas de historias de Instagram para tus contactos.",

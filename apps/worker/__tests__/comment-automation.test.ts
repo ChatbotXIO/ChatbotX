@@ -89,6 +89,7 @@ const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
 const mockDiscardEvent = vi.fn().mockResolvedValue(undefined)
 const mockMarkDelivered = vi.fn().mockResolvedValue(undefined)
 const mockRecordMisses = vi.fn().mockResolvedValue(undefined)
+const mockHasSentPrivateReply = vi.fn().mockResolvedValue(false)
 const mockRecordDeliveredPrivateReply = vi
   .fn()
   .mockResolvedValue({ id: "private-reply-message-1" })
@@ -131,6 +132,7 @@ vi.mock("@chatbotx.io/business", () => ({
     incrementRepliesCount: mockIncrementRepliesCount,
     getPriorContactInboxCount: mockGetPriorContactInboxCount,
     hasRepliedOnOtherPost: mockHasRepliedOnOtherPost,
+    hasSentPrivateReply: mockHasSentPrivateReply,
   },
   workspaceService: {
     findById: mockWorkspaceFindById,
@@ -185,6 +187,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     deferredCommentPrivateReply: "deferredCommentPrivateReply",
   },
   integrationQueue: { add: mockIntegrationQueueAdd },
+  MISSED_COMMENT_REPLAY_PRIORITY: 10,
 }))
 
 vi.mock("../src/chat/handlers/send-message", () => ({
@@ -244,6 +247,9 @@ vi.mock("../src/integration/handlers/automated-response/replies", () => ({
 
 const { isCommentReply, processCommentAutomation } = await import(
   "../src/integration/handlers/comment-automation"
+)
+const { runAsMissedCommentReplay } = await import(
+  "../src/integration/handlers/comment-automation/replay-priority"
 )
 const { processCommentAIReply } = await import(
   "../src/integration/handlers/comment-automation/ai-reply"
@@ -1929,6 +1935,163 @@ describe("processCommentAutomation private reply budget per comment", () => {
     await processCommentAutomation(buildJobData() as any)
 
     expect(mockSendPrivateReply).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("processCommentAutomation missed comment replay", () => {
+  test("runs only the replayed automation and records no miss for the others", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-other",
+        post: { type: "postIds", value: ["999_888"] },
+        publicReply: { type: "text", value: "other" },
+      }),
+      buildAutomation({
+        id: "automation-replayed",
+        publicReply: { type: "text", value: "replayed answer" },
+      }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData(),
+      onlyAutomationId: "automation-replayed",
+    } as any)
+
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "replayed answer" }),
+    )
+    expect(mockMessageCreate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ text: "other" }),
+    )
+    expect(mockRecordMisses).not.toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ automationId: "automation-other" }),
+      ]),
+    )
+  })
+
+  test("does nothing when the replayed automation is no longer active", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-other",
+        publicReply: { type: "text", value: "other" },
+      }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData(),
+      onlyAutomationId: "automation-replayed",
+    } as any)
+
+    expect(mockMessageCreate).not.toHaveBeenCalled()
+    expect(mockRecordEvent).not.toHaveBeenCalled()
+  })
+
+  test("a private reply already sent by another automation blocks the replay's DM", async () => {
+    mockHasSentPrivateReply.mockResolvedValueOnce(true)
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-replayed",
+        privateReply: { type: "text", value: "second DM" },
+      }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData(),
+      onlyAutomationId: "automation-replayed",
+    } as any)
+
+    expect(mockHasSentPrivateReply).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      channelType: "messenger",
+      commentId: COMMENT_ID,
+    })
+    expect(mockSendPrivateReply).not.toHaveBeenCalled()
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        automationId: "automation-replayed",
+        replyChannel: "private",
+        status: "failed",
+      }),
+    )
+  })
+
+  test("a webhook comment never looks up earlier private replies", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "text", value: "DM" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockHasSentPrivateReply).not.toHaveBeenCalled()
+    expect(mockSendPrivateReply).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("processCommentAutomation replay priority", () => {
+  // A replay run can queue thousands of comments; everything they send must
+  // yield to live traffic on the shared chat/integration/aiAgent queues.
+  function arrangeReplyAndHide() {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "answer" },
+        hideComments: { all: true },
+        options: { likeUserComment: true },
+      }),
+    ])
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+      claimContentAttributes: mockClaimContentAttributes,
+    })
+  }
+
+  test("a replay's reply and hide jobs carry the low replay priority", async () => {
+    arrangeReplyAndHide()
+
+    await runAsMissedCommentReplay(() =>
+      processCommentAutomation({
+        ...buildJobData(),
+        onlyAutomationId: "automation-1",
+      } as any),
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChannelMessage",
+      expect.anything(),
+      expect.objectContaining({ priority: 10 }),
+    )
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        data: expect.objectContaining({ hidden: true }),
+      }),
+      { priority: 10 },
+    )
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        data: expect.objectContaining({ liked: true }),
+      }),
+      { priority: 10 },
+    )
+  })
+
+  test("a live comment's jobs carry no priority", async () => {
+    arrangeReplyAndHide()
+
+    await processCommentAutomation(buildJobData() as any)
+
+    for (const call of mockChatQueueAdd.mock.calls) {
+      expect(call[2]?.priority).toBeUndefined()
+    }
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.anything(),
+    )
   })
 })
 

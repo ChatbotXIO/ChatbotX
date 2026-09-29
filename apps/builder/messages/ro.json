@@ -5277,6 +5277,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Procesează comentariile ratate",
+    "processing": "Se procesează comentariile ratate",
+    "title": "Procesează comentariile ratate",
+    "description": "Scanează comentariile acestei postări din ultimele 7 zile și le procesează prin această automatizare de comentarii. Comentariile deja procesate sunt omise. Această acțiune trimite mesaje și răspunsuri reale.",
+    "success": "Au fost scanate {scanned} comentarii: {skipped} deja procesate, {queued} în coada de procesare, {failed} eșuate.",
+    "errors": {
+      "notSinglePost": "Disponibil doar pentru o automatizare care vizează exact o singură postare anume.",
+      "inactive": "Activează această automatizare înainte de a procesa comentariile ratate.",
+      "outsideSchedule": "Această automatizare este în afara orelor active. Încearcă din nou în intervalul programat.",
+      "workspaceInactive": "Acest spațiu de lucru este oprit sau în afara orelor active, deci niciun comentariu nu ar fi procesat. Încearcă din nou când spațiul de lucru este activ.",
+      "alreadyRunning": "Comentariile ratate pentru această automatizare sunt deja în curs de procesare. Încearcă din nou peste câteva minute.",
+      "integrationNotFound": "Nu a fost găsit niciun cont conectat pentru acest canal.",
+      "fetchFailed": "Comentariile postării nu au putut fi încărcate. Verifică conexiunea canalului și încearcă din nou."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Automatizare răspunsuri la Story-uri Instagram",
     "description": "Automatizează răspunsurile la răspunsurile la Story-urile Instagram pentru contactele tale.",

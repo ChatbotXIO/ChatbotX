@@ -3140,6 +3140,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "עיבוד תגובות שפוספסו",
+    "processing": "מעבד תגובות שפוספסו",
+    "title": "עיבוד תגובות שפוספסו",
+    "description": "סריקת התגובות לפוסט הזה מ-7 הימים האחרונים ועיבודן דרך אוטומציית התגובות הזו. תגובות שכבר עובדו ידולגו. פעולה זו שולחת הודעות ותשובות אמיתיות.",
+    "success": "נסרקו {scanned} תגובות: {skipped} כבר עובדו, {queued} בתור לעיבוד, {failed} נכשלו.",
+    "errors": {
+      "notSinglePost": "זמין רק לאוטומציה שמכוונת לפוסט ספציפי אחד בדיוק.",
+      "inactive": "יש להפעיל את האוטומציה הזו לפני עיבוד תגובות שפוספסו.",
+      "outsideSchedule": "האוטומציה הזו מחוץ לשעות הפעילות שלה. נסו שוב בזמן שנקבע לה.",
+      "workspaceInactive": "סביבת העבודה הזו כבויה או מחוץ לשעות הפעילות שלה, ולכן אף תגובה לא תעובד. נסו שוב כשסביבת העבודה פעילה.",
+      "alreadyRunning": "כבר מתבצע עיבוד של תגובות שפוספסו עבור האוטומציה הזו. נסו שוב בעוד כמה דקות.",
+      "integrationNotFound": "לא נמצא חשבון מחובר לערוץ הזה.",
+      "fetchFailed": "לא ניתן לטעון את התגובות לפוסט. בדקו את חיבור הערוץ ונסו שוב."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "אוטומציה למענה לסטורי באינסטגרם",
     "description": "הפוך את המענה לתגובות על הסטורי שלך באינסטגרם לאוטומטי עבור אנשי הקשר שלך.",
