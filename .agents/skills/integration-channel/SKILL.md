@@ -1,8 +1,8 @@
 ---
 name: integration-channel
 description: >-
-  Create and modify integration channels (messenger, whatsapp, zalo, tiktok, webchat,
-  etc.) for the chatbot platform. Use when adding a new channel integration,
+  Create and modify integration channels (messenger, whatsapp, zalo, tiktok, threads,
+  webchat, etc.) for the chatbot platform. Use when adding a new channel integration,
   modifying webhook handlers, working with message send/receive, or connecting
   external platforms.
 ---
@@ -44,7 +44,7 @@ Channel name → determines package name (`@chatbotx.io/integration-<channel>`),
 | Base                          | When to use                                               | Examples                          |
 | ----------------------------- | --------------------------------------------------------- | --------------------------------- |
 | `customAuthSchema` (from SDK) | User provides credentials directly. No OAuth.             | smtp, webchat, telegram           |
-| `Oauth2AuthValue` (from SDK)  | Platform uses OAuth2 with clientId/clientSecret + tokens. | messenger, whatsapp, zalo, tiktok |
+| `Oauth2AuthValue` (from SDK)  | Platform uses OAuth2 with clientId/clientSecret + tokens. | messenger, whatsapp, zalo, tiktok, threads |
 
 For EACH field: name, Zod type, required or optional. Infer types from context (e.g. "port" → `z.number().int().positive()`).
 
@@ -52,7 +52,7 @@ For EACH field: name, Zod type, required or optional. Infer types from context (
 
 | Scenario                                                   | Platform credentials? | Examples                          |
 | ---------------------------------------------------------- | --------------------- | --------------------------------- |
-| OAuth app (clientId/clientSecret shared across workspaces) | YES                   | messenger, whatsapp, zalo, tiktok |
+| OAuth app (clientId/clientSecret shared across workspaces) | YES                   | messenger, whatsapp, zalo, tiktok, threads |
 | Per-workspace credentials only                             | NO                    | smtp, webchat, telegram           |
 | Shared third-party API key                                 | YES                   | giphy, stripe                     |
 
@@ -510,7 +510,7 @@ implementation instead of each building its own picker:
 
 **Channel vs integration.** Not every integration is a channel. `channelTypes`
 (`packages/utils/src/channel.ts:18`) is exactly: `omnichannel`, `webchat`, `messenger`,
-`whatsapp`, `zalo`, `smtp`, `telegram`, `instagram`, `tiktok`, `api`. Entries below that are
+`whatsapp`, `zalo`, `smtp`, `telegram`, `instagram`, `threads`, `tiktok`, `api`. Entries below that are
 not in that list (`google-sheets`, `instagram-facebook`, …) are `integrationTypes` only —
 they connect an external service but carry no inbox conversation.
 
@@ -521,6 +521,7 @@ they connect an external service but carry no inbox conversation.
 | whatsapp            | OAuth2    | YES                   | clientId/clientSecret + systemUser as platform credential                                                                          |
 | zalo                | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
 | tiktok              | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
+| threads             | OAuth2    | YES                   | Meta Threads app (clientId/clientSecret) as platform credential; comments only — public reply + hide top-level replies, no DM API and no like; see the `comment-automation` skill |
 | google-sheets       | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
 | instagram-facebook  | OAuth2    | YES                   | Meta/Facebook app (clientId/clientSecret); auth via Facebook Graph API for Instagram Business/Creator accounts linked to FB Pages; handles DMs + post comments; Personal accounts filtered out; integration name in code: `instagramFacebook` |
 | smtp                | Custom    | NO                    | SMTP with provider presets                                                                                                         |
