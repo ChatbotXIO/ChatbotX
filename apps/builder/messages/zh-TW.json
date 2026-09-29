@@ -2686,6 +2686,7 @@
       "sendTemplateMessage": "範本訊息",
       "whatsappOptionList": "選項清單",
       "noTemplatesAvailable": "目前沒有可用的範本",
+      "inboxesUnavailable": "無法載入頻道",
       "noFlowsAvailable": "無可用流量",
       "setCustomField": "設定自訂欄位",
       "startAnotherNode": "啟動另一個節點",

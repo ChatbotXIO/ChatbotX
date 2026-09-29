@@ -2364,6 +2364,7 @@
       "sendTemplateMessage": "Message modèle",
       "whatsappOptionList": "Liste d’options",
       "noTemplatesAvailable": "Aucun modèle disponible",
+      "inboxesUnavailable": "Impossible de charger les canaux",
       "noFlowsAvailable": "Aucun flux disponible",
       "setCustomField": "Définir le champ personnalisé",
       "startAnotherNode": "Démarrer un autre nœud",

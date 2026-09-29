@@ -2364,6 +2364,7 @@
       "sendTemplateMessage": "Vorlagennachricht",
       "whatsappOptionList": "Optionsliste",
       "noTemplatesAvailable": "Keine Vorlagen verfügbar",
+      "inboxesUnavailable": "Kanäle konnten nicht geladen werden",
       "noFlowsAvailable": "Keine Flows verfügbar",
       "setCustomField": "Benutzerdefiniertes Feld festlegen",
       "startAnotherNode": "Anderen Knoten starten",

@@ -2506,6 +2506,7 @@
       "sendTemplateMessage": "Şablon Mesajı",
       "whatsappOptionList": "Seçenek Listesi",
       "noTemplatesAvailable": "Kullanılabilir şablon yok",
+      "inboxesUnavailable": "Kanallar yüklenemedi",
       "noFlowsAvailable": "Kullanılabilir akış yok",
       "setCustomField": "Özel Alan Ayarla",
       "startAnotherNode": "Başka Bir Düğüm Başlat",

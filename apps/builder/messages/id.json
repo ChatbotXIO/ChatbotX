@@ -2364,6 +2364,7 @@
       "sendTemplateMessage": "Pesan Templat",
       "whatsappOptionList": "Daftar Opsi",
       "noTemplatesAvailable": "Tidak ada templat yang tersedia",
+      "inboxesUnavailable": "Tidak dapat memuat saluran",
       "noFlowsAvailable": "Tidak ada alur yang tersedia",
       "setCustomField": "Atur Kolom Kustom",
       "startAnotherNode": "Mulai Node Lain",

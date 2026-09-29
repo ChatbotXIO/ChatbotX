@@ -2364,6 +2364,7 @@
       "sendTemplateMessage": "テンプレートメッセージ",
       "whatsappOptionList": "選択肢リスト",
       "noTemplatesAvailable": "利用可能なテンプレートがありません",
+      "inboxesUnavailable": "チャンネルを読み込めませんでした",
       "noFlowsAvailable": "利用可能なフローがありません",
       "setCustomField": "カスタムフィールドを設定",
       "startAnotherNode": "別のノードを開始",

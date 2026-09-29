@@ -2364,6 +2364,7 @@
       "sendTemplateMessage": "Skabelonbesked",
       "whatsappOptionList": "Option Liste",
       "noTemplatesAvailable": "Nej skabeloner tilgængelig",
+      "inboxesUnavailable": "Kunne ikke indlæse kanaler",
       "noFlowsAvailable": "Nej flows tilgængelig",
       "setCustomField": "Angiv brugerdefineret felt",
       "startAnotherNode": "Start Another Node",

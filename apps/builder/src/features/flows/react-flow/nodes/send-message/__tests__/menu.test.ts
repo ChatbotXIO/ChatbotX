@@ -10,7 +10,12 @@ import { integrationMenus } from "../menus/integration-menu"
 const t = ((key: string) => key) as unknown as TranslationFn
 
 const TEMPLATE_LABEL = "flows.actions.sendTemplateMessage"
+const WHATSAPP_FLOW_LABEL = "flows.actions.whatsappFlow"
 const NO_TEMPLATES_LABEL = "flows.actions.noTemplatesAvailable"
+const INBOX_STATUS_CASES = [
+  ["pending", "actions.loading"],
+  ["error", "flows.actions.inboxesUnavailable"],
+] as const
 
 const waInbox = {
   id: "wa-1",
@@ -49,11 +54,11 @@ const messengerTemplate = {
 const buildMenuData = (
   channel: MenuData["beforeStep"]["channel"],
   inboxes = [waInbox, messengerInbox, telegramInbox],
-  inboxesUnavailable = false,
+  inboxesStatus: MenuData["inboxesStatus"] = "success",
 ): MenuData =>
   ({
     inboxes,
-    inboxesUnavailable,
+    inboxesStatus,
     templates: {
       waTemplates: [waTemplate],
       messengerTemplates: [messengerTemplate],
@@ -68,37 +73,45 @@ const childLabels = (item?: MenuItem): string[] =>
   (item?.children ?? []).map((child) => child.label)
 
 describe("sendMessageEditorMenus — template message consolidation", () => {
+  it.each(
+    INBOX_STATUS_CASES,
+  )("shows the %s inbox status under available template entries", (status, label) => {
+    for (const channel of [
+      channelTypes.enum.whatsapp,
+      channelTypes.enum.messenger,
+      channelTypes.enum.omnichannel,
+    ]) {
+      const items = sendMessageEditorMenus(
+        t,
+        buildMenuData(channel, [], status),
+      )
+
+      expect(childLabels(findTemplateItem(items))).toEqual([label])
+      if (channel !== channelTypes.enum.messenger) {
+        expect(
+          childLabels(items.find((item) => item.label === WHATSAPP_FLOW_LABEL)),
+        ).toEqual([label])
+      }
+    }
+  })
+
   it.each([
     channelTypes.enum.whatsapp,
     channelTypes.enum.messenger,
     channelTypes.enum.omnichannel,
-  ])("keeps independent entries when %s inbox data is unavailable", (channel) => {
-    const items = sendMessageEditorMenus(
+    channelTypes.enum.tiktok,
+  ])("keeps every %s top-level entry in the same order after an inbox error", (channel) => {
+    const successLabels = sendMessageEditorMenus(
       t,
-      buildMenuData(channel, [waInbox, messengerInbox], true),
-    )
-    const labels = items.map((item) => item.label)
+      buildMenuData(channel, []),
+    ).map((item) => item.label)
+    const errorLabels = sendMessageEditorMenus(
+      t,
+      buildMenuData(channel, [], "error"),
+    ).map((item) => item.label)
 
-    expect(labels).not.toContain(TEMPLATE_LABEL)
-    expect(labels).not.toContain("flows.actions.whatsappFlow")
-    expect(labels).toContain("flows.actions.sendText")
-    expect(labels).toContain("flows.actions.sendFile")
-    expect(labels).toContain("flows.actions.actions")
+    expect(errorLabels).toEqual(successLabels)
   })
-
-  it.each([channelTypes.enum.whatsapp, channelTypes.enum.omnichannel])(
-    "keeps WhatsApp option list when %s inbox data is unavailable",
-    (channel) => {
-      const items = sendMessageEditorMenus(
-        t,
-        buildMenuData(channel, [waInbox, messengerInbox], true),
-      )
-
-      expect(items.map((item) => item.label)).toContain(
-        "flows.actions.whatsappOptionList",
-      )
-    },
-  )
 
   it("shows exactly ONE Template Message item on omnichannel (no duplicate)", () => {
     const items = sendMessageEditorMenus(
@@ -143,22 +156,6 @@ describe("sendMessageEditorMenus — template message consolidation", () => {
     const items = sendMessageEditorMenus(
       t,
       buildMenuData(channelTypes.enum.tiktok),
-    )
-
-    expect(items.map((item) => item.label)).toEqual([
-      "flows.actions.sendText",
-      "flows.actions.sendImage",
-      "flows.actions.sendMultipleImages",
-      "flows.actions.getUserData",
-      "flows.actions.typing",
-      "flows.actions.actions",
-    ])
-  })
-
-  it("keeps independent TikTok entries when inbox data is unavailable", () => {
-    const items = sendMessageEditorMenus(
-      t,
-      buildMenuData(channelTypes.enum.tiktok, [], true),
     )
 
     expect(items.map((item) => item.label)).toEqual([
@@ -224,7 +221,7 @@ describe("integrationMenus", () => {
   it("preserves template parent and empty state after successful empty inbox fetch", () => {
     const items = sendMessageEditorMenus(
       t,
-      buildMenuData(channelTypes.enum.whatsapp, [], false),
+      buildMenuData(channelTypes.enum.whatsapp, []),
     )
     const templateItem = findTemplateItem(items)
 

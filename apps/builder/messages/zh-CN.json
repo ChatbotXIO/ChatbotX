@@ -3209,6 +3209,7 @@
       "moosendCreateContact": "将联系人添加到 Moosend",
       "noFlowsAvailable": "无可用流量",
       "noTemplatesAvailable": "目前没有可用的范本",
+      "inboxesUnavailable": "无法加载渠道",
       "openWebsite": "打开网站",
       "optInEmail": "选择接收电子邮件",
       "optOutEmail": "选择退出电子邮件",
