@@ -12,6 +12,14 @@ vi.mock("../src/lib/http-client", () => ({
   facebookGraphClient: { get: mockGet },
 }))
 
+vi.mock("@chatbotx.io/utils/media-download", () => ({
+  fetchMediaWithLimits: vi.fn(async () => ({
+    bytes: new Uint8Array([1, 2, 3]),
+    mimeType: "image/jpeg",
+  })),
+}))
+
+const { HTTPError } = await import("ky")
 const { contactHandlers } = await import("../src/handlers/contact")
 const { getUserProfile } = await import("../src/apis/user")
 
@@ -26,12 +34,41 @@ const createProps = (sourceId = "user-123") =>
         },
       },
       uploader: { putObject: mockPutObject },
+      storagePrefix: "workspace-1",
     },
   }) as never
+
+const MIRRORED_AVATAR_PATH = /^public\/space\/workspace-1\/avatars\//
+
+const PUBLIC_USER_FIELDS =
+  "first_name,last_name,name,picture.height(480).width(480){url,is_silhouette}"
+const PUBLIC_PAGE_FIELDS =
+  "name,picture.height(480).width(480){url,is_silhouette}"
+
+const graphError = (code: number, message: string) =>
+  Object.assign(
+    new HTTPError(
+      new Response(null, { status: 400 }),
+      new Request("https://graph.facebook.com/v23.0/user-123"),
+      {} as never,
+    ),
+    { data: { error: { code, message } } },
+  )
+
+const noProfileError = () =>
+  graphError(100, "(#100) No profile available for this user.")
+
+const calledFields = () =>
+  mockGet.mock.calls.map(
+    ([, options]) =>
+      (options as { searchParams: { fields: string } }).searchParams.fields,
+  )
 
 describe("getUserProfile", () => {
   beforeEach(() => {
     mockGet.mockReset()
+    // Public-profile fallback: no picture unless a test says otherwise.
+    mockGet.mockResolvedValue({ id: "user-123" })
     mockPutObject.mockReset()
   })
 
@@ -88,9 +125,112 @@ describe("getUserProfile", () => {
   })
 })
 
+describe("getUserProfile public-profile fallback", () => {
+  beforeEach(() => {
+    mockGet.mockReset()
+    mockPutObject.mockReset()
+  })
+
+  test("keeps the Messenger profile and skips the fallback when profile_pic exists", async () => {
+    mockGet.mockResolvedValueOnce({
+      id: "user-123",
+      first_name: "Ada",
+      profile_pic: "https://cdn.example/avatar.jpg",
+    })
+
+    const result = await getUserProfile(createProps())
+
+    expect(mockGet).toHaveBeenCalledTimes(1)
+    expect(result?.avatar).toMatch(MIRRORED_AVATAR_PATH)
+  })
+
+  test("uses the public picture for a commenter who never messaged the page", async () => {
+    mockGet.mockRejectedValueOnce(noProfileError()).mockResolvedValueOnce({
+      id: "user-123",
+      first_name: "Ada",
+      last_name: "Lovelace",
+      name: "Ada Lovelace",
+      picture: {
+        data: { url: "https://cdn.example/public.jpg", is_silhouette: false },
+      },
+    })
+
+    const result = await getUserProfile(createProps())
+
+    expect(calledFields()).toEqual([
+      "first_name,last_name,profile_pic,locale,timezone,gender",
+      PUBLIC_USER_FIELDS,
+    ])
+    expect(result).toMatchObject({
+      sourceId: "user-123",
+      firstName: "Ada",
+      lastName: "Lovelace",
+    })
+    expect(result?.avatar).toMatch(MIRRORED_AVATAR_PATH)
+    expect(mockPutObject).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not store Facebook's default silhouette", async () => {
+    mockGet.mockRejectedValueOnce(noProfileError()).mockResolvedValueOnce({
+      id: "user-123",
+      first_name: "Ada",
+      picture: {
+        data: {
+          url: "https://cdn.example/silhouette.jpg",
+          is_silhouette: true,
+        },
+      },
+    })
+
+    const result = await getUserProfile(createProps())
+
+    expect(result?.avatar).toBeUndefined()
+    expect(mockPutObject).not.toHaveBeenCalled()
+  })
+
+  test("retries with Page fields when the commenter is a Page", async () => {
+    mockGet
+      .mockRejectedValueOnce(noProfileError())
+      .mockRejectedValueOnce(
+        graphError(
+          100,
+          "(#100) Tried accessing nonexisting field (first_name) on node type (Page)",
+        ),
+      )
+      .mockResolvedValueOnce({
+        id: "user-123",
+        name: "Some Page",
+        picture: {
+          data: { url: "https://cdn.example/page.jpg", is_silhouette: false },
+        },
+      })
+
+    const result = await getUserProfile(createProps())
+
+    expect(calledFields()).toEqual([
+      "first_name,last_name,profile_pic,locale,timezone,gender",
+      PUBLIC_USER_FIELDS,
+      PUBLIC_PAGE_FIELDS,
+    ])
+    expect(result).toMatchObject({ firstName: "Some Page" })
+    expect(result?.avatar).toBeDefined()
+  })
+
+  test("rethrows the Messenger error when both lookups fail", async () => {
+    const messengerError = noProfileError()
+    mockGet
+      .mockRejectedValueOnce(messengerError)
+      .mockRejectedValueOnce(graphError(190, "Invalid token"))
+
+    await expect(getUserProfile(createProps())).rejects.toBe(messengerError)
+  })
+})
+
 describe("getContactProfilePicUrl", () => {
   beforeEach(() => {
     mockGet.mockReset()
+    // Public-profile fallback: no picture unless a test says otherwise.
+    mockGet.mockResolvedValue({ id: "user-123" })
     mockPutObject.mockReset()
   })
 
@@ -112,6 +252,20 @@ describe("getContactProfilePicUrl", () => {
         fields: "first_name,last_name,profile_pic,locale,timezone,gender",
       },
     })
+    expect(mockPutObject).not.toHaveBeenCalled()
+  })
+
+  test("falls back to the public picture when profile_pic is unavailable", async () => {
+    mockGet.mockRejectedValueOnce(noProfileError()).mockResolvedValueOnce({
+      id: "user-123",
+      picture: {
+        data: { url: "https://cdn.example/public.jpg", is_silhouette: false },
+      },
+    })
+
+    await expect(
+      contactHandlers.getContactProfilePicUrl?.(createProps()),
+    ).resolves.toBe("https://cdn.example/public.jpg")
     expect(mockPutObject).not.toHaveBeenCalled()
   })
 
