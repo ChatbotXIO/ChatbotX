@@ -85,7 +85,11 @@ export const useInboxListState = (options?: {
 }): InboxListState => {
   const workspaceId = useWorkspaceId()
   const { data, status } = useInboxes(workspaceId, options)
-  return { inboxes: data ?? EMPTY_INBOXES, status }
+  // A failed background refetch keeps the cached list but flips `status` to
+  // "error"; report success so consumers keep showing the inboxes they have.
+  return data
+    ? { inboxes: data, status: "success" }
+    : { inboxes: EMPTY_INBOXES, status }
 }
 
 export const useInboxList = (options?: { enabled?: boolean }) =>

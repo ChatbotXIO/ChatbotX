@@ -599,6 +599,29 @@ describe("useInboxListState", () => {
 
     expect(errorState?.inboxes).toBe(pendingState?.inboxes)
   })
+
+  test("keeps cached inboxes as success when a background refetch fails", async () => {
+    const cached = [{ id: "inbox-1", name: "Support" }]
+    mockListInboxes.mockResolvedValueOnce({ data: cached })
+    const states: InboxListState[] = []
+
+    renderProbe((state) => states.push(state))
+    await vi.waitFor(() => {
+      expect(states.at(-1)?.status).toBe("success")
+    })
+
+    mockListInboxes.mockRejectedValueOnce(new Error("inboxes unavailable"))
+    const rendersBeforeRefetch = states.length
+    await act(async () => {
+      await queryClient.refetchQueries()
+    })
+    await vi.waitFor(() => {
+      expect(states.length).toBeGreaterThan(rendersBeforeRefetch)
+    })
+
+    expect(queryClient.getQueryCache().getAll()[0]?.state.status).toBe("error")
+    expect(states.at(-1)).toEqual({ inboxes: cached, status: "success" })
+  })
 })
 
 describe("useInboxList", () => {
