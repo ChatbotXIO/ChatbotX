@@ -173,9 +173,34 @@ describe("coexistImportService.resolveOrCreateContactLinks", () => {
     })
 
     expect(fixture.calls.onConflictDoNothingArgs).toHaveLength(1)
+    expect(fixture.calls.contactInboxInsertValues[0]).toEqual([
+      expect.objectContaining({ sourceId: "s1", language: null }),
+    ])
     // A targeted clause would let a conflict on the OTHER identity index
     // abort the whole batch, so the call must carry no arguments at all.
     expect(fixture.calls.onConflictDoNothingArgs[0]).toEqual([])
+  })
+
+  test("writes the finalized language to a new ContactInbox row", async () => {
+    const fixture = buildTx([[], [{ id: "conv-1", contactId: "id-1" }]])
+    fixture.inboxReturning.rows = [
+      { id: "ci-1", sourceId: "s1", contactId: "id-1" },
+    ]
+
+    await run(fixture, {
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      inboxChannel: "messenger",
+      dedup: new Map([
+        ["s1", { sourceId: "s1", locale: "en_GB", language: "en" }],
+      ]),
+      sourceIds: ["s1"],
+      sourceUserIds: [],
+    })
+
+    expect(fixture.calls.contactInboxInsertValues[0]).toEqual([
+      expect.objectContaining({ sourceId: "s1", language: "en" }),
+    ])
   })
 
   test("counts only truly-new rows and deletes the pre-allocated Contact of a raced entry", async () => {
@@ -211,10 +236,10 @@ describe("coexistImportService.resolveOrCreateContactLinks", () => {
     // Both source ids still resolve to a link, so message import can proceed.
     expect(result.contactInboxIds.get("s1")?.contactId).toBe("id-1")
     expect(result.contactInboxIds.get("s2")?.contactId).toBe("contact-won")
-    // The event fan-out covers everything resolved through the insert path.
-    expect(
-      result.newContactCreatedEvents.map((e) => e.sourceId).sort(),
-    ).toEqual(["s1", "s2"])
+    // Only this transaction's returned insert emits; the race winner is a link only.
+    expect(result.newContactCreatedEvents.map((e) => e.sourceId)).toEqual([
+      "s1",
+    ])
   })
 
   test("aliases a scoped-user-id race winner back to the raced entry's own import key", async () => {

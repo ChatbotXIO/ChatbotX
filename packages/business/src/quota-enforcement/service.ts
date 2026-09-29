@@ -1,5 +1,10 @@
 import { macAnalyticsService, macTrackingService } from "@chatbotx.io/analytics"
-import { db, type Transaction } from "@chatbotx.io/database/client"
+import {
+  db,
+  type StatementTimeout,
+  setLocalStatementTimeout,
+  type Transaction,
+} from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { tenantService } from "../enterprise/tenant/service"
@@ -39,6 +44,7 @@ const ALL_METRICS: readonly QuotaMetric[] = [
 ]
 
 const LOCK_TIMEOUT_SECONDS = 30
+const MAC_CREATE_STATEMENT_TIMEOUT: StatementTimeout = "30s"
 // Read on first use, not at import: t3-env refuses server variables when this
 // module is imported transitively from a browser-like (jsdom) test.
 let quotaEnforcementSettings: ReturnType<typeof quotaEnforcementEnv> | undefined
@@ -556,8 +562,9 @@ class QuotaEnforcementService {
   /**
    * Create a brand-new contact WITHOUT consuming MAC.
    *
-   * For contacts created passively (manual UI add, public-API upsert) where no
-   * inbound/outbound activity has occurred yet. Unlike
+   * For contacts created passively (manual UI add, public-API upsert), or first
+   * seen as the recipient of an outgoing echo, where no contact-authored
+   * activity has occurred yet. Unlike
    * {@link createNewContactWithMac} this applies NO MAC gate, writes NO
    * `ContactActiveMonthly` presence row (which the authoritative MAC reconcile
    * would otherwise re-sum), and does NOT increment `mac`. It only bumps the
@@ -573,7 +580,10 @@ class QuotaEnforcementService {
   }): Promise<T> {
     const { ownerId, workspaceId, create } = args
 
-    const value = await db.transaction(async (tx) => create(tx))
+    const value = await db.transaction(async (tx) => {
+      await setLocalStatementTimeout(tx, MAC_CREATE_STATEMENT_TIMEOUT)
+      return await create(tx)
+    })
 
     const ctx = await this.resolveContext(ownerId)
     await this.incrementByForCtx(ctx, ownerId, "contacts", 1)

@@ -1,186 +1,135 @@
-# Implementation Plan: Messenger echo flood and per-owner MAC lock
+# Implementation Plan: Messenger echoes — third-party echoes on the low queue, no MAC
 
-Status: **draft, waiting for owner confirmation**. No code is written until a
-PR is explicitly approved ("implement PR-A" etc.).
+Status: final design closed. Branch `perf/messenger-echo-low-queue` (from the
+rebased echo stack on `main`). Sections 1–5 describe the target; section 6
+lists what is already on the branch; section 7 is the remaining work.
+Production figures never go into commits or PR descriptions.
 
-## 1. Requirements restatement
+## 1. Goal
 
-- Real customer messages must never queue behind Messenger `message_echoes`.
-- Echoes from Page Inbox, Business Suite, Meta auto-replies and third-party
-  tools on the same Page are still saved and shown in the inbox exactly as
-  today (D5: keep current behaviour, including template echoes with an
-  empty payload).
-- A recipient of an echo who does not exist yet **is created as a contact but
-  is not monthly-active**: no MAC gate, no per-owner MAC lock (D4 = option
-  A). MAC is counted only if that contact later writes back.
-- Echo rows use Meta's `messaging.timestamp` as `createdAt` (D3).
-- No new Redis key keyed by user or message. Any cache must have a computed
-  upper bound.
-- Existing flows stay intact: redelivery dedup, attachments, `sourceId`
-  stamping, conversation activity tracking, the outbound "Page keyword"
-  loop-guard, `getProfile` for new contacts, the story-reply direction flip,
-  and the D8 unique-violation race recovery.
+Messenger `message_echoes` — above all third-party broadcast echoes, which
+Meta delivers one webhook per recipient — must never slow down real customer
+messages. They are still stored and still create their contacts, but on the
+`low` queue, in batches, and without counting MAC.
 
-## 2. Root cause (from production investigation; numbers deliberately kept
-out of commits and PRs)
+## 2. Decisions (closed)
 
-- Echoes of ChatbotX's own sends are already dropped at the webhook
-  (`metadata: "SENT_FROM_CHATBOTX"`,
-  `integrations/messenger/src/handlers/webhook.ts:279-285`). They cost
-  nothing.
-- The remaining echoes are third-party template broadcasts to recipients
-  unknown to the workspace. Each one runs the full inbound pipeline, calls
-  Graph `getProfile`, then creates the contact through
-  `quotaEnforcementService.createNewContactWithMac`, which holds a Redis lock
-  `quota:user:<owner>:mac` for the whole multi-statement transaction.
-- A losing job spins up to `lockWaitSeconds` (10 s, 51 attempts × 200 ms)
-  while holding a worker slot, then defers with backoff
-  (`apps/worker/src/lib/lock-contention-deferral.ts`). One owner's broadcast
-  therefore occupies every `integration` worker slot and starves all tenants.
-- Additionally, `message:received` is emitted for outgoing echoes (with
-  `origin: undefined`) and `trackMessageIn`
-  (`packages/analytics/src/services/mac-tracking.service.ts`) counts every
-  payload as `message_in`, so a saved echo currently counts MAC.
-
-## 3. Cost of one echo to an unknown recipient today (estimated from code)
-
-| Step | Round trips |
+| # | Decision |
 |---|---|
-| Identify inbox twice (`worker.ts` + `received-message.ts`) | 4 DB + 2 Redis |
-| `resolveTenantSettings` twice | 4–6 Redis/DB |
-| `getProfile` | 1 HTTP (Meta) |
-| Contact + conversation lookup | 2–3 DB |
-| MAC lock acquire/release, spin on contention | 2 Redis, worst case 51 × 200 ms |
-| Inside the lock: remaining slots, `getForUser`, transaction (contact, contactInbox, cleanup, conversation, MAC claim, counters) | ~8 DB |
-| `createOrUpdate`: Redlock + `findBySourceId` across every shard in 24 h + insert | 2 Redis + N shards + 1 DB |
-| Tracking transaction + cache invalidation | 2 DB + 1 Redis |
-| Realtime broadcast + `message:received` (MAC, presence) | 1 publish + 2 DB |
+| D1 | **Third-party echo** (`app_id` not a Meta first-party app, `echoOrigin = thirdParty`) goes to the `low` queue, collected per page and persisted in batches. It is **not dropped**. |
+| D2 | **First-party echo** (Page Inbox, `echoOrigin = firstParty`) and **unclassified echo** (no usable `app_id`) stay on the `integration` queue (single-event path), so an agent's reply shows up immediately. |
+| D3 | Echo `createdAt` = Meta `messaging.timestamp`, validated to `[now − 7 d, now + 5 min]`; both paths stamp the same value. Out of window → single-event path, processing time. |
+| D4 | A recipient of an echo (any origin, not a story reply) who does not exist yet is created as a contact **without MAC** (no gate, no lock). MAC counts only when the contact writes back. |
+| D5 | Echoes are stored and shown as today, including template echoes (text from the template title, main #1317). |
+| D6 | Contacts created from echoes fire `contact:created` / "new contact" triggers. |
+| D7 | Profile of an echo-created contact: name only, no avatar. |
+| D8 | Echoes never emit `message:received`: no MAC, no hourly presence. |
+| D9 | Main #1317's rule "third-party echo to an unknown contact is skipped" is a **temporary** performance guard. It stays active only while the low-queue routing is disabled, and is removed once the flag is retired. |
+| — | Unchanged: redelivery dedup, `lastIncomingMessageAt` never touched by an echo, the outbound Page-keyword loop guard (`isEchoOfOwnSend`), the story-reply flip, referral / postback / quick-reply / reaction / deletion handling, inbound MAC admission (main #1356). |
 
-Phase 1 removes the lock, the spin and ~6–7 round trips for new-contact
-echoes, and isolates echoes from customer traffic. Phase 2 brings a typical
-echo from roughly 25–30 round trips down to 8–10 with no lock wait.
-`getProfile` stays the slowest step for new contacts unless the owner
-decides echo-created contacts may go without a profile until they reply
-(open question, see §8).
+## 3. Flow
 
-## 4. Phase 1 — stop the bleeding (3 PRs, each TDD + Codex review)
+```
+Meta ─1 echo/request─▶ builder webhook (Messenger)
+  own send (SENT_FROM_CHATBOTX)                 → drop (as today)
+  third-party & plain & flag on                 → Redis list per page → low job messengerEchoFlush (0.5 s)
+  everything else (first-party, unclassified,
+    non-plain, flag off, list full, Redis error) → integration job incomingMessage (as today)
 
-No migration. No new Redis keys.
+low worker: messengerEchoFlush (per-page lock, ≤200 items)
+  parse (shared parser) → messengerEchoBatchService.process → digest-verified ack
+  known contact → store; unknown contact → create without MAC (name only) → store
+  failure: retry; final attempt → unpersisted items to the integration job
+sweeper cron (1 min): pages with a pending list and no flag → flush
 
-### PR-A: echo to an unknown recipient → contact without MAC, without lock
+integration worker: receiveMessage (single-event)
+  third-party & unknown contact & flag OFF → skip (temporary guard, D9)
+  outgoing non-story echo & unknown contact → create without MAC (D4)
+  inbound new contact                       → MAC admission (main #1356)
+```
 
-`apps/worker/src/integration/handlers/received-message.ts`
+The flag is `THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED` (default off), read by the
+builder (routing) and the worker (D9 guard) from one shared env definition.
+Rollout: deploy, then enable the flag on the **builder first**, then on the
+worker; disable in the reverse order. Builder-on/worker-off is safe (plain
+third-party echoes are batched on `low`; the worker still applies D9 to the
+rest, as today). Worker-on/builder-off is not: every third-party echo would
+reach the `integration` queue with D9 off.
 
-- `detectContactAndConversation` gains `newContactQuota: "mac" | "skip"`
-  (default `"mac"`; callers `whatsapp-call.ts`, `lead-ads`, and the
-  referral-only path are untouched).
-- `receiveMessage` passes `"skip"` for an outgoing message **except** an
-  outgoing story reply: for a brand-new contact that is really the
-  customer's first message and is flipped to incoming afterwards
-  (`correctStoryReplyDirectionForNewContact`), so it must go through the
-  MAC gate. Helper `newContactQuotaFor(message)`.
-- `createNewContactAndContactInbox`: extract one `createRows(tx)` closure
-  (Contact + ContactInbox + `cancelByInboxSource` + `conversation.findOrCreate`)
-  shared by both branches. `"skip"` → existing
-  `quotaEnforcementService.createContactWithoutMac`; `"mac"` → the current
-  logic moved verbatim into `createRowsBehindMacGate` (keeps
-  `UnrecoverableError("contact_mac_limit_reached")`).
-- Emit `message:received` only when `isNew && isInboundMessage`. Listeners on
-  this event (MAC presence, hourly activity, ads `contactReplied`) all model
-  the contact acting, which an echo is not.
-- Derive the transaction type from the service signature
-  (`Parameters<…createContactWithoutMac>[0]["create"]`) so the app layer
-  never imports the database client.
+## 4. Plain echo (collector eligibility)
 
-`packages/business/src/quota-enforcement/service.ts`
+`is_echo` AND not our metadata AND no `quick_reply` / `referral` (any slot) /
+`postback` / `reply_to` AND not `is_deleted` AND no reaction / read /
+delivery AND `sender.id === entry.id` AND attachments only
+`image | video | audio | file | template` AND **`echoOrigin = thirdParty`**
+(main's classifier `integrations/messenger/src/lib/echo.ts`).
 
-- `createContactWithoutMac` sets the same `setLocalStatementTimeout` as the
-  MAC path inside its transaction.
+## 5. Risks
 
-Tests
+- Third-party echoes appear in the inbox 0.5–1 s later (batching on `low`).
+- Echo-created contacts bypass MAC: an owner may exceed the nominal MAC cap
+  for contacts that never wrote back (intended, D4).
+- A broadcast to many recipients fires that many "new contact" automations
+  (D6).
+- Flag on the builder but not yet on the worker: non-plain third-party
+  echoes and flush fallbacks to unknown contacts are still skipped by D9
+  (today's behaviour) until the worker flag is enabled.
+- Flag on the worker but not the builder floods the `integration` queue;
+  follow the rollout order in §3.
 
-- `apps/worker/__tests__/received-message.test.ts`: echo to unknown recipient
-  uses the no-MAC creator (rows, `emitContactCreated`, echo saved, no
-  `message:received`); story-reply flip still goes through the MAC gate and
-  emits `origin: "inbound"`; D8 race recovery on the no-MAC path; inbound new
-  contact still MAC-gated; existing outgoing tests (`getProfile` still
-  fetched, tracking shape, no profile refresh) stay green.
-- `packages/business/__tests__/quota-enforcement.service.test.ts`: statement
-  timeout on the no-MAC transaction.
+## 6. Already on the branch (rebased, reviewed)
 
-Known trade-off: `contactsUsed` counters (`UserQuota`, `WorkspaceUsage`) are
-still incremented per contact, a single hot row per owner. Not a regression
-(the MAC path incremented the same rows) and each increment is one short
-statement outside the create transaction. Watch it; batch in Phase 2 if it
-shows up.
+- **No-MAC echo recipients** (`apps/worker/.../received-message.ts`):
+  `newContactQuota: "mac" | "skip"`, `createContactWithoutMac`, name-only
+  `getProfile` (`data.avatar: false`), `message:received` for inbound only.
+- **Collector + batch**: `packages/redis/src/echo-collector.ts` (bounded Lua
+  push, digest-verified ack, processing lease, SET NX flag, SCAN);
+  instance in `packages/worker-config` on BullMQ's Redis; webhook
+  `isPlainEcho` + `echoCollector` port; SDK `parseEcho` /
+  `downloadAttachments`; `messengerEchoBatchService` (bulk contacts / messages
+  / attachments / tracking / realtime / loop guard); low-queue
+  `messengerEchoFlush` + `sweepEchoCollectors` cron; builder port.
+- **Single-path trimming**: identify once per job, tenant settings once,
+  broadcast only when new, lock-free insert for timestamped attachment-free
+  echoes, `lockWaitSeconds` 1 (lock-mode MAC admission only).
 
-### PR-B: route echoes to the `low` queue
+## 7. Remaining work (this implementation)
 
-- `integrations/messenger/src/handlers/webhook.ts`: an `is_echo` event
-  without our metadata is enqueued to `lowQueue` instead of
-  `integrationQueue`, with jobId
-  `messenger-echo-<sha256(pageId + mid).slice(0, 32)>` (dedups redeliveries
-  while the job exists; no cache).
-- `packages/worker-config/src/queues/low/index.ts`: `LowJobAction.messengerEcho`.
-- `apps/worker/src/low/worker.ts`: handler that calls the existing
-  `receiveMessage` unchanged.
-- Jobs already in `integration` keep the old path. Adjust `low` replicas or
-  `LOW_WORKER_CONCURRENCY` in the deployment stack if needed.
+### Phase 1 — Route only third-party echoes to the low queue
 
-Tests: `integrations/messenger/__tests__/webhook-echo-routing.test.ts`
-(metadata drop, echo → low, non-echo → integration, jobId has no `:`), low
-worker boot/dispatch test.
+- `packages/worker-config/src/queues/low/messenger-echo-env.ts`: add
+  `THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED` (`z.stringbool().default(false)`) to
+  the env shared by builder and worker; remove
+  `MESSENGER_ECHO_COLLECTOR_ENABLED` from `apps/builder/src/env.ts`; update
+  `.env.example`.
+- `apps/builder/src/app/integrations/[...integration]/webhook.ts`: pass the
+  port when the new flag is on.
+- `integrations/messenger/src/handlers/webhook.ts`: collector eligibility =
+  `isPlainEcho` AND main's classifier says `thirdParty` (§4). First-party and
+  unclassified echoes keep the `integration` job.
+- Tests: webhook routing matrix (third-party plain → collector; first-party
+  plain → integration; unclassified → integration; third-party non-plain →
+  integration; flag off → integration); builder port reads the new flag.
 
-### PR-C: MAC lock for genuine inbound bursts
+### Phase 2 — Store third-party echoes instead of skipping them
 
-- `apps/worker/src/lib/lock-contention-deferral.ts`: `lockWaitSeconds`
-  10 → 1 so a losing job frees its slot within a second.
-- `packages/business/src/quota-enforcement/service.ts`
-  `createNewContactWithMac`: replace Redlock with `SELECT … FOR UPDATE` on the
-  owner's `UserQuota` row (and the pool owner's row for a sub-account) inside
-  the transaction that already has `statement_timeout`. Waiters queue FIFO in
-  Postgres, no Redis polling, lock held exactly as long as the transaction.
+- `packages/business/src/message/messenger-echo-batch-service.ts`: remove the
+  third-party-unknown skip (`skippedThirdPartyUnknown`); unknown recipients of
+  any origin are created without MAC (existing bulk path). `echoOrigin` stays
+  on the item only if something still reads it; otherwise remove it.
+- `apps/worker/src/integration/handlers/received-message.ts`: the D9 guard
+  (`isThirdPartyEcho` → `return null`) applies only while
+  `THIRD_PARTY_ECHO_LOW_QUEUE_ENABLED` is off. Read the flag through the
+  worker env (channel-agnostic name; no channel check added to the shared
+  handler). With the flag on, a third-party echo reaching this path (non-plain
+  or flush fallback) follows D4.
+- Tests: batch creates and stores third-party echoes to unknown contacts (no
+  MAC, name-only profile, `contact:created`); worker guard on/off matrix;
+  story reply still MAC-gated; flush fallback of a third-party unknown echo is
+  stored when the flag is on.
 
-Tests: gate stays atomic, `distributedLock` no longer called, deferral
-policy values.
+### Phase 3 — Validation and review
 
-## 5. Phase 2 — make each echo cheap (after Phase 1 is stable)
-
-1. Echo `createdAt` = Meta `messaging.timestamp`; audit `recordInboundActivity`
-   so a late event cannot move `lastActivityAt` backwards.
-2. Repository: echo-only write path, direct `INSERT … ON CONFLICT DO NOTHING`
-   on the write shard keyed by `(contactInboxId, sourceId, createdAt)`; on
-   conflict read back from the primary. No Redlock, no 24 h all-shard scan.
-3. Identify the inbox once per job; skip `resolveTenantSettings` for
-   outgoing; broadcast realtime only when `isNew`.
-4. Split Messenger parsing into core and attachment; download attachments
-   only after the insert wins, with its own bounded concurrency.
-5. Batch `contactsUsed` increments if the hot row shows up.
-6. Metrics: echo share, p95 echo processing per stage, `low` and
-   `integration` queue lag, MAC lock wait histogram.
-
-## 6. Phase 3 — only if Phase 2 metrics require it
-
-Postgres ingress table for echoes with a `FOR UPDATE SKIP LOCKED` consumer,
-replacing one Redis job per echo (Codex's long-term proposal).
-
-## 7. Risks
-
-- Echo-created contacts bypass the MAC gate: an owner may exceed the nominal
-  contact cap without being billed for them (intended by D4).
-- Dropping `message:received` for echoes also drops hourly presence and
-  `contactReplied` for echoes; both are meaningless for outgoing messages.
-- PR-C row lock: a slow create transaction makes waiters wait in Postgres
-  instead of Redis; bounded by the existing `statement_timeout`.
-- Old commit history: PR #1303 was opened prematurely and closed; its branch
-  is deleted and its head now points at a sanitized commit.
-
-## 8. Open questions for the owner
-
-- May echo-created contacts skip `getProfile` (no name/avatar until they
-  reply)? Removes the one external HTTP call per new-contact echo.
-
-## 9. Complexity
-
-PR-A: M (~1 day). PR-B: S–M (0.5–1 day). PR-C: M (~1 day).
-Phase 2: L (4–6 days). Phase 3: L, only if needed.
+Full relevant suites, typecheck, `pnpm lint`; Codex end-to-end review of the
+branch diff vs `main` against this plan; fix → re-review until clean. No push,
+no PR (the owner decides).

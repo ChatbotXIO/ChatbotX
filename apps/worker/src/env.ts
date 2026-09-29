@@ -1,3 +1,4 @@
+import { messengerEchoWorkerEnv } from "@chatbotx.io/worker-config/messenger-echo-env"
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
@@ -7,6 +8,7 @@ const editionRule = z
 
 export const env = createEnv({
   server: {
+    ...messengerEchoWorkerEnv,
     NEXT_PUBLIC_EDITION: editionRule,
     QUOTA_SYNC_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60),
     WEBHOOK_WORKER_CONCURRENCY: z.coerce

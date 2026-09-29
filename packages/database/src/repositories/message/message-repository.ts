@@ -22,6 +22,16 @@ export interface CreateMessageResult {
   message: MessageModel
 }
 
+export interface CreateOrUpdateMessageOptions {
+  /**
+   * Skip the distributed dedup lock while retaining the cross-shard guard read.
+   * Safe only when the caller guarantees a channel-authoritative `createdAt`,
+   * so a concurrent duplicate job collides on the unique key instead of
+   * relying on the lock.
+   */
+  skipDedupLock?: boolean
+}
+
 export interface CreateAttachmentInput {
   conversationId: string
   createdAt?: Date
@@ -90,6 +100,19 @@ export interface FindManyByConversationOptions {
   workspaceId: string
 }
 
+export interface FindRecentOutgoingByConversationsParams {
+  conversationIds: string[]
+  messageTypes: ("incoming" | "outgoing" | "activity")[]
+  perConversationLimit: number
+  sinceTime: Date
+  workspaceId: string
+}
+
+export type RecentOutgoingMessageRow = Pick<
+  MessageModel,
+  "id" | "conversationId" | "text"
+>
+
 export interface FindAIContextMessagesOptions {
   conversationId: string
   limit: number
@@ -130,6 +153,14 @@ export interface FindMessageByIdParams {
 export interface FindManyBySourceIdsParams {
   contactInboxIds: string[]
   sinceTime?: Date
+  sourceIds: string[]
+  strict?: boolean
+  workspaceId: string
+}
+
+export interface FindManyOnWriteShardBySourceIdsParams {
+  contactInboxIds: string[]
+  sinceTime: Date
   sourceIds: string[]
   workspaceId: string
 }
@@ -212,13 +243,11 @@ export interface DistributedLock {
 }
 
 export interface IMessageRepository {
-  bulkCreate(
-    messages: CreateMessageInput[],
-  ): Promise<{ id: string; sourceId: string | null }[]>
+  bulkCreate(messages: CreateMessageInput[]): Promise<MessageModel[]>
 
   bulkCreateAttachments(
     attachments: BulkCreateAttachmentInput[],
-  ): Promise<{ id: string }[]>
+  ): Promise<AttachmentModel[]>
 
   bulkPatchContentAttributes(
     params: BulkPatchContentAttributesParams,
@@ -242,7 +271,10 @@ export interface IMessageRepository {
 
   create(message: CreateMessageInput): Promise<MessageModel>
 
-  createOrUpdate(message: CreateMessageInput): Promise<CreateMessageResult>
+  createOrUpdate(
+    message: CreateMessageInput,
+    options?: CreateOrUpdateMessageOptions,
+  ): Promise<CreateMessageResult>
 
   createOrUpdateWithAttachments(
     message: CreateMessageInput,
@@ -286,6 +318,17 @@ export interface IMessageRepository {
     params: FindAttachmentByIdParams,
   ): Promise<AttachmentLookupRow | null>
 
+  findAttachmentSourceIdsByMessageIds(params: {
+    workspaceId: string
+    messages: Array<{ messageId: string; messageCreatedAt: Date }>
+  }): Promise<
+    Array<{
+      messageId: string
+      messageCreatedAt: Date
+      sourceId: string | null
+    }>
+  >
+
   findById(
     params: FindMessageByIdParams,
   ): Promise<MessageWithAttachments | null>
@@ -317,6 +360,14 @@ export interface IMessageRepository {
   findManyBySourceIds(
     params: FindManyBySourceIdsParams,
   ): Promise<MessageSourceRow[]>
+
+  findManyOnWriteShardBySourceIds(
+    params: FindManyOnWriteShardBySourceIdsParams,
+  ): Promise<MessageSourceRow[]>
+
+  findRecentOutgoingByConversations(
+    params: FindRecentOutgoingByConversationsParams,
+  ): Promise<RecentOutgoingMessageRow[]>
 
   findRichResponseByButton(
     params: FindRichResponseByButtonParams,

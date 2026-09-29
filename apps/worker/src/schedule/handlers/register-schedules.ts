@@ -34,6 +34,20 @@ export const registerSchedules = async () => {
   }
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.sweepEchoCollectors,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.sweepEchoCollectors,
+      data: {
+        type: ScheduleJobData.sweepEchoCollectors,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.enqueueBroadcast,
     {
       pattern: "* * * * *",

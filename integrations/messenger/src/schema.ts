@@ -229,6 +229,13 @@ export const messengerMessageSchema = z.object({
   // the whole webhook over an attribution field, losing the customer's message
   // to save a label. Attribution degrades; delivery does not.
   referral: messengerReferralSchema.optional().catch(undefined),
+  reply_to: z.preprocess(
+    (value) =>
+      typeof value === "object" && value !== null && !Array.isArray(value)
+        ? value
+        : undefined,
+    z.looseObject({ mid: z.string().optional() }).optional(),
+  ),
 })
 export type MessengerMessage = z.infer<typeof messengerMessageSchema>
 
