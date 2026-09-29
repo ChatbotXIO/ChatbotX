@@ -543,6 +543,17 @@ export const facebookUserProfileSchema = z.object({
 })
 export type FacebookUserProfile = z.infer<typeof facebookUserProfileSchema>
 
+// Public profile readable with a page token for anyone who interacted with the
+// page (e.g. a commenter), unlike `profile_pic`, which exists only for users
+// who have messaged the page.
+export type FacebookPublicUserProfile = {
+  id: string
+  name?: string
+  first_name?: string
+  last_name?: string
+  picture?: { data?: { url?: string; is_silhouette?: boolean } }
+}
+
 // Facebook Page schema
 export const facebookPageSchema = z.object({
   id: z.string(),
