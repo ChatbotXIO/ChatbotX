@@ -67,6 +67,7 @@ vi.mock("@chatbotx.io/flow-config", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  BROADCAST_SEND_PRIORITY: 5,
   chatQueue: {
     add: (...args: unknown[]) => chatAddSpy(...args),
   },
@@ -256,6 +257,8 @@ describe("processBroadcastContacts", () => {
         }),
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r0",
+          // Below unprioritized live traffic, so comment replies go first.
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -327,6 +330,8 @@ describe("processBroadcastContacts", () => {
         }),
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
+          // Below unprioritized live traffic, so comment replies go first.
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -352,6 +357,7 @@ describe("processBroadcastContacts", () => {
         expect.objectContaining({ type: "sendMessengerTemplateMessage" }),
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -948,6 +954,7 @@ describe("processBroadcastContacts", () => {
         expect.anything(),
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r0",
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -956,6 +963,7 @@ describe("processBroadcastContacts", () => {
         expect.anything(),
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -984,20 +992,24 @@ describe("processBroadcastContacts", () => {
       expect(integrationAddSpy.mock.calls.map((call) => call[2])).toEqual([
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r0",
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r0",
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       ])
       expect(chatAddSpy.mock.calls.map((call) => call[2])).toEqual([
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
         {
           jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
+          priority: 5,
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       ])

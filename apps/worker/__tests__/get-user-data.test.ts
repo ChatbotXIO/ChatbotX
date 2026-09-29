@@ -94,6 +94,7 @@ vi.mock("@chatbotx.io/events", () => ({
 
 const chatQueueAdd = vi.fn(async () => ({ id: "job-1" }))
 vi.mock("@chatbotx.io/worker-config", () => ({
+  BROADCAST_SEND_PRIORITY: 5,
   ChatJobAction: {
     sendChatMessage: "sendChatMessage",
     sendFlowMessage: "sendFlowMessage",
@@ -544,40 +545,48 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
       ),
     )
 
-    expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
-      type: "sendFlowMessage",
-      data: expect.objectContaining({
-        conversationId: "conv-1",
-        contactInboxId: "ci-1",
-        flowId: "flow-1",
-        flowVersionId: "fv-1",
-        metadata: {
-          type: "broadcast",
-          broadcastId: "bc-1",
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      {
+        type: "sendFlowMessage",
+        data: expect.objectContaining({
+          conversationId: "conv-1",
           contactInboxId: "ci-1",
-        },
-        step: expect.objectContaining({
-          id: "step-1",
-          nodeId: "node-1",
-          stepType: "sendText",
-          text: "Please re-enter your email",
-          buttons: [],
+          flowId: "flow-1",
+          flowVersionId: "fv-1",
+          metadata: {
+            type: "broadcast",
+            broadcastId: "bc-1",
+            contactInboxId: "ci-1",
+          },
+          step: expect.objectContaining({
+            id: "step-1",
+            nodeId: "node-1",
+            stepType: "sendText",
+            text: "Please re-enter your email",
+            buttons: [],
+          }),
         }),
-      }),
-    })
+      },
+      { priority: 5 },
+    )
   })
 
   test("keeps the long-standing blank retry behavior for non-webview formats (sends the blank retry text unchanged)", async () => {
     await getUserData(makeProps(ReplyFormat.email, { retryMessage: "" }, 1))
 
-    expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
-      type: "sendFlowMessage",
-      data: expect.objectContaining({
-        step: expect.objectContaining({
-          text: "",
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      {
+        type: "sendFlowMessage",
+        data: expect.objectContaining({
+          step: expect.objectContaining({
+            text: "",
+          }),
         }),
-      }),
-    })
+      },
+      { priority: 5 },
+    )
   })
 
   test("falls back to the step message on date retry so the picker prompt is re-sent with its button", async () => {
@@ -735,27 +744,31 @@ describe("getUserData — first send (no challenge state)", () => {
     props.ctx = { variables: { conversation: {} } }
     const result = await getUserData(props)
     expect(result.status).toBe("wait")
-    expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
-      type: "sendFlowMessage",
-      data: {
-        conversationId: "conv-1",
-        contactInboxId: "ci-1",
-        flowId: "flow-1",
-        flowVersionId: "fv-1",
-        step: {
-          id: "step-1",
-          nodeId: "node-1",
-          stepType: "sendText",
-          text: "Please enter your email, {{contact.name}}",
-          buttons: [],
-        },
-        metadata: {
-          type: "broadcast",
-          broadcastId: "bc-1",
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      {
+        type: "sendFlowMessage",
+        data: {
+          conversationId: "conv-1",
           contactInboxId: "ci-1",
+          flowId: "flow-1",
+          flowVersionId: "fv-1",
+          step: {
+            id: "step-1",
+            nodeId: "node-1",
+            stepType: "sendText",
+            text: "Please enter your email, {{contact.name}}",
+            buttons: [],
+          },
+          metadata: {
+            type: "broadcast",
+            broadcastId: "bc-1",
+            contactInboxId: "ci-1",
+          },
         },
       },
-    })
+      { priority: 5 },
+    )
     expect(challengeClearCalls()).toHaveLength(0)
   })
 
@@ -1411,6 +1424,7 @@ describe("getUserData — date/datetime webview channel gating (Fix 3)", () => {
     expect(chatQueueAdd).toHaveBeenCalledWith(
       "sendFlowMessage",
       expect.objectContaining({ type: "sendFlowMessage" }),
+      { priority: 5 },
     )
     expect(chatQueueAdd).not.toHaveBeenCalledWith(
       "sendChatMessage",
@@ -1445,6 +1459,7 @@ describe("getUserData — non-date replyFormats keep the text prompt path (regre
     expect(chatQueueAdd).toHaveBeenCalledWith(
       "sendFlowMessage",
       expect.objectContaining({ type: "sendFlowMessage" }),
+      { priority: 5 },
     )
     expect(chatQueueAdd).not.toHaveBeenCalledWith(
       "sendChatMessage",
@@ -1513,6 +1528,7 @@ describe("getUserData — WhatsApp native location request (RF08)", () => {
     expect(chatQueueAdd).toHaveBeenCalledWith(
       "sendFlowMessage",
       expect.objectContaining({ type: "sendFlowMessage" }),
+      { priority: 5 },
     )
     expect(chatQueueAdd).not.toHaveBeenCalledWith(
       "sendChatMessage",

@@ -107,6 +107,16 @@ export type CommentTag = {
  */
 export const MISSED_COMMENT_REPLAY_PRIORITY = 10
 
+/**
+ * BullMQ priority for every send a broadcast makes on the shared `chat` and
+ * `integration` queues — its first job per recipient and each flow step after
+ * it. Unprioritized live traffic (comment replies, inbox messages) runs first,
+ * so a broadcast to thousands of contacts no longer holds a comment reply
+ * behind it. Kept ahead of `MISSED_COMMENT_REPLAY_PRIORITY`: a broadcast is a
+ * scheduled send, a replay is catch-up work.
+ */
+export const BROADCAST_SEND_PRIORITY = 5
+
 export type IntegrationJobReceiveComment = {
   type: typeof IntegrationJobAction.incomingComment
   data: {

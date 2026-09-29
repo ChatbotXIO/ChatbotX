@@ -24,6 +24,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { mapWithConcurrency } from "@chatbotx.io/utils"
 import {
+  BROADCAST_SEND_PRIORITY,
   ChatJobAction,
   chatQueue,
   IntegrationJobAction,
@@ -51,6 +52,7 @@ type ContactOnBroadcastForSend = BroadcastRecipientForSend
 
 const downstreamJobOptions = (jobId: string) => ({
   jobId,
+  priority: BROADCAST_SEND_PRIORITY,
   removeOnComplete: {
     age: BROADCAST_SEND_JOB_RETENTION_SECONDS,
     count: 100_000,

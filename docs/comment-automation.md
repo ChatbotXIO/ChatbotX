@@ -209,7 +209,7 @@ shape keeps working — **read both through `resolveReplyTexts`**, never directl
 `value` and need no migration; `publicReply` is `jsonb`.
 
 Sends are **staggered by 3s** (`PUBLIC_REPLY_SPACING_MS`). Not cosmetic: the chat queue runs
-`concurrency: 5` with no limiter, so N jobs sharing one delay are picked up in parallel and the
+`CHAT_WORKER_CONCURRENCY` jobs at once (default 5) with no limiter, so N jobs sharing one delay are picked up in parallel and the
 replies land under the comment in whatever order Facebook accepts them.
 
 **The set is ONE reply, not N.** Exactly the rule a `flow` reply already follows, and it is what
