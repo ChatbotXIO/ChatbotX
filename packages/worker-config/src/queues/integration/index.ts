@@ -118,6 +118,13 @@ export type IntegrationJobReceiveComment = {
        * own storage before it ever reaches `Contact.avatar`.
        */
       fromAvatarUrl?: string
+      /**
+       * Video attached to the comment, when the channel's webhook pushes its
+       * URL on the payload (Messenger `feed` `value.video`). The Graph
+       * attachment lookup only re-hosts photos and GIFs, so this is the video's
+       * only source — `receiveComment` re-uploads it to the tenant's storage.
+       */
+      videoUrl?: string
       message?: string
       tags?: CommentTag[]
       createdTime: number

@@ -3579,6 +3579,80 @@ describe("contact source taxonomy", () => {
     ).toBe(false)
   })
 
+  test("saves a Facebook video comment with the webhook's video attached", async () => {
+    mockDownloadCommentMediaAttachment.mockResolvedValueOnce({
+      sourceId: "attachment-video-1",
+      fileType: "video",
+      mimeType: "video/mp4",
+      originPath: "public/ws/ws-1/video",
+      size: 3,
+    })
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-video-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        postId: "post-1",
+        videoUrl: "https://video.xx.fbcdn.test/comment-video.mp4",
+      },
+    })
+
+    expect(mockDownloadCommentMediaAttachment).toHaveBeenCalledWith({
+      url: "https://video.xx.fbcdn.test/comment-video.mp4",
+      workspaceId: "ws-1",
+      commentId: "comment-video-1",
+    })
+    expect(mockCreateOrUpdateWithAttachments).toHaveBeenCalledTimes(1)
+  })
+
+  test("keeps the Graph attachment and skips the video URL when both exist", async () => {
+    vi.mocked(allIntegrations.messenger?.runAction)?.mockResolvedValueOnce({
+      type: "photo",
+      attachment: {
+        sourceId: "attachment-photo-1",
+        fileType: "image",
+        mimeType: "image/jpeg",
+        originPath: "public/ws/ws-1/photo",
+        size: 3,
+      },
+    } as never)
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-photo-1",
+        fromId: "commenter-1",
+        postId: "post-1",
+        videoUrl: "https://video.xx.fbcdn.test/comment-video.mp4",
+      },
+    })
+
+    expect(mockDownloadCommentMediaAttachment).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdateWithAttachments).toHaveBeenCalledTimes(1)
+  })
+
+  test("still saves a Facebook video comment when the video download fails", async () => {
+    mockDownloadCommentMediaAttachment.mockResolvedValueOnce(undefined)
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-video-fail-1",
+        fromId: "commenter-1",
+        postId: "post-1",
+        videoUrl: "https://video.xx.fbcdn.test/comment-video.mp4",
+      },
+    })
+
+    expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
+  })
+
   // A retry of this job after the message save already committed always sees
   // `isNew: false`; skipping the enqueue there would silently drop the
   // auto-reply. De-duplication is the queue's job (`jobId` + retained

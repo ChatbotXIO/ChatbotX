@@ -1193,7 +1193,17 @@ describe("private-reply capability parity", () => {
 })
 
 describe("processCommentAutomation matchPost normalization", () => {
-  test("matches a reel stored as a bare id against the composite webhook post_id", async () => {
+  test("matches a reel stored by its composite post_id", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ post: { type: "postIds", value: [POST_ID] } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockInsertDedup).toHaveBeenCalled()
+  })
+
+  test("matches a bare story id against the composite webhook post_id", async () => {
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({ post: { type: "postIds", value: [STORY_ID] } }),
     ])
