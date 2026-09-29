@@ -175,9 +175,9 @@ export const fbCommentsPrivateAPI = {
             conversationId: contactInbox.conversation?.id ?? "",
             errorContent: event.errorContent ?? null,
             occurredAt: event.occurredAt,
-            // Only a `comment:missed` row carries these; a delivery row
-            // describes the reply, so they stay null and the dialog renders
-            // its error column instead.
+            // The user comment behind the row — shown beside the contact in
+            // the Sent/Delivered/Seen/Missed dialogs. Only a `comment:missed`
+            // row carries `missReason`.
             commentText: event.commentText ?? null,
             missReason: event.missReason ?? null,
           }

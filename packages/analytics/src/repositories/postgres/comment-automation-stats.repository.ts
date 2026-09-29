@@ -455,7 +455,10 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     perPage: number
   }): Promise<{
     contactInboxIds: string[]
-    events: (ContactEventData & { rowKey: string })[]
+    events: (ContactEventData & {
+      rowKey: string
+      commentText: string | null
+    })[]
     contactTotal: number
   }> {
     const { workspaceId, automationId, eventType, page, perPage } = input
@@ -497,6 +500,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
           clickedAt: event.clickedAt,
           failedAt: event.failedAt,
           errorDetail: event.errorDetail,
+          commentText: event.commentText,
         })
         .from(event)
         .where(scope)
@@ -516,7 +520,10 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     ])
 
     const contactInboxIds: string[] = []
-    const events: (ContactEventData & { rowKey: string })[] = []
+    const events: (ContactEventData & {
+      rowKey: string
+      commentText: string | null
+    })[] = []
 
     for (const row of rows) {
       if (!row.contactInboxId) {
@@ -529,6 +536,9 @@ export class CommentAutomationStatsRepository extends BaseRepository {
         contactInboxId: row.contactInboxId,
         occurredAt: this.getOccurredAt(row, eventType),
         errorContent: row.errorDetail ?? undefined,
+        // The user comment the reply answered — shown beside the contact in
+        // the Sent/Delivered/Seen dialogs.
+        commentText: row.commentText,
       })
     }
 

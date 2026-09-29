@@ -715,8 +715,9 @@ export class CommentAutomationAnalyticsService {
   }): Promise<{
     contactInboxIds: string[]
     /**
-     * `commentText`/`missReason` are present only on `comment:missed` rows —
-     * declared optional here so the one API handler can map both shapes without
+     * `commentText` is the user comment behind the row (both tables carry it);
+     * `missReason` is present only on `comment:missed` rows — declared
+     * optional here so the one API handler can map both shapes without
      * narrowing on the event type a second time.
      */
     events: (ContactEventData & {
