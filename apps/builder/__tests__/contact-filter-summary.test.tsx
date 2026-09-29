@@ -134,7 +134,7 @@ describe("ContactFilterSummary", () => {
       ]),
     )
 
-    expect(text).toContain("VIP, missing")
+    expect(text).toContain("VIP, condition.unknownValue")
     expect(text).toContain("Support Inbox")
     expect(text).toContain("Loyalty Tier")
     expect(text).toContain("Includes")

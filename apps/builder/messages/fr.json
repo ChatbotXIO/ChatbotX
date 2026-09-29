@@ -576,6 +576,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Inconnu",
     "yes": "Oui",
     "no": "Non",
     "valuePlaceholder": "...",

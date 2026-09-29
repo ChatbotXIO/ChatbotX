@@ -576,6 +576,7 @@
     }
   },
   "condition": {
+    "unknownValue": "غير معروف",
     "yes": "نعم",
     "no": "لا",
     "valuePlaceholder": "...",

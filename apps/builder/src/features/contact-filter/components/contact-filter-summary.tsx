@@ -6,6 +6,7 @@ import type { ContactFilterCriteria } from "../schema"
 import {
   formatConditionValueDisplay,
   formatCtwaRetargetChipLabel,
+  getUnknownValueLabel,
 } from "./contact-filter-config"
 import { useContactFilterConfigs } from "./use-contact-filter-configs"
 
@@ -110,6 +111,7 @@ function ContactFilterSummaryList({
           const valueDisplay = formatConditionValueDisplay(
             "value" in condition ? condition.value : undefined,
             fieldConfig?.options,
+            getUnknownValueLabel(fieldConfig, t),
           )
           const conditionKey = [
             condition.field,

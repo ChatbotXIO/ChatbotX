@@ -2256,6 +2256,7 @@
     }
   },
   "condition": {
+    "unknownValue": "未知",
     "yes": "是",
     "no": "否",
     "valuePlaceholder": "...",

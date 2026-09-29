@@ -576,6 +576,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Bilinmiyor",
     "yes": "Evet",
     "no": "Hayır",
     "valuePlaceholder": "...",

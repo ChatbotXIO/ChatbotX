@@ -642,19 +642,31 @@ const findOptionLabel = (
   }
 }
 
+// Option-backed values that no longer resolve (deleted tag, removed member…)
+// read as "Unknown". Booleans keep the raw value: custom boolean fields also
+// accept `{{variable}}` values that have no matching option.
+export const getUnknownValueLabel = (
+  fieldConfig: FieldConfig | undefined,
+  t: (key: string) => string,
+): string | undefined =>
+  fieldConfig?.formField === formFieldTypes.enum.boolean
+    ? undefined
+    : t("condition.unknownValue")
+
 export const formatConditionValueDisplay = (
   value: string | string[] | undefined,
   options?: SelectOption[],
+  unknownLabel?: string,
 ): string => {
   if (value === undefined) {
     return ""
   }
-  if (!options?.length) {
+  if (!options) {
     return Array.isArray(value) ? value.join(", ") : value
   }
 
   const getLabel = (optionValue: string) =>
-    findOptionLabel(options, optionValue) ?? optionValue
+    findOptionLabel(options, optionValue) ?? unknownLabel ?? optionValue
 
   if (Array.isArray(value)) {
     return value.map(getLabel).join(", ")

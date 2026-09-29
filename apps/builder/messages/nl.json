@@ -2076,6 +2076,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Onbekend",
     "yes": "Ja",
     "no": "Nee",
     "valuePlaceholder": "...",

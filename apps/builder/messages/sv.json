@@ -835,6 +835,7 @@
     "toggleLabel": "Synkronisera befintliga kontakter och chatthistorik"
   },
   "condition": {
+    "unknownValue": "Okänd",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimeInvalid": "Ange ett datum som YYYY-MM-DD HH:mm eller en variabel",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import {
   type FieldConfig,
   formatConditionValueDisplay,
+  getUnknownValueLabel,
 } from "@/features/contact-filter/components/contact-filter-config"
 import { useContactFilterConfigs } from "@/features/contact-filter/components/use-contact-filter-configs"
 import { StateHandle } from "../base/step-state-handles"
@@ -56,6 +57,7 @@ const ConditionRow = ({
   const valueDisplay = formatConditionValueDisplay(
     condition.value,
     fieldConfig?.options,
+    getUnknownValueLabel(fieldConfig, t),
   )
 
   return (

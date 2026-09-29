@@ -576,6 +576,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Tidak diketahui",
     "yes": "Ya",
     "no": "Tidak",
     "valuePlaceholder": "...",

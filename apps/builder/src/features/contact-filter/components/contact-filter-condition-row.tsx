@@ -8,6 +8,7 @@ import {
   type FieldConfig,
   formatConditionValueDisplay,
   formatCtwaRetargetChipLabel,
+  getUnknownValueLabel,
 } from "./contact-filter-config"
 
 type ContactFilterConditionRowProps = {
@@ -87,6 +88,7 @@ export const ContactFilterConditionRow = ({
   const valueDisplay = formatConditionValueDisplay(
     "value" in row ? row.value : undefined,
     fieldConfig?.options,
+    getUnknownValueLabel(fieldConfig, t),
   )
   const operatorLabel = operatorLabelByValue.get(row.operator) ?? row.operator
   const editLabel = [fieldLabel, operatorLabel, valueDisplay]

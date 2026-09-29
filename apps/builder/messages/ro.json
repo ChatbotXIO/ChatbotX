@@ -1404,6 +1404,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Necunoscut",
     "yes": "Da",
     "no": "Nu",
     "valuePlaceholder": "...",

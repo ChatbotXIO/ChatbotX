@@ -576,6 +576,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Naməlum",
     "yes": "Bəli",
     "no": "Xeyr",
     "valuePlaceholder": "...",

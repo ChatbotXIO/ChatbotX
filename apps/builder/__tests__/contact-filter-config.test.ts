@@ -14,6 +14,7 @@ import {
   getConditionOptions,
   getFieldConfigs,
   getFieldOptions,
+  getUnknownValueLabel,
 } from "@/features/contact-filter/components/contact-filter-config"
 import {
   customFieldOperatorRequiresArrayValue,
@@ -456,10 +457,14 @@ describe("contact filter field config helpers", () => {
     ).toEqual(booleanOptions)
 
     for (const fieldName of ["customField:cf-bool", "botField:bf-bool"]) {
-      const options = configs.find(
-        (config) => config.name === fieldName,
-      )?.options
-      expect(formatConditionValueDisplay("{{x}}", options)).toBe("{{x}}")
+      const fieldConfig = configs.find((config) => config.name === fieldName)
+      expect(
+        formatConditionValueDisplay(
+          "{{x}}",
+          fieldConfig?.options,
+          getUnknownValueLabel(fieldConfig, t),
+        ),
+      ).toBe("{{x}}")
     }
   })
 
@@ -706,5 +711,33 @@ describe("contact filter field config helpers", () => {
         ],
       ),
     ).toBe("Alice, Sales Team, Unassigned, missing")
+  })
+
+  test("shows the unknown label for option values that no longer resolve", () => {
+    const tagsConfig = getFieldConfigs({
+      t,
+      tagOptions: [{ label: "VIP", value: "tag-1" }],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    }).find((config) => config.name === "tags")
+    const unknownLabel = getUnknownValueLabel(tagsConfig, t)
+
+    expect(unknownLabel).toBe("condition.unknownValue")
+    expect(
+      formatConditionValueDisplay(
+        ["tag-1", "deleted-tag"],
+        tagsConfig?.options,
+        unknownLabel,
+      ),
+    ).toBe("VIP, condition.unknownValue")
+    // An empty option list (e.g. every tag deleted) still resolves nothing.
+    expect(formatConditionValueDisplay("deleted-tag", [], unknownLabel)).toBe(
+      "condition.unknownValue",
+    )
+    // Free-text fields have no option list, so their value stays as typed.
+    expect(formatConditionValueDisplay("titan", undefined, unknownLabel)).toBe(
+      "titan",
+    )
   })
 })
