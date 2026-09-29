@@ -661,7 +661,9 @@ export const formatConditionValueDisplay = (
   if (value === undefined) {
     return ""
   }
-  if (!options) {
+  // No options yet (still loading, failed, or not option-backed): nothing to
+  // resolve against, so show the value as-is rather than flag it unknown.
+  if (!options?.length) {
     return Array.isArray(value) ? value.join(", ") : value
   }
 
