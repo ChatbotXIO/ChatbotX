@@ -64,7 +64,7 @@ Triggered from:
   (webchat first message from a new guest)
 - `apps/worker/src/integration/handlers/received-message.ts:1899`
   (any channel inbound message from a brand-new contact — Messenger, Instagram,
-  WhatsApp, Telegram, Zalo, TikTok, comments, etc., via `detectContactAndConversation`)
+  WhatsApp, Telegram, Zalo, TikTok, Threads, comments, etc., via `detectContactAndConversation`)
 
 Both call `quotaEnforcementService.createNewContactWithMac`
 (`packages/business/src/quota-enforcement/service.ts:511`):

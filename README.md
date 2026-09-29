@@ -55,6 +55,11 @@
     <source media="(prefers-color-scheme: light)" srcset=".github/assets/readme/tiktok-light.svg">
     <img alt="TikTok" src=".github/assets/readme/tiktok-light.svg" width="32">
   </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/readme/threads-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/readme/threads-light.svg">
+    <img alt="Threads" src=".github/assets/readme/threads-light.svg" width="32">
+  </picture>
   <img alt="Email" src=".github/assets/readme/email.svg" width="32">
   <img alt="Website" src=".github/assets/readme/website.svg" width="32">
 </p>
@@ -88,7 +93,7 @@
 
 ## ✨ Features
 
-- **Omnichannel:** WhatsApp, Facebook, Instagram, TikTok, Telegram, Zalo, Email, API, and Webchat
+- **Omnichannel:** WhatsApp, Facebook, Instagram, Threads, TikTok, Telegram, Zalo, Email, API, and Webchat
 - **Visual Flow Builder:** Drag-and-drop chatbot builder with 15+ node types
 - **AI Agents:** OpenAI, Claude, Gemini, DeepSeek, OpenRouter, NVIDIA NIM, and Local LLMs
 - **Live Chat Inbox:** Real-time inbox with human takeover and conversation assignment
@@ -98,6 +103,7 @@
 - **Team Management:** Invite team members, assign roles, and manage permissions
 - **Rich Messaging:** Media, files, buttons, quick replies, catalogs, locations, and carousel cards
 - **Comment-to-DM:** Automatically message users who comment with specific keywords
+- **Comment Automation:** Auto-reply, like, and hide comments on Messenger, Instagram, Threads, and TikTok posts (on Threads: public reply and hide only — it has no DM or like API)
 - **A/B Testing:** Test and optimize different message flows
 - **Triggers:** Execute actions based on events within your bot
 - **Webhooks & HTTP:** Integrate external APIs directly into your flows
@@ -156,6 +162,7 @@ To have the project up and running, please follow the [Quick Start Guide](https:
 |   |-- whatsapp/
 |   |-- messenger/
 |   |-- instagram/
+|   |-- threads/
 |   |-- telegram/
 |   |-- zalo/
 |   |-- tiktok/
