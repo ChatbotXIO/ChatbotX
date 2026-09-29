@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.54",
+    "@ai-sdk/openai": "^3.0.120",
     "@chatbotx.io/sdk": "workspace:*",
-    "ai": "^6.0.170"
+    "ai": "^6.0.296"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

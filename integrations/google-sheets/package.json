@@ -7,7 +7,7 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "google-auth-library": "^11.1.0",
-    "googleapis": "^171.4.0"
+    "googleapis": "^182.0.0"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
