@@ -6,6 +6,7 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { ContactInboxPanel } from "@/features/contacts/contact-inbox-panel"
 import type { UseAutoRefreshContactProfileProps } from "@/features/contacts/hooks/use-auto-refresh-contact-profile"
+import type { ThreadControlView } from "@/features/conversations/utils/thread-control"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -164,6 +165,35 @@ vi.mock("@chatbotx.io/ui/components/ui/accordion", () => ({
   ),
 }))
 
+const threadControlView = vi.hoisted(() => ({
+  current: null as ThreadControlView | null,
+}))
+vi.mock("@/features/conversations/hooks/use-thread-control", () => ({
+  useThreadControl: () => threadControlView.current,
+}))
+vi.mock(
+  "@/features/contacts/components/contact-thread-control-section",
+  () => ({
+    ContactThreadControlSection: () => <div data-testid="routing-section" />,
+  }),
+)
+
+const ROUTING_SECTION_KEY = "conversationRouting.panel.title"
+
+const makeThreadControlView = (
+  state: ThreadControlView["state"],
+): ThreadControlView => ({
+  contactInboxId: "ci-1",
+  state,
+  ownerRole: null,
+  updatedAt: null,
+  canRelease: false,
+  canPass: false,
+  isLocked: state === "standby",
+  idleAt: null,
+  now: new Date(),
+})
+
 const makeQueryClient = () =>
   new QueryClient({
     defaultOptions: {
@@ -212,6 +242,7 @@ describe("ContactInboxPanel", () => {
     appointmentsMock.mockClear()
     sequencesMock.mockClear()
     latestAccordionOnValueChange = undefined
+    threadControlView.current = null
     seededContact = undefined
     latestConversations = [firstConversation, secondConversation]
     autoRefreshCapture = {}
@@ -527,5 +558,50 @@ describe("ContactInboxPanel", () => {
       resolve({ data: [] })
       await promise
     })
+  })
+
+  test("auto-expands the routing section when a partner is handling the thread", () => {
+    seededContact = makeContact("contact-1", "Jane")
+    threadControlView.current = makeThreadControlView("standby")
+
+    render()
+
+    expect(
+      container.querySelector('[data-testid="routing-section"]'),
+    ).not.toBeNull()
+  })
+
+  test("leaves the routing section collapsed when this app owns the thread", () => {
+    seededContact = makeContact("contact-1", "Jane")
+    threadControlView.current = makeThreadControlView("owned")
+
+    render()
+
+    expect(
+      container.querySelector('[data-testid="routing-section"]'),
+    ).toBeNull()
+
+    // The module still exists and opens on demand.
+    act(() => latestAccordionOnValueChange?.([ROUTING_SECTION_KEY]))
+    expect(
+      container.querySelector('[data-testid="routing-section"]'),
+    ).not.toBeNull()
+  })
+
+  test("expands the routing section when a handover arrives mid-view", () => {
+    seededContact = makeContact("contact-1", "Jane")
+    threadControlView.current = makeThreadControlView("owned")
+    render()
+    expect(
+      container.querySelector('[data-testid="routing-section"]'),
+    ).toBeNull()
+
+    // A partner takes over: re-render with the new state, same conversation.
+    threadControlView.current = makeThreadControlView("standby")
+    render()
+
+    expect(
+      container.querySelector('[data-testid="routing-section"]'),
+    ).not.toBeNull()
   })
 })

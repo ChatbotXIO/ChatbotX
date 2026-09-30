@@ -19,6 +19,13 @@ import {
   extractCallEventPayloads,
   type WhatsappCallEventPayload,
 } from "../lib/calls"
+import {
+  isStandbyEchoItem,
+  readHandoverPhoneNumberId,
+  THREAD_CONTROL_EVENT_JOB_NAME,
+  THREAD_CONTROL_JOB_ID_PREFIX,
+  type ThreadControlJobPayload,
+} from "../lib/conversation-routing"
 import { logger } from "../lib/logger"
 import { extractWhatsappStatusRecipientUserId } from "../lib/raw-identity"
 import { resolveSignaturePolicy } from "../lib/signature-policy"
@@ -420,6 +427,229 @@ const buildMessagesChangeBuffers = (
   return buffers
 }
 
+/** One Conversation Routing item to enqueue as a `threadControlEvent` job. */
+export type ConversationRoutingPayload = ThreadControlJobPayload & {
+  phoneNumberId: string
+  /** wamid / echo id used in the job id; `null` = hash the body instead. */
+  dedupeKey: string | null
+}
+
+type RoutingChangeContext = {
+  object: unknown
+  entryId: unknown
+  value: Record<string, unknown>
+}
+
+const isRoutingRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
+/** `messaging_handovers`: one job per change value, keyed by its body hash. */
+const splitHandoverChange = ({
+  value,
+}: RoutingChangeContext): ConversationRoutingPayload[] => {
+  const phoneNumberId = readHandoverPhoneNumberId(value)
+  if (!phoneNumberId) {
+    logger.warn(
+      "Whatsapp messaging_handovers dropped: recipient.phone_number_id missing",
+    )
+    return []
+  }
+  return [{ phoneNumberId, kind: "handover", body: value, dedupeKey: null }]
+}
+
+/**
+ * Re-wraps one standby item as a single-item `raw` body that keeps
+ * `field: "standby"`. Contacts also sit at `value.contacts` so the shared
+ * BSUID/username reader (`lib/raw-identity.ts`) works unchanged.
+ */
+const buildStandbyRawBody = (
+  context: RoutingChangeContext,
+  standbyPart: Record<string, unknown>,
+  contacts: unknown[] | undefined,
+): unknown => ({
+  object: context.object,
+  entry: [
+    {
+      id: context.entryId,
+      changes: [
+        {
+          field: "standby",
+          value: {
+            ...context.value,
+            ...(contacts ? { contacts } : {}),
+            standby: { ...standbyPart, ...(contacts ? { contacts } : {}) },
+          },
+        },
+      ],
+    },
+  ],
+})
+
+const readContactProfileName = (
+  contacts: unknown[] | undefined,
+): string | undefined => {
+  const profile = (
+    contacts?.[0] as { profile?: { name?: unknown } } | undefined
+  )?.profile
+  return typeof profile?.name === "string" ? profile.name : undefined
+}
+
+const splitStandbyMessages = (
+  context: RoutingChangeContext,
+  phoneNumberId: string,
+  standby: Record<string, unknown>,
+): ConversationRoutingPayload[] => {
+  if (!Array.isArray(standby.messages)) {
+    return []
+  }
+  const contactList = Array.isArray(standby.contacts)
+    ? standby.contacts
+    : undefined
+  const payloads: ConversationRoutingPayload[] = []
+  for (const [index, message] of standby.messages.entries()) {
+    const id = readStringField(message, "id")
+    if (!id) {
+      logger.warn("Whatsapp standby message dropped: message id missing")
+      continue
+    }
+    const contacts = pickContactsForMessage(contactList, message, index)
+    const from =
+      readStringField(message, "from") ??
+      readStringField(contacts?.[0], "wa_id") ??
+      ""
+    payloads.push({
+      phoneNumberId,
+      kind: "standbyMessage",
+      dedupeKey: id,
+      body: {
+        phoneID: phoneNumberId,
+        from,
+        message,
+        name: readContactProfileName(contacts),
+        raw: buildStandbyRawBody(context, { messages: [message] }, contacts),
+      },
+    })
+  }
+  return payloads
+}
+
+const splitStandbyEchoes = (
+  context: RoutingChangeContext,
+  phoneNumberId: string,
+  standby: Record<string, unknown>,
+): ConversationRoutingPayload[] => {
+  if (!Array.isArray(standby.message_echoes)) {
+    return []
+  }
+  const payloads: ConversationRoutingPayload[] = []
+  for (const echo of standby.message_echoes) {
+    if (!isStandbyEchoItem(echo)) {
+      logger.warn("Whatsapp standby echo dropped: id or message missing")
+      continue
+    }
+    const sent = echo.message as Record<string, unknown>
+    payloads.push({
+      phoneNumberId,
+      kind: "standbyEcho",
+      dedupeKey: echo.id as string,
+      body: {
+        phoneID: phoneNumberId,
+        from:
+          readStringField(sent, "to") ??
+          readStringField(sent, "recipient") ??
+          "",
+        message: echo,
+        raw: buildStandbyRawBody(
+          context,
+          { message_echoes: [echo] },
+          undefined,
+        ),
+      },
+    })
+  }
+  return payloads
+}
+
+/**
+ * `standby`: messages and echoes become one job each. `statuses[]` (receipts of
+ * other partners' messages) are acknowledged and dropped (D14).
+ */
+const splitStandbyChange = (
+  context: RoutingChangeContext,
+): ConversationRoutingPayload[] => {
+  const phoneNumberId = (
+    context.value.metadata as { phone_number_id?: unknown }
+  )?.phone_number_id
+  const standby = context.value.standby
+  if (typeof phoneNumberId !== "string" || !isRoutingRecord(standby)) {
+    logger.warn("Whatsapp standby change dropped: malformed payload")
+    return []
+  }
+  if (Array.isArray(standby.statuses) && standby.statuses.length > 0) {
+    logger.debug(
+      { count: standby.statuses.length },
+      "Whatsapp standby statuses dropped",
+    )
+  }
+  return [
+    ...splitStandbyMessages(context, phoneNumberId, standby),
+    ...splitStandbyEchoes(context, phoneNumberId, standby),
+  ]
+}
+
+const conversationRoutingSplitters: Record<
+  string,
+  (context: RoutingChangeContext) => ConversationRoutingPayload[]
+> = {
+  messaging_handovers: splitHandoverChange,
+  standby: splitStandbyChange,
+}
+
+/**
+ * Every Conversation Routing item (`messaging_handovers`, `standby`) as one
+ * `threadControlEvent` job payload — never as an `incomingMessage` directly.
+ * Never throws on a malformed item. Needs no DB access.
+ */
+export const extractConversationRoutingPayloads = (
+  rawBody: unknown,
+  pinnedPhoneNumberId?: string,
+): ConversationRoutingPayload[] => {
+  const object =
+    typeof rawBody === "object" && rawBody !== null
+      ? (rawBody as { object?: unknown }).object
+      : undefined
+  const payloads: ConversationRoutingPayload[] = []
+
+  for (const entry of readWebhookEntries(rawBody)) {
+    const { id: entryId, changes } = entry as {
+      id?: unknown
+      changes?: unknown
+    }
+    if (!Array.isArray(changes)) {
+      continue
+    }
+    for (const change of changes) {
+      const { field, value } = (change ?? {}) as {
+        field?: unknown
+        value?: unknown
+      }
+      const splitter =
+        typeof field === "string"
+          ? conversationRoutingSplitters[field]
+          : undefined
+      if (splitter && isRoutingRecord(value)) {
+        payloads.push(...splitter({ object, entryId, value }))
+      }
+    }
+  }
+
+  return dropMismatchedPhoneNumberId(
+    payloads,
+    pinnedPhoneNumberId,
+    "conversationRouting",
+  )
+}
+
 /**
  * Parses the verified body into payloads to enqueue. Never throws, so the
  * webhook can still ACK Meta.
@@ -432,7 +662,9 @@ const parsePostPayloads = (
   automaticEventPayloads: AutomaticEventPayload[]
   callEventPayloads: WhatsappCallEventPayload[]
   messagesChangeBuffers: ArrayBuffer[]
+  conversationRoutingPayloads: ConversationRoutingPayload[]
 } => {
+  let conversationRoutingPayloads: ConversationRoutingPayload[] = []
   let coexistPayloads: CoexistPayload[] = []
   let automaticEventPayloads: AutomaticEventPayload[] = []
   let callEventPayloads: WhatsappCallEventPayload[] = []
@@ -461,6 +693,17 @@ const parsePostPayloads = (
       rawBody,
       pinnedPhoneNumberId,
     )
+    try {
+      conversationRoutingPayloads = extractConversationRoutingPayloads(
+        rawBody,
+        pinnedPhoneNumberId,
+      )
+    } catch (err) {
+      logger.error(
+        { err },
+        "Whatsapp conversation routing extraction failed; webhook will still acknowledge",
+      )
+    }
   } catch {
     logger.debug("Whatsapp webhook raw body was not JSON; continuing")
   }
@@ -470,6 +713,7 @@ const parsePostPayloads = (
     automaticEventPayloads,
     callEventPayloads,
     messagesChangeBuffers,
+    conversationRoutingPayloads,
   }
 }
 
@@ -894,6 +1138,20 @@ const enqueueNativeCallCapture = async (
  */
 const REDELIVERABLE_JOB_OPTIONS = { removeOnFail: true } as const
 
+/**
+ * A routing job carries one-shot side effects (the handover resume flow) that
+ * Meta will not redeliver once our webhook answered 200, so it rides out a
+ * transient Redis/DB failure longer than the queue default (2 attempts):
+ * 5 attempts, 10s exponential backoff (~2.5 min). Enqueued here through the
+ * raw queue the builder hands in, so the per-action `jobOptionsByAction` map in
+ * `@chatbotx.io/worker-config` does not apply to it.
+ */
+const THREAD_CONTROL_EVENT_JOB_OPTIONS = {
+  ...REDELIVERABLE_JOB_OPTIONS,
+  attempts: 5,
+  backoff: { type: "exponential", delay: 10_000 },
+} as const
+
 const dispatchWebhookResult = async (
   queue: WebhookQueue,
   result:
@@ -959,6 +1217,38 @@ const dispatchWebhookResult = async (
   }
 }
 
+/**
+ * One job per routing item with a deterministic, prefix-distinct job id, so a
+ * redelivery re-adds nothing and a standby job never swallows an owner
+ * delivery. Failures propagate: Meta must redeliver, which is safe.
+ */
+const enqueueConversationRoutingPayloads = async (
+  queue: WebhookQueue,
+  payloads: ConversationRoutingPayload[],
+): Promise<void> => {
+  for (const { phoneNumberId, kind, body, dedupeKey } of payloads) {
+    const payload: ThreadControlJobPayload = { kind, body }
+    const suffix = dedupeKey
+      ? toBullMqSafeIdSegment(dedupeKey)
+      : await sha256Hex(JSON.stringify(body))
+    await queue?.add(
+      THREAD_CONTROL_EVENT_JOB_NAME,
+      {
+        type: THREAD_CONTROL_EVENT_JOB_NAME,
+        data: {
+          integrationType: "whatsapp",
+          integrationIdentifier: phoneNumberId,
+          payload,
+        },
+      },
+      {
+        jobId: `${THREAD_CONTROL_JOB_ID_PREFIX[kind]}-${toBullMqSafeIdSegment(phoneNumberId)}-${suffix}`,
+        ...THREAD_CONTROL_EVENT_JOB_OPTIONS,
+      },
+    )
+  }
+}
+
 export const webhookHandler = async (
   props: HandleRequestProps<WhatsappConfig>,
 ) => {
@@ -1006,6 +1296,7 @@ export const webhookHandler = async (
         automaticEventPayloads,
         callEventPayloads,
         messagesChangeBuffers,
+        conversationRoutingPayloads,
       } = parsePostPayloads(signatureOutcome.rawBodyBuffer, pinnedPhoneNumberId)
 
       const boundCoexistPayloads = dropMismatchedPhoneNumberId(
@@ -1060,6 +1351,10 @@ export const webhookHandler = async (
       for (const result of results) {
         await dispatchWebhookResult(props.queue, result)
       }
+      await enqueueConversationRoutingPayloads(
+        props.queue,
+        conversationRoutingPayloads,
+      )
       await enqueueCoexistPayloads(props.queue, boundCoexistPayloads)
       await enqueueAutomaticEventPayloads(
         props.queue,

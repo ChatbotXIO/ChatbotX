@@ -1995,7 +1995,8 @@
       "searchPlaceholder": "ابحث عن كلمة مفتاحية..."
     },
     "templateId": {
-      "label": "قالب WhatsApp"
+      "label": "قالب WhatsApp",
+      "placeholder": "اختر قالبًا"
     },
     "messengerTemplateId": {
       "label": "قالب Messenger"
@@ -2533,7 +2534,8 @@
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
       "importJsonOnly": "ملفات JSON فقط",
       "whatsappCallButton": "الاتصال عبر واتساب",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "التحكم في المحادثة"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "فتح مجموعة Zalo",
     "openZalo": "فتح Zalo",
     "openMessenger": "فتح Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "شريك",
+      "partnerWithRole": "شريك · {role}",
+      "self": "أنت"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "إعلانات Click-to-WhatsApp",
+      "customer_service": "خدمة العملاء",
+      "escalation": "التصعيد",
+      "marketing": "التسويق",
+      "utility": "الخدمات"
+    },
+    "pill": {
+      "standby": "وضع الاستماع ({owner})",
+      "owned": "نشط",
+      "tooltip": "يتولاها {owner}"
+    },
+    "release": {
+      "label": "تحرير",
+      "tooltip": "حرّر هذه المحادثة ليتمكن التطبيقات الأخرى من الرد",
+      "success": "تم تحرير المحادثة"
+    },
+    "pass": {
+      "menuItem": "تمرير إلى التصعيد",
+      "title": "التمرير إلى شريك التصعيد؟",
+      "description": "هل تريد تسليم هذه المحادثة إلى شريك التصعيد؟ ستتوقف ردودك مؤقتًا حتى تعود المحادثة.",
+      "confirm": "تمرير",
+      "success": "تم تمرير المحادثة إلى شريك التصعيد"
+    },
+    "composer": {
+      "title": "أنت في وضع الاستماع فقط",
+      "description": "شريك خارجي يتولى هذه المحادثة. تم قفل مربع الرسائل لتجنب الردود المكررة.",
+      "takeOver": "استلام",
+      "takeOverSuccess": "أنت الآن تتولى هذه المحادثة",
+      "notEscalation": "يمكن لشريك التصعيد فقط الاستلام. يتم ضبط التوجيه في Meta Business Suite.",
+      "learnMore": "اعرف المزيد",
+      "dismiss": "إرسال على أي حال"
+    },
+    "divider": {
+      "ownerHandling": "{owner} يتولى هذه المحادثة الآن",
+      "handedOver": "{previousOwner} أعاد هذه المحادثة إليك",
+      "selfHandling": "أنت تتولى هذه المحادثة الآن",
+      "takenOver": "لقد توليت هذه المحادثة",
+      "released": "تم تحرير المحادثة",
+      "passed": "تم تمرير المحادثة إلى شريك التصعيد",
+      "serviceRejected": "لم يتم إرسال الرسالة: {owner} يتولى هذه المحادثة"
+    },
+    "context": {
+      "title": "سياق المحادثة",
+      "summaryBadge": "ملخص الذكاء الاصطناعي",
+      "historyBadge": "السجل",
+      "customer": "العميل",
+      "business": "النشاط التجاري",
+      "handoverNote": "ملاحظة التسليم: {note}",
+      "showAll": "عرض الكل ({count})",
+      "showLess": "عرض أقل"
+    },
+    "echo": {
+      "partner": "شريك"
+    },
+    "panel": {
+      "title": "توجيه المحادثة",
+      "threadState": "حالة المحادثة",
+      "threadStateOwned": "قيد المعالجة",
+      "threadStateStandby": "وضع الاستعداد",
+      "threadStateIdle": "في وضع الخمول",
+      "currentOwner": "المالك الحالي",
+      "noOwner": "لا يوجد مالك",
+      "roleLabel": "دورك",
+      "selfOwned": "يتولى المحادثة",
+      "selfStandby": "وضع الاستعداد — استماع فقط",
+      "selfIdle": "في انتظار رسالة العميل التالية",
+      "hintOwned": "حرّر المحادثة عند الانتهاء ليتمكن التطبيقات الأخرى من الرد.",
+      "hintStandby": "بينما يتولى شريك هذه المحادثة، يتم تعليق رسائلك حتى لا يتلقى العميل ردودًا مكررة. تولَّ المحادثة من مربع الرسائل للرد.",
+      "hintIdle": "رسالة العميل التالية تحدد من يجيب."
+    },
+    "settings": {
+      "title": "مسار الاستئناف بعد التسليم",
+      "description": "الأتمتة التي تعمل عندما يعيد شريك المحادثة إليك.",
+      "resumeFlowLabel": "اختر تدفقًا",
+      "resumeFlowPlaceholder": "اختر تدفقًا",
+      "info": "يبدأ هذا التدفق تلقائيًا عند إعادة التحكم إليك. ثم يتم عرض ملخص المحادثة وسجل الدردشة لوكلائك في الدردشة المباشرة.",
+      "save": "حفظ التغييرات",
+      "clearFlow": "مسح التدفق",
+      "adminOnly": "يمكن لمسؤولي مساحة العمل فقط تغيير التوجيه",
+      "flowNotFound": "لم يتم العثور على التدفق المحدد أو أنه غير نشط",
+      "integrationNotFound": "لم يتم العثور على رقم WhatsApp"
+    },
+    "errors": {
+      "unsupported": "توجيه المحادثات غير متاح على هذه القناة",
+      "notFound": "هذه المحادثة ليست على تلك القناة",
+      "actionFailed": "تعذر تحديث توجيه المحادثة. يرجى المحاولة مرة أخرى."
+    },
+    "step": {
+      "action": "إجراء",
+      "release": "تحرير المحادثة",
+      "pass": "التمرير إلى شريك التصعيد",
+      "helper": "واتساب فقط. على القنوات الأخرى، أو عندما لا تكون المحادثة مملوكة هنا، تتبع الخطوة مسار الخطأ."
+    },
+    "template": {
+      "sent": "تم إرسال القالب"
+    }
   }
 }

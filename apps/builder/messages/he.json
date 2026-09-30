@@ -433,7 +433,8 @@
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
       "importJsonOnly": "קבצי JSON בלבד",
       "whatsappCallButton": "התקשרות בוואטסאפ",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "שליטה בשרשור"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -4993,7 +4994,8 @@
       "searchPlaceholder": "חיפוש מילת מפתח..."
     },
     "templateId": {
-      "label": "תבנית WhatsApp"
+      "label": "תבנית WhatsApp",
+      "placeholder": "בחר תבנית"
     },
     "messengerTemplateId": {
       "label": "תבנית Messenger"
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "פתיחת קבוצת Zalo",
     "openZalo": "פתיחת Zalo",
     "openMessenger": "פתיחת Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "שותף",
+      "partnerWithRole": "שותף · {role}",
+      "self": "אתה"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "מודעות Click-to-WhatsApp",
+      "customer_service": "שירות לקוחות",
+      "escalation": "הסלמה",
+      "marketing": "שיווק",
+      "utility": "שירות"
+    },
+    "pill": {
+      "standby": "המתנה ({owner})",
+      "owned": "פעיל",
+      "tooltip": "בטיפול של {owner}"
+    },
+    "release": {
+      "label": "שחרור",
+      "tooltip": "שחרר את השיחה כדי שאפליקציות אחרות יוכלו להשיב",
+      "success": "השיחה שוחררה"
+    },
+    "pass": {
+      "menuItem": "העבר להסלמה",
+      "title": "להעביר לשותף ההסלמה?",
+      "description": "להעביר את השיחה לשותף ההסלמה שלך? התשובות שלך יושהו עד שהשיחה תחזור.",
+      "confirm": "העבר",
+      "success": "השיחה הועברה לשותף ההסלמה"
+    },
+    "composer": {
+      "title": "אתה במצב המתנה (האזנה בלבד)",
+      "description": "שותף צד שלישי מטפל בשיחה זו. תיבת ההודעות נעולה כדי למנוע תשובות כפולות.",
+      "takeOver": "קח שליטה",
+      "takeOverSuccess": "אתה מטפל עכשיו בשיחה הזו",
+      "notEscalation": "רק שותף ההסלמה יכול לקחת שליטה. הניתוב מוגדר ב-Meta Business Suite.",
+      "learnMore": "למידע נוסף",
+      "dismiss": "שלח בכל זאת"
+    },
+    "divider": {
+      "ownerHandling": "{owner} מטפל עכשיו בשיחה הזו",
+      "handedOver": "{previousOwner} החזיר אליך את השיחה הזו",
+      "selfHandling": "אתה מטפל כעת בשיחה זו",
+      "takenOver": "השתלטת על השיחה הזו",
+      "released": "השיחה שוחררה",
+      "passed": "השיחה הועברה לשותף ההסלמה",
+      "serviceRejected": "ההודעה לא נשלחה: {owner} מטפל בשיחה הזו"
+    },
+    "context": {
+      "title": "הקשר השיחה",
+      "summaryBadge": "סיכום AI",
+      "historyBadge": "היסטוריה",
+      "customer": "לקוח",
+      "business": "עסק",
+      "handoverNote": "הערת העברה: {note}",
+      "showAll": "הצג הכול ({count})",
+      "showLess": "הצג פחות"
+    },
+    "echo": {
+      "partner": "שותף"
+    },
+    "panel": {
+      "title": "ניתוב שיחה",
+      "threadState": "מצב השיחה",
+      "threadStateOwned": "בטיפול",
+      "threadStateStandby": "המתנה",
+      "threadStateIdle": "לא פעיל",
+      "currentOwner": "הבעלים הנוכחי",
+      "noOwner": "אין בעלים",
+      "roleLabel": "התפקיד שלך",
+      "selfOwned": "מטפל בשיחה",
+      "selfStandby": "המתנה — האזנה בלבד",
+      "selfIdle": "ממתין להודעה הבאה של הלקוח",
+      "hintOwned": "שחרר בסיום כדי שאפליקציות אחרות יוכלו להשיב.",
+      "hintStandby": "בזמן ששותף מטפל בשיחה, ההודעות שלך מוחזקות כדי שהלקוח לא יקבל תשובות כפולות. השתלט על השיחה מתיבת ההודעות כדי להשיב.",
+      "hintIdle": "ההודעה הבאה של הלקוח תקבע מי משיב."
+    },
+    "settings": {
+      "title": "תהליך חידוש לאחר מסירה",
+      "description": "האוטומציה שפועלת כאשר שותף מחזיר שיחה.",
+      "resumeFlowLabel": "בחר תהליך",
+      "resumeFlowPlaceholder": "בחר תהליך",
+      "info": "תהליך זה מתחיל אוטומטית כאשר השליטה מוחזרת. סיכום השיחה והיסטוריית הצ'אט מוצגים לאחר מכן לנציגים שלך בצ'אט החי.",
+      "save": "שמור שינויים",
+      "clearFlow": "נקה תהליך",
+      "adminOnly": "רק מנהלי סביבת העבודה יכולים לשנות ניתוב",
+      "flowNotFound": "התהליך שנבחר לא נמצא או שאינו פעיל",
+      "integrationNotFound": "מספר WhatsApp לא נמצא"
+    },
+    "errors": {
+      "unsupported": "ניתוב שיחות אינו זמין בערוץ הזה",
+      "notFound": "השיחה הזו אינה בערוץ הזה",
+      "actionFailed": "לא ניתן היה לעדכן את ניתוב השיחה. נסה שוב."
+    },
+    "step": {
+      "action": "פעולה",
+      "release": "שחרר את השיחה",
+      "pass": "העבר לשותף ההסלמה",
+      "helper": "וואטסאפ בלבד. בערוצים אחרים, או כשהשיחה אינה בבעלות כאן, השלב ממשיך בנתיב השגיאה."
+    },
+    "template": {
+      "sent": "התבנית נשלחה"
+    }
   }
 }

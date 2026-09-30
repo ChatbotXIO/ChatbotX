@@ -1853,7 +1853,8 @@
       "searchPlaceholder": "Rechercher un mot-clé..."
     },
     "templateId": {
-      "label": "Modèle WhatsApp"
+      "label": "Modèle WhatsApp",
+      "placeholder": "Sélectionner un modèle"
     },
     "messengerTemplateId": {
       "label": "Modèle Messenger"
@@ -2391,7 +2392,8 @@
       "importStarted": "Le flux est en cours d'importation. Consultez l'historique des imports pour voir les résultats.",
       "importJsonOnly": "Fichiers JSON uniquement",
       "whatsappCallButton": "Appeler sur WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Contrôle du fil"
     },
     "splitTraffic": {
       "balanceHint": "La somme totale doit être égale à 100 %.",
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "Ouvrir le groupe Zalo",
     "openZalo": "Ouvrir Zalo",
     "openMessenger": "Ouvrir Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partenaire",
+      "partnerWithRole": "Partenaire · {role}",
+      "self": "vous"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Publicités Click-to-WhatsApp",
+      "customer_service": "Service client",
+      "escalation": "Escalade",
+      "marketing": "Marketing",
+      "utility": "Utilitaire"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Actif",
+      "tooltip": "Géré par {owner}"
+    },
+    "release": {
+      "label": "Libérer",
+      "tooltip": "Libérer cette conversation pour que d'autres applications puissent répondre",
+      "success": "Conversation libérée"
+    },
+    "pass": {
+      "menuItem": "Passer à l'escalade",
+      "title": "Passer au partenaire d'escalade ?",
+      "description": "Transférer cette conversation à votre partenaire d'escalade ? Vos réponses seront suspendues jusqu'au retour de la conversation.",
+      "confirm": "Passer",
+      "success": "Conversation transmise au partenaire d'escalade"
+    },
+    "composer": {
+      "title": "Vous êtes en veille (écoute seule)",
+      "description": "Un partenaire tiers gère cette conversation. La zone de message est verrouillée pour éviter les réponses en double.",
+      "takeOver": "Prendre la main",
+      "takeOverSuccess": "Vous gérez maintenant cette conversation",
+      "notEscalation": "Seul le partenaire d'escalade peut prendre la main. Le routage se configure dans Meta Business Suite.",
+      "learnMore": "En savoir plus",
+      "dismiss": "Envoyer quand même"
+    },
+    "divider": {
+      "ownerHandling": "{owner} gère maintenant cette conversation",
+      "handedOver": "{previousOwner} vous a rendu cette conversation",
+      "selfHandling": "Vous gérez maintenant cette conversation",
+      "takenOver": "Vous avez repris cette conversation",
+      "released": "Conversation libérée",
+      "passed": "Conversation transmise au partenaire d'escalade",
+      "serviceRejected": "Message non envoyé : {owner} gère cette conversation"
+    },
+    "context": {
+      "title": "Contexte de la conversation",
+      "summaryBadge": "Résumé IA",
+      "historyBadge": "Historique",
+      "customer": "Client",
+      "business": "Entreprise",
+      "handoverNote": "Note de transfert : {note}",
+      "showAll": "Tout afficher ({count})",
+      "showLess": "Afficher moins"
+    },
+    "echo": {
+      "partner": "Partenaire"
+    },
+    "panel": {
+      "title": "Routage de la conversation",
+      "threadState": "État du fil",
+      "threadStateOwned": "Pris en charge",
+      "threadStateStandby": "En veille",
+      "threadStateIdle": "Inactif",
+      "currentOwner": "Propriétaire actuel",
+      "noOwner": "Aucun propriétaire",
+      "roleLabel": "Votre rôle",
+      "selfOwned": "Gère la conversation",
+      "selfStandby": "En veille — écoute seule",
+      "selfIdle": "En attente du prochain message du client",
+      "hintOwned": "Libérez quand vous avez terminé pour que d'autres applications puissent répondre.",
+      "hintStandby": "Tant qu'un partenaire gère cette conversation, vos messages sont retenus pour que le client ne reçoive pas de réponses en double. Reprenez la main depuis la zone de message pour répondre.",
+      "hintIdle": "Le prochain message du client décide qui répond."
+    },
+    "settings": {
+      "title": "Flow de reprise après transfert",
+      "description": "L'automatisation qui s'exécute lorsqu'un partenaire rend une conversation.",
+      "resumeFlowLabel": "Choisir un flow",
+      "resumeFlowPlaceholder": "Sélectionner un flow",
+      "info": "Ce flow démarre automatiquement lorsque le contrôle est rendu. Le résumé de la conversation et l'historique du chat sont alors affichés à vos agents dans le chat en direct.",
+      "save": "Enregistrer les modifications",
+      "clearFlow": "Effacer le flux",
+      "adminOnly": "Seuls les administrateurs de l'espace de travail peuvent modifier le routage",
+      "flowNotFound": "Le flux sélectionné est introuvable ou inactif",
+      "integrationNotFound": "Numéro WhatsApp introuvable"
+    },
+    "errors": {
+      "unsupported": "Le routage des conversations n'est pas disponible sur ce canal",
+      "notFound": "Cette conversation n'est pas sur ce canal",
+      "actionFailed": "Impossible de mettre à jour le routage de la conversation. Veuillez réessayer."
+    },
+    "step": {
+      "action": "Action",
+      "release": "Libérer la conversation",
+      "pass": "Passer au partenaire d'escalade",
+      "helper": "WhatsApp uniquement. Sur les autres canaux, ou lorsque la conversation n'est pas gérée ici, l'étape suit le chemin d'erreur."
+    },
+    "template": {
+      "sent": "Modèle envoyé"
+    }
   }
 }

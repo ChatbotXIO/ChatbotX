@@ -2846,7 +2846,8 @@
       "label": "Temperatur"
     },
     "templateId": {
-      "label": "WhatsApp-mall"
+      "label": "WhatsApp-mall",
+      "placeholder": "Välj en mall"
     },
     "templateMessages": {
       "label": "Mallmeddelanden"
@@ -3254,7 +3255,8 @@
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
       "importJsonOnly": "Endast JSON-filer",
       "whatsappCallButton": "Ring på WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Trådkontroll"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "Öppna Zalo-grupp",
     "openZalo": "Öppna Zalo",
     "openMessenger": "Öppna Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "dig"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-annonser",
+      "customer_service": "Kundtjänst",
+      "escalation": "Eskalering",
+      "marketing": "Marknadsföring",
+      "utility": "Tjänst"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Aktiv",
+      "tooltip": "Hanteras av {owner}"
+    },
+    "release": {
+      "label": "Släpp",
+      "tooltip": "Släpp konversationen så att andra appar kan svara",
+      "success": "Konversationen släppt"
+    },
+    "pass": {
+      "menuItem": "Skicka vidare till eskalering",
+      "title": "Skicka vidare till eskaleringspartnern?",
+      "description": "Lämna över den här konversationen till din eskaleringspartner? Dina svar pausas tills konversationen kommer tillbaka.",
+      "confirm": "Skicka vidare",
+      "success": "Konversationen skickades vidare till eskaleringspartnern"
+    },
+    "composer": {
+      "title": "Du är i standby (endast lyssning)",
+      "description": "En tredjepartspartner hanterar den här konversationen. Meddelanderutan är låst för att undvika dubbla svar.",
+      "takeOver": "Ta över",
+      "takeOverSuccess": "Du hanterar nu den här konversationen",
+      "notEscalation": "Bara eskaleringspartnern kan ta över. Routing konfigureras i Meta Business Suite.",
+      "learnMore": "Läs mer",
+      "dismiss": "Skicka ändå"
+    },
+    "divider": {
+      "ownerHandling": "{owner} hanterar nu den här konversationen",
+      "handedOver": "{previousOwner} lämnade tillbaka den här konversationen till dig",
+      "selfHandling": "Du hanterar nu den här konversationen",
+      "takenOver": "Du tog över den här konversationen",
+      "released": "Konversationen släppt",
+      "passed": "Konversationen skickades vidare till eskaleringspartnern",
+      "serviceRejected": "Meddelandet skickades inte: {owner} hanterar den här konversationen"
+    },
+    "context": {
+      "title": "Konversationskontext",
+      "summaryBadge": "AI-sammanfattning",
+      "historyBadge": "Historik",
+      "customer": "Kund",
+      "business": "Företag",
+      "handoverNote": "Överlämningsanteckning: {note}",
+      "showAll": "Visa alla ({count})",
+      "showLess": "Visa färre"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Konversationsroutning",
+      "threadState": "Trådstatus",
+      "threadStateOwned": "Ägd",
+      "threadStateStandby": "Standby",
+      "threadStateIdle": "Inaktiv",
+      "currentOwner": "Nuvarande ägare",
+      "noOwner": "Ingen ansvarig",
+      "roleLabel": "Din roll",
+      "selfOwned": "Hanterar konversationen",
+      "selfStandby": "Standby — lyssnar bara",
+      "selfIdle": "Väntar på kundens nästa meddelande",
+      "hintOwned": "Släpp när du är klar så att andra appar kan svara.",
+      "hintStandby": "Medan en partner hanterar detta hålls dina meddelanden tillbaka så att kunden inte får dubbla svar. Ta över från meddelanderutan för att svara.",
+      "hintIdle": "Kundens nästa meddelande avgör vem som svarar."
+    },
+    "settings": {
+      "title": "Flöde för återupptagning efter överlämning",
+      "description": "Automatiseringen som körs när en partner lämnar tillbaka en konversation.",
+      "resumeFlowLabel": "Välj ett flöde",
+      "resumeFlowPlaceholder": "Välj ett flöde",
+      "info": "Det här flödet startar automatiskt när kontrollen lämnas tillbaka. Konversationssammanfattningen och chatthistoriken visas sedan för dina agenter i livechatten.",
+      "save": "Spara ändringar",
+      "clearFlow": "Rensa flöde",
+      "adminOnly": "Bara arbetsyteadministratörer kan ändra routning",
+      "flowNotFound": "Det valda flödet hittades inte eller är inte aktivt",
+      "integrationNotFound": "WhatsApp-numret hittades inte"
+    },
+    "errors": {
+      "unsupported": "Konversationsroutning är inte tillgänglig i den här kanalen",
+      "notFound": "Den här konversationen finns inte i den kanalen",
+      "actionFailed": "Det gick inte att uppdatera konversationsroutningen. Försök igen."
+    },
+    "step": {
+      "action": "Åtgärd",
+      "release": "Släpp konversationen",
+      "pass": "Skicka vidare till eskaleringspartnern",
+      "helper": "Endast WhatsApp. På andra kanaler, eller när konversationen inte ägs här, följer steget felvägen."
+    },
+    "template": {
+      "sent": "Mall skickad"
+    }
   }
 }

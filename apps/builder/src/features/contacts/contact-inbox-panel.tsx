@@ -10,15 +10,17 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { orpc } from "@/lib/orpc/query"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
 import UpdateContactSequenceField, {
   type ContactSequence,
 } from "../contact-sequences/update-contact-sequence-field"
+import { useThreadControl } from "../conversations/hooks/use-thread-control"
 import type { TagResource } from "../tags/schema/resource"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
+import { ContactThreadControlSection } from "./components/contact-thread-control-section"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
 import { useAutoRefreshContactProfile } from "./hooks/use-auto-refresh-contact-profile"
@@ -123,17 +125,54 @@ export const ContactInboxPanel = ({
   })
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: activeConversationId is a trigger-only dependency; the effect resets accordion state on conversation switch without reading the value itself
+  const threadControl = useThreadControl(activeConversation)
+  const routingSectionKey = t("conversationRouting.panel.title")
+  // A partner (Meta AI or another app) is handling the thread while we listen.
+  const isPartnerHandling = threadControl?.state === "standby"
+  const isPartnerHandlingRef = useRef(isPartnerHandling)
+  isPartnerHandlingRef.current = isPartnerHandling
+
+  // On conversation switch, collapse every module — but auto-open the routing
+  // section when a partner is already handling the thread, so the agent sees
+  // why the composer is locked without hunting for it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resets only on conversation switch; the current routing state is read via ref, not as a trigger
   useEffect(() => {
-    setOpenAccordionItems([])
-  }, [activeConversationId])
+    setOpenAccordionItems(
+      isPartnerHandlingRef.current ? [routingSectionKey] : [],
+    )
+  }, [activeConversationId, routingSectionKey])
+
+  // A handover that lands while the panel is open expands the section too,
+  // without collapsing anything the agent opened themselves.
+  useEffect(() => {
+    if (!isPartnerHandling) {
+      return
+    }
+    setOpenAccordionItems((prev) =>
+      prev.includes(routingSectionKey) ? prev : [...prev, routingSectionKey],
+    )
+  }, [isPartnerHandling, routingSectionKey])
 
   const accordionModules: AccordionModule[] = useMemo(() => {
     if (!contactData) {
       return []
     }
 
+    // Conversation routing leads the list, and only exists once routing was
+    // observed on the contact's WhatsApp thread.
+    const routingModules: AccordionModule[] = threadControl
+      ? [
+          {
+            keyName: t("conversationRouting.panel.title"),
+            content: (
+              <ContactThreadControlSection threadControl={threadControl} />
+            ),
+          },
+        ]
+      : []
+
     return [
+      ...routingModules,
       {
         keyName: t("coupons.title"),
         content: (
@@ -180,7 +219,7 @@ export const ContactInboxPanel = ({
         ),
       },
     ]
-  }, [contactData, workspaceId, t, setContactData])
+  }, [contactData, workspaceId, t, setContactData, threadControl])
 
   if (!storeContact) {
     return null

@@ -15,6 +15,13 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import {
+  type ThreadControlEvent,
+  type ThreadControlRole,
+  type ThreadControlState,
+  threadControlEvents,
+  threadControlStates,
+} from "../partials/thread-control"
 import { contactModel } from "./contact"
 import { inboxModel } from "./inbox"
 
@@ -38,6 +45,16 @@ export type ContactInboxReferral = {
 export const lastUserInputTypeEnum = pgEnum(
   "lastUserInputType",
   lastUserInputTypes.options as [string, ...string[]],
+)
+
+export const threadControlStateEnum = pgEnum(
+  "threadControlState",
+  threadControlStates.options as [string, ...string[]],
+)
+
+export const threadControlEventEnum = pgEnum(
+  "threadControlEvent",
+  threadControlEvents.options as [string, ...string[]],
 )
 
 /**
@@ -95,6 +112,17 @@ export const contactInboxModel = pgTable(
     // Channel handle/username for this contact (e.g. WhatsApp `@username`).
     // Display-only, never used as a matching key.
     sourceUsername: text(),
+    // Conversation-routing thread control (WhatsApp today). NULL = routing was
+    // never observed for this thread, i.e. single-responder behaviour.
+    threadControlState: threadControlStateEnum().$type<ThreadControlState>(),
+    // Role of the CURRENT owner. Validated on write via `parseThreadControlRole`
+    // (unknown Meta roles are stored as null), hence text, not an enum.
+    threadOwnerRole: text().$type<ThreadControlRole>(),
+    // Meta event time of the last applied transition; orders concurrent events.
+    threadControlUpdatedAt: timestamp(timestampConfig),
+    // The event that produced the current state (tie order + debugging).
+    threadControlLastEvent:
+      threadControlEventEnum().$type<ThreadControlEvent>(),
   },
   (table) => [
     uniqueIndex(CONTACT_INBOX_SOURCE_ID_KEY).using(

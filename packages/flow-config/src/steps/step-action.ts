@@ -55,6 +55,7 @@ export const stepTypes = z.enum([
   "archiveConversation",
   "unarchiveConversation",
   "notifyAgent",
+  "threadControl",
 
   // AI/OpenAI Operations (A_)
   "aiGenerateText",

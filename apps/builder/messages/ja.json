@@ -1853,7 +1853,8 @@
       "searchPlaceholder": "キーワードを検索..."
     },
     "templateId": {
-      "label": "WhatsAppテンプレート"
+      "label": "WhatsAppテンプレート",
+      "placeholder": "テンプレートを選択"
     },
     "messengerTemplateId": {
       "label": "Messengerテンプレート"
@@ -2391,7 +2392,8 @@
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
       "importJsonOnly": "JSONファイルのみ",
       "whatsappCallButton": "WhatsAppで通話",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "スレッド制御"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "Zaloグループを開く",
     "openZalo": "Zaloを開く",
     "openMessenger": "Messengerを開く"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "パートナー",
+      "partnerWithRole": "パートナー · {role}",
+      "self": "あなた"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp広告",
+      "customer_service": "カスタマーサービス",
+      "escalation": "エスカレーション",
+      "marketing": "マーケティング",
+      "utility": "ユーティリティ"
+    },
+    "pill": {
+      "standby": "スタンバイ（{owner}）",
+      "owned": "対応中",
+      "tooltip": "{owner}が対応中"
+    },
+    "release": {
+      "label": "解放",
+      "tooltip": "他のアプリが返信できるようにこの会話を解放します",
+      "success": "会話を解放しました"
+    },
+    "pass": {
+      "menuItem": "エスカレーションへ渡す",
+      "title": "エスカレーションパートナーに渡しますか？",
+      "description": "この会話をエスカレーションパートナーに引き継ぎますか？会話が戻るまで、あなたの返信は一時停止されます。",
+      "confirm": "渡す",
+      "success": "会話をエスカレーションパートナーに渡しました"
+    },
+    "composer": {
+      "title": "スタンバイ中です（受信のみ）",
+      "description": "サードパーティのパートナーがこの会話を対応しています。重複返信を防ぐため、メッセージ欄はロックされています。",
+      "takeOver": "引き継ぐ",
+      "takeOverSuccess": "この会話に対応中です",
+      "notEscalation": "引き継げるのはエスカレーションパートナーのみです。ルーティングはMeta Business Suiteで設定します。",
+      "learnMore": "詳しく見る",
+      "dismiss": "それでも送信"
+    },
+    "divider": {
+      "ownerHandling": "{owner}がこの会話に対応を開始しました",
+      "handedOver": "{previousOwner}がこの会話をあなたに戻しました",
+      "selfHandling": "この会話の対応を開始しました",
+      "takenOver": "この会話を引き継ぎました",
+      "released": "会話を解放しました",
+      "passed": "会話をエスカレーションパートナーに渡しました",
+      "serviceRejected": "メッセージを送信できませんでした：{owner}がこの会話に対応中です"
+    },
+    "context": {
+      "title": "会話のコンテキスト",
+      "summaryBadge": "AI要約",
+      "historyBadge": "履歴",
+      "customer": "顧客",
+      "business": "ビジネス",
+      "handoverNote": "引き継ぎメモ：{note}",
+      "showAll": "すべて表示（{count}）",
+      "showLess": "表示を減らす"
+    },
+    "echo": {
+      "partner": "パートナー"
+    },
+    "panel": {
+      "title": "会話ルーティング",
+      "threadState": "スレッドの状態",
+      "threadStateOwned": "担当あり",
+      "threadStateStandby": "スタンバイ",
+      "threadStateIdle": "未担当",
+      "currentOwner": "現在の担当",
+      "noOwner": "担当者なし",
+      "roleLabel": "あなたの役割",
+      "selfOwned": "会話に対応中",
+      "selfStandby": "スタンバイ — 受信のみ",
+      "selfIdle": "お客様の次のメッセージを待機中",
+      "hintOwned": "対応が終わったら解放して、他のアプリが返信できるようにします。",
+      "hintStandby": "パートナーが対応している間、顧客に重複返信が届かないよう、あなたのメッセージは保留されます。返信するには、メッセージ欄から引き継いでください。",
+      "hintIdle": "次のお客様のメッセージで返信担当が決まります。"
+    },
+    "settings": {
+      "title": "引き継ぎ後の再開フロー",
+      "description": "パートナーが会話を戻したときに実行される自動化です。",
+      "resumeFlowLabel": "フローを選択",
+      "resumeFlowPlaceholder": "フローを選択してください",
+      "info": "このフローは、コントロールが戻されると自動的に開始されます。その後、会話の要約とチャット履歴がライブチャットでオペレーターに表示されます。",
+      "save": "変更を保存",
+      "clearFlow": "フローをクリア",
+      "adminOnly": "ルーティングを変更できるのはワークスペース管理者のみです",
+      "flowNotFound": "選択したフローが見つからないか、有効ではありません",
+      "integrationNotFound": "WhatsApp番号が見つかりません"
+    },
+    "errors": {
+      "unsupported": "このチャネルでは会話ルーティングは利用できません",
+      "notFound": "この会話はそのチャネルにありません",
+      "actionFailed": "会話ルーティングを更新できませんでした。もう一度お試しください。"
+    },
+    "step": {
+      "action": "アクション",
+      "release": "会話を解放",
+      "pass": "エスカレーションパートナーに渡す",
+      "helper": "WhatsApp のみ。他のチャネルや、会話がここで管理されていない場合、このステップはエラーパスに進みます。"
+    },
+    "template": {
+      "sent": "テンプレートを送信しました"
+    }
   }
 }

@@ -13,6 +13,7 @@ const CHANNEL_ORIGINATED_JOB_TYPES: ReadonlySet<string> = new Set([
   IntegrationJobAction.processAutomatedResonse,
   IntegrationJobAction.channelLabelChange,
   IntegrationJobAction.processCommentAutomation,
+  IntegrationJobAction.threadControlEvent,
 ])
 
 export function isChannelOriginatedJob(jobData: IntegrationJobData): boolean {

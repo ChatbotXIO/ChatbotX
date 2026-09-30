@@ -31,7 +31,12 @@ const auth = {
 } as unknown as WhatsappAuthValue
 
 const phoneNumbersResponse = (
-  data: Array<{ id: string; code_verification_status: string }>,
+  data: Array<{
+    id: string
+    code_verification_status: string
+    status?: string
+    platform_type?: string
+  }>,
   next?: string,
 ) => ({
   json: vi.fn().mockResolvedValue({
@@ -127,6 +132,82 @@ describe("registerPhoneNumber", () => {
     expect(apiGetMock).toHaveBeenCalledTimes(2)
     expect(apiPostMock).toHaveBeenCalledWith(
       expect.stringContaining("/2006/register"),
+      expect.anything(),
+    )
+  })
+
+  test("skips /register for a number already CONNECTED on the Cloud API (shared number)", async () => {
+    apiGetMock.mockReturnValueOnce(
+      phoneNumbersResponse([
+        {
+          id: "2010",
+          code_verification_status: "VERIFIED",
+          status: "CONNECTED",
+          platform_type: "CLOUD_API",
+        },
+      ]),
+    )
+
+    const result = await registerPhoneNumber({ auth, phoneNumberId: "2010" })
+
+    expect(result).toEqual({ status: "registered" })
+    expect(apiPostMock).not.toHaveBeenCalled()
+  })
+
+  test("asks the listing for the status field the register skip reads", async () => {
+    apiGetMock.mockReturnValueOnce(
+      phoneNumbersResponse([
+        { id: "2011", code_verification_status: "VERIFIED" },
+      ]),
+    )
+
+    await registerPhoneNumber({ auth, phoneNumberId: "2011" })
+
+    const [url] = apiGetMock.mock.calls[0] as [string]
+    expect(new URL(url).searchParams.get("fields")?.split(",") ?? []).toContain(
+      "status",
+    )
+  })
+
+  test("skips OTP and /register for a CONNECTED CLOUD_API number whose verification expired", async () => {
+    apiGetMock.mockReturnValueOnce(
+      phoneNumbersResponse([
+        {
+          id: "2013",
+          code_verification_status: "EXPIRED",
+          status: "CONNECTED",
+          platform_type: "CLOUD_API",
+        },
+      ]),
+    )
+
+    const result = await registerPhoneNumber({ auth, phoneNumberId: "2013" })
+
+    expect(result).toEqual({ status: "registered" })
+    expect(apiPostMock).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ["PENDING", "NOT_APPLICABLE"],
+    ["CONNECTED", "NOT_APPLICABLE"],
+    ["DISCONNECTED", "CLOUD_API"],
+  ])("still registers a number reporting status=%s platform_type=%s", async (status, platformType) => {
+    apiGetMock.mockReturnValueOnce(
+      phoneNumbersResponse([
+        {
+          id: "2012",
+          code_verification_status: "VERIFIED",
+          status,
+          platform_type: platformType,
+        },
+      ]),
+    )
+
+    const result = await registerPhoneNumber({ auth, phoneNumberId: "2012" })
+
+    expect(result).toEqual({ status: "registered" })
+    expect(apiPostMock).toHaveBeenCalledWith(
+      expect.stringContaining("/2012/register"),
       expect.anything(),
     )
   })

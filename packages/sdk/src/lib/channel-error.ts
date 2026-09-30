@@ -37,3 +37,21 @@ export class ChannelError extends SdkException {
     this.isPermanent = PERMANENT_CATEGORIES.has(category)
   }
 }
+
+/**
+ * A `take` the channel refused because this app is not allowed to take the
+ * thread (WhatsApp: only the escalation partner may take, Meta error
+ * `2494191`). Channel-agnostic: the channel's handler decides which of its
+ * errors this is; callers only branch on the class. Keeps the original
+ * category, codes and type.
+ */
+export class ThreadControlTakeRefusedError extends ChannelError {
+  static fromChannelError(error: ChannelError): ThreadControlTakeRefusedError {
+    return new ThreadControlTakeRefusedError(error.message, error.category, {
+      code: error.code,
+      httpStatusCode: error.httpStatusCode,
+      subCode: error.subCode ?? null,
+      type: error.type,
+    })
+  }
+}

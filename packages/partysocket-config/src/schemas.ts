@@ -21,6 +21,7 @@ export const RealtimeEventType = {
   whatsappCallOutboundAnswer: "whatsappCallOutboundAnswer",
   whatsappCallOutboundStatus: "whatsappCallOutboundStatus",
   whatsappCallPermissionUpdated: "whatsappCallPermissionUpdated",
+  contactInboxThreadControlUpdated: "contactInboxThreadControlUpdated",
 } as const
 
 export const RealtimeTopic = {
@@ -127,6 +128,10 @@ export const REALTIME_EVENT_TOPICS: {
   [RealtimeEventType.whatsappCallPermissionUpdated]: {
     durability: "durable",
     topics: [RealtimeTopic.voip],
+  },
+  [RealtimeEventType.contactInboxThreadControlUpdated]: {
+    durability: "durable",
+    topics: [RealtimeTopic.chat],
   },
 }
 
@@ -430,6 +435,34 @@ export type RealtimeEventWhatsappCallPermissionUpdated = {
   data: WhatsappCallPermissionUpdatedData
 }
 
+/**
+ * A conversation thread's routing owner changed (conversation routing / thread
+ * control). Carries the same snapshot the take/release/pass action returns, so
+ * a client patches the matching contact inbox without a refetch and ignores a
+ * snapshot older than the one it holds. Broadcast to the workspace room.
+ */
+export const contactInboxThreadControlUpdatedSchema = z.object({
+  conversationId: z.string(),
+  contactInboxId: z.string(),
+  threadControlState: z.enum(["owned", "standby", "idle"]).nullable(),
+  threadOwnerRole: z.string().nullable(),
+  /** ISO-8601 of the last applied transition; null when never observed. */
+  threadControlUpdatedAt: z.string().nullable(),
+  /**
+   * The event that produced the state; clients use it to break a tie between
+   * two snapshots of the same second, with the server's precedence order.
+   */
+  threadControlLastEvent: z.string().nullable(),
+})
+export type ContactInboxThreadControlUpdatedData = z.infer<
+  typeof contactInboxThreadControlUpdatedSchema
+>
+
+export type RealtimeEventContactInboxThreadControlUpdated = {
+  eventType: typeof RealtimeEventType.contactInboxThreadControlUpdated
+  data: ContactInboxThreadControlUpdatedData
+}
+
 export type RealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
@@ -449,3 +482,4 @@ export type RealtimeEventData =
   | RealtimeEventWhatsappCallOutboundAnswer
   | RealtimeEventWhatsappCallOutboundStatus
   | RealtimeEventWhatsappCallPermissionUpdated
+  | RealtimeEventContactInboxThreadControlUpdated

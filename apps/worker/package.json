@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "backfill:whatsapp-webhook-fields": "dotenv -e ../../.env -- tsx scripts/resubscribe-whatsapp-webhook-fields.ts",
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev": "concurrently pnpm:worker:* | pino-pretty",

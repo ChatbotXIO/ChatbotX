@@ -130,6 +130,79 @@ export const messageTypes = z.enum(["outgoing", "incoming", "activity"])
  */
 export const echoOrigins = z.enum(["firstParty", "thirdParty"])
 export type EchoOrigin = z.infer<typeof echoOrigins>
+
+/**
+ * Channel-agnostic conversation-routing (thread control) vocabulary shared by
+ * channel integrations. The persisted state model lives in
+ * `@chatbotx.io/database/partials` (`thread-control.ts`); the SDK cannot depend
+ * on the database layer, so the role/action values are mirrored here and
+ * pinned to the database copy by `packages/database/__tests__/thread-control-sdk-parity.test.ts`.
+ */
+export const threadControlRoles = z.enum([
+  "ai_agent",
+  "ctwa",
+  "customer_service",
+  "escalation",
+  "marketing",
+  "utility",
+])
+export type ThreadControlRole = z.infer<typeof threadControlRoles>
+
+export const threadControlActions = z.enum(["take", "release", "pass"])
+export type ThreadControlAction = z.infer<typeof threadControlActions>
+
+/**
+ * Which responder role a delivery reached us in: `owner` = the channel's normal
+ * inbound feed, `standby` = the listen-only standby feed.
+ */
+export const threadControlDeliveries = z.enum(["owner", "standby"])
+export type ThreadControlDelivery = z.infer<typeof threadControlDeliveries>
+
+/** One line of a history-shaped conversation context. */
+export const threadControlHistoryItemSchema = z.object({
+  sender: z.enum(["user", "business"]),
+  text: z.string(),
+  /** Unix epoch seconds as sent by the channel; display only. */
+  timestamp: z.string().optional(),
+})
+export type ThreadControlHistoryItem = z.infer<
+  typeof threadControlHistoryItemSchema
+>
+
+/** Display-only context a previous owner hands over (summary text is opaque). */
+export const threadControlContextSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("summary"), text: z.string() }),
+  z.object({
+    type: z.literal("history"),
+    items: z.array(threadControlHistoryItemSchema),
+  }),
+])
+export type ThreadControlContext = z.infer<typeof threadControlContextSchema>
+
+export type ThreadControlReceiveInfo = {
+  delivery: ThreadControlDelivery
+  context?: ThreadControlContext
+  /**
+   * The channel's own timestamp of the delivered item. Routing transitions are
+   * ordered by it, so a delayed job cannot overwrite a later handover.
+   */
+  occurredAt?: Date
+}
+
+export type ThreadControlWebhookEvent = {
+  contact: IncomingContact
+  event: "controlPassed" | "controlTaken"
+  previousOwnerRole: ThreadControlRole | null
+  newOwnerRole: ThreadControlRole | null
+  handoverNote?: string
+  context?: ThreadControlContext
+  occurredAt: Date
+}
+
+export type ThreadControlWebhookResult =
+  | { kind: "handover"; event: ThreadControlWebhookEvent }
+  /** Handed unchanged to `receiveMessage`. */
+  | { kind: "standbyMessage"; receivePayload: unknown }
 export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {

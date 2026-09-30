@@ -11,6 +11,10 @@ export const integrationWhatsappRelations = defineRelationsPart(
         to: r.workspaceModel.id,
         optional: false,
       }),
+      handoverResumeFlow: r.one.flowModel({
+        from: r.integrationWhatsappModel.handoverResumeFlowId,
+        to: r.flowModel.id,
+      }),
       inbox: r.one.inboxModel({
         from: r.integrationWhatsappModel.inboxId,
         to: r.inboxModel.id,

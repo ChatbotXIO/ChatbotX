@@ -28,6 +28,7 @@ import {
 import { Controller, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { disableBotAction } from "@/features/conversations/actions/disable-bot.action"
+import { useThreadControl } from "@/features/conversations/hooks/use-thread-control"
 import {
   BOT_DISABLE_DURATION_MS,
   isConversationActive,
@@ -39,11 +40,12 @@ import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popo
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
-import { createMessageRequest } from "../schema/mutation"
+import { createMessageWithRoutingBypassRequest } from "../schema/mutation"
 import type { MessageResource } from "../schema/resource"
 import { FileUploadPreview } from "./file-upload"
 import { InputMenu } from "./input-menu"
 import { MediaFilePreview } from "./media-file-preview"
+import { ThreadControlLockedComposer } from "./thread-control-locked-composer"
 
 const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
   api: 0,
@@ -113,6 +115,18 @@ export const MessageInput = () => {
     [conversations, activeConversationId],
   )
 
+  const channel = conversation?.contactInboxes[0]?.channel
+  const threadControl = useThreadControl(conversation, channel)
+
+  // The agent dismissed the standby lock (stored routing state may be stale):
+  // the next send bypasses the worker's thread-control gate.
+  const [routingLockDismissed, setRoutingLockDismissed] = useState(false)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset only on conversation switch
+  useEffect(() => {
+    setRoutingLockDismissed(false)
+  }, [activeConversationId])
+  const isThreadLocked = Boolean(threadControl?.isLocked)
+
   const { execute: disableBot } = useAction(
     disableBotAction.bind(null, conversation?.workspaceId ?? ""),
     {
@@ -139,7 +153,7 @@ export const MessageInput = () => {
         conversation?.workspaceId ?? "",
         conversation?.id ?? "",
       ),
-      zodResolver(createMessageRequest),
+      zodResolver(createMessageWithRoutingBypassRequest),
       {
         actionProps: {
           onExecute: ({ input }: { input: unknown }) => {
@@ -268,8 +282,19 @@ export const MessageInput = () => {
         lastContactComment.createdAt ?? undefined,
       )
     }
+    form.setValue(
+      "bypassThreadControlLock",
+      routingLockDismissed && isThreadLocked ? true : undefined,
+    )
     handleSubmitWithAction()
-  }, [replyToMessage, lastContactComment, form, handleSubmitWithAction])
+  }, [
+    replyToMessage,
+    lastContactComment,
+    form,
+    handleSubmitWithAction,
+    routingLockDismissed,
+    isThreadLocked,
+  ])
 
   // Memoize keyboard handler
   const onKeyDown = useCallback(
@@ -288,8 +313,6 @@ export const MessageInput = () => {
   const isInstagramPostComment =
     conversation?.contactInboxes[0]?.channel === "instagram" &&
     conversation?.sourceId != null
-
-  const channel = conversation?.contactInboxes[0]?.channel
 
   // Meta DM = messenger or instagram that is NOT a post comment.
   // sourceId != null on the conversation means it's a post comment for both channels.
@@ -383,6 +406,23 @@ export const MessageInput = () => {
   // Early return if no active conversation
   if (!activeConversationId) {
     return null
+  }
+
+  // Another responder owns the WhatsApp thread: replies are paused until an
+  // explicit take-over. Placed before the window-closed branches and after
+  // every hook, so the form (and its draft) survives the lock.
+  if (conversation && threadControl?.isLocked && !routingLockDismissed) {
+    return (
+      <ThreadControlLockedComposer
+        contactInboxId={threadControl.contactInboxId}
+        conversationId={conversation.id}
+        // Keyed per conversation so a take-over spinner or inline refusal
+        // never carries over when the agent switches conversations.
+        key={conversation.id}
+        onDismiss={() => setRoutingLockDismissed(true)}
+        workspaceId={conversation.workspaceId}
+      />
+    )
   }
 
   if (isMessengerHumanAgentWindowExpired) {

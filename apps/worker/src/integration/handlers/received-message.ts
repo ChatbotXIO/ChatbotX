@@ -8,11 +8,15 @@ import {
   conversationService,
   hasOnDemandProfileApi,
   hasRealAvatar,
+  isUnpromotedStandbyCopy,
   messageCleanupService,
   publishToWorkspaceParty,
   quotaEnforcementService,
   recordProfileRefreshFailure,
   resolveTenantSettings,
+  THREAD_CONTROL_DELIVERY_KEY,
+  THREAD_CONTROL_STANDBY_DELIVERY,
+  threadControlService,
   updateContactFromMessage,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -113,6 +117,7 @@ import {
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
+import { recordInboundThreadControl } from "./thread-control-inbound"
 import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
 type ContactInboxTracking = ContactInboxTrackingData
@@ -221,6 +226,15 @@ export const receiveMessage = async (
   quickReplyAction: string | null
   ref?: string | null
   channelType: "instagram" | "instagramFacebook"
+  /** True for a standby (listen-only) delivery: the caller must run no automation. */
+  suppressAutomation: boolean
+  /**
+   * The stored copy of a standby delivery, also on a retry (the copy is no
+   * longer new but still standby and unpromoted), so account-state work that
+   * is not automation (a call-permission answer, an idempotent upsert) is not
+   * lost when an earlier attempt failed after the save. `null` otherwise.
+   */
+  standbyCopy: MessageWithAttachments | null
 } | null> => {
   setWebhookExecutionContext({ source: "webhook" })
 
@@ -280,8 +294,16 @@ export const receiveMessage = async (
     ref,
     referralSource,
   } = parsedMessage
-  const appointmentCancelToken =
-    parseAppointmentCancelPostback(rawPostbackAction)
+  // A standby delivery is a listen-only copy of a thread another responder
+  // owns: it is stored, but must not start any automation (one early guard
+  // instead of per-branch checks; `canAutomate` replaces `isWorkspaceActive`
+  // in every automation branch below).
+  const threadControl = parsedMessage.threadControl
+  const suppressAutomation = threadControl?.delivery === "standby"
+  const canAutomate = isWorkspaceActive && !suppressAutomation
+  const appointmentCancelToken = suppressAutomation
+    ? null
+    : parseAppointmentCancelPostback(rawPostbackAction)
   let postbackAction = sanitizeFlowAction(rawPostbackAction, {
     kind: "postback",
     integrationType,
@@ -348,10 +370,12 @@ export const receiveMessage = async (
     rawIncomingMessage,
     isNewContact,
   )
-  const incomingMessage =
+  const incomingMessage = markStandbyDelivery(
     postbackButtonLabel && directedIncomingMessage
       ? { ...directedIncomingMessage, text: postbackButtonLabel }
-      : directedIncomingMessage
+      : directedIncomingMessage,
+    suppressAutomation,
+  )
   const systemFieldUpdates = getReceivedMessageSystemFieldUpdates({
     buttonTitle: parsedMessage.buttonTitle || postbackButtonLabel,
     message: incomingMessage,
@@ -395,7 +419,22 @@ export const receiveMessage = async (
   }
 
   let createdMessage: MessageWithAttachments | null = null
+  let standbyCopy: MessageWithAttachments | null = null
   if (incomingMessage) {
+    // An owner delivery unlocks the thread for our automation, so it is
+    // recorded BEFORE the message is saved: if the write fails the job
+    // rethrows, and the BullMQ retry still sees a new message and runs the
+    // automation exactly once (never against a stale standby lock).
+    if (threadControl?.delivery === "owner") {
+      await recordInboundThreadControl({
+        inbox,
+        contactInbox,
+        conversationId: conversation.id,
+        threadControl,
+        fallbackOccurredAt: new Date(),
+      })
+    }
+
     const { message: newMessage, isNew: isNewMessage } =
       await saveAndBroadcastMessage({
         inbox,
@@ -424,7 +463,55 @@ export const receiveMessage = async (
       })
     }
 
-    if (isNewMessage) {
+    // The owner delivery of a message we first stored from a standby copy is
+    // the one that owns the automation. Its transition is recorded one tick
+    // after the standby record (see `supersedesStandbyCopy`) BEFORE the
+    // one-shot promotion claim, so a failed write rethrows with the claim
+    // unspent and the retry promotes and automates exactly once. The claim is
+    // atomic, so concurrent owner redeliveries promote exactly once.
+    const isOwnerDeliveryOfStandbyCopy =
+      !isNewMessage &&
+      threadControl?.delivery === "owner" &&
+      isUnpromotedStandbyCopy(newMessage)
+    if (isOwnerDeliveryOfStandbyCopy) {
+      await recordInboundThreadControl({
+        inbox,
+        contactInbox,
+        conversationId: conversation.id,
+        threadControl,
+        fallbackOccurredAt: newMessage.createdAt,
+        supersedesStandbyCopy: true,
+      })
+    }
+    const isPromotedOwnerDelivery =
+      isOwnerDeliveryOfStandbyCopy &&
+      (await threadControlService.promoteStandbyDelivery({
+        workspaceId: inbox.workspaceId,
+        message: newMessage,
+      }))
+
+    // A standby delivery is recorded for a new message, and again for a
+    // redelivery of a copy still stored as standby and unpromoted: that is
+    // how the retry of a failed standby write records it (a clean exact
+    // redelivery is a no-op in the service, the thread is already standby).
+    // A standby duplicate of a message we hold as owner (the owner copy came
+    // first, or it was promoted) must not flip the thread back to standby.
+    // Standby never runs automation either way.
+    if (
+      threadControl?.delivery === "standby" &&
+      (isNewMessage || isUnpromotedStandbyCopy(newMessage))
+    ) {
+      standbyCopy = newMessage
+      await recordInboundThreadControl({
+        inbox,
+        contactInbox,
+        conversationId: conversation.id,
+        threadControl,
+        fallbackOccurredAt: newMessage.createdAt,
+      })
+    }
+
+    if (isNewMessage || isPromotedOwnerDelivery) {
       createdMessage = newMessage
 
       if (appointmentCancelToken) {
@@ -480,7 +567,7 @@ export const receiveMessage = async (
         }
       }
 
-      if (postbackAction && isWorkspaceActive) {
+      if (postbackAction && canAutomate) {
         await automatedResponseService.enqueueFlowAction({
           kind: "postback",
           data: {
@@ -499,7 +586,7 @@ export const receiveMessage = async (
         })
       }
 
-      if (quickReplyAction && isWorkspaceActive) {
+      if (quickReplyAction && canAutomate) {
         await automatedResponseService.enqueueFlowAction({
           kind: "quickReply",
           data: {
@@ -512,7 +599,7 @@ export const receiveMessage = async (
         })
       }
 
-      if (templateFlowToken && isWorkspaceActive) {
+      if (templateFlowToken && canAutomate) {
         const flowResponse = getWhatsappFlowResponse(incomingMessage)
         if (flowResponse) {
           await integrationQueue.add(
@@ -539,7 +626,7 @@ export const receiveMessage = async (
       // must be checked here too — mirrors the enqueue in that action,
       // including its `user &&` gate (see isEchoOfOwnSend).
       if (
-        isWorkspaceActive &&
+        canAutomate &&
         incomingMessage.messageType === "outgoing" &&
         incomingMessage.text
       ) {
@@ -595,7 +682,7 @@ export const receiveMessage = async (
     })
   }
 
-  if (ref && isWorkspaceActive) {
+  if (ref && canAutomate) {
     await integrationQueue.add(IntegrationJobAction.runRef, {
       type: IntegrationJobAction.runRef,
       data: {
@@ -616,6 +703,8 @@ export const receiveMessage = async (
     quickReplyAction,
     ref,
     channelType,
+    suppressAutomation,
+    standbyCopy,
   }
 }
 
@@ -813,6 +902,28 @@ const attachmentSignature = (
 // updates contactInbox/conversation activity timestamps for new rows,
 // broadcasts the realtime event to the UI, and emits `message:received` to trigger flows.
 // Shared by `receiveMessage` and `receiveComment`.
+/**
+ * A standby (listen-only) copy of an inbound message is stored with a marker,
+ * so that if the owner delivery of the same message arrives later it can
+ * promote the row and run the owner-side work once. Echoes never get an owner
+ * copy, so only inbound messages are marked.
+ */
+const markStandbyDelivery = <T extends IncomingMessage | null | undefined>(
+  message: T,
+  isStandbyDelivery: boolean,
+): T => {
+  if (!(message && isStandbyDelivery) || message.messageType === "outgoing") {
+    return message
+  }
+  return {
+    ...message,
+    contentAttributes: {
+      ...message.contentAttributes,
+      [THREAD_CONTROL_DELIVERY_KEY]: THREAD_CONTROL_STANDBY_DELIVERY,
+    },
+  }
+}
+
 const saveAndBroadcastMessage = async (props: {
   inbox: InboxModel
   contactInbox: ContactInboxModel
@@ -1513,7 +1624,7 @@ type ContactInboxResolverProps = {
 // (today's behavior, unchanged — a phone-keyed match never falls through),
 // then the scoped user id (e.g. a WhatsApp BSUID) when the payload carries
 // one. Both columns are backed by unique indexes on (inboxId, …).
-const resolveExistingContactInbox = async ({
+export const resolveExistingContactInbox = async ({
   inbox,
   incomingContact,
 }: ContactInboxResolverProps): Promise<ContactInboxWithContact | undefined> =>

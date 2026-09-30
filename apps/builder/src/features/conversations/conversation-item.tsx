@@ -34,6 +34,8 @@ import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
 import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
+import { useTenantSettings } from "../tenant/tenant-settings-provider"
+import { ThreadControlPill } from "./components/thread-control-pill"
 import { useMarkConversationRead } from "./hooks/use-mark-conversation-read"
 import { isConversationUnread } from "./lib/is-conversation-unread"
 import {
@@ -194,7 +196,12 @@ export default function ConversationItem({
   const assignedInboxTeamOptionName =
     assigneeOptionNameByValue.get(`t_${conversation.assignedInboxTeamId}`) ??
     null
-  const previewText = resolveLastMessagePreview(conversation.messages?.[0], t)
+  const { name: brand } = useTenantSettings()
+  const previewText = resolveLastMessagePreview(
+    conversation.messages?.[0],
+    t,
+    brand,
+  )
   const callPreviewKind = resolveCallPreviewKind(conversation.messages?.[0])
   const CallPreviewIcon = callPreviewKind
     ? CALL_PREVIEW_ICON_BY_KIND[callPreviewKind]
@@ -331,14 +338,15 @@ export default function ConversationItem({
             <span className="truncate">{previewText}</span>
           </div>
           <div className="flex items-center justify-between gap-1 text-xs">
-            {adBadge ? (
-              <AdBadgePill
-                adTitle={adBadge.adTitle}
-                label={t(adBadgeLabelKey(adBadge.channel))}
-              />
-            ) : (
-              <span />
-            )}
+            <div className="flex min-w-0 items-center gap-1">
+              {adBadge && (
+                <AdBadgePill
+                  adTitle={adBadge.adTitle}
+                  label={t(adBadgeLabelKey(adBadge.channel))}
+                />
+              )}
+              <ThreadControlPill conversation={conversation} />
+            </div>
             <span className="text-neutral-400">
               {conversation.lastActivityAt
                 ? formatDistanceToNowStrict(conversation.lastActivityAt)

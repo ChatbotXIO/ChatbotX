@@ -66,6 +66,12 @@ vi.mock("@chatbotx.io/business", () => ({
   whatsappCallPermissionService: {
     recordPermanentGrant: mockRecordPermanentGrant,
   },
+  // These rows never observed conversation routing: the current row is the
+  // job's row (the real service returns it without a query).
+  threadControlService: {
+    refreshForRouting: ({ contactInbox }: { contactInbox: unknown }) =>
+      Promise.resolve(contactInbox),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({

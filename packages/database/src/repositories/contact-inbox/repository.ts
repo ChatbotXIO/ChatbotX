@@ -7,10 +7,20 @@ import {
   type DatabaseClient,
   db,
   eq,
+  exists,
   inArray,
+  isNull,
+  lt,
+  or,
   type SQL,
   sql,
 } from "../../client"
+import {
+  eventsOutrankedBy,
+  THREAD_CONTROL_TRANSITIONS,
+  type ThreadControlEvent,
+  type ThreadControlRole,
+} from "../../partials/thread-control"
 import { adConversationPredicate } from "../../queries/ad-referral"
 import type { AdsConversionChannel } from "../../schema"
 import {
@@ -128,6 +138,58 @@ export type ContactInboxBySourceIdRow = Pick<
   ContactInboxModel,
   "id" | "sourceId" | "lastIncomingMessageAt" | "createdAt"
 >
+
+export type ApplyThreadControlTransitionInput = {
+  id: string
+  workspaceId: string
+  event: ThreadControlEvent
+  /** Role of the owner AFTER the event; null when there is none / it is unknown. */
+  ownerRole: ThreadControlRole | null
+  /** Meta event time for webhook events, `now` for our own calls. */
+  occurredAt: Date
+}
+
+/** A ContactInbox we own, as `releaseOwnedThreadsForContacts` needs it. */
+export type ThreadControlledContactInboxRow = Pick<
+  ContactInboxModel,
+  | "id"
+  | "contactId"
+  | "inboxId"
+  | "threadControlState"
+  | "threadControlUpdatedAt"
+  | "lastIncomingMessageAt"
+>
+
+/**
+ * Guard for `applyThreadControlTransition`. Meta timestamps have second
+ * resolution, so on an equal timestamp the event with higher precedence wins,
+ * an exact redelivery (same event, state and role) is accepted as idempotent,
+ * and anything else is stale. This is a total order, so the final state does
+ * not depend on the order events are processed in.
+ */
+const threadControlTransitionGuard = (
+  input: ApplyThreadControlTransitionInput,
+  state: (typeof THREAD_CONTROL_TRANSITIONS)[ThreadControlEvent],
+): SQL | undefined => {
+  const outranked = eventsOutrankedBy(input.event)
+  return or(
+    isNull(contactInboxModel.threadControlUpdatedAt),
+    lt(contactInboxModel.threadControlUpdatedAt, input.occurredAt),
+    and(
+      eq(contactInboxModel.threadControlUpdatedAt, input.occurredAt),
+      or(
+        outranked.length > 0
+          ? inArray(contactInboxModel.threadControlLastEvent, outranked)
+          : undefined,
+        and(
+          eq(contactInboxModel.threadControlLastEvent, input.event),
+          eq(contactInboxModel.threadControlState, state),
+          sql`${contactInboxModel.threadOwnerRole} IS NOT DISTINCT FROM ${input.ownerRole}`,
+        ),
+      ),
+    ),
+  )
+}
 
 export const contactInboxRepository = {
   listWithInboxNameByContactId(
@@ -576,5 +638,112 @@ export const contactInboxRepository = {
     return await tx.query.contactInboxModel.findMany({
       where: { contactId: input.contactId },
     })
+  },
+
+  /**
+   * One guarded `UPDATE ... RETURNING`: applies a thread-control event only
+   * when it is not stale (see `threadControlTransitionGuard`). Every non-stale
+   * event advances `threadControlUpdatedAt`, even when the state is unchanged,
+   * so a later-arriving older event can never overwrite a newer same-state one.
+   * Scoped to the workspace through the owning Inbox (ContactInbox has no
+   * `workspaceId`). Returns the updated row, or `null` when the event was
+   * stale or the contact inbox is not in the workspace.
+   */
+  async applyThreadControlTransition(
+    input: ApplyThreadControlTransitionInput,
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | null> {
+    const state = THREAD_CONTROL_TRANSITIONS[input.event]
+    const [row] = await tx
+      .update(contactInboxModel)
+      .set({
+        threadControlState: state,
+        threadOwnerRole: input.ownerRole,
+        threadControlUpdatedAt: input.occurredAt,
+        threadControlLastEvent: input.event,
+      })
+      .where(
+        and(
+          eq(contactInboxModel.id, input.id),
+          exists(
+            tx
+              .select({ one: sql`1` })
+              .from(inboxModel)
+              .where(
+                and(
+                  eq(inboxModel.id, contactInboxModel.inboxId),
+                  eq(inboxModel.workspaceId, input.workspaceId),
+                ),
+              ),
+          ),
+          threadControlTransitionGuard(input, state),
+        ),
+      )
+      .returning()
+
+    return row ?? null
+  },
+
+  /**
+   * Full-row, workspace-scoped load by id (workspace resolved through the
+   * owning Inbox). `requestAction` needs the whole row to address the channel
+   * and to compute the pre-transition thread state. `null` when the id is
+   * unknown or belongs to another workspace.
+   */
+  async findModelByIdForWorkspace(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | null> {
+    const [row] = await tx
+      .select({ contactInbox: contactInboxModel })
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(eq(contactInboxModel.id, input.id))
+      .limit(1)
+
+    return row?.contactInbox ?? null
+  },
+
+  /**
+   * One query for archive-release: the contact inboxes of `contactIds` whose
+   * stored state is `owned`. The stored state can be older than 24h of user
+   * silence, so the caller must still filter through `resolveThreadControlState`.
+   */
+  async listThreadControlledByContactIds(
+    input: { workspaceId: string; contactIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<ThreadControlledContactInboxRow[]> {
+    if (input.contactIds.length === 0) {
+      return []
+    }
+    return await tx
+      .select({
+        id: contactInboxModel.id,
+        contactId: contactInboxModel.contactId,
+        inboxId: contactInboxModel.inboxId,
+        threadControlState: contactInboxModel.threadControlState,
+        threadControlUpdatedAt: contactInboxModel.threadControlUpdatedAt,
+        lastIncomingMessageAt: contactInboxModel.lastIncomingMessageAt,
+      })
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(
+        and(
+          inArray(contactInboxModel.contactId, input.contactIds),
+          eq(contactInboxModel.threadControlState, "owned"),
+        ),
+      )
   },
 }

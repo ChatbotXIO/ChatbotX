@@ -1853,7 +1853,8 @@
       "searchPlaceholder": "Cari kata kunci..."
     },
     "templateId": {
-      "label": "Templat WhatsApp"
+      "label": "Templat WhatsApp",
+      "placeholder": "Pilih template"
     },
     "messengerTemplateId": {
       "label": "Templat Messenger"
@@ -2391,7 +2392,8 @@
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
       "importJsonOnly": "Hanya file JSON",
       "whatsappCallButton": "Telepon di WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Kontrol thread"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "Buka grup Zalo",
     "openZalo": "Buka Zalo",
     "openMessenger": "Buka Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Mitra",
+      "partnerWithRole": "Mitra · {role}",
+      "self": "Anda"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Iklan Click-to-WhatsApp",
+      "customer_service": "Layanan pelanggan",
+      "escalation": "Eskalasi",
+      "marketing": "Pemasaran",
+      "utility": "Utilitas"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Aktif",
+      "tooltip": "Ditangani oleh {owner}"
+    },
+    "release": {
+      "label": "Lepaskan",
+      "tooltip": "Lepaskan percakapan ini agar aplikasi lain dapat menjawab",
+      "success": "Percakapan dilepaskan"
+    },
+    "pass": {
+      "menuItem": "Teruskan ke eskalasi",
+      "title": "Teruskan ke mitra eskalasi?",
+      "description": "Serahkan percakapan ini ke mitra eskalasi Anda? Balasan Anda akan dijeda hingga percakapan kembali.",
+      "confirm": "Teruskan",
+      "success": "Percakapan diteruskan ke mitra eskalasi"
+    },
+    "composer": {
+      "title": "Anda dalam mode standby (hanya mendengarkan)",
+      "description": "Mitra pihak ketiga sedang menangani percakapan ini. Kotak pesan dikunci untuk menghindari balasan ganda.",
+      "takeOver": "Ambil alih",
+      "takeOverSuccess": "Anda kini menangani percakapan ini",
+      "notEscalation": "Hanya mitra eskalasi yang dapat mengambil alih. Perutean diatur di Meta Business Suite.",
+      "learnMore": "Pelajari lebih lanjut",
+      "dismiss": "Kirim saja"
+    },
+    "divider": {
+      "ownerHandling": "{owner} kini menangani percakapan ini",
+      "handedOver": "{previousOwner} menyerahkan kembali percakapan ini kepada Anda",
+      "selfHandling": "Anda sekarang menangani percakapan ini",
+      "takenOver": "Anda mengambil alih percakapan ini",
+      "released": "Percakapan dilepaskan",
+      "passed": "Percakapan diteruskan ke mitra eskalasi",
+      "serviceRejected": "Pesan tidak terkirim: {owner} sedang menangani percakapan ini"
+    },
+    "context": {
+      "title": "Konteks percakapan",
+      "summaryBadge": "Ringkasan AI",
+      "historyBadge": "Riwayat",
+      "customer": "Pelanggan",
+      "business": "Bisnis",
+      "handoverNote": "Catatan serah terima: {note}",
+      "showAll": "Tampilkan semua ({count})",
+      "showLess": "Tampilkan lebih sedikit"
+    },
+    "echo": {
+      "partner": "Mitra"
+    },
+    "panel": {
+      "title": "Perutean percakapan",
+      "threadState": "Status thread",
+      "threadStateOwned": "Dipegang",
+      "threadStateStandby": "Siaga",
+      "threadStateIdle": "Menganggur",
+      "currentOwner": "Pemilik saat ini",
+      "noOwner": "Tidak ada pemilik",
+      "roleLabel": "Peran Anda",
+      "selfOwned": "Menangani percakapan",
+      "selfStandby": "Siaga — hanya mendengarkan",
+      "selfIdle": "Menunggu pesan pelanggan berikutnya",
+      "hintOwned": "Lepaskan setelah selesai agar aplikasi lain dapat menjawab.",
+      "hintStandby": "Selama mitra menangani ini, pesan Anda ditahan agar pelanggan tidak menerima balasan ganda. Ambil alih dari kotak pesan untuk membalas.",
+      "hintIdle": "Pesan pelanggan berikutnya menentukan siapa yang menjawab."
+    },
+    "settings": {
+      "title": "Flow lanjutan setelah serah terima",
+      "description": "Otomatisasi yang berjalan saat mitra menyerahkan kembali percakapan.",
+      "resumeFlowLabel": "Pilih flow",
+      "resumeFlowPlaceholder": "Pilih flow",
+      "info": "Flow ini dimulai secara otomatis saat kendali diserahkan kembali. Ringkasan percakapan dan riwayat chat kemudian ditampilkan kepada agen Anda di live chat.",
+      "save": "Simpan perubahan",
+      "clearFlow": "Hapus alur",
+      "adminOnly": "Hanya admin workspace yang dapat mengubah perutean",
+      "flowNotFound": "Alur yang dipilih tidak ditemukan atau tidak aktif",
+      "integrationNotFound": "Nomor WhatsApp tidak ditemukan"
+    },
+    "errors": {
+      "unsupported": "Perutean percakapan tidak tersedia di kanal ini",
+      "notFound": "Percakapan ini tidak ada di kanal tersebut",
+      "actionFailed": "Gagal memperbarui perutean percakapan. Silakan coba lagi."
+    },
+    "step": {
+      "action": "Aksi",
+      "release": "Lepaskan percakapan",
+      "pass": "Teruskan ke mitra eskalasi",
+      "helper": "Hanya WhatsApp. Di kanal lain, atau saat percakapan tidak dimiliki di sini, langkah mengikuti jalur Error."
+    },
+    "template": {
+      "sent": "Template terkirim"
+    }
   }
 }

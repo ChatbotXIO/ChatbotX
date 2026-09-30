@@ -210,6 +210,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`
 - Automatic Customer Scan (contact import by scanning channel conversation history; shares the `CoexistSyncRun` table via a `type` discriminator): `docs/contact-scan.md`
+- WhatsApp Conversation Routing (thread control with Meta AI / other partners: webhook backfill, send gate, handover, archive release): `docs/whatsapp-conversation-routing.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.
 

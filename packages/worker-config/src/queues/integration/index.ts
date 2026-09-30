@@ -73,6 +73,9 @@ export const IntegrationJobAction = {
   sendMetaCapiEvent: "sendMetaCapiEvent",
   syncRetargetAudience: "syncRetargetAudience",
   contactScan: "contactScan",
+  // Conversation routing (thread control).
+  threadControlEvent: "threadControlEvent",
+  threadControlAction: "threadControlAction",
 } as const
 
 type IntegrationJobActionValue =
@@ -928,6 +931,32 @@ export type IntegrationJobContactScan = {
   }
 }
 
+/**
+ * One conversation-routing webhook item (handover, standby message or echo).
+ * The channel decides what `payload` means; the worker only forwards it.
+ * Same data shape as {@link IntegrationJobReceiveMessage}.
+ */
+export type IntegrationJobThreadControlEvent = {
+  type: typeof IntegrationJobAction.threadControlEvent
+  data: IntegrationJobReceiveMessage["data"]
+}
+
+/**
+ * Releases a thread AhaChat owns (archive auto-release). `jobId` is
+ * `thread-release-<contactInboxId>-<updatedAtMs>`, so a re-archive of the same
+ * thread state collapses onto one job.
+ */
+export type IntegrationJobThreadControlAction = {
+  type: typeof IntegrationJobAction.threadControlAction
+  data: {
+    workspaceId: string
+    contactInboxId: string
+    /** The conversation the divider is written to (the archived one). */
+    conversationId: string
+    action: "release"
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobReceiveComment
@@ -974,6 +1003,8 @@ export type IntegrationJobData =
   | AdsConversionJobEvaluateConversionTrigger
   | AdsConversionJobSyncRetargetAudience
   | IntegrationJobContactScan
+  | IntegrationJobThreadControlEvent
+  | IntegrationJobThreadControlAction
 
 export const integrationQueue = isNoRedisEnv()
   ? fakeQueue

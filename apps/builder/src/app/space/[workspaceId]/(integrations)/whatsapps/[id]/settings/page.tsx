@@ -9,12 +9,15 @@ import {
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { WhatsappAutomationManage } from "@/features/integration-whatsapp/automation/whatsapp-automation-manage"
+import { ConversationRoutingCard } from "@/features/integration-whatsapp/components/conversation-routing-card"
 import { UpdateWhatsappProfile } from "@/features/integration-whatsapp/profile/update-whatsapp-profile"
 import {
   findIntegrationWhatsapp,
   toIntegrationWhatsappLinkable,
 } from "@/features/integration-whatsapp/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 // Merged tab: the former Profile and Automation tabs now live together under
 // a single "Settings" tab, each in its own card.
@@ -27,10 +30,19 @@ export default async function WhatsappSettingsPage(props: {
   }
 
   const t = await getTranslations()
-  const integrationWhatsapp = await findIntegrationWhatsapp({
-    workspaceId: data.workspaceId,
-    id: data.id,
-  })
+  const [integrationWhatsapp, currentUserAndWorkspace] = await Promise.all([
+    findIntegrationWhatsapp({
+      workspaceId: data.workspaceId,
+      id: data.id,
+    }),
+    getCurrentUserAndTargetWorkspace(data.workspaceId),
+  ])
+  const isSuperAdmin = currentUserAndWorkspace
+    ? hasWorkspacePermission(
+        currentUserAndWorkspace.targetWorkspaceMember.permissions,
+        "superAdmin",
+      )
+    : false
 
   const promises = Promise.all([
     findConversationalAutomation(
@@ -70,6 +82,13 @@ export default async function WhatsappSettingsPage(props: {
           />
         </CardContent>
       </Card>
+
+      <ConversationRoutingCard
+        handoverResumeFlowId={integrationWhatsapp.handoverResumeFlowId}
+        integrationWhatsappId={data.id}
+        isSuperAdmin={isSuperAdmin}
+        workspaceId={data.workspaceId}
+      />
     </div>
   )
 }

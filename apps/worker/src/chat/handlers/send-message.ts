@@ -3,11 +3,16 @@ import {
   contactService,
   conversationService,
   publishToWorkspaceParty,
+  threadControlService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   channelTypes,
+  isServiceSendBlocked,
+  readThreadControlColumns,
   resolveChannelConversationId,
+  resolveThreadControlState,
+  toThreadControlTimestamp,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { whatsappFlowModel } from "@chatbotx.io/database/schema"
@@ -25,6 +30,8 @@ import {
 } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
+  ChannelError,
+  ChannelErrorCategory,
   type CommentAnchor,
   type MessageButtonTemplate,
   type OutgoingSendResult,
@@ -93,6 +100,78 @@ export const markConversationReadAfterDelivery = async (props: {
   }
 }
 
+/**
+ * Error code of a Service send the local gate refused because another
+ * responder owns the thread. Distinct from any Meta code, so the rejection
+ * reconciler (which only reacts to Meta's) never records our own refusal.
+ */
+export const THREAD_NOT_OWNED_ERROR_CODE = "thread_not_owned"
+
+/**
+ * Shared by both send chokepoints. Only a known foreign owner blocks a Service
+ * send (templates, idle, owned and never-observed threads go to the channel,
+ * which is the authority). Throws a permanent `ChannelError` BEFORE the API
+ * call, which the existing failure path records as a send error without retry.
+ * Deliberately stricter than Meta: as escalation partner an AhaChat Service
+ * send would be an implicit take and silently steal the thread.
+ */
+const assertThreadOpenForServiceMessage = (
+  contactInbox: ContactInboxModel,
+  { isTemplateMessage }: { isTemplateMessage: boolean },
+): void => {
+  if (
+    !isServiceSendBlocked({
+      ...readThreadControlColumns(contactInbox),
+      isTemplateMessage,
+      now: new Date(),
+    })
+  ) {
+    return
+  }
+  throw new ChannelError(
+    "Message not sent: another app is handling this conversation",
+    ChannelErrorCategory.PERMISSION_DENIED,
+    { code: THREAD_NOT_OWNED_ERROR_CODE },
+  )
+}
+
+/**
+ * A Service send that succeeded on a non-owned (idle/standby) thread made us
+ * the owner (Meta treats the escalation partner's send as an implicit take).
+ * A never-observed thread is left alone, and an owned one costs nothing. The
+ * send already happened, so a bookkeeping failure is logged, never rethrown
+ * (a retry would send twice).
+ */
+const recordServiceSent = async (props: {
+  conversation: Pick<ConversationModel, "id" | "workspaceId">
+  contactInbox: ContactInboxModel
+  isTemplateMessage: boolean
+}): Promise<void> => {
+  const { conversation, contactInbox, isTemplateMessage } = props
+  const state = resolveThreadControlState({
+    ...readThreadControlColumns(contactInbox),
+    now: new Date(),
+  })
+  if (isTemplateMessage || state === null || state === "owned") {
+    return
+  }
+  try {
+    await threadControlService.recordEvent({
+      workspaceId: conversation.workspaceId,
+      inbox: { id: contactInbox.inboxId, threadControlSeenAt: null },
+      contactInbox,
+      conversationId: conversation.id,
+      event: "serviceSent",
+      occurredAt: toThreadControlTimestamp(new Date()),
+    })
+  } catch (err) {
+    logger.warn(
+      { err, contactInboxId: contactInbox.id },
+      "Unable to record a service send for conversation routing",
+    )
+  }
+}
+
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
   attemptsMade = 0,
@@ -115,7 +194,31 @@ export async function sendMessageToChannel(
     isBulkOutboundMetadata(metadata, isBulkBroadcast) ||
     isBulkOutboundMetadata(message.contentAttributes?.metadata, isBulkBroadcast)
 
+  // The job carries the contact inbox as it was at enqueue; a routing
+  // handover may have landed since. Routing decisions (the gate, the
+  // rejection reconciler, the implicit-take record) use the current row,
+  // re-read only when the thread has routing state (zero queries otherwise).
+  let routingContactInbox = contactInbox
   try {
+    routingContactInbox = await threadControlService.refreshForRouting({
+      workspaceId: conversation.workspaceId,
+      contactInbox,
+    })
+    // Escape hatch: the agent dismissed the standby lock because our stored
+    // routing state may be stale. Skip the gate; a successful send still
+    // goes through recordServiceSent below (implicit take).
+    const messageMetadata = message.contentAttributes?.metadata
+    const bypassLock =
+      typeof messageMetadata === "object" &&
+      messageMetadata !== null &&
+      "bypassThreadControlLock" in messageMetadata &&
+      messageMetadata.bypassThreadControlLock === true
+    if (!bypassLock) {
+      assertThreadOpenForServiceMessage(routingContactInbox, {
+        isTemplateMessage: false,
+      })
+    }
+
     const { integration, ctx } =
       await resolveIntegrationContextFromContactInbox({
         workspaceId: conversation.workspaceId,
@@ -272,6 +375,14 @@ export async function sendMessageToChannel(
       at: message.createdAt ?? new Date(),
     })
 
+    if (!isComment) {
+      await recordServiceSent({
+        conversation,
+        contactInbox: routingContactInbox,
+        isTemplateMessage: false,
+      })
+    }
+
     if (isDeliveredDirectMessage({ message, result })) {
       await markConversationReadAfterDelivery({
         workspaceId: conversation.workspaceId,
@@ -325,7 +436,7 @@ export async function sendMessageToChannel(
     const isReconciledSendError = await reconcileChannelSendError({
       error,
       conversation,
-      contactInbox,
+      contactInbox: routingContactInbox,
       contentAttributes: message.contentAttributes,
     })
     logger.error(error, "An error occurred while sending the message")
@@ -744,6 +855,7 @@ export async function sendFlowStepToChannel({
   sendFrom,
   commentAnchor,
   botSentAnalytics,
+  isTemplateMessage = false,
 }: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -758,7 +870,14 @@ export async function sendFlowStepToChannel({
   sendFrom?: "inbox"
   commentAnchor?: CommentAnchor
   botSentAnalytics: BotSentTrigger
+  /**
+   * True only for a WhatsApp template send, which any responder may make and
+   * which never changes thread ownership. Everything else is a Service send.
+   */
+  isTemplateMessage?: boolean
 }): Promise<OutgoingSendResult> {
+  assertThreadOpenForServiceMessage(contactInbox, { isTemplateMessage })
+
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
     contactInbox,
@@ -785,10 +904,9 @@ export async function sendFlowStepToChannel({
     }
   }
 
-  const result = await integration.runChannelHandler(
-    "message",
-    "sendFlowStep",
-    {
+  let result: OutgoingSendResult
+  try {
+    result = await integration.runChannelHandler("message", "sendFlowStep", {
       ctx,
       data: {
         contact: {
@@ -804,8 +922,19 @@ export async function sendFlowStepToChannel({
         sendFrom,
         commentAnchor,
       },
-    },
-  )
+    })
+  } catch (error) {
+    // The same reconciliation `sendMessageToChannel` runs, so both chokepoints
+    // learn from a rejected send. Its verdict is ignored: this function has
+    // always rethrown, and the caller owns the failure handling.
+    await reconcileChannelSendError({
+      error,
+      conversation,
+      contactInbox,
+      contentAttributes: undefined,
+    })
+    throw error
+  }
 
   await updateMessageSourceId(
     messageId,
@@ -819,6 +948,8 @@ export async function sendFlowStepToChannel({
     workspaceId: conversation.workspaceId,
     at: new Date(),
   })
+
+  await recordServiceSent({ conversation, contactInbox, isTemplateMessage })
 
   await emitBotMessageSentEvents({
     workspaceId: conversation.workspaceId,

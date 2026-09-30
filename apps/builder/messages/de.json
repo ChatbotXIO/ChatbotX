@@ -1853,7 +1853,8 @@
       "searchPlaceholder": "Schlüsselwort suchen..."
     },
     "templateId": {
-      "label": "WhatsApp-Vorlage"
+      "label": "WhatsApp-Vorlage",
+      "placeholder": "Vorlage auswählen"
     },
     "messengerTemplateId": {
       "label": "Messenger-Vorlage"
@@ -2391,7 +2392,8 @@
       "importStarted": "Der Flow wird importiert. Ergebnisse im Importverlauf prüfen.",
       "importJsonOnly": "Nur JSON-Dateien",
       "whatsappCallButton": "Auf WhatsApp anrufen",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Thread-Steuerung"
     },
     "splitTraffic": {
       "balanceHint": "Die Gesamtsumme muss 100 % ergeben.",
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "Zalo-Gruppe öffnen",
     "openZalo": "Zalo öffnen",
     "openMessenger": "Messenger öffnen"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "Ihnen"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-Anzeigen",
+      "customer_service": "Kundenservice",
+      "escalation": "Eskalation",
+      "marketing": "Marketing",
+      "utility": "Utility"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Aktiv",
+      "tooltip": "Bearbeitet von {owner}"
+    },
+    "release": {
+      "label": "Freigeben",
+      "tooltip": "Konversation freigeben, damit andere Apps antworten können",
+      "success": "Konversation freigegeben"
+    },
+    "pass": {
+      "menuItem": "An Eskalation übergeben",
+      "title": "An den Eskalationspartner übergeben?",
+      "description": "Diese Unterhaltung an Ihren Eskalationspartner übergeben? Ihre Antworten pausieren, bis die Unterhaltung zurückkommt.",
+      "confirm": "Übergeben",
+      "success": "Konversation an den Eskalationspartner übergeben"
+    },
+    "composer": {
+      "title": "Sie sind im Standby (nur Zuhören)",
+      "description": "Ein Drittanbieter-Partner bearbeitet diese Unterhaltung. Das Nachrichtenfeld ist gesperrt, um doppelte Antworten zu vermeiden.",
+      "takeOver": "Übernehmen",
+      "takeOverSuccess": "Sie bearbeiten diese Konversation jetzt",
+      "notEscalation": "Nur der Eskalationspartner kann übernehmen. Das Routing wird in Meta Business Suite konfiguriert.",
+      "learnMore": "Mehr erfahren",
+      "dismiss": "Trotzdem senden"
+    },
+    "divider": {
+      "ownerHandling": "{owner} bearbeitet diese Konversation jetzt",
+      "handedOver": "{previousOwner} hat diese Unterhaltung an Sie zurückgegeben",
+      "selfHandling": "Sie bearbeiten diese Unterhaltung jetzt",
+      "takenOver": "Sie haben diese Unterhaltung übernommen",
+      "released": "Konversation freigegeben",
+      "passed": "Konversation an den Eskalationspartner übergeben",
+      "serviceRejected": "Nachricht nicht gesendet: {owner} bearbeitet diese Konversation"
+    },
+    "context": {
+      "title": "Konversationskontext",
+      "summaryBadge": "KI-Zusammenfassung",
+      "historyBadge": "Verlauf",
+      "customer": "Kunde",
+      "business": "Unternehmen",
+      "handoverNote": "Übergabenotiz: {note}",
+      "showAll": "Alle anzeigen ({count})",
+      "showLess": "Weniger anzeigen"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Konversations-Routing",
+      "threadState": "Thread-Status",
+      "threadStateOwned": "Belegt",
+      "threadStateStandby": "Standby",
+      "threadStateIdle": "Inaktiv",
+      "currentOwner": "Aktueller Besitzer",
+      "noOwner": "Kein Besitzer",
+      "roleLabel": "Ihre Rolle",
+      "selfOwned": "Bearbeitet die Konversation",
+      "selfStandby": "Standby — nur zuhören",
+      "selfIdle": "Wartet auf die nächste Kundennachricht",
+      "hintOwned": "Geben Sie frei, wenn Sie fertig sind, damit andere Apps antworten können.",
+      "hintStandby": "Solange ein Partner dies bearbeitet, werden Ihre Nachrichten zurückgehalten, damit der Kunde keine doppelten Antworten erhält. Übernehmen Sie über das Nachrichtenfeld, um zu antworten.",
+      "hintIdle": "Die nächste Kundennachricht entscheidet, wer antwortet."
+    },
+    "settings": {
+      "title": "Flow zur Wiederaufnahme nach Übergabe",
+      "description": "Die Automatisierung, die läuft, wenn ein Partner eine Unterhaltung zurückgibt.",
+      "resumeFlowLabel": "Flow auswählen",
+      "resumeFlowPlaceholder": "Flow auswählen",
+      "info": "Dieser Flow startet automatisch, wenn die Steuerung zurückgegeben wird. Die Zusammenfassung der Unterhaltung und der Chatverlauf werden dann Ihren Agenten im Live-Chat angezeigt.",
+      "save": "Änderungen speichern",
+      "clearFlow": "Flow entfernen",
+      "adminOnly": "Nur Workspace-Admins können das Routing ändern",
+      "flowNotFound": "Der ausgewählte Flow wurde nicht gefunden oder ist nicht aktiv",
+      "integrationNotFound": "WhatsApp-Nummer nicht gefunden"
+    },
+    "errors": {
+      "unsupported": "Konversations-Routing ist auf diesem Kanal nicht verfügbar",
+      "notFound": "Diese Konversation gehört nicht zu diesem Kanal",
+      "actionFailed": "Konversations-Routing konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut."
+    },
+    "step": {
+      "action": "Aktion",
+      "release": "Konversation freigeben",
+      "pass": "An den Eskalationspartner übergeben",
+      "helper": "Nur WhatsApp. In anderen Kanälen oder wenn die Unterhaltung nicht hier verwaltet wird, folgt der Schritt dem Fehlerpfad."
+    },
+    "template": {
+      "sent": "Vorlage gesendet"
+    }
   }
 }

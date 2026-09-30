@@ -14,6 +14,7 @@ vi.mock("ky", async () => {
 import {
   subscribeWebhook,
   WHATSAPP_BASE_SUBSCRIBED_FIELDS,
+  WHATSAPP_CONVERSATION_ROUTING_FIELDS,
   WHATSAPP_SUBSCRIBED_FIELDS,
 } from "../src/api/webhook"
 import type { WhatsappAuthValue } from "../src/schema"
@@ -55,6 +56,7 @@ describe("subscribeWebhook", () => {
     expect(url).toContain("/waba-1/subscribed_apps")
     expect(options.json.subscribed_fields).toEqual([
       ...WHATSAPP_BASE_SUBSCRIBED_FIELDS,
+      ...WHATSAPP_CONVERSATION_ROUTING_FIELDS,
     ])
     expect(options.json.subscribed_fields).not.toContain("automatic_events")
     expect(options.headers.Authorization).toBe("Bearer tok-abc")
@@ -95,6 +97,7 @@ describe("subscribeWebhook", () => {
     const [, options] = postMock.mock.calls[0]
     expect(options.json.subscribed_fields).toEqual([
       ...WHATSAPP_SUBSCRIBED_FIELDS,
+      ...WHATSAPP_CONVERSATION_ROUTING_FIELDS,
     ])
   })
 
@@ -109,7 +112,10 @@ describe("subscribeWebhook", () => {
     const [, options] = postMock.mock.calls[0]
     expect(options.json.override_callback_uri).toBe("https://example.com/wh")
     expect(options.json.verify_token).toBe("verify")
-    expect(options.json.subscribed_fields).toHaveLength(4)
+    expect(options.json.subscribed_fields).toEqual([
+      ...WHATSAPP_BASE_SUBSCRIBED_FIELDS,
+      ...WHATSAPP_CONVERSATION_ROUTING_FIELDS,
+    ])
   })
 
   it("omits override fields when overrideCallbackUrl not set and env var unset", async () => {

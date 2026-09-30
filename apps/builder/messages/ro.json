@@ -141,7 +141,8 @@
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
       "importJsonOnly": "Doar fișiere JSON",
       "whatsappCallButton": "Sună pe WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Controlul conversației"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -2681,7 +2682,8 @@
       "searchPlaceholder": "Căutați un cuvânt-cheie..."
     },
     "templateId": {
-      "label": "Șablon WhatsApp"
+      "label": "Șablon WhatsApp",
+      "placeholder": "Selectează un șablon"
     },
     "messengerTemplateId": {
       "label": "Șablon Messenger"
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "Deschide grupul Zalo",
     "openZalo": "Deschide Zalo",
     "openMessenger": "Deschide Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partener",
+      "partnerWithRole": "Partener · {role}",
+      "self": "tine"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Reclame Click-to-WhatsApp",
+      "customer_service": "Servicii clienți",
+      "escalation": "Escaladare",
+      "marketing": "Marketing",
+      "utility": "Utilitar"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Activ",
+      "tooltip": "Gestionată de {owner}"
+    },
+    "release": {
+      "label": "Eliberează",
+      "tooltip": "Eliberează această conversație pentru ca alte aplicații să poată răspunde",
+      "success": "Conversație eliberată"
+    },
+    "pass": {
+      "menuItem": "Transferă la escaladare",
+      "title": "Transferi către partenerul de escaladare?",
+      "description": "Predai această conversație partenerului tău de escaladare? Răspunsurile tale vor fi suspendate până când conversația revine.",
+      "confirm": "Transferă",
+      "success": "Conversație transferată partenerului de escaladare"
+    },
+    "composer": {
+      "title": "Ești în standby (doar ascultare)",
+      "description": "Un partener terț gestionează această conversație. Caseta de mesaje este blocată pentru a evita răspunsurile duplicate.",
+      "takeOver": "Preia",
+      "takeOverSuccess": "Acum gestionezi această conversație",
+      "notEscalation": "Doar partenerul de escaladare poate prelua. Rutarea se configurează în Meta Business Suite.",
+      "learnMore": "Află mai multe",
+      "dismiss": "Trimite oricum"
+    },
+    "divider": {
+      "ownerHandling": "{owner} gestionează acum această conversație",
+      "handedOver": "{previousOwner} ți-a returnat această conversație",
+      "selfHandling": "Acum gestionezi această conversație",
+      "takenOver": "Ai preluat această conversație",
+      "released": "Conversație eliberată",
+      "passed": "Conversație transferată partenerului de escaladare",
+      "serviceRejected": "Mesaj netrimis: {owner} gestionează această conversație"
+    },
+    "context": {
+      "title": "Contextul conversației",
+      "summaryBadge": "Rezumat AI",
+      "historyBadge": "Istoric",
+      "customer": "Client",
+      "business": "Companie",
+      "handoverNote": "Notă de predare: {note}",
+      "showAll": "Afișează tot ({count})",
+      "showLess": "Afișează mai puțin"
+    },
+    "echo": {
+      "partner": "Partener"
+    },
+    "panel": {
+      "title": "Rutarea conversației",
+      "threadState": "Starea conversației",
+      "threadStateOwned": "Preluată",
+      "threadStateStandby": "În așteptare",
+      "threadStateIdle": "Liberă",
+      "currentOwner": "Proprietar curent",
+      "noOwner": "Fără responsabil",
+      "roleLabel": "Rolul tău",
+      "selfOwned": "Gestionează conversația",
+      "selfStandby": "În așteptare — doar ascultă",
+      "selfIdle": "Se așteaptă următorul mesaj al clientului",
+      "hintOwned": "Eliberează când ai terminat, ca alte aplicații să poată răspunde.",
+      "hintStandby": "Cât timp un partener gestionează conversația, mesajele tale sunt reținute pentru ca clientul să nu primească răspunsuri duplicate. Preia conversația din caseta de mesaje pentru a răspunde.",
+      "hintIdle": "Următorul mesaj al clientului decide cine răspunde."
+    },
+    "settings": {
+      "title": "Flux de reluare după predare",
+      "description": "Automatizarea care rulează când un partener returnează o conversație.",
+      "resumeFlowLabel": "Alege un flux",
+      "resumeFlowPlaceholder": "Selectează un flux",
+      "info": "Acest flux pornește automat când controlul este returnat. Rezumatul conversației și istoricul chatului sunt apoi afișate agenților tăi în chatul live.",
+      "save": "Salvează modificările",
+      "clearFlow": "Șterge fluxul",
+      "adminOnly": "Doar administratorii spațiului de lucru pot modifica rutarea",
+      "flowNotFound": "Fluxul selectat nu a fost găsit sau nu este activ",
+      "integrationNotFound": "Numărul WhatsApp nu a fost găsit"
+    },
+    "errors": {
+      "unsupported": "Rutarea conversațiilor nu este disponibilă pe acest canal",
+      "notFound": "Această conversație nu se află pe acel canal",
+      "actionFailed": "Nu s-a putut actualiza rutarea conversației. Încearcă din nou."
+    },
+    "step": {
+      "action": "Acțiune",
+      "release": "Eliberează conversația",
+      "pass": "Transferă către partenerul de escaladare",
+      "helper": "Doar WhatsApp. Pe alte canale, sau când conversația nu este gestionată aici, pasul urmează calea de eroare."
+    },
+    "template": {
+      "sent": "Șablon trimis"
+    }
   }
 }

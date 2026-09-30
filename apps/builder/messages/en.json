@@ -2004,7 +2004,8 @@
       "searchPlaceholder": "Search keyword..."
     },
     "templateId": {
-      "label": "WhatsApp Template"
+      "label": "WhatsApp Template",
+      "placeholder": "Select a template"
     },
     "messengerTemplateId": {
       "label": "Messenger Template"
@@ -2733,7 +2734,8 @@
       "importStarted": "Flow is importing. Check the import history for results.",
       "importJsonOnly": "JSON files only",
       "whatsappCallButton": "Call on WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Thread Control"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -6695,5 +6697,111 @@
     "openZaloGroup": "Open Zalo group",
     "openZalo": "Open Zalo",
     "openMessenger": "Open Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "you"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp ads",
+      "customer_service": "Customer service",
+      "escalation": "Escalation",
+      "marketing": "Marketing",
+      "utility": "Utility"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Active",
+      "tooltip": "Handled by {owner}"
+    },
+    "release": {
+      "label": "Release",
+      "tooltip": "Release this conversation so other apps can answer",
+      "success": "Conversation released"
+    },
+    "pass": {
+      "menuItem": "Pass to escalation",
+      "title": "Pass to the escalation partner?",
+      "description": "Hand this conversation to your escalation partner? Your replies will pause until the thread comes back.",
+      "confirm": "Pass",
+      "success": "Conversation passed to the escalation partner"
+    },
+    "composer": {
+      "title": "You’re on standby (listening only)",
+      "description": "A third-party partner is handling this conversation. The message box is locked to avoid duplicate replies.",
+      "takeOver": "Take over",
+      "takeOverSuccess": "You're now handling this conversation",
+      "notEscalation": "Only the escalation partner can take over. Routing is configured in Meta Business Suite.",
+      "learnMore": "Learn more",
+      "dismiss": "Send anyway"
+    },
+    "divider": {
+      "ownerHandling": "{owner} is now handling this conversation",
+      "handedOver": "{previousOwner} handed this conversation back to you",
+      "selfHandling": "You are now handling this conversation",
+      "takenOver": "You took over this conversation",
+      "released": "Conversation released",
+      "passed": "Conversation passed to the escalation partner",
+      "serviceRejected": "Message not sent: {owner} is handling this conversation"
+    },
+    "context": {
+      "title": "Conversation context",
+      "summaryBadge": "AI summary",
+      "historyBadge": "History",
+      "customer": "Customer",
+      "business": "Business",
+      "handoverNote": "Handover note: {note}",
+      "showAll": "Show all ({count})",
+      "showLess": "Show less"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Conversation routing",
+      "threadState": "Thread state",
+      "threadStateOwned": "Owned",
+      "threadStateStandby": "Standby",
+      "threadStateIdle": "Idle",
+      "currentOwner": "Current owner",
+      "noOwner": "No owner",
+      "roleLabel": "Your role",
+      "selfOwned": "Active — handling the conversation",
+      "selfStandby": "Standby — listening only",
+      "selfIdle": "Idle — waiting",
+      "hintOwned": "Release when you're done so other apps can answer.",
+      "hintStandby": "While a partner is handling this, your messages are held so the customer doesn't get duplicate replies. Take over from the message box to reply.",
+      "hintIdle": "The next customer message decides who answers."
+    },
+    "settings": {
+      "title": "Handover resume flow",
+      "description": "The automation that runs when a partner hands a conversation back.",
+      "resumeFlowLabel": "Choose a flow",
+      "resumeFlowPlaceholder": "Select a flow",
+      "info": "This flow starts automatically when control is handed back. The conversation summary and chat history are then shown to your agents in the live chat.",
+      "save": "Save changes",
+      "clearFlow": "Clear flow",
+      "adminOnly": "Only workspace admins can change routing",
+      "flowNotFound": "The selected flow was not found or is not active",
+      "integrationNotFound": "WhatsApp number not found"
+    },
+    "errors": {
+      "unsupported": "Conversation routing is not available on this channel",
+      "notFound": "This conversation is not on that channel",
+      "actionFailed": "Couldn't update conversation routing. Please try again."
+    },
+    "step": {
+      "action": "Action",
+      "release": "Release the conversation",
+      "pass": "Pass to the escalation partner",
+      "helper": "WhatsApp only. On other channels, or when the conversation isn’t owned here, the step follows the Error path."
+    },
+    "template": {
+      "sent": "Template sent"
+    }
   }
 }
