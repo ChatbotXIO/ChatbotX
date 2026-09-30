@@ -123,6 +123,7 @@ function* convertFlowStepToWhatsappMessage(
   const {
     data: { step },
   } = props
+  // Must exactly match `handledFlowStepTypes`.
   switch (step.stepType) {
     case stepTypes.enum.sendText:
       yield* convertFlowStepText(
@@ -211,6 +212,7 @@ function* convertFlowStepToWhatsappMessage(
         >[0],
       )
       break
+    // Must stay in sync with `handledFlowStepTypes`.
     default:
       logger.warn(
         { channel: "whatsapp", stepType: step.stepType },
@@ -296,6 +298,7 @@ async function postRawMessage(props: {
   return await response.json()
 }
 
+/** Must exactly match the cases in `convertFlowStepToWhatsappMessage` above. */
 export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,

@@ -10,10 +10,7 @@ import {
   remapFlowGraphReferences,
 } from "@chatbotx.io/flow-config"
 import { flowService } from "../../flow"
-import {
-  assertFlowGraphPublishable,
-  flowVersionService,
-} from "../../flow-version"
+import { flowVersionService } from "../../flow-version"
 import type {
   PatchTask,
   ResourceAdapter,
@@ -118,6 +115,7 @@ export const flowsAdapter: ResourceAdapter = {
         edges: remapped.edges,
         folderId: requestedFolderId,
         tx: ctx.tx,
+        validatePublishable: false,
       })
 
       flowIdMap.set(entry.sourceId, flowId)
@@ -157,7 +155,6 @@ export const flowsAdapter: ResourceAdapter = {
                   }),
               },
             )
-            assertFlowGraphPublishable(patched)
             await patchCtx.tx
               .update(flowVersionModel)
               .set({ nodes: patched.nodes, edges: patched.edges })

@@ -330,8 +330,6 @@ class FlowVersionService extends BaseService {
     nodes: FlowVersionModel["nodes"]
     edges: FlowVersionModel["edges"]
   }): Promise<void> {
-    assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
-
     const draftVersion = await this.findDraft({
       flowId: input.flowId,
       workspaceId: input.workspaceId,

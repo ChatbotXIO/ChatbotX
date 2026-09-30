@@ -128,6 +128,7 @@ const sendPageMessageWithMessengerExtensionWhitelistRetry = async (
   }
 }
 
+/** Must exactly match the cases in `convertFlowStep` below. */
 export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
@@ -600,6 +601,7 @@ async function* convertFlowStep(
         props as SendFlowStepProps<MessengerAuthValue, SendCarouselStepSchema>,
       ) as Generator<FacebookMessage>
       break
+    // Must stay in sync with `handledFlowStepTypes`.
     default:
       logger.warn(
         { channel: "messenger", stepType: step.stepType },

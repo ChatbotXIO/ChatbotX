@@ -42,6 +42,7 @@ import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
+/** Must exactly match the cases in `sendFlowStep` below. */
 export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
@@ -298,6 +299,7 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           }
           break
         }
+        // Must stay in sync with `handledFlowStepTypes`.
         default:
           logger.warn(
             { channel: "telegram", stepType: step.stepType },

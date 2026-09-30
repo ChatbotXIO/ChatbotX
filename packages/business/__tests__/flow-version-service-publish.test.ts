@@ -12,6 +12,7 @@ const {
   mockTxSet,
   mockInvalidateCacheTags,
   mockDispatchAuditRecord,
+  mockAssertFlowGraphPublishable,
 } = vi.hoisted(() => {
   const mockTxInsertValues = vi.fn().mockResolvedValue(undefined)
   const mockTxInsert = vi.fn().mockReturnValue({ values: mockTxInsertValues })
@@ -29,6 +30,7 @@ const {
     mockTxSet,
     mockInvalidateCacheTags: vi.fn().mockResolvedValue(undefined),
     mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
+    mockAssertFlowGraphPublishable: vi.fn(),
   }
 })
 
@@ -36,6 +38,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: { flowModel: { findFirst: mockFlowFindFirst } },
     transaction: mockDbTransaction,
+    update: mockTxUpdate,
   },
   and: (...args: unknown[]) => ({ and: args }),
   eq: (...args: unknown[]) => ({ eq: args }),
@@ -70,7 +73,7 @@ vi.mock("../src/audit/dispatcher", () => ({
 }))
 
 vi.mock("../src/flow-version/assert-publishable", () => ({
-  assertFlowGraphPublishable: vi.fn(),
+  assertFlowGraphPublishable: mockAssertFlowGraphPublishable,
 }))
 
 const { flowVersionService } = await import("../src/flow-version/service")
@@ -180,5 +183,29 @@ describe("flowVersionService.publish", () => {
     ).rejects.toThrow("Flow not found")
 
     expect(mockDbTransaction).not.toHaveBeenCalled()
+  })
+})
+
+describe("flowVersionService.updateDraftByFlowId", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("saves an in-progress graph without publish validation", async () => {
+    mockAssertFlowGraphPublishable.mockImplementationOnce(() => {
+      throw new Error("Draft graph is not publishable")
+    })
+    vi.spyOn(flowVersionService, "findDraft").mockResolvedValue({
+      id: "draft-1",
+    } as never)
+
+    await expect(
+      flowVersionService.updateDraftByFlowId({
+        workspaceId: "ws-1",
+        flowId: "flow-1",
+        nodes: [{ id: "unsupported-node" }] as never,
+        edges: [] as never,
+      }),
+    ).resolves.toBeUndefined()
   })
 })

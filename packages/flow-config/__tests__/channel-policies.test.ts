@@ -161,4 +161,61 @@ describe("channel flow policies", () => {
       }),
     )
   })
+
+  test("allows ten quick replies for Messenger and omnichannel text steps", () => {
+    const makeNode = (channel: "messenger" | "omnichannel") =>
+      sendMessageNodeDefaultFn({
+        nodeProps: {},
+        detailProps: {
+          beforeStep: chooseChannelStepDefaultFn({ channel }),
+          quickReplies: Array.from({ length: 10 }, () =>
+            buttonStepDefaultFn({ label: "Option" }),
+          ),
+          steps: [sendTextStepDefaultFn({ text: "Choose one" })],
+        },
+      })
+
+    expect(collectIssues(makeNode("messenger"))).toEqual([])
+    expect(collectIssues(makeNode("omnichannel"))).toEqual([])
+  })
+
+  test("counts TikTok quick replies with text-step buttons", () => {
+    const node = sendMessageNodeDefaultFn({
+      nodeProps: {},
+      detailProps: {
+        beforeStep: chooseChannelStepDefaultFn({ channel: "tiktok" }),
+        quickReplies: Array.from({ length: 2 }, () =>
+          buttonStepDefaultFn({ label: "Option" }),
+        ),
+        steps: [
+          sendTextStepDefaultFn({
+            text: "Choose one",
+            buttons: Array.from({ length: 2 }, () =>
+              buttonStepDefaultFn({ label: "Option" }),
+            ),
+          }),
+        ],
+      },
+    })
+
+    expect(collectIssues(node)).toContainEqual(
+      expect.objectContaining({
+        message: "constraintExceeded",
+        path: [0, "data", "details", "quickReplies"],
+      }),
+    )
+  })
+
+  test("uses omnichannel policy for legacy channel values", () => {
+    const node = sendMessageNodeDefaultFn({
+      nodeProps: {},
+      detailProps: {
+        beforeStep: chooseChannelStepDefaultFn({ channel: "legacy-channel" }),
+        quickReplies: [],
+        steps: [sendCardStepDefaultFn()],
+      },
+    })
+
+    expect(collectIssues(node)).toEqual([])
+  })
 })

@@ -59,5 +59,6 @@ describe("channel flow policy runtime contract", () => {
     )
 
     expect(steps).toEqual(expect.arrayContaining(permittedSteps))
+    expect(permittedSteps).toEqual(expect.arrayContaining(steps))
   })
 })

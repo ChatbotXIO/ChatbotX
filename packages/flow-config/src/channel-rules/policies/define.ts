@@ -18,11 +18,13 @@ export type ChannelFlowPolicy = {
     cardTitle?: number
     text: number
   }
+  quickRepliesShareButtonSlots: boolean
   steps: Record<StepType, StepSupport>
 }
 
 type ChannelFlowPolicyDefinition = {
   limits: ChannelFlowPolicy["limits"]
+  quickRepliesShareButtonSlots?: boolean
   noButtons?: readonly StepType[]
   unsupported?: readonly StepType[]
 }
@@ -47,6 +49,8 @@ export const defineChannelFlowPolicy = (
 
   return {
     limits: definition.limits,
+    quickRepliesShareButtonSlots:
+      definition.quickRepliesShareButtonSlots ?? false,
     steps,
   }
 }

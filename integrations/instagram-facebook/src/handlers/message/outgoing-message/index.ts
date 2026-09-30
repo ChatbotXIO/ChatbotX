@@ -39,6 +39,7 @@ import { convertFlowStepMultipleImages } from "./send-multiple-images"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
+/** Must exactly match the cases in `convertFlowStep` below. */
 export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
@@ -232,6 +233,7 @@ export async function* convertFlowStep(
         props as SendFlowStepProps<InstagramAuthValue, SendCarouselStepSchema>,
       ) as Generator<InstagramSendMessage>
       break
+    // Must stay in sync with `handledFlowStepTypes`.
     default:
       logger.warn(
         { channel: "instagram", stepType: step.stepType },

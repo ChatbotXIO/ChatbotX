@@ -75,14 +75,6 @@ export const formatZodPathSegment = (
   return acc.length === 0 ? key : `${acc}.${key}`
 }
 
-/**
- * Converts a parse failure into `FlowAuthoringError[]` using the caller's
- * diagnostic code. Without `mapPath`, issue paths are used verbatim — correct
- * when validating the spec itself, where paths are already spec-relative.
- * `compileAndValidateSpec` (`apps/builder`) passes `mapPath` when validating
- * the compiled node graph instead, to translate a node-graph path back to
- * the spec-relative path an agent actually wrote.
- */
 const isFlowCapability = (value: unknown): value is FlowCapability =>
   typeof value === "object" &&
   value !== null &&
@@ -94,6 +86,15 @@ const isFlowCapability = (value: unknown): value is FlowCapability =>
   (value.code === "constraintExceeded" || value.code === "unsupportedBlock") &&
   "policyVersion" in value &&
   typeof value.policyVersion === "number"
+
+/**
+ * Converts a parse failure into `FlowAuthoringError[]` using the caller's
+ * diagnostic code. Without `mapPath`, issue paths are used verbatim — correct
+ * when validating the spec itself, where paths are already spec-relative.
+ * `compileAndValidateSpec` (`apps/builder`) passes `mapPath` when validating
+ * the compiled node graph instead, to translate a node-graph path back to
+ * the spec-relative path an agent actually wrote.
+ */
 export function zodErrorToFlowAuthoringErrors(
   error: z.ZodError,
   code: FlowAuthoringErrorCode,

@@ -341,9 +341,6 @@ class FlowService extends BaseService {
     }
 
     const graph = input.graph ?? defaultDraftGraph()
-    if (input.graph) {
-      assertFlowGraphPublishable(input.graph)
-    }
 
     const flow = await db.transaction(async (tx) => {
       const flowId = createId()
@@ -513,8 +510,11 @@ class FlowService extends BaseService {
     edges: EdgeSchema[]
     folderId?: string | null
     tx?: DatabaseClient
+    validatePublishable?: boolean
   }): Promise<string> {
-    assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
+    if (input.validatePublishable ?? true) {
+      assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
+    }
 
     const run = (tx: DatabaseClient) =>
       this.insertFlowWithDraft(tx, {

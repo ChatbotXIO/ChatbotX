@@ -16,7 +16,7 @@ export const contactImportPublicResource = z.object({
   errorMessage: z.string().nullable(),
   errorSample: z.array(
     z.object({
-      row: z.number(),
+      row: z.number().optional(),
       reason: z.string(),
     }),
   ),

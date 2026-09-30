@@ -28,6 +28,7 @@ import {
 } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 
+/** Must exactly match the cases in `convertFlowStepToZaloMessage` below. */
 export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
@@ -166,6 +167,7 @@ export async function* convertFlowStepToZaloMessage(
         props as SendFlowStepProps<ZaloAuthValue, SendFileStepSchema>,
       )
       break
+    // Must stay in sync with `handledFlowStepTypes`.
     default:
       logger.warn(
         { channel: "zalo", stepType: step.stepType },

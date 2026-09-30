@@ -68,7 +68,9 @@ function ImportErrorSampleButton({ item }: { item: ListImportsItem }) {
               key={`${error.row}-${error.reason}`}
             >
               <span className="font-medium">
-                {t("fields.import.histories.row", { row: error.row })}
+                {error.row === undefined
+                  ? error.path
+                  : t("fields.import.histories.row", { row: error.row })}
               </span>
               <span className="text-muted-foreground">{error.reason}</span>
             </div>

@@ -6,16 +6,6 @@ import { countMessageCharacters } from "./characters"
 import { TIKTOK_CARD_TITLE_MAX } from "./policies/tiktok"
 
 /**
- * TikTok's QA_BUTTON_CARD/QA_LINK_CARD send only accepts up to 40 chars in
- * the card `title` (the step's message text) — confirmed against production,
- * where TikTok silently rejected the whole send past that length.
- *
- * Shared with the TikTok integration on purpose: `integrations/tiktok` clamps
- * to this same limit instead of failing, so the flow editor reads it too, to
- * warn the author before their message is silently cut short.
- */
-
-/**
  * True once the message is sent as a card at all — `convertFlowStepText` in
  * `integrations/tiktok` switches from a plain TEXT to a TEMPLATE as soon as
  * `step.buttons.length === 0 && quickReplies.length === 0` stops holding, so a

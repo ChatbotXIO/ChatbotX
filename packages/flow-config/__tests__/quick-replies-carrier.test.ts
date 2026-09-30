@@ -107,6 +107,11 @@ describe("sendMessage quick replies", () => {
         buttonStepDefaultFn({ label: "a".repeat(BUTTON_LABEL_MAX + 1) }),
       ).success,
     ).toBe(false)
+    expect(
+      buttonStepSchema.safeParse(
+        buttonStepDefaultFn({ label: "😀".repeat(BUTTON_LABEL_MAX) }),
+      ).success,
+    ).toBe(true)
 
     const node = sendMessageNodeDefaultFn({
       nodeProps: {},

@@ -24,16 +24,19 @@ type ButtonCount = {
 const checkButtonCount = (
   step: { buttons?: unknown; stepType: StepType },
   quickReplyCount: number,
+  quickRepliesShareButtonSlots: boolean,
   limit: number,
 ): ButtonCount => {
   const buttons = Array.isArray(step.buttons) ? step.buttons : []
   const isTextStep = step.stepType === stepTypes.enum.sendText
-  const total = buttons.length + (isTextStep ? quickReplyCount : 0)
+  const countedQuickReplies =
+    isTextStep && quickRepliesShareButtonSlots ? quickReplyCount : 0
+  const total = buttons.length + countedQuickReplies
 
   return {
     buttons,
     quickRepliesCauseOverflow:
-      isTextStep && total > limit && buttons.length <= limit,
+      countedQuickReplies > 0 && total > limit && buttons.length <= limit,
     total,
   }
 }
@@ -48,14 +51,6 @@ export const refineStepsByChannel = (
     }
 
     const channel = getSendMessageChannel(node)
-    if (!channel) {
-      ctx.addIssue({
-        code: "custom",
-        message: flowValidationCodes.unsupportedChannel,
-        path: [nodeIndex, "data", "details", "beforeStep", "channel"],
-      })
-      return
-    }
 
     const policy = CHANNEL_FLOW_POLICIES[channel]
     const quickReplyCount = node.data.details.quickReplies.length
@@ -88,6 +83,7 @@ export const refineStepsByChannel = (
       const buttonCount = checkButtonCount(
         step,
         quickReplyCount,
+        policy.quickRepliesShareButtonSlots,
         policy.limits.buttonCount,
       )
       if (buttonCount.total > policy.limits.buttonCount) {

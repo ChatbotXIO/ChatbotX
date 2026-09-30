@@ -189,7 +189,7 @@ describe("runFlowImport", () => {
     })
     expect(finalUpdate?.errorSample).toEqual([
       expect.objectContaining({
-        row: 1,
+        path: expect.any(String),
         reason: expect.stringContaining("sequence"),
       }),
     ])
@@ -464,7 +464,7 @@ describe("runFlowImport", () => {
     expect(finalUpdate).toMatchObject({ status: "completed" })
     expect(finalUpdate?.errorSample).toEqual([
       expect.objectContaining({
-        row: 1,
+        path: expect.any(String),
         reason: expect.stringContaining("customField"),
       }),
     ])
@@ -607,7 +607,7 @@ describe("runFlowImport", () => {
     expect(finalUpdate).toMatchObject({ status: "completed" })
     expect(finalUpdate?.errorSample).toEqual([
       expect.objectContaining({
-        row: 1,
+        path: expect.any(String),
         reason: expect.stringContaining("botField"),
       }),
     ])

@@ -63,12 +63,15 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
 })
 export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>
 
-/** Returns the validated target channel, or `undefined` for a legacy value. */
+/**
+ * Returns the configured channel, falling back to omnichannel for stored
+ * legacy values that predate the current channel enum.
+ */
 export const getSendMessageChannel = (
   node: SendMessageNodeSchema,
-): ChannelType | undefined => {
+): ChannelType => {
   const parsed = channelTypes.safeParse(node.data.details.beforeStep.channel)
-  return parsed.success ? parsed.data : undefined
+  return parsed.success ? parsed.data : channelTypes.enum.omnichannel
 }
 
 export const sendMessageNodeDefaultFn = (

@@ -1,4 +1,3 @@
-import type { FlowAuthoringError } from "@chatbotx.io/flow-config"
 import { sql } from "drizzle-orm"
 import {
   index,
@@ -45,12 +44,23 @@ export const importStatus = pgEnum(
   importStatuses.options as [ImportStatus, ...ImportStatus[]],
 )
 
+export type ImportErrorCapability = {
+  actual?: number
+  allowed?: number
+  block: string
+  channel: string
+  code: "constraintExceeded" | "unsupportedBlock"
+  constraintId?: string
+  policyVersion: number
+  unit?: string
+}
+
 export type ImportErrorSample = {
-  capability?: FlowAuthoringError["capability"]
+  capability?: ImportErrorCapability
   code?: string
   path?: string
   reason: string
-  row: number
+  row?: number
 }
 
 export const importModel = pgTable(

@@ -87,8 +87,7 @@ const summarizeSchemaError = (
 }
 
 const toImportErrorSamples = (errors: readonly FlowAuthoringError[]) =>
-  errors.map((error, index) => ({
-    row: index + 1,
+  errors.map((error) => ({
     reason: error.message,
     path: error.path,
     code: error.code,
@@ -196,16 +195,10 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
   }
 
   const MAX_WARNING_SAMPLE = 50
-  // `errorSample.row` is typed as a data-row number; a reference warning has
-  // no row of its own, so a 1-based warning index is used instead of a fixed
-  // `0` — the UI shows "Row N" per entry, and a fixed `0` for every entry
-  // would look like a single dangling row.
-  const errorSample = warnings
-    .slice(0, MAX_WARNING_SAMPLE)
-    .map((warning, index) => ({
-      row: index + 1,
-      reason: `${warning.entityKind} reference at ${warning.path} (${warning.value}) was not remapped — repoint it manually.`,
-    }))
+  const errorSample = warnings.slice(0, MAX_WARNING_SAMPLE).map((warning) => ({
+    path: warning.path,
+    reason: `${warning.entityKind} reference at ${warning.path} (${warning.value}) was not remapped — repoint it manually.`,
+  }))
 
   await importService.complete({
     importId: row.id,

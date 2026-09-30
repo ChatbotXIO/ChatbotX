@@ -1,5 +1,7 @@
 import { stepTypes } from "../../steps/step-action"
 import { defineChannelFlowPolicy } from "./define"
+// WhatsApp Cloud API text messages allow 4,096 characters, not the 1,024-character
+// limit used by some template components.
 
 export const whatsappFlowPolicy = defineChannelFlowPolicy({
   limits: {
@@ -7,6 +9,9 @@ export const whatsappFlowPolicy = defineChannelFlowPolicy({
     buttonLabel: 20,
     text: 4096,
   },
+  quickRepliesShareButtonSlots: true,
+  // WhatsApp's converter implements text, images, carousels, and WhatsApp
+  // interactive/template steps; it has no converters for these step types.
   unsupported: [
     stepTypes.enum.sendVideo,
     stepTypes.enum.sendAudio,

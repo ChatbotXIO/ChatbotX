@@ -3,6 +3,7 @@ import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
 import { waitStepDelayUnits } from "../steps/wait"
+import { flowValidationCodes } from "../validation-codes"
 
 const MAX_SPEC_BUTTONS = 3
 const MAX_SPEC_TEXT_LENGTH = 1000
@@ -91,11 +92,12 @@ const sendButtonSpecSchema: z.ZodType<{
         .min(1)
         .refine(
           (value) => countMessageCharacters(value) <= BUTTON_LABEL_MAX,
-          `Button labels must be ${BUTTON_LABEL_MAX} characters or fewer.`,
+          flowValidationCodes.constraintExceeded,
         )
-        .describe(
-          `Button label shown to the contact (max ${BUTTON_LABEL_MAX} characters).`,
-        ),
+        .meta({
+          description: `Button label shown to the contact (max ${BUTTON_LABEL_MAX} characters).`,
+          maxLength: BUTTON_LABEL_MAX,
+        }),
       // DSL vocabulary ("steps to run then"), not an accidental thenable — the
       // value is an array, never callable, so nothing ever treats this object
       // as a Promise.
@@ -120,12 +122,13 @@ const sendStepSpecSchema = z
       .min(1)
       .refine(
         (value) => countMessageCharacters(value) <= MAX_SPEC_TEXT_LENGTH,
-        `Text must be ${MAX_SPEC_TEXT_LENGTH} characters or fewer.`,
+        flowValidationCodes.constraintExceeded,
       )
       .optional()
-      .describe(
-        `Text message body (max ${MAX_SPEC_TEXT_LENGTH} characters). Exactly one of text/imageUrl/fileUrl is required.`,
-      ),
+      .meta({
+        description: `Text message body (max ${MAX_SPEC_TEXT_LENGTH} characters). Exactly one of text/imageUrl/fileUrl is required.`,
+        maxLength: MAX_SPEC_TEXT_LENGTH,
+      }),
     imageUrl: z
       .url()
       .optional()
@@ -359,11 +362,12 @@ const addNoteStepSpecSchema = z
       .min(1)
       .refine(
         (value) => countMessageCharacters(value) <= MAX_SPEC_TEXT_LENGTH,
-        `Notes must be ${MAX_SPEC_TEXT_LENGTH} characters or fewer.`,
+        flowValidationCodes.constraintExceeded,
       )
-      .describe(
-        `Internal note text (max ${MAX_SPEC_TEXT_LENGTH} characters) — never shown to the contact.`,
-      ),
+      .meta({
+        description: `Internal note text (max ${MAX_SPEC_TEXT_LENGTH} characters) — never shown to the contact.`,
+        maxLength: MAX_SPEC_TEXT_LENGTH,
+      }),
   })
   .describe("Adds an internal note to the conversation.")
 
