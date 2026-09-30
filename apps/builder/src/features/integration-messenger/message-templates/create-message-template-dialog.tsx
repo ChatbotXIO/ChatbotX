@@ -95,7 +95,7 @@ const defaultValues: CreateMessengerMessageTemplateRequest = {
 }
 
 function extractVariableKeys(text: string): string[] {
-  return [...new Set(text.match(/{{\d}}/g) ?? [])].sort((a, b) => {
+  return [...new Set(text.match(/{{\d+}}/g) ?? [])].sort((a, b) => {
     const left = Number(a.replace(/\D/g, ""))
     const right = Number(b.replace(/\D/g, ""))
     return left - right
@@ -432,7 +432,7 @@ export function CreateMessageTemplateDialog({
 
             <TextWithVariablesField
               label={t("messenger.messageTemplate.create.body")}
-              maxVariables={9}
+              maxVariables={15}
               name="body"
               variablesLayout="stack"
               variablesName="bodyVariables"
