@@ -1247,7 +1247,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 message.conversationId,
                 messageIndex,
               )
-            } else if (!currentConversation && !isSystemActivityLog(message)) {
+            } else if (!(currentConversation || isSystemActivityLog(message))) {
               unmatchedWorkspaceId ??= message.workspaceId
             }
 

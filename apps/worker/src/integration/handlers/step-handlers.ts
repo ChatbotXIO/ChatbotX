@@ -26,7 +26,6 @@ import {
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
 import { subHours } from "date-fns"
-import { logger } from "../../lib/logger"
 import {
   resolveWhatsappMessageSourceId,
   sendTypingToChannel,
