@@ -1767,12 +1767,14 @@ describe("chat store system activity logs", () => {
       ] as never,
     })
 
-    store.getState().handleNewMessage({
-      ...makeMessage("conv-1", new Date("2026-09-18T10:00:00Z")),
-      id: "msg-log",
-      messageType: "activity",
-      contentAttributes: { activityType: "tag_added", tags: ["vip"] },
-    } as never)
+    store.getState().handleNewMessages([
+      {
+        ...makeMessage("conv-1", new Date("2026-09-18T10:00:00Z")),
+        id: "msg-log",
+        messageType: "activity",
+        contentAttributes: { activityType: "tag_added", tags: ["vip"] },
+      } as never,
+    ])
 
     const conversation = store.getState().conversations[0] as
       | {
@@ -1803,12 +1805,14 @@ describe("chat store system activity logs", () => {
       ] as never,
     })
 
-    store.getState().handleNewMessage({
-      ...makeMessage("conv-1", new Date("2026-09-18T10:00:00Z")),
-      id: "msg-call",
-      messageType: "activity",
-      contentAttributes: { type: "whatsapp_call" },
-    } as never)
+    store.getState().handleNewMessages([
+      {
+        ...makeMessage("conv-1", new Date("2026-09-18T10:00:00Z")),
+        id: "msg-call",
+        messageType: "activity",
+        contentAttributes: { type: "whatsapp_call" },
+      } as never,
+    ])
 
     const conversation = store.getState().conversations[0] as
       | { messages: { id: string }[] }
