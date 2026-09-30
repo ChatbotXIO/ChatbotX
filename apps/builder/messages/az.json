@@ -5250,7 +5250,7 @@
     "replyAfter": "Cavabdan əvvəl gözləmə müddəti",
     "replyAfterValue": "Dəyər",
     "specificPostIds": "Müəyyən paylaşımların ID-ləri",
-    "postIdPlaceholder": "Paylaşım ID-lərini daxil edin və daxil etmə düyməsini basın...",
+    "postIdPlaceholder": "Rəqəmsal paylaşım ID-lərini daxil edib Enter basın (linkdəki kod deyil)...",
     "card": {
       "targeting": "Hədəfləmə və cavab",
       "filters": "Süzgəclər və seçimlər",
@@ -5312,7 +5312,14 @@
     },
     "showCommentsAfter": {
       "none": "Heç vaxt"
-    }
+    },
+    "chooseSpecificPosts": "Paylaşımları seçin...",
+    "selectPosts": "Paylaşımları seç",
+    "selectAccountAll": "Bütün hesablar",
+    "postsTab": "Paylaşımlar",
+    "postIdTab": "Paylaşım ID-si",
+    "noPostsFound": "Paylaşım tapılmadı",
+    "loadPostsError": "Paylaşımları yükləmək mümkün olmadı. ID-ləri yenə də əl ilə daxil edə bilərsiniz."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok şərhlərinin avtomatlaşdırılması",

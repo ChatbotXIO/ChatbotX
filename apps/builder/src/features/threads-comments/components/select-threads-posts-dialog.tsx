@@ -27,12 +27,12 @@ import {
   PostGrid,
   PostIdTagInput,
 } from "@/features/shared/comment-automation/post-picker"
-import { splitInstagramMediaPosts } from "../provider/ig-comment-posts-store"
-import { useIgCommentPostsStore } from "../provider/ig-comment-posts-store-context"
+import { useWorkspaceId } from "@/hooks/routing"
+import { useThreadsPosts } from "../hooks/use-threads-posts"
 
-const ALL_PAGES_VALUE = "all"
+const ALL_ACCOUNTS_VALUE = "all"
 
-export function SelectInstagramPostsDialog({
+export function SelectThreadsPostsDialog({
   open,
   onOpenChange,
   value,
@@ -44,13 +44,15 @@ export function SelectInstagramPostsDialog({
   onChange: (ids: string[]) => void
 }) {
   const t = useTranslations()
-
-  const loading = useIgCommentPostsStore((s) => s.loading)
-  const posts = useIgCommentPostsStore((s) => s.posts)
-  const pages = useIgCommentPostsStore((s) => s.pages)
+  const { data, isLoading, isError } = useThreadsPosts(useWorkspaceId(), {
+    enabled: open,
+  })
+  const posts = data?.posts ?? []
+  const accounts = data?.accounts ?? []
 
   const [selectedIds, setSelectedIds] = useState<string[]>(value)
-  const [selectedPageId, setSelectedPageId] = useState<string>(ALL_PAGES_VALUE)
+  const [selectedAccountId, setSelectedAccountId] =
+    useState<string>(ALL_ACCOUNTS_VALUE)
 
   useEffect(() => {
     if (open) {
@@ -58,11 +60,10 @@ export function SelectInstagramPostsDialog({
     }
   }, [open, value])
 
-  const pagePosts =
-    selectedPageId === ALL_PAGES_VALUE
+  const accountPosts =
+    selectedAccountId === ALL_ACCOUNTS_VALUE
       ? posts
-      : posts.filter((post) => post.accountId === selectedPageId)
-  const instagramMedia = splitInstagramMediaPosts(pagePosts)
+      : posts.filter((post) => post.accountId === selectedAccountId)
 
   const toggleId = (id: string) => {
     setSelectedIds((prev) =>
@@ -79,61 +80,50 @@ export function SelectInstagramPostsDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>
-            {t("instagramCommentAutomation.selectPosts")}
-          </DialogTitle>
+          <DialogTitle>{t("threadsCommentAutomation.selectPosts")}</DialogTitle>
         </DialogHeader>
 
-        {pages.length > 0 && (
+        {accounts.length > 1 && (
           <Select
-            onValueChange={(val) => setSelectedPageId(val as string)}
-            value={selectedPageId}
+            onValueChange={(val) => setSelectedAccountId(val as string)}
+            value={selectedAccountId}
           >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_PAGES_VALUE}>
-                {t("instagramCommentAutomation.selectPageAll")}
+              <SelectItem value={ALL_ACCOUNTS_VALUE}>
+                {t("threadsCommentAutomation.selectAccountAll")}
               </SelectItem>
-              {pages.map((page) => (
-                <SelectItem key={page.id} value={page.id}>
-                  {page.name}
+              {accounts.map((account) => (
+                <SelectItem key={account.id} value={account.id}>
+                  {account.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )}
 
-        <Tabs defaultValue="published">
+        <Tabs defaultValue="posts">
           <TabsList className="w-full">
-            <TabsTrigger className="flex-1" value="published">
-              {t("instagramCommentAutomation.postType.published")}
-            </TabsTrigger>
-            <TabsTrigger className="flex-1" value="reels">
-              {t("instagramCommentAutomation.postType.reels")}
+            <TabsTrigger className="flex-1" value="posts">
+              {t("threadsCommentAutomation.postsTab")}
             </TabsTrigger>
             <TabsTrigger className="flex-1" value="postId">
-              {t("instagramCommentAutomation.postIdTab")}
+              {t("threadsCommentAutomation.postIdTab")}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent className="mt-3" value="published">
+          <TabsContent className="mt-3" value="posts">
             <PostGrid
-              emptyText={t("instagramCommentAutomation.noPostsFound")}
-              loading={loading}
+              emptyText={
+                isError
+                  ? t("threadsCommentAutomation.loadPostsError")
+                  : t("threadsCommentAutomation.noPostsFound")
+              }
+              loading={isLoading}
               onToggle={toggleId}
-              posts={instagramMedia.published}
-              selectedIds={selectedIds}
-            />
-          </TabsContent>
-
-          <TabsContent className="mt-3" value="reels">
-            <PostGrid
-              emptyText={t("instagramCommentAutomation.noPostsFound")}
-              loading={loading}
-              onToggle={toggleId}
-              posts={instagramMedia.reels}
+              posts={accountPosts}
               selectedIds={selectedIds}
             />
           </TabsContent>
@@ -141,7 +131,7 @@ export function SelectInstagramPostsDialog({
           <TabsContent className="mt-3" value="postId">
             <PostIdTagInput
               onChange={setSelectedIds}
-              placeholder={t("instagramCommentAutomation.postIdPlaceholder")}
+              placeholder={t("threadsCommentAutomation.postIdPlaceholder")}
               value={selectedIds}
             />
           </TabsContent>

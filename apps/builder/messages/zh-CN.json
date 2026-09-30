@@ -3689,7 +3689,7 @@
     "replyAfter": "回复时间",
     "replyAfterValue": "时间值",
     "specificPostIds": "指定帖子 ID",
-    "postIdPlaceholder": "输入帖子 ID 后按 Enter...",
+    "postIdPlaceholder": "输入数字格式的贴文 ID 后按 Enter(不是链接中的代码)...",
     "card": {
       "targeting": "目标与回复",
       "filters": "筛选条件与选项",
@@ -3751,7 +3751,14 @@
     },
     "showCommentsAfter": {
       "none": "永不"
-    }
+    },
+    "chooseSpecificPosts": "选择贴文...",
+    "selectPosts": "选择贴文",
+    "selectAccountAll": "所有帐号",
+    "postsTab": "贴文",
+    "postIdTab": "贴文 ID",
+    "noPostsFound": "找不到贴文",
+    "loadPostsError": "无法加载贴文。你仍可手动输入 ID。"
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

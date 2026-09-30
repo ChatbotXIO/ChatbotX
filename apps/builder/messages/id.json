@@ -4965,7 +4965,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "Masukkan ID postingan berupa angka lalu tekan Enter (bukan kode di tautan)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -5027,7 +5027,14 @@
     },
     "showCommentsAfter": {
       "none": "Jangan pernah"
-    }
+    },
+    "chooseSpecificPosts": "Pilih postingan...",
+    "selectPosts": "Pilih Postingan",
+    "selectAccountAll": "Semua akun",
+    "postsTab": "Postingan",
+    "postIdTab": "ID Postingan",
+    "noPostsFound": "Tidak ada postingan yang ditemukan",
+    "loadPostsError": "Gagal memuat postingan. Anda masih bisa memasukkan ID secara manual."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

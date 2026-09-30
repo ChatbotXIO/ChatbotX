@@ -6,6 +6,7 @@ import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-f
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
@@ -22,7 +23,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/form"
 import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
 import { useTranslations } from "next-intl"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
@@ -33,6 +34,7 @@ import { ReplyTextsField } from "@/features/shared/comment-automation/reply-text
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateThreadsCommentRequest } from "../schema/action"
+import { SelectThreadsPostsDialog } from "./select-threads-posts-dialog"
 
 type Props = {
   form: UseFormReturn<CreateThreadsCommentRequest>
@@ -58,6 +60,9 @@ export function ThreadsCommentForm({
     name: "publicReply.type",
   })
   const postType = useWatch({ control: form.control, name: "post.type" })
+  const postValue =
+    useWatch({ control: form.control, name: "post.value" }) ?? []
+  const [selectPostsOpen, setSelectPostsOpen] = useState(false)
   const includeKeywordsType = useWatch({
     control: form.control,
     name: "includeKeywords.type",
@@ -176,18 +181,29 @@ export function ThreadsCommentForm({
               name="post.value"
               render={() => (
                 <FormItem>
-                  <FormLabel>
-                    {t("threadsCommentAutomation.specificPostIds")}
-                  </FormLabel>
                   <FormControl>
-                    <TagsInputField
-                      name="post.value"
-                      placeholder={t(
-                        "threadsCommentAutomation.postIdPlaceholder",
-                      )}
-                    />
+                    <Button
+                      className="w-full"
+                      onClick={() => setSelectPostsOpen(true)}
+                      type="button"
+                      variant="outline"
+                    >
+                      {t("threadsCommentAutomation.chooseSpecificPosts")}
+                      {postValue.length > 0 && ` (${postValue.length})`}
+                    </Button>
                   </FormControl>
                   <FormMessage />
+                  <SelectThreadsPostsDialog
+                    onChange={(ids) =>
+                      form.setValue("post.value", ids, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    onOpenChange={setSelectPostsOpen}
+                    open={selectPostsOpen}
+                    value={postValue}
+                  />
                 </FormItem>
               )}
             />

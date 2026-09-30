@@ -4944,7 +4944,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "数字の投稿IDを入力してEnterを押してください(リンク内のコードではありません)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -5006,7 +5006,14 @@
     },
     "showCommentsAfter": {
       "none": "再表示しない"
-    }
+    },
+    "chooseSpecificPosts": "投稿を選択...",
+    "selectPosts": "投稿を選択",
+    "selectAccountAll": "すべてのアカウント",
+    "postsTab": "投稿",
+    "postIdTab": "投稿ID",
+    "noPostsFound": "投稿が見つかりません",
+    "loadPostsError": "投稿を読み込めませんでした。IDを手動で入力することもできます。"
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

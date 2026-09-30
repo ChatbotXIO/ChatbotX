@@ -2994,7 +2994,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "הזינו מזהי פוסטים מספריים והקישו Enter (לא הקוד שבקישור)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -3056,7 +3056,14 @@
     },
     "showCommentsAfter": {
       "none": "לעולם לא"
-    }
+    },
+    "chooseSpecificPosts": "בחירת פוסטים...",
+    "selectPosts": "בחירת פוסטים",
+    "selectAccountAll": "כל החשבונות",
+    "postsTab": "פוסטים",
+    "postIdTab": "מזהה פוסט",
+    "noPostsFound": "לא נמצאו פוסטים",
+    "loadPostsError": "לא ניתן לטעון את הפוסטים. עדיין אפשר להזין מזהים ידנית."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

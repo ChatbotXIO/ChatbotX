@@ -4965,7 +4965,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "Indtast numeriske opslags-ID'er og tryk Enter (ikke koden i linket)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -5027,7 +5027,14 @@
     },
     "showCommentsAfter": {
       "none": "Never"
-    }
+    },
+    "chooseSpecificPosts": "Choose opslag...",
+    "selectPosts": "Vælg Opslag",
+    "selectAccountAll": "Alle accounts",
+    "postsTab": "Opslag",
+    "postIdTab": "Opslag ID",
+    "noPostsFound": "Ingen opslag found",
+    "loadPostsError": "Kunne ikke indlæse opslag. Du kan stadig indtaste ID'er manuelt."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

@@ -5046,7 +5046,7 @@
     "replyAfter": "Trả lời sau",
     "replyAfterValue": "Giá trị",
     "specificPostIds": "ID bài viết cụ thể",
-    "postIdPlaceholder": "Nhập ID bài viết rồi nhấn Enter...",
+    "postIdPlaceholder": "Nhập ID dạng số của bài viết rồi nhấn Enter (không phải mã trên link)...",
     "card": {
       "targeting": "Nhắm mục tiêu & Trả lời",
       "filters": "Bộ lọc & Tùy chọn",
@@ -5108,7 +5108,14 @@
     },
     "showCommentsAfter": {
       "none": "Không bao giờ"
-    }
+    },
+    "chooseSpecificPosts": "Chọn bài viết...",
+    "selectPosts": "Chọn bài viết",
+    "selectAccountAll": "Tất cả tài khoản",
+    "postsTab": "Bài viết",
+    "postIdTab": "Post ID",
+    "noPostsFound": "Không tìm thấy bài viết",
+    "loadPostsError": "Không tải được bài viết. Bạn vẫn có thể nhập ID."
   },
   "tiktokCommentAutomation": {
     "title": "Tự động hóa bình luận TikTok",

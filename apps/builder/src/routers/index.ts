@@ -196,6 +196,11 @@ export const router = {
       default: m.igCommentsAPI,
     })),
   ),
+  threadsCommentsAPI: lazy(() =>
+    import("@/features/threads-comments/api").then((m) => ({
+      default: m.threadsCommentsAPI,
+    })),
+  ),
   igStoriesAPI: lazy(() =>
     import("@/features/ig-stories/api").then((m) => ({
       default: m.igStoriesAPI,

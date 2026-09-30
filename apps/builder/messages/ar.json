@@ -5448,7 +5448,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "أدخل معرّفات المنشورات الرقمية ثم اضغط Enter (وليس الرمز الموجود في الرابط)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -5510,7 +5510,14 @@
     },
     "showCommentsAfter": {
       "none": "أبدًا"
-    }
+    },
+    "chooseSpecificPosts": "اختر منشورات...",
+    "selectPosts": "تحديد المنشورات",
+    "selectAccountAll": "جميع الحسابات",
+    "postsTab": "المنشورات",
+    "postIdTab": "معرّف المنشور",
+    "noPostsFound": "لم يتم العثور على منشورات",
+    "loadPostsError": "تعذّر تحميل المنشورات. لا يزال بإمكانك إدخال المعرّفات يدويًا."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

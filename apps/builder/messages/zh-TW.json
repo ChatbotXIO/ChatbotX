@@ -4998,7 +4998,7 @@
     "replyAfter": "回覆時間",
     "replyAfterValue": "時間值",
     "specificPostIds": "指定貼文 ID",
-    "postIdPlaceholder": "輸入貼文 ID 後按 Enter...",
+    "postIdPlaceholder": "輸入數字格式的貼文 ID 後按 Enter(不是連結中的代碼)...",
     "card": {
       "targeting": "目標與回覆",
       "filters": "篩選條件與選項",
@@ -5060,7 +5060,14 @@
     },
     "showCommentsAfter": {
       "none": "永不"
-    }
+    },
+    "chooseSpecificPosts": "選擇貼文...",
+    "selectPosts": "選擇貼文",
+    "selectAccountAll": "所有帳號",
+    "postsTab": "貼文",
+    "postIdTab": "貼文 ID",
+    "noPostsFound": "找不到貼文",
+    "loadPostsError": "無法載入貼文。你仍可手動輸入 ID。"
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",
