@@ -165,6 +165,9 @@ export async function GET(req: NextRequest) {
       contactInboxId: contactInbox.id,
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
+      // Automation logs (tags, custom fields, sequences) share the message
+      // table. Guests must not see them on refresh.
+      messageTypes: ["incoming", "outgoing"],
     })
 
     return NextResponse.json(result, { headers })

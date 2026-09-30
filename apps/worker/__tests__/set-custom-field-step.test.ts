@@ -120,6 +120,11 @@ describe("setContactCustomField", () => {
       contactInboxId: "ci-1",
       allowBotFields: true,
       operation: undefined,
+      activityContext: {
+        conversationId: undefined,
+        contactInboxId: "ci-1",
+        fieldKeyword: "42",
+      },
     })
   })
 

@@ -17,6 +17,7 @@ import type {
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
+import { isSystemActivityLog } from "@/features/messages/lib/system-activity"
 import type {
   MessageResource,
   MessageResourceWithRelations,
@@ -149,6 +150,9 @@ export type ChatState = {
 
   // active facebook post (for comment conversations)
   activePost: PostDetails | null
+
+  // show/hide system activity events in chat
+  showSystemEvents: boolean
 }
 // `messages`/`nextCursorMessage`/`hasNextMessagePage`/`messagesConversationId`
 // must be seeded together or not at all: a `messages` seed without its
@@ -280,6 +284,9 @@ export type ChatActions = {
 
   // Contact actions
   updateContact: (contactId: string, data: Partial<ContactResource>) => void
+
+  // Activity events toggle
+  toggleSystemEvents: () => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -510,6 +517,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       ...conversationListDefaults(),
       filters: {},
       ...messageThreadDefaults(),
+      showSystemEvents: true,
+
+      toggleSystemEvents: () =>
+        set((state) => ({ showSystemEvents: !state.showSystemEvents })),
 
       ...restInitialState,
       ...messagesSeed,
@@ -1063,6 +1074,11 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       },
 
       updateConversationViaMessage: (message: MessageResource) => {
+        // Automation logs must not become the inbox preview or pull an
+        // archived conversation back to the top.
+        if (isSystemActivityLog(message)) {
+          return
+        }
         let matchedConversation = false
         set((state) => {
           const conversationIndex = state.conversations.findIndex(
@@ -1208,7 +1224,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             const currentConversation = conversationsById.get(
               message.conversationId,
             )
-            if (currentConversation) {
+            if (currentConversation && !isSystemActivityLog(message)) {
               const conversationPatch = conversationPatchForMessage(
                 currentConversation,
                 message,
@@ -1231,7 +1247,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 message.conversationId,
                 messageIndex,
               )
-            } else {
+            } else if (!(currentConversation || isSystemActivityLog(message))) {
               unmatchedWorkspaceId ??= message.workspaceId
             }
 

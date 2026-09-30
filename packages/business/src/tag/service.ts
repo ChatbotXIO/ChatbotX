@@ -258,9 +258,17 @@ class TagService extends BaseService {
     accessScope?: ContactAccessScope
     contactInbox?: { id: string; inboxId: string; channel: string | null }
     emitFor?: "all" | "newlyLinked"
-  }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
+  }): Promise<{
+    processedContactIds: string[]
+    skippedContactIds: string[]
+    newlyLinkedNames: string[]
+  }> {
     if (contactIds.length === 0 || names.length === 0) {
-      return { processedContactIds: [], skippedContactIds: [...contactIds] }
+      return {
+        processedContactIds: [],
+        skippedContactIds: [...contactIds],
+        newlyLinkedNames: [],
+      }
     }
 
     // Resolve/create the tag set once (bounded by the request, small).
@@ -269,10 +277,16 @@ class TagService extends BaseService {
       names,
     })
     if (allTags.length === 0) {
-      return { processedContactIds: [], skippedContactIds: [...contactIds] }
+      return {
+        processedContactIds: [],
+        skippedContactIds: [...contactIds],
+        newlyLinkedNames: [],
+      }
     }
 
     const affectedContactIds: string[] = []
+    const newlyLinkedNames = new Set<string>()
+    const tagNameById = new Map(allTags.map((tag) => [tag.id, tag.name]))
 
     // Process selected contacts in chunks — never load all contacts at once.
     for (
@@ -308,6 +322,13 @@ class TagService extends BaseService {
           contactId: contactsToTagsModel.contactId,
           tagId: contactsToTagsModel.tagId,
         })
+
+      for (const pair of newlyLinkedPairs) {
+        const linkedName = tagNameById.get(pair.tagId)
+        if (linkedName) {
+          newlyLinkedNames.add(linkedName)
+        }
+      }
 
       // Emit tag applied for all attempted pairs by default (existing callers
       // depend on it for manual re-apply triggers). Flow-step callers that
@@ -386,6 +407,7 @@ class TagService extends BaseService {
     return {
       processedContactIds: affectedContactIds,
       skippedContactIds: contactIds.filter((id) => !processedSet.has(id)),
+      newlyLinkedNames: [...newlyLinkedNames],
     }
   }
 
@@ -531,9 +553,9 @@ class TagService extends BaseService {
     names: string[]
     accessScope?: ContactAccessScope
     contactInboxId?: string
-  }) {
+  }): Promise<{ removedNames: string[] }> {
     if (contactIds.length === 0 || names.length === 0) {
-      return
+      return { removedNames: [] }
     }
 
     // contactIds are contact ids; names are tag NAMES (the dialog
@@ -546,14 +568,17 @@ class TagService extends BaseService {
       },
       columns: {
         id: true,
+        name: true,
       },
     })
     const allTagIds = allTags.map((tag) => tag.id)
     if (allTagIds.length === 0) {
-      return
+      return { removedNames: [] }
     }
 
     const affectedContactIds: string[] = []
+    const removedNames = new Set<string>()
+    const tagNameById = new Map(allTags.map((tag) => [tag.id, tag.name]))
 
     // Process selected contacts in chunks — never load all contacts at once.
     for (
@@ -573,8 +598,10 @@ class TagService extends BaseService {
       const contactIdsInChunk = contacts.map((contact) => contact.id)
       affectedContactIds.push(...contactIdsInChunk)
 
-      // One DELETE per chunk instead of one per contact.
-      await db
+      // RETURNING is only the links that existed. Activity logs use this so a
+      // re-run does not record a removal that did not happen. Event emission
+      // below stays on the requested set, matching the previous contract.
+      const deletedLinks = await db
         .delete(contactsToTagsModel)
         .where(
           and(
@@ -582,6 +609,14 @@ class TagService extends BaseService {
             inArray(contactsToTagsModel.tagId, allTagIds),
           ),
         )
+        .returning({ tagId: contactsToTagsModel.tagId })
+
+      for (const link of deletedLinks) {
+        const removedName = tagNameById.get(link.tagId)
+        if (removedName) {
+          removedNames.add(removedName)
+        }
+      }
 
       // Channel cleanup (unassign + delete ContactToTagChannel) runs in the queue.
       for (const contact of contacts) {
@@ -615,6 +650,8 @@ class TagService extends BaseService {
     if (affectedContactIds.length > 0) {
       await contactService.invalidate({ workspaceId, ids: affectedContactIds })
     }
+
+    return { removedNames: [...removedNames] }
   }
 
   listForContact(input: { workspaceId: string; contactId: string }) {

@@ -181,7 +181,10 @@ describe("listConversations / findConversation attachment count", () => {
 
     expect(mocks.repo.findLastByConversation).toHaveBeenCalledWith(
       "conv-1",
-      expect.objectContaining({ attachmentCountOnly: true }),
+      expect.objectContaining({
+        attachmentCountOnly: true,
+        excludeSystemActivityLogs: true,
+      }),
     )
     expect(mocks.repo.findLastByConversation).not.toHaveBeenCalledWith(
       "conv-1",

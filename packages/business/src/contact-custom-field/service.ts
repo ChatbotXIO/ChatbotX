@@ -28,11 +28,15 @@ import { type ContactAccessScope, contactService } from "../contact/service"
 import { customFieldService } from "../custom-field/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
+import type { CustomFieldActivityContext } from "../message/record-custom-field-activity"
+import { recordCustomFieldChangeActivities } from "../message/record-custom-field-activity"
 import {
   createSourceTimezoneResolver,
   normalizeCustomFieldValueForStorage,
 } from "./normalize"
 import { contactCustomFieldValueService } from "./value-service"
+
+export type { CustomFieldActivityContext } from "../message/record-custom-field-activity"
 
 type SetValuesInput = {
   workspaceId: string
@@ -70,6 +74,11 @@ type SetValuesInput = {
    * inbox instead of the contact's most-recently-active one.
    */
   contactInboxId?: string
+  /**
+   * When a flow step writes custom fields during an active conversation, inbox
+   * activity messages are recorded for each persisted change.
+   */
+  activityContext?: CustomFieldActivityContext
 }
 
 /**
@@ -141,6 +150,7 @@ type SetValueByKeyInput = DeleteByKeyInput & {
    * pre-existing platform bug tracked separately (plan §3.2, Phase 5).
    */
   operation?: FieldOperationType
+  activityContext?: CustomFieldActivityContext
 }
 
 /**
@@ -618,6 +628,16 @@ class ContactCustomFieldService extends BaseService {
       changes,
       contactInboxId: input.contactInboxId,
     })
+
+    if (input.activityContext && changes.length > 0) {
+      await recordCustomFieldChangeActivities({
+        workspaceId: input.workspaceId,
+        conversationId: input.activityContext.conversationId,
+        contactInboxId: input.activityContext.contactInboxId,
+        changes,
+        fieldKeyword: input.activityContext.fieldKeyword,
+      })
+    }
   }
 
   /**
@@ -790,7 +810,11 @@ class ContactCustomFieldService extends BaseService {
 
     const botFieldKey = resolveBotFieldKey(keyword, allowBotFields)
     if (botFieldKey) {
-      await botFieldService.applyValueOperation({
+      const before = await botFieldService.findByKeyOrFail({
+        workspaceId,
+        key: botFieldKey,
+      })
+      const updated = await botFieldService.applyValueOperation({
         workspaceId,
         key: botFieldKey,
         operation: operation ?? FieldOperationType.set,
@@ -799,6 +823,25 @@ class ContactCustomFieldService extends BaseService {
         temporalInputParsing,
         fillEmptyTemporalWithNow,
       })
+      // Re-running a flow that writes the same bot-field value must not log.
+      if (
+        input.activityContext &&
+        (before.value ?? "") !== (updated.value ?? "")
+      ) {
+        await recordCustomFieldChangeActivities({
+          workspaceId,
+          conversationId: input.activityContext.conversationId,
+          contactInboxId: input.activityContext.contactInboxId,
+          changes: [
+            {
+              customFieldId: updated.id,
+              customFieldName: updated.name,
+              oldValue: before.value,
+              newValue: updated.value ?? "",
+            },
+          ],
+        })
+      }
       return
     }
 
@@ -830,17 +873,26 @@ class ContactCustomFieldService extends BaseService {
       temporalInputParsing,
       fillEmptyTemporalWithNow,
       contactInboxId,
+      activityContext: input.activityContext,
     })
   }
 
-  async deleteByKey(input: DeleteByKeyInput): Promise<void> {
+  async deleteByKey(input: DeleteByKeyInput): Promise<{
+    cleared: boolean
+    fieldName: string
+  }> {
     const { workspaceId, contactId, keyword, contactInboxId, allowBotFields } =
       input
 
     const botFieldKey = resolveBotFieldKey(keyword, allowBotFields)
     if (botFieldKey) {
+      const existing = await botFieldService.findByKeyOrFail({
+        workspaceId,
+        key: botFieldKey,
+      })
+      const hadValue = existing.value != null && existing.value !== ""
       await botFieldService.clearValueByKey({ workspaceId, key: botFieldKey })
-      return
+      return { cleared: hadValue, fieldName: existing.name }
     }
 
     let customField: { id: string; name: string } | undefined
@@ -880,7 +932,7 @@ class ContactCustomFieldService extends BaseService {
     })
 
     if (oldValue === null) {
-      return
+      return { cleared: false, fieldName: customField.name }
     }
 
     emitCustomFieldChanged(
@@ -897,6 +949,8 @@ class ContactCustomFieldService extends BaseService {
         "Failed to emit customFieldChanged event",
       )
     })
+
+    return { cleared: true, fieldName: customField.name }
   }
 
   async invalidate(props: {

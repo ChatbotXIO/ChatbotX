@@ -7,7 +7,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // Trigger event it emits attributes to the conversation's own channel.
 // ---------------------------------------------------------------------------
 
-const deleteByKey = vi.fn(async () => undefined)
+const deleteByKey = vi.fn(async () => ({
+  cleared: false,
+  fieldName: "",
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
   contactCustomFieldService: { deleteByKey },
