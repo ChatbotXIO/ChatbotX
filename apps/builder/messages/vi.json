@@ -5193,6 +5193,22 @@
     "privateReplyHighIntentTitle": "TikTok quyết định bình luận nào được nhắn tin",
     "privateReplyHighIntentNotice": "Tài khoản TikTok đã kết nối phải bật Comment-to-Message, và phải là Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan. TikTok chỉ gửi tin nhắn riêng cho bình luận cấp 1 mà TikTok đánh dấu là có ý định mua cao, trong vòng 48 giờ, mỗi bình luận một lần, và không gửi nếu người bình luận đã nhắn tin cho bạn trong 24 giờ qua."
   },
+  "commentAutomationMissedComments": {
+    "action": "Xử lý bình luận bị bỏ sót",
+    "processing": "Đang xử lý bình luận bị bỏ sót",
+    "title": "Xử lý bình luận bị bỏ sót",
+    "description": "Quét các bình luận của bài viết này trong 7 ngày gần nhất và xử lý qua comment automation. Các bình luận đã xử lý sẽ được bỏ qua. Thao tác này sẽ gửi tin nhắn và trả lời thật.",
+    "success": "Đã quét {scanned} bình luận: {skipped} đã xử lý trước đó, {queued} đang chờ xử lý, {failed} bị lỗi.",
+    "errors": {
+      "notSinglePost": "Chỉ dùng được cho automation chọn đúng một bài viết cụ thể.",
+      "inactive": "Hãy bật automation này trước khi xử lý bình luận bị bỏ sót.",
+      "outsideSchedule": "Automation này đang ngoài khung giờ hoạt động. Hãy thử lại trong khung giờ đã đặt.",
+      "workspaceInactive": "Workspace đang tắt hoặc ngoài giờ hoạt động nên sẽ không có bình luận nào được xử lý. Hãy thử lại khi workspace đang hoạt động.",
+      "alreadyRunning": "Automation này đang xử lý bình luận bị bỏ sót. Hãy thử lại sau vài phút.",
+      "integrationNotFound": "Không tìm thấy tài khoản đã kết nối cho kênh này.",
+      "fetchFailed": "Không tải được bình luận của bài viết. Hãy kiểm tra kết nối kênh rồi thử lại."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Tự động hóa trả lời Story Instagram",
     "description": "Tự động hóa trả lời khi có người reply vào Story Instagram cho các liên hệ của bạn.",

@@ -1,6 +1,9 @@
 "use client"
 
-import { folderTypes } from "@chatbotx.io/database/partials"
+import {
+  canProcessMissedComments,
+  folderTypes,
+} from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -24,6 +27,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import {
   ChartColumnIcon,
   FolderUpIcon,
+  HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
   TextIcon,
@@ -40,7 +44,10 @@ import { BulkMoveCommentAutomationFolderDialog } from "../shared/comment-automat
 import { CommentAutomationScheduleDialog } from "../shared/comment-automation/comment-automation-schedule-dialog"
 import { buildCommentAutomationStatColumns } from "../shared/comment-automation/comment-automation-stat-columns"
 import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
+import { MissedCommentsProcessingLabel } from "../shared/comment-automation/missed-comments-processing-label"
+import { ProcessMissedCommentsDialog } from "../shared/comment-automation/process-missed-comments-dialog"
 import { RenameCommentAutomationDialog } from "../shared/comment-automation/rename-comment-automation-dialog"
+import { useMissedCommentsInProgress } from "../shared/comment-automation/use-missed-comments-in-progress"
 import { deleteFbCommentAction } from "./actions/delete-fb-comment.action"
 import { updateFbCommentAction } from "./actions/update-fb-comment.action"
 import type { listFbComments } from "./queries"
@@ -63,6 +70,18 @@ export function FbCommentsTable({
   const [rowAction, setRowAction] = React.useState<DataTableRowAction<
     ListFbCommentsResponse["data"][number]
   > | null>(null)
+
+  const [missedCommentsItem, setMissedCommentsItem] = React.useState<
+    ListFbCommentsResponse["data"][number] | null
+  >(null)
+
+  const {
+    inProgress: missedCommentsInProgress,
+    refresh: refreshMissedCommentsInProgress,
+  } = useMissedCommentsInProgress(
+    workspaceId,
+    data.map((automation) => automation.id),
+  )
 
   const [scheduleDialogItem, setScheduleDialogItem] = React.useState<
     ListFbCommentsResponse["data"][number] | null
@@ -141,6 +160,9 @@ export function FbCommentsTable({
                 <p>{row.original.name}</p>
               </TooltipContent>
             </Tooltip>
+            {missedCommentsInProgress.has(row.original.id) ? (
+              <MissedCommentsProcessingLabel />
+            ) : null}
           </div>
         ),
         meta: {
@@ -234,6 +256,15 @@ export function FbCommentsTable({
                   <TextIcon className="me-2" />
                   {t("actions.rename")}
                 </DropdownMenuItem>
+                {canProcessMissedComments(row.original.post) ? (
+                  <DropdownMenuItem
+                    disabled={missedCommentsInProgress.has(row.original.id)}
+                    onClick={() => setMissedCommentsItem(row.original)}
+                  >
+                    <HistoryIcon className="me-2" />
+                    {t("commentAutomationMissedComments.action")}
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem
                   onClick={() => setRowAction({ row, variant: "move" })}
                 >
@@ -256,7 +287,7 @@ export function FbCommentsTable({
         enableHiding: false,
       },
     ],
-    [t, workspaceId, handleToggleStatus, router],
+    [t, workspaceId, handleToggleStatus, router, missedCommentsInProgress],
   )
 
   const { table } = useDataTable({
@@ -362,6 +393,15 @@ export function FbCommentsTable({
         open={!!scheduleDialogItem}
         resource={scheduleDialogItem}
         translationNamespace="facebookCommentAutomation"
+      />
+
+      <ProcessMissedCommentsDialog
+        onOpenChange={() => setMissedCommentsItem(null)}
+        onSuccess={() => {
+          refreshMissedCommentsInProgress()
+          router.refresh()
+        }}
+        resource={missedCommentsItem}
       />
     </>
   )

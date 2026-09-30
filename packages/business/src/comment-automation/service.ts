@@ -14,6 +14,7 @@ import {
   type CommentHideComments,
   type CommentIncludeKeywords,
   type CommentReply,
+  canProcessMissedComments,
   commentAutomationChannelSupportsHideGif,
   commentAutomationTypes,
   type IgCommentAutomationType,
@@ -21,6 +22,8 @@ import {
   normalizeReplyTexts,
 } from "@chatbotx.io/database/partials"
 import {
+  commentAutomationEventModel,
+  commentAutomationMissModel,
   commentAutomationModel,
   commentAutomationReplyModel,
   contactInboxModel,
@@ -31,6 +34,7 @@ import {
   likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
+import { distributedStore } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
@@ -69,6 +73,29 @@ type ListChannelCommentsInput = {
   name?: string | null
   isActive?: boolean | null
   tx?: DatabaseClient
+}
+
+export type MissedCommentsIneligibleReason =
+  | "notSinglePost"
+  | "inactive"
+  | "outsideSchedule"
+
+const MISSED_COMMENTS_LOCK_SECONDS = 30 * 60
+
+/**
+ * How long "still processing" outlives the last scheduled replay. Only matters
+ * when replays never finish (a dead worker): the status then clears itself
+ * instead of blocking the automation for good.
+ */
+const MISSED_COMMENTS_REMAINING_GRACE_SECONDS = 30 * 60
+
+function missedCommentsLockKey(automationId: string): string {
+  return `comment-automation:missed-comments:${automationId}`
+}
+
+/** Replays of the automation's last run still queued or running. */
+function missedCommentsRemainingKey(automationId: string): string {
+  return `comment-automation:missed-comments:remaining:${automationId}`
 }
 
 function resolveIsActiveFilter(isActive?: boolean | null): boolean | undefined {
@@ -390,6 +417,270 @@ class CommentAutomationService extends BaseService {
         type: props.channelType,
       },
     })
+  }
+
+  /**
+   * Whether any automation on this channel already sent this comment its one
+   * comment-anchored DM. Meta and TikTok accept a single private reply per
+   * comment, so a replayed comment must not try again. Filtered through the
+   * workspace's automations so `CommentAutomationEvent_dedup_idx`
+   * (automationId, commentId, replyChannel) serves the lookup.
+   */
+  async hasSentPrivateReply(props: {
+    workspaceId: string
+    channelType: CommentAutomationType
+    commentId: string
+  }): Promise<boolean> {
+    const [row] = await db
+      .select({ id: commentAutomationEventModel.id })
+      .from(commentAutomationEventModel)
+      .where(
+        and(
+          inArray(
+            commentAutomationEventModel.automationId,
+            db
+              .select({ id: commentAutomationModel.id })
+              .from(commentAutomationModel)
+              .where(
+                and(
+                  eq(commentAutomationModel.workspaceId, props.workspaceId),
+                  eq(commentAutomationModel.type, props.channelType),
+                ),
+              ),
+          ),
+          eq(commentAutomationEventModel.commentId, props.commentId),
+          eq(commentAutomationEventModel.replyChannel, "private"),
+          eq(commentAutomationEventModel.status, "sent"),
+        ),
+      )
+      .limit(1)
+    return row !== undefined
+  }
+
+  /**
+   * Loads an automation for "process missed comments" and says why it cannot
+   * run, if it cannot. A run outside the automation's schedule is refused up
+   * front: every replayed comment would be declined as `outsideSchedule`, and
+   * that miss row would then mark the comment as handled for good.
+   */
+  async resolveMissedCommentsTarget(props: {
+    workspaceId: string
+    id: string
+  }): Promise<
+    | {
+        eligible: true
+        automation: CommentAutomationModel
+        channelType: CommentAutomationType
+        postId: string
+      }
+    | { eligible: false; reason: MissedCommentsIneligibleReason }
+  > {
+    const automation = await db.query.commentAutomationModel.findFirst({
+      where: { id: props.id, workspaceId: props.workspaceId },
+    })
+    if (!automation) {
+      throw notFoundException("Comment automation not found")
+    }
+
+    const [postId] = automation.post.value
+    if (!(canProcessMissedComments(automation.post) && postId)) {
+      return { eligible: false, reason: "notSinglePost" }
+    }
+    if (!automation.isActive) {
+      return { eligible: false, reason: "inactive" }
+    }
+
+    const workspace = await db.query.workspaceModel.findFirst({
+      where: { id: props.workspaceId },
+      columns: { timezone: true },
+    })
+    if (!workspace) {
+      throw notFoundException("Workspace not found")
+    }
+    if (!this.isWithinSchedule(automation, workspace.timezone)) {
+      return { eligible: false, reason: "outsideSchedule" }
+    }
+
+    return {
+      eligible: true,
+      automation,
+      channelType: commentAutomationTypes.parse(automation.type),
+      postId,
+    }
+  }
+
+  /**
+   * The comment ids this automation has already handled — replied to (an
+   * event row) or looked at and declined (a miss row). Both tables are unique
+   * on `(automationId, commentId, …)`, so their dedup indexes serve the lookup.
+   */
+  async findProcessedCommentIds(props: {
+    automationId: string
+    commentIds: string[]
+  }): Promise<Set<string>> {
+    if (props.commentIds.length === 0) {
+      return new Set()
+    }
+
+    const [events, misses] = await Promise.all([
+      db
+        .select({ commentId: commentAutomationEventModel.commentId })
+        .from(commentAutomationEventModel)
+        .where(
+          and(
+            eq(commentAutomationEventModel.automationId, props.automationId),
+            inArray(commentAutomationEventModel.commentId, props.commentIds),
+          ),
+        ),
+      db
+        .select({ commentId: commentAutomationMissModel.commentId })
+        .from(commentAutomationMissModel)
+        .where(
+          and(
+            eq(commentAutomationMissModel.automationId, props.automationId),
+            inArray(commentAutomationMissModel.commentId, props.commentIds),
+          ),
+        ),
+    ])
+
+    return new Set([...events, ...misses].map((row) => row.commentId))
+  }
+
+  /**
+   * One missed-comments run per automation at a time, from the scan until its
+   * last replay has run: two overlapping runs would read the same "not yet
+   * handled" set and reply twice, and the builder disables the action for the
+   * same span. Returns false while a run is scanning (the lock) or still has
+   * replays queued (the remaining counter). The TTL frees a lock whose holder
+   * died.
+   */
+  async claimMissedCommentsRun(automationId: string): Promise<boolean> {
+    if (
+      await distributedStore.exists(missedCommentsRemainingKey(automationId))
+    ) {
+      return false
+    }
+    return distributedStore.setNumberIfNotExists(
+      missedCommentsLockKey(automationId),
+      1,
+      MISSED_COMMENTS_LOCK_SECONDS,
+    )
+  }
+
+  /**
+   * Starts counting a run's replays. Called BEFORE they are enqueued: the first
+   * one can run immediately, and its `finishMissedCommentReplay` must find the
+   * counter or it would be lost.
+   */
+  startMissedCommentsReplay(
+    automationId: string,
+    count: number,
+  ): Promise<void> {
+    return distributedStore.setNumber(
+      missedCommentsRemainingKey(automationId),
+      count,
+      MISSED_COMMENTS_LOCK_SECONDS,
+    )
+  }
+
+  /**
+   * Settles the counter once the run's replays are enqueued: takes back the
+   * ones that failed to enqueue (they will never finish) and stretches its TTL
+   * past the last scheduled replay.
+   */
+  async settleMissedCommentsEnqueue(
+    automationId: string,
+    props: { failed: number; lastDelayMs: number },
+  ): Promise<void> {
+    const key = missedCommentsRemainingKey(automationId)
+    if (props.failed > 0) {
+      const remaining = await distributedStore.incrementCounter(
+        key,
+        -props.failed,
+      )
+      if (remaining !== null && remaining <= 0) {
+        await distributedStore.delete(key)
+        return
+      }
+    }
+    await distributedStore.expire(
+      key,
+      Math.ceil(props.lastDelayMs / 1000) +
+        MISSED_COMMENTS_REMAINING_GRACE_SECONDS,
+    )
+  }
+
+  /**
+   * One replay of the automation's run has finished — sent, declined, skipped
+   * or failed alike. The last one clears the "processing" status.
+   */
+  async finishMissedCommentReplay(automationId: string): Promise<void> {
+    const key = missedCommentsRemainingKey(automationId)
+    const remaining = await distributedStore.incrementCounter(key, -1)
+    if (remaining !== null && remaining <= 0) {
+      await distributedStore.delete(key)
+    }
+  }
+
+  /**
+   * The given automations of this workspace that are processing missed
+   * comments: scanning, or with replays still queued. Ids from another
+   * workspace are dropped before Redis is read.
+   */
+  async findMissedCommentsInProgress(props: {
+    workspaceId: string
+    automationIds: string[]
+  }): Promise<string[]> {
+    if (props.automationIds.length === 0) {
+      return []
+    }
+    const owned = await db
+      .select({ id: commentAutomationModel.id })
+      .from(commentAutomationModel)
+      .where(
+        and(
+          eq(commentAutomationModel.workspaceId, props.workspaceId),
+          inArray(commentAutomationModel.id, props.automationIds),
+        ),
+      )
+    if (owned.length === 0) {
+      return []
+    }
+
+    const keys = owned.flatMap(({ id }) => [
+      missedCommentsLockKey(id),
+      missedCommentsRemainingKey(id),
+    ])
+    const values = await distributedStore.getAll<number>(keys)
+    return owned
+      .map(({ id }) => id)
+      .filter(
+        (id) =>
+          values[missedCommentsLockKey(id)] != null ||
+          values[missedCommentsRemainingKey(id)] != null,
+      )
+  }
+
+  releaseMissedCommentsRun(automationId: string): Promise<void> {
+    return distributedStore.delete(missedCommentsLockKey(automationId))
+  }
+
+  /**
+   * Books `spanMs` of replay time on one channel account (a Page, an IG or
+   * TikTok account) and returns when that booking starts, epoch ms. Runs of
+   * different automations on the same account queue up behind one another
+   * instead of each firing at its own pace, so the account's replay rate stays
+   * at one comment per spacing however many runs are started together.
+   */
+  reserveMissedCommentsReplayWindow(props: {
+    channelType: CommentAutomationType
+    integrationIdentifier: string
+    spanMs: number
+  }): Promise<number> {
+    return distributedStore.reserveTimeWindow(
+      `comment-automation:missed-comments:pace:${props.channelType}:${props.integrationIdentifier}`,
+      props.spanMs,
+    )
   }
 
   isWithinSchedule(

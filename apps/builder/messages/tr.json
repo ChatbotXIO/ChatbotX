@@ -5112,6 +5112,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Kaçırılan yorumları işle",
+    "processing": "Kaçırılan yorumlar işleniyor",
+    "title": "Kaçırılan yorumları işle",
+    "description": "Bu gönderinin son 7 gündeki yorumlarını tarar ve bu yorum otomasyonuyla işler. Zaten işlenmiş yorumlar atlanır. Bu işlem gerçek mesajlar ve yanıtlar gönderir.",
+    "success": "{scanned} yorum tarandı: {skipped} zaten işlenmiş, {queued} işlenmek üzere sırada, {failed} başarısız.",
+    "errors": {
+      "notSinglePost": "Yalnızca tam olarak belirli bir gönderiyi hedefleyen otomasyonlar için kullanılabilir.",
+      "inactive": "Kaçırılan yorumları işlemeden önce bu otomasyonu etkinleştirin.",
+      "outsideSchedule": "Bu otomasyon aktif saatlerinin dışında. Zamanlaması içinde tekrar deneyin.",
+      "workspaceInactive": "Bu çalışma alanı kapalı veya aktif saatlerinin dışında olduğundan hiçbir yorum işlenmez. Çalışma alanı aktifken tekrar deneyin.",
+      "alreadyRunning": "Bu otomasyon için kaçırılan yorumlar zaten işleniyor. Birkaç dakika sonra tekrar deneyin.",
+      "integrationNotFound": "Bu kanal için bağlı hesap bulunamadı.",
+      "fetchFailed": "Gönderinin yorumları yüklenemedi. Kanal bağlantısını kontrol edip tekrar deneyin."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Instagram Hikaye Yanıt Otomasyonu",
     "description": "Kişileriniz için Instagram hikaye yanıtlarına verilen yanıtları otomatikleştirin.",

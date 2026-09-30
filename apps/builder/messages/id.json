@@ -5112,6 +5112,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Proses komentar yang terlewat",
+    "processing": "Memproses komentar yang terlewat",
+    "title": "Proses komentar yang terlewat",
+    "description": "Pindai komentar postingan ini dalam 7 hari terakhir dan proses melalui otomatisasi komentar ini. Komentar yang sudah diproses akan dilewati. Tindakan ini mengirim pesan dan balasan sungguhan.",
+    "success": "Memindai {scanned} komentar: {skipped} sudah diproses, {queued} dalam antrean, {failed} gagal.",
+    "errors": {
+      "notSinglePost": "Hanya tersedia untuk otomatisasi yang menargetkan tepat satu postingan tertentu.",
+      "inactive": "Aktifkan otomatisasi ini sebelum memproses komentar yang terlewat.",
+      "outsideSchedule": "Otomatisasi ini berada di luar jam aktifnya. Coba lagi sesuai jadwalnya.",
+      "workspaceInactive": "Workspace ini sedang nonaktif atau di luar jam aktifnya, sehingga tidak ada komentar yang akan diproses. Coba lagi saat workspace aktif.",
+      "alreadyRunning": "Komentar yang terlewat untuk otomatisasi ini sedang diproses. Coba lagi dalam beberapa menit.",
+      "integrationNotFound": "Tidak ditemukan akun terhubung untuk kanal ini.",
+      "fetchFailed": "Tidak dapat memuat komentar postingan. Periksa koneksi kanal lalu coba lagi."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Otomatisasi Balasan Story Instagram",
     "description": "Otomatiskan balasan untuk balasan Story Instagram bagi kontak Anda.",

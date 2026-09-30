@@ -86,6 +86,7 @@ import {
   type IntegrationJobDeleteIncomingComment,
   type IntegrationJobDeleteIncomingMessage,
   type IntegrationJobMessageReaction,
+  type IntegrationJobProcessCommentAutomation,
   type IntegrationJobReceiveComment,
   type IntegrationJobReceiveMessage,
   type IntegrationJobUpdateIncomingComment,
@@ -102,6 +103,8 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
+import { processCommentAutomation } from "./comment-automation"
+import { runAsMissedCommentReplay } from "./comment-automation/replay-priority"
 import {
   downloadCommentMediaAttachment,
   fetchThreadsCommentAttachments,
@@ -1151,7 +1154,7 @@ export const receiveComment = async (
 ): Promise<void> => {
   setWebhookExecutionContext({ source: "webhook" })
 
-  const { integrationType, integrationIdentifier, commentData } = props
+  const { integrationType, integrationIdentifier, commentData, replay } = props
 
   if (commentData.fromId === integrationIdentifier) {
     logger.info(
@@ -1347,6 +1350,11 @@ export const receiveComment = async (
     contactInbox,
     conversation,
     incomingMessage,
+    // A replayed comment may be days old and already stored by its webhook.
+    // Dating the row at the comment itself puts it where it belongs in the
+    // thread, and moves the source-id dedup lookback (24h before `createdAt`
+    // up to now) back far enough to find that original row.
+    createdAt: replay ? new Date(commentData.createdTime * 1000) : undefined,
     storageUrl,
   })
 
@@ -1376,6 +1384,35 @@ export const receiveComment = async (
     return
   }
 
+  const automationData: IntegrationJobProcessCommentAutomation["data"] = {
+    integrationType,
+    integrationIdentifier,
+    workspaceId: inbox.workspaceId,
+    conversationId: conversation.id,
+    contactInboxId: contactInbox.id,
+    commentId: commentData.commentId,
+    postId: commentData.postId,
+    parentId: commentData.parentId,
+    fromId: commentData.fromId,
+    message: commentData.message,
+    tags: commentData.tags,
+    createdTime: commentData.createdTime,
+  }
+
+  // A missed-comment replay already runs on the `low` queue, one comment per
+  // job, paced by the run that queued it. Running its one automation inline
+  // keeps it off the `integration` queue entirely, and the replay marker lowers
+  // the priority of everything the automation sends.
+  if (replay) {
+    await runAsMissedCommentReplay(() =>
+      processCommentAutomation({
+        ...automationData,
+        onlyAutomationId: replay.automationId,
+      }),
+    )
+    return
+  }
+
   const processCommentAutomationJobId = `comment-auto-${commentData.commentId}`
   const existingJob = await integrationQueue.getJob(
     processCommentAutomationJobId,
@@ -1388,20 +1425,7 @@ export const receiveComment = async (
     IntegrationJobAction.processCommentAutomation,
     {
       type: IntegrationJobAction.processCommentAutomation,
-      data: {
-        integrationType,
-        integrationIdentifier,
-        workspaceId: inbox.workspaceId,
-        conversationId: conversation.id,
-        contactInboxId: contactInbox.id,
-        commentId: commentData.commentId,
-        postId: commentData.postId,
-        parentId: commentData.parentId,
-        fromId: commentData.fromId,
-        message: commentData.message,
-        tags: commentData.tags,
-        createdTime: commentData.createdTime,
-      },
+      data: automationData,
     },
     SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS.has(integrationType)
       ? { jobId: processCommentAutomationJobId, attempts: 1 }

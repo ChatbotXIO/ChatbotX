@@ -3836,6 +3836,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "处理遗漏的评论",
+    "processing": "正在处理遗漏的评论",
+    "title": "处理遗漏的评论",
+    "description": "扫描此帖子最近 7 天的评论,并通过此评论自动化进行处理。已处理的评论将被跳过。此操作会真实发送消息和回复。",
+    "success": "已扫描 {scanned} 条评论:{skipped} 条已处理,{queued} 条排队处理中,{failed} 条失败。",
+    "errors": {
+      "notSinglePost": "仅适用于只针对一个特定帖子的自动化。",
+      "inactive": "请先启用此自动化,再处理遗漏的评论。",
+      "outsideSchedule": "此自动化当前不在运行时间内。请在其计划时间内重试。",
+      "workspaceInactive": "此工作区已关闭或不在运行时间内,因此不会处理任何评论。请在工作区运行时重试。",
+      "alreadyRunning": "此自动化的遗漏评论正在处理中。请几分钟后重试。",
+      "integrationNotFound": "未找到此渠道已连接的账号。",
+      "fetchFailed": "无法加载帖子的评论。请检查渠道连接后重试。"
+    }
+  },
   "instagramStoryAutomation": {
     "activated": "自动化已激活",
     "activeStoriesTab": "目前限时动态",

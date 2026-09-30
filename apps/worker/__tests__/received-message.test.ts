@@ -505,6 +505,21 @@ vi.mock("../src/integration/handlers/comment-media-attachment", () => ({
   fetchThreadsCommentAttachments: mockFetchThreadsCommentAttachments,
 }))
 
+const mockProcessCommentAutomation = vi.fn().mockResolvedValue(undefined)
+vi.mock("../src/integration/handlers/comment-automation", () => ({
+  processCommentAutomation: mockProcessCommentAutomation,
+}))
+
+const mockRunAsMissedCommentReplay = vi.fn((callback: () => Promise<unknown>) =>
+  callback(),
+)
+vi.mock(
+  "../src/integration/handlers/comment-automation/replay-priority",
+  () => ({
+    runAsMissedCommentReplay: mockRunAsMissedCommentReplay,
+  }),
+)
+
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
@@ -3715,6 +3730,45 @@ describe("contact source taxonomy", () => {
         },
       },
       { jobId: "comment-auto-comment-new-1" },
+    )
+  })
+
+  // A missed-comment replay already runs on the `low` queue, paced by its run:
+  // it must date the message at the comment (so the source-id dedup finds the
+  // webhook's row), run its one automation inline under the replay marker, and
+  // never put a job on the `integration` queue.
+  test("a missed-comment replay runs its one automation inline, off the integration queue", async () => {
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-old-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+      replay: { automationId: "automation-9" },
+    })
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceId: "comment-old-1",
+        createdAt: new Date(1_783_674_105 * 1000),
+      }),
+    )
+    expect(mockRunAsMissedCommentReplay).toHaveBeenCalledTimes(1)
+    expect(mockProcessCommentAutomation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commentId: "comment-old-1",
+        onlyAutomationId: "automation-9",
+      }),
+    )
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.anything(),
+      expect.anything(),
     )
   })
 

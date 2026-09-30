@@ -5397,6 +5397,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Process missed comments",
+    "processing": "Processing missed comments",
+    "title": "Process missed comments",
+    "description": "Scan this post's comments from the last 7 days and run them through this comment automation. Comments that were already processed are skipped. This sends real messages and replies.",
+    "success": "Scanned {scanned} comments: {skipped} already processed, {queued} queued for processing, {failed} failed.",
+    "errors": {
+      "notSinglePost": "Only available for an automation that targets exactly one specific post.",
+      "inactive": "Turn on this automation before processing missed comments.",
+      "outsideSchedule": "This automation is outside its active hours. Try again during its schedule.",
+      "workspaceInactive": "This workspace is turned off or outside its active hours, so no comment would be processed. Try again when the workspace is active.",
+      "alreadyRunning": "Missed comments are already being processed for this automation. Try again in a few minutes.",
+      "integrationNotFound": "No connected account for this channel was found.",
+      "fetchFailed": "Couldn't load the post's comments. Check the channel connection and try again."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Instagram Story Reply Automation",
     "description": "Automate replies to Instagram story replies for your contacts.",

@@ -5091,6 +5091,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "見逃したコメントを処理",
+    "processing": "見逃したコメントを処理中",
+    "title": "見逃したコメントを処理",
+    "description": "この投稿の過去7日間のコメントをスキャンし、このコメント自動化で処理します。処理済みのコメントはスキップされます。この操作では実際にメッセージと返信が送信されます。",
+    "success": "{scanned}件のコメントをスキャンしました:処理済み{skipped}件、処理待ち{queued}件、失敗{failed}件。",
+    "errors": {
+      "notSinglePost": "特定の投稿を1件だけ対象とする自動化でのみ利用できます。",
+      "inactive": "見逃したコメントを処理する前に、この自動化を有効にしてください。",
+      "outsideSchedule": "この自動化は現在稼働時間外です。スケジュール内に再度お試しください。",
+      "workspaceInactive": "このワークスペースは停止中または稼働時間外のため、コメントは処理されません。ワークスペースが稼働中のときに再度お試しください。",
+      "alreadyRunning": "この自動化の見逃したコメントはすでに処理中です。数分後に再度お試しください。",
+      "integrationNotFound": "このチャネルに接続されたアカウントが見つかりません。",
+      "fetchFailed": "投稿のコメントを読み込めませんでした。チャネルの接続を確認して再度お試しください。"
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Instagramストーリー返信オートメーション",
     "description": "連絡先に対するInstagramストーリーへの返信を自動化します。",

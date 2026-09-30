@@ -6,6 +6,7 @@ import {
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
+import type { IntegrationJobReceiveComment } from "../integration"
 
 /**
  * Workload-class queue for jobs that are individually *light* (short, I/O-bound)
@@ -21,6 +22,7 @@ import { queueNames } from "../../lib/types"
 export const LowJobAction = {
   coexistAttachmentDownload: "coexistAttachmentDownload",
   updateContactAvatar: "updateContactAvatar",
+  replayMissedComment: "replayMissedComment",
 } as const
 
 export type LowJobAction = (typeof LowJobAction)[keyof typeof LowJobAction]
@@ -59,9 +61,25 @@ export type LowJobUpdateContactAvatar = {
   }
 }
 
+/**
+ * One comment of a "process missed comments" run: ingested exactly like its
+ * channel's webhook, then run through the one automation in `replay`. A run can
+ * hold thousands of these, which is why they live here and never on the
+ * `integration` queue that answers live customers. `workspaceId` is the
+ * automation's, carried so the worker can apply `withBlockedOwnerGuard`.
+ */
+export type LowJobReplayMissedComment = {
+  type: typeof LowJobAction.replayMissedComment
+  data: IntegrationJobReceiveComment["data"] & {
+    workspaceId: string
+    replay: { automationId: string }
+  }
+}
+
 export type LowJobData =
   | LowJobCoexistAttachmentDownload
   | LowJobUpdateContactAvatar
+  | LowJobReplayMissedComment
 
 export const lowQueue = isNoRedisEnv()
   ? fakeQueue

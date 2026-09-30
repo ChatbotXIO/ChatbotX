@@ -6,6 +6,7 @@ import type {
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { normalizeForMatch } from "./automation-matching"
 import type { CommentAutomationChannelType } from "./channel-type"
+import { withReplayPriority } from "./replay-priority"
 
 /**
  * Whether the channel can hide (and later unhide) a comment.
@@ -158,15 +159,20 @@ export async function applyHideComments(
     return
   }
 
-  await chatQueue.add(ChatJobAction.changeChannelMessageState, {
-    type: ChatJobAction.changeChannelMessageState,
-    data: {
-      conversation: ctx.conversation,
-      contactInbox: ctx.contactInbox,
-      message: { id: ctx.messageId, createdAt: ctx.messageCreatedAt },
-      hidden: true,
+  const hideOptions = withReplayPriority()
+  await chatQueue.add(
+    ChatJobAction.changeChannelMessageState,
+    {
+      type: ChatJobAction.changeChannelMessageState,
+      data: {
+        conversation: ctx.conversation,
+        contactInbox: ctx.contactInbox,
+        message: { id: ctx.messageId, createdAt: ctx.messageCreatedAt },
+        hidden: true,
+      },
     },
-  })
+    ...(hideOptions ? [hideOptions] : []),
+  )
 
   if (hideComments.showCommentsAfter !== "none") {
     const delay = UNHIDE_DELAY_MS[hideComments.showCommentsAfter] ?? 0
@@ -181,7 +187,7 @@ export async function applyHideComments(
           hidden: false,
         },
       },
-      { delay, jobId: `unhide-comment-${commentId}` },
+      withReplayPriority({ delay, jobId: `unhide-comment-${commentId}` }),
     )
   }
 }

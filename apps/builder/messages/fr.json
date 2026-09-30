@@ -5112,6 +5112,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Traiter les commentaires manqués",
+    "processing": "Traitement des commentaires manqués en cours",
+    "title": "Traiter les commentaires manqués",
+    "description": "Analyse les commentaires de cette publication des 7 derniers jours et les traite avec cette automatisation de commentaires. Les commentaires déjà traités sont ignorés. Cette action envoie de vrais messages et de vraies réponses.",
+    "success": "{scanned} commentaires analysés : {skipped} déjà traités, {queued} en file d'attente, {failed} en échec.",
+    "errors": {
+      "notSinglePost": "Disponible uniquement pour une automatisation qui cible exactement une publication précise.",
+      "inactive": "Activez cette automatisation avant de traiter les commentaires manqués.",
+      "outsideSchedule": "Cette automatisation est en dehors de ses heures d'activité. Réessayez pendant sa plage horaire.",
+      "workspaceInactive": "Cet espace de travail est désactivé ou en dehors de ses heures d'activité, aucun commentaire ne serait donc traité. Réessayez quand l'espace de travail est actif.",
+      "alreadyRunning": "Les commentaires manqués de cette automatisation sont déjà en cours de traitement. Réessayez dans quelques minutes.",
+      "integrationNotFound": "Aucun compte connecté n'a été trouvé pour ce canal.",
+      "fetchFailed": "Impossible de charger les commentaires de la publication. Vérifiez la connexion du canal et réessayez."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Automatisation des réponses aux stories Instagram",
     "description": "Automatisez les réponses aux réponses de stories Instagram pour vos contacts.",

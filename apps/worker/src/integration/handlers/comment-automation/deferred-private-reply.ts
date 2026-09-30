@@ -23,6 +23,7 @@ import {
   recordBlockedPrivateReply,
   recordReplyFailure,
 } from "./record"
+import { withReplayPriority } from "./replay-priority"
 
 type DeferredPrivateReplyData =
   IntegrationJobDeferredCommentPrivateReply["data"]
@@ -57,14 +58,14 @@ export async function enqueueDeferredPrivateReply(
   await integrationQueue.add(
     IntegrationJobAction.deferredCommentPrivateReply,
     { type: IntegrationJobAction.deferredCommentPrivateReply, data },
-    {
+    withReplayPriority({
       delay: DEFERRED_PRIVATE_REPLY_DELAYS_MS[data.attempt],
       jobId: deferredPrivateReplyJobId(data),
       // One attempt per scheduled re-check: this job re-enqueues itself rather
       // than relying on BullMQ retries, so its own failure should not silently
       // double the schedule.
       attempts: 1,
-    },
+    }),
   )
 }
 

@@ -1,4 +1,7 @@
-import { withBlockedOwnerGuard } from "@chatbotx.io/business"
+import {
+  commentAutomationService,
+  withBlockedOwnerGuard,
+} from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -10,9 +13,66 @@ import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
+import { receiveComment } from "../integration/handlers/received-message"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+
+/**
+ * Runs one `low` job behind the blocked-owner guard, dispatching on its type.
+ */
+async function processLowJob(job: Job<LowJobData>): Promise<void> {
+  const workspaceId = job.data.data.workspaceId
+  await withBlockedOwnerGuard(workspaceId, async () => {
+    await runJobWithAuditContext(
+      { workspaceId, source: `low:${job.data.type}` },
+      async () => {
+        switch (job.data.type) {
+          case LowJobAction.coexistAttachmentDownload: {
+            await coexistAttachmentDownload(job, job.data.data)
+            return
+          }
+          case LowJobAction.updateContactAvatar: {
+            await updateContactAvatar(job.data.data)
+            return
+          }
+          case LowJobAction.replayMissedComment: {
+            await receiveComment(job.data.data)
+            return
+          }
+          default: {
+            // Exhaustiveness guard — a new LowJobData variant without a
+            // case here becomes a compile error.
+            const _exhaustive: never = job.data
+            logger.warn({ data: _exhaustive }, "Unhandled low job type")
+            return
+          }
+        }
+      },
+    )
+  })
+}
+
+/**
+ * A missed-comment replay counts down its run's "processing" status whatever
+ * happened to it — replied, declined, skipped by the owner guard or failed —
+ * so the status clears when the last one is done. Never throws: a failed
+ * count-down must not hide the job's own error or fail a job that succeeded.
+ */
+async function settleMissedCommentReplay(job: Job<LowJobData>): Promise<void> {
+  if (job.data.type !== LowJobAction.replayMissedComment) {
+    return
+  }
+  const { automationId } = job.data.data.replay
+  try {
+    await commentAutomationService.finishMissedCommentReplay(automationId)
+  } catch (err) {
+    logger.error(
+      { err, automationId, jobId: job.id },
+      "Failed to count down a missed-comment replay",
+    )
+  }
+}
 
 /**
  * Consumer for the `low` workload-class queue: light, high-volume, low-priority
@@ -41,31 +101,11 @@ async function startLowWorker() {
   const worker = new Worker(
     queueNames.enum.low,
     async (job: Job<LowJobData>) => {
-      const workspaceId = job.data.data.workspaceId
-      await withBlockedOwnerGuard(workspaceId, async () => {
-        await runJobWithAuditContext(
-          { workspaceId, source: `low:${job.data.type}` },
-          async () => {
-            switch (job.data.type) {
-              case LowJobAction.coexistAttachmentDownload: {
-                await coexistAttachmentDownload(job, job.data.data)
-                return
-              }
-              case LowJobAction.updateContactAvatar: {
-                await updateContactAvatar(job.data.data)
-                return
-              }
-              default: {
-                // Exhaustiveness guard — a new LowJobData variant without a
-                // case here becomes a compile error.
-                const _exhaustive: never = job.data
-                logger.warn({ data: _exhaustive }, "Unhandled low job type")
-                return
-              }
-            }
-          },
-        )
-      })
+      try {
+        await processLowJob(job)
+      } finally {
+        await settleMissedCommentReplay(job)
+      }
     },
     {
       connection: getRedisConnection(),

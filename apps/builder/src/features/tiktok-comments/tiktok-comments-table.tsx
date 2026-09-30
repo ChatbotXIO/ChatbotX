@@ -1,5 +1,6 @@
 "use client"
 
+import { canProcessMissedComments } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -22,6 +23,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   ChartColumnIcon,
+  HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
@@ -33,6 +35,9 @@ import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 import { buildCommentAutomationStatColumns } from "../shared/comment-automation/comment-automation-stat-columns"
 import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
+import { MissedCommentsProcessingLabel } from "../shared/comment-automation/missed-comments-processing-label"
+import { ProcessMissedCommentsDialog } from "../shared/comment-automation/process-missed-comments-dialog"
+import { useMissedCommentsInProgress } from "../shared/comment-automation/use-missed-comments-in-progress"
 import { deleteTiktokCommentAction } from "./actions/delete-tiktok-comment.action"
 import { updateTiktokCommentAction } from "./actions/update-tiktok-comment.action"
 import type { listTiktokComments } from "./queries"
@@ -54,6 +59,18 @@ export function TiktokCommentsTable({
   const [rowAction, setRowAction] = React.useState<DataTableRowAction<
     ListTiktokCommentsResponse["data"][number]
   > | null>(null)
+
+  const [missedCommentsItem, setMissedCommentsItem] = React.useState<
+    ListTiktokCommentsResponse["data"][number] | null
+  >(null)
+
+  const {
+    inProgress: missedCommentsInProgress,
+    refresh: refreshMissedCommentsInProgress,
+  } = useMissedCommentsInProgress(
+    workspaceId,
+    data.map((automation) => automation.id),
+  )
 
   const handleToggleStatus = useCallback(
     async (item: ListTiktokCommentsResponse["data"][number]) => {
@@ -89,12 +106,17 @@ export function TiktokCommentsTable({
           />
         ),
         cell: ({ row }) => (
-          <Link
-            className="font-medium hover:underline"
-            href={`/space/${workspaceId}/tiktok-comments/${row.original.id}`}
-          >
-            {row.original.name}
-          </Link>
+          <div className="flex flex-col gap-0.5">
+            <Link
+              className="font-medium hover:underline"
+              href={`/space/${workspaceId}/tiktok-comments/${row.original.id}`}
+            >
+              {row.original.name}
+            </Link>
+            {missedCommentsInProgress.has(row.original.id) ? (
+              <MissedCommentsProcessingLabel />
+            ) : null}
+          </div>
         ),
         meta: {
           label: t("fields.name.label"),
@@ -182,6 +204,15 @@ export function TiktokCommentsTable({
                   <ChartColumnIcon className="me-2" />
                   {t("actions.viewAnalytics")}
                 </DropdownMenuItem>
+                {canProcessMissedComments(row.original.post) ? (
+                  <DropdownMenuItem
+                    disabled={missedCommentsInProgress.has(row.original.id)}
+                    onClick={() => setMissedCommentsItem(row.original)}
+                  >
+                    <HistoryIcon className="me-2" />
+                    {t("commentAutomationMissedComments.action")}
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem
                   className="hover:bg-muted hover:text-destructive"
                   onClick={() => setRowAction({ row, variant: "delete" })}
@@ -198,7 +229,7 @@ export function TiktokCommentsTable({
         enableHiding: false,
       },
     ],
-    [handleToggleStatus, router, t, workspaceId],
+    [handleToggleStatus, router, t, workspaceId, missedCommentsInProgress],
   )
 
   const { table } = useDataTable({
@@ -251,6 +282,15 @@ export function TiktokCommentsTable({
               : null
           }
           translationNamespace="tiktokCommentAutomation"
+        />
+
+        <ProcessMissedCommentsDialog
+          onOpenChange={() => setMissedCommentsItem(null)}
+          onSuccess={() => {
+            refreshMissedCommentsInProgress()
+            router.refresh()
+          }}
+          resource={missedCommentsItem}
         />
       </CardContent>
     </Card>

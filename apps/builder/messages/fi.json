@@ -5112,6 +5112,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Käsittele väliin jääneet kommentit",
+    "processing": "Käsitellään väliin jääneitä kommentteja",
+    "title": "Käsittele väliin jääneet kommentit",
+    "description": "Skannaa tämän julkaisun viimeisen 7 päivän kommentit ja käsittele ne tällä kommenttiautomaatiolla. Jo käsitellyt kommentit ohitetaan. Tämä lähettää oikeita viestejä ja vastauksia.",
+    "success": "Skannattiin {scanned} kommenttia: {skipped} jo käsitelty, {queued} jonossa käsittelyyn, {failed} epäonnistui.",
+    "errors": {
+      "notSinglePost": "Käytettävissä vain automaatiolle, joka kohdistuu täsmälleen yhteen tiettyyn julkaisuun.",
+      "inactive": "Ota tämä automaatio käyttöön ennen väliin jääneiden kommenttien käsittelyä.",
+      "outsideSchedule": "Tämä automaatio on aktiivisten aikojensa ulkopuolella. Yritä uudelleen sen aikataulun aikana.",
+      "workspaceInactive": "Tämä työtila on pois päältä tai aktiivisten aikojensa ulkopuolella, joten yhtään kommenttia ei käsiteltäisi. Yritä uudelleen, kun työtila on aktiivinen.",
+      "alreadyRunning": "Tämän automaation väliin jääneitä kommentteja käsitellään jo. Yritä uudelleen muutaman minuutin kuluttua.",
+      "integrationNotFound": "Tälle kanavalle ei löytynyt yhdistettyä tiliä.",
+      "fetchFailed": "Julkaisun kommentteja ei voitu ladata. Tarkista kanavan yhteys ja yritä uudelleen."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Instagram-tarinavastausautomaatio",
     "description": "Automatisoi vastaukset Instagram-tarinavastauksiin yhteystiedoillesi.",

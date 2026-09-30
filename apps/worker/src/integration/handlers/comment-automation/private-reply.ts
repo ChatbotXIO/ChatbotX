@@ -35,6 +35,7 @@ import { logger } from "../../../lib/logger"
 import { TIKTOK_HIGH_INTENT_ATTRIBUTE } from "../tiktok-high-intent-comment"
 import type { CommentAutomationChannelType } from "./channel-type"
 import type { CommentAutomationDedup } from "./dedup"
+import { withReplayPriority } from "./replay-priority"
 import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -501,7 +502,7 @@ export async function executePrivateReply(
               },
             },
           },
-          { delay: ctx.delay },
+          withReplayPriority({ delay: ctx.delay }),
         )
       },
     }
@@ -535,10 +536,10 @@ export async function executePrivateReply(
               commentDedup: ctx.dedup,
             },
           },
-          {
+          withReplayPriority({
             delay: ctx.delay,
             jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-private`,
-          },
+          }),
         )
       },
     }

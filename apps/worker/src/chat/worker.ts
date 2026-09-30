@@ -12,6 +12,7 @@ import {
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
@@ -143,6 +144,7 @@ async function startChatWorker() {
     {
       connection: getRedisConnection(),
       ...defaultWorkerOptions,
+      concurrency: env.CHAT_WORKER_CONCURRENCY,
     },
   )
 

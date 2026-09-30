@@ -72,6 +72,7 @@ import {
   recordConfiguredBranchFailures,
   recordReplyFailure,
 } from "./record"
+import { withReplayPriority } from "./replay-priority"
 import type { CommentReplyOutcome } from "./reply-outcome"
 
 export { isCommentReply } from "./automation-matching"
@@ -131,6 +132,7 @@ export async function processCommentAutomation(
     message,
     tags,
     createdTime,
+    onlyAutomationId,
   } = data
 
   // When the customer commented, not when this job runs — `replyAfter` can put
@@ -175,7 +177,23 @@ export async function processCommentAutomation(
     throw err
   }
 
-  const { integrationRow, auth, contactInbox, automations, workspace } = context
+  const { integrationRow, auth, contactInbox, workspace } = context
+
+  // A replayed missed comment runs its one automation only. Filtered before the
+  // loop, so every other automation neither replies nor records a miss for it.
+  const automations = onlyAutomationId
+    ? context.automations.filter(
+        (automation) => automation.id === onlyAutomationId,
+      )
+    : context.automations
+
+  if (onlyAutomationId && automations.length === 0) {
+    logger.info(
+      { automationId: onlyAutomationId, workspaceId, commentId },
+      "Missed comment replay skipped: automation no longer active",
+    )
+    return
+  }
 
   if (!contactInbox) {
     logger.warn(
@@ -252,8 +270,15 @@ export async function processCommentAutomation(
 
   // Meta allows a single comment_id-anchored DM per comment, and that budget is
   // shared by every automation matching this one comment — so it is tracked
-  // across the loop, not per automation.
-  let privateReplyClaimed = false
+  // across the loop, not per automation. A replay runs long after the webhook's
+  // own run, so that budget may already be spent by another automation.
+  let privateReplyClaimed = onlyAutomationId
+    ? await commentAutomationService.hasSentPrivateReply({
+        workspaceId,
+        channelType,
+        commentId,
+      })
+    : false
 
   // Every automation that declines this comment, flushed in ONE insert after
   // the loop. `findActiveAutomations` scopes by workspace + channel, not by
@@ -435,16 +460,21 @@ export async function processCommentAutomation(
 
         if (automation.options.likeUserComment) {
           if (supportsCommentLike(channelType)) {
+            const likeOptions = withReplayPriority()
             chatQueue
-              .add(ChatJobAction.changeChannelMessageState, {
-                type: ChatJobAction.changeChannelMessageState,
-                data: {
-                  conversation: conversationRef,
-                  contactInbox,
-                  message: messageRef,
-                  liked: true,
+              .add(
+                ChatJobAction.changeChannelMessageState,
+                {
+                  type: ChatJobAction.changeChannelMessageState,
+                  data: {
+                    conversation: conversationRef,
+                    contactInbox,
+                    message: messageRef,
+                    liked: true,
+                  },
                 },
-              })
+                ...(likeOptions ? [likeOptions] : []),
+              )
               .catch((err: unknown) =>
                 logger.error(
                   { err, automationId: automation.id, commentId },

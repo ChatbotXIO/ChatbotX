@@ -5145,6 +5145,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "處理遺漏的留言",
+    "processing": "正在處理遺漏的留言",
+    "title": "處理遺漏的留言",
+    "description": "掃描此貼文最近 7 天的留言,並透過此留言自動化進行處理。已處理的留言將會略過。此操作會實際傳送訊息與回覆。",
+    "success": "已掃描 {scanned} 則留言:{skipped} 則已處理,{queued} 則排隊處理中,{failed} 則失敗。",
+    "errors": {
+      "notSinglePost": "僅適用於只針對一則特定貼文的自動化。",
+      "inactive": "請先啟用此自動化,再處理遺漏的留言。",
+      "outsideSchedule": "此自動化目前不在運作時段內。請在其排程時段內重試。",
+      "workspaceInactive": "此工作區已關閉或不在運作時段內,因此不會處理任何留言。請在工作區運作時重試。",
+      "alreadyRunning": "此自動化的遺漏留言正在處理中。請幾分鐘後重試。",
+      "integrationNotFound": "找不到此頻道已連結的帳號。",
+      "fetchFailed": "無法載入貼文的留言。請檢查頻道連線後重試。"
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Instagram 限時動態回覆自動化",
     "description": "自動回覆聯絡人對 Instagram 限時動態的回覆。",

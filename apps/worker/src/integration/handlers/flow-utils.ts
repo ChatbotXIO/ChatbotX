@@ -5,17 +5,19 @@ import type {
   FlowVersionModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
-import type {
-  BaseStepSchema,
-  ButtonStepProps,
-  EdgeSchema,
-  MetadataPayload,
-  StepType,
+import {
+  type BaseStepSchema,
+  BROADCAST_PAYLOAD_TYPE,
+  type ButtonStepProps,
+  type EdgeSchema,
+  type MetadataPayload,
+  type StepType,
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, Variables } from "@chatbotx.io/sdk"
 import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
 import {
   type BotResponseTrackingContext,
+  BROADCAST_SEND_PRIORITY,
   ChatJobAction,
   type ChatJobSendFlowStep,
   chatQueue,
@@ -278,23 +280,41 @@ export async function sendFlow(
   const connectedNodeId = seekConnectedNode(flowVersion, nodeId)
 
   if (connectedNodeId) {
-    await integrationQueue.add(IntegrationJobAction.sendFlow, {
-      type: IntegrationJobAction.sendFlow,
-      data: {
-        conversationId: conversation,
-        contactInboxId: contactInbox,
-        flowId: flowVersion.flowId,
-        nodeId: connectedNodeId,
-        metadata: props.metadata,
-        isBulkBroadcast: props.isBulkBroadcast,
-        appointmentId: props.appointmentId,
-        sendFrom: props.sendFrom,
-        nodeVisits: props.nodeVisits,
-        commentAnchor: props.commentAnchor,
-        origin: webhookChannelOrigin(),
+    await integrationQueue.add(
+      IntegrationJobAction.sendFlow,
+      {
+        type: IntegrationJobAction.sendFlow,
+        data: {
+          conversationId: conversation,
+          contactInboxId: contactInbox,
+          flowId: flowVersion.flowId,
+          nodeId: connectedNodeId,
+          metadata: props.metadata,
+          isBulkBroadcast: props.isBulkBroadcast,
+          appointmentId: props.appointmentId,
+          sendFrom: props.sendFrom,
+          nodeVisits: props.nodeVisits,
+          commentAnchor: props.commentAnchor,
+          origin: webhookChannelOrigin(),
+        },
       },
-    })
+      ...broadcastPriorityOptions(props.metadata),
+    )
   }
+}
+
+/**
+ * The trailing job-options argument carrying `BROADCAST_SEND_PRIORITY` for a
+ * job that belongs to a broadcast run, so every flow step after the
+ * broadcast's first job keeps yielding to live traffic. Empty otherwise — a
+ * job without a priority runs first, and its `add` call keeps its old shape.
+ */
+function broadcastPriorityOptions(
+  metadata: MetadataPayload | undefined,
+): [{ priority: number }] | [] {
+  return metadata?.type === BROADCAST_PAYLOAD_TYPE
+    ? [{ priority: BROADCAST_SEND_PRIORITY }]
+    : []
 }
 
 /**
@@ -304,10 +324,14 @@ export async function sendFlow(
 export async function enqueueFlowStepMessage(
   data: ChatJobSendFlowStep["data"],
 ): Promise<void> {
-  const job = await chatQueue.add(ChatJobAction.sendFlowMessage, {
-    type: ChatJobAction.sendFlowMessage,
-    data,
-  })
+  const job = await chatQueue.add(
+    ChatJobAction.sendFlowMessage,
+    {
+      type: ChatJobAction.sendFlowMessage,
+      data,
+    },
+    ...broadcastPriorityOptions(data.metadata),
+  )
 
   await waitForChatJobCompletion(job, {
     conversationId: data.conversationId,

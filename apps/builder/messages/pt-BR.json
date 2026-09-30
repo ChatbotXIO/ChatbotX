@@ -4997,6 +4997,22 @@
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
     "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
+  "commentAutomationMissedComments": {
+    "action": "Processar comentários perdidos",
+    "processing": "Processando comentários perdidos",
+    "title": "Processar comentários perdidos",
+    "description": "Verifica os comentários desta publicação dos últimos 7 dias e os processa com esta automação de comentários. Comentários já processados são ignorados. Esta ação envia mensagens e respostas reais.",
+    "success": "{scanned} comentários verificados: {skipped} já processados, {queued} na fila de processamento, {failed} com falha.",
+    "errors": {
+      "notSinglePost": "Disponível apenas para uma automação que tenha exatamente uma publicação específica como alvo.",
+      "inactive": "Ative esta automação antes de processar comentários perdidos.",
+      "outsideSchedule": "Esta automação está fora do horário de funcionamento. Tente novamente dentro da programação.",
+      "workspaceInactive": "Este workspace está desativado ou fora do horário de funcionamento, então nenhum comentário seria processado. Tente novamente quando o workspace estiver ativo.",
+      "alreadyRunning": "Os comentários perdidos desta automação já estão sendo processados. Tente novamente em alguns minutos.",
+      "integrationNotFound": "Nenhuma conta conectada foi encontrada para este canal.",
+      "fetchFailed": "Não foi possível carregar os comentários da publicação. Verifique a conexão do canal e tente novamente."
+    }
+  },
   "instagramStoryAutomation": {
     "title": "Automação de resposta a Stories do Instagram",
     "description": "Automatize respostas às respostas de Stories do Instagram para seus contatos.",

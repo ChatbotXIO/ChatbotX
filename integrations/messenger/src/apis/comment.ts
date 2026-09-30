@@ -387,3 +387,55 @@ export const hideComment = (
     }),
   )
 }
+
+export type FacebookPostComment = {
+  id: string
+  message?: string
+  created_time: string
+  from?: { id: string; name?: string }
+  parent?: { id: string }
+  message_tags?: { id?: string; name?: string }[]
+}
+
+export type FacebookPostCommentPage = {
+  comments: FacebookPostComment[]
+  /** Cursor for the next page; absent on the last one. */
+  nextCursor?: string
+}
+
+/**
+ * One page of a post's comments, newest first.
+ *
+ * `filter=stream` is required: Graph defaults this edge to `toplevel`, which
+ * omits replies. `order=reverse_chronological` lets the caller stop at the
+ * first comment older than its window.
+ */
+export const listPostComments = (props: {
+  auth: MessengerAuthValue
+  postId: string
+  after?: string
+}): Promise<FacebookPostCommentPage> => {
+  const { auth, postId, after } = props
+  const { version = DEFAULT_API_VERSION } = auth
+  const endpoint = `${version}/${postId}/comments`
+
+  return rescue(endpoint, async () => {
+    const res = await facebookGraphClient.get<{
+      data: FacebookPostComment[]
+      paging?: { cursors?: { after?: string }; next?: string }
+    }>(endpoint, {
+      headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
+      searchParams: {
+        fields: "id,message,created_time,from{id,name},parent{id},message_tags",
+        order: "reverse_chronological",
+        filter: "stream",
+        limit: "100",
+        ...(after ? { after } : {}),
+      },
+    })
+    return {
+      comments: res.data,
+      nextCursor: res.paging?.next ? res.paging.cursors?.after : undefined,
+    }
+  })
+}

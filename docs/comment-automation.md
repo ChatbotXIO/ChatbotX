@@ -209,7 +209,7 @@ shape keeps working — **read both through `resolveReplyTexts`**, never directl
 `value` and need no migration; `publicReply` is `jsonb`.
 
 Sends are **staggered by 3s** (`PUBLIC_REPLY_SPACING_MS`). Not cosmetic: the chat queue runs
-`concurrency: 5` with no limiter, so N jobs sharing one delay are picked up in parallel and the
+`CHAT_WORKER_CONCURRENCY` jobs at once (default 5) with no limiter, so N jobs sharing one delay are picked up in parallel and the
 replies land under the comment in whatever order Facebook accepts them.
 
 **The set is ONE reply, not N.** Exactly the rule a `flow` reply already follows, and it is what
@@ -495,6 +495,85 @@ which Meta only allows on **top-level** replies. The worker therefore skips hidi
 Threads reply (`supportsHideForComment` in `hide-comments.ts`, logged as
 `hide nested reply unsupported`) instead of enqueuing a state change that would mark it
 hidden in the inbox and then fail at the channel.
+
+## Process missed comments
+
+A comment written before its automation existed (or whose webhook was lost) is never
+answered. The **Process missed comments** row action replays the last 7 days of
+comments on the automation's post through **that automation only**. It is offered only
+when the automation targets exactly one specific post (`canProcessMissedComments` in
+`@chatbotx.io/database/partials`), on all four comment tables.
+
+Flow: `processMissedCommentsAction` (`features/shared/comment-automation/actions/`) →
+`processMissedComments` (`lib/missed-comments/process-missed-comments.ts`):
+
+1. `commentAutomationService.resolveMissedCommentsTarget` refuses an automation that is
+   off, not single-post, or **outside its schedule** — `isWithinSchedule` reads the
+   current time, so every replay would otherwise become an `outsideSchedule` miss and
+   that miss would mark the comment handled for good.
+2. The workspace must be active now (`workspaceService.isActiveNow`) — `receiveComment`
+   silently drops a comment for an inactive workspace, so a run would send nothing.
+3. `claimMissedCommentsRun` takes a 30-minute Redis lock per automation; two
+   overlapping runs would read the same "not handled" set and reply twice.
+4. `scanPostComments` lists **every** page back to the 7-day window, like AhaChat's
+   replay (`MISSED_COMMENTS_MAX_PAGES` = 200 is only a backstop), per channel
+   (`listPostComments` Graph
+   `/{post}/comments?filter=stream&order=reverse_chronological`; `listMediaComments`
+   `/{media}/comments` with nested `replies`; Threads `listPostConversation`
+   `/{post}/conversation`; TikTok `listTiktokComments` with `include_replies`) and
+   shapes each one **exactly like that channel's webhook** — same
+   `integrationIdentifier`, `fromId`, `parentId` rules. Facebook always uses the
+   composite `{pageId}_{storyId}` post id, because the comment conversation is keyed by
+   the webhook's `post_id` and a bare id would open a second one.
+5. "Already handled" means this automation has a `CommentAutomationEvent` **or** a
+   `CommentAutomationMiss` row for the comment id
+   (`findProcessedCommentIds`, served by both tables' dedup indexes). It is decided per
+   comment, not per contact; `replyOncePerUserPerPost` still guards a repeat commenter.
+6. The rest are enqueued oldest first on the **`low` queue** as
+   `LowJobAction.replayMissedComment` jobs carrying `replay: { automationId }` (job id
+   `missed-comment-{automationId}-{commentId}`, one attempt — a failed replay has no
+   event row, so the next run picks it up), with `addBulk` in chunks of 500.
+7. **Pacing is booked per channel account**, not per run:
+   `reserveMissedCommentsReplayWindow` (`distributedStore.reserveTimeWindow`, one Lua
+   step) books `count × 1s` on the account's timeline and returns where the booking
+   starts, so runs of several automations on one Page queue up behind each other and
+   the Page never replays faster than one comment per second. AhaChat gets the same
+   one-at-a-time pace by posting each comment synchronously to its `comment-delay`
+   service; here the action returns in seconds while a 3,000-comment post replays over
+   ~50 minutes.
+
+**"Processing" status.** A run counts its replays in Redis
+(`comment-automation:missed-comments:remaining:{automationId}`):
+`startMissedCommentsReplay` sets it **before** the replays are enqueued (the first one
+can run at once), `settleMissedCommentsEnqueue` takes back the ones that failed to
+enqueue and stretches its TTL 30 minutes past the last scheduled replay, and the `low`
+worker calls `finishMissedCommentReplay` in a `finally` around the owner guard — so a
+replay that sent, declined, was skipped by the guard or failed all count down, and the
+last one deletes the key. `findMissedCommentsInProgress` reports an automation that is
+scanning (the lock) or still has replays (the counter); the comment tables poll it every
+5 s through `useMissedCommentsInProgress` only while one is in progress, show
+"Processing missed comments" under the name, disable the row action, and
+`router.refresh()` once when a run finishes. `claimMissedCommentsRun` refuses while the
+counter exists, so the server enforces the same span the UI disables.
+
+In the worker, the `low` job calls `receiveComment`, where `replay` changes three things:
+the message is saved with the comment's own `createdAt` (so the 24h source-id dedup
+lookback finds the webhook's row and no duplicate lands in the inbox);
+`processCommentAutomation` runs **inline** with `onlyAutomationId` — never on the
+`integration` queue — and filters the automation list **before** the loop (other
+automations neither reply nor record a miss); and `privateReplyClaimed` is seeded from
+`hasSentPrivateReply` — a DM another automation already sent for that comment used the
+channel's one comment-anchored DM, so the replay records a blocked private reply instead
+of calling the API.
+
+The inline run is wrapped in `runAsMissedCommentReplay` (an `AsyncLocalStorage` marker,
+`comment-automation/replay-priority.ts`). Every enqueue site in the comment-automation
+handlers passes its options through `withReplayPriority`, which adds
+`MISSED_COMMENT_REPLAY_PRIORITY` inside a replay — BullMQ runs every unprioritized job
+first, so a replay's replies, hides, flows and AI replies always yield to live traffic on
+the shared `chat`, `integration` and `aiAgent` queues. **A new enqueue site added to these
+handlers must do the same.** Jobs those jobs enqueue later (a flow's later steps, the AI
+reply's own send) run outside the marker at normal priority.
 
 ## Known gaps & pitfalls
 
