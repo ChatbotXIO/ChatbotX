@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 const NUMERIC_PLACEHOLDER_PATTERN = /{{\d+}}/g
-const SUPPORTED_PLACEHOLDER_PATTERN = /^{{[1-9]}}$/
+const SUPPORTED_PLACEHOLDER_PATTERN = /^{{([1-9]|1[0-5])}}$/
 
 const templateVariableSchema = z.object({
   key: z.string().regex(SUPPORTED_PLACEHOLDER_PATTERN),
@@ -53,7 +53,7 @@ function addPlaceholderIssues({
   if (unsupportedPlaceholder) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Only variables from {{1}} to {{9}} are supported",
+      message: "Only variables from {{1}} to {{15}} are supported",
       path,
     })
     return
@@ -99,7 +99,7 @@ export const createMessengerMessageTemplateRequest = z
     headerVariables: z.array(templateVariableSchema).max(1).default([]),
     headerImageUrl: z.string().url().optional(),
     body: z.string().min(1),
-    bodyVariables: z.array(templateVariableSchema).max(9).default([]),
+    bodyVariables: z.array(templateVariableSchema).max(15).default([]),
     buttons: z.array(templateButtonSchema).max(3).default([]),
   })
   .superRefine((value, ctx) => {
@@ -133,7 +133,7 @@ export const createMessengerMessageTemplateRequest = z
       ctx,
       path: ["bodyVariables"],
       text: value.body,
-      maxVariables: 9,
+      maxVariables: 15,
       variables: value.bodyVariables,
     })
 
@@ -150,7 +150,7 @@ export const createMessengerMessageTemplateRequest = z
       if (unsupportedPlaceholder) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Only variables from {{1}} to {{9}} are supported",
+          message: "Only variables from {{1}} to {{15}} are supported",
           path: ["buttons", index, "url"],
         })
         return

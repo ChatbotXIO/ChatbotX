@@ -31,7 +31,7 @@ type TextWithVariablesFieldProps = {
   variablesLayout?: "grid" | "stack"
 }
 
-const VARIABLE_PATTERN = /{{\d}}/g
+const VARIABLE_PATTERN = /{{\d+}}/g
 const TRAILING_WHITESPACE_PATTERN = /\s$/
 
 function extractVariableKeys(text: string): string[] {
@@ -46,7 +46,7 @@ export function TextWithVariablesField({
   name,
   variablesName,
   label,
-  maxVariables = 9,
+  maxVariables = 15,
   variablesLayout = "grid",
 }: TextWithVariablesFieldProps) {
   const t = useTranslations()
