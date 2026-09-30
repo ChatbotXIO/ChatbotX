@@ -59,32 +59,26 @@ describe("getCapabilities", () => {
   })
 
   test.each([
-    ["tiktok", true, 3, "unsupported"],
-    ["messenger", true, undefined, "full"],
-    ["omnichannel", false, undefined, undefined],
-  ])("projects the %s channel policy", async (channel, managed, maxButtonCount, sendCardSupport) => {
+    ["tiktok", ["sendCard"], ["sendImage"], 3],
+    ["messenger", [], ["sendAudio", "sendFile"], 3],
+    ["omnichannel", [], [], 3],
+  ])("projects the %s channel policy", async (channel, unsupportedSteps, noButtonSteps, buttonCount) => {
     const result = await getCapabilities({
       channel,
       include: ["flowSpec"],
       workspaceId: "ws-1",
     })
 
-    expect(result.flowSpec?.selectedChannelPolicy?.managed).toBe(managed)
-    if (!managed) {
-      return
-    }
-
     expect(result.flowSpec?.selectedChannelPolicy).toMatchObject({
       policyVersion: 1,
-      stepSupport: { sendCard: sendCardSupport },
+      limits: { buttonCount },
     })
-    if (maxButtonCount !== undefined) {
-      expect(result.flowSpec?.selectedChannelPolicy?.limits).toContainEqual({
-        allowed: maxButtonCount,
-        id: "maxButtonCount",
-        unit: "buttons",
-      })
-    }
+    expect(result.flowSpec?.selectedChannelPolicy?.unsupportedSteps).toEqual(
+      expect.arrayContaining(unsupportedSteps),
+    )
+    expect(result.flowSpec?.selectedChannelPolicy?.noButtonSteps).toEqual(
+      expect.arrayContaining(noButtonSteps),
+    )
   })
 
   test("`include` dispatches only the requested loaders", async () => {

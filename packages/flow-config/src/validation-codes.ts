@@ -16,7 +16,6 @@ export const flowValidationCodes = {
   whatsappCarouselLinkButtonNotAlone: "whatsappCarouselLinkButtonNotAlone",
   tiktokCardTitleTooLong: "tiktokCardTitleTooLong",
   sendTextTooLongForChannel: "sendTextTooLongForChannel",
-  mediaStepUnsupported: "mediaStepUnsupported",
   mediaButtonsUnsupported: "mediaButtonsUnsupported",
   unsupportedBlock: "unsupportedBlock",
   unsupportedChannel: "unsupportedChannel",

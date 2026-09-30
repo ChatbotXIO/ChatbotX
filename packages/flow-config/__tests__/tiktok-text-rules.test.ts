@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest"
 import { refineStepsByChannel } from "../src/channel-rules/channel-step-refinement"
+import { TIKTOK_CARD_TITLE_MAX } from "../src/channel-rules/policies"
 import { sendTextValidator } from "../src/channel-rules/send-text-validator"
 import {
   isTiktokCardTitleTruncated,
   isTiktokQuickReplyCardTitleTooLong,
-  TIKTOK_CARD_TITLE_MAX,
 } from "../src/channel-rules/tiktok-text-rules"
 import { sendMessageNodeDefaultFn } from "../src/nodes/send-message"
 import { buttonStepDefaultFn } from "../src/steps/button"

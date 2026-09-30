@@ -1,3 +1,4 @@
+import type { FlowAuthoringError } from "@chatbotx.io/flow-config"
 import { sql } from "drizzle-orm"
 import {
   index,
@@ -45,7 +46,7 @@ export const importStatus = pgEnum(
 )
 
 export type ImportErrorSample = {
-  capability?: Record<string, boolean | number | string | string[]>
+  capability?: FlowAuthoringError["capability"]
   code?: string
   path?: string
   reason: string

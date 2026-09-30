@@ -2,15 +2,15 @@ import { waTemplateParamsSchema } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 const capabilitiesChannelPolicySchema = z.object({
-  managed: z.boolean(),
-  policyVersion: z.number().optional(),
-  surfaces: z
-    .object({ builder: z.boolean(), flowSpec: z.boolean() })
-    .optional(),
-  stepSupport: z.record(z.string(), z.string()).optional(),
-  limits: z
-    .array(z.object({ allowed: z.number(), id: z.string(), unit: z.string() }))
-    .optional(),
+  policyVersion: z.number(),
+  unsupportedSteps: z.array(z.string()),
+  noButtonSteps: z.array(z.string()),
+  limits: z.object({
+    buttonCount: z.number(),
+    buttonLabel: z.number(),
+    cardTitle: z.number().optional(),
+    text: z.number(),
+  }),
 })
 
 export const capabilitiesInboxSchema = z
@@ -75,9 +75,6 @@ export const capabilitiesFlowSpecSchema = z
       .describe("Supported flow-spec step types."),
     waitUnits: z.array(z.string()).describe("Supported wait-step delay units."),
     channels: z.array(z.string()).describe("Supported flow channels."),
-    managedChannels: z
-      .array(z.string())
-      .describe("Channels with an explicit flow policy."),
     policyVersion: z.number().describe("Channel policy version."),
     selectedChannelPolicy: capabilitiesChannelPolicySchema
       .optional()

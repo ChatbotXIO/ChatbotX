@@ -1,5 +1,11 @@
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
-import { stepTypes } from "@chatbotx.io/flow-config"
+import {
+  CHANNEL_FLOW_POLICIES,
+  getChannelFlowPolicy,
+  type StepType,
+  stepSupport,
+  stepTypes,
+} from "@chatbotx.io/flow-config"
 import {
   CreditCardIcon,
   ImageIcon,
@@ -134,57 +140,41 @@ const BASE_MENU_ORDER = [
   "sendVideo",
   "getUserData",
   "sendGif",
+  "sendTemplateMessage",
   "typing",
   "sendFile",
   "actions",
 ] as const
 
-const WHATSAPP_MENU_ORDER = [
-  "sendText",
-  "sendImage",
-  "sendMultipleImages",
-  "sendCard",
-  "sendCarousel",
-  "sendVideo",
-  "getUserData",
-  "sendGif",
-  "sendTemplateMessage",
+const WHATSAPP_MENU_EXTRAS = [
   "whatsappFlow",
   "whatsappOptionList",
   "whatsappCallButton",
-  "typing",
-  "sendFile",
-  "actions",
 ] as const
 
-const MESSENGER_MENU_ORDER = [
-  "sendText",
-  "sendImage",
-  "sendMultipleImages",
-  "sendCard",
-  "sendCarousel",
-  "sendVideo",
-  "getUserData",
-  "sendGif",
-  "sendTemplateMessage",
-  "typing",
-  "sendFile",
-  "actions",
-] as const
+const MENU_ITEM_STEP_TYPES: Record<string, readonly StepType[]> = {
+  sendFile: [stepTypes.enum.sendAudio, stepTypes.enum.sendFile],
+  sendTemplateMessage: [
+    stepTypes.enum.sendMessengerTemplateMessage,
+    stepTypes.enum.sendWaTemplateMessage,
+  ],
+}
 
-const TIKTOK_MENU_ORDER = [
-  "sendText",
-  "sendImage",
-  "sendMultipleImages",
-  "getUserData",
-  "typing",
-  "actions",
-] as const
+const isMenuItemSupported = (props: {
+  item: MenuItem
+  key: string
+  policy: (typeof CHANNEL_FLOW_POLICIES)[ChannelType]
+}): boolean => {
+  const stepTypes = props.item.stepType
+    ? [props.item.stepType]
+    : MENU_ITEM_STEP_TYPES[props.key]
 
-const MENU_ORDER_BY_CHANNEL: Record<string, readonly string[]> = {
-  [channelTypes.enum.whatsapp]: WHATSAPP_MENU_ORDER,
-  [channelTypes.enum.messenger]: MESSENGER_MENU_ORDER,
-  [channelTypes.enum.tiktok]: TIKTOK_MENU_ORDER,
+  return (
+    stepTypes === undefined ||
+    stepTypes.some(
+      (stepType) => props.policy.steps[stepType] !== stepSupport.unsupported,
+    )
+  )
 }
 
 /**
@@ -201,20 +191,26 @@ export const sendMessageEditorMenus = (
   menuData?: MenuData,
 ): MenuItem[] => {
   const channel = menuData?.beforeStep?.channel
+  const policy =
+    getChannelFlowPolicy(channel) ?? CHANNEL_FLOW_POLICIES.omnichannel
   const allMenuItems = ALL_MENU_ITEMS(t, menuData)
-
-  if (channel === channelTypes.enum.omnichannel) {
-    return Object.entries(allMenuItems)
-      .filter(([key]) => !OMNICHANNEL_EXCLUDED_ITEMS.has(key))
-      .map(([, item]) => item)
-  }
-
   const menuOrder =
-    channel && MENU_ORDER_BY_CHANNEL[channel]
-      ? MENU_ORDER_BY_CHANNEL[channel]
+    channel === channelTypes.enum.whatsapp ||
+    channel === channelTypes.enum.omnichannel
+      ? [...BASE_MENU_ORDER, ...WHATSAPP_MENU_EXTRAS]
       : BASE_MENU_ORDER
 
-  return menuOrder.map((key) => allMenuItems[key])
+  return menuOrder.flatMap((key) => {
+    if (
+      channel === channelTypes.enum.omnichannel &&
+      OMNICHANNEL_EXCLUDED_ITEMS.has(key)
+    ) {
+      return []
+    }
+
+    const item = allMenuItems[key]
+    return item && isMenuItemSupported({ item, key, policy }) ? [item] : []
+  })
 }
 
 export const sendMessageEditorMenusWithButton = (

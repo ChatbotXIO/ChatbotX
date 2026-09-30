@@ -558,8 +558,6 @@ class FlowService extends BaseService {
     createdCustomFieldIds: string[]
     createdBotFieldIds: string[]
   }> {
-    assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
-
     return await db.transaction(async (tx) => {
       const { idMap: customFieldIdMap, createdIds } =
         await resolveManifestIdMap(

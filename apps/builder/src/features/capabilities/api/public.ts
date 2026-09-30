@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/business/capabilities"
 import { capabilitiesResponseSchema } from "@chatbotx.io/business/capabilities/schema"
 import { flowSpecSchema } from "@chatbotx.io/flow-config"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
@@ -38,8 +39,7 @@ const includeQueryParam = z.preprocess(
     ),
 )
 
-const channelQueryParam = z
-  .string()
+const channelQueryParam = channelTypes
   .optional()
   .describe(
     "Channel to project an explicit flow policy for. Query this before authoring a channel-bound flow.",

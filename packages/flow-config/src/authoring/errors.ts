@@ -26,17 +26,22 @@ export type FlowAuthoringErrorCode =
   | "unsupportedBlock"
   | "constraintExceeded"
 
+type FlowCapability = {
+  actual?: number
+  allowed?: number
+  block: string
+  channel: string
+  code: Extract<
+    FlowAuthoringErrorCode,
+    "constraintExceeded" | "unsupportedBlock"
+  >
+  constraintId?: string
+  policyVersion: number
+  unit?: string
+}
+
 export type FlowAuthoringError = {
-  capability?: {
-    actual?: number
-    allowed?: number
-    alternatives: string[]
-    block: string
-    channel: string
-    constraintId?: string
-    policyVersion: number
-    unit?: string
-  }
+  capability?: FlowCapability
   /** Spec-relative path, e.g. `steps[2].templateName` — never a compiled-node path. */
   path: string
   code: FlowAuthoringErrorCode
@@ -78,15 +83,15 @@ export const formatZodPathSegment = (
  * the compiled node graph instead, to translate a node-graph path back to
  * the spec-relative path an agent actually wrote.
  */
-const isFlowCapability = (
-  value: unknown,
-): value is NonNullable<FlowAuthoringError["capability"]> =>
+const isFlowCapability = (value: unknown): value is FlowCapability =>
   typeof value === "object" &&
   value !== null &&
   "block" in value &&
   typeof value.block === "string" &&
   "channel" in value &&
   typeof value.channel === "string" &&
+  "code" in value &&
+  (value.code === "constraintExceeded" || value.code === "unsupportedBlock") &&
   "policyVersion" in value &&
   typeof value.policyVersion === "number"
 export function zodErrorToFlowAuthoringErrors(
@@ -95,11 +100,6 @@ export function zodErrorToFlowAuthoringErrors(
   mapPath?: (issuePath: PropertyKey[]) => string | undefined,
 ): FlowAuthoringError[] {
   return error.issues.map((issue) => {
-    const capabilityCode =
-      issue.message === "unsupportedBlock" ||
-      issue.message === "constraintExceeded"
-        ? issue.message
-        : undefined
     const issueParams =
       "params" in issue && typeof issue.params === "object"
         ? issue.params
@@ -110,6 +110,7 @@ export function zodErrorToFlowAuthoringErrors(
       isFlowCapability(issueParams.capability)
         ? issueParams.capability
         : undefined
+    const capabilityCode = capability?.code
 
     return {
       capability,

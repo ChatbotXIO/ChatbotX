@@ -9,6 +9,7 @@ import {
   type SendQuickReplyStepSchema,
   type SendTextStepSchema,
   type SendVideoStepSchema,
+  type StepType,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
@@ -126,6 +127,20 @@ const sendPageMessageWithMessengerExtensionWhitelistRetry = async (
     return await sendMessageApi(ctx.auth, payload)
   }
 }
+
+export const handledFlowStepTypes = [
+  stepTypes.enum.sendText,
+  stepTypes.enum.sendImage,
+  stepTypes.enum.sendVideo,
+  stepTypes.enum.sendMultipleImages,
+  stepTypes.enum.sendAudio,
+  stepTypes.enum.sendFile,
+  stepTypes.enum.sendGif,
+  stepTypes.enum.sendQuickReply,
+  stepTypes.enum.sendCard,
+  stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendMessengerTemplateMessage,
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
   async (props) => {
@@ -568,10 +583,9 @@ async function* convertFlowStep(
       ) as Generator<FacebookMessage>
       break
     case stepTypes.enum.sendCard: {
-      const cardStep = step
       const carouselStep: SendCarouselStepSchema = {
-        cards: [cardStep],
-        id: cardStep.id,
+        cards: [step],
+        id: step.id,
         layout: cardLayouts.enum.horizontal,
         stepType: stepTypes.enum.sendCarousel,
       }

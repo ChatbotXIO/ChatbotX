@@ -3,12 +3,12 @@ import {
   extractTemplateParams,
   type FlowAuthoringContext,
   flowSpecStepTypes,
-  getChannelStepPolicy,
-  managedChannels,
+  getChannelFlowPolicy,
+  stepSupport,
   type TemplateComponent,
   waitStepDelayUnits,
 } from "@chatbotx.io/flow-config"
-import { channelTypes } from "@chatbotx.io/utils/channel"
+import { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 import { aiAgentService } from "../ai-agent/service"
 import { botFieldService } from "../bot-field/service"
 import { customFieldService } from "../custom-field/service"
@@ -238,37 +238,31 @@ const FLOW_SPEC_CAPABILITIES = {
   stepTypes: flowSpecStepTypes,
   waitUnits: [...waitStepDelayUnits.options],
   channels: [...channelTypes.options],
-  managedChannels: [...managedChannels],
   policyVersion: CHANNEL_POLICY_VERSION,
 } satisfies Omit<CapabilitiesFlowSpec, "selectedChannelPolicy">
 
-function getFlowSpecCapabilities(channel?: string): CapabilitiesFlowSpec {
-  const policy = getChannelStepPolicy(channel)
+const getFlowSpecCapabilities = (
+  channel?: ChannelType,
+): CapabilitiesFlowSpec => {
+  const policy = getChannelFlowPolicy(channel)
   if (!policy) {
-    return {
-      ...FLOW_SPEC_CAPABILITIES,
-      selectedChannelPolicy: { managed: false },
-    }
+    return FLOW_SPEC_CAPABILITIES
   }
 
-  const limits = [
-    ["maxButtonCount", "buttons"],
-    ["maxButtonLabelLength", "characters"],
-    ["maxCardTitleLength", "characters"],
-    ["maxTextLength", "characters"],
-  ].flatMap(([id, unit]) => {
-    const allowed = policy.constraints[id as keyof typeof policy.constraints]
-    return typeof allowed === "number" ? [{ allowed, id, unit }] : []
-  })
+  const unsupportedSteps = Object.entries(policy.steps)
+    .filter(([, support]) => support === stepSupport.unsupported)
+    .map(([stepType]) => stepType)
+  const noButtonSteps = Object.entries(policy.steps)
+    .filter(([, support]) => support === stepSupport.noButtons)
+    .map(([stepType]) => stepType)
 
   return {
     ...FLOW_SPEC_CAPABILITIES,
     selectedChannelPolicy: {
-      managed: true,
-      policyVersion: policy.policyVersion,
-      surfaces: policy.surfaces,
-      stepSupport: policy.stepSupport,
-      limits,
+      policyVersion: CHANNEL_POLICY_VERSION,
+      unsupportedSteps,
+      noButtonSteps,
+      limits: policy.limits,
     },
   }
 }
@@ -276,6 +270,7 @@ function getFlowSpecCapabilities(channel?: string): CapabilitiesFlowSpec {
 const CAPABILITY_LOADERS: {
   [K in CapabilitiesInclude]: (
     workspaceId: string,
+    channel?: ChannelType,
   ) => Promise<CapabilitiesResponse[K]>
 } = {
   inboxes: listInboxes,
@@ -286,8 +281,8 @@ const CAPABILITY_LOADERS: {
   aiAgents: listAiAgents,
   sequences: listSequences,
   flows: listFlows,
-  flowSpec: (_workspaceId: string) =>
-    Promise.resolve(getFlowSpecCapabilities()),
+  flowSpec: (_workspaceId: string, channel?: ChannelType) =>
+    Promise.resolve(getFlowSpecCapabilities(channel)),
 }
 
 /**
@@ -302,7 +297,7 @@ const CAPABILITY_LOADERS: {
 export async function getCapabilities(props: {
   workspaceId: string
   include?: readonly CapabilitiesInclude[]
-  channel?: string
+  channel?: ChannelType
 }): Promise<CapabilitiesResponse> {
   const { workspaceId } = props
   const includes = props.include ?? DEFAULT_INCLUDES
@@ -313,7 +308,10 @@ export async function getCapabilities(props: {
   const settled = await Promise.allSettled(
     includes.map(
       async (include) =>
-        [include, await CAPABILITY_LOADERS[include](workspaceId)] as const,
+        [
+          include,
+          await CAPABILITY_LOADERS[include](workspaceId, props.channel),
+        ] as const,
     ),
   )
 
@@ -328,11 +326,7 @@ export async function getCapabilities(props: {
     return [result.value]
   })
 
-  const response = Object.fromEntries(entries) as CapabilitiesResponse
-  if (response.flowSpec) {
-    response.flowSpec = getFlowSpecCapabilities(props.channel)
-  }
-  return response
+  return Object.fromEntries(entries) as CapabilitiesResponse
 }
 
 /**

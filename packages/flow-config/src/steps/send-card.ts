@@ -1,6 +1,6 @@
 import { createId, zodUrlWithVariables } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { countMessageCharacters } from "../channel-rules/send-text-length-rules"
+import { countMessageCharacters } from "../channel-rules/characters"
 import { baseStepSchema } from "./base"
 import { buttonStepSchema } from "./button"
 import { sendImageStepDefaultFn, sendImageStepSchema } from "./send-image"

@@ -9,12 +9,13 @@ import { flowImportMetaSchema } from "@chatbotx.io/database/partials"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
   collectFlowReferenceWarnings,
+  type FlowAuthoringError,
   FlowAuthoringException,
+  type FlowReferenceWarning,
   parseFlowExport,
 } from "@chatbotx.io/flow-config"
 import { getImportEntry } from "@chatbotx.io/imports/registry"
 import { createByteLimitedStream } from "@chatbotx.io/imports/stream-guard"
-import { z } from "zod"
 import { logger } from "../../../lib/logger"
 import type { ImportRow } from "./base-import"
 
@@ -73,78 +74,26 @@ const readImportedJson = async (row: ImportRow): Promise<unknown> => {
   }
 }
 
-/**
- * `parseFlowExport`'s `reason` is either a plain sentence (the format-version
- * pre-check) or Zod's default `error.message`, a multi-issue JSON dump. Only
- * the latter needs summarizing — this keeps the first issue's path and
- * message, which is the part a user can act on.
- */
-const summarizeSchemaError = (message: string): string => {
-  let issues: Array<{ path?: unknown[]; message?: string }>
-  try {
-    issues = JSON.parse(message)
-  } catch {
-    return message
-  }
-  const [first] = issues
-  if (!first?.message) {
+const summarizeSchemaError = (
+  errors: readonly FlowAuthoringError[],
+): string => {
+  const [first] = errors
+  if (!first) {
     return "The export file does not match the expected format."
   }
-  const path = first.path?.length ? ` at ${first.path.join(".")}` : ""
+
+  const path = first.path ? ` at ${first.path}` : ""
   return `Invalid export file${path}: ${first.message}`
 }
 
-const flowCapabilitySchema = z.object({
-  actual: z.number().optional(),
-  allowed: z.number().optional(),
-  alternatives: z.array(z.string()),
-  block: z.string(),
-  channel: z.string(),
-  constraintId: z.string().optional(),
-  policyVersion: z.number(),
-  unit: z.string().optional(),
-})
-
-const schemaIssueSample = z.object({
-  code: z.string().optional(),
-  message: z.string().optional(),
-  params: z.object({ capability: flowCapabilitySchema.optional() }).optional(),
-  path: z.array(z.union([z.string(), z.number()])).optional(),
-})
-
-const getSchemaErrorSamples = (message: string) => {
-  try {
-    const parsed = z.array(schemaIssueSample).safeParse(JSON.parse(message))
-    if (!parsed.success) {
-      return []
-    }
-
-    return parsed.data.flatMap((issue, index) => {
-      if (!issue.message) {
-        return []
-      }
-      const capability = issue.params?.capability
-      const code =
-        capability &&
-        (issue.message === "unsupportedBlock" ||
-          issue.message === "constraintExceeded")
-          ? issue.message
-          : issue.code
-
-      return [
-        {
-          row: index + 1,
-          reason: issue.message,
-          code,
-          capability,
-          path: issue.path?.join("."),
-        },
-      ]
-    })
-  } catch {
-    return []
-  }
-}
+const toImportErrorSamples = (errors: readonly FlowAuthoringError[]) =>
+  errors.map((error, index) => ({
+    row: index + 1,
+    reason: error.message,
+    path: error.path,
+    code: error.code,
+    capability: error.capability,
+  }))
 
 export const runFlowImport = async (row: ImportRow): Promise<void> => {
   const parsedMeta = flowImportMetaSchema.safeParse(row.meta)
@@ -175,11 +124,11 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
     await importService.fail(
       row.id,
       new ChatbotXException(
-        summarizeSchemaError(parsed.reason),
+        summarizeSchemaError(parsed.errors),
         "flowImportSchemaMismatch",
       ),
       { processed: 1, success: 0, failed: 1 },
-      getSchemaErrorSamples(parsed.reason),
+      toImportErrorSamples(parsed.errors),
     )
     return
   }
@@ -188,7 +137,7 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
 
   let createdCustomFieldIds: string[]
   let createdBotFieldIds: string[]
-  let warnings: ReturnType<typeof collectFlowReferenceWarnings>
+  let warnings: FlowReferenceWarning[]
   try {
     const result = await flowService.importFlowExport({
       workspaceId: row.workspaceId,
@@ -231,13 +180,7 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
         row.id,
         error,
         { processed: 1, success: 0, failed: 1 },
-        error.errors.map((issue, index) => ({
-          row: index + 1,
-          reason: issue.message,
-          path: issue.path,
-          code: issue.code,
-          capability: issue.capability,
-        })),
+        toImportErrorSamples(error.errors),
       )
       return
     }

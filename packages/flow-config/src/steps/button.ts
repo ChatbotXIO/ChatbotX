@@ -1,6 +1,6 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { countMessageCharacters } from "../channel-rules/send-text-length-rules"
+import { countMessageCharacters } from "../channel-rules/characters"
 import { actionSteps } from "../shared"
 import { openWebsiteStepSchema } from "./open-website"
 import { startAnotherNodeStepSchema } from "./start-another-node"

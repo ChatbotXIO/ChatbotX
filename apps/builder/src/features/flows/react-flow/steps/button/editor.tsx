@@ -1,6 +1,7 @@
 import {
   buttonStepDefaultFn,
-  getChannelStepPolicy,
+  CHANNEL_FLOW_POLICIES,
+  getChannelFlowPolicy,
   resolveSendTextLengthLimits,
 } from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -15,8 +16,6 @@ import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { CharacterCounter } from "@/components/character-counter"
 import type { ButtonEditorConfig } from "../../stores/step-store"
 import { useStepStore } from "../../stores/step-store-provider"
-
-const DEFAULT_MAX_BUTTON_GROUP_BUTTONS = 3
 
 type ButtonStepEditorProps = {
   parentName: string
@@ -78,9 +77,10 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
     name: parentName,
   })
   const channel = useWatch({ name: "beforeStep.channel" })
+
   const maxButtons =
-    getChannelStepPolicy(channel)?.constraints.maxButtonCount ??
-    DEFAULT_MAX_BUTTON_GROUP_BUTTONS
+    getChannelFlowPolicy(channel)?.limits.buttonCount ??
+    CHANNEL_FLOW_POLICIES.omnichannel.limits.buttonCount
 
   function addButton() {
     append(

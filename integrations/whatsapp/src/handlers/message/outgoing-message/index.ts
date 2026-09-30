@@ -4,6 +4,7 @@ import {
   type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
   type SendWaTemplateMessageStepSchema,
+  type StepType,
   stepTypes,
   type WhatsappCallButtonStepSchema,
   type WhatsappFlowStepSchema,
@@ -211,6 +212,10 @@ function* convertFlowStepToWhatsappMessage(
       )
       break
     default:
+      logger.warn(
+        { channel: "whatsapp", stepType: step.stepType },
+        "Skipping unsupported WhatsApp flow step",
+      )
       break
   }
 }
@@ -290,6 +295,17 @@ async function postRawMessage(props: {
 
   return await response.json()
 }
+
+export const handledFlowStepTypes = [
+  stepTypes.enum.sendText,
+  stepTypes.enum.sendImage,
+  stepTypes.enum.sendMultipleImages,
+  stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendWaTemplateMessage,
+  stepTypes.enum.whatsappOptionList,
+  stepTypes.enum.whatsappCallButton,
+  stepTypes.enum.whatsappFlow,
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
   async (props) => {

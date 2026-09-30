@@ -1,6 +1,6 @@
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
-import { countMessageCharacters } from "../channel-rules/send-text-length-rules"
+import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
 import { waitStepDelayUnits } from "../steps/wait"
 

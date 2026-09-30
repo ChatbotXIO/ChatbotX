@@ -2,7 +2,8 @@ import { channelTypes } from "@chatbotx.io/utils/channel"
 import type { z } from "zod"
 import type { ButtonStepProps } from "../steps/button"
 import { flowValidationCodes } from "../validation-codes"
-import { countMessageCharacters } from "./send-text-length-rules"
+import { countMessageCharacters } from "./characters"
+import { TIKTOK_CARD_TITLE_MAX } from "./policies/tiktok"
 
 /**
  * TikTok's QA_BUTTON_CARD/QA_LINK_CARD send only accepts up to 40 chars in
@@ -13,7 +14,6 @@ import { countMessageCharacters } from "./send-text-length-rules"
  * to this same limit instead of failing, so the flow editor reads it too, to
  * warn the author before their message is silently cut short.
  */
-export const TIKTOK_CARD_TITLE_MAX = 40
 
 /**
  * True once the message is sent as a card at all — `convertFlowStepText` in
