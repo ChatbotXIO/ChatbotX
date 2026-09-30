@@ -4646,7 +4646,26 @@
   },
   "botSimulator": {
     "title": "Bot-Simulator",
-    "description": "Simulieren Sie das Verhalten Ihres Bots in einer Echtzeitumgebung."
+    "description": "Simulieren Sie das Verhalten Ihres Bots in einer Echtzeitumgebung.",
+    "formDescription": "Erhalte einen Link, der eine Website mit deinem Webchat zeigt, um den Bot einem Kunden vorzuführen.",
+    "websiteLink": "Website-Link",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "Die Website, die hinter dem Webchat angezeigt wird. Manche Websites erlauben keine Anzeige innerhalb einer anderen Seite.",
+    "selectWebchat": "Webchat auswählen",
+    "webchatRequired": "Bitte wähle einen Webchat aus",
+    "invalidUrl": "Gib einen vollständigen Link ein, der mit http:// oder https:// beginnt",
+    "getLink": "Link abrufen",
+    "linkCopied": "Link in die Zwischenablage kopiert",
+    "copyFailed": "Link konnte nicht kopiert werden",
+    "noWebchat": "Dieser Workspace hat noch keinen Webchat.",
+    "createWebchat": "Webchat erstellen",
+    "websitePreview": "Website-Vorschau",
+    "webchatDisabled": "Dieser Webchat ist deaktiviert. Aktivieren Sie ihn oder wählen Sie einen anderen.",
+    "domainNotAllowed": "Diese Website gehört nicht zu den erlaubten Domains des Webchats.",
+    "disabledWebchatLabel": "{name} (deaktiviert)",
+    "allowedDomainsHint": "Funktioniert nur mit Websites auf: {domains}",
+    "noEnabledWebchat": "In diesem Workspace ist kein Webchat aktiviert.",
+    "enableWebchat": "Webchat aktivieren"
   },
   "pollManager": {
     "title": "Umfrageverwaltung",

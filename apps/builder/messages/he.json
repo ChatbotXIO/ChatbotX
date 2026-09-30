@@ -2675,7 +2675,26 @@
   },
   "botSimulator": {
     "title": "מדמה בוט",
-    "description": "הדמיית התנהגות הבוט בסביבה בזמן אמת."
+    "description": "הדמיית התנהגות הבוט בסביבה בזמן אמת.",
+    "formDescription": "קבל קישור שמציג אתר עם הצ'אט שלך, כדי להדגים את הבוט ללקוח.",
+    "websiteLink": "קישור לאתר",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "האתר שיוצג מאחורי הצ'אט. חלק מהאתרים אינם מאפשרים הצגה בתוך דף אחר.",
+    "selectWebchat": "בחר צ'אט אתר",
+    "webchatRequired": "אנא בחר צ'אט אתר",
+    "invalidUrl": "הזן קישור מלא שמתחיל ב-http:// או https://",
+    "getLink": "קבל קישור",
+    "linkCopied": "הקישור הועתק ללוח",
+    "copyFailed": "לא ניתן להעתיק את הקישור",
+    "noWebchat": "לסביבת עבודה זו אין עדיין צ'אט אתר.",
+    "createWebchat": "צור צ'אט אתר",
+    "websitePreview": "תצוגה מקדימה של האתר",
+    "webchatDisabled": "הצ'אט הזה כבוי. הפעילו אותו או בחרו אחר.",
+    "domainNotAllowed": "האתר הזה אינו ברשימת הדומיינים המותרים של הצ'אט.",
+    "disabledWebchatLabel": "{name} (כבוי)",
+    "allowedDomainsHint": "עובד רק עם אתרים בדומיינים: {domains}",
+    "noEnabledWebchat": "אין צ'אט פעיל בסביבת העבודה הזו.",
+    "enableWebchat": "הפעלת צ'אט"
   },
   "pollManager": {
     "title": "מנהל סקרים",

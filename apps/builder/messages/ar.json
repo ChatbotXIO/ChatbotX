@@ -4646,7 +4646,26 @@
   },
   "botSimulator": {
     "title": "محاكي البوت",
-    "description": "حاكي سلوك البوت في بيئة فورية."
+    "description": "حاكي سلوك البوت في بيئة فورية.",
+    "formDescription": "احصل على رابط يعرض موقعًا إلكترونيًا مع الدردشة الخاصة بك، لتعرض البوت على العميل.",
+    "websiteLink": "رابط الموقع",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "الموقع الذي يظهر خلف الدردشة. بعض المواقع لا تسمح بعرضها داخل صفحة أخرى.",
+    "selectWebchat": "اختر دردشة ويب",
+    "webchatRequired": "يرجى اختيار دردشة ويب",
+    "invalidUrl": "أدخل رابطًا كاملًا يبدأ بـ http:// أو https://",
+    "getLink": "احصل على الرابط",
+    "linkCopied": "تم نسخ الرابط إلى الحافظة",
+    "copyFailed": "تعذر نسخ الرابط",
+    "noWebchat": "لا توجد دردشة ويب في مساحة العمل هذه بعد.",
+    "createWebchat": "إنشاء دردشة ويب",
+    "websitePreview": "معاينة الموقع",
+    "webchatDisabled": "هذه الدردشة متوقفة. قم بتشغيلها أو اختر أخرى.",
+    "domainNotAllowed": "هذا الموقع ليس ضمن النطاقات المسموح بها للدردشة.",
+    "disabledWebchatLabel": "{name} (متوقفة)",
+    "allowedDomainsHint": "تعمل فقط مع المواقع على: {domains}",
+    "noEnabledWebchat": "لا توجد دردشة مفعّلة في مساحة العمل هذه.",
+    "enableWebchat": "تشغيل دردشة"
   },
   "pollManager": {
     "title": "إدارة الاستطلاعات",

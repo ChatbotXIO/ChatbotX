@@ -27,6 +27,11 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/mediator")).toBe(false)
   })
 
+  test("/bs is public so a bot simulator link opens without a session", () => {
+    expect(isPublicRoute("/bs/ws-1/webchat-1")).toBe(true)
+    expect(isPublicRoute("/bsx")).toBe(false)
+  })
+
   test("an authenticated app path is not public", () => {
     expect(isPublicRoute("/space/1/inbox")).toBe(false)
     expect(isPublicRoute("/channels/create")).toBe(false)

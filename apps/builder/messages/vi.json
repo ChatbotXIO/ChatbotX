@@ -4727,7 +4727,26 @@
   },
   "botSimulator": {
     "title": "Mô phỏng Bot",
-    "description": "Mô phỏng hành vi của bot trong môi trường thời gian thực."
+    "description": "Mô phỏng hành vi của bot trong môi trường thời gian thực.",
+    "formDescription": "Lấy một đường dẫn hiển thị website kèm webchat của bạn, để demo bot cho khách hàng.",
+    "websiteLink": "Link website",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "Website hiển thị phía sau webchat. Một số website không cho phép hiển thị bên trong trang khác.",
+    "selectWebchat": "Chọn webchat",
+    "webchatRequired": "Vui lòng chọn một webchat",
+    "invalidUrl": "Nhập đường dẫn đầy đủ bắt đầu bằng http:// hoặc https://",
+    "getLink": "Lấy link",
+    "linkCopied": "Đã sao chép link vào bộ nhớ tạm",
+    "copyFailed": "Không thể sao chép link",
+    "noWebchat": "Workspace này chưa có webchat nào.",
+    "createWebchat": "Tạo webchat",
+    "websitePreview": "Xem trước website",
+    "webchatDisabled": "Webchat này đang tắt. Hãy bật lên hoặc chọn webchat khác.",
+    "domainNotAllowed": "Website này không nằm trong danh sách tên miền được phép của webchat.",
+    "disabledWebchatLabel": "{name} (đang tắt)",
+    "allowedDomainsHint": "Chỉ dùng được với website thuộc: {domains}",
+    "noEnabledWebchat": "Workspace này chưa bật webchat nào.",
+    "enableWebchat": "Bật webchat"
   },
   "pollManager": {
     "title": "Quản lý khảo sát",

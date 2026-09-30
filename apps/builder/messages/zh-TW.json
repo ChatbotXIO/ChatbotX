@@ -4679,7 +4679,26 @@
   },
   "botSimulator": {
     "title": "機器人模擬器",
-    "description": "在即時環境中模擬機器人的行為。"
+    "description": "在即時環境中模擬機器人的行為。",
+    "formDescription": "取得一個顯示網站並附有你的網頁聊天的連結，用來向客戶示範機器人。",
+    "websiteLink": "網站連結",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "顯示在網頁聊天後方的網站。部分網站不允許在其他頁面中顯示。",
+    "selectWebchat": "選擇網頁聊天",
+    "webchatRequired": "請選擇一個網頁聊天",
+    "invalidUrl": "請輸入以 http:// 或 https:// 開頭的完整連結",
+    "getLink": "取得連結",
+    "linkCopied": "連結已複製到剪貼簿",
+    "copyFailed": "無法複製連結",
+    "noWebchat": "此工作區尚未有網頁聊天。",
+    "createWebchat": "建立網頁聊天",
+    "websitePreview": "網站預覽",
+    "webchatDisabled": "此網頁聊天已關閉。請開啟它或選擇其他網頁聊天。",
+    "domainNotAllowed": "該網站不在此網頁聊天允許的網域清單中。",
+    "disabledWebchatLabel": "{name}（已關閉）",
+    "allowedDomainsHint": "僅適用於以下網域的網站：{domains}",
+    "noEnabledWebchat": "此工作區中沒有已開啟的網頁聊天。",
+    "enableWebchat": "開啟網頁聊天"
   },
   "pollManager": {
     "title": "投票管理器",

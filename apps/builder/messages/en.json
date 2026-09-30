@@ -4931,7 +4931,26 @@
   },
   "botSimulator": {
     "title": "Bot Simulator",
-    "description": "Simulate your bot's behavior in a real-time environment."
+    "description": "Simulate your bot's behavior in a real-time environment.",
+    "formDescription": "Get a link that shows a website with your webchat on it, so you can demo the bot to a customer.",
+    "websiteLink": "Website Link",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "The website to show behind the webchat. Some websites do not allow being shown inside another page.",
+    "selectWebchat": "Select a webchat",
+    "webchatRequired": "Please select a webchat",
+    "invalidUrl": "Enter a full link starting with http:// or https://",
+    "getLink": "Get Link",
+    "linkCopied": "Link copied to clipboard",
+    "copyFailed": "Could not copy the link",
+    "noWebchat": "This workspace has no webchat yet.",
+    "createWebchat": "Create a webchat",
+    "websitePreview": "Website preview",
+    "webchatDisabled": "This webchat is turned off. Turn it on or choose another one.",
+    "domainNotAllowed": "This website is not in the webchat's allowed domains.",
+    "disabledWebchatLabel": "{name} (turned off)",
+    "allowedDomainsHint": "Only works with websites on: {domains}",
+    "noEnabledWebchat": "No webchat is turned on in this workspace.",
+    "enableWebchat": "Turn on a webchat"
   },
   "pollManager": {
     "title": "Poll Manager",

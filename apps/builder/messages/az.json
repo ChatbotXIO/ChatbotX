@@ -4931,7 +4931,26 @@
   },
   "botSimulator": {
     "title": "Bot simulyatoru",
-    "description": "Botunuzun davranışını real vaxt mühitində sınaqdan keçirin."
+    "description": "Botunuzun davranışını real vaxt mühitində sınaqdan keçirin.",
+    "formDescription": "Botu müştəriyə nümayiş etdirmək üçün vebçatınızla birlikdə veb saytı göstərən link əldə edin.",
+    "websiteLink": "Veb sayt linki",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "Vebçatın arxasında göstəriləcək veb sayt. Bəzi saytlar başqa səhifənin içində göstərilməyə icazə vermir.",
+    "selectWebchat": "Vebçat seçin",
+    "webchatRequired": "Zəhmət olmasa vebçat seçin",
+    "invalidUrl": "http:// və ya https:// ilə başlayan tam link daxil edin",
+    "getLink": "Linki al",
+    "linkCopied": "Link mübadilə buferinə kopyalandı",
+    "copyFailed": "Linki kopyalamaq mümkün olmadı",
+    "noWebchat": "Bu iş sahəsində hələ vebçat yoxdur.",
+    "createWebchat": "Vebçat yarat",
+    "websitePreview": "Veb sayt önizləməsi",
+    "webchatDisabled": "Bu vebçat söndürülüb. Onu yandırın və ya başqasını seçin.",
+    "domainNotAllowed": "Bu vebsayt vebçatın icazə verilən domenləri siyahısında deyil.",
+    "disabledWebchatLabel": "{name} (söndürülüb)",
+    "allowedDomainsHint": "Yalnız bu domenlərdəki vebsaytlarla işləyir: {domains}",
+    "noEnabledWebchat": "Bu iş sahəsində yandırılmış vebçat yoxdur.",
+    "enableWebchat": "Vebçatı yandırın"
   },
   "pollManager": {
     "title": "Sorğu idarəetməsi",

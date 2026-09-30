@@ -45,7 +45,10 @@ import {
 import { headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
 import { randomString } from "remeda"
-import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
+import {
+  isFirstPartyOrigin,
+  isOriginAuthorized,
+} from "@/features/integration-webchat/lib/authorized-domain"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { logger } from "@/lib/log"
 import {
@@ -115,8 +118,13 @@ export async function handleCreateWebchatMessage({
     throw new ChatbotXException(t("description"), "forbidden", 403)
   }
 
+  const requestHeaders = await getRequestHeaders()
   if (
     integrationWebchat.authorizedDomains.length > 0 &&
+    !isFirstPartyOrigin(
+      parsedInput.parentOrigin,
+      requestHeaders.get("x-domain") ?? "",
+    ) &&
     !isOriginAuthorized(
       parsedInput.parentOrigin,
       integrationWebchat.authorizedDomains,
@@ -126,7 +134,6 @@ export async function handleCreateWebchatMessage({
     throw new ChatbotXException(t("description"), "forbidden", 403)
   }
 
-  const requestHeaders = await getRequestHeaders()
   const rateLimit = await checkGuestRateLimit({
     clientIp: getGuestClientIp(requestHeaders),
     guestConversationId: parsedInput.guestConversationId,

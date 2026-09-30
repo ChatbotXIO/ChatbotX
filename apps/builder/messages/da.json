@@ -4646,7 +4646,26 @@
   },
   "botSimulator": {
     "title": "Bot Simulator",
-    "description": "Simuler din bot's behavior i a real-time environment."
+    "description": "Simuler din bot's behavior i a real-time environment.",
+    "formDescription": "Få et link, der viser et websted med din webchat, så du kan demonstrere botten for en kunde.",
+    "websiteLink": "Link til websted",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "Webstedet, der vises bag webchatten. Nogle websteder tillader ikke at blive vist i en anden side.",
+    "selectWebchat": "Vælg en webchat",
+    "webchatRequired": "Vælg venligst en webchat",
+    "invalidUrl": "Indtast et fuldt link, der starter med http:// eller https://",
+    "getLink": "Hent link",
+    "linkCopied": "Link kopieret til udklipsholderen",
+    "copyFailed": "Linket kunne ikke kopieres",
+    "noWebchat": "Dette arbejdsområde har endnu ingen webchat.",
+    "createWebchat": "Opret en webchat",
+    "websitePreview": "Forhåndsvisning af websted",
+    "webchatDisabled": "Denne webchat er slået fra. Slå den til, eller vælg en anden.",
+    "domainNotAllowed": "Dette websted er ikke blandt webchattens tilladte domæner.",
+    "disabledWebchatLabel": "{name} (slået fra)",
+    "allowedDomainsHint": "Virker kun med websteder på: {domains}",
+    "noEnabledWebchat": "Der er ingen webchat slået til i dette workspace.",
+    "enableWebchat": "Slå en webchat til"
   },
   "pollManager": {
     "title": "Afstemning Manager",

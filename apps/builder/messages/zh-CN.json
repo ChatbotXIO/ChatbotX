@@ -676,7 +676,26 @@
   },
   "botSimulator": {
     "description": "在即时环境中仿真机器人的行为。",
-    "title": "机器人仿真器"
+    "title": "机器人仿真器",
+    "formDescription": "获取一个显示网站并带有你的网页聊天的链接，用于向客户演示机器人。",
+    "websiteLink": "网站链接",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "显示在网页聊天背后的网站。部分网站不允许在其他页面中显示。",
+    "selectWebchat": "选择网页聊天",
+    "webchatRequired": "请选择一个网页聊天",
+    "invalidUrl": "请输入以 http:// 或 https:// 开头的完整链接",
+    "getLink": "获取链接",
+    "linkCopied": "链接已复制到剪贴板",
+    "copyFailed": "无法复制链接",
+    "noWebchat": "此工作区还没有网页聊天。",
+    "createWebchat": "创建网页聊天",
+    "websitePreview": "网站预览",
+    "webchatDisabled": "此网页聊天已关闭。请开启它或选择其他网页聊天。",
+    "domainNotAllowed": "该网站不在此网页聊天允许的域名列表中。",
+    "disabledWebchatLabel": "{name}（已关闭）",
+    "allowedDomainsHint": "仅适用于以下域名的网站：{domains}",
+    "noEnabledWebchat": "此工作区中没有已开启的网页聊天。",
+    "enableWebchat": "开启网页聊天"
   },
   "broadcasts": {
     "allContacts": {

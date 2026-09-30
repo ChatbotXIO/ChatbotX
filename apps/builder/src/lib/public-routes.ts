@@ -29,6 +29,8 @@ export const PUBLIC_ROUTES = [
   "/booking",
   "/portal/redeem",
   "/webchat",
+  // Bot simulator preview: frames a website with the webchat widget for demos.
+  "/bs",
   "/t/",
 ]
 

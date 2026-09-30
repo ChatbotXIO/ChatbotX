@@ -4646,7 +4646,26 @@
   },
   "botSimulator": {
     "title": "Botsimulator",
-    "description": "Simuleer het gedrag van je bot in een realtimeomgeving."
+    "description": "Simuleer het gedrag van je bot in een realtimeomgeving.",
+    "formDescription": "Krijg een link die een website met je webchat toont, zodat je de bot aan een klant kunt demonstreren.",
+    "websiteLink": "Websitelink",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "De website die achter de webchat wordt getoond. Sommige websites staan niet toe dat ze in een andere pagina worden getoond.",
+    "selectWebchat": "Selecteer een webchat",
+    "webchatRequired": "Selecteer een webchat",
+    "invalidUrl": "Voer een volledige link in die begint met http:// of https://",
+    "getLink": "Link ophalen",
+    "linkCopied": "Link gekopieerd naar klembord",
+    "copyFailed": "Link kon niet worden gekopieerd",
+    "noWebchat": "Deze werkruimte heeft nog geen webchat.",
+    "createWebchat": "Webchat maken",
+    "websitePreview": "Websitevoorbeeld",
+    "webchatDisabled": "Deze webchat staat uit. Zet hem aan of kies een andere.",
+    "domainNotAllowed": "Deze website staat niet in de toegestane domeinen van de webchat.",
+    "disabledWebchatLabel": "{name} (uit)",
+    "allowedDomainsHint": "Werkt alleen met websites op: {domains}",
+    "noEnabledWebchat": "Er staat geen webchat aan in deze workspace.",
+    "enableWebchat": "Zet een webchat aan"
   },
   "pollManager": {
     "title": "Pollbeheer",
