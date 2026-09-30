@@ -43,7 +43,7 @@ import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
 /** Must exactly match the cases in `sendFlowStep` below. */
-export const handledFlowStepTypes = [
+export const handledFlowStepTypes: readonly StepType[] = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendVideo,
@@ -53,7 +53,7 @@ export const handledFlowStepTypes = [
   stepTypes.enum.sendGif,
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendCarousel,
-] as const satisfies readonly StepType[]
+]
 
 export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
   async (props) => {
@@ -166,6 +166,10 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
     const messageIds: string[] = []
 
     try {
+      if (!handledFlowStepTypes.includes(step.stepType)) {
+        throw new Error(`Unsupported Telegram flow step: ${step.stepType}`)
+      }
+
       switch (step.stepType) {
         case stepTypes.enum.sendText: {
           for (const payload of convertFlowStepText(
@@ -301,11 +305,7 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
         }
         // Must stay in sync with `handledFlowStepTypes`.
         default:
-          logger.warn(
-            { channel: "telegram", stepType: step.stepType },
-            "Skipping unsupported Telegram flow step",
-          )
-          break
+          throw new Error(`Unsupported Telegram flow step: ${step.stepType}`)
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending flow step")

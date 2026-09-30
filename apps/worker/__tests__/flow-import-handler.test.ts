@@ -249,6 +249,8 @@ describe("runFlowImport", () => {
       failed: 1,
       processed: 1,
       success: 0,
+      errorMessage:
+        "Invalid export file at flows[0].nodes[0].data.details.steps[0]: unsupportedBlock",
       errorSample: [
         expect.objectContaining({
           code: "unsupportedBlock",

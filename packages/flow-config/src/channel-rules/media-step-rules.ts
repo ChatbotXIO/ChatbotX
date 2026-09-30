@@ -7,9 +7,6 @@ import {
   stepSupport,
 } from "./policies"
 
-export const mediaStepSupport = stepSupport
-export type MediaStepSupport = StepSupport
-
 const MEDIA_STEP_TYPES = [
   stepTypes.enum.sendImage,
   stepTypes.enum.sendVideo,
@@ -28,9 +25,7 @@ type MediaStepProps = {
 export const isMediaStepType = (stepType: string): stepType is MediaStepType =>
   (MEDIA_STEP_TYPES as readonly string[]).includes(stepType)
 
-export const resolveMediaStepSupport = (
-  props: MediaStepProps,
-): MediaStepSupport => {
+export const resolveMediaStepSupport = (props: MediaStepProps): StepSupport => {
   if (!isMediaStepType(props.stepType)) {
     return stepSupport.full
   }

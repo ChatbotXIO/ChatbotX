@@ -1,4 +1,4 @@
-import type { z } from "zod"
+import { z } from "zod"
 
 /**
  * Structured compiler diagnostics for the flow-spec DSL. Deliberately NOT
@@ -26,19 +26,25 @@ export type FlowAuthoringErrorCode =
   | "unsupportedBlock"
   | "constraintExceeded"
 
-type FlowCapability = {
-  actual?: number
-  allowed?: number
-  block: string
-  channel: string
-  code: Extract<
-    FlowAuthoringErrorCode,
-    "constraintExceeded" | "unsupportedBlock"
-  >
-  constraintId?: string
-  policyVersion: number
-  unit?: string
-}
+export const flowCapabilitySchema = z.discriminatedUnion("code", [
+  z.object({
+    block: z.string(),
+    channel: z.string(),
+    code: z.literal("unsupportedBlock"),
+    policyVersion: z.number(),
+  }),
+  z.object({
+    actual: z.number().optional(),
+    allowed: z.number().optional(),
+    block: z.string(),
+    channel: z.string(),
+    code: z.literal("constraintExceeded"),
+    constraintId: z.string().optional(),
+    policyVersion: z.number(),
+    unit: z.string().optional(),
+  }),
+])
+export type FlowCapability = z.infer<typeof flowCapabilitySchema>
 
 export type FlowAuthoringError = {
   capability?: FlowCapability
@@ -76,16 +82,7 @@ export const formatZodPathSegment = (
 }
 
 const isFlowCapability = (value: unknown): value is FlowCapability =>
-  typeof value === "object" &&
-  value !== null &&
-  "block" in value &&
-  typeof value.block === "string" &&
-  "channel" in value &&
-  typeof value.channel === "string" &&
-  "code" in value &&
-  (value.code === "constraintExceeded" || value.code === "unsupportedBlock") &&
-  "policyVersion" in value &&
-  typeof value.policyVersion === "number"
+  flowCapabilitySchema.safeParse(value).success
 
 /**
  * Converts a parse failure into `FlowAuthoringError[]` using the caller's

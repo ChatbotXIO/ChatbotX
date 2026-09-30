@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit.",
     "unsupportedBlock": "Ce canal ne prend pas en charge ce bloc.",
     "constraintExceeded": "La limite de ce canal a été dépassée.",
-    "unsupportedChannel": "Ce nœud utilise un canal non pris en charge.",
     "mediaButtonsUnsupported": "Ce canal ne peut pas envoyer de boutons avec un message média. Supprimez les boutons ou déplacez-les vers une étape de texte suivante.",
     "voiceCall": "Appel vocal",
     "voiceCallDuration": "Appel vocal · {duration}",

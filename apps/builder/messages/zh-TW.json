@@ -1632,7 +1632,6 @@
     "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。",
     "unsupportedBlock": "此管道不支援此區塊。",
     "constraintExceeded": "已超出此管道的限制。",
-    "unsupportedChannel": "此節點使用不受支援的管道。",
     "mediaButtonsUnsupported": "此管道無法隨媒體訊息傳送按鈕。請刪除按鈕，或移到此步驟之後的文字步驟中。",
     "voiceCall": "語音通話",
     "voiceCallDuration": "語音通話 · {duration}",

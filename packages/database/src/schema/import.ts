@@ -1,3 +1,4 @@
+import type { FlowCapability } from "@chatbotx.io/flow-config"
 import { sql } from "drizzle-orm"
 import {
   index,
@@ -44,16 +45,7 @@ export const importStatus = pgEnum(
   importStatuses.options as [ImportStatus, ...ImportStatus[]],
 )
 
-export type ImportErrorCapability = {
-  actual?: number
-  allowed?: number
-  block: string
-  channel: string
-  code: "constraintExceeded" | "unsupportedBlock"
-  constraintId?: string
-  policyVersion: number
-  unit?: string
-}
+export type ImportErrorCapability = FlowCapability
 
 export type ImportErrorSample = {
   capability?: ImportErrorCapability

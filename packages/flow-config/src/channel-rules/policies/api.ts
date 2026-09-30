@@ -8,6 +8,17 @@ export const apiFlowPolicy = defineChannelFlowPolicy({
     buttonLabel: 20,
     text: 6000,
   },
+  supported: [
+    stepTypes.enum.sendText,
+    stepTypes.enum.sendImage,
+    stepTypes.enum.sendMultipleImages,
+    stepTypes.enum.sendCarousel,
+    stepTypes.enum.sendVideo,
+    stepTypes.enum.sendGif,
+    stepTypes.enum.sendAudio,
+    stepTypes.enum.sendFile,
+    stepTypes.enum.sendQuickReply,
+  ],
   // The API attachment transport has no button payload; text keeps buttons.
   noButtons: [
     stepTypes.enum.sendImage,

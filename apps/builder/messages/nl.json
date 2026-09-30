@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor.",
     "unsupportedBlock": "Dit kanaal ondersteunt dit blok niet.",
     "constraintExceeded": "De limiet van dit kanaal is overschreden.",
-    "unsupportedChannel": "Dit knooppunt gebruikt een niet-ondersteund kanaal.",
     "mediaButtonsUnsupported": "Dit kanaal kan geen knoppen bij een mediabericht verzenden. Verwijder de knoppen of verplaats ze naar een tekststap hierna.",
     "voiceCall": "Spraakoproep",
     "voiceCallDuration": "Spraakoproep · {duration}",

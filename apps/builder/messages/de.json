@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Jeder Abschnitt braucht mindestens ein ausgewähltes Produkt — entferne leere Zeilen oder wähle ein Produkt aus.",
     "unsupportedBlock": "Dieser Kanal unterstützt diesen Block nicht.",
     "constraintExceeded": "Das Limit dieses Kanals wurde überschritten.",
-    "unsupportedChannel": "Dieser Knoten verwendet einen nicht unterstützten Kanal.",
     "mediaButtonsUnsupported": "Dieser Kanal kann keine Buttons mit einer Mediennachricht senden. Entferne die Buttons oder verschiebe sie in einen Textschritt nach diesem.",
     "voiceCall": "Sprachanruf",
     "voiceCallDuration": "Sprachanruf · {duration}",

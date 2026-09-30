@@ -4165,7 +4165,6 @@
     "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。",
     "unsupportedBlock": "此渠道不支持此模块。",
     "constraintExceeded": "已超出此渠道的限制。",
-    "unsupportedChannel": "此节点使用了不受支持的渠道。",
     "mediaButtonsUnsupported": "此渠道无法随媒体消息发送按钮。请删除按钮，或将其移到此步骤之后的文本步骤中。",
     "voiceCall": "语音通话",
     "voiceCallDuration": "语音通话 · {duration}",

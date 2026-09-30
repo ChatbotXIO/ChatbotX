@@ -18,7 +18,6 @@ export const flowValidationCodes = {
   sendTextTooLongForChannel: "sendTextTooLongForChannel",
   mediaButtonsUnsupported: "mediaButtonsUnsupported",
   unsupportedBlock: "unsupportedBlock",
-  unsupportedChannel: "unsupportedChannel",
   constraintExceeded: "constraintExceeded",
   waTemplateMpmNoProducts: "waTemplateMpmNoProducts",
   waTemplateMpmTooManySections: "waTemplateMpmTooManySections",

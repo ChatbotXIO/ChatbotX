@@ -177,7 +177,10 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
     if (error instanceof FlowAuthoringException) {
       await importService.fail(
         row.id,
-        error,
+        new ChatbotXException(
+          summarizeSchemaError(error.errors),
+          "flowImportValidationFailed",
+        ),
         { processed: 1, success: 0, failed: 1 },
         toImportErrorSamples(error.errors),
       )

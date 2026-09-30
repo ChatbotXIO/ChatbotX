@@ -3345,7 +3345,6 @@
     "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
     "unsupportedBlock": "このチャネルはこのブロックに対応していません。",
     "constraintExceeded": "このチャネルの上限を超えました。",
-    "unsupportedChannel": "このノードはサポートされていないチャネルを使用しています。",
     "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。",
     "voiceCall": "音声通話",
     "voiceCallDuration": "音声通話 · {duration}",

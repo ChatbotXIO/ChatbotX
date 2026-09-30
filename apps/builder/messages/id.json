@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya.",
     "unsupportedBlock": "Saluran ini tidak mendukung blok ini.",
     "constraintExceeded": "Batas saluran ini telah terlampaui.",
-    "unsupportedChannel": "Node ini menggunakan saluran yang tidak didukung.",
     "mediaButtonsUnsupported": "Saluran ini tidak dapat mengirim tombol bersama pesan media. Hapus tombolnya, atau pindahkan ke langkah teks setelah langkah ini.",
     "voiceCall": "Panggilan suara",
     "voiceCallDuration": "Panggilan suara · {duration}",

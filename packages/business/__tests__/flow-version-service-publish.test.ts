@@ -1,5 +1,9 @@
 // @vitest-environment node
 
+import {
+  sendMessageNodeDefaultFn,
+  sendVideoStepDefaultFn,
+} from "@chatbotx.io/flow-config"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -12,7 +16,6 @@ const {
   mockTxSet,
   mockInvalidateCacheTags,
   mockDispatchAuditRecord,
-  mockAssertFlowGraphPublishable,
 } = vi.hoisted(() => {
   const mockTxInsertValues = vi.fn().mockResolvedValue(undefined)
   const mockTxInsert = vi.fn().mockReturnValue({ values: mockTxInsertValues })
@@ -30,7 +33,6 @@ const {
     mockTxSet,
     mockInvalidateCacheTags: vi.fn().mockResolvedValue(undefined),
     mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
-    mockAssertFlowGraphPublishable: vi.fn(),
   }
 })
 
@@ -60,7 +62,8 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: mockInvalidateCacheTags,
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
+vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils")>()),
   createId: mockCreateId,
 }))
 
@@ -70,10 +73,6 @@ vi.mock("../src/errors", () => ({
 
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
-}))
-
-vi.mock("../src/flow-version/assert-publishable", () => ({
-  assertFlowGraphPublishable: mockAssertFlowGraphPublishable,
 }))
 
 const { flowVersionService } = await import("../src/flow-version/service")
@@ -89,7 +88,10 @@ describe("flowVersionService.publish", () => {
       workspaceId: "ws-1",
       flowVersions: [{ id: "draft-1", startNodeId: "node-1" }],
     })
-    mockCreateId.mockReturnValue("new-version-1")
+    mockCreateId
+      .mockReturnValueOnce("1")
+      .mockReturnValueOnce("2")
+      .mockReturnValue("new-version-1")
     mockDbTransaction.mockImplementation(
       async (
         fn: (tx: {
@@ -99,11 +101,12 @@ describe("flowVersionService.publish", () => {
       ) => fn({ insert: mockTxInsert, update: mockTxUpdate }),
     )
 
+    const nodes = [sendMessageNodeDefaultFn({})]
     await flowVersionService.publish({
       workspaceId: "ws-1",
       flowId: "flow-1",
-      nodes: [{ id: "node-1" }] as never,
-      edges: [] as never,
+      nodes,
+      edges: [],
     })
 
     // 1) reset other latest versions
@@ -116,7 +119,7 @@ describe("flowVersionService.publish", () => {
 
     // 2) sync draft nodes/edges
     expect(mockTxSet).toHaveBeenNthCalledWith(2, {
-      nodes: [{ id: "node-1" }],
+      nodes,
       edges: [],
     })
 
@@ -132,7 +135,7 @@ describe("flowVersionService.publish", () => {
       flowId: "flow-1",
       isDraft: false,
       isLatest: true,
-      nodes: [{ id: "node-1" }],
+      nodes,
       edges: [],
       startNodeId: "node-1",
     })
@@ -149,6 +152,40 @@ describe("flowVersionService.publish", () => {
       action: "publish",
       detail: "published a flow (#flow-1)",
     })
+  })
+
+  test("rejects a channel-incompatible graph before reading or mutating the flow", async () => {
+    mockCreateId.mockReturnValue("1")
+    const node = sendMessageNodeDefaultFn({})
+    node.data.details.beforeStep.channel = "tiktok"
+    node.data.details.steps = [sendVideoStepDefaultFn()]
+
+    await expect(
+      flowVersionService.publish({
+        workspaceId: "ws-1",
+        flowId: "flow-1",
+        nodes: [node],
+        edges: [],
+      }),
+    ).rejects.toMatchObject({ name: "FlowAuthoringException" })
+
+    expect(mockFlowFindFirst).not.toHaveBeenCalled()
+    expect(mockDbTransaction).not.toHaveBeenCalled()
+  })
+
+  test("rejects an incompatible restored graph before opening a transaction", async () => {
+    mockCreateId.mockReturnValue("1")
+    const node = sendMessageNodeDefaultFn({})
+    node.data.details.beforeStep.channel = "tiktok"
+    node.data.details.steps = [sendVideoStepDefaultFn()]
+
+    await expect(
+      flowVersionService.restore({
+        version: { edges: [], nodes: [node] } as never,
+      }),
+    ).rejects.toMatchObject({ name: "FlowAuthoringException" })
+
+    expect(mockDbTransaction).not.toHaveBeenCalled()
   })
 
   test("throws notFoundException when the flow does not exist", async () => {
@@ -192,9 +229,6 @@ describe("flowVersionService.updateDraftByFlowId", () => {
   })
 
   test("saves an in-progress graph without publish validation", async () => {
-    mockAssertFlowGraphPublishable.mockImplementationOnce(() => {
-      throw new Error("Draft graph is not publishable")
-    })
     vi.spyOn(flowVersionService, "findDraft").mockResolvedValue({
       id: "draft-1",
     } as never)

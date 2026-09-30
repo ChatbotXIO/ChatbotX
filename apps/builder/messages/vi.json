@@ -3408,7 +3408,6 @@
     "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó.",
     "unsupportedBlock": "Kênh này không hỗ trợ khối này.",
     "constraintExceeded": "Đã vượt quá giới hạn của kênh này.",
-    "unsupportedChannel": "Nút này sử dụng một kênh không được hỗ trợ.",
     "mediaButtonsUnsupported": "Kênh này không gửi được nút kèm tin nhắn media. Hãy xoá các nút, hoặc chuyển sang một bước văn bản ngay sau bước này.",
     "voiceCall": "Cuộc gọi thoại",
     "voiceCallDuration": "Cuộc gọi thoại · {duration}",

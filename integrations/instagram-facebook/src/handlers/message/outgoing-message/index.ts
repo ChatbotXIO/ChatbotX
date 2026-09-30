@@ -40,7 +40,7 @@ import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
 /** Must exactly match the cases in `convertFlowStep` below. */
-export const handledFlowStepTypes = [
+export const handledFlowStepTypes: readonly StepType[] = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendVideo,
@@ -50,7 +50,7 @@ export const handledFlowStepTypes = [
   stepTypes.enum.sendGif,
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendCarousel,
-] as const satisfies readonly StepType[]
+]
 
 export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
   async (props) => {
@@ -184,6 +184,9 @@ export async function* convertFlowStep(
   const {
     data: { step },
   } = props
+  if (!handledFlowStepTypes.includes(step.stepType)) {
+    throw new Error(`Unsupported Instagram flow step: ${step.stepType}`)
+  }
 
   switch (step.stepType) {
     case stepTypes.enum.sendText:
@@ -233,13 +236,8 @@ export async function* convertFlowStep(
         props as SendFlowStepProps<InstagramAuthValue, SendCarouselStepSchema>,
       ) as Generator<InstagramSendMessage>
       break
-    // Must stay in sync with `handledFlowStepTypes`.
     default:
-      logger.warn(
-        { channel: "instagram", stepType: step.stepType },
-        "Skipping unsupported Instagram flow step",
-      )
-      break
+      throw new Error(`Unsupported Instagram flow step: ${step.stepType}`)
   }
 }
 

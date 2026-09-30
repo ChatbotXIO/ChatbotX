@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Her bölümde en az bir seçili ürün olmalı — boş satırları silin veya onlara ürün seçin.",
     "unsupportedBlock": "Bu kanal bu bloğu desteklemiyor.",
     "constraintExceeded": "Bu kanalın sınırı aşıldı.",
-    "unsupportedChannel": "Bu düğüm desteklenmeyen bir kanal kullanıyor.",
     "mediaButtonsUnsupported": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez. Düğmeleri kaldırın veya bundan sonraki bir metin adımına taşıyın.",
     "voiceCall": "Sesli arama",
     "voiceCallDuration": "Sesli arama · {duration}",

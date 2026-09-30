@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import type { ChannelType } from "@chatbotx.io/utils/channel"
 import { describe, expect, test } from "vitest"
+import { handledFlowStepTypes as apiHandledFlowStepTypes } from "../../../integrations/api/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as instagramHandledFlowStepTypes } from "../../../integrations/instagram/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as instagramFacebookHandledFlowStepTypes } from "../../../integrations/instagram-facebook/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as messengerHandledFlowStepTypes } from "../../../integrations/messenger/src/handlers/message/outgoing-message"
@@ -37,9 +38,11 @@ const HANDLED_STEP_TYPES: ReadonlyArray<{
   steps: readonly StepType[]
 }> = [
   { channel: "instagram", steps: instagramHandledFlowStepTypes },
+  { channel: "api", steps: apiHandledFlowStepTypes },
   { channel: "instagram", steps: instagramFacebookHandledFlowStepTypes },
   { channel: "messenger", steps: messengerHandledFlowStepTypes },
   { channel: "telegram", steps: telegramHandledFlowStepTypes },
+  { channel: "threads", steps: [] },
   { channel: "tiktok", steps: tiktokHandledFlowStepTypes },
   { channel: "whatsapp", steps: whatsappHandledFlowStepTypes },
   { channel: "zalo", steps: zaloHandledFlowStepTypes },

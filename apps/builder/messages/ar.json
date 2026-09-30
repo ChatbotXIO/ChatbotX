@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "يحتاج كل قسم إلى منتج واحد محدد على الأقل — احذف الصفوف الفارغة أو اختر منتجًا لها.",
     "unsupportedBlock": "هذه القناة لا تدعم هذه الكتلة.",
     "constraintExceeded": "تم تجاوز حد هذه القناة.",
-    "unsupportedChannel": "تستخدم هذه العقدة قناة غير مدعومة.",
     "mediaButtonsUnsupported": "لا يمكن لهذه القناة إرسال أزرار مع رسالة وسائط. أزِل الأزرار أو انقلها إلى خطوة نصية بعد هذه الخطوة.",
     "voiceCall": "مكالمة صوتية",
     "voiceCallDuration": "مكالمة صوتية · {duration}",

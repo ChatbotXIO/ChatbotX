@@ -1,6 +1,15 @@
 import { importStatuses } from "@chatbotx.io/database/partials"
+import { flowCapabilitySchema } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
+
+const importErrorSampleSchema = z.object({
+  capability: flowCapabilitySchema.optional(),
+  code: z.string().optional(),
+  path: z.string().optional(),
+  reason: z.string(),
+  row: z.number().optional(),
+})
 
 export const contactImportPublicResource = z.object({
   id: z.string(),
@@ -14,12 +23,7 @@ export const contactImportPublicResource = z.object({
   successCount: z.number(),
   failedCount: z.number(),
   errorMessage: z.string().nullable(),
-  errorSample: z.array(
-    z.object({
-      row: z.number().optional(),
-      reason: z.string(),
-    }),
-  ),
+  errorSample: z.array(importErrorSampleSchema),
   completedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),

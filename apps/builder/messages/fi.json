@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote.",
     "unsupportedBlock": "Tämä kanava ei tue tätä lohkoa.",
     "constraintExceeded": "Tämän kanavan raja ylittyi.",
-    "unsupportedChannel": "Tämä solmu käyttää kanavaa, jota ei tueta.",
     "mediaButtonsUnsupported": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana. Poista painikkeet tai siirrä ne tämän jälkeiseen tekstivaiheeseen.",
     "voiceCall": "Äänipuhelu",
     "voiceCallDuration": "Äänipuhelu · {duration}",

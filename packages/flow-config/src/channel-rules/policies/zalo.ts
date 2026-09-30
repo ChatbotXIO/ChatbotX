@@ -8,6 +8,13 @@ export const zaloFlowPolicy = defineChannelFlowPolicy({
     buttonLabel: 20,
     text: 2000,
   },
+  supported: [
+    stepTypes.enum.sendText,
+    stepTypes.enum.sendImage,
+    stepTypes.enum.sendMultipleImages,
+    stepTypes.enum.sendGif,
+    stepTypes.enum.sendFile,
+  ],
   // Zalo's attachment conversion has no button payload for file steps.
   noButtons: [stepTypes.enum.sendFile],
   // Zalo's runtime switch has no video, audio, card, carousel, quick-reply,

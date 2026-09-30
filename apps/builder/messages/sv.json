@@ -4165,7 +4165,6 @@
     "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt.",
     "unsupportedBlock": "Den här kanalen har inte stöd för det här blocket.",
     "constraintExceeded": "Den här kanalens gräns har överskridits.",
-    "unsupportedChannel": "Den här noden använder en kanal som inte stöds.",
     "mediaButtonsUnsupported": "Den här kanalen kan inte skicka knappar tillsammans med ett mediemeddelande. Ta bort knapparna eller flytta dem till ett textsteg efter det här.",
     "voiceCall": "Röstsamtal",
     "voiceCallDuration": "Röstsamtal · {duration}",

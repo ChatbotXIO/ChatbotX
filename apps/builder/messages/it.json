@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Ogni sezione richiede almeno un prodotto selezionato: rimuovi le righe vuote o scegli un prodotto.",
     "unsupportedBlock": "Questo canale non supporta questo blocco.",
     "constraintExceeded": "Il limite di questo canale è stato superato.",
-    "unsupportedChannel": "Questo nodo utilizza un canale non supportato.",
     "mediaButtonsUnsupported": "Questo canale non può inviare pulsanti con un messaggio multimediale. Rimuovi i pulsanti o spostali in un passaggio di testo successivo.",
     "voiceCall": "Chiamata vocale",
     "voiceCallDuration": "Chiamata vocale · {duration}",

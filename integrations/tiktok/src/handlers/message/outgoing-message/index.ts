@@ -15,11 +15,11 @@ import { uploadAndBuildImagePayload } from "./send-media"
 import { convertFlowStepText } from "./send-text"
 
 /** Must exactly match the cases in `sendFlowStep` below. */
-export const handledFlowStepTypes = [
+export const handledFlowStepTypes: readonly StepType[] = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendMultipleImages,
-] as const satisfies readonly StepType[]
+]
 
 export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
   async (props) => {
@@ -90,6 +90,10 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
     let sentCount = 0
 
     try {
+      if (!handledFlowStepTypes.includes(step.stepType)) {
+        throw new Error(`Unsupported TikTok flow step: ${step.stepType}`)
+      }
+
       const conversationId = requireConversationId(contact.sourceConversationId)
 
       switch (step.stepType) {
@@ -152,11 +156,7 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
         }
         // Must stay in sync with `handledFlowStepTypes`.
         default:
-          logger.warn(
-            { channel: "tiktok", stepType: step.stepType },
-            "Skipping unsupported TikTok flow step",
-          )
-          break
+          throw new Error(`Unsupported TikTok flow step: ${step.stepType}`)
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending TikTok flow step")

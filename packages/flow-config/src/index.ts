@@ -8,6 +8,8 @@ export {
   type FlowAuthoringError,
   type FlowAuthoringErrorCode,
   FlowAuthoringException,
+  type FlowCapability,
+  flowCapabilitySchema,
   formatZodPathSegment,
   zodErrorToFlowAuthoringErrors,
 } from "./authoring/errors"

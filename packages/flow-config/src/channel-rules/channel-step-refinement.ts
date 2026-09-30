@@ -41,6 +41,10 @@ const checkButtonCount = (
   }
 }
 
+/**
+ * Rejects publish, restore, and import graphs whose channel cannot deliver a
+ * configured message step.
+ */
 export const refineStepsByChannel = (
   nodes: FlowVersionSchema[],
   ctx: z.RefinementCtx,

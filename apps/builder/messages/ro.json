@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
     "unsupportedBlock": "Acest canal nu acceptă acest bloc.",
     "constraintExceeded": "Limita acestui canal a fost depășită.",
-    "unsupportedChannel": "Acest nod utilizează un canal neacceptat.",
     "mediaButtonsUnsupported": "Acest canal nu poate trimite butoane împreună cu un mesaj media. Elimină butoanele sau mută-le într-un pas text de după acesta.",
     "voiceCall": "Apel vocal",
     "voiceCallDuration": "Apel vocal · {duration}",

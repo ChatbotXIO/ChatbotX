@@ -18,6 +18,11 @@ export const tiktokFlowPolicy = defineChannelFlowPolicy({
     text: 6000,
   },
   quickRepliesShareButtonSlots: true,
+  supported: [
+    stepTypes.enum.sendText,
+    stepTypes.enum.sendImage,
+    stepTypes.enum.sendMultipleImages,
+  ],
   // TikTok's runtime switch implements only text, single-image, and
   // multiple-image flow steps.
   noButtons: [stepTypes.enum.sendImage],

@@ -1395,7 +1395,6 @@
     "waTemplateMpmIncompleteProducts": "כל מקטע צריך לפחות מוצר אחד שנבחר — הסירו שורות ריקות או בחרו להן מוצר.",
     "unsupportedBlock": "הערוץ הזה אינו תומך בבלוק הזה.",
     "constraintExceeded": "חרגת ממגבלת הערוץ.",
-    "unsupportedChannel": "הצומת הזה משתמש בערוץ שאינו נתמך.",
     "mediaButtonsUnsupported": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה. הסר את הכפתורים או העבר אותם לשלב טקסט שלאחר שלב זה.",
     "voiceCall": "שיחה קולית",
     "voiceCallDuration": "שיחה קולית · {duration}",

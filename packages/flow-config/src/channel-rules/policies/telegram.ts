@@ -8,6 +8,17 @@ export const telegramFlowPolicy = defineChannelFlowPolicy({
     buttonLabel: 20,
     text: 4096,
   },
+  supported: [
+    stepTypes.enum.sendText,
+    stepTypes.enum.sendImage,
+    stepTypes.enum.sendVideo,
+    stepTypes.enum.sendMultipleImages,
+    stepTypes.enum.sendAudio,
+    stepTypes.enum.sendFile,
+    stepTypes.enum.sendGif,
+    stepTypes.enum.sendQuickReply,
+    stepTypes.enum.sendCarousel,
+  ],
   // Telegram's runtime switch implements media, quick replies, and carousels,
   // but has no card or Messenger-template converter.
   unsupported: [

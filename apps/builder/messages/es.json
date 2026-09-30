@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Cada sección necesita al menos un producto seleccionado: elimina las filas vacías o elige un producto.",
     "unsupportedBlock": "Este canal no admite este bloque.",
     "constraintExceeded": "Se ha superado el límite de este canal.",
-    "unsupportedChannel": "Este nodo utiliza un canal no compatible.",
     "mediaButtonsUnsupported": "Este canal no puede enviar botones junto con un mensaje multimedia. Quita los botones o muévelos a un paso de texto posterior.",
     "voiceCall": "Llamada de voz",
     "voiceCallDuration": "Llamada de voz · {duration}",

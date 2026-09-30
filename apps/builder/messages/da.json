@@ -3366,7 +3366,6 @@
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
     "unsupportedBlock": "Denne kanal understøtter ikke denne blok.",
     "constraintExceeded": "Denne kanals grænse er overskredet.",
-    "unsupportedChannel": "Denne node bruger en ikke-understøttet kanal.",
     "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
     "voiceCall": "Taleopkald",
     "voiceCallDuration": "Taleopkald · {duration}",

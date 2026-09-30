@@ -3608,7 +3608,6 @@
     "waTemplateMpmIncompleteProducts": "Hər bölmədə ən azı bir məhsul seçilməlidir: boş sətirləri çıxarın və ya onlar üçün məhsul seçin.",
     "unsupportedBlock": "Bu kanal bu bloku dəstəkləmir.",
     "constraintExceeded": "Bu kanalın limiti aşıldı.",
-    "unsupportedChannel": "Bu qovşaq dəstəklənməyən kanaldan istifadə edir.",
     "mediaButtonsUnsupported": "Bu kanal media mesajı ilə düymə göndərə bilmir. Düymələri çıxarın və ya onları bundan sonrakı mətn addımına köçürün.",
     "voiceCall": "Səsli zəng",
     "voiceCallDuration": "Səsli zəng · {duration}",
