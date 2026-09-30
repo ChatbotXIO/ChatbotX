@@ -2,6 +2,7 @@ import { channelTypes } from "@chatbotx.io/utils/channel"
 import type { z } from "zod"
 import type { ButtonStepProps } from "../steps/button"
 import { flowValidationCodes } from "../validation-codes"
+import { countMessageCharacters } from "./send-text-length-rules"
 
 /**
  * TikTok's QA_BUTTON_CARD/QA_LINK_CARD send only accepts up to 40 chars in
@@ -44,7 +45,7 @@ const exceedsCardTitleMax = (props: {
   text: string | null | undefined
 }): boolean =>
   formsButtonCard(props) &&
-  Array.from(props.text ?? "").length > TIKTOK_CARD_TITLE_MAX
+  countMessageCharacters(props.text) > TIKTOK_CARD_TITLE_MAX
 
 /**
  * Channels on which a sendText step can reach a TikTok contact, and so have

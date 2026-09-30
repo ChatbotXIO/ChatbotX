@@ -58,6 +58,35 @@ describe("getCapabilities", () => {
     expect(result.flowSpec).toBeDefined()
   })
 
+  test.each([
+    ["tiktok", true, 3, "unsupported"],
+    ["messenger", true, undefined, "full"],
+    ["omnichannel", false, undefined, undefined],
+  ])("projects the %s channel policy", async (channel, managed, maxButtonCount, sendCardSupport) => {
+    const result = await getCapabilities({
+      channel,
+      include: ["flowSpec"],
+      workspaceId: "ws-1",
+    })
+
+    expect(result.flowSpec?.selectedChannelPolicy?.managed).toBe(managed)
+    if (!managed) {
+      return
+    }
+
+    expect(result.flowSpec?.selectedChannelPolicy).toMatchObject({
+      policyVersion: 1,
+      stepSupport: { sendCard: sendCardSupport },
+    })
+    if (maxButtonCount !== undefined) {
+      expect(result.flowSpec?.selectedChannelPolicy?.limits).toContainEqual({
+        allowed: maxButtonCount,
+        id: "maxButtonCount",
+        unit: "buttons",
+      })
+    }
+  })
+
   test("`include` dispatches only the requested loaders", async () => {
     const result = await getCapabilities({
       workspaceId: "ws-1",

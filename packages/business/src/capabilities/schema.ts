@@ -1,6 +1,18 @@
 import { waTemplateParamsSchema } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
+const capabilitiesChannelPolicySchema = z.object({
+  managed: z.boolean(),
+  policyVersion: z.number().optional(),
+  surfaces: z
+    .object({ builder: z.boolean(), flowSpec: z.boolean() })
+    .optional(),
+  stepSupport: z.record(z.string(), z.string()).optional(),
+  limits: z
+    .array(z.object({ allowed: z.number(), id: z.string(), unit: z.string() }))
+    .optional(),
+})
+
 export const capabilitiesInboxSchema = z
   .object({
     id: z.string().describe("Inbox ID."),
@@ -63,6 +75,13 @@ export const capabilitiesFlowSpecSchema = z
       .describe("Supported flow-spec step types."),
     waitUnits: z.array(z.string()).describe("Supported wait-step delay units."),
     channels: z.array(z.string()).describe("Supported flow channels."),
+    managedChannels: z
+      .array(z.string())
+      .describe("Channels with an explicit flow policy."),
+    policyVersion: z.number().describe("Channel policy version."),
+    selectedChannelPolicy: capabilitiesChannelPolicySchema
+      .optional()
+      .describe("Machine-readable policy for the requested channel."),
   })
   .describe("Reference data for authoring a flow spec.")
 export type CapabilitiesFlowSpec = z.infer<typeof capabilitiesFlowSpecSchema>

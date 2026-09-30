@@ -3,6 +3,7 @@ import type { z } from "zod"
 import type { ButtonStepProps } from "../steps/button"
 import { type StepType, stepTypes } from "../steps/step-action"
 import { flowValidationCodes } from "../validation-codes"
+import { resolveStepSupport } from "./step-support"
 
 /**
  * What a channel actually does with a media step, and therefore what the editor
@@ -170,6 +171,14 @@ export const resolveMediaStepSupport = (
 ): MediaStepSupport => {
   if (!isMediaStepType(props.stepType)) {
     return full
+  }
+
+  const canonicalSupport = resolveStepSupport({
+    channel: props.channel,
+    stepType: props.stepType,
+  })
+  if (canonicalSupport) {
+    return canonicalSupport
   }
 
   return (

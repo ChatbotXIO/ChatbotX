@@ -9,10 +9,12 @@ import { flowImportMetaSchema } from "@chatbotx.io/database/partials"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
   collectFlowReferenceWarnings,
+  FlowAuthoringException,
   parseFlowExport,
 } from "@chatbotx.io/flow-config"
 import { getImportEntry } from "@chatbotx.io/imports/registry"
 import { createByteLimitedStream } from "@chatbotx.io/imports/stream-guard"
+import { z } from "zod"
 import { logger } from "../../../lib/logger"
 import type { ImportRow } from "./base-import"
 
@@ -92,6 +94,58 @@ const summarizeSchemaError = (message: string): string => {
   return `Invalid export file${path}: ${first.message}`
 }
 
+const flowCapabilitySchema = z.object({
+  actual: z.number().optional(),
+  allowed: z.number().optional(),
+  alternatives: z.array(z.string()),
+  block: z.string(),
+  channel: z.string(),
+  constraintId: z.string().optional(),
+  policyVersion: z.number(),
+  unit: z.string().optional(),
+})
+
+const schemaIssueSample = z.object({
+  code: z.string().optional(),
+  message: z.string().optional(),
+  params: z.object({ capability: flowCapabilitySchema.optional() }).optional(),
+  path: z.array(z.union([z.string(), z.number()])).optional(),
+})
+
+const getSchemaErrorSamples = (message: string) => {
+  try {
+    const parsed = z.array(schemaIssueSample).safeParse(JSON.parse(message))
+    if (!parsed.success) {
+      return []
+    }
+
+    return parsed.data.flatMap((issue, index) => {
+      if (!issue.message) {
+        return []
+      }
+      const capability = issue.params?.capability
+      const code =
+        capability &&
+        (issue.message === "unsupportedBlock" ||
+          issue.message === "constraintExceeded")
+          ? issue.message
+          : issue.code
+
+      return [
+        {
+          row: index + 1,
+          reason: issue.message,
+          code,
+          capability,
+          path: issue.path?.join("."),
+        },
+      ]
+    })
+  } catch {
+    return []
+  }
+}
+
 export const runFlowImport = async (row: ImportRow): Promise<void> => {
   const parsedMeta = flowImportMetaSchema.safeParse(row.meta)
   if (!parsedMeta.success) {
@@ -124,6 +178,8 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
         summarizeSchemaError(parsed.reason),
         "flowImportSchemaMismatch",
       ),
+      { processed: 1, success: 0, failed: 1 },
+      getSchemaErrorSamples(parsed.reason),
     )
     return
   }
@@ -170,6 +226,21 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
     )
   } catch (error) {
     logger.error({ err: error }, `Flow import ${row.id} insert failed`)
+    if (error instanceof FlowAuthoringException) {
+      await importService.fail(
+        row.id,
+        error,
+        { processed: 1, success: 0, failed: 1 },
+        error.errors.map((issue, index) => ({
+          row: index + 1,
+          reason: issue.message,
+          path: issue.path,
+          code: issue.code,
+          capability: issue.capability,
+        })),
+      )
+      return
+    }
     await importService.fail(row.id, error)
     return
   }

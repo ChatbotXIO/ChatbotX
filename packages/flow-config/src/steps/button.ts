@@ -1,5 +1,6 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { countMessageCharacters } from "../channel-rules/send-text-length-rules"
 import { actionSteps } from "../shared"
 import { openWebsiteStepSchema } from "./open-website"
 import { startAnotherNodeStepSchema } from "./start-another-node"
@@ -22,7 +23,13 @@ export const BUTTON_LABEL_MAX = 20
 export const buttonStepSchema = z
   .object({
     id: zodBigintAsString(),
-    label: z.string().min(1).max(BUTTON_LABEL_MAX),
+    label: z
+      .string()
+      .min(1)
+      .refine(
+        (value) => countMessageCharacters(value) <= BUTTON_LABEL_MAX,
+        `Button labels must be ${BUTTON_LABEL_MAX} characters or fewer.`,
+      ),
   })
   .and(
     z.discriminatedUnion("buttonType", [

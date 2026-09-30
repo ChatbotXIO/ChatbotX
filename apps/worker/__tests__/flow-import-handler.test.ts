@@ -17,13 +17,22 @@ vi.mock("@chatbotx.io/business", () => ({
       mocks.updateValues.push({ status: "processing" })
       return Promise.resolve()
     }),
-    fail: vi.fn((_importId: string, error: unknown) => {
-      mocks.updateValues.push({
-        status: "failed",
-        errorMessage: error instanceof Error ? error.message : error,
-      })
-      return Promise.resolve()
-    }),
+    fail: vi.fn(
+      (
+        _importId: string,
+        error: unknown,
+        counters?: { processed: number; success: number; failed: number },
+        errorSample?: unknown,
+      ) => {
+        mocks.updateValues.push({
+          status: "failed",
+          errorMessage: error instanceof Error ? error.message : error,
+          ...counters,
+          errorSample,
+        })
+        return Promise.resolve()
+      },
+    ),
     complete: vi.fn(
       (input: {
         importId: string
@@ -208,6 +217,55 @@ describe("runFlowImport", () => {
 
     expect(mocks.importFlowExport).not.toHaveBeenCalled()
     expect(mocks.updateValues.at(-1)).toMatchObject({ status: "failed" })
+  })
+
+  test("persists every TikTok unsupported-step capability error without importing", async () => {
+    const exportJson = buildExportJson()
+    const node = exportJson.flows[0].nodes[0]
+    node.data.details.beforeStep.channel = "tiktok"
+    node.data.details.steps = [
+      {
+        id: "4",
+        stepType: "sendVideo",
+        mode: "url",
+        url: "https://example.com/video.mp4",
+        buttons: [],
+      },
+      {
+        id: "5",
+        stepType: "sendFile",
+        mode: "url",
+        url: "https://example.com/file.pdf",
+        buttons: [],
+      },
+    ]
+    mockStream(exportJson)
+
+    await runFlowImport(importRow)
+
+    expect(mocks.importFlowExport).not.toHaveBeenCalled()
+    expect(mocks.updateValues.at(-1)).toMatchObject({
+      status: "failed",
+      failed: 1,
+      processed: 1,
+      success: 0,
+      errorSample: [
+        expect.objectContaining({
+          code: "unsupportedBlock",
+          capability: expect.objectContaining({
+            block: "sendVideo",
+            channel: "tiktok",
+          }),
+        }),
+        expect.objectContaining({
+          code: "unsupportedBlock",
+          capability: expect.objectContaining({
+            block: "sendFile",
+            channel: "tiktok",
+          }),
+        }),
+      ],
+    })
   })
 
   test("fails the import when the stream exceeds the byte limit", async () => {

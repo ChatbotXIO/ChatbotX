@@ -23,8 +23,20 @@ export type FlowAuthoringErrorCode =
   | "invalidGraph"
   | "compileFailed"
   | "templateNotApproved"
+  | "unsupportedBlock"
+  | "constraintExceeded"
 
 export type FlowAuthoringError = {
+  capability?: {
+    actual?: number
+    allowed?: number
+    alternatives: string[]
+    block: string
+    channel: string
+    constraintId?: string
+    policyVersion: number
+    unit?: string
+  }
   /** Spec-relative path, e.g. `steps[2].templateName` — never a compiled-node path. */
   path: string
   code: FlowAuthoringErrorCode
@@ -63,19 +75,50 @@ export const formatZodPathSegment = (
  * diagnostic code. Without `mapPath`, issue paths are used verbatim — correct
  * when validating the spec itself, where paths are already spec-relative.
  * `compileAndValidateSpec` (`apps/builder`) passes `mapPath` when validating
- * the *compiled* node graph instead, to translate a node-graph path back to
+ * the compiled node graph instead, to translate a node-graph path back to
  * the spec-relative path an agent actually wrote.
  */
+const isFlowCapability = (
+  value: unknown,
+): value is NonNullable<FlowAuthoringError["capability"]> =>
+  typeof value === "object" &&
+  value !== null &&
+  "block" in value &&
+  typeof value.block === "string" &&
+  "channel" in value &&
+  typeof value.channel === "string" &&
+  "policyVersion" in value &&
+  typeof value.policyVersion === "number"
 export function zodErrorToFlowAuthoringErrors(
   error: z.ZodError,
   code: FlowAuthoringErrorCode,
   mapPath?: (issuePath: PropertyKey[]) => string | undefined,
 ): FlowAuthoringError[] {
-  return error.issues.map((issue) => ({
-    path: mapPath?.(issue.path) ?? issue.path.reduce(formatZodPathSegment, ""),
-    code,
-    message: issue.message,
-  }))
+  return error.issues.map((issue) => {
+    const capabilityCode =
+      issue.message === "unsupportedBlock" ||
+      issue.message === "constraintExceeded"
+        ? issue.message
+        : undefined
+    const issueParams =
+      "params" in issue && typeof issue.params === "object"
+        ? issue.params
+        : undefined
+    const capability =
+      issueParams &&
+      "capability" in issueParams &&
+      isFlowCapability(issueParams.capability)
+        ? issueParams.capability
+        : undefined
+
+    return {
+      capability,
+      path:
+        mapPath?.(issue.path) ?? issue.path.reduce(formatZodPathSegment, ""),
+      code: capabilityCode ?? code,
+      message: issue.message,
+    }
+  })
 }
 
 // Small edit-distance algorithm — names here are short (workspace entity

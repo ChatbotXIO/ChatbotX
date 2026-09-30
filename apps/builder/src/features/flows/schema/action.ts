@@ -1,8 +1,7 @@
 import {
   edgeSchema,
   flowSpecSchema,
-  flowVersionSchema,
-  refineStepsByChannel,
+  publishFlowSchema as publishFlowGraphSchema,
 } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -175,21 +174,13 @@ export const updateDraftFlowRequest = z.union([
   updateDraftFlowVersionSchema,
 ])
 
-// Channel rules are declared per step (see
-// `@chatbotx.io/flow-config/channel-rules`), so this stays one generic hook
-// instead of accumulating a refinement per channel/step pair.
+// Keep the branch guard local to this request union. The graph and channel
+// validation itself lives in flow-config so business and worker callers use
+// the identical live-flow boundary.
 export const publishFlowSchema = rejectIfKeysPresent(
   ["spec"],
   '"nodes"/"edges"',
-  z.object({
-    nodes: z
-      .array(flowVersionSchema)
-      .superRefine(refineStepsByChannel)
-      .describe("Raw flow node graph, as sent by the builder UI."),
-    edges: z
-      .array(edgeSchema)
-      .describe("Raw flow edge graph, as sent by the builder UI."),
-  }),
+  publishFlowGraphSchema,
 )
 export type PublishFlowSchema = z.infer<typeof publishFlowSchema>
 

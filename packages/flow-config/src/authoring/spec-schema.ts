@@ -1,5 +1,6 @@
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
+import { countMessageCharacters } from "../channel-rules/send-text-length-rules"
 import { BUTTON_LABEL_MAX } from "../steps/button"
 import { waitStepDelayUnits } from "../steps/wait"
 
@@ -88,7 +89,10 @@ const sendButtonSpecSchema: z.ZodType<{
         .string()
         .trim()
         .min(1)
-        .max(BUTTON_LABEL_MAX)
+        .refine(
+          (value) => countMessageCharacters(value) <= BUTTON_LABEL_MAX,
+          `Button labels must be ${BUTTON_LABEL_MAX} characters or fewer.`,
+        )
         .describe(
           `Button label shown to the contact (max ${BUTTON_LABEL_MAX} characters).`,
         ),
@@ -114,7 +118,10 @@ const sendStepSpecSchema = z
       .string()
       .trim()
       .min(1)
-      .max(MAX_SPEC_TEXT_LENGTH)
+      .refine(
+        (value) => countMessageCharacters(value) <= MAX_SPEC_TEXT_LENGTH,
+        `Text must be ${MAX_SPEC_TEXT_LENGTH} characters or fewer.`,
+      )
       .optional()
       .describe(
         `Text message body (max ${MAX_SPEC_TEXT_LENGTH} characters). Exactly one of text/imageUrl/fileUrl is required.`,
@@ -350,7 +357,10 @@ const addNoteStepSpecSchema = z
       .string()
       .trim()
       .min(1)
-      .max(MAX_SPEC_TEXT_LENGTH)
+      .refine(
+        (value) => countMessageCharacters(value) <= MAX_SPEC_TEXT_LENGTH,
+        `Notes must be ${MAX_SPEC_TEXT_LENGTH} characters or fewer.`,
+      )
       .describe(
         `Internal note text (max ${MAX_SPEC_TEXT_LENGTH} characters) — never shown to the contact.`,
       ),

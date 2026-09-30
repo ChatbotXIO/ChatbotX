@@ -591,7 +591,7 @@ chatbotx appointments delete <id>
 ### `capabilities`
 
 ```bash
-chatbotx capabilities list                            # [--include]  Discover workspace ids/names an agent needs
+chatbotx capabilities list                            # [--include --channel]  Discover workspace ids/names and channel flow policy
 ```
 
 ---

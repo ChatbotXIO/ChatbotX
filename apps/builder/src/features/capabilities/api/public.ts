@@ -38,6 +38,13 @@ const includeQueryParam = z.preprocess(
     ),
 )
 
+const channelQueryParam = z
+  .string()
+  .optional()
+  .describe(
+    "Channel to project an explicit flow policy for. Query this before authoring a channel-bound flow.",
+  )
+
 const flowSpecJsonSchemaConverter = new ZodToJsonSchemaConverter()
 // `flowSpecSchema` is static — converted once at module load rather than on
 // every `schemas.flowSpec` request.
@@ -53,11 +60,11 @@ export const capabilitiesPublicRouter = {
       path: "/v1/capabilities",
       summary: "Discover workspace capabilities",
       description:
-        "Returns compact (id + name, plus a couple of decisive fields) lists of the workspace entities an agent needs to reference by id — inboxes, WhatsApp templates, custom/bot fields, tags, AI agents, sequences, and flows — plus the flow-spec DSL's step types and valid wait units/channels. Bot fields are reference data only; they cannot be used as a branch condition's `field` (only custom fields and built-in contact fields can). Use `include` (comma-separated) to narrow the response; omit it for the default set an agent needs to build a flow. Call this before `flows.create`/`flows.publish`/`flows.updateDraft`/`flows.validate` so names in a flow spec resolve to real ids instead of guesses.",
+        "Returns compact workspace reference data and FlowSpec authoring capabilities. Before writing a channel-bound FlowSpec, pass `channel` to receive the selected channel policy, supported block IDs, limits, and Builder/FlowSpec surface flags. Use `include` (comma-separated) to narrow the response; omit it for the default flow-authoring capabilities. Call this before `flows.create`, `flows.publish`, `flows.updateDraft`, or `flows.validate` so referenced names resolve to real workspace entities.",
       tags: ["Capabilities"],
       spec: mcpSpec({ visibility: "default", alwaysVisible: true }),
     })
-    .input(z.object({ include: includeQueryParam }))
+    .input(z.object({ channel: channelQueryParam, include: includeQueryParam }))
     .output(capabilitiesResponseSchema)
     .errors(possibleErrorsOnListingResource)
     .handler(
@@ -65,6 +72,7 @@ export const capabilitiesPublicRouter = {
         await getCapabilities({
           workspaceId: context.workspace.id,
           include: input.include,
+          channel: input.channel,
         }),
     ),
 }

@@ -11,6 +11,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { assertFlowGraphPublishable } from "./assert-publishable"
 
 class FlowVersionService extends BaseService {
   async findDraft(
@@ -127,6 +128,8 @@ class FlowVersionService extends BaseService {
   }
 
   async restore({ version }: { version: FlowVersionModel }): Promise<void> {
+    assertFlowGraphPublishable({ nodes: version.nodes, edges: version.edges })
+
     await db.transaction(async (tx) => {
       await tx
         .update(flowVersionModel)
@@ -327,6 +330,8 @@ class FlowVersionService extends BaseService {
     nodes: FlowVersionModel["nodes"]
     edges: FlowVersionModel["edges"]
   }): Promise<void> {
+    assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
+
     const draftVersion = await this.findDraft({
       flowId: input.flowId,
       workspaceId: input.workspaceId,
@@ -379,6 +384,8 @@ class FlowVersionService extends BaseService {
     nodes: FlowVersionModel["nodes"]
     edges: FlowVersionModel["edges"]
   }): Promise<void> {
+    assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
+
     const flow = await db.query.flowModel.findFirst({
       where: {
         id: input.flowId,

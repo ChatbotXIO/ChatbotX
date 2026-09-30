@@ -69,6 +69,10 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+vi.mock("../src/flow-version/assert-publishable", () => ({
+  assertFlowGraphPublishable: vi.fn(),
+}))
+
 const { flowVersionService } = await import("../src/flow-version/service")
 
 describe("flowVersionService.publish", () => {

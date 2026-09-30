@@ -44,6 +44,14 @@ export const importStatus = pgEnum(
   importStatuses.options as [ImportStatus, ...ImportStatus[]],
 )
 
+export type ImportErrorSample = {
+  capability?: Record<string, boolean | number | string | string[]>
+  code?: string
+  path?: string
+  reason: string
+  row: number
+}
+
 export const importModel = pgTable(
   "Import",
   {
@@ -84,10 +92,7 @@ export const importModel = pgTable(
     successCount: integer().default(0).notNull(),
     failedCount: integer().default(0).notNull(),
     errorMessage: text(),
-    errorSample: jsonb()
-      .$type<Array<{ row: number; reason: string }>>()
-      .default([])
-      .notNull(),
+    errorSample: jsonb().$type<ImportErrorSample[]>().default([]).notNull(),
     completedAt: timestamp(timestampConfig),
   },
   (table) => [

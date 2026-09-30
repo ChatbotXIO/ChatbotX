@@ -143,6 +143,10 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
           break
         }
         default:
+          logger.warn(
+            { channel: "tiktok", stepType: step.stepType },
+            "Skipping unsupported TikTok flow step",
+          )
           break
       }
     } catch (error) {

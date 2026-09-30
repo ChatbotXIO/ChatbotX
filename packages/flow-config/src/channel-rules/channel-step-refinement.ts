@@ -1,10 +1,17 @@
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import type { z } from "zod"
+import type { FlowAuthoringError } from "../authoring/errors"
 import { nodeTypeSchema } from "../nodes/base"
 import type { FlowVersionSchema } from "../nodes/index"
+import {
+  getSendMessageChannel,
+  type SendMessageNodeSchema,
+} from "../nodes/send-message"
 import { stepTypes } from "../steps/step-action"
 import { flowValidationCodes } from "../validation-codes"
 import { resolveStepValidator } from "./channel-validator"
+import { countMessageCharacters } from "./send-text-length-rules"
+import { getChannelStepPolicy, isStepUnsupported } from "./step-support"
 import { isTiktokQuickReplyCardTitleTooLong } from "./tiktok-text-rules"
 import { channelAwareStepValidators } from "./validators"
 
@@ -28,18 +35,113 @@ export const refineStepsByChannel = (
       return
     }
 
-    const { channel } = node.data.details.beforeStep
+    const channel = getSendMessageChannel(node as SendMessageNodeSchema)
     const quickReplyCount = node.data.details.quickReplies.length
+    if (!channel) {
+      ctx.addIssue({
+        code: "custom",
+        message: flowValidationCodes.unsupportedChannel,
+        path: [nodeIndex, "data", "details", "beforeStep", "channel"],
+      })
+      return
+    }
+
+    const policy = getChannelStepPolicy(channel)
 
     node.data.details.steps.forEach((step, stepIndex) => {
       // Re-anchor onto the node path so the message resolver still finds the
       // validation code, and the issue points at the offending step.
-      const addStepIssue = (message: string, path: PropertyKey[]): void => {
+      const addStepIssue = (
+        message: string,
+        path: PropertyKey[],
+        capability?: FlowAuthoringError["capability"],
+      ): void => {
         ctx.addIssue({
           code: "custom",
           message,
           path: [nodeIndex, "data", "details", "steps", stepIndex, ...path],
+          params: capability ? { capability } : undefined,
         })
+      }
+
+      if (isStepUnsupported({ channel, stepType: step.stepType })) {
+        addStepIssue(flowValidationCodes.unsupportedBlock, [], {
+          alternatives: [],
+          block: step.stepType,
+          channel,
+          policyVersion: policy?.policyVersion ?? 1,
+        })
+        return
+      }
+
+      const constraints = policy?.constraints
+      const buttons =
+        "buttons" in step && Array.isArray(step.buttons) ? step.buttons : []
+
+      const buttonCount =
+        step.stepType === stepTypes.enum.sendText
+          ? buttons.length + quickReplyCount
+          : buttons.length
+      const exceedsButtonLimit =
+        constraints?.maxButtonCount !== undefined &&
+        buttonCount > constraints.maxButtonCount
+      const quickRepliesCauseOverflow =
+        exceedsButtonLimit &&
+        step.stepType === stepTypes.enum.sendText &&
+        buttons.length <=
+          (constraints?.maxButtonCount ?? Number.POSITIVE_INFINITY)
+      const countCapability = {
+        actual: buttonCount,
+        allowed: constraints?.maxButtonCount,
+        alternatives: [],
+        block: step.stepType,
+        channel,
+        constraintId: "maxButtonCount",
+        policyVersion: policy?.policyVersion ?? 1,
+        unit: "buttons",
+      }
+
+      if (quickRepliesCauseOverflow) {
+        ctx.addIssue({
+          code: "custom",
+          message: flowValidationCodes.constraintExceeded,
+          params: { capability: countCapability },
+          path: [nodeIndex, "data", "details", "quickReplies"],
+        })
+      } else if (exceedsButtonLimit) {
+        addStepIssue(
+          flowValidationCodes.constraintExceeded,
+          ["buttons"],
+          countCapability,
+        )
+      }
+
+      if (constraints?.maxButtonLabelLength !== undefined) {
+        for (const [buttonIndex, button] of buttons.entries()) {
+          if (
+            typeof button === "object" &&
+            button !== null &&
+            "label" in button &&
+            typeof button.label === "string" &&
+            countMessageCharacters(button.label) >
+              constraints.maxButtonLabelLength
+          ) {
+            addStepIssue(
+              flowValidationCodes.constraintExceeded,
+              ["buttons", buttonIndex, "label"],
+              {
+                actual: countMessageCharacters(button.label),
+                allowed: constraints.maxButtonLabelLength,
+                alternatives: [],
+                block: step.stepType,
+                channel,
+                constraintId: "maxButtonLabelLength",
+                policyVersion: policy?.policyVersion ?? 1,
+                unit: "characters",
+              },
+            )
+          }
+        }
       }
 
       // Node-level rule: quick replies are not part of the step, so the

@@ -1,11 +1,11 @@
-import type {
-  FlowAuthoringContext,
-  FlowSpecStepType,
-  TemplateComponent,
-} from "@chatbotx.io/flow-config"
 import {
+  CHANNEL_POLICY_VERSION,
   extractTemplateParams,
+  type FlowAuthoringContext,
   flowSpecStepTypes,
+  getChannelStepPolicy,
+  managedChannels,
+  type TemplateComponent,
   waitStepDelayUnits,
 } from "@chatbotx.io/flow-config"
 import { channelTypes } from "@chatbotx.io/utils/channel"
@@ -234,13 +234,42 @@ async function listAllFlows(
   return data.map((flow) => ({ id: flow.id, name: flow.name }))
 }
 
-function getFlowSpecCapabilities(): CapabilitiesFlowSpec {
-  const stepTypes: FlowSpecStepType[] = flowSpecStepTypes
+const FLOW_SPEC_CAPABILITIES = {
+  stepTypes: flowSpecStepTypes,
+  waitUnits: [...waitStepDelayUnits.options],
+  channels: [...channelTypes.options],
+  managedChannels: [...managedChannels],
+  policyVersion: CHANNEL_POLICY_VERSION,
+} satisfies Omit<CapabilitiesFlowSpec, "selectedChannelPolicy">
+
+function getFlowSpecCapabilities(channel?: string): CapabilitiesFlowSpec {
+  const policy = getChannelStepPolicy(channel)
+  if (!policy) {
+    return {
+      ...FLOW_SPEC_CAPABILITIES,
+      selectedChannelPolicy: { managed: false },
+    }
+  }
+
+  const limits = [
+    ["maxButtonCount", "buttons"],
+    ["maxButtonLabelLength", "characters"],
+    ["maxCardTitleLength", "characters"],
+    ["maxTextLength", "characters"],
+  ].flatMap(([id, unit]) => {
+    const allowed = policy.constraints[id as keyof typeof policy.constraints]
+    return typeof allowed === "number" ? [{ allowed, id, unit }] : []
+  })
 
   return {
-    stepTypes,
-    waitUnits: [...waitStepDelayUnits.options],
-    channels: [...channelTypes.options],
+    ...FLOW_SPEC_CAPABILITIES,
+    selectedChannelPolicy: {
+      managed: true,
+      policyVersion: policy.policyVersion,
+      surfaces: policy.surfaces,
+      stepSupport: policy.stepSupport,
+      limits,
+    },
   }
 }
 
@@ -273,6 +302,7 @@ const CAPABILITY_LOADERS: {
 export async function getCapabilities(props: {
   workspaceId: string
   include?: readonly CapabilitiesInclude[]
+  channel?: string
 }): Promise<CapabilitiesResponse> {
   const { workspaceId } = props
   const includes = props.include ?? DEFAULT_INCLUDES
@@ -298,7 +328,11 @@ export async function getCapabilities(props: {
     return [result.value]
   })
 
-  return Object.fromEntries(entries) as CapabilitiesResponse
+  const response = Object.fromEntries(entries) as CapabilitiesResponse
+  if (response.flowSpec) {
+    response.flowSpec = getFlowSpecCapabilities(props.channel)
+  }
+  return response
 }
 
 /**

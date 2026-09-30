@@ -3,7 +3,11 @@ import type { z } from "zod"
 import type { ButtonStepProps } from "../steps/button"
 import { BUTTON_LABEL_MAX } from "../steps/button"
 import { flowValidationCodes } from "../validation-codes"
+import { getChannelStepPolicy } from "./step-support"
 import { TIKTOK_CARD_TITLE_MAX } from "./tiktok-text-rules"
+export const countMessageCharacters = (
+  value: string | null | undefined,
+): number => Array.from(value ?? "").length
 
 /**
  * Message-body limit each channel's send API accepts, in characters.
@@ -92,26 +96,20 @@ export const resolveSendTextLengthLimits = (props: {
   hasQuickReplies?: boolean
 }): SendTextLengthLimits => {
   const channel = resolveChannelKey(props.channel)
-
+  const policy = getChannelStepPolicy(channel)
   const isTiktokCard =
     channel === channelTypes.enum.tiktok &&
     (props.hasButtons === true || props.hasQuickReplies === true)
 
   return {
-    text: isTiktokCard ? TIKTOK_CARD_TITLE_MAX : CHANNEL_TEXT_MAX[channel],
-    buttonLabel: BUTTON_LABEL_MAX,
-    quickReplyLabel: BUTTON_LABEL_MAX,
+    text: isTiktokCard
+      ? (policy?.constraints.maxCardTitleLength ?? TIKTOK_CARD_TITLE_MAX)
+      : (policy?.constraints.maxTextLength ?? CHANNEL_TEXT_MAX[channel]),
+    buttonLabel: policy?.constraints.maxButtonLabelLength ?? BUTTON_LABEL_MAX,
+    quickReplyLabel:
+      policy?.constraints.maxButtonLabelLength ?? BUTTON_LABEL_MAX,
   }
 }
-
-/**
- * Counts characters the way a messaging platform does — by code point, so an
- * emoji built from a surrogate pair counts as one, not two. Mirrors how
- * `tiktok-text-rules` already measures a card title.
- */
-export const countMessageCharacters = (
-  value: string | null | undefined,
-): number => Array.from(value ?? "").length
 
 /**
  * Blocks publish (and worker import) for a sendText step whose message is

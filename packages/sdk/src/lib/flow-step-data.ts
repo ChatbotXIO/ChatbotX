@@ -1,5 +1,6 @@
 import type {
   SendAudioStepSchema,
+  SendCardStepSchema,
   SendCarouselStepSchema,
   SendFileStepSchema,
   SendGifStepSchema,
@@ -19,6 +20,7 @@ export type SendFlowStepData =
   | SendTextStepSchema
   | SendImageStepSchema
   | SendMultipleImagesStepSchema
+  | SendCardStepSchema
   | SendGifStepSchema
   | SendAudioStepSchema
   | SendVideoStepSchema

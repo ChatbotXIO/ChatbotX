@@ -1,4 +1,5 @@
 import {
+  cardLayouts,
   type SendAudioStepSchema,
   type SendCarouselStepSchema,
   type SendFileStepSchema,
@@ -566,12 +567,30 @@ async function* convertFlowStep(
         >,
       ) as Generator<FacebookMessage>
       break
+    case stepTypes.enum.sendCard: {
+      const cardStep = step
+      const carouselStep: SendCarouselStepSchema = {
+        cards: [cardStep],
+        id: cardStep.id,
+        layout: cardLayouts.enum.horizontal,
+        stepType: stepTypes.enum.sendCarousel,
+      }
+      yield* convertFlowStepCarousel({
+        ...props,
+        data: { ...props.data, step: carouselStep },
+      }) as Generator<FacebookMessage>
+      break
+    }
     case stepTypes.enum.sendCarousel:
       yield* convertFlowStepCarousel(
         props as SendFlowStepProps<MessengerAuthValue, SendCarouselStepSchema>,
       ) as Generator<FacebookMessage>
       break
     default:
+      logger.warn(
+        { channel: "messenger", stepType: step.stepType },
+        "Skipping unsupported Messenger flow step",
+      )
       break
   }
 }

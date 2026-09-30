@@ -1,5 +1,6 @@
 import {
   buttonStepDefaultFn,
+  getChannelStepPolicy,
   resolveSendTextLengthLimits,
 } from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -15,7 +16,7 @@ import { CharacterCounter } from "@/components/character-counter"
 import type { ButtonEditorConfig } from "../../stores/step-store"
 import { useStepStore } from "../../stores/step-store-provider"
 
-const MAX_BUTTON_GROUP_BUTTONS = 3
+const DEFAULT_MAX_BUTTON_GROUP_BUTTONS = 3
 
 type ButtonStepEditorProps = {
   parentName: string
@@ -76,6 +77,10 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
     control,
     name: parentName,
   })
+  const channel = useWatch({ name: "beforeStep.channel" })
+  const maxButtons =
+    getChannelStepPolicy(channel)?.constraints.maxButtonCount ??
+    DEFAULT_MAX_BUTTON_GROUP_BUTTONS
 
   function addButton() {
     append(
@@ -116,7 +121,7 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
 
       <Button
         className="my-1.5 w-full"
-        disabled={fields.length >= MAX_BUTTON_GROUP_BUTTONS}
+        disabled={fields.length >= maxButtons}
         onClick={addButton}
         type="button"
         variant="secondary"
@@ -124,9 +129,9 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
         <PlusIcon />
         {t("actions.add")}
       </Button>
-      {fields.length >= MAX_BUTTON_GROUP_BUTTONS ? (
+      {fields.length >= maxButtons ? (
         <p className="text-muted-foreground text-sm">
-          {t("flows.buttons.limitReached", { max: MAX_BUTTON_GROUP_BUTTONS })}
+          {t("flows.buttons.limitReached", { max: maxButtons })}
         </p>
       ) : null}
     </>
