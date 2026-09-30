@@ -642,7 +642,7 @@ describe("tagService.detachByNamesFromContacts", () => {
         contactIds: ["c-1"],
         names: ["tag-a"],
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ removedNames: [] })
 
     expect(enqueueDetach).toHaveBeenCalledOnce()
     expect(enqueueDetach).toHaveBeenCalledWith({

@@ -13,7 +13,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   customFieldFindFirst: vi.fn(),
-  applyValueOperation: vi.fn(async () => ({ id: "bot-1", value: "after" })),
+  findByKeyOrFail: vi.fn(async () => ({
+    id: "bot-1",
+    name: "Bot field",
+    value: "before",
+  })),
+  applyValueOperation: vi.fn(async () => ({
+    id: "bot-1",
+    name: "Bot field",
+    value: "after",
+  })),
   clearValueByKey: vi.fn(async () => ({ id: "bot-1", value: null })),
   invalidateCacheByTags: vi.fn(async () => undefined),
   emitCustomFieldChanged: vi.fn(async () => undefined),
@@ -41,6 +50,7 @@ vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
 
 vi.mock("../src/bot-field/service", () => ({
   botFieldService: {
+    findByKeyOrFail: mocks.findByKeyOrFail,
     applyValueOperation: mocks.applyValueOperation,
     clearValueByKey: mocks.clearValueByKey,
   },
