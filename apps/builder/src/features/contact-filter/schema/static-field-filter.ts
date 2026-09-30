@@ -3,6 +3,7 @@ import {
   operatorTypes,
 } from "@chatbotx.io/database/partials"
 import { z } from "zod"
+import { isChannelPostId } from "@/features/channel-posts/schema"
 import { sampleStringSchema } from "./shared"
 
 const VALUELESS_OPERATORS = [
@@ -93,6 +94,8 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   lastSeenMinutesAgo: NUMBER_OPERATORS,
   lastInteractionMinutesAgo: NUMBER_OPERATORS,
   consecutiveAiFailures: NUMBER_OPERATORS,
+  followerCountOnInstagram: NUMBER_OPERATORS,
+  commentedOnPost: BASE_OPERATORS,
   lastUserInputType: [
     operatorTypes.enum.eq,
     operatorTypes.enum.ne,
@@ -112,6 +115,9 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   emailWasVerified: NON_NULLABLE_BOOLEAN_OPERATORS,
   optedInForEmail: NON_NULLABLE_BOOLEAN_OPERATORS,
   fromCtwaAd: BOOLEAN_OPERATORS,
+  followsBusinessOnInstagram: BOOLEAN_OPERATORS,
+  businessFollowsUserOnInstagram: BOOLEAN_OPERATORS,
+  verifiedAccountOnInstagram: BOOLEAN_OPERATORS,
 
   fullName: TEXT_FREE_OPERATORS,
   lastComment: TEXT_FREE_OPERATORS,
@@ -179,6 +185,23 @@ export const staticFieldFilter = <T extends string>(field: T) =>
       }
 
       if (isValuelessOperator(condition.operator)) {
+        return
+      }
+
+      if (field === "commentedOnPost") {
+        if (
+          !Array.isArray(condition.value) ||
+          condition.value.length === 0 ||
+          condition.value.length > 100 ||
+          new Set(condition.value).size !== condition.value.length ||
+          !condition.value.every(isChannelPostId)
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Commented posts require one to 100 unique bigint ids",
+            path: ["value"],
+          })
+        }
         return
       }
 

@@ -27,7 +27,7 @@ import {
   getWhatsappClient,
   type WhatsappAuthValue,
 } from "@chatbotx.io/integration-whatsapp"
-import { getChildLogger } from "@chatbotx.io/logger"
+import { getChildLogger, toLogSafeError } from "@chatbotx.io/logger"
 import { distributedLock } from "@chatbotx.io/redis"
 import { IntegrationException, SdkException } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -699,7 +699,9 @@ const storeNoAvatarSentinel = async (
 ): Promise<{ avatar: string }> => {
   log.warn(
     {
-      err,
+      // An auth-refresh failure carries the refresh request URL (with its token)
+      // on nested error fields; toLogSafeError strips them before logging.
+      err: toLogSafeError(err),
       contactInboxId: input.contactInboxId,
       workspaceId: input.workspaceId,
     },

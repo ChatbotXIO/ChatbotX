@@ -173,6 +173,10 @@ chatbotx contacts block <identifier>
 chatbotx contacts unblock <identifier>
 chatbotx contacts filter-fields                      # Field/operator reference for --contactFilter
 
+# Discover IDs accepted by contactFilter.commentedOnPost
+chatbotx channel-posts list                           # [--limit --search --cursor]
+chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter post labels
+
 # Imports & exports
 chatbotx contacts imports                            # [--page --perPage --status --keyword]
 chatbotx contacts find-by-imports <id>                # Get one import job

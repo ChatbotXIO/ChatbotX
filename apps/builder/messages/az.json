@@ -625,6 +625,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "YYYY-MM-DD HH:mm formatında tarix və ya dəyişən daxil edin",
+    "openPost": "{post} aç",
+    "openPostLink": "Aç",
+    "postWithoutCaption": "Başlıqsız paylaşım",
     "operator": {
       "and": "Bütün şərtlər",
       "or": "İstənilən şərt"
@@ -922,7 +925,9 @@
       "bannerDescription": "Bu iş sahəsinin silinməsi planlaşdırılıb. Ondan istifadəyə davam etmək üçün aşağıda silinməni geri alın.",
       "pendingBlockedToast": "Bu iş sahəsinin silinməsi planlaşdırılıb. Girişi bərpa etmək üçün iş sahəsinin administratoru ilə əlaqə saxlayın.",
       "navDisabledTooltip": "İş sahəsinin silinməsi planlaşdırıldığı müddətdə əlçatan deyil",
-      "badge": "Silinmə planlaşdırılıb"
+      "badge": "Silinmə planlaşdırılıb",
+      "purging": "İş sahəsinin silinməsi davam edir.",
+      "alreadyStarted": "İş sahəsinin silinməsi artıq başlayıb."
     },
     "supportAccess": {
       "bannerTitle": "Platforma dəstək sessiyası",

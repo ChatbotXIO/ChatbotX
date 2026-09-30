@@ -1,3 +1,4 @@
+import { scrubSecretsInString } from "@chatbotx.io/logger"
 import { UNKNOWN_ERROR } from "@chatbotx.io/sdk"
 import ky, { isHTTPError, type KyInstance } from "ky"
 import { API_URL, INSTAGRAM_OAUTH_URL } from "../constants"
@@ -59,12 +60,15 @@ export function logChannelError(
   if (isExpectedPolicyError(source)) {
     logger.warn(
       payload,
-      `Instagram API expected policy error: ${source.message ?? "unknown"}`,
+      `Instagram API expected policy error: ${scrubSecretsInString(source.message ?? "unknown")}`,
     )
     return
   }
 
-  logger.error(payload, `Instagram API error: ${source.message ?? "unknown"}`)
+  logger.error(
+    payload,
+    `Instagram API error: ${scrubSecretsInString(source.message ?? "unknown")}`,
+  )
 }
 
 type HttpClientConfig = {

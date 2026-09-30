@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { WorkspacePurgeIncompleteError } from "../../errors"
 
 const {
   mockDbExecute,
@@ -80,13 +81,14 @@ describe("workspaceLifecycleService", () => {
     mockSelectDistinctLimit.mockResolvedValue([])
     mockDeleteWhere.mockResolvedValue({ rowCount: 0 })
     mockLiftDecompressionLimit.mockResolvedValue(undefined)
+    mockDbExecute.mockResolvedValue({ rowCount: 0, rows: [] })
   })
 
   test("purgeWorkspaceHeavyData drains each ctid table until a short batch", async () => {
     // First batch is full (keep draining), then a short batch stops that table.
     mockDbExecute
       .mockResolvedValueOnce({ rowCount: 2 })
-      .mockResolvedValue({ rowCount: 1 })
+      .mockResolvedValue({ rowCount: 1, rows: [] })
 
     const result = await workspaceLifecycleService.purgeWorkspaceHeavyData({
       workspaceId: "workspace-1",
@@ -95,7 +97,9 @@ describe("workspaceLifecycleService", () => {
 
     // Table 1: 2 + 1 rows (2 calls); tables 2..6: 1 row each (1 call).
     expect(result).toBe(2 + 1 + (HEAVY_TABLE_COUNT - 1))
-    expect(mockDbExecute).toHaveBeenCalledTimes(2 + (HEAVY_TABLE_COUNT - 1))
+    expect(mockDbExecute).toHaveBeenCalledTimes(
+      2 + (HEAVY_TABLE_COUNT - 1) + HEAVY_TABLE_COUNT,
+    )
   })
 
   test("purgeWorkspaceHeavyData caps batches per ctid table", async () => {
@@ -103,7 +107,7 @@ describe("workspaceLifecycleService", () => {
       callback()
       return 0 as unknown as ReturnType<typeof setTimeout>
     })
-    mockDbExecute.mockResolvedValue({ rowCount: 1 })
+    mockDbExecute.mockResolvedValue({ rowCount: 1, rows: [] })
 
     const result = await workspaceLifecycleService.purgeWorkspaceHeavyData({
       workspaceId: "workspace-1",
@@ -112,8 +116,25 @@ describe("workspaceLifecycleService", () => {
 
     expect(result).toBe(HEAVY_TABLE_COUNT * MAX_BATCHES_PER_TABLE)
     expect(mockDbExecute).toHaveBeenCalledTimes(
-      HEAVY_TABLE_COUNT * MAX_BATCHES_PER_TABLE,
+      HEAVY_TABLE_COUNT * MAX_BATCHES_PER_TABLE + HEAVY_TABLE_COUNT,
     )
+    vi.restoreAllMocks()
+  })
+
+  test("signals an incomplete drain when a capped table still has rows", async () => {
+    vi.spyOn(globalThis, "setTimeout").mockImplementation((callback) => {
+      callback()
+      return 0 as unknown as ReturnType<typeof setTimeout>
+    })
+    mockDbExecute.mockResolvedValue({ rowCount: 1, rows: [{}] })
+
+    await expect(
+      workspaceLifecycleService.purgeWorkspaceHeavyData({
+        workspaceId: "workspace-1",
+        batchSize: 1,
+      }),
+    ).rejects.toBeInstanceOf(WorkspacePurgeIncompleteError)
+
     vi.restoreAllMocks()
   })
 
@@ -123,7 +144,7 @@ describe("workspaceLifecycleService", () => {
       return 0 as unknown as ReturnType<typeof setTimeout>
     })
     // ctid loop deletes nothing (short first batch → immediate break per table).
-    mockDbExecute.mockResolvedValue({ rowCount: 0 })
+    mockDbExecute.mockResolvedValue({ rowCount: 0, rows: [] })
     // Message pass: one page of two conversations, then empty. Attachment pass:
     // empty.
     mockSelectDistinctLimit

@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Indtast en dato som YYYY-MM-DD HH:mm eller en variabel",
+    "openPost": "Åbn {post}",
+    "openPostLink": "Åbn",
+    "postWithoutCaption": "Opslag uden tekst",
     "operator": {
       "and": "Alle betingelser",
       "or": "En vilkårlig betingelse"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "Denne arbejdsområde er planlagt for deletion. Fortryd den deletion below til fortsæt using it.",
       "pendingBlockedToast": "Denne arbejdsområde er planlagt for deletion. Kontakt a arbejdsområde administrator til gendan access.",
       "navDisabledTooltip": "Unavailable while arbejdsområde deletion er planlagt",
-      "badge": "Deletion planlagt"
+      "badge": "Deletion planlagt",
+      "purging": "Sletning af arbejdsområdet er i gang.",
+      "alreadyStarted": "Sletning af arbejdsområdet er allerede startet."
     },
     "supportAccess": {
       "bannerTitle": "Platformssupportsession",

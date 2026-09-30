@@ -47,7 +47,8 @@ describe("Instagram via Facebook getContactProfilePicUrl", () => {
     ).resolves.toBe("https://cdn.example/avatar.jpg")
 
     expect(mockGet).toHaveBeenCalledWith(
-      "v23.0/igsid-1?fields=name%2Cusername%2Cprofile_pic&access_token=page-token",
+      "v23.0/igsid-1?fields=name%2Cusername%2Cprofile_pic",
+      { headers: { Authorization: "Bearer page-token" } },
     )
     expect(mockPutObject).not.toHaveBeenCalled()
   })
@@ -58,5 +59,24 @@ describe("Instagram via Facebook getContactProfilePicUrl", () => {
     await expect(
       contactHandlers.getContactProfilePicUrl?.(createProps()),
     ).resolves.toBeNull()
+  })
+
+  test("uses the Instagram-via-Facebook verified field for snapshots", async () => {
+    mockGet.mockResolvedValueOnce({
+      id: "igsid-1",
+      follower_count: 8,
+      is_business_follow_user: true,
+      is_user_follow_business: false,
+      is_verified_user: true,
+    })
+
+    await expect(
+      contactHandlers.getInstagramSnapshot?.(createProps()),
+    ).resolves.toEqual({
+      follow: false,
+      followers: 8,
+      following: true,
+      verified: true,
+    })
   })
 })

@@ -1,7 +1,8 @@
 import { macAnalyticsService } from "@chatbotx.io/analytics"
 import { db } from "@chatbotx.io/database/client"
-import { afterEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { contactService } from "../src/contact"
+import { contactInboxPostService } from "../src/contact-inbox-post/service"
 import { messageCleanupService } from "../src/message-cleanup"
 import { quotaEnforcementService } from "../src/quota-enforcement/service"
 import { userQuotaService } from "../src/user-quota/service"
@@ -44,6 +45,10 @@ const stubConversations = (rows: { id: string; contactId: string }[]): void => {
 }
 
 describe("contactService.delete", () => {
+  beforeEach(() => {
+    vi.spyOn(contactInboxPostService, "deleteForContacts").mockResolvedValue(0)
+  })
+
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -62,6 +67,12 @@ describe("contactService.delete", () => {
         callOrder.push("record")
         return Promise.resolve()
       })
+    vi.spyOn(contactInboxPostService, "deleteForContacts").mockImplementation(
+      () => {
+        callOrder.push("post")
+        return Promise.resolve(0)
+      },
+    )
     const invalidate = vi
       .spyOn(contactService, "invalidate")
       .mockResolvedValue()
@@ -88,10 +99,13 @@ describe("contactService.delete", () => {
     expect(transaction).toHaveBeenCalledTimes(3)
     expect(record).toHaveBeenCalledTimes(3)
     expect(callOrder).toEqual([
+      "post",
       "record",
       "delete",
+      "post",
       "record",
       "delete",
+      "post",
       "record",
       "delete",
     ])
@@ -210,6 +224,10 @@ describe("contactService.delete", () => {
 })
 
 describe("contactService.delete — quota release", () => {
+  beforeEach(() => {
+    vi.spyOn(contactInboxPostService, "deleteForContacts").mockResolvedValue(0)
+  })
+
   afterEach(() => {
     vi.restoreAllMocks()
   })

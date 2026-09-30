@@ -174,7 +174,9 @@ const WorkspaceCard = ({
             ) : null}
             {isScheduledForDeletion ? (
               <div className="line-clamp-1 text-center text-destructive text-xs">
-                {t("workspace.deletion.badge")}
+                {workspace.purgeStartedAt
+                  ? t("workspace.deletion.purging")
+                  : t("workspace.deletion.badge")}
               </div>
             ) : null}
           </div>

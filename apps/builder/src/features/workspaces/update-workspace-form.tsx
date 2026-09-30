@@ -27,6 +27,7 @@ export function UpdateWorkspaceForm({
       <WorkspaceDeletionCard
         workspace={{
           id: workspace.id,
+          purgeStartedAt: workspace.purgeStartedAt,
           scheduledDeletionAt: workspace.scheduledDeletionAt,
         }}
       />

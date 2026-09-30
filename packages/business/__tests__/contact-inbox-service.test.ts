@@ -11,6 +11,8 @@ const {
   mockDbSelectWhereRows,
   mockDbSet,
   mockDbUpdate,
+  mockDbTransaction,
+  mockDbWhere,
   mockInArray,
   mockInvalidateCacheByTags,
   mockLoggerWarn,
@@ -63,6 +65,7 @@ const {
     mockDbSelectWhereRows,
     mockDbSet,
     mockDbUpdate: vi.fn().mockReturnValue(updateChain),
+    mockDbTransaction: vi.fn(),
     mockDbWhere,
     mockInArray: vi.fn((field: unknown, values: unknown[]) => ({
       field,
@@ -88,10 +91,12 @@ const mockSql = Object.assign(
 )
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  asc: vi.fn((field: unknown) => ({ asc: field })),
   db: {
     execute: mockDbExecute,
     select: mockDbSelect,
     update: mockDbUpdate,
+    transaction: mockDbTransaction,
     query: {
       contactInboxModel: {
         findFirst: mockDbFindFirst,
@@ -104,6 +109,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   gt: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   inArray: mockInArray,
   isNull: vi.fn((field: unknown) => ({ isNull: field })),
+  lte: vi.fn((field: unknown, value: unknown) => ({ lte: [field, value] })),
   or: mockOr,
   isUniqueViolationError: mockIsUniqueViolationError,
   sql: mockSql,
@@ -119,6 +125,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   contactInboxRepository: {
     findWithContact: mockFindWithContact,
     updateIdentityGuarded: mockUpdateIdentityGuarded,
+  },
+  contactInboxPostRepository: {
+    lockWorkspaceForPostWrite: vi.fn(),
   },
 }))
 
@@ -141,6 +150,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     firstInteractionAt: "firstInteractionAt",
     id: "id",
     inboxId: "inboxId",
+    igFollow: "igFollow",
+    igFollowers: "igFollowers",
+    igFollowing: "igFollowing",
+    igSnapshotAttempts: "igSnapshotAttempts",
+    igSnapshotNextAttemptAt: "igSnapshotNextAttemptAt",
+    igSnapshotState: "igSnapshotState",
+    igVerified: "igVerified",
     lastIncomingMessageAt: "lastIncomingMessageAt",
     lastMessageAt: "lastMessageAt",
     lastUserInput: "lastUserInput",
@@ -150,6 +166,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     sourceParentUserId: "sourceParentUserId",
     sourceUserId: "sourceUserId",
     sourceUsername: "sourceUsername",
+  },
+  inboxModel: { channel: "channel", id: "inboxId", workspaceId: "workspaceId" },
+  workspaceModel: {
+    id: "workspace.id",
+    purgeStartedAt: "workspace.purgeStartedAt",
+    scheduledDeletionAt: "workspace.scheduledDeletionAt",
   },
 }))
 
@@ -538,6 +560,359 @@ describe("contactInboxService timestamp helpers", () => {
       'GREATEST(t."lastIncomingMessageAt", u.incoming_ts)',
     )
     expect(statement).not.toContain("CASE")
+  })
+})
+
+describe("contactInboxService.completeInstagramSnapshot", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback({ update: mockDbUpdate }),
+    )
+    const { contactInboxPostRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    vi.mocked(
+      contactInboxPostRepository.lockWorkspaceForPostWrite,
+    ).mockResolvedValue(true)
+  })
+
+  test("commits an all-null snapshot only for the current pending claim", async () => {
+    mockDbReturning.mockResolvedValueOnce([{ contactId: "contact-1" }])
+
+    await expect(
+      contactInboxService.completeInstagramSnapshot({
+        attempt: 2,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        outcome: "captured",
+        snapshot: {
+          follow: null,
+          followers: null,
+          following: null,
+          verified: null,
+        },
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe(true)
+
+    expect(mockDbSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        igSnapshotNextAttemptAt: null,
+        igSnapshotState: "captured",
+      }),
+    )
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
+      "contacts:contact-1:contact-inboxes",
+    ])
+    expect(mockDbSet.mock.calls[0]?.[0].igFollow.strings.join(" ")).toContain(
+      "CASE WHEN",
+    )
+    expect(mockDbSet.mock.calls[0]?.[0].igFollow.values).toContain(null)
+    expect(mockDbSet.mock.calls[0]?.[0].igSnapshotState).toBe("captured")
+    expect(mockDbReturning).toHaveBeenCalledOnce()
+    expect(
+      (await import("@chatbotx.io/database/client")).eq,
+    ).toHaveBeenCalledWith("igSnapshotState", "pending")
+    expect(
+      (await import("@chatbotx.io/database/client")).eq,
+    ).toHaveBeenCalledWith("igSnapshotAttempts", 2)
+    const where = mockDbWhere.mock.calls[0]?.[0] as {
+      conditions: Array<{ values?: unknown[] }>
+    }
+    expect(where.conditions.at(-1)?.values).toContain("workspace-1")
+  })
+
+  test("uses CASE expressions to preserve values from another source", async () => {
+    mockDbReturning.mockResolvedValueOnce([{ contactId: "contact-1" }])
+
+    await contactInboxService.completeInstagramSnapshot({
+      attempt: 2,
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      outcome: "captured",
+      snapshot: {
+        follow: true,
+        followers: 42,
+        following: false,
+        verified: true,
+      },
+      workspaceId: "workspace-1",
+    })
+
+    const update = mockDbSet.mock.calls[0]?.[0]
+    const snapshotColumns = [
+      ["igFollow", true],
+      ["igFollowing", false],
+      ["igVerified", true],
+      ["igFollowers", 42],
+    ] as const
+    for (const [column, incomingValue] of snapshotColumns) {
+      const caseExpression = update[column] as {
+        strings: string[]
+        values: unknown[]
+      }
+      const guard = caseExpression.values[0] as {
+        values: unknown[]
+      }
+
+      expect(caseExpression.strings.join(" ")).toContain("CASE WHEN")
+      expect(caseExpression.values).toContain(incomingValue)
+      expect(caseExpression.values).toContain(column)
+      for (const guardedColumn of snapshotColumns.map(([name]) => name)) {
+        expect(guard.values).toContain(guardedColumn)
+      }
+    }
+  })
+
+  test("invalidates the contact cache only after the snapshot transaction commits", async () => {
+    let releaseCommit: (() => void) | undefined
+    const commit = new Promise<void>((resolve) => {
+      releaseCommit = resolve
+    })
+    mockDbTransaction.mockImplementation(async (callback) => {
+      const result = await callback({ update: mockDbUpdate })
+      await commit
+      return result
+    })
+    mockDbReturning.mockResolvedValueOnce([{ contactId: "contact-1" }])
+
+    const completing = contactInboxService.completeInstagramSnapshot({
+      attempt: 2,
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      outcome: "captured",
+      snapshot: {
+        follow: null,
+        followers: null,
+        following: null,
+        verified: null,
+      },
+      workspaceId: "workspace-1",
+    })
+    await vi.waitFor(() => expect(mockDbReturning).toHaveBeenCalledOnce())
+
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+    releaseCommit?.()
+
+    await expect(completing).resolves.toBe(true)
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
+      "contacts:contact-1:contact-inboxes",
+    ])
+  })
+
+  test("does not invalidate when a newer claim has already completed", async () => {
+    mockDbReturning.mockResolvedValueOnce([])
+
+    await expect(
+      contactInboxService.completeInstagramSnapshot({
+        attempt: 1,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        outcome: "failed",
+        snapshot: {
+          follow: null,
+          followers: null,
+          following: null,
+          verified: null,
+        },
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe(false)
+
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test("terminal recovery requires that the claimed lease has expired", async () => {
+    mockDbReturning.mockResolvedValueOnce([])
+
+    await contactInboxService.completeInstagramSnapshot({
+      attempt: 5,
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      onlyIfLeaseExpired: true,
+      outcome: "failed",
+      snapshot: {
+        follow: null,
+        followers: null,
+        following: null,
+        verified: null,
+      },
+      workspaceId: "workspace-1",
+    })
+
+    expect(
+      (await import("@chatbotx.io/database/client")).lte,
+    ).toHaveBeenCalledWith("igSnapshotNextAttemptAt", expect.any(Date))
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactInboxService Instagram snapshot recovery queries", () => {
+  const mockRecoveryQuery = (rows: unknown[]) => {
+    const limit = vi.fn().mockResolvedValue(rows)
+    const orderBy = vi.fn(() => ({ limit }))
+    const where = vi.fn(() => ({ orderBy }))
+    const innerJoin = vi.fn(() => ({ innerJoin, where }))
+    mockDbSelect.mockReturnValueOnce({
+      from: vi.fn(() => ({ innerJoin })),
+    })
+    return { innerJoin, where }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("excludes fenced workspaces before recovery pagination", async () => {
+    mockRecoveryQuery([])
+
+    await expect(
+      contactInboxService.listDueInstagramSnapshots({ limit: 100 }),
+    ).resolves.toEqual([])
+
+    const { isNull } = await import("@chatbotx.io/database/client")
+    expect(isNull).toHaveBeenCalledWith("workspace.purgeStartedAt")
+    expect(isNull).toHaveBeenCalledWith("workspace.scheduledDeletionAt")
+  })
+
+  test("selects exhausted work only after its lease deadline", async () => {
+    mockRecoveryQuery([])
+
+    await expect(
+      contactInboxService.listExhaustedInstagramSnapshots({ limit: 100 }),
+    ).resolves.toEqual([])
+
+    const { lte } = await import("@chatbotx.io/database/client")
+    expect(lte).toHaveBeenCalledWith(
+      "igSnapshotNextAttemptAt",
+      expect.any(Date),
+    )
+  })
+})
+
+describe("contactInboxService Instagram snapshot claim and retry", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    const { contactInboxPostRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    vi.mocked(
+      contactInboxPostRepository.lockWorkspaceForPostWrite,
+    ).mockResolvedValue(true)
+  })
+
+  test("claims only a due pending row and fences the increment by its attempt", async () => {
+    const limit = vi
+      .fn()
+      .mockResolvedValue([{ attempts: 0, sourceId: "igsid-1" }])
+    const where = vi.fn(() => ({ for: vi.fn(() => ({ limit })) }))
+    const txSelect = vi.fn(() => ({
+      from: vi.fn(() => ({
+        innerJoin: vi.fn(() => ({ where })),
+      })),
+    }))
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback({ select: txSelect, update: mockDbUpdate }),
+    )
+    mockDbReturning.mockResolvedValueOnce([{ id: "contact-inbox-1" }])
+
+    await expect(
+      contactInboxService.claimInstagramSnapshot({
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toEqual({ attempt: 1, sourceId: "igsid-1" })
+
+    expect(mockDbSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        igSnapshotAttempts: 1,
+        igSnapshotNextAttemptAt: expect.any(Date),
+      }),
+    )
+    expect(
+      (await import("@chatbotx.io/database/client")).eq,
+    ).toHaveBeenCalledWith("igSnapshotAttempts", 0)
+    const { eq, lte } = await import("@chatbotx.io/database/client")
+    expect(eq).toHaveBeenCalledWith("igSnapshotState", "pending")
+    expect(eq).toHaveBeenCalledWith("inboxId", "inbox-1")
+    expect(eq).toHaveBeenCalledWith("workspaceId", "workspace-1")
+    expect(eq).toHaveBeenCalledWith("channel", "instagram")
+    expect(lte).toHaveBeenCalledWith(
+      "igSnapshotNextAttemptAt",
+      expect.any(Date),
+    )
+    const whereClause = where.mock.calls[0]?.[0] as {
+      conditions: Array<{ values?: unknown[] }>
+    }
+    expect(
+      whereClause.conditions.some((condition) => condition.values?.includes(5)),
+    ).toBe(true)
+  })
+
+  test("backs off retryable claims and terminalizes the fifth attempt", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-09-30T00:00:00.000Z"))
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback({ update: mockDbUpdate }),
+    )
+    mockDbReturning.mockResolvedValueOnce([{ state: "pending" }])
+
+    await expect(
+      contactInboxService.rescheduleInstagramSnapshot({
+        attempt: 1,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe("pending")
+    expect(mockDbSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        igSnapshotNextAttemptAt: new Date("2026-09-30T00:00:30.000Z"),
+        igSnapshotState: "pending",
+      }),
+    )
+
+    mockDbReturning.mockResolvedValueOnce([{ state: "failed" }])
+    await expect(
+      contactInboxService.rescheduleInstagramSnapshot({
+        attempt: 5,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe("failed")
+    expect(mockDbSet).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        igSnapshotNextAttemptAt: null,
+        igSnapshotState: "failed",
+      }),
+    )
+    vi.useRealTimers()
+  })
+
+  test("does not write a claim or retry when the workspace fence rejects it", async () => {
+    const { contactInboxPostRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    vi.mocked(
+      contactInboxPostRepository.lockWorkspaceForPostWrite,
+    ).mockResolvedValue(false)
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback({ update: mockDbUpdate }),
+    )
+
+    await expect(
+      contactInboxService.rescheduleInstagramSnapshot({
+        attempt: 1,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mockDbUpdate).not.toHaveBeenCalled()
   })
 })
 

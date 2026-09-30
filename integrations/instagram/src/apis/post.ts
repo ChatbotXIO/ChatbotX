@@ -6,6 +6,7 @@ import type { InstagramAuthValue } from "../schema"
 
 export type InstagramMediaDetails = {
   caption?: string
+  media_type?: string
   media_url?: string
   thumbnail_url?: string
   timestamp: string
@@ -100,7 +101,8 @@ export const getPostDetails = (props: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },
       searchParams: {
-        fields: "caption,media_url,thumbnail_url,timestamp,permalink",
+        fields:
+          "caption,media_type,media_url,thumbnail_url,timestamp,permalink",
       },
     }),
   )

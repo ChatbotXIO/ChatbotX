@@ -89,6 +89,39 @@ describe("uploadFileFromUrl byte cap and redirect handling", () => {
       "path/to/file",
       expect.anything(),
       expect.objectContaining({ ContentLength: chunk.byteLength }),
+      undefined,
+    )
+  })
+
+  test("forwards the abort signal to both the download and the upload", async () => {
+    const chunk = new TextEncoder().encode("hi")
+    const fetchMock = vi.fn(async () =>
+      streamResponse([chunk], {
+        headers: { "content-length": "1", "content-type": "text/plain" },
+      }),
+    )
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const controller = new AbortController()
+
+    await uploadFileFromUrl(
+      "https://example.com/file.txt",
+      "path/to/file",
+      "private",
+      1000,
+      undefined,
+      controller.signal,
+    )
+
+    // The deadline must bound both halves: the download fetch and the S3 put.
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.com/file.txt",
+      expect.objectContaining({ signal: controller.signal }),
+    )
+    expect(mockPutObject).toHaveBeenCalledWith(
+      "path/to/file",
+      expect.anything(),
+      expect.anything(),
+      controller.signal,
     )
   })
 

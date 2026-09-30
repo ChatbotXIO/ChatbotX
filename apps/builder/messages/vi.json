@@ -625,6 +625,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Nhập ngày dạng YYYY-MM-DD HH:mm hoặc một biến",
+    "openPost": "Mở {post}",
+    "openPostLink": "Mở",
+    "postWithoutCaption": "Bài viết không có chú thích",
     "operator": {
       "and": "Tất cả điều kiện",
       "or": "Bất kỳ điều kiện nào"
@@ -922,7 +925,9 @@
       "bannerDescription": "Workspace này đã được lên lịch xóa. Hãy hoàn tác lịch xóa bên dưới để tiếp tục sử dụng workspace.",
       "pendingBlockedToast": "Workspace này đã được lên lịch xóa. Hãy liên hệ quản trị viên workspace để khôi phục quyền truy cập.",
       "navDisabledTooltip": "Không khả dụng khi workspace đã được lên lịch xóa",
-      "badge": "Đã lên lịch xóa"
+      "badge": "Đã lên lịch xóa",
+      "purging": "Đang xóa workspace.",
+      "alreadyStarted": "Quá trình xóa workspace đã bắt đầu."
     },
     "supportAccess": {
       "bannerTitle": "Phiên hỗ trợ nền tảng",

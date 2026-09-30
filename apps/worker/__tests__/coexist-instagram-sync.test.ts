@@ -81,6 +81,10 @@ vi.mock("../src/lib/logger", () => ({
   },
 }))
 
+vi.mock("../src/integration/handlers/instagram-snapshot/queue", () => ({
+  enqueueInstagramSnapshotJobs: vi.fn().mockResolvedValue(undefined),
+}))
+
 vi.mock("../src/integration/handlers/coexist/bulk-historical-import", () => ({
   applyCoexistActivityUpdates: mockApplyCoexistActivityUpdates,
   bulkImportContacts: mockBulkImportContacts,
@@ -174,7 +178,12 @@ describe("coexistInstagramSync", () => {
     // Default: no display name resolved → keep the participant fallback.
     mockResolveContactProfile.mockResolvedValue(null)
     mockBulkImportContacts.mockResolvedValue({
+      // `bulkImportContacts` aliases `bulkImportChannelContacts`, which returns
+      // BOTH maps: `contactInboxIds` (all contacts — read for message import)
+      // and `newContactInboxIds` (only newly inserted — read to enqueue snapshot
+      // jobs). The Instagram sync uses both, so the mock must provide both.
       contactInboxIds: new Map([["customer-1", contactLink]]),
+      newContactInboxIds: new Map([["customer-1", contactLink]]),
       importedContacts: 1,
       skippedContacts: 0,
     })

@@ -1053,6 +1053,9 @@
     },
     "datePlaceholder": "年-月-日",
     "datetimeInvalid": "输入 YYYY-MM-DD HH:mm 格式的日期或变量",
+    "openPost": "打开 {post}",
+    "openPostLink": "打开",
+    "postWithoutCaption": "没有说明文字的帖子",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "fieldGroups": {
       "analytics": "分析",
@@ -5967,6 +5970,8 @@
   "workspace": {
     "deletion": {
       "badge": "排定删除",
+      "purging": "正在删除工作区。",
+      "alreadyStarted": "工作区删除已开始。",
       "bannerDescription": "此工作区已排定删除。撤销下方的删除即可继续使用。",
       "bannerTitle": "工作区已排定删除",
       "confirmDescription": "所有联系人、设置和数据将在您确认后 24 小时内永久删除。您可以在此之前随时撤销删除。",

@@ -2087,6 +2087,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Inserisci una data nel formato YYYY-MM-DD HH:mm o una variabile",
+    "openPost": "Apri {post}",
+    "openPostLink": "Apri",
+    "postWithoutCaption": "Post senza didascalia",
     "operator": {
       "and": "Tutte le condizioni",
       "or": "Una qualsiasi condizione"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "L'eliminazione di questa area di lavoro è pianificata. Annullala qui sotto per continuare a utilizzarla.",
       "pendingBlockedToast": "L'eliminazione di questa area di lavoro è pianificata. Contatta un amministratore dell'area di lavoro per ripristinare l'accesso.",
       "navDisabledTooltip": "Non disponibile mentre è pianificata l'eliminazione dell'area di lavoro",
-      "badge": "Eliminazione pianificata"
+      "badge": "Eliminazione pianificata",
+      "purging": "L’eliminazione dell’area di lavoro è in corso.",
+      "alreadyStarted": "L’eliminazione dell’area di lavoro è già iniziata."
     },
     "supportAccess": {
       "bannerTitle": "Sessione di supporto della piattaforma",

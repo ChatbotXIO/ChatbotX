@@ -857,6 +857,9 @@
     "unknownValue": "Okänd",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimeInvalid": "Ange ett datum som YYYY-MM-DD HH:mm eller en variabel",
+    "openPost": "Öppna {post}",
+    "openPostLink": "Öppna",
+    "postWithoutCaption": "Inlägg utan bildtext",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "fieldGroups": {
       "analytics": "Analys",
@@ -5967,6 +5970,8 @@
   "workspace": {
     "deletion": {
       "badge": "Borttagning schemalagd",
+      "purging": "Borttagning av arbetsytan pågår.",
+      "alreadyStarted": "Borttagning av arbetsytan har redan startat.",
       "bannerDescription": "Den här arbetsytan är schemalagd för borttagning. Ångra borttagningen nedan för att fortsätta använda den.",
       "bannerTitle": "Borttagning av arbetsyta har schemalagts",
       "confirmDescription": "Alla kontakter, inställningar och data raderas permanent 24 timmar efter att du har bekräftat. Du kan ångra borttagningen när som helst fram till dess.",

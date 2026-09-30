@@ -1,10 +1,12 @@
 import { anchoredPeriod, macRepository } from "@chatbotx.io/analytics"
 import {
+  and,
   type DatabaseClient,
   db,
   describeDatabaseError,
   eq,
   inArray,
+  isNull,
   sql,
 } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
@@ -18,8 +20,14 @@ import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { formatInTimeZone } from "date-fns-tz"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import { contactInboxPostService } from "../contact-inbox-post/service"
 import { tenantService } from "../enterprise/tenant/service"
-import { notFoundException, workspaceLimitReachedException } from "../errors"
+import {
+  notFoundException,
+  WorkspacePurgeIncompleteError,
+  workspaceDeletionStartedException,
+  workspaceLimitReachedException,
+} from "../errors"
 import { isCommunity } from "../keys"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
@@ -142,11 +150,19 @@ class WorkspaceService extends BaseService {
       )?.name
     }
 
+    const updateWhere =
+      data.scheduledDeletionAt === undefined
+        ? eq(workspaceModel.id, id)
+        : and(eq(workspaceModel.id, id), isNull(workspaceModel.purgeStartedAt))
     const [updated] = await tx
       .update(workspaceModel)
       .set(data)
-      .where(eq(workspaceModel.id, id))
+      .where(updateWhere)
       .returning()
+
+    if (!updated) {
+      throw workspaceDeletionStartedException()
+    }
 
     const memberUserIds = await workspaceMemberService.listUserIdsByWorkspaceId(
       { tx, workspaceId: id },
@@ -246,9 +262,12 @@ class WorkspaceService extends BaseService {
         >(sql`
           SELECT "id", "ownerId", "tenantId"
           FROM "Workspace"
-          WHERE "scheduledDeletionAt" IS NOT NULL
-            AND "scheduledDeletionAt" < NOW()
-          ORDER BY "scheduledDeletionAt" ASC, "id" ASC
+          WHERE "purgeStartedAt" IS NOT NULL
+             OR (
+               "scheduledDeletionAt" IS NOT NULL
+               AND "scheduledDeletionAt" < NOW()
+             )
+          ORDER BY COALESCE("purgeStartedAt", "scheduledDeletionAt") ASC, "id" ASC
           LIMIT ${chunkSize}
           FOR UPDATE SKIP LOCKED
         `)
@@ -346,13 +365,18 @@ class WorkspaceService extends BaseService {
     integrations?: WorkspaceTeardownIntegrations,
   ): Promise<DueWorkspace | null> {
     try {
-      await workspaceLifecycleService.freezeWorkspaceRuntime(workspace.id)
+      const fencedWorkspace = await this.acquirePurgeFence(workspace.id)
+      if (!fencedWorkspace) {
+        return null
+      }
+
+      await workspaceLifecycleService.freezeWorkspaceRuntime(fencedWorkspace.id)
 
       await workspaceLifecycleService
-        .disconnectWorkspaceIntegrations(workspace.id)
+        .disconnectWorkspaceIntegrations(fencedWorkspace.id)
         .catch((err) => {
           logger.error(
-            { err, workspaceId: workspace.id },
+            { err, workspaceId: fencedWorkspace.id },
             "workspace-purge: failed to disconnect workspace integrations",
           )
         })
@@ -361,15 +385,25 @@ class WorkspaceService extends BaseService {
         integrations,
         teardownLevel: "disconnect",
         reason: "workspace_purge",
-        workspaceId: workspace.id,
-        ownerId: workspace.ownerId,
+        workspaceId: fencedWorkspace.id,
+        ownerId: fencedWorkspace.ownerId,
       })
 
       // Drain high-volume child tables in small self-committing batches before
       // the FK cascade, so no single statement deletes millions of rows under lock.
       await workspaceLifecycleService.purgeWorkspaceHeavyData({
-        workspaceId: workspace.id,
+        workspaceId: fencedWorkspace.id,
       })
+
+      const postPurge = await contactInboxPostService.purgeWorkspace({
+        workspaceId: fencedWorkspace.id,
+      })
+      if (!postPurge.complete) {
+        throw new WorkspacePurgeIncompleteError(
+          fencedWorkspace.id,
+          "ContactInboxPost",
+        )
+      }
 
       // Best-effort: never block/roll back the purge if release fails —
       // `reconcileOwnerPoolUsage` below re-derives `workspaces` from source
@@ -378,15 +412,28 @@ class WorkspaceService extends BaseService {
         .release({ userId: workspace.ownerId, metric: "workspaces" })
         .catch((err) => {
           logger.warn(
-            { err, workspaceId: workspace.id, ownerId: workspace.ownerId },
+            {
+              err,
+              workspaceId: fencedWorkspace.id,
+              ownerId: fencedWorkspace.ownerId,
+            },
             "workspace-purge: workspace quota release failed",
           )
         })
 
-      await db.delete(workspaceModel).where(eq(workspaceModel.id, workspace.id))
+      await db
+        .delete(workspaceModel)
+        .where(eq(workspaceModel.id, fencedWorkspace.id))
 
-      return workspace
+      return fencedWorkspace
     } catch (err) {
+      if (err instanceof WorkspacePurgeIncompleteError) {
+        logger.info(
+          { table: err.table, workspaceId: err.workspaceId },
+          "workspace-purge: heavy data remains, deferring to next run",
+        )
+        return null
+      }
       logger.error(
         {
           err,
@@ -397,6 +444,47 @@ class WorkspaceService extends BaseService {
       )
       return null
     }
+  }
+
+  private async acquirePurgeFence(
+    workspaceId: string,
+  ): Promise<DueWorkspace | null> {
+    return await db.transaction(async (tx) => {
+      const result = await tx.execute<
+        DueWorkspace & {
+          purgeStartedAt: Date | string | null
+        }
+      >(sql`
+        SELECT "id", "ownerId", "tenantId", "purgeStartedAt"
+        FROM "Workspace"
+        WHERE "id" = ${workspaceId}::bigint
+          AND (
+            "purgeStartedAt" IS NOT NULL
+            OR (
+              "scheduledDeletionAt" IS NOT NULL
+              AND "scheduledDeletionAt" < NOW()
+            )
+          )
+        FOR UPDATE
+      `)
+      const workspace = result.rows[0]
+      if (!workspace) {
+        return null
+      }
+
+      if (!workspace.purgeStartedAt) {
+        await tx
+          .update(workspaceModel)
+          .set({ purgeStartedAt: new Date() })
+          .where(eq(workspaceModel.id, workspace.id))
+      }
+
+      return {
+        id: workspace.id,
+        ownerId: workspace.ownerId,
+        tenantId: workspace.tenantId,
+      }
+    })
   }
 
   /**

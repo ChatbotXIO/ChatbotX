@@ -53,11 +53,18 @@ export type BulkImportChannelContactsResult = {
  * (`bulkImportContacts`) so its coexist callers are unaffected.
  */
 export const bulkImportChannelContacts = async (props: {
+  /** Durable opt-in used only by Instagram coexist and contact-scan imports. */
+  captureInstagramSnapshot?: boolean
   inbox: InboxModel
   workspaceId: string
   contacts: IncomingContact[]
 }): Promise<BulkImportChannelContactsResult> => {
-  const { inbox, workspaceId, contacts } = props
+  const {
+    inbox,
+    workspaceId,
+    contacts,
+    captureInstagramSnapshot = false,
+  } = props
 
   const empty: BulkImportChannelContactsResult = {
     importedContacts: 0,
@@ -119,6 +126,7 @@ export const bulkImportChannelContacts = async (props: {
       dedup,
       sourceIds,
       sourceUserIds,
+      captureInstagramSnapshot,
     })
 
   // Narrow `contactInboxIds` to only the sourceIds that were newly created —

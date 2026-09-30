@@ -24,6 +24,7 @@ import {
 import { useFilterValueLabels } from "./use-filter-value-labels"
 import {
   useBroadcastSelectOptions,
+  useChannelPostSelectOptions,
   useReflinkSelectOptions,
 } from "./use-workspace-option-sources"
 
@@ -32,6 +33,23 @@ type UseContactFilterConfigsResult = {
   conditionOptions: ConditionOption[]
   operatorLabelByValue: Map<string, string>
 }
+
+const getCommentedOnPostIds = (
+  conditions: readonly FilterValueCondition[],
+): string[] =>
+  Array.from(
+    new Set(
+      conditions.flatMap((condition) =>
+        condition.field === "commentedOnPost" &&
+        "value" in condition &&
+        Array.isArray(condition.value)
+          ? condition.value.filter(
+              (value): value is string => typeof value === "string",
+            )
+          : [],
+      ),
+    ),
+  )
 
 /**
  * Centralizes all option/config wiring needed by one contact-filter surface.
@@ -66,6 +84,12 @@ export const useContactFilterConfigs = (
       ? parsedChannel.data
       : undefined
   const broadcastOptions = useBroadcastSelectOptions(broadcastChannel)
+  const channelPostIds = useMemo(
+    () => getCommentedOnPostIds(conditions),
+    [conditions],
+  )
+  const { options: channelPostOptions } =
+    useChannelPostSelectOptions(channelPostIds)
   const sequences = useSequenceOptions()
   const sequenceOptions = useMemo(
     () =>
@@ -93,6 +117,7 @@ export const useContactFilterConfigs = (
         broadcastOptions,
         sequenceOptions,
         reflinkOptions,
+        channelPostOptions,
         assigneeOptions,
         couponTopicOptions,
         botFields,
@@ -108,6 +133,7 @@ export const useContactFilterConfigs = (
       broadcastOptions,
       sequenceOptions,
       reflinkOptions,
+      channelPostOptions,
       assigneeOptions,
       couponTopicOptions,
       botFields,

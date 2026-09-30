@@ -13,6 +13,23 @@ export const contactSources = z.enum([
 ])
 export type ContactSource = z.infer<typeof contactSources>
 
+export const instagramSnapshotStates = z.enum([
+  "pending",
+  "captured",
+  "unavailable",
+  "failed",
+])
+export type InstagramSnapshotState = z.infer<typeof instagramSnapshotStates>
+
+export const channelPostIntegrationTypes = z.enum([
+  "messenger",
+  "instagram",
+  "instagramFacebook",
+])
+export type ChannelPostIntegrationType = z.infer<
+  typeof channelPostIntegrationTypes
+>
+
 export const genderTypes = z.enum(["male", "female", "unknown"])
 export type GenderType = z.infer<typeof genderTypes>
 

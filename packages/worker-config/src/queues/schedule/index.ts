@@ -43,6 +43,7 @@ export const ScheduleJobData = {
   // WhatsApp calling.
   purgeExpiredCallRecordings: "purgeExpiredCallRecordings",
   sweepStaleWhatsappCalls: "sweepStaleWhatsappCalls",
+  dispatchInstagramSnapshots: "dispatchInstagramSnapshots",
 } as const
 
 /**
@@ -204,6 +205,11 @@ export type ScheduleJobClearExpiredSupportAccess = {
   data: Record<string, never>
 }
 
+export type ScheduleJobDispatchInstagramSnapshots = {
+  type: typeof ScheduleJobData.dispatchInstagramSnapshots
+  data: Record<string, never>
+}
+
 export type ScheduleJobPurgeBroadcasts = {
   type: typeof ScheduleJobData.purgeBroadcasts
   data: Record<string, never>
@@ -277,6 +283,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
   | ScheduleJobClearExpiredSupportAccess
+  | ScheduleJobDispatchInstagramSnapshots
   | ScheduleJobPurgeBroadcasts
   | ScheduleJobPurgeAutomationThrottle
   | ScheduleJobPurgeErrorLogs

@@ -106,6 +106,11 @@ export const router = {
       default: m.aiHandoverAPIs,
     })),
   ),
+  channelPostAPIs: lazy(() =>
+    import("@/features/channel-posts/api").then((m) => ({
+      default: m.channelPostAPIs,
+    })),
+  ),
   botFieldAPIs: lazy(() =>
     import("@/features/bot-fields/api").then((m) => ({
       default: m.botFieldAPIs,

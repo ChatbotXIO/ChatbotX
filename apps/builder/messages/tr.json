@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "YYYY-MM-DD HH:mm biçiminde bir tarih veya bir değişken girin",
+    "openPost": "{post} aç",
+    "openPostLink": "Aç",
+    "postWithoutCaption": "Açıklamasız gönderi",
     "operator": {
       "and": "Tüm koşullar",
       "or": "Herhangi bir koşul"
@@ -880,7 +883,9 @@
       "bannerDescription": "Bu çalışma alanının silinmesi planlandı. Kullanmaya devam etmek için aşağıdan silme işlemini geri alın.",
       "pendingBlockedToast": "Bu çalışma alanının silinmesi planlandı. Erişimi geri yüklemek için bir çalışma alanı yöneticisiyle iletişime geçin.",
       "navDisabledTooltip": "Çalışma alanı silme işlemi planlıyken kullanılamaz",
-      "badge": "Silme planlandı"
+      "badge": "Silme planlandı",
+      "purging": "Çalışma alanı siliniyor.",
+      "alreadyStarted": "Çalışma alanının silinmesi zaten başladı."
     },
     "supportAccess": {
       "bannerTitle": "Platform destek oturumu",

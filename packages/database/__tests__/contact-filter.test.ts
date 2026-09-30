@@ -2345,6 +2345,170 @@ describe("applyContactFilter — contactInbox relation fields", () => {
   })
 })
 
+describe("applyContactFilter — Instagram snapshots and commented posts", () => {
+  test.each([
+    ["followsBusinessOnInstagram", "igFollow"],
+    ["businessFollowsUserOnInstagram", "igFollowing"],
+    ["verifiedAccountOnInstagram", "igVerified"],
+  ])("keeps explicit true, false and empty distinct for %s", (field, column) => {
+    for (const value of ["true", "false"]) {
+      const query = renderContactWhere(
+        applyContactFilter({
+          operator: "and",
+          conditions: [{ field, operator: "eq", value }],
+        }),
+      )
+      expect(query.sql).toContain(`"ContactInbox"."${column}" = ${value}`)
+    }
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field, operator: "isEmpty" }],
+      }),
+    )
+    expect(empty.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(empty.sql).toContain(`"ContactInbox"."${column}" IS NOT NULL`)
+  })
+
+  test("uses the latest Instagram follower count and keeps NULL semantics", () => {
+    for (const operator of ["eq", "ne", "gt", "gte", "lt", "lte", "isEmpty"]) {
+      const query = renderContactWhere(
+        applyContactFilter({
+          operator: "and",
+          conditions: [
+            {
+              field: "followerCountOnInstagram",
+              operator,
+              ...(operator === "isEmpty" ? {} : { value: "10" }),
+            },
+          ],
+        }),
+      )
+      expect(query.sql).toContain('SELECT MAX("ContactInbox"."igFollowers")')
+      if (operator === "ne" || operator === "isEmpty") {
+        expect(query.sql).toContain("IS NULL")
+      }
+    }
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field: "followerCountOnInstagram", operator: "eq" }],
+      }),
+    ).toEqual({})
+  })
+
+  test("scopes commented posts to a workspace and rejects malformed persisted ids", () => {
+    const criteria = {
+      operator: "and" as const,
+      conditions: [
+        { field: "commentedOnPost", operator: "eq", value: ["4", "4", "9"] },
+      ],
+    }
+    expect(applyContactFilter(criteria)).toEqual({})
+    const query = renderContactWhere(applyContactFilter(criteria, "42"))
+    expect(query.sql).toContain('JOIN "ContactInboxPost" p')
+    expect(query.sql).toContain('p."workspaceId" = $1::bigint')
+    expect(query.params).toEqual(["42", "4", "9"])
+
+    for (const value of [
+      undefined,
+      [],
+      ["0"],
+      ["01"],
+      ["x"],
+      ["9223372036854775808"],
+    ]) {
+      expect(
+        applyContactFilter(
+          {
+            operator: "and",
+            conditions: [{ field: "commentedOnPost", operator: "eq", value }],
+          },
+          "42",
+        ),
+      ).toEqual({})
+    }
+    const maximum = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "commentedOnPost",
+              operator: "eq",
+              value: ["9223372036854775807"],
+            },
+          ],
+        },
+        "42",
+      ),
+    )
+    expect(maximum.params).toContain("9223372036854775807")
+    const hundred = Array.from({ length: 100 }, (_, index) => String(index + 1))
+    expect(
+      renderContactWhere(
+        applyContactFilter(
+          {
+            operator: "and",
+            conditions: [
+              { field: "commentedOnPost", operator: "eq", value: hundred },
+            ],
+          },
+          "42",
+        ),
+      ).params,
+    ).toHaveLength(101)
+    expect(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "commentedOnPost",
+              operator: "eq",
+              value: [...hundred, "101"],
+            },
+          ],
+        },
+        "42",
+      ),
+    ).toEqual({})
+  })
+
+  test("renders ne and isEmpty as NOT EXISTS without reading an empty value", () => {
+    const ne = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            { field: "commentedOnPost", operator: "ne", value: ["7"] },
+          ],
+        },
+        "42",
+      ),
+    )
+    expect(ne.sql).toContain("NOT EXISTS")
+    const empty = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "commentedOnPost",
+              operator: "isEmpty",
+              value: "junk",
+            },
+          ],
+        },
+        "42",
+      ),
+    )
+    expect(empty.sql).toContain("NOT EXISTS")
+    expect(empty.sql).not.toContain('p."postId"')
+    expect(empty.params).toEqual(["42"])
+  })
+})
+
 describe("applyContactFilter — CTWA fields", () => {
   test("renders fromCtwaAd true/false as EXISTS / NOT EXISTS on ContactInbox.referral", () => {
     const positive = renderContactWhere(

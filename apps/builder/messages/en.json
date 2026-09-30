@@ -625,6 +625,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Enter a date as YYYY-MM-DD HH:mm or a variable",
+    "openPost": "Open {post}",
+    "openPostLink": "Open",
+    "postWithoutCaption": "Post without caption",
     "operator": {
       "and": "All conditions",
       "or": "Any condition"
@@ -922,7 +925,9 @@
       "bannerDescription": "This workspace is scheduled for deletion. Undo the deletion below to continue using it.",
       "pendingBlockedToast": "This workspace is scheduled for deletion. Contact a workspace admin to restore access.",
       "navDisabledTooltip": "Unavailable while workspace deletion is scheduled",
-      "badge": "Deletion scheduled"
+      "badge": "Deletion scheduled",
+      "purging": "Workspace deletion is in progress.",
+      "alreadyStarted": "Workspace deletion has already started."
     },
     "supportAccess": {
       "bannerTitle": "Platform support session",

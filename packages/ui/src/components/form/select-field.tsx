@@ -17,6 +17,14 @@ export type SingleSelectOption = {
   icon?: LucideIcon
   iconColor?: string
   disabled?: boolean
+  /** Optional secondary label for richer pickers. */
+  description?: string
+  /** Public image URL displayed by controls that support rich option rows. */
+  thumbnailUrl?: string
+  /** Public destination for an optional action in a rich option row. */
+  href?: string
+  /** Optional semantic channel identifier for a feature-owned option renderer. */
+  channel?: string
 }
 
 export type SelectOption = SingleSelectOption & {

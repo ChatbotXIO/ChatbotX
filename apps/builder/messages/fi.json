@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Anna päivämäärä muodossa YYYY-MM-DD HH:mm tai muuttuja",
+    "openPost": "Avaa {post}",
+    "openPostLink": "Avaa",
+    "postWithoutCaption": "Julkaisu ilman kuvatekstiä",
     "operator": {
       "and": "Kaikki ehdot",
       "or": "Mikä tahansa ehto"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "Tämä työtila on ajastettu poistettavaksi. Jatka sen käyttöä kumoamalla poistaminen alta.",
       "pendingBlockedToast": "Tämä työtila on ajastettu poistettavaksi. Pyydä työtilan ylläpitäjää palauttamaan käyttöoikeus.",
       "navDisabledTooltip": "Ei käytettävissä, kun työtilan poistaminen on ajastettu",
-      "badge": "Poistaminen ajastettu"
+      "badge": "Poistaminen ajastettu",
+      "purging": "Työtilan poisto on käynnissä.",
+      "alreadyStarted": "Työtilan poisto on jo alkanut."
     },
     "supportAccess": {
       "bannerTitle": "Alustan tukisessio",

@@ -1,17 +1,31 @@
 // @vitest-environment jsdom
 
 import type { ChannelType } from "@chatbotx.io/database/partials"
-import { act } from "react"
+import { act, StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
+type ChannelPostOption = {
+  caption: string | null
+  externalPostId: string
+  id: string
+  inboxName: string
+  integrationType: "instagram" | "instagramFacebook" | "messenger"
+  permalink: string | null
+  thumbnailUrl: string | null
+}
+
 const {
   mockUseParams,
+  privateGetChannelPostOptionsByIdsAPI,
   privateListBroadcastOptionsAPI,
+  privateListChannelPostOptionsAPI,
   listRefLinkOptionsAuthenticatedAPI,
 } = vi.hoisted(() => ({
   mockUseParams: vi.fn(),
+  privateGetChannelPostOptionsByIdsAPI: vi.fn(),
   privateListBroadcastOptionsAPI: vi.fn(),
+  privateListChannelPostOptionsAPI: vi.fn(),
   listRefLinkOptionsAuthenticatedAPI: vi.fn(),
 }))
 
@@ -27,6 +41,10 @@ vi.mock("@/lib/orpc/orpc", () => ({
   client: {
     broadcastAPIs: {
       privateListBroadcastOptionsAPI,
+    },
+    channelPostAPIs: {
+      privateGetChannelPostOptionsByIdsAPI,
+      privateListChannelPostOptionsAPI,
     },
     refLinksAPI: {
       listRefLinkOptionsAuthenticatedAPI,
@@ -92,7 +110,11 @@ vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-id",
 }))
 
-const { useBroadcastSelectOptions, useReflinkSelectOptions } = await import(
+const {
+  useBroadcastSelectOptions,
+  useChannelPostSelectOptions,
+  useReflinkSelectOptions,
+} = await import(
   "../src/features/contact-filter/components/use-workspace-option-sources"
 )
 const { useContactFilterConfigs } = await import(
@@ -124,6 +146,17 @@ function ReflinkProbe({ onRender }: { onRender: (options: unknown) => void }) {
   return null
 }
 
+function ChannelPostProbe({
+  onRender,
+  selectedIds,
+}: {
+  onRender: (result: ReturnType<typeof useChannelPostSelectOptions>) => void
+  selectedIds?: string[]
+}) {
+  onRender(useChannelPostSelectOptions(selectedIds))
+  return null
+}
+
 const flush = () =>
   act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
@@ -141,6 +174,11 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
     privateListBroadcastOptionsAPI.mockResolvedValue({
       data: [{ id: "b1", name: "Broadcast One" }],
     })
+    privateListChannelPostOptionsAPI.mockResolvedValue({
+      items: [],
+      nextCursor: undefined,
+    })
+    privateGetChannelPostOptionsByIdsAPI.mockResolvedValue({ data: [] })
     listRefLinkOptionsAuthenticatedAPI.mockResolvedValue({
       data: [{ id: "r1", name: "Reflink One" }],
     })
@@ -351,5 +389,200 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
 
     expect(privateListBroadcastOptionsAPI).toHaveBeenCalledTimes(1)
     expect(listRefLinkOptionsAuthenticatedAPI).toHaveBeenCalledTimes(1)
+  })
+
+  test("hydrates a saved post label after StrictMode replays the effect", async () => {
+    let latest: ReturnType<typeof useChannelPostSelectOptions> | undefined
+    let resolveSavedPosts: (value: { data: ChannelPostOption[] }) => void =
+      () => undefined
+    const savedPostsRequest = new Promise<{ data: ChannelPostOption[] }>(
+      (resolve) => {
+        resolveSavedPosts = resolve
+      },
+    )
+    privateGetChannelPostOptionsByIdsAPI.mockReturnValue(savedPostsRequest)
+
+    act(() => {
+      root.render(
+        <StrictMode>
+          <ChannelPostProbe
+            onRender={(result) => (latest = result)}
+            selectedIds={["1"]}
+          />
+        </StrictMode>,
+      )
+    })
+
+    expect(privateGetChannelPostOptionsByIdsAPI).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      resolveSavedPosts({
+        data: [
+          {
+            caption: "Saved post",
+            externalPostId: "external-1",
+            id: "1",
+            inboxName: "Instagram",
+            integrationType: "instagram",
+            permalink: null,
+            thumbnailUrl: null,
+          },
+        ],
+      })
+      await savedPostsRequest
+    })
+
+    expect(latest?.options).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Saved post", value: "1" }),
+      ]),
+    )
+  })
+
+  test("ignores a completed hydration for posts no longer selected", async () => {
+    let latest: ReturnType<typeof useChannelPostSelectOptions> | undefined
+    const requests = new Map<
+      string,
+      { resolve: (value: { data: ChannelPostOption[] }) => void }
+    >()
+    privateGetChannelPostOptionsByIdsAPI.mockImplementation(
+      ({ ids }: { ids: string[] }) =>
+        new Promise<{ data: ChannelPostOption[] }>((resolve) => {
+          requests.set(ids.join(","), { resolve })
+        }),
+    )
+
+    act(() => {
+      root.render(
+        <ChannelPostProbe
+          onRender={(result) => (latest = result)}
+          selectedIds={["1"]}
+        />,
+      )
+    })
+    act(() => {
+      root.render(
+        <ChannelPostProbe
+          onRender={(result) => (latest = result)}
+          selectedIds={["2"]}
+        />,
+      )
+    })
+
+    await act(async () => {
+      requests.get("1")?.resolve({
+        data: [
+          {
+            caption: "Old post",
+            externalPostId: "external-1",
+            id: "1",
+            inboxName: "Instagram",
+            integrationType: "instagram",
+            permalink: null,
+            thumbnailUrl: null,
+          },
+        ],
+      })
+      await Promise.resolve()
+    })
+    expect(latest?.options).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ value: "1" })]),
+    )
+
+    await act(async () => {
+      requests.get("2")?.resolve({
+        data: [
+          {
+            caption: "New post",
+            externalPostId: "external-2",
+            id: "2",
+            inboxName: "Instagram",
+            integrationType: "instagram",
+            permalink: null,
+            thumbnailUrl: null,
+          },
+        ],
+      })
+      await Promise.resolve()
+    })
+    expect(latest?.options).toEqual(
+      expect.arrayContaining([expect.objectContaining({ value: "2" })]),
+    )
+  })
+
+  test("retries a failed saved-post hydration", async () => {
+    let latest: ReturnType<typeof useChannelPostSelectOptions> | undefined
+    privateGetChannelPostOptionsByIdsAPI
+      .mockRejectedValueOnce(new Error("temporary"))
+      .mockResolvedValueOnce({
+        data: [
+          {
+            caption: "Recovered post",
+            externalPostId: "external-1",
+            id: "1",
+            inboxName: "Instagram",
+            integrationType: "instagram",
+            permalink: null,
+            thumbnailUrl: null,
+          },
+        ],
+      })
+
+    act(() => {
+      root.render(
+        <ChannelPostProbe
+          onRender={(result) => (latest = result)}
+          selectedIds={["1"]}
+        />,
+      )
+    })
+    await flush()
+    expect(latest?.error).toBe(true)
+
+    act(() => latest?.retry())
+    await flush()
+
+    expect(privateGetChannelPostOptionsByIdsAPI).toHaveBeenCalledTimes(2)
+    expect(latest?.options).toEqual(
+      expect.arrayContaining([expect.objectContaining({ value: "1" })]),
+    )
+  })
+
+  test("hydrates more than 100 saved posts in bounded requests", async () => {
+    let latest: ReturnType<typeof useChannelPostSelectOptions> | undefined
+    const selectedIds = Array.from({ length: 101 }, (_, index) =>
+      String(index + 1),
+    )
+    privateGetChannelPostOptionsByIdsAPI.mockImplementation(
+      ({ ids }: { ids: string[] }) =>
+        Promise.resolve({
+          data: ids.map((id: string) => ({
+            caption: `Post ${id}`,
+            externalPostId: `external-${id}`,
+            id,
+            inboxName: "Instagram",
+            integrationType: "instagram",
+            permalink: null,
+            thumbnailUrl: null,
+          })),
+        }),
+    )
+
+    act(() => {
+      root.render(
+        <ChannelPostProbe
+          onRender={(result) => (latest = result)}
+          selectedIds={selectedIds}
+        />,
+      )
+    })
+    await flush()
+
+    expect(privateGetChannelPostOptionsByIdsAPI).toHaveBeenCalledTimes(2)
+    expect(
+      privateGetChannelPostOptionsByIdsAPI.mock.calls.map(
+        ([input]) => input.ids.length,
+      ),
+    ).toEqual([100, 1])
+    expect(latest?.options).toHaveLength(101)
   })
 })

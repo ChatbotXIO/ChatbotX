@@ -13,12 +13,14 @@ const fetchUserProfile = async ({
   ctx: Context<InstagramAuthValue>
   psid: string
 }): Promise<InstagramUserProfile> => {
+  // Auth in the Authorization header, not the query string — a query token
+  // leaks through the request URL captured on HTTP-client errors and logs.
   const queries = new URLSearchParams({
     fields: "id,name,username,profile_pic",
-    access_token: ctx.auth.tokens.accessToken,
   })
   return await instagramBusinessClient.get<InstagramUserProfile>(
     `${ctx.auth.metadata.version}/${psid}?${queries.toString()}`,
+    { headers: { Authorization: `Bearer ${ctx.auth.tokens.accessToken}` } },
   )
 }
 

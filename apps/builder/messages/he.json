@@ -1360,7 +1360,9 @@
       "bannerDescription": "סביבת עבודה זו מתוזמנת למחיקה. בטלו את המחיקה למטה כדי להמשיך להשתמש בה.",
       "pendingBlockedToast": "סביבת עבודה זו מתוזמנת למחיקה. פנו למנהל סביבת העבודה כדי לשחזר את הגישה.",
       "navDisabledTooltip": "לא זמין כאשר מחיקת סביבת העבודה מתוזמנת",
-      "badge": "מחיקה מתוזמנת"
+      "badge": "מחיקה מתוזמנת",
+      "purging": "מחיקת סביבת העבודה מתבצעת.",
+      "alreadyStarted": "מחיקת סביבת העבודה כבר החלה."
     },
     "supportAccess": {
       "bannerTitle": "הפעלת תמיכה של הפלטפורמה",
@@ -5847,6 +5849,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "יש להזין תאריך בתבנית YYYY-MM-DD HH:mm או משתנה",
+    "openPost": "פתיחת {post}",
+    "openPostLink": "פתיחה",
+    "postWithoutCaption": "פוסט ללא כיתוב",
     "operator": {
       "and": "כל התנאים",
       "or": "תנאי כלשהו"

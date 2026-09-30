@@ -12,6 +12,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import pLimit from "p-limit"
 import { logger } from "../../../lib/logger"
+import { enqueueInstagramSnapshotJobs } from "../instagram-snapshot/queue"
 import {
   applyCoexistActivityUpdates,
   bulkImportContacts,
@@ -252,12 +253,25 @@ const runInstagramCoexistPull = async <
                   // conversation below and resolves the run to `partial`; decide
                   // whether large historical imports should be plan-gated.
                   const contactResult = await bulkImportContacts({
+                    captureInstagramSnapshot: true,
                     inbox: context.inbox,
                     workspaceId,
                     contacts: [contact],
                   })
                   pageImportedContacts += contactResult.importedContacts
                   pageSkipped += contactResult.skippedContacts
+                  await enqueueInstagramSnapshotJobs({
+                    contactInboxIds: [
+                      ...contactResult.newContactInboxIds.values(),
+                    ].map((link) => link.contactInboxId),
+                    inboxId: context.inbox.id,
+                    workspaceId,
+                  }).catch((err) => {
+                    logger.warn(
+                      { err, inboxId: context.inbox.id, workspaceId },
+                      "[coexist] Instagram snapshot enqueue failed; recovery will retry",
+                    )
+                  })
                   if (contactResult.failureReason) {
                     currentError = contactResult.failureReason
                   }

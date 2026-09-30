@@ -27,7 +27,9 @@ const db = {
 }
 vi.mock("@chatbotx.io/database/client", () => ({
   db,
+  and: vi.fn(),
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  isNull: vi.fn(),
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceModel: {},
@@ -328,6 +330,16 @@ describe("WorkspaceService.update — member cache invalidation", () => {
     await workspaceService.update({ id: "ws-1", data: { name: "New Name" } })
 
     expect(invalidateCacheByTags).toHaveBeenCalledWith(["workspaces:ws-1"])
+  })
+
+  test("rejects cancellation after the durable purge fence is set", async () => {
+    returningUpdatedWorkspace.mockResolvedValueOnce([])
+
+    await expect(
+      workspaceService.cancelDeletion({ id: "ws-1" }),
+    ).rejects.toMatchObject({
+      code: "workspaceDeletionStarted",
+    })
   })
 })
 

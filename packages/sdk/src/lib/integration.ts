@@ -385,8 +385,15 @@ export type UserCustomSettings = {
 
 export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
-    { ctx: Context<IAuth>; data: { sourceId: string } },
+    {
+      ctx: Context<IAuth>
+      data: { includeInstagramSnapshot?: boolean; sourceId: string }
+    },
     IncomingContact
+  >
+  getInstagramSnapshot?: Handler<
+    { ctx: Context<IAuth>; data: { sourceId: string } },
+    NonNullable<IncomingContact["instagramProfile"]>
   >
   getContactProfilePicUrl: Handler<
     { ctx: Context<IAuth>; data: { sourceId: string } },

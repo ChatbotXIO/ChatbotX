@@ -9,6 +9,7 @@ export type FacebookPostDetails = {
   full_picture?: string
   from?: { id: string; name: string }
   created_time: string
+  permalink_url?: string
 }
 
 export type FacebookPostListItem = {
@@ -125,7 +126,7 @@ export const getPostDetails = (props: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },
       searchParams: {
-        fields: "message,full_picture,from,created_time",
+        fields: "message,full_picture,from,created_time,permalink_url",
       },
     }),
   )

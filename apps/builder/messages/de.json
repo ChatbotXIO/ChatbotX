@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Geben Sie ein Datum im Format YYYY-MM-DD HH:mm oder eine Variable ein",
+    "openPost": "{post} öffnen",
+    "openPostLink": "Öffnen",
+    "postWithoutCaption": "Beitrag ohne Beschreibung",
     "operator": {
       "and": "Alle Bedingungen",
       "or": "Beliebige Bedingung"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "Dieser Arbeitsbereich ist zur Löschung vorgesehen. Machen Sie die Löschung unten rückgängig, um ihn weiter zu verwenden.",
       "pendingBlockedToast": "Dieser Arbeitsbereich ist zur Löschung vorgesehen. Wenden Sie sich an einen Arbeitsbereichs-Admin, um den Zugriff wiederherzustellen.",
       "navDisabledTooltip": "Nicht verfügbar, solange die Löschung des Arbeitsbereichs geplant ist",
-      "badge": "Löschung geplant"
+      "badge": "Löschung geplant",
+      "purging": "Die Löschung des Arbeitsbereichs läuft.",
+      "alreadyStarted": "Die Löschung des Arbeitsbereichs wurde bereits gestartet."
     },
     "supportAccess": {
       "bannerTitle": "Plattform-Support-Sitzung",

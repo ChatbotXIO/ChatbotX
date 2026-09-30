@@ -19,6 +19,7 @@ vi.mock(
   "@/features/contact-filter/components/use-contact-filter-configs",
   () => ({
     useContactFilterConfigs: mockUseContactFilterConfigs,
+    getCommentedOnPostIds: () => [],
   }),
 )
 

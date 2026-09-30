@@ -17,6 +17,7 @@ import {
 } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
 import { buildBotFieldWhere } from "./bot-field-predicates"
+import { buildCommentedOnPostWhere } from "./commented-on-post"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import {
@@ -31,6 +32,7 @@ import {
   buildBooleanColumn,
   buildBooleanFromTimestamp,
   buildColumnWhere,
+  buildContactInboxTriStateBooleanWhere,
   buildDateColumnWhere,
   buildExistingContactWhere,
   buildExistsBooleanWhere,
@@ -505,6 +507,37 @@ function buildConditionWhere(
         operator,
         value,
       )
+
+    case "followsBusinessOnInstagram":
+      return buildContactInboxTriStateBooleanWhere(
+        contactInboxModel.igFollow,
+        operator,
+        value,
+      )
+
+    case "businessFollowsUserOnInstagram":
+      return buildContactInboxTriStateBooleanWhere(
+        contactInboxModel.igFollowing,
+        operator,
+        value,
+      )
+
+    case "verifiedAccountOnInstagram":
+      return buildContactInboxTriStateBooleanWhere(
+        contactInboxModel.igVerified,
+        operator,
+        value,
+      )
+
+    case "followerCountOnInstagram":
+      return buildLatestContactInboxNumberWhere(
+        contactInboxModel.igFollowers,
+        operator,
+        value,
+      )
+
+    case "commentedOnPost":
+      return buildCommentedOnPostWhere(operator, value, context.workspaceId)
 
     case "emailWasVerified":
       return buildBooleanColumn("emailVerified", operator, value)

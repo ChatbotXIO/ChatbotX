@@ -24,6 +24,7 @@ import {
   resolveUsageThrottle,
   sleepForUsageThrottle,
 } from "../coexist/usage-throttle"
+import { enqueueInstagramSnapshotJobs } from "../instagram-snapshot/queue"
 import type { ContactScanErrorClassification } from "./adapter"
 import { contactScanAdapters } from "./adapter"
 
@@ -284,6 +285,7 @@ export const runContactScan = async (
       if (filtered.itemsToProcess.length > 0) {
         try {
           pageResult = await bulkImportChannelContacts({
+            captureInstagramSnapshot: context.inbox.channel === "instagram",
             inbox: context.inbox,
             workspaceId,
             contacts: filtered.itemsToProcess.map((entry) => entry.contact),
@@ -324,6 +326,24 @@ export const runContactScan = async (
               "[contact-scan] quota increment failed — continuing (info-only)",
             )
           })
+      }
+
+      if (
+        context.inbox.channel === "instagram" &&
+        pageResult?.newContactInboxIds.size
+      ) {
+        await enqueueInstagramSnapshotJobs({
+          contactInboxIds: [...pageResult.newContactInboxIds.values()].map(
+            (link) => link.contactInboxId,
+          ),
+          inboxId: context.inbox.id,
+          workspaceId,
+        }).catch((err) => {
+          logger.warn(
+            { err, inboxId: context.inbox.id, workspaceId },
+            "[contact-scan] Instagram snapshot enqueue failed; recovery will retry",
+          )
+        })
       }
 
       oldestProcessed = filtered.oldestProcessed

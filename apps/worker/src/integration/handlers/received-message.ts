@@ -4,6 +4,8 @@ import {
   buildContext,
   type ContactInboxTrackingData,
   type ContactInboxWithContact,
+  channelPostService,
+  contactInboxPostService,
   contactInboxService,
   contactService,
   conversationService,
@@ -64,6 +66,7 @@ import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
+import { toLogSafeError } from "@chatbotx.io/logger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
@@ -124,6 +127,73 @@ import {
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 import { recordInboundThreadControl } from "./thread-control-inbound"
 import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
+
+const COMMENT_POST_INTEGRATION_TYPES = new Set([
+  "messenger",
+  "instagram",
+  "instagramFacebook",
+] as const)
+
+type CommentPostIntegrationType =
+  | "messenger"
+  | "instagram"
+  | "instagramFacebook"
+
+type CommentPostDetails = {
+  caption?: string | null
+  mediaType?: string | null
+  permalink?: string | null
+  publishedAt?: Date | null
+  thumbnailUrl?: string | null
+}
+
+type CommentPostDetailsResponse = {
+  caption?: string
+  created_time?: string
+  full_picture?: string
+  media_type?: string
+  message?: string
+  permalink?: string
+  permalink_url?: string
+  thumbnail_url?: string
+  media_url?: string
+  timestamp?: string
+}
+
+type CommentPostDetailsRunner = {
+  runAction: (
+    action: "getPostDetails",
+    props: { ctx: unknown; input: { postId: string } },
+  ) => Promise<CommentPostDetailsResponse>
+}
+
+// Messenger and Instagram return different post-detail field names; each maps
+// to the shared CommentPostDetails shape.
+const mapMessengerPostDetails = (
+  post: CommentPostDetailsResponse,
+): CommentPostDetails => ({
+  caption: post.message,
+  permalink: post.permalink_url,
+  publishedAt: post.created_time ? new Date(post.created_time) : null,
+  thumbnailUrl: post.full_picture,
+})
+
+const mapInstagramPostDetails = (
+  post: CommentPostDetailsResponse,
+): CommentPostDetails => ({
+  caption: post.caption,
+  mediaType: post.media_type,
+  permalink: post.permalink,
+  publishedAt: post.timestamp ? new Date(post.timestamp) : null,
+  thumbnailUrl: post.thumbnail_url ?? post.media_url,
+})
+
+const isCommentPostIntegrationType = (
+  integrationType: string,
+): integrationType is CommentPostIntegrationType =>
+  COMMENT_POST_INTEGRATION_TYPES.has(
+    integrationType as CommentPostIntegrationType,
+  )
 
 type ContactInboxTracking = ContactInboxTrackingData
 
@@ -1454,6 +1524,68 @@ export const receiveComment = async (
   }
   const { contactInbox, contact, conversation } = detected
 
+  if (isCommentPostIntegrationType(integrationType)) {
+    // Post metadata fetch is best-effort (handled in channelPostService) and a
+    // workspace deleted mid-flight is a no-op (resolveForComment returns null).
+    // A transient persistence failure MUST propagate so the job retries: the
+    // writes are idempotent and this runs before the message insert +
+    // automation, so a retry records the relationship exactly once and never
+    // double-sends. Matches plan §5 ("errors propagate; retry is idempotent").
+    const postId = await channelPostService.resolveForComment({
+      workspaceId: inbox.workspaceId,
+      inboxId: inbox.id,
+      integrationId: integrationRow.id,
+      integrationType,
+      sourceAccountId: integrationIdentifier,
+      externalPostId: commentData.postId,
+      fetchDetails: async (): Promise<CommentPostDetails> => {
+        const integration = allIntegrations[integrationType]
+        if (!integration) {
+          throw new SdkException("Comment post details handler is unavailable")
+        }
+        const postDetailsIntegration =
+          integration as unknown as CommentPostDetailsRunner
+        if (integrationType === "messenger") {
+          const ctx = await buildContext({
+            workspaceId: inbox.workspaceId,
+            integrationType,
+            integration: {
+              ...integrationRow,
+              auth: integrationRow.auth as MessengerAuthValue,
+            },
+          })
+          const post = await postDetailsIntegration.runAction(
+            "getPostDetails",
+            { ctx, input: { postId: commentData.postId } },
+          )
+          return mapMessengerPostDetails(post)
+        }
+
+        const ctx = await buildContext({
+          workspaceId: inbox.workspaceId,
+          integrationType,
+          integration: integrationRow,
+        })
+        const post = await postDetailsIntegration.runAction("getPostDetails", {
+          ctx,
+          input: { postId: commentData.postId },
+        })
+        return mapInstagramPostDetails(post)
+      },
+    })
+    if (postId) {
+      await contactInboxPostService.recordComment({
+        workspaceId: inbox.workspaceId,
+        inboxId: inbox.id,
+        inboxChannel: inbox.channel,
+        contactInboxId: contactInbox.id,
+        postId,
+        integrationType,
+        commentedAt: new Date(commentData.createdTime * 1000),
+      })
+    }
+  }
+
   // Resolved AFTER the contact, and only when it has no real avatar yet. A
   // sentinel remains replaceable, while a returning commenter with a real
   // avatar skips the download because `buildExistingContactMatch` ignores
@@ -2050,6 +2182,7 @@ const createNewContactAndContactInbox = async (props: {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
   }
+  let instagramProfile: IncomingContact["instagramProfile"]
   if (hasOnDemandProfileApi(inbox.channel as ChannelType)) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
@@ -2068,17 +2201,23 @@ const createNewContactAndContactInbox = async (props: {
           "getProfile",
           {
             ctx: profileCtx,
-            data: { sourceId: incomingContact.sourceId },
+            data: {
+              sourceId: incomingContact.sourceId,
+              includeInstagramSnapshot: inbox.channel === "instagram",
+            },
           },
         )
+        const { instagramProfile: resolvedInstagramProfile, ...profile } =
+          userProfile
+        instagramProfile = resolvedInstagramProfile
         contactData = {
           ...contactData,
-          ...userProfile,
+          ...profile,
         }
       } catch (error) {
         logger.warn(
           {
-            err: error,
+            err: toLogSafeError(error),
             sourceId: incomingContact.sourceId,
             channel: inbox.channel,
           },
@@ -2170,6 +2309,10 @@ const createNewContactAndContactInbox = async (props: {
           sourceParentUserId: incomingContact.sourceParentUserId ?? null,
           sourceUsername: incomingContact.sourceUsername ?? null,
           channel: inbox.channel,
+          igFollow: instagramProfile?.follow ?? null,
+          igFollowing: instagramProfile?.following ?? null,
+          igVerified: instagramProfile?.verified ?? null,
+          igFollowers: instagramProfile?.followers ?? null,
           language: finalizedProfile.language,
         })
         .returning()

@@ -41,6 +41,18 @@ export type IncomingContact = {
    * `packages/database/src/partials/channel.ts`.
    */
   channelConversationId?: string
+  /**
+   * Best-effort Instagram relationship snapshot. It is intentionally separate
+   * from the contact fields: callers persist it on the channel connection.
+   */
+  instagramProfile?: InstagramProfileSnapshot | null
+}
+
+export type InstagramProfileSnapshot = {
+  follow: boolean | null
+  followers: number | null
+  following: boolean | null
+  verified: boolean | null
 }
 
 /** The channel-scoped identity slice shared by contact-inbox rows and SDK contacts. */

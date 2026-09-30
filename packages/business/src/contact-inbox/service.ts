@@ -8,14 +8,17 @@ import {
   inArray,
   isNull,
   isUniqueViolationError,
+  lte,
   or,
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
+import type { InstagramSnapshotState } from "@chatbotx.io/database/partials"
 import {
   type ContactInboxIdentityFields,
   type ContactInboxIdentityGuard,
   contactInboxOperationalColumns,
+  contactInboxPostRepository,
   contactInboxRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
@@ -29,6 +32,8 @@ import {
   CONTACT_INBOX_SOURCE_USER_ID_KEY,
   contactInboxModel,
   contactModel,
+  inboxModel,
+  workspaceModel,
 } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -122,6 +127,51 @@ export type ContactInboxBulkTrackingRow = {
   lastMessageAt: Date
   lastIncomingMessageAt: Date | null
 }
+
+export const INSTAGRAM_SNAPSHOT_MAX_ATTEMPTS = 5
+export const INSTAGRAM_SNAPSHOT_CLAIM_LEASE_MS = 10 * 60 * 1000
+export const INSTAGRAM_SNAPSHOT_INITIAL_RETRY_MS = 30 * 1000
+export const INSTAGRAM_SNAPSHOT_MAX_RETRY_MS = 30 * 60 * 1000
+
+// Snapshot recovery paginates by (igSnapshotNextAttemptAt, id) so it can walk
+// the partial pending index as an ordered range instead of sorting the whole
+// due set. The Redis cursor stores that tuple as `${isoNextAttemptAt}|${id}`.
+export type InstagramSnapshotCursor = { at: Date; id: string }
+
+const parseInstagramSnapshotCursor = (
+  cursor: string | undefined,
+): InstagramSnapshotCursor | undefined => {
+  if (!cursor) {
+    return
+  }
+  const separator = cursor.indexOf("|")
+  if (separator < 0) {
+    return
+  }
+  const at = new Date(cursor.slice(0, separator))
+  const id = cursor.slice(separator + 1)
+  if (Number.isNaN(at.getTime()) || !id) {
+    return
+  }
+  return { at, id }
+}
+
+export const serializeInstagramSnapshotCursor = (row: {
+  contactInboxId: string
+  nextAttemptAt: Date | null
+}): string | undefined =>
+  row.nextAttemptAt
+    ? `${row.nextAttemptAt.toISOString()}|${row.contactInboxId}`
+    : undefined
+
+const instagramSnapshotCursorWhere = (cursor: InstagramSnapshotCursor) =>
+  or(
+    gt(contactInboxModel.igSnapshotNextAttemptAt, cursor.at),
+    and(
+      eq(contactInboxModel.igSnapshotNextAttemptAt, cursor.at),
+      gt(contactInboxModel.id, cursor.id),
+    ),
+  )
 
 type FindByProps = {
   id: string
@@ -287,6 +337,229 @@ export const buildContactInboxIdentityWhere = (props: {
 }
 
 class ContactInboxService extends BaseService {
+  async claimInstagramSnapshot(props: {
+    contactInboxId: string
+    inboxId: string
+    workspaceId: string
+  }): Promise<
+    | {
+        attempt: number
+        sourceId: string
+      }
+    | undefined
+  > {
+    const now = new Date()
+    const leaseExpiresAt = new Date(
+      now.getTime() + INSTAGRAM_SNAPSHOT_CLAIM_LEASE_MS,
+    )
+
+    return await db.transaction(async (tx) => {
+      const canWrite =
+        await contactInboxPostRepository.lockWorkspaceForPostWrite(
+          { workspaceId: props.workspaceId },
+          tx,
+        )
+      if (!canWrite) {
+        return
+      }
+
+      const [candidate] = await tx
+        .select({
+          attempts: contactInboxModel.igSnapshotAttempts,
+          sourceId: contactInboxModel.sourceId,
+        })
+        .from(contactInboxModel)
+        .innerJoin(inboxModel, eq(inboxModel.id, contactInboxModel.inboxId))
+        .where(
+          and(
+            eq(contactInboxModel.id, props.contactInboxId),
+            eq(contactInboxModel.inboxId, props.inboxId),
+            eq(inboxModel.workspaceId, props.workspaceId),
+            eq(inboxModel.channel, "instagram"),
+            eq(contactInboxModel.igSnapshotState, "pending"),
+            lte(contactInboxModel.igSnapshotNextAttemptAt, now),
+            sql`COALESCE(${contactInboxModel.igSnapshotAttempts}, 0) < ${INSTAGRAM_SNAPSHOT_MAX_ATTEMPTS}`,
+          ),
+        )
+        .for("update")
+        .limit(1)
+      if (!candidate) {
+        return
+      }
+
+      const attempt = (candidate.attempts ?? 0) + 1
+      const [claimed] = await tx
+        .update(contactInboxModel)
+        .set({
+          igSnapshotAttempts: attempt,
+          igSnapshotNextAttemptAt: leaseExpiresAt,
+        })
+        .where(
+          and(
+            eq(contactInboxModel.id, props.contactInboxId),
+            eq(contactInboxModel.igSnapshotState, "pending"),
+            eq(contactInboxModel.igSnapshotAttempts, candidate.attempts ?? 0),
+          ),
+        )
+        .returning({ id: contactInboxModel.id })
+
+      return claimed ? { attempt, sourceId: candidate.sourceId } : undefined
+    })
+  }
+
+  async rescheduleInstagramSnapshot(props: {
+    attempt: number
+    contactInboxId: string
+    inboxId: string
+    workspaceId: string
+  }): Promise<InstagramSnapshotState | undefined> {
+    const exhausted = props.attempt >= INSTAGRAM_SNAPSHOT_MAX_ATTEMPTS
+    const retryDelay = Math.min(
+      INSTAGRAM_SNAPSHOT_INITIAL_RETRY_MS * 2 ** (props.attempt - 1),
+      INSTAGRAM_SNAPSHOT_MAX_RETRY_MS,
+    )
+    const updated = await db.transaction(async (tx) => {
+      const canWrite =
+        await contactInboxPostRepository.lockWorkspaceForPostWrite(
+          { workspaceId: props.workspaceId },
+          tx,
+        )
+      if (!canWrite) {
+        return
+      }
+      const [row] = await tx
+        .update(contactInboxModel)
+        .set({
+          igSnapshotNextAttemptAt: exhausted
+            ? null
+            : new Date(Date.now() + retryDelay),
+          igSnapshotState: exhausted ? "failed" : "pending",
+        })
+        .where(
+          and(
+            eq(contactInboxModel.id, props.contactInboxId),
+            eq(contactInboxModel.inboxId, props.inboxId),
+            eq(contactInboxModel.igSnapshotState, "pending"),
+            eq(contactInboxModel.igSnapshotAttempts, props.attempt),
+            sql`EXISTS (
+              SELECT 1
+              FROM ${inboxModel}
+              WHERE ${inboxModel.id} = ${props.inboxId}::bigint
+                AND ${inboxModel.workspaceId} = ${props.workspaceId}::bigint
+            )`,
+          ),
+        )
+        .returning({ state: contactInboxModel.igSnapshotState })
+      return row
+    })
+
+    const state = updated?.state
+    return state === "pending" ||
+      state === "failed" ||
+      state === "captured" ||
+      state === "unavailable"
+      ? state
+      : undefined
+  }
+
+  async listDueInstagramSnapshots(props: {
+    cursor?: string
+    limit: number
+  }): Promise<
+    Array<{
+      contactInboxId: string
+      inboxId: string
+      nextAttemptAt: Date | null
+      workspaceId: string
+    }>
+  > {
+    const now = new Date()
+    const cursor = parseInstagramSnapshotCursor(props.cursor)
+    const rows = await db
+      .select({
+        contactInboxId: contactInboxModel.id,
+        inboxId: inboxModel.id,
+        nextAttemptAt: contactInboxModel.igSnapshotNextAttemptAt,
+        workspaceId: inboxModel.workspaceId,
+      })
+      .from(contactInboxModel)
+      .innerJoin(inboxModel, eq(inboxModel.id, contactInboxModel.inboxId))
+      .innerJoin(workspaceModel, eq(workspaceModel.id, inboxModel.workspaceId))
+      .where(
+        and(
+          eq(inboxModel.channel, "instagram"),
+          isNull(workspaceModel.purgeStartedAt),
+          isNull(workspaceModel.scheduledDeletionAt),
+          eq(contactInboxModel.igSnapshotState, "pending"),
+          lte(contactInboxModel.igSnapshotNextAttemptAt, now),
+          sql`COALESCE(${contactInboxModel.igSnapshotAttempts}, 0) < ${INSTAGRAM_SNAPSHOT_MAX_ATTEMPTS}`,
+          ...(cursor ? [instagramSnapshotCursorWhere(cursor)] : []),
+        ),
+      )
+      .orderBy(
+        asc(contactInboxModel.igSnapshotNextAttemptAt),
+        asc(contactInboxModel.id),
+      )
+      .limit(props.limit)
+
+    return rows
+  }
+
+  async listExhaustedInstagramSnapshots(props: {
+    cursor?: string
+    limit: number
+  }): Promise<
+    Array<{
+      attempt: number
+      contactInboxId: string
+      inboxId: string
+      nextAttemptAt: Date | null
+      workspaceId: string
+    }>
+  > {
+    const cursor = parseInstagramSnapshotCursor(props.cursor)
+    const rows = await db
+      .select({
+        attempt: contactInboxModel.igSnapshotAttempts,
+        contactInboxId: contactInboxModel.id,
+        inboxId: inboxModel.id,
+        nextAttemptAt: contactInboxModel.igSnapshotNextAttemptAt,
+        workspaceId: inboxModel.workspaceId,
+      })
+      .from(contactInboxModel)
+      .innerJoin(inboxModel, eq(inboxModel.id, contactInboxModel.inboxId))
+      .innerJoin(workspaceModel, eq(workspaceModel.id, inboxModel.workspaceId))
+      .where(
+        and(
+          eq(inboxModel.channel, "instagram"),
+          isNull(workspaceModel.purgeStartedAt),
+          isNull(workspaceModel.scheduledDeletionAt),
+          eq(contactInboxModel.igSnapshotState, "pending"),
+          sql`COALESCE(${contactInboxModel.igSnapshotAttempts}, 0) >= ${INSTAGRAM_SNAPSHOT_MAX_ATTEMPTS}`,
+          lte(contactInboxModel.igSnapshotNextAttemptAt, new Date()),
+          ...(cursor ? [instagramSnapshotCursorWhere(cursor)] : []),
+        ),
+      )
+      .orderBy(
+        asc(contactInboxModel.igSnapshotNextAttemptAt),
+        asc(contactInboxModel.id),
+      )
+      .limit(props.limit)
+
+    return rows.flatMap((row) =>
+      row.attempt === null
+        ? []
+        : [
+            {
+              attempt: row.attempt,
+              contactInboxId: row.contactInboxId,
+              inboxId: row.inboxId,
+              nextAttemptAt: row.nextAttemptAt,
+              workspaceId: row.workspaceId,
+            },
+          ],
+    )
+  }
   protected readonly cachePrefix: string = "contact-inboxes"
 
   async findByUncached(props: {
@@ -798,6 +1071,83 @@ class ContactInboxService extends BaseService {
     }
 
     return invalidation
+  }
+
+  /**
+   * Commits one claimed Instagram snapshot. The attempt counter is a fencing
+   * token: an older worker cannot overwrite a newer claim or terminal state.
+   * All profile values move together only when the target row is still wholly
+   * empty, preserving values populated by another source.
+   */
+  async completeInstagramSnapshot(props: {
+    attempt: number
+    contactInboxId: string
+    inboxId: string
+    onlyIfLeaseExpired?: boolean
+    outcome: Exclude<InstagramSnapshotState, "pending">
+    snapshot: {
+      follow: boolean | null
+      followers: number | null
+      following: boolean | null
+      verified: boolean | null
+    }
+    workspaceId: string
+  }): Promise<boolean> {
+    const now = new Date()
+    const contactId = await db.transaction(async (tx) => {
+      const canWrite =
+        await contactInboxPostRepository.lockWorkspaceForPostWrite(
+          { workspaceId: props.workspaceId },
+          tx,
+        )
+      if (!canWrite) {
+        return
+      }
+
+      const allSnapshotValuesAreNull = sql`
+        ${contactInboxModel.igFollow} IS NULL
+        AND ${contactInboxModel.igFollowing} IS NULL
+        AND ${contactInboxModel.igVerified} IS NULL
+        AND ${contactInboxModel.igFollowers} IS NULL
+      `
+      const [updated] = await tx
+        .update(contactInboxModel)
+        .set({
+          igFollow: sql`CASE WHEN ${allSnapshotValuesAreNull} THEN ${props.snapshot.follow} ELSE ${contactInboxModel.igFollow} END`,
+          igFollowing: sql`CASE WHEN ${allSnapshotValuesAreNull} THEN ${props.snapshot.following} ELSE ${contactInboxModel.igFollowing} END`,
+          igVerified: sql`CASE WHEN ${allSnapshotValuesAreNull} THEN ${props.snapshot.verified} ELSE ${contactInboxModel.igVerified} END`,
+          igFollowers: sql`CASE WHEN ${allSnapshotValuesAreNull} THEN ${props.snapshot.followers} ELSE ${contactInboxModel.igFollowers} END`,
+          igSnapshotNextAttemptAt: null,
+          igSnapshotState: props.outcome,
+        })
+        .where(
+          and(
+            eq(contactInboxModel.id, props.contactInboxId),
+            eq(contactInboxModel.inboxId, props.inboxId),
+            eq(contactInboxModel.igSnapshotState, "pending"),
+            eq(contactInboxModel.igSnapshotAttempts, props.attempt),
+            ...(props.onlyIfLeaseExpired
+              ? [lte(contactInboxModel.igSnapshotNextAttemptAt, now)]
+              : []),
+            sql`EXISTS (
+              SELECT 1
+              FROM ${inboxModel}
+              WHERE ${inboxModel.id} = ${contactInboxModel.inboxId}
+                AND ${inboxModel.workspaceId} = ${props.workspaceId}
+            )`,
+          ),
+        )
+        .returning({ contactId: contactInboxModel.contactId })
+
+      return updated?.contactId
+    })
+
+    if (!contactId) {
+      return false
+    }
+
+    await this.invalidateCacheTags(this.getTrackingCacheTags(contactId))
+    return true
   }
 
   async bulkUpdateTracking(props: {

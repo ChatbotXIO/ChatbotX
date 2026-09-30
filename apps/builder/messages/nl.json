@@ -2087,6 +2087,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Voer een datum in als YYYY-MM-DD HH:mm of als variabele",
+    "openPost": "{post} openen",
+    "openPostLink": "Openen",
+    "postWithoutCaption": "Bericht zonder bijschrift",
     "operator": {
       "and": "Alle voorwaarden",
       "or": "Een of meer voorwaarden"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "Deze workspace staat gepland voor verwijdering. Maak de verwijdering hieronder ongedaan om de workspace te blijven gebruiken.",
       "pendingBlockedToast": "Deze workspace staat gepland voor verwijdering. Neem contact op met een workspacebeheerder om de toegang te herstellen.",
       "navDisabledTooltip": "Niet beschikbaar zolang de verwijdering van de workspace gepland staat",
-      "badge": "Verwijdering gepland"
+      "badge": "Verwijdering gepland",
+      "purging": "Het verwijderen van de werkruimte is bezig.",
+      "alreadyStarted": "Het verwijderen van de werkruimte is al gestart."
     },
     "supportAccess": {
       "bannerTitle": "Platformondersteuningssessie",

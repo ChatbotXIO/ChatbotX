@@ -26,14 +26,14 @@ const fetchProfileFields = async ({
   const fields = includeProfilePic
     ? "name,username,profile_pic"
     : "name,username"
-  const queries = new URLSearchParams({
-    fields,
-    access_token: ctx.auth.tokens.accessToken,
-  })
+  // Auth in the Authorization header, not the query string — a query token
+  // leaks through the request URL captured on HTTP-client errors and logs.
+  const queries = new URLSearchParams({ fields })
 
   try {
     return await instagramGraphClient.get<InstagramUserProfile>(
       `${ctx.auth.metadata.version}/${psid}?${queries.toString()}`,
+      { headers: { Authorization: `Bearer ${ctx.auth.tokens.accessToken}` } },
     )
   } catch (error) {
     // Graph rejects `profile_pic` on some nodes (e.g. the business account's

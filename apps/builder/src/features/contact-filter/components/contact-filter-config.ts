@@ -67,6 +67,7 @@ export type FieldConfig = {
    * keep using `options`.
    */
   valueLabels?: SelectOption[]
+  optionSource?: ContactFilterOptionSource
   /** Retired field: still rendered/validated, but omitted from the picker. */
   hidden?: boolean
 }
@@ -223,6 +224,7 @@ const resolveContactFilterOptions = (
     sequenceOptions: SelectOption[]
     reflinkOptions: SelectOption[]
     assigneeOptions: SelectOption[]
+    channelPostOptions: SelectOption[]
   },
 ): SelectOption[] | undefined => {
   switch (optionSource) {
@@ -267,6 +269,8 @@ const resolveContactFilterOptions = (
       return ctx.reflinkOptions
     case "assignees":
       return ctx.assigneeOptions
+    case "channelPosts":
+      return ctx.channelPostOptions
     case "ctwaConversionTypes":
       return [
         {
@@ -413,6 +417,7 @@ export const getFieldConfigs = ({
   sequenceOptions = [],
   reflinkOptions = [],
   assigneeOptions = [],
+  channelPostOptions = [],
   couponTopicOptions = [],
   botFields = [],
   includeBotFields = false,
@@ -427,6 +432,7 @@ export const getFieldConfigs = ({
   sequenceOptions?: SelectOption[]
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
+  channelPostOptions?: SelectOption[]
   couponTopicOptions?: SelectOption[]
   /** Workspace bot (account) fields — only read when `includeBotFields` is true. */
   botFields?: CustomFieldFilterOption[]
@@ -474,12 +480,14 @@ export const getFieldConfigs = ({
           sequenceOptions,
           reflinkOptions,
           assigneeOptions,
+          channelPostOptions,
         }) ?? booleanOptionsFor(formField)
       return {
         name: def.field,
         formField,
         group: getContactFilterFieldGroup(def.field),
         hidden: def.hidden,
+        optionSource: def.optionSource,
         options,
         valueLabels: filterValueLabels
           ? buildFilterValueLabels(def.optionSource, filterValueLabels, options)
