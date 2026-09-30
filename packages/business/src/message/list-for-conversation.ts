@@ -78,6 +78,8 @@ export type ListForConversationInput = {
   contactInboxId?: string
   cursor?: PaginationCursor
   limit: number
+  /** When set, the page only contains these message types. */
+  messageTypes?: ("incoming" | "outgoing" | "activity")[]
 }
 
 export type MessageWithPresignedAttachments = Omit<
@@ -127,6 +129,7 @@ export async function listForConversation(
     workspaceId: input.workspaceId,
     contactInboxId: input.contactInboxId,
     conversationId: input.conversationId,
+    messageTypes: input.messageTypes,
     sinceTime: getSafeSinceTime(conversation?.createdAt),
     pagination: {
       limit: input.limit,

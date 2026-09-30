@@ -170,6 +170,10 @@ export const createGuestSessionStore = (
     },
 
     handleNewMessage: (message: MessageResource) => {
+      // Same exclusion as GET /api/guest/messages: activity rows are operator logs.
+      if (message.messageType === "activity") {
+        return
+      }
       const { messages, appendMessage } = get()
 
       // If the message contains the clientId, it can be sent from this tab itself.

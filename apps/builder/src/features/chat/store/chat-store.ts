@@ -17,6 +17,7 @@ import type {
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
+import { isSystemActivityLog } from "@/features/messages/lib/system-activity"
 import type {
   MessageResource,
   MessageResourceWithRelations,
@@ -1073,6 +1074,11 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       },
 
       updateConversationViaMessage: (message: MessageResource) => {
+        // Automation logs must not become the inbox preview or pull an
+        // archived conversation back to the top.
+        if (isSystemActivityLog(message)) {
+          return
+        }
         let matchedConversation = false
         set((state) => {
           const conversationIndex = state.conversations.findIndex(
@@ -1218,7 +1224,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             const currentConversation = conversationsById.get(
               message.conversationId,
             )
-            if (currentConversation) {
+            if (currentConversation && !isSystemActivityLog(message)) {
               const conversationPatch = conversationPatchForMessage(
                 currentConversation,
                 message,
@@ -1241,7 +1247,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 message.conversationId,
                 messageIndex,
               )
-            } else {
+            } else if (!currentConversation && !isSystemActivityLog(message)) {
               unmatchedWorkspaceId ??= message.workspaceId
             }
 

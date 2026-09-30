@@ -239,7 +239,7 @@ class ContactSequenceService extends BaseService {
     contactId: string
     sequenceId: string
     contactInboxId: string
-  }): Promise<void> {
+  }): Promise<{ subscribed: boolean; sequenceName: string | null }> {
     const { workspaceId, contactId, sequenceId, contactInboxId } = props
 
     const existing = await db.query.contactsOnSequenceModel.findFirst({
@@ -247,7 +247,7 @@ class ContactSequenceService extends BaseService {
       columns: { id: true },
     })
     if (existing) {
-      return
+      return { subscribed: false, sequenceName: null }
     }
 
     const now = new Date()
@@ -286,7 +286,48 @@ class ContactSequenceService extends BaseService {
       sequence?.name ?? "",
       contactInboxId,
     )
+
+    return { subscribed: true, sequenceName: sequence?.name ?? null }
   }
+
+  // Inicia funcion (unsubscribeFromFlow)
+  /**
+   * Flow-step unsubscribe. Returns whether an enrollment was actually removed
+   * and the sequence name, so the inbox timeline can skip no-ops and avoid
+   * showing the raw sequence id.
+   */
+  async unsubscribeFromFlow(props: {
+    workspaceId: string
+    contactId: string
+    sequenceId: string
+    contactInboxId: string
+  }): Promise<{ unsubscribed: boolean; sequenceName: string | null }> {
+    const { workspaceId, contactId, sequenceId, contactInboxId } = props
+
+    const existing = await db.query.contactsOnSequenceModel.findFirst({
+      where: { contactId, sequenceId, workspaceId },
+      columns: { id: true },
+    })
+    if (!existing) {
+      return { unsubscribed: false, sequenceName: null }
+    }
+
+    const sequence = await db.query.sequenceModel.findFirst({
+      where: { id: sequenceId, workspaceId },
+      columns: { name: true },
+    })
+
+    await this.removeContactSequencesForContact({
+      workspaceId,
+      contactId,
+      sequenceIds: [sequenceId],
+      reason: "unsubscribed_via_flow",
+      contactInboxId,
+    })
+
+    return { unsubscribed: true, sequenceName: sequence?.name ?? null }
+  }
+  // Finaliza funcion (unsubscribeFromFlow)
 
   async listByContactId(props: {
     workspaceId: string

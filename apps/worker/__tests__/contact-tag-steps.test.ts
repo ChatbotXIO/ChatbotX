@@ -17,12 +17,22 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const removeContactSequencesForContact = vi.fn(() => {
   order.push("remove-sequence")
 })
-const subscribeFromFlow = vi.fn(async () => undefined)
+const subscribeFromFlow = vi.fn(async () => ({
+  subscribed: false,
+  sequenceName: null,
+}))
+const unsubscribeFromFlow = vi.fn(async () => ({
+  unsubscribed: false,
+  sequenceName: null,
+}))
 const attachByNamesToContacts = vi.fn(async () => ({
   processedContactIds: [],
   skippedContactIds: [],
+  newlyLinkedNames: [] as string[],
 }))
-const detachByNamesFromContacts = vi.fn(async () => undefined)
+const detachByNamesFromContacts = vi.fn(async () => ({
+  removedNames: [] as string[],
+}))
 const setBroadcastSubscription = vi.fn(async () => ({ id: "c-1" }))
 
 const order: string[] = []
@@ -36,6 +46,7 @@ vi.mock("@chatbotx.io/business/contact-sequence", () => ({
   contactSequenceService: {
     removeContactSequencesForContact,
     subscribeFromFlow,
+    unsubscribeFromFlow,
   },
 }))
 
@@ -149,11 +160,10 @@ describe("removeContactSequence", () => {
   test("delegates unsubscribe removal to the business service", async () => {
     await removeContactSequence(removeSequenceProps())
 
-    expect(removeContactSequencesForContact).toHaveBeenCalledWith({
+    expect(unsubscribeFromFlow).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactId: "c-1",
-      sequenceIds: ["seq-1"],
-      reason: "unsubscribed_via_flow",
+      sequenceId: "seq-1",
       contactInboxId: "ci-1",
     })
   })
@@ -161,7 +171,7 @@ describe("removeContactSequence", () => {
   test("returns early when sequenceId is missing", async () => {
     await removeContactSequence(removeSequenceProps(null))
 
-    expect(removeContactSequencesForContact).not.toHaveBeenCalled()
+    expect(unsubscribeFromFlow).not.toHaveBeenCalled()
   })
 })
 

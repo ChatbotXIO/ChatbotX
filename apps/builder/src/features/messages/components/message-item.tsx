@@ -106,7 +106,12 @@ export const MessageItem = (props: MessageItemProps) => {
   const t = useTranslations("messages")
   const [isEditing, setIsEditing] = useState(false)
 
-  if (message.messageType === "activity") {
+  // Call cards are stored as activity rows but render their own card.
+  // Automation logs (activityType) use the centered timeline item.
+  if (
+    message.messageType === "activity" &&
+    !getWhatsappCallEntity(message.contentAttributes)
+  ) {
     return <ActivityMessageItem message={message} />
   }
 

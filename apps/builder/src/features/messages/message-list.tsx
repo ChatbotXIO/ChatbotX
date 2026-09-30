@@ -15,6 +15,7 @@ import { deleteMessageAction } from "./actions/delete-message.action"
 import { editMessageAction } from "./actions/edit-message.action"
 import { MessageItem } from "./components/message-item"
 import { canPrivateReplyToComment } from "./lib/private-reply"
+import { isSystemActivityLog } from "./lib/system-activity"
 import type { MessageResourceWithRelations } from "./schema/resource"
 
 const START_INDEX = 100_000
@@ -189,14 +190,16 @@ export function MessageList() {
   }
 
   const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX)
-  const prevLengthRef = useRef(0)
+  const prevFilteredLengthRef = useRef(0)
+  const prevShowSystemEventsRef = useRef(true)
   const prependPendingRef = useRef(false)
   const didAutoSelectCommentRef = useRef(false)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
     setFirstItemIndex(START_INDEX)
-    prevLengthRef.current = 0
+    prevFilteredLengthRef.current = 0
+    prevShowSystemEventsRef.current = showSystemEvents
     prependPendingRef.current = false
     didAutoSelectCommentRef.current = false
     if (activeConversationId) {
@@ -227,15 +230,59 @@ export function MessageList() {
     }
   }, [messages])
 
+  const filteredMessages = showSystemEvents
+    ? messages
+    : messages.filter((message) => !isSystemActivityLog(message))
+
   useEffect(() => {
-    const prevLength = prevLengthRef.current
-    const delta = messages.length - prevLength
-    if (delta > 0 && prependPendingRef.current) {
-      setFirstItemIndex((idx) => idx - delta)
+    const filterToggled = prevShowSystemEventsRef.current !== showSystemEvents
+    prevShowSystemEventsRef.current = showSystemEvents
+    if (filterToggled) {
+      setFirstItemIndex(START_INDEX)
+      prevFilteredLengthRef.current = filteredMessages.length
+      prependPendingRef.current = false
+      return
+    }
+
+    const prevLength = prevFilteredLengthRef.current
+    const delta = filteredMessages.length - prevLength
+    // Virtuoso's firstItemIndex tracks the rendered list, not the raw page.
+    // A prepend of hidden activity rows must not shift the scroll.
+    if (prependPendingRef.current && !isLoadMoreMessage) {
+      if (delta > 0) {
+        setFirstItemIndex((idx) => idx - delta)
+      }
       prependPendingRef.current = false
     }
-    prevLengthRef.current = messages.length
-  }, [messages.length])
+    prevFilteredLengthRef.current = filteredMessages.length
+  }, [filteredMessages.length, isLoadMoreMessage, showSystemEvents])
+
+  // A page that is only activity logs renders nothing while events are hidden,
+  // and startReached never fires. Keep loading until a visible row arrives.
+  useEffect(() => {
+    if (showSystemEvents || filteredMessages.length > 0) {
+      return
+    }
+    if (
+      messages.length === 0 ||
+      !hasNextMessagePage ||
+      isLoadMoreMessage ||
+      !activeConversationId
+    ) {
+      return
+    }
+    prependPendingRef.current = true
+    loadMoreMessages(workspaceId, INBOX_MESSAGES_PER_PAGE)
+  }, [
+    activeConversationId,
+    filteredMessages.length,
+    hasNextMessagePage,
+    isLoadMoreMessage,
+    loadMoreMessages,
+    messages.length,
+    showSystemEvents,
+    workspaceId,
+  ])
 
   const loadMoreItems = () => {
     if (isLoadMoreMessage || !hasNextMessagePage || messages.length === 0) {
@@ -244,10 +291,6 @@ export function MessageList() {
     prependPendingRef.current = true
     loadMoreMessages(workspaceId, INBOX_MESSAGES_PER_PAGE)
   }
-
-  const filteredMessages = showSystemEvents
-    ? messages
-    : messages.filter((m) => m.messageType !== "activity")
 
   return (
     // `min-h-0`: Virtuoso's scroller is `height: 100%`, so without it this item

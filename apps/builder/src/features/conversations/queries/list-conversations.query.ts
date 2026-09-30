@@ -141,6 +141,7 @@ export const listConversations = async (
       // resolveLastMessageSinceTime falls back to a full-history scan instead.
       return messageRepository.findLastByConversation(c.id, {
         attachmentCountOnly: true,
+        excludeSystemActivityLogs: true,
         limit: 1,
         sinceTime: resolveLastMessageSinceTime(c.lastActivityAt),
         workspaceId,

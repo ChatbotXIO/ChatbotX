@@ -8,7 +8,9 @@ import type {
 import type { MessageResourceWithRelations } from "../schema/resource"
 
 export const listMessages = async (
-  input: ListMessagesRequest,
+  input: ListMessagesRequest & {
+    messageTypes?: ("incoming" | "outgoing" | "activity")[]
+  },
 ): Promise<ListMessagesResponse> => {
   const cursor = decodeCursor(input.cursor)
 
@@ -16,6 +18,7 @@ export const listMessages = async (
     workspaceId: input.workspaceId,
     conversationId: input.conversationId,
     contactInboxId: input.contactInboxId,
+    messageTypes: input.messageTypes,
     cursor: cursor
       ? {
           createdAt: cursor.createdAt,

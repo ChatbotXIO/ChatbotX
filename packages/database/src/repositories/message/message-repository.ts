@@ -66,6 +66,7 @@ export interface PaginatedMessages {
 export interface ListMessagesQuery {
   contactInboxId?: string
   conversationId?: string
+  messageTypes?: ("incoming" | "outgoing" | "activity")[]
   pagination: Pagination
   sinceTime?: Date
   workspaceId: string
@@ -73,6 +74,12 @@ export interface ListMessagesQuery {
 
 export interface FindLastByConversationOptions {
   attachmentCountOnly?: boolean
+  /**
+   * Drop automation timeline rows (`contentAttributes.activityType`) so the
+   * inbox preview stays on the last real message. Call cards and reactions
+   * stay eligible: they are `activity` messages without `activityType`.
+   */
+  excludeSystemActivityLogs?: boolean
   limit?: number
   messageTypes?: ("incoming" | "outgoing" | "activity")[]
   requireCompleteResults?: boolean

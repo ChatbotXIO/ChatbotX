@@ -192,6 +192,21 @@ describe("message list-for-conversation", () => {
       expect(call.pagination.cursor.createdAt.getMinutes()).toBe(59)
     })
 
+    test("forwards messageTypes so a guest page can omit activity logs", async () => {
+      await listForConversation({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        limit: 20,
+        messageTypes: ["incoming", "outgoing"],
+      })
+
+      expect(mocks.repo.listByConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messageTypes: ["incoming", "outgoing"],
+        }),
+      )
+    })
+
     test.each([
       "messenger",
       "instagram",

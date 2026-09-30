@@ -19,10 +19,13 @@ mockInsertBuilder.values.mockReturnValue(mockInsertBuilder)
 mockInsertBuilder.onConflictDoNothing.mockReturnValue(mockInsertBuilder)
 mockInsertBuilder.returning.mockResolvedValue([])
 
-const mockDeleteBuilder = {
-  where: vi.fn(),
+const mockDeleteReturning = vi.fn().mockResolvedValue([])
+const mockDeleteWhereResult = {
+  returning: mockDeleteReturning,
 }
-mockDeleteBuilder.where.mockResolvedValue(undefined)
+const mockDeleteBuilder = {
+  where: vi.fn(() => mockDeleteWhereResult),
+}
 
 const state = {
   txTagFindMany: [] as { id: string; name?: string; workspaceId?: string }[],
@@ -169,7 +172,8 @@ function resetMocks() {
   mockInsertBuilder.values.mockReturnValue(mockInsertBuilder)
   mockInsertBuilder.onConflictDoNothing.mockReturnValue(mockInsertBuilder)
   mockInsertBuilder.returning.mockResolvedValue([])
-  mockDeleteBuilder.where.mockResolvedValue(undefined)
+  mockDeleteBuilder.where.mockReturnValue(mockDeleteWhereResult)
+  mockDeleteReturning.mockResolvedValue([])
   createId.mockImplementation(() => `generated-id-${++idCounter}`)
   // vi.clearAllMocks() does not drain mockResolvedValueOnce queues — mockReset
   // drops them, then re-wire the base implementation.
@@ -348,7 +352,11 @@ describe("tagService.attachByNamesToContacts", () => {
         contactIds: ["c-1"],
         names: ["tag-a"],
       }),
-    ).resolves.toEqual({ processedContactIds: ["c-1"], skippedContactIds: [] })
+    ).resolves.toEqual({
+      processedContactIds: ["c-1"],
+      skippedContactIds: [],
+      newlyLinkedNames: [],
+    })
 
     expect(enqueueAttach).toHaveBeenCalledOnce()
     expect(enqueueAttach).toHaveBeenCalledWith({

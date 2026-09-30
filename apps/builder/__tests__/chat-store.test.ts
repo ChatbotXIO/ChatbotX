@@ -1751,3 +1751,68 @@ describe("createChatStore seed invariant check", () => {
     expect(loggerWarnMock).not.toHaveBeenCalled()
   })
 })
+
+describe("chat store system activity logs", () => {
+  test("appends an automation log to the open thread without replacing the preview", () => {
+    const store = createChatStore()
+    const existing = makeMessage("conv-1", new Date("2026-09-18T09:00:00Z"))
+    store.setState({
+      activeConversationId: "conv-1",
+      messages: [existing] as never,
+      conversations: [
+        {
+          ...makeConversation("conv-1", new Date("2026-09-18T09:00:00Z")),
+          messages: [existing],
+        },
+      ] as never,
+    })
+
+    store.getState().handleNewMessage({
+      ...makeMessage("conv-1", new Date("2026-09-18T10:00:00Z")),
+      id: "msg-log",
+      messageType: "activity",
+      contentAttributes: { activityType: "tag_added", tags: ["vip"] },
+    } as never)
+
+    const conversation = store.getState().conversations[0] as
+      | {
+          lastActivityAt: Date
+          messages: { id: string }[]
+        }
+      | undefined
+    expect(conversation?.messages[0]?.id).toBe(existing.id)
+    expect(conversation?.lastActivityAt).toEqual(
+      new Date("2026-09-18T09:00:00Z"),
+    )
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      existing.id,
+      "msg-log",
+    ])
+  })
+
+  test("still promotes a call card, which is activity without activityType", () => {
+    const store = createChatStore()
+    const existing = makeMessage("conv-1", new Date("2026-09-18T09:00:00Z"))
+    store.setState({
+      activeConversationId: "conv-1",
+      conversations: [
+        {
+          ...makeConversation("conv-1", new Date("2026-09-18T09:00:00Z")),
+          messages: [existing],
+        },
+      ] as never,
+    })
+
+    store.getState().handleNewMessage({
+      ...makeMessage("conv-1", new Date("2026-09-18T10:00:00Z")),
+      id: "msg-call",
+      messageType: "activity",
+      contentAttributes: { type: "whatsapp_call" },
+    } as never)
+
+    const conversation = store.getState().conversations[0] as
+      | { messages: { id: string }[] }
+      | undefined
+    expect(conversation?.messages[0]?.id).toBe("msg-call")
+  })
+})

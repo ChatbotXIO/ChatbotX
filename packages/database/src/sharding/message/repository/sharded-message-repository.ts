@@ -2318,6 +2318,18 @@ export class ShardedMessageRepository implements IMessageRepository {
                 )
               }
 
+              if (options?.excludeSystemActivityLogs) {
+                // `->` instead of jsonb `?`: node-pg treats `?` as a placeholder.
+                const notSystemActivityLog = or(
+                  sql`${messageModel.messageType} <> 'activity'`,
+                  isNull(messageModel.contentAttributes),
+                  sql`(${messageModel.contentAttributes} -> 'activityType') IS NULL`,
+                )
+                if (notSystemActivityLog) {
+                  whereConditions.push(notSystemActivityLog)
+                }
+              }
+
               const messages = await shardClient
                 .select()
                 .from(messageModel)
@@ -2656,6 +2668,12 @@ export class ShardedMessageRepository implements IMessageRepository {
 
         if (contactInboxId) {
           whereConditions.push(eq(messageModel.contactInboxId, contactInboxId))
+        }
+
+        if (query.messageTypes && query.messageTypes.length > 0) {
+          whereConditions.push(
+            inArray(messageModel.messageType, query.messageTypes),
+          )
         }
 
         if (cursor) {

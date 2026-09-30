@@ -154,45 +154,12 @@ export const ActivityMessageItem = ({
           </div>
         )
 
-      default: {
-        const lines = (message.text ?? "").split("\n")
+      default:
         return (
-          <div className="flex flex-col items-center justify-center text-center text-muted-foreground text-xs">
-            {lines.map((line, idx) => {
-              const colonIdx = line.indexOf(":")
-              const lower = line.toLowerCase()
-              if (
-                colonIdx !== -1 &&
-                (lower.startsWith("previous value:") ||
-                  lower.startsWith("valor anterior:") ||
-                  lower.startsWith("new value:") ||
-                  lower.startsWith("nuevo valor:"))
-              ) {
-                const label = line.slice(0, colonIdx + 1)
-                const val = line.slice(colonIdx + 1)
-                return (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: lines are static text chunks
-                  <div className="mt-0.5" key={idx}>
-                    <span className="font-semibold text-foreground/85">
-                      {label}
-                    </span>
-                    <span>{val}</span>
-                  </div>
-                )
-              }
-              return (
-                <div
-                  className={idx === 0 ? "text-muted-foreground" : ""}
-                  // biome-ignore lint/suspicious/noArrayIndexKey: lines are static text chunks
-                  key={idx}
-                >
-                  {line}
-                </div>
-              )
-            })}
+          <div className="whitespace-pre-line text-center text-muted-foreground text-xs">
+            {message.text}
           </div>
         )
-      }
     }
   }
 
