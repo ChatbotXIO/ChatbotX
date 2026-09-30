@@ -489,7 +489,26 @@
   },
   "botSimulator": {
     "description": "Simulera botens beteende i en realtidsmiljö.",
-    "title": "Botsimulator"
+    "title": "Botsimulator",
+    "formDescription": "Få en länk som visar en webbplats med din webbchatt, så att du kan demonstrera boten för en kund.",
+    "websiteLink": "Webbplatslänk",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "Webbplatsen som visas bakom webbchatten. Vissa webbplatser tillåter inte att visas inuti en annan sida.",
+    "selectWebchat": "Välj en webbchatt",
+    "webchatRequired": "Välj en webbchatt",
+    "invalidUrl": "Ange en fullständig länk som börjar med http:// eller https://",
+    "getLink": "Hämta länk",
+    "linkCopied": "Länken kopierades till urklipp",
+    "copyFailed": "Det gick inte att kopiera länken",
+    "noWebchat": "Den här arbetsytan har ingen webbchatt ännu.",
+    "createWebchat": "Skapa en webbchatt",
+    "websitePreview": "Förhandsvisning av webbplats",
+    "webchatDisabled": "Den här webbchatten är avstängd. Slå på den eller välj en annan.",
+    "domainNotAllowed": "Den här webbplatsen finns inte bland webbchattens tillåtna domäner.",
+    "disabledWebchatLabel": "{name} (avstängd)",
+    "allowedDomainsHint": "Fungerar bara med webbplatser på: {domains}",
+    "noEnabledWebchat": "Ingen webbchatt är påslagen i den här arbetsytan.",
+    "enableWebchat": "Slå på en webbchatt"
   },
   "broadcasts": {
     "allContacts": {

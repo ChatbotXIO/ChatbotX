@@ -177,6 +177,13 @@ export const TOOLS_CONFIG = [
   //   getLink: (id: string) => `/space/${id}/webhooks`,
   // },
   {
+    id: "bot-simulator",
+    labelKey: "botSimulator.title",
+    descriptionKey: "botSimulator.description",
+    icon: BotIcon,
+    getLink: (id: string) => `/space/${id}/bot-simulator`,
+  },
+  {
     id: "places-near-me",
     labelKey: "placesNearMe.title",
     descriptionKey: "placesNearMe.description",
@@ -187,12 +194,6 @@ export const TOOLS_CONFIG = [
     labelKey: "pollManager.title",
     descriptionKey: "pollManager.description",
     icon: UserCheck2Icon,
-  },
-  {
-    id: "bot-simulator",
-    labelKey: "botSimulator.title",
-    descriptionKey: "botSimulator.description",
-    icon: BotIcon,
   },
 ] as const
 

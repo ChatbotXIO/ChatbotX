@@ -56,6 +56,24 @@ export const isOriginAuthorized = (
   )
 }
 
+/**
+ * A request coming from the app's own host (or with no origin at all, i.e.
+ * the webchat opened directly) is first-party: the allowlist only guards
+ * embedding on third-party sites. The bot simulator relies on this — its
+ * widget runs on the app host, not on the simulated website.
+ */
+export const isFirstPartyOrigin = (
+  origin: string | null | undefined,
+  appHost: string,
+) => {
+  if (!origin) {
+    return true
+  }
+
+  const originHost = getHostFromOrigin(origin)
+  return !!originHost && !!appHost && originHost === appHost.toLowerCase()
+}
+
 export const getParentOriginFromUrl = (url: string | null | undefined) => {
   if (!url) {
     return null

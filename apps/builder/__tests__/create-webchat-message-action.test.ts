@@ -168,7 +168,20 @@ vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
 const PROTOCOL_PREFIX_REGEX = /^https?:\/\//
 const HOST_DELIMITER_REGEX = /[/:?#]/
 
-vi.mock("@/features/integration-webchat/lib/authorized-domain", () => ({
+const { mockHeaders } = vi.hoisted(() => ({
+  mockHeaders: vi.fn(() => Promise.resolve(new Headers())),
+}))
+
+vi.mock("next/headers", () => ({
+  headers: mockHeaders,
+}))
+
+vi.mock("@/features/integration-webchat/lib/authorized-domain", async () => ({
+  isFirstPartyOrigin: (
+    await vi.importActual<
+      typeof import("@/features/integration-webchat/lib/authorized-domain")
+    >("@/features/integration-webchat/lib/authorized-domain")
+  ).isFirstPartyOrigin,
   isOriginAuthorized: (
     origin: string | null | undefined,
     authorizedDomains: string[],
@@ -559,6 +572,52 @@ describe("handleCreateWebchatMessage", () => {
     })
 
     expect(mockContactInboxFindLatest).not.toHaveBeenCalled()
+  })
+
+  test("allows the app's own host even when it is not in authorizedDomains (bot simulator)", async () => {
+    // The bot simulator's widget runs on the app host, not on the simulated
+    // website, so its parentOrigin is always the app host.
+    mockFindOrFail.mockResolvedValue({
+      inboxId: "inbox-1",
+      authorizedDomains: ["example.com"],
+    })
+    mockHeaders.mockResolvedValueOnce(
+      new Headers({ "x-domain": "app.chatbotx.test" }),
+    )
+
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        text: "hello",
+        workspaceId: "ws-1",
+        webchatId: "webchat-1",
+        guestConversationId: "guest-1",
+        parentOrigin: "https://app.chatbotx.test",
+      },
+    }).catch(() => undefined)
+
+    expect(mockContactInboxFindLatest).toHaveBeenCalled()
+  })
+
+  test("still rejects a third-party origin when the app host is known", async () => {
+    mockFindOrFail.mockResolvedValue({
+      inboxId: "inbox-1",
+      authorizedDomains: ["example.com"],
+    })
+    mockHeaders.mockResolvedValueOnce(
+      new Headers({ "x-domain": "app.chatbotx.test" }),
+    )
+
+    await expect(
+      handleCreateWebchatMessage({
+        parsedInput: {
+          text: "hello",
+          workspaceId: "ws-1",
+          webchatId: "webchat-1",
+          guestConversationId: "guest-1",
+          parentOrigin: "https://attacker.test",
+        },
+      }),
+    ).rejects.toMatchObject({ code: "forbidden", httpStatusCode: 403 })
   })
 
   test("rejects an invalid access token even when no authorizedDomains are configured", async () => {

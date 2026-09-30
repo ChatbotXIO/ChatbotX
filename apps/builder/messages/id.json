@@ -4646,7 +4646,26 @@
   },
   "botSimulator": {
     "title": "Simulator Bot",
-    "description": "Simulasikan perilaku bot Anda dalam lingkungan waktu nyata."
+    "description": "Simulasikan perilaku bot Anda dalam lingkungan waktu nyata.",
+    "formDescription": "Dapatkan tautan yang menampilkan situs web dengan webchat Anda, untuk mendemokan bot kepada pelanggan.",
+    "websiteLink": "Tautan situs web",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "Situs web yang ditampilkan di belakang webchat. Beberapa situs tidak mengizinkan ditampilkan di dalam halaman lain.",
+    "selectWebchat": "Pilih webchat",
+    "webchatRequired": "Silakan pilih webchat",
+    "invalidUrl": "Masukkan tautan lengkap yang diawali http:// atau https://",
+    "getLink": "Dapatkan tautan",
+    "linkCopied": "Tautan disalin ke papan klip",
+    "copyFailed": "Tidak dapat menyalin tautan",
+    "noWebchat": "Workspace ini belum memiliki webchat.",
+    "createWebchat": "Buat webchat",
+    "websitePreview": "Pratinjau situs web",
+    "webchatDisabled": "Webchat ini sedang nonaktif. Aktifkan atau pilih yang lain.",
+    "domainNotAllowed": "Situs web ini tidak termasuk dalam domain yang diizinkan untuk webchat.",
+    "disabledWebchatLabel": "{name} (nonaktif)",
+    "allowedDomainsHint": "Hanya berfungsi dengan situs web di: {domains}",
+    "noEnabledWebchat": "Tidak ada webchat yang aktif di workspace ini.",
+    "enableWebchat": "Aktifkan webchat"
   },
   "pollManager": {
     "title": "Pengelola Jajak Pendapat",

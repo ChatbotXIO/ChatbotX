@@ -4646,7 +4646,26 @@
   },
   "botSimulator": {
     "title": "Bot Simülatörü",
-    "description": "Botunuzun davranışını gerçek zamanlı bir ortamda simüle edin."
+    "description": "Botunuzun davranışını gerçek zamanlı bir ortamda simüle edin.",
+    "formDescription": "Botu müşteriye göstermek için web sohbetinizle birlikte bir web sitesini gösteren bağlantı alın.",
+    "websiteLink": "Web sitesi bağlantısı",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "Web sohbetinin arkasında gösterilecek web sitesi. Bazı siteler başka bir sayfanın içinde gösterilmeye izin vermez.",
+    "selectWebchat": "Web sohbeti seçin",
+    "webchatRequired": "Lütfen bir web sohbeti seçin",
+    "invalidUrl": "http:// veya https:// ile başlayan tam bir bağlantı girin",
+    "getLink": "Bağlantıyı al",
+    "linkCopied": "Bağlantı panoya kopyalandı",
+    "copyFailed": "Bağlantı kopyalanamadı",
+    "noWebchat": "Bu çalışma alanında henüz web sohbeti yok.",
+    "createWebchat": "Web sohbeti oluştur",
+    "websitePreview": "Web sitesi önizlemesi",
+    "webchatDisabled": "Bu web sohbeti kapalı. Açın veya başka birini seçin.",
+    "domainNotAllowed": "Bu web sitesi, web sohbetinin izin verilen alan adları arasında değil.",
+    "disabledWebchatLabel": "{name} (kapalı)",
+    "allowedDomainsHint": "Yalnızca şu alan adlarındaki web siteleriyle çalışır: {domains}",
+    "noEnabledWebchat": "Bu çalışma alanında açık bir web sohbeti yok.",
+    "enableWebchat": "Bir web sohbetini açın"
   },
   "pollManager": {
     "title": "Anket Yöneticisi",

@@ -4625,7 +4625,26 @@
   },
   "botSimulator": {
     "title": "ボットシミュレーター",
-    "description": "リアルタイム環境でボットの動作をシミュレーションします。"
+    "description": "リアルタイム環境でボットの動作をシミュレーションします。",
+    "formDescription": "ウェブチャット付きでウェブサイトを表示するリンクを取得し、顧客にボットをデモできます。",
+    "websiteLink": "ウェブサイトのリンク",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "ウェブチャットの背後に表示するウェブサイトです。一部のサイトは他のページ内での表示を許可していません。",
+    "selectWebchat": "ウェブチャットを選択",
+    "webchatRequired": "ウェブチャットを選択してください",
+    "invalidUrl": "http:// または https:// で始まる完全なリンクを入力してください",
+    "getLink": "リンクを取得",
+    "linkCopied": "リンクをクリップボードにコピーしました",
+    "copyFailed": "リンクをコピーできませんでした",
+    "noWebchat": "このワークスペースにはまだウェブチャットがありません。",
+    "createWebchat": "ウェブチャットを作成",
+    "websitePreview": "ウェブサイトのプレビュー",
+    "webchatDisabled": "このWebチャットはオフになっています。オンにするか、別のものを選択してください。",
+    "domainNotAllowed": "このWebサイトはWebチャットの許可ドメインに含まれていません。",
+    "disabledWebchatLabel": "{name}（オフ）",
+    "allowedDomainsHint": "次のドメインのWebサイトでのみ利用できます: {domains}",
+    "noEnabledWebchat": "このワークスペースでオンになっているWebチャットはありません。",
+    "enableWebchat": "Webチャットをオンにする"
   },
   "pollManager": {
     "title": "投票管理",

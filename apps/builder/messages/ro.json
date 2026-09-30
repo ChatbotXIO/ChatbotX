@@ -4646,7 +4646,26 @@
   },
   "botSimulator": {
     "title": "Simulator de bot",
-    "description": "Simulează comportamentul botului tău într-un mediu în timp real."
+    "description": "Simulează comportamentul botului tău într-un mediu în timp real.",
+    "formDescription": "Obține un link care afișează un site web cu webchat-ul tău, pentru a prezenta botul unui client.",
+    "websiteLink": "Link site web",
+    "websiteLinkPlaceholder": "https://example.com",
+    "websiteLinkHint": "Site-ul afișat în spatele webchat-ului. Unele site-uri nu permit afișarea în interiorul altei pagini.",
+    "selectWebchat": "Selectează un webchat",
+    "webchatRequired": "Te rugăm să selectezi un webchat",
+    "invalidUrl": "Introdu un link complet care începe cu http:// sau https://",
+    "getLink": "Obține link",
+    "linkCopied": "Link copiat în clipboard",
+    "copyFailed": "Linkul nu a putut fi copiat",
+    "noWebchat": "Acest spațiu de lucru nu are încă un webchat.",
+    "createWebchat": "Creează un webchat",
+    "websitePreview": "Previzualizare site web",
+    "webchatDisabled": "Acest webchat este dezactivat. Activează-l sau alege altul.",
+    "domainNotAllowed": "Acest site nu se află printre domeniile permise ale webchatului.",
+    "disabledWebchatLabel": "{name} (dezactivat)",
+    "allowedDomainsHint": "Funcționează doar cu site-uri de pe: {domains}",
+    "noEnabledWebchat": "Niciun webchat nu este activat în acest spațiu de lucru.",
+    "enableWebchat": "Activează un webchat"
   },
   "pollManager": {
     "title": "Manager de sondaje",
