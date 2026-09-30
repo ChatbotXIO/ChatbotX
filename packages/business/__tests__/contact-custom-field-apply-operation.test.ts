@@ -143,6 +143,10 @@ vi.mock("../src/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), debug: vi.fn(), info: vi.fn() },
 }))
 
+vi.mock("../src/message/record-custom-field-activity", () => ({
+  recordCustomFieldChangeActivities: vi.fn(async () => undefined),
+}))
+
 const { contactCustomFieldService } = await import(
   "../src/contact-custom-field/service"
 )
