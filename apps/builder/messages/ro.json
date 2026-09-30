@@ -101,6 +101,7 @@
       "sendTemplateMessage": "Mesaj șablon",
       "whatsappOptionList": "Listă de opțiuni",
       "noTemplatesAvailable": "Nu există șabloane disponibile",
+      "inboxesUnavailable": "Canalele nu au putut fi încărcate",
       "noFlowsAvailable": "Nu există fluxuri disponibile",
       "setCustomField": "Setează câmpul personalizat",
       "startAnotherNode": "Pornește alt nod",

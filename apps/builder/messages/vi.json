@@ -2578,6 +2578,7 @@
       "subscribeSequence": "Đăng ký chăm sóc",
       "unsubscribeSequence": "Hủy đăng ký chăm sóc",
       "noTemplatesAvailable": "No templates available",
+      "inboxesUnavailable": "Không thể tải kênh",
       "noFlowsAvailable": "Không có flow nào",
       "splitTraffic": "Chia lưu lượng",
       "aiEditImage": "AI Chỉnh sửa hình ảnh",

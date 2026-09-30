@@ -3206,6 +3206,7 @@
       "moosendCreateContact": "Lägg till kontakt i Moosend",
       "noFlowsAvailable": "Inga flöden tillgängliga",
       "noTemplatesAvailable": "Inga mallar tillgängliga",
+      "inboxesUnavailable": "Det gick inte att läsa in kanaler",
       "openWebsite": "Öppna webbplats",
       "optInEmail": "Anmäl till e-post",
       "optOutEmail": "Avanmäl från e-post",

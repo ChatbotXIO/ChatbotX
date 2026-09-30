@@ -2364,6 +2364,7 @@
       "sendTemplateMessage": "Malliviesti",
       "whatsappOptionList": "Vaihtoehtoluettelo",
       "noTemplatesAvailable": "Malleja ei ole saatavilla",
+      "inboxesUnavailable": "Kanavia ei voitu ladata",
       "noFlowsAvailable": "Flow'ita ei ole saatavilla",
       "setCustomField": "Aseta mukautettu kenttä",
       "startAnotherNode": "Käynnistä toinen solmu",

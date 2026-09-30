@@ -2751,6 +2751,7 @@
       "sendTemplateMessage": "Şablon mesajı",
       "whatsappOptionList": "Seçim siyahısı",
       "noTemplatesAvailable": "Şablon yoxdur",
+      "inboxesUnavailable": "Kanallar yüklənə bilmədi",
       "noFlowsAvailable": "Axın yoxdur",
       "setCustomField": "Fərdi sahəni təyin et",
       "startAnotherNode": "Başqa düyünü başlat",

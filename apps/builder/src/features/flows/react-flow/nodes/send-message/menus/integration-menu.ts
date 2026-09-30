@@ -1,7 +1,12 @@
 import type { ListInboxesResponse } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { channelTypes } from "@chatbotx.io/database/partials"
-import { GlobeIcon, type LucideIcon } from "lucide-react"
+import {
+  GlobeIcon,
+  LoaderIcon,
+  type LucideIcon,
+  TriangleAlertIcon,
+} from "lucide-react"
 import { INBOX_ICON_CONFIG } from "@/features/inboxes/components/inbox-icon"
 import type { MenuData, MenuItem, TranslationFn } from "../../types"
 import { messengerTemplateMenus } from "./messenger-template-menus"
@@ -14,11 +19,37 @@ const TEMPLATE_CHANNELS: ChannelType[] = [
   channelTypes.enum.messenger,
 ]
 
+const inboxStatusMenu = (
+  t: TranslationFn,
+  status: MenuData["inboxesStatus"] | undefined,
+): MenuItem[] | null => {
+  if (status === "pending") {
+    return [{ label: t("actions.loading"), icon: LoaderIcon, stepType: null }]
+  }
+
+  if (status === "error") {
+    return [
+      {
+        label: t("flows.actions.inboxesUnavailable"),
+        icon: TriangleAlertIcon,
+        stepType: null,
+      },
+    ]
+  }
+
+  return null
+}
+
 export const integrationMenus = (
   t: TranslationFn,
   menuData?: MenuData,
   inboxChannel?: ChannelType,
 ): MenuItem[] => {
+  const statusMenu = inboxStatusMenu(t, menuData?.inboxesStatus)
+  if (statusMenu) {
+    return statusMenu
+  }
+
   // A concrete channel filters to that channel; omnichannel (or no channel)
   // shows every template-supporting inbox so both WhatsApp and Messenger appear.
   const isSpecificChannel =
@@ -68,6 +99,11 @@ export const waFlowIntegrationMenus = (
   t: TranslationFn,
   menuData?: MenuData,
 ): MenuItem[] => {
+  const statusMenu = inboxStatusMenu(t, menuData?.inboxesStatus)
+  if (statusMenu) {
+    return statusMenu
+  }
+
   const inboxes = (menuData?.inboxes ?? []).filter(
     (inbox) => inbox.channel === channelTypes.enum.whatsapp,
   )

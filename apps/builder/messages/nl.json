@@ -2364,6 +2364,7 @@
       "sendTemplateMessage": "Sjabloonbericht",
       "whatsappOptionList": "Optielijst",
       "noTemplatesAvailable": "Geen sjablonen beschikbaar",
+      "inboxesUnavailable": "Kanalen konden niet worden geladen",
       "noFlowsAvailable": "Geen flows beschikbaar",
       "setCustomField": "Aangepast veld instellen",
       "startAnotherNode": "Ander knooppunt starten",

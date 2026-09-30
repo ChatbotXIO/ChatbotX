@@ -10,7 +10,12 @@ import { integrationMenus } from "../menus/integration-menu"
 const t = ((key: string) => key) as unknown as TranslationFn
 
 const TEMPLATE_LABEL = "flows.actions.sendTemplateMessage"
+const WHATSAPP_FLOW_LABEL = "flows.actions.whatsappFlow"
 const NO_TEMPLATES_LABEL = "flows.actions.noTemplatesAvailable"
+const INBOX_STATUS_CASES = [
+  ["pending", "actions.loading"],
+  ["error", "flows.actions.inboxesUnavailable"],
+] as const
 
 const waInbox = {
   id: "wa-1",
@@ -49,9 +54,11 @@ const messengerTemplate = {
 const buildMenuData = (
   channel: MenuData["beforeStep"]["channel"],
   inboxes = [waInbox, messengerInbox, telegramInbox],
+  inboxesStatus: MenuData["inboxesStatus"] = "success",
 ): MenuData =>
   ({
     inboxes,
+    inboxesStatus,
     templates: {
       waTemplates: [waTemplate],
       messengerTemplates: [messengerTemplate],
@@ -66,6 +73,46 @@ const childLabels = (item?: MenuItem): string[] =>
   (item?.children ?? []).map((child) => child.label)
 
 describe("sendMessageEditorMenus — template message consolidation", () => {
+  it.each(
+    INBOX_STATUS_CASES,
+  )("shows the %s inbox status under available template entries", (status, label) => {
+    for (const channel of [
+      channelTypes.enum.whatsapp,
+      channelTypes.enum.messenger,
+      channelTypes.enum.omnichannel,
+    ]) {
+      const items = sendMessageEditorMenus(
+        t,
+        buildMenuData(channel, [], status),
+      )
+
+      expect(childLabels(findTemplateItem(items))).toEqual([label])
+      if (channel !== channelTypes.enum.messenger) {
+        expect(
+          childLabels(items.find((item) => item.label === WHATSAPP_FLOW_LABEL)),
+        ).toEqual([label])
+      }
+    }
+  })
+
+  it.each([
+    channelTypes.enum.whatsapp,
+    channelTypes.enum.messenger,
+    channelTypes.enum.omnichannel,
+    channelTypes.enum.tiktok,
+  ])("keeps every %s top-level entry in the same order after an inbox error", (channel) => {
+    const successLabels = sendMessageEditorMenus(
+      t,
+      buildMenuData(channel, []),
+    ).map((item) => item.label)
+    const errorLabels = sendMessageEditorMenus(
+      t,
+      buildMenuData(channel, [], "error"),
+    ).map((item) => item.label)
+
+    expect(errorLabels).toEqual(successLabels)
+  })
+
   it("shows exactly ONE Template Message item on omnichannel (no duplicate)", () => {
     const items = sendMessageEditorMenus(
       t,
@@ -169,5 +216,16 @@ describe("integrationMenus", () => {
     expect(menus).toHaveLength(1)
     expect(menus[0]?.label).toBe(NO_TEMPLATES_LABEL)
     expect(menus[0]?.stepType).toBeNull()
+  })
+
+  it("preserves template parent and empty state after successful empty inbox fetch", () => {
+    const items = sendMessageEditorMenus(
+      t,
+      buildMenuData(channelTypes.enum.whatsapp, []),
+    )
+    const templateItem = findTemplateItem(items)
+
+    expect(templateItem).toBeDefined()
+    expect(childLabels(templateItem)).toEqual([NO_TEMPLATES_LABEL])
   })
 })

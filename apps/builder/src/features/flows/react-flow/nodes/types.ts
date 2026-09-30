@@ -3,6 +3,7 @@ import type {
   ChooseChannelStepSchema,
   StepType,
 } from "@chatbotx.io/flow-config"
+import type { QueryStatus } from "@tanstack/react-query"
 import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { FlowMessengerTemplateResource } from "@/features/integration-messenger/message-templates/schema/resource"
@@ -31,6 +32,7 @@ export type FlowMenuData = {
 
 export type MenuData = {
   inboxes: ListInboxesResponse["data"]
+  inboxesStatus: QueryStatus
   templates: FlowTemplateMenuData
   flows: FlowMenuData
   beforeStep: ChooseChannelStepSchema

@@ -38,7 +38,7 @@ import {
   useWatch,
 } from "react-hook-form"
 import { useCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
-import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
+import { useInboxListState } from "@/features/inboxes/provider/inbox-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
@@ -163,7 +163,7 @@ const NodeEditorMenu = memo(
     onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
-    const inboxes = useInboxList()
+    const { inboxes, status } = useInboxListState()
     const whatsappTemplates = useFlowTemplate((s) => s.whatsappTemplates)
     const whatsappFlows = useWhatsappFlow((s) => s.whatsappFlows)
     const messengerTemplates = useFlowTemplate((s) => s.messengerTemplates)
@@ -177,6 +177,7 @@ const NodeEditorMenu = memo(
         setNodeMenus(
           nodeConfig.menus(t, {
             inboxes,
+            inboxesStatus: status,
             templates: { waTemplates: whatsappTemplates, messengerTemplates },
             flows: { waFlows: whatsappFlows },
             beforeStep,
@@ -189,6 +190,7 @@ const NodeEditorMenu = memo(
       nodeType,
       t,
       inboxes,
+      status,
       whatsappTemplates,
       whatsappFlows,
       messengerTemplates,

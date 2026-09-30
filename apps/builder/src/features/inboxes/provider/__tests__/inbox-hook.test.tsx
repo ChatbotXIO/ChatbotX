@@ -8,9 +8,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
 import {
   allInboxConfigs,
+  type InboxListState,
   useConfiguredInboxTypeOptions,
   useInboxes,
   useInboxList,
+  useInboxListState,
   useInboxOptionsByChannel,
   useInboxOptionsForChannels,
   useInvalidateInboxes,
@@ -49,6 +51,15 @@ function InboxesProbe({
   onData?.(inboxes.data)
   onError?.(inboxes.isError)
   onState?.({ isError: inboxes.isError, error: inboxes.error })
+  return null
+}
+
+function InboxListStateProbe({
+  onState,
+}: {
+  onState: (state: InboxListState) => void
+}) {
+  onState(useInboxListState())
   return null
 }
 
@@ -527,6 +538,91 @@ function InboxListEffectProbe({
 
   return null
 }
+
+describe("useInboxListState", () => {
+  let container: HTMLDivElement
+  let root: Root
+  let queryClient: QueryClient
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    container = document.createElement("div")
+    document.body.append(container)
+    root = createRoot(container)
+    queryClient = makeQueryClient()
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+    queryClient.clear()
+  })
+
+  const renderProbe = (onState: (state: InboxListState) => void) => {
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InboxListStateProbe onState={onState} />
+        </QueryClientProvider>,
+      )
+    })
+  }
+
+  test("reports pending before a successful inbox response", async () => {
+    mockListInboxes.mockResolvedValue({
+      data: [{ id: "inbox-1", name: "Support" }],
+    })
+    const states: InboxListState[] = []
+
+    renderProbe((state) => states.push(state))
+
+    expect(states.at(-1)?.status).toBe("pending")
+    await vi.waitFor(() => {
+      expect(states.at(-1)?.status).toBe("success")
+    })
+    expect(states.some((state) => state.status === "pending")).toBe(true)
+  })
+
+  test("reports errors with the shared empty inbox fallback", async () => {
+    mockListInboxes.mockRejectedValue(new Error("inboxes unavailable"))
+    const states: InboxListState[] = []
+
+    renderProbe((state) => states.push(state))
+
+    const pendingState = states.find((state) => state.status === "pending")
+    await vi.waitFor(() => {
+      expect(states.at(-1)?.status).toBe("error")
+    })
+    const errorState = states.at(-1)
+
+    expect(errorState?.inboxes).toBe(pendingState?.inboxes)
+  })
+
+  test("keeps cached inboxes as success when a background refetch fails", async () => {
+    const cached = [{ id: "inbox-1", name: "Support" }]
+    mockListInboxes.mockResolvedValueOnce({ data: cached })
+    const states: InboxListState[] = []
+
+    renderProbe((state) => states.push(state))
+    await vi.waitFor(() => {
+      expect(states.at(-1)?.status).toBe("success")
+    })
+
+    mockListInboxes.mockRejectedValueOnce(new Error("inboxes unavailable"))
+    const rendersBeforeRefetch = states.length
+    await act(async () => {
+      await queryClient.refetchQueries()
+    })
+    await vi.waitFor(() => {
+      expect(states.length).toBeGreaterThan(rendersBeforeRefetch)
+    })
+
+    expect(queryClient.getQueryCache().getAll()[0]?.state.status).toBe("error")
+    expect(states.at(-1)).toEqual({ inboxes: cached, status: "success" })
+  })
+})
 
 describe("useInboxList", () => {
   let container: HTMLDivElement

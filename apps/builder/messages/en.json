@@ -2751,6 +2751,7 @@
       "sendTemplateMessage": "Template Message",
       "whatsappOptionList": "Option List",
       "noTemplatesAvailable": "No templates available",
+      "inboxesUnavailable": "Couldn't load channels",
       "noFlowsAvailable": "No flows available",
       "setCustomField": "Set Custom Field",
       "startAnotherNode": "Start Another Node",
