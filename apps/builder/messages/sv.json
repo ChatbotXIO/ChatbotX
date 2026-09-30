@@ -3689,7 +3689,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "Ange numeriska inläggs-ID:n och tryck Enter (inte koden i länken)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -3751,7 +3751,14 @@
     },
     "showCommentsAfter": {
       "none": "Aldrig"
-    }
+    },
+    "chooseSpecificPosts": "Välj inlägg...",
+    "selectPosts": "Välj inlägg",
+    "selectAccountAll": "Alla konton",
+    "postsTab": "Inlägg",
+    "postIdTab": "Inläggs-ID",
+    "noPostsFound": "Inga inlägg hittades",
+    "loadPostsError": "Det gick inte att läsa in inläggen. Du kan fortfarande ange ID:n manuellt."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

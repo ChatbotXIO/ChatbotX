@@ -5131,7 +5131,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "Introdu ID-urile numerice ale postărilor și apasă Enter (nu codul din link)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -5193,7 +5193,14 @@
     },
     "showCommentsAfter": {
       "none": "Niciodată"
-    }
+    },
+    "chooseSpecificPosts": "Alege postări...",
+    "selectPosts": "Selectează postările",
+    "selectAccountAll": "Toate conturile",
+    "postsTab": "Postări",
+    "postIdTab": "ID postare",
+    "noPostsFound": "Nu au fost găsite postări",
+    "loadPostsError": "Postările nu au putut fi încărcate. Poți introduce în continuare ID-urile manual."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

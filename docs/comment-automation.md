@@ -86,6 +86,13 @@ Only the trailing story id agrees in both. A photo post therefore breaks any
   `{pageId}_{postId}`; **reels** store a bare video id; **manual entry** is whatever the
   user pastes. `matchPost` normalizes both sides on the trailing story id
   (`normalizePostId`) so all three match the webhook `post_id`.
+- **Threads ids are numeric media ids, never the permalink shortcode.** The `replies`
+  webhook carries `root_post.id` (e.g. `17841400000000001`), which becomes `postId`. A
+  shortcode pasted from a post link (`threads.com/@user/post/DdZNxZvEqpU`) never matches
+  and the automation stays silent. The `threads-comments` picker
+  (`select-threads-posts-dialog.tsx`, backed by `listThreadsPosts` → `GET /me/threads`)
+  stores the numeric ids and drops `REPOST_FACADE` items, whose comments land on the
+  original post. It lists one page (100 posts); older posts go through its Post ID tab.
 - **Instagram ids are not composite.** Its `comments` webhook carries a bare comment `id`
   and a bare `media.id` (used as `postId`), and the `ig-comments` picker stores those same
   bare media ids — `normalizePostId` is a no-op there.

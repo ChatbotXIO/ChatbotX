@@ -5250,7 +5250,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "Enter numeric post IDs and press Enter (not the code in the link)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -5312,7 +5312,14 @@
     },
     "showCommentsAfter": {
       "none": "Never"
-    }
+    },
+    "chooseSpecificPosts": "Choose posts...",
+    "selectPosts": "Select Posts",
+    "selectAccountAll": "All accounts",
+    "postsTab": "Posts",
+    "postIdTab": "Post ID",
+    "noPostsFound": "No posts found",
+    "loadPostsError": "Couldn't load posts. You can still enter IDs manually."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",

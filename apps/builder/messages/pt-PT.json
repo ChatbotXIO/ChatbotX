@@ -4961,7 +4961,7 @@
     "replyAfter": "Reply after",
     "replyAfterValue": "Value",
     "specificPostIds": "Specific post IDs",
-    "postIdPlaceholder": "Enter post IDs and press Enter...",
+    "postIdPlaceholder": "Introduza os IDs numéricos das publicações e prima Enter (não o código do link)...",
     "card": {
       "targeting": "Targeting & Reply",
       "filters": "Filters & Options",
@@ -5023,7 +5023,14 @@
     },
     "showCommentsAfter": {
       "none": "Nunca"
-    }
+    },
+    "chooseSpecificPosts": "Escolher publicações...",
+    "selectPosts": "Selecionar publicações",
+    "selectAccountAll": "Todas as contas",
+    "postsTab": "Publicações",
+    "postIdTab": "ID da publicação",
+    "noPostsFound": "Não foram encontradas publicações",
+    "loadPostsError": "Não foi possível carregar as publicações. Ainda pode introduzir os IDs manualmente."
   },
   "tiktokCommentAutomation": {
     "title": "TikTok Comment Automation",
