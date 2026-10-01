@@ -15,6 +15,10 @@ export const integrationMessengerRelations = defineRelationsPart(
         from: r.integrationMessengerModel.welcomeFlowId,
         to: r.flowModel.id,
       }),
+      handoverResumeFlow: r.one.flowModel({
+        from: r.integrationMessengerModel.handoverResumeFlowId,
+        to: r.flowModel.id,
+      }),
       inbox: r.one.inboxModel({
         from: r.integrationMessengerModel.inboxId,
         to: r.inboxModel.id,

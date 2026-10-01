@@ -16,6 +16,15 @@ export const WHATSAPP_SUBSCRIBED_FIELDS = [
   "automatic_events",
 ] as const
 
+/**
+ * Conversation Routing fields. Subscribing is inert until the business
+ * configures routing in Meta Business Suite.
+ */
+export const WHATSAPP_CONVERSATION_ROUTING_FIELDS = [
+  "messaging_handovers",
+  "standby",
+] as const
+
 export function subscribeWebhook({
   auth,
   includeAutomaticEvents = false,
@@ -30,9 +39,12 @@ export function subscribeWebhook({
 
   return rescue(async () => {
     const json: Record<string, unknown> = {
-      subscribed_fields: includeAutomaticEvents
-        ? WHATSAPP_SUBSCRIBED_FIELDS
-        : WHATSAPP_BASE_SUBSCRIBED_FIELDS,
+      subscribed_fields: [
+        ...(includeAutomaticEvents
+          ? WHATSAPP_SUBSCRIBED_FIELDS
+          : WHATSAPP_BASE_SUBSCRIBED_FIELDS),
+        ...WHATSAPP_CONVERSATION_ROUTING_FIELDS,
+      ],
     }
 
     // Explicit per-integration callback (metadata.webhookUrl) wins; the env

@@ -10,9 +10,10 @@ import {
   or,
   sql,
 } from "../../client"
-import type { WhatsappCallHoursSnapshot } from "../../partials"
+import { inboxStatuses, type WhatsappCallHoursSnapshot } from "../../partials"
 import {
   type IntegrationWhatsappRegistrationError,
+  inboxModel,
   integrationWhatsappModel,
 } from "../../schema"
 import type { IntegrationWhatsappModel } from "../../types"
@@ -176,6 +177,27 @@ class IntegrationWhatsappRepository {
         auth: integrationWhatsappModel.auth,
       })
       .from(integrationWhatsappModel)
+  }
+
+  /**
+   * Integrations whose inbox is still connected — the rows a webhook
+   * re-subscription may act on (a disconnected inbox has had its subscription
+   * removed on purpose).
+   */
+  findAllConnectedForWebhookSubscription(tx: DatabaseClient = db) {
+    return tx
+      .select({
+        id: integrationWhatsappModel.id,
+        workspaceId: integrationWhatsappModel.workspaceId,
+        wabaId: integrationWhatsappModel.wabaId,
+        auth: integrationWhatsappModel.auth,
+      })
+      .from(integrationWhatsappModel)
+      .innerJoin(
+        inboxModel,
+        eq(inboxModel.id, integrationWhatsappModel.inboxId),
+      )
+      .where(eq(inboxModel.status, inboxStatuses.enum.connected))
   }
 
   findForTokenRefreshByWorkspaceIds(
@@ -725,6 +747,20 @@ class IntegrationWhatsappRepository {
             )
           : workspaceIntegrationFilter(input),
       )
+      .returning()
+
+    return row ?? null
+  }
+
+  /** Sets (or clears) the flow started when Meta hands a conversation to this app. */
+  async updateHandoverResumeFlow(
+    input: WorkspaceIntegrationRef & { handoverResumeFlowId: string | null },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({ handoverResumeFlowId: input.handoverResumeFlowId })
+      .where(workspaceIntegrationFilter(input))
       .returning()
 
     return row ?? null

@@ -1,0 +1,3 @@
+ALTER TABLE "IntegrationMessenger" ADD COLUMN "handoverResumeFlowId" bigint;--> statement-breakpoint
+CREATE INDEX "IntegrationMessenger_handoverResumeFlowId_idx" ON "IntegrationMessenger" ("handoverResumeFlowId");--> statement-breakpoint
+ALTER TABLE "IntegrationMessenger" ADD CONSTRAINT "IntegrationMessenger_handoverResumeFlowId_Flow_id_fkey" FOREIGN KEY ("handoverResumeFlowId") REFERENCES "Flow"("id") ON DELETE SET NULL ON UPDATE CASCADE;

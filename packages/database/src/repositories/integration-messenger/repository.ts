@@ -4,11 +4,13 @@ import {
   type DatabaseClient,
   db,
   eq,
+  gt,
   inArray,
   isNull,
   sql,
 } from "../../client"
-import { integrationMessengerModel } from "../../schema"
+import { inboxStatuses } from "../../partials"
+import { inboxModel, integrationMessengerModel } from "../../schema"
 import type { IntegrationMessengerModel } from "../../types"
 
 type WorkspaceIntegrationRef = {
@@ -396,5 +398,53 @@ export const integrationMessengerRepository = {
     return await tx.query.integrationMessengerModel.findMany({
       where: { workspaceId: input.workspaceId },
     })
+  },
+
+  /** Sets (or clears) the flow started when a partner hands a conversation back. */
+  async updateHandoverResumeFlow(
+    input: WorkspaceIntegrationRef & { handoverResumeFlowId: string | null },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel | null> {
+    const [row] = await tx
+      .update(integrationMessengerModel)
+      .set({ handoverResumeFlowId: input.handoverResumeFlowId })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  },
+
+  /**
+   * One keyset page (ascending id) of Messenger integrations whose inbox is
+   * still connected: the rows a webhook re-subscription may act on (a
+   * disconnected inbox had its subscription removed on purpose). Bounded by
+   * `limit`; pass the last row's id as `afterId` for the next page.
+   */
+  listConnectedForWebhookSubscription(
+    input: { afterId?: string; limit: number },
+    tx: DatabaseClient = db,
+  ) {
+    return tx
+      .select({
+        id: integrationMessengerModel.id,
+        workspaceId: integrationMessengerModel.workspaceId,
+        pageId: integrationMessengerModel.pageId,
+        auth: integrationMessengerModel.auth,
+      })
+      .from(integrationMessengerModel)
+      .innerJoin(
+        inboxModel,
+        eq(inboxModel.id, integrationMessengerModel.inboxId),
+      )
+      .where(
+        and(
+          eq(inboxModel.status, inboxStatuses.enum.connected),
+          input.afterId
+            ? gt(integrationMessengerModel.id, input.afterId)
+            : undefined,
+        ),
+      )
+      .orderBy(integrationMessengerModel.id)
+      .limit(input.limit)
   },
 }

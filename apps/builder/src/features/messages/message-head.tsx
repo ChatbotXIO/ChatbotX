@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
+import { ThreadControlReleaseButton } from "../conversations/components/thread-control-release-button"
 import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
 import { ConversationAction } from "../conversations/conversation-action"
 import { isConversationActive } from "../conversations/utils/bot-state"
@@ -119,6 +120,7 @@ export default function MessageHead({
             outboundCallMode={outboundCallMode.data}
           />
         )}
+        <ThreadControlReleaseButton conversation={activeConversation} />
         {!isConversationActive(activeConversation) && (
           <Tooltip>
             <TooltipTrigger

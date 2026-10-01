@@ -57,6 +57,7 @@ const stepExecutionKinds = {
   unfollowConversation: "worker",
   archiveConversation: "worker",
   unarchiveConversation: "worker",
+  threadControl: "worker",
   notifyAgent: "worker",
   aiGenerateText: "worker",
   aiGenerateTextAgent: "worker",

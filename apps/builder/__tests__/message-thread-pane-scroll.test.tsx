@@ -43,7 +43,7 @@ vi.mock("@/features/messages/components/message-input", () => ({
   MessageInput: () => <div data-testid="composer" />,
 }))
 
-const storeState = { updateConversation: vi.fn() }
+const storeState = { updateConversation: vi.fn(), conversations: [] }
 
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof storeState) => unknown) =>

@@ -19,7 +19,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type CapturedWorker = {
   queueName: unknown
-  processor: (job: { data: unknown }) => Promise<unknown>
+  processor: (job: {
+    data: unknown
+    attemptsMade?: number
+    stalledCounter?: number
+  }) => Promise<unknown>
 }
 
 const {
@@ -45,6 +49,9 @@ const {
   mockConversationFindOrCreate,
   mockGetWhatsappCallPermissionReply,
   mockRecordCallPermissionReply,
+  mockRecordInboundDelivery,
+  mockReceiveThreadControlEvent,
+  mockReleaseOwnedThread,
   workerState,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
@@ -97,6 +104,9 @@ const {
     mockConversationFindOrCreate: vi.fn(),
     mockGetWhatsappCallPermissionReply: vi.fn(),
     mockRecordCallPermissionReply: vi.fn().mockResolvedValue(undefined),
+    mockRecordInboundDelivery: vi.fn().mockResolvedValue(null),
+    mockReceiveThreadControlEvent: vi.fn().mockResolvedValue(undefined),
+    mockReleaseOwnedThread: vi.fn().mockResolvedValue(undefined),
     workerState: { capturedWorkers: [] as CapturedWorker[] },
   }
 })
@@ -235,6 +245,16 @@ vi.mock("../src/integration/handlers/template-flow-response", () => ({
 }))
 vi.mock("../src/integration/handlers/wait-resume", () => ({
   runWaitResume: vi.fn(),
+}))
+vi.mock("../src/integration/handlers/thread-control", () => ({
+  receiveThreadControlEvent: mockReceiveThreadControlEvent,
+  releaseOwnedThread: mockReleaseOwnedThread,
+  // Real logic (pure helper): a thrown-error retry bumps attemptsMade, a
+  // stalled-job recovery bumps stalledCounter.
+  isThreadControlJobReprocess: (job: {
+    attemptsMade?: number
+    stalledCounter?: number
+  }) => (job.attemptsMade ?? 0) > 0 || (job.stalledCounter ?? 0) > 0,
 }))
 
 // ---------------------------------------------------------------------------
@@ -382,6 +402,12 @@ vi.mock("@chatbotx.io/business", () => ({
   messageCleanupService: {
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
   },
+  threadControlService: {
+    recordInboundDelivery: mockRecordInboundDelivery,
+    promoteStandbyDelivery: vi.fn().mockResolvedValue(false),
+  },
+  THREAD_CONTROL_DELIVERY_KEY: "threadControlDelivery",
+  THREAD_CONTROL_STANDBY_DELIVERY: "standby",
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -468,6 +494,8 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
     runRef: "runRef",
+    threadControlEvent: "threadControlEvent",
+    threadControlAction: "threadControlAction",
   },
   integrationQueue: {
     add: vi.fn().mockResolvedValue(undefined),
@@ -821,5 +849,195 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     expect(mockRecordCallPermissionReply).toHaveBeenCalledWith(
       expect.objectContaining({ response: "reject", isPermanent: false }),
     )
+  })
+})
+
+describe("integration worker — conversation routing (thread control)", () => {
+  const parsedMessage = (threadControl?: {
+    delivery: "owner" | "standby"
+  }) => ({
+    message: {
+      sourceId: "wamid.1",
+      messageType: "incoming",
+      text: "hello",
+      contentType: "text",
+      contentAttributes: {},
+      attachments: [],
+    },
+    contact: { sourceId: "psid-123" },
+    postbackAction: null,
+    quickReplyAction: null,
+    ref: null,
+    ...(threadControl ? { threadControl } : {}),
+  })
+
+  const runJob = (data: { type: string; data: unknown }, attemptsMade = 0) =>
+    findIntegrationWorker().processor({ data, attemptsMade })
+
+  const incomingJob = {
+    type: "incomingMessage",
+    data: {
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      payload: {},
+    },
+  }
+
+  beforeEach(() => {
+    mockRunChannelHandler.mockReset()
+    mockResolveIncomingTextRouting.mockReset()
+    mockAutomatedResponseEnqueue.mockClear()
+    mockRecordInboundDelivery.mockClear()
+    mockReceiveThreadControlEvent.mockClear()
+    mockReleaseOwnedThread.mockClear()
+    mockGetWhatsappCallPermissionReply.mockReset()
+    mockRecordCallPermissionReply.mockClear()
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: { ...fakeContact, firstName: "Named" },
+    })
+    mockResolveIncomingTextRouting.mockResolvedValue({
+      type: "automatedResponse",
+      conversation: fakeConversation,
+    })
+  })
+
+  test("T-5: a standby delivery is stored but never reaches routing or keyword automation", async () => {
+    mockRunChannelHandler.mockResolvedValue(
+      parsedMessage({ delivery: "standby" }),
+    )
+
+    await runJob(incomingJob)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalled()
+    expect(mockRecordInboundDelivery).toHaveBeenCalledWith(
+      expect.objectContaining({ delivery: "standby" }),
+    )
+    expect(mockResolveIncomingTextRouting).not.toHaveBeenCalled()
+    expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+  })
+
+  test("a standby delivery with no persistable message still records ownership", async () => {
+    // e.g. a Messenger standby postback without a message id: message is null,
+    // but the standby still proves another app owns the thread.
+    mockRunChannelHandler.mockResolvedValue({
+      ...parsedMessage({ delivery: "standby" }),
+      message: null,
+    })
+
+    await runJob(incomingJob)
+
+    expect(mockCreateOrUpdate).not.toHaveBeenCalled()
+    expect(mockRecordInboundDelivery).toHaveBeenCalledWith(
+      expect.objectContaining({ delivery: "standby" }),
+    )
+  })
+
+  test("a call-permission answer on a standby delivery is still recorded, and nothing is routed", async () => {
+    mockGetWhatsappCallPermissionReply.mockReturnValue({
+      type: "whatsapp_call_permission_reply",
+      response: "accept",
+      isPermanent: true,
+    })
+    mockRunChannelHandler.mockResolvedValue(
+      parsedMessage({ delivery: "standby" }),
+    )
+
+    await runJob(incomingJob)
+
+    expect(mockRecordCallPermissionReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactInboxId: "ci-1",
+        response: "accept",
+        isPermanent: true,
+      }),
+    )
+    expect(mockResolveIncomingTextRouting).not.toHaveBeenCalled()
+    expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+  })
+
+  test("T-1: an owner delivery is routed to automation exactly like today", async () => {
+    mockRunChannelHandler.mockResolvedValue(
+      parsedMessage({ delivery: "owner" }),
+    )
+
+    await runJob(incomingJob)
+
+    expect(mockResolveIncomingTextRouting).toHaveBeenCalledTimes(1)
+    expect(mockAutomatedResponseEnqueue).toHaveBeenCalledTimes(1)
+  })
+
+  test("no routing info on the parse result: a delivery never touches thread control", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsedMessage())
+
+    await runJob(incomingJob)
+
+    expect(mockRecordInboundDelivery).not.toHaveBeenCalled()
+    expect(mockAutomatedResponseEnqueue).toHaveBeenCalledTimes(1)
+  })
+
+  test("dispatches the routing webhook job to its handler", async () => {
+    const data = {
+      integrationType: "whatsapp",
+      integrationIdentifier: "phone-1",
+      payload: { kind: "handover", body: {} },
+    }
+
+    await runJob({ type: "threadControlEvent", data })
+
+    expect(mockReceiveThreadControlEvent).toHaveBeenCalledWith(data, {
+      isRetry: false,
+    })
+  })
+
+  test("tells the routing handler when BullMQ is retrying the job", async () => {
+    const data = {
+      integrationType: "whatsapp",
+      integrationIdentifier: "phone-1",
+      payload: { kind: "handover", body: {} },
+    }
+
+    await runJob({ type: "threadControlEvent", data }, 1)
+
+    expect(mockReceiveThreadControlEvent).toHaveBeenCalledWith(data, {
+      isRetry: true,
+    })
+  })
+
+  test("treats a stalled-job recovery (stalledCounter) as a retry", async () => {
+    const data = {
+      integrationType: "whatsapp",
+      integrationIdentifier: "phone-1",
+      payload: { kind: "handover", body: {} },
+    }
+
+    // A worker crash is recovered by BullMQ's stalled checker, which bumps
+    // stalledCounter but NOT attemptsMade — the resume flow must still start.
+    await findIntegrationWorker().processor({
+      data: { type: "threadControlEvent", data },
+      attemptsMade: 0,
+      stalledCounter: 1,
+    })
+
+    expect(mockReceiveThreadControlEvent).toHaveBeenCalledWith(data, {
+      isRetry: true,
+    })
+  })
+
+  test("dispatches the archive-release job to its handler", async () => {
+    const data = {
+      workspaceId: "ws-1",
+      contactInboxId: "ci-1",
+      conversationId: "conv-1",
+      action: "release",
+    }
+
+    await runJob({ type: "threadControlAction", data })
+
+    expect(mockReleaseOwnedThread).toHaveBeenCalledWith(data)
   })
 })

@@ -1867,7 +1867,8 @@
       "searchPlaceholder": "Pesquisar palavra-chave..."
     },
     "templateId": {
-      "label": "Modelo do WhatsApp"
+      "label": "Modelo do WhatsApp",
+      "placeholder": "Selecione um modelo"
     },
     "messengerTemplateId": {
       "label": "Modelo do Messenger"
@@ -2409,7 +2410,8 @@
       "importStarted": "O fluxo está a ser importado. Consulte o histórico de importações para ver os resultados.",
       "importJsonOnly": "Apenas ficheiros JSON",
       "whatsappCallButton": "Ligar no WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Controlo da conversa"
     },
     "splitTraffic": {
       "balanceHint": "A soma total deve ser igual a 100%.",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "Abrir grupo do Zalo",
     "openZalo": "Abrir Zalo",
     "openMessenger": "Abrir Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Parceiro",
+      "partnerWithRole": "Parceiro · {role}",
+      "self": "si"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Anúncios Click-to-WhatsApp",
+      "customer_service": "Atendimento ao cliente",
+      "escalation": "Escalonamento",
+      "marketing": "Marketing",
+      "utility": "Utilidade"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Ativo",
+      "tooltip": "Tratada por {owner}"
+    },
+    "release": {
+      "label": "Libertar",
+      "tooltip": "Liberte esta conversa para que outras apps possam responder",
+      "success": "Conversa libertada"
+    },
+    "pass": {
+      "menuItem": "Passar para escalonamento",
+      "title": "Passar para o parceiro de escalonamento?",
+      "description": "Passar esta conversa ao seu parceiro de escalonamento? As suas respostas ficarão em pausa até a conversa regressar.",
+      "confirm": "Passar",
+      "success": "Conversa passada ao parceiro de escalonamento"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Está em standby (apenas escuta)",
+      "description": "Um parceiro terceiro está a tratar desta conversa. A caixa de mensagem está bloqueada para evitar respostas duplicadas.",
+      "takeOver": "Assumir",
+      "takeOverSuccess": "Agora está a tratar desta conversa",
+      "notEscalation": "Apenas o parceiro de escalonamento pode assumir. O encaminhamento é configurado no Meta Business Suite.",
+      "notPrimaryReceiver": "Esta app tem de ser o recetor principal da Página para assumir. Defina-o nas definições do Handover Protocol da Página.",
+      "learnMore": "Saiba mais",
+      "dismiss": "Enviar mesmo assim"
+    },
+    "divider": {
+      "ownerHandling": "{owner} está agora a tratar desta conversa",
+      "handedOver": "{previousOwner} devolveu esta conversa a si",
+      "selfHandling": "Está agora a tratar desta conversa",
+      "takenOver": "Assumiu esta conversa",
+      "released": "Conversa libertada",
+      "passed": "Conversa passada ao parceiro de escalonamento",
+      "serviceRejected": "Mensagem não enviada: {owner} está a tratar desta conversa"
+    },
+    "context": {
+      "title": "Contexto da conversa",
+      "summaryBadge": "Resumo da IA",
+      "historyBadge": "Histórico",
+      "customer": "Cliente",
+      "business": "Empresa",
+      "handoverNote": "Nota de transferência: {note}",
+      "showAll": "Mostrar tudo ({count})",
+      "showLess": "Mostrar menos"
+    },
+    "echo": {
+      "partner": "Parceiro"
+    },
+    "panel": {
+      "title": "Encaminhamento da conversa",
+      "threadState": "Estado da conversa",
+      "threadStateOwned": "Atribuída",
+      "threadStateStandby": "Em espera",
+      "threadStateIdle": "Livre",
+      "currentOwner": "Responsável atual",
+      "noOwner": "Sem responsável",
+      "roleLabel": "O seu papel",
+      "selfOwned": "A tratar da conversa",
+      "selfStandby": "Em espera — apenas a ouvir",
+      "selfIdle": "A aguardar a próxima mensagem do cliente",
+      "hintOwned": "Liberte quando terminar para que outras apps possam responder.",
+      "hintStandby": "Enquanto um parceiro trata desta conversa, as suas mensagens ficam retidas para o cliente não receber respostas duplicadas. Assuma a partir da caixa de mensagem para responder.",
+      "hintIdle": "A próxima mensagem do cliente decide quem responde.",
+      "syncOwner": "Sincronizar proprietário",
+      "syncOwnerSuccess": "Proprietário sincronizado"
+    },
+    "settings": {
+      "title": "Fluxo de retoma após a transferência",
+      "description": "A automatização que é executada quando um parceiro devolve uma conversa.",
+      "resumeFlowLabel": "Escolha um fluxo",
+      "resumeFlowPlaceholder": "Selecione um fluxo",
+      "info": "Este fluxo é iniciado automaticamente quando o controlo é devolvido. O resumo da conversa e o histórico do chat são então apresentados aos seus agentes no chat em direto.",
+      "save": "Guardar alterações",
+      "clearFlow": "Limpar fluxo",
+      "adminOnly": "Apenas administradores do espaço de trabalho podem alterar o encaminhamento",
+      "flowNotFound": "O fluxo selecionado não foi encontrado ou não está ativo",
+      "integrationNotFound": "Número do WhatsApp não encontrado",
+      "messengerIntegrationNotFound": "Página do Messenger não encontrada"
+    },
+    "errors": {
+      "unsupported": "O encaminhamento de conversas não está disponível neste canal",
+      "notFound": "Esta conversa não está nesse canal",
+      "actionFailed": "Não foi possível atualizar o encaminhamento da conversa. Tente novamente."
+    },
+    "step": {
+      "action": "Ação",
+      "release": "Libertar a conversa",
+      "pass": "Passar para o parceiro de escalonamento",
+      "helper": "Apenas WhatsApp. Noutros canais, ou quando a conversa não é gerida aqui, o passo segue o caminho de erro."
+    },
+    "template": {
+      "sent": "Modelo enviado"
+    }
   }
 }

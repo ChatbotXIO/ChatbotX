@@ -34,6 +34,7 @@ import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   BotResponseTrackingContext,
   ChatJobSendWhatsappTemplateMessage,
+  ChatJobSendWhatsappTemplateToConversation,
 } from "@chatbotx.io/worker-config"
 import {
   replaceWhatsappTemplateVariables,
@@ -348,6 +349,9 @@ export async function processWhatsappTemplate(
       },
       metadata,
       messageId: newMessage.id,
+      // Any responder may send a template and it never changes thread
+      // ownership, so the conversation-routing send gate lets it through.
+      isTemplateMessage: true,
       botSentAnalytics: {
         triggerHandler: "processWhatsappTemplate",
         triggerType: "message_bot_sent_whatsapp_template",
@@ -540,6 +544,60 @@ export async function sendWhatsappTemplateMessage(
         broadcastId,
       },
       "Error sending WhatsApp template message for broadcast",
+    )
+    if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
+      return
+    }
+    throw error
+  }
+}
+
+/**
+ * Sends one approved WhatsApp template to a single open conversation with the
+ * agent's runtime params. Shares the whole delivery engine with the broadcast
+ * path (`processWhatsappTemplate`: variable resolution, message row, realtime,
+ * provider send, `isTemplateMessage` 24h/standby bypass) but skips the
+ * broadcast sendability guard, since there is no broadcast.
+ */
+export async function sendWhatsappTemplateToConversation(
+  data: ChatJobSendWhatsappTemplateToConversation["data"],
+  willRetryOnThrow = false,
+): Promise<ProcessWhatsappTemplateResult | undefined> {
+  const { conversation, contactInbox, templateId, templateData, metadata } =
+    data
+
+  try {
+    const validated = await validateWhatsappTemplate(
+      templateId,
+      contactInbox.inboxId,
+    )
+    if (!validated) {
+      throw new Error(
+        `WhatsApp template not found or not approved: ${templateId}`,
+      )
+    }
+
+    const { template } = validated
+    const templateParams =
+      templateData ??
+      extractTemplateParams((template.components as TemplateComponent[]) || [])
+
+    return await processWhatsappTemplate({
+      conversation,
+      contactInbox,
+      willRetryOnThrow,
+      template: {
+        id: template.id,
+        name: template.name,
+        language: template.language,
+        params: templateParams,
+      },
+      metadata,
+    })
+  } catch (error) {
+    logger.error(
+      { err: error, conversationId: conversation.id, templateId },
+      "Error sending WhatsApp template message to conversation",
     )
     if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
       return

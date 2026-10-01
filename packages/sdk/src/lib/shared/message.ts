@@ -178,6 +178,162 @@ export const messageTypes = z.enum(["outgoing", "incoming", "activity"])
  */
 export const echoOrigins = z.enum(["firstParty", "thirdParty"])
 export type EchoOrigin = z.infer<typeof echoOrigins>
+
+/**
+ * Channel-agnostic conversation-routing (thread control) vocabulary shared by
+ * channel integrations. The persisted state model lives in
+ * `@chatbotx.io/database/partials` (`thread-control.ts`); the SDK cannot depend
+ * on the database layer, so the role/action values are mirrored here and
+ * pinned to the database copy by `packages/database/__tests__/thread-control-sdk-parity.test.ts`.
+ */
+export const threadControlRoles = z.enum([
+  "ai_agent",
+  "ctwa",
+  "customer_service",
+  "escalation",
+  "marketing",
+  "utility",
+])
+export type ThreadControlRole = z.infer<typeof threadControlRoles>
+
+export const threadControlActions = z.enum(["take", "release", "pass"])
+export type ThreadControlAction = z.infer<typeof threadControlActions>
+
+/**
+ * Which responder role a delivery reached us in: `owner` = the channel's normal
+ * inbound feed, `standby` = the listen-only standby feed.
+ */
+export const threadControlDeliveries = z.enum(["owner", "standby"])
+export type ThreadControlDelivery = z.infer<typeof threadControlDeliveries>
+
+/** One line of a history-shaped conversation context. */
+export const threadControlHistoryItemSchema = z.object({
+  sender: z.enum(["user", "business"]),
+  text: z.string(),
+  /** Unix epoch seconds as sent by the channel; display only. */
+  timestamp: z.string().optional(),
+})
+export type ThreadControlHistoryItem = z.infer<
+  typeof threadControlHistoryItemSchema
+>
+
+/** Display-only context a previous owner hands over (summary text is opaque). */
+export const threadControlContextSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("summary"), text: z.string() }),
+  z.object({
+    type: z.literal("history"),
+    items: z.array(threadControlHistoryItemSchema),
+  }),
+])
+export type ThreadControlContext = z.infer<typeof threadControlContextSchema>
+
+export type ThreadControlReceiveInfo = {
+  delivery: ThreadControlDelivery
+  context?: ThreadControlContext
+  /**
+   * The channel's own timestamp of the delivered item. Routing transitions are
+   * ordered by it, so a delayed job cannot overwrite a later handover.
+   */
+  occurredAt?: Date
+  /**
+   * Owner app id observed on a `standby` delivery, for channels that name
+   * owners by app id. Absent/null when the channel did not say (roles and the
+   * owner delivery never set it: owning needs no app id).
+   */
+  ownerAppId?: string | null
+  /**
+   * Owner role observed on a `standby` delivery (e.g. `ai_agent` when the
+   * channel flags an AI owner). Absent/null = unstated; ignored for an owner
+   * delivery.
+   */
+  ownerRole?: ThreadControlRole | null
+}
+
+export type ThreadControlWebhookEvent = {
+  contact: IncomingContact
+  event: "controlPassed" | "controlTaken"
+  previousOwnerRole: ThreadControlRole | null
+  newOwnerRole: ThreadControlRole | null
+  handoverNote?: string
+  context?: ThreadControlContext
+  /**
+   * Owner identity for channels that name owners by app id instead of a role
+   * (the role fields above stay `null` for those). Absent when the channel
+   * payload does not carry it (e.g. a take names only the previous owner).
+   */
+  previousOwnerAppId?: string
+  newOwnerAppId?: string
+  /**
+   * Whether this handover starts the resume flow. The CHANNEL decides (it
+   * alone knows which passes mean "handed back to us"); absent = never.
+   */
+  resumeEligible?: boolean
+  occurredAt: Date
+}
+
+/**
+ * A partner asking for the thread (`request_thread_control`). Parsed so the
+ * channel can acknowledge it, but no ownership change follows from it.
+ */
+export type ThreadControlRequestEvent = {
+  contact: IncomingContact
+  requestedOwnerAppId?: string
+  handoverNote?: string
+  occurredAt: Date
+}
+
+/**
+ * Receiver configuration of the account (which app is the primary receiver).
+ * Account-level: carries no contact, so it never touches a thread.
+ */
+export type ThreadControlAppRolesEvent = {
+  /** The account id the roles belong to. */
+  accountId: string
+  /** app id -> roles that app holds. */
+  roles: Record<string, string[]>
+  occurredAt: Date
+}
+
+/**
+ * What a channel's `updateThreadControl` reports back after Meta accepted the
+ * action: the owner of the thread AFTER it (`null` = no owner, e.g. released,
+ * or an owner the channel cannot express as a role). The channel decides —
+ * whether a take makes us the escalation partner or an app id owner is a
+ * channel rule, not a shared one.
+ */
+export type ThreadControlUpdateResult = {
+  ownerRole: ThreadControlRole | null
+  /** Owner app id after the action, for channels that name owners by app id. */
+  ownerAppId?: string | null
+}
+
+/**
+ * What a channel's `getThreadOwner` reports: who holds the thread according to
+ * the channel itself. `ownerAppId: null` = the channel says nobody holds it.
+ * A channel that cannot answer does not implement the handler at all, so a
+ * missing handler means "cannot sync", never "no owner".
+ */
+export type ThreadOwnerResult = {
+  ownerAppId: string | null
+  /** When the channel says the ownership lapses; `null` when it does not. */
+  expiresAt: Date | null
+  /**
+   * The channel's own identities, resolved on the channel side so shared code
+   * can classify `ownerAppId` without reading channel config: OUR app id, and
+   * the automated-assistant app id. Absent/null = the channel does not know.
+   */
+  ownAppId?: string | null
+  businessAiAppId?: string | null
+}
+
+export type ThreadControlWebhookResult =
+  | { kind: "handover"; event: ThreadControlWebhookEvent }
+  /** A thread request: parsed and ignored (no ownership change). */
+  | { kind: "handoverRequest"; event: ThreadControlRequestEvent }
+  /** Receiver configuration: parsed and logged only. */
+  | { kind: "appRoles"; event: ThreadControlAppRolesEvent }
+  /** Handed unchanged to `receiveMessage`. */
+  | { kind: "standbyMessage"; receivePayload: unknown }
 export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {

@@ -2009,7 +2009,8 @@
       "searchPlaceholder": "Anahtar kelime ara..."
     },
     "templateId": {
-      "label": "WhatsApp Şablonu"
+      "label": "WhatsApp Şablonu",
+      "placeholder": "Bir şablon seçin"
     },
     "messengerTemplateId": {
       "label": "Messenger Şablonu"
@@ -2551,7 +2552,8 @@
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
       "importJsonOnly": "Yalnızca JSON dosyaları",
       "whatsappCallButton": "WhatsApp'ta ara",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Konuşma kontrolü"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "Zalo grubunu aç",
     "openZalo": "Zalo'yu aç",
     "openMessenger": "Messenger'ı aç"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Ortak",
+      "partnerWithRole": "Ortak · {role}",
+      "self": "siz"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp reklamları",
+      "customer_service": "Müşteri hizmetleri",
+      "escalation": "Yükseltme",
+      "marketing": "Pazarlama",
+      "utility": "Yardımcı"
+    },
+    "pill": {
+      "standby": "Beklemede ({owner})",
+      "owned": "Aktif",
+      "tooltip": "{owner} ilgileniyor"
+    },
+    "release": {
+      "label": "Bırak",
+      "tooltip": "Diğer uygulamaların yanıtlayabilmesi için bu konuşmayı bırakın",
+      "success": "Konuşma bırakıldı"
+    },
+    "pass": {
+      "menuItem": "Yükseltmeye aktar",
+      "title": "Yükseltme ortağına aktarılsın mı?",
+      "description": "Bu görüşme yükseltme ortağınıza devredilsin mi? Görüşme geri dönene kadar yanıtlarınız duraklatılır.",
+      "confirm": "Aktar",
+      "success": "Konuşma yükseltme ortağına aktarıldı"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Beklemedesiniz (yalnızca dinleme)",
+      "description": "Üçüncü taraf bir iş ortağı bu görüşmeyi yönetiyor. Mesaj kutusu, mükerrer yanıtları önlemek için kilitlendi.",
+      "takeOver": "Devral",
+      "takeOverSuccess": "Artık bu konuşmayla siz ilgileniyorsunuz",
+      "notEscalation": "Yalnızca yükseltme ortağı devralabilir. Yönlendirme Meta Business Suite'te yapılandırılır.",
+      "notPrimaryReceiver": "Devralabilmesi için bu uygulamanın Sayfa'nın birincil alıcısı olması gerekir. Bunu Sayfa'nın Handover Protocol ayarlarından yapın.",
+      "learnMore": "Daha fazla bilgi",
+      "dismiss": "Yine de gönder"
+    },
+    "divider": {
+      "ownerHandling": "{owner} artık bu konuşmayla ilgileniyor",
+      "handedOver": "{previousOwner} bu görüşmeyi size geri devretti",
+      "selfHandling": "Artık bu görüşmeyi siz yönetiyorsunuz",
+      "takenOver": "Bu görüşmeyi devraldınız",
+      "released": "Konuşma bırakıldı",
+      "passed": "Konuşma yükseltme ortağına aktarıldı",
+      "serviceRejected": "Mesaj gönderilmedi: {owner} bu konuşmayla ilgileniyor"
+    },
+    "context": {
+      "title": "Konuşma bağlamı",
+      "summaryBadge": "Yapay zeka özeti",
+      "historyBadge": "Geçmiş",
+      "customer": "Müşteri",
+      "business": "İşletme",
+      "handoverNote": "Devir notu: {note}",
+      "showAll": "Tümünü göster ({count})",
+      "showLess": "Daha az göster"
+    },
+    "echo": {
+      "partner": "Ortak"
+    },
+    "panel": {
+      "title": "Konuşma yönlendirme",
+      "threadState": "Konuşma durumu",
+      "threadStateOwned": "Sahipli",
+      "threadStateStandby": "Beklemede",
+      "threadStateIdle": "Boşta",
+      "currentOwner": "Mevcut sahip",
+      "noOwner": "Sahibi yok",
+      "roleLabel": "Rolünüz",
+      "selfOwned": "Konuşmayla ilgileniyor",
+      "selfStandby": "Beklemede — yalnızca dinliyor",
+      "selfIdle": "Müşterinin sonraki mesajı bekleniyor",
+      "hintOwned": "İşiniz bitince bırakın, böylece diğer uygulamalar yanıtlayabilir.",
+      "hintStandby": "Bir iş ortağı bunu yönetirken, müşteri mükerrer yanıt almasın diye mesajlarınız bekletilir. Yanıt vermek için mesaj kutusundan devralın.",
+      "hintIdle": "Müşterinin sonraki mesajı kimin yanıtlayacağını belirler.",
+      "syncOwner": "Sahibi eşitle",
+      "syncOwnerSuccess": "Sahip eşitlendi"
+    },
+    "settings": {
+      "title": "Devir sonrası devam akışı",
+      "description": "Bir iş ortağı konuşmayı geri devrettiğinde çalışan otomasyon.",
+      "resumeFlowLabel": "Bir akış seçin",
+      "resumeFlowPlaceholder": "Bir akış seçin",
+      "info": "Bu akış, kontrol geri devredildiğinde otomatik olarak başlar. Konuşma özeti ve sohbet geçmişi daha sonra canlı sohbette temsilcilerinize gösterilir.",
+      "save": "Değişiklikleri kaydet",
+      "clearFlow": "Akışı temizle",
+      "adminOnly": "Yönlendirmeyi yalnızca çalışma alanı yöneticileri değiştirebilir",
+      "flowNotFound": "Seçilen akış bulunamadı veya etkin değil",
+      "integrationNotFound": "WhatsApp numarası bulunamadı",
+      "messengerIntegrationNotFound": "Messenger sayfası bulunamadı"
+    },
+    "errors": {
+      "unsupported": "Konuşma yönlendirme bu kanalda kullanılamıyor",
+      "notFound": "Bu konuşma o kanalda değil",
+      "actionFailed": "Konuşma yönlendirme güncellenemedi. Lütfen tekrar deneyin."
+    },
+    "step": {
+      "action": "Eylem",
+      "release": "Konuşmayı bırak",
+      "pass": "Yükseltme ortağına aktar",
+      "helper": "Yalnızca WhatsApp. Diğer kanallarda veya görüşme burada yönetilmiyorsa adım Hata yolunu izler."
+    },
+    "template": {
+      "sent": "Şablon gönderildi"
+    }
   }
 }

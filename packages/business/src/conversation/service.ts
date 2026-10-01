@@ -61,6 +61,7 @@ import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { threadControlService } from "../thread-control/service"
 import { workspaceMemberService } from "../workspace-member/service"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
@@ -690,6 +691,7 @@ class ConversationService extends BaseService {
           props.userId,
         )
       }
+      await this.releaseOwnedThreads({ workspaceId, conversations, archivedAt })
     }
 
     for (const conv of conversations) {
@@ -700,6 +702,28 @@ class ConversationService extends BaseService {
         occurredAt: new Date(),
         metadata: { triggerContext },
       })
+    }
+  }
+
+  /**
+   * Archiving ends the conversation, so every routing thread we own for these
+   * contacts is released (the owner keeps a thread while the customer stays
+   * active; stopping sends does not free it). Best effort by design: the
+   * archive is already written, so a failure to enqueue is logged and the
+   * thread simply idles out after 24h of customer silence.
+   */
+  private async releaseOwnedThreads(props: {
+    workspaceId: string
+    conversations: { id: string; contactId: string }[]
+    archivedAt: Date
+  }): Promise<void> {
+    try {
+      await threadControlService.releaseOwnedThreadsForContacts(props)
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId: props.workspaceId },
+        "Unable to enqueue thread release after archiving conversations",
+      )
     }
   }
 

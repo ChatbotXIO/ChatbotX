@@ -59,6 +59,7 @@ import { startExternalFlowStepSchema } from "./steps/start-external-flow"
 import { startExternalNodeStepSchema } from "./steps/start-external-node"
 import { subscribeBroadcastStepSchema } from "./steps/subscribe-broadcast"
 import { subscribeSequenceStepSchema } from "./steps/subscribe-sequence"
+import { threadControlStepSchema } from "./steps/thread-control"
 import { triggerN8nStepSchema } from "./steps/trigger-n8n"
 import { unarchiveConversationStepSchema } from "./steps/unarchive-conversation"
 import { unassignConversationStepSchema } from "./steps/unassign-conversation"
@@ -79,6 +80,7 @@ const inboxSteps = [
   unfollowConversationStepSchema,
   archiveConversationStepSchema,
   unarchiveConversationStepSchema,
+  threadControlStepSchema,
 ]
 
 const contactSteps = [
