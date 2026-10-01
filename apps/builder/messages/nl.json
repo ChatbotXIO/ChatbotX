@@ -1828,7 +1828,10 @@
         "failed": "Mislukt",
         "completedAt": "Voltooid op",
         "errorDetails": "Importfouten",
-        "row": "Rij {row}"
+        "row": "Rij {row}",
+        "unsupportedChannelStep": "Het kanaal {channel} ondersteunt {block} niet.",
+        "channelStepConstraintExceeded": "{block} overschrijdt de limiet van {channel}: {actual} {unit}, maximaal {allowed}.",
+        "channelStepConstraintExceededGeneric": "Het kanaal {channel} ondersteunt de huidige configuratie van {block} niet."
       }
     },
     "line": {

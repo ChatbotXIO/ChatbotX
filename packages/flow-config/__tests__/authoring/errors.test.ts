@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import { z } from "zod"
 import {
   closestNames,
+  FlowAuthoringException,
   formatZodPathSegment,
   zodErrorToFlowAuthoringErrors,
 } from "../../src/authoring/errors"
@@ -76,6 +77,42 @@ describe("zodErrorToFlowAuthoringErrors", () => {
     expect(errors).toMatchObject([
       { code: "invalidStep", path: "items[0].name" },
     ])
+  })
+})
+
+describe("FlowAuthoringException", () => {
+  test("formats channel capabilities without exposing validation codes", () => {
+    const error = new FlowAuthoringException([
+      {
+        capability: {
+          block: "sendCard",
+          channel: "instagram",
+          code: "unsupportedBlock",
+          policyVersion: 1,
+        },
+        code: "unsupportedBlock",
+        message: "unsupportedBlock",
+        path: "steps[0]",
+      },
+      {
+        capability: {
+          actual: 4,
+          allowed: 3,
+          block: "sendText",
+          channel: "tiktok",
+          code: "constraintExceeded",
+          policyVersion: 1,
+          unit: "buttons",
+        },
+        code: "constraintExceeded",
+        message: "constraintExceeded",
+        path: "steps[1]",
+      },
+    ])
+
+    expect(error.message).toBe(
+      "steps[0]: The instagram channel does not support sendCard.; steps[1]: sendText exceeds the tiktok maximum of 3 buttons (received 4).",
+    )
   })
 })
 

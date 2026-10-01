@@ -1,5 +1,5 @@
 import { stepTypes } from "../../steps/step-action"
-import { defineChannelFlowPolicy, whatsappOnlyStepTypes } from "./define"
+import { defineChannelFlowPolicy } from "./define"
 // TikTok text payloads allow 6,000 characters; button cards use the tighter title cap below.
 
 /**
@@ -23,18 +23,5 @@ export const tiktokFlowPolicy = defineChannelFlowPolicy({
     stepTypes.enum.sendImage,
     stepTypes.enum.sendMultipleImages,
   ],
-  // TikTok's runtime switch implements only text, single-image, and
-  // multiple-image flow steps.
   noButtons: [stepTypes.enum.sendImage],
-  unsupported: [
-    stepTypes.enum.sendCard,
-    stepTypes.enum.sendCarousel,
-    stepTypes.enum.sendVideo,
-    stepTypes.enum.sendGif,
-    stepTypes.enum.sendAudio,
-    stepTypes.enum.sendFile,
-    stepTypes.enum.sendQuickReply,
-    stepTypes.enum.sendMessengerTemplateMessage,
-    ...whatsappOnlyStepTypes,
-  ],
 })

@@ -2202,7 +2202,10 @@
         "failed": "Thất bại",
         "completedAt": "Hoàn thành lúc",
         "errorDetails": "Lỗi import",
-        "row": "Dòng {row}"
+        "row": "Dòng {row}",
+        "unsupportedChannelStep": "Kênh {channel} không hỗ trợ {block}.",
+        "channelStepConstraintExceeded": "{block} vượt quá giới hạn của {channel}: {actual} {unit}, tối đa {allowed}.",
+        "channelStepConstraintExceededGeneric": "Kênh {channel} không hỗ trợ cấu hình {block} hiện tại."
       }
     },
     "line": {

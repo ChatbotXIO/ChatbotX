@@ -75,12 +75,16 @@ export const refineStepsByChannel = (
       }
 
       if (policy.steps[step.stepType] === stepSupport.unsupported) {
-        addStepIssue(flowValidationCodes.unsupportedBlock, [], {
-          block: step.stepType,
-          channel,
-          code: flowValidationCodes.unsupportedBlock,
-          policyVersion: CHANNEL_POLICY_VERSION,
-        })
+        addStepIssue(
+          `The ${channel} channel does not support ${step.stepType}.`,
+          [],
+          {
+            block: step.stepType,
+            channel,
+            code: flowValidationCodes.unsupportedBlock,
+            policyVersion: CHANNEL_POLICY_VERSION,
+          },
+        )
         return
       }
 
@@ -101,6 +105,7 @@ export const refineStepsByChannel = (
           policyVersion: CHANNEL_POLICY_VERSION,
           unit: "buttons",
         }
+        const message = `${step.stepType} exceeds the ${channel} maximum of ${capability.allowed} ${capability.unit}.`
 
         if (
           buttonCount.quickRepliesCauseOverflow &&
@@ -109,16 +114,12 @@ export const refineStepsByChannel = (
           quickReplyOverflowReported = true
           ctx.addIssue({
             code: "custom",
-            message: flowValidationCodes.constraintExceeded,
+            message,
             params: { capability },
             path: [nodeIndex, "data", "details", "quickReplies"],
           })
         } else if (!buttonCount.quickRepliesCauseOverflow) {
-          addStepIssue(
-            flowValidationCodes.constraintExceeded,
-            ["buttons"],
-            capability,
-          )
+          addStepIssue(message, ["buttons"], capability)
         }
       }
 

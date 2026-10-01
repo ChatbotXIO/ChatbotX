@@ -39,6 +39,7 @@ import {
   appendCodeToMagicLink,
   type ButtonStepProps,
   buttonTypes,
+  channelDeliverableStepTypes,
   encodeButtonPayload,
   extractMetadata,
   isBulkOutboundMetadata,
@@ -77,28 +78,6 @@ import {
 } from "./send-message"
 import { processMessengerTemplate } from "./send-messenger-template"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
-
-/**
- * Step payloads `sendFlowStep` knows how to hand to a channel. Keep this in
- * sync with `STEP_PRODUCES_MESSAGE` in `integration/handlers/flow-utils.ts`.
- */
-const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
-  stepTypes.enum.sendAudio,
-  stepTypes.enum.sendCard,
-  stepTypes.enum.sendCarousel,
-  stepTypes.enum.sendFile,
-  stepTypes.enum.sendGif,
-  stepTypes.enum.sendImage,
-  stepTypes.enum.sendMessengerTemplateMessage,
-  stepTypes.enum.sendMultipleImages,
-  stepTypes.enum.sendQuickReply,
-  stepTypes.enum.sendText,
-  stepTypes.enum.sendVideo,
-  stepTypes.enum.sendWaTemplateMessage,
-  stepTypes.enum.whatsappCallButton,
-  stepTypes.enum.whatsappFlow,
-  stepTypes.enum.whatsappOptionList,
-])
 
 type MessageWithResolvedAttachmentUrls = MessageModel & {
   attachments: (AttachmentModel & { url: string | null })[]
@@ -625,7 +604,9 @@ export async function sendFlowStep({
     nodeId: step.nodeId,
   }
 
-  if (!CHANNEL_DELIVERABLE_STEP_TYPES.has(step.stepType)) {
+  // getUserData produces an outgoing message through its own handler, so it is
+  // deliberately excluded from channel-deliverable steps.
+  if (!channelDeliverableStepTypes.includes(step.stepType)) {
     logger.debug(
       {
         conversationId,
@@ -639,7 +620,7 @@ export async function sendFlowStep({
     return
   }
 
-  // Spintax is on here because only CHANNEL_DELIVERABLE_STEP_TYPES reach this
+  // Spintax is on here because only channelDeliverableStepTypes reach this
   // point — every string leaf is copy an author wrote for a contact to read.
   // Code- or data-carrying steps (external request, execute JavaScript) resolve
   // through their own handlers and deliberately leave it off.

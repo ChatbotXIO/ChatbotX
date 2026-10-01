@@ -81,7 +81,7 @@ function ImportErrorSampleButton({ item }: { item: ListImportsItem }) {
                   : t("fields.import.histories.row", { row: error.row })}
               </span>
               <span className="text-muted-foreground">
-                {getImportErrorSampleDescription(error)}
+                {getImportErrorSampleDescription(error, t)}
               </span>
             </div>
           ))}

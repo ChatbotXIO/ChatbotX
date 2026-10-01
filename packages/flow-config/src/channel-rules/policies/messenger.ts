@@ -1,5 +1,5 @@
 import { stepTypes } from "../../steps/step-action"
-import { defineChannelFlowPolicy, whatsappOnlyStepTypes } from "./define"
+import { defineChannelFlowPolicy } from "./define"
 // Messenger's Graph API text payload is capped at 2,000 characters.
 
 export const messengerFlowPolicy = defineChannelFlowPolicy({
@@ -21,7 +21,5 @@ export const messengerFlowPolicy = defineChannelFlowPolicy({
     stepTypes.enum.sendCarousel,
     stepTypes.enum.sendMessengerTemplateMessage,
   ],
-  // Messenger has no runtime implementation for WhatsApp-specific step types.
   noButtons: [stepTypes.enum.sendAudio, stepTypes.enum.sendFile],
-  unsupported: whatsappOnlyStepTypes,
 })

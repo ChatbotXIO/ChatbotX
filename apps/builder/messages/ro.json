@@ -2844,7 +2844,10 @@
         "failed": "Eșuat",
         "completedAt": "Finalizat la",
         "errorDetails": "Erori de import",
-        "row": "Rândul {row}"
+        "row": "Rândul {row}",
+        "unsupportedChannelStep": "Canalul {channel} nu acceptă {block}.",
+        "channelStepConstraintExceeded": "{block} depășește limita canalului {channel}: {actual} {unit}, maximum {allowed}.",
+        "channelStepConstraintExceededGeneric": "Canalul {channel} nu acceptă configurația curentă pentru {block}."
       }
     },
     "line": {

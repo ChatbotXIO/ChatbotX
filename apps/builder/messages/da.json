@@ -2015,7 +2015,10 @@
         "failed": "Failed",
         "completedAt": "Completed at",
         "errorDetails": "Importér errors",
-        "row": "Række {row}"
+        "row": "Række {row}",
+        "unsupportedChannelStep": "{channel}-kanalen understøtter ikke {block}.",
+        "channelStepConstraintExceeded": "{block} overskrider grænsen for {channel}: {actual} {unit}, maksimum {allowed}.",
+        "channelStepConstraintExceededGeneric": "{channel}-kanalen understøtter ikke den aktuelle {block}-konfiguration."
       }
     },
     "line": {

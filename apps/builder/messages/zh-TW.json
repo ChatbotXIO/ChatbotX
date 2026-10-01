@@ -1252,7 +1252,10 @@
         "failed": "失敗",
         "completedAt": "完成於",
         "errorDetails": "匯入錯誤",
-        "row": "第 {row} 列"
+        "row": "第 {row} 列",
+        "unsupportedChannelStep": "{channel} 渠道不支援 {block}。",
+        "channelStepConstraintExceeded": "{block} 超過 {channel} 限制：{actual} {unit}，最大值為 {allowed}。",
+        "channelStepConstraintExceededGeneric": "{channel} 渠道不支援目前的 {block} 設定。"
       }
     },
     "line": {

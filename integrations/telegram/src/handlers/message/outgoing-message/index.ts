@@ -42,8 +42,7 @@ import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
-/** Must exactly match the cases in `sendFlowStep` below. */
-export const handledFlowStepTypes: readonly StepType[] = [
+export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendVideo,
@@ -53,7 +52,7 @@ export const handledFlowStepTypes: readonly StepType[] = [
   stepTypes.enum.sendGif,
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendCarousel,
-]
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
   async (props) => {
@@ -166,10 +165,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
     const messageIds: string[] = []
 
     try {
-      if (!handledFlowStepTypes.includes(step.stepType)) {
-        throw new Error(`Unsupported Telegram flow step: ${step.stepType}`)
-      }
-
       switch (step.stepType) {
         case stepTypes.enum.sendText: {
           for (const payload of convertFlowStepText(
@@ -303,7 +298,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           }
           break
         }
-        // Must stay in sync with `handledFlowStepTypes`.
         default:
           throw new Error(`Unsupported Telegram flow step: ${step.stepType}`)
       }

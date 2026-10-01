@@ -1,4 +1,5 @@
 import { Readable } from "node:stream"
+import { FlowAuthoringException } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { ImportRow } from "../src/default/handlers/imports/base-import"
 
@@ -26,6 +27,8 @@ vi.mock("@chatbotx.io/business", () => ({
       ) => {
         mocks.updateValues.push({
           status: "failed",
+          errorCode:
+            error instanceof Error && "code" in error ? error.code : undefined,
           errorMessage: error instanceof Error ? error.message : error,
           ...counters,
           errorSample,
@@ -249,8 +252,9 @@ describe("runFlowImport", () => {
       failed: 1,
       processed: 1,
       success: 0,
+      errorCode: "flowImportValidationFailed",
       errorMessage:
-        "Invalid export file at flows[0].nodes[0].data.details.steps[0]: unsupportedBlock",
+        "Flow uses steps not supported by tiktok: sendVideo, sendFile.",
       errorSample: [
         expect.objectContaining({
           code: "unsupportedBlock",
@@ -267,6 +271,32 @@ describe("runFlowImport", () => {
           }),
         }),
       ],
+    })
+  })
+
+  test("summarizes channel-policy errors raised while persisting an otherwise valid flow", async () => {
+    mocks.importFlowExport.mockRejectedValueOnce(
+      new FlowAuthoringException([
+        {
+          capability: {
+            block: "sendVideo",
+            channel: "tiktok",
+            code: "unsupportedBlock",
+            policyVersion: 1,
+          },
+          code: "unsupportedBlock",
+          message: "The tiktok channel does not support sendVideo.",
+          path: "nodes[0].data.details.steps[0]",
+        },
+      ]),
+    )
+    mockStream(buildExportJson())
+
+    await runFlowImport(importRow)
+
+    expect(mocks.updateValues.at(-1)).toMatchObject({
+      errorCode: "flowImportValidationFailed",
+      errorMessage: "Flow uses steps not supported by tiktok: sendVideo.",
     })
   })
 

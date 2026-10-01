@@ -1,5 +1,5 @@
 import { stepTypes } from "../../steps/step-action"
-import { defineChannelFlowPolicy, whatsappOnlyStepTypes } from "./define"
+import { defineChannelFlowPolicy } from "./define"
 // Instagram's Graph API text payload is capped at 1,000 characters.
 
 export const instagramFlowPolicy = defineChannelFlowPolicy({
@@ -26,11 +26,5 @@ export const instagramFlowPolicy = defineChannelFlowPolicy({
     stepTypes.enum.sendVideo,
     stepTypes.enum.sendAudio,
     stepTypes.enum.sendFile,
-  ],
-  // The Instagram runtime switch has no card or Messenger-template converter.
-  unsupported: [
-    stepTypes.enum.sendCard,
-    stepTypes.enum.sendMessengerTemplateMessage,
-    ...whatsappOnlyStepTypes,
   ],
 })

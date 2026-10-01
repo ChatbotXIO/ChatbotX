@@ -28,14 +28,13 @@ import {
 } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 
-/** Must exactly match the cases in `convertFlowStepToZaloMessage` below. */
-export const handledFlowStepTypes: readonly StepType[] = [
+export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendGif,
   stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendFile,
-]
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
   async (props) => {
@@ -142,9 +141,6 @@ export async function* convertFlowStepToZaloMessage(
   const {
     data: { step },
   } = props
-  if (!handledFlowStepTypes.includes(step.stepType)) {
-    throw new Error(`Unsupported Zalo flow step: ${step.stepType}`)
-  }
   switch (step.stepType) {
     case stepTypes.enum.sendText:
       yield* convertFlowStepText(
@@ -170,7 +166,6 @@ export async function* convertFlowStepToZaloMessage(
         props as SendFlowStepProps<ZaloAuthValue, SendFileStepSchema>,
       )
       break
-    // Must stay in sync with `handledFlowStepTypes`.
     default:
       throw new Error(`Unsupported Zalo flow step: ${step.stepType}`)
   }

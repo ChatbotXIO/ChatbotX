@@ -2157,7 +2157,10 @@
         "failed": "Fallido",
         "completedAt": "Completado at",
         "errorDetails": "Errores de importación",
-        "row": "Fila {row}"
+        "row": "Fila {row}",
+        "unsupportedChannelStep": "El canal {channel} no admite {block}.",
+        "channelStepConstraintExceeded": "{block} supera el límite de {channel}: {actual} {unit}; máximo {allowed}.",
+        "channelStepConstraintExceededGeneric": "El canal {channel} no admite la configuración actual de {block}."
       }
     },
     "line": {

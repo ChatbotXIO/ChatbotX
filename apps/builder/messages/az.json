@@ -2208,7 +2208,10 @@
         "failed": "Uğursuz",
         "completedAt": "Tamamlanma vaxtı",
         "errorDetails": "İdxal xətaları",
-        "row": "Sətir {row}"
+        "row": "Sətir {row}",
+        "unsupportedChannelStep": "{channel} kanalı {block} blokunu dəstəkləmir.",
+        "channelStepConstraintExceeded": "{block}, {channel} kanal limitini aşır: {actual} {unit}; maksimum {allowed}.",
+        "channelStepConstraintExceededGeneric": "{channel} kanalı mövcud {block} konfiqurasiyasını dəstəkləmir."
       }
     },
     "line": {

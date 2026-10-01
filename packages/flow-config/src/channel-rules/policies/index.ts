@@ -36,6 +36,7 @@ export const getChannelFlowPolicy = (
 export {
   CHANNEL_POLICY_VERSION,
   type ChannelFlowPolicy,
+  channelDeliverableStepTypes,
   type StepSupport,
   stepSupport,
 } from "./define"

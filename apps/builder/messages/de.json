@@ -2015,7 +2015,10 @@
         "failed": "Fehlgeschlagen",
         "completedAt": "Abgeschlossen am",
         "errorDetails": "Importfehler",
-        "row": "Zeile {row}"
+        "row": "Zeile {row}",
+        "unsupportedChannelStep": "Der Kanal {channel} unterstützt {block} nicht.",
+        "channelStepConstraintExceeded": "{block} überschreitet das Limit für {channel}: {actual} {unit}, maximal {allowed}.",
+        "channelStepConstraintExceededGeneric": "Der Kanal {channel} unterstützt die aktuelle {block}-Konfiguration nicht."
       }
     },
     "line": {

@@ -74,9 +74,44 @@ const readImportedJson = async (row: ImportRow): Promise<unknown> => {
   }
 }
 
+const summarizeFlowImportValidationError = (
+  errors: readonly FlowAuthoringError[],
+): string | undefined => {
+  const unsupportedStepsByChannel = new Map<string, Set<string>>()
+  for (const error of errors) {
+    const capability = error.capability
+    if (capability?.code !== "unsupportedBlock") {
+      continue
+    }
+    const steps = unsupportedStepsByChannel.get(capability.channel) ?? new Set()
+    steps.add(capability.block)
+    unsupportedStepsByChannel.set(capability.channel, steps)
+  }
+  if (unsupportedStepsByChannel.size > 0) {
+    return [...unsupportedStepsByChannel]
+      .map(
+        ([channel, steps]) =>
+          `Flow uses steps not supported by ${channel}: ${[...steps].join(", ")}.`,
+      )
+      .join(" ")
+  }
+
+  const constraintCapability = errors.find(
+    (error) => error.capability?.code === "constraintExceeded",
+  )?.capability
+  if (constraintCapability?.code === "constraintExceeded") {
+    return `Flow uses ${constraintCapability.block}, which exceeds the ${constraintCapability.channel} limit.`
+  }
+}
+
 const summarizeSchemaError = (
   errors: readonly FlowAuthoringError[],
 ): string => {
+  const validationError = summarizeFlowImportValidationError(errors)
+  if (validationError) {
+    return validationError
+  }
+
   const [first] = errors
   if (!first) {
     return "The export file does not match the expected format."
@@ -120,12 +155,12 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
 
   const parsed = parseFlowExport(json)
   if (!parsed.ok) {
+    const errorCode = parsed.errors.some((error) => error.capability)
+      ? "flowImportValidationFailed"
+      : "flowImportSchemaMismatch"
     await importService.fail(
       row.id,
-      new ChatbotXException(
-        summarizeSchemaError(parsed.errors),
-        "flowImportSchemaMismatch",
-      ),
+      new ChatbotXException(summarizeSchemaError(parsed.errors), errorCode),
       { processed: 1, success: 0, failed: 1 },
       toImportErrorSamples(parsed.errors),
     )

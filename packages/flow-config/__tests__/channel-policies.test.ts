@@ -129,7 +129,7 @@ describe("channel flow policies", () => {
 
     expect(collectIssues(node)).toContainEqual(
       expect.objectContaining({
-        message: "unsupportedBlock",
+        message: "The instagram channel does not support sendCard.",
         path: [0, "data", "details", "steps", 0],
       }),
     )
@@ -156,7 +156,7 @@ describe("channel flow policies", () => {
     expect(collectIssues(makeNode(3))).toEqual([])
     expect(collectIssues(makeNode(4))).toContainEqual(
       expect.objectContaining({
-        message: "constraintExceeded",
+        message: "sendText exceeds the tiktok maximum of 3 buttons.",
         path: [0, "data", "details", "steps", 0, "buttons"],
       }),
     )
@@ -200,7 +200,7 @@ describe("channel flow policies", () => {
 
     expect(collectIssues(node)).toContainEqual(
       expect.objectContaining({
-        message: "constraintExceeded",
+        message: "sendText exceeds the tiktok maximum of 3 buttons.",
         path: [0, "data", "details", "quickReplies"],
       }),
     )

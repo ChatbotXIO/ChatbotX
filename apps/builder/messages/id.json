@@ -2015,7 +2015,10 @@
         "failed": "Gagal",
         "completedAt": "Selesai pada",
         "errorDetails": "Kesalahan impor",
-        "row": "Baris {row}"
+        "row": "Baris {row}",
+        "unsupportedChannelStep": "Kanal {channel} tidak mendukung {block}.",
+        "channelStepConstraintExceeded": "{block} melebihi batas {channel}: {actual} {unit}, maksimum {allowed}.",
+        "channelStepConstraintExceededGeneric": "Kanal {channel} tidak mendukung konfigurasi {block} saat ini."
       }
     },
     "line": {

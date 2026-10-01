@@ -56,13 +56,39 @@ export type FlowAuthoringError = {
   candidates?: string[]
 }
 
+const formatFlowAuthoringErrorMessage = (error: FlowAuthoringError): string => {
+  const capability = error.capability
+  if (!capability) {
+    return error.message
+  }
+
+  if (capability.code === "unsupportedBlock") {
+    return `The ${capability.channel} channel does not support ${capability.block}.`
+  }
+
+  if (
+    capability.actual !== undefined &&
+    capability.allowed !== undefined &&
+    capability.unit
+  ) {
+    return `${capability.block} exceeds the ${capability.channel} maximum of ${capability.allowed} ${capability.unit} (received ${capability.actual}).`
+  }
+
+  return `${capability.block} violates a ${capability.channel} channel constraint.`
+}
+
 export class FlowAuthoringException extends Error {
   readonly errors: readonly FlowAuthoringError[]
 
   constructor(errors: readonly FlowAuthoringError[]) {
     super(
       errors.length > 0
-        ? errors.map((error) => `${error.path}: ${error.message}`).join("; ")
+        ? errors
+            .map(
+              (error) =>
+                `${error.path}: ${formatFlowAuthoringErrorMessage(error)}`,
+            )
+            .join("; ")
         : "Flow authoring failed",
     )
     this.name = "FlowAuthoringException"

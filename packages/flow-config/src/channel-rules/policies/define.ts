@@ -154,7 +154,6 @@ type ChannelFlowPolicyDefinition = {
   quickRepliesShareButtonSlots?: boolean
   supported?: readonly ChannelDeliverableStepType[]
   noButtons?: readonly ChannelDeliverableStepType[]
-  unsupported?: readonly ChannelDeliverableStepType[]
 }
 
 const createDefaultStepSupport = (): Record<StepType, StepSupport> =>
@@ -180,10 +179,6 @@ export const defineChannelFlowPolicy = (
     steps[stepType] = stepSupport.noButtons
   }
 
-  for (const stepType of definition.unsupported ?? []) {
-    steps[stepType] = stepSupport.unsupported
-  }
-
   return {
     limits: definition.limits,
     quickRepliesShareButtonSlots:
@@ -191,12 +186,5 @@ export const defineChannelFlowPolicy = (
     steps,
   }
 }
-
-export const whatsappOnlyStepTypes = [
-  stepTypes.enum.sendWaTemplateMessage,
-  stepTypes.enum.whatsappOptionList,
-  stepTypes.enum.whatsappCallButton,
-  stepTypes.enum.whatsappFlow,
-] as const satisfies readonly StepType[]
 
 export type ChannelFlowPolicyMap = Record<ChannelType, ChannelFlowPolicy>

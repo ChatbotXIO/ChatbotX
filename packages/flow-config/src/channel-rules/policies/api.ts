@@ -1,5 +1,5 @@
 import { stepTypes } from "../../steps/step-action"
-import { defineChannelFlowPolicy, whatsappOnlyStepTypes } from "./define"
+import { defineChannelFlowPolicy } from "./define"
 // API messages use the platform's 6,000-character transport limit.
 
 export const apiFlowPolicy = defineChannelFlowPolicy({
@@ -25,11 +25,5 @@ export const apiFlowPolicy = defineChannelFlowPolicy({
     stepTypes.enum.sendVideo,
     stepTypes.enum.sendAudio,
     stepTypes.enum.sendFile,
-  ],
-  // No API runtime converter exists for cards or channel-owned templates.
-  unsupported: [
-    stepTypes.enum.sendCard,
-    stepTypes.enum.sendMessengerTemplateMessage,
-    ...whatsappOnlyStepTypes,
   ],
 })

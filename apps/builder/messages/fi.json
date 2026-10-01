@@ -2015,7 +2015,10 @@
         "failed": "Epäonnistui",
         "completedAt": "Valmistunut",
         "errorDetails": "Tuontivirheet",
-        "row": "Rivi {row}"
+        "row": "Rivi {row}",
+        "unsupportedChannelStep": "Kanava {channel} ei tue lohkoa {block}.",
+        "channelStepConstraintExceeded": "{block} ylittää kanavan {channel} rajan: {actual} {unit}, enintään {allowed}.",
+        "channelStepConstraintExceededGeneric": "Kanava {channel} ei tue nykyistä {block}-määritystä."
       }
     },
     "line": {

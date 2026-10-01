@@ -1,9 +1,5 @@
 import { stepTypes } from "../../steps/step-action"
-import {
-  channelDeliverableStepTypes,
-  defineChannelFlowPolicy,
-  whatsappOnlyStepTypes,
-} from "./define"
+import { defineChannelFlowPolicy } from "./define"
 // SMTP delivery retains the 6,000-character platform message limit.
 
 export const smtpFlowPolicy = defineChannelFlowPolicy({
@@ -12,13 +8,16 @@ export const smtpFlowPolicy = defineChannelFlowPolicy({
     buttonLabel: 20,
     text: 6000,
   },
-  supported: channelDeliverableStepTypes.filter(
-    (stepType) =>
-      stepType !== stepTypes.enum.sendMessengerTemplateMessage &&
-      !whatsappOnlyStepTypes.includes(stepType as never),
-  ),
-  unsupported: [
-    stepTypes.enum.sendMessengerTemplateMessage,
-    ...whatsappOnlyStepTypes,
+  supported: [
+    stepTypes.enum.sendText,
+    stepTypes.enum.sendImage,
+    stepTypes.enum.sendMultipleImages,
+    stepTypes.enum.sendCard,
+    stepTypes.enum.sendCarousel,
+    stepTypes.enum.sendVideo,
+    stepTypes.enum.sendGif,
+    stepTypes.enum.sendAudio,
+    stepTypes.enum.sendFile,
+    stepTypes.enum.sendQuickReply,
   ],
 })

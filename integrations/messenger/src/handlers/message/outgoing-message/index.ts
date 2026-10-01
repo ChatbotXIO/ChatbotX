@@ -128,8 +128,7 @@ const sendPageMessageWithMessengerExtensionWhitelistRetry = async (
   }
 }
 
-/** Must exactly match the cases in `convertFlowStep` below. */
-export const handledFlowStepTypes: readonly StepType[] = [
+export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendVideo,
@@ -141,7 +140,7 @@ export const handledFlowStepTypes: readonly StepType[] = [
   stepTypes.enum.sendCard,
   stepTypes.enum.sendCarousel,
   stepTypes.enum.sendMessengerTemplateMessage,
-]
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
   async (props) => {
@@ -536,9 +535,6 @@ async function* convertFlowStep(
   const {
     data: { step },
   } = props
-  if (!handledFlowStepTypes.includes(step.stepType)) {
-    throw new Error(`Unsupported Messenger flow step: ${step.stepType}`)
-  }
 
   switch (step.stepType) {
     case stepTypes.enum.sendText:

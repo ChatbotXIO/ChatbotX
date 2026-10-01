@@ -1,5 +1,5 @@
-import { channelDeliverableStepTypes, defineChannelFlowPolicy } from "./define"
-// Threads replies are capped at 500 characters and do not support media flow steps.
+import { defineChannelFlowPolicy } from "./define"
+// Threads has no direct-message delivery runtime.
 
 export const threadsFlowPolicy = defineChannelFlowPolicy({
   limits: {
@@ -7,5 +7,4 @@ export const threadsFlowPolicy = defineChannelFlowPolicy({
     buttonLabel: 20,
     text: 500,
   },
-  unsupported: channelDeliverableStepTypes,
 })

@@ -1252,7 +1252,10 @@
         "failed": "Non riuscita",
         "completedAt": "Completata il",
         "errorDetails": "Errori di importazione",
-        "row": "Riga {row}"
+        "row": "Riga {row}",
+        "unsupportedChannelStep": "Il canale {channel} non supporta {block}.",
+        "channelStepConstraintExceeded": "{block} supera il limite di {channel}: {actual} {unit}, massimo {allowed}.",
+        "channelStepConstraintExceededGeneric": "Il canale {channel} non supporta la configurazione {block} corrente."
       }
     },
     "line": {

@@ -5173,7 +5173,10 @@
         "failed": "נכשל",
         "completedAt": "הושלם בתאריך",
         "errorDetails": "שגיאות ייבוא",
-        "row": "שורה {row}"
+        "row": "שורה {row}",
+        "unsupportedChannelStep": "הערוץ {channel} אינו תומך ב-{block}.",
+        "channelStepConstraintExceeded": "{block} חורג ממגבלת הערוץ {channel}: ‏{actual} {unit}, המקסימום הוא {allowed}.",
+        "channelStepConstraintExceededGeneric": "הערוץ {channel} אינו תומך בתצורה הנוכחית של {block}."
       }
     },
     "line": {

@@ -2153,7 +2153,10 @@
         "completedAt": "اكتمل في",
         "recent": "الاستيرادات الأخيرة",
         "errorDetails": "أخطاء الاستيراد",
-        "row": "الصف {row}"
+        "row": "الصف {row}",
+        "unsupportedChannelStep": "قناة {channel} لا تدعم {block}.",
+        "channelStepConstraintExceeded": "يتجاوز {block} حد قناة {channel}: {actual} {unit}، والحد الأقصى {allowed}.",
+        "channelStepConstraintExceededGeneric": "قناة {channel} لا تدعم إعداد {block} الحالي."
       },
       "fileTooLarge": "الملف يتجاوز الحد الأقصى البالغ {size} ميجابايت.",
       "unsupportedFileType": "نوع الملف هذا غير مدعوم.",

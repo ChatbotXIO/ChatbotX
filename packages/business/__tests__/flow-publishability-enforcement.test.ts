@@ -80,7 +80,12 @@ describe("flow publishability enforcement", () => {
         data: { folderId: "folder-1", name: "Unsupported" },
         graph: incompatibleGraph(),
       }),
-    ).rejects.toMatchObject({ name: "FlowAuthoringException" })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining(
+        "The tiktok channel does not support sendVideo.",
+      ),
+      name: "FlowAuthoringException",
+    })
 
     expect(mocks.ensureFolderExists).not.toHaveBeenCalled()
     expect(mocks.dbTransaction).not.toHaveBeenCalled()
@@ -98,7 +103,7 @@ describe("flow publishability enforcement", () => {
         enableInInbox: true,
         ...graph,
       }),
-    ).toThrow("unsupportedBlock")
+    ).toThrow("The tiktok channel does not support sendVideo.")
 
     expect(mocks.dbTransaction).not.toHaveBeenCalled()
     expect(mocks.insert).not.toHaveBeenCalled()

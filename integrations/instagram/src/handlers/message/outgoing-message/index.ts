@@ -102,8 +102,7 @@ export function resolveMessagingPolicy(props: {
   )
 }
 
-/** Must exactly match the cases in `convertFlowStep` below. */
-export const handledFlowStepTypes: readonly StepType[] = [
+export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendVideo,
@@ -113,7 +112,7 @@ export const handledFlowStepTypes: readonly StepType[] = [
   stepTypes.enum.sendGif,
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendCarousel,
-]
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
   async (props) => {
@@ -250,9 +249,6 @@ export async function* convertFlowStep(
   const {
     data: { step },
   } = props
-  if (!handledFlowStepTypes.includes(step.stepType)) {
-    throw new Error(`Unsupported Instagram flow step: ${step.stepType}`)
-  }
 
   switch (step.stepType) {
     case stepTypes.enum.sendText:

@@ -2144,7 +2144,10 @@
         "recent": "Senaste importer",
         "row": "Rad {row}",
         "success": "Lyckades",
-        "title": "Importhistorik"
+        "title": "Importhistorik",
+        "unsupportedChannelStep": "Kanalen {channel} stöder inte {block}.",
+        "channelStepConstraintExceeded": "{block} överskrider gränsen för {channel}: {actual} {unit}, högst {allowed}.",
+        "channelStepConstraintExceededGeneric": "Kanalen {channel} stöder inte den aktuella {block}-konfigurationen."
       },
       "label": "Import",
       "unableToReadHeaders": "Det gick inte att läsa importrubrikerna.",

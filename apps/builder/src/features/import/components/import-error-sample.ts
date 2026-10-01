@@ -1,7 +1,16 @@
 import type { ImportErrorSample } from "@chatbotx.io/database/schema"
 
+type ImportErrorSampleTranslation = (
+  key:
+    | "fields.import.histories.unsupportedChannelStep"
+    | "fields.import.histories.channelStepConstraintExceeded"
+    | "fields.import.histories.channelStepConstraintExceededGeneric",
+  values: Record<string, number | string>,
+) => string
+
 export const getImportErrorSampleDescription = (
   error: ImportErrorSample,
+  t: ImportErrorSampleTranslation,
 ): string => {
   const capability = error.capability
   if (!capability) {
@@ -9,12 +18,30 @@ export const getImportErrorSampleDescription = (
   }
 
   if (capability.code === "unsupportedBlock") {
-    return `The ${capability.channel} channel does not support ${capability.block}.`
+    return t("fields.import.histories.unsupportedChannelStep", {
+      block: capability.block,
+      channel: capability.channel,
+    })
   }
 
-  const unit = capability.unit ?? "items"
-  const constraint = capability.constraintId ?? "limit"
-  return `${capability.block} exceeds the ${capability.channel} ${constraint}: ${capability.actual ?? "unknown"} ${unit}, maximum ${capability.allowed ?? "unknown"}.`
+  if (
+    capability.actual === undefined ||
+    capability.allowed === undefined ||
+    !capability.unit
+  ) {
+    return t("fields.import.histories.channelStepConstraintExceededGeneric", {
+      block: capability.block,
+      channel: capability.channel,
+    })
+  }
+
+  return t("fields.import.histories.channelStepConstraintExceeded", {
+    actual: capability.actual,
+    allowed: capability.allowed,
+    block: capability.block,
+    channel: capability.channel,
+    unit: capability.unit,
+  })
 }
 
 export const getImportErrorSampleKey = (

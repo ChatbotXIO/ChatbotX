@@ -2157,7 +2157,10 @@
         "failed": "Başarısız",
         "completedAt": "Tamamlanma zamanı",
         "errorDetails": "İçe aktarma hataları",
-        "row": "Satır {row}"
+        "row": "Satır {row}",
+        "unsupportedChannelStep": "{channel} kanalı {block} adımını desteklemiyor.",
+        "channelStepConstraintExceeded": "{block}, {channel} sınırını aşıyor: {actual} {unit}; en fazla {allowed}.",
+        "channelStepConstraintExceededGeneric": "{channel} kanalı mevcut {block} yapılandırmasını desteklemiyor."
       }
     },
     "line": {

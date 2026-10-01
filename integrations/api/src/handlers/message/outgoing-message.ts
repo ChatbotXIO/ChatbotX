@@ -64,15 +64,11 @@ export const sendFlowStep: MessageHandlers<ApiAuthValue>["sendFlowStep"] =
       data: { contact, step, quickReplies },
     } = props
 
-    if (!handledFlowStepTypes.includes(step.stepType)) {
-      throw new Error(`Unsupported API flow step: ${step.stepType}`)
-    }
+    const { text, contentAttributes } = mapFlowStepToEnvelope(step)
 
     if (!ctx.auth.callbackUrl) {
       return { messageIds: [], sentCount: 0 }
     }
-
-    const { text, contentAttributes } = mapFlowStepToEnvelope(step)
 
     const response = await postSignedEnvelope({
       callbackUrl: ctx.auth.callbackUrl,
@@ -113,7 +109,7 @@ const fileTypeForStep = (
   }
 }
 
-export const handledFlowStepTypes: readonly StepType[] = [
+export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendMultipleImages,
@@ -123,7 +119,7 @@ export const handledFlowStepTypes: readonly StepType[] = [
   stepTypes.enum.sendAudio,
   stepTypes.enum.sendFile,
   stepTypes.enum.sendQuickReply,
-] as const
+] as const satisfies readonly StepType[]
 
 const mapFlowStepToEnvelope = (
   step: SendFlowStepData,

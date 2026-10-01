@@ -2015,7 +2015,10 @@
         "failed": "Échec",
         "completedAt": "Terminé le",
         "errorDetails": "Erreurs d’importation",
-        "row": "Ligne {row}"
+        "row": "Ligne {row}",
+        "unsupportedChannelStep": "Le canal {channel} ne prend pas en charge {block}.",
+        "channelStepConstraintExceeded": "{block} dépasse la limite de {channel} : {actual} {unit}, maximum {allowed}.",
+        "channelStepConstraintExceededGeneric": "Le canal {channel} ne prend pas en charge la configuration {block} actuelle."
       }
     },
     "line": {

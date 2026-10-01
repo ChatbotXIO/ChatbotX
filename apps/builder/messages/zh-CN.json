@@ -2147,7 +2147,10 @@
         "recent": "最近导入",
         "row": "第 {row} 列",
         "success": "成功",
-        "title": "导入历史记录"
+        "title": "导入历史记录",
+        "unsupportedChannelStep": "{channel} 渠道不支持 {block}。",
+        "channelStepConstraintExceeded": "{block} 超出 {channel} 限制：{actual} {unit}，最大值为 {allowed}。",
+        "channelStepConstraintExceededGeneric": "{channel} 渠道不支持当前的 {block} 配置。"
       },
       "label": "导入",
       "unableToReadHeaders": "无法读取导入标头。",

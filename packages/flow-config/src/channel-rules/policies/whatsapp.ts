@@ -20,15 +20,4 @@ export const whatsappFlowPolicy = defineChannelFlowPolicy({
     stepTypes.enum.whatsappCallButton,
     stepTypes.enum.whatsappFlow,
   ],
-  // WhatsApp's converter implements text, images, carousels, and WhatsApp
-  // interactive/template steps; it has no converters for these step types.
-  unsupported: [
-    stepTypes.enum.sendVideo,
-    stepTypes.enum.sendAudio,
-    stepTypes.enum.sendFile,
-    stepTypes.enum.sendGif,
-    stepTypes.enum.sendCard,
-    stepTypes.enum.sendQuickReply,
-    stepTypes.enum.sendMessengerTemplateMessage,
-  ],
 })

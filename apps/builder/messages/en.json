@@ -2208,7 +2208,10 @@
         "failed": "Failed",
         "completedAt": "Completed at",
         "errorDetails": "Import errors",
-        "row": "Row {row}"
+        "row": "Row {row}",
+        "unsupportedChannelStep": "The {channel} channel does not support {block}.",
+        "channelStepConstraintExceeded": "{block} exceeds the {channel} limit: {actual} {unit}, maximum {allowed}.",
+        "channelStepConstraintExceededGeneric": "The {channel} channel does not support the current {block} configuration."
       }
     },
     "line": {

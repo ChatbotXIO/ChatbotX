@@ -2015,7 +2015,10 @@
         "failed": "失敗",
         "completedAt": "完了日時",
         "errorDetails": "インポートエラー",
-        "row": "行{row}"
+        "row": "行{row}",
+        "unsupportedChannelStep": "{channel} チャネルは {block} をサポートしていません。",
+        "channelStepConstraintExceeded": "{block} は {channel} の上限を超えています: {actual} {unit}、上限は {allowed}。",
+        "channelStepConstraintExceededGeneric": "{channel} チャネルは現在の {block} 設定をサポートしていません。"
       }
     },
     "line": {
