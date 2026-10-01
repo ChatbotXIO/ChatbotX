@@ -650,24 +650,30 @@ describe("conversationService.recordInboundActivity contactRepliedAt", () => {
     })
 
     const setArg = set.mock.calls[0][0] as {
-      lastActivityAt: Date
+      lastActivityAt: unknown
       contactRepliedAt: unknown
     }
-    expect(setArg.lastActivityAt).toEqual(at)
+    const lastActivitySql = collectSqlText(setArg.lastActivityAt)
+    const contactRepliedSql = collectSqlText(setArg.contactRepliedAt)
 
-    const sqlText = collectSqlText(setArg.contactRepliedAt)
-    expect(sqlText).toContain("GREATEST")
-
-    const params = collectSqlParams(setArg.contactRepliedAt)
-    expect(params).toContainEqual(at)
+    expect(lastActivitySql).toContain("GREATEST")
+    expect(contactRepliedSql).toContain("GREATEST")
+    expect(collectSqlParams(setArg.lastActivityAt)).toContainEqual(at)
+    expect(collectSqlParams(setArg.contactRepliedAt)).toContainEqual(at)
   })
 
-  test("leaves contactRepliedAt untouched when omitted (e.g. outgoing echo)", async () => {
+  test("advances lastActivityAt without touching contactRepliedAt when omitted", async () => {
     const at = new Date("2026-09-24T10:00:00.000Z")
 
     await conversationService.recordInboundActivity({ ...baseProps, at })
 
-    expect(set).toHaveBeenCalledWith({ lastActivityAt: at })
+    const setArg = set.mock.calls[0][0] as {
+      lastActivityAt: unknown
+      contactRepliedAt?: unknown
+    }
+    expect(collectSqlText(setArg.lastActivityAt)).toContain("GREATEST")
+    expect(collectSqlParams(setArg.lastActivityAt)).toContainEqual(at)
+    expect(setArg).not.toHaveProperty("contactRepliedAt")
   })
 })
 
@@ -684,10 +690,12 @@ describe("conversationService outbound activity bump", () => {
     vi.clearAllMocks()
   })
 
-  test("advances lastActivityAt for an interactive message by default", async () => {
+  test("advances lastActivityAt with a GREATEST guard by default", async () => {
     await conversationService.recordOutboundMessageActivity(baseProps)
 
-    expect(set).toHaveBeenCalledWith({ lastActivityAt: baseProps.at })
+    const setArg = set.mock.calls[0][0] as { lastActivityAt: unknown }
+    expect(collectSqlText(setArg.lastActivityAt)).toContain("GREATEST")
+    expect(collectSqlParams(setArg.lastActivityAt)).toContainEqual(baseProps.at)
   })
 
   test("leaves lastActivityAt untouched for a bulk message", async () => {
