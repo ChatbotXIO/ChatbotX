@@ -131,7 +131,7 @@ describe("requestThreadControlAction", () => {
   })
 
   test("delegates the state recording to the business service with the caller's identifiers", async () => {
-    await runWrapped({ ...baseProps, actorUserId: "user-1" })
+    await runWrapped({ ...baseProps })
 
     expect(mocks.requestAction).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -139,7 +139,6 @@ describe("requestThreadControlAction", () => {
         contactInboxId: "ci-1",
         conversationId: "conv-1",
         action: "release",
-        actorUserId: "user-1",
         applyOnChannel: expect.any(Function),
       }),
     )
