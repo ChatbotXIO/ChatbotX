@@ -4,6 +4,7 @@ import {
   importStatuses,
   importTypes,
 } from "@chatbotx.io/database/partials"
+import type { ImportErrorSample } from "@chatbotx.io/database/schema"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
@@ -44,7 +45,7 @@ export type ListImportsItem = {
   successCount: number
   failedCount: number
   errorMessage: string | null
-  errorSample: Array<{ row: number; reason: string }>
+  errorSample: ImportErrorSample[]
   completedAt: Date | null
   createdAt: Date
   updatedAt: Date

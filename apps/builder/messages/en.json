@@ -2209,7 +2209,10 @@
         "failed": "Failed",
         "completedAt": "Completed at",
         "errorDetails": "Import errors",
-        "row": "Row {row}"
+        "row": "Row {row}",
+        "unsupportedChannelStep": "The {channel} channel does not support {block}.",
+        "channelStepConstraintExceeded": "{block} exceeds the {channel} limit: {actual} {unit}, maximum {allowed}.",
+        "channelStepConstraintExceededGeneric": "The {channel} channel does not support the current {block} configuration."
       }
     },
     "line": {
@@ -3607,7 +3610,8 @@
     "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",
     "waTemplateLtoExpirationRequired": "Pick an expiration date for the limited-time offer before sending.",
     "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them.",
-    "mediaStepUnsupported": "This channel can't send this media type. Remove the step, or point this node at a channel that supports it.",
+    "unsupportedBlock": "This channel does not support this block.",
+    "constraintExceeded": "This channel limit was exceeded.",
     "mediaButtonsUnsupported": "This channel can't send buttons with a media message. Remove the buttons, or move them to a text step after this one.",
     "voiceCall": "Voice call",
     "voiceCallDuration": "Voice call · {duration}",

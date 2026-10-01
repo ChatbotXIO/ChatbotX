@@ -2016,7 +2016,10 @@
         "failed": "Fehlgeschlagen",
         "completedAt": "Abgeschlossen am",
         "errorDetails": "Importfehler",
-        "row": "Zeile {row}"
+        "row": "Zeile {row}",
+        "unsupportedChannelStep": "Der Kanal {channel} unterstützt {block} nicht.",
+        "channelStepConstraintExceeded": "{block} überschreitet das Limit für {channel}: {actual} {unit}, maximal {allowed}.",
+        "channelStepConstraintExceededGeneric": "Der Kanal {channel} unterstützt die aktuelle {block}-Konfiguration nicht."
       }
     },
     "line": {
@@ -3365,7 +3368,8 @@
     "waTemplateMpmTooManyProducts": "Eine Multi-Produkt-Schaltfläche kann insgesamt höchstens 30 Produkte haben. Entferne einige Produkte, bevor du veröffentlichst.",
     "waTemplateLtoExpirationRequired": "Wähle ein Ablaufdatum für das zeitlich begrenzte Angebot, bevor du sendest.",
     "waTemplateMpmIncompleteProducts": "Jeder Abschnitt braucht mindestens ein ausgewähltes Produkt — entferne leere Zeilen oder wähle ein Produkt aus.",
-    "mediaStepUnsupported": "Dieser Kanal kann diesen Medientyp nicht senden. Entferne den Schritt oder richte diesen Node auf einen Kanal aus, der ihn unterstützt.",
+    "unsupportedBlock": "Dieser Kanal unterstützt diesen Block nicht.",
+    "constraintExceeded": "Das Limit dieses Kanals wurde überschritten.",
     "mediaButtonsUnsupported": "Dieser Kanal kann keine Buttons mit einer Mediennachricht senden. Entferne die Buttons oder verschiebe sie in einen Textschritt nach diesem.",
     "voiceCall": "Sprachanruf",
     "voiceCallDuration": "Sprachanruf · {duration}",

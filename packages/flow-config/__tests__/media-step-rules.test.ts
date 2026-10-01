@@ -27,8 +27,8 @@ const step = (stepType: string, extra: Record<string, unknown> = {}) => ({
   ...extra,
 })
 
-// The table these assertions pin was read off each integration's sendFlowStep
-// switch — see the comment on MEDIA_STEP_SUPPORT.
+// These expectations mirror the per-channel policies derived from each
+// integration's outgoing message handler.
 describe("resolveMediaStepSupport", () => {
   test.each([
     ["telegram", "sendVideo", "full"],
@@ -146,40 +146,6 @@ describe("media step validators block publish per channel", () => {
       flowValidationCodes.mediaButtonsUnsupported,
     )
     expect(result?.error?.issues[0]?.path).toEqual(["buttons"])
-  })
-
-  test("rejects a step the channel cannot send at all, naming the url field", () => {
-    const result = sendVideoValidator.whatsapp?.safeParse(step("sendVideo"))
-
-    expect(result?.success).toBe(false)
-    expect(result?.error?.issues[0]?.message).toBe(
-      flowValidationCodes.mediaStepUnsupported,
-    )
-    expect(result?.error?.issues[0]?.path).toEqual(["url"])
-  })
-
-  test("an unsupported step is rejected even with no buttons attached", () => {
-    expect(
-      sendFileValidator.tiktok?.safeParse(step("sendFile", { buttons: [] }))
-        .success,
-    ).toBe(false)
-  })
-
-  test("a supported step with no buttons publishes on a dropping channel", () => {
-    expect(
-      sendImageValidator.instagram?.safeParse(
-        step("sendImage", { buttons: [] }),
-      ).success,
-    ).toBe(true)
-  })
-
-  // A gif step carries no buttons, so only the unsupported mode can fire.
-  test("gif is blocked on whatsapp and tiktok, allowed on zalo", () => {
-    const gif = { id: "1", stepType: "sendGif", url: "https://x.dev/a.gif" }
-
-    expect(sendGifValidator.whatsapp?.safeParse(gif).success).toBe(false)
-    expect(sendGifValidator.tiktok?.safeParse(gif).success).toBe(false)
-    expect(sendGifValidator.zalo).toBeUndefined()
   })
 
   test("a channel with nothing to say gets no override at all", () => {

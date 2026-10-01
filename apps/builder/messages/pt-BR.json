@@ -2016,7 +2016,10 @@
         "failed": "Falha",
         "completedAt": "Concluído em",
         "errorDetails": "Erros de importação",
-        "row": "Linha {row}"
+        "row": "Linha {row}",
+        "unsupportedChannelStep": "O canal {channel} não oferece suporte a {block}.",
+        "channelStepConstraintExceeded": "{block} excede o limite de {channel}: {actual} {unit}, máximo {allowed}.",
+        "channelStepConstraintExceededGeneric": "O canal {channel} não suporta a configuração {block} atual."
       }
     },
     "line": {
@@ -3344,7 +3347,8 @@
     "waTemplateMpmTooManyProducts": "Um botão multiproduto pode ter no máximo 30 produtos no total. Remova alguns produtos antes de publicar.",
     "waTemplateLtoExpirationRequired": "Escolha uma data de expiração para a oferta por tempo limitado antes de enviar.",
     "waTemplateMpmIncompleteProducts": "Cada seção precisa de pelo menos um produto selecionado — remova linhas vazias ou escolha um produto.",
-    "mediaStepUnsupported": "Este canal não consegue enviar esse tipo de mídia. Remova a etapa ou aponte este nó para um canal compatível.",
+    "unsupportedBlock": "Este canal não oferece suporte a este bloco.",
+    "constraintExceeded": "O limite deste canal foi excedido.",
     "mediaButtonsUnsupported": "Este canal não consegue enviar botões junto com uma mensagem de mídia. Remova os botões ou mova-os para uma etapa de texto depois desta.",
     "voiceCall": "Chamada de voz",
     "voiceCallDuration": "Chamada de voz · {duration}",

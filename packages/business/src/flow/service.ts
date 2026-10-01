@@ -35,7 +35,7 @@ import { BaseService } from "../base.service"
 import { botFieldService } from "../bot-field/service"
 import { customFieldService } from "../custom-field/service"
 import { notFoundException } from "../errors"
-import { flowVersionService } from "../flow-version"
+import { assertFlowGraphPublishable, flowVersionService } from "../flow-version"
 import { folderService } from "../folder/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { filterFlowsByStartStepType, filterFlowsByTemplateIds } from "./filters"
@@ -397,6 +397,7 @@ class FlowService extends BaseService {
     }
   }): Promise<{ id: string }> {
     const { workspaceId, data, graph } = input
+    assertFlowGraphPublishable(graph)
 
     if (data.folderId) {
       await folderService.ensureExists({
@@ -509,7 +510,12 @@ class FlowService extends BaseService {
     edges: EdgeSchema[]
     folderId?: string | null
     tx?: DatabaseClient
+    validatePublishable?: boolean
   }): Promise<string> {
+    if (input.validatePublishable ?? true) {
+      assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
+    }
+
     const run = (tx: DatabaseClient) =>
       this.insertFlowWithDraft(tx, {
         name: input.name,

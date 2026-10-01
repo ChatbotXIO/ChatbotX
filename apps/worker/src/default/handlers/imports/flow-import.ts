@@ -9,6 +9,9 @@ import { flowImportMetaSchema } from "@chatbotx.io/database/partials"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
   collectFlowReferenceWarnings,
+  type FlowAuthoringError,
+  FlowAuthoringException,
+  type FlowReferenceWarning,
   parseFlowExport,
 } from "@chatbotx.io/flow-config"
 import { getImportEntry } from "@chatbotx.io/imports/registry"
@@ -71,26 +74,60 @@ const readImportedJson = async (row: ImportRow): Promise<unknown> => {
   }
 }
 
-/**
- * `parseFlowExport`'s `reason` is either a plain sentence (the format-version
- * pre-check) or Zod's default `error.message`, a multi-issue JSON dump. Only
- * the latter needs summarizing — this keeps the first issue's path and
- * message, which is the part a user can act on.
- */
-const summarizeSchemaError = (message: string): string => {
-  let issues: Array<{ path?: unknown[]; message?: string }>
-  try {
-    issues = JSON.parse(message)
-  } catch {
-    return message
+const summarizeFlowImportValidationError = (
+  errors: readonly FlowAuthoringError[],
+): string | undefined => {
+  const unsupportedStepsByChannel = new Map<string, Set<string>>()
+  for (const error of errors) {
+    const capability = error.capability
+    if (capability?.code !== "unsupportedBlock") {
+      continue
+    }
+    const steps = unsupportedStepsByChannel.get(capability.channel) ?? new Set()
+    steps.add(capability.block)
+    unsupportedStepsByChannel.set(capability.channel, steps)
   }
-  const [first] = issues
-  if (!first?.message) {
+  if (unsupportedStepsByChannel.size > 0) {
+    return [...unsupportedStepsByChannel]
+      .map(
+        ([channel, steps]) =>
+          `Flow uses steps not supported by ${channel}: ${[...steps].join(", ")}.`,
+      )
+      .join(" ")
+  }
+
+  const constraintCapability = errors.find(
+    (error) => error.capability?.code === "constraintExceeded",
+  )?.capability
+  if (constraintCapability?.code === "constraintExceeded") {
+    return `Flow uses ${constraintCapability.block}, which exceeds the ${constraintCapability.channel} limit.`
+  }
+}
+
+const summarizeSchemaError = (
+  errors: readonly FlowAuthoringError[],
+): string => {
+  const validationError = summarizeFlowImportValidationError(errors)
+  if (validationError) {
+    return validationError
+  }
+
+  const [first] = errors
+  if (!first) {
     return "The export file does not match the expected format."
   }
-  const path = first.path?.length ? ` at ${first.path.join(".")}` : ""
+
+  const path = first.path ? ` at ${first.path}` : ""
   return `Invalid export file${path}: ${first.message}`
 }
+
+const toImportErrorSamples = (errors: readonly FlowAuthoringError[]) =>
+  errors.map((error) => ({
+    reason: error.message,
+    path: error.path,
+    code: error.code,
+    capability: error.capability,
+  }))
 
 export const runFlowImport = async (row: ImportRow): Promise<void> => {
   const parsedMeta = flowImportMetaSchema.safeParse(row.meta)
@@ -118,12 +155,14 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
 
   const parsed = parseFlowExport(json)
   if (!parsed.ok) {
+    const errorCode = parsed.errors.some((error) => error.capability)
+      ? "flowImportValidationFailed"
+      : "flowImportSchemaMismatch"
     await importService.fail(
       row.id,
-      new ChatbotXException(
-        summarizeSchemaError(parsed.reason),
-        "flowImportSchemaMismatch",
-      ),
+      new ChatbotXException(summarizeSchemaError(parsed.errors), errorCode),
+      { processed: 1, success: 0, failed: 1 },
+      toImportErrorSamples(parsed.errors),
     )
     return
   }
@@ -132,7 +171,7 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
 
   let createdCustomFieldIds: string[]
   let createdBotFieldIds: string[]
-  let warnings: ReturnType<typeof collectFlowReferenceWarnings>
+  let warnings: FlowReferenceWarning[]
   try {
     const result = await flowService.importFlowExport({
       workspaceId: row.workspaceId,
@@ -170,6 +209,18 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
     )
   } catch (error) {
     logger.error({ err: error }, `Flow import ${row.id} insert failed`)
+    if (error instanceof FlowAuthoringException) {
+      await importService.fail(
+        row.id,
+        new ChatbotXException(
+          summarizeSchemaError(error.errors),
+          "flowImportValidationFailed",
+        ),
+        { processed: 1, success: 0, failed: 1 },
+        toImportErrorSamples(error.errors),
+      )
+      return
+    }
     await importService.fail(row.id, error)
     return
   }
@@ -182,16 +233,10 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
   }
 
   const MAX_WARNING_SAMPLE = 50
-  // `errorSample.row` is typed as a data-row number; a reference warning has
-  // no row of its own, so a 1-based warning index is used instead of a fixed
-  // `0` — the UI shows "Row N" per entry, and a fixed `0` for every entry
-  // would look like a single dangling row.
-  const errorSample = warnings
-    .slice(0, MAX_WARNING_SAMPLE)
-    .map((warning, index) => ({
-      row: index + 1,
-      reason: `${warning.entityKind} reference at ${warning.path} (${warning.value}) was not remapped — repoint it manually.`,
-    }))
+  const errorSample = warnings.slice(0, MAX_WARNING_SAMPLE).map((warning) => ({
+    path: warning.path,
+    reason: `${warning.entityKind} reference at ${warning.path} (${warning.value}) was not remapped — repoint it manually.`,
+  }))
 
   await importService.complete({
     importId: row.id,

@@ -143,6 +143,47 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
     expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
+  test("sends a standalone Card as one generic-template element", async () => {
+    const result = await sendFlowStep({
+      ctx,
+      data: {
+        contact: recentlyRepliedContact,
+        step: {
+          id: "step-card-1",
+          image: {
+            buttons: [],
+            id: "image-1",
+            mode: "url",
+            stepType: "sendImage",
+            url: "https://example.com/card.png",
+          },
+          nodeId: "node-1",
+          stepType: "sendCard",
+          subtitle: "Card subtitle",
+          title: "Card title",
+          buttons: [],
+        },
+      },
+    } as never)
+
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
+    const payload =
+      mockSendPageMessage.mock.calls[0]?.[1].message?.attachment?.payload
+
+    expect(payload).toMatchObject({
+      elements: [
+        {
+          buttons: undefined,
+          image_url: "https://example.com/card.png",
+          subtitle: "Card subtitle",
+          title: "Card title",
+        },
+      ],
+      image_aspect_ratio: "horizontal",
+      template_type: "generic",
+    })
+  })
+
   // 11 cards chunked by 10 → 2 Facebook messages for this single step.
   const multiMessageStep = {
     id: "step-1",

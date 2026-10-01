@@ -2016,7 +2016,10 @@
         "failed": "失敗",
         "completedAt": "完了日時",
         "errorDetails": "インポートエラー",
-        "row": "行{row}"
+        "row": "行{row}",
+        "unsupportedChannelStep": "{channel} チャネルは {block} をサポートしていません。",
+        "channelStepConstraintExceeded": "{block} は {channel} の上限を超えています: {actual} {unit}、上限は {allowed}。",
+        "channelStepConstraintExceededGeneric": "{channel} チャネルは現在の {block} 設定をサポートしていません。"
       }
     },
     "line": {
@@ -3344,7 +3347,8 @@
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
     "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
     "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
-    "mediaStepUnsupported": "このチャネルではこの種類のメディアを送信できません。ステップを削除するか、対応しているチャネルにこのノードを向けてください。",
+    "unsupportedBlock": "このチャネルはこのブロックに対応していません。",
+    "constraintExceeded": "このチャネルの上限を超えました。",
     "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。",
     "voiceCall": "音声通話",
     "voiceCallDuration": "音声通話 · {duration}",

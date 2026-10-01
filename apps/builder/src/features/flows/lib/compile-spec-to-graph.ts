@@ -7,9 +7,9 @@ import {
   type FlowSpec,
   type FlowVersionSchema,
   formatZodPathSegment,
+  publishFlowSchema,
   zodErrorToFlowAuthoringErrors,
 } from "@chatbotx.io/flow-config"
-import { publishFlowSchema } from "../schema/action"
 
 async function compileWithContext(
   spec: FlowSpec,

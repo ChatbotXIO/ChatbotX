@@ -2167,7 +2167,10 @@
         "recent": "最近导入",
         "row": "第 {row} 列",
         "success": "成功",
-        "title": "导入历史记录"
+        "title": "导入历史记录",
+        "unsupportedChannelStep": "{channel} 渠道不支持 {block}。",
+        "channelStepConstraintExceeded": "{block} 超出 {channel} 限制：{actual} {unit}，最大值为 {allowed}。",
+        "channelStepConstraintExceededGeneric": "{channel} 渠道不支持当前的 {block} 配置。"
       },
       "label": "导入",
       "unableToReadHeaders": "无法读取导入标头。",
@@ -4190,7 +4193,8 @@
     "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "发送前请为限时优惠选择到期时间。",
     "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。",
-    "mediaStepUnsupported": "此渠道无法发送该类型的媒体。请删除该步骤，或将此节点指向支持的渠道。",
+    "unsupportedBlock": "此渠道不支持此模块。",
+    "constraintExceeded": "已超出此渠道的限制。",
     "mediaButtonsUnsupported": "此渠道无法随媒体消息发送按钮。请删除按钮，或将其移到此步骤之后的文本步骤中。",
     "voiceCall": "语音通话",
     "voiceCallDuration": "语音通话 · {duration}",

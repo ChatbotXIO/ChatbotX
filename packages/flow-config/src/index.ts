@@ -8,6 +8,8 @@ export {
   type FlowAuthoringError,
   type FlowAuthoringErrorCode,
   FlowAuthoringException,
+  type FlowCapability,
+  flowCapabilitySchema,
   formatZodPathSegment,
   zodErrorToFlowAuthoringErrors,
 } from "./authoring/errors"
@@ -26,8 +28,10 @@ export {
 } from "./authoring/spec-schema"
 export * from "./channel-rules/channel-step-refinement"
 export * from "./channel-rules/channel-validator"
+export * from "./channel-rules/characters"
 export * from "./channel-rules/media-step-rules"
 export * from "./channel-rules/media-step-validators"
+export * from "./channel-rules/policies"
 export * from "./channel-rules/send-carousel-validator"
 export * from "./channel-rules/send-text-length-rules"
 export * from "./channel-rules/send-text-validator"
@@ -54,6 +58,7 @@ export * from "./nodes/send-message"
 export * from "./nodes/split-traffic"
 export * from "./nodes/start-flow"
 export * from "./nodes/wait"
+export * from "./publish-schema"
 export type { FlowRoute, FlowRouteUpdate } from "./routable-handle"
 export {
   applyRouteInNode,

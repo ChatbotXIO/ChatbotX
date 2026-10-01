@@ -63,6 +63,7 @@ vi.mock("@/lib/log", () => ({
 
 const { ChatbotXException, notFoundException, validationException } =
   await import("@chatbotx.io/business/errors")
+const { FlowAuthoringException } = await import("@chatbotx.io/flow-config")
 const { SdkException } = await import("@chatbotx.io/sdk")
 const { actionClient } = await import("@/lib/safe-action")
 
@@ -137,6 +138,25 @@ describe("actionClient.handleServerError — ChatbotXException / SdkException lo
     const result = await runFailingAction(error)
 
     expect(result.serverError).toBe("Channel rejected")
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      { err: error },
+      "Action rejected request",
+    )
+    expect(mocks.loggerError).not.toHaveBeenCalled()
+  })
+
+  test("warn-logs a FlowAuthoringException and returns its client-facing summary", async () => {
+    const error = new FlowAuthoringException([
+      {
+        code: "unsupportedBlock",
+        message: "unsupportedBlock",
+        path: "nodes[0].steps[0]",
+      },
+    ])
+
+    const result = await runFailingAction(error)
+
+    expect(result.serverError).toBe("nodes[0].steps[0]: unsupportedBlock")
     expect(mocks.loggerWarn).toHaveBeenCalledWith(
       { err: error },
       "Action rejected request",

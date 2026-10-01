@@ -1,4 +1,4 @@
-import { stepTypes } from "@chatbotx.io/flow-config"
+import { type StepType, stepTypes } from "@chatbotx.io/flow-config"
 import {
   contentTypes,
   type MessageHandlers,
@@ -7,7 +7,6 @@ import {
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { postSignedEnvelope } from "../../lib/delivery"
-import { logger } from "../../lib/logger"
 import type { ApiAuthValue } from "../../schema"
 
 const messageStatusPayloadSchema = z.object({
@@ -55,10 +54,8 @@ export const sendMessage: MessageHandlers<ApiAuthValue>["sendMessage"] = async (
 }
 
 /**
- * Full rich parity is the point of this channel — unlike webchat, which
- * no-ops `sendFlowStep` entirely, every flow step variant is mapped onto the
- * same envelope shape as `sendMessage`, with `contentAttributes` carrying the
- * rich payload. Unsupported step types degrade to their text content.
+ * Maps each supported flow step to the API envelope shape. Unsupported steps
+ * reject so channel delivery cannot record a false success.
  */
 export const sendFlowStep: MessageHandlers<ApiAuthValue>["sendFlowStep"] =
   async (props) => {
@@ -67,11 +64,11 @@ export const sendFlowStep: MessageHandlers<ApiAuthValue>["sendFlowStep"] =
       data: { contact, step, quickReplies },
     } = props
 
+    const { text, contentAttributes } = mapFlowStepToEnvelope(step)
+
     if (!ctx.auth.callbackUrl) {
       return { messageIds: [], sentCount: 0 }
     }
-
-    const { text, contentAttributes } = mapFlowStepToEnvelope(step)
 
     const response = await postSignedEnvelope({
       callbackUrl: ctx.auth.callbackUrl,
@@ -111,6 +108,18 @@ const fileTypeForStep = (
       return "file"
   }
 }
+
+export const handledFlowStepTypes = [
+  stepTypes.enum.sendText,
+  stepTypes.enum.sendImage,
+  stepTypes.enum.sendMultipleImages,
+  stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendVideo,
+  stepTypes.enum.sendGif,
+  stepTypes.enum.sendAudio,
+  stepTypes.enum.sendFile,
+  stepTypes.enum.sendQuickReply,
+] as const satisfies readonly StepType[]
 
 const mapFlowStepToEnvelope = (
   step: SendFlowStepData,
@@ -161,14 +170,7 @@ const mapFlowStepToEnvelope = (
         },
       }
     default:
-      logger.warn(
-        { stepType: step.stepType },
-        "API channel: unsupported flow step type, degrading to text",
-      )
-      return {
-        text:
-          "text" in step && typeof step.text === "string" ? step.text : null,
-      }
+      throw new Error(`Unsupported API flow step: ${step.stepType}`)
   }
 }
 

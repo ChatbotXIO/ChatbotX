@@ -178,6 +178,15 @@ describe("sendMessageEditorMenus — template message consolidation", () => {
     expect(labels).toContain(messengerInbox.name)
     expect(labels).not.toContain(waInbox.name)
   })
+
+  it.each([
+    channelTypes.enum.smtp,
+    channelTypes.enum.webchat,
+  ])("does not show template messages for %s", (channel) => {
+    const items = sendMessageEditorMenus(t, buildMenuData(channel))
+
+    expect(findTemplateItem(items)).toBeUndefined()
+  })
 })
 
 describe("integrationMenus", () => {

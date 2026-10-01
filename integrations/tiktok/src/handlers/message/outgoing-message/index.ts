@@ -2,6 +2,7 @@ import {
   type SendImageStepSchema,
   type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
+  type StepType,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
@@ -12,6 +13,12 @@ import { logger } from "../../../lib/logger"
 import type { TiktokAuthValue } from "../../../schema"
 import { uploadAndBuildImagePayload } from "./send-media"
 import { convertFlowStepText } from "./send-text"
+
+export const handledFlowStepTypes = [
+  stepTypes.enum.sendText,
+  stepTypes.enum.sendImage,
+  stepTypes.enum.sendMultipleImages,
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
   async (props) => {
@@ -143,7 +150,7 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
           break
         }
         default:
-          break
+          throw new Error(`Unsupported TikTok flow step: ${step.stepType}`)
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending TikTok flow step")

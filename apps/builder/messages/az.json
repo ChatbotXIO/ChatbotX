@@ -2209,7 +2209,10 @@
         "failed": "Uğursuz",
         "completedAt": "Tamamlanma vaxtı",
         "errorDetails": "İdxal xətaları",
-        "row": "Sətir {row}"
+        "row": "Sətir {row}",
+        "unsupportedChannelStep": "{channel} kanalı {block} blokunu dəstəkləmir.",
+        "channelStepConstraintExceeded": "{block}, {channel} kanal limitini aşır: {actual} {unit}; maksimum {allowed}.",
+        "channelStepConstraintExceededGeneric": "{channel} kanalı mövcud {block} konfiqurasiyasını dəstəkləmir."
       }
     },
     "line": {
@@ -3607,7 +3610,8 @@
     "waTemplateMpmTooManyProducts": "Çoxməhsullu düymədə ümumilikdə ən çox 30 məhsul ola bilər. Dərc etməzdən əvvəl bəzi məhsulları çıxarın.",
     "waTemplateLtoExpirationRequired": "Göndərməzdən əvvəl müddəti məhdud təklif üçün bitmə tarixi seçin.",
     "waTemplateMpmIncompleteProducts": "Hər bölmədə ən azı bir məhsul seçilməlidir: boş sətirləri çıxarın və ya onlar üçün məhsul seçin.",
-    "mediaStepUnsupported": "Bu kanal bu media növünü göndərə bilmir. Addımı çıxarın və ya bu düyünü həmin növü dəstəkləyən kanala yönləndirin.",
+    "unsupportedBlock": "Bu kanal bu bloku dəstəkləmir.",
+    "constraintExceeded": "Bu kanalın limiti aşıldı.",
     "mediaButtonsUnsupported": "Bu kanal media mesajı ilə düymə göndərə bilmir. Düymələri çıxarın və ya onları bundan sonrakı mətn addımına köçürün.",
     "voiceCall": "Səsli zəng",
     "voiceCallDuration": "Səsli zəng · {duration}",

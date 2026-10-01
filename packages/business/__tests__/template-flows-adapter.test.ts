@@ -96,6 +96,7 @@ describe("flowsAdapter", () => {
     expect(mockCreateFromImport).toHaveBeenCalledWith(
       expect.objectContaining({
         nodes: [buildFlowNode("bot_field:77")],
+        validatePublishable: false,
       }),
     )
   })

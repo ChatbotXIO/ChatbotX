@@ -115,6 +115,7 @@ export const flowsAdapter: ResourceAdapter = {
         edges: remapped.edges,
         folderId: requestedFolderId,
         tx: ctx.tx,
+        validatePublishable: false,
       })
 
       flowIdMap.set(entry.sourceId, flowId)

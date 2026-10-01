@@ -1,5 +1,9 @@
 // @vitest-environment node
 
+import {
+  sendMessageNodeDefaultFn,
+  sendVideoStepDefaultFn,
+} from "@chatbotx.io/flow-config"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -36,6 +40,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: { flowModel: { findFirst: mockFlowFindFirst } },
     transaction: mockDbTransaction,
+    update: mockTxUpdate,
   },
   and: (...args: unknown[]) => ({ and: args }),
   eq: (...args: unknown[]) => ({ eq: args }),
@@ -57,7 +62,8 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: mockInvalidateCacheTags,
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
+vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils")>()),
   createId: mockCreateId,
 }))
 
@@ -82,7 +88,10 @@ describe("flowVersionService.publish", () => {
       workspaceId: "ws-1",
       flowVersions: [{ id: "draft-1", startNodeId: "node-1" }],
     })
-    mockCreateId.mockReturnValue("new-version-1")
+    mockCreateId
+      .mockReturnValueOnce("1")
+      .mockReturnValueOnce("2")
+      .mockReturnValue("new-version-1")
     mockDbTransaction.mockImplementation(
       async (
         fn: (tx: {
@@ -92,11 +101,12 @@ describe("flowVersionService.publish", () => {
       ) => fn({ insert: mockTxInsert, update: mockTxUpdate }),
     )
 
+    const nodes = [sendMessageNodeDefaultFn({})]
     await flowVersionService.publish({
       workspaceId: "ws-1",
       flowId: "flow-1",
-      nodes: [{ id: "node-1" }] as never,
-      edges: [] as never,
+      nodes,
+      edges: [],
     })
 
     // 1) reset other latest versions
@@ -109,7 +119,7 @@ describe("flowVersionService.publish", () => {
 
     // 2) sync draft nodes/edges
     expect(mockTxSet).toHaveBeenNthCalledWith(2, {
-      nodes: [{ id: "node-1" }],
+      nodes,
       edges: [],
     })
 
@@ -125,7 +135,7 @@ describe("flowVersionService.publish", () => {
       flowId: "flow-1",
       isDraft: false,
       isLatest: true,
-      nodes: [{ id: "node-1" }],
+      nodes,
       edges: [],
       startNodeId: "node-1",
     })
@@ -142,6 +152,40 @@ describe("flowVersionService.publish", () => {
       action: "publish",
       detail: "published a flow (#flow-1)",
     })
+  })
+
+  test("rejects a channel-incompatible graph before reading or mutating the flow", async () => {
+    mockCreateId.mockReturnValue("1")
+    const node = sendMessageNodeDefaultFn({})
+    node.data.details.beforeStep.channel = "tiktok"
+    node.data.details.steps = [sendVideoStepDefaultFn()]
+
+    await expect(
+      flowVersionService.publish({
+        workspaceId: "ws-1",
+        flowId: "flow-1",
+        nodes: [node],
+        edges: [],
+      }),
+    ).rejects.toMatchObject({ name: "FlowAuthoringException" })
+
+    expect(mockFlowFindFirst).not.toHaveBeenCalled()
+    expect(mockDbTransaction).not.toHaveBeenCalled()
+  })
+
+  test("rejects an incompatible restored graph before opening a transaction", async () => {
+    mockCreateId.mockReturnValue("1")
+    const node = sendMessageNodeDefaultFn({})
+    node.data.details.beforeStep.channel = "tiktok"
+    node.data.details.steps = [sendVideoStepDefaultFn()]
+
+    await expect(
+      flowVersionService.restore({
+        version: { edges: [], nodes: [node] } as never,
+      }),
+    ).rejects.toMatchObject({ name: "FlowAuthoringException" })
+
+    expect(mockDbTransaction).not.toHaveBeenCalled()
   })
 
   test("throws notFoundException when the flow does not exist", async () => {
@@ -176,5 +220,26 @@ describe("flowVersionService.publish", () => {
     ).rejects.toThrow("Flow not found")
 
     expect(mockDbTransaction).not.toHaveBeenCalled()
+  })
+})
+
+describe("flowVersionService.updateDraftByFlowId", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("saves an in-progress graph without publish validation", async () => {
+    vi.spyOn(flowVersionService, "findDraft").mockResolvedValue({
+      id: "draft-1",
+    } as never)
+
+    await expect(
+      flowVersionService.updateDraftByFlowId({
+        workspaceId: "ws-1",
+        flowId: "flow-1",
+        nodes: [{ id: "unsupported-node" }] as never,
+        edges: [] as never,
+      }),
+    ).resolves.toBeUndefined()
   })
 })

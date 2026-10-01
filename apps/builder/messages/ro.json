@@ -2845,7 +2845,10 @@
         "failed": "Eșuat",
         "completedAt": "Finalizat la",
         "errorDetails": "Erori de import",
-        "row": "Rândul {row}"
+        "row": "Rândul {row}",
+        "unsupportedChannelStep": "Canalul {channel} nu acceptă {block}.",
+        "channelStepConstraintExceeded": "{block} depășește limita canalului {channel}: {actual} {unit}, maximum {allowed}.",
+        "channelStepConstraintExceededGeneric": "Canalul {channel} nu acceptă configurația curentă pentru {block}."
       }
     },
     "line": {
@@ -3365,7 +3368,8 @@
     "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
     "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
     "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
-    "mediaStepUnsupported": "Acest canal nu poate trimite acest tip de conținut media. Elimină pasul sau îndreaptă acest nod spre un canal compatibil.",
+    "unsupportedBlock": "Acest canal nu acceptă acest bloc.",
+    "constraintExceeded": "Limita acestui canal a fost depășită.",
     "mediaButtonsUnsupported": "Acest canal nu poate trimite butoane împreună cu un mesaj media. Elimină butoanele sau mută-le într-un pas text de după acesta.",
     "voiceCall": "Apel vocal",
     "voiceCallDuration": "Apel vocal · {duration}",

@@ -2016,7 +2016,10 @@
         "failed": "Gagal",
         "completedAt": "Selesai pada",
         "errorDetails": "Kesalahan impor",
-        "row": "Baris {row}"
+        "row": "Baris {row}",
+        "unsupportedChannelStep": "Kanal {channel} tidak mendukung {block}.",
+        "channelStepConstraintExceeded": "{block} melebihi batas {channel}: {actual} {unit}, maksimum {allowed}.",
+        "channelStepConstraintExceededGeneric": "Kanal {channel} tidak mendukung konfigurasi {block} saat ini."
       }
     },
     "line": {
@@ -3365,7 +3368,8 @@
     "waTemplateMpmTooManyProducts": "Tombol multi-produk dapat memiliki maksimal total 30 produk. Hapus beberapa produk sebelum memublikasikan.",
     "waTemplateLtoExpirationRequired": "Pilih tanggal berakhir untuk penawaran waktu terbatas sebelum mengirim.",
     "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya.",
-    "mediaStepUnsupported": "Saluran ini tidak dapat mengirim jenis media ini. Hapus langkahnya, atau arahkan node ini ke saluran yang mendukungnya.",
+    "unsupportedBlock": "Saluran ini tidak mendukung blok ini.",
+    "constraintExceeded": "Batas saluran ini telah terlampaui.",
     "mediaButtonsUnsupported": "Saluran ini tidak dapat mengirim tombol bersama pesan media. Hapus tombolnya, atau pindahkan ke langkah teks setelah langkah ini.",
     "voiceCall": "Panggilan suara",
     "voiceCallDuration": "Panggilan suara · {duration}",

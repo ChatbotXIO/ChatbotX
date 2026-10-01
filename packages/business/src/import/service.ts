@@ -19,7 +19,11 @@ import {
   importStatuses,
   importTypes,
 } from "@chatbotx.io/database/partials"
-import { fileModel, importModel } from "@chatbotx.io/database/schema"
+import {
+  fileModel,
+  type ImportErrorSample,
+  importModel,
+} from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   likeContains,
@@ -37,7 +41,7 @@ import { inboxService } from "../inbox/service"
 const GENERIC_IMPORT_FAILURE =
   "The import failed. Please try again or contact support."
 
-export type ImportErrorSample = { row: number; reason: string }
+export type { ImportErrorSample } from "@chatbotx.io/database/schema"
 export type ImportCounters = {
   processed: number
   success: number

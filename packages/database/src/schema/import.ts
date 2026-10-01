@@ -1,3 +1,4 @@
+import type { FlowCapability } from "@chatbotx.io/flow-config"
 import { sql } from "drizzle-orm"
 import {
   index,
@@ -44,6 +45,16 @@ export const importStatus = pgEnum(
   importStatuses.options as [ImportStatus, ...ImportStatus[]],
 )
 
+export type ImportErrorCapability = FlowCapability
+
+export type ImportErrorSample = {
+  capability?: ImportErrorCapability
+  code?: string
+  path?: string
+  reason: string
+  row?: number
+}
+
 export const importModel = pgTable(
   "Import",
   {
@@ -84,10 +95,7 @@ export const importModel = pgTable(
     successCount: integer().default(0).notNull(),
     failedCount: integer().default(0).notNull(),
     errorMessage: text(),
-    errorSample: jsonb()
-      .$type<Array<{ row: number; reason: string }>>()
-      .default([])
-      .notNull(),
+    errorSample: jsonb().$type<ImportErrorSample[]>().default([]).notNull(),
     completedAt: timestamp(timestampConfig),
   },
   (table) => [

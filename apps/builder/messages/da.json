@@ -2016,7 +2016,10 @@
         "failed": "Failed",
         "completedAt": "Completed at",
         "errorDetails": "Importér errors",
-        "row": "Række {row}"
+        "row": "Række {row}",
+        "unsupportedChannelStep": "{channel}-kanalen understøtter ikke {block}.",
+        "channelStepConstraintExceeded": "{block} overskrider grænsen for {channel}: {actual} {unit}, maksimum {allowed}.",
+        "channelStepConstraintExceededGeneric": "{channel}-kanalen understøtter ikke den aktuelle {block}-konfiguration."
       }
     },
     "line": {
@@ -3365,7 +3368,8 @@
     "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
-    "mediaStepUnsupported": "Denne kanal kan ikke sende denne medietype. Fjern trinnet, eller peg noden mod en kanal der understøtter det.",
+    "unsupportedBlock": "Denne kanal understøtter ikke denne blok.",
+    "constraintExceeded": "Denne kanals grænse er overskredet.",
     "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
     "voiceCall": "Taleopkald",
     "voiceCallDuration": "Taleopkald · {duration}",

@@ -1,4 +1,5 @@
 import { Readable } from "node:stream"
+import { FlowAuthoringException } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { ImportRow } from "../src/default/handlers/imports/base-import"
 
@@ -17,13 +18,24 @@ vi.mock("@chatbotx.io/business", () => ({
       mocks.updateValues.push({ status: "processing" })
       return Promise.resolve()
     }),
-    fail: vi.fn((_importId: string, error: unknown) => {
-      mocks.updateValues.push({
-        status: "failed",
-        errorMessage: error instanceof Error ? error.message : error,
-      })
-      return Promise.resolve()
-    }),
+    fail: vi.fn(
+      (
+        _importId: string,
+        error: unknown,
+        counters?: { processed: number; success: number; failed: number },
+        errorSample?: unknown,
+      ) => {
+        mocks.updateValues.push({
+          status: "failed",
+          errorCode:
+            error instanceof Error && "code" in error ? error.code : undefined,
+          errorMessage: error instanceof Error ? error.message : error,
+          ...counters,
+          errorSample,
+        })
+        return Promise.resolve()
+      },
+    ),
     complete: vi.fn(
       (input: {
         importId: string
@@ -180,7 +192,7 @@ describe("runFlowImport", () => {
     })
     expect(finalUpdate?.errorSample).toEqual([
       expect.objectContaining({
-        row: 1,
+        path: expect.any(String),
         reason: expect.stringContaining("sequence"),
       }),
     ])
@@ -208,6 +220,84 @@ describe("runFlowImport", () => {
 
     expect(mocks.importFlowExport).not.toHaveBeenCalled()
     expect(mocks.updateValues.at(-1)).toMatchObject({ status: "failed" })
+  })
+
+  test("persists every TikTok unsupported-step capability error without importing", async () => {
+    const exportJson = buildExportJson()
+    const node = exportJson.flows[0].nodes[0]
+    node.data.details.beforeStep.channel = "tiktok"
+    node.data.details.steps = [
+      {
+        id: "4",
+        stepType: "sendVideo",
+        mode: "url",
+        url: "https://example.com/video.mp4",
+        buttons: [],
+      },
+      {
+        id: "5",
+        stepType: "sendFile",
+        mode: "url",
+        url: "https://example.com/file.pdf",
+        buttons: [],
+      },
+    ]
+    mockStream(exportJson)
+
+    await runFlowImport(importRow)
+
+    expect(mocks.importFlowExport).not.toHaveBeenCalled()
+    expect(mocks.updateValues.at(-1)).toMatchObject({
+      status: "failed",
+      failed: 1,
+      processed: 1,
+      success: 0,
+      errorCode: "flowImportValidationFailed",
+      errorMessage:
+        "Flow uses steps not supported by tiktok: sendVideo, sendFile.",
+      errorSample: [
+        expect.objectContaining({
+          code: "unsupportedBlock",
+          capability: expect.objectContaining({
+            block: "sendVideo",
+            channel: "tiktok",
+          }),
+        }),
+        expect.objectContaining({
+          code: "unsupportedBlock",
+          capability: expect.objectContaining({
+            block: "sendFile",
+            channel: "tiktok",
+          }),
+        }),
+      ],
+    })
+  })
+
+  test("summarizes channel-policy errors raised while persisting an otherwise valid flow", async () => {
+    mocks.importFlowExport.mockRejectedValueOnce(
+      new FlowAuthoringException([
+        {
+          capability: {
+            block: "sendVideo",
+            channel: "tiktok",
+            code: "unsupportedBlock",
+            policyVersion: 1,
+          },
+          code: "unsupportedBlock",
+          message: "The tiktok channel does not support sendVideo.",
+          path: "nodes[0].data.details.steps[0]",
+        },
+      ]),
+    )
+    mockStream(buildExportJson())
+
+    await runFlowImport(importRow)
+
+    expect(mocks.updateValues.at(-1)).toMatchObject({
+      errorCode: "flowImportValidationFailed",
+      errorMessage: "Flow uses steps not supported by tiktok: sendVideo.",
+    })
   })
 
   test("fails the import when the stream exceeds the byte limit", async () => {
@@ -406,7 +496,7 @@ describe("runFlowImport", () => {
     expect(finalUpdate).toMatchObject({ status: "completed" })
     expect(finalUpdate?.errorSample).toEqual([
       expect.objectContaining({
-        row: 1,
+        path: expect.any(String),
         reason: expect.stringContaining("customField"),
       }),
     ])
@@ -549,7 +639,7 @@ describe("runFlowImport", () => {
     expect(finalUpdate).toMatchObject({ status: "completed" })
     expect(finalUpdate?.errorSample).toEqual([
       expect.objectContaining({
-        row: 1,
+        path: expect.any(String),
         reason: expect.stringContaining("botField"),
       }),
     ])

@@ -1,12 +1,12 @@
 import { describe, expect, test } from "vitest"
 import { resolveStepValidator } from "../src/channel-rules/channel-validator"
+import { countMessageCharacters } from "../src/channel-rules/characters"
+import { TIKTOK_CARD_TITLE_MAX } from "../src/channel-rules/policies"
 import {
-  countMessageCharacters,
   resolveSendTextLengthLimits,
   SEND_TEXT_MAX,
 } from "../src/channel-rules/send-text-length-rules"
 import { sendTextValidator } from "../src/channel-rules/send-text-validator"
-import { TIKTOK_CARD_TITLE_MAX } from "../src/channel-rules/tiktok-text-rules"
 import { BUTTON_LABEL_MAX } from "../src/steps/button"
 import { sendTextStepSchema } from "../src/steps/send-text"
 import { flowValidationCodes } from "../src/validation-codes"

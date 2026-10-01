@@ -39,7 +39,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 | Tool | Description |
 |---|---|
-| `capabilities_get` | Discover the workspace's inboxes, WhatsApp templates, custom/bot fields, tags, AI agents, sequences, and flows — the ids a flow spec or a message needs to reference. |
+| `capabilities_get` | Discover workspace entities and query `channel` before authoring a channel-bound FlowSpec to receive its supported blocks and limits. |
 | `token_get` | Get the calling token's workspace id, permission (`read_only`/`full`), and scopes — check before attempting a write. |
 | `schemas_flow_spec` | Get the JSON Schema for the `spec` object `flows_publish`/`flows_update_draft`/`flows_validate` accept — the authoritative reference for every flow step type. |
 
@@ -51,7 +51,7 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 
 | Tool | Description |
 |---|---|
-| `capabilities_get` | Discover the workspace's inboxes, templates, fields, tags, sequences, and flows |
+| `capabilities_get` | Discover workspace entities and a requested channel's FlowSpec policy |
 | `schemas_flow_spec` | Get JSON Schema for flow-spec DSL |
 | `token_get` | Get calling token workspace id, permission, and scopes |
 

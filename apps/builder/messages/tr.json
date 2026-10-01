@@ -2158,7 +2158,10 @@
         "failed": "Başarısız",
         "completedAt": "Tamamlanma zamanı",
         "errorDetails": "İçe aktarma hataları",
-        "row": "Satır {row}"
+        "row": "Satır {row}",
+        "unsupportedChannelStep": "{channel} kanalı {block} adımını desteklemiyor.",
+        "channelStepConstraintExceeded": "{block}, {channel} sınırını aşıyor: {actual} {unit}; en fazla {allowed}.",
+        "channelStepConstraintExceededGeneric": "{channel} kanalı mevcut {block} yapılandırmasını desteklemiyor."
       }
     },
     "line": {
@@ -3365,7 +3368,8 @@
     "waTemplateMpmTooManyProducts": "Çoklu ürün butonunda toplamda en fazla 30 ürün olabilir. Yayınlamadan önce bazı ürünleri kaldırın.",
     "waTemplateLtoExpirationRequired": "Göndermeden önce sınırlı süreli teklif için bir bitiş tarihi seçin.",
     "waTemplateMpmIncompleteProducts": "Her bölümde en az bir seçili ürün olmalı — boş satırları silin veya onlara ürün seçin.",
-    "mediaStepUnsupported": "Bu kanal bu medya türünü gönderemez. Adımı kaldırın veya bu düğümü destekleyen bir kanala yönlendirin.",
+    "unsupportedBlock": "Bu kanal bu bloğu desteklemiyor.",
+    "constraintExceeded": "Bu kanalın sınırı aşıldı.",
     "mediaButtonsUnsupported": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez. Düğmeleri kaldırın veya bundan sonraki bir metin adımına taşıyın.",
     "voiceCall": "Sesli arama",
     "voiceCallDuration": "Sesli arama · {duration}",

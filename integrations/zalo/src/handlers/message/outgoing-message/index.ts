@@ -4,6 +4,7 @@ import {
   type SendImageStepSchema,
   type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
+  type StepType,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import type {
@@ -26,6 +27,14 @@ import {
   convertFlowStepMultipleImages,
 } from "./send-image"
 import { convertFlowStepText } from "./send-text"
+
+export const handledFlowStepTypes = [
+  stepTypes.enum.sendText,
+  stepTypes.enum.sendImage,
+  stepTypes.enum.sendGif,
+  stepTypes.enum.sendMultipleImages,
+  stepTypes.enum.sendFile,
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
   async (props) => {
@@ -158,7 +167,7 @@ export async function* convertFlowStepToZaloMessage(
       )
       break
     default:
-      break
+      throw new Error(`Unsupported Zalo flow step: ${step.stepType}`)
   }
 }
 
