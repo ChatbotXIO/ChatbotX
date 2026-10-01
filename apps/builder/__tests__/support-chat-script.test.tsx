@@ -32,6 +32,14 @@ describe("SupportChatScript", () => {
     expect(result).toBeNull()
   })
 
+  test("renders nothing on the bot simulator route", () => {
+    mockUsePathname.mockReturnValue("/bs/11612470479962112/11639136935936000")
+
+    const result = SupportChatScript({ pageId: "page-123" })
+
+    expect(result).toBeNull()
+  })
+
   test("renders the pancake script with the encoded page id on other routes", () => {
     mockUsePathname.mockReturnValue("/dashboard")
 
