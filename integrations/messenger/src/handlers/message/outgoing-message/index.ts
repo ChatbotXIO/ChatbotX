@@ -142,6 +142,24 @@ export const handledFlowStepTypes = [
   stepTypes.enum.sendMessengerTemplateMessage,
 ] as const satisfies readonly StepType[]
 
+/**
+ * A take-over / forced inbox reply carries `bypassThreadControlLock` in its
+ * message metadata (set by the inbox composer when a human agent takes a thread
+ * over from BizAI). Such a reply must always ride the HUMAN_AGENT tag.
+ */
+const isForcedHumanAgentSend = (message: {
+  contentAttributes?: { [x: string]: unknown } | null
+}): boolean => {
+  const metadata = message.contentAttributes?.metadata
+  return (
+    typeof metadata === "object" &&
+    metadata !== null &&
+    "bypassThreadControlLock" in metadata &&
+    (metadata as { bypassThreadControlLock?: unknown })
+      .bypassThreadControlLock === true
+  )
+}
+
 export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
   async (props) => {
     const {
@@ -152,7 +170,11 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
     const messageIds: string[] = []
     let sentCount = 0
     try {
-      const policy = resolveMessagingPolicy({ contact, sendFrom })
+      const policy = resolveMessagingPolicy({
+        contact,
+        sendFrom,
+        forceHumanAgent: isForcedHumanAgentSend(message),
+      })
       const facebookMessages = [...convertMessage(message)]
       const lastMessage = facebookMessages.at(-1)
       const nativeQuickReplies = (quickReplies ?? []).filter(
@@ -491,8 +513,15 @@ export function resolveMessagingPolicy(props: {
   contact: OutgoingContact
   now?: Date | number
   sendFrom?: "inbox"
+  /**
+   * A take-over / forced reply (the standby send gate was bypassed): always
+   * tag HUMAN_AGENT — a human agent is stepping in, so the tag is used even
+   * inside the 24h window, never gated on elapsed time (still bounded by Meta's
+   * 7-day human-agent limit).
+   */
+  forceHumanAgent?: boolean
 }): MessengerMessagingPolicy {
-  const { contact, sendFrom } = props
+  const { contact, sendFrom, forceHumanAgent } = props
 
   if (sendFrom !== "inbox") {
     return { messagingType: "RESPONSE" }
@@ -514,12 +543,13 @@ export function resolveMessagingPolicy(props: {
   }
   const elapsedMs = nowMs - lastIncomingMessageAt.getTime()
 
-  if (elapsedMs <= META_RESPONSE_WINDOW_MS) {
-    return { messagingType: "RESPONSE" }
-  }
-
   if (elapsedMs <= META_HUMAN_AGENT_WINDOW_MS) {
-    return { messagingType: "MESSAGE_TAG", tag: "HUMAN_AGENT" }
+    // A take-over reply is always HUMAN_AGENT; a normal inbox reply only needs
+    // the tag once it is past the 24h standard window.
+    if (forceHumanAgent || elapsedMs > META_RESPONSE_WINDOW_MS) {
+      return { messagingType: "MESSAGE_TAG", tag: "HUMAN_AGENT" }
+    }
+    return { messagingType: "RESPONSE" }
   }
 
   throw new ChannelError(

@@ -2061,7 +2061,8 @@
       "label": "Khoảng tùy chỉnh"
     },
     "templateId": {
-      "label": "WhatsApp Template"
+      "label": "WhatsApp Template",
+      "placeholder": "Chọn mẫu"
     },
     "whatsappChannel": {
       "label": "Kênh WhatsApp"
@@ -2593,7 +2594,8 @@
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
       "importJsonOnly": "Chỉ tệp JSON",
       "whatsappCallButton": "Gọi qua WhatsApp",
-      "metaConversions": "API Chuyển đổi Meta"
+      "metaConversions": "API Chuyển đổi Meta",
+      "threadControl": "Điều khiển luồng"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "Mở nhóm Zalo",
     "openZalo": "Mở Zalo",
     "openMessenger": "Mở Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Đối tác",
+      "partnerWithRole": "Đối tác · {role}",
+      "self": "bạn"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Quảng cáo Click-to-WhatsApp",
+      "customer_service": "Chăm sóc khách hàng",
+      "escalation": "Chuyển cấp",
+      "marketing": "Tiếp thị",
+      "utility": "Tiện ích"
+    },
+    "pill": {
+      "standby": "Standby ({owner} đang xử lý)",
+      "owned": "Đang xử lý",
+      "tooltip": "Do {owner} xử lý"
+    },
+    "release": {
+      "label": "Trả quyền",
+      "tooltip": "Trả quyền xử lý để các ứng dụng khác có thể trả lời",
+      "success": "Đã trả quyền xử lý hội thoại"
+    },
+    "pass": {
+      "menuItem": "Chuyển cho đối tác xử lý nâng cao",
+      "title": "Chuyển cho đối tác xử lý nâng cao?",
+      "description": "Chuyển hội thoại này cho đối tác xử lý nâng cao? Tin nhắn của bạn sẽ tạm dừng cho đến khi hội thoại được trả lại.",
+      "confirm": "Chuyển",
+      "success": "Đã chuyển hội thoại cho đối tác xử lý nâng cao"
+    },
+    "composer": {
+      "aiStandbyHint": "Trả lời sẽ tiếp quản hội thoại này khỏi trợ lý AI.",
+      "title": "Bạn đang ở chế độ Lắng nghe (Standby)",
+      "description": "Đối tác bên thứ 3 đang xử lý cuộc trò chuyện này. Khung chat tạm khóa để tránh gửi trùng tin nhắn.",
+      "takeOver": "Tiếp quản",
+      "takeOverSuccess": "Bạn đang xử lý hội thoại này",
+      "notEscalation": "Chỉ đối tác xử lý nâng cao mới có thể tiếp quản. Việc điều phối được cấu hình trong Meta Business Suite.",
+      "notPrimaryReceiver": "Ứng dụng này phải là bên nhận chính của Trang để có thể tiếp quản. Hãy thiết lập trong phần cài đặt Handover Protocol của Trang.",
+      "learnMore": "Tìm hiểu thêm",
+      "dismiss": "Vẫn gửi"
+    },
+    "divider": {
+      "ownerHandling": "{owner} đang xử lý hội thoại này",
+      "handedOver": "{previousOwner} đã bàn giao hội thoại này lại cho bạn",
+      "selfHandling": "Bạn đang xử lý hội thoại này",
+      "takenOver": "Bạn đã tiếp quản hội thoại này",
+      "released": "Đã trả quyền xử lý hội thoại",
+      "passed": "Đã chuyển hội thoại cho đối tác xử lý nâng cao",
+      "serviceRejected": "Tin nhắn chưa được gửi: {owner} đang xử lý hội thoại này"
+    },
+    "context": {
+      "title": "Ngữ cảnh hội thoại",
+      "summaryBadge": "Tóm tắt AI",
+      "historyBadge": "Lịch sử",
+      "customer": "Khách hàng",
+      "business": "Doanh nghiệp",
+      "handoverNote": "Ghi chú bàn giao: {note}",
+      "showAll": "Hiện tất cả ({count})",
+      "showLess": "Thu gọn"
+    },
+    "echo": {
+      "partner": "Đối tác"
+    },
+    "panel": {
+      "title": "Điều phối hội thoại",
+      "threadState": "Trạng thái luồng",
+      "threadStateOwned": "Đang được giữ",
+      "threadStateStandby": "Chế độ chờ",
+      "threadStateIdle": "Chưa ai giữ",
+      "currentOwner": "Bên đang giữ",
+      "noOwner": "Chưa có",
+      "roleLabel": "Vai trò của bạn",
+      "selfOwned": "Đang xử lý hội thoại",
+      "selfStandby": "Chế độ chờ — chỉ lắng nghe",
+      "selfIdle": "Đang chờ",
+      "hintOwned": "Hãy trả quyền khi xong để các ứng dụng khác có thể trả lời.",
+      "hintStandby": "Khi đối tác đang xử lý, tin nhắn bạn soạn sẽ được giữ lại để khách không nhận trả lời trùng lặp. Nhấn Tiếp quản ở khung soạn tin để trả lời.",
+      "hintIdle": "Tin nhắn tiếp theo của khách sẽ quyết định ai trả lời.",
+      "syncOwner": "Đồng bộ chủ sở hữu",
+      "syncOwnerSuccess": "Đã đồng bộ chủ sở hữu"
+    },
+    "settings": {
+      "title": "Kịch bản tiếp nhận khi nhận quyền (Handover Resume Flow)",
+      "description": "Hành động tự động khi nhận sự kiện bàn giao từ đối tác.",
+      "resumeFlowLabel": "Chọn kịch bản",
+      "resumeFlowPlaceholder": "Chọn một kịch bản",
+      "info": "Kịch bản này sẽ tự động khởi chạy khi quyền điều khiển được chuyển về. Hệ thống sẽ tự động hiển thị tóm tắt cuộc trò chuyện và lịch sử chat trên LiveChat cho nhân viên.",
+      "save": "Lưu cấu hình",
+      "clearFlow": "Xóa luồng",
+      "adminOnly": "Chỉ quản trị viên workspace mới có thể thay đổi điều phối",
+      "flowNotFound": "Không tìm thấy luồng đã chọn hoặc luồng chưa hoạt động",
+      "integrationNotFound": "Không tìm thấy số WhatsApp",
+      "messengerIntegrationNotFound": "Không tìm thấy trang Messenger"
+    },
+    "errors": {
+      "unsupported": "Kênh này không hỗ trợ điều phối hội thoại",
+      "notFound": "Hội thoại này không thuộc kênh đó",
+      "actionFailed": "Không thể cập nhật điều phối hội thoại. Vui lòng thử lại."
+    },
+    "step": {
+      "action": "Hành động",
+      "release": "Trả quyền xử lý hội thoại",
+      "pass": "Chuyển cho đối tác xử lý nâng cao",
+      "helper": "Chỉ dành cho WhatsApp. Trên kênh khác, hoặc khi hội thoại không được sở hữu tại đây, bước này sẽ đi theo nhánh Lỗi."
+    },
+    "template": {
+      "sent": "Đã gửi mẫu"
+    }
   }
 }

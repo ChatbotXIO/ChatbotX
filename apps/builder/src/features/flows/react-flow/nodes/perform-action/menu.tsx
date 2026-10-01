@@ -8,6 +8,7 @@ import {
 } from "@icons-pack/react-simple-icons"
 import {
   ArchiveIcon,
+  ArrowRightLeftIcon,
   BellOffIcon,
   BellRingIcon,
   BotIcon,
@@ -326,6 +327,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.transferConversationToBot"),
         icon: BotIcon,
         stepType: stepTypes.enum.enableBot,
+      },
+      {
+        label: t("flows.actions.threadControl"),
+        icon: ArrowRightLeftIcon,
+        stepType: stepTypes.enum.threadControl,
       },
       {
         label: t("flows.actions.assignConversation"),

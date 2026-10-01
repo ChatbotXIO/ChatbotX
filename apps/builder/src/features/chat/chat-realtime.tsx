@@ -37,6 +37,7 @@ export function ChatRealtime() {
     markMessagesDeleted,
     markMessageFailed,
     openConversation,
+    patchContactInboxThreadControl,
     resumeConversationHeadRefresh,
     updateContact,
     updateConversations,
@@ -51,6 +52,7 @@ export function ChatRealtime() {
       markMessagesDeleted: state.markMessagesDeleted,
       markMessageFailed: state.markMessageFailed,
       openConversation: state.openConversation,
+      patchContactInboxThreadControl: state.patchContactInboxThreadControl,
       resumeConversationHeadRefresh: state.resumeConversationHeadRefresh,
       updateContact: state.updateContact,
       updateConversations: state.updateConversations,
@@ -246,6 +248,10 @@ export function ChatRealtime() {
         assignedUser: null,
         assignedInboxTeam: null,
       })
+    },
+    contactInboxThreadControlUpdated: (event) => {
+      const { conversationId, ...snapshot } = event.data
+      patchContactInboxThreadControl(conversationId, snapshot)
     },
     conversationUpdated: (event) => {
       const { conversationIds, changes } = event.data

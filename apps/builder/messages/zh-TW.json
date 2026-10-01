@@ -1103,7 +1103,8 @@
       "searchPlaceholder": "搜尋關鍵字..."
     },
     "templateId": {
-      "label": "WhatsApp 範本"
+      "label": "WhatsApp 範本",
+      "placeholder": "選擇範本"
     },
     "messengerTemplateId": {
       "label": "Messenger 範本"
@@ -2732,7 +2733,8 @@
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
       "importJsonOnly": "僅限 JSON 檔案",
       "whatsappCallButton": "透過 WhatsApp 通話",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "對話控制"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "開啟 Zalo 群組",
     "openZalo": "開啟 Zalo",
     "openMessenger": "開啟 Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "合作夥伴",
+      "partnerWithRole": "合作夥伴 · {role}",
+      "self": "您"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp 廣告",
+      "customer_service": "客戶服務",
+      "escalation": "升級處理",
+      "marketing": "行銷",
+      "utility": "通用"
+    },
+    "pill": {
+      "standby": "待命（{owner}）",
+      "owned": "處理中",
+      "tooltip": "由 {owner} 處理"
+    },
+    "release": {
+      "label": "釋放",
+      "tooltip": "釋放此對話，讓其他應用程式可以回覆",
+      "success": "對話已釋放"
+    },
+    "pass": {
+      "menuItem": "轉交升級處理",
+      "title": "轉交給升級處理合作夥伴？",
+      "description": "要將此對話轉交給您的升級合作夥伴嗎？在對話返回之前，您的回覆將暫停。",
+      "confirm": "轉交",
+      "success": "對話已轉交給升級處理合作夥伴"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "您處於待命狀態（僅監聽）",
+      "description": "第三方合作夥伴正在處理此對話。訊息框已鎖定，以避免重複回覆。",
+      "takeOver": "接管",
+      "takeOverSuccess": "您現在正在處理此對話",
+      "notEscalation": "只有升級處理合作夥伴可以接管。路由在 Meta Business Suite 中設定。",
+      "notPrimaryReceiver": "此應用程式必須是粉絲專頁的主要接收者才能接管。請在粉絲專頁的 Handover Protocol 設定中設定。",
+      "learnMore": "瞭解詳情",
+      "dismiss": "仍然傳送"
+    },
+    "divider": {
+      "ownerHandling": "{owner} 現在正在處理此對話",
+      "handedOver": "{previousOwner}已將此對話交還給您",
+      "selfHandling": "您現在正在處理此對話",
+      "takenOver": "您已接管此對話",
+      "released": "對話已釋放",
+      "passed": "對話已轉交給升級處理合作夥伴",
+      "serviceRejected": "訊息未傳送：{owner} 正在處理此對話"
+    },
+    "context": {
+      "title": "對話脈絡",
+      "summaryBadge": "AI 摘要",
+      "historyBadge": "歷史記錄",
+      "customer": "客戶",
+      "business": "商家",
+      "handoverNote": "交接備註：{note}",
+      "showAll": "顯示全部（{count}）",
+      "showLess": "收合"
+    },
+    "echo": {
+      "partner": "合作夥伴"
+    },
+    "panel": {
+      "title": "對話路由",
+      "threadState": "對話狀態",
+      "threadStateOwned": "已被接管",
+      "threadStateStandby": "待命",
+      "threadStateIdle": "閒置",
+      "currentOwner": "目前負責方",
+      "noOwner": "無負責方",
+      "roleLabel": "您的角色",
+      "selfOwned": "正在處理對話",
+      "selfStandby": "待命 — 僅監聽",
+      "selfIdle": "等待客戶的下一則訊息",
+      "hintOwned": "處理完成後請釋放，讓其他應用程式可以回覆。",
+      "hintStandby": "合作夥伴處理期間，您的訊息會被暫存，以免客戶收到重複回覆。如需回覆，請在訊息框中接管對話。",
+      "hintIdle": "客戶的下一則訊息將決定由誰回覆。",
+      "syncOwner": "同步擁有者",
+      "syncOwnerSuccess": "擁有者已同步"
+    },
+    "settings": {
+      "title": "交接後恢復流程",
+      "description": "合作夥伴將對話交還時自動執行的流程。",
+      "resumeFlowLabel": "選擇流程",
+      "resumeFlowPlaceholder": "選擇一個流程",
+      "info": "控制權交還時，此流程會自動啟動。隨後，對話摘要和聊天記錄會在即時聊天中顯示給您的客服。",
+      "save": "儲存變更",
+      "clearFlow": "清除流程",
+      "adminOnly": "只有工作區管理員可以變更路由",
+      "flowNotFound": "找不到所選流程，或該流程未啟用",
+      "integrationNotFound": "找不到 WhatsApp 號碼",
+      "messengerIntegrationNotFound": "找不到 Messenger 粉絲專頁"
+    },
+    "errors": {
+      "unsupported": "此管道不支援對話路由",
+      "notFound": "此對話不在該管道上",
+      "actionFailed": "無法更新對話路由，請再試一次。"
+    },
+    "step": {
+      "action": "動作",
+      "release": "釋放對話",
+      "pass": "轉交給升級處理合作夥伴",
+      "helper": "僅限 WhatsApp。在其他管道，或對話不歸此處管理時，此步驟將走錯誤路徑。"
+    },
+    "template": {
+      "sent": "範本已發送"
+    }
   }
 }

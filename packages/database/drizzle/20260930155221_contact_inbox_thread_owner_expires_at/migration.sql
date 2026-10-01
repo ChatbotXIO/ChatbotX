@@ -1,0 +1,1 @@
+ALTER TABLE "ContactInbox" ADD COLUMN "threadOwnerExpiresAt" timestamp(6) with time zone;

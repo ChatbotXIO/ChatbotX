@@ -9,7 +9,11 @@ import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue, WhatsappException } from "../exception"
 import { mapToChannelError } from "../lib/error-mapper"
 import { logger } from "../lib/logger"
-import { listPhoneNumbers } from "./phone-number"
+import {
+  listPhoneNumbers,
+  PHONE_NUMBER_REGISTER_FIELDS,
+  type WhatsappPhoneNumber,
+} from "./phone-number"
 
 const api = ky.create({
   timeout: 60_000,
@@ -150,6 +154,16 @@ const createVerificationRequiredError = (phoneNumberId: string) => {
   return error
 }
 
+const CONNECTED_STATUS = "CONNECTED"
+const CLOUD_API_PLATFORM = "CLOUD_API"
+
+/** Meta reports a registered Cloud API number as `status: CONNECTED` on `CLOUD_API`. */
+const isAlreadyRegistered = (
+  phoneNumber: Pick<WhatsappPhoneNumber, "status" | "platform_type">,
+): boolean =>
+  phoneNumber.status === CONNECTED_STATUS &&
+  phoneNumber.platform_type === CLOUD_API_PLATFORM
+
 export function registerPhoneNumber({
   auth,
   phoneNumberId,
@@ -164,6 +178,7 @@ export function registerPhoneNumber({
       wabaId: auth.metadata.wabaId,
       accessToken: auth.tokens.accessToken,
       version,
+      fields: PHONE_NUMBER_REGISTER_FIELDS,
     })
     const phoneNumber = phoneNumbers.data.find(
       (candidate) => candidate.id === phoneNumberId,
@@ -174,6 +189,15 @@ export function registerPhoneNumber({
         status: "failed",
         error: createPhoneNumberNotFoundError(phoneNumberId),
       }
+    }
+
+    // Checked before verification: a connected number needs no OTP even when
+    // its code verification has expired.
+    // A number already connected on the Cloud API (typically shared with
+    // another partner) must not be re-registered: `/register` would overwrite
+    // the other partner's PIN or fail on a PIN mismatch.
+    if (isAlreadyRegistered(phoneNumber)) {
+      return { status: "registered" }
     }
 
     if (phoneNumber.code_verification_status !== "VERIFIED") {

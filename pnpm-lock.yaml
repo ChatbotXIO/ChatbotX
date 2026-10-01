@@ -1422,6 +1422,9 @@ importers:
       '@chatbotx.io/business':
         specifier: workspace:*
         version: link:../../packages/business
+      '@chatbotx.io/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config

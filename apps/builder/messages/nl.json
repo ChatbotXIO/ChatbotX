@@ -1679,7 +1679,8 @@
       "searchPlaceholder": "Trefwoord zoeken..."
     },
     "templateId": {
-      "label": "WhatsApp-sjabloon"
+      "label": "WhatsApp-sjabloon",
+      "placeholder": "Selecteer een sjabloon"
     },
     "messengerTemplateId": {
       "label": "Messenger-sjabloon"
@@ -2409,7 +2410,8 @@
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
       "importJsonOnly": "Alleen JSON-bestanden",
       "whatsappCallButton": "Bellen via WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Threadbeheer"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "Zalo-groep openen",
     "openZalo": "Zalo openen",
     "openMessenger": "Messenger openen"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "jou"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-advertenties",
+      "customer_service": "Klantenservice",
+      "escalation": "Escalatie",
+      "marketing": "Marketing",
+      "utility": "Utility"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Actief",
+      "tooltip": "Behandeld door {owner}"
+    },
+    "release": {
+      "label": "Vrijgeven",
+      "tooltip": "Geef dit gesprek vrij zodat andere apps kunnen antwoorden",
+      "success": "Gesprek vrijgegeven"
+    },
+    "pass": {
+      "menuItem": "Doorgeven aan escalatie",
+      "title": "Doorgeven aan de escalatiepartner?",
+      "description": "Dit gesprek overdragen aan je escalatiepartner? Je antwoorden worden gepauzeerd totdat het gesprek terugkomt.",
+      "confirm": "Doorgeven",
+      "success": "Gesprek doorgegeven aan de escalatiepartner"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Je staat in standby (alleen luisteren)",
+      "description": "Een externe partner behandelt dit gesprek. Het berichtenveld is vergrendeld om dubbele antwoorden te voorkomen.",
+      "takeOver": "Overnemen",
+      "takeOverSuccess": "Je behandelt dit gesprek nu",
+      "notEscalation": "Alleen de escalatiepartner kan overnemen. Routing wordt ingesteld in Meta Business Suite.",
+      "notPrimaryReceiver": "Deze app moet de primaire ontvanger van de pagina zijn om over te nemen. Stel dit in bij de Handover Protocol-instellingen van de pagina.",
+      "learnMore": "Meer informatie",
+      "dismiss": "Toch verzenden"
+    },
+    "divider": {
+      "ownerHandling": "{owner} behandelt dit gesprek nu",
+      "handedOver": "{previousOwner} heeft dit gesprek aan jou teruggegeven",
+      "selfHandling": "Je behandelt dit gesprek nu",
+      "takenOver": "Je hebt dit gesprek overgenomen",
+      "released": "Gesprek vrijgegeven",
+      "passed": "Gesprek doorgegeven aan de escalatiepartner",
+      "serviceRejected": "Bericht niet verzonden: {owner} behandelt dit gesprek"
+    },
+    "context": {
+      "title": "Gesprekscontext",
+      "summaryBadge": "AI-samenvatting",
+      "historyBadge": "Geschiedenis",
+      "customer": "Klant",
+      "business": "Bedrijf",
+      "handoverNote": "Overdrachtsnotitie: {note}",
+      "showAll": "Alles tonen ({count})",
+      "showLess": "Minder tonen"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Gespreksroutering",
+      "threadState": "Threadstatus",
+      "threadStateOwned": "In behandeling",
+      "threadStateStandby": "Stand-by",
+      "threadStateIdle": "Inactief",
+      "currentOwner": "Huidige eigenaar",
+      "noOwner": "Geen eigenaar",
+      "roleLabel": "Jouw rol",
+      "selfOwned": "Behandelt het gesprek",
+      "selfStandby": "Stand-by — alleen meeluisteren",
+      "selfIdle": "Wacht op het volgende klantbericht",
+      "hintOwned": "Geef vrij als je klaar bent zodat andere apps kunnen antwoorden.",
+      "hintStandby": "Terwijl een partner dit behandelt, worden je berichten vastgehouden zodat de klant geen dubbele antwoorden krijgt. Neem over vanuit het berichtenveld om te antwoorden.",
+      "hintIdle": "Het volgende klantbericht bepaalt wie antwoordt.",
+      "syncOwner": "Eigenaar synchroniseren",
+      "syncOwnerSuccess": "Eigenaar gesynchroniseerd"
+    },
+    "settings": {
+      "title": "Hervattingsflow na overdracht",
+      "description": "De automatisering die wordt uitgevoerd wanneer een partner een gesprek teruggeeft.",
+      "resumeFlowLabel": "Kies een flow",
+      "resumeFlowPlaceholder": "Selecteer een flow",
+      "info": "Deze flow start automatisch wanneer de controle wordt teruggegeven. De gesprekssamenvatting en de chatgeschiedenis worden dan getoond aan je medewerkers in de livechat.",
+      "save": "Wijzigingen opslaan",
+      "clearFlow": "Flow wissen",
+      "adminOnly": "Alleen workspacebeheerders kunnen de routering wijzigen",
+      "flowNotFound": "De geselecteerde flow is niet gevonden of niet actief",
+      "integrationNotFound": "WhatsApp-nummer niet gevonden",
+      "messengerIntegrationNotFound": "Messenger-pagina niet gevonden"
+    },
+    "errors": {
+      "unsupported": "Gespreksroutering is niet beschikbaar op dit kanaal",
+      "notFound": "Dit gesprek staat niet op dat kanaal",
+      "actionFailed": "Gespreksroutering bijwerken mislukt. Probeer het opnieuw."
+    },
+    "step": {
+      "action": "Actie",
+      "release": "Het gesprek vrijgeven",
+      "pass": "Doorgeven aan de escalatiepartner",
+      "helper": "Alleen WhatsApp. Op andere kanalen, of wanneer het gesprek hier niet wordt beheerd, volgt de stap het foutpad."
+    },
+    "template": {
+      "sent": "Sjabloon verzonden"
+    }
   }
 }

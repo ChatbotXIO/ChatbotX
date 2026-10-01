@@ -29,6 +29,7 @@ const chatStoreState = {
   updateConversations: vi.fn(),
   bubbleConversationToTop: bubbleConversationToTopMock,
   openConversation: openConversationMock,
+  patchContactInboxThreadControl: vi.fn(),
   resumeConversationHeadRefresh: vi.fn(),
 }
 const wholeStoreSelectionMock = vi.fn()
@@ -110,11 +111,12 @@ describe("ChatRealtime — chat event parity", () => {
     expect(wholeStoreSelectionMock).not.toHaveBeenCalled()
   })
 
-  test("registers exactly the ten chat events, no more, no fewer", async () => {
+  test("registers exactly the eleven chat events, no more, no fewer", async () => {
     await render()
     expect(Object.keys(capturedHandlers ?? {}).sort()).toEqual(
       [
         "contactBlocked",
+        "contactInboxThreadControlUpdated",
         "contactUnblocked",
         "conversationAssigned",
         "conversationUpdated",
@@ -268,6 +270,29 @@ describe("ChatRealtime — chat event parity", () => {
     )
 
     expect(chatStoreState.applyAgentLastReadAt).not.toHaveBeenCalled()
+  })
+
+  test("contactInboxThreadControlUpdated patches the contact inbox of its conversation", async () => {
+    await render()
+    act(() =>
+      emit("contactInboxThreadControlUpdated", {
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        threadControlState: "standby",
+        threadOwnerRole: "ai_agent",
+        threadControlUpdatedAt: "2026-09-29T10:00:00.000Z",
+      }),
+    )
+
+    expect(chatStoreState.patchContactInboxThreadControl).toHaveBeenCalledWith(
+      "conv-1",
+      {
+        contactInboxId: "ci-1",
+        threadControlState: "standby",
+        threadOwnerRole: "ai_agent",
+        threadControlUpdatedAt: "2026-09-29T10:00:00.000Z",
+      },
+    )
   })
 
   test("conversationUpdated ignores a malformed agent read timestamp", async () => {

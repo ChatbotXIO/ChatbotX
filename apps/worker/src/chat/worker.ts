@@ -30,12 +30,16 @@ import {
   sendTypingToChannel,
 } from "./handlers/send-message"
 import { sendMessengerTemplateMessage } from "./handlers/send-messenger-template"
-import { sendWhatsappTemplateMessage } from "./handlers/send-whatsapp-template"
+import {
+  sendWhatsappTemplateMessage,
+  sendWhatsappTemplateToConversation,
+} from "./handlers/send-whatsapp-template"
 
 const botSendActions = new Set<ChatJobData["type"]>([
   ChatJobAction.sendFlowMessage,
   ChatJobAction.sendChatMessage,
   ChatJobAction.sendWhatsappTemplateMessage,
+  ChatJobAction.sendWhatsappTemplateToConversation,
   ChatJobAction.sendMessengerTemplateMessage,
 ])
 
@@ -97,6 +101,12 @@ async function startChatWorker() {
               return
             case ChatJobAction.sendWhatsappTemplateMessage:
               await sendWhatsappTemplateMessage(
+                job.data.data,
+                !isFinalAttempt(job),
+              )
+              return
+            case ChatJobAction.sendWhatsappTemplateToConversation:
+              await sendWhatsappTemplateToConversation(
                 job.data.data,
                 !isFinalAttempt(job),
               )

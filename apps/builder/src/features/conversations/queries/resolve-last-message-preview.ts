@@ -5,6 +5,11 @@ import {
 } from "@chatbotx.io/sdk"
 import type { useTranslations } from "next-intl"
 import { formatCallDurationSeconds } from "@/features/messages/lib/format-call-duration"
+import {
+  formatThreadControlActivity,
+  getThreadControlActivity,
+  getThreadControlContextCard,
+} from "@/features/messages/lib/thread-control-content"
 import type { MessageResourceWithRelations } from "@/features/messages/schema/resource"
 
 const EMPTY_PREVIEW = " "
@@ -54,6 +59,7 @@ export function resolveCallPreviewKind(
 export function resolveLastMessagePreview(
   message: MessageResourceWithRelations | undefined,
   t: ReturnType<typeof useTranslations>,
+  brand = "",
 ): string {
   // A call activity message stores its English fallback in `message.text` (see
   // `buildCallActivityText`) so it can never come out empty for a legacy client
@@ -72,6 +78,18 @@ export function resolveLastMessagePreview(
       : t("messages.voiceCallDuration", {
           duration: formatCallDurationSeconds(callEntity.durationSeconds),
         })
+  }
+
+  // Conversation-routing rows store a brand-neutral English fallback too;
+  // the list shows the same localized sentence as the timeline.
+  const threadControlActivity = getThreadControlActivity(
+    message?.contentAttributes,
+  )
+  if (threadControlActivity) {
+    return formatThreadControlActivity(threadControlActivity, t, brand)
+  }
+  if (getThreadControlContextCard(message?.contentAttributes)) {
+    return t("conversationRouting.context.title")
   }
 
   if (message?.text) {

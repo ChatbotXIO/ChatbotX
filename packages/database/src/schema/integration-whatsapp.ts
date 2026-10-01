@@ -27,6 +27,7 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import { flowModel } from "./flow"
 import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
 
@@ -138,6 +139,11 @@ export const integrationWhatsappModel = pgTable(
     registrationError: jsonb().$type<IntegrationWhatsappRegistrationError>(),
     verificationCodeRequestedAt: timestamp(timestampConfig),
     tokenRefreshError: text(),
+    // Flow started when Meta hands a conversation to this app (control_passed).
+    handoverResumeFlowId: bigintAsString().references(() => flowModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -159,6 +165,10 @@ export const integrationWhatsappModel = pgTable(
     index("IntegrationWhatsapp_workspaceId_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
+    ),
+    index("IntegrationWhatsapp_handoverResumeFlowId_idx").using(
+      "btree",
+      table.handoverResumeFlowId.asc().nullsLast(),
     ),
     // A Meta phone number can back exactly one integration platform-wide.
     // The application already enforces this before insert, but that check and

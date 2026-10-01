@@ -139,6 +139,27 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
   })
 }
 
+// === Thread-control (Handover Protocol) rejection ===
+
+/**
+ * Error sub-codes Meta returns when a Send API call is refused because another
+ * app owns the thread. Meta has not published them, so this stays empty until
+ * one is captured from a real rejection (same stance as the WhatsApp set);
+ * the local send gate covers known-standby threads. A refusal is only ever
+ * read from a permission-category error, never from the code alone.
+ */
+export const THREAD_CONTROL_REJECTION_SUBCODES: ReadonlySet<number> =
+  new Set<number>([])
+
+export function isThreadControlRejection(error: ChannelError): boolean {
+  return (
+    error.category === ChannelErrorCategory.PERMISSION_DENIED &&
+    error.subCode !== null &&
+    error.subCode !== undefined &&
+    THREAD_CONTROL_REJECTION_SUBCODES.has(Number(error.subCode))
+  )
+}
+
 // === Revoked / invalidated access token detection ===
 // FB Graph signals revoked tokens via OAuthException + code 190 + specific subcodes:
 //   458 = app not installed / user not authenticated

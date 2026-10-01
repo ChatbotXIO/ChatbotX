@@ -7,11 +7,20 @@ import {
   type DatabaseClient,
   db,
   eq,
+  exists,
   inArray,
   isNull,
+  lt,
+  or,
   type SQL,
   sql,
 } from "../../client"
+import {
+  eventsOutrankedBy,
+  THREAD_CONTROL_TRANSITIONS,
+  type ThreadControlEvent,
+  type ThreadControlRole,
+} from "../../partials/thread-control"
 import { adConversationPredicate } from "../../queries/ad-referral"
 import type { AdsConversionChannel } from "../../schema"
 import {
@@ -183,6 +192,75 @@ export type ContactInboxBySourceIdRow = Pick<
   ContactInboxModel,
   "id" | "sourceId" | "lastIncomingMessageAt" | "createdAt"
 >
+
+export type ApplyThreadControlTransitionInput = {
+  id: string
+  workspaceId: string
+  event: ThreadControlEvent
+  /** Role of the owner AFTER the event; null when there is none / it is unknown. */
+  ownerRole: ThreadControlRole | null
+  /**
+   * App id of the owner AFTER the event, for channels that name owners by app
+   * id (null for role-based channels). Part of the same-second idempotency
+   * check, so two passes to different apps are never one redelivery.
+   */
+  ownerAppId?: string | null
+  /** App id of the owner BEFORE the event (the return target); null when unknown. */
+  previousOwnerAppId?: string | null
+  /**
+   * Channel-reported expiry of the non-owned thread. `undefined` keeps the
+   * stored value, `null` clears it, a Date sets it. A refinement of the state,
+   * not part of ownership identity, so it is never in the transition guard.
+   */
+  threadOwnerExpiresAt?: Date | null | undefined
+  /** Meta event time for webhook events, `now` for our own calls. */
+  occurredAt: Date
+}
+
+/** A ContactInbox we own, as `releaseOwnedThreadsForContacts` needs it. */
+export type ThreadControlledContactInboxRow = Pick<
+  ContactInboxModel,
+  | "id"
+  | "contactId"
+  | "inboxId"
+  | "channel"
+  | "threadControlState"
+  | "threadControlUpdatedAt"
+  | "threadOwnerExpiresAt"
+  | "lastIncomingMessageAt"
+>
+
+/**
+ * Guard for `applyThreadControlTransition`. Meta timestamps have second
+ * resolution, so on an equal timestamp the event with higher precedence wins,
+ * an exact redelivery (same event, state and role) is accepted as idempotent,
+ * and anything else is stale. This is a total order, so the final state does
+ * not depend on the order events are processed in.
+ */
+const threadControlTransitionGuard = (
+  input: ApplyThreadControlTransitionInput,
+  state: (typeof THREAD_CONTROL_TRANSITIONS)[ThreadControlEvent],
+): SQL | undefined => {
+  const outranked = eventsOutrankedBy(input.event)
+  return or(
+    isNull(contactInboxModel.threadControlUpdatedAt),
+    lt(contactInboxModel.threadControlUpdatedAt, input.occurredAt),
+    and(
+      eq(contactInboxModel.threadControlUpdatedAt, input.occurredAt),
+      or(
+        outranked.length > 0
+          ? inArray(contactInboxModel.threadControlLastEvent, outranked)
+          : undefined,
+        and(
+          eq(contactInboxModel.threadControlLastEvent, input.event),
+          eq(contactInboxModel.threadControlState, state),
+          sql`${contactInboxModel.threadOwnerRole} IS NOT DISTINCT FROM ${input.ownerRole}`,
+          sql`${contactInboxModel.threadOwnerAppId} IS NOT DISTINCT FROM ${input.ownerAppId ?? null}`,
+        ),
+      ),
+    ),
+  )
+}
 
 export const contactInboxRepository = {
   async updateIdentityGuarded(
@@ -686,5 +764,229 @@ export const contactInboxRepository = {
       where: { contactId: input.contactId },
       columns: contactInboxOperationalColumns,
     })) as ContactInboxModel[]
+  },
+
+  /**
+   * One guarded `UPDATE ... RETURNING`: applies a thread-control event only
+   * when it is not stale (see `threadControlTransitionGuard`). Every non-stale
+   * event advances `threadControlUpdatedAt`, even when the state is unchanged,
+   * so a later-arriving older event can never overwrite a newer same-state one.
+   * Scoped to the workspace through the owning Inbox (ContactInbox has no
+   * `workspaceId`). Returns the updated row, or `null` when the event was
+   * stale or the contact inbox is not in the workspace.
+   */
+  async applyThreadControlTransition(
+    input: ApplyThreadControlTransitionInput,
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | null> {
+    const state = THREAD_CONTROL_TRANSITIONS[input.event]
+    const [row] = await tx
+      .update(contactInboxModel)
+      .set({
+        threadControlState: state,
+        threadOwnerRole: input.ownerRole,
+        threadOwnerAppId: input.ownerAppId ?? null,
+        threadPreviousOwnerAppId: input.previousOwnerAppId ?? null,
+        threadControlUpdatedAt: input.occurredAt,
+        threadControlLastEvent: input.event,
+        ...(input.threadOwnerExpiresAt === undefined
+          ? {}
+          : { threadOwnerExpiresAt: input.threadOwnerExpiresAt }),
+      })
+      .where(
+        and(
+          eq(contactInboxModel.id, input.id),
+          exists(
+            tx
+              .select({ one: sql`1` })
+              .from(inboxModel)
+              .where(
+                and(
+                  eq(inboxModel.id, contactInboxModel.inboxId),
+                  eq(inboxModel.workspaceId, input.workspaceId),
+                ),
+              ),
+          ),
+          threadControlTransitionGuard(input, state),
+        ),
+      )
+      .returning()
+
+    return row ?? null
+  },
+
+  /**
+   * Records the owner delivery of a message first stored from its standby
+   * copy, at the standby copy's OWN time (`occurredAt`; the event time is never
+   * advanced, so a handover of the same Meta second can never be leapfrogged).
+   * `inboundReceived` is the lowest precedence, so the normal guard rejects it
+   * against the `standbyReceived` copy; this dedicated write bypasses that for
+   * exactly one case: the row is still the standby copy (`standbyReceived` at
+   * `occurredAt`). Any other row (a handover already recorded at that second,
+   * a later event, or an already-promoted copy) returns `null`, and a handover
+   * processed AFTER this write outranks `inboundReceived` through the normal
+   * guard - so a handover wins in both processing orders.
+   * Workspace-scoped through the owning Inbox.
+   */
+  async promoteStandbyToOwnerDelivery(
+    input: {
+      id: string
+      workspaceId: string
+      ownerRole: ThreadControlRole | null
+      previousOwnerAppId?: string | null
+      threadOwnerExpiresAt?: Date | null | undefined
+      occurredAt: Date
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | null> {
+    const [row] = await tx
+      .update(contactInboxModel)
+      .set({
+        threadControlState: THREAD_CONTROL_TRANSITIONS.inboundReceived,
+        threadOwnerRole: input.ownerRole,
+        threadOwnerAppId: null,
+        threadPreviousOwnerAppId: input.previousOwnerAppId ?? null,
+        threadControlUpdatedAt: input.occurredAt,
+        threadControlLastEvent: "inboundReceived",
+        ...(input.threadOwnerExpiresAt === undefined
+          ? {}
+          : { threadOwnerExpiresAt: input.threadOwnerExpiresAt }),
+      })
+      .where(
+        and(
+          eq(contactInboxModel.id, input.id),
+          eq(contactInboxModel.threadControlLastEvent, "standbyReceived"),
+          eq(contactInboxModel.threadControlUpdatedAt, input.occurredAt),
+          exists(
+            tx
+              .select({ one: sql`1` })
+              .from(inboxModel)
+              .where(
+                and(
+                  eq(inboxModel.id, contactInboxModel.inboxId),
+                  eq(inboxModel.workspaceId, input.workspaceId),
+                ),
+              ),
+          ),
+        ),
+      )
+      .returning()
+
+    return row ?? null
+  },
+
+  /**
+   * Stores the channel-reported expiry on a thread that is still standby under
+   * the given owner app, without touching ownership or the transition clock.
+   * `observedUpdatedAt` is the ownership version the channel answer was
+   * fetched against: the write applies only while it is unchanged, so an
+   * A -> us -> A change during the fetch cannot let a stale expiry land.
+   * Workspace-scoped through the owning Inbox. Returns `null` when the thread
+   * moved on (no longer that standby owner/version) or is not in the workspace.
+   */
+  async setStandbyThreadOwnerExpiresAt(
+    input: {
+      id: string
+      workspaceId: string
+      ownerAppId: string | null
+      observedUpdatedAt: Date | null
+      threadOwnerExpiresAt: Date | null
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | null> {
+    const [row] = await tx
+      .update(contactInboxModel)
+      .set({ threadOwnerExpiresAt: input.threadOwnerExpiresAt })
+      .where(
+        and(
+          eq(contactInboxModel.id, input.id),
+          eq(contactInboxModel.threadControlState, "standby"),
+          sql`${contactInboxModel.threadOwnerAppId} IS NOT DISTINCT FROM ${input.ownerAppId}`,
+          input.observedUpdatedAt
+            ? eq(
+                contactInboxModel.threadControlUpdatedAt,
+                input.observedUpdatedAt,
+              )
+            : isNull(contactInboxModel.threadControlUpdatedAt),
+          exists(
+            tx
+              .select({ one: sql`1` })
+              .from(inboxModel)
+              .where(
+                and(
+                  eq(inboxModel.id, contactInboxModel.inboxId),
+                  eq(inboxModel.workspaceId, input.workspaceId),
+                ),
+              ),
+          ),
+        ),
+      )
+      .returning()
+    return row ?? null
+  },
+
+  /**
+   * Full-row, workspace-scoped load by id (workspace resolved through the
+   * owning Inbox). `requestAction` needs the whole row to address the channel
+   * and to compute the pre-transition thread state. `null` when the id is
+   * unknown or belongs to another workspace.
+   */
+  async findModelByIdForWorkspace(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | null> {
+    const [row] = await tx
+      .select({ contactInbox: contactInboxModel })
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(eq(contactInboxModel.id, input.id))
+      .limit(1)
+
+    return row?.contactInbox ?? null
+  },
+
+  /**
+   * One query for archive-release: the contact inboxes of `contactIds` whose
+   * stored state is `owned`. The stored state can be older than 24h of user
+   * silence, so the caller must still filter through `resolveThreadControlState`.
+   */
+  async listThreadControlledByContactIds(
+    input: { workspaceId: string; contactIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<ThreadControlledContactInboxRow[]> {
+    if (input.contactIds.length === 0) {
+      return []
+    }
+    return await tx
+      .select({
+        id: contactInboxModel.id,
+        contactId: contactInboxModel.contactId,
+        inboxId: contactInboxModel.inboxId,
+        channel: contactInboxModel.channel,
+        threadControlState: contactInboxModel.threadControlState,
+        threadControlUpdatedAt: contactInboxModel.threadControlUpdatedAt,
+        threadOwnerExpiresAt: contactInboxModel.threadOwnerExpiresAt,
+        lastIncomingMessageAt: contactInboxModel.lastIncomingMessageAt,
+      })
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(
+        and(
+          inArray(contactInboxModel.contactId, input.contactIds),
+          eq(contactInboxModel.threadControlState, "owned"),
+        ),
+      )
   },
 }

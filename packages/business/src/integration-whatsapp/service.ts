@@ -28,6 +28,8 @@ import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { BaseService } from "../base.service"
+import { notFoundException } from "../errors"
+import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import {
@@ -371,6 +373,10 @@ class IntegrationWhatsappService extends BaseService {
 
   findAllForTokenRefresh() {
     return integrationWhatsappRepository.findAllForTokenRefresh()
+  }
+
+  findAllConnectedForWebhookSubscription() {
+    return integrationWhatsappRepository.findAllConnectedForWebhookSubscription()
   }
 
   findForTokenRefreshByWorkspaceIds(workspaceIds: string[]) {
@@ -740,6 +746,38 @@ class IntegrationWhatsappService extends BaseService {
     })
     if (enablesTranscriptionAlone && !row) {
       throw new WhatsappCallTranscriptionRequiresRecordingError()
+    }
+  }
+
+  /**
+   * Sets (or clears) the flow that runs when Meta hands a conversation to this
+   * app. A non-null flow must be an active flow of the same workspace, so
+   * a flow id from another workspace can never be stored. Like
+   * `updateCallSettings` there is no cache to invalidate: the worker reads the
+   * integration row uncached.
+   */
+  async updateHandoverResumeFlow(input: {
+    id: string
+    workspaceId: string
+    handoverResumeFlowId: string | null
+  }): Promise<void> {
+    const { id, workspaceId, handoverResumeFlowId } = input
+    if (handoverResumeFlowId) {
+      const flow = await flowService.findActiveById({
+        id: handoverResumeFlowId,
+        workspaceId,
+      })
+      if (!flow) {
+        throw notFoundException("Handover flow not found")
+      }
+    }
+    const row = await integrationWhatsappRepository.updateHandoverResumeFlow({
+      id,
+      workspaceId,
+      handoverResumeFlowId,
+    })
+    if (!row) {
+      throw notFoundException("WhatsApp integration not found")
     }
   }
 }

@@ -801,6 +801,16 @@ describe("processWhatsappTemplate — template quick-reply flow routing", () => 
     const sentStep = mockSendFlowStep.mock.calls[0][0].step
     expect(sentStep.template.params.button).toBeUndefined()
   })
+
+  test("marks the send as a template so the conversation-routing gate lets it through", async () => {
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+    })
+
+    expect(mockSendFlowStep.mock.calls[0][0].isTemplateMessage).toBe(true)
+  })
 })
 
 describe("processWhatsappTemplate — BSUID auth-template guard (D5)", () => {

@@ -5,6 +5,7 @@ import {
   inboxTeamService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
+import { requestThreadControlAction } from "@chatbotx.io/channel-registry/thread-control"
 import { gte, type SQL } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { conversationModel } from "@chatbotx.io/database/schema"
@@ -19,6 +20,7 @@ import {
   type FollowConversationStepSchema,
   type MarkConversationAsReadStepSchema,
   type MarkConversationAsUnreadStepSchema,
+  type ThreadControlStepSchema,
   type TypingStepSchema,
   type UnarchiveConversationStepSchema,
   type UnassignConversationStepSchema,
@@ -33,6 +35,38 @@ import { logger } from "../../lib/logger"
 import { resolveIntegrationContextFromContactInbox } from "../../services/integrations"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
+
+/**
+ * Releases or passes the conversation's routing thread. A channel with no
+ * routing support, a channel refusal (e.g. we no longer own the thread) or any
+ * other failure follows the step's Error path with the reason, so a flow can
+ * branch on it; the step never throws into a retry.
+ */
+export async function stepThreadControl({
+  conversation,
+  contactInbox,
+  step,
+}: ExecuteStepProps<ThreadControlStepSchema>): Promise<ExecuteStepResult> {
+  try {
+    await requestThreadControlAction({
+      workspaceId: conversation.workspaceId,
+      contactInboxId: contactInbox.id,
+      conversationId: conversation.id,
+      action: step.action,
+    })
+    return { status: "success", result: undefined }
+  } catch (err) {
+    logger.warn(
+      { err, contactInboxId: contactInbox.id, action: step.action },
+      "Thread control step failed",
+    )
+    return {
+      status: "error",
+      errorMessage: err instanceof Error ? err.message : String(err),
+      result: undefined,
+    }
+  }
+}
 
 export async function stepBlockContact({
   conversation,

@@ -1,4 +1,5 @@
 import type { Context } from "@chatbotx.io/sdk"
+import z from "zod"
 import { DEFAULT_API_VERSION } from "../constants"
 import { MessengerAPIException, rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
@@ -25,6 +26,10 @@ export const PAGE_SUBSCRIBE_SCOPES = [
   "inbox_labels",
   "live_videos",
   "standby",
+  // Handover Protocol events (pass/take/request_thread_control, app_roles).
+  // Pages connected before this was added are re-subscribed by
+  // `apps/worker/scripts/resubscribe-messenger-webhook-fields.ts`.
+  "messaging_handovers",
 ]
 
 /**
@@ -126,6 +131,59 @@ export const subscribePageToAppWebhook = (props: {
       },
     }),
   )
+}
+
+/**
+ * Routing fields every connected Page must carry (Conversation Routing).
+ * Subset of `PAGE_SUBSCRIBE_SCOPES`.
+ */
+export const ROUTING_PAGE_SUBSCRIBE_FIELDS = [
+  "messaging_handovers",
+  "standby",
+] as const
+
+const pageSubscribedAppsSchema = z.object({
+  data: z
+    .array(
+      z.object({
+        id: z.union([z.string(), z.number()]).optional(),
+        subscribed_fields: z.array(z.string()).optional(),
+      }),
+    )
+    .optional(),
+})
+
+/**
+ * GET `/me/subscribed_apps`: the webhook fields the Page is currently
+ * subscribed to. `POST /me/subscribed_apps` REPLACES this list, so a caller
+ * that re-subscribes must start from these to avoid dropping a field (for
+ * example `leadgen`). When `appId` is given only that app's entry is read
+ * (the list holds one entry per subscribed app); an app with no entry yields
+ * `[]`. Throws on an API failure: the caller decides the fallback.
+ */
+export const getPageSubscribedFields = async (props: {
+  accessToken: string
+  version?: string
+  appId?: string | null
+}): Promise<string[]> => {
+  const { version = DEFAULT_API_VERSION } = props
+  const endpoint = `${version}/me/subscribed_apps`
+
+  const response: unknown = await rescue(endpoint, () =>
+    facebookGraphClient.get<unknown>(endpoint, {
+      headers: { Authorization: `Bearer ${props.accessToken}` },
+    }),
+  )
+  const parsed = pageSubscribedAppsSchema.safeParse(response)
+  if (!parsed.success) {
+    throw new MessengerAPIException(
+      "Unexpected /me/subscribed_apps response shape",
+    )
+  }
+  const entries = (parsed.data.data ?? []).filter(
+    (entry) => !props.appId || String(entry.id) === props.appId,
+  )
+  return [...new Set(entries.flatMap((entry) => entry.subscribed_fields ?? []))]
 }
 
 export const unsubscribePageFromAppWebhook = (props: {

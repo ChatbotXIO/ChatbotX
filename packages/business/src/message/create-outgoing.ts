@@ -52,6 +52,11 @@ type CreateOutgoingInput = (
   replyToMessageCreatedAt?: Date
   isPrivateReply?: boolean
   /**
+   * Agent dismissed the WhatsApp standby lock: the worker skips the
+   * thread-control send gate for this message.
+   */
+  bypassThreadControlLock?: boolean
+  /**
    * Explicit content attributes for the created message row (e.g. the
    * WhatsApp `call_permission_request` marker read by the outgoing-message
    * handler). Overrides the `isPrivateReply`-derived default when set.
@@ -91,6 +96,24 @@ const copyMediaLibraryFileToConversationAttachment = async (props: {
     originPath: attachmentPath,
     size: mediaLibraryFile.size,
     fileType: guessFileTypeFromMimeType(mediaLibraryFile.mimeType),
+  }
+}
+
+/** Carries the bypass flag to the send worker via `metadata`. */
+const withBypassThreadControlLock = (
+  contentAttributes: Record<string, unknown> | null,
+  bypass: boolean | undefined,
+): Record<string, unknown> | null => {
+  if (bypass !== true) {
+    return contentAttributes
+  }
+  const metadata = contentAttributes?.metadata
+  return {
+    ...contentAttributes,
+    metadata: {
+      ...(typeof metadata === "object" && metadata !== null ? metadata : {}),
+      bypassThreadControlLock: true,
+    },
   }
 }
 
@@ -215,9 +238,11 @@ export const createOutgoing = async (props: {
       ? ("comment" as const)
       : ("message" as const),
     parentId,
-    contentAttributes:
+    contentAttributes: withBypassThreadControlLock(
       parsedInput.contentAttributes ??
-      (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
+        (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
+      parsedInput.bypassThreadControlLock,
+    ),
   }
 
   const attachmentInputs = uploadedFiles.map((file) => ({

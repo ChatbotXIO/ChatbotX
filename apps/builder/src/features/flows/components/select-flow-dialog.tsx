@@ -32,6 +32,10 @@ import {
   isConversationActive,
 } from "@/features/conversations/utils/bot-state"
 import { createMessageAction } from "@/features/messages/actions/create-message.action"
+import {
+  useWhatsappTemplatesForInbox,
+  WhatsappTemplateSendTab,
+} from "@/features/messages/components/whatsapp-template-send-tab"
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import {
   useFlowNodesSelectOptions,
@@ -42,15 +46,70 @@ export function SelectFlowDialog({
   children,
   title,
   submitText,
+  templateStartType,
 }: {
   children: React.ReactNode
   title?: string
   submitText?: string
+  /**
+   * When set, a "Template" tab lists only flows whose first step is a message
+   * template of this start type (e.g. WhatsApp). Used by the standby composer,
+   * where a partner owns the thread and only templates may be sent.
+   */
+  templateStartType?: string
 }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const flowOptions = useFlowSelectOptions({ enabled: open })
-  const nodesSelectOptions = useFlowNodesSelectOptions({ enabled: open })
+  const [activeTab, setActiveTab] = useState(
+    templateStartType ? "template" : "flows",
+  )
+
+  const { activeConversationId, conversations, updateConversation } =
+    useChatStore((state) => state)
+
+  const conversation = useMemo(
+    () => conversations.find((c) => c.id === activeConversationId) ?? null,
+    [conversations, activeConversationId],
+  )
+
+  // The WhatsApp inbox backing this conversation.
+  const whatsappInboxId = useMemo(
+    () =>
+      conversation?.contactInboxes.find((ci) => ci.channel === "whatsapp")
+        ?.inboxId,
+    [conversation],
+  )
+
+  // The template tab lists this inbox's approved templates; its integration id
+  // (derived from those templates) also scopes the Flow/Node tabs — no separate
+  // resolver call, reusing the one query that already works by inbox.
+  const { integrationWhatsappId } = useWhatsappTemplatesForInbox(
+    conversation?.workspaceId ?? "",
+    whatsappInboxId,
+    open && Boolean(templateStartType),
+  )
+
+  // In the standby composer (templateStartType set) every tab is scoped to this
+  // conversation's WhatsApp number: only template-first flows of that
+  // integration are sendable while a partner holds the thread, so Flows and
+  // Node are narrowed the same way as Template. The normal composer passes no
+  // scope, so all flows are offered.
+  const scopedFilter = templateStartType
+    ? { startType: templateStartType, integrationWhatsappId }
+    : undefined
+  // Hold the scoped queries until the integration resolves: without it the
+  // backend returns an empty list, so an early fetch only re-runs.
+  const scopedEnabled =
+    open && (!templateStartType || Boolean(integrationWhatsappId))
+
+  const flowOptions = useFlowSelectOptions({
+    enabled: scopedEnabled,
+    filter: scopedFilter,
+  })
+  const nodesSelectOptions = useFlowNodesSelectOptions({
+    enabled: scopedEnabled,
+    filter: scopedFilter,
+  })
   const nodeIdToFlowIdMap = useMemo(() => {
     const map: Record<string, string> = {} // Record<nodeId, flowId>
 
@@ -65,14 +124,6 @@ export function SelectFlowDialog({
 
     return map
   }, [nodesSelectOptions])
-
-  const { activeConversationId, conversations, updateConversation } =
-    useChatStore((state) => state)
-
-  const conversation = useMemo(
-    () => conversations.find((c) => c.id === activeConversationId) ?? null,
-    [conversations, activeConversationId],
-  )
 
   const { execute: disableBot } = useAction(
     disableBotAction.bind(null, conversation?.workspaceId ?? ""),
@@ -134,75 +185,92 @@ export function SelectFlowDialog({
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger render={children as React.ReactElement} />
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
-        {title && (
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-          </DialogHeader>
-        )}
-        <div className="flex items-center space-x-2">
+      <DialogContent className="max-h-screen max-w-lg overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{title ?? t("actions.sendFlow")}</DialogTitle>
+        </DialogHeader>
+        <Tabs
+          onValueChange={(value) => {
+            setActiveTab(value)
+            resetFormAndAction()
+          }}
+          value={activeTab}
+        >
+          <TabsList
+            className={`grid w-full ${
+              templateStartType ? "grid-cols-3" : "grid-cols-2"
+            }`}
+          >
+            {templateStartType && (
+              <TabsTrigger value="template">
+                {t("fields.template.label")}
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="flows">{t("fields.flows.label")}</TabsTrigger>
+            <TabsTrigger value="steps">{t("fields.steps.label")}</TabsTrigger>
+          </TabsList>
+
+          {/* The template tab sends a real WhatsApp template (its own form),
+              so it stays outside the flow/node picker's form. */}
+          {templateStartType && (
+            <TabsContent className="mt-4" value="template">
+              <WhatsappTemplateSendTab
+                conversationId={conversation?.id ?? ""}
+                inboxId={whatsappInboxId}
+                onDone={() => setOpen(false)}
+                workspaceId={conversation?.workspaceId ?? ""}
+              />
+            </TabsContent>
+          )}
+
           <Form {...form}>
-            <form
-              className="flex-1 space-y-4"
-              onSubmit={handleSubmitWithAction}
-            >
-              <Tabs defaultValue="flows">
-                <TabsList className="mb-2 w-full">
-                  <TabsTrigger onClick={resetFormAndAction} value="flows">
-                    {t("fields.flows.label")}
-                  </TabsTrigger>
-                  <TabsTrigger onClick={resetFormAndAction} value="steps">
-                    {t("fields.steps.label")}
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="flows">
-                  <ComboboxField
-                    emptyText={t("actions.noRecordFound")}
-                    label={t("fields.flows.label")}
-                    name="flowId"
-                    options={flowOptions}
-                    placeholder={t("fields.flows.placeholder")}
-                    portal={true}
-                    required
-                  />
-                </TabsContent>
-
-                <TabsContent value="steps">
-                  <ComboboxField
-                    emptyText={t("actions.noRecordFound")}
-                    label={t("fields.steps.label")}
-                    name="nodeId"
-                    options={nodesSelectOptions}
-                    placeholder={t("fields.steps.placeholder")}
-                    portal={true}
-                    required
-                  />
-                </TabsContent>
-              </Tabs>
-
-              <div className="flex justify-end gap-4">
-                <DialogClose
-                  render={
-                    <Button variant="outline">{t("actions.cancel")}</Button>
-                  }
+            <form className="space-y-5" onSubmit={handleSubmitWithAction}>
+              <TabsContent className="mt-4" value="flows">
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  name="flowId"
+                  options={flowOptions}
+                  placeholder={t("fields.flows.placeholder")}
+                  portal={true}
+                  required
                 />
+              </TabsContent>
 
-                <Button
-                  disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
-                  }
-                  type="submit"
-                >
-                  {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
-                  )}
-                  {submitText || t("actions.confirm")}
-                </Button>
-              </div>
+              <TabsContent className="mt-4" value="steps">
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  name="nodeId"
+                  options={nodesSelectOptions}
+                  placeholder={t("fields.steps.placeholder")}
+                  portal={true}
+                  required
+                />
+              </TabsContent>
+
+              {activeTab !== "template" && (
+                <div className="flex justify-end gap-2">
+                  <DialogClose
+                    render={
+                      <Button variant="outline">{t("actions.cancel")}</Button>
+                    }
+                  />
+
+                  <Button
+                    disabled={
+                      !form.formState.isValid || form.formState.isSubmitting
+                    }
+                    type="submit"
+                  >
+                    {form.formState.isSubmitting && (
+                      <Loader2 className="animate-spin" />
+                    )}
+                    {submitText || t("actions.confirm")}
+                  </Button>
+                </div>
+              )}
             </form>
           </Form>
-        </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

@@ -18,7 +18,9 @@ export * from "./integration"
 export {
   isDisconnectSafeError,
   isRevokedTokenError,
+  isThreadControlRejection,
   mapToChannelError,
+  THREAD_CONTROL_REJECTION_SUBCODES,
 } from "./lib/error-mapper"
 export {
   messengerMenusToCallToActions,

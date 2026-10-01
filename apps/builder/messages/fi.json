@@ -1867,7 +1867,8 @@
       "searchPlaceholder": "Hae avainsanaa..."
     },
     "templateId": {
-      "label": "WhatsApp-malli"
+      "label": "WhatsApp-malli",
+      "placeholder": "Valitse malli"
     },
     "messengerTemplateId": {
       "label": "Messenger-malli"
@@ -2409,7 +2410,8 @@
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
       "importJsonOnly": "Vain JSON-tiedostot",
       "whatsappCallButton": "Soita WhatsAppissa",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Keskustelun hallinta"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "Avaa Zalo-ryhmä",
     "openZalo": "Avaa Zalo",
     "openMessenger": "Avaa Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Kumppani",
+      "partnerWithRole": "Kumppani · {role}",
+      "self": "sinä"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-mainokset",
+      "customer_service": "Asiakaspalvelu",
+      "escalation": "Eskalointi",
+      "marketing": "Markkinointi",
+      "utility": "Palvelu"
+    },
+    "pill": {
+      "standby": "Valmiustila ({owner})",
+      "owned": "Aktiivinen",
+      "tooltip": "Käsittelijä: {owner}"
+    },
+    "release": {
+      "label": "Vapauta",
+      "tooltip": "Vapauta keskustelu, jotta muut sovellukset voivat vastata",
+      "success": "Keskustelu vapautettu"
+    },
+    "pass": {
+      "menuItem": "Siirrä eskalointiin",
+      "title": "Siirretäänkö eskalointikumppanille?",
+      "description": "Siirretäänkö tämä keskustelu eskalointikumppanillesi? Vastauksesi keskeytyvät, kunnes keskustelu palaa.",
+      "confirm": "Siirrä",
+      "success": "Keskustelu siirretty eskalointikumppanille"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Olet valmiustilassa (vain kuuntelu)",
+      "description": "Kolmannen osapuolen kumppani hoitaa tätä keskustelua. Viestikenttä on lukittu kaksoisvastausten välttämiseksi.",
+      "takeOver": "Ota haltuun",
+      "takeOverSuccess": "Käsittelet nyt tätä keskustelua",
+      "notEscalation": "Vain eskalointikumppani voi ottaa keskustelun haltuun. Reititys määritetään Meta Business Suitessa.",
+      "notPrimaryReceiver": "Tämän sovelluksen on oltava sivun ensisijainen vastaanottaja, jotta se voi ottaa keskustelun haltuunsa. Määritä se sivun Handover Protocol -asetuksissa.",
+      "learnMore": "Lue lisää",
+      "dismiss": "Lähetä silti"
+    },
+    "divider": {
+      "ownerHandling": "{owner} käsittelee nyt tätä keskustelua",
+      "handedOver": "{previousOwner} palautti tämän keskustelun sinulle",
+      "selfHandling": "Hoidat nyt tätä keskustelua",
+      "takenOver": "Otit tämän keskustelun hoitaaksesi",
+      "released": "Keskustelu vapautettu",
+      "passed": "Keskustelu siirretty eskalointikumppanille",
+      "serviceRejected": "Viestiä ei lähetetty: {owner} käsittelee tätä keskustelua"
+    },
+    "context": {
+      "title": "Keskustelun konteksti",
+      "summaryBadge": "Tekoälyn yhteenveto",
+      "historyBadge": "Historia",
+      "customer": "Asiakas",
+      "business": "Yritys",
+      "handoverNote": "Luovutusmuistiinpano: {note}",
+      "showAll": "Näytä kaikki ({count})",
+      "showLess": "Näytä vähemmän"
+    },
+    "echo": {
+      "partner": "Kumppani"
+    },
+    "panel": {
+      "title": "Keskustelun reititys",
+      "threadState": "Keskustelun tila",
+      "threadStateOwned": "Varattu",
+      "threadStateStandby": "Valmiustila",
+      "threadStateIdle": "Vapaa",
+      "currentOwner": "Nykyinen omistaja",
+      "noOwner": "Ei omistajaa",
+      "roleLabel": "Roolisi",
+      "selfOwned": "Käsittelee keskustelua",
+      "selfStandby": "Valmiustila — vain kuuntelu",
+      "selfIdle": "Odottaa asiakkaan seuraavaa viestiä",
+      "hintOwned": "Vapauta, kun olet valmis, jotta muut sovellukset voivat vastata.",
+      "hintStandby": "Kun kumppani hoitaa tätä, viestisi pidätetään, jotta asiakas ei saa kaksoisvastauksia. Ota keskustelu hoitoosi viestikentästä vastataksesi.",
+      "hintIdle": "Asiakkaan seuraava viesti ratkaisee, kuka vastaa.",
+      "syncOwner": "Synkronoi omistaja",
+      "syncOwnerSuccess": "Omistaja synkronoitu"
+    },
+    "settings": {
+      "title": "Luovutuksen jatkumisen flow",
+      "description": "Automaatio, joka suoritetaan, kun kumppani palauttaa keskustelun.",
+      "resumeFlowLabel": "Valitse flow",
+      "resumeFlowPlaceholder": "Valitse flow",
+      "info": "Tämä flow käynnistyy automaattisesti, kun hallinta palautetaan. Keskustelun yhteenveto ja chat-historia näytetään sen jälkeen agenteillesi live-chatissa.",
+      "save": "Tallenna muutokset",
+      "clearFlow": "Tyhjennä kulku",
+      "adminOnly": "Vain työtilan ylläpitäjät voivat muuttaa reititystä",
+      "flowNotFound": "Valittua kulkua ei löytynyt tai se ei ole aktiivinen",
+      "integrationNotFound": "WhatsApp-numeroa ei löytynyt",
+      "messengerIntegrationNotFound": "Messenger-sivua ei löytynyt"
+    },
+    "errors": {
+      "unsupported": "Keskustelun reititys ei ole käytettävissä tällä kanavalla",
+      "notFound": "Tämä keskustelu ei ole kyseisellä kanavalla",
+      "actionFailed": "Keskustelun reitityksen päivitys epäonnistui. Yritä uudelleen."
+    },
+    "step": {
+      "action": "Toiminto",
+      "release": "Vapauta keskustelu",
+      "pass": "Siirrä eskalointikumppanille",
+      "helper": "Vain WhatsApp. Muilla kanavilla tai kun keskustelu ei ole täällä hallinnassa, vaihe seuraa virhepolkua."
+    },
+    "template": {
+      "sent": "Malli lähetetty"
+    }
   }
 }

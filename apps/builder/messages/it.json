@@ -1103,7 +1103,8 @@
       "searchPlaceholder": "Cerca una parola chiave..."
     },
     "templateId": {
-      "label": "Modello WhatsApp"
+      "label": "Modello WhatsApp",
+      "placeholder": "Seleziona un modello"
     },
     "messengerTemplateId": {
       "label": "Modello Messenger"
@@ -2409,7 +2410,8 @@
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
       "importJsonOnly": "Solo file JSON",
       "whatsappCallButton": "Chiama su WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Controllo del thread"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "Apri gruppo Zalo",
     "openZalo": "Apri Zalo",
     "openMessenger": "Apri Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "te"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Annunci Click-to-WhatsApp",
+      "customer_service": "Assistenza clienti",
+      "escalation": "Escalation",
+      "marketing": "Marketing",
+      "utility": "Utility"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Attivo",
+      "tooltip": "Gestita da {owner}"
+    },
+    "release": {
+      "label": "Rilascia",
+      "tooltip": "Rilascia questa conversazione così altre app possono rispondere",
+      "success": "Conversazione rilasciata"
+    },
+    "pass": {
+      "menuItem": "Passa all'escalation",
+      "title": "Passare al partner di escalation?",
+      "description": "Passare questa conversazione al tuo partner di escalation? Le tue risposte saranno sospese finché la conversazione non tornerà.",
+      "confirm": "Passa",
+      "success": "Conversazione passata al partner di escalation"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Sei in standby (solo ascolto)",
+      "description": "Un partner terzo sta gestendo questa conversazione. La casella dei messaggi è bloccata per evitare risposte duplicate.",
+      "takeOver": "Prendi in carico",
+      "takeOverSuccess": "Ora stai gestendo questa conversazione",
+      "notEscalation": "Solo il partner di escalation può prendere in carico. L'instradamento si configura in Meta Business Suite.",
+      "notPrimaryReceiver": "Questa app deve essere il ricevente principale della Pagina per prendere in carico. Impostalo nelle impostazioni dell'Handover Protocol della Pagina.",
+      "learnMore": "Scopri di più",
+      "dismiss": "Invia comunque"
+    },
+    "divider": {
+      "ownerHandling": "{owner} sta ora gestendo questa conversazione",
+      "handedOver": "{previousOwner} ti ha restituito questa conversazione",
+      "selfHandling": "Ora stai gestendo questa conversazione",
+      "takenOver": "Hai preso in carico questa conversazione",
+      "released": "Conversazione rilasciata",
+      "passed": "Conversazione passata al partner di escalation",
+      "serviceRejected": "Messaggio non inviato: {owner} sta gestendo questa conversazione"
+    },
+    "context": {
+      "title": "Contesto della conversazione",
+      "summaryBadge": "Riepilogo IA",
+      "historyBadge": "Cronologia",
+      "customer": "Cliente",
+      "business": "Azienda",
+      "handoverNote": "Nota di passaggio: {note}",
+      "showAll": "Mostra tutto ({count})",
+      "showLess": "Mostra meno"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Instradamento della conversazione",
+      "threadState": "Stato del thread",
+      "threadStateOwned": "Assegnato",
+      "threadStateStandby": "In standby",
+      "threadStateIdle": "Inattivo",
+      "currentOwner": "Proprietario attuale",
+      "noOwner": "Nessun responsabile",
+      "roleLabel": "Il tuo ruolo",
+      "selfOwned": "Gestisce la conversazione",
+      "selfStandby": "In standby — solo ascolto",
+      "selfIdle": "In attesa del prossimo messaggio del cliente",
+      "hintOwned": "Rilascia quando hai finito così altre app possono rispondere.",
+      "hintStandby": "Mentre un partner gestisce questa conversazione, i tuoi messaggi vengono trattenuti per evitare risposte duplicate al cliente. Prendi in carico dalla casella dei messaggi per rispondere.",
+      "hintIdle": "Il prossimo messaggio del cliente decide chi risponde.",
+      "syncOwner": "Sincronizza proprietario",
+      "syncOwnerSuccess": "Proprietario sincronizzato"
+    },
+    "settings": {
+      "title": "Flusso di ripresa dopo il passaggio",
+      "description": "L'automazione che viene eseguita quando un partner restituisce una conversazione.",
+      "resumeFlowLabel": "Scegli un flusso",
+      "resumeFlowPlaceholder": "Seleziona un flusso",
+      "info": "Questo flusso si avvia automaticamente quando il controllo viene restituito. Il riepilogo della conversazione e la cronologia della chat vengono quindi mostrati ai tuoi agenti nella live chat.",
+      "save": "Salva modifiche",
+      "clearFlow": "Rimuovi flusso",
+      "adminOnly": "Solo gli amministratori dello spazio di lavoro possono modificare l'instradamento",
+      "flowNotFound": "Il flusso selezionato non è stato trovato o non è attivo",
+      "integrationNotFound": "Numero WhatsApp non trovato",
+      "messengerIntegrationNotFound": "Pagina Messenger non trovata"
+    },
+    "errors": {
+      "unsupported": "L'instradamento delle conversazioni non è disponibile su questo canale",
+      "notFound": "Questa conversazione non è su quel canale",
+      "actionFailed": "Impossibile aggiornare l'instradamento della conversazione. Riprova."
+    },
+    "step": {
+      "action": "Azione",
+      "release": "Rilascia la conversazione",
+      "pass": "Passa al partner di escalation",
+      "helper": "Solo WhatsApp. Sugli altri canali, o quando la conversazione non è gestita qui, il passaggio segue il percorso di errore."
+    },
+    "template": {
+      "sent": "Modello inviato"
+    }
   }
 }

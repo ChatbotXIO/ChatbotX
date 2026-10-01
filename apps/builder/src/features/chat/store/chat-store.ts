@@ -17,6 +17,11 @@ import type {
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
+import {
+  isStaleThreadControlSnapshot,
+  parseThreadControlEvent,
+  type ThreadControlSnapshotPatch,
+} from "@/features/conversations/utils/thread-control"
 import type {
   MessageResource,
   MessageResourceWithRelations,
@@ -230,6 +235,17 @@ export type ChatActions = {
   applyAgentLastReadAt: (
     conversationIds: string[],
     agentLastReadAt: Date,
+  ) => void
+  /**
+   * Replaces the routing (thread control) fields of one contact inbox of a
+   * loaded conversation. Shared by the take/release/pass action result and the
+   * `contactInboxThreadControlUpdated` realtime event; a snapshot older than
+   * the stored `threadControlUpdatedAt` is ignored, so a late event can never
+   * re-lock a composer the action just unlocked (or the reverse).
+   */
+  patchContactInboxThreadControl: (
+    conversationId: string,
+    snapshot: ThreadControlSnapshotPatch,
   ) => void
 
   // Filter actions
@@ -813,6 +829,45 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             }
             changed = true
             return { ...conversation, agentLastReadAt }
+          })
+          return changed ? { conversations } : state
+        })
+      },
+
+      patchContactInboxThreadControl: (conversationId, snapshot) => {
+        set((state) => {
+          let changed = false
+          const conversations = state.conversations.map((conversation) => {
+            if (conversation.id !== conversationId) {
+              return conversation
+            }
+            const contactInboxes = conversation.contactInboxes.map(
+              (contactInbox) => {
+                if (
+                  contactInbox.id !== snapshot.contactInboxId ||
+                  isStaleThreadControlSnapshot(contactInbox, snapshot)
+                ) {
+                  return contactInbox
+                }
+                changed = true
+                return {
+                  ...contactInbox,
+                  threadControlState: snapshot.threadControlState,
+                  threadOwnerRole: snapshot.threadOwnerRole,
+                  threadOwnerAppId: snapshot.threadOwnerAppId ?? null,
+                  threadControlUpdatedAt: snapshot.threadControlUpdatedAt
+                    ? new Date(snapshot.threadControlUpdatedAt)
+                    : null,
+                  threadOwnerExpiresAt: snapshot.threadOwnerExpiresAt
+                    ? new Date(snapshot.threadOwnerExpiresAt)
+                    : null,
+                  threadControlLastEvent: parseThreadControlEvent(
+                    snapshot.threadControlLastEvent,
+                  ),
+                }
+              },
+            )
+            return changed ? { ...conversation, contactInboxes } : conversation
           })
           return changed ? { conversations } : state
         })

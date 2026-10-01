@@ -1,6 +1,7 @@
 import { deriveAdSourcePlatform } from "@chatbotx.io/business/referral"
 import {
   contentTypes,
+  echoOrigins,
   type IncomingContact,
   type IncomingMessage,
   type MessageHandlers,
@@ -9,6 +10,11 @@ import {
 } from "@chatbotx.io/sdk"
 import type { ServerMessageTypes } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "../../client"
+import {
+  isStandbyEchoItem,
+  parseStandbyEcho,
+  readThreadControlReceiveInfo,
+} from "../../lib/conversation-routing"
 import { extractWhatsappUserIdentity } from "../../lib/raw-identity"
 import { asString } from "../../lib/value"
 import type { WhatsappAuthValue, WhatsappWebhookEvent } from "../../schema"
@@ -156,6 +162,26 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
     } = props
 
     const data = payload as WhatsappWebhookEvent
+    const threadControl = readThreadControlReceiveInfo(data.raw)
+
+    // A standby echo is a partner's outgoing message, not a customer message:
+    // its "message" is the Send API body, so it never reaches the type parsers.
+    if (
+      threadControl?.delivery === "standby" &&
+      isStandbyEchoItem(data.message)
+    ) {
+      const echo = parseStandbyEcho(data.message as Record<string, unknown>)
+      return {
+        message: echo.message,
+        contact: echo.contact,
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        echoOrigin: echoOrigins.enum.thirdParty,
+        threadControl,
+      }
+    }
+
     const whatsappClient = getWhatsappClient(ctx.auth)
     const referral = getWhatsappReferral(data.message)
 
@@ -210,5 +236,6 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       referralSource: referral?.source ?? null,
       referral,
       buttonTitle: fragment.buttonTitle ?? null,
+      ...(threadControl ? { threadControl } : {}),
     }
   }
