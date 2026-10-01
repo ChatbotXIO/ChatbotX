@@ -1,6 +1,11 @@
-import { stepTypes } from "../../steps/step-action"
 import { defineChannelFlowPolicy } from "./define"
-// SMTP delivery retains the 6,000-character platform message limit.
+// SMTP has no sendFlowStep/sendMessage channel handler (`integrations/smtp`
+// registers `channels.channel.message: {}`): delivery only ever happens
+// through the dedicated `email` step (a worker action, always `full` by
+// default), never through a sendMessage node's channel-kind steps. Keeping
+// `supported` empty — like `threadsFlowPolicy` — blocks publish/import and
+// hides sendText/sendImage/etc. from the editor's SMTP menu instead of
+// authoring a step that would throw in `sendFlowStepToChannel` at send time.
 
 export const smtpFlowPolicy = defineChannelFlowPolicy({
   limits: {
@@ -8,16 +13,4 @@ export const smtpFlowPolicy = defineChannelFlowPolicy({
     buttonLabel: 20,
     text: 6000,
   },
-  supported: [
-    stepTypes.enum.sendText,
-    stepTypes.enum.sendImage,
-    stepTypes.enum.sendMultipleImages,
-    stepTypes.enum.sendCard,
-    stepTypes.enum.sendCarousel,
-    stepTypes.enum.sendVideo,
-    stepTypes.enum.sendGif,
-    stepTypes.enum.sendAudio,
-    stepTypes.enum.sendFile,
-    stepTypes.enum.sendQuickReply,
-  ],
 })

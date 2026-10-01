@@ -498,6 +498,27 @@ describe("sendFlowStep", () => {
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
   })
 
+  test("skips a step the RESOLVED channel's policy marks unsupported (omnichannel sendCard reaching Telegram)", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "telegram",
+    })
+    const cardStep = {
+      id: "step-card-telegram",
+      nodeId: "node-card",
+      stepType: "sendCard",
+      cards: [{ id: "card-1", title: "Card", buttons: [] }],
+      buttons: [],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({ ...baseParams, step: cardStep })
+
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+    expect(mockRepositoryCreate).not.toHaveBeenCalled()
+    expect(mockRepositoryCreateWithAttachments).not.toHaveBeenCalled()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+
   test("calls repository.create() for step without url (sendText)", async () => {
     await sendFlowStep({
       ...baseParams,

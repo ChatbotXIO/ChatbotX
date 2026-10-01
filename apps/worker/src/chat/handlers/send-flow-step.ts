@@ -26,15 +26,11 @@ import {
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
-import type {
-  AttachmentModel,
-  ContactInboxModel,
-  MessageModel,
-} from "@chatbotx.io/database/types"
+import type { AttachmentModel, MessageModel } from "@chatbotx.io/database/types"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
-import type { MetadataPayload, StepType } from "@chatbotx.io/flow-config"
+import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
   appendCodeToMagicLink,
   type ButtonStepProps,
@@ -42,9 +38,11 @@ import {
   channelDeliverableStepTypes,
   encodeButtonPayload,
   extractMetadata,
+  getChannelFlowPolicy,
   isBulkOutboundMetadata,
   messageEventTypeSchema,
   type SendCardStepSchema,
+  stepSupport,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { logDiagnostic } from "@chatbotx.io/logger"
@@ -112,17 +110,6 @@ const resolveMessageAttachmentUrls = async (
       }),
     ),
   }
-}
-
-/**
- * Steps whose payload only exists on one channel. On any other channel they
- * are skipped before a Message row is persisted, so an omnichannel flow never
- * shows a phantom "sent" message the channel could not deliver.
- */
-const CHANNEL_EXCLUSIVE_STEP_TYPES: Partial<
-  Record<StepType, ContactInboxModel["channel"]>
-> = {
-  [stepTypes.enum.whatsappCallButton]: channelTypes.enum.whatsapp,
 }
 
 const isBlankTextCarrierStep = (step: SendFlowStepData) => {
@@ -500,6 +487,30 @@ export async function sendFlowStep({
     }),
     "sendFlowStep: job received",
   )
+  // The node's authored channel (used by publish/import validation) is a
+  // best-effort declaration — an omnichannel node is reachable from any
+  // conversation, so the RESOLVED contact inbox's channel can be narrower
+  // than what validation allowed. Re-check against the same policy table
+  // here, the one place every step ultimately funnels through before a
+  // Message row or channel dispatch happens, so a mismatch is skipped (like
+  // any other non-deliverable step) instead of throwing inside the channel's
+  // `convertFlowStep` — the outgoing-message handlers no longer swallow an
+  // unhandled stepType, they throw.
+  if (
+    getChannelFlowPolicy(targetContactInbox.channel)?.steps[step.stepType] ===
+    stepSupport.unsupported
+  ) {
+    logger.debug(
+      {
+        conversationId,
+        stepId: step.id,
+        stepType: step.stepType,
+        channel: targetContactInbox.channel,
+      },
+      "Skipping flow step unsupported on the resolved channel",
+    )
+    return
+  }
 
   if (step.stepType === stepTypes.enum.sendWaTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.whatsapp) {
@@ -533,20 +544,6 @@ export async function sendFlowStep({
       )
     }
 
-    return
-  }
-
-  const exclusiveChannel = CHANNEL_EXCLUSIVE_STEP_TYPES[step.stepType]
-  if (exclusiveChannel && targetContactInbox.channel !== exclusiveChannel) {
-    logger.debug(
-      {
-        conversationId,
-        stepId: step.id,
-        stepType: step.stepType,
-        channel: targetContactInbox.channel,
-      },
-      "Skipping channel-exclusive flow step on another channel",
-    )
     return
   }
 

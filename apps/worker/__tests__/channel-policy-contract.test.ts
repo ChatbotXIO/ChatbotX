@@ -42,6 +42,7 @@ const HANDLED_STEP_TYPES: ReadonlyArray<{
   { channel: "instagram", steps: instagramFacebookHandledFlowStepTypes },
   { channel: "messenger", steps: messengerHandledFlowStepTypes },
   { channel: "telegram", steps: telegramHandledFlowStepTypes },
+  { channel: "smtp", steps: [] },
   { channel: "threads", steps: [] },
   { channel: "tiktok", steps: tiktokHandledFlowStepTypes },
   { channel: "whatsapp", steps: whatsappHandledFlowStepTypes },

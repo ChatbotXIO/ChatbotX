@@ -19,7 +19,13 @@ const MEDIA_SUPPORT_BY_CHANNEL = {
   instagram: ["noButtons", "noButtons", "noButtons", "noButtons", "full"],
   messenger: ["full", "full", "noButtons", "noButtons", "full"],
   omnichannel: ["full", "full", "full", "full", "full"],
-  smtp: ["full", "full", "full", "full", "full"],
+  smtp: [
+    "unsupported",
+    "unsupported",
+    "unsupported",
+    "unsupported",
+    "unsupported",
+  ],
   telegram: ["full", "full", "full", "full", "full"],
   threads: [
     "unsupported",
