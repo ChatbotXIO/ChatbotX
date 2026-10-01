@@ -94,9 +94,19 @@ const BASE_VALUES: CreateIgCommentRequest = {
   replyAfter: { type: "immediately", value: 0 },
 }
 
-function Harness({ variant }: { variant: IgCommentVariant }) {
+function Harness({
+  variant,
+  isLive = false,
+}: {
+  variant: IgCommentVariant
+  isLive?: boolean
+}) {
   const form = useForm<CreateIgCommentRequest>({
-    defaultValues: { ...BASE_VALUES, type: variant },
+    defaultValues: {
+      ...BASE_VALUES,
+      type: variant,
+      post: isLive ? { type: "live", value: [] } : BASE_VALUES.post,
+    },
   })
 
   return (
@@ -117,12 +127,12 @@ describe("IgCommentForm capability gating", () => {
   let container: HTMLDivElement
   let root: Root
 
-  const renderVariant = (variant: IgCommentVariant) => {
+  const renderVariant = (variant: IgCommentVariant, isLive = false) => {
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
     act(() => {
-      root.render(<Harness variant={variant} />)
+      root.render(<Harness isLive={isLive} variant={variant} />)
     })
   }
 
@@ -180,5 +190,32 @@ describe("IgCommentForm capability gating", () => {
     expect(container.textContent).not.toContain(
       "commentAutomation.hideComments.hasGif",
     )
+  })
+
+  // Instagram Live is private-reply-only and only while broadcasting, so the
+  // form shows the private reply and nothing Meta would reject.
+  test.each([
+    "instagram",
+    "instagramFacebook",
+  ] as const)("%s Live: only the private reply and the supported filters", (variant) => {
+    renderVariant(variant, true)
+    const text = container.textContent ?? ""
+
+    expect(text).toContain("commentAutomation.card.reply")
+    expect(text).toContain("instagramCommentAutomation.liveReplyNote")
+    expect(text).toContain("instagramCommentAutomation.privateReply")
+    expect(text).toContain("instagramCommentAutomation.card.filters")
+
+    expect(text).not.toContain("instagramCommentAutomation.card.targeting")
+    expect(text).not.toContain("instagramCommentAutomation.trackCommentsOn")
+    expect(text).not.toContain("instagramCommentAutomation.publicReply")
+    expect(text).not.toContain(
+      "instagramCommentAutomation.options.likeUserComment",
+    )
+    expect(text).not.toContain(
+      "instagramCommentAutomation.options.ignoreCommentReplies",
+    )
+    expect(text).not.toContain("instagramCommentAutomation.card.replyTiming")
+    expect(text).not.toContain("instagramCommentAutomation.card.hideComments")
   })
 })

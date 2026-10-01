@@ -615,6 +615,13 @@
     "trackUserTags": {
       "label": "Track if a user tags other users",
       "descriptionText": "Counts the accounts tagged in each comment and adds them to the contact's running totals across all comments. Use '{{total_tagged}}' for every tagged account and '{{total_new_tagged}}' for accounts that have never messaged your page or been a contact."
+    },
+    "card": {
+      "reply": "Reply"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Select post type"
     }
   },
   "condition": {
@@ -5121,7 +5128,13 @@
     "chooseSpecificPosts": "Choose posts...",
     "postIdTab": "Post ID",
     "postIdPlaceholder": "Enter post IDs, one per line...",
-    "noPostsFound": "No posts found"
+    "noPostsFound": "No posts found",
+    "postTypeDialog": {
+      "liveTitle": "Live Stream",
+      "liveDescription": "Automate comments on Live streams. Supports public replies, private replies, hiding, and liking comments.",
+      "postsTitle": "Page Posts",
+      "postsDescription": "Automate comments on Page posts and reels. Supports public replies, private replies, hiding, and liking comments."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Instagram Comment Automation",
@@ -5228,7 +5241,14 @@
       "instagramDescription": "Instagram Login connection. Supports public reply, private reply, and hiding comments. Liking comments is not supported.",
       "instagramFacebookTitle": "Instagram Login with Facebook",
       "instagramFacebookDescription": "Instagram connected via a Facebook Page. Supports public reply, private reply, hiding comments, and liking comments."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automate comments on Instagram Live streams. Sends a private reply to each commenter while you are live.",
+      "postsTitle": "Posts & Reels",
+      "postsDescription": "Automate comments on posts and reels. Supports public replies, private replies, and hiding comments."
+    },
+    "liveReplyNote": "Instagram only allows a private reply to a Live comment, and only while you are live. Public replies, hiding, and liking are not available."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

@@ -573,6 +573,13 @@
     "trackUserTags": {
       "label": "Bijhouden of een gebruiker andere gebruikers tagt",
       "descriptionText": "Telt de accounts die in elke reactie worden getagd en telt ze op bij de totalen van het contact over alle reacties. Gebruik '{{total_tagged}}' voor alle getagde accounts en '{{total_new_tagged}}' voor accounts die je pagina nooit een bericht hebben gestuurd of nooit contact zijn geweest."
+    },
+    "card": {
+      "reply": "Antwoord"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Berichttype selecteren"
     }
   },
   "fields": {
@@ -4836,7 +4843,13 @@
     "chooseSpecificPosts": "Berichten kiezen...",
     "postIdTab": "Bericht-ID",
     "postIdPlaceholder": "Voer bericht-ID's in, één per regel...",
-    "noPostsFound": "Geen berichten gevonden"
+    "noPostsFound": "Geen berichten gevonden",
+    "postTypeDialog": {
+      "liveTitle": "Livestream",
+      "liveDescription": "Automatiseer reacties op livestreams. Ondersteunt openbare antwoorden, privéantwoorden en het verbergen en liken van reacties.",
+      "postsTitle": "Paginaberichten",
+      "postsDescription": "Automatiseer reacties op paginaberichten en reels. Ondersteunt openbare antwoorden, privéantwoorden en het verbergen en liken van reacties."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Automatisering van Instagram-opmerkingen",
@@ -4943,7 +4956,14 @@
       "instagramDescription": "Verbinding via Instagram Login. Ondersteunt openbare antwoorden, privéantwoorden en het verbergen van opmerkingen. Opmerkingen leuk vinden wordt niet ondersteund.",
       "instagramFacebookTitle": "Instagram Login met Facebook",
       "instagramFacebookDescription": "Instagram gekoppeld via een Facebook-pagina. Ondersteunt openbare antwoorden, privéantwoorden, het verbergen van opmerkingen en het leuk vinden van opmerkingen."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatiseer reacties op Instagram Live. Stuurt elke reageerder een privéantwoord terwijl je live bent.",
+      "postsTitle": "Berichten en reels",
+      "postsDescription": "Automatiseer reacties op berichten en reels. Ondersteunt openbare antwoorden, privéantwoorden en het verbergen van reacties."
+    },
+    "liveReplyNote": "Instagram staat op een Live-reactie alleen een privéantwoord toe, en alleen terwijl je live bent. Openbare antwoorden, verbergen en liken zijn niet beschikbaar."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

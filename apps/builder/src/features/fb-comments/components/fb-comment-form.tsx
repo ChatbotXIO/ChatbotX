@@ -1,5 +1,6 @@
 "use client"
 
+import { isLiveCommentAutomation } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
@@ -67,6 +68,9 @@ export function FbCommentForm({
 
   const postType = useWatch({ control: form.control, name: "post.type" })
   const postValue = useWatch({ control: form.control, name: "post.value" })
+  // A Live automation answers every live broadcast, so there is no post to
+  // target — the card keeps only the replies.
+  const isLive = isLiveCommentAutomation({ type: postType })
 
   const privateReplyType = useWatch({
     control: form.control,
@@ -183,20 +187,26 @@ export function FbCommentForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("facebookCommentAutomation.card.targeting")}</CardTitle>
+          <CardTitle>
+            {isLive
+              ? t("commentAutomation.card.reply")
+              : t("facebookCommentAutomation.card.targeting")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
-          <RadioGroupField
-            description={t(
-              "facebookCommentAutomation.trackCommentsOnDescription",
-            )}
-            descriptionType="tooltip"
-            label={t("facebookCommentAutomation.trackCommentsOn")}
-            name="post.type"
-            options={postTypeOptions}
-            orientation="horizontal"
-            required
-          />
+          {!isLive && (
+            <RadioGroupField
+              description={t(
+                "facebookCommentAutomation.trackCommentsOnDescription",
+              )}
+              descriptionType="tooltip"
+              label={t("facebookCommentAutomation.trackCommentsOn")}
+              name="post.type"
+              options={postTypeOptions}
+              orientation="horizontal"
+              required
+            />
+          )}
 
           {postType === "postIds" && (
             <>

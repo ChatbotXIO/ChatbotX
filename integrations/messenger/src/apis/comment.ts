@@ -230,6 +230,20 @@ type CommentAttachmentResponse = {
 const COMMENT_ATTACHMENT_FIELDS =
   "attachment{type,url,unshimmed_url,target,media}"
 
+/**
+ * "Time the comment was made on a live video" — present only on a comment
+ * written on a live broadcast, which is how a Facebook Live comment is told
+ * apart: the `feed` webhook delivers it as an ordinary `item: "comment"`.
+ */
+const COMMENT_LIVE_FIELD = "live_broadcast_timestamp"
+
+export type CommentAttachmentLookup = {
+  type: string | null
+  attachment?: IncomingAttachment
+  /** The comment was made on a live broadcast. */
+  isLive: boolean
+}
+
 function toHttpsUrl(link: string | undefined): string | null {
   if (!link) {
     return null
@@ -325,26 +339,29 @@ async function downloadFirstGifCandidate(
 export const getCommentAttachment = async (props: {
   ctx: Context<MessengerAuthValue>
   input: { commentId: string }
-}): Promise<{ type: string | null; attachment?: IncomingAttachment }> => {
+}): Promise<CommentAttachmentLookup> => {
   const { ctx, input } = props
   const { version = DEFAULT_API_VERSION } = ctx.auth
   const endpoint = `${version}/${input.commentId}`
 
   const res = await rescue(endpoint, () =>
-    facebookGraphClient.get<{ attachment?: CommentAttachmentResponse }>(
-      endpoint,
-      {
-        headers: {
-          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-        },
-        searchParams: {
-          fields: COMMENT_ATTACHMENT_FIELDS,
-        },
+    facebookGraphClient.get<{
+      attachment?: CommentAttachmentResponse
+      live_broadcast_timestamp?: number
+    }>(endpoint, {
+      headers: {
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },
-    ),
+      searchParams: {
+        // Rides on this lookup, which already runs once per comment, so
+        // telling a live comment apart costs no extra Graph call.
+        fields: `${COMMENT_ATTACHMENT_FIELDS},${COMMENT_LIVE_FIELD}`,
+      },
+    }),
   )
 
   const type = res.attachment?.type ?? null
+  const isLive = res.live_broadcast_timestamp !== undefined
   const imageUrl = res.attachment?.media?.image?.src
 
   if (type === "photo" && imageUrl) {
@@ -355,15 +372,15 @@ export const getCommentAttachment = async (props: {
       logger.error(error, "Failed to download comment attachment")
       return
     })
-    return { type, attachment }
+    return { type, attachment, isLive }
   }
 
   if (res.attachment && type?.startsWith("animated_image")) {
     const attachment = await downloadFirstGifCandidate(ctx, res.attachment)
-    return { type, attachment }
+    return { type, attachment, isLive }
   }
 
-  return { type }
+  return { type, isLive }
 }
 
 /**

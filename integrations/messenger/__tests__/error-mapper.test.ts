@@ -123,3 +123,14 @@ describe("messenger error-mapper isDisconnectSafeError", () => {
     expect(isDisconnectSafeError(undefined)).toBe(false)
   })
 })
+
+describe("messenger error-mapper RATE_LIMITED detection", () => {
+  test.each([
+    4, 17, 32, 613, 80_001,
+  ])("code %i maps to RATE_LIMITED", (code) => {
+    const exc = new MessengerException("Too many calls", 400, code)
+    const mapped = mapToChannelError(exc)
+    expect(mapped.category).toBe(ChannelErrorCategory.RATE_LIMITED)
+    expect(mapped.isPermanent).toBe(false)
+  })
+})

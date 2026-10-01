@@ -573,6 +573,13 @@
     "trackUserTags": {
       "label": "Erfassen, ob ein Nutzer andere Nutzer markiert",
       "descriptionText": "Zählt die in jedem Kommentar markierten Konten und addiert sie über alle Kommentare zu den Summen des Kontakts. Verwende '{{total_tagged}}' für alle markierten Konten und '{{total_new_tagged}}' für Konten, die deiner Seite nie geschrieben haben oder nie Kontakt waren."
+    },
+    "card": {
+      "reply": "Antwort"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Beitragstyp auswählen"
     }
   },
   "condition": {
@@ -4836,7 +4843,13 @@
     "chooseSpecificPosts": "Beiträge auswählen...",
     "postIdTab": "Beitrags-ID",
     "postIdPlaceholder": "Beitrags-IDs eingeben, eine pro Zeile...",
-    "noPostsFound": "Keine Beiträge gefunden"
+    "noPostsFound": "Keine Beiträge gefunden",
+    "postTypeDialog": {
+      "liveTitle": "Livestream",
+      "liveDescription": "Automatisiere Kommentare in Livestreams. Unterstützt öffentliche Antworten, private Antworten sowie das Ausblenden und Liken von Kommentaren.",
+      "postsTitle": "Seitenbeiträge",
+      "postsDescription": "Automatisiere Kommentare zu Seitenbeiträgen und Reels. Unterstützt öffentliche Antworten, private Antworten sowie das Ausblenden und Liken von Kommentaren."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Instagram-Kommentarautomatisierung",
@@ -4943,7 +4956,14 @@
       "instagramDescription": "Verbindung über Instagram Login. Unterstützt öffentliche und private Antworten sowie das Ausblenden von Kommentaren. „Gefällt mir“ für Kommentare wird nicht unterstützt.",
       "instagramFacebookTitle": "Instagram-Anmeldung mit Facebook",
       "instagramFacebookDescription": "Instagram ist über eine Facebook-Seite verbunden. Unterstützt öffentliche und private Antworten, das Ausblenden und das Liken von Kommentaren."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatisiere Kommentare in Instagram Live. Sendet jedem Kommentierenden eine private Antwort, solange du live bist.",
+      "postsTitle": "Beiträge & Reels",
+      "postsDescription": "Automatisiere Kommentare zu Beiträgen und Reels. Unterstützt öffentliche Antworten, private Antworten und das Ausblenden von Kommentaren."
+    },
+    "liveReplyNote": "Instagram erlaubt auf einen Live-Kommentar nur eine private Antwort und nur, solange du live bist. Öffentliche Antworten, Ausblenden und Liken sind nicht verfügbar."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

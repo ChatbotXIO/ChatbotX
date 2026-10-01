@@ -120,12 +120,12 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `isActive` | Automation on/off | `findActiveAutomations` filters `isActive: true`. |
 | `type` | `messenger` \| `instagram` \| `instagramFacebook` \| `threads` \| `tiktok` | `findActiveAutomations` filters `type === channelType`, which is the incoming `integrationType`. The builder writes it: `fb-comments` → `messenger`, `ig-comments` → the selected Instagram variant. |
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
-| `post` (`all` / `postIds`) | Which posts | `matchPost` — `all` always true; `postIds` matches via normalized trailing id. |
+| `post` (`all` / `postIds` / `live`) | Which posts | `matchPost(post, postId, isLive)` — `live` matches only live-broadcast comments; `all` matches only NON-live comments (Live and post automations never answer the same comment); `postIds` matches via normalized trailing id, live or not. See [Live comments](#live-comments). |
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
 | `includeKeywords` (`all`/`equal`/`contain`/`mentions`) | "Reply to" | `matchKeywords` — both sides lowercased and accent-folded (`normalizeForMatch`). `equal` = whole comment equals a keyword; `contain` = substring. `mentions` ignores keywords: the comment must tag **at least** `includeKeywords.mentionCount` (1–5) accounts — `matchMentionCount`, miss reason `mentionCountNotMatched`. The mention list is the same one tag tracking uses (see [Tag tracking](#tag-tracking)). |
 | `excludeKeywords` + `excludeKeywordsType` (`equal`/`contain`, default `contain`) | Text must not match | `matchKeywords` — `contain` = substring, `equal` = the whole trimmed comment equals a keyword; lowercased and accent-folded both sides. |
 | `options.replyToNewContactsOnly` | Only first-time contacts | `getPriorContactInboxCount(contactId) > 1` → skip. Counts `ContactInbox` rows. |
-| `options.replyOncePerUserPerPost` | Once per user per post | `findDedup(automationId, contactId, postId)` exists → skip. |
+| `options.replyOncePerUserPerPost` | Once per user per post | `findDedup(automationId, contactId, postId)` exists → skip (fast path, keeps the miss reason). Then `claimDedup` — an `INSERT … ON CONFLICT DO NOTHING RETURNING` on `CommentAutomationReply_dedup_idx` — is the actual guard: two comments from one person milliseconds apart both pass the read, only one wins the row. A claimed row is released (`deleteDedup`) when nothing was dispatched. |
 | `options.replyToUsersWhoCommentedOnOtherPosts` (default **true**) | If off, only engage each user on their first post | When `false`, `hasRepliedOnOtherPost` (a dedup row with a different `postId`) → skip. |
 | `options.likeUserComment` | Auto-like the comment | Runs only if the incoming comment's DB message was found (`findBySourceId`). |
 | `options.trackUserTags` | Count who the commenter tagged | Not a filter — never skips. Adds the comment's counts to `Contact.totalTagged`/`totalNewTagged`, which back `{{total_tagged}}`/`{{total_new_tagged}}`. Once per comment, ahead of the reply filters. See [Tag tracking](#tag-tracking). |
@@ -581,6 +581,56 @@ first, so a replay's replies, hides, flows and AI replies always yield to live t
 the shared `chat`, `integration` and `aiAgent` queues. **A new enqueue site added to these
 handlers must do the same.** Jobs those jobs enqueue later (a flow's later steps, the AI
 reply's own send) run outside the marker at normal priority.
+
+## Live comments
+
+A Live automation is an ordinary `CommentAutomation` row with `post.type: "live"`
+(jsonb — no migration). It lives in the same Facebook / Instagram Comment
+Automation pages; "Create Automation" opens a "Select post type" step (FB:
+Live Stream / Page Posts; IG: after the connection type, Instagram Live /
+Posts & Reels) that passes `?postType=live` to the create page.
+
+**How a comment is known to be live**
+
+| Channel | Signal | Where |
+|---|---|---|
+| Instagram (both variants) | Its own webhook field, `live_comments` (same value shape as `comments`) | `integrations/instagram{,-facebook}/src/handlers/webhook.ts` → `commentData.isLive` |
+| Facebook | None on `feed` — a live comment is an ordinary `item: "comment"`. The comment's `live_broadcast_timestamp` is read on the attachment lookup `receiveComment` already makes (no extra Graph call), and the post is remembered live in Redis for 7 days so a failed lookup mid-burst, or a replay comment with no timestamp, still resolves | `getCommentAttachment` (`integrations/messenger/src/apis/comment.ts`), `resolveLiveComment` (`apps/worker/.../comment-automation/live-comment.ts`) |
+
+The flag rides `processCommentAutomation.data.isLive` and is stamped on the
+comment message as `contentAttributes.isLiveComment`.
+
+**Subscriptions.** Instagram Login sends `live_comments` only if it is in the
+account's `subscribed_fields` (`INSTAGRAM_SUBSCRIBE_FIELDS`); accounts connected
+before Live existed are re-subscribed when an Instagram Live automation is
+created (`ensureLiveCommentsSubscriptionForAutomation`, every create path).
+Instagram via Facebook Login needs the `live_comments` field enabled once on the
+App Dashboard's `instagram` webhook object — it is not per-account. Both need
+`instagram_manage_comments` / `instagram_business_manage_comments` at Advanced
+Access, like `comments`.
+
+**Capabilities** — `liveCommentCapabilities(type)` in
+`packages/database/src/partials/comment-automation.ts` is the single source; the
+form hides, the service pins (`withLiveCapabilities`) and the worker strips
+(`withLiveCapabilityLimits`) the same fields:
+
+| | FB Live | IG Live |
+|---|---|---|
+| Private reply | ✅ 7 days | ✅ only while broadcasting (window capped at 4 h; Meta rejects after the end → `failed` event) |
+| Public reply | ✅ | ❌ "You cannot reply to comments on a live video" |
+| Like | ✅ | ❌ |
+| Hide | ✅ | ❌ |
+| Reply delay | ✅ | ❌ (forced `immediately`) |
+
+**Pacing.** A live comment's `processCommentAutomation` job is delayed onto the
+account's own timeline (`reserveLiveCommentWindow`, 5/s Facebook, 20/s
+Instagram) so one busy broadcast cannot starve every other workspace's replies
+on the shared integration/chat workers. Delayed jobs hold no worker. If Redis
+fails the comment is processed immediately.
+
+**Redelivery.** `processCommentAutomation` jobs are kept for 24 h
+(`removeOnComplete: { age }`), not the queue-wide last-1,000, so the
+`comment-auto-{commentId}` jobId still rejects a redelivered webhook after a burst.
 
 ## Known gaps & pitfalls
 

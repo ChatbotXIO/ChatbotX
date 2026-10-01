@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
+import { initialCommentPost } from "@/features/shared/comment-automation/lib/live-post-type"
 import { createIgCommentAction } from "../actions/create-ig-comment.action"
 import {
   type CreateIgCommentRequest,
@@ -18,9 +19,11 @@ import { IgCommentForm } from "./ig-comment-form"
 export function CreateIgCommentForm({
   workspaceId,
   variant,
+  isLive,
 }: {
   workspaceId: string
   variant: IgCommentVariant
+  isLive: boolean
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -29,7 +32,7 @@ export function CreateIgCommentForm({
     name: "",
     type: variant,
     folderId: undefined,
-    post: { type: "all" as const, value: [] },
+    post: initialCommentPost(isLive),
     privateReply: { type: "text" as const, value: "" },
     publicReply: {
       type: "none" as const,
@@ -44,7 +47,8 @@ export function CreateIgCommentForm({
       replyOncePerUserPerPost: false,
       likeUserComment: false,
       replyToUsersWhoCommentedOnOtherPosts: true,
-      ignoreCommentReplies: true,
+      // A live comment is never a reply, and the switch is hidden for Live.
+      ignoreCommentReplies: !isLive,
       trackUserTags: false,
     },
     hideComments: {

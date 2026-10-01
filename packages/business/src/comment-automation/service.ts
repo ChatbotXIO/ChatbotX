@@ -19,6 +19,8 @@ import {
   commentAutomationTypes,
   type IgCommentAutomationType,
   igCommentAutomationTypes,
+  isLiveCommentAutomation,
+  liveCommentCapabilities,
   normalizeReplyTexts,
 } from "@chatbotx.io/database/partials"
 import {
@@ -683,6 +685,26 @@ class CommentAutomationService extends BaseService {
     )
   }
 
+  /**
+   * Paces one account's live-broadcast comments through the automation: each
+   * call reserves `spanMs` on the account's timeline and returns when its slot
+   * starts (epoch ms). A live broadcast can drop thousands of comments in
+   * minutes, and every one of them would otherwise reach the shared
+   * integration and chat workers at once — starving every other workspace's
+   * replies and tripping the Page's Graph limits. Delaying the job (rather
+   * than sleeping in it) holds no worker while it waits.
+   */
+  reserveLiveCommentWindow(props: {
+    channelType: CommentAutomationType
+    integrationIdentifier: string
+    spanMs: number
+  }): Promise<number> {
+    return distributedStore.reserveTimeWindow(
+      `comment-automation:live-comments:pace:${props.channelType}:${props.integrationIdentifier}`,
+      props.spanMs,
+    )
+  }
+
   isWithinSchedule(
     automation: { startTime: string | null; endTime: string | null },
     timezone: string,
@@ -732,6 +754,30 @@ class CommentAutomationService extends BaseService {
       .insert(commentAutomationReplyModel)
       .values({ id: createId(), ...props })
       .onConflictDoNothing()
+  }
+
+  /**
+   * Atomically takes the "one reply per user per post" slot: `true` only for
+   * the one caller whose row was actually inserted.
+   *
+   * `findDedup` followed by a later `insertDedup` is a check-then-act race —
+   * two comments from the same person a few milliseconds apart (routine on a
+   * busy live broadcast, where viewers repeat themselves) both read "not yet
+   * replied" and both get a reply. The unique `CommentAutomationReply_dedup_idx`
+   * makes this insert the arbiter instead.
+   */
+  async claimDedup(props: {
+    automationId: string
+    contactId: string
+    postId: string
+    workspaceId: string
+  }): Promise<boolean> {
+    const inserted = await db
+      .insert(commentAutomationReplyModel)
+      .values({ id: createId(), ...props })
+      .onConflictDoNothing()
+      .returning({ id: commentAutomationReplyModel.id })
+    return inserted.length > 0
   }
 
   /**
@@ -999,6 +1045,58 @@ class CommentAutomationService extends BaseService {
     return { ...data, hideComments: { ...data.hideComments, hasGif: false } }
   }
 
+  /**
+   * Pins off what a Live automation's channel cannot do on a live comment —
+   * Instagram Live is private-reply-only and must reply immediately (see
+   * `liveCommentCapabilities`). The builder hides those controls; this keeps a
+   * public-API, MCP or template write from storing a reply that Meta rejects.
+   *
+   * On an update the post and options may be absent from `data`, so the
+   * existing row fills them in — otherwise switching a row to `live` through a
+   * partial PATCH would keep its old public reply.
+   */
+  private withLiveCapabilities<T extends Partial<FbCommentAutomationWriteData>>(
+    type: CommentAutomationType,
+    data: T,
+    existing?: CommentAutomationModel,
+  ): T {
+    const post = data.post ?? existing?.post
+    if (!(post && isLiveCommentAutomation(post))) {
+      return data
+    }
+    const capabilities = liveCommentCapabilities(type)
+    const next: T = { ...data }
+    if (!capabilities.publicReply) {
+      next.publicReply = { type: "none", value: null }
+    }
+    const options = data.options ?? existing?.options
+    if (!capabilities.likeComment && options) {
+      next.options = { ...options, likeUserComment: false }
+    }
+    if (!capabilities.commentReplies && next.options) {
+      next.options = { ...next.options, ignoreCommentReplies: false }
+    }
+    const hideComments = data.hideComments ?? existing?.hideComments
+    if (!capabilities.hideComments && hideComments) {
+      next.hideComments = {
+        ...hideComments,
+        all: false,
+        hasPhoneNumber: false,
+        hasImage: false,
+        hasVideo: false,
+        hasLink: false,
+        hasKeywords: false,
+        hasGif: false,
+        hasEmoji: false,
+        showCommentsAfter: "none",
+      }
+    }
+    if (!capabilities.replyDelay) {
+      next.replyAfter = { type: "immediately", value: 0 }
+    }
+    return next
+  }
+
   async createInstagram(input: {
     workspaceId: string
     type: IgCommentAutomationType
@@ -1010,9 +1108,12 @@ class CommentAutomationService extends BaseService {
         id: createId(),
         workspaceId: input.workspaceId,
         type: input.type,
-        ...this.withSupportedHideComments(
+        ...this.withLiveCapabilities(
           input.type,
-          this.withNormalizedReplies(input.data),
+          this.withSupportedHideComments(
+            input.type,
+            this.withNormalizedReplies(input.data),
+          ),
         ),
       })
       .returning()
@@ -1028,10 +1129,14 @@ class CommentAutomationService extends BaseService {
     const [updated] = await db
       .update(commentAutomationModel)
       .set(
-        this.withSupportedHideComments(
-          // `findInstagramOrFail` only matches `igCommentAutomationTypes`.
+        this.withLiveCapabilities(
           existing.type as IgCommentAutomationType,
-          this.withNormalizedReplies(data),
+          this.withSupportedHideComments(
+            // `findInstagramOrFail` only matches `igCommentAutomationTypes`.
+            existing.type as IgCommentAutomationType,
+            this.withNormalizedReplies(data),
+          ),
+          existing,
         ),
       )
       .where(

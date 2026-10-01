@@ -2865,7 +2865,13 @@
     "chooseSpecificPosts": "בחירת פוסטים...",
     "postIdTab": "מזהה פוסט",
     "postIdPlaceholder": "הזנת מזהי פוסטים, אחד בכל שורה...",
-    "noPostsFound": "לא נמצאו פוסטים"
+    "noPostsFound": "לא נמצאו פוסטים",
+    "postTypeDialog": {
+      "liveTitle": "שידור חי",
+      "liveDescription": "אוטומציה לתגובות בשידורים חיים. תומך בתשובות ציבוריות, תשובות פרטיות, הסתרת תגובות וסימון לייק.",
+      "postsTitle": "פוסטים בדף",
+      "postsDescription": "אוטומציה לתגובות בפוסטים ובסרטוני Reels של הדף. תומך בתשובות ציבוריות, תשובות פרטיות, הסתרת תגובות וסימון לייק."
+    }
   },
   "instagramCommentAutomation": {
     "title": "אוטומציית תגובות ב-Instagram",
@@ -2972,7 +2978,14 @@
       "instagramDescription": "חיבור באמצעות כניסה ל-Instagram. תומך בתשובה ציבורית, תשובה פרטית והסתרת תגובות. סימון לייק לתגובות אינו נתמך.",
       "instagramFacebookTitle": "כניסה ל-Instagram באמצעות Facebook",
       "instagramFacebookDescription": "Instagram מחובר באמצעות דף Facebook. תומך בתשובה ציבורית, תשובה פרטית, הסתרת תגובות וסימון לייק לתגובות."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "אוטומציה לתגובות ב-Instagram Live. שולח תשובה פרטית לכל מגיב בזמן שאתם בשידור.",
+      "postsTitle": "פוסטים ו-Reels",
+      "postsDescription": "אוטומציה לתגובות בפוסטים וב-Reels. תומך בתשובות ציבוריות, תשובות פרטיות והסתרת תגובות."
+    },
+    "liveReplyNote": "Instagram מאפשר רק תשובה פרטית לתגובה בשידור חי, ורק בזמן השידור. תשובות ציבוריות, הסתרה ולייקים אינם זמינים."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",
@@ -5709,6 +5722,13 @@
     "trackUserTags": {
       "label": "עקוב אם משתמש מתייג משתמשים אחרים",
       "descriptionText": "סופר את החשבונות שתויגו בכל תגובה ומוסיף אותם לסכומים המצטברים של איש הקשר בכל התגובות. השתמשו ב-'{{total_tagged}}' לכל החשבונות שתויגו וב-'{{total_new_tagged}}' לחשבונות שמעולם לא שלחו הודעה לדף שלכם או היו אנשי קשר."
+    },
+    "card": {
+      "reply": "תגובה"
+    },
+    "liveBadge": "שידור חי",
+    "postTypeDialog": {
+      "title": "בחירת סוג פוסט"
     }
   },
   "condition": {

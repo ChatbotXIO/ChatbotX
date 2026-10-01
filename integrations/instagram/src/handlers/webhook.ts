@@ -6,6 +6,7 @@ import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import {
   INSTAGRAM_MESSAGE_METADATA,
   type InstagramConfig,
+  type InstagramPageEntry,
   instagramCommentEventValueSchema,
   instagramWebhookEventSchema,
 } from "../schema"
@@ -28,6 +29,33 @@ const verifyWebhookSignature = async (
   } catch {
     return false
   }
+}
+
+/**
+ * `live_comments` carries comments on a live broadcast; its value has the same
+ * shape as `comments`. Meta asks apps to tell the two apart — a live comment
+ * only accepts a private reply, and only while the broadcast runs.
+ */
+const LIVE_COMMENTS_FIELD = "live_comments"
+const INSTAGRAM_COMMENT_FIELDS = new Set(["comments", LIVE_COMMENTS_FIELD])
+
+/**
+ * Every comment event on an entry. Instagram Login sends either a top-level
+ * `field`/`value` or a `changes` array; every change is taken, not just the
+ * first — a busy live broadcast is exactly when Meta batches them.
+ */
+function collectCommentEvents(
+  entry: InstagramPageEntry,
+): { value: unknown; isLive: boolean }[] {
+  if (entry.field && INSTAGRAM_COMMENT_FIELDS.has(entry.field)) {
+    return [{ value: entry.value, isLive: entry.field === LIVE_COMMENTS_FIELD }]
+  }
+  return (entry.changes ?? [])
+    .filter((change) => INSTAGRAM_COMMENT_FIELDS.has(change.field))
+    .map((change) => ({
+      value: change.value,
+      isLive: change.field === LIVE_COMMENTS_FIELD,
+    }))
 }
 
 const handleWebhookEvent = async (
@@ -82,51 +110,50 @@ const handleWebhookEvent = async (
     // entry — into a single webhook POST (e.g. a contact sending several DMs
     // quickly). Every entry/event must be processed, not just the first.
     for (const entry of webhookData.entry) {
-      const commentValue =
-        entry.field === "comments"
-          ? entry.value
-          : entry.changes?.find(
-              (c: { field: string }) => c.field === "comments",
-            )?.value
-      if (commentValue !== undefined) {
-        const parsed = instagramCommentEventValueSchema.safeParse(commentValue)
-        if (!parsed.success) {
-          logger.warn(
-            {
-              issues: parsed.error.issues.map(({ code, path }) => ({
-                code,
-                path,
-              })),
+      const commentEvents = collectCommentEvents(entry)
+      if (commentEvents.length > 0) {
+        for (const { value: commentValue, isLive } of commentEvents) {
+          const parsed =
+            instagramCommentEventValueSchema.safeParse(commentValue)
+          if (!parsed.success) {
+            logger.warn(
+              {
+                issues: parsed.error.issues.map(({ code, path }) => ({
+                  code,
+                  path,
+                })),
+              },
+              "comment event parse failed — skipping",
+            )
+            continue
+          }
+          const value = parsed.data
+          if (!value.media?.id) {
+            logger.warn(
+              { commentId: value.id },
+              "comment webhook missing media.id — skipping",
+            )
+            continue
+          }
+          await queue?.add("incomingComment", {
+            type: "incomingComment",
+            data: {
+              integrationType: "instagram",
+              integrationIdentifier: entry.id,
+              commentData: {
+                commentId: value.id,
+                postId: value.media.id,
+                parentId: value.parent_id,
+                fromId: value.from.id,
+                fromName: value.from.username ?? value.from.id,
+                fromUsername: value.from.username,
+                message: value.text,
+                createdTime: entry.time,
+                ...(isLive ? { isLive: true } : {}),
+              },
             },
-            "comment event parse failed — skipping",
-          )
-          continue
+          })
         }
-        const value = parsed.data
-        if (!value.media?.id) {
-          logger.warn(
-            { commentId: value.id },
-            "comment webhook missing media.id — skipping",
-          )
-          continue
-        }
-        await queue?.add("incomingComment", {
-          type: "incomingComment",
-          data: {
-            integrationType: "instagram",
-            integrationIdentifier: entry.id,
-            commentData: {
-              commentId: value.id,
-              postId: value.media.id,
-              parentId: value.parent_id,
-              fromId: value.from.id,
-              fromName: value.from.username ?? value.from.id,
-              fromUsername: value.from.username,
-              message: value.text,
-              createdTime: entry.time,
-            },
-          },
-        })
         continue
       }
 

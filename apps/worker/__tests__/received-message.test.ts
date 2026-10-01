@@ -253,7 +253,12 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
   omnichannel: { inbound: null, onDemand: false },
 }
 
+const mockReserveLiveCommentWindow = vi.hoisted(() => vi.fn())
+
 vi.mock("@chatbotx.io/business", () => ({
+  commentAutomationService: {
+    reserveLiveCommentWindow: mockReserveLiveCommentWindow,
+  },
   appointmentService: {
     cancelAppointmentByToken: mockAppointmentCancelByToken,
   },
@@ -3693,7 +3698,10 @@ describe("contact source taxonomy", () => {
     expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
       "processCommentAutomation",
       expect.objectContaining({ type: "processCommentAutomation" }),
-      { jobId: "comment-auto-comment-dup-1" },
+      {
+        jobId: "comment-auto-comment-dup-1",
+        removeOnComplete: { age: 86_400 },
+      },
     )
   })
 
@@ -3729,7 +3737,73 @@ describe("contact source taxonomy", () => {
           createdTime: 1_783_674_105,
         },
       },
-      { jobId: "comment-auto-comment-new-1" },
+      {
+        jobId: "comment-auto-comment-new-1",
+        removeOnComplete: { age: 86_400 },
+      },
+    )
+  })
+
+  test("a live Instagram comment is flagged and paced on the account's timeline", async () => {
+    vi.useFakeTimers({ now: new Date("2026-10-01T00:00:00Z") })
+    mockReserveLiveCommentWindow.mockResolvedValue(Date.now() + 400)
+    try {
+      await receiveComment({
+        integrationType: "instagram",
+        integrationIdentifier: "inbox-1",
+        commentData: {
+          commentId: "comment-live-1",
+          fromId: "commenter-1",
+          message: "price?",
+          postId: "live-media-1",
+          createdTime: 1_783_674_105,
+          isLive: true,
+        },
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+
+    expect(mockReserveLiveCommentWindow).toHaveBeenCalledWith({
+      channelType: "instagram",
+      integrationIdentifier: "inbox-1",
+      spanMs: 50,
+    })
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.objectContaining({
+        data: expect.objectContaining({ isLive: true }),
+      }),
+      {
+        jobId: "comment-auto-comment-live-1",
+        removeOnComplete: { age: 86_400 },
+        delay: 400,
+      },
+    )
+  })
+
+  test("a pacing failure processes the live comment immediately", async () => {
+    mockReserveLiveCommentWindow.mockRejectedValue(new Error("redis down"))
+
+    await receiveComment({
+      integrationType: "instagram",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-live-2",
+        fromId: "commenter-1",
+        postId: "live-media-1",
+        isLive: true,
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.anything(),
+      {
+        jobId: "comment-auto-comment-live-2",
+        removeOnComplete: { age: 86_400 },
+        delay: 0,
+      },
     )
   })
 
@@ -3811,7 +3885,11 @@ describe("contact source taxonomy", () => {
           createdTime: 1_783_674_105,
         },
       },
-      { jobId: "comment-auto-comment-threads-1", attempts: 1 },
+      {
+        jobId: "comment-auto-comment-threads-1",
+        removeOnComplete: { age: 86_400 },
+        attempts: 1,
+      },
     )
   })
 
@@ -3883,7 +3961,11 @@ describe("contact source taxonomy", () => {
     expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
       "processCommentAutomation",
       expect.anything(),
-      { jobId: "comment-auto-comment-tiktok-1", attempts: 1 },
+      {
+        jobId: "comment-auto-comment-tiktok-1",
+        removeOnComplete: { age: 86_400 },
+        attempts: 1,
+      },
     )
   })
 

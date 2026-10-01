@@ -72,9 +72,35 @@ const PRIVATE_REPLY_WINDOW_LABEL: Record<CommentAutomationChannelType, string> =
     tiktok: "TikTok's 48-hour Comment-to-Message window",
   }
 
+/**
+ * Instagram Live accepts a private reply only while the broadcast is running
+ * (Meta: "Once the broadcast ends, private replies cannot be sent"). There is
+ * no end signal on the comment, so this caps the wait at the longest an
+ * Instagram Live can run; a reply after an earlier end is rejected by Meta and
+ * recorded as a failed delivery, never dropped silently.
+ */
+const INSTAGRAM_LIVE_PRIVATE_REPLY_WINDOW_MS = 4 * 60 * 60 * 1000
+
+const isInstagramChannel = (channelType: CommentAutomationChannelType) =>
+  channelType === "instagram" || channelType === "instagramFacebook"
+
+function privateReplyWindowMs(
+  channelType: CommentAutomationChannelType,
+  isLive: boolean,
+): number {
+  if (isLive && isInstagramChannel(channelType)) {
+    return INSTAGRAM_LIVE_PRIVATE_REPLY_WINDOW_MS
+  }
+  return PRIVATE_REPLY_WINDOW_MS_BY_CHANNEL[channelType]
+}
+
 export const privateReplyWindowLabel = (
   channelType: CommentAutomationChannelType,
-): string => PRIVATE_REPLY_WINDOW_LABEL[channelType]
+  isLive = false,
+): string =>
+  isLive && isInstagramChannel(channelType)
+    ? "the Instagram Live broadcast (private replies are accepted only while it runs)"
+    : PRIVATE_REPLY_WINDOW_LABEL[channelType]
 
 /**
  * Whether the DM would leave after the channel's comment window has closed.
@@ -93,10 +119,12 @@ export function isOutsidePrivateReplyWindow(props: {
   channelType: CommentAutomationChannelType
   createdTime: number
   delay: number
+  isLive?: boolean
 }): boolean {
   const commentAgeAtSendMs = Date.now() + props.delay - props.createdTime * 1000
   return (
-    commentAgeAtSendMs > PRIVATE_REPLY_WINDOW_MS_BY_CHANNEL[props.channelType]
+    commentAgeAtSendMs >
+    privateReplyWindowMs(props.channelType, props.isLive ?? false)
   )
 }
 
@@ -348,6 +376,8 @@ export async function executePrivateReply(
     delay: number
     message?: string
     createdTime: number
+    /** The comment was made on a live broadcast — see `privateReplyWindowMs`. */
+    isLive?: boolean
     dedup?: CommentAutomationDedup
   },
 ): Promise<CommentReplyOutcome | null> {
@@ -363,6 +393,7 @@ export async function executePrivateReply(
       channelType: ctx.channelType,
       createdTime: ctx.createdTime,
       delay: ctx.delay,
+      isLive: ctx.isLive,
     })
   ) {
     logger.warn(
@@ -370,7 +401,7 @@ export async function executePrivateReply(
         automationId: ctx.automationId,
         commentId: ctx.commentId,
         workspaceId: ctx.workspaceId,
-        reason: `comment older than ${privateReplyWindowLabel(ctx.channelType)}`,
+        reason: `comment older than ${privateReplyWindowLabel(ctx.channelType, ctx.isLive)}`,
       },
       "Comment automation private reply skipped",
     )

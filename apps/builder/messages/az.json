@@ -615,6 +615,13 @@
     "trackUserTags": {
       "label": "İstifadəçinin digər istifadəçiləri etiketləməsini izlə",
       "descriptionText": "Hər şərhdə etiketlənən hesabları sayır və kontaktın bütün şərhlər üzrə ümumi sayına əlavə edir. Etiketlənən bütün hesablar üçün '{{total_tagged}}' dəyişənindən, səhifənizə heç vaxt mesaj göndərməmiş və ya kontakt olmamış hesablar üçün '{{total_new_tagged}}' dəyişənindən istifadə edin."
+    },
+    "card": {
+      "reply": "Cavab"
+    },
+    "liveBadge": "Canlı",
+    "postTypeDialog": {
+      "title": "Paylaşım növünü seçin"
     }
   },
   "condition": {
@@ -5121,7 +5128,13 @@
     "chooseSpecificPosts": "Paylaşımları seçin...",
     "postIdTab": "Paylaşım ID-si",
     "postIdPlaceholder": "Hər sətirdə bir paylaşım ID-si daxil edin...",
-    "noPostsFound": "Paylaşım tapılmadı"
+    "noPostsFound": "Paylaşım tapılmadı",
+    "postTypeDialog": {
+      "liveTitle": "Canlı yayım",
+      "liveDescription": "Canlı yayımlardakı şərhləri avtomatlaşdırın. İctimai cavablar, şəxsi cavablar, şərhlərin gizlədilməsi və bəyənilməsi dəstəklənir.",
+      "postsTitle": "Səhifə paylaşımları",
+      "postsDescription": "Səhifə paylaşımları və reels-lərdəki şərhləri avtomatlaşdırın. İctimai cavablar, şəxsi cavablar, şərhlərin gizlədilməsi və bəyənilməsi dəstəklənir."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Instagram şərhlərinin avtomatlaşdırılması",
@@ -5228,7 +5241,14 @@
       "instagramDescription": "Instagram Login əlaqəsi. İctimai cavab, şəxsi cavab və şərhlərin gizlədilməsi dəstəklənir. Şərhlərin bəyənilməsi dəstəklənmir.",
       "instagramFacebookTitle": "Facebook-la Instagram-a giriş",
       "instagramFacebookDescription": "Facebook səhifəsi vasitəsilə qoşulmuş Instagram. İctimai cavab, şəxsi cavab, şərhlərin gizlədilməsi və bəyənilməsi dəstəklənir."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Instagram Live yayımlarındakı şərhləri avtomatlaşdırın. Yayım zamanı hər şərh yazana şəxsi cavab göndərir.",
+      "postsTitle": "Paylaşımlar və Reels",
+      "postsDescription": "Paylaşımlar və reels-lərdəki şərhləri avtomatlaşdırın. İctimai cavablar, şəxsi cavablar və şərhlərin gizlədilməsi dəstəklənir."
+    },
+    "liveReplyNote": "Instagram canlı yayım şərhlərinə yalnız şəxsi cavaba və yalnız yayım zamanı icazə verir. İctimai cavab, gizlətmə və bəyənmə mövcud deyil."
   },
   "threadsCommentAutomation": {
     "title": "Threads şərhlərinin avtomatlaşdırılması",

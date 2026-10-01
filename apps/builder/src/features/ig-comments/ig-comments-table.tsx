@@ -44,6 +44,7 @@ import { BulkMoveCommentAutomationFolderDialog } from "../shared/comment-automat
 import { CommentAutomationScheduleDialog } from "../shared/comment-automation/comment-automation-schedule-dialog"
 import { buildCommentAutomationStatColumns } from "../shared/comment-automation/comment-automation-stat-columns"
 import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
+import { LiveAutomationBadge } from "../shared/comment-automation/live-automation-badge"
 import { MissedCommentsProcessingLabel } from "../shared/comment-automation/missed-comments-processing-label"
 import { ProcessMissedCommentsDialog } from "../shared/comment-automation/process-missed-comments-dialog"
 import { RenameCommentAutomationDialog } from "../shared/comment-automation/rename-comment-automation-dialog"
@@ -163,6 +164,7 @@ export function IgCommentsTable({
                 <p>{row.original.name}</p>
               </TooltipContent>
             </Tooltip>
+            <LiveAutomationBadge post={row.original.post} />
             {missedCommentsInProgress.has(row.original.id) ? (
               <MissedCommentsProcessingLabel />
             ) : null}

@@ -573,6 +573,13 @@
     "trackUserTags": {
       "label": "Spor om en bruger tagger andre brugere",
       "descriptionText": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
+    },
+    "card": {
+      "reply": "Svar"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Vælg opslagstype"
     }
   },
   "condition": {
@@ -4836,7 +4843,13 @@
     "chooseSpecificPosts": "Choose opslag...",
     "postIdTab": "Opslag ID",
     "postIdPlaceholder": "Indtast opslag IDs, one per line...",
-    "noPostsFound": "Ingen opslag found"
+    "noPostsFound": "Ingen opslag found",
+    "postTypeDialog": {
+      "liveTitle": "Livestream",
+      "liveDescription": "Automatiser kommentarer på livestreams. Understøtter offentlige svar, private svar, skjulning og likes af kommentarer.",
+      "postsTitle": "Sideopslag",
+      "postsDescription": "Automatiser kommentarer på sideopslag og reels. Understøtter offentlige svar, private svar, skjulning og likes af kommentarer."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Instagram Kommentar Automatisering",
@@ -4943,7 +4956,14 @@
       "instagramDescription": "Instagram Login connection. Supports public svar, private svar, og hiding kommentarer. Liking kommentarer er ikke supported.",
       "instagramFacebookTitle": "Instagram Login med Facebook",
       "instagramFacebookDescription": "Instagram connected via a Facebook Side. Supports public svar, private svar, hiding kommentarer, og liking kommentarer."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatiser kommentarer på Instagram Live. Sender et privat svar til hver kommentator, mens du er live.",
+      "postsTitle": "Opslag og reels",
+      "postsDescription": "Automatiser kommentarer på opslag og reels. Understøtter offentlige svar, private svar og skjulning af kommentarer."
+    },
+    "liveReplyNote": "Instagram tillader kun et privat svar på en Live-kommentar, og kun mens du er live. Offentlige svar, skjulning og likes er ikke tilgængelige."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

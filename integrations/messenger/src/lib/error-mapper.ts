@@ -43,6 +43,9 @@ const PERMISSION_DENIED_CODES = new Set([
 const RATE_LIMITED_CODES = new Set([
   4, // API rate limit reached
   17, // User API rate limit reached
+  32, // Page-level API rate limit reached
+  613, // Calls to this API have exceeded the rate limit
+  80_001, // Too many calls to this Page account (Pages BUC limit)
 ])
 
 const PAYLOAD_INVALID_CODES = new Set([

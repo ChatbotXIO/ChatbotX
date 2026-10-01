@@ -9,7 +9,7 @@ import type {
 } from "./types"
 
 type TemplateCommentPost = {
-  type: "published" | "ads" | "reels" | "postIds" | "all"
+  type: "published" | "ads" | "reels" | "postIds" | "all" | "live"
   // External Facebook post ids — copied verbatim, never remapped. Sibling
   // of `privateReply.value`/`publicReply.value`/`includeKeywords.value`,
   // which is exactly why this adapter resolves the reply fields explicitly

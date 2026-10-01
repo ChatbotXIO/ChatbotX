@@ -31,21 +31,26 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: (...args: unknown[]) => ({ sql: args }),
 }))
 
-vi.mock("@chatbotx.io/database/partials", async () => ({
-  // The real allowlist, so the pin below is tested against what ships. Read
+vi.mock("@chatbotx.io/database/partials", async () => {
+  // The real allowlists, so the pins below are tested against what ships. Read
   // from the source file, not the barrel, which pulls in `@chatbotx.io/utils`
   // (mocked below).
-  commentAutomationChannelSupportsHideGif: (
-    await vi.importActual<
-      typeof import("../../database/src/partials/comment-automation")
-    >("../../database/src/partials/comment-automation")
-  ).commentAutomationChannelSupportsHideGif,
-  commentAutomationTypes: { enum: { messenger: "messenger" } },
-  igCommentAutomationTypes: {
-    options: ["instagram", "instagramFacebook"],
-  },
-  rootFolderId: "0",
-}))
+  const actual = await vi.importActual<
+    typeof import("../../database/src/partials/comment-automation")
+  >("../../database/src/partials/comment-automation")
+  return {
+    commentAutomationChannelSupportsHideGif:
+      actual.commentAutomationChannelSupportsHideGif,
+    isLiveCommentAutomation: actual.isLiveCommentAutomation,
+    liveCommentCapabilities: actual.liveCommentCapabilities,
+    normalizeReplyTexts: actual.normalizeReplyTexts,
+    commentAutomationTypes: { enum: { messenger: "messenger" } },
+    igCommentAutomationTypes: {
+      options: ["instagram", "instagramFacebook"],
+    },
+    rootFolderId: "0",
+  }
+})
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {},
@@ -312,6 +317,146 @@ describe("commentAutomationService — hasGif capability pin", () => {
     expect(values).toHaveBeenCalledWith(
       expect.objectContaining({
         hideComments: expect.objectContaining({ hasGif: true }),
+      }),
+    )
+  })
+})
+
+// Instagram Live is private-reply-only, cannot be hidden or liked, and only
+// accepts the DM while the broadcast runs — a write that sets any of those
+// would store a reply Meta rejects.
+describe("commentAutomationService — Instagram Live capability pin", () => {
+  const livePost = { type: "live" as const, value: [] }
+  const hideComments = {
+    all: true,
+    hasPhoneNumber: true,
+    hasImage: false,
+    hasVideo: false,
+    hasLink: true,
+    hasKeywords: false,
+    keywords: ["spam"],
+    showCommentsAfter: "1d" as const,
+  }
+  const options = {
+    replyToNewContactsOnly: false,
+    replyOncePerUserPerPost: true,
+    likeUserComment: true,
+    replyToUsersWhoCommentedOnOtherPosts: true,
+    ignoreCommentReplies: true,
+    trackUserTags: false,
+  }
+
+  test("createInstagram strips public reply, like, hide and delay on a Live automation", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagram",
+      data: {
+        name: "live",
+        post: livePost,
+        publicReply: { type: "text", value: "hi", values: [{ value: "hi" }] },
+        privateReply: { type: "text", value: "dm" },
+        options,
+        hideComments,
+        replyAfter: { type: "minutes", value: 5 },
+      },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "dm" },
+        options: expect.objectContaining({
+          likeUserComment: false,
+          replyOncePerUserPerPost: true,
+        }),
+        hideComments: expect.objectContaining({
+          all: false,
+          hasPhoneNumber: false,
+          hasLink: false,
+          showCommentsAfter: "none",
+        }),
+        replyAfter: { type: "immediately", value: 0 },
+      }),
+    )
+  })
+
+  test("createInstagram leaves a post automation untouched", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagramFacebook",
+      data: {
+        name: "posts",
+        post: { type: "all", value: [] },
+        options,
+        replyAfter: { type: "minutes", value: 5 },
+      },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ likeUserComment: true }),
+        replyAfter: { type: "minutes", value: 5 },
+      }),
+    )
+  })
+
+  test("updateInstagram pins a partial write on an existing Live row", async () => {
+    mocks.findFirst.mockResolvedValue({
+      id: "9",
+      type: "instagram",
+      post: livePost,
+      options,
+      hideComments,
+    })
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await commentAutomationService.updateInstagram(
+      { workspaceId: "1", id: "9" },
+      { publicReply: { type: "text", value: "hi", values: [{ value: "hi" }] } },
+    )
+
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publicReply: { type: "none", value: null },
+        options: expect.objectContaining({ likeUserComment: false }),
+        hideComments: expect.objectContaining({ all: false }),
+        replyAfter: { type: "immediately", value: 0 },
+      }),
+    )
+  })
+
+  test("createMessenger keeps every capability on a Facebook Live automation", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createMessenger({
+      workspaceId: "1",
+      data: {
+        name: "fb live",
+        post: livePost,
+        options,
+        hideComments,
+        replyAfter: { type: "minutes", value: 5 },
+      },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ likeUserComment: true }),
+        hideComments: expect.objectContaining({ all: true }),
+        replyAfter: { type: "minutes", value: 5 },
       }),
     )
   })
