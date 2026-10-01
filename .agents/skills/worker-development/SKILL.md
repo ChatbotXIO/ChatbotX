@@ -1,23 +1,21 @@
 ---
 name: worker-development
 description: >-
-  Create and manage background workers, BullMQ queues, Kafka consumers, and
-  scheduled jobs. Use when adding new workers, creating queues, defining job
-  types, building scheduled tasks, or working with async processing.
+  Create and manage background workers, BullMQ queues, and scheduled jobs. Use when adding new workers, creating queues, defining job types, building scheduled tasks, or working with async processing.
 ---
 
 # Worker Development
 
 ## Architecture
 
-Workers run as separate Node processes in `apps/worker/`. They consume jobs from **BullMQ** queues (Redis-backed) or **Kafka** topics.
+Workers run as separate Node processes in `apps/worker/`. They consume jobs from **BullMQ** queues backed by Redis.
 
 **Shared config** lives in `packages/worker-config/` (`@chatbotx.io/worker-config`).
 
 ## Existing Workers
 
-| Worker | Queue/Topic | Entry |
-|--------|------------|-------|
+| Worker | Queue | Entry |
+|--------|-------|-------|
 | integration | `integration` | `src/integration/worker.ts` |
 | chat | `chat` | `src/chat/worker.ts` |
 | ai-agent | `aiAgent` | `src/ai-agent/worker.ts` |
@@ -26,7 +24,7 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 | trigger | `trigger` | `src/trigger/worker.ts` |
 | webhook | `webhook` | `src/webhook/worker.ts` |
 | schedule | (cron) | `src/schedule/worker.ts` |
-| sequence-scheduler | Kafka | `src/sequence-scheduler/worker*.ts` |
+| sequence-scheduler | `sequenceScheduler` | `src/sequence-scheduler/worker*.ts` |
 | notification | `notification` | `src/notification/worker.ts` |
 | events | event-bus (not BullMQ) | `src/events/worker.ts` — `startWorker([...listeners])` from `@chatbotx.io/event-bus/worker` |
 
@@ -239,16 +237,13 @@ The guard excludes system/quota/tenancy work: `sendAuditLog`, the
 broadcast handlers that operate on workspace-owned broadcast work. Observability jobs stay unguarded so blocked
 jobs can still report failures.
 
-## Kafka (Sequence Scheduler Pattern)
+## Sequence scheduling
 
-For high-throughput scenarios, the project uses Kafka:
-
-- **Producer**: `createProducer` from `@chatbotx.io/kafka`
-- **Consumer**: `createConsumer` from `@chatbotx.io/kafka`
-- Topics defined as constants
-- JSON serialization for payloads
-
-Only used for sequence dispatch currently. Prefer BullMQ for standard job queues.
+Sequence dispatch uses BullMQ on Redis. `packages/sequence-scheduler` hashes
+dispatches across 256 buckets, while `SchedulerClient` stores schedule and retry
+entries in Redis sorted sets. Redlock-backed `withLock` claims each dispatch before
+it is published to the `sequenceScheduler` queue, preventing concurrent scheduler
+workers from processing the same dispatch.
 
 ## Worker Imports
 

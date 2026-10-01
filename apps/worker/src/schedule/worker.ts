@@ -1,6 +1,6 @@
 import {
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   queueNames,
   ScheduleJobData,
   scheduleQueue,
@@ -199,7 +199,7 @@ async function startScheduleWorker() {
         },
       ),
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.schedule),
       ...defaultWorkerOptions,
     },
   )

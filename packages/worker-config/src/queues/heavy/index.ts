@@ -13,7 +13,7 @@ import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -309,6 +309,6 @@ export type HeavyAnalyzeImageResultData = z.infer<
 export const heavyQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<HeavyJobData>(queueNames.enum.heavy, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.heavy),
       defaultJobOptions,
     })

@@ -55,6 +55,7 @@ const {
   mockMarkReadByOutbound,
   mockRecordInboundDelivery,
   mockPromoteStandbyDelivery,
+  mockDistributedLockRunExclusive,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
 
@@ -179,6 +180,12 @@ const {
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
     mockRecordInboundDelivery: vi.fn().mockResolvedValue(null),
     mockPromoteStandbyDelivery: vi.fn().mockResolvedValue(false),
+    // Pass-through by default: `saveAndBroadcastMessage` wraps its critical
+    // section in this lock; tests exercise persistence behavior, not lock
+    // contention, unless they explicitly override this mock.
+    mockDistributedLockRunExclusive: vi.fn(
+      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+    ),
   }
 })
 
@@ -338,6 +345,11 @@ vi.mock("@chatbotx.io/business", () => ({
   }) =>
     message.contentAttributes?.threadControlDelivery === "standby" &&
     message.contentAttributes?.threadControlPromoted === undefined,
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mockDistributedLockRunExclusive },
+  isLockAcquisitionError: () => false,
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

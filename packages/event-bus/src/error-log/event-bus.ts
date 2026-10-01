@@ -23,7 +23,7 @@ const MAX_ERROR_LOG_DLQ_EVENTS = 10_000
 export const errorLogEventBus = new BaseEventBus<
   ErrorLogEventMap,
   BaseEventListener<ErrorLogRecordedPayload>
->(() => getRedisConnection(), {
+>(() => getRedisConnection("hot"), {
   streamKey: "events:error-log",
   consumerGroup: "error-log-events-group",
   deadLetterMaxLen: MAX_ERROR_LOG_DLQ_EVENTS,

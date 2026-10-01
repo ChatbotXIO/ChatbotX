@@ -1,7 +1,6 @@
 import { bloomFilterFactory } from "./bloom-filter"
 import { casStoreFactory } from "./cas-store"
 import { cacheConnections } from "./connections/cache-connection"
-import { sequenceConnections } from "./connections/sequence-connection"
 import { distributedLockFactory } from "./distributed-lock"
 import { distributedStoreFactory } from "./distributed-store"
 import { presenceStoreFactory } from "./presence-store"
@@ -20,23 +19,17 @@ export { presenceStoreFactory } from "./presence-store"
 export const presenceStore = presenceStoreFactory(cacheConnections.useExisting)
 
 export { cacheConnections } from "./connections/cache-connection"
-export { distributedLockFactory } from "./distributed-lock"
+export {
+  type DistributedLock,
+  distributedLockFactory,
+  isLockAcquisitionError,
+} from "./distributed-lock"
 export const distributedLock = distributedLockFactory(cacheConnections.create)
-// Re-exported so callers can catch a failed (non-blocking) lock acquisition
-// distinctly from a failure inside the locked `fn` itself, without adding
-// `redlock-universal` as a direct dependency of every package that uses
-// `distributedLock`.
-export { LockAcquisitionError } from "redlock-universal"
 export const distributedStore = distributedStoreFactory(
   cacheConnections.useExisting,
 )
 
-export { queueConnections } from "./connections/queue-connection"
-export { sequenceConnections } from "./connections/sequence-connection"
-export { createRedisConnection } from "./redis-client"
-export const distributedSequenceStore = distributedStoreFactory(
-  sequenceConnections.useExisting,
-)
-
 export * from "./cache-utils"
+export { sequenceConnections } from "./connections/sequence-connection"
 export * from "./queue-utils"
+export { createRedisConnection } from "./redis-client"

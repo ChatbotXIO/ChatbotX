@@ -22,7 +22,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/worker-config", () => ({
   ChatJobAction: { sendChatMessage: "sendChatMessage" },
   chatQueue: { add: vi.fn() },
-  getRedisConnection: () => ({ duplicate: () => ({}) }),
+  getQueueConnection: () => ({ duplicate: () => ({}) }),
   queueNames: { enum: { chat: "chat" } },
 }))
 vi.mock("bullmq", () => ({

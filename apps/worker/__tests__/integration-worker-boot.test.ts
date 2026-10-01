@@ -67,6 +67,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   },
   getHeavyJobCompletionWaitTimeoutMs: vi.fn(() => 330_000),
   getRedisConnection: () => ({}),
+  getQueueConnection: () => ({}),
   HeavyJobAction: { aiGenerateImage: "aiGenerateImage" },
   IntegrationJobAction: {
     incomingMessage: "incomingMessage",

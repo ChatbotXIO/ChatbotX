@@ -3,6 +3,7 @@ import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { getAssignedBuckets } from "./buckets"
 
 const BOOTSTRAP_WINDOW_HOURS = 24
 const BOOTSTRAP_INTERVAL_MS_DEFAULT = 3_600_000
@@ -11,7 +12,6 @@ const RETENTION_BATCH_SIZE_DEFAULT = 1000
 const RETENTION_INTERVAL_MS_DEFAULT = 86_400_000
 const RETENTION_TTL_DAYS_DEFAULT = 30
 const BATCH_SIZE = 1000
-const TOTAL_BUCKETS = 256
 
 interface ReconcileJobOptions {
   cleanupIntervalMs: number
@@ -204,19 +204,7 @@ export class ReconcileJob {
   }
 
   private getMaxBucket(): number {
-    const bucketRange = process.env.SCHEDULER_BUCKET_RANGE
-
-    if (bucketRange) {
-      if (bucketRange.includes(",")) {
-        const buckets = bucketRange.split(",").map(Number)
-        return Math.max(...buckets) + 1
-      }
-
-      const [, end] = bucketRange.split("-").map(Number)
-      return end + 1
-    }
-
-    return TOTAL_BUCKETS
+    return Math.max(...getAssignedBuckets()) + 1
   }
 
   async deleteTerminalDispatches() {

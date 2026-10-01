@@ -29,6 +29,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     defaultWorkerOptions: {},
     getHeavyJobOptions: () => ({}),
     getRedisConnection: vi.fn(),
+    getQueueConnection: vi.fn(),
     HeavyJobAction: { processAIFile: "processAIFile" },
     heavyQueue: { add: mocks.heavyQueueAdd },
     queueNames: { enum: { aiAgent: "aiAgent" } },

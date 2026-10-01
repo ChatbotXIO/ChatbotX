@@ -12,7 +12,7 @@
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/flow-config": "workspace:*",
-    "@chatbotx.io/kafka": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.11",
@@ -24,8 +24,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./contact-pii": "./src/lib/contact-pii.ts",
-    "./keys": "./src/keys.ts",
-    "./message-queue/factory": "./src/message-queue/factory.ts"
+    "./keys": "./src/keys.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

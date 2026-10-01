@@ -2,7 +2,7 @@ import { Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -144,7 +144,7 @@ export const whatsappVoipSignalingQueue = isNoRedisEnv()
   : new Queue<WhatsappVoipSignalingJobData>(
       queueNames.enum.whatsappVoipSignaling,
       {
-        connection: getRedisConnection(),
+        connection: getQueueConnection(queueNames.enum.whatsappVoipSignaling),
         defaultJobOptions: whatsappVoipSignalingJobOptions,
       },
     )

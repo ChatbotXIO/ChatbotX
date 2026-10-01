@@ -30,10 +30,14 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     hasBroadcastRecipients(...args),
   hardDeleteBroadcast: (...args: unknown[]) => hardDeleteBroadcast(...args),
 }))
-vi.mock("@chatbotx.io/redis", () => ({
-  distributedLock: { runExclusive },
-  distributedStore: { exists: lockExists },
-}))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    distributedLock: { runExclusive },
+    distributedStore: { exists: lockExists },
+  }
+})
 vi.mock("@chatbotx.io/logger", () => ({
   getChildLogger: () => ({ info, warn, error }),
 }))

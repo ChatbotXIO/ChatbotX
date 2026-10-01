@@ -145,7 +145,6 @@ vi.mock("@chatbotx.io/redis", async (importOriginal) => {
     bloomFilter: {},
     cacheConnections: { useExisting: vi.fn(), create: vi.fn() },
     distributedStore: {},
-    distributedSequenceStore: {},
     distributedLock: {
       runExclusive: vi.fn(async (_k: string, fn: () => unknown) => fn()),
     },
