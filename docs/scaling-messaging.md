@@ -33,15 +33,21 @@ role-specific env vars set runs today's single-instance topology unchanged.
    jobs and registered `upsertJobScheduler` repeatable-job entries live on the old
    instance's queue keys and are not migrated automatically — they would become
    invisible to a worker pointed at the new URL. Drain by:
-   - Pausing enqueue of new bulk-queue jobs (or accepting the small window of jobs
-     landing on the old instance during cutover).
-   - Waiting for `aiAgent`, `heavy`, `default`, `schedule`, `trigger`, `webhook`, and
-     `quota` queues to reach zero active + waiting + delayed jobs on the old
+   - Pausing non-schedule producers of new bulk jobs (or accepting the small window
+     of jobs landing on the old instance during cutover).
+   - Removing every old `schedule` job scheduler with BullMQ's
+     `Queue.removeJobScheduler`, using the scheduler IDs registered in
+     `apps/worker/src/schedule/handlers/register-schedules.ts`. Do this before
+     checking queue depth and prevent the old schedule worker from registering them
+     again. A recurring scheduler always leaves its next delayed job on the old
+     instance, so the queue cannot otherwise drain.
+   - Letting the old schedule worker process the remaining ordinary `schedule`
+     jobs, then waiting for `aiAgent`, `heavy`, `default`, `schedule`, `trigger`,
+     `webhook`, and `quota` to reach zero active + waiting + delayed jobs on the old
      instance (`redis-cli --scan --pattern 'bull:<queue>:*'` per queue, or the
      BullMQ dashboard).
-   - Re-registering the 28 `register-schedules.ts` cron entries once workers using
-     `REDIS_QUEUE_BULK_URL` are up — `upsertJobScheduler` recreates them
-     idempotently against the new instance.
+   - Re-registering the cron entries once workers using `REDIS_QUEUE_BULK_URL` are
+     up — `upsertJobScheduler` recreates them idempotently against the new instance.
 4. Restart every producer and consumer with the new env var: all workers and
    `apps/builder`. The enterprise `quota-worker` consumes `quota` and must receive
    the same bulk URL.
@@ -51,27 +57,6 @@ role-specific env vars set runs today's single-instance topology unchanged.
 
 Rolling back is symmetric: unset `REDIS_QUEUE_BULK_URL`, drain the bulk queues on the
 dedicated instance the same way, and restart bulk workers.
-
-## AOF durability
-
-The reference `docker-compose.yml` `redis` service runs:
-
-```yaml
-command:
-  - redis-server
-  - --appendonly
-  - "yes"
-  - --appendfsync
-  - everysec
-```
-
-`appendfsync everysec` bounds data loss on an unclean stop (`SIGKILL`, host crash,
-OOM kill) to at most ~1 second of writes, instead of losing everything queued since
-the last RDB snapshot (RDB alone can lose minutes of data depending on `save`
-cadence). This trades a small, constant `fsync` overhead for that bound. It applies
-to every role sharing this container in a single-instance deployment; once a role
-moves to its own instance (see the topology table), configure the same two flags on
-that instance too.
 
 ## Retention formula, worked example
 

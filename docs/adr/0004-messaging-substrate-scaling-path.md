@@ -33,8 +33,6 @@ Grounding facts, verified against the code at the time of this decision:
   `valkey/valkey` has no bloom commands (they live in the separate `valkey-bloom`
   module); Dragonfly implements `BF.*` natively; `redis:8-alpine` bundles them. **The
   cache role cannot move to plain Valkey.**
-- `docker-compose.yml`'s `redis` service ran the official image with no `command:` —
-  no AOF, RDB snapshots only.
 - `packages/business/src/conversation/service.ts` wrote `Conversation.lastActivityAt`
   unconditionally in `updateFlowStepState`, while sibling call sites
   (`bulkAdvanceActivityAndAiContextMarker`, `contactInboxService.updateTracking`)
@@ -145,9 +143,9 @@ rather than argued about:
   `maxLen / (events_per_second × 60)`. Migrate a bus when its computed retention drops
   below the longest consumer outage the deployment must survive without data loss —
   recommended floor 60 minutes.
-- **Move ingress to JetStream:** when inbound webhook volume makes an at-most-1-second
-  AOF `everysec` loss window unacceptable, or when per-conversation ordering must be
-  guaranteed rather than best-effort.
+- **Move ingress to JetStream:** when inbound webhook volume makes the deployment's
+  configured Redis persistence loss window unacceptable, or when per-conversation
+  ordering must be guaranteed rather than best-effort.
 
 ## Consequences
 
@@ -155,9 +153,6 @@ rather than argued about:
 - Enabling `REDIS_QUEUE_BULK_URL` on a running deployment requires draining the bulk
   queues first: in-flight jobs and registered `upsertJobScheduler` entries live on the
   old instance and do not migrate automatically.
-- The reference `docker-compose.yml` `redis` service now runs with `--appendonly yes
-  --appendfsync everysec`, bounding data loss on an unclean stop to at most ~1 second
-  of writes instead of losing everything queued since the last RDB snapshot.
 - `saveAndBroadcastMessage` (`apps/worker/src/integration/handlers/received-message.ts`)
   now serializes its insert → tracking → realtime → notification → event-bus critical
   section per conversation via `distributedLock`, keyed `ingress:conv:${conversationId}`.
