@@ -71,11 +71,14 @@ const appointmentWhere = (input: AppointmentListInput, now = new Date()) =>
   )
 
 type AppointmentListRow = typeof appointmentModel.$inferSelect & {
-  contactAvatar: string | null
   calendarName: string
-  contactFirstName: string | null
-  contactLastName: string | null
-  contactFullName: string | null
+  contact: {
+    id: string
+    avatar: string | null
+    firstName: string | null
+    lastName: string | null
+    fullName: string | null
+  }
 }
 
 export const appointmentRepository = {
@@ -115,19 +118,31 @@ export const appointmentRepository = {
           cancelledAt: appointmentModel.cancelledAt,
           deletedAt: appointmentModel.deletedAt,
           calendarName: appointmentCalendarModel.name,
-          contactAvatar: contactModel.avatar,
-          contactFirstName: contactModel.firstName,
-          contactLastName: contactModel.lastName,
-          contactFullName: contactModel.fullName,
+          contact: {
+            id: contactModel.id,
+            avatar: contactModel.avatar,
+            firstName: contactModel.firstName,
+            lastName: contactModel.lastName,
+            fullName: contactModel.fullName,
+          },
         })
         .from(appointmentModel)
         .innerJoin(
           appointmentCalendarModel,
-          eq(appointmentCalendarModel.id, appointmentModel.calendarId),
+          and(
+            eq(appointmentCalendarModel.id, appointmentModel.calendarId),
+            eq(
+              appointmentCalendarModel.workspaceId,
+              appointmentModel.workspaceId,
+            ),
+          ),
         )
         .innerJoin(
           contactModel,
-          eq(contactModel.id, appointmentModel.contactId),
+          and(
+            eq(contactModel.id, appointmentModel.contactId),
+            eq(contactModel.workspaceId, appointmentModel.workspaceId),
+          ),
         )
         .where(where)
         .orderBy(desc(appointmentModel.startAt))
@@ -138,11 +153,20 @@ export const appointmentRepository = {
         .from(appointmentModel)
         .innerJoin(
           appointmentCalendarModel,
-          eq(appointmentCalendarModel.id, appointmentModel.calendarId),
+          and(
+            eq(appointmentCalendarModel.id, appointmentModel.calendarId),
+            eq(
+              appointmentCalendarModel.workspaceId,
+              appointmentModel.workspaceId,
+            ),
+          ),
         )
         .innerJoin(
           contactModel,
-          eq(contactModel.id, appointmentModel.contactId),
+          and(
+            eq(contactModel.id, appointmentModel.contactId),
+            eq(contactModel.workspaceId, appointmentModel.workspaceId),
+          ),
         )
         .where(where),
     ])

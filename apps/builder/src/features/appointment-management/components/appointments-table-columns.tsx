@@ -68,7 +68,7 @@ export function getAppointmentColumns({
         <ContactNameCell
           avatarClassName="size-8"
           contact={{
-            avatar: row.original.contactAvatar,
+            avatar: row.original.contact.avatar,
             fullName: row.original.contactName,
           }}
           conversationId={row.original.conversationId}

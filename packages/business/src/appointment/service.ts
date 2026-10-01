@@ -182,7 +182,7 @@ class AppointmentService extends BaseService {
 
         return {
           ...appointment,
-          contactName: getAppointmentContactName(appointment),
+          contactName: getAppointmentContactName(appointment.contact),
           scheduleUrl: buildAppointmentUrl(
             input.appUrl,
             "/booking/schedule",
@@ -1011,14 +1011,14 @@ export function buildAppointmentUrl(
 }
 
 function getAppointmentContactName(contact: {
-  contactFullName?: string | null
-  contactFirstName?: string | null
-  contactLastName?: string | null
+  fullName?: string | null
+  firstName?: string | null
+  lastName?: string | null
 }) {
-  const nameFromParts = [contact.contactFirstName, contact.contactLastName]
+  const nameFromParts = [contact.firstName, contact.lastName]
     .filter(Boolean)
     .join(" ")
-  return (contact.contactFullName ?? nameFromParts) || null
+  return (contact.fullName ?? nameFromParts) || null
 }
 
 function getCancellationExternalSyncStatus(appointment: {
