@@ -1165,7 +1165,7 @@ importers:
         version: link:../../packages/sdk
       google-auth-library:
         specifier: ^10.7.0
-        version: 10.7.0
+        version: 10.9.1
       googleapis:
         specifier: ^171.4.0
         version: 171.4.0
@@ -1199,7 +1199,7 @@ importers:
         version: link:../../packages/sdk
       google-auth-library:
         specifier: ^10.7.0
-        version: 10.7.0
+        version: 10.9.1
       googleapis:
         specifier: ^171.4.0
         version: 171.4.0
@@ -6797,6 +6797,9 @@ packages:
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
 
+  '@tybys/wasm-util@0.10.4':
+    resolution: {integrity: sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A==}
+
   '@types/any-base@1.1.3':
     resolution: {integrity: sha512-B7RTBD7jVYxm754XDdw6UozY3ZyyBv4iF4QQSjCzeLV4avDy8JBwCuI5SN4mz27ENI6K1NtKZwQ7zcqgH2h2Mw==}
 
@@ -8539,8 +8542,8 @@ packages:
     resolution: {integrity: sha512-YGGyuEdVIjqxkxVH1pUTMY/XtmmsApXrCVv5EU25iX6inEPbV+VakJfLealkBtJN69AQmh1eGOdCl9Sm1UP6XQ==}
     engines: {node: '>=18'}
 
-  gaxios@7.1.5:
-    resolution: {integrity: sha512-5FZy72Rh8LhtjmvDrKkI+lVhrsQrVKVsItxMoDm5mNQE+xR0WVIIs+jzPSJgBvKVsLi24fZhXJIsNI0bihDzFg==}
+  gaxios@7.3.1:
+    resolution: {integrity: sha512-kB3rzJV7d9juLZh8/56QTXCwQfxyhdOMdyYk1HdQKFtF8TJTDTZQJtixWIwXdE9Jji91mC41DUNpjleo4L4eAQ==}
     engines: {node: '>=18'}
 
   gcp-metadata@8.1.2:
@@ -8614,8 +8617,8 @@ packages:
   globrex@0.1.2:
     resolution: {integrity: sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==}
 
-  google-auth-library@10.7.0:
-    resolution: {integrity: sha512-QpTAbNJ36TliZLx3TTtahR8HG0hN9RllL1e3FymOvQSIKK8JmgV58H924ub2wa2DsS3ANjjP1Aw1N+Ramc8hqQ==}
+  google-auth-library@10.9.1:
+    resolution: {integrity: sha512-i1ydyHrqcIxXkWh/uBmVkzCvIuq5yiK2ATndIe5XxKholrG/MTYP9xGYka4sQhrbIAgGjL2B6NOE7rFaiF3fXw==}
     engines: {node: '>=18'}
 
   google-logging-utils@1.1.3:
@@ -13523,7 +13526,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.10.0
       '@emnapi/runtime': 1.10.0
-      '@tybys/wasm-util': 0.10.3
+      '@tybys/wasm-util': 0.10.4
     optional: true
 
   '@napi-rs/wasm-runtime@1.2.4(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
@@ -14704,6 +14707,11 @@ snapshots:
     optional: true
 
   '@tybys/wasm-util@0.10.3':
+    dependencies:
+      tslib: 2.8.1
+    optional: true
+
+  '@tybys/wasm-util@0.10.4':
     dependencies:
       tslib: 2.8.1
     optional: true
@@ -16505,7 +16513,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  gaxios@7.1.5:
+  gaxios@7.3.1:
     dependencies:
       extend: 3.0.2
       https-proxy-agent: 7.0.6
@@ -16515,7 +16523,7 @@ snapshots:
 
   gcp-metadata@8.1.2:
     dependencies:
-      gaxios: 7.1.5
+      gaxios: 7.3.1
       google-logging-utils: 1.1.3
       json-bigint: 1.0.0
     transitivePeerDependencies:
@@ -16605,11 +16613,11 @@ snapshots:
 
   globrex@0.1.2: {}
 
-  google-auth-library@10.7.0:
+  google-auth-library@10.9.1:
     dependencies:
       base64-js: 1.5.1
       ecdsa-sig-formatter: 1.0.11
-      gaxios: 7.1.5
+      gaxios: 7.3.1
       gcp-metadata: 8.1.2
       google-logging-utils: 1.1.3
       jws: 4.0.1
@@ -16622,7 +16630,7 @@ snapshots:
     dependencies:
       extend: 3.0.2
       gaxios: 7.1.3
-      google-auth-library: 10.7.0
+      google-auth-library: 10.9.1
       google-logging-utils: 1.1.3
       qs: 6.15.2
       url-template: 2.0.8
@@ -16631,7 +16639,7 @@ snapshots:
 
   googleapis@171.4.0:
     dependencies:
-      google-auth-library: 10.7.0
+      google-auth-library: 10.9.1
       googleapis-common: 8.0.2
     transitivePeerDependencies:
       - supports-color
