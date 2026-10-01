@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   findMessengerByInboxIdForWorkspace: vi.fn(),
   findInstagramByInboxIdForWorkspace: vi.fn(),
   findThreadsByInboxIdForWorkspace: vi.fn(),
+  threadsRunAction: vi.fn(),
   cacheKeys: [] as string[],
   cacheOptions: [] as Record<string, unknown>[],
 }))
@@ -44,7 +45,9 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
 }))
 
-vi.mock("@/integration", () => ({ integrations: {} }))
+vi.mock("@/integration", () => ({
+  integrations: { threads: { runAction: mocks.threadsRunAction } },
+}))
 
 const { getPostDetailsQuery } = await import(
   "@/features/conversations/queries/get-post-details.query"
@@ -95,6 +98,32 @@ describe("getPostDetailsQuery", () => {
       postId: "7123",
     })
     expect(mocks.findMessengerByInboxIdForWorkspace).not.toHaveBeenCalled()
+  })
+
+  // For a Threads video `media_url` is the .mp4 itself; the post card renders
+  // `picture` in an <img>, so it must be the thumbnail.
+  test("shows a Threads video's thumbnail, not its .mp4 media_url", async () => {
+    mocks.findThreadsByInboxIdForWorkspace.mockResolvedValue({
+      id: "integration-1",
+      auth: { tokens: { accessToken: "token" } },
+    })
+    mocks.threadsRunAction.mockResolvedValue({
+      id: "17841400000000001",
+      text: "video post",
+      media_type: "VIDEO",
+      media_url: "https://cdn.example.com/video.mp4",
+      thumbnail_url: "https://cdn.example.com/thumb.jpg",
+      timestamp: "2026-09-01T00:00:00Z",
+    })
+
+    const result = await getPostDetailsQuery({
+      workspaceId: "1",
+      inboxId: "inbox_1",
+      postId: "17841400000000001",
+      channel: "threads",
+    })
+
+    expect(result.picture).toBe("https://cdn.example.com/thumb.jpg")
   })
 
   // The handler only checks that the caller belongs to `workspaceId`; the inbox

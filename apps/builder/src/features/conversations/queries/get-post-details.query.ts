@@ -12,6 +12,7 @@ import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import { withCache } from "@chatbotx.io/redis"
+import { resolvePostPreviewImage } from "@/features/shared/comment-automation/lib/post-preview-image"
 import { integrations } from "@/integration"
 import { type PostDetails, supportsPostDetails } from "../schema/query"
 
@@ -119,7 +120,7 @@ export async function getPostDetailsQuery(props: {
         })
         return {
           text: raw.text,
-          picture: raw.media_url ?? raw.thumbnail_url,
+          picture: resolvePostPreviewImage(raw),
           from: raw.username
             ? { id: raw.owner?.id ?? raw.username, name: raw.username }
             : undefined,
