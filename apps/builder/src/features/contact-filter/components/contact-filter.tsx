@@ -5,7 +5,7 @@ import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-fie
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
-import { useFieldArray, useFormContext } from "react-hook-form"
+import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { pruneExcludedConditions } from "../lib/prune-conditions"
 import { getBrowserTimezone } from "../lib/timezone"
 import type { ContactFilterCondition } from "../schema"
@@ -53,9 +53,11 @@ export const ContactFilter = ({
     }
   }, [parentName, getValues, setValue])
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const watchedConditions: ContactFilterCondition[] =
+    useWatch({ control, name: `${parentName}.conditions` }) ?? []
 
   const { configs, conditionOptions, operatorLabelByValue } =
-    useContactFilterConfigs(inboxChannel, includeBotFields)
+    useContactFilterConfigs(inboxChannel, includeBotFields, watchedConditions)
   const filteredConfigs = useMemo(
     () =>
       configs.filter(

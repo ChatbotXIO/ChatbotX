@@ -576,6 +576,7 @@
     }
   },
   "condition": {
+    "unknownValue": "Ukendt",
     "yes": "Ja",
     "no": "Nej",
     "valuePlaceholder": "...",

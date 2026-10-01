@@ -19,6 +19,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../../base.service"
 import { ChatbotXException, notFoundException } from "../../errors"
+import { type IdLabel, selectLabelsByIds } from "../../select-labels-by-ids"
 import { workspaceMemberService } from "../../workspace-member/service"
 
 type InboxTeamWithMembers = InboxTeamModel & {
@@ -354,6 +355,14 @@ class InboxTeamService extends BaseService {
       where: { workspaceId, id: { in: ids } },
       columns: { id: true },
     })
+  }
+
+  /** Teams of the workspace among `ids`. */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(inboxTeamModel, input)
   }
 }
 

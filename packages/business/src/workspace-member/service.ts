@@ -426,6 +426,28 @@ export class WorkspaceMemberService extends BaseService {
       },
     })
   }
+
+  /** Members of the workspace among `userIds`; `id` is the user id. */
+  async listLabelsByUserIds(input: {
+    workspaceId: string
+    userIds: string[]
+  }): Promise<{ id: string; name: string }[]> {
+    if (input.userIds.length === 0) {
+      return []
+    }
+    const members = await db.query.workspaceMemberModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        userId: { in: input.userIds },
+      },
+      columns: { userId: true },
+      with: { user: { columns: { name: true } } },
+    })
+    return members.map((member) => ({
+      id: member.userId,
+      name: member.user?.name ?? "--",
+    }))
+  }
 }
 
 export const workspaceMemberService = new WorkspaceMemberService()

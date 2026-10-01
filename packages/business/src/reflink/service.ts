@@ -12,6 +12,7 @@ import type { ReflinkModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
+import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import { assertDeletable } from "../template/installed-resource.service"
 
 type SelectOptionRow = { id: string; name: string }
@@ -157,6 +158,17 @@ class ReflinkService extends BaseService {
           inArray(reflinkModel.id, input.ids),
         ),
       )
+  }
+
+  /** Existing ref links only (QR codes excluded). */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(reflinkModel, {
+      ...input,
+      where: eq(reflinkModel.type, "refLink"),
+    })
   }
 }
 

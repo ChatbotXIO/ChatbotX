@@ -1,5 +1,6 @@
 import type { HTTPMethod } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { FILTER_VALUE_LABELS_POST_PATH } from "@/features/contact-filter/lib/api-paths"
 import { CONVERSATIONS_LIST_POST_PATH } from "@/features/conversations/lib/api-paths"
 
 const { getAccessState, isAtLimit, isCloud } = vi.hoisted(() => ({
@@ -209,6 +210,19 @@ describe("assertWorkspaceOwnerAccessForMethod", () => {
         method: "POST",
         ownerId: "owner-1",
         path: "/workspaces/{workspaceId}/conversations/list",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("allows the filter value labels POST path for a trial-expired workspace", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path: FILTER_VALUE_LABELS_POST_PATH,
       }),
     ).resolves.toBeUndefined()
   })

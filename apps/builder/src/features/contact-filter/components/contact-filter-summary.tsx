@@ -4,8 +4,8 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { useTranslations } from "next-intl"
 import type { ContactFilterCriteria } from "../schema"
 import {
-  formatConditionValueDisplay,
   formatCtwaRetargetChipLabel,
+  formatFilterConditionValue,
 } from "./contact-filter-config"
 import { useContactFilterConfigs } from "./use-contact-filter-configs"
 
@@ -42,8 +42,11 @@ function ContactFilterSummaryList({
   inboxChannel,
 }: ContactFilterSummaryProps & { contactFilter: ContactFilterCriteria }) {
   const t = useTranslations()
-  const { configs, operatorLabelByValue } =
-    useContactFilterConfigs(inboxChannel)
+  const { configs, operatorLabelByValue } = useContactFilterConfigs(
+    inboxChannel,
+    false,
+    contactFilter.conditions,
+  )
 
   const operatorLabel =
     contactFilter.operator === "and"
@@ -107,9 +110,10 @@ function ContactFilterSummaryList({
             })()
           const conditionOperator =
             operatorLabelByValue.get(condition.operator) ?? condition.operator
-          const valueDisplay = formatConditionValueDisplay(
+          const valueDisplay = formatFilterConditionValue(
             "value" in condition ? condition.value : undefined,
-            fieldConfig?.options,
+            fieldConfig,
+            t,
           )
           const conditionKey = [
             condition.field,

@@ -102,6 +102,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
+import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import {
   broadcastPlanPolicyService,
   type RestrictedBroadcastPlanContext,
@@ -2758,6 +2759,17 @@ class BroadcastService extends BaseService {
           eq(contactsOnBroadcastsModel.contactId, input.contactId),
         ),
       )
+  }
+
+  /** Existing rows only (any channel); soft-deleted broadcasts are excluded. */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(broadcastModel, {
+      ...input,
+      where: isNull(broadcastModel.deletedAt),
+    })
   }
 }
 

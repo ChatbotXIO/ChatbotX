@@ -118,6 +118,31 @@ describe("ContactFilterSummary", () => {
     return container.textContent ?? ""
   }
 
+  test("flags values missing from the looked-up labels as unknown", () => {
+    mockUseContactFilterConfigs.mockReturnValue({
+      configs: configs.map((config) =>
+        config.name === "tags"
+          ? { ...config, valueLabels: [{ label: "VIP", value: "tag-1" }] }
+          : config,
+      ),
+      conditionOptions: [],
+      operatorLabelByValue: new Map([["in", "Includes"]]),
+    })
+    const filter = parseFilter([
+      { field: "tags", operator: "in", value: ["tag-1", "deleted"] },
+    ])
+
+    const text = renderSummary(filter)
+
+    expect(text).toContain("VIP, condition.unknownValue")
+    // The filter is handed to the hook so it can look its ids up.
+    expect(mockUseContactFilterConfigs).toHaveBeenCalledWith(
+      "messenger",
+      false,
+      filter.conditions,
+    )
+  })
+
   test("resolves option labels, dynamic field names, and operator labels", async () => {
     const text = await renderSummary(
       parseFilter([
@@ -139,7 +164,11 @@ describe("ContactFilterSummary", () => {
     expect(text).toContain("Loyalty Tier")
     expect(text).toContain("Includes")
     expect(text).toContain("Is")
-    expect(mockUseContactFilterConfigs).toHaveBeenCalledWith("messenger")
+    expect(mockUseContactFilterConfigs).toHaveBeenCalledWith(
+      "messenger",
+      false,
+      expect.any(Array),
+    )
   })
 
   test("resolves nested assignee options and top-level unassigned", async () => {

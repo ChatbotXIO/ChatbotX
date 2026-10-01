@@ -11,6 +11,7 @@ import { describe, expect, test } from "vitest"
 import {
   type FieldConfig,
   formatConditionValueDisplay,
+  formatFilterConditionValue,
   getConditionOptions,
   getFieldConfigs,
   getFieldOptions,
@@ -706,5 +707,109 @@ describe("contact filter field config helpers", () => {
         ],
       ),
     ).toBe("Alice, Sales Team, Unassigned, missing")
+  })
+
+  describe("looked-up value labels", () => {
+    const t = (key: string) => key
+    const tagLabels = [{ label: "VIP", value: "tag-1" }]
+
+    test("flags a value missing from the looked-up labels as unknown", () => {
+      expect(
+        formatConditionValueDisplay(
+          ["tag-1", "deleted"],
+          tagLabels,
+          "condition.unknownValue",
+        ),
+      ).toBe("VIP, condition.unknownValue")
+    })
+
+    test("an empty looked-up list means every value was deleted", () => {
+      expect(
+        formatConditionValueDisplay("tag-1", [], "condition.unknownValue"),
+      ).toBe("condition.unknownValue")
+    })
+
+    test("without an unknown label an empty or missing list shows the raw value", () => {
+      expect(formatConditionValueDisplay("tag-1", [])).toBe("tag-1")
+      expect(formatConditionValueDisplay("tag-1", undefined)).toBe("tag-1")
+    })
+
+    test("formatFilterConditionValue prefers looked-up labels over picker options", () => {
+      const fieldConfig: FieldConfig = {
+        name: "tags",
+        formField: "multiSelect",
+        group: "analytics",
+        // The picker list is capped, so tag-9 is not in it.
+        options: [{ label: "VIP", value: "tag-1" }],
+        valueLabels: [
+          { label: "VIP", value: "tag-1" },
+          { label: "Late tag", value: "tag-9" },
+        ],
+      }
+
+      expect(
+        formatFilterConditionValue(["tag-1", "tag-9", "gone"], fieldConfig, t),
+      ).toBe("VIP, Late tag, condition.unknownValue")
+    })
+
+    test("formatFilterConditionValue falls back to picker options until labels load", () => {
+      const fieldConfig: FieldConfig = {
+        name: "tags",
+        formField: "multiSelect",
+        group: "analytics",
+        options: [{ label: "VIP", value: "tag-1" }],
+      }
+
+      expect(
+        formatFilterConditionValue(["tag-1", "tag-9"], fieldConfig, t),
+      ).toBe("VIP, tag-9")
+      expect(formatFilterConditionValue("titan", undefined, t)).toBe("titan")
+    })
+
+    test("getFieldConfigs attaches looked-up labels only for id-backed fields", () => {
+      const configs = getFieldConfigs({
+        t,
+        tagOptions: [],
+        inboxOptions: [],
+        flowVersionOptions: [],
+        customFields: [],
+        assigneeOptions: [{ label: "Unassigned", value: "unassigned" }],
+        filterValueLabels: {
+          tags: [{ id: "tag-1", name: "VIP" }],
+          sequences: [],
+          broadcasts: [],
+          reflinks: [],
+          inboxes: [],
+          members: [{ id: "7", name: "Alice" }],
+          inboxTeams: [{ id: "3", name: "Sales" }],
+        },
+      })
+      const byName = (name: string) =>
+        configs.find((config) => config.name === name)
+
+      expect(byName("tags")?.valueLabels).toEqual([
+        { value: "tag-1", label: "VIP" },
+      ])
+      expect(byName("conversationAssigned")?.valueLabels).toEqual([
+        { value: "u_7", label: "Alice" },
+        { value: "t_3", label: "Sales" },
+        { label: "Unassigned", value: "unassigned" },
+      ])
+      expect(byName("fullName")?.valueLabels).toBeUndefined()
+    })
+
+    test("getFieldConfigs leaves valueLabels unset until the lookup has loaded", () => {
+      const configs = getFieldConfigs({
+        t,
+        tagOptions: [],
+        inboxOptions: [],
+        flowVersionOptions: [],
+        customFields: [],
+      })
+
+      expect(configs.every((config) => config.valueLabels === undefined)).toBe(
+        true,
+      )
+    })
   })
 })

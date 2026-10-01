@@ -1041,6 +1041,7 @@
     "toggleLabel": "同步现有联系人与聊天记录"
   },
   "condition": {
+    "unknownValue": "未知",
     "ctwaRetarget": {
       "adPrefix": "广告",
       "allAds": "所有广告",

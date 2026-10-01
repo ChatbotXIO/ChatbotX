@@ -24,6 +24,10 @@ export * from "./contact"
 // worker consumers (contact-scan engine, coexist shim) import it from the
 // top-level "@chatbotx.io/business" barrel, so this placement serves them fine.
 export * from "./contact/bulk-import-channel-contacts"
+// Same placement reason: it pulls in the broadcast/inbox/sequence/reflink/tag/
+// member/inbox-team services, which the ./contact barrel (imported by
+// conversation/service) must not reach.
+export * from "./contact/filter-value-labels"
 export * from "./contact-custom-field"
 export * from "./contact-export"
 export * from "./contact-inbox"
