@@ -3,6 +3,7 @@ import {
   listThreadsPosts,
   type ThreadsAuthValue,
 } from "@chatbotx.io/integration-threads"
+import { resolvePostPreviewImage } from "@/features/shared/comment-automation/lib/post-preview-image"
 import { collectSettled } from "@/lib/collect-settled"
 
 export type ThreadsAutomationPost = {
@@ -44,7 +45,7 @@ export async function listThreadsPostsForWorkspace(workspaceId: string) {
       return items.map<ThreadsAutomationPost>((item) => ({
         id: item.id,
         message: item.text,
-        full_picture: item.media_url ?? item.thumbnail_url,
+        full_picture: resolvePostPreviewImage(item),
         created_time: item.timestamp,
         permalink_url: item.permalink,
         accountId: integration.threadsUserId,

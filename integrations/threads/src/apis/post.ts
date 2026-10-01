@@ -7,6 +7,7 @@ export type ThreadsPostDetails = {
   id: string
   text?: string
   permalink?: string
+  media_type?: string
   media_url?: string
   thumbnail_url?: string
   timestamp?: string
@@ -72,7 +73,7 @@ export const getPostDetails = (
     threadsGraphClient.get<ThreadsPostDetails>(endpoint, {
       searchParams: {
         fields:
-          "text,permalink,media_url,thumbnail_url,timestamp,username,owner",
+          "text,permalink,media_type,media_url,thumbnail_url,timestamp,username,owner",
         access_token: auth.tokens.accessToken,
       },
     }),

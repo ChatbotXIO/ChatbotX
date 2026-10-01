@@ -8,6 +8,7 @@ import {
   type InstagramAuthValue as InstagramFacebookAuthValue,
   listInstagramMedia as listInstagramFacebookMediaApi,
 } from "@chatbotx.io/integration-instagram-facebook"
+import { resolvePostPreviewImage } from "@/features/shared/comment-automation/lib/post-preview-image"
 import { collectSettled } from "@/lib/collect-settled"
 
 export type InstagramAutomationMedia = {
@@ -28,6 +29,7 @@ export type InstagramAutomationAccount = {
 type InstagramMediaListItem = {
   id: string
   caption?: string
+  media_type?: string
   media_url?: string
   thumbnail_url?: string
   timestamp: string
@@ -56,7 +58,7 @@ async function collectInstagramMedia(
       return media.map<InstagramAutomationMedia>((item) => ({
         id: item.id,
         message: item.caption,
-        full_picture: item.media_url ?? item.thumbnail_url,
+        full_picture: resolvePostPreviewImage(item),
         created_time: item.timestamp,
         permalink_url: item.permalink,
         media_product_type: item.media_product_type,
