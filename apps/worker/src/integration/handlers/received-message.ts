@@ -1212,7 +1212,7 @@ const saveAndBroadcastMessage = async (
     return await distributedLock.runExclusive({
       key: lockKey,
       timeoutInSeconds: 30,
-      retryTimeoutInSeconds: 30,
+      retryTimeoutInSeconds: LOCK_CONTENTION_POLICY.lockWaitSeconds,
       fn: () => persistMessage(props),
     })
   } catch (error) {

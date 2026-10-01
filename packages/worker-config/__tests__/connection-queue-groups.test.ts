@@ -94,18 +94,33 @@ describe("getRedisConnection queue-group routing", () => {
     bulk.disconnect()
   })
 
-  test("defaults to the hot group when no group is passed", async () => {
+  test("requires an explicit queue group", async () => {
     vi.stubEnv("REDIS_URL", DEAD_REDIS_URL)
     vi.stubEnv("REDIS_QUEUE_URL", DEAD_QUEUE_URL)
     vi.stubEnv("REDIS_QUEUE_BULK_URL", DEAD_BULK_URL)
 
     const { getRedisConnection } = await import("../src/lib/connection")
-    const defaultConnection = getRedisConnection()
+
+    expect(getRedisConnection).toHaveLength(1)
+  })
+
+  test("returns the singleton assigned to each queue's group", async () => {
+    vi.stubEnv("REDIS_URL", DEAD_REDIS_URL)
+    vi.stubEnv("REDIS_QUEUE_URL", DEAD_QUEUE_URL)
+    vi.stubEnv("REDIS_QUEUE_BULK_URL", DEAD_BULK_URL)
+
+    const { getQueueConnection, getRedisConnection } = await import(
+      "../src/lib/connection"
+    )
+    const { queueNames } = await import("../src/lib/types")
     const hot = getRedisConnection("hot")
+    const bulk = getRedisConnection("bulk")
 
-    expect(defaultConnection).toBe(hot)
+    expect(getQueueConnection(queueNames.enum.chat)).toBe(hot)
+    expect(getQueueConnection(queueNames.enum.quota)).toBe(bulk)
 
-    defaultConnection.disconnect()
+    hot.disconnect()
+    bulk.disconnect()
   })
 
   test("assigns every queue to its documented Redis group", async () => {

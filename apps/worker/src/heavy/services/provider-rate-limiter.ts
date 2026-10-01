@@ -25,7 +25,7 @@ export async function waitForHeavyProviderSlot(input: {
   }
 
   const key = `heavy-provider-rate:${input.workspaceId}:${input.provider}`
-  const redis = getRedisConnection()
+  const redis = getRedisConnection("hot")
 
   while (true) {
     const waitMs = Number(

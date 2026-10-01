@@ -17,9 +17,8 @@ to describe an aspirational design as deployed architecture.
 
 ## Decision
 
-Remove the unused Kafka workspace package, its dependencies, and its supporting
-Docker and environment configuration. Simplify the message-queue factory and its
-configuration types to the BullMQ implementation that is actually used.
+Remove the unused Kafka workspace package, its dependencies, its supporting Docker
+and environment configuration, and the single-use BullMQ message-queue wrapper.
 
 ## Consequences
 

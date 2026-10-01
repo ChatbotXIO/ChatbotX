@@ -44,9 +44,9 @@ Grounding facts, verified against the code at the time of this decision:
 - `apps/worker/src/sequence-scheduler/worker-consumer.ts` swallowed every processing
   error inside its BullMQ handler, so BullMQ marked the job completed and never
   retried a genuinely failed dispatch.
-- `packages/worker-config/src/message-queue/bullmq-provider.ts` logged failed jobs with
-  `console.error`, violating the repository's structured-logging invariant (the
-  serializer key is `err`, not `error`).
+- The former generic message-queue wrapper logged failed jobs with `console.error`,
+  violating the repository's structured-logging invariant (the serializer key is
+  `err`, not `error`).
 
 ## Decision
 

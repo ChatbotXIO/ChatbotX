@@ -38,7 +38,7 @@ Key components of the project's tech stack.
 
 ### Background Jobs & Queues
 
-- [BullMQ](https://bullmq.io/) backed by **Redis / Dragonfly**
+- [BullMQ](https://bullmq.io/) backed by **Redis**
 - Queues split into a hot group (`integration`, `chat`, `notification`, `low`,
   `callTranscription`, `whatsappVoipSignaling`) and a bulk group (`aiAgent`, `heavy`,
   `default`, `schedule`, `trigger`, `webhook`, `quota`) via `REDIS_QUEUE_URL` /

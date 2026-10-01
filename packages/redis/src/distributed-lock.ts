@@ -81,6 +81,11 @@ export const distributedLockFactory = (
   }
 }
 
+export type DistributedLock = {
+  runExclusive<T>(params: RunExclusiveParams<T>): Promise<T>
+  destroy(): Promise<void>
+}
+
 type RunExclusiveParams<T> = {
   key: string
   timeoutInSeconds: number

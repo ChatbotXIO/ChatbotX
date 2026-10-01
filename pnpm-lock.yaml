@@ -203,9 +203,6 @@ importers:
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../../packages/redis
-      '@chatbotx.io/scheduler':
-        specifier: workspace:*
-        version: link:../../packages/scheduler
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
@@ -2749,7 +2746,6 @@ importers:
       vitest:
         specifier: ^4.1.0
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
-
 
   packages/logger:
     dependencies:

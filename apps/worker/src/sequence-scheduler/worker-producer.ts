@@ -2,14 +2,15 @@ import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import {
-  type MessagingProducer,
-  SEQUENCE_SCHEDULER_QUEUE_NAME,
+  getSequenceSchedulerQueue,
+  type SequenceSchedulerJobData,
+  type SequenceSchedulerQueue,
 } from "@chatbotx.io/worker-config"
-import { createProducer } from "@chatbotx.io/worker-config/message-queue/factory"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 
-const TOTAL_BUCKETS = 256
+import { getAssignedBuckets } from "./buckets"
+
 const CLAIM_LIMIT = 100
 const LOCK_TTL_MS = 30_000
 const TICK_INTERVAL_MS = 500
@@ -31,7 +32,7 @@ type ClaimedDispatch = {
 export class SchedulerWorker {
   private readonly config: SchedulerConfig
   private _scheduler: SchedulerClient | null = null
-  private _producer: MessagingProducer | null = null
+  private _queue: SequenceSchedulerQueue | null = null
   private running = false
   private readonly timers = new Map<number, NodeJS.Timeout>()
 
@@ -42,16 +43,18 @@ export class SchedulerWorker {
     return this._scheduler
   }
 
-  private get producer(): MessagingProducer {
-    if (!this._producer) {
-      throw new Error("Producer not initialized. Call start() first.")
+  private get queue(): SequenceSchedulerQueue {
+    if (!this._queue) {
+      throw new Error(
+        "Sequence scheduler queue not initialized. Call start() first.",
+      )
     }
-    return this._producer
+    return this._queue
   }
 
   constructor(config: Partial<SchedulerConfig> = {}) {
     this.config = {
-      buckets: config.buckets || this.getAssignedBuckets(),
+      buckets: config.buckets || getAssignedBuckets(),
       tickIntervalMs: config.tickIntervalMs || TICK_INTERVAL_MS,
       claimLimit: config.claimLimit || CLAIM_LIMIT,
       lockTtlMs: config.lockTtlMs || LOCK_TTL_MS,
@@ -85,9 +88,11 @@ export class SchedulerWorker {
 
     const redisClient = await sequenceConnections.useExisting()
     this._scheduler = new SchedulerClient(redisClient)
-    this._producer = createProducer({
-      topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
-    })
+    const queue = await getSequenceSchedulerQueue()
+    if (!queue) {
+      throw new Error("Sequence scheduler queue is unavailable")
+    }
+    this._queue = queue
 
     this.running = true
 
@@ -265,31 +270,33 @@ export class SchedulerWorker {
       pendingDispatches.map((dispatch) => [dispatch.id, dispatch.workspaceId]),
     )
 
-    const messages = dispatches.flatMap((dispatch) => {
+    const jobs = dispatches.flatMap((dispatch) => {
       const workspaceId = workspaceByDispatchId.get(dispatch.dispatchId)
       if (!workspaceId) {
         return []
       }
 
+      const data: SequenceSchedulerJobData = {
+        dispatchId: dispatch.dispatchId,
+        claimedAt: Date.now(),
+        bucket,
+        workspaceId,
+      }
       return {
-        key: dispatch.dispatchId,
-        value: JSON.stringify({
-          dispatchId: dispatch.dispatchId,
-          claimedAt: Date.now(),
-          bucket,
-          workspaceId,
-        }),
+        name: dispatch.dispatchId,
+        data,
+        opts: { jobId: `sequence-${dispatch.dispatchId}` },
       }
     })
 
-    if (messages.length === 0) {
+    if (jobs.length === 0) {
       return
     }
 
-    await this.producer.send(messages)
+    await this.queue.addBulk(jobs)
   }
 
-  async stop() {
+  stop() {
     if (!this.running) {
       return
     }
@@ -301,22 +308,7 @@ export class SchedulerWorker {
     }
     this.timers.clear()
 
-    await this.producer.close()
-  }
-
-  private getAssignedBuckets(): number[] {
-    const bucketRange = process.env.SCHEDULER_BUCKET_RANGE
-
-    if (bucketRange) {
-      if (bucketRange.includes(",")) {
-        return bucketRange.split(",").map(Number)
-      }
-
-      const [start, end] = bucketRange.split("-").map(Number)
-      return Array.from({ length: end - start + 1 }, (_, i) => start + i)
-    }
-
-    return Array.from({ length: TOTAL_BUCKETS }, (_, i) => i)
+    this._queue = null
   }
 }
 

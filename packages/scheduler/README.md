@@ -35,13 +35,8 @@ Generic scheduler client that accepts any Redis client.
 - `removeFromRetry(bucket, dispatchId)` - Remove from retry queue
 - `removeFromAll(bucket, dispatchId)` - Remove from both queues
 - `getDue(key, nowMs, limit)` - Get due dispatches
-- `acquireLock(bucket, dispatchId, lockTtlMs)` - Acquire a lock
-- `releaseLock(bucket, dispatchId)` - Release a lock
 - `getScheduleCount(bucket)` - Get schedule queue count
 - `getRetryCount(bucket)` - Get retry queue count
 - `batchAddToSchedule(items)` - Batch add to schedule
-- `batchRemoveFromAll(items)` - Batch remove from all queues
 - `getZSetMembers(bucket, type)` - Get all members from a queue
-- `isConnected()` - Check if Redis is connected
-- `isConnectingOrConnected()` - Check if Redis is connecting or connected
 

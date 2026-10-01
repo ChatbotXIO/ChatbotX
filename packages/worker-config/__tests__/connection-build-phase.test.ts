@@ -23,7 +23,7 @@ describe("getRedisConnection during next build", () => {
     vi.stubEnv("NEXT_PHASE", "phase-production-build")
 
     const { getRedisConnection } = await import("../src/lib/connection")
-    const connection = getRedisConnection()
+    const connection = getRedisConnection("hot")
 
     // lazyConnect keeps the socket untouched until the first command.
     expect(connection.status).toBe("wait")
@@ -35,7 +35,7 @@ describe("getRedisConnection during next build", () => {
     vi.stubEnv("NEXT_PHASE", "")
 
     const { getRedisConnection } = await import("../src/lib/connection")
-    const connection = getRedisConnection()
+    const connection = getRedisConnection("hot")
 
     expect(connection.status).not.toBe("wait")
 

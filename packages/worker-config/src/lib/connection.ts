@@ -51,7 +51,7 @@ function resolveGroupUrl(group: QueueGroup): string {
   return queueUrl
 }
 
-export function getRedisConnection(group: QueueGroup = "hot") {
+export function getRedisConnection(group: QueueGroup) {
   const existing = connectionsByGroup[group]
   if (existing) {
     return existing

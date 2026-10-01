@@ -409,5 +409,3 @@ export const distributedStoreFactory = (
     return Number(start)
   },
 })
-
-export type DistributedStore = ReturnType<typeof distributedStoreFactory>

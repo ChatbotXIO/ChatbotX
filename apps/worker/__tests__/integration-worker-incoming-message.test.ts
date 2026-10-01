@@ -904,7 +904,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
       expect.objectContaining({
         key: "ingress:conv:conv-1",
         timeoutInSeconds: 30,
-        retryTimeoutInSeconds: 30,
+        retryTimeoutInSeconds: 10,
         fn: expect.any(Function),
       }),
     )

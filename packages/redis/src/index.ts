@@ -1,7 +1,6 @@
 import { bloomFilterFactory } from "./bloom-filter"
 import { casStoreFactory } from "./cas-store"
 import { cacheConnections } from "./connections/cache-connection"
-import { sequenceConnections } from "./connections/sequence-connection"
 import { distributedLockFactory } from "./distributed-lock"
 import { distributedStoreFactory } from "./distributed-store"
 import { presenceStoreFactory } from "./presence-store"
@@ -21,6 +20,7 @@ export const presenceStore = presenceStoreFactory(cacheConnections.useExisting)
 
 export { cacheConnections } from "./connections/cache-connection"
 export {
+  type DistributedLock,
   distributedLockFactory,
   isLockAcquisitionError,
 } from "./distributed-lock"
@@ -29,11 +29,7 @@ export const distributedStore = distributedStoreFactory(
   cacheConnections.useExisting,
 )
 
-export { sequenceConnections } from "./connections/sequence-connection"
-export { createRedisConnection } from "./redis-client"
-export const distributedSequenceStore = distributedStoreFactory(
-  sequenceConnections.useExisting,
-)
-
 export * from "./cache-utils"
+export { sequenceConnections } from "./connections/sequence-connection"
 export * from "./queue-utils"
+export { createRedisConnection } from "./redis-client"

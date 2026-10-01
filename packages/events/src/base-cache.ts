@@ -39,7 +39,7 @@ export abstract class BaseCache {
     }
 
     try {
-      const redis = getRedisConnection()
+      const redis = getRedisConnection("hot")
       const data = await redis.get(cacheKey)
 
       if (data) {
@@ -133,7 +133,7 @@ export abstract class BaseCache {
       this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
       try {
-        const redis = getRedisConnection()
+        const redis = getRedisConnection("hot")
         await redis.setex(cacheKey, this.redisTTL, JSON.stringify(chatbotMap))
       } catch (error) {
         console.error("Redis setex error (cache):", error)
@@ -157,7 +157,7 @@ export abstract class BaseCache {
       const cacheKey = this.getCacheKey(workspaceId)
       this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
-      const redis = getRedisConnection()
+      const redis = getRedisConnection("hot")
       await redis.setex(cacheKey, this.redisTTL, JSON.stringify(chatbotMap))
     } catch (error) {
       console.error("Update cache error (cache):", error)
@@ -169,7 +169,7 @@ export abstract class BaseCache {
       const cacheKey = this.getCacheKey(workspaceId)
       this.ramCache.delete(cacheKey)
 
-      const redis = getRedisConnection()
+      const redis = getRedisConnection("hot")
       await redis.del(cacheKey)
     } catch (error) {
       console.error("Remove cache error (cache):", error)
@@ -190,7 +190,7 @@ export abstract class BaseCache {
       this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
       try {
-        const redis = getRedisConnection()
+        const redis = getRedisConnection("hot")
         await redis.setex(cacheKey, this.redisTTL, JSON.stringify(chatbotMap))
       } catch (error) {
         console.error("Redis cache error (cache):", error)
