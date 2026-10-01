@@ -165,7 +165,7 @@ describe("getPostDetailsQuery", () => {
       channel: "tiktok",
     })
 
-    expect(mocks.cacheKeys).toEqual(["post-details:42:inbox_1:7123"])
+    expect(mocks.cacheKeys).toEqual(["post-details:v2:42:inbox_1:7123"])
   })
 
   // A transient TikTok failure used to pin a caption-less, thumbnail-less post

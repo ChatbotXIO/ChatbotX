@@ -35,12 +35,18 @@ type CachedPostDetails = PostDetails & { degraded?: boolean }
 // single cross-workspace read — from a caller predating the scoped lookups
 // below, or from a future one that forgets them — would stay served to everyone
 // for a full day after the hole itself was closed.
+//
+// Bump the version whenever the cached shape or its meaning changes, so entries
+// written by the old code stop being served. v2: Threads videos cached the .mp4
+// `media_url` as `picture` before the thumbnail fix.
+const POST_DETAILS_CACHE_VERSION = "v2"
+
 function getPostDetailsCacheKey(
   workspaceId: string,
   inboxId: string,
   postId: string,
 ): string {
-  return `post-details:${workspaceId}:${inboxId}:${postId}`
+  return `post-details:${POST_DETAILS_CACHE_VERSION}:${workspaceId}:${inboxId}:${postId}`
 }
 
 // `async` so an unsupported channel rejects rather than throwing
