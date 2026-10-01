@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./errors": "./src/errors.ts",
     "./media-hydration": "./src/media-hydration.ts",
-    "./registry": "./src/registry.ts"
+    "./registry": "./src/registry.ts",
+    "./thread-control": "./src/thread-control.ts"
   },
   "scripts": {
     "build": "tsdown",

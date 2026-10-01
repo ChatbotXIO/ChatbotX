@@ -26,6 +26,7 @@ vi.mock("@/lib/safe-action", () => ({
 
 vi.mock("../src/features/messages/schema/mutation", () => ({
   createMessageRequest: {},
+  createMessageWithRoutingBypassRequest: {},
 }))
 
 const { createMessageAction: createMessageActionUntyped } = await import(

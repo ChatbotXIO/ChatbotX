@@ -283,3 +283,50 @@ export const isContactScanChannel = (
 ): channel is ContactScanChannel =>
   channel != null &&
   (CONTACT_SCAN_CHANNELS as readonly string[]).includes(channel)
+
+/**
+ * Channels that support conversation routing (thread control: another app
+ * such as Meta AI or a partner may own the thread while this app listens on
+ * standby). Subset of `channelTypes`.
+ *
+ * Lives here for the same reason as `channelTypes`/`coexistChannels` (see the
+ * comments above): the builder's routing view, the business service and the
+ * worker send gate all need the same list without adding a database
+ * dependency. A channel joins it once its adapter implements the routing
+ * handlers; shared code keys off this set, never a channel name.
+ */
+export const threadControlChannels = z.enum(["whatsapp", "messenger"])
+
+export type ThreadControlChannel = z.infer<typeof threadControlChannels>
+
+/**
+ * Same values as `threadControlChannels.options`, exposed as a plain array for
+ * callers that want that shape directly.
+ */
+export const THREAD_CONTROL_CHANNELS = threadControlChannels.options
+
+/** Whether a channel string is one of the routing-capable channels. */
+export const isThreadControlChannel = (
+  channel: string | null | undefined,
+): channel is ThreadControlChannel =>
+  channel != null &&
+  (THREAD_CONTROL_CHANNELS as readonly string[]).includes(channel)
+
+/**
+ * Routing channels whose archive auto-releases an owned thread on the channel
+ * (a `release` call so the number does not keep the conversation). A channel
+ * absent from this set skips the release on archive: nothing is enqueued and no
+ * idle state is recorded (Messenger: Meta has no release for a Page-owned
+ * thread, and the 24h window ends the thread by itself). Subset of
+ * `threadControlChannels`; shared code keys off this set, never a channel name.
+ */
+export const ARCHIVE_RELEASE_CHANNELS: readonly ThreadControlChannel[] = [
+  "whatsapp",
+]
+
+/** Whether archiving a contact should release its owned thread on the channel. */
+export const supportsArchiveRelease = (
+  channel: string | null | undefined,
+): channel is ThreadControlChannel =>
+  channel != null &&
+  (ARCHIVE_RELEASE_CHANNELS as readonly string[]).includes(channel)

@@ -37,6 +37,9 @@ const AUTH_FAILED_CODES = new Set([
   133_009, // PIN entered too quickly
 ])
 
+/** `take` refused: the caller is not the escalation partner. */
+export const THREAD_CONTROL_NOT_ESCALATION_CODE = 2_494_191
+
 const PERMISSION_DENIED_CODES = new Set([
   3, // Capability disabled
   10, // Permission denied
@@ -51,7 +54,16 @@ const PERMISSION_DENIED_CODES = new Set([
   133_006, // Phone verification required
   133_010, // Phone not registered
   133_015, // Wait before re-registering
+  THREAD_CONTROL_NOT_ESCALATION_CODE, // Thread control: only escalation may `take`
 ])
+
+/**
+ * Codes Meta returns when a non-owner sends a Service message. Meta has not
+ * published the code (plan risk R1), so this stays empty until one is captured
+ * from a real rejection; the local send gate covers known-standby threads.
+ */
+export const THREAD_CONTROL_REJECTION_CODES: ReadonlySet<number> =
+  new Set<number>([])
 
 /**
  * Matched before the generic `OAuthException` branch in `categorize`, which
@@ -132,7 +144,14 @@ function categorize(
       : ChannelErrorCategory.UNKNOWN
   }
 
-  if (CALLING_INELIGIBLE_CODES.has(code)) {
+  // Checked before the OAuth branch, like calling eligibility: these are an
+  // ownership refusal, never a credential problem, and must not flag the
+  // integration as needing re-auth whatever `type` Meta attaches.
+  if (
+    CALLING_INELIGIBLE_CODES.has(code) ||
+    THREAD_CONTROL_REJECTION_CODES.has(code) ||
+    code === THREAD_CONTROL_NOT_ESCALATION_CODE
+  ) {
     return ChannelErrorCategory.PERMISSION_DENIED
   }
 

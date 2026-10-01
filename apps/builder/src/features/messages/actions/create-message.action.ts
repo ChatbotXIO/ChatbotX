@@ -2,10 +2,10 @@
 import { conversationService, messageService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createMessageRequest } from "../schema/mutation"
+import { createMessageWithRoutingBypassRequest } from "../schema/mutation"
 export const createMessageAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
-  .inputSchema(createMessageRequest)
+  .inputSchema(createMessageWithRoutingBypassRequest)
   .action(async (props) => {
     const {
       bindArgsParsedInputs: [workspaceId, conversationId],

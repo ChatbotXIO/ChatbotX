@@ -1867,7 +1867,8 @@
       "searchPlaceholder": "Søg keyword..."
     },
     "templateId": {
-      "label": "WhatsApp Skabelon"
+      "label": "WhatsApp Skabelon",
+      "placeholder": "Vælg en skabelon"
     },
     "messengerTemplateId": {
       "label": "Messenger Skabelon"
@@ -2409,7 +2410,8 @@
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
       "importJsonOnly": "Kun JSON-filer",
       "whatsappCallButton": "Ring på WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Trådkontrol"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "Åbn Zalo-gruppe",
     "openZalo": "Åbn Zalo",
     "openMessenger": "Åbn Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "dig"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-annoncer",
+      "customer_service": "Kundeservice",
+      "escalation": "Eskalering",
+      "marketing": "Marketing",
+      "utility": "Service"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Aktiv",
+      "tooltip": "Håndteres af {owner}"
+    },
+    "release": {
+      "label": "Frigiv",
+      "tooltip": "Frigiv samtalen, så andre apps kan svare",
+      "success": "Samtalen er frigivet"
+    },
+    "pass": {
+      "menuItem": "Send videre til eskalering",
+      "title": "Send videre til eskaleringspartneren?",
+      "description": "Vil du give denne samtale videre til din eskaleringspartner? Dine svar pauses, indtil tråden kommer tilbage.",
+      "confirm": "Send videre",
+      "success": "Samtalen er sendt videre til eskaleringspartneren"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Du er i standby (kun lytning)",
+      "description": "En tredjepartspartner håndterer denne samtale. Beskedfeltet er låst for at undgå dobbelte svar.",
+      "takeOver": "Overtag",
+      "takeOverSuccess": "Du håndterer nu denne samtale",
+      "notEscalation": "Kun eskaleringspartneren kan overtage. Routing konfigureres i Meta Business Suite.",
+      "notPrimaryReceiver": "Denne app skal være sidens primære modtager for at kunne overtage. Indstil det i sidens indstillinger for Handover Protocol.",
+      "learnMore": "Læs mere",
+      "dismiss": "Send alligevel"
+    },
+    "divider": {
+      "ownerHandling": "{owner} håndterer nu denne samtale",
+      "handedOver": "{previousOwner} gav denne samtale tilbage til dig",
+      "selfHandling": "Du håndterer nu denne samtale",
+      "takenOver": "Du overtog denne samtale",
+      "released": "Samtalen er frigivet",
+      "passed": "Samtalen er sendt videre til eskaleringspartneren",
+      "serviceRejected": "Beskeden blev ikke sendt: {owner} håndterer denne samtale"
+    },
+    "context": {
+      "title": "Samtalekontekst",
+      "summaryBadge": "AI-resumé",
+      "historyBadge": "Historik",
+      "customer": "Kunde",
+      "business": "Virksomhed",
+      "handoverNote": "Overdragelsesnote: {note}",
+      "showAll": "Vis alle ({count})",
+      "showLess": "Vis færre"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Samtaleroutning",
+      "threadState": "Trådstatus",
+      "threadStateOwned": "Ejet",
+      "threadStateStandby": "Standby",
+      "threadStateIdle": "Inaktiv",
+      "currentOwner": "Nuværende ejer",
+      "noOwner": "Ingen ejer",
+      "roleLabel": "Din rolle",
+      "selfOwned": "Håndterer samtalen",
+      "selfStandby": "Standby — lytter kun",
+      "selfIdle": "Venter på kundens næste besked",
+      "hintOwned": "Frigiv, når du er færdig, så andre apps kan svare.",
+      "hintStandby": "Mens en partner håndterer denne samtale, bliver dine beskeder holdt tilbage, så kunden ikke får dobbelte svar. Overtag fra beskedfeltet for at svare.",
+      "hintIdle": "Kundens næste besked afgør, hvem der svarer.",
+      "syncOwner": "Synkroniser ejer",
+      "syncOwnerSuccess": "Ejer synkroniseret"
+    },
+    "settings": {
+      "title": "Genoptagelsesflow ved tilbageføring",
+      "description": "Den automatisering, der kører, når en partner overdrager en samtale tilbage.",
+      "resumeFlowLabel": "Vælg et flow",
+      "resumeFlowPlaceholder": "Vælg et flow",
+      "info": "Dette flow starter automatisk, når kontrollen overdrages tilbage. Samtaleresuméet og chathistorikken vises derefter for dine agenter i live chatten.",
+      "save": "Gem ændringer",
+      "clearFlow": "Ryd flow",
+      "adminOnly": "Kun workspace-administratorer kan ændre routing",
+      "flowNotFound": "Det valgte flow blev ikke fundet eller er ikke aktivt",
+      "integrationNotFound": "WhatsApp-nummer blev ikke fundet",
+      "messengerIntegrationNotFound": "Messenger-siden blev ikke fundet"
+    },
+    "errors": {
+      "unsupported": "Samtaleroutning er ikke tilgængelig på denne kanal",
+      "notFound": "Denne samtale findes ikke på den kanal",
+      "actionFailed": "Kunne ikke opdatere samtaleroutning. Prøv igen."
+    },
+    "step": {
+      "action": "Handling",
+      "release": "Frigiv samtalen",
+      "pass": "Send videre til eskaleringspartneren",
+      "helper": "Kun WhatsApp. På andre kanaler, eller når samtalen ikke ejes her, følger trinnet fejlstien."
+    },
+    "template": {
+      "sent": "Skabelon sendt"
+    }
   }
 }

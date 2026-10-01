@@ -53,6 +53,10 @@ vi.mock("@/features/contacts/actions/unblock-contact.action", () => ({
 vi.mock("@/features/contacts/components/remove-contact-dialog", () => ({
   default: () => null,
 }))
+vi.mock(
+  "@/features/conversations/components/thread-control-pass-menu-item",
+  () => ({ ThreadControlPassMenuItem: () => null }),
+)
 
 const storeState = {
   deleteConversation: vi.fn(),

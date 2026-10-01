@@ -47,10 +47,17 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentUrl } from "@/features/attachments/utils"
+import {
+  getThreadControlActivity,
+  getThreadControlContextCard,
+  isThreadControlEcho,
+} from "../lib/thread-control-content"
 import type { MessageResourceWithRelations } from "../schema/resource"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
 import { MessageErrorBadge } from "./message-error-badge"
+import { ThreadControlContextCard } from "./thread-control-context-card"
+import { ThreadControlDivider } from "./thread-control-divider"
 import { WhatsappCallCard } from "./whatsapp-call-card"
 
 type MessageItemProps = {
@@ -103,6 +110,7 @@ export const MessageItem = (props: MessageItemProps) => {
     onEdit,
   } = props
   const t = useTranslations("messages")
+  const tRouting = useTranslations("conversationRouting")
   const [isEditing, setIsEditing] = useState(false)
 
   const variants: Record<"left" | "right" | "full", string> = {
@@ -140,7 +148,21 @@ export const MessageItem = (props: MessageItemProps) => {
   const callPermissionReply = getWhatsappCallPermissionReply(
     message.contentAttributes,
   )
-  const suppressRawText = Boolean(whatsappCall || callPermissionReply)
+  const threadControlActivity = getThreadControlActivity(
+    message.contentAttributes,
+  )
+  const threadControlContext = getThreadControlContextCard(
+    message.contentAttributes,
+  )
+  // A partner's reply seen on the standby feed: outgoing side, but in the
+  // muted bubble and captioned, so it never reads as the agent's own message.
+  const isPartnerEcho = isThreadControlEcho(message.contentAttributes)
+  const suppressRawText = Boolean(
+    whatsappCall ||
+      callPermissionReply ||
+      threadControlActivity ||
+      threadControlContext,
+  )
 
   // A call card defaults to the centered `full` variant, but a call still has
   // a direction: business-initiated sits right, customer-initiated sits left
@@ -175,6 +197,12 @@ export const MessageItem = (props: MessageItemProps) => {
         )}
       >
         {storyReply && <StoryReplyContext story={storyReply.story} />}
+        {isPartnerEcho && (
+          <span className="flex items-center gap-1 self-end text-muted-foreground text-xs">
+            <BotIcon aria-hidden className="size-3" />
+            {tRouting("echo.partner")}
+          </span>
+        )}
         {isComment ? (
           <div
             className={cn(
@@ -219,7 +247,7 @@ export const MessageItem = (props: MessageItemProps) => {
                 <div
                   className={cn(
                     "text-sm",
-                    variants[variant],
+                    isPartnerEcho ? variants.left : variants[variant],
                     isDeleted && "opacity-50",
                   )}
                 >
@@ -647,6 +675,20 @@ const RenderContentAttributes = (props: MessageItemProps) => {
     return (
       <WhatsappCallPermissionReply response={callPermissionReply.response} />
     )
+  }
+
+  const threadControlActivity = getThreadControlActivity(
+    message.contentAttributes,
+  )
+  if (threadControlActivity) {
+    return <ThreadControlDivider activity={threadControlActivity} />
+  }
+
+  const threadControlContext = getThreadControlContextCard(
+    message.contentAttributes,
+  )
+  if (threadControlContext) {
+    return <ThreadControlContextCard data={threadControlContext} />
   }
 
   const contentAttributes = message.contentAttributes as

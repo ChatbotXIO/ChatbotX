@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
+  contactInboxThreadControlUpdatedSchema,
   REALTIME_EVENT_TOPICS,
   RealtimeEventType,
   RealtimeProtocol,
@@ -297,5 +298,62 @@ describe("serializeRealtimeSubscriptionMessage", () => {
       type: "subscribe",
       topics: ["chat", "voip"],
     })
+  })
+})
+
+describe("contactInboxThreadControlUpdatedSchema", () => {
+  const snapshot = {
+    conversationId: "conv-1",
+    contactInboxId: "ci-1",
+    threadControlState: "standby",
+    threadOwnerRole: "ai_agent",
+    threadControlUpdatedAt: "2026-09-29T09:00:00.000Z",
+    threadControlLastEvent: "controlTaken",
+  }
+
+  test("parses a snapshot and is a durable chat-topic event", () => {
+    expect(contactInboxThreadControlUpdatedSchema.parse(snapshot)).toEqual(
+      snapshot,
+    )
+    expect(RealtimeEventType.contactInboxThreadControlUpdated).toBe(
+      "contactInboxThreadControlUpdated",
+    )
+    expect(REALTIME_EVENT_TOPICS.contactInboxThreadControlUpdated).toEqual({
+      durability: "durable",
+      topics: [RealtimeTopic.chat],
+    })
+  })
+
+  test("carries the owner app id when present and stays valid without it", () => {
+    expect(
+      contactInboxThreadControlUpdatedSchema.parse({
+        ...snapshot,
+        threadOwnerAppId: "app-1",
+      }).threadOwnerAppId,
+    ).toBe("app-1")
+    expect(
+      contactInboxThreadControlUpdatedSchema.parse(snapshot).threadOwnerAppId,
+    ).toBeUndefined()
+  })
+
+  test("accepts a never-observed thread (all routing fields null)", () => {
+    expect(
+      contactInboxThreadControlUpdatedSchema.parse({
+        ...snapshot,
+        threadControlState: null,
+        threadOwnerRole: null,
+        threadControlUpdatedAt: null,
+        threadControlLastEvent: null,
+      }).threadControlState,
+    ).toBeNull()
+  })
+
+  test("rejects an unknown state", () => {
+    expect(() =>
+      contactInboxThreadControlUpdatedSchema.parse({
+        ...snapshot,
+        threadControlState: "busy",
+      }),
+    ).toThrow()
   })
 })

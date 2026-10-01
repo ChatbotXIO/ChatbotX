@@ -58,6 +58,8 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: vi.fn(() => "generated-id"),
 }))
 
+vi.mock("../src/flow/service", () => ({ flowService: {} }))
+
 vi.mock("../src/inbox/connect-channel", () => ({
   auditChannelConnected: vi.fn(),
   connectChannelIntegration: vi.fn(),

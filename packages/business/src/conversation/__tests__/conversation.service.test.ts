@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   inboxTeamExists: vi.fn(),
   assignUserIfUnassigned: vi.fn(),
   broadcastToWorkspaceParty: vi.fn(),
+  releaseOwnedThreadsForContacts: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -127,6 +128,12 @@ vi.mock("@chatbotx.io/events", () => ({
   emitConversationUnassigned: vi.fn(),
 }))
 
+vi.mock("../../thread-control/service", () => ({
+  threadControlService: {
+    releaseOwnedThreadsForContacts: mocks.releaseOwnedThreadsForContacts,
+  },
+}))
+
 vi.mock("../../contact-inbox/service", () => ({
   contactInboxService: {},
 }))
@@ -176,6 +183,8 @@ beforeEach(() => {
   vi.mocked(notificationQueue.addBulk).mockReset()
   vi.mocked(emitConversationAssigned).mockReset()
   vi.mocked(emit).mockReset()
+  mocks.releaseOwnedThreadsForContacts.mockReset()
+  mocks.releaseOwnedThreadsForContacts.mockResolvedValue(undefined)
 })
 
 describe("ConversationService.findDMByContactIds", () => {
@@ -922,5 +931,62 @@ describe("ConversationService.assignOneOrSkip", () => {
         },
       }),
     )
+  })
+})
+
+describe("ConversationService.updateArchived — conversation routing release", () => {
+  const conversations = [
+    { id: "conv-1", contactId: "contact-1" },
+    { id: "conv-2", contactId: "contact-2" },
+  ]
+  const triggerContext = {
+    triggerSource: "test",
+    triggerHandler: "test",
+    triggerType: "test",
+  }
+
+  test("archiving asks the thread-control service to release the contacts' owned threads", async () => {
+    const archivedAt = new Date()
+    await conversationService.updateArchived({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      archivedAt,
+      triggerContext,
+    })
+
+    expect(mocks.releaseOwnedThreadsForContacts).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      archivedAt,
+    })
+  })
+
+  test("unarchiving never releases a thread", async () => {
+    await conversationService.updateArchived({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      archivedAt: null,
+      triggerContext,
+    })
+
+    expect(mocks.releaseOwnedThreadsForContacts).not.toHaveBeenCalled()
+  })
+
+  test("a failed release enqueue does not fail the archive", async () => {
+    mocks.releaseOwnedThreadsForContacts.mockRejectedValue(
+      new Error("redis down"),
+    )
+
+    await expect(
+      conversationService.updateArchived({
+        workspaceId: WORKSPACE_ID,
+        conversations,
+        archivedAt: new Date(),
+        triggerContext,
+      }),
+    ).resolves.toBeUndefined()
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      archivedAt: expect.any(Date),
+    })
   })
 })

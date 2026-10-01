@@ -1,4 +1,5 @@
 import {
+  contactInboxThreadControlUpdatedSchema,
   RealtimeEventType,
   realtimeCallTransportEndedSchema,
   realtimeCallTransportIncomingSchema,
@@ -32,4 +33,6 @@ export const REALTIME_EVENT_SCHEMAS: {
     realtimeCallTransportOutboundStatusVoipSchema,
   [RealtimeEventType.whatsappCallPermissionUpdated]:
     whatsappCallPermissionUpdatedSchema,
+  [RealtimeEventType.contactInboxThreadControlUpdated]:
+    contactInboxThreadControlUpdatedSchema,
 }

@@ -1,4 +1,8 @@
 import {
+  threadControlEvents,
+  threadControlStates,
+} from "@chatbotx.io/database/partials"
+import {
   conversationModel,
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
@@ -43,9 +47,20 @@ export const adReferralResource = z.object({
 // (apps/worker/src/integration/handlers/messenger-context.ts) — but that
 // selection has no reason to leak into the public/workspace-token contact
 // APIs that nest the shared `contactInboxResource`.
+//
+// The thread-control (conversation routing) columns ride along for the same
+// reason: the list, header, composer and side panel read them from the store
+// without a second request. Nullish tolerates a store persisted before they
+// existed; `null` everywhere means routing was never observed.
 export const conversationContactInboxResource = contactInboxResource.extend({
   adReferral: adReferralResource.nullable(),
   lastMessageAt: z.date().nullable(),
+  threadControlState: threadControlStates.nullish(),
+  threadOwnerRole: z.string().nullish(),
+  threadControlUpdatedAt: z.date().nullish(),
+  threadOwnerExpiresAt: z.date().nullish(),
+  threadOwnerAppId: z.string().nullish(),
+  threadControlLastEvent: threadControlEvents.nullish(),
 })
 export type ConversationContactInboxResource = z.infer<
   typeof conversationContactInboxResource

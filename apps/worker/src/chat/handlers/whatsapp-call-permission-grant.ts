@@ -8,7 +8,7 @@ import {
   getWhatsappCallPermissionRequest,
 } from "@chatbotx.io/sdk"
 import { logger } from "../../lib/logger"
-import type { ChannelSendErrorContext } from "./channel-send-error-reconcilers"
+import type { ChannelSendErrorContext } from "./channel-send-error-types"
 
 /**
  * Meta error 138017 — a call_permission_request send is rejected because the

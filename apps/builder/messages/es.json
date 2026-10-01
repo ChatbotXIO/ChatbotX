@@ -2009,7 +2009,8 @@
       "searchPlaceholder": "Buscar claveword..."
     },
     "templateId": {
-      "label": "WhatsApp Plantilla"
+      "label": "WhatsApp Plantilla",
+      "placeholder": "Selecciona una plantilla"
     },
     "messengerTemplateId": {
       "label": "Messenger Plantilla"
@@ -2551,7 +2552,8 @@
       "importStarted": "El flujo se está importando. Consulta el historial de importaciones para ver los resultados.",
       "importJsonOnly": "Solo archivos JSON",
       "whatsappCallButton": "Llamar por WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Control del hilo"
     },
     "splitTraffic": {
       "balanceHint": "La suma total debe ser igual al 100 %.",
@@ -6798,5 +6800,116 @@
     "openZaloGroup": "Abrir grupo de Zalo",
     "openZalo": "Abrir Zalo",
     "openMessenger": "Abrir Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Socio",
+      "partnerWithRole": "Socio · {role}",
+      "self": "ti"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Anuncios Click-to-WhatsApp",
+      "customer_service": "Atención al cliente",
+      "escalation": "Escalamiento",
+      "marketing": "Marketing",
+      "utility": "Utilidad"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Activo",
+      "tooltip": "Atendida por {owner}"
+    },
+    "release": {
+      "label": "Liberar",
+      "tooltip": "Libera esta conversación para que otras apps puedan responder",
+      "success": "Conversación liberada"
+    },
+    "pass": {
+      "menuItem": "Pasar a escalamiento",
+      "title": "¿Pasar al socio de escalamiento?",
+      "description": "¿Pasar esta conversación a tu socio de escalamiento? Tus respuestas se pausarán hasta que el hilo regrese.",
+      "confirm": "Pasar",
+      "success": "Conversación pasada al socio de escalamiento"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Estás en espera (solo escucha)",
+      "description": "Un socio externo está gestionando esta conversación. El cuadro de mensaje está bloqueado para evitar respuestas duplicadas.",
+      "takeOver": "Tomar el control",
+      "takeOverSuccess": "Ahora estás atendiendo esta conversación",
+      "notEscalation": "Solo el socio de escalamiento puede tomar el control. El enrutamiento se configura en Meta Business Suite.",
+      "notPrimaryReceiver": "Esta app debe ser el receptor principal de la página para tomar el control. Configúralo en los ajustes del Handover Protocol de la página.",
+      "learnMore": "Más información",
+      "dismiss": "Enviar de todos modos"
+    },
+    "divider": {
+      "ownerHandling": "{owner} está atendiendo ahora esta conversación",
+      "handedOver": "{previousOwner} te devolvió esta conversación",
+      "selfHandling": "Ahora estás gestionando esta conversación",
+      "takenOver": "Tomaste el control de esta conversación",
+      "released": "Conversación liberada",
+      "passed": "Conversación pasada al socio de escalamiento",
+      "serviceRejected": "Mensaje no enviado: {owner} está atendiendo esta conversación"
+    },
+    "context": {
+      "title": "Contexto de la conversación",
+      "summaryBadge": "Resumen de IA",
+      "historyBadge": "Historial",
+      "customer": "Cliente",
+      "business": "Empresa",
+      "handoverNote": "Nota de traspaso: {note}",
+      "showAll": "Mostrar todo ({count})",
+      "showLess": "Mostrar menos"
+    },
+    "echo": {
+      "partner": "Socio"
+    },
+    "panel": {
+      "title": "Enrutamiento de la conversación",
+      "threadState": "Estado del hilo",
+      "threadStateOwned": "Asignado",
+      "threadStateStandby": "En espera",
+      "threadStateIdle": "Inactivo",
+      "currentOwner": "Propietario actual",
+      "noOwner": "Sin propietario",
+      "roleLabel": "Tu rol",
+      "selfOwned": "Atendiendo la conversación",
+      "selfStandby": "En espera — solo escucha",
+      "selfIdle": "Esperando el siguiente mensaje del cliente",
+      "hintOwned": "Libera cuando termines para que otras apps puedan responder.",
+      "hintStandby": "Mientras un socio gestiona esto, tus mensajes se retienen para que el cliente no reciba respuestas duplicadas. Toma el control desde el cuadro de mensaje para responder.",
+      "hintIdle": "El siguiente mensaje del cliente decide quién responde.",
+      "syncOwner": "Sincronizar propietario",
+      "syncOwnerSuccess": "Propietario sincronizado"
+    },
+    "settings": {
+      "title": "Flujo de reanudación tras el traspaso",
+      "description": "La automatización que se ejecuta cuando un socio devuelve una conversación.",
+      "resumeFlowLabel": "Elige un flujo",
+      "resumeFlowPlaceholder": "Selecciona un flujo",
+      "info": "Este flujo se inicia automáticamente cuando se devuelve el control. El resumen de la conversación y el historial del chat se muestran entonces a tus agentes en el chat en vivo.",
+      "save": "Guardar cambios",
+      "clearFlow": "Quitar flujo",
+      "adminOnly": "Solo los administradores del espacio de trabajo pueden cambiar el enrutamiento",
+      "flowNotFound": "No se encontró el flujo seleccionado o no está activo",
+      "integrationNotFound": "No se encontró el número de WhatsApp",
+      "messengerIntegrationNotFound": "No se encontró la página de Messenger"
+    },
+    "errors": {
+      "unsupported": "El enrutamiento de conversaciones no está disponible en este canal",
+      "notFound": "Esta conversación no está en ese canal",
+      "actionFailed": "No se pudo actualizar el enrutamiento de la conversación. Inténtalo de nuevo."
+    },
+    "step": {
+      "action": "Acción",
+      "release": "Liberar la conversación",
+      "pass": "Pasar al socio de escalamiento",
+      "helper": "Solo WhatsApp. En otros canales, o cuando la conversación no es gestionada aquí, el paso sigue la ruta de error."
+    },
+    "template": {
+      "sent": "Plantilla enviada"
+    }
   }
 }

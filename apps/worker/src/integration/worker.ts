@@ -3,12 +3,11 @@ import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   conversationService,
   flushAllPendingWorkspaceBroadcasts,
-  whatsappCallPermissionService,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
-import { getStoryReply, getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
+import { getStoryReply } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
   AIJobAction,
@@ -72,11 +71,17 @@ import {
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
+import {
+  isThreadControlJobReprocess,
+  receiveThreadControlEvent,
+  releaseOwnedThread,
+} from "./handlers/thread-control"
 import { receiveTiktokHighIntentComment } from "./handlers/tiktok-high-intent-comment"
 import { runWaitResume } from "./handlers/wait-resume"
 import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
 import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call-native-recording"
 import { handleWhatsappCallNativeTranscriptFetch } from "./handlers/whatsapp-call-native-transcript"
+import { recordWhatsappCallPermissionReply } from "./handlers/whatsapp-call-permission-reply"
 import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
 import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
 import { handleWhatsappIdentityChange } from "./handlers/whatsapp-identity-change"
@@ -179,6 +184,7 @@ async function startIntegrationWorker() {
                 quickReplyAction,
                 conversation,
                 channelType,
+                suppressAutomation,
               } = received
 
               if (!message) {
@@ -189,6 +195,24 @@ async function startIntegrationWorker() {
                 postbackAction || quickReplyAction
               )
 
+              // A call-permission answer is account state, recorded for
+              // standby deliveries too; it never reaches automation.
+              if (
+                isNotPostbackOrQuickReply &&
+                (await recordWhatsappCallPermissionReply({
+                  workspaceId: conversation.workspaceId,
+                  message,
+                }))
+              ) {
+                return
+              }
+
+              // Standby deliveries (another responder owns the thread) are
+              // stored only: no story-reply, routing or fallback analytics.
+              if (suppressAutomation) {
+                return
+              }
+
               // An image/file message has contentType "text" — only its
               // `attachments` array distinguishes it; a shared location has
               // contentType "location".
@@ -198,21 +222,6 @@ async function startIntegrationWorker() {
               const isLocation = message.contentType === "location"
 
               const storyReply = getStoryReply(message.contentAttributes)
-
-              const callPermissionReply = getWhatsappCallPermissionReply(
-                message.contentAttributes,
-              )
-              if (isFromContact && callPermissionReply) {
-                await whatsappCallPermissionService.recordReply({
-                  workspaceId: conversation.workspaceId,
-                  contactInboxId: message.contactInboxId,
-                  response: callPermissionReply.response,
-                  isPermanent: callPermissionReply.isPermanent === true,
-                  expirationTimestamp: callPermissionReply.expirationTimestamp,
-                  respondedAt: message.createdAt,
-                })
-                return
-              }
 
               if (isFromContact && storyReply) {
                 await aiAgentQueue.add(
@@ -518,6 +527,16 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.processLeadgen: {
               await processLeadgen(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.threadControlEvent: {
+              await receiveThreadControlEvent(job.data.data, {
+                isRetry: isThreadControlJobReprocess(job),
+              })
+              return
+            }
+            case IntegrationJobAction.threadControlAction: {
+              await releaseOwnedThread(job.data.data)
               return
             }
             case IntegrationJobAction.createMessage: {

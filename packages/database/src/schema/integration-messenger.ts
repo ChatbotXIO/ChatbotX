@@ -80,6 +80,11 @@ export const integrationMessengerModel = pgTable(
     }),
     syncTagEnabledAt: timestamp(timestampConfig),
     tokenRefreshError: text(),
+    // Flow started when a partner hands a conversation back (control_passed).
+    handoverResumeFlowId: bigintAsString().references(() => flowModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
   },
   (table) => [
     index("IntegrationMessenger_workspaceId_idx").using(
@@ -89,6 +94,10 @@ export const integrationMessengerModel = pgTable(
     index("IntegrationMessenger_welcomeFlowId_idx").using(
       "btree",
       table.welcomeFlowId.asc().nullsLast(),
+    ),
+    index("IntegrationMessenger_handoverResumeFlowId_idx").using(
+      "btree",
+      table.handoverResumeFlowId.asc().nullsLast(),
     ),
     uniqueIndex("IntegrationMessenger_inboxId_key").using(
       "btree",

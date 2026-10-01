@@ -1,5 +1,7 @@
-import { type DatabaseClient, db } from "../../client"
+import { and, type DatabaseClient, db, eq, isNull, lt, or } from "../../client"
 import type { ChannelType } from "../../partials"
+import { THREAD_CONTROL_SEEN_REFRESH_MS } from "../../partials/thread-control"
+import { inboxModel } from "../../schema"
 import type { InboxModel } from "../../types"
 
 export type InboxChannelOption = { id: string; name: string }
@@ -36,5 +38,36 @@ export const inboxRepository = {
       columns: { id: true, name: true },
       where: { workspaceId: input.workspaceId, channel: input.channel },
     })
+  },
+
+  /**
+   * Marks the inbox as having seen conversation-routing traffic. Throttled in
+   * SQL (idempotent): a write happens only when the stored value is missing or
+   * older than `THREAD_CONTROL_SEEN_REFRESH_MS`, bounding this to about one
+   * write per inbox per day. Returns whether a row was written.
+   */
+  async touchThreadControlSeen(
+    input: { workspaceId: string; inboxId: string; seenAt: Date },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const staleBefore = new Date(
+      input.seenAt.getTime() - THREAD_CONTROL_SEEN_REFRESH_MS,
+    )
+    const rows = await tx
+      .update(inboxModel)
+      .set({ threadControlSeenAt: input.seenAt })
+      .where(
+        and(
+          eq(inboxModel.id, input.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+          or(
+            isNull(inboxModel.threadControlSeenAt),
+            lt(inboxModel.threadControlSeenAt, staleBefore),
+          ),
+        ),
+      )
+      .returning({ id: inboxModel.id })
+
+    return rows.length > 0
   },
 }

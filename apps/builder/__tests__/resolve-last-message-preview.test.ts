@@ -192,3 +192,66 @@ describe("resolveCallPreviewKind", () => {
     expect(resolveCallPreviewKind(undefined)).toBeUndefined()
   })
 })
+
+describe("resolveLastMessagePreview — conversation routing rows", () => {
+  test("localizes a routing divider instead of its stored English fallback", () => {
+    const result = resolveLastMessagePreview(
+      {
+        text: "Another app is now handling this conversation",
+        contentAttributes: {
+          type: "threadControl",
+          event: "standbyReceived",
+          ownerRole: "ai_agent",
+        },
+      } as never,
+      t,
+      "AhaChat",
+    )
+    expect(result).toBe("Meta AI is now handling this conversation")
+  })
+
+  test("localizes this app's own events without a brand name", () => {
+    const result = resolveLastMessagePreview(
+      {
+        text: "This app took over this conversation",
+        contentAttributes: { type: "threadControl", event: "taken" },
+      } as never,
+      t,
+      "AhaChat",
+    )
+    expect(result).toBe("You took over this conversation")
+  })
+
+  test("names who handed over on controlPassed", () => {
+    const result = resolveLastMessagePreview(
+      {
+        text: "Conversation handed to this app",
+        contentAttributes: {
+          type: "threadControl",
+          event: "controlPassed",
+          previousOwnerRole: "customer_service",
+        },
+      } as never,
+      t,
+      "AhaChat",
+    )
+    expect(result).toBe(
+      "Partner · Customer service handed this conversation back to you",
+    )
+  })
+
+  test("shows the context card title for a handover context card", () => {
+    const result = resolveLastMessagePreview(
+      {
+        text: null,
+        contentAttributes: {
+          type: "threadControlContext",
+          context: { type: "summary", text: "Wants to change address" },
+        },
+      } as never,
+      t,
+      "AhaChat",
+    )
+    expect(result).toBe("Conversation context")
+  })
+})

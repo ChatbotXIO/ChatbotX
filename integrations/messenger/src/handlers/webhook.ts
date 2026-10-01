@@ -1,15 +1,150 @@
 import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
+import { sha256Hex } from "@chatbotx.io/utils/crypto"
 import z from "zod"
 import { MessengerWebhookException } from "../exception"
+import {
+  classifyMessagingRoutingItem,
+  parseStandbyDelivery,
+  THREAD_CONTROL_EVENT_JOB_NAME,
+  THREAD_CONTROL_JOB_ID_PREFIX,
+  type ThreadControlJobPayload,
+} from "../lib/conversation-routing"
 import { logger } from "../lib/logger"
 import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import {
+  type IncomingWebhookEntry,
+  incomingWebhookEntrySchema,
   incomingWebhookEventSchema,
   MESSENGER_MESSAGE_METADATA,
   type MessengerConfig,
   messengerFeedCommentValueSchema,
   messengerLeadgenValueSchema,
+  messengerMessagingEventSchema,
 } from "../schema"
+
+/** One Conversation Routing item to enqueue as a `threadControlEvent` job. */
+export type ConversationRoutingPayload = ThreadControlJobPayload & {
+  pageId: string
+  /** `mid` used in the job id; `null` = hash the body instead. */
+  dedupeKey: string | null
+}
+
+const toBullMqSafeIdSegment = (value: string): string =>
+  value.replace(/[^a-zA-Z0-9._-]/g, "_")
+
+/**
+ * Standby items that are worth a job: a message or a postback. Reads and
+ * deliveries on standby are receipts for another app's traffic.
+ */
+const isStandbyRoutingItem = (item: unknown): boolean =>
+  typeof item === "object" &&
+  item !== null &&
+  ("message" in item || "postback" in item)
+
+/**
+ * The Conversation Routing items of one entry: `messaging[]` handover /
+ * request / app_roles structures and `standby[]` deliveries. Each item is
+ * isolated: a malformed one is logged and skipped, never dropping the rest of
+ * the batch. Ordinary `messaging[]` items are NOT routing items (inbound
+ * classification happens in incoming-message). Never throws.
+ */
+export const extractConversationRoutingPayloads = (
+  object: string,
+  entry: IncomingWebhookEntry,
+): ConversationRoutingPayload[] => {
+  const payloads: ConversationRoutingPayload[] = []
+
+  for (const item of entry.messaging ?? []) {
+    const kind = classifyMessagingRoutingItem(item)
+    if (kind) {
+      payloads.push({ kind, pageId: entry.id, body: item, dedupeKey: null })
+    }
+  }
+
+  for (const item of entry.standby ?? []) {
+    try {
+      if (!isStandbyRoutingItem(item)) {
+        logger.debug("Messenger standby receipt dropped")
+        continue
+      }
+      const delivery = parseStandbyDelivery(item)
+      if (!delivery) {
+        continue
+      }
+      payloads.push({
+        kind: "standbyMessage",
+        pageId: entry.id,
+        dedupeKey: delivery.mid ?? null,
+        body: {
+          object,
+          entry: [
+            {
+              id: entry.id,
+              time: entry.time,
+              // Consumed by receiveMessage (Business-AI standby owner).
+              ...(entry.hop_context ? { hop_context: entry.hop_context } : {}),
+              standby: [item],
+            },
+          ],
+        },
+      })
+    } catch (err) {
+      logger.error({ err }, "Messenger standby item skipped")
+    }
+  }
+
+  return payloads
+}
+
+/**
+ * A routing job carries one-shot side effects (the handover resume flow) that
+ * Meta will not redeliver once the webhook answered 200, so it rides out a
+ * transient Redis/DB failure: 5 attempts, 10s exponential backoff. Same
+ * options as the other channels' routing jobs. `removeOnFail` frees the
+ * deterministic jobId so a redelivery can reprocess a failed job.
+ */
+const THREAD_CONTROL_EVENT_JOB_OPTIONS = {
+  removeOnFail: true,
+  attempts: 5,
+  backoff: { type: "exponential", delay: 10_000 },
+} as const
+
+/** Deterministic jobId (`prefix-page-mid|bodyHash`) so a redelivery re-adds nothing. */
+export const buildThreadControlJobId = async (
+  payload: ConversationRoutingPayload,
+): Promise<string> => {
+  const suffix = payload.dedupeKey
+    ? toBullMqSafeIdSegment(payload.dedupeKey)
+    : await sha256Hex(JSON.stringify(payload.body))
+  return `${THREAD_CONTROL_JOB_ID_PREFIX[payload.kind]}-${toBullMqSafeIdSegment(payload.pageId)}-${suffix}`
+}
+
+const enqueueConversationRoutingPayloads = async (
+  queue: ContextQueue,
+  payloads: ConversationRoutingPayload[],
+): Promise<void> => {
+  for (const payload of payloads) {
+    const job: ThreadControlJobPayload = {
+      kind: payload.kind,
+      body: payload.body,
+    }
+    await queue?.add(
+      THREAD_CONTROL_EVENT_JOB_NAME,
+      {
+        type: THREAD_CONTROL_EVENT_JOB_NAME,
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: payload.pageId,
+          payload: job,
+        },
+      },
+      {
+        jobId: await buildThreadControlJobId(payload),
+        ...THREAD_CONTROL_EVENT_JOB_OPTIONS,
+      },
+    )
+  }
+}
 
 const verifyWebhookSignature = async (
   payload: string,
@@ -81,7 +216,22 @@ const handleWebhookEvent = async (
     // Meta batches multiple entries — and multiple messaging events per
     // entry — into a single webhook POST (e.g. a contact sending several DMs
     // quickly). Every entry/event must be processed, not just the first.
-    for (const entry of webhookData.entry) {
+    for (const rawEntry of webhookData.entry) {
+      const parsedEntry = incomingWebhookEntrySchema.safeParse(rawEntry)
+      if (!parsedEntry.success) {
+        logger.warn(
+          { err: parsedEntry.error },
+          "messenger webhook entry skipped: malformed entry",
+        )
+        continue
+      }
+      const entry = parsedEntry.data
+
+      await enqueueConversationRoutingPayloads(
+        queue,
+        extractConversationRoutingPayloads(webhookData.object, entry),
+      )
+
       const labelChange = entry.changes?.find(
         (c: { field: string }) => c.field === "inbox_labels",
       )
@@ -196,7 +346,22 @@ const handleWebhookEvent = async (
         continue
       }
 
-      for (const messagingEvent of entry.messaging) {
+      for (const rawMessagingEvent of entry.messaging) {
+        // Handover / request / app_roles items were enqueued above.
+        if (classifyMessagingRoutingItem(rawMessagingEvent)) {
+          continue
+        }
+        const parsedEvent =
+          messengerMessagingEventSchema.safeParse(rawMessagingEvent)
+        if (!parsedEvent.success) {
+          logger.warn(
+            { err: parsedEvent.error },
+            "messenger messaging event skipped: malformed item",
+          )
+          continue
+        }
+        const messagingEvent = parsedEvent.data
+
         // Reshape to a single-entry, single-messaging-event payload so
         // downstream consumers — which only ever read entry[0]/messaging[0] —
         // see exactly the one event this job is for.

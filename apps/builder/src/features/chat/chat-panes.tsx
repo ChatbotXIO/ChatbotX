@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import { disableBotAction } from "../conversations/actions/disable-bot.action"
 import ConversationList from "../conversations/conversation-list"
+import { useThreadControl } from "../conversations/hooks/use-thread-control"
 import { useThreadReadTracking } from "../conversations/hooks/use-thread-read-tracking"
 import type { ConversationResource } from "../conversations/schema/resource"
 import {
@@ -96,6 +97,17 @@ export function MessageThreadPane({
   const t = useTranslations()
   const updateConversation = useChatStore((state) => state.updateConversation)
   const threadReadHandlers = useThreadReadTracking(activeConversation)
+  const activeListConversation = useChatStore((state) =>
+    activeConversation
+      ? state.conversations.find(
+          (conversation) => conversation.id === activeConversation.id,
+        )
+      : undefined,
+  )
+  // While another responder owns the WhatsApp thread the bot is suppressed,
+  // so "Bot is active" would be misleading.
+  const isThreadOnStandby =
+    useThreadControl(activeListConversation)?.state === "standby"
 
   const { execute: disableBot, isExecuting: isDisablingBot } = useAction(
     disableBotAction.bind(null, workspaceId),
@@ -127,7 +139,7 @@ export function MessageThreadPane({
           {...threadReadHandlers}
         >
           <MessageHead onBack={onBack} onOpenContact={onOpenContact} />
-          {isConversationActive(activeConversation) && (
+          {isConversationActive(activeConversation) && !isThreadOnStandby && (
             <Button
               className="shrink-0 rounded-none"
               disabled={isDisablingBot}
