@@ -1,13 +1,18 @@
 "use server"
 
 import { isDeepStrictEqual } from "node:util"
-import { userService, workspaceMemberService } from "@chatbotx.io/business"
+import {
+  revokeWorkspaceMemberRealtimeConnections,
+  userService,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { isCommunity } from "@/env"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   getSuperAdminPermissions,
@@ -81,6 +86,20 @@ export const updateWorkspaceMemberAction = workspaceActionClient
 
     if (!updated) {
       return
+    }
+    if (permissionsChanged) {
+      try {
+        await revokeWorkspaceMemberRealtimeConnections({
+          userId: workspaceMember.userId,
+          workspaceId,
+          reason: "reauth",
+        })
+      } catch (error) {
+        logger.error(
+          { err: error, userId: workspaceMember.userId, workspaceId },
+          "Failed to revoke workspace member realtime connections",
+        )
+      }
     }
 
     // Only a real permissions/role change is in the audit-log spec for this

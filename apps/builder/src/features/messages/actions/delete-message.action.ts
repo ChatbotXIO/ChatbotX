@@ -1,13 +1,13 @@
 "use server"
 
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
+  messageService,
+  queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -30,8 +30,7 @@ export const deleteMessage = async (props: {
 
   // Resolve the comment's own contactInbox so the worker dispatches to the
   // exact channel the comment belongs to (the commenter's messenger inbox).
-  const repository = await createMessageRepository()
-  const message = await repository.findById({
+  const message = await messageService.findWithAttachments({
     id,
     createdAt: new Date(createdAt),
     workspaceId,
@@ -43,16 +42,15 @@ export const deleteMessage = async (props: {
   // Soft-delete immediately in the DB and notify other tabs in realtime.
   // If the message has a sourceId, also queue a background job to remove it
   // from the external channel (e.g. Facebook).
-  const deleted = message.sourceId
-    ? await repository.deleteBySourceId(
-        message.sourceId,
-        workspaceId,
-        message.createdAt,
-      )
-    : await repository.deleteById(message.id, workspaceId, message.createdAt)
+  const deleted = await messageService.delete({
+    id: message.id,
+    sourceId: message.sourceId ?? undefined,
+    workspaceId,
+    createdAt: message.createdAt,
+  })
   const messageIds = deleted.map((row) => row.id)
 
-  await broadcastToWorkspaceParty(workspaceId, {
+  queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
   })

@@ -18,7 +18,6 @@ export class TriggerExecutorService {
     const { id: triggerId, workspaceId, actions } = trigger
     const { contactId, contactInboxId, decisionFlowOrigin, occurrenceId } =
       input
-
     try {
       setTriggerExecutionContext({ source: "worker" })
 

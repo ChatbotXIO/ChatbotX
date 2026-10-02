@@ -7,14 +7,14 @@ import {
   whatsappCallRepository,
 } from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import { getWhatsappCallEntity } from "@chatbotx.io/sdk"
 import { contactService } from "../contact/service"
 import { contactInboxService } from "../contact-inbox/service"
 import { notFoundException, summaryAlreadyGeneratingException } from "../errors"
 import { logger } from "../logger"
-import { broadcastToWorkspaceParty } from "../platform/realtime-broadcast"
+import { publishWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
 import { userService } from "../user/service"
 import { workspaceService } from "../workspace/service"
 
@@ -279,7 +279,7 @@ class WhatsappCallSummaryService {
     }
 
     try {
-      await broadcastToWorkspaceParty(call.workspaceId, {
+      await publishWorkspaceRealtimeEvent(call.workspaceId, {
         eventType: RealtimeEventType.messageContentUpdated,
         data: { messageId: merged.id, contentAttributes: entity },
       })

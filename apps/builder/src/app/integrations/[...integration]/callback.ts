@@ -2,6 +2,8 @@ import {
   appointmentExternalCalendarService,
   hasWorkspaceAccess,
   integrationFacebookAdsService,
+  integrationMetaCatalogService,
+  integrationService,
   integrationThreadsService,
   platformCredentialService,
   workspaceService,
@@ -24,6 +26,11 @@ import {
   integrationModel,
 } from "@chatbotx.io/database/schema"
 import type { ConnectSessionModel } from "@chatbotx.io/database/types"
+import {
+  exchangeCodeForToken as exchangeFacebookAdsCode,
+  exchangeLongLivedToken as exchangeFacebookAdsLongLivedToken,
+  type FacebookAdsAuthValue,
+} from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import {
@@ -32,7 +39,11 @@ import {
   getThreadsProfile,
 } from "@chatbotx.io/integration-threads"
 import { TiktokMissingScopesError } from "@chatbotx.io/integration-tiktok"
-import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
+import {
+  AuthType,
+  type AuthValue,
+  type Oauth2AuthValue,
+} from "@chatbotx.io/sdk"
 import {
   createId,
   getPublicUrlFromRequest,
@@ -43,6 +54,7 @@ import {
   type ConnectErrorQueryCode,
   connectFailureCauseOf,
 } from "@chatbotx.io/utils/connection"
+import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { normalizeError } from "universal-error-normalizer"
@@ -1271,22 +1283,12 @@ export const handleCallback = async (
     return notFound()
   }
 
-  await db.transaction(async (tx) => {
-    const integrationId = createId()
-
-    await tx.insert(integrationModel).values({
-      id: integrationId,
-      workspaceId: workspace.id,
-      integrationType,
-    })
-
-    if (integrationType === "googleSheets" && googleSheetsAuth) {
-      await tx.insert(integrationGoogleSheetsModel).values({
-        workspaceId: workspace.id,
-        integrationId,
-        auth: googleSheetsAuth,
-      })
-    }
+  await integrationService.create({
+    workspaceId: workspace.id,
+    integrationType,
+    ...(integrationType === "googleSheets" && googleSheetsAuth
+      ? { googleSheetsAuth }
+      : {}),
   })
 
   if (integrationType === "googleSheets") {

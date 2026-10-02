@@ -53,7 +53,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  publishToWorkspaceParty: mocks.publishToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mocks.publishToWorkspaceParty,
 }))
 
 vi.mock("../src/logger", () => ({

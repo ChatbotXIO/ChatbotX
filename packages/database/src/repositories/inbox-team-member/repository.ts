@@ -28,6 +28,28 @@ class InboxTeamMemberRepository {
       )
     return rows.map((row) => row.userId)
   }
+
+  async listTeamIdsByUserId(props: {
+    workspaceId: string
+    userId: string
+    tx?: DatabaseClient
+  }): Promise<string[]> {
+    const { workspaceId, userId, tx = db } = props
+    const rows = await tx
+      .select({ inboxTeamId: inboxTeamMemberModel.inboxTeamId })
+      .from(inboxTeamMemberModel)
+      .innerJoin(
+        inboxTeamModel,
+        eq(inboxTeamMemberModel.inboxTeamId, inboxTeamModel.id),
+      )
+      .where(
+        and(
+          eq(inboxTeamModel.workspaceId, workspaceId),
+          eq(inboxTeamMemberModel.userId, userId),
+        ),
+      )
+    return rows.map((row) => row.inboxTeamId)
+  }
 }
 
 export const inboxTeamMemberRepository = new InboxTeamMemberRepository()

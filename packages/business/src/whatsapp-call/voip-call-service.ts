@@ -119,7 +119,26 @@ export type ResumableIncomingVoipCall = {
  * lifecycle writes. SDP storage and webhook entry points live in
  * `whatsappVoipSignalingService`.
  */
+
 class WhatsappVoipCallService {
+  findByIdForWorkspace(props: {
+    id: string
+    workspaceId: string
+  }): Promise<WhatsappCallModel | undefined> {
+    return whatsappCallRepository.findByIdForWorkspace(
+      props.id,
+      props.workspaceId,
+    )
+  }
+
+  findByWacid(wacid: string): Promise<WhatsappCallModel | undefined> {
+    return whatsappCallRepository.findByWacid(wacid)
+  }
+
+  findByAttemptId(attemptId: string): Promise<WhatsappCallModel | undefined> {
+    return whatsappCallRepository.findByAttemptId(attemptId)
+  }
+
   async readControl(wacid: string): Promise<VoipCallControl | null> {
     return await casStore.getJson<VoipCallControl>(controlKey(wacid))
   }

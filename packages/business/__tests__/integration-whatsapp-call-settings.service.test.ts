@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { repositoryMock } = vi.hoisted(() => ({
+const { findFirstMock, repositoryMock } = vi.hoisted(() => ({
+  findFirstMock: vi.fn(),
   repositoryMock: {
     updateCallSettings: vi.fn(),
   },
@@ -11,6 +12,19 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   whatsappSignupSessionRepository: {},
   metaCapiEventRepository: {},
   LIVE_RUN_STATUSES: [],
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  and: vi.fn(),
+  db: {
+    query: {
+      integrationWhatsappModel: {
+        findFirst: findFirstMock,
+      },
+    },
+  },
+  eq: vi.fn(),
+  inArray: vi.fn(),
 }))
 
 const {
@@ -96,5 +110,32 @@ describe("integrationWhatsappService.updateCallSettings", () => {
     })
 
     expect(repositoryMock.updateCallSettings).not.toHaveBeenCalled()
+  })
+})
+
+describe("integrationWhatsappService.findAuthByInboxId", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("returns only the raw auth value for an inbox", async () => {
+    const auth = { tokens: { accessToken: "secret" } }
+    findFirstMock.mockResolvedValue({ auth })
+
+    await expect(
+      integrationWhatsappService.findAuthByInboxId("inbox-1"),
+    ).resolves.toBe(auth)
+    expect(findFirstMock).toHaveBeenCalledWith({
+      columns: { auth: true },
+      where: { inboxId: "inbox-1" },
+    })
+  })
+
+  test("returns null when the inbox has no WhatsApp integration", async () => {
+    findFirstMock.mockResolvedValue(undefined)
+
+    await expect(
+      integrationWhatsappService.findAuthByInboxId("inbox-1"),
+    ).resolves.toBeNull()
   })
 })

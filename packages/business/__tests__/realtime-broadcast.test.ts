@@ -1,375 +1,191 @@
-import type * as PartysocketConfig from "@chatbotx.io/partysocket-config"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import {
-  broadcastToWorkspaceParty,
-  flushAllPendingWorkspaceBroadcasts,
-  flushPendingWorkspaceBroadcasts,
-  publishToWorkspaceParty,
-  resetRealtimeBroadcastStateForTests,
-  WORKSPACE_BROADCAST_MAX_BYTES,
-  WORKSPACE_BROADCAST_MAX_EVENTS,
+  flushAllPendingWorkspaceRealtimeEvents,
+  publishGuestRealtimeEvent,
+  publishWorkspaceMemberRealtimeEvent,
+  publishWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent,
+  resetRealtimePublishStateForTests,
+  revokeWorkspaceMemberRealtimeConnections,
 } from "../src/platform/realtime-broadcast"
 
 const {
-  broadcastToWorkspacePartyLow,
   loggerError,
-  resolveBroadcastSecret,
-  resolveRealtimeBroadcastUrl,
-  resolveRealtimeDeliveryGate,
-  resolveTenantSettings,
+  markRealtimeMemberRevoked,
+  publishRealtimeStreamRecord,
+  publishSerializedRealtimeStreamRecord,
 } = vi.hoisted(() => ({
-  broadcastToWorkspacePartyLow: vi.fn(),
   loggerError: vi.fn(),
-  resolveBroadcastSecret: vi.fn(),
-  resolveRealtimeBroadcastUrl: vi.fn(),
-  resolveRealtimeDeliveryGate: vi.fn(),
-  resolveTenantSettings: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/partysocket-config", async () => {
-  const actual = await vi.importActual<typeof PartysocketConfig>(
-    "@chatbotx.io/partysocket-config",
-  )
-  return { ...actual, broadcastToWorkspaceParty: broadcastToWorkspacePartyLow }
-})
-
-vi.mock("../src/platform/settings", () => ({
-  resolveBroadcastSecret,
-  resolveRealtimeBroadcastUrl,
-  resolveRealtimeDeliveryGate,
-  resolveTenantSettings,
+  markRealtimeMemberRevoked: vi.fn(),
+  publishRealtimeStreamRecord: vi.fn(),
+  publishSerializedRealtimeStreamRecord: vi.fn(),
 }))
 
 vi.mock("../src/logger", () => ({
-  logger: { error: loggerError },
+  logger: { error: loggerError, info: vi.fn(), warn: vi.fn() },
 }))
+
+vi.mock("../src/platform/realtime-stream-publisher", () => ({
+  markRealtimeMemberRevoked,
+  publishRealtimeStreamRecord,
+  publishSerializedRealtimeStreamRecord,
+  resetRealtimeStreamPublisherForTests: vi.fn(),
+}))
+
 const typingEvent = {
+  data: { typing: true },
   eventType: "typing",
-  data: { conversationId: "conversation_1", seconds: 1, typing: true },
-} as const
-
-const messageCreatedEvent = {
-  eventType: "messageCreated",
-  data: { conversationId: "conversation_1" },
-} as const
-
-const contactBlockedEvent = {
-  eventType: "contactBlocked",
-  data: { contactId: "contact_1" },
-} as const
-
-/** Mixed chat+voip topic — must never be suppressed or drive the gate. */
-const conversationAssignedEvent = {
-  eventType: "conversationAssigned",
-  data: {
-    conversationIds: ["conversation_1"],
-    assignedUserId: "user_1",
-    assignedInboxTeamId: null,
-  },
-} as const
-
-/** Voip-only topic — must never be suppressed or drive the gate. */
-const voipEvent = {
-  eventType: "whatsappCallClaimedElsewhere",
-  data: {
-    whatsappCallId: "call_1",
-    wacid: "wacid_1",
-    answeredByUserId: "user_1",
-  },
 } as const
 
 beforeEach(() => {
   vi.useFakeTimers()
-  broadcastToWorkspacePartyLow.mockReset()
-  resolveBroadcastSecret.mockReset()
-  resolveRealtimeBroadcastUrl.mockReset()
-  resolveRealtimeDeliveryGate.mockReset()
-  resolveTenantSettings.mockReset()
   loggerError.mockReset()
-  broadcastToWorkspacePartyLow.mockResolvedValue(1)
-  resolveBroadcastSecret.mockReturnValue("s".repeat(32))
-  resolveRealtimeBroadcastUrl.mockReturnValue("http://realtime:1999")
-  resolveRealtimeDeliveryGate.mockReturnValue(true)
-  resetRealtimeBroadcastStateForTests()
+  markRealtimeMemberRevoked.mockReset()
+  markRealtimeMemberRevoked.mockResolvedValue(undefined)
+  publishRealtimeStreamRecord.mockReset()
+  publishRealtimeStreamRecord.mockResolvedValue(undefined)
+  publishSerializedRealtimeStreamRecord.mockReset()
+  publishSerializedRealtimeStreamRecord.mockResolvedValue(undefined)
+  resetRealtimePublishStateForTests()
 })
 
 afterEach(() => {
-  resetRealtimeBroadcastStateForTests()
+  resetRealtimePublishStateForTests()
   vi.useRealTimers()
 })
 
-const broadcastAndFlush = async (
-  ...args: Parameters<typeof broadcastToWorkspaceParty>
-) => {
-  const broadcast = broadcastToWorkspaceParty(...args)
-  await vi.runOnlyPendingTimersAsync()
-  return await broadcast
-}
+describe("realtime stream broadcast", () => {
+  test("coalesces workspace events into one durable stream record", async () => {
+    const first = publishWorkspaceRealtimeEvent("workspace_1", typingEvent)
+    const second = publishWorkspaceRealtimeEvent("workspace_1", typingEvent)
 
-describe("broadcastToWorkspaceParty aggregator (B1)", () => {
-  test("queues the first event until the coalesce window elapses", async () => {
-    const queued = broadcastToWorkspaceParty("workspace_1", typingEvent)
-
-    expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
-
-    await vi.runOnlyPendingTimersAsync()
-    await expect(queued).resolves.toBe(1)
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
-      { secret: "s".repeat(32), url: "http://realtime:1999" },
-      "workspace_1",
-      [typingEvent],
-    )
-  })
-
-  test("flushes after 25 ms", async () => {
-    const queued = broadcastToWorkspaceParty("workspace_1", typingEvent)
-
-    await vi.advanceTimersByTimeAsync(24)
-    expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
-
-    await vi.advanceTimersByTimeAsync(1)
-    await expect(queued).resolves.toBe(1)
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-  })
-
-  test("keeps the coalesce window at 25 ms during a burst", async () => {
-    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
     await vi.advanceTimersByTimeAsync(25)
-    await first
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      undefined,
+      undefined,
+    ])
 
-    const burst = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
-    await vi.advanceTimersByTimeAsync(24)
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-    await vi.advanceTimersByTimeAsync(1)
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(2)
-    await flushPendingWorkspaceBroadcasts("workspace_1")
-    await burst
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(2)
-  })
-
-  test("coalesces all events queued during the window into one batch request", async () => {
-    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
-    const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
-    const third = broadcastToWorkspaceParty(
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
       "workspace_1",
-      conversationAssignedEvent,
-    )
-
-    expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
-
-    await vi.runOnlyPendingTimersAsync()
-    await Promise.all([first, second, third])
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
-      expect.anything(),
-      "workspace_1",
-      [typingEvent, contactBlockedEvent, conversationAssignedEvent],
+      '{"events":[{"data":{"typing":true},"eventType":"typing"},{"data":{"typing":true},"eventType":"typing"}],"kind":"workspace-events","workspaceId":"workspace_1"}',
     )
   })
 
-  test("flushes immediately once the max event count is reached, without waiting for the coalesce window", async () => {
-    const queued = Array.from({ length: WORKSPACE_BROADCAST_MAX_EVENTS }, () =>
-      broadcastToWorkspaceParty("workspace_1", contactBlockedEvent),
-    )
-    await Promise.all(queued)
+  test("flushes pending workspace records before shutdown", async () => {
+    const delivery = publishWorkspaceRealtimeEvent("workspace_1", typingEvent)
 
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-    const [, , batch] = broadcastToWorkspacePartyLow.mock.calls[0] as [
-      unknown,
-      unknown,
-      unknown[],
-    ]
-    expect(batch).toHaveLength(WORKSPACE_BROADCAST_MAX_EVENTS)
+    await flushAllPendingWorkspaceRealtimeEvents()
+    await expect(delivery).resolves.toBeUndefined()
+
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledTimes(1)
   })
 
-  test("flushes a pending batch immediately when a VoIP event arrives", async () => {
-    const pending = broadcastToWorkspaceParty("workspace_1", typingEvent)
-    const voip = broadcastToWorkspaceParty("workspace_1", voipEvent)
-
-    await Promise.all([pending, voip])
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
-      expect.anything(),
-      "workspace_1",
-      [typingEvent, voipEvent],
-    )
-  })
-
-  test("serializes an overflow flush before the next batch", async () => {
-    const oversizedEvent = {
-      eventType: "contactBlocked" as const,
-      data: { contactId: "x".repeat(WORKSPACE_BROADCAST_MAX_BYTES) },
-    }
-    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
-    const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
-    const third = broadcastToWorkspaceParty("workspace_1", oversizedEvent)
-
-    await vi.runAllTimersAsync()
-    await Promise.all([first, second, third])
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
-      1,
-      expect.anything(),
-      "workspace_1",
-      [typingEvent, contactBlockedEvent],
-    )
-    expect(broadcastToWorkspacePartyLow).toHaveBeenNthCalledWith(
-      2,
-      expect.anything(),
-      "workspace_1",
-      [oversizedEvent],
-    )
-  })
-
-  test("flushPendingWorkspaceBroadcasts drains a pending batch on demand, ahead of the timer", async () => {
-    const queued = broadcastToWorkspaceParty("workspace_1", typingEvent)
-    const interested = await flushPendingWorkspaceBroadcasts("workspace_1")
-    await queued
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-    expect(interested).toBe(1)
-  })
-
-  test("resolves every waiter with null when a batched relay request rejects", async () => {
-    broadcastToWorkspacePartyLow.mockRejectedValueOnce(new Error("relay down"))
-    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
-    const second = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
-
-    await vi.runOnlyPendingTimersAsync()
-
-    await expect(Promise.all([first, second])).resolves.toEqual([null, null])
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
-      expect.anything(),
-      "workspace_1",
-      [typingEvent, contactBlockedEvent],
-    )
-  })
-
-  test("flushPendingWorkspaceBroadcasts is a no-op when nothing is pending", async () => {
+  test("publishes directed member, revocation, and guest records directly", async () => {
     await expect(
-      flushPendingWorkspaceBroadcasts("workspace_never_used"),
-    ).resolves.toBeNull()
-    expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
+      publishWorkspaceMemberRealtimeEvent(
+        { userId: "user_1", workspaceId: "workspace_1" },
+        typingEvent,
+      ),
+    ).resolves.toBeUndefined()
+    await expect(
+      revokeWorkspaceMemberRealtimeConnections({
+        userId: "user_1",
+        workspaceId: "workspace_1",
+        reason: "deleted",
+      }),
+    ).resolves.toBeUndefined()
+    await expect(
+      publishGuestRealtimeEvent(
+        { guestConversationId: "guest_1", workspaceId: "workspace_1" },
+        typingEvent,
+      ),
+    ).resolves.toBeUndefined()
+
+    expect(publishRealtimeStreamRecord).toHaveBeenNthCalledWith(1, {
+      event: typingEvent,
+      kind: "member-send",
+      userId: "user_1",
+      workspaceId: "workspace_1",
+    })
+    expect(publishRealtimeStreamRecord).toHaveBeenNthCalledWith(2, {
+      kind: "member-revoke",
+      reason: "deleted",
+      userId: "user_1",
+      workspaceId: "workspace_1",
+    })
+    expect(publishRealtimeStreamRecord).toHaveBeenNthCalledWith(3, {
+      event: typingEvent,
+      guestConversationId: "guest_1",
+      kind: "guest-event",
+      workspaceId: "workspace_1",
+    })
   })
 
-  test("flushAllPendingWorkspaceBroadcasts drains every workspace", async () => {
-    const first = broadcastToWorkspaceParty("workspace_1", typingEvent)
-    const second = broadcastToWorkspaceParty("workspace_2", contactBlockedEvent)
+  test("retries a transient revoke-append failure before succeeding", async () => {
+    publishRealtimeStreamRecord
+      .mockRejectedValueOnce(new Error("ECONNRESET"))
+      .mockResolvedValueOnce(undefined)
 
-    await flushAllPendingWorkspaceBroadcasts()
-    await Promise.all([first, second])
+    const revoke = revokeWorkspaceMemberRealtimeConnections({
+      userId: "user_1",
+      workspaceId: "workspace_1",
+      reason: "deleted",
+    })
+    await vi.runAllTimersAsync()
 
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(2)
+    await expect(revoke).resolves.toBeUndefined()
+    expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(2)
   })
 
-  test("publishes without making a caller await relay delivery", async () => {
-    const result = publishToWorkspaceParty("workspace_1", typingEvent)
-    await vi.runOnlyPendingTimersAsync()
+  test("throws after exhausting every revoke-append retry, so a failed member revoke is never silently swallowed", async () => {
+    const persistentError = new Error("ECONNREFUSED")
+    publishRealtimeStreamRecord.mockRejectedValue(persistentError)
 
-    expect(result).toBeUndefined()
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
-      expect.anything(),
-      "workspace_1",
-      [typingEvent],
+    const revoke = revokeWorkspaceMemberRealtimeConnections({
+      userId: "user_1",
+      workspaceId: "workspace_1",
+      reason: "deleted",
+    })
+    // Attach the rejection assertion in the same tick the promise is
+    // created — `revoke` settles across several fake-timer-driven retries,
+    // and awaiting `vi.runAllTimersAsync()` first leaves it unhandled for a
+    // tick, which Node flags as an unhandled-then-handled rejection.
+    const assertion = expect(revoke).rejects.toBe(persistentError)
+    await vi.runAllTimersAsync()
+
+    await assertion
+    expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(3)
+  })
+
+  test("drains every workspace's shutdown flush independently, even when one workspace's append rejects", async () => {
+    // Regression for PR #1349 round-4 medium finding: `Promise.all` used to
+    // abort the whole shutdown drain on the first failing workspace, so a
+    // busy/broken neighbor could leave an unrelated workspace's in-flight
+    // append un-awaited (and un-logged) past process exit.
+    const failure = new Error("ECONNRESET")
+    publishSerializedRealtimeStreamRecord.mockImplementation(
+      (workspaceId: string) =>
+        workspaceId === "ws-fail"
+          ? Promise.reject(failure)
+          : Promise.resolve(undefined),
     )
-  })
-})
 
-describe("chat delivery negative cache (B4)", () => {
-  test("suppresses typing for the TTL after the relay reports zero interest, without hitting the network", async () => {
-    broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastAndFlush("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
+    queueWorkspaceRealtimeEvent("ws-fail", typingEvent)
+    queueWorkspaceRealtimeEvent("ws-ok", typingEvent)
 
-    const interested = await broadcastToWorkspaceParty(
-      "workspace_1",
-      typingEvent,
+    await expect(flushAllPendingWorkspaceRealtimeEvents()).rejects.toThrow()
+
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
+      "ws-fail",
+      expect.any(String),
     )
-
-    expect(interested).toBe(0)
-    expect(broadcastToWorkspacePartyLow).not.toHaveBeenCalled()
-  })
-
-  test("continues broadcasting durable chat events while the typing gate is active", async () => {
-    broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastAndFlush("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-
-    const queued = broadcastToWorkspaceParty("workspace_1", messageCreatedEvent)
-    await vi.runOnlyPendingTimersAsync()
-    await queued
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledWith(
-      expect.anything(),
-      "workspace_1",
-      [messageCreatedEvent],
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
+      "ws-ok",
+      expect.any(String),
     )
-  })
-
-  test("stops suppressing once the negative-cache TTL elapses", async () => {
-    broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastAndFlush("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-    broadcastToWorkspacePartyLow.mockResolvedValue(1)
-
-    await vi.advanceTimersByTimeAsync(2001)
-    await broadcastAndFlush("workspace_1", contactBlockedEvent)
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-  })
-
-  test("a relay response with nonzero interest never sets the negative cache", async () => {
-    broadcastToWorkspacePartyLow.mockResolvedValueOnce(3)
-    await broadcastAndFlush("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-
-    const queued = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
-    await vi.runOnlyPendingTimersAsync()
-    await queued
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-  })
-
-  test("never suppresses a mixed chat+voip event, even while the chat gate is active", async () => {
-    broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastAndFlush("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-
-    const queued = broadcastToWorkspaceParty(
-      "workspace_1",
-      conversationAssignedEvent,
+    expect(loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: failure, workspaceId: "ws-fail" }),
+      "Failed to flush pending realtime events on shutdown",
     )
-    await vi.runOnlyPendingTimersAsync()
-    await queued
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-  })
-
-  test("never suppresses a voip-only event, even while the chat gate is active", async () => {
-    broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastAndFlush("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-
-    const queued = broadcastToWorkspaceParty("workspace_1", voipEvent)
-    await vi.runOnlyPendingTimersAsync()
-    await queued
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
-  })
-
-  test("fails open when REALTIME_DELIVERY_GATE is disabled", async () => {
-    resolveRealtimeDeliveryGate.mockReturnValue(false)
-    broadcastToWorkspacePartyLow.mockResolvedValueOnce(0)
-    await broadcastAndFlush("workspace_1", typingEvent)
-    broadcastToWorkspacePartyLow.mockClear()
-
-    const queued = broadcastToWorkspaceParty("workspace_1", contactBlockedEvent)
-    await vi.runOnlyPendingTimersAsync()
-    await queued
-
-    expect(broadcastToWorkspacePartyLow).toHaveBeenCalledTimes(1)
   })
 })
