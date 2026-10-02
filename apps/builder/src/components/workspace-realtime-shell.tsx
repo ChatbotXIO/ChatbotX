@@ -6,6 +6,7 @@ import { WhatsappCallRealtime } from "@/features/integration-whatsapp/calling/vo
 import { WhatsappVoipCallProvider } from "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { WhatsappCallInfoSheet } from "@/features/messages/components/whatsapp-call-info-sheet"
 import { WorkspaceRealtimeProvider } from "@/features/realtime/workspace-realtime-provider"
+import { WorkspaceRealtimeStatusBanner } from "./workspace-realtime-status-banner"
 
 type WorkspaceRealtimeShellProps = {
   realtimeEnabled: boolean
@@ -47,6 +48,7 @@ export function WorkspaceRealtimeShell({
 
   return (
     <WorkspaceRealtimeProvider>
+      <WorkspaceRealtimeStatusBanner />
       {callHistoryEnabled && <WhatsappCallInfoSheet />}
       {callingEnabled ? (
         <WorkspaceCallingLayer>{children}</WorkspaceCallingLayer>

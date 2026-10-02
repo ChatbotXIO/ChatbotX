@@ -253,7 +253,7 @@ and that call). Transport-tagged `ended` realtime event closes the peer.
   changes for any other number are dropped before enqueue.
 
 ## Realtime event contract
-The transport-tagged payload lives in `packages/partysocket-config/src/schemas.ts`
+The transport-tagged payload lives in `packages/realtime-protocol/src/schemas.ts`
 (`transport: z.literal("voip")` — kept as a literal, not stripped, so existing
 clients keep parsing the payload unchanged; browser WebRTC is the only transport).
 Variants carry `whatsappCallId`/`wacid` and **no `rootUuid`**. `ChatRealtime` and
@@ -293,7 +293,8 @@ the shared finalizer emit the transport-tagged ended event.
   (`workspacePresenceService.listOnlineMembers`) — a user counts as "online" while
   their entry is renewed within `PRESENCE_TTL_MS` (20 s). Renewal is no longer a
   per-browser-tab client heartbeat: each `apps/realtime` `workspaces` room reports its
-  distinct connected user ids to the builder every 20 s (`WorkspaceParty`'s alarm loop
+  distinct connected user ids to the builder every 10 s (the gateway's own
+  `presenceHeartbeat` timer, `PRESENCE_REPORT_INTERVAL_MS` in `presence.ts`)
   → `POST /api/workspace-presence/report` → `workspacePresenceService.heartbeatMany`,
   one Redis round-trip for the whole batch), so request volume scales with active
   workspaces, not agent count. Matches a widely used online-status-tracker model: there is

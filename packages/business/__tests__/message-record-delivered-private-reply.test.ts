@@ -18,10 +18,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
-  RealtimeEventType: { messageCreated: "messageCreated" },
-}))
-
 vi.mock("../src/conversation/service", () => ({
   conversationService: {
     findDMByContact: mockFindDMByContact,
