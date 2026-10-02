@@ -3,13 +3,19 @@ import enMessages from "../messages/en.json"
 
 const mocks = vi.hoisted(() => ({
   mockWorkspaceCreate: vi.fn(),
+  mockWorkspaceFind: vi.fn(
+    async (): Promise<{ id: string } | undefined> => undefined,
+  ),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  workspaceService: { create: mocks.mockWorkspaceCreate },
+  workspaceService: {
+    create: mocks.mockWorkspaceCreate,
+    find: mocks.mockWorkspaceFind,
+  },
 }))
 vi.mock("next/navigation", () => ({ redirect: mocks.mockRedirect }))
 
@@ -51,16 +57,28 @@ describe("create-first-workspace", () => {
     expect(isCreateChannelErrorCode(undefined)).toBe(false)
   })
 
-  test("returns the created workspace on success", async () => {
+  test("returns the created workspace on success when the user owns none yet", async () => {
     mocks.mockWorkspaceCreate.mockResolvedValue({ id: "ws-new" })
 
     await expect(createFirstWorkspace("user-1")).resolves.toEqual({
       id: "ws-new",
     })
+    expect(mocks.mockWorkspaceFind).toHaveBeenCalledWith({
+      where: { ownerId: "user-1" },
+    })
     expect(mocks.mockWorkspaceCreate).toHaveBeenCalledWith({
       data: { name: "New Workspace", ownerId: "user-1" },
       createdBy: "user-1",
     })
+  })
+
+  test("reuses the user's existing workspace instead of minting a second one (regression I7: a GET-route retry/back-button/replay must not create an orphan workspace every time)", async () => {
+    mocks.mockWorkspaceFind.mockResolvedValueOnce({ id: "ws-existing" })
+
+    await expect(createFirstWorkspace("user-1")).resolves.toEqual({
+      id: "ws-existing",
+    })
+    expect(mocks.mockWorkspaceCreate).not.toHaveBeenCalled()
   })
 
   test("redirects to /channels/create?error=… on a plan-limit failure", async () => {

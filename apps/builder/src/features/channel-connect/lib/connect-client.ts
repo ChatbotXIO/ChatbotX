@@ -53,7 +53,7 @@ function transportFailureOutcome(item: ConnectTarget): ConnectActionResultWire {
 export type ConnectViaApiParams<TBody, TResult> = {
   /** `CONNECT_CHANNEL_REGISTRY[channel].connectRoute`, or `INSTAGRAM_DIRECT_CONNECT_ROUTE` — never a procedure named at the call site. */
   route: ConnectRoute<TBody>
-  /** Ids only, and only the ones this route accepts. The workspace and the provider token stay server-side (pending-auth cookie / signup session). */
+  /** Ids only, and only the ones this route accepts. The workspace and the provider token stay server-side (`ConnectSession` row / WhatsApp signup session). */
   body: TBody
   /** Validates the procedure's answer — a channel whose result carries more than the shared outcome shape passes its own schema. */
   parse: (data: unknown) => TResult

@@ -43,7 +43,6 @@ const {
   mockCreateGoogleFromOAuthCallback,
   mockResolveOwnerForWorkspace,
   mockGetCurrentUser,
-  mockEncryptAuth,
   mockCookieSet,
   mockNotFound,
   mockRedirect,
@@ -72,7 +71,6 @@ const {
   mockCreateGoogleFromOAuthCallback: vi.fn(),
   mockResolveOwnerForWorkspace: vi.fn(async () => "platform-owner-1"),
   mockGetCurrentUser: vi.fn(),
-  mockEncryptAuth: vi.fn(async () => "encrypted-token"),
   mockCookieSet: vi.fn(),
   mockNotFound: vi.fn(() => {
     throw new Error("not found")
@@ -251,14 +249,6 @@ vi.mock("@/lib/auth/utils", () => ({
 
 vi.mock("@/lib/log", () => ({
   logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}))
-
-vi.mock("@/lib/facebook-pending-auth", () => ({
-  encryptAuth: mockEncryptAuth,
-  FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE: "igfb-pending-auth",
-  FB_INSTAGRAM_PENDING_AUTH_COOKIE: "ig-pending-auth",
-  FB_MESSENGER_PENDING_AUTH_COOKIE: "messenger-pending-auth",
-  FB_PENDING_AUTH_MAX_AGE: 600,
 }))
 
 // NOTE: `@/lib/oauth-referer` and `@/lib/oauth-broker` are deliberately left

@@ -1,3 +1,6 @@
+import { connectionService } from "@chatbotx.io/connections"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { normalizeError } from "universal-error-normalizer"
 import {
   type WorkspaceIdRequestParams,
@@ -17,13 +20,32 @@ interface CreateDisconnectActionOptions {
   log?: boolean
   /** Human-readable integration name for the error log, e.g. "ActiveCampaign". */
   name: string
+  /**
+   * The `Connection` registry key for this integration — workspace-level
+   * integrations are singletons (`sourceId = "workspace"`). When a
+   * `Connection` row exists for `(workspaceId, provider, "workspace")` the
+   * disconnect routes through `connectionService.disconnect` (provider-side
+   * teardown + store-binding delete + FSM transition); otherwise (a
+   * workspace predating the Phase 1 backfill) it falls back to `service`'s
+   * own `disconnect`, so this never regresses a not-yet-backfilled
+   * workspace's ability to disconnect.
+   */
+  provider: IntegrationType
 }
 
+/**
+ * Scheduled for removal in Phase 5 of the connection-lifecycle plan, once
+ * every adopter reads/writes the `Connection` domain directly instead of
+ * going through a per-provider service. Until then this is the active,
+ * correct implementation for the 13 workspace-integration disconnect
+ * actions — it routes through `connectionService` itself (see `provider`
+ * above), so adopters do not need any further change.
+ */
 export function createDisconnectAction(
   service: DisconnectService,
   options: CreateDisconnectActionOptions,
 ) {
-  const { name, log = true, afterDisconnect } = options
+  const { name, log = true, afterDisconnect, provider } = options
 
   return workspaceActionClientAllowExpired
     .bindArgsSchemas(workspaceIdrequestParams)
@@ -34,7 +56,19 @@ export function createDisconnectAction(
         bindArgsParsedInputs: WorkspaceIdRequestParams
       }) => {
         try {
-          await service.disconnect(workspaceId)
+          const connection = await connectionRepository.findByProviderSourceId({
+            workspaceId,
+            provider,
+            sourceId: "workspace",
+          })
+          if (connection) {
+            await connectionService.disconnect({
+              connectionId: connection.id,
+              workspaceId,
+            })
+          } else {
+            await service.disconnect(workspaceId)
+          }
           await afterDisconnect?.(workspaceId)
         } catch (error) {
           if (log) {

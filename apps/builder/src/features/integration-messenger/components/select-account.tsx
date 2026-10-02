@@ -27,6 +27,7 @@ export type PagesLoadError = {
 }
 
 type SelectPageProps = {
+  sessionId: string
   items: MessengerPickerItem[]
   bmLookupFailed: boolean
   /**
@@ -40,6 +41,7 @@ type SelectPageProps = {
 }
 
 export function SelectPage({
+  sessionId,
   items,
   bmLookupFailed,
   loadError,
@@ -73,7 +75,11 @@ export function SelectPage({
             </AlertDescription>
           </Alert>
         )}
-        <MessengerPages items={items} workspaceId={workspaceId} />
+        <MessengerPages
+          items={items}
+          sessionId={sessionId}
+          workspaceId={workspaceId}
+        />
       </CardContent>
     </Card>
   )
