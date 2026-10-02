@@ -23,7 +23,7 @@
     "@t3-oss/env-nextjs": "^0.13.11",
     "date-fns": "^4.1.0",
     "lucide-react": "^1.14.0",
-    "next-intl": "^4.11.0",
+    "next-intl": "^4.14.8",
     "react": "19.2.5",
     "react-hook-form": "^7.74.0",
     "zod": "^4.3.6",
