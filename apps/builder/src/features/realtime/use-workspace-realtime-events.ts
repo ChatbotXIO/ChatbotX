@@ -8,8 +8,8 @@ import { useWorkspaceRealtimeContext } from "./workspace-realtime-provider"
  * Subscribes to a set of workspace realtime events for as long as the calling
  * component is mounted. `handlers` is read through a ref rather than
  * `useEffectEvent`, since `subscribeHandlers` calls the getter later from a
- * PartySocket callback, not synchronously inside a React Effect. Only the set of
- * event names drives the subscription effect's cleanup/re-run.
+ * realtime socket callback, not synchronously inside a React Effect. Only the
+ * set of event names drives the subscription effect's cleanup/re-run.
  */
 export function useWorkspaceRealtimeEvents(handlers: RealtimeHandlerMap): void {
   const { subscribeHandlers } = useWorkspaceRealtimeContext()

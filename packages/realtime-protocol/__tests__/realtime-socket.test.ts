@@ -286,4 +286,30 @@ describe("RealtimeSocket", () => {
     expect(onError).not.toHaveBeenCalled()
     expect(onClose).toHaveBeenCalledOnce()
   })
+
+  it("fires onClose only once even if the underlying socket's close handler is invoked twice", async () => {
+    // Regression for PR #1349 round-5: a native WebSocket implementation
+    // (or an error->close() request racing a connection that was already
+    // closing on its own) could in principle invoke `onclose` more than
+    // once for the SAME socket instance — `this.#socket !== socket` must
+    // guard every invocation after the first, not just assume there's only
+    // ever one.
+    const webSocket = new FakeWebSocket()
+    const onClose = vi.fn()
+    const socket = new RealtimeSocket({
+      getUrl: vi.fn().mockResolvedValue("ws://test"),
+      onClose,
+      onMessage: vi.fn(),
+      webSocketFactory: () => webSocket,
+    })
+
+    socket.connect()
+    await vi.runAllTimersAsync()
+    webSocket.onclose?.({ code: 1006, reason: "" })
+    // A second, redundant invocation of the exact same handler on the exact
+    // same (already-replaced) socket instance.
+    webSocket.onclose?.({ code: 1006, reason: "" })
+
+    expect(onClose).toHaveBeenCalledOnce()
+  })
 })

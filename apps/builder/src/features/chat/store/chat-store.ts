@@ -30,7 +30,8 @@ import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 export const INBOX_CONVERSATIONS_PER_PAGE = 20
 export const INBOX_MESSAGES_PER_PAGE = 20
-const CONVERSATION_HEAD_REFRESH_THROTTLE_MS = 5000
+const CONVERSATION_HEAD_REFRESH_MIN_THROTTLE_MS = 5000
+const CONVERSATION_HEAD_REFRESH_MAX_THROTTLE_MS = 15_000
 
 /**
  * The later of two timestamps — tolerates the string a realtime payload
@@ -285,6 +286,7 @@ export type ChatActions = {
   ) => void
   loadMoreMessages: (workspaceId: string, perPage: number) => Promise<void>
   loadInitialMessages: (workspaceId: string, perPage: number) => Promise<void>
+  resyncRealtime: (workspaceId: string) => Promise<void>
   handleNewMessages: (messages: MessageResourceWithRelations[]) => void
   setReplyToMessage: (
     message: MessageResourceWithRelations | null,
@@ -507,6 +509,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   let conversationHeadRefreshPending = false
   let conversationHeadRefreshTimer: number | null = null
   let pendingConversationHeadRefreshWorkspaceId: string | null = null
+  let conversationHeadRefreshThrottleMs =
+    CONVERSATION_HEAD_REFRESH_MIN_THROTTLE_MS
   const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => {
@@ -557,11 +561,13 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
 
         const now = Date.now()
         if (conversationHeadRefreshInFlight) {
+          conversationHeadRefreshThrottleMs =
+            CONVERSATION_HEAD_REFRESH_MAX_THROTTLE_MS
           return
         }
         const throttleDelay = Math.max(
           0,
-          CONVERSATION_HEAD_REFRESH_THROTTLE_MS -
+          conversationHeadRefreshThrottleMs -
             (now - lastConversationHeadRefreshAt),
         )
         if (throttleDelay > 0) {
@@ -601,23 +607,36 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             }
 
             set((state) => {
-              const existingIds = new Set(
-                state.conversations.map((conversation) => conversation.id),
+              const currentConversationsById = new Map(
+                state.conversations.map(
+                  (conversation) => [conversation.id, conversation] as const,
+                ),
               )
-              const newConversations = headConversations.filter(
-                (conversation) => {
-                  if (existingIds.has(conversation.id)) {
-                    return false
-                  }
-                  existingIds.add(conversation.id)
-                  return true
-                },
-              )
-              if (newConversations.length === 0) {
-                return state
-              }
+              const headConversationIds = new Set<string>()
+              const reconciledHead = headConversations.map((conversation) => {
+                headConversationIds.add(conversation.id)
+                const currentConversation = currentConversationsById.get(
+                  conversation.id,
+                )
+                if (
+                  currentConversation?.lastActivityAt &&
+                  conversation.lastActivityAt &&
+                  new Date(currentConversation.lastActivityAt).getTime() >
+                    new Date(conversation.lastActivityAt).getTime()
+                ) {
+                  return currentConversation
+                }
+                return conversation
+              })
+              conversationHeadRefreshThrottleMs =
+                CONVERSATION_HEAD_REFRESH_MIN_THROTTLE_MS
               return {
-                conversations: [...newConversations, ...state.conversations],
+                conversations: [
+                  ...reconciledHead,
+                  ...state.conversations.filter(
+                    (conversation) => !headConversationIds.has(conversation.id),
+                  ),
+                ],
               }
             })
           } catch (error) {
@@ -1117,6 +1136,75 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         await loadMoreMessages(workspaceId, perPage)
       },
 
+      resyncRealtime: async (workspaceId: string) => {
+        get().scheduleConversationHeadRefresh(workspaceId)
+        const { activeConversationId, isLoadMoreMessage, messages } = get()
+        if (!activeConversationId || isLoadMoreMessage) {
+          return
+        }
+        const messagesBeforeResync = new Map(
+          messages.map((message) => [message.id, message]),
+        )
+
+        set({ isLoadMoreMessage: true })
+        try {
+          const { data, nextCursor } =
+            await client.messagesAPI.listMessagesAuthenticatedAPI({
+              workspaceId,
+              perPage: INBOX_MESSAGES_PER_PAGE,
+              cursor: "",
+              conversationId: activeConversationId,
+            })
+          if (get().activeConversationId !== activeConversationId) {
+            set({ isLoadMoreMessage: false })
+            return
+          }
+          const refreshedMessages = data.reverse()
+          set((state) => {
+            const currentMessagesById = new Map(
+              state.messages.map((message) => [message.id, message]),
+            )
+            const refreshedMessageIds = new Set(
+              refreshedMessages.map((message) => message.id),
+            )
+            const messagesReceivedDuringResync = state.messages.filter(
+              (message) =>
+                !(
+                  messagesBeforeResync.has(message.id) ||
+                  refreshedMessageIds.has(message.id)
+                ),
+            )
+            const messages = [
+              ...refreshedMessages.map((message) => {
+                const previousMessage = messagesBeforeResync.get(message.id)
+                const currentMessage = currentMessagesById.get(message.id)
+                return currentMessage && currentMessage !== previousMessage
+                  ? currentMessage
+                  : message
+              }),
+              ...messagesReceivedDuringResync,
+            ].sort(
+              (left, right) =>
+                new Date(left.createdAt).getTime() -
+                new Date(right.createdAt).getTime(),
+            )
+            return {
+              messages,
+              nextCursorMessage: nextCursor,
+              hasNextMessagePage: nextCursor !== null,
+              isLoadMoreMessage: false,
+              messagesConversationId: activeConversationId,
+            }
+          })
+        } catch (error) {
+          set({ isLoadMoreMessage: false })
+          logger.warn(
+            { err: error, workspaceId, conversationId: activeConversationId },
+            "resyncRealtime: failed to refresh active conversation",
+          )
+        }
+      },
+
       updateConversationViaMessage: (message: MessageResource) => {
         let matchedConversation = false
         set((state) => {
@@ -1129,11 +1217,20 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
 
           matchedConversation = true
           const currentConversation = state.conversations[conversationIndex]
+          const currentActivityAt = currentConversation.lastActivityAt
+          const isOlderMessage =
+            currentActivityAt !== null &&
+            new Date(message.createdAt).getTime() <
+              new Date(currentActivityAt).getTime()
+          if (isOlderMessage) {
+            return state
+          }
+
           const conversation = {
             ...currentConversation,
             messages: [message],
             lastActivityAt: latestActivityAt(
-              currentConversation.lastActivityAt,
+              currentActivityAt,
               message.createdAt,
             ),
           }
@@ -1255,6 +1352,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             ),
           )
           const lastMessageIndexByConversationId = new Map<string, number>()
+          const updatedConversationIds = new Set<string>()
           let messages: MessageResourceWithRelations[] | null = null
           let messageIndexById = new Map<string, number>()
           let messageIndexByClientId = new Map<string, number>()
@@ -1272,20 +1370,32 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 currentConversation,
                 message,
               )
+              const currentActivityAt = currentConversation.lastActivityAt
+              const hasNewerActivity =
+                currentActivityAt === null ||
+                new Date(message.createdAt).getTime() >=
+                  new Date(currentActivityAt).getTime()
               conversationsById.set(message.conversationId, {
                 ...currentConversation,
                 ...(conversationPatch ?? {}),
                 ...readStatePatch,
-                messages: [message],
-                lastActivityAt: latestActivityAt(
-                  currentConversation.lastActivityAt,
-                  message.createdAt,
-                ),
+                ...(hasNewerActivity
+                  ? {
+                      messages: [message],
+                      lastActivityAt: latestActivityAt(
+                        currentActivityAt,
+                        message.createdAt,
+                      ),
+                    }
+                  : {}),
               })
-              lastMessageIndexByConversationId.set(
-                message.conversationId,
-                messageIndex,
-              )
+              updatedConversationIds.add(message.conversationId)
+              if (hasNewerActivity) {
+                lastMessageIndexByConversationId.set(
+                  message.conversationId,
+                  messageIndex,
+                )
+              }
             } else {
               unmatchedWorkspaceId ??= message.workspaceId
             }
@@ -1340,7 +1450,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             }
           }
 
-          if (lastMessageIndexByConversationId.size === 0 && !messages) {
+          if (updatedConversationIds.size === 0 && !messages) {
             return state
           }
 
@@ -1355,9 +1465,15 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               const conversation = conversationsById.get(conversationId)
               return conversation ? [conversation] : []
             }),
-            ...state.conversations.filter(
-              (conversation) => !movedConversationIdSet.has(conversation.id),
-            ),
+            ...state.conversations
+              .filter(
+                (conversation) => !movedConversationIdSet.has(conversation.id),
+              )
+              .map((conversation) =>
+                updatedConversationIds.has(conversation.id)
+                  ? (conversationsById.get(conversation.id) ?? conversation)
+                  : conversation,
+              ),
           ]
           return {
             conversations,

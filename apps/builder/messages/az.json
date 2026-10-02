@@ -6924,6 +6924,15 @@
     "openZalo": "Zalo-nu aç",
     "openMessenger": "Messenger-i aç"
   },
+  "realtime": {
+    "connectionBanner": {
+      "reconnectingTitle": "Yenidən qoşulur…",
+      "reconnectingDescription": "Canlı yeniləmələr müvəqqəti olaraq əlçatan deyil. Arxa planda yenidən cəhd etməyə davam edəcəyik.",
+      "closedTitle": "Bağlantı itirildi",
+      "closedDescription": "Canlı yeniləmələr dayandı. Yeni mesajları almaq üçün səhifəni yeniləyin.",
+      "reload": "Yenilə"
+    }
+  },
   "conversationRouting": {
     "owner": {
       "metaAi": "Meta AI",
