@@ -3625,6 +3625,7 @@
       "months": "{count} mês",
       "years": "{count} a"
     },
+    "realtimeRevokeWarning": "Não foi possível confirmar a revogação de acesso de imediato - terá efeito na próxima reconexão do membro.",
     "moveFeature": "Mover {feature}",
     "poweredBy": "Com tecnologia de {name}",
     "noGiphyApiKey": "Não foi encontrada nenhuma chave da API do GIPHY. Adicione uma nas Definições da plataforma.",

@@ -434,6 +434,7 @@ describe("conversationService.updateReadStatus", () => {
         conversationIds: ["conv-1"],
         changes: { agentLastReadAt: agentLastReadAt.toISOString() },
       },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 })
@@ -460,6 +461,8 @@ describe("conversationService.markReadByOutbound", () => {
 
     expect(set).toHaveBeenCalledWith({ agentLastReadAt: readAt })
     expect(returning).toHaveBeenCalledWith({
+      assignedInboxTeamId: expect.anything(),
+      assignedUserId: expect.anything(),
       id: expect.anything(),
     })
 
@@ -489,6 +492,7 @@ describe("conversationService.markReadByOutbound", () => {
         conversationIds: ["conv-1"],
         changes: { agentLastReadAt: readAt.toISOString() },
       },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 

@@ -1,4 +1,7 @@
-import type { RealtimeEventData } from "@chatbotx.io/realtime-protocol"
+import type {
+  RealtimeEventData,
+  RealtimeTargetedEventData,
+} from "@chatbotx.io/realtime-protocol"
 import { logger } from "../logger"
 import {
   REALTIME_METRIC_WINDOW_MS,
@@ -144,13 +147,21 @@ const flushPendingWorkspaceRealtimeEvents = (
     },
   )
 
-  const continuation = append.catch(() => undefined)
-  inFlightByWorkspace.set(workspaceId, continuation)
-  continuation.then(() => {
-    if (inFlightByWorkspace.get(workspaceId) === continuation) {
-      inFlightByWorkspace.delete(workspaceId)
-    }
-  })
+  // Stores the RAW `append` (not a `.catch`-wrapped copy): the shutdown
+  // drain's `Promise.allSettled` reads straight from this map, and a wrapped
+  // promise that never rejects would make every in-flight append look like
+  // it succeeded there even when Redis genuinely failed it. Map-cleanup uses
+  // its own derived, always-settling chain instead, so a rejection here is
+  // still observed exactly once (by the waiter-settling `.then` above) and
+  // never surfaces as a second, unhandled rejection from this cleanup chain.
+  inFlightByWorkspace.set(workspaceId, append)
+  append
+    .catch(() => undefined)
+    .then(() => {
+      if (inFlightByWorkspace.get(workspaceId) === append) {
+        inFlightByWorkspace.delete(workspaceId)
+      }
+    })
   return append
 }
 
@@ -294,7 +305,7 @@ export const queueWorkspaceRealtimeEvent = (
  */
 export const publishWorkspaceMemberRealtimeEvent = async (
   args: { workspaceId: string; userId: string },
-  event: RealtimeEventData,
+  event: RealtimeTargetedEventData,
 ): Promise<void> => {
   await publishRealtimeStreamRecord({
     event,
@@ -363,7 +374,7 @@ export const revokeWorkspaceMemberRealtimeConnections = async (args: {
 /** Publishes an event to a guest conversation's active realtime connections. */
 export const publishGuestRealtimeEvent = async (
   args: { workspaceId: string; guestConversationId: string },
-  event: RealtimeEventData,
+  event: RealtimeTargetedEventData,
 ): Promise<void> => {
   await publishRealtimeStreamRecord({
     event,

@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   createMessageRepository: vi.fn(),
   publishWorkspaceRealtimeEvent: vi.fn(),
   runExclusive: vi.fn(),
+  conversationFindBy: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -47,6 +48,10 @@ vi.mock("../src/contact-inbox/service", () => ({
 
 vi.mock("../src/contact/service", () => ({
   contactService: { findById: mocks.contactFindById },
+}))
+
+vi.mock("../src/conversation/service", () => ({
+  conversationService: { findBy: mocks.conversationFindBy },
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
@@ -90,6 +95,10 @@ beforeEach(() => {
   mocks.messageRepositoryMergeContentAttributesBySourceId.mockResolvedValue(
     null,
   )
+  mocks.conversationFindBy.mockResolvedValue({
+    assignedInboxTeamId: null,
+    assignedUserId: null,
+  })
   // Non-blocking lock: run `fn` immediately, as if it always won the lock.
   mocks.runExclusive.mockImplementation(
     async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),

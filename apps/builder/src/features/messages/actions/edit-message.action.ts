@@ -8,7 +8,10 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getImageDimensions, uploader } from "@chatbotx.io/filesystem"
-import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -128,6 +131,10 @@ export const editMessage = async (props: {
       newAttachmentHeight: resolvedHeight,
       removedAttachment: removeAttachment ?? false,
     },
+    route: routeForConversation({
+      assignedUserId: conversation.assignedUserId,
+      assignedInboxTeamId: conversation.assignedInboxTeamId,
+    }),
   })
 
   await Promise.allSettled([

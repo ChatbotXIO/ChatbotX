@@ -3,7 +3,10 @@ import type {
   ContactInboxModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
-import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { contactService } from "../contact/service"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
@@ -16,20 +19,25 @@ import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
  * fallback to the comment conversation: a private DM written there would show
  * in the public comment thread.
  */
+type DirectMessageConversationRef = {
+  id: string
+  assignedUserId: string | null
+  assignedInboxTeamId: string | null
+}
+
 async function findOrCreateDirectMessageConversationId(props: {
   workspaceId: string
   contactId: string
-}): Promise<string> {
+}): Promise<DirectMessageConversationRef> {
   const existing = await conversationService.findDMByContact(props)
   if (existing) {
-    return existing.id
+    return existing
   }
 
-  const created = await conversationService.findOrCreate({
+  return await conversationService.findOrCreate({
     ...props,
     sourceId: null,
   })
-  return created.id
 }
 
 /**
@@ -84,12 +92,22 @@ async function applyDeliveredDirectMessageEffects(props: {
 export const recordDeliveredDirectMessage = async (props: {
   workspaceId: string
   conversationId: string
+  assignedUserId?: string | null
+  assignedInboxTeamId?: string | null
   contactInbox: ContactInboxModel
   text: string
   sourceId: string | null
   contentAttributes?: MessageModel["contentAttributes"]
 }): Promise<MessageModel | null> => {
-  const { workspaceId, conversationId, contactInbox, text, sourceId } = props
+  const {
+    workspaceId,
+    conversationId,
+    assignedUserId,
+    assignedInboxTeamId,
+    contactInbox,
+    text,
+    sourceId,
+  } = props
 
   try {
     const repository = await createMessageRepository()
@@ -139,6 +157,7 @@ export const recordDeliveredDirectMessage = async (props: {
     queueWorkspaceRealtimeEvent(workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: message,
+      route: routeForConversation({ assignedUserId, assignedInboxTeamId }),
     })
 
     return message
@@ -164,13 +183,15 @@ export const recordDeliveredPrivateReply = async (props: {
   const { workspaceId, contactInbox } = props
 
   try {
-    const conversationId = await findOrCreateDirectMessageConversationId({
+    const conversation = await findOrCreateDirectMessageConversationId({
       workspaceId,
       contactId: contactInbox.contactId,
     })
     return await recordDeliveredDirectMessage({
       ...props,
-      conversationId,
+      conversationId: conversation.id,
+      assignedUserId: conversation.assignedUserId,
+      assignedInboxTeamId: conversation.assignedInboxTeamId,
       contentAttributes: { isPrivateReply: true },
     })
   } catch (err) {

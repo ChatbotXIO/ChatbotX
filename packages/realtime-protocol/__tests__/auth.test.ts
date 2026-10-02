@@ -5,89 +5,64 @@ import {
   REALTIME_TOKEN_PURPOSE,
   signGuestConnectToken,
   signMemberConnectToken,
-  signRealtimeToken,
+  signPresenceReportToken,
   verifyGuestConnectToken,
   verifyMemberConnectToken,
+  verifyPresenceReportToken,
   verifyRealtimeToken,
 } from "../src/auth"
 
 const SECRET = "a".repeat(32)
 const OTHER_SECRET = "b".repeat(32)
 
-describe("signRealtimeToken / verifyRealtimeToken", () => {
+describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/verify mechanics)", () => {
   it("verifies a token signed for the same audience and purpose", async () => {
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
+    const token = await signPresenceReportToken(
+      { workspaceId: "ws_1", bodyHash: "hash-1" },
       SECRET,
     )
 
     await expect(
-      verifyRealtimeToken(
-        token,
-        { kind: "workspace", id: "ws_1" },
-        REALTIME_TOKEN_PURPOSE.presenceReport,
-        SECRET,
-      ),
+      verifyPresenceReportToken(token, "ws_1", SECRET),
     ).resolves.toBeDefined()
   })
 
   it("rejects when the audience id does not match (room-claim mismatch)", async () => {
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
+    const token = await signPresenceReportToken(
+      { workspaceId: "ws_1", bodyHash: "hash-1" },
       SECRET,
     )
 
     await expect(
-      verifyRealtimeToken(
-        token,
-        { kind: "workspace", id: "ws_2" },
-        REALTIME_TOKEN_PURPOSE.presenceReport,
-        SECRET,
-      ),
+      verifyPresenceReportToken(token, "ws_2", SECRET),
     ).rejects.toThrow()
   })
 
   it("rejects when signed with a different secret", async () => {
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
+    const token = await signPresenceReportToken(
+      { workspaceId: "ws_1", bodyHash: "hash-1" },
       SECRET,
     )
 
     await expect(
-      verifyRealtimeToken(
-        token,
-        { kind: "workspace", id: "ws_1" },
-        REALTIME_TOKEN_PURPOSE.presenceReport,
-        OTHER_SECRET,
-      ),
+      verifyPresenceReportToken(token, "ws_1", OTHER_SECRET),
     ).rejects.toThrow()
   })
 
-  it("carries extra claims through the payload", async () => {
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
-      SECRET,
-      { userId: "u_1" },
-    )
-
-    const payload = await verifyRealtimeToken(
-      token,
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
+  it("carries its claim through the payload", async () => {
+    const token = await signPresenceReportToken(
+      { workspaceId: "ws_1", bodyHash: "hash-1" },
       SECRET,
     )
 
-    expect(payload.userId).toBe("u_1")
+    const claims = await verifyPresenceReportToken(token, "ws_1", SECRET)
+
+    expect(claims.bodyHash).toBe("hash-1")
   })
 
   it("embeds the purpose claim in the signed payload (undecoded)", async () => {
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
+    const token = await signPresenceReportToken(
+      { workspaceId: "ws_1", bodyHash: "hash-1" },
       SECRET,
     )
 
@@ -102,19 +77,13 @@ describe("signRealtimeToken / verifyRealtimeToken", () => {
   })
 
   it("rejects a token minted for a different purpose — a member-connect token must not verify as a presence-report token (MEDIUM-3)", async () => {
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.memberConnect,
+    const token = await signMemberConnectToken(
+      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
 
     await expect(
-      verifyRealtimeToken(
-        token,
-        { kind: "workspace", id: "ws_1" },
-        REALTIME_TOKEN_PURPOSE.presenceReport,
-        SECRET,
-      ),
+      verifyPresenceReportToken(token, "ws_1", SECRET),
     ).rejects.toThrow()
   })
 
@@ -127,12 +96,7 @@ describe("signRealtimeToken / verifyRealtimeToken", () => {
       .sign(new TextEncoder().encode(SECRET))
 
     await expect(
-      verifyRealtimeToken(
-        legacyToken,
-        { kind: "workspace", id: "ws_1" },
-        REALTIME_TOKEN_PURPOSE.presenceReport,
-        SECRET,
-      ),
+      verifyPresenceReportToken(legacyToken, "ws_1", SECRET),
     ).rejects.toThrow()
   })
 })
@@ -151,6 +115,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
       chatScope: "all",
       teamIds: [],
       iat: expect.any(Number),
+      iatMs: expect.any(Number),
     })
   })
 
@@ -172,6 +137,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
       chatScope: "assigned",
       teamIds: ["team_1", "team_2"],
       iat: expect.any(Number),
+      iatMs: expect.any(Number),
     })
   })
 
@@ -187,13 +153,17 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
   })
 
   it("rejects a token missing the userId claim", async () => {
-    // Minted via the lower-level primitive with no claims, simulating a
-    // token that never carried `userId` — must never be silently trusted.
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.memberConnect,
-      SECRET,
-    )
+    // Hand-signed with the right purpose/audience but no claims at all,
+    // simulating a token that never carried `userId` — must never be
+    // silently trusted.
+    const token = await new SignJWT({
+      purpose: REALTIME_TOKEN_PURPOSE.memberConnect,
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setAudience("workspace:ws_1")
+      .setExpirationTime("60s")
+      .sign(new TextEncoder().encode(SECRET))
 
     await expect(
       verifyMemberConnectToken(token, "ws_1", SECRET),
@@ -241,9 +211,8 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
   })
 
   it("a freshly minted presence-report token must never verify as a member-connect token — same cross-purpose confusion, reversed", async () => {
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: "ws_1" },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
+    const token = await signPresenceReportToken(
+      { workspaceId: "ws_1", bodyHash: "hash-1" },
       SECRET,
     )
 

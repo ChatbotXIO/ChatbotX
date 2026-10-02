@@ -1,5 +1,8 @@
 import { z } from "zod"
-import { realtimeEventEnvelopeSchema } from "./schemas"
+import {
+  realtimeEventEnvelopeSchema,
+  realtimeWorkspaceEventEnvelopeSchema,
+} from "./schemas"
 
 const REALTIME_STREAM_SHARD_COUNT = 256
 
@@ -70,7 +73,7 @@ export const isRealtimeSeqAfter = (
 }
 
 const realtimeWorkspaceEventsStreamRecordSchema = z.object({
-  events: z.array(realtimeEventEnvelopeSchema).min(1),
+  events: z.array(realtimeWorkspaceEventEnvelopeSchema).min(1),
   kind: z.literal("workspace-events"),
   workspaceId: z.string().min(1),
 })

@@ -17,6 +17,9 @@ export const REALTIME_CLOSE_CODE = {
   reauth: 4004,
 } as const
 
+export type RealtimeCloseCode =
+  (typeof REALTIME_CLOSE_CODE)[keyof typeof REALTIME_CLOSE_CODE]
+
 /**
  * `getUrl` throws this to signal that the failure is permanent — e.g. the
  * server rejected the token mint with 401/403 — so retrying with the same
