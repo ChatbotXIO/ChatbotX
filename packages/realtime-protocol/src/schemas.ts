@@ -40,6 +40,11 @@ export const CONVERSATION_SCOPED_EVENT_TYPES: ReadonlySet<string> = new Set([
   RealtimeEventType.messageFailed,
   RealtimeEventType.conversationAssigned,
   RealtimeEventType.conversationUpdated,
+  // A permission-mode change is most relevant to whoever is actually working
+  // the conversation, unlike a ringing/active call (the other
+  // whatsappCall* types), which genuinely needs every available agent
+  // notified regardless of assignment. See PR #1349 round-5 finding #1.
+  RealtimeEventType.whatsappCallPermissionUpdated,
 ])
 
 /**
@@ -383,7 +388,9 @@ export type RealtimeEventWhatsappCallOutboundStatus = {
  * Fires when Meta 138017 (consumer already granted permanent permission) is
  * reconciled into a local grant with no inbound message to invalidate on.
  * Tells open threads to refetch `useOutboundCallMode`; carries no permission
- * detail. Broadcast to the workspace room.
+ * detail. Conversation-scoped (see `CONVERSATION_SCOPED_EVENT_TYPES`): only
+ * whoever is assigned to (or has full-scope access to) this conversation
+ * needs it, unlike a ringing/active call's workspace-wide broadcast.
  */
 export const whatsappCallPermissionUpdatedSchema = z.object({
   conversationId: z.string(),
@@ -446,6 +453,7 @@ export type RealtimeConversationScopedEventData =
   | RealtimeEventMessageFailed
   | RealtimeEventConversationAssigned
   | RealtimeEventConversationUpdated
+  | RealtimeEventWhatsappCallPermissionUpdated
 
 /**
  * Workspace-wide or guest/member-targeted event data: never filtered by
@@ -459,7 +467,6 @@ export type RealtimeWorkspaceBroadcastEventData =
   | RealtimeEventWhatsappCallClaimedElsewhere
   | RealtimeEventWhatsappCallOutboundAnswer
   | RealtimeEventWhatsappCallOutboundStatus
-  | RealtimeEventWhatsappCallPermissionUpdated
   | RealtimeEventContactInboxThreadControlUpdated
 
 export type RealtimeEventData =

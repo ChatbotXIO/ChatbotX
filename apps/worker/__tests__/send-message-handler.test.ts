@@ -1517,6 +1517,7 @@ describe("chat send-message handlers", () => {
     expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "whatsappCallPermissionUpdated",
       data: { conversationId: "conv-1" },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
     // The send-error icon is still surfaced (this is the correction).
     expect(mockEmit).toHaveBeenCalledWith(
