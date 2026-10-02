@@ -30,8 +30,8 @@ type TenantBrandingData = {
   theme?: string | null
 }
 
-const tenantCacheTag = (tenantId: string) => `tenants:${tenantId}`
-const ownerCacheTag = (ownerId: string) => `tenants:owner:${ownerId}`
+const tenantCacheTag = (tenantId: string) => `tenant:${tenantId}`
+const ownerCacheTag = (ownerId: string) => `tenant:owner:${ownerId}`
 const TENANT_CACHE_TTL_SECONDS = 30
 
 /**

@@ -87,9 +87,9 @@ describe("tenantService cache contract", () => {
 
     expect(result).toBeUndefined()
     expect(withCache).toHaveBeenCalledWith(
-      "tenants:owner:owner-1",
+      "tenant:owner:owner-1",
       expect.any(Function),
-      expect.objectContaining({ tags: ["tenants:owner:owner-1"] }),
+      expect.objectContaining({ tags: ["tenant:owner:owner-1"] }),
     )
   })
 
@@ -103,7 +103,7 @@ describe("tenantService cache contract", () => {
       dynamicTags: (r: { tenant: { id: string } | null }) => unknown
     }
     expect(options.dynamicTags({ tenant: { id: "tenant-1" } })).toEqual([
-      "tenants:tenant-1",
+      "tenant:tenant-1",
     ])
     expect(options.dynamicTags({ tenant: null })).toBeUndefined()
   })
@@ -115,9 +115,7 @@ describe("tenantService cache contract", () => {
     const id = await tenantService.provisionForOwner("owner-1")
 
     expect(id).toBe("tenant-1")
-    expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      "tenants:owner:owner-1",
-    ])
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tenant:owner:owner-1"])
   })
 
   test("provisionForOwner is a no-op (no invalidation) when a tenant already exists", async () => {
@@ -147,6 +145,6 @@ describe("tenantService cache contract", () => {
 
     await run()
 
-    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tenants:tenant-1"])
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tenant:tenant-1"])
   })
 })
