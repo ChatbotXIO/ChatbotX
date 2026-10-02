@@ -12,12 +12,12 @@ export const keys = () =>
         .number()
         .int()
         .positive()
-        .default(30_000),
+        .optional(),
       DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS: z.coerce
         .number()
         .int()
         .positive()
-        .default(30_000),
+        .optional(),
       MESSAGE_SHARDS_PASSWORD: z.string().optional(),
       MESSAGE_SHARDS_SSL: z.stringbool().optional().default(false),
     },
