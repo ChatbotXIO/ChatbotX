@@ -6,8 +6,8 @@ import { base } from "@/middlewares/context"
  * Stamps the acting user onto every audit record a connect route writes.
  *
  * The workspace-scoped routes get this from `workspaceAuthorizedMidddleware`,
- * but a connect route cannot: its workspace comes from the pending-auth
- * cookie (or, for WhatsApp's first number, does not exist yet), so it
+ * but a connect route cannot: its workspace comes from the `ConnectSession`
+ * row (or, for WhatsApp's first number, does not exist yet), so it
  * authorizes on the user alone. Without this the connect audits
  * (`auditChannelConnected`, the workspace-create audit) would be written with
  * no actor at all. `workspaceId` is deliberately absent — the core resolves

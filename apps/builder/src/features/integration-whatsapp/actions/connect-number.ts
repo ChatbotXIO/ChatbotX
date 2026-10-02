@@ -57,7 +57,7 @@ import {
  * membership + owner-quota/trial gate `resolveConnectSession` runs for
  * Messenger/Instagram (plan §2.4 steps 2-3). WhatsApp's `workspaceId` arrives
  * on the wire directly (a client-supplied form field, or the signup
- * session's own stored value) instead of a signed pending-auth cookie, and is
+ * session's own stored value) instead of a `ConnectSession` row, and is
  * never itself proof of membership — every non-null `workspaceId` on every
  * path (direct manual/OAuth/auto-select, AND the session's own stored value)
  * must be checked. Throws one of the session-level exceptions — callers let

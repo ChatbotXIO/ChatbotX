@@ -3,13 +3,13 @@
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { integrationOpenAIService } from "@chatbotx.io/business"
+import { verifyAiProviderApiKey } from "@chatbotx.io/business/integration-ai-provider/verify"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
-import { verifyAiProviderApiKey } from "@/features/integration-ai/lib/verify-api-key"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ConnectOpenAISchema,
@@ -29,12 +29,7 @@ export const connectOpenAIAction = workspaceActionClient
     }) => {
       const t = await getTranslations()
 
-      if (
-        !(await verifyAiProviderApiKey(
-          aiProviders.enum.openai,
-          parsedInput.apiKey,
-        ))
-      ) {
+      if (!(await verifyAiProviderApiKey("openai", parsedInput.apiKey))) {
         return returnValidationErrors(connectOpenAISchema, {
           apiKey: {
             _errors: [t("validation.invalidApiKey")],

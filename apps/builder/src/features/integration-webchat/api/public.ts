@@ -20,7 +20,7 @@ import {
   webchatPublicResource,
 } from "../schema/public"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
 
 const tags = ["Channels"]
 

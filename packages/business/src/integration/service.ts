@@ -77,9 +77,17 @@ class IntegrationService extends BaseService {
 
   /**
    * Channel integrations whose daily token-refresh cron last failed
-   * (`tokenRefreshError` set), across every channel that supports automatic
-   * refresh. Used to warn the workspace owner that a channel needs a manual
-   * reconnect before it silently stops sending/receiving messages.
+   * (`tokenRefreshError` set on the channel's own satellite row), across
+   * every channel that supports automatic refresh. Deliberately reads each
+   * `Integration<Channel>.tokenRefreshError` column directly rather than
+   * `Connection.lastError` — the refresh crons
+   * (`apps/worker/src/schedule/handlers/refresh-*-tokens.ts`) only ever
+   * write the satellite column (`markTokenRefreshError`/`updateAuth`
+   * clearing it on success), so `Connection.lastError` (written only by
+   * `recordAuthSaved`, which clears it to `null`) never reflects a refresh
+   * failure. The returned `id` is therefore the channel's own
+   * `Integration<Channel>.id` — the public contract this deprecated
+   * endpoint has always returned, not `Connection.id`.
    */
   async findTokenRefreshErrorsByWorkspaceId(
     workspaceId: string,

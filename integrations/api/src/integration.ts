@@ -18,6 +18,20 @@ const config: IntegrationDefinition<BaseConfig, ApiAuthValue, ApiActions> = {
     },
   },
   actions: {},
+  connection: {
+    kind: "channel",
+    strategy: "self_serve",
+    multiAccount: true,
+    configFields: [],
+    describe: () => ({
+      // The API channel has no external account identity.
+      sourceId: "workspace",
+      displayName: "API channel",
+    }),
+    // The API channel has no external provider to verify.
+    verify: async () => ({ ok: true }),
+    isRevokedTokenError: () => false,
+  },
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,
   ): Promise<string | number | Oauth2AuthValue> {

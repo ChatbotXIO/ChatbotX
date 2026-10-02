@@ -54,7 +54,7 @@ export type ConnectWarning =
  * (`ConnectActionResult`).
  */
 export const CONNECT_SESSION_ERROR_CODES = {
-  // Pending-auth cookie / signup session missing, expired, or invalid.
+  // ConnectSession row / signup session missing, expired, or invalid.
   sessionExpired: "sessionExpired",
   // Raised by `notWorkspaceMemberException()`, NOT the generic `notFound`.
   notMember: "notMember",

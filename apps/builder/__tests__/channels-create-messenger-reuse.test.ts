@@ -3,44 +3,36 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockBuildMessengerReferer,
-  mockCookieSet,
-  mockCookies,
-  mockEncryptAuth,
-  mockFindWorkspace,
+  mockConnectSessionCreate,
   mockFindWorkspaceById,
-  mockGenerateMessengerRedirectUri,
   mockGetCurrentUserId,
+  mockListAndAttachCandidates,
   mockRedirect,
   mockRequireWorkspacePermission,
   mockResolveForOwner,
+  mockResolveOAuthCredential,
+  mockStartSession,
   mockTryReuseFacebookSsoToken,
+  mockUpdateReturnUrl,
   mockWorkspaceCreate,
 } = vi.hoisted(() => ({
-  mockBuildMessengerReferer: vi.fn(async () => "https://tenant.example.com"),
-  mockCookieSet: vi.fn(),
-  mockCookies: vi.fn(),
-  mockEncryptAuth: vi.fn(async () => "encrypted-token"),
-  mockFindWorkspace: vi.fn(async () => ({ ownerId: "owner-1" })),
+  mockConnectSessionCreate: vi.fn(),
   mockFindWorkspaceById: vi.fn(async () => ({
     id: "ws-1",
     ownerId: "owner-1",
   })),
-  mockGenerateMessengerRedirectUri: vi.fn(
-    async () => "https://facebook.com/oauth-dialog",
-  ),
   mockGetCurrentUserId: vi.fn(async () => "user-1"),
+  mockListAndAttachCandidates: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
   mockRequireWorkspacePermission: vi.fn(async () => undefined),
   mockResolveForOwner: vi.fn(),
+  mockResolveOAuthCredential: vi.fn(),
+  mockStartSession: vi.fn(),
   mockTryReuseFacebookSsoToken: vi.fn(),
+  mockUpdateReturnUrl: vi.fn(),
   mockWorkspaceCreate: vi.fn(async () => ({ id: "ws-new", ownerId: "user-1" })),
-}))
-
-vi.mock("next/headers", () => ({
-  cookies: mockCookies,
 }))
 
 vi.mock("next/navigation", () => ({
@@ -53,10 +45,28 @@ vi.mock("next/navigation", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
   workspaceService: {
-    find: mockFindWorkspace,
     findById: mockFindWorkspaceById,
+    find: vi.fn(async () => undefined),
     create: mockWorkspaceCreate,
   },
+}))
+
+vi.mock("@chatbotx.io/business/connect-session", () => ({
+  connectSessionService: {
+    create: mockConnectSessionCreate,
+    updateReturnUrl: mockUpdateReturnUrl,
+  },
+}))
+
+vi.mock("@chatbotx.io/connections", () => ({
+  connectionService: {
+    listAndAttachCandidates: mockListAndAttachCandidates,
+    startSession: mockStartSession,
+  },
+}))
+
+vi.mock("@/features/connections/lib/resolve-connect-credential", () => ({
+  resolveOAuthCredential: mockResolveOAuthCredential,
 }))
 
 vi.mock("@/lib/platform-credential-owner", () => ({
@@ -69,27 +79,6 @@ vi.mock("@/lib/auth/require-workspace-permission", () => ({
 
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserId: mockGetCurrentUserId,
-}))
-
-vi.mock("@/lib/facebook-pending-auth", async (importOriginal) => {
-  // The real `pendingAuthCookieOptions` — these tests assert the set site
-  // passes the helper's own value through, not a copy that could drift from
-  // it (the cookie's `path` is what makes the connect routes reachable).
-  const actual =
-    await importOriginal<typeof import("@/lib/facebook-pending-auth")>()
-
-  return {
-    encryptAuth: mockEncryptAuth,
-    FB_MESSENGER_PENDING_AUTH_COOKIE: "fb_messenger_pending_auth",
-    FB_PENDING_AUTH_MAX_AGE: 600,
-    // The real writer: these tests assert what actually reaches the cookie
-    // store, including the expiry of the picker-scoped predecessor.
-    writePendingAuth: actual.writePendingAuth,
-  }
-})
-vi.mock("@/features/integration-messenger/libs/oauth", () => ({
-  buildMessengerReferer: mockBuildMessengerReferer,
-  generateMessengerRedirectUri: mockGenerateMessengerRedirectUri,
 }))
 
 vi.mock("@/features/integration-messenger/libs/sso-reuse", () => ({
@@ -113,32 +102,38 @@ function requestWithWorkspaceId(workspaceId: string | null) {
   return { nextUrl: url } as unknown as Parameters<typeof GET>[0]
 }
 
-/** Only the messenger credential resolves; every other channel is unconfigured. */
 function resolveOnlyMessenger() {
-  mockResolveForOwner.mockImplementation(({ type }: { type: string }) =>
-    Promise.resolve(type === "messenger" ? messengerCredential : undefined),
-  )
+  mockResolveForOwner.mockResolvedValue(messengerCredential)
 }
 
 describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetCurrentUserId.mockResolvedValue("user-1")
-    mockCookies.mockResolvedValue({ set: mockCookieSet })
+    mockConnectSessionCreate.mockResolvedValue({ session: { id: "session-1" } })
+    mockResolveOAuthCredential.mockResolvedValue({
+      credential: { clientId: "app-id", clientSecret: "app-secret" },
+      callbackUrl: "https://app.example.com/integrations/messenger/callback",
+    })
+    mockStartSession.mockResolvedValue({
+      session: { id: "session-2" },
+      nextAction: {
+        type: "open_url",
+        url: "https://facebook.com/oauth-dialog",
+      },
+    })
+    mockUpdateReturnUrl.mockResolvedValue({ id: "session-2" })
     resolveOnlyMessenger()
   })
 
-  test("reuses a valid SSO token: writes the pending-auth cookie and redirects straight to the Page picker", async () => {
+  test("reuses a valid SSO token: attaches candidates and redirects to the Page picker session", async () => {
     mockTryReuseFacebookSsoToken.mockResolvedValue({
       reusable: true,
       userToken: "long-lived-user-token",
-      userId: "fb-1",
-      userName: "Jane Doe",
-      userAvatarUrl: "https://example.com/a.png",
     })
 
     await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
-      "redirect:/channels/messenger/select",
+      "redirect:/channels/messenger/select?session=session-1",
     )
 
     expect(mockRequireWorkspacePermission).toHaveBeenCalledWith(
@@ -147,24 +142,25 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     )
     expect(mockFindWorkspaceById).toHaveBeenCalledWith({ id: "ws-1" })
     expect(mockWorkspaceCreate).not.toHaveBeenCalled()
-    expect(mockEncryptAuth).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userToken: "long-lived-user-token",
-        userId: "fb-1",
-        userName: "Jane Doe",
-        userAvatarUrl: "https://example.com/a.png",
-        workspaceId: "ws-1",
+    expect(mockConnectSessionCreate).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      provider: "messenger",
+      purpose: "connect",
+      actorUserId: "user-1",
+      platformOwnerId: "owner-1",
+    })
+    expect(mockListAndAttachCandidates).toHaveBeenCalledWith(
+      { id: "session-1" },
+      {
+        authType: "oauth2",
+        clientId: "app-id",
+        clientSecret: "app-secret",
+        redirectUrl: "",
         version: "v23.0",
-      }),
+        tokens: { accessToken: "long-lived-user-token" },
+      },
     )
-    expect(mockCookieSet).toHaveBeenCalledWith(
-      "fb_messenger_pending_auth",
-      "encrypted-token",
-      // The connect route reads this cookie, so it must not be scoped to the
-      // picker page (see `pendingAuthCookieOptions`).
-      expect.objectContaining({ path: "/", httpOnly: true, sameSite: "lax" }),
-    )
-    expect(mockGenerateMessengerRedirectUri).not.toHaveBeenCalled()
+    expect(mockStartSession).not.toHaveBeenCalled()
   })
 
   test("creates a workspace first when reusing a token with no workspaceId yet (first channel ever)", async () => {
@@ -174,7 +170,7 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     })
 
     await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow(
-      "redirect:/channels/messenger/select",
+      "redirect:/channels/messenger/select?session=session-1",
     )
 
     expect(mockRequireWorkspacePermission).not.toHaveBeenCalled()
@@ -182,7 +178,7 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       data: { name: "New Workspace", ownerId: "user-1" },
       createdBy: "user-1",
     })
-    expect(mockEncryptAuth).toHaveBeenCalledWith(
+    expect(mockConnectSessionCreate).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: "ws-new" }),
     )
   })
@@ -194,9 +190,6 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     mockTryReuseFacebookSsoToken.mockResolvedValue({
       reusable: true,
       userToken: "long-lived-user-token",
-      userId: "fb-1",
-      userName: "Jane Doe",
-      userAvatarUrl: "https://example.com/a.png",
     })
     mockWorkspaceCreate.mockRejectedValueOnce(workspaceLimitReachedException())
 
@@ -204,21 +197,74 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       "redirect:/channels/create?error=workspaceLimitReached",
     )
 
-    expect(mockCookieSet).not.toHaveBeenCalled()
+    expect(mockConnectSessionCreate).not.toHaveBeenCalled()
+    expect(mockListAndAttachCandidates).not.toHaveBeenCalled()
   })
 
-  test("falls back to the full OAuth redirect when there is no reusable token", async () => {
+  test("starts a full OAuth session when there is no reusable token", async () => {
     mockTryReuseFacebookSsoToken.mockResolvedValue({ reusable: false })
 
     await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
       "redirect:https://facebook.com/oauth-dialog",
     )
 
-    expect(mockEncryptAuth).not.toHaveBeenCalled()
-    expect(mockCookieSet).not.toHaveBeenCalled()
-    expect(mockGenerateMessengerRedirectUri).toHaveBeenCalledWith(
-      messengerCredential,
-      "ws-1",
+    expect(mockConnectSessionCreate).not.toHaveBeenCalled()
+    expect(mockListAndAttachCandidates).not.toHaveBeenCalled()
+    expect(mockResolveOAuthCredential).toHaveBeenCalledWith({
+      provider: "messenger",
+      ownerId: "owner-1",
+    })
+    expect(mockStartSession).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      provider: "messenger",
+      purpose: "connect",
+      credential: { clientId: "app-id", clientSecret: "app-secret" },
+      callbackUrl: "https://app.example.com/integrations/messenger/callback",
+      actorUserId: "user-1",
+      platformOwnerId: "owner-1",
+    })
+    expect(mockUpdateReturnUrl).toHaveBeenCalledWith({
+      id: "session-2",
+      returnUrl: "http://localhost/channels/messenger/select?session=session-2",
+    })
+  })
+
+  // Regression (C1): previously stored a *relative* returnUrl
+  // (`/channels/messenger/select?session=...`). `sanitizeReferer` —
+  // invoked for real when the OAuth callback reads `ConnectSession
+  // .returnUrl` back — does `new URL(referer)` first, which throws on a
+  // relative path and silently falls back to `/manage`, hiding the picker.
+  // This test does NOT mock `sanitizeReferer`/`isAllowedOrigin` so a
+  // regression here fails for real instead of being hidden by a mock.
+  test("the stored returnUrl survives a real (unmocked) sanitizeReferer round-trip instead of falling back to /manage", async () => {
+    mockTryReuseFacebookSsoToken.mockResolvedValue({ reusable: false })
+    const { sanitizeReferer, FALLBACK_REDIRECT } = await import(
+      "@/lib/oauth-referer"
+    )
+
+    // Origin matches the test env's NEXT_PUBLIC_BUILDER_URL
+    // (packages/vitest-config/src/setup-env.ts) exactly, so
+    // `isAllowedOrigin` accepts it without needing `customDomainService`.
+    const req = {
+      nextUrl: new URL(
+        "http://localhost:3123/channels/create/messenger?workspaceId=ws-1",
+      ),
+    } as unknown as Parameters<typeof GET>[0]
+
+    await expect(GET(req)).rejects.toThrow(
+      "redirect:https://facebook.com/oauth-dialog",
+    )
+
+    const storedReturnUrl = mockUpdateReturnUrl.mock.calls.at(0)?.[0]
+      .returnUrl as string
+    expect(storedReturnUrl).toBe(
+      "http://localhost:3123/channels/messenger/select?session=session-2",
+    )
+    await expect(sanitizeReferer(storedReturnUrl)).resolves.toBe(
+      storedReturnUrl,
+    )
+    await expect(sanitizeReferer(storedReturnUrl)).resolves.not.toBe(
+      FALLBACK_REDIRECT,
     )
   })
 

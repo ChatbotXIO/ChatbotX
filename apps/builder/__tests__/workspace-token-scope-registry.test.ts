@@ -6,7 +6,7 @@ import {
 } from "../src/features/workspaces/lib/workspace-token-scopes"
 
 const NEW_SCOPES = [
-  "channels",
+  "connections",
   "minigames",
   "appointments",
   "media",
@@ -14,17 +14,19 @@ const NEW_SCOPES = [
 ] as const
 
 describe("workspaceApiTokenScopes", () => {
-  test("includes the 5 newly named resource-area scopes", () => {
+  test("includes the newly named resource-area scopes, and no longer the merged 'channels'/'integrations' scopes", () => {
     for (const scope of NEW_SCOPES) {
       expect(workspaceApiTokenScopes.options).toContain(scope)
     }
-    expect(workspaceApiTokenScopes.options).toHaveLength(12)
+    expect(workspaceApiTokenScopes.options).not.toContain("channels")
+    expect(workspaceApiTokenScopes.options).not.toContain("integrations")
+    expect(workspaceApiTokenScopes.options).toHaveLength(11)
   })
 })
 
 describe("orderedWorkspaceApiTokenScopes", () => {
-  test("has 12 entries with unique, contiguous orders", () => {
-    expect(orderedWorkspaceApiTokenScopes).toHaveLength(12)
+  test("has 11 entries with unique, contiguous orders", () => {
+    expect(orderedWorkspaceApiTokenScopes).toHaveLength(11)
 
     const orders = orderedWorkspaceApiTokenScopes
       .map((scope) => workspaceApiTokenScopeRegistry[scope].order)

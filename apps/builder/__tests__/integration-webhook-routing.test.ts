@@ -6,30 +6,18 @@ const findIntegrationTelegramByBotId = vi.fn()
 const findIntegrationTiktokByOpenId = vi.fn()
 const telegramHandleRequest = vi.fn()
 const tiktokHandleRequest = vi.fn()
-const dbUpdateSet = vi.fn()
-const dbUpdateWhere = vi.fn()
-const dbUpdate = vi.fn(() => ({ set: dbUpdateSet }))
+const markUnhealthyByIdentifier = vi.fn()
+const findOwnerUserIdByWorkspaceId = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
+  connectionStateService: { markUnhealthyByIdentifier },
+  workspaceMemberService: { findOwnerUserIdByWorkspaceId },
   customDomainService: { findActiveByDomain: vi.fn() },
   platformCredentialService: {
     findDecryptedForUser: vi.fn(),
     findDecryptedPlatform: vi.fn(),
   },
   tenantService: { findById: vi.fn() },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { update: dbUpdate },
-  eq: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/partials", () => ({
-  inboxStatuses: { enum: { disconnected: "disconnected" } },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  inboxModel: {},
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -77,11 +65,9 @@ const asNextRequest = (url: string, body?: string) => {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dbUpdate.mockImplementation(() => ({ set: dbUpdateSet }))
-  dbUpdateSet.mockImplementation(() => ({ where: dbUpdateWhere }))
-  dbUpdateWhere.mockResolvedValue(undefined)
   telegramHandleRequest.mockResolvedValue("ok")
   tiktokHandleRequest.mockResolvedValue("ok")
+  findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
 })
 
 // These cover the route-level HTTP contract for the Telegram and TikTok
@@ -182,7 +168,7 @@ describe("tiktok webhook routing", () => {
     expect(tiktokHandleRequest).not.toHaveBeenCalled()
   })
 
-  test("marks the inbox disconnected on authorization.removed without calling the integration", async () => {
+  test("routes authorization.removed to connectionStateService.markUnhealthyByIdentifier with the resolved workspace owner (regression: previously 500'd with no ownerId)", async () => {
     findIntegrationTiktokByOpenId.mockResolvedValue({
       auth: {
         clientId: "id",
@@ -207,7 +193,14 @@ describe("tiktok webhook routing", () => {
 
     expect(await response.text()).toBe("ok")
     expect(tiktokHandleRequest).not.toHaveBeenCalled()
-    expect(dbUpdate).toHaveBeenCalledTimes(1)
-    expect(dbUpdateSet).toHaveBeenCalledWith({ status: "disconnected" })
+    expect(findOwnerUserIdByWorkspaceId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+    })
+    expect(markUnhealthyByIdentifier).toHaveBeenCalledWith({
+      provider: "tiktok",
+      identifier: "open-1",
+      reason: "token_revoked",
+      ownerId: "owner-1",
+    })
   })
 })

@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
@@ -24,20 +25,68 @@ import {
   mailchimpTagsResponseSchema,
 } from "./schemas"
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateApiKey` action. */
+const buildMailchimpAuth = async (
+  apiKey: string,
+): Promise<MailchimpAuthValue> => {
+  const auth = createMailchimpAuth(apiKey)
+  await mailchimpRequest(
+    auth,
+    MAILCHIMP_PING_ENDPOINT,
+    mailchimpPingResponseSchema,
+  )
+  return auth
+}
+
 const config: IntegrationDefinition<
   MailchimpConfig,
   MailchimpAuthValue,
   MailchimpActions
 > = {
   name: "mailchimp",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.mailchimp.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // Mailchimp auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "Mailchimp",
+    }),
+    fromCredentials: (config: { apiKey: string }) =>
+      buildMailchimpAuth(config.apiKey),
+    verify: async ({ auth }) => {
+      try {
+        await mailchimpRequest(
+          auth,
+          MAILCHIMP_PING_ENDPOINT,
+          mailchimpPingResponseSchema,
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: isUnauthorizedStatusError(error),
+          error:
+            error instanceof Error
+              ? error.message
+              : "Mailchimp credential verification failed",
+        }
+      }
+    },
+    isRevokedTokenError: isUnauthorizedStatusError,
+  },
   actions: {
     validateApiKey: async ({ props }) => {
-      const auth = createMailchimpAuth(props.apiKey)
-      await mailchimpRequest(
-        auth,
-        MAILCHIMP_PING_ENDPOINT,
-        mailchimpPingResponseSchema,
-      )
+      const auth = await buildMailchimpAuth(props.apiKey)
       return { dataCenter: auth.dataCenter }
     },
     listAudiences: async ({ ctx }) => {

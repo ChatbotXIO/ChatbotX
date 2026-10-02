@@ -13,7 +13,7 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { conditionSchema } from "../../conditions/schema"
 import { publicWebhookResource } from "../schema/resource"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
 
 const webhookResource = createSelectSchema(webhookModel, {
   id: z.string(),

@@ -1,11 +1,16 @@
 import {
   AuthException,
+  AuthType,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
   SdkException,
 } from "@chatbotx.io/sdk"
-import { refreshAccessToken } from "./api/auth"
+import {
+  convertCodeToTokens,
+  getZaloOAProfile,
+  refreshAccessToken,
+} from "./api/auth"
 import {
   getUserDetail,
   listOaTags,
@@ -13,10 +18,12 @@ import {
   removeTag,
   tagFollower,
 } from "./api/tag"
+import { ZALO_API_ENDPOINTS, ZALO_OAUTH_BASE_URL } from "./constants"
 import { callbackHandler } from "./handlers/callback"
 import { contactHandlers } from "./handlers/handler"
 import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
+import { isRevokedTokenError } from "./lib/error-mapper"
 import type {
   ZaloActions,
   ZaloAuthValue,
@@ -38,6 +45,69 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
     listOaTags,
     removeTag,
     getUserDetail,
+  },
+  connection: {
+    kind: "channel",
+    strategy: "oauth_redirect",
+    multiAccount: true,
+    configFields: [],
+    // Bypasses `generateAuthUrl` deliberately: that helper base64-JSON-
+    // encodes `stateParams` for the legacy cookie callback flow, whereas the
+    // Connection callback hub matches this raw session state verbatim.
+    authorizeUrl: ({ credential, callbackUrl, state }) => {
+      const config = credential as ZaloConfig
+      const params = new URLSearchParams({
+        app_id: config.clientId,
+        redirect_uri: callbackUrl,
+        state,
+      })
+      return `${ZALO_OAUTH_BASE_URL}${ZALO_API_ENDPOINTS.AUTH.PERMISSION}?${params.toString()}`
+    },
+    exchangeCode: async ({ code, callbackUrl, credential }) => {
+      const config = credential as ZaloConfig
+      const tokens = await convertCodeToTokens(
+        { ...config, redirectUrl: callbackUrl },
+        code,
+      )
+      const oaProfile = await getZaloOAProfile(tokens.access_token)
+      return {
+        authType: AuthType.oauth2,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        redirectUrl: callbackUrl,
+        version: config.version,
+        tokens: {
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          expiresAt: calculateExpiresAt(tokens.expires_in),
+        },
+        oaId: oaProfile.oa_id,
+        metadata: {
+          version: config.version,
+          oaName: oaProfile.name,
+        },
+      } satisfies ZaloAuthValue
+    },
+    describe: (auth) => ({
+      sourceId: auth.oaId,
+      displayName: auth.metadata.oaName || "Zalo",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        await getZaloOAProfile(auth.tokens.accessToken)
+        return { ok: true, authExpiresAt: auth.tokens.expiresAt }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: isRevokedTokenError(error),
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to verify Zalo connection",
+        }
+      }
+    },
+    isRevokedTokenError,
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")

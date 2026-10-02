@@ -465,18 +465,18 @@ implementation instead of each building its own picker:
   `notSelectableOutcome` / `duplicatedOutcome` / `connectedOutcome`, wrap
   best-effort follow-ups (branding, tag scan, …) in `runConnectFollowUps`,
   and convert the core's outer catch with `toConnectActionFailure`. Expose it
-  as `POST /api/channels/<channel>/connect` from the feature's `api/`
+  as `POST /rpc/channels/<channel>/connect` from the feature's `api/`
   folder (`authorizedAPI`, ids-only input, registered through the feature's
   `api/index.ts`) — **not** a server action: Next serializes server actions
   from one browser, so the picker's batch could only connect one account at a
   time. Add a server action only for a form that genuinely needs one (as
   WhatsApp's top-level connect form does), delegating to the same core.
 - **`resolveConnectSession`** (`lib/resolve-connect-session.ts`) — reads the
-  pending-auth cookie or signup session for both legs (initial provider list
+  `ConnectSession` row or signup session for both legs (initial provider list
   fetch and the per-id connect call); returns the same session-error codes
   the outcome wire type carries.
 - **Client side** — every picker posts through `lib/connect-client.ts`'s
-  `connectViaApi` (path from `CONNECT_CHANNEL_REGISTRY[channel].connectPath`),
+  `connectViaApi` (route from `CONNECT_CHANNEL_REGISTRY[channel].connectRoute`),
   which turns any transport failure into the batch's own `failed`/`unknown`
   outcome. `useConnectFlow` runs a single pick inline (button spinner) and
   fans 2+ picks out through `ConnectManyDialog`'s status list,
