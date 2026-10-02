@@ -1,6 +1,6 @@
 import type {
-  RealtimeEventData,
   RealtimeEventType,
+  RealtimeTargetedEventData,
 } from "@chatbotx.io/realtime-protocol"
 
 /**
@@ -23,7 +23,7 @@ export type RealtimeEventName =
  * instead.
  */
 export type RealtimeEvent<K extends RealtimeEventName> =
-  RealtimeEventData extends infer Event
+  RealtimeTargetedEventData extends infer Event
     ? Event extends { eventType: infer EventType }
       ? K extends EventType
         ? Event
