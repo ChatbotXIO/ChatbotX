@@ -16,21 +16,35 @@ const {
   mockUpdateMember,
   mockWorkspaceFindById,
   mockWorkspaceMemberServiceDelete,
-} = vi.hoisted(() => ({
-  mockAuditRecord: vi.fn(),
-  mockFindOrFail: vi.fn(),
-  mockFindByIdOrFail: vi.fn(),
-  mockFindNameAndEmail: vi.fn(),
-  mockGetCurrentUserAndTargetWorkspace: vi.fn(),
-  mockInvitationCreate: vi.fn(),
-  mockWorkspaceMemberServiceDelete: vi.fn(),
-  mockInvalidateCacheByTags: vi.fn(),
-  mockIsCommunity: vi.fn(),
-  mockQuotaHasReachedLimit: vi.fn(),
-  mockRevokeWorkspaceMemberConnections: vi.fn(),
-  mockUpdateMember: vi.fn(),
-  mockWorkspaceFindById: vi.fn(),
-}))
+  mockInvalidateMembershipCache,
+  mockDbInsert,
+  mockInsertReturning,
+  mockInsertValues,
+} = vi.hoisted(() => {
+  const mockInsertReturning = vi.fn()
+  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
+  const mockDbInsert = vi.fn(() => ({ values: mockInsertValues }))
+
+  return {
+    mockAuditRecord: vi.fn(),
+    mockDbInsert,
+    mockFindOrFail: vi.fn(),
+    mockFindByIdOrFail: vi.fn(),
+    mockFindNameAndEmail: vi.fn(),
+    mockGetCurrentUserAndTargetWorkspace: vi.fn(),
+    mockInsertReturning,
+    mockInvitationCreate: vi.fn(),
+    mockWorkspaceMemberServiceDelete: vi.fn(),
+    mockInsertValues,
+    mockInvalidateCacheByTags: vi.fn(),
+    mockIsCommunity: vi.fn(),
+    mockQuotaHasReachedLimit: vi.fn(),
+    mockRevokeWorkspaceMemberConnections: vi.fn(),
+    mockUpdateMember: vi.fn(),
+    mockWorkspaceFindById: vi.fn(),
+    mockInvalidateMembershipCache: vi.fn(),
+  }
+})
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -60,13 +74,15 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: {
     hasReachedLimit: mockQuotaHasReachedLimit,
   },
-  revokeWorkspaceMemberConnections: mockRevokeWorkspaceMemberConnections,
+  revokeWorkspaceMemberRealtimeConnections:
+    mockRevokeWorkspaceMemberConnections,
   userService: {
     findNameAndEmail: mockFindNameAndEmail,
   },
   workspaceMemberService: {
     delete: mockWorkspaceMemberServiceDelete,
     findByIdOrFail: mockFindByIdOrFail,
+    invalidateMembershipCache: mockInvalidateMembershipCache,
     update: mockUpdateMember,
   },
   workspaceService: {
@@ -75,6 +91,9 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  db: {
+    insert: mockDbInsert,
+  },
   eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
   findOrFail: mockFindOrFail,
 }))
@@ -466,7 +485,7 @@ function deleteActionCtx() {
 describe("deleteWorkspaceMemberAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFindOrFail.mockResolvedValue({
+    mockFindByIdOrFail.mockResolvedValue({
       id: MEMBER_ID,
       userId: MEMBER_USER_ID,
       workspaceId: WORKSPACE_ID,
@@ -476,7 +495,7 @@ describe("deleteWorkspaceMemberAction", () => {
   })
 
   test("rejects deleting the workspace owner", async () => {
-    mockFindOrFail.mockResolvedValue({
+    mockFindByIdOrFail.mockResolvedValue({
       id: MEMBER_ID,
       userId: MEMBER_USER_ID,
       workspaceId: WORKSPACE_ID,
@@ -515,9 +534,7 @@ describe("deleteWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
     })
-    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
-      `users:${MEMBER_USER_ID}:workspace-members`,
-    ])
+    expect(mockInvalidateMembershipCache).toHaveBeenCalledWith(MEMBER_USER_ID)
   })
 
   test("deletes the member without mutating team-member quota", async () => {
@@ -526,8 +543,6 @@ describe("deleteWorkspaceMemberAction", () => {
     )
 
     expect(mockWorkspaceMemberServiceDelete).toHaveBeenCalledOnce()
-    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
-      `users:${MEMBER_USER_ID}:workspace-members`,
-    ])
+    expect(mockInvalidateMembershipCache).toHaveBeenCalledWith(MEMBER_USER_ID)
   })
 })
