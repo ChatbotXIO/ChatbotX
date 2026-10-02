@@ -1,10 +1,8 @@
 import {
   buildContext,
   conversationService,
-  flowService,
   threadControlService,
 } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   requestThreadControlAction,
   syncThreadOwner,
@@ -19,16 +17,13 @@ import type {
   InboxModel,
 } from "@chatbotx.io/database/types"
 import {
-  ChannelError,
   SdkException,
   type ThreadControlWebhookEvent,
   type ThreadControlWebhookResult,
 } from "@chatbotx.io/sdk"
-import {
-  IntegrationJobAction,
-  type IntegrationJobThreadControlAction,
-  type IntegrationJobThreadControlEvent,
-  integrationQueue,
+import type {
+  IntegrationJobThreadControlAction,
+  IntegrationJobThreadControlEvent,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import {
@@ -36,6 +31,11 @@ import {
   type IntegrationRow,
   integrationService,
 } from "../../services/integrations"
+import {
+  enqueueAiHandoverTakeBackIfDue,
+  isPermanentThreadControlFailure,
+} from "./ai-handover-take-back"
+import { startHandoverResponse } from "./handover-response"
 import {
   detectContactAndConversation,
   receiveMessage,
@@ -57,6 +57,8 @@ export type ThreadControlEventJobOptions = {
    * `isThreadControlJobReprocess`.
    */
   isRetry: boolean
+  /** The routing job's id, deterministic per webhook event. */
+  jobId?: string
 }
 
 /**
@@ -144,50 +146,6 @@ const readHandoverResumeFlowId = (
 }
 
 /**
- * Starts the workspace's handover flow, once per applied resume-eligible handover. The
- * job id is derived from the event, so a redelivered handover cannot start the
- * flow twice; a deleted or inactive flow is logged and skipped, never fatal.
- */
-const startHandoverResumeFlow = async (props: {
-  context: HandoverContext
-  thread: ResolvedThread
-}): Promise<void> => {
-  const { context, thread } = props
-  const flowId = readHandoverResumeFlowId(context.integrationRow)
-  if (!flowId) {
-    return
-  }
-
-  const flow = await flowService.findActiveById({
-    id: flowId,
-    workspaceId: context.inbox.workspaceId,
-  })
-  if (!flow?.currentVersionId) {
-    logger.warn(
-      { flowId, integrationId: context.integrationRow.id },
-      "Handover resume flow is missing or inactive; skipping",
-    )
-    return
-  }
-
-  await integrationQueue.add(
-    IntegrationJobAction.sendFlow,
-    {
-      type: IntegrationJobAction.sendFlow,
-      data: {
-        conversationId: thread.conversation.id,
-        contactInboxId: thread.contactInbox.id,
-        flowId,
-        origin: "channel",
-      },
-    },
-    {
-      jobId: `thread-resume-${thread.contactInbox.id}-${context.event.occurredAt.getTime()}`,
-    },
-  )
-}
-
-/**
  * A handover that leaves the thread with another owner: best-effort fetch of
  * the channel's own expiry for it (Messenger: Meta's thread_owner expiration),
  * so the thread expires by the channel's clock rather than the blind 24h rule.
@@ -214,10 +172,37 @@ const storeChannelThreadExpiry = async (props: {
   }
 }
 
+/**
+ * Our own retry of an inferred hand-back whose event was already recorded (the
+ * worker died before the response was queued): the thread no longer reads as
+ * the AI's, but it was this very event that moved it, so recovery must go on.
+ * An unrelated ownership change never matches (its time and previous owner differ).
+ */
+const isOwnRetry = (
+  context: HandoverContext,
+  contactInbox: ContactInboxModel,
+): boolean =>
+  context.job.isRetry &&
+  contactInbox.threadControlLastEvent === context.event.event &&
+  contactInbox.threadPreviousOwnerAppId === context.event.onlyIfOwnedByAppId &&
+  contactInbox.threadControlUpdatedAt?.getTime() ===
+    context.event.occurredAt.getTime()
+
 const handleHandover = async (context: HandoverContext): Promise<void> => {
   const { inbox, event } = context
   const thread = await resolveHandoverThread(context)
   if (!thread) {
+    return
+  }
+  if (
+    event.onlyIfOwnedByAppId &&
+    thread.contactInbox.threadOwnerAppId !== event.onlyIfOwnedByAppId &&
+    !isOwnRetry(context, thread.contactInbox)
+  ) {
+    logger.debug(
+      { contactInboxId: thread.contactInbox.id },
+      "Dropping an inferred hand-back: the thread is not held by the app it names",
+    )
     return
   }
 
@@ -250,7 +235,20 @@ const handleHandover = async (context: HandoverContext): Promise<void> => {
   // knows which passes are "handed back to us" (e.g. an app-id check).
   const isFirstDelivery = !isRedelivery || context.job.isRetry
   if (eventApplied && isFirstDelivery && event.resumeEligible === true) {
-    await startHandoverResumeFlow({ context, thread })
+    await startHandoverResponse({
+      workspaceId: inbox.workspaceId,
+      inboxId: inbox.id,
+      integrationType: context.data.integrationType,
+      pageResumeFlowId: readHandoverResumeFlowId(context.integrationRow),
+      event,
+      // Recorded on the row (the payload's previous owner, else the one the
+      // row held), since Meta often omits it.
+      previousOwnerAppId: row?.threadPreviousOwnerAppId ?? null,
+      // The routing job's deterministic id: distinct per Meta event, stable on
+      // redelivery and retry.
+      eventKey: context.job.jobId ?? String(event.occurredAt.getTime()),
+      thread,
+    })
   }
 }
 
@@ -258,7 +256,7 @@ const handleHandover = async (context: HandoverContext): Promise<void> => {
  * `threadControlEvent` job: the channel turns the routing webhook item into a
  * handover or a standby message; a standby message goes through the normal
  * inbound pipeline (which stores it and suppresses automation), a handover is
- * recorded and may start the resume flow.
+ * recorded and may start the hand-back response (resume flow / AI settings).
  */
 export async function receiveThreadControlEvent(
   data: ThreadControlEventData,
@@ -345,13 +343,15 @@ type ResultHandlerContext = Omit<HandoverContext, "event">
 /**
  * Same pipeline as an owner delivery: stores the message, suppresses
  * automation. A call-permission answer is still recorded (account state, not
- * automation), exactly as the owner path in `worker.ts` does. It reads the
- * stored standby copy, not only a new message, so a retry after a failed
- * standby write still records it (the reply upsert is idempotent).
+ * automation), exactly as the owner path in `worker.ts` does. When the AI
+ * agent holds the thread while the workspace's AI automation is not running,
+ * the customer's message also queues a take-back (see `ai-handover-take-back`).
+ * It reads the stored standby copy, not only a new message, so a retry after a
+ * failed standby write still records it (the reply upsert is idempotent).
  */
 const receiveStandbyMessage = async (
   result: Extract<ThreadControlWebhookResult, { kind: "standbyMessage" }>,
-  { data }: ResultHandlerContext,
+  { data, inbox }: ResultHandlerContext,
 ): Promise<void> => {
   const received = await receiveMessage({
     integrationType: data.integrationType,
@@ -361,12 +361,24 @@ const receiveStandbyMessage = async (
   if (!received?.standbyCopy) {
     return
   }
-  if (received.postbackAction || received.quickReplyAction) {
-    return
+  // A standby postback or quick reply is never a call-permission answer; the
+  // take-back below still applies to a replayable quick reply.
+  if (!(received.postbackAction || received.quickReplyAction)) {
+    await recordWhatsappCallPermissionReply({
+      workspaceId: received.conversation.workspaceId,
+      message: received.standbyCopy,
+    })
   }
-  await recordWhatsappCallPermissionReply({
+  // The AI agent holds the thread but the Page's AI automation is not
+  // running: take it back and let the bot answer this message.
+  await enqueueAiHandoverTakeBackIfDue({
     workspaceId: received.conversation.workspaceId,
-    message: received.standbyCopy,
+    inboxId: inbox.id,
+    integrationType: data.integrationType,
+    integrationIdentifier: data.integrationIdentifier,
+    ownerReplayPayload: result.ownerReplayPayload,
+    aiAgentAppId: result.aiAgentAppId,
+    standbyCopy: received.standbyCopy,
   })
 }
 
@@ -439,7 +451,7 @@ export async function releaseOwnedThread(
       expectedThreadControlUpdatedAt: current.threadControlUpdatedAt,
     })
   } catch (err) {
-    if (isPermanentReleaseFailure(err)) {
+    if (isPermanentThreadControlFailure(err)) {
       logger.warn(
         { err, contactInboxId: data.contactInboxId },
         "Thread release after archive was rejected; not retrying",
@@ -449,7 +461,3 @@ export async function releaseOwnedThread(
     throw err
   }
 }
-
-const isPermanentReleaseFailure = (err: unknown): boolean =>
-  (err instanceof ChannelError && !err.isRetryable) ||
-  err instanceof ChatbotXException

@@ -36,6 +36,7 @@ import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syn
 import { reconcileTenants } from "./handlers/reconcile-tenants"
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
+import { scanAiHandoverBulkRuns } from "./handlers/scan-ai-handover-bulk-runs"
 import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanContactScans } from "./handlers/scan-contact-scans"
@@ -133,6 +134,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.scanContactScans:
               await scanContactScans()
+              return
+
+            case ScheduleJobData.scanAiHandoverBulkRuns:
+              await scanAiHandoverBulkRuns()
               return
 
             case ScheduleJobData.reconcileMetaCatalogSyncs:

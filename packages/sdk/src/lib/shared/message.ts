@@ -1,5 +1,6 @@
 import type { ButtonPayload } from "@chatbotx.io/flow-config"
 import { z } from "zod"
+import type { ChannelError } from "../channel-error"
 
 export type IncomingContact = {
   sourceId: string
@@ -264,6 +265,19 @@ export type ThreadControlWebhookEvent = {
   previousOwnerAppId?: string
   newOwnerAppId?: string
   /**
+   * The channel's AI-agent app id (e.g. Messenger's Business AI), so shared
+   * code can tell a hand-back FROM the AI agent from any other hand-back
+   * without reading channel config. Absent when the channel has no AI-agent app.
+   */
+  aiAgentAppId?: string
+  /**
+   * A handover the channel inferred from a notice rather than a structured
+   * pass/take (so it may be stale): applied only while the stored thread is
+   * held by this app. On a thread another owner (e.g. us) already holds it is
+   * dropped, so a notice never re-fires the hand-back response.
+   */
+  onlyIfOwnedByAppId?: string
+  /**
    * Whether this handover starts the resume flow. The CHANNEL decides (it
    * alone knows which passes mean "handed back to us"); absent = never.
    */
@@ -308,6 +322,69 @@ export type ThreadControlUpdateResult = {
 }
 
 /**
+ * Bulk "hand every thread to the AI agent / take the AI-held ones back".
+ * `takeFromAi` is the channel's way of taking a thread over with a human
+ * message (Messenger: a HUMAN_AGENT-tagged send), so it carries `text`.
+ */
+export type BulkThreadControlAction = "handToAi" | "takeFromAi"
+
+/**
+ * The transport facts of a channel's bulk thread-control call, advertised by
+ * its adapter so shared code never assumes one channel's numbers.
+ */
+export type BulkThreadControlLimits = {
+  /** Most threads one bulk call can carry (Messenger: a Graph batch of 50). */
+  maxBatchSize: number
+  /** Pause between two calls, to spread the channel's quota over time. */
+  batchGapMs: number
+  /**
+   * How long to wait when the channel refuses a whole call for its rate limit
+   * without saying when to retry (the caller must stop calling meanwhile).
+   */
+  rateLimitPauseMs: number
+}
+
+/** The thread-control event a succeeded bulk item records on the thread. */
+export type BulkThreadControlRecordedEvent = "passed" | "serviceSent"
+
+/**
+ * Outcome of one thread in a bulk call. `failed` means the channel definitely
+ * did not apply it (safe to retry when the error is retryable); `unknown`
+ * means it may have been applied (a timed-out or 5xx sub-request) and must not
+ * be retried for a send, since a retry could deliver the message twice.
+ */
+export type BulkThreadControlItemResult =
+  | {
+      contactInboxId: string
+      status: "succeeded"
+      /** What happened to the thread: a hand-over is a pass, a tagged send a takeover. */
+      event: BulkThreadControlRecordedEvent
+      ownerRole: ThreadControlRole | null
+      ownerAppId: string | null
+      /** Channel id of the message a `takeFromAi` sent, when there is one. */
+      messageSourceId: string | null
+    }
+  | { contactInboxId: string; status: "failed"; error: ChannelError }
+  | { contactInboxId: string; status: "unknown"; error: ChannelError }
+  /**
+   * Not applied because the channel asked to slow down (a rate limit, or the
+   * quota is nearly used up): nothing happened, so it is safe to retry after
+   * `retryAfterMs`.
+   */
+  | { contactInboxId: string; status: "deferred"; error: ChannelError }
+
+/** What one bulk call reports back. */
+export type BulkThreadControlResult = {
+  /** One entry per input contact, in input order. */
+  results: BulkThreadControlItemResult[]
+  /**
+   * The channel asks the caller to wait this long before its next call (its
+   * quota is exhausted or close to it). `null` = carry on.
+   */
+  retryAfterMs: number | null
+}
+
+/**
  * What a channel's `getThreadOwner` reports: who holds the thread according to
  * the channel itself. `ownerAppId: null` = the channel says nobody holds it.
  * A channel that cannot answer does not implement the handler at all, so a
@@ -323,7 +400,7 @@ export type ThreadOwnerResult = {
    * the automated-assistant app id. Absent/null = the channel does not know.
    */
   ownAppId?: string | null
-  businessAiAppId?: string | null
+  aiAgentAppId?: string | null
 }
 
 export type ThreadControlWebhookResult =
@@ -333,7 +410,18 @@ export type ThreadControlWebhookResult =
   /** Receiver configuration: parsed and logged only. */
   | { kind: "appRoles"; event: ThreadControlAppRolesEvent }
   /** Handed unchanged to `receiveMessage`. */
-  | { kind: "standbyMessage"; receivePayload: unknown }
+  | {
+      kind: "standbyMessage"
+      receivePayload: unknown
+      /**
+       * The same message as a regular (owner) delivery, for a channel whose
+       * standby copy can be re-processed once this app holds the thread again
+       * (the channel does not resend it). Absent when it cannot be replayed.
+       */
+      ownerReplayPayload?: unknown
+      /** The channel's AI-agent app id, to recognise a thread this app took from it. */
+      aiAgentAppId?: string
+    }
 export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {

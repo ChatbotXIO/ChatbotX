@@ -188,6 +188,10 @@ export type IntegrationThreadsModel =
   typeof schema.integrationThreadsModel.$inferSelect
 export type WhatsappMessageTemplateModel =
   typeof schema.whatsappMessageTemplateModel.$inferSelect
+export type AiHandoverBulkRunModel =
+  typeof schema.aiHandoverBulkRunModel.$inferSelect
+export type AiHandoverSettingsModel =
+  typeof schema.aiHandoverSettingsModel.$inferSelect
 export type MessengerMessageTemplateModel =
   typeof schema.messengerMessageTemplateModel.$inferSelect
 export type WhatsappFlowModel = typeof schema.whatsappFlowModel.$inferSelect

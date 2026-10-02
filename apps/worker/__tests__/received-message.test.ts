@@ -5496,6 +5496,32 @@ describe("receiveMessage — conversation routing (thread control)", () => {
       expect(mockPromoteStandbyDelivery).toHaveBeenCalledTimes(2)
     })
 
+    test("take-back replay: after our own take the owner replay of an unpromoted standby copy automates exactly once, even when replayed twice", async () => {
+      mockCreateOrUpdate.mockResolvedValue({
+        message: standbyCopy,
+        isNew: false,
+      })
+      mockRunChannelHandler.mockResolvedValue(owner)
+      // The thread is already ours (the take is later than the standby copy):
+      // the service applies nothing for the replay, yet the one-time promotion
+      // claim alone decides who automates.
+      mockRecordInboundDelivery.mockResolvedValue({
+        eventApplied: false,
+        stateChanged: false,
+        isRedelivery: false,
+        row: null,
+      })
+
+      const first = await receiveMessage(whatsappProps)
+      const second = await receiveMessage(whatsappProps)
+
+      expect(first?.suppressAutomation).toBe(false)
+      expect(first?.message).not.toBeNull()
+      // The second replay (a retried or duplicated take-back job) loses the claim.
+      expect(second?.message).toBeNull()
+      expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledTimes(1)
+    })
+
     test("owner first, then standby: automation runs exactly once, for the owner delivery", async () => {
       mockCreateOrUpdate
         .mockResolvedValueOnce({ message: fakeCreatedMessage, isNew: true })

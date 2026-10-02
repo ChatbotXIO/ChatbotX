@@ -6,14 +6,17 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
+import {
+  THREAD_CONTROL_PASS_COPY_KEYS,
+  type ThreadControlPassTarget,
+} from "@/features/messages/lib/thread-control-channel-ui"
 import { threadControlAction } from "../actions/thread-control.action"
 import { THREAD_CONTROL_NOT_ESCALATION } from "../lib/thread-control-result"
 
 const SUCCESS_TOAST_KEYS = {
   take: "conversationRouting.composer.takeOverSuccess",
   release: "conversationRouting.release.success",
-  pass: "conversationRouting.pass.success",
-} as const satisfies Record<ThreadControlAction, string>
+} as const satisfies Record<Exclude<ThreadControlAction, "pass">, string>
 
 /**
  * Runs take/release/pass for one conversation. On success the store is
@@ -25,6 +28,8 @@ const SUCCESS_TOAST_KEYS = {
 export function useThreadControlAction(input: {
   workspaceId: string
   conversationId: string
+  /** Who a pass hands the thread to; picks the pass success toast. */
+  passTarget?: ThreadControlPassTarget
 }) {
   const t = useTranslations()
   const patchContactInboxThreadControl = useChatStore(
@@ -50,7 +55,14 @@ export function useThreadControlAction(input: {
           return
         }
         patchContactInboxThreadControl(input.conversationId, data.snapshot)
-        toast.success(t(SUCCESS_TOAST_KEYS[actionInput.action]))
+        toast.success(
+          t(
+            actionInput.action === "pass"
+              ? THREAD_CONTROL_PASS_COPY_KEYS[input.passTarget ?? "escalation"]
+                  .success
+              : SUCCESS_TOAST_KEYS[actionInput.action],
+          ),
+        )
       },
       onError: ({ error }) => {
         toast.error(error.serverError ?? t("messages.unknownError"))
@@ -61,7 +73,7 @@ export function useThreadControlAction(input: {
   return {
     execute,
     // Awaitable: the composer takes the thread over, then sends only if the
-    // take succeeded (see message-input's inline BizAI reply).
+    // take succeeded (see message-input's inline AI hand-over reply).
     executeAsync,
     isExecuting,
     pendingAction: isExecuting ? lastInput?.action : undefined,

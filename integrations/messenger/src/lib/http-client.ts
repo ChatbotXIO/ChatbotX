@@ -123,7 +123,11 @@ type GetOptions = {
 type PostOptions = {
   headers?: Record<string, string>
   json?: unknown
+  /** Form-encoded body (Graph batch sub-requests carry their own encoding). */
+  body?: URLSearchParams
   retry?: number
+  /** Overrides the client's timeout for this call (ms). */
+  timeout?: number
 }
 
 type DeleteOptions = {
@@ -197,6 +201,18 @@ class MessengerHttpClient {
 
   post<T>(url: string, options?: PostOptions): Promise<T> {
     return this.request(() => this.client.post(url, options).json<T>())
+  }
+
+  /** Like `post` but also returns the response `Headers` (quota headers). */
+  postWithHeaders<T>(
+    url: string,
+    options?: PostOptions,
+  ): Promise<{ data: T; headers: Headers }> {
+    return this.request(async () => {
+      const response = await this.client.post(url, options)
+      const data = await response.json<T>()
+      return { data, headers: response.headers }
+    })
   }
 
   delete<T>(url: string, options?: DeleteOptions): Promise<T> {

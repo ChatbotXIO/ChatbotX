@@ -808,6 +808,128 @@
   "integrations": {
     "title": "Integrări"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Controlează ce se întâmplă când asistentul AI al Meta răspunde clienților tăi de pe Messenger.",
+    "info": "Când este activat, conversațiile sunt preluate aici după ce asistentul AI le returnează, iar setările de mai jos se aplică.",
+    "enabled": {
+      "label": "Activează"
+    },
+    "schedule": {
+      "label": "Interval de rulare",
+      "description": "Se aplică doar în aceste ore ale fusului orar al workspace-ului.",
+      "from": "De la ora",
+      "to": "Până la ora",
+      "add": "Adaugă interval",
+      "remove": "Elimină intervalul"
+    },
+    "gotoFlow": {
+      "label": "Mergi la flux",
+      "description": "Flow pornit când asistentul AI returnează conversația. Are prioritate față de mesajul de returnare.",
+      "placeholder": "Selectează un flux",
+      "clear": "Șterge fluxul"
+    },
+    "returnMessage": {
+      "label": "Mesaj de revenire",
+      "description": "Trimis în schimb când nu este setat niciun flux sau fluxul nu mai este activ.",
+      "placeholder": "Mesaj trimis când AI-ul returnează conversația"
+    },
+    "pauseBot": {
+      "label": "Transferă conversația către un operator",
+      "description": "Oprește botul pentru acest contact după returnare, până când un membru al echipei preia sau botul își reia activitatea."
+    },
+    "readOnly": "Poți vedea aceste setări, dar nu le poți modifica.",
+    "errors": {
+      "supportSession": "Setările nu pot fi modificate dintr-o sesiune de suport.",
+      "flowNotFound": "Fluxul selectat nu a fost găsit sau nu este activ.",
+      "timeRanges": "Introdu intervale valide: ore întregi de la 0 la 24, cu început și sfârșit diferite."
+    },
+    "bulk": {
+      "title": "Aplică tuturor clienților",
+      "description": "Predă toate conversațiile Messenger eligibile asistentului AI al Meta sau preia înapoi pe cele pe care le deține acum. Rulează în fundal și îl poți urmări aici.",
+      "started": "Pornit. Poți urmări progresul aici.",
+      "progress": "Progres",
+      "processedOfTotal": "{done} din {total} conversații",
+      "counters": "{processed} finalizate, {skipped} omise, {failed} eșuate",
+      "action": {
+        "enable": "Activează pentru toți",
+        "disable": "Dezactivează pentru toți"
+      },
+      "status": {
+        "pending": "Așteaptă pornirea",
+        "running": "În desfășurare",
+        "cancelling": "Se anulează",
+        "completed": "Finalizată",
+        "failed": "Eșuată",
+        "cancelled": "Anulată"
+      },
+      "enable": {
+        "dialogDescription": "Fiecare conversație Messenger în care clientul a scris în ultimele 30 de zile și pe care nicio altă aplicație nu o deține este predată asistentului AI al Meta. Conversațiile sunt preluate înapoi conform setărilor de mai sus.",
+        "confirm": "Activează pentru toți",
+        "blocked": "Salvează automatizarea de mai sus și pornește-o (în intervalul ei de rulare) pentru a o activa pentru toți clienții."
+      },
+      "disable": {
+        "dialogDescription": "Sunt preluate înapoi doar conversațiile pe care asistentul AI al Meta le deține acum și pot fi contactați doar clienții care au scris în ultimele 7 zile. Fiecare primește mesajul de mai jos, trimis cu eticheta Human Agent a Meta, așa că scrie-l ca și cum ar răspunde o persoană. Pagina are nevoie de permisiunea Human Agent.",
+        "messageLabel": "Mesaj pentru clienți",
+        "messageDescription": "Până la {max} caractere.",
+        "messagePlaceholder": "Bună, un membru al echipei preia această conversație.",
+        "confirm": "Dezactivează pentru toți",
+        "policyWarning": "Meta permite eticheta Human Agent doar unei persoane care răspunde clientului. Utilizarea ei pentru promoții sau mesaje automate poate duce la restricționarea mesageriei Paginii."
+      },
+      "errors": {
+        "automationNotActive": "Salvează automatizarea și pornește-o (în intervalul ei de rulare) înainte de a o activa pentru toți clienții.",
+        "messageRequired": "Introdu mesajul care va fi trimis clienților.",
+        "messageTooLong": "Mesajul este prea lung.",
+        "pageNotConnected": "Această Pagină nu este conectată.",
+        "nothingToRetry": "Nu există nimic de reîncercat."
+      },
+      "runErrors": {
+        "automationStopped": "Oprită deoarece automatizarea a fost dezactivată.",
+        "tokenInvalid": "Accesul Paginii a fost revocat. Reconectează Pagina și încearcă din nou.",
+        "channelUnsupported": "Acest canal nu acceptă acțiunea în masă.",
+        "maxAttempts": "Renunțat după eșecuri repetate.",
+        "channelUnavailable": "Oprită deoarece Meta nu a putut fi contactat de mai multe ori la rând.",
+        "batchFailed": "Unele conversații nu au putut fi confirmate și au fost numărate ca eșuate.",
+        "pageDisconnected": "Oprit deoarece Pagina a fost deconectată.",
+        "pageRefused": "Meta a refuzat predarea pentru această Pagină: este posibil să nu fie configurată pentru asistentul AI al Meta sau să lipsească permisiunea.",
+        "integrationUnavailable": "Conexiunea Paginii nu a putut fi încărcată. Reconectează Pagina și încearcă din nou."
+      },
+      "pausedUntil": "Oprit temporar până la {at} pentru a rămâne în limitele de rată ale Meta pentru această Pagină. Reia singur.",
+      "preparing": "Se pregătește…",
+      "live": {
+        "enable": "Se activează pentru clienți: {done} / {total}",
+        "disable": "Se dezactivează pentru clienți: {done} / {total}",
+        "enableCounting": "Se activează pentru clienți: se numără…",
+        "disableCounting": "Se dezactivează pentru clienți: se numără…"
+      },
+      "done": {
+        "enable": "Activat pentru {processed} din {total} clienți.",
+        "disable": "Dezactivat pentru {processed} din {total} clienți."
+      },
+      "stopped": {
+        "enable": "Activarea pentru toți clienții a fost oprită.",
+        "disable": "Dezactivarea pentru toți clienții a fost oprită."
+      },
+      "retry": "Reîncearcă"
+    },
+    "history": {
+      "link": "Istoric",
+      "title": "Istoricul rulărilor în masă",
+      "empty": "Nicio rulare încă.",
+      "columns": {
+        "action": "Acțiune",
+        "requestedAt": "Pornită",
+        "progress": "Procesate / total",
+        "finishedAt": "Finalizată",
+        "message": "Mesaj",
+        "requestedBy": "Solicitată de"
+      },
+      "description": "De fiecare dată când \"Aplică tuturor clienților\" a fost activat sau dezactivat pentru această Pagină, cele mai recente primele.",
+      "error": "Istoricul nu a putut fi încărcat.",
+      "previousPage": "Pagina anterioară",
+      "nextPage": "Pagina următoare"
+    }
+  },
   "platformSettings": {
     "title": "Setările platformei",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Predai această conversație partenerului tău de escaladare? Răspunsurile tale vor fi suspendate până când conversația revine.",
       "confirm": "Transferă",
       "success": "Conversație transferată partenerului de escaladare"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Returnează această conversație asistentului AI",
+      "title": "Returnezi asistentului AI?",
+      "description": "Asistentul AI va răspunde din nou acestui client. Răspunsurile tale vor fi puse în pauză până când conversația revine la tine. Meta nu garantează că asistentul răspunde la fiecare mesaj.",
+      "confirm": "Returnează",
+      "success": "Conversație returnată asistentului AI"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

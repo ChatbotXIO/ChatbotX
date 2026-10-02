@@ -73,29 +73,26 @@ async function applyDeliveredDirectMessageEffects(props: {
 }
 
 /**
- * Records a comment-anchored private DM that was already sent inline (straight
- * through the channel's Send API, outside the chat pipeline) on the contact's
- * DM conversation, with the same bookkeeping a delivered DM gets there.
+ * Records a direct message that was already sent inline (straight through the
+ * channel's Send API, outside the chat pipeline) on a known conversation, with
+ * the same bookkeeping a delivered DM gets there.
  *
- * Never throws: the DM already left, and a throw would fail the caller's job
- * so a retry sends it a second time. Returns `null` when nothing was recorded.
+ * Never throws: the message already left, and a throw would fail the caller's
+ * job so a retry sends it a second time. Returns `null` when nothing was
+ * recorded.
  */
-export const recordDeliveredPrivateReply = async (props: {
+export const recordDeliveredDirectMessage = async (props: {
   workspaceId: string
+  conversationId: string
   contactInbox: ContactInboxModel
   text: string
   sourceId: string | null
+  contentAttributes?: MessageModel["contentAttributes"]
 }): Promise<MessageModel | null> => {
-  const { workspaceId, contactInbox, text, sourceId } = props
+  const { workspaceId, conversationId, contactInbox, text, sourceId } = props
 
   try {
-    const [conversationId, repository] = await Promise.all([
-      findOrCreateDirectMessageConversationId({
-        workspaceId,
-        contactId: contactInbox.contactId,
-      }),
-      createMessageRepository(),
-    ])
+    const repository = await createMessageRepository()
 
     const message = await repository.create({
       workspaceId,
@@ -106,7 +103,7 @@ export const recordDeliveredPrivateReply = async (props: {
       senderType: "bot",
       sourceId,
       text,
-      contentAttributes: { isPrivateReply: true },
+      contentAttributes: props.contentAttributes,
       createdAt: new Date(),
     })
 
@@ -145,6 +142,37 @@ export const recordDeliveredPrivateReply = async (props: {
     })
 
     return message
+  } catch (err) {
+    logger.warn(
+      { err, workspaceId, contactInboxId: contactInbox.id },
+      "Failed to record a delivered direct message in the inbox",
+    )
+    return null
+  }
+}
+
+/**
+ * Records a comment-anchored private DM that was already sent inline on the
+ * contact's DM conversation (see {@link recordDeliveredDirectMessage}).
+ */
+export const recordDeliveredPrivateReply = async (props: {
+  workspaceId: string
+  contactInbox: ContactInboxModel
+  text: string
+  sourceId: string | null
+}): Promise<MessageModel | null> => {
+  const { workspaceId, contactInbox } = props
+
+  try {
+    const conversationId = await findOrCreateDirectMessageConversationId({
+      workspaceId,
+      contactId: contactInbox.contactId,
+    })
+    return await recordDeliveredDirectMessage({
+      ...props,
+      conversationId,
+      contentAttributes: { isPrivateReply: true },
+    })
   } catch (err) {
     logger.warn(
       { err, workspaceId, contactInboxId: contactInbox.id },

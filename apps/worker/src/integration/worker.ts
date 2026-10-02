@@ -38,6 +38,8 @@ import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { integrationService } from "../services/integrations"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
+import { runAiHandoverBulkToggle } from "./handlers/ai-handover-bulk-toggle"
+import { runAiHandoverTakeBack } from "./handlers/ai-handover-take-back"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
 import { coexistInstagramSync } from "./handlers/coexist/instagram-sync"
@@ -532,11 +534,20 @@ async function startIntegrationWorker() {
             case IntegrationJobAction.threadControlEvent: {
               await receiveThreadControlEvent(job.data.data, {
                 isRetry: isThreadControlJobReprocess(job),
+                jobId: job.id,
               })
               return
             }
             case IntegrationJobAction.threadControlAction: {
               await releaseOwnedThread(job.data.data)
+              return
+            }
+            case IntegrationJobAction.aiHandoverBulkToggle: {
+              await runAiHandoverBulkToggle(job.data.data)
+              return
+            }
+            case IntegrationJobAction.aiHandoverTakeBack: {
+              await runAiHandoverTakeBack(job.data.data)
               return
             }
             case IntegrationJobAction.createMessage: {

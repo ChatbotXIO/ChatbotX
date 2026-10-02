@@ -3076,6 +3076,128 @@
   "integrations": {
     "title": "Integrationer"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Styr, hvad der sker, når Metas AI-assistent svarer dine Messenger-kunder.",
+    "info": "Når det er slået til, overtages samtaler her, efter AI-assistenten har givet dem tilbage, og indstillingerne nedenfor gælder.",
+    "enabled": {
+      "label": "Aktivér"
+    },
+    "schedule": {
+      "label": "Kørselstid",
+      "description": "Gælder kun i disse timer i workspacets tidszone.",
+      "from": "Fra time",
+      "to": "Til time",
+      "add": "Tilføj tidsinterval",
+      "remove": "Fjern tidsinterval"
+    },
+    "gotoFlow": {
+      "label": "Gå til flow",
+      "description": "Flow, der startes, når AI-assistenten giver samtalen tilbage. Har forrang over returbeskeden.",
+      "placeholder": "Vælg et flow",
+      "clear": "Ryd flow"
+    },
+    "returnMessage": {
+      "label": "Returbesked",
+      "description": "Sendes i stedet, når der ikke er et flow, eller flowet ikke længere er aktivt.",
+      "placeholder": "Besked, der sendes, når AI'en giver samtalen tilbage"
+    },
+    "pauseBot": {
+      "label": "Transfer Samtale til Menneskelig",
+      "description": "Stopper botten for denne kontakt efter tilbagegivelsen, indtil et teammedlem overtager, eller den genoptages."
+    },
+    "readOnly": "Du kan se disse indstillinger, men ikke ændre dem.",
+    "errors": {
+      "supportSession": "Indstillinger kan ikke ændres fra en supportsession.",
+      "flowNotFound": "Det valgte flow blev ikke fundet eller er ikke aktivt.",
+      "timeRanges": "Angiv gyldige tidsintervaller: hele timer fra 0 til 24, med forskellig start og slut."
+    },
+    "bulk": {
+      "title": "Anvend på alle kunder",
+      "description": "Giv alle kvalificerede Messenger-samtaler til Metas AI-assistent, eller tag dem tilbage, som den holder lige nu. Det kører i baggrunden, og du kan følge det her.",
+      "started": "Startet. Du kan følge fremdriften her.",
+      "progress": "Fremdrift",
+      "processedOfTotal": "{done} af {total} samtaler",
+      "counters": "{processed} færdige, {skipped} sprunget over, {failed} mislykkedes",
+      "action": {
+        "enable": "Aktivér for alle",
+        "disable": "Deaktivér for alle"
+      },
+      "status": {
+        "pending": "Venter på at starte",
+        "running": "Kører",
+        "cancelling": "Annullerer",
+        "completed": "Fuldført",
+        "failed": "Mislykkedes",
+        "cancelled": "Annulleret"
+      },
+      "enable": {
+        "dialogDescription": "Hver Messenger-samtale, hvor kunden har skrevet inden for de sidste 30 dage, og som ingen anden app holder, gives til Metas AI-assistent. Samtaler tages tilbage efter indstillingerne ovenfor.",
+        "confirm": "Aktivér for alle",
+        "blocked": "Gem automatiseringen ovenfor, og slå den til (inden for dens kørselstid) for at aktivere den for alle kunder."
+      },
+      "disable": {
+        "dialogDescription": "Kun samtaler, som Metas AI-assistent holder lige nu, tages tilbage, og kun kunder, der har skrevet inden for de sidste 7 dage, kan nås. Hver af dem modtager beskeden nedenfor, sendt med Metas Human Agent-tag, så skriv den, som om en person svarer. Siden skal have Human Agent-tilladelsen.",
+        "messageLabel": "Besked til kunder",
+        "messageDescription": "Op til {max} tegn.",
+        "messagePlaceholder": "Hej, et teammedlem overtager denne samtale.",
+        "confirm": "Deaktivér for alle",
+        "policyWarning": "Meta tillader kun Human Agent-tagget til en person, der svarer kunden. Bruges det til tilbud eller automatiske beskeder, kan Sidens beskeder blive begrænset."
+      },
+      "errors": {
+        "automationNotActive": "Gem automatiseringen, og slå den til (inden for dens kørselstid), før du aktiverer den for alle kunder.",
+        "messageRequired": "Indtast den besked, der skal sendes til kunderne.",
+        "messageTooLong": "Beskeden er for lang.",
+        "pageNotConnected": "Denne Side er ikke forbundet.",
+        "nothingToRetry": "Der er intet at prøve igen."
+      },
+      "runErrors": {
+        "automationStopped": "Stoppet, fordi automatiseringen blev slået fra.",
+        "tokenInvalid": "Sidens adgang blev tilbagekaldt. Forbind siden igen, og prøv igen.",
+        "channelUnsupported": "Denne kanal understøtter ikke massehandlingen.",
+        "maxAttempts": "Opgivet efter gentagne fejl.",
+        "channelUnavailable": "Stoppet, fordi Meta ikke kunne nås flere gange i træk.",
+        "batchFailed": "Nogle samtaler kunne ikke bekræftes og blev talt som mislykkede.",
+        "pageDisconnected": "Stoppet, fordi Siden blev frakoblet.",
+        "pageRefused": "Meta afviste overdragelsen for denne Side: den er muligvis ikke sat op til Metas AI-assistent, eller den mangler tilladelsen.",
+        "integrationUnavailable": "Sidens forbindelse kunne ikke indlæses. Forbind Siden igen, og prøv igen."
+      },
+      "pausedUntil": "Sat på pause indtil {at} for at holde sig inden for Metas hastighedsgrænser for denne Side. Den genoptages af sig selv.",
+      "preparing": "Forbereder…",
+      "live": {
+        "enable": "Aktiverer for kunder: {done} / {total}",
+        "disable": "Deaktiverer for kunder: {done} / {total}",
+        "enableCounting": "Aktiverer for kunder: tæller…",
+        "disableCounting": "Deaktiverer for kunder: tæller…"
+      },
+      "done": {
+        "enable": "Aktiveret for {processed} af {total} kunder.",
+        "disable": "Deaktiveret for {processed} af {total} kunder."
+      },
+      "stopped": {
+        "enable": "Aktivering for alle kunder blev stoppet.",
+        "disable": "Deaktivering for alle kunder blev stoppet."
+      },
+      "retry": "Prøv igen"
+    },
+    "history": {
+      "link": "Historik",
+      "title": "Historik over massekørsler",
+      "empty": "Ingen kørsler endnu.",
+      "columns": {
+        "action": "Handling",
+        "requestedAt": "Startet",
+        "progress": "Behandlet / i alt",
+        "finishedAt": "Afsluttet",
+        "message": "Besked",
+        "requestedBy": "Anmodet af"
+      },
+      "description": "Hver gang \"Anvend på alle kunder\" blev slået til eller fra for denne Side, nyeste først.",
+      "error": "Historikken kunne ikke indlæses.",
+      "previousPage": "Forrige side",
+      "nextPage": "Næste side"
+    }
+  },
   "platformSettings": {
     "title": "Platform Indstillinger",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Vil du give denne samtale videre til din eskaleringspartner? Dine svar pauses, indtil tråden kommer tilbage.",
       "confirm": "Send videre",
       "success": "Samtalen er sendt videre til eskaleringspartneren"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Giv denne samtale tilbage til AI-assistenten",
+      "title": "Giv tilbage til AI-assistenten?",
+      "description": "AI-assistenten begynder igen at svare denne kunde. Dine svar sættes på pause, indtil samtalen kommer tilbage til dig. Meta garanterer ikke, at assistenten svarer på hver besked.",
+      "confirm": "Giv tilbage",
+      "success": "Samtalen er givet tilbage til AI-assistenten"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

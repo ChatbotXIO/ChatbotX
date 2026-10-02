@@ -180,6 +180,42 @@ describe("webhookHandler conversation routing", () => {
     expect(calls()).toHaveLength(1)
   })
 
+  describe("the Business-AI hand-back notice (admin_text)", () => {
+    const notice = {
+      sender: { id: "psid-1" },
+      recipient: { id: "page-1" },
+      timestamp: 1_790_920_217_103,
+      message: { admin_text: "Tác nhân AI đã chuyển đoạn chat này cho bạn." },
+    }
+
+    it("is enqueued once as a handover, never as an ordinary message", async () => {
+      await post(entryBody({ messaging: [notice] }), queue)
+
+      expect(calls().map((call) => call[0])).toEqual(["threadControlEvent"])
+      expect(calls()[0]?.[1].data).toMatchObject({
+        integrationType: "messenger",
+        integrationIdentifier: "page-1",
+        payload: { kind: "handover", body: notice },
+      })
+      expect(calls()[0]?.[2].jobId).toMatch(HANDOVER_JOB_ID_RE)
+    })
+
+    it("a redelivery collapses onto the same job id", async () => {
+      const body = entryBody({ messaging: [notice] })
+      await post(body, queue)
+      await post(body, queue)
+
+      const [first, second] = calls()
+      expect(first?.[2].jobId).toBe(second?.[2].jobId)
+    })
+
+    it("its standby copy stores nothing and enqueues nothing", async () => {
+      await post(entryBody({ standby: [notice] }), queue)
+
+      expect(queue.add).not.toHaveBeenCalled()
+    })
+  })
+
   it("does not route an ordinary message as a routing item", async () => {
     await post(
       entryBody({

@@ -1,6 +1,12 @@
-import { inboxService } from "@chatbotx.io/business"
+import {
+  aiHandoverBulkRunService,
+  aiHandoverSettingsService,
+  inboxService,
+} from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 
+import { AiHandoverSettingsCard } from "@/features/integration-ai-handover/components/ai-handover-settings-card"
+import { toApplyToAllStatus } from "@/features/integration-ai-handover/lib/bulk-run-resource"
 import { ConversationRoutingCard } from "@/features/integration-messenger/components/conversation-routing-card"
 import { findIntegrationMessenger } from "@/features/integration-messenger/queries"
 import { UpdateMessengerForm } from "@/features/integration-messenger/update-messenger-form"
@@ -27,9 +33,19 @@ export default async function UpdateMessengerPage(props: {
         "superAdmin",
       )
     : false
-  const inbox = await inboxService.find({
-    where: { id: integrationMessenger.inboxId, workspaceId },
-  })
+  // A platform support session sees the AI hand-over card but cannot change it.
+  const canEditAiHandover =
+    isSuperAdmin && !currentUserAndWorkspace?.isSupportSession
+  const pageRef = { workspaceId, inboxId: integrationMessenger.inboxId }
+  const [inbox, aiHandoverSettings, activeAiHandoverSettings, applyToAllState] =
+    await Promise.all([
+      inboxService.find({
+        where: { id: integrationMessenger.inboxId, workspaceId },
+      }),
+      aiHandoverSettingsService.find(pageRef),
+      aiHandoverSettingsService.findActive(pageRef),
+      aiHandoverBulkRunService.findStatus(pageRef),
+    ])
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,6 +58,24 @@ export default async function UpdateMessengerPage(props: {
         handoverResumeFlowId={integrationMessenger.handoverResumeFlowId}
         integrationMessengerId={id}
         isSuperAdmin={isSuperAdmin}
+        workspaceId={workspaceId}
+      />
+      <AiHandoverSettingsCard
+        canEdit={canEditAiHandover}
+        inboxId={integrationMessenger.inboxId}
+        initialApplyToAllStatus={toApplyToAllStatus(
+          applyToAllState,
+          activeAiHandoverSettings !== null,
+        )}
+        initialValues={{
+          enabled: aiHandoverSettings?.enabled ?? false,
+          scheduleEnabled: aiHandoverSettings?.scheduleEnabled ?? false,
+          timeRanges: aiHandoverSettings?.timeRanges ?? [],
+          gotoFlowId: aiHandoverSettings?.gotoFlowId ?? null,
+          returnMessage: aiHandoverSettings?.returnMessage ?? "",
+          pauseBotWaitingForStaff:
+            aiHandoverSettings?.pauseBotWaitingForStaff ?? false,
+        }}
         workspaceId={workspaceId}
       />
     </div>

@@ -1,8 +1,10 @@
 "use client"
 
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { cn } from "@chatbotx.io/ui/lib/utils"
+import { XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
@@ -60,5 +62,45 @@ export function FlowSelectorSimple({
         placeholder={placeholder ?? t("sequences.selectFlow")}
       />
     </Form>
+  )
+}
+
+type ClearableFlowSelectorProps = {
+  value: string | null
+  onChange: (value: string | null) => void
+  placeholder?: string
+  /** Accessible name of the clear button. */
+  clearLabel: string
+}
+
+/** A full-width flow selector with a clear (X) button; `null` means no flow. */
+export function ClearableFlowSelector({
+  value,
+  onChange,
+  placeholder,
+  clearLabel,
+}: ClearableFlowSelectorProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="min-w-0 flex-1">
+        <FlowSelectorSimple
+          className="w-full"
+          onChange={(next) => onChange(next || null)}
+          placeholder={placeholder}
+          value={value ?? ""}
+        />
+      </div>
+      {value && (
+        <Button
+          aria-label={clearLabel}
+          onClick={() => onChange(null)}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <XIcon aria-hidden />
+        </Button>
+      )}
+    </div>
   )
 }

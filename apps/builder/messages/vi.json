@@ -3260,6 +3260,128 @@
   "integrations": {
     "title": "Tích hợp"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Điều khiển những gì xảy ra quanh việc trợ lý AI của Meta trả lời khách hàng Messenger của bạn.",
+    "info": "Khi bật, hội thoại sẽ được tiếp quản tại đây sau khi trợ lý AI trả lại, và các cài đặt bên dưới được áp dụng.",
+    "enabled": {
+      "label": "Bật"
+    },
+    "schedule": {
+      "label": "Thời gian chạy",
+      "description": "Chỉ áp dụng trong các khung giờ này theo múi giờ của workspace.",
+      "from": "Từ giờ",
+      "to": "Đến giờ",
+      "add": "Thêm khung giờ",
+      "remove": "Xóa khung giờ"
+    },
+    "gotoFlow": {
+      "label": "Chuyển đến kịch bản",
+      "description": "Flow được bắt đầu khi trợ lý AI trả lại hội thoại. Được ưu tiên hơn tin nhắn trả lại.",
+      "placeholder": "Chọn kịch bản",
+      "clear": "Bỏ kịch bản"
+    },
+    "returnMessage": {
+      "label": "Tin nhắn trả về",
+      "description": "Được gửi thay thế khi chưa chọn kịch bản hoặc kịch bản không còn hoạt động.",
+      "placeholder": "Tin nhắn gửi khi AI trả hội thoại lại"
+    },
+    "pauseBot": {
+      "label": "Chuyển cuộc trò chuyện cho người",
+      "description": "Dừng bot với khách này sau khi AI trả lại, cho đến khi nhân viên tiếp quản hoặc bot tự chạy lại."
+    },
+    "readOnly": "Bạn có thể xem nhưng không thể thay đổi các cài đặt này.",
+    "errors": {
+      "supportSession": "Không thể thay đổi cài đặt từ phiên hỗ trợ.",
+      "flowNotFound": "Không tìm thấy kịch bản đã chọn hoặc kịch bản không hoạt động.",
+      "timeRanges": "Nhập khung giờ hợp lệ: số giờ nguyên từ 0 đến 24, giờ bắt đầu khác giờ kết thúc."
+    },
+    "bulk": {
+      "title": "Áp dụng cho tất cả khách hàng",
+      "description": "Chuyển mọi hội thoại Messenger đủ điều kiện cho trợ lý AI của Meta, hoặc giành lại những hội thoại nó đang giữ. Tác vụ chạy nền và bạn có thể theo dõi tại đây.",
+      "started": "Đã bắt đầu. Bạn có thể theo dõi tiến độ tại đây.",
+      "progress": "Tiến độ",
+      "processedOfTotal": "{done}/{total} hội thoại",
+      "counters": "{processed} xong, {skipped} bỏ qua, {failed} lỗi",
+      "action": {
+        "enable": "Bật cho tất cả",
+        "disable": "Tắt cho tất cả"
+      },
+      "status": {
+        "pending": "Chờ bắt đầu",
+        "running": "Đang chạy",
+        "cancelling": "Đang hủy",
+        "completed": "Hoàn tất",
+        "failed": "Thất bại",
+        "cancelled": "Đã hủy"
+      },
+      "enable": {
+        "dialogDescription": "Mọi hội thoại Messenger có khách nhắn trong 30 ngày qua và chưa do ứng dụng nào khác giữ sẽ được chuyển cho trợ lý AI của Meta. Hội thoại sẽ được lấy lại theo các cài đặt ở trên.",
+        "confirm": "Bật cho tất cả",
+        "blocked": "Hãy lưu tự động hóa ở trên và bật nó (trong khung giờ chạy) để bật cho tất cả khách hàng."
+      },
+      "disable": {
+        "dialogDescription": "Chỉ những hội thoại mà trợ lý AI của Meta đang giữ mới được lấy lại, và chỉ tiếp cận được khách đã nhắn trong 7 ngày qua. Mỗi khách sẽ nhận tin nhắn bên dưới, gửi kèm thẻ Human Agent của Meta, nên hãy viết như một người thật đang trả lời. Page cần có quyền Human Agent.",
+        "messageLabel": "Tin nhắn gửi khách hàng",
+        "messageDescription": "Tối đa {max} ký tự.",
+        "messagePlaceholder": "Xin chào, một nhân viên đang tiếp nhận cuộc trò chuyện này.",
+        "confirm": "Tắt cho tất cả",
+        "policyWarning": "Meta chỉ cho phép thẻ Human Agent khi có người thật trả lời khách hàng. Dùng thẻ này cho khuyến mãi hoặc tin nhắn tự động có thể khiến Page bị hạn chế nhắn tin."
+      },
+      "errors": {
+        "automationNotActive": "Hãy lưu tự động hóa và bật nó (trong khung giờ chạy) trước khi bật cho tất cả khách hàng.",
+        "messageRequired": "Nhập tin nhắn gửi cho khách hàng.",
+        "messageTooLong": "Tin nhắn quá dài.",
+        "pageNotConnected": "Page này chưa được kết nối.",
+        "nothingToRetry": "Không có gì để thử lại."
+      },
+      "runErrors": {
+        "automationStopped": "Đã dừng vì tự động hóa đã bị tắt.",
+        "tokenInvalid": "Quyền truy cập của Page đã bị thu hồi. Hãy kết nối lại Page rồi thử lại.",
+        "channelUnsupported": "Kênh này không hỗ trợ thao tác hàng loạt.",
+        "maxAttempts": "Đã dừng sau nhiều lần thất bại liên tiếp.",
+        "channelUnavailable": "Đã dừng vì không thể kết nối tới Meta nhiều lần liên tiếp.",
+        "batchFailed": "Một số hội thoại không thể xác nhận và đã được tính là lỗi.",
+        "pageDisconnected": "Đã dừng vì Page đã bị ngắt kết nối.",
+        "pageRefused": "Meta đã từ chối việc bàn giao cho Page này: có thể Page chưa được thiết lập cho trợ lý AI của Meta, hoặc thiếu quyền.",
+        "integrationUnavailable": "Không thể tải kết nối của Page. Hãy kết nối lại Page rồi thử lại."
+      },
+      "pausedUntil": "Tạm dừng đến {at} để nằm trong giới hạn tốc độ của Meta cho Page này. Sẽ tự tiếp tục.",
+      "preparing": "Đang chuẩn bị…",
+      "live": {
+        "enable": "Đang bật cho khách hàng: {done}/{total}",
+        "disable": "Đang tắt cho khách hàng: {done}/{total}",
+        "enableCounting": "Đang bật cho khách hàng: đang đếm…",
+        "disableCounting": "Đang tắt cho khách hàng: đang đếm…"
+      },
+      "done": {
+        "enable": "Đã bật cho {processed}/{total} khách hàng.",
+        "disable": "Đã tắt cho {processed}/{total} khách hàng."
+      },
+      "stopped": {
+        "enable": "Đã dừng việc bật cho tất cả khách hàng.",
+        "disable": "Đã dừng việc tắt cho tất cả khách hàng."
+      },
+      "retry": "Thử lại"
+    },
+    "history": {
+      "link": "Lịch sử",
+      "title": "Lịch sử chạy hàng loạt",
+      "empty": "Chưa có lượt chạy nào.",
+      "columns": {
+        "action": "Thao tác",
+        "requestedAt": "Bắt đầu",
+        "progress": "Đã xử lý / tổng",
+        "finishedAt": "Kết thúc",
+        "message": "Tin nhắn",
+        "requestedBy": "Người yêu cầu"
+      },
+      "description": "Mỗi lần \"Áp dụng cho tất cả khách hàng\" được bật hoặc tắt cho Page này, mới nhất trước.",
+      "error": "Không thể tải lịch sử.",
+      "previousPage": "Trang trước",
+      "nextPage": "Trang sau"
+    }
+  },
   "platformSettings": {
     "title": "Cài đặt Nền tảng",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Chuyển hội thoại này cho đối tác xử lý nâng cao? Tin nhắn của bạn sẽ tạm dừng cho đến khi hội thoại được trả lại.",
       "confirm": "Chuyển",
       "success": "Đã chuyển hội thoại cho đối tác xử lý nâng cao"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Trả hội thoại này lại cho trợ lý AI",
+      "title": "Trả lại cho trợ lý AI?",
+      "description": "Trợ lý AI sẽ tiếp tục trả lời khách hàng này. Tin nhắn của bạn sẽ tạm dừng cho đến khi hội thoại được trả lại. Meta không đảm bảo trợ lý AI trả lời mọi tin nhắn.",
+      "confirm": "Trả lại",
+      "success": "Đã trả hội thoại cho trợ lý AI"
     },
     "composer": {
       "aiStandbyHint": "Trả lời sẽ tiếp quản hội thoại này khỏi trợ lý AI.",

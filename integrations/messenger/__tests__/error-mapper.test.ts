@@ -123,3 +123,27 @@ describe("messenger error-mapper isDisconnectSafeError", () => {
     expect(isDisconnectSafeError(undefined)).toBe(false)
   })
 })
+
+describe("messenger error-mapper rate limits", () => {
+  test.each([
+    [4, "app limit"],
+    [17, "user limit"],
+    [32, "Page limit"],
+    [613, "custom limit"],
+    [80_001, "Pages business use case limit"],
+    [80_006, "Messenger business use case limit"],
+  ])("code %i (%s) is RATE_LIMITED, so callers wait instead of failing the contact", (code) => {
+    const error = mapToChannelError(
+      new MessengerException("(#x) limit reached", 400, code),
+    )
+    expect(error.category).toBe(ChannelErrorCategory.RATE_LIMITED)
+    expect(error.isRetryable).toBe(true)
+  })
+
+  test("613 with Meta's 'inconsistent request pattern' subcode is a rate limit too", () => {
+    const error = mapToChannelError(
+      new MessengerException("pattern", 400, 613, 1996),
+    )
+    expect(error.category).toBe(ChannelErrorCategory.RATE_LIMITED)
+  })
+})

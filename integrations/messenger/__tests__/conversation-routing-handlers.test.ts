@@ -11,6 +11,7 @@ import {
   isResumeEligibleHandover,
   THREAD_CONTROL_ACTION_UNSUPPORTED_CODE,
 } from "../src/handlers/conversation"
+import { receiveMessage } from "../src/handlers/message/incoming-message"
 import { BUSINESS_AI_APP_ID_ENV } from "../src/lib/thread-control-config"
 
 const BASE = "https://graph.facebook.com"
@@ -210,6 +211,24 @@ describe("receiveThreadControlEvent", () => {
     })
   })
 
+  it("every handover carries the AI agent's app id so shared code can recognise a hand-back from it", async () => {
+    const passed = await receive(
+      "handover",
+      handoverBody("pass_thread_control", { new_owner_app_id: OWN_APP }),
+    )
+    const taken = await receive(
+      "handover",
+      handoverBody("take_thread_control", { previous_owner_app_id: OWN_APP }),
+    )
+
+    for (const result of [passed, taken]) {
+      expect(result).toMatchObject({
+        kind: "handover",
+        event: { aiAgentAppId: BOT_APP },
+      })
+    }
+  })
+
   it("a handover whose new owner is the Business-AI app records the ai_agent role", async () => {
     const result = await receive(
       "handover",
@@ -223,6 +242,42 @@ describe("receiveThreadControlEvent", () => {
       kind: "handover",
       event: { newOwnerAppId: BOT_APP, newOwnerRole: "ai_agent" },
     })
+  })
+
+  it("a hand-back whose payload names the Business-AI app as the previous owner records the ai_agent previous role", async () => {
+    const result = await receive(
+      "handover",
+      handoverBody("pass_thread_control", {
+        previous_owner_app_id: BOT_APP,
+        new_owner_app_id: OWN_APP,
+      }),
+    )
+
+    expect(result).toMatchObject({
+      kind: "handover",
+      event: { previousOwnerRole: "ai_agent" },
+    })
+  })
+
+  it("a previous owner that is not the Business-AI app, or one the payload omits, leaves the previous role as it was", async () => {
+    const fromPartner = await receive(
+      "handover",
+      handoverBody("pass_thread_control", {
+        previous_owner_app_id: PARTNER_APP,
+        new_owner_app_id: OWN_APP,
+      }),
+    )
+    const omitted = await receive(
+      "handover",
+      handoverBody("pass_thread_control", { new_owner_app_id: OWN_APP }),
+    )
+
+    for (const result of [fromPartner, omitted]) {
+      expect(result).toMatchObject({
+        kind: "handover",
+        event: { previousOwnerRole: null },
+      })
+    }
   })
 
   it("a handover to a non-Business-AI partner keeps a null new owner role", async () => {
@@ -257,6 +312,28 @@ describe("receiveThreadControlEvent", () => {
     expect(result?.kind === "handover" && result.event.resumeEligible).toBe(
       true,
     )
+  })
+
+  it("the Business-AI hand-back notice (admin_text) is a resume-eligible pass from the AI agent to us", async () => {
+    const result = await receive("handover", {
+      sender: { id: PSID },
+      recipient: { id: "page-1" },
+      timestamp: 1_755_694_800_750,
+      message: { admin_text: "Tác nhân AI đã chuyển đoạn chat này cho bạn." },
+    })
+
+    expect(result).toMatchObject({
+      kind: "handover",
+      event: {
+        event: "controlPassed",
+        previousOwnerAppId: BOT_APP,
+        previousOwnerRole: "ai_agent",
+        newOwnerAppId: OWN_APP,
+        aiAgentAppId: BOT_APP,
+        onlyIfOwnedByAppId: BOT_APP,
+        resumeEligible: true,
+      },
+    })
   })
 
   it("a pass to us with no previous owner (Meta omits it) is eligible", async () => {
@@ -372,8 +449,37 @@ describe("receiveThreadControlEvent", () => {
     expect(await receive("standbyMessage", body)).toEqual({
       kind: "standbyMessage",
       receivePayload: body,
+      aiAgentAppId: BOT_APP,
+      ownerReplayPayload: {
+        object: "page",
+        entry: [
+          {
+            id: "page-1",
+            time: 1,
+            messaging: [body.entry[0].standby[0]],
+          },
+        ],
+      },
     })
     expect(await receive("standbyMessage", { entry: [] })).toBeNull()
+
+    // The owner replay is the same item as a regular `messaging` delivery: the
+    // standby-only `hop_context` (the AI-owner hint) is not part of it.
+    const withHopContext = {
+      ...body,
+      entry: [{ ...body.entry[0], hop_context: { is_ai_thread_owner: true } }],
+    }
+    const replay = await receive("standbyMessage", withHopContext)
+    expect(replay).toMatchObject({
+      ownerReplayPayload: {
+        entry: [{ messaging: [body.entry[0].standby[0]] }],
+      },
+    })
+    expect(JSON.stringify(replay)).not.toContain('"messaging":[{"hop_context"')
+    expect(
+      (replay as { ownerReplayPayload: { entry: Record<string, unknown>[] } })
+        .ownerReplayPayload.entry[0],
+    ).not.toHaveProperty("hop_context")
     expect(await receive("handover", { nonsense: true })).toBeNull()
     expect(
       await conversationHandlers.receiveThreadControlEvent({
@@ -385,6 +491,84 @@ describe("receiveThreadControlEvent", () => {
         },
       } as never),
     ).toBeNull()
+  })
+})
+
+describe("standby message owner replay", () => {
+  const standbyBody = (item: Record<string, unknown>) => ({
+    object: "page",
+    entry: [
+      {
+        id: "page-1",
+        time: 1,
+        hop_context: { is_ai_thread_owner: true },
+        standby: [
+          {
+            sender: { id: PSID },
+            recipient: { id: "page-1" },
+            timestamp: 1_755_694_800_750,
+            ...item,
+          },
+        ],
+      },
+    ],
+  })
+  const resolve = async (item: Record<string, unknown>) =>
+    await conversationHandlers.receiveThreadControlEvent({
+      ctx,
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "page-1",
+        payload: { kind: "standbyMessage", body: standbyBody(item) },
+      },
+    } as never)
+
+  it("replays the very same message (same mid) as an owner delivery", async () => {
+    const result = await resolve({ message: { mid: "m-1", text: "hi" } })
+    if (result?.kind !== "standbyMessage") {
+      throw new Error("expected a standby message result")
+    }
+
+    const standbyCopy = await receiveMessage({
+      ctx,
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "page-1",
+        payload: result.receivePayload,
+      },
+    } as never)
+    const replay = await receiveMessage({
+      ctx,
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "page-1",
+        payload: result.ownerReplayPayload,
+      },
+    } as never)
+
+    expect(standbyCopy.threadControl?.delivery).toBe("standby")
+    expect(replay.threadControl?.delivery).toBe("owner")
+    // Same stored message: the replay is its owner delivery, which the pipeline
+    // promotes exactly once.
+    expect(replay.message?.sourceId).toBe(standbyCopy.message?.sourceId)
+    expect(replay.message?.sourceId).toBe("m-1")
+  })
+
+  it("replays a quick reply (its payload survives on standby)", async () => {
+    const result = await resolve({
+      message: { mid: "m-2", text: "Yes", quick_reply: { payload: "YES" } },
+    })
+    expect(result).toMatchObject({
+      kind: "standbyMessage",
+      ownerReplayPayload: expect.anything(),
+    })
+  })
+
+  it("does not replay a stripped standby postback (Meta removes its payload and title)", async () => {
+    const result = await resolve({ postback: { mid: "m-3" } })
+    expect(result).toMatchObject({ kind: "standbyMessage" })
+    expect(result).not.toHaveProperty("ownerReplayPayload")
+    expect(result).not.toHaveProperty("aiAgentAppId")
   })
 })
 
@@ -473,7 +657,7 @@ describe("getThreadOwner", () => {
       ownerAppId: PARTNER_APP,
       expiresAt: new Date(1_755_694_800_000),
       ownAppId: OWN_APP,
-      businessAiAppId: BOT_APP,
+      aiAgentAppId: BOT_APP,
     })
   })
 

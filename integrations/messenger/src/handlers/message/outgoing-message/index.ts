@@ -145,7 +145,7 @@ export const handledFlowStepTypes = [
 /**
  * A take-over / forced inbox reply carries `bypassThreadControlLock` in its
  * message metadata (set by the inbox composer when a human agent takes a thread
- * over from BizAI). Such a reply must always ride the HUMAN_AGENT tag.
+ * over from AI hand-over). Such a reply must always ride the HUMAN_AGENT tag.
  */
 const isForcedHumanAgentSend = (message: {
   contentAttributes?: { [x: string]: unknown } | null
@@ -488,7 +488,7 @@ const toFacebookButton = (
   }
 }
 
-const buildMessagePayload = (props: {
+export const buildMessagePayload = (props: {
   contact: OutgoingContact
   message: FacebookMessageAttachmentPayload | FacebookMessage
   messagingType?: "MESSAGE_TAG" | "RESPONSE"

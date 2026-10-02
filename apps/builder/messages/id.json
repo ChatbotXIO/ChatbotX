@@ -3076,6 +3076,128 @@
   "integrations": {
     "title": "Integrasi"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Atur apa yang terjadi saat asisten AI Meta menjawab pelanggan Messenger Anda.",
+    "info": "Jika diaktifkan, percakapan diambil alih di sini setelah asisten AI mengembalikannya, dan pengaturan di bawah berlaku.",
+    "enabled": {
+      "label": "Aktifkan"
+    },
+    "schedule": {
+      "label": "Waktu berjalan",
+      "description": "Terapkan hanya pada jam-jam ini di zona waktu workspace.",
+      "from": "Dari jam",
+      "to": "Sampai jam",
+      "add": "Tambah rentang waktu",
+      "remove": "Hapus rentang waktu"
+    },
+    "gotoFlow": {
+      "label": "Buka alur",
+      "description": "Alur yang dimulai saat asisten AI mengembalikan percakapan. Diprioritaskan di atas pesan pengembalian.",
+      "placeholder": "Pilih alur",
+      "clear": "Hapus alur"
+    },
+    "returnMessage": {
+      "label": "Pesan balik",
+      "description": "Dikirim sebagai gantinya bila tidak ada alur atau alur sudah tidak aktif.",
+      "placeholder": "Pesan yang dikirim saat AI mengembalikan percakapan"
+    },
+    "pauseBot": {
+      "label": "Alihkan Percakapan ke Manusia",
+      "description": "Menghentikan bot untuk kontak ini setelah dikembalikan, hingga anggota tim mengambil alih atau bot dilanjutkan."
+    },
+    "readOnly": "Anda dapat melihat pengaturan ini tetapi tidak dapat mengubahnya.",
+    "errors": {
+      "supportSession": "Pengaturan tidak dapat diubah dari sesi dukungan.",
+      "flowNotFound": "Alur yang dipilih tidak ditemukan atau tidak aktif.",
+      "timeRanges": "Masukkan rentang waktu yang valid: jam bulat 0 sampai 24, dengan awal dan akhir berbeda."
+    },
+    "bulk": {
+      "title": "Terapkan ke semua pelanggan",
+      "description": "Serahkan setiap percakapan Messenger yang memenuhi syarat ke asisten AI Meta, atau ambil kembali yang sedang dipegangnya. Berjalan di latar belakang dan Anda bisa memantaunya di sini.",
+      "started": "Dimulai. Anda bisa memantau progresnya di sini.",
+      "progress": "Progres",
+      "processedOfTotal": "{done} dari {total} percakapan",
+      "counters": "{processed} selesai, {skipped} dilewati, {failed} gagal",
+      "action": {
+        "enable": "Aktifkan untuk semua",
+        "disable": "Nonaktifkan untuk semua"
+      },
+      "status": {
+        "pending": "Menunggu dimulai",
+        "running": "Berjalan",
+        "cancelling": "Membatalkan",
+        "completed": "Selesai",
+        "failed": "Gagal",
+        "cancelled": "Dibatalkan"
+      },
+      "enable": {
+        "dialogDescription": "Setiap percakapan Messenger yang pelanggannya menulis dalam 30 hari terakhir dan tidak dipegang aplikasi lain akan diserahkan ke asisten AI Meta. Percakapan diambil kembali sesuai pengaturan di atas.",
+        "confirm": "Aktifkan untuk semua",
+        "blocked": "Simpan otomatisasi di atas dan nyalakan (dalam waktu berjalannya) untuk mengaktifkannya bagi semua pelanggan."
+      },
+      "disable": {
+        "dialogDescription": "Hanya percakapan yang sedang dipegang asisten AI Meta yang diambil kembali, dan hanya pelanggan yang menulis dalam 7 hari terakhir yang dapat dijangkau. Masing-masing menerima pesan di bawah, dikirim dengan tag Human Agent dari Meta, jadi tulislah seperti seseorang yang sedang membalas. Halaman memerlukan izin Human Agent.",
+        "messageLabel": "Pesan untuk pelanggan",
+        "messageDescription": "Maksimal {max} karakter.",
+        "messagePlaceholder": "Halo, anggota tim sedang mengambil alih percakapan ini.",
+        "confirm": "Nonaktifkan untuk semua",
+        "policyWarning": "Meta hanya mengizinkan tag Human Agent untuk orang yang membalas pelanggan. Menggunakannya untuk promosi atau pesan otomatis dapat membuat pengiriman pesan Halaman dibatasi."
+      },
+      "errors": {
+        "automationNotActive": "Simpan otomatisasi dan nyalakan (dalam waktu berjalannya) sebelum mengaktifkannya bagi semua pelanggan.",
+        "messageRequired": "Masukkan pesan yang akan dikirim ke pelanggan.",
+        "messageTooLong": "Pesan terlalu panjang.",
+        "pageNotConnected": "Halaman ini tidak terhubung.",
+        "nothingToRetry": "Tidak ada yang perlu dicoba ulang."
+      },
+      "runErrors": {
+        "automationStopped": "Dihentikan karena otomatisasi dimatikan.",
+        "tokenInvalid": "Akses Halaman telah dicabut. Hubungkan kembali Halaman lalu coba lagi.",
+        "channelUnsupported": "Kanal ini tidak mendukung aksi massal.",
+        "maxAttempts": "Menyerah setelah kegagalan berulang.",
+        "channelUnavailable": "Dihentikan karena Meta tidak dapat dihubungi beberapa kali berturut-turut.",
+        "batchFailed": "Beberapa percakapan tidak dapat dikonfirmasi dan dihitung sebagai gagal.",
+        "pageDisconnected": "Dihentikan karena Halaman diputuskan.",
+        "pageRefused": "Meta menolak penyerahan untuk Halaman ini: mungkin belum disiapkan untuk asisten AI Meta, atau tidak memiliki izin.",
+        "integrationUnavailable": "Koneksi Halaman tidak dapat dimuat. Hubungkan kembali Halaman lalu coba lagi."
+      },
+      "pausedUntil": "Dijeda hingga {at} agar tetap dalam batas laju Meta untuk Halaman ini. Akan berlanjut dengan sendirinya.",
+      "preparing": "Mempersiapkan…",
+      "live": {
+        "enable": "Mengaktifkan untuk pelanggan: {done} / {total}",
+        "disable": "Menonaktifkan untuk pelanggan: {done} / {total}",
+        "enableCounting": "Mengaktifkan untuk pelanggan: menghitung…",
+        "disableCounting": "Menonaktifkan untuk pelanggan: menghitung…"
+      },
+      "done": {
+        "enable": "Diaktifkan untuk {processed} dari {total} pelanggan.",
+        "disable": "Dinonaktifkan untuk {processed} dari {total} pelanggan."
+      },
+      "stopped": {
+        "enable": "Pengaktifan untuk semua pelanggan dihentikan.",
+        "disable": "Penonaktifan untuk semua pelanggan dihentikan."
+      },
+      "retry": "Coba lagi"
+    },
+    "history": {
+      "link": "Riwayat",
+      "title": "Riwayat proses massal",
+      "empty": "Belum ada proses.",
+      "columns": {
+        "action": "Aksi",
+        "requestedAt": "Dimulai",
+        "progress": "Diproses / total",
+        "finishedAt": "Selesai",
+        "message": "Pesan",
+        "requestedBy": "Diminta oleh"
+      },
+      "description": "Setiap kali \"Terapkan ke semua pelanggan\" diaktifkan atau dinonaktifkan untuk Halaman ini, terbaru lebih dulu.",
+      "error": "Riwayat tidak dapat dimuat.",
+      "previousPage": "Halaman sebelumnya",
+      "nextPage": "Halaman berikutnya"
+    }
+  },
   "platformSettings": {
     "title": "Pengaturan Platform",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Serahkan percakapan ini ke mitra eskalasi Anda? Balasan Anda akan dijeda hingga percakapan kembali.",
       "confirm": "Teruskan",
       "success": "Percakapan diteruskan ke mitra eskalasi"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Kembalikan percakapan ini ke asisten AI",
+      "title": "Kembalikan ke asisten AI?",
+      "description": "Asisten AI akan kembali menjawab pelanggan ini. Balasan Anda dijeda hingga percakapan kembali ke Anda. Meta tidak menjamin asisten membalas setiap pesan.",
+      "confirm": "Kembalikan",
+      "success": "Percakapan dikembalikan ke asisten AI"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

@@ -30,6 +30,10 @@ import {
   resolveOwnAppId,
 } from "../lib/thread-control-config"
 import type { MessengerAuthValue } from "../schema"
+import {
+  bulkThreadControlLimits,
+  bulkUpdateThreadControl,
+} from "./bulk-thread-control"
 
 const sendTyping: ConversationHandlers<MessengerAuthValue>["sendTyping"] =
   async (props): Promise<void> => {
@@ -183,7 +187,7 @@ const getThreadOwner: ConversationHandlers<MessengerAuthValue>["getThreadOwner"]
       return {
         ...owner,
         ownAppId: resolveOwnAppId(ctx.auth),
-        businessAiAppId: readBusinessAiAppId(),
+        aiAgentAppId: readBusinessAiAppId(),
       }
     } catch (error) {
       throw mapToChannelError(error)
@@ -251,13 +255,23 @@ const withHandoverDecisions = (
   // normalization turns into a `controlPassed` (we hold the thread) is still
   // our own take, never a hand-back.
   const isEligible = isResumeEligibleHandover(result.event, { ownAppId })
-  const businessAiAppId = readBusinessAiAppId()
+  const aiAgentAppId = readBusinessAiAppId()
   const normalized = normalizeOwnershipDirection(result.event, ownAppId)
-  // The Business-AI app is an AI agent: its ownership shows the AI owner label.
-  const event =
-    normalized.newOwnerAppId === businessAiAppId
-      ? { ...normalized, newOwnerRole: threadControlRoles.enum.ai_agent }
-      : normalized
+  // The Business-AI app is an AI agent: its ownership shows the AI owner label,
+  // on either side of the handover.
+  const aiAgent = threadControlRoles.enum.ai_agent
+  const event = {
+    ...normalized,
+    ...(normalized.newOwnerAppId === aiAgentAppId
+      ? { newOwnerRole: aiAgent }
+      : {}),
+    ...(normalized.previousOwnerAppId === aiAgentAppId
+      ? { previousOwnerRole: aiAgent }
+      : {}),
+    // Lets shared code recognise a hand-back FROM the AI agent without
+    // knowing Messenger's config.
+    aiAgentAppId,
+  }
   return {
     kind: "handover",
     event: isEligible ? { ...event, resumeEligible: true } : event,
@@ -270,6 +284,48 @@ const standbyBodySchema = z.object({
 
 const hasStandbyItem = (body: unknown): boolean =>
   standbyBodySchema.safeParse(body).success
+
+const standbyRewrapSchema = z.object({
+  object: z.unknown(),
+  entry: z
+    .array(
+      z.object({
+        id: z.unknown(),
+        time: z.unknown(),
+        // Only a real message can be replayed: Meta strips the payload and
+        // title from a standby postback, which the regular delivery schema
+        // would reject.
+        standby: z
+          .array(
+            z
+              .object({ message: z.record(z.string(), z.unknown()) })
+              .passthrough(),
+          )
+          .min(1),
+      }),
+    )
+    .min(1),
+})
+
+/**
+ * The stored standby rewrap as the regular `messaging` delivery Meta would have
+ * sent had this app owned the thread, so the inbound pipeline treats a replay
+ * as an owner delivery. The standby-only `hop_context` is dropped. `null` when
+ * the body is not a usable standby rewrap or its item is not a message (a
+ * stripped standby postback).
+ */
+const toOwnerDeliveryPayload = (body: unknown): unknown => {
+  const parsed = standbyRewrapSchema.safeParse(body)
+  if (!parsed.success) {
+    return null
+  }
+  const { object, entry } = parsed.data
+  const [first] = entry
+  return {
+    object,
+    entry: [{ id: first.id, time: first.time, messaging: [first.standby[0]] }],
+  }
+}
 
 /**
  * Turns a `threadControlEvent` job into a typed routing result. `null` (never
@@ -297,10 +353,22 @@ const resolveThreadControlEvent = (
       logger.warn("Messenger standby message dropped: no standby item")
       return null
     }
-    return { kind: "standbyMessage", receivePayload: job.data.body }
+    const ownerReplayPayload = toOwnerDeliveryPayload(job.data.body)
+    return {
+      kind: "standbyMessage",
+      receivePayload: job.data.body,
+      ...(ownerReplayPayload
+        ? { ownerReplayPayload, aiAgentAppId: readBusinessAiAppId() }
+        : {}),
+    }
   }
 
-  const result = parseRoutingJobBody(job.data.kind, job.data.body)
+  const result = parseRoutingJobBody(
+    job.data.kind,
+    job.data.body,
+    new Date(),
+    resolveOwnAppId(auth),
+  )
   return result ? withHandoverDecisions(result, auth) : null
 }
 
@@ -314,6 +382,8 @@ export const conversationHandlers = {
   sendTyping,
   agentMarkAsRead,
   updateThreadControl,
+  bulkUpdateThreadControl,
+  bulkThreadControlLimits,
   getThreadOwner,
   receiveThreadControlEvent,
 }

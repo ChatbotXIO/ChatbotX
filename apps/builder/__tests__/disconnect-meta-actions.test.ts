@@ -138,7 +138,7 @@ vi.mock("@/integration", () => ({
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { warn: mocks.loggerWarn },
+  logger: { warn: mocks.loggerWarn, error: vi.fn() },
 }))
 
 vi.mock("@/lib/safe-action", () => ({

@@ -227,6 +227,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanAiHandoverBulkRuns,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.scanAiHandoverBulkRuns,
+      data: {
+        type: ScheduleJobData.scanAiHandoverBulkRuns,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.reconcileMetaCatalogSyncs,
     {
       pattern: "* * * * *",
