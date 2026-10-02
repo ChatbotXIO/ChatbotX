@@ -1,5 +1,7 @@
 import net from "node:net"
 import {
+  getRealtimeStreamKey,
+  getRealtimeStreamShard,
   REALTIME_CLOSE_CODE,
   REALTIME_TOKEN_PURPOSE,
   signGuestConnectToken,
@@ -67,6 +69,32 @@ const signExpiredGuestToken = async (
     .setIssuedAt()
     .setAudience(`guest:${guestConversationId}`)
     .setExpirationTime(Math.floor(Date.now() / 1000) - 120)
+    .sign(new TextEncoder().encode(secret))
+
+/**
+ * Mints a member-connect token with an explicit `iatMs` claim, independent
+ * of when this call actually runs — the revoke-marker boundary tests need
+ * exact control over the gap between a token's mint time and a revoke's
+ * recorded time, which `signMemberConnectToken`'s own `Date.now()` call
+ * doesn't expose.
+ */
+const signMemberTokenWithIatMs = async (
+  workspaceId: string,
+  userId: string,
+  iatMs: number,
+  secret: string,
+): Promise<string> =>
+  await new SignJWT({
+    chatScope: "all",
+    iatMs,
+    purpose: REALTIME_TOKEN_PURPOSE.memberConnect,
+    teamIds: [],
+    userId,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setAudience(`workspace:${workspaceId}`)
+    .setExpirationTime("60s")
     .sign(new TextEncoder().encode(secret))
 
 /**
@@ -305,6 +333,67 @@ describe("createRealtimeGateway (live)", () => {
     await waitForClose(first)
   })
 
+  test("N+k parallel upgrades against the cap: exactly N succeed", async () => {
+    // Regression for PR #1349 finding #3: the pending-upgrade count is
+    // incremented synchronously next to the capacity check, before the
+    // `await` that lets concurrent upgrades for the same key race past it —
+    // without that, a burst of parallel connects would all read the same
+    // pre-upgrade count and all pass, breaching the cap.
+    const CAP = 3
+    const EXTRA = 2
+    gateway = createRealtimeGateway({
+      maxConnections: 10,
+      maxConnectionsPerWorkspace: CAP,
+      redis: createFakeRedis() as never,
+      secret: SECRET,
+    })
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signMemberConnectToken(
+      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+    const url = `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`
+
+    // Fires every connect in the same tick, with no await between
+    // constructions, so every upgrade handler races through its own
+    // `verifyMemberConnectToken`/revoke-marker awaits concurrently — this is
+    // exactly the window the synchronous pending-count increment has to
+    // stay correct across.
+    const sockets = Array.from(
+      { length: CAP + EXTRA },
+      () => new WebSocket(url),
+    )
+    await Promise.all(sockets.map((socket) => waitForOpen(socket)))
+    // Every admitted AND overloaded socket completes the WS handshake (the
+    // overloaded close is written from inside `open`, after it already
+    // fired) — `readyState` transitioning away from OPEN is the reliable
+    // signal here, not necessarily a `close` event: an overloaded socket
+    // closed this fast after its own `open` can leave the `close` event
+    // itself unobserved in this test transport even though the server-sent
+    // close frame did land (confirmed independently), so this asserts on
+    // the settled connection count instead of racing a `close` event.
+    await delay(300)
+    const openCount = sockets.filter(
+      (socket) => socket.readyState === WebSocket.OPEN,
+    ).length
+    const notOpenCount = sockets.filter(
+      (socket) => socket.readyState !== WebSocket.OPEN,
+    ).length
+    expect(openCount).toBe(CAP)
+    expect(notOpenCount).toBe(EXTRA)
+
+    for (const socket of sockets) {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close()
+      }
+    }
+    await Promise.all(
+      sockets
+        .filter((socket) => socket.readyState === WebSocket.OPEN)
+        .map((socket) => waitForClose(socket)),
+    )
+  })
+
   test("releases a workspace's connection slot once its socket closes", async () => {
     gateway = createRealtimeGateway({
       maxConnections: 10,
@@ -530,6 +619,118 @@ describe("createRealtimeGateway (live)", () => {
     expect(response.statusCode).toBe(401)
   })
 
+  describe("revoke-marker iatMs boundary", () => {
+    // Regression for PR #1349 round-5 finding #2: comparing against the
+    // JWT's own `iat` (floored to whole seconds by jose's `setIssuedAt()`)
+    // could put it BEFORE a revoke that landed earlier in the same second,
+    // rejecting a legitimate reconnect minted within that second. `iatMs`
+    // carries the real millisecond mint time instead.
+
+    test("rejects a token minted strictly before the revoke marker", async () => {
+      const revokedAt = Date.now()
+      const redis = createFakeRedis()
+      redis.get.mockResolvedValue(String(revokedAt))
+      gateway = createRealtimeGateway({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      })
+      const port = await gateway.listen("127.0.0.1", 0)
+      const token = await signMemberTokenWithIatMs(
+        "ws-1",
+        "user-1",
+        revokedAt - 1,
+        SECRET,
+      )
+
+      const response = await requestUpgrade(
+        port,
+        `/rt/workspaces/ws-1?token=${token}`,
+      )
+
+      expect(response.statusCode).toBe(401)
+    })
+
+    test("accepts a token whose iatMs exactly equals the revoke marker (strict > , not >=)", async () => {
+      const revokedAt = Date.now()
+      const redis = createFakeRedis()
+      redis.get.mockResolvedValue(String(revokedAt))
+      gateway = createRealtimeGateway({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      })
+      const port = await gateway.listen("127.0.0.1", 0)
+      const token = await signMemberTokenWithIatMs(
+        "ws-1",
+        "user-1",
+        revokedAt,
+        SECRET,
+      )
+
+      const socket = new WebSocket(
+        `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
+      )
+      await waitForOpen(socket)
+      expect(socket.readyState).toBe(WebSocket.OPEN)
+
+      socket.close()
+      await waitForClose(socket)
+    })
+
+    test("accepts a token minted strictly after the revoke marker", async () => {
+      const revokedAt = Date.now()
+      const redis = createFakeRedis()
+      redis.get.mockResolvedValue(String(revokedAt))
+      gateway = createRealtimeGateway({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      })
+      const port = await gateway.listen("127.0.0.1", 0)
+      const token = await signMemberTokenWithIatMs(
+        "ws-1",
+        "user-1",
+        revokedAt + 1,
+        SECRET,
+      )
+
+      const socket = new WebSocket(
+        `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
+      )
+      await waitForOpen(socket)
+      expect(socket.readyState).toBe(WebSocket.OPEN)
+
+      socket.close()
+      await waitForClose(socket)
+    })
+
+    test("accepts a token when no revoke marker exists at all", async () => {
+      const redis = createFakeRedis()
+      gateway = createRealtimeGateway({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      })
+      const port = await gateway.listen("127.0.0.1", 0)
+      const token = await signMemberTokenWithIatMs(
+        "ws-1",
+        "user-1",
+        Date.now(),
+        SECRET,
+      )
+
+      const socket = new WebSocket(
+        `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
+      )
+      await waitForOpen(socket)
+      expect(socket.readyState).toBe(WebSocket.OPEN)
+
+      socket.close()
+      await waitForClose(socket)
+    })
+  })
+
   test("forces a 4002 resync when replay drops an entry for this workspace, not just a metric bump", async () => {
     // Regression for PR #1349 round-4 finding #6: a reconnect whose replay
     // window contains a malformed entry for ITS OWN workspace used to open
@@ -570,64 +771,134 @@ describe("createRealtimeGateway (live)", () => {
     expect(closeEvent.reason).toBe("replay-entries-dropped")
   })
 
-  // Test gap flagged in PR #1349 round-4 review (criticality 7): a genuine
-  // burst of simultaneous connects should race through the synchronous
-  // pending-upgrade check/increment together, so only
-  // `maxConnectionsPerWorkspace` of them get admitted and the rest close
-  // `overloaded`.
-  //
-  // Verified correct via a standalone script driving `createRealtimeGateway`
-  // directly outside Vitest (5 concurrent connects, `maxConnectionsPerWorkspace:
-  // 1` -> exactly 1 admitted, 4 closed with `REALTIME_CLOSE_CODE.overloaded`).
-  // Reproducing that same assertion as a Vitest test in this file hangs /
-  // reports 0 overloaded instead, with the identical gateway code and
-  // connection pattern — a harness-environment difference this investigation
-  // couldn't pin down. Skipped rather than shipped flaky or asserting the
-  // wrong thing; the capacity-enforcement logic itself is exercised
-  // non-concurrently by the sibling "rejects a workspace's second connection
-  // as overloaded..." test above.
-  test.skip("rejects every concurrent connect past the cap when N upgrades race in, not just sequential ones", async () => {
+  test("closes an invalid-record-tainted shard's sockets only for workspaces hashed to that shard, leaving other shards' sockets open", async () => {
+    // Regression for `resyncShard` (PR #1349 test gap): an invalid stream
+    // record whose `workspaceId` couldn't even be recovered has no single
+    // workspace to target, so `onInvalidRecord` falls back to resyncing
+    // every LOCALLY-CONNECTED workspace that hashes to the same shard —
+    // this must not over-reach into unrelated shards' connections.
+    const ws1Shard = getRealtimeStreamShard("ws-1")
+    const ws2Shard = getRealtimeStreamShard("ws-2")
+    expect(ws1Shard).not.toBe(ws2Shard) // precondition: distinct shards
+
+    let injectedRead: unknown[] | null = null
+    const xreadMock = vi.fn().mockImplementation(async () => {
+      if (injectedRead) {
+        const toReturn = injectedRead
+        injectedRead = null
+        return toReturn
+      }
+      // Simulates `XREAD`'s real `BLOCK`-ms pacing: resolving instantly
+      // here would spin the reader's idle poll loop as fast as the event
+      // loop allows, and `vi.fn()` recording every one of those calls
+      // exhausts memory within milliseconds (reproduced standalone: crashes
+      // the process) — real Redis actually blocks, so this mock must too.
+      await delay(20)
+      return null
+    })
+    const redis = {
+      ...createFakeRedis(),
+      duplicate: () => ({ call: xreadMock, disconnect: vi.fn() }),
+    }
+
     gateway = createRealtimeGateway({
       maxConnections: 10,
-      maxConnectionsPerWorkspace: 1,
-      redis: createFakeRedis() as never,
+      redis: redis as never,
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberConnectToken(
+    const token1 = await signMemberConnectToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
-    const url = `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`
-
-    const concurrentUpgrades = 5
-    const sockets = Array.from(
-      { length: concurrentUpgrades },
-      () => new WebSocket(url),
+    const token2 = await signMemberConnectToken(
+      { chatScope: "all", userId: "user-2", workspaceId: "ws-2" },
+      SECRET,
     )
-    const openPromises = sockets.map((socket) => waitForOpen(socket))
-    const closePromises = sockets.map((socket) => waitForClose(socket))
-
-    await Promise.all(openPromises)
-    const closeOutcomes = await Promise.all(
-      closePromises.map((closePromise) =>
-        Promise.race([
-          closePromise.then((event) => event.code as number | null),
-          delay(300).then(() => null),
-        ]),
-      ),
+    const socket1 = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token1}`,
     )
+    const socket2 = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-2?token=${token2}`,
+    )
+    await Promise.all([waitForOpen(socket1), waitForOpen(socket2)])
 
-    const overloadedCount = closeOutcomes.filter(
-      (code) => code === REALTIME_CLOSE_CODE.overloaded,
-    ).length
-    const stillOpenCount = closeOutcomes.filter((code) => code === null).length
-    expect(overloadedCount).toBe(concurrentUpgrades - 1)
-    expect(stillOpenCount).toBe(1)
+    // An entry on ws-1's shard stream key with no recoverable `workspaceId`
+    // (unparseable JSON) — `onInvalidRecord` gets `workspaceId: undefined`
+    // and must fall back to `resyncShard(ws1Shard, ...)`.
+    injectedRead = [
+      [getRealtimeStreamKey("ws-1"), [["2-0", ["record", "not-json"]]]],
+    ]
 
-    for (const socket of sockets) {
-      socket.close()
+    const closeEvent = await waitForClose(socket1)
+    expect(closeEvent.code).toBe(REALTIME_CLOSE_CODE.resync)
+    expect(closeEvent.reason).toBe("malformed-stream-record")
+
+    // ws-2's shard was never touched — its socket must stay open.
+    await delay(100)
+    expect(socket2.readyState).toBe(WebSocket.OPEN)
+    socket2.close()
+  })
+
+  test("resyncs every connected workspace, across every shard, once the stream reader recovers from an XREAD error", async () => {
+    // Regression for `resyncAllWorkspaces` (PR #1349 test gap): the stream
+    // reader's single Redis connection blocks on every active shard at
+    // once, so one failed read leaves every active shard's cursor
+    // potentially stale by an unknown amount — recovery must resync
+    // EVERY connected workspace, not just one shard.
+    const ws1Shard = getRealtimeStreamShard("ws-1")
+    const ws2Shard = getRealtimeStreamShard("ws-2")
+    expect(ws1Shard).not.toBe(ws2Shard) // precondition: distinct shards
+
+    let failNextRead = false
+    const xreadMock = vi.fn().mockImplementation(async () => {
+      if (failNextRead) {
+        failNextRead = false
+        throw new Error("simulated XREAD failure")
+      }
+      // See the sibling shard-isolation test above: an idle mock that
+      // resolves instantly spins the reader's poll loop fast enough to
+      // crash the process via unbounded `vi.fn()` call recording.
+      await delay(20)
+      return null
+    })
+    const redis = {
+      ...createFakeRedis(),
+      duplicate: () => ({ call: xreadMock, disconnect: vi.fn() }),
     }
+
+    gateway = createRealtimeGateway({
+      maxConnections: 10,
+      redis: redis as never,
+      secret: SECRET,
+    })
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token1 = await signMemberConnectToken(
+      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+    const token2 = await signMemberConnectToken(
+      { chatScope: "all", userId: "user-2", workspaceId: "ws-2" },
+      SECRET,
+    )
+    const socket1 = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token1}`,
+    )
+    const socket2 = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-2?token=${token2}`,
+    )
+    await Promise.all([waitForOpen(socket1), waitForOpen(socket2)])
+
+    failNextRead = true
+
+    const [closeEvent1, closeEvent2] = await Promise.all([
+      waitForClose(socket1),
+      waitForClose(socket2),
+    ])
+    expect(closeEvent1.code).toBe(REALTIME_CLOSE_CODE.resync)
+    expect(closeEvent1.reason).toBe("stream-reader-recovered")
+    expect(closeEvent2.code).toBe(REALTIME_CLOSE_CODE.resync)
+    expect(closeEvent2.reason).toBe("stream-reader-recovered")
   })
 
   // These cover a criticality-9 test gap (PR #1349 round-4 review): nothing
@@ -638,21 +909,16 @@ describe("createRealtimeGateway (live)", () => {
   // live-integration tests, that's a genuine real-clock wait.
   const PRESENCE_TEST_TIMEOUT_MS = 45_000
 
-  // Skipped: reliably passes in isolation and whenever it runs early in
-  // this file, but reproducibly hangs past a 45s explicit timeout when it
-  // runs after ~17 other real-socket "live" tests in the same process (this
-  // file already has several 15-16s real-timer tests before this point) —
-  // a resource-exhaustion artifact of this many sequential real uWS
-  // servers/sockets in one Vitest worker, not a logic bug: dedup is a
-  // `Set<string>` (`connectedUsersByWorkspace`) and coalescing is a single
-  // `setTimeout` per workspace (`markPresenceDirty`), both straightforward
-  // by inspection, and both mechanisms are separately exercised by the two
-  // sibling presence tests below, which pass reliably under the same load.
-  test.skip(
+  test(
     "presence: dedupes two tabs of the same user and coalesces a second user's connect into one report",
     async () => {
+      // A short, test-only `presenceReportCoalesceMs` (instead of the real
+      // 1000ms default) keeps this real-socket test fast and avoids the
+      // resource-exhaustion flakiness a 1100ms real-clock wait hit when run
+      // after many other real-socket "live" tests earlier in this file.
       gateway = createRealtimeGateway({
         maxConnections: 10,
+        presenceReportCoalesceMs: 30,
         redis: createFakeRedis() as never,
         secret: SECRET,
       })
@@ -676,7 +942,7 @@ describe("createRealtimeGateway (live)", () => {
       )
       await waitForOpen(otherUser)
 
-      await delay(1100) // past the 1s presence-report coalesce window
+      await delay(150) // past the 30ms presence-report coalesce window
 
       const callsForWorkspace = reportWorkspacePresenceMock.mock.calls.filter(
         ([workspaceId]) => workspaceId === "ws-presence-1",
@@ -687,12 +953,14 @@ describe("createRealtimeGateway (live)", () => {
       )
       expect(callsForWorkspace[0]?.[1]).toHaveLength(2)
 
+      // Closing 3 sockets this close together can leave a `close` event
+      // unobserved client-side even once the server has written its close
+      // frame (the same transport quirk the N+k parallel-upgrades test
+      // works around) — `gateway.close()` in `afterEach` tears down
+      // whatever's left, so cleanup here doesn't need to wait on it.
       firstTab.close()
       secondTab.close()
       otherUser.close()
-      await waitForClose(firstTab)
-      await waitForClose(secondTab)
-      await waitForClose(otherUser)
     },
     PRESENCE_TEST_TIMEOUT_MS,
   )
