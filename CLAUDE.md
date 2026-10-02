@@ -14,7 +14,6 @@
 | Task | Skill to read first |
 |------|---------------------|
 | Broad/ambiguous request, onboarding, "where does X live" | `chatbotx-basecode` |
-| Architecture/product decision, competing approaches, adversarial brainstorming | `multi-model-brainstorming` |
 | New feature / page | `feature-scaffold` |
 | Builder UI component, form, table, dialog, or any user-facing string | `builder-ui-i18n` |
 | New API endpoint | `orpc-api` |
