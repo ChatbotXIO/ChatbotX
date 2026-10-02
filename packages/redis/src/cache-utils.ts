@@ -22,6 +22,66 @@ const inFlightCacheMisses = new Map<string, Promise<unknown>>()
 const isSuperJsonEnvelope = (value: unknown): value is SuperJSONResult =>
   typeof value === "object" && value !== null && "json" in value
 
+/**
+ * Runs `fn`, then best-effort writes the result (and its tags) to the cache.
+ * Shared by every in-flight entry for `cacheKey`: joiners all await this same
+ * promise, so `fn` runs exactly once per miss.
+ */
+const loadAndStore = async <T>(
+  cacheKey: string,
+  key: string,
+  fn: () => Promise<T>,
+  options: {
+    ttl: number
+    ttlFor?: (result: T) => number | undefined
+    tags: string[]
+    dynamicTags?: (result: T) => string[] | undefined
+  },
+): Promise<T> => {
+  const { ttl, ttlFor, tags, dynamicTags } = options
+  const result = await fn()
+  // Skip cache write if result is null or undefined
+  if (result === null || result === undefined) {
+    return result
+  }
+
+  // Cache writes are best-effort: a failure here must not break the caller,
+  // which already has a valid result from the source function.
+  try {
+    const resolvedTtl = ttlFor?.(result) ?? ttl
+    await distributedStore.put(
+      cacheKey,
+      superjson.serialize(result),
+      resolvedTtl,
+    )
+
+    // Add tags to the cache
+    const dynamicTagsResult = dynamicTags?.(result)
+    const allTags = [...tags, ...(dynamicTagsResult || [])]
+    if (allTags.length > 0) {
+      // The tag set is shared by every key under the tag — its expiry must
+      // never be truncated by one short-lived (e.g. negative-result) entry,
+      // or longer-lived siblings would drop out of tag invalidation early.
+      const tagTtl = Math.max(resolvedTtl, ttl)
+      await Promise.all(
+        allTags.map(async (tag) => {
+          await distributedStore.sadd(`tags:${tag}`, cacheKey)
+          await distributedStore.expire(`tags:${tag}`, tagTtl)
+        }),
+      )
+    }
+  } catch (err) {
+    logger.debug({ err, key }, "Cache write failed, returning source result")
+  }
+
+  return result
+}
+
+/**
+ * Concurrent callers that miss the cache for the same `key` join the same
+ * in-flight fetch (`fn` runs once) and all resolve to the same result
+ * instance — treat the returned value as read-only, and never mutate it.
+ */
 export const withCache = async <T>(
   key: string,
   fn: () => Promise<T>,
@@ -60,44 +120,12 @@ export const withCache = async <T>(
     return await (inFlight as Promise<T>)
   }
 
-  const sourcePromise = (async () => {
-    const result = await fn()
-    // Skip cache write if result is null or undefined
-    if (result === null || result === undefined) {
-      return result
-    }
-
-    // Cache writes are best-effort: a failure here must not break the caller,
-    // which already has a valid result from the source function.
-    try {
-      const resolvedTtl = ttlFor?.(result) ?? ttl
-      await distributedStore.put(
-        cacheKey,
-        superjson.serialize(result),
-        resolvedTtl,
-      )
-
-      // Add tags to the cache
-      const dynamicTagsResult = dynamicTags?.(result)
-      const allTags = [...tags, ...(dynamicTagsResult || [])]
-      if (allTags.length > 0) {
-        // The tag set is shared by every key under the tag — its expiry must
-        // never be truncated by one short-lived (e.g. negative-result) entry,
-        // or longer-lived siblings would drop out of tag invalidation early.
-        const tagTtl = Math.max(resolvedTtl, ttl)
-        await Promise.all(
-          allTags.map(async (tag) => {
-            await distributedStore.sadd(`tags:${tag}`, cacheKey)
-            await distributedStore.expire(`tags:${tag}`, tagTtl)
-          }),
-        )
-      }
-    } catch (err) {
-      logger.debug({ err, key }, "Cache write failed, returning source result")
-    }
-
-    return result
-  })()
+  const sourcePromise = loadAndStore(cacheKey, key, fn, {
+    ttl,
+    ttlFor,
+    tags,
+    dynamicTags,
+  })
   inFlightCacheMisses.set(cacheKey, sourcePromise)
 
   try {
@@ -123,6 +151,11 @@ export const invalidateCacheKeys = async (
   if (keysArray.length === 0) {
     return
   }
+  // A reader that arrives after this invalidation must start a fresh fetch
+  // rather than join a fetch that began before the write it's meant to see.
+  for (const key of keysArray) {
+    inFlightCacheMisses.delete(`${CACHE_KEY_PREFIX}${key}`)
+  }
   await distributedStore.delete(
     keysArray.flatMap((key) => [`${CACHE_KEY_PREFIX}${key}`, key]),
   )
@@ -135,6 +168,9 @@ export const invalidateCacheByTags = async (tags: string[]) => {
   await Promise.all(
     tags.map(async (tag) => {
       const keys = await distributedStore.smembers(`tags:${tag}`)
+      for (const key of keys) {
+        inFlightCacheMisses.delete(key)
+      }
       await distributedStore.delete([...keys, `tags:${tag}`])
     }),
   )
