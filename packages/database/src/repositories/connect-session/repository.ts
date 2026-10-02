@@ -108,7 +108,13 @@ export const connectSessionRepository = {
         | (Partial<
             Pick<
               typeof connectSessionModel.$inferInsert,
-              "encryptedAuth" | "nextAction" | "status" | "step"
+              | "encryptedAuth"
+              | "expiresAt"
+              | "nextAction"
+              | "returnUrl"
+              | "status"
+              | "step"
+              | "targets"
             >
           > & {
             status?: Exclude<

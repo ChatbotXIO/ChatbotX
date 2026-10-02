@@ -57,6 +57,17 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "generated-id",
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  // Defaults to "no Connection row" so the existing disconnect test below
+  // (written before the Connection-row integration) keeps exercising the
+  // legacy `inboxService.disconnect` fallback unchanged.
+  connectionRepository: { findByInboxId: vi.fn(async () => undefined) },
+}))
+
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { transition: vi.fn() },
+}))
+
 vi.mock("../src/inbox/connect-channel", () => ({
   connectChannelIntegration: mockConnectChannelIntegration,
 }))
@@ -197,5 +208,36 @@ describe("telegramIntegrationService.disconnect", () => {
     })
 
     expect(callOrder).toEqual(["delete", "inbox-disconnect"])
+  })
+
+  test("routes through connectionStateService.transition instead of the legacy inboxService.disconnect fallback when a Connection row already exists (regression: the FSM path was only ever exercised by a mock forcing 'no Connection row')", async () => {
+    const { connectionRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    const { connectionStateService } = await import(
+      "../src/connection/state-service"
+    )
+    vi.mocked(connectionRepository.findByInboxId).mockResolvedValueOnce({
+      id: "conn-1",
+    } as never)
+    const tx = {
+      delete: vi.fn(() => ({ where: vi.fn(async () => undefined) })),
+    }
+
+    await telegramIntegrationService.disconnect({
+      workspaceId: "ws-1",
+      id: "integration-1",
+      inboxId: "inbox-1",
+      ownerId: "owner-1",
+      tx: tx as never,
+    })
+
+    expect(connectionStateService.transition).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+      event: "user.disconnect",
+      ownerId: "owner-1",
+      tx,
+    })
+    expect(mockDisconnect).not.toHaveBeenCalled()
   })
 })

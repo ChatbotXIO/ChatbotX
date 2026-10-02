@@ -6,11 +6,13 @@ import {
   findOrFail,
   sql,
 } from "@chatbotx.io/database/client"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { integrationThreadsModel } from "@chatbotx.io/database/schema"
 import type { IntegrationThreadsModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import {
   connectChannelIntegration,
   runConnectTransaction,
@@ -311,13 +313,31 @@ class IntegrationThreadsService extends BaseService {
       .delete(integrationThreadsModel)
       .where(eq(integrationThreadsModel.id, integration.id))
 
-    await inboxService.disconnect({
-      inboxId: integration.inboxId,
-      ownerId: workspace.ownerId,
-      workspaceId: props.workspaceId,
-      reason: "manual",
-      tx: client,
-    })
+    // Writing through `connectionStateService` (not `inboxService.disconnect`
+    // directly) keeps the `Connection` row and `Inbox.status` in lockstep —
+    // see `disconnect-messenger.ts` for why. Falls back to the legacy
+    // direct write only for a pre-backfill row with no `Connection`
+    // counterpart yet.
+    const connection = await connectionRepository.findByInboxId(
+      { inboxId: integration.inboxId },
+      client,
+    )
+    if (connection) {
+      await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "user.disconnect",
+        ownerId: workspace.ownerId,
+        tx: client,
+      })
+    } else {
+      await inboxService.disconnect({
+        inboxId: integration.inboxId,
+        ownerId: workspace.ownerId,
+        workspaceId: props.workspaceId,
+        reason: "manual",
+        tx: client,
+      })
+    }
   }
 }
 

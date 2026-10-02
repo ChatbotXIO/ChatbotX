@@ -149,6 +149,19 @@ export const connectionRepository = {
     })
   },
 
+  async listDueForRefresh(
+    input: { before: Date; statuses: ConnectionStatus[] },
+    tx: DatabaseClient = db,
+  ): Promise<ConnectionModel[]> {
+    return await tx.query.connectionModel.findMany({
+      where: {
+        status: { in: input.statuses },
+        authExpiresAt: { lte: input.before },
+      },
+      orderBy: { authExpiresAt: "asc" },
+    })
+  },
+
   async insert(
     values: typeof connectionModel.$inferInsert,
     tx: DatabaseClient = db,

@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   transaction: vi.fn(),
   workspaceFindById: vi.fn(),
+  findByInboxId: vi.fn(async () => undefined),
+  connectionTransition: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -59,6 +61,17 @@ vi.mock("../src/inbox/connect-channel", () => ({
 
 vi.mock("../src/inbox/service", () => ({
   inboxService: { disconnect: mocks.disconnectInbox },
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  // Defaults to "no Connection row" so the existing disconnect test below
+  // (written before the Connection-row integration) keeps exercising the
+  // legacy `inboxService.disconnect` fallback unchanged.
+  connectionRepository: { findByInboxId: mocks.findByInboxId },
+}))
+
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { transition: mocks.connectionTransition },
 }))
 
 vi.mock("../src/workspace", () => ({
@@ -392,5 +405,27 @@ describe("integrationThreadsService", () => {
       reason: "manual",
       tx: expect.anything(),
     })
+  })
+
+  test("routes through connectionStateService.transition instead of the legacy inboxService.disconnect fallback when a Connection row already exists (regression: the FSM path was only ever exercised by a mock forcing 'no Connection row')", async () => {
+    mocks.findFirst.mockResolvedValue({
+      id: "threads-1",
+      inboxId: "inbox-1",
+    })
+    mocks.workspaceFindById.mockResolvedValue({ ownerId: "owner-1" })
+    mocks.findByInboxId.mockResolvedValueOnce({ id: "conn-1" })
+
+    await integrationThreadsService.disconnect({
+      workspaceId: "workspace-1",
+      id: "threads-1",
+    })
+
+    expect(mocks.connectionTransition).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+      event: "user.disconnect",
+      ownerId: "owner-1",
+      tx: expect.anything(),
+    })
+    expect(mocks.disconnectInbox).not.toHaveBeenCalled()
   })
 })
