@@ -23,6 +23,7 @@ export type ApiRateLimitScope =
   | "channel-api-rate-limit"
   | "workspace-token-rate-limit"
   | "workspace-token-preauth-rate-limit"
+  | "guest-realtime-mint-workspace-rate-limit"
 
 type ApiRateLimitInput = {
   scope: ApiRateLimitScope

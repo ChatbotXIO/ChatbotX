@@ -4,6 +4,7 @@ import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  checkApiRateLimit: vi.fn(),
   checkGuestRateLimit: vi.fn(),
   contactInboxServiceFindLatestBySource: vi.fn(),
   integrationWebchatServiceFindByIdForWorkspaceOrNull: vi.fn(),
@@ -36,6 +37,10 @@ vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
 vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
   checkGuestRateLimit: mocks.checkGuestRateLimit,
   getGuestClientIp: () => "203.0.113.1",
+}))
+
+vi.mock("@/lib/rate-limit/api-rate-limit", () => ({
+  checkApiRateLimit: mocks.checkApiRateLimit,
 }))
 
 // Dynamic import required: the route module must load after the vi.mock
@@ -80,6 +85,10 @@ describe("POST /api/guest/realtime-token", () => {
       limited: false,
       retryAfter: 0,
     })
+    mocks.checkApiRateLimit.mockResolvedValue({
+      limited: false,
+      retryAfter: 0,
+    })
     mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull.mockResolvedValue(
       webchat(),
     )
@@ -104,6 +113,31 @@ describe("POST /api/guest/realtime-token", () => {
     expect(
       mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull,
     ).not.toHaveBeenCalled()
+  })
+
+  test("returns 429 with Retry-After when the workspace-scoped mint limit is exceeded, independent of per-IP/session state", async () => {
+    mocks.checkApiRateLimit.mockResolvedValue({
+      limited: true,
+      retryAfter: 7,
+    })
+
+    const response = await POST(
+      buildRequest(
+        baseBody({ guestConversationId: NEW_GUEST_CONVERSATION_ID }),
+      ),
+    )
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("Retry-After")).toBe("7")
+    expect(
+      mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull,
+    ).not.toHaveBeenCalled()
+    expect(mocks.checkApiRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "guest-realtime-mint-workspace-rate-limit",
+        key: WORKSPACE_ID,
+      }),
+    )
   })
 
   test("returns 404 when the webchat cannot be found for the workspace", async () => {

@@ -52,6 +52,11 @@ const DEFAULT_MAX_GUEST_CONNECTIONS_PER_WORKSPACE = 1000
  * the only way a revoked member, a disabled support-access session, or an
  * expired grant stops receiving events short of an explicit revoke event. */
 const DEFAULT_CONNECTION_LIFETIME_MS = 30 * 60 * 1000
+/** Spread applied to `connectionLifetimeMs` so every socket opened around
+ * the same time (e.g. right after a deploy) doesn't reauth-close in
+ * lockstep — a thundering herd of simultaneous reconnects across every tab
+ * in every workspace. See PR #1349 advisory. */
+const CONNECTION_LIFETIME_JITTER_RATIO = 0.15
 
 /**
  * Jittered retry hint for an overloaded connection. The spread keeps a mass
@@ -82,6 +87,15 @@ const decrementKeyedCount = (
 
 type ReplayResult = {
   closeReason?: string
+  /** Entries whose record (or part of it) couldn't be parsed during replay —
+   * bumped into `counters.malformedRecords` by the caller. Not re-resynced
+   * here: the live dispatch path already resyncs every connected socket the
+   * first time this same record arrives, so doing it again for every later
+   * reconnect that replays through the same historical window would just
+   * flap the socket without recovering anything new. See PR #1349 finding
+   * #7.
+   */
+  droppedCount?: number
   entries: StreamRecordEntry[]
   lastStreamId?: string
 }
@@ -152,9 +166,11 @@ export const loadReplay = async ({
   }
 
   const parsedEntries: StreamRecordEntry[] = []
+  let droppedCount = 0
   for (const [id, fields] of entries) {
     const parsed = parseStreamRecord(fields)
     if (!parsed.ok) {
+      droppedCount += 1
       logger.error(
         {
           err: parsed.error,
@@ -165,11 +181,15 @@ export const loadReplay = async ({
       )
       continue
     }
+    if (parsed.droppedCount) {
+      droppedCount += parsed.droppedCount
+    }
     if (parsed.record.workspaceId === workspaceId) {
       parsedEntries.push({ id, record: parsed.record })
     }
   }
   return {
+    droppedCount: droppedCount || undefined,
     entries: parsedEntries,
     lastStreamId: entries.at(-1)?.[0] ?? lastSeq,
   }
@@ -222,6 +242,13 @@ export const createRealtimeGateway = ({
     NodeJS.Timeout
   >()
   const guestLifetimeTimers = new WeakMap<GuestSocketData, NodeJS.Timeout>()
+  const jitteredConnectionLifetimeMs = (): number =>
+    connectionLifetimeMs +
+    Math.floor(
+      (Math.random() * 2 - 1) *
+        connectionLifetimeMs *
+        CONNECTION_LIFETIME_JITTER_RATIO,
+    )
   let heartbeat: NodeJS.Timeout | undefined
   let presenceHeartbeat: NodeJS.Timeout | undefined
   let metricsTimer: NodeJS.Timeout | undefined
@@ -460,6 +487,9 @@ export const createRealtimeGateway = ({
               await streamReader.activateWorkspace(workspaceId)
             activated = true
             const replay = await loadReplay({ lastSeq, redis, workspaceId })
+            if (replay.droppedCount) {
+              counters.malformedRecords += replay.droppedCount
+            }
             if (aborted) {
               pendingUpgrades -= 1
               decrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
@@ -561,6 +591,20 @@ export const createRealtimeGateway = ({
         if (!delivery.replayWorkspaceSocket(socket, gapEntries)) {
           return
         }
+        // Lets a reconnect that processes zero live batches during this
+        // connection's lifetime still have a real stream cursor instead of
+        // falling back to a synthetic `"0-0"` on its next reconnect — which
+        // would otherwise force a full `invalidateQueries()` resync on every
+        // quiet-tab lifetime rotation. See PR #1349 finding #2.
+        if (socketData.replayCutoff) {
+          delivery.sendCursor(socket, socketData.replayCutoff)
+        }
+        // Free the parsed replay payload (up to `MAX_REPLAY_ENTRIES` full
+        // events) once it's been used — it's otherwise retained for this
+        // socket's entire connection lifetime for no reason. See PR #1349
+        // finding #6.
+        socketData.replayEntries = []
+        socketData.replayCutoff = undefined
         if (firstUserSocket) {
           addConnectedUser(socketData.workspaceId, socketData.userId)
         }
@@ -575,7 +619,7 @@ export const createRealtimeGateway = ({
               REALTIME_CLOSE_CODE.reauth,
               "connection-lifetime-exceeded",
             )
-          }, connectionLifetimeMs),
+          }, jitteredConnectionLifetimeMs()),
         )
       },
       close: (socket) => {
@@ -817,6 +861,8 @@ export const createRealtimeGateway = ({
                 socketData.guestConversationId,
           )
         delivery.replayGuestSocket(socket, gapEntries)
+        // See PR #1349 finding #6 — same rationale as the workspace socket.
+        socketData.replayEntries = []
         guestLifetimeTimers.set(
           socketData,
           setTimeout(() => {
@@ -828,7 +874,7 @@ export const createRealtimeGateway = ({
               REALTIME_CLOSE_CODE.reauth,
               "connection-lifetime-exceeded",
             )
-          }, connectionLifetimeMs),
+          }, jitteredConnectionLifetimeMs()),
         )
       },
       close: (socket) => {

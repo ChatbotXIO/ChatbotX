@@ -23,13 +23,38 @@ export const main = async (): Promise<void> => {
     }
     shuttingDown = true
     logger.info({ signal }, "Stopping realtime gateway")
-    await gateway.close()
+    try {
+      await gateway.close()
+    } catch (error) {
+      logger.error(
+        { err: error, signal },
+        "Error while stopping realtime gateway",
+      )
+    }
   }
 
   process.once("SIGINT", shutdown.bind(null, "SIGINT"))
   process.once("SIGTERM", shutdown.bind(null, "SIGTERM"))
 
-  await gateway.listen(config.host, config.port)
+  try {
+    await gateway.listen(config.host, config.port)
+  } catch (error) {
+    logger.error({ err: error }, "Realtime gateway failed to start")
+    // The gateway's streamReader/redis connections otherwise keep the event
+    // loop alive forever after a failed `listen()` — `exitCode` alone just
+    // sets the eventual code and waits for those handles to drain, which
+    // they never do on their own. Close them, then force the exit. See PR
+    // #1349 finding #5.
+    try {
+      await gateway.close()
+    } catch (closeError) {
+      logger.error(
+        { err: closeError },
+        "Error while closing realtime gateway after failed start",
+      )
+    }
+    process.exit(1)
+  }
   logger.info(
     {
       host: config.host,
@@ -40,6 +65,6 @@ export const main = async (): Promise<void> => {
 }
 
 main().catch((error: unknown) => {
-  logger.error({ err: error }, "Realtime gateway failed to start")
-  process.exitCode = 1
+  logger.error({ err: error }, "Unhandled realtime gateway startup error")
+  process.exit(1)
 })

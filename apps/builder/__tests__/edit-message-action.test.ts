@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockBroadcastToWorkspaceParty,
+  mockQueueWorkspaceRealtimeEvent,
   mockBulkCreateAttachments,
   mockChatQueueAdd,
   mockContactInboxFindBy,
@@ -10,7 +10,7 @@ const {
   mockFindById,
   mockUpdateMessageText,
 } = vi.hoisted(() => ({
-  mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+  mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   mockBulkCreateAttachments: vi.fn().mockResolvedValue(undefined),
   mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
   mockContactInboxFindBy: vi.fn(),
@@ -21,7 +21,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  queueWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
   contactInboxService: { findBy: mockContactInboxFindBy },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
   messageService: {
@@ -89,7 +89,7 @@ const createdAt = new Date("2026-01-01T00:00:00Z")
 describe("editMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
+    mockQueueWorkspaceRealtimeEvent.mockResolvedValue(undefined)
     mockConversationFindByOrFail.mockResolvedValue({
       id: "conv-1",
       workspaceId: "ws-1",
@@ -116,7 +116,7 @@ describe("editMessage", () => {
       } as never,
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageUpdated",
       data: {
         messageId: "msg-1",
@@ -143,7 +143,7 @@ describe("editMessage", () => {
       } as never,
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
         eventType: "messageUpdated",
@@ -174,6 +174,6 @@ describe("editMessage", () => {
       }),
     ).rejects.toThrow("Message is not an editable comment")
 
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 })

@@ -56,6 +56,18 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     let hasConnectedOnce = false
     let consecutiveFailureCount = 0
     let firstFailureAtMs: number | null = null
+    const recordConnectFailure = (): boolean => {
+      consecutiveFailureCount += 1
+      firstFailureAtMs ??= Date.now()
+      if (
+        consecutiveFailureCount >= MAX_CONSECUTIVE_CONNECT_FAILURES ||
+        Date.now() - firstFailureAtMs >= MAX_CONNECTING_DURATION_MS
+      ) {
+        setConnectionStatus("closed")
+        return true
+      }
+      return false
+    }
     setConnectionStatus("connecting")
     const frameHandler = createWebchatFrameHandler({
       onMessage: handleNewMessage,
@@ -103,21 +115,16 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       },
       onClose: ({ code, reason }) => {
         logger.warn({ code, reason }, "Webchat realtime connection closed")
-        consecutiveFailureCount += 1
-        firstFailureAtMs ??= Date.now()
-        if (
-          consecutiveFailureCount >= MAX_CONSECUTIVE_CONNECT_FAILURES ||
-          Date.now() - firstFailureAtMs >= MAX_CONNECTING_DURATION_MS
-        ) {
-          setConnectionStatus("closed")
-          return
+        if (!recordConnectFailure()) {
+          setConnectionStatus("connecting")
         }
-        setConnectionStatus("connecting")
       },
       onError: (error) => {
         logger.warn({ err: error }, "Webchat realtime connection failed")
         if (error instanceof RealtimeFatalError) {
           setConnectionStatus("closed")
+        } else {
+          recordConnectFailure()
         }
       },
       onMessage: frameHandler.handleFrame,

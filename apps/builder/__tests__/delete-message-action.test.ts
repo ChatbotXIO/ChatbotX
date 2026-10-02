@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockBroadcastToWorkspaceParty,
+  mockQueueWorkspaceRealtimeEvent,
   mockChatQueueAdd,
   mockContactInboxFindBy,
   mockConversationFindByOrFail,
@@ -9,7 +9,7 @@ const {
   mockDeleteBySourceId,
   mockFindById,
 } = vi.hoisted(() => ({
-  mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+  mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
   mockContactInboxFindBy: vi.fn(),
   mockConversationFindByOrFail: vi.fn(),
@@ -19,7 +19,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  queueWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
   contactInboxService: { findBy: mockContactInboxFindBy },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
   messageService: {
@@ -69,7 +69,7 @@ const createdAt = new Date("2026-01-01T00:00:00Z")
 describe("deleteMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
+    mockQueueWorkspaceRealtimeEvent.mockResolvedValue(undefined)
     mockConversationFindByOrFail.mockResolvedValue({
       id: "conv-1",
       workspaceId: "ws-1",
@@ -92,7 +92,7 @@ describe("deleteMessage", () => {
       parsedInput: { id: "msg-1", createdAt },
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageDeleted",
       data: { messageIds: ["msg-1"] },
     })
@@ -115,7 +115,7 @@ describe("deleteMessage", () => {
       parsedInput: { id: "msg-1", createdAt },
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageDeleted",
       data: { messageIds: ["msg-1", "msg-2"] },
     })
@@ -146,6 +146,6 @@ describe("deleteMessage", () => {
       }),
     ).rejects.toThrow("Comment not found")
 
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 })

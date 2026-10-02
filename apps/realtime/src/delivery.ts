@@ -144,6 +144,12 @@ export type RealtimeDelivery = {
    * resync — used when a stream record for that workspace couldn't be fully
    * parsed, so every local recipient has a confirmed gap. */
   resyncWorkspace: (workspaceId: string, reason: string) => void
+  /** Sends an empty-batch frame carrying only `seq` — lets a socket's
+   * open-time replay cursor reach the client even when nothing was
+   * replayed, so a reconnect that processes zero live batches still has a
+   * real cursor instead of falling back to a synthetic one on its next
+   * reconnect. See PR #1349 finding #2. */
+  sendCursor: (socket: WorkspaceSocket, seq: string) => void
   subscribeGuestSocket: (socket: {
     getUserData: () => GuestSocketData
     subscribe: (topic: string) => void
@@ -436,6 +442,12 @@ export const createRealtimeDelivery = (
         socketData.closed = true
         socket.end(REALTIME_CLOSE_CODE.resync, reason)
       }
+    },
+    sendCursor: (socket, seq) => {
+      if (socket.getUserData().closed) {
+        return
+      }
+      recordSend(socket, encodeBatch([], seq))
     },
     subscribeGuestSocket: (socket) => {
       const { guestConversationId, workspaceId } = socket.getUserData()

@@ -226,11 +226,13 @@ describe("stream reader", () => {
     expect(dispatched).toEqual([
       { data: { id: "ok" }, eventType: "messageCreated" },
     ])
-    // The record still had one valid event delivered, so it's not reported
-    // as a fully invalid entry — the error+log already happened inside the
-    // partial-parse path (see loggerErrorMock assertion in the sibling test
-    // for the fully-unparseable case); this one just proves the survivor
-    // isn't silently dropped alongside the bad envelope.
-    expect(invalidRecordCalls).toEqual([])
+    // The valid event is still delivered (the point of per-event
+    // tolerance), but the dropped invalid envelope is no longer silent: it's
+    // reported through `onInvalidRecord` same as a fully-unparseable entry,
+    // so the malformed-record metric and workspace resync both see it. See
+    // PR #1349 finding #7.
+    expect(invalidRecordCalls).toEqual([
+      { id: "1-0", workspaceId: "workspace-1" },
+    ])
   })
 })

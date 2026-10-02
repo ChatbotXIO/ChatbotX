@@ -182,4 +182,39 @@ describe("WebchatRealtime connection status", () => {
 
     expect(statuses.at(-1)).toBe("connecting")
   })
+
+  test("flips to closed after enough consecutive non-fatal getUrl failures, even though no socket is ever created", async () => {
+    // Regression for PR #1349 finding #9 (remaining gap): when getUrl()
+    // itself rejects non-fatally (e.g. the mint fetch throws, or returns a
+    // non-2xx that isn't 401/403), RealtimeSocket.connect() calls onError
+    // alone — no socket is ever created, so onClose never fires for that
+    // attempt. The failure counter must still advance from onError, or a
+    // sustained mint-endpoint outage leaves the status stuck on
+    // "connecting" forever.
+    vi.useFakeTimers()
+    try {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          json: async () => ({}),
+          ok: false,
+          status: 500,
+        }),
+      )
+
+      await render()
+      await act(async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(40_000)
+      })
+
+      expect(statuses.at(-1)).toBe("closed")
+      expect(FakeWebSocket.instances).toHaveLength(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

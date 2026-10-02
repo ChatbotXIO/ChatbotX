@@ -110,6 +110,66 @@ describe("loadReplay", () => {
     expect(replay.closeReason).toBeUndefined()
     expect(replay.entries).toEqual([])
   })
+
+  test("reports droppedCount for an entry that fails to parse entirely", async () => {
+    // Regression for PR #1349 finding #7: the live dispatch path signals a
+    // dropped entry via onInvalidRecord/counters.malformedRecords, but the
+    // replay path used to just log + continue with no visibility at all.
+    const redis = {
+      xrange: vi
+        .fn()
+        .mockResolvedValueOnce([["1-0", []]])
+        .mockResolvedValueOnce([["2-0", ["record", "not-json"]]])
+        .mockResolvedValueOnce([["1-0", []]]),
+      xrevrange: vi.fn().mockResolvedValue([["2-0", []]]),
+    }
+
+    const replay = await loadReplay({
+      lastSeq: "1-0",
+      redis: redis as never,
+      workspaceId: "workspace-1",
+    })
+
+    expect(replay.entries).toEqual([])
+    expect(replay.droppedCount).toBe(1)
+  })
+
+  test("reports droppedCount for a partially-invalid coalesced record, while still returning its valid events", async () => {
+    const workspaceEventsRecord = JSON.stringify({
+      events: [
+        { data: { id: "ok" }, eventType: "messageCreated" },
+        { data: {}, eventType: 123 },
+      ],
+      kind: "workspace-events",
+      workspaceId: "workspace-1",
+    })
+    const redis = {
+      xrange: vi
+        .fn()
+        .mockResolvedValueOnce([["1-0", []]])
+        .mockResolvedValueOnce([["2-0", ["record", workspaceEventsRecord]]])
+        .mockResolvedValueOnce([["1-0", []]]),
+      xrevrange: vi.fn().mockResolvedValue([["2-0", []]]),
+    }
+
+    const replay = await loadReplay({
+      lastSeq: "1-0",
+      redis: redis as never,
+      workspaceId: "workspace-1",
+    })
+
+    expect(replay.entries).toEqual([
+      {
+        id: "2-0",
+        record: {
+          events: [{ data: { id: "ok" }, eventType: "messageCreated" }],
+          kind: "workspace-events",
+          workspaceId: "workspace-1",
+        },
+      },
+    ])
+    expect(replay.droppedCount).toBe(1)
+  })
 })
 
 const SECRET = "gateway-test-secret"
@@ -206,6 +266,12 @@ const waitForClose = (
   }>()
   socket.onclose = (event) =>
     resolve({ code: event.code, reason: event.reason })
+  return promise
+}
+
+const waitForMessage = (socket: WebSocket): Promise<string> => {
+  const { promise, resolve } = Promise.withResolvers<string>()
+  socket.onmessage = (event) => resolve(event.data as string)
   return promise
 }
 
@@ -452,5 +518,36 @@ describe("createRealtimeGateway (live)", () => {
       code: REALTIME_CLOSE_CODE.reauth,
       reason: "connection-lifetime-exceeded",
     })
+  })
+
+  test("sends an open-time cursor frame even when nothing was replayed", async () => {
+    // Regression for PR #1349 finding #2: a reconnect that never processed a
+    // live batch had no cursor of its own, so it fell back to a synthetic
+    // "0-0" lastSeq on its *next* reconnect — which always resyncs
+    // (replay-window-expired) against a non-empty stream, forcing a full
+    // cache invalidation on every quiet-tab lifetime rotation. Sending this
+    // cursor up front on every open means a connection always has a real
+    // one, even if it never receives a single live batch.
+    gateway = createRealtimeGateway({
+      maxConnections: 10,
+      redis: createFakeRedis() as never,
+      secret: SECRET,
+    })
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signMemberConnectToken(
+      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
+    )
+    await waitForOpen(socket)
+
+    const frame = await waitForMessage(socket)
+
+    expect(JSON.parse(frame)).toEqual({ batch: [], seq: "0-0" })
+
+    socket.close()
+    await waitForClose(socket)
   })
 })

@@ -12,7 +12,7 @@ const {
   mockRecordOutboundMessageSent,
   mockRecordSendFailure,
   mockChatQueueAdd,
-  mockBroadcastToWorkspaceParty,
+  mockQueueWorkspaceRealtimeEvent,
   mockRecordPermanentGrant,
   mockMarkReadByOutbound,
 } = vi.hoisted(() => {
@@ -42,7 +42,7 @@ const {
     mockRecordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
-    mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+    mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
     mockRecordPermanentGrant: vi.fn().mockResolvedValue(undefined),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
   }
@@ -61,8 +61,8 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
   conversationService: { markReadByOutbound: mockMarkReadByOutbound },
-  publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
-  queueWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
   messageService: {
     findWithAttachments: vi.fn().mockResolvedValue(null),
     updateAttributes: vi.fn().mockResolvedValue(undefined),
@@ -839,7 +839,7 @@ describe("chat send-message handlers", () => {
       "ws-1",
       expect.any(Date),
     )
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageFailed",
       data: { messageId: "msg-1", error: "sdk error" },
     })
@@ -884,7 +884,7 @@ describe("chat send-message handlers", () => {
       "ws-1",
       expect.any(Date),
     )
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("publishes a broadcast continuation send error", async () => {
@@ -919,7 +919,7 @@ describe("chat send-message handlers", () => {
       } as never,
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageFailed",
       data: {
         messageId: "msg-broadcast-continuation",
@@ -945,7 +945,7 @@ describe("chat send-message handlers", () => {
     })
 
     expect(mockUpdateSendError).not.toHaveBeenCalled()
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("clears a prior sendError when a retry (attemptsMade > 0) succeeds", async () => {
@@ -977,7 +977,7 @@ describe("chat send-message handlers", () => {
       "ws-1",
       createdAt,
     )
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageFailed",
       data: { messageId: "msg-1", clientId: "client-1", error: null },
     })
@@ -1020,7 +1020,7 @@ describe("chat send-message handlers", () => {
       "ws-1",
       createdAt,
     )
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("does not clear sendError on a first-attempt (non-retry) successful send", async () => {
@@ -1215,7 +1215,7 @@ describe("chat send-message handlers", () => {
       contactInboxId: "ci-1",
       grantedAt: expect.any(Date),
     })
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "whatsappCallPermissionUpdated",
       data: { conversationId: "conv-1" },
     })

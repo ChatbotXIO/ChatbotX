@@ -487,4 +487,22 @@ describe("realtime delivery", () => {
 
     expect(socket.closed).toBeNull()
   })
+
+  test("sendCursor sends an empty-batch frame carrying only the seq", () => {
+    const { delivery } = createDelivery()
+    const socket = createSocket()
+
+    delivery.sendCursor(socket, "5-0")
+
+    expect(socket.sent).toEqual([JSON.stringify({ batch: [], seq: "5-0" })])
+  })
+
+  test("sendCursor is a no-op once the socket is already closed", () => {
+    const { delivery } = createDelivery()
+    const socket = createSocket({ closed: true })
+
+    delivery.sendCursor(socket, "5-0")
+
+    expect(socket.sent).toEqual([])
+  })
 })

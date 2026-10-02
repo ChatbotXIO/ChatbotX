@@ -77,7 +77,7 @@ const looseStreamRecordShapeSchema = z.object({
 })
 
 export type ParsedStreamRecord =
-  | { ok: true; record: RealtimeStreamRecord }
+  | { droppedCount?: number; ok: true; record: RealtimeStreamRecord }
   | { error: unknown; ok: false; workspaceId?: string }
 
 export const parseStreamRecord = (
@@ -116,6 +116,7 @@ export const parseStreamRecord = (
       }
       if (validEvents.length > 0) {
         return {
+          droppedCount: rawEvents.length - validEvents.length,
           ok: true,
           record: {
             events: validEvents,
@@ -281,6 +282,18 @@ export const createStreamReader = ({
           )
           onInvalidRecord({ id, workspaceId: parsed.workspaceId })
           continue
+        }
+        if (parsed.droppedCount) {
+          logger.error(
+            {
+              droppedCount: parsed.droppedCount,
+              id,
+              streamKey,
+              workspaceId: parsed.record.workspaceId,
+            },
+            "Dropped invalid events from a coalesced realtime stream record",
+          )
+          onInvalidRecord({ id, workspaceId: parsed.record.workspaceId })
         }
         const entry = { id, record: parsed.record }
         appendRecentEntry(activeShard, entry)

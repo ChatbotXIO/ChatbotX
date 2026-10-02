@@ -238,11 +238,15 @@ export const createGuestSessionStore = (
           const seenIds = new Set(
             state.messages.map((message) => message.id).filter(Boolean),
           )
-          const freshMessages = data
+          const freshMessages = [...data]
             .reverse()
             .filter((message) => !seenIds.has(message.id))
           return freshMessages.length > 0
-            ? { messages: [...state.messages, ...freshMessages] }
+            ? {
+                messages: [...state.messages, ...freshMessages].sort(
+                  (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+                ),
+              }
             : {}
         })
       } catch (error) {

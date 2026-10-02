@@ -12,6 +12,7 @@ import { z } from "zod"
 import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
 import { zodGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
+import { checkApiRateLimit } from "@/lib/rate-limit/api-rate-limit"
 import {
   checkGuestRateLimit,
   getGuestClientIp,
@@ -19,6 +20,20 @@ import {
 
 const workspaceGuestConversationPrefix = (workspaceId: string): string =>
   `${workspaceId}:`
+
+// A single workspace's guest-token minting, independent of caller IP: the
+// per-IP/per-session check above is spoofable by rotating `X-Forwarded-For`,
+// but every mint still has to name the target workspace, so this bucket is
+// the only place that can see "how many distinct new conversations is THIS
+// WORKSPACE minting tokens for" regardless of who's asking. Filling the
+// gateway's `REALTIME_MAX_GUEST_CONNECTIONS_PER_WORKSPACE` cap (1,000, at 5
+// sockets per `REALTIME_MAX_CONNECTIONS_PER_GUEST`) needs ~200 distinct new
+// guestConversationIds; capping this bucket well under a tenth of that per
+// 10s window (WINDOW_SECONDS in api-rate-limit.ts) makes a single-window
+// exhaustion attempt impossible while still allowing a couple of brand-new
+// guest visitors per second for one workspace — far above realistic organic
+// webchat traffic for a single site.
+const GUEST_REALTIME_MINT_WORKSPACE_LIMIT = 20
 
 const requestSchema = z.object({
   guestConversationId: zodGuestConversationId(),
@@ -47,6 +62,18 @@ export const POST = async (request: NextRequest) => {
   if (rateLimit.limited) {
     return new NextResponse(null, {
       headers: { "Retry-After": String(rateLimit.retryAfter) },
+      status: 429,
+    })
+  }
+
+  const workspaceRateLimit = await checkApiRateLimit({
+    scope: "guest-realtime-mint-workspace-rate-limit",
+    key: workspaceId,
+    limit: GUEST_REALTIME_MINT_WORKSPACE_LIMIT,
+  })
+  if (workspaceRateLimit.limited) {
+    return new NextResponse(null, {
+      headers: { "Retry-After": String(workspaceRateLimit.retryAfter) },
       status: 429,
     })
   }

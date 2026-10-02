@@ -6,7 +6,7 @@ const {
   insertBuilder,
   mockAutomatedResponseEnqueue,
   mockAutomatedResponseEnqueueFlowAction,
-  mockBroadcastToWorkspaceParty,
+  mockQueueWorkspaceRealtimeEvent,
   mockChatQueueAdd,
   mockCheckGuestRateLimit,
   mockContactFindById,
@@ -57,7 +57,7 @@ const {
     mockAutomatedResponseEnqueueFlowAction: vi
       .fn()
       .mockResolvedValue(undefined),
-    mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+    mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockCheckGuestRateLimit: vi
       .fn()
@@ -118,7 +118,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  queueWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }
@@ -344,7 +344,7 @@ const resetCommonMocks = () => {
     createWithAttachments: vi.fn(),
   })
   mockChatQueueAdd.mockResolvedValue(undefined)
-  mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
+  mockQueueWorkspaceRealtimeEvent.mockResolvedValue(undefined)
   tx.insert.mockReturnValue(insertBuilder)
   insertBuilder.values.mockReturnValue(insertBuilder)
   insertBuilder.returning.mockReset()
@@ -390,7 +390,7 @@ describe("handleCreateWebchatMessage", () => {
       },
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
         eventType: "messageCreated",
