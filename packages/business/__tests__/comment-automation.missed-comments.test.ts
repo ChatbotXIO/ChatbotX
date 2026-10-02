@@ -66,6 +66,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {},
 }))
 
+vi.mock("../src/flow/service", () => ({
+  flowService: { exists: vi.fn().mockResolvedValue(true) },
+}))
+
 vi.mock("@chatbotx.io/redis", () => ({
   distributedStore: {
     setNumberIfNotExists: mocks.setNumberIfNotExists,
