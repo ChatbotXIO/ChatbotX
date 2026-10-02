@@ -25,7 +25,7 @@ vi.mock("ky", () => ({
 
 const { reportWorkspacePresence } = await import("../src/lib/presence-report")
 const { hashPresenceUserIds, MAX_PRESENCE_USER_IDS_PER_REPORT } = await import(
-  "@chatbotx.io/partysocket-config/presence"
+  "@chatbotx.io/realtime-protocol/presence"
 )
 
 const encodeSecret = () => new TextEncoder().encode(SECRET)
