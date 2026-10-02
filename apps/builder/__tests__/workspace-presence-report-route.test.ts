@@ -1,10 +1,10 @@
 // @vitest-environment node
 
 import {
-  REALTIME_TOKEN_PURPOSE,
-  signRealtimeToken,
-} from "@chatbotx.io/partysocket-config/auth"
-import { hashPresenceUserIds } from "@chatbotx.io/partysocket-config/presence"
+  signMemberConnectToken,
+  signPresenceReportToken,
+} from "@chatbotx.io/realtime-protocol/auth"
+import { hashPresenceUserIds } from "@chatbotx.io/realtime-protocol/presence"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const SECRET = "a".repeat(32)
@@ -31,17 +31,12 @@ const { POST } = await import("../src/app/api/workspace-presence/report/route")
 async function signPresenceToken(input: {
   workspaceId: string
   userIds: string[]
-  purpose?: string
   secret?: string
 }): Promise<string> {
   const bodyHash = await hashPresenceUserIds(input.userIds)
-  return await signRealtimeToken(
-    { kind: "workspace", id: input.workspaceId },
-    (input.purpose ?? REALTIME_TOKEN_PURPOSE.presenceReport) as Parameters<
-      typeof signRealtimeToken
-    >[1],
+  return await signPresenceReportToken(
+    { workspaceId: input.workspaceId, bodyHash },
     input.secret ?? SECRET,
-    { bodyHash },
   )
 }
 
@@ -156,12 +151,11 @@ describe("POST /api/workspace-presence/report", () => {
     expect(mocks.heartbeatMany).not.toHaveBeenCalled()
   })
 
-  test("rejects with 401 when the token's purpose is not presence-report (a broadcast token must not work here, MEDIUM-3)", async () => {
-    const token = await signPresenceToken({
-      workspaceId: "1",
-      userIds: ["2"],
-      purpose: REALTIME_TOKEN_PURPOSE.broadcast,
-    })
+  test("rejects with 401 when the token's purpose is not presence-report (a member-connect token must not work here, MEDIUM-3)", async () => {
+    const token = await signMemberConnectToken(
+      { workspaceId: "1", userId: "u_1", chatScope: "all" },
+      SECRET,
+    )
 
     const response = await POST(
       makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`),
@@ -189,7 +183,6 @@ describe("POST /api/workspace-presence/report", () => {
     const token = await signPresenceToken({
       workspaceId: "1",
       userIds: ["2"],
-      purpose: REALTIME_TOKEN_PURPOSE.presenceReport,
       secret: "b".repeat(32),
     })
 
@@ -244,7 +237,7 @@ describe("POST /api/workspace-presence/report", () => {
 
   test("truncates an over-cap userIds batch instead of rejecting it, and matches the token hashed over the same truncated set (LOW-7)", async () => {
     const { MAX_PRESENCE_USER_IDS_PER_REPORT } = await import(
-      "@chatbotx.io/partysocket-config/presence"
+      "@chatbotx.io/realtime-protocol/presence"
     )
     const overCapUserIds = Array.from(
       { length: MAX_PRESENCE_USER_IDS_PER_REPORT + 5 },

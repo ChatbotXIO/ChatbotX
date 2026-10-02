@@ -1,18 +1,15 @@
-import {
-  REALTIME_TOKEN_PURPOSE,
-  signRealtimeToken,
-} from "@chatbotx.io/partysocket-config/auth"
+import { signPresenceReportToken } from "@chatbotx.io/realtime-protocol/auth"
 import {
   hashPresenceUserIds,
   truncatePresenceUserIds,
-} from "@chatbotx.io/partysocket-config/presence"
+} from "@chatbotx.io/realtime-protocol/presence"
 import ky from "ky"
 import { env } from "../env"
 import { logger } from "../logger"
 
 /**
  * Periodic mirror of connected user ids into Redis, authenticated with the
- * same shared secret/JWT scheme (signRealtimeToken) used in reverse for
+ * same shared secret/JWT scheme (signPresenceReportToken) used in reverse for
  * inbound broadcast requests. Best-effort: failures are logged and
  * swallowed, never thrown or retried — the next interval supersedes a lost
  * report.
@@ -33,11 +30,9 @@ export async function reportWorkspacePresence(
     // list. workspaceId travels as a query param, not in the JSON body, so the
     // route can verify the token's signature before parsing the body.
     const bodyHash = await hashPresenceUserIds(boundedUserIds)
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: workspaceId },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
+    const token = await signPresenceReportToken(
+      { workspaceId, bodyHash },
       env.REALTIME_BROADCAST_SECRET,
-      { bodyHash },
     )
     const url = new URL(
       "/api/workspace-presence/report",

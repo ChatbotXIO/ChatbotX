@@ -1,8 +1,8 @@
-import { keys as partysocketKeys } from "@chatbotx.io/partysocket-config/keys"
+import { keys as realtimeKeys } from "@chatbotx.io/realtime-protocol/keys"
 import { createEnv } from "@t3-oss/env-core"
 
 export const env = createEnv({
-  extends: [partysocketKeys()],
+  extends: [realtimeKeys()],
   server: {},
   runtimeEnv: process.env,
 })

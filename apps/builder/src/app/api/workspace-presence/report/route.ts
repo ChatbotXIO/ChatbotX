@@ -1,13 +1,12 @@
 import { workspacePresenceService } from "@chatbotx.io/business"
 import {
   extractBearerToken,
-  REALTIME_TOKEN_PURPOSE,
-  verifyRealtimeToken,
-} from "@chatbotx.io/partysocket-config/auth"
+  verifyPresenceReportToken,
+} from "@chatbotx.io/realtime-protocol/auth"
 import {
   hashPresenceUserIds,
   truncatePresenceUserIds,
-} from "@chatbotx.io/partysocket-config/presence"
+} from "@chatbotx.io/realtime-protocol/presence"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
@@ -55,12 +54,11 @@ export async function POST(req: NextRequest) {
   }
   const workspaceId = workspaceIdResult.data
 
-  let payload: Awaited<ReturnType<typeof verifyRealtimeToken>>
+  let claims: Awaited<ReturnType<typeof verifyPresenceReportToken>>
   try {
-    payload = await verifyRealtimeToken(
+    claims = await verifyPresenceReportToken(
       token,
-      { kind: "workspace", id: workspaceId },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
+      workspaceId,
       env.REALTIME_BROADCAST_SECRET,
     )
   } catch {
@@ -75,11 +73,7 @@ export async function POST(req: NextRequest) {
 
   const userIds = truncatePresenceUserIds(parsed.data.userIds)
   const expectedBodyHash = await hashPresenceUserIds(userIds)
-  const claimedBodyHash = payload.bodyHash
-  if (
-    typeof claimedBodyHash !== "string" ||
-    claimedBodyHash !== expectedBodyHash
-  ) {
+  if (claims.bodyHash !== expectedBodyHash) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
