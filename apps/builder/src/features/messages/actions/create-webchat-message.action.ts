@@ -8,7 +8,7 @@ import {
   integrationWebchatService,
   isWorkspaceScheduledForDeletion,
   messageService,
-  publishWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent,
   resolveTenantSettings,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -300,7 +300,7 @@ export async function handleCreateWebchatMessage({
       sourceId: newMessage.sourceId ?? undefined,
     })
 
-    await publishWorkspaceRealtimeEvent(newMessage.workspaceId, {
+    queueWorkspaceRealtimeEvent(newMessage.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: {
         ...newMessage,

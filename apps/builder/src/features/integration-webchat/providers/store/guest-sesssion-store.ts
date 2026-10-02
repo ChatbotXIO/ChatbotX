@@ -53,6 +53,7 @@ export type GuestSessionActions = {
     guestConversationId: string,
     perPage: number,
   ) => Promise<void>
+  refetchLatestMessages: (perPage: number) => Promise<void>
   handleNewMessage: (message: MessageResource) => void
   sendMessage: (content: string) => void
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
@@ -166,6 +167,57 @@ export const createGuestSessionStore = (
         set({ isLoadMoreMessage: false })
         console.error("Failed to load more messages:", error)
         throw error
+      }
+    },
+
+    refetchLatestMessages: async (perPage: number) => {
+      const { guestConversationId, config, accessToken } = get()
+      if (!guestConversationId) {
+        return
+      }
+
+      try {
+        const params = new URLSearchParams({
+          perPage: `${perPage}`,
+          cursor: "",
+          guestConversationId,
+          workspaceId: config.workspaceId,
+          webchatId: config.id,
+        })
+        const parentOrigin = getClientEmbeddingOrigin()
+        if (parentOrigin) {
+          params.set("parentOrigin", parentOrigin)
+        }
+
+        const { data } = await ky
+          .get<ListMessagesResponse>(
+            `/api/guest/messages?${params.toString()}`,
+            {
+              headers: accessToken
+                ? { Authorization: `Bearer ${accessToken}` }
+                : undefined,
+            },
+          )
+          .json()
+
+        // Only append messages the socket hasn't already delivered — this
+        // recovers the common "missed a few messages during a brief
+        // reconnect" gap, not a true replay: a gap wider than one page of
+        // history still isn't fully backfilled (the guest socket has no
+        // stream cursor to resume from, unlike the workspace socket).
+        set((state) => {
+          const seenIds = new Set(
+            state.messages.map((message) => message.id).filter(Boolean),
+          )
+          const freshMessages = data
+            .reverse()
+            .filter((message) => !seenIds.has(message.id))
+          return freshMessages.length > 0
+            ? { messages: [...state.messages, ...freshMessages] }
+            : {}
+        })
+      } catch (error) {
+        console.error("Failed to refetch messages after reconnect:", error)
       }
     },
 

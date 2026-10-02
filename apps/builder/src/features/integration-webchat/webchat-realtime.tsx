@@ -13,22 +13,33 @@ type WebchatRealtimeProps = {
   guestConversationId: string
 }
 
+// Matches webchat-message-list.tsx's page size: a reconnect refetch only
+// needs to cover at least as many messages as fit in the visible list.
+const RECONNECT_REFETCH_PAGE_SIZE = 50
+
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
   const { publicRealtimeUrl } = useTenantSettings()
-  const { accessToken, config, handleNewMessage, setIsTyping } =
-    useGuestSessionStore(
-      useShallow((state) => ({
-        accessToken: state.accessToken,
-        config: state.config,
-        handleNewMessage: state.handleNewMessage,
-        setIsTyping: state.setIsTyping,
-      })),
-    )
+  const {
+    accessToken,
+    config,
+    handleNewMessage,
+    refetchLatestMessages,
+    setIsTyping,
+  } = useGuestSessionStore(
+    useShallow((state) => ({
+      accessToken: state.accessToken,
+      config: state.config,
+      handleNewMessage: state.handleNewMessage,
+      refetchLatestMessages: state.refetchLatestMessages,
+      setIsTyping: state.setIsTyping,
+    })),
+  )
 
   useEffect(() => {
     if (!accessToken) {
       return
     }
+    let hasConnectedOnce = false
     const frameHandler = createWebchatFrameHandler({
       onMessage: handleNewMessage,
       onParseError: (error) => {
@@ -65,8 +76,29 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
         socketUrl.searchParams.set("token", token)
         return socketUrl.toString()
       },
+      onClose: ({ code, reason }) => {
+        logger.warn({ code, reason }, "Webchat realtime connection closed")
+      },
+      onError: (error) => {
+        logger.warn({ err: error }, "Webchat realtime connection failed")
+      },
       onMessage: frameHandler.handleFrame,
-      onOpen: () => frameHandler.reset(),
+      onOpen: () => {
+        frameHandler.reset()
+        // A guest socket carries no stream cursor (unlike the workspace
+        // socket), so a reconnect — not the very first open — can't tell on
+        // its own whether anything arrived during the gap. Refetch the
+        // latest page and merge in whatever the live subscription missed.
+        if (hasConnectedOnce) {
+          refetchLatestMessages(RECONNECT_REFETCH_PAGE_SIZE).catch((error) => {
+            logger.warn(
+              { err: error },
+              "Failed to refetch webchat messages after reconnect",
+            )
+          })
+        }
+        hasConnectedOnce = true
+      },
     })
     socket.connect()
 
@@ -78,6 +110,7 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     guestConversationId,
     handleNewMessage,
     publicRealtimeUrl,
+    refetchLatestMessages,
     setIsTyping,
   ])
 

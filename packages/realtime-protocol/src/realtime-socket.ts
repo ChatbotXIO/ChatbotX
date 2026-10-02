@@ -16,6 +16,7 @@ export type RealtimeSocketOptions = {
   heartbeatTimeoutMs?: number
   maxReconnectDelayMs?: number
   onClose?: (event: { code: number; reason: string }) => void
+  onError?: (error: unknown) => void
   onMessage: (data: string) => void
   onOpen?: () => void
   onResync?: () => void
@@ -49,6 +50,7 @@ export class RealtimeSocket {
   #closed = false
   #heartbeatTimer: ReturnType<typeof setTimeout> | null = null
   #reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  #retryNotBeforeMs: number | null = null
   #socket: RealtimeWebSocket | null = null
   readonly #heartbeatTimeoutMs: number
   readonly #maxReconnectDelayMs: number
@@ -92,6 +94,7 @@ export class RealtimeSocket {
         this.#socket = socket
         socket.onopen = () => {
           this.#attempt = 0
+          this.#retryNotBeforeMs = null
           this.#armHeartbeat(socket)
           this.options.onOpen?.()
         }
@@ -100,6 +103,7 @@ export class RealtimeSocket {
           this.options.onMessage(event.data)
         }
         socket.onerror = () => {
+          this.options.onError?.(new Error("Realtime WebSocket error"))
           socket.close()
         }
         socket.onclose = (event) => {
@@ -112,8 +116,9 @@ export class RealtimeSocket {
           this.#scheduleReconnect(event)
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         this.#connecting = false
+        this.options.onError?.(error)
         this.#scheduleReconnect({ code: 0, reason: "" })
       })
   }
@@ -127,6 +132,15 @@ export class RealtimeSocket {
   }
 
   reconnectNow = (): void => {
+    // A server-directed overload backoff must survive a foreground/online
+    // event — otherwise every tab reconnects in lockstep the instant the
+    // laptop wakes, defeating the jittered retryAfter the server sent.
+    if (
+      this.#retryNotBeforeMs !== null &&
+      Date.now() < this.#retryNotBeforeMs
+    ) {
+      return
+    }
     this.#clearReconnect()
     this.connect()
   }
@@ -171,6 +185,7 @@ export class RealtimeSocket {
     )
     this.#attempt += 1
     const delay = retryAfterMs ?? Math.floor(this.#random() * ceiling)
+    this.#retryNotBeforeMs = retryAfterMs === null ? null : Date.now() + delay
     this.#reconnectTimer = setTimeout(() => {
       this.#reconnectTimer = null
       this.connect()

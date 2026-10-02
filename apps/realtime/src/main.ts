@@ -6,7 +6,11 @@ import { logger } from "./logger"
 export const main = async (): Promise<void> => {
   const config = resolveRealtimeGatewayConfig()
   const gateway = createRealtimeGateway({
+    connectionLifetimeMs: config.connectionLifetimeMs,
     maxConnections: config.maxConnections,
+    maxConnectionsPerGuest: config.maxConnectionsPerGuest,
+    maxConnectionsPerWorkspace: config.maxConnectionsPerWorkspace,
+    maxGuestConnections: config.maxGuestConnections,
     redis: createRedisConnection(config.redisUrl),
     secret: config.secret,
   })

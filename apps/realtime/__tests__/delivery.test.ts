@@ -1,6 +1,8 @@
+import { REALTIME_CLOSE_CODE } from "@chatbotx.io/realtime-protocol"
 import { describe, expect, test } from "vitest"
 import {
   createRealtimeDelivery,
+  type GuestSocketData,
   type WorkspaceSocket,
   type WorkspaceSocketData,
 } from "../src/delivery"
@@ -33,6 +35,36 @@ const createSocket = (
     },
     sent: [] as string[],
     subscribe: () => undefined,
+  }
+  return socket
+}
+
+const createGuestSocket = (
+  overrides: Partial<GuestSocketData> = {},
+): {
+  closed: { code?: number; reason?: string } | null
+  end: (code?: number, reason?: string) => void
+  endCalls: number
+  getUserData: () => GuestSocketData
+  send: (data: string) => number
+} => {
+  const data: GuestSocketData = {
+    closed: false,
+    guestConversationId: "guest-1",
+    replayCutoff: "0-0",
+    replayEntries: [],
+    workspaceId: "workspace-1",
+    ...overrides,
+  }
+  const socket = {
+    closed: null as { code?: number; reason?: string } | null,
+    end(code?: number, reason?: string): void {
+      this.endCalls += 1
+      this.closed = { code, reason }
+    },
+    endCalls: 0,
+    getUserData: () => data,
+    send: (): number => 2,
   }
   return socket
 }
@@ -149,5 +181,92 @@ describe("realtime delivery", () => {
     })
 
     expect(socket.closed).toEqual({ code: 4001, reason: "revoked" })
+  })
+
+  test("publishes a guest event to a topic scoped by workspace, not just the guest conversation id", () => {
+    const { delivery, published } = createDelivery()
+
+    delivery.dispatch({
+      id: "4-0",
+      record: {
+        event: { data: {}, eventType: "messageCreated" },
+        guestConversationId: "12345",
+        kind: "guest-event",
+        workspaceId: "workspace-1",
+      },
+    })
+
+    expect(published).toEqual([
+      {
+        message: JSON.stringify({
+          batch: [{ data: {}, eventType: "messageCreated" }],
+          seq: "4-0",
+        }),
+        topic: "guest:workspace-1:12345",
+      },
+    ])
+  })
+
+  test("isolates guest events between workspaces that share the same legacy guestConversationId", () => {
+    const { delivery, published } = createDelivery()
+
+    delivery.dispatch({
+      id: "5-0",
+      record: {
+        event: { data: {}, eventType: "messageCreated" },
+        guestConversationId: "12345",
+        kind: "guest-event",
+        workspaceId: "workspace-1",
+      },
+    })
+    delivery.dispatch({
+      id: "6-0",
+      record: {
+        event: { data: {}, eventType: "messageCreated" },
+        guestConversationId: "12345",
+        kind: "guest-event",
+        workspaceId: "workspace-2",
+      },
+    })
+
+    const topics = published.map((entry) => entry.topic)
+    expect(topics).toEqual([
+      "guest:workspace-1:12345",
+      "guest:workspace-2:12345",
+    ])
+    expect(new Set(topics).size).toBe(2)
+  })
+
+  test("closes a socket on a backpressure drop and does not close it a second time once already closed", () => {
+    const { delivery } = createDelivery()
+    const socket = createGuestSocket()
+
+    delivery.replayGuestSocket(socket, [
+      {
+        id: "7-0",
+        record: {
+          event: { data: {}, eventType: "messageCreated" },
+          guestConversationId: "guest-1",
+          kind: "guest-event",
+          workspaceId: "workspace-1",
+        },
+      },
+      {
+        id: "8-0",
+        record: {
+          event: { data: {}, eventType: "messageCreated" },
+          guestConversationId: "guest-1",
+          kind: "guest-event",
+          workspaceId: "workspace-1",
+        },
+      },
+    ])
+
+    expect(socket.closed).toEqual({
+      code: REALTIME_CLOSE_CODE.resync,
+      reason: "backpressure-drop",
+    })
+    expect(socket.getUserData().closed).toBe(true)
+    expect(socket.endCalls).toBe(1)
   })
 })

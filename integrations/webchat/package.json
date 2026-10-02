@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*"
   },
   "devDependencies": {

@@ -7,6 +7,14 @@ vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
 }))
 
+const { invalidateQueriesMock } = vi.hoisted(() => ({
+  invalidateQueriesMock: vi.fn(),
+}))
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
+  useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
+}))
+
 vi.mock("@/features/tenant", () => ({
   useTenantSettings: () => ({
     publicRealtimeUrl: "ws://realtime.test",

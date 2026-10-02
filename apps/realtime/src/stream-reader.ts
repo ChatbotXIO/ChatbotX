@@ -6,6 +6,7 @@ import {
   realtimeStreamRecordSchema,
 } from "@chatbotx.io/realtime-protocol"
 import type { Redis } from "@chatbotx.io/redis"
+import { logger } from "./logger"
 
 const STREAM_READ_BLOCK_MS = 1000
 const STREAM_READ_COUNT = 200
@@ -204,6 +205,10 @@ export const createStreamReader = ({
         activeShard.lastId = id
         const record = parseStreamRecord(fields)
         if (!record) {
+          logger.warn(
+            { id, streamKey },
+            "Ignoring malformed realtime stream entry",
+          )
           continue
         }
         const entry = { id, record }

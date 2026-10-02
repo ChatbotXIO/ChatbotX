@@ -8,6 +8,7 @@ import {
   RealtimeSocket,
   realtimeBatchEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   createContext,
   type ReactNode,
@@ -143,6 +144,7 @@ export function WorkspaceRealtimeProvider({
 }) {
   const workspaceId = useWorkspaceId()
   const { publicRealtimeUrl } = useTenantSettings()
+  const queryClient = useQueryClient()
   const listenersRef = useRef(
     new Map<RealtimeEventName, Set<ErasedRealtimeListener>>(),
   )
@@ -150,6 +152,7 @@ export function WorkspaceRealtimeProvider({
     useState<WorkspaceRealtimeConnectionStatus>("connecting")
   const [resyncCount, setResyncCount] = useState(0)
   const lastProcessedSeqRef = useRef<string | null>(null)
+  const hasConnectedOnceRef = useRef(false)
 
   const processRealtimeEvent = useCallback(
     (frame: { data: unknown; eventType: string }): void => {
@@ -255,6 +258,7 @@ export function WorkspaceRealtimeProvider({
   useEffect(() => {
     let disposed = false
     lastProcessedSeqRef.current = null
+    hasConnectedOnceRef.current = false
     setStatus("connecting")
     const socket = new RealtimeSocket({
       getUrl: async () => {
@@ -267,7 +271,15 @@ export function WorkspaceRealtimeProvider({
           publicRealtimeUrl,
         )
         socketUrl.searchParams.set("token", token)
-        const lastSeq = lastProcessedSeqRef.current
+        // A reconnect that never processed a single batch still has no
+        // cursor of its own — sending none would make the server treat it as
+        // a brand-new connection and skip replay entirely, silently losing
+        // whatever happened during the gap. `"0-0"` is a known-ancient
+        // cursor: the server resyncs us (closeReason) unless the stream is
+        // genuinely empty, which is exactly the safe behavior here.
+        const lastSeq =
+          lastProcessedSeqRef.current ??
+          (hasConnectedOnceRef.current ? "0-0" : null)
         if (lastSeq) {
           socketUrl.searchParams.set("lastSeq", lastSeq)
         }
@@ -281,12 +293,19 @@ export function WorkspaceRealtimeProvider({
           code === REALTIME_CLOSE_CODE.revoked ? "closed" : "connecting",
         )
       },
+      onError: (error) => {
+        if (!disposed) {
+          logger.warn({ err: error }, "Workspace realtime connection failed")
+        }
+      },
       onMessage: processSocketMessage,
       onOpen: () => {
+        hasConnectedOnceRef.current = true
         setStatus("open")
       },
       onResync: () => {
         if (!disposed) {
+          lastProcessedSeqRef.current = null
           setResyncCount((count) => count + 1)
           setStatus("resyncing")
         }
@@ -310,6 +329,17 @@ export function WorkspaceRealtimeProvider({
       socket.close()
     }
   }, [processSocketMessage, publicRealtimeUrl, workspaceId])
+
+  // A resync means the client may have missed events outside this file's own
+  // listeners (e.g. contacts/inbox lists cached by other TanStack consumers)
+  // — invalidate everything so every cached view, not just chat, refetches
+  // instead of silently drifting (AGENTS.md invariant #21).
+  useEffect(() => {
+    if (resyncCount === 0) {
+      return
+    }
+    queryClient.invalidateQueries()
+  }, [resyncCount, queryClient])
 
   const subscribe = useCallback<WorkspaceRealtimeSubscribe>(
     (eventType, listener) => {

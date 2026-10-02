@@ -32,6 +32,7 @@ export const createWebchatFrameHandler = (handlers: {
       }
       const batch = realtimeBatchEnvelopeSchema.safeParse(parsed)
       if (!batch.success) {
+        handlers.onParseError(batch.error)
         return
       }
       const { seq } = batch.data

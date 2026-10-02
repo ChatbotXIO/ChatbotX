@@ -62,4 +62,47 @@ describe("loadReplay", () => {
     })
     expect(redis.xrange).toHaveBeenCalledTimes(3)
   })
+
+  test("requires resync when the cursor-less sentinel is sent against a stream with retained history", async () => {
+    const redis = {
+      xrange: vi.fn().mockResolvedValue([["5-0", []]]),
+      xrevrange: vi.fn().mockResolvedValue([["5-0", []]]),
+    }
+
+    const replay = await loadReplay({
+      lastSeq: "0-0",
+      redis: redis as never,
+      workspaceId: "workspace-1",
+    })
+
+    expect(replay).toEqual({
+      closeReason: "replay-window-expired",
+      entries: [],
+    })
+  })
+
+  test("does not resync the cursor-less sentinel against a genuinely empty stream", async () => {
+    const redis = {
+      xrange: vi.fn().mockResolvedValue([]),
+      xrevrange: vi.fn().mockResolvedValue([]),
+    }
+
+    const replay = await loadReplay({
+      lastSeq: "0-0",
+      redis: redis as never,
+      workspaceId: "workspace-1",
+    })
+
+    expect(replay.closeReason).toBeUndefined()
+    expect(replay.entries).toEqual([])
+  })
+
+  // The per-workspace/per-guest/guest-pool connection caps, the
+  // connectionLifetimeMs force-close timer, and the `activated`-flag release
+  // guard all live inside createRealtimeGateway's app.ws() upgrade/open/close
+  // handlers, which only run against a live uWS socket (upgrade/open/close
+  // are driven by uWebSockets.js itself, not callable directly). Exercising
+  // them would require a real listening gateway plus a WebSocket client and
+  // a Redis instance, none of which this package has as a dependency or
+  // convention today, so that behavior isn't covered here.
 })

@@ -983,7 +983,12 @@ export async function sendFlowStep({
             eventType: RealtimeEventType.messageCreated,
             data: message,
           },
-        ),
+        ).catch((error) => {
+          logger.error(
+            { err: error, workspaceId: conversation.workspaceId },
+            "Failed to publish guest realtime event for flow step",
+          )
+        }),
       )
     }
 

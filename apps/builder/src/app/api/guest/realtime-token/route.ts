@@ -1,4 +1,5 @@
 import {
+  contactInboxService,
   integrationWebchatService,
   resolveBroadcastSecret,
 } from "@chatbotx.io/business"
@@ -12,6 +13,10 @@ import { z } from "zod"
 import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
 import { zodGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
+import {
+  checkGuestRateLimit,
+  getGuestClientIp,
+} from "@/lib/rate-limit/guest-rate-limit"
 
 const workspaceGuestConversationPrefix = (workspaceId: string): string =>
   `${workspaceId}:`
@@ -34,20 +39,49 @@ export const POST = async (request: NextRequest) => {
 
   const { guestConversationId, parentOrigin, webchatId, workspaceId } =
     input.data
-  if (
-    guestConversationId.includes(":") &&
-    !guestConversationId.startsWith(
-      workspaceGuestConversationPrefix(workspaceId),
-    )
-  ) {
-    return new NextResponse(null, { status: 400 })
+
+  const rateLimit = await checkGuestRateLimit({
+    clientIp: getGuestClientIp(request.headers),
+    guestConversationId,
+    webchatId,
+  })
+  if (rateLimit.limited) {
+    return new NextResponse(null, {
+      headers: { "Retry-After": String(rateLimit.retryAfter) },
+      status: 429,
+    })
   }
+
   const webchat = await integrationWebchatService.findByIdForWorkspaceOrNull({
     id: webchatId,
     workspaceId,
   })
   if (!webchat) {
     return new NextResponse(null, { status: 404 })
+  }
+
+  if (guestConversationId.includes(":")) {
+    if (
+      !guestConversationId.startsWith(
+        workspaceGuestConversationPrefix(workspaceId),
+      )
+    ) {
+      return new NextResponse(null, { status: 400 })
+    }
+  } else {
+    // Legacy digits-only ids predate the workspace-prefixed scheme and carry
+    // no proof on their face of which workspace they belong to — an
+    // enumerable Snowflake id minted for another tenant's conversation would
+    // otherwise mint a valid realtime token here too. Require the
+    // conversation to actually exist under this workspace's webchat inbox.
+    const ownedConversation = await contactInboxService.findLatestBySource({
+      inboxId: webchat.inboxId,
+      sourceId: guestConversationId,
+      workspaceId,
+    })
+    if (!ownedConversation) {
+      return new NextResponse(null, { status: 404 })
+    }
   }
 
   const { authorized: tokenAuthorized } = await verifyWebchatAccessToken({

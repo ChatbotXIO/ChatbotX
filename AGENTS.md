@@ -19,7 +19,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `apps/builder`    | **Next.js** web app (product UI). Default dev URL often `http://localhost:3123` (see `.env.example`).                   |
 | `apps/worker`     | **BullMQ** (and related) background jobs: chat, AI, triggers, webhooks, analytics, sequences.                           |
-| `apps/realtime`   | Realtime server; builder exposes `NEXT_PUBLIC_REALTIME_URL` (e.g. `http://localhost:1999`).                             |
+| `apps/realtime`   | Realtime server; builder exposes `REALTIME_PROXY_URL` (e.g. `http://localhost:1999`).                                  |
 | `apps/cli`        | Command-line client (`chatbotx`).                                                                                       |
 | `apps/mcp-server` | MCP server exposing public API surfaces.                                                                                |
 | `apps/javascript-executor` | Internal HTTP service that executes flow-step JavaScript in isolated-vm.                                      |

@@ -25,17 +25,13 @@ export const RealtimeEventType = {
  * envelope; consumers validate event data against their event-specific schema.
  */
 
-export type RealtimeEventRoute = {
-  assignedTeamIds: string[]
-  assignedUserIds: string[]
-  inboxId?: string
-}
-
 export const realtimeEventRouteSchema = z.object({
   assignedTeamIds: z.array(z.string()).default([]),
   assignedUserIds: z.array(z.string()),
   inboxId: z.string().optional(),
 })
+
+export type RealtimeEventRoute = z.infer<typeof realtimeEventRouteSchema>
 
 export const routeForConversation = ({
   assignedInboxTeamId,

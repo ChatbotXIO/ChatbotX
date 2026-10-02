@@ -4,7 +4,7 @@ import {
   contactInboxService,
   conversationService,
   messageService,
-  publishWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
@@ -50,7 +50,7 @@ export const deleteMessage = async (props: {
   })
   const messageIds = deleted.map((row) => row.id)
 
-  await publishWorkspaceRealtimeEvent(workspaceId, {
+  queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
   })

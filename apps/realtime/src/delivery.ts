@@ -1,11 +1,13 @@
 import {
   REALTIME_CLOSE_CODE,
+  type RealtimeEventRoute,
   type RealtimeMemberClaims,
   type RealtimeStreamRecord,
 } from "@chatbotx.io/realtime-protocol"
 import type { RealtimeServerCounters } from "./lib/realtime-metrics"
 
 export type WorkspaceSocketData = RealtimeMemberClaims & {
+  activated?: boolean
   closeReason?: string
   closed: boolean
   overloadRetryAfterMs?: number
@@ -39,10 +41,7 @@ type PublishApp = {
 }
 
 type WorkspaceEvent = {
-  route?: {
-    assignedTeamIds: string[]
-    assignedUserIds: string[]
-  }
+  route?: RealtimeEventRoute
 }
 
 const memberKey = (workspaceId: string, userId: string): string =>
@@ -92,6 +91,7 @@ export type RealtimeDelivery = {
   removeWorkspaceSocket: (socket: WorkspaceSocket) => boolean
   replayGuestSocket: (
     socket: {
+      end: (code?: number, reason?: string) => void
       getUserData: () => GuestSocketData
       send: (data: string) => number
     },
@@ -122,15 +122,30 @@ export const createRealtimeDelivery = (
   }
 
   const recordSend = (
-    socket: { send: (data: string) => number },
+    socket: {
+      end: (code?: number, reason?: string) => void
+      getUserData: () => { closed: boolean }
+      send: (data: string) => number
+    },
     frame: string,
   ): void => {
     const result = socket.send(frame)
     counters.sends += 1
     counters.sendBytes += frame.length
-    if (result === 2) {
-      counters.drops += 1
+    if (result !== 2) {
+      return
     }
+    // uWS returned "dropped" (backpressure/connection gone): the client is
+    // now missing this event and has no way to detect the gap on its own.
+    // Force a resync close so it reconnects and gets a fresh replay instead
+    // of silently running with a hole in its event stream.
+    counters.drops += 1
+    const socketData = socket.getUserData()
+    if (socketData.closed) {
+      return
+    }
+    socketData.closed = true
+    socket.end(REALTIME_CLOSE_CODE.resync, "backpressure-drop")
   }
 
   const sendWorkspaceRecord = (
@@ -201,7 +216,7 @@ export const createRealtimeDelivery = (
       }
       case "guest-event":
         recordPublish(
-          `guest:${record.guestConversationId}`,
+          `guest:${record.workspaceId}:${record.guestConversationId}`,
           encodeBatch([record.event], entry.id),
         )
         return
@@ -324,8 +339,9 @@ export const createRealtimeDelivery = (
       return true
     },
     subscribeGuestSocket: (socket) => {
+      const { guestConversationId, workspaceId } = socket.getUserData()
       socket.subscribe("hb")
-      socket.subscribe(`guest:${socket.getUserData().guestConversationId}`)
+      socket.subscribe(`guest:${workspaceId}:${guestConversationId}`)
     },
     subscribeWorkspaceSocket: (socket) => {
       socket.subscribe("hb")

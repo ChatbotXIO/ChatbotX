@@ -337,7 +337,7 @@ const notifyRungAgentsIfEnded = async (input: {
       status,
     },
   }
-  await Promise.all(
+  const results = await Promise.allSettled(
     input.targets.map((userId) =>
       publishWorkspaceMemberRealtimeEvent(
         { workspaceId: input.workspaceId, userId },
@@ -345,6 +345,19 @@ const notifyRungAgentsIfEnded = async (input: {
       ),
     ),
   )
+  for (const [index, result] of results.entries()) {
+    if (result.status === "rejected") {
+      logger.warn(
+        {
+          err: result.reason,
+          userId: input.targets[index],
+          workspaceId: input.workspaceId,
+          wacid: input.wacid,
+        },
+        "Whatsapp VoIP: unable to publish the ended event to a previously rung agent",
+      )
+    }
+  }
 }
 
 /**

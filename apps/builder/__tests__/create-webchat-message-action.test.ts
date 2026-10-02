@@ -118,7 +118,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }

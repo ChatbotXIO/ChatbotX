@@ -1,23 +1,32 @@
 import type { MessageHandlers } from "@chatbotx.io/sdk"
+import { logger } from "../lib/logger"
 import type { WebchatAuthValue } from "../schema"
 
-export const sendMessage: MessageHandlers<WebchatAuthValue>["sendMessage"] =
-  async (props) => {
-    const {
-      ctx,
-      data: { contact, message },
-    } = props
+export const sendMessage: MessageHandlers<WebchatAuthValue>["sendMessage"] = (
+  props,
+) => {
+  const {
+    ctx,
+    data: { contact, message },
+  } = props
 
-    await ctx.platform.publishGuestRealtimeEvent(contact.sourceId, {
+  ctx.platform
+    .publishGuestRealtimeEvent(contact.sourceId, {
       eventType: "messageCreated",
       data: message,
     })
+    .catch((error: unknown) => {
+      logger.error(
+        { err: error, contactSourceId: contact.sourceId },
+        "Failed to publish guest realtime event",
+      )
+    })
 
-    return {
-      messageIds: [],
-      sentCount: 1,
-    }
-  }
+  return Promise.resolve({
+    messageIds: [],
+    sentCount: 1,
+  })
+}
 
 // Delivered by the worker itself through the guest realtime stream
 // (`send-flow-step.ts` → `publishGuestRealtimeEvent`), not by this handler —

@@ -19,7 +19,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
   contactInboxService: { findBy: mockContactInboxFindBy },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
   messageService: {

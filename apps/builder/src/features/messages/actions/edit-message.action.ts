@@ -4,7 +4,7 @@ import {
   contactInboxService,
   conversationService,
   messageService,
-  publishWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getImageDimensions, uploader } from "@chatbotx.io/filesystem"
@@ -116,7 +116,7 @@ export const editMessage = async (props: {
     })
   }
 
-  await publishWorkspaceRealtimeEvent(workspaceId, {
+  queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageUpdated,
     data: {
       messageId,
