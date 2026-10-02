@@ -1,0 +1,904 @@
+import uWS from "uWebSockets.js"
+import {
+  getRealtimeMemberRevokedKey,
+  getRealtimeStreamShard,
+  REALTIME_CLOSE_CODE,
+  type RealtimeGuestClaims,
+  type RealtimeMemberClaims,
+  verifyGuestConnectToken,
+  verifyMemberConnectToken,
+} from "@chatbotx.io/realtime-protocol"
+import { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/realtime-protocol/presence"
+import type { Redis } from "@chatbotx.io/redis"
+import {
+  createRealtimeDelivery,
+  type GuestSocketData,
+  type WorkspaceSocketData,
+} from "./delivery"
+import { decrementKeyedCount, incrementKeyedCount } from "./lib/keyed-count"
+import { reportWorkspacePresence } from "./lib/presence-report"
+import {
+  createRealtimeServerCounters,
+  REALTIME_METRIC_WINDOW_MS,
+  recordRealtimeServerWindow,
+} from "./lib/realtime-metrics"
+import { logger } from "./logger"
+import { loadReplay } from "./replay"
+import { createStreamReader } from "./stream-reader"
+
+const SLOW_CONSUMER_BUFFER_BYTES = 512_000
+const PRESENCE_REPORT_CONCURRENCY = 16
+const PRESENCE_REPORT_COALESCE_MS = 1000
+const OVERLOAD_RETRY_AFTER_MIN_MS = 1000
+const OVERLOAD_RETRY_AFTER_SPREAD_MS = 4000
+/** Guest pool ceiling when the caller doesn't pass one explicitly (tests). */
+const DEFAULT_GUEST_CONNECTION_SHARE = 0.8
+const DEFAULT_MAX_CONNECTIONS_PER_WORKSPACE = 500
+const DEFAULT_MAX_CONNECTIONS_PER_GUEST = 5
+/** Caps one workspace's *total* guest connections (across every distinct
+ * `guestConversationId`) well below the global guest pool, so one tenant's
+ * webchat traffic spike can't exhaust `maxGuestConnections` for everyone
+ * else. `maxConnectionsPerGuest` alone doesn't bound this: it only limits
+ * one guest conversation, not how many distinct conversations a single
+ * workspace can open. */
+const DEFAULT_MAX_GUEST_CONNECTIONS_PER_WORKSPACE = 1000
+/** Forces every connection to periodically re-handshake (fresh token mint,
+ * re-checked membership/permissions) instead of living forever once open —
+ * the only way a revoked member, a disabled support-access session, or an
+ * expired grant stops receiving events short of an explicit revoke event. */
+const DEFAULT_CONNECTION_LIFETIME_MS = 30 * 60 * 1000
+/** Spread applied to `connectionLifetimeMs` so every socket opened around
+ * the same time (e.g. right after a deploy) doesn't reauth-close in
+ * lockstep — a thundering herd of simultaneous reconnects across every tab
+ * in every workspace. See PR #1349 advisory. */
+const CONNECTION_LIFETIME_JITTER_RATIO = 0.15
+
+/**
+ * Jittered retry hint for an overloaded connection. The spread keeps a mass
+ * reconnect from re-arriving in lockstep; the client uses this value verbatim.
+ */
+const nextOverloadRetryAfterMs = (): number =>
+  OVERLOAD_RETRY_AFTER_MIN_MS +
+  Math.floor(Math.random() * OVERLOAD_RETRY_AFTER_SPREAD_MS)
+
+export type RealtimeGateway = {
+  close: () => Promise<void>
+  /** Resolves with the actual bound port — useful for `port: 0` (OS-assigned). */
+  listen: (host: string, port: number) => Promise<number>
+}
+
+export const createRealtimeGateway = ({
+  connectionLifetimeMs = DEFAULT_CONNECTION_LIFETIME_MS,
+  maxConnections,
+  maxConnectionsPerGuest = DEFAULT_MAX_CONNECTIONS_PER_GUEST,
+  maxConnectionsPerWorkspace = DEFAULT_MAX_CONNECTIONS_PER_WORKSPACE,
+  maxGuestConnections = Math.floor(
+    maxConnections * DEFAULT_GUEST_CONNECTION_SHARE,
+  ),
+  maxGuestConnectionsPerWorkspace = DEFAULT_MAX_GUEST_CONNECTIONS_PER_WORKSPACE,
+  presenceReportIntervalMs = PRESENCE_REPORT_INTERVAL_MS,
+  redis,
+  secret,
+}: {
+  connectionLifetimeMs?: number
+  maxConnections: number
+  maxConnectionsPerGuest?: number
+  maxConnectionsPerWorkspace?: number
+  maxGuestConnections?: number
+  maxGuestConnectionsPerWorkspace?: number
+  /** Overridable only for tests — production always uses the shared
+   * protocol constant so it can never drift from `PRESENCE_TTL_MS`. */
+  presenceReportIntervalMs?: number
+  redis: Redis
+  secret: string
+}): RealtimeGateway => {
+  const app = uWS.App()
+  const counters = createRealtimeServerCounters()
+  const delivery = createRealtimeDelivery(app, counters)
+  const connectedUsersByWorkspace = new Map<string, Set<string>>()
+  const presenceTimers = new Map<string, NodeJS.Timeout>()
+  // Reserves headroom for members: guests draw from their own sub-pool
+  // (`maxGuestConnections`, strictly below `maxConnections`) so a guest-side
+  // flood can never consume every slot a member needs to connect.
+  let activeGuestConnections = 0
+  let pendingGuestUpgrades = 0
+  const memberConnectionCountByWorkspace = new Map<string, number>()
+  // Pending (not-yet-open) upgrades per key, incremented synchronously next
+  // to the capacity check and before the `await` that lets concurrent
+  // upgrades for the same key race past it — without this, a burst of
+  // parallel connects all read the same pre-upgrade count and all pass.
+  // See PR #1349 finding #3.
+  const memberPendingUpgradesByWorkspace = new Map<string, number>()
+  const guestConnectionCountByKey = new Map<string, number>()
+  const guestConnectionCountByWorkspace = new Map<string, number>()
+  const guestPendingUpgradesByKey = new Map<string, number>()
+  const guestPendingUpgradesByWorkspace = new Map<string, number>()
+  const workspaceLifetimeTimers = new WeakMap<
+    WorkspaceSocketData,
+    NodeJS.Timeout
+  >()
+  const guestLifetimeTimers = new WeakMap<GuestSocketData, NodeJS.Timeout>()
+  const jitteredConnectionLifetimeMs = (): number =>
+    connectionLifetimeMs +
+    Math.floor(
+      (Math.random() * 2 - 1) *
+        connectionLifetimeMs *
+        CONNECTION_LIFETIME_JITTER_RATIO,
+    )
+  let heartbeat: NodeJS.Timeout | undefined
+  let presenceHeartbeat: NodeJS.Timeout | undefined
+  let metricsTimer: NodeJS.Timeout | undefined
+  let ready = false
+  let stopped = false
+  let activeConnections = 0
+  let pendingUpgrades = 0
+  let peakConnections = 0
+  let windowStartedAt = Date.now()
+
+  const guestConnectionKey = (
+    workspaceId: string,
+    guestConversationId: string,
+  ): string => `${workspaceId}:${guestConversationId}`
+
+  // A bad secret or clock skew would otherwise fire a bare, silent `catch`
+  // per rejected connect — invisible in logs and, under a credential-rotation
+  // bug or a misconfigured client, log-spamming at full connection-attempt
+  // volume. Coalesce to one `err`-carrying warn per window instead. See
+  // PR #1349 finding #8.
+  const TOKEN_REJECTION_LOG_WINDOW_MS = 10_000
+  let lastTokenRejectionLogAt = 0
+  let suppressedTokenRejectionCount = 0
+  const logTokenRejection = (
+    context: Record<string, unknown>,
+    error: unknown,
+  ): void => {
+    const now = Date.now()
+    if (now - lastTokenRejectionLogAt < TOKEN_REJECTION_LOG_WINDOW_MS) {
+      suppressedTokenRejectionCount += 1
+      return
+    }
+    const suppressed = suppressedTokenRejectionCount
+    suppressedTokenRejectionCount = 0
+    lastTokenRejectionLogAt = now
+    logger.warn(
+      { err: error, suppressed, ...context },
+      "Realtime connect token verification failed",
+    )
+  }
+
+  const reportLocalPresence = async (workspaceIds: string[]): Promise<void> => {
+    for (
+      let index = 0;
+      index < workspaceIds.length;
+      index += PRESENCE_REPORT_CONCURRENCY
+    ) {
+      await Promise.all(
+        workspaceIds
+          .slice(index, index + PRESENCE_REPORT_CONCURRENCY)
+          .map(
+            async (workspaceId) =>
+              await reportWorkspacePresence(workspaceId, [
+                ...(connectedUsersByWorkspace.get(workspaceId) ?? []),
+              ]),
+          ),
+      )
+    }
+  }
+
+  const markPresenceDirty = (workspaceId: string): void => {
+    const existingTimer = presenceTimers.get(workspaceId)
+    if (existingTimer) {
+      clearTimeout(existingTimer)
+    }
+    presenceTimers.set(
+      workspaceId,
+      setTimeout(() => {
+        presenceTimers.delete(workspaceId)
+        reportLocalPresence([workspaceId]).catch((error) => {
+          logger.error(
+            { err: error, workspaceId },
+            "Failed to report workspace presence",
+          )
+        })
+      }, PRESENCE_REPORT_COALESCE_MS),
+    )
+  }
+
+  const allConnectedWorkspaceIds = (): Set<string> => {
+    const workspaceIds = new Set<string>()
+    for (const workspaceId of memberConnectionCountByWorkspace.keys()) {
+      workspaceIds.add(workspaceId)
+    }
+    for (const workspaceId of guestConnectionCountByWorkspace.keys()) {
+      workspaceIds.add(workspaceId)
+    }
+    return workspaceIds
+  }
+
+  /** Resyncs every locally-connected workspace that hashes to `shard` —
+   * used when an invalid stream record couldn't even yield a `workspaceId`
+   * (so `delivery.resyncWorkspace` has no single workspace to target): every
+   * workspace sharing that shard has an unconfirmed gap. See PR #1349
+   * round-4 finding (invalid record with no workspaceId). */
+  const resyncShard = (shard: number, reason: string): void => {
+    for (const workspaceId of allConnectedWorkspaceIds()) {
+      if (getRealtimeStreamShard(workspaceId) === shard) {
+        delivery.resyncWorkspace(workspaceId, reason)
+      }
+    }
+  }
+
+  /** Resyncs every locally-connected workspace regardless of shard — used
+   * when the stream reader's single Redis connection recovers from an
+   * error: that one connection blocks on every active shard at once, so a
+   * failed read is a gap for ALL of them, not just one. See PR #1349
+   * round-4 finding (Redis outage). */
+  const resyncAllWorkspaces = (reason: string): void => {
+    for (const workspaceId of allConnectedWorkspaceIds()) {
+      delivery.resyncWorkspace(workspaceId, reason)
+    }
+  }
+
+  const streamReader = createStreamReader({
+    onEntries: (entries) => {
+      counters.records += entries.length
+      for (const entry of entries) {
+        // One malformed/unexpected record must not take the rest of this
+        // batch down with it: `dispatchEntries` already advanced the shard's
+        // `lastId` past every entry here, so a throw escaping this loop would
+        // both lose every entry after the failing one (they'll never be
+        // replayed — the cursor has already moved past them) and flip
+        // `ready = false` for the whole process via `onError` below.
+        try {
+          delivery.dispatch(entry)
+        } catch (error) {
+          logger.error(
+            { err: error, id: entry.id, kind: entry.record.kind },
+            "Failed to dispatch realtime stream entry",
+          )
+        }
+      }
+    },
+    onError: (error) => {
+      ready = false
+      if (!stopped) {
+        logger.error({ err: error }, "Realtime Redis Streams reader failed")
+      }
+    },
+    onInvalidRecord: ({ shard, workspaceId }) => {
+      counters.malformedRecords += 1
+      if (workspaceId) {
+        delivery.resyncWorkspace(workspaceId, "malformed-stream-record")
+        return
+      }
+      resyncShard(shard, "malformed-stream-record")
+    },
+    onReady: () => {
+      ready = true
+    },
+    onRecovered: () => {
+      if (!stopped) {
+        resyncAllWorkspaces("stream-reader-recovered")
+      }
+    },
+    redis,
+  })
+
+  const flushMetrics = (): void => {
+    recordRealtimeServerWindow({
+      ...counters,
+      connections: activeConnections,
+      maxConnections: peakConnections,
+      shards: streamReader.activeShardCount(),
+      windowStartedAt,
+    })
+    counters.drops = 0
+    counters.malformedRecords = 0
+    counters.overloadCloses = 0
+    counters.publishBytes = 0
+    counters.publishes = 0
+    counters.records = 0
+    counters.sendBytes = 0
+    counters.sends = 0
+    counters.tokenRejections = 0
+    counters.upgrades = 0
+    peakConnections = activeConnections
+    windowStartedAt = Date.now()
+  }
+
+  const addConnectedUser = (workspaceId: string, userId: string): void => {
+    const users =
+      connectedUsersByWorkspace.get(workspaceId) ?? new Set<string>()
+    users.add(userId)
+    connectedUsersByWorkspace.set(workspaceId, users)
+    markPresenceDirty(workspaceId)
+  }
+
+  const removeConnectedUser = (workspaceId: string, userId: string): void => {
+    const users = connectedUsersByWorkspace.get(workspaceId)
+    if (!users) {
+      return
+    }
+    users.delete(userId)
+    if (users.size === 0) {
+      connectedUsersByWorkspace.delete(workspaceId)
+    }
+    markPresenceDirty(workspaceId)
+  }
+
+  const registerWorkspaceSocket = (path: string): void => {
+    app.ws<WorkspaceSocketData>(path, {
+      closeOnBackpressureLimit: true,
+      idleTimeout: 60,
+      maxBackpressure: SLOW_CONSUMER_BUFFER_BYTES,
+      sendPingsAutomatically: true,
+      upgrade: (res, req, context) => {
+        let aborted = false
+        res.onAborted(() => {
+          aborted = true
+        })
+        const workspaceId = req.getParameter("workspaceId")
+        const token = req.getQuery("token")
+        const lastSeq = req.getQuery("lastSeq")
+        const websocketKey = req.getHeader("sec-websocket-key")
+        const websocketProtocol = req.getHeader("sec-websocket-protocol")
+        const websocketExtensions = req.getHeader("sec-websocket-extensions")
+        if (!(workspaceId && token)) {
+          counters.tokenRejections += 1
+          res.cork(() => {
+            res.writeStatus("401 Unauthorized").end()
+          })
+          return
+        }
+
+        ;(async () => {
+          let claims: RealtimeMemberClaims
+          try {
+            claims = await verifyMemberConnectToken(token, workspaceId, secret)
+          } catch (error) {
+            if (!aborted) {
+              counters.tokenRejections += 1
+              logTokenRejection({ workspaceId }, error)
+              res.cork(() => {
+                res.writeStatus("401 Unauthorized").end()
+              })
+            }
+            return
+          }
+
+          // Independent of whether this connect carries a `lastSeq`: a
+          // stream-entry-based revoke check only catches a revoke sitting
+          // *inside* the replayed window, so a connect with no `lastSeq` at
+          // all (e.g. every connect after a 4002 resync) used to skip the
+          // check entirely, letting a pre-revoke token that's still
+          // unexpired (the token TTL plus clock tolerance) connect. See
+          // PR #1349 round-4 finding #5.
+          const revokedAtRaw = await redis.get(
+            getRealtimeMemberRevokedKey(workspaceId, claims.userId),
+          )
+          if (revokedAtRaw && Number(revokedAtRaw) >= claims.iat * 1000) {
+            if (!aborted) {
+              counters.tokenRejections += 1
+              res.cork(() => {
+                res.writeStatus("401 Unauthorized").end()
+              })
+            }
+            return
+          }
+
+          const workspaceConnectionCount =
+            memberConnectionCountByWorkspace.get(workspaceId) ?? 0
+          const workspacePendingCount =
+            memberPendingUpgradesByWorkspace.get(workspaceId) ?? 0
+          const overloaded =
+            activeConnections + pendingUpgrades >= maxConnections ||
+            workspaceConnectionCount + workspacePendingCount >=
+              maxConnectionsPerWorkspace
+          if (overloaded) {
+            if (aborted) {
+              return
+            }
+            res.cork(() => {
+              res.upgrade(
+                {
+                  ...claims,
+                  closed: false,
+                  overloadRetryAfterMs: nextOverloadRetryAfterMs(),
+                  replayEntries: [],
+                  workspaceId,
+                },
+                websocketKey,
+                websocketProtocol,
+                websocketExtensions,
+                context,
+              )
+            })
+            pendingUpgrades += 1
+            return
+          }
+          pendingUpgrades += 1
+          incrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
+
+          let activated = false
+          try {
+            const activationLastId =
+              await streamReader.activateWorkspace(workspaceId)
+            activated = true
+            const replay = await loadReplay({ lastSeq, redis, workspaceId })
+            if (replay.droppedCount) {
+              counters.malformedRecords += replay.droppedCount
+            }
+            if (aborted) {
+              pendingUpgrades -= 1
+              decrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
+              streamReader.releaseWorkspace(workspaceId)
+              return
+            }
+            res.cork(() => {
+              res.upgrade(
+                {
+                  ...claims,
+                  activated,
+                  closeReason:
+                    replay.closeReason ??
+                    (replay.droppedCount
+                      ? "replay-entries-dropped"
+                      : undefined),
+                  closed: false,
+                  replayCutoff: replay.lastStreamId ?? activationLastId,
+                  replayEntries: replay.entries,
+                  workspaceId,
+                },
+                websocketKey,
+                websocketProtocol,
+                websocketExtensions,
+                context,
+              )
+            })
+          } catch (error) {
+            if (aborted) {
+              pendingUpgrades -= 1
+              decrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
+              if (activated) {
+                streamReader.releaseWorkspace(workspaceId)
+              }
+              return
+            }
+            logger.warn(
+              { err: error, workspaceId },
+              "Realtime socket replay failed",
+            )
+            res.cork(() => {
+              res.upgrade(
+                {
+                  ...claims,
+                  activated,
+                  closeReason: "replay-failed",
+                  closed: false,
+                  replayEntries: [],
+                  workspaceId,
+                },
+                websocketKey,
+                websocketProtocol,
+                websocketExtensions,
+                context,
+              )
+            })
+          }
+        })().catch((error) => {
+          logger.error(
+            { err: error, workspaceId },
+            "Unhandled workspace realtime upgrade failure",
+          )
+        })
+      },
+      open: (socket) => {
+        const socketData = socket.getUserData()
+        pendingUpgrades -= 1
+        if (socketData.overloadRetryAfterMs !== undefined) {
+          counters.overloadCloses += 1
+          socketData.closed = true
+          socket.end(
+            REALTIME_CLOSE_CODE.overloaded,
+            JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
+          )
+          return
+        }
+        activeConnections += 1
+        peakConnections = Math.max(peakConnections, activeConnections)
+        counters.upgrades += 1
+        decrementKeyedCount(
+          memberPendingUpgradesByWorkspace,
+          socketData.workspaceId,
+        )
+        incrementKeyedCount(
+          memberConnectionCountByWorkspace,
+          socketData.workspaceId,
+        )
+        const firstUserSocket = delivery.addWorkspaceSocket(socket)
+        delivery.subscribeWorkspaceSocket(socket)
+        if (socketData.closeReason) {
+          socketData.closed = true
+          socket.end(REALTIME_CLOSE_CODE.resync, socketData.closeReason)
+          return
+        }
+        if (!delivery.replayWorkspaceSocket(socket)) {
+          return
+        }
+        const gapEntries = streamReader
+          .getRecentEntries(socketData.workspaceId, socketData.replayCutoff)
+          .filter(
+            (entry) => entry.record.workspaceId === socketData.workspaceId,
+          )
+        if (!delivery.replayWorkspaceSocket(socket, gapEntries)) {
+          return
+        }
+        // Lets a reconnect that processes zero live batches during this
+        // connection's lifetime still have a real stream cursor instead of
+        // falling back to a synthetic `"0-0"` on its next reconnect — which
+        // would otherwise force a full `invalidateQueries()` resync on every
+        // quiet-tab lifetime rotation. See PR #1349 finding #2.
+        if (socketData.replayCutoff) {
+          delivery.sendCursor(socket, socketData.replayCutoff)
+        }
+        // Free the parsed replay payload (up to `MAX_REPLAY_ENTRIES` full
+        // events) once it's been used — it's otherwise retained for this
+        // socket's entire connection lifetime for no reason. See PR #1349
+        // finding #6.
+        socketData.replayEntries = []
+        socketData.replayCutoff = undefined
+        if (firstUserSocket) {
+          addConnectedUser(socketData.workspaceId, socketData.userId)
+        }
+        workspaceLifetimeTimers.set(
+          socketData,
+          setTimeout(() => {
+            if (socketData.closed) {
+              return
+            }
+            socketData.closed = true
+            socket.end(
+              REALTIME_CLOSE_CODE.reauth,
+              "connection-lifetime-exceeded",
+            )
+          }, jitteredConnectionLifetimeMs()),
+        )
+      },
+      close: (socket) => {
+        const socketData = socket.getUserData()
+        socketData.closed = true
+        if (socketData.overloadRetryAfterMs !== undefined) {
+          return
+        }
+        activeConnections -= 1
+        decrementKeyedCount(
+          memberConnectionCountByWorkspace,
+          socketData.workspaceId,
+        )
+        const lifetimeTimer = workspaceLifetimeTimers.get(socketData)
+        clearTimeout(lifetimeTimer)
+        workspaceLifetimeTimers.delete(socketData)
+        // Only release the shard this socket actually activated: if
+        // `activateWorkspace` itself threw during upgrade, `activated` stays
+        // false and this socket never incremented the shard's `socketCount`
+        // — releasing here would underflow it and deactivate a shard other
+        // live sockets still depend on.
+        if (socketData.activated) {
+          streamReader.releaseWorkspace(socketData.workspaceId)
+        }
+        if (delivery.removeWorkspaceSocket(socket)) {
+          removeConnectedUser(socketData.workspaceId, socketData.userId)
+        }
+      },
+    })
+  }
+
+  const registerGuestSocket = (path: string): void => {
+    app.ws<GuestSocketData>(path, {
+      closeOnBackpressureLimit: true,
+      idleTimeout: 60,
+      maxBackpressure: SLOW_CONSUMER_BUFFER_BYTES,
+      sendPingsAutomatically: true,
+      upgrade: (res, req, context) => {
+        let aborted = false
+        res.onAborted(() => {
+          aborted = true
+        })
+        const guestConversationId = req.getParameter("guestConversationId")
+        const token = req.getQuery("token")
+        const websocketKey = req.getHeader("sec-websocket-key")
+        const websocketProtocol = req.getHeader("sec-websocket-protocol")
+        const websocketExtensions = req.getHeader("sec-websocket-extensions")
+        if (!(guestConversationId && token)) {
+          counters.tokenRejections += 1
+          res.cork(() => {
+            res.writeStatus("401 Unauthorized").end()
+          })
+          return
+        }
+
+        ;(async () => {
+          let claims: RealtimeGuestClaims
+          try {
+            claims = await verifyGuestConnectToken(
+              token,
+              guestConversationId,
+              secret,
+            )
+          } catch (error) {
+            if (!aborted) {
+              counters.tokenRejections += 1
+              logTokenRejection({ guestConversationId }, error)
+              res.cork(() => {
+                res.writeStatus("401 Unauthorized").end()
+              })
+            }
+            return
+          }
+
+          const guestKey = guestConnectionKey(
+            claims.workspaceId,
+            guestConversationId,
+          )
+          const guestConnectionCount =
+            guestConnectionCountByKey.get(guestKey) ?? 0
+          const guestPendingCount = guestPendingUpgradesByKey.get(guestKey) ?? 0
+          const workspaceGuestConnectionCount =
+            guestConnectionCountByWorkspace.get(claims.workspaceId) ?? 0
+          const workspaceGuestPendingCount =
+            guestPendingUpgradesByWorkspace.get(claims.workspaceId) ?? 0
+          const overloaded =
+            activeConnections + pendingUpgrades >= maxConnections ||
+            activeGuestConnections + pendingGuestUpgrades >=
+              maxGuestConnections ||
+            guestConnectionCount + guestPendingCount >=
+              maxConnectionsPerGuest ||
+            workspaceGuestConnectionCount + workspaceGuestPendingCount >=
+              maxGuestConnectionsPerWorkspace
+          if (overloaded) {
+            if (aborted) {
+              return
+            }
+            res.cork(() => {
+              res.upgrade(
+                {
+                  ...claims,
+                  closed: false,
+                  overloadRetryAfterMs: nextOverloadRetryAfterMs(),
+                  replayCutoff: "0-0",
+                  replayEntries: [],
+                },
+                websocketKey,
+                websocketProtocol,
+                websocketExtensions,
+                context,
+              )
+            })
+            pendingUpgrades += 1
+            pendingGuestUpgrades += 1
+            return
+          }
+          pendingUpgrades += 1
+          pendingGuestUpgrades += 1
+          incrementKeyedCount(guestPendingUpgradesByKey, guestKey)
+          incrementKeyedCount(
+            guestPendingUpgradesByWorkspace,
+            claims.workspaceId,
+          )
+
+          let activated = false
+          try {
+            const activationLastId = await streamReader.activateWorkspace(
+              claims.workspaceId,
+            )
+            activated = true
+            if (aborted) {
+              pendingUpgrades -= 1
+              pendingGuestUpgrades -= 1
+              decrementKeyedCount(guestPendingUpgradesByKey, guestKey)
+              decrementKeyedCount(
+                guestPendingUpgradesByWorkspace,
+                claims.workspaceId,
+              )
+              streamReader.releaseWorkspace(claims.workspaceId)
+              return
+            }
+            res.cork(() => {
+              res.upgrade(
+                {
+                  ...claims,
+                  closed: false,
+                  replayCutoff: activationLastId,
+                  replayEntries: [],
+                },
+                websocketKey,
+                websocketProtocol,
+                websocketExtensions,
+                context,
+              )
+            })
+          } catch (error) {
+            pendingUpgrades -= 1
+            pendingGuestUpgrades -= 1
+            decrementKeyedCount(guestPendingUpgradesByKey, guestKey)
+            decrementKeyedCount(
+              guestPendingUpgradesByWorkspace,
+              claims.workspaceId,
+            )
+            // `res.upgrade()` above can itself throw (a known uWS footgun
+            // when the response aborts mid-call) *after* activation already
+            // incremented the shard's `socketCount` — without this, that
+            // socketCount would never come back down, pinning the shard's
+            // XREAD active forever. See PR #1349 finding #10.
+            if (activated) {
+              streamReader.releaseWorkspace(claims.workspaceId)
+            }
+            if (aborted) {
+              return
+            }
+            logger.warn(
+              { err: error, guestConversationId },
+              "Realtime guest socket activation failed",
+            )
+            res.cork(() => {
+              res.writeStatus("401 Unauthorized").end()
+            })
+          }
+        })().catch((error) => {
+          logger.error(
+            { err: error, guestConversationId },
+            "Unhandled guest realtime upgrade failure",
+          )
+        })
+      },
+      open: (socket) => {
+        const socketData = socket.getUserData()
+        pendingUpgrades -= 1
+        pendingGuestUpgrades -= 1
+        if (socketData.overloadRetryAfterMs !== undefined) {
+          counters.overloadCloses += 1
+          socketData.closed = true
+          socket.end(
+            REALTIME_CLOSE_CODE.overloaded,
+            JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
+          )
+          return
+        }
+        activeConnections += 1
+        activeGuestConnections += 1
+        peakConnections = Math.max(peakConnections, activeConnections)
+        counters.upgrades += 1
+        decrementKeyedCount(
+          guestPendingUpgradesByKey,
+          guestConnectionKey(
+            socketData.workspaceId,
+            socketData.guestConversationId,
+          ),
+        )
+        decrementKeyedCount(
+          guestPendingUpgradesByWorkspace,
+          socketData.workspaceId,
+        )
+        incrementKeyedCount(
+          guestConnectionCountByKey,
+          guestConnectionKey(
+            socketData.workspaceId,
+            socketData.guestConversationId,
+          ),
+        )
+        incrementKeyedCount(
+          guestConnectionCountByWorkspace,
+          socketData.workspaceId,
+        )
+        delivery.addGuestSocket(socket)
+        delivery.subscribeGuestSocket(socket)
+        delivery.replayGuestSocket(socket)
+        const gapEntries = streamReader
+          .getRecentEntries(socketData.workspaceId, socketData.replayCutoff)
+          .filter(
+            (entry) =>
+              entry.record.kind === "guest-event" &&
+              entry.record.workspaceId === socketData.workspaceId &&
+              entry.record.guestConversationId ===
+                socketData.guestConversationId,
+          )
+        delivery.replayGuestSocket(socket, gapEntries)
+        // See PR #1349 finding #6 — same rationale as the workspace socket.
+        socketData.replayEntries = []
+        guestLifetimeTimers.set(
+          socketData,
+          setTimeout(() => {
+            if (socketData.closed) {
+              return
+            }
+            socketData.closed = true
+            socket.end(
+              REALTIME_CLOSE_CODE.reauth,
+              "connection-lifetime-exceeded",
+            )
+          }, jitteredConnectionLifetimeMs()),
+        )
+      },
+      close: (socket) => {
+        const socketData = socket.getUserData()
+        socketData.closed = true
+        if (socketData.overloadRetryAfterMs !== undefined) {
+          return
+        }
+        activeConnections -= 1
+        activeGuestConnections -= 1
+        decrementKeyedCount(
+          guestConnectionCountByKey,
+          guestConnectionKey(
+            socketData.workspaceId,
+            socketData.guestConversationId,
+          ),
+        )
+        decrementKeyedCount(
+          guestConnectionCountByWorkspace,
+          socketData.workspaceId,
+        )
+        const lifetimeTimer = guestLifetimeTimers.get(socketData)
+        clearTimeout(lifetimeTimer)
+        guestLifetimeTimers.delete(socketData)
+        delivery.removeGuestSocket(socket)
+        streamReader.releaseWorkspace(socketData.workspaceId)
+      },
+    })
+  }
+
+  app.get("/health", (res) => {
+    res.end("ok")
+  })
+  app.get("/ready", (res) => {
+    if (!ready) {
+      res.writeStatus("503 Service Unavailable").end("not ready")
+      return
+    }
+    res.end("ready")
+  })
+  registerWorkspaceSocket("/rt/workspaces/:workspaceId")
+  registerGuestSocket("/rt/guests/:guestConversationId")
+
+  return {
+    close: async () => {
+      stopped = true
+      ready = false
+      clearInterval(heartbeat)
+      clearInterval(presenceHeartbeat)
+      clearInterval(metricsTimer)
+      for (const timer of presenceTimers.values()) {
+        clearTimeout(timer)
+      }
+      presenceTimers.clear()
+      app.close()
+      await streamReader.close()
+      redis.disconnect()
+    },
+    listen: async (host, port) => {
+      const { promise, reject, resolve } = Promise.withResolvers<number>()
+      app.listen(host, port, (listenSocket) => {
+        if (!listenSocket) {
+          reject(new Error(`Unable to listen on ${host}:${port}`))
+          return
+        }
+        resolve(uWS.us_socket_local_port(listenSocket))
+      })
+      const boundPort = await promise
+      ready = true
+      heartbeat = setInterval(() => {
+        app.publish("hb", JSON.stringify({ hb: 1 }))
+      }, 25_000)
+      presenceHeartbeat = setInterval(() => {
+        reportLocalPresence([...connectedUsersByWorkspace.keys()]).catch(
+          (error) => {
+            logger.error({ err: error }, "Failed to report workspace presence")
+          },
+        )
+      }, presenceReportIntervalMs)
+      metricsTimer = setInterval(flushMetrics, REALTIME_METRIC_WINDOW_MS)
+      streamReader.start()
+      return boundPort
+    },
+  }
+}
