@@ -30,8 +30,10 @@ const chatStoreState = {
   bubbleConversationToTop: bubbleConversationToTopMock,
   openConversation: openConversationMock,
   patchContactInboxThreadControl: vi.fn(),
+  resyncRealtime: vi.fn(),
   resumeConversationHeadRefresh: vi.fn(),
 }
+const realtimeContext = { reconnectCount: 0 }
 const wholeStoreSelectionMock = vi.fn()
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof chatStoreState) => unknown) => {
@@ -57,6 +59,10 @@ vi.mock("@/features/realtime/use-workspace-realtime-events", () => ({
   ) => {
     capturedHandlers = handlers
   },
+}))
+
+vi.mock("@/features/realtime/workspace-realtime-provider", () => ({
+  useWorkspaceRealtimeContext: () => realtimeContext,
 }))
 
 const { ChatRealtime } = await import("@/features/chat/chat-realtime")
@@ -86,6 +92,7 @@ describe("ChatRealtime — chat event parity", () => {
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    realtimeContext.reconnectCount = 0
     vi.clearAllMocks()
     bubbleConversationToTopMock.mockResolvedValue(undefined)
     useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
@@ -130,6 +137,13 @@ describe("ChatRealtime — chat event parity", () => {
     )
   })
 
+  test("resyncs the conversation list and active thread after a reconnect", async () => {
+    await render()
+    realtimeContext.reconnectCount = 1
+    await render()
+
+    expect(chatStoreState.resyncRealtime).toHaveBeenCalledWith("workspace-1")
+  })
   test("retries a deferred head refresh when the tab becomes visible", async () => {
     await render()
 

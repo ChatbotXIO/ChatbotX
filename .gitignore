@@ -48,7 +48,6 @@ yarn-error.log*
 .idea/
 .windsurf/skills
 
-.partykit
 test.rest
 test-webchat
 

@@ -525,5 +525,5 @@ they connect an external service but carry no inbox conversation.
 | google-sheets       | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
 | instagram-facebook  | OAuth2    | YES                   | Meta/Facebook app (clientId/clientSecret); auth via Facebook Graph API for Instagram Business/Creator accounts linked to FB Pages; handles DMs + post comments; Personal accounts filtered out; integration name in code: `instagramFacebook` |
 | smtp                | Custom    | NO                    | SMTP with provider presets                                                                                                         |
-| webchat             | Custom    | NO                    | PartySocket-based                                                                                                                  |
+| webchat             | Custom    | NO                    | Custom WebSocket (realtime-protocol v2 / apps/realtime)                                                                            |
 | chatbotx            | Custom    | NO                    | Internal chatbot                                                                                                                   |

@@ -12,6 +12,10 @@ vi.mock("@/features/realtime/workspace-realtime-provider", () => ({
   },
 }))
 
+vi.mock("@/components/workspace-realtime-status-banner", () => ({
+  WorkspaceRealtimeStatusBanner: () => null,
+}))
+
 const voipProviderMountMock = vi.fn()
 vi.mock(
   "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context",
