@@ -69,10 +69,31 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
 
 const before = listMigrationFolders()
 
-const result = spawnSync("drizzle-kit", ["generate", `--name=${PROBE_NAME}`], {
-  cwd: join(__dirname, ".."),
-  encoding: "utf8",
-})
+// Launch drizzle-kit through node on its own entry file: on Windows the
+// installed binary is a `.CMD` shim, which `spawnSync` cannot execute without a
+// shell (ENOENT). Falls back to the bare command if the entry cannot be found.
+const resolveDrizzleKit = () => {
+  try {
+    const packageDir = join(__dirname, "../node_modules/drizzle-kit")
+    const { bin } = JSON.parse(
+      readFileSync(join(packageDir, "package.json"), "utf8"),
+    )
+    const entry = typeof bin === "string" ? bin : bin["drizzle-kit"]
+    return { command: process.execPath, prefix: [join(packageDir, entry)] }
+  } catch {
+    return { command: "drizzle-kit", prefix: [] }
+  }
+}
+const drizzleKit = resolveDrizzleKit()
+
+const result = spawnSync(
+  drizzleKit.command,
+  [...drizzleKit.prefix, "generate", `--name=${PROBE_NAME}`],
+  {
+    cwd: join(__dirname, ".."),
+    encoding: "utf8",
+  },
+)
 
 if (result.error) {
   console.error("[ERROR] Could not run drizzle-kit:", result.error.message)
