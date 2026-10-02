@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { sql } from "@chatbotx.io/database/client"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   conversationFindMany: vi.fn(),
@@ -24,6 +25,7 @@ const mocks = vi.hoisted(() => ({
     strings: Array.from(strings),
     values,
   })),
+  cancelQuickReplyFollowUps: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -158,9 +160,16 @@ vi.mock("../../enterprise/inbox-team/service", () => ({
   },
 }))
 
+vi.mock("../../smart-delay/service", () => ({
+  smartDelayService: {
+    cancelQuickReplyFollowUps: mocks.cancelQuickReplyFollowUps,
+  },
+}))
+
 const { conversationService } = await import("../service")
 const { emit } = await import("@chatbotx.io/event-bus")
-const { emitConversationAssigned } = await import("@chatbotx.io/events")
+const { emitConversationAssigned, emitConversationTransferredToHuman } =
+  await import("@chatbotx.io/events")
 const { invalidateCacheByTags } = await import("@chatbotx.io/redis")
 const { notificationQueue } = await import("@chatbotx.io/worker-config")
 
@@ -192,6 +201,9 @@ beforeEach(() => {
   vi.mocked(emit).mockReset()
   mocks.releaseOwnedThreadsForContacts.mockReset()
   mocks.releaseOwnedThreadsForContacts.mockResolvedValue(undefined)
+  mocks.cancelQuickReplyFollowUps.mockReset()
+  mocks.cancelQuickReplyFollowUps.mockResolvedValue(undefined)
+  vi.mocked(emitConversationTransferredToHuman).mockReset()
   mocks.sql.mockClear()
 })
 
@@ -1031,5 +1043,177 @@ describe("ConversationService.updateArchived — conversation routing release", 
     expect(mocks.updateSet).toHaveBeenCalledWith({
       archivedAt: expect.any(Date),
     })
+  })
+})
+
+describe("ConversationService quick-reply challenge CAS", () => {
+  const renderSql = (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    text: strings.join("?").replace(/\s+/g, " "),
+    values,
+  })
+
+  beforeEach(() => {
+    vi.mocked(sql).mockImplementation(renderSql as never)
+  })
+
+  afterEach(() => {
+    vi.mocked(sql).mockReset()
+  })
+
+  test("setQuickReplyChallengeAttempts only wins when type, nodeId and current attempts all match", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    const won = await conversationService.setQuickReplyChallengeAttempts({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      nodeId: "node-1",
+      fromAttempts: 1,
+      toAttempts: 2,
+    })
+
+    expect(won).toBe(true)
+    const where = mocks.updateWhere.mock.calls[0][0] as {
+      and: { text?: string; values?: unknown[] }[]
+    }
+    const texts = where.and.map((c) => c.text ?? "")
+    expect(where.and[0]).toEqual({ eq: [undefined, WORKSPACE_ID] })
+    expect(where.and[1]).toEqual({ eq: [undefined, "conv-1"] })
+    expect(texts.some((t) => t.includes("->>'type' = 'quickReply'"))).toBe(true)
+    expect(where.and[3]?.values).toContain("node-1")
+    expect(where.and[4]?.values).toContain(1)
+  })
+
+  test("clearQuickReplyChallenge scopes by the current attempts when given", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([])
+
+    const won = await conversationService.clearQuickReplyChallenge({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      nodeId: "node-1",
+      attempts: 3,
+    })
+
+    expect(won).toBe(false)
+    const where = mocks.updateWhere.mock.calls[0][0] as {
+      and: ({ text?: string; values?: unknown[] } | undefined)[]
+    }
+    const attemptsClause = where.and.find((c) =>
+      c?.text?.includes("->>'attempts')::int = ?"),
+    )
+    expect(attemptsClause?.values).toContain(3)
+  })
+
+  test("clearQuickReplyChallenge without attempts has no attempts predicate", async () => {
+    await conversationService.clearQuickReplyChallenge({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      nodeId: "node-1",
+    })
+
+    const where = mocks.updateWhere.mock.calls[0][0] as {
+      and: ({ text?: string } | undefined)[]
+    }
+    expect(where.and.some((c) => c?.text?.includes("attempts"))).toBe(false)
+  })
+
+  test("returns false when the CAS matched no row", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([])
+
+    await expect(
+      conversationService.setQuickReplyChallengeAttempts({
+        workspaceId: WORKSPACE_ID,
+        conversationId: "conv-1",
+        nodeId: "node-1",
+        fromAttempts: 1,
+        toAttempts: 2,
+      }),
+    ).resolves.toBe(false)
+  })
+})
+
+describe("ConversationService.updateBotEnabled quick-reply follow-up cancel", () => {
+  test("pausing the bot cancels pending quick-reply follow-ups", async () => {
+    await conversationService.updateBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      ids: ["conv-1"],
+      botEnabled: false,
+    })
+
+    expect(mocks.cancelQuickReplyFollowUps).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        conversationIds: ["conv-1"],
+      }),
+    )
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("enabling the bot does not cancel follow-ups", async () => {
+    await conversationService.updateBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      ids: ["conv-1"],
+      botEnabled: true,
+    })
+
+    expect(mocks.cancelQuickReplyFollowUps).not.toHaveBeenCalled()
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("a rejected cancel still resolves, invalidates and emits the handoff", async () => {
+    mocks.cancelQuickReplyFollowUps.mockRejectedValueOnce(
+      new Error('invalid input value for enum "SmartDelayType"'),
+    )
+
+    await expect(
+      conversationService.disableBotState({
+        workspaceId: WORKSPACE_ID,
+        conversations: [{ id: "conv-1", contactId: "contact-1" }],
+        triggerContext: { source: "manual" } as never,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.stringContaining("conv-1")]),
+    )
+    expect(emitConversationTransferredToHuman).toHaveBeenCalledWith(
+      WORKSPACE_ID,
+      "contact-1",
+      "conv-1",
+      undefined,
+    )
+    expect(emit).toHaveBeenCalledWith(
+      "analytics:dashboard",
+      expect.objectContaining({
+        eventType: "conversation:transferred_to_human",
+      }),
+    )
+  })
+
+  test("inside a caller tx the cancel runs behind a savepoint and a failure is swallowed", async () => {
+    const savepoint = { savepoint: true }
+    const transaction = vi.fn(
+      async (fn: (client: unknown) => Promise<unknown>) => fn(savepoint),
+    )
+    const updateWhere = vi.fn()
+    const tx = {
+      update: () => ({ set: () => ({ where: updateWhere }) }),
+      transaction,
+    }
+    mocks.cancelQuickReplyFollowUps.mockRejectedValueOnce(new Error("boom"))
+
+    await expect(
+      conversationService.updateBotEnabled({
+        workspaceId: WORKSPACE_ID,
+        ids: ["conv-1"],
+        botEnabled: false,
+        tx: tx as never,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    expect(mocks.cancelQuickReplyFollowUps).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: savepoint }),
+    )
+    expect(invalidateCacheByTags).toHaveBeenCalled()
   })
 })

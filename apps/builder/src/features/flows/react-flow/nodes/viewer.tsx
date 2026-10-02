@@ -18,6 +18,7 @@ import { DynamicStepViewer } from "../steps"
 import { ButtonStepViewer } from "../steps/button/viewer"
 import { FlowNodeToolbar } from "../toolbar/node-toolbar"
 import { allNodesConfig } from "./node-config"
+import { QuickReplySettingsHandles } from "./quick-reply-settings/quick-reply-settings-handles"
 
 type NodeViewerProps = {
   id: string
@@ -79,6 +80,10 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
             data.details.quickReplies.map((quickReplyItem) => (
               <ButtonStepViewer data={quickReplyItem} key={quickReplyItem.id} />
             ))}
+
+          {"quickReplySettings" in data.details && (
+            <QuickReplySettingsHandles details={data.details} />
+          )}
 
           {shouldShowDefaultContinue(type, data) && (
             <div className="relative w-full text-right">

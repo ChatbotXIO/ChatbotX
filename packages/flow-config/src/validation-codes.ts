@@ -24,6 +24,9 @@ export const flowValidationCodes = {
   waTemplateMpmTooManyProducts: "waTemplateMpmTooManyProducts",
   waTemplateLtoExpirationRequired: "waTemplateLtoExpirationRequired",
   waTemplateMpmIncompleteProducts: "waTemplateMpmIncompleteProducts",
+  quickReplyNextStepRequired: "quickReplyNextStepRequired",
+  quickReplyRetryMessageRequired: "quickReplyRetryMessageRequired",
+  quickReplyRetryWithGetUserData: "quickReplyRetryWithGetUserData",
 } as const
 
 export type FlowValidationCode =

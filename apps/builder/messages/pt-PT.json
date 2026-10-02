@@ -2279,6 +2279,28 @@
     "quickReplies": {
       "limitReached": "Foi atingido o limite de respostas rápidas ({max})."
     },
+    "quickReplySettings": {
+      "open": "Definições de respostas rápidas",
+      "title": "Configurar respostas rápidas",
+      "chooseNextStep": "Escolher o passo seguinte",
+      "followUp": {
+        "label": "Fazer seguimento se o contacto não interagir",
+        "waitFor": "Aguardar",
+        "divider": "Se o contacto não interagir, fazer seguimento com",
+        "windowHint": "O Messenger e o Instagram só permitem enviar mensagens até 24 horas após a última mensagem do contacto; os seguimentos posteriores são ignorados nesses canais.",
+        "handle": "Sem interação"
+      },
+      "retry": {
+        "label": "Tentar novamente se a resposta não for uma resposta rápida",
+        "message": "Mensagem de nova tentativa",
+        "messageDefault": "Por favor, toque numa das opções abaixo 👇",
+        "count": "Número de tentativas",
+        "countOption": "{count, plural, =0 {Sem novas tentativas} one {# vez} other {# vezes}}",
+        "divider": "Quando o número de tentativas for excedido",
+        "handle": "Tentativas excedidas",
+        "getUserDataConflict": "A nova tentativa não está disponível quando esta mensagem contém um passo Obter dados do utilizador."
+      }
+    },
     "buttons": {
       "limitReached": "Foi atingido o limite de botões ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Não foram encontradas versões publicadas",
     "publishVersionSuccess": "Foi publicada uma nova versão",
     "flowConfigIncomplete": "Algumas configurações estão incompletas",
+    "quickReplyNextStepRequired": "Escolha um passo seguinte para cada definição de resposta rápida ativada",
+    "quickReplyRetryMessageRequired": "Introduza uma mensagem de nova tentativa",
+    "quickReplyRetryWithGetUserData": "A nova tentativa não pode ser combinada com um passo Obter dados do utilizador",
     "whatsappCarouselButtonsMismatch": "No WhatsApp, um carrossel tem de ter os mesmos botões em cada cartão: um único botão de ligação em cada cartão, ou o mesmo número de botões de resposta em cada cartão",
     "whatsappCarouselLinkButtonNotAlone": "No WhatsApp, um cartão de carrossel com um botão de ligação não pode ter outros botões. Remova os outros botões nesse cartão ou altere o botão de ligação para outra ação.",
     "duplicateNodeError": "Não foi possível duplicar o bloco. Tente novamente.",

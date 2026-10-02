@@ -31,6 +31,8 @@ export type TiptapEditorFieldProps = {
   description?: string
   /** When set, renders a live `used/limit` character counter below the editor. */
   maxLength?: number
+  /** Suppress the inline error message (e.g. when the parent shows it translated). */
+  hideMessage?: boolean
 }
 
 export const TiptapEditorField = ({
@@ -47,6 +49,7 @@ export const TiptapEditorField = ({
   showEmojiPicker = true,
   enableEmoji = true,
   maxLength,
+  hideMessage = false,
 }: TiptapEditorFieldProps) => {
   const { control, getValues } = useFormContext()
   const t = useTranslations("fields")
@@ -99,7 +102,7 @@ export const TiptapEditorField = ({
           {description ? (
             <FormDescription>{description}</FormDescription>
           ) : null}
-          <FormMessage />
+          {hideMessage ? null : <FormMessage />}
         </FormItem>
       )}
     />

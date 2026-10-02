@@ -1,4 +1,8 @@
-import type { CommentReply } from "@chatbotx.io/database/partials"
+import type {
+  CommentReply,
+  ConversationQuickReplyChallenge,
+  ConversationStepChallenge,
+} from "@chatbotx.io/database/partials"
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -45,6 +49,7 @@ export const IntegrationJobAction = {
   runChallenge: "runChallenge",
   resumeWait: "resumeWait",
   resumeFollowUp: "resumeFollowUp",
+  resumeQuickReplyFollowUp: "resumeQuickReplyFollowUp",
   blockContact: "blockContact",
   unblockContact: "unblockContact",
   assignConversation: "assignConversation",
@@ -358,23 +363,17 @@ export type IntegrationJobRunChallenge = {
     contactInboxId: string | ContactInboxModel
     messageId?: string
     messageCreatedAt?: Date
-    challenge: {
-      type: "step"
-      data: {
-        flowId: string
-        flowVersionId?: string
-        nodeId: string
-        stepId: string
-        attempts: number
-        lastAttemptAt: Date
-        appointmentId?: string
-      }
-    }
+    challenge: ConversationStepChallenge | ConversationQuickReplyChallenge
   }
 }
 
 export type IntegrationJobResumeFollowUp = {
   type: typeof IntegrationJobAction.resumeFollowUp
+  data: { smartDelayId: string }
+}
+
+export type IntegrationJobResumeQuickReplyFollowUp = {
+  type: typeof IntegrationJobAction.resumeQuickReplyFollowUp
   data: { smartDelayId: string }
 }
 
@@ -1100,6 +1099,7 @@ export type IntegrationJobData =
   | IntegrationJobRunChallenge
   | IntegrationJobResumeWait
   | IntegrationJobResumeFollowUp
+  | IntegrationJobResumeQuickReplyFollowUp
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
   | IntegrationJobSendSequenceFlow

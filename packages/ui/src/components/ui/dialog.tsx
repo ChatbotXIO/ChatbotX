@@ -45,13 +45,16 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  overlayProps,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  /** Base UI skips a nested dialog's backdrop; pass `{ forceRender: true }` to keep it. */
+  overlayProps?: DialogPrimitive.Backdrop.Props
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay {...overlayProps} />
       {/*
         Width is `w-[calc(100%-2rem)]`, not `w-full`, so the 1rem gutter
         survives a caller's `className`. tailwind-merge resolves `max-w-*` by

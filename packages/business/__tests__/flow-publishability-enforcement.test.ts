@@ -53,6 +53,9 @@ vi.mock("../src/folder/service", () => ({
 vi.mock("../src/template/installed-resource.service", () => ({
   assertDeletable: vi.fn(),
 }))
+// flow-version/service imports these for quick reply cleanup on publish.
+vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
+vi.mock("../src/smart-delay/service", () => ({ smartDelayService: {} }))
 vi.mock("../src/flow-version", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../src/flow-version")>()),
   flowVersionService: { findDraft: vi.fn(), invalidateList: vi.fn() },

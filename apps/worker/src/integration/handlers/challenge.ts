@@ -7,6 +7,7 @@ import {
   detectFlowVersion,
 } from "../../lib/db"
 import { runStepsAndQuickReplies } from "./flow"
+import { runQuickReplyChallenge } from "./quick-reply-resume"
 
 export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
   const {
@@ -17,15 +18,19 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
     messageCreatedAt,
   } = data
 
-  if (challenge.type !== "step") {
-    return
-  }
-
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
       conversationId,
       contactInboxId,
     })
+
+  if (challenge.type === "quickReply") {
+    await runQuickReplyChallenge({ conversation, contactInbox, challenge })
+    return
+  }
+  if (challenge.type !== "step") {
+    return
+  }
 
   const startTime = Date.now()
   try {

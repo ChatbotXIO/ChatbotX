@@ -37,19 +37,35 @@ export const inboxDisconnectReasons = z.enum([
 ])
 export type InboxDisconnectReason = z.infer<typeof inboxDisconnectReasons>
 
+export type ConversationStepChallenge = {
+  type: "step"
+  data: {
+    flowId: string
+    flowVersionId?: string
+    nodeId: string
+    stepId: string
+    attempts: number
+    lastAttemptAt: Date
+    appointmentId?: string
+    challengeId?: string
+  }
+}
+
+/** Pending "retry if reply isn't a quick reply" for a Send Message node. */
+export type ConversationQuickReplyChallenge = {
+  type: "quickReply"
+  data: {
+    flowId: string
+    flowVersionId?: string
+    nodeId: string
+    attempts: number
+    // Informational only: the node's current config is authoritative for retries.
+    maxRetries: number
+    sentAt: Date
+  }
+}
+
 export type ConversationAttributes = {
   phoneNumber?: string
-  challenge?: {
-    type: "step"
-    data: {
-      flowId: string
-      flowVersionId?: string
-      nodeId: string
-      stepId: string
-      attempts: number
-      lastAttemptAt: Date
-      appointmentId?: string
-      challengeId?: string
-    }
-  }
+  challenge?: ConversationStepChallenge | ConversationQuickReplyChallenge
 }

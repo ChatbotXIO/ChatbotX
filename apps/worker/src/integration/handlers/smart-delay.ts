@@ -19,6 +19,7 @@ import {
   type IntegrationJobData,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 
 type SmartDelayJobSpec = {
@@ -76,6 +77,16 @@ const buildResumeFollowUpJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
   },
 })
 
+const buildResumeQuickReplyFollowUpJob = (
+  row: SmartDelayRow,
+): SmartDelayJobSpec => ({
+  name: IntegrationJobAction.resumeQuickReplyFollowUp,
+  data: {
+    type: IntegrationJobAction.resumeQuickReplyFollowUp,
+    data: { smartDelayId: row.id },
+  },
+})
+
 const buildResumeWaitJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
   name: IntegrationJobAction.resumeWait,
   data: {
@@ -90,6 +101,7 @@ export const smartDelayResumeJobFactories: Record<
 > = {
   [smartDelayTypes.enum.waitNode]: buildResumeWaitJob,
   [smartDelayTypes.enum.followUp]: buildResumeFollowUpJob,
+  [smartDelayTypes.enum.quickReplyFollowUp]: buildResumeQuickReplyFollowUpJob,
 }
 
 const smartDelayPersistenceHandlers: Record<
@@ -102,6 +114,8 @@ const smartDelayPersistenceHandlers: Record<
   },
   [smartDelayTypes.enum.followUp]: async (data) =>
     await smartDelayService.upsertFollowUp({ data }),
+  [smartDelayTypes.enum.quickReplyFollowUp]: async (data) =>
+    await smartDelayService.upsertQuickReplyFollowUp({ data }),
 }
 
 export async function scheduleSmartDelayResume(props: {
@@ -169,5 +183,25 @@ export async function scheduleSmartDelayResume(props: {
       { err, rowId: persistedRow.id },
       "Failed to immediately enqueue smart delay; scanner will pick it up",
     )
+  }
+}
+
+/**
+ * Re-opens a claimed row after its resume work failed, so BullMQ's retry can
+ * claim it again. `claimForRun` is the concurrency guard; never throws.
+ */
+export async function requeueClaimedRunOrLog(
+  smartDelayId: string,
+  message: string,
+): Promise<void> {
+  try {
+    const requeued = await smartDelayService.requeueClaimedRun({
+      id: smartDelayId,
+    })
+    if (!requeued) {
+      logger.error({ smartDelayId }, message)
+    }
+  } catch (error) {
+    logger.error({ err: normalizeError(error), smartDelayId }, message)
   }
 }

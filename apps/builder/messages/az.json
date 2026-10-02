@@ -2665,6 +2665,28 @@
     "quickReplies": {
       "limitReached": "Sürətli cavab həddinə çatılıb ({max})."
     },
+    "quickReplySettings": {
+      "open": "Sürətli cavab parametrləri",
+      "title": "Sürətli cavabları konfiqurasiya et",
+      "chooseNextStep": "Növbəti addımı seçin",
+      "followUp": {
+        "label": "Kontakt reaksiya verməyibsə, xatırlatma göndər",
+        "waitFor": "Gözləmə müddəti",
+        "divider": "Kontakt reaksiya verməyibsə, bununla xatırlat",
+        "windowHint": "Messenger və Instagram yalnız kontaktın son mesajından sonrakı 24 saat ərzində göndərməyə icazə verir; sonrakı xatırlatmalar orada ötürülür.",
+        "handle": "Reaksiya yoxdur"
+      },
+      "retry": {
+        "label": "Cavab Sürətli cavab deyilsə, yenidən cəhd et",
+        "message": "Təkrar cəhd mesajı",
+        "messageDefault": "Zəhmət olmasa, aşağıdakı seçimlərdən birinə toxunun 👇",
+        "count": "Təkrar cəhdlərin sayı",
+        "countOption": "{count, plural, =0 {Təkrar cəhd yoxdur} one {# dəfə} other {# dəfə}}",
+        "divider": "Təkrar cəhdlərin sayı aşıldıqda",
+        "handle": "Təkrar cəhdlər aşıldı",
+        "getUserDataConflict": "Bu mesajda İstifadəçi məlumatlarını al addımı olduqda təkrar cəhd mümkün deyil."
+      }
+    },
     "buttons": {
       "limitReached": "Düymə həddinə çatılıb ({max})."
     },
@@ -3725,6 +3747,9 @@
     "noVersionsFound": "Dərc edilmiş versiya tapılmadı",
     "publishVersionSuccess": "Yeni versiya dərc edilib",
     "flowConfigIncomplete": "Bəzi konfiqurasiyalar tamamlanmayıb",
+    "quickReplyNextStepRequired": "Aktiv olan hər sürətli cavab parametri üçün növbəti addımı seçin",
+    "quickReplyRetryMessageRequired": "Təkrar cəhd mesajını daxil edin",
+    "quickReplyRetryWithGetUserData": "Təkrar cəhd İstifadəçi məlumatlarını al addımı ilə birlikdə istifadə edilə bilməz",
     "whatsappCarouselButtonsMismatch": "WhatsApp-da karuselin bütün kartlarında eyni düymələr olmalıdır: hər kartda ya tək keçid düyməsi, ya da eyni sayda cavab düyməsi olmalıdır",
     "whatsappCarouselLinkButtonNotAlone": "WhatsApp-da keçid düyməsi olan karusel kartında başqa düymə ola bilməz. Həmin kartdakı digər düymələri çıxarın və ya keçid düyməsini başqa əməliyyata dəyişin.",
     "duplicateNodeError": "Blokun surətini yaratmaq mümkün olmadı. Yenidən cəhd edin.",

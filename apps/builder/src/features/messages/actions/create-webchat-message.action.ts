@@ -50,6 +50,7 @@ import {
   isOriginAuthorized,
 } from "@/features/integration-webchat/lib/authorized-domain"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
+import { shouldRunWebchatChallenge } from "@/features/messages/lib/should-run-webchat-challenge"
 import { logger } from "@/lib/log"
 import {
   checkGuestRateLimit,
@@ -334,7 +335,12 @@ export async function handleCreateWebchatMessage({
     const additionalAttributes =
       conversation.additionalAttributes as unknown as ConversationAttributes
 
-    if (additionalAttributes?.challenge) {
+    const hasPostback = Boolean(
+      "postback" in parsedInput && parsedInput.postback,
+    )
+    if (
+      shouldRunWebchatChallenge(additionalAttributes?.challenge, hasPostback)
+    ) {
       promises.push(
         integrationQueue.add(
           IntegrationJobAction.runChallenge,

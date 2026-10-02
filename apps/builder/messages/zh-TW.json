@@ -1620,6 +1620,9 @@
     "noVersionsFound": "找不到已發布的版本",
     "publishVersionSuccess": "新版本已發布",
     "flowConfigIncomplete": "部分設定不完整",
+    "quickReplyNextStepRequired": "請為每個已啟用的快速回覆設定選擇下一步",
+    "quickReplyRetryMessageRequired": "請輸入重試訊息",
+    "quickReplyRetryWithGetUserData": "重試無法與「取得使用者資料」步驟同時使用",
     "whatsappCarouselButtonsMismatch": "在 WhatsApp 上，輪播需要在每張卡片上使用相同的按鈕：每張卡片上有一個連結按鈕，或每張卡片上有相同數量的回應按鈕",
     "whatsappCarouselLinkButtonNotAlone": "在 WhatsApp 中，帶有連結按鈕的輪播卡片不能同時包含其他按鈕。請移除此卡片上的其他按鈕，或將連結按鈕改成其他動作。",
     "duplicateNodeError": "無法複製該區塊。請再試一次。",
@@ -2603,6 +2606,28 @@
     "title": "流程",
     "quickReplies": {
       "limitReached": "已達到快速回覆限制 ({max})。"
+    },
+    "quickReplySettings": {
+      "open": "快速回覆設定",
+      "title": "設定快速回覆",
+      "chooseNextStep": "選擇下一步",
+      "followUp": {
+        "label": "聯絡人未互動時進行追蹤",
+        "waitFor": "等待",
+        "divider": "如果聯絡人未互動，則以此追蹤",
+        "windowHint": "Messenger 和 Instagram 僅允許在聯絡人最後一則訊息後的 24 小時內傳送訊息；之後的追蹤將在這些管道上略過。",
+        "handle": "無互動"
+      },
+      "retry": {
+        "label": "回覆不是快速回覆時重試",
+        "message": "重試訊息",
+        "messageDefault": "請點選下方的其中一個選項 👇",
+        "count": "重試次數",
+        "countOption": "{count, plural, =0 {不重試} one {# 次} other {# 次}}",
+        "divider": "超過重試次數時",
+        "handle": "超過重試次數",
+        "getUserDataConflict": "當此訊息包含「取得使用者資料」步驟時，無法使用重試。"
+      }
     },
     "buttons": {
       "limitReached": "已達到按鈕限制 ({max})。"

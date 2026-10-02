@@ -2279,6 +2279,28 @@
     "quickReplies": {
       "limitReached": "Limit für Schnellantworten erreicht ({max})."
     },
+    "quickReplySettings": {
+      "open": "Einstellungen für Schnellantworten",
+      "title": "Schnellantworten konfigurieren",
+      "chooseNextStep": "Nächsten Schritt wählen",
+      "followUp": {
+        "label": "Nachfassen, wenn der Kontakt nicht reagiert hat",
+        "waitFor": "Warten für",
+        "divider": "Wenn der Kontakt nicht reagiert hat, nachfassen mit",
+        "windowHint": "Messenger und Instagram erlauben das Senden nur innerhalb von 24 Stunden nach der letzten Nachricht des Kontakts; spätere Nachfassnachrichten werden dort übersprungen.",
+        "handle": "Keine Reaktion"
+      },
+      "retry": {
+        "label": "Erneut fragen, wenn die Antwort keine Schnellantwort ist",
+        "message": "Nachricht für erneute Anfrage",
+        "messageDefault": "Bitte tippe auf eine der Optionen unten 👇",
+        "count": "Anzahl der Wiederholungen",
+        "countOption": "{count, plural, =0 {Keine Wiederholungen} one {# Mal} other {# Mal}}",
+        "divider": "Wenn die Anzahl der Wiederholungen überschritten ist",
+        "handle": "Wiederholungen überschritten",
+        "getUserDataConflict": "Wiederholen ist nicht verfügbar, wenn diese Nachricht einen Schritt „Benutzerdaten abrufen“ enthält."
+      }
+    },
     "buttons": {
       "limitReached": "Schaltflächenlimit erreicht ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Keine veröffentlichten Versionen gefunden",
     "publishVersionSuccess": "Eine neue Version wurde veröffentlicht",
     "flowConfigIncomplete": "Einige Konfigurationen sind unvollständig",
+    "quickReplyNextStepRequired": "Wähle für jede aktivierte Schnellantwort-Einstellung einen nächsten Schritt",
+    "quickReplyRetryMessageRequired": "Gib eine Nachricht für die erneute Anfrage ein",
+    "quickReplyRetryWithGetUserData": "Wiederholen kann nicht mit einem Schritt „Benutzerdaten abrufen“ kombiniert werden",
     "whatsappCarouselButtonsMismatch": "Bei WhatsApp benötigt ein Karussell auf jeder Karte dieselben Schaltflächen: entweder eine einzelne Link-Schaltfläche auf jeder Karte oder dieselbe Anzahl an Antwort-Schaltflächen auf jeder Karte",
     "whatsappCarouselLinkButtonNotAlone": "Bei WhatsApp darf eine Karussellkarte mit einer Link-Schaltfläche keine weiteren Schaltflächen haben. Entfernen Sie die anderen Schaltflächen auf dieser Karte oder ändern Sie die Link-Schaltfläche in eine andere Aktion.",
     "duplicateNodeError": "Der Block konnte nicht dupliziert werden. Versuchen Sie es erneut.",

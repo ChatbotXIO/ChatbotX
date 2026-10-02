@@ -8,6 +8,8 @@ import {
   isNotNull,
   lt,
   lte,
+  ne,
+  notInArray,
   sql,
 } from "@chatbotx.io/database/client"
 import {
@@ -18,6 +20,21 @@ import {
 } from "@chatbotx.io/database/partials"
 import { contactOnSmartDelayModel } from "@chatbotx.io/database/schema"
 import { BaseService } from "../base.service"
+
+/**
+ * Active quick-reply follow-ups of a workspace. Mirrors the partial unique
+ * index `ContactOnSmartDelay_quickReplyFollowUp_active_key`.
+ */
+const activeQuickReplyFollowUps = (workspaceId: string) =>
+  and(
+    eq(contactOnSmartDelayModel.workspaceId, workspaceId),
+    eq(contactOnSmartDelayModel.type, smartDelayTypes.enum.quickReplyFollowUp),
+    notInArray(contactOnSmartDelayModel.status, [
+      smartDelayStatuses.enum.completed,
+      smartDelayStatuses.enum.failed,
+      smartDelayStatuses.enum.canceled,
+    ]),
+  )
 
 export type SmartDelayRow = Omit<
   typeof contactOnSmartDelayModel.$inferSelect,
@@ -48,6 +65,115 @@ class SmartDelayService extends BaseService {
   }): Promise<void> {
     const { tx = db, data } = props
     await tx.insert(contactOnSmartDelayModel).values(data)
+  }
+
+  async upsertQuickReplyFollowUp(props: {
+    tx?: DatabaseClient
+    data: SmartDelayInsert
+  }): Promise<SmartDelayRow> {
+    const { tx = db, data } = props
+    const now = new Date()
+    const [row] = await tx
+      .insert(contactOnSmartDelayModel)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [
+          contactOnSmartDelayModel.workspaceId,
+          contactOnSmartDelayModel.contactInboxId,
+          contactOnSmartDelayModel.flowId,
+          contactOnSmartDelayModel.nodeId,
+        ],
+        targetWhere: sql`${contactOnSmartDelayModel.status} NOT IN ('completed', 'failed', 'canceled') AND ${contactOnSmartDelayModel.type} = 'quickReplyFollowUp'`,
+        set: {
+          conversationId: data.conversationId,
+          appointmentId: data.appointmentId,
+          createdAt: now,
+          flowVersionId: data.flowVersionId,
+          metadata: data.metadata,
+          stepId: data.stepId,
+          status: smartDelayStatuses.enum.pending,
+          triggerAt: data.triggerAt,
+        },
+      })
+      .returning()
+
+    if (!row) {
+      throw new Error("Failed to upsert quick reply follow-up smart delay")
+    }
+
+    return toSmartDelayRow(row)
+  }
+
+  /**
+   * Cancels active quick-reply follow-ups. A canceled row can never run:
+   * the resume handler requires `status = 'scheduled'`, and `resetToPending`
+   * only moves `scheduled` rows.
+   */
+  async cancelQuickReplyFollowUps(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    contactInboxId?: string
+    conversationIds?: string[]
+    exceptNodeId?: string
+    exceptFlowId?: string
+  }): Promise<number> {
+    const { tx = db } = props
+    if (!(props.contactInboxId || props.conversationIds?.length)) {
+      return 0
+    }
+
+    const rows = await tx
+      .update(contactOnSmartDelayModel)
+      .set({ status: smartDelayStatuses.enum.canceled })
+      .where(
+        and(
+          activeQuickReplyFollowUps(props.workspaceId),
+          props.contactInboxId
+            ? eq(contactOnSmartDelayModel.contactInboxId, props.contactInboxId)
+            : undefined,
+          props.conversationIds?.length
+            ? inArray(
+                contactOnSmartDelayModel.conversationId,
+                props.conversationIds,
+              )
+            : undefined,
+          props.exceptNodeId
+            ? ne(contactOnSmartDelayModel.nodeId, props.exceptNodeId)
+            : undefined,
+          props.exceptFlowId
+            ? ne(contactOnSmartDelayModel.flowId, props.exceptFlowId)
+            : undefined,
+        ),
+      )
+      .returning({ id: contactOnSmartDelayModel.id })
+
+    return rows.length
+  }
+
+  async cancelQuickReplyFollowUpsForStaleVersion(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    flowId: string
+    currentFlowVersionId: string
+  }): Promise<number> {
+    const { tx = db } = props
+    const rows = await tx
+      .update(contactOnSmartDelayModel)
+      .set({ status: smartDelayStatuses.enum.canceled })
+      .where(
+        and(
+          activeQuickReplyFollowUps(props.workspaceId),
+          eq(contactOnSmartDelayModel.flowId, props.flowId),
+          isNotNull(contactOnSmartDelayModel.flowVersionId),
+          ne(
+            contactOnSmartDelayModel.flowVersionId,
+            props.currentFlowVersionId,
+          ),
+        ),
+      )
+      .returning({ id: contactOnSmartDelayModel.id })
+
+    return rows.length
   }
 
   async upsertFollowUp(props: {

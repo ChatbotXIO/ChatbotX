@@ -2279,6 +2279,28 @@
     "quickReplies": {
       "limitReached": "Quick svar limit reached ({max})."
     },
+    "quickReplySettings": {
+      "open": "Indstillinger for Quick Svar",
+      "title": "Konfigurer Quick Svar",
+      "chooseNextStep": "Vælg næste trin",
+      "followUp": {
+        "label": "Følg op, hvis kontakten ikke har reageret",
+        "waitFor": "Vent i",
+        "divider": "Hvis kontakten ikke har reageret, følg op med",
+        "windowHint": "Messenger og Instagram tillader kun afsendelse inden for 24 timer efter kontaktens seneste besked; senere opfølgninger springes over der.",
+        "handle": "Ingen reaktion"
+      },
+      "retry": {
+        "label": "Prøv igen, hvis svaret ikke er et Quick Svar",
+        "message": "Besked ved nyt forsøg",
+        "messageDefault": "Tryk venligst på en af mulighederne nedenfor 👇",
+        "count": "Antal forsøg",
+        "countOption": "{count, plural, =0 {Ingen forsøg} one {# gang} other {# gange}}",
+        "divider": "Når antallet af forsøg er overskredet",
+        "handle": "Forsøg overskredet",
+        "getUserDataConflict": "Nyt forsøg er ikke tilgængeligt, når denne besked indeholder et Get Bruger Data-trin."
+      }
+    },
     "buttons": {
       "limitReached": "Knap limit reached ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Ingen published versions found",
     "publishVersionSuccess": "A ny version har been published",
     "flowConfigIncomplete": "Some configurations er incomplete",
+    "quickReplyNextStepRequired": "Vælg et næste trin for hver aktiveret Quick Svar-indstilling",
+    "quickReplyRetryMessageRequired": "Indtast en besked til nyt forsøg",
+    "quickReplyRetryWithGetUserData": "Nyt forsøg kan ikke kombineres med et Get Bruger Data-trin",
     "whatsappCarouselButtonsMismatch": "På WhatsApp skal en karrusel have de samme knapper på hvert kort: enten en enkelt linkknap på hvert kort eller det samme antal svarknapper på hvert kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan et karruselkort med en linkknap ikke have andre knapper. Fjern de andre knapper på kortet, eller skift linkknappen til en anden handling.",
     "duplicateNodeError": "Could ikke dupliker den blokér. Prøv igen.",

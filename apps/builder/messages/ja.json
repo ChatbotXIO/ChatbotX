@@ -2279,6 +2279,28 @@
     "quickReplies": {
       "limitReached": "クイック返信の上限（{max}件）に達しました。"
     },
+    "quickReplySettings": {
+      "open": "クイック返信の設定",
+      "title": "クイック返信を設定",
+      "chooseNextStep": "次のステップを選択",
+      "followUp": {
+        "label": "連絡先の反応がない場合にフォローアップする",
+        "waitFor": "待機時間",
+        "divider": "連絡先の反応がない場合のフォローアップ",
+        "windowHint": "Messenger と Instagram では、連絡先の最後のメッセージから 24 時間以内のみ送信できます。それ以降のフォローアップはスキップされます。",
+        "handle": "反応なし"
+      },
+      "retry": {
+        "label": "返信がクイック返信でない場合に再試行する",
+        "message": "再試行メッセージ",
+        "messageDefault": "下の選択肢のいずれかをタップしてください 👇",
+        "count": "再試行回数",
+        "countOption": "{count, plural, =0 {再試行なし} one {#回} other {#回}}",
+        "divider": "再試行回数を超えた場合",
+        "handle": "再試行回数超過",
+        "getUserDataConflict": "このメッセージに「ユーザーデータを取得」ステップが含まれている場合、再試行は利用できません。"
+      }
+    },
     "buttons": {
       "limitReached": "ボタンの上限（{max}個）に達しました。"
     },
@@ -3462,6 +3484,9 @@
     "noVersionsFound": "公開済みバージョンが見つかりません",
     "publishVersionSuccess": "新しいバージョンを公開しました",
     "flowConfigIncomplete": "一部の設定が未完了です",
+    "quickReplyNextStepRequired": "有効なクイック返信設定ごとに次のステップを選択してください",
+    "quickReplyRetryMessageRequired": "再試行メッセージを入力してください",
+    "quickReplyRetryWithGetUserData": "再試行は「ユーザーデータを取得」ステップと併用できません",
     "whatsappCarouselButtonsMismatch": "WhatsAppでは、カルーセルのすべてのカードに同じボタンが必要です。各カードに1つのリンクボタンを設定するか、各カードに同じ数の返信ボタンを設定してください",
     "whatsappCarouselLinkButtonNotAlone": "WhatsAppでは、リンクボタンを含むカルーセルカードに他のボタンを設定できません。そのカードの他のボタンを削除するか、リンクボタンを別のアクションに変更してください。",
     "duplicateNodeError": "ブロックを複製できませんでした。もう一度お試しください。",

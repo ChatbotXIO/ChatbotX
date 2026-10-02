@@ -2279,6 +2279,28 @@
     "quickReplies": {
       "limitReached": "Limiet voor snelle antwoorden bereikt ({max})."
     },
+    "quickReplySettings": {
+      "open": "Instellingen voor snelle antwoorden",
+      "title": "Snelle antwoorden configureren",
+      "chooseNextStep": "Volgende stap kiezen",
+      "followUp": {
+        "label": "Opvolgen als het contact niet heeft gereageerd",
+        "waitFor": "Wacht",
+        "divider": "Als het contact niet heeft gereageerd, opvolgen met",
+        "windowHint": "Messenger en Instagram staan verzenden alleen toe binnen 24 uur na het laatste bericht van het contact; latere opvolgingen worden daar overgeslagen.",
+        "handle": "Geen reactie"
+      },
+      "retry": {
+        "label": "Opnieuw vragen als het antwoord geen snel antwoord is",
+        "message": "Bericht voor opnieuw vragen",
+        "messageDefault": "Tik op een van de opties hieronder 👇",
+        "count": "Aantal pogingen",
+        "countOption": "{count, plural, =0 {Geen pogingen} one {# keer} other {# keer}}",
+        "divider": "Wanneer het aantal pogingen is overschreden",
+        "handle": "Pogingen overschreden",
+        "getUserDataConflict": "Opnieuw vragen is niet beschikbaar als dit bericht een stap Gebruikersgegevens ophalen bevat."
+      }
+    },
     "buttons": {
       "limitReached": "Knoppenlimiet bereikt ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Geen gepubliceerde versies gevonden",
     "publishVersionSuccess": "Er is een nieuwe versie gepubliceerd",
     "flowConfigIncomplete": "Sommige configuraties zijn onvolledig",
+    "quickReplyNextStepRequired": "Kies een volgende stap voor elke ingeschakelde instelling voor snelle antwoorden",
+    "quickReplyRetryMessageRequired": "Voer een bericht voor opnieuw vragen in",
+    "quickReplyRetryWithGetUserData": "Opnieuw vragen kan niet worden gecombineerd met een stap Gebruikersgegevens ophalen",
     "whatsappCarouselButtonsMismatch": "Op WhatsApp moet een carrousel op elke kaart dezelfde knoppen hebben: één linkknop op elke kaart, of hetzelfde aantal antwoordknoppen op elke kaart",
     "whatsappCarouselLinkButtonNotAlone": "Op WhatsApp mag een carrouselkaart met een linkknop geen andere knoppen hebben. Verwijder de andere knoppen op die kaart, of wijzig de linkknop in een andere actie.",
     "duplicateNodeError": "Het blok kon niet worden gedupliceerd. Probeer het opnieuw.",

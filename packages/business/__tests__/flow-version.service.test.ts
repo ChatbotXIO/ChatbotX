@@ -46,6 +46,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+vi.mock("../src/smart-delay/service", () => ({ smartDelayService: {} }))
+vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
+
 vi.mock("../src/base.service", () => ({
   BaseService: class BaseService {
     protected invalidateCacheTags() {

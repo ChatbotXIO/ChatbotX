@@ -2279,6 +2279,28 @@
     "quickReplies": {
       "limitReached": "Limite di risposte rapide raggiunto ({max})."
     },
+    "quickReplySettings": {
+      "open": "Impostazioni risposte rapide",
+      "title": "Configura risposte rapide",
+      "chooseNextStep": "Scegli il passaggio successivo",
+      "followUp": {
+        "label": "Invia un promemoria se il contatto non ha interagito",
+        "waitFor": "Attendi",
+        "divider": "Se il contatto non ha interagito, invia un promemoria con",
+        "windowHint": "Messenger e Instagram consentono l’invio solo entro 24 ore dall’ultimo messaggio del contatto; i promemoria successivi vengono saltati su questi canali.",
+        "handle": "Nessuna interazione"
+      },
+      "retry": {
+        "label": "Riprova se la risposta non è una risposta rapida",
+        "message": "Messaggio di nuovo tentativo",
+        "messageDefault": "Tocca una delle opzioni qui sotto 👇",
+        "count": "Numero di tentativi",
+        "countOption": "{count, plural, =0 {Nessun tentativo} one {# volta} other {# volte}}",
+        "divider": "Quando il numero di tentativi viene superato",
+        "handle": "Tentativi superati",
+        "getUserDataConflict": "Il nuovo tentativo non è disponibile quando questo messaggio contiene un passaggio Ottieni dati dell'utente."
+      }
+    },
     "buttons": {
       "limitReached": "Limite di pulsanti raggiunto ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Nessuna versione pubblicata trovata",
     "publishVersionSuccess": "È stata pubblicata una nuova versione",
     "flowConfigIncomplete": "Alcune configurazioni sono incomplete",
+    "quickReplyNextStepRequired": "Scegli un passaggio successivo per ogni impostazione di risposta rapida attiva",
+    "quickReplyRetryMessageRequired": "Inserisci un messaggio di nuovo tentativo",
+    "quickReplyRetryWithGetUserData": "Il nuovo tentativo non può essere combinato con un passaggio Ottieni dati dell'utente",
     "whatsappCarouselButtonsMismatch": "Su WhatsApp, un carosello richiede gli stessi pulsanti su ogni scheda: un unico pulsante di collegamento su ogni scheda, oppure lo stesso numero di pulsanti di risposta su ogni scheda",
     "whatsappCarouselLinkButtonNotAlone": "Su WhatsApp, una scheda del carosello con un pulsante di collegamento non può avere altri pulsanti. Rimuovi gli altri pulsanti su quella scheda, oppure cambia il pulsante di collegamento in un'altra azione.",
     "duplicateNodeError": "Impossibile duplicare il blocco. Riprova.",

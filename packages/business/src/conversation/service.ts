@@ -11,7 +11,10 @@ import {
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
-import type { ConversationAttributes } from "@chatbotx.io/database/partials"
+import type {
+  ConversationAttributes,
+  ConversationQuickReplyChallenge,
+} from "@chatbotx.io/database/partials"
 import {
   assignUserIfUnassigned,
   contactInboxOperationalColumns,
@@ -62,6 +65,7 @@ import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { smartDelayService } from "../smart-delay/service"
 import { threadControlService } from "../thread-control/service"
 import { workspaceMemberService } from "../workspace-member/service"
 
@@ -122,6 +126,28 @@ type FindByProps = {
 export type ConversationWithContactInboxes = ConversationModel & {
   contactInboxes: ContactInboxModel[]
 }
+
+const quickReplyChallengeJson = () =>
+  sql`${conversationModel.additionalAttributes}->'challenge'`
+
+const isQuickReplyChallenge = () =>
+  sql`${quickReplyChallengeJson()}->>'type' = 'quickReply'`
+
+/**
+ * SET fragment that drops a quick-reply challenge and leaves every other
+ * challenge (e.g. Get User Data `type: "step"`) untouched. Reused by the
+ * handoff executor.
+ */
+const dropChallenge = () =>
+  sql`${conversationModel.additionalAttributes} - 'challenge'`
+
+const setChallenge = (
+  challenge: NonNullable<ConversationAttributes["challenge"]>,
+) =>
+  sql`jsonb_set(COALESCE(${conversationModel.additionalAttributes}, '{}'::jsonb), '{challenge}', ${JSON.stringify(challenge)}::jsonb, true)`
+
+export const sqlDropQuickReplyChallenge = () =>
+  sql`CASE WHEN ${isQuickReplyChallenge()} THEN ${dropChallenge()} ELSE ${conversationModel.additionalAttributes} END`
 
 class ConversationService extends BaseService {
   async markAgentReplied(input: { id: string; workspaceId: string; at: Date }) {
@@ -224,8 +250,8 @@ class ConversationService extends BaseService {
   }): Promise<void> {
     const additionalAttributes =
       props.challenge === undefined
-        ? sql`${conversationModel.additionalAttributes} - 'challenge'`
-        : sql`jsonb_set(COALESCE(${conversationModel.additionalAttributes}, '{}'::jsonb), '{challenge}', ${JSON.stringify(props.challenge)}::jsonb, true)`
+        ? dropChallenge()
+        : setChallenge(props.challenge)
 
     const [row] = await db
       .update(conversationModel)
@@ -263,7 +289,7 @@ class ConversationService extends BaseService {
     const rows = await db
       .update(conversationModel)
       .set({
-        additionalAttributes: sql`${conversationModel.additionalAttributes} - 'challenge'`,
+        additionalAttributes: dropChallenge(),
       })
       .where(
         and(
@@ -294,7 +320,7 @@ class ConversationService extends BaseService {
     const rows = await db
       .update(conversationModel)
       .set({
-        additionalAttributes: sql`jsonb_set(COALESCE(${conversationModel.additionalAttributes}, '{}'::jsonb), '{challenge}', ${JSON.stringify(props.challenge)}::jsonb, true)`,
+        additionalAttributes: setChallenge(props.challenge),
       })
       .where(
         and(
@@ -306,6 +332,130 @@ class ConversationService extends BaseService {
       .returning({ id: conversationModel.id })
 
     return rows.length > 0
+  }
+
+  /**
+   * Clears a pending quick-reply retry. Never touches a Get User Data
+   * (`type: "step"`) challenge. Returns whether a row changed, so concurrent
+   * callers can tell who won. `attempts` makes it a compare-and-set on the
+   * current attempt count (mirrors `setQuickReplyChallengeAttempts`), so a
+   * stale caller cannot clear a freshly re-armed challenge.
+   */
+  async clearQuickReplyChallenge(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    conversationId: string
+    nodeId?: string
+    exceptFlowId?: string
+    attempts?: number
+  }): Promise<boolean> {
+    const { tx = db } = props
+    const challenge = quickReplyChallengeJson()
+    const rows = await tx
+      .update(conversationModel)
+      .set({ additionalAttributes: dropChallenge() })
+      .where(
+        and(
+          eq(conversationModel.workspaceId, props.workspaceId),
+          eq(conversationModel.id, props.conversationId),
+          isQuickReplyChallenge(),
+          props.nodeId
+            ? sql`${challenge}->'data'->>'nodeId' = ${props.nodeId}`
+            : undefined,
+          props.exceptFlowId
+            ? sql`${challenge}->'data'->>'flowId' <> ${props.exceptFlowId}`
+            : undefined,
+          props.attempts === undefined
+            ? undefined
+            : sql`(${challenge}->'data'->>'attempts')::int = ${props.attempts}`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
+  /**
+   * Writes a quick-reply retry challenge only while the bot is enabled, so a
+   * pause landing between the caller's `ensureActive` read and this write
+   * cannot leave a challenge on a handed-off conversation. Returns whether it
+   * was written.
+   */
+  async armQuickReplyChallenge(props: {
+    workspaceId: string
+    conversationId: string
+    challenge: ConversationQuickReplyChallenge
+  }): Promise<boolean> {
+    const rows = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes: setChallenge(props.challenge),
+      })
+      .where(
+        and(
+          eq(conversationModel.workspaceId, props.workspaceId),
+          eq(conversationModel.id, props.conversationId),
+          eq(conversationModel.botEnabled, true),
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
+  /** Compare-and-set on `attempts`: only one concurrent retry wins. */
+  async setQuickReplyChallengeAttempts(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    conversationId: string
+    nodeId: string
+    fromAttempts: number
+    toAttempts: number
+  }): Promise<boolean> {
+    const { tx = db } = props
+    const challenge = quickReplyChallengeJson()
+    const rows = await tx
+      .update(conversationModel)
+      .set({
+        additionalAttributes: sql`jsonb_set(${conversationModel.additionalAttributes}, '{challenge,data,attempts}', to_jsonb(${props.toAttempts}::int), false)`,
+      })
+      .where(
+        and(
+          eq(conversationModel.workspaceId, props.workspaceId),
+          eq(conversationModel.id, props.conversationId),
+          isQuickReplyChallenge(),
+          sql`${challenge}->'data'->>'nodeId' = ${props.nodeId}`,
+          sql`(${challenge}->'data'->>'attempts')::int = ${props.fromAttempts}`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
+  async clearQuickReplyChallengesForStaleVersion(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    flowId: string
+    currentFlowVersionId: string
+  }): Promise<number> {
+    const { tx = db } = props
+    const challenge = quickReplyChallengeJson()
+    const rows = await tx
+      .update(conversationModel)
+      .set({ additionalAttributes: dropChallenge() })
+      .where(
+        and(
+          eq(conversationModel.workspaceId, props.workspaceId),
+          isQuickReplyChallenge(),
+          sql`${challenge}->'data'->>'flowId' = ${props.flowId}`,
+          sql`${challenge}->'data'->>'flowVersionId' IS NOT NULL`,
+          sql`${challenge}->'data'->>'flowVersionId' <> ${props.currentFlowVersionId}`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length
   }
 
   async findByContactWithInboxes(props: {
@@ -1134,13 +1284,43 @@ class ConversationService extends BaseService {
     }
     await tx
       .update(conversationModel)
-      .set({ botEnabled, botResumeAt })
+      .set({
+        botEnabled,
+        botResumeAt,
+        ...(botEnabled
+          ? {}
+          : { additionalAttributes: sqlDropQuickReplyChallenge() }),
+      })
       .where(
         and(
           eq(conversationModel.workspaceId, workspaceId),
           inArray(conversationModel.id, ids),
         ),
       )
+    if (!botEnabled) {
+      // Best-effort: fire-time `ensureActive` already skips a follow-up on a
+      // paused conversation, so a failed cancel must never fail the pause (or
+      // skip `invalidate`). Inside a caller's tx it runs behind a SAVEPOINT so
+      // a failed statement cannot poison the outer transaction.
+      const cancel = (client: DatabaseClient) =>
+        smartDelayService.cancelQuickReplyFollowUps({
+          tx: client,
+          workspaceId,
+          conversationIds: ids,
+        })
+      try {
+        if (props.tx) {
+          await props.tx.transaction(cancel)
+        } else {
+          await cancel(tx)
+        }
+      } catch (error) {
+        logger.warn(
+          { err: error, workspaceId, conversationIds: ids },
+          "quick reply follow-up cancel on bot pause failed",
+        )
+      }
+    }
     await this.invalidate({ workspaceId, ids })
   }
 

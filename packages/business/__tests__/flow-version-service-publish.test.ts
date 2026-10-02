@@ -16,6 +16,9 @@ const {
   mockTxSet,
   mockInvalidateCacheTags,
   mockDispatchAuditRecord,
+  mockCancelStale,
+  mockClearStale,
+  mockLoggerWarn,
 } = vi.hoisted(() => {
   const mockTxInsertValues = vi.fn().mockResolvedValue(undefined)
   const mockTxInsert = vi.fn().mockReturnValue({ values: mockTxInsertValues })
@@ -33,6 +36,9 @@ const {
     mockTxSet,
     mockInvalidateCacheTags: vi.fn().mockResolvedValue(undefined),
     mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
+    mockCancelStale: vi.fn().mockResolvedValue(0),
+    mockClearStale: vi.fn().mockResolvedValue(0),
+    mockLoggerWarn: vi.fn(),
   }
 })
 
@@ -71,6 +77,22 @@ vi.mock("../src/errors", () => ({
   notFoundException: (message: string) => new Error(message),
 }))
 
+vi.mock("../src/smart-delay/service", () => ({
+  smartDelayService: {
+    cancelQuickReplyFollowUpsForStaleVersion: mockCancelStale,
+  },
+}))
+
+vi.mock("../src/conversation/service", () => ({
+  conversationService: {
+    clearQuickReplyChallengesForStaleVersion: mockClearStale,
+  },
+}))
+
+vi.mock("../src/logger", () => ({
+  logger: { warn: mockLoggerWarn },
+}))
+
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
@@ -91,6 +113,9 @@ describe("flowVersionService.publish", () => {
     mockCreateId
       .mockReturnValueOnce("1")
       .mockReturnValueOnce("2")
+      // quickReplySettings followUp/retry ids in the node defaults
+      .mockReturnValueOnce("3")
+      .mockReturnValueOnce("4")
       .mockReturnValue("new-version-1")
     mockDbTransaction.mockImplementation(
       async (
@@ -186,6 +211,37 @@ describe("flowVersionService.publish", () => {
     ).rejects.toMatchObject({ name: "FlowAuthoringException" })
 
     expect(mockDbTransaction).not.toHaveBeenCalled()
+  })
+
+  test("clears stale quick reply state for the new version without failing publish when cleanup rejects", async () => {
+    mockFlowFindFirst.mockResolvedValue({
+      id: "flow-1",
+      workspaceId: "ws-1",
+      flowVersions: [{ id: "draft-1", startNodeId: "node-1" }],
+    })
+    mockCreateId.mockReturnValue("new-version-1")
+    mockDbTransaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) =>
+        fn({ insert: mockTxInsert, update: mockTxUpdate }),
+    )
+    mockCancelStale.mockRejectedValueOnce(new Error("boom"))
+
+    await flowVersionService.publish({
+      workspaceId: "ws-1",
+      flowId: "flow-1",
+      nodes: [] as never,
+      edges: [] as never,
+    })
+    await vi.waitFor(() => expect(mockLoggerWarn).toHaveBeenCalled())
+
+    const expected = {
+      workspaceId: "ws-1",
+      flowId: "flow-1",
+      currentFlowVersionId: "new-version-1",
+    }
+    expect(mockCancelStale).toHaveBeenCalledWith(expected)
+    expect(mockClearStale).toHaveBeenCalledWith(expected)
+    expect(mockLoggerWarn.mock.calls[0][0]).toMatchObject({ flowId: "flow-1" })
   })
 
   test("throws notFoundException when the flow does not exist", async () => {

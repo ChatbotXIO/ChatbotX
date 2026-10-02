@@ -2423,6 +2423,28 @@
     "quickReplies": {
       "limitReached": "Hızlı yanıt sınırına ulaşıldı ({max})."
     },
+    "quickReplySettings": {
+      "open": "Hızlı yanıt ayarları",
+      "title": "Hızlı yanıtları yapılandır",
+      "chooseNextStep": "Sonraki adımı seç",
+      "followUp": {
+        "label": "Kişi etkileşime girmediyse takip et",
+        "waitFor": "Bekleme süresi",
+        "divider": "Kişi etkileşime girmediyse şununla takip et",
+        "windowHint": "Messenger ve Instagram yalnızca kişinin son mesajından sonraki 24 saat içinde gönderime izin verir; daha sonraki takipler bu kanallarda atlanır.",
+        "handle": "Etkileşim yok"
+      },
+      "retry": {
+        "label": "Yanıt bir Hızlı Yanıt değilse yeniden dene",
+        "message": "Yeniden deneme mesajı",
+        "messageDefault": "Lütfen aşağıdaki seçeneklerden birine dokunun 👇",
+        "count": "Yeniden deneme sayısı",
+        "countOption": "{count, plural, =0 {Yeniden deneme yok} one {# kez} other {# kez}}",
+        "divider": "Yeniden deneme sayısı aşıldığında",
+        "handle": "Yeniden deneme sayısı aşıldı",
+        "getUserDataConflict": "Bu mesaj bir Kullanıcı Verisini Al adımı içerdiğinde yeniden deneme kullanılamaz."
+      }
+    },
     "buttons": {
       "limitReached": "Buton sınırına ulaşıldı ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Yayınlanmış sürüm bulunamadı",
     "publishVersionSuccess": "Yeni bir sürüm yayınlandı",
     "flowConfigIncomplete": "Bazı yapılandırmalar eksik",
+    "quickReplyNextStepRequired": "Etkin her hızlı yanıt ayarı için bir sonraki adım seçin",
+    "quickReplyRetryMessageRequired": "Bir yeniden deneme mesajı girin",
+    "quickReplyRetryWithGetUserData": "Yeniden deneme, Kullanıcı Verisini Al adımıyla birlikte kullanılamaz",
     "whatsappCarouselButtonsMismatch": "WhatsApp'ta bir karusel her kartta aynı düğmelere sahip olmalıdır: her kartta tek bir bağlantı düğmesi veya her kartta aynı sayıda yanıt düğmesi",
     "whatsappCarouselLinkButtonNotAlone": "WhatsApp'ta bağlantı düğmesi olan bir karusel kartında başka düğme bulunamaz. O karttaki diğer düğmeleri kaldırın veya bağlantı düğmesini başka bir eyleme dönüştürün.",
     "duplicateNodeError": "Blok çoğaltılamadı. Lütfen tekrar deneyin.",

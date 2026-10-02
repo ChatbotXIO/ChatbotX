@@ -2665,6 +2665,28 @@
     "quickReplies": {
       "limitReached": "Quick reply limit reached ({max})."
     },
+    "quickReplySettings": {
+      "open": "Quick reply settings",
+      "title": "Configure quick replies",
+      "chooseNextStep": "Choose next step",
+      "followUp": {
+        "label": "Follow up if contact hasn’t engaged",
+        "waitFor": "Wait for",
+        "divider": "If contact hasn’t engaged, follow up with",
+        "windowHint": "Messenger and Instagram only allow sending within 24 hours of the contact’s last message; later follow-ups are skipped there.",
+        "handle": "No engagement"
+      },
+      "retry": {
+        "label": "Retry if reply isn’t a Quick reply",
+        "message": "Retry message",
+        "messageDefault": "Please, tap one of the options below 👇",
+        "count": "Number of retries",
+        "countOption": "{count, plural, =0 {No retries} one {# time} other {# times}}",
+        "divider": "When number of retries is exceeded",
+        "handle": "Retries exceeded",
+        "getUserDataConflict": "Retry isn’t available when this message contains a Get User Data step."
+      }
+    },
     "buttons": {
       "limitReached": "Button limit reached ({max})."
     },
@@ -3725,6 +3747,9 @@
     "noVersionsFound": "No published versions found",
     "publishVersionSuccess": "A new version has been published",
     "flowConfigIncomplete": "Some configurations are incomplete",
+    "quickReplyNextStepRequired": "Choose a next step for each enabled quick reply setting",
+    "quickReplyRetryMessageRequired": "Enter a retry message",
+    "quickReplyRetryWithGetUserData": "Retry can’t be combined with a Get User Data step",
     "whatsappCarouselButtonsMismatch": "On WhatsApp, a carousel needs the same buttons on every card: either a single link button on each card, or the same number of reply buttons on each card",
     "whatsappCarouselLinkButtonNotAlone": "On WhatsApp, a carousel card with a link button cannot have any other buttons. Remove the other buttons on that card, or change the link button to another action.",
     "duplicateNodeError": "Could not duplicate the block. Please try again.",

@@ -8,6 +8,28 @@
     "quickReplies": {
       "limitReached": "A fost atinsă limita de răspunsuri rapide ({max})."
     },
+    "quickReplySettings": {
+      "open": "Setări pentru răspunsuri rapide",
+      "title": "Configurează răspunsurile rapide",
+      "chooseNextStep": "Alege pasul următor",
+      "followUp": {
+        "label": "Revino dacă contactul nu a interacționat",
+        "waitFor": "Așteaptă",
+        "divider": "Dacă contactul nu a interacționat, revino cu",
+        "windowHint": "Messenger și Instagram permit trimiterea doar în 24 de ore de la ultimul mesaj al contactului; mesajele de revenire ulterioare sunt omise acolo.",
+        "handle": "Nicio interacțiune"
+      },
+      "retry": {
+        "label": "Reîncearcă dacă răspunsul nu este un răspuns rapid",
+        "message": "Mesaj de reîncercare",
+        "messageDefault": "Te rugăm să atingi una dintre opțiunile de mai jos 👇",
+        "count": "Număr de reîncercări",
+        "countOption": "{count, plural, =0 {Fără reîncercări} one {# dată} other {# ori}}",
+        "divider": "Când numărul de reîncercări este depășit",
+        "handle": "Reîncercări depășite",
+        "getUserDataConflict": "Reîncercarea nu este disponibilă când acest mesaj conține un pas Obține datele utilizatorului."
+      }
+    },
     "buttons": {
       "limitReached": "A fost atinsă limita de butoane ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Nicio versiune publicată găsită",
     "publishVersionSuccess": "A fost publicată o versiune nouă",
     "flowConfigIncomplete": "Unele configurări sunt incomplete",
+    "quickReplyNextStepRequired": "Alege un pas următor pentru fiecare setare de răspuns rapid activată",
+    "quickReplyRetryMessageRequired": "Introdu un mesaj de reîncercare",
+    "quickReplyRetryWithGetUserData": "Reîncercarea nu poate fi combinată cu un pas Obține datele utilizatorului",
     "whatsappCarouselButtonsMismatch": "Pe WhatsApp, un carusel are nevoie de aceleași butoane pe fiecare card: fie un singur buton de link pe fiecare card, fie același număr de butoane de răspuns pe fiecare card",
     "whatsappCarouselLinkButtonNotAlone": "Pe WhatsApp, un card de carusel cu un buton de link nu poate avea alte butoane. Elimină celelalte butoane de pe acel card sau schimbă butonul de link cu o altă acțiune.",
     "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",

@@ -62,6 +62,7 @@ import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processLeadgen } from "./handlers/lead-ads"
 import { handleMessageStatus } from "./handlers/message-status"
 import { handleSendMetaCapiEvent } from "./handlers/meta-conversions/send-meta-capi-event"
+import { runQuickReplyFollowUpResume } from "./handlers/quick-reply-resume"
 import {
   deleteIncomingComment,
   deleteIncomingMessage,
@@ -399,6 +400,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.resumeFollowUp: {
               await runFollowUpResume(job.data.data)
+              return
+            }
+            case IntegrationJobAction.resumeQuickReplyFollowUp: {
+              await runQuickReplyFollowUpResume(job.data.data)
               return
             }
             case IntegrationJobAction.messageStatus: {
