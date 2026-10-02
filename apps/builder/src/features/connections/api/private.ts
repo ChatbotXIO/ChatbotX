@@ -14,6 +14,7 @@ import {
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { sanitizeOptionalReturnUrl } from "@/lib/oauth-referer"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
+import { withPublicPaging } from "@/lib/public-api/list"
 import { resolveChannelPolicy } from "@/lib/workspace/resolve-visible-channels"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -43,18 +44,22 @@ const listConnectionsAPI = authorizedAPI
     summary: "List connections",
     tags: ["Connections"],
   })
-  .input(listConnectionsRequest.and(withWorkspaceIdSchema))
+  .input(withPublicPaging(listConnectionsRequest).and(withWorkspaceIdSchema))
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
-    const { data } = await connectionStateService.list({
+    const { data, count } = await connectionStateService.list({
       workspaceId: input.workspaceId,
       kind: input.kind,
       provider: input.provider,
       channel: input.channel,
       status: input.status ? [input.status] : undefined,
-      perPage: 50,
+      page: input.page,
+      perPage: input.perPage,
     })
-    return { data: data.map(toConnectionResource) }
+    return {
+      data: data.map(toConnectionResource),
+      pageCount: Math.max(1, Math.ceil(count / input.perPage)),
+    }
   })
 
 const getConnectionAPI = authorizedAPI

@@ -2,6 +2,23 @@
 
 import { describe, expect, test, vi } from "vitest"
 
+// `resolve-provider.ts` also imports `connectionStateService`/
+// `platformCredentialService` for its OTHER exports (`resolveOneProvider` /
+// `resolveAlreadyConnectedProviders`, neither exercised here) — but merely
+// importing the real `@chatbotx.io/business` barrel reaches `better-auth`'s
+// init (via `enterprise/custom-domain/service.ts`), which opens a real DB
+// pool. Mocked at the boundary so this narrow `toConnectionResource` test
+// doesn't need a live database.
+vi.mock("@chatbotx.io/business", () => ({
+  connectionStateService: { list: vi.fn() },
+  platformCredentialService: { resolveForOwner: vi.fn() },
+  // `packages/auth/src/server.ts`'s `trustedOrigins` (reached once
+  // `better-auth` initializes, somewhere deep in this test's real,
+  // unmocked `@/lib/workspace/resolve-visible-channels` import) also
+  // pulls this from the same barrel.
+  customDomainService: { listActiveDomains: vi.fn(async () => []) },
+}))
+
 vi.mock("@chatbotx.io/connections", () => ({
   CONNECTION_REGISTRY: {
     messenger: {

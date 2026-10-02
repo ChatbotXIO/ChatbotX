@@ -5,6 +5,7 @@ import {
   connectionNotConfiguredException,
   connectionWrongStrategyException,
   toPublicErrorMessage,
+  validationException,
 } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
@@ -81,6 +82,21 @@ export const connectFromCredentials = async (input: {
   const extraConfig = Object.fromEntries(
     Object.entries(input.config).filter(([key]) => !configFieldNames.has(key)),
   )
+  // Anything left is not part of the provider's own validated credential
+  // shape — only pass it to the satellite insert if the binding's
+  // `configColumns` allow-list explicitly names it (e.g. an AI provider's
+  // `model`/`temperature`). Otherwise a client could set an arbitrary
+  // satellite column (workspaceId, inboxId, tokenHash, …) via `config`.
+  const allowedConfigColumns = new Set(store.configColumns ?? [])
+  const rejectedConfigKeys = Object.keys(extraConfig).filter(
+    (key) => !allowedConfigColumns.has(key),
+  )
+  if (rejectedConfigKeys.length > 0) {
+    throw validationException(
+      rejectedConfigKeys[0] as string,
+      `Unsupported config field(s) for ${input.provider}: ${rejectedConfigKeys.join(", ")}`,
+    )
+  }
 
   let auth: AuthValue
   try {

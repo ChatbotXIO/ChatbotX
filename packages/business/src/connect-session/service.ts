@@ -244,41 +244,40 @@ class ConnectSessionService extends BaseService {
   }
 
   /**
-   * Merges outcomes/connection ids into the session's running totals and,
-   * once every originally-offered target has a result, marks the session
-   * `completed`. Safe to call more than once for the same session (e.g.
-   * `connectTargets` processing two batches) — results accumulate rather
-   * than overwrite.
+   * Atomically merges one `connectTargets` batch's outcomes into the
+   * session's running totals via `connectSessionRepository.appendResults`
+   * — a single guarded SQL `UPDATE`, not a read-then-write (which lost
+   * updates under two concurrent batches on the same session). Completion
+   * is computed over DISTINCT target ids against the session's own
+   * selectable-target count, so a `notSelectable` target or a duplicated
+   * outcome can't skew it; the terminal status is `completed` only if at
+   * least one outcome succeeded, otherwise `failed` — an all-`failed`/
+   * all-`limitReached` batch no longer reports success. Guarded by
+   * `status = 'awaiting_selection'`: a session already terminal (a
+   * concurrent batch completed it first, or it was `fail`/`cancel`led)
+   * updates 0 rows — this returns that current terminal row unchanged
+   * instead of throwing, so a caller that merely raced another terminal
+   * transition sees the real outcome rather than a spurious error.
    */
   async recordResults(input: {
     id: string
     results: ConnectSessionOutcome[]
     resultConnectionIds: string[]
   }): Promise<ConnectSessionModel> {
+    const updated = await connectSessionRepository.appendResults(input)
+    if (updated) {
+      return updated
+    }
     const existing = await connectSessionRepository.findById({ id: input.id })
     if (!existing) {
       throw new ConnectSessionNotFoundException()
     }
-    const mergedResults = [...existing.results, ...input.results]
-    const mergedConnectionIds = [
-      ...existing.resultConnectionIds,
-      ...input.resultConnectionIds,
-    ]
-    const isComplete = mergedResults.length >= existing.targets.length
-    const updated = await connectSessionRepository.update({
-      id: existing.id,
-      values: {
-        status: isComplete ? "completed" : existing.status,
-        step: isComplete ? "done" : existing.step,
-        results: mergedResults,
-        resultConnectionIds: mergedConnectionIds,
-        consumedAt: isComplete ? new Date() : existing.consumedAt,
-      },
-    })
-    if (!updated) {
-      throw new ConnectSessionNotFoundException()
-    }
-    return updated
+    return existing
+  }
+
+  /** Releases a target `claimTarget` claimed whose `connectTargets` attempt did not end in `connected` — see `connectSessionRepository.releaseTarget`. */
+  async releaseTarget(input: { id: string; targetId: string }): Promise<void> {
+    await connectSessionRepository.releaseTarget(input)
   }
 
   /** Records user-submitted `enter_input` step data (e.g. a credential-strategy `config`) without changing status — the caller advances the step separately once it has processed the input. */
@@ -297,52 +296,79 @@ class ConnectSessionService extends BaseService {
     return updated
   }
 
+  /** Transitions to `failed`, guarded to only affect an active (non-terminal) session — a replayed/duplicate OAuth callback `?error=` can never flip an already-`completed`/`cancelled`/etc. session. Returns the session's current (already-terminal) row unchanged instead of throwing when the guard doesn't match. */
   async fail(input: {
     id: string
     errorCode: ConnectSessionErrorCode
   }): Promise<ConnectSessionModel> {
-    const updated = await connectSessionRepository.update({
+    const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
+      statuses: [...ACTIVE_STATUSES],
       values: {
         status: "failed",
         errorCode: input.errorCode,
         consumedAt: new Date(),
+        // No further use once terminal — see `expireDue`/`cancel`/
+        // `appendResults`, the other three terminal paths that clear it.
+        encryptedAuth: null,
       },
     })
-    if (!updated) {
+    if (updated) {
+      return updated
+    }
+    const existing = await connectSessionRepository.findById({ id: input.id })
+    if (!existing) {
       throw new ConnectSessionNotFoundException()
     }
-    return updated
+    return existing
   }
 
+  /** Transitions to `cancelled`, guarded to only affect an active session — see `fail`. */
   async cancel(input: {
     id: string
     workspaceId: string
   }): Promise<ConnectSessionModel> {
     const existing = await this.requireByIdForWorkspace(input)
-    const updated = await connectSessionRepository.update({
+    const updated = await connectSessionRepository.updateWhereStatusIn({
       id: existing.id,
-      values: { status: "cancelled", consumedAt: new Date() },
+      statuses: [...ACTIVE_STATUSES],
+      values: {
+        status: "cancelled",
+        consumedAt: new Date(),
+        encryptedAuth: null,
+      },
     })
-    if (!updated) {
-      throw new ConnectSessionNotFoundException()
-    }
-    return updated
+    return updated ?? existing
   }
 
-  /** Sweeps every active session past `expiresAt` to `status = "expired"` — the `purgeExpired` cron. Returns the number of rows updated. */
-  async purgeExpired(): Promise<number> {
-    const expired = await connectSessionRepository.listExpired({
+  /**
+   * The `purgeExpiredConnectSessions` cron's two sweeps:
+   * - `expireDue`: one bulk `UPDATE` flips every active session past
+   *   `expiresAt` to `expired` (not a per-row loop — see the repository
+   *   method's docstring) and clears `encryptedAuth`.
+   * - `purgeOldTerminal`: deletes terminal rows (already `completed`/
+   *   `failed`/`expired`/`cancelled`) past `options.retentionDays` —
+   *   without this, a finished `ConnectSession` row is never deleted, only
+   *   ever flipped to a terminal status once.
+   */
+  async purgeExpired(options: {
+    retentionDays: number
+    chunkSize: number
+    interChunkDelayMs: number
+    maxChunks: number
+    maxRunDurationMs?: number
+  }): Promise<{
+    expired: number
+    deletedTerminal: number
+    terminalPurgeStopReason: "drained" | "deadline" | "chunkCap"
+  }> {
+    const expired = await connectSessionRepository.expireDue({
       before: new Date(),
       statuses: [...ACTIVE_STATUSES],
     })
-    for (const session of expired) {
-      await connectSessionRepository.update({
-        id: session.id,
-        values: { status: "expired" },
-      })
-    }
-    return expired.length
+    const { deleted: deletedTerminal, stopReason: terminalPurgeStopReason } =
+      await connectSessionRepository.purgeOldTerminal(options)
+    return { expired, deletedTerminal, terminalPurgeStopReason }
   }
 
   /** Loads an active (non-expired, non-terminal) session by id alone, or throws `connectSessionExpired`. */

@@ -7,7 +7,11 @@ import type {
   ChannelType,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
-import { integrationTypes } from "@chatbotx.io/database/partials"
+import {
+  ACTIVE_CONNECTION_STATUSES,
+  INACTIVE_CONNECTION_STATUSES,
+  integrationTypes,
+} from "@chatbotx.io/database/partials"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { getTranslations } from "next-intl/server"
 import { resolveChannelPolicy } from "@/lib/workspace/resolve-visible-channels"
@@ -91,17 +95,39 @@ export const listConnectionProviderResources = async (input: {
   )
 }
 
+/**
+ * A `disconnected` row is fully torn down and must not block a fresh
+ * connect — only a row still in some other status (`connected`/`degraded`/
+ * `needs_reauth`/`paused`) represents an existing slot for its provider.
+ */
+const NON_DISCONNECTED_STATUSES = [
+  ...ACTIVE_CONNECTION_STATUSES,
+  ...INACTIVE_CONNECTION_STATUSES.filter((status) => status !== "disconnected"),
+]
+
+/** Hard backstop only — `connectionStateService.list` clamps `perPage` to the DB's 50-row `maxLimit`, so a workspace with more non-disconnected Connection rows than that needs this loop to see every page; this just bounds a pathological runaway. */
+const MAX_ALREADY_CONNECTED_PAGES = 50
+
 const resolveAlreadyConnectedProviders = async (
   workspaceId: string,
 ): Promise<Set<IntegrationType>> => {
-  // Only distinct `provider` values matter here (deduped into the `Set`
-  // below); 50 is the DB-level page-size cap (`maxLimit`) — comfortably
-  // above the 30-value `IntegrationType` domain this loop iterates.
-  const { data } = await connectionStateService.list({
-    workspaceId,
-    perPage: 50,
-  })
-  return new Set(data.map((row) => row.provider))
+  const providers = new Set<IntegrationType>()
+  const perPage = 50
+  for (let page = 1; page <= MAX_ALREADY_CONNECTED_PAGES; page++) {
+    const { data } = await connectionStateService.list({
+      workspaceId,
+      status: NON_DISCONNECTED_STATUSES,
+      page,
+      perPage,
+    })
+    for (const row of data) {
+      providers.add(row.provider)
+    }
+    if (data.length < perPage) {
+      break
+    }
+  }
+  return providers
 }
 
 const resolveOneProvider = async (input: {

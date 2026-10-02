@@ -10,6 +10,7 @@ import {
   SdkException,
 } from "@chatbotx.io/sdk"
 import { connectionStateService } from "../connection/state-service"
+import { logger } from "../logger"
 import { workspaceMemberService } from "../workspace-member/service"
 
 const REFRESH_LOCK_TIMEOUT_SECONDS = 10
@@ -99,10 +100,26 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
         auth.authType === "oauth2" && auth.tokens.expiresAt
           ? new Date(auth.tokens.expiresAt)
           : null
-      await connectionStateService.recordAuthSaved({
-        connectionId: connection.id,
-        authExpiresAt,
-      })
+      // `auth.saved` only transitions a currently-ACTIVE (connected/
+      // degraded) connection — it throws from `needs_reauth`/`paused`/
+      // `disconnected` (see `transitionConnection`). The row write above
+      // already succeeded and is the source of truth for the refreshed
+      // token; a token refresh that happens to still work while the
+      // `Connection` is in one of those inactive states (a stale
+      // revocation, a pause mid-refresh, a disconnect race) must not fail
+      // the whole refresh/send over a state-machine mirror that was never
+      // going to apply anyway.
+      try {
+        await connectionStateService.recordAuthSaved({
+          connectionId: connection.id,
+          authExpiresAt,
+        })
+      } catch (err) {
+        logger.warn(
+          { err, connectionId: connection.id },
+          "auth-store: recordAuthSaved could not transition the connection (likely inactive) — auth was still saved",
+        )
+      }
     },
     withLock: (fn) =>
       distributedLock.runExclusive({

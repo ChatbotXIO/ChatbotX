@@ -538,6 +538,12 @@ export const connectTargets = async (input: {
         connectionId: connection.id,
       })
     } catch (err) {
+      // The claim above already appended `targetId` to `claimedTargetIds`;
+      // every branch below ends in a non-`connected` outcome, so release it
+      // — otherwise a retry's `claimTarget` permanently sees this target as
+      // claimed and reports `duplicated` even though it was never actually
+      // connected.
+      await connectSessionService.releaseTarget({ id: session.id, targetId })
       if (
         err instanceof ChatbotXException &&
         err.code === "channelLimitReached"

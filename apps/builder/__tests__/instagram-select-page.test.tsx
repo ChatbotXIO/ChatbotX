@@ -29,6 +29,10 @@ vi.mock("@/features/channel-connect/lib/resolve-connect-session", () => ({
   resolveConnectSession: mockResolveConnectSession,
 }))
 
+vi.mock("@/lib/log", () => ({
+  logger: { warn: vi.fn() },
+}))
+
 vi.mock("@/features/integration-instagram/components/select-accounts", () => ({
   SelectAccount: mockSelectAccount,
 }))
@@ -111,6 +115,16 @@ describe("InstagramSelectPage", () => {
       session: { targets: [] },
       workspace: { id: "ws-1" },
     })
+
+    await expect(InstagramSelectPage(pageArgs)).rejects.toThrow(
+      "redirect:/channels/create",
+    )
+  })
+
+  test("redirects to channel creation when resolveConnectSession throws (regression: an expired/invalid session previously 500'd this page instead of redirecting)", async () => {
+    mockResolveConnectSession.mockRejectedValue(
+      new Error("connect session expired"),
+    )
 
     await expect(InstagramSelectPage(pageArgs)).rejects.toThrow(
       "redirect:/channels/create",

@@ -7,10 +7,12 @@ import {
   isDatabaseError,
 } from "@chatbotx.io/database/client"
 import { integrationTypes } from "@chatbotx.io/database/partials"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { integrationTelegramModel } from "@chatbotx.io/database/schema"
 import type { IntegrationTelegramModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
@@ -156,13 +158,31 @@ class TelegramIntegrationService extends BaseService {
             eq(integrationTelegramModel.workspaceId, workspaceId),
           ),
         )
-      await inboxService.disconnect({
-        inboxId,
-        ownerId,
-        workspaceId,
-        reason: "manual",
-        tx: client,
-      })
+      // Writing through `connectionStateService` (not `inboxService.disconnect`
+      // directly) keeps the `Connection` row and `Inbox.status` in lockstep —
+      // see `disconnect-messenger.ts` for why. Falls back to the legacy
+      // direct write only for a pre-backfill row with no `Connection`
+      // counterpart yet.
+      const connection = await connectionRepository.findByInboxId(
+        { inboxId },
+        client,
+      )
+      if (connection) {
+        await connectionStateService.transition({
+          connectionId: connection.id,
+          event: "user.disconnect",
+          ownerId,
+          tx: client,
+        })
+      } else {
+        await inboxService.disconnect({
+          inboxId,
+          ownerId,
+          workspaceId,
+          reason: "manual",
+          tx: client,
+        })
+      }
     }
 
     if (tx) {

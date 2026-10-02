@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { db, eq } from "@chatbotx.io/database/client"
+import { and, db, eq } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
   integrationActiveCampaignModel,
@@ -34,6 +34,7 @@ import {
   integrationZaloModel,
 } from "@chatbotx.io/database/schema"
 import type { AuthValue } from "@chatbotx.io/sdk"
+import type { SQL } from "drizzle-orm"
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core"
 
 /** Minimal shape a binding's DB row is normalized to. */
@@ -107,6 +108,17 @@ export type ConnectionStoreBinding = {
   ) => Promise<ConnectionStoreRow | null>
   /** Unique-constraint name a duplicate insert violates — lets callers map it to `alreadyConnected` instead of a raw DB error. */
   duplicateConstraint?: string
+  /**
+   * Allow-list of extra satellite columns a credential-strategy `connect`
+   * request may set via `config` beyond the provider's own `configFields`
+   * (e.g. an AI provider's `model`/`temperature`/`maxOutputTokens`).
+   * `connectFromCredentials` rejects any `config` key outside this list —
+   * without it, a client could set an arbitrary satellite column (e.g.
+   * `IntegrationApi.tokenHash`) via `config`. Undefined/empty for every
+   * provider whose satellite row carries no additional client-settable
+   * column.
+   */
+  configColumns?: readonly string[]
 }
 
 /**
@@ -143,6 +155,8 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
   extraInsertValues?: Record<string, unknown>
   /** Extra equality narrowing every read must apply (e.g. `type = 'instagram'`). */
   extraWhere?: Record<string, AnyPgColumn extends never ? never : unknown>
+  /** See `ConnectionStoreBinding.configColumns`. */
+  configColumns?: readonly string[]
 }): ConnectionStoreBinding => {
   const { table } = opts
   // `.from()`/`.insert()` reject a generic `TTable` param (Drizzle's typing
@@ -157,6 +171,18 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
   const identityCol = opts.identityColumn
     ? (table[opts.identityColumn as keyof TTable] as unknown as AnyPgColumn)
     : null
+  // Narrows every read/write below to the caller's slice of a shared table
+  // (e.g. `IntegrationInstagram.type = 'instagram'` vs `'facebook'`) — without
+  // this, instagram and instagramFacebook bindings could load/overwrite/
+  // delete each other's rows by `id`/`inboxId` collision on the shared table.
+  const extraConditions = (): SQL[] =>
+    Object.entries(opts.extraWhere ?? {}).map(([column, value]) =>
+      eq(table[column as keyof TTable] as unknown as AnyPgColumn, value),
+    )
+  const withExtraWhere = (condition: SQL): SQL => {
+    const extras = extraConditions()
+    return extras.length > 0 ? (and(condition, ...extras) as SQL) : condition
+  }
 
   return {
     table: opts.tableName,
@@ -165,7 +191,7 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       const [row] = await tx
         .select({ auth: table.auth })
         .from(rawTable)
-        .where(eq(table.id, rowId))
+        .where(withExtraWhere(eq(table.id, rowId)))
         .limit(1)
       if (!row) {
         throw new Error(`Unable to load auth for ${opts.tableName} ${rowId}`)
@@ -176,7 +202,7 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       const [row] = await tx
         .select({ auth: table.auth })
         .from(rawTable)
-        .where(eq(table.inboxId, inboxId))
+        .where(withExtraWhere(eq(table.inboxId, inboxId)))
         .limit(1)
       if (!row) {
         throw new Error(
@@ -189,20 +215,28 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       await tx
         .update(rawTable)
         .set({ auth } as never)
-        .where(eq(table.inboxId, inboxId))
+        .where(withExtraWhere(eq(table.inboxId, inboxId)))
     },
     insertRow: async (input, tx = db) => {
       const identityValues = identityCol
         ? { [opts.identityColumn as string]: input.descriptor.sourceId }
         : {}
+      const allowedConfigColumns = new Set(opts.configColumns ?? [])
+      const safeConfig = Object.fromEntries(
+        Object.entries(input.config ?? {}).filter(([key]) =>
+          allowedConfigColumns.has(key),
+        ),
+      )
+      // `safeConfig` spreads first so no client-controlled key can clobber
+      // the system columns set below — see `ConnectionStoreBinding.configColumns`.
       const values = {
+        ...safeConfig,
+        ...opts.extraInsertValues,
         workspaceId: input.workspaceId,
         inboxId: input.inboxId,
         auth: input.auth,
         name: input.descriptor.displayName,
         ...identityValues,
-        ...opts.extraInsertValues,
-        ...input.config,
       }
       // Each channel table adds its own extra required/defaulted columns
       // beyond this shared shape (e.g. `IntegrationApi.tokenHash`), so the
@@ -218,7 +252,9 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       if (opts.onDisconnect === "keep_row") {
         return
       }
-      await tx.delete(rawTable).where(eq(table.inboxId, inboxId))
+      await tx
+        .delete(rawTable)
+        .where(withExtraWhere(eq(table.inboxId, inboxId)))
     },
     findRowByIdentifier: async (identifier, tx = db) => {
       if (!identityCol) {
@@ -227,7 +263,7 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       const [row] = await tx
         .select({ id: table.id, inboxId: table.inboxId, auth: table.auth })
         .from(rawTable)
-        .where(eq(identityCol, identifier))
+        .where(withExtraWhere(eq(identityCol, identifier)))
         .limit(1)
       if (!row) {
         return null
@@ -239,6 +275,7 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       }
     },
     duplicateConstraint: opts.duplicateConstraint,
+    configColumns: opts.configColumns,
   }
 }
 
@@ -263,6 +300,8 @@ const makeWorkspaceIntegrationBinding = <
   integrationType: IntegrationType
   authColumn?: "auth" | "encryptedAuth"
   duplicateConstraint?: string
+  /** See `ConnectionStoreBinding.configColumns`. */
+  configColumns?: readonly string[]
 }): ConnectionStoreBinding => {
   const { table } = opts
   // `.from()`/`.insert()` reject a generic `TTable` param — see the same
@@ -310,6 +349,12 @@ const makeWorkspaceIntegrationBinding = <
         .where(eq(table.integrationId, integrationId))
     },
     insertRow: async (input, tx) => {
+      const allowedConfigColumns = new Set(opts.configColumns ?? [])
+      const safeConfig = Object.fromEntries(
+        Object.entries(input.config ?? {}).filter(([key]) =>
+          allowedConfigColumns.has(key),
+        ),
+      )
       const run = async (client: DatabaseClient) => {
         const [parent] = await client
           .insert(integrationModel)
@@ -318,11 +363,13 @@ const makeWorkspaceIntegrationBinding = <
             integrationType: opts.integrationType,
           })
           .returning({ id: integrationModel.id })
+        // `safeConfig` spreads first so no client-controlled key can clobber
+        // the system columns set below — see `ConnectionStoreBinding.configColumns`.
         const values = {
+          ...safeConfig,
           workspaceId: input.workspaceId,
           integrationId: parent.id,
           [authColumnName]: input.auth,
-          ...input.config,
         }
         // Same per-table shape gap as `makeChannelBinding.insertRow` above.
         const [row] = await client
@@ -358,6 +405,7 @@ const makeWorkspaceIntegrationBinding = <
       }
     },
     duplicateConstraint: opts.duplicateConstraint,
+    configColumns: opts.configColumns,
   }
 }
 
@@ -383,12 +431,26 @@ export const CONNECTION_STORE_BINDINGS: Record<
     tableName: "IntegrationClaude",
     integrationType: "claude",
     duplicateConstraint: "IntegrationClaude_workspaceId_key",
+    configColumns: [
+      "model",
+      "maxOutputTokens",
+      "prompt",
+      "temperature",
+      "autoReply",
+    ],
   }),
   deepseek: makeWorkspaceIntegrationBinding({
     table: integrationDeepseekModel,
     tableName: "IntegrationDeepseek",
     integrationType: "deepseek",
     duplicateConstraint: "IntegrationDeepseek_workspaceId_key",
+    configColumns: [
+      "model",
+      "maxOutputTokens",
+      "prompt",
+      "temperature",
+      "autoReply",
+    ],
   }),
   drip: makeWorkspaceIntegrationBinding({
     table: integrationDripModel,
@@ -407,6 +469,13 @@ export const CONNECTION_STORE_BINDINGS: Record<
     tableName: "IntegrationGemini",
     integrationType: "gemini",
     duplicateConstraint: "IntegrationGemini_workspaceId_key",
+    configColumns: [
+      "model",
+      "maxOutputTokens",
+      "prompt",
+      "temperature",
+      "autoReply",
+    ],
   }),
   getResponse: makeWorkspaceIntegrationBinding({
     table: integrationGetResponseModel,
@@ -432,6 +501,10 @@ export const CONNECTION_STORE_BINDINGS: Record<
     duplicateConstraint: "IntegrationInstagram_igId_key",
     extraInsertValues: { type: "instagram" },
     extraWhere: { type: "instagram" },
+    // OAuth-only (no `fromCredentials`): `candidateToConfig` is
+    // developer-derived from `auth`, never client input — see
+    // `integrations/instagram/src/integration.ts`.
+    configColumns: ["username"],
   }),
   instagramFacebook: makeChannelBinding({
     table: integrationInstagramModel,
@@ -441,6 +514,8 @@ export const CONNECTION_STORE_BINDINGS: Record<
     duplicateConstraint: "IntegrationInstagram_igId_key",
     extraInsertValues: { type: "facebook" },
     extraWhere: { type: "facebook" },
+    // OAuth-only — see `integrations/instagram-facebook/src/integration.ts`.
+    configColumns: ["pageId", "username"],
   }),
   klaviyo: makeWorkspaceIntegrationBinding({
     table: integrationKlaviyoModel,
@@ -483,17 +558,34 @@ export const CONNECTION_STORE_BINDINGS: Record<
     table: integrationOpenaiModel,
     tableName: "IntegrationOpenai",
     integrationType: "openai",
+    configColumns: [
+      "model",
+      "maxOutputTokens",
+      "prompt",
+      "temperature",
+      "autoReply",
+      "autoReplyVoice",
+      "voice",
+    ],
   }),
   openaiCompatible: makeWorkspaceIntegrationBinding({
     table: integrationOpenaiCompatibleModel,
     tableName: "IntegrationOpenaiCompatible",
     integrationType: "openaiCompatible",
+    configColumns: ["defaultModel", "preset", "name", "autoReply", "enabled"],
   }),
   openrouter: makeWorkspaceIntegrationBinding({
     table: integrationOpenrouterModel,
     tableName: "IntegrationOpenrouter",
     integrationType: "openrouter",
     duplicateConstraint: "IntegrationOpenrouter_workspaceId_key",
+    configColumns: [
+      "model",
+      "maxOutputTokens",
+      "prompt",
+      "temperature",
+      "autoReply",
+    ],
   }),
   outlookCalendar: makeWorkspaceIntegrationBinding({
     table: integrationOutlookCalendarModel,

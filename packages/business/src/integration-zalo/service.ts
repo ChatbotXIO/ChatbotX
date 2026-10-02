@@ -1,12 +1,14 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import {
   integrationZaloModel,
   tagChannelModel,
 } from "@chatbotx.io/database/schema"
 import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
@@ -233,13 +235,31 @@ class ZaloIntegrationService extends BaseService {
             eq(integrationZaloModel.workspaceId, workspaceId),
           ),
         )
-      await inboxService.disconnect({
-        inboxId,
-        ownerId,
-        workspaceId,
-        reason: "manual",
-        tx: client,
-      })
+      // Writing through `connectionStateService` (not `inboxService.disconnect`
+      // directly) keeps the `Connection` row and `Inbox.status` in lockstep —
+      // see `disconnect-messenger.ts` for why. Falls back to the legacy
+      // direct write only for a pre-backfill row with no `Connection`
+      // counterpart yet.
+      const connection = await connectionRepository.findByInboxId(
+        { inboxId },
+        client,
+      )
+      if (connection) {
+        await connectionStateService.transition({
+          connectionId: connection.id,
+          event: "user.disconnect",
+          ownerId,
+          tx: client,
+        })
+      } else {
+        await inboxService.disconnect({
+          inboxId,
+          ownerId,
+          workspaceId,
+          reason: "manual",
+          tx: client,
+        })
+      }
     }
 
     if (tx) {

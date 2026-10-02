@@ -1,8 +1,17 @@
 /**
  * Backfills the `Connection` table from every existing channel (`Inbox` +
  * `Integration<Channel>`) and workspace-level integration row. Idempotent —
- * upserts on the table's own `(workspaceId, provider, sourceId)` unique
- * constraint, so running it twice in a row is a no-op the second time.
+ * `ON CONFLICT DO NOTHING` (no column target, so it matches a conflict on
+ * ANY of the table's unique constraints: `(workspaceId, provider,
+ * sourceId)`, `inboxId`, or `integrationId`) means a row that already
+ * exists is never touched. This is deliberate, not just "safe to re-run":
+ * once the Connection domain is live, `Connection.status` is FSM-managed
+ * (`connectionStateService.transition`) and can be `needs_reauth`/`paused`
+ * — states this script's `resolveChannelStatus`/`resolveWorkspaceStatus`
+ * never produce (they only derive `connected`/`degraded`/`disconnected`
+ * from the satellite's own raw fields). An `ON CONFLICT ... DO UPDATE`
+ * here would silently regress a real `needs_reauth` connection back to
+ * `connected` on every re-run.
  *
  * Usage:
  *   pnpm --filter @chatbotx.io/database backfill:connections -- --dry-run
@@ -261,11 +270,12 @@ type UpsertInput = {
   authExpiresAt: string | null
 }
 
-const upsertConnection = async (input: UpsertInput): Promise<void> => {
+/** Returns `true` when a row was actually inserted — `false` means a row already existed for one of the table's unique constraints and was left untouched (see the module docstring for why that's deliberate). */
+const upsertConnection = async (input: UpsertInput): Promise<boolean> => {
   if (isDryRun) {
-    return
+    return true
   }
-  await db.execute(sql`
+  const result = await db.execute(sql`
     INSERT INTO "Connection"
       (id, "workspaceId", provider, kind, channel, "inboxId", "integrationId", "sourceId", "displayName", status, "authExpiresAt", "connectedAt", "disconnectedAt")
     VALUES
@@ -273,17 +283,10 @@ const upsertConnection = async (input: UpsertInput): Promise<void> => {
        ${input.authExpiresAt}::timestamptz,
        CASE WHEN ${input.status} = 'disconnected' THEN NULL ELSE now() END,
        CASE WHEN ${input.status} = 'disconnected' THEN now() ELSE NULL END)
-    ON CONFLICT ("workspaceId", provider, "sourceId") DO UPDATE SET
-      kind = EXCLUDED.kind,
-      channel = EXCLUDED.channel,
-      "inboxId" = EXCLUDED."inboxId",
-      "integrationId" = EXCLUDED."integrationId",
-      "displayName" = EXCLUDED."displayName",
-      status = EXCLUDED.status,
-      "authExpiresAt" = EXCLUDED."authExpiresAt",
-      "connectedAt" = EXCLUDED."connectedAt",
-      "disconnectedAt" = EXCLUDED."disconnectedAt"
+    ON CONFLICT DO NOTHING
+    RETURNING id
   `)
+  return result.rows.length > 0
 }
 const resolveChannelStatus = (
   inboxStatus: string,
@@ -305,7 +308,11 @@ const resolveWorkspaceStatus = (
   return rowStatus === "invalid" ? "degraded" : "connected"
 }
 
-const backfillChannel = async (config: ChannelConfig): Promise<number> => {
+type BackfillCounts = { scanned: number; inserted: number }
+
+const backfillChannel = async (
+  config: ChannelConfig,
+): Promise<BackfillCounts> => {
   const identityExpr = config.identityColumn
     ? sql.raw(`sat."${config.identityColumn}"`)
     : sql.raw("sat.id")
@@ -340,28 +347,33 @@ const backfillChannel = async (config: ChannelConfig): Promise<number> => {
     ${typeWhere}
   `)
 
+  let inserted = 0
   for (const row of result.rows) {
     const status = resolveChannelStatus(row.inboxstatus, row.tokenrefresherror)
 
-    await upsertConnection({
-      workspaceId: row.workspaceId,
-      provider: config.provider,
-      kind: "channel",
-      channel: config.channel,
-      inboxId: row.inboxId,
-      integrationId: null,
-      sourceId: row.sourceid,
-      displayName: row.name,
-      status,
-      authExpiresAt: row.authexpiresat,
-    })
+    if (
+      await upsertConnection({
+        workspaceId: row.workspaceId,
+        provider: config.provider,
+        kind: "channel",
+        channel: config.channel,
+        inboxId: row.inboxId,
+        integrationId: null,
+        sourceId: row.sourceid,
+        displayName: row.name,
+        status,
+        authExpiresAt: row.authexpiresat,
+      })
+    ) {
+      inserted++
+    }
   }
-  return result.rows.length
+  return { scanned: result.rows.length, inserted }
 }
 
 const backfillWorkspaceIntegration = async (
   config: WorkspaceConfig,
-): Promise<number> => {
+): Promise<BackfillCounts> => {
   const authExpr = sql.raw(`sat."${config.authColumn}"`)
   const statusExpr = config.statusColumn
     ? sql.raw(`sat."${config.statusColumn}"`)
@@ -389,44 +401,56 @@ const backfillWorkspaceIntegration = async (
     FROM ${sql.identifier(config.table)} sat
   `)
 
+  let inserted = 0
   for (const row of result.rows) {
     const status = resolveWorkspaceStatus(row.deletedat, row.rowstatus)
 
-    await upsertConnection({
-      workspaceId: row.workspaceId,
-      provider: config.provider,
-      kind: "integration",
-      channel: null,
-      inboxId: null,
-      integrationId: row.integrationId,
-      sourceId: "workspace",
-      displayName: config.displayName,
-      status,
-      authExpiresAt: row.authexpiresat,
-    })
+    if (
+      await upsertConnection({
+        workspaceId: row.workspaceId,
+        provider: config.provider,
+        kind: "integration",
+        channel: null,
+        inboxId: null,
+        integrationId: row.integrationId,
+        sourceId: "workspace",
+        displayName: config.displayName,
+        status,
+        authExpiresAt: row.authexpiresat,
+      })
+    ) {
+      inserted++
+    }
   }
-  return result.rows.length
+  return { scanned: result.rows.length, inserted }
 }
 
 const main = async (): Promise<void> => {
-  let total = 0
+  let totalScanned = 0
+  let totalInserted = 0
 
   for (const config of CHANNEL_CONFIGS) {
-    const count = await backfillChannel(config)
-    total += count
-    console.log(`${config.provider}: ${count} row(s)`)
+    const { scanned, inserted } = await backfillChannel(config)
+    totalScanned += scanned
+    totalInserted += inserted
+    console.log(
+      `${config.provider}: ${scanned} row(s) scanned, ${inserted} inserted (${scanned - inserted} already present, left untouched)`,
+    )
   }
 
   for (const config of WORKSPACE_CONFIGS) {
-    const count = await backfillWorkspaceIntegration(config)
-    total += count
-    console.log(`${config.provider}: ${count} row(s)`)
+    const { scanned, inserted } = await backfillWorkspaceIntegration(config)
+    totalScanned += scanned
+    totalInserted += inserted
+    console.log(
+      `${config.provider}: ${scanned} row(s) scanned, ${inserted} inserted (${scanned - inserted} already present, left untouched)`,
+    )
   }
 
   console.log(
     isDryRun
-      ? `Dry run: ${total} connection row(s) would be upserted.`
-      : `Upserted ${total} connection row(s).`,
+      ? `Dry run: ${totalScanned} row(s) scanned, ${totalInserted} would be inserted.`
+      : `Scanned ${totalScanned} row(s), inserted ${totalInserted} new Connection row(s).`,
   )
 }
 

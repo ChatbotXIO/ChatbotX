@@ -1,5 +1,9 @@
 // @vitest-environment node
 
+import {
+  connectionStateMismatchException,
+  connectSessionExpiredException,
+} from "@chatbotx.io/business/errors"
 import type { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -245,7 +249,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     ).rejects.toThrow("not found")
   })
 
-  test("provider denial (?error=) fails the session and redirects without exchanging code", async () => {
+  test("provider denial (?error=access_denied) fails the session with provider_denied and redirects without exchanging code", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -264,6 +268,25 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     })
     expect(mockCompleteAuthorization).not.toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+  })
+
+  test("a non-access_denied provider error (regression: every ?error= value used to be reported as provider_denied) fails the session with provider_error instead", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+
+    await handleCallback(
+      "messenger",
+      buildRequest("123.abc-nonce", "&error=server_error"),
+    )
+
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "provider_error",
+    })
   })
 
   test("redirects to the session's own sanitized returnUrl when set", async () => {
@@ -288,7 +311,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     expect(mockRedirect).toHaveBeenCalledWith("https://app.example.com/done")
   })
 
-  test("404s when the session's provider has no registered credentialType", async () => {
+  test("404s when the session's provider has no registered credentialType, and fails the session instead of leaving it stuck (regression)", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "unconfigured",
@@ -299,10 +322,15 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     await expect(
       handleCallback("messenger", buildRequest("123.abc-nonce")),
     ).rejects.toThrow("not found")
+
     expect(mockResolveForOwner).not.toHaveBeenCalled()
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "internal_error",
+    })
   })
 
-  test("404s when the session has no platformOwnerId recorded", async () => {
+  test("404s when the session has no platformOwnerId recorded, and fails the session instead of leaving it stuck (regression)", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -313,9 +341,14 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     await expect(
       handleCallback("messenger", buildRequest("123.abc-nonce")),
     ).rejects.toThrow("not found")
+
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "internal_error",
+    })
   })
 
-  test("404s when the platform credential cannot be resolved", async () => {
+  test("404s when the platform credential cannot be resolved, and fails the session instead of leaving it stuck (regression)", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -328,6 +361,10 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       handleCallback("messenger", buildRequest("123.abc-nonce")),
     ).rejects.toThrow("not found")
     expect(mockCompleteAuthorization).not.toHaveBeenCalled()
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "internal_error",
+    })
   })
 
   test("calls completeAuthorization with the reconstructed callback URL and this exact credential config", async () => {
@@ -424,7 +461,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     )
   })
 
-  test("swallows an unexpected completeAuthorization error and still redirects to the completion page", async () => {
+  test("swallows an unexpected completeAuthorization error, fails the session, and still redirects to the completion page (regression: previously left the session stuck in its prior status)", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -435,6 +472,74 @@ describe("handleCallback — ConnectSession state dispatch", () => {
 
     await handleCallback("messenger", buildRequest("123.abc-nonce"))
 
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "internal_error",
+    })
+    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+  })
+
+  test("fails the session when the post-authorization auto-connect (connectTargets) throws (regression: item 10 — the session previously stayed awaiting_selection forever)", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "zalo",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockResolvedValueOnce({
+      id: "123",
+      workspaceId: "ws-1",
+      status: "awaiting_selection",
+      targets: [{ id: "oa-1", selectable: true }],
+    })
+    mockConnectTargets.mockRejectedValueOnce(new Error("boom"))
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "internal_error",
+    })
+    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+  })
+
+  test("replaying the callback while the session is still legitimately active (completeAuthorization rejects the duplicate code exchange) redirects without failing the session (regression: a double-fired/replayed callback must not corrupt a connect that's genuinely still in progress)", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    // `completeAuthorization`'s own `status !== "pending"` guard throws this
+    // exact exception for a session that's already moved on (awaiting
+    // selection, authorized, or completed) — the real shape a replayed
+    // callback produces, not a generic unexpected error.
+    mockCompleteAuthorization.mockRejectedValueOnce(
+      connectSessionExpiredException(
+        "This connect session is no longer active.",
+      ),
+    )
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockFailSession).not.toHaveBeenCalled()
+    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+  })
+
+  test("a forged/stale state on replay (connectionStateMismatch) also redirects without failing the session", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockRejectedValueOnce(
+      connectionStateMismatchException(),
+    )
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockFailSession).not.toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
   })
 })

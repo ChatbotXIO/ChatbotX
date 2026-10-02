@@ -1,6 +1,8 @@
 import {
   connectionKinds,
   connectionStatuses,
+  connectionStatusReasons,
+  connectSessionErrorCodes,
   connectSessionNextActionSchema,
   connectSessionOutcomeSchema,
   connectSessionPurposes,
@@ -20,7 +22,7 @@ export const connectionResource = z.object({
   provider: z.string(),
   channel: z.string().nullable(),
   status: connectionStatuses,
-  statusReason: z.string().nullable(),
+  statusReason: connectionStatusReasons.nullable(),
   sourceId: z.string(),
   displayName: z.string(),
   inboxId: z.string().nullable(),
@@ -92,7 +94,7 @@ export const connectSessionResource = z.object({
   nextAction: connectSessionNextActionSchema.nullable(),
   targets: z.array(connectSessionTargetSchema),
   connectionIds: z.array(z.string()),
-  errorCode: z.string().nullable(),
+  errorCode: connectSessionErrorCodes.nullable(),
   expiresAt: z.string(),
 })
 export type ConnectSessionResource = z.infer<typeof connectSessionResource>

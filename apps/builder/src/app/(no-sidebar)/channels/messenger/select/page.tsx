@@ -1,10 +1,14 @@
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
-import { resolveConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
+import {
+  type ResolvedConnectSession,
+  resolveConnectSession,
+} from "@/features/channel-connect/lib/resolve-connect-session"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import type { MessengerPickerItem } from "@/features/integration-messenger/components/messenger-pages"
 import { SelectPage } from "@/features/integration-messenger/components/select-account"
 import { getCurrentUserId } from "@/lib/auth/utils"
+import { logger } from "@/lib/log"
 
 export const dynamic = "force-dynamic"
 
@@ -60,12 +64,21 @@ export default async function MessengerSelectPage({
     redirect("/channels/create")
   }
 
-  const resolved = await resolveConnectSession({
-    userId,
-    sessionId,
-    credentialType: "messenger",
-    brandingChannel: "messenger",
-  })
+  let resolved: ResolvedConnectSession<"messenger">
+  try {
+    resolved = await resolveConnectSession({
+      userId,
+      sessionId,
+      credentialType: "messenger",
+      brandingChannel: "messenger",
+    })
+  } catch (err) {
+    // An expired/invalid/no-longer-accessible session previously 500'd this
+    // Server Component render — redirect back to the picker instead, same
+    // as every other failure this flow can hit before the session exists.
+    logger.warn({ err, sessionId }, "resolveConnectSession failed")
+    redirect("/channels/create")
+  }
 
   const t = await getTranslations()
   const items = resolved.session.targets

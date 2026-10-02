@@ -255,7 +255,7 @@ export const credentialMissingException = (message: string) =>
   new ChatbotXException(message, "credentialMissing")
 
 /**
- * A connect flow's session (the pending-auth cookie for Messenger/Instagram,
+ * A connect flow's session (the `ConnectSession` row for Messenger/Instagram,
  * or a WhatsApp signup session) is missing, expired, or otherwise unusable —
  * a condition that makes every remaining request in a multi-select batch
  * pointless, not just the one item. See
@@ -263,7 +263,7 @@ export const credentialMissingException = (message: string) =>
  * into a typed `sessionError` result instead of a thrown/rendered error.
  *
  * `code` defaults to "connectSessionExpired" (Messenger/Instagram's
- * pending-auth cookie); pass "signupSessionExpired" for WhatsApp's
+ * `ConnectSession` row); pass "signupSessionExpired" for WhatsApp's
  * per-number signup-session claim, which is tracked as a distinct exception
  * code even though both map to the same `sessionExpired` client code.
  */

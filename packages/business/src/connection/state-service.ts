@@ -328,10 +328,19 @@ class ConnectionStateService extends BaseService {
     ownerId: string,
     workspaceId: string,
   ): Promise<void> {
-    await quotaEnforcementService.release({
-      userId: ownerId,
-      metric: "channels",
-    })
+    // Best-effort: never block/roll back the status transition if release
+    // fails — the nightly reconcile self-heals. A real Redis/DB error here
+    // must not undo the status write this runs alongside in the same
+    // transaction, matching `inboxService.disconnect`'s existing release
+    // call.
+    await quotaEnforcementService
+      .release({ userId: ownerId, metric: "channels" })
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId, ownerId },
+          "connection disconnect: channel quota release failed",
+        )
+      })
     await workspaceUsageService
       .decrement(workspaceId, "channels")
       .catch((err) => {

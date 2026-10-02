@@ -8,7 +8,19 @@ const mocks = vi.hoisted(() => ({
   findByIdForWorkspace: vi.fn(),
   findByStateNonceHash: vi.fn(),
   claimTarget: vi.fn(),
-  listExpired: vi.fn(async (): Promise<Record<string, unknown>[]> => []),
+  releaseTarget: vi.fn(),
+  appendResults: vi.fn(),
+  updateWhereStatusIn: vi.fn(),
+  expireDue: vi.fn(async () => 0),
+  purgeOldTerminal: vi.fn(
+    async (): Promise<{
+      deleted: number
+      stopReason: "drained" | "deadline" | "chunkCap"
+    }> => ({
+      deleted: 0,
+      stopReason: "drained",
+    }),
+  ),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -20,7 +32,11 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findByIdForWorkspace: mocks.findByIdForWorkspace,
     findByStateNonceHash: mocks.findByStateNonceHash,
     claimTarget: mocks.claimTarget,
-    listExpired: mocks.listExpired,
+    releaseTarget: mocks.releaseTarget,
+    appendResults: mocks.appendResults,
+    updateWhereStatusIn: mocks.updateWhereStatusIn,
+    expireDue: mocks.expireDue,
+    purgeOldTerminal: mocks.purgeOldTerminal,
   },
 }))
 
@@ -45,6 +61,13 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.countActiveByWorkspaceId.mockResolvedValue(0)
   mocks.update.mockImplementation(
+    async (input: { id: string; values: Record<string, unknown> }) => ({
+      ...baseSession(),
+      id: input.id,
+      ...input.values,
+    }),
+  )
+  mocks.updateWhereStatusIn.mockImplementation(
     async (input: { id: string; values: Record<string, unknown> }) => ({
       ...baseSession(),
       id: input.id,
@@ -231,14 +254,9 @@ describe("connectSessionService.claimTarget", () => {
 })
 
 describe("connectSessionService.recordResults", () => {
-  it("stays awaiting_selection until every target has a result", async () => {
-    mocks.findById.mockResolvedValue(
-      baseSession({
-        status: "awaiting_selection",
-        targets: [{ id: "a" }, { id: "b" }],
-        results: [],
-        resultConnectionIds: [],
-      }),
+  it("delegates the merge/completion computation to the atomic connectSessionRepository.appendResults", async () => {
+    mocks.appendResults.mockResolvedValue(
+      baseSession({ status: "awaiting_selection" }),
     )
 
     const result = await connectSessionService.recordResults({
@@ -247,50 +265,84 @@ describe("connectSessionService.recordResults", () => {
       resultConnectionIds: ["c1"],
     })
 
-    expect(result.status).not.toBe("completed")
-    expect(mocks.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        values: expect.objectContaining({ status: "awaiting_selection" }),
-      }),
-    )
+    expect(mocks.appendResults).toHaveBeenCalledWith({
+      id: "session-1",
+      results: [{ targetId: "a", status: "connected", connectionId: "c1" }],
+      resultConnectionIds: ["c1"],
+    })
+    expect(result.status).toBe("awaiting_selection")
   })
 
-  it("marks completed once accumulated results cover every target", async () => {
-    mocks.findById.mockResolvedValue(
-      baseSession({
-        status: "awaiting_selection",
-        targets: [{ id: "a" }, { id: "b" }],
-        results: [{ targetId: "a", status: "connected", connectionId: "c1" }],
-        resultConnectionIds: ["c1"],
-      }),
-    )
+  it("returns the session's current terminal row instead of throwing when the atomic update's status guard no-ops (regression: a concurrent/replayed batch on an already-terminal session)", async () => {
+    mocks.appendResults.mockResolvedValue(undefined)
+    mocks.findById.mockResolvedValue(baseSession({ status: "completed" }))
 
     const result = await connectSessionService.recordResults({
       id: "session-1",
-      results: [{ targetId: "b", status: "connected", connectionId: "c2" }],
-      resultConnectionIds: ["c2"],
+      results: [{ targetId: "a", status: "connected", connectionId: "c1" }],
+      resultConnectionIds: ["c1"],
     })
 
     expect(result.status).toBe("completed")
-    expect(mocks.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        values: expect.objectContaining({
-          status: "completed",
-          resultConnectionIds: ["c1", "c2"],
-        }),
+  })
+
+  it("throws when the session truly does not exist", async () => {
+    mocks.appendResults.mockResolvedValue(undefined)
+    mocks.findById.mockResolvedValue(undefined)
+
+    await expect(
+      connectSessionService.recordResults({
+        id: "session-missing",
+        results: [],
+        resultConnectionIds: [],
       }),
-    )
+    ).rejects.toMatchObject({ code: "notFound" })
+  })
+})
+
+describe("connectSessionService.releaseTarget", () => {
+  it("forwards to the repository's array_remove", async () => {
+    await connectSessionService.releaseTarget({
+      id: "session-1",
+      targetId: "page-1",
+    })
+    expect(mocks.releaseTarget).toHaveBeenCalledWith({
+      id: "session-1",
+      targetId: "page-1",
+    })
   })
 })
 
 describe("connectSessionService.fail / cancel", () => {
-  it("fail sets status failed with the given errorCode", async () => {
+  it("fail sets status failed with the given errorCode, guarded to active sessions only", async () => {
     const result = await connectSessionService.fail({
       id: "session-1",
       errorCode: "provider_denied",
     })
     expect(result.status).toBe("failed")
     expect(result.errorCode).toBe("provider_denied")
+    expect(mocks.updateWhereStatusIn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "session-1",
+        statuses: expect.arrayContaining([
+          "pending",
+          "authorized",
+          "awaiting_selection",
+        ]),
+      }),
+    )
+  })
+
+  it("fail does not flip an already-terminal session (regression: a replayed OAuth callback `?error=` must not override a completed session)", async () => {
+    mocks.updateWhereStatusIn.mockResolvedValue(undefined)
+    mocks.findById.mockResolvedValue(baseSession({ status: "completed" }))
+
+    const result = await connectSessionService.fail({
+      id: "session-1",
+      errorCode: "provider_denied",
+    })
+
+    expect(result.status).toBe("completed")
   })
 
   it("cancel requires the session to belong to the workspace", async () => {
@@ -308,26 +360,66 @@ describe("connectSessionService.fail / cancel", () => {
     })
     expect(result.status).toBe("cancelled")
   })
+
+  it("cancel does not flip an already-terminal session", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseSession({ status: "failed", errorCode: "provider_denied" }),
+    )
+    mocks.updateWhereStatusIn.mockResolvedValue(undefined)
+
+    const result = await connectSessionService.cancel({
+      id: "session-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(result.status).toBe("failed")
+  })
 })
 
 describe("connectSessionService.purgeExpired", () => {
-  it("flips every session listExpired returns to expired and reports the count", async () => {
-    mocks.listExpired.mockResolvedValue([
-      baseSession({ id: "s1" }),
-      baseSession({ id: "s2" }),
-    ])
+  it("delegates the bulk expire to connectSessionRepository.expireDue and reports its count", async () => {
+    mocks.expireDue.mockResolvedValue(2)
 
-    const count = await connectSessionService.purgeExpired()
+    const result = await connectSessionService.purgeExpired({
+      retentionDays: 7,
+      chunkSize: 500,
+      interChunkDelayMs: 100,
+      maxChunks: 1000,
+    })
 
-    expect(count).toBe(2)
-    expect(mocks.update).toHaveBeenCalledWith({
-      id: "s1",
-      values: { status: "expired" },
+    expect(mocks.expireDue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statuses: expect.arrayContaining([
+          "pending",
+          "authorized",
+          "awaiting_selection",
+        ]),
+      }),
+    )
+    expect(result.expired).toBe(2)
+  })
+
+  it("delegates the terminal-row retention delete to connectSessionRepository.purgeOldTerminal and reports its count/stopReason", async () => {
+    mocks.purgeOldTerminal.mockResolvedValue({
+      deleted: 5,
+      stopReason: "chunkCap",
     })
-    expect(mocks.update).toHaveBeenCalledWith({
-      id: "s2",
-      values: { status: "expired" },
+
+    const result = await connectSessionService.purgeExpired({
+      retentionDays: 7,
+      chunkSize: 500,
+      interChunkDelayMs: 100,
+      maxChunks: 1000,
     })
+
+    expect(mocks.purgeOldTerminal).toHaveBeenCalledWith({
+      retentionDays: 7,
+      chunkSize: 500,
+      interChunkDelayMs: 100,
+      maxChunks: 1000,
+    })
+    expect(result.deletedTerminal).toBe(5)
+    expect(result.terminalPurgeStopReason).toBe("chunkCap")
   })
 })
 

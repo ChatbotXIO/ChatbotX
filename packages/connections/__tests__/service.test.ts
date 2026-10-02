@@ -62,6 +62,7 @@ const mocks = vi.hoisted(() => ({
   decryptObject: vi.fn(),
   findSessionByIdForWorkspace: vi.fn(),
   claimTarget: vi.fn(async () => true),
+  releaseTarget: vi.fn(async () => undefined),
   inboxCreate: vi.fn(async () => ({
     inbox: { id: "inbox-new" },
     wasCreated: true,
@@ -115,6 +116,7 @@ vi.mock("@chatbotx.io/business/connect-session", () => ({
     findByNonce: mocks.findByNonce,
     findByIdForWorkspace: mocks.findSessionByIdForWorkspace,
     claimTarget: mocks.claimTarget,
+    releaseTarget: mocks.releaseTarget,
     submitInput: mocks.submitInput,
     attachAuthorization: mocks.attachAuthorization,
     recordResults: mocks.recordResults,
@@ -734,7 +736,9 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(result).toBeDefined()
   })
 
-  it("passes config fields outside the provider's configFields through to the satellite insert unvalidated", async () => {
+  it("passes config fields the store's configColumns allow-list permits through to the satellite insert", async () => {
+    mockAdapter.store.configColumns = ["model", "temperature"]
+
     await connectionService.connectFromCredentials({
       workspaceId: "ws-1",
       provider: "claude",
@@ -747,6 +751,34 @@ describe("ConnectionService.connectFromCredentials", () => {
       }),
       "tx",
     )
+
+    mockAdapter.store.configColumns = undefined
+  })
+
+  it("rejects a config field outside the store's configColumns allow-list instead of passing it to the satellite insert", async () => {
+    mockAdapter.store.configColumns = ["model"]
+
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "claude",
+        config: { apiKey: "sk-live", temperature: 0.7 },
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insertRow).not.toHaveBeenCalled()
+
+    mockAdapter.store.configColumns = undefined
+  })
+
+  it("rejects a config payload that attempts to override a system column (workspaceId) instead of silently stripping or applying it", async () => {
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "claude",
+        config: { apiKey: "sk-live", workspaceId: "other-workspace" },
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insertRow).not.toHaveBeenCalled()
   })
 
   it("does not resolve an ownerId for a kind:integration provider", async () => {
@@ -1400,7 +1432,7 @@ describe("ConnectionService.connectTargets", () => {
     ])
   })
 
-  it("maps a channelLimitReached failure from connectCandidate to a limitReached outcome", async () => {
+  it("maps a channelLimitReached failure from connectCandidate to a limitReached outcome and releases the claim (regression: a claimed target was never released on failure, so a retry always saw duplicated)", async () => {
     mocks.findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
     mocks.inboxCreate.mockRejectedValue(channelLimitReachedException())
     const result = await connectionService.connectTargets({
@@ -1412,6 +1444,44 @@ describe("ConnectionService.connectTargets", () => {
       { targetId: "page-1", status: "limitReached", reason: "workspaceLimit" },
     ])
     expect(result.connections).toHaveLength(0)
+    expect(mocks.releaseTarget).toHaveBeenCalledWith({
+      id: "session-1",
+      targetId: "page-1",
+    })
+  })
+
+  it("releases the claim on a generic/provider-rejected connect failure too (regression: item 8 — every non-connected outcome must release)", async () => {
+    mocks.inboxCreate.mockRejectedValue(new Error("provider is down"))
+    const result = await connectionService.connectTargets({
+      sessionId: "session-1",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+    })
+    expect(result.outcomes).toEqual([
+      {
+        targetId: "page-1",
+        status: "failed",
+        reason: "providerRejected",
+        detail: "provider is down",
+      },
+    ])
+    expect(mocks.releaseTarget).toHaveBeenCalledWith({
+      id: "session-1",
+      targetId: "page-1",
+    })
+  })
+
+  it("does not release a claim when the connect actually succeeds", async () => {
+    mocks.inboxCreate.mockResolvedValue({
+      inbox: { id: "inbox-new" },
+      wasCreated: true,
+    })
+    await connectionService.connectTargets({
+      sessionId: "session-1",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+    })
+    expect(mocks.releaseTarget).not.toHaveBeenCalled()
   })
 
   it("maps an unrecognized targetId to a failed/unknown outcome", async () => {

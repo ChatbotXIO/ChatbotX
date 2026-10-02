@@ -9,10 +9,14 @@ import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { CONNECT_PICKER_CARD_CLASS } from "@/features/channel-connect/components/connect-picker-card"
 import type { ConnectPickerItem } from "@/features/channel-connect/lib/picker-items"
-import { resolveConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
+import {
+  type ResolvedConnectSession,
+  resolveConnectSession,
+} from "@/features/channel-connect/lib/resolve-connect-session"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { SelectFacebookAccounts } from "@/features/integration-instagram/components/select-facebook-accounts"
 import { getCurrentUserId } from "@/lib/auth/utils"
+import { logger } from "@/lib/log"
 
 export const dynamic = "force-dynamic"
 
@@ -70,12 +74,20 @@ export default async function InstagramFacebookSelectPage({
     redirect("/channels/create")
   }
 
-  const resolved = await resolveConnectSession({
-    userId,
-    sessionId,
-    credentialType: "instagramFacebook",
-    brandingChannel: "instagram",
-  })
+  let resolved: ResolvedConnectSession<"instagramFacebook">
+  try {
+    resolved = await resolveConnectSession({
+      userId,
+      sessionId,
+      credentialType: "instagramFacebook",
+      brandingChannel: "instagram",
+    })
+  } catch (err) {
+    // An expired/invalid/no-longer-accessible session previously 500'd this
+    // Server Component render — redirect back to the picker instead.
+    logger.warn({ err, sessionId }, "resolveConnectSession failed")
+    redirect("/channels/create")
+  }
 
   const t = await getTranslations()
   const items = resolved.session.targets

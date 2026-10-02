@@ -101,13 +101,24 @@ export const connectSessionModel = pgTable(
       "btree",
       table.expiresAt.asc().nullsLast(),
     ),
+    // Serves `purgeOldTerminal`'s age scan — partial because only a
+    // terminal row ever has `consumedAt` set.
+    index("ConnectSession_consumedAt_idx")
+      .using("btree", table.consumedAt.asc().nullsLast())
+      .where(sql`${table.consumedAt} IS NOT NULL`),
     uniqueIndex("ConnectSession_stateNonceHash_key").using(
       "btree",
       table.stateNonceHash.asc().nullsLast(),
     ),
+    // `<= 1`, not `= 1`: the actor FKs are `ON DELETE SET NULL` (deleting a
+    // User or WorkspaceApiToken that ever started a session must not fail),
+    // so a terminal session's row can end up with BOTH actor columns null
+    // once its actor is deleted. `ConnectSessionService.create` still
+    // enforces exactly one actor at creation time — this CHECK only widens
+    // to tolerate that later deletion, never to allow two actors at once.
     check(
       "ConnectSession_actor_exactly_one",
-      sql`(("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) = 1`,
+      sql`(("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) <= 1`,
     ),
   ],
 )

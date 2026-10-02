@@ -333,21 +333,33 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
     : fallbackReturnUrl
 
   // Facebook/Google/Zalo/TikTok all return ?error=... when the user cancels
-  // the OAuth dialog — no code exchange to attempt.
-  if (url.searchParams.get("error")) {
+  // the OAuth dialog — no code exchange to attempt. Only `access_denied` is
+  // an actual user cancellation; every other provider error value (e.g.
+  // `server_error`, `temporarily_unavailable`, `invalid_scope`) is a
+  // provider-side failure, not a denial, and must not be reported as one.
+  const oauthError = url.searchParams.get("error")
+  if (oauthError) {
     await connectSessionService.fail({
       id: session.id,
-      errorCode: "provider_denied",
+      errorCode:
+        oauthError === "access_denied" ? "provider_denied" : "provider_error",
     })
     return redirect(returnUrl)
   }
 
   const adapter = CONNECTION_REGISTRY[session.provider]
   if (!(adapter?.credentialType && session.platformOwnerId)) {
-    logger.warn(
+    logger.error(
       { sessionId: session.id, provider: session.provider },
       "connect session provider is not OAuth-configured",
     )
+    // Without this, the session stays `awaiting_selection`/`authorized`
+    // until its TTL lapses and the completion page polls the whole time —
+    // a server-side misconfiguration, not a recoverable state.
+    await connectSessionService.fail({
+      id: session.id,
+      errorCode: "internal_error",
+    })
     return notFound()
   }
 
@@ -356,6 +368,14 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
     type: adapter.credentialType,
   })
   if (!credential) {
+    logger.error(
+      { sessionId: session.id, provider: session.provider },
+      "connect session platform credential missing",
+    )
+    await connectSessionService.fail({
+      id: session.id,
+      errorCode: "internal_error",
+    })
     return notFound()
   }
 
@@ -400,14 +420,33 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
     }
   } catch (err) {
     // `completeAuthorization` already marks the session `failed` for its own
-    // known error paths (exchange rejected, no candidates, state mismatch);
-    // this catch is only a safety net so an unexpected error still redirects
-    // the browser instead of rendering a 500 — the completion page shows
-    // whatever status the session actually ended up in.
-    logger.warn(
+    // known error paths (exchange rejected, no candidates). A replayed/
+    // double-fired callback (a duplicate request while the session is
+    // still legitimately `pending`/`authorized`/`awaiting_selection`)
+    // throws `connectionStateMismatch`/`connectSessionExpired` instead —
+    // that's "nothing to do, this request is a no-op", not a failure, so
+    // it must NOT call `fail()` and flip a still-active session to
+    // `failed` out from under the request that's actually progressing it.
+    // Every other error reaching here is genuinely unexpected — most
+    // commonly the auto-connect step above (`connectTargets`) throwing
+    // after a successful `completeAuthorization` — and is the only thing
+    // that terminalizes the session in that case; without it the session
+    // stayed `awaiting_selection` until its TTL lapsed, and the
+    // completion page polled the whole time instead of showing a failure.
+    logger.error(
       { err, sessionId: session.id, provider: session.provider },
       "connect session completeAuthorization failed",
     )
+    const isBenignReplay =
+      err instanceof ChatbotXException &&
+      (err.code === "connectionStateMismatch" ||
+        err.code === "connectSessionExpired")
+    if (!isBenignReplay) {
+      await connectSessionService.fail({
+        id: session.id,
+        errorCode: "internal_error",
+      })
+    }
   }
 
   return redirect(returnUrl)

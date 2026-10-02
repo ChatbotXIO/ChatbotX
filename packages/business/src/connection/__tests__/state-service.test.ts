@@ -229,6 +229,19 @@ describe("ConnectionStateService.markUnhealthy", () => {
     expect(mocks.release).not.toHaveBeenCalled()
     expect(mocks.tryConsume).not.toHaveBeenCalled()
   })
+
+  test("does not throw (and does not roll back the status write) when quotaEnforcementService.release fails (regression: a Redis/DB release error previously propagated and could roll back a disconnect already acted on remotely)", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.release.mockRejectedValueOnce(new Error("redis down"))
+
+    const result = await connectionStateService.markUnhealthy({
+      connectionId: "conn-1",
+      ownerId: "owner-1",
+    })
+
+    expect(result.status).toBe("needs_reauth")
+  })
 })
 
 describe("ConnectionStateService.markUnhealthyByIdentifier", () => {

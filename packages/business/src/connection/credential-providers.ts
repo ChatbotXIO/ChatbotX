@@ -3,7 +3,7 @@ import {
   type ConnectionProvider,
   type SecretTextAuthValue,
 } from "@chatbotx.io/sdk"
-import ky, { HTTPError } from "ky"
+import ky, { isHTTPError, isNetworkError, isTimeoutError } from "ky"
 import {
   type AiKeyProvider,
   verifyAiProviderApiKey,
@@ -147,13 +147,29 @@ const verifyOpenaiCompatibleEndpoint = async (
     })
     return { ok: true }
   } catch (error) {
-    if (
-      error instanceof HTTPError &&
-      (error.response.status === 401 || error.response.status === 403)
-    ) {
-      return { ok: false, error: "Invalid API key" }
+    // Every branch below fails closed: a baseURL the caller can't reach —
+    // wrong host (DNS), wrong path (404), or a provider that never answers
+    // (timeout) — is exactly as unverifiable as a rejected credential, and
+    // must not report `ok: true`. Only a genuine 401/403 gets the more
+    // specific "Invalid API key" message; every other failure still
+    // reports `ok: false` so `fromCredentials` rejects the connect and
+    // `verify` surfaces the health check as failing.
+    if (isHTTPError(error)) {
+      const { status } = error.response
+      if (status === 401 || status === 403) {
+        return { ok: false, error: "Invalid API key" }
+      }
+      return {
+        ok: false,
+        error: `Unexpected response from the endpoint (HTTP ${status})`,
+      }
     }
-    // Transient failures don't prove the credential is invalid.
-    return { ok: true }
+    if (isTimeoutError(error)) {
+      return { ok: false, error: "The endpoint did not respond in time" }
+    }
+    if (isNetworkError(error)) {
+      return { ok: false, error: "Unable to reach the endpoint" }
+    }
+    return { ok: false, error: "Unable to verify the endpoint" }
   }
 }

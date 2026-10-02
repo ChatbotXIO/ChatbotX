@@ -137,9 +137,6 @@ vi.mock("@/features/integration-webchat/lib", () => ({
 vi.mock("@/features/workspaces/actions/upload-logo", () => ({
   updateWorkspaceLogo: vi.fn(),
 }))
-vi.mock("@/lib/integration-user-info", () => ({
-  persistIntegrationUserInfo: vi.fn(),
-}))
 vi.mock("@/lib/log", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }))

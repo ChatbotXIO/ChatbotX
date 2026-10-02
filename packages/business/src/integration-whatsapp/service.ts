@@ -9,6 +9,7 @@ import type {
   WhatsappRegistrationStatus,
 } from "@chatbotx.io/database/partials"
 import {
+  connectionRepository,
   integrationWhatsappRepository,
   LIVE_RUN_STATUSES,
   metaCapiEventRepository,
@@ -28,6 +29,7 @@ import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
@@ -708,13 +710,31 @@ class IntegrationWhatsappService extends BaseService {
       tx,
     })
 
-    await inboxService.disconnect({
-      inboxId: integrationWhatsapp.inboxId,
-      ownerId,
-      workspaceId,
-      reason: "manual",
+    // Writing through `connectionStateService` (not `inboxService.disconnect`
+    // directly) keeps the `Connection` row and `Inbox.status` in lockstep —
+    // see `disconnect-messenger.ts` for why. Falls back to the legacy
+    // direct write only for a pre-backfill row with no `Connection`
+    // counterpart yet.
+    const connection = await connectionRepository.findByInboxId(
+      { inboxId: integrationWhatsapp.inboxId },
       tx,
-    })
+    )
+    if (connection) {
+      await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "user.disconnect",
+        ownerId,
+        tx,
+      })
+    } else {
+      await inboxService.disconnect({
+        inboxId: integrationWhatsapp.inboxId,
+        ownerId,
+        workspaceId,
+        reason: "manual",
+        tx,
+      })
+    }
   }
 
   /**

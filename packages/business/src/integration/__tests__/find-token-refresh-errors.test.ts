@@ -1,60 +1,113 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const mocks = vi.hoisted(() => ({
-  list: vi.fn(),
-}))
+type Row = Record<string, unknown>
 
-vi.mock("../../connection/state-service", () => ({
-  connectionStateService: { list: mocks.list },
-}))
+const tableData = vi.hoisted(
+  () =>
+    new Map<string, Row[]>([
+      ["zalo", []],
+      ["tiktok", []],
+      ["instagram", []],
+      ["messenger", []],
+      ["whatsapp", []],
+      ["threads", []],
+    ]),
+)
+
+const setRows = (channel: string, rows: Row[]) => {
+  tableData.set(channel, rows)
+}
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  and: vi.fn(),
-  db: {},
+  and: (...args: unknown[]) => args,
   eq: vi.fn(),
   exists: vi.fn(),
+  isNotNull: vi.fn(),
   isNull: vi.fn(),
   ne: vi.fn(),
   or: vi.fn(),
+  db: {
+    // The mocked tables below carry a `__channel` tag the real schema
+    // columns don't have — used only here to route `.from(table)` to the
+    // right in-memory rows, independent of the (unvalidated) `select`/
+    // `where` shape the real implementation builds.
+    select: () => ({
+      from: (table: { __channel: string }) => ({
+        where: () => Promise.resolve(tableData.get(table.__channel) ?? []),
+      }),
+    }),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  integrationZaloModel: {
+    __channel: "zalo",
+    id: "id",
+    name: "name",
+    workspaceId: "workspaceId",
+    tokenRefreshError: "tokenRefreshError",
+  },
+  integrationTiktokModel: {
+    __channel: "tiktok",
+    id: "id",
+    name: "name",
+    workspaceId: "workspaceId",
+    tokenRefreshError: "tokenRefreshError",
+  },
+  integrationInstagramModel: {
+    __channel: "instagram",
+    id: "id",
+    name: "name",
+    workspaceId: "workspaceId",
+    tokenRefreshError: "tokenRefreshError",
+    type: "type",
+  },
+  integrationMessengerModel: {
+    __channel: "messenger",
+    id: "id",
+    name: "name",
+    workspaceId: "workspaceId",
+    tokenRefreshError: "tokenRefreshError",
+  },
+  integrationWhatsappModel: {
+    __channel: "whatsapp",
+    id: "id",
+    name: "name",
+    workspaceId: "workspaceId",
+    tokenRefreshError: "tokenRefreshError",
+  },
+  integrationThreadsModel: {
+    __channel: "threads",
+    id: "id",
+    name: "name",
+    workspaceId: "workspaceId",
+    tokenRefreshError: "tokenRefreshError",
+  },
   integrationMetaCatalogModel: {},
   integrationModel: {},
 }))
 
 const { integrationService } = await import("../service")
 
-const connection = (overrides: Partial<Record<string, unknown>> = {}) => ({
-  id: "conn-1",
-  provider: "messenger",
-  displayName: "My Page",
-  lastError: "refresh failed",
-  ...overrides,
-})
-
 beforeEach(() => {
   vi.clearAllMocks()
+  for (const channel of tableData.keys()) {
+    setRows(channel, [])
+  }
 })
 
 describe("integrationService.findTokenRefreshErrorsByWorkspaceId", () => {
-  it("queries connectionStateService.list scoped to channel connections in needs_reauth/degraded", async () => {
-    mocks.list.mockResolvedValue({ data: [] })
-    await integrationService.findTokenRefreshErrorsByWorkspaceId("ws-1")
-    expect(mocks.list).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      kind: "channel",
-      status: ["needs_reauth", "degraded"],
-    })
-  })
+  it("reads the channel's own tokenRefreshError column — the field the refresh crons actually write (regression: Connection.lastError is never set by the crons and was always empty)", async () => {
+    setRows("messenger", [
+      { id: "int-1", name: "My Page", error: "refresh failed" },
+    ])
 
-  it("maps a matching auto-refresh channel connection onto the legacy DTO", async () => {
-    mocks.list.mockResolvedValue({ data: [connection()] })
     const result =
       await integrationService.findTokenRefreshErrorsByWorkspaceId("ws-1")
+
     expect(result).toEqual([
       {
-        id: "conn-1",
+        id: "int-1",
         channel: "messenger",
         name: "My Page",
         error: "refresh failed",
@@ -62,32 +115,56 @@ describe("integrationService.findTokenRefreshErrorsByWorkspaceId", () => {
     ])
   })
 
-  it("preserves the instagram vs instagramFacebook provider distinction", async () => {
-    mocks.list.mockResolvedValue({
-      data: [connection({ id: "conn-2", provider: "instagramFacebook" })],
-    })
+  it("returns the channel's own Integration<Channel>.id, not a Connection id (regression: the public API contract)", async () => {
+    setRows("zalo", [
+      { id: "integration-zalo-1", name: "Shop", error: "expired" },
+    ])
+
     const result =
       await integrationService.findTokenRefreshErrorsByWorkspaceId("ws-1")
+
     expect(result).toEqual([
-      expect.objectContaining({ channel: "instagramFacebook" }),
+      {
+        id: "integration-zalo-1",
+        channel: "zalo",
+        name: "Shop",
+        error: "expired",
+      },
     ])
   })
 
-  it("excludes a connection whose provider does not auto-refresh (e.g. smtp)", async () => {
-    mocks.list.mockResolvedValue({
-      data: [connection({ provider: "smtp" })],
-    })
+  it("maps IntegrationInstagram.type to the instagram vs instagramFacebook channel", async () => {
+    setRows("instagram", [
+      { id: "ig-1", name: "IG", error: "expired", type: "instagram" },
+      { id: "ig-2", name: "FB IG", error: "expired", type: "facebook" },
+    ])
+
+    const result =
+      await integrationService.findTokenRefreshErrorsByWorkspaceId("ws-1")
+
+    expect(result).toEqual([
+      expect.objectContaining({ id: "ig-1", channel: "instagram" }),
+      expect.objectContaining({ id: "ig-2", channel: "instagramFacebook" }),
+    ])
+  })
+
+  it("returns an empty list when no satellite row has a tokenRefreshError", async () => {
     const result =
       await integrationService.findTokenRefreshErrorsByWorkspaceId("ws-1")
     expect(result).toEqual([])
   })
 
-  it("excludes a connection with no lastError", async () => {
-    mocks.list.mockResolvedValue({
-      data: [connection({ lastError: null })],
-    })
+  it("aggregates across every auto-refresh channel", async () => {
+    setRows("zalo", [{ id: "z-1", name: "Z", error: "e1" }])
+    setRows("tiktok", [{ id: "t-1", name: "T", error: "e2" }])
+    setRows("whatsapp", [{ id: "w-1", name: "W", error: "e3" }])
+    setRows("threads", [{ id: "th-1", name: "TH", error: "e4" }])
+
     const result =
       await integrationService.findTokenRefreshErrorsByWorkspaceId("ws-1")
-    expect(result).toEqual([])
+
+    expect(result.map((row) => row.channel).sort()).toEqual(
+      ["threads", "tiktok", "whatsapp", "zalo"].sort(),
+    )
   })
 })

@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   transaction: vi.fn(),
   workspaceFindById: vi.fn(),
+  findByInboxId: vi.fn(async () => undefined),
+  connectionTransition: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -59,6 +61,17 @@ vi.mock("../src/inbox/connect-channel", () => ({
 
 vi.mock("../src/inbox/service", () => ({
   inboxService: { disconnect: mocks.disconnectInbox },
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  // Defaults to "no Connection row" so the existing disconnect test below
+  // (written before the Connection-row integration) keeps exercising the
+  // legacy `inboxService.disconnect` fallback unchanged.
+  connectionRepository: { findByInboxId: mocks.findByInboxId },
+}))
+
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { transition: mocks.connectionTransition },
 }))
 
 vi.mock("../src/workspace", () => ({

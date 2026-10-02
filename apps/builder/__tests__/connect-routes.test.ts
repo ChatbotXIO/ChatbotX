@@ -79,9 +79,9 @@ const connectedOutcome = {
 
 /**
  * The picker's parallel transport. Each route is the same contract: the
- * signed-in user authorizes it, the ids are the ONLY thing on the wire (the
- * workspace and the provider token stay server-side, in the pending-auth
- * cookie or the signup session), and every failure comes back as a typed
+  signed-in user authorizes it, the ids are the ONLY thing on the wire (the
+  workspace and the provider token stay server-side, in the `ConnectSession`
+  row or the WhatsApp signup session), and every failure comes back as a typed
  * result in the 200 response instead of a status the batch cannot classify.
  */
 describe("connect routes", () => {

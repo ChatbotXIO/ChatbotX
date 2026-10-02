@@ -114,6 +114,21 @@ describe("makeAuthStore.save", () => {
     await store.save({ authType: "none" })
     expect(mocks.recordAuthSaved).not.toHaveBeenCalled()
   })
+
+  it("does not throw when recordAuthSaved rejects because the connection is inactive (regression: a successful token refresh must not fail just because the FSM mirror can't apply from needs_reauth/paused/disconnected)", async () => {
+    mocks.findByInboxId.mockResolvedValue({
+      id: "conn-1",
+      workspaceId: "ws-1",
+    })
+    mocks.recordAuthSaved.mockRejectedValueOnce(
+      new Error("InvalidConnectionTransitionException"),
+    )
+    const store = makeAuthStore("messenger", {
+      id: "row-1",
+      inboxId: "inbox-1",
+    })
+    await expect(store.save({ authType: "none" })).resolves.toBeUndefined()
+  })
 })
 
 describe("makeAuthStore.markOffline", () => {

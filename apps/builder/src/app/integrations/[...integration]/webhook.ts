@@ -3,6 +3,7 @@ import {
   customDomainService,
   platformCredentialService,
   tenantService,
+  workspaceMemberService,
 } from "@chatbotx.io/business"
 import { getSafeErrorDetails } from "@chatbotx.io/integration-threads"
 import type {
@@ -377,10 +378,14 @@ const handleTiktokWebhook = async (req: NextRequest) => {
   }
 
   if (eventType === "authorization.removed") {
+    const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+      workspaceId: integrationTiktok.workspaceId,
+    })
     await connectionStateService.markUnhealthyByIdentifier({
       provider: "tiktok",
       identifier: userOpenId,
       reason: "token_revoked",
+      ownerId,
     })
     logger.info(
       { openId: userOpenId },

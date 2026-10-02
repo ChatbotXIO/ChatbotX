@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation"
-import { resolveConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
+import {
+  type ResolvedConnectSession,
+  resolveConnectSession,
+} from "@/features/channel-connect/lib/resolve-connect-session"
 import { SelectAccount } from "@/features/integration-instagram/components/select-accounts"
 import { getCurrentUserId } from "@/lib/auth/utils"
+import { logger } from "@/lib/log"
 
 export const dynamic = "force-dynamic"
 
@@ -25,12 +29,20 @@ export default async function InstagramSelectPage({
     redirect("/channels/create")
   }
 
-  const resolved = await resolveConnectSession({
-    userId,
-    sessionId,
-    credentialType: "instagram",
-    brandingChannel: "instagram",
-  })
+  let resolved: ResolvedConnectSession<"instagram">
+  try {
+    resolved = await resolveConnectSession({
+      userId,
+      sessionId,
+      credentialType: "instagram",
+      brandingChannel: "instagram",
+    })
+  } catch (err) {
+    // An expired/invalid/no-longer-accessible session previously 500'd this
+    // Server Component render — redirect back to the picker instead.
+    logger.warn({ err, sessionId }, "resolveConnectSession failed")
+    redirect("/channels/create")
+  }
 
   const target = resolved.session.targets[0]
   if (!target) {

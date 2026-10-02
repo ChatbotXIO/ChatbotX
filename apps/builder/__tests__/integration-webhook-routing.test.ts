@@ -7,9 +7,11 @@ const findIntegrationTiktokByOpenId = vi.fn()
 const telegramHandleRequest = vi.fn()
 const tiktokHandleRequest = vi.fn()
 const markUnhealthyByIdentifier = vi.fn()
+const findOwnerUserIdByWorkspaceId = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   connectionStateService: { markUnhealthyByIdentifier },
+  workspaceMemberService: { findOwnerUserIdByWorkspaceId },
   customDomainService: { findActiveByDomain: vi.fn() },
   platformCredentialService: {
     findDecryptedForUser: vi.fn(),
@@ -65,6 +67,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   telegramHandleRequest.mockResolvedValue("ok")
   tiktokHandleRequest.mockResolvedValue("ok")
+  findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
 })
 
 // These cover the route-level HTTP contract for the Telegram and TikTok
@@ -165,7 +168,7 @@ describe("tiktok webhook routing", () => {
     expect(tiktokHandleRequest).not.toHaveBeenCalled()
   })
 
-  test("routes authorization.removed to connectionStateService.markUnhealthyByIdentifier instead of the integration", async () => {
+  test("routes authorization.removed to connectionStateService.markUnhealthyByIdentifier with the resolved workspace owner (regression: previously 500'd with no ownerId)", async () => {
     findIntegrationTiktokByOpenId.mockResolvedValue({
       auth: {
         clientId: "id",
@@ -190,10 +193,14 @@ describe("tiktok webhook routing", () => {
 
     expect(await response.text()).toBe("ok")
     expect(tiktokHandleRequest).not.toHaveBeenCalled()
+    expect(findOwnerUserIdByWorkspaceId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+    })
     expect(markUnhealthyByIdentifier).toHaveBeenCalledWith({
       provider: "tiktok",
       identifier: "open-1",
       reason: "token_revoked",
+      ownerId: "owner-1",
     })
   })
 })

@@ -3,17 +3,23 @@ import {
   db,
   eq,
   exists,
+  isNotNull,
   isNull,
   ne,
   or,
 } from "@chatbotx.io/database/client"
 import {
+  integrationInstagramModel,
+  integrationMessengerModel,
   integrationMetaCatalogModel,
   integrationModel,
+  integrationThreadsModel,
+  integrationTiktokModel,
+  integrationWhatsappModel,
+  integrationZaloModel,
 } from "@chatbotx.io/database/schema"
 import type { IntegrationModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
-import { connectionStateService } from "../connection/state-service"
 
 export type TokenRefreshErrorChannel =
   | "zalo"
@@ -70,48 +76,146 @@ class IntegrationService extends BaseService {
   }
 
   /**
-   * Channel integrations whose token-refresh last failed — delegates to
-   * `connectionStateService.list` (the `Connection` domain now owns
-   * `needs_reauth`/`degraded` status), filtered to the channels that
-   * actually auto-refresh, and mapped back onto this method's original DTO
-   * so the layout banner (`TokenRefreshErrorDialog`) is unchanged.
+   * Channel integrations whose daily token-refresh cron last failed
+   * (`tokenRefreshError` set on the channel's own satellite row), across
+   * every channel that supports automatic refresh. Deliberately reads each
+   * `Integration<Channel>.tokenRefreshError` column directly rather than
+   * `Connection.lastError` — the refresh crons
+   * (`apps/worker/src/schedule/handlers/refresh-*-tokens.ts`) only ever
+   * write the satellite column (`markTokenRefreshError`/`updateAuth`
+   * clearing it on success), so `Connection.lastError` (written only by
+   * `recordAuthSaved`, which clears it to `null`) never reflects a refresh
+   * failure. The returned `id` is therefore the channel's own
+   * `Integration<Channel>.id` — the public contract this deprecated
+   * endpoint has always returned, not `Connection.id`.
    */
   async findTokenRefreshErrorsByWorkspaceId(
     workspaceId: string,
   ): Promise<TokenRefreshErrorIntegration[]> {
-    const autoRefreshChannels = new Set<TokenRefreshErrorChannel>([
-      "zalo",
-      "tiktok",
-      "instagram",
-      "instagramFacebook",
-      "messenger",
-      "whatsapp",
-      "threads",
-    ])
-    const { data } = await connectionStateService.list({
-      workspaceId,
-      kind: "channel",
-      status: ["needs_reauth", "degraded"],
-    })
-    return data.flatMap((connection) => {
-      if (
-        !(
-          autoRefreshChannels.has(
-            connection.provider as TokenRefreshErrorChannel,
-          ) && connection.lastError
-        )
-      ) {
-        return []
-      }
-      return [
-        {
-          id: connection.id,
-          channel: connection.provider as TokenRefreshErrorChannel,
-          name: connection.displayName,
-          error: connection.lastError,
-        },
-      ]
-    })
+    const [zalos, tiktoks, instagrams, messengers, whatsapps, threads] =
+      await Promise.all([
+        db
+          .select({
+            id: integrationZaloModel.id,
+            name: integrationZaloModel.name,
+            error: integrationZaloModel.tokenRefreshError,
+          })
+          .from(integrationZaloModel)
+          .where(
+            and(
+              eq(integrationZaloModel.workspaceId, workspaceId),
+              isNotNull(integrationZaloModel.tokenRefreshError),
+            ),
+          ),
+        db
+          .select({
+            id: integrationTiktokModel.id,
+            name: integrationTiktokModel.name,
+            error: integrationTiktokModel.tokenRefreshError,
+          })
+          .from(integrationTiktokModel)
+          .where(
+            and(
+              eq(integrationTiktokModel.workspaceId, workspaceId),
+              isNotNull(integrationTiktokModel.tokenRefreshError),
+            ),
+          ),
+        db
+          .select({
+            id: integrationInstagramModel.id,
+            name: integrationInstagramModel.name,
+            error: integrationInstagramModel.tokenRefreshError,
+            type: integrationInstagramModel.type,
+          })
+          .from(integrationInstagramModel)
+          .where(
+            and(
+              eq(integrationInstagramModel.workspaceId, workspaceId),
+              isNotNull(integrationInstagramModel.tokenRefreshError),
+            ),
+          ),
+        db
+          .select({
+            id: integrationMessengerModel.id,
+            name: integrationMessengerModel.name,
+            error: integrationMessengerModel.tokenRefreshError,
+          })
+          .from(integrationMessengerModel)
+          .where(
+            and(
+              eq(integrationMessengerModel.workspaceId, workspaceId),
+              isNotNull(integrationMessengerModel.tokenRefreshError),
+            ),
+          ),
+        db
+          .select({
+            id: integrationWhatsappModel.id,
+            name: integrationWhatsappModel.name,
+            error: integrationWhatsappModel.tokenRefreshError,
+          })
+          .from(integrationWhatsappModel)
+          .where(
+            and(
+              eq(integrationWhatsappModel.workspaceId, workspaceId),
+              isNotNull(integrationWhatsappModel.tokenRefreshError),
+            ),
+          ),
+        db
+          .select({
+            id: integrationThreadsModel.id,
+            name: integrationThreadsModel.name,
+            error: integrationThreadsModel.tokenRefreshError,
+          })
+          .from(integrationThreadsModel)
+          .where(
+            and(
+              eq(integrationThreadsModel.workspaceId, workspaceId),
+              isNotNull(integrationThreadsModel.tokenRefreshError),
+            ),
+          ),
+      ])
+
+    return [
+      ...zalos.map((row) => ({
+        id: row.id,
+        channel: "zalo" as const,
+        name: row.name,
+        error: row.error as string,
+      })),
+      ...tiktoks.map((row) => ({
+        id: row.id,
+        channel: "tiktok" as const,
+        name: row.name,
+        error: row.error as string,
+      })),
+      ...instagrams.map((row) => ({
+        id: row.id,
+        channel:
+          row.type === "facebook"
+            ? ("instagramFacebook" as const)
+            : ("instagram" as const),
+        name: row.name,
+        error: row.error as string,
+      })),
+      ...messengers.map((row) => ({
+        id: row.id,
+        channel: "messenger" as const,
+        name: row.name,
+        error: row.error as string,
+      })),
+      ...whatsapps.map((row) => ({
+        id: row.id,
+        channel: "whatsapp" as const,
+        name: row.name,
+        error: row.error as string,
+      })),
+      ...threads.map((row) => ({
+        id: row.id,
+        channel: "threads" as const,
+        name: row.name,
+        error: row.error as string,
+      })),
+    ]
   }
 
   /**
