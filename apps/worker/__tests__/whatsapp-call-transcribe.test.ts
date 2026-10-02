@@ -12,7 +12,8 @@ const mocks = vi.hoisted(() => ({
   aiFindBy: vi.fn(),
   transcribe: vi.fn(),
   kyGet: vi.fn(),
-  broadcastToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
+  conversationFindBy: vi.fn().mockResolvedValue(null),
   findBySourceId: vi.fn(),
   updateContentBySourceId: vi.fn(),
   mergeContentAttributesBySourceId: vi.fn(),
@@ -23,7 +24,22 @@ vi.mock("@chatbotx.io/business", () => ({
   whatsappCallLifecycleService: { attachTranscript: mocks.attachTranscript },
   contactInboxService: { findBy: mocks.contactInboxFindBy },
   callRecordingService: { getRecordingSignedUrl: mocks.getRecordingSignedUrl },
-  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
+  conversationService: { findBy: mocks.conversationFindBy },
+  messageService: {
+    findBySourceId: mocks.findBySourceId,
+    mergeContentAttributesBySourceId: (input: {
+      overlay: unknown
+      sourceId: string
+      workspaceId: string
+    }) =>
+      mocks.mergeContentAttributesBySourceId(
+        input.sourceId,
+        input.workspaceId,
+        input.overlay,
+      ),
+    updateContentBySourceId: mocks.updateContentBySourceId,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -238,15 +254,18 @@ describe("handleWhatsappCallTranscribe", () => {
         "ws-1",
         { hasTranscript: true },
       )
-      expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
-        eventType: "messageContentUpdated",
-        data: {
-          messageId: "message-1",
-          contentAttributes: expect.objectContaining({
-            hasTranscript: true,
+      expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith(
+        "ws-1",
+        expect.objectContaining({
+          eventType: "messageContentUpdated",
+          data: expect.objectContaining({
+            messageId: "message-1",
+            contentAttributes: expect.objectContaining({
+              hasTranscript: true,
+            }),
           }),
-        },
-      })
+        }),
+      )
     })
 
     // `enrichCallActivityMessage` must not silently skip when the finalize
@@ -266,7 +285,7 @@ describe("handleWhatsappCallTranscribe", () => {
     }, 10_000)
 
     test("a broadcast failure is swallowed and does not fail the job or block callTranscribed", async () => {
-      mocks.broadcastToWorkspaceParty.mockRejectedValueOnce(
+      mocks.publishWorkspaceRealtimeEvent.mockRejectedValueOnce(
         new Error("realtime down"),
       )
 

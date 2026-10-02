@@ -1504,6 +1504,7 @@
     }
   },
   "messages": {
+    "realtimeRevokeWarning": "無法立即確認存取權限的撤銷操作，該操作將在成員下次重新連線時生效。",
     "sentAttachments": "已傳送 {count, plural, one {1 個附件} other {# 個附件}}",
     "moveFeature": "移動 {feature}",
     "poweredBy": "由 {name} 提供技術支援",

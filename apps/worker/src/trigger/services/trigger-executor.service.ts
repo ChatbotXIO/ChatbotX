@@ -17,7 +17,6 @@ export class TriggerExecutorService {
   ): Promise<void> {
     const { id: triggerId, workspaceId, actions } = trigger
     const { contactId, contactInboxId } = input
-
     try {
       setTriggerExecutionContext({ source: "worker" })
 

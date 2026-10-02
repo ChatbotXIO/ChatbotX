@@ -1,6 +1,7 @@
 import { bloomFilterFactory } from "./bloom-filter"
 import { casStoreFactory } from "./cas-store"
 import { cacheConnections } from "./connections/cache-connection"
+import { sequenceConnections } from "./connections/sequence-connection"
 import { distributedLockFactory } from "./distributed-lock"
 import { distributedStoreFactory } from "./distributed-store"
 import { presenceStoreFactory } from "./presence-store"
@@ -27,6 +28,11 @@ export {
 export const distributedLock = distributedLockFactory(cacheConnections.create)
 export const distributedStore = distributedStoreFactory(
   cacheConnections.useExisting,
+)
+
+export { keys } from "./keys"
+export const distributedSequenceStore = distributedStoreFactory(
+  sequenceConnections.useExisting,
 )
 
 export * from "./cache-utils"

@@ -3341,6 +3341,7 @@
     "deleteConfirmation": "Você tem certeza absoluta?\nEsta ação não pode ser desfeita.\nIsso excluirá permanentemente {feature} dos nossos servidores."
   },
   "messages": {
+    "realtimeRevokeWarning": "Não foi possível confirmar a revogação de acesso imediatamente - ela terá efeito na próxima reconexão do membro.",
     "moveFeature": "Mover {feature}",
     "poweredBy": "Desenvolvido por {name}",
     "noGiphyApiKey": "Nenhuma chave da API do GIPHY encontrada. Adicione uma nas Configurações da plataforma.",

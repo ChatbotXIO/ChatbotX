@@ -12,8 +12,9 @@ const mocks = vi.hoisted(() => ({
   messageRepositoryUpdateContentBySourceId: vi.fn(),
   messageRepositoryMergeContentAttributesBySourceId: vi.fn(),
   createMessageRepository: vi.fn(),
-  broadcastToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
   runExclusive: vi.fn(),
+  conversationFindBy: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -49,8 +50,12 @@ vi.mock("../src/contact/service", () => ({
   contactService: { findById: mocks.contactFindById },
 }))
 
+vi.mock("../src/conversation/service", () => ({
+  conversationService: { findBy: mocks.conversationFindBy },
+}))
+
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
 }))
 
 const { whatsappCallTranscriptService, whatsappCallSummaryService } =
@@ -90,6 +95,10 @@ beforeEach(() => {
   mocks.messageRepositoryMergeContentAttributesBySourceId.mockResolvedValue(
     null,
   )
+  mocks.conversationFindBy.mockResolvedValue({
+    assignedInboxTeamId: null,
+    assignedUserId: null,
+  })
   // Non-blocking lock: run `fn` immediately, as if it always won the lock.
   mocks.runExclusive.mockImplementation(
     async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
@@ -253,7 +262,7 @@ describe("whatsappCallSummaryService.attachSummary", () => {
     expect(
       mocks.messageRepositoryMergeContentAttributesBySourceId,
     ).toHaveBeenCalledWith("wacall-call-1", "ws-1", { hasSummary: true })
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
         data: expect.objectContaining({ messageId: "msg-1" }),
@@ -277,7 +286,7 @@ describe("whatsappCallSummaryService.attachSummary", () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("a second concurrent Regenerate for the SAME call fails fast with 'already generating' instead of calling the provider twice", async () => {

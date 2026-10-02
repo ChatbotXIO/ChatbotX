@@ -22,7 +22,10 @@ import type {
   InboxModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import type {
   ThreadControlContext,
   ThreadControlDelivery,
@@ -36,9 +39,10 @@ import {
 } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 import { contactInboxService } from "../contact-inbox/service"
+import { conversationService } from "../conversation/service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
-import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
 import {
   isRoutingTraffic,
   resolveThreadControlActivityText,
@@ -953,7 +957,7 @@ class ThreadControlService extends BaseService {
     await this.invalidateCacheTags([
       `contacts:${input.contactInbox.contactId}:contact-inboxes`,
     ])
-    publishToWorkspaceParty(input.workspaceId, {
+    queueWorkspaceRealtimeEvent(input.workspaceId, {
       eventType: RealtimeEventType.contactInboxThreadControlUpdated,
       data: {
         conversationId: input.conversationId,
@@ -1047,9 +1051,21 @@ class ThreadControlService extends BaseService {
     }
     await this.bumpLastMessageAt(input)
     try {
-      publishToWorkspaceParty(workspaceId, {
+      // Cached per conversation (see `conversationService.findBy`), so this
+      // adds no uncached query on the hot routing-message path; needed so an
+      // assigned-scope agent's socket still receives this routing message
+      // (`hasRouteMatch` drops a routeless event for anyone not on full
+      // `chatScope: "all"`).
+      const conversation = await conversationService.findBy({
+        where: { id: input.conversationId, workspaceId },
+      })
+      queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: { ...(written as MessageModel), attachments: [] },
+        route: routeForConversation({
+          assignedUserId: conversation?.assignedUserId,
+          assignedInboxTeamId: conversation?.assignedInboxTeamId,
+        }),
       })
     } catch (err) {
       logger.warn(

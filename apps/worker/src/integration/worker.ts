@@ -2,7 +2,7 @@ import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   conversationService,
-  flushAllPendingWorkspaceBroadcasts,
+  flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -710,7 +710,7 @@ async function startIntegrationWorker() {
       ])
       // After every close(): drains events published by jobs that finished
       // during the drain, whose coalesce timers would never fire past exit.
-      await flushAllPendingWorkspaceBroadcasts()
+      await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[IntegrationWorker] Error during shutdown")

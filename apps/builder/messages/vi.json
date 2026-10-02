@@ -3404,6 +3404,7 @@
     "title": "Chỉnh sửa hồ sơ"
   },
   "messages": {
+    "realtimeRevokeWarning": "Không thể xác nhận ngay việc thu hồi quyền truy cập - thao tác sẽ có hiệu lực vào lần kết nối lại tiếp theo của thành viên.",
     "moveFeature": "Di chuyển {feature}",
     "poweredBy": "Được cung cấp bởi {name}",
     "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm vào Cài đặt Nền tảng.",

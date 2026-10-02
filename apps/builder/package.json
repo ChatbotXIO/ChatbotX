@@ -63,6 +63,7 @@
     "@chatbotx.io/mail": "workspace:*",
     "@chatbotx.io/minigame-ui": "workspace:*",
     "@chatbotx.io/partysocket-config": "workspace:*",
+    "@chatbotx.io/realtime-protocol": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/sequence-scheduler": "workspace:*",

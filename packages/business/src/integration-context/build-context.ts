@@ -2,44 +2,36 @@ import {
   uploader as defaultUploader,
   getStoragePrefix,
 } from "@chatbotx.io/filesystem"
-import { buildBroadcastAuthHeader } from "@chatbotx.io/partysocket-config"
 import type { AuthStore, AuthValue, Context } from "@chatbotx.io/sdk"
-import { resolveRealtimeBroadcastTarget } from "../platform/realtime-broadcast"
+import { publishGuestRealtimeEvent } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { type AuthStoreIntegrationRow, makeAuthStore } from "./auth-store"
 
-type GetRealtimeBroadcastAuthHeaders =
-  Context<AuthValue>["platform"]["getRealtimeBroadcastAuthHeaders"]
+type PublishGuestRealtimeEvent =
+  Context<AuthValue>["platform"]["publishGuestRealtimeEvent"]
 
-const buildGetRealtimeBroadcastAuthHeaders =
-  (secret: string): GetRealtimeBroadcastAuthHeaders =>
-  async (target) => ({
-    Authorization: await buildBroadcastAuthHeader(target, secret),
-  })
+const buildPublishGuestRealtimeEvent =
+  (workspaceId: string): PublishGuestRealtimeEvent =>
+  async (guestConversationId, event) => {
+    await publishGuestRealtimeEvent(
+      { guestConversationId, workspaceId },
+      event as Parameters<typeof publishGuestRealtimeEvent>[1],
+    )
+  }
 
 export type PlatformData = {
   appUrl: string
-  internalRealtimeUrl: string
   publicRealtimeUrl: string
   storageUrl: string
-  getRealtimeBroadcastAuthHeaders: GetRealtimeBroadcastAuthHeaders
+  publishGuestRealtimeEvent: PublishGuestRealtimeEvent
 }
 
 const resolvePlatformData = async (
   workspaceId: string,
-): Promise<PlatformData> => {
-  const realtimeTarget = resolveRealtimeBroadcastTarget()
-  const tenantSettings = await resolveTenantSettings({ workspaceId })
-
-  return {
-    ...tenantSettings,
-    internalRealtimeUrl: realtimeTarget.url,
-    getRealtimeBroadcastAuthHeaders: buildGetRealtimeBroadcastAuthHeaders(
-      realtimeTarget.secret,
-    ),
-  }
-}
-
+): Promise<PlatformData> => ({
+  ...(await resolveTenantSettings({ workspaceId })),
+  publishGuestRealtimeEvent: buildPublishGuestRealtimeEvent(workspaceId),
+})
 export type IntegrationContext<TAuth extends AuthValue = AuthValue> = {
   storagePrefix: string
   auth: TAuth

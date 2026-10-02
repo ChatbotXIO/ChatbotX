@@ -14,7 +14,10 @@ import {
   uploader,
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { createId } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
@@ -26,7 +29,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
-import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { getPublicFileUrl } from "../utils"
 
@@ -284,12 +287,16 @@ export const createOutgoing = async (props: {
     })),
   }
 
-  publishToWorkspaceParty(messageWithAttachments.workspaceId, {
+  queueWorkspaceRealtimeEvent(messageWithAttachments.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: {
       ...messageWithAttachments,
       clientId: parsedInput.clientId,
     },
+    route: routeForConversation({
+      assignedUserId: targetConversation.assignedUserId,
+      assignedInboxTeamId: targetConversation.assignedInboxTeamId,
+    }),
   })
 
   const jobs: {

@@ -3362,6 +3362,7 @@
     "deleteConfirmation": "Sind Sie sich ganz sicher?\nDiese Aktion kann nicht rückgängig gemacht werden.\nDadurch wird {feature} dauerhaft von unseren Servern gelöscht."
   },
   "messages": {
+    "realtimeRevokeWarning": "Der Zugriffswiderruf konnte nicht sofort bestätigt werden – er wird beim nächsten erneuten Verbinden des Mitglieds wirksam.",
     "moveFeature": "{feature} verschieben",
     "poweredBy": "Bereitgestellt von {name}",
     "noGiphyApiKey": "Kein GIPHY-API-Schlüssel gefunden. Fügen Sie einen in den Plattformeinstellungen hinzu.",

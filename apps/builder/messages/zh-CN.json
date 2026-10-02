@@ -4187,6 +4187,7 @@
     "toolsGroup": "工具"
   },
   "messages": {
+    "realtimeRevokeWarning": "无法立即确认访问权限的撤销操作，该操作将在成员下次重新连接时生效。",
     "addFeature": "添加 {feature}",
     "archiveFeature": "封存 {feature}",
     "archiveFeatureDescription": "您确定要封存 {feature} 吗？",

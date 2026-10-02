@@ -1,146 +1,102 @@
 import type {
-  BroadcastTarget,
   RealtimeEventData,
-} from "@chatbotx.io/partysocket-config"
-import {
-  broadcastToGuestParty as broadcastToGuestPartyLow,
-  broadcastToWorkspaceParty as broadcastToWorkspacePartyLow,
-  REALTIME_DELIVERY_NEGATIVE_TTL_MS,
-  REALTIME_EVENT_TOPICS,
-  RealtimeEventType,
-  revokeWorkspaceMemberConnections as revokeWorkspaceMemberConnectionsLow,
-  sendToWorkspaceMember as sendToWorkspaceMemberLow,
-} from "@chatbotx.io/partysocket-config"
+  RealtimeTargetedEventData,
+} from "@chatbotx.io/realtime-protocol"
 import { logger } from "../logger"
 import {
-  resolveBroadcastSecret,
-  resolveRealtimeBroadcastUrl,
-  resolveRealtimeDeliveryGate,
-} from "./settings"
+  REALTIME_METRIC_WINDOW_MS,
+  type RealtimeRelayWindow,
+  recordRealtimeRelayWindow,
+} from "./realtime-metrics"
+import {
+  markRealtimeMemberRevoked,
+  publishRealtimeStreamRecord,
+  publishSerializedRealtimeStreamRecord,
+  resetRealtimeStreamPublisherForTests,
+} from "./realtime-stream-publisher"
 
-export const WORKSPACE_BROADCAST_COALESCE_MS = 25
-export const WORKSPACE_BROADCAST_MAX_EVENTS = 64
-export const WORKSPACE_BROADCAST_MAX_BYTES = 256 * 1024
+const WORKSPACE_REALTIME_COALESCE_MS = 25
+const WORKSPACE_REALTIME_MAX_EVENTS = 64
+const WORKSPACE_REALTIME_MAX_BYTES = 256 * 1024
 
-const BATCH_ENVELOPE_BYTES = new TextEncoder().encode('{"batch":[]}').byteLength
+const BATCH_ENVELOPE_BYTES = Buffer.byteLength('{"batch":[]}')
+const IMMEDIATE_FLUSH_EVENT_TYPES = new Set([
+  "conversationAssigned",
+  "whatsappCallClaimedElsewhere",
+  "whatsappCallOutboundAnswer",
+  "whatsappCallOutboundStatus",
+  "whatsappCallPermissionUpdated",
+  "whatsappCallTransportEnded",
+  "whatsappCallTransportIncoming",
+])
 
-type PendingWorkspaceBroadcast = {
+type PendingWorkspaceRealtimeEvents = {
   byteLength: number
   events: RealtimeEventData[]
+  serializedEvents: string[]
   timer: NodeJS.Timeout
   waiters: {
-    resolve: (interested: number | null) => void
+    reject: (error: unknown) => void
+    resolve: () => void
   }[]
 }
 
-const pendingByWorkspace = new Map<string, PendingWorkspaceBroadcast>()
+const pendingByWorkspace = new Map<string, PendingWorkspaceRealtimeEvents>()
 const inFlightByWorkspace = new Map<string, Promise<void>>()
-const chatNegativeCache = new Map<string, number>()
 
-let cachedTarget: BroadcastTarget | undefined
+const createEmptyRelayWindow = (): RealtimeRelayWindow => ({
+  bytes: 0,
+  errors: 0,
+  eventTypes: {},
+  events: 0,
+  flushes: 0,
+  maxBatchEvents: 0,
+  windowStartedAt: Date.now(),
+})
 
-export const resolveRealtimeBroadcastTarget = (): BroadcastTarget =>
-  (cachedTarget ??= {
-    secret: resolveBroadcastSecret(),
-    url: resolveRealtimeBroadcastUrl(),
-  })
+let relayWindow = createEmptyRelayWindow()
 
-/**
- * Ephemeral chat events may be skipped only when their topic metadata marks
- * them as such.
- */
-const isGateableEvent = (event: RealtimeEventData): boolean => {
-  if (event.eventType !== "typing") {
-    return false
-  }
+const relayWindowIsEmpty = (): boolean =>
+  relayWindow.events === 0 &&
+  relayWindow.flushes === 0 &&
+  relayWindow.errors === 0
 
-  const eventTopics = REALTIME_EVENT_TOPICS[event.eventType]
-  return (
-    event.eventType === RealtimeEventType.typing &&
-    eventTopics.durability === "ephemeral" &&
-    eventTopics.topics.length === 1 &&
-    eventTopics.topics[0] === "chat"
-  )
-}
-
-const isChatDeliverySuppressed = (
-  workspaceId: string,
-  event: RealtimeEventData,
-): boolean => {
-  if (!(resolveRealtimeDeliveryGate() && isGateableEvent(event))) {
-    return false
-  }
-
-  const expiresAt = chatNegativeCache.get(workspaceId)
-  if (expiresAt === undefined) {
-    return false
-  }
-  if (expiresAt <= Date.now()) {
-    chatNegativeCache.delete(workspaceId)
-    return false
-  }
-  return true
-}
-
-const recordRelayInterest = (
-  workspaceId: string,
-  events: readonly RealtimeEventData[],
-  interested: number | null,
-): void => {
+const flushRelayWindowIfElapsed = (): void => {
   if (
-    !resolveRealtimeDeliveryGate() ||
-    interested === null ||
-    events.length === 0 ||
-    !events.every(isGateableEvent)
+    Date.now() - relayWindow.windowStartedAt < REALTIME_METRIC_WINDOW_MS ||
+    relayWindowIsEmpty()
   ) {
     return
   }
-  if (interested > 0) {
-    chatNegativeCache.delete(workspaceId)
-    return
-  }
-  chatNegativeCache.set(
-    workspaceId,
-    Date.now() + REALTIME_DELIVERY_NEGATIVE_TTL_MS,
-  )
+  recordRealtimeRelayWindow(relayWindow)
+  relayWindow = createEmptyRelayWindow()
 }
 
-const sendWorkspaceEvents = async (
+const appendWorkspaceRealtimeEvents = async (
   workspaceId: string,
-  events: RealtimeEventData | readonly RealtimeEventData[],
-): Promise<number | null> => {
-  const eventList = Array.isArray(events) ? events : [events]
-  try {
-    const interested = await broadcastToWorkspacePartyLow(
-      resolveRealtimeBroadcastTarget(),
-      workspaceId,
-      events,
-    )
-    recordRelayInterest(workspaceId, eventList, interested)
-    return interested
-  } catch (err) {
-    logger.error(
-      {
-        err,
-        eventCount: eventList.length,
-        eventTypes: eventList.map((event) => event.eventType),
-        workspaceId,
-      },
-      "Failed to broadcast realtime events",
-    )
-    return null
-  }
+  pending: PendingWorkspaceRealtimeEvents,
+): Promise<void> => {
+  const serializedRecord = `{"events":[${pending.serializedEvents.join(",")}],"kind":"workspace-events","workspaceId":${JSON.stringify(workspaceId)}}`
+  await publishSerializedRealtimeStreamRecord(workspaceId, serializedRecord)
 }
 
-const createPendingWorkspaceBroadcast = (
+const createPendingWorkspaceRealtimeEvents = (
   workspaceId: string,
-): PendingWorkspaceBroadcast => {
-  const pending: PendingWorkspaceBroadcast = {
+): PendingWorkspaceRealtimeEvents => {
+  const pending: PendingWorkspaceRealtimeEvents = {
     byteLength: BATCH_ENVELOPE_BYTES,
     events: [],
-    timer: setTimeout(() => {
-      flushPendingWorkspaceBroadcasts(workspaceId)
-    }, WORKSPACE_BROADCAST_COALESCE_MS),
+    serializedEvents: [],
+    timer: setTimeout(
+      () =>
+        flushPendingWorkspaceRealtimeEvents(workspaceId).catch((error) => {
+          logger.error(
+            { err: error, workspaceId },
+            "Failed to publish realtime events",
+          )
+        }),
+      WORKSPACE_REALTIME_COALESCE_MS,
+    ),
     waiters: [],
   }
   pendingByWorkspace.set(workspaceId, pending)
@@ -148,163 +104,282 @@ const createPendingWorkspaceBroadcast = (
 }
 
 /**
- * Flushes the coalesced tail for one workspace. Exported as a deterministic
- * seam for callers that need to drain before shutdown and for focused tests.
+ * Flushes one workspace's coalesced event batch. Used for both the
+ * coalescing flush timer and `flushAllPendingWorkspaceRealtimeEvents`'s
+ * shutdown drain. Rejects when Redis cannot append it.
  */
-export function flushPendingWorkspaceBroadcasts(
+const flushPendingWorkspaceRealtimeEvents = (
   workspaceId: string,
-): Promise<number | null> {
+): Promise<void> => {
   const pending = pendingByWorkspace.get(workspaceId)
   if (!pending) {
-    return Promise.resolve(null)
+    return Promise.resolve()
   }
 
   pendingByWorkspace.delete(workspaceId)
   clearTimeout(pending.timer)
   if (pending.events.length === 0) {
-    return Promise.resolve(null)
+    return Promise.resolve()
   }
 
-  const previousSend = inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
-  const flush = previousSend
-    .then(() => sendWorkspaceEvents(workspaceId, pending.events))
-    .then(
-      (interested) => {
-        for (const waiter of pending.waiters) {
-          waiter.resolve(interested)
-        }
-        return interested
-      },
-      () => {
-        for (const waiter of pending.waiters) {
-          waiter.resolve(null)
-        }
-        return null
-      },
-    )
-  const completion = flush.then(() => undefined)
-  inFlightByWorkspace.set(workspaceId, completion)
-  completion.then(() => {
-    if (inFlightByWorkspace.get(workspaceId) === completion) {
-      inFlightByWorkspace.delete(workspaceId)
-    }
-  })
-  return flush
+  relayWindow.flushes += 1
+  relayWindow.maxBatchEvents = Math.max(
+    relayWindow.maxBatchEvents,
+    pending.events.length,
+  )
+
+  const previousAppend =
+    inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
+  const append = previousAppend.then(() =>
+    appendWorkspaceRealtimeEvents(workspaceId, pending),
+  )
+  append.then(
+    () => {
+      for (const waiter of pending.waiters) {
+        waiter.resolve()
+      }
+    },
+    (error) => {
+      relayWindow.errors += 1
+      for (const waiter of pending.waiters) {
+        waiter.reject(error)
+      }
+    },
+  )
+
+  // Stores the RAW `append` (not a `.catch`-wrapped copy): the shutdown
+  // drain's `Promise.allSettled` reads straight from this map, and a wrapped
+  // promise that never rejects would make every in-flight append look like
+  // it succeeded there even when Redis genuinely failed it. Map-cleanup uses
+  // its own derived, always-settling chain instead, so a rejection here is
+  // still observed exactly once (by the waiter-settling `.then` above) and
+  // never surfaces as a second, unhandled rejection from this cleanup chain.
+  inFlightByWorkspace.set(workspaceId, append)
+  append
+    .catch(() => undefined)
+    .then(() => {
+      if (inFlightByWorkspace.get(workspaceId) === append) {
+        inFlightByWorkspace.delete(workspaceId)
+      }
+    })
+  return append
 }
 
-export const resetRealtimeBroadcastStateForTests = (): void => {
+export const resetRealtimePublishStateForTests = (): void => {
   for (const pending of pendingByWorkspace.values()) {
     clearTimeout(pending.timer)
     for (const waiter of pending.waiters) {
-      waiter.resolve(null)
+      waiter.resolve()
     }
   }
   pendingByWorkspace.clear()
   inFlightByWorkspace.clear()
-  chatNegativeCache.clear()
+  resetRealtimeStreamPublisherForTests()
+  relayWindow = createEmptyRelayWindow()
 }
 
-export const flushAllPendingWorkspaceBroadcasts = async (): Promise<void> => {
-  const pendingWorkspaceIds = [...pendingByWorkspace.keys()]
-  await Promise.all(
-    pendingWorkspaceIds.map((workspaceId) =>
-      flushPendingWorkspaceBroadcasts(workspaceId),
-    ),
-  )
-  await Promise.all(inFlightByWorkspace.values())
-}
+/**
+ * Drains every workspace's coalesced batch and in-flight append on worker
+ * shutdown. Uses `allSettled` (not `all`): one workspace's Redis append
+ * failing must not abort draining every OTHER workspace's still-pending
+ * append — `Promise.all` would reject on the first failure and leave the
+ * rest of the `Promise.all` call's un-awaited entries to settle
+ * independently with no one logging their outcome, silently losing events
+ * for workspaces that had nothing to do with the failing one. See PR #1349
+ * round-4 medium finding (shutdown flush).
+ */
+export const flushAllPendingWorkspaceRealtimeEvents =
+  async (): Promise<void> => {
+    const pendingWorkspaceIds = [...pendingByWorkspace.keys()]
+    const flushResults = await Promise.allSettled(
+      pendingWorkspaceIds.map((workspaceId) =>
+        flushPendingWorkspaceRealtimeEvents(workspaceId),
+      ),
+    )
+    const failures: unknown[] = []
+    for (const [index, result] of flushResults.entries()) {
+      if (result.status === "rejected") {
+        failures.push(result.reason)
+        logger.error(
+          { err: result.reason, workspaceId: pendingWorkspaceIds[index] },
+          "Failed to flush pending realtime events on shutdown",
+        )
+      }
+    }
+    const inFlightEntries = [...inFlightByWorkspace.entries()]
+    const inFlightResults = await Promise.allSettled(
+      inFlightEntries.map(([, append]) => append),
+    )
+    for (const [index, result] of inFlightResults.entries()) {
+      if (result.status === "rejected") {
+        failures.push(result.reason)
+        logger.error(
+          { err: result.reason, workspaceId: inFlightEntries[index]?.[0] },
+          "Failed to drain an in-flight realtime append on shutdown",
+        )
+      }
+    }
+    if (!relayWindowIsEmpty()) {
+      recordRealtimeRelayWindow(relayWindow)
+      relayWindow = createEmptyRelayWindow()
+    }
+    // Every workspace above got its own fully-drained attempt and its own
+    // log line regardless of any other workspace's outcome (the bug this
+    // fixes) — but the caller's shutdown handler still needs an overall
+    // rejection to know whether to exit 0 or 1, so re-raise once everything
+    // that COULD run already has.
+    if (failures.length > 0) {
+      throw new AggregateError(
+        failures,
+        `${failures.length} realtime flush(es) failed during shutdown`,
+      )
+    }
+  }
 
-export const broadcastToWorkspaceParty = (
+/**
+ * Coalesces workspace events for a short interval while preserving append order
+ * per workspace. Resolves only after the corresponding Redis stream append.
+ */
+export const publishWorkspaceRealtimeEvent = (
   workspaceId: string,
   event: RealtimeEventData,
-): Promise<number | null> => {
-  if (isChatDeliverySuppressed(workspaceId, event)) {
-    return Promise.resolve(0)
-  }
+): Promise<void> => {
+  flushRelayWindowIfElapsed()
+  let pending =
+    pendingByWorkspace.get(workspaceId) ??
+    createPendingWorkspaceRealtimeEvents(workspaceId)
 
-  let pending = pendingByWorkspace.get(workspaceId)
-  if (!pending) {
-    pending = createPendingWorkspaceBroadcast(workspaceId)
-  }
-
-  const serializedEventBytes = new TextEncoder().encode(
-    JSON.stringify(event),
-  ).byteLength
+  const serializedEvent = JSON.stringify(event)
+  const serializedEventBytes = Buffer.byteLength(serializedEvent)
+  relayWindow.events += 1
+  relayWindow.bytes += serializedEventBytes
+  relayWindow.eventTypes[event.eventType] =
+    (relayWindow.eventTypes[event.eventType] ?? 0) + 1
   const separatorBytes = pending.events.length > 0 ? 1 : 0
   const wouldExceedBytes =
     pending.byteLength + separatorBytes + serializedEventBytes >
-    WORKSPACE_BROADCAST_MAX_BYTES
+    WORKSPACE_REALTIME_MAX_BYTES
   const wouldExceedCount =
-    pending.events.length + 1 > WORKSPACE_BROADCAST_MAX_EVENTS
+    pending.events.length + 1 > WORKSPACE_REALTIME_MAX_EVENTS
 
   if (wouldExceedBytes || wouldExceedCount) {
-    flushPendingWorkspaceBroadcasts(workspaceId)
-    pending = createPendingWorkspaceBroadcast(workspaceId)
+    flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined)
+    pending = createPendingWorkspaceRealtimeEvents(workspaceId)
   }
 
   const nextSeparatorBytes = pending.events.length > 0 ? 1 : 0
   pending.events.push(event)
+  pending.serializedEvents.push(serializedEvent)
   pending.byteLength += nextSeparatorBytes + serializedEventBytes
-  const result = new Promise<number | null>((resolve) => {
-    pending.waiters.push({ resolve })
-  })
+  const { promise: delivery, reject, resolve } = Promise.withResolvers<void>()
+  pending.waiters.push({ reject, resolve })
 
   if (
-    REALTIME_EVENT_TOPICS[event.eventType].topics.includes("voip") ||
-    pending.events.length === WORKSPACE_BROADCAST_MAX_EVENTS
+    IMMEDIATE_FLUSH_EVENT_TYPES.has(event.eventType) ||
+    pending.events.length === WORKSPACE_REALTIME_MAX_EVENTS
   ) {
-    flushPendingWorkspaceBroadcasts(workspaceId)
+    flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined)
   }
-  return result
+  return delivery
 }
 
-export const publishToWorkspaceParty = (
+/**
+ * Queues a workspace event without making the caller wait for stream delivery.
+ * Redis append failures remain visible in logs.
+ */
+export const queueWorkspaceRealtimeEvent = (
   workspaceId: string,
   event: RealtimeEventData,
 ): void => {
-  const delivery = broadcastToWorkspaceParty(workspaceId, event)
-  delivery.catch((err) => {
+  publishWorkspaceRealtimeEvent(workspaceId, event).catch((error) => {
     logger.error(
-      { err, eventType: event.eventType, workspaceId },
+      { err: error, eventType: event.eventType, workspaceId },
       "Failed to publish realtime event",
     )
   })
 }
 
 /**
- * Delivers an event to only one workspace member's currently-open realtime
- * connections (never a workspace-wide broadcast) — e.g. the VoIP offer for
- * the single agent a call was routed to.
+ * Delivers an event to one workspace member's active realtime connections.
+ * Resolves after Redis accepts the command and rejects on append failure.
  */
-export const sendToWorkspaceMember = (
+export const publishWorkspaceMemberRealtimeEvent = async (
   args: { workspaceId: string; userId: string },
-  json: RealtimeEventData,
-) => {
-  const target = resolveRealtimeBroadcastTarget()
-  return sendToWorkspaceMemberLow(target, args.workspaceId, args.userId, json)
+  event: RealtimeTargetedEventData,
+): Promise<void> => {
+  await publishRealtimeStreamRecord({
+    event,
+    kind: "member-send",
+    workspaceId: args.workspaceId,
+    userId: args.userId,
+  })
+}
+
+const REVOKE_RETRY_ATTEMPTS = 3
+const REVOKE_RETRY_DELAY_MS = 250
+
+const delay = (ms: number): Promise<void> => {
+  const { promise, resolve } = Promise.withResolvers<void>()
+  setTimeout(resolve, ms)
+  return promise
 }
 
 /**
- * Closes a member's tagged realtime connections in a workspace room — used
- * on membership removal so a former member's already-open socket stops
- * receiving further events immediately, rather than only on next reconnect.
+ * Immediately revokes a member's existing realtime connections and marks the
+ * member revoked for any NEW connect too — `markRealtimeMemberRevoked` writes
+ * a TTL'd `realtime:revoked:{workspaceId}:{userId}` key the gateway checks
+ * against a connect token's `iat`, independent of whether that connect
+ * carries a replay `lastSeq` (see `getRealtimeMemberRevokedKey`'s doc for
+ * why a stream-entry-based check alone isn't enough). Retries a transient
+ * Redis failure a few times before giving up: a revoke that silently fails
+ * once leaves the member's existing socket receiving events, and a new
+ * connect able to succeed, for up to `connectionLifetimeMs` (30 minutes by
+ * default) until its next forced reconnect re-checks membership — callers
+ * must still log and decide what to do if every attempt here fails.
+ *
+ * `reason` is required, not defaulted: `"deleted"` closes the socket
+ * terminally (the member was actually removed from the workspace — the
+ * client must not reconnect), `"reauth"` only forces a fresh token mint
+ * (permissions or team membership changed, but the member is still in the
+ * workspace). Using the wrong one either strands a still-valid member with a
+ * dead inbox, or lets a removed member's existing socket keep reconnecting.
+ * See PR #1349 finding #1 and round-4 finding #5.
  */
-export const revokeWorkspaceMemberConnections = (args: {
+export const revokeWorkspaceMemberRealtimeConnections = async (args: {
   workspaceId: string
   userId: string
-}) => {
-  const target = resolveRealtimeBroadcastTarget()
-  return revokeWorkspaceMemberConnectionsLow(
-    target,
-    args.workspaceId,
-    args.userId,
-  )
+  reason: "deleted" | "reauth"
+}): Promise<void> => {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= REVOKE_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      await markRealtimeMemberRevoked(args.workspaceId, args.userId)
+      await publishRealtimeStreamRecord({
+        kind: "member-revoke",
+        reason: args.reason,
+        workspaceId: args.workspaceId,
+        userId: args.userId,
+      })
+      return
+    } catch (error) {
+      lastError = error
+      if (attempt < REVOKE_RETRY_ATTEMPTS) {
+        await delay(REVOKE_RETRY_DELAY_MS * attempt)
+      }
+    }
+  }
+  throw lastError
 }
 
-export const broadcastToGuestParty = (
+/** Publishes an event to a guest conversation's active realtime connections. */
+export const publishGuestRealtimeEvent = async (
   args: { workspaceId: string; guestConversationId: string },
-  json: RealtimeEventData,
-) => {
-  const target = resolveRealtimeBroadcastTarget()
-  return broadcastToGuestPartyLow(target, args.guestConversationId, json)
+  event: RealtimeTargetedEventData,
+): Promise<void> => {
+  await publishRealtimeStreamRecord({
+    event,
+    guestConversationId: args.guestConversationId,
+    kind: "guest-event",
+    workspaceId: args.workspaceId,
+  })
 }

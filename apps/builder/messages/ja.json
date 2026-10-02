@@ -3341,6 +3341,7 @@
     "deleteConfirmation": "本当によろしいですか？\nこの操作は元に戻せません。\n{feature}はサーバーから完全に削除されます。"
   },
   "messages": {
+    "realtimeRevokeWarning": "アクセスの取り消しをすぐに確認できませんでした。メンバーの次回の再接続時に反映されます。",
     "moveFeature": "{feature}を移動",
     "poweredBy": "{name}を利用",
     "noGiphyApiKey": "GIPHY APIキーが見つかりません。プラットフォーム設定で追加してください。",

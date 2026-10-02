@@ -3604,6 +3604,7 @@
     "title": "Profili redaktə et"
   },
   "messages": {
+    "realtimeRevokeWarning": "Girişin ləğvi dərhal təsdiqlənə bilmədi - üzvün növbəti yenidən qoşulmasında qüvvəyə minəcək.",
     "moveFeature": "Köçür: {feature}",
     "poweredBy": "{name} tərəfindən təmin edilir",
     "noGiphyApiKey": "GIPHY API açarı tapılmadı. Platforma parametrlərində açar əlavə edin.",

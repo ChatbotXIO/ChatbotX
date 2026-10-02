@@ -1,17 +1,14 @@
 "use server"
 
 import {
-  revokeWorkspaceMemberConnections,
-  workspaceMemberCacheTag,
+  revokeWorkspaceMemberRealtimeConnections,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { findOrFail } from "@chatbotx.io/database/client"
-import { workspaceMemberModel } from "@chatbotx.io/database/schema"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { logger } from "@/lib/log"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
 export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
@@ -21,10 +18,9 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
-    const workspaceMember = await findOrFail({
-      table: workspaceMemberModel,
-      where: { id, workspaceId },
-      message: "Workspace member not found",
+    const workspaceMember = await workspaceMemberService.findByIdOrFail({
+      id,
+      workspaceId,
     })
 
     if (workspaceMember.role === "owner") {
@@ -53,18 +49,34 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
 
     // The removed member's cached `listByUserId` result still lists this
     // workspace; bust it so their access is revoked immediately.
-    await invalidateCacheByTags([
-      workspaceMemberCacheTag(workspaceMember.userId),
-    ])
+    await workspaceMemberService.invalidateMembershipCache(
+      workspaceMember.userId,
+    )
 
     // Close any realtime sockets the removed member already has open in
     // this workspace room — their next connect attempt is rejected anyway
     // (the mint endpoint re-checks membership), but an existing socket
     // would otherwise keep receiving events until it happens to reconnect.
-    // Best-effort: `revokeWorkspaceMemberConnections` swallows its own
-    // network failures, so this never blocks the deletion.
-    await revokeWorkspaceMemberConnections({
-      workspaceId,
-      userId: workspaceMember.userId,
-    })
+    // `revokeWorkspaceMemberRealtimeConnections` already retries a transient
+    // Redis failure a few times; if every attempt still fails, the removal
+    // itself has already succeeded (the member is deleted and their session
+    // re-check will reject the next connect) — only the IMMEDIATE socket
+    // close is uncertain, so this reports a warning rather than failing the
+    // whole action. See PR #1349 finding #5.
+    let revokeWarning = false
+    try {
+      await revokeWorkspaceMemberRealtimeConnections({
+        workspaceId,
+        userId: workspaceMember.userId,
+        reason: "deleted",
+      })
+    } catch (error) {
+      revokeWarning = true
+      logger.error(
+        { err: error, userId: workspaceMember.userId, workspaceId },
+        "Failed to revoke removed member realtime connections",
+      )
+    }
+
+    return { revokeWarning }
   })

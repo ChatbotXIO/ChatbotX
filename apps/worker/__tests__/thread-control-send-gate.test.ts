@@ -26,8 +26,13 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   contactService: { unblockIfBlocked: vi.fn().mockResolvedValue(null) },
   conversationService: { markReadByOutbound: vi.fn().mockResolvedValue(true) },
-  publishToWorkspaceParty: vi.fn(),
-  broadcastToWorkspaceParty: vi.fn(),
+  messageService: {
+    updateSendError: mocks.updateSendError,
+    updateSourceId: mocks.updateSourceId,
+    updateAttributes: vi.fn().mockResolvedValue(undefined),
+    findWithAttachments: vi.fn().mockResolvedValue(null),
+  },
+  queueWorkspaceRealtimeEvent: vi.fn(),
   whatsappCallPermissionService: { recordPermanentGrant: vi.fn() },
   threadControlService: {
     recordEvent: mocks.recordEvent,

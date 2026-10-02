@@ -1,14 +1,11 @@
 import {
+  integrationWhatsappService,
+  publishWorkspaceMemberRealtimeEvent,
   resolveWhatsappCallerName,
-  sendToWorkspaceMember,
   whatsappVoipCallService,
   whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
 import type { WhatsappCallHoursSnapshot } from "@chatbotx.io/database/partials"
-import {
-  integrationLookupRepository,
-  whatsappCallRepository,
-} from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
@@ -20,7 +17,7 @@ import {
   type RealtimeEventWhatsappCallOutboundAnswer,
   type RealtimeEventWhatsappCallTransportEnded,
   type RealtimeEventWhatsappCallTransportIncoming,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import { isWithinCallHours } from "@chatbotx.io/utils/whatsapp-call-hours"
 import {
   WhatsappVoipSignalingJobAction,
@@ -63,7 +60,7 @@ class VoipCallRowNotReadyError extends Error {
 }
 
 const getCallRowOrThrow = async (wacid: string): Promise<WhatsappCallModel> => {
-  const call = await whatsappCallRepository.findByWacid(wacid)
+  const call = await whatsappVoipCallService.findByWacid(wacid)
   if (!call) {
     throw new VoipCallRowNotReadyError(wacid)
   }
@@ -78,14 +75,14 @@ const getOutboundCallRowOrThrow = async (input: {
   attemptId: string
   wacid?: string
 }): Promise<WhatsappCallModel> => {
-  const byAttempt = await whatsappCallRepository.findByAttemptId(
+  const byAttempt = await whatsappVoipCallService.findByAttemptId(
     input.attemptId,
   )
   if (byAttempt) {
     return byAttempt
   }
   const byWacid = input.wacid
-    ? await whatsappCallRepository.findByWacid(input.wacid)
+    ? await whatsappVoipCallService.findByWacid(input.wacid)
     : undefined
   if (byWacid) {
     return byWacid
@@ -176,16 +173,13 @@ export const inboundCallRefusal = (
 export const resolveVoipAuthByInboxId = async (
   inboxId: string,
 ): Promise<WhatsappAuthValue> => {
-  const row = await integrationLookupRepository.findAuthByInboxId({
-    modelName: "IntegrationWhatsapp",
-    inboxId,
-  })
-  if (!row) {
+  const auth = await integrationWhatsappService.findAuthByInboxId(inboxId)
+  if (!auth) {
     throw new Error(
       `Whatsapp VoIP: no IntegrationWhatsapp row for inboxId ${inboxId}`,
     )
   }
-  return row.auth as WhatsappAuthValue
+  return auth as WhatsappAuthValue
 }
 
 /**
@@ -196,7 +190,7 @@ const finalizeEndedCall = async (input: {
   wacid: string
   status: "rejected" | "failed"
 }): Promise<void> => {
-  const call = await whatsappCallRepository.findByWacid(input.wacid)
+  const call = await whatsappVoipCallService.findByWacid(input.wacid)
   if (!call) {
     logger.warn(
       { wacid: input.wacid, status: input.status },
@@ -294,8 +288,8 @@ const endedStatusOf = (
     : null
 
 /**
- * Delivers the offer to every rung agent. `sendToWorkspaceMember` never throws,
- * so a falsy result is the failure signal.
+ * Delivers the incoming offer to every selected agent. A failed stream append
+ * is logged per target without preventing other offers from being published.
  */
 const ringAgents = async (input: {
   workspaceId: string
@@ -304,14 +298,15 @@ const ringAgents = async (input: {
 }): Promise<void> => {
   await Promise.all(
     input.targets.map(async (userId) => {
-      const result = await sendToWorkspaceMember(
-        { workspaceId: input.workspaceId, userId },
-        input.event,
-      )
-      if (!result) {
+      try {
+        await publishWorkspaceMemberRealtimeEvent(
+          { workspaceId: input.workspaceId, userId },
+          input.event,
+        )
+      } catch (err) {
         logger.warn(
-          { wacid: input.event.data.wacid, userId },
-          "Whatsapp VoIP: unable to deliver the offer realtime event",
+          { err, wacid: input.event.data.wacid, userId },
+          "Whatsapp VoIP: unable to publish the offer realtime event",
         )
       }
     }),
@@ -328,7 +323,7 @@ const notifyRungAgentsIfEnded = async (input: {
   workspaceId: string
   targets: string[]
 }): Promise<void> => {
-  const latest = await whatsappCallRepository.findByWacid(input.wacid)
+  const latest = await whatsappVoipCallService.findByWacid(input.wacid)
   const status = latest ? endedStatusOf(latest) : null
   if (!(latest && status)) {
     return
@@ -342,11 +337,27 @@ const notifyRungAgentsIfEnded = async (input: {
       status,
     },
   }
-  await Promise.all(
+  const results = await Promise.allSettled(
     input.targets.map((userId) =>
-      sendToWorkspaceMember({ workspaceId: input.workspaceId, userId }, event),
+      publishWorkspaceMemberRealtimeEvent(
+        { workspaceId: input.workspaceId, userId },
+        event,
+      ),
     ),
   )
+  for (const [index, result] of results.entries()) {
+    if (result.status === "rejected") {
+      logger.warn(
+        {
+          err: result.reason,
+          userId: input.targets[index],
+          workspaceId: input.workspaceId,
+          wacid: input.wacid,
+        },
+        "Whatsapp VoIP: unable to publish the ended event to a previously rung agent",
+      )
+    }
+  }
 }
 
 /**
@@ -400,7 +411,7 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
 
   // The terminate that ended this call found nothing to clean up — check before
   // anything else.
-  const existing = await whatsappCallRepository.findByWacid(wacid)
+  const existing = await whatsappVoipCallService.findByWacid(wacid)
   if (existing && whatsappVoipCallService.isCallEnded(existing)) {
     await whatsappVoipSignalingService.deleteOffer(wacid)
     logger.info(
@@ -566,17 +577,18 @@ const handleOutboundAnswer = async (
     session: { sdpType: "answer", sdp: answer.sdp },
   }
 
-  const result = await sendToWorkspaceMember(
-    { workspaceId, userId: initiatorUserId },
-    {
-      eventType: RealtimeEventType.whatsappCallOutboundAnswer,
-      data: eventData,
-    },
-  )
-  if (!result) {
+  try {
+    await publishWorkspaceMemberRealtimeEvent(
+      { workspaceId, userId: initiatorUserId },
+      {
+        eventType: RealtimeEventType.whatsappCallOutboundAnswer,
+        data: eventData,
+      },
+    )
+  } catch (err) {
     logger.warn(
-      { attemptId, userId: initiatorUserId },
-      "Whatsapp VoIP: unable to deliver the outbound answer realtime event",
+      { attemptId, err, userId: initiatorUserId },
+      "Whatsapp VoIP: unable to publish the outbound answer realtime event",
     )
   }
 
@@ -592,7 +604,7 @@ const forceEndNoAnswerOutboundDial = async (input: {
   wacid: string
   auth: WhatsappAuthValue
 }): Promise<void> => {
-  const call = await whatsappCallRepository.findByWacid(input.wacid)
+  const call = await whatsappVoipCallService.findByWacid(input.wacid)
   if (call?.status !== "ringing") {
     return
   }

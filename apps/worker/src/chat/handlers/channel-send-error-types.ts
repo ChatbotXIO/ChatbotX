@@ -8,7 +8,10 @@ import type {
 
 export type ChannelSendErrorContext = {
   error: unknown
-  conversation: Pick<ConversationModel, "id" | "workspaceId">
+  conversation: Pick<
+    ConversationModel,
+    "id" | "workspaceId" | "assignedUserId" | "assignedInboxTeamId"
+  >
   contactInbox: ContactInboxModel
   contentAttributes: unknown
 }

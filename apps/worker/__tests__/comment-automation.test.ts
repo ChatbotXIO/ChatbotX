@@ -106,8 +106,8 @@ vi.mock("@chatbotx.io/analytics", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
-  publishToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
+  queueWorkspaceRealtimeEvent: vi.fn(),
   logProviderError: mockLogProviderError,
   flowService: { findBy: mockFlowFindBy },
   buildContext: vi.fn().mockResolvedValue({}),
@@ -138,6 +138,10 @@ vi.mock("@chatbotx.io/business", () => ({
     findById: mockWorkspaceFindById,
     isActiveNow: mockIsActiveNow,
   },
+  messageService: {
+    create: async (...args: unknown[]) =>
+      (await mockCreateMessageRepository()).create(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -160,8 +164,9 @@ vi.mock("@chatbotx.io/integration-tiktok", () => ({
   sendPrivateReply: mockSendTiktokPrivateReply,
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/variables", () => ({

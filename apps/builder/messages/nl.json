@@ -3362,6 +3362,7 @@
     "deleteConfirmation": "Weet je het absoluut zeker?\nDeze actie kan niet ongedaan worden gemaakt.\nHiermee wordt je {feature} permanent van onze servers verwijderd."
   },
   "messages": {
+    "realtimeRevokeWarning": "De toegangsintrekking kon niet direct worden bevestigd - deze wordt van kracht bij de volgende herverbinding van het lid.",
     "moveFeature": "{feature} verplaatsen",
     "poweredBy": "Mogelijk gemaakt door {name}",
     "noGiphyApiKey": "Geen GIPHY API-sleutel gevonden. Voeg er een toe in Platforminstellingen.",

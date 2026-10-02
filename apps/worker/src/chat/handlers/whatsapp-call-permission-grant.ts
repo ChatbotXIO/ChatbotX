@@ -1,8 +1,11 @@
 import {
-  broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent,
   whatsappCallPermissionService,
 } from "@chatbotx.io/business"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import {
   ChannelError,
   getWhatsappCallPermissionRequest,
@@ -47,9 +50,13 @@ export async function reconcileCallPermissionAlreadyGranted(
     contactInboxId: context.contactInbox.id,
     grantedAt: new Date(),
   })
-  await broadcastToWorkspaceParty(context.conversation.workspaceId, {
+  await publishWorkspaceRealtimeEvent(context.conversation.workspaceId, {
     eventType: RealtimeEventType.whatsappCallPermissionUpdated,
     data: { conversationId: context.conversation.id },
+    route: routeForConversation({
+      assignedInboxTeamId: context.conversation.assignedInboxTeamId,
+      assignedUserId: context.conversation.assignedUserId,
+    }),
   })
   logger.info(
     { contactInboxId: context.contactInbox.id },
