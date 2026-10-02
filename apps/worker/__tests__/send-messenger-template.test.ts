@@ -8,9 +8,12 @@ import {
   vi,
 } from "vitest"
 
-const { mockMarkReadByOutbound } = vi.hoisted(() => ({
-  mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
-}))
+const { mockMarkReadByOutbound, mockMessageUpdateSourceId } = vi.hoisted(
+  () => ({
+    mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
+    mockMessageUpdateSourceId: vi.fn().mockResolvedValue(undefined),
+  }),
+)
 
 function makeEmptySelectChain(): Promise<never[]> & Record<string, unknown> {
   const chain = Promise.resolve<never[]>([]) as Promise<never[]> &
@@ -108,6 +111,14 @@ vi.mock("@chatbotx.io/business", () => ({
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
   },
+  messageService: {
+    create: vi.fn(async (input: Record<string, unknown>) => ({
+      ...input,
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      id: "msg-1",
+    })),
+    updateSourceId: mockMessageUpdateSourceId,
+  },
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -196,9 +207,13 @@ describe("processMessengerTemplate — sourceId persistence", () => {
       template: TEMPLATE,
     })
 
-    expect(mockDbUpdate).toHaveBeenCalled()
-    const setCall = mockDbUpdate.mock.results[0].value.set
-    expect(setCall).toHaveBeenCalledWith({ sourceId: PROVIDER_ID })
+    expect(mockMessageUpdateSourceId).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "msg-1",
+        sourceId: PROVIDER_ID,
+        workspaceId: "ws-1",
+      }),
+    )
     // Template sends honour the inbox option like any other bot message.
     expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
       expect.objectContaining({

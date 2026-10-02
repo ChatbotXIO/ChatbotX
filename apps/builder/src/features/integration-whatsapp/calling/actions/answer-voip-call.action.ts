@@ -6,16 +6,13 @@ import {
   contactInboxService,
   contactService,
   diagnoseAnswerShape,
+  integrationWhatsappService,
   isAnswerDeadlineExpired,
   publishWorkspaceRealtimeEvent,
   summarizeIceCandidates,
   whatsappVoipCallService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import {
-  integrationWhatsappRepository,
-  whatsappCallRepository,
-} from "@chatbotx.io/database/repositories"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   acceptCall,
@@ -115,13 +112,16 @@ async function resolveCallAndAuth(input: {
   announcementOptions: WhatsappCallAnnouncementOptions
 }> {
   const t = await getTranslations()
-  const call = await whatsappCallRepository.findById(input.whatsappCallId)
-  if (!call || call.workspaceId !== input.workspaceId || !call.wacid) {
+  const call = await whatsappVoipCallService.findByIdForWorkspace({
+    id: input.whatsappCallId,
+    workspaceId: input.workspaceId,
+  })
+  if (!call?.wacid) {
     throw new ChatbotXException(t("whatsapp.calls.errors.callNotFound"))
   }
 
   const integration =
-    await integrationWhatsappRepository.findByInboxIdForWorkspace({
+    await integrationWhatsappService.findByInboxIdForWorkspaceOrNull({
       workspaceId: input.workspaceId,
       inboxId: call.inboxId,
     })

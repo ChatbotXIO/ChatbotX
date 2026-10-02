@@ -100,6 +100,22 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     recordOutboundMessageActivity: mockRecordOutboundMessageActivity,
   },
+  messageService: {
+    create: async (...args: unknown[]) =>
+      (await mockCreateMessageRepository()).create(...args),
+    updateSourceId: async (input: {
+      createdAt: Date
+      id: string
+      sourceId: string
+      workspaceId: string
+    }) =>
+      (await mockCreateMessageRepository()).updateSourceId(
+        input.id,
+        input.sourceId,
+        input.workspaceId,
+        input.createdAt,
+      ),
+  },
   flowService: {
     findAnyActive: mockFindAnyActiveFlow,
   },

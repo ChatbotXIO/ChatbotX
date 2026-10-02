@@ -642,9 +642,6 @@ importers:
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
-      jose:
-        specifier: ^6.2.3
-        version: 6.2.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2

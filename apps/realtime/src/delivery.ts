@@ -1,13 +1,14 @@
-import type {
-  RealtimeMemberClaims,
-  RealtimeStreamRecord,
+import {
+  REALTIME_CLOSE_CODE,
+  type RealtimeMemberClaims,
+  type RealtimeStreamRecord,
 } from "@chatbotx.io/realtime-protocol"
-
-export const REALTIME_CLOSE_CODE = { resync: 4002, revoked: 4001 } as const
+import type { RealtimeServerCounters } from "./lib/realtime-metrics"
 
 export type WorkspaceSocketData = RealtimeMemberClaims & {
   closeReason?: string
   closed: boolean
+  overloadRetryAfterMs?: number
   replayCutoff?: string
   replayEntries: StreamRecordEntry[]
   workspaceId: string
@@ -15,6 +16,7 @@ export type WorkspaceSocketData = RealtimeMemberClaims & {
 export type GuestSocketData = {
   closed: boolean
   guestConversationId: string
+  overloadRetryAfterMs?: number
   replayCutoff: string
   replayEntries: StreamRecordEntry[]
   workspaceId: string
@@ -28,7 +30,7 @@ export type StreamRecordEntry = {
 export type WorkspaceSocket = {
   end: (code?: number, reason?: string) => void
   getUserData: () => WorkspaceSocketData
-  send: (data: string) => void
+  send: (data: string) => number
   subscribe: (topic: string) => void
 }
 
@@ -91,7 +93,7 @@ export type RealtimeDelivery = {
   replayGuestSocket: (
     socket: {
       getUserData: () => GuestSocketData
-      send: (data: string) => void
+      send: (data: string) => number
     },
     entries?: StreamRecordEntry[],
   ) => void
@@ -106,9 +108,30 @@ export type RealtimeDelivery = {
   subscribeWorkspaceSocket: (socket: WorkspaceSocket) => void
 }
 
-export const createRealtimeDelivery = (app: PublishApp): RealtimeDelivery => {
+export const createRealtimeDelivery = (
+  app: PublishApp,
+  counters: RealtimeServerCounters,
+): RealtimeDelivery => {
   const connectionsByMember = new Map<string, Set<WorkspaceSocket>>()
   const restrictedByWorkspace = new Map<string, Set<WorkspaceSocket>>()
+
+  const recordPublish = (topic: string, frame: string): void => {
+    app.publish(topic, frame)
+    counters.publishes += 1
+    counters.publishBytes += frame.length
+  }
+
+  const recordSend = (
+    socket: { send: (data: string) => number },
+    frame: string,
+  ): void => {
+    const result = socket.send(frame)
+    counters.sends += 1
+    counters.sendBytes += frame.length
+    if (result === 2) {
+      counters.drops += 1
+    }
+  }
 
   const sendWorkspaceRecord = (
     socket: WorkspaceSocket,
@@ -125,7 +148,7 @@ export const createRealtimeDelivery = (app: PublishApp): RealtimeDelivery => {
       socket.getUserData(),
     )
     if (events.length > 0) {
-      socket.send(encodeBatch(events, entry.id))
+      recordSend(socket, encodeBatch(events, entry.id))
     }
   }
 
@@ -136,14 +159,14 @@ export const createRealtimeDelivery = (app: PublishApp): RealtimeDelivery => {
     if (socket.getUserData().closed || entry.record.kind !== "member-send") {
       return
     }
-    socket.send(encodeBatch([entry.record.event], entry.id))
+    recordSend(socket, encodeBatch([entry.record.event], entry.id))
   }
 
   const dispatch = (entry: StreamRecordEntry): void => {
     const { record } = entry
     switch (record.kind) {
       case "workspace-events": {
-        app.publish(
+        recordPublish(
           `ws:${record.workspaceId}:all`,
           encodeBatch(record.events, entry.id),
         )
@@ -171,13 +194,13 @@ export const createRealtimeDelivery = (app: PublishApp): RealtimeDelivery => {
           }
           const resolvedFrame = framesByAudience.get(audienceKey)
           if (resolvedFrame) {
-            socket.send(resolvedFrame)
+            recordSend(socket, resolvedFrame)
           }
         }
         return
       }
       case "guest-event":
-        app.publish(
+        recordPublish(
           `guest:${record.guestConversationId}`,
           encodeBatch([record.event], entry.id),
         )
@@ -265,7 +288,7 @@ export const createRealtimeDelivery = (app: PublishApp): RealtimeDelivery => {
           entry.record.workspaceId === workspaceId &&
           entry.record.guestConversationId === guestConversationId
         ) {
-          socket.send(encodeBatch([entry.record.event], entry.id))
+          recordSend(socket, encodeBatch([entry.record.event], entry.id))
         }
       }
     },

@@ -116,6 +116,22 @@ vi.mock("@chatbotx.io/business", () => ({
     findSendableBroadcast: mockFindSendableBroadcast,
     resetContactForResume: mockResetContactForResume,
   },
+  messageService: {
+    create: async (...args: unknown[]) =>
+      (await mockCreateMessageRepository()).create(...args),
+    updateSourceId: async (input: {
+      createdAt: Date
+      id: string
+      sourceId: string
+      workspaceId: string
+    }) =>
+      (await mockCreateMessageRepository()).updateSourceId(
+        input.id,
+        input.sourceId,
+        input.workspaceId,
+        input.createdAt,
+      ),
+  },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

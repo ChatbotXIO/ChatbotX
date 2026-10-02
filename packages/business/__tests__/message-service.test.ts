@@ -2,10 +2,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
   const repo = {
+    bulkCreateAttachments: vi.fn(),
+    create: vi.fn(),
+    deleteAttachmentsByMessageId: vi.fn(),
+    deleteById: vi.fn(),
+    deleteBySourceId: vi.fn(),
     findById: vi.fn(),
     findLastByConversation: vi.fn(),
     hardDeleteAllByContactInbox: vi.fn(),
     listIncomingTextsByContactInbox: vi.fn(),
+    updateMessageText: vi.fn(),
+    updateSendError: vi.fn(),
+    updateSourceId: vi.fn(),
   }
   return {
     db: { query: { messageModel: { findFirst: vi.fn(), findMany: vi.fn() } } },
@@ -186,5 +194,61 @@ describe("messageService", () => {
       workspaceId: "ws-1",
     })
     expect(result).toEqual({ attachmentPaths: ["origin.jpg", "thumb.jpg"] })
+  })
+
+  test("uses the supplied transaction and preserves delete-by-source semantics", async () => {
+    const tx = {} as never
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    mocks.repo.deleteBySourceId.mockResolvedValue([{ id: "message-1" }])
+
+    await expect(
+      messageService.delete({
+        id: "message-1",
+        sourceId: "provider-1",
+        workspaceId: "ws-1",
+        createdAt,
+        tx,
+      }),
+    ).resolves.toEqual([{ id: "message-1" }])
+
+    expect(mocks.createMessageRepository).toHaveBeenCalledWith(tx)
+    expect(mocks.repo.deleteBySourceId).toHaveBeenCalledWith(
+      "provider-1",
+      "ws-1",
+      createdAt,
+    )
+    expect(mocks.repo.deleteById).not.toHaveBeenCalled()
+  })
+
+  test("maps message write inputs to repository methods", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    mocks.repo.updateSourceId.mockResolvedValue({ id: "message-1" })
+    mocks.repo.updateSendError.mockResolvedValue({ id: "message-1" })
+
+    await messageService.updateSourceId({
+      id: "message-1",
+      sourceId: "provider-1",
+      workspaceId: "ws-1",
+      createdAt,
+    })
+    await messageService.updateSendError({
+      id: "message-1",
+      sendError: "provider unavailable",
+      workspaceId: "ws-1",
+      createdAt,
+    })
+
+    expect(mocks.repo.updateSourceId).toHaveBeenCalledWith(
+      "message-1",
+      "provider-1",
+      "ws-1",
+      createdAt,
+    )
+    expect(mocks.repo.updateSendError).toHaveBeenCalledWith(
+      "message-1",
+      "provider unavailable",
+      "ws-1",
+      createdAt,
+    )
   })
 })

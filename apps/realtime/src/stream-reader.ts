@@ -1,6 +1,7 @@
 import {
   getRealtimeStreamKey,
   getRealtimeStreamShard,
+  isRealtimeSeqAfter,
   type RealtimeStreamRecord,
   realtimeStreamRecordSchema,
 } from "@chatbotx.io/realtime-protocol"
@@ -32,6 +33,7 @@ export type StreamRecordEntry = {
 
 export type StreamReader = {
   activateWorkspace: (workspaceId: string) => Promise<string>
+  activeShardCount: () => number
   close: () => Promise<void>
   getRecentEntries: (
     workspaceId: string,
@@ -74,15 +76,6 @@ export const parseStreamRecord = (
   } catch {
     return null
   }
-}
-
-export const isStreamIdBefore = (left: string, right: string): boolean => {
-  const [leftMilliseconds, leftSequence] = left.split("-").map(BigInt)
-  const [rightMilliseconds, rightSequence] = right.split("-").map(BigInt)
-  return (
-    leftMilliseconds < rightMilliseconds ||
-    (leftMilliseconds === rightMilliseconds && leftSequence < rightSequence)
-  )
 }
 
 const getLatestStreamId = async (
@@ -205,7 +198,7 @@ export const createStreamReader = ({
         continue
       }
       for (const [id, fields] of entries) {
-        if (!isStreamIdBefore(activeShard.lastId, id)) {
+        if (!isRealtimeSeqAfter(id, activeShard.lastId)) {
           continue
         }
         activeShard.lastId = id
@@ -261,6 +254,7 @@ export const createStreamReader = ({
 
   return {
     activateWorkspace,
+    activeShardCount: () => activeShards.size,
     close: async () => {
       stopped = true
       for (const [shard, activeShard] of activeShards) {
@@ -278,7 +272,7 @@ export const createStreamReader = ({
         return []
       }
       return activeShard.recentEntries.filter(
-        (entry) => !afterId || isStreamIdBefore(afterId, entry.id),
+        (entry) => !afterId || isRealtimeSeqAfter(entry.id, afterId),
       )
     },
     releaseWorkspace,

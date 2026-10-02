@@ -24,6 +24,23 @@ vi.mock("@chatbotx.io/business", () => ({
   publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
   contactInboxService: { findBy: mockContactInboxFindBy },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
+  messageService: {
+    findWithAttachments: mockFindById,
+    replaceAttachments: async (input: {
+      attachments: unknown[]
+      messageCreatedAt: Date
+      messageId: string
+    }) => {
+      await mockDeleteAttachmentsByMessageId(
+        input.messageId,
+        input.messageCreatedAt,
+      )
+      if (input.attachments.length > 0) {
+        await mockBulkCreateAttachments(input.attachments)
+      }
+    },
+    updateText: mockUpdateMessageText,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({

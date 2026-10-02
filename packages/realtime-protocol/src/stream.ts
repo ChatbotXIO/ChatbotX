@@ -21,6 +21,27 @@ export const getRealtimeStreamShard = (workspaceId: string): number =>
 export const getRealtimeStreamKey = (workspaceId: string): string =>
   `rt:{${getRealtimeStreamShard(workspaceId)}}`
 
+/**
+ * Redis Stream id ordering (`<ms>-<sequence>`). `true` when `candidate` is
+ * strictly newer than `previous`.
+ */
+export const isRealtimeSeqAfter = (
+  candidate: string,
+  previous: string,
+): boolean => {
+  const [candidateMilliseconds, candidateSequence] = candidate
+    .split("-")
+    .map(BigInt)
+  const [previousMilliseconds, previousSequence] = previous
+    .split("-")
+    .map(BigInt)
+  return (
+    candidateMilliseconds > previousMilliseconds ||
+    (candidateMilliseconds === previousMilliseconds &&
+      candidateSequence > previousSequence)
+  )
+}
+
 const realtimeWorkspaceEventsStreamRecordSchema = z.object({
   events: z.array(realtimeEventEnvelopeSchema).min(1),
   kind: z.literal("workspace-events"),

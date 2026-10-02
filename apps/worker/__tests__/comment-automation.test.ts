@@ -131,6 +131,10 @@ vi.mock("@chatbotx.io/business", () => ({
     findById: mockWorkspaceFindById,
     isActiveNow: mockIsActiveNow,
   },
+  messageService: {
+    create: async (...args: unknown[]) =>
+      (await mockCreateMessageRepository()).create(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({

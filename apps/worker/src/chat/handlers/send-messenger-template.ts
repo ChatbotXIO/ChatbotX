@@ -2,9 +2,9 @@ import {
   contactInboxService,
   conversationService,
   flowService,
+  messageService,
   queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -245,8 +245,7 @@ export async function processMessengerTemplate(
       metadata,
     }
 
-    const messageRepository = await createMessageRepository()
-    newMessage = await messageRepository.create({
+    newMessage = await messageService.create({
       id: createId(),
       contactInboxId: contactInbox.id,
       workspaceId: conversation.workspaceId,
@@ -341,12 +340,12 @@ export async function processMessengerTemplate(
 
     if (providerMessageId) {
       try {
-        await messageRepository.updateSourceId(
-          newMessage.id,
-          providerMessageId,
-          conversation.workspaceId,
-          newMessage.createdAt,
-        )
+        await messageService.updateSourceId({
+          id: newMessage.id,
+          sourceId: providerMessageId,
+          workspaceId: conversation.workspaceId,
+          createdAt: newMessage.createdAt,
+        })
       } catch (err) {
         logger.error(
           err,

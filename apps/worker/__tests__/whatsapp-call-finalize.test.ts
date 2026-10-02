@@ -39,6 +39,24 @@ vi.mock("@chatbotx.io/business", () => ({
   userService: {
     findNameAndEmail: mocks.findNameAndEmail,
   },
+  integrationWhatsappService: {
+    findByInboxIdForWorkspaceOrNull: mocks.findByInboxIdForWorkspace,
+  },
+  messageService: {
+    createOrUpdate: mocks.createOrUpdate,
+    findBySourceId: mocks.findBySourceId,
+    mergeContentAttributesBySourceId: (input: {
+      overlay: unknown
+      sourceId: string
+      workspaceId: string
+    }) =>
+      mocks.mergeContentAttributesBySourceId(
+        input.sourceId,
+        input.workspaceId,
+        input.overlay,
+      ),
+    updateContentBySourceId: mocks.updateContentBySourceId,
+  },
   whatsappVoipCallService: {
     readControl: mocks.voipReadControl,
     endCall: mocks.voipMarkTerminated,

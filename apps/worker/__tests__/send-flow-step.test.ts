@@ -202,6 +202,13 @@ vi.mock("@chatbotx.io/business", () => ({
     markReadByOutbound: mockMarkReadByOutbound,
   },
   resolveTenantSettings: mockresolveTenantSettings,
+  messageService: {
+    create: mockRepositoryCreate,
+    createWithAttachments: (input: {
+      attachments: unknown[]
+      message: unknown
+    }) => mockRepositoryCreateWithAttachments(input.message, input.attachments),
+  },
   resolveMediaUrl: mockResolveMediaUrl,
 }))
 

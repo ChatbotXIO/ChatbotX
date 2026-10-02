@@ -3,10 +3,10 @@
 import {
   contactInboxService,
   conversationService,
+  messageService,
   publishWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { getImageDimensions, uploader } from "@chatbotx.io/filesystem"
 import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
@@ -36,9 +36,7 @@ export const editMessage = async (props: {
     where: { id: conversationId, workspaceId },
   })
 
-  const repository = await createMessageRepository()
-
-  const message = await repository.findById({
+  const message = await messageService.findWithAttachments({
     id: messageId,
     createdAt,
     workspaceId,
@@ -58,21 +56,16 @@ export const editMessage = async (props: {
   if (!contactInbox) {
     throw new ChatbotXException("Inbox not found")
   }
-  await repository.updateMessageText(
-    messageId,
+  await messageService.updateText({
+    id: messageId,
     workspaceId,
-    newText,
-    message.createdAt,
-  )
+    text: newText,
+    createdAt: message.createdAt,
+  })
 
-  if (removeAttachment || newAttachmentPath) {
-    await repository.deleteAttachmentsByMessageId(
-      messageId,
-      workspaceId,
-      message.createdAt,
-    )
-  }
-
+  const attachments: Parameters<
+    typeof messageService.replaceAttachments
+  >[0]["attachments"] = []
   let resolvedWidth = 0
   let resolvedHeight = 0
 
@@ -100,22 +93,27 @@ export const editMessage = async (props: {
     resolvedWidth = width
     resolvedHeight = height
 
-    await repository.bulkCreateAttachments([
-      {
-        id: createId(),
-        workspaceId,
-        conversationId,
-        messageId,
-        messageCreatedAt: message.createdAt,
-        fileType,
-        mimeType,
-        originPath: newAttachmentPath,
-        name: newAttachmentName ?? null,
-        size: newAttachmentSize,
-        height,
-        width,
-      },
-    ])
+    attachments.push({
+      id: createId(),
+      workspaceId,
+      conversationId,
+      fileType,
+      mimeType,
+      originPath: newAttachmentPath,
+      name: newAttachmentName ?? null,
+      size: newAttachmentSize,
+      height,
+      width,
+    })
+  }
+
+  if (removeAttachment || newAttachmentPath) {
+    await messageService.replaceAttachments({
+      id: messageId,
+      workspaceId,
+      createdAt: message.createdAt,
+      attachments,
+    })
   }
 
   await publishWorkspaceRealtimeEvent(workspaceId, {

@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  isRealtimeSeqAfter,
   REALTIME_CLOSE_CODE,
   type RealtimeEventData,
   RealtimeEventType,
@@ -46,24 +47,6 @@ export type WorkspaceRealtimeConnectionStatus =
 const KNOWN_REALTIME_EVENT_NAMES: ReadonlySet<string> = new Set(
   Object.values(RealtimeEventType),
 )
-
-const isStreamSequenceAfter = (
-  candidate: string,
-  previous: string,
-): boolean => {
-  const [candidateMilliseconds, candidateSequence] = candidate
-    .split("-")
-    .map(BigInt)
-  const [previousMilliseconds, previousSequence] = previous
-    .split("-")
-    .map(BigInt)
-
-  return (
-    candidateMilliseconds > previousMilliseconds ||
-    (candidateMilliseconds === previousMilliseconds &&
-      candidateSequence > previousSequence)
-  )
-}
 
 /**
  * Real type guard (no `as`) — narrows an arbitrary string from a parsed frame
@@ -255,7 +238,7 @@ export function WorkspaceRealtimeProvider({
       if (
         seq &&
         lastProcessedSeqRef.current &&
-        !isStreamSequenceAfter(seq, lastProcessedSeqRef.current)
+        !isRealtimeSeqAfter(seq, lastProcessedSeqRef.current)
       ) {
         return
       }

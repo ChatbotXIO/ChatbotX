@@ -4,6 +4,7 @@ import {
   type WorkspaceSocket,
   type WorkspaceSocketData,
 } from "../src/delivery"
+import { createRealtimeServerCounters } from "../src/lib/realtime-metrics"
 
 const createSocket = (
   overrides: Partial<WorkspaceSocketData> = {},
@@ -26,8 +27,9 @@ const createSocket = (
       this.closed = { code, reason }
     },
     getUserData: () => data,
-    send(data: string): void {
+    send(data: string): number {
       this.sent.push(data)
+      return 1
     },
     sent: [] as string[],
     subscribe: () => undefined,
@@ -37,12 +39,15 @@ const createSocket = (
 
 const createDelivery = () => {
   const published: { message: string; topic: string }[] = []
-  const delivery = createRealtimeDelivery({
-    publish: (topic, message) => {
-      published.push({ message, topic })
-      return true
+  const delivery = createRealtimeDelivery(
+    {
+      publish: (topic, message) => {
+        published.push({ message, topic })
+        return true
+      },
     },
-  })
+    createRealtimeServerCounters(),
+  )
   return { delivery, published }
 }
 

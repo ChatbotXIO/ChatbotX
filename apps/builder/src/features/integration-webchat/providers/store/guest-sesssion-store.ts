@@ -189,6 +189,16 @@ export const createGuestSessionStore = (
         }
       }
 
+      // Second line of defence against a duplicate delivery (e.g. a guest
+      // socket's replay window overlapping its live subscription): don't
+      // render a server message id that is already in the list.
+      if (
+        message.id &&
+        messages.some((existing) => existing.id === message.id)
+      ) {
+        return
+      }
+
       // Append the message to the end of messages list
       appendMessage(message)
     },

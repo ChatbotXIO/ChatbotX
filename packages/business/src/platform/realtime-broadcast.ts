@@ -1,6 +1,11 @@
 import type { RealtimeEventData } from "@chatbotx.io/realtime-protocol"
 import { logger } from "../logger"
 import {
+  REALTIME_METRIC_WINDOW_MS,
+  type RealtimeRelayWindow,
+  recordRealtimeRelayWindow,
+} from "./realtime-metrics"
+import {
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
   resetRealtimeStreamPublisherForTests,
@@ -34,6 +39,34 @@ type PendingWorkspaceRealtimeEvents = {
 
 const pendingByWorkspace = new Map<string, PendingWorkspaceRealtimeEvents>()
 const inFlightByWorkspace = new Map<string, Promise<void>>()
+
+const createEmptyRelayWindow = (): RealtimeRelayWindow => ({
+  bytes: 0,
+  errors: 0,
+  eventTypes: {},
+  events: 0,
+  flushes: 0,
+  maxBatchEvents: 0,
+  windowStartedAt: Date.now(),
+})
+
+let relayWindow = createEmptyRelayWindow()
+
+const relayWindowIsEmpty = (): boolean =>
+  relayWindow.events === 0 &&
+  relayWindow.flushes === 0 &&
+  relayWindow.errors === 0
+
+const flushRelayWindowIfElapsed = (): void => {
+  if (
+    Date.now() - relayWindow.windowStartedAt < REALTIME_METRIC_WINDOW_MS ||
+    relayWindowIsEmpty()
+  ) {
+    return
+  }
+  recordRealtimeRelayWindow(relayWindow)
+  relayWindow = createEmptyRelayWindow()
+}
 
 const appendWorkspaceRealtimeEvents = async (
   workspaceId: string,
@@ -84,6 +117,12 @@ export const flushPendingWorkspaceRealtimeEvents = (
     return Promise.resolve()
   }
 
+  relayWindow.flushes += 1
+  relayWindow.maxBatchEvents = Math.max(
+    relayWindow.maxBatchEvents,
+    pending.events.length,
+  )
+
   const previousAppend =
     inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
   const append = previousAppend.then(() =>
@@ -96,6 +135,7 @@ export const flushPendingWorkspaceRealtimeEvents = (
       }
     },
     (error) => {
+      relayWindow.errors += 1
       for (const waiter of pending.waiters) {
         waiter.reject(error)
       }
@@ -122,6 +162,7 @@ export const resetRealtimePublishStateForTests = (): void => {
   pendingByWorkspace.clear()
   inFlightByWorkspace.clear()
   resetRealtimeStreamPublisherForTests()
+  relayWindow = createEmptyRelayWindow()
 }
 
 export const flushAllPendingWorkspaceRealtimeEvents =
@@ -133,6 +174,10 @@ export const flushAllPendingWorkspaceRealtimeEvents =
       ),
     )
     await Promise.all(inFlightByWorkspace.values())
+    if (!relayWindowIsEmpty()) {
+      recordRealtimeRelayWindow(relayWindow)
+      relayWindow = createEmptyRelayWindow()
+    }
   }
 
 /**
@@ -143,12 +188,17 @@ export const publishWorkspaceRealtimeEvent = (
   workspaceId: string,
   event: RealtimeEventData,
 ): Promise<void> => {
+  flushRelayWindowIfElapsed()
   let pending =
     pendingByWorkspace.get(workspaceId) ??
     createPendingWorkspaceRealtimeEvents(workspaceId)
 
   const serializedEvent = JSON.stringify(event)
   const serializedEventBytes = Buffer.byteLength(serializedEvent)
+  relayWindow.events += 1
+  relayWindow.bytes += serializedEventBytes
+  relayWindow.eventTypes[event.eventType] =
+    (relayWindow.eventTypes[event.eventType] ?? 0) + 1
   const separatorBytes = pending.events.length > 0 ? 1 : 0
   const wouldExceedBytes =
     pending.byteLength + separatorBytes + serializedEventBytes >

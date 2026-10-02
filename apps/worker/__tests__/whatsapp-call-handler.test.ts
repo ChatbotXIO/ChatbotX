@@ -22,6 +22,18 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  messageService: {
+    updateContentBySourceId: (input: {
+      patch: unknown
+      sourceId: string
+      workspaceId: string
+    }) =>
+      mocks.updateContentBySourceId(
+        input.sourceId,
+        input.workspaceId,
+        input.patch,
+      ),
+  },
   whatsappCallLifecycleService: {
     recordIncomingCall: mocks.createIfAbsent,
     advanceInterimStatus: mocks.updateInterimStatus,
@@ -31,6 +43,8 @@ vi.mock("@chatbotx.io/business", () => ({
     markOutboundAccepted: mocks.markOutboundAccepted,
     markAcceptedByAgent: mocks.markAcceptedIfActive,
     attachMetaCallId: mocks.attachWacid,
+    findByAttemptId: mocks.findByAttemptId,
+    findByWacid: mocks.findByWacid,
   },
   publishWorkspaceMemberRealtimeEvent:
     mocks.publishWorkspaceMemberRealtimeEvent,

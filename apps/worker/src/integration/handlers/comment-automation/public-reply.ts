@@ -1,12 +1,12 @@
 import {
   conversationService,
+  messageService,
   queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import {
   type CommentReply,
   resolveReplyTexts,
 } from "@chatbotx.io/database/partials"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -86,8 +86,7 @@ export async function postPublicCommentReply(props: {
   parentMessageCreatedAt?: Date | null
   delay?: number
 }): Promise<void> {
-  const repo = await createMessageRepository()
-  const messageInput = {
+  const message = await messageService.create({
     conversationId: props.conversationId,
     contactInboxId: props.contactInboxId,
     workspaceId: props.workspaceId,
@@ -105,8 +104,7 @@ export async function postPublicCommentReply(props: {
     },
     parentId: props.parentMessageId ?? null,
     createdAt: new Date(),
-  }
-  const message = await repo.create(messageInput)
+  })
   const conversation = await conversationService.findBy({
     where: { id: props.conversationId, workspaceId: props.workspaceId },
   })

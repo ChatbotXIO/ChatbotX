@@ -54,6 +54,22 @@ class WhatsappFlowService extends BaseService {
     })
   }
 
+  async findSourceIdForWorkspace(props: {
+    id: string
+    tx?: DatabaseClient
+    workspaceId: string
+  }): Promise<string | undefined> {
+    const { tx = db, id, workspaceId } = props
+    const flow = await tx.query.whatsappFlowModel.findFirst({
+      columns: { sourceId: true },
+      where: {
+        id,
+        integrationWhatsapp: { workspaceId },
+      },
+    })
+    return flow?.sourceId
+  }
+
   async syncFromMeta(props: {
     integrationWhatsappId: string
     flows: MetaWhatsappFlow[]

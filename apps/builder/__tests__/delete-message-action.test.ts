@@ -22,6 +22,11 @@ vi.mock("@chatbotx.io/business", () => ({
   publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
   contactInboxService: { findBy: mockContactInboxFindBy },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
+  messageService: {
+    delete: ({ sourceId }: { sourceId?: string | null }) =>
+      sourceId ? mockDeleteBySourceId(sourceId) : mockDeleteById(),
+    findWithAttachments: mockFindById,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({

@@ -29,12 +29,23 @@ vi.mock("@chatbotx.io/business", () => ({
   publishWorkspaceMemberRealtimeEvent:
     mocks.publishWorkspaceMemberRealtimeEvent,
   resolveWhatsappCallerName: mocks.resolveWhatsappCallerName,
+  integrationWhatsappService: {
+    findAuthByInboxId: async (inboxId: string) => {
+      const row = await mocks.findAuthByInboxId({
+        modelName: "IntegrationWhatsapp",
+        inboxId,
+      })
+      return row?.auth ?? row
+    },
+  },
   whatsappVoipCallService: {
     reserveIncomingCall: mocks.reserveIncomingCall,
     selectRingTargetsForCall: mocks.selectRingTargetsForCall,
     readControl: mocks.readControl,
     claimUnreachable: mocks.claimUnreachable,
     endCall: mocks.endCall,
+    findByAttemptId: mocks.findByAttemptId,
+    findByWacid: mocks.findByWacid,
     isCallEnded: mocks.isCallEnded,
   },
   whatsappVoipSignalingService: {

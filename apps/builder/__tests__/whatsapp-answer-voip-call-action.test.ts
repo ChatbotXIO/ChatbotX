@@ -109,6 +109,7 @@ vi.mock("@chatbotx.io/business", () => ({
     commitAccepted: commitAcceptedMock,
     releaseClaim: releaseClaimMock,
     markAcceptedByAgent: markAcceptedByAgentMock,
+    findByIdForWorkspace: findByIdMock,
   },
   // Real implementation (not a stub) so the deadline tests exercise the
   // actual deadline-margin logic instead of a hard-coded true/false.
@@ -120,6 +121,9 @@ vi.mock("@chatbotx.io/business", () => ({
   canSendAudio: actualCanSendAudio,
   diagnoseAnswerShape: actualDiagnoseAnswerShape,
   contactInboxService: { findBy: findContactInboxMock },
+  integrationWhatsappService: {
+    findByInboxIdForWorkspaceOrNull: findByInboxIdForWorkspaceMock,
+  },
   contactService: { findBy: findContactMock },
   publishWorkspaceRealtimeEvent: publishWorkspaceRealtimeEventMock,
   conversationService: { claimForCallAgent: claimForCallAgentMock },
@@ -224,12 +228,7 @@ describe("answerWhatsappVoipCallAction", () => {
   })
 
   test("denies a cross-workspace call id", async () => {
-    findByIdMock.mockResolvedValue({
-      id: "call-1",
-      workspaceId: "workspace-2",
-      inboxId: "inbox-1",
-      wacid: "wacid-1",
-    })
+    findByIdMock.mockResolvedValue(null)
     await expect(call()).rejects.toThrow("whatsapp.calls.errors.callNotFound")
     expect(claimForAnswerMock).not.toHaveBeenCalled()
   })

@@ -18,6 +18,7 @@ const {
   mockUpdateMember,
   mockWorkspaceFindById,
   mockWorkspaceMemberServiceDelete,
+  mockInvalidateMembershipCache,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
@@ -39,6 +40,7 @@ const {
     mockRevokeWorkspaceMemberConnections: vi.fn(),
     mockUpdateMember: vi.fn(),
     mockWorkspaceFindById: vi.fn(),
+    mockInvalidateMembershipCache: vi.fn(),
   }
 })
 
@@ -75,6 +77,7 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberService: {
     delete: mockWorkspaceMemberServiceDelete,
     findByIdOrFail: mockFindByIdOrFail,
+    invalidateMembershipCache: mockInvalidateMembershipCache,
     update: mockUpdateMember,
   },
   workspaceService: {
@@ -476,7 +479,7 @@ function deleteActionCtx() {
 describe("deleteWorkspaceMemberAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFindOrFail.mockResolvedValue({
+    mockFindByIdOrFail.mockResolvedValue({
       id: MEMBER_ID,
       userId: MEMBER_USER_ID,
       workspaceId: WORKSPACE_ID,
@@ -486,7 +489,7 @@ describe("deleteWorkspaceMemberAction", () => {
   })
 
   test("rejects deleting the workspace owner", async () => {
-    mockFindOrFail.mockResolvedValue({
+    mockFindByIdOrFail.mockResolvedValue({
       id: MEMBER_ID,
       userId: MEMBER_USER_ID,
       workspaceId: WORKSPACE_ID,
@@ -525,9 +528,7 @@ describe("deleteWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
     })
-    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
-      `users:${MEMBER_USER_ID}:workspace-members`,
-    ])
+    expect(mockInvalidateMembershipCache).toHaveBeenCalledWith(MEMBER_USER_ID)
   })
 
   test("deletes the member without mutating team-member quota", async () => {
@@ -536,8 +537,6 @@ describe("deleteWorkspaceMemberAction", () => {
     )
 
     expect(mockWorkspaceMemberServiceDelete).toHaveBeenCalledOnce()
-    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
-      `users:${MEMBER_USER_ID}:workspace-members`,
-    ])
+    expect(mockInvalidateMembershipCache).toHaveBeenCalledWith(MEMBER_USER_ID)
   })
 })

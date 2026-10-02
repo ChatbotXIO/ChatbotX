@@ -1,6 +1,8 @@
 import {
   contactInboxService,
   conversationService,
+  integrationWhatsappService,
+  messageService,
   publishWorkspaceMemberRealtimeEvent,
   publishWorkspaceRealtimeEvent,
   userService,
@@ -11,10 +13,6 @@ import {
   resolveWhatsappCallTerminalOutcomePair,
   type WhatsappCallTerminalStatusOutcomePair,
 } from "@chatbotx.io/database/partials"
-import {
-  createMessageRepository,
-  integrationWhatsappRepository,
-} from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { emitCallEnded, emitMissedAudioCall } from "@chatbotx.io/events"
 import {
@@ -48,7 +46,7 @@ export const resolveCallActivityRequestFlags = async (
   recordingUnavailable: boolean
 }> => {
   const integration =
-    await integrationWhatsappRepository.findByInboxIdForWorkspace({
+    await integrationWhatsappService.findByInboxIdForWorkspaceOrNull({
       inboxId: call.inboxId,
       workspaceId: call.workspaceId,
     })
@@ -326,8 +324,7 @@ export const finalizeCallSideEffects = async (
     "[wa-call-media] call card flags stamped",
   )
 
-  const repository = await createMessageRepository()
-  const { message, isNew } = await repository.createOrUpdate({
+  const { message, isNew } = await messageService.createOrUpdate({
     id: createId(),
     conversationId: call.conversationId,
     contactInboxId: call.contactInboxId,
@@ -521,7 +518,6 @@ export const enrichCallActivityMessage = async (props: {
 }): Promise<void> => {
   const { call, overrides } = props
   const sourceId = callActivitySourceId(call.id)
-  const repository = await createMessageRepository()
 
   // The finalize message is created at call end (createdAt: endedAt), so the
   // call's own createdAt is always at or before it — a valid, tight sinceTime
@@ -532,12 +528,12 @@ export const enrichCallActivityMessage = async (props: {
 
   const existing = await waitUntilReady(
     () =>
-      repository.findBySourceId(
+      messageService.findBySourceId({
         sourceId,
-        call.conversationId,
-        call.workspaceId,
+        conversationId: call.conversationId,
+        workspaceId: call.workspaceId,
         sinceTime,
-      ),
+      }),
     (message) => message !== null,
   )
   if (!existing) {
@@ -548,11 +544,11 @@ export const enrichCallActivityMessage = async (props: {
     throw new WhatsappCallEnrichmentPendingError(call.id)
   }
 
-  const merged = await repository.mergeContentAttributesBySourceId(
+  const merged = await messageService.mergeContentAttributesBySourceId({
     sourceId,
-    call.workspaceId,
-    overrides,
-  )
+    workspaceId: call.workspaceId,
+    overlay: overrides,
+  })
   if (!merged) {
     logger.warn(
       { callId: call.id },

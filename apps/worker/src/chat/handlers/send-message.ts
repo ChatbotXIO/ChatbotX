@@ -2,15 +2,14 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  messageService,
   queueWorkspaceRealtimeEvent,
+  whatsappFlowService,
 } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
 import {
   channelTypes,
   resolveChannelConversationId,
 } from "@chatbotx.io/database/partials"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
-import { whatsappFlowModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -126,8 +125,7 @@ export async function sendMessageToChannel(
 
     let handlerMessage = message
     if (isComment && message.parentId && message.parentCreatedAt) {
-      const repo = await createMessageRepository()
-      const parentMsg = await repo.findById({
+      const parentMsg = await messageService.findWithAttachments({
         id: message.parentId,
         createdAt: new Date(message.parentCreatedAt),
         workspaceId: conversation.workspaceId,
@@ -211,13 +209,12 @@ export async function sendMessageToChannel(
         // point must never rethrow, or BullMQ retries the whole job and
         // sendComment fires again, posting a second live duplicate reply.
         try {
-          const repo = await createMessageRepository()
-          await repo.updateSourceId(
-            message.id,
-            replyId,
-            conversation.workspaceId,
-            new Date(message.createdAt),
-          )
+          await messageService.updateSourceId({
+            id: message.id,
+            sourceId: replyId,
+            workspaceId: conversation.workspaceId,
+            createdAt: new Date(message.createdAt),
+          })
 
           // Notify the client so edit/delete buttons appear immediately without a refresh.
           queueWorkspaceRealtimeEvent(conversation.workspaceId, {
@@ -386,8 +383,7 @@ export async function deleteMessageFromChannel(
 ) {
   const { conversation, contactInbox, message } = data
 
-  const repository = await createMessageRepository()
-  const found = await repository.findById({
+  const found = await messageService.findWithAttachments({
     id: message.id,
     createdAt: new Date(message.createdAt),
     workspaceId: conversation.workspaceId,
@@ -426,8 +422,7 @@ export async function editMessageFromChannel(
   const { conversation, contactInbox, message, newText, newAttachmentUrl } =
     data
 
-  const repository = await createMessageRepository()
-  const found = await repository.findById({
+  const found = await messageService.findWithAttachments({
     id: message.id,
     createdAt: new Date(message.createdAt),
     workspaceId: conversation.workspaceId,
@@ -465,8 +460,7 @@ export async function changeMessageStateOnChannel(
 ) {
   const { conversation, contactInbox, message, liked, hidden } = data
 
-  const repository = await createMessageRepository()
-  const found = await repository.findById({
+  const found = await messageService.findWithAttachments({
     id: message.id,
     createdAt: new Date(message.createdAt),
     workspaceId: conversation.workspaceId,
@@ -494,12 +488,12 @@ export async function changeMessageStateOnChannel(
     liked: liked === undefined ? (current.liked ?? false) : liked,
     hidden: hidden === undefined ? (current.hidden ?? false) : hidden,
   }
-  await repository.updateMessageAttributes(
-    message.id,
-    conversation.workspaceId,
-    newAttributes,
-    found.createdAt,
-  )
+  await messageService.updateAttributes({
+    id: message.id,
+    workspaceId: conversation.workspaceId,
+    attributes: newAttributes,
+    createdAt: found.createdAt,
+  })
 
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
@@ -600,13 +594,12 @@ export async function recordMessageSendError(
       return
     }
     const truncatedError = errorMessage.slice(0, MAX_SEND_ERROR_LENGTH)
-    const repo = await createMessageRepository()
-    await repo.updateSendError(
-      messageId,
-      truncatedError,
+    await messageService.updateSendError({
+      id: messageId,
+      sendError: truncatedError,
       workspaceId,
       createdAt,
-    )
+    })
 
     if (!silent) {
       queueWorkspaceRealtimeEvent(workspaceId, {
@@ -630,8 +623,12 @@ async function clearMessageSendError(
     if (!(messageId && createdAt)) {
       return
     }
-    const repo = await createMessageRepository()
-    await repo.updateSendError(messageId, null, workspaceId, createdAt)
+    await messageService.updateSendError({
+      id: messageId,
+      sendError: null,
+      workspaceId,
+      createdAt,
+    })
 
     if (!silent) {
       queueWorkspaceRealtimeEvent(workspaceId, {
@@ -656,13 +653,12 @@ async function updateMessageSourceId(
   try {
     const firstMessageId = result?.messageIds?.[0]
     if (messageId && firstMessageId && createdAt) {
-      const repo = await createMessageRepository()
-      await repo.updateSourceId(
-        messageId,
-        firstMessageId,
+      await messageService.updateSourceId({
+        id: messageId,
+        sourceId: firstMessageId,
         workspaceId,
         createdAt,
-      )
+      })
     }
   } catch (err) {
     logger.error(err, "Failed to update message sourceId with provider id")
@@ -771,16 +767,15 @@ export async function sendFlowStepToChannel({
     step.flow.id &&
     !step.flow.sourceId
   ) {
-    const [row] = await db
-      .select({ sourceId: whatsappFlowModel.sourceId })
-      .from(whatsappFlowModel)
-      .where(eq(whatsappFlowModel.id, step.flow.id))
-      .limit(1)
+    const sourceId = await whatsappFlowService.findSourceIdForWorkspace({
+      id: step.flow.id,
+      workspaceId: conversation.workspaceId,
+    })
 
-    if (row?.sourceId) {
+    if (sourceId) {
       resolvedStep = {
         ...step,
-        flow: { ...step.flow, sourceId: row.sourceId },
+        flow: { ...step.flow, sourceId },
       }
     }
   }

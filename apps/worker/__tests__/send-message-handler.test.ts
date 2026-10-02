@@ -63,6 +63,34 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: { markReadByOutbound: mockMarkReadByOutbound },
   publishWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
   queueWorkspaceRealtimeEvent: mockBroadcastToWorkspaceParty,
+  messageService: {
+    findWithAttachments: vi.fn().mockResolvedValue(null),
+    updateAttributes: vi.fn().mockResolvedValue(undefined),
+    updateSendError: (input: {
+      createdAt: Date
+      id: string
+      sendError: string | null
+      workspaceId: string
+    }) =>
+      mockUpdateSendError(
+        input.id,
+        input.sendError,
+        input.workspaceId,
+        input.createdAt,
+      ),
+    updateSourceId: (input: {
+      createdAt: Date
+      id: string
+      sourceId: string
+      workspaceId: string
+    }) =>
+      mockUpdateSourceId(
+        input.id,
+        input.sourceId,
+        input.workspaceId,
+        input.createdAt,
+      ),
+  },
   whatsappCallPermissionService: {
     recordPermanentGrant: mockRecordPermanentGrant,
   },

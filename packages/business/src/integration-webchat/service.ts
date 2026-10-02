@@ -6,15 +6,26 @@ import {
   findOrFail,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
-import { integrationWebchatModel } from "@chatbotx.io/database/schema"
+import { contactSources } from "@chatbotx.io/database/partials"
+import {
+  contactInboxModel,
+  contactModel,
+  conversationModel,
+  integrationWebchatModel,
+} from "@chatbotx.io/database/schema"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { parsePagination } from "@chatbotx.io/database/utils"
+import { emitContactCreated } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
+import { randomString } from "remeda"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import { finalizeContactProfile } from "../contact-locale"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
+import { messageCleanupService } from "../message-cleanup/service"
+import { quotaEnforcementService } from "../quota-enforcement/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { workspaceService } from "../workspace"
 
@@ -266,6 +277,112 @@ class IntegrationWebchatService extends BaseService {
       where: { id: props.id, workspaceId: props.workspaceId },
       message: "Webchat integration not found",
     })
+  }
+
+  async findOrCreateGuestConversation(input: {
+    guestConversationId: string
+    locale?: string | null
+    parentUrl?: string | null
+    timezone?: string | null
+    webchatId: string
+    workspaceId: string
+  }) {
+    const [integration, workspace] = await Promise.all([
+      this.findByIdForWorkspace({
+        id: input.webchatId,
+        workspaceId: input.workspaceId,
+      }),
+      workspaceService.findById({ id: input.workspaceId }),
+    ])
+    if (!workspace) {
+      throw notFoundException("Workspace not found")
+    }
+
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: workspace.ownerId,
+      workspaceId: input.workspaceId,
+      create: async (tx) => {
+        const finalizedProfile = finalizeContactProfile({
+          locale: input.locale,
+          timezone: input.timezone,
+        })
+        const contact = await tx
+          .insert(contactModel)
+          .values({
+            id: createId(),
+            workspaceId: input.workspaceId,
+            email: input.guestConversationId,
+            gender: "unknown",
+            firstName: "Guest",
+            lastName: randomString(10),
+            locale: finalizedProfile.locale,
+            timezone: finalizedProfile.timezone,
+          })
+          .returning()
+          .then((rows) => rows[0])
+        if (!contact) {
+          throw notFoundException("Contact not found")
+        }
+
+        const contactInbox = await tx
+          .insert(contactInboxModel)
+          .values({
+            id: createId(),
+            inboxId: integration.inboxId,
+            contactId: contact.id,
+            originalContactId: contact.id,
+            source: contactSources.enum.webchat,
+            sourceId: input.guestConversationId,
+            channel: "webchat",
+            language: finalizedProfile.language,
+            webchatParentUrl: input.parentUrl,
+          })
+          .returning()
+          .then((rows) => rows[0])
+        if (!contactInbox) {
+          throw notFoundException("Contact inbox not found")
+        }
+
+        await messageCleanupService.cancelByInboxSource({
+          inboxId: integration.inboxId,
+          sourceIds: [contactInbox.sourceId],
+          tx,
+        })
+
+        const conversation = await tx
+          .insert(conversationModel)
+          .values({
+            id: createId(),
+            workspaceId: input.workspaceId,
+            contactId: contact.id,
+          })
+          .returning()
+          .then((rows) => rows[0])
+        if (!conversation) {
+          throw notFoundException("Conversation not found")
+        }
+
+        return {
+          value: { contact, contactInbox, conversation },
+          contactId: contact.id,
+          contactInboxId: contactInbox.id,
+          inboxId: integration.inboxId,
+        }
+      },
+    })
+    if (!result.ok) {
+      return null
+    }
+
+    await emitContactCreated(
+      input.workspaceId,
+      result.value.contact.id,
+      result.value.contact.firstName || undefined,
+      result.value.contact.phoneNumber || undefined,
+      result.value.contact.email || undefined,
+      result.value.contactInbox.id,
+    )
+    return result.value
   }
 
   async list(input: {

@@ -1,9 +1,9 @@
 import {
   contactInboxService,
   conversationService,
+  messageService,
   queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -293,8 +293,7 @@ export async function processWhatsappTemplate(
       }
     }
 
-    const repository = await createMessageRepository()
-    newMessage = await repository.create({
+    newMessage = await messageService.create({
       contactInboxId: contactInbox.id,
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
@@ -398,12 +397,12 @@ export async function processWhatsappTemplate(
 
     if (providerMessageId) {
       try {
-        await repository.updateSourceId(
-          newMessage.id,
-          providerMessageId,
-          conversation.workspaceId,
-          newMessage.createdAt,
-        )
+        await messageService.updateSourceId({
+          id: newMessage.id,
+          sourceId: providerMessageId,
+          workspaceId: conversation.workspaceId,
+          createdAt: newMessage.createdAt,
+        })
       } catch (err) {
         logger.error(
           err,

@@ -1,14 +1,11 @@
 import {
+  integrationWhatsappService,
   publishWorkspaceMemberRealtimeEvent,
   resolveWhatsappCallerName,
   whatsappVoipCallService,
   whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
 import type { WhatsappCallHoursSnapshot } from "@chatbotx.io/database/partials"
-import {
-  integrationLookupRepository,
-  whatsappCallRepository,
-} from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
@@ -63,7 +60,7 @@ class VoipCallRowNotReadyError extends Error {
 }
 
 const getCallRowOrThrow = async (wacid: string): Promise<WhatsappCallModel> => {
-  const call = await whatsappCallRepository.findByWacid(wacid)
+  const call = await whatsappVoipCallService.findByWacid(wacid)
   if (!call) {
     throw new VoipCallRowNotReadyError(wacid)
   }
@@ -78,14 +75,14 @@ const getOutboundCallRowOrThrow = async (input: {
   attemptId: string
   wacid?: string
 }): Promise<WhatsappCallModel> => {
-  const byAttempt = await whatsappCallRepository.findByAttemptId(
+  const byAttempt = await whatsappVoipCallService.findByAttemptId(
     input.attemptId,
   )
   if (byAttempt) {
     return byAttempt
   }
   const byWacid = input.wacid
-    ? await whatsappCallRepository.findByWacid(input.wacid)
+    ? await whatsappVoipCallService.findByWacid(input.wacid)
     : undefined
   if (byWacid) {
     return byWacid
@@ -176,16 +173,13 @@ export const inboundCallRefusal = (
 export const resolveVoipAuthByInboxId = async (
   inboxId: string,
 ): Promise<WhatsappAuthValue> => {
-  const row = await integrationLookupRepository.findAuthByInboxId({
-    modelName: "IntegrationWhatsapp",
-    inboxId,
-  })
-  if (!row) {
+  const auth = await integrationWhatsappService.findAuthByInboxId(inboxId)
+  if (!auth) {
     throw new Error(
       `Whatsapp VoIP: no IntegrationWhatsapp row for inboxId ${inboxId}`,
     )
   }
-  return row.auth as WhatsappAuthValue
+  return auth as WhatsappAuthValue
 }
 
 /**
@@ -196,7 +190,7 @@ const finalizeEndedCall = async (input: {
   wacid: string
   status: "rejected" | "failed"
 }): Promise<void> => {
-  const call = await whatsappCallRepository.findByWacid(input.wacid)
+  const call = await whatsappVoipCallService.findByWacid(input.wacid)
   if (!call) {
     logger.warn(
       { wacid: input.wacid, status: input.status },
@@ -329,7 +323,7 @@ const notifyRungAgentsIfEnded = async (input: {
   workspaceId: string
   targets: string[]
 }): Promise<void> => {
-  const latest = await whatsappCallRepository.findByWacid(input.wacid)
+  const latest = await whatsappVoipCallService.findByWacid(input.wacid)
   const status = latest ? endedStatusOf(latest) : null
   if (!(latest && status)) {
     return
@@ -404,7 +398,7 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
 
   // The terminate that ended this call found nothing to clean up — check before
   // anything else.
-  const existing = await whatsappCallRepository.findByWacid(wacid)
+  const existing = await whatsappVoipCallService.findByWacid(wacid)
   if (existing && whatsappVoipCallService.isCallEnded(existing)) {
     await whatsappVoipSignalingService.deleteOffer(wacid)
     logger.info(
@@ -597,7 +591,7 @@ const forceEndNoAnswerOutboundDial = async (input: {
   wacid: string
   auth: WhatsappAuthValue
 }): Promise<void> => {
-  const call = await whatsappCallRepository.findByWacid(input.wacid)
+  const call = await whatsappVoipCallService.findByWacid(input.wacid)
   if (call?.status !== "ringing") {
     return
   }

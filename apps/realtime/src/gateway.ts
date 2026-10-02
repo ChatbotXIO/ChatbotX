@@ -1,6 +1,9 @@
 import uWS from "uWebSockets.js"
 import {
   getRealtimeStreamKey,
+  isRealtimeSeqAfter,
+  REALTIME_CLOSE_CODE,
+  type RealtimeGuestClaims,
   type RealtimeMemberClaims,
   verifyGuestConnectToken,
   verifyMemberConnectToken,
@@ -10,15 +13,18 @@ import type { Redis } from "@chatbotx.io/redis"
 import {
   createRealtimeDelivery,
   type GuestSocketData,
-  REALTIME_CLOSE_CODE,
   type StreamRecordEntry,
   type WorkspaceSocketData,
 } from "./delivery"
 import { reportWorkspacePresence } from "./lib/presence-report"
+import {
+  createRealtimeServerCounters,
+  REALTIME_METRIC_WINDOW_MS,
+  recordRealtimeServerWindow,
+} from "./lib/realtime-metrics"
 import { logger } from "./logger"
 import {
   createStreamReader,
-  isStreamIdBefore,
   parseStreamRecord,
   type StreamEntry,
 } from "./stream-reader"
@@ -28,6 +34,16 @@ const MAX_REPLAY_ENTRIES = 500
 const PRESENCE_REPORT_CONCURRENCY = 16
 const PRESENCE_REPORT_COALESCE_MS = 1000
 const STREAM_ID_PATTERN = /^\d+-\d+$/
+const OVERLOAD_RETRY_AFTER_MIN_MS = 1000
+const OVERLOAD_RETRY_AFTER_SPREAD_MS = 4000
+
+/**
+ * Jittered retry hint for an overloaded connection. The spread keeps a mass
+ * reconnect from re-arriving in lockstep; the client uses this value verbatim.
+ */
+const nextOverloadRetryAfterMs = (): number =>
+  OVERLOAD_RETRY_AFTER_MIN_MS +
+  Math.floor(Math.random() * OVERLOAD_RETRY_AFTER_SPREAD_MS)
 
 type ReplayResult = {
   closeReason?: string
@@ -63,12 +79,12 @@ export const loadReplay = async ({
   ])) as [StreamEntry[], StreamEntry[]]
   const oldestEntry = oldestEntries[0]
   const newestEntry = newestEntries[0]
-  if (oldestEntry && isStreamIdBefore(lastSeq, oldestEntry[0])) {
+  if (oldestEntry && isRealtimeSeqAfter(oldestEntry[0], lastSeq)) {
     return { closeReason: "replay-window-expired", entries: [] }
   }
   if (
     (!newestEntry && lastSeq !== "0-0") ||
-    (newestEntry && isStreamIdBefore(newestEntry[0], lastSeq))
+    (newestEntry && isRealtimeSeqAfter(lastSeq, newestEntry[0]))
   ) {
     return { closeReason: "replay-cursor-ahead", entries: [] }
   }
@@ -92,7 +108,10 @@ export const loadReplay = async ({
     1,
   )) as StreamEntry[]
   const currentOldestEntry = currentOldestEntries[0]
-  if (currentOldestEntry && isStreamIdBefore(lastSeq, currentOldestEntry[0])) {
+  if (
+    currentOldestEntry &&
+    isRealtimeSeqAfter(currentOldestEntry[0], lastSeq)
+  ) {
     return { closeReason: "replay-window-expired", entries: [] }
   }
 
@@ -114,20 +133,28 @@ export const loadReplay = async ({
 }
 
 export const createRealtimeGateway = ({
+  maxConnections,
   redis,
   secret,
 }: {
+  maxConnections: number
   redis: Redis
   secret: string
 }): RealtimeGateway => {
   const app = uWS.App()
-  const delivery = createRealtimeDelivery(app)
+  const counters = createRealtimeServerCounters()
+  const delivery = createRealtimeDelivery(app, counters)
   const connectedUsersByWorkspace = new Map<string, Set<string>>()
   const presenceTimers = new Map<string, NodeJS.Timeout>()
   let heartbeat: NodeJS.Timeout | undefined
   let presenceHeartbeat: NodeJS.Timeout | undefined
+  let metricsTimer: NodeJS.Timeout | undefined
   let ready = false
   let stopped = false
+  let activeConnections = 0
+  let pendingUpgrades = 0
+  let peakConnections = 0
+  let windowStartedAt = Date.now()
 
   const reportLocalPresence = async (workspaceIds: string[]): Promise<void> => {
     for (
@@ -169,6 +196,7 @@ export const createRealtimeGateway = ({
 
   const streamReader = createStreamReader({
     onEntries: (entries) => {
+      counters.records += entries.length
       for (const entry of entries) {
         delivery.dispatch(entry)
       }
@@ -184,6 +212,27 @@ export const createRealtimeGateway = ({
     },
     redis,
   })
+
+  const flushMetrics = (): void => {
+    recordRealtimeServerWindow({
+      ...counters,
+      connections: activeConnections,
+      maxConnections: peakConnections,
+      shards: streamReader.activeShardCount(),
+      windowStartedAt,
+    })
+    counters.drops = 0
+    counters.overloadCloses = 0
+    counters.publishBytes = 0
+    counters.publishes = 0
+    counters.records = 0
+    counters.sendBytes = 0
+    counters.sends = 0
+    counters.tokenRejections = 0
+    counters.upgrades = 0
+    peakConnections = activeConnections
+    windowStartedAt = Date.now()
+  }
 
   const addConnectedUser = (workspaceId: string, userId: string): void => {
     const users =
@@ -207,6 +256,7 @@ export const createRealtimeGateway = ({
 
   const registerWorkspaceSocket = (path: string): void => {
     app.ws<WorkspaceSocketData>(path, {
+      closeOnBackpressureLimit: true,
       idleTimeout: 60,
       maxBackpressure: SLOW_CONSUMER_BUFFER_BYTES,
       sendPingsAutomatically: true,
@@ -222,6 +272,7 @@ export const createRealtimeGateway = ({
         const websocketProtocol = req.getHeader("sec-websocket-protocol")
         const websocketExtensions = req.getHeader("sec-websocket-extensions")
         if (!(workspaceId && token)) {
+          counters.tokenRejections += 1
           res.writeStatus("401 Unauthorized").end()
           return
         }
@@ -232,10 +283,35 @@ export const createRealtimeGateway = ({
             claims = await verifyMemberConnectToken(token, workspaceId, secret)
           } catch {
             if (!aborted) {
+              counters.tokenRejections += 1
               res.writeStatus("401 Unauthorized").end()
             }
             return
           }
+
+          if (activeConnections + pendingUpgrades >= maxConnections) {
+            if (aborted) {
+              return
+            }
+            res.cork(() => {
+              res.upgrade(
+                {
+                  ...claims,
+                  closed: false,
+                  overloadRetryAfterMs: nextOverloadRetryAfterMs(),
+                  replayEntries: [],
+                  workspaceId,
+                },
+                websocketKey,
+                websocketProtocol,
+                websocketExtensions,
+                context,
+              )
+            })
+            pendingUpgrades += 1
+            return
+          }
+          pendingUpgrades += 1
 
           let activated = false
           try {
@@ -244,6 +320,7 @@ export const createRealtimeGateway = ({
             activated = true
             const replay = await loadReplay({ lastSeq, redis, workspaceId })
             if (aborted) {
+              pendingUpgrades -= 1
               streamReader.releaseWorkspace(workspaceId)
               return
             }
@@ -265,6 +342,7 @@ export const createRealtimeGateway = ({
             })
           } catch (error) {
             if (aborted) {
+              pendingUpgrades -= 1
               if (activated) {
                 streamReader.releaseWorkspace(workspaceId)
               }
@@ -299,6 +377,19 @@ export const createRealtimeGateway = ({
       },
       open: (socket) => {
         const socketData = socket.getUserData()
+        pendingUpgrades -= 1
+        if (socketData.overloadRetryAfterMs !== undefined) {
+          counters.overloadCloses += 1
+          socketData.closed = true
+          socket.end(
+            REALTIME_CLOSE_CODE.overloaded,
+            JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
+          )
+          return
+        }
+        activeConnections += 1
+        peakConnections = Math.max(peakConnections, activeConnections)
+        counters.upgrades += 1
         const firstUserSocket = delivery.addWorkspaceSocket(socket)
         delivery.subscribeWorkspaceSocket(socket)
         if (socketData.closeReason) {
@@ -324,6 +415,10 @@ export const createRealtimeGateway = ({
       close: (socket) => {
         const socketData = socket.getUserData()
         socketData.closed = true
+        if (socketData.overloadRetryAfterMs !== undefined) {
+          return
+        }
+        activeConnections -= 1
         streamReader.releaseWorkspace(socketData.workspaceId)
         if (delivery.removeWorkspaceSocket(socket)) {
           removeConnectedUser(socketData.workspaceId, socketData.userId)
@@ -334,6 +429,7 @@ export const createRealtimeGateway = ({
 
   const registerGuestSocket = (path: string): void => {
     app.ws<GuestSocketData>(path, {
+      closeOnBackpressureLimit: true,
       idleTimeout: 60,
       maxBackpressure: SLOW_CONSUMER_BUFFER_BYTES,
       sendPingsAutomatically: true,
@@ -348,21 +444,57 @@ export const createRealtimeGateway = ({
         const websocketProtocol = req.getHeader("sec-websocket-protocol")
         const websocketExtensions = req.getHeader("sec-websocket-extensions")
         if (!(guestConversationId && token)) {
+          counters.tokenRejections += 1
           res.writeStatus("401 Unauthorized").end()
           return
         }
 
         ;(async () => {
+          let claims: RealtimeGuestClaims
           try {
-            const claims = await verifyGuestConnectToken(
+            claims = await verifyGuestConnectToken(
               token,
               guestConversationId,
               secret,
             )
+          } catch {
+            if (!aborted) {
+              counters.tokenRejections += 1
+              res.writeStatus("401 Unauthorized").end()
+            }
+            return
+          }
+
+          if (activeConnections + pendingUpgrades >= maxConnections) {
+            if (aborted) {
+              return
+            }
+            res.cork(() => {
+              res.upgrade(
+                {
+                  ...claims,
+                  closed: false,
+                  overloadRetryAfterMs: nextOverloadRetryAfterMs(),
+                  replayCutoff: "0-0",
+                  replayEntries: [],
+                },
+                websocketKey,
+                websocketProtocol,
+                websocketExtensions,
+                context,
+              )
+            })
+            pendingUpgrades += 1
+            return
+          }
+          pendingUpgrades += 1
+
+          try {
             const activationLastId = await streamReader.activateWorkspace(
               claims.workspaceId,
             )
             if (aborted) {
+              pendingUpgrades -= 1
               streamReader.releaseWorkspace(claims.workspaceId)
               return
             }
@@ -380,10 +512,16 @@ export const createRealtimeGateway = ({
                 context,
               )
             })
-          } catch {
-            if (!aborted) {
-              res.writeStatus("401 Unauthorized").end()
+          } catch (error) {
+            pendingUpgrades -= 1
+            if (aborted) {
+              return
             }
+            logger.warn(
+              { err: error, guestConversationId },
+              "Realtime guest socket activation failed",
+            )
+            res.writeStatus("401 Unauthorized").end()
           }
         })().catch((error) => {
           logger.error(
@@ -394,6 +532,19 @@ export const createRealtimeGateway = ({
       },
       open: (socket) => {
         const socketData = socket.getUserData()
+        pendingUpgrades -= 1
+        if (socketData.overloadRetryAfterMs !== undefined) {
+          counters.overloadCloses += 1
+          socketData.closed = true
+          socket.end(
+            REALTIME_CLOSE_CODE.overloaded,
+            JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
+          )
+          return
+        }
+        activeConnections += 1
+        peakConnections = Math.max(peakConnections, activeConnections)
+        counters.upgrades += 1
         delivery.subscribeGuestSocket(socket)
         delivery.replayGuestSocket(socket)
         const gapEntries = streamReader
@@ -410,6 +561,10 @@ export const createRealtimeGateway = ({
       close: (socket) => {
         const socketData = socket.getUserData()
         socketData.closed = true
+        if (socketData.overloadRetryAfterMs !== undefined) {
+          return
+        }
+        activeConnections -= 1
         streamReader.releaseWorkspace(socketData.workspaceId)
       },
     })
@@ -434,6 +589,7 @@ export const createRealtimeGateway = ({
       ready = false
       clearInterval(heartbeat)
       clearInterval(presenceHeartbeat)
+      clearInterval(metricsTimer)
       for (const timer of presenceTimers.values()) {
         clearTimeout(timer)
       }
@@ -463,6 +619,7 @@ export const createRealtimeGateway = ({
           },
         )
       }, PRESENCE_REPORT_INTERVAL_MS)
+      metricsTimer = setInterval(flushMetrics, REALTIME_METRIC_WINDOW_MS)
       streamReader.start()
     },
   }

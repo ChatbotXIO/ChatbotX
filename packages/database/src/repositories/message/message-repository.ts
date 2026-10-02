@@ -9,10 +9,12 @@ export interface CreateMessageInput {
   createdAt?: Date
   id?: string
   messageType: "incoming" | "outgoing" | "activity"
+  parentId?: string | null
   senderId?: string | null
   senderType: "bot" | "contact" | "system" | "user" | "api"
   sourceId?: string | null
   text?: string | null
+  type?: "message" | "comment"
   updatedAt?: Date
   workspaceId: string
 }

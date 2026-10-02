@@ -29,6 +29,20 @@ vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: { findBy: mocks.contactInboxFindBy },
   callRecordingService: { getRecordingSignedUrl: mocks.getRecordingSignedUrl },
   conversationService: { findBy: mocks.conversationFindBy },
+  messageService: {
+    findBySourceId: mocks.findBySourceId,
+    mergeContentAttributesBySourceId: (input: {
+      overlay: unknown
+      sourceId: string
+      workspaceId: string
+    }) =>
+      mocks.mergeContentAttributesBySourceId(
+        input.sourceId,
+        input.workspaceId,
+        input.overlay,
+      ),
+    updateContentBySourceId: mocks.updateContentBySourceId,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({

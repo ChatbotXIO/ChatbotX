@@ -36,6 +36,20 @@ vi.mock("@chatbotx.io/business", () => ({
   isAllowedRecordingContentType: (value: string) =>
     ["audio/ogg", "audio/webm", "audio/mp4", "audio/mpeg"].includes(value),
   DEFAULT_RECORDING_CONTENT_TYPE: "audio/ogg",
+  messageService: {
+    findBySourceId: mocks.findBySourceId,
+    mergeContentAttributesBySourceId: (input: {
+      overlay: unknown
+      sourceId: string
+      workspaceId: string
+    }) =>
+      mocks.mergeContentAttributesBySourceId(
+        input.sourceId,
+        input.workspaceId,
+        input.overlay,
+      ),
+    updateContentBySourceId: mocks.updateContentBySourceId,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({

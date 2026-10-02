@@ -1757,6 +1757,8 @@ class ConversationService extends BaseService {
     tracking: ContactInboxTrackingData
     contactLocation?: ContactModel["location"] | null
     at: Date
+    /** Contact's own inbox read cursor, advanced with an inbound message. */
+    contactLastReadAt?: Date
     /** Set only for contact-authored messages; drives the "No admin reply" filter. */
     contactRepliedAt?: Date
   }): Promise<ContactInboxTrackingInvalidation | null> {
@@ -1768,6 +1770,7 @@ class ConversationService extends BaseService {
       tracking,
       contactLocation,
       at,
+      contactLastReadAt,
       contactRepliedAt,
     } = props
 
@@ -1795,6 +1798,18 @@ class ConversationService extends BaseService {
         lastActivityAt: at,
         ...(contactRepliedAt ? { contactRepliedAt } : {}),
       })
+
+      if (contactLastReadAt) {
+        await tx
+          .update(conversationModel)
+          .set({ contactLastReadAt })
+          .where(
+            and(
+              eq(conversationModel.id, conversationId),
+              eq(conversationModel.workspaceId, workspaceId),
+            ),
+          )
+      }
 
       return invalidation
     })
