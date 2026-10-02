@@ -160,9 +160,10 @@ export const refresh = async (input: {
       authStore,
       platform: {
         appUrl: "",
-        wsUrl: "",
+        internalRealtimeUrl: "",
+        publicRealtimeUrl: "",
         storageUrl: "",
-        getRealtimeAuthHeaders: async () => ({}),
+        getRealtimeBroadcastAuthHeaders: async () => ({}),
       },
     },
     { force: true },

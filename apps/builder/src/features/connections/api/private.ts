@@ -5,6 +5,7 @@ import {
   connectionNotConfiguredException,
   connectSessionExpiredException,
   notFoundException,
+  validationException,
 } from "@chatbotx.io/business/errors"
 import {
   CONNECTION_REGISTRY,
@@ -197,6 +198,9 @@ const updateConnectionAPI = authorizedAPI
   .input(updateConnectionRequest.and(withWorkspaceIdSchema))
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
+    if (input.displayName === undefined) {
+      throw validationException("displayName", "displayName is required")
+    }
     const connection = await connectionStateService.updateDisplayName({
       id: input.id,
       workspaceId: input.workspaceId,

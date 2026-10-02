@@ -27,6 +27,7 @@ import {
   integrationSendGridModel,
   integrationSmtpModel,
   integrationTelegramModel,
+  integrationThreadsModel,
   integrationTiktokModel,
   integrationWebchatModel,
   integrationWhatsappModel,
@@ -517,6 +518,13 @@ export const CONNECTION_STORE_BINDINGS: Record<
     identityColumn: "botId",
     onDisconnect: "keep_row",
     duplicateConstraint: "IntegrationTelegram_botId_key",
+  }),
+  threads: makeChannelBinding({
+    table: integrationThreadsModel,
+    tableName: "IntegrationThreads",
+    identityColumn: "threadsUserId",
+    onDisconnect: "keep_row",
+    duplicateConstraint: "IntegrationThreads_threadsUserId_key",
   }),
   tiktok: makeChannelBinding({
     table: integrationTiktokModel,

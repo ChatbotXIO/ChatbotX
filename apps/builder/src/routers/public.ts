@@ -15,6 +15,7 @@ import {
   capabilitiesPublicRouter,
   schemasPublicRouter,
 } from "@/features/capabilities/api/public"
+import {
   connectionProvidersPublicRouter,
   connectionsPublicRouter,
   connectSessionsPublicRouter,

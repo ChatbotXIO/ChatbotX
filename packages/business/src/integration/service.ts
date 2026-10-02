@@ -10,7 +10,6 @@ import {
 import {
   integrationMetaCatalogModel,
   integrationModel,
-
 } from "@chatbotx.io/database/schema"
 import type { IntegrationModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"

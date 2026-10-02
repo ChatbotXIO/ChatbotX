@@ -40,6 +40,7 @@ vi.mock("@chatbotx.io/business", () => ({
   appointmentExternalCalendarService: {},
   integrationFacebookAdsService: {},
   integrationMetaCatalogService: {},
+  integrationThreadsService: {},
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -107,6 +108,14 @@ vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
   exchangeLongLivedToken: vi.fn(),
   subscribePageToAppWebhook: vi.fn(),
 }))
+vi.mock("@chatbotx.io/integration-tiktok", () => ({
+  TiktokMissingScopesError: class TiktokMissingScopesError extends Error {},
+}))
+vi.mock("@chatbotx.io/integration-threads", () => ({
+  buildThreadsAuthValue: vi.fn(),
+  exchangeCodeForToken: vi.fn(),
+  getThreadsProfile: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/sdk", () => ({
   AuthType: { oauth2: "oauth2", custom: "custom" },
@@ -128,6 +137,9 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/features/integration-messenger/actions/reconnect-callback", () => ({
   reconnectMessengerHandler: vi.fn(),
+}))
+vi.mock("@/features/integration-threads/actions/reconnect-callback", () => ({
+  reconnectThreadsHandler: vi.fn(),
 }))
 vi.mock("@/features/integration-instagram/actions/reconnect-callback", () => ({
   reconnectInstagramHandler: vi.fn(),

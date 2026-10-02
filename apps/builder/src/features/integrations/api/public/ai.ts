@@ -125,7 +125,7 @@ export const integrationsAiPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/integrations/ai/{provider}",
-      summary: "Disconnect an AI provider integration",
+      summary: "Disconnect AI provider integration",
       description:
         "Deprecated — use `DELETE /v1/connections/{id}` instead. Kept for backward compatibility.",
       deprecated: true,

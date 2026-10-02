@@ -13,8 +13,8 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   CONNECTION_REGISTRY,
   connectionService,
@@ -36,6 +36,10 @@ import {
 } from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
+import {
+  type FacebookUser,
+  getFacebookUser as getMessengerFacebookUser,
+} from "@chatbotx.io/integration-messenger"
 import type { MetaCatalogAuthValue } from "@chatbotx.io/integration-meta-catalog/schemas"
 import {
   buildThreadsAuthValue,
@@ -281,6 +285,19 @@ const storeMetaCatalogConnection = async (args: {
     auth,
     tokenExpiresAt,
   })
+}
+
+// Best-effort: the connect flow works without the user identity, so a failed
+// lookup only leaves `userInfo` unset on the integration row.
+const lookupFacebookUser = async (
+  fetchUser: () => Promise<FacebookUser>,
+): Promise<FacebookUser | undefined> => {
+  try {
+    return await fetchUser()
+  } catch (error) {
+    logger.info({ err: error }, "Failed to fetch Facebook user profile")
+    return
+  }
 }
 
 const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/

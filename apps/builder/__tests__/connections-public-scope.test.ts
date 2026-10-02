@@ -102,6 +102,7 @@ vi.mock("@chatbotx.io/business/errors", () => {
     }
   }
   return {
+    BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
     ChatbotXException: MockChatbotXException,
     notFoundException: vi.fn(),
     validationException: vi.fn(),

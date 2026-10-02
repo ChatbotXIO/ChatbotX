@@ -135,6 +135,7 @@ export const CONNECTION_REGISTRY: ConnectionRegistry = {
   sendGrid: fromIntegration(integrationSendGrid, "sendGrid"),
   smtp: fromIntegration(integrationSmtp, "smtp"),
   telegram: fromIntegration(integrationTelegram, "telegram"),
+  threads: null,
   tiktok: fromIntegration(integrationTiktok, "tiktok", "tiktok"),
   webchat: fromIntegration(integrationWebchat, "webchat"),
   whatsapp: fromIntegration(integrationWhatsapp, "whatsapp", "whatsapp"),

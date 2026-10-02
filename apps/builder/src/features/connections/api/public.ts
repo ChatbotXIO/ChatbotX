@@ -5,6 +5,7 @@ import {
   connectionNotConfiguredException,
   connectSessionExpiredException,
   notFoundException,
+  validationException,
 } from "@chatbotx.io/business/errors"
 import {
   CONNECTION_REGISTRY,
@@ -90,7 +91,9 @@ export const connectionsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/connections/{id}",
-      summary: "Get a connection",
+      summary: "Get connection",
+      description:
+        "Fetches one connection by id. Call `connections.list` to find its id.",
       tags: ["Connections"],
     })
     .input(getConnectionRequest)
@@ -112,7 +115,7 @@ export const connectionsPublicRouter = {
       method: "POST",
       path: "/v1/connections",
       successStatus: 201,
-      summary: "Connect a channel or integration",
+      summary: "Connect channel or integration",
       description:
         'Credential-strategy providers (`token`/`api_key`/`self_serve`) connect immediately and return `connection` (`session: null`). OAuth providers (`oauth_redirect`/`oauth_popup`) return `connection: null` and a `session` whose `nextAction` is `{type:"open_url", url}` — show that URL to the person connecting, then poll `GET /v1/connect-sessions/{id}` until `awaiting_selection` (a multi-account provider) or `completed` (a single-account provider), then call `POST /v1/connect-sessions/{id}/targets` to finish a multi-account connect. The person opening the URL must have admin rights on the account being connected: the resulting token belongs to them, so hand each person their own link — a leaked URL can only connect the opener\'s account into this workspace.',
       tags: ["Connections"],
@@ -182,7 +185,7 @@ export const connectionsPublicRouter = {
       method: "POST",
       path: "/v1/connections/{id}/reconnect",
       successStatus: 201,
-      summary: "Re-authorize an existing connection",
+      summary: "Re-authorize existing connection",
       description:
         "Starts a new OAuth authorization for this exact connection (typically after it went `needs_reauth`). The re-granted account must match the one being reconnected, or the attempt fails once the browser round trip completes. Same envelope as `POST /v1/connections`; `connection` is always `null` here — a reconnect never resolves without the round trip.",
       tags: ["Connections"],
@@ -223,7 +226,7 @@ export const connectionsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/connections/{id}",
-      summary: "Rename a connection",
+      summary: "Rename connection",
       description:
         "Updates the connection's display name only — provider configuration stays on provider-specific routes.",
       tags: ["Connections"],
@@ -232,6 +235,9 @@ export const connectionsPublicRouter = {
     .output(connectionResource)
     .errors(possibleErrorsOnUpdatingConnection)
     .handler(async ({ context, input }) => {
+      if (input.displayName === undefined) {
+        throw validationException("displayName", "displayName is required")
+      }
       const connection = await connectionStateService.updateDisplayName({
         id: input.id,
         workspaceId: context.workspace.id,
@@ -247,7 +253,7 @@ export const connectionsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/connections/{id}",
-      summary: "Disconnect a connection",
+      summary: "Disconnect connection",
       description:
         "Best-effort provider-side teardown (revoke/unsubscribe), then marks the connection disconnected. Never fails the local disconnect on an upstream API error.",
       tags: ["Connections"],
@@ -267,7 +273,7 @@ export const connectionsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/connections/{id}/refresh",
-      summary: "Force-refresh a connection's auth",
+      summary: "Force-refresh connection auth",
       description:
         "Calls the provider's token refresh regardless of expiry. 409 if the connection is not active; 400 if the provider does not support refresh.",
       tags: ["Connections"],
@@ -287,7 +293,7 @@ export const connectionsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/connections/{id}/verify",
-      summary: "Run a live health check on a connection",
+      summary: "Run live connection health check",
       description:
         "Calls the provider's health check without refreshing auth, and updates the connection's status from the result. 409 if the connection is not active.",
       tags: ["Connections"],
@@ -331,7 +337,7 @@ export const connectSessionsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/connect-sessions/{id}",
-      summary: "Get a connect session",
+      summary: "Get connect session",
       description:
         "Poll this after `POST /v1/connections`/`POST /v1/connections/{id}/reconnect` returns a `session`. `status` moves `pending` -> `awaiting_selection` (multi-account) or straight to `completed` (single-account) once the OAuth round trip finishes, or `failed`/`expired`/`cancelled`. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
       tags: ["Connections"],
@@ -354,7 +360,7 @@ export const connectSessionsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/connect-sessions/{id}/targets",
-      summary: "Connect the selected targets of an awaiting_selection session",
+      summary: "Connect selected targets of awaiting_selection session",
       description:
         "Finishes a multi-account OAuth connect: claims and connects each requested target, one outcome per target (`connected`/`duplicated`/`limitReached`/`failed` — never throws for a single target's failure). 400 if the session is not `awaiting_selection`.",
       tags: ["Connections"],
@@ -379,7 +385,7 @@ export const connectSessionsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/connect-sessions/{id}/input",
-      summary: "Answer an enter_input step",
+      summary: "Answer enter_input step",
       description:
         "Answers a session whose `nextAction.type` is `enter_input` (e.g. a future WhatsApp registration PIN step). No v1 provider produces an `enter_input` step yet — this route ships so clients are already written against the full protocol. 400 if the session is not currently awaiting input.",
       tags: ["Connections"],
@@ -412,7 +418,9 @@ export const connectSessionsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/connect-sessions/{id}",
-      summary: "Cancel a connect session",
+      summary: "Cancel connect session",
+      description:
+        "Stops an in-progress connect session before it completes — the session moves to `cancelled` and can no longer accept a callback or `connectTargets` call.",
       tags: ["Connections"],
     })
     .input(getConnectSessionRequest)

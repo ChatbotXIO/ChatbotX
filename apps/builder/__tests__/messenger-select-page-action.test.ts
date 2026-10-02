@@ -297,7 +297,6 @@ describe("connectMessengerPage", () => {
       channelType: "messenger",
       integrationId: "integration-1",
     })
-
   })
 
   test("a failed connection outcome is returned without follow-ups", async () => {

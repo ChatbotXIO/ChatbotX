@@ -368,6 +368,7 @@ const connectionNotRefreshable = {
 export const possibleErrorsOnDisconnectingConnection = {
   notFound,
   businessError,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnRefreshingConnection = {
@@ -375,6 +376,7 @@ export const possibleErrorsOnRefreshingConnection = {
   connectionInactive,
   connectionNotConfigured,
   connectionNotRefreshable,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnVerifyingConnection = {
@@ -382,6 +384,7 @@ export const possibleErrorsOnVerifyingConnection = {
   businessError,
   connectionInactive,
   connectionNotConfigured,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 /** `connectFromCredentials`'s config-validation/live-check failures — see `ConnectionService` in `@chatbotx.io/connections`. */
@@ -417,6 +420,7 @@ export const possibleErrorsOnCreatingConnection = {
   connectionNotOAuth,
   connectionNotConfigured,
   channelHidden,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnReconnectingConnection = {
@@ -424,11 +428,13 @@ export const possibleErrorsOnReconnectingConnection = {
   businessError,
   connectionNotOAuth,
   connectionNotConfigured,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnUpdatingConnection = {
   notFound,
   businessError,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 /** The `state` nonce did not resolve to a matching session, or the session is expired/consumed — see `ConnectSessionService`. */
@@ -446,14 +452,17 @@ export const possibleErrorsOnConnectingSessionTargets = {
   notFound,
   businessError,
   connectSessionExpired,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnSubmittingConnectSessionInput = {
   notFound,
   connectSessionExpired,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnCancelingConnectSession = {
   notFound,
   businessError,
+  ...possibleIdempotencyErrors,
 } satisfies ErrorMap

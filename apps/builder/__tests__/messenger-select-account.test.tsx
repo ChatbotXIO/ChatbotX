@@ -49,6 +49,7 @@ describe("SelectPage", () => {
             providerMessage:
               "(#1) Please reduce the amount of data you're asking for",
           }}
+          sessionId="session-1"
           workspaceId="ws-1"
         />,
       )
@@ -72,6 +73,7 @@ describe("SelectPage", () => {
           bmLookupFailed={false}
           items={[]}
           loadError={{}}
+          sessionId="session-1"
           workspaceId="ws-1"
         />,
       )
@@ -85,7 +87,12 @@ describe("SelectPage", () => {
   test("renders no error box when the page list loaded", async () => {
     await act(() => {
       root.render(
-        <SelectPage bmLookupFailed={false} items={[]} workspaceId="ws-1" />,
+        <SelectPage
+          bmLookupFailed={false}
+          items={[]}
+          sessionId="session-1"
+          workspaceId="ws-1"
+        />,
       )
     })
 
