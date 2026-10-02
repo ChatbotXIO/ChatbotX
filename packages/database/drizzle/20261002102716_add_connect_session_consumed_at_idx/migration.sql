@@ -1,0 +1,1 @@
+CREATE INDEX "ConnectSession_consumedAt_idx" ON "ConnectSession" ("consumedAt") WHERE "consumedAt" IS NOT NULL;

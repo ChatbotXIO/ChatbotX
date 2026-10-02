@@ -1,8 +1,16 @@
 import {
+  AuthType,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
+import {
+  exchangeCodeForToken,
+  getUserPages,
+  MESSENGER_SCOPES,
+  toAppAccessToken,
+  verifyMetaToken,
+} from "./apis/auth"
 import {
   getCommentAttachment,
   getCommentAttachmentType,
@@ -16,11 +24,13 @@ import {
 import {
   deleteProfileFields,
   exchangeLongLivedToken,
+  subscribePageToAppWebhook,
   syncPersonas,
   unsubscribePageFromAppWebhook,
 } from "./apis/page"
 import { getPostDetails } from "./apis/post"
 import { getUserInboxLink } from "./apis/user-inbox-link"
+import { DEFAULT_API_VERSION } from "./constants"
 import { MessengerAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
 import { commentHandlers } from "./handlers/comment"
@@ -28,6 +38,7 @@ import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
+import { isRevokedTokenError } from "./lib/error-mapper"
 import { logger } from "./lib/logger"
 import type {
   MessengerActions,
@@ -41,6 +52,122 @@ const config: IntegrationDefinition<
   MessengerActions
 > = {
   name: "messenger",
+  connection: {
+    kind: "channel",
+    strategy: "oauth_redirect",
+    multiAccount: true,
+    configFields: [],
+    // Bypasses `generateAuthUrl` deliberately: that helper base64-JSON-
+    // encodes `stateParams` into the `state` query param for the legacy
+    // per-request cookie flow, but the Connection domain's OAuth callback
+    // hub matches `state` against a raw `"{sessionId}.{nonce}"` string —
+    // wrapping it in JSON here would make every session-based Messenger
+    // connect silently fall through to the legacy branch.
+    authorizeUrl: ({ credential, callbackUrl, state }) => {
+      const config = credential as MessengerConfig
+      const params = new URLSearchParams({
+        auth_type: "rerequest",
+        client_id: config.clientId,
+        redirect_uri: callbackUrl,
+        scope: MESSENGER_SCOPES.join(","),
+        response_type: "code",
+        state,
+      })
+      return `https://www.facebook.com/${config.version}/dialog/oauth?${params.toString()}`
+    },
+    // Returns a *user*-level `AuthValue` (SDK-generalized, not `MessengerAuthValue`
+    // — the exchanged token isn't tied to a page yet, so it can't carry
+    // `metadata.pageId`). Mirrors the OAuth callback hub's existing
+    // short-lived -> long-lived exchange, falling back to the short-lived
+    // token on a failed long-lived exchange rather than failing the whole
+    // connect (`apps/builder/src/app/integrations/[...integration]/callback.ts`).
+    exchangeCode: async ({ code, callbackUrl, credential }) => {
+      const config = credential as MessengerConfig
+      const shortLivedToken = await exchangeCodeForToken(
+        config,
+        code,
+        callbackUrl,
+      )
+      const longLivedToken = await exchangeLongLivedToken(
+        config,
+        shortLivedToken,
+      ).catch((error) => {
+        logger.warn(
+          { err: error },
+          "Messenger long-lived token exchange failed, using short-lived token",
+        )
+        return shortLivedToken
+      })
+      return {
+        authType: AuthType.oauth2,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        // The real callback URL `authorizeUrl` sent as `redirect_uri` —
+        // `oauth2AuthSchema.redirectUrl` is `min(1)`; a hardcoded `""` here
+        // fails the first generic validator that parses this value (Google
+        // Calendar's `.extend()` pattern already does).
+        redirectUrl: callbackUrl,
+        version: config.version,
+        tokens: { accessToken: longLivedToken },
+      }
+    },
+    // One Graph call, no cache — provider lists already carry each page's
+    // own access token (`getUserPages`), so no per-candidate follow-up call
+    // is needed to build its final `MessengerAuthValue`.
+    listCandidates: async ({ auth }) => {
+      if (auth.authType !== "oauth2") {
+        return []
+      }
+      const version = auth.version ?? DEFAULT_API_VERSION
+      const { pages } = await getUserPages(auth.tokens.accessToken, version)
+      return pages
+        .filter((page) => page.isConnectable && page.access_token)
+        .map((page) => ({
+          sourceId: page.id,
+          displayName: page.name,
+          auth: {
+            authType: AuthType.oauth2,
+            clientId: auth.clientId,
+            clientSecret: auth.clientSecret,
+            redirectUrl: auth.redirectUrl,
+            version,
+            tokens: { accessToken: page.access_token as string },
+            metadata: { pageId: page.id, pageName: page.name, version },
+          } satisfies MessengerAuthValue,
+        }))
+    },
+    describe: (auth) => ({
+      // Candidate-level auth (initial connect, from `listCandidates`
+      // above) always carries `metadata.pageId`/`pageName`. On RECONNECT,
+      // `completeReconnect` (`connect-session-flow.ts`) calls `describe`
+      // directly on the raw OAuth-exchanged `auth` — a *user*-level token
+      // with no `metadata` yet, since a page hasn't been (re-)selected
+      // (see `ConnectionProvider.exchangeCode`'s doc comment in
+      // `@chatbotx.io/sdk`, which documents `describe` as never receiving
+      // that value for a multi-page provider — reconnect bypasses
+      // `listCandidates` and violates that contract). Falling back here
+      // turns a reconnect into a clean identity mismatch instead of an
+      // unhandled TypeError.
+      sourceId: auth.metadata?.pageId ?? "unknown_page",
+      displayName: auth.metadata?.pageName ?? "Messenger",
+    }),
+    verify: verifyMetaToken("Messenger"),
+    isRevokedTokenError,
+    webhook: {
+      subscribe: ({ auth }) =>
+        subscribePageToAppWebhook({
+          pageId: auth.metadata.pageId,
+          accessToken: auth.tokens.accessToken,
+          version: auth.metadata.version,
+        }),
+      unsubscribe: ({ auth }) =>
+        unsubscribePageFromAppWebhook({
+          pageId: auth.metadata.pageId,
+          appAccessToken: toAppAccessToken(auth),
+          version: auth.metadata.version,
+        }),
+    },
+  },
   channels: {
     channel: {
       message: messageHandlers,
@@ -88,9 +215,7 @@ const config: IntegrationDefinition<
       })
     } catch (error) {
       logger.warn(
-        {
-          err: error instanceof Error ? error.message : String(error),
-        },
+        { err: error },
         "Failed to clear Messenger persistent menu before disconnect",
       )
     }

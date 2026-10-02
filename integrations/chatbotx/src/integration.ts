@@ -15,13 +15,29 @@ const config: IntegrationDefinition<BaseConfig, ChatbotxAuthValue> = {
     },
   },
   actions: {},
+  connection: {
+    kind: "channel",
+    strategy: "self_serve",
+    multiAccount: false,
+    configFields: [],
+    describe: () => ({
+      // ChatbotX is a built-in workspace channel with no external account.
+      sourceId: "workspace",
+      displayName: "ChatbotX",
+    }),
+    // ChatbotX is internal, so there is no external provider to verify.
+    verify: async () => ({ ok: true }),
+    isRevokedTokenError: () => false,
+  },
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,
   ): Promise<string | number | Oauth2AuthValue> {
     throw new Error("Method is not implemented.")
   },
   disconnect(_props: ChatbotxAuthValue): Promise<void> {
-    throw new Error("Method is not implemented.")
+    // ChatbotX is a built-in workspace channel with no external provider
+    // to disconnect; removing the inbox row is the whole teardown.
+    return Promise.resolve()
   },
 }
 

@@ -21,7 +21,7 @@ import {
   integrationSmtpResource,
 } from "../schema/resource"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
 
 const tags = ["Channels"]
 

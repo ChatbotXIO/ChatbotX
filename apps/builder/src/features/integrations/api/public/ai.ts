@@ -23,7 +23,7 @@ import {
   publicAiProviderResource,
 } from "../../schema/ai-provider"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
 
 type AiProviderRow = {
   id: string
