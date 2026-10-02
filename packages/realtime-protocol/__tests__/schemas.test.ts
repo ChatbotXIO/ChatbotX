@@ -5,6 +5,7 @@ import {
   realtimeCallTransportIncomingSchema,
   realtimeCallTransportOutboundAnswerVoipSchema,
   realtimeCallTransportOutboundStatusVoipSchema,
+  realtimeGuestBatchEnvelopeSchema,
   routeForAssignment,
   routeForConversation,
   whatsappCallClaimedElsewhereSchema,
@@ -43,6 +44,23 @@ describe("realtime batch envelopes", () => {
       batch: [
         { data: { contactId: "contact-1" }, eventType: "contactBlocked" },
       ],
+      seq: "123-0",
+    })
+
+    expect(frame.batch).toHaveLength(1)
+  })
+})
+
+describe("realtime guest batch envelopes", () => {
+  // Regression for PR #1349 round-5 finding: a guest socket's delivery is
+  // never route-filtered, so every event it carries — including a
+  // conversation-scoped one like messageCreated — correctly has no route.
+  // realtimeBatchEnvelopeSchema's route-required refine is workspace-only;
+  // using it for guest frames would reject every real messageCreated the
+  // webchat client ever receives.
+  test("allows a conversation-scoped event with no route", () => {
+    const frame = realtimeGuestBatchEnvelopeSchema.parse({
+      batch: [{ data: { id: "message-1" }, eventType: "messageCreated" }],
       seq: "123-0",
     })
 
