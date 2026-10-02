@@ -7,6 +7,7 @@ import type { CreateWebchatMessageRequest } from "@/features/messages/schema/mut
 import type { ListMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schema/resource"
+import { logger } from "@/lib/log"
 import { getWebchatProfileFields } from "../../browser-profile-fields"
 import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
 import {
@@ -41,11 +42,21 @@ export type GuestSessionState = {
   isLoadMoreMessage: boolean
   hasNextMessagePage: boolean
   isTyping: boolean
+
+  /**
+   * Realtime socket lifecycle. `"closed"` is terminal — set only when the
+   * realtime-token mint comes back 401/403 (see webchat-realtime.tsx), since
+   * that means re-minting with the same access token will never succeed and
+   * `RealtimeSocket` has given up reconnecting. The widget should tell the
+   * guest to reload rather than appearing to silently stop responding.
+   */
+  connectionStatus: "connecting" | "open" | "closed"
 }
 
 export type GuestSessionActions = {
   setGuestUser: (user: UserResource) => void
   initGuestSession: (serverGuestConversationId: string) => void
+  setConnectionStatus: (status: GuestSessionState["connectionStatus"]) => void
 
   // messages
   appendMessage: (message: Partial<MessageResource>) => MessageResource
@@ -85,6 +96,7 @@ export const createGuestSessionStore = (
     hasNextMessagePage: true,
 
     isTyping: false,
+    connectionStatus: "connecting",
 
     initGuestSession: (serverGuestConversationId: string) => {
       const { guestConversationId, config } = get()
@@ -99,8 +111,14 @@ export const createGuestSessionStore = (
         return
       }
 
+      // Only the `<workspaceId>:<uuid>` legacy global-key form is safe to
+      // reuse here. A digits-only legacy id carries no proof of which
+      // *caller* it belongs to (see guest-conversation-id.ts), and the
+      // realtime-token route now refuses to mint tokens for it — so reusing
+      // it would just leave the guest unable to connect. Fall through to
+      // mint a fresh id instead of returning early.
       const legacyGuestId = readLegacyGuestId()
-      if (legacyGuestId) {
+      if (legacyGuestId?.includes(":")) {
         safeStorageSet(scopedKey, legacyGuestId)
         set({ guestConversationId: legacyGuestId, isNewGuestSession: false })
         return
@@ -115,6 +133,10 @@ export const createGuestSessionStore = (
 
     setGuestUser: (user: UserResource) => {
       set({ user })
+    },
+
+    setConnectionStatus: (connectionStatus) => {
+      set({ connectionStatus })
     },
 
     loadMoreMessages: async (guestConversationId: string, perPage: number) => {
@@ -217,7 +239,11 @@ export const createGuestSessionStore = (
             : {}
         })
       } catch (error) {
-        console.error("Failed to refetch messages after reconnect:", error)
+        logger.warn(
+          { err: error },
+          "Failed to refetch messages after reconnect",
+        )
+        throw error
       }
     },
 

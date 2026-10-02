@@ -40,6 +40,13 @@ const OVERLOAD_RETRY_AFTER_SPREAD_MS = 4000
 const DEFAULT_GUEST_CONNECTION_SHARE = 0.8
 const DEFAULT_MAX_CONNECTIONS_PER_WORKSPACE = 500
 const DEFAULT_MAX_CONNECTIONS_PER_GUEST = 5
+/** Caps one workspace's *total* guest connections (across every distinct
+ * `guestConversationId`) well below the global guest pool, so one tenant's
+ * webchat traffic spike can't exhaust `maxGuestConnections` for everyone
+ * else. `maxConnectionsPerGuest` alone doesn't bound this: it only limits
+ * one guest conversation, not how many distinct conversations a single
+ * workspace can open. */
+const DEFAULT_MAX_GUEST_CONNECTIONS_PER_WORKSPACE = 1000
 /** Forces every connection to periodically re-handshake (fresh token mint,
  * re-checked membership/permissions) instead of living forever once open —
  * the only way a revoked member, a disabled support-access session, or an
@@ -81,7 +88,8 @@ type ReplayResult = {
 
 export type RealtimeGateway = {
   close: () => Promise<void>
-  listen: (host: string, port: number) => Promise<void>
+  /** Resolves with the actual bound port — useful for `port: 0` (OS-assigned). */
+  listen: (host: string, port: number) => Promise<number>
 }
 
 export const loadReplay = async ({
@@ -168,6 +176,7 @@ export const createRealtimeGateway = ({
   maxGuestConnections = Math.floor(
     maxConnections * DEFAULT_GUEST_CONNECTION_SHARE,
   ),
+  maxGuestConnectionsPerWorkspace = DEFAULT_MAX_GUEST_CONNECTIONS_PER_WORKSPACE,
   redis,
   secret,
 }: {
@@ -176,6 +185,7 @@ export const createRealtimeGateway = ({
   maxConnectionsPerGuest?: number
   maxConnectionsPerWorkspace?: number
   maxGuestConnections?: number
+  maxGuestConnectionsPerWorkspace?: number
   redis: Redis
   secret: string
 }): RealtimeGateway => {
@@ -191,6 +201,7 @@ export const createRealtimeGateway = ({
   let pendingGuestUpgrades = 0
   const memberConnectionCountByWorkspace = new Map<string, number>()
   const guestConnectionCountByKey = new Map<string, number>()
+  const guestConnectionCountByWorkspace = new Map<string, number>()
   const workspaceLifetimeTimers = new WeakMap<
     WorkspaceSocketData,
     NodeJS.Timeout
@@ -341,7 +352,9 @@ export const createRealtimeGateway = ({
         const websocketExtensions = req.getHeader("sec-websocket-extensions")
         if (!(workspaceId && token)) {
           counters.tokenRejections += 1
-          res.writeStatus("401 Unauthorized").end()
+          res.cork(() => {
+            res.writeStatus("401 Unauthorized").end()
+          })
           return
         }
 
@@ -352,7 +365,9 @@ export const createRealtimeGateway = ({
           } catch {
             if (!aborted) {
               counters.tokenRejections += 1
-              res.writeStatus("401 Unauthorized").end()
+              res.cork(() => {
+                res.writeStatus("401 Unauthorized").end()
+              })
             }
             return
           }
@@ -551,7 +566,9 @@ export const createRealtimeGateway = ({
         const websocketExtensions = req.getHeader("sec-websocket-extensions")
         if (!(guestConversationId && token)) {
           counters.tokenRejections += 1
-          res.writeStatus("401 Unauthorized").end()
+          res.cork(() => {
+            res.writeStatus("401 Unauthorized").end()
+          })
           return
         }
 
@@ -566,7 +583,9 @@ export const createRealtimeGateway = ({
           } catch {
             if (!aborted) {
               counters.tokenRejections += 1
-              res.writeStatus("401 Unauthorized").end()
+              res.cork(() => {
+                res.writeStatus("401 Unauthorized").end()
+              })
             }
             return
           }
@@ -577,11 +596,14 @@ export const createRealtimeGateway = ({
           )
           const guestConnectionCount =
             guestConnectionCountByKey.get(guestKey) ?? 0
+          const workspaceGuestConnectionCount =
+            guestConnectionCountByWorkspace.get(claims.workspaceId) ?? 0
           const overloaded =
             activeConnections + pendingUpgrades >= maxConnections ||
             activeGuestConnections + pendingGuestUpgrades >=
               maxGuestConnections ||
-            guestConnectionCount >= maxConnectionsPerGuest
+            guestConnectionCount >= maxConnectionsPerGuest ||
+            workspaceGuestConnectionCount >= maxGuestConnectionsPerWorkspace
           if (overloaded) {
             if (aborted) {
               return
@@ -642,7 +664,9 @@ export const createRealtimeGateway = ({
               { err: error, guestConversationId },
               "Realtime guest socket activation failed",
             )
-            res.writeStatus("401 Unauthorized").end()
+            res.cork(() => {
+              res.writeStatus("401 Unauthorized").end()
+            })
           }
         })().catch((error) => {
           logger.error(
@@ -674,6 +698,10 @@ export const createRealtimeGateway = ({
             socketData.workspaceId,
             socketData.guestConversationId,
           ),
+        )
+        incrementKeyedCount(
+          guestConnectionCountByWorkspace,
+          socketData.workspaceId,
         )
         delivery.subscribeGuestSocket(socket)
         delivery.replayGuestSocket(socket)
@@ -716,6 +744,10 @@ export const createRealtimeGateway = ({
             socketData.guestConversationId,
           ),
         )
+        decrementKeyedCount(
+          guestConnectionCountByWorkspace,
+          socketData.workspaceId,
+        )
         const lifetimeTimer = guestLifetimeTimers.get(socketData)
         clearTimeout(lifetimeTimer)
         guestLifetimeTimers.delete(socketData)
@@ -753,15 +785,15 @@ export const createRealtimeGateway = ({
       redis.disconnect()
     },
     listen: async (host, port) => {
-      const { promise, reject, resolve } = Promise.withResolvers<void>()
+      const { promise, reject, resolve } = Promise.withResolvers<number>()
       app.listen(host, port, (listenSocket) => {
         if (!listenSocket) {
           reject(new Error(`Unable to listen on ${host}:${port}`))
           return
         }
-        resolve()
+        resolve(uWS.us_socket_local_port(listenSocket))
       })
-      await promise
+      const boundPort = await promise
       ready = true
       heartbeat = setInterval(() => {
         app.publish("hb", JSON.stringify({ hb: 1 }))
@@ -775,6 +807,7 @@ export const createRealtimeGateway = ({
       }, PRESENCE_REPORT_INTERVAL_MS)
       metricsTimer = setInterval(flushMetrics, REALTIME_METRIC_WINDOW_MS)
       streamReader.start()
+      return boundPort
     },
   }
 }

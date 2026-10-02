@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { REALTIME_CLOSE_CODE, RealtimeSocket } from "../src/realtime-socket"
+import {
+  REALTIME_CLOSE_CODE,
+  RealtimeFatalError,
+  RealtimeSocket,
+} from "../src/realtime-socket"
 
 class FakeWebSocket {
   closed: { code?: number; reason?: string } | null = null
@@ -108,6 +112,73 @@ describe("RealtimeSocket", () => {
     expect(sockets).toHaveLength(2)
   })
 
+  it("keeps backing off across a repeated resync-then-immediate-close loop", async () => {
+    // Regression for PR #1349 finding #1: resetting #attempt on every `open`
+    // gave a server that closes right after connecting (e.g. a stale-cursor
+    // resync loop) zero backoff. Attempt must only reset after the socket
+    // stays open past `minUptimeBeforeResetMs`.
+    const sockets: FakeWebSocket[] = []
+    const getUrl = vi.fn<() => Promise<string>>().mockResolvedValue("ws://test")
+    new RealtimeSocket({
+      getUrl,
+      minUptimeBeforeResetMs: 60_000,
+      onMessage: vi.fn(),
+      random: () => 1,
+      reconnectBaseDelayMs: 1000,
+      webSocketFactory: () => {
+        const webSocket = new FakeWebSocket()
+        sockets.push(webSocket)
+        return webSocket
+      },
+    }).connect()
+    await vi.runAllTimersAsync()
+    sockets[0]?.open()
+    sockets[0]?.close(1006)
+
+    await vi.advanceTimersByTimeAsync(999)
+    expect(getUrl).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(getUrl).toHaveBeenCalledTimes(2)
+
+    sockets[1]?.open()
+    sockets[1]?.close(1006)
+    await vi.advanceTimersByTimeAsync(1999)
+    expect(getUrl).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(getUrl).toHaveBeenCalledTimes(3)
+  })
+
+  it("resets backoff once a connection stays open past the minimum uptime", async () => {
+    const sockets: FakeWebSocket[] = []
+    const getUrl = vi.fn<() => Promise<string>>().mockResolvedValue("ws://test")
+    new RealtimeSocket({
+      getUrl,
+      minUptimeBeforeResetMs: 5000,
+      onMessage: vi.fn(),
+      random: () => 1,
+      reconnectBaseDelayMs: 1000,
+      webSocketFactory: () => {
+        const webSocket = new FakeWebSocket()
+        sockets.push(webSocket)
+        return webSocket
+      },
+    }).connect()
+    await vi.runAllTimersAsync()
+    sockets[0]?.open()
+    sockets[0]?.close(1006)
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(getUrl).toHaveBeenCalledTimes(2)
+
+    sockets[1]?.open()
+    await vi.advanceTimersByTimeAsync(5000)
+    sockets[1]?.close(1006)
+
+    await vi.advanceTimersByTimeAsync(999)
+    expect(getUrl).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(getUrl).toHaveBeenCalledTimes(3)
+  })
+
   it("uses the server retryAfter on an overloaded close", async () => {
     const getUrl = vi.fn().mockResolvedValue("ws://test")
     let webSocket: FakeWebSocket | undefined
@@ -165,5 +236,29 @@ describe("RealtimeSocket", () => {
       code: 4000,
       reason: "heartbeat-timeout",
     })
+  })
+
+  it("stops reconnecting once getUrl rejects with a fatal error (e.g. a 401/403 token mint)", async () => {
+    const onError = vi.fn()
+    const getUrl = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValue(new RealtimeFatalError("unauthorized"))
+    const socket = new RealtimeSocket({
+      getUrl,
+      onError,
+      onMessage: vi.fn(),
+    })
+
+    socket.connect()
+    await vi.runAllTimersAsync()
+
+    expect(getUrl).toHaveBeenCalledOnce()
+    expect(onError).toHaveBeenCalledWith(expect.any(RealtimeFatalError))
+
+    // A later external trigger (e.g. the tab regaining focus) must not
+    // resurrect a connection the fatal error already gave up on.
+    socket.reconnectNow()
+    await vi.runAllTimersAsync()
+    expect(getUrl).toHaveBeenCalledOnce()
   })
 })

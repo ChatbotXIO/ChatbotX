@@ -11,6 +11,7 @@ export const main = async (): Promise<void> => {
     maxConnectionsPerGuest: config.maxConnectionsPerGuest,
     maxConnectionsPerWorkspace: config.maxConnectionsPerWorkspace,
     maxGuestConnections: config.maxGuestConnections,
+    maxGuestConnectionsPerWorkspace: config.maxGuestConnectionsPerWorkspace,
     redis: createRedisConnection(config.redisUrl),
     secret: config.secret,
   })

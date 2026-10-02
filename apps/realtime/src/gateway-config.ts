@@ -28,6 +28,11 @@ const gatewayEnv = () =>
         .int()
         .min(1)
         .default(8000),
+      REALTIME_MAX_GUEST_CONNECTIONS_PER_WORKSPACE: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .default(1000),
       REDIS_URL: z.url(),
     },
     runtimeEnv: process.env,
@@ -41,6 +46,7 @@ export type RealtimeGatewayConfig = {
   maxConnectionsPerGuest: number
   maxConnectionsPerWorkspace: number
   maxGuestConnections: number
+  maxGuestConnectionsPerWorkspace: number
   port: number
   redisUrl: string
   secret: string
@@ -56,6 +62,8 @@ export const resolveRealtimeGatewayConfig = (): RealtimeGatewayConfig => {
     maxConnectionsPerWorkspace:
       environment.REALTIME_MAX_CONNECTIONS_PER_WORKSPACE,
     maxGuestConnections: environment.REALTIME_MAX_GUEST_CONNECTIONS,
+    maxGuestConnectionsPerWorkspace:
+      environment.REALTIME_MAX_GUEST_CONNECTIONS_PER_WORKSPACE,
     port: environment.PORT,
     redisUrl: environment.REDIS_URL,
     secret: environment.REALTIME_BROADCAST_SECRET,

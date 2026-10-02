@@ -10,6 +10,12 @@ export const sendMessage: MessageHandlers<WebchatAuthValue>["sendMessage"] = (
     data: { contact, message },
   } = props
 
+  // Deliberately fire-and-forget: by the time this handler runs, the message
+  // is already durably persisted (that's what `sentCount` reports — the
+  // message was accepted and stored). The realtime publish below is only a
+  // best-effort live push to an already-connected browser socket; if it
+  // fails, the guest still sees the message on next load/poll, so its
+  // failure must not flip `sentCount` to 0 or delay the response.
   ctx.platform
     .publishGuestRealtimeEvent(contact.sourceId, {
       eventType: "messageCreated",

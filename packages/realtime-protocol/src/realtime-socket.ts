@@ -4,6 +4,15 @@ export const REALTIME_CLOSE_CODE = {
   overloaded: 4003,
 } as const
 
+/**
+ * `getUrl` throws this to signal that the failure is permanent — e.g. the
+ * server rejected the token mint with 401/403 — so retrying with the same
+ * (or a freshly re-minted, still-unauthorized) credential would never
+ * succeed. `connect()`'s catch handler stops reconnecting entirely instead
+ * of backing off forever.
+ */
+export class RealtimeFatalError extends Error {}
+
 type RealtimeWebSocket = {
   close: (code?: number, reason?: string) => void
   onclose: ((event: { code: number; reason: string }) => void) | null
@@ -15,6 +24,7 @@ export type RealtimeSocketOptions = {
   getUrl: () => Promise<string>
   heartbeatTimeoutMs?: number
   maxReconnectDelayMs?: number
+  minUptimeBeforeResetMs?: number
   onClose?: (event: { code: number; reason: string }) => void
   onError?: (error: unknown) => void
   onMessage: (data: string) => void
@@ -25,8 +35,11 @@ export type RealtimeSocketOptions = {
   webSocketFactory?: (url: string) => RealtimeWebSocket
 }
 
+type TimerHandle = ReturnType<typeof setTimeout>
+
 const DEFAULT_HEARTBEAT_TIMEOUT_MS = 60_000
 const DEFAULT_MAX_RECONNECT_DELAY_MS = 30_000
+const DEFAULT_MIN_UPTIME_BEFORE_RESET_MS = 10_000
 const DEFAULT_RECONNECT_BASE_DELAY_MS = 500
 
 const getRetryAfterMs = (reason: string): number | null => {
@@ -48,12 +61,14 @@ export class RealtimeSocket {
   #attempt = 0
   #connecting = false
   #closed = false
-  #heartbeatTimer: ReturnType<typeof setTimeout> | null = null
-  #reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  #heartbeatTimer: TimerHandle | null = null
+  #reconnectTimer: TimerHandle | null = null
   #retryNotBeforeMs: number | null = null
   #socket: RealtimeWebSocket | null = null
+  #uptimeResetTimer: TimerHandle | null = null
   readonly #heartbeatTimeoutMs: number
   readonly #maxReconnectDelayMs: number
+  readonly #minUptimeBeforeResetMs: number
   readonly #random: () => number
   readonly #reconnectBaseDelayMs: number
   readonly #webSocketFactory: (url: string) => RealtimeWebSocket
@@ -65,6 +80,8 @@ export class RealtimeSocket {
       options.heartbeatTimeoutMs ?? DEFAULT_HEARTBEAT_TIMEOUT_MS
     this.#maxReconnectDelayMs =
       options.maxReconnectDelayMs ?? DEFAULT_MAX_RECONNECT_DELAY_MS
+    this.#minUptimeBeforeResetMs =
+      options.minUptimeBeforeResetMs ?? DEFAULT_MIN_UPTIME_BEFORE_RESET_MS
     this.#random = options.random ?? Math.random
     this.#reconnectBaseDelayMs =
       options.reconnectBaseDelayMs ?? DEFAULT_RECONNECT_BASE_DELAY_MS
@@ -93,12 +110,12 @@ export class RealtimeSocket {
         const socket = this.#webSocketFactory(url)
         this.#socket = socket
         socket.onopen = () => {
-          this.#attempt = 0
-          this.#retryNotBeforeMs = null
+          this.#armUptimeReset()
           this.#armHeartbeat(socket)
           this.options.onOpen?.()
         }
         socket.onmessage = (event) => {
+          this.#resetAttempt()
           this.#armHeartbeat(socket)
           this.options.onMessage(event.data)
         }
@@ -112,6 +129,7 @@ export class RealtimeSocket {
           }
           this.#socket = null
           this.#clearHeartbeat()
+          this.#clearUptimeReset()
           this.options.onClose?.(event)
           this.#scheduleReconnect(event)
         }
@@ -119,6 +137,10 @@ export class RealtimeSocket {
       .catch((error: unknown) => {
         this.#connecting = false
         this.options.onError?.(error)
+        if (error instanceof RealtimeFatalError) {
+          this.close()
+          return
+        }
         this.#scheduleReconnect({ code: 0, reason: "" })
       })
   }
@@ -127,6 +149,7 @@ export class RealtimeSocket {
     this.#closed = true
     this.#clearHeartbeat()
     this.#clearReconnect()
+    this.#clearUptimeReset()
     this.#socket?.close()
     this.#socket = null
   }
@@ -159,6 +182,27 @@ export class RealtimeSocket {
       clearTimeout(this.#heartbeatTimer)
       this.#heartbeatTimer = null
     }
+  }
+
+  #armUptimeReset(): void {
+    this.#clearUptimeReset()
+    this.#uptimeResetTimer = setTimeout(() => {
+      this.#uptimeResetTimer = null
+      this.#resetAttempt()
+    }, this.#minUptimeBeforeResetMs)
+  }
+
+  #clearUptimeReset(): void {
+    if (this.#uptimeResetTimer) {
+      clearTimeout(this.#uptimeResetTimer)
+      this.#uptimeResetTimer = null
+    }
+  }
+
+  #resetAttempt(): void {
+    this.#clearUptimeReset()
+    this.#attempt = 0
+    this.#retryNotBeforeMs = null
   }
 
   #clearReconnect(): void {

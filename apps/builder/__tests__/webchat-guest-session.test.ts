@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
+import ky from "ky"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import {
   getParentOriginFromUrl,
@@ -30,6 +31,10 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
   return { ...actual, createId: vi.fn(() => "generated-id") }
 })
+
+vi.mock("ky", () => ({
+  default: { get: vi.fn() },
+}))
 
 const createLocalStorageMock = (initial: Record<string, string> = {}) => {
   const items = new Map(Object.entries(initial))
@@ -164,6 +169,28 @@ describe("webchat guest session store", () => {
     )
   })
 
+  test("abandons a legacy digits-only session id instead of reusing it (PR #1349 finding #3)", () => {
+    // A digits-only legacy id carries no proof of which caller it belongs to
+    // — the realtime-token route now refuses to mint a token for it — so
+    // reusing it here would just leave the guest unable to connect.
+    const localStorageMock = createLocalStorageMock({
+      [GUEST_CONVERSATION_ID_KEY]: "999000111",
+    })
+    vi.stubGlobal("localStorage", localStorageMock)
+
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    store.getState().initGuestSession("workspace-1:server-guest")
+
+    const scopedKey = buildGuestStorageKey("workspace-1", "webchat-1")
+    const state = store.getState()
+    expect(state.guestConversationId).toBe("workspace-1:server-guest")
+    expect(state.isNewGuestSession).toBe(true)
+    expect(localStorageMock.items.get(scopedKey)).toBe(
+      "workspace-1:server-guest",
+    )
+  })
+
   test("keeps guest sessions isolated across webchat ids", () => {
     const localStorageMock = createLocalStorageMock()
     vi.stubGlobal("localStorage", localStorageMock)
@@ -188,6 +215,22 @@ describe("webchat guest session store", () => {
         buildGuestStorageKey("workspace-1", "webchat-2"),
       ),
     ).toBe(true)
+  })
+
+  test("rethrows after logging so the caller's .catch runs when refetchLatestMessages fails (PR #1349 finding #8)", async () => {
+    const networkError = new Error("network down")
+    vi.mocked(ky.get).mockReturnValue({
+      json: () => Promise.reject(networkError),
+    } as never)
+
+    const localStorageMock = createLocalStorageMock()
+    vi.stubGlobal("localStorage", localStorageMock)
+    const store = createGuestSessionStore(createWebchatConfig())
+    store.getState().initGuestSession("workspace-1:server-guest")
+
+    await expect(store.getState().refetchLatestMessages(50)).rejects.toBe(
+      networkError,
+    )
   })
 })
 

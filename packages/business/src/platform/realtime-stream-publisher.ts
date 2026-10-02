@@ -12,6 +12,17 @@ let realtimeStreamConnection: Redis | null = null
 const getRealtimeStreamConnection = (): Redis =>
   (realtimeStreamConnection ??= createRedisConnection(
     resolveRealtimeRedisUrl(),
+    // A hung `xadd` during a Redis outage would stall this package's publish
+    // path forever: ioredis's default `maxRetriesPerRequest: null` queues the
+    // command indefinitely instead of rejecting it. Fail fast so callers that
+    // await a publish (whatsapp call/VoIP signaling, guest publish) and
+    // fire-and-forget callers (`queueWorkspaceRealtimeEvent`'s `.catch`) both
+    // observe the failure instead of hanging.
+    {
+      commandTimeout: 2000,
+      enableOfflineQueue: false,
+      maxRetriesPerRequest: 1,
+    },
   ))
 
 /**

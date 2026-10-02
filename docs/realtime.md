@@ -41,3 +41,39 @@ the replay window rather than by a per-shard entry count.
 The gateway reports presence after a user's first local socket opens or last
 local socket closes. Reports are coalesced per workspace for one second, and
 the periodic report is concurrency-bounded.
+
+## Limits
+
+| Limit | Default | Configured via | Scope |
+| --- | --- | --- | --- |
+| Total connections | 10,000 | `REALTIME_MAX_CONNECTIONS` | whole server |
+| Guest connections | 8,000 | `REALTIME_MAX_GUEST_CONNECTIONS` | whole server (sub-pool of the total above) |
+| Member connections per workspace | 500 | `REALTIME_MAX_CONNECTIONS_PER_WORKSPACE` | one workspace |
+| Guest connections per workspace | 1,000 | `REALTIME_MAX_GUEST_CONNECTIONS_PER_WORKSPACE` | one workspace, across every guest conversation |
+| Connections per guest conversation | 5 | `REALTIME_MAX_CONNECTIONS_PER_GUEST` | one `guestConversationId` |
+| Forced reconnect (connection lifetime) | 30 minutes | `REALTIME_CONNECTION_LIFETIME_MS` | per socket |
+| Connect token TTL | 60 seconds | — | per mint |
+| Replay window | 500 entries / 5 minutes | — | per upgrade |
+| Backpressure buffer | 512,000 bytes (~500 KiB) | — | per socket |
+| Heartbeat interval / idle timeout | 25s / 60s | — | whole server |
+
+Hitting any connection-count limit above completes the WebSocket handshake
+and then immediately closes with `4003` and a jittered `retryAfter` (1–5s) in
+the close reason, so the client's backoff is server-directed rather than
+guessed.
+
+## Close codes
+
+| Code | Meaning | Client behavior |
+| --- | --- | --- |
+| `4000` | Client-detected heartbeat timeout (no frame for 60s) | Reconnects with backoff |
+| `4001` (`revoked`) | Member removed, permissions changed, or connection explicitly revoked | Does not reconnect — caller must re-authenticate |
+| `4002` (`resync`) | Replay cursor invalid/expired/oversized, or the connection lifetime elapsed | Clears its cursor and reconnects immediately |
+| `4003` (`overloaded`) | A limit from the table above was hit | Reconnects after the server-supplied `retryAfter` |
+
+`4002`'s reason string is one of `invalid-last-seq`, `replay-cursor-ahead`,
+`replay-window-expired`, `replay-window-too-large`, `replay-failed`, or
+`connection-lifetime-exceeded` — the client treats all of them identically
+(full resync), but they're distinguishable in gateway logs when diagnosing
+*why* a resync was forced.
+

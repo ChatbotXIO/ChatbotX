@@ -291,7 +291,8 @@ the shared finalizer emit the transport-tagged ended event.
   (`workspacePresenceService.listOnlineMembers`) — a user counts as "online" while
   their entry is renewed within `PRESENCE_TTL_MS` (20 s). Renewal is no longer a
   per-browser-tab client heartbeat: each `apps/realtime` `workspaces` room reports its
-  distinct connected user ids to the builder every 20 s (`WorkspaceParty`'s alarm loop
+  distinct connected user ids to the builder every 10 s (the gateway's own
+  `presenceHeartbeat` timer, `PRESENCE_REPORT_INTERVAL_MS` in `presence.ts`)
   → `POST /api/workspace-presence/report` → `workspacePresenceService.heartbeatMany`,
   one Redis round-trip for the whole batch), so request volume scales with active
   workspaces, not agent count. Matches a widely used online-status-tracker model: there is

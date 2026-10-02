@@ -1,5 +1,4 @@
 import {
-  contactInboxService,
   integrationWebchatService,
   resolveBroadcastSecret,
 } from "@chatbotx.io/business"
@@ -60,28 +59,24 @@ export const POST = async (request: NextRequest) => {
     return new NextResponse(null, { status: 404 })
   }
 
-  if (guestConversationId.includes(":")) {
-    if (
-      !guestConversationId.startsWith(
-        workspaceGuestConversationPrefix(workspaceId),
-      )
-    ) {
-      return new NextResponse(null, { status: 400 })
-    }
-  } else {
-    // Legacy digits-only ids predate the workspace-prefixed scheme and carry
-    // no proof on their face of which workspace they belong to — an
-    // enumerable Snowflake id minted for another tenant's conversation would
-    // otherwise mint a valid realtime token here too. Require the
-    // conversation to actually exist under this workspace's webchat inbox.
-    const ownedConversation = await contactInboxService.findLatestBySource({
-      inboxId: webchat.inboxId,
-      sourceId: guestConversationId,
-      workspaceId,
-    })
-    if (!ownedConversation) {
-      return new NextResponse(null, { status: 404 })
-    }
+  // Legacy digits-only ids predate the workspace-prefixed scheme and carry
+  // no proof on their face of which workspace — or which caller — they
+  // belong to. A workspace-scoped existence check only proves the
+  // conversation exists somewhere in this workspace, not that the caller
+  // owns it: an enumerable Snowflake id lets anyone guess a neighbor's
+  // conversation and mint a token for it. Refuse outright; the client
+  // re-keys to a `<workspaceId>:<uuid>` id via `readLegacyGuestId` on the
+  // next load instead of continuing to send this id.
+  if (!guestConversationId.includes(":")) {
+    return new NextResponse(null, { status: 400 })
+  }
+
+  if (
+    !guestConversationId.startsWith(
+      workspaceGuestConversationPrefix(workspaceId),
+    )
+  ) {
+    return new NextResponse(null, { status: 400 })
   }
 
   const { authorized: tokenAuthorized } = await verifyWebchatAccessToken({

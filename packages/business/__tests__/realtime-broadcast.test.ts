@@ -103,4 +103,38 @@ describe("realtime stream broadcast", () => {
       workspaceId: "workspace_1",
     })
   })
+
+  test("retries a transient revoke-append failure before succeeding", async () => {
+    publishRealtimeStreamRecord
+      .mockRejectedValueOnce(new Error("ECONNRESET"))
+      .mockResolvedValueOnce(undefined)
+
+    const revoke = revokeWorkspaceMemberRealtimeConnections({
+      userId: "user_1",
+      workspaceId: "workspace_1",
+    })
+    await vi.runAllTimersAsync()
+
+    await expect(revoke).resolves.toBeUndefined()
+    expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(2)
+  })
+
+  test("throws after exhausting every revoke-append retry, so a failed member revoke is never silently swallowed", async () => {
+    const persistentError = new Error("ECONNREFUSED")
+    publishRealtimeStreamRecord.mockRejectedValue(persistentError)
+
+    const revoke = revokeWorkspaceMemberRealtimeConnections({
+      userId: "user_1",
+      workspaceId: "workspace_1",
+    })
+    // Attach the rejection assertion in the same tick the promise is
+    // created — `revoke` settles across several fake-timer-driven retries,
+    // and awaiting `vi.runAllTimersAsync()` first leaves it unhandled for a
+    // tick, which Node flags as an unhandled-then-handled rejection.
+    const assertion = expect(revoke).rejects.toBe(persistentError)
+    await vi.runAllTimersAsync()
+
+    await assertion
+    expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(3)
+  })
 })

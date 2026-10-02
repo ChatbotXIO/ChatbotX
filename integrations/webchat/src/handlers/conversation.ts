@@ -9,6 +9,10 @@ export const sendTyping: ConversationHandlers<WebchatAuthValue>["sendTyping"] =
       data: { contact, typing },
     } = props
 
+    // Deliberately fire-and-forget: a typing indicator is inherently
+    // ephemeral best-effort UI, not a tracked/billed send like a message —
+    // there is no sentCount here to get wrong, and waiting on (or failing)
+    // this publish would only delay/break the response for no benefit.
     ctx.platform
       .publishGuestRealtimeEvent(contact.sourceId, {
         eventType: "typing",

@@ -259,16 +259,44 @@ export const publishWorkspaceMemberRealtimeEvent = async (
   })
 }
 
-/** Immediately revokes a member's existing realtime connections. */
+const REVOKE_RETRY_ATTEMPTS = 3
+const REVOKE_RETRY_DELAY_MS = 250
+
+const delay = (ms: number): Promise<void> => {
+  const { promise, resolve } = Promise.withResolvers<void>()
+  setTimeout(resolve, ms)
+  return promise
+}
+
+/**
+ * Immediately revokes a member's existing realtime connections. Retries a
+ * transient Redis append failure a few times before giving up: a revoke that
+ * silently fails once leaves the member's existing socket receiving events
+ * for up to `connectionLifetimeMs` (30 minutes by default) until its next
+ * forced reconnect re-checks membership — callers must still log and decide
+ * what to do if every attempt here fails.
+ */
 export const revokeWorkspaceMemberRealtimeConnections = async (args: {
   workspaceId: string
   userId: string
 }): Promise<void> => {
-  await publishRealtimeStreamRecord({
-    kind: "member-revoke",
-    workspaceId: args.workspaceId,
-    userId: args.userId,
-  })
+  let lastError: unknown
+  for (let attempt = 1; attempt <= REVOKE_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      await publishRealtimeStreamRecord({
+        kind: "member-revoke",
+        workspaceId: args.workspaceId,
+        userId: args.userId,
+      })
+      return
+    } catch (error) {
+      lastError = error
+      if (attempt < REVOKE_RETRY_ATTEMPTS) {
+        await delay(REVOKE_RETRY_DELAY_MS * attempt)
+      }
+    }
+  }
+  throw lastError
 }
 
 /** Publishes an event to a guest conversation's active realtime connections. */

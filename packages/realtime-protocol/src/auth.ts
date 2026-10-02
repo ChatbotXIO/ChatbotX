@@ -136,9 +136,6 @@ export const signMemberConnectToken = async (
  * Verifies a room-connect token minted by `signMemberConnectToken`. Throws on a
  * bad/expired signature, an `aud` that doesn't match `workspaceId`, or a
  * missing/malformed `userId` claim.
- * Never passes `allowLegacyMissingPurpose`: no purpose-less token of this kind
- * has ever existed, and accepting one would let it replay as a broadcast
- * token — both bind the same `workspace:<id>` audience under the same secret.
  */
 export const verifyMemberConnectToken = async (
   token: string,

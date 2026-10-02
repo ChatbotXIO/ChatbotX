@@ -129,25 +129,11 @@ describe("POST /api/guest/realtime-token", () => {
     expect(mocks.contactInboxServiceFindLatestBySource).not.toHaveBeenCalled()
   })
 
-  test("returns 404 for a legacy digits-only guest conversation id with no matching conversation in this workspace's webchat inbox", async () => {
-    mocks.contactInboxServiceFindLatestBySource.mockResolvedValue(undefined)
-
+  test("returns 400 for a legacy digits-only guest conversation id, without checking the DB for an owned conversation", async () => {
     const response = await POST(buildRequest(baseBody()))
 
-    expect(response.status).toBe(404)
-    expect(mocks.contactInboxServiceFindLatestBySource).toHaveBeenCalledWith({
-      inboxId: "inbox-1",
-      sourceId: LEGACY_GUEST_CONVERSATION_ID,
-      workspaceId: WORKSPACE_ID,
-    })
-  })
-
-  test("proceeds past the ownership check for a legacy id that does resolve a conversation, reaching a 200 with a token", async () => {
-    const response = await POST(buildRequest(baseBody()))
-
-    expect(response.status).toBe(200)
-    const payload = await response.json()
-    expect(payload).toEqual({ token: "signed-guest-token" })
+    expect(response.status).toBe(400)
+    expect(mocks.contactInboxServiceFindLatestBySource).not.toHaveBeenCalled()
   })
 
   test("returns 200 with a token for an authorized new-format guest conversation id", async () => {
@@ -166,7 +152,11 @@ describe("POST /api/guest/realtime-token", () => {
   test("returns 403 when the access token is unauthorized", async () => {
     mocks.verifyWebchatAccessToken.mockResolvedValue({ authorized: false })
 
-    const response = await POST(buildRequest(baseBody()))
+    const response = await POST(
+      buildRequest(
+        baseBody({ guestConversationId: NEW_GUEST_CONVERSATION_ID }),
+      ),
+    )
 
     expect(response.status).toBe(403)
   })
@@ -177,7 +167,12 @@ describe("POST /api/guest/realtime-token", () => {
     )
 
     const response = await POST(
-      buildRequest(baseBody({ parentOrigin: "https://attacker.test" })),
+      buildRequest(
+        baseBody({
+          guestConversationId: NEW_GUEST_CONVERSATION_ID,
+          parentOrigin: "https://attacker.test",
+        }),
+      ),
     )
 
     expect(response.status).toBe(403)

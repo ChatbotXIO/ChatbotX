@@ -129,7 +129,7 @@ class InboxTeamService extends BaseService {
             userId,
           })
         } catch (error) {
-          logger.warn(
+          logger.error(
             { err: error, userId, workspaceId },
             "Failed to revoke inbox team member realtime connections",
           )

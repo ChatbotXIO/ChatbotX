@@ -269,4 +269,120 @@ describe("realtime delivery", () => {
     expect(socket.getUserData().closed).toBe(true)
     expect(socket.endCalls).toBe(1)
   })
+
+  test("does not deliver a routed event assigned to another team or user to an assigned-scope socket", () => {
+    const { delivery } = createDelivery()
+    const socket = createSocket({ chatScope: "assigned", teamIds: ["team-1"] })
+    delivery.addWorkspaceSocket(socket)
+
+    delivery.dispatch(
+      workspaceEntry([
+        {
+          data: {},
+          eventType: "messageCreated",
+          route: {
+            assignedTeamIds: ["team-2"],
+            assignedUserIds: ["user-2"],
+          },
+        },
+      ]),
+    )
+
+    expect(socket.sent).toEqual([])
+  })
+
+  test("delivers nothing to a chatScope: none socket, routed or not", () => {
+    const { delivery } = createDelivery()
+    const socket = createSocket({ chatScope: "none", teamIds: ["team-1"] })
+    delivery.addWorkspaceSocket(socket)
+
+    delivery.dispatch(
+      workspaceEntry([
+        { data: {}, eventType: "messageCreated" },
+        {
+          data: {},
+          eventType: "messageCreated",
+          route: { assignedTeamIds: ["team-1"], assignedUserIds: ["user-1"] },
+        },
+      ]),
+    )
+
+    expect(socket.sent).toEqual([])
+  })
+
+  test("replay applies the same scope filter as live dispatch", () => {
+    const { delivery } = createDelivery()
+    const assignedSocket = createSocket({
+      chatScope: "assigned",
+      teamIds: ["team-1"],
+    })
+    const noneSocket = createSocket({ chatScope: "none", userId: "user-2" })
+
+    const entries = [
+      {
+        id: "9-0",
+        record: {
+          events: [
+            {
+              data: { id: "mine" },
+              eventType: "messageCreated",
+              route: {
+                assignedTeamIds: ["team-1"],
+                assignedUserIds: ["user-1"],
+              },
+            },
+            {
+              data: { id: "not-mine" },
+              eventType: "messageCreated",
+              route: {
+                assignedTeamIds: ["team-2"],
+                assignedUserIds: ["user-2"],
+              },
+            },
+          ],
+          kind: "workspace-events" as const,
+          workspaceId: "workspace-1",
+        },
+      },
+    ]
+
+    delivery.replayWorkspaceSocket(assignedSocket, entries)
+    delivery.replayWorkspaceSocket(noneSocket, entries)
+
+    expect(assignedSocket.sent).toEqual([
+      JSON.stringify({
+        batch: [
+          {
+            data: { id: "mine" },
+            eventType: "messageCreated",
+            route: { assignedTeamIds: ["team-1"], assignedUserIds: ["user-1"] },
+          },
+        ],
+        seq: "9-0",
+      }),
+    ])
+    expect(noneSocket.sent).toEqual([])
+  })
+
+  test("never replays a guest record from another workspace onto a guest socket, even sharing the same conversation id", () => {
+    const { delivery } = createDelivery()
+    const socket = createGuestSocket({
+      guestConversationId: "12345",
+      workspaceId: "workspace-a",
+    })
+
+    delivery.replayGuestSocket(socket, [
+      {
+        id: "10-0",
+        record: {
+          event: { data: {}, eventType: "messageCreated" },
+          guestConversationId: "12345",
+          kind: "guest-event",
+          workspaceId: "workspace-b",
+        },
+      },
+    ])
+
+    expect(socket.closed).toBeNull()
+  })
 })

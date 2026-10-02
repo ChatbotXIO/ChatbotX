@@ -1,6 +1,9 @@
 "use client"
 
-import { RealtimeSocket } from "@chatbotx.io/realtime-protocol"
+import {
+  RealtimeFatalError,
+  RealtimeSocket,
+} from "@chatbotx.io/realtime-protocol"
 import { useEffect } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { getClientEmbeddingOrigin } from "@/features/integration-webchat/lib/authorized-domain"
@@ -24,6 +27,7 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     config,
     handleNewMessage,
     refetchLatestMessages,
+    setConnectionStatus,
     setIsTyping,
   } = useGuestSessionStore(
     useShallow((state) => ({
@@ -31,6 +35,7 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       config: state.config,
       handleNewMessage: state.handleNewMessage,
       refetchLatestMessages: state.refetchLatestMessages,
+      setConnectionStatus: state.setConnectionStatus,
       setIsTyping: state.setIsTyping,
     })),
   )
@@ -40,6 +45,7 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       return
     }
     let hasConnectedOnce = false
+    setConnectionStatus("connecting")
     const frameHandler = createWebchatFrameHandler({
       onMessage: handleNewMessage,
       onParseError: (error) => {
@@ -65,6 +71,14 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
             workspaceId: config.workspaceId,
           }),
         })
+        if (response.status === 401 || response.status === 403) {
+          // The access token itself is unauthorized — re-minting the
+          // realtime token on the same token would fail the same way
+          // forever, so give up instead of backing off indefinitely.
+          throw new RealtimeFatalError(
+            "Webchat realtime token mint was unauthorized",
+          )
+        }
         if (!response.ok) {
           throw new Error("Unable to mint webchat realtime token")
         }
@@ -78,13 +92,18 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       },
       onClose: ({ code, reason }) => {
         logger.warn({ code, reason }, "Webchat realtime connection closed")
+        setConnectionStatus("connecting")
       },
       onError: (error) => {
         logger.warn({ err: error }, "Webchat realtime connection failed")
+        if (error instanceof RealtimeFatalError) {
+          setConnectionStatus("closed")
+        }
       },
       onMessage: frameHandler.handleFrame,
       onOpen: () => {
         frameHandler.reset()
+        setConnectionStatus("open")
         // A guest socket carries no stream cursor (unlike the workspace
         // socket), so a reconnect — not the very first open — can't tell on
         // its own whether anything arrived during the gap. Refetch the
@@ -111,6 +130,7 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     handleNewMessage,
     publicRealtimeUrl,
     refetchLatestMessages,
+    setConnectionStatus,
     setIsTyping,
   ])
 

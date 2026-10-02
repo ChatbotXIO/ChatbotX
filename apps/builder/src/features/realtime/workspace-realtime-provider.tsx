@@ -306,6 +306,7 @@ export function WorkspaceRealtimeProvider({
       onResync: () => {
         if (!disposed) {
           lastProcessedSeqRef.current = null
+          hasConnectedOnceRef.current = false
           setResyncCount((count) => count + 1)
           setStatus("resyncing")
         }
