@@ -23,6 +23,11 @@ import {
   createHandoverResumeFlowRoute,
 } from "@/features/channel-integrations/api/public"
 import { channelPostsPublicRouter } from "@/features/channel-posts/api/public"
+import {
+  connectionProvidersPublicRouter,
+  connectionsPublicRouter,
+  connectSessionsPublicRouter,
+} from "@/features/connections/api/public"
 import { contactScanPublicRouter } from "@/features/contact-scan/api/public"
 import { contactsPublicRouter } from "@/features/contacts/api/public"
 import { conversationsPublicRouter } from "@/features/conversations/api/public"
@@ -92,6 +97,9 @@ export const publicRouter = {
   capabilities: capabilitiesPublicRouter,
   channelPosts: channelPostsPublicRouter,
   channels: channelsPublicRouter,
+  connectionProviders: connectionProvidersPublicRouter,
+  connections: connectionsPublicRouter,
+  connectSessions: connectSessionsPublicRouter,
   contactScans: contactScanPublicRouter,
   contacts: contactsPublicRouter,
   conversations: conversationsPublicRouter,
