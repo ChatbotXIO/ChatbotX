@@ -164,6 +164,28 @@ describe("webchat guest session store", () => {
     )
   })
 
+  test("abandons a legacy digits-only session id instead of reusing it (PR #1349 finding #3)", () => {
+    // A digits-only legacy id carries no proof of which caller it belongs to
+    // — the realtime-token route now refuses to mint a token for it — so
+    // reusing it here would just leave the guest unable to connect.
+    const localStorageMock = createLocalStorageMock({
+      [GUEST_CONVERSATION_ID_KEY]: "999000111",
+    })
+    vi.stubGlobal("localStorage", localStorageMock)
+
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    store.getState().initGuestSession("workspace-1:server-guest")
+
+    const scopedKey = buildGuestStorageKey("workspace-1", "webchat-1")
+    const state = store.getState()
+    expect(state.guestConversationId).toBe("workspace-1:server-guest")
+    expect(state.isNewGuestSession).toBe(true)
+    expect(localStorageMock.items.get(scopedKey)).toBe(
+      "workspace-1:server-guest",
+    )
+  })
+
   test("keeps guest sessions isolated across webchat ids", () => {
     const localStorageMock = createLocalStorageMock()
     vi.stubGlobal("localStorage", localStorageMock)

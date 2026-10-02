@@ -1,4 +1,4 @@
-# Workspace realtime platform
+# Realtime
 
 One socket per browser tab, per workspace: `WorkspaceRealtimeProvider`
 (`apps/builder/src/features/realtime/workspace-realtime-provider.tsx`) is
@@ -66,26 +66,40 @@ or oversized replay window.
 | 4003 | Gateway capacity limit | Reconnect after the JSON `retryAfter` hint. |
 | 4004 | Connection lifetime, membership, permission, or team change | Mint a fresh token and reconnect with the existing replay cursor. |
 
-## Subscribing to events
+## Connection and delivery
 
-```tsx
-"use client"
+- Member tabs connect to `/rt/workspaces/:workspaceId` with a short-lived
+  workspace-bound token. Guest tabs connect to `/rt/guests/:guestConversationId`
+  with a token bound to both the conversation and its workspace.
+- Full-access members receive one `{"batch":[…],"seq":"<stream-id>"}` frame per
+  workspace record. Assigned-only members receive one filtered frame per record;
+  unrouted events are full-access only. Directed member events use the local
+  member-connection map; a workspace-member deletion closes with code `4001`,
+  while a permissions/team-membership change (the member is still in the
+  workspace) closes with the non-terminal `4004` instead.
+- Every socket subscribes to the gateway's `hb` topic. The gateway publishes a
+  heartbeat every 25 seconds (whole-server interval). Clients independently
+  self-close with code `4000` after 60 seconds without any frame at all — this
+  is a client-side timer (`RealtimeSocket`'s `heartbeatTimeoutMs`), not a
+  server-enforced idle timeout; the server never closes a connection for
+  being quiet.
+- A member's existing connections are revoked immediately
+  (`revokeWorkspaceMemberRealtimeConnections`): already-open sockets close
+  live, and a TTL'd `realtime:revoked:{workspaceId}:{userId}` marker makes
+  every *new* connect attempt — with or without a `lastSeq` to replay through
+  — check the revoke against the token's `iat` before admitting it, so a
+  still-unexpired pre-revoke token can't reconnect either.
 
-import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-realtime-events"
+The contract is at-least-once. `seq` is strictly increasing per socket; clients
+deduplicate only complete record frames, not individual events in a batch.
 
-export function MyFeatureRealtime() {
-  useWorkspaceRealtimeEvents({
-    messageDeleted: (event) => {
-      // event.data is typed per `RealtimeEvent<"messageDeleted">`
-    },
-    conversationAssigned: (event) => {
-      // ...
-    },
-  })
+## Streams and recovery
 
-  return null
-}
-```
+The gateway activates only shards with local workspace or guest sockets. One
+Redis connection runs `XREAD BLOCK 1000 COUNT 200` across active shards; no
+consumer group is used. Every replica therefore observes the same records, so
+load-balancer workspace affinity is an optional efficiency optimization, not a
+correctness requirement.
 
 - Pass a `RealtimeHandlerMap` (`features/realtime/types.ts`): at most one
   handler per `RealtimeEventName`.
@@ -98,7 +112,12 @@ export function MyFeatureRealtime() {
   lifecycle (for example, to show “reconnecting…”), use
   `useWorkspaceRealtimeStatus()`; it never gates subscription registration.
 
-## Validation
+If the reader's single Redis connection errors (any active shard), the first
+successful read after it recovers forces every locally-connected socket to
+resync — an outage that outlasted the stream's retention window would
+otherwise silently skip the gap instead of erroring. A stream record whose
+`workspaceId` can't be recovered even loosely forces every workspace sharing
+that record's shard to resync, since there's no single workspace to target.
 
 An event is only dispatched to subscribers if:
 1. At least one subscriber registered for that `eventType` (an event this
@@ -115,32 +134,30 @@ Not every event has a schema today (e.g. `messageCreated` carries
 schema in `features/realtime/`; only reuse schemas that already exist in
 `realtime-protocol`.
 
-## What lives where
+The gateway reports presence after a user's first local socket opens or last
+local socket closes. Reports are coalesced per workspace for one second, and
+the periodic report is concurrency-bounded.
 
-- `features/realtime/` is channel-agnostic: it must never import chat or
-  WhatsApp code. It only knows about `RealtimeEventName`/`RealtimeEventData`
-  from `@chatbotx.io/partysocket-config`.
-- Chat's subscriber: `features/chat/chat-realtime.tsx` (`ChatRealtime`).
-- WhatsApp calling's subscriber:
-  `features/integration-whatsapp/calling/voip/whatsapp-call-realtime.tsx`
-  (`WhatsappCallRealtime`) — voip store / query-client only, no
-  `ChatStoreProvider` dependency.
-- The workspace-level composition of the platform with the calling layer
-  (VoIP provider/panel, the call subscriber, the presence lease) lives in
-  `apps/builder/src/components/workspace-realtime-shell.tsx`, gated by the
-  server-computed contract in the workspace layout
-  (`resolveWorkspaceRealtimeGates`, `apps/builder/src/lib/workspace/resolve-workspace-realtime-gates.ts`):
-  `realtimeEnabled` (the socket itself — true for any resolved workspace
-  access), `callingEnabled` (call control), `callHistoryEnabled` (Calls page
-  / call history and artifacts).
+## Limits
 
-## Presence lease
+| Limit | Default | Configured via | Scope |
+| --- | --- | --- | --- |
+| Total connections | 10,000 | `REALTIME_MAX_CONNECTIONS` | whole server |
+| Guest connections | 8,000 | `REALTIME_MAX_GUEST_CONNECTIONS` | whole server (sub-pool of the total above) |
+| Member connections per workspace | 500 | `REALTIME_MAX_CONNECTIONS_PER_WORKSPACE` | one workspace |
+| Guest connections per workspace | 1,000 | `REALTIME_MAX_GUEST_CONNECTIONS_PER_WORKSPACE` | one workspace, across every guest conversation |
+| Connections per guest conversation | 5 | `REALTIME_MAX_CONNECTIONS_PER_GUEST` | one `guestConversationId` |
+| Forced reconnect (connection lifetime) | 30 minutes ±15% jitter | `REALTIME_CONNECTION_LIFETIME_MS` | per socket |
+| Connect token TTL | 60 seconds | — | per mint |
+| Replay window | 500 entries / 5 minutes | — | per upgrade |
+| Backpressure buffer | 512,000 bytes (~500 KiB) | — | per socket |
+| Server heartbeat publish interval | 25s | — | whole server |
+| Client self-closes on silence (no frame at all) | 60s | — | per socket (client-side timer, not server-enforced) |
 
-Any feature that needs "who has this workspace open right now" (today:
-`selectRingTargetsForCall` in `voip-call-service.ts`) reads through
-`workspacePresenceService`
-(`packages/business/src/workspace-presence/service.ts`) — channel-agnostic,
-not tied to calling.
+Hitting any connection-count limit above completes the WebSocket handshake
+and then immediately closes with `4003` and a jittered `retryAfter` (1–5s) in
+the close reason, so the client's backoff is server-directed rather than
+guessed.
 
 **Server-reported presence:** Realtime maintains a `Set` of distinct connected
 member ids for each workspace. On a member’s first local socket it schedules a

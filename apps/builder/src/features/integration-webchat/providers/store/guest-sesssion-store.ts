@@ -4,9 +4,10 @@ import { createId } from "@chatbotx.io/utils"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { CreateWebchatMessageRequest } from "@/features/messages/schema/mutation"
-import type { ListMessagesResponse } from "@/features/messages/schema/query"
+import { listMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schema/resource"
+import { logger } from "@/lib/log"
 import { getWebchatProfileFields } from "../../browser-profile-fields"
 import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
 import {
@@ -41,11 +42,28 @@ export type GuestSessionState = {
   isLoadMoreMessage: boolean
   hasNextMessagePage: boolean
   isTyping: boolean
+
+  /**
+   * Realtime socket lifecycle. `"closed"` means either of two things:
+   * - The realtime-token mint came back 401/403 (see webchat-realtime.tsx):
+   *   re-minting with the same access token will never succeed, and
+   *   `RealtimeSocket` has given up reconnecting entirely — genuinely
+   *   terminal.
+   * - A sustained non-fatal outage (several consecutive failed
+   *   connects, or too long without a single successful open): the socket
+   *   is still quietly retrying in the background, but the widget stops
+   *   claiming "connecting" after that long. A later successful reconnect
+   *   flips this back to `"open"` on its own.
+   * Either way, the widget should tell the guest the connection is down
+   * rather than appearing to silently stop responding.
+   */
+  connectionStatus: "connecting" | "open" | "closed"
 }
 
 export type GuestSessionActions = {
   setGuestUser: (user: UserResource) => void
   initGuestSession: (serverGuestConversationId: string) => void
+  setConnectionStatus: (status: GuestSessionState["connectionStatus"]) => void
 
   // messages
   appendMessage: (message: Partial<MessageResource>) => MessageResource
@@ -53,6 +71,7 @@ export type GuestSessionActions = {
     guestConversationId: string,
     perPage: number,
   ) => Promise<void>
+  refetchLatestMessages: (perPage: number) => Promise<void>
   handleNewMessage: (message: MessageResource) => void
   sendMessage: (content: string) => void
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
@@ -84,6 +103,7 @@ export const createGuestSessionStore = (
     hasNextMessagePage: true,
 
     isTyping: false,
+    connectionStatus: "connecting",
 
     initGuestSession: (serverGuestConversationId: string) => {
       const { guestConversationId, config } = get()
@@ -98,8 +118,14 @@ export const createGuestSessionStore = (
         return
       }
 
+      // Only the `<workspaceId>:<uuid>` legacy global-key form is safe to
+      // reuse here. A digits-only legacy id carries no proof of which
+      // *caller* it belongs to (see guest-conversation-id.ts), and the
+      // realtime-token route now refuses to mint tokens for it — so reusing
+      // it would just leave the guest unable to connect. Fall through to
+      // mint a fresh id instead of returning early.
       const legacyGuestId = readLegacyGuestId()
-      if (legacyGuestId) {
+      if (legacyGuestId?.includes(":")) {
         safeStorageSet(scopedKey, legacyGuestId)
         set({ guestConversationId: legacyGuestId, isNewGuestSession: false })
         return
@@ -114,6 +140,10 @@ export const createGuestSessionStore = (
 
     setGuestUser: (user: UserResource) => {
       set({ user })
+    },
+
+    setConnectionStatus: (connectionStatus) => {
+      set({ connectionStatus })
     },
 
     loadMoreMessages: async (guestConversationId: string, perPage: number) => {
@@ -145,16 +175,14 @@ export const createGuestSessionStore = (
           params.set("parentOrigin", parentOrigin)
         }
 
-        const { data, nextCursor } = await ky
-          .get<ListMessagesResponse>(
-            `/api/guest/messages?${params.toString()}`,
-            {
-              headers: accessToken
-                ? { Authorization: `Bearer ${accessToken}` }
-                : undefined,
-            },
-          )
+        const raw = await ky
+          .get(`/api/guest/messages?${params.toString()}`, {
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : undefined,
+          })
           .json()
+        const { data, nextCursor } = listMessagesResponse.parse(raw)
 
         set({
           messages: [...data.reverse(), ...messages],
@@ -165,6 +193,63 @@ export const createGuestSessionStore = (
       } catch (error) {
         set({ isLoadMoreMessage: false })
         console.error("Failed to load more messages:", error)
+        throw error
+      }
+    },
+
+    refetchLatestMessages: async (perPage: number) => {
+      const { guestConversationId, config, accessToken } = get()
+      if (!guestConversationId) {
+        return
+      }
+
+      try {
+        const params = new URLSearchParams({
+          perPage: `${perPage}`,
+          cursor: "",
+          guestConversationId,
+          workspaceId: config.workspaceId,
+          webchatId: config.id,
+        })
+        const parentOrigin = getClientEmbeddingOrigin()
+        if (parentOrigin) {
+          params.set("parentOrigin", parentOrigin)
+        }
+
+        const raw = await ky
+          .get(`/api/guest/messages?${params.toString()}`, {
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : undefined,
+          })
+          .json()
+        const { data } = listMessagesResponse.parse(raw)
+
+        // Only append messages the socket hasn't already delivered — this
+        // recovers the common "missed a few messages during a brief
+        // reconnect" gap, not a true replay: a gap wider than one page of
+        // history still isn't fully backfilled (the guest socket has no
+        // stream cursor to resume from, unlike the workspace socket).
+        set((state) => {
+          const seenIds = new Set(
+            state.messages.map((message) => message.id).filter(Boolean),
+          )
+          const freshMessages = [...data]
+            .reverse()
+            .filter((message) => !seenIds.has(message.id))
+          return freshMessages.length > 0
+            ? {
+                messages: [...state.messages, ...freshMessages].sort(
+                  (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+                ),
+              }
+            : {}
+        })
+      } catch (error) {
+        logger.warn(
+          { err: error },
+          "Failed to refetch messages after reconnect",
+        )
         throw error
       }
     },
@@ -187,6 +272,16 @@ export const createGuestSessionStore = (
           })
           return
         }
+      }
+
+      // Second line of defence against a duplicate delivery (e.g. a guest
+      // socket's replay window overlapping its live subscription): don't
+      // render a server message id that is already in the list.
+      if (
+        message.id &&
+        messages.some((existing) => existing.id === message.id)
+      ) {
+        return
       }
 
       // Append the message to the end of messages list
