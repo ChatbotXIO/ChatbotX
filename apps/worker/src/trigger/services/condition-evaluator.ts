@@ -52,6 +52,14 @@ export class ConditionEvaluator {
       case triggerEventTypes.enum.unsubscribedFromSequence:
       case triggerEventTypes.enum.contactReferredANewContact:
       case triggerEventTypes.enum.contactReferredExistingContact:
+      // The five WhatsApp call conditions the Triggers screen offers. They
+      // carry no source or operator, so the event happening is the whole
+      // condition, same as the ones above.
+      case triggerEventTypes.enum.incomingCall:
+      case triggerEventTypes.enum.missedAudioCall:
+      case triggerEventTypes.enum.callEnded:
+      case triggerEventTypes.enum.callRecorded:
+      case triggerEventTypes.enum.callTranscribed:
         return true
 
       case triggerEventTypes.enum.dateTimeBasedTrigger:
