@@ -31,6 +31,8 @@ type TenantBrandingData = {
 }
 
 const tenantCacheTag = (tenantId: string) => `tenants:${tenantId}`
+const ownerCacheTag = (ownerId: string) => `tenants:owner:${ownerId}`
+const TENANT_CACHE_TTL_SECONDS = 30
 
 /**
  * Read/write access to the `Tenant` row (identity + lifecycle + branding). A
@@ -46,7 +48,7 @@ export const tenantService = {
         db.query.tenantModel.findFirst({
           where: { id: tenantId },
         }),
-      { tags: [tenantCacheTag(tenantId)], ttl: 30 },
+      { tags: [tenantCacheTag(tenantId)], ttl: TENANT_CACHE_TTL_SECONDS },
     )
   },
 
@@ -82,10 +84,32 @@ export const tenantService = {
     )
   },
 
-  findByOwner(ownerId: string) {
-    return db.query.tenantModel.findFirst({
-      where: { ownerId },
-    })
+  /**
+   * The tenant owned by `ownerId`, or `undefined` if `ownerId` owns no
+   * tenant. The "no tenant" result is cached too (wrapped in an object,
+   * since `withCache` never persists a bare `null`/`undefined`) — this is
+   * the common case for a plain platform user, so it's worth caching.
+   * `upsertById`/`upsertByOwner`/`setStatusByOwner` bust this entry via
+   * `dynamicTags` pointing at the tenant's own tag; `provisionForOwner` busts
+   * it directly through `ownerCacheTag` since no tenant (and so no tenant
+   * tag) exists yet at that point.
+   */
+  async findByOwner(ownerId: string) {
+    const { tenant } = await withCache(
+      ownerCacheTag(ownerId),
+      async () => ({
+        tenant:
+          (await db.query.tenantModel.findFirst({ where: { ownerId } })) ??
+          null,
+      }),
+      {
+        ttl: TENANT_CACHE_TTL_SECONDS,
+        tags: [ownerCacheTag(ownerId)],
+        dynamicTags: (r) =>
+          r.tenant ? [tenantCacheTag(r.tenant.id)] : undefined,
+      },
+    )
+    return tenant ?? undefined
   },
 
   /**
@@ -112,6 +136,7 @@ export const tenantService = {
       .onConflictDoNothing({ target: tenantModel.ownerId })
       .returning({ id: tenantModel.id })
     if (created) {
+      await invalidateCacheByTags([ownerCacheTag(ownerId)])
       return created.id
     }
 
