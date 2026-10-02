@@ -91,13 +91,15 @@ guessed.
 | --- | --- | --- |
 | `4000` | Client self-detected it hasn't seen any frame (incl. heartbeats) for 60s — a client-side timer, not something the server sends | Reconnects with backoff |
 | `4001` (`revoked`) | The member was removed from the workspace | Does not reconnect — caller must re-authenticate |
-| `4002` (`resync`) | Replay cursor invalid/expired/oversized, a replay-window entry couldn't be fully parsed, or a post-outage recovery | Clears its cursor and reconnects immediately |
+| `4002` (`resync`) | Replay cursor invalid/expired/oversized, a replay-window entry couldn't be fully parsed, a slow consumer's buffer was dropped, or a post-outage recovery | Clears its cursor and reconnects with jittered backoff (same exponential schedule as `4000`), not immediately |
 | `4003` (`overloaded`) | A limit from the table above was hit | Reconnects after the server-supplied `retryAfter` |
 | `4004` (`reauth`) | Permissions/team membership changed, or the connection lifetime elapsed | Reconnects with a freshly minted token, keeping its replay cursor |
 
 `4002`'s reason string is one of `invalid-last-seq`, `replay-cursor-ahead`,
 `replay-window-expired`, `replay-window-too-large`, `replay-failed`,
-`replay-entries-dropped` (the replay window contained an entry for this
+`backpressure-drop` (a slow consumer exceeded the server's backpressure
+buffer and had frames dropped — rather than let it keep running with a
+silent gap, the server forces it to resync), `replay-entries-dropped` (the replay window contained an entry for this
 workspace that couldn't be fully parsed — the connect still opens with
 whatever replayed cleanly, then immediately resyncs instead of leaving a
 silent gap), `malformed-stream-record` (a *live* stream record this replica

@@ -262,6 +262,28 @@ describe("WorkspaceRealtimeProvider", () => {
     )
   })
 
+  test("triggers a throttled resync for a well-formed but schema-invalid batch envelope", async () => {
+    // Regression for PR #1349 round-5: a frame that parses as JSON but
+    // fails realtimeBatchEnvelopeSchema (unlike "not json" above, which
+    // never even reaches schema validation) previously only logged — now
+    // it also resyncs, throttled so a burst of them can't storm
+    // invalidateQueries().
+    function StatusReader() {
+      const { resyncCount } = useWorkspaceRealtimeContext()
+      return <div data-testid="resync-count">{resyncCount}</div>
+    }
+
+    await render(<StatusReader />)
+    const socket = await waitForSocket()
+
+    act(() => socket.receive(JSON.stringify({ not: "a valid batch" })))
+    expect(container.textContent).toBe("1")
+
+    // A second invalid batch this close together is throttled.
+    act(() => socket.receive(JSON.stringify({ also: "not valid" })))
+    expect(container.textContent).toBe("1")
+  })
+
   test("suppresses duplicate and stale stream batches during replay handoff", async () => {
     const handler = vi.fn()
     function Subscriber() {
