@@ -1,5 +1,5 @@
 import {
-  isRealtimeSeqAfter,
+  createRealtimeFrameReader,
   RealtimeEventType,
   realtimeGuestBatchEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
@@ -18,7 +18,8 @@ export type WebchatFrameHandler = {
  * Guards against the two gaps a guest socket is exposed to that a workspace
  * socket already handles: heartbeat frames (guest sockets subscribe to the
  * shared `hb` topic) and duplicate deliveries (a guest socket's replay window
- * can overlap the live subscription, replaying a record twice).
+ * can overlap the live subscription, replaying a record twice) — both
+ * handled by the shared `createRealtimeFrameReader`.
  */
 export const createWebchatFrameHandler = (handlers: {
   onMessage: (message: MessageResource) => void
@@ -26,64 +27,49 @@ export const createWebchatFrameHandler = (handlers: {
   onResyncNeeded: () => void
   onTyping: (isTyping: boolean) => void
 }): WebchatFrameHandler => {
-  let lastSeq: string | null = null
+  const frameReader = createRealtimeFrameReader({
+    onParseError: handlers.onParseError,
+    onResyncNeeded: handlers.onResyncNeeded,
+    schema: realtimeGuestBatchEnvelopeSchema,
+  })
 
   const handleFrame = (data: string): void => {
-    try {
-      const parsed: unknown = JSON.parse(data)
-      if (parsed && typeof parsed === "object" && "hb" in parsed) {
-        return
-      }
-      const batch = realtimeGuestBatchEnvelopeSchema.safeParse(parsed)
-      if (!batch.success) {
-        handlers.onParseError(batch.error)
-        handlers.onResyncNeeded()
-        return
-      }
-      const { seq } = batch.data
-      if (lastSeq && !isRealtimeSeqAfter(seq, lastSeq)) {
-        return
-      }
-      lastSeq = seq
+    const batch = frameReader.readFrame(data)
+    if (!batch) {
+      return
+    }
 
-      for (const event of batch.data.batch) {
-        switch (event.eventType) {
-          case RealtimeEventType.messageCreated: {
-            const parsedMessage = messageResource.safeParse(event.data)
-            if (!parsedMessage.success) {
-              handlers.onParseError(parsedMessage.error)
-              handlers.onResyncNeeded()
-              break
-            }
-            const message = parsedMessage.data
-            handlers.onMessage(message)
-            if (message.messageType === "outgoing") {
-              handlers.onTyping(false)
-            }
+    for (const event of batch) {
+      switch (event.eventType) {
+        case RealtimeEventType.messageCreated: {
+          const parsedMessage = messageResource.safeParse(event.data)
+          if (!parsedMessage.success) {
+            handlers.onParseError(parsedMessage.error)
+            frameReader.reportInvalidEvent()
             break
           }
-          case RealtimeEventType.typing:
-            if (
-              event.data &&
-              typeof event.data === "object" &&
-              "typing" in event.data &&
-              typeof event.data.typing === "boolean"
-            ) {
-              handlers.onTyping(event.data.typing)
-            }
-            break
-          default:
-            break
+          const message = parsedMessage.data
+          handlers.onMessage(message)
+          if (message.messageType === "outgoing") {
+            handlers.onTyping(false)
+          }
+          break
         }
+        case RealtimeEventType.typing:
+          if (
+            event.data &&
+            typeof event.data === "object" &&
+            "typing" in event.data &&
+            typeof event.data.typing === "boolean"
+          ) {
+            handlers.onTyping(event.data.typing)
+          }
+          break
+        default:
+          break
       }
-    } catch (error) {
-      handlers.onParseError(error)
     }
   }
 
-  const reset = (): void => {
-    lastSeq = null
-  }
-
-  return { handleFrame, reset }
+  return { handleFrame, reset: frameReader.reset }
 }

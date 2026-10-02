@@ -1,13 +1,15 @@
 "use client"
 
 import {
-  isRealtimeSeqAfter,
+  createRealtimeFrameReader,
   REALTIME_CLOSE_CODE,
-  type RealtimeEventData,
+  type RealtimeEventEnvelope,
   RealtimeEventType,
   RealtimeFatalError,
+  type RealtimeFrameReader,
   RealtimeSocket,
-  realtimeBatchEnvelopeSchema,
+  type RealtimeTargetedEventData,
+  realtimeMemberBatchEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
 import { ORPCError } from "@orpc/client"
 import { useQueryClient } from "@tanstack/react-query"
@@ -66,7 +68,7 @@ function isKnownRealtimeEventName(value: string): value is RealtimeEventName {
  * stores, since a single `Map`/`Set` can't hold a distinct generic
  * instantiation per entry.
  */
-type ErasedRealtimeListener = (event: RealtimeEventData) => void
+type ErasedRealtimeListener = (event: RealtimeTargetedEventData) => void
 
 const logRealtimeWarning = ({
   error,
@@ -124,7 +126,10 @@ const WorkspaceRealtimeContext =
  * always share the same `eventType` string, even though TS can't correlate a
  * dynamically-looked-up key with one union member.
  */
-function invokeErasedHandler(handler: unknown, event: RealtimeEventData): void {
+function invokeErasedHandler(
+  handler: unknown,
+  event: RealtimeTargetedEventData,
+): void {
   if (typeof handler !== "function") {
     return
   }
@@ -153,7 +158,8 @@ export function WorkspaceRealtimeProvider({
   const [status, setStatus] =
     useState<WorkspaceRealtimeConnectionStatus>("connecting")
   const [resyncCount, setResyncCount] = useState(0)
-  const lastProcessedSeqRef = useRef<string | null>(null)
+  const frameReaderRef =
+    useRef<RealtimeFrameReader<RealtimeEventEnvelope> | null>(null)
   const hasConnectedOnceRef = useRef(false)
   const pendingResyncRef = useRef(false)
 
@@ -188,7 +194,10 @@ export function WorkspaceRealtimeProvider({
           // good — a resync-triggered `invalidateQueries()` is the only way
           // a listener still gets a correct (if delayed) view. See PR #1349
           // round-4 medium finding (client frames dropped without a resync).
-          setResyncCount((count) => count + 1)
+          // Shares the frame reader's throttle (round-5): a burst of these
+          // can't storm resyncCount/invalidateQueries() any more than a
+          // burst of invalid batch envelopes can.
+          frameReaderRef.current?.reportInvalidEvent()
           return
         }
       }
@@ -196,7 +205,7 @@ export function WorkspaceRealtimeProvider({
       const dispatchedEvent = {
         eventType,
         data,
-      } as unknown as RealtimeEventData
+      } as unknown as RealtimeTargetedEventData
 
       for (const listener of listeners) {
         try {
@@ -219,42 +228,10 @@ export function WorkspaceRealtimeProvider({
 
   const processSocketMessage = useCallback(
     (data: string): void => {
-      let parsedJson: unknown
-      try {
-        parsedJson = JSON.parse(data)
-      } catch (error) {
-        logRealtimeWarning({
-          error,
-          message: "Workspace realtime: could not parse message frame",
-          reason: "malformed-json",
-          suppressionMessage:
-            "Workspace realtime: further malformed-JSON warnings suppressed for this window",
-        })
+      const batch = frameReaderRef.current?.readFrame(data)
+      if (!batch) {
         return
       }
-
-      if (parsedJson && typeof parsedJson === "object" && "hb" in parsedJson) {
-        return
-      }
-      const batchResult = realtimeBatchEnvelopeSchema.safeParse(parsedJson)
-      if (!batchResult.success) {
-        logRealtimeWarning({
-          error: batchResult.error,
-          message: "Workspace realtime: message frame is not a valid batch",
-          reason: "invalid-batch",
-          suppressionMessage:
-            "Workspace realtime: further invalid-batch warnings suppressed for this window",
-        })
-        return
-      }
-      const { batch, seq } = batchResult.data
-      if (
-        lastProcessedSeqRef.current &&
-        !isRealtimeSeqAfter(seq, lastProcessedSeqRef.current)
-      ) {
-        return
-      }
-      lastProcessedSeqRef.current = seq
       for (const frame of batch) {
         processRealtimeEvent(frame)
       }
@@ -264,7 +241,29 @@ export function WorkspaceRealtimeProvider({
 
   useEffect(() => {
     let disposed = false
-    lastProcessedSeqRef.current = null
+    frameReaderRef.current = createRealtimeFrameReader({
+      onParseError: (error) => {
+        // JSON.parse throws SyntaxError; a schema-validation failure never
+        // does — this recovers the same malformed-json/invalid-batch
+        // distinction the previous hand-rolled parsing had, for independent
+        // per-reason log suppression windows.
+        const isMalformedJson = error instanceof SyntaxError
+        logRealtimeWarning({
+          error,
+          message: isMalformedJson
+            ? "Workspace realtime: could not parse message frame"
+            : "Workspace realtime: message frame is not a valid batch",
+          reason: isMalformedJson ? "malformed-json" : "invalid-batch",
+          suppressionMessage: isMalformedJson
+            ? "Workspace realtime: further malformed-JSON warnings suppressed for this window"
+            : "Workspace realtime: further invalid-batch warnings suppressed for this window",
+        })
+      },
+      onResyncNeeded: () => {
+        setResyncCount((count) => count + 1)
+      },
+      schema: realtimeMemberBatchEnvelopeSchema,
+    })
     hasConnectedOnceRef.current = false
     pendingResyncRef.current = false
     setStatus("connecting")
@@ -305,7 +304,7 @@ export function WorkspaceRealtimeProvider({
         // cursor: the server resyncs us (closeReason) unless the stream is
         // genuinely empty, which is exactly the safe behavior here.
         const lastSeq =
-          lastProcessedSeqRef.current ??
+          frameReaderRef.current?.getLastSeq() ??
           (hasConnectedOnceRef.current ? "0-0" : null)
         if (lastSeq) {
           socketUrl.searchParams.set("lastSeq", lastSeq)
@@ -340,7 +339,7 @@ export function WorkspaceRealtimeProvider({
       },
       onResync: () => {
         if (!disposed) {
-          lastProcessedSeqRef.current = null
+          frameReaderRef.current?.reset()
           hasConnectedOnceRef.current = false
           pendingResyncRef.current = true
           setStatus("resyncing")

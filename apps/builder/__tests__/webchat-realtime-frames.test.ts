@@ -149,6 +149,8 @@ describe("createWebchatFrameHandler", () => {
 
     expect(onMessage).not.toHaveBeenCalled()
     expect(onParseError).toHaveBeenCalledTimes(2)
-    expect(onResyncNeeded).toHaveBeenCalledTimes(2)
+    // Throttled (round-5 finding): two invalid payloads this close together
+    // share one resync signal instead of storming onResyncNeeded.
+    expect(onResyncNeeded).toHaveBeenCalledTimes(1)
   })
 })

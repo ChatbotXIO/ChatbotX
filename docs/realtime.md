@@ -62,9 +62,15 @@ or oversized replay window.
 | --- | --- | --- |
 | 4000 | Heartbeat timeout detected by the client | Reconnect normally. |
 | 4001 | Membership revoked or workspace deleted | Stop reconnecting. |
-| 4002 | Replay or live-stream gap | Invalidate and refetch realtime-backed data, then reconnect. |
+| 4002 | Replay or live-stream gap, including a dropped slow-consumer buffer | Invalidate and refetch realtime-backed data, then reconnect with jittered backoff. |
 | 4003 | Gateway capacity limit | Reconnect after the JSON `retryAfter` hint. |
 | 4004 | Connection lifetime, membership, permission, or team change | Mint a fresh token and reconnect with the existing replay cursor. |
+`4002` is raised for `invalid-last-seq`, `replay-cursor-ahead`,
+`replay-window-expired`, `replay-window-too-large`, `replay-failed`,
+`backpressure-drop`, `replay-entries-dropped`, `malformed-stream-record`, and
+`stream-reader-recovered`. Each reason requires the same authoritative resync;
+the gateway logs the specific cause for diagnosis.
+
 
 ## Connection and delivery
 
