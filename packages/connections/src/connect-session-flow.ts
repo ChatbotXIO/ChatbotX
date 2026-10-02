@@ -17,7 +17,7 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
+import { db, isUniqueViolationError } from "@chatbotx.io/database/client"
 import type {
   ChannelType,
   ConnectSessionOutcome,
@@ -330,9 +330,54 @@ const completeReconnect = async (input: {
   // event `connectFromCredentials`'s revive path uses.
   const ownerId = await resolveOwnerId(connection)
   await db.transaction(async (tx) => {
-    await store.saveAuthByForeignKey(foreignKey, auth, tx)
+    // `Connection.inboxId`/`integrationId` is never cleared when a
+    // `delete_row` provider's satellite row is deleted on disconnect, so
+    // its mere presence doesn't mean a row to update still exists —
+    // attempt the update and fall back to inserting a fresh satellite row
+    // when it matches zero rows (regression I3: this used to silently
+    // no-op for a `delete_row` channel like messenger/instagram, then
+    // still proceed to `connect.completed` — consuming quota and
+    // reporting the reconnect as successful with no auth persisted
+    // anywhere).
+    const revived = await store.saveAuthByForeignKey(
+      foreignKey,
+      auth,
+      undefined,
+      tx,
+    )
+    let integrationId: string | undefined
+    if (!revived) {
+      try {
+        const inserted = await store.insertRow(
+          {
+            workspaceId: connection.workspaceId,
+            inboxId: connection.inboxId ?? undefined,
+            auth,
+            descriptor,
+            config: {},
+          },
+          tx,
+        )
+        integrationId = inserted.integrationId
+      } catch (err) {
+        if (
+          store.duplicateConstraint &&
+          isUniqueViolationError(err, store.duplicateConstraint)
+        ) {
+          throw connectionAlreadyConnectedException()
+        }
+        throw err
+      }
+    }
     await connectionRepository.update(
-      { id: connection.id, values: { authExpiresAt, lastError: null } },
+      {
+        id: connection.id,
+        values: {
+          authExpiresAt,
+          lastError: null,
+          integrationId: integrationId ?? connection.integrationId,
+        },
+      },
       tx,
     )
     await connectionStateService.transition({
@@ -494,94 +539,116 @@ export const connectTargets = async (input: {
 
   const outcomes: ConnectSessionOutcome[] = []
   const connections: ConnectionModel[] = []
+  let updatedSession: ConnectSessionModel | undefined
 
-  for (const targetId of input.targetIds) {
-    const target = session.targets.find((t) => t.id === targetId)
-    const candidate = candidateBySourceId.get(targetId)
-    if (!(target && candidate)) {
-      outcomes.push({ targetId, status: "failed", reason: "unknown" })
-      continue
-    }
-    if (!target.selectable) {
-      outcomes.push(
-        target.alreadyConnected
-          ? { targetId, status: "duplicated", reason: "alreadyConnected" }
-          : { targetId, status: "failed", reason: "notSelectable" },
-      )
-      continue
-    }
+  try {
+    for (const targetId of input.targetIds) {
+      const target = session.targets.find((t) => t.id === targetId)
+      const candidate = candidateBySourceId.get(targetId)
+      if (!(target && candidate)) {
+        outcomes.push({ targetId, status: "failed", reason: "unknown" })
+        continue
+      }
+      if (!target.selectable) {
+        outcomes.push(
+          target.alreadyConnected
+            ? { targetId, status: "duplicated", reason: "alreadyConnected" }
+            : { targetId, status: "failed", reason: "notSelectable" },
+        )
+        continue
+      }
 
-    const claimed = await connectSessionService.claimTarget({
-      id: session.id,
-      targetId,
-    })
-    if (!claimed) {
-      outcomes.push({
+      const claimed = await connectSessionService.claimTarget({
+        id: session.id,
         targetId,
-        status: "duplicated",
-        reason: "alreadyConnected",
       })
-      continue
-    }
-
-    try {
-      const connection = await connectCandidate({
-        workspaceId: input.workspaceId,
-        provider: session.provider,
-        candidate: candidate as ConnectionCandidate,
-        actorUserId: input.actorUserId,
-      })
-      connections.push(connection)
-      outcomes.push({
-        targetId,
-        status: "connected",
-        connectionId: connection.id,
-      })
-    } catch (err) {
-      // The claim above already appended `targetId` to `claimedTargetIds`;
-      // every branch below ends in a non-`connected` outcome, so release it
-      // — otherwise a retry's `claimTarget` permanently sees this target as
-      // claimed and reports `duplicated` even though it was never actually
-      // connected.
-      await connectSessionService.releaseTarget({ id: session.id, targetId })
-      if (
-        err instanceof ChatbotXException &&
-        err.code === "channelLimitReached"
-      ) {
-        outcomes.push({
-          targetId,
-          status: "limitReached",
-          reason: "workspaceLimit",
-        })
-      } else if (
-        err instanceof ChatbotXException &&
-        err.code === "connectionAlreadyConnected"
-      ) {
+      if (!claimed) {
         outcomes.push({
           targetId,
           status: "duplicated",
           reason: "alreadyConnected",
         })
-      } else {
-        logger.warn(
-          { err, targetId, provider: session.provider },
-          "connectTargets: candidate connect failed",
-        )
+        continue
+      }
+
+      try {
+        const connection = await connectCandidate({
+          workspaceId: input.workspaceId,
+          provider: session.provider,
+          candidate: candidate as ConnectionCandidate,
+          actorUserId: input.actorUserId,
+        })
+        connections.push(connection)
         outcomes.push({
           targetId,
-          status: "failed",
-          reason: "providerRejected",
-          detail: toPublicErrorMessage(err, "Connect failed"),
+          status: "connected",
+          connectionId: connection.id,
         })
+      } catch (err) {
+        // The claim above already appended `targetId` to `claimedTargetIds`;
+        // every branch below ends in a non-`connected` outcome, so release it
+        // — otherwise a retry's `claimTarget` permanently sees this target as
+        // claimed and reports `duplicated` even though it was never actually
+        // connected. Isolated in its own try (regression I10): a
+        // `releaseTarget` failure (e.g. a transient DB error) must not
+        // propagate past this `catch` — that used to abort the ENTIRE
+        // `for` loop, skipping every remaining target in the batch and
+        // the `recordResults` call below for ones already processed.
+        try {
+          await connectSessionService.releaseTarget({
+            id: session.id,
+            targetId,
+          })
+        } catch (releaseErr) {
+          logger.warn(
+            { err: releaseErr, targetId, provider: session.provider },
+            "connectTargets: releaseTarget failed after a failed connect attempt; the target stays claimed until a later retry releases it",
+          )
+        }
+        if (
+          err instanceof ChatbotXException &&
+          err.code === "channelLimitReached"
+        ) {
+          outcomes.push({
+            targetId,
+            status: "limitReached",
+            reason: "workspaceLimit",
+          })
+        } else if (
+          err instanceof ChatbotXException &&
+          err.code === "connectionAlreadyConnected"
+        ) {
+          outcomes.push({
+            targetId,
+            status: "duplicated",
+            reason: "alreadyConnected",
+          })
+        } else {
+          logger.warn(
+            { err, targetId, provider: session.provider },
+            "connectTargets: candidate connect failed",
+          )
+          outcomes.push({
+            targetId,
+            status: "failed",
+            reason: "providerRejected",
+            detail: toPublicErrorMessage(err, "Connect failed"),
+          })
+        }
       }
     }
+  } finally {
+    // Runs even if something outside the per-target `try/catch` above threw
+    // unexpectedly (e.g. `claimTarget` itself) — the last line of defense so
+    // a partial batch's outcomes collected so far are never silently
+    // dropped (regression I10). On the normal path this is simply where
+    // the final merge happens.
+    updatedSession = await connectSessionService.recordResults({
+      id: session.id,
+      results: outcomes,
+      resultConnectionIds: connections.map((connection) => connection.id),
+    })
   }
-
-  const updatedSession = await connectSessionService.recordResults({
-    id: session.id,
-    results: outcomes,
-    resultConnectionIds: connections.map((connection) => connection.id),
-  })
 
   return { session: updatedSession, connections, outcomes }
 }

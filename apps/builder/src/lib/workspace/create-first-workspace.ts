@@ -51,8 +51,22 @@ function createChannelErrorPathFor(error: unknown): string | null {
  * the channel connects. Shared by the OAuth callback and the Facebook
  * SSO-reuse route so both turn a plan-limit failure into a redirect back to
  * `/channels/create` with a translated message, never a bare 500.
+ *
+ * Idempotent on `ownerId` (regression I7): this runs from a plain GET route
+ * reached by a redirect, not a POST — a browser back-button retry, a
+ * double-navigation, or a replayed request must reuse the user's existing
+ * workspace instead of minting a second "New Workspace" every time. Without
+ * this check, `workspaceService.create` has no such guard (it isn't meant
+ * to — callers that deliberately want an ADDITIONAL workspace, e.g.
+ * Settings → "New workspace", must still be able to create one), so the
+ * idempotency has to live here, at the "this is the user's FIRST workspace"
+ * call site specifically.
  */
 export async function createFirstWorkspace(userId: string) {
+  const existing = await workspaceService.find({ where: { ownerId: userId } })
+  if (existing) {
+    return existing
+  }
   try {
     return await workspaceService.create({
       data: { name: "New Workspace", ownerId: userId },

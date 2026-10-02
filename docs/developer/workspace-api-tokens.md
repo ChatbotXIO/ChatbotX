@@ -419,6 +419,15 @@ scope, each public handler calls the same `packages/business` service
 method the private/action code calls — no business logic was duplicated to
 publish these.
 
+**Accepted consequence:** the merge is a deliberate simplification, not an
+oversight — a token issued before 2026-09-14 with only the old
+`integrations` scope can now also connect/disconnect channels (and a
+`channels`-only token can now manage integrations), because both map to
+the same `connections` value post-migration. A workspace that needs the
+pre-merge separation back must issue a narrower-scoped (or unscoped=`null`
+only where appropriate) replacement token; the two scopes will not be
+re-split.
+
 | Endpoint | Notes |
 |---|---|
 | `GET/POST /v1/user-persistent-menus`, `GET/PUT/DELETE /v1/user-persistent-menus/{id}` | Full CRUD via `userPersistentMenuService`. |

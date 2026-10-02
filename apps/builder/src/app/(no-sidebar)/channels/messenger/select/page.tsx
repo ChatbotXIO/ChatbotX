@@ -1,14 +1,10 @@
-import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import {
-  type ResolvedConnectSession,
-  resolveConnectSession,
-} from "@/features/channel-connect/lib/resolve-connect-session"
-import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
+  resolveSelectSession,
+  toConnectPickerItem,
+} from "@/features/channel-connect/lib/select-page"
 import type { MessengerPickerItem } from "@/features/integration-messenger/components/messenger-pages"
 import { SelectPage } from "@/features/integration-messenger/components/select-account"
-import { getCurrentUserId } from "@/lib/auth/utils"
-import { logger } from "@/lib/log"
 
 export const dynamic = "force-dynamic"
 
@@ -26,63 +22,28 @@ export const dynamic = "force-dynamic"
  * - `bmLookupFailed` (the Business Manager lookup warning) isn't part of
  *   the session's public target projection, so it's always `false` here.
  */
-function toPickerItem(
-  target: {
-    id: string
-    name: string
-    selectable: boolean
-    alreadyConnected?: "this_workspace" | "other_workspace"
-  },
-  t: Awaited<ReturnType<typeof getTranslations>>,
-): MessengerPickerItem {
-  return {
-    id: target.id,
-    name: target.name,
-    secondary: target.id,
-    disabled: !target.selectable,
-    disabledReason: target.alreadyConnected
-      ? t("messenger.selectPage.alreadyConnectedNote")
-      : undefined,
-    leading: <InboxIcon channel="messenger" showLabel={false} size="small" />,
-    isConnectable: true,
-    isAlreadyConnected: Boolean(target.alreadyConnected),
-  }
-}
-
 export default async function MessengerSelectPage({
   searchParams,
 }: {
   searchParams: Promise<{ session?: string }>
 }) {
-  const { session: sessionId } = await searchParams
-  if (!sessionId) {
-    redirect("/channels/create")
-  }
-
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    redirect("/channels/create")
-  }
-
-  let resolved: ResolvedConnectSession<"messenger">
-  try {
-    resolved = await resolveConnectSession({
-      userId,
-      sessionId,
-      credentialType: "messenger",
-      brandingChannel: "messenger",
-    })
-  } catch (err) {
-    // An expired/invalid/no-longer-accessible session previously 500'd this
-    // Server Component render — redirect back to the picker instead, same
-    // as every other failure this flow can hit before the session exists.
-    logger.warn({ err, sessionId }, "resolveConnectSession failed")
-    redirect("/channels/create")
-  }
+  const { sessionId, resolved } = await resolveSelectSession({
+    searchParams,
+    credentialType: "messenger",
+    brandingChannel: "messenger",
+  })
 
   const t = await getTranslations()
-  const items = resolved.session.targets
-    .map((target) => toPickerItem(target, t))
+  const items: MessengerPickerItem[] = resolved.session.targets
+    .map((target) => ({
+      ...toConnectPickerItem({
+        target,
+        channel: "messenger",
+        alreadyConnectedLabel: t("messenger.selectPage.alreadyConnectedNote"),
+      }),
+      isConnectable: true,
+      isAlreadyConnected: Boolean(target.alreadyConnected),
+    }))
     .sort((current, next) => Number(current.disabled) - Number(next.disabled))
 
   return (

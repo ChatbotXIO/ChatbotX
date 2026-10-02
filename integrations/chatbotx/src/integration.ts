@@ -35,7 +35,9 @@ const config: IntegrationDefinition<BaseConfig, ChatbotxAuthValue> = {
     throw new Error("Method is not implemented.")
   },
   disconnect(_props: ChatbotxAuthValue): Promise<void> {
-    throw new Error("Method is not implemented.")
+    // ChatbotX is a built-in workspace channel with no external provider
+    // to disconnect; removing the inbox row is the whole teardown.
+    return Promise.resolve()
   },
 }
 

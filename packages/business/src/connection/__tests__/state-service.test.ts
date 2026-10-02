@@ -18,6 +18,10 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: {
     findById: mocks.findById,
+    // `ConnectionStateService.transition` reads via the row-locking
+    // variant (I6) — same mock fn, so every existing
+    // `mocks.findById.mockResolvedValue(...)` in this file still drives it.
+    findByIdForUpdate: mocks.findById,
     findByProviderAndSourceIdAnyWorkspace:
       mocks.findByProviderAndSourceIdAnyWorkspace,
     update: mocks.update,

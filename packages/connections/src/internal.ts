@@ -13,9 +13,10 @@ import {
   type DatabaseClient,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
-import type {
-  ChannelType,
-  IntegrationType,
+import {
+  type ChannelType,
+  channelTypes,
+  type IntegrationType,
 } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
@@ -180,12 +181,34 @@ export const subscribeWebhookBestEffort = async (input: {
       },
       "connect: webhook subscribe failed, marking connection degraded",
     )
-    return await connectionStateService.transition({
-      connectionId: input.connection.id,
-      event: "verify.failed_non_auth",
-      reason: "verify_failed",
-      ownerId: input.ownerId,
-    })
+    try {
+      return await connectionStateService.transition({
+        connectionId: input.connection.id,
+        event: "verify.failed_non_auth",
+        reason: "verify_failed",
+        ownerId: input.ownerId,
+      })
+    } catch (transitionErr) {
+      // Regression I9: this call lands AFTER `upsertConnectionRow`'s own
+      // transaction already committed the connection as `connected` — a
+      // throw here used to propagate out of `connectCandidate`, which
+      // `connectTargets`' catch then reported as a `failed` outcome (and
+      // released the just-claimed target) even though the connection row
+      // is, right now, actually connected and consuming quota. Degrading
+      // is itself best-effort: swallow the failure and return the
+      // already-committed connection unchanged rather than mis-reporting
+      // a successful connect as a failure. A later `verify`/health-check
+      // cycle will still catch and correctly degrade an unhealthy webhook.
+      logger.error(
+        {
+          err: transitionErr,
+          connectionId: input.connection.id,
+          provider: input.connection.provider,
+        },
+        "connect: failed to mark connection degraded after a webhook subscribe failure; leaving it connected",
+      )
+      return input.connection
+    }
   }
 }
 
@@ -215,20 +238,48 @@ export const resolveOwnerId = async (
  * `CONNECTION_STORE_BINDINGS`), but `Inbox.channel` has no matching
  * `instagramFacebook` value (`ChannelType` only has `instagram`) — every
  * other channel-kind `IntegrationType` literal is already a valid
- * `ChannelType`. Only called for `kind === "channel"` providers.
+ * `ChannelType`. Only called for `kind === "channel"` providers; validated
+ * at runtime via `channelTypes.parse` (not an `as ChannelType` cast) so a
+ * future `IntegrationType` added as `kind: "channel"` without a matching
+ * `ChannelType` entry throws loudly here instead of silently writing an
+ * invalid value to `Inbox.channel`.
  */
 export const toChannelType = (provider: IntegrationType): ChannelType =>
-  provider === "instagramFacebook" ? "instagram" : (provider as ChannelType)
+  channelTypes.parse(provider === "instagramFacebook" ? "instagram" : provider)
 
 /**
  * Revive-or-insert-then-transition: the ~90-line block `connectFromCredentials`
  * and `connectCandidate` each ran independently before this extraction.
- * Revives a `keep_row` provider's satellite row in place (its unique
- * constraint would otherwise collide with a fresh `insertRow`), otherwise
- * inserts a new satellite row (mapping a duplicate-constraint violation to
- * `connectionAlreadyConnectedException`); then updates or inserts the
- * `Connection` row and drives it through `connect.completed` — the sole
- * event `ConnectionStateService.transition` consumes quota from, so this is
+ *
+ * Attempts to update an existing satellite row in place first whenever
+ * `existing` still carries a foreign key (`resolveForeignKey`), and falls
+ * back to inserting a fresh satellite row when that update actually
+ * matches zero rows. The fallback matters because `Connection.inboxId`/
+ * `integrationId` is NEVER cleared when a `delete_row` provider's
+ * satellite row is deleted on disconnect (only the row itself goes away)
+ * — so the stored FK being present does NOT mean a row to update still
+ * exists; it's equally consistent with "this connection was fully
+ * disconnected a while ago". Deciding from the FK's mere presence alone
+ * (the previous `store.onDisconnect === "keep_row"` check had the same
+ * flaw) silently no-ops the `UPDATE` and proceeds as if the auth were
+ * saved, which under-reported as two different regressions:
+ * - (I2) a `delete_row` provider's `connectFromCredentials({ allowUpdate:
+ *   true })` call against an already-CONNECTED row (e.g. `PUT
+ *   /v1/integrations/ai/{provider}` rotating an API key — the satellite
+ *   row is still there, never deleted) used to always fall to the insert
+ *   branch, which either collided with the satellite table's own unique
+ *   constraint (a spurious `connectionAlreadyConnected` 409 for claude/
+ *   deepseek/gemini/openrouter) or — for openai, which has none — silently
+ *   inserted a SECOND `Integration` row and orphaned the first.
+ * - (I3) reconnecting a `delete_row` channel (messenger/instagram) whose
+ *   satellite row IS already gone used to always take the update branch
+ *   (the FK/`inboxId` is still set), silently no-op, and still proceed to
+ *   `connect.completed` — consuming quota and reporting success with no
+ *   auth actually persisted anywhere.
+ *
+ * Either way this then updates or inserts the `Connection` row and drives
+ * it through `connect.completed` — the sole event
+ * `ConnectionStateService.transition` consumes quota from, so this is
  * inserted `disconnected` and transitioned, never hardcoded `connected`.
  */
 export const upsertConnectionRow = async (input: {
@@ -261,13 +312,20 @@ export const upsertConnectionRow = async (input: {
   } = input
 
   let integrationId: string | undefined
-  if (existing && store.onDisconnect === "keep_row") {
-    const existingForeignKey = resolveForeignKey(existing)
-    if (existingForeignKey) {
-      await store.saveAuthByForeignKey(existingForeignKey, auth, tx)
+  const existingForeignKey = existing ? resolveForeignKey(existing) : null
+  let revived = false
+  if (existing && existingForeignKey) {
+    revived = await store.saveAuthByForeignKey(
+      existingForeignKey,
+      auth,
+      extraConfig,
+      tx,
+    )
+    if (revived) {
+      integrationId = existing.integrationId ?? undefined
     }
-    integrationId = existing.integrationId ?? undefined
-  } else {
+  }
+  if (!revived) {
     try {
       const inserted = await store.insertRow(
         {

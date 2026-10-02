@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
   exchangeLongLivedToken: vi.fn(),
   getUserPages: vi.fn(),
-  loggerInfo: vi.fn(),
+  loggerWarn: vi.fn(),
 }))
 
 vi.mock("../src/apis/auth", async (importOriginal) => {
@@ -26,9 +26,9 @@ vi.mock("../src/apis/page", async (importOriginal) => {
 
 vi.mock("../src/lib/logger", () => ({
   logger: {
-    warn: vi.fn(),
+    warn: mocks.loggerWarn,
     error: vi.fn(),
-    info: mocks.loggerInfo,
+    info: vi.fn(),
     debug: vi.fn(),
   },
 }))
@@ -93,7 +93,7 @@ describe("Messenger connection.exchangeCode", () => {
     expect(
       (auth as { tokens: { accessToken: string } }).tokens.accessToken,
     ).toBe("short-lived-token")
-    expect(mocks.loggerInfo).toHaveBeenCalled()
+    expect(mocks.loggerWarn).toHaveBeenCalled()
   })
 })
 
@@ -159,5 +159,42 @@ describe("Messenger connection.listCandidates", () => {
     })
     expect(candidates).toEqual([])
     expect(mocks.getUserPages).not.toHaveBeenCalled()
+  })
+})
+
+describe("Messenger connection.describe", () => {
+  test("uses the page metadata for candidate-level auth (initial connect)", () => {
+    const descriptor = integration.connection.describe({
+      authType: "oauth2",
+      clientId: "client-1",
+      clientSecret: "secret-1",
+      redirectUrl: "",
+      version: "v23.0",
+      tokens: { accessToken: "page-1-token" },
+      metadata: { pageId: "page-1", pageName: "Page One", version: "v23.0" },
+    })
+    expect(descriptor).toEqual({
+      sourceId: "page-1",
+      displayName: "Page One",
+    })
+  })
+
+  test("does not throw on a RECONNECT user-level auth with no metadata", () => {
+    const userLevelAuth = {
+      authType: "oauth2",
+      clientId: "client-1",
+      clientSecret: "secret-1",
+      redirectUrl: "",
+      version: "v23.0",
+      tokens: { accessToken: "user-token" },
+    }
+    expect(() =>
+      // `completeReconnect` (connect-session-flow.ts) calls `describe`
+      // directly on the raw OAuth-exchanged auth, which for Messenger has
+      // no `metadata` yet — this must degrade, not throw a TypeError.
+      integration.connection.describe(
+        userLevelAuth as Parameters<typeof integration.connection.describe>[0],
+      ),
+    ).not.toThrow()
   })
 })

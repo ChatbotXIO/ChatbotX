@@ -50,7 +50,7 @@ export type ConnectionTransitionResult = {
 export const isActiveConnectionStatus = (status: ConnectionStatus): boolean =>
   (ACTIVE_CONNECTION_STATUSES as readonly ConnectionStatus[]).includes(status)
 
-class InvalidConnectionTransitionException extends Error {
+export class InvalidConnectionTransitionException extends Error {
   constructor(from: ConnectionStatus | undefined, event: ConnectionEvent) {
     super(
       `Connection cannot handle event "${event}" from status "${from ?? "∅"}"`,

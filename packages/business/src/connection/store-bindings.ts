@@ -77,12 +77,32 @@ export type ConnectionStoreBinding = {
     foreignKey: string,
     tx?: DatabaseClient,
   ) => Promise<AuthValue>
-  /** Persists a refreshed auth value by the same FK as {@link loadAuthByForeignKey} — used by `ConnectionService.refresh`'s `AuthStore.save`. */
+  /**
+   * Persists a refreshed auth value by the same FK as
+   * {@link loadAuthByForeignKey} — used by `ConnectionService.refresh`'s
+   * `AuthStore.save`, by `upsertConnectionRow`'s revive-in-place attempt
+   * for a `connectFromCredentials({ allowUpdate: true })` call against an
+   * already-active connection, and by `completeReconnect`'s OAuth-reconnect
+   * revive attempt. `config`, when given, additionally updates the
+   * satellite row's own extra columns through the same `configColumns`
+   * allow-list `insertRow` enforces — e.g. replacing an AI provider's
+   * `model`/`temperature` alongside its `apiKey` on a PUT update, not just
+   * the auth column.
+   *
+   * Returns whether a row actually matched the FK and was updated — NOT
+   * `void`. `Connection.inboxId`/`integrationId` is never cleared when a
+   * `delete_row` provider's satellite row is deleted on disconnect (only
+   * the satellite row itself goes away), so the stored FK alone can't tell
+   * a caller whether a row to update still exists. Both callers above must
+   * fall back to `insertRow` when this returns `false` instead of silently
+   * no-op-ing a 0-row `UPDATE` and proceeding as if the auth were saved.
+   */
   saveAuthByForeignKey: (
     foreignKey: string,
     auth: AuthValue,
+    config?: Record<string, unknown>,
     tx?: DatabaseClient,
-  ) => Promise<void>
+  ) => Promise<boolean>
   /**
    * `id` is always the satellite row's own PK. `integrationId` is also
    * populated for a workspace-integration binding (the parent `Integration`
@@ -211,11 +231,19 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       }
       return asAuthValue(row.auth)
     },
-    saveAuthByForeignKey: async (inboxId, auth, tx = db) => {
-      await tx
+    saveAuthByForeignKey: async (inboxId, auth, config, tx = db) => {
+      const allowedConfigColumns = new Set(opts.configColumns ?? [])
+      const safeConfig = Object.fromEntries(
+        Object.entries(config ?? {}).filter(([key]) =>
+          allowedConfigColumns.has(key),
+        ),
+      )
+      const updated = await tx
         .update(rawTable)
-        .set({ auth } as never)
+        .set({ ...safeConfig, auth } as never)
         .where(withExtraWhere(eq(table.inboxId, inboxId)))
+        .returning({ id: table.id })
+      return updated.length > 0
     },
     insertRow: async (input, tx = db) => {
       const identityValues = identityCol
@@ -302,6 +330,18 @@ const makeWorkspaceIntegrationBinding = <
   duplicateConstraint?: string
   /** See `ConnectionStoreBinding.configColumns`. */
   configColumns?: readonly string[]
+  /**
+   * NOT NULL satellite columns the credential-strategy `connect` request's
+   * own `configFields` never supply (e.g. a bare-`apiKey` AI provider's
+   * `model`/`maxOutputTokens`) — applied before `safeConfig` so any value
+   * the caller DID pass via `config` still wins. A function of the insert
+   * input (not a static object) so a default can derive from the
+   * connection descriptor (e.g. `openaiCompatible`'s `name` falling back
+   * to `descriptor.displayName`).
+   */
+  defaultConfigValues?: (
+    input: ConnectionStoreInsertInput,
+  ) => Record<string, unknown>
 }): ConnectionStoreBinding => {
   const { table } = opts
   // `.from()`/`.insert()` reject a generic `TTable` param — see the same
@@ -342,11 +382,19 @@ const makeWorkspaceIntegrationBinding = <
       }
       return asAuthValue(row.auth)
     },
-    saveAuthByForeignKey: async (integrationId, auth, tx = db) => {
-      await tx
+    saveAuthByForeignKey: async (integrationId, auth, config, tx = db) => {
+      const allowedConfigColumns = new Set(opts.configColumns ?? [])
+      const safeConfig = Object.fromEntries(
+        Object.entries(config ?? {}).filter(([key]) =>
+          allowedConfigColumns.has(key),
+        ),
+      )
+      const updated = await tx
         .update(rawTable)
-        .set({ [authColumnName]: auth } as never)
+        .set({ ...safeConfig, [authColumnName]: auth } as never)
         .where(eq(table.integrationId, integrationId))
+        .returning({ id: table.id })
+      return updated.length > 0
     },
     insertRow: async (input, tx) => {
       const allowedConfigColumns = new Set(opts.configColumns ?? [])
@@ -363,9 +411,13 @@ const makeWorkspaceIntegrationBinding = <
             integrationType: opts.integrationType,
           })
           .returning({ id: integrationModel.id })
-        // `safeConfig` spreads first so no client-controlled key can clobber
-        // the system columns set below — see `ConnectionStoreBinding.configColumns`.
+        // `defaultConfigValues` spreads first (lowest precedence) so a
+        // caller-supplied `config` value in `safeConfig` always overrides
+        // it; `safeConfig` itself spreads before the system columns below
+        // so no client-controlled key can clobber those — see
+        // `ConnectionStoreBinding.configColumns`.
         const values = {
+          ...opts.defaultConfigValues?.(input),
           ...safeConfig,
           workspaceId: input.workspaceId,
           integrationId: parent.id,
@@ -409,6 +461,53 @@ const makeWorkspaceIntegrationBinding = <
   }
 }
 
+/**
+ * `model`/`maxOutputTokens` NOT NULL defaults for the five AI-key providers
+ * whose credential-strategy `configFields` only declare `apiKey` (see
+ * `credential-providers.ts`'s `makeAiKeyProvider`) — without these,
+ * `connectFromCredentials({ apiKey })` hits the satellite table's NOT NULL
+ * constraint on `model`/`maxOutputTokens` and surfaces as a raw 500. Model
+ * ids mirror `packages/ai/src/models/registry.ts`'s `aiChatProviders[...]
+ * .defaultModel` (that file's own comment calls it the single source of
+ * truth the AI agent model picker and legacy connect dialogs already use)
+ * — duplicated as literals rather than imported because `@chatbotx.io/ai`
+ * depends on `@chatbotx.io/business`, so importing it back here would be
+ * circular. `maxOutputTokens: 1024` matches the `.default(1024)` on the
+ * legacy claude/deepseek/gemini/openrouter connect schemas
+ * (`apps/builder/src/features/integration-{claude,deepseek,gemini,
+ * openrouter}/schema/request.ts`); openai's legacy schema has no default,
+ * so 1024 is reused here for consistency across all five providers.
+ */
+const AI_KEY_PROVIDER_DEFAULTS = {
+  claude: { model: "claude-sonnet-4-6", maxOutputTokens: 1024 },
+  deepseek: { model: "deepseek-flash", maxOutputTokens: 1024 },
+  gemini: { model: "gemini-3.5-flash", maxOutputTokens: 1024 },
+  openai: { model: "gpt-5.4-mini", maxOutputTokens: 1024 },
+  openrouter: { model: "openai/gpt-5.4-mini", maxOutputTokens: 1024 },
+} as const satisfies Record<
+  "claude" | "deepseek" | "gemini" | "openai" | "openrouter",
+  { model: string; maxOutputTokens: number }
+>
+
+/**
+ * `defaultModel`/`preset` NOT NULL defaults for `openaiCompatible`'s
+ * credential-strategy connect (`configFields` only declare `apiKey`/
+ * `baseURL` — see `credential-providers.ts`'s
+ * `openaiCompatibleConnectionProvider`). Values mirror
+ * `packages/ai/src/openai-compatible/presets.ts`'s `custom` preset config
+ * (`defaultModel: "gpt-4o-mini"`) — the catch-all preset the unique index
+ * `IntegrationOpenaiCompatible_workspaceId_preset_key` exempts so a
+ * workspace can connect more than one — duplicated as a literal for the
+ * same circular-dependency reason as `AI_KEY_PROVIDER_DEFAULTS` above.
+ * `name` isn't included here: it falls back to the connection
+ * descriptor's `displayName` at the call site, the same pattern
+ * `makeChannelBinding.insertRow` already uses for its own `name` column.
+ */
+const OPENAI_COMPATIBLE_DEFAULTS = {
+  defaultModel: "gpt-4o-mini",
+  preset: "custom",
+} as const
+
 export const CONNECTION_STORE_BINDINGS: Record<
   IntegrationType,
   ConnectionStoreBinding | null
@@ -438,6 +537,7 @@ export const CONNECTION_STORE_BINDINGS: Record<
       "temperature",
       "autoReply",
     ],
+    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.claude,
   }),
   deepseek: makeWorkspaceIntegrationBinding({
     table: integrationDeepseekModel,
@@ -451,6 +551,7 @@ export const CONNECTION_STORE_BINDINGS: Record<
       "temperature",
       "autoReply",
     ],
+    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.deepseek,
   }),
   drip: makeWorkspaceIntegrationBinding({
     table: integrationDripModel,
@@ -476,6 +577,7 @@ export const CONNECTION_STORE_BINDINGS: Record<
       "temperature",
       "autoReply",
     ],
+    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.gemini,
   }),
   getResponse: makeWorkspaceIntegrationBinding({
     table: integrationGetResponseModel,
@@ -567,12 +669,24 @@ export const CONNECTION_STORE_BINDINGS: Record<
       "autoReplyVoice",
       "voice",
     ],
+    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.openai,
   }),
   openaiCompatible: makeWorkspaceIntegrationBinding({
     table: integrationOpenaiCompatibleModel,
     tableName: "IntegrationOpenaiCompatible",
     integrationType: "openaiCompatible",
-    configColumns: ["defaultModel", "preset", "name", "autoReply", "enabled"],
+    configColumns: [
+      "baseURL",
+      "defaultModel",
+      "preset",
+      "name",
+      "autoReply",
+      "enabled",
+    ],
+    defaultConfigValues: (input) => ({
+      ...OPENAI_COMPATIBLE_DEFAULTS,
+      name: input.descriptor.displayName,
+    }),
   }),
   openrouter: makeWorkspaceIntegrationBinding({
     table: integrationOpenrouterModel,
@@ -586,6 +700,7 @@ export const CONNECTION_STORE_BINDINGS: Record<
       "temperature",
       "autoReply",
     ],
+    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.openrouter,
   }),
   outlookCalendar: makeWorkspaceIntegrationBinding({
     table: integrationOutlookCalendarModel,

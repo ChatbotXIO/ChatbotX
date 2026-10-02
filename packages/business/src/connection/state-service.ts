@@ -16,7 +16,11 @@ import { channelLimitReachedException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceUsageService } from "../workspace-usage/service"
-import { type ConnectionEvent, transitionConnection } from "./state"
+import {
+  type ConnectionEvent,
+  isActiveConnectionStatus,
+  transitionConnection,
+} from "./state"
 
 class ConnectionNotFoundException extends Error {
   constructor(id: string) {
@@ -103,7 +107,13 @@ class ConnectionStateService extends BaseService {
     tx?: DatabaseClient
   }): Promise<ConnectionModel> {
     const run = async (client: DatabaseClient): Promise<ConnectionModel> => {
-      const existing = await connectionRepository.findById(
+      // Row-locked (not the relational `findById`): two concurrent
+      // `transition` calls on the same connection must serialize here so
+      // only one of them reads the pre-transition status and decides the
+      // quota edge — otherwise both can observe the same `existing.status`
+      // and each consume (or release) a `channels` quota unit for what is
+      // really a single state change.
+      const existing = await connectionRepository.findByIdForUpdate(
         { id: input.connectionId },
         client,
       )
@@ -259,6 +269,24 @@ class ConnectionStateService extends BaseService {
       })
     if (!existing) {
       return null
+    }
+    if (!isActiveConnectionStatus(existing.status)) {
+      // No ACTIVE row matched `(provider, identifier)` — the repository
+      // fell back to its "any row, most recent" branch, which can be a
+      // stale disconnected row (possibly from a DIFFERENT workspace that
+      // reconnected the same external account elsewhere). Proceeding is
+      // still the best available option (a webhook payload carries no
+      // workspace to disambiguate further), but this is worth a warning —
+      // see I8 in the PR review.
+      logger.warn(
+        {
+          provider: input.provider,
+          identifier: input.identifier,
+          connectionId: existing.id,
+          status: existing.status,
+        },
+        "markUnhealthyByIdentifier: no ACTIVE connection matched; falling back to the most recent non-active row",
+      )
     }
     return await this.markUnhealthy({
       connectionId: existing.id,

@@ -4,19 +4,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
-import Image from "next/image"
-import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { CONNECT_PICKER_CARD_CLASS } from "@/features/channel-connect/components/connect-picker-card"
-import type { ConnectPickerItem } from "@/features/channel-connect/lib/picker-items"
 import {
-  type ResolvedConnectSession,
-  resolveConnectSession,
-} from "@/features/channel-connect/lib/resolve-connect-session"
-import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
+  resolveSelectSession,
+  toConnectPickerItem,
+} from "@/features/channel-connect/lib/select-page"
 import { SelectFacebookAccounts } from "@/features/integration-instagram/components/select-facebook-accounts"
-import { getCurrentUserId } from "@/lib/auth/utils"
-import { logger } from "@/lib/log"
 
 export const dynamic = "force-dynamic"
 
@@ -27,71 +21,26 @@ export const dynamic = "force-dynamic"
  * and (like Messenger) no "not admin" rank: only selectable vs.
  * already-connected.
  */
-function toPickerItem(
-  target: {
-    id: string
-    name: string
-    avatarUrl?: string
-    selectable: boolean
-    alreadyConnected?: "this_workspace" | "other_workspace"
-  },
-  t: Awaited<ReturnType<typeof getTranslations>>,
-): ConnectPickerItem {
-  return {
-    id: target.id,
-    name: target.name,
-    secondary: target.id,
-    disabled: !target.selectable,
-    disabledReason: target.alreadyConnected
-      ? t("instagram.selectPage.alreadyConnectedNote")
-      : undefined,
-    leading: target.avatarUrl ? (
-      <Image
-        alt={target.name}
-        className="size-6 rounded-full object-cover"
-        height={24}
-        src={target.avatarUrl}
-        width={24}
-      />
-    ) : (
-      <InboxIcon channel="instagram" showLabel={false} size="small" />
-    ),
-  }
-}
-
 export default async function InstagramFacebookSelectPage({
   searchParams,
 }: {
   searchParams: Promise<{ session?: string }>
 }) {
-  const { session: sessionId } = await searchParams
-  if (!sessionId) {
-    redirect("/channels/create")
-  }
-
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    redirect("/channels/create")
-  }
-
-  let resolved: ResolvedConnectSession<"instagramFacebook">
-  try {
-    resolved = await resolveConnectSession({
-      userId,
-      sessionId,
-      credentialType: "instagramFacebook",
-      brandingChannel: "instagram",
-    })
-  } catch (err) {
-    // An expired/invalid/no-longer-accessible session previously 500'd this
-    // Server Component render — redirect back to the picker instead.
-    logger.warn({ err, sessionId }, "resolveConnectSession failed")
-    redirect("/channels/create")
-  }
+  const { sessionId, resolved } = await resolveSelectSession({
+    searchParams,
+    credentialType: "instagramFacebook",
+    brandingChannel: "instagram",
+  })
 
   const t = await getTranslations()
   const items = resolved.session.targets
-    .map((target) => toPickerItem(target, t))
+    .map((target) =>
+      toConnectPickerItem({
+        target,
+        channel: "instagram",
+        alreadyConnectedLabel: t("instagram.selectPage.alreadyConnectedNote"),
+      }),
+    )
     .sort((current, next) => Number(current.disabled) - Number(next.disabled))
 
   return (

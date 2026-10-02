@@ -78,7 +78,10 @@ const config: IntegrationDefinition<BaseConfig, SmtpAuthValue, SmtpActions> = {
     throw new Error("Method is not implemented.")
   },
   disconnect(_props: SmtpAuthValue): Promise<void> {
-    throw new Error("Method is not implemented.")
+    // SMTP credentials are workspace-local (host/port/username/password);
+    // there is no external provider session or webhook subscription to
+    // tear down, so this is a no-op (mirrors webchat/api's disconnect).
+    return Promise.resolve()
   },
 }
 

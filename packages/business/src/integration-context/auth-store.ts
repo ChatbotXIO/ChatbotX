@@ -9,6 +9,7 @@ import {
   type ConnectionHealth,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { InvalidConnectionTransitionException } from "../connection/state"
 import { connectionStateService } from "../connection/state-service"
 import { logger } from "../logger"
 import { workspaceMemberService } from "../workspace-member/service"
@@ -154,8 +155,15 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
             reason: "refresh_failed",
             ownerId,
           })
-        } catch {
+        } catch (err) {
+          if (!(err instanceof InvalidConnectionTransitionException)) {
+            throw err
+          }
           // Not currently active — nothing to degrade.
+          logger.warn(
+            { err, connectionId: connection.id },
+            "auth-store: markOffline connection not currently active, nothing to degrade",
+          )
         }
         return
       }

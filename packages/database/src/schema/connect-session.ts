@@ -56,9 +56,13 @@ export const connectSessionModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
-    // Exactly one of actorUserId/actorTokenId is set — enforced by the CHECK
-    // constraint below. A token-actor session's Connection rows are created
-    // with `createdBy = null` (repo convention for token-created rows).
+    // `ConnectSessionService.create` enforces exactly one of actorUserId/
+    // actorTokenId at the application layer (`requireExactlyOneActor`);
+    // the CHECK constraint below is a looser `<= 1` backstop (0 or 1), not
+    // a mirror of that stricter app-level rule — see its own comment for
+    // why the name still says "exactly one". A token-actor session's
+    // Connection rows are created with `createdBy = null` (repo
+    // convention for token-created rows).
     actorUserId: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
@@ -116,6 +120,9 @@ export const connectSessionModel = pgTable(
     // once its actor is deleted. `ConnectSessionService.create` still
     // enforces exactly one actor at creation time — this CHECK only widens
     // to tolerate that later deletion, never to allow two actors at once.
+    // The constraint's own name is now imprecise ("exactly_one" for an
+    // "at most one" rule) — kept as-is rather than renamed via a
+    // behavior-neutral migration for a cosmetic mismatch alone.
     check(
       "ConnectSession_actor_exactly_one",
       sql`(("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) <= 1`,

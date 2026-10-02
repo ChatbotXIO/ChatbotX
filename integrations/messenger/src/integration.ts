@@ -92,7 +92,7 @@ const config: IntegrationDefinition<
         config,
         shortLivedToken,
       ).catch((error) => {
-        logger.info(
+        logger.warn(
           { err: error },
           "Messenger long-lived token exchange failed, using short-lived token",
         )
@@ -137,8 +137,19 @@ const config: IntegrationDefinition<
         }))
     },
     describe: (auth) => ({
-      sourceId: auth.metadata.pageId,
-      displayName: auth.metadata.pageName,
+      // Candidate-level auth (initial connect, from `listCandidates`
+      // above) always carries `metadata.pageId`/`pageName`. On RECONNECT,
+      // `completeReconnect` (`connect-session-flow.ts`) calls `describe`
+      // directly on the raw OAuth-exchanged `auth` — a *user*-level token
+      // with no `metadata` yet, since a page hasn't been (re-)selected
+      // (see `ConnectionProvider.exchangeCode`'s doc comment in
+      // `@chatbotx.io/sdk`, which documents `describe` as never receiving
+      // that value for a multi-page provider — reconnect bypasses
+      // `listCandidates` and violates that contract). Falling back here
+      // turns a reconnect into a clean identity mismatch instead of an
+      // unhandled TypeError.
+      sourceId: auth.metadata?.pageId ?? "unknown_page",
+      displayName: auth.metadata?.pageName ?? "Messenger",
     }),
     verify: verifyMetaToken("Messenger"),
     isRevokedTokenError,
@@ -204,9 +215,7 @@ const config: IntegrationDefinition<
       })
     } catch (error) {
       logger.warn(
-        {
-          err: error instanceof Error ? error.message : String(error),
-        },
+        { err: error },
         "Failed to clear Messenger persistent menu before disconnect",
       )
     }

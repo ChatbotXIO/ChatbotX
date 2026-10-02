@@ -46,6 +46,7 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
   workspaceService: {
     findById: mockFindWorkspaceById,
+    find: vi.fn(async () => undefined),
     create: mockWorkspaceCreate,
   },
 }))
@@ -224,8 +225,47 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     })
     expect(mockUpdateReturnUrl).toHaveBeenCalledWith({
       id: "session-2",
-      returnUrl: "/channels/messenger/select?session=session-2",
+      returnUrl: "http://localhost/channels/messenger/select?session=session-2",
     })
+  })
+
+  // Regression (C1): previously stored a *relative* returnUrl
+  // (`/channels/messenger/select?session=...`). `sanitizeReferer` —
+  // invoked for real when the OAuth callback reads `ConnectSession
+  // .returnUrl` back — does `new URL(referer)` first, which throws on a
+  // relative path and silently falls back to `/manage`, hiding the picker.
+  // This test does NOT mock `sanitizeReferer`/`isAllowedOrigin` so a
+  // regression here fails for real instead of being hidden by a mock.
+  test("the stored returnUrl survives a real (unmocked) sanitizeReferer round-trip instead of falling back to /manage", async () => {
+    mockTryReuseFacebookSsoToken.mockResolvedValue({ reusable: false })
+    const { sanitizeReferer, FALLBACK_REDIRECT } = await import(
+      "@/lib/oauth-referer"
+    )
+
+    // Origin matches the test env's NEXT_PUBLIC_BUILDER_URL
+    // (packages/vitest-config/src/setup-env.ts) exactly, so
+    // `isAllowedOrigin` accepts it without needing `customDomainService`.
+    const req = {
+      nextUrl: new URL(
+        "http://localhost:3123/channels/create/messenger?workspaceId=ws-1",
+      ),
+    } as unknown as Parameters<typeof GET>[0]
+
+    await expect(GET(req)).rejects.toThrow(
+      "redirect:https://facebook.com/oauth-dialog",
+    )
+
+    const storedReturnUrl = mockUpdateReturnUrl.mock.calls.at(0)?.[0]
+      .returnUrl as string
+    expect(storedReturnUrl).toBe(
+      "http://localhost:3123/channels/messenger/select?session=session-2",
+    )
+    await expect(sanitizeReferer(storedReturnUrl)).resolves.toBe(
+      storedReturnUrl,
+    )
+    await expect(sanitizeReferer(storedReturnUrl)).resolves.not.toBe(
+      FALLBACK_REDIRECT,
+    )
   })
 
   test("404s when the workspace has no messenger credential configured", async () => {

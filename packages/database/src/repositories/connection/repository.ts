@@ -1,8 +1,9 @@
 import type { ChannelType } from "@chatbotx.io/utils/channel"
 import { type DatabaseClient, db, eq, relationsFilterToSQL } from "../../client"
-import type {
-  ConnectionKind,
-  ConnectionStatus,
+import {
+  ACTIVE_CONNECTION_STATUSES,
+  type ConnectionKind,
+  type ConnectionStatus,
 } from "../../partials/connection"
 import type { IntegrationType } from "../../partials/integration"
 import { connectionModel } from "../../schema"
@@ -77,16 +78,39 @@ export const connectionRepository = {
 
   /**
    * Same identity key as `findByProviderSourceId`, without a known
-   * workspace — used by webhook-triggered `markUnhealthyByIdentifier`
-   * (a revoked-token webhook payload carries the provider's external id,
-   * never the workspace).
+   * workspace — used by webhook-triggered `markUnhealthyByIdentifier` (a
+   * revoked-token webhook payload carries the provider's external id,
+   * never the workspace) and by `listAndAttachCandidates`'s
+   * already-connected check.
+   *
+   * `(provider, sourceId)` is NOT unique across workspaces (e.g. the same
+   * TikTok account disconnected in one workspace and reconnected in
+   * another leaves a stale `disconnected` row behind), so an unordered
+   * `findFirst` could previously return an arbitrary — possibly stale,
+   * possibly another workspace's — row (regression I8). This now prefers
+   * a row whose status is currently ACTIVE (`ACTIVE_CONNECTION_STATUSES`)
+   * over a disconnected/needs_reauth/paused one, and both branches order by
+   * `id DESC` (most recently created) as a deterministic tiebreaker when
+   * more than one row still matches.
    */
   async findByProviderAndSourceIdAnyWorkspace(
     input: { provider: IntegrationType; sourceId: string },
     tx: DatabaseClient = db,
   ): Promise<ConnectionModel | undefined> {
+    const active = await tx.query.connectionModel.findFirst({
+      where: {
+        provider: input.provider,
+        sourceId: input.sourceId,
+        status: { in: [...ACTIVE_CONNECTION_STATUSES] },
+      },
+      orderBy: { id: "desc" },
+    })
+    if (active) {
+      return active
+    }
     return await tx.query.connectionModel.findFirst({
       where: { provider: input.provider, sourceId: input.sourceId },
+      orderBy: { id: "desc" },
     })
   },
 
@@ -97,6 +121,30 @@ export const connectionRepository = {
     return await tx.query.connectionModel.findFirst({
       where: { id: input.id },
     })
+  },
+
+  /**
+   * Same as `findById`, but takes a `SELECT ... FOR UPDATE` row lock —
+   * MUST be called from inside an open transaction (`tx` has no default,
+   * unlike every other method here, so a caller that forgets to pass one
+   * is a type error, not a silent no-lock read). `ConnectionStateService
+   * .transition` uses this (never the relational-query `findById`) so two
+   * concurrent transitions on the SAME connection serialize on this row
+   * instead of both reading the same pre-transition `status` and each
+   * independently deciding to consume/release quota — the race that
+   * double-consumed (or double-released) one `channels` quota unit for
+   * what should have been a single state change.
+   */
+  async findByIdForUpdate(
+    input: { id: string },
+    tx: DatabaseClient,
+  ): Promise<ConnectionModel | undefined> {
+    const [row] = await tx
+      .select()
+      .from(connectionModel)
+      .where(eq(connectionModel.id, input.id))
+      .for("update")
+    return row
   },
 
   async findByInboxId(

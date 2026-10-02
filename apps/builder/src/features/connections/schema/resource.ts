@@ -1,4 +1,5 @@
 import {
+  channelTypes,
   connectionKinds,
   connectionStatuses,
   connectionStatusReasons,
@@ -8,6 +9,7 @@ import {
   connectSessionPurposes,
   connectSessionStatuses,
   connectSessionTargetSchema,
+  integrationTypes,
 } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 
@@ -19,8 +21,8 @@ import { z } from "zod"
 export const connectionResource = z.object({
   id: z.string(),
   kind: connectionKinds,
-  provider: z.string(),
-  channel: z.string().nullable(),
+  provider: integrationTypes,
+  channel: channelTypes.nullable(),
   status: connectionStatuses,
   statusReason: connectionStatusReasons.nullable(),
   sourceId: z.string(),
@@ -87,9 +89,13 @@ export type ConnectionProviderResource = z.infer<
 /** `ConnectSession` DTO — `GET /v1/connect-sessions/{id}` and the connect envelope's `session` field. Never `encryptedAuth`/`claimedTargetIds`/`stateNonceHash`. */
 export const connectSessionResource = z.object({
   id: z.string(),
-  provider: z.string(),
+  provider: integrationTypes,
   purpose: connectSessionPurposes,
   status: connectSessionStatuses,
+  // Provider-defined step name (`authorize`, `select`, `verify_code`, `done`,
+  // …) — genuinely open-ended per `ConnectSession.step`'s own schema
+  // comment, not a fixed enum like the fields above; `z.string()` here is
+  // intentional, not an oversight.
   step: z.string(),
   nextAction: connectSessionNextActionSchema.nullable(),
   targets: z.array(connectSessionTargetSchema),

@@ -8,6 +8,7 @@ import {
   type AiKeyProvider,
   verifyAiProviderApiKey,
 } from "../integration-ai-provider/verify"
+import { validateOpenaiCompatibleBaseUrlForEnvironment } from "../integration-openai-compatible/validate-base-url"
 
 /**
  * `claude`/`deepseek`/`gemini`/`openai`/`openrouter`/`openaiCompatible` have
@@ -110,7 +111,20 @@ export const openaiCompatibleConnectionProvider: ConnectionProvider<
   ],
   describe: () => ({ sourceId: "workspace", displayName: "OpenAI-compatible" }),
   fromCredentials: async ({ apiKey, baseURL }) => {
-    const health = await verifyOpenaiCompatibleEndpoint(baseURL, apiKey)
+    // SSRF guard: without this, a workspace token can drive `ky.get` at an
+    // arbitrary attacker-chosen host (including internal/metadata
+    // addresses like 169.254.169.254), and the distinct error branches
+    // below (401/403 vs timeout vs network vs generic) leak enough signal
+    // to use this endpoint as a port scanner. The legacy
+    // `integration-openai-compatible` connect path already gates on this;
+    // this credential-strategy path must too. Use the validated/normalized
+    // URL it returns, not the raw input, for the actual probe.
+    const validatedBaseUrl =
+      await validateOpenaiCompatibleBaseUrlForEnvironment(baseURL)
+    const health = await verifyOpenaiCompatibleEndpoint(
+      validatedBaseUrl,
+      apiKey,
+    )
     if (!health.ok) {
       throw new Error(health.error)
     }

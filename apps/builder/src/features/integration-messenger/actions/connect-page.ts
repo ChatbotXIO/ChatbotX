@@ -30,8 +30,9 @@ type MessengerSession = ResolvedConnectSession<"messenger">
  * the batch picker posts to (`api/connect.ts`, `CONNECT_CONCURRENCY` at a
  * time) and the server action kept for any non-picker caller.
  *
- * Replaces the pending-auth-cookie skeleton (`runConnectSequence` +
- * `getUserPages` re-fetch + `messengerIntegrationService.connectPage`) with
+ * Replaces the pending-auth-cookie skeleton (`runConnectSequence` + `getUserPages`
+ * re-fetch + `messengerIntegrationService.connectPage` — all three names
+ * removed by this migration, kept here only as historical context) with
  * the unified `ConnectionService.connectTargets`, which already does the
  * lookup/duplicate/quota/FSM/webhook-subscribe work generically. This
  * function's own job shrinks to: resolve session context (workspace,

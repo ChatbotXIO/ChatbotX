@@ -19,15 +19,39 @@ export const connectionStatuses = z.enum([
 ])
 export type ConnectionStatus = z.infer<typeof connectionStatuses>
 
-export const ACTIVE_CONNECTION_STATUSES: readonly ConnectionStatus[] = [
+export const ACTIVE_CONNECTION_STATUSES = [
   "connected",
   "degraded",
-]
-export const INACTIVE_CONNECTION_STATUSES: readonly ConnectionStatus[] = [
+] as const satisfies readonly ConnectionStatus[]
+export const INACTIVE_CONNECTION_STATUSES = [
   "needs_reauth",
   "paused",
   "disconnected",
-]
+] as const satisfies readonly ConnectionStatus[]
+/**
+ * Compile-time exhaustiveness check: fails to type-check if a future
+ * `ConnectionStatus` literal is added to the enum above without also being
+ * placed into exactly one of `ACTIVE_CONNECTION_STATUSES`/
+ * `INACTIVE_CONNECTION_STATUSES`. Relies on both arrays being declared
+ * `as const satisfies readonly ConnectionStatus[]` (preserves their literal
+ * tuple type while still checking every entry is a valid status) rather
+ * than widened to `readonly ConnectionStatus[]`, which would make this
+ * vacuously pass. The assertion must be a `const` assignment, not a bare
+ * unused type alias — a type alias that resolves to `never` is NOT itself
+ * a compile error in TypeScript, so only forcing `true` to be assignable
+ * to the resolved type actually catches a missing status. Never read at
+ * runtime.
+ */
+type AssertEqual<A, B> = [A] extends [B]
+  ? [B] extends [A]
+    ? true
+    : never
+  : never
+const _assertConnectionStatusPartitionIsExhaustive: AssertEqual<
+  ConnectionStatus,
+  | (typeof ACTIVE_CONNECTION_STATUSES)[number]
+  | (typeof INACTIVE_CONNECTION_STATUSES)[number]
+> = true
 
 /** Why a connection last moved into (or stayed in) a non-`connected` status. */
 export const connectionStatusReasons = z.enum([

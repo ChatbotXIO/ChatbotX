@@ -54,7 +54,7 @@ const sessionLimitReachedException = () =>
     429,
   )
 
-/** Exactly one of `actorUserId`/`actorTokenId` — mirrors the `ConnectSession_actor_exactly_one` DB CHECK constraint so a violation surfaces before the insert, not as a raw constraint-violation error. */
+/** Exactly one of `actorUserId`/`actorTokenId` at creation time, surfacing a clean error before the insert rather than a raw constraint-violation one. Stricter than the DB's own `ConnectSession_actor_exactly_one` CHECK, which only enforces `<= 1` (0 or 1) — it has to tolerate an actor FK going null later via `ON DELETE SET NULL`, not just at creation. */
 const requireExactlyOneActor = (input: {
   actorUserId?: string | null
   actorTokenId?: string | null
@@ -184,16 +184,19 @@ class ConnectSessionService extends BaseService {
    * Sets `returnUrl` on an already-created session — for a caller (a
    * builder picker's OAuth-initiating route) that needs the redirect target
    * to reference the session's own id (`?session={id}`), which isn't known
-   * until after `create()` returns. Best-effort by design at the call site:
-   * the OAuth dialog hasn't been visited yet when this runs, so there is no
-   * risk of a lost update racing a completed authorization.
+   * until after `create()` returns. Guarded the same as
+   * `attachAuthorization`/`submitInput` (active status + unexpired) for
+   * consistency — in practice this call races nothing (the OAuth dialog
+   * hasn't been visited yet), but it must not silently write to a session a
+   * concurrent request already cancelled/expired/completed.
    */
   async updateReturnUrl(input: {
     id: string
     returnUrl: string
   }): Promise<ConnectSessionModel> {
-    const updated = await connectSessionRepository.update({
+    const updated = await connectSessionRepository.updateWhereActive({
       id: input.id,
+      statuses: [...ACTIVE_STATUSES],
       values: { returnUrl: input.returnUrl },
     })
     if (!updated) {
@@ -209,15 +212,21 @@ class ConnectSessionService extends BaseService {
    * immediately follow with `connectTargets` for a single-target/
    * non-multi-account provider — this method itself makes no registry-aware
    * decision, it only records the step.
+   *
+   * Guarded by `updateWhereActive` (status + unexpired) in the SAME
+   * statement as the write — not a `requireActive` read followed by a
+   * separate `update` — so a cancel/expire that lands during the OAuth
+   * provider's `exchangeCode` round trip can never be "revived" back into
+   * `awaiting_selection` by this call landing after it.
    */
   async attachAuthorization(input: {
     id: string
     encryptedAuth: EncryptedData
     targets: ConnectSessionTarget[]
   }): Promise<ConnectSessionModel> {
-    const existing = await this.requireActive(input.id)
-    const updated = await connectSessionRepository.update({
-      id: existing.id,
+    const updated = await connectSessionRepository.updateWhereActive({
+      id: input.id,
+      statuses: [...ACTIVE_STATUSES],
       values: {
         status: "awaiting_selection",
         step: "select",
@@ -226,10 +235,18 @@ class ConnectSessionService extends BaseService {
         expiresAt: new Date(Date.now() + AUTHORIZED_TTL_MS),
       },
     })
-    if (!updated) {
+    if (updated) {
+      return updated
+    }
+    const existing = await connectSessionRepository.findById({
+      id: input.id,
+    })
+    if (!existing) {
       throw new ConnectSessionNotFoundException()
     }
-    return updated
+    throw connectSessionExpiredException(
+      "This connect session is no longer active.",
+    )
   }
 
   /**
@@ -280,20 +297,35 @@ class ConnectSessionService extends BaseService {
     await connectSessionRepository.releaseTarget(input)
   }
 
-  /** Records user-submitted `enter_input` step data (e.g. a credential-strategy `config`) without changing status — the caller advances the step separately once it has processed the input. */
+  /**
+   * Records user-submitted `enter_input` step data (e.g. a credential-
+   * strategy `config`) without changing status — the caller advances the
+   * step separately once it has processed the input. Guarded by
+   * `updateWhereActive` in the same statement as the write (see
+   * `attachAuthorization`) rather than a `requireActive` read followed by a
+   * separate `update`.
+   */
   async submitInput(input: {
     id: string
     nextAction: ConnectSessionModel["nextAction"]
   }): Promise<ConnectSessionModel> {
-    await this.requireActive(input.id)
-    const updated = await connectSessionRepository.update({
+    const updated = await connectSessionRepository.updateWhereActive({
       id: input.id,
+      statuses: [...ACTIVE_STATUSES],
       values: { nextAction: input.nextAction },
     })
-    if (!updated) {
+    if (updated) {
+      return updated
+    }
+    const existing = await connectSessionRepository.findById({
+      id: input.id,
+    })
+    if (!existing) {
       throw new ConnectSessionNotFoundException()
     }
-    return updated
+    throw connectSessionExpiredException(
+      "This connect session is no longer active.",
+    )
   }
 
   /** Transitions to `failed`, guarded to only affect an active (non-terminal) session — a replayed/duplicate OAuth callback `?error=` can never flip an already-`completed`/`cancelled`/etc. session. Returns the session's current (already-terminal) row unchanged instead of throwing when the guard doesn't match. */
@@ -371,22 +403,18 @@ class ConnectSessionService extends BaseService {
     return { expired, deletedTerminal, terminalPurgeStopReason }
   }
 
-  /** Loads an active (non-expired, non-terminal) session by id alone, or throws `connectSessionExpired`. */
-  private async requireActive(id: string): Promise<ConnectSessionModel> {
-    const session = await connectSessionRepository.findById({ id })
-    const row = await this.applyExpiryRule(session)
-    if (!row) {
-      throw new ConnectSessionNotFoundException()
-    }
-    if (!ACTIVE_STATUSES.has(row.status)) {
-      throw connectSessionExpiredException(
-        "This connect session is no longer active.",
-      )
-    }
-    return row
-  }
-
-  /** `expiresAt <= now()` reads as `expired` regardless of the stored status — lazily flips the row so every reader agrees without a cron dependency. */
+  /**
+   * `expiresAt <= now()` reads as `expired` regardless of the stored status
+   * — lazily flips the row so every reader agrees without a cron
+   * dependency. Guarded by `updateWhereStatusIn` (same as `fail`/`cancel`)
+   * so a concurrent completion racing this read can't be overwritten, and
+   * clears `consumedAt`/`encryptedAuth` like every other terminal
+   * transition — without that, `expireDue`'s cron sweep never selects the
+   * row (it is no longer in an active status) and `purgeOldTerminal`
+   * never selects it either (it only scans `consumedAt IS NOT NULL`), so
+   * the row — and its ciphertext — would sit forever instead of being
+   * swept.
+   */
   private async applyExpiryRule(
     session: ConnectSessionModel | undefined,
   ): Promise<ConnectSessionModel | undefined> {
@@ -399,11 +427,19 @@ class ConnectSessionService extends BaseService {
     if (!ACTIVE_STATUSES.has(session.status)) {
       return session
     }
-    const updated = await connectSessionRepository.update({
+    const updated = await connectSessionRepository.updateWhereStatusIn({
       id: session.id,
-      values: { status: "expired" },
+      statuses: [...ACTIVE_STATUSES],
+      values: {
+        status: "expired",
+        consumedAt: new Date(),
+        encryptedAuth: null,
+      },
     })
-    return updated ?? session
+    if (updated) {
+      return updated
+    }
+    return await connectSessionRepository.findById({ id: session.id })
   }
 }
 

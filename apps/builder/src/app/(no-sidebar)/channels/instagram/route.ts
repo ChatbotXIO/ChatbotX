@@ -53,13 +53,17 @@ export async function GET(req: NextRequest) {
     actorUserId: userId,
     platformOwnerId,
   })
-  // The session's own id isn't known until `startSession` returns, so the
-  // confirm-screen redirect target — which the select page needs to resolve
-  // this same session via `?session=` — is set in a follow-up call rather
-  // than passed into `startSession` itself.
+  // Absolute: `sanitizeReferer` (called when the callback reads this back)
+  // rejects a relative path outright (`new URL("/channels/...")` throws),
+  // which silently fell back to `/manage` and hid the picker. `req.nextUrl
+  // .origin` — not the platform's fixed builder URL — so a white-label
+  // custom-domain visitor lands back on their own host.
   await connectSessionService.updateReturnUrl({
     id: session.id,
-    returnUrl: `/channels/instagram/select?session=${session.id}`,
+    returnUrl: new URL(
+      `/channels/instagram/select?session=${session.id}`,
+      req.nextUrl.origin,
+    ).toString(),
   })
   if (nextAction.type !== "open_url") {
     throw new Error(

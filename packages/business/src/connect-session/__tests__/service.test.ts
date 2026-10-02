@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   releaseTarget: vi.fn(),
   appendResults: vi.fn(),
   updateWhereStatusIn: vi.fn(),
+  updateWhereActive: vi.fn(),
   expireDue: vi.fn(async () => 0),
   purgeOldTerminal: vi.fn(
     async (): Promise<{
@@ -35,6 +36,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     releaseTarget: mocks.releaseTarget,
     appendResults: mocks.appendResults,
     updateWhereStatusIn: mocks.updateWhereStatusIn,
+    updateWhereActive: mocks.updateWhereActive,
     expireDue: mocks.expireDue,
     purgeOldTerminal: mocks.purgeOldTerminal,
   },
@@ -68,6 +70,13 @@ beforeEach(() => {
     }),
   )
   mocks.updateWhereStatusIn.mockImplementation(
+    async (input: { id: string; values: Record<string, unknown> }) => ({
+      ...baseSession(),
+      id: input.id,
+      ...input.values,
+    }),
+  )
+  mocks.updateWhereActive.mockImplementation(
     async (input: { id: string; values: Record<string, unknown> }) => ({
       ...baseSession(),
       id: input.id,
@@ -147,7 +156,7 @@ describe("connectSessionService.create", () => {
 })
 
 describe("expiry rule", () => {
-  it("lazily flips an active session past expiresAt to expired", async () => {
+  it("lazily flips an active session past expiresAt to expired, guarded and clearing consumedAt/encryptedAuth", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(
       baseSession({ expiresAt: PAST, status: "pending" }),
     )
@@ -158,10 +167,37 @@ describe("expiry rule", () => {
     })
 
     expect(result?.status).toBe("expired")
-    expect(mocks.update).toHaveBeenCalledWith({
+    expect(mocks.updateWhereStatusIn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "session-1",
+        statuses: expect.arrayContaining([
+          "pending",
+          "authorized",
+          "awaiting_selection",
+        ]),
+        values: expect.objectContaining({
+          status: "expired",
+          consumedAt: expect.any(Date),
+          encryptedAuth: null,
+        }),
+      }),
+    )
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  it("does not flip a session a concurrent completion already made terminal (regression: lazy expiry must not overwrite a concurrent completion)", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseSession({ expiresAt: PAST, status: "pending" }),
+    )
+    mocks.updateWhereStatusIn.mockResolvedValue(undefined)
+    mocks.findById.mockResolvedValue(baseSession({ status: "completed" }))
+
+    const result = await connectSessionService.findByIdForWorkspace({
       id: "session-1",
-      values: { status: "expired" },
+      workspaceId: "ws-1",
     })
+
+    expect(result?.status).toBe("completed")
   })
 
   it("does not touch a terminal-status session past expiresAt", async () => {
@@ -175,7 +211,7 @@ describe("expiry rule", () => {
     })
 
     expect(result?.status).toBe("completed")
-    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.updateWhereStatusIn).not.toHaveBeenCalled()
   })
 
   it("returns an unexpired session unchanged", async () => {
@@ -187,12 +223,13 @@ describe("expiry rule", () => {
     })
 
     expect(result?.status).toBe("pending")
-    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.updateWhereStatusIn).not.toHaveBeenCalled()
   })
 })
 
 describe("connectSessionService.attachAuthorization", () => {
   it("throws connectSessionExpired when the session is not active", async () => {
+    mocks.updateWhereActive.mockResolvedValueOnce(undefined)
     mocks.findById.mockResolvedValue(baseSession({ status: "completed" }))
 
     await expect(
@@ -204,9 +241,7 @@ describe("connectSessionService.attachAuthorization", () => {
     ).rejects.toMatchObject({ code: "connectSessionExpired" })
   })
 
-  it("moves an active session to awaiting_selection with the given targets", async () => {
-    mocks.findById.mockResolvedValue(baseSession({ status: "pending" }))
-
+  it("moves an active session to awaiting_selection with the given targets, guarded atomically by updateWhereActive", async () => {
     const targets = [{ id: "page-1", name: "Page One", selectable: true }]
     await connectSessionService.attachAuthorization({
       id: "session-1",
@@ -214,9 +249,14 @@ describe("connectSessionService.attachAuthorization", () => {
       targets,
     })
 
-    expect(mocks.update).toHaveBeenCalledWith(
+    expect(mocks.updateWhereActive).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "session-1",
+        statuses: expect.arrayContaining([
+          "pending",
+          "authorized",
+          "awaiting_selection",
+        ]),
         values: expect.objectContaining({
           status: "awaiting_selection",
           step: "select",
@@ -224,6 +264,19 @@ describe("connectSessionService.attachAuthorization", () => {
         }),
       }),
     )
+  })
+
+  it("throws notFound when the session does not exist at all (guard miss with no fallback row)", async () => {
+    mocks.updateWhereActive.mockResolvedValueOnce(undefined)
+    mocks.findById.mockResolvedValue(undefined)
+
+    await expect(
+      connectSessionService.attachAuthorization({
+        id: "missing",
+        encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" } as never,
+        targets: [],
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
   })
 })
 
@@ -424,7 +477,7 @@ describe("connectSessionService.purgeExpired", () => {
 })
 
 describe("connectSessionService.updateReturnUrl", () => {
-  it("sets returnUrl on the given session, referencing its own id", async () => {
+  it("sets returnUrl on the given session, referencing its own id, guarded atomically by updateWhereActive", async () => {
     const result = await connectSessionService.updateReturnUrl({
       id: "session-1",
       returnUrl: "/channels/messenger/select?session=session-1",
@@ -432,19 +485,56 @@ describe("connectSessionService.updateReturnUrl", () => {
     expect(result.returnUrl).toBe(
       "/channels/messenger/select?session=session-1",
     )
-    expect(mocks.update).toHaveBeenCalledWith({
-      id: "session-1",
-      values: { returnUrl: "/channels/messenger/select?session=session-1" },
-    })
+    expect(mocks.updateWhereActive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "session-1",
+        values: { returnUrl: "/channels/messenger/select?session=session-1" },
+      }),
+    )
   })
 
-  it("throws notFound when the session does not exist", async () => {
-    mocks.update.mockResolvedValue(undefined)
+  it("throws notFound when the session does not exist or is no longer active", async () => {
+    mocks.updateWhereActive.mockResolvedValue(undefined)
     await expect(
       connectSessionService.updateReturnUrl({
         id: "missing",
         returnUrl: "/channels/messenger/select?session=missing",
       }),
     ).rejects.toMatchObject({ code: "notFound" })
+  })
+})
+
+describe("connectSessionService.submitInput", () => {
+  it("records nextAction on an active session, guarded atomically by updateWhereActive", async () => {
+    const nextAction = { type: "wait" } as never
+    const result = await connectSessionService.submitInput({
+      id: "session-1",
+      nextAction,
+    })
+
+    expect(result.nextAction).toEqual(nextAction)
+    expect(mocks.updateWhereActive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "session-1",
+        statuses: expect.arrayContaining([
+          "pending",
+          "authorized",
+          "awaiting_selection",
+        ]),
+        values: { nextAction },
+      }),
+    )
+  })
+
+  it("throws connectSessionExpired instead of reviving an already-terminal session (regression I5: a cancel/expire landing mid-flow must not be overwritten)", async () => {
+    mocks.updateWhereActive.mockResolvedValueOnce(undefined)
+    mocks.findById.mockResolvedValue(baseSession({ status: "cancelled" }))
+
+    await expect(
+      connectSessionService.submitInput({
+        id: "session-1",
+        nextAction: { type: "wait" } as never,
+      }),
+    ).rejects.toMatchObject({ code: "connectSessionExpired" })
   })
 })

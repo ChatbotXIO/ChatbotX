@@ -406,4 +406,26 @@ describe("integrationThreadsService", () => {
       tx: expect.anything(),
     })
   })
+
+  test("routes through connectionStateService.transition instead of the legacy inboxService.disconnect fallback when a Connection row already exists (regression: the FSM path was only ever exercised by a mock forcing 'no Connection row')", async () => {
+    mocks.findFirst.mockResolvedValue({
+      id: "threads-1",
+      inboxId: "inbox-1",
+    })
+    mocks.workspaceFindById.mockResolvedValue({ ownerId: "owner-1" })
+    mocks.findByInboxId.mockResolvedValueOnce({ id: "conn-1" })
+
+    await integrationThreadsService.disconnect({
+      workspaceId: "workspace-1",
+      id: "threads-1",
+    })
+
+    expect(mocks.connectionTransition).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+      event: "user.disconnect",
+      ownerId: "owner-1",
+      tx: expect.anything(),
+    })
+    expect(mocks.disconnectInbox).not.toHaveBeenCalled()
+  })
 })

@@ -1,3 +1,4 @@
+import type { ConnectionKind as UtilsConnectionKind } from "@chatbotx.io/utils/connection"
 import type { AuthValue } from "./auth"
 import type { Handler } from "./shared"
 
@@ -32,6 +33,20 @@ export type ConnectNextAction =
   | { type: "wait" }
 
 export type ConnectionKind = "channel" | "integration" | "sub_connection"
+
+/**
+ * `@chatbotx.io/utils`'s `ConnectionKind` is a separate, re-declared Zod
+ * enum (not imported here) so the database layer and public API schemas
+ * can validate against it without depending on the SDK — see that file's
+ * own comment. This pins the two literal unions equal at compile time so a
+ * future kind added to one and not the other fails to build instead of
+ * silently drifting. Never read at runtime.
+ */
+const _assertConnectionKindMatchesUtils: ConnectionKind extends UtilsConnectionKind
+  ? UtilsConnectionKind extends ConnectionKind
+    ? true
+    : never
+  : never = true
 
 export type ConnectionHealth =
   | { ok: true; authExpiresAt?: string }

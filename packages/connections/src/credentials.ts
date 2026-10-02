@@ -79,15 +79,26 @@ export const connectFromCredentials = async (input: {
   const configFieldNames = new Set(
     provider.configFields.map((field) => field.name),
   )
+  // The binding's own allow-list of extra satellite columns a `config`
+  // request may set (e.g. an AI provider's `model`/`temperature`, or
+  // `openaiCompatible`'s `baseURL`). Computed before `extraConfig` below —
+  // a `configFields` entry (consumed by `fromCredentials` for live
+  // validation) can ALSO double as a required satellite column
+  // (`openaiCompatible`'s `baseURL` is both validated and NOT NULL on
+  // `IntegrationOpenaiCompatible`); without this allow-list check, such a
+  // field would be unconditionally excluded below and silently dropped
+  // before ever reaching `store.insertRow`.
+  const allowedConfigColumns = new Set(store.configColumns ?? [])
   const extraConfig = Object.fromEntries(
-    Object.entries(input.config).filter(([key]) => !configFieldNames.has(key)),
+    Object.entries(input.config).filter(
+      ([key]) => !configFieldNames.has(key) || allowedConfigColumns.has(key),
+    ),
   )
   // Anything left is not part of the provider's own validated credential
   // shape — only pass it to the satellite insert if the binding's
   // `configColumns` allow-list explicitly names it (e.g. an AI provider's
   // `model`/`temperature`). Otherwise a client could set an arbitrary
   // satellite column (workspaceId, inboxId, tokenHash, …) via `config`.
-  const allowedConfigColumns = new Set(store.configColumns ?? [])
   const rejectedConfigKeys = Object.keys(extraConfig).filter(
     (key) => !allowedConfigColumns.has(key),
   )

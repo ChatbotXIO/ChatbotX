@@ -1,5 +1,6 @@
 import { AuthException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { InvalidConnectionTransitionException } from "../../connection/state"
 
 const mocks = vi.hoisted(() => ({
   execute: vi.fn(async () => ({ rows: [{ auth: { authType: "none" } }] })),
@@ -170,12 +171,17 @@ describe("makeAuthStore.markOffline", () => {
     expect(mocks.inboxUpdate).not.toHaveBeenCalled()
   })
 
-  it("swallows an invalid transition when the connection is already inactive", async () => {
+  it("swallows an InvalidConnectionTransitionException when the connection is already inactive", async () => {
     mocks.findByInboxId.mockResolvedValue({
       id: "conn-1",
       workspaceId: "ws-1",
     })
-    mocks.transition.mockRejectedValueOnce(new Error("invalid transition"))
+    mocks.transition.mockRejectedValueOnce(
+      new InvalidConnectionTransitionException(
+        "needs_reauth",
+        "refresh.transient_failure",
+      ),
+    )
     const store = makeAuthStore("messenger", {
       id: "row-1",
       inboxId: "inbox-1",
@@ -183,6 +189,21 @@ describe("makeAuthStore.markOffline", () => {
     await expect(
       store.markOffline?.(new Error("ECONNRESET")),
     ).resolves.toBeUndefined()
+  })
+
+  it("rethrows an unexpected error instead of silently dropping it", async () => {
+    mocks.findByInboxId.mockResolvedValue({
+      id: "conn-1",
+      workspaceId: "ws-1",
+    })
+    mocks.transition.mockRejectedValueOnce(new Error("db unavailable"))
+    const store = makeAuthStore("messenger", {
+      id: "row-1",
+      inboxId: "inbox-1",
+    })
+    await expect(store.markOffline?.(new Error("ECONNRESET"))).rejects.toThrow(
+      "db unavailable",
+    )
   })
 
   it("falls back to a direct Inbox write for an AuthException when no Connection row exists yet", async () => {

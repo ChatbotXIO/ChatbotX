@@ -1,5 +1,6 @@
 import {
   connectionStateService,
+  InvalidConnectionTransitionException,
   isActiveConnectionStatus,
 } from "@chatbotx.io/business/connection"
 import {
@@ -45,24 +46,51 @@ export const disconnect = async (input: {
   let teardownError: string | null = null
 
   if (adapter.store && foreignKey) {
+    let auth: AuthValue | null = null
     try {
-      const auth = await adapter.store.loadAuthByForeignKey(foreignKey)
-      if (adapter.integration) {
-        await adapter.integration.disconnect(auth)
-      }
-      if (adapter.provider.webhook) {
-        await adapter.provider.webhook.unsubscribe({ auth })
-      }
+      auth = await adapter.store.loadAuthByForeignKey(foreignKey)
     } catch (err) {
-      // Surfaced onto the row (not just logged) — a webhook left
-      // subscribed or a provider-side disconnect that silently failed is
-      // otherwise indistinguishable from a clean teardown once the row
-      // flips to `disconnected`.
       teardownError = toPublicErrorMessage(err, "Provider-side teardown failed")
       logger.warn(
         { err, connectionId: connection.id, provider: connection.provider },
-        "connection disconnect: provider-side teardown failed, proceeding with local disconnect",
+        "connection disconnect: failed to load auth for provider-side teardown, proceeding with local disconnect",
       )
+    }
+    if (auth) {
+      if (adapter.integration) {
+        try {
+          await adapter.integration.disconnect(auth)
+        } catch (err) {
+          // Surfaced onto the row (not just logged) — a provider-side
+          // disconnect that silently failed is otherwise indistinguishable
+          // from a clean teardown once the row flips to `disconnected`.
+          teardownError = toPublicErrorMessage(
+            err,
+            "Provider-side teardown failed",
+          )
+          logger.warn(
+            { err, connectionId: connection.id, provider: connection.provider },
+            "connection disconnect: provider-side disconnect failed, proceeding with local disconnect",
+          )
+        }
+      }
+      if (adapter.provider.webhook) {
+        try {
+          await adapter.provider.webhook.unsubscribe({ auth })
+        } catch (err) {
+          // Independent of the `disconnect` try/catch above — a channel
+          // whose `disconnect` throws (e.g. not implemented) must not skip
+          // its webhook unsubscribe, and vice versa.
+          teardownError = toPublicErrorMessage(
+            err,
+            "Webhook unsubscribe failed",
+          )
+          logger.warn(
+            { err, connectionId: connection.id, provider: connection.provider },
+            "connection disconnect: webhook unsubscribe failed, proceeding with local disconnect",
+          )
+        }
+      }
     }
   }
 
@@ -142,8 +170,15 @@ export const refresh = async (input: {
           reason: "refresh_failed",
           ownerId,
         })
-      } catch {
+      } catch (err) {
+        if (!(err instanceof InvalidConnectionTransitionException)) {
+          throw err
+        }
         // Not currently active — nothing to degrade.
+        logger.warn(
+          { err, connectionId: connection.id },
+          "connection markOffline: connection not currently active, nothing to degrade",
+        )
       }
     },
   }

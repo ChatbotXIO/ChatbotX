@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
+  isCloud: vi.fn(() => false),
 }))
 
 vi.mock("ky", async (importOriginal) => {
@@ -17,6 +18,13 @@ vi.mock("ky", async (importOriginal) => {
 vi.mock("../../integration-ai-provider/verify", () => ({
   verifyAiProviderApiKey: vi.fn(async () => true),
 }))
+
+// Defaults to OSS (`isCloud() === false`), matching every pre-existing test
+// below — only the C2 SSRF-guard suite opts into the cloud-only check via
+// `mockReturnValueOnce`. Mocking this file-wide as always-cloud would send
+// the other tests' fake hostnames (`provider.example.com`, `*.invalid`,
+// …) through a real DNS-over-HTTPS lookup in `assertPublicUrl`.
+vi.mock("../../keys", () => ({ isCloud: mocks.isCloud }))
 
 const { openaiCompatibleConnectionProvider } = await import(
   "../credential-providers"
@@ -106,5 +114,20 @@ describe("openaiCompatibleConnectionProvider.fromCredentials", () => {
         baseURL: "https://slow.example.com",
       }),
     ).rejects.toThrow("did not respond in time")
+  })
+})
+
+describe("openaiCompatibleConnectionProvider.fromCredentials — SSRF guard (C2)", () => {
+  it("rejects a link-local baseURL (e.g. the cloud metadata address) without ever probing it", async () => {
+    mocks.isCloud.mockReturnValueOnce(true)
+
+    await expect(
+      fromCredentials({
+        apiKey: "sk-live",
+        baseURL: "http://169.254.169.254",
+      }),
+    ).rejects.toMatchObject({ code: "ssrfBlocked" })
+
+    expect(mocks.get).not.toHaveBeenCalled()
   })
 })

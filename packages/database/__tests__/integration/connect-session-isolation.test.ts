@@ -286,5 +286,432 @@ describe.skipIf(!databaseUrl)(
         await seedClient.end()
       }
     })
+
+    test("appendResults does not let a non-selectable/unknown id's outcome count toward completion or success (regression I4: submitting a real id alongside a junk id used to complete the session before every real selectable target had a result)", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-append-1",
+        })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" } })
+          .where(eq(schema.connectSessionModel.id, session.id))
+
+        // Session has two selectable targets (t1, t2). This batch resolves
+        // t1 for real and throws in one unknown id — the unknown id must
+        // not count as "the second of two" targets.
+        const updated = await connectSessionRepository.appendResults(
+          {
+            id: session.id,
+            results: [
+              { targetId: "t1", status: "connected", connectionId: "conn-1" },
+              { targetId: "unknown-id", status: "failed", reason: "unknown" },
+            ],
+            resultConnectionIds: ["conn-1"],
+          },
+          tx,
+        )
+
+        expect(updated?.status).toBe("awaiting_selection")
+        expect(updated?.step).toBe("select")
+        expect(updated?.encryptedAuth).not.toBeNull()
+
+        // Completing the real remaining target (t2) now finishes the
+        // session — proving the first call's junk id never counted.
+        const completed = await connectSessionRepository.appendResults(
+          {
+            id: session.id,
+            results: [
+              { targetId: "t2", status: "connected", connectionId: "conn-2" },
+            ],
+            resultConnectionIds: ["conn-2"],
+          },
+          tx,
+        )
+        expect(completed?.status).toBe("completed")
+        expect(completed?.encryptedAuth).toBeNull()
+      }))
+
+    test("appendResults does not treat a non-selectable target's duplicated outcome as the success that completes the batch (regression I4)", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const [session] = await tx
+          .insert(schema.connectSessionModel)
+          .values({
+            workspaceId,
+            provider: "messenger",
+            purpose: "connect",
+            actorUserId: ownerId,
+            stateNonceHash: "iso-hash-append-2",
+            status: "awaiting_selection",
+            step: "select",
+            targets: [
+              { id: "t1", name: "A", selectable: true },
+              {
+                id: "already",
+                name: "Already connected",
+                selectable: false,
+                alreadyConnected: "other_workspace",
+              },
+            ],
+            claimedTargetIds: [],
+            resultConnectionIds: [],
+            results: [],
+            expiresAt: FUTURE,
+          })
+          .returning()
+
+        // Only the non-selectable target's outcome is submitted — the real
+        // selectable target (t1) was never attempted, so the batch must not
+        // report success/complete.
+        const updated = await connectSessionRepository.appendResults(
+          {
+            id: session.id,
+            results: [
+              {
+                targetId: "already",
+                status: "duplicated",
+                reason: "alreadyConnected",
+              },
+            ],
+            resultConnectionIds: [],
+          },
+          tx,
+        )
+
+        expect(updated?.status).toBe("awaiting_selection")
+      }))
+
+    test("appendResults is a no-op (0 rows, returns undefined) on an already-terminal session — a replayed/duplicate batch cannot re-complete or overwrite a finished session", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-append-3",
+        })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ status: "completed", consumedAt: new Date() })
+          .where(eq(schema.connectSessionModel.id, session.id))
+
+        const result = await connectSessionRepository.appendResults(
+          {
+            id: session.id,
+            results: [{ targetId: "t1", status: "connected" }],
+            resultConnectionIds: [],
+          },
+          tx,
+        )
+
+        expect(result).toBeUndefined()
+      }))
+
+    test("updateWhereStatusIn is a no-op on a session outside the given statuses (terminal-session guard backing C3/I5)", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-guard-1",
+        })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ status: "completed", consumedAt: new Date() })
+          .where(eq(schema.connectSessionModel.id, session.id))
+
+        const result = await connectSessionRepository.updateWhereStatusIn(
+          {
+            id: session.id,
+            statuses: ["pending", "authorized", "awaiting_selection"],
+            values: { status: "expired" },
+          },
+          tx,
+        )
+
+        expect(result).toBeUndefined()
+        const [row] = await tx
+          .select({ status: schema.connectSessionModel.status })
+          .from(schema.connectSessionModel)
+          .where(eq(schema.connectSessionModel.id, session.id))
+        expect(row.status).toBe("completed")
+      }))
+
+    test("updateWhereActive is a no-op on a session whose status is active but expiresAt is already past (regression I5: a stale-but-not-yet-lazily-expired session must not be revived by attachAuthorization/submitInput/updateReturnUrl)", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-active-guard-1",
+        })
+        // Simulates a session nobody has read since its TTL lapsed: status
+        // is still the original active value in the DB, only `expiresAt`
+        // is in the past.
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ expiresAt: new Date(Date.now() - 60_000) })
+          .where(eq(schema.connectSessionModel.id, session.id))
+
+        const result = await connectSessionRepository.updateWhereActive(
+          {
+            id: session.id,
+            statuses: ["pending", "authorized", "awaiting_selection"],
+            values: { status: "awaiting_selection", step: "select" },
+          },
+          tx,
+        )
+
+        expect(result).toBeUndefined()
+        const [row] = await tx
+          .select({ step: schema.connectSessionModel.step })
+          .from(schema.connectSessionModel)
+          .where(eq(schema.connectSessionModel.id, session.id))
+        expect(row.step).toBe("select")
+      }))
+
+    test("releaseTarget lets a retry claim the same target again after a failed attempt (claim -> release -> claim)", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-release-1",
+        })
+
+        expect(
+          await connectSessionRepository.claimTarget(
+            { id: session.id, targetId: "t1" },
+            tx,
+          ),
+        ).toBe(true)
+
+        await connectSessionRepository.releaseTarget(
+          { id: session.id, targetId: "t1" },
+          tx,
+        )
+
+        expect(
+          await connectSessionRepository.claimTarget(
+            { id: session.id, targetId: "t1" },
+            tx,
+          ),
+        ).toBe(true)
+      }))
+
+    test("appendResults terminates an all-failed batch as failed with a generic errorCode, not completed", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-allfailed-1",
+        })
+
+        const updated = await connectSessionRepository.appendResults(
+          {
+            id: session.id,
+            results: [
+              { targetId: "t1", status: "failed", reason: "providerRejected" },
+              {
+                targetId: "t2",
+                status: "limitReached",
+                reason: "workspaceLimit",
+              },
+            ],
+            resultConnectionIds: [],
+          },
+          tx,
+        )
+
+        expect(updated?.status).toBe("failed")
+        expect(updated?.errorCode).toBe("provider_error")
+        expect(updated?.encryptedAuth).toBeNull()
+      }))
+
+    test("appendResults under REAL concurrency: two separate connections each completing a different target merge into one completed session with no lost update", async () => {
+      const seedClient = new Client({ connectionString: databaseUrl as string })
+      await seedClient.connect()
+      const seedDb = createDatabase(seedClient)
+
+      const [owner] = await seedDb
+        .insert(schema.userModel)
+        .values({
+          email: `cs-iso-concurrent-${Date.now()}-${Math.random()}@example.test`,
+        })
+        .returning({ id: schema.userModel.id })
+      const [workspace] = await seedDb
+        .insert(schema.workspaceModel)
+        .values({ name: "cs-iso-concurrent", ownerId: owner.id })
+        .returning({ id: schema.workspaceModel.id })
+      const [session] = await seedDb
+        .insert(schema.connectSessionModel)
+        .values({
+          workspaceId: workspace.id,
+          provider: "messenger",
+          purpose: "connect",
+          actorUserId: owner.id,
+          stateNonceHash: `iso-hash-concurrent-${Date.now()}`,
+          status: "awaiting_selection",
+          step: "select",
+          targets: [
+            { id: "t1", name: "A", selectable: true },
+            { id: "t2", name: "B", selectable: true },
+          ],
+          claimedTargetIds: [],
+          resultConnectionIds: [],
+          results: [],
+          expiresAt: FUTURE,
+        })
+        .returning()
+
+      try {
+        const clientA = new Client({ connectionString: databaseUrl as string })
+        const clientB = new Client({ connectionString: databaseUrl as string })
+        await Promise.all([clientA.connect(), clientB.connect()])
+        try {
+          const dbA = createDatabase(clientA)
+          const dbB = createDatabase(clientB)
+
+          await Promise.all([
+            connectSessionRepository.appendResults(
+              {
+                id: session.id,
+                results: [
+                  {
+                    targetId: "t1",
+                    status: "connected",
+                    connectionId: "conn-t1",
+                  },
+                ],
+                resultConnectionIds: ["conn-t1"],
+              },
+              dbA,
+            ),
+            connectSessionRepository.appendResults(
+              {
+                id: session.id,
+                results: [
+                  {
+                    targetId: "t2",
+                    status: "connected",
+                    connectionId: "conn-t2",
+                  },
+                ],
+                resultConnectionIds: ["conn-t2"],
+              },
+              dbB,
+            ),
+          ])
+
+          const final = await connectSessionRepository.findById(
+            { id: session.id },
+            seedDb,
+          )
+          expect(final?.status).toBe("completed")
+          expect(final?.results).toHaveLength(2)
+          expect(final?.results.map((r) => r.targetId).sort()).toEqual([
+            "t1",
+            "t2",
+          ])
+          expect(final?.resultConnectionIds.sort()).toEqual([
+            "conn-t1",
+            "conn-t2",
+          ])
+        } finally {
+          await Promise.all([clientA.end(), clientB.end()])
+        }
+      } finally {
+        await seedDb
+          .delete(schema.connectSessionModel)
+          .where(eq(schema.connectSessionModel.id, session.id))
+        await seedDb
+          .delete(schema.workspaceModel)
+          .where(eq(schema.workspaceModel.id, workspace.id))
+        await seedDb
+          .delete(schema.userModel)
+          .where(eq(schema.userModel.id, owner.id))
+        await seedClient.end()
+      }
+    })
+
+    test("purgeOldTerminal deletes a terminal session past retention but leaves a recent terminal session alone", async () => {
+      const seedClient = new Client({ connectionString: databaseUrl as string })
+      await seedClient.connect()
+      const seedDb = createDatabase(seedClient)
+      const { workspaceId, ownerId } = await (async () => {
+        const [owner] = await seedDb
+          .insert(schema.userModel)
+          .values({
+            email: `cs-iso-purge-${Date.now()}-${Math.random()}@example.test`,
+          })
+          .returning({ id: schema.userModel.id })
+        const [workspace] = await seedDb
+          .insert(schema.workspaceModel)
+          .values({ name: "cs-iso-purge", ownerId: owner.id })
+          .returning({ id: schema.workspaceModel.id })
+        return { workspaceId: workspace.id, ownerId: owner.id }
+      })()
+
+      const THIRTY_ONE_DAYS_AGO = new Date(
+        Date.now() - 31 * 24 * 60 * 60 * 1000,
+      )
+      const seedTerminal = async (label: string, consumedAt: Date) => {
+        const [row] = await seedDb
+          .insert(schema.connectSessionModel)
+          .values({
+            workspaceId,
+            provider: "messenger",
+            purpose: "connect",
+            actorUserId: ownerId,
+            stateNonceHash: `iso-hash-purge-${label}-${Date.now()}`,
+            status: "completed",
+            step: "done",
+            targets: [],
+            claimedTargetIds: [],
+            resultConnectionIds: [],
+            results: [],
+            expiresAt: FUTURE,
+            consumedAt,
+          })
+          .returning()
+        return row
+      }
+      const oldRow = await seedTerminal("old", THIRTY_ONE_DAYS_AGO)
+      const recentRow = await seedTerminal("recent", new Date())
+
+      try {
+        const result = await connectSessionRepository.purgeOldTerminal({
+          retentionDays: 30,
+          chunkSize: 500,
+          interChunkDelayMs: 0,
+          maxChunks: 10,
+        })
+
+        expect(result.deleted).toBeGreaterThanOrEqual(1)
+        const oldStillThere = await connectSessionRepository.findById({
+          id: oldRow.id,
+        })
+        expect(oldStillThere).toBeUndefined()
+        const recentStillThere = await connectSessionRepository.findById({
+          id: recentRow.id,
+        })
+        expect(recentStillThere).toBeDefined()
+      } finally {
+        await seedDb
+          .delete(schema.connectSessionModel)
+          .where(eq(schema.connectSessionModel.id, recentRow.id))
+        await seedDb
+          .delete(schema.workspaceModel)
+          .where(eq(schema.workspaceModel.id, workspaceId))
+        await seedDb
+          .delete(schema.userModel)
+          .where(eq(schema.userModel.id, ownerId))
+        await seedClient.end()
+      }
+    })
   },
 )

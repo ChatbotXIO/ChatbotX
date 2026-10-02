@@ -3,6 +3,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  gt,
   inArray,
   lte,
   sql,
@@ -140,6 +141,39 @@ export const connectSessionRepository = {
   },
 
   /**
+   * Same as `updateWhereStatusIn`, additionally guarded on `expiresAt >
+   * now()` — for a write that must never land on a session that is
+   * ALREADY past its TTL but hasn't been lazily flipped to `expired` yet
+   * (the lazy-expiry read path, `ConnectSessionService.applyExpiryRule`,
+   * only runs on a read; nothing guarantees a read has happened between a
+   * session going stale and this write). Without the extra guard,
+   * `attachAuthorization` could "revive" a session a concurrent
+   * cancel/expire raced past its TTL back into `awaiting_selection`, since
+   * its stored `status` would still read as one of the active statuses.
+   */
+  async updateWhereActive(
+    input: {
+      id: string
+      values: Partial<typeof connectSessionModel.$inferInsert>
+      statuses: ConnectSessionStatus[]
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ConnectSessionModel | undefined> {
+    const [row] = await tx
+      .update(connectSessionModel)
+      .set(input.values)
+      .where(
+        and(
+          eq(connectSessionModel.id, input.id),
+          inArray(connectSessionModel.status, input.statuses),
+          gt(connectSessionModel.expiresAt, sql`now()`),
+        ),
+      )
+      .returning()
+    return row
+  },
+
+  /**
    * Bulk-flips every active session past `expiresAt` to `expired` in ONE
    * statement — not the per-row loop this replaced, which issued one
    * `UPDATE` per expired session (N+1) — and clears `encryptedAuth`: the
@@ -241,14 +275,19 @@ export const connectSessionRepository = {
    * `UPDATE` semantics), so this is correct without a surrounding
    * transaction or row lock of its own:
    * - `results`/`resultConnectionIds` accumulate via `||`/`array_cat`.
-   * - Completion counts DISTINCT `targetId`s across the merged results
-   *   against the session's own count of *selectable* targets — so a
-   *   `notSelectable` target (never offered to connect) can't block
-   *   completion, and a duplicate outcome for the same target can't
-   *   double-count it.
-   * - The terminal status is `completed` only if at least one outcome is
-   *   NOT `failed`/`limitReached`; an all-failed/all-limitReached batch
-   *   terminates `failed` instead, with a generic `errorCode` set.
+   * - Completion counts DISTINCT `targetId`s across the merged results,
+   *   restricted to ids the session's `targets` still mark `selectable`
+   *   (`selectableTargetIds`) — against the session's own count of
+   *   selectable targets. Without that restriction an outcome for an
+   *   unknown id or one already `selectable: false` (never offered to
+   *   connect) would inflate the numerator just like a real target,
+   *   completing the session before every real target had a result and
+   *   clearing `encryptedAuth` out from under the ones never attempted.
+   * - The terminal status is `completed` only if at least one *selectable*
+   *   outcome is NOT `failed`/`limitReached`; a non-selectable id's
+   *   `duplicated` outcome does not count as that success, and an
+   *   all-failed/all-limitReached batch terminates `failed` instead, with
+   *   a generic `errorCode` set.
    * - Guarded by `status = 'awaiting_selection'` in the `WHERE`: a session
    *   already terminal (completed by a concurrent call, or replayed after
    *   `fail`/`cancel`) updates 0 rows — the caller sees `undefined` rather
@@ -265,8 +304,19 @@ export const connectSessionRepository = {
     const newResults = sql`${JSON.stringify(input.results)}::jsonb`
     const mergedResults = sql`(${connectSessionModel.results} || ${newResults})`
     const selectableTargetCount = sql`(SELECT count(*) FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
-    const distinctResultCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem)`
-    const hasSuccess = sql`(SELECT bool_or(elem2->>'status' NOT IN ('failed', 'limitReached')) FROM jsonb_array_elements(${mergedResults}) AS elem2)`
+    // Restricted to ids the session actually offered as `selectable` — an
+    // unknown id (not in `targets` at all) or one already marked
+    // `selectable: false` was never real progress toward
+    // `selectableTargetCount`, so it must not advance `distinctResultCount`
+    // (regression: submitting one real id alongside one non-selectable/
+    // unknown id used to complete the session before every real target had
+    // an outcome, nulling `encryptedAuth` out from under the targets that
+    // were never attempted). The same filter applies to `hasSuccess` — a
+    // `duplicated` outcome for a non-selectable id must not count as the
+    // "at least one success" that flips the batch to `completed`.
+    const selectableTargetIds = sql`(SELECT t->>'id' FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
+    const distinctResultCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem WHERE elem->>'targetId' IN ${selectableTargetIds})`
+    const hasSuccess = sql`(SELECT bool_or(elem2->>'status' NOT IN ('failed', 'limitReached')) FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
     const isComplete = sql`(${distinctResultCount} >= ${selectableTargetCount})`
 
     const [row] = await tx
