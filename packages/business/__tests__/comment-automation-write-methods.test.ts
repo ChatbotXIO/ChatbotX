@@ -45,6 +45,7 @@ vi.mock("@chatbotx.io/database/partials", async () => ({
   igCommentAutomationTypes: {
     options: ["instagram", "instagramFacebook"],
   },
+  normalizeReplyTexts: (reply: unknown) => reply,
   rootFolderId: "0",
 }))
 
@@ -286,11 +287,41 @@ describe("commentAutomationService — type-scoped writes", () => {
       data: {
         name: "hello",
         privateReply: { type: "flow", value: "flow-1" },
+        publicReply: { type: "flow", value: "flow-2" },
       },
     })
 
-    expect(mocks.flowExists).toHaveBeenCalledWith("1", "flow-1", undefined)
+    expect(mocks.flowExists).toHaveBeenNthCalledWith(
+      1,
+      "1",
+      "flow-1",
+      undefined,
+    )
+    expect(mocks.flowExists).toHaveBeenNthCalledWith(
+      2,
+      "1",
+      "flow-2",
+      undefined,
+    )
     expect(values).toHaveBeenCalled()
+  })
+
+  test("createMessenger rejects on privateReply when both reply flows are missing", async () => {
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      commentAutomationService.createMessenger({
+        workspaceId: "1",
+        data: {
+          name: "hello",
+          privateReply: { type: "flow", value: "flow-1" },
+          publicReply: { type: "flow", value: "flow-2" },
+        },
+      }),
+    ).rejects.toMatchObject({ field: "privateReply" })
+
+    expect(mocks.flowExists).toHaveBeenCalledTimes(1)
+    expect(mocks.insert).not.toHaveBeenCalled()
   })
 
   test("createMessenger never calls flowService when neither reply is a flow", async () => {
@@ -304,6 +335,37 @@ describe("commentAutomationService — type-scoped writes", () => {
     })
 
     expect(mocks.flowExists).not.toHaveBeenCalled()
+  })
+
+  test("updateMessenger rejects a privateReply flow from another workspace", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "messenger" })
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      commentAutomationService.updateMessenger(
+        { workspaceId: "1", id: "9" },
+        { privateReply: { type: "flow", value: "flow-from-another-space" } },
+      ),
+    ).rejects.toMatchObject({ field: "privateReply" })
+
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  test("createInstagram rejects a privateReply flow from another workspace", async () => {
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      commentAutomationService.createInstagram({
+        workspaceId: "1",
+        type: "instagramFacebook",
+        data: {
+          name: "hello",
+          privateReply: { type: "flow", value: "flow-from-another-space" },
+        },
+      }),
+    ).rejects.toMatchObject({ field: "privateReply" })
+
+    expect(mocks.insert).not.toHaveBeenCalled()
   })
 
   test("updateInstagram rejects a privateReply flow from another workspace", async () => {
@@ -392,6 +454,22 @@ describe("commentAutomationService — type-scoped writes", () => {
     ).rejects.toMatchObject({ field: "publicReply" })
 
     expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  test("updateTiktokAutomation rejects a publicReply flow from another workspace", async () => {
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      commentAutomationService.updateTiktokAutomation({
+        workspaceId: "1",
+        id: "9",
+        data: {
+          publicReply: { type: "flow", value: "flow-from-another-space" },
+        },
+      }),
+    ).rejects.toMatchObject({ field: "publicReply" })
+
+    expect(mocks.update).not.toHaveBeenCalled()
   })
 })
 
