@@ -12,7 +12,7 @@ import {
   hasRealAvatar,
   isUnpromotedStandbyCopy,
   messageCleanupService,
-  publishToWorkspaceParty,
+  queueWorkspaceRealtimeEvent,
   quotaEnforcementService,
   recordProfileRefreshFailure,
   resolveTenantSettings,
@@ -64,7 +64,10 @@ import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
@@ -1169,9 +1172,13 @@ const persistMessage = async (
   }
 
   if (isNew && !isOwnSendEcho) {
-    publishToWorkspaceParty(inbox.workspaceId, {
+    queueWorkspaceRealtimeEvent(inbox.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: message,
+      route: routeForConversation({
+        assignedUserId: conversation.assignedUserId,
+        assignedInboxTeamId: conversation.assignedInboxTeamId,
+      }),
     })
   }
 
@@ -1678,13 +1685,20 @@ export const updateIncomingComment = async (
     return
   }
 
-  publishToWorkspaceParty(inbox.workspaceId, {
+  const conversation = await conversationService.findBy({
+    where: { id: updated.conversationId, workspaceId: inbox.workspaceId },
+  })
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageUpdated,
     data: {
       messageId: updated.id,
       newText,
       removedAttachment: false,
     },
+    route: routeForConversation({
+      assignedUserId: conversation?.assignedUserId,
+      assignedInboxTeamId: conversation?.assignedInboxTeamId,
+    }),
   })
 }
 
@@ -1714,9 +1728,16 @@ export const deleteIncomingComment = async (
   }
 
   const messageIds = deleted.map((row) => row.id)
-  publishToWorkspaceParty(inbox.workspaceId, {
+  const conversation = await conversationService.findBy({
+    where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
+  })
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
+    route: routeForConversation({
+      assignedUserId: conversation?.assignedUserId,
+      assignedInboxTeamId: conversation?.assignedInboxTeamId,
+    }),
   })
 }
 
@@ -1748,9 +1769,16 @@ export const deleteIncomingMessage = async (
   }
 
   const messageIds = deleted.map((row) => row.id)
-  publishToWorkspaceParty(inbox.workspaceId, {
+  const conversation = await conversationService.findBy({
+    where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
+  })
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
+    route: routeForConversation({
+      assignedUserId: conversation?.assignedUserId,
+      assignedInboxTeamId: conversation?.assignedInboxTeamId,
+    }),
   })
 }
 
@@ -1839,9 +1867,13 @@ export const processMessageReaction = async (
   })
 
   if (isNew) {
-    publishToWorkspaceParty(inbox.workspaceId, {
+    queueWorkspaceRealtimeEvent(inbox.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: reactionRow,
+      route: routeForConversation({
+        assignedUserId: conversation.assignedUserId,
+        assignedInboxTeamId: conversation.assignedInboxTeamId,
+      }),
     })
     return
   }
@@ -1854,13 +1886,17 @@ export const processMessageReaction = async (
       reactionRow.createdAt,
     )
     if (updated) {
-      publishToWorkspaceParty(inbox.workspaceId, {
+      queueWorkspaceRealtimeEvent(inbox.workspaceId, {
         eventType: RealtimeEventType.messageUpdated,
         data: {
           messageId: updated.id,
           newText: reactionText,
           removedAttachment: false,
         },
+        route: routeForConversation({
+          assignedUserId: conversation.assignedUserId,
+          assignedInboxTeamId: conversation.assignedInboxTeamId,
+        }),
       })
     }
   }

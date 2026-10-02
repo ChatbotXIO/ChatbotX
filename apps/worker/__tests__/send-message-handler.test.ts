@@ -12,7 +12,7 @@ const {
   mockRecordOutboundMessageSent,
   mockRecordSendFailure,
   mockChatQueueAdd,
-  mockBroadcastToWorkspaceParty,
+  mockQueueWorkspaceRealtimeEvent,
   mockRecordPermanentGrant,
   mockMarkReadByOutbound,
 } = vi.hoisted(() => {
@@ -42,7 +42,7 @@ const {
     mockRecordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
-    mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+    mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
     mockRecordPermanentGrant: vi.fn().mockResolvedValue(undefined),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
   }
@@ -61,8 +61,36 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
   conversationService: { markReadByOutbound: mockMarkReadByOutbound },
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
-  publishToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
+  messageService: {
+    findWithAttachments: vi.fn().mockResolvedValue(null),
+    updateAttributes: vi.fn().mockResolvedValue(undefined),
+    updateSendError: (input: {
+      createdAt: Date
+      id: string
+      sendError: string | null
+      workspaceId: string
+    }) =>
+      mockUpdateSendError(
+        input.id,
+        input.sendError,
+        input.workspaceId,
+        input.createdAt,
+      ),
+    updateSourceId: (input: {
+      createdAt: Date
+      id: string
+      sourceId: string
+      workspaceId: string
+    }) =>
+      mockUpdateSourceId(
+        input.id,
+        input.sourceId,
+        input.workspaceId,
+        input.createdAt,
+      ),
+  },
   whatsappCallPermissionService: {
     recordPermanentGrant: mockRecordPermanentGrant,
   },
@@ -817,9 +845,51 @@ describe("chat send-message handlers", () => {
       "ws-1",
       expect.any(Date),
     )
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageFailed",
       data: { messageId: "msg-1", error: "sdk error" },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
+    })
+  })
+
+  test("routes a send-failure event to the conversation's assigned agent/team, not just full-access members", async () => {
+    // Regression for PR #1349 round-4 finding #3: `messageFailed` used to
+    // publish with no `route` at all, so a workspace member restricted to
+    // `chatScope: \"assigned\"` never saw a failed-send state (or the
+    // edit/delete buttons it unlocks) for a conversation assigned to them.
+    const error = new ChannelError(
+      "expired human agent window",
+      ChannelErrorCategory.PAYLOAD_INVALID,
+      { code: "messenger_human_agent_window_expired" },
+    )
+    mockRunChannelHandler.mockRejectedValueOnce(error)
+
+    const assignedConversation = {
+      ...conversation,
+      assignedUserId: "user-42",
+      assignedInboxTeamId: "team-7",
+    }
+
+    await sendMessageToChannel({
+      conversation: assignedConversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "hello",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageFailed",
+      data: { messageId: "msg-1", error: "sdk error" },
+      route: { assignedTeamIds: ["team-7"], assignedUserIds: ["user-42"] },
     })
   })
 
@@ -862,7 +932,7 @@ describe("chat send-message handlers", () => {
       "ws-1",
       expect.any(Date),
     )
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("publishes a broadcast continuation send error", async () => {
@@ -897,12 +967,13 @@ describe("chat send-message handlers", () => {
       } as never,
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageFailed",
       data: {
         messageId: "msg-broadcast-continuation",
         error: "sdk error",
       },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 
@@ -923,7 +994,7 @@ describe("chat send-message handlers", () => {
     })
 
     expect(mockUpdateSendError).not.toHaveBeenCalled()
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("clears a prior sendError when a retry (attemptsMade > 0) succeeds", async () => {
@@ -955,9 +1026,10 @@ describe("chat send-message handlers", () => {
       "ws-1",
       createdAt,
     )
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageFailed",
       data: { messageId: "msg-1", clientId: "client-1", error: null },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 
@@ -998,7 +1070,7 @@ describe("chat send-message handlers", () => {
       "ws-1",
       createdAt,
     )
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("does not clear sendError on a first-attempt (non-retry) successful send", async () => {
@@ -1193,7 +1265,7 @@ describe("chat send-message handlers", () => {
       contactInboxId: "ci-1",
       grantedAt: expect.any(Date),
     })
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "whatsappCallPermissionUpdated",
       data: { conversationId: "conv-1" },
     })

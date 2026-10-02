@@ -185,9 +185,9 @@ vi.mock("@chatbotx.io/business", () => ({
   appointmentCalendarService: {
     findByPublicLinkSlug: mockFindAppointmentCalendarBySlug,
   },
-  broadcastToWorkspaceParty: mockBroadcast,
-  publishToWorkspaceParty: mockBroadcast,
-  broadcastToGuestParty: vi.fn().mockResolvedValue(undefined),
+  publishWorkspaceRealtimeEvent: mockBroadcast,
+  queueWorkspaceRealtimeEvent: mockBroadcast,
+  publishGuestRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   contactInboxService: {
     findByUncached: mockFindContactInbox,
     findRecentByContactId: mockFindContactInbox,
@@ -202,6 +202,13 @@ vi.mock("@chatbotx.io/business", () => ({
     markReadByOutbound: mockMarkReadByOutbound,
   },
   resolveTenantSettings: mockresolveTenantSettings,
+  messageService: {
+    create: mockRepositoryCreate,
+    createWithAttachments: (input: {
+      attachments: unknown[]
+      message: unknown
+    }) => mockRepositoryCreateWithAttachments(input.message, input.attachments),
+  },
   resolveMediaUrl: mockResolveMediaUrl,
 }))
 
@@ -226,8 +233,23 @@ vi.mock("@chatbotx.io/event-bus", () => ({
   emit: mockEmit,
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(
+    ({
+      assignedInboxTeamId,
+      assignedUserId,
+      inboxId,
+    }: {
+      assignedInboxTeamId?: string | null
+      assignedUserId?: string | null
+      inboxId?: string | null
+    }) => ({
+      assignedTeamIds: assignedInboxTeamId ? [assignedInboxTeamId] : [],
+      assignedUserIds: assignedUserId ? [assignedUserId] : [],
+      inboxId,
+    }),
+  ),
 }))
 
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
@@ -1721,6 +1743,22 @@ describe("sendChatMessage", () => {
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],
     })
+  })
+
+  test("uses the resolved fallback inbox when routing the realtime message", async () => {
+    mockFindContactInbox.mockResolvedValue(fakeContactInbox)
+
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      text: "hello from chat",
+    })
+
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        route: expect.objectContaining({ inboxId: fakeContactInbox.inboxId }),
+      }),
+    )
   })
 
   test("keeps a broadcast continuation visible in realtime and the inbox sort", async () => {

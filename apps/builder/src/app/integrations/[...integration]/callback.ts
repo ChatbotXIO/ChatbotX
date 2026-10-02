@@ -5,6 +5,7 @@ import {
   instagramIntegrationService,
   integrationFacebookAdsService,
   integrationMetaCatalogService,
+  integrationService,
   integrationThreadsService,
   integrationWhatsappService,
   messagingAdsConnectionService,
@@ -14,16 +15,11 @@ import {
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import {
   type IntegrationType,
   type MessagingAdChannel,
   messagingAdChannelTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  integrationGoogleSheetsModel,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
 import {
   exchangeCodeForToken as exchangeFacebookAdsCode,
   exchangeLongLivedToken as exchangeFacebookAdsLongLivedToken,
@@ -52,11 +48,7 @@ import {
   type AuthValue,
   type Oauth2AuthValue,
 } from "@chatbotx.io/sdk"
-import {
-  createId,
-  getPublicUrlFromRequest,
-  zodBigintAsString,
-} from "@chatbotx.io/utils"
+import { getPublicUrlFromRequest, zodBigintAsString } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
@@ -1070,22 +1062,12 @@ export const handleCallback = async (
     return notFound()
   }
 
-  await db.transaction(async (tx) => {
-    const integrationId = createId()
-
-    await tx.insert(integrationModel).values({
-      id: integrationId,
-      workspaceId: workspace.id,
-      integrationType,
-    })
-
-    if (integrationType === "googleSheets" && googleSheetsAuth) {
-      await tx.insert(integrationGoogleSheetsModel).values({
-        workspaceId: workspace.id,
-        integrationId,
-        auth: googleSheetsAuth,
-      })
-    }
+  await integrationService.create({
+    workspaceId: workspace.id,
+    integrationType,
+    ...(integrationType === "googleSheets" && googleSheetsAuth
+      ? { googleSheetsAuth }
+      : {}),
   })
 
   if (integrationType === "googleSheets") {

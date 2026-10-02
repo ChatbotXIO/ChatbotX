@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   messageRepositoryUpdateContentBySourceId: vi.fn(),
   messageRepositoryMergeContentAttributesBySourceId: vi.fn(),
   createMessageRepository: vi.fn(),
-  broadcastToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
   runExclusive: vi.fn(),
 }))
 
@@ -50,7 +50,7 @@ vi.mock("../src/contact/service", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
 }))
 
 const { whatsappCallTranscriptService, whatsappCallSummaryService } =
@@ -253,7 +253,7 @@ describe("whatsappCallSummaryService.attachSummary", () => {
     expect(
       mocks.messageRepositoryMergeContentAttributesBySourceId,
     ).toHaveBeenCalledWith("wacall-call-1", "ws-1", { hasSummary: true })
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
         data: expect.objectContaining({ messageId: "msg-1" }),
@@ -277,7 +277,7 @@ describe("whatsappCallSummaryService.attachSummary", () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("a second concurrent Regenerate for the SAME call fails fast with 'already generating' instead of calling the provider twice", async () => {

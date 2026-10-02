@@ -44,7 +44,7 @@ vi.mock("../src/contact/service", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  publishToWorkspaceParty: mockPublishToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockPublishToWorkspaceParty,
 }))
 
 vi.mock("../src/logger", () => ({

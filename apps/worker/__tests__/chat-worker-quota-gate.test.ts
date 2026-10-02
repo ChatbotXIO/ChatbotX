@@ -16,7 +16,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
   replyByOutboundAutomatedResponse: vi.fn(),
 }))
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
 }))
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/sdk")>()

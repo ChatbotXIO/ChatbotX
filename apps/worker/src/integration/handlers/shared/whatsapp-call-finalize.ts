@@ -1,8 +1,10 @@
 import {
-  broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
-  sendToWorkspaceMember,
+  integrationWhatsappService,
+  messageService,
+  publishWorkspaceMemberRealtimeEvent,
+  publishWorkspaceRealtimeEvent,
   userService,
   whatsappVoipCallService,
   whatsappVoipSignalingService,
@@ -11,16 +13,13 @@ import {
   resolveWhatsappCallTerminalOutcomePair,
   type WhatsappCallTerminalStatusOutcomePair,
 } from "@chatbotx.io/database/partials"
-import {
-  createMessageRepository,
-  integrationWhatsappRepository,
-} from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { emitCallEnded, emitMissedAudioCall } from "@chatbotx.io/events"
 import {
   RealtimeEventType,
   type RealtimeEventWhatsappCallTransportEnded,
-} from "@chatbotx.io/partysocket-config"
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import {
   getWhatsappCallEntity,
   type MessageWhatsappCallEntity,
@@ -47,7 +46,7 @@ export const resolveCallActivityRequestFlags = async (
   recordingUnavailable: boolean
 }> => {
   const integration =
-    await integrationWhatsappRepository.findByInboxIdForWorkspace({
+    await integrationWhatsappService.findByInboxIdForWorkspaceOrNull({
       inboxId: call.inboxId,
       workspaceId: call.workspaceId,
     })
@@ -182,10 +181,10 @@ const emitCallEndedToAgent = async (
     // Unclaimed call: broadcast so every rung agent's dialog clears immediately
     // instead of waiting out its own ~55s deadline timer.
     if (control.reservedUserId === "") {
-      await broadcastToWorkspaceParty(call.workspaceId, eventPayload)
+      await publishWorkspaceRealtimeEvent(call.workspaceId, eventPayload)
       return
     }
-    await sendToWorkspaceMember(
+    await publishWorkspaceMemberRealtimeEvent(
       { workspaceId: call.workspaceId, userId: control.reservedUserId },
       eventPayload,
     )
@@ -325,8 +324,7 @@ export const finalizeCallSideEffects = async (
     "[wa-call-media] call card flags stamped",
   )
 
-  const repository = await createMessageRepository()
-  const { message, isNew } = await repository.createOrUpdate({
+  const { message, isNew } = await messageService.createOrUpdate({
     id: createId(),
     conversationId: call.conversationId,
     contactInboxId: call.contactInboxId,
@@ -391,9 +389,16 @@ export const finalizeCallSideEffects = async (
   }
 
   try {
-    await broadcastToWorkspaceParty(call.workspaceId, {
+    const conversation = await conversationService.findBy({
+      where: { id: call.conversationId, workspaceId: call.workspaceId },
+    })
+    await publishWorkspaceRealtimeEvent(call.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: { ...message, attachments: [] },
+      route: routeForConversation({
+        assignedUserId: conversation?.assignedUserId,
+        assignedInboxTeamId: conversation?.assignedInboxTeamId,
+      }),
     })
   } catch (error) {
     logger.warn({ err: error }, "Whatsapp call: unable to emit realtime event")
@@ -513,7 +518,6 @@ export const enrichCallActivityMessage = async (props: {
 }): Promise<void> => {
   const { call, overrides } = props
   const sourceId = callActivitySourceId(call.id)
-  const repository = await createMessageRepository()
 
   // The finalize message is created at call end (createdAt: endedAt), so the
   // call's own createdAt is always at or before it — a valid, tight sinceTime
@@ -524,12 +528,12 @@ export const enrichCallActivityMessage = async (props: {
 
   const existing = await waitUntilReady(
     () =>
-      repository.findBySourceId(
+      messageService.findBySourceId({
         sourceId,
-        call.conversationId,
-        call.workspaceId,
+        conversationId: call.conversationId,
+        workspaceId: call.workspaceId,
         sinceTime,
-      ),
+      }),
     (message) => message !== null,
   )
   if (!existing) {
@@ -540,11 +544,11 @@ export const enrichCallActivityMessage = async (props: {
     throw new WhatsappCallEnrichmentPendingError(call.id)
   }
 
-  const merged = await repository.mergeContentAttributesBySourceId(
+  const merged = await messageService.mergeContentAttributesBySourceId({
     sourceId,
-    call.workspaceId,
-    overrides,
-  )
+    workspaceId: call.workspaceId,
+    overlay: overrides,
+  })
   if (!merged) {
     logger.warn(
       { callId: call.id },
@@ -562,10 +566,17 @@ export const enrichCallActivityMessage = async (props: {
     getWhatsappCallEntity(merged.contentAttributes) ??
     defaultCallEntity(call, overrides)
 
+  const conversation = await conversationService.findBy({
+    where: { id: call.conversationId, workspaceId: call.workspaceId },
+  })
   try {
-    await broadcastToWorkspaceParty(call.workspaceId, {
+    await publishWorkspaceRealtimeEvent(call.workspaceId, {
       eventType: RealtimeEventType.messageContentUpdated,
       data: { messageId: merged.id, contentAttributes: entity },
+      route: routeForConversation({
+        assignedUserId: conversation?.assignedUserId,
+        assignedInboxTeamId: conversation?.assignedInboxTeamId,
+      }),
     })
   } catch (error) {
     logger.warn(

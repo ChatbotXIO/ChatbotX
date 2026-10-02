@@ -3,12 +3,12 @@ import type {
   ContactInboxModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { contactService } from "../contact/service"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { logger } from "../logger"
-import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
 
 /**
  * The contact's DM conversation (`sourceId IS NULL`), created when this is
@@ -136,7 +136,7 @@ export const recordDeliveredDirectMessage = async (props: {
       at: message.createdAt,
     })
 
-    publishToWorkspaceParty(workspaceId, {
+    queueWorkspaceRealtimeEvent(workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: message,
     })

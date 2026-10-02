@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   deleteOffer: vi.fn(),
   readOutboundAnswer: vi.fn(),
   deleteOutboundAnswer: vi.fn(),
-  sendToWorkspaceMember: vi.fn(),
+  publishWorkspaceMemberRealtimeEvent: vi.fn(),
   resolveWhatsappCallerName: vi.fn(),
   findByWacid: vi.fn(),
   findByAttemptId: vi.fn(),
@@ -26,14 +26,26 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  sendToWorkspaceMember: mocks.sendToWorkspaceMember,
+  publishWorkspaceMemberRealtimeEvent:
+    mocks.publishWorkspaceMemberRealtimeEvent,
   resolveWhatsappCallerName: mocks.resolveWhatsappCallerName,
+  integrationWhatsappService: {
+    findAuthByInboxId: async (inboxId: string) => {
+      const row = await mocks.findAuthByInboxId({
+        modelName: "IntegrationWhatsapp",
+        inboxId,
+      })
+      return row?.auth ?? row
+    },
+  },
   whatsappVoipCallService: {
     reserveIncomingCall: mocks.reserveIncomingCall,
     selectRingTargetsForCall: mocks.selectRingTargetsForCall,
     readControl: mocks.readControl,
     claimUnreachable: mocks.claimUnreachable,
     endCall: mocks.endCall,
+    findByAttemptId: mocks.findByAttemptId,
+    findByWacid: mocks.findByWacid,
     isCallEnded: mocks.isCallEnded,
   },
   whatsappVoipSignalingService: {
@@ -59,7 +71,7 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/calling", () => ({
   terminateCall: mocks.terminateCall,
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: {
     whatsappCallTransportIncoming: "whatsappCallTransportIncoming",
     whatsappCallTransportEnded: "whatsappCallTransportEnded",
@@ -195,24 +207,24 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
         deadlineAt: new Date(2000).toISOString(),
       },
     }
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledTimes(2)
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledTimes(2)
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
       { workspaceId: "ws-1", userId: "agent-1" },
       expectedEvent,
     )
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
       { workspaceId: "ws-1", userId: "agent-2" },
       expectedEvent,
     )
     expect(mocks.rejectCall).not.toHaveBeenCalled()
   })
 
-  test("a per-recipient delivery failure (sendToWorkspaceMember returns null) is logged, other recipients still delivered", async () => {
+  test("a per-recipient publish failure is logged while other recipients are delivered", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
     mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
-    mocks.sendToWorkspaceMember
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ ok: true })
+    mocks.publishWorkspaceMemberRealtimeEvent
+      .mockRejectedValueOnce(new Error("stream down"))
+      .mockResolvedValueOnce(undefined)
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
@@ -224,10 +236,10 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
 
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledTimes(2)
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledTimes(2)
     expect(mocks.logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ wacid: "wacid.ABC" }),
-      expect.stringContaining("unable to deliver"),
+      expect.stringContaining("unable to publish"),
     )
   })
 
@@ -272,7 +284,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
         status: "rejected",
       },
     })
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     // The reservation already exists at this point (reserve-first), so
     // this branch must end it directly via `endReservedCall` rather than
     // going through `refuseIncomingCall`'s `claimUnreachable` SET NX, which
@@ -297,7 +309,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
     })
 
     expect(mocks.selectRingTargetsForCall).not.toHaveBeenCalled()
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.terminateCall).not.toHaveBeenCalled()
     expect(mocks.endCall).not.toHaveBeenCalled()
@@ -333,7 +345,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       workspaceId: "ws-1",
       conversationId: "conv-1",
     })
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
       { workspaceId: "ws-1", userId: "agent-3" },
       expect.anything(),
     )
@@ -370,7 +382,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       workspaceId: "ws-1",
       conversationId: "conv-1",
     })
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     expect(mocks.endCall).toHaveBeenCalledWith({
       wacid: "wacid.ABC",
       allowFromAccepted: false,
@@ -410,7 +422,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
     // BEFORE any target is selected, refusal issued, or agent rung.
     expect(mocks.reserveIncomingCall).toHaveBeenCalled()
     expect(mocks.selectRingTargetsForCall).not.toHaveBeenCalled()
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.terminateCall).not.toHaveBeenCalled()
   })
@@ -462,7 +474,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     expect(mocks.reserveIncomingCall).not.toHaveBeenCalled()
     expect(mocks.selectRingTargetsForCall).not.toHaveBeenCalled()
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.terminateCall).not.toHaveBeenCalled()
     expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
@@ -485,7 +497,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("the call ended while the ring set was being selected: ends the reserved control without Meta, never rings", async () => {
@@ -510,7 +522,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
 
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     expect(mocks.endCall).toHaveBeenCalledWith({
       wacid: "wacid.ABC",
       allowFromAccepted: false,
@@ -547,12 +559,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
         status: "completed",
       },
     }
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledTimes(4)
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledTimes(4)
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
       { workspaceId: "ws-1", userId: "agent-1" },
       endedEvent,
     )
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
       { workspaceId: "ws-1", userId: "agent-2" },
       endedEvent,
     )
@@ -574,8 +586,8 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
 
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledTimes(2)
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledTimes(2)
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ eventType: "whatsappCallTransportEnded" }),
     )
@@ -608,7 +620,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
         status: "rejected",
       },
     })
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
   })
 })
 
@@ -865,7 +877,7 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
   test("forwards the SDP answer to the initiator, targeted-only, then deletes the stored answer", async () => {
     mocks.findByAttemptId.mockResolvedValue(outboundCallRow)
     mocks.readOutboundAnswer.mockResolvedValue({ sdp: "v=0...answer" })
-    mocks.sendToWorkspaceMember.mockResolvedValue({ ok: true })
+    mocks.publishWorkspaceMemberRealtimeEvent.mockResolvedValue(undefined)
 
     await handleWhatsappVoipSignalingJob({
       type: "handleOutboundAnswer",
@@ -877,7 +889,7 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
       },
     })
 
-    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).toHaveBeenCalledWith(
       { workspaceId: "ws-1", userId: "initiator-1" },
       {
         eventType: "whatsappCallOutboundAnswer",
@@ -906,7 +918,7 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
       },
     })
 
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     expect(mocks.deleteOutboundAnswer).not.toHaveBeenCalled()
     expect(mocks.logger.warn).toHaveBeenCalled()
   })
@@ -928,7 +940,7 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
       },
     })
 
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
     expect(mocks.deleteOutboundAnswer).not.toHaveBeenCalled()
     expect(mocks.logger.warn).toHaveBeenCalled()
   })
@@ -936,7 +948,9 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
   test("a per-recipient delivery failure is logged, but the stored answer is still deleted", async () => {
     mocks.findByAttemptId.mockResolvedValue(outboundCallRow)
     mocks.readOutboundAnswer.mockResolvedValue({ sdp: "v=0...answer" })
-    mocks.sendToWorkspaceMember.mockResolvedValue(null)
+    mocks.publishWorkspaceMemberRealtimeEvent.mockRejectedValue(
+      new Error("stream down"),
+    )
 
     await handleWhatsappVoipSignalingJob({
       type: "handleOutboundAnswer",
@@ -950,7 +964,7 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
 
     expect(mocks.logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ attemptId: "att-1" }),
-      expect.stringContaining("unable to deliver"),
+      expect.stringContaining("unable to publish"),
     )
     expect(mocks.deleteOutboundAnswer).toHaveBeenCalledWith("att-1")
   })
@@ -971,7 +985,7 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
       }),
     ).rejects.toThrow(CALL_ROW_NOT_READY_PATTERN)
 
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceMemberRealtimeEvent).not.toHaveBeenCalled()
   })
 })
 

@@ -9,10 +9,12 @@ export interface CreateMessageInput {
   createdAt?: Date
   id?: string
   messageType: "incoming" | "outgoing" | "activity"
+  parentId?: string | null
   senderId?: string | null
   senderType: "bot" | "contact" | "system" | "user" | "api"
   sourceId?: string | null
   text?: string | null
+  type?: "message" | "comment"
   updatedAt?: Date
   workspaceId: string
 }
@@ -276,7 +278,7 @@ export interface IMessageRepository {
     sourceId: string,
     workspaceId: string,
     createdAt: Date,
-  ): Promise<{ id: string }[]>
+  ): Promise<{ conversationId: string; id: string }[]>
 
   findAIContextMessages(
     options: FindAIContextMessagesOptions,
@@ -395,7 +397,7 @@ export interface IMessageRepository {
     workspaceId: string,
     newText: string,
     createdAt: Date,
-  ): Promise<{ id: string } | null>
+  ): Promise<{ conversationId: string; id: string } | null>
 
   updateSendError(
     id: string,
@@ -415,5 +417,5 @@ export interface IMessageRepository {
     sourceId: string,
     workspaceId: string,
     newText: string,
-  ): Promise<{ id: string } | null>
+  ): Promise<{ conversationId: string; id: string } | null>
 }

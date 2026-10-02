@@ -1,13 +1,10 @@
 import {
-  sendToWorkspaceMember,
+  messageService,
+  publishWorkspaceMemberRealtimeEvent,
   whatsappCallLifecycleService,
   whatsappVoipCallService,
 } from "@chatbotx.io/business"
 import { contactSources } from "@chatbotx.io/database/partials"
-import {
-  createMessageRepository,
-  whatsappCallRepository,
-} from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import {
   emitIncomingCall,
@@ -16,7 +13,7 @@ import {
 import {
   RealtimeEventType,
   type RealtimeEventWhatsappCallOutboundStatus,
-} from "@chatbotx.io/partysocket-config"
+} from "@chatbotx.io/realtime-protocol"
 import {
   CALL_CANCELED_BY_BUSINESS_LAST_ERROR,
   type MessageWhatsappCallEntity,
@@ -71,13 +68,13 @@ const readBizOpaqueCallbackData = (event: CallEvent): string | undefined =>
 const resolveStatusCallRow = async (
   event: Extract<CallEvent, { kind: "status" }>,
 ): Promise<WhatsappCallModel | undefined> => {
-  const byWacid = await whatsappCallRepository.findByWacid(event.wacid)
+  const byWacid = await whatsappVoipCallService.findByWacid(event.wacid)
   if (byWacid) {
     return byWacid
   }
   const attemptId = readBizOpaqueCallbackData(event)
   return attemptId
-    ? await whatsappCallRepository.findByAttemptId(attemptId)
+    ? await whatsappVoipCallService.findByAttemptId(attemptId)
     : undefined
 }
 
@@ -102,19 +99,13 @@ const notifyOutboundStatus = async (
   }
 
   try {
-    const result = await sendToWorkspaceMember(
+    await publishWorkspaceMemberRealtimeEvent(
       { workspaceId: call.workspaceId, userId: call.answeredByUserId },
       {
         eventType: RealtimeEventType.whatsappCallOutboundStatus,
         data: eventData,
       },
     )
-    if (!result) {
-      logger.warn(
-        { whatsappCallId: call.id, status, userId: call.answeredByUserId },
-        "Whatsapp VoIP: unable to deliver the outbound status realtime event",
-      )
-    }
   } catch (err: unknown) {
     logger.warn(
       { err, whatsappCallId: call.id, status },
@@ -305,14 +296,14 @@ const attachBusinessInitiatedToPendingOutbound = async (
   >,
   wacid: string,
 ): Promise<WhatsappCallModel | undefined> => {
-  const alreadyAttached = await whatsappCallRepository.findByWacid(wacid)
+  const alreadyAttached = await whatsappVoipCallService.findByWacid(wacid)
   if (alreadyAttached) {
     return alreadyAttached
   }
 
   const attemptId = readBizOpaqueCallbackData(event)
   if (attemptId) {
-    const byAttempt = await whatsappCallRepository.findByAttemptId(attemptId)
+    const byAttempt = await whatsappVoipCallService.findByAttemptId(attemptId)
     if (byAttempt) {
       return await whatsappVoipCallService.attachMetaCallId({
         whatsappCallId: byAttempt.id,
@@ -420,12 +411,11 @@ const handleInterimStatus = async (
       direction: existing.direction,
       status: "rejected",
     }
-    const repository = await createMessageRepository()
-    await repository.updateContentBySourceId(
-      callActivitySourceId(existing.id),
-      existing.workspaceId,
-      { text: buildCallActivityText(entity), contentAttributes: entity },
-    )
+    await messageService.updateContentBySourceId({
+      sourceId: callActivitySourceId(existing.id),
+      workspaceId: existing.workspaceId,
+      patch: { text: buildCallActivityText(entity), contentAttributes: entity },
+    })
   }
 }
 
@@ -536,7 +526,7 @@ const handleTerminate = async (
   props: CallEventData,
   event: Extract<CallEvent, { kind: "terminate" }>,
 ): Promise<void> => {
-  let call = await whatsappCallRepository.findByWacid(event.wacid)
+  let call = await whatsappVoipCallService.findByWacid(event.wacid)
 
   if (!call) {
     if (event.direction === "businessInitiated") {

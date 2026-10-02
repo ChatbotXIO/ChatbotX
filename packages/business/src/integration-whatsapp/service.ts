@@ -1,6 +1,7 @@
 import {
   and,
   type DatabaseClient,
+  db,
   eq,
   inArray,
 } from "@chatbotx.io/database/client"
@@ -348,6 +349,21 @@ class IntegrationWhatsappService extends BaseService {
     input: FindWorkspaceIntegrationInput,
   ): Promise<IntegrationWhatsappModel | null> {
     return integrationWhatsappRepository.findByIdForWorkspace(input)
+  }
+
+  findByInboxIdForWorkspaceOrNull(input: {
+    inboxId: string
+    workspaceId: string
+  }): Promise<IntegrationWhatsappModel | null> {
+    return integrationWhatsappRepository.findByInboxIdForWorkspace(input)
+  }
+
+  async findAuthByInboxId(inboxId: string): Promise<unknown | null> {
+    const integration = await db.query.integrationWhatsappModel.findFirst({
+      columns: { auth: true },
+      where: { inboxId },
+    })
+    return integration?.auth ?? null
   }
 
   /**

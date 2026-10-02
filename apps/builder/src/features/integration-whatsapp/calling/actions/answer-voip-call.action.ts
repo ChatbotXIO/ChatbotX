@@ -1,21 +1,18 @@
 "use server"
 
 import {
-  broadcastToWorkspaceParty,
   canCallConversation,
   canSendAudio,
   contactInboxService,
   contactService,
   diagnoseAnswerShape,
+  integrationWhatsappService,
   isAnswerDeadlineExpired,
+  publishWorkspaceRealtimeEvent,
   summarizeIceCandidates,
   whatsappVoipCallService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import {
-  integrationWhatsappRepository,
-  whatsappCallRepository,
-} from "@chatbotx.io/database/repositories"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   acceptCall,
@@ -24,7 +21,7 @@ import {
   type WhatsappCallAnnouncementOptions,
   type WhatsappCallSdpAnswerInput,
 } from "@chatbotx.io/integration-whatsapp/api/calling"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
@@ -115,13 +112,16 @@ async function resolveCallAndAuth(input: {
   announcementOptions: WhatsappCallAnnouncementOptions
 }> {
   const t = await getTranslations()
-  const call = await whatsappCallRepository.findById(input.whatsappCallId)
-  if (!call || call.workspaceId !== input.workspaceId || !call.wacid) {
+  const call = await whatsappVoipCallService.findByIdForWorkspace({
+    id: input.whatsappCallId,
+    workspaceId: input.workspaceId,
+  })
+  if (!call?.wacid) {
     throw new ChatbotXException(t("whatsapp.calls.errors.callNotFound"))
   }
 
   const integration =
-    await integrationWhatsappRepository.findByInboxIdForWorkspace({
+    await integrationWhatsappService.findByInboxIdForWorkspaceOrNull({
       workspaceId: input.workspaceId,
       inboxId: call.inboxId,
     })
@@ -390,7 +390,7 @@ export const answerWhatsappVoipCallAction = callingActionClient
       // deadline. The tab that answered ignores it because it is already past
       // incomingRinging. A broadcast failure must never fail the accept
       // already won.
-      await broadcastToWorkspaceParty(workspaceId, {
+      await publishWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.whatsappCallClaimedElsewhere,
         data: {
           whatsappCallId,
