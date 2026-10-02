@@ -25,7 +25,7 @@ sequenceDiagram
   participant Browser
 
   Producer->>Redis: XADD typed realtime record
-  Gateway->>Redis: consume owned shard
+  Gateway->>Redis: XREAD active shards (no ownership — every replica reads the same shards it has local sockets for)
   Gateway->>Browser: { seq, batch }
   Browser->>Browser: deduplicate and persist seq
 ```

@@ -76,6 +76,7 @@ describe("realtime stream broadcast", () => {
       revokeWorkspaceMemberRealtimeConnections({
         userId: "user_1",
         workspaceId: "workspace_1",
+        reason: "deleted",
       }),
     ).resolves.toBeUndefined()
     await expect(
@@ -93,6 +94,7 @@ describe("realtime stream broadcast", () => {
     })
     expect(publishRealtimeStreamRecord).toHaveBeenNthCalledWith(2, {
       kind: "member-revoke",
+      reason: "deleted",
       userId: "user_1",
       workspaceId: "workspace_1",
     })
@@ -112,6 +114,7 @@ describe("realtime stream broadcast", () => {
     const revoke = revokeWorkspaceMemberRealtimeConnections({
       userId: "user_1",
       workspaceId: "workspace_1",
+      reason: "deleted",
     })
     await vi.runAllTimersAsync()
 
@@ -126,6 +129,7 @@ describe("realtime stream broadcast", () => {
     const revoke = revokeWorkspaceMemberRealtimeConnections({
       userId: "user_1",
       workspaceId: "workspace_1",
+      reason: "deleted",
     })
     // Attach the rejection assertion in the same tick the promise is
     // created — `revoke` settles across several fake-timer-driven retries,

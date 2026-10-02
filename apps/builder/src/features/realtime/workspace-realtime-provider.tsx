@@ -5,9 +5,11 @@ import {
   REALTIME_CLOSE_CODE,
   type RealtimeEventData,
   RealtimeEventType,
+  RealtimeFatalError,
   RealtimeSocket,
   realtimeBatchEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
+import { ORPCError } from "@orpc/client"
 import { useQueryClient } from "@tanstack/react-query"
 import {
   createContext,
@@ -153,6 +155,7 @@ export function WorkspaceRealtimeProvider({
   const [resyncCount, setResyncCount] = useState(0)
   const lastProcessedSeqRef = useRef<string | null>(null)
   const hasConnectedOnceRef = useRef(false)
+  const pendingResyncRef = useRef(false)
 
   const processRealtimeEvent = useCallback(
     (frame: { data: unknown; eventType: string }): void => {
@@ -259,13 +262,33 @@ export function WorkspaceRealtimeProvider({
     let disposed = false
     lastProcessedSeqRef.current = null
     hasConnectedOnceRef.current = false
+    pendingResyncRef.current = false
     setStatus("connecting")
     const socket = new RealtimeSocket({
       getUrl: async () => {
-        const { token } =
-          await client.realtimeAPI.mintWorkspaceConnectTokenAuthenticatedAPI({
-            workspaceId,
-          })
+        let token: string
+        try {
+          ;({ token } =
+            await client.realtimeAPI.mintWorkspaceConnectTokenAuthenticatedAPI({
+              workspaceId,
+            }))
+        } catch (error) {
+          // The mint endpoint re-checks workspace membership on every call —
+          // an UNAUTHORIZED/FORBIDDEN here means re-minting with the same
+          // session would fail identically forever (e.g. the member was
+          // just removed), not a transient blip. Stop retrying instead of
+          // backing off forever against a dead credential. See PR #1349
+          // finding #5.
+          if (
+            error instanceof ORPCError &&
+            (error.code === "UNAUTHORIZED" || error.code === "FORBIDDEN")
+          ) {
+            throw new RealtimeFatalError(
+              "Workspace realtime connect-token mint was unauthorized",
+            )
+          }
+          throw error
+        }
         const socketUrl = new URL(
           `/rt/workspaces/${encodeURIComponent(workspaceId)}`,
           publicRealtimeUrl,
@@ -294,20 +317,28 @@ export function WorkspaceRealtimeProvider({
         )
       },
       onError: (error) => {
-        if (!disposed) {
-          logger.warn({ err: error }, "Workspace realtime connection failed")
+        if (disposed) {
+          return
+        }
+        logger.warn({ err: error }, "Workspace realtime connection failed")
+        if (error instanceof RealtimeFatalError) {
+          setStatus("closed")
         }
       },
       onMessage: processSocketMessage,
       onOpen: () => {
         hasConnectedOnceRef.current = true
         setStatus("open")
+        if (pendingResyncRef.current) {
+          pendingResyncRef.current = false
+          setResyncCount((count) => count + 1)
+        }
       },
       onResync: () => {
         if (!disposed) {
           lastProcessedSeqRef.current = null
           hasConnectedOnceRef.current = false
-          setResyncCount((count) => count + 1)
+          pendingResyncRef.current = true
           setStatus("resyncing")
         }
       },

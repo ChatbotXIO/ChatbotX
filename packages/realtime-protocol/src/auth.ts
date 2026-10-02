@@ -101,6 +101,11 @@ const memberClaimsSchema = z.object({
   userId: z.string().min(1),
   chatScope: realtimeChatScopes,
   teamIds: z.array(z.string().min(1)).default([]),
+  // Standard JWT "issued at" (seconds since epoch), set automatically by
+  // `signRealtimeToken`'s `.setIssuedAt()`. Kept (not stripped) so a replayed
+  // `member-revoke` stream record older than this token's mint time can be
+  // told apart from one that's genuinely newer than the reconnect.
+  iat: z.number(),
 })
 
 /** Claims carried by a room-connect token: the verified member's user id. */

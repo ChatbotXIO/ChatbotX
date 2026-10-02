@@ -150,6 +150,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
       userId: "u_1",
       chatScope: "all",
       teamIds: [],
+      iat: expect.any(Number),
     })
   })
 
@@ -170,6 +171,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
       userId: "u_1",
       chatScope: "assigned",
       teamIds: ["team_1", "team_2"],
+      iat: expect.any(Number),
     })
   })
 

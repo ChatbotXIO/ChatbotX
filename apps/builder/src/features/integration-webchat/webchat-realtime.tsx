@@ -20,6 +20,15 @@ type WebchatRealtimeProps = {
 // needs to cover at least as many messages as fit in the visible list.
 const RECONNECT_REFETCH_PAGE_SIZE = 50
 
+// Past this many consecutive non-fatal close/retry cycles, or this long
+// without a single successful open, the widget stops silently retrying in
+// the UI's eyes and tells the guest the connection is down — otherwise a
+// sustained outage (not a 401/403, which is already fatal) leaves the
+// widget showing "connecting" forever with no signal anything is wrong.
+// See PR #1349 finding #9.
+const MAX_CONSECUTIVE_CONNECT_FAILURES = 5
+const MAX_CONNECTING_DURATION_MS = 30_000
+
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
   const { publicRealtimeUrl } = useTenantSettings()
   const {
@@ -45,6 +54,8 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       return
     }
     let hasConnectedOnce = false
+    let consecutiveFailureCount = 0
+    let firstFailureAtMs: number | null = null
     setConnectionStatus("connecting")
     const frameHandler = createWebchatFrameHandler({
       onMessage: handleNewMessage,
@@ -92,6 +103,15 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       },
       onClose: ({ code, reason }) => {
         logger.warn({ code, reason }, "Webchat realtime connection closed")
+        consecutiveFailureCount += 1
+        firstFailureAtMs ??= Date.now()
+        if (
+          consecutiveFailureCount >= MAX_CONSECUTIVE_CONNECT_FAILURES ||
+          Date.now() - firstFailureAtMs >= MAX_CONNECTING_DURATION_MS
+        ) {
+          setConnectionStatus("closed")
+          return
+        }
         setConnectionStatus("connecting")
       },
       onError: (error) => {
@@ -102,6 +122,8 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       },
       onMessage: frameHandler.handleFrame,
       onOpen: () => {
+        consecutiveFailureCount = 0
+        firstFailureAtMs = null
         frameHandler.reset()
         setConnectionStatus("open")
         // A guest socket carries no stream cursor (unlike the workspace

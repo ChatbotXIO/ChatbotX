@@ -11,7 +11,9 @@ uWebSockets gateway backed by Redis Streams.
 - Full-access members receive one `{"batch":[…],"seq":"<stream-id>"}` frame per
   workspace record. Assigned-only members receive one filtered frame per record;
   unrouted events are full-access only. Directed member events use the local
-  member-connection map and revocations close with code `4001`.
+  member-connection map; a workspace-member deletion closes with code `4001`,
+  while a permissions/team-membership change (the member is still in the
+  workspace) closes with the non-terminal `4004` instead.
 - Every socket subscribes to the gateway's `hb` topic. The gateway publishes a
   heartbeat every 25 seconds; clients close only after 60 seconds without any
   frame.
@@ -67,13 +69,18 @@ guessed.
 | Code | Meaning | Client behavior |
 | --- | --- | --- |
 | `4000` | Client-detected heartbeat timeout (no frame for 60s) | Reconnects with backoff |
-| `4001` (`revoked`) | Member removed, permissions changed, or connection explicitly revoked | Does not reconnect — caller must re-authenticate |
-| `4002` (`resync`) | Replay cursor invalid/expired/oversized, or the connection lifetime elapsed | Clears its cursor and reconnects immediately |
+| `4001` (`revoked`) | The member was removed from the workspace | Does not reconnect — caller must re-authenticate |
+| `4002` (`resync`) | Replay cursor invalid/expired/oversized | Clears its cursor and reconnects immediately |
 | `4003` (`overloaded`) | A limit from the table above was hit | Reconnects after the server-supplied `retryAfter` |
+| `4004` (`reauth`) | Permissions/team membership changed, or the connection lifetime elapsed | Reconnects with a freshly minted token, keeping its replay cursor |
 
 `4002`'s reason string is one of `invalid-last-seq`, `replay-cursor-ahead`,
 `replay-window-expired`, `replay-window-too-large`, `replay-failed`, or
-`connection-lifetime-exceeded` — the client treats all of them identically
-(full resync), but they're distinguishable in gateway logs when diagnosing
-*why* a resync was forced.
+`malformed-stream-record` (a stream record this replica couldn't fully parse —
+a rolling-deploy schema skew — forces every local socket for that workspace to
+resync instead of silently missing it) — the client treats all of them
+identically (full resync), but they're distinguishable in gateway logs when
+diagnosing *why* a resync was forced. `4004`'s reason is `reauth` for a
+permissions/team-membership change or `connection-lifetime-exceeded` for the
+forced periodic re-handshake.
 

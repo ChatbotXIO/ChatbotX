@@ -36,6 +36,14 @@ export type WorkspaceSocket = {
   subscribe: (topic: string) => void
 }
 
+/** Minimal closable reference kept per-workspace so a server-detected gap
+ * (e.g. a malformed stream record) can force every affected guest socket to
+ * resync, not just the member sockets `WorkspaceSocket` already covers. */
+export type GuestSocket = {
+  end: (code?: number, reason?: string) => void
+  getUserData: () => GuestSocketData
+}
+
 type PublishApp = {
   publish: (topic: string, message: string) => boolean
 }
@@ -49,7 +57,36 @@ const memberKey = (workspaceId: string, userId: string): string =>
 
 const teamKey = (teamIds: string[]): string => [...teamIds].sort().join(",")
 
-export const encodeBatch = (events: unknown[], seq: string): string =>
+/**
+ * `"deleted"` closes are terminal (the client must not reconnect); `"reauth"`
+ * closes are a forced re-handshake only — the client reconnects with a
+ * freshly minted token and keeps its replay cursor. See PR #1349 finding #1.
+ */
+const closeCodeForRevoke = (
+  reason: "deleted" | "reauth",
+): { closeCode: number; closeReason: string } =>
+  reason === "deleted"
+    ? { closeCode: REALTIME_CLOSE_CODE.revoked, closeReason: "revoked" }
+    : { closeCode: REALTIME_CLOSE_CODE.reauth, closeReason: "reauth" }
+
+/**
+ * True when a `member-revoke` stream entry predates the token this socket
+ * (re)connected with. A reconnect always mints a fresh token, which
+ * re-validates membership/permissions at mint time — so a revoke still
+ * sitting in the replay window from *before* that mint reflects a condition
+ * already superseded by the fresh, successful mint. Honoring it anyway would
+ * kill a socket that just proved it's currently authorized. See PR #1349
+ * finding #1.
+ */
+const isRevokeStaleForToken = (
+  entryId: string,
+  iatSeconds: number,
+): boolean => {
+  const [entryMillisecondsRaw] = entryId.split("-")
+  return Number(entryMillisecondsRaw) < iatSeconds * 1000
+}
+
+const encodeBatch = (events: unknown[], seq: string): string =>
   JSON.stringify({ batch: events, seq })
 
 const hasRouteMatch = (
@@ -86,8 +123,10 @@ const filterWorkspaceEvents = <Event extends WorkspaceEvent>(
 }
 
 export type RealtimeDelivery = {
+  addGuestSocket: (socket: GuestSocket) => void
   addWorkspaceSocket: (socket: WorkspaceSocket) => boolean
   dispatch: (entry: StreamRecordEntry) => void
+  removeGuestSocket: (socket: GuestSocket) => void
   removeWorkspaceSocket: (socket: WorkspaceSocket) => boolean
   replayGuestSocket: (
     socket: {
@@ -101,6 +140,10 @@ export type RealtimeDelivery = {
     socket: WorkspaceSocket,
     entries?: StreamRecordEntry[],
   ) => boolean
+  /** Forces every known socket (member and guest) of one workspace to
+   * resync — used when a stream record for that workspace couldn't be fully
+   * parsed, so every local recipient has a confirmed gap. */
+  resyncWorkspace: (workspaceId: string, reason: string) => void
   subscribeGuestSocket: (socket: {
     getUserData: () => GuestSocketData
     subscribe: (topic: string) => void
@@ -114,6 +157,8 @@ export const createRealtimeDelivery = (
 ): RealtimeDelivery => {
   const connectionsByMember = new Map<string, Set<WorkspaceSocket>>()
   const restrictedByWorkspace = new Map<string, Set<WorkspaceSocket>>()
+  const memberSocketsByWorkspace = new Map<string, Set<WorkspaceSocket>>()
+  const guestSocketsByWorkspace = new Map<string, Set<GuestSocket>>()
 
   const recordPublish = (topic: string, frame: string): void => {
     app.publish(topic, frame)
@@ -239,13 +284,14 @@ export const createRealtimeDelivery = (
         if (!sockets) {
           return
         }
+        const { closeCode, closeReason } = closeCodeForRevoke(record.reason)
         for (const socket of sockets) {
           const socketData = socket.getUserData()
           if (socketData.closed) {
             continue
           }
           socketData.closed = true
-          socket.end(REALTIME_CLOSE_CODE.revoked, "revoked")
+          socket.end(closeCode, closeReason)
         }
         return
       }
@@ -255,6 +301,13 @@ export const createRealtimeDelivery = (
   }
 
   return {
+    addGuestSocket: (socket) => {
+      const { workspaceId } = socket.getUserData()
+      const sockets =
+        guestSocketsByWorkspace.get(workspaceId) ?? new Set<GuestSocket>()
+      sockets.add(socket)
+      guestSocketsByWorkspace.set(workspaceId, sockets)
+    },
     addWorkspaceSocket: (socket) => {
       const { chatScope, userId, workspaceId } = socket.getUserData()
       const key = memberKey(workspaceId, userId)
@@ -262,6 +315,10 @@ export const createRealtimeDelivery = (
       const firstSocket = sockets.size === 0
       sockets.add(socket)
       connectionsByMember.set(key, sockets)
+      const workspaceSockets =
+        memberSocketsByWorkspace.get(workspaceId) ?? new Set<WorkspaceSocket>()
+      workspaceSockets.add(socket)
+      memberSocketsByWorkspace.set(workspaceId, workspaceSockets)
       if (chatScope === "assigned") {
         const restrictedSockets =
           restrictedByWorkspace.get(workspaceId) ?? new Set<WorkspaceSocket>()
@@ -271,10 +328,26 @@ export const createRealtimeDelivery = (
       return firstSocket
     },
     dispatch,
+    removeGuestSocket: (socket) => {
+      const { workspaceId } = socket.getUserData()
+      const sockets = guestSocketsByWorkspace.get(workspaceId)
+      if (!sockets) {
+        return
+      }
+      sockets.delete(socket)
+      if (sockets.size === 0) {
+        guestSocketsByWorkspace.delete(workspaceId)
+      }
+    },
     removeWorkspaceSocket: (socket) => {
       const { chatScope, userId, workspaceId } = socket.getUserData()
       const key = memberKey(workspaceId, userId)
       const sockets = connectionsByMember.get(key)
+      const workspaceSockets = memberSocketsByWorkspace.get(workspaceId)
+      workspaceSockets?.delete(socket)
+      if (workspaceSockets?.size === 0) {
+        memberSocketsByWorkspace.delete(workspaceId)
+      }
       if (!sockets) {
         return false
       }
@@ -325,18 +398,44 @@ export const createRealtimeDelivery = (
               sendMemberRecord(socket, entry)
             }
             break
-          case "member-revoke":
-            if (entry.record.userId === socket.getUserData().userId) {
+          case "member-revoke": {
+            const { iat, userId } = socket.getUserData()
+            if (
+              entry.record.userId === userId &&
+              !isRevokeStaleForToken(entry.id, iat)
+            ) {
+              const { closeCode, closeReason } = closeCodeForRevoke(
+                entry.record.reason,
+              )
               socket.getUserData().closed = true
-              socket.end(REALTIME_CLOSE_CODE.revoked, "revoked")
+              socket.end(closeCode, closeReason)
               return false
             }
             break
+          }
           default:
             break
         }
       }
       return true
+    },
+    resyncWorkspace: (workspaceId, reason) => {
+      for (const socket of memberSocketsByWorkspace.get(workspaceId) ?? []) {
+        const socketData = socket.getUserData()
+        if (socketData.closed) {
+          continue
+        }
+        socketData.closed = true
+        socket.end(REALTIME_CLOSE_CODE.resync, reason)
+      }
+      for (const socket of guestSocketsByWorkspace.get(workspaceId) ?? []) {
+        const socketData = socket.getUserData()
+        if (socketData.closed) {
+          continue
+        }
+        socketData.closed = true
+        socket.end(REALTIME_CLOSE_CODE.resync, reason)
+      }
     },
     subscribeGuestSocket: (socket) => {
       const { guestConversationId, workspaceId } = socket.getUserData()

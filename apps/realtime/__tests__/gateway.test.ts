@@ -402,4 +402,55 @@ describe("createRealtimeGateway (live)", () => {
     second.close()
     await waitForClose(second)
   })
+
+  test("forces a member socket to reauth (not resync) once its connection lifetime elapses", async () => {
+    // Regression for PR #1349 finding #2: the lifetime close used to reuse
+    // the `resync` code, forcing every tab through a full cache invalidation
+    // every `connectionLifetimeMs` even though nothing was actually lost.
+    gateway = createRealtimeGateway({
+      connectionLifetimeMs: 50,
+      maxConnections: 10,
+      redis: createFakeRedis() as never,
+      secret: SECRET,
+    })
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signMemberConnectToken(
+      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
+    )
+    await waitForOpen(socket)
+
+    const closeEvent = await waitForClose(socket)
+    expect(closeEvent).toEqual({
+      code: REALTIME_CLOSE_CODE.reauth,
+      reason: "connection-lifetime-exceeded",
+    })
+  })
+
+  test("forces a guest socket to reauth (not resync) once its connection lifetime elapses", async () => {
+    gateway = createRealtimeGateway({
+      connectionLifetimeMs: 50,
+      maxConnections: 10,
+      redis: createFakeRedis() as never,
+      secret: SECRET,
+    })
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signGuestConnectToken(
+      { guestConversationId: "guest-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/guests/guest-1?token=${token}`,
+    )
+    await waitForOpen(socket)
+
+    const closeEvent = await waitForClose(socket)
+    expect(closeEvent).toEqual({
+      code: REALTIME_CLOSE_CODE.reauth,
+      reason: "connection-lifetime-exceeded",
+    })
+  })
 })

@@ -92,6 +92,7 @@ export const updateWorkspaceMemberAction = workspaceActionClient
         await revokeWorkspaceMemberRealtimeConnections({
           userId: workspaceMember.userId,
           workspaceId,
+          reason: "reauth",
         })
       } catch (error) {
         logger.error(

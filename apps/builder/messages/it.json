@@ -6695,5 +6695,14 @@
     "openZaloGroup": "Apri gruppo Zalo",
     "openZalo": "Apri Zalo",
     "openMessenger": "Apri Messenger"
+  },
+  "realtime": {
+    "connectionBanner": {
+      "reconnectingTitle": "Reconnecting…",
+      "reconnectingDescription": "Live updates are temporarily unavailable. We'll keep retrying in the background.",
+      "closedTitle": "Connection lost",
+      "closedDescription": "Live updates have stopped. Reload the page to keep receiving new messages.",
+      "reload": "Reload"
+    }
   }
 }

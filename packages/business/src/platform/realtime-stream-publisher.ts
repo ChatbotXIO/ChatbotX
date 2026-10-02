@@ -7,7 +7,21 @@ import { resolveRealtimeRedisUrl } from "./settings"
 
 const REALTIME_STREAM_RETENTION_MS = 5 * 60 * 1000
 
+/** A transient Redis blip (brief network hiccup, failover) must not
+ * permanently drop a realtime event with no gap signal to clients —
+ * especially fire-and-forget guest publishes, which have no caller-level
+ * retry of their own. Bounded so a genuine outage still fails fast instead
+ * of queueing indefinitely. See PR #1349 finding #7. */
+const PUBLISH_RETRY_ATTEMPTS = 3
+const PUBLISH_RETRY_DELAY_MS = 100
+
 let realtimeStreamConnection: Redis | null = null
+
+const delay = (ms: number): Promise<void> => {
+  const { promise, resolve } = Promise.withResolvers<void>()
+  setTimeout(resolve, ms)
+  return promise
+}
 
 const getRealtimeStreamConnection = (): Redis =>
   (realtimeStreamConnection ??= createRedisConnection(
@@ -33,15 +47,27 @@ export const publishSerializedRealtimeStreamRecord = async (
   workspaceId: string,
   serializedRecord: string,
 ): Promise<void> => {
-  await getRealtimeStreamConnection().xadd(
-    getRealtimeStreamKey(workspaceId),
-    "MINID",
-    "~",
-    `${Date.now() - REALTIME_STREAM_RETENTION_MS}-0`,
-    "*",
-    "record",
-    serializedRecord,
-  )
+  let lastError: unknown
+  for (let attempt = 1; attempt <= PUBLISH_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      await getRealtimeStreamConnection().xadd(
+        getRealtimeStreamKey(workspaceId),
+        "MINID",
+        "~",
+        `${Date.now() - REALTIME_STREAM_RETENTION_MS}-0`,
+        "*",
+        "record",
+        serializedRecord,
+      )
+      return
+    } catch (error) {
+      lastError = error
+      if (attempt < PUBLISH_RETRY_ATTEMPTS) {
+        await delay(PUBLISH_RETRY_DELAY_MS * attempt)
+      }
+    }
+  }
+  throw lastError
 }
 
 /**

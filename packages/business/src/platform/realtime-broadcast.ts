@@ -11,9 +11,9 @@ import {
   resetRealtimeStreamPublisherForTests,
 } from "./realtime-stream-publisher"
 
-export const WORKSPACE_REALTIME_COALESCE_MS = 25
-export const WORKSPACE_REALTIME_MAX_EVENTS = 64
-export const WORKSPACE_REALTIME_MAX_BYTES = 256 * 1024
+const WORKSPACE_REALTIME_COALESCE_MS = 25
+const WORKSPACE_REALTIME_MAX_EVENTS = 64
+const WORKSPACE_REALTIME_MAX_BYTES = 256 * 1024
 
 const BATCH_ENVELOPE_BYTES = Buffer.byteLength('{"batch":[]}')
 const IMMEDIATE_FLUSH_EVENT_TYPES = new Set([
@@ -100,10 +100,11 @@ const createPendingWorkspaceRealtimeEvents = (
 }
 
 /**
- * Flushes one workspace's coalesced event batch. Exported for deterministic
- * shutdown draining and focused tests. Rejects when Redis cannot append it.
+ * Flushes one workspace's coalesced event batch. Used for both the
+ * coalescing flush timer and `flushAllPendingWorkspaceRealtimeEvents`'s
+ * shutdown drain. Rejects when Redis cannot append it.
  */
-export const flushPendingWorkspaceRealtimeEvents = (
+const flushPendingWorkspaceRealtimeEvents = (
   workspaceId: string,
 ): Promise<void> => {
   const pending = pendingByWorkspace.get(workspaceId)
@@ -275,16 +276,26 @@ const delay = (ms: number): Promise<void> => {
  * for up to `connectionLifetimeMs` (30 minutes by default) until its next
  * forced reconnect re-checks membership — callers must still log and decide
  * what to do if every attempt here fails.
+ *
+ * `reason` is required, not defaulted: `"deleted"` closes the socket
+ * terminally (the member was actually removed from the workspace — the
+ * client must not reconnect), `"reauth"` only forces a fresh token mint
+ * (permissions or team membership changed, but the member is still in the
+ * workspace). Using the wrong one either strands a still-valid member with a
+ * dead inbox, or lets a removed member's existing socket keep reconnecting.
+ * See PR #1349 finding #1.
  */
 export const revokeWorkspaceMemberRealtimeConnections = async (args: {
   workspaceId: string
   userId: string
+  reason: "deleted" | "reauth"
 }): Promise<void> => {
   let lastError: unknown
   for (let attempt = 1; attempt <= REVOKE_RETRY_ATTEMPTS; attempt += 1) {
     try {
       await publishRealtimeStreamRecord({
         kind: "member-revoke",
+        reason: args.reason,
         workspaceId: args.workspaceId,
         userId: args.userId,
       })

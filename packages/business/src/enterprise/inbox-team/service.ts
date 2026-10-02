@@ -127,6 +127,7 @@ class InboxTeamService extends BaseService {
           await revokeWorkspaceMemberRealtimeConnections({
             workspaceId,
             userId,
+            reason: "reauth",
           })
         } catch (error) {
           logger.error(

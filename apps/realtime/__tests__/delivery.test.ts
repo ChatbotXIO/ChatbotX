@@ -17,6 +17,7 @@ const createSocket = (
   const data: WorkspaceSocketData = {
     chatScope: "all",
     closed: false,
+    iat: 0,
     replayEntries: [],
     teamIds: [],
     userId: "user-1",
@@ -175,11 +176,78 @@ describe("realtime delivery", () => {
       id: "3-0",
       record: {
         kind: "member-revoke",
+        reason: "deleted",
         userId: "user-1",
         workspaceId: "workspace-1",
       },
     })
 
+    expect(socket.closed).toEqual({ code: 4001, reason: "revoked" })
+  })
+
+  test("closes a targeted member socket with the non-terminal reauth code when the revoke reason is reauth", () => {
+    // Regression for PR #1349 finding #1: a permission/team change must not
+    // use the terminal `revoked` code — the client would never reconnect.
+    const { delivery } = createDelivery()
+    const socket = createSocket()
+    delivery.addWorkspaceSocket(socket)
+
+    delivery.dispatch({
+      id: "3-0",
+      record: {
+        kind: "member-revoke",
+        reason: "reauth",
+        userId: "user-1",
+        workspaceId: "workspace-1",
+      },
+    })
+
+    expect(socket.closed).toEqual({ code: 4004, reason: "reauth" })
+  })
+
+  test("replay ignores a member-revoke entry older than the reconnecting token's iat", () => {
+    // Regression for PR #1349 finding #1: a revoke still sitting in the
+    // replay window from before this token was minted reflects a condition
+    // the fresh, successful mint already superseded — honoring it anyway
+    // would kill a socket that just proved it's currently authorized.
+    const { delivery } = createDelivery()
+    const socket = createSocket({ iat: 10 })
+
+    const staleRevokeId = "9000-0" // 9s, before iat (10s)
+    const result = delivery.replayWorkspaceSocket(socket, [
+      {
+        id: staleRevokeId,
+        record: {
+          kind: "member-revoke",
+          reason: "reauth",
+          userId: "user-1",
+          workspaceId: "workspace-1",
+        },
+      },
+    ])
+
+    expect(result).toBe(true)
+    expect(socket.closed).toBeNull()
+  })
+
+  test("replay still honors a member-revoke entry newer than the reconnecting token's iat", () => {
+    const { delivery } = createDelivery()
+    const socket = createSocket({ iat: 10 })
+
+    const freshRevokeId = "11000-0" // 11s, after iat (10s)
+    const result = delivery.replayWorkspaceSocket(socket, [
+      {
+        id: freshRevokeId,
+        record: {
+          kind: "member-revoke",
+          reason: "deleted",
+          userId: "user-1",
+          workspaceId: "workspace-1",
+        },
+      },
+    ])
+
+    expect(result).toBe(false)
     expect(socket.closed).toEqual({ code: 4001, reason: "revoked" })
   })
 
@@ -268,6 +336,40 @@ describe("realtime delivery", () => {
     })
     expect(socket.getUserData().closed).toBe(true)
     expect(socket.endCalls).toBe(1)
+  })
+
+  test("resyncWorkspace closes every registered member and guest socket of that workspace, and only that workspace", () => {
+    // Regression for PR #1349 finding #4: a stream record the gateway
+    // couldn't fully parse must force a resync on every local socket that
+    // might have missed it, not just log a warning nobody sees.
+    const { delivery } = createDelivery()
+    const memberSocket = createSocket({ workspaceId: "workspace-1" })
+    const otherWorkspaceMemberSocket = createSocket({
+      userId: "user-2",
+      workspaceId: "workspace-2",
+    })
+    const guestSocket = createGuestSocket({ workspaceId: "workspace-1" })
+    const otherWorkspaceGuestSocket = createGuestSocket({
+      guestConversationId: "guest-2",
+      workspaceId: "workspace-2",
+    })
+    delivery.addWorkspaceSocket(memberSocket)
+    delivery.addWorkspaceSocket(otherWorkspaceMemberSocket)
+    delivery.addGuestSocket(guestSocket)
+    delivery.addGuestSocket(otherWorkspaceGuestSocket)
+
+    delivery.resyncWorkspace("workspace-1", "malformed-stream-record")
+
+    expect(memberSocket.closed).toEqual({
+      code: REALTIME_CLOSE_CODE.resync,
+      reason: "malformed-stream-record",
+    })
+    expect(guestSocket.closed).toEqual({
+      code: REALTIME_CLOSE_CODE.resync,
+      reason: "malformed-stream-record",
+    })
+    expect(otherWorkspaceMemberSocket.closed).toBeNull()
+    expect(otherWorkspaceGuestSocket.closed).toBeNull()
   })
 
   test("does not deliver a routed event assigned to another team or user to an assigned-scope socket", () => {

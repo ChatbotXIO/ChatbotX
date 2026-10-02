@@ -2,10 +2,13 @@ import {
   getRealtimeStreamKey,
   getRealtimeStreamShard,
   isRealtimeSeqAfter,
+  type RealtimeEventEnvelope,
   type RealtimeStreamRecord,
+  realtimeEventEnvelopeSchema,
   realtimeStreamRecordSchema,
 } from "@chatbotx.io/realtime-protocol"
 import type { Redis } from "@chatbotx.io/redis"
+import { z } from "zod"
 import { logger } from "./logger"
 
 const STREAM_READ_BLOCK_MS = 1000
@@ -15,7 +18,7 @@ const DEACTIVATION_DELAY_MS = 30_000
 const IDLE_RETRY_MS = 250
 const ERROR_RETRY_MS = 1000
 
-export type StreamFieldList = [string, string][] | string[]
+type StreamFieldList = [string, string][] | string[]
 export type StreamEntry = [string, StreamFieldList]
 type StreamReadResult = [string, StreamEntry[]][]
 
@@ -64,19 +67,76 @@ const toFieldMap = (fields: StreamFieldList): Map<string, string> => {
   return fieldMap
 }
 
+/** A loose, best-effort read of `kind`/`workspaceId` only — used to recover
+ * enough identity to log and signal a resync even when the full record
+ * schema below rejects the entry (e.g. a rolling deploy skew). */
+const looseStreamRecordShapeSchema = z.object({
+  events: z.unknown().optional(),
+  kind: z.string(),
+  workspaceId: z.string().min(1),
+})
+
+export type ParsedStreamRecord =
+  | { ok: true; record: RealtimeStreamRecord }
+  | { error: unknown; ok: false; workspaceId?: string }
+
 export const parseStreamRecord = (
   fields: StreamFieldList,
-): RealtimeStreamRecord | null => {
+): ParsedStreamRecord => {
   const serializedRecord = toFieldMap(fields).get("record")
   if (!serializedRecord) {
-    return null
+    return { error: new Error("Stream entry has no 'record' field"), ok: false }
   }
 
+  let parsedJson: unknown
   try {
-    return realtimeStreamRecordSchema.parse(JSON.parse(serializedRecord))
-  } catch {
-    return null
+    parsedJson = JSON.parse(serializedRecord)
+  } catch (error) {
+    return { error, ok: false }
   }
+
+  const looseShape = looseStreamRecordShapeSchema.safeParse(parsedJson)
+  const workspaceId = looseShape.success
+    ? looseShape.data.workspaceId
+    : undefined
+
+  // A rolling deploy can have the worker publish a newer event shape than
+  // this build's envelope schema knows. Validating `events` per item instead
+  // of rejecting the whole `.min(1)` array keeps every *other* valid event in
+  // the same coalesced batch deliverable instead of discarding the record.
+  if (looseShape.success && looseShape.data.kind === "workspace-events") {
+    const rawEvents = looseShape.data.events
+    if (Array.isArray(rawEvents)) {
+      const validEvents: RealtimeEventEnvelope[] = []
+      for (const rawEvent of rawEvents) {
+        const result = realtimeEventEnvelopeSchema.safeParse(rawEvent)
+        if (result.success) {
+          validEvents.push(result.data)
+        }
+      }
+      if (validEvents.length > 0) {
+        return {
+          ok: true,
+          record: {
+            events: validEvents,
+            kind: "workspace-events",
+            workspaceId: looseShape.data.workspaceId,
+          },
+        }
+      }
+      return {
+        error: new Error("workspace-events record has no valid events"),
+        ok: false,
+        workspaceId,
+      }
+    }
+  }
+
+  const result = realtimeStreamRecordSchema.safeParse(parsedJson)
+  if (result.success) {
+    return { ok: true, record: result.data }
+  }
+  return { error: result.error, ok: false, workspaceId }
 }
 
 const getLatestStreamId = async (
@@ -96,11 +156,16 @@ const getLatestStreamId = async (
 export const createStreamReader = ({
   onEntries,
   onError,
+  onInvalidRecord,
   onReady,
   redis,
 }: {
   onEntries: (entries: StreamRecordEntry[]) => void
   onError: (error: unknown) => void
+  /** Called once per entry whose record couldn't be fully parsed — the
+   * gateway uses this to bump a metric and force an affected workspace's
+   * sockets to resync instead of silently running with a permanent gap. */
+  onInvalidRecord: (info: { id: string; workspaceId?: string }) => void
   onReady: () => void
   redis: Redis
 }): StreamReader => {
@@ -203,15 +268,21 @@ export const createStreamReader = ({
           continue
         }
         activeShard.lastId = id
-        const record = parseStreamRecord(fields)
-        if (!record) {
-          logger.warn(
-            { id, streamKey },
+        const parsed = parseStreamRecord(fields)
+        if (!parsed.ok) {
+          logger.error(
+            {
+              err: parsed.error,
+              id,
+              streamKey,
+              workspaceId: parsed.workspaceId,
+            },
             "Ignoring malformed realtime stream entry",
           )
+          onInvalidRecord({ id, workspaceId: parsed.workspaceId })
           continue
         }
-        const entry = { id, record }
+        const entry = { id, record: parsed.record }
         appendRecentEntry(activeShard, entry)
         dispatchedEntries.push(entry)
       }

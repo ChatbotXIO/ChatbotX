@@ -153,13 +153,20 @@ export const loadReplay = async ({
 
   const parsedEntries: StreamRecordEntry[] = []
   for (const [id, fields] of entries) {
-    const record = parseStreamRecord(fields)
-    if (!record) {
-      logger.warn({ id, workspaceId }, "Ignoring invalid realtime stream entry")
+    const parsed = parseStreamRecord(fields)
+    if (!parsed.ok) {
+      logger.error(
+        {
+          err: parsed.error,
+          id,
+          workspaceId: parsed.workspaceId ?? workspaceId,
+        },
+        "Ignoring invalid realtime stream entry during replay",
+      )
       continue
     }
-    if (record.workspaceId === workspaceId) {
-      parsedEntries.push({ id, record })
+    if (parsed.record.workspaceId === workspaceId) {
+      parsedEntries.push({ id, record: parsed.record })
     }
   }
   return {
@@ -200,8 +207,16 @@ export const createRealtimeGateway = ({
   let activeGuestConnections = 0
   let pendingGuestUpgrades = 0
   const memberConnectionCountByWorkspace = new Map<string, number>()
+  // Pending (not-yet-open) upgrades per key, incremented synchronously next
+  // to the capacity check and before the `await` that lets concurrent
+  // upgrades for the same key race past it — without this, a burst of
+  // parallel connects all read the same pre-upgrade count and all pass.
+  // See PR #1349 finding #3.
+  const memberPendingUpgradesByWorkspace = new Map<string, number>()
   const guestConnectionCountByKey = new Map<string, number>()
   const guestConnectionCountByWorkspace = new Map<string, number>()
+  const guestPendingUpgradesByKey = new Map<string, number>()
+  const guestPendingUpgradesByWorkspace = new Map<string, number>()
   const workspaceLifetimeTimers = new WeakMap<
     WorkspaceSocketData,
     NodeJS.Timeout
@@ -221,6 +236,32 @@ export const createRealtimeGateway = ({
     workspaceId: string,
     guestConversationId: string,
   ): string => `${workspaceId}:${guestConversationId}`
+
+  // A bad secret or clock skew would otherwise fire a bare, silent `catch`
+  // per rejected connect — invisible in logs and, under a credential-rotation
+  // bug or a misconfigured client, log-spamming at full connection-attempt
+  // volume. Coalesce to one `err`-carrying warn per window instead. See
+  // PR #1349 finding #8.
+  const TOKEN_REJECTION_LOG_WINDOW_MS = 10_000
+  let lastTokenRejectionLogAt = 0
+  let suppressedTokenRejectionCount = 0
+  const logTokenRejection = (
+    context: Record<string, unknown>,
+    error: unknown,
+  ): void => {
+    const now = Date.now()
+    if (now - lastTokenRejectionLogAt < TOKEN_REJECTION_LOG_WINDOW_MS) {
+      suppressedTokenRejectionCount += 1
+      return
+    }
+    const suppressed = suppressedTokenRejectionCount
+    suppressedTokenRejectionCount = 0
+    lastTokenRejectionLogAt = now
+    logger.warn(
+      { err: error, suppressed, ...context },
+      "Realtime connect token verification failed",
+    )
+  }
 
   const reportLocalPresence = async (workspaceIds: string[]): Promise<void> => {
     for (
@@ -286,6 +327,12 @@ export const createRealtimeGateway = ({
         logger.error({ err: error }, "Realtime Redis Streams reader failed")
       }
     },
+    onInvalidRecord: ({ workspaceId }) => {
+      counters.malformedRecords += 1
+      if (workspaceId) {
+        delivery.resyncWorkspace(workspaceId, "malformed-stream-record")
+      }
+    },
     onReady: () => {
       ready = true
     },
@@ -301,6 +348,7 @@ export const createRealtimeGateway = ({
       windowStartedAt,
     })
     counters.drops = 0
+    counters.malformedRecords = 0
     counters.overloadCloses = 0
     counters.publishBytes = 0
     counters.publishes = 0
@@ -362,9 +410,10 @@ export const createRealtimeGateway = ({
           let claims: RealtimeMemberClaims
           try {
             claims = await verifyMemberConnectToken(token, workspaceId, secret)
-          } catch {
+          } catch (error) {
             if (!aborted) {
               counters.tokenRejections += 1
+              logTokenRejection({ workspaceId }, error)
               res.cork(() => {
                 res.writeStatus("401 Unauthorized").end()
               })
@@ -374,9 +423,12 @@ export const createRealtimeGateway = ({
 
           const workspaceConnectionCount =
             memberConnectionCountByWorkspace.get(workspaceId) ?? 0
+          const workspacePendingCount =
+            memberPendingUpgradesByWorkspace.get(workspaceId) ?? 0
           const overloaded =
             activeConnections + pendingUpgrades >= maxConnections ||
-            workspaceConnectionCount >= maxConnectionsPerWorkspace
+            workspaceConnectionCount + workspacePendingCount >=
+              maxConnectionsPerWorkspace
           if (overloaded) {
             if (aborted) {
               return
@@ -400,6 +452,7 @@ export const createRealtimeGateway = ({
             return
           }
           pendingUpgrades += 1
+          incrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
 
           let activated = false
           try {
@@ -409,6 +462,7 @@ export const createRealtimeGateway = ({
             const replay = await loadReplay({ lastSeq, redis, workspaceId })
             if (aborted) {
               pendingUpgrades -= 1
+              decrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
               streamReader.releaseWorkspace(workspaceId)
               return
             }
@@ -432,6 +486,7 @@ export const createRealtimeGateway = ({
           } catch (error) {
             if (aborted) {
               pendingUpgrades -= 1
+              decrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
               if (activated) {
                 streamReader.releaseWorkspace(workspaceId)
               }
@@ -480,6 +535,10 @@ export const createRealtimeGateway = ({
         activeConnections += 1
         peakConnections = Math.max(peakConnections, activeConnections)
         counters.upgrades += 1
+        decrementKeyedCount(
+          memberPendingUpgradesByWorkspace,
+          socketData.workspaceId,
+        )
         incrementKeyedCount(
           memberConnectionCountByWorkspace,
           socketData.workspaceId,
@@ -513,7 +572,7 @@ export const createRealtimeGateway = ({
             }
             socketData.closed = true
             socket.end(
-              REALTIME_CLOSE_CODE.resync,
+              REALTIME_CLOSE_CODE.reauth,
               "connection-lifetime-exceeded",
             )
           }, connectionLifetimeMs),
@@ -580,9 +639,10 @@ export const createRealtimeGateway = ({
               guestConversationId,
               secret,
             )
-          } catch {
+          } catch (error) {
             if (!aborted) {
               counters.tokenRejections += 1
+              logTokenRejection({ guestConversationId }, error)
               res.cork(() => {
                 res.writeStatus("401 Unauthorized").end()
               })
@@ -596,14 +656,19 @@ export const createRealtimeGateway = ({
           )
           const guestConnectionCount =
             guestConnectionCountByKey.get(guestKey) ?? 0
+          const guestPendingCount = guestPendingUpgradesByKey.get(guestKey) ?? 0
           const workspaceGuestConnectionCount =
             guestConnectionCountByWorkspace.get(claims.workspaceId) ?? 0
+          const workspaceGuestPendingCount =
+            guestPendingUpgradesByWorkspace.get(claims.workspaceId) ?? 0
           const overloaded =
             activeConnections + pendingUpgrades >= maxConnections ||
             activeGuestConnections + pendingGuestUpgrades >=
               maxGuestConnections ||
-            guestConnectionCount >= maxConnectionsPerGuest ||
-            workspaceGuestConnectionCount >= maxGuestConnectionsPerWorkspace
+            guestConnectionCount + guestPendingCount >=
+              maxConnectionsPerGuest ||
+            workspaceGuestConnectionCount + workspaceGuestPendingCount >=
+              maxGuestConnectionsPerWorkspace
           if (overloaded) {
             if (aborted) {
               return
@@ -629,14 +694,26 @@ export const createRealtimeGateway = ({
           }
           pendingUpgrades += 1
           pendingGuestUpgrades += 1
+          incrementKeyedCount(guestPendingUpgradesByKey, guestKey)
+          incrementKeyedCount(
+            guestPendingUpgradesByWorkspace,
+            claims.workspaceId,
+          )
 
+          let activated = false
           try {
             const activationLastId = await streamReader.activateWorkspace(
               claims.workspaceId,
             )
+            activated = true
             if (aborted) {
               pendingUpgrades -= 1
               pendingGuestUpgrades -= 1
+              decrementKeyedCount(guestPendingUpgradesByKey, guestKey)
+              decrementKeyedCount(
+                guestPendingUpgradesByWorkspace,
+                claims.workspaceId,
+              )
               streamReader.releaseWorkspace(claims.workspaceId)
               return
             }
@@ -657,6 +734,19 @@ export const createRealtimeGateway = ({
           } catch (error) {
             pendingUpgrades -= 1
             pendingGuestUpgrades -= 1
+            decrementKeyedCount(guestPendingUpgradesByKey, guestKey)
+            decrementKeyedCount(
+              guestPendingUpgradesByWorkspace,
+              claims.workspaceId,
+            )
+            // `res.upgrade()` above can itself throw (a known uWS footgun
+            // when the response aborts mid-call) *after* activation already
+            // incremented the shard's `socketCount` — without this, that
+            // socketCount would never come back down, pinning the shard's
+            // XREAD active forever. See PR #1349 finding #10.
+            if (activated) {
+              streamReader.releaseWorkspace(claims.workspaceId)
+            }
             if (aborted) {
               return
             }
@@ -692,6 +782,17 @@ export const createRealtimeGateway = ({
         activeGuestConnections += 1
         peakConnections = Math.max(peakConnections, activeConnections)
         counters.upgrades += 1
+        decrementKeyedCount(
+          guestPendingUpgradesByKey,
+          guestConnectionKey(
+            socketData.workspaceId,
+            socketData.guestConversationId,
+          ),
+        )
+        decrementKeyedCount(
+          guestPendingUpgradesByWorkspace,
+          socketData.workspaceId,
+        )
         incrementKeyedCount(
           guestConnectionCountByKey,
           guestConnectionKey(
@@ -703,6 +804,7 @@ export const createRealtimeGateway = ({
           guestConnectionCountByWorkspace,
           socketData.workspaceId,
         )
+        delivery.addGuestSocket(socket)
         delivery.subscribeGuestSocket(socket)
         delivery.replayGuestSocket(socket)
         const gapEntries = streamReader
@@ -723,7 +825,7 @@ export const createRealtimeGateway = ({
             }
             socketData.closed = true
             socket.end(
-              REALTIME_CLOSE_CODE.resync,
+              REALTIME_CLOSE_CODE.reauth,
               "connection-lifetime-exceeded",
             )
           }, connectionLifetimeMs),
@@ -751,6 +853,7 @@ export const createRealtimeGateway = ({
         const lifetimeTimer = guestLifetimeTimers.get(socketData)
         clearTimeout(lifetimeTimer)
         guestLifetimeTimers.delete(socketData)
+        delivery.removeGuestSocket(socket)
         streamReader.releaseWorkspace(socketData.workspaceId)
       },
     })

@@ -4,6 +4,7 @@ export const REALTIME_METRIC_WINDOW_MS = 10_000
 
 export type RealtimeServerCounters = {
   drops: number
+  malformedRecords: number
   overloadCloses: number
   publishBytes: number
   publishes: number
@@ -23,6 +24,7 @@ export type RealtimeServerWindow = RealtimeServerCounters & {
 
 export const createRealtimeServerCounters = (): RealtimeServerCounters => ({
   drops: 0,
+  malformedRecords: 0,
   overloadCloses: 0,
   publishBytes: 0,
   publishes: 0,

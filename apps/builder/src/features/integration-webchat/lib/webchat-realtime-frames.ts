@@ -3,7 +3,10 @@ import {
   RealtimeEventType,
   realtimeBatchEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
-import type { MessageResource } from "../../messages/schema/resource"
+import {
+  type MessageResource,
+  messageResource,
+} from "../../messages/schema/resource"
 
 export type WebchatFrameHandler = {
   handleFrame: (data: string) => void
@@ -44,7 +47,12 @@ export const createWebchatFrameHandler = (handlers: {
       for (const event of batch.data.batch) {
         switch (event.eventType) {
           case RealtimeEventType.messageCreated: {
-            const message = event.data as MessageResource
+            const parsedMessage = messageResource.safeParse(event.data)
+            if (!parsedMessage.success) {
+              handlers.onParseError(parsedMessage.error)
+              break
+            }
+            const message = parsedMessage.data
             handlers.onMessage(message)
             if (message.messageType === "outgoing") {
               handlers.onTyping(false)

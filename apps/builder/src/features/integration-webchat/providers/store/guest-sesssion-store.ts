@@ -44,11 +44,18 @@ export type GuestSessionState = {
   isTyping: boolean
 
   /**
-   * Realtime socket lifecycle. `"closed"` is terminal — set only when the
-   * realtime-token mint comes back 401/403 (see webchat-realtime.tsx), since
-   * that means re-minting with the same access token will never succeed and
-   * `RealtimeSocket` has given up reconnecting. The widget should tell the
-   * guest to reload rather than appearing to silently stop responding.
+   * Realtime socket lifecycle. `"closed"` means either of two things:
+   * - The realtime-token mint came back 401/403 (see webchat-realtime.tsx):
+   *   re-minting with the same access token will never succeed, and
+   *   `RealtimeSocket` has given up reconnecting entirely — genuinely
+   *   terminal.
+   * - A sustained non-fatal outage (several consecutive failed
+   *   connects, or too long without a single successful open): the socket
+   *   is still quietly retrying in the background, but the widget stops
+   *   claiming "connecting" after that long. A later successful reconnect
+   *   flips this back to `"open"` on its own.
+   * Either way, the widget should tell the guest the connection is down
+   * rather than appearing to silently stop responding.
    */
   connectionStatus: "connecting" | "open" | "closed"
 }

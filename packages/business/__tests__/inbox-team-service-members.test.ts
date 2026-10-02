@@ -141,12 +141,14 @@ describe("InboxTeamService member validation against duplicate membership rows",
       {
         workspaceId: WORKSPACE_ID,
         userId: "member-1",
+        reason: "reauth",
       },
     )
     expect(mocks.revokeWorkspaceMemberRealtimeConnections).toHaveBeenCalledWith(
       {
         workspaceId: WORKSPACE_ID,
         userId: "member-2",
+        reason: "reauth",
       },
     )
   })

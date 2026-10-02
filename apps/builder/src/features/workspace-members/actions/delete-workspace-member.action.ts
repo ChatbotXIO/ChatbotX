@@ -61,6 +61,7 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       await revokeWorkspaceMemberRealtimeConnections({
         workspaceId,
         userId: workspaceMember.userId,
+        reason: "deleted",
       })
     } catch (error) {
       logger.error(

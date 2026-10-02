@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { realtimeEventEnvelopeSchema } from "./schemas"
 
-export const REALTIME_STREAM_SHARD_COUNT = 256
+const REALTIME_STREAM_SHARD_COUNT = 256
 
 const hashWorkspaceId = (workspaceId: string): number => {
   let hash = 0
@@ -62,8 +62,16 @@ const realtimeMemberSendStreamRecordSchema = z.object({
   workspaceId: z.string().min(1),
 })
 
+/**
+ * `"deleted"` means the member was actually removed from the workspace — the
+ * close is terminal, the socket must not reconnect. `"reauth"` means only
+ * permissions/team membership changed: the member is still in the
+ * workspace, so the close should just force a fresh token mint (re-checked
+ * membership/scope) and reconnect, not stop.
+ */
 const realtimeMemberRevokeStreamRecordSchema = z.object({
   kind: z.literal("member-revoke"),
+  reason: z.enum(["deleted", "reauth"]),
   userId: z.string().min(1),
   workspaceId: z.string().min(1),
 })

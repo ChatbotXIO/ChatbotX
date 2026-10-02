@@ -199,23 +199,41 @@ describe("WorkspaceRealtimeProvider", () => {
       vi.useRealTimers()
     }
   })
-  test("increments resync count after the gateway closes the native socket", async () => {
-    const resyncCounts: number[] = []
-    const statuses: string[] = []
-    function StatusReader() {
-      const { resyncCount, status } = useWorkspaceRealtimeContext()
-      resyncCounts.push(resyncCount)
-      statuses.push(status)
-      return null
+  test("defers the resync count bump until the reconnect opens, not the close", async () => {
+    // Regression for PR #1349 finding #2: bumping `resyncCount` (which
+    // drives a full `invalidateQueries()`) at close time, before the new
+    // socket is live, lets an event land in the gap between the stale
+    // refetch and the new subscription with nothing to catch it.
+    vi.useFakeTimers()
+    try {
+      const resyncCounts: number[] = []
+      const statuses: string[] = []
+      function StatusReader() {
+        const { resyncCount, status } = useWorkspaceRealtimeContext()
+        resyncCounts.push(resyncCount)
+        statuses.push(status)
+        return null
+      }
+
+      await render(<StatusReader />)
+      const socket = await waitForSocket()
+      act(() => socket.open())
+      act(() => socket.close(4002, "resync"))
+
+      expect(statuses.at(-1)).toBe("resyncing")
+      expect(resyncCounts.at(-1)).toBe(0)
+
+      await act(async () => {
+        await vi.runAllTimersAsync()
+      })
+      const reconnectSocket = await waitForSocket()
+      act(() => reconnectSocket.open())
+
+      expect(statuses.at(-1)).toBe("open")
+      expect(resyncCounts.at(-1)).toBe(1)
+    } finally {
+      vi.useRealTimers()
     }
-
-    await render(<StatusReader />)
-    const socket = await waitForSocket()
-    act(() => socket.open())
-    act(() => socket.close(4002, "resync"))
-
-    expect(statuses.at(-1)).toBe("resyncing")
-    expect(resyncCounts.at(-1)).toBe(1)
   })
 
   test("keeps malformed gateway frames out of subscribers", async () => {
