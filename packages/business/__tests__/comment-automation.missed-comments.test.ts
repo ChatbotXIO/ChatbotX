@@ -40,31 +40,34 @@ vi.mock("@chatbotx.io/database/partials", async () => {
   const actual = await vi.importActual<
     typeof import("@chatbotx.io/database/partials")
   >("@chatbotx.io/database/partials")
-  return {
-    canProcessMissedComments: actual.canProcessMissedComments,
-    commentAutomationTypes: actual.commentAutomationTypes,
-  }
+  return { ...actual }
 })
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  commentAutomationEventModel: {
-    name: "event",
-    automationId: "Event.automationId",
-    commentId: "Event.commentId",
-  },
-  commentAutomationMissModel: {
-    name: "miss",
-    automationId: "Miss.automationId",
-    commentId: "Miss.commentId",
-  },
-  commentAutomationModel: {
-    name: "automation",
-    id: "Automation.id",
-    workspaceId: "Automation.workspaceId",
-  },
-  commentAutomationReplyModel: {},
-  contactInboxModel: {},
-}))
+vi.mock("@chatbotx.io/database/schema", async () => {
+  const actual = await vi.importActual<
+    typeof import("@chatbotx.io/database/schema")
+  >("@chatbotx.io/database/schema")
+  return {
+    ...actual,
+    commentAutomationEventModel: {
+      name: "event",
+      automationId: "Event.automationId",
+      commentId: "Event.commentId",
+    },
+    commentAutomationMissModel: {
+      name: "miss",
+      automationId: "Miss.automationId",
+      commentId: "Miss.commentId",
+    },
+    commentAutomationModel: {
+      name: "automation",
+      id: "Automation.id",
+      workspaceId: "Automation.workspaceId",
+    },
+    commentAutomationReplyModel: {},
+    contactInboxModel: {},
+  }
+})
 
 vi.mock("@chatbotx.io/redis", () => ({
   distributedStore: {
