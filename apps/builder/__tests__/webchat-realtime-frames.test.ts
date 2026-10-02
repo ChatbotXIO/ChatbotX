@@ -34,6 +34,7 @@ describe("createWebchatFrameHandler", () => {
     const handler = createWebchatFrameHandler({
       onMessage,
       onParseError: vi.fn(),
+      onResyncNeeded: vi.fn(),
       onTyping: vi.fn(),
     })
 
@@ -50,6 +51,7 @@ describe("createWebchatFrameHandler", () => {
     const handler = createWebchatFrameHandler({
       onMessage,
       onParseError: vi.fn(),
+      onResyncNeeded: vi.fn(),
       onTyping: vi.fn(),
     })
     const frame = messageCreatedFrame("5-0", "m1")
@@ -65,6 +67,7 @@ describe("createWebchatFrameHandler", () => {
     const handler = createWebchatFrameHandler({
       onMessage,
       onParseError: vi.fn(),
+      onResyncNeeded: vi.fn(),
       onTyping: vi.fn(),
     })
 
@@ -88,6 +91,7 @@ describe("createWebchatFrameHandler", () => {
     const handler = createWebchatFrameHandler({
       onMessage,
       onParseError: vi.fn(),
+      onResyncNeeded: vi.fn(),
       onTyping: vi.fn(),
     })
     const frame = messageCreatedFrame("5-0", "m1")
@@ -105,6 +109,7 @@ describe("createWebchatFrameHandler", () => {
     const handler = createWebchatFrameHandler({
       onMessage,
       onParseError,
+      onResyncNeeded: vi.fn(),
       onTyping: vi.fn(),
     })
 
@@ -121,9 +126,11 @@ describe("createWebchatFrameHandler", () => {
     // reached `onMessage` as-is.
     const onMessage = vi.fn()
     const onParseError = vi.fn()
+    const onResyncNeeded = vi.fn()
     const handler = createWebchatFrameHandler({
       onMessage,
       onParseError,
+      onResyncNeeded,
       onTyping: vi.fn(),
     })
 
@@ -142,5 +149,6 @@ describe("createWebchatFrameHandler", () => {
 
     expect(onMessage).not.toHaveBeenCalled()
     expect(onParseError).toHaveBeenCalledTimes(2)
+    expect(onResyncNeeded).toHaveBeenCalledTimes(2)
   })
 })

@@ -1,3 +1,4 @@
+import { getRealtimeStreamShard } from "@chatbotx.io/realtime-protocol"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const { loggerErrorMock, loggerWarnMock } = vi.hoisted(() => ({
@@ -68,6 +69,7 @@ describe("stream reader", () => {
       },
       onInvalidRecord: () => undefined,
       onReady: () => undefined,
+      onRecovered: () => undefined,
       redis: redis as never,
     })
 
@@ -135,6 +137,7 @@ describe("stream reader", () => {
       },
       onInvalidRecord: () => undefined,
       onReady: () => undefined,
+      onRecovered: () => undefined,
       redis: redis as never,
     })
 
@@ -156,7 +159,11 @@ describe("stream reader", () => {
     // rolling deploy), silently losing every *other* event in that record
     // too.
     const dispatched: { data: unknown; eventType: string }[] = []
-    const invalidRecordCalls: { id: string; workspaceId?: string }[] = []
+    const invalidRecordCalls: {
+      id: string
+      shard: number
+      workspaceId?: string
+    }[] = []
     const { promise: idleRead, resolve: resolveIdleRead } =
       Promise.withResolvers<null>()
     const { promise: dispatchedRecords, resolve: resolveDispatchedRecords } =
@@ -214,6 +221,7 @@ describe("stream reader", () => {
         invalidRecordCalls.push(info)
       },
       onReady: () => undefined,
+      onRecovered: () => undefined,
       redis: redis as never,
     })
 
@@ -232,7 +240,88 @@ describe("stream reader", () => {
     // so the malformed-record metric and workspace resync both see it. See
     // PR #1349 finding #7.
     expect(invalidRecordCalls).toEqual([
-      { id: "1-0", workspaceId: "workspace-1" },
+      {
+        id: "1-0",
+        shard: getRealtimeStreamShard("workspace-1"),
+        workspaceId: "workspace-1",
+      },
     ])
+  })
+
+  test("recovers after an XREAD rejection without skipping or duplicating entries, firing onRecovered exactly once", async () => {
+    // Test gap flagged in PR #1349 round-4 review (criticality 8): the
+    // reader's single Redis connection blocks on every active shard at
+    // once, so one failed read means every active shard's position is
+    // stale by an unknown amount once the retry succeeds — the gateway
+    // uses `onRecovered` to force every connected socket to resync instead
+    // of silently continuing as if nothing happened.
+    const dispatched: string[] = []
+    let recoveredCount = 0
+    const { promise: idleRead, resolve: resolveIdleRead } =
+      Promise.withResolvers<null>()
+    const { promise: dispatchedRecords, resolve: resolveDispatchedRecords } =
+      Promise.withResolvers<void>()
+    let reads = 0
+    const reader = {
+      call: vi.fn(async (...arguments_: string[]) => {
+        reads += 1
+        const streamIndex = arguments_.indexOf("STREAMS")
+        const [key] = arguments_.slice(streamIndex + 1, streamIndex + 2)
+        if (reads === 1) {
+          throw new Error("ECONNRESET")
+        }
+        if (reads === 2) {
+          return [
+            [
+              key,
+              [
+                [
+                  "1-0",
+                  [
+                    "record",
+                    JSON.stringify({
+                      events: [{ data: {}, eventType: "messageCreated" }],
+                      kind: "workspace-events",
+                      workspaceId: "workspace-1",
+                    }),
+                  ],
+                ],
+              ],
+            ],
+          ]
+        }
+        return await idleRead
+      }) as RedisCall,
+      disconnect: vi.fn(() => resolveIdleRead(null)),
+    }
+    const redis = {
+      duplicate: () => reader,
+      xrevrange: vi.fn().mockResolvedValue([]),
+    }
+    const streamReader = createStreamReader({
+      onEntries: (entries) => {
+        dispatched.push(...entries.map((entry) => entry.id))
+        resolveDispatchedRecords()
+      },
+      onError: () => undefined,
+      onInvalidRecord: () => undefined,
+      onReady: () => undefined,
+      onRecovered: () => {
+        recoveredCount += 1
+      },
+      redis: redis as never,
+    })
+
+    await streamReader.activateWorkspace("workspace-1")
+    streamReader.start()
+
+    await dispatchedRecords
+    await streamReader.close()
+
+    // No skip: the one real entry still arrives. No duplicate: it arrives
+    // exactly once, proving `lastId` wasn't rewound or re-read twice across
+    // the failed-then-successful read pair.
+    expect(dispatched).toEqual(["1-0"])
+    expect(recoveredCount).toBe(1)
   })
 })

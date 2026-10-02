@@ -261,4 +261,29 @@ describe("RealtimeSocket", () => {
     await vi.runAllTimersAsync()
     expect(getUrl).toHaveBeenCalledOnce()
   })
+
+  it("counts a native WebSocket error only once (onClose), not also via onError", async () => {
+    // Regression for PR #1349 round-4 medium finding: `onerror` used to also
+    // forward to `options.onError` before calling `socket.close()` — since
+    // `close()` always triggers `onclose` too, a caller tallying consecutive
+    // connect failures across both callbacks (e.g. the webchat widget's
+    // reconnect-failure banner threshold) counted one real failure as two.
+    const webSocket = new FakeWebSocket()
+    const onError = vi.fn()
+    const onClose = vi.fn()
+    const socket = new RealtimeSocket({
+      getUrl: vi.fn().mockResolvedValue("ws://test"),
+      onClose,
+      onError,
+      onMessage: vi.fn(),
+      webSocketFactory: () => webSocket,
+    })
+
+    socket.connect()
+    await vi.runAllTimersAsync()
+    webSocket.onerror?.()
+
+    expect(onError).not.toHaveBeenCalled()
+    expect(onClose).toHaveBeenCalledOnce()
+  })
 })

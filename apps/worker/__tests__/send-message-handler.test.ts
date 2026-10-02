@@ -842,6 +842,48 @@ describe("chat send-message handlers", () => {
     expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageFailed",
       data: { messageId: "msg-1", error: "sdk error" },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
+    })
+  })
+
+  test("routes a send-failure event to the conversation's assigned agent/team, not just full-access members", async () => {
+    // Regression for PR #1349 round-4 finding #3: `messageFailed` used to
+    // publish with no `route` at all, so a workspace member restricted to
+    // `chatScope: \"assigned\"` never saw a failed-send state (or the
+    // edit/delete buttons it unlocks) for a conversation assigned to them.
+    const error = new ChannelError(
+      "expired human agent window",
+      ChannelErrorCategory.PAYLOAD_INVALID,
+      { code: "messenger_human_agent_window_expired" },
+    )
+    mockRunChannelHandler.mockRejectedValueOnce(error)
+
+    const assignedConversation = {
+      ...conversation,
+      assignedUserId: "user-42",
+      assignedInboxTeamId: "team-7",
+    }
+
+    await sendMessageToChannel({
+      conversation: assignedConversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "hello",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageFailed",
+      data: { messageId: "msg-1", error: "sdk error" },
+      route: { assignedTeamIds: ["team-7"], assignedUserIds: ["user-42"] },
     })
   })
 
@@ -925,6 +967,7 @@ describe("chat send-message handlers", () => {
         messageId: "msg-broadcast-continuation",
         error: "sdk error",
       },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 
@@ -980,6 +1023,7 @@ describe("chat send-message handlers", () => {
     expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageFailed",
       data: { messageId: "msg-1", clientId: "client-1", error: null },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 

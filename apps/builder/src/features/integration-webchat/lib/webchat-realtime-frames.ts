@@ -23,6 +23,7 @@ export type WebchatFrameHandler = {
 export const createWebchatFrameHandler = (handlers: {
   onMessage: (message: MessageResource) => void
   onParseError: (error: unknown) => void
+  onResyncNeeded: () => void
   onTyping: (isTyping: boolean) => void
 }): WebchatFrameHandler => {
   let lastSeq: string | null = null
@@ -36,6 +37,7 @@ export const createWebchatFrameHandler = (handlers: {
       const batch = realtimeBatchEnvelopeSchema.safeParse(parsed)
       if (!batch.success) {
         handlers.onParseError(batch.error)
+        handlers.onResyncNeeded()
         return
       }
       const { seq } = batch.data
@@ -50,6 +52,7 @@ export const createWebchatFrameHandler = (handlers: {
             const parsedMessage = messageResource.safeParse(event.data)
             if (!parsedMessage.success) {
               handlers.onParseError(parsedMessage.error)
+              handlers.onResyncNeeded()
               break
             }
             const message = parsedMessage.data

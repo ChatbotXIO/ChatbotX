@@ -26,6 +26,7 @@ type ActiveShard = {
   deactivateTimer: NodeJS.Timeout | null
   lastId: string
   recentEntries: StreamRecordEntry[]
+  shard: number
   socketCount: number
   streamKey: string
 }
@@ -159,6 +160,7 @@ export const createStreamReader = ({
   onError,
   onInvalidRecord,
   onReady,
+  onRecovered,
   redis,
 }: {
   onEntries: (entries: StreamRecordEntry[]) => void
@@ -166,8 +168,23 @@ export const createStreamReader = ({
   /** Called once per entry whose record couldn't be fully parsed — the
    * gateway uses this to bump a metric and force an affected workspace's
    * sockets to resync instead of silently running with a permanent gap. */
-  onInvalidRecord: (info: { id: string; workspaceId?: string }) => void
+  onInvalidRecord: (info: {
+    id: string
+    shard: number
+    workspaceId?: string
+  }) => void
   onReady: () => void
+  /** Called once when an `XREAD` succeeds right after a PRECEDING `XREAD`
+   * failed (not on every ordinary successful read) — i.e. the reader is
+   * recovering from an outage. The single Redis connection this reader uses
+   * blocks on every active shard at once, so one failed read means every
+   * active shard's last-known position is now stale by an unknown amount:
+   * if the outage outlasted the stream's 5-minute `MINID` retention, some
+   * entries were trimmed before this reader ever saw them, and `XREAD`
+   * resuming from the old `lastId` silently skips the gap instead of
+   * erroring. The gateway uses this to force every currently-connected
+   * socket to resync. See PR #1349 round-4 medium finding (Redis outage). */
+  onRecovered: () => void
   redis: Redis
 }): StreamReader => {
   const activeShards = new Map<number, ActiveShard>()
@@ -224,6 +241,7 @@ export const createStreamReader = ({
         deactivateTimer: null,
         lastId: await getLatestStreamId(redis, streamKey),
         recentEntries: [],
+        shard,
         socketCount: 1,
         streamKey,
       }
@@ -280,7 +298,11 @@ export const createStreamReader = ({
             },
             "Ignoring malformed realtime stream entry",
           )
-          onInvalidRecord({ id, workspaceId: parsed.workspaceId })
+          onInvalidRecord({
+            id,
+            shard: activeShard.shard,
+            workspaceId: parsed.workspaceId,
+          })
           continue
         }
         if (parsed.droppedCount) {
@@ -293,7 +315,11 @@ export const createStreamReader = ({
             },
             "Dropped invalid events from a coalesced realtime stream record",
           )
-          onInvalidRecord({ id, workspaceId: parsed.record.workspaceId })
+          onInvalidRecord({
+            id,
+            shard: activeShard.shard,
+            workspaceId: parsed.record.workspaceId,
+          })
         }
         const entry = { id, record: parsed.record }
         appendRecentEntry(activeShard, entry)
@@ -305,13 +331,20 @@ export const createStreamReader = ({
     }
   }
 
+  const delay = (ms: number): Promise<void> => {
+    const { promise, resolve } = Promise.withResolvers<void>()
+    setTimeout(resolve, ms)
+    return promise
+  }
+
   const run = async (): Promise<void> => {
     reader = redis.duplicate()
+    let recoveringFromError = false
     try {
       while (!stopped) {
         const activeShardsSnapshot = getActiveShards()
         if (activeShardsSnapshot.length === 0) {
-          await new Promise((resolve) => setTimeout(resolve, IDLE_RETRY_MS))
+          await delay(IDLE_RETRY_MS)
           continue
         }
 
@@ -327,12 +360,17 @@ export const createStreamReader = ({
             ...activeShardsSnapshot.map((activeShard) => activeShard.lastId),
           )) as StreamReadResult | null
           onReady()
+          if (recoveringFromError) {
+            recoveringFromError = false
+            onRecovered()
+          }
           if (response) {
             dispatchEntries(response)
           }
         } catch (error) {
+          recoveringFromError = true
           onError(error)
-          await new Promise((resolve) => setTimeout(resolve, ERROR_RETRY_MS))
+          await delay(ERROR_RETRY_MS)
         }
       }
     } finally {

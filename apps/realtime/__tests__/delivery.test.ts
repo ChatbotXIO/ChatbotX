@@ -205,39 +205,23 @@ describe("realtime delivery", () => {
     expect(socket.closed).toEqual({ code: 4004, reason: "reauth" })
   })
 
-  test("replay ignores a member-revoke entry older than the reconnecting token's iat", () => {
-    // Regression for PR #1349 finding #1: a revoke still sitting in the
-    // replay window from before this token was minted reflects a condition
-    // the fresh, successful mint already superseded — honoring it anyway
-    // would kill a socket that just proved it's currently authorized.
+  test("replay never closes on a member-revoke entry — revocation is checked once at connect, not re-derived from stream-entry clocks", () => {
+    // Regression for PR #1349 round-4 finding #5: this used to compare a
+    // Redis stream entry's auto-generated id (the Redis server's clock)
+    // against the token's `iat` (the builder's clock) to decide whether a
+    // revoke sitting in the replay window was "stale". That comparison is
+    // now entirely superseded by an authoritative check the gateway makes
+    // once at connect time (`getRealtimeMemberRevokedKey` against `iat`,
+    // independent of whether the connect even carries a `lastSeq`) — by the
+    // time any entries reach `replayWorkspaceSocket`, a genuinely-revoked
+    // member's connect was already rejected, so a `member-revoke` entry
+    // surviving into replay must never re-close the socket here.
     const { delivery } = createDelivery()
     const socket = createSocket({ iat: 10 })
 
-    const staleRevokeId = "9000-0" // 9s, before iat (10s)
     const result = delivery.replayWorkspaceSocket(socket, [
       {
-        id: staleRevokeId,
-        record: {
-          kind: "member-revoke",
-          reason: "reauth",
-          userId: "user-1",
-          workspaceId: "workspace-1",
-        },
-      },
-    ])
-
-    expect(result).toBe(true)
-    expect(socket.closed).toBeNull()
-  })
-
-  test("replay still honors a member-revoke entry newer than the reconnecting token's iat", () => {
-    const { delivery } = createDelivery()
-    const socket = createSocket({ iat: 10 })
-
-    const freshRevokeId = "11000-0" // 11s, after iat (10s)
-    const result = delivery.replayWorkspaceSocket(socket, [
-      {
-        id: freshRevokeId,
+        id: "11000-0",
         record: {
           kind: "member-revoke",
           reason: "deleted",
@@ -247,8 +231,8 @@ describe("realtime delivery", () => {
       },
     ])
 
-    expect(result).toBe(false)
-    expect(socket.closed).toEqual({ code: 4001, reason: "revoked" })
+    expect(result).toBe(true)
+    expect(socket.closed).toBeNull()
   })
 
   test("publishes a guest event to a topic scoped by workspace, not just the guest conversation id", () => {

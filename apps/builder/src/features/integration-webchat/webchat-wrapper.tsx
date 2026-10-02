@@ -2,6 +2,7 @@
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { RefreshCwIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { CSSProperties } from "react"
 import WebchatRef from "./components/webchat-ref"
 import { readableForeground } from "./lib/brand-color"
@@ -18,6 +19,7 @@ export const WebchatWrapper = ({
   referral?: string
   parentOrigin?: string | null
 }) => {
+  const t = useTranslations("realtime.connectionBanner")
   const { guestConversationId, accessToken, config, connectionStatus } =
     useGuestSessionStore((state) => state)
 
@@ -31,15 +33,15 @@ export const WebchatWrapper = ({
       {!config.hideHeader && <WebchatHeader />}
       {connectionStatus === "closed" && (
         <div className="flex items-center justify-between gap-2 border-b bg-destructive/10 px-3 py-2 text-destructive text-sm">
-          <span>Connection lost. Reload to keep chatting.</span>
+          <span>{t("closedDescription")}</span>
           <Button
-            aria-label="Reload"
+            aria-label={t("reload")}
             onClick={() => window.location.reload()}
             size="sm"
             variant="outline"
           >
             <RefreshCwIcon className="size-4" />
-            Reload
+            {t("reload")}
           </Button>
         </div>
       )}

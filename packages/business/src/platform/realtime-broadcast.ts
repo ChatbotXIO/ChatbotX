@@ -6,6 +6,7 @@ import {
   recordRealtimeRelayWindow,
 } from "./realtime-metrics"
 import {
+  markRealtimeMemberRevoked,
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
   resetRealtimeStreamPublisherForTests,
@@ -166,18 +167,61 @@ export const resetRealtimePublishStateForTests = (): void => {
   relayWindow = createEmptyRelayWindow()
 }
 
+/**
+ * Drains every workspace's coalesced batch and in-flight append on worker
+ * shutdown. Uses `allSettled` (not `all`): one workspace's Redis append
+ * failing must not abort draining every OTHER workspace's still-pending
+ * append — `Promise.all` would reject on the first failure and leave the
+ * rest of the `Promise.all` call's un-awaited entries to settle
+ * independently with no one logging their outcome, silently losing events
+ * for workspaces that had nothing to do with the failing one. See PR #1349
+ * round-4 medium finding (shutdown flush).
+ */
 export const flushAllPendingWorkspaceRealtimeEvents =
   async (): Promise<void> => {
     const pendingWorkspaceIds = [...pendingByWorkspace.keys()]
-    await Promise.all(
+    const flushResults = await Promise.allSettled(
       pendingWorkspaceIds.map((workspaceId) =>
         flushPendingWorkspaceRealtimeEvents(workspaceId),
       ),
     )
-    await Promise.all(inFlightByWorkspace.values())
+    const failures: unknown[] = []
+    for (const [index, result] of flushResults.entries()) {
+      if (result.status === "rejected") {
+        failures.push(result.reason)
+        logger.error(
+          { err: result.reason, workspaceId: pendingWorkspaceIds[index] },
+          "Failed to flush pending realtime events on shutdown",
+        )
+      }
+    }
+    const inFlightEntries = [...inFlightByWorkspace.entries()]
+    const inFlightResults = await Promise.allSettled(
+      inFlightEntries.map(([, append]) => append),
+    )
+    for (const [index, result] of inFlightResults.entries()) {
+      if (result.status === "rejected") {
+        failures.push(result.reason)
+        logger.error(
+          { err: result.reason, workspaceId: inFlightEntries[index]?.[0] },
+          "Failed to drain an in-flight realtime append on shutdown",
+        )
+      }
+    }
     if (!relayWindowIsEmpty()) {
       recordRealtimeRelayWindow(relayWindow)
       relayWindow = createEmptyRelayWindow()
+    }
+    // Every workspace above got its own fully-drained attempt and its own
+    // log line regardless of any other workspace's outcome (the bug this
+    // fixes) — but the caller's shutdown handler still needs an overall
+    // rejection to know whether to exit 0 or 1, so re-raise once everything
+    // that COULD run already has.
+    if (failures.length > 0) {
+      throw new AggregateError(
+        failures,
+        `${failures.length} realtime flush(es) failed during shutdown`,
+      )
     }
   }
 
@@ -270,12 +314,17 @@ const delay = (ms: number): Promise<void> => {
 }
 
 /**
- * Immediately revokes a member's existing realtime connections. Retries a
- * transient Redis append failure a few times before giving up: a revoke that
- * silently fails once leaves the member's existing socket receiving events
- * for up to `connectionLifetimeMs` (30 minutes by default) until its next
- * forced reconnect re-checks membership — callers must still log and decide
- * what to do if every attempt here fails.
+ * Immediately revokes a member's existing realtime connections and marks the
+ * member revoked for any NEW connect too — `markRealtimeMemberRevoked` writes
+ * a TTL'd `realtime:revoked:{workspaceId}:{userId}` key the gateway checks
+ * against a connect token's `iat`, independent of whether that connect
+ * carries a replay `lastSeq` (see `getRealtimeMemberRevokedKey`'s doc for
+ * why a stream-entry-based check alone isn't enough). Retries a transient
+ * Redis failure a few times before giving up: a revoke that silently fails
+ * once leaves the member's existing socket receiving events, and a new
+ * connect able to succeed, for up to `connectionLifetimeMs` (30 minutes by
+ * default) until its next forced reconnect re-checks membership — callers
+ * must still log and decide what to do if every attempt here fails.
  *
  * `reason` is required, not defaulted: `"deleted"` closes the socket
  * terminally (the member was actually removed from the workspace — the
@@ -283,7 +332,7 @@ const delay = (ms: number): Promise<void> => {
  * (permissions or team membership changed, but the member is still in the
  * workspace). Using the wrong one either strands a still-valid member with a
  * dead inbox, or lets a removed member's existing socket keep reconnecting.
- * See PR #1349 finding #1.
+ * See PR #1349 finding #1 and round-4 finding #5.
  */
 export const revokeWorkspaceMemberRealtimeConnections = async (args: {
   workspaceId: string
@@ -293,6 +342,7 @@ export const revokeWorkspaceMemberRealtimeConnections = async (args: {
   let lastError: unknown
   for (let attempt = 1; attempt <= REVOKE_RETRY_ATTEMPTS; attempt += 1) {
     try {
+      await markRealtimeMemberRevoked(args.workspaceId, args.userId)
       await publishRealtimeStreamRecord({
         kind: "member-revoke",
         reason: args.reason,

@@ -1,5 +1,7 @@
 import {
+  getRealtimeMemberRevokedKey,
   getRealtimeStreamKey,
+  REALTIME_MEMBER_REVOKED_TTL_SECONDS,
   type RealtimeStreamRecord,
 } from "@chatbotx.io/realtime-protocol"
 import { createRedisConnection, type Redis } from "@chatbotx.io/redis"
@@ -82,6 +84,28 @@ export const publishRealtimeStreamRecord = async (
     record.workspaceId,
     JSON.stringify(record),
   )
+
+/**
+ * Records that a member's realtime connections were just revoked, so the
+ * gateway can reject a reconnect from a still-unexpired token minted before
+ * this moment — independent of whether that connect carries a replay
+ * `lastSeq` (a stream-entry-based check only catches a revoke sitting
+ * inside the replayed window). The TTL mirrors the longest a token minted
+ * right before this call could still pass verification, so once the key
+ * expires every currently-valid token was necessarily minted after it. See
+ * PR #1349 round-4 finding #5.
+ */
+export const markRealtimeMemberRevoked = async (
+  workspaceId: string,
+  userId: string,
+): Promise<void> => {
+  await getRealtimeStreamConnection().set(
+    getRealtimeMemberRevokedKey(workspaceId, userId),
+    `${Date.now()}`,
+    "EX",
+    REALTIME_MEMBER_REVOKED_TTL_SECONDS,
+  )
+}
 
 export const resetRealtimeStreamPublisherForTests = (): void => {
   realtimeStreamConnection = null

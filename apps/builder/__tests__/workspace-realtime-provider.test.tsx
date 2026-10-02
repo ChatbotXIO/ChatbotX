@@ -329,7 +329,13 @@ describe("WorkspaceRealtimeProvider", () => {
     )
   })
 
-  test("does not dispatch schema-invalid event data", async () => {
+  test("does not dispatch schema-invalid event data, but does trigger a resync", async () => {
+    // Regression for PR #1349 round-4 medium finding: the batch's `seq`
+    // cursor already advanced past this record by the time schema
+    // validation rejects it, so the only way a listener still gets a
+    // correct view of whatever that event represented is a full
+    // `invalidateQueries()` resync — silently dropping it otherwise leaves
+    // a permanent, undetectable gap.
     const handler = vi.fn()
     function Subscriber() {
       useWorkspaceRealtimeEvents({ whatsappCallTransportIncoming: handler })
@@ -338,6 +344,7 @@ describe("WorkspaceRealtimeProvider", () => {
 
     await render(<Subscriber />)
     const socket = await waitForSocket()
+    invalidateQueriesMock.mockClear()
     act(() => {
       socket.receive(
         JSON.stringify({
@@ -354,5 +361,6 @@ describe("WorkspaceRealtimeProvider", () => {
       }),
       expect.stringContaining("schema validation"),
     )
+    expect(invalidateQueriesMock).toHaveBeenCalled()
   })
 })

@@ -10,7 +10,19 @@ const BEARER_SCHEME = "Bearer"
  * deploy separately and drift by NTP-class amounts. Kept short relative to the
  * 60s token TTL so it doesn't widen the replay window.
  */
-const CLOCK_TOLERANCE_SECONDS = 5
+export const CLOCK_TOLERANCE_SECONDS = 5
+
+/**
+ * How long a `realtime:revoked:{workspaceId}:{userId}` marker (written by
+ * `revokeWorkspaceMemberRealtimeConnections`) must outlive a token: any token
+ * minted before the marker is written is guaranteed to have expired (per the
+ * JWT's own `exp`, which this TTL mirrors) by the time the marker itself
+ * expires, so once the marker is gone every token that could still pass
+ * `verifyMemberConnectToken` was necessarily minted after the revoke. See
+ * PR #1349 round-4 finding #5.
+ */
+export const REALTIME_MEMBER_REVOKED_TTL_SECONDS =
+  REALTIME_TOKEN_TTL_SECONDS + CLOCK_TOLERANCE_SECONDS
 
 /**
  * Every purpose a realtime token can be minted for. Bound into the payload and

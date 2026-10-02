@@ -29,6 +29,10 @@ const RECONNECT_REFETCH_PAGE_SIZE = 50
 const MAX_CONSECUTIVE_CONNECT_FAILURES = 5
 const MAX_CONNECTING_DURATION_MS = 30_000
 
+// Leading-edge throttle: several malformed frames in a row should trigger
+// at most one refetch per window instead of hammering the REST endpoint.
+const RESYNC_REFETCH_THROTTLE_MS = 2000
+
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
   const { publicRealtimeUrl } = useTenantSettings()
   const {
@@ -56,6 +60,7 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     let hasConnectedOnce = false
     let consecutiveFailureCount = 0
     let firstFailureAtMs: number | null = null
+    let lastResyncRefetchAtMs = 0
     const recordConnectFailure = (): boolean => {
       consecutiveFailureCount += 1
       firstFailureAtMs ??= Date.now()
@@ -73,6 +78,19 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       onMessage: handleNewMessage,
       onParseError: (error) => {
         logger.warn({ err: error }, "Unable to parse realtime message")
+      },
+      onResyncNeeded: () => {
+        const now = Date.now()
+        if (now - lastResyncRefetchAtMs < RESYNC_REFETCH_THROTTLE_MS) {
+          return
+        }
+        lastResyncRefetchAtMs = now
+        refetchLatestMessages(RECONNECT_REFETCH_PAGE_SIZE).catch((error) => {
+          logger.warn(
+            { err: error },
+            "Failed to refetch webchat messages after a frame parse error",
+          )
+        })
       },
       onTyping: setIsTyping,
     })

@@ -22,7 +22,11 @@ import {
   messageEventTypeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
+import {
+  type RealtimeEventRoute,
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import {
   type CommentAnchor,
   type MessageButtonTemplate,
@@ -220,6 +224,10 @@ export async function sendMessageToChannel(
           queueWorkspaceRealtimeEvent(conversation.workspaceId, {
             eventType: RealtimeEventType.messageIdAssigned,
             data: { messageId: message.id, commentId: replyId },
+            route: routeForConversation({
+              assignedInboxTeamId: conversation.assignedInboxTeamId,
+              assignedUserId: conversation.assignedUserId,
+            }),
           })
 
           if (attemptsMade > 0) {
@@ -228,6 +236,10 @@ export async function sendMessageToChannel(
               message.clientId,
               conversation.workspaceId,
               new Date(message.createdAt),
+              routeForConversation({
+                assignedInboxTeamId: conversation.assignedInboxTeamId,
+                assignedUserId: conversation.assignedUserId,
+              }),
               isBulkOutbound,
             )
           }
@@ -257,6 +269,10 @@ export async function sendMessageToChannel(
           message.clientId,
           conversation.workspaceId,
           new Date(message.createdAt),
+          routeForConversation({
+            assignedInboxTeamId: conversation.assignedInboxTeamId,
+            assignedUserId: conversation.assignedUserId,
+          }),
           isBulkOutbound,
         )
       }
@@ -358,6 +374,10 @@ export async function sendMessageToChannel(
       conversation.workspaceId,
       message?.createdAt ? new Date(message.createdAt) : undefined,
       errorData.message,
+      routeForConversation({
+        assignedInboxTeamId: conversation.assignedInboxTeamId,
+        assignedUserId: conversation.assignedUserId,
+      }),
       isBulkOutbound,
     )
     // Terminal failures only: an attempt that is about to be retried must not
@@ -587,6 +607,7 @@ export async function recordMessageSendError(
   workspaceId: string,
   createdAt: Date | undefined,
   errorMessage: string,
+  route: RealtimeEventRoute | undefined,
   silent = false,
 ) {
   try {
@@ -605,6 +626,7 @@ export async function recordMessageSendError(
       queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.messageFailed,
         data: { messageId, clientId, error: truncatedError },
+        route,
       })
     }
   } catch (err) {
@@ -617,6 +639,7 @@ async function clearMessageSendError(
   clientId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
+  route: RealtimeEventRoute | undefined,
   silent = false,
 ) {
   try {
@@ -634,6 +657,7 @@ async function clearMessageSendError(
       queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.messageFailed,
         data: { messageId, clientId, error: null },
+        route,
       })
     }
   } catch (err) {

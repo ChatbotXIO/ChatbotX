@@ -66,18 +66,6 @@ export const POST = async (request: NextRequest) => {
     })
   }
 
-  const workspaceRateLimit = await checkApiRateLimit({
-    scope: "guest-realtime-mint-workspace-rate-limit",
-    key: workspaceId,
-    limit: GUEST_REALTIME_MINT_WORKSPACE_LIMIT,
-  })
-  if (workspaceRateLimit.limited) {
-    return new NextResponse(null, {
-      headers: { "Retry-After": String(workspaceRateLimit.retryAfter) },
-      status: 429,
-    })
-  }
-
   const webchat = await integrationWebchatService.findByIdForWorkspaceOrNull({
     id: webchatId,
     workspaceId,
@@ -117,6 +105,18 @@ export const POST = async (request: NextRequest) => {
     isOriginAuthorized(parentOrigin, webchat.authorizedDomains)
   if (!(tokenAuthorized && originAuthorized)) {
     return new NextResponse(null, { status: 403 })
+  }
+
+  const workspaceRateLimit = await checkApiRateLimit({
+    scope: "guest-realtime-mint-workspace-rate-limit",
+    key: workspaceId,
+    limit: GUEST_REALTIME_MINT_WORKSPACE_LIMIT,
+  })
+  if (workspaceRateLimit.limited) {
+    return new NextResponse(null, {
+      headers: { "Retry-After": String(workspaceRateLimit.retryAfter) },
+      status: 429,
+    })
   }
 
   const token = await signGuestConnectToken(

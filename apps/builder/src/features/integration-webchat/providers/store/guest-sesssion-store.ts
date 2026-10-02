@@ -4,7 +4,7 @@ import { createId } from "@chatbotx.io/utils"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { CreateWebchatMessageRequest } from "@/features/messages/schema/mutation"
-import type { ListMessagesResponse } from "@/features/messages/schema/query"
+import { listMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schema/resource"
 import { logger } from "@/lib/log"
@@ -175,16 +175,14 @@ export const createGuestSessionStore = (
           params.set("parentOrigin", parentOrigin)
         }
 
-        const { data, nextCursor } = await ky
-          .get<ListMessagesResponse>(
-            `/api/guest/messages?${params.toString()}`,
-            {
-              headers: accessToken
-                ? { Authorization: `Bearer ${accessToken}` }
-                : undefined,
-            },
-          )
+        const raw = await ky
+          .get(`/api/guest/messages?${params.toString()}`, {
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : undefined,
+          })
           .json()
+        const { data, nextCursor } = listMessagesResponse.parse(raw)
 
         set({
           messages: [...data.reverse(), ...messages],
@@ -218,16 +216,14 @@ export const createGuestSessionStore = (
           params.set("parentOrigin", parentOrigin)
         }
 
-        const { data } = await ky
-          .get<ListMessagesResponse>(
-            `/api/guest/messages?${params.toString()}`,
-            {
-              headers: accessToken
-                ? { Authorization: `Bearer ${accessToken}` }
-                : undefined,
-            },
-          )
+        const raw = await ky
+          .get(`/api/guest/messages?${params.toString()}`, {
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : undefined,
+          })
           .json()
+        const { data } = listMessagesResponse.parse(raw)
 
         // Only append messages the socket hasn't already delivered — this
         // recovers the common "missed a few messages during a brief

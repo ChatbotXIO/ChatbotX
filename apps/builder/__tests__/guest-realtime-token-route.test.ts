@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   checkApiRateLimit: vi.fn(),
   checkGuestRateLimit: vi.fn(),
-  contactInboxServiceFindLatestBySource: vi.fn(),
   integrationWebchatServiceFindByIdForWorkspaceOrNull: vi.fn(),
   resolveBroadcastSecret: vi.fn(),
   signGuestConnectToken: vi.fn(),
@@ -14,9 +13,6 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  contactInboxService: {
-    findLatestBySource: mocks.contactInboxServiceFindLatestBySource,
-  },
   integrationWebchatService: {
     findByIdForWorkspaceOrNull:
       mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull,
@@ -56,7 +52,6 @@ const NEW_GUEST_CONVERSATION_ID = `${WORKSPACE_ID}:3f6a2f2a-1b1a-4e9a-9b1a-7c3a2
 
 const webchat = (overrides: Record<string, unknown> = {}) => ({
   authorizedDomains: [] as string[],
-  inboxId: "inbox-1",
   ...overrides,
 })
 
@@ -71,7 +66,7 @@ const buildRequest = (
   })
 
 const baseBody = (overrides: Record<string, unknown> = {}) => ({
-  guestConversationId: LEGACY_GUEST_CONVERSATION_ID,
+  guestConversationId: NEW_GUEST_CONVERSATION_ID,
   parentOrigin: "https://example.com",
   workspaceId: WORKSPACE_ID,
   webchatId: WEBCHAT_ID,
@@ -92,15 +87,12 @@ describe("POST /api/guest/realtime-token", () => {
     mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull.mockResolvedValue(
       webchat(),
     )
-    mocks.contactInboxServiceFindLatestBySource.mockResolvedValue({
-      id: "contact-inbox-1",
-    })
     mocks.verifyWebchatAccessToken.mockResolvedValue({ authorized: true })
     mocks.resolveBroadcastSecret.mockResolvedValue("broadcast-secret")
     mocks.signGuestConnectToken.mockResolvedValue("signed-guest-token")
   })
 
-  test("returns 429 with Retry-After when rate limited, without touching the database", async () => {
+  test("returns 429 with Retry-After when rate limited by IP, without looking up the webchat", async () => {
     mocks.checkGuestRateLimit.mockResolvedValue({
       limited: true,
       retryAfter: 42,
@@ -115,31 +107,6 @@ describe("POST /api/guest/realtime-token", () => {
     ).not.toHaveBeenCalled()
   })
 
-  test("returns 429 with Retry-After when the workspace-scoped mint limit is exceeded, independent of per-IP/session state", async () => {
-    mocks.checkApiRateLimit.mockResolvedValue({
-      limited: true,
-      retryAfter: 7,
-    })
-
-    const response = await POST(
-      buildRequest(
-        baseBody({ guestConversationId: NEW_GUEST_CONVERSATION_ID }),
-      ),
-    )
-
-    expect(response.status).toBe(429)
-    expect(response.headers.get("Retry-After")).toBe("7")
-    expect(
-      mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull,
-    ).not.toHaveBeenCalled()
-    expect(mocks.checkApiRateLimit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        scope: "guest-realtime-mint-workspace-rate-limit",
-        key: WORKSPACE_ID,
-      }),
-    )
-  })
-
   test("returns 404 when the webchat cannot be found for the workspace", async () => {
     mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull.mockResolvedValue(
       undefined,
@@ -150,7 +117,17 @@ describe("POST /api/guest/realtime-token", () => {
     expect(response.status).toBe(404)
   })
 
-  test("returns 400 for a new-format guest conversation id whose workspace prefix mismatches the request, without checking the DB", async () => {
+  test("returns 400 for a legacy digits-only guest conversation id", async () => {
+    const response = await POST(
+      buildRequest(
+        baseBody({ guestConversationId: LEGACY_GUEST_CONVERSATION_ID }),
+      ),
+    )
+
+    expect(response.status).toBe(400)
+  })
+
+  test("returns 400 for a new-format guest conversation id whose workspace prefix mismatches the request", async () => {
     const response = await POST(
       buildRequest(
         baseBody({
@@ -160,55 +137,55 @@ describe("POST /api/guest/realtime-token", () => {
     )
 
     expect(response.status).toBe(400)
-    expect(mocks.contactInboxServiceFindLatestBySource).not.toHaveBeenCalled()
   })
 
-  test("returns 400 for a legacy digits-only guest conversation id, without checking the DB for an owned conversation", async () => {
-    const response = await POST(buildRequest(baseBody()))
-
-    expect(response.status).toBe(400)
-    expect(mocks.contactInboxServiceFindLatestBySource).not.toHaveBeenCalled()
-  })
-
-  test("returns 200 with a token for an authorized new-format guest conversation id", async () => {
-    const response = await POST(
-      buildRequest(
-        baseBody({ guestConversationId: NEW_GUEST_CONVERSATION_ID }),
-      ),
-    )
-
-    expect(response.status).toBe(200)
-    const payload = await response.json()
-    expect(payload).toEqual({ token: "signed-guest-token" })
-    expect(mocks.contactInboxServiceFindLatestBySource).not.toHaveBeenCalled()
-  })
-
-  test("returns 403 when the access token is unauthorized", async () => {
+  test("returns 403 without ever checking the workspace-wide mint rate limit when the access token is unauthorized", async () => {
     mocks.verifyWebchatAccessToken.mockResolvedValue({ authorized: false })
 
-    const response = await POST(
-      buildRequest(
-        baseBody({ guestConversationId: NEW_GUEST_CONVERSATION_ID }),
-      ),
-    )
+    const response = await POST(buildRequest(baseBody()))
 
     expect(response.status).toBe(403)
+    expect(mocks.checkApiRateLimit).not.toHaveBeenCalled()
   })
 
-  test("returns 403 when the origin is not in the webchat's authorized domains", async () => {
+  test("returns 403 without ever checking the workspace-wide mint rate limit when the origin is not in the webchat's authorized domains", async () => {
     mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull.mockResolvedValue(
       webchat({ authorizedDomains: ["allowed.example"] }),
     )
 
     const response = await POST(
-      buildRequest(
-        baseBody({
-          guestConversationId: NEW_GUEST_CONVERSATION_ID,
-          parentOrigin: "https://attacker.test",
-        }),
-      ),
+      buildRequest(baseBody({ parentOrigin: "https://attacker.test" })),
     )
 
     expect(response.status).toBe(403)
+    expect(mocks.checkApiRateLimit).not.toHaveBeenCalled()
+  })
+
+  test("returns 200 with a token for an authorized request within all rate limits", async () => {
+    const response = await POST(buildRequest(baseBody()))
+
+    expect(response.status).toBe(200)
+    const payload = await response.json()
+    expect(payload).toEqual({ token: "signed-guest-token" })
+    expect(mocks.checkApiRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "guest-realtime-mint-workspace-rate-limit",
+        key: WORKSPACE_ID,
+      }),
+    )
+  })
+
+  test("returns 429 with Retry-After when the workspace-wide mint rate limit is exceeded for an otherwise-authorized request", async () => {
+    mocks.checkApiRateLimit.mockResolvedValue({
+      limited: true,
+      retryAfter: 7,
+    })
+
+    const response = await POST(buildRequest(baseBody()))
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("Retry-After")).toBe("7")
+    expect(mocks.verifyWebchatAccessToken).toHaveBeenCalled()
+    expect(mocks.signGuestConnectToken).not.toHaveBeenCalled()
   })
 })

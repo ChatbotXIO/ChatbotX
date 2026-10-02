@@ -4,17 +4,29 @@ import {
   publishGuestRealtimeEvent,
   publishWorkspaceMemberRealtimeEvent,
   publishWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent,
   resetRealtimePublishStateForTests,
   revokeWorkspaceMemberRealtimeConnections,
 } from "../src/platform/realtime-broadcast"
 
-const { publishRealtimeStreamRecord, publishSerializedRealtimeStreamRecord } =
-  vi.hoisted(() => ({
-    publishRealtimeStreamRecord: vi.fn(),
-    publishSerializedRealtimeStreamRecord: vi.fn(),
-  }))
+const {
+  loggerError,
+  markRealtimeMemberRevoked,
+  publishRealtimeStreamRecord,
+  publishSerializedRealtimeStreamRecord,
+} = vi.hoisted(() => ({
+  loggerError: vi.fn(),
+  markRealtimeMemberRevoked: vi.fn(),
+  publishRealtimeStreamRecord: vi.fn(),
+  publishSerializedRealtimeStreamRecord: vi.fn(),
+}))
+
+vi.mock("../src/logger", () => ({
+  logger: { error: loggerError, info: vi.fn(), warn: vi.fn() },
+}))
 
 vi.mock("../src/platform/realtime-stream-publisher", () => ({
+  markRealtimeMemberRevoked,
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
   resetRealtimeStreamPublisherForTests: vi.fn(),
@@ -27,6 +39,9 @@ const typingEvent = {
 
 beforeEach(() => {
   vi.useFakeTimers()
+  loggerError.mockReset()
+  markRealtimeMemberRevoked.mockReset()
+  markRealtimeMemberRevoked.mockResolvedValue(undefined)
   publishRealtimeStreamRecord.mockReset()
   publishRealtimeStreamRecord.mockResolvedValue(undefined)
   publishSerializedRealtimeStreamRecord.mockReset()
@@ -140,5 +155,37 @@ describe("realtime stream broadcast", () => {
 
     await assertion
     expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(3)
+  })
+
+  test("drains every workspace's shutdown flush independently, even when one workspace's append rejects", async () => {
+    // Regression for PR #1349 round-4 medium finding: `Promise.all` used to
+    // abort the whole shutdown drain on the first failing workspace, so a
+    // busy/broken neighbor could leave an unrelated workspace's in-flight
+    // append un-awaited (and un-logged) past process exit.
+    const failure = new Error("ECONNRESET")
+    publishSerializedRealtimeStreamRecord.mockImplementation(
+      (workspaceId: string) =>
+        workspaceId === "ws-fail"
+          ? Promise.reject(failure)
+          : Promise.resolve(undefined),
+    )
+
+    queueWorkspaceRealtimeEvent("ws-fail", typingEvent)
+    queueWorkspaceRealtimeEvent("ws-ok", typingEvent)
+
+    await expect(flushAllPendingWorkspaceRealtimeEvents()).rejects.toThrow()
+
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
+      "ws-fail",
+      expect.any(String),
+    )
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
+      "ws-ok",
+      expect.any(String),
+    )
+    expect(loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: failure, workspaceId: "ws-fail" }),
+      "Failed to flush pending realtime events on shutdown",
+    )
   })
 })

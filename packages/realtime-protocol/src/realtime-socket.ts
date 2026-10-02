@@ -1,4 +1,11 @@
 export const REALTIME_CLOSE_CODE = {
+  // Client-generated, not sent by the server: this socket closes itself
+  // when `heartbeatTimeoutMs` elapses with no frame at all (not even the
+  // server's `hb` broadcast) — see `#armHeartbeat` below. Kept in this same
+  // table (not a bare magic number at the call site) so every close code
+  // this protocol uses, server- or client-originated, is discoverable in
+  // one place. See PR #1349 round-4 advisory.
+  heartbeatTimeout: 4000,
   revoked: 4001,
   resync: 4002,
   overloaded: 4003,
@@ -126,7 +133,18 @@ export class RealtimeSocket {
           this.options.onMessage(event.data)
         }
         socket.onerror = () => {
-          this.options.onError?.(new Error("Realtime WebSocket error"))
+          // Deliberately does NOT call `this.options.onError` here: the
+          // native WebSocket `error` event carries no usable code/reason
+          // (per spec) and is ALWAYS followed by a `close` event once
+          // `.close()` below runs — calling both callbacks for the same
+          // underlying failure double-counts it for any caller tallying
+          // consecutive connect failures across `onError` + `onClose` (e.g.
+          // the webchat widget's reconnect-failure banner threshold).
+          // `onClose` is the single authoritative signal for this failure;
+          // `onError` stays reserved for failures that never produce a
+          // `close` event at all (a `getUrl()` rejection, handled in the
+          // `.catch` below). See PR #1349 round-4 medium finding (webchat
+          // double-counts connect failures).
           socket.close()
         }
         socket.onclose = (event) => {
@@ -178,7 +196,7 @@ export class RealtimeSocket {
     this.#clearHeartbeat()
     this.#heartbeatTimer = setTimeout(() => {
       if (this.#socket === socket) {
-        socket.close(4000, "heartbeat-timeout")
+        socket.close(REALTIME_CLOSE_CODE.heartbeatTimeout, "heartbeat-timeout")
       }
     }, this.#heartbeatTimeoutMs)
   }

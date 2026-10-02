@@ -1081,6 +1081,10 @@ export async function sendFlowStep({
       conversation.workspaceId,
       message?.createdAt,
       parsedError.message,
+      routeForConversation({
+        assignedInboxTeamId: conversation.assignedInboxTeamId,
+        assignedUserId: conversation.assignedUserId,
+      }),
       isBulkOutbound,
     )
 

@@ -1,7 +1,7 @@
 import uWS from "uWebSockets.js"
 import {
-  getRealtimeStreamKey,
-  isRealtimeSeqAfter,
+  getRealtimeMemberRevokedKey,
+  getRealtimeStreamShard,
   REALTIME_CLOSE_CODE,
   type RealtimeGuestClaims,
   type RealtimeMemberClaims,
@@ -13,9 +13,9 @@ import type { Redis } from "@chatbotx.io/redis"
 import {
   createRealtimeDelivery,
   type GuestSocketData,
-  type StreamRecordEntry,
   type WorkspaceSocketData,
 } from "./delivery"
+import { decrementKeyedCount, incrementKeyedCount } from "./lib/keyed-count"
 import { reportWorkspacePresence } from "./lib/presence-report"
 import {
   createRealtimeServerCounters,
@@ -23,17 +23,12 @@ import {
   recordRealtimeServerWindow,
 } from "./lib/realtime-metrics"
 import { logger } from "./logger"
-import {
-  createStreamReader,
-  parseStreamRecord,
-  type StreamEntry,
-} from "./stream-reader"
+import { loadReplay } from "./replay"
+import { createStreamReader } from "./stream-reader"
 
 const SLOW_CONSUMER_BUFFER_BYTES = 512_000
-const MAX_REPLAY_ENTRIES = 500
 const PRESENCE_REPORT_CONCURRENCY = 16
 const PRESENCE_REPORT_COALESCE_MS = 1000
-const STREAM_ID_PATTERN = /^\d+-\d+$/
 const OVERLOAD_RETRY_AFTER_MIN_MS = 1000
 const OVERLOAD_RETRY_AFTER_SPREAD_MS = 4000
 /** Guest pool ceiling when the caller doesn't pass one explicitly (tests). */
@@ -66,133 +61,10 @@ const nextOverloadRetryAfterMs = (): number =>
   OVERLOAD_RETRY_AFTER_MIN_MS +
   Math.floor(Math.random() * OVERLOAD_RETRY_AFTER_SPREAD_MS)
 
-const incrementKeyedCount = (
-  counts: Map<string, number>,
-  key: string,
-): void => {
-  counts.set(key, (counts.get(key) ?? 0) + 1)
-}
-
-const decrementKeyedCount = (
-  counts: Map<string, number>,
-  key: string,
-): void => {
-  const next = (counts.get(key) ?? 0) - 1
-  if (next > 0) {
-    counts.set(key, next)
-  } else {
-    counts.delete(key)
-  }
-}
-
-type ReplayResult = {
-  closeReason?: string
-  /** Entries whose record (or part of it) couldn't be parsed during replay —
-   * bumped into `counters.malformedRecords` by the caller. Not re-resynced
-   * here: the live dispatch path already resyncs every connected socket the
-   * first time this same record arrives, so doing it again for every later
-   * reconnect that replays through the same historical window would just
-   * flap the socket without recovering anything new. See PR #1349 finding
-   * #7.
-   */
-  droppedCount?: number
-  entries: StreamRecordEntry[]
-  lastStreamId?: string
-}
-
 export type RealtimeGateway = {
   close: () => Promise<void>
   /** Resolves with the actual bound port — useful for `port: 0` (OS-assigned). */
   listen: (host: string, port: number) => Promise<number>
-}
-
-export const loadReplay = async ({
-  lastSeq,
-  redis,
-  workspaceId,
-}: {
-  lastSeq?: string
-  redis: Redis
-  workspaceId: string
-}): Promise<ReplayResult> => {
-  if (!lastSeq) {
-    return { entries: [] }
-  }
-  if (!STREAM_ID_PATTERN.test(lastSeq)) {
-    return { closeReason: "invalid-last-seq", entries: [] }
-  }
-
-  const streamKey = getRealtimeStreamKey(workspaceId)
-  const [oldestEntries, newestEntries] = (await Promise.all([
-    redis.xrange(streamKey, "-", "+", "COUNT", 1),
-    redis.xrevrange(streamKey, "+", "-", "COUNT", 1),
-  ])) as [StreamEntry[], StreamEntry[]]
-  const oldestEntry = oldestEntries[0]
-  const newestEntry = newestEntries[0]
-  if (oldestEntry && isRealtimeSeqAfter(oldestEntry[0], lastSeq)) {
-    return { closeReason: "replay-window-expired", entries: [] }
-  }
-  if (
-    (!newestEntry && lastSeq !== "0-0") ||
-    (newestEntry && isRealtimeSeqAfter(lastSeq, newestEntry[0]))
-  ) {
-    return { closeReason: "replay-cursor-ahead", entries: [] }
-  }
-
-  const entries = (await redis.xrange(
-    streamKey,
-    `(${lastSeq}`,
-    "+",
-    "COUNT",
-    MAX_REPLAY_ENTRIES + 1,
-  )) as StreamEntry[]
-  if (entries.length > MAX_REPLAY_ENTRIES) {
-    return { closeReason: "replay-window-too-large", entries: [] }
-  }
-
-  const currentOldestEntries = (await redis.xrange(
-    streamKey,
-    "-",
-    "+",
-    "COUNT",
-    1,
-  )) as StreamEntry[]
-  const currentOldestEntry = currentOldestEntries[0]
-  if (
-    currentOldestEntry &&
-    isRealtimeSeqAfter(currentOldestEntry[0], lastSeq)
-  ) {
-    return { closeReason: "replay-window-expired", entries: [] }
-  }
-
-  const parsedEntries: StreamRecordEntry[] = []
-  let droppedCount = 0
-  for (const [id, fields] of entries) {
-    const parsed = parseStreamRecord(fields)
-    if (!parsed.ok) {
-      droppedCount += 1
-      logger.error(
-        {
-          err: parsed.error,
-          id,
-          workspaceId: parsed.workspaceId ?? workspaceId,
-        },
-        "Ignoring invalid realtime stream entry during replay",
-      )
-      continue
-    }
-    if (parsed.droppedCount) {
-      droppedCount += parsed.droppedCount
-    }
-    if (parsed.record.workspaceId === workspaceId) {
-      parsedEntries.push({ id, record: parsed.record })
-    }
-  }
-  return {
-    droppedCount: droppedCount || undefined,
-    entries: parsedEntries,
-    lastStreamId: entries.at(-1)?.[0] ?? lastSeq,
-  }
 }
 
 export const createRealtimeGateway = ({
@@ -204,6 +76,7 @@ export const createRealtimeGateway = ({
     maxConnections * DEFAULT_GUEST_CONNECTION_SHARE,
   ),
   maxGuestConnectionsPerWorkspace = DEFAULT_MAX_GUEST_CONNECTIONS_PER_WORKSPACE,
+  presenceReportIntervalMs = PRESENCE_REPORT_INTERVAL_MS,
   redis,
   secret,
 }: {
@@ -213,6 +86,9 @@ export const createRealtimeGateway = ({
   maxConnectionsPerWorkspace?: number
   maxGuestConnections?: number
   maxGuestConnectionsPerWorkspace?: number
+  /** Overridable only for tests — production always uses the shared
+   * protocol constant so it can never drift from `PRESENCE_TTL_MS`. */
+  presenceReportIntervalMs?: number
   redis: Redis
   secret: string
 }): RealtimeGateway => {
@@ -328,6 +204,41 @@ export const createRealtimeGateway = ({
     )
   }
 
+  const allConnectedWorkspaceIds = (): Set<string> => {
+    const workspaceIds = new Set<string>()
+    for (const workspaceId of memberConnectionCountByWorkspace.keys()) {
+      workspaceIds.add(workspaceId)
+    }
+    for (const workspaceId of guestConnectionCountByWorkspace.keys()) {
+      workspaceIds.add(workspaceId)
+    }
+    return workspaceIds
+  }
+
+  /** Resyncs every locally-connected workspace that hashes to `shard` —
+   * used when an invalid stream record couldn't even yield a `workspaceId`
+   * (so `delivery.resyncWorkspace` has no single workspace to target): every
+   * workspace sharing that shard has an unconfirmed gap. See PR #1349
+   * round-4 finding (invalid record with no workspaceId). */
+  const resyncShard = (shard: number, reason: string): void => {
+    for (const workspaceId of allConnectedWorkspaceIds()) {
+      if (getRealtimeStreamShard(workspaceId) === shard) {
+        delivery.resyncWorkspace(workspaceId, reason)
+      }
+    }
+  }
+
+  /** Resyncs every locally-connected workspace regardless of shard — used
+   * when the stream reader's single Redis connection recovers from an
+   * error: that one connection blocks on every active shard at once, so a
+   * failed read is a gap for ALL of them, not just one. See PR #1349
+   * round-4 finding (Redis outage). */
+  const resyncAllWorkspaces = (reason: string): void => {
+    for (const workspaceId of allConnectedWorkspaceIds()) {
+      delivery.resyncWorkspace(workspaceId, reason)
+    }
+  }
+
   const streamReader = createStreamReader({
     onEntries: (entries) => {
       counters.records += entries.length
@@ -354,14 +265,21 @@ export const createRealtimeGateway = ({
         logger.error({ err: error }, "Realtime Redis Streams reader failed")
       }
     },
-    onInvalidRecord: ({ workspaceId }) => {
+    onInvalidRecord: ({ shard, workspaceId }) => {
       counters.malformedRecords += 1
       if (workspaceId) {
         delivery.resyncWorkspace(workspaceId, "malformed-stream-record")
+        return
       }
+      resyncShard(shard, "malformed-stream-record")
     },
     onReady: () => {
       ready = true
+    },
+    onRecovered: () => {
+      if (!stopped) {
+        resyncAllWorkspaces("stream-reader-recovered")
+      }
     },
     redis,
   })
@@ -448,6 +366,26 @@ export const createRealtimeGateway = ({
             return
           }
 
+          // Independent of whether this connect carries a `lastSeq`: a
+          // stream-entry-based revoke check only catches a revoke sitting
+          // *inside* the replayed window, so a connect with no `lastSeq` at
+          // all (e.g. every connect after a 4002 resync) used to skip the
+          // check entirely, letting a pre-revoke token that's still
+          // unexpired (the token TTL plus clock tolerance) connect. See
+          // PR #1349 round-4 finding #5.
+          const revokedAtRaw = await redis.get(
+            getRealtimeMemberRevokedKey(workspaceId, claims.userId),
+          )
+          if (revokedAtRaw && Number(revokedAtRaw) >= claims.iat * 1000) {
+            if (!aborted) {
+              counters.tokenRejections += 1
+              res.cork(() => {
+                res.writeStatus("401 Unauthorized").end()
+              })
+            }
+            return
+          }
+
           const workspaceConnectionCount =
             memberConnectionCountByWorkspace.get(workspaceId) ?? 0
           const workspacePendingCount =
@@ -501,7 +439,11 @@ export const createRealtimeGateway = ({
                 {
                   ...claims,
                   activated,
-                  closeReason: replay.closeReason,
+                  closeReason:
+                    replay.closeReason ??
+                    (replay.droppedCount
+                      ? "replay-entries-dropped"
+                      : undefined),
                   closed: false,
                   replayCutoff: replay.lastStreamId ?? activationLastId,
                   replayEntries: replay.entries,
@@ -953,7 +895,7 @@ export const createRealtimeGateway = ({
             logger.error({ err: error }, "Failed to report workspace presence")
           },
         )
-      }, PRESENCE_REPORT_INTERVAL_MS)
+      }, presenceReportIntervalMs)
       metricsTimer = setInterval(flushMetrics, REALTIME_METRIC_WINDOW_MS)
       streamReader.start()
       return boundPort

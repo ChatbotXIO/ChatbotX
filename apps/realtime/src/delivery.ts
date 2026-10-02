@@ -69,23 +69,6 @@ const closeCodeForRevoke = (
     ? { closeCode: REALTIME_CLOSE_CODE.revoked, closeReason: "revoked" }
     : { closeCode: REALTIME_CLOSE_CODE.reauth, closeReason: "reauth" }
 
-/**
- * True when a `member-revoke` stream entry predates the token this socket
- * (re)connected with. A reconnect always mints a fresh token, which
- * re-validates membership/permissions at mint time — so a revoke still
- * sitting in the replay window from *before* that mint reflects a condition
- * already superseded by the fresh, successful mint. Honoring it anyway would
- * kill a socket that just proved it's currently authorized. See PR #1349
- * finding #1.
- */
-const isRevokeStaleForToken = (
-  entryId: string,
-  iatSeconds: number,
-): boolean => {
-  const [entryMillisecondsRaw] = entryId.split("-")
-  return Number(entryMillisecondsRaw) < iatSeconds * 1000
-}
-
 const encodeBatch = (events: unknown[], seq: string): string =>
   JSON.stringify({ batch: events, seq })
 
@@ -404,21 +387,13 @@ export const createRealtimeDelivery = (
               sendMemberRecord(socket, entry)
             }
             break
-          case "member-revoke": {
-            const { iat, userId } = socket.getUserData()
-            if (
-              entry.record.userId === userId &&
-              !isRevokeStaleForToken(entry.id, iat)
-            ) {
-              const { closeCode, closeReason } = closeCodeForRevoke(
-                entry.record.reason,
-              )
-              socket.getUserData().closed = true
-              socket.end(closeCode, closeReason)
-              return false
-            }
-            break
-          }
+          // "member-revoke" entries are never replayed: the gateway's
+          // connect-time check (`getRealtimeMemberRevokedKey` against the
+          // token's `iat`) already rejected the connect if this user was
+          // revoked after the token was minted — independent of whether
+          // this socket's `lastSeq` even covers the window the revoke
+          // entry sits in. A live revoke while already connected is still
+          // handled, in `dispatch` below. See PR #1349 round-4 finding #5.
           default:
             break
         }

@@ -1,7 +1,6 @@
 // @vitest-environment node
 
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
-import ky from "ky"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import {
   getParentOriginFromUrl,
@@ -21,7 +20,6 @@ import {
   safeStorageSet,
 } from "@/features/integration-webchat/providers/store/lib/guest-session"
 import { toWebchatClientConfig } from "@/features/integration-webchat/providers/store/lib/webchat-client-config"
-import type { MessageResource } from "@/features/messages/schema/resource"
 import { checkGuestRateLimit } from "@/lib/rate-limit/guest-rate-limit"
 
 vi.mock("@/features/messages/actions/create-webchat-message.action", () => ({
@@ -32,10 +30,6 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
   return { ...actual, createId: vi.fn(() => "generated-id") }
 })
-
-vi.mock("ky", () => ({
-  default: { get: vi.fn() },
-}))
 
 const createLocalStorageMock = (initial: Record<string, string> = {}) => {
   const items = new Map(Object.entries(initial))
@@ -58,17 +52,6 @@ const createWebchatConfig = (
     persistentMenus: [],
     ...overrides,
   }) as IntegrationWebchatModel
-
-const makeMessage = (overrides: Partial<MessageResource> = {}) =>
-  ({
-    id: "msg-1",
-    workspaceId: "workspace-1",
-    conversationId: "workspace-1:server-guest",
-    contactInboxId: "contact-inbox-1",
-    createdAt: new Date("2024-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2024-01-01T00:00:00.000Z"),
-    ...overrides,
-  }) as unknown as MessageResource
 
 const GUEST_ID_UUID_PATTERN =
   /^workspace-1:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -227,56 +210,6 @@ describe("webchat guest session store", () => {
         buildGuestStorageKey("workspace-1", "webchat-2"),
       ),
     ).toBe(true)
-  })
-
-  test("rethrows after logging so the caller's .catch runs when refetchLatestMessages fails (PR #1349 finding #8)", async () => {
-    const networkError = new Error("network down")
-    vi.mocked(ky.get).mockReturnValue({
-      json: () => Promise.reject(networkError),
-    } as never)
-
-    const localStorageMock = createLocalStorageMock()
-    vi.stubGlobal("localStorage", localStorageMock)
-    const store = createGuestSessionStore(createWebchatConfig())
-    store.getState().initGuestSession("workspace-1:server-guest")
-
-    await expect(store.getState().refetchLatestMessages(50)).rejects.toBe(
-      networkError,
-    )
-  })
-
-  test("merges reconnect-backfill messages into chronological order instead of appending them after a live message that arrived mid-fetch", async () => {
-    const liveMessage = makeMessage({
-      id: "live-msg",
-      createdAt: new Date("2024-01-01T00:00:10.000Z"),
-    })
-    const backfilledMessage = makeMessage({
-      id: "backfilled-msg",
-      createdAt: new Date("2024-01-01T00:00:05.000Z"),
-    })
-    const originalMessages = [backfilledMessage]
-
-    vi.mocked(ky.get).mockReturnValue({
-      // `data` must not be mutated by the caller: assert against the same
-      // array reference after the call to catch an in-place `.reverse()`.
-      json: () => Promise.resolve({ data: originalMessages }),
-    } as never)
-
-    const localStorageMock = createLocalStorageMock()
-    vi.stubGlobal("localStorage", localStorageMock)
-    const store = createGuestSessionStore(createWebchatConfig())
-    store.getState().initGuestSession("workspace-1:server-guest")
-    // Seed the live message that the socket delivered while the backfill
-    // fetch below was still in flight.
-    store.setState({ messages: [liveMessage] })
-
-    await store.getState().refetchLatestMessages(50)
-
-    expect(store.getState().messages.map((message) => message.id)).toEqual([
-      "backfilled-msg",
-      "live-msg",
-    ])
-    expect(originalMessages).toEqual([backfilledMessage])
   })
 })
 

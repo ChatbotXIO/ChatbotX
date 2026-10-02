@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-const { createRedisConnection, loggerError, xadd } = vi.hoisted(() => ({
+const { createRedisConnection, loggerError, set, xadd } = vi.hoisted(() => ({
   createRedisConnection: vi.fn(),
   loggerError: vi.fn(),
+  set: vi.fn(),
   xadd: vi.fn(),
 }))
 
@@ -25,8 +26,10 @@ const typingEvent = {
 
 beforeEach(() => {
   createRedisConnection.mockReset()
-  createRedisConnection.mockReturnValue({ xadd })
+  createRedisConnection.mockReturnValue({ set, xadd })
   loggerError.mockReset()
+  set.mockReset()
+  set.mockResolvedValue("OK")
   xadd.mockReset()
 })
 
@@ -81,5 +84,30 @@ describe("realtime stream publisher Redis connection", () => {
         "Failed to publish realtime event",
       )
     })
+  })
+
+  test("writes the authoritative revoked-at marker, keyed by workspace+user, with a TTL that outlives any still-valid connect token", async () => {
+    // Regression for PR #1349 round-4 finding #5: the gateway checks this
+    // key at connect time independent of whether the connect carries a
+    // replay `lastSeq`.
+    const { getRealtimeMemberRevokedKey, REALTIME_MEMBER_REVOKED_TTL_SECONDS } =
+      await import("@chatbotx.io/realtime-protocol")
+    const { revokeWorkspaceMemberRealtimeConnections } = await import(
+      "../src/platform/realtime-broadcast"
+    )
+    xadd.mockResolvedValue("1-0")
+
+    await revokeWorkspaceMemberRealtimeConnections({
+      reason: "deleted",
+      userId: "user-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(set).toHaveBeenCalledWith(
+      getRealtimeMemberRevokedKey("ws-1", "user-1"),
+      expect.any(String),
+      "EX",
+      REALTIME_MEMBER_REVOKED_TTL_SECONDS,
+    )
   })
 })

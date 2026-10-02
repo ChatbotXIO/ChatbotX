@@ -217,4 +217,30 @@ describe("WebchatRealtime connection status", () => {
       vi.useRealTimers()
     }
   })
+
+  test("stops retrying after a 4001 (revoked) close, consistent with RealtimeSocket's terminal-code contract", async () => {
+    // Test gap flagged in PR #1349 round-4 review (criticality 7). Guest
+    // tokens are never actually revoked by this server (`member-revoke` only
+    // targets member sockets — see delivery.ts's `connectionsByMember`), so
+    // a webchat socket can't receive `4001` in production; this still
+    // verifies the shared `RealtimeSocket` contract holds through webchat's
+    // own integration: unlike `4003`/transient codes, a `4001` close never
+    // schedules a reconnect (`#scheduleReconnect` returns early for
+    // `REALTIME_CLOSE_CODE.revoked`), so no new socket is ever created
+    // afterward, however long the test waits.
+    vi.useFakeTimers()
+    try {
+      await render()
+
+      const socket = await waitForSocket()
+      act(() => socket.close(4001, "revoked"))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(40_000)
+      })
+
+      expect(FakeWebSocket.instances).toHaveLength(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

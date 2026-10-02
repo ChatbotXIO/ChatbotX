@@ -182,6 +182,13 @@ export function WorkspaceRealtimeProvider({
             suppressionMessage:
               "Workspace realtime: further schema-validation warnings suppressed for this window",
           })
+          // The batch's `seq` cursor already advanced past this record (see
+          // `processSocketMessage`) before this event is even reached, so
+          // the lost payload is gone from this socket's perspective for
+          // good — a resync-triggered `invalidateQueries()` is the only way
+          // a listener still gets a correct (if delayed) view. See PR #1349
+          // round-4 medium finding (client frames dropped without a resync).
+          setResyncCount((count) => count + 1)
           return
         }
       }
@@ -242,15 +249,12 @@ export function WorkspaceRealtimeProvider({
       }
       const { batch, seq } = batchResult.data
       if (
-        seq &&
         lastProcessedSeqRef.current &&
         !isRealtimeSeqAfter(seq, lastProcessedSeqRef.current)
       ) {
         return
       }
-      if (seq) {
-        lastProcessedSeqRef.current = seq
-      }
+      lastProcessedSeqRef.current = seq
       for (const frame of batch) {
         processRealtimeEvent(frame)
       }
