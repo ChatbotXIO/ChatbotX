@@ -134,6 +134,20 @@ export const realtimeBatchEnvelopeSchema = z.object({
   seq: z.string().regex(/^\d+-\d+$/),
 })
 
+/**
+ * Guest-socket batch validation. A guest socket's delivery is never
+ * route-filtered (`publishGuestRealtimeEvent` is always single-recipient),
+ * so a conversation-scoped event type like `messageCreated` correctly never
+ * carries a `route` here even though `realtimeBatchEnvelopeSchema` above
+ * would reject that same frame — that schema's route-required refine is
+ * workspace-broadcast-only, not a property of every batch frame on the wire.
+ * See PR #1349 round-5 finding (guest client rejecting every real frame).
+ */
+export const realtimeGuestBatchEnvelopeSchema = z.object({
+  batch: z.array(realtimeEventEnvelopeSchema),
+  seq: z.string().regex(/^\d+-\d+$/),
+})
+
 export type RealtimeEventCreateMessage = {
   eventType: typeof RealtimeEventType.messageCreated
   data: unknown
