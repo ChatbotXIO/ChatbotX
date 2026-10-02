@@ -313,6 +313,53 @@ export const isThreadControlChannel = (
   (THREAD_CONTROL_CHANNELS as readonly string[]).includes(channel)
 
 /**
+ * The rules of the AI hand-over automation (hand a conversation to the
+ * channel's AI agent and take it back) that differ per channel, as plain data:
+ * shared code looks a channel up here and never branches on its name. A channel
+ * joins by adding an entry (it must already be a thread-control channel) and by
+ * implementing the bulk thread-control handler in its adapter. Transport limits
+ * (batch size, pacing) are not here: the adapter advertises them.
+ */
+export type AiHandoverChannelPolicy = {
+  /**
+   * How long after a customer's last message the channel still lets us send
+   * them a takeover text (Messenger: Meta's 7-day HUMAN_AGENT window).
+   */
+  takeoverMessageWindowMs: number
+  /** A bulk hand-over to the AI reaches only contacts active within this many days. */
+  handToAiActiveWithinDays: number
+  /** Longest takeover or return text the channel accepts. */
+  messageMaxLength: number
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+export const AI_HANDOVER_CHANNEL_POLICIES = {
+  messenger: {
+    takeoverMessageWindowMs: 7 * MS_PER_DAY,
+    handToAiActiveWithinDays: 30,
+    messageMaxLength: 2000,
+  },
+} as const satisfies Partial<
+  Record<ThreadControlChannel, AiHandoverChannelPolicy>
+>
+
+/** Channels that can hand a conversation to an AI agent: the keys of the policies. */
+export type AiHandoverChannel = keyof typeof AI_HANDOVER_CHANNEL_POLICIES
+
+export const AI_HANDOVER_CHANNELS = Object.keys(
+  AI_HANDOVER_CHANNEL_POLICIES,
+) as AiHandoverChannel[]
+
+/** The AI hand-over channel for an integration type, or `null` when it has none. */
+export const parseAiHandoverChannel = (
+  channel: string | null | undefined,
+): AiHandoverChannel | null =>
+  channel != null && (AI_HANDOVER_CHANNELS as string[]).includes(channel)
+    ? (channel as AiHandoverChannel)
+    : null
+
+/**
  * Routing channels whose archive auto-releases an owned thread on the channel
  * (a `release` call so the number does not keep the conversation). A channel
  * absent from this set skips the release on archive: nothing is enqueued and no

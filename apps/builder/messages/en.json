@@ -3460,6 +3460,128 @@
   "integrations": {
     "title": "Integrations"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Control what happens around Meta's AI assistant answering your Messenger customers.",
+    "info": "When enabled, conversations are taken over here after the AI assistant hands them back, and the settings below apply.",
+    "enabled": {
+      "label": "Enable"
+    },
+    "schedule": {
+      "label": "Run time",
+      "description": "Only apply it during these hours of the workspace time zone.",
+      "from": "From hour",
+      "to": "To hour",
+      "add": "Add time range",
+      "remove": "Remove time range"
+    },
+    "gotoFlow": {
+      "label": "Go to flow",
+      "description": "Flow started when the AI assistant hands the conversation back. Takes priority over the return message.",
+      "placeholder": "Select a flow",
+      "clear": "Clear flow"
+    },
+    "returnMessage": {
+      "label": "Return message",
+      "description": "Sent instead when no flow is set or the flow is no longer active.",
+      "placeholder": "Message sent when the AI hands the conversation back"
+    },
+    "pauseBot": {
+      "label": "Transfer Conversation to Human",
+      "description": "Stops the bot for this contact after the hand-back, until a team member takes over or it resumes."
+    },
+    "readOnly": "You can view these settings but not change them.",
+    "errors": {
+      "supportSession": "Settings cannot be changed from a support session.",
+      "flowNotFound": "The selected flow was not found or is not active.",
+      "timeRanges": "Enter valid time ranges: whole hours from 0 to 24, with different start and end."
+    },
+    "bulk": {
+      "title": "Apply to all customers",
+      "description": "Hand every eligible Messenger conversation to Meta's AI assistant, or take back the ones it holds right now. It runs in the background and you can follow it here.",
+      "started": "Started. You can follow the progress here.",
+      "progress": "Progress",
+      "processedOfTotal": "{done} of {total} conversations",
+      "counters": "{processed} done, {skipped} skipped, {failed} failed",
+      "action": {
+        "enable": "Enable for all",
+        "disable": "Disable for all"
+      },
+      "status": {
+        "pending": "Waiting to start",
+        "running": "Running",
+        "cancelling": "Cancelling",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "enable": {
+        "dialogDescription": "Every Messenger conversation whose customer wrote in the last 30 days and that no other app holds is handed to Meta's AI assistant. Conversations are taken back according to the settings above.",
+        "confirm": "Enable for all",
+        "blocked": "Save the automation above and switch it on (inside its run time) to enable it for all customers."
+      },
+      "disable": {
+        "dialogDescription": "Only conversations Meta's AI assistant holds right now are taken back, and only customers who wrote in the last 7 days can be reached. Each of them receives the message below, sent with Meta's Human Agent tag, so write it as a person replying. The Page needs the Human Agent permission.",
+        "messageLabel": "Message to customers",
+        "messageDescription": "Up to {max} characters.",
+        "messagePlaceholder": "Hi, a team member is taking over this conversation.",
+        "confirm": "Disable for all",
+        "policyWarning": "Meta allows the Human Agent tag only for a person replying to the customer. Using it for promotions or automated messages can get the Page's messaging restricted."
+      },
+      "errors": {
+        "automationNotActive": "Save the automation and switch it on (inside its run time) before enabling it for all customers.",
+        "messageRequired": "Enter the message to send to customers.",
+        "messageTooLong": "The message is too long.",
+        "pageNotConnected": "This Page is not connected.",
+        "nothingToRetry": "There is nothing to retry."
+      },
+      "runErrors": {
+        "automationStopped": "Stopped because the automation was switched off.",
+        "tokenInvalid": "The Page's access was revoked. Reconnect the Page and try again.",
+        "channelUnsupported": "This channel does not support the bulk action.",
+        "maxAttempts": "Gave up after repeated failures.",
+        "channelUnavailable": "Stopped because Meta could not be reached several times in a row.",
+        "batchFailed": "Some conversations could not be confirmed and were counted as failed.",
+        "pageDisconnected": "Stopped because the Page was disconnected.",
+        "pageRefused": "Meta refused the hand-over for this Page: it may not be set up for Meta's AI assistant, or it lacks the permission.",
+        "integrationUnavailable": "The Page's connection could not be loaded. Reconnect the Page and try again."
+      },
+      "pausedUntil": "Paused until {at} to stay within Meta's rate limits for this Page. It resumes on its own.",
+      "preparing": "Preparing…",
+      "live": {
+        "enable": "Enabling for customers: {done} / {total}",
+        "disable": "Disabling for customers: {done} / {total}",
+        "enableCounting": "Enabling for customers: counting…",
+        "disableCounting": "Disabling for customers: counting…"
+      },
+      "done": {
+        "enable": "Enabled for {processed} of {total} customers.",
+        "disable": "Disabled for {processed} of {total} customers."
+      },
+      "stopped": {
+        "enable": "Enabling for all customers was stopped.",
+        "disable": "Disabling for all customers was stopped."
+      },
+      "retry": "Retry"
+    },
+    "history": {
+      "link": "History",
+      "title": "Bulk run history",
+      "empty": "No runs yet.",
+      "columns": {
+        "action": "Action",
+        "requestedAt": "Started",
+        "progress": "Processed / total",
+        "finishedAt": "Finished",
+        "message": "Message",
+        "requestedBy": "Requested by"
+      },
+      "description": "Every time \"Apply to all customers\" was switched on or off for this Page, newest first.",
+      "error": "Could not load the history.",
+      "previousPage": "Previous page",
+      "nextPage": "Next page"
+    }
+  },
   "platformSettings": {
     "title": "Platform Settings",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Hand this conversation to your escalation partner? Your replies will pause until the thread comes back.",
       "confirm": "Pass",
       "success": "Conversation passed to the escalation partner"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Hand this conversation back to the AI assistant",
+      "title": "Hand back to the AI assistant?",
+      "description": "The AI assistant will resume answering this customer. Your replies will pause until the conversation comes back to you. Meta doesn't guarantee the assistant replies to every message.",
+      "confirm": "Hand back",
+      "success": "Conversation handed back to the AI assistant"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

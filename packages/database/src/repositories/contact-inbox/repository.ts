@@ -8,6 +8,7 @@ import {
   db,
   eq,
   exists,
+  getTableColumns,
   inArray,
   isNull,
   lt,
@@ -22,11 +23,17 @@ import {
   type ThreadControlRole,
 } from "../../partials/thread-control"
 import { adConversationPredicate } from "../../queries/ad-referral"
+import {
+  type BulkEligibilityInput,
+  bulkEligibilityConditions,
+  bulkEligibilityWhere,
+} from "../../queries/ai-handover-bulk-eligibility"
 import type { AdsConversionChannel } from "../../schema"
 import {
   type ContactInboxIdentityChangeReason,
   type ContactInboxIdentityHistoryEntry,
   contactInboxModel,
+  conversationModel,
   inboxModel,
   integrationInstagramModel,
   integrationMessengerModel,
@@ -37,6 +44,16 @@ import type {
   ContactModel,
   ConversationModel,
 } from "../../types"
+
+/**
+ * A contact-inbox a bulk AI hand-over run acts on, with its direct-message
+ * conversation. The full row, because settling a thread
+ * (`threadControlService.recordEvent`) needs it and a per-contact re-read
+ * would be an N+1.
+ */
+export type BulkAiContactInboxRow = ContactInboxModel & {
+  conversationId: string
+}
 
 export type WhatsappCtwaInboxRow = {
   contactInboxId: string
@@ -261,6 +278,14 @@ const threadControlTransitionGuard = (
     ),
   )
 }
+
+/** The contact's direct-message conversation (`sourceId IS NULL`), same workspace. */
+const bulkConversationJoin = (workspaceId: string) =>
+  and(
+    eq(conversationModel.contactId, contactInboxModel.contactId),
+    isNull(conversationModel.sourceId),
+    eq(conversationModel.workspaceId, workspaceId),
+  )
 
 export const contactInboxRepository = {
   async updateIdentityGuarded(
@@ -988,5 +1013,70 @@ export const contactInboxRepository = {
           eq(contactInboxModel.threadControlState, "owned"),
         ),
       )
+  },
+  /**
+   * One keyset page of the threads a bulk AI hand-over run acts on in a single inbox,
+   * ordered by contact-inbox id. The conversation is joined here (the direct
+   * message one) so the run never resolves it per contact; a contact without
+   * one is not eligible, and no conversation is ever created by a run. The
+   * workspace scope is enforced through the conversation's own workspaceId.
+   */
+  async listBulkAiPage(
+    input: BulkEligibilityInput & {
+      workspaceId: string
+      inboxId: string
+      afterId: string | null
+      limit: number
+    },
+    tx: DatabaseClient = db,
+  ): Promise<BulkAiContactInboxRow[]> {
+    return await tx
+      .select({
+        ...getTableColumns(contactInboxModel),
+        conversationId: conversationModel.id,
+      })
+      .from(contactInboxModel)
+      .innerJoin(conversationModel, bulkConversationJoin(input.workspaceId))
+      .where(bulkEligibilityWhere(input.inboxId, input, input.afterId))
+      .orderBy(contactInboxModel.id)
+      .limit(input.limit)
+  },
+
+  /** Of `ids`, those still eligible right now (the pre-dispatch re-check). */
+  async listStillBulkAiEligible(
+    input: BulkEligibilityInput & { workspaceId: string; ids: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    if (input.ids.length === 0) {
+      return []
+    }
+    const rows = await tx
+      .select({ id: contactInboxModel.id })
+      .from(contactInboxModel)
+      .innerJoin(conversationModel, bulkConversationJoin(input.workspaceId))
+      .where(
+        and(
+          inArray(contactInboxModel.id, input.ids),
+          ...bulkEligibilityConditions(input),
+        ),
+      )
+    return rows.map((row) => row.id)
+  },
+
+  /** Eligible threads of one inbox after `afterId` (all when absent). */
+  async countBulkAiEligible(
+    input: BulkEligibilityInput & {
+      workspaceId: string
+      inboxId: string
+      afterId?: string | null
+    },
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    const [row] = await tx
+      .select({ total: sql<number>`count(*)::int` })
+      .from(contactInboxModel)
+      .innerJoin(conversationModel, bulkConversationJoin(input.workspaceId))
+      .where(bulkEligibilityWhere(input.inboxId, input, input.afterId ?? null))
+    return row?.total ?? 0
   },
 }

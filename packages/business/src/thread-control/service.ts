@@ -201,16 +201,16 @@ export type SyncThreadOwnerInput = {
    * (the channel reports its own identities alongside the owner).
    */
   ownAppId?: string | null
-  businessAiAppId?: string | null
+  aiAgentAppId?: string | null
 }
 
 /** Who the channel says holds the thread, relative to us. */
-export type ThreadOwnerKind = "self" | "businessAi" | "partner" | "none"
+export type ThreadOwnerKind = "self" | "aiHandover" | "partner" | "none"
 
 /** Pure: classifies the channel's owner app id against the caller's identities. */
 export const classifyThreadOwner = (
   ownerAppId: string | null,
-  ids: { ownAppId: string | null; businessAiAppId: string | null },
+  ids: { ownAppId: string | null; aiAgentAppId: string | null },
 ): ThreadOwnerKind | "unknown" => {
   if (ownerAppId === null) {
     return "none"
@@ -222,7 +222,7 @@ export const classifyThreadOwner = (
   if (ownerAppId === ids.ownAppId) {
     return "self"
   }
-  return ownerAppId === ids.businessAiAppId ? "businessAi" : "partner"
+  return ownerAppId === ids.aiAgentAppId ? "aiHandover" : "partner"
 }
 
 /** Our own action → the event recorded once the channel accepted it. */
@@ -316,6 +316,39 @@ const isSameEvent = (
   contactInbox.threadControlLastEvent === event &&
   readThreadControlColumns(contactInbox).threadControlUpdatedAt?.getTime() ===
     occurredAt.getTime()
+
+/**
+ * Handovers Meta reports (our own take/pass actions record their previous owner
+ * explicitly), whose payload often omits the previous owner.
+ */
+const HANDOVER_EVENTS: ReadonlySet<ThreadControlEvent> = new Set([
+  "controlPassed",
+  "controlTaken",
+])
+
+/**
+ * The app that held the thread before this event. The payload's value wins
+ * (Meta often omits it). For a handover without it, the row's own record: the
+ * owner it held before this write, or, on a redelivery (the row already moved
+ * to the new owner), the previous owner it recorded the first time. Other
+ * events keep only the explicit value.
+ */
+const resolvePreviousOwnerAppId = (
+  input: RecordThreadControlEventInput,
+): string | null => {
+  if (input.previousOwnerAppId) {
+    return input.previousOwnerAppId
+  }
+  if (!HANDOVER_EVENTS.has(input.event)) {
+    return null
+  }
+  const { contactInbox } = input
+  return (
+    (isSameEvent(contactInbox, input.event, input.occurredAt)
+      ? contactInbox.threadPreviousOwnerAppId
+      : contactInbox.threadOwnerAppId) ?? null
+  )
+}
 
 /**
  * The expiry lifecycle, decided in one place: a caller-supplied value wins; an
@@ -457,7 +490,7 @@ class ThreadControlService extends BaseService {
         event: input.event,
         ownerRole,
         ownerAppId: input.ownerAppId ?? null,
-        previousOwnerAppId: input.previousOwnerAppId ?? null,
+        previousOwnerAppId: resolvePreviousOwnerAppId(input),
         threadOwnerExpiresAt,
         occurredAt: input.occurredAt,
       })
@@ -618,7 +651,7 @@ class ThreadControlService extends BaseService {
 
     const kind = classifyThreadOwner(owner.ownerAppId, {
       ownAppId: input.ownAppId ?? owner.ownAppId ?? null,
-      businessAiAppId: input.businessAiAppId ?? owner.businessAiAppId ?? null,
+      aiAgentAppId: input.aiAgentAppId ?? owner.aiAgentAppId ?? null,
     })
     if (kind === "unknown") {
       return toSnapshot(contactInbox)
@@ -793,6 +826,12 @@ class ThreadControlService extends BaseService {
     contactInboxId: string
   }): Promise<{
     state: ThreadControlState
+    /** Role of the current owner, `null` when unknown. */
+    ownerRole: ThreadControlRole | null
+    /** The last applied event, `null` before any. */
+    lastEvent: ThreadControlEvent | null
+    /** The app that held the thread before the last event, when recorded. */
+    previousOwnerAppId: string | null
     threadControlUpdatedAt: Date | null
   } | null> {
     const current = await contactInboxRepository.findModelByIdForWorkspace({
@@ -801,7 +840,13 @@ class ThreadControlService extends BaseService {
     })
     const state = current ? resolveStoredState(current, new Date()) : null
     return current && state
-      ? { state, threadControlUpdatedAt: current.threadControlUpdatedAt }
+      ? {
+          state,
+          ownerRole: parseThreadControlRole(current.threadOwnerRole),
+          lastEvent: current.threadControlLastEvent ?? null,
+          previousOwnerAppId: current.threadPreviousOwnerAppId ?? null,
+          threadControlUpdatedAt: current.threadControlUpdatedAt,
+        }
       : null
   }
 
@@ -1041,7 +1086,7 @@ const OWNER_SYNC_PLANS: Record<ThreadOwnerKind, OwnerSyncPlan> = {
     keepsOwnerAppId: false,
     isConfirmed: ({ resolved }) => resolved === "owned",
   },
-  businessAi: {
+  aiHandover: {
     event: "standbyReceived",
     ownerRole: threadControlRoles.enum.ai_agent,
     keepsOwnerAppId: true,

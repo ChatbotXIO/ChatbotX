@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   classifyMessagingRoutingItem,
+  isAiHandbackNotice,
   messengerTimestampToOccurredAt,
   parseAppRolesEvent,
   parseHandoverEvent,
@@ -54,6 +55,101 @@ describe("classifyMessagingRoutingItem", () => {
     expect(classifyMessagingRoutingItem({ app_roles: {} })).toBe("appRoles")
     expect(classifyMessagingRoutingItem({ message: { mid: "m" } })).toBeNull()
     expect(classifyMessagingRoutingItem("nope")).toBeNull()
+  })
+})
+
+/** The notice Meta sent when the Business-AI agent handed a chat back. */
+const handbackNotice = (overrides: Record<string, unknown> = {}): unknown => ({
+  sender: { id: "psid-1" },
+  recipient: { id: PAGE },
+  timestamp: TS_MS,
+  message: { admin_text: "Tác nhân AI đã chuyển đoạn chat này cho bạn." },
+  ...overrides,
+})
+
+describe("the Business-AI hand-back notice (admin_text, no mid)", () => {
+  it("is recognised by its shape and routed as a handover", () => {
+    expect(isAiHandbackNotice(handbackNotice())).toBe(true)
+    expect(classifyMessagingRoutingItem(handbackNotice())).toBe("handover")
+  })
+
+  it("accepts the notice in any language that names the AI (temporary text guard)", () => {
+    for (const adminText of [
+      "The AI agent handed this chat over to you.",
+      "Tác nhân AI đã chuyển đoạn chat này cho bạn.",
+      "L'agent IA vous a transféré ce chat (AI).",
+    ]) {
+      expect(
+        isAiHandbackNotice(
+          handbackNotice({ message: { admin_text: adminText } }),
+        ),
+      ).toBe(true)
+    }
+  })
+
+  it.each([
+    "A customer left the chat.",
+    "Chat đã được chuyển cho nhân viên, ai đó sẽ phản hồi.",
+    "MAIN inbox notice",
+    "",
+  ])("an admin_text that does not name the AI (%j) is not the notice", (adminText) => {
+    const item = handbackNotice({ message: { admin_text: adminText } })
+
+    expect(isAiHandbackNotice(item)).toBe(false)
+    expect(classifyMessagingRoutingItem(item)).toBeNull()
+  })
+
+  it.each([
+    ["an ordinary customer message", { message: { mid: "m.1", text: "hi" } }],
+    [
+      "an admin_text that also carries a mid",
+      { message: { mid: "m.1", admin_text: "x" } },
+    ],
+    ["a non-string admin_text", { message: { admin_text: 5 } }],
+    ["a read receipt", { message: undefined, read: { watermark: 1 } }],
+    ["an echo", { message: { is_echo: true, text: "hi" } }],
+    ["a message with no admin_text", { message: { text: "hi" } }],
+  ])("%s is not a notice", (_name, overrides) => {
+    expect(isAiHandbackNotice(handbackNotice(overrides))).toBe(false)
+    expect(classifyMessagingRoutingItem(handbackNotice(overrides))).toBeNull()
+  })
+
+  it("a real pass_thread_control is never treated as the notice", () => {
+    expect(
+      isAiHandbackNotice({
+        ...(passItem() as object),
+        message: { admin_text: "x" },
+      }),
+    ).toBe(false)
+  })
+
+  it("parses as a pass from the Business-AI agent to our own app", () => {
+    const event = parseHandoverEvent(handbackNotice(), NOW, "app-own")
+
+    expect(event).toEqual({
+      contact: { sourceId: "psid-1" },
+      event: "controlPassed",
+      previousOwnerRole: null,
+      newOwnerRole: null,
+      previousOwnerAppId: "622851382610562",
+      // Applied only to a thread the AI actually holds (a notice may be stale).
+      onlyIfOwnedByAppId: "622851382610562",
+      newOwnerAppId: "app-own",
+      occurredAt: TS_FLOORED,
+    })
+  })
+
+  it("without our own app id it still records the pass, naming no new owner", () => {
+    const event = parseHandoverEvent(handbackNotice(), NOW, null)
+
+    expect(event).toMatchObject({ event: "controlPassed" })
+    expect(event?.newOwnerAppId).toBeUndefined()
+  })
+
+  it("a notice without a sender is malformed and skipped", () => {
+    expect(
+      parseHandoverEvent(handbackNotice({ sender: undefined }), NOW, "app-own"),
+    ).toBeNull()
   })
 })
 

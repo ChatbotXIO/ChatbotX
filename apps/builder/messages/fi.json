@@ -3076,6 +3076,128 @@
   "integrations": {
     "title": "Integraatiot"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Hallitse, mitä tapahtuu, kun Metan tekoälyavustaja vastaa Messenger-asiakkaillesi.",
+    "info": "Kun käytössä, keskustelut otetaan hoitoon täällä, kun tekoälyavustaja palauttaa ne, ja alla olevat asetukset ovat voimassa.",
+    "enabled": {
+      "label": "Ota käyttöön"
+    },
+    "schedule": {
+      "label": "Ajoaika",
+      "description": "Käytä vain näinä tunteina työtilan aikavyöhykkeellä.",
+      "from": "Alkutunti",
+      "to": "Lopputunti",
+      "add": "Lisää aikaväli",
+      "remove": "Poista aikaväli"
+    },
+    "gotoFlow": {
+      "label": "Siirry kulkuun",
+      "description": "Flow, joka käynnistyy, kun tekoälyavustaja palauttaa keskustelun. Ohittaa palautusviestin.",
+      "placeholder": "Valitse kulku",
+      "clear": "Tyhjennä kulku"
+    },
+    "returnMessage": {
+      "label": "Palautusviesti",
+      "description": "Lähetetään sen sijaan, kun kulkua ei ole asetettu tai kulku ei ole enää aktiivinen.",
+      "placeholder": "Viesti, joka lähetetään, kun tekoäly palauttaa keskustelun"
+    },
+    "pauseBot": {
+      "label": "Siirrä keskustelu ihmiselle",
+      "description": "Pysäyttää botin tälle yhteystiedolle palautuksen jälkeen, kunnes tiimin jäsen ottaa vastuun tai botti jatkuu."
+    },
+    "readOnly": "Voit katsella näitä asetuksia mutta et muuttaa niitä.",
+    "errors": {
+      "supportSession": "Asetuksia ei voi muuttaa tukiistunnosta.",
+      "flowNotFound": "Valittua kulkua ei löytynyt tai se ei ole aktiivinen.",
+      "timeRanges": "Anna kelvolliset aikavälit: kokonaisia tunteja 0–24, alku ja loppu eri arvoiset."
+    },
+    "bulk": {
+      "title": "Käytä kaikille asiakkaille",
+      "description": "Siirrä kaikki oikeutetut Messenger-keskustelut Metan tekoälyavustajalle tai ota takaisin ne, joita se tällä hetkellä hallitsee. Toiminto ajetaan taustalla, ja voit seurata sitä täällä.",
+      "started": "Käynnistetty. Voit seurata etenemistä täällä.",
+      "progress": "Eteneminen",
+      "processedOfTotal": "{done} / {total} keskustelua",
+      "counters": "{processed} valmista, {skipped} ohitettu, {failed} epäonnistunut",
+      "action": {
+        "enable": "Ota käyttöön kaikille",
+        "disable": "Poista käytöstä kaikilta"
+      },
+      "status": {
+        "pending": "Odottaa käynnistystä",
+        "running": "Käynnissä",
+        "cancelling": "Peruutetaan",
+        "completed": "Valmis",
+        "failed": "Epäonnistui",
+        "cancelled": "Peruutettu"
+      },
+      "enable": {
+        "dialogDescription": "Jokainen Messenger-keskustelu, johon asiakas on kirjoittanut viimeisen 30 päivän aikana ja jota mikään muu sovellus ei hallitse, siirretään Metan tekoälyavustajalle. Keskustelut otetaan takaisin yllä olevien asetusten mukaan.",
+        "confirm": "Ota käyttöön kaikille",
+        "blocked": "Tallenna yllä oleva automaatio ja kytke se päälle (ajoaikansa sisällä), jotta voit ottaa sen käyttöön kaikille asiakkaille."
+      },
+      "disable": {
+        "dialogDescription": "Takaisin otetaan vain keskustelut, joita Metan tekoälyavustaja hallitsee juuri nyt, ja tavoitettavissa ovat vain asiakkaat, jotka ovat kirjoittaneet viimeisen 7 päivän aikana. Jokainen heistä saa alla olevan viestin Metan Human Agent -tunnisteella lähetettynä, joten kirjoita se kuin ihminen vastaisi. Sivulla on oltava Human Agent -oikeus.",
+        "messageLabel": "Viesti asiakkaille",
+        "messageDescription": "Enintään {max} merkkiä.",
+        "messagePlaceholder": "Hei, tiimin jäsen ottaa tämän keskustelun hoitaakseen.",
+        "confirm": "Poista käytöstä kaikilta",
+        "policyWarning": "Meta sallii Human Agent -tunnisteen vain silloin, kun ihminen vastaa asiakkaalle. Sen käyttö mainontaan tai automaattisiin viesteihin voi johtaa Sivun viestinnän rajoittamiseen."
+      },
+      "errors": {
+        "automationNotActive": "Tallenna automaatio ja kytke se päälle (ajoaikansa sisällä), ennen kuin otat sen käyttöön kaikille asiakkaille.",
+        "messageRequired": "Kirjoita asiakkaille lähetettävä viesti.",
+        "messageTooLong": "Viesti on liian pitkä.",
+        "pageNotConnected": "Tämä Sivu ei ole yhdistetty.",
+        "nothingToRetry": "Ei mitään yritettävää uudelleen."
+      },
+      "runErrors": {
+        "automationStopped": "Pysäytetty, koska automaatio kytkettiin pois päältä.",
+        "tokenInvalid": "Sivun käyttöoikeus peruttiin. Yhdistä sivu uudelleen ja yritä uudelleen.",
+        "channelUnsupported": "Tämä kanava ei tue joukkotoimintoa.",
+        "maxAttempts": "Luovutettiin toistuvien virheiden jälkeen.",
+        "channelUnavailable": "Pysäytetty, koska Metaa ei tavoitettu useita kertoja peräkkäin.",
+        "batchFailed": "Joitakin keskusteluja ei voitu vahvistaa, ja ne laskettiin epäonnistuneiksi.",
+        "pageDisconnected": "Pysäytetty, koska Sivun yhteys katkaistiin.",
+        "pageRefused": "Meta hylkäsi siirron tälle Sivulle: sitä ei ehkä ole määritetty Metan tekoälyavustajalle tai siltä puuttuu oikeus.",
+        "integrationUnavailable": "Sivun yhteyttä ei voitu ladata. Yhdistä Sivu uudelleen ja yritä uudestaan."
+      },
+      "pausedUntil": "Keskeytetty kunnes {at}, jotta tämä Sivu pysyy Metan nopeusrajoitusten sisällä. Jatkuu itsestään.",
+      "preparing": "Valmistellaan…",
+      "live": {
+        "enable": "Otetaan käyttöön asiakkaille: {done} / {total}",
+        "disable": "Poistetaan käytöstä asiakkailta: {done} / {total}",
+        "enableCounting": "Otetaan käyttöön asiakkaille: lasketaan…",
+        "disableCounting": "Poistetaan käytöstä asiakkailta: lasketaan…"
+      },
+      "done": {
+        "enable": "Otettu käyttöön {processed} / {total} asiakkaalle.",
+        "disable": "Poistettu käytöstä {processed} / {total} asiakkaalta."
+      },
+      "stopped": {
+        "enable": "Käyttöönotto kaikille asiakkaille pysäytettiin.",
+        "disable": "Käytöstä poisto kaikilta asiakkailta pysäytettiin."
+      },
+      "retry": "Yritä uudelleen"
+    },
+    "history": {
+      "link": "Historia",
+      "title": "Joukkoajojen historia",
+      "empty": "Ei vielä ajoja.",
+      "columns": {
+        "action": "Toiminto",
+        "requestedAt": "Alkoi",
+        "progress": "Käsitelty / yhteensä",
+        "finishedAt": "Päättyi",
+        "message": "Viesti",
+        "requestedBy": "Pyytäjä"
+      },
+      "description": "Kaikki kerrat, jolloin \"Käytä kaikille asiakkaille\" kytkettiin päälle tai pois tälle Sivulle, uusin ensin.",
+      "error": "Historiaa ei voitu ladata.",
+      "previousPage": "Edellinen sivu",
+      "nextPage": "Seuraava sivu"
+    }
+  },
   "platformSettings": {
     "title": "Alusta-asetukset",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Siirretäänkö tämä keskustelu eskalointikumppanillesi? Vastauksesi keskeytyvät, kunnes keskustelu palaa.",
       "confirm": "Siirrä",
       "success": "Keskustelu siirretty eskalointikumppanille"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Palauta tämä keskustelu tekoälyavustajalle",
+      "title": "Palautetaanko tekoälyavustajalle?",
+      "description": "Tekoälyavustaja alkaa taas vastata tälle asiakkaalle. Vastauksesi keskeytyvät, kunnes keskustelu palaa sinulle. Meta ei takaa, että avustaja vastaa jokaiseen viestiin.",
+      "confirm": "Palauta",
+      "success": "Keskustelu palautettu tekoälyavustajalle"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

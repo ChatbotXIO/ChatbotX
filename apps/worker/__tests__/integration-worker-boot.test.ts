@@ -202,6 +202,15 @@ vi.mock("../src/integration/handlers/flow", () => ({
 vi.mock("../src/integration/handlers/follow-up", () => ({
   runFollowUpResume: vi.fn(),
 }))
+vi.mock("../src/integration/handlers/ai-handover-bulk-toggle", () => ({
+  runAiHandoverBulkToggle: vi.fn(),
+}))
+vi.mock("../src/integration/handlers/ai-handover-take-back", () => ({
+  runAiHandoverTakeBack: vi.fn(),
+}))
+vi.mock("../src/integration/handlers/handover-response", () => ({
+  startHandoverResponse: vi.fn(),
+}))
 vi.mock("../src/integration/handlers/inbox_labels", () => ({
   handleChannelLabelWebhook: vi.fn(),
 }))

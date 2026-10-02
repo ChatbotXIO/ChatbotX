@@ -40,9 +40,15 @@ const PERMISSION_DENIED_CODES = new Set([
   368, // Temporarily blocked for policy violations
 ])
 
+// developers.facebook.com/docs/graph-api/overview/rate-limiting: every code
+// below means "stop calling and wait", never "this request is invalid".
 const RATE_LIMITED_CODES = new Set([
   4, // API rate limit reached
   17, // User API rate limit reached
+  32, // Page-level rate limit reached
+  613, // Custom rate limit (incl. subcode 1996: inconsistent request pattern)
+  80_001, // Business Use Case limit: Pages
+  80_006, // Business Use Case limit: Messenger
 ])
 
 const PAYLOAD_INVALID_CODES = new Set([

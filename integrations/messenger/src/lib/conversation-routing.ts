@@ -12,6 +12,7 @@ import {
   messengerStandbyEventSchema,
 } from "../schema"
 import { logger } from "./logger"
+import { readBusinessAiAppId } from "./thread-control-config"
 
 /**
  * Conversation Routing (Handover Protocol) webhook parsing. Parsers are pure,
@@ -115,6 +116,37 @@ const handoverItemSchema = z.looseObject({
   request_thread_control: handoverPayloadSchema.optional(),
 })
 
+/**
+ * An extra hand-back signal, alongside `pass_thread_control` (which is handled
+ * as before). Observed in practice, not documented by Meta: when a customer
+ * asks Meta's AI for a human, it sends this notice when it hands the chat back.
+ * The notice is an ordinary-looking item whose `message` is only an
+ * `admin_text` (a display line) with no `mid`, and no `pass_thread_control` of
+ * its own. Meta delivers `messaging[]` items to the app that owns the thread,
+ * so receiving it there means the thread is ours again. Detected by its shape,
+ * plus the temporary text guard below.
+ */
+
+/**
+ * TEMPORARY, while Meta's other admin notices are not known: the line must name
+ * the AI. "AI" reads the same in the languages Meta localizes it to; it is
+ * matched as a whole upper-case word, so Vietnamese "ai" (who) never matches.
+ */
+const AI_WORD = /\bAI\b/
+
+export const isAiHandbackNotice = (item: unknown): boolean => {
+  if (!(isRecord(item) && isRecord(item.message))) {
+    return false
+  }
+  return (
+    typeof item.message.admin_text === "string" &&
+    AI_WORD.test(item.message.admin_text) &&
+    item.message.mid === undefined &&
+    !("pass_thread_control" in item) &&
+    !("take_thread_control" in item)
+  )
+}
+
 /** What structure a `messaging[]` item carries, if it is a routing item. */
 export type MessagingRoutingKind = Extract<
   ThreadControlPayloadKind,
@@ -140,6 +172,9 @@ export const classifyMessagingRoutingItem = (
   if ("app_roles" in item) {
     return "appRoles"
   }
+  if (isAiHandbackNotice(item)) {
+    return "handover"
+  }
   return null
 }
 
@@ -155,6 +190,7 @@ export const classifyMessagingRoutingItem = (
 export const parseHandoverEvent = (
   item: unknown,
   now: Date = new Date(),
+  ownAppId: string | null = null,
 ): ThreadControlWebhookEvent | null => {
   const parsed = handoverItemSchema.safeParse(item)
   if (!parsed.success) {
@@ -168,6 +204,22 @@ export const parseHandoverEvent = (
   const isPassed = data.pass_thread_control !== undefined
   const payload = data.pass_thread_control ?? data.take_thread_control
   if (!payload) {
+    if (isAiHandbackNotice(item)) {
+      // The Business-AI agent handed the chat back to the app that receives
+      // this item: a pass from it to us, with no pass/take payload to read.
+      return {
+        contact: { sourceId: data.sender.id },
+        event: "controlPassed",
+        previousOwnerRole: null,
+        newOwnerRole: null,
+        previousOwnerAppId: readBusinessAiAppId(),
+        // A notice may arrive for a thread we already hold: only the AI's
+        // thread can be handed back by it.
+        onlyIfOwnedByAppId: readBusinessAiAppId(),
+        ...(ownAppId ? { newOwnerAppId: ownAppId } : {}),
+        occurredAt: messengerTimestampToOccurredAt(data.timestamp, now),
+      }
+    }
     logger.warn("Messenger handover skipped: no pass/take payload")
     return null
   }
@@ -248,9 +300,10 @@ export const parseRoutingJobBody = (
   kind: Exclude<ThreadControlPayloadKind, "standbyMessage">,
   body: unknown,
   now: Date = new Date(),
+  ownAppId: string | null = null,
 ): ThreadControlWebhookResult | null => {
   if (kind === "handover") {
-    const event = parseHandoverEvent(body, now)
+    const event = parseHandoverEvent(body, now, ownAppId)
     return event ? { kind: "handover", event } : null
   }
   if (kind === "handoverRequest") {

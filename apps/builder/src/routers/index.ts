@@ -101,6 +101,11 @@ export const router = {
       default: m.contactScanAPIs,
     })),
   ),
+  aiHandoverAPIs: lazy(() =>
+    import("@/features/integration-ai-handover/api").then((m) => ({
+      default: m.aiHandoverAPIs,
+    })),
+  ),
   botFieldAPIs: lazy(() =>
     import("@/features/bot-fields/api").then((m) => ({
       default: m.botFieldAPIs,

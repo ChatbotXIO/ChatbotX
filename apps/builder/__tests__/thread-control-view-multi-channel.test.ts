@@ -18,9 +18,11 @@ vi.mock("@/lib/orpc/orpc", () => ({
 }))
 vi.mock("ky", () => ({ default: { post: vi.fn() } }))
 
-const { resolveThreadControlView } = await import(
-  "@/features/conversations/utils/thread-control"
-)
+const {
+  canReturnToAiAgent,
+  findAiHandoverContactInbox,
+  resolveThreadControlView,
+} = await import("@/features/conversations/utils/thread-control")
 
 const NOW = new Date("2026-09-29T10:00:00.000Z")
 const MINUTES_AGO = (minutes: number) =>
@@ -65,6 +67,39 @@ describe("resolveThreadControlView with two routing-capable inboxes", () => {
       "whatsapp",
     )
     expect(ownedWhatsapp).toMatchObject({ canRelease: true, canPass: true })
+  })
+
+  test("an idle Messenger thread can be passed back to AI hand-over; an idle WhatsApp thread cannot be passed", () => {
+    const idleMessenger = resolveThreadControlView(
+      {
+        contactInboxes: [
+          inbox("ci-ms", "messenger", { threadControlState: "idle" }),
+        ],
+      },
+      NOW,
+      "messenger",
+    )
+    expect(idleMessenger).toMatchObject({ state: "idle", canPass: true })
+
+    const idleWhatsapp = resolveThreadControlView(
+      {
+        contactInboxes: [
+          inbox("ci-wa", "whatsapp", { threadControlState: "idle" }),
+        ],
+      },
+      NOW,
+      "whatsapp",
+    )
+    expect(idleWhatsapp).toMatchObject({ state: "idle", canPass: false })
+  })
+
+  test("a standby Messenger thread (AI hand-over owns it) cannot be passed", () => {
+    const view = resolveThreadControlView(
+      { contactInboxes: [inbox("ci-ms", "messenger")] },
+      NOW,
+      "messenger",
+    )
+    expect(view).toMatchObject({ state: "standby", canPass: false })
   })
 
   test("picks the inbox of the composer channel", () => {
@@ -134,5 +169,67 @@ describe("resolveThreadControlView with two routing-capable inboxes", () => {
       "whatsapp",
     )
     expect(view).toBeNull()
+  })
+})
+
+describe("header return-to-AI resolution (findAiHandoverContactInbox + canReturnToAiAgent)", () => {
+  const unobserved = {
+    threadControlState: null,
+    threadOwnerRole: null,
+    threadControlUpdatedAt: null,
+  }
+  /** What the header button does: scope to the AI inbox, resolve its own view. */
+  const resolve = (contactInboxes: ReturnType<typeof inbox>[]) => {
+    const aiInbox = findAiHandoverContactInbox({ contactInboxes })
+    if (!aiInbox) {
+      return null
+    }
+    const view = resolveThreadControlView({ contactInboxes: [aiInbox] }, NOW)
+    return canReturnToAiAgent(aiInbox, view) ? aiInbox.id : null
+  }
+
+  test("a Messenger thread whose routing was never observed is ours: offered (as v1 does)", () => {
+    expect(resolve([inbox("ci-ms", "messenger", unobserved)])).toBe("ci-ms")
+  })
+
+  test("a WhatsApp thread is never offered (it passes to an escalation partner)", () => {
+    expect(resolve([inbox("ci-wa", "whatsapp", unobserved)])).toBeNull()
+    expect(
+      resolve([inbox("ci-wa", "whatsapp", { threadControlState: "owned" })]),
+    ).toBeNull()
+  })
+
+  test("owned and idle Messenger threads are offered", () => {
+    expect(
+      resolve([inbox("ci-ms", "messenger", { threadControlState: "owned" })]),
+    ).toBe("ci-ms")
+    expect(
+      resolve([inbox("ci-ms", "messenger", { threadControlState: "idle" })]),
+    ).toBe("ci-ms")
+  })
+
+  test("a thread the AI already owns (standby) is not offered", () => {
+    expect(resolve([inbox("ci-ms", "messenger")])).toBeNull()
+  })
+
+  test("no routing-capable inbox at all is not offered", () => {
+    expect(resolve([inbox("ci-ig", "instagram", unobserved)])).toBeNull()
+  })
+
+  test.each([
+    [
+      "owned",
+      { threadControlState: "owned", threadOwnerRole: "customer_service" },
+    ],
+    ["standby", { threadControlState: "standby" }],
+    ["idle", { threadControlState: "idle" }],
+    ["unobserved", unobserved],
+  ])("an observed (%s) WhatsApp inbox does not hide an unobserved Messenger inbox", (_label, whatsappRouting) => {
+    expect(
+      resolve([
+        inbox("ci-wa", "whatsapp", whatsappRouting),
+        inbox("ci-ms", "messenger", unobserved),
+      ]),
+    ).toBe("ci-ms")
   })
 })

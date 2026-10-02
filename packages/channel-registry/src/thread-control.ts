@@ -8,8 +8,18 @@ import {
 } from "@chatbotx.io/business"
 import type { ThreadControlAction } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
-import type { ThreadControlRole, ThreadOwnerResult } from "@chatbotx.io/sdk"
-import { resolveIntegrationContextFromContactInbox } from "./registry"
+import type {
+  BulkThreadControlAction,
+  BulkThreadControlLimits,
+  BulkThreadControlResult,
+  OutgoingContact,
+  ThreadControlRole,
+  ThreadOwnerResult,
+} from "@chatbotx.io/sdk"
+import {
+  type ContactInboxRoute,
+  resolveIntegrationContextFromContactInbox,
+} from "./registry"
 
 export type RequestThreadControlActionProps = Omit<
   RequestThreadControlActionInput,
@@ -105,4 +115,63 @@ export function syncThreadOwner(
         contactInbox,
       }),
   })
+}
+
+export type BulkThreadControlRunner = (input: {
+  action: BulkThreadControlAction
+  contacts: OutgoingContact[]
+  text?: string
+}) => Promise<BulkThreadControlResult>
+
+/** A channel's bulk thread-control call and the limits it must be driven within. */
+export type BulkThreadControl = {
+  run: BulkThreadControlRunner
+  limits: BulkThreadControlLimits
+}
+
+/**
+ * Resolves the channel integration of an inbox ONCE and returns the function
+ * that hands a batch of its threads to the AI agent or takes them back, with
+ * the limits the channel advertises for it (batch size, pacing). The caller
+ * runs it for every batch of a Page, so the integration lookup is not repeated
+ * per batch.
+ *
+ * Per-thread failures come back in the results; a failure of the whole call
+ * (revoked token) rethrows the channel's `ChannelError`. Throws
+ * `ThreadControlUnsupportedError` when the channel has no bulk handler. The
+ * outcome is NOT recorded here: the caller settles each thread
+ * (`threadControlService.recordEvent`) because it owns the cut-off times.
+ */
+export async function createBulkThreadControl(props: {
+  workspaceId: string
+  inbox: ContactInboxRoute
+}): Promise<BulkThreadControl> {
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: props.workspaceId,
+    contactInbox: props.inbox,
+  })
+  if (
+    !(
+      integration.hasChannelHandler(
+        "conversation",
+        "bulkUpdateThreadControl",
+      ) &&
+      integration.hasChannelHandler("conversation", "bulkThreadControlLimits")
+    )
+  ) {
+    throw new ThreadControlUnsupportedError(props.inbox.channel)
+  }
+  const limits = await integration.runChannelHandler(
+    "conversation",
+    "bulkThreadControlLimits",
+    { ctx },
+  )
+  return {
+    limits,
+    run: (input) =>
+      integration.runChannelHandler("conversation", "bulkUpdateThreadControl", {
+        ctx,
+        data: input,
+      }),
+  }
 }

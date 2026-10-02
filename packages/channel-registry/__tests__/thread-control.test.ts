@@ -212,3 +212,117 @@ describe("getChannelThreadOwner / syncThreadOwner", () => {
     expect(mocks.channelResult).toHaveBeenCalledWith(owner)
   })
 })
+
+describe("createBulkThreadControl", () => {
+  const inbox = { channel: "messenger", inboxId: "inbox-1" }
+  const response = {
+    results: [{ contactInboxId: "ci-1", status: "succeeded" }],
+    retryAfterMs: 60_000,
+  }
+
+  const limits = {
+    maxBatchSize: 50,
+    batchGapMs: 1000,
+    rateLimitPauseMs: 3_600_000,
+  }
+  /** The limits handler answers `limits`; the bulk handler answers `answer`. */
+  const channelAnswers = (answer: unknown) =>
+    mocks.runChannelHandler.mockImplementation(
+      (_scope: string, handler: string) => {
+        if (handler === "bulkThreadControlLimits") {
+          return Promise.resolve(limits)
+        }
+        return typeof answer === "function"
+          ? (answer as () => Promise<unknown>)()
+          : Promise.resolve(answer)
+      },
+    )
+
+  test("resolves the integration once, reads the channel's limits, and reuses it for every batch", async () => {
+    const ctx = { auth: "page-token" }
+    channelAnswers(response)
+    mocks.resolveContext.mockResolvedValue({
+      integration: {
+        hasChannelHandler: mocks.hasChannelHandler.mockReturnValue(true),
+        runChannelHandler: mocks.runChannelHandler,
+      },
+      ctx,
+    })
+    const { createBulkThreadControl } = await import("../src/thread-control")
+
+    const bulk = await createBulkThreadControl({
+      workspaceId: "ws-1",
+      inbox,
+    })
+    await bulk.run({ action: "handToAi", contacts: [] })
+    const out = await bulk.run({
+      action: "takeFromAi",
+      contacts: [],
+      text: "A person is here",
+    })
+
+    // The channel's pause request reaches the caller with the results.
+    expect(out).toBe(response)
+    expect(bulk.limits).toEqual(limits)
+    expect(mocks.runChannelHandler).toHaveBeenCalledWith(
+      "conversation",
+      "bulkThreadControlLimits",
+      { ctx },
+    )
+    expect(mocks.resolveContext).toHaveBeenCalledTimes(1)
+    expect(mocks.resolveContext).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInbox: inbox,
+    })
+    expect(mocks.runChannelHandler).toHaveBeenLastCalledWith(
+      "conversation",
+      "bulkUpdateThreadControl",
+      {
+        ctx,
+        data: { action: "takeFromAi", contacts: [], text: "A person is here" },
+      },
+    )
+  })
+
+  test.each([
+    ["the bulk handler", "bulkUpdateThreadControl"],
+    ["the limits handler", "bulkThreadControlLimits"],
+  ])("a channel without %s is unsupported, before any batch runs", async (_name, missing) => {
+    mocks.resolveContext.mockResolvedValue({
+      integration: {
+        hasChannelHandler: mocks.hasChannelHandler.mockImplementation(
+          (_scope: string, handler: string) => handler !== missing,
+        ),
+        runChannelHandler: mocks.runChannelHandler,
+      },
+      ctx: {},
+    })
+    const { createBulkThreadControl } = await import("../src/thread-control")
+
+    await expect(
+      createBulkThreadControl({ workspaceId: "ws-1", inbox }),
+    ).rejects.toMatchObject({ channel: "messenger" })
+    expect(mocks.runChannelHandler).not.toHaveBeenCalled()
+  })
+
+  test("a whole-call failure from the channel reaches the caller", async () => {
+    const failure = new Error("token revoked")
+    channelAnswers(() => Promise.reject(failure))
+    mocks.resolveContext.mockResolvedValue({
+      integration: {
+        hasChannelHandler: mocks.hasChannelHandler.mockReturnValue(true),
+        runChannelHandler: mocks.runChannelHandler,
+      },
+      ctx: {},
+    })
+    const { createBulkThreadControl } = await import("../src/thread-control")
+    const bulk = await createBulkThreadControl({
+      workspaceId: "ws-1",
+      inbox,
+    })
+
+    await expect(bulk.run({ action: "handToAi", contacts: [] })).rejects.toBe(
+      failure,
+    )
+  })
+})

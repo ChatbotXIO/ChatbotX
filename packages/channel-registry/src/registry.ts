@@ -227,7 +227,7 @@ export const integrationService = {
   },
 
   getIntegrationFromContactInbox: async (
-    contactInbox: ContactInboxModel,
+    contactInbox: ContactInboxRoute,
   ): Promise<IntegrationRow> => {
     if (contactInbox.channel === "threads") {
       const integrationRow = await integrationThreadsService.findByInboxId(
@@ -285,6 +285,9 @@ export const integrationService = {
   },
 }
 
+/** What locates a contact's integration: its channel and inbox, nothing else. */
+export type ContactInboxRoute = Pick<ContactInboxModel, "channel" | "inboxId">
+
 export type ResolvedIntegrationContext = {
   integration: ResolvedIntegration
   ctx: IntegrationContext
@@ -295,7 +298,7 @@ export type ResolvedIntegrationContext = {
 
 export async function resolveIntegrationContextFromContactInbox(args: {
   workspaceId: string
-  contactInbox: ContactInboxModel
+  contactInbox: ContactInboxRoute
 }): Promise<ResolvedIntegrationContext> {
   let integration = getRegisteredIntegration(args.contactInbox.channel)
   if (!integration) {

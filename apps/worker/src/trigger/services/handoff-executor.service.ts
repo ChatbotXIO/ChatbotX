@@ -12,7 +12,11 @@ export interface HandoffRequest {
   conversationId: string
   metadata?: Record<string, unknown>
   reason: string
-  source: "ai_system_tool" | "automated_response" | "manual"
+  source:
+    | "ai_system_tool"
+    | "automated_response"
+    | "manual"
+    | "thread_control_handback"
   workspaceId: string
 }
 
@@ -78,7 +82,7 @@ export class HandoffExecutorService {
     } catch (error) {
       const normalizedError = normalizeError(error)
       baseLogger.error(
-        { error: normalizedError, conversationId },
+        { err: normalizedError, conversationId },
         "[handoff-executor] Handoff execution failed",
       )
       throw error

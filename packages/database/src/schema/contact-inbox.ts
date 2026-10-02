@@ -186,6 +186,18 @@ export const contactInboxModel = pgTable(
       table.inboxId.asc().nullsLast(),
       table.id.asc().nullsLast(),
     ),
+    // Bulk AI hand-over disable walks only the threads the AI agent holds. Without
+    // this partial index the keyset page would scan the whole inbox to find
+    // them; it only holds standby + ai_agent rows, so it stays tiny.
+    index("ContactInbox_inboxId_id_ai_held_idx")
+      .using(
+        "btree",
+        table.inboxId.asc().nullsLast(),
+        table.id.asc().nullsLast(),
+      )
+      .where(
+        sql`${table.threadControlState} = 'standby' AND ${table.threadOwnerRole} = 'ai_agent'`,
+      ),
     index("ContactInbox_contactId_lastIncomingMessageAt_idx").using(
       "btree",
       table.contactId.asc().nullsLast(),

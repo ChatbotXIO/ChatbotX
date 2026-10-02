@@ -4,6 +4,7 @@ import z from "zod"
 import { MessengerWebhookException } from "../exception"
 import {
   classifyMessagingRoutingItem,
+  isAiHandbackNotice,
   parseStandbyDelivery,
   THREAD_CONTROL_EVENT_JOB_NAME,
   THREAD_CONTROL_JOB_ID_PREFIX,
@@ -39,6 +40,9 @@ const toBullMqSafeIdSegment = (value: string): string =>
 const isStandbyRoutingItem = (item: unknown): boolean =>
   typeof item === "object" &&
   item !== null &&
+  // The Business-AI hand-back notice is acted on where it is delivered to the
+  // thread's owner (`messaging[]`); its standby copy carries nothing to store.
+  !isAiHandbackNotice(item) &&
   ("message" in item || "postback" in item)
 
 /**

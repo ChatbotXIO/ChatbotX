@@ -21,10 +21,15 @@ const mocks = vi.hoisted(() => ({
   loggerWarn: vi.fn(),
   loggerDebug: vi.fn(),
   recordCallPermissionReply: vi.fn(),
+  findActiveAiHandoverSettings: vi.fn(),
+  updateBotEnabled: vi.fn(),
+  chatQueueAdd: vi.fn(),
+  enqueueTakeBack: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: mocks.buildContext,
+  aiHandoverSettingsService: { findActive: mocks.findActiveAiHandoverSettings },
   conversationService: {
     findOrCreate: mocks.findOrCreate,
     findByUncached: mocks.findConversationByUncached,
@@ -42,8 +47,28 @@ vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  ChatJobAction: { sendChatMessage: "sendChatMessage" },
   IntegrationJobAction: { sendFlow: "sendFlow" },
+  chatQueue: { add: mocks.chatQueueAdd },
   integrationQueue: { add: mocks.queueAdd },
+}))
+
+vi.mock("../src/trigger/services/handoff-executor.service", () => ({
+  handoffExecutorService: { execute: mocks.updateBotEnabled },
+}))
+
+vi.mock(
+  "../src/integration/handlers/ai-handover-take-back",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("../src/integration/handlers/ai-handover-take-back")
+    >()),
+    enqueueAiHandoverTakeBackIfDue: mocks.enqueueTakeBack,
+  }),
+)
+
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: vi.fn(async (_contactId, value) => value),
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -58,6 +83,10 @@ vi.mock("../src/lib/logger", () => ({
 vi.mock("../src/services/integrations", () => ({
   allIntegrations: {
     whatsapp: {
+      hasChannelHandler: mocks.hasChannelHandler,
+      runChannelHandler: mocks.runChannelHandler,
+    },
+    messenger: {
       hasChannelHandler: mocks.hasChannelHandler,
       runChannelHandler: mocks.runChannelHandler,
     },
@@ -134,6 +163,8 @@ beforeEach(() => {
     row: contactInbox,
   })
   mocks.queueAdd.mockResolvedValue(undefined)
+  // No workspace AI settings: hand-backs keep the per-Page resume behaviour.
+  mocks.findActiveAiHandoverSettings.mockResolvedValue(null)
   mocks.requestThreadControlAction.mockResolvedValue(undefined)
   mocks.syncThreadOwner.mockResolvedValue({})
 })
@@ -283,6 +314,107 @@ describe("receiveThreadControlEvent — routing", () => {
     await receiveThreadControlEvent(jobData)
 
     expect(mocks.recordCallPermissionReply).not.toHaveBeenCalled()
+  })
+
+  describe("AI take-back hook", () => {
+    const ownerReplayPayload = { entry: [{ messaging: [{}] }] }
+    const standbyCopy = {
+      id: "msg-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      messageType: "incoming",
+    }
+
+    beforeEach(() => {
+      mocks.runChannelHandler.mockResolvedValue({
+        kind: "standbyMessage",
+        receivePayload: {},
+        ownerReplayPayload,
+        aiAgentAppId: "ai-app",
+      })
+    })
+
+    test("a stored customer standby copy asks for a take-back with the channel's replay payload", async () => {
+      mocks.receiveMessage.mockResolvedValue({
+        message: standbyCopy,
+        conversation,
+        postbackAction: null,
+        quickReplyAction: null,
+        standbyCopy,
+      })
+
+      await receiveThreadControlEvent({
+        ...jobData,
+        integrationType: "messenger",
+      })
+
+      expect(mocks.enqueueTakeBack).toHaveBeenCalledExactlyOnceWith({
+        workspaceId: "ws-1",
+        inboxId: "inbox-1",
+        integrationType: "messenger",
+        integrationIdentifier: "phone-1",
+        ownerReplayPayload,
+        aiAgentAppId: "ai-app",
+        standbyCopy,
+      })
+    })
+
+    test("the retry of a standby job asks again (the take-back job id dedupes it)", async () => {
+      mocks.receiveMessage.mockResolvedValue({
+        message: null,
+        conversation,
+        postbackAction: null,
+        quickReplyAction: null,
+        standbyCopy,
+      })
+
+      await receiveThreadControlEvent(jobData, { isRetry: true })
+
+      expect(mocks.enqueueTakeBack).toHaveBeenCalledTimes(1)
+    })
+
+    test("a duplicate (no standby copy) never asks", async () => {
+      mocks.receiveMessage.mockResolvedValue({
+        message: null,
+        conversation,
+        standbyCopy: null,
+      })
+      await receiveThreadControlEvent(jobData)
+      expect(mocks.enqueueTakeBack).not.toHaveBeenCalled()
+    })
+
+    test("a quick reply or postback copy still asks (the channel decides replayability) but is never a call-permission answer", async () => {
+      for (const reply of [
+        { postbackAction: "payload", quickReplyAction: null },
+        { postbackAction: null, quickReplyAction: "YES" },
+      ]) {
+        mocks.receiveMessage.mockResolvedValue({
+          message: standbyCopy,
+          conversation,
+          standbyCopy,
+          ...reply,
+        })
+        await receiveThreadControlEvent(jobData)
+      }
+
+      expect(mocks.enqueueTakeBack).toHaveBeenCalledTimes(2)
+      expect(mocks.recordCallPermissionReply).not.toHaveBeenCalled()
+    })
+
+    test("a failed take-back enqueue rethrows so the standby job retries", async () => {
+      mocks.receiveMessage.mockResolvedValue({
+        message: standbyCopy,
+        conversation,
+        postbackAction: null,
+        quickReplyAction: null,
+        standbyCopy,
+      })
+      mocks.enqueueTakeBack.mockRejectedValue(new Error("redis down"))
+
+      await expect(receiveThreadControlEvent(jobData)).rejects.toThrow(
+        "redis down",
+      )
+    })
   })
 })
 
@@ -742,5 +874,209 @@ describe("releaseOwnedThread (archive auto-release)", () => {
     mocks.requestThreadControlAction.mockRejectedValue(error)
 
     await expect(releaseOwnedThread(data)).rejects.toBe(error)
+  })
+})
+
+describe("receiveThreadControlEvent: hand-back from the AI agent", () => {
+  const messengerJob = { ...jobData, integrationType: "messenger" }
+  const AI_APP_ID = "ai-app"
+
+  const aiHandback = (overrides: Record<string, unknown> = {}) =>
+    handover({
+      aiAgentAppId: AI_APP_ID,
+      newOwnerAppId: "own-app",
+      // Meta often omits the previous owner: the stored row has it.
+      previousOwnerRole: null,
+      newOwnerRole: null,
+      ...overrides,
+    })
+
+  const activeSettings = {
+    enabled: true,
+    scheduleEnabled: false,
+    timeRanges: [],
+    gotoFlowId: "workspace-flow",
+    returnMessage: null,
+    pauseBotWaitingForStaff: true,
+  }
+
+  beforeEach(() => {
+    mocks.findActiveAiHandoverSettings.mockResolvedValue(activeSettings)
+    mocks.findActiveById.mockImplementation(async ({ id }) => ({
+      id,
+      currentVersionId: `${id}-v1`,
+    }))
+  })
+
+  describe("a hand-back inferred from Meta's admin_text notice (onlyIfOwnedByAppId)", () => {
+    const notice = () => aiHandback({ onlyIfOwnedByAppId: AI_APP_ID })
+
+    test("on a thread the AI holds it is applied and the response fires once", async () => {
+      mocks.resolveExistingContactInbox.mockResolvedValue({
+        row: { ...contactInbox, threadOwnerAppId: AI_APP_ID },
+        matchedBy: "sourceId",
+      })
+      mocks.runChannelHandler.mockResolvedValue(notice())
+      mocks.recordEvent.mockResolvedValue({
+        eventApplied: true,
+        stateChanged: true,
+        isRedelivery: false,
+        row: { ...contactInbox, threadPreviousOwnerAppId: AI_APP_ID },
+      })
+
+      await receiveThreadControlEvent(messengerJob)
+
+      expect(mocks.recordEvent).toHaveBeenCalledTimes(1)
+      expect(mocks.queueAdd).toHaveBeenCalledWith(
+        "sendFlow",
+        expect.anything(),
+        expect.anything(),
+      )
+    })
+
+    test.each([
+      ["a thread we already hold (no owner app id)", null],
+      ["a thread another partner holds", "partner-app"],
+    ])("on %s it is dropped: no event is recorded and nothing is sent", async (_name, ownerAppId) => {
+      mocks.resolveExistingContactInbox.mockResolvedValue({
+        row: { ...contactInbox, threadOwnerAppId: ownerAppId },
+        matchedBy: "sourceId",
+      })
+      mocks.runChannelHandler.mockResolvedValue(notice())
+
+      await receiveThreadControlEvent(messengerJob)
+
+      expect(mocks.recordEvent).not.toHaveBeenCalled()
+      expect(mocks.queueAdd).not.toHaveBeenCalled()
+      expect(mocks.updateBotEnabled).not.toHaveBeenCalled()
+    })
+
+    test("our own retry after the event was recorded (response not queued yet) is not dropped", async () => {
+      const at = new Date("2026-10-02T05:50:17.000Z")
+      mocks.resolveExistingContactInbox.mockResolvedValue({
+        row: {
+          ...contactInbox,
+          // Already moved by THIS notice: owned by us, previous owner the AI.
+          threadOwnerAppId: "own-app",
+          threadPreviousOwnerAppId: AI_APP_ID,
+          threadControlLastEvent: "controlPassed",
+          threadControlUpdatedAt: at,
+        },
+        matchedBy: "sourceId",
+      })
+      mocks.runChannelHandler.mockResolvedValue(
+        aiHandback({ onlyIfOwnedByAppId: AI_APP_ID, occurredAt: at }),
+      )
+      mocks.recordEvent.mockResolvedValue({
+        eventApplied: true,
+        stateChanged: false,
+        isRedelivery: true,
+        row: {
+          ...contactInbox,
+          threadPreviousOwnerAppId: AI_APP_ID,
+        },
+      })
+
+      await receiveThreadControlEvent(messengerJob, { isRetry: true })
+
+      expect(mocks.recordEvent).toHaveBeenCalledTimes(1)
+      expect(mocks.queueAdd).toHaveBeenCalledWith(
+        "sendFlow",
+        expect.anything(),
+        expect.anything(),
+      )
+    })
+
+    test("a retry does not bypass the guard for an unrelated ownership change", async () => {
+      mocks.resolveExistingContactInbox.mockResolvedValue({
+        row: {
+          ...contactInbox,
+          threadOwnerAppId: "own-app",
+          threadPreviousOwnerAppId: "partner-app",
+          threadControlLastEvent: "controlPassed",
+          threadControlUpdatedAt: new Date("2026-10-02T05:00:00.000Z"),
+        },
+        matchedBy: "sourceId",
+      })
+      mocks.runChannelHandler.mockResolvedValue(
+        aiHandback({
+          onlyIfOwnedByAppId: AI_APP_ID,
+          occurredAt: new Date("2026-10-02T05:50:17.000Z"),
+        }),
+      )
+
+      await receiveThreadControlEvent(messengerJob, { isRetry: true })
+
+      expect(mocks.recordEvent).not.toHaveBeenCalled()
+      expect(mocks.queueAdd).not.toHaveBeenCalled()
+    })
+
+    test("a structured pass_thread_control is never gated: it applies on any stored owner", async () => {
+      mocks.runChannelHandler.mockResolvedValue(aiHandback())
+      mocks.recordEvent.mockResolvedValue({
+        eventApplied: true,
+        stateChanged: true,
+        isRedelivery: false,
+        row: { ...contactInbox, threadPreviousOwnerAppId: AI_APP_ID },
+      })
+
+      await receiveThreadControlEvent(messengerJob)
+
+      expect(mocks.recordEvent).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  test("takes the AI's identity from the recorded row when the payload omits the previous owner", async () => {
+    mocks.runChannelHandler.mockResolvedValue(aiHandback())
+    mocks.recordEvent.mockResolvedValue({
+      eventApplied: true,
+      stateChanged: true,
+      isRedelivery: false,
+      row: { ...contactInbox, threadPreviousOwnerAppId: AI_APP_ID },
+    })
+
+    await receiveThreadControlEvent(messengerJob)
+
+    expect(mocks.findActiveAiHandoverSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1", inboxId: "inbox-1" }),
+    )
+    expect(mocks.queueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({ flowId: "workspace-flow" }),
+      }),
+      expect.anything(),
+    )
+    expect(mocks.updateBotEnabled).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        source: "thread_control_handback",
+      }),
+    )
+  })
+
+  test("the response job ids follow the routing job id, so two distinct hand-backs never collide", async () => {
+    mocks.runChannelHandler.mockResolvedValue(aiHandback())
+    mocks.recordEvent.mockResolvedValue({
+      eventApplied: true,
+      stateChanged: true,
+      isRedelivery: false,
+      row: { ...contactInbox, threadPreviousOwnerAppId: AI_APP_ID },
+    })
+
+    await receiveThreadControlEvent(messengerJob, {
+      isRetry: false,
+      jobId: "threadControl-handover-page-1-abc",
+    })
+    await receiveThreadControlEvent(messengerJob, {
+      isRetry: false,
+      jobId: "threadControl-handover-page-1-def",
+    })
+
+    expect(mocks.queueAdd.mock.calls.map((call) => call[2].jobId)).toEqual([
+      "thread-resume-ci-1-threadControl-handover-page-1-abc",
+      "thread-resume-ci-1-threadControl-handover-page-1-def",
+    ])
   })
 })

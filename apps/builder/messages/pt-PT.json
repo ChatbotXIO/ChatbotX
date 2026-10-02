@@ -3076,6 +3076,128 @@
   "integrations": {
     "title": "Integrações"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Controle o que acontece quando o assistente de IA da Meta responde aos seus clientes do Messenger.",
+    "info": "Quando ativado, as conversas são assumidas aqui depois de o assistente de IA as devolver, e as definições abaixo aplicam-se.",
+    "enabled": {
+      "label": "Ativar"
+    },
+    "schedule": {
+      "label": "Horário de execução",
+      "description": "Aplicar apenas nestas horas do fuso horário do workspace.",
+      "from": "Da hora",
+      "to": "Até à hora",
+      "add": "Adicionar intervalo",
+      "remove": "Remover intervalo"
+    },
+    "gotoFlow": {
+      "label": "Ir para o fluxo",
+      "description": "Fluxo iniciado quando o assistente de IA devolve a conversa. Tem prioridade sobre a mensagem de devolução.",
+      "placeholder": "Selecione um fluxo",
+      "clear": "Remover fluxo"
+    },
+    "returnMessage": {
+      "label": "Mensagem de retorno",
+      "description": "Enviada em alternativa quando não há fluxo ou o fluxo já não está ativo.",
+      "placeholder": "Mensagem enviada quando a IA devolve a conversa"
+    },
+    "pauseBot": {
+      "label": "Transferir conversa para uma pessoa",
+      "description": "Para o bot para este contacto após a devolução, até um membro da equipa assumir ou o bot ser retomado."
+    },
+    "readOnly": "Pode ver estas definições, mas não as alterar.",
+    "errors": {
+      "supportSession": "As definições não podem ser alteradas numa sessão de suporte.",
+      "flowNotFound": "O fluxo selecionado não foi encontrado ou não está ativo.",
+      "timeRanges": "Introduza intervalos válidos: horas inteiras de 0 a 24, com início e fim diferentes."
+    },
+    "bulk": {
+      "title": "Aplicar a todos os clientes",
+      "description": "Entregue todas as conversas elegíveis do Messenger ao assistente de IA da Meta ou retome as que ele mantém neste momento. Decorre em segundo plano e pode acompanhá-lo aqui.",
+      "started": "Iniciado. Pode acompanhar o progresso aqui.",
+      "progress": "Progresso",
+      "processedOfTotal": "{done} de {total} conversas",
+      "counters": "{processed} concluídas, {skipped} ignoradas, {failed} com falha",
+      "action": {
+        "enable": "Ativar para todos",
+        "disable": "Desativar para todos"
+      },
+      "status": {
+        "pending": "A aguardar início",
+        "running": "Em execução",
+        "cancelling": "A cancelar",
+        "completed": "Concluída",
+        "failed": "Falhou",
+        "cancelled": "Cancelada"
+      },
+      "enable": {
+        "dialogDescription": "Todas as conversas do Messenger em que o cliente escreveu nos últimos 30 dias e que nenhuma outra aplicação mantém são entregues ao assistente de IA da Meta. As conversas são retomadas de acordo com as definições acima.",
+        "confirm": "Ativar para todos",
+        "blocked": "Guarde a automatização acima e ative-a (dentro do horário de execução) para a ativar para todos os clientes."
+      },
+      "disable": {
+        "dialogDescription": "Apenas as conversas que o assistente de IA da Meta mantém neste momento são retomadas, e só é possível contactar clientes que escreveram nos últimos 7 dias. Cada um recebe a mensagem abaixo, enviada com a etiqueta Human Agent da Meta, por isso escreva-a como se fosse uma pessoa a responder. A Página precisa da permissão Human Agent.",
+        "messageLabel": "Mensagem para os clientes",
+        "messageDescription": "Até {max} carateres.",
+        "messagePlaceholder": "Olá, um membro da equipa está a assumir esta conversa.",
+        "confirm": "Desativar para todos",
+        "policyWarning": "A Meta só permite a etiqueta Human Agent a uma pessoa que responde ao cliente. Usá-la para promoções ou mensagens automáticas pode levar à restrição das mensagens da Página."
+      },
+      "errors": {
+        "automationNotActive": "Guarde a automatização e ative-a (dentro do horário de execução) antes de a ativar para todos os clientes.",
+        "messageRequired": "Introduza a mensagem a enviar aos clientes.",
+        "messageTooLong": "A mensagem é demasiado longa.",
+        "pageNotConnected": "Esta Página não está ligada.",
+        "nothingToRetry": "Não há nada para tentar novamente."
+      },
+      "runErrors": {
+        "automationStopped": "Interrompida porque a automatização foi desativada.",
+        "tokenInvalid": "O acesso da Página foi revogado. Volte a ligar a Página e tente novamente.",
+        "channelUnsupported": "Este canal não suporta a ação em massa.",
+        "maxAttempts": "Desistiu após falhas repetidas.",
+        "channelUnavailable": "Interrompida porque não foi possível contactar a Meta várias vezes seguidas.",
+        "batchFailed": "Algumas conversas não puderam ser confirmadas e foram contadas como falhas.",
+        "pageDisconnected": "Interrompida porque a Página foi desligada.",
+        "pageRefused": "A Meta recusou a transferência para esta Página: pode não estar configurada para o assistente de IA da Meta ou faltar a permissão.",
+        "integrationUnavailable": "Não foi possível carregar a ligação da Página. Volte a ligar a Página e tente novamente."
+      },
+      "pausedUntil": "Em pausa até {at} para respeitar os limites de taxa da Meta para esta Página. Retoma sozinho.",
+      "preparing": "A preparar…",
+      "live": {
+        "enable": "A ativar para os clientes: {done} / {total}",
+        "disable": "A desativar para os clientes: {done} / {total}",
+        "enableCounting": "A ativar para os clientes: a contar…",
+        "disableCounting": "A desativar para os clientes: a contar…"
+      },
+      "done": {
+        "enable": "Ativado para {processed} de {total} clientes.",
+        "disable": "Desativado para {processed} de {total} clientes."
+      },
+      "stopped": {
+        "enable": "A ativação para todos os clientes foi interrompida.",
+        "disable": "A desativação para todos os clientes foi interrompida."
+      },
+      "retry": "Tentar novamente"
+    },
+    "history": {
+      "link": "Histórico",
+      "title": "Histórico de execuções em massa",
+      "empty": "Ainda não há execuções.",
+      "columns": {
+        "action": "Ação",
+        "requestedAt": "Início",
+        "progress": "Processadas / total",
+        "finishedAt": "Fim",
+        "message": "Mensagem",
+        "requestedBy": "Pedida por"
+      },
+      "description": "Cada vez que \"Aplicar a todos os clientes\" foi ativado ou desativado para esta Página, do mais recente ao mais antigo.",
+      "error": "Não foi possível carregar o histórico.",
+      "previousPage": "Página anterior",
+      "nextPage": "Página seguinte"
+    }
+  },
   "platformSettings": {
     "title": "Definições da plataforma",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Passar esta conversa ao seu parceiro de escalonamento? As suas respostas ficarão em pausa até a conversa regressar.",
       "confirm": "Passar",
       "success": "Conversa passada ao parceiro de escalonamento"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Devolver esta conversa ao assistente de IA",
+      "title": "Devolver ao assistente de IA?",
+      "description": "O assistente de IA voltará a responder a este cliente. As suas respostas ficarão em pausa até a conversa voltar para si. A Meta não garante que o assistente responda a todas as mensagens.",
+      "confirm": "Devolver",
+      "success": "Conversa devolvida ao assistente de IA"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

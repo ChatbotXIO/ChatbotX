@@ -1831,7 +1831,13 @@ describe("threadControlService.resolveCurrentState", () => {
 
     await expect(
       threadControlService.resolveCurrentState(input),
-    ).resolves.toEqual({ state: "owned", threadControlUpdatedAt: ago(HOUR) })
+    ).resolves.toEqual({
+      state: "owned",
+      ownerRole: null,
+      lastEvent: null,
+      previousOwnerAppId: null,
+      threadControlUpdatedAt: ago(HOUR),
+    })
     expect(mocks.findModelByIdForWorkspace).toHaveBeenCalledWith({
       id: "ci-1",
       workspaceId: "ws-1",
@@ -1849,6 +1855,53 @@ describe("threadControlService.resolveCurrentState", () => {
     await expect(
       threadControlService.resolveCurrentState(input),
     ).resolves.toMatchObject({ state: "standby" })
+  })
+
+  test("reports who owns a standby thread, so a job can tell the AI agent from a partner", async () => {
+    mocks.findModelByIdForWorkspace.mockResolvedValue(
+      makeContactInbox({
+        threadControlState: "standby",
+        threadOwnerRole: "ai_agent",
+        threadControlUpdatedAt: ago(HOUR),
+      }),
+    )
+
+    await expect(
+      threadControlService.resolveCurrentState(input),
+    ).resolves.toMatchObject({ state: "standby", ownerRole: "ai_agent" })
+  })
+
+  test("reports the last event and who held the thread before it, so a take from the AI is recognisable", async () => {
+    mocks.findModelByIdForWorkspace.mockResolvedValue(
+      makeContactInbox({
+        threadControlState: "owned",
+        threadControlLastEvent: "taken",
+        threadPreviousOwnerAppId: "ai-app",
+        threadControlUpdatedAt: ago(HOUR),
+      }),
+    )
+
+    await expect(
+      threadControlService.resolveCurrentState(input),
+    ).resolves.toMatchObject({
+      state: "owned",
+      lastEvent: "taken",
+      previousOwnerAppId: "ai-app",
+    })
+  })
+
+  test("an unknown or stored-invalid role reads as null", async () => {
+    mocks.findModelByIdForWorkspace.mockResolvedValue(
+      makeContactInbox({
+        threadControlState: "standby",
+        threadOwnerRole: "not-a-role",
+        threadControlUpdatedAt: ago(HOUR),
+      }),
+    )
+
+    await expect(
+      threadControlService.resolveCurrentState(input),
+    ).resolves.toMatchObject({ ownerRole: null })
   })
 
   test("is null when the row is gone", async () => {
@@ -2316,7 +2369,7 @@ describe("threadControlService.syncThreadOwner", () => {
     owner: {
       ownerAppId: string | null
       ownAppId?: string | null
-      businessAiAppId?: string | null
+      aiAgentAppId?: string | null
     } | null,
   ) =>
     threadControlService.syncThreadOwner({
@@ -2326,7 +2379,7 @@ describe("threadControlService.syncThreadOwner", () => {
       fetchOwner: () =>
         Promise.resolve(owner ? { expiresAt: null, ...owner } : null),
       ownAppId: OWN,
-      businessAiAppId: BOT,
+      aiAgentAppId: BOT,
     })
 
   const owned = (extra: Partial<ContactInboxModel> = {}) =>
@@ -2453,7 +2506,7 @@ describe("threadControlService.syncThreadOwner", () => {
           ownerAppId: PARTNER,
           expiresAt: null,
           ownAppId: OWN,
-          businessAiAppId: BOT,
+          aiAgentAppId: BOT,
         }),
     })
 
@@ -2477,7 +2530,7 @@ describe("threadControlService.syncThreadOwner", () => {
         return Promise.resolve({ ownerAppId: PARTNER, expiresAt: null })
       },
       ownAppId: OWN,
-      businessAiAppId: BOT,
+      aiAgentAppId: BOT,
     })
 
     // Stamped at fetch START, not completion: the guarded write sees the
@@ -2572,7 +2625,7 @@ describe("threadControlService.syncThreadOwner — channel expiry", () => {
       conversationId: "conv-1",
       fetchOwner: () => Promise.resolve({ ownerAppId, expiresAt }),
       ownAppId: OWN,
-      businessAiAppId: null,
+      aiAgentAppId: null,
     })
 
   const owned = () =>
@@ -2673,5 +2726,132 @@ describe("threadControlService.syncThreadOwner — channel expiry", () => {
   test("confirming an owned thread never touches the expiry", async () => {
     await sync(owned(), OWN, EXPIRES_AT)
     expect(mocks.setStandbyThreadOwnerExpiresAt).not.toHaveBeenCalled()
+  })
+})
+
+describe("threadControlService.recordEvent — previous owner of a handover", () => {
+  const AI_APP_ID = "ai-app"
+  const OWN_APP_ID = "own-app"
+  const OCCURRED_AT = ago(HOUR)
+
+  const recordHandover = (
+    contactInbox: ContactInboxModel,
+    overrides: Partial<
+      Parameters<typeof threadControlService.recordEvent>[0]
+    > = {},
+  ) => {
+    mocks.applyThreadControlTransition.mockResolvedValue(
+      appliedRow("controlPassed", null, OCCURRED_AT),
+    )
+    return threadControlService.recordEvent({
+      workspaceId: "ws-1",
+      inbox: inbox(NOW),
+      contactInbox,
+      conversationId: "conv-1",
+      event: "controlPassed",
+      ownerRole: null,
+      ownerAppId: OWN_APP_ID,
+      occurredAt: OCCURRED_AT,
+      ...overrides,
+    })
+  }
+  const writtenPreviousOwner = () =>
+    mocks.applyThreadControlTransition.mock.calls[0][0].previousOwnerAppId
+
+  test("records the owner the row held when the payload omits the previous owner", async () => {
+    await recordHandover(
+      makeContactInbox({
+        threadControlState: "standby",
+        threadOwnerRole: "ai_agent",
+        threadOwnerAppId: AI_APP_ID,
+        threadControlUpdatedAt: ago(2 * HOUR),
+        threadControlLastEvent: "standbyReceived",
+      }),
+    )
+    expect(writtenPreviousOwner()).toBe(AI_APP_ID)
+  })
+
+  test("the payload's previous owner wins over the row's", async () => {
+    await recordHandover(
+      makeContactInbox({
+        threadControlState: "standby",
+        threadOwnerAppId: "someone-else",
+        threadControlUpdatedAt: ago(2 * HOUR),
+        threadControlLastEvent: "standbyReceived",
+      }),
+      { previousOwnerAppId: AI_APP_ID },
+    )
+    expect(writtenPreviousOwner()).toBe(AI_APP_ID)
+  })
+
+  test("a redelivery keeps the previous owner already recorded instead of naming the new owner", async () => {
+    // The row already moved to us at exactly this event: its owner column is
+    // the NEW owner, its previous-owner column the one that was replaced.
+    await recordHandover(
+      makeContactInbox({
+        threadControlState: "owned",
+        threadOwnerAppId: OWN_APP_ID,
+        threadPreviousOwnerAppId: AI_APP_ID,
+        threadControlUpdatedAt: OCCURRED_AT,
+        threadControlLastEvent: "controlPassed",
+      }),
+    )
+    expect(writtenPreviousOwner()).toBe(AI_APP_ID)
+  })
+
+  test("a take records the previous owner the same way", async () => {
+    mocks.applyThreadControlTransition.mockResolvedValue(
+      appliedRow("controlTaken", "ai_agent", OCCURRED_AT),
+    )
+    await threadControlService.recordEvent({
+      workspaceId: "ws-1",
+      inbox: inbox(NOW),
+      contactInbox: makeContactInbox({
+        threadControlState: "owned",
+        threadOwnerAppId: OWN_APP_ID,
+        threadControlUpdatedAt: ago(2 * HOUR),
+        threadControlLastEvent: "inboundReceived",
+      }),
+      conversationId: "conv-1",
+      event: "controlTaken",
+      ownerRole: "ai_agent",
+      ownerAppId: AI_APP_ID,
+      occurredAt: OCCURRED_AT,
+    })
+    expect(writtenPreviousOwner()).toBe(OWN_APP_ID)
+  })
+
+  test("no previous owner anywhere stays null", async () => {
+    await recordHandover(
+      makeContactInbox({
+        threadControlState: "standby",
+        threadControlUpdatedAt: ago(2 * HOUR),
+        threadControlLastEvent: "standbyReceived",
+      }),
+      { ownerAppId: null },
+    )
+    expect(writtenPreviousOwner()).toBeNull()
+  })
+
+  test("events that are not handovers keep writing only the explicit previous owner", async () => {
+    mocks.applyThreadControlTransition.mockResolvedValue(
+      appliedRow("standbyReceived", "ai_agent", OCCURRED_AT),
+    )
+    await threadControlService.recordEvent({
+      workspaceId: "ws-1",
+      inbox: inbox(NOW),
+      contactInbox: makeContactInbox({
+        threadControlState: "standby",
+        threadOwnerAppId: AI_APP_ID,
+        threadControlUpdatedAt: ago(2 * HOUR),
+        threadControlLastEvent: "standbyReceived",
+      }),
+      conversationId: "conv-1",
+      event: "standbyReceived",
+      ownerRole: "ai_agent",
+      ownerAppId: AI_APP_ID,
+      occurredAt: OCCURRED_AT,
+    })
+    expect(writtenPreviousOwner()).toBeNull()
   })
 })

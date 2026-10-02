@@ -3218,6 +3218,128 @@
   "integrations": {
     "title": "Entegrasyonlar"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Meta'nın yapay zekâ asistanı Messenger müşterilerinizi yanıtladığında ne olacağını yönetin.",
+    "info": "Etkinleştirildiğinde, yapay zekâ asistanı görüşmeleri geri verdikten sonra görüşmeler burada devralınır ve aşağıdaki ayarlar geçerli olur.",
+    "enabled": {
+      "label": "Etkinleştir"
+    },
+    "schedule": {
+      "label": "Çalışma zamanı",
+      "description": "Yalnızca çalışma alanının saat diliminde bu saatlerde uygula.",
+      "from": "Başlangıç saati",
+      "to": "Bitiş saati",
+      "add": "Zaman aralığı ekle",
+      "remove": "Zaman aralığını kaldır"
+    },
+    "gotoFlow": {
+      "label": "Akışa git",
+      "description": "Yapay zekâ asistanı görüşmeyi geri verdiğinde başlatılan akış. Geri verme mesajından önceliklidir.",
+      "placeholder": "Bir akış seçin",
+      "clear": "Akışı temizle"
+    },
+    "returnMessage": {
+      "label": "Dönüş mesajı",
+      "description": "Akış ayarlı değilse veya akış artık etkin değilse bunun yerine gönderilir.",
+      "placeholder": "Yapay zekâ görüşmeyi geri verdiğinde gönderilen mesaj"
+    },
+    "pauseBot": {
+      "label": "Konuşmayı İnsana Aktar",
+      "description": "Geri verme sonrasında bu kişi için botu, bir ekip üyesi devralana veya bot yeniden başlayana kadar durdurur."
+    },
+    "readOnly": "Bu ayarları görüntüleyebilirsiniz ancak değiştiremezsiniz.",
+    "errors": {
+      "supportSession": "Ayarlar bir destek oturumundan değiştirilemez.",
+      "flowNotFound": "Seçilen akış bulunamadı veya etkin değil.",
+      "timeRanges": "Geçerli zaman aralıkları girin: 0 ile 24 arasında tam saatler, başlangıç ve bitiş farklı olmalı."
+    },
+    "bulk": {
+      "title": "Tüm müşterilere uygula",
+      "description": "Uygun tüm Messenger görüşmelerini Meta'nın yapay zekâ asistanına devredin veya şu anda onda olanları geri alın. Arka planda çalışır ve buradan takip edebilirsiniz.",
+      "started": "Başlatıldı. İlerlemeyi buradan takip edebilirsiniz.",
+      "progress": "İlerleme",
+      "processedOfTotal": "{done} / {total} görüşme",
+      "counters": "{processed} tamamlandı, {skipped} atlandı, {failed} başarısız",
+      "action": {
+        "enable": "Tümü için aç",
+        "disable": "Tümü için kapat"
+      },
+      "status": {
+        "pending": "Başlamayı bekliyor",
+        "running": "Çalışıyor",
+        "cancelling": "İptal ediliyor",
+        "completed": "Tamamlandı",
+        "failed": "Başarısız",
+        "cancelled": "İptal edildi"
+      },
+      "enable": {
+        "dialogDescription": "Müşterisinin son 30 gün içinde yazdığı ve başka hiçbir uygulamanın tutmadığı her Messenger görüşmesi Meta'nın yapay zekâ asistanına devredilir. Görüşmeler yukarıdaki ayarlara göre geri alınır.",
+        "confirm": "Tümü için aç",
+        "blocked": "Tüm müşteriler için açmak üzere yukarıdaki otomasyonu kaydedin ve (çalışma zamanı içinde) açın."
+      },
+      "disable": {
+        "dialogDescription": "Yalnızca Meta'nın yapay zekâ asistanının şu anda tuttuğu görüşmeler geri alınır ve yalnızca son 7 gün içinde yazan müşterilere ulaşılabilir. Her biri, Meta'nın Human Agent etiketiyle gönderilen aşağıdaki mesajı alır; bu yüzden onu bir kişi yanıt veriyormuş gibi yazın. Sayfanın Human Agent iznine sahip olması gerekir.",
+        "messageLabel": "Müşterilere mesaj",
+        "messageDescription": "En fazla {max} karakter.",
+        "messagePlaceholder": "Merhaba, bir ekip üyesi bu görüşmeyi devralıyor.",
+        "confirm": "Tümü için kapat",
+        "policyWarning": "Meta, Human Agent etiketine yalnızca müşteriye yanıt veren bir kişi için izin verir. Promosyonlar veya otomatik mesajlar için kullanmak Sayfanın mesajlaşmasının kısıtlanmasına yol açabilir."
+      },
+      "errors": {
+        "automationNotActive": "Tüm müşteriler için açmadan önce otomasyonu kaydedin ve (çalışma zamanı içinde) açın.",
+        "messageRequired": "Müşterilere gönderilecek mesajı girin.",
+        "messageTooLong": "Mesaj çok uzun.",
+        "pageNotConnected": "Bu Sayfa bağlı değil.",
+        "nothingToRetry": "Yeniden denenecek bir şey yok."
+      },
+      "runErrors": {
+        "automationStopped": "Otomasyon kapatıldığı için durduruldu.",
+        "tokenInvalid": "Sayfanın erişimi iptal edildi. Sayfayı yeniden bağlayıp tekrar deneyin.",
+        "channelUnsupported": "Bu kanal toplu işlemi desteklemiyor.",
+        "maxAttempts": "Art arda yaşanan hatalar nedeniyle vazgeçildi.",
+        "channelUnavailable": "Meta'ya art arda birkaç kez ulaşılamadığı için durduruldu.",
+        "batchFailed": "Bazı görüşmeler doğrulanamadı ve başarısız olarak sayıldı.",
+        "pageDisconnected": "Sayfanın bağlantısı kesildiği için durduruldu.",
+        "pageRefused": "Meta bu Sayfa için devri reddetti: Sayfa, Meta'nın yapay zekâ asistanı için ayarlanmamış olabilir veya izni eksik olabilir.",
+        "integrationUnavailable": "Sayfanın bağlantısı yüklenemedi. Sayfayı yeniden bağlayıp tekrar deneyin."
+      },
+      "pausedUntil": "Bu Sayfa için Meta'nın hız sınırları içinde kalmak üzere {at} tarihine kadar duraklatıldı. Kendiliğinden devam eder.",
+      "preparing": "Hazırlanıyor…",
+      "live": {
+        "enable": "Müşteriler için etkinleştiriliyor: {done} / {total}",
+        "disable": "Müşteriler için devre dışı bırakılıyor: {done} / {total}",
+        "enableCounting": "Müşteriler için etkinleştiriliyor: sayılıyor…",
+        "disableCounting": "Müşteriler için devre dışı bırakılıyor: sayılıyor…"
+      },
+      "done": {
+        "enable": "{total} müşteriden {processed} tanesi için etkinleştirildi.",
+        "disable": "{total} müşteriden {processed} tanesi için devre dışı bırakıldı."
+      },
+      "stopped": {
+        "enable": "Tüm müşteriler için etkinleştirme durduruldu.",
+        "disable": "Tüm müşteriler için devre dışı bırakma durduruldu."
+      },
+      "retry": "Yeniden dene"
+    },
+    "history": {
+      "link": "Geçmiş",
+      "title": "Toplu çalıştırma geçmişi",
+      "empty": "Henüz çalıştırma yok.",
+      "columns": {
+        "action": "İşlem",
+        "requestedAt": "Başlangıç",
+        "progress": "İşlenen / toplam",
+        "finishedAt": "Bitiş",
+        "message": "Mesaj",
+        "requestedBy": "Talep eden"
+      },
+      "description": "Bu Sayfa için \"Tüm müşterilere uygula\" her açıldığında veya kapatıldığında, en yeni en üstte.",
+      "error": "Geçmiş yüklenemedi.",
+      "previousPage": "Önceki sayfa",
+      "nextPage": "Sonraki sayfa"
+    }
+  },
   "platformSettings": {
     "title": "Platform Ayarları",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Bu görüşme yükseltme ortağınıza devredilsin mi? Görüşme geri dönene kadar yanıtlarınız duraklatılır.",
       "confirm": "Aktar",
       "success": "Konuşma yükseltme ortağına aktarıldı"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Bu görüşmeyi yapay zekâ asistanına geri ver",
+      "title": "Yapay zekâ asistanına geri verilsin mi?",
+      "description": "Yapay zekâ asistanı bu müşteriyi yeniden yanıtlamaya başlayacak. Görüşme size dönene kadar yanıtlarınız duraklatılır. Meta, asistanın her mesaja yanıt vereceğini garanti etmez.",
+      "confirm": "Geri ver",
+      "success": "Görüşme yapay zekâ asistanına geri verildi"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

@@ -3460,6 +3460,128 @@
   "integrations": {
     "title": "İnteqrasiyalar"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Meta-nın AI köməkçisi Messenger müştərilərinizi cavablandıranda nə baş verəcəyini idarə edin.",
+    "info": "Aktiv olduqda, AI köməkçisi söhbətləri qaytardıqdan sonra onlar burada qəbul edilir və aşağıdakı parametrlər tətbiq olunur.",
+    "enabled": {
+      "label": "Aktiv et"
+    },
+    "schedule": {
+      "label": "İşləmə vaxtı",
+      "description": "Yalnız iş sahəsinin saat qurşağındakı bu saatlarda tətbiq et.",
+      "from": "Başlanğıc saatı",
+      "to": "Bitmə saatı",
+      "add": "Vaxt aralığı əlavə et",
+      "remove": "Vaxt aralığını sil"
+    },
+    "gotoFlow": {
+      "label": "Axına keç",
+      "description": "AI köməkçisi söhbəti geri verdikdə başladılan axın. Qaytarma mesajından üstündür.",
+      "placeholder": "Axın seçin",
+      "clear": "Axını təmizlə"
+    },
+    "returnMessage": {
+      "label": "Qaytarma mesajı",
+      "description": "Axın təyin olunmayanda və ya axın artıq aktiv olmayanda əvəzinə göndərilir.",
+      "placeholder": "AI söhbəti qaytardıqda göndərilən mesaj"
+    },
+    "pauseBot": {
+      "label": "Söhbəti operatora ötür",
+      "description": "Qaytarmadan sonra bu əlaqə üçün botu komanda üzvü öz üzərinə götürənə və ya bot davam edənə qədər dayandırır."
+    },
+    "readOnly": "Bu parametrlərə baxa bilərsiniz, lakin dəyişə bilməzsiniz.",
+    "errors": {
+      "supportSession": "Parametrlər dəstək sessiyasından dəyişdirilə bilməz.",
+      "flowNotFound": "Seçilmiş axın tapılmadı və ya aktiv deyil.",
+      "timeRanges": "Düzgün vaxt aralıqları daxil edin: 0-dan 24-ə qədər tam saatlar, başlanğıc və son fərqli olmalıdır."
+    },
+    "bulk": {
+      "title": "Bütün müştərilərə tətbiq et",
+      "description": "Bütün uyğun Messenger söhbətlərini Meta-nın AI köməkçisinə verin və ya onun hazırda tutduğu söhbətləri geri alın. Arxa planda işləyir və burada izləyə bilərsiniz.",
+      "started": "Başladıldı. Gedişatı burada izləyə bilərsiniz.",
+      "progress": "Gedişat",
+      "processedOfTotal": "{done} / {total} söhbət",
+      "counters": "{processed} tamamlandı, {skipped} keçildi, {failed} uğursuz oldu",
+      "action": {
+        "enable": "Hamısı üçün aç",
+        "disable": "Hamısı üçün söndür"
+      },
+      "status": {
+        "pending": "Başlamağı gözləyir",
+        "running": "İşləyir",
+        "cancelling": "Ləğv edilir",
+        "completed": "Tamamlandı",
+        "failed": "Uğursuz oldu",
+        "cancelled": "Ləğv edildi"
+      },
+      "enable": {
+        "dialogDescription": "Müştərinin son 30 gün ərzində yazdığı və başqa heç bir tətbiqin tutmadığı hər Messenger söhbəti Meta-nın AI köməkçisinə verilir. Söhbətlər yuxarıdakı ayarlara görə geri alınır.",
+        "confirm": "Hamısı üçün aç",
+        "blocked": "Bütün müştərilər üçün açmaq üçün yuxarıdakı avtomatlaşdırmanı yadda saxlayın və (işləmə vaxtı daxilində) yandırın."
+      },
+      "disable": {
+        "dialogDescription": "Yalnız Meta-nın AI köməkçisinin hazırda tutduğu söhbətlər geri alınır və yalnız son 7 gün ərzində yazan müştərilərə çatmaq olar. Onların hər biri Meta-nın Human Agent teqi ilə göndərilən aşağıdakı mesajı alır, ona görə də onu insan cavab verirmiş kimi yazın. Səhifədə Human Agent icazəsi olmalıdır.",
+        "messageLabel": "Müştərilərə mesaj",
+        "messageDescription": "Ən çox {max} simvol.",
+        "messagePlaceholder": "Salam, komanda üzvü bu söhbəti öz üzərinə götürür.",
+        "confirm": "Hamısı üçün söndür",
+        "policyWarning": "Meta Human Agent teqinə yalnız müştərisinə cavab verən insan üçün icazə verir. Ondan təbliğat və ya avtomatik mesajlar üçün istifadə etmək Səhifənin mesajlaşmasının məhdudlaşdırılmasına səbəb ola bilər."
+      },
+      "errors": {
+        "automationNotActive": "Bütün müştərilər üçün açmazdan əvvəl avtomatlaşdırmanı yadda saxlayın və (işləmə vaxtı daxilində) yandırın.",
+        "messageRequired": "Müştərilərə göndəriləcək mesajı daxil edin.",
+        "messageTooLong": "Mesaj çox uzundur.",
+        "pageNotConnected": "Bu Səhifə qoşulmayıb.",
+        "nothingToRetry": "Yenidən cəhd ediləcək heç nə yoxdur."
+      },
+      "runErrors": {
+        "automationStopped": "Avtomatlaşdırma söndürüldüyü üçün dayandırıldı.",
+        "tokenInvalid": "Səhifənin girişi ləğv edilib. Səhifəni yenidən qoşub bir daha cəhd edin.",
+        "channelUnsupported": "Bu kanal kütləvi əməliyyatı dəstəkləmir.",
+        "maxAttempts": "Təkrarlanan uğursuzluqlardan sonra imtina edildi.",
+        "channelUnavailable": "Meta-ya ardıcıl bir neçə dəfə qoşulmaq mümkün olmadığı üçün dayandırıldı.",
+        "batchFailed": "Bəzi söhbətlər təsdiqlənə bilmədi və uğursuz kimi sayıldı.",
+        "pageDisconnected": "Səhifənin bağlantısı kəsildiyi üçün dayandırıldı.",
+        "pageRefused": "Meta bu Səhifə üçün təhvil verməni rədd etdi: Səhifə Meta-nın AI köməkçisi üçün qurulmamış ola bilər və ya icazəsi çatışmır.",
+        "integrationUnavailable": "Səhifənin bağlantısı yüklənə bilmədi. Səhifəni yenidən qoşub bir daha cəhd edin."
+      },
+      "pausedUntil": "Bu Səhifə üçün Meta-nın sürət limitləri daxilində qalmaq məqsədilə {at} tarixinədək dayandırılıb. Özü davam edəcək.",
+      "preparing": "Hazırlanır…",
+      "live": {
+        "enable": "Müştərilər üçün aktivləşdirilir: {done} / {total}",
+        "disable": "Müştərilər üçün deaktiv edilir: {done} / {total}",
+        "enableCounting": "Müştərilər üçün aktivləşdirilir: sayılır…",
+        "disableCounting": "Müştərilər üçün deaktiv edilir: sayılır…"
+      },
+      "done": {
+        "enable": "{total} müştəridən {processed} üçün aktivləşdirildi.",
+        "disable": "{total} müştəridən {processed} üçün deaktiv edildi."
+      },
+      "stopped": {
+        "enable": "Bütün müştərilər üçün aktivləşdirmə dayandırıldı.",
+        "disable": "Bütün müştərilər üçün deaktiv etmə dayandırıldı."
+      },
+      "retry": "Yenidən cəhd et"
+    },
+    "history": {
+      "link": "Tarixçə",
+      "title": "Kütləvi işə salmaların tarixçəsi",
+      "empty": "Hələ işə salma yoxdur.",
+      "columns": {
+        "action": "Əməliyyat",
+        "requestedAt": "Başlama",
+        "progress": "İşlənən / cəmi",
+        "finishedAt": "Bitmə",
+        "message": "Mesaj",
+        "requestedBy": "Sorğu edən"
+      },
+      "description": "Bu Səhifə üçün \"Bütün müştərilərə tətbiq et\" hər dəfə açılıb-söndürüləndə, ən yenisi əvvəldə.",
+      "error": "Tarixçə yüklənə bilmədi.",
+      "previousPage": "Əvvəlki səhifə",
+      "nextPage": "Növbəti səhifə"
+    }
+  },
   "platformSettings": {
     "title": "Platforma parametrləri",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Hand this conversation to your escalation partner? Your replies will pause until the thread comes back.",
       "confirm": "Pass",
       "success": "Conversation passed to the escalation partner"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Bu söhbəti AI köməkçisinə qaytar",
+      "title": "AI köməkçisinə qaytarılsın?",
+      "description": "AI köməkçisi bu müştərini yenidən cavablandıracaq. Söhbət sizə qayıdana qədər cavablarınız dayandırılır. Meta köməkçinin hər mesaja cavab verəcəyinə zəmanət vermir.",
+      "confirm": "Qaytar",
+      "success": "Söhbət AI köməkçisinə qaytarıldı"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

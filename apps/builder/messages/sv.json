@@ -3947,6 +3947,128 @@
   "integrations": {
     "title": "Integrationer"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Styr vad som händer när Metas AI-assistent svarar dina Messenger-kunder.",
+    "info": "När det är aktiverat tas konversationer över här efter att AI-assistenten lämnat tillbaka dem, och inställningarna nedan gäller.",
+    "enabled": {
+      "label": "Aktivera"
+    },
+    "schedule": {
+      "label": "Körtid",
+      "description": "Tillämpa bara under dessa timmar i arbetsytans tidszon.",
+      "from": "Från timme",
+      "to": "Till timme",
+      "add": "Lägg till tidsintervall",
+      "remove": "Ta bort tidsintervall"
+    },
+    "gotoFlow": {
+      "label": "Gå till flöde",
+      "description": "Flow som startas när AI-assistenten lämnar tillbaka konversationen. Har företräde framför återlämningsmeddelandet.",
+      "placeholder": "Välj ett flöde",
+      "clear": "Rensa flöde"
+    },
+    "returnMessage": {
+      "label": "Återlämningsmeddelande",
+      "description": "Skickas i stället när inget flöde är valt eller flödet inte längre är aktivt.",
+      "placeholder": "Meddelande som skickas när AI:n lämnar tillbaka konversationen"
+    },
+    "pauseBot": {
+      "label": "Överför konversation till människa",
+      "description": "Stoppar boten för den här kontakten efter återlämningen tills en teammedlem tar över eller den återupptas."
+    },
+    "readOnly": "Du kan se de här inställningarna men inte ändra dem.",
+    "errors": {
+      "supportSession": "Inställningar kan inte ändras från en supportsession.",
+      "flowNotFound": "Det valda flödet hittades inte eller är inte aktivt.",
+      "timeRanges": "Ange giltiga tidsintervall: hela timmar från 0 till 24, med olika start och slut."
+    },
+    "bulk": {
+      "title": "Tillämpa på alla kunder",
+      "description": "Lämna över alla berättigade Messenger-konversationer till Metas AI-assistent, eller ta tillbaka de som den håller just nu. Det körs i bakgrunden och du kan följa det här.",
+      "started": "Startad. Du kan följa förloppet här.",
+      "progress": "Förlopp",
+      "processedOfTotal": "{done} av {total} konversationer",
+      "counters": "{processed} klara, {skipped} hoppades över, {failed} misslyckades",
+      "action": {
+        "enable": "Aktivera för alla",
+        "disable": "Inaktivera för alla"
+      },
+      "status": {
+        "pending": "Väntar på start",
+        "running": "Körs",
+        "cancelling": "Avbryts",
+        "completed": "Slutförd",
+        "failed": "Misslyckades",
+        "cancelled": "Avbruten"
+      },
+      "enable": {
+        "dialogDescription": "Varje Messenger-konversation där kunden har skrivit de senaste 30 dagarna och som ingen annan app håller lämnas över till Metas AI-assistent. Konversationer tas tillbaka enligt inställningarna ovan.",
+        "confirm": "Aktivera för alla",
+        "blocked": "Spara automatiseringen ovan och slå på den (inom dess körtid) för att aktivera den för alla kunder."
+      },
+      "disable": {
+        "dialogDescription": "Bara konversationer som Metas AI-assistent håller just nu tas tillbaka, och bara kunder som skrivit de senaste 7 dagarna kan nås. Var och en får meddelandet nedan, skickat med Metas Human Agent-tagg, så skriv det som om en person svarar. Sidan behöver behörigheten Human Agent.",
+        "messageLabel": "Meddelande till kunder",
+        "messageDescription": "Upp till {max} tecken.",
+        "messagePlaceholder": "Hej, en teammedlem tar över den här konversationen.",
+        "confirm": "Inaktivera för alla",
+        "policyWarning": "Meta tillåter Human Agent-taggen bara när en person svarar kunden. Används den för kampanjer eller automatiska meddelanden kan sidans meddelandefunktion begränsas."
+      },
+      "errors": {
+        "automationNotActive": "Spara automatiseringen och slå på den (inom dess körtid) innan du aktiverar den för alla kunder.",
+        "messageRequired": "Ange meddelandet som ska skickas till kunderna.",
+        "messageTooLong": "Meddelandet är för långt.",
+        "pageNotConnected": "Den här sidan är inte ansluten.",
+        "nothingToRetry": "Det finns inget att försöka igen."
+      },
+      "runErrors": {
+        "automationStopped": "Stoppades eftersom automatiseringen stängdes av.",
+        "tokenInvalid": "Sidans åtkomst har återkallats. Anslut sidan igen och försök på nytt.",
+        "channelUnsupported": "Den här kanalen stöder inte massåtgärden.",
+        "maxAttempts": "Gav upp efter upprepade fel.",
+        "channelUnavailable": "Stoppades eftersom Meta inte kunde nås flera gånger i rad.",
+        "batchFailed": "Vissa konversationer kunde inte bekräftas och räknades som misslyckade.",
+        "pageDisconnected": "Stoppades eftersom sidan kopplades bort.",
+        "pageRefused": "Meta nekade överlämningen för den här sidan: den kanske inte är konfigurerad för Metas AI-assistent eller saknar behörighet.",
+        "integrationUnavailable": "Sidans anslutning kunde inte laddas. Anslut sidan igen och försök på nytt."
+      },
+      "pausedUntil": "Pausad till {at} för att hålla sig inom Metas hastighetsgränser för den här sidan. Den återupptas av sig själv.",
+      "preparing": "Förbereder…",
+      "live": {
+        "enable": "Aktiverar för kunder: {done} / {total}",
+        "disable": "Inaktiverar för kunder: {done} / {total}",
+        "enableCounting": "Aktiverar för kunder: räknar…",
+        "disableCounting": "Inaktiverar för kunder: räknar…"
+      },
+      "done": {
+        "enable": "Aktiverat för {processed} av {total} kunder.",
+        "disable": "Inaktiverat för {processed} av {total} kunder."
+      },
+      "stopped": {
+        "enable": "Aktiveringen för alla kunder stoppades.",
+        "disable": "Inaktiveringen för alla kunder stoppades."
+      },
+      "retry": "Försök igen"
+    },
+    "history": {
+      "link": "Historik",
+      "title": "Historik för massköringar",
+      "empty": "Inga körningar ännu.",
+      "columns": {
+        "action": "Åtgärd",
+        "requestedAt": "Startad",
+        "progress": "Bearbetade / totalt",
+        "finishedAt": "Avslutad",
+        "message": "Meddelande",
+        "requestedBy": "Begärd av"
+      },
+      "description": "Varje gång \"Tillämpa på alla kunder\" slogs på eller av för den här sidan, senaste först.",
+      "error": "Historiken kunde inte laddas.",
+      "previousPage": "Föregående sida",
+      "nextPage": "Nästa sida"
+    }
+  },
   "invitation": {
     "chatbotInvitationDescription1": "Gå med i {chatbotName}",
     "chatbotInvitationDescription2": "{userName} har bjudit in dig att gå med i {chatbotName}.",
@@ -6832,6 +6954,14 @@
       "description": "Lämna över den här konversationen till din eskaleringspartner? Dina svar pausas tills konversationen kommer tillbaka.",
       "confirm": "Skicka vidare",
       "success": "Konversationen skickades vidare till eskaleringspartnern"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Lämna tillbaka den här konversationen till AI-assistenten",
+      "title": "Lämna tillbaka till AI-assistenten?",
+      "description": "AI-assistenten börjar svara den här kunden igen. Dina svar pausas tills konversationen kommer tillbaka till dig. Meta garanterar inte att assistenten svarar på varje meddelande.",
+      "confirm": "Lämna tillbaka",
+      "success": "Konversationen har lämnats tillbaka till AI-assistenten"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

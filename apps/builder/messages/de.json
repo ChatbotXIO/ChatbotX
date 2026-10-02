@@ -3076,6 +3076,128 @@
   "integrations": {
     "title": "Integrationen"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Steuern Sie, was passiert, wenn der KI-Assistent von Meta Ihre Messenger-Kunden beantwortet.",
+    "info": "Wenn aktiviert, werden Unterhaltungen hier übernommen, nachdem der KI-Assistent sie zurückgibt, und die folgenden Einstellungen gelten.",
+    "enabled": {
+      "label": "Aktivieren"
+    },
+    "schedule": {
+      "label": "Laufzeit",
+      "description": "Nur in diesen Stunden der Zeitzone des Workspaces anwenden.",
+      "from": "Von Stunde",
+      "to": "Bis Stunde",
+      "add": "Zeitraum hinzufügen",
+      "remove": "Zeitraum entfernen"
+    },
+    "gotoFlow": {
+      "label": "Zu Flow wechseln",
+      "description": "Flow, der gestartet wird, wenn der KI-Assistent die Unterhaltung zurückgibt. Hat Vorrang vor der Rückgabenachricht.",
+      "placeholder": "Flow auswählen",
+      "clear": "Flow entfernen"
+    },
+    "returnMessage": {
+      "label": "Rückgabenachricht",
+      "description": "Wird stattdessen gesendet, wenn kein Flow gesetzt oder der Flow nicht mehr aktiv ist.",
+      "placeholder": "Nachricht, die gesendet wird, wenn die KI die Unterhaltung zurückgibt"
+    },
+    "pauseBot": {
+      "label": "Unterhaltung an Mitarbeiter übergeben",
+      "description": "Stoppt den Bot für diesen Kontakt nach der Rückgabe, bis ein Teammitglied übernimmt oder er fortgesetzt wird."
+    },
+    "readOnly": "Sie können diese Einstellungen ansehen, aber nicht ändern.",
+    "errors": {
+      "supportSession": "Einstellungen können in einer Support-Sitzung nicht geändert werden.",
+      "flowNotFound": "Der ausgewählte Flow wurde nicht gefunden oder ist nicht aktiv.",
+      "timeRanges": "Geben Sie gültige Zeiträume ein: ganze Stunden von 0 bis 24, mit unterschiedlichem Start und Ende."
+    },
+    "bulk": {
+      "title": "Für alle Kunden anwenden",
+      "description": "Übergeben Sie jede berechtigte Messenger-Unterhaltung an den KI-Assistenten von Meta oder holen Sie die zurück, die er gerade hält. Der Vorgang läuft im Hintergrund, und Sie können den Fortschritt hier verfolgen.",
+      "started": "Gestartet. Den Fortschritt können Sie hier verfolgen.",
+      "progress": "Fortschritt",
+      "processedOfTotal": "{done} von {total} Unterhaltungen",
+      "counters": "{processed} erledigt, {skipped} übersprungen, {failed} fehlgeschlagen",
+      "action": {
+        "enable": "Für alle aktivieren",
+        "disable": "Für alle deaktivieren"
+      },
+      "status": {
+        "pending": "Wartet auf den Start",
+        "running": "Läuft",
+        "cancelling": "Wird abgebrochen",
+        "completed": "Abgeschlossen",
+        "failed": "Fehlgeschlagen",
+        "cancelled": "Abgebrochen"
+      },
+      "enable": {
+        "dialogDescription": "Jede Messenger-Unterhaltung, in der der Kunde in den letzten 30 Tagen geschrieben hat und die keine andere App hält, wird an den KI-Assistenten von Meta übergeben. Unterhaltungen werden gemäß den obigen Einstellungen zurückgeholt.",
+        "confirm": "Für alle aktivieren",
+        "blocked": "Speichern Sie die obige Automatisierung und schalten Sie sie ein (innerhalb ihrer Laufzeit), um sie für alle Kunden zu aktivieren."
+      },
+      "disable": {
+        "dialogDescription": "Es werden nur Unterhaltungen zurückgeholt, die der KI-Assistent von Meta gerade hält, und nur Kunden, die in den letzten 7 Tagen geschrieben haben, sind erreichbar. Jeder von ihnen erhält die folgende Nachricht, gesendet mit dem Human-Agent-Tag von Meta. Formulieren Sie sie also so, als antworte eine Person. Die Seite benötigt die Human-Agent-Berechtigung.",
+        "messageLabel": "Nachricht an Kunden",
+        "messageDescription": "Bis zu {max} Zeichen.",
+        "messagePlaceholder": "Hallo, ein Teammitglied übernimmt diese Unterhaltung.",
+        "confirm": "Für alle deaktivieren",
+        "policyWarning": "Meta erlaubt das Human-Agent-Tag nur, wenn eine Person dem Kunden antwortet. Wird es für Werbung oder automatische Nachrichten verwendet, kann das Messaging der Seite eingeschränkt werden."
+      },
+      "errors": {
+        "automationNotActive": "Speichern Sie die Automatisierung und schalten Sie sie ein (innerhalb ihrer Laufzeit), bevor Sie sie für alle Kunden aktivieren.",
+        "messageRequired": "Geben Sie die Nachricht ein, die an die Kunden gesendet werden soll.",
+        "messageTooLong": "Die Nachricht ist zu lang.",
+        "pageNotConnected": "Diese Seite ist nicht verbunden.",
+        "nothingToRetry": "Es gibt nichts zu wiederholen."
+      },
+      "runErrors": {
+        "automationStopped": "Gestoppt, weil die Automatisierung ausgeschaltet wurde.",
+        "tokenInvalid": "Der Zugriff der Seite wurde widerrufen. Verbinden Sie die Seite erneut und versuchen Sie es noch einmal.",
+        "channelUnsupported": "Dieser Kanal unterstützt die Massenaktion nicht.",
+        "maxAttempts": "Nach wiederholten Fehlschlägen aufgegeben.",
+        "channelUnavailable": "Gestoppt, weil Meta mehrmals hintereinander nicht erreicht werden konnte.",
+        "batchFailed": "Einige Unterhaltungen konnten nicht bestätigt werden und wurden als fehlgeschlagen gezählt.",
+        "pageDisconnected": "Gestoppt, weil die Seite getrennt wurde.",
+        "pageRefused": "Meta hat die Übergabe für diese Seite abgelehnt: Sie ist möglicherweise nicht für den KI-Assistenten von Meta eingerichtet oder es fehlt die Berechtigung.",
+        "integrationUnavailable": "Die Verbindung der Seite konnte nicht geladen werden. Verbinden Sie die Seite erneut und versuchen Sie es noch einmal."
+      },
+      "pausedUntil": "Pausiert bis {at}, um die Ratenlimits von Meta für diese Seite einzuhalten. Der Vorgang wird von selbst fortgesetzt.",
+      "preparing": "Wird vorbereitet…",
+      "live": {
+        "enable": "Aktivierung für Kunden: {done} / {total}",
+        "disable": "Deaktivierung für Kunden: {done} / {total}",
+        "enableCounting": "Aktivierung für Kunden: Zählung läuft…",
+        "disableCounting": "Deaktivierung für Kunden: Zählung läuft…"
+      },
+      "done": {
+        "enable": "Für {processed} von {total} Kunden aktiviert.",
+        "disable": "Für {processed} von {total} Kunden deaktiviert."
+      },
+      "stopped": {
+        "enable": "Die Aktivierung für alle Kunden wurde gestoppt.",
+        "disable": "Die Deaktivierung für alle Kunden wurde gestoppt."
+      },
+      "retry": "Wiederholen"
+    },
+    "history": {
+      "link": "Verlauf",
+      "title": "Verlauf der Massenläufe",
+      "empty": "Noch keine Läufe.",
+      "columns": {
+        "action": "Aktion",
+        "requestedAt": "Gestartet",
+        "progress": "Verarbeitet / gesamt",
+        "finishedAt": "Beendet",
+        "message": "Nachricht",
+        "requestedBy": "Angefordert von"
+      },
+      "description": "Jedes Mal, wenn \"Für alle Kunden anwenden\" für diese Seite ein- oder ausgeschaltet wurde, neueste zuerst.",
+      "error": "Der Verlauf konnte nicht geladen werden.",
+      "previousPage": "Vorherige Seite",
+      "nextPage": "Nächste Seite"
+    }
+  },
   "platformSettings": {
     "title": "Plattformeinstellungen",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Diese Unterhaltung an Ihren Eskalationspartner übergeben? Ihre Antworten pausieren, bis die Unterhaltung zurückkommt.",
       "confirm": "Übergeben",
       "success": "Konversation an den Eskalationspartner übergeben"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Diese Unterhaltung an den KI-Assistenten zurückgeben",
+      "title": "An den KI-Assistenten zurückgeben?",
+      "description": "Der KI-Assistent beantwortet diesen Kunden wieder. Ihre Antworten pausieren, bis die Unterhaltung zu Ihnen zurückkommt. Meta garantiert nicht, dass der Assistent jede Nachricht beantwortet.",
+      "confirm": "Zurückgeben",
+      "success": "Unterhaltung an den KI-Assistenten zurückgegeben"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

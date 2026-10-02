@@ -47,6 +47,30 @@ export const parseBucHeader = (header: string | null): BucUsage | null => {
 }
 
 /**
+ * The worst of several readings of the same Page's quota (a batch carries one
+ * per sub-request, plus the call's own): the highest of each figure, so the
+ * caller backs off for the most pressed reading. `null` when none was sent.
+ */
+export const mergeBucUsage = (
+  readings: readonly (BucUsage | null)[],
+): BucUsage | null => {
+  const present = readings.filter(
+    (reading): reading is BucUsage => reading !== null,
+  )
+  if (present.length === 0) {
+    return null
+  }
+  return {
+    callCount: Math.max(...present.map((usage) => usage.callCount)),
+    totalCpuTime: Math.max(...present.map((usage) => usage.totalCpuTime)),
+    totalTime: Math.max(...present.map((usage) => usage.totalTime)),
+    estimatedTimeToRegainAccess: Math.max(
+      ...present.map((usage) => usage.estimatedTimeToRegainAccess),
+    ),
+  }
+}
+
+/**
  * Maps BUC usage to a recommended concurrency. Returns 0 when the bucket is
  * exhausted (caller must pause until `estimatedTimeToRegainAccess`).
  */

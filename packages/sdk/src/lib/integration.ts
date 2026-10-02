@@ -9,6 +9,9 @@ import {
 import type { SendFlowStepData } from "./flow-step-data"
 import type {
   BaseConfig,
+  BulkThreadControlAction,
+  BulkThreadControlLimits,
+  BulkThreadControlResult,
   CommentAnchor,
   Context,
   HandleRequestProps,
@@ -285,6 +288,34 @@ export type ConversationHandlers<IAuth extends AuthValue> = {
       }
     },
     ThreadControlUpdateResult
+  >
+  /**
+   * Conversation routing, many threads at once: hands each contact to the AI
+   * agent, or takes it back with `text`. One call carries a channel-sized batch
+   * (Messenger: at most 50). A per-contact failure never throws: it is reported
+   * in `results`, one entry per input contact. A failure of the whole call
+   * (revoked token) throws a `ChannelError`. When the channel's quota runs low
+   * it stops early: the rest come back `deferred` with `retryAfterMs` set.
+   */
+  bulkUpdateThreadControl?: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        action: BulkThreadControlAction
+        contacts: OutgoingContact[]
+        text?: string
+      }
+    },
+    BulkThreadControlResult
+  >
+  /**
+   * The transport limits of `bulkUpdateThreadControl` (batch size, pacing, the
+   * wait after a refused call). Required for a channel that implements the bulk
+   * handler: the caller sizes and paces its calls from it.
+   */
+  bulkThreadControlLimits?: Handler<
+    { ctx: Context<IAuth> },
+    BulkThreadControlLimits
   >
   /**
    * Conversation routing: asks the channel who owns the thread right now

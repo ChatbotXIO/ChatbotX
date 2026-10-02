@@ -91,12 +91,16 @@ export type ThreadControlView = {
   updatedAt: Date | null
   /** Release is offered while this app owns the thread and the channel supports it. */
   canRelease: boolean
-  /** Pass is hidden when this app is itself the escalation partner (Meta forbids it) or the channel cannot pass. */
+  /**
+   * Pass is offered while this app owns the thread (or holds it idle on a
+   * channel that can pass from idle). Hidden when this app is itself the
+   * escalation partner (Meta forbids it) or the channel cannot pass.
+   */
   canPass: boolean
   /** The composer is locked while another responder owns the thread on its channel. */
   isLocked: boolean
   /**
-   * A standby thread the AI agent (BizAI) owns on an inline-reply channel
+   * A standby thread the AI agent (AI hand-over) owns on an inline-reply channel
    * (`aiStandbyInlineReply`, e.g. Messenger). The locked banner still shows,
    * but its "Take over" only reveals the composer; the next send then takes the
    * thread over and rides the HUMAN_AGENT tag. Implies `isLocked` until
@@ -218,7 +222,7 @@ export function resolveThreadControlView(
   const composerOwnsThread =
     isThreadControlChannel(composerChannel) &&
     composerChannel === contactInbox.channel
-  // BizAI (ai_agent) holds a standby thread on a channel that lets a human
+  // AI hand-over (ai_agent) holds a standby thread on a channel that lets a human
   // reply inline. The banner still shows first: "Take over" reveals the
   // composer (no Meta call yet), then the first send takes the thread over and
   // rides the HUMAN_AGENT tag (see the locked composer + message-input).
@@ -237,14 +241,53 @@ export function resolveThreadControlView(
     updatedAt: columns.threadControlUpdatedAt,
     canRelease: state === "owned" && capabilities.supportsRelease,
     canPass:
-      state === "owned" &&
       capabilities.supportsPass &&
+      (state === "owned" || (state === "idle" && capabilities.passFromIdle)) &&
       ownerRole !== "escalation",
     isLocked: state === "standby" && composerOwnsThread,
     inlineReplyTakesOver,
     idleAt,
     now,
   }
+}
+
+/**
+ * The contact inbox whose thread the header "return to the AI" would pass: the
+ * first routing-capable inbox on a channel whose pass target is the AI agent
+ * (`passTarget: "aiAgent"`). Chosen by channel capability, not by which
+ * routing view the conversation shows, so another channel's observed routing
+ * (e.g. an owned WhatsApp thread) never hides it.
+ */
+export function findAiHandoverContactInbox<
+  TContactInbox extends ThreadControlContactInbox,
+>(
+  conversation: { contactInboxes: TContactInbox[] } | null | undefined,
+): TContactInbox | undefined {
+  return conversation?.contactInboxes.find(
+    (contactInbox) =>
+      isThreadControlChannel(contactInbox.channel) &&
+      THREAD_CONTROL_CHANNEL_UI[contactInbox.channel].passTarget === "aiAgent",
+  )
+}
+
+/**
+ * Whether the header "return to the AI" is offered for `contactInbox`, given
+ * the routing view resolved for that inbox alone. Offered while this app can
+ * pass (`view.canPass`) and for a thread whose routing was never observed (no
+ * view): on such a channel this app is the primary receiver and holds the
+ * thread, so returning it is valid (v1 shows it for every such thread). The AI
+ * already owning the thread, or any other responder in standby, hides it.
+ */
+export function canReturnToAiAgent(
+  contactInbox: Pick<ThreadControlContactInbox, "channel"> | undefined,
+  view: ThreadControlView | null,
+): boolean {
+  if (!(contactInbox && isThreadControlChannel(contactInbox.channel))) {
+    return false
+  }
+  return view
+    ? view.canPass
+    : THREAD_CONTROL_CHANNEL_UI[contactInbox.channel].passFromIdle
 }
 
 /** The routing fields a thread-control snapshot patches onto a contact inbox. */

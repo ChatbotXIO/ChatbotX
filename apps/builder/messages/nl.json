@@ -3076,6 +3076,128 @@
   "integrations": {
     "title": "Integraties"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Bepaal wat er gebeurt wanneer de AI-assistent van Meta je Messenger-klanten beantwoordt.",
+    "info": "Indien ingeschakeld worden gesprekken hier overgenomen nadat de AI-assistent ze teruggeeft, en gelden de onderstaande instellingen.",
+    "enabled": {
+      "label": "Inschakelen"
+    },
+    "schedule": {
+      "label": "Looptijd",
+      "description": "Alleen toepassen tijdens deze uren van de tijdzone van de workspace.",
+      "from": "Vanaf uur",
+      "to": "Tot uur",
+      "add": "Tijdbereik toevoegen",
+      "remove": "Tijdbereik verwijderen"
+    },
+    "gotoFlow": {
+      "label": "Ga naar flow",
+      "description": "Flow die start wanneer de AI-assistent het gesprek teruggeeft. Heeft voorrang op het terugkeerbericht.",
+      "placeholder": "Selecteer een flow",
+      "clear": "Flow wissen"
+    },
+    "returnMessage": {
+      "label": "Terugkeerbericht",
+      "description": "Wordt in plaats daarvan verzonden als er geen flow is ingesteld of de flow niet meer actief is.",
+      "placeholder": "Bericht dat wordt verzonden wanneer de AI het gesprek teruggeeft"
+    },
+    "pauseBot": {
+      "label": "Gesprek overdragen aan medewerker",
+      "description": "Stopt de bot voor dit contact na het teruggeven, tot een teamlid overneemt of de bot hervat."
+    },
+    "readOnly": "Je kunt deze instellingen bekijken maar niet wijzigen.",
+    "errors": {
+      "supportSession": "Instellingen kunnen niet worden gewijzigd vanuit een supportsessie.",
+      "flowNotFound": "De geselecteerde flow is niet gevonden of niet actief.",
+      "timeRanges": "Voer geldige tijdbereiken in: hele uren van 0 tot 24, met een verschillend begin en einde."
+    },
+    "bulk": {
+      "title": "Toepassen op alle klanten",
+      "description": "Draag elk in aanmerking komend Messenger-gesprek over aan de AI-assistent van Meta, of neem de gesprekken terug die hij nu vasthoudt. Het draait op de achtergrond en je kunt het hier volgen.",
+      "started": "Gestart. Je kunt de voortgang hier volgen.",
+      "progress": "Voortgang",
+      "processedOfTotal": "{done} van {total} gesprekken",
+      "counters": "{processed} klaar, {skipped} overgeslagen, {failed} mislukt",
+      "action": {
+        "enable": "Inschakelen voor iedereen",
+        "disable": "Uitschakelen voor iedereen"
+      },
+      "status": {
+        "pending": "Wacht op start",
+        "running": "Bezig",
+        "cancelling": "Wordt geannuleerd",
+        "completed": "Voltooid",
+        "failed": "Mislukt",
+        "cancelled": "Geannuleerd"
+      },
+      "enable": {
+        "dialogDescription": "Elk Messenger-gesprek waarin de klant de afgelopen 30 dagen heeft geschreven en dat geen andere app vasthoudt, wordt overgedragen aan de AI-assistent van Meta. Gesprekken worden teruggenomen volgens de instellingen hierboven.",
+        "confirm": "Inschakelen voor iedereen",
+        "blocked": "Sla de automatisering hierboven op en zet hem aan (binnen de looptijd) om hem voor alle klanten in te schakelen."
+      },
+      "disable": {
+        "dialogDescription": "Alleen gesprekken die de AI-assistent van Meta nu vasthoudt, worden teruggenomen, en alleen klanten die de afgelopen 7 dagen hebben geschreven, zijn bereikbaar. Elk van hen ontvangt het onderstaande bericht, verzonden met de Human Agent-tag van Meta. Schrijf het dus alsof een persoon antwoordt. De pagina heeft de Human Agent-machtiging nodig.",
+        "messageLabel": "Bericht aan klanten",
+        "messageDescription": "Maximaal {max} tekens.",
+        "messagePlaceholder": "Hallo, een teamlid neemt dit gesprek over.",
+        "confirm": "Uitschakelen voor iedereen",
+        "policyWarning": "Meta staat de Human Agent-tag alleen toe wanneer een persoon de klant antwoordt. Gebruik voor promoties of geautomatiseerde berichten kan ertoe leiden dat het berichtenverkeer van de pagina wordt beperkt."
+      },
+      "errors": {
+        "automationNotActive": "Sla de automatisering op en zet hem aan (binnen de looptijd) voordat je hem voor alle klanten inschakelt.",
+        "messageRequired": "Voer het bericht in dat naar klanten wordt gestuurd.",
+        "messageTooLong": "Het bericht is te lang.",
+        "pageNotConnected": "Deze pagina is niet gekoppeld.",
+        "nothingToRetry": "Er valt niets opnieuw te proberen."
+      },
+      "runErrors": {
+        "automationStopped": "Gestopt omdat de automatisering is uitgeschakeld.",
+        "tokenInvalid": "De toegang van de pagina is ingetrokken. Koppel de pagina opnieuw en probeer het nog eens.",
+        "channelUnsupported": "Dit kanaal ondersteunt de bulkactie niet.",
+        "maxAttempts": "Opgegeven na herhaalde fouten.",
+        "channelUnavailable": "Gestopt omdat Meta meerdere keren achter elkaar niet bereikbaar was.",
+        "batchFailed": "Sommige gesprekken konden niet worden bevestigd en zijn als mislukt geteld.",
+        "pageDisconnected": "Gestopt omdat de pagina is losgekoppeld.",
+        "pageRefused": "Meta heeft de overdracht voor deze pagina geweigerd: de pagina is mogelijk niet ingesteld voor de AI-assistent van Meta, of mist de machtiging.",
+        "integrationUnavailable": "De koppeling van de pagina kon niet worden geladen. Koppel de pagina opnieuw en probeer het nog eens."
+      },
+      "pausedUntil": "Gepauzeerd tot {at} om binnen de snelheidslimieten van Meta voor deze pagina te blijven. Hervat vanzelf.",
+      "preparing": "Voorbereiden…",
+      "live": {
+        "enable": "Inschakelen voor klanten: {done} / {total}",
+        "disable": "Uitschakelen voor klanten: {done} / {total}",
+        "enableCounting": "Inschakelen voor klanten: tellen…",
+        "disableCounting": "Uitschakelen voor klanten: tellen…"
+      },
+      "done": {
+        "enable": "Ingeschakeld voor {processed} van {total} klanten.",
+        "disable": "Uitgeschakeld voor {processed} van {total} klanten."
+      },
+      "stopped": {
+        "enable": "Inschakelen voor alle klanten is gestopt.",
+        "disable": "Uitschakelen voor alle klanten is gestopt."
+      },
+      "retry": "Opnieuw proberen"
+    },
+    "history": {
+      "link": "Geschiedenis",
+      "title": "Geschiedenis van bulkruns",
+      "empty": "Nog geen runs.",
+      "columns": {
+        "action": "Actie",
+        "requestedAt": "Gestart",
+        "progress": "Verwerkt / totaal",
+        "finishedAt": "Voltooid",
+        "message": "Bericht",
+        "requestedBy": "Aangevraagd door"
+      },
+      "description": "Elke keer dat \"Toepassen op alle klanten\" voor deze pagina is in- of uitgeschakeld, nieuwste eerst.",
+      "error": "De geschiedenis kon niet worden geladen.",
+      "previousPage": "Vorige pagina",
+      "nextPage": "Volgende pagina"
+    }
+  },
   "platformSettings": {
     "title": "Platforminstellingen",
     "errors": {
@@ -6832,6 +6954,14 @@
       "description": "Dit gesprek overdragen aan je escalatiepartner? Je antwoorden worden gepauzeerd totdat het gesprek terugkomt.",
       "confirm": "Doorgeven",
       "success": "Gesprek doorgegeven aan de escalatiepartner"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Dit gesprek teruggeven aan de AI-assistent",
+      "title": "Teruggeven aan de AI-assistent?",
+      "description": "De AI-assistent gaat deze klant weer beantwoorden. Je antwoorden worden gepauzeerd tot het gesprek bij jou terugkomt. Meta garandeert niet dat de assistent elk bericht beantwoordt.",
+      "confirm": "Teruggeven",
+      "success": "Gesprek teruggegeven aan de AI-assistent"
     },
     "composer": {
       "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",

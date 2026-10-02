@@ -14,6 +14,8 @@ import {
   inboxStatuses,
 } from "@chatbotx.io/database/partials"
 import {
+  aiHandoverBulkRunRepository,
+  aiHandoverSettingsRepository,
   type InboxChannelOption,
   inboxRepository,
 } from "@chatbotx.io/database/repositories"
@@ -469,6 +471,12 @@ class InboxService extends BaseService {
         disconnectReason: props.reason,
       })
       .where(eq(inboxModel.id, props.inboxId))
+    // Whatever the channel, a disconnected Page must not keep a bulk AI
+    // hand-over running: stop it in the same transaction as the disconnect.
+    const ref = { workspaceId: props.workspaceId, inboxId: props.inboxId }
+    if (await aiHandoverSettingsRepository.lockExisting(ref, client)) {
+      await aiHandoverBulkRunRepository.cancelLive(ref, client)
+    }
 
     // Best-effort: never block/roll back the disconnect if release fails, the
     // nightly reconcile self-heals.
