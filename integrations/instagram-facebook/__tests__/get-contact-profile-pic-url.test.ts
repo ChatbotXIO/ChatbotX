@@ -71,12 +71,13 @@ describe("Instagram via Facebook getContactProfilePicUrl", () => {
     })
 
     await expect(
-      contactHandlers.getInstagramSnapshot?.(createProps()),
+      contactHandlers.getProfileSnapshot?.(createProps()),
     ).resolves.toEqual({
-      follow: false,
-      followers: 8,
-      following: true,
-      verified: true,
+      followsBusiness: false,
+      followerCount: 8,
+      businessFollowsContact: true,
+      accountVerified: true,
+      username: null,
     })
   })
 })

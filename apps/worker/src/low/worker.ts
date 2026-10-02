@@ -7,10 +7,12 @@ import {
   getQueueConnection,
   LowJobAction,
   type LowJobData,
+  type ProfileSnapshotJobData,
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
+import { captureContactProfileSnapshot } from "../integration/handlers/capture-contact-profile-snapshot"
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
 import { receiveComment } from "../integration/handlers/received-message"
@@ -89,6 +91,10 @@ async function settleMissedCommentReplay(job: Job<LowJobData>): Promise<void> {
  * Handlers are shared with the integration worker during the two-phase cutover
  * (integration still handles any jobs already queued under the old actions);
  * once that queue is drained, the integration-side cases are removed.
+ *
+ * This process also hosts the dedicated, rate-limited `profileSnapshot` consumer
+ * (contact relationship snapshots) — non-urgent provider enrichment that must
+ * not occupy the integration process.
  */
 async function startLowWorker() {
   try {
@@ -120,6 +126,36 @@ async function startLowWorker() {
     }
   })
 
+  // Rate-limited provider enrichment (contact relationship snapshots). Its own
+  // queue + limiter so the provider rate limit never throttles the shared
+  // `low` jobs above; it runs here, off the latency-sensitive integration
+  // process.
+  const profileSnapshotWorker = new Worker(
+    queueNames.enum.profileSnapshot,
+    async (job: Job<ProfileSnapshotJobData>) => {
+      const workspaceId = job.data.data.workspaceId
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `profile-snapshot:${job.data.type}` },
+          async () => {
+            await captureContactProfileSnapshot(job.data.data)
+          },
+        )
+      })
+    },
+    {
+      connection: getQueueConnection(queueNames.enum.profileSnapshot),
+      concurrency: 1,
+      limiter: { max: env.PROFILE_SNAPSHOT_JOBS_PER_SECOND, duration: 1000 },
+    },
+  )
+
+  profileSnapshotWorker.on("failed", (job, err) => {
+    if (job) {
+      logger.error({ err }, `Profile snapshot job ${job.id} has failed`)
+    }
+  })
+
   let isShuttingDown = false
   async function shutdown() {
     if (isShuttingDown) {
@@ -127,7 +163,7 @@ async function startLowWorker() {
     }
     isShuttingDown = true
     try {
-      await worker.close()
+      await Promise.all([worker.close(), profileSnapshotWorker.close()])
       process.exit(0)
     } catch (err) {
       logger.error(err, "[LowWorker] Error during shutdown")

@@ -1,17 +1,17 @@
 import {
   contactInboxService,
-  serializeInstagramSnapshotCursor,
+  serializeProfileSnapshotCursor,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import { distributedStore } from "@chatbotx.io/redis"
-import { enqueueInstagramSnapshotJobs } from "../../integration/handlers/instagram-snapshot/queue"
+import { enqueueProfileSnapshotJobs } from "../../integration/handlers/profile-snapshot/queue"
 import { logger } from "../../lib/logger"
 
 const PAGE_SIZE = 100
 const MAX_PAGES_PER_RUN = 20
 const RECOVERY_CURSOR_TTL_SECONDS = 60 * 60 * 24
-const DUE_CURSOR_KEY = "schedule:instagram-snapshots:due-cursor"
-const EXHAUSTED_CURSOR_KEY = "schedule:instagram-snapshots:exhausted-cursor"
+const DUE_CURSOR_KEY = "schedule:profile-snapshots:due-cursor"
+const EXHAUSTED_CURSOR_KEY = "schedule:profile-snapshots:exhausted-cursor"
 
 type SnapshotRecoveryRow = {
   contactInboxId: string
@@ -21,11 +21,11 @@ type SnapshotRecoveryRow = {
 }
 
 /**
- * Re-drives durable Instagram snapshot intent after a Redis enqueue failure or
+ * Re-drives durable profile snapshot intent after a Redis enqueue failure or
  * a worker crash. It walks by ContactInbox id so a blocked workspace cannot
  * prevent later rows from being considered in this run.
  */
-export const dispatchInstagramSnapshots = async (): Promise<void> => {
+export const dispatchProfileSnapshots = async (): Promise<void> => {
   await finishExhaustedSnapshots()
   await enqueueDueSnapshots()
 }
@@ -34,27 +34,27 @@ const finishExhaustedSnapshots = async (): Promise<void> => {
   await recoverSnapshotPages({
     cursorKey: EXHAUSTED_CURSOR_KEY,
     list: (cursor) =>
-      contactInboxService.listExhaustedInstagramSnapshots({
+      contactInboxService.listExhaustedProfileSnapshots({
         cursor,
         limit: PAGE_SIZE,
       }),
     process: async (row) => {
       await withBlockedOwnerGuard(row.workspaceId, async () => {
-        const completed = await contactInboxService.completeInstagramSnapshot({
+        const completed = await contactInboxService.completeProfileSnapshot({
           ...row,
           onlyIfLeaseExpired: true,
           outcome: "failed",
           snapshot: {
-            follow: null,
-            followers: null,
-            following: null,
-            verified: null,
+            followsBusiness: null,
+            businessFollowsContact: null,
+            accountVerified: null,
+            followerCount: null,
           },
         })
         if (completed) {
           logger.error(
             { ...row, outcome: "failed", reason: "retryExhausted" },
-            "Instagram snapshot retry budget exhausted during recovery",
+            "Profile snapshot retry budget exhausted during recovery",
           )
         }
       })
@@ -66,20 +66,20 @@ const enqueueDueSnapshots = async (): Promise<void> => {
   await recoverSnapshotPages({
     cursorKey: DUE_CURSOR_KEY,
     list: async (cursor) =>
-      await contactInboxService.listDueInstagramSnapshots({
+      await contactInboxService.listDueProfileSnapshots({
         cursor,
         limit: PAGE_SIZE,
       }),
     process: async (row) => {
       await withBlockedOwnerGuard(row.workspaceId, async () => {
-        await enqueueInstagramSnapshotJobs({
+        await enqueueProfileSnapshotJobs({
           contactInboxIds: [row.contactInboxId],
           inboxId: row.inboxId,
           workspaceId: row.workspaceId,
         }).catch((err) => {
           logger.warn(
             { err, ...row },
-            "Instagram snapshot recovery enqueue failed; intent remains pending",
+            "Profile snapshot recovery enqueue failed; intent remains pending",
           )
         })
       })
@@ -109,7 +109,7 @@ const recoverSnapshotPages = async <Row extends SnapshotRecoveryRow>(props: {
       return
     }
     const lastRow = rows.at(-1)
-    cursor = lastRow ? serializeInstagramSnapshotCursor(lastRow) : undefined
+    cursor = lastRow ? serializeProfileSnapshotCursor(lastRow) : undefined
     if (!cursor) {
       return
     }

@@ -86,7 +86,6 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     enum: {
       integration: "integration",
       callTranscription: "callTranscription",
-      instagramSnapshot: "instagramSnapshot",
       whatsappVoipSignaling: "whatsappVoipSignaling",
     },
   },
@@ -101,11 +100,6 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn(),
-  contactInboxService: {
-    claimInstagramSnapshot: vi.fn(),
-    completeInstagramSnapshot: vi.fn(),
-    rescheduleInstagramSnapshot: vi.fn(),
-  },
   conversationService: { ensureActive: vi.fn() },
   withBlockedOwnerGuard: vi.fn(
     async (_workspaceId: unknown, fn: () => Promise<unknown>) => await fn(),
@@ -126,7 +120,6 @@ vi.mock("../src/env", () => ({
     HEAVY_JOB_WAIT_TIMEOUT_MS: 120_000,
     INTEGRATION_WORKER_CONCURRENCY: 10,
     CALL_TRANSCRIBE_PER_MIN: 10,
-    IG_SNAPSHOT_JOBS_PER_SECOND: 5,
   },
 }))
 
@@ -272,22 +265,27 @@ vi.mock("../src/integration/utils/message", () => ({
 }))
 
 // Importing the worker module boots it exactly once (ESM module cache) —
-// the four `new Worker(...)` calls happen as a side effect of this import,
+// the three `new Worker(...)` calls happen as a side effect of this import,
 // so they must happen once, before any assertions, rather than per-test.
 await import("../src/integration/worker")
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(4)
+  expect(workerState.capturedWorkers).toHaveLength(3)
 })
 
 describe("integration worker process boot", () => {
-  test("boots exactly four Workers: the shared integration queue, the dedicated callTranscription queue, the dedicated instagramSnapshot queue, and the dedicated whatsappVoipSignaling queue", () => {
-    expect(workerState.capturedWorkers).toHaveLength(4)
+  test("boots exactly three Workers: the shared integration queue, the dedicated callTranscription queue, and the dedicated whatsappVoipSignaling queue", () => {
+    expect(workerState.capturedWorkers).toHaveLength(3)
     expect(workerState.capturedWorkers[0]?.queueName).toBe("integration")
     expect(workerState.capturedWorkers[1]?.queueName).toBe("callTranscription")
-    expect(workerState.capturedWorkers[2]?.queueName).toBe("instagramSnapshot")
-    expect(workerState.capturedWorkers[3]?.queueName).toBe(
+    expect(workerState.capturedWorkers[2]?.queueName).toBe(
       "whatsappVoipSignaling",
     )
+  })
+
+  test("does not consume the profileSnapshot queue (it runs in the low process)", () => {
+    expect(
+      workerState.capturedWorkers.map((worker) => worker.queueName),
+    ).not.toContain("profileSnapshot")
   })
 
   test("keeps the env-tunable concurrency and long coexist lock on the integration worker", () => {
@@ -307,16 +305,8 @@ describe("integration worker process boot", () => {
     expect(transcriptionWorker?.options.concurrency).toBe(1)
   })
 
-  test("the instagramSnapshot worker carries the IG_SNAPSHOT_JOBS_PER_SECOND limiter", () => {
-    const [, , snapshotWorker] = workerState.capturedWorkers
-
-    expect(snapshotWorker?.options.concurrency).toBe(1)
-    expect(snapshotWorker?.options.limiter?.duration).toBe(1000)
-    expect(snapshotWorker?.options.limiter?.max).toBeGreaterThan(0)
-  })
-
   test("the whatsappVoipSignaling worker is a dedicated, non-rate-limited consumer", () => {
-    const [, , , voipSignalingWorker] = workerState.capturedWorkers
+    const [, , voipSignalingWorker] = workerState.capturedWorkers
 
     expect(voipSignalingWorker?.options.concurrency).toBe(10)
     expect(voipSignalingWorker?.options.limiter).toBeUndefined()
@@ -343,7 +333,7 @@ describe("integration worker process boot", () => {
       async () => undefined,
     )
 
-    const [, , , voipSignalingWorker] = workerState.capturedWorkers
+    const [, , voipSignalingWorker] = workerState.capturedWorkers
     await voipSignalingWorker?.processor({
       data: {
         type: "handleOutboundAnswer",
@@ -370,7 +360,7 @@ describe("integration worker process boot", () => {
       inbox: { workspaceId: "ws-resolved" },
     })
 
-    const [, , , voipSignalingWorker] = workerState.capturedWorkers
+    const [, , voipSignalingWorker] = workerState.capturedWorkers
     await voipSignalingWorker?.processor({
       data: {
         type: "handleConnect",
@@ -397,7 +387,7 @@ describe("integration worker process boot", () => {
       new Error("no integration for this phoneNumberId"),
     )
 
-    const [, , , voipSignalingWorker] = workerState.capturedWorkers
+    const [, , voipSignalingWorker] = workerState.capturedWorkers
     await voipSignalingWorker?.processor({
       data: {
         type: "handleConnect",

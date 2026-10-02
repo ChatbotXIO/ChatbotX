@@ -551,12 +551,11 @@ vi.mock("../src/services/integrations", () => ({
 // ---------------------------------------------------------------------------
 
 await import("../src/integration/worker")
-// The integration worker process now boots four BullMQ workers: the shared
-// `integration` queue, the rate-limited `callTranscription` queue, the
-// dedicated `instagramSnapshot` queue, and the dedicated `whatsappVoipSignaling`
-// queue.
+// The integration worker process boots three BullMQ workers: the shared
+// `integration` queue, the rate-limited `callTranscription` queue, and the
+// dedicated `whatsappVoipSignaling` queue.
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(4)
+  expect(workerState.capturedWorkers).toHaveLength(3)
 })
 const findIntegrationWorker = () => {
   const captured = workerState.capturedWorkers.find(

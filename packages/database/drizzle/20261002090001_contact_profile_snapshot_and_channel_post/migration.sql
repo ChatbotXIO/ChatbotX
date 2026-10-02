@@ -1,4 +1,13 @@
 SET LOCAL lock_timeout = '5s';--> statement-breakpoint
+CREATE TYPE "contactInboxProfileSnapshotState" AS ENUM('pending', 'captured', 'unavailable', 'failed');--> statement-breakpoint
+ALTER TABLE "ContactInbox" ADD COLUMN "followsBusiness" boolean;--> statement-breakpoint
+ALTER TABLE "ContactInbox" ADD COLUMN "businessFollowsContact" boolean;--> statement-breakpoint
+ALTER TABLE "ContactInbox" ADD COLUMN "accountVerified" boolean;--> statement-breakpoint
+ALTER TABLE "ContactInbox" ADD COLUMN "followerCount" integer;--> statement-breakpoint
+ALTER TABLE "ContactInbox" ADD COLUMN "profileSnapshotState" "contactInboxProfileSnapshotState";--> statement-breakpoint
+ALTER TABLE "ContactInbox" ADD COLUMN "profileSnapshotAttempts" integer;--> statement-breakpoint
+ALTER TABLE "ContactInbox" ADD COLUMN "profileSnapshotNextAttemptAt" timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Workspace" ADD COLUMN "purgeStartedAt" timestamp(6) with time zone;--> statement-breakpoint
 CREATE TYPE "channelPostIntegrationType" AS ENUM('messenger', 'instagram', 'instagramFacebook');--> statement-breakpoint
 CREATE TABLE "ContactInboxPost" (
 	"workspaceId" bigint NOT NULL,

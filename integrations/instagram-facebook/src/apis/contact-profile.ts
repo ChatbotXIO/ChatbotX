@@ -3,6 +3,7 @@ import { rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
 
 export type InstagramContactProfile = {
+  username: string | null
   followersCount: number | null
   isVerified: boolean | null
   followsBusiness: boolean | null
@@ -11,6 +12,7 @@ export type InstagramContactProfile = {
 
 type RawContactProfileResponse = {
   id: string
+  username?: string
   follower_count?: number
   // Instagram User Profile API (both Facebook-Login and Instagram-Login
   // variants) returns `is_verified_user`, per Meta docs + the v12.0 changelog.
@@ -34,7 +36,7 @@ export const fetchInstagramContactProfile = (props: {
     // so a query `access_token` would leak on every timeout/network failure.
     const queries = new URLSearchParams({
       fields:
-        "follower_count,is_verified_user,is_user_follow_business,is_business_follow_user",
+        "username,follower_count,is_verified_user,is_user_follow_business,is_business_follow_user",
     })
 
     const response = await instagramGraphClient.get<RawContactProfileResponse>(
@@ -43,6 +45,7 @@ export const fetchInstagramContactProfile = (props: {
     )
 
     return {
+      username: response.username ?? null,
       followersCount: response.follower_count ?? null,
       isVerified: response.is_verified_user ?? null,
       followsBusiness: response.is_user_follow_business ?? null,

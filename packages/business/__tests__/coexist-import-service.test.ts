@@ -44,6 +44,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   contactSources: { enum: { inboundMessage: "inboundMessage" } },
+  supportsProfileSnapshot: (channel: string) => channel === "instagram",
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -193,7 +194,7 @@ describe("coexistImportService.resolveOrCreateContactLinks", () => {
     ]
 
     const result = await run(fixture, {
-      captureInstagramSnapshot: true,
+      captureProfileSnapshot: true,
       workspaceId: "ws-1",
       inboxId: "inbox-1",
       inboxChannel: "instagram",
@@ -225,7 +226,7 @@ describe("coexistImportService.resolveOrCreateContactLinks", () => {
     ]
 
     await run(fixture, {
-      captureInstagramSnapshot: true,
+      captureProfileSnapshot: true,
       workspaceId: "ws-1",
       inboxId: "inbox-1",
       inboxChannel: "instagram",
@@ -236,9 +237,9 @@ describe("coexistImportService.resolveOrCreateContactLinks", () => {
 
     expect(fixture.calls.contactInboxInsertValues[0]?.[0]).toEqual(
       expect.objectContaining({
-        igSnapshotAttempts: 0,
-        igSnapshotNextAttemptAt: expect.any(Date),
-        igSnapshotState: "pending",
+        profileSnapshotAttempts: 0,
+        profileSnapshotNextAttemptAt: expect.any(Date),
+        profileSnapshotState: "pending",
       }),
     )
   })

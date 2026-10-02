@@ -10,7 +10,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { instagramSnapshotStates } from "../partials/contact"
+import { profileSnapshotStates } from "../partials/contact"
 import { lastUserInputTypes } from "../partials/message"
 import {
   bigintAsString,
@@ -76,9 +76,9 @@ export const threadControlEventEnum = pgEnum(
   threadControlEvents.options as [string, ...string[]],
 )
 
-export const contactInboxInstagramSnapshotState = pgEnum(
-  "contactInboxInstagramSnapshotState",
-  instagramSnapshotStates.options as [string, ...string[]],
+export const contactInboxProfileSnapshotState = pgEnum(
+  "contactInboxProfileSnapshotState",
+  profileSnapshotStates.options as [string, ...string[]],
 )
 
 /**
@@ -111,13 +111,13 @@ export const contactInboxModel = pgTable(
     channel: text().notNull(),
     source: text().notNull(),
     sourceId: text().notNull(),
-    igFollow: boolean(),
-    igFollowing: boolean(),
-    igVerified: boolean(),
-    igFollowers: integer(),
-    igSnapshotState: contactInboxInstagramSnapshotState(),
-    igSnapshotAttempts: integer(),
-    igSnapshotNextAttemptAt: timestamp(timestampConfig),
+    followsBusiness: boolean(),
+    businessFollowsContact: boolean(),
+    accountVerified: boolean(),
+    followerCount: integer(),
+    profileSnapshotState: contactInboxProfileSnapshotState(),
+    profileSnapshotAttempts: integer(),
+    profileSnapshotNextAttemptAt: timestamp(timestampConfig),
     language: text(),
     // Local persona id (MessengerPersona.id) chosen for this contact connection
     // via the "Set Persona" flow action. Resolved to the page's current Facebook
@@ -191,9 +191,9 @@ export const contactInboxModel = pgTable(
         table.sourceParentUserId.asc().nullsLast(),
       )
       .where(sql`${table.sourceParentUserId} IS NOT NULL`),
-    index("ContactInbox_igSnapshot_pending_idx")
-      .on(table.igSnapshotNextAttemptAt, table.id)
-      .where(sql`${table.igSnapshotState} = 'pending'`),
+    index("ContactInbox_profileSnapshot_pending_idx")
+      .on(table.profileSnapshotNextAttemptAt, table.id)
+      .where(sql`${table.profileSnapshotState} = 'pending'`),
     // Lets "the N-th contact of a page in id order" (broadcast audience
     // window/order, see partials/broadcast.ts) be an ordered index range scan
     // for a single-inbox audience, instead of the planner choosing between

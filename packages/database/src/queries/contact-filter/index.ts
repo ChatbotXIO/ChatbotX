@@ -510,28 +510,28 @@ function buildConditionWhere(
 
     case "followsBusinessOnInstagram":
       return buildContactInboxTriStateBooleanWhere(
-        contactInboxModel.igFollow,
+        contactInboxModel.followsBusiness,
         operator,
         value,
       )
 
     case "businessFollowsUserOnInstagram":
       return buildContactInboxTriStateBooleanWhere(
-        contactInboxModel.igFollowing,
+        contactInboxModel.businessFollowsContact,
         operator,
         value,
       )
 
     case "verifiedAccountOnInstagram":
       return buildContactInboxTriStateBooleanWhere(
-        contactInboxModel.igVerified,
+        contactInboxModel.accountVerified,
         operator,
         value,
       )
 
     case "followerCountOnInstagram":
       return buildLatestContactInboxNumberWhere(
-        contactInboxModel.igFollowers,
+        contactInboxModel.followerCount,
         operator,
         value,
       )

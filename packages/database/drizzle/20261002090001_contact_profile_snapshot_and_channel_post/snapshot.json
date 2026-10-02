@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "267be3d4-5b89-4d0a-9cf6-dd8f65a333a6",
+  "id": "4296e836-6a56-47f9-8100-b96f05151fde",
   "prevIds": [
-    "4296e836-6a56-47f9-8100-b96f05151fde"
+    "7e3d4c2e-9fa2-4a2b-9281-574e0f1035d1"
   ],
   "ddl": [
     {
@@ -47617,7 +47617,7 @@
         "unavailable",
         "failed"
       ],
-      "name": "contactInboxInstagramSnapshotState",
+      "name": "contactInboxProfileSnapshotState",
       "entityType": "enums",
       "schema": "public"
     },
@@ -47629,7 +47629,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "igFollow",
+      "name": "followsBusiness",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactInbox"
@@ -47642,7 +47642,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "igFollowing",
+      "name": "businessFollowsContact",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactInbox"
@@ -47655,7 +47655,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "igVerified",
+      "name": "accountVerified",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactInbox"
@@ -47668,20 +47668,20 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "igFollowers",
+      "name": "followerCount",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactInbox"
     },
     {
-      "type": "contactInboxInstagramSnapshotState",
+      "type": "contactInboxProfileSnapshotState",
       "typeSchema": "public",
       "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "igSnapshotState",
+      "name": "profileSnapshotState",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactInbox"
@@ -47694,7 +47694,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "igSnapshotAttempts",
+      "name": "profileSnapshotAttempts",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactInbox"
@@ -47707,7 +47707,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "igSnapshotNextAttemptAt",
+      "name": "profileSnapshotNextAttemptAt",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactInbox"
@@ -47724,17 +47724,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Workspace"
-    },
-    {
-      "values": [
-        "pending",
-        "captured",
-        "unavailable",
-        "failed"
-      ],
-      "name": "contactInboxInstagramSnapshotState",
-      "entityType": "enums",
-      "schema": "public"
     },
     {
       "values": [
@@ -47757,97 +47746,6 @@
       "name": "ChannelPost",
       "entityType": "tables",
       "schema": "public"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "igFollow",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactInbox"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "igFollowing",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactInbox"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "igVerified",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactInbox"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "igFollowers",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactInbox"
-    },
-    {
-      "type": "contactInboxInstagramSnapshotState",
-      "typeSchema": "public",
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "igSnapshotState",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactInbox"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "igSnapshotAttempts",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactInbox"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "igSnapshotNextAttemptAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactInbox"
     },
     {
       "type": "bigint",
@@ -48108,19 +48006,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ChannelPost"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "purgeStartedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Workspace"
     },
     {
       "nameExplicit": true,

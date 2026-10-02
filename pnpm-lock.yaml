@@ -3218,6 +3218,9 @@ importers:
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../redis
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../utils

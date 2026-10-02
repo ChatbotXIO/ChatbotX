@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/business/contact-scan"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import { sanitizePublicText } from "@chatbotx.io/business/errors"
+import { supportsProfileSnapshot } from "@chatbotx.io/database/partials"
 import type { CoexistRunWriteGuard } from "@chatbotx.io/database/repositories"
 import { isContactScanChannel } from "@chatbotx.io/utils/channel"
 import {
@@ -24,7 +25,7 @@ import {
   resolveUsageThrottle,
   sleepForUsageThrottle,
 } from "../coexist/usage-throttle"
-import { enqueueInstagramSnapshotJobs } from "../instagram-snapshot/queue"
+import { enqueueProfileSnapshotJobs } from "../profile-snapshot/queue"
 import type { ContactScanErrorClassification } from "./adapter"
 import { contactScanAdapters } from "./adapter"
 
@@ -285,7 +286,9 @@ export const runContactScan = async (
       if (filtered.itemsToProcess.length > 0) {
         try {
           pageResult = await bulkImportChannelContacts({
-            captureInstagramSnapshot: context.inbox.channel === "instagram",
+            captureProfileSnapshot: supportsProfileSnapshot(
+              context.inbox.channel,
+            ),
             inbox: context.inbox,
             workspaceId,
             contacts: filtered.itemsToProcess.map((entry) => entry.contact),
@@ -329,10 +332,10 @@ export const runContactScan = async (
       }
 
       if (
-        context.inbox.channel === "instagram" &&
+        supportsProfileSnapshot(context.inbox.channel) &&
         pageResult?.newContactInboxIds.size
       ) {
-        await enqueueInstagramSnapshotJobs({
+        await enqueueProfileSnapshotJobs({
           contactInboxIds: [...pageResult.newContactInboxIds.values()].map(
             (link) => link.contactInboxId,
           ),
@@ -341,7 +344,7 @@ export const runContactScan = async (
         }).catch((err) => {
           logger.warn(
             { err, inboxId: context.inbox.id, workspaceId },
-            "[contact-scan] Instagram snapshot enqueue failed; recovery will retry",
+            "[contact-scan] Profile snapshot enqueue failed; recovery will retry",
           )
         })
       }

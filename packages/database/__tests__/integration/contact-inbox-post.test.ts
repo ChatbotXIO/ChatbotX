@@ -1147,29 +1147,29 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
     await db
       .update(schema.contactInboxModel)
       .set({
-        igFollow: true,
-        igFollowers: 42,
-        igFollowing: false,
-        igSnapshotAttempts: 1,
-        igSnapshotState: "captured",
-        igVerified: null,
+        followsBusiness: true,
+        followerCount: 42,
+        businessFollowsContact: false,
+        profileSnapshotAttempts: 1,
+        profileSnapshotState: "captured",
+        accountVerified: null,
       })
       .where(eq(schema.contactInboxModel.id, fixture.contactInboxId))
     const [contactInbox] = await db
       .select({
-        igFollow: schema.contactInboxModel.igFollow,
-        igFollowers: schema.contactInboxModel.igFollowers,
-        igFollowing: schema.contactInboxModel.igFollowing,
-        igVerified: schema.contactInboxModel.igVerified,
+        followsBusiness: schema.contactInboxModel.followsBusiness,
+        followerCount: schema.contactInboxModel.followerCount,
+        businessFollowsContact: schema.contactInboxModel.businessFollowsContact,
+        accountVerified: schema.contactInboxModel.accountVerified,
       })
       .from(schema.contactInboxModel)
       .where(eq(schema.contactInboxModel.id, fixture.contactInboxId))
 
     expect(contactInbox).toEqual({
-      igFollow: true,
-      igFollowers: 42,
-      igFollowing: false,
-      igVerified: null,
+      followsBusiness: true,
+      followerCount: 42,
+      businessFollowsContact: false,
+      accountVerified: null,
     })
 
     for (const condition of [

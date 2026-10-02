@@ -53,6 +53,7 @@ describe("instagramCoexistAdapter", () => {
       sourceId: "customer-1",
       firstName: "Customer",
       lastName: "One",
+      sourceUsername: "customer_one",
     })
   })
 

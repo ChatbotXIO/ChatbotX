@@ -19,7 +19,6 @@ import {
   getHeavyJobCompletionWaitTimeoutMs,
   getQueueConnection,
   HeavyJobAction,
-  type InstagramSnapshotJobData,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
@@ -41,7 +40,6 @@ import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
 import { runAiHandoverBulkToggle } from "./handlers/ai-handover-bulk-toggle"
 import { runAiHandoverTakeBack } from "./handlers/ai-handover-take-back"
-import { captureInstagramSnapshot } from "./handlers/capture-instagram-snapshot"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
 import { coexistInstagramSync } from "./handlers/coexist/instagram-sync"
@@ -631,32 +629,6 @@ async function startIntegrationWorker() {
     }
   })
 
-  const instagramSnapshotWorker = new Worker(
-    queueNames.enum.instagramSnapshot,
-    async (job: Job<InstagramSnapshotJobData>) => {
-      const workspaceId = job.data.data.workspaceId
-      await withBlockedOwnerGuard(workspaceId, async () => {
-        await runJobWithAuditContext(
-          { workspaceId, source: `instagram-snapshot:${job.data.type}` },
-          async () => {
-            await captureInstagramSnapshot(job.data.data)
-          },
-        )
-      })
-    },
-    {
-      connection: getQueueConnection(queueNames.enum.instagramSnapshot),
-      concurrency: 1,
-      limiter: { max: env.IG_SNAPSHOT_JOBS_PER_SECOND, duration: 1000 },
-    },
-  )
-
-  instagramSnapshotWorker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Instagram snapshot job ${job.id} has failed`)
-    }
-  })
-
   // Dedicated consumer for WhatsApp Business Calling VoIP-mode signaling: a
   // third Worker instance on its own queue, since the shared integration
   // queue's traffic must never starve the 30-60s Meta answer-deadline window.
@@ -731,7 +703,6 @@ async function startIntegrationWorker() {
       await worker.close()
       await Promise.all([
         callTranscriptionWorker.close(),
-        instagramSnapshotWorker.close(),
         whatsappVoipSignalingWorker.close(),
         closeChatQueueEvents(),
         closeIntegrationQueueEvents(),

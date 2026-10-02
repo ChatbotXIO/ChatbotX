@@ -42,17 +42,24 @@ export type IncomingContact = {
    */
   channelConversationId?: string
   /**
-   * Best-effort Instagram relationship snapshot. It is intentionally separate
+   * Best-effort relationship snapshot. It is intentionally separate
    * from the contact fields: callers persist it on the channel connection.
    */
-  instagramProfile?: InstagramProfileSnapshot | null
+  profileSnapshot?: ContactProfileSnapshot | null
 }
 
-export type InstagramProfileSnapshot = {
-  follow: boolean | null
-  followers: number | null
-  following: boolean | null
-  verified: boolean | null
+/**
+ * Channel-neutral relationship facts about a contact, stored on ContactInbox
+ * columns of the same names. A channel fills what its API exposes; `null`
+ * means "unknown", never false/0.
+ */
+export type ContactProfileSnapshot = {
+  followsBusiness: boolean | null
+  businessFollowsContact: boolean | null
+  accountVerified: boolean | null
+  followerCount: number | null
+  /** Handle at fetch time; only used to backfill `sourceUsername`. */
+  username?: string | null
 }
 
 /** The channel-scoped identity slice shared by contact-inbox rows and SDK contacts. */

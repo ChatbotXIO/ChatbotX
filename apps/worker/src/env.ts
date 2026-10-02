@@ -110,7 +110,7 @@ export const env = createEnv({
       .min(1)
       .max(1000)
       .default(10),
-    IG_SNAPSHOT_JOBS_PER_SECOND: z.coerce
+    PROFILE_SNAPSHOT_JOBS_PER_SECOND: z.coerce
       .number()
       .int()
       .min(1)

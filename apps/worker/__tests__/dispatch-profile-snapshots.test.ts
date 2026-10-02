@@ -15,11 +15,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
-    completeInstagramSnapshot: mocks.complete,
-    listDueInstagramSnapshots: mocks.due,
-    listExhaustedInstagramSnapshots: mocks.exhausted,
+    completeProfileSnapshot: mocks.complete,
+    listDueProfileSnapshots: mocks.due,
+    listExhaustedProfileSnapshots: mocks.exhausted,
   },
-  serializeInstagramSnapshotCursor: (r: {
+  serializeProfileSnapshotCursor: (r: {
     contactInboxId: string
     nextAttemptAt: Date | null
   }) =>
@@ -29,8 +29,8 @@ vi.mock("@chatbotx.io/business", () => ({
   withBlockedOwnerGuard: mocks.guard,
 }))
 
-vi.mock("../src/integration/handlers/instagram-snapshot/queue", () => ({
-  enqueueInstagramSnapshotJobs: mocks.enqueue,
+vi.mock("../src/integration/handlers/profile-snapshot/queue", () => ({
+  enqueueProfileSnapshotJobs: mocks.enqueue,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -45,8 +45,8 @@ vi.mock("@chatbotx.io/redis", () => ({
   },
 }))
 
-const { dispatchInstagramSnapshots } = await import(
-  "../src/schedule/handlers/dispatch-instagram-snapshots"
+const { dispatchProfileSnapshots } = await import(
+  "../src/schedule/handlers/dispatch-profile-snapshots"
 )
 
 // All fixtures share one nextAttemptAt so the composite keyset cursor
@@ -61,7 +61,7 @@ const row = (contactInboxId: string, workspaceId = "workspace-1") => ({
   workspaceId,
 })
 
-describe("dispatchInstagramSnapshots", () => {
+describe("dispatchProfileSnapshots", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.complete.mockResolvedValue(true)
@@ -77,7 +77,7 @@ describe("dispatchInstagramSnapshots", () => {
   test("uses an expired-lease CAS while terminalizing exhausted work", async () => {
     mocks.exhausted.mockResolvedValueOnce([{ ...row("ci-1"), attempt: 5 }])
 
-    await dispatchInstagramSnapshots()
+    await dispatchProfileSnapshots()
 
     expect(mocks.complete).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -101,7 +101,7 @@ describe("dispatchInstagramSnapshots", () => {
       workspaceId === "workspace-blocked" ? undefined : await fn(),
     )
 
-    await dispatchInstagramSnapshots()
+    await dispatchProfileSnapshots()
 
     expect(mocks.enqueue).toHaveBeenCalledWith({
       contactInboxIds: ["ci-ready"],
@@ -128,7 +128,7 @@ describe("dispatchInstagramSnapshots", () => {
       )
       .mockResolvedValueOnce([])
 
-    await dispatchInstagramSnapshots()
+    await dispatchProfileSnapshots()
 
     expect(mocks.exhausted).toHaveBeenNthCalledWith(2, {
       cursor: `${CURSOR_AT}|exhausted-99`,
@@ -172,13 +172,13 @@ describe("dispatchInstagramSnapshots", () => {
       )
     })
 
-    await dispatchInstagramSnapshots()
+    await dispatchProfileSnapshots()
 
-    expect(cursors.get("schedule:instagram-snapshots:due-cursor")).toBe(
+    expect(cursors.get("schedule:profile-snapshots:due-cursor")).toBe(
       `${CURSOR_AT}|blocked-1999`,
     )
 
-    await dispatchInstagramSnapshots()
+    await dispatchProfileSnapshots()
 
     expect(mocks.enqueue).toHaveBeenCalledWith({
       contactInboxIds: ["ci-ready"],

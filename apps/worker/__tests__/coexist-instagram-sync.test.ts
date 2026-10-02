@@ -81,8 +81,8 @@ vi.mock("../src/lib/logger", () => ({
   },
 }))
 
-vi.mock("../src/integration/handlers/instagram-snapshot/queue", () => ({
-  enqueueInstagramSnapshotJobs: vi.fn().mockResolvedValue(undefined),
+vi.mock("../src/integration/handlers/profile-snapshot/queue", () => ({
+  enqueueProfileSnapshotJobs: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("../src/integration/handlers/coexist/bulk-historical-import", () => ({

@@ -67,15 +67,16 @@ describe("fetchInstagramContactProfile", () => {
             tokens: { accessToken: "page-token" },
           },
         },
-        data: { includeInstagramSnapshot: true, sourceId: "igsid-1" },
+        data: { includeProfileSnapshot: true, sourceId: "igsid-1" },
       } as never),
     ).resolves.toEqual({
       firstName: "Ada",
-      instagramProfile: {
-        follow: true,
-        followers: 123,
-        following: false,
-        verified: true,
+      profileSnapshot: {
+        followsBusiness: true,
+        followerCount: 123,
+        businessFollowsContact: false,
+        accountVerified: true,
+        username: null,
       },
       sourceId: "igsid-1",
       sourceUsername: "ada",
@@ -101,15 +102,16 @@ describe("fetchInstagramContactProfile", () => {
             tokens: { accessToken: "page-token" },
           },
         },
-        data: { includeInstagramSnapshot: true, sourceId: "igsid-1" },
+        data: { includeProfileSnapshot: true, sourceId: "igsid-1" },
       } as never),
     ).resolves.toEqual({
       sourceId: "igsid-1",
-      instagramProfile: {
-        follow: true,
-        followers: 123,
-        following: false,
-        verified: true,
+      profileSnapshot: {
+        followsBusiness: true,
+        followerCount: 123,
+        businessFollowsContact: false,
+        accountVerified: true,
+        username: null,
       },
     })
   })

@@ -1,10 +1,10 @@
 import {
-  InstagramSnapshotJobAction,
-  instagramSnapshotJobId,
-  instagramSnapshotQueue,
+  ProfileSnapshotJobAction,
+  profileSnapshotJobId,
+  profileSnapshotQueue,
 } from "@chatbotx.io/worker-config"
 
-export const enqueueInstagramSnapshotJobs = async (input: {
+export const enqueueProfileSnapshotJobs = async (input: {
   contactInboxIds: Iterable<string>
   inboxId: string
   workspaceId: string
@@ -13,11 +13,11 @@ export const enqueueInstagramSnapshotJobs = async (input: {
   if (ids.length === 0) {
     return
   }
-  await instagramSnapshotQueue.addBulk(
+  await profileSnapshotQueue.addBulk(
     ids.map((contactInboxId) => ({
-      name: InstagramSnapshotJobAction.capture,
+      name: ProfileSnapshotJobAction.capture,
       data: {
-        type: InstagramSnapshotJobAction.capture,
+        type: ProfileSnapshotJobAction.capture,
         data: {
           contactInboxId,
           inboxId: input.inboxId,
@@ -26,7 +26,7 @@ export const enqueueInstagramSnapshotJobs = async (input: {
       },
       opts: {
         attempts: 1,
-        jobId: instagramSnapshotJobId(contactInboxId),
+        jobId: profileSnapshotJobId(contactInboxId),
         removeOnComplete: true,
         removeOnFail: true,
       },

@@ -5,8 +5,8 @@ import { getContactProfilePicUrl, getUserProfile } from "../apis/user"
 import { logger } from "../lib/logger"
 import type { InstagramAuthValue } from "../schema"
 
-const getInstagramSnapshot: NonNullable<
-  ContactHandlers<InstagramAuthValue>["getInstagramSnapshot"]
+const getProfileSnapshot: NonNullable<
+  ContactHandlers<InstagramAuthValue>["getProfileSnapshot"]
 > = async ({ ctx, data: { sourceId } }) => {
   const profile = await fetchInstagramContactProfile({
     igsid: sourceId,
@@ -14,22 +14,23 @@ const getInstagramSnapshot: NonNullable<
     version: ctx.auth.metadata.version,
   })
   return {
-    follow: profile.followsBusiness,
-    followers: profile.followersCount,
-    following: profile.businessFollowUser,
-    verified: profile.isVerified,
+    followsBusiness: profile.followsBusiness,
+    businessFollowsContact: profile.businessFollowUser,
+    accountVerified: profile.isVerified,
+    followerCount: profile.followersCount,
+    username: profile.username,
   }
 }
 
 export const contactHandlers: Partial<ContactHandlers<InstagramAuthValue>> = {
-  getProfile: async ({ ctx, data: { includeInstagramSnapshot, sourceId } }) => {
-    if (!includeInstagramSnapshot) {
+  getProfile: async ({ ctx, data: { includeProfileSnapshot, sourceId } }) => {
+    if (!includeProfileSnapshot) {
       return await getUserProfile({ ctx, psid: sourceId })
     }
 
     const [profile, snapshot] = await Promise.allSettled([
       getUserProfile({ ctx, psid: sourceId }),
-      getInstagramSnapshot({ ctx, data: { sourceId } }),
+      getProfileSnapshot({ ctx, data: { sourceId } }),
     ])
     if (profile.status === "rejected" && snapshot.status === "rejected") {
       throw profile.reason
@@ -49,10 +50,10 @@ export const contactHandlers: Partial<ContactHandlers<InstagramAuthValue>> = {
 
     return {
       ...(profile.status === "fulfilled" ? profile.value : { sourceId }),
-      instagramProfile: snapshot.status === "fulfilled" ? snapshot.value : null,
+      profileSnapshot: snapshot.status === "fulfilled" ? snapshot.value : null,
     }
   },
-  getInstagramSnapshot,
+  getProfileSnapshot,
   getContactProfilePicUrl: async ({ ctx, data: { sourceId } }) =>
     await getContactProfilePicUrl({ ctx, psid: sourceId }),
 }

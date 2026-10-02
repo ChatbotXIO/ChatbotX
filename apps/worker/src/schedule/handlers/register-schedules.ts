@@ -34,14 +34,14 @@ export const registerSchedules = async () => {
   }
 
   await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.dispatchInstagramSnapshots,
+    ScheduleJobData.dispatchProfileSnapshots,
     {
       pattern: "* * * * *",
     },
     {
-      name: ScheduleJobData.dispatchInstagramSnapshots,
+      name: ScheduleJobData.dispatchProfileSnapshots,
       data: {
-        type: ScheduleJobData.dispatchInstagramSnapshots,
+        type: ScheduleJobData.dispatchProfileSnapshots,
         data: {},
       },
     },

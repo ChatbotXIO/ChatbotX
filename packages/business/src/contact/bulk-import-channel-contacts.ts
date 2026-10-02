@@ -54,17 +54,12 @@ export type BulkImportChannelContactsResult = {
  */
 export const bulkImportChannelContacts = async (props: {
   /** Durable opt-in used only by Instagram coexist and contact-scan imports. */
-  captureInstagramSnapshot?: boolean
+  captureProfileSnapshot?: boolean
   inbox: InboxModel
   workspaceId: string
   contacts: IncomingContact[]
 }): Promise<BulkImportChannelContactsResult> => {
-  const {
-    inbox,
-    workspaceId,
-    contacts,
-    captureInstagramSnapshot = false,
-  } = props
+  const { inbox, workspaceId, contacts, captureProfileSnapshot = false } = props
 
   const empty: BulkImportChannelContactsResult = {
     importedContacts: 0,
@@ -126,7 +121,7 @@ export const bulkImportChannelContacts = async (props: {
       dedup,
       sourceIds,
       sourceUserIds,
-      captureInstagramSnapshot,
+      captureProfileSnapshot,
     })
 
   // Narrow `contactInboxIds` to only the sourceIds that were newly created —

@@ -13,13 +13,27 @@ export const contactSources = z.enum([
 ])
 export type ContactSource = z.infer<typeof contactSources>
 
-export const instagramSnapshotStates = z.enum([
+export const profileSnapshotStates = z.enum([
   "pending",
   "captured",
   "unavailable",
   "failed",
 ])
-export type InstagramSnapshotState = z.infer<typeof instagramSnapshotStates>
+export type ProfileSnapshotState = z.infer<typeof profileSnapshotStates>
+
+/**
+ * Channels whose integration implements `getProfileSnapshot`. The single
+ * source for every "can this channel capture a profile snapshot" gate (claim,
+ * recovery scans, import producers); adding a channel = add it here and
+ * implement the handler.
+ */
+export const profileSnapshotChannels = ["instagram"] as const
+export type ProfileSnapshotChannel = (typeof profileSnapshotChannels)[number]
+
+export const supportsProfileSnapshot = (
+  channel: string,
+): channel is ProfileSnapshotChannel =>
+  profileSnapshotChannels.some((candidate) => candidate === channel)
 
 export const channelPostIntegrationTypes = z.enum([
   "messenger",

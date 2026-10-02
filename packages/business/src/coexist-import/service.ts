@@ -7,7 +7,10 @@ import {
   or,
   type SQL,
 } from "@chatbotx.io/database/client"
-import { contactSources } from "@chatbotx.io/database/partials"
+import {
+  contactSources,
+  supportsProfileSnapshot,
+} from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   contactModel,
@@ -121,7 +124,7 @@ export type CoexistDedupContact = {
 }
 
 export type ResolveOrCreateContactLinksInput = {
-  captureInstagramSnapshot: boolean
+  captureProfileSnapshot: boolean
   workspaceId: string
   inboxId: string
   inboxChannel: string
@@ -170,7 +173,7 @@ class CoexistImportService extends BaseService {
       dedup,
       sourceIds,
       sourceUserIds,
-      captureInstagramSnapshot,
+      captureProfileSnapshot,
     } = input
 
     const newContactCreatedEvents: NewContactCreatedEvent[] = []
@@ -302,11 +305,11 @@ class CoexistImportService extends BaseService {
           sourceUserId: entry.sourceUserId ?? null,
           sourceUsername: entry.sourceUsername ?? null,
           channel: inboxChannel,
-          ...(captureInstagramSnapshot && inboxChannel === "instagram"
+          ...(captureProfileSnapshot && supportsProfileSnapshot(inboxChannel)
             ? {
-                igSnapshotAttempts: 0,
-                igSnapshotNextAttemptAt: new Date(),
-                igSnapshotState: "pending" as const,
+                profileSnapshotAttempts: 0,
+                profileSnapshotNextAttemptAt: new Date(),
+                profileSnapshotState: "pending" as const,
               }
             : {}),
           createdAt: new Date(),

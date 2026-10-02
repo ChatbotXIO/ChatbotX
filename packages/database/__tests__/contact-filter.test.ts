@@ -2347,9 +2347,9 @@ describe("applyContactFilter — contactInbox relation fields", () => {
 
 describe("applyContactFilter — Instagram snapshots and commented posts", () => {
   test.each([
-    ["followsBusinessOnInstagram", "igFollow"],
-    ["businessFollowsUserOnInstagram", "igFollowing"],
-    ["verifiedAccountOnInstagram", "igVerified"],
+    ["followsBusinessOnInstagram", "followsBusiness"],
+    ["businessFollowsUserOnInstagram", "businessFollowsContact"],
+    ["verifiedAccountOnInstagram", "accountVerified"],
   ])("keeps explicit true, false and empty distinct for %s", (field, column) => {
     for (const value of ["true", "false"]) {
       const query = renderContactWhere(
@@ -2384,7 +2384,7 @@ describe("applyContactFilter — Instagram snapshots and commented posts", () =>
           ],
         }),
       )
-      expect(query.sql).toContain('SELECT MAX("ContactInbox"."igFollowers")')
+      expect(query.sql).toContain('SELECT MAX("ContactInbox"."followerCount")')
       if (operator === "ne" || operator === "isEmpty") {
         expect(query.sql).toContain("IS NULL")
       }

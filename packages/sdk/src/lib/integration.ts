@@ -387,13 +387,13 @@ export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
     {
       ctx: Context<IAuth>
-      data: { includeInstagramSnapshot?: boolean; sourceId: string }
+      data: { includeProfileSnapshot?: boolean; sourceId: string }
     },
     IncomingContact
   >
-  getInstagramSnapshot?: Handler<
+  getProfileSnapshot?: Handler<
     { ctx: Context<IAuth>; data: { sourceId: string } },
-    NonNullable<IncomingContact["instagramProfile"]>
+    NonNullable<IncomingContact["profileSnapshot"]>
   >
   getContactProfilePicUrl: Handler<
     { ctx: Context<IAuth>; data: { sourceId: string } },

@@ -17,7 +17,7 @@ const {
   mockLogProviderError,
   mockLowQueueAddBulk,
   mockQueueAdd,
-  mockEnqueueInstagramSnapshots,
+  mockEnqueueProfileSnapshots,
 } = vi.hoisted(() => ({
   mockClaim: vi.fn(),
   mockFinish: vi.fn(),
@@ -35,7 +35,7 @@ const {
   mockLogProviderError: vi.fn(),
   mockLowQueueAddBulk: vi.fn(),
   mockQueueAdd: vi.fn(),
-  mockEnqueueInstagramSnapshots: vi.fn(),
+  mockEnqueueProfileSnapshots: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -114,8 +114,8 @@ vi.mock("../src/integration/handlers/contact-scan/adapter", () => ({
   },
 }))
 
-vi.mock("../src/integration/handlers/instagram-snapshot/queue", () => ({
-  enqueueInstagramSnapshotJobs: mockEnqueueInstagramSnapshots,
+vi.mock("../src/integration/handlers/profile-snapshot/queue", () => ({
+  enqueueProfileSnapshotJobs: mockEnqueueProfileSnapshots,
 }))
 
 const { runContactScan } = await import(
@@ -181,7 +181,7 @@ describe("runContactScan", () => {
     mockReopenReleased.mockResolvedValue(1)
     mockBulkImportChannelContacts.mockResolvedValue(emptyImportResult)
     mockQueueAdd.mockResolvedValue(undefined)
-    mockEnqueueInstagramSnapshots.mockResolvedValue(undefined)
+    mockEnqueueProfileSnapshots.mockResolvedValue(undefined)
     // Both are best-effort (`.catch(...)`-chained by the engine, FIX 1) —
     // default them to resolving Promises like the real services so a test
     // that doesn't care about them doesn't crash on `.catch` of a bare
@@ -310,7 +310,7 @@ describe("runContactScan", () => {
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
       expect(mockBulkImportChannelContacts).toHaveBeenCalledWith({
-        captureInstagramSnapshot: false,
+        captureProfileSnapshot: false,
         inbox: context.inbox,
         workspaceId: WORKSPACE_ID,
         contacts: [{ sourceId: "in-window" }],
@@ -492,9 +492,9 @@ describe("runContactScan", () => {
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
       expect(mockBulkImportChannelContacts).toHaveBeenCalledWith(
-        expect.objectContaining({ captureInstagramSnapshot: true }),
+        expect.objectContaining({ captureProfileSnapshot: true }),
       )
-      expect(mockEnqueueInstagramSnapshots).toHaveBeenCalledWith({
+      expect(mockEnqueueProfileSnapshots).toHaveBeenCalledWith({
         contactInboxIds: ["ci-1"],
         inboxId: "inbox-1",
         workspaceId: WORKSPACE_ID,

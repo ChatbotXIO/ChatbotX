@@ -3330,7 +3330,7 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "contact",
       "getProfile",
       expect.objectContaining({
-        data: { includeInstagramSnapshot: true, sourceId: "ig-psid-1" },
+        data: { includeProfileSnapshot: true, sourceId: "ig-psid-1" },
       }),
     )
   })
@@ -3391,7 +3391,7 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "contact",
       "getProfile",
       expect.objectContaining({
-        data: { includeInstagramSnapshot: false, sourceId: "zalo-psid-1" },
+        data: { includeProfileSnapshot: false, sourceId: "zalo-psid-1" },
       }),
     )
   })
@@ -3452,7 +3452,7 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "contact",
       "getProfile",
       expect.objectContaining({
-        data: { includeInstagramSnapshot: false, sourceId: "telegram-chat-1" },
+        data: { includeProfileSnapshot: false, sourceId: "telegram-chat-1" },
       }),
     )
   })

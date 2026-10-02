@@ -42,7 +42,7 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   whatsappVoipSignaling: "hot",
   low: "hot",
   // Rate-limited background enrichment; must not compete with chat/integration.
-  instagramSnapshot: "bulk",
+  profileSnapshot: "bulk",
 }
 
 function resolveGroupUrl(group: QueueGroup): string {

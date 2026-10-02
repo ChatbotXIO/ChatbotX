@@ -35,6 +35,7 @@ import {
   type ContactSource,
   contactSources,
   type IntegrationType,
+  supportsProfileSnapshot,
 } from "@chatbotx.io/database/partials"
 import {
   type CreateMessageInput,
@@ -2182,7 +2183,10 @@ const createNewContactAndContactInbox = async (props: {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
   }
-  let instagramProfile: IncomingContact["instagramProfile"]
+  let profileSnapshot: IncomingContact["profileSnapshot"]
+  // The handle only arrives via the on-demand profile lookup (the DM webhook
+  // carries none); it belongs on ContactInbox, not on the Contact row.
+  let profileSourceUsername: string | undefined
   if (hasOnDemandProfileApi(inbox.channel as ChannelType)) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
@@ -2203,13 +2207,14 @@ const createNewContactAndContactInbox = async (props: {
             ctx: profileCtx,
             data: {
               sourceId: incomingContact.sourceId,
-              includeInstagramSnapshot: inbox.channel === "instagram",
+              includeProfileSnapshot: supportsProfileSnapshot(inbox.channel),
             },
           },
         )
-        const { instagramProfile: resolvedInstagramProfile, ...profile } =
+        const { profileSnapshot: resolvedProfileSnapshot, ...profile } =
           userProfile
-        instagramProfile = resolvedInstagramProfile
+        profileSnapshot = resolvedProfileSnapshot
+        profileSourceUsername = profile.sourceUsername
         contactData = {
           ...contactData,
           ...profile,
@@ -2307,12 +2312,14 @@ const createNewContactAndContactInbox = async (props: {
           sourceId: incomingContact.sourceId,
           sourceUserId: incomingContact.sourceUserId ?? null,
           sourceParentUserId: incomingContact.sourceParentUserId ?? null,
-          sourceUsername: incomingContact.sourceUsername ?? null,
+          sourceUsername:
+            incomingContact.sourceUsername ?? profileSourceUsername ?? null,
           channel: inbox.channel,
-          igFollow: instagramProfile?.follow ?? null,
-          igFollowing: instagramProfile?.following ?? null,
-          igVerified: instagramProfile?.verified ?? null,
-          igFollowers: instagramProfile?.followers ?? null,
+          followsBusiness: profileSnapshot?.followsBusiness ?? null,
+          businessFollowsContact:
+            profileSnapshot?.businessFollowsContact ?? null,
+          accountVerified: profileSnapshot?.accountVerified ?? null,
+          followerCount: profileSnapshot?.followerCount ?? null,
           language: finalizedProfile.language,
         })
         .returning()
