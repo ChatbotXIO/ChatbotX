@@ -49,6 +49,38 @@ describe("realtime batch envelopes", () => {
 
     expect(frame.batch).toHaveLength(1)
   })
+
+  test("rejects a whatsappCallPermissionUpdated event missing its route", () => {
+    // Regression for PR #1349 round-5 finding #1 (6th routeless site): a
+    // permission-mode change is conversation-scoped like a message event,
+    // unlike a ringing/active call's workspace-wide broadcast.
+    expect(() =>
+      realtimeBatchEnvelopeSchema.parse({
+        batch: [
+          {
+            data: { conversationId: "conv-1" },
+            eventType: "whatsappCallPermissionUpdated",
+          },
+        ],
+        seq: "123-0",
+      }),
+    ).toThrow(CONVERSATION_SCOPED_ROUTE_ERROR_REGEX)
+  })
+
+  test("allows a whatsappCallPermissionUpdated event with its route", () => {
+    const frame = realtimeBatchEnvelopeSchema.parse({
+      batch: [
+        {
+          data: { conversationId: "conv-1" },
+          eventType: "whatsappCallPermissionUpdated",
+          route,
+        },
+      ],
+      seq: "123-0",
+    })
+
+    expect(frame.batch).toHaveLength(1)
+  })
 })
 
 describe("realtime guest batch envelopes", () => {
