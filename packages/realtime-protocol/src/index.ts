@@ -1,4 +1,5 @@
 export * from "./auth"
+export * from "./frame-reader"
 export * from "./realtime-socket"
 export * from "./schemas"
 export * from "./stream"
