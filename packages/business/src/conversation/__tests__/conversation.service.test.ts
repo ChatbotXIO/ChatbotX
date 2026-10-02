@@ -110,6 +110,10 @@ vi.mock("@chatbotx.io/realtime-protocol", () => ({
     assignedTeamIds: [],
     assignedUserIds: [],
   })),
+  routeForConversation: vi.fn(() => ({
+    assignedTeamIds: [],
+    assignedUserIds: [],
+  })),
 }))
 
 vi.mock("../../platform/realtime-broadcast", () => ({

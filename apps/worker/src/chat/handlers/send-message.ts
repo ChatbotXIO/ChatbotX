@@ -735,7 +735,7 @@ export async function recordMessageSendError(
   workspaceId: string,
   createdAt: Date | undefined,
   errorMessage: string,
-  route: RealtimeEventRoute | undefined,
+  route: RealtimeEventRoute,
   silent = false,
 ) {
   try {
@@ -767,7 +767,7 @@ async function clearMessageSendError(
   clientId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
-  route: RealtimeEventRoute | undefined,
+  route: RealtimeEventRoute,
   silent = false,
 ) {
   try {

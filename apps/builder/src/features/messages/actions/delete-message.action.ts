@@ -7,7 +7,10 @@ import {
   queueWorkspaceRealtimeEvent,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -53,6 +56,10 @@ export const deleteMessage = async (props: {
   queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
+    route: routeForConversation({
+      assignedUserId: conversation.assignedUserId,
+      assignedInboxTeamId: conversation.assignedInboxTeamId,
+    }),
   })
 
   const jobs: Promise<unknown>[] = []

@@ -85,8 +85,16 @@ export const updateWorkspaceMemberAction = workspaceActionClient
     })
 
     if (!updated) {
-      return
+      return { revokeWarning: false }
     }
+    // `revokeWorkspaceMemberRealtimeConnections` already retries a transient
+    // Redis failure a few times; if every attempt still fails, the
+    // permissions change itself has already been persisted — only the
+    // IMMEDIATE reauth-close of the member's existing sockets is uncertain
+    // (they still re-validate on their next forced reconnect), so this
+    // reports a warning rather than failing the whole action. See PR #1349
+    // finding #5.
+    let revokeWarning = false
     if (permissionsChanged) {
       try {
         await revokeWorkspaceMemberRealtimeConnections({
@@ -95,6 +103,7 @@ export const updateWorkspaceMemberAction = workspaceActionClient
           reason: "reauth",
         })
       } catch (error) {
+        revokeWarning = true
         logger.error(
           { err: error, userId: workspaceMember.userId, workspaceId },
           "Failed to revoke workspace member realtime connections",
@@ -115,4 +124,6 @@ export const updateWorkspaceMemberAction = workspaceActionClient
         detail: `changed role of ${targetUser?.name ?? targetUser?.email ?? "a member"} to ${updateInput.permissions.superAdmin ? "admin" : "member"}`,
       })
     }
+
+    return { revokeWarning }
   })

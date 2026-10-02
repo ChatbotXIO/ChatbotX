@@ -10,18 +10,43 @@ import {
   whatsappCallClaimedElsewhereSchema,
 } from "../src/schemas"
 
+const CONVERSATION_SCOPED_ROUTE_ERROR_REGEX =
+  /conversation-scoped and requires a route/
+
 describe("realtime batch envelopes", () => {
+  const route = { assignedTeamIds: [], assignedUserIds: ["user-1"] }
+
   test("preserves every event in one sequenced record frame", () => {
     const frame = realtimeBatchEnvelopeSchema.parse({
       batch: [
-        { data: { id: "message-1" }, eventType: "messageCreated" },
-        { data: { id: "message-2" }, eventType: "messageCreated" },
+        { data: { id: "message-1" }, eventType: "messageCreated", route },
+        { data: { id: "message-2" }, eventType: "messageCreated", route },
       ],
       seq: "123-0",
     })
 
     expect(frame.batch).toHaveLength(2)
     expect(frame.seq).toBe("123-0")
+  })
+
+  test("rejects a conversation-scoped event missing its route", () => {
+    expect(() =>
+      realtimeBatchEnvelopeSchema.parse({
+        batch: [{ data: { id: "message-1" }, eventType: "messageCreated" }],
+        seq: "123-0",
+      }),
+    ).toThrow(CONVERSATION_SCOPED_ROUTE_ERROR_REGEX)
+  })
+
+  test("allows a workspace-wide event with no route", () => {
+    const frame = realtimeBatchEnvelopeSchema.parse({
+      batch: [
+        { data: { contactId: "contact-1" }, eventType: "contactBlocked" },
+      ],
+      seq: "123-0",
+    })
+
+    expect(frame.batch).toHaveLength(1)
   })
 })
 

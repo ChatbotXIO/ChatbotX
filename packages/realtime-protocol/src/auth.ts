@@ -71,7 +71,14 @@ const encodeSecret = (secret: string): Uint8Array => {
  */
 export type RealtimeTokenClaims = Record<string, unknown>
 
-export const signRealtimeToken = async (
+/**
+ * Not exported: every caller mints through a purpose-specific wrapper
+ * (`signMemberConnectToken`, `signGuestConnectToken`,
+ * `signPresenceReportToken`) so each purpose's claims are typed and
+ * validated at its own call site instead of callers building an untyped
+ * claims bag by hand against this primitive directly.
+ */
+const signRealtimeToken = async (
   audience: RealtimeAudience,
   purpose: RealtimeTokenPurpose,
   secret: string,
@@ -114,10 +121,19 @@ const memberClaimsSchema = z.object({
   chatScope: realtimeChatScopes,
   teamIds: z.array(z.string().min(1)).default([]),
   // Standard JWT "issued at" (seconds since epoch), set automatically by
-  // `signRealtimeToken`'s `.setIssuedAt()`. Kept (not stripped) so a replayed
-  // `member-revoke` stream record older than this token's mint time can be
-  // told apart from one that's genuinely newer than the reconnect.
+  // the internal `signRealtimeToken`'s `.setIssuedAt()`. Kept (not stripped)
+  // so a replayed `member-revoke` stream record older than this token's mint
+  // time can be told apart from one that's genuinely newer than the
+  // reconnect.
   iat: z.number(),
+  // Millisecond-precision mint time, set explicitly below (jose's built-in
+  // `iat` floors to whole seconds). The revoke-marker check must compare
+  // `revokedAt > iatMs`, not `iat * 1000`: flooring `iat` to the start of its
+  // second can put it BEFORE a revoke that landed earlier in that same
+  // second, letting a member who reconnects within the same second as their
+  // own revoke slip through a `>=` check on the floored value. See PR #1349
+  // round-5 finding #2.
+  iatMs: z.number(),
 })
 
 /** Claims carried by a room-connect token: the verified member's user id. */
@@ -146,6 +162,7 @@ export const signMemberConnectToken = async (
       userId: member.userId,
       chatScope: member.chatScope,
       teamIds: member.teamIds ?? [],
+      iatMs: Date.now(),
     },
   )
 
@@ -195,6 +212,47 @@ export const verifyGuestConnectToken = async (
       token,
       { kind: "guest", id: guestConversationId },
       REALTIME_TOKEN_PURPOSE.guestConnect,
+      secret,
+    ),
+  )
+
+const presenceReportClaimsSchema = z.object({
+  // Binds this token to exactly the user-id list the caller is about to
+  // send, so a captured token can't be replayed with a different member
+  // list — the route recomputes the same hash over the body it receives and
+  // rejects on mismatch.
+  bodyHash: z.string().min(1),
+})
+export type RealtimePresenceReportClaims = z.infer<
+  typeof presenceReportClaimsSchema
+>
+
+/**
+ * Mints the realtime server's periodic presence report to the builder. Its
+ * own purpose claim keeps this direction from replaying a token minted for
+ * the inbound-broadcast direction.
+ */
+export const signPresenceReportToken = async (
+  args: { workspaceId: string; bodyHash: string },
+  secret: string,
+): Promise<string> =>
+  signRealtimeToken(
+    { kind: "workspace", id: args.workspaceId },
+    REALTIME_TOKEN_PURPOSE.presenceReport,
+    secret,
+    { bodyHash: args.bodyHash },
+  )
+
+export const verifyPresenceReportToken = async (
+  token: string,
+  workspaceId: string,
+  secret: string,
+): Promise<RealtimePresenceReportClaims> =>
+  presenceReportClaimsSchema.parse(
+    await verifyRealtimeToken(
+      token,
+      { kind: "workspace", id: workspaceId },
+      REALTIME_TOKEN_PURPOSE.presenceReport,
       secret,
     ),
   )

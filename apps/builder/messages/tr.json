@@ -3362,6 +3362,7 @@
     "title": "Profili Düzenle"
   },
   "messages": {
+    "realtimeRevokeWarning": "Erişim iptali hemen onaylanamadı - üyenin bir sonraki yeniden bağlanmasında geçerli olacak.",
     "moveFeature": "{feature} Taşı",
     "poweredBy": "{name} tarafından desteklenmektedir",
     "noGiphyApiKey": "GIPHY API anahtarı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin.",

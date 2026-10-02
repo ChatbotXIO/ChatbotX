@@ -3362,6 +3362,7 @@
     "deleteConfirmation": "Apakah Anda benar-benar yakin?\nTindakan ini tidak dapat dibatalkan.\nTindakan ini akan menghapus {feature} Anda secara permanen dari server kami."
   },
   "messages": {
+    "realtimeRevokeWarning": "Pencabutan akses tidak dapat dikonfirmasi langsung - akan berlaku saat anggota tersambung kembali berikutnya.",
     "moveFeature": "Pindahkan {feature}",
     "poweredBy": "Didukung oleh {name}",
     "noGiphyApiKey": "Kunci API GIPHY tidak ditemukan. Tambahkan di Pengaturan Platform.",

@@ -46,6 +46,7 @@ import {
 import {
   RealtimeEventType,
   routeForAssignment,
+  routeForConversation,
 } from "@chatbotx.io/realtime-protocol"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
@@ -1358,7 +1359,7 @@ class ConversationService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     const { workspaceId, id, agentLastReadAt, silent, tx = db } = props
-    await tx
+    const [updated] = await tx
       .update(conversationModel)
       .set({ agentLastReadAt })
       .where(
@@ -1367,6 +1368,10 @@ class ConversationService extends BaseService {
           eq(conversationModel.workspaceId, workspaceId),
         ),
       )
+      .returning({
+        assignedInboxTeamId: conversationModel.assignedInboxTeamId,
+        assignedUserId: conversationModel.assignedUserId,
+      })
     await this.invalidate({ workspaceId, ids: [id] })
     if (!silent) {
       queueWorkspaceRealtimeEvent(workspaceId, {
@@ -1375,6 +1380,10 @@ class ConversationService extends BaseService {
           conversationIds: [id],
           changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
         },
+        route: routeForConversation({
+          assignedUserId: updated?.assignedUserId,
+          assignedInboxTeamId: updated?.assignedInboxTeamId,
+        }),
       })
     }
   }
@@ -1418,7 +1427,11 @@ class ConversationService extends BaseService {
           ),
         ),
       )
-      .returning({ id: conversationModel.id })
+      .returning({
+        assignedInboxTeamId: conversationModel.assignedInboxTeamId,
+        assignedUserId: conversationModel.assignedUserId,
+        id: conversationModel.id,
+      })
 
     if (updated.length === 0) {
       return false
@@ -1432,6 +1445,10 @@ class ConversationService extends BaseService {
           conversationIds: [conversationId],
           changes: { agentLastReadAt: readAt.toISOString() },
         },
+        route: routeForConversation({
+          assignedUserId: updated[0]?.assignedUserId,
+          assignedInboxTeamId: updated[0]?.assignedInboxTeamId,
+        }),
       })
     }
 

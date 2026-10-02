@@ -57,6 +57,13 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
     // this workspace room — their next connect attempt is rejected anyway
     // (the mint endpoint re-checks membership), but an existing socket
     // would otherwise keep receiving events until it happens to reconnect.
+    // `revokeWorkspaceMemberRealtimeConnections` already retries a transient
+    // Redis failure a few times; if every attempt still fails, the removal
+    // itself has already succeeded (the member is deleted and their session
+    // re-check will reject the next connect) — only the IMMEDIATE socket
+    // close is uncertain, so this reports a warning rather than failing the
+    // whole action. See PR #1349 finding #5.
+    let revokeWarning = false
     try {
       await revokeWorkspaceMemberRealtimeConnections({
         workspaceId,
@@ -64,9 +71,12 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
         reason: "deleted",
       })
     } catch (error) {
+      revokeWarning = true
       logger.error(
         { err: error, userId: workspaceMember.userId, workspaceId },
         "Failed to revoke removed member realtime connections",
       )
     }
+
+    return { revokeWarning }
   })

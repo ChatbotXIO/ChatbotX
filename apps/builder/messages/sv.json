@@ -4187,6 +4187,7 @@
     "toolsGroup": "Verktyg"
   },
   "messages": {
+    "realtimeRevokeWarning": "Åtkomståterkallelsen kunde inte bekräftas direkt – den börjar gälla vid medlemmens nästa återanslutning.",
     "addFeature": "Lägg till {feature}",
     "archiveFeature": "Arkivera {feature}",
     "archiveFeatureDescription": "Är du säker på att du vill arkivera {feature}?",

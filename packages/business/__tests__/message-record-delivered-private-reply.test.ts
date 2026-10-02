@@ -166,6 +166,7 @@ describe("recordDeliveredPrivateReply", () => {
     expect(mockPublishToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
       eventType: "messageCreated",
       data: expect.objectContaining({ id: "msg-1" }),
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 

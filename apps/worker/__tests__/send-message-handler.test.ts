@@ -893,6 +893,78 @@ describe("chat send-message handlers", () => {
     })
   })
 
+  test("routes a comment reply's messageIdAssigned event with a route, full-access by default", async () => {
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["reply-1"],
+      sentCount: 1,
+    })
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-comment-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "comment reply",
+        type: "comment",
+        parentId: "parent-1",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageIdAssigned",
+      data: { messageId: "msg-comment-1", commentId: "reply-1" },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
+    })
+  })
+
+  test("routes a comment reply's messageIdAssigned event to the conversation's assigned agent/team", async () => {
+    // Regression for PR #1349 finding #1: `messageIdAssigned` used to
+    // publish with no `route` at all, so a workspace member restricted to
+    // `chatScope: "assigned"` never saw the provider comment id attach (the
+    // edit/delete buttons it unlocks) for a conversation assigned to them.
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["reply-1"],
+      sentCount: 1,
+    })
+
+    const assignedConversation = {
+      ...conversation,
+      assignedUserId: "user-42",
+      assignedInboxTeamId: "team-7",
+    }
+
+    await sendMessageToChannel({
+      conversation: assignedConversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-comment-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "comment reply",
+        type: "comment",
+        parentId: "parent-1",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageIdAssigned",
+      data: { messageId: "msg-comment-1", commentId: "reply-1" },
+      route: { assignedTeamIds: ["team-7"], assignedUserIds: ["user-42"] },
+    })
+  })
+
   test("persists but does not publish a bulk outbound send error", async () => {
     mockRunChannelHandler.mockRejectedValueOnce(
       new ChannelError(
