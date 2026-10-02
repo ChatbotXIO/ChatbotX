@@ -7,16 +7,15 @@ import type { MessageKey } from "@/features/channel-connect/lib/message-key"
 const CREATE_CHANNEL_ERROR_PARAM = "error"
 
 /**
- * Plan-limit failures the "create a workspace for the user's first channel"
- * step can raise (`workspaceService.create`'s quota gates), keyed by
- * `ChatbotXException.code` → the copy `/channels/create` shows for them. Any
- * other error keeps propagating, so an unexpected failure is never dressed
- * up as a plan limit.
+ * Known failures keyed by `ChatbotXException.code` or connect-flow error code
+ * → the copy `/channels/create` shows for them. Any other error keeps
+ * propagating, so an unexpected failure is never dressed up as a known error.
  */
 export const CREATE_CHANNEL_ERROR_MESSAGE_KEYS = {
   workspaceLimitReached: "channels.connectMany.reason.workspaceLimit",
   trialExpired: "channels.connectMany.sessionError.trialExpired",
   macLimitReached: "channels.connectMany.sessionError.macLimitReached",
+  sessionExpired: "channels.connectMany.sessionError.sessionExpired",
 } as const satisfies Record<string, MessageKey>
 
 export type CreateChannelErrorCode =
