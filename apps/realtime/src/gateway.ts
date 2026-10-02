@@ -1,13 +1,5 @@
 import uWS from "uWebSockets.js"
-import {
-  getRealtimeMemberRevokedKey,
-  getRealtimeStreamShard,
-  REALTIME_CLOSE_CODE,
-  type RealtimeGuestClaims,
-  type RealtimeMemberClaims,
-  verifyGuestConnectToken,
-  verifyMemberConnectToken,
-} from "@chatbotx.io/realtime-protocol"
+import { getRealtimeStreamShard } from "@chatbotx.io/realtime-protocol"
 import { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/realtime-protocol/presence"
 import type { Redis } from "@chatbotx.io/redis"
 import {
@@ -15,7 +7,9 @@ import {
   type GuestSocketData,
   type WorkspaceSocketData,
 } from "./delivery"
-import { decrementKeyedCount, incrementKeyedCount } from "./lib/keyed-count"
+import { createGuestSocketBehavior } from "./gateway-guest-socket"
+import { createGatewayConnectionState } from "./gateway-shared"
+import { createWorkspaceSocketBehavior } from "./gateway-workspace-socket"
 import { reportWorkspacePresence } from "./lib/presence-report"
 import {
   createRealtimeServerCounters,
@@ -23,14 +17,10 @@ import {
   recordRealtimeServerWindow,
 } from "./lib/realtime-metrics"
 import { logger } from "./logger"
-import { loadReplay } from "./replay"
 import { createStreamReader } from "./stream-reader"
 
-const SLOW_CONSUMER_BUFFER_BYTES = 512_000
 const PRESENCE_REPORT_CONCURRENCY = 16
 const PRESENCE_REPORT_COALESCE_MS = 1000
-const OVERLOAD_RETRY_AFTER_MIN_MS = 1000
-const OVERLOAD_RETRY_AFTER_SPREAD_MS = 4000
 /** Guest pool ceiling when the caller doesn't pass one explicitly (tests). */
 const DEFAULT_GUEST_CONNECTION_SHARE = 0.8
 const DEFAULT_MAX_CONNECTIONS_PER_WORKSPACE = 500
@@ -53,14 +43,6 @@ const DEFAULT_CONNECTION_LIFETIME_MS = 30 * 60 * 1000
  * in every workspace. See PR #1349 advisory. */
 const CONNECTION_LIFETIME_JITTER_RATIO = 0.15
 
-/**
- * Jittered retry hint for an overloaded connection. The spread keeps a mass
- * reconnect from re-arriving in lockstep; the client uses this value verbatim.
- */
-const nextOverloadRetryAfterMs = (): number =>
-  OVERLOAD_RETRY_AFTER_MIN_MS +
-  Math.floor(Math.random() * OVERLOAD_RETRY_AFTER_SPREAD_MS)
-
 export type RealtimeGateway = {
   close: () => Promise<void>
   /** Resolves with the actual bound port — useful for `port: 0` (OS-assigned). */
@@ -76,6 +58,7 @@ export const createRealtimeGateway = ({
     maxConnections * DEFAULT_GUEST_CONNECTION_SHARE,
   ),
   maxGuestConnectionsPerWorkspace = DEFAULT_MAX_GUEST_CONNECTIONS_PER_WORKSPACE,
+  presenceReportCoalesceMs = PRESENCE_REPORT_COALESCE_MS,
   presenceReportIntervalMs = PRESENCE_REPORT_INTERVAL_MS,
   redis,
   secret,
@@ -86,6 +69,9 @@ export const createRealtimeGateway = ({
   maxConnectionsPerWorkspace?: number
   maxGuestConnections?: number
   maxGuestConnectionsPerWorkspace?: number
+  /** Overridable only for tests — production always uses
+   * `PRESENCE_REPORT_COALESCE_MS`. */
+  presenceReportCoalesceMs?: number
   /** Overridable only for tests — production always uses the shared
    * protocol constant so it can never drift from `PRESENCE_TTL_MS`. */
   presenceReportIntervalMs?: number
@@ -97,27 +83,10 @@ export const createRealtimeGateway = ({
   const delivery = createRealtimeDelivery(app, counters)
   const connectedUsersByWorkspace = new Map<string, Set<string>>()
   const presenceTimers = new Map<string, NodeJS.Timeout>()
-  // Reserves headroom for members: guests draw from their own sub-pool
-  // (`maxGuestConnections`, strictly below `maxConnections`) so a guest-side
-  // flood can never consume every slot a member needs to connect.
-  let activeGuestConnections = 0
-  let pendingGuestUpgrades = 0
-  const memberConnectionCountByWorkspace = new Map<string, number>()
-  // Pending (not-yet-open) upgrades per key, incremented synchronously next
-  // to the capacity check and before the `await` that lets concurrent
-  // upgrades for the same key race past it — without this, a burst of
-  // parallel connects all read the same pre-upgrade count and all pass.
-  // See PR #1349 finding #3.
-  const memberPendingUpgradesByWorkspace = new Map<string, number>()
-  const guestConnectionCountByKey = new Map<string, number>()
-  const guestConnectionCountByWorkspace = new Map<string, number>()
-  const guestPendingUpgradesByKey = new Map<string, number>()
-  const guestPendingUpgradesByWorkspace = new Map<string, number>()
-  const workspaceLifetimeTimers = new WeakMap<
+  const state = createGatewayConnectionState<
     WorkspaceSocketData,
-    NodeJS.Timeout
+    GuestSocketData
   >()
-  const guestLifetimeTimers = new WeakMap<GuestSocketData, NodeJS.Timeout>()
   const jitteredConnectionLifetimeMs = (): number =>
     connectionLifetimeMs +
     Math.floor(
@@ -130,21 +99,14 @@ export const createRealtimeGateway = ({
   let metricsTimer: NodeJS.Timeout | undefined
   let ready = false
   let stopped = false
-  let activeConnections = 0
-  let pendingUpgrades = 0
-  let peakConnections = 0
   let windowStartedAt = Date.now()
-
-  const guestConnectionKey = (
-    workspaceId: string,
-    guestConversationId: string,
-  ): string => `${workspaceId}:${guestConversationId}`
 
   // A bad secret or clock skew would otherwise fire a bare, silent `catch`
   // per rejected connect — invisible in logs and, under a credential-rotation
   // bug or a misconfigured client, log-spamming at full connection-attempt
   // volume. Coalesce to one `err`-carrying warn per window instead. See
-  // PR #1349 finding #8.
+  // PR #1349 finding #8. Shared by both the workspace and guest upgrade
+  // handlers — the suppression window is global across both paths.
   const TOKEN_REJECTION_LOG_WINDOW_MS = 10_000
   let lastTokenRejectionLogAt = 0
   let suppressedTokenRejectionCount = 0
@@ -186,10 +148,7 @@ export const createRealtimeGateway = ({
   }
 
   const markPresenceDirty = (workspaceId: string): void => {
-    const existingTimer = presenceTimers.get(workspaceId)
-    if (existingTimer) {
-      clearTimeout(existingTimer)
-    }
+    clearTimeout(presenceTimers.get(workspaceId))
     presenceTimers.set(
       workspaceId,
       setTimeout(() => {
@@ -200,16 +159,36 @@ export const createRealtimeGateway = ({
             "Failed to report workspace presence",
           )
         })
-      }, PRESENCE_REPORT_COALESCE_MS),
+      }, presenceReportCoalesceMs),
     )
+  }
+
+  const addConnectedUser = (workspaceId: string, userId: string): void => {
+    const users =
+      connectedUsersByWorkspace.get(workspaceId) ?? new Set<string>()
+    users.add(userId)
+    connectedUsersByWorkspace.set(workspaceId, users)
+    markPresenceDirty(workspaceId)
+  }
+
+  const removeConnectedUser = (workspaceId: string, userId: string): void => {
+    const users = connectedUsersByWorkspace.get(workspaceId)
+    if (!users) {
+      return
+    }
+    users.delete(userId)
+    if (users.size === 0) {
+      connectedUsersByWorkspace.delete(workspaceId)
+    }
+    markPresenceDirty(workspaceId)
   }
 
   const allConnectedWorkspaceIds = (): Set<string> => {
     const workspaceIds = new Set<string>()
-    for (const workspaceId of memberConnectionCountByWorkspace.keys()) {
+    for (const workspaceId of state.memberConnectionCountByWorkspace.keys()) {
       workspaceIds.add(workspaceId)
     }
-    for (const workspaceId of guestConnectionCountByWorkspace.keys()) {
+    for (const workspaceId of state.guestConnectionCountByWorkspace.keys()) {
       workspaceIds.add(workspaceId)
     }
     return workspaceIds
@@ -287,8 +266,8 @@ export const createRealtimeGateway = ({
   const flushMetrics = (): void => {
     recordRealtimeServerWindow({
       ...counters,
-      connections: activeConnections,
-      maxConnections: peakConnections,
+      connections: state.activeConnections,
+      maxConnections: state.peakConnections,
       shards: streamReader.activeShardCount(),
       windowStartedAt,
     })
@@ -302,549 +281,47 @@ export const createRealtimeGateway = ({
     counters.sends = 0
     counters.tokenRejections = 0
     counters.upgrades = 0
-    peakConnections = activeConnections
+    state.peakConnections = state.activeConnections
     windowStartedAt = Date.now()
   }
 
-  const addConnectedUser = (workspaceId: string, userId: string): void => {
-    const users =
-      connectedUsersByWorkspace.get(workspaceId) ?? new Set<string>()
-    users.add(userId)
-    connectedUsersByWorkspace.set(workspaceId, users)
-    markPresenceDirty(workspaceId)
-  }
-
-  const removeConnectedUser = (workspaceId: string, userId: string): void => {
-    const users = connectedUsersByWorkspace.get(workspaceId)
-    if (!users) {
-      return
-    }
-    users.delete(userId)
-    if (users.size === 0) {
-      connectedUsersByWorkspace.delete(workspaceId)
-    }
-    markPresenceDirty(workspaceId)
-  }
-
   const registerWorkspaceSocket = (path: string): void => {
-    app.ws<WorkspaceSocketData>(path, {
-      closeOnBackpressureLimit: true,
-      idleTimeout: 60,
-      maxBackpressure: SLOW_CONSUMER_BUFFER_BYTES,
-      sendPingsAutomatically: true,
-      upgrade: (res, req, context) => {
-        let aborted = false
-        res.onAborted(() => {
-          aborted = true
-        })
-        const workspaceId = req.getParameter("workspaceId")
-        const token = req.getQuery("token")
-        const lastSeq = req.getQuery("lastSeq")
-        const websocketKey = req.getHeader("sec-websocket-key")
-        const websocketProtocol = req.getHeader("sec-websocket-protocol")
-        const websocketExtensions = req.getHeader("sec-websocket-extensions")
-        if (!(workspaceId && token)) {
-          counters.tokenRejections += 1
-          res.cork(() => {
-            res.writeStatus("401 Unauthorized").end()
-          })
-          return
-        }
-
-        ;(async () => {
-          let claims: RealtimeMemberClaims
-          try {
-            claims = await verifyMemberConnectToken(token, workspaceId, secret)
-          } catch (error) {
-            if (!aborted) {
-              counters.tokenRejections += 1
-              logTokenRejection({ workspaceId }, error)
-              res.cork(() => {
-                res.writeStatus("401 Unauthorized").end()
-              })
-            }
-            return
-          }
-
-          // Independent of whether this connect carries a `lastSeq`: a
-          // stream-entry-based revoke check only catches a revoke sitting
-          // *inside* the replayed window, so a connect with no `lastSeq` at
-          // all (e.g. every connect after a 4002 resync) used to skip the
-          // check entirely, letting a pre-revoke token that's still
-          // unexpired (the token TTL plus clock tolerance) connect. See
-          // PR #1349 round-4 finding #5.
-          const revokedAtRaw = await redis.get(
-            getRealtimeMemberRevokedKey(workspaceId, claims.userId),
-          )
-          if (revokedAtRaw && Number(revokedAtRaw) >= claims.iat * 1000) {
-            if (!aborted) {
-              counters.tokenRejections += 1
-              res.cork(() => {
-                res.writeStatus("401 Unauthorized").end()
-              })
-            }
-            return
-          }
-
-          const workspaceConnectionCount =
-            memberConnectionCountByWorkspace.get(workspaceId) ?? 0
-          const workspacePendingCount =
-            memberPendingUpgradesByWorkspace.get(workspaceId) ?? 0
-          const overloaded =
-            activeConnections + pendingUpgrades >= maxConnections ||
-            workspaceConnectionCount + workspacePendingCount >=
-              maxConnectionsPerWorkspace
-          if (overloaded) {
-            if (aborted) {
-              return
-            }
-            res.cork(() => {
-              res.upgrade(
-                {
-                  ...claims,
-                  closed: false,
-                  overloadRetryAfterMs: nextOverloadRetryAfterMs(),
-                  replayEntries: [],
-                  workspaceId,
-                },
-                websocketKey,
-                websocketProtocol,
-                websocketExtensions,
-                context,
-              )
-            })
-            pendingUpgrades += 1
-            return
-          }
-          pendingUpgrades += 1
-          incrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
-
-          let activated = false
-          try {
-            const activationLastId =
-              await streamReader.activateWorkspace(workspaceId)
-            activated = true
-            const replay = await loadReplay({ lastSeq, redis, workspaceId })
-            if (replay.droppedCount) {
-              counters.malformedRecords += replay.droppedCount
-            }
-            if (aborted) {
-              pendingUpgrades -= 1
-              decrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
-              streamReader.releaseWorkspace(workspaceId)
-              return
-            }
-            res.cork(() => {
-              res.upgrade(
-                {
-                  ...claims,
-                  activated,
-                  closeReason:
-                    replay.closeReason ??
-                    (replay.droppedCount
-                      ? "replay-entries-dropped"
-                      : undefined),
-                  closed: false,
-                  replayCutoff: replay.lastStreamId ?? activationLastId,
-                  replayEntries: replay.entries,
-                  workspaceId,
-                },
-                websocketKey,
-                websocketProtocol,
-                websocketExtensions,
-                context,
-              )
-            })
-          } catch (error) {
-            if (aborted) {
-              pendingUpgrades -= 1
-              decrementKeyedCount(memberPendingUpgradesByWorkspace, workspaceId)
-              if (activated) {
-                streamReader.releaseWorkspace(workspaceId)
-              }
-              return
-            }
-            logger.warn(
-              { err: error, workspaceId },
-              "Realtime socket replay failed",
-            )
-            res.cork(() => {
-              res.upgrade(
-                {
-                  ...claims,
-                  activated,
-                  closeReason: "replay-failed",
-                  closed: false,
-                  replayEntries: [],
-                  workspaceId,
-                },
-                websocketKey,
-                websocketProtocol,
-                websocketExtensions,
-                context,
-              )
-            })
-          }
-        })().catch((error) => {
-          logger.error(
-            { err: error, workspaceId },
-            "Unhandled workspace realtime upgrade failure",
-          )
-        })
-      },
-      open: (socket) => {
-        const socketData = socket.getUserData()
-        pendingUpgrades -= 1
-        if (socketData.overloadRetryAfterMs !== undefined) {
-          counters.overloadCloses += 1
-          socketData.closed = true
-          socket.end(
-            REALTIME_CLOSE_CODE.overloaded,
-            JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
-          )
-          return
-        }
-        activeConnections += 1
-        peakConnections = Math.max(peakConnections, activeConnections)
-        counters.upgrades += 1
-        decrementKeyedCount(
-          memberPendingUpgradesByWorkspace,
-          socketData.workspaceId,
-        )
-        incrementKeyedCount(
-          memberConnectionCountByWorkspace,
-          socketData.workspaceId,
-        )
-        const firstUserSocket = delivery.addWorkspaceSocket(socket)
-        delivery.subscribeWorkspaceSocket(socket)
-        if (socketData.closeReason) {
-          socketData.closed = true
-          socket.end(REALTIME_CLOSE_CODE.resync, socketData.closeReason)
-          return
-        }
-        if (!delivery.replayWorkspaceSocket(socket)) {
-          return
-        }
-        const gapEntries = streamReader
-          .getRecentEntries(socketData.workspaceId, socketData.replayCutoff)
-          .filter(
-            (entry) => entry.record.workspaceId === socketData.workspaceId,
-          )
-        if (!delivery.replayWorkspaceSocket(socket, gapEntries)) {
-          return
-        }
-        // Lets a reconnect that processes zero live batches during this
-        // connection's lifetime still have a real stream cursor instead of
-        // falling back to a synthetic `"0-0"` on its next reconnect — which
-        // would otherwise force a full `invalidateQueries()` resync on every
-        // quiet-tab lifetime rotation. See PR #1349 finding #2.
-        if (socketData.replayCutoff) {
-          delivery.sendCursor(socket, socketData.replayCutoff)
-        }
-        // Free the parsed replay payload (up to `MAX_REPLAY_ENTRIES` full
-        // events) once it's been used — it's otherwise retained for this
-        // socket's entire connection lifetime for no reason. See PR #1349
-        // finding #6.
-        socketData.replayEntries = []
-        socketData.replayCutoff = undefined
-        if (firstUserSocket) {
-          addConnectedUser(socketData.workspaceId, socketData.userId)
-        }
-        workspaceLifetimeTimers.set(
-          socketData,
-          setTimeout(() => {
-            if (socketData.closed) {
-              return
-            }
-            socketData.closed = true
-            socket.end(
-              REALTIME_CLOSE_CODE.reauth,
-              "connection-lifetime-exceeded",
-            )
-          }, jitteredConnectionLifetimeMs()),
-        )
-      },
-      close: (socket) => {
-        const socketData = socket.getUserData()
-        socketData.closed = true
-        if (socketData.overloadRetryAfterMs !== undefined) {
-          return
-        }
-        activeConnections -= 1
-        decrementKeyedCount(
-          memberConnectionCountByWorkspace,
-          socketData.workspaceId,
-        )
-        const lifetimeTimer = workspaceLifetimeTimers.get(socketData)
-        clearTimeout(lifetimeTimer)
-        workspaceLifetimeTimers.delete(socketData)
-        // Only release the shard this socket actually activated: if
-        // `activateWorkspace` itself threw during upgrade, `activated` stays
-        // false and this socket never incremented the shard's `socketCount`
-        // — releasing here would underflow it and deactivate a shard other
-        // live sockets still depend on.
-        if (socketData.activated) {
-          streamReader.releaseWorkspace(socketData.workspaceId)
-        }
-        if (delivery.removeWorkspaceSocket(socket)) {
-          removeConnectedUser(socketData.workspaceId, socketData.userId)
-        }
-      },
-    })
+    app.ws<WorkspaceSocketData>(
+      path,
+      createWorkspaceSocketBehavior({
+        addConnectedUser,
+        counters,
+        delivery,
+        jitteredConnectionLifetimeMs,
+        logTokenRejection,
+        maxConnections,
+        maxConnectionsPerWorkspace,
+        redis,
+        removeConnectedUser,
+        secret,
+        state,
+        streamReader,
+      }),
+    )
   }
 
   const registerGuestSocket = (path: string): void => {
-    app.ws<GuestSocketData>(path, {
-      closeOnBackpressureLimit: true,
-      idleTimeout: 60,
-      maxBackpressure: SLOW_CONSUMER_BUFFER_BYTES,
-      sendPingsAutomatically: true,
-      upgrade: (res, req, context) => {
-        let aborted = false
-        res.onAborted(() => {
-          aborted = true
-        })
-        const guestConversationId = req.getParameter("guestConversationId")
-        const token = req.getQuery("token")
-        const websocketKey = req.getHeader("sec-websocket-key")
-        const websocketProtocol = req.getHeader("sec-websocket-protocol")
-        const websocketExtensions = req.getHeader("sec-websocket-extensions")
-        if (!(guestConversationId && token)) {
-          counters.tokenRejections += 1
-          res.cork(() => {
-            res.writeStatus("401 Unauthorized").end()
-          })
-          return
-        }
-
-        ;(async () => {
-          let claims: RealtimeGuestClaims
-          try {
-            claims = await verifyGuestConnectToken(
-              token,
-              guestConversationId,
-              secret,
-            )
-          } catch (error) {
-            if (!aborted) {
-              counters.tokenRejections += 1
-              logTokenRejection({ guestConversationId }, error)
-              res.cork(() => {
-                res.writeStatus("401 Unauthorized").end()
-              })
-            }
-            return
-          }
-
-          const guestKey = guestConnectionKey(
-            claims.workspaceId,
-            guestConversationId,
-          )
-          const guestConnectionCount =
-            guestConnectionCountByKey.get(guestKey) ?? 0
-          const guestPendingCount = guestPendingUpgradesByKey.get(guestKey) ?? 0
-          const workspaceGuestConnectionCount =
-            guestConnectionCountByWorkspace.get(claims.workspaceId) ?? 0
-          const workspaceGuestPendingCount =
-            guestPendingUpgradesByWorkspace.get(claims.workspaceId) ?? 0
-          const overloaded =
-            activeConnections + pendingUpgrades >= maxConnections ||
-            activeGuestConnections + pendingGuestUpgrades >=
-              maxGuestConnections ||
-            guestConnectionCount + guestPendingCount >=
-              maxConnectionsPerGuest ||
-            workspaceGuestConnectionCount + workspaceGuestPendingCount >=
-              maxGuestConnectionsPerWorkspace
-          if (overloaded) {
-            if (aborted) {
-              return
-            }
-            res.cork(() => {
-              res.upgrade(
-                {
-                  ...claims,
-                  closed: false,
-                  overloadRetryAfterMs: nextOverloadRetryAfterMs(),
-                  replayCutoff: "0-0",
-                  replayEntries: [],
-                },
-                websocketKey,
-                websocketProtocol,
-                websocketExtensions,
-                context,
-              )
-            })
-            pendingUpgrades += 1
-            pendingGuestUpgrades += 1
-            return
-          }
-          pendingUpgrades += 1
-          pendingGuestUpgrades += 1
-          incrementKeyedCount(guestPendingUpgradesByKey, guestKey)
-          incrementKeyedCount(
-            guestPendingUpgradesByWorkspace,
-            claims.workspaceId,
-          )
-
-          let activated = false
-          try {
-            const activationLastId = await streamReader.activateWorkspace(
-              claims.workspaceId,
-            )
-            activated = true
-            if (aborted) {
-              pendingUpgrades -= 1
-              pendingGuestUpgrades -= 1
-              decrementKeyedCount(guestPendingUpgradesByKey, guestKey)
-              decrementKeyedCount(
-                guestPendingUpgradesByWorkspace,
-                claims.workspaceId,
-              )
-              streamReader.releaseWorkspace(claims.workspaceId)
-              return
-            }
-            res.cork(() => {
-              res.upgrade(
-                {
-                  ...claims,
-                  closed: false,
-                  replayCutoff: activationLastId,
-                  replayEntries: [],
-                },
-                websocketKey,
-                websocketProtocol,
-                websocketExtensions,
-                context,
-              )
-            })
-          } catch (error) {
-            pendingUpgrades -= 1
-            pendingGuestUpgrades -= 1
-            decrementKeyedCount(guestPendingUpgradesByKey, guestKey)
-            decrementKeyedCount(
-              guestPendingUpgradesByWorkspace,
-              claims.workspaceId,
-            )
-            // `res.upgrade()` above can itself throw (a known uWS footgun
-            // when the response aborts mid-call) *after* activation already
-            // incremented the shard's `socketCount` — without this, that
-            // socketCount would never come back down, pinning the shard's
-            // XREAD active forever. See PR #1349 finding #10.
-            if (activated) {
-              streamReader.releaseWorkspace(claims.workspaceId)
-            }
-            if (aborted) {
-              return
-            }
-            logger.warn(
-              { err: error, guestConversationId },
-              "Realtime guest socket activation failed",
-            )
-            res.cork(() => {
-              res.writeStatus("401 Unauthorized").end()
-            })
-          }
-        })().catch((error) => {
-          logger.error(
-            { err: error, guestConversationId },
-            "Unhandled guest realtime upgrade failure",
-          )
-        })
-      },
-      open: (socket) => {
-        const socketData = socket.getUserData()
-        pendingUpgrades -= 1
-        pendingGuestUpgrades -= 1
-        if (socketData.overloadRetryAfterMs !== undefined) {
-          counters.overloadCloses += 1
-          socketData.closed = true
-          socket.end(
-            REALTIME_CLOSE_CODE.overloaded,
-            JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
-          )
-          return
-        }
-        activeConnections += 1
-        activeGuestConnections += 1
-        peakConnections = Math.max(peakConnections, activeConnections)
-        counters.upgrades += 1
-        decrementKeyedCount(
-          guestPendingUpgradesByKey,
-          guestConnectionKey(
-            socketData.workspaceId,
-            socketData.guestConversationId,
-          ),
-        )
-        decrementKeyedCount(
-          guestPendingUpgradesByWorkspace,
-          socketData.workspaceId,
-        )
-        incrementKeyedCount(
-          guestConnectionCountByKey,
-          guestConnectionKey(
-            socketData.workspaceId,
-            socketData.guestConversationId,
-          ),
-        )
-        incrementKeyedCount(
-          guestConnectionCountByWorkspace,
-          socketData.workspaceId,
-        )
-        delivery.addGuestSocket(socket)
-        delivery.subscribeGuestSocket(socket)
-        delivery.replayGuestSocket(socket)
-        const gapEntries = streamReader
-          .getRecentEntries(socketData.workspaceId, socketData.replayCutoff)
-          .filter(
-            (entry) =>
-              entry.record.kind === "guest-event" &&
-              entry.record.workspaceId === socketData.workspaceId &&
-              entry.record.guestConversationId ===
-                socketData.guestConversationId,
-          )
-        delivery.replayGuestSocket(socket, gapEntries)
-        // See PR #1349 finding #6 — same rationale as the workspace socket.
-        socketData.replayEntries = []
-        guestLifetimeTimers.set(
-          socketData,
-          setTimeout(() => {
-            if (socketData.closed) {
-              return
-            }
-            socketData.closed = true
-            socket.end(
-              REALTIME_CLOSE_CODE.reauth,
-              "connection-lifetime-exceeded",
-            )
-          }, jitteredConnectionLifetimeMs()),
-        )
-      },
-      close: (socket) => {
-        const socketData = socket.getUserData()
-        socketData.closed = true
-        if (socketData.overloadRetryAfterMs !== undefined) {
-          return
-        }
-        activeConnections -= 1
-        activeGuestConnections -= 1
-        decrementKeyedCount(
-          guestConnectionCountByKey,
-          guestConnectionKey(
-            socketData.workspaceId,
-            socketData.guestConversationId,
-          ),
-        )
-        decrementKeyedCount(
-          guestConnectionCountByWorkspace,
-          socketData.workspaceId,
-        )
-        const lifetimeTimer = guestLifetimeTimers.get(socketData)
-        clearTimeout(lifetimeTimer)
-        guestLifetimeTimers.delete(socketData)
-        delivery.removeGuestSocket(socket)
-        streamReader.releaseWorkspace(socketData.workspaceId)
-      },
-    })
+    app.ws<GuestSocketData>(
+      path,
+      createGuestSocketBehavior({
+        counters,
+        delivery,
+        jitteredConnectionLifetimeMs,
+        logTokenRejection,
+        maxConnections,
+        maxConnectionsPerGuest,
+        maxGuestConnections,
+        maxGuestConnectionsPerWorkspace,
+        secret,
+        state,
+        streamReader,
+      }),
+    )
   }
 
   app.get("/health", (res) => {

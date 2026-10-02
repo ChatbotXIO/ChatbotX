@@ -29,6 +29,16 @@ type ActiveShard = {
   shard: number
   socketCount: number
   streamKey: string
+  /**
+   * The highest stream id this shard has seen that couldn't be fully
+   * parsed. A socket whose upgrade (activation + replay) completed before
+   * this id, but that only reaches `open` after it, has a gap no other
+   * mechanism catches: `onInvalidRecord`'s resync only reaches sockets
+   * already registered with `delivery` at the moment it fires, and a
+   * still-pending upgrade isn't registered yet. See PR #1349 round-5
+   * finding (pending-upgrade gap).
+   */
+  taintedUpToId?: string
 }
 
 export type StreamRecordEntry = {
@@ -44,6 +54,11 @@ export type StreamReader = {
     workspaceId: string,
     afterId?: string,
   ) => StreamRecordEntry[]
+  /**
+   * The shard's `taintedUpToId` (see `ActiveShard`), or `undefined` if
+   * nothing invalid has been seen since the shard activated.
+   */
+  getTaintedUpToId: (workspaceId: string) => string | undefined
   releaseWorkspace: (workspaceId: string) => void
   start: () => void
 }
@@ -298,6 +313,7 @@ export const createStreamReader = ({
             },
             "Ignoring malformed realtime stream entry",
           )
+          activeShard.taintedUpToId = id
           onInvalidRecord({
             id,
             shard: activeShard.shard,
@@ -315,6 +331,7 @@ export const createStreamReader = ({
             },
             "Dropped invalid events from a coalesced realtime stream record",
           )
+          activeShard.taintedUpToId = id
           onInvalidRecord({
             id,
             shard: activeShard.shard,
@@ -402,6 +419,8 @@ export const createStreamReader = ({
         (entry) => !afterId || isRealtimeSeqAfter(entry.id, afterId),
       )
     },
+    getTaintedUpToId: (workspaceId) =>
+      activeShards.get(getRealtimeStreamShard(workspaceId))?.taintedUpToId,
     releaseWorkspace,
     start: () => {
       loop ??= run()

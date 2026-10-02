@@ -194,4 +194,86 @@ describe("loadReplay", () => {
     ])
     expect(replay.droppedCount).toBe(1)
   })
+
+  /** One valid, parseable `workspace-events` record entry for `workspaceId`. */
+  const validEntry = (n: number, workspaceId: string): [string, string[]] => [
+    `${n}-0`,
+    [
+      "record",
+      JSON.stringify({
+        events: [{ data: { id: String(n) }, eventType: "messageCreated" }],
+        kind: "workspace-events",
+        workspaceId,
+      }),
+    ],
+  ]
+
+  test("closes the replay window once this workspace's OWN entries exceed MAX_REPLAY_ENTRIES (500), even within a single page", async () => {
+    // Regression test for the MAX_REPLAY_ENTRIES bound (PR #1349 test gap,
+    // criticality 8): the 501st own-workspace entry in the replay window
+    // must force a resync instead of growing `entries` unbounded. The
+    // return happens as soon as the 501st entry is pushed, inside the same
+    // page — `loadReplay` never reaches a post-loop re-check for this case.
+    const ownEntries: [string, string[]][] = Array.from(
+      { length: 501 },
+      (_, i) => validEntry(i + 2, "workspace-1"),
+    )
+    const redis = {
+      xrange: vi
+        .fn()
+        .mockResolvedValueOnce([["1-0", []]]) // oldest-entry check
+        .mockResolvedValueOnce(ownEntries), // the one (full) page
+      xrevrange: vi.fn().mockResolvedValue([["502-0", []]]),
+    }
+
+    const replay = await loadReplay({
+      lastSeq: "1-0",
+      redis: redis as never,
+      workspaceId: "workspace-1",
+    })
+
+    expect(replay).toEqual({
+      closeReason: "replay-window-too-large",
+      entries: [],
+    })
+  })
+
+  test("closes the replay window once scanning a noisy shard exceeds MAX_REPLAY_SCAN_ENTRIES (10,020), even with none of this workspace's own entries yet", async () => {
+    // Regression test for the MAX_REPLAY_SCAN_ENTRIES bound (PR #1349 test
+    // gap, criticality 8): a shard entirely dominated by another
+    // workspace's traffic must not turn this workspace's replay into an
+    // unbounded Redis scan — hitting the scan cap resyncs instead.
+    const PAGE_SIZE = 501
+    const PAGE_COUNT = 20 // 20 * 501 = 10,020 === MAX_REPLAY_SCAN_ENTRIES
+    const xrangeMock = vi.fn().mockResolvedValueOnce([["1-0", []]]) // oldest-entry check
+    let cursor = 1
+    for (let page = 0; page < PAGE_COUNT; page += 1) {
+      const entries: [string, string[]][] = Array.from(
+        { length: PAGE_SIZE },
+        () => {
+          cursor += 1
+          return validEntry(cursor, "noisy-neighbor")
+        },
+      )
+      xrangeMock.mockResolvedValueOnce(entries)
+    }
+    const redis = {
+      xrange: xrangeMock,
+      xrevrange: vi.fn().mockResolvedValue([[`${cursor}-0`, []]]),
+    }
+
+    const replay = await loadReplay({
+      lastSeq: "1-0",
+      redis: redis as never,
+      workspaceId: "workspace-1",
+    })
+
+    expect(replay).toEqual({
+      closeReason: "replay-window-too-large",
+      entries: [],
+    })
+    // Confirms the scan cap, not the entry cap, is what stopped this: no
+    // entry here ever belonged to workspace-1, so `parsedEntries` never grew.
+    expect(xrangeMock).toHaveBeenCalledTimes(1 + PAGE_COUNT)
+  })
 })
