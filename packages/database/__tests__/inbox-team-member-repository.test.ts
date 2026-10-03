@@ -68,3 +68,30 @@ describe("inboxTeamMemberRepository.listUserIdsByTeamId", () => {
     expect(result).toEqual([])
   })
 })
+
+describe("inboxTeamMemberRepository.listTeamIdsByUserId", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.select.mockReturnValue({ from: mocks.from })
+    mocks.from.mockReturnValue({ innerJoin: mocks.innerJoin })
+    mocks.innerJoin.mockReturnValue({ where: mocks.where })
+  })
+
+  test("joins InboxTeam to scope a user's team ids by workspace", async () => {
+    mocks.where.mockResolvedValue([{ inboxTeamId: "team-1" }])
+
+    const result = await inboxTeamMemberRepository.listTeamIdsByUserId({
+      workspaceId: "ws-1",
+      userId: "user-1",
+    })
+
+    expect(result).toEqual(["team-1"])
+    expect(mocks.where).toHaveBeenCalledWith({
+      op: "and",
+      args: [
+        { op: "eq", args: ["workspaceId", "ws-1"] },
+        { op: "eq", args: ["userId", "user-1"] },
+      ],
+    })
+  })
+})

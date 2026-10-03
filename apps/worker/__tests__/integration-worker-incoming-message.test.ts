@@ -1,20 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ---------------------------------------------------------------------------
 // Job-level ordering proof for the `incomingMessage` case in
-// `src/integration/worker.ts` (fix round 1 of Task 2 of
-// .superpowers/sdd/2026-08-31-messenger-ctm-profile-backfill): the
-// receiveMessage-level assertion in received-message.test.ts is a fine
-// proxy, but the brief's actual bullet asks for the refresh's resolution to
-// be proven ordered before the automated-response dispatch AT THE JOB
-// LEVEL, i.e. through the real `worker.ts` processor. Unlike
-// integration-worker-boot.test.ts, this file does NOT mock
-// `./handlers/received-message` — it boots the REAL `receiveMessage`
-// pipeline (mocking only its DB/Redis/channel-registry dependencies, same
-// convention as received-message.test.ts) so the real post-save
-// `refreshExistingContactProfile` call runs, while `resolveIncomingTextRouting`
-// and `automatedResponseService.enqueue` (the dispatch this bullet cares
-// about) stay mocked and observable.
+// `src/integration/worker.ts`: the receiveMessage-level assertion in
+// received-message.test.ts is a fine proxy, but this proves the profile refresh
+// resolves before automated-response dispatch through the real worker
+// processor. Unlike integration-worker-boot.test.ts, this file does not mock
+// `./handlers/received-message`; it boots the real receiveMessage pipeline
+// while mocking only DB, Redis, and channel-registry dependencies.
 // ---------------------------------------------------------------------------
 
 type CapturedWorker = {

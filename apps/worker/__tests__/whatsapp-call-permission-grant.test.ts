@@ -59,10 +59,8 @@ describe("reconcileChannelSendError", () => {
   })
 
   test("routes the broadcast to the conversation's assigned user and team", async () => {
-    // Regression for PR #1349 round-5: this event is conversation-scoped
-    // (CONVERSATION_SCOPED_EVENT_TYPES) — an assigned-scope member's socket
-    // only matches it if the route reflects the REAL assignment, not an
-    // empty placeholder.
+    // Assigned-scope members receive this only when the event carries the
+    // conversation's real assignment route.
     const isReconciled = await reconcileChannelSendError({
       error: channelError(138_017),
       conversation: {

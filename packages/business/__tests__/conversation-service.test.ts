@@ -1,14 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  queueWorkspaceRealtimeEvent,
-  execute,
   chatQueueAdd,
   conversationFindFirst,
   createMessageRepository,
+  emit,
+  emitConversationAssigned,
+  emitConversationUnassigned,
+  execute,
+  findByWorkspaceIdAndUserId,
   findLastByConversation,
+  inboxTeamExists,
   invalidateCacheByTags,
   invalidateTracking,
+  queueWorkspaceRealtimeEvent,
   returning,
   selectWhere,
   set,
@@ -26,8 +31,13 @@ const {
     chatQueueAdd: vi.fn().mockResolvedValue(undefined),
     conversationFindFirst: vi.fn(),
     createMessageRepository: vi.fn(),
+    emit: vi.fn(),
+    emitConversationAssigned: vi.fn().mockResolvedValue(undefined),
+    emitConversationUnassigned: vi.fn().mockResolvedValue(undefined),
     execute: vi.fn().mockResolvedValue(undefined),
+    findByWorkspaceIdAndUserId: vi.fn(),
     findLastByConversation: vi.fn(),
+    inboxTeamExists: vi.fn(),
     invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
     returning,
@@ -97,6 +107,25 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
   queueWorkspaceRealtimeEvent,
+}))
+
+vi.mock("@chatbotx.io/event-bus", () => ({ emit }))
+
+vi.mock("@chatbotx.io/events", () => ({
+  emitConversationArchived: vi.fn(),
+  emitConversationAssigned,
+  emitConversationFollowUp: vi.fn(),
+  emitConversationTransferredToBot: vi.fn(),
+  emitConversationTransferredToHuman: vi.fn(),
+  emitConversationUnassigned,
+}))
+
+vi.mock("../src/enterprise/inbox-team/service", () => ({
+  inboxTeamService: { exists: inboxTeamExists },
+}))
+
+vi.mock("../src/workspace-member/service", () => ({
+  workspaceMemberService: { findByWorkspaceIdAndUserId },
 }))
 
 // `conversationService` now imports `contactService` (for the location write
@@ -721,6 +750,79 @@ describe("conversationService outbound activity bump", () => {
     expect(set).toHaveBeenCalledWith({
       currentStep: "step-2",
       lastStep: "step-1",
+    })
+  })
+})
+
+describe("conversationService.updateAssignment", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    returning.mockResolvedValue([{ contactId: "contact-1", id: "conv-1" }])
+  })
+  test("passes silent through the worker assignment wrapper", async () => {
+    findByWorkspaceIdAndUserId.mockResolvedValue({ id: "user-after" })
+
+    await conversationService.assignOneOrSkip({
+      workspaceId: "ws-1",
+      conversation: {
+        contactId: "contact-1",
+        id: "conv-1",
+      },
+      assignedId: "u_user-after",
+      silent: true,
+      triggerContext: { triggerType: "flow_action" },
+    })
+
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+  })
+
+  test("suppresses assignment realtime events when silent", async () => {
+    await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [
+        {
+          contactId: "contact-1",
+          id: "conv-1",
+          assignedInboxTeamId: "team-before",
+          assignedUserId: "user-before",
+        },
+      ],
+      assignedInboxTeamId: "team-after",
+      assignedUserId: "user-after",
+      silent: true,
+      triggerContext: { triggerType: "flow_action" },
+    })
+
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+  })
+
+  test("routes an assignment event to both previous and next assignees", async () => {
+    await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [
+        {
+          contactId: "contact-1",
+          id: "conv-1",
+          assignedInboxTeamId: "team-before",
+          assignedUserId: "user-before",
+        },
+      ],
+      assignedInboxTeamId: "team-after",
+      assignedUserId: "user-after",
+      triggerContext: { triggerType: "flow_action" },
+    })
+
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
+      eventType: "conversationAssigned",
+      data: {
+        assignedInboxTeamId: "team-after",
+        assignedUserId: "user-after",
+        conversationIds: ["conv-1"],
+      },
+      route: {
+        assignedTeamIds: ["team-before", "team-after"],
+        assignedUserIds: ["user-before", "user-after"],
+      },
     })
   })
 })

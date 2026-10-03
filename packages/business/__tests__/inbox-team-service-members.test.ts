@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  delete: vi.fn(),
+  deleteReturning: vi.fn(),
+  deleteWhere: vi.fn(),
   listExistingUserIds: vi.fn(),
   insertValues: vi.fn(),
   teamFindFirst: vi.fn(),
+  teamFindMany: vi.fn(),
   teamMemberFindMany: vi.fn(),
   userFindMany: vi.fn(),
   listUserIdsByTeamId: vi.fn(),
   dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
-  revokeWorkspaceMemberRealtimeConnections: vi
-    .fn()
-    .mockResolvedValue(undefined),
+  tryRevokeWorkspaceMemberRealtimeConnections: vi.fn().mockResolvedValue(true),
 }))
 
 const WORKSPACE_ID = "ws-1"
@@ -40,8 +42,12 @@ const makeTx = () => ({
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
+    delete: mocks.delete,
     query: {
-      inboxTeamModel: { findFirst: mocks.teamFindFirst },
+      inboxTeamModel: {
+        findFirst: mocks.teamFindFirst,
+        findMany: mocks.teamFindMany,
+      },
       inboxTeamMemberModel: { findMany: mocks.teamMemberFindMany },
     },
     transaction: (fn: (tx: unknown) => unknown) => fn(makeTx()),
@@ -78,8 +84,8 @@ vi.mock("../src/audit/dispatcher", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  revokeWorkspaceMemberRealtimeConnections:
-    mocks.revokeWorkspaceMemberRealtimeConnections,
+  tryRevokeWorkspaceMemberRealtimeConnections:
+    mocks.tryRevokeWorkspaceMemberRealtimeConnections,
 }))
 
 const { inboxTeamService } = await import(
@@ -95,6 +101,11 @@ beforeEach(() => {
   })
   mocks.teamMemberFindMany.mockResolvedValue([])
   mocks.userFindMany.mockResolvedValue([])
+  mocks.delete.mockReturnValue({ where: mocks.deleteWhere })
+  mocks.deleteWhere.mockReturnValue({ returning: mocks.deleteReturning })
+  mocks.deleteReturning.mockResolvedValue([{ id: "member-row-1" }])
+  mocks.teamFindMany.mockResolvedValue([{ id: TEAM_ID }])
+  mocks.listUserIdsByTeamId.mockResolvedValue(["member-1"])
 })
 
 describe("InboxTeamService member validation against duplicate membership rows", () => {
@@ -135,28 +146,30 @@ describe("InboxTeamService member validation against duplicate membership rows",
       }),
     ).resolves.toBeDefined()
     expect(
-      mocks.revokeWorkspaceMemberRealtimeConnections,
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
     ).toHaveBeenCalledTimes(2)
-    expect(mocks.revokeWorkspaceMemberRealtimeConnections).toHaveBeenCalledWith(
-      {
-        workspaceId: WORKSPACE_ID,
-        userId: "member-1",
-        reason: "reauth",
-      },
-    )
-    expect(mocks.revokeWorkspaceMemberRealtimeConnections).toHaveBeenCalledWith(
-      {
-        workspaceId: WORKSPACE_ID,
-        userId: "member-2",
-        reason: "reauth",
-      },
-    )
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+      reason: "reauth",
+      errorMessage: "Failed to revoke inbox team member realtime connections",
+    })
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-2",
+      reason: "reauth",
+      errorMessage: "Failed to revoke inbox team member realtime connections",
+    })
   })
 
-  test("still audits a created team when realtime revocation fails", async () => {
+  test("still audits a created team when realtime revocation reports a warning", async () => {
     mocks.listExistingUserIds.mockResolvedValue([{ userId: "member-1" }])
-    mocks.revokeWorkspaceMemberRealtimeConnections.mockRejectedValueOnce(
-      new Error("Redis unavailable"),
+    mocks.tryRevokeWorkspaceMemberRealtimeConnections.mockResolvedValueOnce(
+      false,
     )
 
     await expect(
@@ -259,5 +272,62 @@ describe("InboxTeamService.listUserIdsByTeamId", () => {
     })
     expect(mocks.listUserIdsByTeamId).toHaveBeenCalledTimes(1)
     expect(result).toBe(userIds)
+  })
+})
+
+describe("InboxTeamService membership mutation revocation", () => {
+  test("revokes members affected by team deletion", async () => {
+    await inboxTeamService.delete({ workspaceId: WORKSPACE_ID, ids: [TEAM_ID] })
+
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+      reason: "reauth",
+      errorMessage: "Failed to revoke inbox team member realtime connections",
+    })
+  })
+
+  test("revokes newly added members", async () => {
+    mocks.listExistingUserIds.mockResolvedValue([{ userId: "member-1" }])
+
+    await inboxTeamService.addMembers(
+      { workspaceId: WORKSPACE_ID, inboxTeamId: TEAM_ID },
+      ["member-1"],
+    )
+
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+      reason: "reauth",
+      errorMessage: "Failed to revoke inbox team member realtime connections",
+    })
+  })
+
+  test("revokes removed members", async () => {
+    mocks.teamMemberFindMany.mockResolvedValue([
+      {
+        id: "member-row-1",
+        userId: "member-1",
+        user: { email: "member@example.com", name: "Member" },
+      },
+    ])
+
+    await inboxTeamService.removeMembers(
+      { workspaceId: WORKSPACE_ID, inboxTeamId: TEAM_ID },
+      ["member-row-1"],
+    )
+
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+      reason: "reauth",
+      errorMessage: "Failed to revoke inbox team member realtime connections",
+    })
   })
 })

@@ -22,16 +22,10 @@ export const RealtimeEventType = {
 } as const
 
 /**
- * Event types scoped to a conversation (a message, its routing, or the
- * conversation's assignment/state) must carry a `route` so `hasRouteMatch`
- * can deliver them to assigned-scope members — a missing `route` silently
- * drops the event for anyone without full `chatScope: "all"` access. Every
- * publisher of one of these event types is required, at the type level (see
- * `RealtimeEventData` below), to pass `route`; `realtimeEventEnvelopeSchema`'s
- * refine re-checks this on the wire too, since a cast can bypass the TS check.
- * See PR #1349 finding #1.
+ * Event types scoped to a conversation must carry a `route` so
+ * `hasRouteMatch` can deliver them to assigned-scope members.
  */
-export const CONVERSATION_SCOPED_EVENT_TYPES: ReadonlySet<string> = new Set([
+const conversationScopedEventTypes = [
   RealtimeEventType.messageCreated,
   RealtimeEventType.messageDeleted,
   RealtimeEventType.messageIdAssigned,
@@ -40,12 +34,14 @@ export const CONVERSATION_SCOPED_EVENT_TYPES: ReadonlySet<string> = new Set([
   RealtimeEventType.messageFailed,
   RealtimeEventType.conversationAssigned,
   RealtimeEventType.conversationUpdated,
-  // A permission-mode change is most relevant to whoever is actually working
-  // the conversation, unlike a ringing/active call (the other
-  // whatsappCall* types), which genuinely needs every available agent
-  // notified regardless of assignment. See PR #1349 round-5 finding #1.
   RealtimeEventType.whatsappCallPermissionUpdated,
-])
+] as const
+
+type ConversationScopedEventType = (typeof conversationScopedEventTypes)[number]
+
+export const CONVERSATION_SCOPED_EVENT_TYPES = Object.fromEntries(
+  conversationScopedEventTypes.map((eventType) => [eventType, true]),
+) as Record<ConversationScopedEventType, true>
 
 /**
  * Shared wire envelope validation. It intentionally validates only the
@@ -116,14 +112,12 @@ export const realtimeEventEnvelopeSchema = z.object({
 export type RealtimeEventEnvelope = z.infer<typeof realtimeEventEnvelopeSchema>
 
 /**
- * Workspace-broadcast-only envelope validation: a conversation-scoped event
- * type missing `route` would silently drop for assigned-scope members
- * (`hasRouteMatch`). See PR #1349 finding #1.
+ * Workspace-broadcast-only envelope validation.
  */
 export const realtimeWorkspaceEventEnvelopeSchema =
   realtimeEventEnvelopeSchema.superRefine((envelope, ctx) => {
     if (
-      CONVERSATION_SCOPED_EVENT_TYPES.has(envelope.eventType) &&
+      Object.hasOwn(CONVERSATION_SCOPED_EVENT_TYPES, envelope.eventType) &&
       !envelope.route
     ) {
       ctx.addIssue({
@@ -134,24 +128,26 @@ export const realtimeWorkspaceEventEnvelopeSchema =
     }
   })
 
-export const realtimeBatchEnvelopeSchema = z.object({
-  batch: z.array(realtimeWorkspaceEventEnvelopeSchema),
-  seq: z.string().regex(/^\d+-\d+$/),
-})
+export const STREAM_ID_PATTERN = /^\d+-\d+$/
+export const realtimeStreamIdSchema = z.string().regex(STREAM_ID_PATTERN)
+
+const batchOf = <T extends z.ZodType>(eventSchema: T) =>
+  z.object({
+    batch: z.array(eventSchema),
+    seq: realtimeStreamIdSchema,
+  })
+
+export const realtimeBatchEnvelopeSchema = batchOf(
+  realtimeWorkspaceEventEnvelopeSchema,
+)
 
 /**
- * Guest-socket batch validation. A guest socket's delivery is never
- * route-filtered (`publishGuestRealtimeEvent` is always single-recipient),
- * so a conversation-scoped event type like `messageCreated` correctly never
- * carries a `route` here even though `realtimeBatchEnvelopeSchema` above
- * would reject that same frame — that schema's route-required refine is
- * workspace-broadcast-only, not a property of every batch frame on the wire.
- * See PR #1349 round-5 finding (guest client rejecting every real frame).
+ * Guest-socket delivery is never route-filtered, so it accepts routeless
+ * conversation-scoped events.
  */
-export const realtimeGuestBatchEnvelopeSchema = z.object({
-  batch: z.array(realtimeEventEnvelopeSchema),
-  seq: z.string().regex(/^\d+-\d+$/),
-})
+export const realtimeGuestBatchEnvelopeSchema = batchOf(
+  realtimeEventEnvelopeSchema,
+)
 
 export type RealtimeEventCreateMessage = {
   eventType: typeof RealtimeEventType.messageCreated
@@ -440,9 +436,7 @@ export type RealtimeEventContactInboxThreadControlUpdated = {
 }
 
 /**
- * Conversation-scoped event data (see `CONVERSATION_SCOPED_EVENT_TYPES`):
- * `route` is required so an assigned-scope member's socket can match it —
- * omitting it is a publisher bug, not a valid "deliver to everyone" signal.
+ * Conversation-scoped event data must include a route for workspace delivery.
  */
 export type RealtimeConversationScopedEventData =
   | RealtimeEventCreateMessage
@@ -455,9 +449,24 @@ export type RealtimeConversationScopedEventData =
   | RealtimeEventConversationUpdated
   | RealtimeEventWhatsappCallPermissionUpdated
 
+type ConversationScopedEventTypesMatch = [
+  Exclude<
+    RealtimeConversationScopedEventData["eventType"],
+    ConversationScopedEventType
+  >,
+  Exclude<
+    ConversationScopedEventType,
+    RealtimeConversationScopedEventData["eventType"]
+  >,
+] extends [never, never]
+  ? true
+  : never
+
+const _conversationScopedEventTypesMatch: ConversationScopedEventTypesMatch = true
+
 /**
- * Workspace-wide or guest/member-targeted event data: never filtered by
- * `route`, so a `route` is accepted (harmless) but never required.
+ * Workspace-wide or guest/member-targeted event data is never filtered by
+ * route.
  */
 export type RealtimeWorkspaceBroadcastEventData =
   | RealtimeEventContactCommon
@@ -469,17 +478,17 @@ export type RealtimeWorkspaceBroadcastEventData =
   | RealtimeEventWhatsappCallOutboundStatus
   | RealtimeEventContactInboxThreadControlUpdated
 
+type Routed<T> = T & { route: RealtimeEventRoute }
+type MaybeRouted<T> = T & { route?: RealtimeEventRoute }
+
 export type RealtimeEventData =
-  | (RealtimeConversationScopedEventData & { route: RealtimeEventRoute })
-  | (RealtimeWorkspaceBroadcastEventData & { route?: RealtimeEventRoute })
+  | Routed<RealtimeConversationScopedEventData>
+  | MaybeRouted<RealtimeWorkspaceBroadcastEventData>
 
 /**
- * Event data accepted by a single-recipient delivery path (a guest
- * conversation's sockets, or one member's sockets): these are never filtered
- * by `hasRouteMatch`/`chatScope` — the recipient is already pinned by
- * `guestConversationId` or `userId` — so `route` is always optional here,
- * even for an otherwise conversation-scoped event type like `messageCreated`.
+ * A guest conversation or one member is already pinned to the recipient, so
+ * route is optional for every targeted event.
  */
-export type RealtimeTargetedEventData =
-  | (RealtimeConversationScopedEventData & { route?: RealtimeEventRoute })
-  | (RealtimeWorkspaceBroadcastEventData & { route?: RealtimeEventRoute })
+export type RealtimeTargetedEventData = MaybeRouted<
+  RealtimeConversationScopedEventData | RealtimeWorkspaceBroadcastEventData
+>

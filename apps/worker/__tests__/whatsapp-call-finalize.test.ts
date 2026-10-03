@@ -1201,6 +1201,24 @@ describe("enrichCallActivityMessage", () => {
     expect(mocks.mergeContentAttributesBySourceId).toHaveBeenCalled()
   })
 
+  test("swallows the conversation lookup failure while publishing the enrichment", async () => {
+    mocks.mergeContentAttributesBySourceId.mockResolvedValue({
+      id: "msg-1",
+      contentAttributes: { type: "whatsapp_call", hasRecording: true },
+    })
+    mocks.conversationFindBy.mockRejectedValueOnce(new Error("database down"))
+
+    await expect(
+      enrichCallActivityMessage({
+        call,
+        overrides: { hasRecording: true },
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    expect(mocks.logger.warn).toHaveBeenCalled()
+  })
+
   test("a realtime broadcast failure is swallowed, never thrown", async () => {
     mocks.mergeContentAttributesBySourceId.mockResolvedValue({
       id: "msg-1",

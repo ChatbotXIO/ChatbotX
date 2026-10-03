@@ -51,9 +51,7 @@ describe("realtime batch envelopes", () => {
   })
 
   test("rejects a whatsappCallPermissionUpdated event missing its route", () => {
-    // Regression for PR #1349 round-5 finding #1 (6th routeless site): a
-    // permission-mode change is conversation-scoped like a message event,
-    // unlike a ringing/active call's workspace-wide broadcast.
+    // Permission-mode changes are conversation-scoped.
     expect(() =>
       realtimeBatchEnvelopeSchema.parse({
         batch: [
@@ -84,12 +82,8 @@ describe("realtime batch envelopes", () => {
 })
 
 describe("realtime guest batch envelopes", () => {
-  // Regression for PR #1349 round-5 finding: a guest socket's delivery is
-  // never route-filtered, so every event it carries — including a
-  // conversation-scoped one like messageCreated — correctly has no route.
-  // realtimeBatchEnvelopeSchema's route-required refine is workspace-only;
-  // using it for guest frames would reject every real messageCreated the
-  // webchat client ever receives.
+  // Guest delivery is never route-filtered, including conversation-scoped
+  // events.
   test("allows a conversation-scoped event with no route", () => {
     const frame = realtimeGuestBatchEnvelopeSchema.parse({
       batch: [{ data: { id: "message-1" }, eventType: "messageCreated" }],

@@ -32,16 +32,8 @@ export type RealtimeFrameReader<TEnvelope> = {
 }
 
 /**
- * Shared "parse a realtime batch wire frame" logic for both realtime
- * clients (the workspace provider and the webchat guest client): JSON
- * parse, heartbeat filtering, batch-envelope schema validation, and `seq`
- * dedup/staleness checks are identical between them — only the envelope
- * schema (route-required for workspace delivery, route-less for guest
- * delivery — see `realtimeBatchEnvelopeSchema` vs
- * `realtimeGuestBatchEnvelopeSchema`) and the per-event dispatch differ,
- * which stay the caller's own responsibility. See PR #1349 round-5 (shared
- * frame reader) and round-4 (invalid batches/events must still force a
- * resync, now throttled so a burst of either can't storm `onResyncNeeded`).
+ * Shared realtime batch-frame parsing: JSON, heartbeat filtering, envelope
+ * validation, sequence deduplication, and throttled resync notifications.
  */
 export const createRealtimeFrameReader = <TEnvelope>({
   onParseError,
@@ -78,6 +70,7 @@ export const createRealtimeFrameReader = <TEnvelope>({
         parsed = JSON.parse(data)
       } catch (error) {
         onParseError(error)
+        triggerResync()
         return null
       }
       if (parsed && typeof parsed === "object" && "hb" in parsed) {

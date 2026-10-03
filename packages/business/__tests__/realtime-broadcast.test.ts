@@ -14,11 +14,28 @@ const {
   markRealtimeMemberRevoked,
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
+  retryWithLinearBackoff,
 } = vi.hoisted(() => ({
   loggerError: vi.fn(),
   markRealtimeMemberRevoked: vi.fn(),
   publishRealtimeStreamRecord: vi.fn(),
   publishSerializedRealtimeStreamRecord: vi.fn(),
+  retryWithLinearBackoff: vi.fn(
+    async (
+      fn: () => Promise<unknown>,
+      options: { attempts: number },
+    ): Promise<unknown> => {
+      let lastError: unknown
+      for (let attempt = 1; attempt <= options.attempts; attempt += 1) {
+        try {
+          return await fn()
+        } catch (error) {
+          lastError = error
+        }
+      }
+      throw lastError
+    },
+  ),
 }))
 
 vi.mock("../src/logger", () => ({
@@ -30,6 +47,7 @@ vi.mock("../src/platform/realtime-stream-publisher", () => ({
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
   resetRealtimeStreamPublisherForTests: vi.fn(),
+  retryWithLinearBackoff,
 }))
 
 const typingEvent = {
@@ -69,6 +87,27 @@ describe("realtime stream broadcast", () => {
       "workspace_1",
       '{"events":[{"data":{"typing":true},"eventType":"typing"},{"data":{"typing":true},"eventType":"typing"}],"kind":"workspace-events","workspaceId":"workspace_1"}',
     )
+  })
+
+  test("flushes a later batch after an earlier append rejects", async () => {
+    const { promise: firstAppend, reject: rejectFirstAppend } =
+      Promise.withResolvers<void>()
+    const failure = new Error("ECONNRESET")
+    publishSerializedRealtimeStreamRecord
+      .mockReturnValueOnce(firstAppend)
+      .mockResolvedValueOnce(undefined)
+
+    const first = publishWorkspaceRealtimeEvent("workspace_1", typingEvent)
+    await vi.advanceTimersByTimeAsync(25)
+
+    const second = publishWorkspaceRealtimeEvent("workspace_1", typingEvent)
+    vi.advanceTimersByTime(25)
+    const firstAssertion = expect(first).rejects.toBe(failure)
+    rejectFirstAppend(failure)
+
+    await firstAssertion
+    await expect(second).resolves.toBeUndefined()
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledTimes(2)
   })
 
   test("flushes pending workspace records before shutdown", async () => {
@@ -158,10 +197,8 @@ describe("realtime stream broadcast", () => {
   })
 
   test("drains every workspace's shutdown flush independently, even when one workspace's append rejects", async () => {
-    // Regression for PR #1349 round-4 medium finding: `Promise.all` used to
-    // abort the whole shutdown drain on the first failing workspace, so a
-    // busy/broken neighbor could leave an unrelated workspace's in-flight
-    // append un-awaited (and un-logged) past process exit.
+    // A failure in one workspace must not prevent another pending append from
+    // being awaited and logged during shutdown.
     const failure = new Error("ECONNRESET")
     publishSerializedRealtimeStreamRecord.mockImplementation(
       (workspaceId: string) =>

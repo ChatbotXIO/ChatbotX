@@ -1,8 +1,11 @@
 import { z } from "zod"
 import {
   realtimeEventEnvelopeSchema,
+  STREAM_ID_PATTERN as realtimeStreamIdPattern,
   realtimeWorkspaceEventEnvelopeSchema,
 } from "./schemas"
+
+export { STREAM_ID_PATTERN } from "./schemas"
 
 const REALTIME_STREAM_SHARD_COUNT = 256
 
@@ -25,23 +28,14 @@ export const getRealtimeStreamKey = (workspaceId: string): string =>
   `rt:{${getRealtimeStreamShard(workspaceId)}}`
 
 /**
- * Marks the moment a member's realtime connections were last revoked
- * (`revokeWorkspaceMemberRealtimeConnections`). The realtime gateway checks
- * this at connect time — independent of whether the connect carries a
- * `lastSeq` — against the token's `iat`, so a still-unexpired token minted
- * before the revoke can't establish a new connection. See PR #1349 round-4
- * finding #5.
+ * Marks the moment a member's realtime connections were last revoked. The
+ * gateway compares it with the token's `iat` so a token minted before a revoke
+ * cannot establish a new connection.
  */
 export const getRealtimeMemberRevokedKey = (
   workspaceId: string,
   userId: string,
 ): string => `realtime:revoked:${workspaceId}:${userId}`
-
-/** Redis Stream id shape (`<ms>-<sequence>`), exported so every caller that
- * accepts a client- or wire-supplied stream id (e.g. a connect's `lastSeq`
- * query param) validates it with the same pattern `isRealtimeSeqAfter`
- * itself relies on. */
-export const STREAM_ID_PATTERN = /^\d+-\d+$/
 
 /**
  * Redis Stream id ordering (`<ms>-<sequence>`). `true` when `candidate` is
@@ -55,7 +49,10 @@ export const isRealtimeSeqAfter = (
   previous: string,
 ): boolean => {
   if (
-    !(STREAM_ID_PATTERN.test(candidate) && STREAM_ID_PATTERN.test(previous))
+    !(
+      realtimeStreamIdPattern.test(candidate) &&
+      realtimeStreamIdPattern.test(previous)
+    )
   ) {
     return false
   }

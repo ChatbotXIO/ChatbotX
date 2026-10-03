@@ -18,8 +18,7 @@ export const CLOCK_TOLERANCE_SECONDS = 5
  * minted before the marker is written is guaranteed to have expired (per the
  * JWT's own `exp`, which this TTL mirrors) by the time the marker itself
  * expires, so once the marker is gone every token that could still pass
- * `verifyMemberConnectToken` was necessarily minted after the revoke. See
- * PR #1349 round-4 finding #5.
+ * `verifyMemberConnectToken` was necessarily minted after the revoke.
  */
 export const REALTIME_MEMBER_REVOKED_TTL_SECONDS =
   REALTIME_TOKEN_TTL_SECONDS + CLOCK_TOLERANCE_SECONDS
@@ -38,12 +37,12 @@ export const REALTIME_TOKEN_PURPOSE = {
   presenceReport: "presence-report",
 } as const
 
-export type RealtimeTokenPurpose =
+type RealtimeTokenPurpose =
   (typeof REALTIME_TOKEN_PURPOSE)[keyof typeof REALTIME_TOKEN_PURPOSE]
 
-export type RealtimeAudienceKind = "workspace" | "guest"
+type RealtimeAudienceKind = "workspace" | "guest"
 
-export interface RealtimeAudience {
+interface RealtimeAudience {
   id: string
   kind: RealtimeAudienceKind
 }
@@ -64,12 +63,7 @@ const encodeSecret = (secret: string): Uint8Array => {
   return encoded
 }
 
-/**
- * Extra claims carried in the JWT payload alongside the `aud` room binding. A
- * generic bag so this primitive stays caller-agnostic; each caller defines and
- * validates its own shape.
- */
-export type RealtimeTokenClaims = Record<string, unknown>
+type RealtimeTokenClaims = Record<string, unknown>
 
 /**
  * Not exported: every caller mints through a purpose-specific wrapper
@@ -113,8 +107,8 @@ export const verifyRealtimeToken = async (
   return payload
 }
 
-export const realtimeChatScopes = z.enum(["all", "assigned", "none"])
-export type RealtimeChatScope = z.infer<typeof realtimeChatScopes>
+const realtimeChatScopes = z.enum(["all", "assigned", "none"])
+type RealtimeChatScope = z.infer<typeof realtimeChatScopes>
 
 const memberClaimsSchema = z.object({
   userId: z.string().min(1),
@@ -129,10 +123,7 @@ const memberClaimsSchema = z.object({
   // Millisecond-precision mint time, set explicitly below (jose's built-in
   // `iat` floors to whole seconds). The revoke-marker check must compare
   // `revokedAt > iatMs`, not `iat * 1000`: flooring `iat` to the start of its
-  // second can put it BEFORE a revoke that landed earlier in that same
-  // second, letting a member who reconnects within the same second as their
-  // own revoke slip through a `>=` check on the floored value. See PR #1349
-  // round-5 finding #2.
+  // second can put it before a revoke that landed earlier in that same second.
   iatMs: z.number(),
 })
 
@@ -153,18 +144,20 @@ export const signMemberConnectToken = async (
     teamIds?: string[]
   },
   secret: string,
-): Promise<string> =>
-  signRealtimeToken(
+): Promise<string> => {
+  const claims: Omit<z.input<typeof memberClaimsSchema>, "iat"> = {
+    userId: member.userId,
+    chatScope: member.chatScope,
+    teamIds: member.teamIds ?? [],
+    iatMs: Date.now(),
+  }
+  return await signRealtimeToken(
     { kind: "workspace", id: member.workspaceId },
     REALTIME_TOKEN_PURPOSE.memberConnect,
     secret,
-    {
-      userId: member.userId,
-      chatScope: member.chatScope,
-      teamIds: member.teamIds ?? [],
-      iatMs: Date.now(),
-    },
+    claims,
   )
+}
 
 /**
  * Verifies a room-connect token minted by `signMemberConnectToken`. Throws on a
@@ -194,13 +187,15 @@ export type RealtimeGuestClaims = z.infer<typeof guestClaimsSchema>
 export const signGuestConnectToken = async (
   guest: { guestConversationId: string; workspaceId: string },
   secret: string,
-): Promise<string> =>
-  signRealtimeToken(
+): Promise<string> => {
+  const claims: Omit<z.input<typeof guestClaimsSchema>, "iat"> = guest
+  return await signRealtimeToken(
     { kind: "guest", id: guest.guestConversationId },
     REALTIME_TOKEN_PURPOSE.guestConnect,
     secret,
-    guest,
+    claims,
   )
+}
 
 export const verifyGuestConnectToken = async (
   token: string,
@@ -223,9 +218,7 @@ const presenceReportClaimsSchema = z.object({
   // rejects on mismatch.
   bodyHash: z.string().min(1),
 })
-export type RealtimePresenceReportClaims = z.infer<
-  typeof presenceReportClaimsSchema
->
+type RealtimePresenceReportClaims = z.infer<typeof presenceReportClaimsSchema>
 
 /**
  * Mints the realtime server's periodic presence report to the builder. Its

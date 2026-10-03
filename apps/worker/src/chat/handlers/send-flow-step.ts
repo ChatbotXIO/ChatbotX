@@ -659,6 +659,10 @@ export async function sendFlowStep({
     stepId: step.id,
     nodeId: step.nodeId,
   }
+  const conversationRoute = routeForConversation({
+    assignedUserId: conversation.assignedUserId,
+    assignedInboxTeamId: conversation.assignedInboxTeamId,
+  })
 
   // getUserData produces an outgoing message through its own handler, so it is
   // deliberately excluded from channel-deliverable steps.
@@ -1003,10 +1007,7 @@ export async function sendFlowStep({
       queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
-        route: routeForConversation({
-          assignedUserId: conversation.assignedUserId,
-          assignedInboxTeamId: conversation.assignedInboxTeamId,
-        }),
+        route: conversationRoute,
       })
     }
 
@@ -1124,10 +1125,7 @@ export async function sendFlowStep({
       conversation.workspaceId,
       message?.createdAt,
       parsedError.message,
-      routeForConversation({
-        assignedInboxTeamId: conversation.assignedInboxTeamId,
-        assignedUserId: conversation.assignedUserId,
-      }),
+      conversationRoute,
       isBulkOutbound,
     )
 
@@ -1198,6 +1196,11 @@ export const sendChatMessage = async (
       `sendChatMessage: contact inbox not found for conversation ${conversation.id}`,
     )
   }
+  const conversationRoute = routeForConversation({
+    assignedUserId: conversation.assignedUserId,
+    assignedInboxTeamId: conversation.assignedInboxTeamId,
+    inboxId: contactInbox.inboxId,
+  })
 
   if (!(text || url)) {
     return
@@ -1308,11 +1311,7 @@ export const sendChatMessage = async (
       queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
-        route: routeForConversation({
-          assignedUserId: conversation.assignedUserId,
-          assignedInboxTeamId: conversation.assignedInboxTeamId,
-          inboxId: contactInbox.inboxId,
-        }),
+        route: conversationRoute,
       })
     }
 
