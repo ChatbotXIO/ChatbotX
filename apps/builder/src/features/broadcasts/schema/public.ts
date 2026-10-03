@@ -1,5 +1,5 @@
 import { broadcastEventType } from "@chatbotx.io/analytics/schemas"
-import { channelTypes } from "@chatbotx.io/database/partials"
+import { broadcastStatuses, channelTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicListRequest } from "@/lib/public-api/list"
@@ -36,4 +36,33 @@ export const publicBroadcastContactResource = z.object({
 export const publicListBroadcastContactsResponse = z.object({
   data: z.array(publicBroadcastContactResource),
   pageCount: z.number().int(),
+})
+
+export const listBroadcastsPublicRequest = publicListRequest.extend({
+  status: broadcastStatuses
+    .optional()
+    .describe("Restrict to broadcasts in this status."),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe("Case-insensitive substring match against the broadcast name."),
+  channel: channelTypes
+    .optional()
+    .describe("Restrict to broadcasts sent on this channel."),
+  scheduledFrom: z.coerce
+    .date()
+    .optional()
+    .describe("Only broadcasts scheduled at or after this time (ISO 8601)."),
+  scheduledTo: z.coerce
+    .date()
+    .optional()
+    .describe("Only broadcasts scheduled at or before this time (ISO 8601)."),
+  sort: z
+    .array(z.object({ id: z.string(), desc: z.boolean() }))
+    .optional()
+    .describe(
+      "Sort order as [{ id, desc }] pairs, e.g. `createdAt`, `schedulesAt`, `name`. Defaults to newest first.",
+    ),
 })

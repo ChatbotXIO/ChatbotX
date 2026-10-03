@@ -227,6 +227,25 @@ describe("assertWorkspaceOwnerAccessForMethod", () => {
     ).resolves.toBeUndefined()
   })
 
+  test("allows stopping a broadcast on a trial-expired workspace (UI parity)", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path: "/v1/broadcasts/{id}/stop",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("a read_only token still cannot stop a broadcast", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", "/v1/broadcasts/{id}/stop"),
+    ).toBe(false)
+  })
+
   test("blocks a different POST path for a trial-expired workspace", async () => {
     isCloud.mockReturnValue(true)
     getAccessState.mockResolvedValue({ blocked: true, reason: "status" })

@@ -455,6 +455,13 @@ an endpoint's scope.
   download does not follow redirects. `PUT /v1/{whatsapp,messenger,instagram}-channels/{id}/coexist`
   (scope `channels`) toggles coexist history sync.
 
+- **Broadcasts** — `broadcasts.list` filters by `status`, `name`, `channel`
+  and a `scheduledFrom`/`scheduledTo` window and accepts `sort`; each broadcast
+  now carries its channel, subaction, template, contact filter and per-page
+  targets. `POST /v1/broadcasts/{id}/stop` stays available on a trial-expired
+  or over-limit workspace (the builder allows it too) but not to `read_only`
+  tokens. `emailTopics.list` accepts `sort`.
+
 - **Imports** — a token can run a whole import without the browser's session
   upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
   `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file

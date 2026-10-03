@@ -164,9 +164,18 @@ export const workspaceAccessDenialOrpcError = (
  * `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` — see the comments above for why each
  * path opts in independently.
  */
+/**
+ * Stopping a sending broadcast must stay possible on a trial-expired or
+ * over-limit workspace, exactly like the builder's `stopBroadcastAction`
+ * (`workspaceActionClientAllowExpired`). It only ever stops work, never starts
+ * any. Gate-only allow-list: a `read_only` token still cannot call it.
+ */
+export const BROADCAST_STOP_TOKEN_PATH = "/v1/broadcasts/{id}/stop"
+
 const READ_ONLY_POST_PATHS = new Set<string>([
   CONVERSATIONS_LIST_POST_PATH,
   FILTER_VALUE_LABELS_POST_PATH,
+  BROADCAST_STOP_TOKEN_PATH,
 ])
 
 export async function assertWorkspaceOwnerAccessForMethod(props: {

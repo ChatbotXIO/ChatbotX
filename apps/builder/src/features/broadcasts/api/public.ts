@@ -12,7 +12,7 @@ import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { publicListRequest } from "@/lib/public-api/list"
+import { BROADCAST_STOP_TOKEN_PATH } from "@/lib/workspace/authorize-workspace-access"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   createBroadcastRequest,
@@ -22,6 +22,7 @@ import {
   updateBroadcastSchema,
 } from "../schema/action"
 import {
+  listBroadcastsPublicRequest,
   publicListBroadcastContactsRequest,
   publicListBroadcastContactsResponse,
 } from "../schema/public"
@@ -59,11 +60,11 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts",
       summary: "List broadcasts",
       description:
-        "Use this to find broadcasts by status before inspecting one with `broadcasts.get` or stopping one with `broadcasts.stop`. Returns newest broadcasts across every status.",
+        "Use this to find broadcasts before inspecting one with `broadcasts.get` or stopping one with `broadcasts.stop`. Filter by `status`, `name`, `channel` or a `scheduledFrom`/`scheduledTo` window; newest first unless `sort` is given. Each broadcast includes its channel, subaction, template, audience filter and per-page targets.",
       tags: ["Broadcasts"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(publicListRequest)
+    .input(listBroadcastsPublicRequest)
     .output(publicListBroadcastsResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(
@@ -71,8 +72,8 @@ export const broadcastsPublicRouter = {
         await broadcastService.list({
           workspaceId: context.workspace.id,
           ...input,
-          sort: [{ id: "createdAt", desc: true }],
-          name: null,
+          sort: input.sort ?? [{ id: "createdAt", desc: true }],
+          name: input.name ?? null,
         }),
     ),
 
@@ -326,10 +327,10 @@ export const broadcastsPublicRouter = {
   stop: workspaceTokenAuthAPI
     .route({
       method: "POST",
-      path: "/v1/broadcasts/{id}/stop",
+      path: BROADCAST_STOP_TOKEN_PATH,
       summary: "Stop broadcast",
       description:
-        "Stops a broadcast only while it is sending and returns its id. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts.",
+        "Stops a broadcast only while it is sending and returns its id. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts.",
       tags: ["Broadcasts"],
       spec: mcpSpec({ visibility: "default" }),
     })
