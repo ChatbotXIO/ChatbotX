@@ -203,14 +203,12 @@ The full endpoint-to-scope mapping is generated, not hand-maintained here —
 see `/api/spec.json` (built from `apps/builder/src/routers/public.ts`) for
 the authoritative, current list, and
 `apps/builder/__tests__/*-public-scope.test.ts` for the tests that enforce
-each feature's scope assignment at compile/test time (e.g.
-`contacts-public-scope.test.ts`, `broadcasts-public-scope.test.ts`,
-`appointments-public-scope.test.ts`, `sequences-public-scope.test.ts`,
-`integrations-public-scope.test.ts`,
-`channels-and-integrations-public-scope.test.ts`,
-`analytics-public-scope.test.ts`, `conversations-public-scope.test.ts`,
-`products-public-scope.test.ts`, `product-categories-public-scope.test.ts`,
-`coupons-public-scope.test.ts`).
+each feature's scope assignment at compile/test time. The 18
+`*-public-scope.test.ts` files are: `ads`, `analytics`, `appointments`,
+`automation`, `broadcasts`, `channels-and-integrations`, `channels`,
+`contacts`, `conversations`, `coupons`, `email-topics`, `error-logs`,
+`integrations`, `media`, `minigames`, `product-categories`, `products` and
+`sequences`.
 
 What follows are the scope-assignment decisions and gotchas that aren't
 derivable from the code or those tests — read before adding or reassigning
@@ -639,6 +637,17 @@ the same credentials module: `generateApiChannelToken` /
 hash-only by `channelApiTokenAuthMidddleware` via
 `findIntegrationApiByTokenHash`. Do not add a builder-local re-export of
 these helpers — import from the business package directly.
+
+## API-first parity guard
+
+`apps/builder/__tests__/api-parity-manifest.test.ts` classifies every UI server
+action (`features/<feature>/actions/*.ts`) in `api-parity-manifest.json` as
+`covered:<feature>` (the feature has a public workspace-token router) or
+`private:<reason>` (UI-only on purpose). A new action missing from the manifest
+fails CI, so a UI capability cannot ship without an API decision. `covered:` is
+feature-level; add the public route in the same PR when you add the action.
+Entries marked `private:no public surface yet` are not yet audited, not
+approved as UI-only.
 
 ## Useful tests
 
