@@ -7,15 +7,17 @@ import { useAnalysisStore } from "../../provider/analysis-store-context"
 
 export function AllContactsByChannelChart() {
   const t = useTranslations()
-  const contactsByChannel = useAnalysisStore((state) => state.contactsByChannel)
+  const allContactsByChannel = useAnalysisStore(
+    (state) => state.allContactsByChannel,
+  )
 
   const data = useMemo(
     () =>
-      contactsByChannel.map((item) => ({
+      allContactsByChannel.map((item) => ({
         name: item.dimension || t("analytics.unknown"),
         value: item.uniqueContacts,
       })),
-    [contactsByChannel, t],
+    [allContactsByChannel, t],
   )
 
   return (
