@@ -93,10 +93,6 @@ export const TOOLS_CONFIG = [
     labelKey: "tiktokCommentAutomation.title",
     descriptionKey: "tiktokCommentAutomation.description",
     icon: SiTiktok,
-    // TikTok delivers comment events within five minutes rather than in real
-    // time, and the write scopes are still pending approval — the card is
-    // marked Beta so the delay reads as a known limitation, not a fault.
-    beta: true,
     getLink: (id: string) => `/space/${id}/tiktok-comments`,
   },
   {
