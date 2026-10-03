@@ -1,11 +1,7 @@
 "use server"
 
-import {
-  aiHandoverBulkRunService,
-  aiHandoverSettingsService,
-} from "@chatbotx.io/business"
+import { aiHandoverBulkRunService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   assertCanManageAiHandover,
@@ -16,29 +12,6 @@ import { saveAiHandoverSettingsRequest } from "../schema/request"
 /** The service reports a missing or inactive goto flow as `notFound`. */
 const SAVE_ERROR_COPY_KEYS: Record<string, string> = {
   notFound: "aiHandover.errors.flowNotFound",
-}
-
-/**
- * Switching the automation off ends a running enable (its hand-overs would be
- * undone by the take-back anyway); a disable is meant to finish. The engine's
- * cached check already stops it at the next batch, so a failure here is logged,
- * never fatal to the save.
- */
-async function stopEnableRun(page: {
-  workspaceId: string
-  inboxId: string
-}): Promise<void> {
-  try {
-    await aiHandoverBulkRunService.cancelLiveForInbox({
-      ...page,
-      action: "enable",
-    })
-  } catch (err) {
-    logger.error(
-      { err, inboxId: page.inboxId },
-      "AI hand-over settings saved off: could not stop the Page's enable run",
-    )
-  }
 }
 
 /**
@@ -59,14 +32,12 @@ export const saveAiHandoverSettingsAction = workspaceActionClient
       await assertCanManageAiHandover(ctx)
 
       try {
-        const saved = await aiHandoverSettingsService.save({
+        // Also stops the Page's running enable when the automation is saved off.
+        const saved = await aiHandoverBulkRunService.saveSettings({
           ...parsedInput,
           workspaceId,
           inboxId,
         })
-        if (!saved.enabled) {
-          await stopEnableRun({ workspaceId, inboxId })
-        }
         return {
           enabled: saved.enabled,
           scheduleEnabled: saved.scheduleEnabled,

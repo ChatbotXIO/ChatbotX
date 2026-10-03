@@ -427,6 +427,25 @@ an endpoint's scope.
   external webhooks, and event webhooks. A token scoped to `["integrations"]`
   is not authorized for channel configuration or operations.
 
+- **Conversation routing and AI hand-over** — `POST
+  /v1/conversations/{id}/thread-control` (take/release/pass; scope `inbox`) and
+  `.../thread-control/sync` call the same `channel-registry` functions as the
+  inbox UI, including the check that the contact inbox belongs to the
+  conversation's contact. `bypassThreadControlLock` is not exposed. A refused
+  `take` returns `status: notEscalation` (200), not an error.
+  `PATCH /v1/{whatsapp,messenger}-channels/{id}/handover-resume-flow` (scope
+  `channels`) replaces the UI's super-admin gate. Meta Business AI hand-over
+  lives under `/v1/inboxes/{inboxId}/ai-handover/*` with scope `integrations`:
+  settings (GET/PUT; saving off also stops a running enable), apply-to-all
+  (GET status, POST switch, POST retry) and history. Apply-to-all messages and
+  hands over real customers, so the POST is bounded: `dryRun: true` returns
+  `eligibleCount` and changes nothing, and a real change must carry
+  `confirmCount` (the most customers the caller accepts) or it is refused when
+  more are eligible at that moment, or when a previous run is still winding
+  down and the change cannot start immediately. This is a check at request
+  time, not a cap on the run: customers who become eligible while it
+  progresses are still included. Token calls record no requesting user.
+
 - **Imports** — a token can run a whole import without the browser's session
   upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
   `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file

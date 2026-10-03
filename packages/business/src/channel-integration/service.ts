@@ -23,6 +23,8 @@ export type ChannelIntegrationSummary = {
   hasCapiScope: boolean
   datasetId: string | null
   syncTagEnabledAt: Date | null
+  /** WhatsApp/Messenger: flow that runs when a partner hands a conversation back. */
+  handoverResumeFlowId: string | null
   tokenRefreshError: string | null
   adsEligible: boolean
 }
@@ -44,6 +46,7 @@ const SUMMARY_DEFAULTS = {
   hasCapiScope: false,
   datasetId: null,
   syncTagEnabledAt: null,
+  handoverResumeFlowId: null,
   tokenRefreshError: null,
 } as const
 
@@ -79,6 +82,7 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         isCoexist: true,
         hasCapiScope: true,
         datasetId: true,
+        handoverResumeFlowId: true,
         tokenRefreshError: true,
       },
     })
@@ -94,6 +98,7 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         isCoexist: row.isCoexist,
         hasCapiScope: row.hasCapiScope,
         datasetId: row.datasetId,
+        handoverResumeFlowId: row.handoverResumeFlowId,
         tokenRefreshError: row.tokenRefreshError,
       }),
     )
@@ -110,6 +115,7 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         hasCapiScope: true,
         datasetId: true,
         syncTagEnabledAt: true,
+        handoverResumeFlowId: true,
         tokenRefreshError: true,
       },
     })
@@ -123,6 +129,7 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         hasCapiScope: row.hasCapiScope,
         datasetId: row.datasetId,
         syncTagEnabledAt: row.syncTagEnabledAt,
+        handoverResumeFlowId: row.handoverResumeFlowId,
         tokenRefreshError: row.tokenRefreshError,
       }),
     )

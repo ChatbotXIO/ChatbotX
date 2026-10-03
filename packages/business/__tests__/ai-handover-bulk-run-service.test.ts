@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   requireInbox: vi.fn(),
+  saveSettings: vi.fn(),
+  cancelLiveRows: vi.fn(),
   findInboxRow: vi.fn(),
   isActiveNow: vi.fn(),
   invalidate: vi.fn(),
@@ -61,6 +63,7 @@ vi.mock("../src/inbox/service", () => ({
 vi.mock("../src/ai-handover-settings/service", () => ({
   aiHandoverSettingsService: {
     requireInbox: mocks.requireInbox,
+    save: mocks.saveSettings,
     isActiveNow: mocks.isActiveNow,
     invalidate: mocks.invalidate,
   },
@@ -977,5 +980,259 @@ describe("engine surface", () => {
       maxAttempts: 5,
     })
     expect(mocks.listAwaiting).toHaveBeenCalledWith({ limit: 20 })
+  })
+})
+
+describe("setApplyToAll: a workspace-token caller has no user", () => {
+  test("records the change without a requesting user", async () => {
+    await aiHandoverBulkRunService.setApplyToAll({
+      ...PAGE,
+      userId: null,
+      applyToAllCustomers: true,
+    })
+
+    expect(mocks.setApplyToAllRow).toHaveBeenCalledWith(
+      expect.objectContaining({ requestedByUserId: null }),
+      TX,
+    )
+  })
+
+  test("retry works without a user too", async () => {
+    setLocked(settingsRow({ applyToAllRevision: 2 }))
+    mocks.findByRevision.mockResolvedValue({ status: "failed" })
+
+    await aiHandoverBulkRunService.retry({ ...PAGE, userId: null })
+
+    expect(mocks.setApplyToAllRow).toHaveBeenCalledWith(
+      expect.objectContaining({ requestedByUserId: null }),
+      TX,
+    )
+  })
+})
+
+describe("previewApplyToAll", () => {
+  test("counts the threads an ON would hand to the AI, writing nothing", async () => {
+    mocks.findSettings.mockResolvedValue(settingsRow())
+    mocks.countBulkAiEligible.mockResolvedValue(42)
+
+    await expect(
+      aiHandoverBulkRunService.previewApplyToAll({
+        ...PAGE,
+        applyToAllCustomers: true,
+      }),
+    ).resolves.toEqual({ isChanged: true, eligibleCount: 42 })
+
+    expect(mocks.countBulkAiEligible).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "enable",
+        workspaceId: "ws-1",
+        inboxId: "inbox-1",
+      }),
+    )
+    expect(mocks.setApplyToAllRow).not.toHaveBeenCalled()
+    expect(mocks.createForRevision).not.toHaveBeenCalled()
+  })
+
+  test("an OFF counts the threads the AI holds (disable action)", async () => {
+    mocks.findSettings.mockResolvedValue(
+      settingsRow({ applyToAllCustomers: true }),
+    )
+    mocks.countBulkAiEligible.mockResolvedValue(5)
+
+    await expect(
+      aiHandoverBulkRunService.previewApplyToAll({
+        ...PAGE,
+        applyToAllCustomers: false,
+        message: "back to a human",
+      }),
+    ).resolves.toEqual({ isChanged: true, eligibleCount: 5 })
+    expect(mocks.countBulkAiEligible).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "disable" }),
+    )
+  })
+
+  test("the state the Page is already in is a no-op without counting", async () => {
+    mocks.findSettings.mockResolvedValue(
+      settingsRow({ applyToAllCustomers: true }),
+    )
+
+    await expect(
+      aiHandoverBulkRunService.previewApplyToAll({
+        ...PAGE,
+        applyToAllCustomers: true,
+      }),
+    ).resolves.toEqual({ isChanged: false, eligibleCount: 0 })
+    expect(mocks.countBulkAiEligible).not.toHaveBeenCalled()
+  })
+
+  test("reports the same refusals as the real call: an ON needs the automation running", async () => {
+    mocks.findSettings.mockResolvedValue(settingsRow())
+    mocks.isActiveNow.mockResolvedValue(false)
+
+    await expect(
+      aiHandoverBulkRunService.previewApplyToAll({
+        ...PAGE,
+        applyToAllCustomers: true,
+      }),
+    ).rejects.toMatchObject({
+      code: AI_HANDOVER_BULK_ERROR_CODES.automationNotActive,
+    })
+  })
+
+  test("an ON for a Page with no saved settings needs the automation too", async () => {
+    mocks.findSettings.mockResolvedValue(null)
+
+    await expect(
+      aiHandoverBulkRunService.previewApplyToAll({
+        ...PAGE,
+        applyToAllCustomers: true,
+      }),
+    ).rejects.toMatchObject({
+      code: AI_HANDOVER_BULK_ERROR_CODES.automationNotActive,
+    })
+  })
+
+  test("an OFF still needs its message", async () => {
+    mocks.findSettings.mockResolvedValue(
+      settingsRow({ applyToAllCustomers: true }),
+    )
+
+    await expect(
+      aiHandoverBulkRunService.previewApplyToAll({
+        ...PAGE,
+        applyToAllCustomers: false,
+        message: "  ",
+      }),
+    ).rejects.toMatchObject({
+      code: AI_HANDOVER_BULK_ERROR_CODES.messageRequired,
+    })
+  })
+
+  test("a disconnected Page is refused", async () => {
+    mocks.requireInbox.mockResolvedValue({
+      id: "inbox-1",
+      status: "disconnected",
+      channel: "messenger",
+    })
+    mocks.findSettings.mockResolvedValue(settingsRow())
+
+    await expect(
+      aiHandoverBulkRunService.previewApplyToAll({
+        ...PAGE,
+        applyToAllCustomers: true,
+      }),
+    ).rejects.toMatchObject({
+      code: AI_HANDOVER_BULK_ERROR_CODES.pageNotConnected,
+    })
+  })
+})
+
+describe("setApplyToAll: confirmMaxEligible", () => {
+  test("refuses, writing nothing, when more threads are eligible than the caller confirmed", async () => {
+    mocks.findSettings.mockResolvedValue(settingsRow())
+    mocks.countBulkAiEligible.mockResolvedValue(11)
+
+    await rejectsWithCode(
+      aiHandoverBulkRunService.setApplyToAll({
+        ...REQUEST,
+        applyToAllCustomers: true,
+        confirmMaxEligible: 10,
+      }),
+      AI_HANDOVER_BULK_ERROR_CODES.confirmCountExceeded,
+    )
+    expect(mocks.createForRevision).not.toHaveBeenCalled()
+  })
+
+  test("proceeds when the eligible count is within the confirmed maximum", async () => {
+    mocks.findSettings.mockResolvedValue(settingsRow())
+    mocks.countBulkAiEligible.mockResolvedValue(10)
+
+    const change = await aiHandoverBulkRunService.setApplyToAll({
+      ...REQUEST,
+      applyToAllCustomers: true,
+      confirmMaxEligible: 10,
+    })
+
+    expect(change.isChanged).toBe(true)
+  })
+
+  test("refuses a confirmed change whose run cannot start now (it would act on a stale count)", async () => {
+    mocks.findSettings.mockResolvedValue(settingsRow())
+    mocks.countBulkAiEligible.mockResolvedValue(3)
+    mocks.createForRevision.mockResolvedValue(null)
+
+    await expect(
+      aiHandoverBulkRunService.setApplyToAll({
+        ...REQUEST,
+        applyToAllCustomers: true,
+        confirmMaxEligible: 10,
+      }),
+    ).rejects.toMatchObject({
+      code: AI_HANDOVER_BULK_ERROR_CODES.runNotStartable,
+    })
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+    // Once inside the rolled-back change, once in its own committed
+    // transaction so the older run really stops.
+    expect(mocks.cancelLive).toHaveBeenCalledTimes(2)
+  })
+
+  test("an unconfirmed change (the UI) may still wait for the previous run", async () => {
+    mocks.createForRevision.mockResolvedValue(null)
+
+    const change = await aiHandoverBulkRunService.setApplyToAll({
+      ...REQUEST,
+      applyToAllCustomers: true,
+    })
+
+    expect(change).toEqual({ isChanged: true, run: null })
+  })
+
+  test("is not consulted when the caller sends no confirmation (the UI path)", async () => {
+    await aiHandoverBulkRunService.setApplyToAll({
+      ...REQUEST,
+      applyToAllCustomers: true,
+    })
+
+    expect(mocks.countBulkAiEligible).not.toHaveBeenCalled()
+  })
+})
+
+describe("saveSettings", () => {
+  const input = {
+    ...PAGE,
+    enabled: false,
+    scheduleEnabled: false,
+    timeRanges: [],
+    gotoFlowId: null,
+    returnMessage: null,
+    pauseBotWaitingForStaff: false,
+  }
+
+  test("saving the automation off also stops the Page's running enable", async () => {
+    mocks.saveSettings.mockResolvedValue({ ...input, enabled: false })
+    mocks.cancelLive.mockResolvedValue(null)
+
+    const saved = await aiHandoverBulkRunService.saveSettings(input)
+
+    expect(saved.enabled).toBe(false)
+    expect(mocks.cancelLive).toHaveBeenCalled()
+  })
+
+  test("saving it on leaves the running runs alone", async () => {
+    mocks.saveSettings.mockResolvedValue({ ...input, enabled: true })
+
+    await aiHandoverBulkRunService.saveSettings({ ...input, enabled: true })
+
+    expect(mocks.cancelLive).not.toHaveBeenCalled()
+  })
+
+  test("a failure to stop the run is logged, never fatal to the save", async () => {
+    mocks.saveSettings.mockResolvedValue({ ...input, enabled: false })
+    mocks.cancelLive.mockRejectedValue(new Error("db down"))
+
+    await expect(
+      aiHandoverBulkRunService.saveSettings(input),
+    ).resolves.toMatchObject({ enabled: false })
+    expect(mocks.loggerError).toHaveBeenCalled()
   })
 })

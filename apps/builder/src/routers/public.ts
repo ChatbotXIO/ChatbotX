@@ -18,6 +18,7 @@ import {
 import {
   channelIntegrationsPublicRouter,
   createChannelReadRoutes,
+  createHandoverResumeFlowRoute,
 } from "@/features/channel-integrations/api/public"
 import { channelPostsPublicRouter } from "@/features/channel-posts/api/public"
 import { contactScanPublicRouter } from "@/features/contact-scan/api/public"
@@ -37,6 +38,7 @@ import { foldersPublicRouter } from "@/features/folders/api/public"
 import { igCommentsPublicRouter } from "@/features/ig-comments/api/public"
 import { igStoriesPublicRouter } from "@/features/ig-stories/api/public"
 import { inboxesPublicRouter } from "@/features/inboxes/api/public"
+import { aiHandoverPublicRouter } from "@/features/integration-ai-handover/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
 import { smtpIntegrationsPublicRouter } from "@/features/integration-smtp/api/public"
@@ -70,6 +72,7 @@ export const publicRouter = {
   ads: adsPublicRouter,
   aiAgents: aiAgentsPublicRouter,
   aiFiles: aiFilesPublicRouter,
+  aiHandover: aiHandoverPublicRouter,
   aiFunctions: aiFunctionsPublicRouter,
   aiMcpServers: aiMcpServersPublicRouter,
   analytics: analyticsPublicRouter,
@@ -126,7 +129,10 @@ export const publicRouter = {
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,
   webhooks: webhooksPublicRouter,
-  whatsappChannels: createChannelReadRoutes("whatsapp"),
+  whatsappChannels: {
+    ...createChannelReadRoutes("whatsapp"),
+    ...createHandoverResumeFlowRoute("whatsapp"),
+  },
   whatsappTemplates: whatsappTemplatesPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,

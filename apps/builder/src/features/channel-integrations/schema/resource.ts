@@ -30,6 +30,12 @@ export const channelIntegrationResource = z.object({
     .date()
     .nullable()
     .describe("When tag sync was enabled; null when off or unsupported."),
+  handoverResumeFlowId: z
+    .string()
+    .nullable()
+    .describe(
+      "WhatsApp/Messenger: flow that runs when a partner hands a conversation back. Change it with the handover-resume-flow route.",
+    ),
   tokenRefreshError: z
     .string()
     .nullable()

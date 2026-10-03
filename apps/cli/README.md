@@ -766,11 +766,31 @@ chatbotx media-library files-move --fileIds <fileIds>  # [--folderId]
 
 ---
 
+### `inboxes` AI hand-over (Meta Business AI, scope `integrations`)
+
+```bash
+chatbotx inboxes settings list <inboxId>                  # AI hand-over settings
+chatbotx inboxes settings update <inboxId> --enabled --scheduleEnabled --timeRanges --gotoFlowId --returnMessage --pauseBotWaitingForStaff
+chatbotx inboxes apply-to-all list <inboxId>              # Switch state + latest run
+chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --dryRun        # Count only
+chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --confirmCount <n>
+chatbotx inboxes retry add <inboxId>                      # Retry the latest apply-to-all
+chatbotx inboxes history list <inboxId>                   # [--page --perPage]
+```
+
+### Conversation thread control (scope `inbox`)
+
+```bash
+chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass
+chatbotx conversations sync add <id> --contactInboxId <id>     # Sync the thread owner from the channel
+```
+
 ### `channel-integrations`
 
 ```bash
 chatbotx channel-integrations list                    # [--channel] Connected WhatsApp/Messenger/Instagram/Zalo/TikTok channels
 chatbotx whatsapp-channels list|get <id>              # Same data per channel; also instagram-channels, tiktok-channels
+chatbotx whatsapp-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
 ```
 
 ### `messenger-channels`
@@ -778,6 +798,7 @@ chatbotx whatsapp-channels list|get <id>              # Same data per channel; a
 ```bash
 chatbotx messenger-channels list
 chatbotx messenger-channels get <id>
+chatbotx messenger-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
 chatbotx messenger-channels tag-sync update <id> --enabled <enabled>
 ```
 

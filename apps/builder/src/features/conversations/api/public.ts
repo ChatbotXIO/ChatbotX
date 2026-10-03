@@ -1,4 +1,9 @@
 import { conversationService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  requestConversationThreadControl,
+  syncConversationThreadOwner,
+} from "@chatbotx.io/channel-registry/thread-control"
 import {
   channelTypes,
   conversationBotCategories,
@@ -15,7 +20,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { cursorPaginationRequest } from "@/lib/pagination"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
+import { mapThreadControlError } from "../lib/thread-control-errors"
 import {
   findConversation,
   listConversations,
@@ -24,10 +29,22 @@ import {
   assignConversationPublicRequest,
   conversationIdPathParam,
   getConversationPublicResponse,
+  syncThreadOwnerPublicRequest,
+  syncThreadOwnerPublicResponse,
+  threadControlPublicRequest,
+  threadControlPublicResponse,
 } from "../schema/public"
 import { listConversationsResponse } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
+
+// English copy for the shared UI error mapper (the builder passes its i18n).
+const THREAD_CONTROL_ERROR_COPY = {
+  "conversationRouting.errors.unsupported":
+    "This channel does not support thread control.",
+  "conversationRouting.errors.actionFailed":
+    "The channel could not apply the thread-control action.",
+} as const
 
 function jsonQueryParam<T>(schema: z.ZodType<T>) {
   return z.preprocess((val) => {
@@ -404,5 +421,69 @@ export const conversationsPublicRouter = {
         },
       })
       return { success: true as const }
+    }),
+
+  threadControl: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/conversations/{id}/thread-control",
+      summary: "Take, release or pass conversation thread",
+      description:
+        "Controls who owns a contact inbox's routing thread on channels that share a conversation with another app (e.g. WhatsApp with Meta AI or a partner): `take` it, `release` it, or `pass` it to the escalation role. Read `contactInboxes[].threadControlState` and `threadOwnerRole` with `conversations.get` first. A `take` the channel refuses returns `status: notEscalation` (HTTP 200) instead of an error.",
+      tags: ["Conversations"],
+    })
+    .input(threadControlPublicRequest)
+    .output(threadControlPublicResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const conversation = await conversationService.findByOrFail({
+        where: { id: input.id, workspaceId },
+      })
+      try {
+        const snapshot = await requestConversationThreadControl({
+          workspaceId,
+          conversation,
+          contactInboxId: input.contactInboxId,
+          action: input.action,
+        })
+        return { status: "applied" as const, snapshot }
+      } catch (error) {
+        if (error instanceof ChatbotXException && error.code === "notFound") {
+          throw error
+        }
+        const refusal = mapThreadControlError(
+          error,
+          input.action,
+          (key) => THREAD_CONTROL_ERROR_COPY[key],
+        )
+        return { status: refusal.status }
+      }
+    }),
+
+  syncThreadOwner: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/conversations/{id}/thread-control/sync",
+      summary: "Sync conversation thread owner",
+      description:
+        "Asks the contact inbox's channel who currently owns the routing thread and updates the stored state to match, then returns it. Channels that cannot report an owner (WhatsApp) leave the state unchanged. Use `conversations.get` to find `contactInboxId`.",
+      tags: ["Conversations"],
+    })
+    .input(syncThreadOwnerPublicRequest)
+    .output(syncThreadOwnerPublicResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const conversation = await conversationService.findByOrFail({
+        where: { id: input.id, workspaceId },
+      })
+      return {
+        snapshot: await syncConversationThreadOwner({
+          workspaceId,
+          conversation,
+          contactInboxId: input.contactInboxId,
+        }),
+      }
     }),
 }

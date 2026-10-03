@@ -13,8 +13,17 @@ import { AI_HANDOVER_MESSAGE_MAX_LENGTH } from "./request"
  */
 export const setApplyToAllRequest = z
   .object({
-    applyToAllCustomers: z.boolean(),
-    message: z.string().max(AI_HANDOVER_MESSAGE_MAX_LENGTH),
+    applyToAllCustomers: z
+      .boolean()
+      .describe(
+        "`true` hands every eligible customer thread to the AI; `false` takes them back.",
+      ),
+    message: z
+      .string()
+      .max(AI_HANDOVER_MESSAGE_MAX_LENGTH)
+      .describe(
+        "Text sent with the HUMAN_AGENT tag when taking customers back; required for `applyToAllCustomers: false`, ignored otherwise.",
+      ),
   })
   // An OFF without text cannot be sent: reject it at the form too.
   .refine(

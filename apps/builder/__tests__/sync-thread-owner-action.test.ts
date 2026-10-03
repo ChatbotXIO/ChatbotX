@@ -4,18 +4,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   findByOrFail: vi.fn(),
-  findByUncached: vi.fn(),
   syncThreadOwner: vi.fn(),
   requireContactAccessForMember: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { findByOrFail: mocks.findByOrFail },
-  contactInboxService: { findByUncached: mocks.findByUncached },
 }))
 
 vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
-  syncThreadOwner: mocks.syncThreadOwner,
+  syncConversationThreadOwner: mocks.syncThreadOwner,
 }))
 
 vi.mock("@/features/contacts/permissions", () => ({
@@ -44,7 +42,6 @@ const syncThreadOwnerAction = untypedAction as unknown as (props: {
 }) => Promise<unknown>
 
 const permissions = { onlyAssignedContacts: true }
-const contactInbox = { id: "ci-1", contactId: "contact-1" }
 const run = (contactInboxId = "ci-1") =>
   syncThreadOwnerAction({
     bindArgsParsedInputs: ["ws-1"],
@@ -62,7 +59,6 @@ const snapshot = {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.findByOrFail.mockResolvedValue({ id: "conv-1", contactId: "contact-1" })
-  mocks.findByUncached.mockResolvedValue(contactInbox)
   mocks.requireContactAccessForMember.mockResolvedValue({})
   mocks.syncThreadOwner.mockResolvedValue(snapshot)
 })
@@ -80,13 +76,10 @@ describe("syncThreadOwnerAction", () => {
       workspaceId: "ws-1",
       contactId: "contact-1",
     })
-    expect(mocks.findByUncached).toHaveBeenCalledWith({
-      where: { id: "ci-1", contactId: "contact-1" },
-    })
     expect(mocks.syncThreadOwner).toHaveBeenCalledWith({
       workspaceId: "ws-1",
-      contactInbox,
-      conversationId: "conv-1",
+      conversation: { id: "conv-1", contactId: "contact-1" },
+      contactInboxId: "ci-1",
     })
   })
 
@@ -111,13 +104,14 @@ describe("syncThreadOwnerAction", () => {
     expect(mocks.syncThreadOwner).not.toHaveBeenCalled()
   })
 
-  test("refuses a contact inbox that does not belong to the conversation's contact", async () => {
-    mocks.findByUncached.mockResolvedValue(undefined)
+  test("shows a translated not-found for a contact inbox of another contact", async () => {
+    mocks.syncThreadOwner.mockRejectedValue(
+      new ChatbotXException("Contact inbox not found", "notFound", 404),
+    )
 
     await expect(run("ci-foreign")).rejects.toThrow(
       "conversationRouting.errors.notFound",
     )
-    expect(mocks.syncThreadOwner).not.toHaveBeenCalled()
   })
 
   test("lets a channel failure propagate instead of reporting a sync", async () => {

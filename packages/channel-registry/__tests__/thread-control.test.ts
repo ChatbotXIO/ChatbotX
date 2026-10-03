@@ -7,9 +7,23 @@ const mocks = vi.hoisted(() => ({
   hasChannelHandler: vi.fn(),
   runChannelHandler: vi.fn(),
   channelResult: vi.fn(),
+  listByContactId: vi.fn(),
+  findByUncached: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business/errors", () => ({
+  notFoundException: (message: string) =>
+    Object.assign(new Error(message), {
+      code: "notFound",
+      httpStatusCode: 404,
+    }),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  contactInboxService: {
+    listByContactId: mocks.listByContactId,
+    findByUncached: mocks.findByUncached,
+  },
   threadControlService: {
     requestAction: mocks.requestAction,
     syncThreadOwner: mocks.syncThreadOwner,
@@ -27,8 +41,13 @@ vi.mock("../src/registry", () => ({
   resolveIntegrationContextFromContactInbox: mocks.resolveContext,
 }))
 
-const { requestThreadControlAction, getChannelThreadOwner, syncThreadOwner } =
-  await import("../src/thread-control")
+const {
+  requestThreadControlAction,
+  getChannelThreadOwner,
+  syncThreadOwner,
+  requestConversationThreadControl,
+  syncConversationThreadOwner,
+} = await import("../src/thread-control")
 
 const contactInbox = { id: "ci-1", channel: "whatsapp", inboxId: "inbox-1" }
 const snapshot = {
@@ -324,5 +343,87 @@ describe("createBulkThreadControl", () => {
     await expect(bulk.run({ action: "handToAi", contacts: [] })).rejects.toBe(
       failure,
     )
+  })
+})
+
+const conversation = { id: "conv-1", contactId: "contact-1" }
+
+describe("requestConversationThreadControl", () => {
+  test("runs the action for a contact inbox of the conversation's contact", async () => {
+    mocks.listByContactId.mockResolvedValue([{ id: "ci-1" }, { id: "ci-2" }])
+    mocks.requestAction.mockResolvedValue(snapshot)
+
+    const result = await requestConversationThreadControl({
+      workspaceId: "ws-1",
+      conversation,
+      contactInboxId: "ci-2",
+      action: "take",
+    })
+
+    expect(mocks.listByContactId).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+    })
+    expect(mocks.requestAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-2",
+        action: "take",
+      }),
+    )
+    expect(result).toBe(snapshot)
+  })
+
+  test("refuses a contact inbox of another contact without touching the channel", async () => {
+    mocks.listByContactId.mockResolvedValue([{ id: "ci-1" }])
+
+    await expect(
+      requestConversationThreadControl({
+        workspaceId: "ws-1",
+        conversation,
+        contactInboxId: "ci-foreign",
+        action: "release",
+      }),
+    ).rejects.toMatchObject({ code: "notFound", httpStatusCode: 404 })
+    expect(mocks.requestAction).not.toHaveBeenCalled()
+  })
+})
+
+describe("syncConversationThreadOwner", () => {
+  test("syncs a fresh row scoped to the conversation's contact", async () => {
+    mocks.findByUncached.mockResolvedValue(contactInbox)
+    mocks.syncThreadOwner.mockResolvedValue(snapshot)
+
+    const result = await syncConversationThreadOwner({
+      workspaceId: "ws-1",
+      conversation,
+      contactInboxId: "ci-1",
+    })
+
+    expect(mocks.findByUncached).toHaveBeenCalledWith({
+      where: { id: "ci-1", contactId: "contact-1" },
+    })
+    expect(mocks.syncThreadOwner).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        contactInbox,
+        conversationId: "conv-1",
+      }),
+    )
+    expect(result).toBe(snapshot)
+  })
+
+  test("refuses a contact inbox that is not the conversation's contact's", async () => {
+    mocks.findByUncached.mockResolvedValue(undefined)
+
+    await expect(
+      syncConversationThreadOwner({
+        workspaceId: "ws-1",
+        conversation,
+        contactInboxId: "ci-foreign",
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(mocks.syncThreadOwner).not.toHaveBeenCalled()
   })
 })

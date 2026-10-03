@@ -76,6 +76,7 @@ describe("channelIntegrationService", () => {
         isCoexist: true,
         hasCapiScope: true,
         datasetId: "ds-1",
+        handoverResumeFlowId: "77",
         tokenRefreshError: null,
       },
     ])
@@ -93,6 +94,7 @@ describe("channelIntegrationService", () => {
         wabaId: "waba-1",
         displayPhoneNumber: null,
         isCoexist: true,
+        handoverResumeFlowId: "77",
         adsEligible: true,
       }),
     ])
