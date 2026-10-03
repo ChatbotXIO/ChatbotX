@@ -164,6 +164,34 @@ const coexistResponse = z.object({
   reason: z.string().optional(),
 })
 
+const coexistRunResource = z.object({
+  id: z.string(),
+  status: z
+    .string()
+    .describe(
+      "init, running, waiting, succeeded, partial or failed (a live run is init, running or waiting).",
+    ),
+  startedAt: z.date().nullable(),
+  finishedAt: z.date().nullable(),
+  totalScan: z.number().describe("Items planned (e.g. conversations)."),
+  currentScan: z.number().describe("Items processed so far."),
+  currentStep: z.string().nullable().describe("Human-readable progress."),
+  syncProgress: z
+    .number()
+    .describe("Meta's history progress, 0-100 (100 = Meta finished pushing)."),
+  importedContactCount: z.number(),
+  importedMessageCount: z.number(),
+  skippedCount: z.number(),
+  failedCount: z.number(),
+  currentError: z.string().nullable().describe("Last error text, if any."),
+})
+
+const coexistStatusResponse = z.object({
+  run: coexistRunResource
+    .nullable()
+    .describe("The newest sync run, or null if none has run yet."),
+})
+
 /**
  * `PUT /v1/<channel>-channels/{id}/coexist`: enables or disables coexistence
  * sync (history import) for a channel, through the same services as the
@@ -172,6 +200,36 @@ const coexistResponse = z.object({
 export const createCoexistRoute = (channel: CoexistChannel) => {
   const label = channelLabels[channel]
   return {
+    getCoexistStatus: workspaceTokenAuthAPI
+      .route({
+        method: "GET",
+        path: `/v1/${channel}-channels/{id}/coexist` as const,
+        summary: `Get ${label} coexist sync status`,
+        description: `Returns the newest history-sync run of a ${label} channel with its progress and counters, or \`run: null\` if it never ran. Poll it after \`setCoexist\` returned a \`runId\`.`,
+        tags: ["Channels"],
+      })
+      .input(
+        z.object({
+          id: zodBigintAsString().describe(
+            `${label} channel (integration) id. Get it from the channel list route.`,
+          ),
+        }),
+      )
+      .output(coexistStatusResponse)
+      .errors(possibleErrorsOnFindingResource)
+      .handler(async ({ context, input }) => {
+        const base = {
+          workspaceId: context.workspace.id,
+          integrationId: input.id,
+          channel,
+        }
+        if (!(await coexistService.findIntegrationForCoexist(base))) {
+          throw notFoundException("Channel not found")
+        }
+        const run = await coexistService.findLatestRun(base)
+        return { run: run ? coexistRunResource.parse(run) : null }
+      }),
+
     setCoexist: workspaceTokenAuthAPI
       .route({
         method: "PUT",

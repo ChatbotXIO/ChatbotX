@@ -40,6 +40,8 @@ const coexist = vi.hoisted(() => ({
   enable: vi.fn(),
   disable: vi.fn(),
   whatsapp: vi.fn(),
+  findIntegration: vi.fn(),
+  findLatestRun: vi.fn(),
 }))
 vi.mock("@/features/integration-whatsapp/lib/coexist-trigger-sync", () => ({
   triggerSync: vi.fn(),
@@ -64,7 +66,12 @@ const service = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/business", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   channelIntegrationService: service,
-  coexistService: { enable: coexist.enable, disable: coexist.disable },
+  coexistService: {
+    enable: coexist.enable,
+    disable: coexist.disable,
+    findIntegrationForCoexist: coexist.findIntegration,
+    findLatestRun: coexist.findLatestRun,
+  },
   integrationWhatsappService: {
     updateHandoverResumeFlow: handoverServices.whatsapp,
     setCoexist: coexist.whatsapp,
@@ -183,6 +190,68 @@ describe.each([
       workspaceId: "ws-1",
       handoverResumeFlowId: null,
     })
+  })
+})
+
+describe("GET /v1/<channel>-channels/{id}/coexist", () => {
+  const getHandler = () => {
+    createCoexistRoute("messenger")
+    return capturedProcedures.find(
+      (p) =>
+        p.route.method === "GET" &&
+        p.route.path === "/v1/messenger-channels/{id}/coexist",
+    )?.handler
+  }
+  const runRow = {
+    id: "r1",
+    status: "running",
+    startedAt: null,
+    finishedAt: null,
+    totalScan: 10,
+    currentScan: 4,
+    currentStep: "page 1/3",
+    syncProgress: 0,
+    importedContactCount: 1,
+    importedMessageCount: 2,
+    skippedCount: 0,
+    failedCount: 0,
+    currentError: null,
+    workspaceId: "ws-1",
+    integrationId: "7",
+  }
+
+  test("returns the newest run without internal columns, scoped to the workspace", async () => {
+    coexist.findIntegration.mockResolvedValue({ id: "7" })
+    coexist.findLatestRun.mockResolvedValue(runRow)
+
+    const result = await getHandler()?.({ context: ctx, input: { id: "7" } })
+
+    expect(coexist.findLatestRun).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      integrationId: "7",
+      channel: "messenger",
+    })
+    expect(result.run).toMatchObject({ id: "r1", currentScan: 4 })
+    expect(result.run).not.toHaveProperty("workspaceId")
+  })
+
+  test("is run: null when it never synced", async () => {
+    coexist.findIntegration.mockResolvedValue({ id: "7" })
+    coexist.findLatestRun.mockResolvedValue(null)
+
+    await expect(
+      getHandler()?.({ context: ctx, input: { id: "7" } }),
+    ).resolves.toEqual({ run: null })
+  })
+
+  test("a channel of another workspace is a 404 and reads no run", async () => {
+    coexist.findIntegration.mockResolvedValue(null)
+    coexist.findLatestRun.mockClear()
+
+    await expect(
+      getHandler()?.({ context: ctx, input: { id: "7" } }),
+    ).rejects.toThrow("Channel not found")
+    expect(coexist.findLatestRun).not.toHaveBeenCalled()
   })
 })
 
