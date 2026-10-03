@@ -69,6 +69,20 @@ vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
     await importOriginal<typeof import("@chatbotx.io/database/schema")>()
   return { ...actual }
 })
+const armQuickReplySettings = vi.fn(async (..._args: unknown[]) => undefined)
+const clearQuickReplyPendingOnFlowEntry = vi.fn(
+  async (..._args: unknown[]) => undefined,
+)
+const clearQuickReplyChallengeOnTap = vi.fn(
+  async (..._args: unknown[]) => undefined,
+)
+vi.mock("../src/integration/handlers/quick-reply-settings", () => ({
+  armQuickReplySettings: (...args: unknown[]) => armQuickReplySettings(...args),
+  clearQuickReplyPendingOnFlowEntry: (...args: unknown[]) =>
+    clearQuickReplyPendingOnFlowEntry(...args),
+  clearQuickReplyChallengeOnTap: (...args: unknown[]) =>
+    clearQuickReplyChallengeOnTap(...args),
+}))
 vi.mock("../src/lib/logger", () => ({
   logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }))
@@ -373,6 +387,7 @@ describe("flow action target resolution", () => {
     findRichResponseByButton.mockClear()
     detectConversationAndContactInbox.mockReset()
     detectFlowVersion.mockReset()
+    clearQuickReplyChallengeOnTap.mockClear()
     // WhatsApp, Zalo, Telegram and TikTok all deliver a tapped reply through a
     // single webhook field, so the channel cannot say whether it was a step
     // button or a node quick reply.
@@ -429,6 +444,22 @@ describe("flow action target resolution", () => {
     expect(job.data.nodeId).toBe("node-2")
     expect(job.data.isBulkBroadcast).toBeUndefined()
   }
+
+  test("a quick reply tap clears a pending quick reply retry", async () => {
+    mockFlowWithReply({
+      steps: [],
+      quickReplies: [makeQuickReply(REPLY_ID, "Yes")],
+    })
+
+    await runFlowQuickReply({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: replyAction(),
+      ref: null,
+    } as never)
+
+    expect(clearQuickReplyChallengeOnTap).toHaveBeenCalledOnce()
+  })
 
   test("runFlowPostback advances the flow for a node quick reply", async () => {
     mockFlowWithReply({
@@ -2520,5 +2551,78 @@ describe("runFlowNode — stop/resume guard", () => {
     await expect(runFlowNode(initialDispatchJobData)).rejects.toBe(sentinel)
 
     expect(resetContactForResume).not.toHaveBeenCalled()
+  })
+})
+
+describe("runStepsAndQuickReplies — quick reply settings", () => {
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    armQuickReplySettings.mockClear()
+    clearQuickReplyPendingOnFlowEntry.mockClear()
+  })
+
+  const quickReply = makeQuickReply("qr-1", "Yes")
+  const carrierStep = {
+    id: "s-1",
+    stepType: "sendText",
+    text: "Hi",
+    buttons: [],
+  } as unknown as BaseStepSchema
+
+  test("arms after the carrier step on a node entry", async () => {
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    const sendSpy = mockSpy(flowStepHandlers, "sendText").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+    try {
+      const details = { steps: [carrierStep], quickReplies: [quickReply] }
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(),
+        details,
+        targetType: "node",
+        targetId: "node-1",
+        targetNodeId: "node-1",
+        triggerNextNode: false,
+      })
+      expect(clearQuickReplyPendingOnFlowEntry).toHaveBeenCalledOnce()
+      expect(sendSpy).toHaveBeenCalledOnce()
+      expect(armQuickReplySettings).toHaveBeenCalledWith(
+        expect.objectContaining({ nodeId: "node-1", details }),
+      )
+    } finally {
+      sendSpy.mockRestore()
+    }
+  })
+
+  test("does not arm or clear for a tapped quick reply target", async () => {
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    const sendSpy = mockSpy(flowStepHandlers, "sendText").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+    try {
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(),
+        details: {
+          ...makeQuickReply("qr-1", "Yes"),
+          steps: [carrierStep],
+          quickReplies: [quickReply],
+        },
+        targetType: "quickReply",
+        targetId: "qr-1",
+        targetNodeId: "node-1",
+        triggerNextNode: false,
+      })
+      expect(sendSpy).toHaveBeenCalledOnce()
+      expect(armQuickReplySettings).not.toHaveBeenCalled()
+      expect(clearQuickReplyPendingOnFlowEntry).not.toHaveBeenCalled()
+    } finally {
+      sendSpy.mockRestore()
+    }
   })
 })

@@ -1,4 +1,8 @@
-import type { FlowNode } from "@chatbotx.io/flow-config"
+import {
+  type FlowNode,
+  type QuickReplyNextStep,
+  quickReplyNextStepFollowsEdge,
+} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { clone } from "remeda"
 
@@ -99,6 +103,38 @@ export const duplicateFlowNodeData = (node: FlowNode): FlowNode["data"] => {
     details.quickReplies = details.quickReplies.map((button) =>
       resetButtonForDuplicate(button as MutableRecord),
     ) as typeof details.quickReplies
+  }
+
+  if (
+    "quickReplySettings" in details &&
+    details.quickReplySettings &&
+    isRecord(details.quickReplySettings)
+  ) {
+    const settings = details.quickReplySettings
+    // The copy has no edges, so a section routed by an edge is switched off.
+    const copySection = <
+      S extends {
+        id: string
+        enabled: boolean
+        target: QuickReplyNextStep | null
+      },
+    >(
+      section: S,
+    ): S =>
+      quickReplyNextStepFollowsEdge(section.target)
+        ? { ...clone(section), id: createId(), enabled: false, target: null }
+        : { ...clone(section), id: createId() }
+    // A partial object (unvalidated draft or API write) may miss a section:
+    // copy only the sections that exist.
+    details.quickReplySettings = {
+      ...settings,
+      ...(isRecord(settings.followUp)
+        ? { followUp: copySection(settings.followUp) }
+        : {}),
+      ...(isRecord(settings.retry)
+        ? { retry: copySection(settings.retry) }
+        : {}),
+    }
   }
 
   return {

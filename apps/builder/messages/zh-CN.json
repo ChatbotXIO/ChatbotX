@@ -3365,6 +3365,28 @@
     "quickReplies": {
       "limitReached": "已达到快速回复限制 ({max})。"
     },
+    "quickReplySettings": {
+      "open": "快速回复设置",
+      "title": "配置快速回复",
+      "chooseNextStep": "选择下一步",
+      "followUp": {
+        "label": "联系人未互动时跟进",
+        "waitFor": "等待",
+        "divider": "如果联系人未互动，则跟进",
+        "windowHint": "Messenger 和 Instagram 仅允许在联系人最后一条消息后的 24 小时内发送消息；之后的跟进将在这些渠道上跳过。",
+        "handle": "无互动"
+      },
+      "retry": {
+        "label": "回复不是快速回复时重试",
+        "message": "重试消息",
+        "messageDefault": "请点击下方的一个选项 👇",
+        "count": "重试次数",
+        "countOption": "{count, plural, =0 {不重试} one {# 次} other {# 次}}",
+        "divider": "超过重试次数时",
+        "handle": "超过重试次数",
+        "getUserDataConflict": "当此消息包含“取得用户数据”步骤时，无法使用重试。"
+      }
+    },
     "sendCarousel": {
       "addSlide": "添加幻灯片",
       "removeSlide": "移除幻灯片",
@@ -4254,6 +4276,9 @@
     "failedToPreviewImage": "预览影像失败",
     "featureNotFound": "{feature} 找不到",
     "flowConfigIncomplete": "部分设置不完整",
+    "quickReplyNextStepRequired": "请为每个已启用的快速回复设置选择下一步",
+    "quickReplyRetryMessageRequired": "请输入重试消息",
+    "quickReplyRetryWithGetUserData": "重试不能与“取得用户数据”步骤同时使用",
     "historyDepth": "({count})",
     "humanAgentWindowExpired": "消息传递窗口已过期。联系人必须先发送消息才能重新开始对话。",
     "leaveEmptyToKeepSecret": "留空以保留目前秘密",

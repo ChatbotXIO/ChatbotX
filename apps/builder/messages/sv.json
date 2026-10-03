@@ -3371,6 +3371,28 @@
     "quickReplies": {
       "limitReached": "Gränsen för snabbsvar har nåtts ({max})."
     },
+    "quickReplySettings": {
+      "open": "Inställningar för snabbsvar",
+      "title": "Konfigurera snabbsvar",
+      "chooseNextStep": "Välj nästa steg",
+      "followUp": {
+        "label": "Följ upp om kontakten inte har reagerat",
+        "waitFor": "Vänta i",
+        "divider": "Om kontakten inte har reagerat, följ upp med",
+        "windowHint": "Messenger och Instagram tillåter bara utskick inom 24 timmar efter kontaktens senaste meddelande; senare uppföljningar hoppas över där.",
+        "handle": "Ingen reaktion"
+      },
+      "retry": {
+        "label": "Försök igen om svaret inte är ett snabbsvar",
+        "message": "Meddelande vid nytt försök",
+        "messageDefault": "Tryck på ett av alternativen nedan 👇",
+        "count": "Antal försök",
+        "countOption": "{count, plural, =0 {Inga försök} one {# gång} other {# gånger}}",
+        "divider": "När antalet försök har överskridits",
+        "handle": "Försök överskridna",
+        "getUserDataConflict": "Nytt försök är inte tillgängligt när det här meddelandet innehåller steget Hämta användardata."
+      }
+    },
     "setCustomField": {
       "temporalHint": "Lämna tomt för att spara aktuellt datum och tid."
     },
@@ -4254,6 +4276,9 @@
     "failedToPreviewImage": "Det gick inte att förhandsgranska bilden",
     "featureNotFound": "{feature} hittades inte",
     "flowConfigIncomplete": "Vissa konfigurationer är ofullständiga",
+    "quickReplyNextStepRequired": "Välj ett nästa steg för varje aktiverad snabbsvarsinställning",
+    "quickReplyRetryMessageRequired": "Ange ett meddelande för nytt försök",
+    "quickReplyRetryWithGetUserData": "Nytt försök kan inte kombineras med steget Hämta användardata",
     "whatsappCarouselButtonsMismatch": "På WhatsApp måste ett karusellkort ha samma knappar på varje kort: antingen en enda länkknapp på varje kort, eller samma antal svarsknappar på varje kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan ett karusellkort med en länkknapp inte ha några andra knappar. Ta bort de andra knapparna på det kortet, eller ändra länkknappen till en annan åtgärd.",
     "historyDepth": "({count})",

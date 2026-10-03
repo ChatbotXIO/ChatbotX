@@ -2279,6 +2279,28 @@
     "quickReplies": {
       "limitReached": "Limite de réponses rapides atteinte ({max})."
     },
+    "quickReplySettings": {
+      "open": "Paramètres des réponses rapides",
+      "title": "Configurer les réponses rapides",
+      "chooseNextStep": "Choisir l’étape suivante",
+      "followUp": {
+        "label": "Relancer si le contact n’a pas interagi",
+        "waitFor": "Attendre",
+        "divider": "Si le contact n’a pas interagi, relancer avec",
+        "windowHint": "Messenger et Instagram n’autorisent l’envoi que dans les 24 heures suivant le dernier message du contact ; les relances ultérieures y sont ignorées.",
+        "handle": "Aucune interaction"
+      },
+      "retry": {
+        "label": "Redemander si la réponse n’est pas une réponse rapide",
+        "message": "Message de relance",
+        "messageDefault": "Merci de toucher l’une des options ci-dessous 👇",
+        "count": "Nombre de tentatives",
+        "countOption": "{count, plural, =0 {Aucune tentative} one {# fois} other {# fois}}",
+        "divider": "Lorsque le nombre de tentatives est dépassé",
+        "handle": "Tentatives dépassées",
+        "getUserDataConflict": "La nouvelle tentative n’est pas disponible lorsque ce message contient une étape Obtenir les données de l’utilisateur."
+      }
+    },
     "buttons": {
       "limitReached": "Limite de boutons atteinte ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Aucune version publiée trouvée",
     "publishVersionSuccess": "Une nouvelle version a été publiée",
     "flowConfigIncomplete": "Certaines configurations sont incomplètes",
+    "quickReplyNextStepRequired": "Choisissez une étape suivante pour chaque paramètre de réponse rapide activé",
+    "quickReplyRetryMessageRequired": "Saisissez un message de relance",
+    "quickReplyRetryWithGetUserData": "La nouvelle tentative ne peut pas être combinée avec une étape Obtenir les données de l’utilisateur",
     "whatsappCarouselButtonsMismatch": "Sur WhatsApp, un carrousel nécessite les mêmes boutons sur chaque carte : soit un seul bouton de lien sur chaque carte, soit le même nombre de boutons de réponse sur chaque carte",
     "whatsappCarouselLinkButtonNotAlone": "Sur WhatsApp, une carte de carrousel avec un bouton de lien ne peut avoir aucun autre bouton. Supprimez les autres boutons de cette carte, ou remplacez le bouton de lien par une autre action.",
     "duplicateNodeError": "Impossible de dupliquer le bloc. Veuillez réessayer.",

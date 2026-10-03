@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   detectFlowVersion: vi.fn(),
   runStepsAndQuickReplies: vi.fn(async () => undefined),
   emit: vi.fn(),
+  runQuickReplyChallenge: vi.fn(async () => undefined),
   initVariables: vi.fn(() => ({ conversation: {} })),
   SdkException: class SdkException extends Error {},
 }))
@@ -46,6 +47,10 @@ vi.mock("../src/lib/db", () => ({
 
 vi.mock("../src/integration/handlers/flow", () => ({
   runStepsAndQuickReplies: mocks.runStepsAndQuickReplies,
+}))
+
+vi.mock("../src/integration/handlers/quick-reply-resume", () => ({
+  runQuickReplyChallenge: mocks.runQuickReplyChallenge,
 }))
 
 const { runChallenge } = await import("../src/integration/handlers/challenge")
@@ -117,5 +122,39 @@ describe("runChallenge", () => {
         startFromStepId: "step-1",
       }),
     )
+  })
+
+  test("delegates a quickReply challenge and does not re-run the node", async () => {
+    await runChallenge({
+      conversationId: "conversation-1",
+      contactInboxId: "contact-inbox-1",
+      challenge: {
+        type: "quickReply",
+        data: {
+          flowId: "flow-1",
+          nodeId: "node-1",
+          attempts: 0,
+          maxRetries: 3,
+          sentAt: new Date(),
+        },
+      },
+    })
+
+    expect(mocks.runQuickReplyChallenge).toHaveBeenCalledOnce()
+    expect(mocks.runStepsAndQuickReplies).not.toHaveBeenCalled()
+  })
+
+  test("ignores an unknown challenge type without resolving a flow", async () => {
+    await expect(
+      runChallenge({
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+        challenge: { type: "somethingNew", data: {} },
+      } as unknown as IntegrationJobRunChallenge["data"]),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.runQuickReplyChallenge).not.toHaveBeenCalled()
+    expect(mocks.detectFlowVersion).not.toHaveBeenCalled()
+    expect(mocks.runStepsAndQuickReplies).not.toHaveBeenCalled()
   })
 })

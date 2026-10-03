@@ -53,6 +53,11 @@ import {
   MESSAGE_PRODUCING_STEP_TYPES,
   seekConnectedNode,
 } from "./flow-utils"
+import {
+  armQuickReplySettings,
+  clearQuickReplyChallengeOnTap,
+  clearQuickReplyPendingOnFlowEntry,
+} from "./quick-reply-settings"
 import { executeRichActions } from "./rich-response/action-executor"
 import { richButtonPayloadSchema } from "./rich-response/button-payload"
 import {
@@ -395,6 +400,15 @@ export async function runStepsAndQuickReplies(
     nodeVisits = { ...props.nodeVisits, [props.targetNodeId]: count }
   }
 
+  if (targetType === "node" && !props.startFromStepId && props.targetNodeId) {
+    await clearQuickReplyPendingOnFlowEntry({
+      workspaceId: props.conversation.workspaceId,
+      conversation: props.conversation,
+      contactInboxId: props.contactInbox.id,
+      flowId: flowVersion.flowId,
+    })
+  }
+
   // run before step
   // Skip startAnotherNode beforeStep for buttons/quickReplies: the edge-following below
   // already navigates to the same target node, so running beforeStep would execute it twice.
@@ -446,6 +460,26 @@ export async function runStepsAndQuickReplies(
       steps: [currentStep],
     })
     remainingAnchor = result?.commentAnchor
+
+    if (
+      targetType === "node" &&
+      quickReplies.length > 0 &&
+      quickReplyCarrier?.id === currentStep.id &&
+      result?.status !== "wait" &&
+      result?.status !== "retry"
+    ) {
+      await armQuickReplySettings({
+        workspaceId: props.conversation.workspaceId,
+        conversation: props.conversation,
+        contactInboxId: props.contactInbox.id,
+        flowId: flowVersion.flowId,
+        flowVersionId: props.useLatestFlowVersion ? null : flowVersion.id,
+        nodeId: targetId,
+        details,
+        metadata: props.metadata,
+        sendFrom: props.sendFrom,
+      })
+    }
 
     if (result?.status === "wait" || result?.status === "retry") {
       return result
@@ -817,6 +851,11 @@ async function runFlowAction(
       conversationId: data.conversationId,
       contactInboxId: data.contactInboxId,
     })
+  // Every tap ends a pending quick reply retry, whatever it then resolves to.
+  await clearQuickReplyChallengeOnTap({
+    workspaceId: conversation.workspaceId,
+    conversation,
+  })
   const flowExecutionKey = resolveFlowExecutionKey(options, {
     ...createFlowActionWarningContext(data),
     handler: handler.name,

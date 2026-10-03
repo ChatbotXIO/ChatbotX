@@ -2279,6 +2279,28 @@
     "quickReplies": {
       "limitReached": "Batas balasan cepat tercapai ({max})."
     },
+    "quickReplySettings": {
+      "open": "Pengaturan balasan cepat",
+      "title": "Konfigurasi balasan cepat",
+      "chooseNextStep": "Pilih langkah berikutnya",
+      "followUp": {
+        "label": "Tindak lanjuti jika kontak belum berinteraksi",
+        "waitFor": "Tunggu selama",
+        "divider": "Jika kontak belum berinteraksi, tindak lanjuti dengan",
+        "windowHint": "Messenger dan Instagram hanya mengizinkan pengiriman dalam 24 jam sejak pesan terakhir kontak; tindak lanjut setelahnya dilewati di sana.",
+        "handle": "Tidak ada interaksi"
+      },
+      "retry": {
+        "label": "Coba lagi jika balasan bukan Balasan Cepat",
+        "message": "Pesan coba lagi",
+        "messageDefault": "Silakan ketuk salah satu opsi di bawah ini 👇",
+        "count": "Jumlah percobaan ulang",
+        "countOption": "{count, plural, =0 {Tanpa percobaan ulang} one {# kali} other {# kali}}",
+        "divider": "Saat jumlah percobaan ulang terlampaui",
+        "handle": "Percobaan ulang terlampaui",
+        "getUserDataConflict": "Coba lagi tidak tersedia jika pesan ini berisi langkah Ambil Data Pengguna."
+      }
+    },
     "buttons": {
       "limitReached": "Batas tombol tercapai ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "Tidak ada versi yang dipublikasikan",
     "publishVersionSuccess": "Versi baru telah dipublikasikan",
     "flowConfigIncomplete": "Beberapa konfigurasi belum lengkap",
+    "quickReplyNextStepRequired": "Pilih langkah berikutnya untuk setiap pengaturan balasan cepat yang aktif",
+    "quickReplyRetryMessageRequired": "Masukkan pesan coba lagi",
+    "quickReplyRetryWithGetUserData": "Coba lagi tidak dapat digabungkan dengan langkah Ambil Data Pengguna",
     "whatsappCarouselButtonsMismatch": "Di WhatsApp, carousel memerlukan tombol yang sama di setiap kartu: satu tombol tautan di setiap kartu, atau jumlah tombol balasan yang sama di setiap kartu",
     "whatsappCarouselLinkButtonNotAlone": "Di WhatsApp, kartu carousel dengan tombol tautan tidak boleh memiliki tombol lain. Hapus tombol lain pada kartu tersebut, atau ubah tombol tautan menjadi tindakan lain.",
     "duplicateNodeError": "Blok tidak dapat diduplikat. Silakan coba lagi.",

@@ -10,7 +10,10 @@ import type { FlowVersionModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { conversationService } from "../conversation/service"
 import { notFoundException } from "../errors"
+import { logger } from "../logger"
+import { smartDelayService } from "../smart-delay/service"
 import { assertFlowGraphPublishable } from "./assert-publishable"
 
 class FlowVersionService extends BaseService {
@@ -404,6 +407,7 @@ class FlowVersionService extends BaseService {
 
     const draftVersion = flow.flowVersions[0]
 
+    const newVersionId = createId()
     await db.transaction(async (tx) => {
       // Remove all other latest versions
       await tx
@@ -426,7 +430,6 @@ class FlowVersionService extends BaseService {
         })
         .where(eq(flowVersionModel.id, draftVersion.id))
 
-      const newVersionId = createId()
       await tx.insert(flowVersionModel).values({
         id: newVersionId,
         workspaceId: flow.workspaceId,
@@ -447,6 +450,26 @@ class FlowVersionService extends BaseService {
     })
 
     await this.invalidateCacheTags(`flows:${flow.id}:versions`)
+
+    // Fire-and-forget: publishing must never fail or wait on cleanup;
+    // stale state also resolves itself at the worker.
+    Promise.all([
+      smartDelayService.cancelQuickReplyFollowUpsForStaleVersion({
+        workspaceId: input.workspaceId,
+        flowId: flow.id,
+        currentFlowVersionId: newVersionId,
+      }),
+      conversationService.clearQuickReplyChallengesForStaleVersion({
+        workspaceId: input.workspaceId,
+        flowId: flow.id,
+        currentFlowVersionId: newVersionId,
+      }),
+    ]).catch((error) => {
+      logger.warn(
+        { err: error, flowId: flow.id },
+        "publish: failed to clear pending quick reply state",
+      )
+    })
 
     await this.audit("publish", `published a flow (#${flow.id})`)
   }

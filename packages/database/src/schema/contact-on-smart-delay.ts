@@ -93,5 +93,12 @@ export const contactOnSmartDelayModel = pgTable(
         // status.
         sql`${table.status} NOT IN ('completed', 'failed', 'canceled') AND ${table.type} = 'followUp'`,
       ),
+    uniqueIndex("ContactOnSmartDelay_quickReplyFollowUp_active_key")
+      .on(table.workspaceId, table.contactInboxId, table.flowId, table.nodeId)
+      .where(
+        // One active follow-up per quick-reply node; re-sending the node
+        // restarts it through upsertQuickReplyFollowUp.
+        sql`${table.status} NOT IN ('completed', 'failed', 'canceled') AND ${table.type} = 'quickReplyFollowUp'`,
+      ),
   ],
 )

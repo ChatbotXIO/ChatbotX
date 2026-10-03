@@ -1,4 +1,8 @@
-import { BOT_DISABLE_DURATION_MS } from "@chatbotx.io/business"
+import {
+  BOT_DISABLE_DURATION_MS,
+  sqlDropQuickReplyChallenge,
+} from "@chatbotx.io/business"
+import { smartDelayService } from "@chatbotx.io/business/smart-delay"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
@@ -42,6 +46,7 @@ export class HandoffExecutorService {
         .set({
           botEnabled: false,
           botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
+          additionalAttributes: sqlDropQuickReplyChallenge(),
         })
         .where(
           and(
@@ -53,6 +58,20 @@ export class HandoffExecutorService {
 
       if (updated.length === 0) {
         return
+      }
+
+      // Best-effort: the handoff is already committed, so a failed cancel must
+      // not skip the transfer events (a retry would hit the botEnabled guard).
+      try {
+        await smartDelayService.cancelQuickReplyFollowUps({
+          workspaceId,
+          conversationIds: [conversationId],
+        })
+      } catch (err) {
+        baseLogger.warn(
+          { err, conversationId },
+          "[handoff-executor] Failed to cancel quick reply follow-ups",
+        )
       }
 
       const resolvedChannel = channel ?? DEFAULT_CHANNEL

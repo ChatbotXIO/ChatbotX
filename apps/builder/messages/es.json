@@ -2423,6 +2423,28 @@
     "quickReplies": {
       "limitReached": "Quick respuesta limit reached ({max})."
     },
+    "quickReplySettings": {
+      "open": "Configuración de respuestas rápidas",
+      "title": "Configurar respuestas rápidas",
+      "chooseNextStep": "Elegir el siguiente paso",
+      "followUp": {
+        "label": "Hacer seguimiento si el contacto no ha interactuado",
+        "waitFor": "Esperar",
+        "divider": "Si el contacto no ha interactuado, hacer seguimiento con",
+        "windowHint": "Messenger e Instagram solo permiten enviar mensajes dentro de las 24 horas posteriores al último mensaje del contacto; allí se omiten los seguimientos posteriores.",
+        "handle": "Sin interacción"
+      },
+      "retry": {
+        "label": "Reintentar si la respuesta no es una respuesta rápida",
+        "message": "Mensaje de reintento",
+        "messageDefault": "Por favor, toca una de las opciones de abajo 👇",
+        "count": "Número de reintentos",
+        "countOption": "{count, plural, =0 {Sin reintentos} one {# vez} other {# veces}}",
+        "divider": "Cuando se supere el número de reintentos",
+        "handle": "Reintentos superados",
+        "getUserDataConflict": "El reintento no está disponible cuando este mensaje contiene un paso Obtener datos del usuario."
+      }
+    },
     "buttons": {
       "limitReached": "Se alcanzó el límite de botones ({max})."
     },
@@ -3483,6 +3505,9 @@
     "noVersionsFound": "No publicado versions found",
     "publishVersionSuccess": "A nuevo version tiene been publicado",
     "flowConfigIncomplete": "Some configurations son incomplete",
+    "quickReplyNextStepRequired": "Elige un siguiente paso para cada configuración de respuesta rápida activada",
+    "quickReplyRetryMessageRequired": "Introduce un mensaje de reintento",
+    "quickReplyRetryWithGetUserData": "El reintento no se puede combinar con un paso Obtener datos del usuario",
     "whatsappCarouselButtonsMismatch": "En WhatsApp, un carrusel necesita los mismos botones en cada tarjeta: un único botón de enlace en cada tarjeta, o el mismo número de botones de respuesta en cada tarjeta",
     "whatsappCarouselLinkButtonNotAlone": "En WhatsApp, una tarjeta de carrusel con un botón de enlace no puede tener otros botones. Elimina los otros botones de esa tarjeta o cambia el botón de enlace a otra acción.",
     "duplicateNodeError": "Could not duplicate el block. Por favor, try again.",

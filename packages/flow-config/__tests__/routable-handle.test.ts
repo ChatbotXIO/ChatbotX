@@ -8,6 +8,7 @@ import {
   emailStepDefaultFn,
   getNodeFromButton,
   pageElementTypes,
+  quickReplySettingsDefaultFn,
   sendCardStepDefaultFn,
   sendCarouselStepDefaultFn,
   sendMailNodeDefaultFn,
@@ -682,5 +683,51 @@ describe("applyRouteUpdatesInNodes", () => {
 
     expect(result).toBe(nodes)
     expect(result[0]).toBe(node)
+  })
+})
+
+describe("quick reply settings handles", () => {
+  function makeNode() {
+    const node = sendMessageNodeDefaultFn({
+      nodeProps: { id: "node-1", position: { x: 0, y: 0 } },
+    })
+    const settings = quickReplySettingsDefaultFn()
+    settings.followUp.enabled = true
+    node.data.details.quickReplySettings = settings
+    return { node, settings }
+  }
+
+  test("connecting an edge sets a startAnotherNode target", () => {
+    const { node, settings } = makeNode()
+    const updated = applyRouteInNode(node, settings.followUp.id, {
+      targetNodeId: "node-9",
+    })
+    const details = updated?.data.details as typeof node.data.details
+    expect(details.quickReplySettings?.followUp.target).toMatchObject({
+      buttonType: buttonTypes.enum.startAnotherNode,
+      beforeStep: { nodeId: "node-9", viewOnly: true },
+    })
+    expect(details.quickReplySettings?.followUp.id).toBe(settings.followUp.id)
+    expect(details.quickReplySettings?.retry).toEqual(settings.retry)
+  })
+
+  test("deleting the edge clears the target but keeps the handle id", () => {
+    const { node, settings } = makeNode()
+    const connected = applyRouteInNode(node, settings.retry.id, {
+      targetNodeId: "node-9",
+    })
+    const cleared = applyRouteInNode(
+      connected as typeof node,
+      settings.retry.id,
+      null,
+    )
+    const details = cleared?.data.details as typeof node.data.details
+    expect(details.quickReplySettings?.retry.target).toBeNull()
+    expect(details.quickReplySettings?.retry.id).toBe(settings.retry.id)
+  })
+
+  test("an unrelated handle id leaves the node untouched", () => {
+    const { node } = makeNode()
+    expect(applyRouteInNode(node, "nope", { targetNodeId: "x" })).toBeNull()
   })
 })

@@ -54,3 +54,12 @@ export const resolveFlowValidationMessageKey = (
 
   return code ? `messages.${code}` : GENERIC_MESSAGE_KEY
 }
+
+/**
+ * The translation key for a form error message that is a validation code, or
+ * `null` for a plain message that should be shown as it is.
+ */
+export const resolveFlowValidationCodeKey = (
+  message: string,
+): `messages.${FlowValidationCode}` | null =>
+  isFlowValidationCode(message) ? `messages.${message}` : null

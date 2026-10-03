@@ -28,6 +28,9 @@ vi.mock("@chatbotx.io/database/partials", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@chatbotx.io/database/partials")>()),
 }))
 
+// flow-version/service imports these for quick reply cleanup on publish.
+vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
+vi.mock("../src/smart-delay/service", () => ({ smartDelayService: {} }))
 vi.mock("../src/inbox/connect-channel", () => ({
   auditChannelConnected: vi.fn(),
   connectChannelIntegration: vi.fn(),

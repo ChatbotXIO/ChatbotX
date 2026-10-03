@@ -2465,6 +2465,28 @@
     "quickReplies": {
       "limitReached": "Đã đạt giới hạn trả lời nhanh ({max})."
     },
+    "quickReplySettings": {
+      "open": "Cài đặt trả lời nhanh",
+      "title": "Cấu hình trả lời nhanh",
+      "chooseNextStep": "Chọn bước tiếp theo",
+      "followUp": {
+        "label": "Nhắc lại nếu liên hệ chưa tương tác",
+        "waitFor": "Chờ trong",
+        "divider": "Nếu liên hệ chưa tương tác, nhắc lại bằng",
+        "windowHint": "Messenger và Instagram chỉ cho phép gửi trong vòng 24 giờ kể từ tin nhắn cuối của liên hệ; các lần nhắc lại sau đó sẽ bị bỏ qua trên các kênh này.",
+        "handle": "Không tương tác"
+      },
+      "retry": {
+        "label": "Thử lại nếu câu trả lời không phải Trả lời nhanh",
+        "message": "Tin nhắn thử lại",
+        "messageDefault": "Vui lòng chọn một trong các lựa chọn bên dưới 👇",
+        "count": "Số lần thử lại",
+        "countOption": "{count, plural, =0 {Không thử lại} one {# lần} other {# lần}}",
+        "divider": "Khi vượt quá số lần thử lại",
+        "handle": "Vượt quá số lần thử lại",
+        "getUserDataConflict": "Không thể dùng Thử lại khi tin nhắn này có bước Lấy đầu vào người dùng."
+      }
+    },
     "buttons": {
       "limitReached": "Đã đạt giới hạn nút ({max})."
     },
@@ -3525,6 +3547,9 @@
     "noVersionsFound": "Không tìm thấy phiên bản đã xuất bản",
     "publishVersionSuccess": "Đã xuất bản phiên bản mới",
     "flowConfigIncomplete": "Một số cấu hình chưa hoàn chỉnh",
+    "quickReplyNextStepRequired": "Chọn bước tiếp theo cho mỗi cài đặt trả lời nhanh đang bật",
+    "quickReplyRetryMessageRequired": "Nhập tin nhắn thử lại",
+    "quickReplyRetryWithGetUserData": "Không thể kết hợp Thử lại với bước Lấy đầu vào người dùng",
     "whatsappCarouselButtonsMismatch": "Với WhatsApp, mọi thẻ trong một carousel phải có nút giống nhau: hoặc mỗi thẻ đúng một nút mở liên kết, hoặc mỗi thẻ cùng số nút trả lời",
     "whatsappCarouselLinkButtonNotAlone": "Với WhatsApp, thẻ carousel có nút mở liên kết thì không được có nút nào khác. Hãy xoá các nút còn lại trên thẻ đó, hoặc đổi nút mở liên kết sang hành động khác.",
     "duplicateNodeError": "Không thể nhân bản khối. Vui lòng thử lại.",
