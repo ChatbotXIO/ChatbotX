@@ -146,7 +146,12 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
     })
     expect(auth).toEqual({
       workspace: { id: "ws-1", name: "Acme", token: null },
-      apiToken: { id: "t-1", workspaceId: "ws-1", permission: "full" },
+      apiToken: {
+        id: "t-1",
+        workspaceId: "ws-1",
+        permission: "full",
+        scopes: null,
+      },
     })
   })
 

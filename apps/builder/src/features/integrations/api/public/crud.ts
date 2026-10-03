@@ -67,7 +67,7 @@ export const integrationsCrudPublicRouter = {
       path: "/v1/integrations/status/token-errors",
       summary: "List channel integrations with failed token refresh",
       description:
-        "Lists channel integrations with failed token refresh. A failed refresh signals that a channel needs manual reconnection before it stops sending or receiving messages.",
+        "A failed refresh requires manual reconnection before message delivery stops.",
       tags: ["Integrations"],
     })
     .output(listTokenRefreshErrorsResponse)
