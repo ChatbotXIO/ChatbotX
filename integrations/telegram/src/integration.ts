@@ -2,6 +2,7 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  probeVerify,
 } from "@chatbotx.io/sdk"
 import { connect, deleteWebhook, getMe, registerWebhook } from "./apis/bot"
 import { TelegramAPIException } from "./exception"
@@ -54,13 +55,7 @@ const config: IntegrationDefinition<
       },
     ],
     describe: (auth) => ({
-      // Telegram bot tokens are formatted `<botId>:<secret>` — the numeric
-      // prefix is Telegram's own stable bot identity: it matches what the
-      // Phase 1 backfill wrote into `IntegrationTelegram.botId` (this
-      // provider's `identityColumn`) and what `ConnectionStoreBinding
-      // .insertRow` writes back into that same NOT NULL unique column from
-      // this exact `sourceId`. A constant like `"workspace"` would collide
-      // across every bot in the workspace and corrupt `botId`.
+      // The numeric bot-token prefix is Telegram's stable bot identity.
       sourceId: auth.secretText.split(":")[0] || auth.secretText,
       displayName: "Telegram bot",
     }),
@@ -70,21 +65,11 @@ const config: IntegrationDefinition<
       await connect({ botToken: config.secretText })
       return { authType: "secretText", secretText: config.secretText }
     },
-    verify: async ({ auth }) => {
-      try {
-        await getMe(auth)
-        return { ok: true }
-      } catch (error) {
-        return {
-          ok: false,
-          revoked: isRevokedTokenError(error),
-          error:
-            error instanceof Error
-              ? error.message
-              : "Telegram bot token verification failed",
-        }
-      }
-    },
+    verify: async ({ auth }) =>
+      await probeVerify(() => getMe(auth), {
+        label: "Telegram bot token",
+        isRevoked: isRevokedTokenError,
+      }),
     isRevokedTokenError,
   },
   handleRequest: async (props) => {

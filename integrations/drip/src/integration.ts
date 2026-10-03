@@ -1,4 +1,5 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
   isUnauthorizedStatusError,
@@ -24,9 +25,20 @@ import {
   dripTagsResponseSchema,
 } from "./schemas"
 
-/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
-const buildDripAuth = async (apiToken: string): Promise<DripAuthValue> => {
-  const auth = createDripAuth(apiToken)
+const dripFields = [
+  {
+    name: "apiToken",
+    type: "secret",
+    required: true,
+    labelKey: "integrations.drip.fields.apiToken",
+  },
+] as const
+
+const buildDripAuth = async (config: {
+  apiToken: string
+}): Promise<DripAuthValue> => createDripAuth(config.apiToken)
+
+const probeDrip = async (auth: DripAuthValue) => {
   const response = await dripRequest(
     auth,
     DRIP_ACCOUNTS_PATH,
@@ -35,56 +47,23 @@ const buildDripAuth = async (apiToken: string): Promise<DripAuthValue> => {
   if (response.accounts.length === 0) {
     throw new DripNoAccountError()
   }
-  return auth
 }
 
 const config: IntegrationDefinition<DripConfig, DripAuthValue, DripActions> = {
   name: "drip",
-  connection: {
-    kind: "integration",
-    strategy: "api_key",
-    multiAccount: false,
-    configFields: [
-      {
-        name: "apiToken",
-        type: "secret",
-        required: true,
-        labelKey: "integrations.drip.fields.apiToken",
-      },
-    ],
-    describe: () => ({
-      // Drip auth has no stable account id; this is workspace-singleton.
-      sourceId: "workspace",
-      displayName: "Drip",
-    }),
-    fromCredentials: (config: { apiToken: string }) =>
-      buildDripAuth(config.apiToken),
-    verify: async ({ auth }) => {
-      try {
-        const response = await dripRequest(
-          auth,
-          DRIP_ACCOUNTS_PATH,
-          dripAccountsResponseSchema,
-        )
-        if (response.accounts.length === 0) {
-          throw new DripNoAccountError()
-        }
-        return { ok: true }
-      } catch (error) {
-        return {
-          ok: false,
-          revoked: isUnauthorizedStatusError(error),
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to verify Drip credentials",
-        }
-      }
-    },
-    isRevokedTokenError: isUnauthorizedStatusError,
-  },
+  connection: apiKeyConnection({
+    displayName: "Drip",
+    fields: dripFields,
+    buildAuth: buildDripAuth,
+    probe: probeDrip,
+    isRevoked: isUnauthorizedStatusError,
+  }),
   actions: {
-    validateCredentials: async ({ props }) => buildDripAuth(props.apiToken),
+    validateCredentials: async ({ props }) => {
+      const auth = await buildDripAuth(props)
+      await probeDrip(auth)
+      return auth
+    },
     listAccounts: async ({ ctx }) => {
       const response = await dripRequest(
         ctx.auth,

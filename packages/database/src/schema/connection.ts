@@ -23,13 +23,8 @@ import { integrationModel } from "./integration-base"
 import { workspaceModel } from "./workspace"
 
 /**
- * Unified Connection domain: one row per `(workspaceId, provider, sourceId)`
- * — revive-or-insert, never duplicate, matching `Inbox` semantics.
- * `channel`/`inboxId` are set iff `kind = "channel"`; `integrationId` is set
- * for workspace-level integrations and survives satellite delete as
- * `disconnected` (`onDelete: "set null"`). See
- * `packages/business/src/connection/state.ts` for the status state machine
- * this table's `status`/`statusReason` columns drive.
+ * Unified connection state keyed by `(workspaceId, provider, sourceId)`.
+ * Channel rows have `channel`/`inboxId`; workspace integrations have `integrationId`.
  */
 export const connectionModel = pgTable(
   "Connection",
@@ -67,13 +62,14 @@ export const connectionModel = pgTable(
     disconnectedAt: timestamp(timestampConfig),
   },
   (table) => [
-    index("Connection_workspaceId_idx").using(
-      "btree",
-      table.workspaceId.asc().nullsLast(),
-    ),
     uniqueIndex("Connection_workspaceId_provider_sourceId_key").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
+      table.provider.asc().nullsLast(),
+      table.sourceId.asc().nullsLast(),
+    ),
+    index("Connection_provider_sourceId_idx").using(
+      "btree",
       table.provider.asc().nullsLast(),
       table.sourceId.asc().nullsLast(),
     ),
@@ -81,21 +77,9 @@ export const connectionModel = pgTable(
       "btree",
       table.inboxId.asc().nullsLast(),
     ),
-    // Workspace-level integrations are 1:1 with their Integration row, but
-    // multiple Connection rows may share `integrationId = NULL` (channels).
-    // A plain unique index on a nullable column already allows multiple
-    // NULL rows in Postgres (NULLs are never equal to each other) — no
-    // partial/WHERE clause needed. Channel connections (integrationId NULL)
-    // are unconstrained here; workspace-level integrations (integrationId
-    // set) are enforced 1:1 with their Integration row.
     uniqueIndex("Connection_integrationId_key").using(
       "btree",
       table.integrationId.asc().nullsLast(),
-    ),
-    index("Connection_status_authExpiresAt_idx").using(
-      "btree",
-      table.status.asc().nullsLast(),
-      table.authExpiresAt.asc().nullsLast(),
     ),
   ],
 )

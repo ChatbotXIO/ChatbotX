@@ -1,4 +1,5 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
   isUnauthorizedStatusError,
@@ -69,17 +70,32 @@ const contactAutomationExists = async (
   )
 }
 
-/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const activeCampaignFields = [
+  {
+    name: "apiUrl",
+    type: "url",
+    required: true,
+    labelKey: "integrations.activeCampaign.fields.apiUrl",
+  },
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+    labelKey: "integrations.activeCampaign.fields.apiKey",
+  },
+] as const
+
 const buildActiveCampaignAuth = async (
   config: ActiveCampaignCredentialValue,
-): Promise<ActiveCampaignAuthValue> => {
-  const credential = activeCampaignCredentialSchema.parse(config)
+): Promise<ActiveCampaignAuthValue> =>
+  createActiveCampaignAuth(activeCampaignCredentialSchema.parse(config))
+
+const probeActiveCampaign = async (auth: ActiveCampaignAuthValue) => {
   await activeCampaignRequest(
-    credential,
+    auth,
     activeCampaignAccountsPath(),
     activeCampaignAccountsResponseSchema,
   )
-  return createActiveCampaignAuth(credential)
 }
 
 const config: IntegrationDefinition<
@@ -88,53 +104,19 @@ const config: IntegrationDefinition<
   ActiveCampaignActions
 > = {
   name: "activeCampaign",
-  connection: {
-    kind: "integration",
-    strategy: "api_key",
-    multiAccount: false,
-    configFields: [
-      {
-        name: "apiUrl",
-        type: "url",
-        required: true,
-        labelKey: "integrations.activeCampaign.fields.apiUrl",
-      },
-      {
-        name: "apiKey",
-        type: "secret",
-        required: true,
-        labelKey: "integrations.activeCampaign.fields.apiKey",
-      },
-    ],
-    describe: () => ({
-      // ActiveCampaign auth has no stable account id; this is workspace-singleton.
-      sourceId: "workspace",
-      displayName: "ActiveCampaign",
-    }),
-    fromCredentials: buildActiveCampaignAuth,
-    verify: async ({ auth }) => {
-      try {
-        await activeCampaignRequest(
-          auth,
-          activeCampaignAccountsPath(),
-          activeCampaignAccountsResponseSchema,
-        )
-        return { ok: true }
-      } catch (error) {
-        return {
-          ok: false,
-          revoked: isUnauthorizedStatusError(error),
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to verify ActiveCampaign credentials",
-        }
-      }
-    },
-    isRevokedTokenError: isUnauthorizedStatusError,
-  },
+  connection: apiKeyConnection({
+    displayName: "ActiveCampaign",
+    fields: activeCampaignFields,
+    buildAuth: buildActiveCampaignAuth,
+    probe: probeActiveCampaign,
+    isRevoked: isUnauthorizedStatusError,
+  }),
   actions: {
-    validateCredentials: async ({ props }) => buildActiveCampaignAuth(props),
+    validateCredentials: async ({ props }) => {
+      const auth = await buildActiveCampaignAuth(props)
+      await probeActiveCampaign(auth)
+      return auth
+    },
     listLists: async ({ ctx }) => {
       const response = await activeCampaignRequest(
         ctx.auth,

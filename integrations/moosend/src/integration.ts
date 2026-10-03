@@ -1,4 +1,5 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
   SdkException,
@@ -16,16 +17,32 @@ import {
   moosendSubscriberResponseSchema,
 } from "./schemas"
 
-/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
-const buildMoosendAuth = async (apiKey: string): Promise<MoosendAuthValue> => {
-  const auth = createMoosendAuth(apiKey)
+const moosendFields = [
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+    labelKey: "integrations.moosend.fields.apiKey",
+  },
+] as const
+
+const buildMoosendAuth = async (config: {
+  apiKey: string
+}): Promise<MoosendAuthValue> => createMoosendAuth(config.apiKey)
+
+const probeMoosend = async (auth: MoosendAuthValue) => {
   await moosendRequest(
     auth,
     moosendListsPagePath(1, 1),
     moosendMailingListsResponseSchema,
   )
-  return auth
 }
+
+const isRevokedTokenError = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "kind" in error &&
+  error.kind === "invalid_credentials"
 
 const config: IntegrationDefinition<
   MoosendConfig,
@@ -33,56 +50,19 @@ const config: IntegrationDefinition<
   MoosendActions
 > = {
   name: "moosend",
-  connection: {
-    kind: "integration",
-    strategy: "api_key",
-    multiAccount: false,
-    configFields: [
-      {
-        name: "apiKey",
-        type: "secret",
-        required: true,
-        labelKey: "integrations.moosend.fields.apiKey",
-      },
-    ],
-    describe: () => ({
-      // Moosend auth contains no stable account identifier; this is workspace-scoped.
-      sourceId: "workspace",
-      displayName: "Moosend",
-    }),
-    fromCredentials: (config: { apiKey: string }) =>
-      buildMoosendAuth(config.apiKey),
-    verify: async ({ auth }) => {
-      try {
-        await moosendRequest(
-          auth,
-          moosendListsPagePath(1, 1),
-          moosendMailingListsResponseSchema,
-        )
-        return { ok: true }
-      } catch (error) {
-        return {
-          ok: false,
-          revoked:
-            typeof error === "object" &&
-            error !== null &&
-            "kind" in error &&
-            error.kind === "invalid_credentials",
-          error:
-            error instanceof Error
-              ? error.message
-              : "Moosend credential verification failed",
-        }
-      }
-    },
-    isRevokedTokenError: (error) =>
-      typeof error === "object" &&
-      error !== null &&
-      "kind" in error &&
-      error.kind === "invalid_credentials",
-  },
+  connection: apiKeyConnection({
+    displayName: "Moosend",
+    fields: moosendFields,
+    buildAuth: buildMoosendAuth,
+    probe: probeMoosend,
+    isRevoked: isRevokedTokenError,
+  }),
   actions: {
-    validateCredentials: async ({ props }) => buildMoosendAuth(props.apiKey),
+    validateCredentials: async ({ props }) => {
+      const auth = await buildMoosendAuth(props)
+      await probeMoosend(auth)
+      return auth
+    },
     listMailingLists: async ({ ctx, props }) => {
       const page = moosendListPageRequestSchema.parse(props)
       const response = await moosendRequest(

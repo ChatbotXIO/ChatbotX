@@ -1,6 +1,5 @@
 import type { Readable } from "node:stream"
 import type { AuthValue } from "../auth"
-import type { ConnectionHealth } from "../connection"
 
 export type ContextUploader = {
   putObject(
@@ -33,12 +32,6 @@ export type AuthStore<AO extends AuthValue = AuthValue> = {
    * failure.
    */
   markOffline?: (reason?: unknown) => Promise<void>
-  /**
-   * Optional hook for a live health check result (`ConnectionProvider.verify`)
-   * to update the connection's displayed status independently of a refresh
-   * cycle — e.g. `POST /v1/connections/{id}/verify`.
-   */
-  recordHealth?: (health: ConnectionHealth) => Promise<void>
 }
 
 export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {

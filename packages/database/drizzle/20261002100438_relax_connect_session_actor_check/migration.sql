@@ -1,1 +1,0 @@
-ALTER TABLE "ConnectSession" DROP CONSTRAINT "ConnectSession_actor_exactly_one", ADD CONSTRAINT "ConnectSession_actor_exactly_one" CHECK ((("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) <= 1);

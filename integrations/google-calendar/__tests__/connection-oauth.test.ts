@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type * as CalendarsModule from "../src/apis/calendars"
 import type * as ClientModule from "../src/client"
+import { oauthCredential } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   generateAuthUrl: vi.fn(),
@@ -37,11 +38,7 @@ if (!connection) {
   )
 }
 
-const credential = {
-  clientId: "client-1",
-  clientSecret: "secret-1",
-  redirectUrl: "https://legacy.example.test/callback",
-}
+const credential = oauthCredential
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -107,7 +104,7 @@ describe("Google Calendar connection.exchangeCode", () => {
         authType: "oauth2",
         clientId: "client-1",
         clientSecret: "secret-1",
-        redirectUrl: "",
+        redirectUrl: "https://app.example.test/connections/callback",
         tokens: {
           accessToken: "access-token",
           expiresAt: "2023-11-14T22:13:20.000Z",
@@ -123,7 +120,7 @@ describe("Google Calendar connection.exchangeCode", () => {
       authType: "oauth2",
       clientId: "client-1",
       clientSecret: "secret-1",
-      redirectUrl: "",
+      redirectUrl: "https://app.example.test/connections/callback",
       tokens: {
         accessToken: "access-token",
         expiresAt: "2023-11-14T22:13:20.000Z",

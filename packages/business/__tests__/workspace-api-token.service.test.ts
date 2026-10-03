@@ -150,6 +150,26 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
     })
   })
 
+  test("normalizes legacy scopes from a cached token", async () => {
+    withCache.mockResolvedValue({
+      workspace: { id: "ws-1", name: "Acme", token: null },
+      apiToken: {
+        id: "t-1",
+        workspaceId: "ws-1",
+        permission: "full",
+        scopes: ["channels", "integrations"],
+      },
+    })
+
+    await expect(
+      workspaceApiTokenService.findWorkspaceByTokenHash({
+        tokenHash: TOKEN_HASH,
+      }),
+    ).resolves.toMatchObject({
+      apiToken: { scopes: ["connections"] },
+    })
+  })
+
   test("returns undefined when no row matches the hash", async () => {
     const auth = await workspaceApiTokenService.findWorkspaceByTokenHash({
       tokenHash: TOKEN_HASH,

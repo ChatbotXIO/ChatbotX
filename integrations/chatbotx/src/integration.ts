@@ -4,6 +4,7 @@ import {
   Integration,
   type IntegrationDefinition,
   type Oauth2AuthValue,
+  selfServeConnection,
 } from "@chatbotx.io/sdk"
 import type { ChatbotxAuthValue } from "./auth"
 
@@ -15,20 +16,10 @@ const config: IntegrationDefinition<BaseConfig, ChatbotxAuthValue> = {
     },
   },
   actions: {},
-  connection: {
-    kind: "channel",
-    strategy: "self_serve",
+  connection: selfServeConnection<ChatbotxAuthValue>({
+    displayName: "ChatbotX",
     multiAccount: false,
-    configFields: [],
-    describe: () => ({
-      // ChatbotX is a built-in workspace channel with no external account.
-      sourceId: "workspace",
-      displayName: "ChatbotX",
-    }),
-    // ChatbotX is internal, so there is no external provider to verify.
-    verify: async () => ({ ok: true }),
-    isRevokedTokenError: () => false,
-  },
+  }),
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,
   ): Promise<string | number | Oauth2AuthValue> {

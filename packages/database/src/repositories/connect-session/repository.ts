@@ -14,16 +14,6 @@ import { connectSessionModel } from "../../schema"
 import type { ConnectSessionModel } from "../../types"
 import { type ChunkedPurgeStopReason, chunkedPurge } from "../chunked-purge"
 
-/**
- * `sql` tagged-template interpolation of a bare JS array splats it into N
- * comma-separated placeholders (drizzle's `IN (...)` convenience) — not a
- * single `text[]`-typed parameter. Encoding it as a Postgres array literal
- * string first (`{"a","b"}`) lets `::text[]` bind it as one parameter, the
- * shape `array_cat`/`array_append` below actually need.
- */
-const toPgTextArrayLiteral = (values: string[]): string =>
-  `{${values.map((value) => `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`).join(",")}}`
-
 export const connectSessionRepository = {
   async findByIdForWorkspace(
     input: { id: string; workspaceId: string },
@@ -34,14 +24,7 @@ export const connectSessionRepository = {
     })
   },
 
-  /**
-   * Unscoped lookup by primary key — for internal service methods
-   * (`attachAuthorization`, `claimTarget`, `recordResults`, …) operating on
-   * a session already resolved via `findByNonce` earlier in the same flow,
-   * where the caller has no independently-verified `workspaceId` to scope
-   * by (the session row itself IS the source of truth for which workspace
-   * it belongs to).
-   */
+  /** Internal lookup for a session whose workspace is established by the row. */
   async findById(
     input: { id: string },
     tx: DatabaseClient = db,
@@ -51,7 +34,7 @@ export const connectSessionRepository = {
     })
   },
 
-  /** `stateNonceHash` is globally unique — the OAuth callback resolves a session by it alone, before it knows the workspace. */
+  /** OAuth callbacks resolve the globally unique nonce before workspace context exists. */
   async findByStateNonceHash(
     input: { stateNonceHash: string },
     tx: DatabaseClient = db,
@@ -61,15 +44,7 @@ export const connectSessionRepository = {
     })
   },
 
-  /**
-   * Enforces the per-workspace pending-session cap
-   * (`ConnectSessionService.create`) — counts sessions still in an active
-   * (non-terminal) status AND not yet past `expiresAt`. Without the
-   * `expiresAt` filter, sessions abandoned mid-flow would count against the
-   * cap until the `purgeExpired` cron catches up to them, even though every
-   * reader already treats a past-`expiresAt` row as expired regardless of
-   * its stored status.
-   */
+  /** Counts unexpired, non-terminal sessions toward the workspace cap. */
   async countActiveByWorkspaceId(
     input: { workspaceId: string },
     tx: DatabaseClient = db,
@@ -95,38 +70,19 @@ export const connectSessionRepository = {
     return row
   },
 
-  async update(
-    input: {
-      id: string
-      values: Partial<typeof connectSessionModel.$inferInsert>
-    },
-    tx: DatabaseClient = db,
-  ): Promise<ConnectSessionModel | undefined> {
-    const [row] = await tx
-      .update(connectSessionModel)
-      .set(input.values)
-      .where(eq(connectSessionModel.id, input.id))
-      .returning()
-    return row
-  },
-
-  /**
-   * Same as `update`, additionally guarded to only affect a session whose
-   * CURRENT `status` is in `input.statuses` — `fail`/`cancel` pass the
-   * active (non-terminal) statuses so a replayed/duplicate terminal call
-   * (e.g. an OAuth callback's `?error=` replayed after the session already
-   * completed) can never flip an already-terminal session. Returns
-   * `undefined`, never throws, when the guard doesn't match — the caller
-   * decides whether that means "not found" or "already terminal, no-op".
-   */
+  /** Updates a session only while it is in one of the requested states. */
   async updateWhereStatusIn(
     input: {
       id: string
       values: Partial<typeof connectSessionModel.$inferInsert>
       statuses: ConnectSessionStatus[]
+      requireUnexpired?: boolean
     },
     tx: DatabaseClient = db,
   ): Promise<ConnectSessionModel | undefined> {
+    const expiryCondition = input.requireUnexpired
+      ? gt(connectSessionModel.expiresAt, sql`now()`)
+      : undefined
     const [row] = await tx
       .update(connectSessionModel)
       .set(input.values)
@@ -134,53 +90,14 @@ export const connectSessionRepository = {
         and(
           eq(connectSessionModel.id, input.id),
           inArray(connectSessionModel.status, input.statuses),
+          expiryCondition,
         ),
       )
       .returning()
     return row
   },
 
-  /**
-   * Same as `updateWhereStatusIn`, additionally guarded on `expiresAt >
-   * now()` — for a write that must never land on a session that is
-   * ALREADY past its TTL but hasn't been lazily flipped to `expired` yet
-   * (the lazy-expiry read path, `ConnectSessionService.applyExpiryRule`,
-   * only runs on a read; nothing guarantees a read has happened between a
-   * session going stale and this write). Without the extra guard,
-   * `attachAuthorization` could "revive" a session a concurrent
-   * cancel/expire raced past its TTL back into `awaiting_selection`, since
-   * its stored `status` would still read as one of the active statuses.
-   */
-  async updateWhereActive(
-    input: {
-      id: string
-      values: Partial<typeof connectSessionModel.$inferInsert>
-      statuses: ConnectSessionStatus[]
-    },
-    tx: DatabaseClient = db,
-  ): Promise<ConnectSessionModel | undefined> {
-    const [row] = await tx
-      .update(connectSessionModel)
-      .set(input.values)
-      .where(
-        and(
-          eq(connectSessionModel.id, input.id),
-          inArray(connectSessionModel.status, input.statuses),
-          gt(connectSessionModel.expiresAt, sql`now()`),
-        ),
-      )
-      .returning()
-    return row
-  },
-
-  /**
-   * Bulk-flips every active session past `expiresAt` to `expired` in ONE
-   * statement — not the per-row loop this replaced, which issued one
-   * `UPDATE` per expired session (N+1) — and clears `encryptedAuth`: the
-   * decrypted-candidate ciphertext has no further use once the session can
-   * no longer be acted on and must not linger indefinitely. Returns the
-   * number of rows flipped.
-   */
+  /** Expires due active sessions and clears authorization ciphertext in one update. */
   async expireDue(
     input: { before: Date; statuses: ConnectSessionStatus[] },
     tx: DatabaseClient = db,
@@ -253,7 +170,7 @@ export const connectSessionRepository = {
     return Boolean(row)
   },
 
-  /** Releases a target `claimTarget` claimed whose connect attempt did not end in `connected` — `array_remove` so a retry can claim (and actually connect) it again instead of permanently seeing `duplicated`. No-ops (never throws) when the target isn't currently claimed. */
+  /** Releases a claimed target after a connect attempt that did not succeed. */
   async releaseTarget(
     input: { id: string; targetId: string },
     tx: DatabaseClient = db,
@@ -266,33 +183,7 @@ export const connectSessionRepository = {
       .where(eq(connectSessionModel.id, input.id))
   },
 
-  /**
-   * Atomic, guarded merge of a `connectTargets` batch's outcomes — the
-   * single-statement replacement for a read-then-write `recordResults`
-   * (which lost updates under concurrent batches and could mark a session
-   * `completed` from an unrelated reader's stale snapshot). Every
-   * expression below reads the PRE-update row consistently (standard SQL
-   * `UPDATE` semantics), so this is correct without a surrounding
-   * transaction or row lock of its own:
-   * - `results`/`resultConnectionIds` accumulate via `||`/`array_cat`.
-   * - Completion counts DISTINCT `targetId`s across the merged results,
-   *   restricted to ids the session's `targets` still mark `selectable`
-   *   (`selectableTargetIds`) — against the session's own count of
-   *   selectable targets. Without that restriction an outcome for an
-   *   unknown id or one already `selectable: false` (never offered to
-   *   connect) would inflate the numerator just like a real target,
-   *   completing the session before every real target had a result and
-   *   clearing `encryptedAuth` out from under the ones never attempted.
-   * - The terminal status is `completed` only if at least one *selectable*
-   *   outcome is NOT `failed`/`limitReached`; a non-selectable id's
-   *   `duplicated` outcome does not count as that success, and an
-   *   all-failed/all-limitReached batch terminates `failed` instead, with
-   *   a generic `errorCode` set.
-   * - Guarded by `status = 'awaiting_selection'` in the `WHERE`: a session
-   *   already terminal (completed by a concurrent call, or replayed after
-   *   `fail`/`cancel`) updates 0 rows — the caller sees `undefined` rather
-   *   than a second, inconsistent terminal transition.
-   */
+  /** Atomically merges outcomes and transitions a fully processed active session. */
   async appendResults(
     input: {
       id: string
@@ -304,16 +195,7 @@ export const connectSessionRepository = {
     const newResults = sql`${JSON.stringify(input.results)}::jsonb`
     const mergedResults = sql`(${connectSessionModel.results} || ${newResults})`
     const selectableTargetCount = sql`(SELECT count(*) FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
-    // Restricted to ids the session actually offered as `selectable` — an
-    // unknown id (not in `targets` at all) or one already marked
-    // `selectable: false` was never real progress toward
-    // `selectableTargetCount`, so it must not advance `distinctResultCount`
-    // (regression: submitting one real id alongside one non-selectable/
-    // unknown id used to complete the session before every real target had
-    // an outcome, nulling `encryptedAuth` out from under the targets that
-    // were never attempted). The same filter applies to `hasSuccess` — a
-    // `duplicated` outcome for a non-selectable id must not count as the
-    // "at least one success" that flips the batch to `completed`.
+    // Only selectable targets count toward completion or a successful batch.
     const selectableTargetIds = sql`(SELECT t->>'id' FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
     const distinctResultCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem WHERE elem->>'targetId' IN ${selectableTargetIds})`
     const hasSuccess = sql`(SELECT bool_or(elem2->>'status' NOT IN ('failed', 'limitReached')) FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
@@ -323,7 +205,10 @@ export const connectSessionRepository = {
       .update(connectSessionModel)
       .set({
         results: mergedResults,
-        resultConnectionIds: sql`array_cat(${connectSessionModel.resultConnectionIds}, ${toPgTextArrayLiteral(input.resultConnectionIds)}::text[])`,
+        resultConnectionIds: sql`array_cat(${connectSessionModel.resultConnectionIds}, ARRAY[${sql.join(
+          input.resultConnectionIds.map((id) => sql`${id}`),
+          sql`, `,
+        )}]::text[])`,
         status: sql`CASE WHEN NOT ${isComplete} THEN ${connectSessionModel.status} WHEN ${hasSuccess} THEN 'completed' ELSE 'failed' END`,
         step: sql`CASE WHEN ${isComplete} THEN 'done' ELSE ${connectSessionModel.step} END`,
         consumedAt: sql`CASE WHEN ${isComplete} THEN now() ELSE ${connectSessionModel.consumedAt} END`,

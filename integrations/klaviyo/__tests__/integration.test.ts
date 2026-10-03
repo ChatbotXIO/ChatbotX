@@ -2,12 +2,7 @@ import type { Context } from "@chatbotx.io/sdk"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { integration } from "../src/integration"
 import { createKlaviyoAuth, type KlaviyoAuthValue } from "../src/schemas"
-
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  })
+import { jsonResponse } from "./test-utils"
 
 const createContext = (auth: KlaviyoAuthValue): Context<KlaviyoAuthValue> => ({
   auth,

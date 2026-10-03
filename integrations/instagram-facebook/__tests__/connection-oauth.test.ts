@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { expectStateVerbatim, facebookOauthCredential } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
@@ -17,10 +18,7 @@ vi.mock("../src/apis/auth", async (importOriginal) => {
 const { integration } = await import("../src/integration")
 
 const credential = {
-  clientId: "client-1",
-  clientSecret: "secret-1",
-  redirectUrl: "",
-  version: "v23.0",
+  ...facebookOauthCredential,
   stateParams: { workspaceId: "workspace-1" },
 }
 
@@ -33,8 +31,8 @@ describe("Instagram Facebook connection.authorizeUrl", () => {
       state: "session-1.abc123",
     })
     const parsed = new URL(url as string)
+    expectStateVerbatim(url, "session-1.abc123")
 
-    expect(parsed.searchParams.get("state")).toBe("session-1.abc123")
     expect(parsed.searchParams.get("client_id")).toBe("client-1")
     expect(parsed.searchParams.get("redirect_uri")).toBe(
       "https://app.example.test/integrations/instagram-facebook/callback",
@@ -65,7 +63,7 @@ describe("Instagram Facebook connection.exchangeCode", () => {
       authType: "oauth2",
       clientId: "client-1",
       clientSecret: "secret-1",
-      redirectUrl: "",
+      redirectUrl: "https://app.example.test/callback",
       version: "v23.0",
       tokens: { accessToken: "user-access-token" },
     })
@@ -77,7 +75,7 @@ describe("Instagram Facebook connection.listCandidates", () => {
     authType: "oauth2" as const,
     clientId: "client-1",
     clientSecret: "secret-1",
-    redirectUrl: "",
+    redirectUrl: facebookOauthCredential.redirectUrl,
     version: "v23.0",
     tokens: { accessToken: "user-access-token" },
   }
@@ -121,7 +119,7 @@ describe("Instagram Facebook connection.listCandidates", () => {
           authType: "oauth2",
           clientId: "client-1",
           clientSecret: "secret-1",
-          redirectUrl: "",
+          redirectUrl: facebookOauthCredential.redirectUrl,
           version: "v23.0",
           tokens: { accessToken: "page-1-token" },
           metadata: {
@@ -140,7 +138,7 @@ describe("Instagram Facebook connection.listCandidates", () => {
           authType: "oauth2",
           clientId: "client-1",
           clientSecret: "secret-1",
-          redirectUrl: "",
+          redirectUrl: facebookOauthCredential.redirectUrl,
           version: "v23.0",
           tokens: { accessToken: "page-2-token" },
           metadata: {
@@ -171,7 +169,7 @@ describe("Instagram Facebook connection.candidateToConfig", () => {
       authType: "oauth2",
       clientId: "client-1",
       clientSecret: "secret-1",
-      redirectUrl: "",
+      redirectUrl: facebookOauthCredential.redirectUrl,
       tokens: { accessToken: "page-access-token" },
       metadata: {
         igId: "ig-1",

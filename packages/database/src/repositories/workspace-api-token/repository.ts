@@ -1,9 +1,10 @@
 import type { EncryptedData } from "@chatbotx.io/encryption"
 import { and, type DatabaseClient, db, eq, isNull, sql } from "../../client"
-import type {
-  TokenHash,
-  WorkspaceApiTokenPermission,
-  WorkspaceApiTokenScope,
+import {
+  normalizeWorkspaceApiTokenScopes,
+  type TokenHash,
+  type WorkspaceApiTokenPermission,
+  type WorkspaceApiTokenScope,
 } from "../../partials/workspace-api-token"
 import { workspaceApiTokenModel } from "../../schema"
 import type { WorkspaceApiTokenModel } from "../../types"
@@ -41,17 +42,24 @@ class WorkspaceApiTokenRepository {
       where: { tokenHash },
     })
 
-    return row ?? null
+    if (!row) {
+      return null
+    }
+    return { ...row, scopes: normalizeWorkspaceApiTokenScopes(row.scopes) }
   }
 
   async listByWorkspaceId(
     workspaceId: string,
     tx: DatabaseClient = db,
   ): Promise<WorkspaceApiTokenModel[]> {
-    return await tx.query.workspaceApiTokenModel.findMany({
+    const rows = await tx.query.workspaceApiTokenModel.findMany({
       where: { workspaceId },
       orderBy: { createdAt: "desc" },
     })
+    return rows.map((row) => ({
+      ...row,
+      scopes: normalizeWorkspaceApiTokenScopes(row.scopes),
+    }))
   }
 
   async countByWorkspaceId(
@@ -125,7 +133,10 @@ class WorkspaceApiTokenRepository {
       where: { workspaceId, isDefault: true },
     })
 
-    return row ?? null
+    if (!row) {
+      return null
+    }
+    return { ...row, scopes: normalizeWorkspaceApiTokenScopes(row.scopes) }
   }
 
   /**

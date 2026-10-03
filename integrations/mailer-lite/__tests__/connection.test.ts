@@ -1,14 +1,9 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { integration } from "../src/integration"
+import { jsonResponse } from "./test-utils"
 
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  })
-
-const connection = integration.connection
-if (!connection?.fromCredentials) {
+const fromCredentials = integration.connection?.fromCredentials
+if (!fromCredentials) {
   throw new Error("mailerLite integration has no connection.fromCredentials")
 }
 
@@ -26,7 +21,7 @@ describe("mailerLite connection.fromCredentials", () => {
     )
     vi.stubGlobal("fetch", fetchMock)
 
-    const auth = await connection.fromCredentials?.({ apiKey: " key " })
+    const auth = await fromCredentials({ apiKey: " key " })
 
     expect(auth).toMatchObject({ authType: "custom", apiKey: "key" })
     expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -38,16 +33,8 @@ describe("mailerLite connection.fromCredentials", () => {
       vi.fn(async () => jsonResponse({}, 401)),
     )
 
-    await expect(
-      connection.fromCredentials?.({ apiKey: "bad-key" }),
-    ).rejects.toBeTruthy()
-  })
-})
-
-describe("mailerLite connection.isRevokedTokenError", () => {
-  test("is a real predicate, not a stub", () => {
-    expect(connection.isRevokedTokenError({ statusCode: 401 })).toBe(true)
-    expect(connection.isRevokedTokenError({ statusCode: 403 })).toBe(true)
-    expect(connection.isRevokedTokenError({ statusCode: 500 })).toBe(false)
+    await expect(fromCredentials({ apiKey: "bad-key" })).rejects.toMatchObject({
+      statusCode: 401,
+    })
   })
 })

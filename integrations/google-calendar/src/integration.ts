@@ -1,9 +1,10 @@
 import {
   AuthException,
-  AuthType,
+  googleOAuthConnection,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  probeVerify,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { getBusyEvents } from "./apis/busy-events"
@@ -23,6 +24,35 @@ import type {
   GoogleCalendarConfig,
 } from "./schemas"
 
+const isRevokedTokenError = (error: unknown) =>
+  getGaxiosStatus(error) === 401 ||
+  (getGaxiosStatus(error) === 400 &&
+    error instanceof Error &&
+    error.message.includes("invalid_grant"))
+const googleConnection = googleOAuthConnection<GoogleCalendarConfig>({
+  getClient,
+  scopes: GOOGLE_CALENDAR_SCOPES,
+  mapAuth: async (baseAuth) => {
+    const auth: GoogleCalendarAuthValue = {
+      ...baseAuth,
+      metadata: {
+        scope:
+          typeof baseAuth.metadata?.scope === "string"
+            ? baseAuth.metadata.scope
+            : undefined,
+      },
+    }
+    const calendar = await verifyCalendarAccess(auth, "primary")
+    return {
+      ...auth,
+      metadata: {
+        ...auth.metadata,
+        ...calendar,
+      },
+    } satisfies GoogleCalendarAuthValue
+  },
+})
+
 const config: IntegrationDefinition<
   GoogleCalendarConfig,
   GoogleCalendarAuthValue,
@@ -34,62 +64,26 @@ const config: IntegrationDefinition<
     strategy: "oauth_redirect",
     multiAccount: true,
     configFields: [],
-    authorizeUrl: ({ credential, callbackUrl, state }) => {
-      const config = credential as GoogleCalendarConfig
-      return getClient({ ...config, redirectUrl: callbackUrl }).generateAuthUrl(
-        {
-          access_type: "offline",
-          prompt: "consent",
-          scope: GOOGLE_CALENDAR_SCOPES,
-          state,
-        },
-      )
-    },
-    exchangeCode: async ({ code, callbackUrl, credential }) => {
-      const config = credential as GoogleCalendarConfig
-      const tokens = await getClient({
-        ...config,
-        redirectUrl: callbackUrl,
-      }).getToken(code)
-      const auth = {
-        authType: AuthType.oauth2,
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        redirectUrl: "",
-        tokens: {
-          accessToken: tokens.tokens.access_token || "",
-          expiresAt: tokens.tokens.expiry_date
-            ? new Date(tokens.tokens.expiry_date).toISOString()
-            : undefined,
-          refreshToken: tokens.tokens.refresh_token ?? null,
-        },
-        metadata: {
-          scope: tokens.tokens.scope,
-        },
-      } satisfies GoogleCalendarAuthValue
-      const calendar = await verifyCalendarAccess(auth, "primary")
-
-      return {
-        ...auth,
-        metadata: {
-          ...auth.metadata,
-          ...calendar,
-        },
-      } satisfies GoogleCalendarAuthValue
-    },
+    ...googleConnection,
     describe: (auth) => ({
       sourceId: auth.metadata?.providerCalendarId ?? "workspace",
       displayName: auth.metadata?.email ?? "Google Calendar",
       authExpiresAt: auth.tokens.expiresAt,
     }),
-    verify: async ({ auth }) => {
-      await verifyCalendarAccess(
-        auth,
-        auth.metadata?.providerCalendarId ?? "primary",
-      )
-      return { ok: true, authExpiresAt: auth.tokens.expiresAt }
-    },
-    isRevokedTokenError: (error) => getGaxiosStatus(error) === 401,
+    verify: async ({ auth }) =>
+      await probeVerify(
+        async () =>
+          await verifyCalendarAccess(
+            auth,
+            auth.metadata?.providerCalendarId ?? "primary",
+          ),
+        {
+          label: "Google Calendar credentials",
+          isRevoked: isRevokedTokenError,
+          expiresAt: auth.tokens.expiresAt,
+        },
+      ),
+    isRevokedTokenError,
   },
   actions: {
     verifyCalendar: async ({ ctx, props }) =>

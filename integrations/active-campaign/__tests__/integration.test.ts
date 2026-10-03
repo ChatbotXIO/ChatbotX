@@ -6,12 +6,7 @@ import {
   type ActiveCampaignAuthValue,
   createActiveCampaignAuth,
 } from "../src/schemas"
-
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  })
+import { jsonResponse } from "./test-utils"
 
 const createContext = (
   auth: ActiveCampaignAuthValue,

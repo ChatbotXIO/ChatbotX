@@ -1,8 +1,9 @@
 import {
-  AuthType,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  oauth2Auth,
+  probeVerify,
 } from "@chatbotx.io/sdk"
 import { exchangeCodeForToken, getInstagramAccount } from "./apis/auth"
 import {
@@ -37,10 +38,6 @@ const config: IntegrationDefinition<
     strategy: "oauth_redirect",
     multiAccount: true,
     configFields: [],
-    // Bypasses `generateAuthUrl` deliberately: it base64-JSON-encodes
-    // `stateParams` into the `state` query param for the legacy per-request
-    // cookie flow, but the Connection domain's OAuth callback hub matches
-    // `state` against a raw `"{sessionId}.{nonce}"` string.
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as InstagramConfig
       const params = new URLSearchParams({
@@ -75,19 +72,18 @@ const config: IntegrationDefinition<
         )
       }
       return {
-        authType: AuthType.oauth2,
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        redirectUrl: "",
-        version: config.version,
-        tokens: { accessToken },
-        metadata: {
-          igId: userId,
-          igName: account.name,
-          pageId: account.id,
-          version: config.version,
-          username: account.username,
-        },
+        ...oauth2Auth(
+          config,
+          callbackUrl,
+          { accessToken },
+          {
+            igId: userId,
+            igName: account.name,
+            pageId: account.id,
+            version: config.version,
+            username: account.username,
+          },
+        ),
       } satisfies InstagramAuthValue
     },
     candidateToConfig: (auth) => ({ username: auth.metadata.username }),
@@ -95,19 +91,20 @@ const config: IntegrationDefinition<
       sourceId: auth.metadata.igId,
       displayName: auth.metadata.igName,
     }),
-    verify: async ({ auth }) => {
-      const account = await getInstagramAccount(auth.tokens.accessToken)
-
-      if (!account || account.id !== auth.metadata.igId) {
-        return {
-          ok: false,
-          revoked: false,
-          error: "Instagram account could not be verified",
-        }
-      }
-
-      return { ok: true, authExpiresAt: auth.tokens.expiresAt }
-    },
+    verify: async ({ auth }) =>
+      await probeVerify(
+        async () => {
+          const account = await getInstagramAccount(auth.tokens.accessToken)
+          if (!account || account.id !== auth.metadata.igId) {
+            throw new Error("Instagram account could not be verified")
+          }
+        },
+        {
+          label: "Instagram connection",
+          expiresAt: auth.tokens.expiresAt,
+          isRevoked: isRevokedTokenError,
+        },
+      ),
     isRevokedTokenError,
     webhook: {
       subscribe: ({ auth }) =>

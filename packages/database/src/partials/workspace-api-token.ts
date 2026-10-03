@@ -26,6 +26,27 @@ export const workspaceApiTokenScopes = z.enum([
 ])
 export type WorkspaceApiTokenScope = z.infer<typeof workspaceApiTokenScopes>
 
+// Maps scopes written before the channels/integrations merge; drop after one release.
+export const workspaceApiTokenScopesSchema = z.preprocess((value) => {
+  if (!Array.isArray(value)) {
+    return value
+  }
+  return [
+    ...new Set(
+      value.map((scope) =>
+        scope === "channels" || scope === "integrations"
+          ? "connections"
+          : scope,
+      ),
+    ),
+  ]
+}, z.array(workspaceApiTokenScopes).nullable())
+
+export const normalizeWorkspaceApiTokenScopes = (
+  scopes: string[] | null,
+): WorkspaceApiTokenScope[] | null =>
+  workspaceApiTokenScopesSchema.parse(scopes)
+
 /**
  * SHA-256 hex digest of a workspace API token's plaintext, as produced by
  * `hashToken()` (`@chatbotx.io/business/workspace-api-token/credentials`).

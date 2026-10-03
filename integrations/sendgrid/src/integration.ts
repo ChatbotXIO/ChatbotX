@@ -1,4 +1,5 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
   isUnauthorizedStatusError,
@@ -38,28 +39,31 @@ const getNextPageToken = (next?: string) => {
   return url.searchParams.get("page_token")?.trim() || undefined
 }
 
-/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
-const buildSendGridAuth = async (
-  apiKey: string,
-): Promise<SendGridAuthValue> => {
-  const auth = createSendGridAuth(apiKey)
+const sendGridFields = [
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+    labelKey: "integrations.sendGrid.fields.apiKey",
+  },
+] as const
+
+const buildSendGridAuth = async (config: {
+  apiKey: string
+}): Promise<SendGridAuthValue> => createSendGridAuth(config.apiKey)
+
+const probeSendGrid = async (auth: SendGridAuthValue) => {
   const { scopes } = await sendGridRequest(
     auth,
     SENDGRID_SCOPES_PATH,
     sendGridScopesResponseSchema,
   )
-  // SendGrid API keys can report Marketing permissions under either the
-  // modern "marketing.*" scope names or the legacy "marketing_campaigns.*"
-  // names depending on key type. Full Access keys have implicit write
-  // access but do NOT enumerate "marketing.write" in the scopes endpoint
-  // even though write calls succeed (HTTP 202). Checking read is enough.
   const hasRead =
     scopes.includes("marketing.read") ||
     scopes.includes("marketing_campaigns.read")
   if (!hasRead) {
     throw new SendGridMissingScopesError(["marketing.read"])
   }
-  return auth
 }
 
 const config: IntegrationDefinition<
@@ -68,48 +72,19 @@ const config: IntegrationDefinition<
   SendGridActions
 > = {
   name: "sendGrid",
-  connection: {
-    kind: "integration",
-    strategy: "api_key",
-    multiAccount: false,
-    configFields: [
-      {
-        name: "apiKey",
-        type: "secret",
-        required: true,
-        labelKey: "integrations.sendGrid.fields.apiKey",
-      },
-    ],
-    describe: () => ({
-      // SendGrid auth contains no stable account identifier; this is workspace-scoped.
-      sourceId: "workspace",
-      displayName: "SendGrid",
-    }),
-    fromCredentials: (config: { apiKey: string }) =>
-      buildSendGridAuth(config.apiKey),
-    verify: async ({ auth }) => {
-      try {
-        await sendGridRequest(
-          auth,
-          SENDGRID_SCOPES_PATH,
-          sendGridScopesResponseSchema,
-        )
-        return { ok: true }
-      } catch (error) {
-        return {
-          ok: false,
-          revoked: isUnauthorizedStatusError(error),
-          error:
-            error instanceof Error
-              ? error.message
-              : "SendGrid credential verification failed",
-        }
-      }
-    },
-    isRevokedTokenError: isUnauthorizedStatusError,
-  },
+  connection: apiKeyConnection({
+    displayName: "SendGrid",
+    fields: sendGridFields,
+    buildAuth: buildSendGridAuth,
+    probe: probeSendGrid,
+    isRevoked: isUnauthorizedStatusError,
+  }),
   actions: {
-    validateCredentials: async ({ props }) => buildSendGridAuth(props.apiKey),
+    validateCredentials: async ({ props }) => {
+      const auth = await buildSendGridAuth(props)
+      await probeSendGrid(auth)
+      return auth
+    },
     listLists: async ({ ctx, props }) => {
       const searchParams = new URLSearchParams({
         page_size: String(props.pageSize),

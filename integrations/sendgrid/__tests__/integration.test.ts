@@ -3,12 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 import { SendGridMissingScopesError } from "../src/error"
 import { integration } from "../src/integration"
 import { createSendGridAuth, type SendGridAuthValue } from "../src/schemas"
-
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  })
+import { jsonResponse } from "./test-utils"
 
 const createContext = (
   auth: SendGridAuthValue,

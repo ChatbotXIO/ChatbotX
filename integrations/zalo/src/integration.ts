@@ -1,9 +1,10 @@
 import {
   AuthException,
-  AuthType,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  oauth2Auth,
+  probeVerify,
   SdkException,
 } from "@chatbotx.io/sdk"
 import {
@@ -51,9 +52,6 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
     strategy: "oauth_redirect",
     multiAccount: true,
     configFields: [],
-    // Bypasses `generateAuthUrl` deliberately: that helper base64-JSON-
-    // encodes `stateParams` for the legacy cookie callback flow, whereas the
-    // Connection callback hub matches this raw session state verbatim.
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as ZaloConfig
       const params = new URLSearchParams({
@@ -71,42 +69,32 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
       )
       const oaProfile = await getZaloOAProfile(tokens.access_token)
       return {
-        authType: AuthType.oauth2,
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        redirectUrl: callbackUrl,
-        version: config.version,
-        tokens: {
-          accessToken: tokens.access_token,
-          refreshToken: tokens.refresh_token,
-          expiresAt: calculateExpiresAt(tokens.expires_in),
-        },
+        ...oauth2Auth(
+          config,
+          callbackUrl,
+          {
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token,
+            expiresAt: calculateExpiresAt(tokens.expires_in),
+          },
+          {
+            version: config.version,
+            oaName: oaProfile.name,
+          },
+        ),
         oaId: oaProfile.oa_id,
-        metadata: {
-          version: config.version,
-          oaName: oaProfile.name,
-        },
       } satisfies ZaloAuthValue
     },
     describe: (auth) => ({
       sourceId: auth.oaId,
       displayName: auth.metadata.oaName || "Zalo",
     }),
-    verify: async ({ auth }) => {
-      try {
-        await getZaloOAProfile(auth.tokens.accessToken)
-        return { ok: true, authExpiresAt: auth.tokens.expiresAt }
-      } catch (error) {
-        return {
-          ok: false,
-          revoked: isRevokedTokenError(error),
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to verify Zalo connection",
-        }
-      }
-    },
+    verify: async ({ auth }) =>
+      await probeVerify(() => getZaloOAProfile(auth.tokens.accessToken), {
+        label: "Zalo connection",
+        expiresAt: auth.tokens.expiresAt,
+        isRevoked: isRevokedTokenError,
+      }),
     isRevokedTokenError,
   },
   handleRequest: async (props) => {

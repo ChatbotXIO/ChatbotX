@@ -30,15 +30,7 @@ import { connectionModel } from "./connection"
 import { workspaceModel } from "./workspace"
 import { workspaceApiTokenModel } from "./workspace-api-token"
 
-/**
- * Strategy-agnostic, multi-step connect-flow record (modelled on Home
- * Assistant config flows / Nango connect sessions) — a future QR-code,
- * device-code, OAuth1, or "enter verification PIN" strategy is a new
- * `nextAction.type`, not a new table. Generalises `WhatsappSignupSession`
- * (kept, wrapped — its id goes in `encryptedAuth`) and the three
- * `fb_*_pending_auth` cookies this PR deletes in favor of this table
- * (formerly `apps/builder/src/lib/facebook-pending-auth.ts`).
- */
+/** Strategy-agnostic, multi-step connection flow. */
 export const connectSessionModel = pgTable(
   "ConnectSession",
   {
@@ -56,13 +48,7 @@ export const connectSessionModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
-    // `ConnectSessionService.create` enforces exactly one of actorUserId/
-    // actorTokenId at the application layer (`requireExactlyOneActor`);
-    // the CHECK constraint below is a looser `<= 1` backstop (0 or 1), not
-    // a mirror of that stricter app-level rule — see its own comment for
-    // why the name still says "exactly one". A token-actor session's
-    // Connection rows are created with `createdBy = null` (repo
-    // convention for token-created rows).
+    // Creation requires exactly one actor; the database permits neither after actor deletion.
     actorUserId: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
@@ -105,8 +91,6 @@ export const connectSessionModel = pgTable(
       "btree",
       table.expiresAt.asc().nullsLast(),
     ),
-    // Serves `purgeOldTerminal`'s age scan — partial because only a
-    // terminal row ever has `consumedAt` set.
     index("ConnectSession_consumedAt_idx")
       .using("btree", table.consumedAt.asc().nullsLast())
       .where(sql`${table.consumedAt} IS NOT NULL`),
@@ -114,17 +98,9 @@ export const connectSessionModel = pgTable(
       "btree",
       table.stateNonceHash.asc().nullsLast(),
     ),
-    // `<= 1`, not `= 1`: the actor FKs are `ON DELETE SET NULL` (deleting a
-    // User or WorkspaceApiToken that ever started a session must not fail),
-    // so a terminal session's row can end up with BOTH actor columns null
-    // once its actor is deleted. `ConnectSessionService.create` still
-    // enforces exactly one actor at creation time — this CHECK only widens
-    // to tolerate that later deletion, never to allow two actors at once.
-    // The constraint's own name is now imprecise ("exactly_one" for an
-    // "at most one" rule) — kept as-is rather than renamed via a
-    // behavior-neutral migration for a cosmetic mismatch alone.
+    // Actor deletion may null either FK; creation still requires exactly one actor.
     check(
-      "ConnectSession_actor_exactly_one",
+      "ConnectSession_actor_at_most_one",
       sql`(("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) <= 1`,
     ),
   ],

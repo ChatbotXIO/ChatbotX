@@ -1,9 +1,15 @@
 import type { ChannelType } from "@chatbotx.io/utils/channel"
-import { type DatabaseClient, db, eq, relationsFilterToSQL } from "../../client"
 import {
-  ACTIVE_CONNECTION_STATUSES,
-  type ConnectionKind,
-  type ConnectionStatus,
+  type DatabaseClient,
+  db,
+  desc,
+  eq,
+  relationsFilterToSQL,
+  sql,
+} from "../../client"
+import type {
+  ConnectionKind,
+  ConnectionStatus,
 } from "../../partials/connection"
 import type { IntegrationType } from "../../partials/integration"
 import { connectionModel } from "../../schema"
@@ -76,42 +82,23 @@ export const connectionRepository = {
     })
   },
 
-  /**
-   * Same identity key as `findByProviderSourceId`, without a known
-   * workspace — used by webhook-triggered `markUnhealthyByIdentifier` (a
-   * revoked-token webhook payload carries the provider's external id,
-   * never the workspace) and by `listAndAttachCandidates`'s
-   * already-connected check.
-   *
-   * `(provider, sourceId)` is NOT unique across workspaces (e.g. the same
-   * TikTok account disconnected in one workspace and reconnected in
-   * another leaves a stale `disconnected` row behind), so an unordered
-   * `findFirst` could previously return an arbitrary — possibly stale,
-   * possibly another workspace's — row (regression I8). This now prefers
-   * a row whose status is currently ACTIVE (`ACTIVE_CONNECTION_STATUSES`)
-   * over a disconnected/needs_reauth/paused one, and both branches order by
-   * `id DESC` (most recently created) as a deterministic tiebreaker when
-   * more than one row still matches.
-   */
+  /** Prefers an active matching connection, then the newest row. */
   async findByProviderAndSourceIdAnyWorkspace(
     input: { provider: IntegrationType; sourceId: string },
     tx: DatabaseClient = db,
   ): Promise<ConnectionModel | undefined> {
-    const active = await tx.query.connectionModel.findFirst({
-      where: {
-        provider: input.provider,
-        sourceId: input.sourceId,
-        status: { in: [...ACTIVE_CONNECTION_STATUSES] },
-      },
-      orderBy: { id: "desc" },
-    })
-    if (active) {
-      return active
-    }
-    return await tx.query.connectionModel.findFirst({
-      where: { provider: input.provider, sourceId: input.sourceId },
-      orderBy: { id: "desc" },
-    })
+    const [row] = await tx
+      .select()
+      .from(connectionModel)
+      .where(
+        sql`${connectionModel.provider} = ${input.provider} AND ${connectionModel.sourceId} = ${input.sourceId}`,
+      )
+      .orderBy(
+        sql`CASE WHEN ${connectionModel.status} IN ('connected', 'degraded') THEN 0 ELSE 1 END`,
+        desc(connectionModel.id),
+      )
+      .limit(1)
+    return row
   },
 
   async findById(
@@ -162,19 +149,6 @@ export const connectionRepository = {
   ): Promise<ConnectionModel | undefined> {
     return await tx.query.connectionModel.findFirst({
       where: { integrationId: input.integrationId },
-    })
-  },
-
-  async listDueForRefresh(
-    input: { before: Date; statuses: ConnectionStatus[] },
-    tx: DatabaseClient = db,
-  ): Promise<ConnectionModel[]> {
-    return await tx.query.connectionModel.findMany({
-      where: {
-        status: { in: input.statuses },
-        authExpiresAt: { lte: input.before },
-      },
-      orderBy: { authExpiresAt: "asc" },
     })
   },
 

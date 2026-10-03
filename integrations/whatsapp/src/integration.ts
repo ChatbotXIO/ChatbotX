@@ -2,6 +2,7 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  probeVerify,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { exchangeLongLivedToken } from "./api/auth"
@@ -39,7 +40,7 @@ const config: IntegrationDefinition<
     },
   },
   actions: {
-    verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
+    verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx.auth),
     uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
     listMessageTemplates: async ({ ctx }) =>
       await listMessageTemplates(ctx.auth),
@@ -59,7 +60,7 @@ const config: IntegrationDefinition<
   },
   connection: {
     kind: "channel",
-    strategy: "oauth_redirect",
+    strategy: "self_serve",
     multiAccount: true,
     configFields: [],
     describe: (auth) => ({
@@ -69,23 +70,12 @@ const config: IntegrationDefinition<
         auth.metadata.phoneNumber.display_phone_number ||
         "WhatsApp",
     }),
-    verify: async ({ auth }) => {
-      try {
-        await verifyAccessToken({
-          auth,
-        } as Parameters<typeof verifyAccessToken>[0])
-        return { ok: true, authExpiresAt: auth.tokens.expiresAt }
-      } catch (error) {
-        return {
-          ok: false,
-          revoked: isRevokedTokenError(error),
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to verify WhatsApp connection",
-        }
-      }
-    },
+    verify: async ({ auth }) =>
+      await probeVerify(() => verifyAccessToken(auth), {
+        label: "WhatsApp connection",
+        expiresAt: auth.tokens.expiresAt,
+        isRevoked: isRevokedTokenError,
+      }),
     isRevokedTokenError,
     webhook: {
       subscribe: async ({ auth }) => await subscribeWebhook({ auth }),

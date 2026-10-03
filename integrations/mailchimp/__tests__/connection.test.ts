@@ -1,16 +1,12 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { integration } from "../src/integration"
-
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  })
+import { jsonResponse } from "./test-utils"
 
 const connection = integration.connection
 if (!connection?.fromCredentials) {
   throw new Error("mailchimp integration has no connection.fromCredentials")
 }
+const { fromCredentials } = connection
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -21,7 +17,7 @@ describe("mailchimp connection.fromCredentials", () => {
     const fetchMock = vi.fn(async () => jsonResponse({ health_status: "ok" }))
     vi.stubGlobal("fetch", fetchMock)
 
-    const auth = await integration.connection?.fromCredentials?.({
+    const auth = await fromCredentials({
       apiKey: " key-us1 ",
     })
 
@@ -38,12 +34,14 @@ describe("mailchimp connection.fromCredentials", () => {
     )
 
     await expect(
-      integration.connection?.fromCredentials?.({ apiKey: "bad-key" }),
-    ).rejects.toBeTruthy()
+      fromCredentials({ apiKey: "bad-key-us1" }),
+    ).rejects.toMatchObject({
+      statusCode: 401,
+    })
   })
 })
 
-describe("mailchimp connection.verify / isRevokedTokenError", () => {
+describe("mailchimp connection.verify", () => {
   test("verify reports revoked:true on a 401 from the ping endpoint", async () => {
     vi.stubGlobal(
       "fetch",
@@ -56,10 +54,5 @@ describe("mailchimp connection.verify / isRevokedTokenError", () => {
       auth: { authType: "custom", apiKey: "key", dataCenter: "us1" } as never,
     })
     expect(health).toMatchObject({ ok: false, revoked: true })
-  })
-
-  test("isRevokedTokenError is a real predicate, not a stub", () => {
-    expect(connection.isRevokedTokenError({ statusCode: 401 })).toBe(true)
-    expect(connection.isRevokedTokenError({ statusCode: 500 })).toBe(false)
   })
 })

@@ -5,16 +5,7 @@ import {
   createGetResponseAuth,
   type GetResponseAuthValue,
 } from "../src/schemas"
-
-const jsonResponse = (
-  body: unknown,
-  status = 200,
-  headers: Record<string, string> = {},
-) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...headers },
-  })
+import { jsonResponse } from "./test-utils"
 
 const createContext = (
   auth: GetResponseAuthValue,

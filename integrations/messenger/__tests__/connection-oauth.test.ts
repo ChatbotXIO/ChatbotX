@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { expectStateVerbatim, facebookOauthCredential } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
@@ -36,10 +37,7 @@ vi.mock("../src/lib/logger", () => ({
 const { integration } = await import("../src/integration")
 
 const credential = {
-  clientId: "client-1",
-  clientSecret: "secret-1",
-  redirectUrl: "",
-  version: "v23.0",
+  ...facebookOauthCredential,
   stateParams: { workspaceId: "workspace-1" },
 }
 
@@ -51,7 +49,7 @@ describe("Messenger connection.authorizeUrl", () => {
       state: "session-1.abc123",
     })
     const parsed = new URL(url as string)
-    expect(parsed.searchParams.get("state")).toBe("session-1.abc123")
+    expectStateVerbatim(url, "session-1.abc123")
     expect(parsed.searchParams.get("client_id")).toBe("client-1")
     expect(parsed.searchParams.get("redirect_uri")).toBe(
       "https://app.example.test/integrations/messenger/callback",
@@ -102,7 +100,7 @@ describe("Messenger connection.listCandidates", () => {
     authType: "oauth2" as const,
     clientId: "client-1",
     clientSecret: "secret-1",
-    redirectUrl: "",
+    redirectUrl: facebookOauthCredential.redirectUrl,
     version: "v23.0",
     tokens: { accessToken: "user-token" },
   }
@@ -140,7 +138,7 @@ describe("Messenger connection.listCandidates", () => {
           authType: "oauth2",
           clientId: "client-1",
           clientSecret: "secret-1",
-          redirectUrl: "",
+          redirectUrl: facebookOauthCredential.redirectUrl,
           version: "v23.0",
           tokens: { accessToken: "page-1-token" },
           metadata: {
@@ -168,7 +166,7 @@ describe("Messenger connection.describe", () => {
       authType: "oauth2",
       clientId: "client-1",
       clientSecret: "secret-1",
-      redirectUrl: "",
+      redirectUrl: facebookOauthCredential.redirectUrl,
       version: "v23.0",
       tokens: { accessToken: "page-1-token" },
       metadata: { pageId: "page-1", pageName: "Page One", version: "v23.0" },
@@ -184,7 +182,7 @@ describe("Messenger connection.describe", () => {
       authType: "oauth2",
       clientId: "client-1",
       clientSecret: "secret-1",
-      redirectUrl: "",
+      redirectUrl: facebookOauthCredential.redirectUrl,
       version: "v23.0",
       tokens: { accessToken: "user-token" },
     }

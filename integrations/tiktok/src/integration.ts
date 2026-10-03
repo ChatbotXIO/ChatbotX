@@ -1,9 +1,10 @@
 import {
   AuthException,
-  AuthType,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  oauth2Auth,
+  probeVerify,
 } from "@chatbotx.io/sdk"
 import { exchangeCodeForToken, refreshAccessToken } from "./apis/auth"
 import { getUserInfo } from "./apis/user"
@@ -50,9 +51,6 @@ const config: IntegrationDefinition<
     strategy: "oauth_redirect",
     multiAccount: true,
     configFields: [],
-    // Bypasses `generateAuthUrl` deliberately: it base64-JSON-encodes
-    // `stateParams` for the legacy per-request cookie flow, but the
-    // Connection domain callback hub matches a raw `"{sessionId}.{nonce}"`.
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as TiktokConfig
       const params = new URLSearchParams({
@@ -80,23 +78,23 @@ const config: IntegrationDefinition<
       })
 
       return {
-        authType: AuthType.oauth2,
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        redirectUrl: "",
-        tokens: {
-          accessToken: tokenResponse.access_token,
-          refreshToken: tokenResponse.refresh_token,
-          ...buildTokenTimestamps(
-            tokenResponse.expires_in,
-            tokenResponse.refresh_expires_in,
-          ),
-        },
-        metadata: {
-          openId: tokenResponse.open_id,
-          username: userInfo.username,
-          displayName: userInfo.display_name,
-        },
+        ...oauth2Auth(
+          config,
+          callbackUrl,
+          {
+            accessToken: tokenResponse.access_token,
+            refreshToken: tokenResponse.refresh_token,
+            ...buildTokenTimestamps(
+              tokenResponse.expires_in,
+              tokenResponse.refresh_expires_in,
+            ),
+          },
+          {
+            openId: tokenResponse.open_id,
+            username: userInfo.username,
+            displayName: userInfo.display_name,
+          },
+        ),
       } satisfies TiktokAuthValue
     },
     describe: (auth) => ({
@@ -104,21 +102,15 @@ const config: IntegrationDefinition<
       displayName:
         auth.metadata.displayName || auth.metadata.username || "TikTok",
     }),
-    verify: async ({ auth }) => {
-      try {
-        await getUserInfo({ accessToken: auth.tokens.accessToken })
-        return { ok: true, authExpiresAt: auth.tokens.expiresAt }
-      } catch (error) {
-        return {
-          ok: false,
-          revoked: isRevokedTokenError(error),
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to verify TikTok connection",
-        }
-      }
-    },
+    verify: async ({ auth }) =>
+      await probeVerify(
+        () => getUserInfo({ accessToken: auth.tokens.accessToken }),
+        {
+          label: "TikTok connection",
+          expiresAt: auth.tokens.expiresAt,
+          isRevoked: isRevokedTokenError,
+        },
+      ),
     isRevokedTokenError,
   },
   refreshAuth: async ({ auth }) => {

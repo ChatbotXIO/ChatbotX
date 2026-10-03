@@ -410,74 +410,13 @@ an endpoint's scope.
     — the same template the builder's edit page shows the user. Never
     publish the bare `backgroundUrl` column value.
 
-- **Connections** — see the dedicated table below.
+- **Connections** — `connections` replaces the former `channels` and
+  `integrations` scopes. Stored legacy values are normalized to
+  `connections` during the rolling deployment, and a data migration
+  rewrites them permanently. Tokens scoped to either legacy resource gain
+  the merged scope's combined access. Channel-only and integration-only
+  access can no longer be expressed: omit `connections` to exclude both.
 
-### Connections scope — endpoint-to-scope table
-
-`connections` replaces the former `channels` and `integrations` scopes
-(merged 2026-09-14; a data migration rewrites already-issued tokens'
-`scopes` arrays from either old value to `connections`). It covers user
-persistent menus (Messenger bot menu) CRUD, webchat CRUD, SMTP integration
-CRUD, Messenger/Zalo tag-sync toggling, a read-only list of Messenger
-personas across the workspace's connected Pages, generic integration
-list/get (including the token-refresh-error signal), AI-provider-key
-connect/disconnect, and webhook/external-webhook CRUD. As with every other
-scope, each public handler calls the same `packages/business` service
-method the private/action code calls — no business logic was duplicated to
-publish these.
-
-**Accepted consequence:** the merge is a deliberate simplification, not an
-oversight — a token issued before 2026-09-14 with only the old
-`integrations` scope can now also connect/disconnect channels (and a
-`channels`-only token can now manage integrations), because both map to
-the same `connections` value post-migration. A workspace that needs the
-pre-merge separation back must issue a narrower-scoped (or unscoped=`null`
-only where appropriate) replacement token; the two scopes will not be
-re-split.
-
-| Endpoint | Notes |
-|---|---|
-| `GET/POST /v1/user-persistent-menus`, `GET/PUT/DELETE /v1/user-persistent-menus/{id}` | Full CRUD via `userPersistentMenuService`. |
-| `GET/POST /v1/webchats`, `GET/PATCH/DELETE /v1/webchats/{id}` | Full CRUD via `integrationWebchatService`. `DELETE` cascades to disconnecting the webchat's `Inbox`. |
-| `GET/POST /v1/smtp-integrations`, `GET/PUT/DELETE /v1/smtp-integrations/{id}` | Full CRUD via `integrationSmtpService`. `DELETE` cascades to disconnecting the SMTP `Inbox`. The row's `auth` blob (SMTP password) is never returned — every response is hand-picked to `{id, name, fromAddress}`. |
-| `PATCH /v1/messenger-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `messengerIntegrationService.updateTagSync`. |
-| `PATCH /v1/zalo-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `zaloIntegrationService.updateTagSync`. |
-| `GET /v1/messenger-personas` | Read-only; lists Messenger personas across every Page connected to the workspace, with page access tokens projected away. |
-| `GET /v1/integrations`, `GET /v1/integrations/{id}` | Read-only list/get via `integrationService`. |
-| `GET /v1/integrations/status/token-errors` | Channel integrations whose daily automatic token-refresh last failed. Superseded by the Connection domain's `needs_reauth`/`degraded` status (not yet public in this branch) — will be marked `deprecated: true` once its `/v1/connections` equivalent ships. |
-| `GET/PUT/DELETE /v1/integrations/ai/{provider}` | Get/upsert/disconnect an AI-provider API key (`claude`, `deepseek`, `gemini`, `openai`) via `integration<Provider>Service`. `PUT` live-validates the key with `verifyAiProviderApiKey` before persisting. |
-| `GET/POST /v1/webhooks`, `DELETE /v1/webhooks/{id}` | Full CRUD via `webhookService`. |
-| `GET/POST /v1/external-webhooks`, `DELETE /v1/external-webhooks/{id}` | Full CRUD via `externalWebhookService`, scoped to platforms like Make; `POST` is idempotent on `(event, url)`. |
-| `GET /v1/connections`, `GET /v1/connections/{id}` | Read-only, `ORDER BY kind, provider, displayName, id`, via `connectionStateService`. The unified successor to the four rows above and `GET /v1/integrations` — not a replacement yet (nothing is marked `deprecated: true` until its write-path equivalent for every provider ships), but the shared read path both the public and private (`GET /workspaces/{workspaceId}/connections`) routes call. `capabilities` (`refreshable`/`verifiable`/`multiAccount`) is joined from `CONNECTION_REGISTRY` at response time — never stored on the row. `auth` is never returned. |
-| `POST /v1/connections` | Connects a channel or integration. Credential-strategy providers (`token`/`api_key`/`self_serve` with `fromCredentials` defined) connect immediately and return `connection`; OAuth providers return a `session` to poll. Only a subset of providers ship `fromCredentials` today — see `GET /v1/connection-providers`'s `unavailableReason: "notImplemented"` for the rest. |
-| `PATCH /v1/connections/{id}` | Renames the connection's `displayName` only. |
-| `DELETE /v1/connections/{id}` | Disconnects — best-effort provider-side teardown, then the local FSM transition. Denied for a `read_only` token. |
-| `POST /v1/connections/{id}/refresh`, `POST /v1/connections/{id}/verify`, `POST /v1/connections/{id}/reconnect` | Force a refresh, run a live health check, or start a re-authorization OAuth session for an existing connection. |
-| `GET /v1/connect-sessions/{id}`, `POST /v1/connect-sessions/{id}/targets`, `POST /v1/connect-sessions/{id}/input`, `DELETE /v1/connect-sessions/{id}` | Poll/complete/cancel a multi-step OAuth connect session started by `POST /v1/connections`/`.../reconnect`. |
-| `GET /v1/connection-providers` | Read-only connect catalog — every `IntegrationType`'s `strategy`, `configFields` (labels resolved from the request locale, falling back to the raw field name for a key with no translation yet), and `available`/`unavailableReason` (`notImplemented` \| `hiddenForTenant` \| `alreadyConnected` \| `credentialMissing`) resolved against this workspace via `resolveChannelPolicy` + `platformCredentialService.resolveForOwner`. |
-
-Two invariants specific to this scope:
-
-- **`customCss` is writable by a `connections`-scoped token with no extra
-  permission check.** The private `updateWebchatAction` gates `customCss`
-  behind `hasWorkspacePermission(..., "superAdmin")` because it renders via
-  `dangerouslySetInnerHTML` in `lib/widget-css.tsx`. The public webchat
-  `create`/`update` handlers accept it with only workspace-token scope. This
-  is **not** a privilege escalation: minting any workspace token already
-  requires the caller to be a workspace superAdmin
-  (`requireWorkspaceTokenSuperAdmin`), the same reasoning the Ads scope's
-  omitted `assertWorkspaceSuperAdmin` guard documents above. Do not add a
-  permission check here — there is no lower-privileged caller to check
-  against.
-- **`welcomeFlowId` normalization and workspace-ownership validation live in
-  `integrationWebchatService`, not in either caller.** Both `create` and
-  `update` call a shared private helper
-  (`resolveWelcomeFlowId`) that normalizes a falsy value to `null` and
-  validates the flow belongs to the same workspace via
-  `flowService.findActiveById`. This was fixed after a review found the
-  public and private paths disagreeing on both points — any future caller
-  of `integrationWebchatService.update`/`.create` gets this for free and
-  must not re-implement it upstream.
 
 - **Minigames** — this scope shipped in the enum/registry/i18n alongside
   `ads` but, like `ads`, carried no endpoints for a while. It now publishes
@@ -607,10 +546,6 @@ these helpers — import from the business package directly.
   asserts a campaign mutation succeeds with no session user in context (the
   `assertWorkspaceSuperAdmin` regression guard) and that `createdBy` is never
   set from one
-- `apps/builder/__tests__/connections-public-scope.test.ts` — real-router scope wiring for the merged `connections` scope (10 submodules)
-- `apps/builder/__tests__/connections-public-api.test.ts` — handler-behavior tests for `GET /v1/connections`, `GET /v1/connections/{id}`, `GET /v1/connection-providers`
-- `packages/business/src/connection/__tests__/state-service.test.ts` — quota-edge-exactly-once and Inbox-mirror assertions for `ConnectionStateService.transition`/`markUnhealthy`
-- `packages/connections/__tests__/registry.test.ts` — `CONNECTION_REGISTRY` exhaustiveness and channel/credential invariants
 - `apps/builder/__tests__/create-workspace-token-action.test.ts`
 - `apps/builder/__tests__/delete-workspace-token-action.test.ts`
 - `apps/builder/__tests__/integration-api-token-hash.test.ts`

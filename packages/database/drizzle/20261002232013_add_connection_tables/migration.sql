@@ -16,14 +16,14 @@ CREATE TABLE "ConnectSession" (
 	"step" text DEFAULT 'authorize' NOT NULL,
 	"nextAction" jsonb,
 	"encryptedAuth" jsonb,
-	"targets" jsonb NOT NULL,
-	"claimedTargetIds" text[] NOT NULL,
-	"resultConnectionIds" text[] NOT NULL,
-	"results" jsonb NOT NULL,
+	"targets" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"claimedTargetIds" text[] DEFAULT '{}' NOT NULL,
+	"resultConnectionIds" text[] DEFAULT '{}' NOT NULL,
+	"results" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"errorCode" text,
 	"expiresAt" timestamp(6) with time zone NOT NULL,
 	"consumedAt" timestamp(6) with time zone,
-	CONSTRAINT "ConnectSession_actor_exactly_one" CHECK ((("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) = 1)
+	CONSTRAINT "ConnectSession_actor_at_most_one" CHECK ((("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) <= 1)
 );
 --> statement-breakpoint
 CREATE TABLE "Connection" (
@@ -49,12 +49,12 @@ CREATE TABLE "Connection" (
 --> statement-breakpoint
 CREATE INDEX "ConnectSession_workspaceId_idx" ON "ConnectSession" ("workspaceId");--> statement-breakpoint
 CREATE INDEX "ConnectSession_expiresAt_idx" ON "ConnectSession" ("expiresAt");--> statement-breakpoint
+CREATE INDEX "ConnectSession_consumedAt_idx" ON "ConnectSession" ("consumedAt") WHERE "consumedAt" IS NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "ConnectSession_stateNonceHash_key" ON "ConnectSession" ("stateNonceHash");--> statement-breakpoint
-CREATE INDEX "Connection_workspaceId_idx" ON "Connection" ("workspaceId");--> statement-breakpoint
 CREATE UNIQUE INDEX "Connection_workspaceId_provider_sourceId_key" ON "Connection" ("workspaceId","provider","sourceId");--> statement-breakpoint
+CREATE INDEX "Connection_provider_sourceId_idx" ON "Connection" ("provider","sourceId");--> statement-breakpoint
 CREATE UNIQUE INDEX "Connection_inboxId_key" ON "Connection" ("inboxId");--> statement-breakpoint
 CREATE UNIQUE INDEX "Connection_integrationId_key" ON "Connection" ("integrationId");--> statement-breakpoint
-CREATE INDEX "Connection_status_authExpiresAt_idx" ON "Connection" ("status","authExpiresAt");--> statement-breakpoint
 ALTER TABLE "ConnectSession" ADD CONSTRAINT "ConnectSession_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "ConnectSession" ADD CONSTRAINT "ConnectSession_targetConnectionId_Connection_id_fkey" FOREIGN KEY ("targetConnectionId") REFERENCES "Connection"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "ConnectSession" ADD CONSTRAINT "ConnectSession_actorUserId_User_id_fkey" FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
@@ -63,3 +63,15 @@ ALTER TABLE "Connection" ADD CONSTRAINT "Connection_workspaceId_Workspace_id_fke
 ALTER TABLE "Connection" ADD CONSTRAINT "Connection_inboxId_Inbox_id_fkey" FOREIGN KEY ("inboxId") REFERENCES "Inbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Connection" ADD CONSTRAINT "Connection_integrationId_Integration_id_fkey" FOREIGN KEY ("integrationId") REFERENCES "Integration"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Connection" ADD CONSTRAINT "Connection_createdBy_User_id_fkey" FOREIGN KEY ("createdBy") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+--> statement-breakpoint
+UPDATE "WorkspaceApiToken"
+SET "scopes" = (
+	SELECT array_agg(
+		DISTINCT CASE
+			WHEN scope IN ('channels', 'integrations') THEN 'connections'
+			ELSE scope
+		END
+	)
+	FROM unnest("scopes") AS scope
+)
+WHERE "scopes" && ARRAY['channels', 'integrations'];

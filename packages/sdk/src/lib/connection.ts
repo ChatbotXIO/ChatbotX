@@ -1,4 +1,9 @@
-import type { ConnectionKind as UtilsConnectionKind } from "@chatbotx.io/utils/connection"
+import type {
+  ConnectionKind,
+  connectionConfigFieldSchema,
+  connectSessionNextActionSchema,
+} from "@chatbotx.io/utils/connection"
+import type { z } from "zod"
 import type { AuthValue } from "./auth"
 import type { Handler } from "./shared"
 
@@ -15,38 +20,9 @@ export type ConnectionStrategy =
   | "api_key"
   | "self_serve"
 
-/** One field of a provider's `config` (credential-strategy connect) or a post-connect action's `input`. */
-export type ConnectionConfigField = {
-  name: string
-  type: "string" | "secret" | "number" | "boolean" | "enum" | "url"
-  required: boolean
-  labelKey: string
-  enumValues?: readonly string[]
-  description?: string
-}
-
-/** What the client must do next to continue a connect session. */
-export type ConnectNextAction =
-  | { type: "open_url"; url: string }
-  | { type: "show_qr"; qr: string }
-  | { type: "enter_input"; inputFields: ConnectionConfigField[] }
-  | { type: "wait" }
-
-export type ConnectionKind = "channel" | "integration" | "sub_connection"
-
-/**
- * `@chatbotx.io/utils`'s `ConnectionKind` is a separate, re-declared Zod
- * enum (not imported here) so the database layer and public API schemas
- * can validate against it without depending on the SDK — see that file's
- * own comment. This pins the two literal unions equal at compile time so a
- * future kind added to one and not the other fails to build instead of
- * silently drifting. Never read at runtime.
- */
-const _assertConnectionKindMatchesUtils: ConnectionKind extends UtilsConnectionKind
-  ? UtilsConnectionKind extends ConnectionKind
-    ? true
-    : never
-  : never = true
+export type ConnectionConfigField = z.infer<typeof connectionConfigFieldSchema>
+export type ConnectNextAction = z.infer<typeof connectSessionNextActionSchema>
+export type { ConnectionKind } from "@chatbotx.io/utils/connection"
 
 export type ConnectionHealth =
   | { ok: true; authExpiresAt?: string }
@@ -92,50 +68,24 @@ export type ConnectionProvider<
     state: string
   }) => string
   /**
-   * Returns `AuthValue`, not `IAuth` — for a single-account provider these
-   * coincide, but a multi-account provider (Messenger Business Login) gets
-   * back a *user*-level token here that is not yet any specific page's
-   * `IAuth` (it has no `pageId` to satisfy `IAuth`'s narrower `metadata`
-   * shape). `listCandidates` receives this same session-level value and is
-   * what derives each candidate's own final `IAuth`; `describe`/`verify`/
-   * `webhook`/`candidateToConfig` never see it.
+   * Returns session-level auth. Multi-account providers finalize candidate
+   * auth in `listCandidates`; reconnect paths may describe this value before
+   * candidate metadata exists, so their descriptors must tolerate that shape.
    */
   exchangeCode?: Handler<
     { code: string; callbackUrl: string; credential: ConnectionCredential },
     AuthValue
   >
   listCandidates?: Handler<{ auth: AuthValue }, ConnectionCandidate[]>
-  /**
-   * Extra satellite-table columns a candidate's own `auth` carries beyond
-   * `describe()`'s `{sourceId, displayName}` and the generic auth/tokens
-   * shape — e.g. Instagram's `username` (its `auth.metadata` already has
-   * `igId`/`pageId`, both covered by `describe()`/`identityColumn`, but the
-   * satellite table's `username` column has no default and isn't part of
-   * either). Read generically by `ConnectionService.connectTargets` and
-   * passed straight through to `ConnectionStoreBinding.insertRow`'s
-   * `config` — omit when a candidate's own `auth`/`descriptor` already
-   * cover every NOT NULL column with no default.
-   */
+  /** Maps candidate auth fields needed by provider-specific persistence. */
   candidateToConfig?: (auth: IAuth) => Record<string, unknown>
   /** Validates `token`/`api_key`/`self_serve` config with a live provider call. */
   fromCredentials?: Handler<ICreds, IAuth>
   verify: Handler<{ auth: IAuth }, ConnectionHealth>
-  isRevokedTokenError: (error: unknown) => boolean
+
+  isRevokedTokenError?: (error: unknown) => boolean
   webhook?: {
     subscribe: Handler<{ auth: IAuth }, void>
     unsubscribe: Handler<{ auth: IAuth }, void>
   }
-  /**
-   * Reserved for provider-specific post-connect verbs (WhatsApp
-   * requestVerificationCode/verifyCode, Telegram setWebhook, …), exposed
-   * later as `POST /v1/connections/{id}/actions/{name}`. Typed now so a
-   * provider can start declaring one; no route consumes this in Phase 0-3.
-   */
-  actions?: Record<
-    string,
-    {
-      inputFields: readonly ConnectionConfigField[]
-      run: Handler<{ auth: IAuth; input: Record<string, unknown> }, unknown>
-    }
-  >
 }

@@ -1,33 +1,11 @@
 import { z } from "zod"
 
-/**
- * What the client must do next — mirrors `ConnectNextAction` from
- * `@chatbotx.io/sdk`. Re-declared here (not imported) because
- * `packages/database` cannot depend on `@chatbotx.io/sdk`; the two are kept
- * structurally identical by convention, same as `ConnectionKind` between
- * `@chatbotx.io/sdk` and `@chatbotx.io/utils`.
- */
-export const connectSessionNextActionSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("open_url"), url: z.string() }),
-  z.object({ type: z.literal("show_qr"), qr: z.string() }),
-  z.object({
-    type: z.literal("enter_input"),
-    inputFields: z.array(
-      z.object({
-        name: z.string(),
-        type: z.enum(["string", "secret", "number", "boolean", "enum", "url"]),
-        required: z.boolean(),
-        labelKey: z.string(),
-        enumValues: z.array(z.string()).optional(),
-        description: z.string().optional(),
-      }),
-    ),
-  }),
-  z.object({ type: z.literal("wait") }),
-])
-export type ConnectSessionNextAction = z.infer<
-  typeof connectSessionNextActionSchema
->
+export {
+  type ConnectionConfigField,
+  type ConnectSessionNextAction,
+  connectionConfigFieldSchema,
+  connectSessionNextActionSchema,
+} from "@chatbotx.io/utils/connection"
 
 /** One selectable target surfaced during `awaiting_selection` — no tokens. */
 export const connectSessionTargetSchema = z.object({

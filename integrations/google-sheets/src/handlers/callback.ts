@@ -1,9 +1,6 @@
-import {
-  AuthType,
-  type HandleRequestProps,
-  SdkException,
-} from "@chatbotx.io/sdk"
+import { type HandleRequestProps, SdkException } from "@chatbotx.io/sdk"
 import { getClient } from "../client"
+import { googleSheetsTokensToAuth } from "../connection-auth"
 import { handleError } from "../error"
 import type { GoogleSheetsAuthValue, GoogleSheetsConfig } from "../schemas"
 
@@ -20,20 +17,11 @@ export const callbackHandler = async (
     const client = getClient(props.config)
     const tokens = await client.getToken(code)
 
-    return {
-      authType: AuthType.oauth2,
-      clientId: props.config.clientId,
-      clientSecret: props.config.clientSecret,
-      redirectUrl: props.config.redirectUrl,
-      tokens: {
-        accessToken: tokens.tokens.access_token || "",
-        expiresAt: new Date(tokens.tokens.expiry_date ?? "").toISOString(),
-        refreshToken: tokens.tokens.refresh_token ?? null,
-      },
-      metadata: {
-        scope: tokens.tokens.scope,
-      },
-    }
+    return await googleSheetsTokensToAuth(
+      props.config,
+      props.config.redirectUrl,
+      tokens.tokens,
+    )
   } catch (error) {
     return handleError(error)
   }

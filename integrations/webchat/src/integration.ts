@@ -4,6 +4,7 @@ import {
   Integration,
   type IntegrationDefinition,
   type Oauth2AuthValue,
+  selfServeConnection,
 } from "@chatbotx.io/sdk"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -22,21 +23,10 @@ const config: IntegrationDefinition<
     },
   },
   actions: {},
-  connection: {
-    kind: "channel",
-    strategy: "self_serve",
-    multiAccount: true,
-    configFields: [],
-    describe: () => ({
-      // Webchat has no external account identity.
-      sourceId: "workspace",
-      displayName: "Webchat",
-    }),
-    // Webchat is self-hosted, so there is no external provider to verify.
-    verify: async () => ({ ok: true }),
-    // TODO(connection-phase2): refine once Webchat revoked-token error shape is confirmed.
-    isRevokedTokenError: () => false,
-  },
+  connection: selfServeConnection<WebchatAuthValue>({
+    displayName: "Webchat",
+    multiAccount: false,
+  }),
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,
   ): Promise<string | number | Oauth2AuthValue> {

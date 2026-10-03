@@ -1,8 +1,9 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
-import type {
-  TokenHash,
-  WorkspaceApiTokenPermission,
-  WorkspaceApiTokenScope,
+import {
+  normalizeWorkspaceApiTokenScopes,
+  type TokenHash,
+  type WorkspaceApiTokenPermission,
+  type WorkspaceApiTokenScope,
 } from "@chatbotx.io/database/partials"
 import { workspaceApiTokenRepository } from "@chatbotx.io/database/repositories"
 import type {
@@ -68,7 +69,7 @@ class WorkspaceApiTokenService extends BaseService {
     // matching `workspaceService.find`'s existing invalidation contract) —
     // dropping either tag would let one of those writes serve stale data
     // for the rest of this entry's TTL.
-    return await withCache(
+    const result = await withCache(
       `workspace-api-tokens:hash:${tokenHash}`,
       async () => {
         const apiToken = await workspaceApiTokenRepository.findByTokenHash(
@@ -95,6 +96,18 @@ class WorkspaceApiTokenService extends BaseService {
             : undefined,
       },
     )
+    if (!result) {
+      return
+    }
+    return {
+      ...result,
+      apiToken: {
+        ...result.apiToken,
+        scopes: normalizeWorkspaceApiTokenScopes(
+          result.apiToken.scopes ?? null,
+        ),
+      },
+    }
   }
 
   async listTokens(props: {

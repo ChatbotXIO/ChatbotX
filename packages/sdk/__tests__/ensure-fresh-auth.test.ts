@@ -1,11 +1,14 @@
 import { describe, expect, test, vi } from "vitest"
 import {
+  AuthException,
   AuthRefreshException,
   AuthType,
+  type AuthValue,
   type Context,
   Integration,
   type IntegrationDefinition,
   type Oauth2AuthValue,
+  SdkException,
 } from "../src"
 
 const baseAuth = (expiresAt: string): Oauth2AuthValue => ({
@@ -40,13 +43,33 @@ const makeContext = (auth: Oauth2AuthValue) => {
     authStore: { load: async () => auth, save, markOffline },
     platform: {
       appUrl: "https://app.test",
-      wsUrl: "wss://app.test",
+      publicRealtimeUrl: "wss://public.test",
+      internalRealtimeUrl: "wss://internal.test",
       storageUrl: "https://storage.test",
-      getRealtimeAuthHeaders: async () => ({}),
+      getRealtimeBroadcastAuthHeaders: async () => ({}),
     },
   }
   return { ctx, save, markOffline }
 }
+const makeIntegrationWithoutRefresh = () =>
+  new Integration<IntegrationDefinition<Record<string, never>, AuthValue>>({
+    name: "fixture-without-refresh",
+    actions: {},
+    handleRequest: async () => "ok",
+    disconnect: async () => undefined,
+  })
+
+const makeNonOauthContext = (): Context<AuthValue> => ({
+  storagePrefix: "test",
+  auth: { authType: AuthType.secretText, secretText: "token-1" },
+  platform: {
+    appUrl: "https://app.test",
+    publicRealtimeUrl: "wss://public.test",
+    internalRealtimeUrl: "wss://internal.test",
+    storageUrl: "https://storage.test",
+    getRealtimeBroadcastAuthHeaders: async () => ({}),
+  },
+})
 
 describe("Integration.ensureFreshAuth", () => {
   test("no-ops when the token is far from expiry and force is not set", async () => {
@@ -93,36 +116,52 @@ describe("Integration.ensureFreshAuth", () => {
     expect(save).toHaveBeenCalledWith(newAuth)
     expect(result.auth).toBe(newAuth)
   })
-
-  test("a custom withinMs widens the proactive-refresh window beyond the default buffer", async () => {
-    const newAuth = baseAuth(
-      new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-    )
-    const refreshAuth = vi.fn(async () => newAuth)
-    const integration = makeIntegration(refreshAuth)
-    // 20 minutes out — outside the SDK's default 5-minute buffer, so a bare
-    // `ensureFreshAuth(ctx)` would NOT refresh this; a 30-minute window does.
-    const twentyMinutesOut = new Date(Date.now() + 20 * 60 * 1000).toISOString()
-    const { ctx, save } = makeContext(baseAuth(twentyMinutesOut))
-
-    const untouched = await integration.ensureFreshAuth(ctx)
-    expect(refreshAuth).not.toHaveBeenCalled()
-    expect(untouched.auth.tokens.expiresAt).toBe(twentyMinutesOut)
-
-    const refreshed = await integration.ensureFreshAuth(ctx, {
-      withinMs: 30 * 60 * 1000,
+  test("force:true does not refresh non-oauth2 auth", async () => {
+    const refreshAuth = vi.fn(async ({ auth }: { auth: AuthValue }) => auth)
+    const integration = new Integration<
+      IntegrationDefinition<Record<string, never>, AuthValue>
+    >({
+      name: "non-oauth-fixture",
+      actions: {},
+      handleRequest: async () => "ok",
+      disconnect: async () => undefined,
+      refreshAuth,
     })
-    expect(refreshAuth).toHaveBeenCalledTimes(1)
-    expect(save).toHaveBeenCalledWith(newAuth)
-    expect(refreshed.auth).toBe(newAuth)
+    const ctx = makeNonOauthContext()
+
+    const result = await integration.ensureFreshAuth(ctx, { force: true })
+
+    expect(refreshAuth).not.toHaveBeenCalled()
+    expect(result.auth).toBe(ctx.auth)
+  })
+
+  test("does not proactively refresh when no refresh implementation exists", async () => {
+    const integration = makeIntegrationWithoutRefresh()
+    const soon = new Date(Date.now() + 60 * 1000).toISOString()
+    const { ctx, save } = makeContext(baseAuth(soon))
+
+    const result = await integration.ensureFreshAuth(ctx)
+
+    expect(result.auth).toBe(ctx.auth)
+    expect(save).not.toHaveBeenCalled()
+  })
+
+  test("force:true rejects when no refresh implementation exists", async () => {
+    const integration = makeIntegrationWithoutRefresh()
+    const farFuture = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    const { ctx } = makeContext(baseAuth(farFuture))
+
+    await expect(
+      integration.ensureFreshAuth(ctx, { force: true }),
+    ).rejects.toThrow(SdkException)
   })
 
   test("marks the connection offline and throws on terminal refresh failure", async () => {
-    class FixtureAuthException extends Error {}
     const refreshAuth: RefreshAuthFn = () => {
-      throw new FixtureAuthException("revoked")
+      throw new AuthException("revoked")
     }
     const integration = makeIntegration(refreshAuth)
+
     const { ctx, markOffline } = makeContext(
       baseAuth(new Date(Date.now() + 60 * 60 * 1000).toISOString()),
     )

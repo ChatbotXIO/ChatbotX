@@ -1,14 +1,16 @@
 import {
-  AuthType,
+  buildFacebookDialogUrl,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  oauth2Auth,
+  verifyGraphToken,
 } from "@chatbotx.io/sdk"
 import {
+  debugToken,
   exchangeCodeForToken,
   getUserInstagramAccounts,
   toAppAccessToken,
-  verifyMetaToken,
 } from "./apis/auth"
 import {
   exchangeLongLivedToken,
@@ -57,29 +59,21 @@ const config: IntegrationDefinition<
     configFields: [],
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as InstagramConfig
-      const params = new URLSearchParams({
-        client_id: config.clientId,
-        redirect_uri: callbackUrl,
-        response_type: "code",
-        scope: INSTAGRAM_OAUTH_SCOPES.join(","),
+      return buildFacebookDialogUrl({
+        clientId: config.clientId,
+        callbackUrl,
+        scopes: INSTAGRAM_OAUTH_SCOPES,
         state,
+        version: config.version,
       })
-      return `https://www.facebook.com/${config.version}/dialog/oauth?${params.toString()}`
     },
     exchangeCode: async ({ code, callbackUrl, credential }) => {
       const config = credential as InstagramConfig
       const accessToken = await exchangeCodeForToken(config, code, callbackUrl)
-      return {
-        authType: AuthType.oauth2,
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        redirectUrl: "",
-        version: config.version,
-        tokens: { accessToken },
-      }
+      return oauth2Auth(config, callbackUrl, { accessToken })
     },
     listCandidates: async ({ auth }) => {
-      if (auth.authType !== AuthType.oauth2) {
+      if (auth.authType !== "oauth2") {
         return []
       }
 
@@ -91,21 +85,18 @@ const config: IntegrationDefinition<
       return accounts.map((account) => ({
         sourceId: account.id,
         displayName: account.name,
-        auth: {
-          authType: AuthType.oauth2,
-          clientId: auth.clientId,
-          clientSecret: auth.clientSecret,
-          redirectUrl: "",
-          version,
-          tokens: { accessToken: account.pageAccessToken },
-          metadata: {
+        auth: oauth2Auth(
+          auth,
+          auth.redirectUrl,
+          { accessToken: account.pageAccessToken },
+          {
             igId: account.id,
             igName: account.name,
             pageId: account.pageId,
             version,
             username: account.username,
           },
-        } satisfies InstagramAuthValue,
+        ) satisfies InstagramAuthValue,
       }))
     },
     candidateToConfig: (auth) => ({
@@ -116,7 +107,11 @@ const config: IntegrationDefinition<
       sourceId: auth.metadata.igId,
       displayName: auth.metadata.igName,
     }),
-    verify: verifyMetaToken("Instagram"),
+    verify: verifyGraphToken<InstagramAuthValue>({
+      label: "Instagram",
+      debugToken,
+      isRevoked: isRevokedTokenError,
+    }),
     isRevokedTokenError,
     webhook: {
       subscribe: ({ auth }) =>

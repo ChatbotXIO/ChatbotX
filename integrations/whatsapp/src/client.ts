@@ -1,4 +1,3 @@
-import type { Context } from "@chatbotx.io/sdk"
 import { WhatsAppAPI } from "whatsapp-api-js"
 import type {
   WhatsappPhoneNumber,
@@ -22,9 +21,9 @@ export const getWhatsappClient = (auth: WhatsappAuthValue) =>
  * @returns string phoneNumberId
  */
 export const verifyAccessToken = (
-  ctx: Context<WhatsappAuthValue>,
+  auth: WhatsappAuthValue,
 ): Promise<WhatsappPhoneNumber> => {
-  const client = getWhatsappClient(ctx.auth)
+  const client = getWhatsappClient(auth)
 
   /**
    * Sample response
@@ -45,7 +44,7 @@ export const verifyAccessToken = (
    */
   return rescue(async () => {
     const res = await client.$$apiFetch$$(
-      `${API_URL}/${DEFAULT_API_VERSION}/${ctx.auth.metadata.wabaId}/phone_numbers`,
+      `${API_URL}/${DEFAULT_API_VERSION}/${auth.metadata.wabaId}/phone_numbers`,
     )
     if (!res.ok) {
       throw new WhatsappException("Access token is not valid")

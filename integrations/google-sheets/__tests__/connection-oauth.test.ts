@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { expectStateVerbatim, oauthCredential } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   generateAuthUrl: vi.fn(),
   getClient: vi.fn(),
   getToken: vi.fn(),
+  getTokenInfo: vi.fn(),
 }))
 
 vi.mock("../src/client", () => ({
@@ -14,18 +16,16 @@ vi.mock("../src/client", () => ({
 
 // Import after mocks so the integration captures the mocked OAuth client.
 const { integration } = await import("../src/integration")
+const { callbackHandler } = await import("../src/handlers/callback")
 
-const credential = {
-  clientId: "client-1",
-  clientSecret: "secret-1",
-  redirectUrl: "",
-}
+const credential = oauthCredential
 
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.getClient.mockReturnValue({
     generateAuthUrl: mocks.generateAuthUrl,
     getToken: mocks.getToken,
+    getTokenInfo: mocks.getTokenInfo,
   })
   mocks.generateAuthUrl.mockImplementation((options: { state?: string }) => {
     const params = new URLSearchParams({ state: options.state ?? "" })
@@ -39,6 +39,10 @@ beforeEach(() => {
       scope: "https://www.googleapis.com/auth/spreadsheets",
     },
   })
+  mocks.getTokenInfo.mockResolvedValue({
+    sub: "google-account-1",
+    email: "owner@example.test",
+  })
 })
 
 describe("Google Sheets connection.authorizeUrl", () => {
@@ -49,9 +53,8 @@ describe("Google Sheets connection.authorizeUrl", () => {
         "https://app.example.test/integrations/google-sheets/callback",
       state: "session-1.abc123",
     })
-    const parsed = new URL(url as string)
+    expectStateVerbatim(url, "session-1.abc123")
 
-    expect(parsed.searchParams.get("state")).toBe("session-1.abc123")
     expect(mocks.getClient).toHaveBeenCalledWith({
       ...credential,
       redirectUrl:
@@ -60,7 +63,11 @@ describe("Google Sheets connection.authorizeUrl", () => {
     expect(mocks.generateAuthUrl).toHaveBeenCalledWith({
       access_type: "offline",
       prompt: "consent",
-      scope: ["https://www.googleapis.com/auth/spreadsheets"],
+      scope: [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "openid",
+        "email",
+      ],
       state: "session-1.abc123",
     })
   })
@@ -81,11 +88,13 @@ describe("Google Sheets connection.exchangeCode", () => {
         "https://app.example.test/integrations/google-sheets/callback",
     })
     expect(mocks.getToken).toHaveBeenCalledWith("auth-code")
+    expect(mocks.getTokenInfo).toHaveBeenCalledWith("access-token")
     expect(auth).toEqual({
       authType: "oauth2",
       clientId: "client-1",
       clientSecret: "secret-1",
-      redirectUrl: "",
+      redirectUrl:
+        "https://app.example.test/integrations/google-sheets/callback",
       tokens: {
         accessToken: "access-token",
         expiresAt: "2026-09-18T15:06:40.000Z",
@@ -93,7 +102,67 @@ describe("Google Sheets connection.exchangeCode", () => {
       },
       metadata: {
         scope: "https://www.googleapis.com/auth/spreadsheets",
+        accountId: "google-account-1",
+        email: "owner@example.test",
       },
+    })
+  })
+
+  test("rejects an exchange without a stable Google account id", async () => {
+    mocks.getTokenInfo.mockResolvedValueOnce({})
+
+    await expect(
+      integration.connection.exchangeCode?.({
+        code: "auth-code",
+        callbackUrl:
+          "https://app.example.test/integrations/google-sheets/callback",
+        credential,
+      }),
+    ).rejects.toThrow("Google Sheets token info has no stable account id")
+  })
+})
+
+describe("Google Sheets connection.describe", () => {
+  test("uses the immutable Google account id as the connection identity", () => {
+    const descriptor = integration.connection.describe({
+      authType: "oauth2",
+      clientId: "client-1",
+      clientSecret: "secret-1",
+      redirectUrl:
+        "https://app.example.test/integrations/google-sheets/callback",
+      tokens: { accessToken: "access-token" },
+      metadata: {
+        accountId: "google-account-1",
+        email: "owner@example.test",
+      },
+    })
+
+    expect(descriptor).toMatchObject({
+      sourceId: "google-account-1",
+      displayName: "owner@example.test",
+    })
+  })
+})
+
+describe("Google Sheets legacy callback", () => {
+  test("handles missing expiry and stores the same stable account identity", async () => {
+    mocks.getToken.mockResolvedValueOnce({
+      tokens: {
+        access_token: "access-token",
+        refresh_token: "refresh-token",
+        scope: "https://www.googleapis.com/auth/spreadsheets",
+      },
+    })
+
+    const auth = await callbackHandler({
+      req: new Request("https://app.example.test/callback?code=auth-code"),
+      config: credential,
+    } as never)
+
+    expect(auth.tokens.expiresAt).toBeUndefined()
+    expect(auth.metadata).toMatchObject({
+      accountId: "google-account-1",
+      email: "owner@example.test",
     })
   })
 })

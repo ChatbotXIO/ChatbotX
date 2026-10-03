@@ -26,7 +26,7 @@ const tags = ["Channels"]
 
 // `create`/`update` accept `customCss` with no extra permission check, unlike
 // the private `updateWebchatAction`'s `superAdmin` gate — intentional, see
-// the security note in `../lib/widget-css.tsx` and the Channels scope
+// the security note in `../lib/widget-css.tsx` and the Connections scope
 // section of `docs/developer/workspace-api-tokens.md`: minting any workspace
 // token already requires superAdmin, so there is no lower-privileged caller
 // left to gate against.

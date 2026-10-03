@@ -21,8 +21,8 @@ const errorResponse = (code: number) => ({
   Context: null,
 })
 
-const connection = integration.connection
-if (!connection?.fromCredentials) {
+const fromCredentials = integration.connection?.fromCredentials
+if (!fromCredentials) {
   throw new Error("moosend integration has no connection.fromCredentials")
 }
 
@@ -37,7 +37,7 @@ describe("moosend connection.fromCredentials", () => {
       vi.fn(async () => Response.json(listResponse())),
     )
 
-    const auth = await connection.fromCredentials?.({ apiKey: " key " })
+    const auth = await fromCredentials({ apiKey: " key " })
 
     expect(auth).toMatchObject({ authType: "custom", apiKey: "key" })
   })
@@ -48,8 +48,9 @@ describe("moosend connection.fromCredentials", () => {
       vi.fn(async () => Response.json(errorResponse(1), { status: 401 })),
     )
 
-    await expect(
-      connection.fromCredentials?.({ apiKey: "bad-key" }),
-    ).rejects.toBeTruthy()
+    await expect(fromCredentials({ apiKey: "bad-key" })).rejects.toMatchObject({
+      kind: "invalid_credentials",
+      statusCode: 401,
+    })
   })
 })

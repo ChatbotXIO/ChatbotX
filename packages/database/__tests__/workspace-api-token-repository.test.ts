@@ -41,15 +41,29 @@ beforeEach(() => {
 
 describe("workspaceApiTokenRepository.findByTokenHash", () => {
   test("returns the row when a token hash matches", async () => {
-    const findFirst = vi
-      .fn()
-      .mockResolvedValue({ id: "t-1", workspaceId: "ws-1" })
+    const row = { id: "t-1", workspaceId: "ws-1", scopes: null }
+    const findFirst = vi.fn().mockResolvedValue(row)
     const tx = { query: { workspaceApiTokenModel: { findFirst } } } as never
 
     await expect(
       workspaceApiTokenRepository.findByTokenHash("hash-1", tx),
-    ).resolves.toEqual({ id: "t-1", workspaceId: "ws-1" })
+    ).resolves.toEqual(row)
     expect(findFirst).toHaveBeenCalledWith({ where: { tokenHash: "hash-1" } })
+  })
+
+  test("normalizes legacy connection scopes when reading stored rows", async () => {
+    const findFirst = vi.fn().mockResolvedValue({
+      id: "t-1",
+      workspaceId: "ws-1",
+      scopes: ["contacts", "channels", "integrations"],
+    })
+    const tx = { query: { workspaceApiTokenModel: { findFirst } } } as never
+
+    await expect(
+      workspaceApiTokenRepository.findByTokenHash("hash-1", tx),
+    ).resolves.toMatchObject({
+      scopes: ["contacts", "connections"],
+    })
   })
 
   test("returns null when no row matches", async () => {
@@ -64,7 +78,10 @@ describe("workspaceApiTokenRepository.findByTokenHash", () => {
 
 describe("workspaceApiTokenRepository.listByWorkspaceId", () => {
   test("lists tokens ordered by createdAt desc", async () => {
-    const rows = [{ id: "t-2" }, { id: "t-1" }]
+    const rows = [
+      { id: "t-2", scopes: null },
+      { id: "t-1", scopes: null },
+    ]
     const findMany = vi.fn().mockResolvedValue(rows)
     const tx = { query: { workspaceApiTokenModel: { findMany } } } as never
 
@@ -217,7 +234,12 @@ describe("workspaceApiTokenRepository.insert", () => {
 
 describe("workspaceApiTokenRepository.findDefaultByWorkspaceId", () => {
   test("returns the default row when one exists", async () => {
-    const row = { id: "t-1", workspaceId: "ws-1", isDefault: true }
+    const row = {
+      id: "t-1",
+      workspaceId: "ws-1",
+      isDefault: true,
+      scopes: null,
+    }
     const findFirst = vi.fn().mockResolvedValue(row)
     const tx = { query: { workspaceApiTokenModel: { findFirst } } } as never
 

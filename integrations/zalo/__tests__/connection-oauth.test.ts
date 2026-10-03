@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type * as ZaloAuthApi from "../src/api/auth"
 import { integration } from "../src/integration"
+import { expectStateVerbatim } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   convertCodeToTokens: vi.fn(),
@@ -19,7 +20,7 @@ vi.mock("../src/api/auth", async (importOriginal) => {
 const credential = {
   clientId: "app-1",
   clientSecret: "secret-1",
-  redirectUrl: "",
+  redirectUrl: "https://legacy.example.test/callback",
   version: "v4",
 }
 
@@ -31,8 +32,8 @@ describe("Zalo connection.authorizeUrl", () => {
       state: "session-1.abc123",
     })
     const parsed = new URL(url as string)
+    expectStateVerbatim(url, "session-1.abc123")
 
-    expect(parsed.searchParams.get("state")).toBe("session-1.abc123")
     expect(parsed.searchParams.get("app_id")).toBe("app-1")
     expect(parsed.searchParams.get("redirect_uri")).toBe(
       "https://app.example.test/integrations/zalo/callback",

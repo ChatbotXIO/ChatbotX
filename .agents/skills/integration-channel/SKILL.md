@@ -471,10 +471,6 @@ implementation instead of each building its own picker:
   from one browser, so the picker's batch could only connect one account at a
   time. Add a server action only for a form that genuinely needs one (as
   WhatsApp's top-level connect form does), delegating to the same core.
-- **`resolveConnectSession`** (`lib/resolve-connect-session.ts`) — reads the
-  `ConnectSession` row or signup session for both legs (initial provider list
-  fetch and the per-id connect call); returns the same session-error codes
-  the outcome wire type carries.
 - **Client side** — every picker posts through `lib/connect-client.ts`'s
   `connectViaApi` (route from `CONNECT_CHANNEL_REGISTRY[channel].connectRoute`),
   which turns any transport failure into the batch's own `failed`/`unknown`

@@ -1,21 +1,9 @@
 // @vitest-environment node
 
 /**
- * `ConnectSession` cross-workspace isolation and `claimTarget`'s atomic
- * compare-and-set against a real Postgres. Both were previously tested only
- * against mocked repositories (a mock trivially "proves" whatever behavior
- * it's told to return) — this file proves the actual SQL.
- *
- * `findByIdForWorkspace`/`countActiveByWorkspaceId` tests seed their own
- * fixture inside a transaction that is always rolled back, so nothing is
- * left behind. The `claimTarget` concurrency test needs two REAL, separate
- * connections racing the same row — which requires committed (not
- * in-transaction) rows, since a second connection can't see another
- * connection's uncommitted insert — so that one test seeds and cleans up
- * explicitly instead.
- *
- * Skipped unless `DATABASE_URL` points at a reachable database; run it with
- * `pnpm --filter @chatbotx.io/database test:db`.
+ * Real-Postgres coverage for workspace isolation and atomic target claims.
+ * Transactional fixtures roll back; the two-connection race cleans up its
+ * committed fixture explicitly.
  */
 
 import { eq } from "drizzle-orm"
@@ -130,7 +118,7 @@ describe.skipIf(!databaseUrl)(
         expect(found?.id).toBe(session.id)
       }))
 
-    test("findByIdForWorkspace returns undefined when a DIFFERENT workspace's id/workspaceId pair is queried — a leaked/guessed sessionId from workspace B cannot resolve workspace A's session (regression: cross-workspace session isolation)", () =>
+    test("findByIdForWorkspace rejects a session id from another workspace", () =>
       run(async (tx) => {
         const { workspaceId: workspaceA, ownerId: ownerA } =
           await seedWorkspace(tx, "a")
@@ -208,7 +196,7 @@ describe.skipIf(!databaseUrl)(
         expect(row.claimedTargetIds).toEqual(["t1"])
       }))
 
-    test("claimTarget under REAL concurrency: two separate connections racing the same target — exactly one wins (regression: claimTarget was previously tested only against a mocked repository)", async () => {
+    test("claimTarget lets exactly one of two concurrent claims win", async () => {
       const seedClient = new Client({ connectionString: databaseUrl as string })
       await seedClient.connect()
       const seedDb = createDatabase(seedClient)
@@ -287,7 +275,7 @@ describe.skipIf(!databaseUrl)(
       }
     })
 
-    test("appendResults does not let a non-selectable/unknown id's outcome count toward completion or success (regression I4: submitting a real id alongside a junk id used to complete the session before every real selectable target had a result)", () =>
+    test("appendResults does not let a non-selectable/unknown id's outcome count toward completion or success", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
         const session = await seedSession(tx, {
@@ -335,7 +323,7 @@ describe.skipIf(!databaseUrl)(
         expect(completed?.encryptedAuth).toBeNull()
       }))
 
-    test("appendResults does not treat a non-selectable target's duplicated outcome as the success that completes the batch (regression I4)", () =>
+    test("appendResults does not treat a non-selectable target's duplicated outcome as the success that completes the batch", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
         const [session] = await tx
@@ -410,7 +398,7 @@ describe.skipIf(!databaseUrl)(
         expect(result).toBeUndefined()
       }))
 
-    test("updateWhereStatusIn is a no-op on a session outside the given statuses (terminal-session guard backing C3/I5)", () =>
+    test("does not update a session outside the allowed statuses", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
         const session = await seedSession(tx, {
@@ -440,7 +428,7 @@ describe.skipIf(!databaseUrl)(
         expect(row.status).toBe("completed")
       }))
 
-    test("updateWhereActive is a no-op on a session whose status is active but expiresAt is already past (regression I5: a stale-but-not-yet-lazily-expired session must not be revived by attachAuthorization/submitInput/updateReturnUrl)", () =>
+    test("does not update an expired active session when expiration is required", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
         const session = await seedSession(tx, {
@@ -448,19 +436,17 @@ describe.skipIf(!databaseUrl)(
           actorUserId: ownerId,
           stateNonceHash: "iso-hash-active-guard-1",
         })
-        // Simulates a session nobody has read since its TTL lapsed: status
-        // is still the original active value in the DB, only `expiresAt`
-        // is in the past.
         await tx
           .update(schema.connectSessionModel)
           .set({ expiresAt: new Date(Date.now() - 60_000) })
           .where(eq(schema.connectSessionModel.id, session.id))
 
-        const result = await connectSessionRepository.updateWhereActive(
+        const result = await connectSessionRepository.updateWhereStatusIn(
           {
             id: session.id,
             statuses: ["pending", "authorized", "awaiting_selection"],
             values: { status: "awaiting_selection", step: "select" },
+            requireUnexpired: true,
           },
           tx,
         )

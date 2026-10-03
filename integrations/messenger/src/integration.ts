@@ -1,15 +1,17 @@
 import {
-  AuthType,
+  buildFacebookDialogUrl,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  oauth2Auth,
+  verifyGraphToken,
 } from "@chatbotx.io/sdk"
 import {
+  debugToken,
   exchangeCodeForToken,
   getUserPages,
   MESSENGER_SCOPES,
   toAppAccessToken,
-  verifyMetaToken,
 } from "./apis/auth"
 import {
   getCommentAttachment,
@@ -57,23 +59,16 @@ const config: IntegrationDefinition<
     strategy: "oauth_redirect",
     multiAccount: true,
     configFields: [],
-    // Bypasses `generateAuthUrl` deliberately: that helper base64-JSON-
-    // encodes `stateParams` into the `state` query param for the legacy
-    // per-request cookie flow, but the Connection domain's OAuth callback
-    // hub matches `state` against a raw `"{sessionId}.{nonce}"` string —
-    // wrapping it in JSON here would make every session-based Messenger
-    // connect silently fall through to the legacy branch.
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as MessengerConfig
-      const params = new URLSearchParams({
-        auth_type: "rerequest",
-        client_id: config.clientId,
-        redirect_uri: callbackUrl,
-        scope: MESSENGER_SCOPES.join(","),
-        response_type: "code",
+      return buildFacebookDialogUrl({
+        authType: "rerequest",
+        clientId: config.clientId,
+        callbackUrl,
+        scopes: MESSENGER_SCOPES,
         state,
+        version: config.version,
       })
-      return `https://www.facebook.com/${config.version}/dialog/oauth?${params.toString()}`
     },
     // Returns a *user*-level `AuthValue` (SDK-generalized, not `MessengerAuthValue`
     // — the exchanged token isn't tied to a page yet, so it can't carry
@@ -98,18 +93,9 @@ const config: IntegrationDefinition<
         )
         return shortLivedToken
       })
-      return {
-        authType: AuthType.oauth2,
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        // The real callback URL `authorizeUrl` sent as `redirect_uri` —
-        // `oauth2AuthSchema.redirectUrl` is `min(1)`; a hardcoded `""` here
-        // fails the first generic validator that parses this value (Google
-        // Calendar's `.extend()` pattern already does).
-        redirectUrl: callbackUrl,
-        version: config.version,
-        tokens: { accessToken: longLivedToken },
-      }
+      return oauth2Auth(config, callbackUrl, {
+        accessToken: longLivedToken,
+      })
     },
     // One Graph call, no cache — provider lists already carry each page's
     // own access token (`getUserPages`), so no per-candidate follow-up call
@@ -125,33 +111,23 @@ const config: IntegrationDefinition<
         .map((page) => ({
           sourceId: page.id,
           displayName: page.name,
-          auth: {
-            authType: AuthType.oauth2,
-            clientId: auth.clientId,
-            clientSecret: auth.clientSecret,
-            redirectUrl: auth.redirectUrl,
-            version,
-            tokens: { accessToken: page.access_token as string },
-            metadata: { pageId: page.id, pageName: page.name, version },
-          } satisfies MessengerAuthValue,
+          auth: oauth2Auth(
+            auth,
+            auth.redirectUrl,
+            { accessToken: page.access_token as string },
+            { pageId: page.id, pageName: page.name, version },
+          ) satisfies MessengerAuthValue,
         }))
     },
     describe: (auth) => ({
-      // Candidate-level auth (initial connect, from `listCandidates`
-      // above) always carries `metadata.pageId`/`pageName`. On RECONNECT,
-      // `completeReconnect` (`connect-session-flow.ts`) calls `describe`
-      // directly on the raw OAuth-exchanged `auth` — a *user*-level token
-      // with no `metadata` yet, since a page hasn't been (re-)selected
-      // (see `ConnectionProvider.exchangeCode`'s doc comment in
-      // `@chatbotx.io/sdk`, which documents `describe` as never receiving
-      // that value for a multi-page provider — reconnect bypasses
-      // `listCandidates` and violates that contract). Falling back here
-      // turns a reconnect into a clean identity mismatch instead of an
-      // unhandled TypeError.
       sourceId: auth.metadata?.pageId ?? "unknown_page",
       displayName: auth.metadata?.pageName ?? "Messenger",
     }),
-    verify: verifyMetaToken("Messenger"),
+    verify: verifyGraphToken<MessengerAuthValue>({
+      label: "Messenger",
+      debugToken,
+      isRevoked: isRevokedTokenError,
+    }),
     isRevokedTokenError,
     webhook: {
       subscribe: ({ auth }) =>

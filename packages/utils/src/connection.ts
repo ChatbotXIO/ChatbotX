@@ -28,20 +28,7 @@ export const INACTIVE_CONNECTION_STATUSES = [
   "paused",
   "disconnected",
 ] as const satisfies readonly ConnectionStatus[]
-/**
- * Compile-time exhaustiveness check: fails to type-check if a future
- * `ConnectionStatus` literal is added to the enum above without also being
- * placed into exactly one of `ACTIVE_CONNECTION_STATUSES`/
- * `INACTIVE_CONNECTION_STATUSES`. Relies on both arrays being declared
- * `as const satisfies readonly ConnectionStatus[]` (preserves their literal
- * tuple type while still checking every entry is a valid status) rather
- * than widened to `readonly ConnectionStatus[]`, which would make this
- * vacuously pass. The assertion must be a `const` assignment, not a bare
- * unused type alias — a type alias that resolves to `never` is NOT itself
- * a compile error in TypeScript, so only forcing `true` to be assignable
- * to the resolved type actually catches a missing status. Never read at
- * runtime.
- */
+/** Fails to type-check when a status is omitted from either partition. */
 type AssertEqual<A, B> = [A] extends [B]
   ? [B] extends [A]
     ? true
@@ -103,6 +90,28 @@ export const connectionKinds = z.enum([
   "sub_connection",
 ])
 export type ConnectionKind = z.infer<typeof connectionKinds>
+
+export const connectionConfigFieldSchema = z.object({
+  name: z.string(),
+  type: z.enum(["string", "secret", "number", "boolean", "enum", "url"]),
+  required: z.boolean(),
+  labelKey: z.string(),
+  enumValues: z.array(z.string()).optional(),
+  description: z.string().optional(),
+})
+export type ConnectionConfigField = z.infer<typeof connectionConfigFieldSchema>
+
+export const connectSessionNextActionSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("open_url"), url: z.string() }),
+  z.object({
+    type: z.literal("enter_input"),
+    inputFields: z.array(connectionConfigFieldSchema),
+  }),
+  z.object({ type: z.literal("wait") }),
+])
+export type ConnectSessionNextAction = z.infer<
+  typeof connectSessionNextActionSchema
+>
 
 /** `ConnectSession.purpose` — set server-side, never accepted from client input. */
 export const connectSessionPurposes = z.enum([

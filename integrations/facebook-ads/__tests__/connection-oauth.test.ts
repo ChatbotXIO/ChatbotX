@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { expectStateVerbatim, facebookOauthCredential } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
@@ -21,11 +22,7 @@ if (!connection) {
   throw new Error("Facebook Ads connection provider is not configured")
 }
 
-const credential = {
-  clientId: "client-1",
-  clientSecret: "secret-1",
-  version: "v23.0",
-}
+const credential = facebookOauthCredential
 
 describe("Facebook Ads connection.authorizeUrl", () => {
   test("passes state through verbatim, not JSON/base64-wrapped", () => {
@@ -36,8 +33,8 @@ describe("Facebook Ads connection.authorizeUrl", () => {
       state: "session-1.abc123",
     })
     const parsed = new URL(url as string)
+    expectStateVerbatim(url, "session-1.abc123")
 
-    expect(parsed.searchParams.get("state")).toBe("session-1.abc123")
     expect(parsed.searchParams.get("client_id")).toBe("client-1")
     expect(parsed.searchParams.get("redirect_uri")).toBe(
       "https://app.example.test/integrations/facebook-ads/callback",

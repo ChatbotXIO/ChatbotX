@@ -1,7 +1,9 @@
 import {
   AuthType,
+  buildFacebookDialogUrl,
   Integration,
   type IntegrationDefinition,
+  probeVerify,
   SdkException,
 } from "@chatbotx.io/sdk"
 import {
@@ -53,20 +55,15 @@ const config: IntegrationDefinition<
     strategy: "oauth_redirect",
     multiAccount: false,
     configFields: [],
-    // Bypasses `generateAdsAuthUrl` deliberately: that legacy helper
-    // base64-JSON-encodes state for its cookie flow, while the Connection
-    // domain callback hub matches the raw `"{sessionId}.{nonce}"` string.
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as FacebookAdsConfig
-      const params = new URLSearchParams({
-        client_id: config.clientId,
-        redirect_uri: callbackUrl,
-        scope: FACEBOOK_ADS_SCOPES.join(","),
-        response_type: "code",
+      return buildFacebookDialogUrl({
+        clientId: config.clientId,
+        callbackUrl,
+        scopes: FACEBOOK_ADS_SCOPES,
         state,
+        version: config.version ?? DEFAULT_API_VERSION,
       })
-      const version = config.version ?? DEFAULT_API_VERSION
-      return `https://www.facebook.com/${version}/dialog/oauth?${params.toString()}`
     },
     exchangeCode: async ({ code, callbackUrl, credential }) => {
       const config = credential as FacebookAdsConfig
@@ -94,10 +91,12 @@ const config: IntegrationDefinition<
       displayName: "Facebook Ads",
       authExpiresAt: auth.expiresAt,
     }),
-    verify: async ({ auth }) => {
-      await getAdAccounts(auth.accessToken, auth.version)
-      return { ok: true, authExpiresAt: auth.expiresAt }
-    },
+    verify: async ({ auth }) =>
+      await probeVerify(() => getAdAccounts(auth.accessToken, auth.version), {
+        label: "Facebook Ads credentials",
+        expiresAt: auth.expiresAt,
+        isRevoked: (error) => getGraphErrorCode(error) === 190,
+      }),
     isRevokedTokenError: (error) => getGraphErrorCode(error) === 190,
   },
   actions: {

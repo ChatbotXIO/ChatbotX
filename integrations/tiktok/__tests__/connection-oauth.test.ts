@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { expectStateVerbatim, oauthCredential } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
@@ -23,11 +24,7 @@ vi.mock("../src/apis/user", async (importOriginal) => {
 
 const { integration } = await import("../src/integration")
 
-const credential = {
-  clientId: "client-1",
-  clientSecret: "secret-1",
-  redirectUrl: "",
-}
+const credential = oauthCredential
 
 describe("TikTok connection.authorizeUrl", () => {
   test("passes state through verbatim, not JSON/base64-wrapped", () => {
@@ -37,8 +34,8 @@ describe("TikTok connection.authorizeUrl", () => {
       state: "session-1.abc123",
     })
     const parsed = new URL(url as string)
+    expectStateVerbatim(url, "session-1.abc123")
 
-    expect(parsed.searchParams.get("state")).toBe("session-1.abc123")
     expect(parsed.searchParams.get("client_key")).toBe("client-1")
     expect(parsed.searchParams.get("redirect_uri")).toBe(
       "https://app.example.test/integrations/tiktok/callback",
@@ -96,7 +93,7 @@ describe("TikTok connection.exchangeCode", () => {
       authType: "oauth2",
       clientId: "client-1",
       clientSecret: "secret-1",
-      redirectUrl: "",
+      redirectUrl: "https://app.example.test/callback",
       tokens: {
         accessToken: "access-token",
         refreshToken: "refresh-token",
