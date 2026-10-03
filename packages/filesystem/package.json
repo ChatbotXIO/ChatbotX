@@ -19,7 +19,7 @@
     "@t3-oss/env-core": "^0.13.11",
     "aws4fetch": "^1.0.20",
     "image-size": "^2.0.3",
-    "probe-image-size": "^7.2.3",
+    "probe-image-size": "^7.4.0",
     "zod": "^4.3.6"
   },
   "exports": {
