@@ -49055,6 +49055,62 @@
       "table": "ConnectSession"
     },
     {
+      "value": "\"status\" IN ('pending', 'authorized', 'awaiting_selection', 'completed', 'failed', 'expired', 'cancelled')",
+      "name": "ConnectSession_status_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ConnectSession"
+    },
+    {
+      "value": "\"purpose\" IN ('connect', 'reconnect', 'facebook_ads', 'messaging_ads', 'lead_ads', 'meta_catalog')",
+      "name": "ConnectSession_purpose_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ConnectSession"
+    },
+    {
+      "value": "\"errorCode\" IN ('state_mismatch', 'expired', 'provider_denied', 'exchange_failed', 'provider_error', 'no_candidates', 'already_connected', 'quota_exceeded', 'trial_expired', 'internal_error')",
+      "name": "ConnectSession_errorCode_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ConnectSession"
+    },
+    {
+      "value": "(\n        (\"kind\" = 'channel' AND \"inboxId\" IS NOT NULL AND \"channel\" IS NOT NULL)\n        OR\n        (\"kind\" = 'integration' AND \"inboxId\" IS NULL AND \"channel\" IS NULL)\n        OR\n        \"kind\" = 'sub_connection'\n      )",
+      "name": "Connection_kind_relation_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "Connection"
+    },
+    {
+      "value": "NOT (\"inboxId\" IS NOT NULL AND \"integrationId\" IS NOT NULL)",
+      "name": "Connection_inbox_integration_exclusive_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "Connection"
+    },
+    {
+      "value": "\"kind\" IN ('channel', 'integration', 'sub_connection')",
+      "name": "Connection_kind_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "Connection"
+    },
+    {
+      "value": "\"status\" IN ('connected', 'degraded', 'needs_reauth', 'paused', 'disconnected')",
+      "name": "Connection_status_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "Connection"
+    },
+    {
+      "value": "\"statusReason\" IN ('manual', 'workspace_purge', 'trial_expired', 'tenant_suspended', 'token_revoked', 'provider_revoked', 'refresh_failed', 'verify_failed', 'quota_exceeded', 'orphaned_webhook')",
+      "name": "Connection_statusReason_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "Connection"
+    },
+    {
       "value": "(\"registrationStatus\" <> 'failed' OR \"registrationError\" IS NOT NULL)\n      AND (\"registrationStatus\" <> 'registered' OR \"registrationError\" IS NULL)",
       "name": "IntegrationWhatsapp_registrationStatus_error_consistent",
       "entityType": "checks",
