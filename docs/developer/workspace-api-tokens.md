@@ -502,6 +502,13 @@ an endpoint's scope.
   settings, call hours, call-permission requests, WhatsApp Flows list/screens
   and sending a template into a conversation.
 
+- **Sequences** — `sequences.list` filters by `name`, `folderId` and `active`
+  and accepts `sort`; `sequences.update` accepts `folderId` (null = no
+  folder). A `folderId` on create or update must be a `sequence` folder of the
+  workspace, and a folder's parent must belong to the same workspace and folder
+  type (`folderService.create` no longer resolves a parent by id alone).
+  Managing sequence folders themselves is not exposed on the public API yet.
+
 - **Imports** — a token can run a whole import without the browser's session
   upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
   `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file

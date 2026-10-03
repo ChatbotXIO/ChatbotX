@@ -59,6 +59,11 @@ export const updateSequenceSchema = z
   .object({
     name: z.string().trim().min(1).max(255).describe("New sequence name."),
     active: z.boolean().describe("Whether the sequence is active."),
+    folderId: zodBigintAsString()
+      .nullable()
+      .describe(
+        "Move the sequence to this sequence folder, or null for no folder.",
+      ),
   })
   .partial()
 export type UpdateSequenceSchema = z.infer<typeof updateSequenceSchema>

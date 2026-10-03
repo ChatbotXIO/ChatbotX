@@ -9,7 +9,6 @@ import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   createSequenceRequest,
@@ -18,6 +17,7 @@ import {
   updateSequenceSchema,
 } from "../schema/action"
 import {
+  listSequencesPublicRequest,
   publicListSequenceStepContactsRequest,
   publicListSequenceStepContactsResponse,
 } from "../schema/public"
@@ -32,17 +32,18 @@ export const sequencesPublicRouter = {
       path: "/v1/sequences",
       summary: "List sequences",
       description:
-        "Use this to find sequence ids before inspecting steps with `sequences.get` or subscribing contacts with `contacts.subscribeSequences`. Returns sequences available in the workspace.",
+        "Use this to find sequence ids before inspecting steps with `sequences.get` or subscribing contacts with `contacts.subscribeSequences`. Returns sequences available in the workspace; filter by `name`, `folderId` or `active`, sort with `sort`.",
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(publicListRequest)
+    .input(listSequencesPublicRequest)
     .output(listSequencesResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await sequenceService.list({
           ...input,
+          sort: input.sort ?? [{ id: "createdAt", desc: true }],
           workspaceId: context.workspace.id,
         }),
     ),
