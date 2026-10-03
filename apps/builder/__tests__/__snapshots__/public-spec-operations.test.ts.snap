@@ -894,6 +894,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contacts.resolveFilterValueLabels",
+    "path": "/v1/contacts/filter-value-labels",
+  },
+  {
+    "method": "POST",
     "operationId": "contacts.search",
     "path": "/v1/contacts/search",
   },

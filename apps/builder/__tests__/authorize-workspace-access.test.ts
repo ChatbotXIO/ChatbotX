@@ -176,6 +176,15 @@ describe("isReadOnlyTokenAllowedMethod", () => {
     ).toBe(true)
   })
 
+  test("allows POST to the public filter value-labels read, and not its PUT", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", "/v1/contacts/filter-value-labels"),
+    ).toBe(true)
+    expect(
+      isReadOnlyTokenAllowedMethod("PUT", "/v1/contacts/filter-value-labels"),
+    ).toBe(false)
+  })
+
   test("rejects POST/PUT/PATCH to every other path", () => {
     expect(isReadOnlyTokenAllowedMethod("POST", "/v1/ads/campaigns")).toBe(
       false,

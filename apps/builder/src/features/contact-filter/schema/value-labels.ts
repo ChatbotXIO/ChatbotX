@@ -49,3 +49,21 @@ export const resolveFilterValueLabelsResponse = z.object({
 export type ResolveFilterValueLabelsResponse = z.infer<
   typeof resolveFilterValueLabelsResponse
 >
+
+/**
+ * Public twin: the same lookup without the people-name types (`members`,
+ * `inboxTeams`), which a contacts-scoped token has no other way to read.
+ */
+export const resolveFilterValueLabelsPublicRequest =
+  resolveFilterValueLabelsRequest
+    .omit({ workspaceId: true, members: true, inboxTeams: true })
+    .extend({
+      tags: filterValueIdsSchema.describe("Tag ids from a `tag` condition."),
+      sequences: filterValueIdsSchema.describe("Sequence ids."),
+      broadcasts: filterValueIdsSchema.describe("Broadcast ids."),
+      reflinks: filterValueIdsSchema.describe("Ref link ids."),
+      inboxes: filterValueIdsSchema.describe("Inbox (channel) ids."),
+    })
+
+export const resolveFilterValueLabelsPublicResponse =
+  resolveFilterValueLabelsResponse.omit({ members: true, inboxTeams: true })

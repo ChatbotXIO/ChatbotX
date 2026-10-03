@@ -54,6 +54,22 @@ describe("exportContactsRequest schema", () => {
     expect(result.success).toBe(false)
   })
 
+  test("rejects a field key without a sys:/cus:/tag: prefix", () => {
+    const result = exportContactsRequest.safeParse({
+      fields: ["sys:email", "123"],
+      exportAll: true,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("accepts custom-field and tag keys", () => {
+    const result = exportContactsRequest.safeParse({
+      fields: ["cus:123", "tag:9", "sys:sourceUserId"],
+      exportAll: true,
+    })
+    expect(result.success).toBe(true)
+  })
+
   test("rejects an empty fields array", () => {
     const result = exportContactsRequest.safeParse({
       fields: [],

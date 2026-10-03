@@ -649,6 +649,22 @@ feature-level; add the public route in the same PR when you add the action.
 Entries marked `private:no public surface yet` are not yet audited, not
 approved as UI-only.
 
+## Contact reads and exports (W6 notes)
+
+- `contacts.list`/`contacts.get` return `avatar` as a resolved URL (same as the
+  builder), never the stored key.
+- `contacts.export` `fields` need a kind prefix: `sys:<column>` (firstName,
+  lastName, fullName, email, phoneNumber, gender, source, lastReadAt,
+  blockedAt, contactId, sourceUserId = WhatsApp BSUID), `cus:<customFieldId>`,
+  `tag:<tagId>`. A key without a prefix is rejected (422).
+- `POST /v1/contacts/filter-value-labels` is a pure read (id lists too large
+  for a query string) that names the tag/sequence/broadcast/ref-link/inbox ids
+  a `contactFilter` references; it is allow-listed for `read_only` tokens and
+  trial-expired workspaces. Member and team names are intentionally excluded.
+- BSUID and WhatsApp username are on the contact-inbox resource
+  (`sourceUserId`, `sourceUsername`); a BSUID-only contact is keyed by it in
+  `sourceId`.
+
 ## Useful tests
 
 - `apps/builder/__tests__/workspace-token-auth-middleware.test.ts`
