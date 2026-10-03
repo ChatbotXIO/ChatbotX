@@ -171,7 +171,7 @@ describe("WhatsApp calling routes", () => {
         },
       }),
     ).rejects.toMatchObject({
-      message: "At least one day needs an open range.",
+      message: expect.stringContaining("At least one day needs an open range."),
       httpStatusCode: 422,
     })
     expect(mocks.updateHours).not.toHaveBeenCalled()

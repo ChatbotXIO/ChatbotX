@@ -4,6 +4,7 @@ import {
   whatsappFlowService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
+import { ModelNotfoundException } from "@chatbotx.io/database/errors"
 import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { integrations } from "@/integration"
@@ -55,8 +56,10 @@ export async function getWhatsappFlowScreens(props: {
   // A missing Flow and a Flow of another workspace must read identically.
   const flow = await whatsappFlowService
     .findByIdUnscoped(props.flowId)
-    .catch(() => {
-      throw notFoundException(FLOW_NOT_FOUND)
+    .catch((error: unknown) => {
+      throw error instanceof ModelNotfoundException
+        ? notFoundException(FLOW_NOT_FOUND)
+        : error
     })
   const integrationWhatsapp =
     await integrationWhatsappService.findByIdForWorkspace({

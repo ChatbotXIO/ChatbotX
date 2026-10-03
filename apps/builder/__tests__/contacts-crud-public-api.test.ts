@@ -172,7 +172,9 @@ describe("GET /v1/contacts", () => {
       },
     })
 
-    expect(resolveAvatars).toHaveBeenCalledWith([], "workspace-1")
+    expect(resolveAvatars).toHaveBeenCalledWith([], "workspace-1", {
+      publicUrls: true,
+    })
     expect(listContacts).toHaveBeenCalledWith({
       page: 1,
       perPage: 20,
@@ -247,6 +249,7 @@ describe("GET /v1/contacts/{identifier}", () => {
     expect(resolveAvatars).toHaveBeenCalledWith(
       [{ id: "contact-1", avatar: "ws/avatar.jpg" }],
       "workspace-1",
+      { publicUrls: true },
     )
     expect(result.avatar).toBe("https://app.test/media/ws/avatar.jpg")
   })

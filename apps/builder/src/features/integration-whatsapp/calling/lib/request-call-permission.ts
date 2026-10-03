@@ -13,6 +13,7 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { invalidateCacheKeys } from "@chatbotx.io/redis"
 import type { MessageWhatsappCallPermissionRequestEntity } from "@chatbotx.io/sdk"
+import { logger } from "@/lib/log"
 import { resolveDialIdentity } from "../actions/outbound-dial-target"
 import {
   canSendCallPermissionRequest,
@@ -120,9 +121,16 @@ export async function requestWhatsappCallPermission(props: {
     user: props.user,
   })
 
-  // The cached Meta counter now undercounts by this request; drop it so a rapid
-  // second call re-reads Meta instead of passing the limit check on stale data.
-  await invalidateCacheKeys(
-    metaCallPermissionCacheKey(integration.id, contactInbox.id),
-  )
+  // Best effort: drop the cached Meta counter so the next call re-reads Meta.
+  // The send is already queued, so a cache failure must not fail the request.
+  try {
+    await invalidateCacheKeys(
+      metaCallPermissionCacheKey(integration.id, contactInbox.id),
+    )
+  } catch (error) {
+    logger.warn(
+      { err: error, integrationId: integration.id },
+      "Could not invalidate the call-permission cache",
+    )
+  }
 }

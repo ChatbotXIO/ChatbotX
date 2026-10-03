@@ -33,6 +33,9 @@ export type CallingMessages = {
   savedOnMetaOnly: string
 }
 
+/** Meta (or the local mirror after Meta accepted) failed: a retryable 502, not a 4xx. */
+export const WHATSAPP_CALLING_UPSTREAM_CODE = "whatsappCallingUpstream"
+
 export const ENGLISH_CALLING_MESSAGES: CallingMessages = {
   notFound: "WhatsApp channel not found",
   transcriptionRequiresRecording:
@@ -174,7 +177,11 @@ export async function updateWhatsappCallingSettings(props: {
       { err: error, workspaceId, integrationWhatsappId },
       "Whatsapp calling: Meta accepted the settings but the local mirror write failed",
     )
-    throw new ChatbotXException(messages.savedOnMetaOnly)
+    throw new ChatbotXException(
+      messages.savedOnMetaOnly,
+      WHATSAPP_CALLING_UPSTREAM_CODE,
+      502,
+    )
   }
   // The inbox reads these settings through a cache.
   await invalidateCallingSettingsCache(integrationWhatsappId)
@@ -209,7 +216,11 @@ export async function updateWhatsappCallHours(props: {
   try {
     current = await getCallingSettings(auth)
   } catch {
-    throw new ChatbotXException(messages.updateFailed)
+    throw new ChatbotXException(
+      messages.updateFailed,
+      WHATSAPP_CALLING_UPSTREAM_CODE,
+      502,
+    )
   }
   const callHours = toMetaCallHours(
     parsedInput,
@@ -240,7 +251,11 @@ export async function updateWhatsappCallHours(props: {
       { err: error, workspaceId, integrationWhatsappId },
       "Whatsapp calling: Meta accepted the call hours but the local mirror write failed",
     )
-    throw new ChatbotXException(messages.savedOnMetaOnly)
+    throw new ChatbotXException(
+      messages.savedOnMetaOnly,
+      WHATSAPP_CALLING_UPSTREAM_CODE,
+      502,
+    )
   }
   await invalidateCallingSettingsCache(integrationWhatsappId)
 }

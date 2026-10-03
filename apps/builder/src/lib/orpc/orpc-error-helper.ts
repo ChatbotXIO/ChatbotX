@@ -152,6 +152,17 @@ export const possibleErrorsOnMutatingResource = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** WhatsApp calling settings/hours: Meta or the local mirror failing is a 502. */
+export const possibleErrorsOnUpdatingWhatsappCalling = {
+  notFound,
+  businessError,
+  whatsappCallingUpstream: {
+    message: "Meta did not apply the calling change. Try again.",
+    status: 502,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 /** Meta Catalog select/sync: a second run while one is active is a 409. */
 export const possibleErrorsOnStartingMetaCatalogRun = {
   notFound,

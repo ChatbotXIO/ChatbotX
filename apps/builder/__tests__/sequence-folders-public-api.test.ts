@@ -74,7 +74,7 @@ describe("sequence folder routes", () => {
     expect(mocks.list).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       folderType: "sequence",
-      parentId: null,
+      parentId: "0",
     })
 
     mocks.create.mockResolvedValue({ id: "5" })

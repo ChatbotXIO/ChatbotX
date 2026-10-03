@@ -12,8 +12,7 @@ export const sequenceFolderIdParam = z.object({
 })
 
 export const listSequenceFoldersPublicRequest = z.object({
-  parentId: z
-    .string()
+  parentId: zodBigintAsString()
     .optional()
     .describe(
       "Restrict to sub-folders of this parent. Omit for top-level folders.",
@@ -22,8 +21,7 @@ export const listSequenceFoldersPublicRequest = z.object({
 
 export const createSequenceFolderPublicRequest = z.object({
   name: createFolderSchema.shape.name.describe("Folder name."),
-  parentId: z
-    .string()
+  parentId: zodBigintAsString()
     .nullable()
     .optional()
     .describe("Parent folder id, or null/omit for a top-level folder."),

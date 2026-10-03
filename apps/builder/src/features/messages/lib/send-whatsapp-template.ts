@@ -1,5 +1,8 @@
-import { conversationService } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { contactInboxService, conversationService } from "@chatbotx.io/business"
+import {
+  ChatbotXException,
+  notFoundException,
+} from "@chatbotx.io/business/errors"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import type { SendWhatsappTemplateRequest } from "../schema/send-template"
 
@@ -21,12 +24,15 @@ export async function sendWhatsappTemplateToConversation(props: {
     where: { id: conversationId, workspaceId },
   })
 
-  const contactInbox =
-    await conversationService.resolveContactInboxForConversation({
-      conversation,
-      workspaceId,
-      inboxId: request.inboxId,
-    })
+  // Without an explicit `inboxId`, the most recent WhatsApp inbox of the
+  // contact (not the most recent inbox of any channel).
+  const contactInbox = request.inboxId
+    ? await conversationService.resolveContactInboxForConversation({
+        conversation,
+        workspaceId,
+        inboxId: request.inboxId,
+      })
+    : await findRecentWhatsappContactInbox(workspaceId, conversation.contactId)
 
   // The worker silently drops a send on any other channel, so refuse it here
   // rather than answer 202 for a message that will never go out.
@@ -43,4 +49,25 @@ export async function sendWhatsappTemplateToConversation(props: {
       templateData: request.templateData,
     },
   })
+}
+
+async function findRecentWhatsappContactInbox(
+  workspaceId: string,
+  contactId: string,
+) {
+  const contactInboxes = await contactInboxService.listByContactId({
+    workspaceId,
+    contactId,
+  })
+  const recent = contactInboxes
+    .filter((contactInbox) => contactInbox.channel === "whatsapp")
+    .sort(
+      (a, b) =>
+        new Date(b.lastMessageAt ?? 0).getTime() -
+        new Date(a.lastMessageAt ?? 0).getTime(),
+    )[0]
+  if (!recent) {
+    throw notFoundException("Inbox not found")
+  }
+  return recent
 }

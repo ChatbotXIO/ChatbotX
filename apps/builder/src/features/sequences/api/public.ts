@@ -277,7 +277,7 @@ export const sequencesPublicRouter = {
       data: await folderService.list({
         workspaceId: context.workspace.id,
         folderType: folderTypes.enum.sequence,
-        parentId: input.parentId ?? null,
+        parentId: input.parentId ?? rootFolderId,
       }),
     })),
 

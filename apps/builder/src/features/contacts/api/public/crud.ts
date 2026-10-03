@@ -69,7 +69,9 @@ export const contactsCrudPublicRouter = {
       // sentinel becomes a usable URL.
       return {
         ...result,
-        data: await resolveContactAvatars(result.data, context.workspace.id),
+        data: await resolveContactAvatars(result.data, context.workspace.id, {
+          publicUrls: true,
+        }),
       }
     }),
 
@@ -102,7 +104,9 @@ export const contactsCrudPublicRouter = {
       // sentinel becomes a usable URL.
       return {
         ...result,
-        data: await resolveContactAvatars(result.data, context.workspace.id),
+        data: await resolveContactAvatars(result.data, context.workspace.id, {
+          publicUrls: true,
+        }),
       }
     }),
 
@@ -156,6 +160,7 @@ export const contactsCrudPublicRouter = {
       const [resolved] = await resolveContactAvatars(
         [contact],
         context.workspace.id,
+        { publicUrls: true },
       )
       return resolved
     }),

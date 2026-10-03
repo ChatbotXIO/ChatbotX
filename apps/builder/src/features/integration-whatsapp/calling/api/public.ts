@@ -7,7 +7,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   possibleErrorsOnFindingResource,
-  possibleErrorsOnMutatingResource,
+  possibleErrorsOnUpdatingWhatsappCalling,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
@@ -105,8 +105,16 @@ const CALL_HOURS_MESSAGES: Record<CallHoursIssue, string> = {
   noOpenHours: "At least one day needs an open range.",
 }
 
-const callHoursIssueMessage = (code: string | undefined): string =>
-  CALL_HOURS_MESSAGES[code as CallHoursIssue] ?? "Invalid call hours"
+const callHoursIssueMessage = (
+  issue: { message: string; path: PropertyKey[] } | undefined,
+): string => {
+  if (!issue) {
+    return "Invalid call hours"
+  }
+  const text =
+    CALL_HOURS_MESSAGES[issue.message as CallHoursIssue] ?? issue.message
+  return issue.path.length > 0 ? `${issue.path.join(".")}: ${text}` : text
+}
 
 const findIntegrationOrFail = async (workspaceId: string, id: string) => {
   const integration = await integrationWhatsappService.findWorkspaceIntegration(
@@ -153,7 +161,7 @@ export const whatsappCallingPublicRouter = {
       tags: ["Channels"],
     })
     .input(updateCallingSettingsRequest)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnUpdatingWhatsappCalling)
     .handler(async ({ context, input }) => {
       const { id, ...settings } = input
       await updateWhatsappCallingSettings({
@@ -175,14 +183,14 @@ export const whatsappCallingPublicRouter = {
       tags: ["Channels"],
     })
     .input(updateCallHoursRequest)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnUpdatingWhatsappCalling)
     .handler(async ({ context, input }) => {
       const { id, ...hours } = input
       // Re-validated with the builder's schema (ranges, overlaps, open hours).
       const parsed = callHoursFormSchema.safeParse(hours)
       if (!parsed.success) {
         throw new ChatbotXException(
-          callHoursIssueMessage(parsed.error.issues[0]?.message),
+          callHoursIssueMessage(parsed.error.issues[0]),
           "validation",
           422,
         )
