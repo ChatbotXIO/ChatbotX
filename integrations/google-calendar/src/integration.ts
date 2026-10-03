@@ -4,6 +4,7 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  isGoogleRevokedError,
   probeVerify,
   SdkException,
 } from "@chatbotx.io/sdk"
@@ -16,7 +17,7 @@ import {
   getClient,
   revokeToken,
 } from "./client"
-import { getGaxiosStatus, handleError } from "./error"
+import { handleError } from "./error"
 import { callbackHandler } from "./handlers/callback"
 import type {
   GoogleCalendarActions,
@@ -24,11 +25,6 @@ import type {
   GoogleCalendarConfig,
 } from "./schemas"
 
-const isRevokedTokenError = (error: unknown) =>
-  getGaxiosStatus(error) === 401 ||
-  (getGaxiosStatus(error) === 400 &&
-    error instanceof Error &&
-    error.message.includes("invalid_grant"))
 const googleConnection = googleOAuthConnection<GoogleCalendarConfig>({
   getClient,
   scopes: GOOGLE_CALENDAR_SCOPES,
@@ -84,11 +80,11 @@ const config: IntegrationDefinition<
           ),
         {
           label: "Google Calendar credentials",
-          isRevoked: isRevokedTokenError,
+          isRevoked: isGoogleRevokedError,
           expiresAt: auth.tokens.expiresAt,
         },
       ),
-    isRevokedTokenError,
+    isRevokedTokenError: isGoogleRevokedError,
   },
   actions: {
     verifyCalendar: async ({ ctx, props }) =>
@@ -168,7 +164,7 @@ const config: IntegrationDefinition<
       if (error instanceof AuthException) {
         throw error
       }
-      if (isRevokedTokenError(error)) {
+      if (isGoogleRevokedError(error)) {
         throw new AuthException(
           "Google Calendar refresh token was revoked",
         ).setOriginError(error)

@@ -46,23 +46,24 @@ const probeMailchimp = async (auth: MailchimpAuthValue) => {
   )
 }
 
+const connection = apiKeyConnection({
+  displayName: "Mailchimp",
+  fields: mailchimpFields,
+  buildAuth: buildMailchimpAuth,
+  probe: probeMailchimp,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   MailchimpConfig,
   MailchimpAuthValue,
   MailchimpActions
 > = {
   name: "mailchimp",
-  connection: apiKeyConnection({
-    displayName: "Mailchimp",
-    fields: mailchimpFields,
-    buildAuth: buildMailchimpAuth,
-    probe: probeMailchimp,
-    isRevoked: isUnauthorizedStatusError,
-  }),
+  connection,
   actions: {
     validateApiKey: async ({ props }) => {
-      const auth = await buildMailchimpAuth(props)
-      await probeMailchimp(auth)
+      const auth = await connection.fromCredentials(props)
       return { dataCenter: auth.dataCenter }
     },
     listAudiences: async ({ ctx }) => {

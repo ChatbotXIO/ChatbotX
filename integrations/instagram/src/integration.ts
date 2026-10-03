@@ -5,7 +5,7 @@ import {
   oauth2Auth,
   probeVerify,
 } from "@chatbotx.io/sdk"
-import { exchangeCodeForToken, getInstagramAccount } from "./apis/auth"
+import { exchangeCodeForToken, fetchInstagramAccount } from "./apis/auth"
 import {
   refreshLongLivedToken,
   subscribePageToInstagramWebhook,
@@ -56,7 +56,7 @@ const config: IntegrationDefinition<
         code,
         callbackUrl,
       )
-      const account = await getInstagramAccount(accessToken)
+      const account = await fetchInstagramAccount(accessToken)
       if (!account) {
         throw new Error(
           "Instagram account is not a supported Business/Creator account.",
@@ -83,7 +83,7 @@ const config: IntegrationDefinition<
     verify: async ({ auth }) =>
       await probeVerify(
         async () => {
-          const account = await getInstagramAccount(auth.tokens.accessToken)
+          const account = await fetchInstagramAccount(auth.tokens.accessToken)
           if (!account || account.userId !== auth.metadata.igId) {
             throw new Error("Instagram account could not be verified")
           }

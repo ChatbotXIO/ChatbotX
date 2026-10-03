@@ -1,4 +1,5 @@
 import type { Context } from "@chatbotx.io/sdk"
+import { jsonResponse } from "@chatbotx.io/vitest-config/test-utils"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { ActiveCampaignApiError } from "../src/error"
 import { integration } from "../src/integration"
@@ -6,7 +7,6 @@ import {
   type ActiveCampaignAuthValue,
   createActiveCampaignAuth,
 } from "../src/schemas"
-import { jsonResponse } from "./test-utils"
 
 const createContext = (
   auth: ActiveCampaignAuthValue,

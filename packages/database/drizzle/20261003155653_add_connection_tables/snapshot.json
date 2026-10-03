@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "90264057-0c46-4d9e-812f-c9c116b07ff4",
+  "id": "97a4c014-07a9-4aa0-bf74-b8a33490d340",
   "prevIds": [
-    "a1f7c613-421d-4bd6-a1eb-1f8317bc11fe"
+    "4860d7e1-09ce-4eb2-9d69-62529ea3d3ac"
   ],
   "ddl": [
     {
@@ -515,7 +515,8 @@
     {
       "values": [
         "waitNode",
-        "followUp"
+        "followUp",
+        "quickReplyFollowUp"
       ],
       "name": "ContactOnSmartDelayType",
       "entityType": "enums",
@@ -9864,7 +9865,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "",
+      "default": "'[]'",
       "generated": null,
       "identity": null,
       "name": "targets",
@@ -9877,7 +9878,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 1,
-      "default": "",
+      "default": "ARRAY[]",
       "generated": null,
       "identity": null,
       "name": "claimedTargetIds",
@@ -9890,7 +9891,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 1,
-      "default": "",
+      "default": "ARRAY[]",
       "generated": null,
       "identity": null,
       "name": "resultConnectionIds",
@@ -9903,7 +9904,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "",
+      "default": "'[]'",
       "generated": null,
       "identity": null,
       "name": "results",
@@ -33966,6 +33967,48 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "nodeId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"status\" NOT IN ('completed', 'failed', 'canceled') AND \"type\" = 'quickReplyFollowUp'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactOnSmartDelay_quickReplyFollowUp_active_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "contactInboxId",
           "isExpression": false,
           "asc": true,
@@ -42546,7 +42589,7 @@
         "id"
       ],
       "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
+      "onDelete": "CASCADE",
       "name": "ConnectSession_targetConnectionId_Connection_id_fkey",
       "entityType": "fks",
       "schema": "public",

@@ -122,6 +122,24 @@ export const connectSessionStatuses = z.enum([
 ])
 export type ConnectSessionStatus = z.infer<typeof connectSessionStatuses>
 
+export const ACTIVE_CONNECT_SESSION_STATUSES = [
+  "pending",
+  "authorized",
+  "awaiting_selection",
+] as const satisfies readonly ConnectSessionStatus[]
+export const TERMINAL_CONNECT_SESSION_STATUSES = [
+  "completed",
+  "failed",
+  "expired",
+  "cancelled",
+] as const satisfies readonly ConnectSessionStatus[]
+/** Fails to type-check when a status is omitted from either partition. */
+const _assertConnectSessionStatusPartitionIsExhaustive: AssertEqual<
+  ConnectSessionStatus,
+  | (typeof ACTIVE_CONNECT_SESSION_STATUSES)[number]
+  | (typeof TERMINAL_CONNECT_SESSION_STATUSES)[number]
+> = true
+
 export const connectSessionErrorCodes = z.enum([
   "state_mismatch",
   "expired",

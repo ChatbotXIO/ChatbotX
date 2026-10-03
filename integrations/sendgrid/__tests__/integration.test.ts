@@ -1,9 +1,9 @@
 import type { Context } from "@chatbotx.io/sdk"
+import { jsonResponse } from "@chatbotx.io/vitest-config/test-utils"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { SendGridMissingScopesError } from "../src/error"
 import { integration } from "../src/integration"
 import { createSendGridAuth, type SendGridAuthValue } from "../src/schemas"
-import { jsonResponse } from "./test-utils"
 
 const createContext = (
   auth: SendGridAuthValue,

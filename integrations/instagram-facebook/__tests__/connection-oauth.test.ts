@@ -1,5 +1,8 @@
+import {
+  expectStateVerbatim,
+  facebookOauthCredential,
+} from "@chatbotx.io/vitest-config/test-utils"
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { expectStateVerbatim, facebookOauthCredential } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),

@@ -4,12 +4,14 @@ import {
   db,
   desc,
   eq,
+  inArray,
   relationsFilterToSQL,
   sql,
 } from "../../client"
-import type {
-  ConnectionKind,
-  ConnectionStatus,
+import {
+  ACTIVE_CONNECTION_STATUSES,
+  type ConnectionKind,
+  type ConnectionStatus,
 } from "../../partials/connection"
 import type { IntegrationType } from "../../partials/integration"
 import { connectionModel } from "../../schema"
@@ -94,7 +96,7 @@ export const connectionRepository = {
         sql`${connectionModel.provider} = ${input.provider} AND ${connectionModel.sourceId} = ${input.sourceId}`,
       )
       .orderBy(
-        sql`CASE WHEN ${connectionModel.status} IN ('connected', 'degraded') THEN 0 ELSE 1 END`,
+        sql`CASE WHEN ${inArray(connectionModel.status, ACTIVE_CONNECTION_STATUSES)} THEN 0 ELSE 1 END`,
         desc(connectionModel.id),
       )
       .limit(1)

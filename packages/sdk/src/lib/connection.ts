@@ -59,7 +59,7 @@ type ConnectionProviderCommon<IAuth extends AuthValue> = {
 }
 
 type OAuthStrategy<ICreds> = {
-  strategy: "oauth_redirect" | "oauth_popup"
+  strategy: Extract<ConnectionStrategy, "oauth_redirect" | "oauth_popup">
   authorizeUrl: (input: {
     credential: ICreds
     callbackUrl: string
@@ -73,14 +73,14 @@ type OAuthStrategy<ICreds> = {
 }
 
 type CredentialStrategy<IAuth extends AuthValue, ICreds> = {
-  strategy: "token" | "api_key"
+  strategy: Extract<ConnectionStrategy, "token" | "api_key">
   authorizeUrl?: never
   exchangeCode?: never
   fromCredentials: Handler<ICreds, IAuth>
 }
 
 type SelfServeStrategy<IAuth extends AuthValue, ICreds> = {
-  strategy: "self_serve"
+  strategy: Extract<ConnectionStrategy, "self_serve">
   authorizeUrl?: never
   exchangeCode?: never
   fromCredentials?: Handler<ICreds, IAuth>

@@ -1,8 +1,8 @@
 import type { Context } from "@chatbotx.io/sdk"
+import { jsonResponse } from "@chatbotx.io/vitest-config/test-utils"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { integration } from "../src/integration"
 import { createMailerLiteAuth, type MailerLiteAuthValue } from "../src/schemas"
-import { jsonResponse } from "./test-utils"
 
 const createContext = (
   auth: MailerLiteAuthValue,

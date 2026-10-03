@@ -52,6 +52,24 @@ export const probeVerify = async (
   }
 }
 
+/** Identifies Google OAuth failures that require replacing stored credentials. */
+export const isGoogleRevokedError = (error: unknown): boolean => {
+  if (!(error instanceof Error && "response" in error)) {
+    return false
+  }
+
+  const response = error.response
+  if (!response || typeof response !== "object" || !("status" in response)) {
+    return false
+  }
+
+  const status = typeof response.status === "number" ? response.status : null
+  return (
+    status === 401 ||
+    (status === 400 && error.message.includes("invalid_grant"))
+  )
+}
+
 /** Creates OAuth2 auth with the exact callback URL used for the exchange. */
 export const oauth2Auth = <
   IMetadata extends Oauth2AuthValue["metadata"] = undefined,

@@ -5,6 +5,7 @@ import {
   buildFacebookDialogUrl,
   googleOAuthConnection,
   googleTokensToAuth,
+  isGoogleRevokedError,
   isUnauthorizedStatusError,
   oauth2Auth,
   probeVerify,
@@ -26,6 +27,26 @@ describe("probeVerify", () => {
       revoked: true,
       error: "credential rejected",
     })
+  })
+})
+
+describe("isGoogleRevokedError", () => {
+  test.each([
+    [401, "Unauthorized"],
+    [400, "invalid_grant"],
+  ])("recognizes status %i with %s", (status, message) => {
+    const error = Object.assign(new Error(message), { response: { status } })
+
+    expect(isGoogleRevokedError(error)).toBe(true)
+  })
+
+  test("rejects transient and malformed errors", () => {
+    const transientError = Object.assign(new Error("upstream failure"), {
+      response: { status: 503 },
+    })
+
+    expect(isGoogleRevokedError(transientError)).toBe(false)
+    expect(isGoogleRevokedError(new Error("invalid_grant"))).toBe(false)
   })
 })
 

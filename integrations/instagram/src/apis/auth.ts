@@ -1,5 +1,5 @@
 import { INSTAGRAM_BUSINESS_SCOPES } from "../constants"
-import { rescue } from "../exception"
+import { InstagramException, rescue } from "../exception"
 import {
   instagramBusinessClient,
   instagramOAuthClient,
@@ -98,7 +98,7 @@ export const exchangeLongLivedToken = (
   })
 }
 
-export async function getInstagramAccount(
+export async function fetchInstagramAccount(
   userAccessToken: string,
 ): Promise<InstagramAccount | null> {
   const endpoint = "me"
@@ -138,5 +138,23 @@ export async function getInstagramAccount(
     profile_picture_url: res.profile_picture_url,
     userId: res.user_id,
     accessToken: userAccessToken,
+  }
+}
+
+/**
+ * Legacy callers treat an unavailable account as a cancelled or unsupported
+ * connect flow. Connection verification uses `fetchInstagramAccount` so it
+ * can retain Graph error details for revocation detection.
+ */
+export const getInstagramAccount = async (
+  userAccessToken: string,
+): Promise<InstagramAccount | null> => {
+  try {
+    return await fetchInstagramAccount(userAccessToken)
+  } catch (error) {
+    if (error instanceof InstagramException) {
+      return null
+    }
+    throw error
   }
 }

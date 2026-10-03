@@ -8,20 +8,40 @@ import {
   lte,
   sql,
 } from "../../client"
-import type { ConnectSessionOutcome } from "../../partials/connect-session"
-import type { ConnectSessionStatus } from "../../partials/connection"
+import {
+  type ConnectSessionOutcome,
+  connectSessionNextActionSchema,
+  connectSessionOutcomeSchema,
+  connectSessionTargetSchema,
+} from "../../partials/connect-session"
+import {
+  ACTIVE_CONNECT_SESSION_STATUSES,
+  type ConnectSessionStatus,
+} from "../../partials/connection"
 import { connectSessionModel } from "../../schema"
 import type { ConnectSessionModel } from "../../types"
 import { type ChunkedPurgeStopReason, chunkedPurge } from "../chunked-purge"
 
+const parseConnectSession = (
+  session: ConnectSessionModel,
+): ConnectSessionModel => ({
+  ...session,
+  nextAction:
+    session.nextAction === null
+      ? null
+      : connectSessionNextActionSchema.parse(session.nextAction),
+  targets: connectSessionTargetSchema.array().parse(session.targets),
+  results: connectSessionOutcomeSchema.array().parse(session.results),
+})
 export const connectSessionRepository = {
   async findByIdForWorkspace(
     input: { id: string; workspaceId: string },
     tx: DatabaseClient = db,
   ): Promise<ConnectSessionModel | undefined> {
-    return await tx.query.connectSessionModel.findFirst({
+    const session = await tx.query.connectSessionModel.findFirst({
       where: { id: input.id, workspaceId: input.workspaceId },
     })
+    return session ? parseConnectSession(session) : undefined
   },
 
   /** Internal lookup for a session whose workspace is established by the row. */
@@ -29,9 +49,10 @@ export const connectSessionRepository = {
     input: { id: string },
     tx: DatabaseClient = db,
   ): Promise<ConnectSessionModel | undefined> {
-    return await tx.query.connectSessionModel.findFirst({
+    const session = await tx.query.connectSessionModel.findFirst({
       where: { id: input.id },
     })
+    return session ? parseConnectSession(session) : undefined
   },
 
   /** OAuth callbacks resolve the globally unique nonce before workspace context exists. */
@@ -39,9 +60,10 @@ export const connectSessionRepository = {
     input: { stateNonceHash: string },
     tx: DatabaseClient = db,
   ): Promise<ConnectSessionModel | undefined> {
-    return await tx.query.connectSessionModel.findFirst({
+    const session = await tx.query.connectSessionModel.findFirst({
       where: { stateNonceHash: input.stateNonceHash },
     })
+    return session ? parseConnectSession(session) : undefined
   },
 
   /** Counts unexpired, non-terminal sessions toward the workspace cap. */
@@ -53,7 +75,7 @@ export const connectSessionRepository = {
       connectSessionModel,
       and(
         eq(connectSessionModel.workspaceId, input.workspaceId),
-        sql`${connectSessionModel.status} IN ('pending', 'authorized', 'awaiting_selection')`,
+        inArray(connectSessionModel.status, ACTIVE_CONNECT_SESSION_STATUSES),
         sql`${connectSessionModel.expiresAt} > now()`,
       ),
     )
@@ -67,7 +89,7 @@ export const connectSessionRepository = {
       .insert(connectSessionModel)
       .values(values)
       .returning()
-    return row
+    return parseConnectSession(row)
   },
 
   /**
@@ -122,7 +144,7 @@ export const connectSessionRepository = {
         ),
       )
       .returning()
-    return row
+    return row ? parseConnectSession(row) : undefined
   },
 
   /** Expires due active sessions and clears authorization ciphertext in one update. */
@@ -261,6 +283,6 @@ export const connectSessionRepository = {
         ),
       )
       .returning()
-    return row
+    return row ? parseConnectSession(row) : undefined
   },
 }

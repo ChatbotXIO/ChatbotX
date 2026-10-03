@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
-  getInstagramAccount: vi.fn(),
+  fetchInstagramAccount: vi.fn(),
 }))
 
 vi.mock("../src/apis/auth", () => ({
   exchangeCodeForToken: mocks.exchangeCodeForToken,
-  getInstagramAccount: mocks.getInstagramAccount,
+  fetchInstagramAccount: mocks.fetchInstagramAccount,
 }))
 
 const { integration } = await import("../src/integration")
@@ -32,7 +32,7 @@ beforeEach(() => {
     accessToken: "short-lived-access-token",
     userId: "token-exchange-user-id",
   })
-  mocks.getInstagramAccount.mockResolvedValue(account)
+  mocks.fetchInstagramAccount.mockResolvedValue(account)
 })
 
 describe("Instagram connection identity", () => {

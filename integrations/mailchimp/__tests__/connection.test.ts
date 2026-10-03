@@ -1,6 +1,6 @@
+import { jsonResponse } from "@chatbotx.io/vitest-config/test-utils"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { integration } from "../src/integration"
-import { jsonResponse } from "./test-utils"
 
 const connection = integration.connection
 if (!connection?.fromCredentials) {

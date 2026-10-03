@@ -21,6 +21,7 @@ import {
   connectSessionErrorCodes,
   connectSessionPurposes,
   connectSessionStatuses,
+  TERMINAL_CONNECT_SESSION_STATUSES,
 } from "../partials/connection"
 import type { IntegrationType } from "../partials/integration"
 import {
@@ -33,6 +34,10 @@ import { connectionModel } from "./connection"
 import { workspaceModel } from "./workspace"
 import { workspaceApiTokenModel } from "./workspace-api-token"
 
+const terminalConnectSessionStatusesSql = sql.join(
+  TERMINAL_CONNECT_SESSION_STATUSES.map((status) => sql`${status}`),
+  sql`, `,
+)
 /** Strategy-agnostic, multi-step connection flow. */
 export const connectSessionModel = pgTable(
   "ConnectSession",
@@ -48,10 +53,11 @@ export const connectSessionModel = pgTable(
     purpose: text().$type<ConnectSessionPurpose>().notNull(),
     // For `reconnect`: identity must match the existing Connection on completion.
     targetConnectionId: bigintAsString().references(() => connectionModel.id, {
-      onDelete: "set null",
+      onDelete: "cascade",
       onUpdate: "cascade",
     }),
-    // Creation requires exactly one actor; the database permits neither after actor deletion.
+    // The service must require exactly one actor when creating a session; actor
+    // deletion may null either FK.
     actorUserId: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
@@ -63,7 +69,8 @@ export const connectSessionModel = pgTable(
     // White-label: the credential owner and host that started the flow.
     platformOwnerId: text(),
     originHost: text(),
-    // Validated with `sanitizeReferer` (`apps/builder/src/lib/oauth-referer.ts`).
+    // The service must validate this with `sanitizeReferer`
+    // (`apps/builder/src/lib/oauth-referer.ts`).
     returnUrl: text(),
     // SHA-256 hex digest of a 32-byte nonce; plaintext appears once inside `authorizeUrl`.
     stateNonceHash: text().notNull(),
@@ -72,16 +79,20 @@ export const connectSessionModel = pgTable(
     step: text().notNull().default("authorize"),
     nextAction: jsonb().$type<ConnectSessionNextAction>(),
     encryptedAuth: jsonb().$type<EncryptedData>(),
-    targets: jsonb().$type<ConnectSessionTarget[]>().default(sql`[]`).notNull(),
-    claimedTargetIds: text().array().default(sql`[]`).notNull(),
-    resultConnectionIds: text().array().default(sql`[]`).notNull(),
+    targets: jsonb()
+      .$type<ConnectSessionTarget[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    claimedTargetIds: text().array().default(sql`ARRAY[]::text[]`).notNull(),
+    resultConnectionIds: text().array().default(sql`ARRAY[]::text[]`).notNull(),
     results: jsonb()
       .$type<ConnectSessionOutcome[]>()
-      .default(sql`[]`)
+      .default(sql`'[]'::jsonb`)
       .notNull(),
     errorCode: text().$type<ConnectSessionErrorCode>(),
-    // 10 min while pending, 30 min once authorized. Reads treat
-    // `expiresAt <= now()` as `expired` regardless of the stored `status`.
+    // The service sets a 10-minute TTL while pending and a 30-minute TTL once
+    // authorized. Reads treat `expiresAt <= now()` as `expired` regardless of
+    // the stored `status`.
     expiresAt: timestamp(timestampConfig).notNull(),
     consumedAt: timestamp(timestampConfig),
   },
@@ -137,21 +148,17 @@ export const connectSessionModel = pgTable(
     // skipped by a partial update.
     check(
       "ConnectSession_terminal_consumedAt_check",
-      sql`(${table.status} IN ('completed', 'failed', 'expired', 'cancelled')) = (${table.consumedAt} IS NOT NULL)`,
+      sql`(${table.status} IN (${terminalConnectSessionStatusesSql})) = (${table.consumedAt} IS NOT NULL)`,
     ),
     check(
       "ConnectSession_terminal_clears_encryptedAuth_check",
-      sql`${table.status} NOT IN ('completed', 'failed', 'expired', 'cancelled') OR ${table.encryptedAuth} IS NULL`,
+      sql`${table.status} NOT IN (${terminalConnectSessionStatusesSql}) OR ${table.encryptedAuth} IS NULL`,
     ),
-    // `targetConnectionId` is nullable only so a terminal (historical) row can
-    // survive its target `Connection` being deleted (`onDelete: "set null"`
-    // above). An active reconnect losing its target mid-flow is a bug, not a
-    // valid state — this CHECK makes that `SET NULL` fail instead of
-    // silently orphaning the flow, so deleting a `Connection` with an active
-    // reconnect session still pointed at it is rejected by the database.
+    // Deleting a reconnect target intentionally removes every session bound to
+    // it. Any remaining active reconnect must still retain its target.
     check(
       "ConnectSession_active_reconnect_requires_target_check",
-      sql`${table.purpose} <> 'reconnect' OR ${table.status} IN ('completed', 'failed', 'expired', 'cancelled') OR ${table.targetConnectionId} IS NOT NULL`,
+      sql`${table.purpose} <> 'reconnect' OR ${table.status} IN (${terminalConnectSessionStatusesSql}) OR ${table.targetConnectionId} IS NOT NULL`,
     ),
   ],
 )

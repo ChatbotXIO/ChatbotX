@@ -291,6 +291,53 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
       )
     }))
 
+  test("deletes a pending reconnect session when its inbox connection is deleted", () =>
+    run(async (tx) => {
+      const { workspaceId, ownerId } = await seedWorkspace(tx, "reconnect")
+      const [inbox] = await tx
+        .insert(schema.inboxModel)
+        .values({
+          workspaceId,
+          channel: "telegram",
+          name: "Reconnect cascade test",
+          sourceId: "reconnect-cascade-test",
+        })
+        .returning({ id: schema.inboxModel.id })
+      const [connection] = await tx
+        .insert(schema.connectionModel)
+        .values({
+          workspaceId,
+          provider: "telegram",
+          kind: "channel",
+          channel: "telegram",
+          inboxId: inbox.id,
+          sourceId: "bot-reconnect",
+          displayName: "Reconnect bot",
+        })
+        .returning({ id: schema.connectionModel.id })
+      const [session] = await tx
+        .insert(schema.connectSessionModel)
+        .values({
+          workspaceId,
+          provider: "telegram",
+          purpose: "reconnect",
+          targetConnectionId: connection.id,
+          actorUserId: ownerId,
+          stateNonceHash: `reconnect-${Date.now()}-${Math.random()}`,
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        })
+        .returning({ id: schema.connectSessionModel.id })
+
+      await tx
+        .delete(schema.inboxModel)
+        .where(eq(schema.inboxModel.id, inbox.id))
+
+      const deletedSession = await tx.query.connectSessionModel.findFirst({
+        where: { id: session.id },
+      })
+      expect(deletedSession).toBeUndefined()
+    }))
+
   test("enforces unique ownership of an integration by a connection", () =>
     run(async (tx) => {
       const { workspaceId } = await seedWorkspace(tx, "a")

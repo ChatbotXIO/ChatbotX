@@ -5,6 +5,7 @@
  * here as the conventional database-layer import site.
  */
 export {
+  ACTIVE_CONNECT_SESSION_STATUSES,
   ACTIVE_CONNECTION_STATUSES,
   CONNECTION_TO_INBOX_DISCONNECT_REASON,
   type ConnectionKind,
@@ -20,4 +21,5 @@ export {
   connectSessionPurposes,
   connectSessionStatuses,
   INACTIVE_CONNECTION_STATUSES,
+  TERMINAL_CONNECT_SESSION_STATUSES,
 } from "@chatbotx.io/utils/connection"

@@ -16,10 +16,10 @@ CREATE TABLE "ConnectSession" (
 	"step" text DEFAULT 'authorize' NOT NULL,
 	"nextAction" jsonb,
 	"encryptedAuth" jsonb,
-	"targets" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"claimedTargetIds" text[] DEFAULT '{}' NOT NULL,
-	"resultConnectionIds" text[] DEFAULT '{}' NOT NULL,
-	"results" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"targets" jsonb DEFAULT '[]' NOT NULL,
+	"claimedTargetIds" text[] DEFAULT ARRAY[]::text[] NOT NULL,
+	"resultConnectionIds" text[] DEFAULT ARRAY[]::text[] NOT NULL,
+	"results" jsonb DEFAULT '[]' NOT NULL,
 	"errorCode" text,
 	"expiresAt" timestamp(6) with time zone NOT NULL,
 	"consumedAt" timestamp(6) with time zone,
@@ -53,10 +53,10 @@ CREATE TABLE "Connection" (
 	"connectedAt" timestamp(6) with time zone,
 	"disconnectedAt" timestamp(6) with time zone,
 	CONSTRAINT "Connection_kind_relation_check" CHECK ((
-		("kind" = 'channel' AND "inboxId" IS NOT NULL AND "channel" IS NOT NULL)
-		OR
-		("kind" = 'integration' AND "inboxId" IS NULL AND "channel" IS NULL AND "integrationId" IS NOT NULL)
-	)),
+        ("kind" = 'channel' AND "inboxId" IS NOT NULL AND "channel" IS NOT NULL)
+        OR
+        ("kind" = 'integration' AND "inboxId" IS NULL AND "channel" IS NULL AND "integrationId" IS NOT NULL)
+      )),
 	CONSTRAINT "Connection_inbox_integration_exclusive_check" CHECK (NOT ("inboxId" IS NOT NULL AND "integrationId" IS NOT NULL)),
 	CONSTRAINT "Connection_kind_check" CHECK ("kind" IN ('channel', 'integration')),
 	CONSTRAINT "Connection_status_check" CHECK ("status" IN ('connected', 'degraded', 'needs_reauth', 'paused', 'disconnected')),
@@ -74,7 +74,7 @@ CREATE INDEX "Connection_provider_sourceId_idx" ON "Connection" ("provider","sou
 CREATE UNIQUE INDEX "Connection_inboxId_key" ON "Connection" ("inboxId");--> statement-breakpoint
 CREATE UNIQUE INDEX "Connection_integrationId_key" ON "Connection" ("integrationId");--> statement-breakpoint
 ALTER TABLE "ConnectSession" ADD CONSTRAINT "ConnectSession_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "ConnectSession" ADD CONSTRAINT "ConnectSession_targetConnectionId_Connection_id_fkey" FOREIGN KEY ("targetConnectionId") REFERENCES "Connection"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
+ALTER TABLE "ConnectSession" ADD CONSTRAINT "ConnectSession_targetConnectionId_Connection_id_fkey" FOREIGN KEY ("targetConnectionId") REFERENCES "Connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "ConnectSession" ADD CONSTRAINT "ConnectSession_actorUserId_User_id_fkey" FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "ConnectSession" ADD CONSTRAINT "ConnectSession_actorTokenId_WorkspaceApiToken_id_fkey" FOREIGN KEY ("actorTokenId") REFERENCES "WorkspaceApiToken"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Connection" ADD CONSTRAINT "Connection_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
