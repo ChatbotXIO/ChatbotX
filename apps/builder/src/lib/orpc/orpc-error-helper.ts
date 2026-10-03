@@ -152,6 +152,33 @@ export const possibleErrorsOnMutatingResource = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** Meta Catalog select/sync: a second run while one is active is a 409. */
+export const possibleErrorsOnStartingMetaCatalogRun = {
+  notFound,
+  businessError,
+  metaCatalogSyncAlreadyRunning: {
+    message: "A catalog sync or import is already running for this workspace.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Ad creative image upload: the type and size checks are 400s. */
+export const possibleErrorsOnCreatingAdImageUpload = {
+  notFound,
+  businessError,
+  adsCreativeUnsupportedImage: {
+    message:
+      "Use a JPEG, PNG, GIF or WebP image whose extension matches its type",
+    status: 400,
+  },
+  adsCreativeImageTooLarge: {
+    message: "Ad images are limited to 10 MB",
+    status: 400,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 export const possibleErrorsOnActivatingBroadcast = {
   notFound,
   businessError,

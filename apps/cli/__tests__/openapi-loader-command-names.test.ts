@@ -144,3 +144,14 @@ describe("pathAndMethodToCommandName — messenger templates by id", () => {
     ).toBe("messenger:templates:delete")
   })
 })
+
+describe("pathAndMethodToCommandName — meta catalog singleton", () => {
+  test("GET (state) and POST (create) get distinct commands", () => {
+    expect(pathAndMethodToCommandName("/v1/products/meta-catalog", "GET")).toBe(
+      "products:meta-catalog:list",
+    )
+    expect(
+      pathAndMethodToCommandName("/v1/products/meta-catalog", "POST"),
+    ).toBe("products:meta-catalog:create")
+  })
+})

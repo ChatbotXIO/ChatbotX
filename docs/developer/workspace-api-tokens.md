@@ -509,6 +509,20 @@ an endpoint's scope.
   type (`folderService.create` no longer resolves a parent by id alone).
   Managing sequence folders themselves is not exposed on the public API yet.
 
+- **Meta Catalog and ad images** — scope `ecommerce`:
+  `GET /v1/products/meta-catalog` (connection without its credential, plus the
+  sync history), `GET .../meta-catalog/businesses`, `POST /v1/products/meta-catalog`
+  (create an empty catalog and bind it), `POST .../select` (bind and import,
+  202) and `POST .../sync` (push products, 202); a second run while one is
+  active returns 409. Connecting and disconnecting stay private (Meta OAuth).
+  Scope `ads`: `POST /v1/ads/campaigns/upload-image` returns `imageKey`,
+  `fileId` and a presigned PUT URL inside the workspace's ads-creative prefix
+  (same type/size checks as the builder; the create-time preflight still proves
+  ownership), and `ads.checkCampaignPrerequisites` now reports
+  `reconnectNeeded`. The 25 MB base64 cap on `upload-video` is unchanged on
+  purpose. A connection without a channel FK is listed with
+  `integrationId: ""` and cannot be disconnected through the API.
+
 - **Imports** — a token can run a whole import without the browser's session
   upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
   `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file

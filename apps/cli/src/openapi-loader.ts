@@ -118,10 +118,12 @@ const SINGLETON_RESOURCES = new Set(["workspaces"])
 const METHOD_VERBED_SINGLETON_PATHS = new Set([
   "workspace/settings",
   "messenger/templates/{id}",
+  "products/meta-catalog",
 ])
 const SINGLETON_VERBS: Record<string, string> = {
   get: "list",
   delete: "delete",
+  post: "create",
   put: "update",
   patch: "update",
 }

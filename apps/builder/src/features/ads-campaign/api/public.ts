@@ -9,6 +9,7 @@ import { facebookAdAccountSchema } from "@chatbotx.io/integration-facebook-ads"
 import { ORPCError } from "@orpc/server"
 import { z } from "zod"
 import {
+  possibleErrorsOnCreatingAdImageUpload,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -18,12 +19,15 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "../lib/api-paths"
+import { createAdsCreativeImageUpload } from "../lib/create-creative-image-upload"
 import { getMessagingAdsContextForIntegration } from "../lib/facebook-ads-runner"
 import { toMessagingAdOperationResource } from "../lib/resource-mapper"
 import {
   adAccountDetailsPublicRequest,
   adAccountDetailsPublicRequestParams,
   checkPrerequisitesPublicRequest,
+  createAdImageUploadPublicRequest,
+  createAdImageUploadPublicResponse,
   createMessagingAdPublicRequest,
   disconnectConnectionPublicRequestParams,
   listAdAccountsPublicRequest,
@@ -308,6 +312,28 @@ export const adsCampaignPublicRouter = {
       }),
     ),
 
+  createCampaignImageUpload: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/ads/campaigns/upload-image",
+      summary: "Create campaign image upload URL",
+      description:
+        'Step 1 of an image creative: declares the image (`fileName`, `mimeType` jpeg/png/gif/webp matching the extension, `fileSize` in bytes, max 10 MB) and returns `imageKey` and `fileId` plus a presigned `presignedPostUrl`. Upload the bytes to it with an HTTP PUT, then pass `imageKey` and `fileId` as `creative.media` (`kind: "image"`) in `ads.createCampaign`. The image is verified against the workspace when the campaign is created.',
+      successStatus: 201,
+      tags: ["Ads"],
+    })
+    .input(createAdImageUploadPublicRequest)
+    .output(createAdImageUploadPublicResponse)
+    .errors(possibleErrorsOnCreatingAdImageUpload)
+    .handler(
+      async ({ context, input }) =>
+        await createAdsCreativeImageUpload({
+          ...input,
+          workspaceId: context.workspace.id,
+          userId: null,
+        }),
+    ),
+
   uploadCampaignVideo: workspaceTokenAuthAPI
     .route({
       method: "POST",
@@ -409,14 +435,24 @@ export const adsCampaignPublicRouter = {
       tags: ["Ads"],
     })
     .input(checkPrerequisitesPublicRequest)
-    .output(z.object({ connected: z.boolean() }))
+    .output(
+      z.object({
+        connected: z.boolean(),
+        reconnectNeeded: z
+          .boolean()
+          .describe(
+            "True when a connection exists but is no longer active: reconnect it in the builder before creating campaigns.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const connection = await messagingAdsConnectionService.findForIntegration(
         { ...input, workspaceId: context.workspace.id },
       )
       return {
-        connected: Boolean(connection && connection.status === "active"),
+        connected: connection?.status === "active",
+        reconnectNeeded: Boolean(connection) && connection?.status !== "active",
       }
     }),
 
@@ -441,6 +477,8 @@ export const adsCampaignPublicRouter = {
         data: connections.map((connection) => ({
           id: connection.id,
           channel: connection.channel,
+          // "" when the connection has no channel FK (it cannot be disconnected
+          // through `ads.disconnectConnection`, which needs a channel integration).
           integrationId:
             connection.integrationWhatsappId ??
             connection.integrationMessengerId ??
