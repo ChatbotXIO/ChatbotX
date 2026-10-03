@@ -122,3 +122,14 @@ describe("pathAndMethodToCommandName — bot field reset", () => {
     ).toBe("bot-fields:bulk-reset")
   })
 })
+
+describe("pathAndMethodToCommandName — workspace settings singleton", () => {
+  test("GET and PATCH on the same path get distinct commands", () => {
+    expect(pathAndMethodToCommandName("/v1/workspace/settings", "GET")).toBe(
+      "workspace:settings:list",
+    )
+    expect(pathAndMethodToCommandName("/v1/workspace/settings", "PATCH")).toBe(
+      "workspace:settings:update",
+    )
+  })
+})

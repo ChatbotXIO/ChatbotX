@@ -2252,7 +2252,8 @@
       "minigames": "Minipelit",
       "appointments": "Tapaamiset",
       "media": "Media",
-      "ads": "Mainokset"
+      "ads": "Mainokset",
+      "settings": "Asetukset"
     },
     "adReferral": {
       "label": "Ads",

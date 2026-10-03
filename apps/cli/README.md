@@ -785,6 +785,13 @@ chatbotx conversations thread-control add <id> --contactInboxId <id> --action ta
 chatbotx conversations sync add <id> --contactInboxId <id>     # Sync the thread owner from the channel
 ```
 
+### `workspace` settings (scope `settings`)
+
+```bash
+chatbotx workspace settings list                      # Get workspace settings
+chatbotx workspace settings update --defaultReply --defaultReplyFrequency --smartResponseDelaySeconds --capiLimitedDataUse --logo
+```
+
 ### `channel-integrations`
 
 ```bash

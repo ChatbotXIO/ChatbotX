@@ -475,6 +475,16 @@ an endpoint's scope.
   errors route also returns each contact's name and avatar.
   `magicLinkContacts`/`refLinkContacts` deliberately omit name and avatar.
 
+- **Workspace settings (scope `settings`)** — the 13th scope, added for
+  `GET/PATCH /v1/workspace/settings`: Default Reply text and frequency, the bot
+  reply delay (3–180 s or null), Conversions API Limited Data Use and the logo
+  URL. They change what the workspace sends to customers and reports to Meta,
+  so they sit outside the resource-area scopes. The service writes a strict
+  allow-list of those five columns (`workspaceService.updateSettings`), so a
+  token can never touch the name, plan, status, owner or tenant. Only
+  `scopes: null` tokens gain the scope automatically; pick it explicitly for
+  restricted tokens. No migration: scopes are stored as plain text. `logo` is read back as an absolute URL (uploaded logos are stored as storage paths) and written as an http(s) URL; an external URL is loaded by every member's browser, so set only images you trust. An empty PATCH returns the settings unchanged.
+
 - **Imports** — a token can run a whole import without the browser's session
   upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
   `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file

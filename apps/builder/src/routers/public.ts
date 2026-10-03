@@ -69,6 +69,7 @@ import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
+import { workspaceSettingsPublicRouter } from "@/features/workspaces/api/public"
 
 export const publicRouter = {
   ads: adsPublicRouter,
@@ -142,5 +143,6 @@ export const publicRouter = {
   },
   whatsappTemplates: whatsappTemplatesPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
+  workspaceSettings: workspaceSettingsPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,
 }

@@ -2396,7 +2396,8 @@
       "minigames": "Mini Oyunlar",
       "appointments": "Randevular",
       "media": "Medya",
-      "ads": "Reklamlar"
+      "ads": "Reklamlar",
+      "settings": "Ayarlar"
     },
     "adReferral": {
       "label": "Ads",

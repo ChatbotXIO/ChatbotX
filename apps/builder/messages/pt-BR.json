@@ -2252,7 +2252,8 @@
       "minigames": "Minijogos",
       "appointments": "Agendamentos",
       "media": "Mídia",
-      "ads": "Anúncios"
+      "ads": "Anúncios",
+      "settings": "Configurações"
     },
     "adReferral": {
       "label": "Ads",

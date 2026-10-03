@@ -345,3 +345,59 @@ describe("WorkspaceService.update — member cache invalidation", () => {
 
 // Token-creation auditing moved with the write: see
 // workspace-api-token.service.test.ts (workspaceApiTokenService.createToken).
+
+describe("workspaceService.updateSettings", () => {
+  test("writes only the five settings columns, whatever else is passed", async () => {
+    setUpdate.mockClear()
+
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: {
+        defaultReply: "hi",
+        defaultReplyFrequency: "oncePerDay",
+        smartResponseDelaySeconds: 10,
+        capiLimitedDataUse: true,
+        logo: "https://cdn.example.com/l.png",
+        // Not settings: must never reach the UPDATE.
+        status: "suspended",
+        ownerId: "attacker",
+        tenantId: "9",
+      } as never,
+    })
+
+    expect(setUpdate).toHaveBeenCalledWith({
+      defaultReply: "hi",
+      defaultReplyFrequency: "oncePerDay",
+      smartResponseDelaySeconds: 10,
+      capiLimitedDataUse: true,
+      logo: "https://cdn.example.com/l.png",
+    })
+  })
+
+  test("an empty or all-undefined body writes nothing and returns the workspace", async () => {
+    setUpdate.mockClear()
+    findFirstWorkspace.mockResolvedValueOnce({
+      id: "ws-1",
+      name: "Old",
+    } as never)
+
+    const result = await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { logo: undefined },
+    })
+
+    expect(setUpdate).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ id: "ws-1" })
+  })
+
+  test("a field left out is not written (undefined is skipped)", async () => {
+    setUpdate.mockClear()
+
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { capiLimitedDataUse: false },
+    })
+
+    expect(setUpdate).toHaveBeenCalledWith({ capiLimitedDataUse: false })
+  })
+})
