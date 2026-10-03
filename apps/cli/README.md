@@ -144,6 +144,8 @@ chatbotx bot-fields get <idOrName>                   # Get bot field
 # `bot-fields update <idOrName> --value <value>` (single field, PUT /v1/bot-fields/{idOrName}) is NOT
 # reachable — collides with `update` above under the same commandName; see Known command-name collisions.
 chatbotx bot-fields delete <idOrName>                # Unset bot field value
+chatbotx bot-fields reset <idOrName>                 # Clear one bot field value, keep the field
+chatbotx bot-fields bulk-reset --ids <ids>           # Clear up to 100 bot field values by id
 ```
 
 ---

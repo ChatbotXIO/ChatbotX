@@ -513,6 +513,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/bot-fields",
   },
   {
+    "method": "POST",
+    "operationId": "botFields.reset",
+    "path": "/v1/bot-fields/{idOrName}/reset",
+  },
+  {
+    "method": "POST",
+    "operationId": "botFields.resetMany",
+    "path": "/v1/bot-fields/bulk-reset",
+  },
+  {
     "method": "PUT",
     "operationId": "botFields.set",
     "path": "/v1/bot-fields/{idOrName}",

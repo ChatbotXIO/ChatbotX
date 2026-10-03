@@ -21,7 +21,7 @@ import {
   publicListSequenceStepContactsRequest,
   publicListSequenceStepContactsResponse,
 } from "../schema/public"
-import { sequenceResource } from "../schema/resource"
+import { sequenceDetailResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 
@@ -62,7 +62,7 @@ export const sequencesPublicRouter = {
         id: z.string().describe("Sequence id. Get it from `sequences.list`."),
       }),
     )
-    .output(sequenceResource)
+    .output(sequenceDetailResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>

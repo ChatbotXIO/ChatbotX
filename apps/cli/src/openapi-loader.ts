@@ -109,7 +109,7 @@ const POST_VERB_OVERRIDES: Record<string, string> = {
 }
 
 // Sub-paths that are actions themselves (not nouns), collapse to group:action (2-level)
-const ACTION_SUBPATHS = new Set(["block", "unblock"])
+const ACTION_SUBPATHS = new Set(["block", "unblock", "reset"])
 // Singleton resources — GET on the collection returns a single object, use "get" not "list"
 const SINGLETON_RESOURCES = new Set(["workspaces"])
 const V1_PREFIX_RE = /^\/v1\//

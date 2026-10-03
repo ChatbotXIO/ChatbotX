@@ -27,3 +27,18 @@ export type CreateBotFieldRequest = z.infer<typeof createBotFieldRequest>
 
 export const updateBotFieldRequest = createBotFieldRequest.partial()
 export type UpdateBotFieldRequest = z.infer<typeof updateBotFieldRequest>
+
+// Bot field ids are Snowflake bigints (> 2^53): a JSON number would lose
+// precision, so they are digit strings. A plain integer is still accepted for
+// callers written against the earlier numeric `id` field.
+export const publicBotFieldIdSchema = z
+  .union([zodBigintAsString(), z.number().int().positive().transform(String)])
+  .describe("Bot field id (numeric string). Get it from `botFields.list`.")
+
+export const resetBotFieldsRequest = z.object({
+  ids: z
+    .array(zodBigintAsString())
+    .min(1)
+    .max(100)
+    .describe("Ids of the bot fields whose value is cleared back to empty."),
+})

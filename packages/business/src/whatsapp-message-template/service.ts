@@ -33,6 +33,7 @@ class WhatsappMessageTemplateService extends BaseService {
 
     const queryWhere = {
       integrationWhatsappId: where.integrationWhatsappId,
+      status: where.status,
       integrationWhatsapp: {
         workspaceId: where.workspaceId,
         inboxId: where.inboxId,

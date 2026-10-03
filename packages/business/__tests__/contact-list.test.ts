@@ -17,7 +17,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const { contactRepository } = await import("@chatbotx.io/database/repositories")
-const { list, UNSCOPED } = await import("../src/contact/list")
+const { inboxService } = await import("../src/inbox/service")
+const { count, list, UNSCOPED } = await import("../src/contact/list")
 
 const where = { workspaceId: "ws-1" }
 const orderBy = { createdAt: "desc" }
@@ -215,5 +216,116 @@ describe("contactService.list", () => {
 
     expect(relationsSpy).toHaveBeenCalledTimes(1)
     expect(tableSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactService inbox scope keys", () => {
+  test("list resolves channels to inbox ids and passes them to buildListWhere", async () => {
+    const resolveSpy = vi
+      .spyOn(inboxService, "resolveBroadcastInboxIds")
+      .mockResolvedValue(["inbox-1"])
+
+    await list({
+      workspaceId: "ws-1",
+      scope: UNSCOPED,
+      channels: ["whatsapp"],
+      subaction: "whatsappWithin24Hours",
+    })
+
+    expect(resolveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1", channels: ["whatsapp"] }),
+    )
+    expect(contactRepository.buildListWhere).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxScope: {
+          inboxIds: ["inbox-1"],
+          requireRecentInteraction: true,
+        },
+      }),
+    )
+  })
+
+  test("list without inbox keys never resolves inboxes and sends no scope", async () => {
+    const resolveSpy = vi.spyOn(inboxService, "resolveBroadcastInboxIds")
+
+    await list({ workspaceId: "ws-1", scope: UNSCOPED })
+
+    expect(resolveSpy).not.toHaveBeenCalled()
+    expect(contactRepository.buildListWhere).toHaveBeenCalledWith(
+      expect.objectContaining({ inboxScope: undefined }),
+    )
+  })
+
+  test("an empty channels array is treated as not provided", async () => {
+    const resolveSpy = vi.spyOn(inboxService, "resolveBroadcastInboxIds")
+
+    await list({ workspaceId: "ws-1", scope: UNSCOPED, channels: [] })
+
+    expect(resolveSpy).not.toHaveBeenCalled()
+  })
+
+  test("an empty inboxIds array is treated as not provided, so channels still narrow", async () => {
+    const resolveSpy = vi
+      .spyOn(inboxService, "resolveBroadcastInboxIds")
+      .mockResolvedValue(["inbox-1"])
+
+    await list({
+      workspaceId: "ws-1",
+      scope: UNSCOPED,
+      inboxIds: [],
+      channels: ["whatsapp"],
+    })
+
+    expect(resolveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ inboxIds: undefined, channels: ["whatsapp"] }),
+    )
+  })
+
+  test("inboxIds: [] alone applies no inbox restriction", async () => {
+    const resolveSpy = vi.spyOn(inboxService, "resolveBroadcastInboxIds")
+
+    await list({ workspaceId: "ws-1", scope: UNSCOPED, inboxIds: [] })
+
+    expect(resolveSpy).not.toHaveBeenCalled()
+    expect(contactRepository.buildListWhere).toHaveBeenCalledWith(
+      expect.objectContaining({ inboxScope: undefined }),
+    )
+  })
+
+  test("subaction alone applies only the recent-interaction window", async () => {
+    await list({
+      workspaceId: "ws-1",
+      scope: UNSCOPED,
+      subaction: "messengerActiveContacts",
+    })
+
+    expect(contactRepository.buildListWhere).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxScope: { requireRecentInteraction: true },
+      }),
+    )
+  })
+
+  test("count with only an inbox key does not use the unfiltered stats shortcut", async () => {
+    vi.spyOn(inboxService, "resolveBroadcastInboxIds").mockResolvedValue([
+      "inbox-1",
+    ])
+    const statsSpy = vi.spyOn(
+      contactRepository,
+      "sumTotalContactsFromInboxStats",
+    )
+    const countSpy = vi
+      .spyOn(contactRepository, "count")
+      .mockResolvedValue(3 as never)
+
+    const result = await count({
+      workspaceId: "ws-1",
+      scope: UNSCOPED,
+      inboxIds: ["inbox-1"],
+    })
+
+    expect(statsSpy).not.toHaveBeenCalled()
+    expect(countSpy).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ total: 3 })
   })
 })

@@ -108,3 +108,17 @@ describe("pathAndMethodToCommandName — filter/variant on a collection", () => 
     )
   })
 })
+
+describe("pathAndMethodToCommandName — bot field reset", () => {
+  test("POST resource/{id}/reset collapses to group:reset", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/bot-fields/{idOrName}/reset", "POST"),
+    ).toBe("bot-fields:reset")
+  })
+
+  test("the bulk route keeps its own name instead of colliding with the single reset", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/bot-fields/bulk-reset", "POST"),
+    ).toBe("bot-fields:bulk-reset")
+  })
+})
