@@ -1993,9 +1993,19 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/sequences",
   },
   {
+    "method": "POST",
+    "operationId": "sequences.createFolder",
+    "path": "/v1/sequence-folders",
+  },
+  {
     "method": "DELETE",
     "operationId": "sequences.delete",
     "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "sequences.deleteFolder",
+    "path": "/v1/sequence-folders/{id}",
   },
   {
     "method": "DELETE",
@@ -2014,6 +2024,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "sequences.listFolders",
+    "path": "/v1/sequence-folders",
+  },
+  {
+    "method": "GET",
     "operationId": "sequences.listStepContacts",
     "path": "/v1/sequences/{id}/steps/{stepId}/contacts",
   },
@@ -2021,6 +2036,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "sequences.update",
     "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "sequences.updateFolder",
+    "path": "/v1/sequence-folders/{id}",
   },
   {
     "method": "PUT",

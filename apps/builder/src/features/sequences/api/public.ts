@@ -1,4 +1,7 @@
+import { folderService } from "@chatbotx.io/business"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { sequenceService } from "@chatbotx.io/business/sequence"
+import { folderTypes, rootFolderId } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
@@ -21,6 +24,13 @@ import {
   publicListSequenceStepContactsRequest,
   publicListSequenceStepContactsResponse,
 } from "../schema/public"
+import {
+  createSequenceFolderPublicRequest,
+  listSequenceFoldersPublicRequest,
+  sequenceFolderIdParam,
+  sequenceFolderResource,
+  updateSequenceFolderPublicRequest,
+} from "../schema/public-folders"
 import { sequenceDetailResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
@@ -250,4 +260,102 @@ export const sequencesPublicRouter = {
         })
       return { data, total, pageCount }
     }),
+
+  listFolders: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/sequence-folders",
+      summary: "List sequence folders",
+      description:
+        "Lists the folders that organize sequences. Omit `parentId` for top-level folders. Use a folder id as `folderId` in `sequences.list`, `sequences.create` or `sequences.update`.",
+      tags: ["Sequences"],
+    })
+    .input(listSequenceFoldersPublicRequest)
+    .output(z.object({ data: z.array(sequenceFolderResource) }))
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => ({
+      data: await folderService.list({
+        workspaceId: context.workspace.id,
+        folderType: folderTypes.enum.sequence,
+        parentId: input.parentId ?? null,
+      }),
+    })),
+
+  createFolder: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/sequence-folders",
+      summary: "Create sequence folder",
+      description:
+        "Adds a folder for sequences. Use `sequences.listFolders` first to avoid duplicating an existing one.",
+      tags: ["Sequences"],
+    })
+    .input(createSequenceFolderPublicRequest)
+    .output(sequenceFolderResource)
+    .errors(possibleErrorsOnCreatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await folderService.create({
+          workspaceId: context.workspace.id,
+          data: {
+            name: input.name,
+            folderType: folderTypes.enum.sequence,
+            parentId:
+              input.parentId && input.parentId !== rootFolderId
+                ? input.parentId
+                : null,
+          },
+        }),
+    ),
+
+  updateFolder: workspaceTokenAuthAPI
+    .route({
+      method: "PUT",
+      path: "/v1/sequence-folders/{id}",
+      summary: "Rename sequence folder",
+      description:
+        "Changes a sequence folder's name without moving its sequences.",
+      tags: ["Sequences"],
+    })
+    .input(updateSequenceFolderPublicRequest)
+    .output(sequenceFolderResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      await requireSequenceFolder(context.workspace.id, input.id)
+      return await folderService.update({
+        workspaceId: context.workspace.id,
+        id: input.id,
+        data: { name: input.name },
+      })
+    }),
+
+  deleteFolder: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/sequence-folders/{id}",
+      summary: "Delete sequence folder",
+      description:
+        "Permanently deletes a sequence folder. Its sequences are not deleted, only unfiled.",
+      successStatus: 204,
+      tags: ["Sequences"],
+    })
+    .input(sequenceFolderIdParam)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      const folder = await requireSequenceFolder(context.workspace.id, input.id)
+      await folderService.bulkDelete({
+        workspaceId: context.workspace.id,
+        ids: [folder.id],
+      })
+    }),
+}
+
+// `folderService.update`/`bulkDelete` take no folderType, so a folder of another
+// type (tag, flow, ...) must read as missing here.
+async function requireSequenceFolder(workspaceId: string, id: string) {
+  const folder = await folderService.findOrFail({ workspaceId, id })
+  if (folder.folderType !== folderTypes.enum.sequence) {
+    throw notFoundException("Folder not found")
+  }
+  return folder
 }
