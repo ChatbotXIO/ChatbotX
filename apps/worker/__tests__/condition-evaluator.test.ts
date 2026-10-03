@@ -317,3 +317,37 @@ describe("ConditionEvaluator customFieldValueChanged operator vocabulary", () =>
     ).resolves.toBe(true)
   })
 })
+
+describe("ConditionEvaluator WhatsApp call conditions", () => {
+  const evaluator = new ConditionEvaluator()
+
+  // The five call conditions the Triggers screen offers under the WhatsApp
+  // group. The events are emitted (apps/worker/src/integration/handlers/
+  // whatsapp-call.ts, whatsapp-call-recording.ts) and the webhook payload
+  // builder maps all five, so a rule using one has to be able to match.
+  const CALL_CONDITIONS = [
+    triggerEventTypes.enum.incomingCall,
+    triggerEventTypes.enum.missedAudioCall,
+    triggerEventTypes.enum.callEnded,
+    triggerEventTypes.enum.callRecorded,
+    triggerEventTypes.enum.callTranscribed,
+  ]
+
+  test.each(
+    CALL_CONDITIONS,
+  )("%s matches the event that carries it", async (type) => {
+    await expect(
+      evaluator.evaluate(buildContext({ type }, { callId: "call-1" })),
+    ).resolves.toBe(true)
+  })
+
+  // Control: the conditions the screen keeps commented out must still fall
+  // through to `false`, so the case above is not just "everything matches".
+  test("a condition the screen does not offer still does not match", async () => {
+    await expect(
+      evaluator.evaluate(
+        buildContext({ type: triggerEventTypes.enum.ticketCreated }),
+      ),
+    ).resolves.toBe(false)
+  })
+})
