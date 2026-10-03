@@ -49104,7 +49104,7 @@
       "table": "ConnectSession"
     },
     {
-      "value": "(\n        (\"kind\" = 'channel' AND \"inboxId\" IS NOT NULL AND \"channel\" IS NOT NULL)\n        OR\n        (\"kind\" = 'integration' AND \"inboxId\" IS NULL AND \"channel\" IS NULL AND \"integrationId\" IS NOT NULL)\n        OR\n        (\"kind\" = 'sub_connection' AND (\n          (\"inboxId\" IS NOT NULL AND \"channel\" IS NOT NULL AND \"integrationId\" IS NULL)\n          OR\n          (\"inboxId\" IS NULL AND \"channel\" IS NULL AND \"integrationId\" IS NOT NULL)\n        ))\n      )",
+      "value": "(\n        (\"kind\" = 'channel' AND \"inboxId\" IS NOT NULL AND \"channel\" IS NOT NULL)\n        OR\n        (\"kind\" = 'integration' AND \"inboxId\" IS NULL AND \"channel\" IS NULL AND \"integrationId\" IS NOT NULL)\n      )",
       "name": "Connection_kind_relation_check",
       "entityType": "checks",
       "schema": "public",
@@ -49118,7 +49118,7 @@
       "table": "Connection"
     },
     {
-      "value": "\"kind\" IN ('channel', 'integration', 'sub_connection')",
+      "value": "\"kind\" IN ('channel', 'integration')",
       "name": "Connection_kind_check",
       "entityType": "checks",
       "schema": "public",

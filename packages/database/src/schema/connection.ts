@@ -29,7 +29,9 @@ import { workspaceModel } from "./workspace"
 
 /**
  * Unified connection state keyed by `(workspaceId, provider, sourceId)`.
- * Channel rows have `channel`/`inboxId`; workspace integrations have `integrationId`.
+ * Each Inbox and each Integration owns at most one Connection
+ * (`Connection_inboxId_key` / `Connection_integrationId_key`). Channel rows
+ * have `channel`/`inboxId`; workspace integrations have `integrationId`.
  */
 export const connectionModel = pgTable(
   "Connection",
@@ -86,22 +88,12 @@ export const connectionModel = pgTable(
       "btree",
       table.integrationId.asc().nullsLast(),
     ),
-    // `sub_connection` is reserved (no reader/writer uses it yet, per
-    // `packages/utils/src/connection.ts`) — it still must land in one of the
-    // two defined shapes, never a half-channel/half-integration mix the two
-    // named kinds already forbid.
     check(
       "Connection_kind_relation_check",
       sql`(
         (${table.kind} = 'channel' AND ${table.inboxId} IS NOT NULL AND ${table.channel} IS NOT NULL)
         OR
         (${table.kind} = 'integration' AND ${table.inboxId} IS NULL AND ${table.channel} IS NULL AND ${table.integrationId} IS NOT NULL)
-        OR
-        (${table.kind} = 'sub_connection' AND (
-          (${table.inboxId} IS NOT NULL AND ${table.channel} IS NOT NULL AND ${table.integrationId} IS NULL)
-          OR
-          (${table.inboxId} IS NULL AND ${table.channel} IS NULL AND ${table.integrationId} IS NOT NULL)
-        ))
       )`,
     ),
     check(

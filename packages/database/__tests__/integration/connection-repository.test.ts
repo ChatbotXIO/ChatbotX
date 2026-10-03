@@ -348,9 +348,10 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
               .values({
                 workspaceId,
                 provider: "googleSheets",
-                kind: "sub_connection",
-                sourceId: "missing-sub-connection-shape",
-                displayName: "Missing sub-connection shape",
+                kind: "sub_connection" as never,
+                integrationId: integration.id,
+                sourceId: "sub-connection-kind",
+                displayName: "Sub-connection kind",
               })
               .returning(),
         ),

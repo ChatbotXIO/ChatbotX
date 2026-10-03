@@ -69,16 +69,12 @@ export const CONNECTION_TO_INBOX_DISCONNECT_REASON: Record<
 }
 
 /**
- * Same three-way split `packages/sdk`'s `ConnectionKind` uses, re-declared
- * here as a Zod enum (same rationale as `channelTypes`) so the database layer
- * and public API schemas can validate against it without depending on the
- * SDK package. `sub_connection` is reserved — no reader/writer uses it yet.
+ * Each Inbox and each Integration owns at most one Connection. This enum is
+ * re-declared here as a Zod enum (same rationale as `channelTypes`) so the
+ * database layer and public API schemas can validate against it without
+ * depending on the SDK package.
  */
-export const connectionKinds = z.enum([
-  "channel",
-  "integration",
-  "sub_connection",
-])
+export const connectionKinds = z.enum(["channel", "integration"])
 export type ConnectionKind = z.infer<typeof connectionKinds>
 
 export const connectionConfigFieldSchema = z.object({

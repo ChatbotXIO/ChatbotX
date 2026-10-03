@@ -56,15 +56,9 @@ CREATE TABLE "Connection" (
 		("kind" = 'channel' AND "inboxId" IS NOT NULL AND "channel" IS NOT NULL)
 		OR
 		("kind" = 'integration' AND "inboxId" IS NULL AND "channel" IS NULL AND "integrationId" IS NOT NULL)
-		OR
-		("kind" = 'sub_connection' AND (
-			("inboxId" IS NOT NULL AND "channel" IS NOT NULL AND "integrationId" IS NULL)
-			OR
-			("inboxId" IS NULL AND "channel" IS NULL AND "integrationId" IS NOT NULL)
-		))
 	)),
 	CONSTRAINT "Connection_inbox_integration_exclusive_check" CHECK (NOT ("inboxId" IS NOT NULL AND "integrationId" IS NOT NULL)),
-	CONSTRAINT "Connection_kind_check" CHECK ("kind" IN ('channel', 'integration', 'sub_connection')),
+	CONSTRAINT "Connection_kind_check" CHECK ("kind" IN ('channel', 'integration')),
 	CONSTRAINT "Connection_status_check" CHECK ("status" IN ('connected', 'degraded', 'needs_reauth', 'paused', 'disconnected')),
 	CONSTRAINT "Connection_statusReason_check" CHECK ("statusReason" IN ('manual', 'workspace_purge', 'trial_expired', 'tenant_suspended', 'token_revoked', 'provider_revoked', 'refresh_failed', 'verify_failed', 'quota_exceeded', 'orphaned_webhook')),
 	CONSTRAINT "Connection_status_reason_check" CHECK (("status" = 'connected') = ("statusReason" IS NULL)),
