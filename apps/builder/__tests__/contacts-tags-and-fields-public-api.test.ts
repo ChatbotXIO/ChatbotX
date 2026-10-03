@@ -292,6 +292,25 @@ describe("PUT /v1/contacts/{identifier}/custom-fields/{idOrName}", () => {
     })
   })
 
+  test("forwards the caller's clientTimezone to anchor a date value", async () => {
+    findCustomFieldByKeyOrFail.mockResolvedValueOnce({ id: "cf-1" })
+    setContactCustomFieldValue.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        identifier: "id:123",
+        idOrName: "cf-1",
+        value: "2026-10-03",
+        clientTimezone: "Asia/Ho_Chi_Minh",
+      },
+    })
+
+    expect(setContactCustomFieldValue).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceTimezone: "Asia/Ho_Chi_Minh" }),
+    )
+  })
+
   test("resolves the field by name before setting the value", async () => {
     findCustomFieldByKeyOrFail.mockResolvedValueOnce({ id: "cf-2" })
     setContactCustomFieldValue.mockResolvedValueOnce(undefined)
@@ -500,5 +519,41 @@ describe("PATCH /v1/contacts/{identifier}/custom-fields", () => {
         { customFieldId: "cf-1", operation: "O02", value: "b" },
       ],
     })
+  })
+
+  test("forwards clientTimezone for the whole batch", async () => {
+    findCustomFieldByKeyOrFail.mockResolvedValue({ id: "cf-1" })
+    applyCustomFieldOperations.mockResolvedValue(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        identifier: "id:123",
+        clientTimezone: "America/New_York",
+        operations: [{ customFieldId: "cf-1", operation: "set", value: "x" }],
+      },
+    })
+
+    expect(applyCustomFieldOperations).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceTimezone: "America/New_York" }),
+    )
+  })
+})
+
+describe("clientTimezone validation", () => {
+  test("an unknown IANA zone is rejected instead of silently becoming UTC", async () => {
+    const { addContactCustomFieldOperationsPublicRequest: schema } =
+      await import("@/features/contacts/schema/public/custom-fields")
+    const base = {
+      identifier: "id:1",
+      operations: [{ customFieldId: "1", operation: "set", value: "x" }],
+    }
+
+    expect(
+      schema.safeParse({ ...base, clientTimezone: "Asia/Ho_Chi_Minh" }).success,
+    ).toBe(true)
+    expect(
+      schema.safeParse({ ...base, clientTimezone: "Asia/Hanoi" }).success,
+    ).toBe(false)
   })
 })

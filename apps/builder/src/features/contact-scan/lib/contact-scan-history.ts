@@ -12,12 +12,14 @@ import type {
  */
 export async function listContactScanHistoryRows(input: {
   workspaceId: string
+  integrationId?: string
   page?: number
   perPage?: number
   sort?: { id: string; desc: boolean }[]
 }): Promise<ListContactScanHistoryResponse> {
   const { data, pageCount } = await contactScanService.listHistory({
     workspaceId: input.workspaceId,
+    integrationId: input.integrationId,
     page: input.page ?? undefined,
     perPage: input.perPage ?? undefined,
     sort: input.sort ?? undefined,

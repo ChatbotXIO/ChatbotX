@@ -329,6 +329,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "analytics.commentAutomationBotReplies",
+    "path": "/v1/analytics/comment-automation/bot-replies",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationErrors",
+    "path": "/v1/analytics/comment-automation/errors",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationReplyStats",
+    "path": "/v1/analytics/comment-automation/replies",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationUserComments",
+    "path": "/v1/analytics/comment-automation/user-comments",
+  },
+  {
+    "method": "GET",
     "operationId": "analytics.contactCountsPerDay",
     "path": "/v1/analytics/contact-counts-per-day",
   },
@@ -366,6 +386,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "analytics.conversationHandoffs",
     "path": "/v1/analytics/conversation-handoffs",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.flowSmartDelayStats",
+    "path": "/v1/analytics/flows/{flowId}/smart-delay-stats",
   },
   {
     "method": "GET",

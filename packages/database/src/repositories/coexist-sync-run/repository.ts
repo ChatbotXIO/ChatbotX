@@ -1111,6 +1111,8 @@ export class CoexistSyncRunRepository {
    */
   async listContactScanRuns(input: {
     workspaceId: string
+    /** Only runs of this channel integration. */
+    integrationId?: string
     page?: number
     perPage?: number
     sort?: { id: string; desc: boolean }[]
@@ -1120,6 +1122,7 @@ export class CoexistSyncRunRepository {
     const where = {
       workspaceId,
       type: "contact_scan" as const,
+      integrationId: input.integrationId,
     }
     const pagination = getPaginationWithDefaults(input)
     const sortObject = parseOrderByAsObject(coexistSyncRunModel, input)

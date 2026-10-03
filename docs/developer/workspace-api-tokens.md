@@ -462,6 +462,19 @@ an endpoint's scope.
   or over-limit workspace (the builder allows it too) but not to `read_only`
   tokens. `emailTopics.list` accepts `sort`.
 
+- **Contacts and analytics extras** — `contacts.setCustomField` and
+  `contacts.applyCustomFieldOperations` accept `clientTimezone` to anchor a
+  date-only value (default: the contact's, then the workspace's zone).
+  `contactScans.list` accepts `integrationId` and `sort`. Analytics adds
+  `GET /v1/analytics/flows/{flowId}/smart-delay-stats` (wait/follow-up
+  `{waiting, sent}` per node of the draft version; kept apart from `flowStats`
+  so its shape does not change) and four comment-automation routes under
+  `/v1/analytics/comment-automation/*` (replies per day, customer comments, bot
+  replies, errors). The customer comment texts are PII and are returned
+  verbatim to any `analytics`-scoped token, as the dashboard shows them; the
+  errors route also returns each contact's name and avatar.
+  `magicLinkContacts`/`refLinkContacts` deliberately omit name and avatar.
+
 - **Imports** — a token can run a whole import without the browser's session
   upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
   `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file

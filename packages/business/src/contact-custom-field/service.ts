@@ -354,9 +354,12 @@ class ContactCustomFieldService extends BaseService {
       operation: FieldOperationType
       value: string
     }>
+    /** Caller's IANA zone, anchoring naive `date` values to its calendar day. */
+    sourceTimezone?: string
     accessScope?: ContactAccessScope
   }): Promise<void> {
-    const { workspaceId, contactId, operations, accessScope } = input
+    const { workspaceId, contactId, operations, accessScope, sourceTimezone } =
+      input
 
     const persistedByContact = await db.transaction(async (tx) => {
       const allChanges: Array<{
@@ -371,6 +374,7 @@ class ContactCustomFieldService extends BaseService {
             customFieldId: op.customFieldId,
             operation: op.operation,
             value: op.value,
+            sourceTimezone,
             accessScope,
           },
           tx,
@@ -396,6 +400,8 @@ class ContactCustomFieldService extends BaseService {
     contactId: string
     customFieldId: string
     value: string
+    /** Caller's IANA zone, anchoring a naive `date` to its calendar day. */
+    sourceTimezone?: string
     accessScope?: ContactAccessScope
   }) {
     await contactService.findByIdOrFail({
@@ -414,6 +420,7 @@ class ContactCustomFieldService extends BaseService {
       workspaceId: input.workspaceId,
       contactId: input.contactId,
       fields: [{ customFieldId: customField.id, value: input.value }],
+      sourceTimezone: input.sourceTimezone,
     })
   }
   async listValues(input: { contactId: string }) {
