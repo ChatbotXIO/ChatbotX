@@ -5,6 +5,7 @@ import {
   type ContactInboxTrackingData,
   type ContactInboxWithContact,
   channelPostService,
+  commentAutomationService,
   contactInboxPostService,
   contactInboxService,
   contactService,
@@ -32,6 +33,7 @@ import {
 } from "@chatbotx.io/business/contact-locale"
 import {
   type ChannelType,
+  type CommentAutomationType,
   type ContactSource,
   contactSources,
   type IntegrationType,
@@ -117,6 +119,7 @@ import {
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
 import { processCommentAutomation } from "./comment-automation"
+import { resolveLiveComment } from "./comment-automation/live-comment"
 import { runAsMissedCommentReplay } from "./comment-automation/replay-priority"
 import {
   downloadCommentMediaAttachment,
@@ -1375,6 +1378,51 @@ const SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS = new Set<string>([
 // `Conversation.sourceId = postId`; the comment author's PSID identifies the
 // contact. Unlike `receiveMessage`, comments only land in the inbox — no
 // automated-response/flow pipeline is triggered.
+/** How long a finished `processCommentAutomation` job — and so its jobId — is kept. */
+const COMMENT_AUTOMATION_JOB_RETENTION_SECONDS = 24 * 60 * 60
+
+/**
+ * Live comments processed per second per account. Facebook gets the tighter
+ * pace because one comment can fan out into a public reply, a private reply, a
+ * like and a hide — four Page-level Graph calls. Instagram Live allows only the
+ * private reply, and Meta permits 100 of those per second per account.
+ */
+const LIVE_COMMENTS_PER_SECOND: Record<string, number> = {
+  messenger: 5,
+  instagram: 20,
+  instagramFacebook: 20,
+}
+
+/**
+ * How long this live comment's automation job waits for its slot on the
+ * account's timeline. Pacing is a protection, not a requirement: if Redis
+ * fails the comment is processed immediately rather than dropped.
+ */
+async function reserveLiveCommentDelay(props: {
+  integrationType: string
+  integrationIdentifier: string
+  commentId: string
+}): Promise<number> {
+  const perSecond = LIVE_COMMENTS_PER_SECOND[props.integrationType]
+  if (!perSecond) {
+    return 0
+  }
+  try {
+    const startsAt = await commentAutomationService.reserveLiveCommentWindow({
+      channelType: props.integrationType as CommentAutomationType,
+      integrationIdentifier: props.integrationIdentifier,
+      spanMs: 1000 / perSecond,
+    })
+    return Math.max(0, startsAt - Date.now())
+  } catch (err) {
+    logger.warn(
+      { err, commentId: props.commentId },
+      "receiveComment: failed to reserve live comment pacing slot, processing now",
+    )
+    return 0
+  }
+}
+
 export const receiveComment = async (
   props: IntegrationJobReceiveComment["data"],
 ): Promise<void> => {
@@ -1547,6 +1595,9 @@ export const receiveComment = async (
   }
 
   let attachments: IncomingAttachment[] = []
+  // Instagram flags a live comment on the webhook itself (`live_comments`);
+  // Facebook's is resolved from the attachment lookup just below.
+  let isLiveComment = commentData.isLive === true
   if (integrationType === "messenger") {
     const ctx = await buildContext({
       workspaceId: inbox.workspaceId,
@@ -1562,6 +1613,11 @@ export const receiveComment = async (
         input: { commentId: commentData.commentId },
       })
       .catch(() => undefined)
+    isLiveComment = await resolveLiveComment({
+      integrationId: integrationRow.id,
+      postId: commentData.postId,
+      lookupIsLive: result?.isLive,
+    })
     if (result?.attachment) {
       attachments = [result.attachment]
     } else if (commentData.videoUrl) {
@@ -1605,7 +1661,10 @@ export const receiveComment = async (
     // The commented post id lives on the comment message itself (not on the
     // ContactInbox); the `last_post_id`/`last_commented_post_text` system fields
     // read it back from here via the user's latest comment message.
-    contentAttributes: { postId: commentData.postId },
+    contentAttributes: {
+      postId: commentData.postId,
+      ...(isLiveComment ? { isLiveComment: true } : {}),
+    },
   }
 
   const { storageUrl } = await resolveTenantSettings({
@@ -1629,8 +1688,9 @@ export const receiveComment = async (
   // already committed (a failure in anything below), and a retry always sees
   // `isNew: false`. Returning here would silently drop the auto-reply. The
   // enqueue below is idempotent on its own — `jobId` rejects a duplicate, and
-  // completed jobs are retained (`removeOnComplete: { count: 1000 }`), so a
-  // genuine webhook redelivery is a no-op rather than a second reply.
+  // completed jobs are retained for a day
+  // (`COMMENT_AUTOMATION_JOB_RETENTION_SECONDS`), so a genuine webhook
+  // redelivery is a no-op rather than a second reply.
   if (!isNewComment) {
     logger.info(
       { commentId: commentData.commentId, integrationType },
@@ -1664,6 +1724,7 @@ export const receiveComment = async (
     message: commentData.message,
     tags: commentData.tags,
     createdTime: commentData.createdTime,
+    isLive: isLiveComment || undefined,
   }
 
   // A missed-comment replay already runs on the `low` queue, one comment per
@@ -1688,6 +1749,23 @@ export const receiveComment = async (
     await existingJob.remove()
   }
 
+  // The jobId only blocks a redelivered webhook while the completed job is
+  // still stored. The worker default keeps the last 1,000 completed jobs
+  // queue-wide, which one busy live broadcast pushes through in minutes — so
+  // this job is kept by age instead, long enough to outlast Meta's retries.
+  const jobOptions = {
+    jobId: processCommentAutomationJobId,
+    removeOnComplete: { age: COMMENT_AUTOMATION_JOB_RETENTION_SECONDS },
+    ...(isLiveComment
+      ? {
+          delay: await reserveLiveCommentDelay({
+            integrationType,
+            integrationIdentifier,
+            commentId: commentData.commentId,
+          }),
+        }
+      : {}),
+  }
   await integrationQueue.add(
     IntegrationJobAction.processCommentAutomation,
     {
@@ -1695,8 +1773,8 @@ export const receiveComment = async (
       data: automationData,
     },
     SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS.has(integrationType)
-      ? { jobId: processCommentAutomationJobId, attempts: 1 }
-      : { jobId: processCommentAutomationJobId },
+      ? { ...jobOptions, attempts: 1 }
+      : jobOptions,
   )
 }
 

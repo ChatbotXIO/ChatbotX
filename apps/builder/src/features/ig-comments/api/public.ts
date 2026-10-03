@@ -7,6 +7,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { ensureLiveCommentsSubscriptionForAutomation } from "../lib/ensure-live-comments-subscription"
 import {
   listInstagramFacebookMedia,
   listInstagramLoginMedia,
@@ -82,11 +83,17 @@ export const igCommentsPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { type, ...data } = input
-      return await commentAutomationService.createInstagram({
+      const created = await commentAutomationService.createInstagram({
         workspaceId: context.workspace.id,
         type,
         data,
       })
+      await ensureLiveCommentsSubscriptionForAutomation({
+        workspaceId: context.workspace.id,
+        type,
+        post: data.post,
+      })
+      return created
     }),
 
   update: workspaceTokenAuthAPI

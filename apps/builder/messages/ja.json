@@ -573,6 +573,13 @@
     "trackUserTags": {
       "label": "ユーザーが他のユーザーをタグ付けしたかを記録する",
       "descriptionText": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
+    },
+    "card": {
+      "reply": "返信"
+    },
+    "liveBadge": "ライブ",
+    "postTypeDialog": {
+      "title": "投稿タイプを選択"
     }
   },
   "condition": {
@@ -4974,7 +4981,13 @@
     "chooseSpecificPosts": "投稿を選択...",
     "postIdTab": "投稿ID",
     "postIdPlaceholder": "投稿IDを1行に1件ずつ入力...",
-    "noPostsFound": "投稿が見つかりません"
+    "noPostsFound": "投稿が見つかりません",
+    "postTypeDialog": {
+      "liveTitle": "ライブ配信",
+      "liveDescription": "ライブ配信のコメントを自動化します。公開返信、非公開返信、コメントの非表示といいねに対応しています。",
+      "postsTitle": "ページの投稿",
+      "postsDescription": "ページの投稿とリールのコメントを自動化します。公開返信、非公開返信、コメントの非表示といいねに対応しています。"
+    }
   },
   "instagramCommentAutomation": {
     "title": "Instagramコメント自動化",
@@ -5081,7 +5094,14 @@
       "instagramDescription": "Instagramログインによる接続です。公開返信、非公開返信、コメントの非表示に対応しています。コメントへの「いいね！」には対応していません。",
       "instagramFacebookTitle": "FacebookでInstagramにログイン",
       "instagramFacebookDescription": "Facebookページ経由で接続されたInstagramです。公開返信、非公開返信、コメントの非表示、コメントへの「いいね！」に対応しています。"
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagramライブ",
+      "liveDescription": "Instagramライブのコメントを自動化します。配信中、コメントした人それぞれに非公開返信を送信します。",
+      "postsTitle": "投稿とリール",
+      "postsDescription": "投稿とリールのコメントを自動化します。公開返信、非公開返信、コメントの非表示に対応しています。"
+    },
+    "liveReplyNote": "Instagramでは、ライブのコメントには非公開返信のみ、かつ配信中のみ送信できます。公開返信、非表示、いいねは利用できません。"
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

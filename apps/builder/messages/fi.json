@@ -573,6 +573,13 @@
     "trackUserTags": {
       "label": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
       "descriptionText": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
+    },
+    "card": {
+      "reply": "Vastaus"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Valitse julkaisun tyyppi"
     }
   },
   "condition": {
@@ -4995,7 +5002,13 @@
     "chooseSpecificPosts": "Valitse julkaisut...",
     "postIdTab": "Julkaisutunnus",
     "postIdPlaceholder": "Kirjoita julkaisutunnukset, yksi kullekin riville...",
-    "noPostsFound": "Julkaisuja ei löytynyt"
+    "noPostsFound": "Julkaisuja ei löytynyt",
+    "postTypeDialog": {
+      "liveTitle": "Livelähetys",
+      "liveDescription": "Automatisoi livelähetysten kommentit. Tukee julkisia vastauksia, yksityisiä vastauksia sekä kommenttien piilottamista ja tykkäämistä.",
+      "postsTitle": "Sivun julkaisut",
+      "postsDescription": "Automatisoi sivun julkaisujen ja reelsien kommentit. Tukee julkisia vastauksia, yksityisiä vastauksia sekä kommenttien piilottamista ja tykkäämistä."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Instagram-kommenttiautomaatio",
@@ -5102,7 +5115,14 @@
       "instagramDescription": "Instagram-kirjautumisyhteys. Tukee julkista vastausta, yksityistä vastausta ja kommenttien piilottamista. Kommenteista tykkäämistä ei tueta.",
       "instagramFacebookTitle": "Instagram-kirjautuminen Facebookilla",
       "instagramFacebookDescription": "Facebook-sivun kautta yhdistetty Instagram. Tukee julkista vastausta, yksityistä vastausta, kommenttien piilottamista ja kommenteista tykkäämistä."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatisoi Instagram Live -kommentit. Lähettää jokaiselle kommentoijalle yksityisen vastauksen, kun olet livenä.",
+      "postsTitle": "Julkaisut ja reelsit",
+      "postsDescription": "Automatisoi julkaisujen ja reelsien kommentit. Tukee julkisia vastauksia, yksityisiä vastauksia ja kommenttien piilottamista."
+    },
+    "liveReplyNote": "Instagram sallii live-kommenttiin vain yksityisen vastauksen ja vain lähetyksen aikana. Julkiset vastaukset, piilottaminen ja tykkääminen eivät ole käytettävissä."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

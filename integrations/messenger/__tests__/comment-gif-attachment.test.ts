@@ -151,6 +151,48 @@ describe("getCommentAttachment GIF comments", () => {
     expect(result).toEqual({
       type: "animated_image_share",
       attachment: undefined,
+      isLive: false,
     })
+  })
+})
+
+describe("getCommentAttachment live comments", () => {
+  test("asks for live_broadcast_timestamp and flags a live comment", async () => {
+    let requestedFields: string | null = null
+    server.use(
+      http.get(
+        `https://graph.facebook.com/v23.0/${COMMENT_ID}`,
+        ({ request }) => {
+          requestedFields = new URL(request.url).searchParams.get("fields")
+          return HttpResponse.json({
+            id: COMMENT_ID,
+            live_broadcast_timestamp: 42,
+          })
+        },
+      ),
+    )
+
+    const result = await getCommentAttachment({
+      ctx: buildCtx(),
+      input: { commentId: COMMENT_ID },
+    })
+
+    expect(requestedFields).toContain("live_broadcast_timestamp")
+    expect(result).toEqual({ type: null, isLive: true })
+  })
+
+  test("a comment without live_broadcast_timestamp is not live", async () => {
+    server.use(
+      http.get(`https://graph.facebook.com/v23.0/${COMMENT_ID}`, () =>
+        HttpResponse.json({ id: COMMENT_ID }),
+      ),
+    )
+
+    const result = await getCommentAttachment({
+      ctx: buildCtx(),
+      input: { commentId: COMMENT_ID },
+    })
+
+    expect(result).toEqual({ type: null, isLive: false })
   })
 })

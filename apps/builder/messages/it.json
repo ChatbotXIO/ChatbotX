@@ -2077,6 +2077,13 @@
     "trackUserTags": {
       "label": "Traccia se un utente tagga altri utenti",
       "descriptionText": "Conta gli account taggati in ogni commento e li somma ai totali del contatto su tutti i commenti. Usa '{{total_tagged}}' per tutti gli account taggati e '{{total_new_tagged}}' per quelli che non hanno mai scritto alla tua pagina né sono stati contatti."
+    },
+    "card": {
+      "reply": "Risposta"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Seleziona il tipo di post"
     }
   },
   "condition": {
@@ -4995,7 +5002,13 @@
     "chooseSpecificPosts": "Scegli post...",
     "postIdTab": "ID post",
     "postIdPlaceholder": "Inserisci gli ID dei post, uno per riga...",
-    "noPostsFound": "Nessun post trovato"
+    "noPostsFound": "Nessun post trovato",
+    "postTypeDialog": {
+      "liveTitle": "Diretta",
+      "liveDescription": "Automatizza i commenti nelle dirette. Supporta risposte pubbliche, risposte private, nascondere e mettere Mi piace ai commenti.",
+      "postsTitle": "Post della Pagina",
+      "postsDescription": "Automatizza i commenti su post e reel della Pagina. Supporta risposte pubbliche, risposte private, nascondere e mettere Mi piace ai commenti."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Automazione dei commenti di Instagram",
@@ -5102,7 +5115,14 @@
       "instagramDescription": "Connessione tramite accesso Instagram. Supporta risposte pubbliche, risposte private e la possibilità di nascondere i commenti. Non supporta i Mi piace ai commenti.",
       "instagramFacebookTitle": "Accesso a Instagram con Facebook",
       "instagramFacebookDescription": "Instagram collegato tramite una Pagina Facebook. Supporta risposte pubbliche, risposte private, la possibilità di nascondere i commenti e i Mi piace ai commenti."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatizza i commenti su Instagram Live. Invia una risposta privata a ogni persona che commenta mentre sei in diretta.",
+      "postsTitle": "Post e reel",
+      "postsDescription": "Automatizza i commenti su post e reel. Supporta risposte pubbliche, risposte private e nascondere i commenti."
+    },
+    "liveReplyNote": "Instagram consente solo una risposta privata a un commento in diretta, e solo mentre sei in diretta. Risposte pubbliche, nascondere e Mi piace non sono disponibili."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

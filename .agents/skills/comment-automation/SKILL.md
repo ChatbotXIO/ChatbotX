@@ -40,6 +40,7 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 | Miss read/write | `packages/analytics/src/repositories/postgres/comment-automation-miss.repository.ts`, `commentAutomationAnalyticsService.recordMisses` |
 | Cross-queue delivery/failure anchor | `apps/worker/src/lib/comment-automation-anchor.ts` |
 | "Process missed comments" (replay one post's last 7 days through one automation) | `apps/builder/src/features/shared/comment-automation/lib/missed-comments/` → `low` queue (`LowJobAction.replayMissedComment`) → `receiveComment` → inline `processCommentAutomation({ onlyAutomationId })`. Every enqueue in these handlers wraps its options in `withReplayPriority` (`replay-priority.ts`) — a new enqueue site that skips it lets a replay of thousands of comments crowd out live sends. See the doc's "Process missed comments" section |
+| Live comments (detection, pacing) | `apps/worker/src/integration/handlers/comment-automation/live-comment.ts`, `received-message.ts` (`reserveLiveCommentDelay`); capabilities in `partials/comment-automation.ts` (`liveCommentCapabilities`) |
 | Tests | `apps/worker/__tests__/comment-automation.test.ts` |
 
 ## Data-flow in one line
@@ -335,6 +336,20 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     and `sentCount` counts attempts on one half of the comment only (trap 11). A blocked
     private reply stays a `failed` event — it was attempted. `missedCount` itself is
     channel-agnostic, unlike the delivery counters — a decline has no reply channel.
+
+17. **Live and post automations are disjoint.** `post.type: "live"` answers only
+    live-broadcast comments and `all` skips them (`matchPost(post, postId, isLive)`);
+    only an explicit `postIds` list matches either. A comment's live-ness comes from
+    Instagram's `live_comments` field or Facebook's `live_broadcast_timestamp` +
+    Redis post memory (`resolveLiveComment`). Never infer it from `post_id` shape.
+    What a Live automation may do is `liveCommentCapabilities(type)` — IG Live is
+    private-reply-only and only while broadcasting — enforced in three places that
+    must agree: the form, `withLiveCapabilities` (service) and
+    `withLiveCapabilityLimits` (worker). See the docs' "Live comments" section.
+
+18. **`replyOncePerUserPerPost` is enforced by `claimDedup`, not `findDedup`.** The
+    read is a fast path for the miss reason; the atomic insert decides. Release a
+    claimed row with `deleteDedup` whenever the run ends up dispatching nothing.
 
 ## Adding a new filter option (recipe)
 

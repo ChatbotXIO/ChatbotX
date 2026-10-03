@@ -573,6 +573,13 @@
     "trackUserTags": {
       "label": "Registrar si un usuario etiqueta a otros usuarios",
       "descriptionText": "Cuenta las cuentas etiquetadas en cada comentario y las suma a los totales del contacto en todos los comentarios. Usa '{{total_tagged}}' para todas las cuentas etiquetadas y '{{total_new_tagged}}' para las que nunca han escrito a tu página ni han sido contacto."
+    },
+    "card": {
+      "reply": "Respuesta"
+    },
+    "liveBadge": "En vivo",
+    "postTypeDialog": {
+      "title": "Selecciona el tipo de publicación"
     }
   },
   "condition": {
@@ -4995,7 +5002,13 @@
     "chooseSpecificPosts": "Elegir publicaciones...",
     "postIdTab": "ID de la publicación",
     "postIdPlaceholder": "Ingresa los ID de las publicaciones, uno por línea...",
-    "noPostsFound": "No se encontraron publicaciones"
+    "noPostsFound": "No se encontraron publicaciones",
+    "postTypeDialog": {
+      "liveTitle": "Transmisión en vivo",
+      "liveDescription": "Automatiza los comentarios en transmisiones en vivo. Admite respuestas públicas, respuestas privadas, ocultar comentarios y darles me gusta.",
+      "postsTitle": "Publicaciones de la página",
+      "postsDescription": "Automatiza los comentarios en publicaciones y reels de la página. Admite respuestas públicas, respuestas privadas, ocultar comentarios y darles me gusta."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Automatización de comentarios de Instagram",
@@ -5102,7 +5115,14 @@
       "instagramDescription": "Conexión de Instagram Login. Admite respuesta pública, respuesta privada y ocultar comentarios. No admite dar me gusta a los comentarios.",
       "instagramFacebookTitle": "Instagram Login con Facebook",
       "instagramFacebookDescription": "Instagram conectado a través de una página de Facebook. Admite respuesta pública, respuesta privada, ocultar comentarios y dar me gusta a los comentarios."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatiza los comentarios en Instagram Live. Envía una respuesta privada a cada persona que comenta mientras estás en vivo.",
+      "postsTitle": "Publicaciones y reels",
+      "postsDescription": "Automatiza los comentarios en publicaciones y reels. Admite respuestas públicas, respuestas privadas y ocultar comentarios."
+    },
+    "liveReplyNote": "Instagram solo permite una respuesta privada a un comentario en vivo, y solo mientras estás en vivo. No se pueden usar respuestas públicas, ocultar ni dar me gusta."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

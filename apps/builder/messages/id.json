@@ -573,6 +573,13 @@
     "trackUserTags": {
       "label": "Lacak jika pengguna menandai pengguna lain",
       "descriptionText": "Menghitung akun yang ditandai di setiap komentar dan menambahkannya ke total kontak dari semua komentar. Gunakan '{{total_tagged}}' untuk semua akun yang ditandai dan '{{total_new_tagged}}' untuk akun yang belum pernah mengirim pesan ke halaman Anda atau menjadi kontak."
+    },
+    "card": {
+      "reply": "Balasan"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Pilih jenis postingan"
     }
   },
   "condition": {
@@ -4995,7 +5002,13 @@
     "chooseSpecificPosts": "Pilih postingan...",
     "postIdTab": "ID Postingan",
     "postIdPlaceholder": "Masukkan ID postingan, satu per baris...",
-    "noPostsFound": "Tidak ada postingan yang ditemukan"
+    "noPostsFound": "Tidak ada postingan yang ditemukan",
+    "postTypeDialog": {
+      "liveTitle": "Siaran Langsung",
+      "liveDescription": "Otomatiskan komentar di siaran langsung. Mendukung balasan publik, balasan pribadi, menyembunyikan, dan menyukai komentar.",
+      "postsTitle": "Postingan Halaman",
+      "postsDescription": "Otomatiskan komentar di postingan dan reels Halaman. Mendukung balasan publik, balasan pribadi, menyembunyikan, dan menyukai komentar."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Otomatisasi Komentar Instagram",
@@ -5102,7 +5115,14 @@
       "instagramDescription": "Koneksi melalui Login Instagram. Mendukung balasan publik, balasan pribadi, dan menyembunyikan komentar. Menyukai komentar tidak didukung.",
       "instagramFacebookTitle": "Login Instagram dengan Facebook",
       "instagramFacebookDescription": "Instagram terhubung melalui Halaman Facebook. Mendukung balasan publik, balasan pribadi, menyembunyikan komentar, dan menyukai komentar."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Otomatiskan komentar di Instagram Live. Mengirim balasan pribadi ke setiap pemberi komentar selama Anda live.",
+      "postsTitle": "Postingan & Reels",
+      "postsDescription": "Otomatiskan komentar di postingan dan reels. Mendukung balasan publik, balasan pribadi, dan menyembunyikan komentar."
+    },
+    "liveReplyNote": "Instagram hanya mengizinkan balasan pribadi untuk komentar Live, dan hanya selama Anda live. Balasan publik, menyembunyikan, dan menyukai tidak tersedia."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

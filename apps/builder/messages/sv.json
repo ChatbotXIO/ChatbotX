@@ -725,6 +725,13 @@
     "trackUserTags": {
       "label": "Spåra om en användare taggar andra användare",
       "descriptionText": "Räknar kontona som taggas i varje kommentar och lägger till dem i kontaktens totaler över alla kommentarer. Använd '{{total_tagged}}' för alla taggade konton och '{{total_new_tagged}}' för konton som aldrig har skrivit till din sida eller varit kontakter."
+    },
+    "card": {
+      "reply": "Svar"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Välj inläggstyp"
     }
   },
   "channels": {
@@ -1633,7 +1640,13 @@
     },
     "title": "Automatisering av Facebook-kommentarer",
     "trackCommentsOn": "Spåra kommentarer på",
-    "trackCommentsOnDescription": "Använd denna automatisering för alla inlägg på din sida eller begränsa den till specifika inlägg som du väljer."
+    "trackCommentsOnDescription": "Använd denna automatisering för alla inlägg på din sida eller begränsa den till specifika inlägg som du väljer.",
+    "postTypeDialog": {
+      "liveTitle": "Livesändning",
+      "liveDescription": "Automatisera kommentarer i livesändningar. Stöder offentliga svar, privata svar samt att dölja och gilla kommentarer.",
+      "postsTitle": "Sidinlägg",
+      "postsDescription": "Automatisera kommentarer på sidans inlägg och reels. Stöder offentliga svar, privata svar samt att dölja och gilla kommentarer."
+    }
   },
   "facebookLeadAdsAutomation": {
     "addNewPage": "Lägg till ny",
@@ -3698,7 +3711,14 @@
     },
     "title": "Automatisering av Instagram-kommentarer",
     "trackCommentsOn": "Spåra kommentarer på",
-    "trackCommentsOnDescription": "Använd denna automatisering för alla inlägg på ditt anslutna konto eller begränsa den till specifika inlägg som du väljer."
+    "trackCommentsOnDescription": "Använd denna automatisering för alla inlägg på ditt anslutna konto eller begränsa den till specifika inlägg som du väljer.",
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatisera kommentarer i Instagram Live. Skickar ett privat svar till varje kommentator medan du sänder live.",
+      "postsTitle": "Inlägg och reels",
+      "postsDescription": "Automatisera kommentarer på inlägg och reels. Stöder offentliga svar, privata svar och att dölja kommentarer."
+    },
+    "liveReplyNote": "Instagram tillåter bara ett privat svar på en Live-kommentar, och bara medan du sänder live. Offentliga svar, döljning och gilla-markeringar är inte tillgängliga."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

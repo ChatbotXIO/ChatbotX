@@ -573,6 +573,13 @@
     "trackUserTags": {
       "label": "Suivre si un utilisateur identifie d'autres utilisateurs",
       "descriptionText": "Compte les comptes identifiés dans chaque commentaire et les ajoute aux totaux du contact sur l'ensemble des commentaires. Utilisez '{{total_tagged}}' pour tous les comptes identifiés et '{{total_new_tagged}}' pour ceux qui n'ont jamais écrit à votre page ni été contacts."
+    },
+    "card": {
+      "reply": "Réponse"
+    },
+    "liveBadge": "En direct",
+    "postTypeDialog": {
+      "title": "Sélectionner le type de publication"
     }
   },
   "condition": {
@@ -4995,7 +5002,13 @@
     "chooseSpecificPosts": "Choisir des publications...",
     "postIdTab": "Identifiant de publication",
     "postIdPlaceholder": "Saisissez un identifiant de publication par ligne...",
-    "noPostsFound": "Aucune publication trouvée"
+    "noPostsFound": "Aucune publication trouvée",
+    "postTypeDialog": {
+      "liveTitle": "Diffusion en direct",
+      "liveDescription": "Automatisez les commentaires sur les diffusions en direct. Prend en charge les réponses publiques, les réponses privées, ainsi que le masquage et les mentions J'aime des commentaires.",
+      "postsTitle": "Publications de la Page",
+      "postsDescription": "Automatisez les commentaires sur les publications et reels de la Page. Prend en charge les réponses publiques, les réponses privées, ainsi que le masquage et les mentions J'aime des commentaires."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Automatisation des commentaires Instagram",
@@ -5102,7 +5115,14 @@
       "instagramDescription": "Connexion avec Instagram Login. Prend en charge les réponses publiques et privées ainsi que le masquage des commentaires, mais pas les mentions J’aime.",
       "instagramFacebookTitle": "Connexion Instagram avec Facebook",
       "instagramFacebookDescription": "Instagram connecté via une Page Facebook. Prend en charge les réponses publiques et privées, le masquage des commentaires et les mentions J’aime."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatisez les commentaires sur Instagram Live. Envoie une réponse privée à chaque personne qui commente pendant que vous êtes en direct.",
+      "postsTitle": "Publications et reels",
+      "postsDescription": "Automatisez les commentaires sur les publications et les reels. Prend en charge les réponses publiques, les réponses privées et le masquage des commentaires."
+    },
+    "liveReplyNote": "Instagram n'autorise qu'une réponse privée à un commentaire en direct, et uniquement pendant la diffusion. Les réponses publiques, le masquage et les mentions J'aime ne sont pas disponibles."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

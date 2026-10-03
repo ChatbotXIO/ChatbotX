@@ -74,10 +74,60 @@ export function commentAutomationChannelSupportsHideGif(
 }
 
 export const commentPostSchema = z.object({
-  type: z.enum(["published", "ads", "reels", "postIds", "all"]),
+  type: z.enum(["published", "ads", "reels", "postIds", "all", "live"]),
   value: z.array(z.string()),
 })
 export type CommentPost = z.infer<typeof commentPostSchema>
+
+/**
+ * A Live automation answers comments made on any of the account's live
+ * broadcasts — and ONLY those: an `all` automation skips a live comment, so a
+ * viewer is never answered twice (see `matchPost` in the worker).
+ */
+export function isLiveCommentAutomation(post: Pick<CommentPost, "type">) {
+  return post.type === "live"
+}
+
+export type LiveCommentCapabilities = {
+  publicReply: boolean
+  likeComment: boolean
+  hideComments: boolean
+  /** Reply delays are allowed — false where the reply window can close mid-wait. */
+  replyDelay: boolean
+  /** Whether a live comment can itself be a reply to another comment. */
+  commentReplies: boolean
+}
+
+const FULL_LIVE_CAPABILITIES: LiveCommentCapabilities = {
+  publicReply: true,
+  likeComment: true,
+  hideComments: true,
+  replyDelay: true,
+  commentReplies: true,
+}
+
+/**
+ * What a Live automation can do per channel. Meta's Instagram Live API is
+ * private-reply-only: "You cannot reply to comments on a live video", live
+ * comments cannot be hidden (they are only readable while broadcasting), there
+ * is no comment-like API, and the private reply is accepted only while the
+ * broadcast is running — so any reply delay risks landing after it ends.
+ * Facebook Live comments are ordinary Page comments.
+ */
+export function liveCommentCapabilities(
+  type: CommentAutomationType,
+): LiveCommentCapabilities {
+  if (type === "instagram" || type === "instagramFacebook") {
+    return {
+      publicReply: false,
+      likeComment: false,
+      hideComments: false,
+      replyDelay: false,
+      commentReplies: false,
+    }
+  }
+  return FULL_LIVE_CAPABILITIES
+}
 
 /**
  * "Process missed comments" replays one post's recent comments, so it is only

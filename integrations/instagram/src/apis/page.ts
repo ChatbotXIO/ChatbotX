@@ -11,6 +11,9 @@ export const INSTAGRAM_SUBSCRIBE_FIELDS = [
   "messaging_seen",
   "messaging_referral",
   "comments",
+  // Comments on a live broadcast arrive on their own field, never on
+  // `comments` — without it Instagram Live automations receive nothing.
+  "live_comments",
 ]
 
 export type InstagramRefreshTokenResponse = {

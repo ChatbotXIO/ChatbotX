@@ -10,6 +10,7 @@ const {
   mockIsWithinSchedule,
   mockFindDedup,
   mockInsertDedup,
+  mockClaimDedup,
   mockDeleteDedup,
   mockIncrementRepliesCount,
   mockGetPriorContactInboxCount,
@@ -47,6 +48,7 @@ const {
   mockIsWithinSchedule: vi.fn(),
   mockFindDedup: vi.fn(),
   mockInsertDedup: vi.fn(),
+  mockClaimDedup: vi.fn(),
   mockDeleteDedup: vi.fn(),
   mockIncrementRepliesCount: vi.fn(),
   mockGetPriorContactInboxCount: vi.fn(),
@@ -128,6 +130,7 @@ vi.mock("@chatbotx.io/business", () => ({
     isWithinSchedule: mockIsWithinSchedule,
     findDedup: mockFindDedup,
     insertDedup: mockInsertDedup,
+    claimDedup: mockClaimDedup,
     deleteDedup: mockDeleteDedup,
     incrementRepliesCount: mockIncrementRepliesCount,
     getPriorContactInboxCount: mockGetPriorContactInboxCount,
@@ -345,6 +348,7 @@ function buildJobData(
     message?: string
     tags?: { id: string; name?: string }[]
     createdTime?: number
+    isLive?: boolean
   } = {},
 ) {
   return {
@@ -363,11 +367,13 @@ function buildJobData(
     // comment_id window, so a hardcoded past timestamp would silently turn
     // every private-reply case into a skip as the fixture ages.
     createdTime: overrides.createdTime ?? Math.floor(Date.now() / 1000) - 60,
+    isLive: overrides.isLive,
   }
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockClaimDedup.mockResolvedValue(true)
   mockIdentifyInboxAndIntegrationAuth.mockResolvedValue({
     integrationRow: { auth: { accessToken: "token" } },
   })
@@ -3993,6 +3999,24 @@ describe("processCommentAutomation misses", () => {
       automation: { options: { replyToUsersWhoCommentedOnOtherPosts: false } },
       arrange: () => mockHasRepliedOnOtherPost.mockResolvedValue(true),
     },
+    {
+      // A Live automation on a comment that is not on a live broadcast.
+      reason: "postNotMatched",
+      automation: { post: { type: "live", value: [] } },
+    },
+    {
+      // An `all` automation on a live comment — Live and posts never overlap.
+      reason: "postNotMatched",
+      automation: {},
+      job: { isLive: true },
+    },
+    {
+      // The read said "not yet replied", but a concurrent comment from the
+      // same person won the atomic claim first.
+      reason: "alreadyRepliedOnPost",
+      automation: { options: { replyOncePerUserPerPost: true } },
+      arrange: () => mockClaimDedup.mockResolvedValue(false),
+    },
   ]
 
   test.each(gateCases)("$reason records one miss and sends nothing", async ({
@@ -4101,6 +4125,202 @@ describe("processCommentAutomation misses", () => {
     expect(missesFor(0)).toEqual([])
     expect(mockRecordEvent).toHaveBeenCalledWith(
       expect.objectContaining({ replyChannel: "private", status: "failed" }),
+    )
+  })
+})
+
+describe("processCommentAutomation live comments", () => {
+  const LIVE_POST = { type: "live", value: [] }
+
+  test("a Live automation answers a live comment", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        post: LIVE_POST,
+        privateReply: { type: "text", value: "thanks for watching" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData({ isLive: true }) as any)
+
+    expect(mockSendPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "thanks for watching",
+    )
+  })
+
+  test("an explicit postIds automation still answers a live comment on its post", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        post: { type: "postIds", value: [POST_ID] },
+        privateReply: { type: "text", value: "hi" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData({ isLive: true }) as any)
+
+    expect(mockSendPrivateReply).toHaveBeenCalled()
+  })
+
+  test("only the Live automation answers when an `all` one is active too", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-all",
+        privateReply: { type: "text", value: "post answer" },
+      }),
+      buildAutomation({
+        id: "automation-live",
+        post: LIVE_POST,
+        privateReply: { type: "text", value: "live answer" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData({ isLive: true }) as any)
+
+    expect(mockSendPrivateReply).toHaveBeenCalledTimes(1)
+    expect(mockSendPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "live answer",
+    )
+  })
+
+  const withStoredCommentRow = () =>
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+      claimContentAttributes: mockClaimContentAttributes,
+    })
+
+  test("a post comment on Instagram still likes it (control for the Live case)", async () => {
+    withStoredCommentRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { likeUserComment: true } }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData(),
+      integrationType: "instagram",
+    } as any)
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        data: expect.objectContaining({ liked: true }),
+      }),
+    )
+  })
+
+  test("Instagram Live strips public reply, like, hide and delay — only the DM goes out", async () => {
+    withStoredCommentRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        post: LIVE_POST,
+        publicReply: { type: "text", value: "public answer" },
+        privateReply: { type: "text", value: "live DM" },
+        options: { likeUserComment: true },
+        hideComments: { all: true },
+        replyAfter: { type: "minutes", value: 5 },
+      }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData({ isLive: true }),
+      integrationType: "instagram",
+    } as any)
+
+    expect(mockSendInstagramPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "live DM",
+    )
+    // No public reply message, no like, no hide.
+    expect(mockMessageCreate).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("Instagram Live blocks a DM once the longest possible broadcast is over", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        post: LIVE_POST,
+        privateReply: { type: "text", value: "late DM" },
+      }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData({
+        isLive: true,
+        createdTime: Math.floor(Date.now() / 1000) - 5 * 60 * 60,
+      }),
+      integrationType: "instagram",
+    } as any)
+
+    expect(mockSendInstagramPrivateReply).not.toHaveBeenCalled()
+  })
+
+  test("Facebook Live keeps Meta's 7-day window", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        post: LIVE_POST,
+        privateReply: { type: "text", value: "replay DM" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        isLive: true,
+        createdTime: Math.floor(Date.now() / 1000) - 5 * 60 * 60,
+      }) as any,
+    )
+
+    expect(mockSendPrivateReply).toHaveBeenCalled()
+  })
+})
+
+describe("processCommentAutomation reply-once claim", () => {
+  test("claims the slot atomically and does not write a second row", async () => {
+    mockFindDedup.mockResolvedValue(undefined)
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        options: { replyOncePerUserPerPost: true },
+        privateReply: { type: "text", value: "hi" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockClaimDedup).toHaveBeenCalledWith({
+      automationId: "automation-1",
+      contactId: "contact-1",
+      postId: POST_ID,
+      workspaceId: "workspace-1",
+    })
+    expect(mockSendPrivateReply).toHaveBeenCalled()
+    expect(mockInsertDedup).not.toHaveBeenCalled()
+    expect(mockDeleteDedup).not.toHaveBeenCalled()
+  })
+
+  test("gives the slot back when every configured branch failed", async () => {
+    mockFindDedup.mockResolvedValue(undefined)
+    mockSendPrivateReply.mockRejectedValue(new Error("send failed"))
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        options: { replyOncePerUserPerPost: true },
+        privateReply: { type: "text", value: "hi" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockDeleteDedup).toHaveBeenCalledWith(
+      expect.objectContaining({
+        automationId: "automation-1",
+        contactId: "contact-1",
+        postId: POST_ID,
+      }),
     )
   })
 })

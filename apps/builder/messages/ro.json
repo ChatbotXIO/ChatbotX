@@ -1547,6 +1547,13 @@
     "trackUserTags": {
       "label": "Urmărește dacă un utilizator etichetează alți utilizatori",
       "descriptionText": "Numără conturile etichetate în fiecare comentariu și le adaugă la totalurile contactului pentru toate comentariile. Folosește '{{total_tagged}}' pentru toate conturile etichetate și '{{total_new_tagged}}' pentru conturile care nu au trimis niciodată mesaj paginii tale și nu au fost contacte."
+    },
+    "card": {
+      "reply": "Răspuns"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Selectează tipul postării"
     }
   },
   "condition": {
@@ -5114,7 +5121,13 @@
     },
     "title": "Automatizare comentarii Facebook",
     "trackCommentsOn": "Urmărește comentariile la",
-    "trackCommentsOnDescription": "Aplică această automatizare tuturor postărilor de pe pagina ta sau restrânge-o la postările specifice pe care le selectezi."
+    "trackCommentsOnDescription": "Aplică această automatizare tuturor postărilor de pe pagina ta sau restrânge-o la postările specifice pe care le selectezi.",
+    "postTypeDialog": {
+      "liveTitle": "Transmisiune live",
+      "liveDescription": "Automatizează comentariile din transmisiunile live. Acceptă răspunsuri publice, răspunsuri private, ascunderea și aprecierea comentariilor.",
+      "postsTitle": "Postările paginii",
+      "postsDescription": "Automatizează comentariile la postările și reels-urile paginii. Acceptă răspunsuri publice, răspunsuri private, ascunderea și aprecierea comentariilor."
+    }
   },
   "facebookLeadAdsAutomation": {
     "addNewPage": "Adaugă nouă",
@@ -5268,7 +5281,14 @@
     },
     "title": "Automatizare comentarii Instagram",
     "trackCommentsOn": "Urmărește comentariile la",
-    "trackCommentsOnDescription": "Aplică această automatizare tuturor postărilor de pe contul tău conectat sau restrânge-o la postările specifice pe care le selectezi."
+    "trackCommentsOnDescription": "Aplică această automatizare tuturor postărilor de pe contul tău conectat sau restrânge-o la postările specifice pe care le selectezi.",
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Automatizează comentariile din Instagram Live. Trimite un răspuns privat fiecărei persoane care comentează cât timp ești live.",
+      "postsTitle": "Postări și reels",
+      "postsDescription": "Automatizează comentariile la postări și reels. Acceptă răspunsuri publice, răspunsuri private și ascunderea comentariilor."
+    },
+    "liveReplyNote": "Instagram permite doar un răspuns privat la un comentariu live și doar cât timp ești live. Răspunsurile publice, ascunderea și aprecierile nu sunt disponibile."
   },
   "threadsCommentAutomation": {
     "title": "Threads Comment Automation",

@@ -30,6 +30,16 @@ const verifyWebhookSignature = async (
   }
 }
 
+/**
+ * `live_comments` carries comments on a live broadcast; its value has the same
+ * shape as `comments`. Meta asks apps to tell the two apart — a live comment
+ * only accepts a private reply, and only while the broadcast runs. Unlike
+ * Instagram Login, this field is subscribed on the App Dashboard's `instagram`
+ * object, not through the Page's `subscribed_apps`.
+ */
+const LIVE_COMMENTS_FIELD = "live_comments"
+const INSTAGRAM_COMMENT_FIELDS = new Set(["comments", LIVE_COMMENTS_FIELD])
+
 const handleWebhookEvent = async (
   req: Request,
   config: InstagramConfig,
@@ -83,47 +93,53 @@ const handleWebhookEvent = async (
     // entry — into a single webhook POST (e.g. a contact sending several DMs
     // quickly). Every entry/event must be processed, not just the first.
     for (const entry of webhookData.entry) {
-      // Handle Instagram post comment events (changes.comments).
-      // Instagram only sends webhooks for new comments — no edit/delete events.
-      const commentChange = entry.changes?.find(
-        (c: { field: string }) => c.field === "comments",
+      // Handle Instagram comment events: `comments` for posts and reels,
+      // `live_comments` for a live broadcast. Instagram only sends webhooks
+      // for new comments — no edit/delete events.
+      const commentChanges = (entry.changes ?? []).filter(
+        (c: { field: string }) => INSTAGRAM_COMMENT_FIELDS.has(c.field),
       )
-      if (commentChange) {
-        const parsed = instagramCommentEventValueSchema.safeParse(
-          commentChange.value,
-        )
-        if (!parsed.success) {
-          logger.warn(
-            { error: parsed.error, value: commentChange.value },
-            "comment event parse failed — skipping",
+      if (commentChanges.length > 0) {
+        for (const commentChange of commentChanges) {
+          const parsed = instagramCommentEventValueSchema.safeParse(
+            commentChange.value,
           )
-          continue
-        }
-        const value = parsed.data
-        if (!value.media?.id) {
-          logger.warn(
-            { commentId: value.id },
-            "comment webhook missing media.id — skipping",
-          )
-          continue
-        }
-        await queue?.add("incomingComment", {
-          type: "incomingComment",
-          data: {
-            integrationType: "instagramFacebook",
-            integrationIdentifier: entry.id,
-            commentData: {
-              commentId: value.id,
-              postId: value.media.id,
-              parentId: value.parent_id,
-              fromId: value.from.id,
-              fromName: value.from.username ?? value.from.id,
-              fromUsername: value.from.username,
-              message: value.text,
-              createdTime: entry.time,
+          if (!parsed.success) {
+            logger.warn(
+              { err: parsed.error, value: commentChange.value },
+              "comment event parse failed — skipping",
+            )
+            continue
+          }
+          const value = parsed.data
+          if (!value.media?.id) {
+            logger.warn(
+              { commentId: value.id },
+              "comment webhook missing media.id — skipping",
+            )
+            continue
+          }
+          await queue?.add("incomingComment", {
+            type: "incomingComment",
+            data: {
+              integrationType: "instagramFacebook",
+              integrationIdentifier: entry.id,
+              commentData: {
+                commentId: value.id,
+                postId: value.media.id,
+                parentId: value.parent_id,
+                fromId: value.from.id,
+                fromName: value.from.username ?? value.from.id,
+                fromUsername: value.from.username,
+                message: value.text,
+                createdTime: entry.time,
+                ...(commentChange.field === LIVE_COMMENTS_FIELD
+                  ? { isLive: true }
+                  : {}),
+              },
             },
-          },
-        })
+          })
+        }
         continue
       }
 

@@ -6,6 +6,7 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { ensureLiveCommentsSubscriptionForAutomation } from "../lib/ensure-live-comments-subscription"
 import {
   type CreateIgCommentRequest,
   createIgCommentRequest,
@@ -27,6 +28,11 @@ export const createIgCommentAction = workspaceActionClient
         workspaceId,
         type,
         data,
+      })
+      await ensureLiveCommentsSubscriptionForAutomation({
+        workspaceId,
+        type,
+        post: data.post,
       })
       return { id: record.id }
     },

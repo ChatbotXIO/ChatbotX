@@ -84,7 +84,11 @@ export type MessengerActions<
   getCommentAttachment: (props: {
     ctx: Context<IAuth>
     input: { commentId: string }
-  }) => Promise<{ type: string | null; attachment?: IncomingAttachment }>
+  }) => Promise<{
+    type: string | null
+    attachment?: IncomingAttachment
+    isLive: boolean
+  }>
   getCommentMessageTags: (props: {
     ctx: Context<IAuth>
     input: { commentId: string }

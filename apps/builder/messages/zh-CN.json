@@ -912,6 +912,13 @@
     "trackUserTags": {
       "label": "追踪用户是否标记了其他用户",
       "descriptionText": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。"
+    },
+    "card": {
+      "reply": "回复"
+    },
+    "liveBadge": "直播",
+    "postTypeDialog": {
+      "title": "选择帖子类型"
     }
   },
   "channels": {
@@ -1636,7 +1643,13 @@
     },
     "title": "Facebook 留言自动化",
     "trackCommentsOn": "追踪留言的对象",
-    "trackCommentsOnDescription": "可套用到粉丝专页上的所有贴文，或缩小范围到您指定的特定贴文。"
+    "trackCommentsOnDescription": "可套用到粉丝专页上的所有贴文，或缩小范围到您指定的特定贴文。",
+    "postTypeDialog": {
+      "liveTitle": "直播",
+      "liveDescription": "自动处理直播评论。支持公开回复、私信回复、隐藏和点赞评论。",
+      "postsTitle": "主页帖子",
+      "postsDescription": "自动处理主页帖子和 Reels 的评论。支持公开回复、私信回复、隐藏和点赞评论。"
+    }
   },
   "facebookLeadAdsAutomation": {
     "addNewPage": "添加新",
@@ -3698,7 +3711,14 @@
     },
     "title": "Instagram 留言自动化",
     "trackCommentsOn": "追踪留言的对象",
-    "trackCommentsOnDescription": "可套用到已连接帐号上的所有贴文，或缩小范围到您指定的特定贴文。"
+    "trackCommentsOnDescription": "可套用到已连接帐号上的所有贴文，或缩小范围到您指定的特定贴文。",
+    "postTypeDialog": {
+      "liveTitle": "Instagram 直播",
+      "liveDescription": "自动处理 Instagram 直播评论。在您直播期间向每位评论者发送私信回复。",
+      "postsTitle": "帖子和 Reels",
+      "postsDescription": "自动处理帖子和 Reels 的评论。支持公开回复、私信回复和隐藏评论。"
+    },
+    "liveReplyNote": "Instagram 仅允许对直播评论发送私信回复，且仅限直播期间。不支持公开回复、隐藏和点赞。"
   },
   "threadsCommentAutomation": {
     "title": "Threads 评论自动化",

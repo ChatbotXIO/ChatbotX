@@ -1,11 +1,15 @@
 import {
+  type CommentAutomationType,
   type CommentExcludeKeywordsType,
   type CommentIncludeKeywords,
   type CommentPost,
   type CommentReply,
   type CommentReplyAfter,
+  isLiveCommentAutomation,
+  liveCommentCapabilities,
   resolveReplyTexts,
 } from "@chatbotx.io/database/partials"
+import type { CommentAutomationModel } from "@chatbotx.io/database/types"
 
 const RANDOM_DELAY_MINUTES: Record<string, number> = {
   randomWithin3Minutes: 3,
@@ -52,9 +56,24 @@ export function normalizeForMatch(value: string): string {
     .toLowerCase()
 }
 
-export function matchPost(post: CommentPost, postId: string): boolean {
+/**
+ * Whether an automation's post targeting covers this comment.
+ *
+ * Live comments and post comments are disjoint audiences: a Live automation
+ * answers only comments on a live broadcast, and an `all` automation skips
+ * them, so a viewer is never answered by both. An explicit `postIds` list is
+ * the exception — a post the user pasted by id is answered whatever it is.
+ */
+export function matchPost(
+  post: CommentPost,
+  postId: string,
+  isLive: boolean,
+): boolean {
+  if (post.type === "live") {
+    return isLive
+  }
   if (post.type !== "postIds") {
-    return true
+    return !isLive
   }
   const target = normalizePostId(postId)
   return post.value.some((v) => v === postId || normalizePostId(v) === target)
@@ -186,4 +205,52 @@ export function computeDelayMs(replyAfter: CommentReplyAfter): number {
   const minutes =
     RANDOM_DELAY_MINUTES[replyAfter.type as keyof typeof RANDOM_DELAY_MINUTES]
   return Math.floor(Math.random() * (minutes ?? 3) * 60_000)
+}
+
+/**
+ * Strips what a Live automation's channel cannot do on a live comment before
+ * the loop sees it, so a row written before the service normalized it — or
+ * edited straight in the database — degrades to what Meta accepts instead of
+ * firing calls Meta rejects (Instagram Live: no public reply, like, hide or
+ * reply delay). Non-live automations pass through untouched.
+ */
+export function withLiveCapabilityLimits(
+  automation: CommentAutomationModel,
+  channelType: CommentAutomationType,
+): CommentAutomationModel {
+  if (!isLiveCommentAutomation(automation.post)) {
+    return automation
+  }
+  const capabilities = liveCommentCapabilities(channelType)
+  return {
+    ...automation,
+    publicReply: capabilities.publicReply
+      ? automation.publicReply
+      : { type: "none", value: null },
+    options: {
+      ...automation.options,
+      likeUserComment: capabilities.likeComment
+        ? automation.options.likeUserComment
+        : false,
+      ignoreCommentReplies: capabilities.commentReplies
+        ? automation.options.ignoreCommentReplies
+        : false,
+    },
+    hideComments: capabilities.hideComments
+      ? automation.hideComments
+      : {
+          ...automation.hideComments,
+          all: false,
+          hasPhoneNumber: false,
+          hasImage: false,
+          hasVideo: false,
+          hasLink: false,
+          hasKeywords: false,
+          hasGif: false,
+          hasEmoji: false,
+        },
+    replyAfter: capabilities.replyDelay
+      ? automation.replyAfter
+      : { type: "immediately", value: 0 },
+  }
 }

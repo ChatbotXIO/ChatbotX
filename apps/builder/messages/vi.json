@@ -615,6 +615,13 @@
     "trackUserTags": {
       "label": "Theo dõi khi người dùng gắn thẻ người khác",
       "descriptionText": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
+    },
+    "card": {
+      "reply": "Trả lời"
+    },
+    "liveBadge": "Live",
+    "postTypeDialog": {
+      "title": "Chọn loại bài viết"
     }
   },
   "condition": {
@@ -5076,7 +5083,13 @@
     "chooseSpecificPosts": "Chọn bài viết...",
     "postIdTab": "Post ID",
     "postIdPlaceholder": "Nhập ID bài viết, mỗi dòng một ID...",
-    "noPostsFound": "Không tìm thấy bài viết"
+    "noPostsFound": "Không tìm thấy bài viết",
+    "postTypeDialog": {
+      "liveTitle": "Phát trực tiếp",
+      "liveDescription": "Tự động xử lý bình luận trên buổi phát trực tiếp. Hỗ trợ trả lời công khai, trả lời riêng, ẩn và thích bình luận.",
+      "postsTitle": "Bài viết trên Trang",
+      "postsDescription": "Tự động xử lý bình luận trên bài viết và reels của Trang. Hỗ trợ trả lời công khai, trả lời riêng, ẩn và thích bình luận."
+    }
   },
   "instagramCommentAutomation": {
     "title": "Tự động hóa bình luận Instagram",
@@ -5183,7 +5196,14 @@
       "instagramDescription": "Kết nối bằng Instagram Login. Hỗ trợ trả lời công khai, trả lời riêng tư, và ẩn bình luận. Không hỗ trợ thích bình luận.",
       "instagramFacebookTitle": "Instagram Login qua Facebook",
       "instagramFacebookDescription": "Instagram được kết nối qua một trang Facebook. Hỗ trợ trả lời công khai, trả lời riêng tư, ẩn bình luận, và thích bình luận."
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram Live",
+      "liveDescription": "Tự động xử lý bình luận trên Instagram Live. Gửi tin nhắn riêng cho từng người bình luận trong lúc bạn đang phát.",
+      "postsTitle": "Bài viết & Reels",
+      "postsDescription": "Tự động xử lý bình luận trên bài viết và reels. Hỗ trợ trả lời công khai, trả lời riêng và ẩn bình luận."
+    },
+    "liveReplyNote": "Instagram chỉ cho phép trả lời riêng bình luận Live, và chỉ trong lúc bạn đang phát. Không hỗ trợ trả lời công khai, ẩn hay thích bình luận."
   },
   "threadsCommentAutomation": {
     "title": "Tự động hóa bình luận Threads",

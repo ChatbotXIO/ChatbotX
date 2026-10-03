@@ -59,6 +59,11 @@ vi.mock("@chatbotx.io/business", () => ({ commentAutomationService }))
 
 const listInstagramLoginMedia = vi.fn()
 const listInstagramFacebookMedia = vi.fn()
+const ensureLiveCommentsSubscriptionForAutomation = vi.fn()
+vi.mock("@/features/ig-comments/lib/ensure-live-comments-subscription", () => ({
+  ensureLiveCommentsSubscriptionForAutomation,
+}))
+
 vi.mock("@/features/ig-comments/lib/instagram-media", () => ({
   listInstagramLoginMedia,
   listInstagramFacebookMedia,
@@ -164,6 +169,26 @@ describe("POST /v1/ig-comments", () => {
       workspaceId: "workspace-1",
       type: "instagram",
       data: { name: "Welcome" },
+    })
+  })
+
+  // An Instagram Login account connected before Live automations existed has
+  // no `live_comments` subscription; creating one must re-subscribe it, or the
+  // automation saves fine and never fires.
+  test("re-subscribes live_comments after creating a Live automation", async () => {
+    const post = { type: "live", value: [] }
+    const input = { name: "Live", type: "instagram", post }
+    commentAutomationService.createInstagram.mockResolvedValueOnce({
+      id: "ig-comment-2",
+      ...input,
+    })
+
+    await procedure.handler?.({ context, input })
+
+    expect(ensureLiveCommentsSubscriptionForAutomation).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      type: "instagram",
+      post,
     })
   })
 })

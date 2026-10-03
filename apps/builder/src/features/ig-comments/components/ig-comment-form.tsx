@@ -1,5 +1,9 @@
 "use client"
 
+import {
+  isLiveCommentAutomation,
+  liveCommentCapabilities,
+} from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
@@ -69,6 +73,17 @@ export function IgCommentForm({
 
   const postType = useWatch({ control: form.control, name: "post.type" })
   const postValue = useWatch({ control: form.control, name: "post.value" })
+  // A Live automation answers every live broadcast, so there is no post to
+  // target. Instagram Live is also private-reply-only (no public reply, like,
+  // hide or reply delay — see `liveCommentCapabilities`), and the service pins
+  // the same fields off, so hiding them here never hides a live setting.
+  const isLive = isLiveCommentAutomation({ type: postType })
+  const capabilities = isLive ? liveCommentCapabilities(variant) : null
+  const showPublicReply = capabilities?.publicReply ?? true
+  const showLikeComment = capabilities?.likeComment ?? true
+  const showHideComments = capabilities?.hideComments ?? true
+  const showReplyTiming = capabilities?.replyDelay ?? true
+  const showCommentReplies = capabilities?.commentReplies ?? true
 
   const privateReplyType = useWatch({
     control: form.control,
@@ -190,21 +205,29 @@ export function IgCommentForm({
       <Card>
         <CardHeader>
           <CardTitle>
-            {t("instagramCommentAutomation.card.targeting")}
+            {isLive
+              ? t("commentAutomation.card.reply")
+              : t("instagramCommentAutomation.card.targeting")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
-          <RadioGroupField
-            description={t(
-              "instagramCommentAutomation.trackCommentsOnDescription",
-            )}
-            descriptionType="tooltip"
-            label={t("instagramCommentAutomation.trackCommentsOn")}
-            name="post.type"
-            options={postTypeOptions}
-            orientation="horizontal"
-            required
-          />
+          {isLive ? (
+            <p className="text-muted-foreground text-sm">
+              {t("instagramCommentAutomation.liveReplyNote")}
+            </p>
+          ) : (
+            <RadioGroupField
+              description={t(
+                "instagramCommentAutomation.trackCommentsOnDescription",
+              )}
+              descriptionType="tooltip"
+              label={t("instagramCommentAutomation.trackCommentsOn")}
+              name="post.type"
+              options={postTypeOptions}
+              orientation="horizontal"
+              required
+            />
+          )}
 
           {postType === "postIds" && (
             <>
@@ -273,49 +296,51 @@ export function IgCommentForm({
             )}
           </div>
 
-          <div className="flex flex-col gap-2 space-y-2">
-            <RadioGroupField
-              description={t(
-                "instagramCommentAutomation.publicReplyDescription",
-              )}
-              descriptionType="tooltip"
-              label={t("instagramCommentAutomation.publicReply")}
-              name="publicReply.type"
-              options={replyTypeOptions}
-              orientation="horizontal"
-              required
-            />
-            {publicReplyType === "text" && (
-              <ReplyTextsField
-                channel="instagram"
-                label={t("instagramCommentAutomation.replyMessage")}
-                name="publicReply"
-                placeholder={t(
-                  "instagramCommentAutomation.replyMessagePlaceholder",
+          {showPublicReply && (
+            <div className="flex flex-col gap-2 space-y-2">
+              <RadioGroupField
+                description={t(
+                  "instagramCommentAutomation.publicReplyDescription",
                 )}
-              />
-            )}
-            {publicReplyType === "flow" && (
-              <ComboboxField
-                emptyText={t("actions.noRecordFound")}
-                label={t("fields.flow.label")}
-                name="publicReply.value"
-                options={flowOptions}
-                placeholder={t("actions.pleaseSelect")}
+                descriptionType="tooltip"
+                label={t("instagramCommentAutomation.publicReply")}
+                name="publicReply.type"
+                options={replyTypeOptions}
+                orientation="horizontal"
                 required
               />
-            )}
-            {publicReplyType === "AIAgent" && (
-              <ComboboxField
-                emptyText={t("actions.noRecordFound")}
-                label={t("fields.aiAgent.label")}
-                name="publicReply.value"
-                options={aiAgentOptions}
-                placeholder={t("actions.pleaseSelect")}
-                required
-              />
-            )}
-          </div>
+              {publicReplyType === "text" && (
+                <ReplyTextsField
+                  channel="instagram"
+                  label={t("instagramCommentAutomation.replyMessage")}
+                  name="publicReply"
+                  placeholder={t(
+                    "instagramCommentAutomation.replyMessagePlaceholder",
+                  )}
+                />
+              )}
+              {publicReplyType === "flow" && (
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  label={t("fields.flow.label")}
+                  name="publicReply.value"
+                  options={flowOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                  required
+                />
+              )}
+              {publicReplyType === "AIAgent" && (
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  label={t("fields.aiAgent.label")}
+                  name="publicReply.value"
+                  options={aiAgentOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                  required
+                />
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -374,7 +399,7 @@ export function IgCommentForm({
             {/* Instagram Business (Instagram Login) has no likeComment API — the
                 option is hidden entirely rather than shown disabled, matching
                 the same treatment for every other unsupported capability. */}
-            {variant === "instagramFacebook" && (
+            {variant === "instagramFacebook" && showLikeComment && (
               <SwitchField
                 description={t(
                   "instagramCommentAutomation.options.likeUserCommentDescription",
@@ -396,17 +421,19 @@ export function IgCommentForm({
               name="options.replyToUsersWhoCommentedOnOtherPosts"
               required
             />
-            <SwitchField
-              description={t(
-                "instagramCommentAutomation.options.ignoreCommentRepliesDescription",
-              )}
-              descriptionType="tooltip"
-              label={t(
-                "instagramCommentAutomation.options.ignoreCommentReplies",
-              )}
-              name="options.ignoreCommentReplies"
-              required
-            />
+            {showCommentReplies && (
+              <SwitchField
+                description={t(
+                  "instagramCommentAutomation.options.ignoreCommentRepliesDescription",
+                )}
+                descriptionType="tooltip"
+                label={t(
+                  "instagramCommentAutomation.options.ignoreCommentReplies",
+                )}
+                name="options.ignoreCommentReplies"
+                required
+              />
+            )}
             <SwitchField
               description={t(
                 "instagramCommentAutomation.options.trackUserTagsDescription",
@@ -420,94 +447,100 @@ export function IgCommentForm({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t("instagramCommentAutomation.card.replyTiming")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <SelectField
-            label={t("instagramCommentAutomation.replyAfter")}
-            name="replyAfter.type"
-            options={replyAfterTypeOptions}
-            required
-          />
-          {needsReplyAfterValue && (
-            <InputField
-              label={t("instagramCommentAutomation.replyAfterValue")}
-              min={1}
-              name="replyAfter.value"
-              type="number"
+      {showReplyTiming && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {t("instagramCommentAutomation.card.replyTiming")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <SelectField
+              label={t("instagramCommentAutomation.replyAfter")}
+              name="replyAfter.type"
+              options={replyAfterTypeOptions}
+              required
             />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t("instagramCommentAutomation.card.hideComments")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <SwitchField
-            label={t("instagramCommentAutomation.hideComments.all")}
-            name="hideComments.all"
-            required
-          />
-          <SwitchField
-            label={t("instagramCommentAutomation.hideComments.hasPhoneNumber")}
-            name="hideComments.hasPhoneNumber"
-            required
-          />
-          <SwitchField
-            label={t("instagramCommentAutomation.hideComments.hasLink")}
-            name="hideComments.hasLink"
-            required
-          />
-          <SwitchField
-            label={t("commentAutomation.hideComments.hasEmoji")}
-            name="hideComments.hasEmoji"
-            required
-          />
-          <SwitchField
-            label={t("instagramCommentAutomation.hideComments.hasKeywords")}
-            name="hideComments.hasKeywords"
-            required
-          />
-          {hideCommentsKeywords && (
-            <FormField
-              control={form.control}
-              name="hideComments.keywords"
-              render={() => (
-                <FormItem>
-                  <FormLabel>
-                    {t("instagramCommentAutomation.hideComments.keywords")}
-                  </FormLabel>
-                  <FormControl>
-                    <TagsInputField
-                      name="hideComments.keywords"
-                      placeholder={t(
-                        "instagramCommentAutomation.keywordsPlaceholder",
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-          <SelectField
-            label={t(
-              "instagramCommentAutomation.hideComments.showCommentsAfter",
+            {needsReplyAfterValue && (
+              <InputField
+                label={t("instagramCommentAutomation.replyAfterValue")}
+                min={1}
+                name="replyAfter.value"
+                type="number"
+              />
             )}
-            name="hideComments.showCommentsAfter"
-            options={showCommentsAfterOptions}
-            required
-          />
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {showHideComments && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {t("instagramCommentAutomation.card.hideComments")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <SwitchField
+              label={t("instagramCommentAutomation.hideComments.all")}
+              name="hideComments.all"
+              required
+            />
+            <SwitchField
+              label={t(
+                "instagramCommentAutomation.hideComments.hasPhoneNumber",
+              )}
+              name="hideComments.hasPhoneNumber"
+              required
+            />
+            <SwitchField
+              label={t("instagramCommentAutomation.hideComments.hasLink")}
+              name="hideComments.hasLink"
+              required
+            />
+            <SwitchField
+              label={t("commentAutomation.hideComments.hasEmoji")}
+              name="hideComments.hasEmoji"
+              required
+            />
+            <SwitchField
+              label={t("instagramCommentAutomation.hideComments.hasKeywords")}
+              name="hideComments.hasKeywords"
+              required
+            />
+            {hideCommentsKeywords && (
+              <FormField
+                control={form.control}
+                name="hideComments.keywords"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("instagramCommentAutomation.hideComments.keywords")}
+                    </FormLabel>
+                    <FormControl>
+                      <TagsInputField
+                        name="hideComments.keywords"
+                        placeholder={t(
+                          "instagramCommentAutomation.keywordsPlaceholder",
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            <SelectField
+              label={t(
+                "instagramCommentAutomation.hideComments.showCommentsAfter",
+              )}
+              name="hideComments.showCommentsAfter"
+              options={showCommentsAfterOptions}
+              required
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex justify-end gap-2">
         <Button onClick={onCancel} type="button" variant="ghost">

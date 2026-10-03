@@ -4,6 +4,7 @@ import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { ensureLiveCommentsSubscriptionForAutomation } from "../lib/ensure-live-comments-subscription"
 import {
   listInstagramFacebookMedia,
   listInstagramLoginMedia,
@@ -44,11 +45,17 @@ export const igCommentsPrivateAPI = {
     .output(igCommentResource)
     .handler(async ({ input }) => {
       const { workspaceId, type, ...data } = input
-      return await commentAutomationService.createInstagram({
+      const created = await commentAutomationService.createInstagram({
         workspaceId,
         type,
         data,
       })
+      await ensureLiveCommentsSubscriptionForAutomation({
+        workspaceId,
+        type,
+        post: data.post,
+      })
+      return created
     }),
 
   updateIgCommentAPI: authorizedAPI

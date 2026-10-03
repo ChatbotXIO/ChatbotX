@@ -158,6 +158,14 @@ export type IntegrationJobReceiveComment = {
       message?: string
       tags?: CommentTag[]
       createdTime: number
+      /**
+       * The channel itself said this is a comment on a live broadcast —
+       * Instagram's `live_comments` webhook field. Facebook has no such
+       * field on `feed`, so its comments arrive without this and
+       * `receiveComment` resolves live-ness from the comment's
+       * `live_broadcast_timestamp`.
+       */
+      isLive?: boolean
     }
     /**
      * Set by "process missed comments": the comment is replayed from the
@@ -842,6 +850,11 @@ export type IntegrationJobProcessCommentAutomation = {
     message?: string
     tags?: CommentTag[]
     createdTime: number
+    /**
+     * The comment was made on a live broadcast. Only `post.type: "live"`
+     * automations answer it; an `all` automation skips it (`matchPost`).
+     */
+    isLive?: boolean
     /**
      * Run this one automation only — a replayed missed comment must not fire
      * every other active automation on the channel. Absent on webhook comments.

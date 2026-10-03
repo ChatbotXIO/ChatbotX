@@ -2261,6 +2261,13 @@
     "trackUserTags": {
       "label": "追蹤使用者是否標記了其他使用者",
       "descriptionText": "統計每則留言中被標記的帳號數,並在所有留言中累加到聯絡人的總數。使用 '{{total_tagged}}' 表示所有被標記的帳號,使用 '{{total_new_tagged}}' 表示從未傳訊息給您的粉絲專頁或從未成為聯絡人的帳號。"
+    },
+    "card": {
+      "reply": "回覆"
+    },
+    "liveBadge": "直播",
+    "postTypeDialog": {
+      "title": "選擇貼文類型"
     }
   },
   "condition": {
@@ -5028,7 +5035,13 @@
     "chooseSpecificPosts": "選擇貼文...",
     "postIdTab": "貼文 ID",
     "postIdPlaceholder": "輸入貼文 ID，每行一筆...",
-    "noPostsFound": "找不到貼文"
+    "noPostsFound": "找不到貼文",
+    "postTypeDialog": {
+      "liveTitle": "直播",
+      "liveDescription": "自動處理直播留言。支援公開回覆、私訊回覆、隱藏和按讚留言。",
+      "postsTitle": "粉絲專頁貼文",
+      "postsDescription": "自動處理粉絲專頁貼文和 Reels 的留言。支援公開回覆、私訊回覆、隱藏和按讚留言。"
+    }
   },
   "instagramCommentAutomation": {
     "title": "Instagram 留言自動化",
@@ -5135,7 +5148,14 @@
       "instagramDescription": "使用 Instagram Login 連接。支援公開回覆、私訊回覆與隱藏留言，不支援對留言按讚。",
       "instagramFacebookTitle": "使用 Facebook 登入的 Instagram",
       "instagramFacebookDescription": "透過 Facebook 粉絲專頁連接的 Instagram。支援公開回覆、私訊回覆、隱藏留言與對留言按讚。"
-    }
+    },
+    "postTypeDialog": {
+      "liveTitle": "Instagram 直播",
+      "liveDescription": "自動處理 Instagram 直播留言。在您直播期間向每位留言者傳送私訊回覆。",
+      "postsTitle": "貼文和 Reels",
+      "postsDescription": "自動處理貼文和 Reels 的留言。支援公開回覆、私訊回覆和隱藏留言。"
+    },
+    "liveReplyNote": "Instagram 只允許對直播留言傳送私訊回覆，且僅限直播期間。不支援公開回覆、隱藏和按讚。"
   },
   "threadsCommentAutomation": {
     "title": "Threads 留言自動化",

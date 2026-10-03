@@ -44,12 +44,14 @@ import { BulkMoveCommentAutomationFolderDialog } from "../shared/comment-automat
 import { CommentAutomationScheduleDialog } from "../shared/comment-automation/comment-automation-schedule-dialog"
 import { buildCommentAutomationStatColumns } from "../shared/comment-automation/comment-automation-stat-columns"
 import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
+import { LiveAutomationBadge } from "../shared/comment-automation/live-automation-badge"
 import { MissedCommentsProcessingLabel } from "../shared/comment-automation/missed-comments-processing-label"
 import { ProcessMissedCommentsDialog } from "../shared/comment-automation/process-missed-comments-dialog"
 import { RenameCommentAutomationDialog } from "../shared/comment-automation/rename-comment-automation-dialog"
 import { useMissedCommentsInProgress } from "../shared/comment-automation/use-missed-comments-in-progress"
 import { deleteFbCommentAction } from "./actions/delete-fb-comment.action"
 import { updateFbCommentAction } from "./actions/update-fb-comment.action"
+import { SelectFacebookPostTypeDialog } from "./components/select-facebook-post-type-dialog"
 import type { listFbComments } from "./queries"
 import type { ListFbCommentsResponse } from "./schema/action"
 
@@ -86,6 +88,8 @@ export function FbCommentsTable({
   const [scheduleDialogItem, setScheduleDialogItem] = React.useState<
     ListFbCommentsResponse["data"][number] | null
   >(null)
+
+  const [postTypeOpen, setPostTypeOpen] = React.useState(false)
 
   const handleToggleStatus = useCallback(
     async (item: ListFbCommentsResponse["data"][number]) => {
@@ -160,6 +164,7 @@ export function FbCommentsTable({
                 <p>{row.original.name}</p>
               </TooltipContent>
             </Tooltip>
+            <LiveAutomationBadge post={row.original.post} />
             {missedCommentsInProgress.has(row.original.id) ? (
               <MissedCommentsProcessingLabel />
             ) : null}
@@ -335,17 +340,18 @@ export function FbCommentsTable({
                 />
               </>
             ) : null}
-            <Button
-              render={
-                <Link href={`/space/${workspaceId}/fb-comments/create`}>
-                  {t("facebookCommentAutomation.create")}
-                </Link>
-              }
-              size="sm"
-            />
+            <Button onClick={() => setPostTypeOpen(true)} size="sm">
+              {t("facebookCommentAutomation.create")}
+            </Button>
           </div>
         </DataTableToolbar>
       </DataTable>
+
+      <SelectFacebookPostTypeDialog
+        onOpenChange={setPostTypeOpen}
+        open={postTypeOpen}
+        workspaceId={workspaceId}
+      />
 
       <RenameCommentAutomationDialog
         action={updateFbCommentAction.bind(
