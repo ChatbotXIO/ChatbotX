@@ -1,32 +1,29 @@
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import type { ZodTypeAny } from "zod"
+import type { ButtonStepProps } from "../steps/button"
 import { sendAudioStepSchema } from "../steps/send-audio"
 import { sendFileStepSchema } from "../steps/send-file"
 import { sendGifStepSchema } from "../steps/send-gif"
 import { sendImageStepSchema } from "../steps/send-image"
 import { sendVideoStepSchema } from "../steps/send-video"
 import { stepTypes } from "../steps/step-action"
+import { flowValidationCodes } from "../validation-codes"
 import type { ChannelValidatorMap } from "./channel-validator"
 import {
   channelsWithMediaStepLimits,
+  isMediaButtonsDropped,
   type MediaStepType,
-  refineMediaStepForChannel,
 } from "./media-step-rules"
 
-/**
- * One `ChannelValidatorMap` per media step, derived from the support table in
- * `media-step-rules.ts` rather than hand-listed: the channels the editor warns
- * about and the channels publish refuses then cannot drift apart, and a new
- * entry in that table is picked up here for free.
- *
- * `omnichannel` stays the unrefined base — a node left on it (the default) is
- * never blocked, only the ones that name a channel which drops the buttons or
- * sends nothing.
- *
- * Kept apart from the step's editor/viewer modules — this is imported directly
- * by `validators.ts`, which is reached from both the builder's publish schema
- * and the worker's import validation, so it must stay React-free.
- */
+const readButtons = (step: unknown): ButtonStepProps[] => {
+  if (typeof step !== "object" || step === null || !("buttons" in step)) {
+    return []
+  }
+
+  const { buttons } = step as { buttons?: unknown }
+  return Array.isArray(buttons) ? (buttons as ButtonStepProps[]) : []
+}
+
 const buildMediaStepValidator = (
   schema: ZodTypeAny,
   stepType: MediaStepType,
@@ -34,9 +31,23 @@ const buildMediaStepValidator = (
   Object.assign(
     { [channelTypes.enum.omnichannel]: schema },
     ...channelsWithMediaStepLimits(stepType).map((channel) => ({
-      [channel]: schema.superRefine(
-        refineMediaStepForChannel(channel, stepType),
-      ),
+      [channel]: schema.superRefine((step, ctx) => {
+        if (
+          !isMediaButtonsDropped({
+            channel,
+            stepType,
+            buttons: readButtons(step),
+          })
+        ) {
+          return
+        }
+
+        ctx.addIssue({
+          code: "custom",
+          message: flowValidationCodes.mediaButtonsUnsupported,
+          path: ["buttons"],
+        })
+      }),
     })),
   )
 

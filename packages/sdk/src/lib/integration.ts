@@ -9,6 +9,10 @@ import {
 import type { SendFlowStepData } from "./flow-step-data"
 import type {
   BaseConfig,
+  BulkThreadControlAction,
+  BulkThreadControlLimits,
+  BulkThreadControlResult,
+  ChannelPostDetails,
   CommentAnchor,
   Context,
   HandleRequestProps,
@@ -18,6 +22,11 @@ import type {
   OutgoingContact,
   OutgoingMessage,
   ReceivedMessageResult,
+  ThreadControlAction,
+  ThreadControlRole,
+  ThreadControlUpdateResult,
+  ThreadControlWebhookResult,
+  ThreadOwnerResult,
 } from "./shared"
 
 // ---------------------------------------------------------------------------
@@ -264,6 +273,78 @@ export type ConversationHandlers<IAuth extends AuthValue> = {
     },
     void
   >
+  /**
+   * Conversation routing: take/release/pass the thread with the channel.
+   * Returns the owner role after the action. Throws a `ChannelError` when the
+   * channel rejects the call.
+   */
+  updateThreadControl?: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        contact: OutgoingContact
+        action: ThreadControlAction
+        targetRole?: ThreadControlRole
+        metadata?: string
+      }
+    },
+    ThreadControlUpdateResult
+  >
+  /**
+   * Conversation routing, many threads at once: hands each contact to the AI
+   * agent, or takes it back with `text`. One call carries a channel-sized batch
+   * (Messenger: at most 50). A per-contact failure never throws: it is reported
+   * in `results`, one entry per input contact. A failure of the whole call
+   * (revoked token) throws a `ChannelError`. When the channel's quota runs low
+   * it stops early: the rest come back `deferred` with `retryAfterMs` set.
+   */
+  bulkUpdateThreadControl?: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        action: BulkThreadControlAction
+        contacts: OutgoingContact[]
+        text?: string
+      }
+    },
+    BulkThreadControlResult
+  >
+  /**
+   * The transport limits of `bulkUpdateThreadControl` (batch size, pacing, the
+   * wait after a refused call). Required for a channel that implements the bulk
+   * handler: the caller sizes and paces its calls from it.
+   */
+  bulkThreadControlLimits?: Handler<
+    { ctx: Context<IAuth> },
+    BulkThreadControlLimits
+  >
+  /**
+   * Conversation routing: asks the channel who owns the thread right now
+   * (a read, separate from take/release/pass). Optional: a channel without an
+   * owner-query API omits it, and callers treat that as "cannot sync".
+   */
+  getThreadOwner?: Handler<
+    {
+      ctx: Context<IAuth>
+      data: { contact: OutgoingContact }
+    },
+    ThreadOwnerResult
+  >
+  /**
+   * Conversation routing: turns a routing webhook job payload into a handover
+   * event or a standby message. `null` = nothing to do (routing off, malformed).
+   */
+  receiveThreadControlEvent?: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        integrationType: string
+        integrationIdentifier: string
+        payload: unknown
+      }
+    },
+    ThreadControlWebhookResult | null
+  >
 }
 
 /** Channel-agnostic label/tag descriptor (e.g. a Facebook Custom Label). */
@@ -305,8 +386,24 @@ export type UserCustomSettings = {
 
 export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
-    { ctx: Context<IAuth>; data: { sourceId: string } },
+    {
+      ctx: Context<IAuth>
+      data: { includeProfileSnapshot?: boolean; sourceId: string }
+    },
     IncomingContact
+  >
+  getProfileSnapshot?: Handler<
+    { ctx: Context<IAuth>; data: { sourceId: string } },
+    NonNullable<IncomingContact["profileSnapshot"]>
+  >
+  /**
+   * Describes a post the contact commented on (caption, permalink, …). Optional:
+   * only channels that track comments per post implement it
+   * (`postTrackingChannels`).
+   */
+  getPostDetails?: Handler<
+    { ctx: Context<IAuth>; data: { postId: string } },
+    ChannelPostDetails
   >
   getContactProfilePicUrl: Handler<
     { ctx: Context<IAuth>; data: { sourceId: string } },
@@ -540,18 +637,38 @@ export class Integration<
     name: Name,
     props: ChannelHandlerInput<T, Group, Name>,
   ): Promise<ChannelHandlerResult<T, Group, Name>> {
-    // biome-ignore lint/suspicious/noExplicitAny: heterogeneous handler shapes
-    const channel = this.channels?.channel as Record<string, any> | undefined
-    const handler = channel?.[group as string]?.[name as string]
-    if (typeof handler !== "function") {
+    const handler = this.findChannelHandler(String(group), String(name))
+    if (!handler) {
       throw new IntegrationException(
         `Channel handler "${String(group)}.${String(name)}" not registered for integration "${this.name}".`,
       )
     }
     return (await this.invokeWithRefresh(
-      handler as (input: unknown) => Promise<unknown>,
+      handler,
       props,
     )) as ChannelHandlerResult<T, Group, Name>
+  }
+
+  /**
+   * Whether the channel registers `group.name`, so callers can check support
+   * without catching the `IntegrationException` `runChannelHandler` throws.
+   */
+  hasChannelHandler<
+    Group extends keyof IntegrationHandlerMap<T>,
+    Name extends keyof IntegrationHandlerMap<T>[Group],
+  >(group: Group, name: Name): boolean {
+    return this.findChannelHandler(String(group), String(name)) !== undefined
+  }
+
+  /** The single lookup behind `runChannelHandler` and `hasChannelHandler`. */
+  private findChannelHandler(
+    group: string,
+    name: string,
+  ): ((input: unknown) => Promise<unknown>) | undefined {
+    // biome-ignore lint/suspicious/noExplicitAny: heterogeneous handler shapes
+    const channel = this.channels?.channel as Record<string, any> | undefined
+    const handler = channel?.[group]?.[name]
+    return typeof handler === "function" ? handler : undefined
   }
 
   // -------------------------------------------------------------------------

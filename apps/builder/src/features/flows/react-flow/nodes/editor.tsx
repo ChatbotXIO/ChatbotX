@@ -41,6 +41,7 @@ import { useCustomFields } from "@/features/custom-fields/provider/custom-field-
 import { useInboxListState } from "@/features/inboxes/provider/inbox-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
+import { resolveFlowValidationCodeKey } from "../flow-validation-message"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
 import { ErrorAlert } from "../steps/error-alert"
@@ -50,6 +51,8 @@ import { useStepStore } from "../stores/step-store-provider"
 import { useFlowHistory } from "../stores/use-flow-history"
 import { useWhatsappFlow } from "../stores/whatsapp-flow-store-provider"
 import { allNodesConfig } from "./node-config"
+import { QuickReplySettingsDialog } from "./quick-reply-settings/quick-reply-settings-dialog"
+import { QuickReplySettingsEdgeSyncs } from "./quick-reply-settings/quick-reply-settings-edge-sync"
 import type { MenuItem } from "./types"
 
 const collectErrorMessages = (node: unknown): string[] => {
@@ -98,7 +101,7 @@ const replaceIds = (data: unknown): unknown => {
   return data
 }
 
-const NodeEditorQuickReplies = () => {
+const NodeEditorQuickReplies = ({ nodeId }: { nodeId: string }) => {
   const t = useTranslations()
   const { control } = useFormContext()
 
@@ -150,6 +153,11 @@ const NodeEditorQuickReplies = () => {
           {t("flows.quickReplies.limitReached", { max: MAX_QUICK_REPLIES })}
         </p>
       )}
+      {quickReplies.length > 0 && <QuickReplySettingsDialog />}
+      <QuickReplySettingsEdgeSyncs
+        hasQuickReplies={quickReplies.length > 0}
+        nodeId={nodeId}
+      />
     </div>
   )
 }
@@ -513,15 +521,20 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
           upgradedNodeDetails.quickReplies && (
             <>
               {(() => {
-                const messages = collectErrorMessages(
+                const messages = collectErrorMessages([
                   // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
                   (form.formState.errors as any).quickReplies,
-                )
+                  // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
+                  (form.formState.errors as any).quickReplySettings,
+                ]).map((message) => {
+                  const key = resolveFlowValidationCodeKey(message)
+                  return key ? t(key) : message
+                })
                 return messages.length > 0 ? (
                   <ErrorAlert message={messages.join(", ")} />
                 ) : null
               })()}
-              <NodeEditorQuickReplies />
+              <NodeEditorQuickReplies nodeId={nodeId} />
             </>
           )}
 

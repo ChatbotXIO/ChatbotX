@@ -56,6 +56,20 @@ again equals the published content.
 - The revert action is destructive from the user's perspective because it discards
   local draft work, so the builder shows a confirmation dialog before executing it.
 
+## Channel capability validation
+
+Publishing, importing, and restoring a flow validate every message step against its
+selected channel. Unsupported blocks and channel limits reject the operation before
+the version becomes current; the builder shows a localized validation message, while
+the API returns a structured capability error.
+
+This also applies to existing published versions. Restoring a version that uses a
+block no longer supported by its channel now fails instead of making that version
+current. Update the version to a supported message block before restoring it.
+
+Threads has no direct-message delivery runtime, so every message step is unsupported
+for Threads. Flows can still use non-message steps for Threads.
+
 ## Flow-spec DSL (agent authoring)
 
 Public API callers (typically an MCP agent) can author a flow as a compact JSON

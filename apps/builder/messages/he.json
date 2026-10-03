@@ -300,6 +300,28 @@
     "quickReplies": {
       "limitReached": "הגעתם למגבלת התשובות המהירות ({max})."
     },
+    "quickReplySettings": {
+      "open": "הגדרות תשובות מהירות",
+      "title": "הגדרת תשובות מהירות",
+      "chooseNextStep": "בחירת השלב הבא",
+      "followUp": {
+        "label": "מעקב אם איש הקשר לא הגיב",
+        "waitFor": "המתנה של",
+        "divider": "אם איש הקשר לא הגיב, מעקב באמצעות",
+        "windowHint": "Messenger ו-Instagram מאפשרים שליחה רק בתוך 24 שעות מההודעה האחרונה של איש הקשר; הודעות מעקב מאוחרות יותר מדולגות שם.",
+        "handle": "אין תגובה"
+      },
+      "retry": {
+        "label": "ניסיון חוזר אם התשובה אינה תשובה מהירה",
+        "message": "הודעת ניסיון חוזר",
+        "messageDefault": "יש להקיש על אחת מהאפשרויות למטה 👇",
+        "count": "מספר ניסיונות חוזרים",
+        "countOption": "{count, plural, =0 {ללא ניסיונות חוזרים} one {# פעם} other {# פעמים}}",
+        "divider": "כאשר מספר הניסיונות החוזרים חורג",
+        "handle": "חריגה ממספר הניסיונות",
+        "getUserDataConflict": "ניסיון חוזר אינו זמין כאשר הודעה זו מכילה שלב קבלת נתוני משתמש."
+      }
+    },
     "buttons": {
       "limitReached": "הגעתם למגבלת הכפתורים ({max})."
     },
@@ -434,7 +456,8 @@
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
       "importJsonOnly": "קבצי JSON בלבד",
       "whatsappCallButton": "התקשרות בוואטסאפ",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "שליטה בשרשור"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -1099,6 +1122,128 @@
   "integrations": {
     "title": "שילובים"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "שלטו במה שקורה כשעוזר ה-AI של Meta עונה ללקוחות ה-Messenger שלכם.",
+    "info": "כשהאפשרות פעילה, שיחות נלקחות לטיפול כאן אחרי שעוזר ה-AI מחזיר אותן, וההגדרות שלהלן חלות.",
+    "enabled": {
+      "label": "הפעלה"
+    },
+    "schedule": {
+      "label": "זמן הפעלה",
+      "description": "החל רק בשעות אלה לפי אזור הזמן של סביבת העבודה.",
+      "from": "משעה",
+      "to": "עד שעה",
+      "add": "הוסף טווח זמן",
+      "remove": "הסר טווח זמן"
+    },
+    "gotoFlow": {
+      "label": "עבור לזרימה",
+      "description": "הפלואו שמתחיל כשעוזר ה-AI מחזיר את השיחה. קודם להודעת ההחזרה.",
+      "placeholder": "בחר זרימה",
+      "clear": "נקה זרימה"
+    },
+    "returnMessage": {
+      "label": "הודעת החזרה",
+      "description": "נשלחת במקום זאת כשלא הוגדרה זרימה או שהזרימה כבר אינה פעילה.",
+      "placeholder": "ההודעה שנשלחת כשה-AI מחזיר את השיחה"
+    },
+    "pauseBot": {
+      "label": "העברת שיחה לנציג אנושי",
+      "description": "עוצר את הבוט עבור איש קשר זה לאחר ההחזרה, עד שחבר צוות משתלט או שהבוט מתחדש."
+    },
+    "readOnly": "אפשר לצפות בהגדרות האלה אך לא לשנות אותן.",
+    "errors": {
+      "supportSession": "לא ניתן לשנות הגדרות מתוך סשן תמיכה.",
+      "flowNotFound": "הזרימה שנבחרה לא נמצאה או שאינה פעילה.",
+      "timeRanges": "הזינו טווחי זמן תקינים: שעות שלמות מ-0 עד 24, כשההתחלה והסיום שונים."
+    },
+    "bulk": {
+      "title": "החל על כל הלקוחות",
+      "description": "העבירו כל שיחת Messenger מתאימה לעוזר ה-AI של Meta, או קחו בחזרה את השיחות שהוא מחזיק כרגע. הפעולה רצה ברקע ואפשר לעקוב אחריה כאן.",
+      "started": "התחיל. אפשר לעקוב אחר ההתקדמות כאן.",
+      "progress": "התקדמות",
+      "processedOfTotal": "{done} מתוך {total} שיחות",
+      "counters": "{processed} הושלמו, {skipped} דולגו, {failed} נכשלו",
+      "action": {
+        "enable": "הפעל לכולם",
+        "disable": "כבה לכולם"
+      },
+      "status": {
+        "pending": "ממתין להתחלה",
+        "running": "רץ",
+        "cancelling": "מבטל",
+        "completed": "הושלם",
+        "failed": "נכשל",
+        "cancelled": "בוטל"
+      },
+      "enable": {
+        "dialogDescription": "כל שיחת Messenger שהלקוח כתב בה ב-30 הימים האחרונים ואף אפליקציה אחרת לא מחזיקה בה מועברת לעוזר ה-AI של Meta. שיחות נלקחות בחזרה בהתאם להגדרות שלמעלה.",
+        "confirm": "הפעל לכולם",
+        "blocked": "שמרו את האוטומציה שלמעלה והפעילו אותה (בתוך זמן ההפעלה שלה) כדי להפעיל אותה לכל הלקוחות."
+      },
+      "disable": {
+        "dialogDescription": "רק שיחות שעוזר ה-AI של Meta מחזיק כרגע נלקחות בחזרה, ואפשר להגיע רק ללקוחות שכתבו ב-7 הימים האחרונים. כל אחד מהם מקבל את ההודעה שלמטה, הנשלחת עם תג Human Agent של Meta, לכן כתבו אותה כאילו אדם משיב. לדף נדרשת הרשאת Human Agent.",
+        "messageLabel": "הודעה ללקוחות",
+        "messageDescription": "עד {max} תווים.",
+        "messagePlaceholder": "שלום, חבר צוות לוקח את השיחה הזו.",
+        "confirm": "כבה לכולם",
+        "policyWarning": "Meta מתירה את תג Human Agent רק כשאדם משיב ללקוח. שימוש בו לקידום מכירות או להודעות אוטומטיות עלול להוביל להגבלת ההודעות של הדף."
+      },
+      "errors": {
+        "automationNotActive": "שמרו את האוטומציה והפעילו אותה (בתוך זמן ההפעלה שלה) לפני שמפעילים אותה לכל הלקוחות.",
+        "messageRequired": "הזינו את ההודעה שתישלח ללקוחות.",
+        "messageTooLong": "ההודעה ארוכה מדי.",
+        "pageNotConnected": "הדף הזה לא מחובר.",
+        "nothingToRetry": "אין מה לנסות שוב."
+      },
+      "runErrors": {
+        "automationStopped": "נעצר כי האוטומציה כובתה.",
+        "tokenInvalid": "הגישה של הדף בוטלה. חברו את הדף מחדש ונסו שוב.",
+        "channelUnsupported": "הערוץ הזה אינו תומך בפעולה קבוצתית.",
+        "maxAttempts": "בוטל לאחר כשלונות חוזרים.",
+        "channelUnavailable": "נעצר כי לא ניתן היה להגיע ל-Meta כמה פעמים ברצף.",
+        "batchFailed": "לא ניתן היה לאשר חלק מהשיחות והן נספרו ככושלות.",
+        "pageDisconnected": "נעצר כי הדף נותק.",
+        "pageRefused": "Meta דחתה את ההעברה עבור הדף הזה: ייתכן שהוא לא מוגדר לעוזר ה-AI של Meta, או שחסרה לו הרשאה.",
+        "integrationUnavailable": "לא ניתן היה לטעון את החיבור של הדף. חברו את הדף מחדש ונסו שוב."
+      },
+      "pausedUntil": "מושהה עד {at} כדי להישאר במסגרת מגבלות הקצב של Meta עבור הדף הזה. הפעולה תתחדש מעצמה.",
+      "preparing": "מתכוננים…",
+      "live": {
+        "enable": "מפעיל עבור הלקוחות: {done} / {total}",
+        "disable": "מכבה עבור הלקוחות: {done} / {total}",
+        "enableCounting": "מפעיל עבור הלקוחות: סופר…",
+        "disableCounting": "מכבה עבור הלקוחות: סופר…"
+      },
+      "done": {
+        "enable": "הופעל עבור {processed} מתוך {total} לקוחות.",
+        "disable": "כובה עבור {processed} מתוך {total} לקוחות."
+      },
+      "stopped": {
+        "enable": "ההפעלה עבור כל הלקוחות נעצרה.",
+        "disable": "הכיבוי עבור כל הלקוחות נעצר."
+      },
+      "retry": "נסה שוב"
+    },
+    "history": {
+      "link": "היסטוריה",
+      "title": "היסטוריית הרצות קבוצתיות",
+      "empty": "עדיין אין הרצות.",
+      "columns": {
+        "action": "פעולה",
+        "requestedAt": "התחיל",
+        "progress": "עובדו / סה״כ",
+        "finishedAt": "הסתיים",
+        "message": "הודעה",
+        "requestedBy": "התבקש על ידי"
+      },
+      "description": "בכל פעם ש-\"החל על כל הלקוחות\" הופעל או כובה עבור הדף הזה, מהחדש לישן.",
+      "error": "לא ניתן היה לטעון את ההיסטוריה.",
+      "previousPage": "הדף הקודם",
+      "nextPage": "הדף הבא"
+    }
+  },
   "platformSettings": {
     "title": "הגדרות פלטפורמה",
     "errors": {
@@ -1237,7 +1382,9 @@
       "bannerDescription": "סביבת עבודה זו מתוזמנת למחיקה. בטלו את המחיקה למטה כדי להמשיך להשתמש בה.",
       "pendingBlockedToast": "סביבת עבודה זו מתוזמנת למחיקה. פנו למנהל סביבת העבודה כדי לשחזר את הגישה.",
       "navDisabledTooltip": "לא זמין כאשר מחיקת סביבת העבודה מתוזמנת",
-      "badge": "מחיקה מתוזמנת"
+      "badge": "מחיקה מתוזמנת",
+      "purging": "מחיקת סביבת העבודה מתבצעת.",
+      "alreadyStarted": "מחיקת סביבת העבודה כבר החלה."
     },
     "supportAccess": {
       "bannerTitle": "הפעלת תמיכה של הפלטפורמה",
@@ -1379,6 +1526,9 @@
     "noVersionsFound": "לא נמצאו גרסאות שפורסמו",
     "publishVersionSuccess": "גרסה חדשה פורסמה",
     "flowConfigIncomplete": "חלק מההגדרות אינן שלמות",
+    "quickReplyNextStepRequired": "יש לבחור שלב הבא לכל הגדרת תשובה מהירה מופעלת",
+    "quickReplyRetryMessageRequired": "יש להזין הודעת ניסיון חוזר",
+    "quickReplyRetryWithGetUserData": "לא ניתן לשלב ניסיון חוזר עם שלב קבלת נתוני משתמש",
     "whatsappCarouselButtonsMismatch": "בוואטסאפ, קרוסלה חייבת לכלול את אותם כפתורים בכל כרטיס: או כפתור קישור יחיד בכל כרטיס, או אותו מספר כפתורי תשובה בכל כרטיס",
     "whatsappCarouselLinkButtonNotAlone": "בוואטסאפ, כרטיס קרוסלה עם כפתור קישור לא יכול לכלול כפתורים נוספים. הסר את הכפתורים הנוספים בכרטיס הזה, או שנה את כפתור הקישור לפעולה אחרת.",
     "duplicateNodeError": "לא ניתן היה לשכפל את הבלוק. נסו שוב.",
@@ -1393,7 +1543,8 @@
     "waTemplateMpmTooManyProducts": "לכפתור רב-מוצרים יכולים להיות עד 30 מוצרים בסך הכל. הסר מוצרים לפני הפרסום.",
     "waTemplateLtoExpirationRequired": "בחרו תאריך תפוגה למבצע המוגבל בזמן לפני השליחה.",
     "waTemplateMpmIncompleteProducts": "כל מקטע צריך לפחות מוצר אחד שנבחר — הסירו שורות ריקות או בחרו להן מוצר.",
-    "mediaStepUnsupported": "ערוץ זה לא יכול לשלוח סוג מדיה זה. הסר את השלב או הפנה את הצומת לערוץ שתומך בכך.",
+    "unsupportedBlock": "הערוץ הזה אינו תומך בבלוק הזה.",
+    "constraintExceeded": "חרגת ממגבלת הערוץ.",
     "mediaButtonsUnsupported": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה. הסר את הכפתורים או העבר אותם לשלב טקסט שלאחר שלב זה.",
     "voiceCall": "שיחה קולית",
     "voiceCallDuration": "שיחה קולית · {duration}",
@@ -5062,7 +5213,8 @@
       "searchPlaceholder": "חיפוש מילת מפתח..."
     },
     "templateId": {
-      "label": "תבנית WhatsApp"
+      "label": "תבנית WhatsApp",
+      "placeholder": "בחר תבנית"
     },
     "messengerTemplateId": {
       "label": "תבנית Messenger"
@@ -5211,7 +5363,10 @@
         "failed": "נכשל",
         "completedAt": "הושלם בתאריך",
         "errorDetails": "שגיאות ייבוא",
-        "row": "שורה {row}"
+        "row": "שורה {row}",
+        "unsupportedChannelStep": "הערוץ {channel} אינו תומך ב-{block}.",
+        "channelStepConstraintExceeded": "{block} חורג ממגבלת הערוץ {channel}: ‏{actual} {unit}, המקסימום הוא {allowed}.",
+        "channelStepConstraintExceededGeneric": "הערוץ {channel} אינו תומך בתצורה הנוכחית של {block}."
       }
     },
     "line": {
@@ -5732,12 +5887,16 @@
     }
   },
   "condition": {
+    "unknownValue": "לא ידוע",
     "yes": "כן",
     "no": "לא",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "יש להזין תאריך בתבנית YYYY-MM-DD HH:mm או משתנה",
+    "openPost": "פתיחת {post}",
+    "openPostLink": "פתיחה",
+    "postWithoutCaption": "פוסט ללא כיתוב",
     "operator": {
       "and": "כל התנאים",
       "or": "תנאי כלשהו"
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "פתיחת קבוצת Zalo",
     "openZalo": "פתיחת Zalo",
     "openMessenger": "פתיחת Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "שותף",
+      "partnerWithRole": "שותף · {role}",
+      "self": "אתה"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "מודעות Click-to-WhatsApp",
+      "customer_service": "שירות לקוחות",
+      "escalation": "הסלמה",
+      "marketing": "שיווק",
+      "utility": "שירות"
+    },
+    "pill": {
+      "standby": "המתנה ({owner})",
+      "owned": "פעיל",
+      "tooltip": "בטיפול של {owner}"
+    },
+    "release": {
+      "label": "שחרור",
+      "tooltip": "שחרר את השיחה כדי שאפליקציות אחרות יוכלו להשיב",
+      "success": "השיחה שוחררה"
+    },
+    "pass": {
+      "menuItem": "העבר להסלמה",
+      "title": "להעביר לשותף ההסלמה?",
+      "description": "להעביר את השיחה לשותף ההסלמה שלך? התשובות שלך יושהו עד שהשיחה תחזור.",
+      "confirm": "העבר",
+      "success": "השיחה הועברה לשותף ההסלמה"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "החזר את השיחה הזו לעוזר ה-AI",
+      "title": "להחזיר לעוזר ה-AI?",
+      "description": "עוזר ה-AI יחזור לענות ללקוח הזה. התשובות שלך יושהו עד שהשיחה תחזור אליך. Meta אינה מבטיחה שהעוזר יענה לכל הודעה.",
+      "confirm": "החזר",
+      "success": "השיחה הוחזרה לעוזר ה-AI"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "אתה במצב המתנה (האזנה בלבד)",
+      "description": "שותף צד שלישי מטפל בשיחה זו. תיבת ההודעות נעולה כדי למנוע תשובות כפולות.",
+      "takeOver": "קח שליטה",
+      "takeOverSuccess": "אתה מטפל עכשיו בשיחה הזו",
+      "notEscalation": "רק שותף ההסלמה יכול לקחת שליטה. הניתוב מוגדר ב-Meta Business Suite.",
+      "notPrimaryReceiver": "האפליקציה הזו חייבת להיות המקבל הראשי של הדף כדי לקחת שליטה. ניתן להגדיר זאת בהגדרות Handover Protocol של הדף.",
+      "learnMore": "למידע נוסף",
+      "dismiss": "שלח בכל זאת"
+    },
+    "divider": {
+      "ownerHandling": "{owner} מטפל עכשיו בשיחה הזו",
+      "handedOver": "{previousOwner} החזיר אליך את השיחה הזו",
+      "selfHandling": "אתה מטפל כעת בשיחה זו",
+      "takenOver": "השתלטת על השיחה הזו",
+      "released": "השיחה שוחררה",
+      "passed": "השיחה הועברה לשותף ההסלמה",
+      "serviceRejected": "ההודעה לא נשלחה: {owner} מטפל בשיחה הזו"
+    },
+    "context": {
+      "title": "הקשר השיחה",
+      "summaryBadge": "סיכום AI",
+      "historyBadge": "היסטוריה",
+      "customer": "לקוח",
+      "business": "עסק",
+      "handoverNote": "הערת העברה: {note}",
+      "showAll": "הצג הכול ({count})",
+      "showLess": "הצג פחות"
+    },
+    "echo": {
+      "partner": "שותף"
+    },
+    "panel": {
+      "title": "ניתוב שיחה",
+      "threadState": "מצב השיחה",
+      "threadStateOwned": "בטיפול",
+      "threadStateStandby": "המתנה",
+      "threadStateIdle": "לא פעיל",
+      "currentOwner": "הבעלים הנוכחי",
+      "noOwner": "אין בעלים",
+      "roleLabel": "התפקיד שלך",
+      "selfOwned": "מטפל בשיחה",
+      "selfStandby": "המתנה — האזנה בלבד",
+      "selfIdle": "ממתין להודעה הבאה של הלקוח",
+      "hintOwned": "שחרר בסיום כדי שאפליקציות אחרות יוכלו להשיב.",
+      "hintStandby": "בזמן ששותף מטפל בשיחה, ההודעות שלך מוחזקות כדי שהלקוח לא יקבל תשובות כפולות. השתלט על השיחה מתיבת ההודעות כדי להשיב.",
+      "hintIdle": "ההודעה הבאה של הלקוח תקבע מי משיב.",
+      "syncOwner": "סנכרון בעלים",
+      "syncOwnerSuccess": "הבעלים סונכרן"
+    },
+    "settings": {
+      "title": "תהליך חידוש לאחר מסירה",
+      "description": "האוטומציה שפועלת כאשר שותף מחזיר שיחה.",
+      "resumeFlowLabel": "בחר תהליך",
+      "resumeFlowPlaceholder": "בחר תהליך",
+      "info": "תהליך זה מתחיל אוטומטית כאשר השליטה מוחזרת. סיכום השיחה והיסטוריית הצ'אט מוצגים לאחר מכן לנציגים שלך בצ'אט החי.",
+      "save": "שמור שינויים",
+      "clearFlow": "נקה תהליך",
+      "adminOnly": "רק מנהלי סביבת העבודה יכולים לשנות ניתוב",
+      "flowNotFound": "התהליך שנבחר לא נמצא או שאינו פעיל",
+      "integrationNotFound": "מספר WhatsApp לא נמצא",
+      "messengerIntegrationNotFound": "דף Messenger לא נמצא"
+    },
+    "errors": {
+      "unsupported": "ניתוב שיחות אינו זמין בערוץ הזה",
+      "notFound": "השיחה הזו אינה בערוץ הזה",
+      "actionFailed": "לא ניתן היה לעדכן את ניתוב השיחה. נסה שוב."
+    },
+    "step": {
+      "action": "פעולה",
+      "release": "שחרר את השיחה",
+      "pass": "העבר לשותף ההסלמה",
+      "helper": "וואטסאפ בלבד. בערוצים אחרים, או כשהשיחה אינה בבעלות כאן, השלב ממשיך בנתיב השגיאה."
+    },
+    "template": {
+      "sent": "התבנית נשלחה"
+    }
   }
 }

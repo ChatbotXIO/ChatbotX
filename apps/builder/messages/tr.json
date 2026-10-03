@@ -583,12 +583,16 @@
     }
   },
   "condition": {
+    "unknownValue": "Bilinmiyor",
     "yes": "Evet",
     "no": "Hayır",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "YYYY-MM-DD HH:mm biçiminde bir tarih veya bir değişken girin",
+    "openPost": "{post} aç",
+    "openPostLink": "Aç",
+    "postWithoutCaption": "Açıklamasız gönderi",
     "operator": {
       "and": "Tüm koşullar",
       "or": "Herhangi bir koşul"
@@ -886,7 +890,9 @@
       "bannerDescription": "Bu çalışma alanının silinmesi planlandı. Kullanmaya devam etmek için aşağıdan silme işlemini geri alın.",
       "pendingBlockedToast": "Bu çalışma alanının silinmesi planlandı. Erişimi geri yüklemek için bir çalışma alanı yöneticisiyle iletişime geçin.",
       "navDisabledTooltip": "Çalışma alanı silme işlemi planlıyken kullanılamaz",
-      "badge": "Silme planlandı"
+      "badge": "Silme planlandı",
+      "purging": "Çalışma alanı siliniyor.",
+      "alreadyStarted": "Çalışma alanının silinmesi zaten başladı."
     },
     "supportAccess": {
       "bannerTitle": "Platform destek oturumu",
@@ -2015,7 +2021,8 @@
       "searchPlaceholder": "Anahtar kelime ara..."
     },
     "templateId": {
-      "label": "WhatsApp Şablonu"
+      "label": "WhatsApp Şablonu",
+      "placeholder": "Bir şablon seçin"
     },
     "messengerTemplateId": {
       "label": "Messenger Şablonu"
@@ -2164,7 +2171,10 @@
         "failed": "Başarısız",
         "completedAt": "Tamamlanma zamanı",
         "errorDetails": "İçe aktarma hataları",
-        "row": "Satır {row}"
+        "row": "Satır {row}",
+        "unsupportedChannelStep": "{channel} kanalı {block} adımını desteklemiyor.",
+        "channelStepConstraintExceeded": "{block}, {channel} sınırını aşıyor: {actual} {unit}; en fazla {allowed}.",
+        "channelStepConstraintExceededGeneric": "{channel} kanalı mevcut {block} yapılandırmasını desteklemiyor."
       }
     },
     "line": {
@@ -2420,6 +2430,28 @@
     "quickReplies": {
       "limitReached": "Hızlı yanıt sınırına ulaşıldı ({max})."
     },
+    "quickReplySettings": {
+      "open": "Hızlı yanıt ayarları",
+      "title": "Hızlı yanıtları yapılandır",
+      "chooseNextStep": "Sonraki adımı seç",
+      "followUp": {
+        "label": "Kişi etkileşime girmediyse takip et",
+        "waitFor": "Bekleme süresi",
+        "divider": "Kişi etkileşime girmediyse şununla takip et",
+        "windowHint": "Messenger ve Instagram yalnızca kişinin son mesajından sonraki 24 saat içinde gönderime izin verir; daha sonraki takipler bu kanallarda atlanır.",
+        "handle": "Etkileşim yok"
+      },
+      "retry": {
+        "label": "Yanıt bir Hızlı Yanıt değilse yeniden dene",
+        "message": "Yeniden deneme mesajı",
+        "messageDefault": "Lütfen aşağıdaki seçeneklerden birine dokunun 👇",
+        "count": "Yeniden deneme sayısı",
+        "countOption": "{count, plural, =0 {Yeniden deneme yok} one {# kez} other {# kez}}",
+        "divider": "Yeniden deneme sayısı aşıldığında",
+        "handle": "Yeniden deneme sayısı aşıldı",
+        "getUserDataConflict": "Bu mesaj bir Kullanıcı Verisini Al adımı içerdiğinde yeniden deneme kullanılamaz."
+      }
+    },
     "buttons": {
       "limitReached": "Buton sınırına ulaşıldı ({max})."
     },
@@ -2554,7 +2586,8 @@
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
       "importJsonOnly": "Yalnızca JSON dosyaları",
       "whatsappCallButton": "WhatsApp'ta ara",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Konuşma kontrolü"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -3219,6 +3252,128 @@
   "integrations": {
     "title": "Entegrasyonlar"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Meta'nın yapay zekâ asistanı Messenger müşterilerinizi yanıtladığında ne olacağını yönetin.",
+    "info": "Etkinleştirildiğinde, yapay zekâ asistanı görüşmeleri geri verdikten sonra görüşmeler burada devralınır ve aşağıdaki ayarlar geçerli olur.",
+    "enabled": {
+      "label": "Etkinleştir"
+    },
+    "schedule": {
+      "label": "Çalışma zamanı",
+      "description": "Yalnızca çalışma alanının saat diliminde bu saatlerde uygula.",
+      "from": "Başlangıç saati",
+      "to": "Bitiş saati",
+      "add": "Zaman aralığı ekle",
+      "remove": "Zaman aralığını kaldır"
+    },
+    "gotoFlow": {
+      "label": "Akışa git",
+      "description": "Yapay zekâ asistanı görüşmeyi geri verdiğinde başlatılan akış. Geri verme mesajından önceliklidir.",
+      "placeholder": "Bir akış seçin",
+      "clear": "Akışı temizle"
+    },
+    "returnMessage": {
+      "label": "Dönüş mesajı",
+      "description": "Akış ayarlı değilse veya akış artık etkin değilse bunun yerine gönderilir.",
+      "placeholder": "Yapay zekâ görüşmeyi geri verdiğinde gönderilen mesaj"
+    },
+    "pauseBot": {
+      "label": "Konuşmayı İnsana Aktar",
+      "description": "Geri verme sonrasında bu kişi için botu, bir ekip üyesi devralana veya bot yeniden başlayana kadar durdurur."
+    },
+    "readOnly": "Bu ayarları görüntüleyebilirsiniz ancak değiştiremezsiniz.",
+    "errors": {
+      "supportSession": "Ayarlar bir destek oturumundan değiştirilemez.",
+      "flowNotFound": "Seçilen akış bulunamadı veya etkin değil.",
+      "timeRanges": "Geçerli zaman aralıkları girin: 0 ile 24 arasında tam saatler, başlangıç ve bitiş farklı olmalı."
+    },
+    "bulk": {
+      "title": "Tüm müşterilere uygula",
+      "description": "Uygun tüm Messenger görüşmelerini Meta'nın yapay zekâ asistanına devredin veya şu anda onda olanları geri alın. Arka planda çalışır ve buradan takip edebilirsiniz.",
+      "started": "Başlatıldı. İlerlemeyi buradan takip edebilirsiniz.",
+      "progress": "İlerleme",
+      "processedOfTotal": "{done} / {total} görüşme",
+      "counters": "{processed} tamamlandı, {skipped} atlandı, {failed} başarısız",
+      "action": {
+        "enable": "Tümü için aç",
+        "disable": "Tümü için kapat"
+      },
+      "status": {
+        "pending": "Başlamayı bekliyor",
+        "running": "Çalışıyor",
+        "cancelling": "İptal ediliyor",
+        "completed": "Tamamlandı",
+        "failed": "Başarısız",
+        "cancelled": "İptal edildi"
+      },
+      "enable": {
+        "dialogDescription": "Müşterisinin son 30 gün içinde yazdığı ve başka hiçbir uygulamanın tutmadığı her Messenger görüşmesi Meta'nın yapay zekâ asistanına devredilir. Görüşmeler yukarıdaki ayarlara göre geri alınır.",
+        "confirm": "Tümü için aç",
+        "blocked": "Tüm müşteriler için açmak üzere yukarıdaki otomasyonu kaydedin ve (çalışma zamanı içinde) açın."
+      },
+      "disable": {
+        "dialogDescription": "Yalnızca Meta'nın yapay zekâ asistanının şu anda tuttuğu görüşmeler geri alınır ve yalnızca son 7 gün içinde yazan müşterilere ulaşılabilir. Her biri, Meta'nın Human Agent etiketiyle gönderilen aşağıdaki mesajı alır; bu yüzden onu bir kişi yanıt veriyormuş gibi yazın. Sayfanın Human Agent iznine sahip olması gerekir.",
+        "messageLabel": "Müşterilere mesaj",
+        "messageDescription": "En fazla {max} karakter.",
+        "messagePlaceholder": "Merhaba, bir ekip üyesi bu görüşmeyi devralıyor.",
+        "confirm": "Tümü için kapat",
+        "policyWarning": "Meta, Human Agent etiketine yalnızca müşteriye yanıt veren bir kişi için izin verir. Promosyonlar veya otomatik mesajlar için kullanmak Sayfanın mesajlaşmasının kısıtlanmasına yol açabilir."
+      },
+      "errors": {
+        "automationNotActive": "Tüm müşteriler için açmadan önce otomasyonu kaydedin ve (çalışma zamanı içinde) açın.",
+        "messageRequired": "Müşterilere gönderilecek mesajı girin.",
+        "messageTooLong": "Mesaj çok uzun.",
+        "pageNotConnected": "Bu Sayfa bağlı değil.",
+        "nothingToRetry": "Yeniden denenecek bir şey yok."
+      },
+      "runErrors": {
+        "automationStopped": "Otomasyon kapatıldığı için durduruldu.",
+        "tokenInvalid": "Sayfanın erişimi iptal edildi. Sayfayı yeniden bağlayıp tekrar deneyin.",
+        "channelUnsupported": "Bu kanal toplu işlemi desteklemiyor.",
+        "maxAttempts": "Art arda yaşanan hatalar nedeniyle vazgeçildi.",
+        "channelUnavailable": "Meta'ya art arda birkaç kez ulaşılamadığı için durduruldu.",
+        "batchFailed": "Bazı görüşmeler doğrulanamadı ve başarısız olarak sayıldı.",
+        "pageDisconnected": "Sayfanın bağlantısı kesildiği için durduruldu.",
+        "pageRefused": "Meta bu Sayfa için devri reddetti: Sayfa, Meta'nın yapay zekâ asistanı için ayarlanmamış olabilir veya izni eksik olabilir.",
+        "integrationUnavailable": "Sayfanın bağlantısı yüklenemedi. Sayfayı yeniden bağlayıp tekrar deneyin."
+      },
+      "pausedUntil": "Bu Sayfa için Meta'nın hız sınırları içinde kalmak üzere {at} tarihine kadar duraklatıldı. Kendiliğinden devam eder.",
+      "preparing": "Hazırlanıyor…",
+      "live": {
+        "enable": "Müşteriler için etkinleştiriliyor: {done} / {total}",
+        "disable": "Müşteriler için devre dışı bırakılıyor: {done} / {total}",
+        "enableCounting": "Müşteriler için etkinleştiriliyor: sayılıyor…",
+        "disableCounting": "Müşteriler için devre dışı bırakılıyor: sayılıyor…"
+      },
+      "done": {
+        "enable": "{total} müşteriden {processed} tanesi için etkinleştirildi.",
+        "disable": "{total} müşteriden {processed} tanesi için devre dışı bırakıldı."
+      },
+      "stopped": {
+        "enable": "Tüm müşteriler için etkinleştirme durduruldu.",
+        "disable": "Tüm müşteriler için devre dışı bırakma durduruldu."
+      },
+      "retry": "Yeniden dene"
+    },
+    "history": {
+      "link": "Geçmiş",
+      "title": "Toplu çalıştırma geçmişi",
+      "empty": "Henüz çalıştırma yok.",
+      "columns": {
+        "action": "İşlem",
+        "requestedAt": "Başlangıç",
+        "progress": "İşlenen / toplam",
+        "finishedAt": "Bitiş",
+        "message": "Mesaj",
+        "requestedBy": "Talep eden"
+      },
+      "description": "Bu Sayfa için \"Tüm müşterilere uygula\" her açıldığında veya kapatıldığında, en yeni en üstte.",
+      "error": "Geçmiş yüklenemedi.",
+      "previousPage": "Önceki sayfa",
+      "nextPage": "Sonraki sayfa"
+    }
+  },
   "platformSettings": {
     "title": "Platform Ayarları",
     "errors": {
@@ -3357,6 +3512,9 @@
     "noVersionsFound": "Yayınlanmış sürüm bulunamadı",
     "publishVersionSuccess": "Yeni bir sürüm yayınlandı",
     "flowConfigIncomplete": "Bazı yapılandırmalar eksik",
+    "quickReplyNextStepRequired": "Etkin her hızlı yanıt ayarı için bir sonraki adım seçin",
+    "quickReplyRetryMessageRequired": "Bir yeniden deneme mesajı girin",
+    "quickReplyRetryWithGetUserData": "Yeniden deneme, Kullanıcı Verisini Al adımıyla birlikte kullanılamaz",
     "whatsappCarouselButtonsMismatch": "WhatsApp'ta bir karusel her kartta aynı düğmelere sahip olmalıdır: her kartta tek bir bağlantı düğmesi veya her kartta aynı sayıda yanıt düğmesi",
     "whatsappCarouselLinkButtonNotAlone": "WhatsApp'ta bağlantı düğmesi olan bir karusel kartında başka düğme bulunamaz. O karttaki diğer düğmeleri kaldırın veya bağlantı düğmesini başka bir eyleme dönüştürün.",
     "duplicateNodeError": "Blok çoğaltılamadı. Lütfen tekrar deneyin.",
@@ -3371,7 +3529,8 @@
     "waTemplateMpmTooManyProducts": "Çoklu ürün butonunda toplamda en fazla 30 ürün olabilir. Yayınlamadan önce bazı ürünleri kaldırın.",
     "waTemplateLtoExpirationRequired": "Göndermeden önce sınırlı süreli teklif için bir bitiş tarihi seçin.",
     "waTemplateMpmIncompleteProducts": "Her bölümde en az bir seçili ürün olmalı — boş satırları silin veya onlara ürün seçin.",
-    "mediaStepUnsupported": "Bu kanal bu medya türünü gönderemez. Adımı kaldırın veya bu düğümü destekleyen bir kanala yönlendirin.",
+    "unsupportedBlock": "Bu kanal bu bloğu desteklemiyor.",
+    "constraintExceeded": "Bu kanalın sınırı aşıldı.",
     "mediaButtonsUnsupported": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez. Düğmeleri kaldırın veya bundan sonraki bir metin adımına taşıyın.",
     "voiceCall": "Sesli arama",
     "voiceCallDuration": "Sesli arama · {duration}",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Zalo grubunu aç",
     "openZalo": "Zalo'yu aç",
     "openMessenger": "Messenger'ı aç"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Ortak",
+      "partnerWithRole": "Ortak · {role}",
+      "self": "siz"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp reklamları",
+      "customer_service": "Müşteri hizmetleri",
+      "escalation": "Yükseltme",
+      "marketing": "Pazarlama",
+      "utility": "Yardımcı"
+    },
+    "pill": {
+      "standby": "Beklemede ({owner})",
+      "owned": "Aktif",
+      "tooltip": "{owner} ilgileniyor"
+    },
+    "release": {
+      "label": "Bırak",
+      "tooltip": "Diğer uygulamaların yanıtlayabilmesi için bu konuşmayı bırakın",
+      "success": "Konuşma bırakıldı"
+    },
+    "pass": {
+      "menuItem": "Yükseltmeye aktar",
+      "title": "Yükseltme ortağına aktarılsın mı?",
+      "description": "Bu görüşme yükseltme ortağınıza devredilsin mi? Görüşme geri dönene kadar yanıtlarınız duraklatılır.",
+      "confirm": "Aktar",
+      "success": "Konuşma yükseltme ortağına aktarıldı"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Bu görüşmeyi yapay zekâ asistanına geri ver",
+      "title": "Yapay zekâ asistanına geri verilsin mi?",
+      "description": "Yapay zekâ asistanı bu müşteriyi yeniden yanıtlamaya başlayacak. Görüşme size dönene kadar yanıtlarınız duraklatılır. Meta, asistanın her mesaja yanıt vereceğini garanti etmez.",
+      "confirm": "Geri ver",
+      "success": "Görüşme yapay zekâ asistanına geri verildi"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Beklemedesiniz (yalnızca dinleme)",
+      "description": "Üçüncü taraf bir iş ortağı bu görüşmeyi yönetiyor. Mesaj kutusu, mükerrer yanıtları önlemek için kilitlendi.",
+      "takeOver": "Devral",
+      "takeOverSuccess": "Artık bu konuşmayla siz ilgileniyorsunuz",
+      "notEscalation": "Yalnızca yükseltme ortağı devralabilir. Yönlendirme Meta Business Suite'te yapılandırılır.",
+      "notPrimaryReceiver": "Devralabilmesi için bu uygulamanın Sayfa'nın birincil alıcısı olması gerekir. Bunu Sayfa'nın Handover Protocol ayarlarından yapın.",
+      "learnMore": "Daha fazla bilgi",
+      "dismiss": "Yine de gönder"
+    },
+    "divider": {
+      "ownerHandling": "{owner} artık bu konuşmayla ilgileniyor",
+      "handedOver": "{previousOwner} bu görüşmeyi size geri devretti",
+      "selfHandling": "Artık bu görüşmeyi siz yönetiyorsunuz",
+      "takenOver": "Bu görüşmeyi devraldınız",
+      "released": "Konuşma bırakıldı",
+      "passed": "Konuşma yükseltme ortağına aktarıldı",
+      "serviceRejected": "Mesaj gönderilmedi: {owner} bu konuşmayla ilgileniyor"
+    },
+    "context": {
+      "title": "Konuşma bağlamı",
+      "summaryBadge": "Yapay zeka özeti",
+      "historyBadge": "Geçmiş",
+      "customer": "Müşteri",
+      "business": "İşletme",
+      "handoverNote": "Devir notu: {note}",
+      "showAll": "Tümünü göster ({count})",
+      "showLess": "Daha az göster"
+    },
+    "echo": {
+      "partner": "Ortak"
+    },
+    "panel": {
+      "title": "Konuşma yönlendirme",
+      "threadState": "Konuşma durumu",
+      "threadStateOwned": "Sahipli",
+      "threadStateStandby": "Beklemede",
+      "threadStateIdle": "Boşta",
+      "currentOwner": "Mevcut sahip",
+      "noOwner": "Sahibi yok",
+      "roleLabel": "Rolünüz",
+      "selfOwned": "Konuşmayla ilgileniyor",
+      "selfStandby": "Beklemede — yalnızca dinliyor",
+      "selfIdle": "Müşterinin sonraki mesajı bekleniyor",
+      "hintOwned": "İşiniz bitince bırakın, böylece diğer uygulamalar yanıtlayabilir.",
+      "hintStandby": "Bir iş ortağı bunu yönetirken, müşteri mükerrer yanıt almasın diye mesajlarınız bekletilir. Yanıt vermek için mesaj kutusundan devralın.",
+      "hintIdle": "Müşterinin sonraki mesajı kimin yanıtlayacağını belirler.",
+      "syncOwner": "Sahibi eşitle",
+      "syncOwnerSuccess": "Sahip eşitlendi"
+    },
+    "settings": {
+      "title": "Devir sonrası devam akışı",
+      "description": "Bir iş ortağı konuşmayı geri devrettiğinde çalışan otomasyon.",
+      "resumeFlowLabel": "Bir akış seçin",
+      "resumeFlowPlaceholder": "Bir akış seçin",
+      "info": "Bu akış, kontrol geri devredildiğinde otomatik olarak başlar. Konuşma özeti ve sohbet geçmişi daha sonra canlı sohbette temsilcilerinize gösterilir.",
+      "save": "Değişiklikleri kaydet",
+      "clearFlow": "Akışı temizle",
+      "adminOnly": "Yönlendirmeyi yalnızca çalışma alanı yöneticileri değiştirebilir",
+      "flowNotFound": "Seçilen akış bulunamadı veya etkin değil",
+      "integrationNotFound": "WhatsApp numarası bulunamadı",
+      "messengerIntegrationNotFound": "Messenger sayfası bulunamadı"
+    },
+    "errors": {
+      "unsupported": "Konuşma yönlendirme bu kanalda kullanılamıyor",
+      "notFound": "Bu konuşma o kanalda değil",
+      "actionFailed": "Konuşma yönlendirme güncellenemedi. Lütfen tekrar deneyin."
+    },
+    "step": {
+      "action": "Eylem",
+      "release": "Konuşmayı bırak",
+      "pass": "Yükseltme ortağına aktar",
+      "helper": "Yalnızca WhatsApp. Diğer kanallarda veya görüşme burada yönetilmiyorsa adım Hata yolunu izler."
+    },
+    "template": {
+      "sent": "Şablon gönderildi"
+    }
   }
 }

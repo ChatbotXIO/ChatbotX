@@ -1686,7 +1686,8 @@
       "searchPlaceholder": "Trefwoord zoeken..."
     },
     "templateId": {
-      "label": "WhatsApp-sjabloon"
+      "label": "WhatsApp-sjabloon",
+      "placeholder": "Selecteer een sjabloon"
     },
     "messengerTemplateId": {
       "label": "Messenger-sjabloon"
@@ -1835,7 +1836,10 @@
         "failed": "Mislukt",
         "completedAt": "Voltooid op",
         "errorDetails": "Importfouten",
-        "row": "Rij {row}"
+        "row": "Rij {row}",
+        "unsupportedChannelStep": "Het kanaal {channel} ondersteunt {block} niet.",
+        "channelStepConstraintExceeded": "{block} overschrijdt de limiet van {channel}: {actual} {unit}, maximaal {allowed}.",
+        "channelStepConstraintExceededGeneric": "Het kanaal {channel} ondersteunt de huidige configuratie van {block} niet."
       }
     },
     "line": {
@@ -2083,12 +2087,16 @@
     }
   },
   "condition": {
+    "unknownValue": "Onbekend",
     "yes": "Ja",
     "no": "Nee",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Voer een datum in als YYYY-MM-DD HH:mm of als variabele",
+    "openPost": "{post} openen",
+    "openPostLink": "Openen",
+    "postWithoutCaption": "Bericht zonder bijschrift",
     "operator": {
       "and": "Alle voorwaarden",
       "or": "Een of meer voorwaarden"
@@ -2278,6 +2286,28 @@
     "quickReplies": {
       "limitReached": "Limiet voor snelle antwoorden bereikt ({max})."
     },
+    "quickReplySettings": {
+      "open": "Instellingen voor snelle antwoorden",
+      "title": "Snelle antwoorden configureren",
+      "chooseNextStep": "Volgende stap kiezen",
+      "followUp": {
+        "label": "Opvolgen als het contact niet heeft gereageerd",
+        "waitFor": "Wacht",
+        "divider": "Als het contact niet heeft gereageerd, opvolgen met",
+        "windowHint": "Messenger en Instagram staan verzenden alleen toe binnen 24 uur na het laatste bericht van het contact; latere opvolgingen worden daar overgeslagen.",
+        "handle": "Geen reactie"
+      },
+      "retry": {
+        "label": "Opnieuw vragen als het antwoord geen snel antwoord is",
+        "message": "Bericht voor opnieuw vragen",
+        "messageDefault": "Tik op een van de opties hieronder 👇",
+        "count": "Aantal pogingen",
+        "countOption": "{count, plural, =0 {Geen pogingen} one {# keer} other {# keer}}",
+        "divider": "Wanneer het aantal pogingen is overschreden",
+        "handle": "Pogingen overschreden",
+        "getUserDataConflict": "Opnieuw vragen is niet beschikbaar als dit bericht een stap Gebruikersgegevens ophalen bevat."
+      }
+    },
     "buttons": {
       "limitReached": "Knoppenlimiet bereikt ({max})."
     },
@@ -2412,7 +2442,8 @@
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
       "importJsonOnly": "Alleen JSON-bestanden",
       "whatsappCallButton": "Bellen via WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Threadbeheer"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -3077,6 +3108,128 @@
   "integrations": {
     "title": "Integraties"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Bepaal wat er gebeurt wanneer de AI-assistent van Meta je Messenger-klanten beantwoordt.",
+    "info": "Indien ingeschakeld worden gesprekken hier overgenomen nadat de AI-assistent ze teruggeeft, en gelden de onderstaande instellingen.",
+    "enabled": {
+      "label": "Inschakelen"
+    },
+    "schedule": {
+      "label": "Looptijd",
+      "description": "Alleen toepassen tijdens deze uren van de tijdzone van de workspace.",
+      "from": "Vanaf uur",
+      "to": "Tot uur",
+      "add": "Tijdbereik toevoegen",
+      "remove": "Tijdbereik verwijderen"
+    },
+    "gotoFlow": {
+      "label": "Ga naar flow",
+      "description": "Flow die start wanneer de AI-assistent het gesprek teruggeeft. Heeft voorrang op het terugkeerbericht.",
+      "placeholder": "Selecteer een flow",
+      "clear": "Flow wissen"
+    },
+    "returnMessage": {
+      "label": "Terugkeerbericht",
+      "description": "Wordt in plaats daarvan verzonden als er geen flow is ingesteld of de flow niet meer actief is.",
+      "placeholder": "Bericht dat wordt verzonden wanneer de AI het gesprek teruggeeft"
+    },
+    "pauseBot": {
+      "label": "Gesprek overdragen aan medewerker",
+      "description": "Stopt de bot voor dit contact na het teruggeven, tot een teamlid overneemt of de bot hervat."
+    },
+    "readOnly": "Je kunt deze instellingen bekijken maar niet wijzigen.",
+    "errors": {
+      "supportSession": "Instellingen kunnen niet worden gewijzigd vanuit een supportsessie.",
+      "flowNotFound": "De geselecteerde flow is niet gevonden of niet actief.",
+      "timeRanges": "Voer geldige tijdbereiken in: hele uren van 0 tot 24, met een verschillend begin en einde."
+    },
+    "bulk": {
+      "title": "Toepassen op alle klanten",
+      "description": "Draag elk in aanmerking komend Messenger-gesprek over aan de AI-assistent van Meta, of neem de gesprekken terug die hij nu vasthoudt. Het draait op de achtergrond en je kunt het hier volgen.",
+      "started": "Gestart. Je kunt de voortgang hier volgen.",
+      "progress": "Voortgang",
+      "processedOfTotal": "{done} van {total} gesprekken",
+      "counters": "{processed} klaar, {skipped} overgeslagen, {failed} mislukt",
+      "action": {
+        "enable": "Inschakelen voor iedereen",
+        "disable": "Uitschakelen voor iedereen"
+      },
+      "status": {
+        "pending": "Wacht op start",
+        "running": "Bezig",
+        "cancelling": "Wordt geannuleerd",
+        "completed": "Voltooid",
+        "failed": "Mislukt",
+        "cancelled": "Geannuleerd"
+      },
+      "enable": {
+        "dialogDescription": "Elk Messenger-gesprek waarin de klant de afgelopen 30 dagen heeft geschreven en dat geen andere app vasthoudt, wordt overgedragen aan de AI-assistent van Meta. Gesprekken worden teruggenomen volgens de instellingen hierboven.",
+        "confirm": "Inschakelen voor iedereen",
+        "blocked": "Sla de automatisering hierboven op en zet hem aan (binnen de looptijd) om hem voor alle klanten in te schakelen."
+      },
+      "disable": {
+        "dialogDescription": "Alleen gesprekken die de AI-assistent van Meta nu vasthoudt, worden teruggenomen, en alleen klanten die de afgelopen 7 dagen hebben geschreven, zijn bereikbaar. Elk van hen ontvangt het onderstaande bericht, verzonden met de Human Agent-tag van Meta. Schrijf het dus alsof een persoon antwoordt. De pagina heeft de Human Agent-machtiging nodig.",
+        "messageLabel": "Bericht aan klanten",
+        "messageDescription": "Maximaal {max} tekens.",
+        "messagePlaceholder": "Hallo, een teamlid neemt dit gesprek over.",
+        "confirm": "Uitschakelen voor iedereen",
+        "policyWarning": "Meta staat de Human Agent-tag alleen toe wanneer een persoon de klant antwoordt. Gebruik voor promoties of geautomatiseerde berichten kan ertoe leiden dat het berichtenverkeer van de pagina wordt beperkt."
+      },
+      "errors": {
+        "automationNotActive": "Sla de automatisering op en zet hem aan (binnen de looptijd) voordat je hem voor alle klanten inschakelt.",
+        "messageRequired": "Voer het bericht in dat naar klanten wordt gestuurd.",
+        "messageTooLong": "Het bericht is te lang.",
+        "pageNotConnected": "Deze pagina is niet gekoppeld.",
+        "nothingToRetry": "Er valt niets opnieuw te proberen."
+      },
+      "runErrors": {
+        "automationStopped": "Gestopt omdat de automatisering is uitgeschakeld.",
+        "tokenInvalid": "De toegang van de pagina is ingetrokken. Koppel de pagina opnieuw en probeer het nog eens.",
+        "channelUnsupported": "Dit kanaal ondersteunt de bulkactie niet.",
+        "maxAttempts": "Opgegeven na herhaalde fouten.",
+        "channelUnavailable": "Gestopt omdat Meta meerdere keren achter elkaar niet bereikbaar was.",
+        "batchFailed": "Sommige gesprekken konden niet worden bevestigd en zijn als mislukt geteld.",
+        "pageDisconnected": "Gestopt omdat de pagina is losgekoppeld.",
+        "pageRefused": "Meta heeft de overdracht voor deze pagina geweigerd: de pagina is mogelijk niet ingesteld voor de AI-assistent van Meta, of mist de machtiging.",
+        "integrationUnavailable": "De koppeling van de pagina kon niet worden geladen. Koppel de pagina opnieuw en probeer het nog eens."
+      },
+      "pausedUntil": "Gepauzeerd tot {at} om binnen de snelheidslimieten van Meta voor deze pagina te blijven. Hervat vanzelf.",
+      "preparing": "Voorbereiden…",
+      "live": {
+        "enable": "Inschakelen voor klanten: {done} / {total}",
+        "disable": "Uitschakelen voor klanten: {done} / {total}",
+        "enableCounting": "Inschakelen voor klanten: tellen…",
+        "disableCounting": "Uitschakelen voor klanten: tellen…"
+      },
+      "done": {
+        "enable": "Ingeschakeld voor {processed} van {total} klanten.",
+        "disable": "Uitgeschakeld voor {processed} van {total} klanten."
+      },
+      "stopped": {
+        "enable": "Inschakelen voor alle klanten is gestopt.",
+        "disable": "Uitschakelen voor alle klanten is gestopt."
+      },
+      "retry": "Opnieuw proberen"
+    },
+    "history": {
+      "link": "Geschiedenis",
+      "title": "Geschiedenis van bulkruns",
+      "empty": "Nog geen runs.",
+      "columns": {
+        "action": "Actie",
+        "requestedAt": "Gestart",
+        "progress": "Verwerkt / totaal",
+        "finishedAt": "Voltooid",
+        "message": "Bericht",
+        "requestedBy": "Aangevraagd door"
+      },
+      "description": "Elke keer dat \"Toepassen op alle klanten\" voor deze pagina is in- of uitgeschakeld, nieuwste eerst.",
+      "error": "De geschiedenis kon niet worden geladen.",
+      "previousPage": "Vorige pagina",
+      "nextPage": "Volgende pagina"
+    }
+  },
   "platformSettings": {
     "title": "Platforminstellingen",
     "errors": {
@@ -3215,7 +3368,9 @@
       "bannerDescription": "Deze workspace staat gepland voor verwijdering. Maak de verwijdering hieronder ongedaan om de workspace te blijven gebruiken.",
       "pendingBlockedToast": "Deze workspace staat gepland voor verwijdering. Neem contact op met een workspacebeheerder om de toegang te herstellen.",
       "navDisabledTooltip": "Niet beschikbaar zolang de verwijdering van de workspace gepland staat",
-      "badge": "Verwijdering gepland"
+      "badge": "Verwijdering gepland",
+      "purging": "Het verwijderen van de werkruimte is bezig.",
+      "alreadyStarted": "Het verwijderen van de werkruimte is al gestart."
     },
     "supportAccess": {
       "bannerTitle": "Platformondersteuningssessie",
@@ -3357,6 +3512,9 @@
     "noVersionsFound": "Geen gepubliceerde versies gevonden",
     "publishVersionSuccess": "Er is een nieuwe versie gepubliceerd",
     "flowConfigIncomplete": "Sommige configuraties zijn onvolledig",
+    "quickReplyNextStepRequired": "Kies een volgende stap voor elke ingeschakelde instelling voor snelle antwoorden",
+    "quickReplyRetryMessageRequired": "Voer een bericht voor opnieuw vragen in",
+    "quickReplyRetryWithGetUserData": "Opnieuw vragen kan niet worden gecombineerd met een stap Gebruikersgegevens ophalen",
     "whatsappCarouselButtonsMismatch": "Op WhatsApp moet een carrousel op elke kaart dezelfde knoppen hebben: één linkknop op elke kaart, of hetzelfde aantal antwoordknoppen op elke kaart",
     "whatsappCarouselLinkButtonNotAlone": "Op WhatsApp mag een carrouselkaart met een linkknop geen andere knoppen hebben. Verwijder de andere knoppen op die kaart, of wijzig de linkknop in een andere actie.",
     "duplicateNodeError": "Het blok kon niet worden gedupliceerd. Probeer het opnieuw.",
@@ -3371,7 +3529,8 @@
     "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",
     "waTemplateLtoExpirationRequired": "Kies een vervaldatum voor de tijdelijke aanbieding voordat je verzendt.",
     "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor.",
-    "mediaStepUnsupported": "Dit kanaal kan dit mediatype niet verzenden. Verwijder de stap of richt deze node op een kanaal dat het ondersteunt.",
+    "unsupportedBlock": "Dit kanaal ondersteunt dit blok niet.",
+    "constraintExceeded": "De limiet van dit kanaal is overschreden.",
     "mediaButtonsUnsupported": "Dit kanaal kan geen knoppen bij een mediabericht verzenden. Verwijder de knoppen of verplaats ze naar een tekststap hierna.",
     "voiceCall": "Spraakoproep",
     "voiceCallDuration": "Spraakoproep · {duration}",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Zalo-groep openen",
     "openZalo": "Zalo openen",
     "openMessenger": "Messenger openen"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "jou"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-advertenties",
+      "customer_service": "Klantenservice",
+      "escalation": "Escalatie",
+      "marketing": "Marketing",
+      "utility": "Utility"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Actief",
+      "tooltip": "Behandeld door {owner}"
+    },
+    "release": {
+      "label": "Vrijgeven",
+      "tooltip": "Geef dit gesprek vrij zodat andere apps kunnen antwoorden",
+      "success": "Gesprek vrijgegeven"
+    },
+    "pass": {
+      "menuItem": "Doorgeven aan escalatie",
+      "title": "Doorgeven aan de escalatiepartner?",
+      "description": "Dit gesprek overdragen aan je escalatiepartner? Je antwoorden worden gepauzeerd totdat het gesprek terugkomt.",
+      "confirm": "Doorgeven",
+      "success": "Gesprek doorgegeven aan de escalatiepartner"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Dit gesprek teruggeven aan de AI-assistent",
+      "title": "Teruggeven aan de AI-assistent?",
+      "description": "De AI-assistent gaat deze klant weer beantwoorden. Je antwoorden worden gepauzeerd tot het gesprek bij jou terugkomt. Meta garandeert niet dat de assistent elk bericht beantwoordt.",
+      "confirm": "Teruggeven",
+      "success": "Gesprek teruggegeven aan de AI-assistent"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Je staat in standby (alleen luisteren)",
+      "description": "Een externe partner behandelt dit gesprek. Het berichtenveld is vergrendeld om dubbele antwoorden te voorkomen.",
+      "takeOver": "Overnemen",
+      "takeOverSuccess": "Je behandelt dit gesprek nu",
+      "notEscalation": "Alleen de escalatiepartner kan overnemen. Routing wordt ingesteld in Meta Business Suite.",
+      "notPrimaryReceiver": "Deze app moet de primaire ontvanger van de pagina zijn om over te nemen. Stel dit in bij de Handover Protocol-instellingen van de pagina.",
+      "learnMore": "Meer informatie",
+      "dismiss": "Toch verzenden"
+    },
+    "divider": {
+      "ownerHandling": "{owner} behandelt dit gesprek nu",
+      "handedOver": "{previousOwner} heeft dit gesprek aan jou teruggegeven",
+      "selfHandling": "Je behandelt dit gesprek nu",
+      "takenOver": "Je hebt dit gesprek overgenomen",
+      "released": "Gesprek vrijgegeven",
+      "passed": "Gesprek doorgegeven aan de escalatiepartner",
+      "serviceRejected": "Bericht niet verzonden: {owner} behandelt dit gesprek"
+    },
+    "context": {
+      "title": "Gesprekscontext",
+      "summaryBadge": "AI-samenvatting",
+      "historyBadge": "Geschiedenis",
+      "customer": "Klant",
+      "business": "Bedrijf",
+      "handoverNote": "Overdrachtsnotitie: {note}",
+      "showAll": "Alles tonen ({count})",
+      "showLess": "Minder tonen"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Gespreksroutering",
+      "threadState": "Threadstatus",
+      "threadStateOwned": "In behandeling",
+      "threadStateStandby": "Stand-by",
+      "threadStateIdle": "Inactief",
+      "currentOwner": "Huidige eigenaar",
+      "noOwner": "Geen eigenaar",
+      "roleLabel": "Jouw rol",
+      "selfOwned": "Behandelt het gesprek",
+      "selfStandby": "Stand-by — alleen meeluisteren",
+      "selfIdle": "Wacht op het volgende klantbericht",
+      "hintOwned": "Geef vrij als je klaar bent zodat andere apps kunnen antwoorden.",
+      "hintStandby": "Terwijl een partner dit behandelt, worden je berichten vastgehouden zodat de klant geen dubbele antwoorden krijgt. Neem over vanuit het berichtenveld om te antwoorden.",
+      "hintIdle": "Het volgende klantbericht bepaalt wie antwoordt.",
+      "syncOwner": "Eigenaar synchroniseren",
+      "syncOwnerSuccess": "Eigenaar gesynchroniseerd"
+    },
+    "settings": {
+      "title": "Hervattingsflow na overdracht",
+      "description": "De automatisering die wordt uitgevoerd wanneer een partner een gesprek teruggeeft.",
+      "resumeFlowLabel": "Kies een flow",
+      "resumeFlowPlaceholder": "Selecteer een flow",
+      "info": "Deze flow start automatisch wanneer de controle wordt teruggegeven. De gesprekssamenvatting en de chatgeschiedenis worden dan getoond aan je medewerkers in de livechat.",
+      "save": "Wijzigingen opslaan",
+      "clearFlow": "Flow wissen",
+      "adminOnly": "Alleen workspacebeheerders kunnen de routering wijzigen",
+      "flowNotFound": "De geselecteerde flow is niet gevonden of niet actief",
+      "integrationNotFound": "WhatsApp-nummer niet gevonden",
+      "messengerIntegrationNotFound": "Messenger-pagina niet gevonden"
+    },
+    "errors": {
+      "unsupported": "Gespreksroutering is niet beschikbaar op dit kanaal",
+      "notFound": "Dit gesprek staat niet op dat kanaal",
+      "actionFailed": "Gespreksroutering bijwerken mislukt. Probeer het opnieuw."
+    },
+    "step": {
+      "action": "Actie",
+      "release": "Het gesprek vrijgeven",
+      "pass": "Doorgeven aan de escalatiepartner",
+      "helper": "Alleen WhatsApp. Op andere kanalen, of wanneer het gesprek hier niet wordt beheerd, volgt de stap het foutpad."
+    },
+    "template": {
+      "sent": "Sjabloon verzonden"
+    }
   }
 }

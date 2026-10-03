@@ -28,7 +28,7 @@ import { Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -41,6 +41,7 @@ export const ChatJobAction = {
   sendFlowMessage: "sendFlowMessage",
   sendChatMessage: "sendChatMessage",
   sendWhatsappTemplateMessage: "sendWhatsappTemplateMessage",
+  sendWhatsappTemplateToConversation: "sendWhatsappTemplateToConversation",
   sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
   sendTyping: "sendTyping",
   notifyExportResult: "notifyExportResult",
@@ -131,6 +132,24 @@ export type ChatJobSendWhatsappTemplateMessage = {
     contactInbox: ContactInboxModel
     templateId: string
     broadcastId: string
+    templateData?: WaTemplateParams
+    metadata?: MetadataPayload
+  }
+}
+
+/**
+ * Sends one approved WhatsApp template to a single open conversation with
+ * runtime params — the agent's "Send template" action from the inbox composer.
+ * Unlike `sendWhatsappTemplateMessage` there is no broadcast, so no broadcast
+ * sendability guard runs; the template send bypasses the 24h/standby gate
+ * (`isTemplateMessage`), which is exactly why an agent reaches for it.
+ */
+export type ChatJobSendWhatsappTemplateToConversation = {
+  type: typeof ChatJobAction.sendWhatsappTemplateToConversation
+  data: {
+    conversation: ConversationModel
+    contactInbox: ContactInboxModel
+    templateId: string
     templateData?: WaTemplateParams
     metadata?: MetadataPayload
   }
@@ -232,6 +251,7 @@ export type ChatJobData =
   | ChatJobSendFlowStep
   | ChatJobSendChatMessage
   | ChatJobSendWhatsappTemplateMessage
+  | ChatJobSendWhatsappTemplateToConversation
   | ChatJobSendMessengerTemplateMessage
   | ChatJobSendTyping
   | ChatJobBroadcastEvent
@@ -244,6 +264,6 @@ export type ChatJobData =
 export const chatQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<ChatJobData>(queueNames.enum.chat, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.chat),
       defaultJobOptions,
     })

@@ -1048,6 +1048,7 @@
     "toggleLabel": "同步现有联系人与聊天记录"
   },
   "condition": {
+    "unknownValue": "未知",
     "ctwaRetarget": {
       "adPrefix": "广告",
       "allAds": "所有广告",
@@ -1059,6 +1060,9 @@
     },
     "datePlaceholder": "年-月-日",
     "datetimeInvalid": "输入 YYYY-MM-DD HH:mm 格式的日期或变量",
+    "openPost": "打开 {post}",
+    "openPostLink": "打开",
+    "postWithoutCaption": "没有说明文字的帖子",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "fieldGroups": {
       "analytics": "分析",
@@ -2179,7 +2183,10 @@
         "recent": "最近导入",
         "row": "第 {row} 列",
         "success": "成功",
-        "title": "导入历史记录"
+        "title": "导入历史记录",
+        "unsupportedChannelStep": "{channel} 渠道不支持 {block}。",
+        "channelStepConstraintExceeded": "{block} 超出 {channel} 限制：{actual} {unit}，最大值为 {allowed}。",
+        "channelStepConstraintExceededGeneric": "{channel} 渠道不支持当前的 {block} 配置。"
       },
       "label": "导入",
       "unableToReadHeaders": "无法读取导入标头。",
@@ -2894,7 +2901,8 @@
       "label": "温度"
     },
     "templateId": {
-      "label": "WhatsApp 范本"
+      "label": "WhatsApp 范本",
+      "placeholder": "选择模板"
     },
     "templateMessages": {
       "label": "范本消息"
@@ -3303,7 +3311,8 @@
       "importStarted": "流程正在导入中，请稍后查看导入记录以获取结果。",
       "importJsonOnly": "仅限 JSON 文件",
       "whatsappCallButton": "通过 WhatsApp 通话",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "会话控制"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -3368,6 +3377,28 @@
     },
     "quickReplies": {
       "limitReached": "已达到快速回复限制 ({max})。"
+    },
+    "quickReplySettings": {
+      "open": "快速回复设置",
+      "title": "配置快速回复",
+      "chooseNextStep": "选择下一步",
+      "followUp": {
+        "label": "联系人未互动时跟进",
+        "waitFor": "等待",
+        "divider": "如果联系人未互动，则跟进",
+        "windowHint": "Messenger 和 Instagram 仅允许在联系人最后一条消息后的 24 小时内发送消息；之后的跟进将在这些渠道上跳过。",
+        "handle": "无互动"
+      },
+      "retry": {
+        "label": "回复不是快速回复时重试",
+        "message": "重试消息",
+        "messageDefault": "请点击下方的一个选项 👇",
+        "count": "重试次数",
+        "countOption": "{count, plural, =0 {不重试} one {# 次} other {# 次}}",
+        "divider": "超过重试次数时",
+        "handle": "超过重试次数",
+        "getUserDataConflict": "当此消息包含“取得用户数据”步骤时，无法使用重试。"
+      }
     },
     "sendCarousel": {
       "addSlide": "添加幻灯片",
@@ -3961,6 +3992,128 @@
   "integrations": {
     "title": "集成"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "控制 Meta 的 AI 助手回复您的 Messenger 客户时的行为。",
+    "info": "启用后，AI 助手交还对话后将在此接管，并应用以下设置。",
+    "enabled": {
+      "label": "启用"
+    },
+    "schedule": {
+      "label": "运行时间",
+      "description": "仅在工作区时区的这些小时内生效。",
+      "from": "开始时间",
+      "to": "结束时间",
+      "add": "添加时间段",
+      "remove": "删除时间段"
+    },
+    "gotoFlow": {
+      "label": "跳转到流程",
+      "description": "AI 助手交还对话时启动的流程。优先于交还消息。",
+      "placeholder": "选择流程",
+      "clear": "清除流程"
+    },
+    "returnMessage": {
+      "label": "返回消息",
+      "description": "未设置流程或流程已停用时改为发送此消息。",
+      "placeholder": "AI 交还对话时发送的消息"
+    },
+    "pauseBot": {
+      "label": "将对话转移给人类",
+      "description": "交还后暂停此联系人的机器人，直到团队成员接手或机器人恢复。"
+    },
+    "readOnly": "您可以查看这些设置，但无法修改。",
+    "errors": {
+      "supportSession": "无法在支持会话中更改设置。",
+      "flowNotFound": "未找到所选流程，或该流程未启用。",
+      "timeRanges": "请输入有效的时间段：0 到 24 的整点小时，且开始与结束不能相同。"
+    },
+    "bulk": {
+      "title": "应用于所有客户",
+      "description": "将所有符合条件的 Messenger 对话交给 Meta 的 AI 助手，或收回它当前持有的对话。任务在后台运行，你可以在此查看进度。",
+      "started": "已开始。你可以在此查看进度。",
+      "progress": "进度",
+      "processedOfTotal": "{done} / {total} 个对话",
+      "counters": "已完成 {processed} 个，已跳过 {skipped} 个，失败 {failed} 个",
+      "action": {
+        "enable": "为所有人开启",
+        "disable": "为所有人关闭"
+      },
+      "status": {
+        "pending": "等待开始",
+        "running": "运行中",
+        "cancelling": "正在取消",
+        "completed": "已完成",
+        "failed": "失败",
+        "cancelled": "已取消"
+      },
+      "enable": {
+        "dialogDescription": "客户在过去 30 天内发过消息、且未被其他应用持有的所有 Messenger 对话都会交给 Meta 的 AI 助手。对话会按上方的设置收回。",
+        "confirm": "为所有人开启",
+        "blocked": "请先保存上方的自动化并将其开启（在运行时间内），才能为所有客户开启。"
+      },
+      "disable": {
+        "dialogDescription": "只会收回 Meta 的 AI 助手当前持有的对话，且只能触达过去 7 天内发过消息的客户。每位客户都会收到下方的消息，并带有 Meta 的 Human Agent 标签发送，因此请按真人回复的口吻来写。主页需要 Human Agent 权限。",
+        "messageLabel": "发给客户的消息",
+        "messageDescription": "最多 {max} 个字符。",
+        "messagePlaceholder": "你好，团队成员正在接手这段对话。",
+        "confirm": "为所有人关闭",
+        "policyWarning": "Meta 仅允许真人回复客户时使用 Human Agent 标签。将其用于促销或自动消息，可能导致主页的消息功能受到限制。"
+      },
+      "errors": {
+        "automationNotActive": "请先保存自动化并将其开启（在运行时间内），再为所有客户开启。",
+        "messageRequired": "请输入要发送给客户的消息。",
+        "messageTooLong": "消息过长。",
+        "pageNotConnected": "此主页未连接。",
+        "nothingToRetry": "没有可重试的内容。"
+      },
+      "runErrors": {
+        "automationStopped": "因自动化已关闭而停止。",
+        "tokenInvalid": "主页的访问权限已被撤销。请重新连接主页后再试。",
+        "channelUnsupported": "此渠道不支持批量操作。",
+        "maxAttempts": "多次失败后已放弃。",
+        "channelUnavailable": "因连续多次无法连接 Meta 而停止。",
+        "batchFailed": "部分对话无法确认，已计为失败。",
+        "pageDisconnected": "因主页已断开连接而停止。",
+        "pageRefused": "Meta 拒绝了此主页的移交：可能尚未为 Meta 的 AI 助手设置，或缺少权限。",
+        "integrationUnavailable": "无法加载主页的连接。请重新连接主页后再试。"
+      },
+      "pausedUntil": "已暂停至 {at}，以遵守 Meta 对此主页的频率限制。将自动恢复。",
+      "preparing": "正在准备…",
+      "live": {
+        "enable": "正在为客户启用：{done} / {total}",
+        "disable": "正在为客户停用：{done} / {total}",
+        "enableCounting": "正在为客户启用：正在统计…",
+        "disableCounting": "正在为客户停用：正在统计…"
+      },
+      "done": {
+        "enable": "已为 {total} 位客户中的 {processed} 位启用。",
+        "disable": "已为 {total} 位客户中的 {processed} 位停用。"
+      },
+      "stopped": {
+        "enable": "已停止为所有客户启用。",
+        "disable": "已停止为所有客户停用。"
+      },
+      "retry": "重试"
+    },
+    "history": {
+      "link": "历史记录",
+      "title": "批量运行历史",
+      "empty": "暂无运行记录。",
+      "columns": {
+        "action": "操作",
+        "requestedAt": "开始时间",
+        "progress": "已处理 / 总数",
+        "finishedAt": "结束时间",
+        "message": "消息",
+        "requestedBy": "请求人"
+      },
+      "description": "此主页每次开启或关闭\"应用于所有客户\"的记录，最新的在前。",
+      "error": "无法加载历史记录。",
+      "previousPage": "上一页",
+      "nextPage": "下一页"
+    }
+  },
   "invitation": {
     "chatbotInvitationDescription1": "加入 {chatbotName}",
     "chatbotInvitationDescription2": "{userName} 邀请您加入 {chatbotName}。",
@@ -4143,6 +4296,9 @@
     "failedToPreviewImage": "预览影像失败",
     "featureNotFound": "{feature} 找不到",
     "flowConfigIncomplete": "部分设置不完整",
+    "quickReplyNextStepRequired": "请为每个已启用的快速回复设置选择下一步",
+    "quickReplyRetryMessageRequired": "请输入重试消息",
+    "quickReplyRetryWithGetUserData": "重试不能与“取得用户数据”步骤同时使用",
     "historyDepth": "({count})",
     "humanAgentWindowExpired": "消息传递窗口已过期。联系人必须先发送消息才能重新开始对话。",
     "leaveEmptyToKeepSecret": "留空以保留目前秘密",
@@ -4209,7 +4365,8 @@
     "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "发送前请为限时优惠选择到期时间。",
     "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。",
-    "mediaStepUnsupported": "此渠道无法发送该类型的媒体。请删除该步骤，或将此节点指向支持的渠道。",
+    "unsupportedBlock": "此渠道不支持此模块。",
+    "constraintExceeded": "已超出此渠道的限制。",
     "mediaButtonsUnsupported": "此渠道无法随媒体消息发送按钮。请删除按钮，或将其移到此步骤之后的文本步骤中。",
     "voiceCall": "语音通话",
     "voiceCallDuration": "语音通话 · {duration}",
@@ -5858,6 +6015,8 @@
   "workspace": {
     "deletion": {
       "badge": "排定删除",
+      "purging": "正在删除工作区。",
+      "alreadyStarted": "工作区删除已开始。",
       "bannerDescription": "此工作区已排定删除。撤销下方的删除即可继续使用。",
       "bannerTitle": "工作区已排定删除",
       "confirmDescription": "所有联系人、设置和数据将在您确认后 24 小时内永久删除。您可以在此之前随时撤销删除。",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "打开 Zalo 群组",
     "openZalo": "打开 Zalo",
     "openMessenger": "打开 Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "合作伙伴",
+      "partnerWithRole": "合作伙伴 · {role}",
+      "self": "您"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp 广告",
+      "customer_service": "客户服务",
+      "escalation": "升级处理",
+      "marketing": "营销",
+      "utility": "通用"
+    },
+    "pill": {
+      "standby": "待命（{owner}）",
+      "owned": "处理中",
+      "tooltip": "由 {owner} 处理"
+    },
+    "release": {
+      "label": "释放",
+      "tooltip": "释放此对话，以便其他应用可以回复",
+      "success": "对话已释放"
+    },
+    "pass": {
+      "menuItem": "转交升级处理",
+      "title": "转交给升级处理合作伙伴？",
+      "description": "要将此会话转交给您的升级合作伙伴吗？在会话返回之前，您的回复将暂停。",
+      "confirm": "转交",
+      "success": "对话已转交给升级处理合作伙伴"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "将此对话交还给 AI 助手",
+      "title": "交还给 AI 助手？",
+      "description": "AI 助手将重新回复该客户。在对话回到您手中之前，您的回复将暂停。Meta 不保证助手会回复每条消息。",
+      "confirm": "交还",
+      "success": "对话已交还给 AI 助手"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "您处于待命状态（仅监听）",
+      "description": "第三方合作伙伴正在处理此会话。消息框已锁定，以避免重复回复。",
+      "takeOver": "接管",
+      "takeOverSuccess": "您现在正在处理此对话",
+      "notEscalation": "只有升级处理合作伙伴可以接管。路由在 Meta Business Suite 中配置。",
+      "notPrimaryReceiver": "此应用必须是主页的主要接收方才能接管。请在主页的 Handover Protocol 设置中配置。",
+      "learnMore": "了解详情",
+      "dismiss": "仍然发送"
+    },
+    "divider": {
+      "ownerHandling": "{owner} 现在正在处理此对话",
+      "handedOver": "{previousOwner}已将此会话交还给您",
+      "selfHandling": "您现在正在处理此会话",
+      "takenOver": "您已接管此会话",
+      "released": "对话已释放",
+      "passed": "对话已转交给升级处理合作伙伴",
+      "serviceRejected": "消息未发送：{owner} 正在处理此对话"
+    },
+    "context": {
+      "title": "对话上下文",
+      "summaryBadge": "AI 摘要",
+      "historyBadge": "历史记录",
+      "customer": "客户",
+      "business": "商家",
+      "handoverNote": "交接备注：{note}",
+      "showAll": "显示全部（{count}）",
+      "showLess": "收起"
+    },
+    "echo": {
+      "partner": "合作伙伴"
+    },
+    "panel": {
+      "title": "对话路由",
+      "threadState": "会话状态",
+      "threadStateOwned": "已被接管",
+      "threadStateStandby": "待命",
+      "threadStateIdle": "空闲",
+      "currentOwner": "当前负责方",
+      "noOwner": "无负责方",
+      "roleLabel": "您的角色",
+      "selfOwned": "正在处理对话",
+      "selfStandby": "待命 — 仅监听",
+      "selfIdle": "等待客户的下一条消息",
+      "hintOwned": "处理完成后请释放，以便其他应用可以回复。",
+      "hintStandby": "合作伙伴处理期间，您的消息会被暂存，以免客户收到重复回复。如需回复，请在消息框中接管会话。",
+      "hintIdle": "客户的下一条消息将决定由谁回复。",
+      "syncOwner": "同步所有者",
+      "syncOwnerSuccess": "所有者已同步"
+    },
+    "settings": {
+      "title": "交接后恢复流程",
+      "description": "合作伙伴将对话交还时自动运行的流程。",
+      "resumeFlowLabel": "选择流程",
+      "resumeFlowPlaceholder": "选择一个流程",
+      "info": "控制权交还时，此流程会自动启动。随后，对话摘要和聊天记录会在实时聊天中显示给您的客服。",
+      "save": "保存更改",
+      "clearFlow": "清除流程",
+      "adminOnly": "只有工作区管理员可以更改路由",
+      "flowNotFound": "未找到所选流程，或该流程未启用",
+      "integrationNotFound": "未找到 WhatsApp 号码",
+      "messengerIntegrationNotFound": "未找到 Messenger 主页"
+    },
+    "errors": {
+      "unsupported": "此渠道不支持对话路由",
+      "notFound": "此对话不在该渠道上",
+      "actionFailed": "无法更新对话路由，请重试。"
+    },
+    "step": {
+      "action": "操作",
+      "release": "释放对话",
+      "pass": "转交给升级处理合作伙伴",
+      "helper": "仅限 WhatsApp。在其他渠道，或会话不归此处管理时，该步骤将走错误路径。"
+    },
+    "template": {
+      "sent": "模板已发送"
+    }
   }
 }

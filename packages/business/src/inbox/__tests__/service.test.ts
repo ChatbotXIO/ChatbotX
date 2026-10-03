@@ -40,6 +40,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // mock never had to satisfy before.
 vi.mock("@chatbotx.io/database/repositories", () => ({
   inboxRepository: { listOptionsByWorkspaceAndChannel: vi.fn() },
+  aiHandoverSettingsRepository: { lockExisting: vi.fn(async () => null) },
+  aiHandoverBulkRunRepository: { cancelLive: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({

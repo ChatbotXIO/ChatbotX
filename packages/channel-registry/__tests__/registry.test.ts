@@ -1,3 +1,7 @@
+import {
+  postTrackingChannels,
+  profileSnapshotChannels,
+} from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -71,5 +75,48 @@ describe("resolveIntegrationContextFromContactInbox", () => {
       integrationType: "instagram",
       integration: nativeRow,
     })
+  })
+})
+
+describe("profile snapshot capability", () => {
+  test.each(
+    profileSnapshotChannels,
+  )("%s implements getProfileSnapshot (capability list and handler cannot drift)", (channel) => {
+    expect(
+      integrations[channel].hasChannelHandler("contact", "getProfileSnapshot"),
+    ).toBe(true)
+  })
+
+  test("Instagram-via-Facebook (the variant resolved for the instagram channel) implements it too", () => {
+    expect(
+      integrations.instagramFacebook.hasChannelHandler(
+        "contact",
+        "getProfileSnapshot",
+      ),
+    ).toBe(true)
+  })
+})
+
+describe("post tracking capability", () => {
+  test.each(
+    postTrackingChannels,
+  )("%s implements getPostDetails (capability list and handler cannot drift)", (channel) => {
+    // The registered integrations are distinct generic types; only the shared
+    // handler-lookup method matters here.
+    const integration = integrations[channel] as unknown as {
+      hasChannelHandler: (group: string, name: string) => boolean
+    }
+    expect(integration.hasChannelHandler("contact", "getPostDetails")).toBe(
+      true,
+    )
+  })
+
+  test("Instagram-via-Facebook (the variant resolved for the instagram channel) implements it too", () => {
+    expect(
+      integrations.instagramFacebook.hasChannelHandler(
+        "contact",
+        "getPostDetails",
+      ),
+    ).toBe(true)
   })
 })

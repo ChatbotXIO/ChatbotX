@@ -4,6 +4,7 @@ import {
   emailStepDefaultFn,
   type FlowNode,
   pageElementTypes,
+  quickReplySettingsDefaultFn,
   sendCardStepDefaultFn,
   sendCarouselStepDefaultFn,
   sendMailNodeDefaultFn,
@@ -11,6 +12,7 @@ import {
   sendTextStepDefaultFn,
   splitTrafficNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
+  startExternalFlowStepDefaultFn,
   whatsappOptionListStepDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
@@ -299,5 +301,78 @@ describe("duplicateFlowNodeData", () => {
     })
 
     expect(result.success, result.error?.message).toBe(true)
+  })
+})
+
+describe("duplicateFlowNodeData — quick reply settings", () => {
+  test("regenerates section ids and drops edge-routed targets", () => {
+    const original = sendMessageNodeDefaultFn({
+      nodeProps: { id: "1", position: { x: 0, y: 0 } },
+    })
+    original.data.details.steps = [
+      sendTextStepDefaultFn({ id: "2", text: "Hi" }),
+    ]
+    original.data.details.quickReplies = [
+      {
+        id: "3",
+        label: "Yes",
+        buttonType: null,
+        beforeStep: null,
+        steps: [],
+      },
+    ]
+    const settings = quickReplySettingsDefaultFn()
+    settings.followUp = {
+      ...settings.followUp,
+      enabled: true,
+      target: {
+        buttonType: buttonTypes.enum.startAnotherNode,
+        beforeStep: startAnotherNodeStepDefaultFn({
+          nodeId: "4",
+          viewOnly: true,
+        }),
+      },
+    }
+    settings.retry = {
+      ...settings.retry,
+      enabled: true,
+      message: "Tap",
+      target: {
+        buttonType: buttonTypes.enum.startExternalFlow,
+        beforeStep: startExternalFlowStepDefaultFn(),
+      },
+    }
+    original.data.details.quickReplySettings = settings
+
+    const copy = duplicateFlowNodeData(original)
+    const copied = (copy.details as typeof original.data.details)
+      .quickReplySettings
+
+    expect(copied?.followUp.id).not.toBe(settings.followUp.id)
+    expect(copied?.retry.id).not.toBe(settings.retry.id)
+    // The copy has no edges, so a node-jump target would point nowhere.
+    expect(copied?.followUp).toMatchObject({ enabled: false, target: null })
+    // External targets don't depend on edges and are kept.
+    expect(copied?.retry).toMatchObject({
+      enabled: true,
+      target: { buttonType: buttonTypes.enum.startExternalFlow },
+    })
+  })
+
+  test("copies a partial settings object without throwing", () => {
+    const original = sendMessageNodeDefaultFn({
+      nodeProps: { id: "1", position: { x: 0, y: 0 } },
+    })
+    const settings = quickReplySettingsDefaultFn()
+    original.data.details.quickReplySettings = {
+      retry: settings.retry,
+    } as unknown as typeof settings
+
+    const copy = duplicateFlowNodeData(original)
+    const copied = (copy.details as typeof original.data.details)
+      .quickReplySettings
+
+    expect(copied?.followUp).toBeUndefined()
+    expect(copied?.retry.id).not.toBe(settings.retry.id)
   })
 })

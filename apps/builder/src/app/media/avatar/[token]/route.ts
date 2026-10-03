@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { resolveFreshContactAvatarUrl } from "@chatbotx.io/channel-registry/media-hydration"
+import { toLogSafeError } from "@chatbotx.io/logger"
 import { type NextRequest, NextResponse } from "next/server"
 import { httpLogger } from "@/lib/log"
 import {
@@ -88,7 +89,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
     // once; only the unexpected transient case is worth logging.
     if (!isTerminalMediaError(err)) {
       httpLogger.error(
-        { err, contactInboxId: contactInbox.id },
+        { err: toLogSafeError(err), contactInboxId: contactInbox.id },
         "Failed to resolve fresh contact avatar URL; serving placeholder",
       )
     }

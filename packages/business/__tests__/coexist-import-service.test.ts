@@ -44,6 +44,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   contactSources: { enum: { inboundMessage: "inboundMessage" } },
+  supportsProfileSnapshot: (channel: string) => channel === "instagram",
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -178,7 +179,7 @@ describe("coexistImportService.resolveOrCreateContactLinks", () => {
     expect(fixture.calls.onConflictDoNothingArgs[0]).toEqual([])
   })
 
-  test("counts only truly-new rows and deletes the pre-allocated Contact of a raced entry", async () => {
+  test("keeps durable snapshot eligibility limited to the actual Instagram insert winner", async () => {
     const fixture = buildTx([
       [], // no existing ContactInbox rows
       [{ id: "ci-won", sourceId: "s2", contactId: "contact-won" }], // race winners by sourceId
@@ -193,9 +194,10 @@ describe("coexistImportService.resolveOrCreateContactLinks", () => {
     ]
 
     const result = await run(fixture, {
+      captureProfileSnapshot: true,
       workspaceId: "ws-1",
       inboxId: "inbox-1",
-      inboxChannel: "whatsapp",
+      inboxChannel: "instagram",
       dedup: new Map([
         ["s1", { sourceId: "s1" }],
         ["s2", { sourceId: "s2" }],
@@ -214,7 +216,32 @@ describe("coexistImportService.resolveOrCreateContactLinks", () => {
     // The event fan-out covers everything resolved through the insert path.
     expect(
       result.newContactCreatedEvents.map((e) => e.sourceId).sort(),
-    ).toEqual(["s1", "s2"])
+    ).toEqual(["s1"])
+  })
+
+  test("stamps durable snapshot intent only on new Instagram inbox rows", async () => {
+    const fixture = buildTx([[], [{ id: "conv-1", contactId: "id-1" }]])
+    fixture.inboxReturning.rows = [
+      { id: "ci-1", sourceId: "s1", contactId: "id-1" },
+    ]
+
+    await run(fixture, {
+      captureProfileSnapshot: true,
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      inboxChannel: "instagram",
+      dedup: new Map([["s1", { sourceId: "s1" }]]),
+      sourceIds: ["s1"],
+      sourceUserIds: [],
+    })
+
+    expect(fixture.calls.contactInboxInsertValues[0]?.[0]).toEqual(
+      expect.objectContaining({
+        profileSnapshotAttempts: 0,
+        profileSnapshotNextAttemptAt: expect.any(Date),
+        profileSnapshotState: "pending",
+      }),
+    )
   })
 
   test("aliases a scoped-user-id race winner back to the raced entry's own import key", async () => {

@@ -7,6 +7,7 @@ import {
   type SendQuickReplyStepSchema,
   type SendTextStepSchema,
   type SendVideoStepSchema,
+  type StepType,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
@@ -100,6 +101,18 @@ export function resolveMessagingPolicy(props: {
     { code: "instagram_human_agent_window_expired" },
   )
 }
+
+export const handledFlowStepTypes = [
+  stepTypes.enum.sendText,
+  stepTypes.enum.sendImage,
+  stepTypes.enum.sendVideo,
+  stepTypes.enum.sendMultipleImages,
+  stepTypes.enum.sendAudio,
+  stepTypes.enum.sendFile,
+  stepTypes.enum.sendGif,
+  stepTypes.enum.sendQuickReply,
+  stepTypes.enum.sendCarousel,
+] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
   async (props) => {
@@ -289,7 +302,7 @@ export async function* convertFlowStep(
       ) as Generator<InstagramSendMessage>
       break
     default:
-      break
+      throw new Error(`Unsupported Instagram flow step: ${step.stepType}`)
   }
 }
 

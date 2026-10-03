@@ -54,6 +54,15 @@ const mapConversationContactInboxes = (
     contactLastReadAt: contactInbox.contactLastReadAt,
     inbox: contactInbox.inbox,
     adReferral: resolveAdReferral(contactInbox.referral),
+    // Conversation routing (thread control): the composer's standby lock and
+    // the owner pill read these off the listed conversation, so the allow-list
+    // mapper must carry them or the lock never engages on reload.
+    threadControlState: contactInbox.threadControlState,
+    threadOwnerRole: contactInbox.threadOwnerRole,
+    threadControlUpdatedAt: contactInbox.threadControlUpdatedAt,
+    threadOwnerExpiresAt: contactInbox.threadOwnerExpiresAt,
+    threadOwnerAppId: contactInbox.threadOwnerAppId,
+    threadControlLastEvent: contactInbox.threadControlLastEvent,
   }))
 
 const resolveConversationContact = async <T extends { avatar: string | null }>(

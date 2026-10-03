@@ -66,6 +66,7 @@ export function WorkspaceDeletionCard({
 }: {
   workspace: {
     id: string
+    purgeStartedAt: string | Date | null
     scheduledDeletionAt: string | Date | null
   }
 }) {
@@ -94,11 +95,85 @@ export function WorkspaceDeletionCard({
     cancelWorkspaceDeletionAction.bind(null, workspace.id),
     {
       onSuccess: reloadPage,
-      onError: safeActionErrorHandler,
+      onError: (result) => {
+        safeActionErrorHandler(result)
+        reloadPage()
+      },
     },
   )
 
   const isPending = isScheduling || isCancelling
+  const isPurging = workspace.purgeStartedAt !== null
+  let deletionDescription = t("workspace.deletion.description")
+  if (isPurging) {
+    deletionDescription = t("workspace.deletion.purging")
+  } else if (workspace.scheduledDeletionAt) {
+    deletionDescription = t("workspace.deletion.pending", {
+      countdown: countdown ?? t("workspace.deletion.pendingFallback"),
+      date: deletionDate,
+    })
+  }
+
+  const deletionAction = (() => {
+    if (isPurging) {
+      return null
+    }
+
+    if (workspace.scheduledDeletionAt) {
+      return (
+        <Button
+          disabled={isPending}
+          onClick={() => cancelDeletion()}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          {isCancelling && <Loader2Icon className="animate-spin" />}
+          {t("actions.undo")}
+        </Button>
+      )
+    }
+
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger
+          render={
+            <Button
+              disabled={isPending}
+              size="sm"
+              type="button"
+              variant="destructive"
+            >
+              {isScheduling && <Loader2Icon className="animate-spin" />}
+              <Trash2Icon className="size-4" />
+              {t("workspace.deletion.schedule")}
+            </Button>
+          }
+        />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("workspace.deletion.confirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("workspace.deletion.confirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={isPending}
+              onClick={() => scheduleDeletion()}
+            >
+              {isScheduling && <Loader2Icon className="animate-spin" />}
+              {t("actions.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  })()
 
   return (
     <Card className="border-destructive/30 bg-destructive/5">
@@ -110,68 +185,13 @@ export function WorkspaceDeletionCard({
               {t("workspace.deletion.title")}
             </h3>
             <p className="text-muted-foreground text-sm">
-              {workspace.scheduledDeletionAt
-                ? t("workspace.deletion.pending", {
-                    countdown:
-                      countdown ?? t("workspace.deletion.pendingFallback"),
-                    date: deletionDate,
-                  })
-                : t("workspace.deletion.description")}
+              {deletionDescription}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {workspace.scheduledDeletionAt ? (
-            <Button
-              disabled={isPending}
-              onClick={() => cancelDeletion()}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              {isCancelling && <Loader2Icon className="animate-spin" />}
-              {t("actions.undo")}
-            </Button>
-          ) : (
-            <AlertDialog>
-              <AlertDialogTrigger
-                render={
-                  <Button
-                    disabled={isPending}
-                    size="sm"
-                    type="button"
-                    variant="destructive"
-                  >
-                    {isScheduling && <Loader2Icon className="animate-spin" />}
-                    <Trash2Icon className="size-4" />
-                    {t("workspace.deletion.schedule")}
-                  </Button>
-                }
-              />
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t("workspace.deletion.confirmTitle")}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t("workspace.deletion.confirmDescription")}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive hover:bg-destructive/90"
-                    disabled={isPending}
-                    onClick={() => scheduleDeletion()}
-                  >
-                    {isScheduling && <Loader2Icon className="animate-spin" />}
-                    {t("actions.delete")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          {deletionAction}
         </div>
       </CardContent>
     </Card>

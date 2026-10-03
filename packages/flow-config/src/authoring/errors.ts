@@ -1,4 +1,4 @@
-import type { z } from "zod"
+import { z } from "zod"
 
 /**
  * Structured compiler diagnostics for the flow-spec DSL. Deliberately NOT
@@ -23,8 +23,31 @@ export type FlowAuthoringErrorCode =
   | "invalidGraph"
   | "compileFailed"
   | "templateNotApproved"
+  | "unsupportedBlock"
+  | "constraintExceeded"
+
+export const flowCapabilitySchema = z.discriminatedUnion("code", [
+  z.object({
+    block: z.string(),
+    channel: z.string(),
+    code: z.literal("unsupportedBlock"),
+    policyVersion: z.number(),
+  }),
+  z.object({
+    actual: z.number().optional(),
+    allowed: z.number().optional(),
+    block: z.string(),
+    channel: z.string(),
+    code: z.literal("constraintExceeded"),
+    constraintId: z.string().optional(),
+    policyVersion: z.number(),
+    unit: z.string().optional(),
+  }),
+])
+export type FlowCapability = z.infer<typeof flowCapabilitySchema>
 
 export type FlowAuthoringError = {
+  capability?: FlowCapability
   /** Spec-relative path, e.g. `steps[2].templateName` — never a compiled-node path. */
   path: string
   code: FlowAuthoringErrorCode
@@ -33,13 +56,39 @@ export type FlowAuthoringError = {
   candidates?: string[]
 }
 
+const formatFlowAuthoringErrorMessage = (error: FlowAuthoringError): string => {
+  const capability = error.capability
+  if (!capability) {
+    return error.message
+  }
+
+  if (capability.code === "unsupportedBlock") {
+    return `The ${capability.channel} channel does not support ${capability.block}.`
+  }
+
+  if (
+    capability.actual !== undefined &&
+    capability.allowed !== undefined &&
+    capability.unit
+  ) {
+    return `${capability.block} exceeds the ${capability.channel} maximum of ${capability.allowed} ${capability.unit} (received ${capability.actual}).`
+  }
+
+  return `${capability.block} violates a ${capability.channel} channel constraint.`
+}
+
 export class FlowAuthoringException extends Error {
   readonly errors: readonly FlowAuthoringError[]
 
   constructor(errors: readonly FlowAuthoringError[]) {
     super(
       errors.length > 0
-        ? errors.map((error) => `${error.path}: ${error.message}`).join("; ")
+        ? errors
+            .map(
+              (error) =>
+                `${error.path}: ${formatFlowAuthoringErrorMessage(error)}`,
+            )
+            .join("; ")
         : "Flow authoring failed",
     )
     this.name = "FlowAuthoringException"
@@ -58,12 +107,15 @@ export const formatZodPathSegment = (
   return acc.length === 0 ? key : `${acc}.${key}`
 }
 
+const isFlowCapability = (value: unknown): value is FlowCapability =>
+  flowCapabilitySchema.safeParse(value).success
+
 /**
  * Converts a parse failure into `FlowAuthoringError[]` using the caller's
  * diagnostic code. Without `mapPath`, issue paths are used verbatim — correct
  * when validating the spec itself, where paths are already spec-relative.
  * `compileAndValidateSpec` (`apps/builder`) passes `mapPath` when validating
- * the *compiled* node graph instead, to translate a node-graph path back to
+ * the compiled node graph instead, to translate a node-graph path back to
  * the spec-relative path an agent actually wrote.
  */
 export function zodErrorToFlowAuthoringErrors(
@@ -71,11 +123,27 @@ export function zodErrorToFlowAuthoringErrors(
   code: FlowAuthoringErrorCode,
   mapPath?: (issuePath: PropertyKey[]) => string | undefined,
 ): FlowAuthoringError[] {
-  return error.issues.map((issue) => ({
-    path: mapPath?.(issue.path) ?? issue.path.reduce(formatZodPathSegment, ""),
-    code,
-    message: issue.message,
-  }))
+  return error.issues.map((issue) => {
+    const issueParams =
+      "params" in issue && typeof issue.params === "object"
+        ? issue.params
+        : undefined
+    const capability =
+      issueParams &&
+      "capability" in issueParams &&
+      isFlowCapability(issueParams.capability)
+        ? issueParams.capability
+        : undefined
+    const capabilityCode = capability?.code
+
+    return {
+      capability,
+      path:
+        mapPath?.(issue.path) ?? issue.path.reduce(formatZodPathSegment, ""),
+      code: capabilityCode ?? code,
+      message: issue.message,
+    }
+  })
 }
 
 // Small edit-distance algorithm — names here are short (workspace entity

@@ -194,7 +194,7 @@ async function executeAndMarkTrigger(
   }
 
   try {
-    const redis = getRedisConnection()
+    const redis = getRedisConnection("hot")
 
     if (await checkExecutionCache(redis, triggerInfo.triggerId, contactId)) {
       return notExecutedResult

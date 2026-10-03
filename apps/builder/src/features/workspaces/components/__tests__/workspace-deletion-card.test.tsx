@@ -10,6 +10,9 @@ const translations: Record<string, string> = {
   "workspace.deletion.schedule": "Delete workspace",
   "workspace.deletion.confirmTitle": "Delete this workspace?",
   "workspace.deletion.confirmDescription": "This cannot be undone.",
+  "workspace.deletion.pending": "Workspace deletion is pending.",
+  "workspace.deletion.pendingFallback": "soon",
+  "workspace.deletion.purging": "Workspace deletion is in progress.",
   "actions.undo": "Undo",
   "actions.cancel": "Cancel",
   "actions.delete": "Delete",
@@ -20,12 +23,21 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
 }))
 
-const capturedOptions: Record<string, { onSuccess?: () => void }> = {}
+const capturedOptions: Record<
+  string,
+  {
+    onError?: (result: { error: { serverError?: string } }) => void
+    onSuccess?: () => void
+  }
+> = {}
 
 vi.mock("next-safe-action/hooks", () => ({
   useAction: (
     action: { __name: string },
-    options: { onSuccess?: () => void },
+    options: {
+      onError?: (result: { error: { serverError?: string } }) => void
+      onSuccess?: () => void
+    },
   ) => {
     capturedOptions[action.__name] = options
     return { execute: vi.fn(), isPending: false }
@@ -71,12 +83,15 @@ describe("WorkspaceDeletionCard", () => {
     container.remove()
   })
 
-  async function render(scheduledDeletionAt: string | null = null) {
+  async function render(
+    scheduledDeletionAt: string | null = null,
+    purgeStartedAt: string | null = null,
+  ) {
     const { WorkspaceDeletionCard } = await import("../workspace-deletion-card")
     act(() => {
       root.render(
         <WorkspaceDeletionCard
-          workspace={{ id: WORKSPACE_ID, scheduledDeletionAt }}
+          workspace={{ id: WORKSPACE_ID, purgeStartedAt, scheduledDeletionAt }}
         />,
       )
     })
@@ -94,6 +109,31 @@ describe("WorkspaceDeletionCard", () => {
     await render(new Date().toISOString())
 
     capturedOptions.cancel?.onSuccess?.()
+
+    expect(reloadMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("shows Undo while deletion is pending", async () => {
+    await render(new Date().toISOString())
+
+    expect(container.textContent).toContain("Undo")
+  })
+
+  it("shows purging without Undo", async () => {
+    await render(new Date().toISOString(), new Date().toISOString())
+
+    expect(container.textContent).toContain(
+      "Workspace deletion is in progress.",
+    )
+    expect(container.textContent).not.toContain("Undo")
+  })
+
+  it("reloads after a stale cancellation is rejected", async () => {
+    await render(new Date().toISOString())
+
+    capturedOptions.cancel?.onError?.({
+      error: { serverError: "Workspace deletion has already started." },
+    })
 
     expect(reloadMock).toHaveBeenCalledTimes(1)
   })

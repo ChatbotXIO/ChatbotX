@@ -625,12 +625,16 @@
     }
   },
   "condition": {
+    "unknownValue": "Unknown",
     "yes": "Yes",
     "no": "No",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Enter a date as YYYY-MM-DD HH:mm or a variable",
+    "openPost": "Open {post}",
+    "openPostLink": "Open",
+    "postWithoutCaption": "Post without caption",
     "operator": {
       "and": "All conditions",
       "or": "Any condition"
@@ -928,7 +932,9 @@
       "bannerDescription": "This workspace is scheduled for deletion. Undo the deletion below to continue using it.",
       "pendingBlockedToast": "This workspace is scheduled for deletion. Contact a workspace admin to restore access.",
       "navDisabledTooltip": "Unavailable while workspace deletion is scheduled",
-      "badge": "Deletion scheduled"
+      "badge": "Deletion scheduled",
+      "purging": "Workspace deletion is in progress.",
+      "alreadyStarted": "Workspace deletion has already started."
     },
     "supportAccess": {
       "bannerTitle": "Platform support session",
@@ -2066,7 +2072,8 @@
       "searchPlaceholder": "Search keyword..."
     },
     "templateId": {
-      "label": "WhatsApp Template"
+      "label": "WhatsApp Template",
+      "placeholder": "Select a template"
     },
     "messengerTemplateId": {
       "label": "Messenger Template"
@@ -2215,7 +2222,10 @@
         "failed": "Failed",
         "completedAt": "Completed at",
         "errorDetails": "Import errors",
-        "row": "Row {row}"
+        "row": "Row {row}",
+        "unsupportedChannelStep": "The {channel} channel does not support {block}.",
+        "channelStepConstraintExceeded": "{block} exceeds the {channel} limit: {actual} {unit}, maximum {allowed}.",
+        "channelStepConstraintExceededGeneric": "The {channel} channel does not support the current {block} configuration."
       }
     },
     "line": {
@@ -2662,6 +2672,28 @@
     "quickReplies": {
       "limitReached": "Quick reply limit reached ({max})."
     },
+    "quickReplySettings": {
+      "open": "Quick reply settings",
+      "title": "Configure quick replies",
+      "chooseNextStep": "Choose next step",
+      "followUp": {
+        "label": "Follow up if contact hasn’t engaged",
+        "waitFor": "Wait for",
+        "divider": "If contact hasn’t engaged, follow up with",
+        "windowHint": "Messenger and Instagram only allow sending within 24 hours of the contact’s last message; later follow-ups are skipped there.",
+        "handle": "No engagement"
+      },
+      "retry": {
+        "label": "Retry if reply isn’t a Quick reply",
+        "message": "Retry message",
+        "messageDefault": "Please, tap one of the options below 👇",
+        "count": "Number of retries",
+        "countOption": "{count, plural, =0 {No retries} one {# time} other {# times}}",
+        "divider": "When number of retries is exceeded",
+        "handle": "Retries exceeded",
+        "getUserDataConflict": "Retry isn’t available when this message contains a Get User Data step."
+      }
+    },
     "buttons": {
       "limitReached": "Button limit reached ({max})."
     },
@@ -2796,7 +2828,8 @@
       "importStarted": "Flow is importing. Check the import history for results.",
       "importJsonOnly": "JSON files only",
       "whatsappCallButton": "Call on WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Thread Control"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -3461,6 +3494,128 @@
   "integrations": {
     "title": "Integrations"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Control what happens around Meta's AI assistant answering your Messenger customers.",
+    "info": "When enabled, conversations are taken over here after the AI assistant hands them back, and the settings below apply.",
+    "enabled": {
+      "label": "Enable"
+    },
+    "schedule": {
+      "label": "Run time",
+      "description": "Only apply it during these hours of the workspace time zone.",
+      "from": "From hour",
+      "to": "To hour",
+      "add": "Add time range",
+      "remove": "Remove time range"
+    },
+    "gotoFlow": {
+      "label": "Go to flow",
+      "description": "Flow started when the AI assistant hands the conversation back. Takes priority over the return message.",
+      "placeholder": "Select a flow",
+      "clear": "Clear flow"
+    },
+    "returnMessage": {
+      "label": "Return message",
+      "description": "Sent instead when no flow is set or the flow is no longer active.",
+      "placeholder": "Message sent when the AI hands the conversation back"
+    },
+    "pauseBot": {
+      "label": "Transfer Conversation to Human",
+      "description": "Stops the bot for this contact after the hand-back, until a team member takes over or it resumes."
+    },
+    "readOnly": "You can view these settings but not change them.",
+    "errors": {
+      "supportSession": "Settings cannot be changed from a support session.",
+      "flowNotFound": "The selected flow was not found or is not active.",
+      "timeRanges": "Enter valid time ranges: whole hours from 0 to 24, with different start and end."
+    },
+    "bulk": {
+      "title": "Apply to all customers",
+      "description": "Hand every eligible Messenger conversation to Meta's AI assistant, or take back the ones it holds right now. It runs in the background and you can follow it here.",
+      "started": "Started. You can follow the progress here.",
+      "progress": "Progress",
+      "processedOfTotal": "{done} of {total} conversations",
+      "counters": "{processed} done, {skipped} skipped, {failed} failed",
+      "action": {
+        "enable": "Enable for all",
+        "disable": "Disable for all"
+      },
+      "status": {
+        "pending": "Waiting to start",
+        "running": "Running",
+        "cancelling": "Cancelling",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "enable": {
+        "dialogDescription": "Every Messenger conversation whose customer wrote in the last 30 days and that no other app holds is handed to Meta's AI assistant. Conversations are taken back according to the settings above.",
+        "confirm": "Enable for all",
+        "blocked": "Save the automation above and switch it on (inside its run time) to enable it for all customers."
+      },
+      "disable": {
+        "dialogDescription": "Only conversations Meta's AI assistant holds right now are taken back, and only customers who wrote in the last 7 days can be reached. Each of them receives the message below, sent with Meta's Human Agent tag, so write it as a person replying. The Page needs the Human Agent permission.",
+        "messageLabel": "Message to customers",
+        "messageDescription": "Up to {max} characters.",
+        "messagePlaceholder": "Hi, a team member is taking over this conversation.",
+        "confirm": "Disable for all",
+        "policyWarning": "Meta allows the Human Agent tag only for a person replying to the customer. Using it for promotions or automated messages can get the Page's messaging restricted."
+      },
+      "errors": {
+        "automationNotActive": "Save the automation and switch it on (inside its run time) before enabling it for all customers.",
+        "messageRequired": "Enter the message to send to customers.",
+        "messageTooLong": "The message is too long.",
+        "pageNotConnected": "This Page is not connected.",
+        "nothingToRetry": "There is nothing to retry."
+      },
+      "runErrors": {
+        "automationStopped": "Stopped because the automation was switched off.",
+        "tokenInvalid": "The Page's access was revoked. Reconnect the Page and try again.",
+        "channelUnsupported": "This channel does not support the bulk action.",
+        "maxAttempts": "Gave up after repeated failures.",
+        "channelUnavailable": "Stopped because Meta could not be reached several times in a row.",
+        "batchFailed": "Some conversations could not be confirmed and were counted as failed.",
+        "pageDisconnected": "Stopped because the Page was disconnected.",
+        "pageRefused": "Meta refused the hand-over for this Page: it may not be set up for Meta's AI assistant, or it lacks the permission.",
+        "integrationUnavailable": "The Page's connection could not be loaded. Reconnect the Page and try again."
+      },
+      "pausedUntil": "Paused until {at} to stay within Meta's rate limits for this Page. It resumes on its own.",
+      "preparing": "Preparing…",
+      "live": {
+        "enable": "Enabling for customers: {done} / {total}",
+        "disable": "Disabling for customers: {done} / {total}",
+        "enableCounting": "Enabling for customers: counting…",
+        "disableCounting": "Disabling for customers: counting…"
+      },
+      "done": {
+        "enable": "Enabled for {processed} of {total} customers.",
+        "disable": "Disabled for {processed} of {total} customers."
+      },
+      "stopped": {
+        "enable": "Enabling for all customers was stopped.",
+        "disable": "Disabling for all customers was stopped."
+      },
+      "retry": "Retry"
+    },
+    "history": {
+      "link": "History",
+      "title": "Bulk run history",
+      "empty": "No runs yet.",
+      "columns": {
+        "action": "Action",
+        "requestedAt": "Started",
+        "progress": "Processed / total",
+        "finishedAt": "Finished",
+        "message": "Message",
+        "requestedBy": "Requested by"
+      },
+      "description": "Every time \"Apply to all customers\" was switched on or off for this Page, newest first.",
+      "error": "Could not load the history.",
+      "previousPage": "Previous page",
+      "nextPage": "Next page"
+    }
+  },
   "platformSettings": {
     "title": "Platform Settings",
     "errors": {
@@ -3599,6 +3754,9 @@
     "noVersionsFound": "No published versions found",
     "publishVersionSuccess": "A new version has been published",
     "flowConfigIncomplete": "Some configurations are incomplete",
+    "quickReplyNextStepRequired": "Choose a next step for each enabled quick reply setting",
+    "quickReplyRetryMessageRequired": "Enter a retry message",
+    "quickReplyRetryWithGetUserData": "Retry can’t be combined with a Get User Data step",
     "whatsappCarouselButtonsMismatch": "On WhatsApp, a carousel needs the same buttons on every card: either a single link button on each card, or the same number of reply buttons on each card",
     "whatsappCarouselLinkButtonNotAlone": "On WhatsApp, a carousel card with a link button cannot have any other buttons. Remove the other buttons on that card, or change the link button to another action.",
     "duplicateNodeError": "Could not duplicate the block. Please try again.",
@@ -3613,7 +3771,8 @@
     "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",
     "waTemplateLtoExpirationRequired": "Pick an expiration date for the limited-time offer before sending.",
     "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them.",
-    "mediaStepUnsupported": "This channel can't send this media type. Remove the step, or point this node at a channel that supports it.",
+    "unsupportedBlock": "This channel does not support this block.",
+    "constraintExceeded": "This channel limit was exceeded.",
     "mediaButtonsUnsupported": "This channel can't send buttons with a media message. Remove the buttons, or move them to a text step after this one.",
     "voiceCall": "Voice call",
     "voiceCallDuration": "Voice call · {duration}",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Open Zalo group",
     "openZalo": "Open Zalo",
     "openMessenger": "Open Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "you"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp ads",
+      "customer_service": "Customer service",
+      "escalation": "Escalation",
+      "marketing": "Marketing",
+      "utility": "Utility"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Active",
+      "tooltip": "Handled by {owner}"
+    },
+    "release": {
+      "label": "Release",
+      "tooltip": "Release this conversation so other apps can answer",
+      "success": "Conversation released"
+    },
+    "pass": {
+      "menuItem": "Pass to escalation",
+      "title": "Pass to the escalation partner?",
+      "description": "Hand this conversation to your escalation partner? Your replies will pause until the thread comes back.",
+      "confirm": "Pass",
+      "success": "Conversation passed to the escalation partner"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Hand this conversation back to the AI assistant",
+      "title": "Hand back to the AI assistant?",
+      "description": "The AI assistant will resume answering this customer. Your replies will pause until the conversation comes back to you. Meta doesn't guarantee the assistant replies to every message.",
+      "confirm": "Hand back",
+      "success": "Conversation handed back to the AI assistant"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "You’re on standby (listening only)",
+      "description": "A third-party partner is handling this conversation. The message box is locked to avoid duplicate replies.",
+      "takeOver": "Take over",
+      "takeOverSuccess": "You're now handling this conversation",
+      "notEscalation": "Only the escalation partner can take over. Routing is configured in Meta Business Suite.",
+      "notPrimaryReceiver": "This app must be the Page's primary receiver to take over. Set it in the Page's Handover Protocol settings.",
+      "learnMore": "Learn more",
+      "dismiss": "Send anyway"
+    },
+    "divider": {
+      "ownerHandling": "{owner} is now handling this conversation",
+      "handedOver": "{previousOwner} handed this conversation back to you",
+      "selfHandling": "You are now handling this conversation",
+      "takenOver": "You took over this conversation",
+      "released": "Conversation released",
+      "passed": "Conversation passed to the escalation partner",
+      "serviceRejected": "Message not sent: {owner} is handling this conversation"
+    },
+    "context": {
+      "title": "Conversation context",
+      "summaryBadge": "AI summary",
+      "historyBadge": "History",
+      "customer": "Customer",
+      "business": "Business",
+      "handoverNote": "Handover note: {note}",
+      "showAll": "Show all ({count})",
+      "showLess": "Show less"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Conversation routing",
+      "threadState": "Thread state",
+      "threadStateOwned": "Owned",
+      "threadStateStandby": "Standby",
+      "threadStateIdle": "Idle",
+      "currentOwner": "Current owner",
+      "noOwner": "No owner",
+      "roleLabel": "Your role",
+      "selfOwned": "Active — handling the conversation",
+      "selfStandby": "Standby — listening only",
+      "selfIdle": "Idle — waiting",
+      "hintOwned": "Release when you're done so other apps can answer.",
+      "hintStandby": "While a partner is handling this, your messages are held so the customer doesn't get duplicate replies. Take over from the message box to reply.",
+      "hintIdle": "The next customer message decides who answers.",
+      "syncOwner": "Sync owner",
+      "syncOwnerSuccess": "Owner synced"
+    },
+    "settings": {
+      "title": "Handover resume flow",
+      "description": "The automation that runs when a partner hands a conversation back.",
+      "resumeFlowLabel": "Choose a flow",
+      "resumeFlowPlaceholder": "Select a flow",
+      "info": "This flow starts automatically when control is handed back. The conversation summary and chat history are then shown to your agents in the live chat.",
+      "save": "Save changes",
+      "clearFlow": "Clear flow",
+      "adminOnly": "Only workspace admins can change routing",
+      "flowNotFound": "The selected flow was not found or is not active",
+      "integrationNotFound": "WhatsApp number not found",
+      "messengerIntegrationNotFound": "Messenger page not found"
+    },
+    "errors": {
+      "unsupported": "Conversation routing is not available on this channel",
+      "notFound": "This conversation is not on that channel",
+      "actionFailed": "Couldn't update conversation routing. Please try again."
+    },
+    "step": {
+      "action": "Action",
+      "release": "Release the conversation",
+      "pass": "Pass to the escalation partner",
+      "helper": "WhatsApp only. On other channels, or when the conversation isn’t owned here, the step follows the Error path."
+    },
+    "template": {
+      "sent": "Template sent"
+    }
   }
 }

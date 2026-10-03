@@ -3,9 +3,13 @@ import { describe, expect, test } from "vitest"
 import { z } from "zod"
 import { resolveFlowValidationMessageKey } from "@/features/flows/react-flow/flow-validation-message"
 
-const makeValidationError = (message: string) => {
+const makeValidationError = (message: string, capability?: unknown) => {
   const schema = z.string().superRefine((_value, ctx) => {
-    ctx.addIssue({ code: "custom", message })
+    ctx.addIssue({
+      code: "custom",
+      message,
+      params: capability ? { capability } : undefined,
+    })
   })
   const result = schema.safeParse("value")
 
@@ -17,13 +21,23 @@ const makeValidationError = (message: string) => {
 }
 
 describe("resolveFlowValidationMessageKey", () => {
-  test("maps a known flow validation code to its localized message key", () => {
+  test.each([
+    flowValidationCodes.unsupportedBlock,
+    flowValidationCodes.constraintExceeded,
+  ])("maps %s to its localized message key", (code) => {
+    const error = makeValidationError(code)
+
+    expect(resolveFlowValidationMessageKey(error)).toBe(`messages.${code}`)
+  })
+
+  test("maps a descriptive issue with a capability code to its localized message key", () => {
     const error = makeValidationError(
-      flowValidationCodes.whatsappCarouselButtonsMismatch,
+      "The instagram channel does not support sendCard.",
+      { code: flowValidationCodes.unsupportedBlock },
     )
 
     expect(resolveFlowValidationMessageKey(error)).toBe(
-      "messages.whatsappCarouselButtonsMismatch",
+      "messages.unsupportedBlock",
     )
   })
 

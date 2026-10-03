@@ -13,6 +13,10 @@ vi.mock("@/features/conversations/hooks/use-mark-conversation-read", () => ({
   useMarkConversationRead: () => executeReadActionMock,
 }))
 
+vi.mock("@/features/tenant/tenant-settings-provider", () => ({
+  useTenantSettings: () => ({ name: "AhaChat" }),
+}))
+
 vi.mock("@/features/contacts/utils", () => ({
   useAvatarUrl: () => undefined,
 }))

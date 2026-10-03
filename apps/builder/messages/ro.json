@@ -8,6 +8,28 @@
     "quickReplies": {
       "limitReached": "A fost atinsă limita de răspunsuri rapide ({max})."
     },
+    "quickReplySettings": {
+      "open": "Setări pentru răspunsuri rapide",
+      "title": "Configurează răspunsurile rapide",
+      "chooseNextStep": "Alege pasul următor",
+      "followUp": {
+        "label": "Revino dacă contactul nu a interacționat",
+        "waitFor": "Așteaptă",
+        "divider": "Dacă contactul nu a interacționat, revino cu",
+        "windowHint": "Messenger și Instagram permit trimiterea doar în 24 de ore de la ultimul mesaj al contactului; mesajele de revenire ulterioare sunt omise acolo.",
+        "handle": "Nicio interacțiune"
+      },
+      "retry": {
+        "label": "Reîncearcă dacă răspunsul nu este un răspuns rapid",
+        "message": "Mesaj de reîncercare",
+        "messageDefault": "Te rugăm să atingi una dintre opțiunile de mai jos 👇",
+        "count": "Număr de reîncercări",
+        "countOption": "{count, plural, =0 {Fără reîncercări} one {# dată} other {# ori}}",
+        "divider": "Când numărul de reîncercări este depășit",
+        "handle": "Reîncercări depășite",
+        "getUserDataConflict": "Reîncercarea nu este disponibilă când acest mesaj conține un pas Obține datele utilizatorului."
+      }
+    },
     "buttons": {
       "limitReached": "A fost atinsă limita de butoane ({max})."
     },
@@ -142,7 +164,8 @@
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
       "importJsonOnly": "Doar fișiere JSON",
       "whatsappCallButton": "Sună pe WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Controlul conversației"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -807,6 +830,128 @@
   "integrations": {
     "title": "Integrări"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Controlează ce se întâmplă când asistentul AI al Meta răspunde clienților tăi de pe Messenger.",
+    "info": "Când este activat, conversațiile sunt preluate aici după ce asistentul AI le returnează, iar setările de mai jos se aplică.",
+    "enabled": {
+      "label": "Activează"
+    },
+    "schedule": {
+      "label": "Interval de rulare",
+      "description": "Se aplică doar în aceste ore ale fusului orar al workspace-ului.",
+      "from": "De la ora",
+      "to": "Până la ora",
+      "add": "Adaugă interval",
+      "remove": "Elimină intervalul"
+    },
+    "gotoFlow": {
+      "label": "Mergi la flux",
+      "description": "Flow pornit când asistentul AI returnează conversația. Are prioritate față de mesajul de returnare.",
+      "placeholder": "Selectează un flux",
+      "clear": "Șterge fluxul"
+    },
+    "returnMessage": {
+      "label": "Mesaj de revenire",
+      "description": "Trimis în schimb când nu este setat niciun flux sau fluxul nu mai este activ.",
+      "placeholder": "Mesaj trimis când AI-ul returnează conversația"
+    },
+    "pauseBot": {
+      "label": "Transferă conversația către un operator",
+      "description": "Oprește botul pentru acest contact după returnare, până când un membru al echipei preia sau botul își reia activitatea."
+    },
+    "readOnly": "Poți vedea aceste setări, dar nu le poți modifica.",
+    "errors": {
+      "supportSession": "Setările nu pot fi modificate dintr-o sesiune de suport.",
+      "flowNotFound": "Fluxul selectat nu a fost găsit sau nu este activ.",
+      "timeRanges": "Introdu intervale valide: ore întregi de la 0 la 24, cu început și sfârșit diferite."
+    },
+    "bulk": {
+      "title": "Aplică tuturor clienților",
+      "description": "Predă toate conversațiile Messenger eligibile asistentului AI al Meta sau preia înapoi pe cele pe care le deține acum. Rulează în fundal și îl poți urmări aici.",
+      "started": "Pornit. Poți urmări progresul aici.",
+      "progress": "Progres",
+      "processedOfTotal": "{done} din {total} conversații",
+      "counters": "{processed} finalizate, {skipped} omise, {failed} eșuate",
+      "action": {
+        "enable": "Activează pentru toți",
+        "disable": "Dezactivează pentru toți"
+      },
+      "status": {
+        "pending": "Așteaptă pornirea",
+        "running": "În desfășurare",
+        "cancelling": "Se anulează",
+        "completed": "Finalizată",
+        "failed": "Eșuată",
+        "cancelled": "Anulată"
+      },
+      "enable": {
+        "dialogDescription": "Fiecare conversație Messenger în care clientul a scris în ultimele 30 de zile și pe care nicio altă aplicație nu o deține este predată asistentului AI al Meta. Conversațiile sunt preluate înapoi conform setărilor de mai sus.",
+        "confirm": "Activează pentru toți",
+        "blocked": "Salvează automatizarea de mai sus și pornește-o (în intervalul ei de rulare) pentru a o activa pentru toți clienții."
+      },
+      "disable": {
+        "dialogDescription": "Sunt preluate înapoi doar conversațiile pe care asistentul AI al Meta le deține acum și pot fi contactați doar clienții care au scris în ultimele 7 zile. Fiecare primește mesajul de mai jos, trimis cu eticheta Human Agent a Meta, așa că scrie-l ca și cum ar răspunde o persoană. Pagina are nevoie de permisiunea Human Agent.",
+        "messageLabel": "Mesaj pentru clienți",
+        "messageDescription": "Până la {max} caractere.",
+        "messagePlaceholder": "Bună, un membru al echipei preia această conversație.",
+        "confirm": "Dezactivează pentru toți",
+        "policyWarning": "Meta permite eticheta Human Agent doar unei persoane care răspunde clientului. Utilizarea ei pentru promoții sau mesaje automate poate duce la restricționarea mesageriei Paginii."
+      },
+      "errors": {
+        "automationNotActive": "Salvează automatizarea și pornește-o (în intervalul ei de rulare) înainte de a o activa pentru toți clienții.",
+        "messageRequired": "Introdu mesajul care va fi trimis clienților.",
+        "messageTooLong": "Mesajul este prea lung.",
+        "pageNotConnected": "Această Pagină nu este conectată.",
+        "nothingToRetry": "Nu există nimic de reîncercat."
+      },
+      "runErrors": {
+        "automationStopped": "Oprită deoarece automatizarea a fost dezactivată.",
+        "tokenInvalid": "Accesul Paginii a fost revocat. Reconectează Pagina și încearcă din nou.",
+        "channelUnsupported": "Acest canal nu acceptă acțiunea în masă.",
+        "maxAttempts": "Renunțat după eșecuri repetate.",
+        "channelUnavailable": "Oprită deoarece Meta nu a putut fi contactat de mai multe ori la rând.",
+        "batchFailed": "Unele conversații nu au putut fi confirmate și au fost numărate ca eșuate.",
+        "pageDisconnected": "Oprit deoarece Pagina a fost deconectată.",
+        "pageRefused": "Meta a refuzat predarea pentru această Pagină: este posibil să nu fie configurată pentru asistentul AI al Meta sau să lipsească permisiunea.",
+        "integrationUnavailable": "Conexiunea Paginii nu a putut fi încărcată. Reconectează Pagina și încearcă din nou."
+      },
+      "pausedUntil": "Oprit temporar până la {at} pentru a rămâne în limitele de rată ale Meta pentru această Pagină. Reia singur.",
+      "preparing": "Se pregătește…",
+      "live": {
+        "enable": "Se activează pentru clienți: {done} / {total}",
+        "disable": "Se dezactivează pentru clienți: {done} / {total}",
+        "enableCounting": "Se activează pentru clienți: se numără…",
+        "disableCounting": "Se dezactivează pentru clienți: se numără…"
+      },
+      "done": {
+        "enable": "Activat pentru {processed} din {total} clienți.",
+        "disable": "Dezactivat pentru {processed} din {total} clienți."
+      },
+      "stopped": {
+        "enable": "Activarea pentru toți clienții a fost oprită.",
+        "disable": "Dezactivarea pentru toți clienții a fost oprită."
+      },
+      "retry": "Reîncearcă"
+    },
+    "history": {
+      "link": "Istoric",
+      "title": "Istoricul rulărilor în masă",
+      "empty": "Nicio rulare încă.",
+      "columns": {
+        "action": "Acțiune",
+        "requestedAt": "Pornită",
+        "progress": "Procesate / total",
+        "finishedAt": "Finalizată",
+        "message": "Mesaj",
+        "requestedBy": "Solicitată de"
+      },
+      "description": "De fiecare dată când \"Aplică tuturor clienților\" a fost activat sau dezactivat pentru această Pagină, cele mai recente primele.",
+      "error": "Istoricul nu a putut fi încărcat.",
+      "previousPage": "Pagina anterioară",
+      "nextPage": "Pagina următoare"
+    }
+  },
   "platformSettings": {
     "title": "Setările platformei",
     "errors": {
@@ -1412,12 +1557,16 @@
     }
   },
   "condition": {
+    "unknownValue": "Necunoscut",
     "yes": "Da",
     "no": "Nu",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Introdu o dată ca YYYY-MM-DD HH:mm sau o variabilă",
+    "openPost": "Deschide {post}",
+    "openPostLink": "Deschide",
+    "postWithoutCaption": "Postare fără descriere",
     "operator": {
       "and": "Toate condițiile",
       "or": "Orice condiție"
@@ -2702,7 +2851,8 @@
       "searchPlaceholder": "Căutați un cuvânt-cheie..."
     },
     "templateId": {
-      "label": "Șablon WhatsApp"
+      "label": "Șablon WhatsApp",
+      "placeholder": "Selectează un șablon"
     },
     "messengerTemplateId": {
       "label": "Șablon Messenger"
@@ -2851,7 +3001,10 @@
         "failed": "Eșuat",
         "completedAt": "Finalizat la",
         "errorDetails": "Erori de import",
-        "row": "Rândul {row}"
+        "row": "Rândul {row}",
+        "unsupportedChannelStep": "Canalul {channel} nu acceptă {block}.",
+        "channelStepConstraintExceeded": "{block} depășește limita canalului {channel}: {actual} {unit}, maximum {allowed}.",
+        "channelStepConstraintExceededGeneric": "Canalul {channel} nu acceptă configurația curentă pentru {block}."
       }
     },
     "line": {
@@ -3215,7 +3368,9 @@
       "bannerDescription": "Acest spațiu de lucru este programat pentru ștergere. Anulează ștergerea de mai jos pentru a continua să-l folosești.",
       "pendingBlockedToast": "Acest spațiu de lucru este programat pentru ștergere. Contactează un administrator al spațiului de lucru pentru a restaura accesul.",
       "navDisabledTooltip": "Indisponibil cât timp ștergerea spațiului de lucru este programată",
-      "badge": "Ștergere programată"
+      "badge": "Ștergere programată",
+      "purging": "Ștergerea spațiului de lucru este în curs.",
+      "alreadyStarted": "Ștergerea spațiului de lucru a început deja."
     },
     "supportAccess": {
       "bannerTitle": "Sesiune de suport a platformei",
@@ -3357,6 +3512,9 @@
     "noVersionsFound": "Nicio versiune publicată găsită",
     "publishVersionSuccess": "A fost publicată o versiune nouă",
     "flowConfigIncomplete": "Unele configurări sunt incomplete",
+    "quickReplyNextStepRequired": "Alege un pas următor pentru fiecare setare de răspuns rapid activată",
+    "quickReplyRetryMessageRequired": "Introdu un mesaj de reîncercare",
+    "quickReplyRetryWithGetUserData": "Reîncercarea nu poate fi combinată cu un pas Obține datele utilizatorului",
     "whatsappCarouselButtonsMismatch": "Pe WhatsApp, un carusel are nevoie de aceleași butoane pe fiecare card: fie un singur buton de link pe fiecare card, fie același număr de butoane de răspuns pe fiecare card",
     "whatsappCarouselLinkButtonNotAlone": "Pe WhatsApp, un card de carusel cu un buton de link nu poate avea alte butoane. Elimină celelalte butoane de pe acel card sau schimbă butonul de link cu o altă acțiune.",
     "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",
@@ -3371,7 +3529,8 @@
     "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
     "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
     "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
-    "mediaStepUnsupported": "Acest canal nu poate trimite acest tip de conținut media. Elimină pasul sau îndreaptă acest nod spre un canal compatibil.",
+    "unsupportedBlock": "Acest canal nu acceptă acest bloc.",
+    "constraintExceeded": "Limita acestui canal a fost depășită.",
     "mediaButtonsUnsupported": "Acest canal nu poate trimite butoane împreună cu un mesaj media. Elimină butoanele sau mută-le într-un pas text de după acesta.",
     "voiceCall": "Apel vocal",
     "voiceCallDuration": "Apel vocal · {duration}",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Deschide grupul Zalo",
     "openZalo": "Deschide Zalo",
     "openMessenger": "Deschide Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partener",
+      "partnerWithRole": "Partener · {role}",
+      "self": "tine"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Reclame Click-to-WhatsApp",
+      "customer_service": "Servicii clienți",
+      "escalation": "Escaladare",
+      "marketing": "Marketing",
+      "utility": "Utilitar"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Activ",
+      "tooltip": "Gestionată de {owner}"
+    },
+    "release": {
+      "label": "Eliberează",
+      "tooltip": "Eliberează această conversație pentru ca alte aplicații să poată răspunde",
+      "success": "Conversație eliberată"
+    },
+    "pass": {
+      "menuItem": "Transferă la escaladare",
+      "title": "Transferi către partenerul de escaladare?",
+      "description": "Predai această conversație partenerului tău de escaladare? Răspunsurile tale vor fi suspendate până când conversația revine.",
+      "confirm": "Transferă",
+      "success": "Conversație transferată partenerului de escaladare"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Returnează această conversație asistentului AI",
+      "title": "Returnezi asistentului AI?",
+      "description": "Asistentul AI va răspunde din nou acestui client. Răspunsurile tale vor fi puse în pauză până când conversația revine la tine. Meta nu garantează că asistentul răspunde la fiecare mesaj.",
+      "confirm": "Returnează",
+      "success": "Conversație returnată asistentului AI"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Ești în standby (doar ascultare)",
+      "description": "Un partener terț gestionează această conversație. Caseta de mesaje este blocată pentru a evita răspunsurile duplicate.",
+      "takeOver": "Preia",
+      "takeOverSuccess": "Acum gestionezi această conversație",
+      "notEscalation": "Doar partenerul de escaladare poate prelua. Rutarea se configurează în Meta Business Suite.",
+      "notPrimaryReceiver": "Această aplicație trebuie să fie destinatarul principal al Paginii pentru a prelua. Setează acest lucru în setările Handover Protocol ale Paginii.",
+      "learnMore": "Află mai multe",
+      "dismiss": "Trimite oricum"
+    },
+    "divider": {
+      "ownerHandling": "{owner} gestionează acum această conversație",
+      "handedOver": "{previousOwner} ți-a returnat această conversație",
+      "selfHandling": "Acum gestionezi această conversație",
+      "takenOver": "Ai preluat această conversație",
+      "released": "Conversație eliberată",
+      "passed": "Conversație transferată partenerului de escaladare",
+      "serviceRejected": "Mesaj netrimis: {owner} gestionează această conversație"
+    },
+    "context": {
+      "title": "Contextul conversației",
+      "summaryBadge": "Rezumat AI",
+      "historyBadge": "Istoric",
+      "customer": "Client",
+      "business": "Companie",
+      "handoverNote": "Notă de predare: {note}",
+      "showAll": "Afișează tot ({count})",
+      "showLess": "Afișează mai puțin"
+    },
+    "echo": {
+      "partner": "Partener"
+    },
+    "panel": {
+      "title": "Rutarea conversației",
+      "threadState": "Starea conversației",
+      "threadStateOwned": "Preluată",
+      "threadStateStandby": "În așteptare",
+      "threadStateIdle": "Liberă",
+      "currentOwner": "Proprietar curent",
+      "noOwner": "Fără responsabil",
+      "roleLabel": "Rolul tău",
+      "selfOwned": "Gestionează conversația",
+      "selfStandby": "În așteptare — doar ascultă",
+      "selfIdle": "Se așteaptă următorul mesaj al clientului",
+      "hintOwned": "Eliberează când ai terminat, ca alte aplicații să poată răspunde.",
+      "hintStandby": "Cât timp un partener gestionează conversația, mesajele tale sunt reținute pentru ca clientul să nu primească răspunsuri duplicate. Preia conversația din caseta de mesaje pentru a răspunde.",
+      "hintIdle": "Următorul mesaj al clientului decide cine răspunde.",
+      "syncOwner": "Sincronizează proprietarul",
+      "syncOwnerSuccess": "Proprietar sincronizat"
+    },
+    "settings": {
+      "title": "Flux de reluare după predare",
+      "description": "Automatizarea care rulează când un partener returnează o conversație.",
+      "resumeFlowLabel": "Alege un flux",
+      "resumeFlowPlaceholder": "Selectează un flux",
+      "info": "Acest flux pornește automat când controlul este returnat. Rezumatul conversației și istoricul chatului sunt apoi afișate agenților tăi în chatul live.",
+      "save": "Salvează modificările",
+      "clearFlow": "Șterge fluxul",
+      "adminOnly": "Doar administratorii spațiului de lucru pot modifica rutarea",
+      "flowNotFound": "Fluxul selectat nu a fost găsit sau nu este activ",
+      "integrationNotFound": "Numărul WhatsApp nu a fost găsit",
+      "messengerIntegrationNotFound": "Pagina Messenger nu a fost găsită"
+    },
+    "errors": {
+      "unsupported": "Rutarea conversațiilor nu este disponibilă pe acest canal",
+      "notFound": "Această conversație nu se află pe acel canal",
+      "actionFailed": "Nu s-a putut actualiza rutarea conversației. Încearcă din nou."
+    },
+    "step": {
+      "action": "Acțiune",
+      "release": "Eliberează conversația",
+      "pass": "Transferă către partenerul de escaladare",
+      "helper": "Doar WhatsApp. Pe alte canale, sau când conversația nu este gestionată aici, pasul urmează calea de eroare."
+    },
+    "template": {
+      "sent": "Șablon trimis"
+    }
   }
 }

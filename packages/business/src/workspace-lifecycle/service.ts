@@ -43,6 +43,7 @@ import {
 } from "@chatbotx.io/sequence-scheduler/dispatch-cancel"
 import { BaseService } from "../base.service"
 import { coexistService } from "../coexist/service"
+import { WorkspacePurgeIncompleteError } from "../errors"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
 import { integrationClaudeService } from "../integration-claude/service"
@@ -301,6 +302,10 @@ class WorkspaceLifecycleService extends BaseService {
           setTimeout(resolve, INTER_CHUNK_DELAY_MS),
         )
       }
+
+      if (await this.hasHeavyRows(table, props.workspaceId)) {
+        throw new WorkspacePurgeIncompleteError(props.workspaceId, table)
+      }
     }
 
     return totalDeleted
@@ -324,6 +329,19 @@ class WorkspaceLifecycleService extends BaseService {
       )
     `)
     return result.rowCount ?? 0
+  }
+
+  private async hasHeavyRows(
+    table: (typeof HEAVY_WORKSPACE_TABLES)[number],
+    workspaceId: string,
+  ): Promise<boolean> {
+    const result = await db.execute(sql`
+      SELECT 1
+      FROM ${sql.raw(`"${table}"`)}
+      WHERE "workspaceId" = ${workspaceId}
+      LIMIT 1
+    `)
+    return result.rows.length > 0
   }
 
   /**
@@ -389,6 +407,10 @@ class WorkspaceLifecycleService extends BaseService {
       await new Promise((resolve) => setTimeout(resolve, INTER_CHUNK_DELAY_MS))
     }
 
+    if (await this.hasHypertableRows(messageModel, workspaceId)) {
+      throw new WorkspacePurgeIncompleteError(workspaceId, "Message")
+    }
+
     // Pass 2: attachment-only conversations (attachments whose Message rows were
     // already gone) that pass 1 never enumerated.
     for (let batch = 0; batch < HYPERTABLE_MAX_CONVERSATION_BATCHES; batch++) {
@@ -405,7 +427,23 @@ class WorkspaceLifecycleService extends BaseService {
       await new Promise((resolve) => setTimeout(resolve, INTER_CHUNK_DELAY_MS))
     }
 
+    if (await this.hasHypertableRows(attachmentModel, workspaceId)) {
+      throw new WorkspacePurgeIncompleteError(workspaceId, "Attachment")
+    }
+
     return deleted
+  }
+
+  private async hasHypertableRows(
+    model: typeof messageModel | typeof attachmentModel,
+    workspaceId: string,
+  ): Promise<boolean> {
+    const rows = await db
+      .selectDistinct({ conversationId: model.conversationId })
+      .from(model)
+      .where(eq(model.workspaceId, workspaceId))
+      .limit(1)
+    return rows.length > 0
   }
 
   /** Returns the ids of the owner's workspaces this call tore down, so callers that need to attribute a per-workspace side effect (e.g. audit rows) don't have to re-query. */

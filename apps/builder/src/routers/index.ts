@@ -68,6 +68,11 @@ export const router = {
   tagsAPI: lazy(() =>
     import("@/features/tags/api").then((m) => ({ default: m.tagsAPI })),
   ),
+  contactFilterAPI: lazy(() =>
+    import("@/features/contact-filter/api").then((m) => ({
+      default: m.contactFilterAPI,
+    })),
+  ),
   customFieldsAPI: lazy(() =>
     import("@/features/custom-fields/api").then((m) => ({
       default: m.customFieldsAPI,
@@ -94,6 +99,16 @@ export const router = {
   contactScanAPIs: lazy(() =>
     import("@/features/contact-scan/api").then((m) => ({
       default: m.contactScanAPIs,
+    })),
+  ),
+  aiHandoverAPIs: lazy(() =>
+    import("@/features/integration-ai-handover/api").then((m) => ({
+      default: m.aiHandoverAPIs,
+    })),
+  ),
+  channelPostAPIs: lazy(() =>
+    import("@/features/channel-posts/api").then((m) => ({
+      default: m.channelPostAPIs,
     })),
   ),
   botFieldAPIs: lazy(() =>

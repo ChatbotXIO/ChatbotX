@@ -38,6 +38,7 @@ import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { getContactInboxSinceTime } from "../contact-inbox/service"
+import { contactInboxPostService } from "../contact-inbox-post/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { NO_AVATAR_SENTINEL_KEY } from "../media/no-avatar-sentinel"
@@ -714,6 +715,11 @@ class ContactService extends BaseService {
       )
 
       await db.transaction(async (tx) => {
+        await contactInboxPostService.deleteForContacts({
+          contactIds: chunk.map((contact) => contact.id),
+          tx,
+          workspaceId,
+        })
         await messageCleanupService.record({ workspaceId, entries, tx })
         await tx.delete(contactModel).where(
           inArray(

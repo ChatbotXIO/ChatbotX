@@ -583,12 +583,16 @@
     }
   },
   "condition": {
+    "unknownValue": "Tuntematon",
     "yes": "Kyllä",
     "no": "Ei",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Anna päivämäärä muodossa YYYY-MM-DD HH:mm tai muuttuja",
+    "openPost": "Avaa {post}",
+    "openPostLink": "Avaa",
+    "postWithoutCaption": "Julkaisu ilman kuvatekstiä",
     "operator": {
       "and": "Kaikki ehdot",
       "or": "Mikä tahansa ehto"
@@ -1873,7 +1877,8 @@
       "searchPlaceholder": "Hae avainsanaa..."
     },
     "templateId": {
-      "label": "WhatsApp-malli"
+      "label": "WhatsApp-malli",
+      "placeholder": "Valitse malli"
     },
     "messengerTemplateId": {
       "label": "Messenger-malli"
@@ -2022,7 +2027,10 @@
         "failed": "Epäonnistui",
         "completedAt": "Valmistunut",
         "errorDetails": "Tuontivirheet",
-        "row": "Rivi {row}"
+        "row": "Rivi {row}",
+        "unsupportedChannelStep": "Kanava {channel} ei tue lohkoa {block}.",
+        "channelStepConstraintExceeded": "{block} ylittää kanavan {channel} rajan: {actual} {unit}, enintään {allowed}.",
+        "channelStepConstraintExceededGeneric": "Kanava {channel} ei tue nykyistä {block}-määritystä."
       }
     },
     "line": {
@@ -2278,6 +2286,28 @@
     "quickReplies": {
       "limitReached": "Pikavastausten enimmäismäärä saavutettu ({max})."
     },
+    "quickReplySettings": {
+      "open": "Pikavastausten asetukset",
+      "title": "Määritä pikavastaukset",
+      "chooseNextStep": "Valitse seuraava vaihe",
+      "followUp": {
+        "label": "Muistuta, jos yhteyshenkilö ei ole reagoinut",
+        "waitFor": "Odota",
+        "divider": "Jos yhteyshenkilö ei ole reagoinut, muistuta viestillä",
+        "windowHint": "Messenger ja Instagram sallivat lähettämisen vain 24 tunnin sisällä yhteyshenkilön viimeisestä viestistä; myöhemmät muistutukset ohitetaan niissä.",
+        "handle": "Ei reaktiota"
+      },
+      "retry": {
+        "label": "Yritä uudelleen, jos vastaus ei ole pikavastaus",
+        "message": "Uudelleenyrityksen viesti",
+        "messageDefault": "Napauta yhtä alla olevista vaihtoehdoista 👇",
+        "count": "Uudelleenyritysten määrä",
+        "countOption": "{count, plural, =0 {Ei uudelleenyrityksiä} one {# kerta} other {# kertaa}}",
+        "divider": "Kun uudelleenyritysten määrä ylittyy",
+        "handle": "Uudelleenyritykset ylitetty",
+        "getUserDataConflict": "Uudelleenyritys ei ole käytettävissä, kun tämä viesti sisältää Hae käyttäjätiedot -vaiheen."
+      }
+    },
     "buttons": {
       "limitReached": "Painikkeiden enimmäismäärä saavutettu ({max})."
     },
@@ -2412,7 +2442,8 @@
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
       "importJsonOnly": "Vain JSON-tiedostot",
       "whatsappCallButton": "Soita WhatsAppissa",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Keskustelun hallinta"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -3077,6 +3108,128 @@
   "integrations": {
     "title": "Integraatiot"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Hallitse, mitä tapahtuu, kun Metan tekoälyavustaja vastaa Messenger-asiakkaillesi.",
+    "info": "Kun käytössä, keskustelut otetaan hoitoon täällä, kun tekoälyavustaja palauttaa ne, ja alla olevat asetukset ovat voimassa.",
+    "enabled": {
+      "label": "Ota käyttöön"
+    },
+    "schedule": {
+      "label": "Ajoaika",
+      "description": "Käytä vain näinä tunteina työtilan aikavyöhykkeellä.",
+      "from": "Alkutunti",
+      "to": "Lopputunti",
+      "add": "Lisää aikaväli",
+      "remove": "Poista aikaväli"
+    },
+    "gotoFlow": {
+      "label": "Siirry kulkuun",
+      "description": "Flow, joka käynnistyy, kun tekoälyavustaja palauttaa keskustelun. Ohittaa palautusviestin.",
+      "placeholder": "Valitse kulku",
+      "clear": "Tyhjennä kulku"
+    },
+    "returnMessage": {
+      "label": "Palautusviesti",
+      "description": "Lähetetään sen sijaan, kun kulkua ei ole asetettu tai kulku ei ole enää aktiivinen.",
+      "placeholder": "Viesti, joka lähetetään, kun tekoäly palauttaa keskustelun"
+    },
+    "pauseBot": {
+      "label": "Siirrä keskustelu ihmiselle",
+      "description": "Pysäyttää botin tälle yhteystiedolle palautuksen jälkeen, kunnes tiimin jäsen ottaa vastuun tai botti jatkuu."
+    },
+    "readOnly": "Voit katsella näitä asetuksia mutta et muuttaa niitä.",
+    "errors": {
+      "supportSession": "Asetuksia ei voi muuttaa tukiistunnosta.",
+      "flowNotFound": "Valittua kulkua ei löytynyt tai se ei ole aktiivinen.",
+      "timeRanges": "Anna kelvolliset aikavälit: kokonaisia tunteja 0–24, alku ja loppu eri arvoiset."
+    },
+    "bulk": {
+      "title": "Käytä kaikille asiakkaille",
+      "description": "Siirrä kaikki oikeutetut Messenger-keskustelut Metan tekoälyavustajalle tai ota takaisin ne, joita se tällä hetkellä hallitsee. Toiminto ajetaan taustalla, ja voit seurata sitä täällä.",
+      "started": "Käynnistetty. Voit seurata etenemistä täällä.",
+      "progress": "Eteneminen",
+      "processedOfTotal": "{done} / {total} keskustelua",
+      "counters": "{processed} valmista, {skipped} ohitettu, {failed} epäonnistunut",
+      "action": {
+        "enable": "Ota käyttöön kaikille",
+        "disable": "Poista käytöstä kaikilta"
+      },
+      "status": {
+        "pending": "Odottaa käynnistystä",
+        "running": "Käynnissä",
+        "cancelling": "Peruutetaan",
+        "completed": "Valmis",
+        "failed": "Epäonnistui",
+        "cancelled": "Peruutettu"
+      },
+      "enable": {
+        "dialogDescription": "Jokainen Messenger-keskustelu, johon asiakas on kirjoittanut viimeisen 30 päivän aikana ja jota mikään muu sovellus ei hallitse, siirretään Metan tekoälyavustajalle. Keskustelut otetaan takaisin yllä olevien asetusten mukaan.",
+        "confirm": "Ota käyttöön kaikille",
+        "blocked": "Tallenna yllä oleva automaatio ja kytke se päälle (ajoaikansa sisällä), jotta voit ottaa sen käyttöön kaikille asiakkaille."
+      },
+      "disable": {
+        "dialogDescription": "Takaisin otetaan vain keskustelut, joita Metan tekoälyavustaja hallitsee juuri nyt, ja tavoitettavissa ovat vain asiakkaat, jotka ovat kirjoittaneet viimeisen 7 päivän aikana. Jokainen heistä saa alla olevan viestin Metan Human Agent -tunnisteella lähetettynä, joten kirjoita se kuin ihminen vastaisi. Sivulla on oltava Human Agent -oikeus.",
+        "messageLabel": "Viesti asiakkaille",
+        "messageDescription": "Enintään {max} merkkiä.",
+        "messagePlaceholder": "Hei, tiimin jäsen ottaa tämän keskustelun hoitaakseen.",
+        "confirm": "Poista käytöstä kaikilta",
+        "policyWarning": "Meta sallii Human Agent -tunnisteen vain silloin, kun ihminen vastaa asiakkaalle. Sen käyttö mainontaan tai automaattisiin viesteihin voi johtaa Sivun viestinnän rajoittamiseen."
+      },
+      "errors": {
+        "automationNotActive": "Tallenna automaatio ja kytke se päälle (ajoaikansa sisällä), ennen kuin otat sen käyttöön kaikille asiakkaille.",
+        "messageRequired": "Kirjoita asiakkaille lähetettävä viesti.",
+        "messageTooLong": "Viesti on liian pitkä.",
+        "pageNotConnected": "Tämä Sivu ei ole yhdistetty.",
+        "nothingToRetry": "Ei mitään yritettävää uudelleen."
+      },
+      "runErrors": {
+        "automationStopped": "Pysäytetty, koska automaatio kytkettiin pois päältä.",
+        "tokenInvalid": "Sivun käyttöoikeus peruttiin. Yhdistä sivu uudelleen ja yritä uudelleen.",
+        "channelUnsupported": "Tämä kanava ei tue joukkotoimintoa.",
+        "maxAttempts": "Luovutettiin toistuvien virheiden jälkeen.",
+        "channelUnavailable": "Pysäytetty, koska Metaa ei tavoitettu useita kertoja peräkkäin.",
+        "batchFailed": "Joitakin keskusteluja ei voitu vahvistaa, ja ne laskettiin epäonnistuneiksi.",
+        "pageDisconnected": "Pysäytetty, koska Sivun yhteys katkaistiin.",
+        "pageRefused": "Meta hylkäsi siirron tälle Sivulle: sitä ei ehkä ole määritetty Metan tekoälyavustajalle tai siltä puuttuu oikeus.",
+        "integrationUnavailable": "Sivun yhteyttä ei voitu ladata. Yhdistä Sivu uudelleen ja yritä uudestaan."
+      },
+      "pausedUntil": "Keskeytetty kunnes {at}, jotta tämä Sivu pysyy Metan nopeusrajoitusten sisällä. Jatkuu itsestään.",
+      "preparing": "Valmistellaan…",
+      "live": {
+        "enable": "Otetaan käyttöön asiakkaille: {done} / {total}",
+        "disable": "Poistetaan käytöstä asiakkailta: {done} / {total}",
+        "enableCounting": "Otetaan käyttöön asiakkaille: lasketaan…",
+        "disableCounting": "Poistetaan käytöstä asiakkailta: lasketaan…"
+      },
+      "done": {
+        "enable": "Otettu käyttöön {processed} / {total} asiakkaalle.",
+        "disable": "Poistettu käytöstä {processed} / {total} asiakkaalta."
+      },
+      "stopped": {
+        "enable": "Käyttöönotto kaikille asiakkaille pysäytettiin.",
+        "disable": "Käytöstä poisto kaikilta asiakkailta pysäytettiin."
+      },
+      "retry": "Yritä uudelleen"
+    },
+    "history": {
+      "link": "Historia",
+      "title": "Joukkoajojen historia",
+      "empty": "Ei vielä ajoja.",
+      "columns": {
+        "action": "Toiminto",
+        "requestedAt": "Alkoi",
+        "progress": "Käsitelty / yhteensä",
+        "finishedAt": "Päättyi",
+        "message": "Viesti",
+        "requestedBy": "Pyytäjä"
+      },
+      "description": "Kaikki kerrat, jolloin \"Käytä kaikille asiakkaille\" kytkettiin päälle tai pois tälle Sivulle, uusin ensin.",
+      "error": "Historiaa ei voitu ladata.",
+      "previousPage": "Edellinen sivu",
+      "nextPage": "Seuraava sivu"
+    }
+  },
   "platformSettings": {
     "title": "Alusta-asetukset",
     "errors": {
@@ -3215,7 +3368,9 @@
       "bannerDescription": "Tämä työtila on ajastettu poistettavaksi. Jatka sen käyttöä kumoamalla poistaminen alta.",
       "pendingBlockedToast": "Tämä työtila on ajastettu poistettavaksi. Pyydä työtilan ylläpitäjää palauttamaan käyttöoikeus.",
       "navDisabledTooltip": "Ei käytettävissä, kun työtilan poistaminen on ajastettu",
-      "badge": "Poistaminen ajastettu"
+      "badge": "Poistaminen ajastettu",
+      "purging": "Työtilan poisto on käynnissä.",
+      "alreadyStarted": "Työtilan poisto on jo alkanut."
     },
     "supportAccess": {
       "bannerTitle": "Alustan tukisessio",
@@ -3357,6 +3512,9 @@
     "noVersionsFound": "Julkaistuja versioita ei löytynyt",
     "publishVersionSuccess": "Uusi versio on julkaistu",
     "flowConfigIncomplete": "Jotkin määritykset ovat puutteellisia",
+    "quickReplyNextStepRequired": "Valitse seuraava vaihe jokaiselle käytössä olevalle pikavastausasetukselle",
+    "quickReplyRetryMessageRequired": "Kirjoita uudelleenyrityksen viesti",
+    "quickReplyRetryWithGetUserData": "Uudelleenyritystä ei voi yhdistää Hae käyttäjätiedot -vaiheeseen",
     "whatsappCarouselButtonsMismatch": "WhatsAppissa karusellin jokaisella kortilla on oltava samat painikkeet: joko yksi linkkipainike jokaisella kortilla tai sama määrä vastauspainikkeita jokaisella kortilla",
     "whatsappCarouselLinkButtonNotAlone": "WhatsAppissa linkkipainikkeen sisältävällä karusellikortilla ei voi olla muita painikkeita. Poista kortin muut painikkeet tai vaihda linkkipainike toiseen toimintoon.",
     "duplicateNodeError": "Lohkoa ei voitu monistaa. Yritä uudelleen.",
@@ -3371,7 +3529,8 @@
     "waTemplateMpmTooManyProducts": "Usean tuotteen painikkeessa voi olla yhteensä enintään 30 tuotetta. Poista tuotteita ennen julkaisua.",
     "waTemplateLtoExpirationRequired": "Valitse määräaikaisen tarjouksen päättymisaika ennen lähettämistä.",
     "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote.",
-    "mediaStepUnsupported": "Tämä kanava ei voi lähettää tätä mediatyyppiä. Poista vaihe tai osoita tämä solmu kanavalle, joka tukee sitä.",
+    "unsupportedBlock": "Tämä kanava ei tue tätä lohkoa.",
+    "constraintExceeded": "Tämän kanavan raja ylittyi.",
     "mediaButtonsUnsupported": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana. Poista painikkeet tai siirrä ne tämän jälkeiseen tekstivaiheeseen.",
     "voiceCall": "Äänipuhelu",
     "voiceCallDuration": "Äänipuhelu · {duration}",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Avaa Zalo-ryhmä",
     "openZalo": "Avaa Zalo",
     "openMessenger": "Avaa Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Kumppani",
+      "partnerWithRole": "Kumppani · {role}",
+      "self": "sinä"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-mainokset",
+      "customer_service": "Asiakaspalvelu",
+      "escalation": "Eskalointi",
+      "marketing": "Markkinointi",
+      "utility": "Palvelu"
+    },
+    "pill": {
+      "standby": "Valmiustila ({owner})",
+      "owned": "Aktiivinen",
+      "tooltip": "Käsittelijä: {owner}"
+    },
+    "release": {
+      "label": "Vapauta",
+      "tooltip": "Vapauta keskustelu, jotta muut sovellukset voivat vastata",
+      "success": "Keskustelu vapautettu"
+    },
+    "pass": {
+      "menuItem": "Siirrä eskalointiin",
+      "title": "Siirretäänkö eskalointikumppanille?",
+      "description": "Siirretäänkö tämä keskustelu eskalointikumppanillesi? Vastauksesi keskeytyvät, kunnes keskustelu palaa.",
+      "confirm": "Siirrä",
+      "success": "Keskustelu siirretty eskalointikumppanille"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Palauta tämä keskustelu tekoälyavustajalle",
+      "title": "Palautetaanko tekoälyavustajalle?",
+      "description": "Tekoälyavustaja alkaa taas vastata tälle asiakkaalle. Vastauksesi keskeytyvät, kunnes keskustelu palaa sinulle. Meta ei takaa, että avustaja vastaa jokaiseen viestiin.",
+      "confirm": "Palauta",
+      "success": "Keskustelu palautettu tekoälyavustajalle"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Olet valmiustilassa (vain kuuntelu)",
+      "description": "Kolmannen osapuolen kumppani hoitaa tätä keskustelua. Viestikenttä on lukittu kaksoisvastausten välttämiseksi.",
+      "takeOver": "Ota haltuun",
+      "takeOverSuccess": "Käsittelet nyt tätä keskustelua",
+      "notEscalation": "Vain eskalointikumppani voi ottaa keskustelun haltuun. Reititys määritetään Meta Business Suitessa.",
+      "notPrimaryReceiver": "Tämän sovelluksen on oltava sivun ensisijainen vastaanottaja, jotta se voi ottaa keskustelun haltuunsa. Määritä se sivun Handover Protocol -asetuksissa.",
+      "learnMore": "Lue lisää",
+      "dismiss": "Lähetä silti"
+    },
+    "divider": {
+      "ownerHandling": "{owner} käsittelee nyt tätä keskustelua",
+      "handedOver": "{previousOwner} palautti tämän keskustelun sinulle",
+      "selfHandling": "Hoidat nyt tätä keskustelua",
+      "takenOver": "Otit tämän keskustelun hoitaaksesi",
+      "released": "Keskustelu vapautettu",
+      "passed": "Keskustelu siirretty eskalointikumppanille",
+      "serviceRejected": "Viestiä ei lähetetty: {owner} käsittelee tätä keskustelua"
+    },
+    "context": {
+      "title": "Keskustelun konteksti",
+      "summaryBadge": "Tekoälyn yhteenveto",
+      "historyBadge": "Historia",
+      "customer": "Asiakas",
+      "business": "Yritys",
+      "handoverNote": "Luovutusmuistiinpano: {note}",
+      "showAll": "Näytä kaikki ({count})",
+      "showLess": "Näytä vähemmän"
+    },
+    "echo": {
+      "partner": "Kumppani"
+    },
+    "panel": {
+      "title": "Keskustelun reititys",
+      "threadState": "Keskustelun tila",
+      "threadStateOwned": "Varattu",
+      "threadStateStandby": "Valmiustila",
+      "threadStateIdle": "Vapaa",
+      "currentOwner": "Nykyinen omistaja",
+      "noOwner": "Ei omistajaa",
+      "roleLabel": "Roolisi",
+      "selfOwned": "Käsittelee keskustelua",
+      "selfStandby": "Valmiustila — vain kuuntelu",
+      "selfIdle": "Odottaa asiakkaan seuraavaa viestiä",
+      "hintOwned": "Vapauta, kun olet valmis, jotta muut sovellukset voivat vastata.",
+      "hintStandby": "Kun kumppani hoitaa tätä, viestisi pidätetään, jotta asiakas ei saa kaksoisvastauksia. Ota keskustelu hoitoosi viestikentästä vastataksesi.",
+      "hintIdle": "Asiakkaan seuraava viesti ratkaisee, kuka vastaa.",
+      "syncOwner": "Synkronoi omistaja",
+      "syncOwnerSuccess": "Omistaja synkronoitu"
+    },
+    "settings": {
+      "title": "Luovutuksen jatkumisen flow",
+      "description": "Automaatio, joka suoritetaan, kun kumppani palauttaa keskustelun.",
+      "resumeFlowLabel": "Valitse flow",
+      "resumeFlowPlaceholder": "Valitse flow",
+      "info": "Tämä flow käynnistyy automaattisesti, kun hallinta palautetaan. Keskustelun yhteenveto ja chat-historia näytetään sen jälkeen agenteillesi live-chatissa.",
+      "save": "Tallenna muutokset",
+      "clearFlow": "Tyhjennä kulku",
+      "adminOnly": "Vain työtilan ylläpitäjät voivat muuttaa reititystä",
+      "flowNotFound": "Valittua kulkua ei löytynyt tai se ei ole aktiivinen",
+      "integrationNotFound": "WhatsApp-numeroa ei löytynyt",
+      "messengerIntegrationNotFound": "Messenger-sivua ei löytynyt"
+    },
+    "errors": {
+      "unsupported": "Keskustelun reititys ei ole käytettävissä tällä kanavalla",
+      "notFound": "Tämä keskustelu ei ole kyseisellä kanavalla",
+      "actionFailed": "Keskustelun reitityksen päivitys epäonnistui. Yritä uudelleen."
+    },
+    "step": {
+      "action": "Toiminto",
+      "release": "Vapauta keskustelu",
+      "pass": "Siirrä eskalointikumppanille",
+      "helper": "Vain WhatsApp. Muilla kanavilla tai kun keskustelu ei ole täällä hallinnassa, vaihe seuraa virhepolkua."
+    },
+    "template": {
+      "sent": "Malli lähetetty"
+    }
   }
 }

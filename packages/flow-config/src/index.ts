@@ -8,6 +8,8 @@ export {
   type FlowAuthoringError,
   type FlowAuthoringErrorCode,
   FlowAuthoringException,
+  type FlowCapability,
+  flowCapabilitySchema,
   formatZodPathSegment,
   zodErrorToFlowAuthoringErrors,
 } from "./authoring/errors"
@@ -26,8 +28,10 @@ export {
 } from "./authoring/spec-schema"
 export * from "./channel-rules/channel-step-refinement"
 export * from "./channel-rules/channel-validator"
+export * from "./channel-rules/characters"
 export * from "./channel-rules/media-step-rules"
 export * from "./channel-rules/media-step-validators"
+export * from "./channel-rules/policies"
 export * from "./channel-rules/send-carousel-validator"
 export * from "./channel-rules/send-text-length-rules"
 export * from "./channel-rules/send-text-validator"
@@ -54,6 +58,7 @@ export * from "./nodes/send-message"
 export * from "./nodes/split-traffic"
 export * from "./nodes/start-flow"
 export * from "./nodes/wait"
+export * from "./publish-schema"
 export type { FlowRoute, FlowRouteUpdate } from "./routable-handle"
 export {
   applyRouteInNode,
@@ -116,6 +121,7 @@ export * from "./steps/open-website"
 export * from "./steps/opt-in-email"
 export * from "./steps/opt-out-email"
 export * from "./steps/questionnaires"
+export * from "./steps/quick-reply-settings"
 export * from "./steps/remove-contact-tag"
 export * from "./steps/send-audio"
 export * from "./steps/send-card"
@@ -148,6 +154,7 @@ export * from "./steps/step-action"
 export * from "./steps/subscribe-broadcast"
 export * from "./steps/subscribe-sequence"
 export * from "./steps/template-start-step"
+export * from "./steps/thread-control"
 export * from "./steps/trigger-n8n"
 export * from "./steps/typing"
 export * from "./steps/unarchive-conversation"

@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/database/utils"
 import type { ErrorLogRecordedPayload } from "@chatbotx.io/event-bus"
 import { emit } from "@chatbotx.io/event-bus"
+import { scrubSecretsInString } from "@chatbotx.io/logger"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ErrorLogProvider,
@@ -171,27 +172,37 @@ const resolveMessage = (error: unknown): string => {
     : String(error)
 }
 
-const toEntry = (input: LogProviderErrorInput): ErrorLogRecordedPayload => ({
-  // Minted here, not by the writer, so that a redelivered event re-inserts the
-  // same primary key and `onConflictDoNothing` absorbs it. Without this a crash
-  // between the insert and the stream ack would duplicate the row.
-  id: createId(),
-  workspaceId: input.workspaceId,
-  provider: input.provider,
-  contactId: input.contactId ?? undefined,
-  sourceId: input.sourceId ?? undefined,
-  // `detail` is the provider's own message and nothing else. The stack goes to
-  // `stackTrace`, which is developer-only: `ErrorLog` is workspace-facing (the
-  // builder table plus the workspace-token API), and a stack leaks absolute
-  // server paths and our internal call chain, so it is withheld from every
-  // read surface and must be read from the database directly. The full error
-  // is still written to the app logger by the `catch` block that calls this.
-  error: {
-    message: truncate(resolveMessage(input.error), MAX_DETAIL_LENGTH),
-    httpCode: resolveHttpCode(input),
-    stackTrace: resolveStackTrace(input),
-  },
-})
+const toEntry = (input: LogProviderErrorInput): ErrorLogRecordedPayload => {
+  // Scrub credentials before persisting: a provider timeout/network error
+  // message (and its stack) can carry the full request URL, including a query
+  // `access_token`. `ErrorLog` is workspace-facing, so a token must never land
+  // here even at rest.
+  const stackTrace = resolveStackTrace(input)
+  return {
+    // Minted here, not by the writer, so that a redelivered event re-inserts the
+    // same primary key and `onConflictDoNothing` absorbs it. Without this a crash
+    // between the insert and the stream ack would duplicate the row.
+    id: createId(),
+    workspaceId: input.workspaceId,
+    provider: input.provider,
+    contactId: input.contactId ?? undefined,
+    sourceId: input.sourceId ?? undefined,
+    // `detail` is the provider's own message and nothing else. The stack goes to
+    // `stackTrace`, which is developer-only: `ErrorLog` is workspace-facing (the
+    // builder table plus the workspace-token API), and a stack leaks absolute
+    // server paths and our internal call chain, so it is withheld from every
+    // read surface and must be read from the database directly. The full error
+    // is still written to the app logger by the `catch` block that calls this.
+    error: {
+      message: truncate(
+        scrubSecretsInString(resolveMessage(input.error)),
+        MAX_DETAIL_LENGTH,
+      ),
+      httpCode: resolveHttpCode(input),
+      stackTrace: stackTrace ? scrubSecretsInString(stackTrace) : stackTrace,
+    },
+  }
+}
 
 /**
  * `getRedisConnection` sets `maxRetriesPerRequest: null` and leaves ioredis's

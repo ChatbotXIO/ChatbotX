@@ -14,6 +14,8 @@ import {
   inboxStatuses,
 } from "@chatbotx.io/database/partials"
 import {
+  aiHandoverBulkRunRepository,
+  aiHandoverSettingsRepository,
   type InboxChannelOption,
   inboxRepository,
 } from "@chatbotx.io/database/repositories"
@@ -30,6 +32,7 @@ import { BaseService } from "../base.service"
 import { channelLimitReachedException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import { workspaceUsageService } from "../workspace-usage/service"
 import type {
   ListAllConnectedInboxesRequest,
@@ -468,6 +471,12 @@ class InboxService extends BaseService {
         disconnectReason: props.reason,
       })
       .where(eq(inboxModel.id, props.inboxId))
+    // Whatever the channel, a disconnected Page must not keep a bulk AI
+    // hand-over running: stop it in the same transaction as the disconnect.
+    const ref = { workspaceId: props.workspaceId, inboxId: props.inboxId }
+    if (await aiHandoverSettingsRepository.lockExisting(ref, client)) {
+      await aiHandoverBulkRunRepository.cancelLive(ref, client)
+    }
 
     // Best-effort: never block/roll back the disconnect if release fails, the
     // nightly reconcile self-heals.
@@ -557,6 +566,14 @@ class InboxService extends BaseService {
       where: { id },
       with: { integrationWhatsapp: true },
     })
+  }
+
+  /** Existing rows only, including disconnected inboxes. */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(inboxModel, input)
   }
 }
 export const inboxService = new InboxService()

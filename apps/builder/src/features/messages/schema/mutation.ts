@@ -14,6 +14,11 @@ const mediaLibraryFileRequest = z.object({
   size: z.number().int().nonnegative(),
 })
 
+const bypassField = z
+  .boolean()
+  .optional()
+  .describe("Skip the WhatsApp standby send gate (agent dismissed the lock).")
+
 export const createMessageRequest = z
   .union([
     z.object({
@@ -127,6 +132,16 @@ export const createMessageRequest = z
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>
+
+/**
+ * Builder-only variant of `createMessageRequest`: the interactive composer may
+ * set `bypassThreadControlLock` to skip the WhatsApp standby send gate after the
+ * agent dismisses the routing lock. Kept off `createMessageRequest` itself so the
+ * public and private message APIs never accept or advertise it.
+ */
+export const createMessageWithRoutingBypassRequest = createMessageRequest.and(
+  z.object({ bypassThreadControlLock: bypassField }),
+)
 
 export const createWebchatMessageRequest = z
   .union([

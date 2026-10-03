@@ -8,14 +8,20 @@ import {
   inArray,
   isNull,
   isUniqueViolationError,
+  lte,
   or,
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
 import {
+  type ProfileSnapshotState,
+  profileSnapshotChannels,
+} from "@chatbotx.io/database/partials"
+import {
   type ContactInboxIdentityFields,
   type ContactInboxIdentityGuard,
   contactInboxOperationalColumns,
+  contactInboxPostRepository,
   contactInboxRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
@@ -29,6 +35,8 @@ import {
   CONTACT_INBOX_SOURCE_USER_ID_KEY,
   contactInboxModel,
   contactModel,
+  inboxModel,
+  workspaceModel,
 } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -37,6 +45,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import type {
+  ContactProfileSnapshot,
   IncomingContact,
   SourceScopedIdentityMatchedBy,
 } from "@chatbotx.io/sdk"
@@ -122,6 +131,51 @@ export type ContactInboxBulkTrackingRow = {
   lastMessageAt: Date
   lastIncomingMessageAt: Date | null
 }
+
+export const PROFILE_SNAPSHOT_MAX_ATTEMPTS = 5
+export const PROFILE_SNAPSHOT_CLAIM_LEASE_MS = 10 * 60 * 1000
+export const PROFILE_SNAPSHOT_INITIAL_RETRY_MS = 30 * 1000
+export const PROFILE_SNAPSHOT_MAX_RETRY_MS = 30 * 60 * 1000
+
+// Snapshot recovery paginates by (profileSnapshotNextAttemptAt, id) so it can walk
+// the partial pending index as an ordered range instead of sorting the whole
+// due set. The Redis cursor stores that tuple as `${isoNextAttemptAt}|${id}`.
+export type ProfileSnapshotCursor = { at: Date; id: string }
+
+const parseProfileSnapshotCursor = (
+  cursor: string | undefined,
+): ProfileSnapshotCursor | undefined => {
+  if (!cursor) {
+    return
+  }
+  const separator = cursor.indexOf("|")
+  if (separator < 0) {
+    return
+  }
+  const at = new Date(cursor.slice(0, separator))
+  const id = cursor.slice(separator + 1)
+  if (Number.isNaN(at.getTime()) || !id) {
+    return
+  }
+  return { at, id }
+}
+
+export const serializeProfileSnapshotCursor = (row: {
+  contactInboxId: string
+  nextAttemptAt: Date | null
+}): string | undefined =>
+  row.nextAttemptAt
+    ? `${row.nextAttemptAt.toISOString()}|${row.contactInboxId}`
+    : undefined
+
+const profileSnapshotCursorWhere = (cursor: ProfileSnapshotCursor) =>
+  or(
+    gt(contactInboxModel.profileSnapshotNextAttemptAt, cursor.at),
+    and(
+      eq(contactInboxModel.profileSnapshotNextAttemptAt, cursor.at),
+      gt(contactInboxModel.id, cursor.id),
+    ),
+  )
 
 type FindByProps = {
   id: string
@@ -287,6 +341,240 @@ export const buildContactInboxIdentityWhere = (props: {
 }
 
 class ContactInboxService extends BaseService {
+  async claimProfileSnapshot(props: {
+    contactInboxId: string
+    inboxId: string
+    workspaceId: string
+  }): Promise<
+    | {
+        attempt: number
+        channel: string
+        sourceId: string
+      }
+    | undefined
+  > {
+    const now = new Date()
+    const leaseExpiresAt = new Date(
+      now.getTime() + PROFILE_SNAPSHOT_CLAIM_LEASE_MS,
+    )
+
+    return await db.transaction(async (tx) => {
+      const canWrite =
+        await contactInboxPostRepository.lockWorkspaceForPostWrite(
+          { workspaceId: props.workspaceId },
+          tx,
+        )
+      if (!canWrite) {
+        return
+      }
+
+      const [candidate] = await tx
+        .select({
+          attempts: contactInboxModel.profileSnapshotAttempts,
+          channel: inboxModel.channel,
+          sourceId: contactInboxModel.sourceId,
+        })
+        .from(contactInboxModel)
+        .innerJoin(inboxModel, eq(inboxModel.id, contactInboxModel.inboxId))
+        .where(
+          and(
+            eq(contactInboxModel.id, props.contactInboxId),
+            eq(contactInboxModel.inboxId, props.inboxId),
+            eq(inboxModel.workspaceId, props.workspaceId),
+            inArray(inboxModel.channel, [...profileSnapshotChannels]),
+            eq(contactInboxModel.profileSnapshotState, "pending"),
+            lte(contactInboxModel.profileSnapshotNextAttemptAt, now),
+            sql`COALESCE(${contactInboxModel.profileSnapshotAttempts}, 0) < ${PROFILE_SNAPSHOT_MAX_ATTEMPTS}`,
+          ),
+        )
+        .for("update")
+        .limit(1)
+      if (!candidate) {
+        return
+      }
+
+      const attempt = (candidate.attempts ?? 0) + 1
+      const [claimed] = await tx
+        .update(contactInboxModel)
+        .set({
+          profileSnapshotAttempts: attempt,
+          profileSnapshotNextAttemptAt: leaseExpiresAt,
+        })
+        .where(
+          and(
+            eq(contactInboxModel.id, props.contactInboxId),
+            eq(contactInboxModel.profileSnapshotState, "pending"),
+            eq(
+              contactInboxModel.profileSnapshotAttempts,
+              candidate.attempts ?? 0,
+            ),
+          ),
+        )
+        .returning({ id: contactInboxModel.id })
+
+      return claimed
+        ? {
+            attempt,
+            channel: candidate.channel,
+            sourceId: candidate.sourceId,
+          }
+        : undefined
+    })
+  }
+
+  async rescheduleProfileSnapshot(props: {
+    attempt: number
+    contactInboxId: string
+    inboxId: string
+    workspaceId: string
+  }): Promise<ProfileSnapshotState | undefined> {
+    const exhausted = props.attempt >= PROFILE_SNAPSHOT_MAX_ATTEMPTS
+    const retryDelay = Math.min(
+      PROFILE_SNAPSHOT_INITIAL_RETRY_MS * 2 ** (props.attempt - 1),
+      PROFILE_SNAPSHOT_MAX_RETRY_MS,
+    )
+    const updated = await db.transaction(async (tx) => {
+      const canWrite =
+        await contactInboxPostRepository.lockWorkspaceForPostWrite(
+          { workspaceId: props.workspaceId },
+          tx,
+        )
+      if (!canWrite) {
+        return
+      }
+      const [row] = await tx
+        .update(contactInboxModel)
+        .set({
+          profileSnapshotNextAttemptAt: exhausted
+            ? null
+            : new Date(Date.now() + retryDelay),
+          profileSnapshotState: exhausted ? "failed" : "pending",
+        })
+        .where(
+          and(
+            eq(contactInboxModel.id, props.contactInboxId),
+            eq(contactInboxModel.inboxId, props.inboxId),
+            eq(contactInboxModel.profileSnapshotState, "pending"),
+            eq(contactInboxModel.profileSnapshotAttempts, props.attempt),
+            sql`EXISTS (
+              SELECT 1
+              FROM ${inboxModel}
+              WHERE ${inboxModel.id} = ${props.inboxId}::bigint
+                AND ${inboxModel.workspaceId} = ${props.workspaceId}::bigint
+            )`,
+          ),
+        )
+        .returning({ state: contactInboxModel.profileSnapshotState })
+      return row
+    })
+
+    const state = updated?.state
+    return state === "pending" ||
+      state === "failed" ||
+      state === "captured" ||
+      state === "unavailable"
+      ? state
+      : undefined
+  }
+
+  async listDueProfileSnapshots(props: {
+    cursor?: string
+    limit: number
+  }): Promise<
+    Array<{
+      contactInboxId: string
+      inboxId: string
+      nextAttemptAt: Date | null
+      workspaceId: string
+    }>
+  > {
+    const now = new Date()
+    const cursor = parseProfileSnapshotCursor(props.cursor)
+    const rows = await db
+      .select({
+        contactInboxId: contactInboxModel.id,
+        inboxId: inboxModel.id,
+        nextAttemptAt: contactInboxModel.profileSnapshotNextAttemptAt,
+        workspaceId: inboxModel.workspaceId,
+      })
+      .from(contactInboxModel)
+      .innerJoin(inboxModel, eq(inboxModel.id, contactInboxModel.inboxId))
+      .innerJoin(workspaceModel, eq(workspaceModel.id, inboxModel.workspaceId))
+      .where(
+        and(
+          inArray(inboxModel.channel, [...profileSnapshotChannels]),
+          isNull(workspaceModel.purgeStartedAt),
+          isNull(workspaceModel.scheduledDeletionAt),
+          eq(contactInboxModel.profileSnapshotState, "pending"),
+          lte(contactInboxModel.profileSnapshotNextAttemptAt, now),
+          sql`COALESCE(${contactInboxModel.profileSnapshotAttempts}, 0) < ${PROFILE_SNAPSHOT_MAX_ATTEMPTS}`,
+          ...(cursor ? [profileSnapshotCursorWhere(cursor)] : []),
+        ),
+      )
+      .orderBy(
+        asc(contactInboxModel.profileSnapshotNextAttemptAt),
+        asc(contactInboxModel.id),
+      )
+      .limit(props.limit)
+
+    return rows
+  }
+
+  async listExhaustedProfileSnapshots(props: {
+    cursor?: string
+    limit: number
+  }): Promise<
+    Array<{
+      attempt: number
+      contactInboxId: string
+      inboxId: string
+      nextAttemptAt: Date | null
+      workspaceId: string
+    }>
+  > {
+    const cursor = parseProfileSnapshotCursor(props.cursor)
+    const rows = await db
+      .select({
+        attempt: contactInboxModel.profileSnapshotAttempts,
+        contactInboxId: contactInboxModel.id,
+        inboxId: inboxModel.id,
+        nextAttemptAt: contactInboxModel.profileSnapshotNextAttemptAt,
+        workspaceId: inboxModel.workspaceId,
+      })
+      .from(contactInboxModel)
+      .innerJoin(inboxModel, eq(inboxModel.id, contactInboxModel.inboxId))
+      .innerJoin(workspaceModel, eq(workspaceModel.id, inboxModel.workspaceId))
+      .where(
+        and(
+          inArray(inboxModel.channel, [...profileSnapshotChannels]),
+          isNull(workspaceModel.purgeStartedAt),
+          isNull(workspaceModel.scheduledDeletionAt),
+          eq(contactInboxModel.profileSnapshotState, "pending"),
+          sql`COALESCE(${contactInboxModel.profileSnapshotAttempts}, 0) >= ${PROFILE_SNAPSHOT_MAX_ATTEMPTS}`,
+          lte(contactInboxModel.profileSnapshotNextAttemptAt, new Date()),
+          ...(cursor ? [profileSnapshotCursorWhere(cursor)] : []),
+        ),
+      )
+      .orderBy(
+        asc(contactInboxModel.profileSnapshotNextAttemptAt),
+        asc(contactInboxModel.id),
+      )
+      .limit(props.limit)
+
+    return rows.flatMap((row) =>
+      row.attempt === null
+        ? []
+        : [
+            {
+              attempt: row.attempt,
+              contactInboxId: row.contactInboxId,
+              inboxId: row.inboxId,
+              nextAttemptAt: row.nextAttemptAt,
+              workspaceId: row.workspaceId,
+            },
+          ],
+    )
+  }
   protected readonly cachePrefix: string = "contact-inboxes"
 
   async findByUncached(props: {
@@ -798,6 +1086,127 @@ class ContactInboxService extends BaseService {
     }
 
     return invalidation
+  }
+
+  /**
+   * Commits one claimed profile snapshot. The attempt counter is a fencing
+   * token: an older worker cannot overwrite a newer claim or terminal state.
+   * All profile values move together only when the target row is still wholly
+   * empty, preserving values populated by another source.
+   */
+  async completeProfileSnapshot(props: {
+    attempt: number
+    contactInboxId: string
+    inboxId: string
+    onlyIfLeaseExpired?: boolean
+    outcome: Exclude<ProfileSnapshotState, "pending">
+    snapshot: Omit<ContactProfileSnapshot, "username">
+    workspaceId: string
+  }): Promise<boolean> {
+    const now = new Date()
+    const contactId = await db.transaction(async (tx) => {
+      const canWrite =
+        await contactInboxPostRepository.lockWorkspaceForPostWrite(
+          { workspaceId: props.workspaceId },
+          tx,
+        )
+      if (!canWrite) {
+        return
+      }
+
+      const allSnapshotValuesAreNull = sql`
+        ${contactInboxModel.followsBusiness} IS NULL
+        AND ${contactInboxModel.businessFollowsContact} IS NULL
+        AND ${contactInboxModel.accountVerified} IS NULL
+        AND ${contactInboxModel.followerCount} IS NULL
+      `
+      const [updated] = await tx
+        .update(contactInboxModel)
+        .set({
+          followsBusiness: sql`CASE WHEN ${allSnapshotValuesAreNull} THEN ${props.snapshot.followsBusiness} ELSE ${contactInboxModel.followsBusiness} END`,
+          businessFollowsContact: sql`CASE WHEN ${allSnapshotValuesAreNull} THEN ${props.snapshot.businessFollowsContact} ELSE ${contactInboxModel.businessFollowsContact} END`,
+          accountVerified: sql`CASE WHEN ${allSnapshotValuesAreNull} THEN ${props.snapshot.accountVerified} ELSE ${contactInboxModel.accountVerified} END`,
+          followerCount: sql`CASE WHEN ${allSnapshotValuesAreNull} THEN ${props.snapshot.followerCount} ELSE ${contactInboxModel.followerCount} END`,
+          profileSnapshotNextAttemptAt: null,
+          profileSnapshotState: props.outcome,
+        })
+        .where(
+          and(
+            eq(contactInboxModel.id, props.contactInboxId),
+            eq(contactInboxModel.inboxId, props.inboxId),
+            eq(contactInboxModel.profileSnapshotState, "pending"),
+            eq(contactInboxModel.profileSnapshotAttempts, props.attempt),
+            ...(props.onlyIfLeaseExpired
+              ? [lte(contactInboxModel.profileSnapshotNextAttemptAt, now)]
+              : []),
+            sql`EXISTS (
+              SELECT 1
+              FROM ${inboxModel}
+              WHERE ${inboxModel.id} = ${contactInboxModel.inboxId}
+                AND ${inboxModel.workspaceId} = ${props.workspaceId}
+            )`,
+          ),
+        )
+        .returning({ contactId: contactInboxModel.contactId })
+
+      return updated?.contactId
+    })
+
+    if (!contactId) {
+      return false
+    }
+
+    await this.invalidateCacheTags(this.getTrackingCacheTags(contactId))
+    return true
+  }
+
+  /**
+   * Persists a live profile fetch (system-field resolution) into the
+   * columns the contact filter reads. Unlike `completeProfileSnapshot` it
+   * refreshes: a non-null fetched value replaces the stored one, while a field
+   * the API omitted (null) keeps what is already stored — NULL stays "unknown"
+   * for the tri-state filter, never a fabricated false/0.
+   */
+  async refreshProfileSnapshot(props: {
+    contactInboxId: string
+    inboxId: string
+    /** `snapshot.username` only backfills a missing `sourceUsername`; it never overwrites. */
+    snapshot: ContactProfileSnapshot
+  }): Promise<void> {
+    const { snapshot } = props
+    const username = snapshot.username || null
+    if (
+      username === null &&
+      snapshot.followsBusiness === null &&
+      snapshot.businessFollowsContact === null &&
+      snapshot.accountVerified === null &&
+      snapshot.followerCount === null
+    ) {
+      return
+    }
+
+    const [updated] = await db
+      .update(contactInboxModel)
+      .set({
+        sourceUsername: sql`COALESCE(${contactInboxModel.sourceUsername}, ${username}::text)`,
+        followsBusiness: sql`COALESCE(${snapshot.followsBusiness}::boolean, ${contactInboxModel.followsBusiness})`,
+        businessFollowsContact: sql`COALESCE(${snapshot.businessFollowsContact}::boolean, ${contactInboxModel.businessFollowsContact})`,
+        accountVerified: sql`COALESCE(${snapshot.accountVerified}::boolean, ${contactInboxModel.accountVerified})`,
+        followerCount: sql`COALESCE(${snapshot.followerCount}::integer, ${contactInboxModel.followerCount})`,
+      })
+      .where(
+        and(
+          eq(contactInboxModel.id, props.contactInboxId),
+          eq(contactInboxModel.inboxId, props.inboxId),
+        ),
+      )
+      .returning({ contactId: contactInboxModel.contactId })
+
+    if (updated?.contactId) {
+      await this.invalidateCacheTags(
+        this.getTrackingCacheTags(updated.contactId),
+      )
+    }
   }
 
   async bulkUpdateTracking(props: {

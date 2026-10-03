@@ -41,7 +41,10 @@ export const useInvalidateFlows = () => {
   )
 }
 
-export const useFlowSelectOptions = (options?: { enabled?: boolean }) => {
+export const useFlowSelectOptions = (options?: {
+  enabled?: boolean
+  filter?: FlowStateFilter
+}) => {
   const workspaceId = useWorkspaceId()
   const { data: flows = [] } = useFlows(workspaceId, options)
 
@@ -55,7 +58,10 @@ export const useFlowSelectOptions = (options?: { enabled?: boolean }) => {
   )
 }
 
-export const useFlowNodesSelectOptions = (options?: { enabled?: boolean }) => {
+export const useFlowNodesSelectOptions = (options?: {
+  enabled?: boolean
+  filter?: FlowStateFilter
+}) => {
   const workspaceId = useWorkspaceId()
   const { data: flows = [] } = useFlows(workspaceId, options)
 
@@ -64,20 +70,40 @@ export const useFlowNodesSelectOptions = (options?: { enabled?: boolean }) => {
       flows.map((flow) => ({
         label: flow.name,
         value: flow.id.toString(),
-        children: getFlowNodesOptions(flow.flowVersions),
+        // In the template context, only nodes that actually send a template
+        // are offered — the others can't be sent while a partner holds the
+        // thread. Elsewhere every node is listed.
+        children: getFlowNodesOptions(
+          flow.flowVersions,
+          options?.filter?.startType,
+        ),
       })),
-    [flows],
+    [flows, options?.filter?.startType],
   )
 }
 
-export const getFlowNodesOptions = (flowVersions: FlowVersionResource[]) => {
+/** Steps of a flow node, used to keep only nodes that run a given step type. */
+type NodeWithSteps = { details?: { steps?: Array<{ stepType?: string }> } }
+const nodeHasStepType = (node: FlowNode, stepType: string): boolean => {
+  const steps = (node.data as NodeWithSteps)?.details?.steps
+  return (
+    Array.isArray(steps) && steps.some((step) => step?.stepType === stepType)
+  )
+}
+
+export const getFlowNodesOptions = (
+  flowVersions: FlowVersionResource[],
+  stepTypeFilter?: string,
+) => {
   const lastedFlowVersion = flowVersions.find(({ isLatest }) => isLatest)
   if (!lastedFlowVersion) {
     return []
   }
 
-  return (lastedFlowVersion.nodes as FlowNode[]).map((node: FlowNode) => ({
-    label: node.data.name,
-    value: node.id.toString(),
-  }))
+  return (lastedFlowVersion.nodes as FlowNode[])
+    .filter((node) => !stepTypeFilter || nodeHasStepType(node, stepTypeFilter))
+    .map((node: FlowNode) => ({
+      label: node.data.name,
+      value: node.id.toString(),
+    }))
 }

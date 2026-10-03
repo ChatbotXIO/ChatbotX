@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const STORED_FIRST_COALESCE_RE = /COALESCE\(\s*,/
+
 const {
   mockDbExecute,
   mockDbFindFirst,
@@ -11,6 +13,8 @@ const {
   mockDbSelectWhereRows,
   mockDbSet,
   mockDbUpdate,
+  mockDbTransaction,
+  mockDbWhere,
   mockInArray,
   mockInvalidateCacheByTags,
   mockLoggerWarn,
@@ -63,6 +67,7 @@ const {
     mockDbSelectWhereRows,
     mockDbSet,
     mockDbUpdate: vi.fn().mockReturnValue(updateChain),
+    mockDbTransaction: vi.fn(),
     mockDbWhere,
     mockInArray: vi.fn((field: unknown, values: unknown[]) => ({
       field,
@@ -88,10 +93,12 @@ const mockSql = Object.assign(
 )
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  asc: vi.fn((field: unknown) => ({ asc: field })),
   db: {
     execute: mockDbExecute,
     select: mockDbSelect,
     update: mockDbUpdate,
+    transaction: mockDbTransaction,
     query: {
       contactInboxModel: {
         findFirst: mockDbFindFirst,
@@ -104,6 +111,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   gt: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   inArray: mockInArray,
   isNull: vi.fn((field: unknown) => ({ isNull: field })),
+  lte: vi.fn((field: unknown, value: unknown) => ({ lte: [field, value] })),
   or: mockOr,
   isUniqueViolationError: mockIsUniqueViolationError,
   sql: mockSql,
@@ -119,6 +127,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   contactInboxRepository: {
     findWithContact: mockFindWithContact,
     updateIdentityGuarded: mockUpdateIdentityGuarded,
+  },
+  contactInboxPostRepository: {
+    lockWorkspaceForPostWrite: vi.fn(),
   },
 }))
 
@@ -141,6 +152,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     firstInteractionAt: "firstInteractionAt",
     id: "id",
     inboxId: "inboxId",
+    followsBusiness: "followsBusiness",
+    followerCount: "followerCount",
+    businessFollowsContact: "businessFollowsContact",
+    profileSnapshotAttempts: "profileSnapshotAttempts",
+    profileSnapshotNextAttemptAt: "profileSnapshotNextAttemptAt",
+    profileSnapshotState: "profileSnapshotState",
+    accountVerified: "accountVerified",
     lastIncomingMessageAt: "lastIncomingMessageAt",
     lastMessageAt: "lastMessageAt",
     lastUserInput: "lastUserInput",
@@ -150,6 +168,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     sourceParentUserId: "sourceParentUserId",
     sourceUserId: "sourceUserId",
     sourceUsername: "sourceUsername",
+  },
+  inboxModel: { channel: "channel", id: "inboxId", workspaceId: "workspaceId" },
+  workspaceModel: {
+    id: "workspace.id",
+    purgeStartedAt: "workspace.purgeStartedAt",
+    scheduledDeletionAt: "workspace.scheduledDeletionAt",
   },
 }))
 
@@ -538,6 +562,454 @@ describe("contactInboxService timestamp helpers", () => {
       'GREATEST(t."lastIncomingMessageAt", u.incoming_ts)',
     )
     expect(statement).not.toContain("CASE")
+  })
+})
+
+describe("contactInboxService.completeProfileSnapshot", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback({ update: mockDbUpdate }),
+    )
+    const { contactInboxPostRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    vi.mocked(
+      contactInboxPostRepository.lockWorkspaceForPostWrite,
+    ).mockResolvedValue(true)
+  })
+
+  test("commits an all-null snapshot only for the current pending claim", async () => {
+    mockDbReturning.mockResolvedValueOnce([{ contactId: "contact-1" }])
+
+    await expect(
+      contactInboxService.completeProfileSnapshot({
+        attempt: 2,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        outcome: "captured",
+        snapshot: {
+          followsBusiness: null,
+          followerCount: null,
+          businessFollowsContact: null,
+          accountVerified: null,
+        },
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe(true)
+
+    expect(mockDbSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        profileSnapshotNextAttemptAt: null,
+        profileSnapshotState: "captured",
+      }),
+    )
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
+      "contacts:contact-1:contact-inboxes",
+    ])
+    expect(
+      mockDbSet.mock.calls[0]?.[0].followsBusiness.strings.join(" "),
+    ).toContain("CASE WHEN")
+    expect(mockDbSet.mock.calls[0]?.[0].followsBusiness.values).toContain(null)
+    expect(mockDbSet.mock.calls[0]?.[0].profileSnapshotState).toBe("captured")
+    expect(mockDbReturning).toHaveBeenCalledOnce()
+    expect(
+      (await import("@chatbotx.io/database/client")).eq,
+    ).toHaveBeenCalledWith("profileSnapshotState", "pending")
+    expect(
+      (await import("@chatbotx.io/database/client")).eq,
+    ).toHaveBeenCalledWith("profileSnapshotAttempts", 2)
+    const where = mockDbWhere.mock.calls[0]?.[0] as {
+      conditions: Array<{ values?: unknown[] }>
+    }
+    expect(where.conditions.at(-1)?.values).toContain("workspace-1")
+  })
+
+  test("refresh skips the write when nothing was fetched", async () => {
+    await contactInboxService.refreshProfileSnapshot({
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      snapshot: {
+        followsBusiness: null,
+        businessFollowsContact: null,
+        accountVerified: null,
+        followerCount: null,
+      },
+    })
+
+    expect(mockDbUpdate).not.toHaveBeenCalled()
+  })
+
+  test("refresh keeps stored values for fields the API omitted and never fabricates false/0", async () => {
+    mockDbReturning.mockResolvedValueOnce([{ contactId: "contact-1" }])
+
+    await contactInboxService.refreshProfileSnapshot({
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      snapshot: {
+        followsBusiness: false,
+        businessFollowsContact: null,
+        accountVerified: null,
+        followerCount: 0,
+        username: "ada",
+      },
+    })
+
+    const update = mockDbSet.mock.calls[0]?.[0]
+    const coalesced = (column: string) =>
+      update[column] as { strings: string[]; values: unknown[] }
+    for (const column of [
+      "followsBusiness",
+      "businessFollowsContact",
+      "accountVerified",
+      "followerCount",
+    ]) {
+      expect(coalesced(column).strings.join(" ")).toContain("COALESCE")
+    }
+    // Genuine false / 0 are written, null stays null so COALESCE keeps the row's value.
+    expect(coalesced("followsBusiness").values).toContain(false)
+    expect(coalesced("followerCount").values).toContain(0)
+    expect(coalesced("businessFollowsContact").values).toContain(null)
+    expect(coalesced("accountVerified").values).toContain(null)
+    expect(update.profileSnapshotState).toBeUndefined()
+  })
+
+  test("refresh only backfills an empty sourceUsername", async () => {
+    mockDbReturning.mockResolvedValueOnce([{ contactId: "contact-1" }])
+
+    await contactInboxService.refreshProfileSnapshot({
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      snapshot: {
+        followsBusiness: null,
+        businessFollowsContact: null,
+        accountVerified: null,
+        followerCount: null,
+        username: "ada",
+      },
+    })
+
+    const sourceUsername = mockDbSet.mock.calls[0]?.[0].sourceUsername as {
+      strings: string[]
+      values: unknown[]
+    }
+    // Stored handle is the first COALESCE operand, so it always wins.
+    expect(sourceUsername.strings.join(" ")).toMatch(STORED_FIRST_COALESCE_RE)
+    expect(sourceUsername.values).toContain("ada")
+  })
+
+  test("uses CASE expressions to preserve values from another source", async () => {
+    mockDbReturning.mockResolvedValueOnce([{ contactId: "contact-1" }])
+
+    await contactInboxService.completeProfileSnapshot({
+      attempt: 2,
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      outcome: "captured",
+      snapshot: {
+        followsBusiness: true,
+        followerCount: 42,
+        businessFollowsContact: false,
+        accountVerified: true,
+      },
+      workspaceId: "workspace-1",
+    })
+
+    const update = mockDbSet.mock.calls[0]?.[0]
+    const snapshotColumns = [
+      ["followsBusiness", true],
+      ["businessFollowsContact", false],
+      ["accountVerified", true],
+      ["followerCount", 42],
+    ] as const
+    for (const [column, incomingValue] of snapshotColumns) {
+      const caseExpression = update[column] as {
+        strings: string[]
+        values: unknown[]
+      }
+      const guard = caseExpression.values[0] as {
+        values: unknown[]
+      }
+
+      expect(caseExpression.strings.join(" ")).toContain("CASE WHEN")
+      expect(caseExpression.values).toContain(incomingValue)
+      expect(caseExpression.values).toContain(column)
+      for (const guardedColumn of snapshotColumns.map(([name]) => name)) {
+        expect(guard.values).toContain(guardedColumn)
+      }
+    }
+  })
+
+  test("invalidates the contact cache only after the snapshot transaction commits", async () => {
+    let releaseCommit: (() => void) | undefined
+    const commit = new Promise<void>((resolve) => {
+      releaseCommit = resolve
+    })
+    mockDbTransaction.mockImplementation(async (callback) => {
+      const result = await callback({ update: mockDbUpdate })
+      await commit
+      return result
+    })
+    mockDbReturning.mockResolvedValueOnce([{ contactId: "contact-1" }])
+
+    const completing = contactInboxService.completeProfileSnapshot({
+      attempt: 2,
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      outcome: "captured",
+      snapshot: {
+        followsBusiness: null,
+        followerCount: null,
+        businessFollowsContact: null,
+        accountVerified: null,
+      },
+      workspaceId: "workspace-1",
+    })
+    await vi.waitFor(() => expect(mockDbReturning).toHaveBeenCalledOnce())
+
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+    releaseCommit?.()
+
+    await expect(completing).resolves.toBe(true)
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
+      "contacts:contact-1:contact-inboxes",
+    ])
+  })
+
+  test("does not invalidate when a newer claim has already completed", async () => {
+    mockDbReturning.mockResolvedValueOnce([])
+
+    await expect(
+      contactInboxService.completeProfileSnapshot({
+        attempt: 1,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        outcome: "failed",
+        snapshot: {
+          followsBusiness: null,
+          followerCount: null,
+          businessFollowsContact: null,
+          accountVerified: null,
+        },
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe(false)
+
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test("terminal recovery requires that the claimed lease has expired", async () => {
+    mockDbReturning.mockResolvedValueOnce([])
+
+    await contactInboxService.completeProfileSnapshot({
+      attempt: 5,
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      onlyIfLeaseExpired: true,
+      outcome: "failed",
+      snapshot: {
+        followsBusiness: null,
+        followerCount: null,
+        businessFollowsContact: null,
+        accountVerified: null,
+      },
+      workspaceId: "workspace-1",
+    })
+
+    expect(
+      (await import("@chatbotx.io/database/client")).lte,
+    ).toHaveBeenCalledWith("profileSnapshotNextAttemptAt", expect.any(Date))
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactInboxService Instagram snapshot recovery queries", () => {
+  const mockRecoveryQuery = (rows: unknown[]) => {
+    const limit = vi.fn().mockResolvedValue(rows)
+    const orderBy = vi.fn(() => ({ limit }))
+    const where = vi.fn(() => ({ orderBy }))
+    const innerJoin = vi.fn(() => ({ innerJoin, where }))
+    mockDbSelect.mockReturnValueOnce({
+      from: vi.fn(() => ({ innerJoin })),
+    })
+    return { innerJoin, where }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("excludes fenced workspaces before recovery pagination", async () => {
+    mockRecoveryQuery([])
+
+    await expect(
+      contactInboxService.listDueProfileSnapshots({ limit: 100 }),
+    ).resolves.toEqual([])
+
+    const { isNull } = await import("@chatbotx.io/database/client")
+    expect(isNull).toHaveBeenCalledWith("workspace.purgeStartedAt")
+    expect(isNull).toHaveBeenCalledWith("workspace.scheduledDeletionAt")
+  })
+
+  test("limits both recovery scans to profile-snapshot capable channels", async () => {
+    mockRecoveryQuery([])
+    mockRecoveryQuery([])
+
+    await contactInboxService.listDueProfileSnapshots({ limit: 100 })
+    await contactInboxService.listExhaustedProfileSnapshots({ limit: 100 })
+
+    const inArrayCalls = mockInArray.mock.calls.filter(
+      ([field]) => field === "channel",
+    )
+    expect(inArrayCalls).toHaveLength(2)
+    for (const [, channels] of inArrayCalls) {
+      expect(channels).toEqual(["instagram"])
+    }
+  })
+
+  test("selects exhausted work only after its lease deadline", async () => {
+    mockRecoveryQuery([])
+
+    await expect(
+      contactInboxService.listExhaustedProfileSnapshots({ limit: 100 }),
+    ).resolves.toEqual([])
+
+    const { lte } = await import("@chatbotx.io/database/client")
+    expect(lte).toHaveBeenCalledWith(
+      "profileSnapshotNextAttemptAt",
+      expect.any(Date),
+    )
+  })
+})
+
+describe("contactInboxService Instagram snapshot claim and retry", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    const { contactInboxPostRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    vi.mocked(
+      contactInboxPostRepository.lockWorkspaceForPostWrite,
+    ).mockResolvedValue(true)
+  })
+
+  test("claims only a due pending row and fences the increment by its attempt", async () => {
+    const limit = vi
+      .fn()
+      .mockResolvedValue([
+        { attempts: 0, channel: "instagram", sourceId: "igsid-1" },
+      ])
+    const where = vi.fn(() => ({ for: vi.fn(() => ({ limit })) }))
+    const txSelect = vi.fn(() => ({
+      from: vi.fn(() => ({
+        innerJoin: vi.fn(() => ({ where })),
+      })),
+    }))
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback({ select: txSelect, update: mockDbUpdate }),
+    )
+    mockDbReturning.mockResolvedValueOnce([{ id: "contact-inbox-1" }])
+
+    await expect(
+      contactInboxService.claimProfileSnapshot({
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toEqual({
+      attempt: 1,
+      channel: "instagram",
+      sourceId: "igsid-1",
+    })
+
+    expect(mockDbSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        profileSnapshotAttempts: 1,
+        profileSnapshotNextAttemptAt: expect.any(Date),
+      }),
+    )
+    expect(
+      (await import("@chatbotx.io/database/client")).eq,
+    ).toHaveBeenCalledWith("profileSnapshotAttempts", 0)
+    const { eq, lte } = await import("@chatbotx.io/database/client")
+    expect(eq).toHaveBeenCalledWith("profileSnapshotState", "pending")
+    expect(eq).toHaveBeenCalledWith("inboxId", "inbox-1")
+    expect(eq).toHaveBeenCalledWith("workspaceId", "workspace-1")
+    expect(mockInArray).toHaveBeenCalledWith("channel", ["instagram"])
+    expect(lte).toHaveBeenCalledWith(
+      "profileSnapshotNextAttemptAt",
+      expect.any(Date),
+    )
+    const whereClause = where.mock.calls[0]?.[0] as {
+      conditions: Array<{ values?: unknown[] }>
+    }
+    expect(
+      whereClause.conditions.some((condition) => condition.values?.includes(5)),
+    ).toBe(true)
+  })
+
+  test("backs off retryable claims and terminalizes the fifth attempt", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-09-30T00:00:00.000Z"))
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback({ update: mockDbUpdate }),
+    )
+    mockDbReturning.mockResolvedValueOnce([{ state: "pending" }])
+
+    await expect(
+      contactInboxService.rescheduleProfileSnapshot({
+        attempt: 1,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe("pending")
+    expect(mockDbSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        profileSnapshotNextAttemptAt: new Date("2026-09-30T00:00:30.000Z"),
+        profileSnapshotState: "pending",
+      }),
+    )
+
+    mockDbReturning.mockResolvedValueOnce([{ state: "failed" }])
+    await expect(
+      contactInboxService.rescheduleProfileSnapshot({
+        attempt: 5,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe("failed")
+    expect(mockDbSet).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        profileSnapshotNextAttemptAt: null,
+        profileSnapshotState: "failed",
+      }),
+    )
+    vi.useRealTimers()
+  })
+
+  test("does not write a claim or retry when the workspace fence rejects it", async () => {
+    const { contactInboxPostRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    vi.mocked(
+      contactInboxPostRepository.lockWorkspaceForPostWrite,
+    ).mockResolvedValue(false)
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback({ update: mockDbUpdate }),
+    )
+
+    await expect(
+      contactInboxService.rescheduleProfileSnapshot({
+        attempt: 1,
+        contactInboxId: "contact-inbox-1",
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mockDbUpdate).not.toHaveBeenCalled()
   })
 })
 

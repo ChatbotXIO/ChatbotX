@@ -414,6 +414,14 @@ export const ContactDetail = ({
     activeConversationForCall?.contactInboxes.filter((contactInbox) =>
       CALL_CAPABLE_CHANNELS.some((channel) => channel === contactInbox.channel),
     ) ?? []
+  // Instagram handle shown under the avatar; absent when the contact has no
+  // Instagram inbox or the handle was never captured.
+  const instagramUsername =
+    activeConversationForCall?.contactInboxes.find(
+      (contactInbox) =>
+        contactInbox.channel === channelTypes.enum.instagram &&
+        contactInbox.sourceUsername,
+    )?.sourceUsername ?? null
   // Destructured behind the length check above so a single-number conversation
   // can never dial an empty-string contactInboxId.
   const [soleCallableContactInbox] =
@@ -701,7 +709,7 @@ export const ContactDetail = ({
 
   return contact ? (
     <div className="flex flex-col">
-      <div className="my-5 flex justify-center">
+      <div className="my-5 flex flex-col items-center gap-2">
         <Avatar className="size-24">
           <AvatarImage
             alt={contact.firstName ?? ""}
@@ -710,6 +718,16 @@ export const ContactDetail = ({
           />
           <AvatarFallback>NA</AvatarFallback>
         </Avatar>
+        {instagramUsername && (
+          <a
+            className="mt-1 text-muted-foreground text-sm hover:text-foreground hover:underline"
+            href={`https://www.instagram.com/${encodeURIComponent(instagramUsername)}`}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            @{instagramUsername}
+          </a>
+        )}
       </div>
       {activeConversationForCall && soleCallableContactInbox && (
         <div className="mb-3 flex justify-center">

@@ -5,6 +5,8 @@ import { aiConversationSourceRelations } from "./ai-conversation-source"
 import { aiEmbeddingRelations } from "./ai-embedding"
 import { aiFileRelations } from "./ai-file"
 import { aiFunctionRelations } from "./ai-function"
+import { aiHandoverBulkRunRelations } from "./ai-handover-bulk-run"
+import { aiHandoverSettingsRelations } from "./ai-handover-settings"
 import { aiMCPServerRelations } from "./ai-mcp-server"
 import {
   analyticsBotMessageEventRelations,
@@ -27,6 +29,7 @@ import { automationThrottleRelations } from "./automation-throttle"
 import { botFieldRelations } from "./bot-field"
 import { broadcastRelations } from "./broadcast"
 import { broadcastTargetRelations } from "./broadcast-target"
+import { channelPostRelations } from "./channel-post"
 import { coexistSyncRunRelations } from "./coexist-sync-run"
 import { commentAutomationRelations } from "./comment-automation"
 import { commentAutomationEventRelations } from "./comment-automation-event"
@@ -35,6 +38,7 @@ import { commentAutomationReplyRelations } from "./comment-automation-reply"
 import { contactRelations } from "./contact"
 import { contactCustomFieldRelations } from "./contact-custom-field"
 import { contactInboxRelations } from "./contact-inbox"
+import { contactInboxPostRelations } from "./contact-inbox-post"
 import { contactNoteRelations } from "./contact-note"
 import { contactsOnBroadcastsRelations } from "./contact-on-broadcast"
 import { contactsOnSequenceRelations } from "./contact-on-sequence"
@@ -156,7 +160,9 @@ export const relations = {
   ...messagingAdsConnectionRelations,
   ...adsConversionRuleRelations,
   ...integrationOpenaiRelations,
+  ...channelPostRelations,
   ...contactRelations,
+  ...contactInboxPostRelations,
   ...tagRelations,
   ...templateRelations,
   ...templateInstallationRelations,
@@ -198,6 +204,8 @@ export const relations = {
   ...inboxTeamMemberRelations,
   ...integrationRelations,
   ...integrationMessengerRelations,
+  ...aiHandoverBulkRunRelations,
+  ...aiHandoverSettingsRelations,
   ...messengerMessageTemplateRelations,
   ...integrationWebchatRelations,
   ...integrationZaloRelations,

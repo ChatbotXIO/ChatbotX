@@ -79,4 +79,26 @@ describe("resolveMessagingPolicy", () => {
       }),
     ).toThrow(ChannelError)
   })
+
+  test("a take-over reply uses HUMAN_AGENT even inside 24 hours", () => {
+    expect(
+      resolveMessagingPolicy({
+        contact: makeContact(new Date("2026-06-08T01:00:00.000Z")),
+        now,
+        sendFrom: "inbox",
+        forceHumanAgent: true,
+      }),
+    ).toEqual({ messagingType: "MESSAGE_TAG", tag: "HUMAN_AGENT" })
+  })
+
+  test("a take-over reply still throws after the 7-day window (Meta limit)", () => {
+    expect(() =>
+      resolveMessagingPolicy({
+        contact: makeContact(new Date("2026-06-01T23:59:59.000Z")),
+        now,
+        sendFrom: "inbox",
+        forceHumanAgent: true,
+      }),
+    ).toThrow(ChannelError)
+  })
 })

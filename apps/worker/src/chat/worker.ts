@@ -8,7 +8,7 @@ import {
   ChatJobAction,
   type ChatJobData,
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
@@ -30,12 +30,16 @@ import {
   sendTypingToChannel,
 } from "./handlers/send-message"
 import { sendMessengerTemplateMessage } from "./handlers/send-messenger-template"
-import { sendWhatsappTemplateMessage } from "./handlers/send-whatsapp-template"
+import {
+  sendWhatsappTemplateMessage,
+  sendWhatsappTemplateToConversation,
+} from "./handlers/send-whatsapp-template"
 
 const botSendActions = new Set<ChatJobData["type"]>([
   ChatJobAction.sendFlowMessage,
   ChatJobAction.sendChatMessage,
   ChatJobAction.sendWhatsappTemplateMessage,
+  ChatJobAction.sendWhatsappTemplateToConversation,
   ChatJobAction.sendMessengerTemplateMessage,
 ])
 
@@ -101,6 +105,12 @@ async function startChatWorker() {
                 !isFinalAttempt(job),
               )
               return
+            case ChatJobAction.sendWhatsappTemplateToConversation:
+              await sendWhatsappTemplateToConversation(
+                job.data.data,
+                !isFinalAttempt(job),
+              )
+              return
             case ChatJobAction.sendMessengerTemplateMessage:
               await sendMessengerTemplateMessage(
                 job.data.data,
@@ -142,7 +152,7 @@ async function startChatWorker() {
       )
     },
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.chat),
       ...defaultWorkerOptions,
       concurrency: env.CHAT_WORKER_CONCURRENCY,
     },

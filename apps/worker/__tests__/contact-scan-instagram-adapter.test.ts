@@ -274,6 +274,7 @@ describe("instagramContactScanAdapter", () => {
         sourceId: "user-1",
         firstName: "bob_ig",
         lastName: undefined,
+        sourceUsername: "bob_ig",
       })
       expect(page.entries[0].updatedAt).toBeNull()
     })

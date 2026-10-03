@@ -210,6 +210,9 @@ export const messengerMessageSchema = z.object({
   // Sending app on an echo. Meta documents it as a string but ships a number;
   // any other shape degrades to "unknown" rather than failing the batch.
   app_id: z.union([z.string(), z.number()]).optional().catch(undefined),
+  // Meta stamps this on a `message_echoes` event sent by the Business AI agent
+  // (the documented signal that an outbound message is AI-generated).
+  ai_generated: z.boolean().optional().catch(undefined),
   // Set (with no other message fields besides `mid`) when the sender unsends
   // a previously-sent DM.
   is_deleted: z.boolean().optional(),
@@ -359,16 +362,55 @@ export const messengerWebhookEventSchema = z.object({
 })
 export type MessengerWebhookEvent = z.infer<typeof messengerWebhookEventSchema>
 
+// Standby delivery: the same envelope as a `messaging[]` item, but Meta strips
+// the postback `payload`/`title` (and `mid` may be absent), so every postback
+// field is optional.
+export const messengerStandbyEventSchema = z.object({
+  sender: idSchema,
+  recipient: idSchema,
+  timestamp: z.number(),
+  message: messengerMessageSchema.optional(),
+  delivery: messengerDeliverySchema.optional(),
+  read: messengerReadSchema.optional(),
+  postback: z
+    .object({
+      mid: z.string().optional(),
+      title: z.string().optional(),
+      payload: z.string().optional(),
+    })
+    .optional(),
+})
+export type MessengerStandbyEvent = z.infer<typeof messengerStandbyEventSchema>
+
+// Page receiver configuration (`messaging[].app_roles`): app id -> roles. It
+// names no contact, so it has no `sender`.
+export const messengerAppRolesEventSchema = z.object({
+  recipient: idSchema,
+  timestamp: z.number(),
+  app_roles: z.record(z.string(), z.array(z.string())),
+})
+export type MessengerAppRolesEvent = z.infer<
+  typeof messengerAppRolesEventSchema
+>
+
+// `messaging` and `standby` items are validated one by one in the handler, so a
+// single malformed event cannot drop the rest of the batch.
 export const incomingWebhookEntrySchema = messengerPageEntrySchema.extend({
   changes: z
     .array(z.object({ field: z.string(), value: z.unknown() }))
     .optional(),
+  messaging: z.array(z.unknown()).optional(),
+  standby: z.array(z.unknown()).optional(),
+  // Entry-level Business-AI ownership signal on standby deliveries; any shape
+  // is tolerated here and read defensively by the consumer.
+  hop_context: z.unknown().optional(),
 })
 export type IncomingWebhookEntry = z.infer<typeof incomingWebhookEntrySchema>
 
+// Entries are validated one by one too (`incomingWebhookEntrySchema`).
 export const incomingWebhookEventSchema = z.object({
   object: z.literal("page"),
-  entry: z.array(incomingWebhookEntrySchema),
+  entry: z.array(z.unknown()),
 })
 export type IncomingWebhookEvent = z.infer<typeof incomingWebhookEventSchema>
 

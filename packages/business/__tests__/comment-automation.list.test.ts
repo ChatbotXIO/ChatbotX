@@ -30,6 +30,12 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   rootFolderId: "0",
 }))
 
+// Stub flowService so its transitive deps aren't loaded; flow validation is
+// covered in comment-automation-write-methods.test.ts.
+vi.mock("../src/flow/service", () => ({
+  flowService: { exists: vi.fn().mockResolvedValue(true) },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {},
   commentAutomationModel: { name: "commentAutomation.name" },

@@ -10,11 +10,12 @@ export type SequenceSchedulerJobData = {
   bucket: number
 }
 
-let sequenceSchedulerQueueInstance: Queue<SequenceSchedulerJobData> | null =
-  null
+export type SequenceSchedulerQueue = Queue<SequenceSchedulerJobData>
+
+let sequenceSchedulerQueueInstance: SequenceSchedulerQueue | null = null
 
 export const getSequenceSchedulerQueue =
-  async (): Promise<Queue<SequenceSchedulerJobData> | null> => {
+  async (): Promise<SequenceSchedulerQueue | null> => {
     if (isNoRedisEnv()) {
       return null
     }
@@ -34,5 +35,3 @@ export const getSequenceSchedulerQueue =
 
     return sequenceSchedulerQueueInstance
   }
-
-export const SEQUENCE_SCHEDULER_QUEUE_NAME = queueNames.enum.sequenceScheduler

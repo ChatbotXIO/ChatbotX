@@ -1,16 +1,15 @@
 import { auditService } from "@chatbotx.io/business/audit"
 import { SEQUENCE_SCHEDULE_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
-import { sequenceConnections } from "@chatbotx.io/redis"
+import { isLockAcquisitionError, sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { advanceEnrollment } from "@chatbotx.io/sequence-scheduler"
 import {
   IntegrationJobAction,
   integrationQueue,
-  type MessagingConsumer,
-  SEQUENCE_SCHEDULER_QUEUE_NAME,
+  queueNames,
+  type SequenceSchedulerJobData,
 } from "@chatbotx.io/worker-config"
-import { createConsumer } from "@chatbotx.io/worker-config/message-queue/factory"
-import pLimit, { type LimitFunction } from "p-limit"
+import { Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
@@ -26,12 +25,21 @@ interface ConsumerOptions {
   maxProcess: number
 }
 
+type LegacySequenceSchedulerJobData = {
+  key: string
+  value: string
+}
+
+const isLegacySequenceSchedulerJobData = (
+  data: SequenceSchedulerJobData | LegacySequenceSchedulerJobData,
+): data is LegacySequenceSchedulerJobData =>
+  "value" in data && typeof data.value === "string"
+
 class DispatchConsumer {
   private running = false
-  private consumer: MessagingConsumer | null = null
+  private consumer: Worker<SequenceSchedulerJobData> | null = null
   private _scheduler: SchedulerClient | null = null
   private readonly options: ConsumerOptions
-  private readonly limitProcess: LimitFunction
 
   private readonly dispatchProcessor: DispatchProcessorService
   private readonly stepExecutor: StepExecutorService
@@ -49,8 +57,6 @@ class DispatchConsumer {
       maxProcess: options.maxProcess || MAX_PROCESS,
     }
 
-    this.limitProcess = pLimit(this.options.maxProcess)
-
     this.dispatchProcessor = new DispatchProcessorService()
     this.stepExecutor = new StepExecutorService()
     this.retryScheduler = new RetrySchedulerService()
@@ -64,22 +70,26 @@ class DispatchConsumer {
     const redisClient = await sequenceConnections.useExisting()
     this._scheduler = new SchedulerClient(redisClient)
 
-    this.consumer = await createConsumer({
-      topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
-      clientId: "sequence-dispatch-consumer",
-      groupId: "sequence-dispatch-consumer",
-    })
-
     this.running = true
-    logger.info("Dispatch consumer fully operational")
+    this.consumer = new Worker<SequenceSchedulerJobData>(
+      queueNames.enum.sequenceScheduler,
+      async (job) => {
+        let payload: Partial<DispatchMessage>
+        if (isLegacySequenceSchedulerJobData(job.data)) {
+          try {
+            // TODO(remove after next release): process jobs enqueued by the legacy wrapper.
+            payload = JSON.parse(job.data.value) as Partial<DispatchMessage>
+          } catch (error) {
+            logger.error(
+              { err: error, value: job.data.value },
+              "Failed to parse sequence dispatch message; discarding",
+            )
+            return
+          }
+        } else {
+          payload = job.data
+        }
 
-    await this.consumer.consume(async (value: string) => {
-      if (!this.running) {
-        return
-      }
-
-      try {
-        const payload = JSON.parse(value || "{}") as Partial<DispatchMessage>
         if (!payload.workspaceId) {
           logger.warn(
             { payload },
@@ -87,14 +97,30 @@ class DispatchConsumer {
           )
           return
         }
-        await this.limitProcess(() =>
-          this.processDispatch(payload as DispatchMessage),
-        )
-      } catch (error) {
-        logger.error(error, "Error processing dispatch message")
-        logger.error({ value }, "Error processing dispatch message value")
-      }
+
+        await this.processDispatch(payload as DispatchMessage)
+      },
+      {
+        connection: redisClient,
+        concurrency: this.options.maxProcess,
+        removeOnComplete: { count: 0 },
+        removeOnFail: { count: 0 },
+      },
+    )
+    this.consumer.on("failed", (job, error) => {
+      logger.error(
+        { err: error, jobId: job?.id },
+        "Sequence scheduler job failed",
+      )
     })
+    try {
+      await this.consumer.waitUntilReady()
+    } catch (error) {
+      this.running = false
+      await this.consumer.close()
+      this.consumer = null
+      throw error
+    }
   }
 
   private async processDispatch(payload: DispatchMessage) {
@@ -114,7 +140,7 @@ class DispatchConsumer {
             payload.workspaceId,
           )
 
-          if (!dispatch || dispatch === null) {
+          if (!dispatch) {
             await this.scheduler.removeFromSchedule(
               payload.bucket,
               payload.dispatchId,
@@ -150,8 +176,24 @@ class DispatchConsumer {
         },
       )
     } catch (error) {
-      logger.error(error, "Error processing dispatch")
-      logger.error({ payload }, "Error processing dispatch payload")
+      if (
+        isLockAcquisitionError(
+          error,
+          this.scheduler.getLockKey(payload.bucket, payload.dispatchId),
+        )
+      ) {
+        logger.debug(
+          { err: error, payload },
+          "Dispatch processing skipped because another worker owns the lock",
+        )
+        return
+      }
+
+      logger.error(
+        { err: error, payload },
+        "Error processing dispatch; propagating for BullMQ retry",
+      )
+      throw error
     }
   }
 
@@ -221,7 +263,7 @@ class DispatchConsumer {
       })
     } catch (error) {
       logger.error(
-        { error, dispatchId: dispatch.id },
+        { err: error, dispatchId: dispatch.id },
         "Failed to enqueue sendSequenceFlow; reverting dispatch",
       )
 

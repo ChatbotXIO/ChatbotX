@@ -7,6 +7,7 @@ import {
   type ContactFilterField,
   type ContactInfoFilterValue,
   type ContactInfoType,
+  contactFilterFields,
   contactInfoFilterValues,
   contactInfoTypes,
   contactSources,
@@ -22,6 +23,7 @@ import {
   allContinentOptions,
   allCountryOptions,
 } from "@/features/workspaces/schema/types"
+import { buildFilterValueLabels } from "../lib/filter-value-labels"
 import {
   CONTACT_FILTER_FIELD_DEFINITIONS,
   type ContactFilterFieldDefinition,
@@ -31,6 +33,7 @@ import {
   type CtwaRetargetSegment,
   convertCustomFieldTypeToConditionType,
 } from "../schema"
+import type { ResolveFilterValueLabelsResponse } from "../schema/value-labels"
 
 export type ConditionOption = {
   value: OperatorType
@@ -58,6 +61,14 @@ export type FieldConfig = {
   formField: FormFieldType
   group: ContactFilterFieldGroup
   options?: SelectOption[]
+  /**
+   * Display-only labels for the ids the current filter references, looked up
+   * by id (see `use-filter-value-labels.ts`). Set once loaded, for fields whose
+   * values are entity ids; a value missing from it no longer exists. Pickers
+   * keep using `options`.
+   */
+  valueLabels?: SelectOption[]
+  optionSource?: ContactFilterOptionSource
   /** Retired field: still rendered/validated, but omitted from the picker. */
   hidden?: boolean
 }
@@ -214,6 +225,7 @@ const resolveContactFilterOptions = (
     sequenceOptions: SelectOption[]
     reflinkOptions: SelectOption[]
     assigneeOptions: SelectOption[]
+    channelPostOptions: SelectOption[]
   },
 ): SelectOption[] | undefined => {
   switch (optionSource) {
@@ -258,6 +270,8 @@ const resolveContactFilterOptions = (
       return ctx.reflinkOptions
     case "assignees":
       return ctx.assigneeOptions
+    case "channelPosts":
+      return ctx.channelPostOptions
     case "ctwaConversionTypes":
       return [
         {
@@ -404,9 +418,11 @@ export const getFieldConfigs = ({
   sequenceOptions = [],
   reflinkOptions = [],
   assigneeOptions = [],
+  channelPostOptions = [],
   couponTopicOptions = [],
   botFields = [],
   includeBotFields = false,
+  filterValueLabels,
 }: {
   t: (key: string) => string
   tagOptions: SelectOption[]
@@ -417,6 +433,7 @@ export const getFieldConfigs = ({
   sequenceOptions?: SelectOption[]
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
+  channelPostOptions?: SelectOption[]
   couponTopicOptions?: SelectOption[]
   /** Workspace bot (account) fields — only read when `includeBotFields` is true. */
   botFields?: CustomFieldFilterOption[]
@@ -429,6 +446,8 @@ export const getFieldConfigs = ({
    * fields alongside per-contact ones.
    */
   includeBotFields?: boolean
+  /** Names for the ids the current filter references; `undefined` until loaded. */
+  filterValueLabels?: ResolveFilterValueLabelsResponse
 }): FieldConfig[] => {
   const channelOptions = getChannelMultiSelectOptions(t)
   const booleanOptions = getBooleanOptions(t)
@@ -451,23 +470,29 @@ export const getFieldConfigs = ({
   const staticConfigs: FieldConfig[] = CONTACT_FILTER_FIELD_DEFINITIONS.map(
     (def: ContactFilterFieldDefinition) => {
       const formField = schemaKindToFormField(def.schemaKind)
+      const options =
+        resolveContactFilterOptions(def.optionSource, {
+          t,
+          channelOptions,
+          inboxOptions,
+          tagOptions,
+          flowVersionOptions,
+          broadcastOptions,
+          sequenceOptions,
+          reflinkOptions,
+          assigneeOptions,
+          channelPostOptions,
+        }) ?? booleanOptionsFor(formField)
       return {
         name: def.field,
         formField,
         group: getContactFilterFieldGroup(def.field),
         hidden: def.hidden,
-        options:
-          resolveContactFilterOptions(def.optionSource, {
-            t,
-            channelOptions,
-            inboxOptions,
-            tagOptions,
-            flowVersionOptions,
-            broadcastOptions,
-            sequenceOptions,
-            reflinkOptions,
-            assigneeOptions,
-          }) ?? booleanOptionsFor(formField),
+        optionSource: def.optionSource,
+        options,
+        valueLabels: filterValueLabels
+          ? buildFilterValueLabels(def.optionSource, filterValueLabels, options)
+          : undefined,
       }
     },
   )
@@ -513,6 +538,24 @@ export const getFieldConfigs = ({
     ...botFieldConfigs,
     ...couponTopicConfigs,
   ]
+}
+
+/** Field preselected when the add-condition dialog opens. */
+const DEFAULT_FILTER_FIELD = contactFilterFields.enum.currentChannel
+
+/**
+ * The config the add-condition dialog opens on: the current channel when it is
+ * offered, otherwise the first pickable field. Retired (hidden) fields are never
+ * a default, and neither is a field that merely sits first in the definitions.
+ */
+export const getDefaultFilterConfig = (
+  configs: FieldConfig[],
+): FieldConfig | undefined => {
+  const pickableConfigs = configs.filter((config) => !config.hidden)
+  return (
+    pickableConfigs.find((config) => config.name === DEFAULT_FILTER_FIELD) ??
+    pickableConfigs[0]
+  )
 }
 
 export const getFieldOptions = (
@@ -645,16 +688,19 @@ const findOptionLabel = (
 export const formatConditionValueDisplay = (
   value: string | string[] | undefined,
   options?: SelectOption[],
+  unknownLabel?: string,
 ): string => {
   if (value === undefined) {
     return ""
   }
-  if (!options?.length) {
+  // With an `unknownLabel` an empty list is a loaded one (everything was
+  // deleted), so values still map; otherwise there is nothing to resolve.
+  if (!options || (options.length === 0 && unknownLabel === undefined)) {
     return Array.isArray(value) ? value.join(", ") : value
   }
 
   const getLabel = (optionValue: string) =>
-    findOptionLabel(options, optionValue) ?? optionValue
+    findOptionLabel(options, optionValue) ?? unknownLabel ?? optionValue
 
   if (Array.isArray(value)) {
     return value.map(getLabel).join(", ")
@@ -662,3 +708,21 @@ export const formatConditionValueDisplay = (
 
   return getLabel(value)
 }
+
+/**
+ * Value text for a condition row. Uses the looked-up `valueLabels` when the
+ * field has them (a value missing there reads "Unknown"); until they load, or
+ * for fields that are not id-backed, falls back to the picker `options`.
+ */
+export const formatFilterConditionValue = (
+  value: string | string[] | undefined,
+  fieldConfig: FieldConfig | undefined,
+  t: (key: string) => string,
+): string =>
+  fieldConfig?.valueLabels
+    ? formatConditionValueDisplay(
+        value,
+        fieldConfig.valueLabels,
+        t("condition.unknownValue"),
+      )
+    : formatConditionValueDisplay(value, fieldConfig?.options)

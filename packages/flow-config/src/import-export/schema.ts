@@ -1,5 +1,9 @@
 import { customFieldTypes } from "@chatbotx.io/utils/custom-field"
 import { z } from "zod"
+import {
+  type FlowAuthoringError,
+  zodErrorToFlowAuthoringErrors,
+} from "../authoring/errors"
 import { refineStepsByChannel } from "../channel-rules/channel-step-refinement"
 import { zodFieldName } from "../field-reference"
 import { edgeSchema, flowVersionSchema } from "../nodes/index"
@@ -65,7 +69,7 @@ export type FlowExport = z.infer<typeof flowExportSchema>
 
 export type FlowExportParseResult =
   | { ok: true; data: FlowExport }
-  | { ok: false; reason: string }
+  | { ok: false; reason: string; errors: FlowAuthoringError[] }
 
 export const parseFlowExport = (raw: unknown): FlowExportParseResult => {
   const preParsed = z.object({ formatVersion: z.unknown() }).safeParse(raw)
@@ -73,17 +77,28 @@ export const parseFlowExport = (raw: unknown): FlowExportParseResult => {
     preParsed.success &&
     preParsed.data.formatVersion !== FLOW_EXPORT_FORMAT_VERSION
   ) {
+    const reason = `Unsupported export format version: ${String(
+      preParsed.data.formatVersion,
+    )}`
+
     return {
       ok: false,
-      reason: `Unsupported export format version: ${String(
-        preParsed.data.formatVersion,
-      )}`,
+      reason,
+      errors: [
+        { code: "invalidGraph", message: reason, path: "formatVersion" },
+      ],
     }
   }
 
   const result = flowExportSchema.safeParse(raw)
+
   if (!result.success) {
-    return { ok: false, reason: result.error.message }
+    const errors = zodErrorToFlowAuthoringErrors(result.error, "invalidGraph")
+    return {
+      ok: false,
+      reason: errors[0]?.message ?? "The export file is invalid.",
+      errors,
+    }
   }
   return { ok: true, data: result.data }
 }

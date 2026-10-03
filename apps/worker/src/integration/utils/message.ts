@@ -6,7 +6,7 @@ import {
   type BotResponseTrackingContext,
   ChatJobAction,
   chatQueue,
-  getRedisConnection,
+  getQueueConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { QueueEvents } from "bullmq"
@@ -28,7 +28,7 @@ function getChatQueueEvents(): QueueEvents {
   }
 
   chatQueueEvents = new QueueEvents(queueNames.enum.chat, {
-    connection: getRedisConnection().duplicate(),
+    connection: getQueueConnection(queueNames.enum.chat).duplicate(),
   })
   return chatQueueEvents
 }

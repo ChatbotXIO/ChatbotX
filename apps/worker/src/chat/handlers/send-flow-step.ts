@@ -26,24 +26,23 @@ import {
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
-import type {
-  AttachmentModel,
-  ContactInboxModel,
-  MessageModel,
-} from "@chatbotx.io/database/types"
+import type { AttachmentModel, MessageModel } from "@chatbotx.io/database/types"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
-import type { MetadataPayload, StepType } from "@chatbotx.io/flow-config"
+import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
   appendCodeToMagicLink,
   type ButtonStepProps,
   buttonTypes,
+  channelDeliverableStepTypes,
   encodeButtonPayload,
   extractMetadata,
+  getChannelFlowPolicy,
   isBulkOutboundMetadata,
   messageEventTypeSchema,
   type SendCardStepSchema,
+  stepSupport,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { logDiagnostic } from "@chatbotx.io/logger"
@@ -78,38 +77,6 @@ import {
 import { processMessengerTemplate } from "./send-messenger-template"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
 
-/**
- * Step payloads `sendFlowStep` knows how to hand to a channel. A step outside
- * this set is dropped with a "Skipping non-deliverable flow step" log and no
- * error, so an omission here fails silently.
- *
- * Related but NOT the same list as `STEP_PRODUCES_MESSAGE`
- * (`integration/handlers/flow-utils.ts`), which answers "may this step claim
- * the comment anchor". The two coincide today except for `getUserData`, which
- * is absent here only because its prompt is synthesized as a `sendText` step
- * before being enqueued (see `promptStep` in `integration/handlers/
- * get-user-data.ts`). Keep them in sync by hand: a new step type that sends a
- * payload of its own needs an entry in both, and neither list is exhaustive
- * enough for the compiler to catch the omission here.
- */
-const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
-  stepTypes.enum.sendAudio,
-  stepTypes.enum.sendCard,
-  stepTypes.enum.sendCarousel,
-  stepTypes.enum.sendFile,
-  stepTypes.enum.sendGif,
-  stepTypes.enum.sendImage,
-  stepTypes.enum.sendMessengerTemplateMessage,
-  stepTypes.enum.sendMultipleImages,
-  stepTypes.enum.sendQuickReply,
-  stepTypes.enum.sendText,
-  stepTypes.enum.sendVideo,
-  stepTypes.enum.sendWaTemplateMessage,
-  stepTypes.enum.whatsappCallButton,
-  stepTypes.enum.whatsappFlow,
-  stepTypes.enum.whatsappOptionList,
-])
-
 type MessageWithResolvedAttachmentUrls = MessageModel & {
   attachments: (AttachmentModel & { url: string | null })[]
 }
@@ -143,17 +110,6 @@ const resolveMessageAttachmentUrls = async (
       }),
     ),
   }
-}
-
-/**
- * Steps whose payload only exists on one channel. On any other channel they
- * are skipped before a Message row is persisted, so an omnichannel flow never
- * shows a phantom "sent" message the channel could not deliver.
- */
-const CHANNEL_EXCLUSIVE_STEP_TYPES: Partial<
-  Record<StepType, ContactInboxModel["channel"]>
-> = {
-  [stepTypes.enum.whatsappCallButton]: channelTypes.enum.whatsapp,
 }
 
 const isBlankTextCarrierStep = (step: SendFlowStepData) => {
@@ -531,6 +487,30 @@ export async function sendFlowStep({
     }),
     "sendFlowStep: job received",
   )
+  // The node's authored channel (used by publish/import validation) is a
+  // best-effort declaration — an omnichannel node is reachable from any
+  // conversation, so the RESOLVED contact inbox's channel can be narrower
+  // than what validation allowed. Re-check against the same policy table
+  // here, the one place every step ultimately funnels through before a
+  // Message row or channel dispatch happens, so a mismatch is skipped (like
+  // any other non-deliverable step) instead of throwing inside the channel's
+  // `convertFlowStep` — the outgoing-message handlers no longer swallow an
+  // unhandled stepType, they throw.
+  if (
+    getChannelFlowPolicy(targetContactInbox.channel)?.steps[step.stepType] ===
+    stepSupport.unsupported
+  ) {
+    logger.debug(
+      {
+        conversationId,
+        stepId: step.id,
+        stepType: step.stepType,
+        channel: targetContactInbox.channel,
+      },
+      "Skipping flow step unsupported on the resolved channel",
+    )
+    return
+  }
 
   if (step.stepType === stepTypes.enum.sendWaTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.whatsapp) {
@@ -564,20 +544,6 @@ export async function sendFlowStep({
       )
     }
 
-    return
-  }
-
-  const exclusiveChannel = CHANNEL_EXCLUSIVE_STEP_TYPES[step.stepType]
-  if (exclusiveChannel && targetContactInbox.channel !== exclusiveChannel) {
-    logger.debug(
-      {
-        conversationId,
-        stepId: step.id,
-        stepType: step.stepType,
-        channel: targetContactInbox.channel,
-      },
-      "Skipping channel-exclusive flow step on another channel",
-    )
     return
   }
 
@@ -635,7 +601,9 @@ export async function sendFlowStep({
     nodeId: step.nodeId,
   }
 
-  if (!CHANNEL_DELIVERABLE_STEP_TYPES.has(step.stepType)) {
+  // getUserData produces an outgoing message through its own handler, so it is
+  // deliberately excluded from channel-deliverable steps.
+  if (!channelDeliverableStepTypes.includes(step.stepType)) {
     logger.debug(
       {
         conversationId,
@@ -649,7 +617,7 @@ export async function sendFlowStep({
     return
   }
 
-  // Spintax is on here because only CHANNEL_DELIVERABLE_STEP_TYPES reach this
+  // Spintax is on here because only channelDeliverableStepTypes reach this
   // point — every string leaf is copy an author wrote for a contact to read.
   // Code- or data-carrying steps (external request, execute JavaScript) resolve
   // through their own handlers and deliberately leave it off.

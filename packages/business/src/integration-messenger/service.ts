@@ -21,6 +21,7 @@ import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { flowService } from "../flow/service"
 import {
   auditChannelConnected,
   connectChannelIntegration,
@@ -104,6 +105,16 @@ class MessengerIntegrationService extends BaseService {
         auth: integrationMessengerModel.auth,
       })
       .from(integrationMessengerModel)
+  }
+
+  /** One bounded keyset page of connected Pages; see the repository method. */
+  listConnectedForWebhookSubscription(input: {
+    afterId?: string
+    limit: number
+  }) {
+    return integrationMessengerRepository.listConnectedForWebhookSubscription(
+      input,
+    )
   }
 
   findForTokenRefreshByWorkspaceIds(workspaceIds: string[]) {
@@ -351,6 +362,36 @@ class MessengerIntegrationService extends BaseService {
       },
       orderBy: { name: "asc" },
     })
+  }
+
+  /**
+   * Sets (or clears) the flow started when a partner hands a conversation back.
+   * The flow must be an active flow of the same workspace. There is no cache to
+   * invalidate: the worker reads the integration row uncached.
+   */
+  async updateHandoverResumeFlow(input: {
+    id: string
+    workspaceId: string
+    handoverResumeFlowId: string | null
+  }): Promise<void> {
+    const { id, workspaceId, handoverResumeFlowId } = input
+    if (handoverResumeFlowId) {
+      const flow = await flowService.findActiveById({
+        id: handoverResumeFlowId,
+        workspaceId,
+      })
+      if (!flow) {
+        throw notFoundException("Handover flow not found")
+      }
+    }
+    const row = await integrationMessengerRepository.updateHandoverResumeFlow({
+      id,
+      workspaceId,
+      handoverResumeFlowId,
+    })
+    if (!row) {
+      throw notFoundException("Messenger integration not found")
+    }
   }
 
   /**

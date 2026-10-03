@@ -174,6 +174,7 @@ source for `lastIncomingMessageAt >= NOW() - INTERVAL '24 hours'`, used by:
 - [ ] Operator rules updated in **both** `STATIC_OPERATOR_RULES` and `staticFieldRules`
 - [ ] `buildConditionWhere` case implemented (with NULL/negation handling)
 - [ ] Option source + group wired (if `optionSource !== "none"`)
+- [ ] If the option source's values are workspace entity ids, register it in `FILTER_VALUE_LABEL_SOURCES` (`lib/filter-value-labels.ts`) and the id lookup (`resolveContactFilterValueLabels`) so read-only labels show names / "Unknown" instead of raw ids
 - [ ] Tests: `apps/builder/__tests__/contact-filter-*.test.ts` and
       `packages/database/__tests__/contact-filter.test.ts`
 - [ ] `pnpm lint` + `check-types` for `builder` and `@chatbotx.io/database`

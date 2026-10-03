@@ -34,6 +34,20 @@ export const registerSchedules = async () => {
   }
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.dispatchProfileSnapshots,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.dispatchProfileSnapshots,
+      data: {
+        type: ScheduleJobData.dispatchProfileSnapshots,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.enqueueBroadcast,
     {
       pattern: "* * * * *",
@@ -221,6 +235,20 @@ export const registerSchedules = async () => {
       name: ScheduleJobData.scanContactScans,
       data: {
         type: ScheduleJobData.scanContactScans,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanAiHandoverBulkRuns,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.scanAiHandoverBulkRuns,
+      data: {
+        type: ScheduleJobData.scanAiHandoverBulkRuns,
         data: {},
       },
     },

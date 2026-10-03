@@ -24,6 +24,11 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 vi.mock("@chatbotx.io/database/client", () => ({ gte: vi.fn() }))
 vi.mock("@chatbotx.io/database/schema", () => ({ conversationModel: {} }))
+// step-handlers also hosts the thread-control step; its registry-aware action
+// is out of scope here and would otherwise load the real channel registry.
+vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
+  requestThreadControlAction: vi.fn(),
+}))
 vi.mock("../src/services/integrations", () => ({
   allIntegrations: { messenger: {}, instagram: {}, whatsapp: {}, api: {} },
   resolveIntegrationContextFromContactInbox:

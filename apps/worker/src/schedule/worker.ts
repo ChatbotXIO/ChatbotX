@@ -1,6 +1,6 @@
 import {
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   queueNames,
   ScheduleJobData,
   scheduleQueue,
@@ -18,6 +18,7 @@ import {
   scanDateTimeWebhooks,
 } from "../webhook/datetime-webhook-scanner"
 import { clearExpiredSupportAccess } from "./handlers/clear-expired-support-access"
+import { dispatchProfileSnapshots } from "./handlers/dispatch-profile-snapshots"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
@@ -36,6 +37,7 @@ import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syn
 import { reconcileTenants } from "./handlers/reconcile-tenants"
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
+import { scanAiHandoverBulkRuns } from "./handlers/scan-ai-handover-bulk-runs"
 import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanContactScans } from "./handlers/scan-contact-scans"
@@ -135,6 +137,10 @@ async function startScheduleWorker() {
               await scanContactScans()
               return
 
+            case ScheduleJobData.scanAiHandoverBulkRuns:
+              await scanAiHandoverBulkRuns()
+              return
+
             case ScheduleJobData.reconcileMetaCatalogSyncs:
               await reconcileMetaCatalogSyncs()
               return
@@ -153,6 +159,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.clearExpiredSupportAccess:
               await clearExpiredSupportAccess()
+              return
+
+            case ScheduleJobData.dispatchProfileSnapshots:
+              await dispatchProfileSnapshots()
               return
 
             case ScheduleJobData.purgeBroadcasts:
@@ -199,7 +209,7 @@ async function startScheduleWorker() {
         },
       ),
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.schedule),
       ...defaultWorkerOptions,
     },
   )

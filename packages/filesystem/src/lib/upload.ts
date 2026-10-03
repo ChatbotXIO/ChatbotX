@@ -61,6 +61,7 @@ export async function uploadFileFromUrl(
   acl = "public-read",
   maxBytes?: number,
   validateUrl?: (url: string) => Promise<void>,
+  signal?: AbortSignal,
 ): Promise<UploadedFile> {
   const { response, finalUrl } = validateUrl
     ? await fetchFollowingSafeRedirects({
@@ -79,12 +80,12 @@ export async function uploadFileFromUrl(
             ),
         },
         fetchImpl: (candidateUrl) =>
-          fetch(candidateUrl, { redirect: "manual" as const }),
+          fetch(candidateUrl, { redirect: "manual" as const, signal }),
         url,
         validateUrl,
       })
     : {
-        response: await fetch(url, { redirect: "follow" as const }),
+        response: await fetch(url, { redirect: "follow" as const, signal }),
         finalUrl: url,
       }
   if (!response.ok) {
@@ -133,11 +134,18 @@ export async function uploadFileFromUrl(
   // streamed, and putObject's ContentLength must match the real buffer.
   const size = buffer.byteLength
 
-  await uploader.putObject(path, buffer, {
-    ACL: acl as ObjectCannedACL,
-    ContentType: mimeType,
-    ContentLength: size,
-  })
+  await uploader.putObject(
+    path,
+    buffer,
+    {
+      ACL: acl as ObjectCannedACL,
+      ContentType: mimeType,
+      ContentLength: size,
+    },
+    // Bound the S3 upload by the same deadline as the download, so a stalled
+    // put cannot hold the caller (e.g. inline comment ingestion) past budget.
+    signal,
+  )
 
   const imageDimensions = await getImageDimensions(mimeType, buffer)
 

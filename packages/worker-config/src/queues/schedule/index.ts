@@ -4,7 +4,7 @@ import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -27,6 +27,7 @@ export const ScheduleJobData = {
   maintainMacPartitions: "maintainMacPartitions",
   scanCoexistRuns: "scanCoexistRuns",
   scanContactScans: "scanContactScans",
+  scanAiHandoverBulkRuns: "scanAiHandoverBulkRuns",
   reconcileMetaCatalogSyncs: "reconcileMetaCatalogSyncs",
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
@@ -42,6 +43,7 @@ export const ScheduleJobData = {
   // WhatsApp calling.
   purgeExpiredCallRecordings: "purgeExpiredCallRecordings",
   sweepStaleWhatsappCalls: "sweepStaleWhatsappCalls",
+  dispatchProfileSnapshots: "dispatchProfileSnapshots",
 } as const
 
 /**
@@ -163,6 +165,11 @@ export type ScheduleJobScanContactScans = {
   data: Record<string, never>
 }
 
+export type ScheduleJobScanAiHandoverBulkRuns = {
+  type: typeof ScheduleJobData.scanAiHandoverBulkRuns
+  data: Record<string, never>
+}
+
 export type ScheduleJobReconcileMetaCatalogSyncs = {
   type: typeof ScheduleJobData.reconcileMetaCatalogSyncs
   data: Record<string, never>
@@ -195,6 +202,11 @@ export type ScheduleJobPurgeWorkspaces = {
 
 export type ScheduleJobClearExpiredSupportAccess = {
   type: typeof ScheduleJobData.clearExpiredSupportAccess
+  data: Record<string, never>
+}
+
+export type ScheduleJobDispatchProfileSnapshots = {
+  type: typeof ScheduleJobData.dispatchProfileSnapshots
   data: Record<string, never>
 }
 
@@ -265,11 +277,13 @@ export type ScheduleJobData =
   | ScheduleJobMaintainMacPartitions
   | ScheduleJobScanCoexistRuns
   | ScheduleJobScanContactScans
+  | ScheduleJobScanAiHandoverBulkRuns
   | ScheduleJobReconcileMetaCatalogSyncs
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
   | ScheduleJobClearExpiredSupportAccess
+  | ScheduleJobDispatchProfileSnapshots
   | ScheduleJobPurgeBroadcasts
   | ScheduleJobPurgeAutomationThrottle
   | ScheduleJobPurgeErrorLogs
@@ -283,6 +297,6 @@ export type ScheduleJobData =
 export const scheduleQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.schedule),
       defaultJobOptions,
     })

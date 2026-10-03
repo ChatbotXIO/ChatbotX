@@ -1,5 +1,10 @@
 import type { ContextQueue } from "./context"
-import type { EchoOrigin, IncomingContact, IncomingMessage } from "./message"
+import type {
+  EchoOrigin,
+  IncomingContact,
+  IncomingMessage,
+  ThreadControlReceiveInfo,
+} from "./message"
 
 export * from "./context"
 export * from "./message"
@@ -64,6 +69,11 @@ export type ReceivedMessageResult = {
   echoOrigin?: EchoOrigin | null
   /** Sending app id on an echo, for diagnostics; null when not an echo or unknown. */
   echoAppId?: string | null
+  /**
+   * Conversation-routing metadata of this delivery. Set only by channels that
+   * support routing (WhatsApp); absent means "no routing information".
+   */
+  threadControl?: ThreadControlReceiveInfo
 }
 
 /**

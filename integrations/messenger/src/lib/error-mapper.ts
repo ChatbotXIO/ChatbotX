@@ -40,12 +40,15 @@ const PERMISSION_DENIED_CODES = new Set([
   368, // Temporarily blocked for policy violations
 ])
 
+// developers.facebook.com/docs/graph-api/overview/rate-limiting: every code
+// below means "stop calling and wait", never "this request is invalid".
 const RATE_LIMITED_CODES = new Set([
   4, // API rate limit reached
   17, // User API rate limit reached
-  32, // Page-level API rate limit reached
-  613, // Calls to this API have exceeded the rate limit
-  80_001, // Too many calls to this Page account (Pages BUC limit)
+  32, // Page-level rate limit reached
+  613, // Custom rate limit (incl. subcode 1996: inconsistent request pattern)
+  80_001, // Business Use Case limit: Pages
+  80_006, // Business Use Case limit: Messenger
 ])
 
 const PAYLOAD_INVALID_CODES = new Set([
@@ -140,6 +143,27 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
     subCode: fields.subCode,
     type: fields.type,
   })
+}
+
+// === Thread-control (Handover Protocol) rejection ===
+
+/**
+ * Error sub-codes Meta returns when a Send API call is refused because another
+ * app owns the thread. Meta has not published them, so this stays empty until
+ * one is captured from a real rejection (same stance as the WhatsApp set);
+ * the local send gate covers known-standby threads. A refusal is only ever
+ * read from a permission-category error, never from the code alone.
+ */
+export const THREAD_CONTROL_REJECTION_SUBCODES: ReadonlySet<number> =
+  new Set<number>([])
+
+export function isThreadControlRejection(error: ChannelError): boolean {
+  return (
+    error.category === ChannelErrorCategory.PERMISSION_DENIED &&
+    error.subCode !== null &&
+    error.subCode !== undefined &&
+    THREAD_CONTROL_REJECTION_SUBCODES.has(Number(error.subCode))
+  )
 }
 
 // === Revoked / invalidated access token detection ===

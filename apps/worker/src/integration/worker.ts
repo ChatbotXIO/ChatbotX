@@ -3,12 +3,11 @@ import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   conversationService,
   flushAllPendingWorkspaceBroadcasts,
-  whatsappCallPermissionService,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
-import { getStoryReply, getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
+import { getStoryReply } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
   AIJobAction,
@@ -18,7 +17,7 @@ import {
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
   getHeavyJobCompletionWaitTimeoutMs,
-  getRedisConnection,
+  getQueueConnection,
   HeavyJobAction,
   IntegrationJobAction,
   type IntegrationJobData,
@@ -39,6 +38,8 @@ import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { integrationService } from "../services/integrations"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
+import { runAiHandoverBulkToggle } from "./handlers/ai-handover-bulk-toggle"
+import { runAiHandoverTakeBack } from "./handlers/ai-handover-take-back"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
 import { coexistInstagramSync } from "./handlers/coexist/instagram-sync"
@@ -61,6 +62,7 @@ import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processLeadgen } from "./handlers/lead-ads"
 import { handleMessageStatus } from "./handlers/message-status"
 import { handleSendMetaCapiEvent } from "./handlers/meta-conversions/send-meta-capi-event"
+import { runQuickReplyFollowUpResume } from "./handlers/quick-reply-resume"
 import {
   deleteIncomingComment,
   deleteIncomingMessage,
@@ -72,11 +74,17 @@ import {
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
+import {
+  isThreadControlJobReprocess,
+  receiveThreadControlEvent,
+  releaseOwnedThread,
+} from "./handlers/thread-control"
 import { receiveTiktokHighIntentComment } from "./handlers/tiktok-high-intent-comment"
 import { runWaitResume } from "./handlers/wait-resume"
 import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
 import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call-native-recording"
 import { handleWhatsappCallNativeTranscriptFetch } from "./handlers/whatsapp-call-native-transcript"
+import { recordWhatsappCallPermissionReply } from "./handlers/whatsapp-call-permission-reply"
 import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
 import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
 import { handleWhatsappIdentityChange } from "./handlers/whatsapp-identity-change"
@@ -179,6 +187,7 @@ async function startIntegrationWorker() {
                 quickReplyAction,
                 conversation,
                 channelType,
+                suppressAutomation,
               } = received
 
               if (!message) {
@@ -189,6 +198,24 @@ async function startIntegrationWorker() {
                 postbackAction || quickReplyAction
               )
 
+              // A call-permission answer is account state, recorded for
+              // standby deliveries too; it never reaches automation.
+              if (
+                isNotPostbackOrQuickReply &&
+                (await recordWhatsappCallPermissionReply({
+                  workspaceId: conversation.workspaceId,
+                  message,
+                }))
+              ) {
+                return
+              }
+
+              // Standby deliveries (another responder owns the thread) are
+              // stored only: no story-reply, routing or fallback analytics.
+              if (suppressAutomation) {
+                return
+              }
+
               // An image/file message has contentType "text" — only its
               // `attachments` array distinguishes it; a shared location has
               // contentType "location".
@@ -198,21 +225,6 @@ async function startIntegrationWorker() {
               const isLocation = message.contentType === "location"
 
               const storyReply = getStoryReply(message.contentAttributes)
-
-              const callPermissionReply = getWhatsappCallPermissionReply(
-                message.contentAttributes,
-              )
-              if (isFromContact && callPermissionReply) {
-                await whatsappCallPermissionService.recordReply({
-                  workspaceId: conversation.workspaceId,
-                  contactInboxId: message.contactInboxId,
-                  response: callPermissionReply.response,
-                  isPermanent: callPermissionReply.isPermanent === true,
-                  expirationTimestamp: callPermissionReply.expirationTimestamp,
-                  respondedAt: message.createdAt,
-                })
-                return
-              }
 
               if (isFromContact && storyReply) {
                 await aiAgentQueue.add(
@@ -390,6 +402,10 @@ async function startIntegrationWorker() {
               await runFollowUpResume(job.data.data)
               return
             }
+            case IntegrationJobAction.resumeQuickReplyFollowUp: {
+              await runQuickReplyFollowUpResume(job.data.data)
+              return
+            }
             case IntegrationJobAction.messageStatus: {
               await handleMessageStatus(job.data.data, job)
               return
@@ -520,6 +536,25 @@ async function startIntegrationWorker() {
               await processLeadgen(job.data.data, job)
               return
             }
+            case IntegrationJobAction.threadControlEvent: {
+              await receiveThreadControlEvent(job.data.data, {
+                isRetry: isThreadControlJobReprocess(job),
+                jobId: job.id,
+              })
+              return
+            }
+            case IntegrationJobAction.threadControlAction: {
+              await releaseOwnedThread(job.data.data)
+              return
+            }
+            case IntegrationJobAction.aiHandoverBulkToggle: {
+              await runAiHandoverBulkToggle(job.data.data)
+              return
+            }
+            case IntegrationJobAction.aiHandoverTakeBack: {
+              await runAiHandoverTakeBack(job.data.data)
+              return
+            }
             case IntegrationJobAction.createMessage: {
               // No-op — action type exists in the union but has no enqueuer yet.
               return
@@ -548,7 +583,7 @@ async function startIntegrationWorker() {
     (job: Job<IntegrationJobData>, token) =>
       deferOnLockContention(job, token, () => processIntegrationJob(job)),
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.integration),
       ...defaultWorkerOptions,
       // Override the shared default (5). I/O-bound webhook handling tolerates
       // more parallelism; env-tunable via INTEGRATION_WORKER_CONCURRENCY.
@@ -587,7 +622,7 @@ async function startIntegrationWorker() {
       })
     },
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.callTranscription),
       concurrency: 1,
       limiter: { max: env.CALL_TRANSCRIBE_PER_MIN, duration: 60_000 },
     },
@@ -620,7 +655,7 @@ async function startIntegrationWorker() {
       })
     },
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.whatsappVoipSignaling),
       concurrency: 10,
     },
   )

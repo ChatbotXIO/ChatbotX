@@ -861,8 +861,12 @@
     "toggleLabel": "Synkronisera befintliga kontakter och chatthistorik"
   },
   "condition": {
+    "unknownValue": "Okänd",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimeInvalid": "Ange ett datum som YYYY-MM-DD HH:mm eller en variabel",
+    "openPost": "Öppna {post}",
+    "openPostLink": "Öppna",
+    "postWithoutCaption": "Inlägg utan bildtext",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "fieldGroups": {
       "analytics": "Analys",
@@ -2176,7 +2180,10 @@
         "recent": "Senaste importer",
         "row": "Rad {row}",
         "success": "Lyckades",
-        "title": "Importhistorik"
+        "title": "Importhistorik",
+        "unsupportedChannelStep": "Kanalen {channel} stöder inte {block}.",
+        "channelStepConstraintExceeded": "{block} överskrider gränsen för {channel}: {actual} {unit}, högst {allowed}.",
+        "channelStepConstraintExceededGeneric": "Kanalen {channel} stöder inte den aktuella {block}-konfigurationen."
       },
       "label": "Import",
       "unableToReadHeaders": "Det gick inte att läsa importrubrikerna.",
@@ -2891,7 +2898,8 @@
       "label": "Temperatur"
     },
     "templateId": {
-      "label": "WhatsApp-mall"
+      "label": "WhatsApp-mall",
+      "placeholder": "Välj en mall"
     },
     "templateMessages": {
       "label": "Mallmeddelanden"
@@ -3300,7 +3308,8 @@
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
       "importJsonOnly": "Endast JSON-filer",
       "whatsappCallButton": "Ring på WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Trådkontroll"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3374,6 +3383,28 @@
     },
     "quickReplies": {
       "limitReached": "Gränsen för snabbsvar har nåtts ({max})."
+    },
+    "quickReplySettings": {
+      "open": "Inställningar för snabbsvar",
+      "title": "Konfigurera snabbsvar",
+      "chooseNextStep": "Välj nästa steg",
+      "followUp": {
+        "label": "Följ upp om kontakten inte har reagerat",
+        "waitFor": "Vänta i",
+        "divider": "Om kontakten inte har reagerat, följ upp med",
+        "windowHint": "Messenger och Instagram tillåter bara utskick inom 24 timmar efter kontaktens senaste meddelande; senare uppföljningar hoppas över där.",
+        "handle": "Ingen reaktion"
+      },
+      "retry": {
+        "label": "Försök igen om svaret inte är ett snabbsvar",
+        "message": "Meddelande vid nytt försök",
+        "messageDefault": "Tryck på ett av alternativen nedan 👇",
+        "count": "Antal försök",
+        "countOption": "{count, plural, =0 {Inga försök} one {# gång} other {# gånger}}",
+        "divider": "När antalet försök har överskridits",
+        "handle": "Försök överskridna",
+        "getUserDataConflict": "Nytt försök är inte tillgängligt när det här meddelandet innehåller steget Hämta användardata."
+      }
     },
     "setCustomField": {
       "temporalHint": "Lämna tomt för att spara aktuellt datum och tid."
@@ -3961,6 +3992,128 @@
   "integrations": {
     "title": "Integrationer"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Styr vad som händer när Metas AI-assistent svarar dina Messenger-kunder.",
+    "info": "När det är aktiverat tas konversationer över här efter att AI-assistenten lämnat tillbaka dem, och inställningarna nedan gäller.",
+    "enabled": {
+      "label": "Aktivera"
+    },
+    "schedule": {
+      "label": "Körtid",
+      "description": "Tillämpa bara under dessa timmar i arbetsytans tidszon.",
+      "from": "Från timme",
+      "to": "Till timme",
+      "add": "Lägg till tidsintervall",
+      "remove": "Ta bort tidsintervall"
+    },
+    "gotoFlow": {
+      "label": "Gå till flöde",
+      "description": "Flow som startas när AI-assistenten lämnar tillbaka konversationen. Har företräde framför återlämningsmeddelandet.",
+      "placeholder": "Välj ett flöde",
+      "clear": "Rensa flöde"
+    },
+    "returnMessage": {
+      "label": "Återlämningsmeddelande",
+      "description": "Skickas i stället när inget flöde är valt eller flödet inte längre är aktivt.",
+      "placeholder": "Meddelande som skickas när AI:n lämnar tillbaka konversationen"
+    },
+    "pauseBot": {
+      "label": "Överför konversation till människa",
+      "description": "Stoppar boten för den här kontakten efter återlämningen tills en teammedlem tar över eller den återupptas."
+    },
+    "readOnly": "Du kan se de här inställningarna men inte ändra dem.",
+    "errors": {
+      "supportSession": "Inställningar kan inte ändras från en supportsession.",
+      "flowNotFound": "Det valda flödet hittades inte eller är inte aktivt.",
+      "timeRanges": "Ange giltiga tidsintervall: hela timmar från 0 till 24, med olika start och slut."
+    },
+    "bulk": {
+      "title": "Tillämpa på alla kunder",
+      "description": "Lämna över alla berättigade Messenger-konversationer till Metas AI-assistent, eller ta tillbaka de som den håller just nu. Det körs i bakgrunden och du kan följa det här.",
+      "started": "Startad. Du kan följa förloppet här.",
+      "progress": "Förlopp",
+      "processedOfTotal": "{done} av {total} konversationer",
+      "counters": "{processed} klara, {skipped} hoppades över, {failed} misslyckades",
+      "action": {
+        "enable": "Aktivera för alla",
+        "disable": "Inaktivera för alla"
+      },
+      "status": {
+        "pending": "Väntar på start",
+        "running": "Körs",
+        "cancelling": "Avbryts",
+        "completed": "Slutförd",
+        "failed": "Misslyckades",
+        "cancelled": "Avbruten"
+      },
+      "enable": {
+        "dialogDescription": "Varje Messenger-konversation där kunden har skrivit de senaste 30 dagarna och som ingen annan app håller lämnas över till Metas AI-assistent. Konversationer tas tillbaka enligt inställningarna ovan.",
+        "confirm": "Aktivera för alla",
+        "blocked": "Spara automatiseringen ovan och slå på den (inom dess körtid) för att aktivera den för alla kunder."
+      },
+      "disable": {
+        "dialogDescription": "Bara konversationer som Metas AI-assistent håller just nu tas tillbaka, och bara kunder som skrivit de senaste 7 dagarna kan nås. Var och en får meddelandet nedan, skickat med Metas Human Agent-tagg, så skriv det som om en person svarar. Sidan behöver behörigheten Human Agent.",
+        "messageLabel": "Meddelande till kunder",
+        "messageDescription": "Upp till {max} tecken.",
+        "messagePlaceholder": "Hej, en teammedlem tar över den här konversationen.",
+        "confirm": "Inaktivera för alla",
+        "policyWarning": "Meta tillåter Human Agent-taggen bara när en person svarar kunden. Används den för kampanjer eller automatiska meddelanden kan sidans meddelandefunktion begränsas."
+      },
+      "errors": {
+        "automationNotActive": "Spara automatiseringen och slå på den (inom dess körtid) innan du aktiverar den för alla kunder.",
+        "messageRequired": "Ange meddelandet som ska skickas till kunderna.",
+        "messageTooLong": "Meddelandet är för långt.",
+        "pageNotConnected": "Den här sidan är inte ansluten.",
+        "nothingToRetry": "Det finns inget att försöka igen."
+      },
+      "runErrors": {
+        "automationStopped": "Stoppades eftersom automatiseringen stängdes av.",
+        "tokenInvalid": "Sidans åtkomst har återkallats. Anslut sidan igen och försök på nytt.",
+        "channelUnsupported": "Den här kanalen stöder inte massåtgärden.",
+        "maxAttempts": "Gav upp efter upprepade fel.",
+        "channelUnavailable": "Stoppades eftersom Meta inte kunde nås flera gånger i rad.",
+        "batchFailed": "Vissa konversationer kunde inte bekräftas och räknades som misslyckade.",
+        "pageDisconnected": "Stoppades eftersom sidan kopplades bort.",
+        "pageRefused": "Meta nekade överlämningen för den här sidan: den kanske inte är konfigurerad för Metas AI-assistent eller saknar behörighet.",
+        "integrationUnavailable": "Sidans anslutning kunde inte laddas. Anslut sidan igen och försök på nytt."
+      },
+      "pausedUntil": "Pausad till {at} för att hålla sig inom Metas hastighetsgränser för den här sidan. Den återupptas av sig själv.",
+      "preparing": "Förbereder…",
+      "live": {
+        "enable": "Aktiverar för kunder: {done} / {total}",
+        "disable": "Inaktiverar för kunder: {done} / {total}",
+        "enableCounting": "Aktiverar för kunder: räknar…",
+        "disableCounting": "Inaktiverar för kunder: räknar…"
+      },
+      "done": {
+        "enable": "Aktiverat för {processed} av {total} kunder.",
+        "disable": "Inaktiverat för {processed} av {total} kunder."
+      },
+      "stopped": {
+        "enable": "Aktiveringen för alla kunder stoppades.",
+        "disable": "Inaktiveringen för alla kunder stoppades."
+      },
+      "retry": "Försök igen"
+    },
+    "history": {
+      "link": "Historik",
+      "title": "Historik för massköringar",
+      "empty": "Inga körningar ännu.",
+      "columns": {
+        "action": "Åtgärd",
+        "requestedAt": "Startad",
+        "progress": "Bearbetade / totalt",
+        "finishedAt": "Avslutad",
+        "message": "Meddelande",
+        "requestedBy": "Begärd av"
+      },
+      "description": "Varje gång \"Tillämpa på alla kunder\" slogs på eller av för den här sidan, senaste först.",
+      "error": "Historiken kunde inte laddas.",
+      "previousPage": "Föregående sida",
+      "nextPage": "Nästa sida"
+    }
+  },
   "invitation": {
     "chatbotInvitationDescription1": "Gå med i {chatbotName}",
     "chatbotInvitationDescription2": "{userName} har bjudit in dig att gå med i {chatbotName}.",
@@ -4143,6 +4296,9 @@
     "failedToPreviewImage": "Det gick inte att förhandsgranska bilden",
     "featureNotFound": "{feature} hittades inte",
     "flowConfigIncomplete": "Vissa konfigurationer är ofullständiga",
+    "quickReplyNextStepRequired": "Välj ett nästa steg för varje aktiverad snabbsvarsinställning",
+    "quickReplyRetryMessageRequired": "Ange ett meddelande för nytt försök",
+    "quickReplyRetryWithGetUserData": "Nytt försök kan inte kombineras med steget Hämta användardata",
     "whatsappCarouselButtonsMismatch": "På WhatsApp måste ett karusellkort ha samma knappar på varje kort: antingen en enda länkknapp på varje kort, eller samma antal svarsknappar på varje kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan ett karusellkort med en länkknapp inte ha några andra knappar. Ta bort de andra knapparna på det kortet, eller ändra länkknappen till en annan åtgärd.",
     "historyDepth": "({count})",
@@ -4209,7 +4365,8 @@
     "waTemplateMpmTooManyProducts": "En flerproduktsknapp kan ha högst 30 produkter totalt. Ta bort några produkter innan publicering.",
     "waTemplateLtoExpirationRequired": "Välj ett utgångsdatum för det tidsbegränsade erbjudandet innan du skickar.",
     "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt.",
-    "mediaStepUnsupported": "Den här kanalen kan inte skicka den här medietypen. Ta bort steget eller peka noden mot en kanal som stöder det.",
+    "unsupportedBlock": "Den här kanalen har inte stöd för det här blocket.",
+    "constraintExceeded": "Den här kanalens gräns har överskridits.",
     "mediaButtonsUnsupported": "Den här kanalen kan inte skicka knappar tillsammans med ett mediemeddelande. Ta bort knapparna eller flytta dem till ett textsteg efter det här.",
     "voiceCall": "Röstsamtal",
     "voiceCallDuration": "Röstsamtal · {duration}",
@@ -5858,6 +6015,8 @@
   "workspace": {
     "deletion": {
       "badge": "Borttagning schemalagd",
+      "purging": "Borttagning av arbetsytan pågår.",
+      "alreadyStarted": "Borttagning av arbetsytan har redan startat.",
       "bannerDescription": "Den här arbetsytan är schemalagd för borttagning. Ångra borttagningen nedan för att fortsätta använda den.",
       "bannerTitle": "Borttagning av arbetsyta har schemalagts",
       "confirmDescription": "Alla kontakter, inställningar och data raderas permanent 24 timmar efter att du har bekräftat. Du kan ångra borttagningen när som helst fram till dess.",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Öppna Zalo-grupp",
     "openZalo": "Öppna Zalo",
     "openMessenger": "Öppna Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "dig"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-annonser",
+      "customer_service": "Kundtjänst",
+      "escalation": "Eskalering",
+      "marketing": "Marknadsföring",
+      "utility": "Tjänst"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Aktiv",
+      "tooltip": "Hanteras av {owner}"
+    },
+    "release": {
+      "label": "Släpp",
+      "tooltip": "Släpp konversationen så att andra appar kan svara",
+      "success": "Konversationen släppt"
+    },
+    "pass": {
+      "menuItem": "Skicka vidare till eskalering",
+      "title": "Skicka vidare till eskaleringspartnern?",
+      "description": "Lämna över den här konversationen till din eskaleringspartner? Dina svar pausas tills konversationen kommer tillbaka.",
+      "confirm": "Skicka vidare",
+      "success": "Konversationen skickades vidare till eskaleringspartnern"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Lämna tillbaka den här konversationen till AI-assistenten",
+      "title": "Lämna tillbaka till AI-assistenten?",
+      "description": "AI-assistenten börjar svara den här kunden igen. Dina svar pausas tills konversationen kommer tillbaka till dig. Meta garanterar inte att assistenten svarar på varje meddelande.",
+      "confirm": "Lämna tillbaka",
+      "success": "Konversationen har lämnats tillbaka till AI-assistenten"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Du är i standby (endast lyssning)",
+      "description": "En tredjepartspartner hanterar den här konversationen. Meddelanderutan är låst för att undvika dubbla svar.",
+      "takeOver": "Ta över",
+      "takeOverSuccess": "Du hanterar nu den här konversationen",
+      "notEscalation": "Bara eskaleringspartnern kan ta över. Routing konfigureras i Meta Business Suite.",
+      "notPrimaryReceiver": "Den här appen måste vara sidans primära mottagare för att kunna ta över. Ställ in det i sidans inställningar för Handover Protocol.",
+      "learnMore": "Läs mer",
+      "dismiss": "Skicka ändå"
+    },
+    "divider": {
+      "ownerHandling": "{owner} hanterar nu den här konversationen",
+      "handedOver": "{previousOwner} lämnade tillbaka den här konversationen till dig",
+      "selfHandling": "Du hanterar nu den här konversationen",
+      "takenOver": "Du tog över den här konversationen",
+      "released": "Konversationen släppt",
+      "passed": "Konversationen skickades vidare till eskaleringspartnern",
+      "serviceRejected": "Meddelandet skickades inte: {owner} hanterar den här konversationen"
+    },
+    "context": {
+      "title": "Konversationskontext",
+      "summaryBadge": "AI-sammanfattning",
+      "historyBadge": "Historik",
+      "customer": "Kund",
+      "business": "Företag",
+      "handoverNote": "Överlämningsanteckning: {note}",
+      "showAll": "Visa alla ({count})",
+      "showLess": "Visa färre"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Konversationsroutning",
+      "threadState": "Trådstatus",
+      "threadStateOwned": "Ägd",
+      "threadStateStandby": "Standby",
+      "threadStateIdle": "Inaktiv",
+      "currentOwner": "Nuvarande ägare",
+      "noOwner": "Ingen ansvarig",
+      "roleLabel": "Din roll",
+      "selfOwned": "Hanterar konversationen",
+      "selfStandby": "Standby — lyssnar bara",
+      "selfIdle": "Väntar på kundens nästa meddelande",
+      "hintOwned": "Släpp när du är klar så att andra appar kan svara.",
+      "hintStandby": "Medan en partner hanterar detta hålls dina meddelanden tillbaka så att kunden inte får dubbla svar. Ta över från meddelanderutan för att svara.",
+      "hintIdle": "Kundens nästa meddelande avgör vem som svarar.",
+      "syncOwner": "Synkronisera ägare",
+      "syncOwnerSuccess": "Ägare synkroniserad"
+    },
+    "settings": {
+      "title": "Flöde för återupptagning efter överlämning",
+      "description": "Automatiseringen som körs när en partner lämnar tillbaka en konversation.",
+      "resumeFlowLabel": "Välj ett flöde",
+      "resumeFlowPlaceholder": "Välj ett flöde",
+      "info": "Det här flödet startar automatiskt när kontrollen lämnas tillbaka. Konversationssammanfattningen och chatthistoriken visas sedan för dina agenter i livechatten.",
+      "save": "Spara ändringar",
+      "clearFlow": "Rensa flöde",
+      "adminOnly": "Bara arbetsyteadministratörer kan ändra routning",
+      "flowNotFound": "Det valda flödet hittades inte eller är inte aktivt",
+      "integrationNotFound": "WhatsApp-numret hittades inte",
+      "messengerIntegrationNotFound": "Messenger-sidan hittades inte"
+    },
+    "errors": {
+      "unsupported": "Konversationsroutning är inte tillgänglig i den här kanalen",
+      "notFound": "Den här konversationen finns inte i den kanalen",
+      "actionFailed": "Det gick inte att uppdatera konversationsroutningen. Försök igen."
+    },
+    "step": {
+      "action": "Åtgärd",
+      "release": "Släpp konversationen",
+      "pass": "Skicka vidare till eskaleringspartnern",
+      "helper": "Endast WhatsApp. På andra kanaler, eller när konversationen inte ägs här, följer steget felvägen."
+    },
+    "template": {
+      "sent": "Mall skickad"
+    }
   }
 }

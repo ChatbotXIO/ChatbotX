@@ -61,6 +61,7 @@
     "./queries/contact-filter/value-format": "./src/queries/contact-filter/value-format.ts",
     "./queries/date-bucket": "./src/queries/date-bucket.ts",
     "./repositories": "./src/repositories/index.ts",
+    "./repositories/contact-inbox-post": "./src/repositories/contact-inbox-post/index.ts",
     "./schema": "./src/schema/index.ts",
     "./types": "./src/types.ts",
     "./utils": "./src/utils.ts"

@@ -583,12 +583,16 @@
     }
   },
   "condition": {
+    "unknownValue": "不明",
     "yes": "はい",
     "no": "いいえ",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "日付をYYYY-MM-DD HH:mm形式または変数で入力してください",
+    "openPost": "{post}を開く",
+    "openPostLink": "開く",
+    "postWithoutCaption": "キャプションなしの投稿",
     "operator": {
       "and": "すべての条件",
       "or": "いずれかの条件"
@@ -1873,7 +1877,8 @@
       "searchPlaceholder": "キーワードを検索..."
     },
     "templateId": {
-      "label": "WhatsAppテンプレート"
+      "label": "WhatsAppテンプレート",
+      "placeholder": "テンプレートを選択"
     },
     "messengerTemplateId": {
       "label": "Messengerテンプレート"
@@ -2022,7 +2027,10 @@
         "failed": "失敗",
         "completedAt": "完了日時",
         "errorDetails": "インポートエラー",
-        "row": "行{row}"
+        "row": "行{row}",
+        "unsupportedChannelStep": "{channel} チャネルは {block} をサポートしていません。",
+        "channelStepConstraintExceeded": "{block} は {channel} の上限を超えています: {actual} {unit}、上限は {allowed}。",
+        "channelStepConstraintExceededGeneric": "{channel} チャネルは現在の {block} 設定をサポートしていません。"
       }
     },
     "line": {
@@ -2278,6 +2286,28 @@
     "quickReplies": {
       "limitReached": "クイック返信の上限（{max}件）に達しました。"
     },
+    "quickReplySettings": {
+      "open": "クイック返信の設定",
+      "title": "クイック返信を設定",
+      "chooseNextStep": "次のステップを選択",
+      "followUp": {
+        "label": "連絡先の反応がない場合にフォローアップする",
+        "waitFor": "待機時間",
+        "divider": "連絡先の反応がない場合のフォローアップ",
+        "windowHint": "Messenger と Instagram では、連絡先の最後のメッセージから 24 時間以内のみ送信できます。それ以降のフォローアップはスキップされます。",
+        "handle": "反応なし"
+      },
+      "retry": {
+        "label": "返信がクイック返信でない場合に再試行する",
+        "message": "再試行メッセージ",
+        "messageDefault": "下の選択肢のいずれかをタップしてください 👇",
+        "count": "再試行回数",
+        "countOption": "{count, plural, =0 {再試行なし} one {#回} other {#回}}",
+        "divider": "再試行回数を超えた場合",
+        "handle": "再試行回数超過",
+        "getUserDataConflict": "このメッセージに「ユーザーデータを取得」ステップが含まれている場合、再試行は利用できません。"
+      }
+    },
     "buttons": {
       "limitReached": "ボタンの上限（{max}個）に達しました。"
     },
@@ -2412,7 +2442,8 @@
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
       "importJsonOnly": "JSONファイルのみ",
       "whatsappCallButton": "WhatsAppで通話",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "スレッド制御"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -3077,6 +3108,128 @@
   "integrations": {
     "title": "連携"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "MetaのAIアシスタントがMessengerのお客様に応答する際の動作を管理します。",
+    "info": "有効にすると、AIアシスタントが会話を戻した後にここで会話を引き継ぎ、以下の設定が適用されます。",
+    "enabled": {
+      "label": "有効にする"
+    },
+    "schedule": {
+      "label": "稼働時間",
+      "description": "ワークスペースのタイムゾーンのこの時間帯のみ適用します。",
+      "from": "開始時刻",
+      "to": "終了時刻",
+      "add": "時間帯を追加",
+      "remove": "時間帯を削除"
+    },
+    "gotoFlow": {
+      "label": "フローへ移動",
+      "description": "AIアシスタントが会話を戻したときに開始されるフローです。戻りメッセージより優先されます。",
+      "placeholder": "フローを選択",
+      "clear": "フローをクリア"
+    },
+    "returnMessage": {
+      "label": "返却メッセージ",
+      "description": "フローが未設定、またはフローが無効になっている場合に代わりに送信されます。",
+      "placeholder": "AIが会話を戻したときに送信するメッセージ"
+    },
+    "pauseBot": {
+      "label": "会話を担当者に転送",
+      "description": "返却後、チームメンバーが引き継ぐかボットが再開するまで、この連絡先のボットを停止します。"
+    },
+    "readOnly": "これらの設定は閲覧のみ可能で、変更できません。",
+    "errors": {
+      "supportSession": "サポートセッションからは設定を変更できません。",
+      "flowNotFound": "選択したフローが見つからないか、有効ではありません。",
+      "timeRanges": "有効な時間帯を入力してください：0〜24の整数の時刻で、開始と終了は異なる値にします。"
+    },
+    "bulk": {
+      "title": "すべての顧客に適用",
+      "description": "対象のMessengerの会話すべてをMetaのAIアシスタントに引き継ぐか、現在AIアシスタントが保持している会話を取り戻します。バックグラウンドで実行され、ここで進捗を確認できます。",
+      "started": "開始しました。進捗はここで確認できます。",
+      "progress": "進捗",
+      "processedOfTotal": "{done} / {total} 件の会話",
+      "counters": "完了 {processed} 件、スキップ {skipped} 件、失敗 {failed} 件",
+      "action": {
+        "enable": "すべてで有効にする",
+        "disable": "すべてで無効にする"
+      },
+      "status": {
+        "pending": "開始待ち",
+        "running": "実行中",
+        "cancelling": "キャンセル中",
+        "completed": "完了",
+        "failed": "失敗",
+        "cancelled": "キャンセル済み"
+      },
+      "enable": {
+        "dialogDescription": "顧客が過去30日以内にメッセージを送っていて、他のアプリが保持していないMessengerの会話をすべてMetaのAIアシスタントに引き継ぎます。会話は上記の設定に従って取り戻されます。",
+        "confirm": "すべてで有効にする",
+        "blocked": "すべての顧客で有効にするには、上の自動化を保存し、（稼働時間内に）オンにしてください。"
+      },
+      "disable": {
+        "dialogDescription": "MetaのAIアシスタントが現在保持している会話のみを取り戻し、過去7日以内にメッセージを送った顧客にのみ届きます。該当する顧客には下のメッセージがMetaのHuman Agentタグ付きで送信されるため、担当者が返信しているように書いてください。ページにはHuman Agent権限が必要です。",
+        "messageLabel": "顧客へのメッセージ",
+        "messageDescription": "最大{max}文字。",
+        "messagePlaceholder": "こんにちは、チームのスタッフがこの会話を引き継ぎます。",
+        "confirm": "すべてで無効にする",
+        "policyWarning": "MetaがHuman Agentタグを認めているのは、担当者が顧客に返信する場合のみです。販促や自動メッセージに使用すると、ページのメッセージ送信が制限される可能性があります。"
+      },
+      "errors": {
+        "automationNotActive": "すべての顧客で有効にする前に、自動化を保存し、（稼働時間内に）オンにしてください。",
+        "messageRequired": "顧客に送信するメッセージを入力してください。",
+        "messageTooLong": "メッセージが長すぎます。",
+        "pageNotConnected": "このページは接続されていません。",
+        "nothingToRetry": "再試行するものはありません。"
+      },
+      "runErrors": {
+        "automationStopped": "自動化がオフになったため停止しました。",
+        "tokenInvalid": "ページのアクセス権が取り消されました。ページを再接続してもう一度お試しください。",
+        "channelUnsupported": "このチャネルは一括操作に対応していません。",
+        "maxAttempts": "失敗が続いたため中止しました。",
+        "channelUnavailable": "Metaに連続して接続できなかったため停止しました。",
+        "batchFailed": "一部の会話は確認できず、失敗として集計されました。",
+        "pageDisconnected": "ページの接続が解除されたため停止しました。",
+        "pageRefused": "Metaがこのページへの引き継ぎを拒否しました。MetaのAIアシスタント用に設定されていないか、権限が不足している可能性があります。",
+        "integrationUnavailable": "ページの接続を読み込めませんでした。ページを再接続してもう一度お試しください。"
+      },
+      "pausedUntil": "このページに対するMetaのレート制限内に収めるため、{at}まで一時停止しています。自動的に再開されます。",
+      "preparing": "準備中…",
+      "live": {
+        "enable": "顧客に対して有効化中: {done} / {total}",
+        "disable": "顧客に対して無効化中: {done} / {total}",
+        "enableCounting": "顧客に対して有効化中: 集計中…",
+        "disableCounting": "顧客に対して無効化中: 集計中…"
+      },
+      "done": {
+        "enable": "{total}人中{processed}人の顧客に対して有効化しました。",
+        "disable": "{total}人中{processed}人の顧客に対して無効化しました。"
+      },
+      "stopped": {
+        "enable": "すべての顧客への有効化を停止しました。",
+        "disable": "すべての顧客への無効化を停止しました。"
+      },
+      "retry": "再試行"
+    },
+    "history": {
+      "link": "履歴",
+      "title": "一括実行の履歴",
+      "empty": "実行履歴はまだありません。",
+      "columns": {
+        "action": "アクション",
+        "requestedAt": "開始",
+        "progress": "処理済み / 合計",
+        "finishedAt": "終了",
+        "message": "メッセージ",
+        "requestedBy": "依頼者"
+      },
+      "description": "このページで\"すべての顧客に適用\"をオンまたはオフにした履歴です。新しい順に表示します。",
+      "error": "履歴を読み込めませんでした。",
+      "previousPage": "前のページ",
+      "nextPage": "次のページ"
+    }
+  },
   "channels": {
     "title": "チャネル",
     "duplicated": {
@@ -3194,7 +3347,9 @@
       "bannerDescription": "このワークスペースは削除予定です。引き続き使用するには、以下で削除を取り消してください。",
       "pendingBlockedToast": "このワークスペースは削除予定です。アクセスを復元するには、ワークスペース管理者にお問い合わせください。",
       "navDisabledTooltip": "ワークスペースの削除が予定されている間は利用できません",
-      "badge": "削除予定"
+      "badge": "削除予定",
+      "purging": "ワークスペースを削除しています。",
+      "alreadyStarted": "ワークスペースの削除はすでに開始されています。"
     },
     "supportAccess": {
       "bannerTitle": "プラットフォームサポートセッション",
@@ -3336,6 +3491,9 @@
     "noVersionsFound": "公開済みバージョンが見つかりません",
     "publishVersionSuccess": "新しいバージョンを公開しました",
     "flowConfigIncomplete": "一部の設定が未完了です",
+    "quickReplyNextStepRequired": "有効なクイック返信設定ごとに次のステップを選択してください",
+    "quickReplyRetryMessageRequired": "再試行メッセージを入力してください",
+    "quickReplyRetryWithGetUserData": "再試行は「ユーザーデータを取得」ステップと併用できません",
     "whatsappCarouselButtonsMismatch": "WhatsAppでは、カルーセルのすべてのカードに同じボタンが必要です。各カードに1つのリンクボタンを設定するか、各カードに同じ数の返信ボタンを設定してください",
     "whatsappCarouselLinkButtonNotAlone": "WhatsAppでは、リンクボタンを含むカルーセルカードに他のボタンを設定できません。そのカードの他のボタンを削除するか、リンクボタンを別のアクションに変更してください。",
     "duplicateNodeError": "ブロックを複製できませんでした。もう一度お試しください。",
@@ -3350,7 +3508,8 @@
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
     "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
     "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
-    "mediaStepUnsupported": "このチャネルではこの種類のメディアを送信できません。ステップを削除するか、対応しているチャネルにこのノードを向けてください。",
+    "unsupportedBlock": "このチャネルはこのブロックに対応していません。",
+    "constraintExceeded": "このチャネルの上限を超えました。",
     "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。",
     "voiceCall": "音声通話",
     "voiceCallDuration": "音声通話 · {duration}",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Zaloグループを開く",
     "openZalo": "Zaloを開く",
     "openMessenger": "Messengerを開く"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "パートナー",
+      "partnerWithRole": "パートナー · {role}",
+      "self": "あなた"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp広告",
+      "customer_service": "カスタマーサービス",
+      "escalation": "エスカレーション",
+      "marketing": "マーケティング",
+      "utility": "ユーティリティ"
+    },
+    "pill": {
+      "standby": "スタンバイ（{owner}）",
+      "owned": "対応中",
+      "tooltip": "{owner}が対応中"
+    },
+    "release": {
+      "label": "解放",
+      "tooltip": "他のアプリが返信できるようにこの会話を解放します",
+      "success": "会話を解放しました"
+    },
+    "pass": {
+      "menuItem": "エスカレーションへ渡す",
+      "title": "エスカレーションパートナーに渡しますか？",
+      "description": "この会話をエスカレーションパートナーに引き継ぎますか？会話が戻るまで、あなたの返信は一時停止されます。",
+      "confirm": "渡す",
+      "success": "会話をエスカレーションパートナーに渡しました"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "この会話をAIアシスタントに戻す",
+      "title": "AIアシスタントに戻しますか？",
+      "description": "AIアシスタントがこのお客様への応答を再開します。会話があなたに戻るまで、あなたの返信は一時停止されます。Metaはアシスタントがすべてのメッセージに返信することを保証しません。",
+      "confirm": "戻す",
+      "success": "会話をAIアシスタントに戻しました"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "スタンバイ中です（受信のみ）",
+      "description": "サードパーティのパートナーがこの会話を対応しています。重複返信を防ぐため、メッセージ欄はロックされています。",
+      "takeOver": "引き継ぐ",
+      "takeOverSuccess": "この会話に対応中です",
+      "notEscalation": "引き継げるのはエスカレーションパートナーのみです。ルーティングはMeta Business Suiteで設定します。",
+      "notPrimaryReceiver": "引き継ぐには、このアプリがページのプライマリ受信者である必要があります。ページのハンドオーバープロトコル設定で指定してください。",
+      "learnMore": "詳しく見る",
+      "dismiss": "それでも送信"
+    },
+    "divider": {
+      "ownerHandling": "{owner}がこの会話に対応を開始しました",
+      "handedOver": "{previousOwner}がこの会話をあなたに戻しました",
+      "selfHandling": "この会話の対応を開始しました",
+      "takenOver": "この会話を引き継ぎました",
+      "released": "会話を解放しました",
+      "passed": "会話をエスカレーションパートナーに渡しました",
+      "serviceRejected": "メッセージを送信できませんでした：{owner}がこの会話に対応中です"
+    },
+    "context": {
+      "title": "会話のコンテキスト",
+      "summaryBadge": "AI要約",
+      "historyBadge": "履歴",
+      "customer": "顧客",
+      "business": "ビジネス",
+      "handoverNote": "引き継ぎメモ：{note}",
+      "showAll": "すべて表示（{count}）",
+      "showLess": "表示を減らす"
+    },
+    "echo": {
+      "partner": "パートナー"
+    },
+    "panel": {
+      "title": "会話ルーティング",
+      "threadState": "スレッドの状態",
+      "threadStateOwned": "担当あり",
+      "threadStateStandby": "スタンバイ",
+      "threadStateIdle": "未担当",
+      "currentOwner": "現在の担当",
+      "noOwner": "担当者なし",
+      "roleLabel": "あなたの役割",
+      "selfOwned": "会話に対応中",
+      "selfStandby": "スタンバイ — 受信のみ",
+      "selfIdle": "お客様の次のメッセージを待機中",
+      "hintOwned": "対応が終わったら解放して、他のアプリが返信できるようにします。",
+      "hintStandby": "パートナーが対応している間、顧客に重複返信が届かないよう、あなたのメッセージは保留されます。返信するには、メッセージ欄から引き継いでください。",
+      "hintIdle": "次のお客様のメッセージで返信担当が決まります。",
+      "syncOwner": "オーナーを同期",
+      "syncOwnerSuccess": "オーナーを同期しました"
+    },
+    "settings": {
+      "title": "引き継ぎ後の再開フロー",
+      "description": "パートナーが会話を戻したときに実行される自動化です。",
+      "resumeFlowLabel": "フローを選択",
+      "resumeFlowPlaceholder": "フローを選択してください",
+      "info": "このフローは、コントロールが戻されると自動的に開始されます。その後、会話の要約とチャット履歴がライブチャットでオペレーターに表示されます。",
+      "save": "変更を保存",
+      "clearFlow": "フローをクリア",
+      "adminOnly": "ルーティングを変更できるのはワークスペース管理者のみです",
+      "flowNotFound": "選択したフローが見つからないか、有効ではありません",
+      "integrationNotFound": "WhatsApp番号が見つかりません",
+      "messengerIntegrationNotFound": "Messengerページが見つかりません"
+    },
+    "errors": {
+      "unsupported": "このチャネルでは会話ルーティングは利用できません",
+      "notFound": "この会話はそのチャネルにありません",
+      "actionFailed": "会話ルーティングを更新できませんでした。もう一度お試しください。"
+    },
+    "step": {
+      "action": "アクション",
+      "release": "会話を解放",
+      "pass": "エスカレーションパートナーに渡す",
+      "helper": "WhatsApp のみ。他のチャネルや、会話がここで管理されていない場合、このステップはエラーパスに進みます。"
+    },
+    "template": {
+      "sent": "テンプレートを送信しました"
+    }
   }
 }

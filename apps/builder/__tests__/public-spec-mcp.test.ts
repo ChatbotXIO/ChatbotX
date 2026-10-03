@@ -18,7 +18,7 @@ vi.mock("@/middlewares/auth", () => ({
 
 vi.mock("@chatbotx.io/database/client", () => {
   const proxy: unknown = new Proxy(() => proxy, { get: () => proxy })
-  return { db: proxy }
+  return { db: proxy, sql: proxy }
 })
 
 type McpOperationMeta = {

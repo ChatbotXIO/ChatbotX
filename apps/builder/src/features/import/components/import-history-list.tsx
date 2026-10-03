@@ -17,6 +17,10 @@ import { useTranslations } from "next-intl"
 import { use, useEffect } from "react"
 import type { listImports } from "../queries/list-imports.queries"
 import type { ListImportsItem } from "../schema/query"
+import {
+  getImportErrorSampleDescription,
+  getImportErrorSampleKey,
+} from "./import-error-sample"
 
 type ImportHistoryListProps = {
   promises: Promise<[Awaited<ReturnType<typeof listImports>>]>
@@ -62,15 +66,19 @@ function ImportErrorSampleButton({ item }: { item: ListImportsItem }) {
           <DialogTitle>{t("fields.import.histories.errorDetails")}</DialogTitle>
         </DialogHeader>
         <div className="max-h-96 space-y-2 overflow-auto">
-          {item.errorSample.map((error) => (
+          {item.errorSample.map((error, index) => (
             <div
               className="grid grid-cols-[5rem_1fr] gap-2 rounded-md border p-2 text-sm"
-              key={`${error.row}-${error.reason}`}
+              key={getImportErrorSampleKey(error, index)}
             >
               <span className="font-medium">
-                {t("fields.import.histories.row", { row: error.row })}
+                {error.row === undefined
+                  ? error.path
+                  : t("fields.import.histories.row", { row: error.row })}
               </span>
-              <span className="text-muted-foreground">{error.reason}</span>
+              <span className="text-muted-foreground">
+                {getImportErrorSampleDescription(error, t)}
+              </span>
             </div>
           ))}
         </div>

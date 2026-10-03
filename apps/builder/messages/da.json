@@ -583,12 +583,16 @@
     }
   },
   "condition": {
+    "unknownValue": "Ukendt",
     "yes": "Ja",
     "no": "Nej",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Indtast en dato som YYYY-MM-DD HH:mm eller en variabel",
+    "openPost": "Åbn {post}",
+    "openPostLink": "Åbn",
+    "postWithoutCaption": "Opslag uden tekst",
     "operator": {
       "and": "Alle betingelser",
       "or": "En vilkårlig betingelse"
@@ -1873,7 +1877,8 @@
       "searchPlaceholder": "Søg keyword..."
     },
     "templateId": {
-      "label": "WhatsApp Skabelon"
+      "label": "WhatsApp Skabelon",
+      "placeholder": "Vælg en skabelon"
     },
     "messengerTemplateId": {
       "label": "Messenger Skabelon"
@@ -2022,7 +2027,10 @@
         "failed": "Failed",
         "completedAt": "Completed at",
         "errorDetails": "Importér errors",
-        "row": "Række {row}"
+        "row": "Række {row}",
+        "unsupportedChannelStep": "{channel}-kanalen understøtter ikke {block}.",
+        "channelStepConstraintExceeded": "{block} overskrider grænsen for {channel}: {actual} {unit}, maksimum {allowed}.",
+        "channelStepConstraintExceededGeneric": "{channel}-kanalen understøtter ikke den aktuelle {block}-konfiguration."
       }
     },
     "line": {
@@ -2278,6 +2286,28 @@
     "quickReplies": {
       "limitReached": "Quick svar limit reached ({max})."
     },
+    "quickReplySettings": {
+      "open": "Indstillinger for Quick Svar",
+      "title": "Konfigurer Quick Svar",
+      "chooseNextStep": "Vælg næste trin",
+      "followUp": {
+        "label": "Følg op, hvis kontakten ikke har reageret",
+        "waitFor": "Vent i",
+        "divider": "Hvis kontakten ikke har reageret, følg op med",
+        "windowHint": "Messenger og Instagram tillader kun afsendelse inden for 24 timer efter kontaktens seneste besked; senere opfølgninger springes over der.",
+        "handle": "Ingen reaktion"
+      },
+      "retry": {
+        "label": "Prøv igen, hvis svaret ikke er et Quick Svar",
+        "message": "Besked ved nyt forsøg",
+        "messageDefault": "Tryk venligst på en af mulighederne nedenfor 👇",
+        "count": "Antal forsøg",
+        "countOption": "{count, plural, =0 {Ingen forsøg} one {# gang} other {# gange}}",
+        "divider": "Når antallet af forsøg er overskredet",
+        "handle": "Forsøg overskredet",
+        "getUserDataConflict": "Nyt forsøg er ikke tilgængeligt, når denne besked indeholder et Get Bruger Data-trin."
+      }
+    },
     "buttons": {
       "limitReached": "Knap limit reached ({max})."
     },
@@ -2412,7 +2442,8 @@
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
       "importJsonOnly": "Kun JSON-filer",
       "whatsappCallButton": "Ring på WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Trådkontrol"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -3077,6 +3108,128 @@
   "integrations": {
     "title": "Integrationer"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Styr, hvad der sker, når Metas AI-assistent svarer dine Messenger-kunder.",
+    "info": "Når det er slået til, overtages samtaler her, efter AI-assistenten har givet dem tilbage, og indstillingerne nedenfor gælder.",
+    "enabled": {
+      "label": "Aktivér"
+    },
+    "schedule": {
+      "label": "Kørselstid",
+      "description": "Gælder kun i disse timer i workspacets tidszone.",
+      "from": "Fra time",
+      "to": "Til time",
+      "add": "Tilføj tidsinterval",
+      "remove": "Fjern tidsinterval"
+    },
+    "gotoFlow": {
+      "label": "Gå til flow",
+      "description": "Flow, der startes, når AI-assistenten giver samtalen tilbage. Har forrang over returbeskeden.",
+      "placeholder": "Vælg et flow",
+      "clear": "Ryd flow"
+    },
+    "returnMessage": {
+      "label": "Returbesked",
+      "description": "Sendes i stedet, når der ikke er et flow, eller flowet ikke længere er aktivt.",
+      "placeholder": "Besked, der sendes, når AI'en giver samtalen tilbage"
+    },
+    "pauseBot": {
+      "label": "Transfer Samtale til Menneskelig",
+      "description": "Stopper botten for denne kontakt efter tilbagegivelsen, indtil et teammedlem overtager, eller den genoptages."
+    },
+    "readOnly": "Du kan se disse indstillinger, men ikke ændre dem.",
+    "errors": {
+      "supportSession": "Indstillinger kan ikke ændres fra en supportsession.",
+      "flowNotFound": "Det valgte flow blev ikke fundet eller er ikke aktivt.",
+      "timeRanges": "Angiv gyldige tidsintervaller: hele timer fra 0 til 24, med forskellig start og slut."
+    },
+    "bulk": {
+      "title": "Anvend på alle kunder",
+      "description": "Giv alle kvalificerede Messenger-samtaler til Metas AI-assistent, eller tag dem tilbage, som den holder lige nu. Det kører i baggrunden, og du kan følge det her.",
+      "started": "Startet. Du kan følge fremdriften her.",
+      "progress": "Fremdrift",
+      "processedOfTotal": "{done} af {total} samtaler",
+      "counters": "{processed} færdige, {skipped} sprunget over, {failed} mislykkedes",
+      "action": {
+        "enable": "Aktivér for alle",
+        "disable": "Deaktivér for alle"
+      },
+      "status": {
+        "pending": "Venter på at starte",
+        "running": "Kører",
+        "cancelling": "Annullerer",
+        "completed": "Fuldført",
+        "failed": "Mislykkedes",
+        "cancelled": "Annulleret"
+      },
+      "enable": {
+        "dialogDescription": "Hver Messenger-samtale, hvor kunden har skrevet inden for de sidste 30 dage, og som ingen anden app holder, gives til Metas AI-assistent. Samtaler tages tilbage efter indstillingerne ovenfor.",
+        "confirm": "Aktivér for alle",
+        "blocked": "Gem automatiseringen ovenfor, og slå den til (inden for dens kørselstid) for at aktivere den for alle kunder."
+      },
+      "disable": {
+        "dialogDescription": "Kun samtaler, som Metas AI-assistent holder lige nu, tages tilbage, og kun kunder, der har skrevet inden for de sidste 7 dage, kan nås. Hver af dem modtager beskeden nedenfor, sendt med Metas Human Agent-tag, så skriv den, som om en person svarer. Siden skal have Human Agent-tilladelsen.",
+        "messageLabel": "Besked til kunder",
+        "messageDescription": "Op til {max} tegn.",
+        "messagePlaceholder": "Hej, et teammedlem overtager denne samtale.",
+        "confirm": "Deaktivér for alle",
+        "policyWarning": "Meta tillader kun Human Agent-tagget til en person, der svarer kunden. Bruges det til tilbud eller automatiske beskeder, kan Sidens beskeder blive begrænset."
+      },
+      "errors": {
+        "automationNotActive": "Gem automatiseringen, og slå den til (inden for dens kørselstid), før du aktiverer den for alle kunder.",
+        "messageRequired": "Indtast den besked, der skal sendes til kunderne.",
+        "messageTooLong": "Beskeden er for lang.",
+        "pageNotConnected": "Denne Side er ikke forbundet.",
+        "nothingToRetry": "Der er intet at prøve igen."
+      },
+      "runErrors": {
+        "automationStopped": "Stoppet, fordi automatiseringen blev slået fra.",
+        "tokenInvalid": "Sidens adgang blev tilbagekaldt. Forbind siden igen, og prøv igen.",
+        "channelUnsupported": "Denne kanal understøtter ikke massehandlingen.",
+        "maxAttempts": "Opgivet efter gentagne fejl.",
+        "channelUnavailable": "Stoppet, fordi Meta ikke kunne nås flere gange i træk.",
+        "batchFailed": "Nogle samtaler kunne ikke bekræftes og blev talt som mislykkede.",
+        "pageDisconnected": "Stoppet, fordi Siden blev frakoblet.",
+        "pageRefused": "Meta afviste overdragelsen for denne Side: den er muligvis ikke sat op til Metas AI-assistent, eller den mangler tilladelsen.",
+        "integrationUnavailable": "Sidens forbindelse kunne ikke indlæses. Forbind Siden igen, og prøv igen."
+      },
+      "pausedUntil": "Sat på pause indtil {at} for at holde sig inden for Metas hastighedsgrænser for denne Side. Den genoptages af sig selv.",
+      "preparing": "Forbereder…",
+      "live": {
+        "enable": "Aktiverer for kunder: {done} / {total}",
+        "disable": "Deaktiverer for kunder: {done} / {total}",
+        "enableCounting": "Aktiverer for kunder: tæller…",
+        "disableCounting": "Deaktiverer for kunder: tæller…"
+      },
+      "done": {
+        "enable": "Aktiveret for {processed} af {total} kunder.",
+        "disable": "Deaktiveret for {processed} af {total} kunder."
+      },
+      "stopped": {
+        "enable": "Aktivering for alle kunder blev stoppet.",
+        "disable": "Deaktivering for alle kunder blev stoppet."
+      },
+      "retry": "Prøv igen"
+    },
+    "history": {
+      "link": "Historik",
+      "title": "Historik over massekørsler",
+      "empty": "Ingen kørsler endnu.",
+      "columns": {
+        "action": "Handling",
+        "requestedAt": "Startet",
+        "progress": "Behandlet / i alt",
+        "finishedAt": "Afsluttet",
+        "message": "Besked",
+        "requestedBy": "Anmodet af"
+      },
+      "description": "Hver gang \"Anvend på alle kunder\" blev slået til eller fra for denne Side, nyeste først.",
+      "error": "Historikken kunne ikke indlæses.",
+      "previousPage": "Forrige side",
+      "nextPage": "Næste side"
+    }
+  },
   "platformSettings": {
     "title": "Platform Indstillinger",
     "errors": {
@@ -3215,7 +3368,9 @@
       "bannerDescription": "Denne arbejdsområde er planlagt for deletion. Fortryd den deletion below til fortsæt using it.",
       "pendingBlockedToast": "Denne arbejdsområde er planlagt for deletion. Kontakt a arbejdsområde administrator til gendan access.",
       "navDisabledTooltip": "Unavailable while arbejdsområde deletion er planlagt",
-      "badge": "Deletion planlagt"
+      "badge": "Deletion planlagt",
+      "purging": "Sletning af arbejdsområdet er i gang.",
+      "alreadyStarted": "Sletning af arbejdsområdet er allerede startet."
     },
     "supportAccess": {
       "bannerTitle": "Platformssupportsession",
@@ -3357,6 +3512,9 @@
     "noVersionsFound": "Ingen published versions found",
     "publishVersionSuccess": "A ny version har been published",
     "flowConfigIncomplete": "Some configurations er incomplete",
+    "quickReplyNextStepRequired": "Vælg et næste trin for hver aktiveret Quick Svar-indstilling",
+    "quickReplyRetryMessageRequired": "Indtast en besked til nyt forsøg",
+    "quickReplyRetryWithGetUserData": "Nyt forsøg kan ikke kombineres med et Get Bruger Data-trin",
     "whatsappCarouselButtonsMismatch": "På WhatsApp skal en karrusel have de samme knapper på hvert kort: enten en enkelt linkknap på hvert kort eller det samme antal svarknapper på hvert kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan et karruselkort med en linkknap ikke have andre knapper. Fjern de andre knapper på kortet, eller skift linkknappen til en anden handling.",
     "duplicateNodeError": "Could ikke dupliker den blokér. Prøv igen.",
@@ -3371,7 +3529,8 @@
     "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
-    "mediaStepUnsupported": "Denne kanal kan ikke sende denne medietype. Fjern trinnet, eller peg noden mod en kanal der understøtter det.",
+    "unsupportedBlock": "Denne kanal understøtter ikke denne blok.",
+    "constraintExceeded": "Denne kanals grænse er overskredet.",
     "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
     "voiceCall": "Taleopkald",
     "voiceCallDuration": "Taleopkald · {duration}",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Åbn Zalo-gruppe",
     "openZalo": "Åbn Zalo",
     "openMessenger": "Åbn Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "dig"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Click-to-WhatsApp-annoncer",
+      "customer_service": "Kundeservice",
+      "escalation": "Eskalering",
+      "marketing": "Marketing",
+      "utility": "Service"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Aktiv",
+      "tooltip": "Håndteres af {owner}"
+    },
+    "release": {
+      "label": "Frigiv",
+      "tooltip": "Frigiv samtalen, så andre apps kan svare",
+      "success": "Samtalen er frigivet"
+    },
+    "pass": {
+      "menuItem": "Send videre til eskalering",
+      "title": "Send videre til eskaleringspartneren?",
+      "description": "Vil du give denne samtale videre til din eskaleringspartner? Dine svar pauses, indtil tråden kommer tilbage.",
+      "confirm": "Send videre",
+      "success": "Samtalen er sendt videre til eskaleringspartneren"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Giv denne samtale tilbage til AI-assistenten",
+      "title": "Giv tilbage til AI-assistenten?",
+      "description": "AI-assistenten begynder igen at svare denne kunde. Dine svar sættes på pause, indtil samtalen kommer tilbage til dig. Meta garanterer ikke, at assistenten svarer på hver besked.",
+      "confirm": "Giv tilbage",
+      "success": "Samtalen er givet tilbage til AI-assistenten"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Du er i standby (kun lytning)",
+      "description": "En tredjepartspartner håndterer denne samtale. Beskedfeltet er låst for at undgå dobbelte svar.",
+      "takeOver": "Overtag",
+      "takeOverSuccess": "Du håndterer nu denne samtale",
+      "notEscalation": "Kun eskaleringspartneren kan overtage. Routing konfigureres i Meta Business Suite.",
+      "notPrimaryReceiver": "Denne app skal være sidens primære modtager for at kunne overtage. Indstil det i sidens indstillinger for Handover Protocol.",
+      "learnMore": "Læs mere",
+      "dismiss": "Send alligevel"
+    },
+    "divider": {
+      "ownerHandling": "{owner} håndterer nu denne samtale",
+      "handedOver": "{previousOwner} gav denne samtale tilbage til dig",
+      "selfHandling": "Du håndterer nu denne samtale",
+      "takenOver": "Du overtog denne samtale",
+      "released": "Samtalen er frigivet",
+      "passed": "Samtalen er sendt videre til eskaleringspartneren",
+      "serviceRejected": "Beskeden blev ikke sendt: {owner} håndterer denne samtale"
+    },
+    "context": {
+      "title": "Samtalekontekst",
+      "summaryBadge": "AI-resumé",
+      "historyBadge": "Historik",
+      "customer": "Kunde",
+      "business": "Virksomhed",
+      "handoverNote": "Overdragelsesnote: {note}",
+      "showAll": "Vis alle ({count})",
+      "showLess": "Vis færre"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Samtaleroutning",
+      "threadState": "Trådstatus",
+      "threadStateOwned": "Ejet",
+      "threadStateStandby": "Standby",
+      "threadStateIdle": "Inaktiv",
+      "currentOwner": "Nuværende ejer",
+      "noOwner": "Ingen ejer",
+      "roleLabel": "Din rolle",
+      "selfOwned": "Håndterer samtalen",
+      "selfStandby": "Standby — lytter kun",
+      "selfIdle": "Venter på kundens næste besked",
+      "hintOwned": "Frigiv, når du er færdig, så andre apps kan svare.",
+      "hintStandby": "Mens en partner håndterer denne samtale, bliver dine beskeder holdt tilbage, så kunden ikke får dobbelte svar. Overtag fra beskedfeltet for at svare.",
+      "hintIdle": "Kundens næste besked afgør, hvem der svarer.",
+      "syncOwner": "Synkroniser ejer",
+      "syncOwnerSuccess": "Ejer synkroniseret"
+    },
+    "settings": {
+      "title": "Genoptagelsesflow ved tilbageføring",
+      "description": "Den automatisering, der kører, når en partner overdrager en samtale tilbage.",
+      "resumeFlowLabel": "Vælg et flow",
+      "resumeFlowPlaceholder": "Vælg et flow",
+      "info": "Dette flow starter automatisk, når kontrollen overdrages tilbage. Samtaleresuméet og chathistorikken vises derefter for dine agenter i live chatten.",
+      "save": "Gem ændringer",
+      "clearFlow": "Ryd flow",
+      "adminOnly": "Kun workspace-administratorer kan ændre routing",
+      "flowNotFound": "Det valgte flow blev ikke fundet eller er ikke aktivt",
+      "integrationNotFound": "WhatsApp-nummer blev ikke fundet",
+      "messengerIntegrationNotFound": "Messenger-siden blev ikke fundet"
+    },
+    "errors": {
+      "unsupported": "Samtaleroutning er ikke tilgængelig på denne kanal",
+      "notFound": "Denne samtale findes ikke på den kanal",
+      "actionFailed": "Kunne ikke opdatere samtaleroutning. Prøv igen."
+    },
+    "step": {
+      "action": "Handling",
+      "release": "Frigiv samtalen",
+      "pass": "Send videre til eskaleringspartneren",
+      "helper": "Kun WhatsApp. På andre kanaler, eller når samtalen ikke ejes her, følger trinnet fejlstien."
+    },
+    "template": {
+      "sent": "Skabelon sendt"
+    }
   }
 }

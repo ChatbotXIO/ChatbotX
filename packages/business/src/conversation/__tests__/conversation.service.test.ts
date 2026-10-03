@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { sql } from "@chatbotx.io/database/client"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   conversationFindMany: vi.fn(),
@@ -16,6 +17,15 @@ const mocks = vi.hoisted(() => ({
   inboxTeamExists: vi.fn(),
   assignUserIfUnassigned: vi.fn(),
   broadcastToWorkspaceParty: vi.fn(),
+  releaseOwnedThreadsForContacts: vi.fn(),
+  // Captures tagged-template calls (`sql\`GREATEST(${a}, ${b})\``) as a plain
+  // `{ strings, values }` fragment so tests can assert both the emitted SQL
+  // shape and the interpolated values without a real Postgres connection.
+  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings: Array.from(strings),
+    values,
+  })),
+  cancelQuickReplyFollowUps: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -49,7 +59,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
   inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-  sql: vi.fn(),
+  sql: mocks.sql,
 }))
 
 // Plain object stubs only — importing the real schema opens a database
@@ -127,6 +137,12 @@ vi.mock("@chatbotx.io/events", () => ({
   emitConversationUnassigned: vi.fn(),
 }))
 
+vi.mock("../../thread-control/service", () => ({
+  threadControlService: {
+    releaseOwnedThreadsForContacts: mocks.releaseOwnedThreadsForContacts,
+  },
+}))
+
 vi.mock("../../contact-inbox/service", () => ({
   contactInboxService: {},
 }))
@@ -144,9 +160,16 @@ vi.mock("../../enterprise/inbox-team/service", () => ({
   },
 }))
 
+vi.mock("../../smart-delay/service", () => ({
+  smartDelayService: {
+    cancelQuickReplyFollowUps: mocks.cancelQuickReplyFollowUps,
+  },
+}))
+
 const { conversationService } = await import("../service")
 const { emit } = await import("@chatbotx.io/event-bus")
-const { emitConversationAssigned } = await import("@chatbotx.io/events")
+const { emitConversationAssigned, emitConversationTransferredToHuman } =
+  await import("@chatbotx.io/events")
 const { invalidateCacheByTags } = await import("@chatbotx.io/redis")
 const { notificationQueue } = await import("@chatbotx.io/worker-config")
 
@@ -176,6 +199,47 @@ beforeEach(() => {
   vi.mocked(notificationQueue.addBulk).mockReset()
   vi.mocked(emitConversationAssigned).mockReset()
   vi.mocked(emit).mockReset()
+  mocks.releaseOwnedThreadsForContacts.mockReset()
+  mocks.releaseOwnedThreadsForContacts.mockResolvedValue(undefined)
+  mocks.cancelQuickReplyFollowUps.mockReset()
+  mocks.cancelQuickReplyFollowUps.mockResolvedValue(undefined)
+  vi.mocked(emitConversationTransferredToHuman).mockReset()
+  mocks.sql.mockClear()
+})
+
+describe("ConversationService.updateFlowStepState lastActivityAt monotonicity", () => {
+  test("uses GREATEST to advance lastActivityAt without regressing or retaining NULL", async () => {
+    const at = new Date("2024-01-02T00:00:00Z")
+
+    await conversationService.updateFlowStepState({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      lastActivityAt: at,
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledOnce()
+    const [data] = mocks.updateSet.mock.calls.at(-1) as [
+      { lastActivityAt: { strings: string[]; values: unknown[] } },
+    ]
+    expect(data.lastActivityAt.strings.join("")).toContain("GREATEST")
+    expect(data.lastActivityAt.strings.join("")).not.toContain("COALESCE")
+    expect(data.lastActivityAt.values).toEqual([undefined, at])
+  })
+
+  test("omits lastActivityAt entirely when not provided, leaving currentStep/lastStep unconditional", async () => {
+    await conversationService.updateFlowStepState({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      currentStep: "step-2",
+      lastStep: "step-1",
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      currentStep: "step-2",
+      lastStep: "step-1",
+    })
+    expect(mocks.sql).not.toHaveBeenCalled()
+  })
 })
 
 describe("ConversationService.findDMByContactIds", () => {
@@ -922,5 +986,234 @@ describe("ConversationService.assignOneOrSkip", () => {
         },
       }),
     )
+  })
+})
+
+describe("ConversationService.updateArchived — conversation routing release", () => {
+  const conversations = [
+    { id: "conv-1", contactId: "contact-1" },
+    { id: "conv-2", contactId: "contact-2" },
+  ]
+  const triggerContext = {
+    triggerSource: "test",
+    triggerHandler: "test",
+    triggerType: "test",
+  }
+
+  test("archiving asks the thread-control service to release the contacts' owned threads", async () => {
+    const archivedAt = new Date()
+    await conversationService.updateArchived({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      archivedAt,
+      triggerContext,
+    })
+
+    expect(mocks.releaseOwnedThreadsForContacts).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      archivedAt,
+    })
+  })
+
+  test("unarchiving never releases a thread", async () => {
+    await conversationService.updateArchived({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      archivedAt: null,
+      triggerContext,
+    })
+
+    expect(mocks.releaseOwnedThreadsForContacts).not.toHaveBeenCalled()
+  })
+
+  test("a failed release enqueue does not fail the archive", async () => {
+    mocks.releaseOwnedThreadsForContacts.mockRejectedValue(
+      new Error("redis down"),
+    )
+
+    await expect(
+      conversationService.updateArchived({
+        workspaceId: WORKSPACE_ID,
+        conversations,
+        archivedAt: new Date(),
+        triggerContext,
+      }),
+    ).resolves.toBeUndefined()
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      archivedAt: expect.any(Date),
+    })
+  })
+})
+
+describe("ConversationService quick-reply challenge CAS", () => {
+  const renderSql = (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    text: strings.join("?").replace(/\s+/g, " "),
+    values,
+  })
+
+  beforeEach(() => {
+    vi.mocked(sql).mockImplementation(renderSql as never)
+  })
+
+  afterEach(() => {
+    vi.mocked(sql).mockReset()
+  })
+
+  test("setQuickReplyChallengeAttempts only wins when type, nodeId and current attempts all match", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    const won = await conversationService.setQuickReplyChallengeAttempts({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      nodeId: "node-1",
+      fromAttempts: 1,
+      toAttempts: 2,
+    })
+
+    expect(won).toBe(true)
+    const where = mocks.updateWhere.mock.calls[0][0] as {
+      and: { text?: string; values?: unknown[] }[]
+    }
+    const texts = where.and.map((c) => c.text ?? "")
+    expect(where.and[0]).toEqual({ eq: [undefined, WORKSPACE_ID] })
+    expect(where.and[1]).toEqual({ eq: [undefined, "conv-1"] })
+    expect(texts.some((t) => t.includes("->>'type' = 'quickReply'"))).toBe(true)
+    expect(where.and[3]?.values).toContain("node-1")
+    expect(where.and[4]?.values).toContain(1)
+  })
+
+  test("clearQuickReplyChallenge scopes by the current attempts when given", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([])
+
+    const won = await conversationService.clearQuickReplyChallenge({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      nodeId: "node-1",
+      attempts: 3,
+    })
+
+    expect(won).toBe(false)
+    const where = mocks.updateWhere.mock.calls[0][0] as {
+      and: ({ text?: string; values?: unknown[] } | undefined)[]
+    }
+    const attemptsClause = where.and.find((c) =>
+      c?.text?.includes("->>'attempts')::int = ?"),
+    )
+    expect(attemptsClause?.values).toContain(3)
+  })
+
+  test("clearQuickReplyChallenge without attempts has no attempts predicate", async () => {
+    await conversationService.clearQuickReplyChallenge({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      nodeId: "node-1",
+    })
+
+    const where = mocks.updateWhere.mock.calls[0][0] as {
+      and: ({ text?: string } | undefined)[]
+    }
+    expect(where.and.some((c) => c?.text?.includes("attempts"))).toBe(false)
+  })
+
+  test("returns false when the CAS matched no row", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([])
+
+    await expect(
+      conversationService.setQuickReplyChallengeAttempts({
+        workspaceId: WORKSPACE_ID,
+        conversationId: "conv-1",
+        nodeId: "node-1",
+        fromAttempts: 1,
+        toAttempts: 2,
+      }),
+    ).resolves.toBe(false)
+  })
+})
+
+describe("ConversationService.updateBotEnabled quick-reply follow-up cancel", () => {
+  test("pausing the bot cancels pending quick-reply follow-ups", async () => {
+    await conversationService.updateBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      ids: ["conv-1"],
+      botEnabled: false,
+    })
+
+    expect(mocks.cancelQuickReplyFollowUps).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        conversationIds: ["conv-1"],
+      }),
+    )
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("enabling the bot does not cancel follow-ups", async () => {
+    await conversationService.updateBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      ids: ["conv-1"],
+      botEnabled: true,
+    })
+
+    expect(mocks.cancelQuickReplyFollowUps).not.toHaveBeenCalled()
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("a rejected cancel still resolves, invalidates and emits the handoff", async () => {
+    mocks.cancelQuickReplyFollowUps.mockRejectedValueOnce(
+      new Error('invalid input value for enum "SmartDelayType"'),
+    )
+
+    await expect(
+      conversationService.disableBotState({
+        workspaceId: WORKSPACE_ID,
+        conversations: [{ id: "conv-1", contactId: "contact-1" }],
+        triggerContext: { source: "manual" } as never,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.stringContaining("conv-1")]),
+    )
+    expect(emitConversationTransferredToHuman).toHaveBeenCalledWith(
+      WORKSPACE_ID,
+      "contact-1",
+      "conv-1",
+      undefined,
+    )
+    expect(emit).toHaveBeenCalledWith(
+      "analytics:dashboard",
+      expect.objectContaining({
+        eventType: "conversation:transferred_to_human",
+      }),
+    )
+  })
+
+  test("inside a caller tx the cancel runs behind a savepoint and a failure is swallowed", async () => {
+    const savepoint = { savepoint: true }
+    const transaction = vi.fn(
+      async (fn: (client: unknown) => Promise<unknown>) => fn(savepoint),
+    )
+    const updateWhere = vi.fn()
+    const tx = {
+      update: () => ({ set: () => ({ where: updateWhere }) }),
+      transaction,
+    }
+    mocks.cancelQuickReplyFollowUps.mockRejectedValueOnce(new Error("boom"))
+
+    await expect(
+      conversationService.updateBotEnabled({
+        workspaceId: WORKSPACE_ID,
+        ids: ["conv-1"],
+        botEnabled: false,
+        tx: tx as never,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    expect(mocks.cancelQuickReplyFollowUps).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: savepoint }),
+    )
+    expect(invalidateCacheByTags).toHaveBeenCalled()
   })
 })

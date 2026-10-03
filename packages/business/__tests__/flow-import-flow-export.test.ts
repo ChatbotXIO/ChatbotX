@@ -77,6 +77,7 @@ vi.mock("../src/errors", () => ({
 }))
 
 vi.mock("../src/flow-version", () => ({
+  assertFlowGraphPublishable: vi.fn(),
   flowVersionService: { findDraft: vi.fn() },
 }))
 

@@ -1,9 +1,7 @@
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
-import {
-  countMessageCharacters,
-  SEND_TEXT_MAX,
-} from "../channel-rules/send-text-length-rules"
+import { countMessageCharacters } from "../channel-rules/characters"
+import { SEND_TEXT_MAX } from "../channel-rules/send-text-length-rules"
 import { flowValidationCodes } from "../validation-codes"
 import { baseStepSchema } from "./base"
 import { buttonStepSchema } from "./button"

@@ -1,4 +1,8 @@
-import type { CommentReply } from "@chatbotx.io/database/partials"
+import type {
+  CommentReply,
+  ConversationQuickReplyChallenge,
+  ConversationStepChallenge,
+} from "@chatbotx.io/database/partials"
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -13,12 +17,13 @@ import { type JobsOptions, Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
 
+export * from "./ai-handover-bulk-job-ids"
 export * from "./coexist-job-ids"
 export * from "./contact-scan-job-ids"
 
@@ -44,6 +49,7 @@ export const IntegrationJobAction = {
   runChallenge: "runChallenge",
   resumeWait: "resumeWait",
   resumeFollowUp: "resumeFollowUp",
+  resumeQuickReplyFollowUp: "resumeQuickReplyFollowUp",
   blockContact: "blockContact",
   unblockContact: "unblockContact",
   assignConversation: "assignConversation",
@@ -74,6 +80,11 @@ export const IntegrationJobAction = {
   sendMetaCapiEvent: "sendMetaCapiEvent",
   syncRetargetAudience: "syncRetargetAudience",
   contactScan: "contactScan",
+  // Conversation routing (thread control).
+  threadControlEvent: "threadControlEvent",
+  threadControlAction: "threadControlAction",
+  aiHandoverTakeBack: "aiHandoverTakeBack",
+  aiHandoverBulkToggle: "aiHandoverBulkToggle",
 } as const
 
 type IntegrationJobActionValue =
@@ -360,23 +371,17 @@ export type IntegrationJobRunChallenge = {
     contactInboxId: string | ContactInboxModel
     messageId?: string
     messageCreatedAt?: Date
-    challenge: {
-      type: "step"
-      data: {
-        flowId: string
-        flowVersionId?: string
-        nodeId: string
-        stepId: string
-        attempts: number
-        lastAttemptAt: Date
-        appointmentId?: string
-      }
-    }
+    challenge: ConversationStepChallenge | ConversationQuickReplyChallenge
   }
 }
 
 export type IntegrationJobResumeFollowUp = {
   type: typeof IntegrationJobAction.resumeFollowUp
+  data: { smartDelayId: string }
+}
+
+export type IntegrationJobResumeQuickReplyFollowUp = {
+  type: typeof IntegrationJobAction.resumeQuickReplyFollowUp
   data: { smartDelayId: string }
 }
 
@@ -1012,6 +1017,83 @@ export type IntegrationJobContactScan = {
   }
 }
 
+/**
+ * Runs one budgeted chunk of a Meta Business AI bulk (enable / disable for all
+ * customers) run. Only `runId`/`workspaceId` travel: the action, message and
+ * cursor are read off the claimed run row, so a stale or forged job cannot
+ * steer the engine.
+ */
+export type IntegrationJobAiHandoverBulkToggle = {
+  type: typeof IntegrationJobAction.aiHandoverBulkToggle
+  data: {
+    runId: string
+    workspaceId: string
+  }
+}
+
+/**
+ * One conversation-routing webhook item (handover, standby message or echo).
+ * The channel decides what `payload` means; the worker only forwards it.
+ * Same data shape as {@link IntegrationJobReceiveMessage}.
+ */
+export type IntegrationJobThreadControlEvent = {
+  type: typeof IntegrationJobAction.threadControlEvent
+  data: IntegrationJobReceiveMessage["data"]
+}
+
+/**
+ * Releases a thread this app owns (archive auto-release). `jobId` is
+ * `thread-release-<contactInboxId>-<updatedAtMs>`, so a re-archive of the same
+ * thread state collapses onto one job.
+ */
+export type IntegrationJobThreadControlAction = {
+  type: typeof IntegrationJobAction.threadControlAction
+  data: {
+    workspaceId: string
+    contactInboxId: string
+    /** The conversation the divider is written to (the archived one). */
+    conversationId: string
+    action: "release"
+    /**
+     * `threadControlUpdatedAt` (ISO) of the owned thread when the job was
+     * enqueued; the release is skipped when it has advanced since. `null` =
+     * the row carried none; absent = a job queued before this field existed
+     * (released on the owned check alone).
+     */
+    threadControlUpdatedAt?: string | null
+  }
+}
+
+/**
+ * Takes a thread back from the AI agent when a customer message reached the
+ * AI-owned thread while the workspace's AI automation is not running, then
+ * replays that message so the bot answers it. One job per stored message
+ * (`ai-takeback-<messageId>`): redeliveries and retries collapse onto it.
+ */
+export type IntegrationJobAiHandoverTakeBack = {
+  type: typeof IntegrationJobAction.aiHandoverTakeBack
+  data: {
+    workspaceId: string
+    /** The Page whose AI hand-over settings decide whether the take-back applies. */
+    inboxId: string
+    integrationType: string
+    integrationIdentifier: string
+    contactInboxId: string
+    conversationId: string
+    /** The stored standby copy of the customer's message. */
+    messageId: string
+    /** The channel's AI-agent app id, to recognise a thread taken from it. */
+    aiAgentAppId: string
+    /**
+     * `threadControlUpdatedAt` (ISO) of the thread when this was queued; the
+     * take only applies while it is still that version. `null` = it carried none.
+     */
+    threadControlUpdatedAt: string | null
+    /** The same message as a regular (owner) delivery, replayed after the take. */
+    ownerReplayPayload: unknown
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobReceiveComment
@@ -1030,6 +1112,7 @@ export type IntegrationJobData =
   | IntegrationJobRunChallenge
   | IntegrationJobResumeWait
   | IntegrationJobResumeFollowUp
+  | IntegrationJobResumeQuickReplyFollowUp
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
   | IntegrationJobSendSequenceFlow
@@ -1059,11 +1142,15 @@ export type IntegrationJobData =
   | AdsConversionJobEvaluateConversionTrigger
   | AdsConversionJobSyncRetargetAudience
   | IntegrationJobContactScan
+  | IntegrationJobThreadControlEvent
+  | IntegrationJobThreadControlAction
+  | IntegrationJobAiHandoverTakeBack
+  | IntegrationJobAiHandoverBulkToggle
 
 export const integrationQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<IntegrationJobData>(queueNames.enum.integration, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.integration),
       defaultJobOptions,
     })
 

@@ -1,5 +1,6 @@
 import type { ButtonPayload } from "@chatbotx.io/flow-config"
 import { z } from "zod"
+import type { ChannelError } from "../channel-error"
 
 export type IncomingContact = {
   sourceId: string
@@ -40,6 +41,38 @@ export type IncomingContact = {
    * `packages/database/src/partials/channel.ts`.
    */
   channelConversationId?: string
+  /**
+   * Best-effort relationship snapshot. It is intentionally separate
+   * from the contact fields: callers persist it on the channel connection.
+   */
+  profileSnapshot?: ContactProfileSnapshot | null
+}
+
+/**
+ * Channel-neutral description of a post a contact commented on. Each channel
+ * maps its own API response into this shape, so shared code never touches
+ * vendor field names.
+ */
+export type ChannelPostDetails = {
+  caption?: string | null
+  mediaType?: string | null
+  permalink?: string | null
+  publishedAt?: Date | null
+  thumbnailUrl?: string | null
+}
+
+/**
+ * Channel-neutral relationship facts about a contact, stored on ContactInbox
+ * columns of the same names. A channel fills what its API exposes; `null`
+ * means "unknown", never false/0.
+ */
+export type ContactProfileSnapshot = {
+  followsBusiness: boolean | null
+  businessFollowsContact: boolean | null
+  accountVerified: boolean | null
+  followerCount: number | null
+  /** Handle at fetch time; only used to backfill `sourceUsername`. */
+  username?: string | null
 }
 
 /** The channel-scoped identity slice shared by contact-inbox rows and SDK contacts. */
@@ -178,6 +211,249 @@ export const messageTypes = z.enum(["outgoing", "incoming", "activity"])
  */
 export const echoOrigins = z.enum(["firstParty", "thirdParty"])
 export type EchoOrigin = z.infer<typeof echoOrigins>
+
+/**
+ * Channel-agnostic conversation-routing (thread control) vocabulary shared by
+ * channel integrations. The persisted state model lives in
+ * `@chatbotx.io/database/partials` (`thread-control.ts`); the SDK cannot depend
+ * on the database layer, so the role/action values are mirrored here and
+ * pinned to the database copy by `packages/database/__tests__/thread-control-sdk-parity.test.ts`.
+ */
+export const threadControlRoles = z.enum([
+  "ai_agent",
+  "ctwa",
+  "customer_service",
+  "escalation",
+  "marketing",
+  "utility",
+])
+export type ThreadControlRole = z.infer<typeof threadControlRoles>
+
+export const threadControlActions = z.enum(["take", "release", "pass"])
+export type ThreadControlAction = z.infer<typeof threadControlActions>
+
+/**
+ * Which responder role a delivery reached us in: `owner` = the channel's normal
+ * inbound feed, `standby` = the listen-only standby feed.
+ */
+export const threadControlDeliveries = z.enum(["owner", "standby"])
+export type ThreadControlDelivery = z.infer<typeof threadControlDeliveries>
+
+/** One line of a history-shaped conversation context. */
+export const threadControlHistoryItemSchema = z.object({
+  sender: z.enum(["user", "business"]),
+  text: z.string(),
+  /** Unix epoch seconds as sent by the channel; display only. */
+  timestamp: z.string().optional(),
+})
+export type ThreadControlHistoryItem = z.infer<
+  typeof threadControlHistoryItemSchema
+>
+
+/** Display-only context a previous owner hands over (summary text is opaque). */
+export const threadControlContextSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("summary"), text: z.string() }),
+  z.object({
+    type: z.literal("history"),
+    items: z.array(threadControlHistoryItemSchema),
+  }),
+])
+export type ThreadControlContext = z.infer<typeof threadControlContextSchema>
+
+export type ThreadControlReceiveInfo = {
+  delivery: ThreadControlDelivery
+  context?: ThreadControlContext
+  /**
+   * The channel's own timestamp of the delivered item. Routing transitions are
+   * ordered by it, so a delayed job cannot overwrite a later handover.
+   */
+  occurredAt?: Date
+  /**
+   * Owner app id observed on a `standby` delivery, for channels that name
+   * owners by app id. Absent/null when the channel did not say (roles and the
+   * owner delivery never set it: owning needs no app id).
+   */
+  ownerAppId?: string | null
+  /**
+   * Owner role observed on a `standby` delivery (e.g. `ai_agent` when the
+   * channel flags an AI owner). Absent/null = unstated; ignored for an owner
+   * delivery.
+   */
+  ownerRole?: ThreadControlRole | null
+}
+
+export type ThreadControlWebhookEvent = {
+  contact: IncomingContact
+  event: "controlPassed" | "controlTaken"
+  previousOwnerRole: ThreadControlRole | null
+  newOwnerRole: ThreadControlRole | null
+  handoverNote?: string
+  context?: ThreadControlContext
+  /**
+   * Owner identity for channels that name owners by app id instead of a role
+   * (the role fields above stay `null` for those). Absent when the channel
+   * payload does not carry it (e.g. a take names only the previous owner).
+   */
+  previousOwnerAppId?: string
+  newOwnerAppId?: string
+  /**
+   * The channel's AI-agent app id (e.g. Messenger's Business AI), so shared
+   * code can tell a hand-back FROM the AI agent from any other hand-back
+   * without reading channel config. Absent when the channel has no AI-agent app.
+   */
+  aiAgentAppId?: string
+  /**
+   * A handover the channel inferred from a notice rather than a structured
+   * pass/take (so it may be stale): applied only while the stored thread is
+   * held by this app. On a thread another owner (e.g. us) already holds it is
+   * dropped, so a notice never re-fires the hand-back response.
+   */
+  onlyIfOwnedByAppId?: string
+  /**
+   * Whether this handover starts the resume flow. The CHANNEL decides (it
+   * alone knows which passes mean "handed back to us"); absent = never.
+   */
+  resumeEligible?: boolean
+  occurredAt: Date
+}
+
+/**
+ * A partner asking for the thread (`request_thread_control`). Parsed so the
+ * channel can acknowledge it, but no ownership change follows from it.
+ */
+export type ThreadControlRequestEvent = {
+  contact: IncomingContact
+  requestedOwnerAppId?: string
+  handoverNote?: string
+  occurredAt: Date
+}
+
+/**
+ * Receiver configuration of the account (which app is the primary receiver).
+ * Account-level: carries no contact, so it never touches a thread.
+ */
+export type ThreadControlAppRolesEvent = {
+  /** The account id the roles belong to. */
+  accountId: string
+  /** app id -> roles that app holds. */
+  roles: Record<string, string[]>
+  occurredAt: Date
+}
+
+/**
+ * What a channel's `updateThreadControl` reports back after Meta accepted the
+ * action: the owner of the thread AFTER it (`null` = no owner, e.g. released,
+ * or an owner the channel cannot express as a role). The channel decides —
+ * whether a take makes us the escalation partner or an app id owner is a
+ * channel rule, not a shared one.
+ */
+export type ThreadControlUpdateResult = {
+  ownerRole: ThreadControlRole | null
+  /** Owner app id after the action, for channels that name owners by app id. */
+  ownerAppId?: string | null
+}
+
+/**
+ * Bulk "hand every thread to the AI agent / take the AI-held ones back".
+ * `takeFromAi` is the channel's way of taking a thread over with a human
+ * message (Messenger: a HUMAN_AGENT-tagged send), so it carries `text`.
+ */
+export type BulkThreadControlAction = "handToAi" | "takeFromAi"
+
+/**
+ * The transport facts of a channel's bulk thread-control call, advertised by
+ * its adapter so shared code never assumes one channel's numbers.
+ */
+export type BulkThreadControlLimits = {
+  /** Most threads one bulk call can carry (Messenger: a Graph batch of 50). */
+  maxBatchSize: number
+  /** Pause between two calls, to spread the channel's quota over time. */
+  batchGapMs: number
+  /**
+   * How long to wait when the channel refuses a whole call for its rate limit
+   * without saying when to retry (the caller must stop calling meanwhile).
+   */
+  rateLimitPauseMs: number
+}
+
+/** The thread-control event a succeeded bulk item records on the thread. */
+export type BulkThreadControlRecordedEvent = "passed" | "serviceSent"
+
+/**
+ * Outcome of one thread in a bulk call. `failed` means the channel definitely
+ * did not apply it (safe to retry when the error is retryable); `unknown`
+ * means it may have been applied (a timed-out or 5xx sub-request) and must not
+ * be retried for a send, since a retry could deliver the message twice.
+ */
+export type BulkThreadControlItemResult =
+  | {
+      contactInboxId: string
+      status: "succeeded"
+      /** What happened to the thread: a hand-over is a pass, a tagged send a takeover. */
+      event: BulkThreadControlRecordedEvent
+      ownerRole: ThreadControlRole | null
+      ownerAppId: string | null
+      /** Channel id of the message a `takeFromAi` sent, when there is one. */
+      messageSourceId: string | null
+    }
+  | { contactInboxId: string; status: "failed"; error: ChannelError }
+  | { contactInboxId: string; status: "unknown"; error: ChannelError }
+  /**
+   * Not applied because the channel asked to slow down (a rate limit, or the
+   * quota is nearly used up): nothing happened, so it is safe to retry after
+   * `retryAfterMs`.
+   */
+  | { contactInboxId: string; status: "deferred"; error: ChannelError }
+
+/** What one bulk call reports back. */
+export type BulkThreadControlResult = {
+  /** One entry per input contact, in input order. */
+  results: BulkThreadControlItemResult[]
+  /**
+   * The channel asks the caller to wait this long before its next call (its
+   * quota is exhausted or close to it). `null` = carry on.
+   */
+  retryAfterMs: number | null
+}
+
+/**
+ * What a channel's `getThreadOwner` reports: who holds the thread according to
+ * the channel itself. `ownerAppId: null` = the channel says nobody holds it.
+ * A channel that cannot answer does not implement the handler at all, so a
+ * missing handler means "cannot sync", never "no owner".
+ */
+export type ThreadOwnerResult = {
+  ownerAppId: string | null
+  /** When the channel says the ownership lapses; `null` when it does not. */
+  expiresAt: Date | null
+  /**
+   * The channel's own identities, resolved on the channel side so shared code
+   * can classify `ownerAppId` without reading channel config: OUR app id, and
+   * the automated-assistant app id. Absent/null = the channel does not know.
+   */
+  ownAppId?: string | null
+  aiAgentAppId?: string | null
+}
+
+export type ThreadControlWebhookResult =
+  | { kind: "handover"; event: ThreadControlWebhookEvent }
+  /** A thread request: parsed and ignored (no ownership change). */
+  | { kind: "handoverRequest"; event: ThreadControlRequestEvent }
+  /** Receiver configuration: parsed and logged only. */
+  | { kind: "appRoles"; event: ThreadControlAppRolesEvent }
+  /** Handed unchanged to `receiveMessage`. */
+  | {
+      kind: "standbyMessage"
+      receivePayload: unknown
+      /**
+       * The same message as a regular (owner) delivery, for a channel whose
+       * standby copy can be re-processed once this app holds the thread again
+       * (the channel does not resend it). Absent when it cannot be replayed.
+       */
+      ownerReplayPayload?: unknown
+      /** The channel's AI-agent app id, to recognise a thread this app took from it. */
+      aiAgentAppId?: string
+    }
 export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {

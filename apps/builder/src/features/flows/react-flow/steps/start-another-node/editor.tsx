@@ -1,7 +1,7 @@
 "use client"
 
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
-import { useReactFlow } from "@xyflow/react"
+import { useNodes } from "@xyflow/react"
 import { SkipForwardIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
@@ -16,8 +16,10 @@ const StartAnotherNodeStepEditor = (props: StartAnotherNodeStepEditorProps) => {
 
   const t = useTranslations()
 
-  const { getNodes } = useReactFlow()
-  const nodes = useMemo(() => getNodes(), [getNodes])
+  // Subscribe rather than snapshot `getNodes()`: a button target created in
+  // the same click (Send Message / Perform Action) adds its node after this
+  // editor mounts, and a snapshot would leave the combobox without it.
+  const nodes = useNodes()
   const currentNodeId = useMemo(
     () => nodes.find((node) => node.selected)?.id,
     [nodes],

@@ -58,7 +58,7 @@ export class BaseEventBus<
   /**
    * Accepts a factory as well as a live client so that constructing a bus has
    * no side effects. The bus singletons are module-scope, and the root barrel
-   * re-exports every one of them, so eagerly calling `getRedisConnection()`
+   * re-exports every one of them, so eagerly calling `getRedisConnection("hot")`
    * would open connections merely because something imported `emit` — which
    * broke any consumer's test that did not also mock `@chatbotx.io/redis`.
    * `getRedisConnection` memoizes, so deferring changes nothing else.

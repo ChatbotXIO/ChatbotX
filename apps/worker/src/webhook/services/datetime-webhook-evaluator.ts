@@ -172,7 +172,7 @@ async function enqueueAndMarkWebhook(
   }
 
   try {
-    const redis = getRedisConnection()
+    const redis = getRedisConnection("hot")
 
     if (await checkExecutionCache(redis, webhookInfo.webhookId, contactId)) {
       return notExecutedResult

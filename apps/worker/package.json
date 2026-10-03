@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "backfill:messenger-webhook-fields": "dotenv -e ../../.env -- tsx scripts/resubscribe-messenger-webhook-fields.ts",
+    "backfill:whatsapp-webhook-fields": "dotenv -e ../../.env -- tsx scripts/resubscribe-whatsapp-webhook-fields.ts",
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev": "concurrently pnpm:worker:* | pino-pretty",
@@ -82,7 +84,6 @@
     "@chatbotx.io/worker-config": "workspace:*",
     "@faker-js/faker": "^10.5.0",
     "@mozilla/readability": "^0.6.0",
-    "@platformatic/kafka": "^1.34.0",
     "@t3-oss/env-core": "^0.13.11",
     "ai": "^6.0.170",
     "bullmq": "^5.76.4",

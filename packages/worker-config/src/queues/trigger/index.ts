@@ -3,7 +3,7 @@ import { Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
-  getRedisConnection,
+  getQueueConnection,
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
@@ -43,6 +43,6 @@ export type TriggerJobData = TriggerJobExecute | TriggerJobEvaluate
 export const triggerQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<TriggerJobData>(queueNames.enum.trigger, {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.trigger),
       defaultJobOptions,
     })

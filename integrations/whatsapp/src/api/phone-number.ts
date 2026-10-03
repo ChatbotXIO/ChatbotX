@@ -39,6 +39,11 @@ export type WhatsappPhoneNumber = {
   display_phone_number: string
   quality_rating: string
   platform_type: string
+  /**
+   * Registration/connection status (`CONNECTED`, `PENDING`, ...). Only present
+   * when the listing asked for it — `PHONE_NUMBER_REGISTER_FIELDS`.
+   */
+  status?: string
   throughput: Record<string, unknown>
   webhook_configuration: Record<string, unknown>
   id: string
@@ -69,6 +74,26 @@ export const PHONE_NUMBER_LIST_COEXIST_FIELDS = [
   "throughput",
   "webhook_configuration",
   "is_on_biz_app",
+].join(",")
+
+/**
+ * Graph's default field set plus `status`, which the register step reads to
+ * tell a number already connected on the Cloud API (e.g. shared through
+ * "Share existing WhatsApp phone numbers") from one that still needs
+ * `/register`. Naming any `fields` narrows the response, so the defaults are
+ * restated here.
+ */
+export const PHONE_NUMBER_REGISTER_FIELDS = [
+  "id",
+  "verified_name",
+  "display_phone_number",
+  "code_verification_status",
+  "name_status",
+  "quality_rating",
+  "platform_type",
+  "throughput",
+  "webhook_configuration",
+  "status",
 ].join(",")
 
 export type WhatsappPhoneNumberResponse = {

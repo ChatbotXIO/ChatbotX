@@ -22,6 +22,7 @@ import { DynamicStepViewer } from "../steps"
 import { ButtonStepViewer } from "../steps/button/viewer"
 import { FlowAnalyticsStoreProvider } from "../stores/flow-analytics-store-provider"
 import { allNodesConfig } from "./node-config"
+import { QuickReplySettingsHandles } from "./quick-reply-settings/quick-reply-settings-handles"
 
 type NodeAnalyticsViewerProps = {
   id: string
@@ -234,6 +235,10 @@ export const NodeAnalyticsViewer = memo((props: NodeAnalyticsViewerProps) => {
                   key={quickReplyItem.id}
                 />
               ))}
+
+            {"quickReplySettings" in data.details && (
+              <QuickReplySettingsHandles details={data.details} />
+            )}
 
             {shouldShowDefaultContinue(type, data) && (
               <div className="relative w-full text-right">

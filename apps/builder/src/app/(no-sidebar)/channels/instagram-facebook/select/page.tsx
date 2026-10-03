@@ -80,7 +80,7 @@ export default async function InstagramFacebookSelectPage() {
   const auth = await readPendingAuth(FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE)
 
   if (!auth) {
-    redirect("/channels/create")
+    redirect("/channels/create?error=sessionExpired")
   }
 
   const accounts = await getUserInstagramAccounts(auth.userToken, auth.version)

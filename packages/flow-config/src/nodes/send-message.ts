@@ -1,3 +1,4 @@
+import { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { actionSteps } from "../shared"
 import { buttonStepSchema } from "../steps/button"
@@ -6,7 +7,13 @@ import {
   chooseChannelStepSchema,
 } from "../steps/choose-channel"
 import { getUserDataStepSchema } from "../steps/get-user-data"
+import {
+  quickReplySettingsDefaultFn,
+  quickReplySettingsSchema,
+  refineQuickReplySettings,
+} from "../steps/quick-reply-settings"
 import { sendAudioStepSchema } from "../steps/send-audio"
+import { sendCardStepSchema } from "../steps/send-card"
 import { sendCarouselStepSchema } from "../steps/send-carousel"
 import { sendFileStepSchema } from "../steps/send-file"
 import { sendGifStepSchema } from "../steps/send-gif"
@@ -32,34 +39,48 @@ import {
 export const sendMessageNodeSchema = baseNodeSchema.extend({
   type: z.literal(nodeTypeSchema.enum.sendMessage),
   data: baseNodeDataSchema.extend({
-    details: z.object({
-      beforeStep: chooseChannelStepSchema,
-      steps: z.array(
-        z.discriminatedUnion("stepType", [
-          sendAudioStepSchema,
-          sendFileStepSchema,
-          sendImageStepSchema,
-          sendMultipleImagesStepSchema,
-          sendTextStepSchema,
-          sendVideoStepSchema,
-          // sendCardStepSchema,
-          sendCarouselStepSchema,
-          getUserDataStepSchema,
-          sendGifStepSchema,
-          typingStepSchema,
-          sendWaTemplateMessageStepSchema,
-          sendMessengerTemplateMessageStepSchema,
-          whatsappOptionListStepSchema,
-          whatsappCallButtonStepSchema,
-          whatsappFlowStepSchema,
-          ...actionSteps,
-        ]),
-      ),
-      quickReplies: z.array(buttonStepSchema).max(MAX_QUICK_REPLIES),
-    }),
+    details: z
+      .object({
+        beforeStep: chooseChannelStepSchema,
+        steps: z.array(
+          z.discriminatedUnion("stepType", [
+            sendAudioStepSchema,
+            sendFileStepSchema,
+            sendImageStepSchema,
+            sendMultipleImagesStepSchema,
+            sendTextStepSchema,
+            sendVideoStepSchema,
+            sendCardStepSchema,
+            sendCarouselStepSchema,
+            getUserDataStepSchema,
+            sendGifStepSchema,
+            typingStepSchema,
+            sendWaTemplateMessageStepSchema,
+            sendMessengerTemplateMessageStepSchema,
+            whatsappOptionListStepSchema,
+            whatsappCallButtonStepSchema,
+            whatsappFlowStepSchema,
+            ...actionSteps,
+          ]),
+        ),
+        quickReplies: z.array(buttonStepSchema).max(MAX_QUICK_REPLIES),
+        quickReplySettings: quickReplySettingsSchema.optional(),
+      })
+      .superRefine(refineQuickReplySettings),
   }),
 })
 export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>
+
+/**
+ * Returns the configured channel, falling back to omnichannel for stored
+ * legacy values that predate the current channel enum.
+ */
+export const getSendMessageChannel = (
+  node: SendMessageNodeSchema,
+): ChannelType => {
+  const parsed = channelTypes.safeParse(node.data.details.beforeStep.channel)
+  return parsed.success ? parsed.data : channelTypes.enum.omnichannel
+}
 
 export const sendMessageNodeDefaultFn = (
   props: DefaultNodeProps,
@@ -75,6 +96,7 @@ export const sendMessageNodeDefaultFn = (
       beforeStep: chooseChannelStepDefaultFn(),
       steps: [],
       quickReplies: [],
+      quickReplySettings: quickReplySettingsDefaultFn(),
       ...props.detailProps,
     },
   },

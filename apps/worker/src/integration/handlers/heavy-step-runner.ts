@@ -82,7 +82,7 @@ function outcomeTtlMs(): number {
 }
 
 async function readOutcome(key: string): Promise<OutcomeState | null> {
-  const raw = await getRedisConnection().get(key)
+  const raw = await getRedisConnection("hot").get(key)
   if (!raw) {
     return null
   }
@@ -109,7 +109,7 @@ async function ensurePending(
   key: string,
   deadlineAt: number,
 ): Promise<OutcomeState> {
-  await getRedisConnection().set(
+  await getRedisConnection("hot").set(
     key,
     JSON.stringify({ deadlineAt, status: "pending" }),
     "PX",
@@ -129,7 +129,7 @@ async function transitionOutcome(
   errorMessage?: string,
 ): Promise<string> {
   return String(
-    await getRedisConnection().eval(
+    await getRedisConnection("hot").eval(
       `
 local raw = redis.call("GET", KEYS[1])
 if not raw then return "missing" end
@@ -173,7 +173,7 @@ export async function claimHeavyStepResume(input: {
   resumeLeaseToken: string
 }): Promise<"claimed" | "pending" | "resumed"> {
   return String(
-    await getRedisConnection().eval(
+    await getRedisConnection("hot").eval(
       `
 local raw = redis.call("GET", KEYS[1])
 if not raw then return "resumed" end
@@ -207,7 +207,7 @@ export async function finishHeavyStepResume(input: {
   resumeLeaseToken: string
   succeeded: boolean
 }): Promise<void> {
-  await getRedisConnection().eval(
+  await getRedisConnection("hot").eval(
     `
 local raw = redis.call("GET", KEYS[1])
 if not raw then return end

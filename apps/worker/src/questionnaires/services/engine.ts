@@ -333,7 +333,7 @@ export async function runQuestionnaireEngine(
   const attributes = conversation.additionalAttributes as
     | ConversationAttributes
     | undefined
-  if (attributes?.challenge) {
+  if (attributes?.challenge?.type === "step") {
     const attempts =
       (props.ctx?.variables.conversation.challengeAttempts?.value as
         | number

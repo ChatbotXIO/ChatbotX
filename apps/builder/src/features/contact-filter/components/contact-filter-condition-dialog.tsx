@@ -1,6 +1,10 @@
 "use client"
 
-import type { FormFieldType } from "@chatbotx.io/database/partials"
+import {
+  type FormFieldType,
+  type PostTrackingChannel,
+  supportsPostTracking,
+} from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
@@ -25,6 +29,7 @@ import {
   canonicalBooleanLiteral,
   operatorTypes,
 } from "@chatbotx.io/utils/custom-field"
+import { SiInstagram, SiMessenger } from "@icons-pack/react-simple-icons"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useCallback, useMemo } from "react"
 import { useForm, useWatch } from "react-hook-form"
@@ -60,6 +65,7 @@ import {
   getStaticFieldValueInputConfig,
   staticFieldOperatorRequiresArrayValue,
 } from "./static-field-filter-config"
+import { useChannelPostSelectOptions } from "./use-workspace-option-sources"
 import {
   DATETIME_VALUE_INPUT_KINDS,
   resolveValueInputKind,
@@ -216,6 +222,7 @@ type ContactFilterValueFieldsProps = {
   customFieldInput?: CustomFieldValueInputConfig
   /** True when the active field is a custom field or bot field (not static). */
   isDynamicField?: boolean
+  isChannelPost?: boolean
   enableVariables: boolean
 }
 
@@ -258,6 +265,23 @@ const FILTER_VALUE_INPUT_CONFIG = {
   FreeTextInputKind,
   { placeholderKey: string; type: "number" | undefined }
 >
+
+/**
+ * One icon per post-tracking channel. Typed against `PostTrackingChannel`, so
+ * adding a channel to the capability list is a compile error until it gets one.
+ */
+const POST_CHANNEL_ICONS: Record<PostTrackingChannel, typeof SiInstagram> = {
+  instagram: SiInstagram,
+  messenger: SiMessenger,
+}
+
+const PostChannelIcon = ({ channel }: { channel: string | undefined }) => {
+  if (!(channel && supportsPostTracking(channel))) {
+    return null
+  }
+  const Icon = POST_CHANNEL_ICONS[channel]
+  return <Icon aria-hidden="true" className="ms-2 size-4" />
+}
 
 const BooleanValueField = () => {
   const t = useTranslations()
@@ -448,6 +472,7 @@ const ContactFilterValueFields = ({
   valueOptions,
   customFieldInput,
   isDynamicField,
+  isChannelPost = false,
   enableVariables,
 }: ContactFilterValueFieldsProps) => {
   const kind = resolveValueInputKind(customFieldInput, valueType)
@@ -466,7 +491,64 @@ const ContactFilterValueFields = ({
     )
   }
 
+  if (kind === "multiSelect" && isChannelPost) {
+    return <ChannelPostValueField />
+  }
+
   return VALUE_INPUT_RENDERERS[kind]({ enableVariables, valueOptions })
+}
+
+const ChannelPostValueField = () => {
+  const t = useTranslations()
+  const value = useWatch<ContactFilterConditionFormDraft>({ name: "value" })
+  const selectedIds = Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : []
+  const { error, isLoading, onReachEnd, onSearchValueChange, options, retry } =
+    useChannelPostSelectOptions(selectedIds)
+  const statusIndicator = error ? (
+    <div className="px-2 py-1.5 text-center">
+      <button className="text-sm underline" onClick={retry} type="button">
+        {t("states.error")}: {t("actions.retry")}
+      </button>
+    </div>
+  ) : null
+  let emptyIndicator: ReactNode | undefined
+  if (error) {
+    emptyIndicator = statusIndicator
+  } else if (isLoading) {
+    emptyIndicator = t("actions.loading")
+  }
+
+  return (
+    <MultiSelectField
+      emptyIndicator={emptyIndicator}
+      hideSelectAll
+      name="value"
+      onReachEnd={onReachEnd}
+      onSearchValueChange={onSearchValueChange}
+      options={options}
+      renderOption={(option) => (
+        <>
+          <PostChannelIcon channel={option.channel} />
+          {option.href ? (
+            <a
+              aria-label={t("condition.openPost", { post: option.label })}
+              className="ms-2 text-muted-foreground text-xs underline"
+              href={option.href}
+              onClick={(event) => event.stopPropagation()}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {t("condition.openPostLink")}
+            </a>
+          ) : null}
+        </>
+      )}
+      serverSearch
+      statusIndicator={statusIndicator}
+    />
+  )
 }
 
 type ContactFilterConditionDialogProps = {
@@ -679,6 +761,7 @@ export const ContactFilterConditionDialog = ({
                 <ContactFilterValueFields
                   customFieldInput={resolvedFieldInput}
                   enableVariables={enableVariables}
+                  isChannelPost={activeConfig?.optionSource === "channelPosts"}
                   isDynamicField={Boolean(
                     activeConfig?.customFieldId || activeConfig?.botFieldId,
                   )}

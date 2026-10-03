@@ -80,6 +80,7 @@ import { sendExternalFlowStep } from "./start-external-flow"
 import { sendExternalNodeStep } from "./start-external-node"
 import { subscribeBroadcastStep } from "./subscribe-broadcast"
 import { subscribeSequenceStep } from "./subscribe-schedule"
+import { threadControlStep } from "./thread-control"
 import { triggerN8nStep } from "./trigger-n8n"
 import typingStep from "./typing"
 import { unarchiveConversationStep } from "./unarchive-conversation"
@@ -113,6 +114,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.addContactTag]: addContactTagStep,
   [stepTypes.enum.removeContactTag]: removeContactTagStep,
   [stepTypes.enum.notifyAgent]: undefined,
+  [stepTypes.enum.threadControl]: threadControlStep,
   [stepTypes.enum.deleteContact]: deleteContactStep,
   [stepTypes.enum.callApi]: externalRequestStep,
   [stepTypes.enum.make]: makeStep,

@@ -7,6 +7,7 @@ import type { HTTPMethod } from "@orpc/server"
 import { ORPCError } from "@orpc/server"
 import { isCloud } from "@/env"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "@/features/ads-campaign/lib/api-paths"
+import { FILTER_VALUE_LABELS_POST_PATH } from "@/features/contact-filter/lib/api-paths"
 import { CONVERSATIONS_LIST_POST_PATH } from "@/features/conversations/lib/api-paths"
 
 export type WorkspaceAccessDenialReason = "trialExpired" | "macLimitReached"
@@ -63,6 +64,11 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
  *   trial gate only — not yet reviewed for read_only-token exposure, so it
  *   stays out of `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` until that review
  *   happens.
+ * - `FILTER_VALUE_LABELS_POST_PATH`
+ *   (`/workspaces/{workspaceId}/contact-filter/value-labels`): up to 100 ids
+ *   per entity type, too large for a GET query string. Primary-key lookups
+ *   that only read, so the filter's names keep resolving on a trial-expired
+ *   workspace. Trial gate only — not reviewed for read_only-token exposure.
  */
 
 const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
@@ -158,7 +164,10 @@ export const workspaceAccessDenialOrpcError = (
  * `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` — see the comments above for why each
  * path opts in independently.
  */
-const READ_ONLY_POST_PATHS = new Set<string>([CONVERSATIONS_LIST_POST_PATH])
+const READ_ONLY_POST_PATHS = new Set<string>([
+  CONVERSATIONS_LIST_POST_PATH,
+  FILTER_VALUE_LABELS_POST_PATH,
+])
 
 export async function assertWorkspaceOwnerAccessForMethod(props: {
   method: HTTPMethod | undefined

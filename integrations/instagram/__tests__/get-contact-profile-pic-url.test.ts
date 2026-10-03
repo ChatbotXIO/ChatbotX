@@ -47,7 +47,8 @@ describe("Instagram getContactProfilePicUrl", () => {
     ).resolves.toBe("https://cdn.example/avatar.jpg")
 
     expect(mockGet).toHaveBeenCalledWith(
-      "v23.0/igsid-1?fields=id%2Cname%2Cusername%2Cprofile_pic&access_token=instagram-token",
+      "v23.0/igsid-1?fields=id%2Cname%2Cusername%2Cprofile_pic",
+      { headers: { Authorization: "Bearer instagram-token" } },
     )
     expect(mockPutObject).not.toHaveBeenCalled()
   })

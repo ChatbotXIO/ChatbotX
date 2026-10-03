@@ -2,7 +2,7 @@ import {
   DefaultJobAction,
   type DefaultJobData,
   defaultWorkerOptions,
-  getRedisConnection,
+  getQueueConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
@@ -162,7 +162,7 @@ async function startDefaultWorker() {
       }
     },
     {
-      connection: getRedisConnection(),
+      connection: getQueueConnection(queueNames.enum.default),
       ...defaultWorkerOptions,
     },
   )

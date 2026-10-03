@@ -18,6 +18,7 @@ const {
   mockUpdate,
   mockUpdateSet,
   mockUpdateReturning,
+  mockAssertFlowGraphPublishable,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn().mockResolvedValue([{ id: "flow-1" }])
   const mockInsertValues = vi.fn(() =>
@@ -47,8 +48,8 @@ const {
     mockTopLevelFlowFindFirst: vi.fn(),
     mockUpdate,
     mockUpdateSet,
-    mockUpdateWhere,
     mockUpdateReturning,
+    mockAssertFlowGraphPublishable: vi.fn(),
   }
 })
 
@@ -131,6 +132,7 @@ vi.mock("../src/errors", () => ({
 }))
 
 vi.mock("../src/flow-version", () => ({
+  assertFlowGraphPublishable: mockAssertFlowGraphPublishable,
   flowVersionService: {
     findDraft: mockFindDraft,
     invalidateList: mockInvalidateList,
@@ -562,6 +564,38 @@ describe("flowService.createDraft", () => {
       }),
     )
     expect(result).toEqual({ id: "flow-2" })
+  })
+
+  test("creates a draft with an in-progress graph without publish validation", async () => {
+    mockAssertFlowGraphPublishable.mockImplementationOnce(() => {
+      throw new Error("Draft graph is not publishable")
+    })
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockInsertValues.mockImplementation(() =>
+      Object.assign(Promise.resolve(undefined), {
+        returning: mockInsertReturning,
+      }),
+    )
+    mockCreateId
+      .mockReturnValueOnce("flow-3")
+      .mockReturnValueOnce("analytics-3")
+      .mockReturnValueOnce("version-3")
+    mockInsertReturning.mockResolvedValue([{ id: "flow-3" }])
+
+    await expect(
+      flowService.createDraft({
+        workspaceId: "ws-1",
+        data: { name: "New flow" },
+        graph: {
+          nodes: [{ id: "unsupported-node" }],
+          edges: [],
+          startNodeId: "unsupported-node",
+        },
+      }),
+    ).resolves.toEqual({ id: "flow-3" })
+    mockAssertFlowGraphPublishable.mockReset()
   })
 })
 

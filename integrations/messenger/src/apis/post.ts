@@ -1,4 +1,4 @@
-import type { Context } from "@chatbotx.io/sdk"
+import type { ChannelPostDetails, Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
@@ -9,7 +9,18 @@ export type FacebookPostDetails = {
   full_picture?: string
   from?: { id: string; name: string }
   created_time: string
+  permalink_url?: string
 }
+
+/** Maps the Graph post node into the channel-neutral post description. */
+export const toChannelPostDetails = (
+  post: FacebookPostDetails,
+): ChannelPostDetails => ({
+  caption: post.message,
+  permalink: post.permalink_url,
+  publishedAt: post.created_time ? new Date(post.created_time) : null,
+  thumbnailUrl: post.full_picture,
+})
 
 export type FacebookPostListItem = {
   id: string
@@ -125,7 +136,7 @@ export const getPostDetails = (props: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },
       searchParams: {
-        fields: "message,full_picture,from,created_time",
+        fields: "message,full_picture,from,created_time,permalink_url",
       },
     }),
   )

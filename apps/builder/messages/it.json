@@ -1103,7 +1103,8 @@
       "searchPlaceholder": "Cerca una parola chiave..."
     },
     "templateId": {
-      "label": "Modello WhatsApp"
+      "label": "Modello WhatsApp",
+      "placeholder": "Seleziona un modello"
     },
     "messengerTemplateId": {
       "label": "Modello Messenger"
@@ -1252,7 +1253,10 @@
         "failed": "Non riuscita",
         "completedAt": "Completata il",
         "errorDetails": "Errori di importazione",
-        "row": "Riga {row}"
+        "row": "Riga {row}",
+        "unsupportedChannelStep": "Il canale {channel} non supporta {block}.",
+        "channelStepConstraintExceeded": "{block} supera il limite di {channel}: {actual} {unit}, massimo {allowed}.",
+        "channelStepConstraintExceededGeneric": "Il canale {channel} non supporta la configurazione {block} corrente."
       }
     },
     "line": {
@@ -2083,12 +2087,16 @@
     }
   },
   "condition": {
+    "unknownValue": "Sconosciuto",
     "yes": "Sì",
     "no": "No",
     "valuePlaceholder": "...",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Inserisci una data nel formato YYYY-MM-DD HH:mm o una variabile",
+    "openPost": "Apri {post}",
+    "openPostLink": "Apri",
+    "postWithoutCaption": "Post senza didascalia",
     "operator": {
       "and": "Tutte le condizioni",
       "or": "Una qualsiasi condizione"
@@ -2278,6 +2286,28 @@
     "quickReplies": {
       "limitReached": "Limite di risposte rapide raggiunto ({max})."
     },
+    "quickReplySettings": {
+      "open": "Impostazioni risposte rapide",
+      "title": "Configura risposte rapide",
+      "chooseNextStep": "Scegli il passaggio successivo",
+      "followUp": {
+        "label": "Invia un promemoria se il contatto non ha interagito",
+        "waitFor": "Attendi",
+        "divider": "Se il contatto non ha interagito, invia un promemoria con",
+        "windowHint": "Messenger e Instagram consentono l’invio solo entro 24 ore dall’ultimo messaggio del contatto; i promemoria successivi vengono saltati su questi canali.",
+        "handle": "Nessuna interazione"
+      },
+      "retry": {
+        "label": "Riprova se la risposta non è una risposta rapida",
+        "message": "Messaggio di nuovo tentativo",
+        "messageDefault": "Tocca una delle opzioni qui sotto 👇",
+        "count": "Numero di tentativi",
+        "countOption": "{count, plural, =0 {Nessun tentativo} one {# volta} other {# volte}}",
+        "divider": "Quando il numero di tentativi viene superato",
+        "handle": "Tentativi superati",
+        "getUserDataConflict": "Il nuovo tentativo non è disponibile quando questo messaggio contiene un passaggio Ottieni dati dell'utente."
+      }
+    },
     "buttons": {
       "limitReached": "Limite di pulsanti raggiunto ({max})."
     },
@@ -2412,7 +2442,8 @@
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
       "importJsonOnly": "Solo file JSON",
       "whatsappCallButton": "Chiama su WhatsApp",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "threadControl": "Controllo del thread"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -3077,6 +3108,128 @@
   "integrations": {
     "title": "Integrazioni"
   },
+  "aiHandover": {
+    "title": "Meta Business AI",
+    "description": "Controlla cosa succede quando l'assistente IA di Meta risponde ai tuoi clienti Messenger.",
+    "info": "Se attivo, le conversazioni vengono riprese qui dopo che l'assistente IA le restituisce e si applicano le impostazioni seguenti.",
+    "enabled": {
+      "label": "Attiva"
+    },
+    "schedule": {
+      "label": "Orario di esecuzione",
+      "description": "Applica solo in queste ore del fuso orario del workspace.",
+      "from": "Dall'ora",
+      "to": "All'ora",
+      "add": "Aggiungi fascia oraria",
+      "remove": "Rimuovi fascia oraria"
+    },
+    "gotoFlow": {
+      "label": "Vai al flusso",
+      "description": "Flow avviato quando l'assistente IA restituisce la conversazione. Ha la precedenza sul messaggio di restituzione.",
+      "placeholder": "Seleziona un flusso",
+      "clear": "Rimuovi flusso"
+    },
+    "returnMessage": {
+      "label": "Messaggio di ritorno",
+      "description": "Inviato al suo posto quando non c'è un flusso o il flusso non è più attivo.",
+      "placeholder": "Messaggio inviato quando l'IA restituisce la conversazione"
+    },
+    "pauseBot": {
+      "label": "Trasferisci conversazione a un operatore",
+      "description": "Ferma il bot per questo contatto dopo la restituzione, finché un membro del team non subentra o il bot riprende."
+    },
+    "readOnly": "Puoi vedere queste impostazioni ma non modificarle.",
+    "errors": {
+      "supportSession": "Le impostazioni non possono essere modificate da una sessione di supporto.",
+      "flowNotFound": "Il flusso selezionato non è stato trovato o non è attivo.",
+      "timeRanges": "Inserisci fasce orarie valide: ore intere da 0 a 24, con inizio e fine diversi."
+    },
+    "bulk": {
+      "title": "Applica a tutti i clienti",
+      "description": "Affida tutte le conversazioni Messenger idonee all'assistente IA di Meta, oppure riprendi quelle che gestisce in questo momento. Viene eseguito in background e puoi seguirlo qui.",
+      "started": "Avviato. Puoi seguire l'avanzamento qui.",
+      "progress": "Avanzamento",
+      "processedOfTotal": "{done} di {total} conversazioni",
+      "counters": "{processed} completate, {skipped} saltate, {failed} non riuscite",
+      "action": {
+        "enable": "Attiva per tutti",
+        "disable": "Disattiva per tutti"
+      },
+      "status": {
+        "pending": "In attesa di avvio",
+        "running": "In esecuzione",
+        "cancelling": "Annullamento in corso",
+        "completed": "Completata",
+        "failed": "Non riuscita",
+        "cancelled": "Annullata"
+      },
+      "enable": {
+        "dialogDescription": "Ogni conversazione Messenger in cui il cliente ha scritto negli ultimi 30 giorni e che nessun'altra app gestisce viene affidata all'assistente IA di Meta. Le conversazioni vengono riprese in base alle impostazioni qui sopra.",
+        "confirm": "Attiva per tutti",
+        "blocked": "Salva l'automazione qui sopra e attivala (entro il suo orario di esecuzione) per abilitarla per tutti i clienti."
+      },
+      "disable": {
+        "dialogDescription": "Vengono riprese solo le conversazioni che l'assistente IA di Meta gestisce in questo momento, e si possono raggiungere solo i clienti che hanno scritto negli ultimi 7 giorni. Ognuno riceve il messaggio qui sotto, inviato con il tag Human Agent di Meta, quindi scrivilo come se rispondesse una persona. La Pagina richiede il permesso Human Agent.",
+        "messageLabel": "Messaggio ai clienti",
+        "messageDescription": "Fino a {max} caratteri.",
+        "messagePlaceholder": "Ciao, un membro del team sta prendendo in carico questa conversazione.",
+        "confirm": "Disattiva per tutti",
+        "policyWarning": "Meta consente il tag Human Agent solo a una persona che risponde al cliente. Usarlo per promozioni o messaggi automatici può portare alla limitazione della messaggistica della Pagina."
+      },
+      "errors": {
+        "automationNotActive": "Salva l'automazione e attivala (entro il suo orario di esecuzione) prima di abilitarla per tutti i clienti.",
+        "messageRequired": "Inserisci il messaggio da inviare ai clienti.",
+        "messageTooLong": "Il messaggio è troppo lungo.",
+        "pageNotConnected": "Questa Pagina non è collegata.",
+        "nothingToRetry": "Non c'è nulla da riprovare."
+      },
+      "runErrors": {
+        "automationStopped": "Interrotta perché l'automazione è stata disattivata.",
+        "tokenInvalid": "L'accesso della Pagina è stato revocato. Ricollega la Pagina e riprova.",
+        "channelUnsupported": "Questo canale non supporta l'azione di massa.",
+        "maxAttempts": "Abbandonata dopo ripetuti errori.",
+        "channelUnavailable": "Interrotta perché non è stato possibile raggiungere Meta più volte di seguito.",
+        "batchFailed": "Alcune conversazioni non hanno potuto essere confermate e sono state conteggiate come non riuscite.",
+        "pageDisconnected": "Interrotta perché la Pagina è stata scollegata.",
+        "pageRefused": "Meta ha rifiutato il passaggio per questa Pagina: potrebbe non essere configurata per l'assistente IA di Meta o mancare del permesso.",
+        "integrationUnavailable": "Impossibile caricare la connessione della Pagina. Ricollega la Pagina e riprova."
+      },
+      "pausedUntil": "In pausa fino a {at} per rispettare i limiti di frequenza di Meta per questa Pagina. Riprende da sola.",
+      "preparing": "Preparazione…",
+      "live": {
+        "enable": "Attivazione per i clienti: {done} / {total}",
+        "disable": "Disattivazione per i clienti: {done} / {total}",
+        "enableCounting": "Attivazione per i clienti: conteggio…",
+        "disableCounting": "Disattivazione per i clienti: conteggio…"
+      },
+      "done": {
+        "enable": "Attivato per {processed} clienti su {total}.",
+        "disable": "Disattivato per {processed} clienti su {total}."
+      },
+      "stopped": {
+        "enable": "L'attivazione per tutti i clienti è stata interrotta.",
+        "disable": "La disattivazione per tutti i clienti è stata interrotta."
+      },
+      "retry": "Riprova"
+    },
+    "history": {
+      "link": "Cronologia",
+      "title": "Cronologia delle esecuzioni di massa",
+      "empty": "Nessuna esecuzione per ora.",
+      "columns": {
+        "action": "Azione",
+        "requestedAt": "Avvio",
+        "progress": "Elaborate / totale",
+        "finishedAt": "Fine",
+        "message": "Messaggio",
+        "requestedBy": "Richiesta da"
+      },
+      "description": "Ogni volta che \"Applica a tutti i clienti\" è stato attivato o disattivato per questa Pagina, dal più recente.",
+      "error": "Impossibile caricare la cronologia.",
+      "previousPage": "Pagina precedente",
+      "nextPage": "Pagina successiva"
+    }
+  },
   "platformSettings": {
     "title": "Impostazioni della piattaforma",
     "errors": {
@@ -3215,7 +3368,9 @@
       "bannerDescription": "L'eliminazione di questa area di lavoro è pianificata. Annullala qui sotto per continuare a utilizzarla.",
       "pendingBlockedToast": "L'eliminazione di questa area di lavoro è pianificata. Contatta un amministratore dell'area di lavoro per ripristinare l'accesso.",
       "navDisabledTooltip": "Non disponibile mentre è pianificata l'eliminazione dell'area di lavoro",
-      "badge": "Eliminazione pianificata"
+      "badge": "Eliminazione pianificata",
+      "purging": "L’eliminazione dell’area di lavoro è in corso.",
+      "alreadyStarted": "L’eliminazione dell’area di lavoro è già iniziata."
     },
     "supportAccess": {
       "bannerTitle": "Sessione di supporto della piattaforma",
@@ -3357,6 +3512,9 @@
     "noVersionsFound": "Nessuna versione pubblicata trovata",
     "publishVersionSuccess": "È stata pubblicata una nuova versione",
     "flowConfigIncomplete": "Alcune configurazioni sono incomplete",
+    "quickReplyNextStepRequired": "Scegli un passaggio successivo per ogni impostazione di risposta rapida attiva",
+    "quickReplyRetryMessageRequired": "Inserisci un messaggio di nuovo tentativo",
+    "quickReplyRetryWithGetUserData": "Il nuovo tentativo non può essere combinato con un passaggio Ottieni dati dell'utente",
     "whatsappCarouselButtonsMismatch": "Su WhatsApp, un carosello richiede gli stessi pulsanti su ogni scheda: un unico pulsante di collegamento su ogni scheda, oppure lo stesso numero di pulsanti di risposta su ogni scheda",
     "whatsappCarouselLinkButtonNotAlone": "Su WhatsApp, una scheda del carosello con un pulsante di collegamento non può avere altri pulsanti. Rimuovi gli altri pulsanti su quella scheda, oppure cambia il pulsante di collegamento in un'altra azione.",
     "duplicateNodeError": "Impossibile duplicare il blocco. Riprova.",
@@ -3371,7 +3529,8 @@
     "waTemplateMpmTooManyProducts": "Un pulsante multi-prodotto può avere al massimo 30 prodotti in totale. Rimuovi alcuni prodotti prima di pubblicare.",
     "waTemplateLtoExpirationRequired": "Scegli una data di scadenza per l'offerta a tempo limitato prima di inviare.",
     "waTemplateMpmIncompleteProducts": "Ogni sezione richiede almeno un prodotto selezionato: rimuovi le righe vuote o scegli un prodotto.",
-    "mediaStepUnsupported": "Questo canale non può inviare questo tipo di contenuto. Rimuovi il passaggio o imposta questo nodo su un canale che lo supporta.",
+    "unsupportedBlock": "Questo canale non supporta questo blocco.",
+    "constraintExceeded": "Il limite di questo canale è stato superato.",
     "mediaButtonsUnsupported": "Questo canale non può inviare pulsanti con un messaggio multimediale. Rimuovi i pulsanti o spostali in un passaggio di testo successivo.",
     "voiceCall": "Chiamata vocale",
     "voiceCallDuration": "Chiamata vocale · {duration}",
@@ -6813,5 +6972,124 @@
     "openZaloGroup": "Apri gruppo Zalo",
     "openZalo": "Apri Zalo",
     "openMessenger": "Apri Messenger"
+  },
+  "conversationRouting": {
+    "owner": {
+      "metaAi": "Meta AI",
+      "partner": "Partner",
+      "partnerWithRole": "Partner · {role}",
+      "self": "te"
+    },
+    "roles": {
+      "ai_agent": "Meta AI",
+      "ctwa": "Annunci Click-to-WhatsApp",
+      "customer_service": "Assistenza clienti",
+      "escalation": "Escalation",
+      "marketing": "Marketing",
+      "utility": "Utility"
+    },
+    "pill": {
+      "standby": "Standby ({owner})",
+      "owned": "Attivo",
+      "tooltip": "Gestita da {owner}"
+    },
+    "release": {
+      "label": "Rilascia",
+      "tooltip": "Rilascia questa conversazione così altre app possono rispondere",
+      "success": "Conversazione rilasciata"
+    },
+    "pass": {
+      "menuItem": "Passa all'escalation",
+      "title": "Passare al partner di escalation?",
+      "description": "Passare questa conversazione al tuo partner di escalation? Le tue risposte saranno sospese finché la conversazione non tornerà.",
+      "confirm": "Passa",
+      "success": "Conversazione passata al partner di escalation"
+    },
+    "aiHandover": {
+      "label": "BizAI",
+      "tooltip": "Restituisci questa conversazione all'assistente IA",
+      "title": "Restituire all'assistente IA?",
+      "description": "L'assistente IA riprenderà a rispondere a questo cliente. Le tue risposte saranno sospese finché la conversazione non tornerà a te. Meta non garantisce che l'assistente risponda a ogni messaggio.",
+      "confirm": "Restituisci",
+      "success": "Conversazione restituita all'assistente IA"
+    },
+    "composer": {
+      "aiStandbyHint": "Replying takes over this conversation from the AI assistant.",
+      "title": "Sei in standby (solo ascolto)",
+      "description": "Un partner terzo sta gestendo questa conversazione. La casella dei messaggi è bloccata per evitare risposte duplicate.",
+      "takeOver": "Prendi in carico",
+      "takeOverSuccess": "Ora stai gestendo questa conversazione",
+      "notEscalation": "Solo il partner di escalation può prendere in carico. L'instradamento si configura in Meta Business Suite.",
+      "notPrimaryReceiver": "Questa app deve essere il ricevente principale della Pagina per prendere in carico. Impostalo nelle impostazioni dell'Handover Protocol della Pagina.",
+      "learnMore": "Scopri di più",
+      "dismiss": "Invia comunque"
+    },
+    "divider": {
+      "ownerHandling": "{owner} sta ora gestendo questa conversazione",
+      "handedOver": "{previousOwner} ti ha restituito questa conversazione",
+      "selfHandling": "Ora stai gestendo questa conversazione",
+      "takenOver": "Hai preso in carico questa conversazione",
+      "released": "Conversazione rilasciata",
+      "passed": "Conversazione passata al partner di escalation",
+      "serviceRejected": "Messaggio non inviato: {owner} sta gestendo questa conversazione"
+    },
+    "context": {
+      "title": "Contesto della conversazione",
+      "summaryBadge": "Riepilogo IA",
+      "historyBadge": "Cronologia",
+      "customer": "Cliente",
+      "business": "Azienda",
+      "handoverNote": "Nota di passaggio: {note}",
+      "showAll": "Mostra tutto ({count})",
+      "showLess": "Mostra meno"
+    },
+    "echo": {
+      "partner": "Partner"
+    },
+    "panel": {
+      "title": "Instradamento della conversazione",
+      "threadState": "Stato del thread",
+      "threadStateOwned": "Assegnato",
+      "threadStateStandby": "In standby",
+      "threadStateIdle": "Inattivo",
+      "currentOwner": "Proprietario attuale",
+      "noOwner": "Nessun responsabile",
+      "roleLabel": "Il tuo ruolo",
+      "selfOwned": "Gestisce la conversazione",
+      "selfStandby": "In standby — solo ascolto",
+      "selfIdle": "In attesa del prossimo messaggio del cliente",
+      "hintOwned": "Rilascia quando hai finito così altre app possono rispondere.",
+      "hintStandby": "Mentre un partner gestisce questa conversazione, i tuoi messaggi vengono trattenuti per evitare risposte duplicate al cliente. Prendi in carico dalla casella dei messaggi per rispondere.",
+      "hintIdle": "Il prossimo messaggio del cliente decide chi risponde.",
+      "syncOwner": "Sincronizza proprietario",
+      "syncOwnerSuccess": "Proprietario sincronizzato"
+    },
+    "settings": {
+      "title": "Flusso di ripresa dopo il passaggio",
+      "description": "L'automazione che viene eseguita quando un partner restituisce una conversazione.",
+      "resumeFlowLabel": "Scegli un flusso",
+      "resumeFlowPlaceholder": "Seleziona un flusso",
+      "info": "Questo flusso si avvia automaticamente quando il controllo viene restituito. Il riepilogo della conversazione e la cronologia della chat vengono quindi mostrati ai tuoi agenti nella live chat.",
+      "save": "Salva modifiche",
+      "clearFlow": "Rimuovi flusso",
+      "adminOnly": "Solo gli amministratori dello spazio di lavoro possono modificare l'instradamento",
+      "flowNotFound": "Il flusso selezionato non è stato trovato o non è attivo",
+      "integrationNotFound": "Numero WhatsApp non trovato",
+      "messengerIntegrationNotFound": "Pagina Messenger non trovata"
+    },
+    "errors": {
+      "unsupported": "L'instradamento delle conversazioni non è disponibile su questo canale",
+      "notFound": "Questa conversazione non è su quel canale",
+      "actionFailed": "Impossibile aggiornare l'instradamento della conversazione. Riprova."
+    },
+    "step": {
+      "action": "Azione",
+      "release": "Rilascia la conversazione",
+      "pass": "Passa al partner di escalation",
+      "helper": "Solo WhatsApp. Sugli altri canali, o quando la conversazione non è gestita qui, il passaggio segue il percorso di errore."
+    },
+    "template": {
+      "sent": "Modello inviato"
+    }
   }
 }

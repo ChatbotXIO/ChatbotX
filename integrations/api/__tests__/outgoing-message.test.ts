@@ -58,4 +58,25 @@ describe("api sendFlowStep — sendMultipleImages", () => {
     })
     expect(result).toEqual({ messageIds: ["m_1"], sentCount: 1 })
   })
+
+  test("rejects an unsupported card instead of degrading it to an empty message", async () => {
+    await expect(
+      sendFlowStep({
+        ctx,
+        data: {
+          contact,
+          quickReplies: [],
+          step: {
+            id: "step-card-1",
+            nodeId: "node-1",
+            stepType: "sendCard",
+            buttons: [],
+            title: "Unsupported card",
+          },
+        },
+      } as never),
+    ).rejects.toThrow("Unsupported API flow step: sendCard")
+
+    expect(mockPostSignedEnvelope).not.toHaveBeenCalled()
+  })
 })

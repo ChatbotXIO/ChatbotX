@@ -191,6 +191,8 @@ These are the most common mistakes — read before writing any code:
 20. **Structured logging: the key is `err`, not `error`.** Server-side code (actions, queries, API handlers, worker consumers, integrations) must use the structured logger, never `console`. Pino's serializer is keyed on `err`, so `logger.error({ error }, "...")` silently drops the stack trace while `logger.error({ err: error }, "...")` keeps it. Import the nearest child logger (`apps/worker/src/lib/logger.ts`, a feature's `lib/log`) or `getChildLogger` from `@chatbotx.io/logger` — there is no named `logger` export on that package. Client components may use `console` only for local debugging removed before merge.
 
 21. **TanStack Query mutations must invalidate.** `router.refresh()` only re-renders the RSC tree; it does not touch the browser-singleton QueryClient (`apps/builder/src/lib/query/query-client.ts`, `staleTime: 30_000`) that survives navigation. Every create, update, delete, toggle, or move of a TanStack-cached resource must call its invalidator (`useInvalidateTags`, `useInvalidateInboxes`, `useInvalidateUsers`, `useInvalidateSequences`, `useInvalidateCustomFields`, `useInvalidateBotFields`, `useInvalidateFlows`, `useSavedReplyCache`) or `setQueryData`. Invalidate before `router.push`. Shared mutation dialogs such as `ChangeFolderDialog` must expose `onSuccess` so callers can invalidate their resource. List payloads may contain derived fields (`flowVersions`, `folderId`, `stepsCount`), so invalidation is required even when the primary entity is unchanged.
+
+22. **`ContactInboxPost` has no FK and is partitioned by `workspaceId`.** Every ContactInbox, Contact, or Workspace delete path must go through `contactInboxPostService`; every post query must include `workspaceId`; and post writes must hold the durable workspace purge guard through commit.
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Git conventions
@@ -201,6 +203,8 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 
 - Human-facing docs: [chatbotx.io/docs](https://chatbotx.io/docs) (including Quick Start).
 - Tech stack details: `docs/tech-stack.md`
+- Architecture decisions: `docs/adr/`
+- Messaging scaling runbook: `docs/scaling-messaging.md`
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`
 - Workspace API tokens (hashing, scopes, `{{api_key}}` default token): `docs/developer/workspace-api-tokens.md`
@@ -210,6 +214,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`
 - Automatic Customer Scan (contact import by scanning channel conversation history; shares the `CoexistSyncRun` table via a `type` discriminator): `docs/contact-scan.md`
+- WhatsApp Conversation Routing (thread control with Meta AI / other partners: webhook backfill, send gate, handover, archive release): `docs/whatsapp-conversation-routing.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.
 

@@ -461,9 +461,11 @@ async function sendMessage(
   // a webview link opened from an earlier prompt (e.g. the first send) stays
   // valid for the retry message's button too. A brand-new challenge cycle
   // (challenge cleared, then a new one started) gets a fresh id.
-  const existingChallenge = (
+  const pendingChallenge = (
     conversation.additionalAttributes as ConversationAttributes | undefined
   )?.challenge
+  const existingChallenge =
+    pendingChallenge?.type === "step" ? pendingChallenge : undefined
   const challengeId = existingChallenge?.data.challengeId ?? createId()
 
   await conversationService.updateChallenge({
@@ -703,9 +705,11 @@ async function consumeCurrentChallenge(
   props: ExecuteStepProps<GetUserDataStepSchema>,
 ): Promise<boolean> {
   const { conversation, step } = props
-  const currentChallenge = (
+  const pendingChallenge = (
     conversation.additionalAttributes as ConversationAttributes | undefined
   )?.challenge
+  const currentChallenge =
+    pendingChallenge?.type === "step" ? pendingChallenge : undefined
 
   if (!currentChallenge) {
     return false
