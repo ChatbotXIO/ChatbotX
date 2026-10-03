@@ -66,25 +66,23 @@ const probeSendGrid = async (auth: SendGridAuthValue) => {
   }
 }
 
+const connection = apiKeyConnection({
+  displayName: "SendGrid",
+  fields: sendGridFields,
+  buildAuth: buildSendGridAuth,
+  probe: probeSendGrid,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   SendGridConfig,
   SendGridAuthValue,
   SendGridActions
 > = {
   name: "sendGrid",
-  connection: apiKeyConnection({
-    displayName: "SendGrid",
-    fields: sendGridFields,
-    buildAuth: buildSendGridAuth,
-    probe: probeSendGrid,
-    isRevoked: isUnauthorizedStatusError,
-  }),
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = await buildSendGridAuth(props)
-      await probeSendGrid(auth)
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listLists: async ({ ctx, props }) => {
       const searchParams = new URLSearchParams({
         page_size: String(props.pageSize),

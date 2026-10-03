@@ -36,7 +36,7 @@ const config: IntegrationDefinition<
   connection: {
     kind: "channel",
     strategy: "oauth_redirect",
-    multiAccount: true,
+    multiAccount: false,
     configFields: [],
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as InstagramConfig
@@ -49,18 +49,9 @@ const config: IntegrationDefinition<
       })
       return `https://www.instagram.com/oauth/authorize?${params.toString()}`
     },
-    // Instagram Business Login authorizes exactly one account per grant —
-    // `exchangeCodeForToken` already returns a long-lived, account-scoped
-    // token (unlike Messenger's user-level token), so this resolves the
-    // full `InstagramAuthValue` directly and no `listCandidates` is needed;
-    // `completeAuthorization`'s single-candidate fallback
-    // (`[{...describe(auth), auth}]`) covers it. `username` has no default
-    // on `IntegrationInstagram` and isn't part of `describe()`'s
-    // `{sourceId,displayName}`, so it rides along in `metadata` for
-    // `candidateToConfig` to surface.
     exchangeCode: async ({ code, callbackUrl, credential }) => {
       const config = credential as InstagramConfig
-      const { accessToken, userId } = await exchangeCodeForToken(
+      const { accessToken } = await exchangeCodeForToken(
         config,
         code,
         callbackUrl,
@@ -71,20 +62,18 @@ const config: IntegrationDefinition<
           "Instagram account is not a supported Business/Creator account.",
         )
       }
-      return {
-        ...oauth2Auth(
-          config,
-          callbackUrl,
-          { accessToken },
-          {
-            igId: userId,
-            igName: account.name,
-            pageId: account.id,
-            version: config.version,
-            username: account.username,
-          },
-        ),
-      } satisfies InstagramAuthValue
+      return oauth2Auth(
+        config,
+        callbackUrl,
+        { accessToken },
+        {
+          igId: account.userId,
+          igName: account.name,
+          pageId: account.id,
+          version: config.version,
+          username: account.username,
+        },
+      ) satisfies InstagramAuthValue
     },
     candidateToConfig: (auth) => ({ username: auth.metadata.username }),
     describe: (auth) => ({
@@ -95,7 +84,7 @@ const config: IntegrationDefinition<
       await probeVerify(
         async () => {
           const account = await getInstagramAccount(auth.tokens.accessToken)
-          if (!account || account.id !== auth.metadata.igId) {
+          if (!account || account.userId !== auth.metadata.igId) {
             throw new Error("Instagram account could not be verified")
           }
         },

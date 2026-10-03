@@ -3,6 +3,7 @@ import { expectStateVerbatim, oauthCredential } from "./test-utils"
 
 const mocks = vi.hoisted(() => ({
   generateAuthUrl: vi.fn(),
+  getAccessToken: vi.fn(),
   getClient: vi.fn(),
   getToken: vi.fn(),
   getTokenInfo: vi.fn(),
@@ -24,6 +25,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.getClient.mockReturnValue({
     generateAuthUrl: mocks.generateAuthUrl,
+    getAccessToken: mocks.getAccessToken,
     getToken: mocks.getToken,
     getTokenInfo: mocks.getTokenInfo,
   })
@@ -43,6 +45,7 @@ beforeEach(() => {
     sub: "google-account-1",
     email: "owner@example.test",
   })
+  mocks.getAccessToken.mockResolvedValue({ token: "access-token" })
 })
 
 describe("Google Sheets connection.authorizeUrl", () => {
@@ -119,6 +122,48 @@ describe("Google Sheets connection.exchangeCode", () => {
         credential,
       }),
     ).rejects.toThrow("Google Sheets token info has no stable account id")
+  })
+})
+
+describe("Google Sheets connection.verify", () => {
+  const auth = {
+    authType: "oauth2" as const,
+    clientId: "client-1",
+    clientSecret: "secret-1",
+    redirectUrl: "https://app.example.test/connections/callback",
+    tokens: { accessToken: "access-token" },
+    metadata: { accountId: "google-account-1" },
+  }
+
+  test.each([
+    ["an unauthorized response", new Error("Unauthorized"), 401],
+    ["an invalid_grant response", new Error("invalid_grant"), 400],
+  ])("treats %s as revoked", async (_label, error, status) => {
+    mocks.getTokenInfo.mockRejectedValue(
+      Object.assign(error, { response: { status } }),
+    )
+
+    await expect(
+      integration.connection.verify({ auth }),
+    ).resolves.toMatchObject({
+      ok: false,
+      revoked: true,
+    })
+  })
+
+  test("does not treat a provider 5xx as revoked", async () => {
+    mocks.getTokenInfo.mockRejectedValue(
+      Object.assign(new Error("upstream failure"), {
+        response: { status: 503 },
+      }),
+    )
+
+    await expect(
+      integration.connection.verify({ auth }),
+    ).resolves.toMatchObject({
+      ok: false,
+      revoked: false,
+    })
   })
 })
 

@@ -155,7 +155,7 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
     })
   })
 
-  test("normalizes legacy scopes from a cached token", async () => {
+  test("preserves distinct scopes from a cached token", async () => {
     withCache.mockResolvedValue({
       workspace: { id: "ws-1", name: "Acme", token: null },
       apiToken: {
@@ -171,7 +171,7 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
         tokenHash: TOKEN_HASH,
       }),
     ).resolves.toMatchObject({
-      apiToken: { scopes: ["connections"] },
+      apiToken: { scopes: ["channels", "integrations"] },
     })
   })
 

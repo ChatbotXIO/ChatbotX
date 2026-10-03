@@ -62,14 +62,19 @@ const config: IntegrationDefinition<
   connection: {
     kind: "integration",
     strategy: "oauth_redirect",
-    multiAccount: true,
+    multiAccount: false,
     configFields: [],
     ...googleConnection,
-    describe: (auth) => ({
-      sourceId: auth.metadata?.providerCalendarId ?? "workspace",
-      displayName: auth.metadata?.email ?? "Google Calendar",
-      authExpiresAt: auth.tokens.expiresAt,
-    }),
+    describe: (auth) => {
+      if (!auth.metadata?.providerCalendarId) {
+        throw new Error("Google Calendar auth has no calendar identity")
+      }
+      return {
+        sourceId: auth.metadata.providerCalendarId,
+        displayName: auth.metadata.email ?? "Google Calendar",
+        authExpiresAt: auth.tokens.expiresAt,
+      }
+    },
     verify: async ({ auth }) =>
       await probeVerify(
         async () =>

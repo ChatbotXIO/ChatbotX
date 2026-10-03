@@ -110,18 +110,7 @@ export const connectionRepository = {
     })
   },
 
-  /**
-   * Same as `findById`, but takes a `SELECT ... FOR UPDATE` row lock —
-   * MUST be called from inside an open transaction (`tx` has no default,
-   * unlike every other method here, so a caller that forgets to pass one
-   * is a type error, not a silent no-lock read). `ConnectionStateService
-   * .transition` uses this (never the relational-query `findById`) so two
-   * concurrent transitions on the SAME connection serialize on this row
-   * instead of both reading the same pre-transition `status` and each
-   * independently deciding to consume/release quota — the race that
-   * double-consumed (or double-released) one `channels` quota unit for
-   * what should have been a single state change.
-   */
+  /** Locks one connection row; callers must pass an open transaction. */
   async findByIdForUpdate(
     input: { id: string },
     tx: DatabaseClient,

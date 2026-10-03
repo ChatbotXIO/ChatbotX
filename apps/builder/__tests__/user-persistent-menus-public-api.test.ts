@@ -96,8 +96,8 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-test("registers the user persistent menus public router under the connections scope", () => {
-  expect(scopeArgAtImport).toBe("connections")
+test("registers the user persistent menus public router under the channels scope", () => {
+  expect(scopeArgAtImport).toBe("channels")
 })
 
 describe("GET /v1/user-persistent-menus", () => {

@@ -137,6 +137,63 @@ describe.skipIf(!databaseUrl)(
         expect(foundFromB).toBeUndefined()
       }))
 
+    test("findByStateNonceHash resolves the globally unique OAuth callback nonce", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-nonce",
+        })
+
+        await expect(
+          connectSessionRepository.findByStateNonceHash(
+            { stateNonceHash: "iso-hash-nonce" },
+            tx,
+          ),
+        ).resolves.toMatchObject({ id: session.id })
+        await expect(
+          connectSessionRepository.findByStateNonceHash(
+            { stateNonceHash: "missing-nonce" },
+            tx,
+          ),
+        ).resolves.toBeUndefined()
+      }))
+
+    test("rejects a session with both actor foreign keys", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const [token] = await tx
+          .insert(schema.workspaceApiTokenModel)
+          .values({
+            workspaceId,
+            name: "Connect session actor constraint",
+            permission: "full",
+            tokenHash: `actor-constraint-${Date.now()}-${Math.random()}`,
+            tokenPrefix: "cbx_ws_actor",
+          })
+          .returning({ id: schema.workspaceApiTokenModel.id })
+
+        await expect(
+          tx.transaction(async (nestedTx) => {
+            await nestedTx.insert(schema.connectSessionModel).values({
+              workspaceId,
+              provider: "messenger",
+              purpose: "connect",
+              actorUserId: ownerId,
+              actorTokenId: token.id,
+              stateNonceHash: `actor-constraint-${Date.now()}-${Math.random()}`,
+              expiresAt: FUTURE,
+            })
+          }),
+        ).rejects.toMatchObject({
+          cause: {
+            code: "23514",
+            constraint: "ConnectSession_actor_at_most_one",
+          },
+        })
+      }))
+
     test("countActiveByWorkspaceId never counts another workspace's pending sessions", () =>
       run(async (tx) => {
         const { workspaceId: workspaceA, ownerId: ownerA } =
@@ -166,6 +223,74 @@ describe.skipIf(!databaseUrl)(
         expect(countA).toBe(2)
       }))
 
+    test("countActiveByWorkspaceId excludes terminal and expired active statuses", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-count-active",
+        })
+        const terminalSession = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-count-terminal",
+        })
+        const expiredSession = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-count-expired",
+        })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ status: "completed", consumedAt: new Date() })
+          .where(eq(schema.connectSessionModel.id, terminalSession.id))
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ expiresAt: new Date(Date.now() - 60_000) })
+          .where(eq(schema.connectSessionModel.id, expiredSession.id))
+
+        await expect(
+          connectSessionRepository.countActiveByWorkspaceId(
+            { workspaceId },
+            tx,
+          ),
+        ).resolves.toBe(1)
+      }))
+
+    test("expireDue expires only due sessions in the requested statuses", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const dueSession = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-expire-due",
+        })
+        await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-expire-future",
+        })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ expiresAt: new Date(Date.now() - 60_000) })
+          .where(eq(schema.connectSessionModel.id, dueSession.id))
+
+        await expect(
+          connectSessionRepository.expireDue(
+            { before: new Date(), statuses: ["awaiting_selection"] },
+            tx,
+          ),
+        ).resolves.toBe(1)
+        await expect(
+          connectSessionRepository.findById({ id: dueSession.id }, tx),
+        ).resolves.toMatchObject({
+          status: "expired",
+          encryptedAuth: null,
+          consumedAt: expect.any(Date),
+        })
+      }))
+
     test("claimTarget's compare-and-set: a second claim of the SAME target after it's already claimed returns false and does not duplicate the array entry", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
@@ -176,16 +301,99 @@ describe.skipIf(!databaseUrl)(
         })
 
         const first = await connectSessionRepository.claimTarget(
-          { id: session.id, targetId: "t1" },
+          { id: session.id, workspaceId, targetId: "t1" },
           tx,
         )
         const second = await connectSessionRepository.claimTarget(
-          { id: session.id, targetId: "t1" },
+          { id: session.id, workspaceId, targetId: "t1" },
           tx,
         )
 
         expect(first).toBe(true)
         expect(second).toBe(false)
+
+        const [row] = await tx
+          .select({
+            claimedTargetIds: schema.connectSessionModel.claimedTargetIds,
+          })
+          .from(schema.connectSessionModel)
+          .where(eq(schema.connectSessionModel.id, session.id))
+        expect(row.claimedTargetIds).toEqual(["t1"])
+      }))
+
+    test("claimTarget rejects completed and expired sessions", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-claim-state-expiry",
+        })
+
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ status: "completed", consumedAt: new Date() })
+          .where(eq(schema.connectSessionModel.id, session.id))
+        expect(
+          await connectSessionRepository.claimTarget(
+            { id: session.id, workspaceId, targetId: "t1" },
+            tx,
+          ),
+        ).toBe(false)
+
+        await tx
+          .update(schema.connectSessionModel)
+          .set({
+            status: "awaiting_selection",
+            consumedAt: null,
+            expiresAt: new Date(Date.now() - 60_000),
+          })
+          .where(eq(schema.connectSessionModel.id, session.id))
+        expect(
+          await connectSessionRepository.claimTarget(
+            { id: session.id, workspaceId, targetId: "t1" },
+            tx,
+          ),
+        ).toBe(false)
+      }))
+
+    test("releaseTarget preserves a claim outside its workspace, state, and expiry guard", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-release-guard",
+        })
+        await connectSessionRepository.claimTarget(
+          { id: session.id, workspaceId, targetId: "t1" },
+          tx,
+        )
+
+        await connectSessionRepository.releaseTarget(
+          { id: session.id, workspaceId: "other-workspace", targetId: "t1" },
+          tx,
+        )
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ status: "completed", consumedAt: new Date() })
+          .where(eq(schema.connectSessionModel.id, session.id))
+        await connectSessionRepository.releaseTarget(
+          { id: session.id, workspaceId, targetId: "t1" },
+          tx,
+        )
+        await tx
+          .update(schema.connectSessionModel)
+          .set({
+            status: "awaiting_selection",
+            consumedAt: null,
+            expiresAt: new Date(Date.now() - 60_000),
+          })
+          .where(eq(schema.connectSessionModel.id, session.id))
+        await connectSessionRepository.releaseTarget(
+          { id: session.id, workspaceId, targetId: "t1" },
+          tx,
+        )
 
         const [row] = await tx
           .select({
@@ -239,11 +447,19 @@ describe.skipIf(!databaseUrl)(
 
           const [resultA, resultB] = await Promise.all([
             connectSessionRepository.claimTarget(
-              { id: session.id, targetId: "race-target" },
+              {
+                id: session.id,
+                workspaceId: workspace.id,
+                targetId: "race-target",
+              },
               dbA,
             ),
             connectSessionRepository.claimTarget(
-              { id: session.id, targetId: "race-target" },
+              {
+                id: session.id,
+                workspaceId: workspace.id,
+                targetId: "race-target",
+              },
               dbB,
             ),
           ])
@@ -398,6 +614,31 @@ describe.skipIf(!databaseUrl)(
         expect(result).toBeUndefined()
       }))
 
+    test("appendResults rejects an expired awaiting-selection session", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-append-expiry",
+        })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ expiresAt: new Date(Date.now() - 60_000) })
+          .where(eq(schema.connectSessionModel.id, session.id))
+
+        const result = await connectSessionRepository.appendResults(
+          {
+            id: session.id,
+            results: [{ targetId: "t1", status: "connected" }],
+            resultConnectionIds: ["conn-1"],
+          },
+          tx,
+        )
+
+        expect(result).toBeUndefined()
+      }))
+
     test("does not update a session outside the allowed statuses", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
@@ -470,19 +711,19 @@ describe.skipIf(!databaseUrl)(
 
         expect(
           await connectSessionRepository.claimTarget(
-            { id: session.id, targetId: "t1" },
+            { id: session.id, workspaceId, targetId: "t1" },
             tx,
           ),
         ).toBe(true)
 
         await connectSessionRepository.releaseTarget(
-          { id: session.id, targetId: "t1" },
+          { id: session.id, workspaceId, targetId: "t1" },
           tx,
         )
 
         expect(
           await connectSessionRepository.claimTarget(
-            { id: session.id, targetId: "t1" },
+            { id: session.id, workspaceId, targetId: "t1" },
             tx,
           ),
         ).toBe(true)

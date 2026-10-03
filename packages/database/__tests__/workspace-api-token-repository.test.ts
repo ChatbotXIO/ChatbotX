@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
     sql: [strings, values],
   })),
   $count: vi.fn(),
+  warn: vi.fn(),
 }))
 
 vi.mock("../src/client", () => ({
@@ -31,6 +32,10 @@ vi.mock("../src/schema", () => ({
   },
 }))
 
+vi.mock("../src/logger", () => ({
+  logger: { warn: mocks.warn },
+}))
+
 const { workspaceApiTokenRepository } = await import(
   "../src/repositories/workspace-api-token/repository"
 )
@@ -51,7 +56,7 @@ describe("workspaceApiTokenRepository.findByTokenHash", () => {
     expect(findFirst).toHaveBeenCalledWith({ where: { tokenHash: "hash-1" } })
   })
 
-  test("normalizes legacy connection scopes when reading stored rows", async () => {
+  test("preserves distinct channel and integration scopes", async () => {
     const findFirst = vi.fn().mockResolvedValue({
       id: "t-1",
       workspaceId: "ws-1",
@@ -62,8 +67,25 @@ describe("workspaceApiTokenRepository.findByTokenHash", () => {
     await expect(
       workspaceApiTokenRepository.findByTokenHash("hash-1", tx),
     ).resolves.toMatchObject({
-      scopes: ["contacts", "connections"],
+      scopes: ["contacts", "channels", "integrations"],
     })
+  })
+
+  test("drops an unknown stored scope instead of rejecting bearer authentication", async () => {
+    const findFirst = vi.fn().mockResolvedValue({
+      id: "t-1",
+      workspaceId: "ws-1",
+      scopes: ["contacts", "future_scope"],
+    })
+    const tx = { query: { workspaceApiTokenModel: { findFirst } } } as never
+
+    await expect(
+      workspaceApiTokenRepository.findByTokenHash("hash-1", tx),
+    ).resolves.toMatchObject({ scopes: ["contacts"] })
+    expect(mocks.warn).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      "Dropping unrecognized workspace API token scopes",
+    )
   })
 
   test("returns null when no row matches", async () => {
@@ -92,6 +114,28 @@ describe("workspaceApiTokenRepository.listByWorkspaceId", () => {
       where: { workspaceId: "ws-1" },
       orderBy: { createdAt: "desc" },
     })
+  })
+
+  test("drops unknown scopes without preventing a workspace token list", async () => {
+    const findMany = vi
+      .fn()
+      .mockResolvedValue([{ id: "t-1", scopes: ["channels", "future_scope"] }])
+    const tx = { query: { workspaceApiTokenModel: { findMany } } } as never
+
+    await expect(
+      workspaceApiTokenRepository.listByWorkspaceId("ws-1", tx),
+    ).resolves.toMatchObject([{ scopes: ["channels"] }])
+  })
+
+  test("preserves separately scoped stored rows", async () => {
+    const findMany = vi
+      .fn()
+      .mockResolvedValue([{ id: "t-1", scopes: ["channels", "integrations"] }])
+    const tx = { query: { workspaceApiTokenModel: { findMany } } } as never
+
+    await expect(
+      workspaceApiTokenRepository.listByWorkspaceId("ws-1", tx),
+    ).resolves.toMatchObject([{ scopes: ["channels", "integrations"] }])
   })
 })
 
@@ -249,6 +293,20 @@ describe("workspaceApiTokenRepository.findDefaultByWorkspaceId", () => {
     expect(findFirst).toHaveBeenCalledWith({
       where: { workspaceId: "ws-1", isDefault: true },
     })
+  })
+
+  test("preserves a channel-scoped default token", async () => {
+    const findFirst = vi.fn().mockResolvedValue({
+      id: "t-1",
+      workspaceId: "ws-1",
+      isDefault: true,
+      scopes: ["channels"],
+    })
+    const tx = { query: { workspaceApiTokenModel: { findFirst } } } as never
+
+    await expect(
+      workspaceApiTokenRepository.findDefaultByWorkspaceId("ws-1", tx),
+    ).resolves.toMatchObject({ scopes: ["channels"] })
   })
 
   test("returns null when no default row exists", async () => {

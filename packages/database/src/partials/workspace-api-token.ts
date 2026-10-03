@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { logger } from "../logger"
 
 export const workspaceApiTokenPermissions = z.enum(["full", "read_only"])
 export type WorkspaceApiTokenPermission = z.infer<
@@ -18,7 +19,8 @@ export const workspaceApiTokenScopes = z.enum([
   "broadcasts",
   "analytics",
   "ecommerce",
-  "connections",
+  "channels",
+  "integrations",
   "minigames",
   "appointments",
   "media",
@@ -26,26 +28,33 @@ export const workspaceApiTokenScopes = z.enum([
 ])
 export type WorkspaceApiTokenScope = z.infer<typeof workspaceApiTokenScopes>
 
-// Maps scopes written before the channels/integrations merge; drop after one release.
-export const workspaceApiTokenScopesSchema = z.preprocess((value) => {
-  if (!Array.isArray(value)) {
-    return value
-  }
-  return [
-    ...new Set(
-      value.map((scope) =>
-        scope === "channels" || scope === "integrations"
-          ? "connections"
-          : scope,
-      ),
-    ),
-  ]
-}, z.array(workspaceApiTokenScopes).nullable())
+const workspaceApiTokenScopesSchema = workspaceApiTokenScopes.array().nullable()
 
 export const normalizeWorkspaceApiTokenScopes = (
   scopes: string[] | null,
-): WorkspaceApiTokenScope[] | null =>
-  workspaceApiTokenScopesSchema.parse(scopes)
+): WorkspaceApiTokenScope[] | null => {
+  const parsed = workspaceApiTokenScopesSchema.safeParse(scopes)
+  if (parsed.success) {
+    return parsed.data
+  }
+
+  logger.warn(
+    { err: parsed.error },
+    "Dropping unrecognized workspace API token scopes",
+  )
+  if (scopes === null) {
+    return null
+  }
+
+  const normalizedScopes = new Set<WorkspaceApiTokenScope>()
+  for (const scope of scopes) {
+    const normalizedScope = workspaceApiTokenScopes.safeParse(scope)
+    if (normalizedScope.success) {
+      normalizedScopes.add(normalizedScope.data)
+    }
+  }
+  return [...normalizedScopes]
+}
 
 /**
  * SHA-256 hex digest of a workspace API token's plaintext, as produced by

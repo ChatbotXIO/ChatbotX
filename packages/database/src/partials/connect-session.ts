@@ -19,7 +19,7 @@ export const connectSessionTargetSchema = z.object({
 export type ConnectSessionTarget = z.infer<typeof connectSessionTargetSchema>
 
 /**
- * Per-target result of a `connectTargets` call. Structurally aligned with
+ * Per-target result of a connection attempt. Structurally aligned with
  * the `CONNECT_ITEM_STATUSES`/`CONNECT_FAILURE_REASONS` vocabulary in
  * `packages/business/src/inbox/connect-outcome-types.ts` (kept in the
  * database layer as plain strings — that file cannot be imported here,

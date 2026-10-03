@@ -147,12 +147,12 @@ export const connectSessionRepository = {
   /**
    * Atomic claim of one target id into `claimedTargetIds` — the `WHERE NOT
    * (targetId = ANY(...))` clause makes this a compare-and-set at the DB
-   * level, so two concurrent `connectTargets` calls racing on the same
-   * target can never both win (the loser sees `claimTarget` return `false`
-   * and maps that to a `duplicated` outcome instead of double-connecting).
+   * level, so two concurrent connection attempts racing on the same target
+   * can never both win (the loser sees `claimTarget` return `false` and maps
+   * that to a `duplicated` outcome instead of double-connecting).
    */
   async claimTarget(
-    input: { id: string; targetId: string },
+    input: { id: string; workspaceId: string; targetId: string },
     tx: DatabaseClient = db,
   ): Promise<boolean> {
     const [row] = await tx
@@ -163,6 +163,9 @@ export const connectSessionRepository = {
       .where(
         and(
           eq(connectSessionModel.id, input.id),
+          eq(connectSessionModel.workspaceId, input.workspaceId),
+          eq(connectSessionModel.status, "awaiting_selection"),
+          gt(connectSessionModel.expiresAt, sql`now()`),
           sql`NOT (${input.targetId} = ANY(${connectSessionModel.claimedTargetIds}))`,
         ),
       )
@@ -172,7 +175,7 @@ export const connectSessionRepository = {
 
   /** Releases a claimed target after a connect attempt that did not succeed. */
   async releaseTarget(
-    input: { id: string; targetId: string },
+    input: { id: string; workspaceId: string; targetId: string },
     tx: DatabaseClient = db,
   ): Promise<void> {
     await tx
@@ -180,7 +183,14 @@ export const connectSessionRepository = {
       .set({
         claimedTargetIds: sql`array_remove(${connectSessionModel.claimedTargetIds}, ${input.targetId})`,
       })
-      .where(eq(connectSessionModel.id, input.id))
+      .where(
+        and(
+          eq(connectSessionModel.id, input.id),
+          eq(connectSessionModel.workspaceId, input.workspaceId),
+          eq(connectSessionModel.status, "awaiting_selection"),
+          gt(connectSessionModel.expiresAt, sql`now()`),
+        ),
+      )
   },
 
   /** Atomically merges outcomes and transitions a fully processed active session. */
@@ -213,15 +223,13 @@ export const connectSessionRepository = {
         step: sql`CASE WHEN ${isComplete} THEN 'done' ELSE ${connectSessionModel.step} END`,
         consumedAt: sql`CASE WHEN ${isComplete} THEN now() ELSE ${connectSessionModel.consumedAt} END`,
         errorCode: sql`CASE WHEN ${isComplete} AND NOT ${hasSuccess} THEN 'provider_error' ELSE ${connectSessionModel.errorCode} END`,
-        // The decrypted-candidate ciphertext has no further use once the
-        // session reaches a terminal status — see `expireDue`/`fail`/
-        // `cancel` for the other three terminal paths that also clear it.
         encryptedAuth: sql`CASE WHEN ${isComplete} THEN NULL ELSE ${connectSessionModel.encryptedAuth} END`,
       })
       .where(
         and(
           eq(connectSessionModel.id, input.id),
           eq(connectSessionModel.status, "awaiting_selection"),
+          gt(connectSessionModel.expiresAt, sql`now()`),
         ),
       )
       .returning()

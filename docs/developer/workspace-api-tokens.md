@@ -410,13 +410,20 @@ an endpoint's scope.
     — the same template the builder's edit page shows the user. Never
     publish the bare `backgroundUrl` column value.
 
-- **Connections** — `connections` replaces the former `channels` and
-  `integrations` scopes. Stored legacy values are normalized to
-  `connections` during the rolling deployment, and a data migration
-  rewrites them permanently. Tokens scoped to either legacy resource gain
-  the merged scope's combined access. Channel-only and integration-only
-  access can no longer be expressed: omit `connections` to exclude both.
+- **Channels** — covers channel configuration and operations: Messenger/Zalo
+  tag sync, webchat management, Messenger personas, persistent menus, and
+  SMTP. A token scoped to `["channels"]` is not authorized for workspace
+  integrations.
+  - *Webchat custom CSS is token-writable.* A `channels`-scoped token may set
+    `customCss` without an additional in-handler permission check because
+    minting a workspace token already requires workspace-super-admin access.
+  - *Webchat welcome-flow ownership is always validated.* Public writes pass
+    `welcomeFlowId` through `integrationWebchatService`, which verifies the
+    flow belongs to the workspace before persisting it.
 
+- **Integrations** — covers workspace integrations, AI provider credentials,
+  external webhooks, and event webhooks. A token scoped to `["integrations"]`
+  is not authorized for channel configuration or operations.
 
 - **Minigames** — this scope shipped in the enum/registry/i18n alongside
   `ads` but, like `ads`, carried no endpoints for a while. It now publishes
@@ -449,10 +456,10 @@ an endpoint's scope.
 
 ### Ads scope — endpoint-to-scope table
 
-`ads` shipped in the enum/registry/i18n from day one (alongside `connections`,
-`minigames`, `appointments`, `media`) but carried no endpoints until this
-table's routes were added — a token scoped to `["ads"]` reached nothing
-before. It now covers Ads conversion-rule CRUD, the CTWA/CTM/CTID funnel and
+`ads` shipped in the enum/registry/i18n from day one (alongside `channels`,
+`integrations`, `minigames`, `appointments`, `media`) but carried no endpoints
+until this table's routes were added — a token scoped to `["ads"]` reached
+nothing before. It now covers Ads conversion-rule CRUD, the CTWA/CTM/CTID funnel and
 CAPI-delivery reads, the conversion export, ad-account reads, and the full
 messaging-ad campaign lifecycle (create/retry/publish/pause/delete + video
 upload). Every handler below calls the same `packages/business` service

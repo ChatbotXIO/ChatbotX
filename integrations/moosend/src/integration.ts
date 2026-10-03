@@ -44,25 +44,23 @@ const isRevokedTokenError = (error: unknown) =>
   "kind" in error &&
   error.kind === "invalid_credentials"
 
+const connection = apiKeyConnection({
+  displayName: "Moosend",
+  fields: moosendFields,
+  buildAuth: buildMoosendAuth,
+  probe: probeMoosend,
+  isRevoked: isRevokedTokenError,
+})
+
 const config: IntegrationDefinition<
   MoosendConfig,
   MoosendAuthValue,
   MoosendActions
 > = {
   name: "moosend",
-  connection: apiKeyConnection({
-    displayName: "Moosend",
-    fields: moosendFields,
-    buildAuth: buildMoosendAuth,
-    probe: probeMoosend,
-    isRevoked: isRevokedTokenError,
-  }),
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = await buildMoosendAuth(props)
-      await probeMoosend(auth)
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listMailingLists: async ({ ctx, props }) => {
       const page = moosendListPageRequestSchema.parse(props)
       const response = await moosendRequest(

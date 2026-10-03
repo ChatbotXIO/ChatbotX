@@ -98,25 +98,23 @@ const probeActiveCampaign = async (auth: ActiveCampaignAuthValue) => {
   )
 }
 
+const connection = apiKeyConnection({
+  displayName: "ActiveCampaign",
+  fields: activeCampaignFields,
+  buildAuth: buildActiveCampaignAuth,
+  probe: probeActiveCampaign,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   ActiveCampaignConfig,
   ActiveCampaignAuthValue,
   ActiveCampaignActions
 > = {
   name: "activeCampaign",
-  connection: apiKeyConnection({
-    displayName: "ActiveCampaign",
-    fields: activeCampaignFields,
-    buildAuth: buildActiveCampaignAuth,
-    probe: probeActiveCampaign,
-    isRevoked: isUnauthorizedStatusError,
-  }),
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = await buildActiveCampaignAuth(props)
-      await probeActiveCampaign(auth)
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listLists: async ({ ctx }) => {
       const response = await activeCampaignRequest(
         ctx.auth,

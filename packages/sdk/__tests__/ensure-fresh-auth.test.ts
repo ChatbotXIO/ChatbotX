@@ -171,4 +171,99 @@ describe("Integration.ensureFreshAuth", () => {
     ).rejects.toBeInstanceOf(AuthRefreshException)
     expect(markOffline).toHaveBeenCalledTimes(1)
   })
+  test("locks then reloads auth before refreshing to avoid a stale duplicate refresh", async () => {
+    const staleAuth = baseAuth(
+      new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    )
+    const reloadedAuth = {
+      ...baseAuth(new Date(Date.now() + 60 * 1000).toISOString()),
+      tokens: {
+        accessToken: "reloaded-token",
+        expiresAt: new Date(Date.now() + 60 * 1000).toISOString(),
+      },
+    }
+    const newAuth = baseAuth(
+      new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    )
+    const refreshAuth = vi.fn(async () => newAuth)
+    const integration = makeIntegration(refreshAuth)
+    const { ctx, save } = makeContext(staleAuth)
+    const load = vi.fn(async () => reloadedAuth)
+    const withLock = vi.fn(
+      async <T>(fn: () => Promise<T>): Promise<T> => await fn(),
+    )
+    ctx.authStore = { load, save, withLock }
+
+    await expect(integration.ensureFreshAuth(ctx)).resolves.toMatchObject({
+      auth: newAuth,
+    })
+    expect(withLock).toHaveBeenCalledTimes(1)
+    expect(refreshAuth).toHaveBeenCalledWith({ auth: reloadedAuth })
+    expect(save).toHaveBeenCalledWith(newAuth)
+  })
+
+  test("retries a transient refresh failure with backoff before persisting", async () => {
+    vi.useFakeTimers()
+    try {
+      const newAuth = baseAuth(
+        new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+      )
+      const refreshAuth = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("network unavailable"))
+        .mockResolvedValueOnce(newAuth)
+      const integration = makeIntegration(refreshAuth)
+      const { ctx, save } = makeContext(
+        baseAuth(new Date(Date.now() + 60 * 1000).toISOString()),
+      )
+
+      const refreshed = integration.ensureFreshAuth(ctx)
+      await vi.advanceTimersByTimeAsync(250)
+
+      await expect(refreshed).resolves.toMatchObject({ auth: newAuth })
+      expect(refreshAuth).toHaveBeenCalledTimes(2)
+      expect(save).toHaveBeenCalledWith(newAuth)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("marks auth offline after exhausting transient refresh retries", async () => {
+    vi.useFakeTimers()
+    try {
+      const refreshAuth = vi
+        .fn()
+        .mockRejectedValue(new Error("network unavailable"))
+      const integration = makeIntegration(refreshAuth)
+      const { ctx, markOffline } = makeContext(
+        baseAuth(new Date(Date.now() + 60 * 1000).toISOString()),
+      )
+
+      const refreshed = integration.ensureFreshAuth(ctx)
+      const expectedFailure =
+        expect(refreshed).rejects.toBeInstanceOf(AuthRefreshException)
+      await vi.advanceTimersByTimeAsync(750)
+
+      await expectedFailure
+      expect(refreshAuth).toHaveBeenCalledTimes(3)
+      expect(markOffline).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("propagates an auth-store save failure after a successful refresh", async () => {
+    const newAuth = baseAuth(
+      new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    )
+    const integration = makeIntegration(async () => newAuth)
+    const { ctx, save, markOffline } = makeContext(
+      baseAuth(new Date(Date.now() + 60 * 1000).toISOString()),
+    )
+    const saveError = new Error("auth store unavailable")
+    save.mockRejectedValueOnce(saveError)
+
+    await expect(integration.ensureFreshAuth(ctx)).rejects.toBe(saveError)
+    expect(markOffline).not.toHaveBeenCalled()
+  })
 })

@@ -20,7 +20,7 @@ import {
   userPersistentMenuPublicResource,
 } from "../schema/public"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
 
 export const userPersistentMenusPublicRouter = {
   list: workspaceTokenAuthAPI

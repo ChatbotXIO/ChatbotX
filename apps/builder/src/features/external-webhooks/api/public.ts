@@ -13,7 +13,7 @@ import {
 } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
 
 const externalWebhookResource = z.object({
   id: z.string(),

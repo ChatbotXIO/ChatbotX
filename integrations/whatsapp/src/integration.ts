@@ -61,7 +61,7 @@ const config: IntegrationDefinition<
   connection: {
     kind: "channel",
     strategy: "self_serve",
-    multiAccount: true,
+    multiAccount: false,
     configFields: [],
     describe: (auth) => ({
       sourceId: auth.metadata.phoneNumber.id,

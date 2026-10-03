@@ -1,15 +1,20 @@
 import type { ChannelType } from "@chatbotx.io/utils/channel"
+import { sql } from "drizzle-orm"
 import {
+  check,
   index,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import type {
-  ConnectionKind,
-  ConnectionStatus,
-  ConnectionStatusReason,
+import {
+  type ConnectionKind,
+  type ConnectionStatus,
+  type ConnectionStatusReason,
+  connectionKinds,
+  connectionStatuses,
+  connectionStatusReasons,
 } from "../partials/connection"
 import type { IntegrationType } from "../partials/integration"
 import {
@@ -80,6 +85,41 @@ export const connectionModel = pgTable(
     uniqueIndex("Connection_integrationId_key").using(
       "btree",
       table.integrationId.asc().nullsLast(),
+    ),
+    check(
+      "Connection_kind_relation_check",
+      sql`(
+        (${table.kind} = 'channel' AND ${table.inboxId} IS NOT NULL AND ${table.channel} IS NOT NULL)
+        OR
+        (${table.kind} = 'integration' AND ${table.inboxId} IS NULL AND ${table.channel} IS NULL)
+        OR
+        ${table.kind} = 'sub_connection'
+      )`,
+    ),
+    check(
+      "Connection_inbox_integration_exclusive_check",
+      sql`NOT (${table.inboxId} IS NOT NULL AND ${table.integrationId} IS NOT NULL)`,
+    ),
+    check(
+      "Connection_kind_check",
+      sql`${table.kind} IN (${sql.join(
+        connectionKinds.options.map((kind) => sql`${kind}`),
+        sql`, `,
+      )})`,
+    ),
+    check(
+      "Connection_status_check",
+      sql`${table.status} IN (${sql.join(
+        connectionStatuses.options.map((status) => sql`${status}`),
+        sql`, `,
+      )})`,
+    ),
+    check(
+      "Connection_statusReason_check",
+      sql`${table.statusReason} IN (${sql.join(
+        connectionStatusReasons.options.map((reason) => sql`${reason}`),
+        sql`, `,
+      )})`,
     ),
   ],
 )

@@ -49,7 +49,7 @@ const config: IntegrationDefinition<
   connection: {
     kind: "channel",
     strategy: "oauth_redirect",
-    multiAccount: true,
+    multiAccount: false,
     configFields: [],
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as TiktokConfig
@@ -77,25 +77,23 @@ const config: IntegrationDefinition<
         accessToken: tokenResponse.access_token,
       })
 
-      return {
-        ...oauth2Auth(
-          config,
-          callbackUrl,
-          {
-            accessToken: tokenResponse.access_token,
-            refreshToken: tokenResponse.refresh_token,
-            ...buildTokenTimestamps(
-              tokenResponse.expires_in,
-              tokenResponse.refresh_expires_in,
-            ),
-          },
-          {
-            openId: tokenResponse.open_id,
-            username: userInfo.username,
-            displayName: userInfo.display_name,
-          },
-        ),
-      } satisfies TiktokAuthValue
+      return oauth2Auth(
+        config,
+        callbackUrl,
+        {
+          accessToken: tokenResponse.access_token,
+          refreshToken: tokenResponse.refresh_token,
+          ...buildTokenTimestamps(
+            tokenResponse.expires_in,
+            tokenResponse.refresh_expires_in,
+          ),
+        },
+        {
+          openId: tokenResponse.open_id,
+          username: userInfo.username,
+          displayName: userInfo.display_name,
+        },
+      ) satisfies TiktokAuthValue
     },
     describe: (auth) => ({
       sourceId: auth.metadata.openId,

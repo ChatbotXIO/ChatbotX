@@ -11,6 +11,7 @@ import type {
   ConnectionKind,
   ConnectionProvider,
 } from "./connection"
+import type { Handler } from "./shared"
 
 type ProbeVerifyOptions = {
   label: string
@@ -97,16 +98,26 @@ export const googleTokensToAuth = (
   config: OAuth2Config,
   callbackUrl: string,
   tokens: GoogleTokenResponse,
-): Oauth2AuthValue => ({
-  ...oauth2Auth(config, callbackUrl, {
-    accessToken: tokens.access_token ?? "",
-    expiresAt: tokens.expiry_date
-      ? new Date(tokens.expiry_date).toISOString()
-      : undefined,
-    refreshToken: tokens.refresh_token ?? null,
-  }),
-  metadata: { scope: tokens.scope },
-})
+): Oauth2AuthValue => {
+  if (!tokens.access_token) {
+    throw new Error("Google OAuth response has no access token")
+  }
+
+  if (!tokens.refresh_token) {
+    throw new Error("Google OAuth response has no refresh token")
+  }
+
+  return {
+    ...oauth2Auth(config, callbackUrl, {
+      accessToken: tokens.access_token,
+      expiresAt: tokens.expiry_date
+        ? new Date(tokens.expiry_date).toISOString()
+        : undefined,
+      refreshToken: tokens.refresh_token,
+    }),
+    metadata: { scope: tokens.scope },
+  }
+}
 
 export const googleOAuthConnection = <IConfig extends Oauth2Config>(
   options: GoogleOAuthConnectionOptions<IConfig>,
@@ -202,8 +213,13 @@ export const verifyGraphToken =
           appAccessToken: `${auth.clientId}|${auth.clientSecret}`,
           version: auth.metadata.version,
         })
-        if (token.is_valid !== true) {
+        if (token.is_valid === false) {
           throw invalidTokenError
+        }
+        if (token.is_valid !== true) {
+          throw new Error(
+            `${options.label} token verification returned no validity state`,
+          )
         }
       },
       {
@@ -225,7 +241,9 @@ type ApiKeyConnectionOptions<IAuth extends AuthValue, IConfig> = {
 
 export const apiKeyConnection = <IAuth extends AuthValue, IConfig>(
   options: ApiKeyConnectionOptions<IAuth, IConfig>,
-): ConnectionProvider<IAuth, IConfig> => ({
+): ConnectionProvider<IAuth, IConfig> & {
+  fromCredentials: Handler<IConfig, IAuth>
+} => ({
   kind: "integration",
   strategy: "api_key",
   multiAccount: false,
@@ -249,7 +267,7 @@ export const apiKeyConnection = <IAuth extends AuthValue, IConfig>(
 
 type SelfServeConnectionOptions<IAuth extends AuthValue> = {
   displayName: string
-  multiAccount: boolean
+  multiAccount: false
   configFields?: readonly ConnectionConfigField[]
   kind?: ConnectionKind
   describe?: (auth: IAuth) => ConnectionDescriptor

@@ -17,6 +17,8 @@ import type {
   TelegramConfig,
 } from "./schema"
 
+const TELEGRAM_BOT_ID = /^\d+$/
+
 const config: IntegrationDefinition<
   TelegramConfig,
   TelegramAuthValue,
@@ -45,7 +47,7 @@ const config: IntegrationDefinition<
   connection: {
     kind: "channel",
     strategy: "token",
-    multiAccount: true,
+    multiAccount: false,
     configFields: [
       {
         name: "secretText",
@@ -54,11 +56,21 @@ const config: IntegrationDefinition<
         labelKey: "integrations.telegram.fields.secretText",
       },
     ],
-    describe: (auth) => ({
-      // The numeric bot-token prefix is Telegram's stable bot identity.
-      sourceId: auth.secretText.split(":")[0] || auth.secretText,
-      displayName: "Telegram bot",
-    }),
+    describe: (auth) => {
+      const separatorIndex = auth.secretText.indexOf(":")
+      if (separatorIndex <= 0) {
+        throw new Error("Telegram auth has no bot identity")
+      }
+      const botId = auth.secretText.slice(0, separatorIndex)
+      if (!TELEGRAM_BOT_ID.test(botId)) {
+        throw new Error("Telegram auth has no bot identity")
+      }
+      return {
+        // The bot-token prefix is Telegram's stable bot identity.
+        sourceId: botId,
+        displayName: "Telegram bot",
+      }
+    },
     fromCredentials: async (config: { secretText: string }) => {
       // Live-validates the bot token via the same `getMe` call the legacy
       // `actions.connect` handler uses.

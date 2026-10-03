@@ -70,12 +70,8 @@ const config: IntegrationDefinition<
         version: config.version,
       })
     },
-    // Returns a *user*-level `AuthValue` (SDK-generalized, not `MessengerAuthValue`
-    // — the exchanged token isn't tied to a page yet, so it can't carry
-    // `metadata.pageId`). Mirrors the OAuth callback hub's existing
-    // short-lived -> long-lived exchange, falling back to the short-lived
-    // token on a failed long-lived exchange rather than failing the whole
-    // connect (`apps/builder/src/app/integrations/[...integration]/callback.ts`).
+    // Exchange failures abort the connection rather than persisting a
+    // short-lived user token that may expire before page selection completes.
     exchangeCode: async ({ code, callbackUrl, credential }) => {
       const config = credential as MessengerConfig
       const shortLivedToken = await exchangeCodeForToken(
@@ -86,13 +82,7 @@ const config: IntegrationDefinition<
       const longLivedToken = await exchangeLongLivedToken(
         config,
         shortLivedToken,
-      ).catch((error) => {
-        logger.warn(
-          { err: error },
-          "Messenger long-lived token exchange failed, using short-lived token",
-        )
-        return shortLivedToken
-      })
+      )
       return oauth2Auth(config, callbackUrl, {
         accessToken: longLivedToken,
       })
@@ -119,10 +109,15 @@ const config: IntegrationDefinition<
           ) satisfies MessengerAuthValue,
         }))
     },
-    describe: (auth) => ({
-      sourceId: auth.metadata?.pageId ?? "unknown_page",
-      displayName: auth.metadata?.pageName ?? "Messenger",
-    }),
+    describe: (auth) => {
+      if (!auth.metadata?.pageId) {
+        throw new Error("Messenger auth has no page identity")
+      }
+      return {
+        sourceId: auth.metadata.pageId,
+        displayName: auth.metadata.pageName ?? "Messenger",
+      }
+    },
     verify: verifyGraphToken<MessengerAuthValue>({
       label: "Messenger",
       debugToken,

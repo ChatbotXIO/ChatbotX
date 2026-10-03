@@ -151,11 +151,38 @@ describe("OAuth helpers", () => {
         redirectUrl: "https://legacy.test/callback",
       },
       "https://app.test/callback",
-      { access_token: "access-1" },
+      { access_token: "access-1", refresh_token: "refresh-1" },
     )
 
     expect(auth.tokens.expiresAt).toBeUndefined()
     expect(auth.redirectUrl).toBe("https://app.test/callback")
+  })
+
+  test("googleTokensToAuth rejects a callback response without a refresh token", () => {
+    expect(() =>
+      googleTokensToAuth(
+        {
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          redirectUrl: "https://legacy.test/callback",
+        },
+        "https://app.test/callback",
+        { access_token: "access-1" },
+      ),
+    ).toThrow("Google OAuth response has no refresh token")
+  })
+  test("googleTokensToAuth rejects a callback response without an access token", () => {
+    expect(() =>
+      googleTokensToAuth(
+        {
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          redirectUrl: "https://legacy.test/callback",
+        },
+        "https://app.test/callback",
+        { refresh_token: "refresh-1" },
+      ),
+    ).toThrow("Google OAuth response has no access token")
   })
 })
 
@@ -222,7 +249,7 @@ describe("selfServeConnection", () => {
 describe("isUnauthorizedStatusError", () => {
   test("matches only unauthorized status errors", () => {
     expect(isUnauthorizedStatusError({ statusCode: 401 })).toBe(true)
-    expect(isUnauthorizedStatusError({ statusCode: 403 })).toBe(true)
+    expect(isUnauthorizedStatusError({ statusCode: 403 })).toBe(false)
     expect(isUnauthorizedStatusError({ statusCode: 500 })).toBe(false)
     expect(isUnauthorizedStatusError(new Error("boom"))).toBe(false)
   })

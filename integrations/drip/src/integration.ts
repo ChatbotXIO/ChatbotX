@@ -49,21 +49,19 @@ const probeDrip = async (auth: DripAuthValue) => {
   }
 }
 
+const connection = apiKeyConnection({
+  displayName: "Drip",
+  fields: dripFields,
+  buildAuth: buildDripAuth,
+  probe: probeDrip,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<DripConfig, DripAuthValue, DripActions> = {
   name: "drip",
-  connection: apiKeyConnection({
-    displayName: "Drip",
-    fields: dripFields,
-    buildAuth: buildDripAuth,
-    probe: probeDrip,
-    isRevoked: isUnauthorizedStatusError,
-  }),
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = await buildDripAuth(props)
-      await probeDrip(auth)
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listAccounts: async ({ ctx }) => {
       const response = await dripRequest(
         ctx.auth,

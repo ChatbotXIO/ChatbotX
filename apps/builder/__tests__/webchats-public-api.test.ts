@@ -116,8 +116,8 @@ beforeEach(() => {
   isCommunity.mockReturnValue(false)
 })
 
-test("registers the webchats public router under the connections scope", () => {
-  expect(scopeArgAtImport).toBe("connections")
+test("registers the webchats public router under the channels scope", () => {
+  expect(scopeArgAtImport).toBe("channels")
 })
 
 test("webchatPublicResource never exposes workspaceId or the auth credential blob", () => {

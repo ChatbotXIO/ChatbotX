@@ -16,6 +16,20 @@ import type {
   GoogleSheetsConfig,
 } from "./schemas"
 
+const isRevokedTokenError = (error: unknown) => {
+  if (!(error instanceof Error && "response" in error)) {
+    return false
+  }
+  const response = error.response
+  if (!response || typeof response !== "object" || !("status" in response)) {
+    return false
+  }
+  const status = typeof response.status === "number" ? response.status : null
+  return (
+    status === 401 ||
+    (status === 400 && error.message.includes("invalid_grant"))
+  )
+}
 const googleConnection = googleOAuthConnection<GoogleSheetsConfig>({
   getClient,
   scopes: GOOGLE_SHEETS_SCOPES,
@@ -31,7 +45,7 @@ const config: IntegrationDefinition<
   connection: {
     kind: "integration",
     strategy: "oauth_redirect",
-    multiAccount: true,
+    multiAccount: false,
     configFields: [],
     ...googleConnection,
     describe: (auth) => ({
@@ -51,8 +65,10 @@ const config: IntegrationDefinition<
         {
           label: "Google Sheets credentials",
           expiresAt: auth.tokens.expiresAt,
+          isRevoked: isRevokedTokenError,
         },
       ),
+    isRevokedTokenError,
   },
   actions: {
     listSheetNames: async ({ ctx, props }): Promise<string[]> => {

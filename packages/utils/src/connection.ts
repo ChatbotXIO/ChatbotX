@@ -1,15 +1,5 @@
 import { z } from "zod"
 
-/**
- * The three connection families driving the `Connection.status` state
- * machine (`packages/business/src/connection/state.ts`).
- *
- * ACTIVE = `connected | degraded` — quota is held, `Inbox.status = connected`.
- * INACTIVE = `needs_reauth | paused | disconnected` — quota is released,
- * `Inbox.status = disconnected`. Quota is consumed exactly on an
- * INACTIVE/absent → ACTIVE edge and released exactly on ACTIVE → INACTIVE,
- * nowhere else.
- */
 export const connectionStatuses = z.enum([
   "connected",
   "degraded",

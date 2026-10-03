@@ -63,25 +63,23 @@ const probeMailerLite = async (auth: MailerLiteAuthValue) => {
   )
 }
 
+const connection = apiKeyConnection({
+  displayName: "MailerLite",
+  fields: mailerLiteFields,
+  buildAuth: buildMailerLiteAuth,
+  probe: probeMailerLite,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   MailerLiteConfig,
   MailerLiteAuthValue,
   MailerLiteActions
 > = {
   name: "mailerLite",
-  connection: apiKeyConnection({
-    displayName: "MailerLite",
-    fields: mailerLiteFields,
-    buildAuth: buildMailerLiteAuth,
-    probe: probeMailerLite,
-    isRevoked: isUnauthorizedStatusError,
-  }),
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = await buildMailerLiteAuth(props)
-      await probeMailerLite(auth)
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listGroups: async ({ ctx, props }) => {
       const response = await mailerLiteRequest(
         ctx.auth,

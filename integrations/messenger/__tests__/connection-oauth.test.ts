@@ -81,17 +81,16 @@ describe("Messenger connection.exchangeCode", () => {
     })
   })
 
-  test("falls back to the short-lived token when the long-lived exchange fails", async () => {
+  test("rejects a failed long-lived token exchange", async () => {
     mocks.exchangeLongLivedToken.mockRejectedValueOnce(new Error("boom"))
-    const auth = await integration.connection.exchangeCode?.({
-      code: "auth-code",
-      callbackUrl: "https://app.example.test/callback",
-      credential,
-    })
-    expect(
-      (auth as { tokens: { accessToken: string } }).tokens.accessToken,
-    ).toBe("short-lived-token")
-    expect(mocks.loggerWarn).toHaveBeenCalled()
+
+    await expect(
+      integration.connection.exchangeCode?.({
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential,
+      }),
+    ).rejects.toThrow("boom")
   })
 })
 
@@ -177,7 +176,7 @@ describe("Messenger connection.describe", () => {
     })
   })
 
-  test("does not throw on a RECONNECT user-level auth with no metadata", () => {
+  test("rejects user-level auth without a stable page identity", () => {
     const userLevelAuth = {
       authType: "oauth2",
       clientId: "client-1",
@@ -187,12 +186,9 @@ describe("Messenger connection.describe", () => {
       tokens: { accessToken: "user-token" },
     }
     expect(() =>
-      // `completeReconnect` (connect-session-flow.ts) calls `describe`
-      // directly on the raw OAuth-exchanged auth, which for Messenger has
-      // no `metadata` yet — this must degrade, not throw a TypeError.
       integration.connection.describe(
         userLevelAuth as Parameters<typeof integration.connection.describe>[0],
       ),
-    ).not.toThrow()
+    ).toThrow("Messenger auth has no page identity")
   })
 })

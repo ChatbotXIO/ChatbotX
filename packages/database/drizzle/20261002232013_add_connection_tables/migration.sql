@@ -63,15 +63,3 @@ ALTER TABLE "Connection" ADD CONSTRAINT "Connection_workspaceId_Workspace_id_fke
 ALTER TABLE "Connection" ADD CONSTRAINT "Connection_inboxId_Inbox_id_fkey" FOREIGN KEY ("inboxId") REFERENCES "Inbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Connection" ADD CONSTRAINT "Connection_integrationId_Integration_id_fkey" FOREIGN KEY ("integrationId") REFERENCES "Integration"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Connection" ADD CONSTRAINT "Connection_createdBy_User_id_fkey" FOREIGN KEY ("createdBy") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
---> statement-breakpoint
-UPDATE "WorkspaceApiToken"
-SET "scopes" = (
-	SELECT array_agg(
-		DISTINCT CASE
-			WHEN scope IN ('channels', 'integrations') THEN 'connections'
-			ELSE scope
-		END
-	)
-	FROM unnest("scopes") AS scope
-)
-WHERE "scopes" && ARRAY['channels', 'integrations'];

@@ -168,12 +168,11 @@ function mapZaloCode(fields: ChannelErrorSource): ChannelError {
   })
 }
 
-// === Revoked / invalidated access token detection ===
-// Zalo OA does not expose a deterministic revoked-token error code — invalid
-// access tokens raise code -124 (AUTH_FAILED). Reconnect is driven by OA admin.
-// Always returns false.
-export function isRevokedTokenError(_error: unknown): boolean {
-  return false
+// Zalo signals invalid access tokens with API code -124.
+export function isRevokedTokenError(error: unknown): boolean {
+  const code =
+    error instanceof ZaloException ? error.code : parseOriginError(error).code
+  return code === -124
 }
 
 export function mapToChannelError(rawError: unknown): ChannelError {

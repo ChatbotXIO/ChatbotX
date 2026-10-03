@@ -50,7 +50,7 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
   connection: {
     kind: "channel",
     strategy: "oauth_redirect",
-    multiAccount: true,
+    multiAccount: false,
     configFields: [],
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as ZaloConfig

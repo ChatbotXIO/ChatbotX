@@ -16,7 +16,7 @@ import {
 } from "../../schema/public"
 import { publicIntegrationResource } from "../../schema/resource"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
 
 export const integrationsCrudPublicRouter = {
   list: workspaceTokenAuthAPI

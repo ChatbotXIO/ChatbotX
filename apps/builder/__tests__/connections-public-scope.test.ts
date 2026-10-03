@@ -81,34 +81,34 @@ beforeEach(() => {
   assertApiNotRateLimited.mockResolvedValue(undefined)
 })
 
-describe("real router: connections public API scope wiring", () => {
-  test("denies the former integrations route to a token without connections", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue(authResult(["contacts"]))
+describe("real router: channel and integration public API scope wiring", () => {
+  test("denies the integrations route to a token without integrations", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["channels"]))
 
     await expect(invokeIntegrations()).rejects.toMatchObject({
       code: "FORBIDDEN",
-      message: "Token is not authorized for the 'connections' scope",
+      message: "Token is not authorized for the 'integrations' scope",
     })
   })
 
-  test("allows the former integrations route to a connections-scoped token", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue(authResult(["connections"]))
+  test("allows the integrations route to an integrations-scoped token", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["integrations"]))
     integrationService.listByWorkspaceId.mockResolvedValue([])
 
     await expect(invokeIntegrations()).resolves.toMatchObject({ data: [] })
   })
 
-  test("denies a former channels route without connections scope", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue(authResult(["contacts"]))
+  test("denies a channel route to a token without channels", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["integrations"]))
 
     await expect(invokeWebchats()).rejects.toMatchObject({
       code: "FORBIDDEN",
-      message: "Token is not authorized for the 'connections' scope",
+      message: "Token is not authorized for the 'channels' scope",
     })
   })
 
-  test("allows a former channels route with connections scope", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue(authResult(["connections"]))
+  test("allows a channel route with a channels-scoped token", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["channels"]))
     integrationWebchatService.list.mockResolvedValue({
       data: [],
       total: 0,
@@ -121,7 +121,7 @@ describe("real router: connections public API scope wiring", () => {
     })
   })
 
-  test("keeps unrestricted tokens authorized after the scope merge", async () => {
+  test("keeps unrestricted tokens authorized", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
     integrationWebchatService.list.mockResolvedValue({
       data: [],

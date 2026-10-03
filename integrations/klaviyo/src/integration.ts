@@ -59,25 +59,23 @@ const probeKlaviyo = async (auth: KlaviyoAuthValue) => {
   )
 }
 
+const connection = apiKeyConnection({
+  displayName: "Klaviyo",
+  fields: klaviyoFields,
+  buildAuth: buildKlaviyoAuth,
+  probe: probeKlaviyo,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   KlaviyoConfig,
   KlaviyoAuthValue,
   KlaviyoActions
 > = {
   name: "klaviyo",
-  connection: apiKeyConnection({
-    displayName: "Klaviyo",
-    fields: klaviyoFields,
-    buildAuth: buildKlaviyoAuth,
-    probe: probeKlaviyo,
-    isRevoked: isUnauthorizedStatusError,
-  }),
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = await buildKlaviyoAuth(props)
-      await probeKlaviyo(auth)
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listLists: async ({ ctx, props }) => {
       const page = klaviyoListPageInputSchema.parse(props)
       const response = await klaviyoRequest(

@@ -65,25 +65,23 @@ const probeGetResponse = async (auth: GetResponseAuthValue) => {
   )
 }
 
+const connection = apiKeyConnection({
+  displayName: "GetResponse",
+  fields: getResponseFields,
+  buildAuth: buildGetResponseAuth,
+  probe: probeGetResponse,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   GetResponseConfig,
   GetResponseAuthValue,
   GetResponseActions
 > = {
   name: "getResponse",
-  connection: apiKeyConnection({
-    displayName: "GetResponse",
-    fields: getResponseFields,
-    buildAuth: buildGetResponseAuth,
-    probe: probeGetResponse,
-    isRevoked: isUnauthorizedStatusError,
-  }),
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = await buildGetResponseAuth(props)
-      await probeGetResponse(auth)
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listCampaigns: async ({ ctx, props }) => {
       const response = await getResponseRequest(
         ctx.auth,

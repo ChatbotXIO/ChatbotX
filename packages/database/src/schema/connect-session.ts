@@ -14,10 +14,13 @@ import type {
   ConnectSessionOutcome,
   ConnectSessionTarget,
 } from "../partials/connect-session"
-import type {
-  ConnectSessionErrorCode,
-  ConnectSessionPurpose,
-  ConnectSessionStatus,
+import {
+  type ConnectSessionErrorCode,
+  type ConnectSessionPurpose,
+  type ConnectSessionStatus,
+  connectSessionErrorCodes,
+  connectSessionPurposes,
+  connectSessionStatuses,
 } from "../partials/connection"
 import type { IntegrationType } from "../partials/integration"
 import {
@@ -102,6 +105,27 @@ export const connectSessionModel = pgTable(
     check(
       "ConnectSession_actor_at_most_one",
       sql`(("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) <= 1`,
+    ),
+    check(
+      "ConnectSession_status_check",
+      sql`${table.status} IN (${sql.join(
+        connectSessionStatuses.options.map((status) => sql`${status}`),
+        sql`, `,
+      )})`,
+    ),
+    check(
+      "ConnectSession_purpose_check",
+      sql`${table.purpose} IN (${sql.join(
+        connectSessionPurposes.options.map((purpose) => sql`${purpose}`),
+        sql`, `,
+      )})`,
+    ),
+    check(
+      "ConnectSession_errorCode_check",
+      sql`${table.errorCode} IN (${sql.join(
+        connectSessionErrorCodes.options.map((errorCode) => sql`${errorCode}`),
+        sql`, `,
+      )})`,
     ),
   ],
 )

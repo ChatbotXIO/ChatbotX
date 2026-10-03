@@ -87,7 +87,7 @@ export class AuthRefreshException extends SdkException {
 }
 
 /**
- * Duck-typed 401/403 check shared by every REST-based marketing-integration
+ * Duck-typed 401 check shared by every REST-based marketing-integration
  * provider's `isRevokedTokenError`/`verify` catch (Mailchimp, Klaviyo,
  * MailerLite, SendGrid, Drip, ActiveCampaign, GetResponse). Each provider's
  * own API error class (`MailchimpApiError`, `DripApiError`, …) carries its
@@ -99,4 +99,4 @@ export const isUnauthorizedStatusError = (error: unknown): boolean =>
   typeof error === "object" &&
   error !== null &&
   "statusCode" in error &&
-  (error.statusCode === 401 || error.statusCode === 403)
+  error.statusCode === 401
