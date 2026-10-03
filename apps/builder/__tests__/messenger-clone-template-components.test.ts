@@ -278,10 +278,30 @@ describe("cloneMessengerMessageTemplateAction authorization", () => {
 
     const result = await run(["im-a", "im-b"])
 
+    // A plain Error's message is not shown: only Meta's and validation text.
     expect(result.failed).toEqual([
-      { channel: "Page im-a", error: "rate limited" },
+      { channel: "Page im-a", error: "Could not clone the template" },
     ])
     expect(result.succeeded).toEqual([{ channel: "Page im-b" }])
+  })
+
+  test("a database failure after Meta approved never leaks its SQL", async () => {
+    listCloneTargetsForUser.mockResolvedValue([target("im-a")])
+    createPageMessageTemplate.mockResolvedValue({
+      id: "meta-a",
+      status: "APPROVED",
+    })
+    const { integrations } = await import("@/integration")
+    vi.mocked(integrations.messenger.runAction).mockRejectedValueOnce(
+      new Error(
+        'Failed query: insert into "MessengerMessageTemplate" ("name") values ($1)\nparams: secret',
+      ),
+    )
+
+    const result = await run(["im-a"])
+
+    expect(JSON.stringify(result.failed)).not.toContain("insert into")
+    expect(JSON.stringify(result.failed)).not.toContain("secret")
   })
 })
 
@@ -309,6 +329,40 @@ describe("createMessengerMessageTemplate header image", () => {
       }),
     ).rejects.toThrow("ssrf-guard")
     expect(resumableUploadImage).not.toHaveBeenCalled()
+    expect(createPageMessageTemplate).not.toHaveBeenCalled()
+  })
+
+  test("a header image that is not an image is a 4xx with the reason, not a plain Error", async () => {
+    assertPublicUrl.mockReset().mockResolvedValue(undefined)
+    createPageMessageTemplate.mockReset()
+    resumableUploadImage
+      .mockClear()
+      .mockRejectedValueOnce(
+        new Error(
+          'Header image must be an image file, got "text/html" instead',
+        ),
+      )
+
+    await expect(
+      createMessengerMessageTemplate({
+        workspaceId: "ws-1",
+        integrationMessenger: { auth: {} } as never,
+        request: {
+          name: "promo",
+          language: "vi",
+          headerType: "text_and_image",
+          headerText: "Hi",
+          headerVariables: [],
+          headerImageUrl: "https://cdn.example.com/x.png",
+          body: "Body",
+          bodyVariables: [],
+          buttons: [],
+        },
+      }),
+    ).rejects.toMatchObject({
+      name: "ChatbotXException",
+      message: expect.stringContaining("must be an image file"),
+    })
     expect(createPageMessageTemplate).not.toHaveBeenCalled()
   })
 })

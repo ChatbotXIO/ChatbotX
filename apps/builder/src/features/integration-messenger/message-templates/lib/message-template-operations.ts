@@ -3,6 +3,10 @@ import {
   buildContext,
   messengerMessageTemplateService,
 } from "@chatbotx.io/business"
+import {
+  ChatbotXException,
+  toPublicErrorMessage,
+} from "@chatbotx.io/business/errors"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import { createPageMessageTemplate } from "@chatbotx.io/integration-messenger/apis/message-templates"
 import { resumableUploadImage } from "@chatbotx.io/integration-messenger/apis/upload"
@@ -109,7 +113,16 @@ async function uploadHeaderImage(
   options: { authenticatedDownload: boolean },
 ): Promise<string> {
   await assertPublicUrl(imageUrl, "Template header image URL")
-  return await resumableUploadImage(auth, imageUrl, options)
+  try {
+    return await resumableUploadImage(auth, imageUrl, options)
+  } catch (error) {
+    // A bad image (not an image, too large, unreachable) is the caller's to
+    // fix: a 4xx with the reason, not a 500. Meta's own errors keep their type.
+    if (error instanceof SdkException || !(error instanceof Error)) {
+      throw error
+    }
+    throw new ChatbotXException(error.message)
+  }
 }
 
 // IMAGE header handles are page-scoped. The DB stores Meta's listed image URL in
@@ -326,11 +339,12 @@ export async function cloneMessengerMessageTemplate(props: {
         })
       }
     } catch (error) {
-      const message =
-        error instanceof SdkException || error instanceof Error
-          ? error.message
-          : "Unknown error occurred"
-      result.failed.push({ channel: target.name, error: message })
+      // Never the raw message: a failed local write carries SQL and bound
+      // parameters. Meta's and our own validation messages survive.
+      result.failed.push({
+        channel: target.name,
+        error: toPublicErrorMessage(error, "Could not clone the template"),
+      })
     }
   }
 
