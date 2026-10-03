@@ -169,7 +169,7 @@ const coexistRunResource = z.object({
   status: z
     .string()
     .describe(
-      "init, running, waiting, succeeded, partial or failed (a live run is init, running or waiting).",
+      "init, running, waiting, succeeded, partial or failed (a live run is init, running or waiting). Error details stay in the builder.",
     ),
   startedAt: z.date().nullable(),
   finishedAt: z.date().nullable(),
@@ -183,7 +183,6 @@ const coexistRunResource = z.object({
   importedMessageCount: z.number(),
   skippedCount: z.number(),
   failedCount: z.number(),
-  currentError: z.string().nullable().describe("Last error text, if any."),
 })
 
 const coexistStatusResponse = z.object({

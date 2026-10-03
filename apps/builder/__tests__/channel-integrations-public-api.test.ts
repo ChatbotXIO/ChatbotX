@@ -215,7 +215,7 @@ describe("GET /v1/<channel>-channels/{id}/coexist", () => {
     importedMessageCount: 2,
     skippedCount: 0,
     failedCount: 0,
-    currentError: null,
+    currentError: "Graph API: token EAAB… rejected",
     workspaceId: "ws-1",
     integrationId: "7",
   }
@@ -233,6 +233,7 @@ describe("GET /v1/<channel>-channels/{id}/coexist", () => {
     })
     expect(result.run).toMatchObject({ id: "r1", currentScan: 4 })
     expect(result.run).not.toHaveProperty("workspaceId")
+    expect(result.run).not.toHaveProperty("currentError")
   })
 
   test("is run: null when it never synced", async () => {
