@@ -115,9 +115,13 @@ const SINGLETON_RESOURCES = new Set(["workspaces"])
 // Two-segment singleton resources that have a read AND a write route on the
 // same path (`GET`/`PATCH /v1/workspace/settings`): the method picks the verb,
 // otherwise both would derive the same command name and one would be dropped.
-const METHOD_VERBED_SINGLETON_PATHS = new Set(["workspace/settings"])
+const METHOD_VERBED_SINGLETON_PATHS = new Set([
+  "workspace/settings",
+  "messenger/templates/{id}",
+])
 const SINGLETON_VERBS: Record<string, string> = {
   get: "list",
+  delete: "delete",
   put: "update",
   patch: "update",
 }
@@ -190,7 +194,8 @@ export function pathAndMethodToCommandName(
   const secondIsParam = segments[1].startsWith("{")
 
   if (!secondIsParam && METHOD_VERBED_SINGLETON_PATHS.has(normalized)) {
-    return `${group}:${segments[1]}:${SINGLETON_VERBS[m] ?? m}`
+    const verb = segments[2] && m === "get" ? "get" : (SINGLETON_VERBS[m] ?? m)
+    return `${group}:${segments[1]}:${verb}`
   }
 
   if (!secondIsParam) {

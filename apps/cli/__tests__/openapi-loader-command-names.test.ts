@@ -133,3 +133,14 @@ describe("pathAndMethodToCommandName — workspace settings singleton", () => {
     )
   })
 })
+
+describe("pathAndMethodToCommandName — messenger templates by id", () => {
+  test("GET and DELETE on the same path get distinct commands", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/messenger/templates/{id}", "GET"),
+    ).toBe("messenger:templates:get")
+    expect(
+      pathAndMethodToCommandName("/v1/messenger/templates/{id}", "DELETE"),
+    ).toBe("messenger:templates:delete")
+  })
+})
