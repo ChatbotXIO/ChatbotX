@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/business/contact-scan"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import { sanitizePublicText } from "@chatbotx.io/business/errors"
+import { supportsProfileSnapshot } from "@chatbotx.io/database/partials"
 import type { CoexistRunWriteGuard } from "@chatbotx.io/database/repositories"
 import { isContactScanChannel } from "@chatbotx.io/utils/channel"
 import {
@@ -24,6 +25,7 @@ import {
   resolveUsageThrottle,
   sleepForUsageThrottle,
 } from "../coexist/usage-throttle"
+import { enqueueProfileSnapshotJobs } from "../profile-snapshot/queue"
 import type { ContactScanErrorClassification } from "./adapter"
 import { contactScanAdapters } from "./adapter"
 
@@ -284,6 +286,9 @@ export const runContactScan = async (
       if (filtered.itemsToProcess.length > 0) {
         try {
           pageResult = await bulkImportChannelContacts({
+            captureProfileSnapshot: supportsProfileSnapshot(
+              context.inbox.channel,
+            ),
             inbox: context.inbox,
             workspaceId,
             contacts: filtered.itemsToProcess.map((entry) => entry.contact),
@@ -324,6 +329,24 @@ export const runContactScan = async (
               "[contact-scan] quota increment failed — continuing (info-only)",
             )
           })
+      }
+
+      if (
+        supportsProfileSnapshot(context.inbox.channel) &&
+        pageResult?.newContactInboxIds.size
+      ) {
+        await enqueueProfileSnapshotJobs({
+          contactInboxIds: [...pageResult.newContactInboxIds.values()].map(
+            (link) => link.contactInboxId,
+          ),
+          inboxId: context.inbox.id,
+          workspaceId,
+        }).catch((err) => {
+          logger.warn(
+            { err, inboxId: context.inbox.id, workspaceId },
+            "[contact-scan] Profile snapshot enqueue failed; recovery will retry",
+          )
+        })
       }
 
       oldestProcessed = filtered.oldestProcessed

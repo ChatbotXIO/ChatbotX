@@ -56,6 +56,8 @@ const {
   mockRecordInboundDelivery,
   mockPromoteStandbyDelivery,
   mockDistributedLockRunExclusive,
+  mockResolveChannelPostForComment,
+  mockRecordContactInboxPostComment,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
 
@@ -186,6 +188,8 @@ const {
     mockDistributedLockRunExclusive: vi.fn(
       async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
     ),
+    mockResolveChannelPostForComment: vi.fn().mockResolvedValue("post-row-1"),
+    mockRecordContactInboxPostComment: vi.fn().mockResolvedValue(true),
   }
 })
 
@@ -290,6 +294,12 @@ vi.mock("@chatbotx.io/business", () => ({
     updateTracking: mockUpdateTracking,
     invalidateTracking: mockInvalidateTracking,
     syncScopedIdentity: mockSyncScopedIdentity,
+  },
+  channelPostService: {
+    resolveForComment: mockResolveChannelPostForComment,
+  },
+  contactInboxPostService: {
+    recordComment: mockRecordContactInboxPostComment,
   },
   getContactInboxIdentityConflictConstraint: (error: unknown) => {
     const constraints = [
@@ -485,7 +495,13 @@ vi.mock("../src/services/integrations", () => ({
     messenger: {
       runChannelHandler: mockRunChannelHandler,
       // Messenger comment path fetches the comment attachment; no attachment here.
-      runAction: vi.fn().mockResolvedValue(undefined),
+      runAction: vi.fn((action: string) =>
+        Promise.resolve(
+          action === "getPostDetails"
+            ? { created_time: "2026-01-01T00:00:00.000Z" }
+            : undefined,
+        ),
+      ),
     },
     telegram: {
       runChannelHandler: mockRunChannelHandler,
@@ -498,9 +514,11 @@ vi.mock("../src/services/integrations", () => ({
     },
     instagram: {
       runChannelHandler: mockRunChannelHandler,
+      runAction: vi.fn(),
     },
     instagramFacebook: {
       runChannelHandler: mockRunChannelHandler,
+      runAction: vi.fn(),
     },
     tiktok: {
       runChannelHandler: mockRunChannelHandler,
@@ -706,6 +724,10 @@ describe("receiveMessage — message repository branch", () => {
     mockCreateOrUpdate.mockResolvedValue({
       message: fakeCreatedMessage,
       isNew: true,
+    })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      isNew: true,
+      result: { ...fakeCreatedMessage, attachments: [] },
     })
     mockCreateOrUpdateWithAttachments.mockResolvedValue({
       result: { ...fakeCreatedMessage, attachments: [] },
@@ -1729,6 +1751,10 @@ describe("receiveMessage — new contact MAC gate", () => {
       id: "ci-new",
       contactId: "contact-new",
     }
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      isNew: true,
+      result: { ...fakeCreatedMessage, attachments: [] },
+    })
     mockCreateNewContactWithMac.mockResolvedValue({
       ok: true,
       value: { newContact, contactInbox, conversation: fakeConversation },
@@ -1841,14 +1867,15 @@ describe("receiveMessage — new contact MAC gate", () => {
         conversation: fakeConversation,
       },
     })
-
     const result = await receiveMessage(baseProps)
 
     expect(result).not.toBeNull()
     expect(mockRunChannelHandler).toHaveBeenCalledWith(
       "contact",
       "getProfile",
-      expect.objectContaining({ data: { sourceId: "psid-123" } }),
+      expect.objectContaining({
+        data: expect.objectContaining({ sourceId: "psid-123" }),
+      }),
     )
     expect(mockCreateNewContactWithMac).toHaveBeenCalled()
     expect(mockCreateOrUpdate).toHaveBeenCalledWith(
@@ -2982,7 +3009,7 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "getProfile",
       {
         ctx: { workspaceId: "ws-1" },
-        data: { sourceId: "tg-chat-1" },
+        data: expect.objectContaining({ sourceId: "tg-chat-1" }),
       },
     )
   })
@@ -3032,7 +3059,9 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
     expect(instagramFacebookRunChannelHandler).toHaveBeenCalledWith(
       "contact",
       "getProfile",
-      expect.objectContaining({ data: { sourceId: "psid-123" } }),
+      expect.objectContaining({
+        data: expect.objectContaining({ sourceId: "psid-123" }),
+      }),
     )
   })
 
@@ -3081,7 +3110,7 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "getProfile",
       {
         ctx: { workspaceId: "ws-1" },
-        data: { sourceId: "psid-123" },
+        data: expect.objectContaining({ sourceId: "psid-123" }),
       },
     )
   })
@@ -3300,8 +3329,122 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
     expect(mockRunChannelHandler).toHaveBeenCalledWith(
       "contact",
       "getProfile",
-      expect.objectContaining({ data: { sourceId: "ig-psid-1" } }),
+      expect.objectContaining({
+        data: { includeProfileSnapshot: true, sourceId: "ig-psid-1" },
+      }),
     )
+  })
+
+  describe("instagram: profile snapshot and handle persisted on the new contact inbox", () => {
+    const newInstagramContactInboxInsert = async (
+      profileResult: Record<string, unknown>,
+    ) => {
+      const instagramInbox = { ...fakeInbox, channel: "instagram" }
+      vi.mocked(
+        integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+      ).mockResolvedValue({
+        inbox: instagramInbox,
+        integrationRow: fakeIntegrationRow,
+      } as never)
+      mockFindContactInbox.mockResolvedValue(undefined)
+      mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+      mockRunChannelHandler.mockImplementation(
+        (_domain: string, action: string) => {
+          if (action === "getProfile") {
+            return Promise.resolve(profileResult)
+          }
+          return Promise.resolve({
+            message: { ...baseIncomingMessage, attachments: [] },
+            contact: { sourceId: "ig-psid-1" },
+            postbackAction: null,
+            quickReplyAction: null,
+            ref: null,
+          })
+        },
+      )
+      const inserted: Record<string, unknown>[] = []
+      const tx = {
+        insert: () => ({
+          values: (values: Record<string, unknown>) => {
+            inserted.push(values)
+            return { returning: () => Promise.resolve([values]) }
+          },
+        }),
+      }
+      mockCreateNewContactWithMac.mockImplementation(
+        async (input: {
+          create: (tx: unknown) => Promise<{ value: unknown }>
+        }) => ({
+          ok: true,
+          value: (await input.create(tx)).value,
+        }),
+      )
+      mockCreateOrUpdate.mockResolvedValue({
+        message: fakeCreatedMessage,
+        isNew: true,
+      })
+
+      await receiveMessage({ ...baseProps, integrationType: "instagram" })
+
+      // inserted[0] is the Contact row, inserted[1] the ContactInbox row.
+      return inserted[1]
+    }
+
+    test("stores the snapshot columns and the handle from the profile lookup", async () => {
+      const contactInboxInsert = await newInstagramContactInboxInsert({
+        firstName: "IG Contact",
+        sourceUsername: "ig_handle",
+        profileSnapshot: {
+          followsBusiness: true,
+          businessFollowsContact: false,
+          accountVerified: false,
+          followerCount: 0,
+          username: "snapshot_handle",
+        },
+      })
+
+      expect(contactInboxInsert).toMatchObject({
+        sourceUsername: "ig_handle",
+        followsBusiness: true,
+        businessFollowsContact: false,
+        accountVerified: false,
+        followerCount: 0,
+      })
+    })
+
+    test("keeps the handle from the snapshot when the profile lookup failed", async () => {
+      const contactInboxInsert = await newInstagramContactInboxInsert({
+        sourceId: "ig-psid-1",
+        profileSnapshot: {
+          followsBusiness: false,
+          businessFollowsContact: false,
+          accountVerified: true,
+          followerCount: 12,
+          username: "snapshot_handle",
+        },
+      })
+
+      expect(contactInboxInsert).toMatchObject({
+        sourceUsername: "snapshot_handle",
+        followerCount: 12,
+        accountVerified: true,
+      })
+    })
+
+    test("writes null (unknown) for every snapshot column when none was returned", async () => {
+      const contactInboxInsert = await newInstagramContactInboxInsert({
+        firstName: "IG Contact",
+        profileSnapshot: null,
+      })
+
+      expect(contactInboxInsert).toMatchObject({
+        sourceUsername: null,
+        followsBusiness: null,
+        businessFollowsContact: null,
+        accountVerified: null,
+        followerCount: null,
+      })
+    })
   })
 
   test("zalo: a new contact creation still fetches getProfile at creation time via hasOnDemandProfileApi", async () => {
@@ -3359,7 +3502,9 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
     expect(mockRunChannelHandler).toHaveBeenCalledWith(
       "contact",
       "getProfile",
-      expect.objectContaining({ data: { sourceId: "zalo-psid-1" } }),
+      expect.objectContaining({
+        data: { includeProfileSnapshot: false, sourceId: "zalo-psid-1" },
+      }),
     )
   })
 
@@ -3418,7 +3563,9 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
     expect(mockRunChannelHandler).toHaveBeenCalledWith(
       "contact",
       "getProfile",
-      expect.objectContaining({ data: { sourceId: "telegram-chat-1" } }),
+      expect.objectContaining({
+        data: { includeProfileSnapshot: false, sourceId: "telegram-chat-1" },
+      }),
     )
   })
 
@@ -3542,7 +3689,7 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "getProfile",
       {
         ctx: { workspaceId: "ws-1" },
-        data: { sourceId: "psid-ctm" },
+        data: expect.objectContaining({ sourceId: "psid-ctm" }),
       },
     )
     // The message row is persisted before the refresh runs — both happen
@@ -3580,6 +3727,10 @@ describe("contact source taxonomy", () => {
       message: fakeCreatedMessage,
       isNew: true,
     })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      isNew: true,
+      result: { ...fakeCreatedMessage, attachments: [] },
+    })
     mockCreateNewContactWithMac.mockResolvedValue({
       ok: true,
       value: {
@@ -3597,6 +3748,16 @@ describe("contact source taxonomy", () => {
         conversation: fakeConversation,
       },
     })
+    vi.mocked(allIntegrations.messenger?.runAction)?.mockImplementation(
+      (action: string) =>
+        Promise.resolve(
+          action === "getPostDetails"
+            ? { created_time: "2026-01-01T00:00:00.000Z" }
+            : undefined,
+        ),
+    )
+    mockResolveChannelPostForComment.mockResolvedValue("post-row-1")
+    mockRecordContactInboxPostComment.mockResolvedValue(true)
   })
 
   afterEach(() => {
@@ -3623,6 +3784,7 @@ describe("contact source taxonomy", () => {
         fromName: "Commenter",
         message: "hello",
         postId: "post-1",
+        createdTime: 0,
       },
     })
 
@@ -3643,11 +3805,116 @@ describe("contact source taxonomy", () => {
       at: fakeCreatedMessage.createdAt,
       contactRepliedAt: fakeCreatedMessage.createdAt,
     })
-    expect(
-      vi
-        .mocked(allIntegrations.messenger?.runAction)
-        .mock.calls.some(([action]) => action === "getPostDetails"),
-    ).toBe(false)
+    expect(mockResolveChannelPostForComment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "messenger",
+        workspaceId: "ws-1",
+      }),
+    )
+    expect(mockRecordContactInboxPostComment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commentedAt: new Date(0),
+        contactInboxId: "ci-new",
+        postId: "post-row-1",
+        workspaceId: "ws-1",
+      }),
+    )
+  })
+
+  test("propagates a post-persistence failure so the job retries", async () => {
+    // A transient failure resolving/recording the commented post must propagate
+    // (not be swallowed) so BullMQ retries the job. The writes are idempotent
+    // and run before the message insert, so a retry records the relationship
+    // exactly once. Matches plan §5 ("errors propagate; retry is idempotent").
+    mockResolveChannelPostForComment.mockRejectedValueOnce(
+      new Error("channel post lookup failed"),
+    )
+
+    await expect(
+      receiveComment({
+        integrationType: "messenger",
+        integrationIdentifier: "inbox-1",
+        commentData: {
+          commentId: "comment-1",
+          fromId: "commenter-1",
+          fromName: "Commenter",
+          message: "hello",
+          postId: "post-1",
+          createdTime: 0,
+        },
+      }),
+    ).rejects.toThrow("channel post lookup failed")
+  })
+
+  test("fetches post details through the channel's neutral getPostDetails handler", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "instagram" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    const details = {
+      caption: "A photo",
+      mediaType: "IMAGE",
+      permalink: "https://instagram.example/p/1",
+      publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+      thumbnailUrl: "https://cdn.example/photo.jpg",
+    }
+    mockRunChannelHandler.mockResolvedValue(details)
+    mockResolveChannelPostForComment.mockImplementationOnce(
+      async ({ fetchDetails }) => {
+        // The worker holds no vendor field mapping: whatever the channel
+        // handler returns is passed through unchanged.
+        await expect(fetchDetails()).resolves.toBe(details)
+        return "post-row-1"
+      },
+    )
+
+    await receiveComment({
+      integrationType: "instagram",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-instagram-1",
+        fromId: "commenter-1",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockResolveIntegrationContextFromContactInbox).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInbox: { channel: "instagram", inboxId: "inbox-1" },
+    })
+    expect(mockRunChannelHandler).toHaveBeenCalledWith(
+      "contact",
+      "getPostDetails",
+      { ctx: { workspaceId: "ws-1" }, data: { postId: "post-1" } },
+    )
+  })
+
+  test("does not track posts for a channel outside postTrackingChannels", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "telegram" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-untracked-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "post-1",
+        createdTime: 0,
+      },
+    })
+
+    expect(mockResolveChannelPostForComment).not.toHaveBeenCalled()
+    expect(mockRecordContactInboxPostComment).not.toHaveBeenCalled()
   })
 
   test("saves a Facebook video comment with the webhook's video attached", async () => {
@@ -3680,16 +3947,23 @@ describe("contact source taxonomy", () => {
   })
 
   test("keeps the Graph attachment and skips the video URL when both exist", async () => {
-    vi.mocked(allIntegrations.messenger?.runAction)?.mockResolvedValueOnce({
-      type: "photo",
-      attachment: {
-        sourceId: "attachment-photo-1",
-        fileType: "image",
-        mimeType: "image/jpeg",
-        originPath: "public/ws/ws-1/photo",
-        size: 3,
-      },
-    } as never)
+    vi.mocked(allIntegrations.messenger?.runAction)?.mockImplementation(
+      (action: string) =>
+        Promise.resolve(
+          action === "getCommentAttachment"
+            ? {
+                type: "photo",
+                attachment: {
+                  sourceId: "attachment-photo-1",
+                  fileType: "image",
+                  mimeType: "image/jpeg",
+                  originPath: "public/ws/ws-1/photo",
+                  size: 3,
+                },
+              }
+            : { created_time: "2026-01-01T00:00:00.000Z" },
+        ),
+    )
 
     await receiveComment({
       integrationType: "messenger",

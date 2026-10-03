@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "أدخل تاريخًا بصيغة YYYY-MM-DD HH:mm أو متغيرًا",
+    "openPost": "فتح {post}",
+    "openPostLink": "فتح",
+    "postWithoutCaption": "منشور بلا وصف",
     "operator": {
       "and": "جميع الشروط",
       "or": "أي شرط"
@@ -880,7 +883,9 @@
       "bannerDescription": "من المقرر حذف مساحة العمل هذه. تراجع عن الحذف أدناه لمواصلة استخدامها.",
       "pendingBlockedToast": "من المقرر حذف مساحة العمل هذه. تواصل مع مشرف مساحة العمل لاستعادة الوصول.",
       "navDisabledTooltip": "غير متاح أثناء جدولة حذف مساحة العمل",
-      "badge": "تمت جدولة الحذف"
+      "badge": "تمت جدولة الحذف",
+      "purging": "جارٍ حذف مساحة العمل.",
+      "alreadyStarted": "بدأ حذف مساحة العمل بالفعل."
     },
     "supportAccess": {
       "bannerTitle": "جلسة دعم المنصة",

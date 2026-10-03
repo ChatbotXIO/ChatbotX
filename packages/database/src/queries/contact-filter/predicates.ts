@@ -504,6 +504,28 @@ export function buildExistsBooleanWhere(
   return exists(yesPredicate, isNo)
 }
 
+/**
+ * Boolean snapshot fields distinguish an explicit false value from no
+ * captured value. Unlike buildExistsBooleanWhere, `isEmpty` means no inbox
+ * has a value at all rather than "not true".
+ */
+export function buildContactInboxTriStateBooleanWhere(
+  column: AnyColumn,
+  operator: string,
+  value: unknown,
+): ContactWhere {
+  if (operator === operatorTypes.enum.eq && value === "true") {
+    return contactInboxExists(sql`${column} = true`)
+  }
+  if (operator === operatorTypes.enum.eq && value === "false") {
+    return contactInboxExists(sql`${column} = false`)
+  }
+  if (operator === operatorTypes.enum.isEmpty) {
+    return contactInboxExists(sql`${column} IS NOT NULL`, true)
+  }
+  return {}
+}
+
 export function buildLastCommentWhere(
   operator: string,
   value: unknown,

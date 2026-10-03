@@ -17,6 +17,7 @@ const {
   mockLogProviderError,
   mockLowQueueAddBulk,
   mockQueueAdd,
+  mockEnqueueProfileSnapshots,
 } = vi.hoisted(() => ({
   mockClaim: vi.fn(),
   mockFinish: vi.fn(),
@@ -34,6 +35,7 @@ const {
   mockLogProviderError: vi.fn(),
   mockLowQueueAddBulk: vi.fn(),
   mockQueueAdd: vi.fn(),
+  mockEnqueueProfileSnapshots: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -102,7 +104,18 @@ vi.mock("../src/integration/handlers/contact-scan/adapter", () => ({
       listPage: mockListPage,
       classifyError: mockClassifyError,
     },
+    instagram: {
+      channel: "instagram",
+      provider: "instagram",
+      loadContext: mockLoadContext,
+      listPage: mockListPage,
+      classifyError: mockClassifyError,
+    },
   },
+}))
+
+vi.mock("../src/integration/handlers/profile-snapshot/queue", () => ({
+  enqueueProfileSnapshotJobs: mockEnqueueProfileSnapshots,
 }))
 
 const { runContactScan } = await import(
@@ -135,7 +148,9 @@ const baseRun = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 })
 
-const context = { inbox: { id: "inbox-1", workspaceId: WORKSPACE_ID } }
+const context = {
+  inbox: { id: "inbox-1", workspaceId: WORKSPACE_ID, channel: "messenger" },
+}
 
 const emptyImportResult = {
   importedContacts: 0,
@@ -152,6 +167,7 @@ const entry = (sourceId: string, updatedAt: Date | null) => ({
 describe("runContactScan", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    context.inbox.channel = "messenger"
     mockFindWorkspace.mockResolvedValue({
       id: WORKSPACE_ID,
       ownerId: "owner-1",
@@ -165,6 +181,7 @@ describe("runContactScan", () => {
     mockReopenReleased.mockResolvedValue(1)
     mockBulkImportChannelContacts.mockResolvedValue(emptyImportResult)
     mockQueueAdd.mockResolvedValue(undefined)
+    mockEnqueueProfileSnapshots.mockResolvedValue(undefined)
     // Both are best-effort (`.catch(...)`-chained by the engine, FIX 1) —
     // default them to resolving Promises like the real services so a test
     // that doesn't care about them doesn't crash on `.catch` of a bare
@@ -293,6 +310,7 @@ describe("runContactScan", () => {
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
       expect(mockBulkImportChannelContacts).toHaveBeenCalledWith({
+        captureProfileSnapshot: false,
         inbox: context.inbox,
         workspaceId: WORKSPACE_ID,
         contacts: [{ sourceId: "in-window" }],
@@ -455,6 +473,32 @@ describe("runContactScan", () => {
       expect(mockFinish).toHaveBeenCalledWith(
         expect.objectContaining({ status: "succeeded" }),
       )
+    })
+
+    it("enqueues durable snapshot work only for newly imported Instagram contacts", async () => {
+      mockClaim.mockResolvedValue(baseRun({ channel: "instagram" }))
+      context.inbox.channel = "instagram"
+      mockListPage.mockResolvedValue({
+        entries: [entry("a", new Date("2026-02-01T00:00:00Z"))],
+        after: undefined,
+      })
+      mockBulkImportChannelContacts.mockResolvedValue({
+        importedContacts: 1,
+        skippedContacts: 0,
+        contactInboxIds: new Map([["a", { contactInboxId: "ci-1" }]]),
+        newContactInboxIds: new Map([["a", { contactInboxId: "ci-1" }]]),
+      })
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockBulkImportChannelContacts).toHaveBeenCalledWith(
+        expect.objectContaining({ captureProfileSnapshot: true }),
+      )
+      expect(mockEnqueueProfileSnapshots).toHaveBeenCalledWith({
+        contactInboxIds: ["ci-1"],
+        inboxId: "inbox-1",
+        workspaceId: WORKSPACE_ID,
+      })
     })
   })
 

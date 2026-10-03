@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Masukkan tanggal dalam format YYYY-MM-DD HH:mm atau sebuah variabel",
+    "openPost": "Buka {post}",
+    "openPostLink": "Buka",
+    "postWithoutCaption": "Postingan tanpa keterangan",
     "operator": {
       "and": "Semua kondisi",
       "or": "Kondisi apa pun"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "Ruang kerja ini dijadwalkan untuk dihapus. Batalkan penghapusan di bawah agar dapat terus menggunakannya.",
       "pendingBlockedToast": "Ruang kerja ini dijadwalkan untuk dihapus. Hubungi admin ruang kerja untuk memulihkan akses.",
       "navDisabledTooltip": "Tidak tersedia saat penghapusan ruang kerja dijadwalkan",
-      "badge": "Penghapusan dijadwalkan"
+      "badge": "Penghapusan dijadwalkan",
+      "purging": "Penghapusan ruang kerja sedang berlangsung.",
+      "alreadyStarted": "Penghapusan ruang kerja sudah dimulai."
     },
     "supportAccess": {
       "bannerTitle": "Sesi dukungan platform",

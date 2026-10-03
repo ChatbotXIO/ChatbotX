@@ -179,6 +179,33 @@ export class ChatbotXException extends Error {
   }
 }
 
+/**
+ * A bounded workspace purge reached its per-run limit while rows still
+ * remain. The scheduled worker treats this as an expected, resumable state:
+ * it keeps the durable purge fence and retries on its next run.
+ */
+export class WorkspacePurgeIncompleteError extends Error {
+  readonly workspaceId: string
+  readonly table: string
+
+  constructor(workspaceId: string, table: string) {
+    super(`Workspace purge is incomplete for ${table}`)
+    this.name = this.constructor.name
+    this.workspaceId = workspaceId
+    this.table = table
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, WorkspacePurgeIncompleteError)
+    }
+  }
+}
+
+export const workspaceDeletionStartedException = () =>
+  new ChatbotXException(
+    "Workspace deletion is already in progress",
+    "workspaceDeletionStarted",
+    409,
+  )
+
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
 

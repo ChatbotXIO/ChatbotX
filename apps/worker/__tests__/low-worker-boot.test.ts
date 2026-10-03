@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // Boots the real `src/low/worker.ts` (which starts itself on import) and asserts
-// it creates exactly one BullMQ `Worker` on the `low` queue, routes each
-// LowJobAction to the correct shared handler, and gates every job behind
-// `withBlockedOwnerGuard`. All of the worker's imports are mocked to keep this a
+// it creates a BullMQ `Worker` on the `low` queue plus the dedicated
+// `profileSnapshot` Worker, routes each LowJobAction to the correct shared
+// handler, and gates every job behind `withBlockedOwnerGuard`. All of the worker's imports are mocked to keep this a
 // fast, isolated unit test.
 
 type CapturedWorker = {
@@ -22,6 +22,7 @@ const workerState = vi.hoisted(() => ({
   ensureBootstrapped: vi.fn(async () => undefined),
   coexistAttachmentDownload: vi.fn(async () => undefined),
   updateContactAvatar: vi.fn(async () => undefined),
+  captureContactProfileSnapshot: vi.fn(async () => undefined),
   receiveComment: vi.fn(async () => undefined),
   finishMissedCommentReplay: vi.fn(async () => undefined),
   withBlockedOwnerGuard: vi.fn(
@@ -54,7 +55,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     updateContactAvatar: "updateContactAvatar",
     replayMissedComment: "replayMissedComment",
   },
-  queueNames: { enum: { low: "low" } },
+  queueNames: { enum: { low: "low", profileSnapshot: "profileSnapshot" } },
   defaultWorkerOptions: { concurrency: 5, removeOnComplete: { count: 1000 } },
   getRedisConnection: vi.fn(() => ({})),
   getQueueConnection: vi.fn(() => ({})),
@@ -68,7 +69,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("../src/env", () => ({
-  env: { LOW_WORKER_CONCURRENCY: 30 },
+  env: { LOW_WORKER_CONCURRENCY: 30, PROFILE_SNAPSHOT_JOBS_PER_SECOND: 5 },
 }))
 
 vi.mock("../src/lib/bootstrap", () => ({
@@ -93,6 +94,10 @@ vi.mock("../src/integration/handlers/contact/update-avatar", () => ({
   updateContactAvatar: workerState.updateContactAvatar,
 }))
 
+vi.mock("../src/integration/handlers/capture-contact-profile-snapshot", () => ({
+  captureContactProfileSnapshot: workerState.captureContactProfileSnapshot,
+}))
+
 vi.mock("../src/integration/handlers/received-message", () => ({
   receiveComment: workerState.receiveComment,
 }))
@@ -100,13 +105,14 @@ vi.mock("../src/integration/handlers/received-message", () => ({
 // Importing the worker module boots it exactly once (ESM module cache).
 await import("../src/low/worker")
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(1)
+  expect(workerState.capturedWorkers).toHaveLength(2)
 })
 
 describe("low worker process boot", () => {
   beforeEach(() => {
     workerState.coexistAttachmentDownload.mockClear()
     workerState.updateContactAvatar.mockClear()
+    workerState.captureContactProfileSnapshot.mockClear()
     workerState.receiveComment.mockClear()
     workerState.finishMissedCommentReplay.mockClear()
     workerState.withBlockedOwnerGuard.mockClear()
@@ -115,10 +121,69 @@ describe("low worker process boot", () => {
     )
   })
 
-  test("boots exactly one Worker on the low queue at the env-tunable concurrency", () => {
-    expect(workerState.capturedWorkers).toHaveLength(1)
+  test("boots the low Worker at the env-tunable concurrency plus the dedicated profileSnapshot Worker", () => {
+    expect(workerState.capturedWorkers).toHaveLength(2)
     expect(workerState.capturedWorkers[0]?.queueName).toBe("low")
     expect(workerState.capturedWorkers[0]?.options.concurrency).toBe(30)
+    expect(workerState.capturedWorkers[1]?.queueName).toBe("profileSnapshot")
+  })
+
+  test("the profileSnapshot Worker is serial and carries the PROFILE_SNAPSHOT_JOBS_PER_SECOND limiter", () => {
+    const [, snapshotWorker] = workerState.capturedWorkers
+
+    expect(snapshotWorker?.options.concurrency).toBe(1)
+    expect(snapshotWorker?.options.limiter).toEqual({ max: 5, duration: 1000 })
+  })
+
+  test("routes a profileSnapshot job to the capture handler behind the owner guard", async () => {
+    const [, snapshotWorker] = workerState.capturedWorkers
+    const data = {
+      contactInboxId: "ci-7",
+      inboxId: "inbox-7",
+      workspaceId: "ws-7",
+    }
+
+    await snapshotWorker?.processor({ data: { type: "capture", data } })
+
+    expect(workerState.captureContactProfileSnapshot).toHaveBeenCalledWith(data)
+    expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(
+      "ws-7",
+      expect.any(Function),
+    )
+  })
+
+  test("skips the capture when the owner guard blocks the workspace", async () => {
+    workerState.withBlockedOwnerGuard.mockImplementationOnce(
+      async () => undefined,
+    )
+    const [, snapshotWorker] = workerState.capturedWorkers
+
+    await snapshotWorker?.processor({
+      data: {
+        type: "capture",
+        data: {
+          contactInboxId: "ci-8",
+          inboxId: "inbox-8",
+          workspaceId: "ws-8",
+        },
+      },
+    })
+
+    expect(workerState.captureContactProfileSnapshot).not.toHaveBeenCalled()
+  })
+
+  test("shutdown closes both Workers", async () => {
+    const exit = vi
+      .spyOn(process, "exit")
+      .mockImplementation((() => undefined) as never)
+    workerState.workerClose.mockClear()
+
+    process.emit("SIGTERM")
+    await vi.waitFor(() => {
+      expect(exit).toHaveBeenCalledWith(0)
+    })
+    expect(workerState.workerClose).toHaveBeenCalledTimes(2)
+    exit.mockRestore()
   })
 
   test("routes coexistAttachmentDownload to its handler with the job payload", async () => {

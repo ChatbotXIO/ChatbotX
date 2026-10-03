@@ -67,8 +67,11 @@ vi.mock("@chatbotx.io/encryption/link-signature", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-instagram", () => ({
-  fetchInstagramContactProfile: vi.fn(),
   getPostDetails: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/channel-registry/registry", () => ({
+  resolveIntegrationContextFromContactInbox: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({

@@ -16,10 +16,11 @@ prerequisites that must be correct regardless of which transport eventually wins
 
 Grounding facts, verified against the code at the time of this decision:
 
-- All 13 active BullMQ queues use the hot/bulk split: hot is `integration`,
+- All 14 active BullMQ queues use the hot/bulk split: hot is `integration`,
   `chat`, `notification`, `low`, `callTranscription`, and
   `whatsappVoipSignaling`; bulk is `aiAgent`, `heavy`, `default`, `schedule`,
-  `trigger`, `webhook`, and `quota`. `sequenceScheduler` stays on its dedicated
+  `trigger`, `webhook`, `quota`, and `profileSnapshot` (rate-limited contact
+  profile enrichment, consumed by the `low` worker process). `sequenceScheduler` stays on its dedicated
   `sequenceConnections` client.
 - The default hot `getRedisConnection()` is also used by event-bus streams,
   `packages/events` cache, heavy-step-runner, and provider-rate-limiter keys.
@@ -67,7 +68,7 @@ not by clustering a single queue. Do not plan a cluster migration for the queue 
 Instead, queues split into a **hot** group (`integration`, `chat`, `notification`,
 `low`, `callTranscription`, `whatsappVoipSignaling` — latency-sensitive) and a
 **bulk** group (`aiAgent`, `heavy`, `default`, `schedule`, `trigger`, `webhook`,
-`quota` — background and export work that can burst).
+`quota`, `profileSnapshot` — background and export work that can burst).
 `getRedisConnection(group: "hot" | "bulk")`
 (`packages/worker-config/src/lib/connection.ts`) resolves each group's URL
 independently, falling back through `REDIS_QUEUE_BULK_URL` → `REDIS_QUEUE_URL` →

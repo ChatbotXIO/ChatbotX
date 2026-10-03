@@ -22,10 +22,14 @@ vi.mock("@/env", () => ({
 // WorkspaceStatusSwitch); the full package pulls in the database client,
 // which throws outside a real server runtime.
 vi.mock("@chatbotx.io/business", () => ({
-  isWorkspaceScheduledForDeletion: () => false,
+  isWorkspaceScheduledForDeletion: (workspace: {
+    scheduledDeletionAt?: Date | string | null
+  }) => workspace.scheduledDeletionAt !== null,
 }))
 vi.mock("@chatbotx.io/business/workspace-lifecycle/predicates", () => ({
-  isWorkspaceScheduledForDeletion: () => false,
+  isWorkspaceScheduledForDeletion: (workspace: {
+    scheduledDeletionAt?: Date | string | null
+  }) => workspace.scheduledDeletionAt !== null,
 }))
 
 // Unconditionally imported by WorkspacesList (only rendered when
@@ -99,5 +103,31 @@ describe("WorkspacesList — community edition, zero workspaces", () => {
 
     const createLink = el.querySelector('a[href="/channels/create"]')
     expect(createLink).toBeNull()
+  })
+
+  test("distinguishes a scheduled deletion from a purge in progress", async () => {
+    const el = await renderWorkspacesList([
+      {
+        id: "1",
+        name: "Pending workspace",
+        logo: null,
+        status: "active",
+        endTime: null,
+        purgeStartedAt: null,
+        scheduledDeletionAt: new Date().toISOString(),
+      },
+      {
+        id: "2",
+        name: "Purging workspace",
+        logo: null,
+        status: "active",
+        endTime: null,
+        purgeStartedAt: new Date().toISOString(),
+        scheduledDeletionAt: new Date().toISOString(),
+      },
+    ] as unknown as Parameters<typeof WorkspacesList>[0]["workspaces"])
+
+    expect(el.textContent).toContain("workspace.deletion.badge")
+    expect(el.textContent).toContain("workspace.deletion.purging")
   })
 })

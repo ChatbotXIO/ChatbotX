@@ -125,6 +125,13 @@ permissions and calls the same `contactService.list` method — see
 contacts or contact-derived data, make the intended scope explicit in the
 API contract and tests.
 
+The `contacts` scope also covers `GET /v1/channel-posts` and
+`GET /v1/channel-posts/options/by-ids`. These endpoints list the workspace's
+tracked-comment post catalog and resolve post labels by id. Their ids are the
+only values accepted by a `contactFilter` condition whose field is
+`commentedOnPost`; callers should discover ids through this catalog instead of
+using a social platform's external post id.
+
 ### PUT vs. PATCH on a resource's own id
 
 House rule, enforced by

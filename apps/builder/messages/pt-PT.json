@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Introduza uma data no formato YYYY-MM-DD HH:mm ou uma variável",
+    "openPost": "Abrir {post}",
+    "openPostLink": "Abrir",
+    "postWithoutCaption": "Publicação sem legenda",
     "operator": {
       "and": "Todas as condições",
       "or": "Qualquer condição"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "A eliminação deste espaço de trabalho está agendada. Anule a eliminação abaixo para continuar a utilizá-lo.",
       "pendingBlockedToast": "A eliminação deste espaço de trabalho está agendada. Contacte um administrador do espaço de trabalho para restaurar o acesso.",
       "navDisabledTooltip": "Indisponível enquanto a eliminação do espaço de trabalho estiver agendada",
-      "badge": "Eliminação agendada"
+      "badge": "Eliminação agendada",
+      "purging": "A eliminação do espaço de trabalho está em curso.",
+      "alreadyStarted": "A eliminação do espaço de trabalho já começou."
     },
     "supportAccess": {
       "bannerTitle": "Sessão de suporte da plataforma",

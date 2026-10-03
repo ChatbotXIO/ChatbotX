@@ -37,6 +37,7 @@ export type ContactFilterOptionSource =
   | "reflinks"
   | "assignees"
   | "ctwaConversionTypes"
+  | "channelPosts"
 
 export type ContactFilterFieldDefinition = {
   field: ContactFilterField
@@ -184,6 +185,31 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
   {
     field: contactFilterFields.enum.lastComment,
     schemaKind: "text",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.commentedOnPost,
+    schemaKind: "multiSelect",
+    optionSource: "channelPosts",
+  },
+  {
+    field: contactFilterFields.enum.followsBusinessOnInstagram,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.businessFollowsUserOnInstagram,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.verifiedAccountOnInstagram,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.followerCountOnInstagram,
+    schemaKind: "number",
     optionSource: "none",
   },
   {

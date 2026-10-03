@@ -12,6 +12,7 @@ import type {
   BulkThreadControlAction,
   BulkThreadControlLimits,
   BulkThreadControlResult,
+  ChannelPostDetails,
   CommentAnchor,
   Context,
   HandleRequestProps,
@@ -385,8 +386,24 @@ export type UserCustomSettings = {
 
 export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
-    { ctx: Context<IAuth>; data: { sourceId: string } },
+    {
+      ctx: Context<IAuth>
+      data: { includeProfileSnapshot?: boolean; sourceId: string }
+    },
     IncomingContact
+  >
+  getProfileSnapshot?: Handler<
+    { ctx: Context<IAuth>; data: { sourceId: string } },
+    NonNullable<IncomingContact["profileSnapshot"]>
+  >
+  /**
+   * Describes a post the contact commented on (caption, permalink, …). Optional:
+   * only channels that track comments per post implement it
+   * (`postTrackingChannels`).
+   */
+  getPostDetails?: Handler<
+    { ctx: Context<IAuth>; data: { postId: string } },
+    ChannelPostDetails
   >
   getContactProfilePicUrl: Handler<
     { ctx: Context<IAuth>; data: { sourceId: string } },

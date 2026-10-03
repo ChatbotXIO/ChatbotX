@@ -1535,6 +1535,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Introdu o dată ca YYYY-MM-DD HH:mm sau o variabilă",
+    "openPost": "Deschide {post}",
+    "openPostLink": "Deschide",
+    "postWithoutCaption": "Postare fără descriere",
     "operator": {
       "and": "Toate condițiile",
       "or": "Orice condiție"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "Acest spațiu de lucru este programat pentru ștergere. Anulează ștergerea de mai jos pentru a continua să-l folosești.",
       "pendingBlockedToast": "Acest spațiu de lucru este programat pentru ștergere. Contactează un administrator al spațiului de lucru pentru a restaura accesul.",
       "navDisabledTooltip": "Indisponibil cât timp ștergerea spațiului de lucru este programată",
-      "badge": "Ștergere programată"
+      "badge": "Ștergere programată",
+      "purging": "Ștergerea spațiului de lucru este în curs.",
+      "alreadyStarted": "Ștergerea spațiului de lucru a început deja."
     },
     "supportAccess": {
       "bannerTitle": "Sesiune de suport a platformei",

@@ -163,6 +163,24 @@ export const integrationInstagramRepository = {
     return row ?? null
   },
 
+  async findByInboxIdForWorkspace(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationInstagramModel | null> {
+    const [row] = await tx
+      .select()
+      .from(integrationInstagramModel)
+      .where(
+        and(
+          eq(integrationInstagramModel.inboxId, input.inboxId),
+          eq(integrationInstagramModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  },
+
   async updateCapiScopeCache(
     input: UpdateInstagramCapiScopeCacheInput,
     tx: DatabaseClient = db,

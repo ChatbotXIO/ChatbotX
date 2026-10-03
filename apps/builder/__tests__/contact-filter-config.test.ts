@@ -13,6 +13,7 @@ import {
   formatConditionValueDisplay,
   formatFilterConditionValue,
   getConditionOptions,
+  getDefaultFilterConfig,
   getFieldConfigs,
   getFieldOptions,
 } from "@/features/contact-filter/components/contact-filter-config"
@@ -27,8 +28,12 @@ import {
   getStaticFieldConditionOptions,
   getStaticFieldValueInputConfig,
   staticFieldOperatorRequiresArrayValue,
+  staticFieldRules,
 } from "@/features/contact-filter/components/static-field-filter-config"
-import { convertCustomFieldTypeToConditionType } from "@/features/contact-filter/schema"
+import {
+  convertCustomFieldTypeToConditionType,
+  singleContactFilterConditionSchema,
+} from "@/features/contact-filter/schema"
 
 const t = (key: string) => key
 const conditionOptions = getConditionOptions(t)
@@ -67,6 +72,71 @@ describe("contact filter operator config", () => {
       expect(option(options, operatorTypes.enum.eq)?.disabled).toBe(false)
       expect(option(options, operatorTypes.enum.isEmpty)?.disabled).toBe(true)
     }
+  })
+
+  test("keeps Instagram snapshot and post filter rules aligned with their schemas", () => {
+    for (const name of [
+      "followsBusinessOnInstagram",
+      "businessFollowsUserOnInstagram",
+      "verifiedAccountOnInstagram",
+    ]) {
+      expect(staticFieldRules[name]?.enabledOperators).toEqual([
+        operatorTypes.enum.eq,
+        operatorTypes.enum.isEmpty,
+      ])
+    }
+
+    expect(staticFieldRules.followerCountOnInstagram?.singleInput).toBe(
+      "number",
+    )
+    expect(staticFieldRules.commentedOnPost?.enabledOperators).toEqual([
+      operatorTypes.enum.eq,
+      operatorTypes.enum.ne,
+      operatorTypes.enum.isEmpty,
+    ])
+
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+      channelPostOptions: [{ label: "Post", value: "post-1" }],
+    })
+    expect(
+      configs.find((config) => config.name === "commentedOnPost"),
+    ).toMatchObject({
+      formField: formFieldTypes.enum.multiSelect,
+      optionSource: "channelPosts",
+      options: [{ label: "Post", value: "post-1" }],
+    })
+  })
+
+  test("rejects malformed commented-post values before they can widen an audience", () => {
+    for (const value of [
+      "1",
+      ["0"],
+      ["01"],
+      ["9223372036854775808"],
+      ["1", "1"],
+      Array.from({ length: 101 }, (_, index) => String(index + 1)),
+    ]) {
+      expect(
+        singleContactFilterConditionSchema.safeParse({
+          field: "commentedOnPost",
+          operator: "eq",
+          value,
+        }).success,
+      ).toBe(false)
+    }
+
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "commentedOnPost",
+        operator: "eq",
+        value: ["1", "9223372036854775807"],
+      }).success,
+    ).toBe(true)
   })
 
   test("enables all number custom-field operator families", () => {
@@ -811,5 +881,55 @@ describe("contact filter field config helpers", () => {
         true,
       )
     })
+  })
+})
+
+describe("getDefaultFilterConfig", () => {
+  const config = (name: string, hidden?: boolean): FieldConfig => ({
+    name,
+    formField: formFieldTypes.enum.text,
+    group: "analytics",
+    hidden,
+    options: [],
+  })
+
+  test("prefers the current channel wherever it sits in the list", () => {
+    const configs = [
+      config("followsBusinessOnInstagram"),
+      config("language"),
+      config("currentChannel"),
+    ]
+
+    expect(getDefaultFilterConfig(configs)?.name).toBe("currentChannel")
+  })
+
+  test("falls back to the first pickable field when the channel is not offered", () => {
+    const configs = [config("locale", true), config("language"), config("tags")]
+
+    expect(getDefaultFilterConfig(configs)?.name).toBe("language")
+  })
+
+  test("never defaults to a retired (hidden) field", () => {
+    expect(
+      getDefaultFilterConfig([config("currentChannel", true), config("tags")])
+        ?.name,
+    ).toBe("tags")
+  })
+
+  test("returns undefined when nothing is pickable", () => {
+    expect(getDefaultFilterConfig([])).toBeUndefined()
+    expect(getDefaultFilterConfig([config("locale", true)])).toBeUndefined()
+  })
+
+  test("the real field configs open on the current channel, not an Instagram field", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+
+    expect(getDefaultFilterConfig(configs)?.name).toBe("currentChannel")
   })
 })

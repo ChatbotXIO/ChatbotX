@@ -1,5 +1,14 @@
 import { describe, expect, test } from "vitest"
-import { capText, DEFAULT_MAX_LOG_CHARS, redactSecrets } from "../src/redact"
+import {
+  capText,
+  DEFAULT_MAX_LOG_CHARS,
+  redactSecrets,
+  scrubSecretsInString,
+  toLogSafeError,
+} from "../src/redact"
+
+const TOKEN = "EAABsecret1234567890"
+const GRAPH_URL = `https://graph.facebook.com/v25.0/123?fields=name&access_token=${TOKEN}`
 
 describe("redactSecrets", () => {
   test("redacts top-level sensitive keys and keeps ordinary ones", () => {
@@ -146,5 +155,59 @@ describe("capText", () => {
     const lastCode = retained.charCodeAt(retained.length - 1)
 
     expect(lastCode >= 0xd8_00 && lastCode <= 0xdb_ff).toBe(false)
+  })
+})
+
+describe("scrubSecretsInString", () => {
+  test("redacts a token embedded in a URL query string", () => {
+    const result = scrubSecretsInString(GRAPH_URL)
+
+    expect(result).not.toContain(TOKEN)
+    expect(result).toContain("access_token=[redacted]")
+    expect(result).toContain("fields=name")
+  })
+
+  test("leaves a string without secrets untouched", () => {
+    expect(scrubSecretsInString("just a message")).toBe("just a message")
+  })
+})
+
+describe("redactSecrets URL-value scrubbing", () => {
+  test("scrubs a token inside a nested string value, not just by key", () => {
+    const result = redactSecrets({ requestUrl: GRAPH_URL }) as Record<
+      string,
+      unknown
+    >
+
+    expect(JSON.stringify(result)).not.toContain(TOKEN)
+    expect(result.requestUrl).toContain("access_token=[redacted]")
+  })
+})
+
+describe("toLogSafeError", () => {
+  test("scrubs a token from an error message and stack, dropping nested fields", () => {
+    const error = Object.assign(
+      new Error(`Request to ${GRAPH_URL} failed`),
+      // A real HTTP-client error carries the request URL on a nested field.
+      { request: { url: GRAPH_URL }, response: { status: 400 } },
+    )
+
+    const result = toLogSafeError(error)
+    const serialized = JSON.stringify(result)
+
+    expect(serialized).not.toContain(TOKEN)
+    expect(result.name).toBe("Error")
+    expect(result.message).toContain("access_token=[redacted]")
+    // Nested request/response are dropped entirely (their getters are never
+    // walked), so no credential can hide there.
+    expect(result).not.toHaveProperty("request")
+    expect(result).not.toHaveProperty("response")
+  })
+
+  test("handles a non-Error thrown value", () => {
+    expect(toLogSafeError("boom")).toEqual({
+      name: "NonError",
+      message: "boom",
+    })
   })
 })

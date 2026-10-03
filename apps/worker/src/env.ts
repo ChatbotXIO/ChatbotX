@@ -110,6 +110,12 @@ export const env = createEnv({
       .min(1)
       .max(1000)
       .default(10),
+    PROFILE_SNAPSHOT_JOBS_PER_SECOND: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .default(10),
   },
   runtimeEnv: process.env,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",

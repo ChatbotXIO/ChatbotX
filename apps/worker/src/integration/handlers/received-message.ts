@@ -4,6 +4,8 @@ import {
   buildContext,
   type ContactInboxTrackingData,
   type ContactInboxWithContact,
+  channelPostService,
+  contactInboxPostService,
   contactInboxService,
   contactService,
   conversationService,
@@ -33,6 +35,8 @@ import {
   type ContactSource,
   contactSources,
   type IntegrationType,
+  supportsPostTracking,
+  supportsProfileSnapshot,
 } from "@chatbotx.io/database/partials"
 import {
   type CreateMessageInput,
@@ -64,9 +68,10 @@ import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
+import { toLogSafeError } from "@chatbotx.io/logger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
-import type { IncomingAttachment } from "@chatbotx.io/sdk"
+import type { ChannelPostDetails, IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
   contentTypes,
@@ -109,6 +114,7 @@ import {
   allIntegrations,
   integrationService,
   isInstagramViaFacebook,
+  resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
 import { processCommentAutomation } from "./comment-automation"
 import { runAsMissedCommentReplay } from "./comment-automation/replay-priority"
@@ -1454,6 +1460,47 @@ export const receiveComment = async (
   }
   const { contactInbox, contact, conversation } = detected
 
+  if (supportsPostTracking(inbox.channel)) {
+    // Post metadata fetch is best-effort (handled in channelPostService) and a
+    // workspace deleted mid-flight is a no-op (resolveForComment returns null).
+    // A transient persistence failure MUST propagate so the job retries: the
+    // writes are idempotent and this runs before the message insert +
+    // automation, so a retry records the relationship exactly once and never
+    // double-sends. Matches plan §5 ("errors propagate; retry is idempotent").
+    const channel = inbox.channel
+    const postId = await channelPostService.resolveForComment({
+      channel,
+      workspaceId: inbox.workspaceId,
+      inboxId: inbox.id,
+      integrationId: integrationRow.id,
+      sourceAccountId: integrationIdentifier,
+      externalPostId: commentData.postId,
+      fetchDetails: async (): Promise<ChannelPostDetails> => {
+        // The registry picks the channel's own integration (e.g. Instagram vs
+        // Instagram-via-Facebook); the handler returns the neutral shape.
+        const { integration, ctx } =
+          await resolveIntegrationContextFromContactInbox({
+            workspaceId: inbox.workspaceId,
+            contactInbox: { channel, inboxId: inbox.id },
+          })
+        return await integration.runChannelHandler(
+          "contact",
+          "getPostDetails",
+          { ctx, data: { postId: commentData.postId } },
+        )
+      },
+    })
+    if (postId) {
+      await contactInboxPostService.recordComment({
+        workspaceId: inbox.workspaceId,
+        inboxId: inbox.id,
+        contactInboxId: contactInbox.id,
+        postId,
+        commentedAt: new Date(commentData.createdTime * 1000),
+      })
+    }
+  }
+
   // Resolved AFTER the contact, and only when it has no real avatar yet. A
   // sentinel remains replaceable, while a returning commenter with a real
   // avatar skips the download because `buildExistingContactMatch` ignores
@@ -2050,6 +2097,10 @@ const createNewContactAndContactInbox = async (props: {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
   }
+  let profileSnapshot: IncomingContact["profileSnapshot"]
+  // The handle only arrives via the on-demand profile lookup (the DM webhook
+  // carries none); it belongs on ContactInbox, not on the Contact row.
+  let profileSourceUsername: string | undefined
   if (hasOnDemandProfileApi(inbox.channel as ChannelType)) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
@@ -2068,17 +2119,29 @@ const createNewContactAndContactInbox = async (props: {
           "getProfile",
           {
             ctx: profileCtx,
-            data: { sourceId: incomingContact.sourceId },
+            data: {
+              sourceId: incomingContact.sourceId,
+              includeProfileSnapshot: supportsProfileSnapshot(inbox.channel),
+            },
           },
         )
+        const { profileSnapshot: resolvedProfileSnapshot, ...profile } =
+          userProfile
+        profileSnapshot = resolvedProfileSnapshot
+        // The independent profile lookup can fail while the snapshot (which also
+        // carries the handle) succeeds, so fall back to it.
+        profileSourceUsername =
+          profile.sourceUsername ??
+          resolvedProfileSnapshot?.username ??
+          undefined
         contactData = {
           ...contactData,
-          ...userProfile,
+          ...profile,
         }
       } catch (error) {
         logger.warn(
           {
-            err: error,
+            err: toLogSafeError(error),
             sourceId: incomingContact.sourceId,
             channel: inbox.channel,
           },
@@ -2168,8 +2231,14 @@ const createNewContactAndContactInbox = async (props: {
           sourceId: incomingContact.sourceId,
           sourceUserId: incomingContact.sourceUserId ?? null,
           sourceParentUserId: incomingContact.sourceParentUserId ?? null,
-          sourceUsername: incomingContact.sourceUsername ?? null,
+          sourceUsername:
+            incomingContact.sourceUsername ?? profileSourceUsername ?? null,
           channel: inbox.channel,
+          followsBusiness: profileSnapshot?.followsBusiness ?? null,
+          businessFollowsContact:
+            profileSnapshot?.businessFollowsContact ?? null,
+          accountVerified: profileSnapshot?.accountVerified ?? null,
+          followerCount: profileSnapshot?.followerCount ?? null,
           language: finalizedProfile.language,
         })
         .returning()

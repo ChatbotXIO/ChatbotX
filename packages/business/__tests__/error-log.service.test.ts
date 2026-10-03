@@ -147,6 +147,23 @@ describe("logProviderError", () => {
     })
   })
 
+  it("scrubs an access_token from the stored message and stack", async () => {
+    const logProviderError = await load()
+    const url =
+      "https://graph.facebook.com/v25.0/1?fields=name&access_token=SECRETTOKEN123"
+
+    await logProviderError({
+      provider: "instagram",
+      workspaceId: "ws-1",
+      sourceId: "igsid-7",
+      error: new Error(`Request to ${url} timed out`),
+    })
+
+    const entry = payload()
+    expect(JSON.stringify(entry)).not.toContain("SECRETTOKEN123")
+    expect(entry.error.message).toContain("access_token=[redacted]")
+  })
+
   it("survives a JSON round trip unchanged, keys and all", async () => {
     const logProviderError = await load()
 

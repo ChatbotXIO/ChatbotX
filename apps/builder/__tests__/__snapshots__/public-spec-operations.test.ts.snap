@@ -603,6 +603,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/capabilities",
   },
   {
+    "method": "GET",
+    "operationId": "channelPosts.list",
+    "path": "/v1/channel-posts",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPosts.listSelected",
+    "path": "/v1/channel-posts/options/by-ids",
+  },
+  {
     "method": "POST",
     "operationId": "channels.deliveryStatus",
     "path": "/v1/channels/api/delivery-status",

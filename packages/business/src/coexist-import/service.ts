@@ -7,7 +7,10 @@ import {
   or,
   type SQL,
 } from "@chatbotx.io/database/client"
-import { contactSources } from "@chatbotx.io/database/partials"
+import {
+  contactSources,
+  supportsProfileSnapshot,
+} from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   contactModel,
@@ -121,6 +124,7 @@ export type CoexistDedupContact = {
 }
 
 export type ResolveOrCreateContactLinksInput = {
+  captureProfileSnapshot: boolean
   workspaceId: string
   inboxId: string
   inboxChannel: string
@@ -169,6 +173,7 @@ class CoexistImportService extends BaseService {
       dedup,
       sourceIds,
       sourceUserIds,
+      captureProfileSnapshot,
     } = input
 
     const newContactCreatedEvents: NewContactCreatedEvent[] = []
@@ -300,6 +305,13 @@ class CoexistImportService extends BaseService {
           sourceUserId: entry.sourceUserId ?? null,
           sourceUsername: entry.sourceUsername ?? null,
           channel: inboxChannel,
+          ...(captureProfileSnapshot && supportsProfileSnapshot(inboxChannel)
+            ? {
+                profileSnapshotAttempts: 0,
+                profileSnapshotNextAttemptAt: new Date(),
+                profileSnapshotState: "pending" as const,
+              }
+            : {}),
           createdAt: new Date(),
           updatedAt: new Date(),
         }))
@@ -322,6 +334,13 @@ class CoexistImportService extends BaseService {
             sourceId: contactInboxModel.sourceId,
             contactId: contactInboxModel.contactId,
           })
+
+        // Preserve this set before conflict-race recovery appends pre-existing
+        // winners. Durable snapshot enrollment and post-commit events apply
+        // only to rows this transaction actually inserted.
+        const newlyInsertedContactInboxIds = new Set(
+          insertedInboxes.map((row) => row.id),
+        )
 
         const insertedSourceIds = new Set(
           insertedInboxes.map((r) => r.sourceId),
@@ -441,7 +460,7 @@ class CoexistImportService extends BaseService {
           })
 
           const entry = dedup.get(inboxRow.sourceId)
-          if (entry) {
+          if (entry && newlyInsertedContactInboxIds.has(inboxRow.id)) {
             newContactCreatedEvents.push({
               workspaceId,
               contactId: inboxRow.contactId,

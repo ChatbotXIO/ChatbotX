@@ -7,6 +7,7 @@ import {
   type ContactFilterField,
   type ContactInfoFilterValue,
   type ContactInfoType,
+  contactFilterFields,
   contactInfoFilterValues,
   contactInfoTypes,
   contactSources,
@@ -67,6 +68,7 @@ export type FieldConfig = {
    * keep using `options`.
    */
   valueLabels?: SelectOption[]
+  optionSource?: ContactFilterOptionSource
   /** Retired field: still rendered/validated, but omitted from the picker. */
   hidden?: boolean
 }
@@ -223,6 +225,7 @@ const resolveContactFilterOptions = (
     sequenceOptions: SelectOption[]
     reflinkOptions: SelectOption[]
     assigneeOptions: SelectOption[]
+    channelPostOptions: SelectOption[]
   },
 ): SelectOption[] | undefined => {
   switch (optionSource) {
@@ -267,6 +270,8 @@ const resolveContactFilterOptions = (
       return ctx.reflinkOptions
     case "assignees":
       return ctx.assigneeOptions
+    case "channelPosts":
+      return ctx.channelPostOptions
     case "ctwaConversionTypes":
       return [
         {
@@ -413,6 +418,7 @@ export const getFieldConfigs = ({
   sequenceOptions = [],
   reflinkOptions = [],
   assigneeOptions = [],
+  channelPostOptions = [],
   couponTopicOptions = [],
   botFields = [],
   includeBotFields = false,
@@ -427,6 +433,7 @@ export const getFieldConfigs = ({
   sequenceOptions?: SelectOption[]
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
+  channelPostOptions?: SelectOption[]
   couponTopicOptions?: SelectOption[]
   /** Workspace bot (account) fields — only read when `includeBotFields` is true. */
   botFields?: CustomFieldFilterOption[]
@@ -474,12 +481,14 @@ export const getFieldConfigs = ({
           sequenceOptions,
           reflinkOptions,
           assigneeOptions,
+          channelPostOptions,
         }) ?? booleanOptionsFor(formField)
       return {
         name: def.field,
         formField,
         group: getContactFilterFieldGroup(def.field),
         hidden: def.hidden,
+        optionSource: def.optionSource,
         options,
         valueLabels: filterValueLabels
           ? buildFilterValueLabels(def.optionSource, filterValueLabels, options)
@@ -529,6 +538,24 @@ export const getFieldConfigs = ({
     ...botFieldConfigs,
     ...couponTopicConfigs,
   ]
+}
+
+/** Field preselected when the add-condition dialog opens. */
+const DEFAULT_FILTER_FIELD = contactFilterFields.enum.currentChannel
+
+/**
+ * The config the add-condition dialog opens on: the current channel when it is
+ * offered, otherwise the first pickable field. Retired (hidden) fields are never
+ * a default, and neither is a field that merely sits first in the definitions.
+ */
+export const getDefaultFilterConfig = (
+  configs: FieldConfig[],
+): FieldConfig | undefined => {
+  const pickableConfigs = configs.filter((config) => !config.hidden)
+  return (
+    pickableConfigs.find((config) => config.name === DEFAULT_FILTER_FIELD) ??
+    pickableConfigs[0]
+  )
 }
 
 export const getFieldOptions = (

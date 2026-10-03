@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "日付をYYYY-MM-DD HH:mm形式または変数で入力してください",
+    "openPost": "{post}を開く",
+    "openPostLink": "開く",
+    "postWithoutCaption": "キャプションなしの投稿",
     "operator": {
       "and": "すべての条件",
       "or": "いずれかの条件"
@@ -3315,7 +3318,9 @@
       "bannerDescription": "このワークスペースは削除予定です。引き続き使用するには、以下で削除を取り消してください。",
       "pendingBlockedToast": "このワークスペースは削除予定です。アクセスを復元するには、ワークスペース管理者にお問い合わせください。",
       "navDisabledTooltip": "ワークスペースの削除が予定されている間は利用できません",
-      "badge": "削除予定"
+      "badge": "削除予定",
+      "purging": "ワークスペースを削除しています。",
+      "alreadyStarted": "ワークスペースの削除はすでに開始されています。"
     },
     "supportAccess": {
       "bannerTitle": "プラットフォームサポートセッション",

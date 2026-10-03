@@ -583,6 +583,9 @@
     "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Saisissez une date au format YYYY-MM-DD HH:mm ou une variable",
+    "openPost": "Ouvrir {post}",
+    "openPostLink": "Ouvrir",
+    "postWithoutCaption": "Publication sans légende",
     "operator": {
       "and": "Toutes les conditions",
       "or": "Au moins une condition"
@@ -3336,7 +3339,9 @@
       "bannerDescription": "La suppression de cet espace de travail est planifiée. Annulez-la ci-dessous pour continuer à l’utiliser.",
       "pendingBlockedToast": "La suppression de cet espace de travail est planifiée. Contactez un administrateur pour restaurer l’accès.",
       "navDisabledTooltip": "Indisponible tant que la suppression est planifiée",
-      "badge": "Suppression planifiée"
+      "badge": "Suppression planifiée",
+      "purging": "La suppression de l’espace de travail est en cours.",
+      "alreadyStarted": "La suppression de l’espace de travail a déjà commencé."
     },
     "supportAccess": {
       "bannerTitle": "Session de support de la plateforme",

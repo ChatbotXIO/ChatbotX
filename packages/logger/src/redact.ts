@@ -32,8 +32,36 @@ const SENSITIVE_KEYS: ReadonlySet<string> = new Set([
   "sdp",
 ])
 
+// Sensitive query-string params whose VALUE must be scrubbed even when embedded
+// inside a URL string (e.g. a Graph request URL captured on an HTTP error),
+// where the key-name redaction below cannot see it. Matches `?token=` / `&token=`
+// up to the next delimiter, case-insensitively.
+const SENSITIVE_QUERY_PARAMS = [
+  "access_token",
+  "refresh_token",
+  "fb_exchange_token",
+  "auth_token",
+  "id_token",
+  "client_secret",
+  "app_secret",
+  "signature",
+  "api_key",
+  "apikey",
+]
+const SENSITIVE_QUERY_RE = new RegExp(
+  `([?&](?:${SENSITIVE_QUERY_PARAMS.join("|")})=)[^&#\\s"']+`,
+  "gi",
+)
+
+/** Redact the value of any sensitive query param embedded in a string. */
+export const scrubSecretsInString = (value: string): string =>
+  value.replace(SENSITIVE_QUERY_RE, "$1[redacted]")
+
 // Primitives never recurse, so the depth guard applies only to arrays/objects.
 const redactAtDepth = (value: unknown, depth: number): unknown => {
+  if (typeof value === "string") {
+    return scrubSecretsInString(value)
+  }
   if (value === null || typeof value !== "object") {
     return value
   }
@@ -60,6 +88,29 @@ const redactAtDepth = (value: unknown, depth: number): unknown => {
  */
 export const redactSecrets = (value: unknown): unknown =>
   redactAtDepth(value, 0)
+
+/**
+ * Turn any thrown value into a log-safe shape: `name` + a secret-scrubbed
+ * `message` and `stack`. It deliberately drops nested `request`/`response`/
+ * `originError` fields (an HTTP client error carries the request URL there,
+ * which for Graph calls includes `access_token` in the query string) rather
+ * than trusting a recursive walk to reach every getter. Use it whenever an
+ * integration/HTTP error is logged, so a credential can never reach the logs.
+ * The underlying channel error code/status is already recorded, sanitized, at
+ * the HTTP-client layer.
+ */
+export const toLogSafeError = (
+  err: unknown,
+): { message: string; name: string; stack?: string } => {
+  if (err instanceof Error) {
+    return {
+      name: err.name,
+      message: scrubSecretsInString(err.message),
+      ...(err.stack ? { stack: scrubSecretsInString(err.stack) } : {}),
+    }
+  }
+  return { name: "NonError", message: scrubSecretsInString(String(err)) }
+}
 
 /**
  * Cap a string to `maxChars`, appending a truncation marker, without splitting

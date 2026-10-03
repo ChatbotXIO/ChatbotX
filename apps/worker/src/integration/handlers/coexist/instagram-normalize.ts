@@ -162,6 +162,9 @@ export const toIncomingContact = (
     sourceId: participant.id,
     firstName: name.firstName ?? participant.username ?? participant.id,
     lastName: name.lastName,
+    // Persisted on ContactInbox so `{{ig_user_name}}` and `@mention` matching
+    // resolve without a live Graph call.
+    sourceUsername: participant.username,
   }
 }
 

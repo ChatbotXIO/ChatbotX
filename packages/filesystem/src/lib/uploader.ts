@@ -72,6 +72,7 @@ export class Uploader {
     path: string,
     body: string | Uint8Array | Buffer | Readable,
     options?: Partial<PutObjectCommandInput>,
+    abortSignal?: AbortSignal,
   ) {
     const command = new PutObjectCommand({
       Bucket: this.#bucketName,
@@ -80,7 +81,10 @@ export class Uploader {
       ...options,
     })
 
-    return await this.#client.send(command)
+    return await this.#client.send(
+      command,
+      abortSignal ? { abortSignal } : undefined,
+    )
   }
 
   async getPresignedUpload(filePath: string): Promise<string> {

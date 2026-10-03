@@ -99,6 +99,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  buildContext: vi.fn(),
   conversationService: { ensureActive: vi.fn() },
   withBlockedOwnerGuard: vi.fn(
     async (_workspaceId: unknown, fn: () => Promise<unknown>) => await fn(),
@@ -279,6 +280,12 @@ describe("integration worker process boot", () => {
     expect(workerState.capturedWorkers[2]?.queueName).toBe(
       "whatsappVoipSignaling",
     )
+  })
+
+  test("does not consume the profileSnapshot queue (it runs in the low process)", () => {
+    expect(
+      workerState.capturedWorkers.map((worker) => worker.queueName),
+    ).not.toContain("profileSnapshot")
   })
 
   test("keeps the env-tunable concurrency and long coexist lock on the integration worker", () => {

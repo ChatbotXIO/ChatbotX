@@ -11,6 +11,7 @@ vi.mock("../src/lib/http-client", () => ({
 const { fetchInstagramContactProfile } = await import(
   "../src/apis/contact-profile"
 )
+const { contactHandlers } = await import("../src/handlers/contact")
 
 describe("fetchInstagramContactProfile", () => {
   beforeEach(() => {
@@ -45,5 +46,73 @@ describe("fetchInstagramContactProfile", () => {
     expect(calledUrl).toContain("v23.0/igsid-1?")
     expect(calledUrl).toContain("username")
     expect(calledUrl).toContain("follower_count")
+  })
+
+  test("maps an opt-in relationship snapshot without putting it in contact fields", async () => {
+    instagramGet
+      .mockResolvedValueOnce({ id: "igsid-1", name: "Ada", username: "ada" })
+      .mockResolvedValueOnce({
+        id: "igsid-1",
+        follower_count: 123,
+        is_business_follow_user: false,
+        is_user_follow_business: true,
+        is_verified_user: true,
+      })
+
+    await expect(
+      contactHandlers.getProfile?.({
+        ctx: {
+          auth: {
+            metadata: { version: "v23.0" },
+            tokens: { accessToken: "page-token" },
+          },
+        },
+        data: { includeProfileSnapshot: true, sourceId: "igsid-1" },
+      } as never),
+    ).resolves.toEqual({
+      firstName: "Ada",
+      profileSnapshot: {
+        followsBusiness: true,
+        followerCount: 123,
+        businessFollowsContact: false,
+        accountVerified: true,
+        username: null,
+      },
+      sourceId: "igsid-1",
+      sourceUsername: "ada",
+    })
+  })
+
+  test("keeps a successful snapshot when the independent name lookup fails", async () => {
+    instagramGet
+      .mockRejectedValueOnce(new Error("profile lookup unavailable"))
+      .mockResolvedValueOnce({
+        id: "igsid-1",
+        follower_count: 123,
+        is_business_follow_user: false,
+        is_user_follow_business: true,
+        is_verified_user: true,
+      })
+
+    await expect(
+      contactHandlers.getProfile?.({
+        ctx: {
+          auth: {
+            metadata: { version: "v23.0" },
+            tokens: { accessToken: "page-token" },
+          },
+        },
+        data: { includeProfileSnapshot: true, sourceId: "igsid-1" },
+      } as never),
+    ).resolves.toEqual({
+      sourceId: "igsid-1",
+      profileSnapshot: {
+        followsBusiness: true,
+        followerCount: 123,
+        businessFollowsContact: false,
+        accountVerified: true,
+        username: null,
+      },
+    })
   })
 })

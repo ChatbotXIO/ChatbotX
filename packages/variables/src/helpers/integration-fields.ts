@@ -6,8 +6,15 @@ import {
 } from "@chatbotx.io/business"
 import { normalizeStoredTimezone } from "@chatbotx.io/business/contact-locale"
 import { systemFieldService } from "@chatbotx.io/business/system-field"
-import type { SystemFieldType } from "@chatbotx.io/database/partials"
-import { channelTypes } from "@chatbotx.io/database/partials"
+import { resolveIntegrationContextFromContactInbox } from "@chatbotx.io/channel-registry/registry"
+import type {
+  ChannelType,
+  SystemFieldType,
+} from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  supportsProfileSnapshot,
+} from "@chatbotx.io/database/partials"
 import type {
   ContactInboxModel,
   ContactModel,
@@ -15,17 +22,18 @@ import type {
 } from "@chatbotx.io/database/types"
 import { signMeLink } from "@chatbotx.io/encryption/link-signature"
 import {
-  fetchInstagramContactProfile,
   getPostDetails as getInstagramPostDetails,
   type InstagramAuthValue,
-  type InstagramContactProfile,
 } from "@chatbotx.io/integration-instagram"
 import {
   getPostDetails as getMessengerPostDetails,
   getUserInboxLink,
   type MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger"
+import { toLogSafeError } from "@chatbotx.io/logger"
 import { withCache } from "@chatbotx.io/redis"
+import type { ContactProfileSnapshot } from "@chatbotx.io/sdk"
+import { logger } from "../logger"
 
 type IntegrationFieldKey = Extract<
   SystemFieldType,
@@ -45,7 +53,7 @@ type IntegrationFieldKey = Extract<
   | "wa_user_name"
 >
 
-const IG_PROFILE_CACHE_TTL = 300
+const PROFILE_SNAPSHOT_CACHE_TTL = 300
 const FB_CHAT_LINK_CACHE_TTL = 60 * 60
 // Short: page owners edit post captions in place, and a stale caption renders
 // straight into an outgoing message.
@@ -60,35 +68,150 @@ const toStringOrNull = (
   return String(value)
 }
 
-const resolveInstagramContactProfile = (
-  contactInboxId: string,
-  igsid: string,
-  integration: { auth: unknown; id: string },
-): Promise<InstagramContactProfile | null> =>
-  withCache(
-    `ig-contact-profile:${contactInboxId}`,
+const getStoredProfileSnapshot = (
+  contactInbox: ContactInboxModel,
+): ContactProfileSnapshot | null => {
+  const snapshot: ContactProfileSnapshot = {
+    followsBusiness: contactInbox.followsBusiness ?? null,
+    businessFollowsContact: contactInbox.businessFollowsContact ?? null,
+    accountVerified: contactInbox.accountVerified ?? null,
+    followerCount: contactInbox.followerCount ?? null,
+    username: contactInbox.sourceUsername ?? null,
+  }
+  return Object.values(snapshot).every((value) => value === null)
+    ? null
+    : snapshot
+}
+
+/**
+ * Live profile snapshot through the channel's own `getProfileSnapshot` handler
+ * (the registry picks the right integration, e.g. Instagram vs
+ * Instagram-via-Facebook, so no host/type branching lives here). A successful
+ * fetch is written through to the contact-inbox columns the contact filter
+ * reads; a failed one is never persisted and `withCache` skips null, so the
+ * next render retries instead of pinning an empty value.
+ */
+const resolveLiveProfileSnapshot = (props: {
+  contactInbox: ContactInboxModel
+  integrationId: string | null
+  workspaceId: string
+}): Promise<ContactProfileSnapshot | null> => {
+  const { contactInbox, integrationId, workspaceId } = props
+  return withCache(
+    `profile-snapshot:${contactInbox.id}`,
     async () => {
-      const auth = integration.auth as InstagramAuthValue
-      const accessToken = auth?.tokens?.accessToken
-      if (!accessToken) {
+      let snapshot: ContactProfileSnapshot
+      try {
+        const { integration, ctx } =
+          await resolveIntegrationContextFromContactInbox({
+            workspaceId,
+            contactInbox,
+          })
+        snapshot = await integration.runChannelHandler(
+          "contact",
+          "getProfileSnapshot",
+          { ctx, data: { sourceId: contactInbox.sourceId } },
+        )
+      } catch (err) {
+        logger.warn(
+          {
+            err: toLogSafeError(err),
+            contactInboxId: contactInbox.id,
+            sourceId: contactInbox.sourceId,
+          },
+          "Contact profile snapshot fetch failed",
+        )
         return null
       }
 
       try {
-        return await fetchInstagramContactProfile({
-          igsid,
-          accessToken,
-          version: auth.metadata?.version,
+        await contactInboxService.refreshProfileSnapshot({
+          contactInboxId: contactInbox.id,
+          inboxId: contactInbox.inboxId,
+          snapshot,
         })
-      } catch {
-        return null
+      } catch (err) {
+        logger.warn(
+          { err: toLogSafeError(err), contactInboxId: contactInbox.id },
+          "Contact profile snapshot persist failed",
+        )
       }
+      return snapshot
     },
     {
-      ttl: IG_PROFILE_CACHE_TTL,
-      tags: [`integration:instagram:${integration.id}`],
+      ttl: PROFILE_SNAPSHOT_CACHE_TTL,
+      tags: integrationId
+        ? [`integration:${contactInbox.channel}:${integrationId}`]
+        : [],
     },
   )
+}
+
+type ProfileSnapshotFieldKey = Extract<
+  IntegrationFieldKey,
+  | "ig_user_name"
+  | "ig_followers"
+  | "ig_verified"
+  | "ig_follow_business"
+  | "ig_business_follow_user"
+>
+
+type ProfileSnapshotField = {
+  read: (
+    snapshot: ContactProfileSnapshot,
+  ) => boolean | number | string | null | undefined
+  /** Stored value wins and skips the provider call (identity, not a metric). */
+  preferStored?: boolean
+}
+
+/** One entry per system field, so adding a channel's field is one entry. */
+const profileSnapshotFields: Record<
+  ProfileSnapshotFieldKey,
+  ProfileSnapshotField
+> = {
+  ig_user_name: { read: (snapshot) => snapshot.username, preferStored: true },
+  ig_followers: { read: (snapshot) => snapshot.followerCount },
+  ig_verified: { read: (snapshot) => snapshot.accountVerified },
+  ig_follow_business: { read: (snapshot) => snapshot.followsBusiness },
+  ig_business_follow_user: {
+    read: (snapshot) => snapshot.businessFollowsContact,
+  },
+}
+
+const isProfileSnapshotFieldKey = (
+  key: IntegrationFieldKey,
+): key is ProfileSnapshotFieldKey => key in profileSnapshotFields
+
+const resolveProfileSnapshotField = async (props: {
+  channel: ChannelType
+  contactInbox: ContactInboxModel
+  inbox: InboxWithIntegrations
+  key: ProfileSnapshotFieldKey
+}): Promise<string | null> => {
+  const { channel, contactInbox, inbox, key } = props
+  if (!supportsProfileSnapshot(channel)) {
+    return null
+  }
+
+  const field = profileSnapshotFields[key]
+  const stored = getStoredProfileSnapshot(contactInbox)
+  if (field.preferStored && stored) {
+    const storedValue = field.read(stored)
+    if (storedValue != null) {
+      return toStringOrNull(storedValue)
+    }
+  }
+
+  // Live fetch first; on failure fall back to what the contact-inbox columns
+  // captured earlier, so the variable still renders.
+  const live = await resolveLiveProfileSnapshot({
+    contactInbox,
+    integrationId: getChannelIntegrationId(inbox, channel),
+    workspaceId: inbox.workspaceId,
+  })
+  const snapshot = live ?? stored
+  return snapshot ? toStringOrNull(field.read(snapshot) ?? null) : null
+}
 
 const getCachedPostText = (
   channel: "instagram" | "messenger",
@@ -244,6 +367,15 @@ export const getIntegrationField = async (
   const channel =
     contactInbox.channel as (typeof channelTypes.enum)[keyof typeof channelTypes.enum]
 
+  if (isProfileSnapshotFieldKey(key)) {
+    return await resolveProfileSnapshotField({
+      channel,
+      contactInbox,
+      inbox,
+      key,
+    })
+  }
+
   switch (key) {
     case "page_user_name": {
       switch (channel) {
@@ -364,36 +496,6 @@ export const getIntegrationField = async (
       return key === "wa_user_id"
         ? (contactInbox.sourceUserId ?? null)
         : (contactInbox.sourceUsername ?? null)
-    }
-
-    case "ig_user_name":
-    case "ig_followers":
-    case "ig_verified":
-    case "ig_follow_business":
-    case "ig_business_follow_user": {
-      if (!inbox.integrationInstagram) {
-        return null
-      }
-      const profile = await resolveInstagramContactProfile(
-        contactInbox.id,
-        contactInbox.sourceId,
-        inbox.integrationInstagram,
-      )
-      if (!profile) {
-        return null
-      }
-      switch (key) {
-        case "ig_user_name":
-          return profile.username
-        case "ig_followers":
-          return toStringOrNull(profile.followersCount)
-        case "ig_follow_business":
-          return toStringOrNull(profile.followsBusiness)
-        case "ig_verified":
-          return toStringOrNull(profile.isVerified)
-        default:
-          return toStringOrNull(profile.businessFollowUser)
-      }
     }
 
     default:

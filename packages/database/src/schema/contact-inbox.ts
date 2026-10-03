@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm"
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -9,6 +10,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
+import { profileSnapshotStates } from "../partials/contact"
 import { lastUserInputTypes } from "../partials/message"
 import {
   bigintAsString,
@@ -74,6 +76,11 @@ export const threadControlEventEnum = pgEnum(
   threadControlEvents.options as [string, ...string[]],
 )
 
+export const contactInboxProfileSnapshotState = pgEnum(
+  "contactInboxProfileSnapshotState",
+  profileSnapshotStates.options as [string, ...string[]],
+)
+
 /**
  * Identity unique-index names on ContactInbox, exported so unique-violation
  * handlers can match the constraint without hardcoding the string.
@@ -104,6 +111,13 @@ export const contactInboxModel = pgTable(
     channel: text().notNull(),
     source: text().notNull(),
     sourceId: text().notNull(),
+    followsBusiness: boolean(),
+    businessFollowsContact: boolean(),
+    accountVerified: boolean(),
+    followerCount: integer(),
+    profileSnapshotState: contactInboxProfileSnapshotState(),
+    profileSnapshotAttempts: integer(),
+    profileSnapshotNextAttemptAt: timestamp(timestampConfig),
     language: text(),
     // Local persona id (MessengerPersona.id) chosen for this contact connection
     // via the "Set Persona" flow action. Resolved to the page's current Facebook
@@ -177,6 +191,9 @@ export const contactInboxModel = pgTable(
         table.sourceParentUserId.asc().nullsLast(),
       )
       .where(sql`${table.sourceParentUserId} IS NOT NULL`),
+    index("ContactInbox_profileSnapshot_pending_idx")
+      .on(table.profileSnapshotNextAttemptAt, table.id)
+      .where(sql`${table.profileSnapshotState} = 'pending'`),
     // Lets "the N-th contact of a page in id order" (broadcast audience
     // window/order, see partials/broadcast.ts) be an ordered index range scan
     // for a single-inbox audience, instead of the planner choosing between

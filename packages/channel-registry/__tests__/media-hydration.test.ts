@@ -68,6 +68,10 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 vi.mock("@chatbotx.io/logger", () => ({
   getChildLogger: () => ({ warn: mocks.loggerWarn }),
+  toLogSafeError: (err: unknown) =>
+    err instanceof Error
+      ? { name: err.name, message: err.message }
+      : { name: "NonError", message: String(err) },
 }))
 
 const runExclusive = <T>({ fn }: { fn: () => Promise<T> }): Promise<T> => {
@@ -1020,8 +1024,14 @@ describe("media hydration", () => {
       contactId: "contact-1",
       avatar: result?.avatar,
     })
+    // The error is logged through toLogSafeError (a safe {name,message,stack}
+    // shape), never the raw error, so a refresh URL/token can never leak here.
     expect(mocks.loggerWarn).toHaveBeenCalledWith(
-      { err, contactInboxId: "contact-inbox-1", workspaceId },
+      {
+        err: expect.objectContaining({ message: "Graph unavailable" }),
+        contactInboxId: "contact-inbox-1",
+        workspaceId,
+      },
       "Contact avatar mirror failed; storing no-avatar sentinel",
     )
   })

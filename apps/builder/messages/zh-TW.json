@@ -2268,6 +2268,9 @@
     "datePlaceholder": "年-月-日",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "輸入 YYYY-MM-DD HH:mm 格式的日期或變量",
+    "openPost": "開啟 {post}",
+    "openPostLink": "開啟",
+    "postWithoutCaption": "沒有說明文字的貼文",
     "operator": {
       "and": "所有條件",
       "or": "任何條件"
@@ -2565,7 +2568,9 @@
       "bannerDescription": "此工作區已排定刪除。撤銷下方的刪除即可繼續使用。",
       "pendingBlockedToast": "此工作區已排定刪除。請聯絡工作區管理員以還原存取。",
       "navDisabledTooltip": "排定刪除工作區時不可用",
-      "badge": "排定刪除"
+      "badge": "排定刪除",
+      "purging": "正在刪除工作區。",
+      "alreadyStarted": "工作區刪除已開始。"
     },
     "supportAccess": {
       "bannerTitle": "平台支援工作階段",
