@@ -3335,6 +3335,118 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
     )
   })
 
+  describe("instagram: profile snapshot and handle persisted on the new contact inbox", () => {
+    const newInstagramContactInboxInsert = async (
+      profileResult: Record<string, unknown>,
+    ) => {
+      const instagramInbox = { ...fakeInbox, channel: "instagram" }
+      vi.mocked(
+        integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+      ).mockResolvedValue({
+        inbox: instagramInbox,
+        integrationRow: fakeIntegrationRow,
+      } as never)
+      mockFindContactInbox.mockResolvedValue(undefined)
+      mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+      mockRunChannelHandler.mockImplementation(
+        (_domain: string, action: string) => {
+          if (action === "getProfile") {
+            return Promise.resolve(profileResult)
+          }
+          return Promise.resolve({
+            message: { ...baseIncomingMessage, attachments: [] },
+            contact: { sourceId: "ig-psid-1" },
+            postbackAction: null,
+            quickReplyAction: null,
+            ref: null,
+          })
+        },
+      )
+      const inserted: Record<string, unknown>[] = []
+      const tx = {
+        insert: () => ({
+          values: (values: Record<string, unknown>) => {
+            inserted.push(values)
+            return { returning: () => Promise.resolve([values]) }
+          },
+        }),
+      }
+      mockCreateNewContactWithMac.mockImplementation(
+        async (input: {
+          create: (tx: unknown) => Promise<{ value: unknown }>
+        }) => ({
+          ok: true,
+          value: (await input.create(tx)).value,
+        }),
+      )
+      mockCreateOrUpdate.mockResolvedValue({
+        message: fakeCreatedMessage,
+        isNew: true,
+      })
+
+      await receiveMessage({ ...baseProps, integrationType: "instagram" })
+
+      // inserted[0] is the Contact row, inserted[1] the ContactInbox row.
+      return inserted[1]
+    }
+
+    test("stores the snapshot columns and the handle from the profile lookup", async () => {
+      const contactInboxInsert = await newInstagramContactInboxInsert({
+        firstName: "IG Contact",
+        sourceUsername: "ig_handle",
+        profileSnapshot: {
+          followsBusiness: true,
+          businessFollowsContact: false,
+          accountVerified: false,
+          followerCount: 0,
+          username: "snapshot_handle",
+        },
+      })
+
+      expect(contactInboxInsert).toMatchObject({
+        sourceUsername: "ig_handle",
+        followsBusiness: true,
+        businessFollowsContact: false,
+        accountVerified: false,
+        followerCount: 0,
+      })
+    })
+
+    test("keeps the handle from the snapshot when the profile lookup failed", async () => {
+      const contactInboxInsert = await newInstagramContactInboxInsert({
+        sourceId: "ig-psid-1",
+        profileSnapshot: {
+          followsBusiness: false,
+          businessFollowsContact: false,
+          accountVerified: true,
+          followerCount: 12,
+          username: "snapshot_handle",
+        },
+      })
+
+      expect(contactInboxInsert).toMatchObject({
+        sourceUsername: "snapshot_handle",
+        followerCount: 12,
+        accountVerified: true,
+      })
+    })
+
+    test("writes null (unknown) for every snapshot column when none was returned", async () => {
+      const contactInboxInsert = await newInstagramContactInboxInsert({
+        firstName: "IG Contact",
+        profileSnapshot: null,
+      })
+
+      expect(contactInboxInsert).toMatchObject({
+        sourceUsername: null,
+        followsBusiness: null,
+        businessFollowsContact: null,
+        accountVerified: null,
+        followerCount: null,
+      })
+    })
+  })
+
   test("zalo: a new contact creation still fetches getProfile at creation time via hasOnDemandProfileApi", async () => {
     mockFindContactInbox.mockResolvedValue(undefined)
     mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })

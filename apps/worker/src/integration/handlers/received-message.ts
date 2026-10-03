@@ -2214,7 +2214,12 @@ const createNewContactAndContactInbox = async (props: {
         const { profileSnapshot: resolvedProfileSnapshot, ...profile } =
           userProfile
         profileSnapshot = resolvedProfileSnapshot
-        profileSourceUsername = profile.sourceUsername
+        // The independent profile lookup can fail while the snapshot (which also
+        // carries the handle) succeeds, so fall back to it.
+        profileSourceUsername =
+          profile.sourceUsername ??
+          resolvedProfileSnapshot?.username ??
+          undefined
         contactData = {
           ...contactData,
           ...profile,
