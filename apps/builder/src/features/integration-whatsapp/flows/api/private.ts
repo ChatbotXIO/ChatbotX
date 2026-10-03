@@ -1,14 +1,7 @@
-import {
-  buildContext,
-  integrationWhatsappService,
-  whatsappFlowService,
-} from "@chatbotx.io/business"
-import {
-  type WhatsappAuthValue,
-  integration as whatsappIntegration,
-} from "@chatbotx.io/integration-whatsapp"
+import { whatsappFlowService } from "@chatbotx.io/business"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { getWhatsappFlowScreens } from "../lib/whatsapp-flow-operations"
 import {
   getWhatsappFlowScreensRequest,
   getWhatsappFlowScreensResponse,
@@ -42,29 +35,9 @@ export const whatsappFlowInternalAPIs = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(getWhatsappFlowScreensResponse)
     .handler(async ({ input }) => {
-      const flow = await whatsappFlowService.findByIdUnscoped(input.flowId)
-
-      const integrationWhatsapp =
-        await integrationWhatsappService.findByIdForWorkspace({
-          id: flow.integrationWhatsappId,
-          workspaceId: input.workspaceId,
-        })
-      if (!integrationWhatsapp) {
-        throw new Error("Whatsapp integration not found")
-      }
-
-      const ctx = await buildContext({
+      const screens = await getWhatsappFlowScreens({
         workspaceId: input.workspaceId,
-        integrationType: "whatsapp",
-        integration: {
-          ...integrationWhatsapp,
-          auth: integrationWhatsapp.auth as WhatsappAuthValue,
-        },
-      })
-
-      const screens = await whatsappIntegration.runAction("getFlowAssets", {
-        ctx,
-        params: { flowSourceId: flow.sourceId },
+        flowId: input.flowId,
       })
 
       return { screens }

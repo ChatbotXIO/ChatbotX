@@ -498,9 +498,18 @@ an endpoint's scope.
   `capiDisconnected`. Provisioning a dataset, disconnecting and custom connect
   stay private. Scope `broadcasts`: `GET /v1/whatsapp/templates/{id}`,
   `POST /v1/whatsapp-channels/{id}/templates/sync`,
-  `GET /v1/whatsapp/templates/catalog-products`. Not exposed yet: calling
-  settings, call hours, call-permission requests, WhatsApp Flows list/screens
-  and sending a template into a conversation.
+  `GET /v1/whatsapp/templates/catalog-products`, and WhatsApp Flows
+  (`GET /v1/whatsapp/flows`, `.../{flowId}/screens`,
+  `POST /v1/whatsapp-channels/{id}/sync-flows`). Scope `integrations`:
+  calling settings (`GET/PATCH /v1/whatsapp-channels/{id}/calling`, `PUT
+  .../calling/hours`; the Meta-side fields are applied first and the local
+  switches mirrored only after Meta accepted, as in the builder; calling is
+  paid and recording stores customer audio, hence the scope). Scope `inbox`:
+  `POST /v1/conversations/{conversationId}/whatsapp-template` (queues an
+  approved template past the 24-hour window; delivery is asynchronous and the
+  worker refuses a template that is not approved or belongs to another number)
+  and `.../whatsapp-call-permission` (Meta's call-permission request, limited
+  by Meta to 1 per 24 h and 2 per 7 days per customer, checked first).
 
 - **Sequences** — `sequences.list` filters by `name`, `folderId` and `active`
   and accepts `sort`; `sequences.update` accepts `folderId` (null = no

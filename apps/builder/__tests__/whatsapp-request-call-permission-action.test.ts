@@ -77,8 +77,11 @@ vi.mock(
   () => ({
     readMetaCallPermissions: readMetaCallPermissionsMock,
     canSendCallPermissionRequest: canSendCallPermissionRequestMock,
+    metaCallPermissionCacheKey: () => "permission-cache-key",
   }),
 )
+
+vi.mock("@chatbotx.io/redis", () => ({ invalidateCacheKeys: vi.fn() }))
 
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,

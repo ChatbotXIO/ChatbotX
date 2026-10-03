@@ -46,6 +46,8 @@ import { messengerChannelsPublicRouter } from "@/features/integration-messenger/
 import { messengerTemplatesPublicRouter } from "@/features/integration-messenger/message-templates/api/public"
 import { smtpIntegrationsPublicRouter } from "@/features/integration-smtp/api/public"
 import { webchatsPublicRouter } from "@/features/integration-webchat/api/public"
+import { whatsappCallingPublicRouter } from "@/features/integration-whatsapp/calling/api/public"
+import { whatsappFlowsPublicRouter } from "@/features/integration-whatsapp/flows/api/public"
 import {
   templateMessagesPublicRouter,
   whatsappTemplatesPublicRouter,
@@ -140,11 +142,13 @@ export const publicRouter = {
   webchats: webchatsPublicRouter,
   webhooks: webhooksPublicRouter,
   whatsappCalls: whatsappCallsPublicRouter,
+  whatsappFlows: whatsappFlowsPublicRouter,
   whatsappChannels: {
     ...createChannelReadRoutes("whatsapp"),
     ...createHandoverResumeFlowRoute("whatsapp"),
     ...createCoexistRoute("whatsapp"),
     ...createCapiRoutes("whatsapp"),
+    ...whatsappCallingPublicRouter,
   },
   whatsappTemplates: whatsappTemplatesPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,

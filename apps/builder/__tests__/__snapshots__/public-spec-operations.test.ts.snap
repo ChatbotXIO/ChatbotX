@@ -1628,6 +1628,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/conversations/{conversationId}/messages",
   },
   {
+    "method": "POST",
+    "operationId": "messages.requestWhatsappCallPermission",
+    "path": "/v1/conversations/{conversationId}/whatsapp-call-permission",
+  },
+  {
+    "method": "POST",
+    "operationId": "messages.sendWhatsappTemplate",
+    "path": "/v1/conversations/{conversationId}/whatsapp-template",
+  },
+  {
     "method": "PUT",
     "operationId": "messages.update",
     "path": "/v1/conversations/{conversationId}/messages/{messageId}",
@@ -2244,6 +2254,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "whatsappChannels.getCallingSettings",
+    "path": "/v1/whatsapp-channels/{id}/calling",
+  },
+  {
+    "method": "GET",
     "operationId": "whatsappChannels.list",
     "path": "/v1/whatsapp-channels",
   },
@@ -2268,9 +2283,34 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/whatsapp-channels/{id}/coexist",
   },
   {
+    "method": "PUT",
+    "operationId": "whatsappChannels.updateCallHours",
+    "path": "/v1/whatsapp-channels/{id}/calling/hours",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "whatsappChannels.updateCallingSettings",
+    "path": "/v1/whatsapp-channels/{id}/calling",
+  },
+  {
     "method": "PATCH",
     "operationId": "whatsappChannels.updateHandoverResumeFlow",
     "path": "/v1/whatsapp-channels/{id}/handover-resume-flow",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappFlows.getScreens",
+    "path": "/v1/whatsapp/flows/{flowId}/screens",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappFlows.list",
+    "path": "/v1/whatsapp/flows",
+  },
+  {
+    "method": "POST",
+    "operationId": "whatsappFlows.sync",
+    "path": "/v1/whatsapp-channels/{id}/sync-flows",
   },
   {
     "method": "GET",
