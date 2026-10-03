@@ -964,12 +964,7 @@ class ConversationService extends BaseService {
 
   async updateAssignment(props: {
     workspaceId: string
-    conversations: {
-      id: string
-      contactId: string
-      assignedInboxTeamId?: string | null
-      assignedUserId?: string | null
-    }[]
+    conversations: { id: string; contactId: string }[]
     assignedUserId: string | null
     assignedInboxTeamId: string | null
     assignedBy?: string
@@ -985,27 +980,60 @@ class ConversationService extends BaseService {
       assignedBy,
       silent,
       triggerContext,
-      tx = db,
+      tx,
     } = props
-    const ids = conversations.map((c) => c.id)
-    const updated = await tx
-      .update(conversationModel)
-      .set({ assignedUserId, assignedInboxTeamId })
-      .where(
-        and(
-          eq(conversationModel.workspaceId, workspaceId),
-          inArray(conversationModel.id, ids),
-        ),
-      )
-      .returning()
+    if (conversations.length === 0) {
+      return []
+    }
 
-    const previousAssignmentByConversationId = new Map(
-      conversations.map((conversation) => [conversation.id, conversation]),
-    )
+    const ids = conversations.map((conversation) => conversation.id)
+    const updateInTransaction = async (
+      transaction: DatabaseClient,
+    ): Promise<{
+      previousAssignments: Map<
+        string,
+        { assignedInboxTeamId: string | null; assignedUserId: string | null }
+      >
+      updated: ConversationModel[]
+    }> => {
+      const previous = await transaction
+        .select({
+          assignedInboxTeamId: conversationModel.assignedInboxTeamId,
+          assignedUserId: conversationModel.assignedUserId,
+          id: conversationModel.id,
+        })
+        .from(conversationModel)
+        .where(
+          and(
+            eq(conversationModel.workspaceId, workspaceId),
+            inArray(conversationModel.id, ids),
+          ),
+        )
+        .for("update")
+      const updated = await transaction
+        .update(conversationModel)
+        .set({ assignedUserId, assignedInboxTeamId })
+        .where(
+          and(
+            eq(conversationModel.workspaceId, workspaceId),
+            inArray(conversationModel.id, ids),
+          ),
+        )
+        .returning()
+      return {
+        previousAssignments: new Map(
+          previous.map((conversation) => [conversation.id, conversation]),
+        ),
+        updated,
+      }
+    }
+    const result = tx
+      ? await updateInTransaction(tx)
+      : await db.transaction(updateInTransaction)
     await this.publishAssignmentChanges({
       workspaceId,
-      conversations: updated.map((conversation) => {
-        const previousAssignment = previousAssignmentByConversationId.get(
+      conversations: result.updated.map((conversation) => {
+        const previousAssignment = result.previousAssignments.get(
           conversation.id,
         )
         return {
@@ -1022,7 +1050,7 @@ class ConversationService extends BaseService {
       triggerContext,
     })
 
-    return updated
+    return result.updated
   }
 
   /**

@@ -1,11 +1,9 @@
 import { z } from "zod"
 import {
   realtimeEventEnvelopeSchema,
-  STREAM_ID_PATTERN as realtimeStreamIdPattern,
   realtimeWorkspaceEventEnvelopeSchema,
+  STREAM_ID_PATTERN,
 } from "./schemas"
-
-export { STREAM_ID_PATTERN } from "./schemas"
 
 const REALTIME_STREAM_SHARD_COUNT = 256
 
@@ -29,8 +27,8 @@ export const getRealtimeStreamKey = (workspaceId: string): string =>
 
 /**
  * Marks the moment a member's realtime connections were last revoked. The
- * gateway compares it with the token's `iat` so a token minted before a revoke
- * cannot establish a new connection.
+ * gateway compares it with the token's `iatMs` so a token minted before a
+ * revoke cannot establish a new connection.
  */
 export const getRealtimeMemberRevokedKey = (
   workspaceId: string,
@@ -49,10 +47,7 @@ export const isRealtimeSeqAfter = (
   previous: string,
 ): boolean => {
   if (
-    !(
-      realtimeStreamIdPattern.test(candidate) &&
-      realtimeStreamIdPattern.test(previous)
-    )
+    !(STREAM_ID_PATTERN.test(candidate) && STREAM_ID_PATTERN.test(previous))
   ) {
     return false
   }

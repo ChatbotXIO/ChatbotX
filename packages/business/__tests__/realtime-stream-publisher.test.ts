@@ -1,13 +1,22 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-const { createRedisConnection, loggerError, loggerWarn, set, xadd } =
-  vi.hoisted(() => ({
-    createRedisConnection: vi.fn(),
-    loggerError: vi.fn(),
-    loggerWarn: vi.fn(),
-    set: vi.fn(),
-    xadd: vi.fn(),
-  }))
+const {
+  createRedisConnection,
+  connect,
+  disconnect,
+  loggerError,
+  loggerWarn,
+  set,
+  xadd,
+} = vi.hoisted(() => ({
+  connect: vi.fn(),
+  createRedisConnection: vi.fn(),
+  disconnect: vi.fn(),
+  loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
+  set: vi.fn(),
+  xadd: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/redis", () => ({
   createRedisConnection,
@@ -26,9 +35,14 @@ const typingEvent = {
   eventType: "typing",
 } as const
 
+const STREAM_MIN_ID_PATTERN = /^\d+-0$/
+
 beforeEach(() => {
+  connect.mockReset()
+  connect.mockResolvedValue(undefined)
   createRedisConnection.mockReset()
-  createRedisConnection.mockReturnValue({ set, xadd })
+  createRedisConnection.mockReturnValue({ connect, disconnect, set, xadd })
+  disconnect.mockReset()
   loggerError.mockReset()
   loggerWarn.mockReset()
   set.mockReset()
@@ -45,7 +59,7 @@ afterEach(async () => {
 })
 
 describe("realtime stream publisher Redis connection", () => {
-  test("creates the connection with fail-fast options so xadd cannot hang during an outage", async () => {
+  test("creates a lazy connection with fail-fast command options", async () => {
     const { publishRealtimeStreamRecord } = await import(
       "../src/platform/realtime-stream-publisher"
     )
@@ -63,9 +77,72 @@ describe("realtime stream publisher Redis connection", () => {
       {
         commandTimeout: 2000,
         enableOfflineQueue: false,
+        lazyConnect: true,
         maxRetriesPerRequest: 1,
       },
     )
+  })
+
+  test("waits for the initial connection before appending to the stream", async () => {
+    const { promise, resolve } = Promise.withResolvers<void>()
+    connect.mockReturnValueOnce(promise)
+    xadd.mockResolvedValue("1-0")
+    const { publishRealtimeStreamRecord } = await import(
+      "../src/platform/realtime-stream-publisher"
+    )
+
+    const publish = publishRealtimeStreamRecord({
+      event: typingEvent,
+      guestConversationId: "guest-1",
+      kind: "guest-event",
+      workspaceId: "ws-1",
+    })
+
+    expect(xadd).not.toHaveBeenCalled()
+    resolve()
+    await publish
+
+    expect(xadd).toHaveBeenCalledTimes(1)
+  })
+
+  test("recreates the client after its initial connection attempt rejects", async () => {
+    const initialFailure = new Error("ECONNREFUSED")
+    const initialConnect = vi.fn().mockRejectedValue(initialFailure)
+    const retryConnect = vi.fn().mockResolvedValue(undefined)
+    createRedisConnection
+      .mockReturnValueOnce({
+        connect: initialConnect,
+        disconnect,
+        set,
+        xadd,
+      })
+      .mockReturnValueOnce({
+        connect: retryConnect,
+        disconnect,
+        set,
+        xadd,
+      })
+    xadd.mockResolvedValue("1-0")
+    vi.useFakeTimers()
+    const { publishRealtimeStreamRecord } = await import(
+      "../src/platform/realtime-stream-publisher"
+    )
+
+    const publish = publishRealtimeStreamRecord({
+      event: typingEvent,
+      guestConversationId: "guest-1",
+      kind: "guest-event",
+      workspaceId: "ws-1",
+    })
+    await vi.runAllTimersAsync()
+
+    await expect(publish).resolves.toBeUndefined()
+    expect(createRedisConnection).toHaveBeenCalledTimes(2)
+    expect(initialConnect).toHaveBeenCalledTimes(1)
+    expect(retryConnect).toHaveBeenCalledTimes(1)
+    expect(disconnect).toHaveBeenCalledTimes(1)
+    expect(xadd).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
   })
 
   test("retries a failed stream append and succeeds on its second attempt", async () => {
@@ -137,11 +214,10 @@ describe("realtime stream publisher Redis connection", () => {
     })
   })
 
-  test("writes the authoritative revoked-at marker, keyed by workspace+user, with a TTL that outlives any still-valid connect token", async () => {
-    // The gateway checks this key at connect time independent of replay
-    // `lastSeq`.
-    const { getRealtimeMemberRevokedKey, REALTIME_MEMBER_REVOKED_TTL_SECONDS } =
-      await import("@chatbotx.io/realtime-protocol")
+  test("writes a numeric revoked-at marker and appends with the Redis stream retention arguments", async () => {
+    const { getRealtimeMemberRevokedKey, getRealtimeStreamKey } = await import(
+      "@chatbotx.io/realtime-protocol"
+    )
     const { revokeWorkspaceMemberRealtimeConnections } = await import(
       "../src/platform/realtime-broadcast"
     )
@@ -157,7 +233,17 @@ describe("realtime stream publisher Redis connection", () => {
       getRealtimeMemberRevokedKey("ws-1", "user-1"),
       expect.any(String),
       "EX",
-      REALTIME_MEMBER_REVOKED_TTL_SECONDS,
+      65,
+    )
+    expect(Number(set.mock.calls[0]?.[1])).toBeGreaterThan(0)
+    expect(xadd).toHaveBeenCalledWith(
+      getRealtimeStreamKey("ws-1"),
+      "MINID",
+      "~",
+      expect.stringMatching(STREAM_MIN_ID_PATTERN),
+      "*",
+      "record",
+      expect.any(String),
     )
   })
 })

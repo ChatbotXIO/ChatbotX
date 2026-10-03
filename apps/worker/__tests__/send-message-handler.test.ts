@@ -1293,7 +1293,7 @@ describe("chat send-message handlers", () => {
     )
   })
 
-  test("reconciles Meta 138017 on a call_permission_request: records the grant, broadcasts the call-mode refresh, STILL shows the send-error icon, and never rethrows", async () => {
+  test("records a reconciled Meta 138017 send error when the realtime refresh cannot publish", async () => {
     // 138017 = the consumer already granted a permanent permission. The worker
     // records the local grant and nudges open threads to refetch
     // `useOutboundCallMode` (button flips to direct-dial) — but the request
@@ -1307,6 +1307,9 @@ describe("chat send-message handlers", () => {
       { code: 138_017 },
     )
     mockRunChannelHandler.mockRejectedValueOnce(error)
+    mockQueueWorkspaceRealtimeEvent.mockRejectedValueOnce(
+      new Error("Redis unavailable"),
+    )
 
     await expect(
       sendMessageToChannel({
@@ -1327,7 +1330,6 @@ describe("chat send-message handlers", () => {
       }),
     ).resolves.toEqual({ messageIds: [], sentCount: 0 })
 
-    // Grant reconciled + button flipped to direct-dial.
     expect(mockRecordPermanentGrant).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactInboxId: "ci-1",
@@ -1338,7 +1340,6 @@ describe("chat send-message handlers", () => {
       data: { conversationId: "conv-1" },
       route: { assignedTeamIds: [], assignedUserIds: [] },
     })
-    // The send-error icon is still surfaced (this is the correction).
     expect(mockEmit).toHaveBeenCalledWith(
       "message:failed",
       expect.objectContaining({ action: { messageId: "msg-1" } }),

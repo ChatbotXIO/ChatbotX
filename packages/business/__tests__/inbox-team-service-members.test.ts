@@ -289,6 +289,51 @@ describe("InboxTeamService membership mutation revocation", () => {
     })
   })
 
+  test("deduplicates multi-team members and continues revocations after one failure", async () => {
+    mocks.teamFindMany.mockResolvedValue([{ id: TEAM_ID }, { id: "team-2" }])
+    mocks.listUserIdsByTeamId
+      .mockResolvedValueOnce(["member-1", "member-2"])
+      .mockResolvedValueOnce(["member-1", "member-3"])
+    mocks.tryRevokeWorkspaceMemberRealtimeConnections
+      .mockRejectedValueOnce(new Error("Redis unavailable"))
+      .mockResolvedValue(true)
+
+    await expect(
+      inboxTeamService.delete({
+        workspaceId: WORKSPACE_ID,
+        ids: [TEAM_ID, "team-2"],
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledTimes(3)
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "member-1",
+        workspaceId: WORKSPACE_ID,
+      }),
+    )
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "member-2",
+        workspaceId: WORKSPACE_ID,
+      }),
+    )
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "member-3",
+        workspaceId: WORKSPACE_ID,
+      }),
+    )
+  })
+
   test("revokes newly added members", async () => {
     mocks.listExistingUserIds.mockResolvedValue([{ userId: "member-1" }])
 

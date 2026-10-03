@@ -115,15 +115,12 @@ const memberClaimsSchema = z.object({
   chatScope: realtimeChatScopes,
   teamIds: z.array(z.string().min(1)).default([]),
   // Standard JWT "issued at" (seconds since epoch), set automatically by
-  // the internal `signRealtimeToken`'s `.setIssuedAt()`. Kept (not stripped)
-  // so a replayed `member-revoke` stream record older than this token's mint
-  // time can be told apart from one that's genuinely newer than the
-  // reconnect.
+  // the internal `signRealtimeToken`'s `.setIssuedAt()`.
   iat: z.number(),
   // Millisecond-precision mint time, set explicitly below (jose's built-in
-  // `iat` floors to whole seconds). The revoke-marker check must compare
-  // `revokedAt > iatMs`, not `iat * 1000`: flooring `iat` to the start of its
-  // second can put it before a revoke that landed earlier in that same second.
+  // `iat` floors to whole seconds). The revoke-marker check compares
+  // `revokedAt > iatMs` so a revoke and reconnect in the same second remain
+  // correctly ordered.
   iatMs: z.number(),
 })
 
@@ -188,7 +185,7 @@ export const signGuestConnectToken = async (
   guest: { guestConversationId: string; workspaceId: string },
   secret: string,
 ): Promise<string> => {
-  const claims: Omit<z.input<typeof guestClaimsSchema>, "iat"> = guest
+  const claims = guest
   return await signRealtimeToken(
     { kind: "guest", id: guest.guestConversationId },
     REALTIME_TOKEN_PURPOSE.guestConnect,
@@ -222,8 +219,7 @@ type RealtimePresenceReportClaims = z.infer<typeof presenceReportClaimsSchema>
 
 /**
  * Mints the realtime server's periodic presence report to the builder. Its
- * own purpose claim keeps this direction from replaying a token minted for
- * the inbound-broadcast direction.
+ * purpose isolates presence-report tokens from member and guest connect tokens.
  */
 export const signPresenceReportToken = async (
   args: { workspaceId: string; bodyHash: string },

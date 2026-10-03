@@ -121,8 +121,8 @@ class InboxTeamService extends BaseService {
     workspaceId: string,
     userIds: Iterable<string>,
   ): Promise<void> {
-    await Promise.all(
-      Array.from(userIds, async (userId) => {
+    await Promise.allSettled(
+      Array.from(new Set(userIds), async (userId) => {
         await tryRevokeWorkspaceMemberRealtimeConnections({
           workspaceId,
           userId,

@@ -17,7 +17,7 @@ const REALTIME_STREAM_RETENTION_MS = 5 * 60 * 1000
 const PUBLISH_RETRY_ATTEMPTS = 3
 const PUBLISH_RETRY_DELAY_MS = 100
 
-let realtimeStreamConnection: Redis | null = null
+let realtimeStreamConnectionPromise: Promise<Redis> | null = null
 
 const delay = (ms: number): Promise<void> => {
   const { promise, resolve } = Promise.withResolvers<void>()
@@ -46,8 +46,12 @@ export const retryWithLinearBackoff = async <T>(
   throw new Error("Realtime retry attempts exhausted")
 }
 
-const getRealtimeStreamConnection = (): Redis =>
-  (realtimeStreamConnection ??= createRedisConnection(
+const getRealtimeStreamConnection = async (): Promise<Redis> => {
+  if (realtimeStreamConnectionPromise) {
+    return await realtimeStreamConnectionPromise
+  }
+
+  const connection = createRedisConnection(
     resolveRealtimeRedisUrl(),
     // A hung `xadd` during a Redis outage would stall this package's publish
     // path forever: ioredis's default `maxRetriesPerRequest: null` queues the
@@ -58,9 +62,22 @@ const getRealtimeStreamConnection = (): Redis =>
     {
       commandTimeout: 2000,
       enableOfflineQueue: false,
+      lazyConnect: true,
       maxRetriesPerRequest: 1,
     },
-  ))
+  )
+  const connectionPromise = connection.connect().then(() => connection)
+  realtimeStreamConnectionPromise = connectionPromise
+  try {
+    return await connectionPromise
+  } catch (error) {
+    if (realtimeStreamConnectionPromise === connectionPromise) {
+      realtimeStreamConnectionPromise = null
+      connection.disconnect()
+    }
+    throw error
+  }
+}
 
 /**
  * Appends a pre-serialized protocol record to its workspace shard. Callers that
@@ -72,7 +89,8 @@ export const publishSerializedRealtimeStreamRecord = async (
 ): Promise<void> => {
   await retryWithLinearBackoff(
     async () => {
-      await getRealtimeStreamConnection().xadd(
+      const connection = await getRealtimeStreamConnection()
+      await connection.xadd(
         getRealtimeStreamKey(workspaceId),
         "MINID",
         "~",
@@ -112,7 +130,8 @@ export const markRealtimeMemberRevoked = async (
   workspaceId: string,
   userId: string,
 ): Promise<void> => {
-  await getRealtimeStreamConnection().set(
+  const connection = await getRealtimeStreamConnection()
+  await connection.set(
     getRealtimeMemberRevokedKey(workspaceId, userId),
     `${Date.now()}`,
     "EX",
@@ -121,5 +140,5 @@ export const markRealtimeMemberRevoked = async (
 }
 
 export const resetRealtimeStreamPublisherForTests = (): void => {
-  realtimeStreamConnection = null
+  realtimeStreamConnectionPromise = null
 }

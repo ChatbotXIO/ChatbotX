@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  assignmentSelectForUpdate: vi.fn(),
   conversationFindMany: vi.fn(),
   conversationFindFirst: vi.fn(),
   updateSet: vi.fn(),
@@ -26,39 +27,45 @@ const mocks = vi.hoisted(() => ({
   })),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      conversationModel: {
-        findMany: mocks.conversationFindMany,
-        findFirst: mocks.conversationFindFirst,
-      },
+vi.mock("@chatbotx.io/database/client", () => {
+  const update = (..._args: unknown[]) => ({
+    set: (values: unknown) => {
+      mocks.updateSet(values)
+      return {
+        where: (condition: unknown) => {
+          mocks.updateWhere(condition)
+          return {
+            returning: (...returningArgs: unknown[]) =>
+              mocks.updateReturning(...returningArgs),
+          }
+        },
+      }
     },
-    // Tagged plain objects (not bare `vi.fn()`) so `.where(cond)` can be
-    // asserted on directly — mirrors `tag-service-soft-delete.test.ts`.
-    // This is what lets `updateAssignment`'s test below prove the
-    // `eq(workspaceId)` clause is actually present in the WHERE, not just
-    // that *some* condition was passed.
-    update: (..._args: unknown[]) => ({
-      set: (values: unknown) => {
-        mocks.updateSet(values)
-        return {
-          where: (cond: unknown) => {
-            mocks.updateWhere(cond)
-            return {
-              returning: (...rArgs: unknown[]) =>
-                mocks.updateReturning(...rArgs),
-            }
-          },
-        }
-      },
+  })
+  const select = () => ({
+    from: () => ({
+      where: () => ({ for: mocks.assignmentSelectForUpdate }),
     }),
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-  sql: mocks.sql,
-}))
+  })
+  return {
+    db: {
+      query: {
+        conversationModel: {
+          findMany: mocks.conversationFindMany,
+          findFirst: mocks.conversationFindFirst,
+        },
+      },
+      select,
+      transaction: (callback: (tx: unknown) => unknown) =>
+        callback({ select, update }),
+      update,
+    },
+    and: (...args: unknown[]) => ({ and: args }),
+    eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
+    inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
+    sql: mocks.sql,
+  }
+})
 
 // Plain object stubs only — importing the real schema opens a database
 // connection through the sharding client. The extra models come from
@@ -175,6 +182,8 @@ const { notificationQueue } = await import("@chatbotx.io/worker-config")
 const WORKSPACE_ID = "ws-1"
 
 beforeEach(() => {
+  mocks.assignmentSelectForUpdate.mockReset()
+  mocks.assignmentSelectForUpdate.mockResolvedValue([])
   mocks.conversationFindMany.mockReset()
   mocks.conversationFindFirst.mockReset()
   mocks.updateSet.mockReset()

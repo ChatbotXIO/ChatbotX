@@ -5,11 +5,10 @@ export const REALTIME_CLOSE_CODE = {
   revoked: 4001,
   resync: 4002,
   overloaded: 4003,
-  // Non-terminal unlike `revoked`: membership/permissions/team changed (not
-  // a deletion) or the forced connection-lifetime re-handshake elapsed.
+  // Non-terminal unlike `revoked`: membership, permissions, or team changed.
   // Unlike `resync`, the client keeps its replay cursor — the server
-  // re-validates claims on the fresh token mint and gap-fills via the
-  // normal replay path, so there's nothing to invalidate caches for.
+  // re-validates claims on the fresh token mint and gap-fills via the normal
+  // replay path, so there's nothing to invalidate caches for.
   reauth: 4004,
 } as const
 

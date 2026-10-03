@@ -50,14 +50,21 @@ export async function reconcileCallPermissionAlreadyGranted(
     contactInboxId: context.contactInbox.id,
     grantedAt: new Date(),
   })
-  await publishWorkspaceRealtimeEvent(context.conversation.workspaceId, {
-    eventType: RealtimeEventType.whatsappCallPermissionUpdated,
-    data: { conversationId: context.conversation.id },
-    route: routeForConversation({
-      assignedInboxTeamId: context.conversation.assignedInboxTeamId,
-      assignedUserId: context.conversation.assignedUserId,
-    }),
-  })
+  try {
+    await publishWorkspaceRealtimeEvent(context.conversation.workspaceId, {
+      eventType: RealtimeEventType.whatsappCallPermissionUpdated,
+      data: { conversationId: context.conversation.id },
+      route: routeForConversation({
+        assignedInboxTeamId: context.conversation.assignedInboxTeamId,
+        assignedUserId: context.conversation.assignedUserId,
+      }),
+    })
+  } catch (err) {
+    logger.warn(
+      { err, conversationId: context.conversation.id },
+      "WhatsApp call permission grant realtime publish failed",
+    )
+  }
   logger.info(
     { contactInboxId: context.contactInbox.id },
     "WhatsApp call permission already granted; recorded permanent grant",
