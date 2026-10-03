@@ -36,6 +36,7 @@ type RouteConfig = {
   method: string
   path: string
   summary: string
+  description?: string
   tags: string[]
   successStatus?: number
 }
@@ -94,6 +95,10 @@ const unblockAndRecord = vi.fn()
 const upsertByIdentifier = vi.fn()
 
 const contactImportService = { startImport: vi.fn() }
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  getAuditActor: () => ({ ipAddress: "203.0.113.9", userAgent: "curl/8" }),
+}))
 
 vi.mock("@chatbotx.io/business", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/business")>()
@@ -388,5 +393,38 @@ describe("POST /v1/contacts/{identifier}/upsert", () => {
     expect(call.data).not.toHaveProperty("email")
     expect(call.data).not.toHaveProperty("phoneNumber")
     expect(call.data).not.toHaveProperty("gender")
+  })
+})
+
+describe("POST /v1/contacts/import", () => {
+  const procedure = findProcedure("POST", "/v1/contacts/import")
+
+  test("starts the import with no user and the caller's request info for the audit trail", async () => {
+    contactImportService.startImport.mockResolvedValueOnce({ importId: "9" })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        fileId: "5",
+        channel: "messenger",
+        inboxId: "7",
+        contactId: "psid",
+      },
+    })
+
+    expect(contactImportService.startImport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        userId: null,
+        inboxId: "7",
+        fileId: "5",
+        actor: { ipAddress: "203.0.113.9", userAgent: "curl/8" },
+      }),
+    )
+    expect(result).toEqual({ importId: "9" })
+  })
+
+  test("documents the 409 for a running import", () => {
+    expect(procedure.route.description).toContain("409")
   })
 })

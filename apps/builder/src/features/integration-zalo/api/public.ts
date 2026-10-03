@@ -1,12 +1,14 @@
 import { zaloIntegrationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { createChannelReadRoutes } from "@/features/channel-integrations/api/public"
 import { possibleErrorsOnMutatingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
 
 export const zaloChannelsPublicRouter = {
+  ...createChannelReadRoutes("zalo"),
   updateTagSync: workspaceTokenAuthAPI
     .route({
       method: "PATCH",
@@ -19,7 +21,7 @@ export const zaloChannelsPublicRouter = {
     .input(
       z.object({
         id: zodBigintAsString().describe(
-          "Zalo channel (integration) id. Get it from `integrations.list`.",
+          "Zalo channel (integration) id. Get it from `zaloChannels.list`.",
         ),
         enabled: z.boolean().describe("Whether tag sync should be enabled."),
       }),

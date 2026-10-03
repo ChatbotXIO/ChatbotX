@@ -1,6 +1,24 @@
-import { productService } from "@chatbotx.io/business"
+import {
+  createImportUpload,
+  peekImportHeaders,
+  productService,
+} from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import {
+  importHeadersPublicRequest,
+  importHeadersPublicResponse,
+  importTemplatePublicRequest,
+  importUploadUrlPublicRequest,
+  importUploadUrlPublicResponse,
+  productImportTemplatePublicResponse,
+} from "@/features/import/schema/public"
+import {
+  buildProductImportTemplate,
+  PRODUCT_IMPORT_TEMPLATE_MIME_TYPE,
+  productImportTemplateFileName,
+  resolveProductImportTemplateLocale,
+} from "@/features/products/lib/product-import-template"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -22,6 +40,73 @@ import { listProductsRequest } from "../schema/query"
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("ecommerce")
 
 export const productsPublicRouter = {
+  getImportTemplate: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/products/import-template",
+      summary: "Get product import template",
+      description:
+        "Returns the XLSX template for product imports as base64 (`contentBase64`): a header row plus two example rows. Decode it to a .xlsx file, fill it in, then upload it with `products.createImportUpload`.",
+      tags: ["Products"],
+    })
+    .input(importTemplatePublicRequest)
+    .output(productImportTemplatePublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const locale = resolveProductImportTemplateLocale(
+        input.language ?? context.workspace.language,
+      )
+      const template = await buildProductImportTemplate(locale)
+      return {
+        fileName: productImportTemplateFileName(locale),
+        mimeType: PRODUCT_IMPORT_TEMPLATE_MIME_TYPE,
+        contentBase64: template.toString("base64"),
+      }
+    }),
+
+  peekImportHeaders: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/products/imports/files/{fileId}/headers",
+      summary: "Read product import file headers",
+      description:
+        "Returns the column headers of an uploaded product import file so you can map columns before importing. Call `products.createImportUpload` and upload the file first.",
+      tags: ["Products"],
+    })
+    .input(importHeadersPublicRequest)
+    .output(importHeadersPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => ({
+      headers: await peekImportHeaders({
+        workspaceId: context.workspace.id,
+        fileId: input.fileId,
+        type: "products",
+      }),
+    })),
+
+  createImportUpload: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/products/imports/upload-url",
+      summary: "Create product import upload URL",
+      description:
+        "Step 1 of a product import: declares the CSV or XLSX (`fileName`, `mimeType`, `fileSize` in bytes, max 10 MB) and returns a presigned `presignedPostUrl` plus a `fileId`. Upload the file bytes to `presignedPostUrl` with an HTTP PUT, then start the import with that `fileId`.",
+      successStatus: 201,
+      tags: ["Products"],
+    })
+    .input(importUploadUrlPublicRequest)
+    .output(importUploadUrlPublicResponse)
+    .errors(possibleErrorsOnCreatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await createImportUpload({
+          ...input,
+          workspaceId: context.workspace.id,
+          userId: null,
+          type: "products",
+        }),
+    ),
+
   list: workspaceTokenAuthAPI
     .route({
       method: "GET",

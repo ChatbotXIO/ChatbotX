@@ -1,4 +1,5 @@
 import { contactService, importService, UNSCOPED } from "@chatbotx.io/business"
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
@@ -32,6 +33,13 @@ import {
 } from "../../schema/query"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
+
+const pickAuditRequestInfo = (
+  actor: ReturnType<typeof getAuditActor>,
+): { ipAddress?: string; userAgent?: string } => ({
+  ipAddress: actor?.ipAddress,
+  userAgent: actor?.userAgent,
+})
 
 export const contactsCrudPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -188,7 +196,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/import",
       summary: "Import contacts from file",
       description:
-        "Starts an asynchronous bulk import of contacts from a previously uploaded file (`fileId`) into the given inbox. Returns an `importId` immediately; the import itself runs in the background, so newly imported contacts may not appear in `contacts.list` right away.",
+        "Starts an asynchronous bulk import of contacts from an uploaded CSV into an inbox. Flow: `contacts.getImportTemplate` for the format, `contacts.createImportUpload` to get a `fileId` and upload URL, upload the file, `contacts.peekImportHeaders` to read its columns, then call this with `channel`, `inboxId`, `fileId` and the column names: `phoneNumber`, `contactId` (a channel user id; required unless the channel is whatsapp), `email`, `firstName`, `lastName`, `sourceUserId` (WhatsApp BSUID). Optional: `fieldMapping` (up to 10 {column, customFieldId}), `tagId` for every contact, `countryCode` for phone normalization, `timezone`. Returns an `importId` immediately; track it with `contacts.getImport`. Only one import can run per workspace: while one is pending or processing this returns 409.",
       successStatus: 201,
       tags: ["Contacts"],
     })
@@ -203,6 +211,9 @@ export const contactsCrudPublicRouter = {
           inboxId: input.inboxId,
           fileId: input.fileId,
           meta: buildContactImportMeta(input),
+          // The token path has no session user; the audit context (owner +
+          // token id) still carries the caller's IP and user agent.
+          actor: pickAuditRequestInfo(getAuditActor()),
         }),
     ),
 

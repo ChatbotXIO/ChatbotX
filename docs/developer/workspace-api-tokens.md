@@ -427,6 +427,17 @@ an endpoint's scope.
   external webhooks, and event webhooks. A token scoped to `["integrations"]`
   is not authorized for channel configuration or operations.
 
+- **Imports** — a token can run a whole import without the browser's session
+  upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
+  `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file
+  (MIME, extension, format, declared size) against the import registry, record
+  a pending `import` file for the workspace and return a presigned PUT URL.
+  `GET /v1/{contacts,products}/imports/files/{fileId}/headers` reads the header
+  row (only for a file of that import type — another type reads as "not
+  found"), and `GET /v1/{contacts,products}/import-template` returns the
+  CSV text / base64 XLSX template. `contacts.import` returns 409 while another
+  import is pending or processing.
+
 - **Minigames** — this scope shipped in the enum/registry/i18n alongside
   `ads` but, like `ads`, carried no endpoints for a while. It now publishes
   minigame CRUD, enable/disable, per-contact play-history reads, and a

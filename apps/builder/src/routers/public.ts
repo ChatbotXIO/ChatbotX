@@ -15,6 +15,10 @@ import {
   capabilitiesPublicRouter,
   schemasPublicRouter,
 } from "@/features/capabilities/api/public"
+import {
+  channelIntegrationsPublicRouter,
+  createChannelReadRoutes,
+} from "@/features/channel-integrations/api/public"
 import { channelPostsPublicRouter } from "@/features/channel-posts/api/public"
 import { contactScanPublicRouter } from "@/features/contact-scan/api/public"
 import { contactsPublicRouter } from "@/features/contacts/api/public"
@@ -93,6 +97,8 @@ export const publicRouter = {
   folders: foldersPublicRouter,
   igComments: igCommentsPublicRouter,
   igStories: igStoriesPublicRouter,
+  channelIntegrations: channelIntegrationsPublicRouter,
+  instagramChannels: createChannelReadRoutes("instagram"),
   inboxTeams: inboxTeamsPublicRouter,
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,
@@ -115,10 +121,12 @@ export const publicRouter = {
   tags: tagsPublicRouter,
   templateMessages: templateMessagesPublicRouter,
   token: tokenPublicRouter,
+  tiktokChannels: createChannelReadRoutes("tiktok"),
   triggers: triggersPublicRouter,
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,
   webhooks: webhooksPublicRouter,
+  whatsappChannels: createChannelReadRoutes("whatsapp"),
   whatsappTemplates: whatsappTemplatesPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,

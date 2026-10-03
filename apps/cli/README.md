@@ -180,7 +180,11 @@ chatbotx channel-posts list                           # [--limit --search --curs
 chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter post labels
 
 # Imports & exports
-chatbotx contacts imports                            # [--page --perPage --status --keyword]
+chatbotx contacts import-template                    # CSV template as text [--language]
+chatbotx contacts imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
+                                                     # Returns fileId + presigned PUT URL
+chatbotx contacts imports-files-headers <fileId>      # Column headers of the uploaded file
+chatbotx contacts imports                            # [--page --perPage --status --keyword --sort]
 chatbotx contacts find-by-imports <id>                # Get one import job
 chatbotx contacts export --fields <fields>            # [--contactIds --exportAll --filter]
 chatbotx contacts find-by-export-files <fileId>       # Poll export status/download URL
@@ -742,6 +746,7 @@ chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eli
 
 ```bash
 chatbotx inboxes list                                 # Connected inboxes; use `id` as `inboxId` elsewhere
+chatbotx inboxes update <id> --markReadOnOutbound <true|false>
 ```
 
 ---
@@ -761,9 +766,18 @@ chatbotx media-library files-move --fileIds <fileIds>  # [--folderId]
 
 ---
 
+### `channel-integrations`
+
+```bash
+chatbotx channel-integrations list                    # [--channel] Connected WhatsApp/Messenger/Instagram/Zalo/TikTok channels
+chatbotx whatsapp-channels list|get <id>              # Same data per channel; also instagram-channels, tiktok-channels
+```
+
 ### `messenger-channels`
 
 ```bash
+chatbotx messenger-channels list
+chatbotx messenger-channels get <id>
 chatbotx messenger-channels tag-sync update <id> --enabled <enabled>
 ```
 
@@ -812,6 +826,9 @@ chatbotx products get <id>
 chatbotx products create --name <name>
 chatbotx products update <id>                           # Full replace
 chatbotx products delete <id>
+chatbotx products import-template                       # XLSX template as base64 [--language]
+chatbotx products imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
+chatbotx products imports-files-headers <fileId>
 ```
 
 ---
@@ -920,6 +937,7 @@ chatbotx webchats delete <id>
 ### `zalo-channels`
 
 ```bash
+chatbotx zalo-channels list|get <id>
 chatbotx zalo-channels tag-sync update <id> --enabled <enabled>
 ```
 

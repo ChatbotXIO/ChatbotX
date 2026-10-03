@@ -614,6 +614,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "channelIntegrations.list",
+    "path": "/v1/channel-integrations",
+  },
+  {
+    "method": "GET",
     "operationId": "channelPosts.list",
     "path": "/v1/channel-posts",
   },
@@ -704,6 +709,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contacts.createImportUpload",
+    "path": "/v1/contacts/imports/upload-url",
+  },
+  {
+    "method": "POST",
     "operationId": "contacts.createNote",
     "path": "/v1/contacts/{identifier}/notes",
   },
@@ -746,6 +756,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "contacts.getImport",
     "path": "/v1/contacts/imports/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.getImportTemplate",
+    "path": "/v1/contacts/import-template",
   },
   {
     "method": "GET",
@@ -801,6 +816,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "contacts.listTags",
     "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.peekImportHeaders",
+    "path": "/v1/contacts/imports/files/{fileId}/headers",
   },
   {
     "method": "POST",
@@ -1323,6 +1343,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/channels",
   },
   {
+    "method": "PATCH",
+    "operationId": "inboxes.update",
+    "path": "/v1/inboxes/{id}",
+  },
+  {
     "method": "POST",
     "operationId": "inboxTeams.addMembers",
     "path": "/v1/teams/{id}/members",
@@ -1356,6 +1381,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "inboxTeams.update",
     "path": "/v1/teams/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "instagramChannels.get",
+    "path": "/v1/instagram-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "instagramChannels.list",
+    "path": "/v1/instagram-channels",
   },
   {
     "method": "PUT",
@@ -1508,6 +1543,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/conversations/{conversationId}/messages/{messageId}",
   },
   {
+    "method": "GET",
+    "operationId": "messengerChannels.get",
+    "path": "/v1/messenger-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerChannels.list",
+    "path": "/v1/messenger-channels",
+  },
+  {
     "method": "PATCH",
     "operationId": "messengerChannels.updateTagSync",
     "path": "/v1/messenger-channels/{id}/tag-sync",
@@ -1593,6 +1638,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/products",
   },
   {
+    "method": "POST",
+    "operationId": "products.createImportUpload",
+    "path": "/v1/products/imports/upload-url",
+  },
+  {
     "method": "DELETE",
     "operationId": "products.delete",
     "path": "/v1/products/{id}",
@@ -1604,8 +1654,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "products.getImportTemplate",
+    "path": "/v1/products/import-template",
+  },
+  {
+    "method": "GET",
     "operationId": "products.list",
     "path": "/v1/products",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.peekImportHeaders",
+    "path": "/v1/products/imports/files/{fileId}/headers",
   },
   {
     "method": "PUT",
@@ -1879,6 +1939,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "tiktokChannels.get",
+    "path": "/v1/tiktok-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "tiktokChannels.list",
+    "path": "/v1/tiktok-channels",
+  },
+  {
+    "method": "GET",
     "operationId": "token.get",
     "path": "/v1/token",
   },
@@ -1979,6 +2049,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "whatsappChannels.get",
+    "path": "/v1/whatsapp-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappChannels.list",
+    "path": "/v1/whatsapp-channels",
+  },
+  {
+    "method": "GET",
     "operationId": "whatsappTemplates.list",
     "path": "/v1/whatsapp/templates",
   },
@@ -1991,6 +2071,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "workspaceMembers.list",
     "path": "/v1/members",
+  },
+  {
+    "method": "GET",
+    "operationId": "zaloChannels.get",
+    "path": "/v1/zalo-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "zaloChannels.list",
+    "path": "/v1/zalo-channels",
   },
   {
     "method": "PATCH",

@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import { describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 
 vi.mock("@chatbotx.io/database/client", () => {
   const proxy: unknown = new Proxy(() => proxy, { get: () => proxy })
@@ -22,6 +23,14 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationSmtpService: {},
   messengerIntegrationService: { updateTagSync: vi.fn() },
   zaloIntegrationService: { updateTagSync: vi.fn() },
+  channelIntegrationService: { list: vi.fn(), get: vi.fn() },
+  channelIntegrationChannels: z.enum([
+    "whatsapp",
+    "messenger",
+    "instagram",
+    "zalo",
+    "tiktok",
+  ]),
 }))
 
 const workspaceTokenAuthAPIForScope = vi.hoisted(() =>
@@ -51,6 +60,10 @@ const smtpCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
 
 await import("@/features/personas/api/public")
 const personasCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
+
+await import("@/features/channel-integrations/api/public")
+const channelIntegrationsCallCount =
+  workspaceTokenAuthAPIForScope.mock.calls.length
 
 await import("@/features/integration-messenger/api/public")
 const messengerCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
@@ -87,10 +100,16 @@ describe("channels public router scope wiring", () => {
     ])
   })
 
+  test("channel-integrations/api/public.ts registers under the 'channels' scope", () => {
+    expect(
+      allScopeCalls.slice(personasCallCount, channelIntegrationsCallCount),
+    ).toEqual(["channels"])
+  })
+
   test("integration-messenger/api/public.ts registers under the 'channels' scope", () => {
-    expect(allScopeCalls.slice(personasCallCount, messengerCallCount)).toEqual([
-      "channels",
-    ])
+    expect(
+      allScopeCalls.slice(channelIntegrationsCallCount, messengerCallCount),
+    ).toEqual(["channels"])
   })
 
   test("integration-zalo/api/public.ts registers under the 'channels' scope", () => {
