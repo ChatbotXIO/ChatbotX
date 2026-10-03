@@ -11,6 +11,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { resolveContactAvatars } from "../../queries/resolve-contact-avatars"
 import {
   createContactRequest,
   updateContactFieldRequest,
@@ -57,13 +58,19 @@ export const contactsCrudPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { include, withCount, ...rest } = input
-      return await contactService.list({
+      const result = await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
         scope: UNSCOPED,
         include,
         withCount,
       })
+      // Same avatar resolution as the builder list: a stored key or no-avatar
+      // sentinel becomes a usable URL.
+      return {
+        ...result,
+        data: await resolveContactAvatars(result.data, context.workspace.id),
+      }
     }),
 
   // Deprecated — use `contacts.list` instead (same filter shape, as a
@@ -84,13 +91,19 @@ export const contactsCrudPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { include, withCount, ...rest } = input
-      return await contactService.list({
+      const result = await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
         scope: UNSCOPED,
         include,
         withCount,
       })
+      // Same avatar resolution as the builder list: a stored key or no-avatar
+      // sentinel becomes a usable URL.
+      return {
+        ...result,
+        data: await resolveContactAvatars(result.data, context.workspace.id),
+      }
     }),
 
   count: workspaceTokenAuthAPI
@@ -136,10 +149,15 @@ export const contactsCrudPublicRouter = {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
-      return await contactService.findPublicContactOrFail({
+      const contact = await contactService.findPublicContactOrFail({
         id: contactId,
         workspaceId: context.workspace.id,
       })
+      const [resolved] = await resolveContactAvatars(
+        [contact],
+        context.workspace.id,
+      )
+      return resolved
     }),
 
   create: workspaceTokenAuthAPI

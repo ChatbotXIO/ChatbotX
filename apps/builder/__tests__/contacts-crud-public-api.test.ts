@@ -96,6 +96,20 @@ const upsertByIdentifier = vi.fn()
 
 const contactImportService = { startImport: vi.fn() }
 
+const resolveAvatars = vi.hoisted(() =>
+  vi.fn(async (contacts: { avatar: string | null }[]) =>
+    contacts.map((contact) => ({
+      ...contact,
+      avatar: contact.avatar
+        ? `https://app.test/media/${contact.avatar}`
+        : null,
+    })),
+  ),
+)
+vi.mock("@/features/contacts/queries/resolve-contact-avatars", () => ({
+  resolveContactAvatars: resolveAvatars,
+}))
+
 vi.mock("@chatbotx.io/business/audit", () => ({
   getAuditActor: () => ({ ipAddress: "203.0.113.9", userAgent: "curl/8" }),
 }))
@@ -158,6 +172,7 @@ describe("GET /v1/contacts", () => {
       },
     })
 
+    expect(resolveAvatars).toHaveBeenCalledWith([], "workspace-1")
     expect(listContacts).toHaveBeenCalledWith({
       page: 1,
       perPage: 20,
@@ -214,7 +229,26 @@ describe("GET /v1/contacts/{identifier}", () => {
       id: "contact-1",
       workspaceId: "workspace-1",
     })
-    expect(result).toEqual(publicContact)
+    expect(result).toEqual({ ...publicContact, avatar: null })
+  })
+
+  test("returns the avatar as a resolved URL, not the stored key", async () => {
+    resolveContactId.mockResolvedValueOnce("contact-1")
+    findPublicContactOrFail.mockResolvedValueOnce({
+      id: "contact-1",
+      avatar: "ws/avatar.jpg",
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:contact-1" },
+    })
+
+    expect(resolveAvatars).toHaveBeenCalledWith(
+      [{ id: "contact-1", avatar: "ws/avatar.jpg" }],
+      "workspace-1",
+    )
+    expect(result.avatar).toBe("https://app.test/media/ws/avatar.jpg")
   })
 })
 
