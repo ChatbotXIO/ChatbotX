@@ -2,12 +2,8 @@ import type {
   RealtimeEventData,
   RealtimeTargetedEventData,
 } from "@chatbotx.io/realtime-protocol"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import { logger } from "../logger"
-import {
-  REALTIME_METRIC_WINDOW_MS,
-  type RealtimeRelayWindow,
-  recordRealtimeRelayWindow,
-} from "./realtime-metrics"
 import {
   markRealtimeMemberRevoked,
   publishRealtimeStreamRecord,
@@ -19,26 +15,29 @@ import {
 const WORKSPACE_REALTIME_COALESCE_MS = 25
 const WORKSPACE_REALTIME_MAX_EVENTS = 64
 const WORKSPACE_REALTIME_MAX_BYTES = 256 * 1024
+const REALTIME_METRIC_WINDOW_MS = 10_000
 
-const BATCH_ENVELOPE_BYTES = Buffer.byteLength('{"batch":[]}')
-const IMMEDIATE_FLUSH_EVENT_TYPES = new Set([
-  "conversationAssigned",
-  "whatsappCallClaimedElsewhere",
-  "whatsappCallOutboundAnswer",
-  "whatsappCallOutboundStatus",
-  "whatsappCallPermissionUpdated",
-  "whatsappCallTransportEnded",
-  "whatsappCallTransportIncoming",
-])
+const serializeWorkspaceEventsRecord = (
+  workspaceId: string,
+  serializedEvents: readonly string[],
+): string => {
+  const events = serializedEvents.join(",")
+  return `{"events":[${events}],"kind":"workspace-events","workspaceId":${JSON.stringify(workspaceId)}}`
+}
+const IMMEDIATE_FLUSH_EVENT_TYPES: Partial<
+  Record<RealtimeEventData["eventType"], true>
+> = {
+  [RealtimeEventType.conversationAssigned]: true,
+  [RealtimeEventType.whatsappCallClaimedElsewhere]: true,
+  [RealtimeEventType.whatsappCallPermissionUpdated]: true,
+  [RealtimeEventType.whatsappCallTransportEnded]: true,
+}
 
 type PendingWorkspaceRealtimeEvents = {
   byteLength: number
+  delivery: PromiseWithResolvers<void>
   serializedEvents: string[]
   timer: NodeJS.Timeout
-  waiters: {
-    reject: (error: unknown) => void
-    resolve: () => void
-  }[]
 }
 
 const pendingByWorkspace = new Map<string, PendingWorkspaceRealtimeEvents>()
@@ -54,6 +53,16 @@ const createEmptyRelayWindow = (): RealtimeRelayWindow => ({
   windowStartedAt: Date.now(),
 })
 
+type RealtimeRelayWindow = {
+  bytes: number
+  errors: number
+  eventTypes: Record<string, number>
+  events: number
+  flushes: number
+  maxBatchEvents: number
+  windowStartedAt: number
+}
+
 let relayWindow = createEmptyRelayWindow()
 
 const relayWindowIsEmpty = (): boolean =>
@@ -61,14 +70,21 @@ const relayWindowIsEmpty = (): boolean =>
   relayWindow.flushes === 0 &&
   relayWindow.errors === 0
 
-const flushRelayWindowIfElapsed = (): void => {
+const flushRelayWindow = (force: boolean): void => {
   if (
-    Date.now() - relayWindow.windowStartedAt < REALTIME_METRIC_WINDOW_MS ||
-    relayWindowIsEmpty()
+    !force &&
+    (Date.now() - relayWindow.windowStartedAt < REALTIME_METRIC_WINDOW_MS ||
+      relayWindowIsEmpty())
   ) {
     return
   }
-  recordRealtimeRelayWindow(relayWindow)
+  if (relayWindowIsEmpty()) {
+    return
+  }
+  logger.info(
+    { metric: "realtime_relay", ...relayWindow },
+    "realtime_relay_metric",
+  )
   relayWindow = createEmptyRelayWindow()
 }
 
@@ -76,14 +92,16 @@ const createPendingWorkspaceRealtimeEvents = (
   workspaceId: string,
 ): PendingWorkspaceRealtimeEvents => {
   const pending: PendingWorkspaceRealtimeEvents = {
-    byteLength: BATCH_ENVELOPE_BYTES,
+    byteLength: Buffer.byteLength(
+      serializeWorkspaceEventsRecord(workspaceId, []),
+    ),
+    delivery: Promise.withResolvers<void>(),
     serializedEvents: [],
     timer: setTimeout(
       () =>
         flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined),
       WORKSPACE_REALTIME_COALESCE_MS,
     ),
-    waiters: [],
   }
   pendingByWorkspace.set(workspaceId, pending)
   return pending
@@ -121,20 +139,16 @@ const flushPendingWorkspaceRealtimeEvents = (
     .then(() =>
       publishSerializedRealtimeStreamRecord(
         workspaceId,
-        `{"events":[${pending.serializedEvents.join(",")}],"kind":"workspace-events","workspaceId":${JSON.stringify(workspaceId)}}`,
+        serializeWorkspaceEventsRecord(workspaceId, pending.serializedEvents),
       ),
     )
   append.then(
     () => {
-      for (const waiter of pending.waiters) {
-        waiter.resolve()
-      }
+      pending.delivery.resolve()
     },
     (error) => {
       relayWindow.errors += 1
-      for (const waiter of pending.waiters) {
-        waiter.reject(error)
-      }
+      pending.delivery.reject(error)
     },
   )
 
@@ -159,9 +173,7 @@ const flushPendingWorkspaceRealtimeEvents = (
 export const resetRealtimePublishStateForTests = (): void => {
   for (const pending of pendingByWorkspace.values()) {
     clearTimeout(pending.timer)
-    for (const waiter of pending.waiters) {
-      waiter.resolve()
-    }
+    pending.delivery.resolve()
   }
   pendingByWorkspace.clear()
   inFlightByWorkspace.clear()
@@ -204,15 +216,10 @@ export const flushAllPendingWorkspaceRealtimeEvents =
         )
       }
     }
-    if (!relayWindowIsEmpty()) {
-      recordRealtimeRelayWindow(relayWindow)
-      relayWindow = createEmptyRelayWindow()
-    }
-    // Every workspace above got its own fully-drained attempt and its own
-    // log line regardless of any other workspace's outcome (the bug this
-    // fixes) — but the caller's shutdown handler still needs an overall
-    // rejection to know whether to exit 0 or 1, so re-raise once everything
-    // that COULD run already has.
+    flushRelayWindow(true)
+    // Every workspace above got its own fully-drained attempt and its own log
+    // line, while the caller still receives one overall failure after every
+    // possible flush has completed.
     if (failures.length > 0) {
       throw new AggregateError(
         failures,
@@ -229,7 +236,7 @@ export const publishWorkspaceRealtimeEvent = (
   workspaceId: string,
   event: RealtimeEventData,
 ): Promise<void> => {
-  flushRelayWindowIfElapsed()
+  flushRelayWindow(false)
   let pending =
     pendingByWorkspace.get(workspaceId) ??
     createPendingWorkspaceRealtimeEvents(workspaceId)
@@ -255,11 +262,10 @@ export const publishWorkspaceRealtimeEvent = (
   const nextSeparatorBytes = pending.serializedEvents.length > 0 ? 1 : 0
   pending.serializedEvents.push(serializedEvent)
   pending.byteLength += nextSeparatorBytes + serializedEventBytes
-  const { promise: delivery, reject, resolve } = Promise.withResolvers<void>()
-  pending.waiters.push({ reject, resolve })
+  const delivery = pending.delivery.promise
 
   if (
-    IMMEDIATE_FLUSH_EVENT_TYPES.has(event.eventType) ||
+    IMMEDIATE_FLUSH_EVENT_TYPES[event.eventType] === true ||
     pending.serializedEvents.length === WORKSPACE_REALTIME_MAX_EVENTS
   ) {
     flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined)
@@ -309,8 +315,8 @@ type WorkspaceMemberRealtimeConnectionRevocationArgs = {
 }
 
 /**
- * Immediately revokes a member's existing realtime connections and marks
- * future connections as revoked.
+ * Immediately revokes existing realtime connections and prevents reconnects
+ * with tokens minted before the revoke marker.
  */
 export const revokeWorkspaceMemberRealtimeConnections = async (
   args: WorkspaceMemberRealtimeConnectionRevocationArgs,
@@ -333,6 +339,10 @@ export const revokeWorkspaceMemberRealtimeConnections = async (
   )
 }
 
+/**
+ * Best-effort revocation that never throws. Returns `false` only when all
+ * retries fail.
+ */
 export const tryRevokeWorkspaceMemberRealtimeConnections = async (
   args: WorkspaceMemberRealtimeConnectionRevocationArgs & {
     errorMessage: string

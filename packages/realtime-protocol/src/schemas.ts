@@ -465,18 +465,23 @@ type ConversationScopedEventTypesMatch = [
 const _conversationScopedEventTypesMatch: ConversationScopedEventTypesMatch = true
 
 /**
- * Workspace-wide or guest/member-targeted event data is never filtered by
- * route.
+ * Workspace-wide events may be broadcast to every workspace connection.
  */
 export type RealtimeWorkspaceBroadcastEventData =
   | RealtimeEventContactCommon
   | RealtimeEventTyping
-  | RealtimeEventWhatsappCallTransportIncoming
   | RealtimeEventWhatsappCallTransportEnded
   | RealtimeEventWhatsappCallClaimedElsewhere
+  | RealtimeEventContactInboxThreadControlUpdated
+
+/**
+ * These events carry call signaling and MUST be sent only to one member or
+ * guest connection, never to the workspace broadcast stream.
+ */
+export type RealtimeTargetedOnlyEventData =
+  | RealtimeEventWhatsappCallTransportIncoming
   | RealtimeEventWhatsappCallOutboundAnswer
   | RealtimeEventWhatsappCallOutboundStatus
-  | RealtimeEventContactInboxThreadControlUpdated
 
 type Routed<T> = T & { route: RealtimeEventRoute }
 type MaybeRouted<T> = T & { route?: RealtimeEventRoute }
@@ -490,5 +495,7 @@ export type RealtimeEventData =
  * route is optional for every targeted event.
  */
 export type RealtimeTargetedEventData = MaybeRouted<
-  RealtimeConversationScopedEventData | RealtimeWorkspaceBroadcastEventData
+  | RealtimeConversationScopedEventData
+  | RealtimeTargetedOnlyEventData
+  | RealtimeWorkspaceBroadcastEventData
 >

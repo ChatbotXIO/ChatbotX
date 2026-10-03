@@ -15,6 +15,7 @@ const {
   invalidateTracking,
   queueWorkspaceRealtimeEvent,
   returning,
+  selectForUpdate,
   selectWhere,
   set,
   transaction,
@@ -26,6 +27,7 @@ const {
   const where = vi.fn(() => ({ returning }))
   const set = vi.fn(() => ({ where }))
   const update = vi.fn(() => ({ set }))
+  const selectForUpdate = vi.fn()
   return {
     queueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
     chatQueueAdd: vi.fn().mockResolvedValue(undefined),
@@ -41,13 +43,27 @@ const {
     invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
     returning,
+    selectForUpdate,
     selectWhere: vi.fn(),
     set,
-    transaction: vi
-      .fn()
-      .mockImplementation((fn: (tx: { update: typeof update }) => unknown) =>
-        fn({ update }),
-      ),
+    transaction: vi.fn().mockImplementation(
+      (
+        fn: (tx: {
+          select: () => {
+            from: () => { where: () => { for: typeof selectForUpdate } }
+          }
+          update: typeof update
+        }) => unknown,
+      ) =>
+        fn({
+          select: () => ({
+            from: () => ({
+              where: () => ({ for: selectForUpdate }),
+            }),
+          }),
+          update,
+        }),
+    ),
     update,
     updateTracking: vi
       .fn()
@@ -90,7 +106,11 @@ vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => {
 vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@chatbotx.io/worker-config")>()
-  return { ...original, chatQueue: { add: chatQueueAdd } }
+  return {
+    ...original,
+    chatQueue: { add: chatQueueAdd },
+    notificationQueue: { addBulk: chatQueueAdd },
+  }
 })
 vi.mock("../src/contact-inbox/service", () => ({
   contactInboxService: {
@@ -448,8 +468,11 @@ describe("conversationService.updateReadStatus", () => {
     vi.clearAllMocks()
   })
 
-  test("broadcasts the updated agent read timestamp", async () => {
+  test("routes the updated read timestamp to the assigned user and team", async () => {
     const agentLastReadAt = new Date("2026-09-23T12:00:00.000Z")
+    returning.mockResolvedValueOnce([
+      { assignedInboxTeamId: "team-1", assignedUserId: "user-1" },
+    ])
 
     await conversationService.updateReadStatus({
       workspaceId: "ws-1",
@@ -463,7 +486,7 @@ describe("conversationService.updateReadStatus", () => {
         conversationIds: ["conv-1"],
         changes: { agentLastReadAt: agentLastReadAt.toISOString() },
       },
-      route: { assignedTeamIds: [], assignedUserIds: [] },
+      route: { assignedTeamIds: ["team-1"], assignedUserIds: ["user-1"] },
     })
   })
 })
@@ -475,9 +498,15 @@ describe("conversationService.markReadByOutbound", () => {
     createMessageRepository.mockResolvedValue({ findLastByConversation })
   })
 
-  test("advances an older read timestamp, invalidates, and broadcasts a realtime update", async () => {
+  test("advances an older read timestamp, invalidates, and routes the realtime update to the assignee", async () => {
     const readAt = new Date("2026-09-23T12:00:00.000Z")
-    returning.mockResolvedValueOnce([{ id: "conv-1" }])
+    returning.mockResolvedValueOnce([
+      {
+        assignedInboxTeamId: "team-1",
+        assignedUserId: "user-1",
+        id: "conv-1",
+      },
+    ])
 
     await expect(
       conversationService.markReadByOutbound({
@@ -521,7 +550,7 @@ describe("conversationService.markReadByOutbound", () => {
         conversationIds: ["conv-1"],
         changes: { agentLastReadAt: readAt.toISOString() },
       },
-      route: { assignedTeamIds: [], assignedUserIds: [] },
+      route: { assignedTeamIds: ["team-1"], assignedUserIds: ["user-1"] },
     })
   })
 
@@ -758,7 +787,15 @@ describe("conversationService.updateAssignment", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     returning.mockResolvedValue([{ contactId: "contact-1", id: "conv-1" }])
+    selectForUpdate.mockResolvedValue([
+      {
+        assignedInboxTeamId: "team-before",
+        assignedUserId: "user-before",
+        id: "conv-1",
+      },
+    ])
   })
+
   test("passes silent through the worker assignment wrapper", async () => {
     findByWorkspaceIdAndUserId.mockResolvedValue({ id: "user-after" })
 
@@ -776,52 +813,44 @@ describe("conversationService.updateAssignment", () => {
     expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
-  test("suppresses assignment realtime events when silent", async () => {
+  test("invalidates and queues the assignment notification when silent", async () => {
     await conversationService.updateAssignment({
       workspaceId: "ws-1",
-      conversations: [
-        {
-          contactId: "contact-1",
-          id: "conv-1",
-          assignedInboxTeamId: "team-before",
-          assignedUserId: "user-before",
-        },
-      ],
+      conversations: [{ contactId: "contact-1", id: "conv-1" }],
       assignedInboxTeamId: "team-after",
       assignedUserId: "user-after",
       silent: true,
       triggerContext: { triggerType: "flow_action" },
     })
 
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "conversations",
+      "conversations:ws-1",
+      "conversations:conv-1",
+    ])
+    expect(chatQueueAdd).toHaveBeenCalledTimes(1)
     expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
-  test("routes an assignment event to both previous and next assignees", async () => {
+  test("routes an unassignment to the prior assignee and team from the locked database row", async () => {
     await conversationService.updateAssignment({
       workspaceId: "ws-1",
-      conversations: [
-        {
-          contactId: "contact-1",
-          id: "conv-1",
-          assignedInboxTeamId: "team-before",
-          assignedUserId: "user-before",
-        },
-      ],
-      assignedInboxTeamId: "team-after",
-      assignedUserId: "user-after",
+      conversations: [{ contactId: "contact-1", id: "conv-1" }],
+      assignedInboxTeamId: null,
+      assignedUserId: null,
       triggerContext: { triggerType: "flow_action" },
     })
 
     expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "conversationAssigned",
       data: {
-        assignedInboxTeamId: "team-after",
-        assignedUserId: "user-after",
+        assignedInboxTeamId: null,
+        assignedUserId: null,
         conversationIds: ["conv-1"],
       },
       route: {
-        assignedTeamIds: ["team-before", "team-after"],
-        assignedUserIds: ["user-before", "user-after"],
+        assignedTeamIds: ["team-before"],
+        assignedUserIds: ["user-before"],
       },
     })
   })

@@ -58,6 +58,26 @@ describe("reconcileChannelSendError", () => {
     })
   })
 
+  test("keeps the send reconciled when the realtime refresh cannot publish", async () => {
+    const publishFailure = new Error("Redis unavailable")
+    mocks.publishWorkspaceRealtimeEvent.mockRejectedValueOnce(publishFailure)
+
+    await expect(
+      reconcileChannelSendError({
+        error: channelError(138_017),
+        conversation,
+        contactInbox: whatsappInbox,
+        contentAttributes: permissionRequestAttrs,
+      }),
+    ).resolves.toBe(true)
+
+    expect(mocks.recordPermanentGrant).toHaveBeenCalledTimes(1)
+    expect(mocks.logger.warn).toHaveBeenCalledWith(
+      { err: publishFailure, conversationId: "conv-1" },
+      "WhatsApp call permission grant realtime publish failed",
+    )
+  })
+
   test("routes the broadcast to the conversation's assigned user and team", async () => {
     // Assigned-scope members receive this only when the event carries the
     // conversation's real assignment route.

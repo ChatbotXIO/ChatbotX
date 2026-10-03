@@ -1,11 +1,9 @@
 import { SignJWT } from "jose"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
-  CLOCK_TOLERANCE_SECONDS,
   extractBearerToken,
   REALTIME_MEMBER_REVOKED_TTL_SECONDS,
   REALTIME_TOKEN_PURPOSE,
-  REALTIME_TOKEN_TTL_SECONDS,
   signGuestConnectToken,
   signMemberConnectToken,
   signPresenceReportToken,
@@ -19,9 +17,7 @@ const SECRET = "a".repeat(32)
 const OTHER_SECRET = "b".repeat(32)
 
 it("keeps a revocation marker valid for every still-tolerated token", () => {
-  expect(REALTIME_MEMBER_REVOKED_TTL_SECONDS).toBeGreaterThanOrEqual(
-    REALTIME_TOKEN_TTL_SECONDS + CLOCK_TOLERANCE_SECONDS,
-  )
+  expect(REALTIME_MEMBER_REVOKED_TTL_SECONDS).toBe(65)
 })
 
 describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/verify mechanics)", () => {
@@ -111,21 +107,24 @@ describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/veri
 })
 
 describe("signMemberConnectToken / verifyMemberConnectToken", () => {
-  it("verifies a token minted for the same workspace room", async () => {
+  it("verifies a token minted for the same workspace room with millisecond mint time", async () => {
+    const mintedAt = Date.now() + 123
+    const dateNow = vi.spyOn(Date, "now").mockReturnValue(mintedAt)
     const token = await signMemberConnectToken(
       { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
       SECRET,
     )
+    const claims = await verifyMemberConnectToken(token, "ws_1", SECRET)
+    dateNow.mockRestore()
 
-    await expect(
-      verifyMemberConnectToken(token, "ws_1", SECRET),
-    ).resolves.toEqual({
+    expect(claims).toEqual({
       userId: "u_1",
       chatScope: "all",
       teamIds: [],
       iat: expect.any(Number),
-      iatMs: expect.any(Number),
+      iatMs: mintedAt,
     })
+    expect(claims.iatMs % 1000).toBe(mintedAt % 1000)
   })
 
   it("preserves assigned-team scope in a member token", async () => {
@@ -167,6 +166,24 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
     // silently trusted.
     const token = await new SignJWT({
       purpose: REALTIME_TOKEN_PURPOSE.memberConnect,
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setAudience("workspace:ws_1")
+      .setExpirationTime("60s")
+      .sign(new TextEncoder().encode(SECRET))
+
+    await expect(
+      verifyMemberConnectToken(token, "ws_1", SECRET),
+    ).rejects.toThrow()
+  })
+
+  it("rejects a member token missing the millisecond mint time", async () => {
+    const token = await new SignJWT({
+      chatScope: "all",
+      purpose: REALTIME_TOKEN_PURPOSE.memberConnect,
+      teamIds: [],
+      userId: "u_1",
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()

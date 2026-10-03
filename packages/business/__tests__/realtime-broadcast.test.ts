@@ -119,6 +119,69 @@ describe("realtime stream broadcast", () => {
     expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledTimes(1)
   })
 
+  test("splits workspace batches at 64 events", async () => {
+    const deliveries = Array.from({ length: 65 }, () =>
+      publishWorkspaceRealtimeEvent("workspace_1", typingEvent),
+    )
+
+    await flushAllPendingWorkspaceRealtimeEvents()
+    await expect(Promise.all(deliveries)).resolves.toHaveLength(65)
+
+    const batches = publishSerializedRealtimeStreamRecord.mock.calls.map(
+      ([, record]) =>
+        JSON.parse(record as string) as {
+          events: unknown[]
+        },
+    )
+    expect(batches.map((batch) => batch.events)).toHaveLength(2)
+    expect(batches.map((batch) => batch.events.length)).toEqual([64, 1])
+  })
+
+  test("splits two valid sub-limit events when their exact record exceeds 256 KiB", async () => {
+    const workspaceId = "workspace_1"
+    const messageEvent = {
+      data: { text: "x".repeat(140 * 1024) },
+      eventType: "messageCreated",
+      route: { assignedTeamIds: [], assignedUserIds: [] },
+    } as const
+    const first = publishWorkspaceRealtimeEvent(workspaceId, messageEvent)
+    const second = publishWorkspaceRealtimeEvent(workspaceId, messageEvent)
+
+    await flushAllPendingWorkspaceRealtimeEvents()
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      undefined,
+      undefined,
+    ])
+
+    const records = publishSerializedRealtimeStreamRecord.mock.calls.map(
+      ([, record]) => record as string,
+    )
+    expect(records).toHaveLength(2)
+    expect(
+      records.every((record) => Buffer.byteLength(record) <= 256 * 1024),
+    ).toBe(true)
+    expect(records.map((record) => JSON.parse(record).events)).toEqual([
+      [messageEvent],
+      [messageEvent],
+    ])
+  })
+
+  test("flushes immediate event types without waiting for the 25ms window", async () => {
+    const delivery = publishWorkspaceRealtimeEvent("workspace_1", {
+      data: {
+        assignedInboxTeamId: null,
+        assignedUserId: "user_1",
+        conversationIds: ["conversation_1"],
+      },
+      eventType: "conversationAssigned",
+      route: { assignedTeamIds: [], assignedUserIds: ["user_1"] },
+    })
+
+    await expect(delivery).resolves.toBeUndefined()
+
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledTimes(1)
+  })
+
   test("publishes directed member, revocation, and guest records directly", async () => {
     await expect(
       publishWorkspaceMemberRealtimeEvent(
@@ -140,6 +203,13 @@ describe("realtime stream broadcast", () => {
       ),
     ).resolves.toBeUndefined()
 
+    const revokeMarkerOrder =
+      markRealtimeMemberRevoked.mock.invocationCallOrder[0]
+    const revokeRecordOrder =
+      publishRealtimeStreamRecord.mock.invocationCallOrder[1]
+    expect(revokeMarkerOrder).toBeLessThan(
+      revokeRecordOrder ?? Number.POSITIVE_INFINITY,
+    )
     expect(publishRealtimeStreamRecord).toHaveBeenNthCalledWith(1, {
       event: typingEvent,
       kind: "member-send",
@@ -160,7 +230,7 @@ describe("realtime stream broadcast", () => {
     })
   })
 
-  test("retries a transient revoke-append failure before succeeding", async () => {
+  test("re-marks the revoked member before every retry of a failed revoke append", async () => {
     publishRealtimeStreamRecord
       .mockRejectedValueOnce(new Error("ECONNRESET"))
       .mockResolvedValueOnce(undefined)
@@ -173,6 +243,7 @@ describe("realtime stream broadcast", () => {
     await vi.runAllTimersAsync()
 
     await expect(revoke).resolves.toBeUndefined()
+    expect(markRealtimeMemberRevoked).toHaveBeenCalledTimes(2)
     expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(2)
   })
 
