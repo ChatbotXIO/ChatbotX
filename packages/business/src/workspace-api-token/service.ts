@@ -1,9 +1,8 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
-import {
-  normalizeWorkspaceApiTokenScopes,
-  type TokenHash,
-  type WorkspaceApiTokenPermission,
-  type WorkspaceApiTokenScope,
+import type {
+  TokenHash,
+  WorkspaceApiTokenPermission,
+  WorkspaceApiTokenScope,
 } from "@chatbotx.io/database/partials"
 import { workspaceApiTokenRepository } from "@chatbotx.io/database/repositories"
 import type {
@@ -99,15 +98,7 @@ class WorkspaceApiTokenService extends BaseService {
     if (!result) {
       return
     }
-    return {
-      ...result,
-      apiToken: {
-        ...result.apiToken,
-        scopes: normalizeWorkspaceApiTokenScopes(
-          result.apiToken.scopes ?? null,
-        ),
-      },
-    }
+    return result
   }
 
   async listTokens(props: {

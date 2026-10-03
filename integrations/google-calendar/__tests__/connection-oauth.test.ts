@@ -1,3 +1,4 @@
+import { AuthException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type * as CalendarsModule from "../src/apis/calendars"
 import type * as ClientModule from "../src/client"
@@ -132,5 +133,36 @@ describe("Google Calendar connection.exchangeCode", () => {
         email: "calendar@example.test",
       },
     })
+  })
+})
+
+describe("Google Calendar refreshAuth", () => {
+  test("classifies invalid_grant as terminal authentication failure", async () => {
+    const refreshAuth = integration.refreshAuth
+    if (!refreshAuth) {
+      throw new Error("Google Calendar integration must define refreshAuth")
+    }
+    const refreshAccessToken = vi.fn().mockRejectedValue(
+      Object.assign(new Error("invalid_grant"), {
+        response: { status: 400 },
+      }),
+    )
+    mocks.getClient.mockReturnValue({ refreshAccessToken })
+
+    await expect(
+      refreshAuth({
+        auth: {
+          authType: "oauth2",
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          redirectUrl: "https://app.example.test/connections/callback",
+          tokens: {
+            accessToken: "expired-access-token",
+            refreshToken: "refresh-token",
+          },
+          metadata: {},
+        },
+      }),
+    ).rejects.toBeInstanceOf(AuthException)
   })
 })

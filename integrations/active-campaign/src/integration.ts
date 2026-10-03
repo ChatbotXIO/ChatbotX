@@ -75,13 +75,11 @@ const activeCampaignFields = [
     name: "apiUrl",
     type: "url",
     required: true,
-    labelKey: "integrations.activeCampaign.fields.apiUrl",
   },
   {
     name: "apiKey",
     type: "secret",
     required: true,
-    labelKey: "integrations.activeCampaign.fields.apiKey",
   },
 ] as const
 

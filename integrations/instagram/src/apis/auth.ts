@@ -1,5 +1,5 @@
 import { INSTAGRAM_BUSINESS_SCOPES } from "../constants"
-import { InstagramException, rescue } from "../exception"
+import { rescue } from "../exception"
 import {
   instagramBusinessClient,
   instagramOAuthClient,
@@ -103,48 +103,40 @@ export async function getInstagramAccount(
 ): Promise<InstagramAccount | null> {
   const endpoint = "me"
 
-  try {
-    const res = await rescue(endpoint, async () =>
-      instagramBusinessClient.get<{
-        id: string
-        username: string
-        user_id: string
-        name?: string
-        profile_picture_url?: string
-        account_type?: string
-      }>(endpoint, {
-        searchParams: {
-          fields: "id,user_id,username,name,profile_picture_url,account_type",
-          access_token: userAccessToken,
-        },
-      }),
+  const res = await rescue(endpoint, async () =>
+    instagramBusinessClient.get<{
+      id: string
+      username: string
+      user_id: string
+      name?: string
+      profile_picture_url?: string
+      account_type?: string
+    }>(endpoint, {
+      searchParams: {
+        fields: "id,user_id,username,name,profile_picture_url,account_type",
+        access_token: userAccessToken,
+      },
+    }),
+  )
+
+  if (
+    !VALID_ACCOUNT_TYPES.includes(
+      res.account_type as (typeof VALID_ACCOUNT_TYPES)[number],
     )
+  ) {
+    logger.warn(
+      { account_type: res.account_type },
+      `Instagram account is not one of the supported account types: ${VALID_ACCOUNT_TYPES.join(", ")}`,
+    )
+    return null
+  }
 
-    if (
-      !VALID_ACCOUNT_TYPES.includes(
-        res.account_type as (typeof VALID_ACCOUNT_TYPES)[number],
-      )
-    ) {
-      logger.warn(
-        { account_type: res.account_type },
-        `Instagram account is not one of the supported account types: ${VALID_ACCOUNT_TYPES.join(", ")}`,
-      )
-      return null
-    }
-
-    return {
-      id: res.id,
-      name: res.name ?? res.username,
-      username: res.username,
-      profile_picture_url: res.profile_picture_url,
-      userId: res.user_id,
-      accessToken: userAccessToken,
-    }
-  } catch (error) {
-    if (error instanceof InstagramException) {
-      logger.warn(error, "Failed to fetch Instagram account during connect")
-      return null
-    }
-    throw error
+  return {
+    id: res.id,
+    name: res.name ?? res.username,
+    username: res.username,
+    profile_picture_url: res.profile_picture_url,
+    userId: res.user_id,
+    accessToken: userAccessToken,
   }
 }

@@ -44,7 +44,6 @@ const sendGridFields = [
     name: "apiKey",
     type: "secret",
     required: true,
-    labelKey: "integrations.sendGrid.fields.apiKey",
   },
 ] as const
 

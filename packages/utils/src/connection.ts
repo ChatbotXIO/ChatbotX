@@ -85,7 +85,7 @@ export const connectionConfigFieldSchema = z.object({
   name: z.string(),
   type: z.enum(["string", "secret", "number", "boolean", "enum", "url"]),
   required: z.boolean(),
-  labelKey: z.string(),
+  labelKey: z.string().optional(),
   enumValues: z.array(z.string()).optional(),
   description: z.string().optional(),
 })

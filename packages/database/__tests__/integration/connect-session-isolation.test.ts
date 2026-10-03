@@ -360,6 +360,10 @@ describe.skipIf(!databaseUrl)(
     test("releaseTarget preserves a claim outside its workspace, state, and expiry guard", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const { workspaceId: otherWorkspaceId } = await seedWorkspace(
+          tx,
+          "other",
+        )
         const session = await seedSession(tx, {
           workspaceId,
           actorUserId: ownerId,
@@ -371,7 +375,7 @@ describe.skipIf(!databaseUrl)(
         )
 
         await connectSessionRepository.releaseTarget(
-          { id: session.id, workspaceId: "other-workspace", targetId: "t1" },
+          { id: session.id, workspaceId: otherWorkspaceId, targetId: "t1" },
           tx,
         )
         await tx
@@ -656,7 +660,11 @@ describe.skipIf(!databaseUrl)(
           {
             id: session.id,
             statuses: ["pending", "authorized", "awaiting_selection"],
-            values: { status: "expired" },
+            values: {
+              status: "expired",
+              consumedAt: new Date(),
+              encryptedAuth: null,
+            },
           },
           tx,
         )
@@ -698,6 +706,74 @@ describe.skipIf(!databaseUrl)(
           .from(schema.connectSessionModel)
           .where(eq(schema.connectSessionModel.id, session.id))
         expect(row.step).toBe("select")
+      }))
+
+    test("enforces terminal cleanup and active reconnect target invariants", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "invariants")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-invariants",
+        })
+
+        await expect(
+          tx.transaction(
+            async (nestedTx) =>
+              await nestedTx
+                .update(schema.connectSessionModel)
+                .set({ status: "completed" })
+                .where(eq(schema.connectSessionModel.id, session.id)),
+          ),
+        ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+        await expect(
+          tx.transaction(
+            async (nestedTx) =>
+              await nestedTx
+                .update(schema.connectSessionModel)
+                .set({
+                  status: "completed",
+                  consumedAt: new Date(),
+                  encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" },
+                })
+                .where(eq(schema.connectSessionModel.id, session.id)),
+          ),
+        ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+        await expect(
+          tx.transaction(
+            async (nestedTx) =>
+              await nestedTx
+                .update(schema.connectSessionModel)
+                .set({ errorCode: "provider_error" })
+                .where(eq(schema.connectSessionModel.id, session.id)),
+          ),
+        ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+        await expect(
+          tx.transaction(
+            async (nestedTx) =>
+              await nestedTx
+                .update(schema.connectSessionModel)
+                .set({
+                  status: "completed",
+                  consumedAt: new Date(),
+                  errorCode: "provider_error",
+                })
+                .where(eq(schema.connectSessionModel.id, session.id)),
+          ),
+        ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+        await expect(
+          tx.transaction(
+            async (nestedTx) =>
+              await nestedTx
+                .update(schema.connectSessionModel)
+                .set({ purpose: "reconnect" })
+                .where(eq(schema.connectSessionModel.id, session.id)),
+          ),
+        ).rejects.toMatchObject({ cause: { code: "23514" } })
       }))
 
     test("releaseTarget lets a retry claim the same target again after a failed attempt (claim -> release -> claim)", () =>

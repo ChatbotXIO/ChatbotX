@@ -30,7 +30,6 @@ const dripFields = [
     name: "apiToken",
     type: "secret",
     required: true,
-    labelKey: "integrations.drip.fields.apiToken",
   },
 ] as const
 

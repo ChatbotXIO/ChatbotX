@@ -49,7 +49,7 @@ export const connectionModel = pgTable(
       onUpdate: "cascade",
     }),
     integrationId: bigintAsString().references(() => integrationModel.id, {
-      onDelete: "set null",
+      onDelete: "cascade",
       onUpdate: "cascade",
     }),
     // pageId / phoneNumberId / igId / oaId / botId / openId / "workspace" for singletons.
@@ -86,14 +86,22 @@ export const connectionModel = pgTable(
       "btree",
       table.integrationId.asc().nullsLast(),
     ),
+    // `sub_connection` is reserved (no reader/writer uses it yet, per
+    // `packages/utils/src/connection.ts`) — it still must land in one of the
+    // two defined shapes, never a half-channel/half-integration mix the two
+    // named kinds already forbid.
     check(
       "Connection_kind_relation_check",
       sql`(
         (${table.kind} = 'channel' AND ${table.inboxId} IS NOT NULL AND ${table.channel} IS NOT NULL)
         OR
-        (${table.kind} = 'integration' AND ${table.inboxId} IS NULL AND ${table.channel} IS NULL)
+        (${table.kind} = 'integration' AND ${table.inboxId} IS NULL AND ${table.channel} IS NULL AND ${table.integrationId} IS NOT NULL)
         OR
-        ${table.kind} = 'sub_connection'
+        (${table.kind} = 'sub_connection' AND (
+          (${table.inboxId} IS NOT NULL AND ${table.channel} IS NOT NULL AND ${table.integrationId} IS NULL)
+          OR
+          (${table.inboxId} IS NULL AND ${table.channel} IS NULL AND ${table.integrationId} IS NOT NULL)
+        ))
       )`,
     ),
     check(
@@ -120,6 +128,16 @@ export const connectionModel = pgTable(
         connectionStatusReasons.options.map((reason) => sql`${reason}`),
         sql`, `,
       )})`,
+    ),
+    // Status metadata describes the current state, not a past one. Every
+    // non-connected state has a reason; only a disconnect carries a timestamp.
+    check(
+      "Connection_status_reason_check",
+      sql`(${table.status} = 'connected') = (${table.statusReason} IS NULL)`,
+    ),
+    check(
+      "Connection_disconnectedAt_check",
+      sql`(${table.status} = 'disconnected') = (${table.disconnectedAt} IS NOT NULL)`,
     ),
   ],
 )

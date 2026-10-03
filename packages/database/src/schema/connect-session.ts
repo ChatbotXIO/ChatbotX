@@ -127,5 +127,31 @@ export const connectSessionModel = pgTable(
         sql`, `,
       )})`,
     ),
+    check(
+      "ConnectSession_errorCode_terminal_failure_check",
+      sql`${table.errorCode} IS NULL OR ${table.status} IN ('failed', 'expired', 'cancelled')`,
+    ),
+    // Purge keys off `consumedAt`; a terminal row missing it would keep its
+    // ciphertext forever. Active rows must not carry it either, so a
+    // terminal-only transition (`expireDue`, `appendResults`) can't be
+    // skipped by a partial update.
+    check(
+      "ConnectSession_terminal_consumedAt_check",
+      sql`(${table.status} IN ('completed', 'failed', 'expired', 'cancelled')) = (${table.consumedAt} IS NOT NULL)`,
+    ),
+    check(
+      "ConnectSession_terminal_clears_encryptedAuth_check",
+      sql`${table.status} NOT IN ('completed', 'failed', 'expired', 'cancelled') OR ${table.encryptedAuth} IS NULL`,
+    ),
+    // `targetConnectionId` is nullable only so a terminal (historical) row can
+    // survive its target `Connection` being deleted (`onDelete: "set null"`
+    // above). An active reconnect losing its target mid-flow is a bug, not a
+    // valid state — this CHECK makes that `SET NULL` fail instead of
+    // silently orphaning the flow, so deleting a `Connection` with an active
+    // reconnect session still pointed at it is rejected by the database.
+    check(
+      "ConnectSession_active_reconnect_requires_target_check",
+      sql`${table.purpose} <> 'reconnect' OR ${table.status} IN ('completed', 'failed', 'expired', 'cancelled') OR ${table.targetConnectionId} IS NOT NULL`,
+    ),
   ],
 )

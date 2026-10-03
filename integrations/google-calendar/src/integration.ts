@@ -165,6 +165,14 @@ const config: IntegrationDefinition<
         },
       }
     } catch (error) {
+      if (error instanceof AuthException) {
+        throw error
+      }
+      if (isRevokedTokenError(error)) {
+        throw new AuthException(
+          "Google Calendar refresh token was revoked",
+        ).setOriginError(error)
+      }
       return handleError(error, "refreshAuth")
     }
   },

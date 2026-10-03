@@ -41,7 +41,6 @@ const klaviyoFields = [
     name: "apiKey",
     type: "secret",
     required: true,
-    labelKey: "integrations.klaviyo.fields.apiKey",
   },
 ] as const
 

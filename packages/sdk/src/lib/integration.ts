@@ -8,6 +8,7 @@ import {
   SdkException,
 } from "./exception"
 import type { SendFlowStepData } from "./flow-step-data"
+import { sdkLogger } from "./logger"
 import type {
   BaseConfig,
   BulkThreadControlAction,
@@ -737,8 +738,11 @@ export class Integration<
       if (ctx.authStore) {
         try {
           baseAuth = await ctx.authStore.load()
-        } catch {
-          // Fall back to the in-memory auth if reload fails.
+        } catch (error) {
+          sdkLogger.warn(
+            { err: error, integration: this.name },
+            "Failed to reload integration auth; using in-memory auth",
+          )
         }
       }
 
@@ -775,9 +779,9 @@ export class Integration<
 
   /**
    * Call the per-integration `refreshAuth` with bounded exponential backoff.
-   * On terminal failure (refresh-token revoked, all retries exhausted) the
-   * integration is marked offline via `ctx.authStore.markOffline` and an
-   * {@link AuthRefreshException} is thrown.
+   * A terminal failure (revoked refresh token, `invalid_grant`, and similar
+   * `AuthException`s) marks the integration offline. Transient failures throw
+   * after retries but retain the connection for the next scheduled refresh.
    */
   private async refreshWithRetry(
     refreshAuth: NonNullable<T["refreshAuth"]>,
@@ -785,7 +789,9 @@ export class Integration<
     ctx: Context<AuthValue>,
   ): Promise<AuthValue> {
     let lastError: unknown
+    let attempts = 0
     for (let attempt = 1; attempt <= AUTH_REFRESH_MAX_ATTEMPTS; attempt++) {
+      attempts = attempt
       try {
         return await refreshAuth({ auth: baseAuth })
       } catch (err) {
@@ -801,16 +807,19 @@ export class Integration<
       }
     }
 
-    if (ctx.authStore?.markOffline) {
+    if (lastError instanceof AuthException && ctx.authStore?.markOffline) {
       try {
         await ctx.authStore.markOffline(lastError)
-      } catch {
-        // Don't shadow the underlying refresh failure with a markOffline failure.
+      } catch (error) {
+        sdkLogger.error(
+          { err: error, integration: this.name },
+          "Failed to mark integration auth offline",
+        )
       }
     }
 
     throw new AuthRefreshException(
-      `Integration "${this.name}" auth refresh failed after ${AUTH_REFRESH_MAX_ATTEMPTS} attempt(s); marked offline.`,
+      `Integration "${this.name}" auth refresh failed after ${attempts} attempt(s).`,
       lastError,
     )
   }

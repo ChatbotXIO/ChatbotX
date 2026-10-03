@@ -31,7 +31,6 @@ const mailchimpFields = [
     name: "apiKey",
     type: "secret",
     required: true,
-    labelKey: "integrations.mailchimp.fields.apiKey",
   },
 ] as const
 

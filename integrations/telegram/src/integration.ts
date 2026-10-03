@@ -53,7 +53,6 @@ const config: IntegrationDefinition<
         name: "secretText",
         type: "secret",
         required: true,
-        labelKey: "integrations.telegram.fields.secretText",
       },
     ],
     describe: (auth) => {

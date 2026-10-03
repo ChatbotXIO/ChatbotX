@@ -22,7 +22,6 @@ const moosendFields = [
     name: "apiKey",
     type: "secret",
     required: true,
-    labelKey: "integrations.moosend.fields.apiKey",
   },
 ] as const
 

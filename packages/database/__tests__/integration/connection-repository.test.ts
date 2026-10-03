@@ -55,8 +55,21 @@ const seedIntegrationConnection = async (
     displayName?: string
     status?: "connected" | "disconnected" | "needs_reauth"
     integrationId?: string
+    statusReason?: "manual"
+    disconnectedAt?: Date
   },
 ) => {
+  const integrationId =
+    input.integrationId ??
+    (
+      await tx
+        .insert(schema.integrationModel)
+        .values({
+          workspaceId: input.workspaceId,
+          integrationType: "googleSheets",
+        })
+        .returning({ id: schema.integrationModel.id })
+    )[0].id
   const [connection] = await tx
     .insert(schema.connectionModel)
     .values({
@@ -66,7 +79,9 @@ const seedIntegrationConnection = async (
       sourceId: input.sourceId,
       displayName: input.displayName ?? input.sourceId,
       status: input.status ?? "connected",
-      integrationId: input.integrationId,
+      statusReason: input.statusReason,
+      disconnectedAt: input.disconnectedAt,
+      integrationId,
     })
     .returning()
   return connection
@@ -188,6 +203,8 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
         workspaceId: workspaceB,
         sourceId: "account-1",
         status: "disconnected",
+        statusReason: "manual",
+        disconnectedAt: new Date(),
       })
 
       await expect(
@@ -296,6 +313,145 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
           })
         }),
       )
+    }))
+
+  test("rejects connection rows that violate the kind or connected-state invariants", () =>
+    run(async (tx) => {
+      const { workspaceId } = await seedWorkspace(tx, "invariants")
+
+      await expect(
+        tx.transaction(
+          async (nestedTx) =>
+            await nestedTx
+              .insert(schema.connectionModel)
+              .values({
+                workspaceId,
+                provider: "googleSheets",
+                kind: "integration",
+                sourceId: "missing-integration",
+                displayName: "Missing integration",
+              })
+              .returning(),
+        ),
+      ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+      const [integration] = await tx
+        .insert(schema.integrationModel)
+        .values({ workspaceId, integrationType: "googleSheets" })
+        .returning({ id: schema.integrationModel.id })
+
+      await expect(
+        tx.transaction(
+          async (nestedTx) =>
+            await nestedTx
+              .insert(schema.connectionModel)
+              .values({
+                workspaceId,
+                provider: "googleSheets",
+                kind: "sub_connection",
+                sourceId: "missing-sub-connection-shape",
+                displayName: "Missing sub-connection shape",
+              })
+              .returning(),
+        ),
+      ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+      await expect(
+        tx.transaction(
+          async (nestedTx) =>
+            await nestedTx
+              .insert(schema.connectionModel)
+              .values({
+                workspaceId,
+                provider: "googleSheets",
+                kind: "integration",
+                integrationId: integration.id,
+                sourceId: "stale-connected-metadata",
+                displayName: "Stale metadata",
+                statusReason: "manual",
+              })
+              .returning(),
+        ),
+      ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+      await expect(
+        tx.transaction(
+          async (nestedTx) =>
+            await nestedTx
+              .insert(schema.connectionModel)
+              .values({
+                workspaceId,
+                provider: "googleSheets",
+                kind: "integration",
+                integrationId: integration.id,
+                sourceId: "missing-inactive-reason",
+                displayName: "Missing inactive reason",
+                status: "needs_reauth",
+              })
+              .returning(),
+        ),
+      ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+      await expect(
+        tx.transaction(
+          async (nestedTx) =>
+            await nestedTx
+              .insert(schema.connectionModel)
+              .values({
+                workspaceId,
+                provider: "googleSheets",
+                kind: "integration",
+                integrationId: integration.id,
+                sourceId: "missing-disconnect-time",
+                displayName: "Missing disconnect time",
+                status: "disconnected",
+                statusReason: "manual",
+              })
+              .returning(),
+        ),
+      ).rejects.toMatchObject({ cause: { code: "23514" } })
+
+      await expect(
+        tx.transaction(
+          async (nestedTx) =>
+            await nestedTx
+              .insert(schema.connectionModel)
+              .values({
+                workspaceId,
+                provider: "googleSheets",
+                kind: "integration",
+                integrationId: integration.id,
+                sourceId: "stale-disconnect-time",
+                displayName: "Stale disconnect time",
+                status: "needs_reauth",
+                statusReason: "manual",
+                disconnectedAt: new Date(),
+              })
+              .returning(),
+        ),
+      ).rejects.toMatchObject({ cause: { code: "23514" } })
+    }))
+
+  test("cascades deleting an integration to its Connection row", () =>
+    run(async (tx) => {
+      const { workspaceId } = await seedWorkspace(tx, "integration-cascade")
+      const [integration] = await tx
+        .insert(schema.integrationModel)
+        .values({ workspaceId, integrationType: "googleSheets" })
+        .returning({ id: schema.integrationModel.id })
+      const connection = await seedIntegrationConnection(tx, {
+        workspaceId,
+        sourceId: "integration-cascade",
+        integrationId: integration.id,
+      })
+
+      await tx
+        .delete(schema.integrationModel)
+        .where(eq(schema.integrationModel.id, integration.id))
+
+      await expect(
+        connectionRepository.findById({ id: connection.id }, tx),
+      ).resolves.toBeUndefined()
     }))
 
   test("findByIdForUpdate blocks a concurrent writer until its transaction commits", async () => {

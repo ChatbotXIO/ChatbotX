@@ -42631,7 +42631,7 @@
         "id"
       ],
       "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
+      "onDelete": "CASCADE",
       "name": "Connection_integrationId_Integration_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -49076,7 +49076,35 @@
       "table": "ConnectSession"
     },
     {
-      "value": "(\n        (\"kind\" = 'channel' AND \"inboxId\" IS NOT NULL AND \"channel\" IS NOT NULL)\n        OR\n        (\"kind\" = 'integration' AND \"inboxId\" IS NULL AND \"channel\" IS NULL)\n        OR\n        \"kind\" = 'sub_connection'\n      )",
+      "value": "\"errorCode\" IS NULL OR \"status\" IN ('failed', 'expired', 'cancelled')",
+      "name": "ConnectSession_errorCode_terminal_failure_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ConnectSession"
+    },
+    {
+      "value": "(\"status\" IN ('completed', 'failed', 'expired', 'cancelled')) = (\"consumedAt\" IS NOT NULL)",
+      "name": "ConnectSession_terminal_consumedAt_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ConnectSession"
+    },
+    {
+      "value": "\"status\" NOT IN ('completed', 'failed', 'expired', 'cancelled') OR \"encryptedAuth\" IS NULL",
+      "name": "ConnectSession_terminal_clears_encryptedAuth_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ConnectSession"
+    },
+    {
+      "value": "\"purpose\" <> 'reconnect' OR \"status\" IN ('completed', 'failed', 'expired', 'cancelled') OR \"targetConnectionId\" IS NOT NULL",
+      "name": "ConnectSession_active_reconnect_requires_target_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ConnectSession"
+    },
+    {
+      "value": "(\n        (\"kind\" = 'channel' AND \"inboxId\" IS NOT NULL AND \"channel\" IS NOT NULL)\n        OR\n        (\"kind\" = 'integration' AND \"inboxId\" IS NULL AND \"channel\" IS NULL AND \"integrationId\" IS NOT NULL)\n        OR\n        (\"kind\" = 'sub_connection' AND (\n          (\"inboxId\" IS NOT NULL AND \"channel\" IS NOT NULL AND \"integrationId\" IS NULL)\n          OR\n          (\"inboxId\" IS NULL AND \"channel\" IS NULL AND \"integrationId\" IS NOT NULL)\n        ))\n      )",
       "name": "Connection_kind_relation_check",
       "entityType": "checks",
       "schema": "public",
@@ -49106,6 +49134,20 @@
     {
       "value": "\"statusReason\" IN ('manual', 'workspace_purge', 'trial_expired', 'tenant_suspended', 'token_revoked', 'provider_revoked', 'refresh_failed', 'verify_failed', 'quota_exceeded', 'orphaned_webhook')",
       "name": "Connection_statusReason_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "Connection"
+    },
+    {
+      "value": "(\"status\" = 'connected') = (\"statusReason\" IS NULL)",
+      "name": "Connection_status_reason_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "Connection"
+    },
+    {
+      "value": "(\"status\" = 'disconnected') = (\"disconnectedAt\" IS NOT NULL)",
+      "name": "Connection_disconnectedAt_check",
       "entityType": "checks",
       "schema": "public",
       "table": "Connection"

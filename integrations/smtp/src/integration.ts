@@ -14,7 +14,6 @@ const smtpFields: readonly ConnectionConfigField[] = [
     name: "provider",
     type: "enum",
     required: true,
-    labelKey: "integrations.smtp.fields.provider",
     enumValues: [
       "google",
       "outlook",
@@ -32,25 +31,21 @@ const smtpFields: readonly ConnectionConfigField[] = [
     name: "host",
     type: "string",
     required: true,
-    labelKey: "integrations.smtp.fields.host",
   },
   {
     name: "port",
     type: "number",
     required: true,
-    labelKey: "integrations.smtp.fields.port",
   },
   {
     name: "username",
     type: "string",
     required: true,
-    labelKey: "integrations.smtp.fields.username",
   },
   {
     name: "password",
     type: "secret",
     required: true,
-    labelKey: "integrations.smtp.fields.password",
   },
 ]
 

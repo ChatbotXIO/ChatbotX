@@ -70,11 +70,39 @@ export const connectSessionRepository = {
     return row
   },
 
-  /** Updates a session only while it is in one of the requested states. */
+  /**
+   * Updates a session only while it is in one of the requested states.
+   *
+   * A transition into a terminal status must supply `consumedAt` and clear
+   * `encryptedAuth` in the same call. This keeps the terminal-state check,
+   * retention sweep, and ciphertext lifecycle atomic. The narrow active-state
+   * shape avoids making identity, actor, and expiry fields mutable here.
+   */
   async updateWhereStatusIn(
     input: {
       id: string
-      values: Partial<typeof connectSessionModel.$inferInsert>
+      values:
+        | (Partial<
+            Pick<
+              typeof connectSessionModel.$inferInsert,
+              "encryptedAuth" | "nextAction" | "status" | "step"
+            >
+          > & {
+            status?: Exclude<
+              ConnectSessionStatus,
+              "completed" | "failed" | "expired" | "cancelled"
+            >
+          })
+        | (Partial<
+            Pick<
+              typeof connectSessionModel.$inferInsert,
+              "errorCode" | "nextAction" | "step"
+            >
+          > & {
+            status: "completed" | "failed" | "expired" | "cancelled"
+            consumedAt: Date
+            encryptedAuth: null
+          })
       statuses: ConnectSessionStatus[]
       requireUnexpired?: boolean
     },

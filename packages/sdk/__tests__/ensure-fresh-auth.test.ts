@@ -168,7 +168,7 @@ describe("Integration.ensureFreshAuth", () => {
 
     await expect(
       integration.ensureFreshAuth(ctx, { force: true }),
-    ).rejects.toBeInstanceOf(AuthRefreshException)
+    ).rejects.toThrow("after 1 attempt(s)")
     expect(markOffline).toHaveBeenCalledTimes(1)
   })
   test("locks then reloads auth before refreshing to avoid a stale duplicate refresh", async () => {
@@ -228,7 +228,7 @@ describe("Integration.ensureFreshAuth", () => {
     }
   })
 
-  test("marks auth offline after exhausting transient refresh retries", async () => {
+  test("does not mark auth offline after exhausting transient refresh retries", async () => {
     vi.useFakeTimers()
     try {
       const refreshAuth = vi
@@ -246,7 +246,7 @@ describe("Integration.ensureFreshAuth", () => {
 
       await expectedFailure
       expect(refreshAuth).toHaveBeenCalledTimes(3)
-      expect(markOffline).toHaveBeenCalledTimes(1)
+      expect(markOffline).not.toHaveBeenCalled()
     } finally {
       vi.useRealTimers()
     }

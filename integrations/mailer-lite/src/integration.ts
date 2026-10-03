@@ -45,7 +45,6 @@ const mailerLiteFields = [
     name: "apiKey",
     type: "secret",
     required: true,
-    labelKey: "integrations.mailerLite.fields.apiKey",
   },
 ] as const
 

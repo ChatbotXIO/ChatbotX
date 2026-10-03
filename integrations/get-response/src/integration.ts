@@ -47,7 +47,6 @@ const getResponseFields = [
     name: "apiKey",
     type: "secret",
     required: true,
-    labelKey: "integrations.getResponse.fields.apiKey",
   },
 ] as const
 
