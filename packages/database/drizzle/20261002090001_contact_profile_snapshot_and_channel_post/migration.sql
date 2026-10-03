@@ -8,7 +8,6 @@ ALTER TABLE "ContactInbox" ADD COLUMN "profileSnapshotState" "contactInboxProfil
 ALTER TABLE "ContactInbox" ADD COLUMN "profileSnapshotAttempts" integer;--> statement-breakpoint
 ALTER TABLE "ContactInbox" ADD COLUMN "profileSnapshotNextAttemptAt" timestamp(6) with time zone;--> statement-breakpoint
 ALTER TABLE "Workspace" ADD COLUMN "purgeStartedAt" timestamp(6) with time zone;--> statement-breakpoint
-CREATE TYPE "channelPostIntegrationType" AS ENUM('messenger', 'instagram', 'instagramFacebook');--> statement-breakpoint
 CREATE TABLE "ContactInboxPost" (
 	"workspaceId" bigint NOT NULL,
 	"contactInboxId" bigint NOT NULL,
@@ -34,7 +33,7 @@ CREATE TABLE "ChannelPost" (
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"workspaceId" bigint NOT NULL,
 	"inboxId" bigint NOT NULL,
-	"integrationType" "channelPostIntegrationType" NOT NULL,
+	"channel" text NOT NULL,
 	"integrationId" bigint NOT NULL,
 	"sourceAccountId" text NOT NULL,
 	"externalPostId" text NOT NULL,
@@ -48,7 +47,7 @@ CREATE TABLE "ChannelPost" (
 );
 --> statement-breakpoint
 CREATE INDEX "ContactInboxPost_workspaceId_postId_idx" ON "ContactInboxPost" ("workspaceId","postId");--> statement-breakpoint
-CREATE UNIQUE INDEX "ChannelPost_workspaceId_externalPostId_key" ON "ChannelPost" ("workspaceId","externalPostId");--> statement-breakpoint
+CREATE UNIQUE INDEX "ChannelPost_workspaceId_channel_externalPostId_key" ON "ChannelPost" ("workspaceId","channel","externalPostId");--> statement-breakpoint
 CREATE INDEX "ChannelPost_workspaceId_sortAt_id_idx" ON "ChannelPost" ("workspaceId",COALESCE("publishedAt", "createdAt") DESC,"id" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "ChannelPost_inboxId_idx" ON "ChannelPost" ("inboxId");--> statement-breakpoint
 ALTER TABLE "ChannelPost" ADD CONSTRAINT "ChannelPost_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint

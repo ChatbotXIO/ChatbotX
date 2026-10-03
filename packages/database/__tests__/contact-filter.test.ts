@@ -2404,7 +2404,11 @@ describe("applyContactFilter — Instagram snapshots and commented posts", () =>
         { field: "commentedOnPost", operator: "eq", value: ["4", "4", "9"] },
       ],
     }
-    expect(applyContactFilter(criteria)).toEqual({})
+    // No workspace means the condition cannot be scoped: it must match nobody
+    // rather than be dropped.
+    expect(renderContactWhere(applyContactFilter(criteria)).sql).toContain(
+      "FALSE",
+    )
     const query = renderContactWhere(applyContactFilter(criteria, "42"))
     expect(query.sql).toContain('JOIN "ContactInboxPost" p')
     expect(query.sql).toContain('p."workspaceId" = $1::bigint')
@@ -2418,7 +2422,7 @@ describe("applyContactFilter — Instagram snapshots and commented posts", () =>
       ["x"],
       ["9223372036854775808"],
     ]) {
-      expect(
+      const query = renderContactWhere(
         applyContactFilter(
           {
             operator: "and",
@@ -2426,7 +2430,9 @@ describe("applyContactFilter — Instagram snapshots and commented posts", () =>
           },
           "42",
         ),
-      ).toEqual({})
+      )
+      expect(query.sql).toContain("FALSE")
+      expect(query.sql).not.toContain("ContactInboxPost")
     }
     const maximum = renderContactWhere(
       applyContactFilter(
@@ -2459,20 +2465,61 @@ describe("applyContactFilter — Instagram snapshots and commented posts", () =>
       ).params,
     ).toHaveLength(101)
     expect(
+      renderContactWhere(
+        applyContactFilter(
+          {
+            operator: "and",
+            conditions: [
+              {
+                field: "commentedOnPost",
+                operator: "eq",
+                value: [...hundred, "101"],
+              },
+            ],
+          },
+          "42",
+        ),
+      ).sql,
+    ).toContain("FALSE")
+  })
+
+  test("a malformed commentedOnPost condition never widens a mixed AND audience", () => {
+    const query = renderContactWhere(
       applyContactFilter(
         {
           operator: "and",
           conditions: [
             {
-              field: "commentedOnPost",
+              field: "followsBusinessOnInstagram",
               operator: "eq",
-              value: [...hundred, "101"],
+              value: "true",
             },
+            { field: "commentedOnPost", operator: "eq", value: ["not-an-id"] },
           ],
         },
         "42",
       ),
-    ).toEqual({})
+    )
+
+    // Both conditions survive: the valid one and a match-nobody guard.
+    expect(query.sql).toContain('"followsBusiness"')
+    expect(query.sql).toContain("FALSE")
+  })
+
+  test("an unsupported commentedOnPost operator fails closed", () => {
+    const query = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            { field: "commentedOnPost", operator: "contains", value: ["4"] },
+          ],
+        },
+        "42",
+      ),
+    )
+
+    expect(query.sql).toContain("FALSE")
   })
 
   test("renders ne and isEmpty as NOT EXISTS without reading an empty value", () => {

@@ -178,7 +178,7 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
         externalPostId,
         inboxId: inbox.id,
         integrationId: "1",
-        integrationType: "instagram",
+        channel: "instagram",
         sourceAccountId: `account-${suffix}`,
         workspaceId: workspace.id,
       })
@@ -286,11 +286,53 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
     }
   })
 
+  test("rejects a comment whose post belongs to another channel", async () => {
+    const db = createDatabase(client)
+    const [otherChannelPost] = await db
+      .insert(schema.channelPostModel)
+      .values({
+        channel: "messenger",
+        externalPostId: fixture.externalPostId,
+        inboxId: fixture.inboxId,
+        integrationId: "1",
+        sourceAccountId: "other-account",
+        workspaceId: fixture.workspaceId,
+      })
+      .returning({ id: schema.channelPostModel.id })
+
+    // Same bare external id on another channel is a distinct post (the unique
+    // key includes the channel) and cannot be linked to an Instagram contact.
+    expect(otherChannelPost.id).not.toBe(fixture.postId)
+    await expect(
+      contactInboxPostRepository.insertIfParentExists(
+        {
+          commentedAt: new Date(),
+          contactInboxId: fixture.contactInboxId,
+          inboxId: fixture.inboxId,
+          postId: otherChannelPost.id,
+          workspaceId: fixture.workspaceId,
+        },
+        db,
+      ),
+    ).resolves.toBe(false)
+    await expect(
+      contactInboxPostRepository.insertIfParentExists(
+        {
+          commentedAt: new Date(),
+          contactInboxId: fixture.contactInboxId,
+          inboxId: fixture.inboxId,
+          postId: fixture.postId,
+          workspaceId: fixture.workspaceId,
+        },
+        db,
+      ),
+    ).resolves.toBe(true)
+  })
+
   test("prunes list, count, negative, empty, cleanup, and outer batch-delete paths", async () => {
     const db = createDatabase(client)
     await contactInboxPostRepository.insertIfParentExists(
       {
-        channel: "instagram",
         commentedAt: new Date(),
         contactInboxId: fixture.contactInboxId,
         inboxId: fixture.inboxId,
@@ -438,7 +480,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
     await expect(
       contactInboxPostRepository.insertIfParentExists(
         {
-          channel: "instagram",
           commentedAt: new Date(),
           contactInboxId: fixture.contactInboxId,
           inboxId: fixture.inboxId,
@@ -451,7 +492,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
     await expect(
       contactInboxPostRepository.insertIfParentExists(
         {
-          channel: "instagram",
           commentedAt: new Date(),
           contactInboxId: fixture.contactInboxId,
           inboxId: fixture.inboxId,
@@ -464,10 +504,10 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
 
     await channelPostRepository.updateIntegrationIfChanged(
       {
+        channel: "instagram",
         externalPostId: fixture.externalPostId,
         inboxId: fixture.inboxId,
         integrationId: "2",
-        integrationType: "instagramFacebook",
         sourceAccountId: "reconnected-account",
         workspaceId: fixture.workspaceId,
       },
@@ -509,7 +549,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
     })
     await contactInboxPostRepository.insertIfParentExists(
       {
-        channel: "instagram",
         commentedAt: new Date(),
         contactInboxId: fixture.contactInboxId,
         inboxId: fixture.inboxId,
@@ -629,8 +668,8 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
         .values({
           externalPostId: `post-${suffix}`,
           inboxId: otherInbox.id,
+          channel: "instagram",
           integrationId: "1",
-          integrationType: "instagram",
           sourceAccountId: suffix,
           workspaceId: otherWorkspace.id,
         })
@@ -638,7 +677,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
 
       await contactInboxPostRepository.insertIfParentExists(
         {
-          channel: "instagram",
           commentedAt: new Date(),
           contactInboxId: fixture.contactInboxId,
           inboxId: fixture.inboxId,
@@ -649,7 +687,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
       )
       await contactInboxPostRepository.insertIfParentExists(
         {
-          channel: "instagram",
           commentedAt: new Date(),
           contactInboxId: otherContactInbox.id,
           inboxId: otherInbox.id,
@@ -683,10 +720,10 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
       expect(await matchingIds()).toEqual([{ id: fixture.contactId }])
       await channelPostRepository.updateIntegrationIfChanged(
         {
+          channel: "instagram",
           externalPostId: fixture.externalPostId,
           inboxId: fixture.inboxId,
           integrationId: "2",
-          integrationType: "instagramFacebook",
           sourceAccountId: "reconnected-account",
           workspaceId: fixture.workspaceId,
         },
@@ -696,7 +733,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
       await expect(
         contactInboxPostRepository.insertIfParentExists(
           {
-            channel: "instagram",
             commentedAt: new Date(),
             contactInboxId: fixture.contactInboxId,
             inboxId: fixture.inboxId,
@@ -725,7 +761,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
     const db = createDatabase(client)
     await contactInboxPostRepository.insertIfParentExists(
       {
-        channel: "instagram",
         commentedAt: new Date(),
         contactInboxId: fixture.contactInboxId,
         inboxId: fixture.inboxId,
@@ -775,7 +810,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
     await expect(
       contactInboxPostRepository.insertIfParentExists(
         {
-          channel: "instagram",
           commentedAt: new Date(),
           contactInboxId: purgeContactInbox.id,
           inboxId: fixture.inboxId,
@@ -841,7 +875,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
         try {
           const result = await contactInboxPostRepository.insertIfParentExists(
             {
-              channel: "instagram",
               commentedAt: new Date(),
               contactInboxId: fixture.contactInboxId,
               inboxId: fixture.inboxId,
@@ -902,7 +935,6 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
         expect(
           await contactInboxPostRepository.insertIfParentExists(
             {
-              channel: "instagram",
               commentedAt: new Date(),
               contactInboxId: fixture.contactInboxId,
               inboxId: fixture.inboxId,

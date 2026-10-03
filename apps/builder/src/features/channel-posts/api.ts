@@ -1,21 +1,8 @@
 import { channelPostService } from "@chatbotx.io/business"
-import { channelPostIntegrationTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { channelPostCursor, channelPostIds } from "./schema"
-
-const channelPostOption = z.object({
-  caption: z.string().nullable(),
-  externalPostId: z.string(),
-  id: z.string(),
-  inboxId: z.string(),
-  inboxName: z.string(),
-  integrationType: channelPostIntegrationTypes,
-  permalink: z.string().nullable(),
-  publishedAt: z.date().nullable(),
-  thumbnailUrl: z.string().nullable(),
-})
+import { channelPostCursor, channelPostIds, channelPostOption } from "./schema"
 
 const listRequest = z.object({
   workspaceId: z.string(),

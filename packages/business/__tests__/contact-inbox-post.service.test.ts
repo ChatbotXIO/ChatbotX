@@ -51,9 +51,7 @@ describe("contactInboxPostService", () => {
       contactInboxPostService.recordComment({
         commentedAt: new Date("2026-09-30T00:00:00.000Z"),
         contactInboxId: "contact-inbox-1",
-        inboxChannel: "instagram",
         inboxId: "inbox-1",
-        integrationType: "instagram",
         postId: "post-1",
         workspaceId: "workspace-1",
       }),
@@ -62,31 +60,28 @@ describe("contactInboxPostService", () => {
     expect(mocks.insertIfParentExists).not.toHaveBeenCalled()
   })
 
-  test("rejects a contact inbox whose channel does not match the integration", async () => {
+  test("lets the repository enforce that the post belongs to the contact inbox's channel", async () => {
+    mocks.insertIfParentExists.mockResolvedValue(false)
+
     await expect(
       contactInboxPostService.recordComment({
         commentedAt: new Date("2026-09-30T00:00:00.000Z"),
         contactInboxId: "contact-inbox-1",
-        inboxChannel: "messenger",
         inboxId: "inbox-1",
-        integrationType: "instagram",
         postId: "post-1",
         workspaceId: "workspace-1",
       }),
     ).resolves.toBe(false)
 
-    expect(mocks.dbTransaction).not.toHaveBeenCalled()
-    expect(mocks.insertIfParentExists).not.toHaveBeenCalled()
+    expect(mocks.insertIfParentExists).toHaveBeenCalledOnce()
   })
 
-  test("permits either Instagram integration type after post ownership changes", async () => {
+  test("records a comment without any channel-specific input", async () => {
     await expect(
       contactInboxPostService.recordComment({
         commentedAt: new Date("2026-09-30T00:00:00.000Z"),
         contactInboxId: "contact-inbox-1",
-        inboxChannel: "instagram",
         inboxId: "inbox-1",
-        integrationType: "instagramFacebook",
         postId: "post-1",
         workspaceId: "workspace-1",
       }),
@@ -94,7 +89,6 @@ describe("contactInboxPostService", () => {
 
     expect(mocks.insertIfParentExists).toHaveBeenCalledWith(
       {
-        channel: "instagram",
         commentedAt: new Date("2026-09-30T00:00:00.000Z"),
         contactInboxId: "contact-inbox-1",
         inboxId: "inbox-1",

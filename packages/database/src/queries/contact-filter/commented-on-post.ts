@@ -23,13 +23,18 @@ const parsePostIds = (value: unknown): string[] | undefined => {
     : undefined
 }
 
+// A saved condition that cannot be evaluated (unknown operator, malformed id,
+// no workspace) must fail CLOSED. Returning `{}` would drop it from an AND
+// group and silently widen the audience to everyone the other conditions match.
+const matchesNobody: ContactWhere = { RAW: () => sql`FALSE` }
+
 export const buildCommentedOnPostWhere = (
   operator: string,
   value: unknown,
   workspaceId: string | undefined,
 ): ContactWhere => {
   if (!workspaceId) {
-    return {}
+    return matchesNobody
   }
   const anyComment = (contactId: unknown) => sql`SELECT 1
     FROM ${contactInboxModel} ci
@@ -43,11 +48,11 @@ export const buildCommentedOnPostWhere = (
   if (
     !(operator === operatorTypes.enum.eq || operator === operatorTypes.enum.ne)
   ) {
-    return {}
+    return matchesNobody
   }
   const ids = parsePostIds(value)
   if (!ids) {
-    return {}
+    return matchesNobody
   }
   return existsWhere(
     (contactId) => sql`${anyComment(contactId)}

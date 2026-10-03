@@ -1,5 +1,4 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
-import type { ChannelPostIntegrationType } from "@chatbotx.io/database/partials"
 import { contactInboxPostRepository } from "@chatbotx.io/database/repositories/contact-inbox-post"
 import { workspaceDeletionStartedException } from "../errors"
 
@@ -7,30 +6,19 @@ export const CONTACT_INBOX_POST_DELETE_CHUNK_SIZE = 500
 export const CONTACT_INBOX_POST_PURGE_BATCH_SIZE = 1000
 export const CONTACT_INBOX_POST_PURGE_MAX_BATCHES = 100
 
-const channelByIntegrationType = {
-  instagram: "instagram",
-  instagramFacebook: "instagram",
-  messenger: "messenger",
-} as const satisfies Record<
-  ChannelPostIntegrationType,
-  "instagram" | "messenger"
->
-
 class ContactInboxPostService {
+  /**
+   * Records that a contact inbox commented on a post. The repository insert
+   * only succeeds when the post belongs to the contact inbox's own channel, so
+   * a comment can never link a contact to another channel's post.
+   */
   async recordComment(input: {
     commentedAt: Date
     contactInboxId: string
-    inboxChannel: string
     inboxId: string
-    integrationType: ChannelPostIntegrationType
     postId: string
     workspaceId: string
   }): Promise<boolean> {
-    const channel = channelByIntegrationType[input.integrationType]
-    if (input.inboxChannel !== channel) {
-      return false
-    }
-
     return await db.transaction(async (tx) => {
       const canWrite =
         await contactInboxPostRepository.lockWorkspaceForPostWrite(
@@ -43,7 +31,6 @@ class ContactInboxPostService {
 
       return await contactInboxPostRepository.insertIfParentExists(
         {
-          channel,
           commentedAt: input.commentedAt,
           contactInboxId: input.contactInboxId,
           inboxId: input.inboxId,

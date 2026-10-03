@@ -175,6 +175,39 @@ for (const m of readMigrationFiles({ migrationsFolder: './drizzle' }))
   if (m.name?.startsWith('20261002090')) console.log(m.name, m.hash)"
 ```
 
+### 4.5 Post tracking (`ChannelPost` / `ContactInboxPost`) is channel-agnostic too
+
+Same rule as the snapshot: shared code must not enumerate Messenger/Instagram.
+
+- `postTrackingChannels` / `supportsPostTracking` (`partials/contact.ts`) are the single
+  capability list; the registry test asserts every entry implements `getPostDetails`.
+- `ChannelPost.channel text NOT NULL` replaces the `channelPostIntegrationType` enum and
+  `integrationType`; the unique key is `(workspaceId, channel, externalPostId)` because
+  providers reuse bare numeric ids across channels.
+- SDK `ContactHandlers.getPostDetails` returns the neutral `ChannelPostDetails`; each
+  integration maps its own vendor fields (`toChannelPostDetails`). The worker holds no
+  mapper and resolves the handler through `resolveIntegrationContextFromContactInbox`.
+- `ContactInboxPost` inserts require `ChannelPost.channel = ContactInbox.channel` in SQL.
+- The `commentedOnPost` filter fails CLOSED (matches nobody) for an unknown operator,
+  malformed id or missing workspace instead of being dropped from an AND group.
+- Public/private API responses expose `channel` instead of `integrationType`.
+- Adding a channel = add it to `postTrackingChannels`, implement `getPostDetails`, and add
+  its icon to the typed `POST_CHANNEL_ICONS` map (compile error until done).
+
+Dev DBs that already applied the previous version need (in addition to section 4.4):
+
+```sql
+ALTER TABLE "ChannelPost" ADD COLUMN "channel" text;
+UPDATE "ChannelPost" cp SET "channel" = i."channel" FROM "Inbox" i WHERE i."id" = cp."inboxId";
+ALTER TABLE "ChannelPost" ALTER COLUMN "channel" SET NOT NULL;
+ALTER TABLE "ChannelPost" DROP COLUMN "integrationType";
+DROP TYPE "channelPostIntegrationType";
+DROP INDEX "ChannelPost_workspaceId_externalPostId_key";
+CREATE UNIQUE INDEX "ChannelPost_workspaceId_channel_externalPostId_key"
+  ON "ChannelPost" ("workspaceId","channel","externalPostId");
+-- then update the merged migration's hash in drizzle.__drizzle_migrations (see 4.4)
+```
+
 ## 5. Implementation phases
 
 1. **Database**: schema columns/enum/index, `partials/contact.ts`, migration SQL +

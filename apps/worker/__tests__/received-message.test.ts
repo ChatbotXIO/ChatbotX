@@ -3807,7 +3807,7 @@ describe("contact source taxonomy", () => {
     })
     expect(mockResolveChannelPostForComment).toHaveBeenCalledWith(
       expect.objectContaining({
-        integrationType: "messenger",
+        channel: "messenger",
         workspaceId: "ws-1",
       }),
     )
@@ -3846,29 +3846,26 @@ describe("contact source taxonomy", () => {
     ).rejects.toThrow("channel post lookup failed")
   })
 
-  test("uses Instagram media_url as the image fallback while retaining media type", async () => {
+  test("fetches post details through the channel's neutral getPostDetails handler", async () => {
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
     ).mockResolvedValue({
       inbox: { ...fakeInbox, channel: "instagram" },
       integrationRow: fakeIntegrationRow,
     } as never)
-    vi.mocked(allIntegrations.instagram?.runAction)?.mockResolvedValue({
+    const details = {
       caption: "A photo",
-      media_type: "IMAGE",
-      media_url: "https://cdn.example/photo.jpg",
+      mediaType: "IMAGE",
       permalink: "https://instagram.example/p/1",
-      timestamp: "2026-01-01T00:00:00.000Z",
-    } as never)
+      publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+      thumbnailUrl: "https://cdn.example/photo.jpg",
+    }
+    mockRunChannelHandler.mockResolvedValue(details)
     mockResolveChannelPostForComment.mockImplementationOnce(
       async ({ fetchDetails }) => {
-        await expect(fetchDetails()).resolves.toEqual({
-          caption: "A photo",
-          mediaType: "IMAGE",
-          permalink: "https://instagram.example/p/1",
-          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
-          thumbnailUrl: "https://cdn.example/photo.jpg",
-        })
+        // The worker holds no vendor field mapping: whatever the channel
+        // handler returns is passed through unchanged.
+        await expect(fetchDetails()).resolves.toBe(details)
         return "post-row-1"
       },
     )
@@ -3883,6 +3880,41 @@ describe("contact source taxonomy", () => {
         createdTime: 1_783_674_105,
       },
     })
+
+    expect(mockResolveIntegrationContextFromContactInbox).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInbox: { channel: "instagram", inboxId: "inbox-1" },
+    })
+    expect(mockRunChannelHandler).toHaveBeenCalledWith(
+      "contact",
+      "getPostDetails",
+      { ctx: { workspaceId: "ws-1" }, data: { postId: "post-1" } },
+    )
+  })
+
+  test("does not track posts for a channel outside postTrackingChannels", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "telegram" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-untracked-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "post-1",
+        createdTime: 0,
+      },
+    })
+
+    expect(mockResolveChannelPostForComment).not.toHaveBeenCalled()
+    expect(mockRecordContactInboxPostComment).not.toHaveBeenCalled()
   })
 
   test("saves a Facebook video comment with the webhook's video attached", async () => {

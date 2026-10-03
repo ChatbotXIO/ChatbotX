@@ -209,7 +209,7 @@ type ChannelPostOption = {
   externalPostId: string
   id: string
   inboxName: string
-  integrationType: "instagram" | "instagramFacebook" | "messenger"
+  channel: ChannelType
   permalink: string | null
   thumbnailUrl: string | null
 }
@@ -350,7 +350,7 @@ const toChannelPostSelectOption = (
   item: ChannelPostOption,
   fallbackLabel: string,
 ): SelectOption => ({
-  channel: item.integrationType === "messenger" ? "messenger" : "instagram",
+  channel: item.channel,
   description: item.inboxName,
   href: item.permalink ?? undefined,
   label: item.caption?.trim() || `${fallbackLabel} · ${item.externalPostId}`,

@@ -1,6 +1,10 @@
 "use client"
 
-import type { FormFieldType } from "@chatbotx.io/database/partials"
+import {
+  type FormFieldType,
+  type PostTrackingChannel,
+  supportsPostTracking,
+} from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
@@ -262,6 +266,23 @@ const FILTER_VALUE_INPUT_CONFIG = {
   { placeholderKey: string; type: "number" | undefined }
 >
 
+/**
+ * One icon per post-tracking channel. Typed against `PostTrackingChannel`, so
+ * adding a channel to the capability list is a compile error until it gets one.
+ */
+const POST_CHANNEL_ICONS: Record<PostTrackingChannel, typeof SiInstagram> = {
+  instagram: SiInstagram,
+  messenger: SiMessenger,
+}
+
+const PostChannelIcon = ({ channel }: { channel: string | undefined }) => {
+  if (!(channel && supportsPostTracking(channel))) {
+    return null
+  }
+  const Icon = POST_CHANNEL_ICONS[channel]
+  return <Icon aria-hidden="true" className="ms-2 size-4" />
+}
+
 const BooleanValueField = () => {
   const t = useTranslations()
 
@@ -509,12 +530,7 @@ const ChannelPostValueField = () => {
       options={options}
       renderOption={(option) => (
         <>
-          {option.channel === "instagram" ? (
-            <SiInstagram aria-hidden="true" className="ms-2 size-4" />
-          ) : null}
-          {option.channel === "messenger" ? (
-            <SiMessenger aria-hidden="true" className="ms-2 size-4" />
-          ) : null}
+          <PostChannelIcon channel={option.channel} />
           {option.href ? (
             <a
               aria-label={t("condition.openPost", { post: option.label })}

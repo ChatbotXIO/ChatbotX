@@ -49,6 +49,19 @@ export type IncomingContact = {
 }
 
 /**
+ * Channel-neutral description of a post a contact commented on. Each channel
+ * maps its own API response into this shape, so shared code never touches
+ * vendor field names.
+ */
+export type ChannelPostDetails = {
+  caption?: string | null
+  mediaType?: string | null
+  permalink?: string | null
+  publishedAt?: Date | null
+  thumbnailUrl?: string | null
+}
+
+/**
  * Channel-neutral relationship facts about a contact, stored on ContactInbox
  * columns of the same names. A channel fills what its API exposes; `null`
  * means "unknown", never false/0.

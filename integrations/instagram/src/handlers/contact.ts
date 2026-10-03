@@ -1,6 +1,7 @@
 import { toLogSafeError } from "@chatbotx.io/logger"
 import type { ContactHandlers } from "@chatbotx.io/sdk"
 import { fetchInstagramContactProfile } from "../apis/contact-profile"
+import { getPostDetails, toChannelPostDetails } from "../apis/post"
 import { getContactProfilePicUrl, getUserProfile } from "../apis/user"
 import { logger } from "../lib/logger"
 import type { InstagramAuthValue } from "../schema"
@@ -54,6 +55,10 @@ export const contactHandlers: Partial<ContactHandlers<InstagramAuthValue>> = {
     }
   },
   getProfileSnapshot,
+  getPostDetails: async ({ ctx, data }) =>
+    toChannelPostDetails(
+      await getPostDetails({ ctx, input: { postId: data.postId } }),
+    ),
   getContactProfilePicUrl: async ({ ctx, data: { sourceId } }) =>
     await getContactProfilePicUrl({ ctx, psid: sourceId }),
 }

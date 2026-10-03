@@ -1,3 +1,4 @@
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 
 const MAX_SIGNED_BIGINT = 9_223_372_036_854_775_807n
@@ -81,3 +82,15 @@ export const channelPostCursor = z.object({
 
 export const isChannelPostId = (value: unknown): value is string =>
   channelPostId.safeParse(value).success
+
+export const channelPostOption = z.object({
+  caption: z.string().nullable(),
+  channel: channelTypes,
+  externalPostId: z.string(),
+  id: z.string(),
+  inboxId: z.string(),
+  inboxName: z.string(),
+  permalink: z.string().nullable(),
+  publishedAt: z.date().nullable(),
+  thumbnailUrl: z.string().nullable(),
+})

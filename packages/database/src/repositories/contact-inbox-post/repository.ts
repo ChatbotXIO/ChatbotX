@@ -20,7 +20,6 @@ export const contactInboxPostRepository = {
 
   async insertIfParentExists(
     input: {
-      channel: "instagram" | "messenger"
       commentedAt: Date
       contactInboxId: string
       inboxId: string
@@ -39,12 +38,12 @@ export const contactInboxPostRepository = {
        AND i."workspaceId" = ${input.workspaceId}::bigint
       WHERE ci."id" = ${input.contactInboxId}::bigint
         AND ci."inboxId" = ${input.inboxId}::bigint
-        AND ci."channel" = ${input.channel}
         AND EXISTS (
           SELECT 1
           FROM "ChannelPost" cp
           WHERE cp."id" = ${input.postId}::bigint
             AND cp."workspaceId" = ${input.workspaceId}::bigint
+            AND cp."channel" = ci."channel"
         )
       FOR KEY SHARE OF ci
       ON CONFLICT ("workspaceId", "contactInboxId", "postId") DO NOTHING

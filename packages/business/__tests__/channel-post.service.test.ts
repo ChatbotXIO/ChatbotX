@@ -59,7 +59,7 @@ const input = {
   fetchDetails: vi.fn(),
   inboxId: "inbox-1",
   integrationId: "integration-1",
-  integrationType: "instagram" as const,
+  channel: "instagram",
   sourceAccountId: "account-1",
   workspaceId: "workspace-1",
 }
@@ -136,12 +136,26 @@ describe("channelPostService.resolveForComment", () => {
     expect(mocks.loggerInfo).toHaveBeenCalledOnce()
   })
 
+  test("namespaces post lookups and inserts by channel", async () => {
+    await channelPostService.resolveForComment({
+      ...input,
+      channel: "messenger",
+    })
+
+    // The same bare id on another channel must resolve to its own row.
+    expect(mocks.findByExternalId).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: "messenger", externalPostId: "1780" }),
+    )
+    expect(mocks.insertBare).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: "messenger", externalPostId: "1780" }),
+    )
+  })
+
   test("uses the conflict winner without fetching metadata a second time", async () => {
     mocks.insertBare.mockResolvedValue(null)
     mocks.findByExternalId.mockResolvedValueOnce(null).mockResolvedValueOnce({
       id: "post-1",
       integrationId: "integration-1",
-      integrationType: "instagram",
       metadataFetchedAt: new Date("2026-09-30T00:00:00.000Z"),
     })
 
@@ -158,7 +172,6 @@ describe("channelPostService.resolveForComment", () => {
     mocks.findByExternalId.mockResolvedValue({
       id: "post-1",
       integrationId: "integration-1",
-      integrationType: "instagram",
       metadataFetchedAt: new Date("2026-09-30T00:00:00.000Z"),
     })
 
@@ -175,7 +188,6 @@ describe("channelPostService.resolveForComment", () => {
     mocks.findByExternalId.mockResolvedValue({
       id: "post-1",
       integrationId: "old-integration",
-      integrationType: "instagramFacebook",
       metadataFetchedAt: null,
     })
     mocks.claimMetadataRetry.mockResolvedValue(true)
@@ -217,7 +229,7 @@ describe("channelPostService.resolveForComment", () => {
         id: "post-1",
         inboxId: "inbox-1",
         inboxName: "Instagram",
-        integrationType: "instagram",
+        channel: "instagram",
         permalink: "https://instagram.com/p/post-1",
         publishedAt: new Date("2026-09-30T00:00:00.000Z"),
         sortAt: "2026-09-30 00:00:00.123456+00",
@@ -229,7 +241,7 @@ describe("channelPostService.resolveForComment", () => {
         id: "post-2",
         inboxId: "inbox-1",
         inboxName: "Instagram",
-        integrationType: "instagram",
+        channel: "instagram",
         permalink: null,
         publishedAt: null,
         sortAt: "2026-09-30 00:00:00.123455+00",
@@ -253,7 +265,7 @@ describe("channelPostService.resolveForComment", () => {
           id: "post-1",
           inboxId: "inbox-1",
           inboxName: "Instagram",
-          integrationType: "instagram",
+          channel: "instagram",
           permalink: "https://instagram.com/p/post-1",
           publishedAt: new Date("2026-09-30T00:00:00.000Z"),
           thumbnailUrl: null,
@@ -264,6 +276,44 @@ describe("channelPostService.resolveForComment", () => {
         sortAt: "2026-09-30 00:00:00.123456+00",
       },
     })
+  })
+
+  test("skips and logs a post whose stored channel is not a known channel", async () => {
+    const row = {
+      caption: "A post",
+      externalPostId: "1780",
+      id: "post-1",
+      inboxId: "inbox-1",
+      inboxName: "Inbox",
+      permalink: null,
+      publishedAt: null,
+      thumbnail: null,
+    }
+    mocks.listFilterOptions.mockResolvedValue([
+      { ...row, channel: "retired-channel", sortAt: "2026-09-30 00:00:00+00" },
+      {
+        ...row,
+        channel: "messenger",
+        externalPostId: "1781",
+        id: "post-2",
+        sortAt: "2026-09-29 00:00:00+00",
+      },
+    ])
+    mocks.resolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example/",
+    })
+
+    const result = await channelPostService.listFilterOptions({
+      limit: 5,
+      workspaceId: "workspace-1",
+    })
+
+    // One bad row never fails the picker; the valid post is still returned.
+    expect(result.items.map((item) => item.id)).toEqual(["post-2"])
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ channelPostId: "post-1" }),
+      expect.stringContaining("unknown channel"),
+    )
   })
 
   test("bounds a hanging metadata fetch and retains the bare post", async () => {

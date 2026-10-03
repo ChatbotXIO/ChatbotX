@@ -10,7 +10,7 @@ type ChannelPostOption = {
   externalPostId: string
   id: string
   inboxName: string
-  integrationType: "instagram" | "instagramFacebook" | "messenger"
+  channel: ChannelType
   permalink: string | null
   thumbnailUrl: string | null
 }
@@ -422,7 +422,7 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
             externalPostId: "external-1",
             id: "1",
             inboxName: "Instagram",
-            integrationType: "instagram",
+            channel: "instagram",
             permalink: null,
             thumbnailUrl: null,
           },
@@ -476,7 +476,7 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
             externalPostId: "external-1",
             id: "1",
             inboxName: "Instagram",
-            integrationType: "instagram",
+            channel: "instagram",
             permalink: null,
             thumbnailUrl: null,
           },
@@ -496,7 +496,7 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
             externalPostId: "external-2",
             id: "2",
             inboxName: "Instagram",
-            integrationType: "instagram",
+            channel: "instagram",
             permalink: null,
             thumbnailUrl: null,
           },
@@ -520,7 +520,7 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
             externalPostId: "external-1",
             id: "1",
             inboxName: "Instagram",
-            integrationType: "instagram",
+            channel: "instagram",
             permalink: null,
             thumbnailUrl: null,
           },
@@ -560,7 +560,7 @@ describe("useWorkspaceOptionEndpoint (via useBroadcastSelectOptions/useReflinkSe
             externalPostId: `external-${id}`,
             id,
             inboxName: "Instagram",
-            integrationType: "instagram",
+            channel: "instagram",
             permalink: null,
             thumbnailUrl: null,
           })),

@@ -1,14 +1,12 @@
 import { isDatabaseError } from "@chatbotx.io/database/client"
-import {
-  type ChannelPostIntegrationType,
-  channelPostIntegrationTypes,
-} from "@chatbotx.io/database/partials"
+import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import {
   type ChannelPostFilterCursor,
   type ChannelPostMetadata,
   channelPostRepository,
 } from "@chatbotx.io/database/repositories"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
+import type { ChannelPostDetails } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
@@ -25,20 +23,13 @@ export const POST_METADATA_RETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000
 // on the ingestion path even when a CDN reports no (or a wrong) content-length.
 export const POST_THUMBNAIL_MAX_BYTES = 30 * 1024 * 1024
 
-export type ChannelPostDetails = {
-  caption?: string | null
-  mediaType?: string | null
-  permalink?: string | null
-  publishedAt?: Date | null
-  thumbnailUrl?: string | null
-}
-
 type ResolveForCommentInput = {
+  /** The channel the post lives on (a ChannelType, same as Inbox.channel). */
+  channel: string
   externalPostId: string
   fetchDetails: () => Promise<ChannelPostDetails>
   inboxId: string
   integrationId: string
-  integrationType: ChannelPostIntegrationType
   sourceAccountId: string
   workspaceId: string
 }
@@ -53,7 +44,7 @@ export type ChannelPostFilterOption = {
   id: string
   inboxId: string
   inboxName: string
-  integrationType: ChannelPostIntegrationType
+  channel: ChannelType
   permalink: string | null
   publishedAt: Date | null
   thumbnailUrl: string | null
@@ -143,10 +134,7 @@ class ChannelPostService extends BaseService {
     existing: ExistingChannelPost,
     input: ResolveForCommentInput,
   ): Promise<string> {
-    if (
-      existing.integrationId !== input.integrationId ||
-      existing.integrationType !== input.integrationType
-    ) {
+    if (existing.integrationId !== input.integrationId) {
       await channelPostRepository.updateIntegrationIfChanged(input)
     }
 
@@ -183,22 +171,10 @@ class ChannelPostService extends BaseService {
       workspaceId: input.workspaceId,
     })
 
-    const items = rows.slice(0, input.limit)
-    const last = items.at(-1)
+    const pageRows = rows.slice(0, input.limit)
+    const last = pageRows.at(-1)
     return {
-      items: items.map((row) => ({
-        caption: row.caption,
-        externalPostId: row.externalPostId,
-        id: row.id,
-        inboxId: row.inboxId,
-        inboxName: row.inboxName,
-        integrationType: channelPostIntegrationTypes.parse(row.integrationType),
-        permalink: row.permalink,
-        publishedAt: row.publishedAt,
-        thumbnailUrl: row.thumbnail
-          ? getPublicFileUrl(row.thumbnail, storageUrl)
-          : null,
-      })),
+      items: this.toFilterOptions(pageRows, storageUrl),
       ...(rows.length > input.limit && last
         ? { nextCursor: { id: last.id, sortAt: last.sortAt } }
         : {}),
@@ -214,19 +190,53 @@ class ChannelPostService extends BaseService {
       workspaceId: input.workspaceId,
     })
 
-    return rows.map((row) => ({
-      caption: row.caption,
-      externalPostId: row.externalPostId,
-      id: row.id,
-      inboxId: row.inboxId,
-      inboxName: row.inboxName,
-      integrationType: channelPostIntegrationTypes.parse(row.integrationType),
-      permalink: row.permalink,
-      publishedAt: row.publishedAt,
-      thumbnailUrl: row.thumbnail
-        ? getPublicFileUrl(row.thumbnail, storageUrl)
-        : null,
-    }))
+    return this.toFilterOptions(rows, storageUrl)
+  }
+
+  /**
+   * Maps rows to picker options. `channel` is free text in the database, so a
+   * value outside `ChannelType` (e.g. a retired channel) is skipped and logged
+   * instead of failing the whole list or by-ids lookup.
+   */
+  private toFilterOptions(
+    rows: {
+      caption: string | null
+      channel: string
+      externalPostId: string
+      id: string
+      inboxId: string
+      inboxName: string
+      permalink: string | null
+      publishedAt: Date | null
+      thumbnail: string | null
+    }[],
+    storageUrl: string,
+  ): ChannelPostFilterOption[] {
+    return rows.flatMap((row) => {
+      const channel = channelTypes.safeParse(row.channel)
+      if (!channel.success) {
+        logger.warn(
+          { channelPostId: row.id, channel: row.channel },
+          "channel-post: skipping a post with an unknown channel",
+        )
+        return []
+      }
+      return [
+        {
+          caption: row.caption,
+          channel: channel.data,
+          externalPostId: row.externalPostId,
+          id: row.id,
+          inboxId: row.inboxId,
+          inboxName: row.inboxName,
+          permalink: row.permalink,
+          publishedAt: row.publishedAt,
+          thumbnailUrl: row.thumbnail
+            ? getPublicFileUrl(row.thumbnail, storageUrl)
+            : null,
+        },
+      ]
+    })
   }
 
   private async fetchAndSaveMetadata(input: {

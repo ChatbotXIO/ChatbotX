@@ -10,11 +10,8 @@ import {
   or,
   sql,
 } from "../../client"
-import {
-  type ChannelPostIntegrationType,
-  channelPostIntegrationTypes,
-} from "../../partials"
 import { channelPostModel, inboxModel } from "../../schema"
+import { likeContains } from "../../utils"
 
 export type ChannelPostMetadata = {
   caption: string | null
@@ -37,46 +34,38 @@ const channelPostScope = (workspaceId: string) =>
 
 export const channelPostRepository = {
   async findByExternalId(
-    input: { externalPostId: string; workspaceId: string },
+    input: { channel: string; externalPostId: string; workspaceId: string },
     tx: DatabaseClient = db,
   ): Promise<{
     id: string
     integrationId: string
-    integrationType: ChannelPostIntegrationType
     metadataFetchedAt: Date | null
   } | null> {
     const [row] = await tx
       .select({
         id: channelPostModel.id,
         integrationId: channelPostModel.integrationId,
-        integrationType: channelPostModel.integrationType,
         metadataFetchedAt: channelPostModel.metadataFetchedAt,
       })
       .from(channelPostModel)
       .where(
         and(
           channelPostScope(input.workspaceId),
+          eq(channelPostModel.channel, input.channel),
           eq(channelPostModel.externalPostId, input.externalPostId),
         ),
       )
       .limit(1)
 
-    return row
-      ? {
-          ...row,
-          integrationType: channelPostIntegrationTypes.parse(
-            row.integrationType,
-          ),
-        }
-      : null
+    return row ?? null
   },
 
   async insertBare(
     input: {
+      channel: string
       externalPostId: string
       inboxId: string
       integrationId: string
-      integrationType: ChannelPostIntegrationType
       sourceAccountId: string
       workspaceId: string
     },
@@ -86,7 +75,11 @@ export const channelPostRepository = {
       .insert(channelPostModel)
       .values({ ...input, metadataAttemptedAt: new Date() })
       .onConflictDoNothing({
-        target: [channelPostModel.workspaceId, channelPostModel.externalPostId],
+        target: [
+          channelPostModel.workspaceId,
+          channelPostModel.channel,
+          channelPostModel.externalPostId,
+        ],
       })
       .returning({ id: channelPostModel.id })
 
@@ -95,10 +88,10 @@ export const channelPostRepository = {
 
   async updateIntegrationIfChanged(
     input: {
+      channel: string
       externalPostId: string
       inboxId: string
       integrationId: string
-      integrationType: ChannelPostIntegrationType
       sourceAccountId: string
       workspaceId: string
     },
@@ -108,16 +101,13 @@ export const channelPostRepository = {
       UPDATE "ChannelPost"
       SET
         "integrationId" = ${input.integrationId}::bigint,
-        "integrationType" = ${input.integrationType}::"channelPostIntegrationType",
         "inboxId" = ${input.inboxId}::bigint,
         "sourceAccountId" = ${input.sourceAccountId},
         "updatedAt" = NOW()
       WHERE "workspaceId" = ${input.workspaceId}::bigint
+        AND "channel" = ${input.channel}
         AND "externalPostId" = ${input.externalPostId}
-        AND ("integrationId", "integrationType") IS DISTINCT FROM (
-          ${input.integrationId}::bigint,
-          ${input.integrationType}::"channelPostIntegrationType"
-        )
+        AND "integrationId" IS DISTINCT FROM ${input.integrationId}::bigint
       RETURNING "id"
     `)
 
@@ -196,7 +186,9 @@ export const channelPostRepository = {
     const channelPostSortAt = sql<string>`COALESCE(${channelPostModel.publishedAt}, ${channelPostModel.createdAt})`
     const conditions = [channelPostScope(input.workspaceId)]
     if (input.search) {
-      conditions.push(ilike(channelPostModel.caption, `%${input.search}%`))
+      conditions.push(
+        ilike(channelPostModel.caption, likeContains(input.search)),
+      )
     }
     if (input.cursor) {
       const cursorCondition = or(
@@ -219,7 +211,7 @@ export const channelPostRepository = {
         id: channelPostModel.id,
         inboxId: channelPostModel.inboxId,
         inboxName: inboxModel.name,
-        integrationType: channelPostModel.integrationType,
+        channel: channelPostModel.channel,
         permalink: channelPostModel.permalink,
         publishedAt: channelPostModel.publishedAt,
         sortAt: channelPostSortAt,
@@ -255,7 +247,7 @@ export const channelPostRepository = {
         id: channelPostModel.id,
         inboxId: channelPostModel.inboxId,
         inboxName: inboxModel.name,
-        integrationType: channelPostModel.integrationType,
+        channel: channelPostModel.channel,
         permalink: channelPostModel.permalink,
         publishedAt: channelPostModel.publishedAt,
         thumbnail: channelPostModel.thumbnail,

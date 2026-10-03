@@ -1,13 +1,11 @@
 import { sql } from "drizzle-orm"
 import {
   index,
-  pgEnum,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { channelPostIntegrationTypes } from "../partials/contact"
 import {
   bigintAsString,
   sharedColumns,
@@ -15,11 +13,6 @@ import {
 } from "../partials/shared"
 import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
-
-export const channelPostIntegrationType = pgEnum(
-  "channelPostIntegrationType",
-  channelPostIntegrationTypes.options as [string, ...string[]],
-)
 
 export const channelPostModel = pgTable(
   "ChannelPost",
@@ -37,10 +30,12 @@ export const channelPostModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    integrationType: channelPostIntegrationType().notNull(),
-    // The id belongs to IntegrationMessenger or IntegrationInstagram according
-    // to integrationType. It has no FK because those two tables are mutually
-    // exclusive targets and their rows are deleted when a channel disconnects.
+    // The channel the post belongs to (a ChannelType, same value as
+    // Inbox.channel). Plain text so a new channel needs no DDL; it namespaces
+    // the external id because providers reuse bare numeric ids.
+    channel: text().notNull(),
+    // The id of the channel's integration row (whichever table that channel
+    // uses). No FK: those rows are deleted when a channel disconnects.
     integrationId: bigintAsString().notNull(),
     sourceAccountId: text().notNull(),
     externalPostId: text().notNull(),
@@ -53,8 +48,9 @@ export const channelPostModel = pgTable(
     metadataAttemptedAt: timestamp(timestampConfig),
   },
   (table) => [
-    uniqueIndex("ChannelPost_workspaceId_externalPostId_key").on(
+    uniqueIndex("ChannelPost_workspaceId_channel_externalPostId_key").on(
       table.workspaceId,
+      table.channel,
       table.externalPostId,
     ),
     index("ChannelPost_workspaceId_sortAt_id_idx").on(

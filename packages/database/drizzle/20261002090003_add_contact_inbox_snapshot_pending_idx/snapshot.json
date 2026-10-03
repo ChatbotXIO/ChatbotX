@@ -47726,16 +47726,6 @@
       "table": "Workspace"
     },
     {
-      "values": [
-        "messenger",
-        "instagram",
-        "instagramFacebook"
-      ],
-      "name": "channelPostIntegrationType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
       "isRlsEnabled": false,
       "name": "ContactInboxPost",
       "entityType": "tables",
@@ -47865,14 +47855,14 @@
       "table": "ChannelPost"
     },
     {
-      "type": "channelPostIntegrationType",
-      "typeSchema": "public",
+      "type": "text",
+      "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "integrationType",
+      "name": "channel",
       "entityType": "columns",
       "schema": "public",
       "table": "ChannelPost"
@@ -48046,6 +48036,13 @@
           "opclass": null
         },
         {
+          "value": "channel",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
           "value": "externalPostId",
           "isExpression": false,
           "asc": true,
@@ -48058,7 +48055,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "ChannelPost_workspaceId_externalPostId_key",
+      "name": "ChannelPost_workspaceId_channel_externalPostId_key",
       "entityType": "indexes",
       "schema": "public",
       "table": "ChannelPost"

@@ -1,4 +1,4 @@
-import type { Context } from "@chatbotx.io/sdk"
+import type { ChannelPostDetails, Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
@@ -12,6 +12,17 @@ export type InstagramMediaDetails = {
   timestamp: string
   permalink?: string
 }
+
+/** Maps the Graph media node into the channel-neutral post description. */
+export const toChannelPostDetails = (
+  media: InstagramMediaDetails,
+): ChannelPostDetails => ({
+  caption: media.caption,
+  mediaType: media.media_type,
+  permalink: media.permalink,
+  publishedAt: media.timestamp ? new Date(media.timestamp) : null,
+  thumbnailUrl: media.thumbnail_url ?? media.media_url,
+})
 
 export type InstagramMediaListItem = {
   id: string

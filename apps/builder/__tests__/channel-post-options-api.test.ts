@@ -58,7 +58,7 @@ vi.mock("@/orpc", () => ({
 
 await import("@/features/channel-posts/api")
 await import("@/features/channel-posts/api/public")
-const { channelPostCursor, channelPostId } = await import(
+const { channelPostCursor, channelPostId, channelPostOption } = await import(
   "@/features/channel-posts/schema"
 )
 
@@ -101,6 +101,34 @@ describe("channel post filter option APIs", () => {
       channelPostCursor.safeParse({
         id: "1",
         sortAt: "2026-99-99T99:99:99Z",
+      }).success,
+    ).toBe(false)
+  })
+
+  test("the option contract carries the channel and rejects an unknown one", () => {
+    const option = {
+      caption: null,
+      channel: "instagram",
+      externalPostId: "1780",
+      id: "1",
+      inboxId: "2",
+      inboxName: "Inbox",
+      permalink: null,
+      publishedAt: null,
+      thumbnailUrl: null,
+    }
+
+    expect(channelPostOption.safeParse(option).success).toBe(true)
+    expect(
+      channelPostOption.safeParse({ ...option, channel: "not-a-channel" })
+        .success,
+    ).toBe(false)
+    // The removed per-integration field must not be accepted in its place.
+    const { channel: _channel, ...withoutChannel } = option
+    expect(
+      channelPostOption.safeParse({
+        ...withoutChannel,
+        integrationType: "instagram",
       }).success,
     ).toBe(false)
   })

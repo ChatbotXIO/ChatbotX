@@ -35,14 +35,19 @@ export const supportsProfileSnapshot = (
 ): channel is ProfileSnapshotChannel =>
   profileSnapshotChannels.some((candidate) => candidate === channel)
 
-export const channelPostIntegrationTypes = z.enum([
-  "messenger",
-  "instagram",
-  "instagramFacebook",
-])
-export type ChannelPostIntegrationType = z.infer<
-  typeof channelPostIntegrationTypes
->
+/**
+ * Channels whose integration implements `getPostDetails` and whose comments are
+ * tracked per post (`ChannelPost` / `ContactInboxPost`, the `commentedOnPost`
+ * filter). The single source for every "can this channel track posts" gate;
+ * adding a channel = add it here and implement the handler.
+ */
+export const postTrackingChannels = ["messenger", "instagram"] as const
+export type PostTrackingChannel = (typeof postTrackingChannels)[number]
+
+export const supportsPostTracking = (
+  channel: string,
+): channel is PostTrackingChannel =>
+  postTrackingChannels.some((candidate) => candidate === channel)
 
 export const genderTypes = z.enum(["male", "female", "unknown"])
 export type GenderType = z.infer<typeof genderTypes>
