@@ -37,9 +37,9 @@ export const contactsFilterFieldsPublicRouter = {
     .route({
       method: "POST",
       path: FILTER_VALUE_LABELS_TOKEN_PATH,
-      summary: "Resolve contact filter id names",
+      summary: "Resolve contact filter tag names",
       description:
-        "Turns the ids a `contactFilter` references (tags, sequences, broadcasts, ref links, inboxes) into their names, up to 500 ids per type; an id that no longer exists is simply absent. A pure read (POST only because the id lists do not fit a query string).",
+        "Turns the tag ids a `contactFilter` references into tag names, up to 500 ids; an id that no longer exists is simply absent. Names of other referenced resources come from their own list routes. A pure read (POST only because the id lists do not fit a query string).",
       successStatus: 200,
       tags: ["Contacts"],
     })

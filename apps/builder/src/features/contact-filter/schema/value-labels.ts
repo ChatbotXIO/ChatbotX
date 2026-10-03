@@ -51,19 +51,15 @@ export type ResolveFilterValueLabelsResponse = z.infer<
 >
 
 /**
- * Public twin: the same lookup without the people-name types (`members`,
- * `inboxTeams`), which a contacts-scoped token has no other way to read.
+ * Public twin, limited to `tags`: the one referenced type a `contacts`-scoped
+ * token can already list. Sequences, broadcasts, ref links, inboxes, members
+ * and teams belong to other scopes (or are people names), so their names stay
+ * behind those scopes' own list routes.
  */
-export const resolveFilterValueLabelsPublicRequest =
-  resolveFilterValueLabelsRequest
-    .omit({ workspaceId: true, members: true, inboxTeams: true })
-    .extend({
-      tags: filterValueIdsSchema.describe("Tag ids from a `tag` condition."),
-      sequences: filterValueIdsSchema.describe("Sequence ids."),
-      broadcasts: filterValueIdsSchema.describe("Broadcast ids."),
-      reflinks: filterValueIdsSchema.describe("Ref link ids."),
-      inboxes: filterValueIdsSchema.describe("Inbox (channel) ids."),
-    })
+export const resolveFilterValueLabelsPublicRequest = z.object({
+  tags: filterValueIdsSchema.describe("Tag ids from a `tag` condition."),
+})
 
-export const resolveFilterValueLabelsPublicResponse =
-  resolveFilterValueLabelsResponse.omit({ members: true, inboxTeams: true })
+export const resolveFilterValueLabelsPublicResponse = z.object({
+  tags: resolveFilterValueLabelsResponse.shape.tags,
+})

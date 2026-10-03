@@ -658,9 +658,10 @@ approved as UI-only.
   blockedAt, contactId, sourceUserId = WhatsApp BSUID), `cus:<customFieldId>`,
   `tag:<tagId>`. A key without a prefix is rejected (422).
 - `POST /v1/contacts/filter-value-labels` is a pure read (id lists too large
-  for a query string) that names the tag/sequence/broadcast/ref-link/inbox ids
-  a `contactFilter` references; it is allow-listed for `read_only` tokens and
-  trial-expired workspaces. Member and team names are intentionally excluded.
+  for a query string) that names the tag ids a `contactFilter` references; it is
+  allow-listed for `read_only` tokens and trial-expired workspaces. Only tags:
+  sequence, broadcast, ref-link, inbox, member and team names belong to other
+  scopes and come from their own list routes.
 - BSUID and WhatsApp username are on the contact-inbox resource
   (`sourceUserId`, `sourceUsername`); a BSUID-only contact is keyed by it in
   `sourceId`.

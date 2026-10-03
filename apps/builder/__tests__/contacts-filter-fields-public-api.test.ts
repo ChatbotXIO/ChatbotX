@@ -104,7 +104,7 @@ describe("GET /v1/contacts/filter-fields", () => {
 describe("POST /v1/contacts/filter-value-labels", () => {
   const procedure = findProcedure("POST", "/v1/contacts/filter-value-labels")
 
-  test("resolves the ids in the token's workspace and passes only the public types", async () => {
+  test("resolves the ids in the token's workspace and passes only tag ids", async () => {
     resolveLabels.mockResolvedValueOnce({
       tags: [{ id: "1", name: "VIP" }],
       sequences: [],

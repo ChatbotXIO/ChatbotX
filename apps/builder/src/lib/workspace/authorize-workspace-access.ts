@@ -76,8 +76,7 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
 
 const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
   ADS_CAMPAIGNS_INSIGHTS_PATH,
-  // Names of tag/sequence/broadcast/reflink/inbox ids only (no member names):
-  // primary-key reads, no writes.
+  // Tag-id -> name lookup only: a primary-key read, no writes.
   FILTER_VALUE_LABELS_TOKEN_PATH,
 ])
 
