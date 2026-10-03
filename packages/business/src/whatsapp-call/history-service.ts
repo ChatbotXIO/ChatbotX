@@ -163,7 +163,12 @@ export type WhatsappCallHistoryRow = WhatsappCallListRow & {
 
 export type WhatsappCallHistoryListInput = {
   workspaceId: string
-  member: { userId: string; permissions: PermissionsInput }
+  /**
+   * The session member whose permissions scope the list, or `"workspace"` for
+   * a workspace-token caller, which authenticates the workspace and has no
+   * member: it reads every call, like a superAdmin/analytics member.
+   */
+  member: { userId: string; permissions: PermissionsInput } | "workspace"
   activity?: WhatsappCallActivityChip
   direction?: WhatsappCallDirection
   inboxId?: string
@@ -184,7 +189,10 @@ export type WhatsappCallHistoryListResult = {
 async function list(
   input: WhatsappCallHistoryListInput,
 ): Promise<WhatsappCallHistoryListResult> {
-  const scope = resolveHistoryScope(input.member)
+  const scope: WhatsappCallHistoryScope | null =
+    input.member === "workspace"
+      ? { allCalls: true }
+      : resolveHistoryScope(input.member)
   // Fail closed — a member with none of the four scope-granting permissions
   // gets an empty page, never a repository read.
   if (!scope) {

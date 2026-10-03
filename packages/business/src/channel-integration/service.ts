@@ -22,6 +22,10 @@ export type ChannelIntegrationSummary = {
   isCoexist: boolean | null
   hasCapiScope: boolean
   datasetId: string | null
+  /** Events Manager test code: while set, CAPI events go to Test Events. */
+  capiTestEventCode: string | null
+  /** User-intent disconnect of the Conversions API. */
+  capiDisconnected: boolean
   syncTagEnabledAt: Date | null
   /** WhatsApp/Messenger: flow that runs when a partner hands a conversation back. */
   handoverResumeFlowId: string | null
@@ -45,6 +49,8 @@ const SUMMARY_DEFAULTS = {
   isCoexist: null,
   hasCapiScope: false,
   datasetId: null,
+  capiTestEventCode: null,
+  capiDisconnected: false,
   syncTagEnabledAt: null,
   handoverResumeFlowId: null,
   tokenRefreshError: null,
@@ -82,6 +88,8 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         isCoexist: true,
         hasCapiScope: true,
         datasetId: true,
+        capiTestEventCode: true,
+        capiDisconnectedAt: true,
         handoverResumeFlowId: true,
         tokenRefreshError: true,
       },
@@ -98,6 +106,8 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         isCoexist: row.isCoexist,
         hasCapiScope: row.hasCapiScope,
         datasetId: row.datasetId,
+        capiTestEventCode: row.capiTestEventCode,
+        capiDisconnected: row.capiDisconnectedAt !== null,
         handoverResumeFlowId: row.handoverResumeFlowId,
         tokenRefreshError: row.tokenRefreshError,
       }),
@@ -114,6 +124,8 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         coexistEnabled: true,
         hasCapiScope: true,
         datasetId: true,
+        capiTestEventCode: true,
+        capiDisconnectedAt: true,
         syncTagEnabledAt: true,
         handoverResumeFlowId: true,
         tokenRefreshError: true,
@@ -128,6 +140,8 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         coexistEnabled: row.coexistEnabled,
         hasCapiScope: row.hasCapiScope,
         datasetId: row.datasetId,
+        capiTestEventCode: row.capiTestEventCode,
+        capiDisconnected: row.capiDisconnectedAt !== null,
         syncTagEnabledAt: row.syncTagEnabledAt,
         handoverResumeFlowId: row.handoverResumeFlowId,
         tokenRefreshError: row.tokenRefreshError,
@@ -146,6 +160,8 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         coexistEnabled: true,
         hasCapiScope: true,
         datasetId: true,
+        capiTestEventCode: true,
+        capiDisconnectedAt: true,
         tokenRefreshError: true,
       },
     })
@@ -159,6 +175,8 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         coexistEnabled: row.coexistEnabled,
         hasCapiScope: row.hasCapiScope,
         datasetId: row.datasetId,
+        capiTestEventCode: row.capiTestEventCode,
+        capiDisconnected: row.capiDisconnectedAt !== null,
         tokenRefreshError: row.tokenRefreshError,
       }),
     )

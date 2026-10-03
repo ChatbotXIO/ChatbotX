@@ -17,6 +17,7 @@ import {
 } from "@/features/capabilities/api/public"
 import {
   channelIntegrationsPublicRouter,
+  createCapiRoutes,
   createChannelReadRoutes,
   createCoexistRoute,
   createHandoverResumeFlowRoute,
@@ -68,6 +69,7 @@ import { tokenPublicRouter } from "@/features/token/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
+import { whatsappCallsPublicRouter } from "@/features/whatsapp-calls/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
 import { workspaceSettingsPublicRouter } from "@/features/workspaces/api/public"
 
@@ -107,6 +109,7 @@ export const publicRouter = {
   instagramChannels: {
     ...createChannelReadRoutes("instagram"),
     ...createCoexistRoute("instagram"),
+    ...createCapiRoutes("instagram"),
   },
   inboxTeams: inboxTeamsPublicRouter,
   inboxes: inboxesPublicRouter,
@@ -136,10 +139,12 @@ export const publicRouter = {
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,
   webhooks: webhooksPublicRouter,
+  whatsappCalls: whatsappCallsPublicRouter,
   whatsappChannels: {
     ...createChannelReadRoutes("whatsapp"),
     ...createHandoverResumeFlowRoute("whatsapp"),
     ...createCoexistRoute("whatsapp"),
+    ...createCapiRoutes("whatsapp"),
   },
   whatsappTemplates: whatsappTemplatesPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,

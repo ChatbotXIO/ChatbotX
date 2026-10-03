@@ -33,7 +33,12 @@ export type ListWhatsappMessageTemplatesResponse = z.infer<
 
 export const searchMetaCatalogProductsRequest = z.object({
   workspaceId: zodBigintAsString(),
-  keyword: z.string().trim().max(200).optional(),
+  keyword: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .describe("Case-insensitive text to search product names for."),
 })
 export type SearchMetaCatalogProductsRequest = z.infer<
   typeof searchMetaCatalogProductsRequest

@@ -26,6 +26,15 @@ export const channelIntegrationResource = z.object({
     .boolean()
     .describe("Whether the Meta token can send Conversions API events."),
   datasetId: z.string().nullable().describe("Meta dataset id for CAPI."),
+  capiTestEventCode: z
+    .string()
+    .nullable()
+    .describe(
+      "Events Manager test code; while set, CAPI events go to Test Events, not production.",
+    ),
+  capiDisconnected: z
+    .boolean()
+    .describe("Whether Conversions API was disconnected for this channel."),
   syncTagEnabledAt: z
     .date()
     .nullable()

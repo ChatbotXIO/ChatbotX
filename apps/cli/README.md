@@ -792,6 +792,20 @@ chatbotx workspace settings list                      # Get workspace settings
 chatbotx workspace settings update --defaultReply --defaultReplyFrequency --smartResponseDelaySeconds --capiLimitedDataUse --logo
 ```
 
+### `whatsapp` calls (scope `integrations`)
+
+```bash
+chatbotx whatsapp calls                              # [--activity --inboxId --agentUserId --cursor]
+chatbotx whatsapp calls-recording <id>               # 15-minute signed playback URL
+chatbotx whatsapp calls-transcript <id>
+chatbotx whatsapp calls-summary <id>
+chatbotx whatsapp templates-catalog-products         # [--keyword] Meta Catalog product search
+chatbotx whatsapp-channels sync add <id>             # Sync WhatsApp templates from Meta
+chatbotx whatsapp-channels dataset update <id> --datasetId <id>      # CAPI dataset (also instagram/messenger)
+chatbotx whatsapp-channels test-event-code update <id> --testEventCode <code>         # "" clears it
+chatbotx whatsapp-channels test-event add <id> --messagingId <id>
+```
+
 ### `channel-integrations`
 
 ```bash

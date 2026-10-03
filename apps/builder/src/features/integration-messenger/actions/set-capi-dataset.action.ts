@@ -1,15 +1,11 @@
 "use server"
 
-import {
-  messengerIntegrationService,
-  metaConversionsService,
-} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { getDataset } from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
-import { surfaceCapiError } from "@/features/meta-conversions/lib/surface-capi-error"
+import { saveCapiDataset } from "@/features/meta-conversions/lib/capi-operations"
+import { isNotFound } from "@/features/meta-conversions/lib/is-not-found"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -31,32 +27,21 @@ export const setMessengerCapiDatasetAction = workspaceActionClient
       const t = await getTranslations("metaConversions.errors")
       await assertWorkspaceSuperAdmin(workspaceId)
 
-      const integration =
-        await messengerIntegrationService.findByIdForWorkspace({
-          id: integrationId,
-          workspaceId,
-        })
-      if (!integration) {
-        throw new ChatbotXException(t("messengerNotFound"))
-      }
-
       try {
-        await metaConversionsService.saveDatasetId({
+        // Validates with Meta, stores it and clears a user-intent disconnect.
+        await saveCapiDataset({
           channel: "messenger",
-          integration,
+          workspaceId,
+          integrationId,
           datasetId: parsedInput.datasetId,
-          validate: getDataset,
+          invalidTokenMessage: t("invalidToken"),
         })
       } catch (error) {
-        surfaceCapiError(error, t("invalidToken"))
+        if (isNotFound(error)) {
+          throw new ChatbotXException(t("messengerNotFound"))
+        }
+        throw error
       }
-
-      // Save = connect: clear a user-intent disconnect so this is the only
-      // path back from a Disconnect now that OAuth reconnect is gone.
-      await metaConversionsService.reconnectCapi({
-        channel: "messenger",
-        integration,
-      })
 
       return { success: true }
     },

@@ -45,6 +45,13 @@ vi.mock("@/features/integration-whatsapp/lib/coexist-trigger-sync", () => ({
   triggerSync: vi.fn(),
 }))
 
+const capiOps = vi.hoisted(() => ({
+  saveCapiDataset: vi.fn(async () => undefined),
+  saveCapiTestEventCodeFor: vi.fn(async () => undefined),
+  sendCapiTestEventFor: vi.fn(async () => undefined),
+}))
+vi.mock("@/features/meta-conversions/lib/capi-operations", () => capiOps)
+
 const handoverServices = vi.hoisted(() => ({
   whatsapp: vi.fn(async () => undefined),
   messenger: vi.fn(async () => undefined),
@@ -86,6 +93,7 @@ const {
   createChannelReadRoutes,
   createHandoverResumeFlowRoute,
   createCoexistRoute,
+  createCapiRoutes,
 } = await import("@/features/channel-integrations/api/public")
 
 const ctx = { workspace: { id: "ws-1" } }
@@ -267,5 +275,76 @@ describe("PUT /v1/<channel>-channels/{id}/coexist", () => {
         input: { id: "3", enabled: true, aiReadsSyncedHistory: false },
       }),
     ).rejects.toMatchObject({ httpStatusCode: status })
+  })
+})
+
+describe("CAPI routes", () => {
+  const handler = (path: string, method: string) => {
+    createCapiRoutes("whatsapp")
+    return capturedProcedures.find(
+      (p) =>
+        p.route.method === method &&
+        p.route.path === `/v1/whatsapp-channels/{id}/capi${path}`,
+    )?.handler
+  }
+
+  test("dataset selection delegates to the shared operation in the token's workspace", async () => {
+    await handler(
+      "/dataset",
+      "PUT",
+    )?.({
+      context: ctx,
+      input: { id: "3", datasetId: "ds-1" },
+    })
+
+    expect(capiOps.saveCapiDataset).toHaveBeenCalledWith({
+      channel: "whatsapp",
+      workspaceId: "ws-1",
+      integrationId: "3",
+      datasetId: "ds-1",
+    })
+  })
+
+  test("an empty test event code clears it", async () => {
+    await handler(
+      "/test-event-code",
+      "PUT",
+    )?.({
+      context: ctx,
+      input: { id: "3", testEventCode: "" },
+    })
+
+    expect(capiOps.saveCapiTestEventCodeFor).toHaveBeenCalledWith(
+      expect.objectContaining({ testEventCode: null }),
+    )
+  })
+
+  test("a refused test event is a 422 with a readable reason", async () => {
+    const { CapiTestEventError } = await import("@chatbotx.io/business")
+    capiOps.sendCapiTestEventFor.mockRejectedValueOnce(
+      new CapiTestEventError("testEventCodeRequired"),
+    )
+
+    await expect(
+      handler(
+        "/test-event",
+        "POST",
+      )?.({
+        context: ctx,
+        input: { id: "3", messagingId: "84900000000" },
+      }),
+    ).rejects.toMatchObject({ httpStatusCode: 422 })
+  })
+
+  test("a sent test event reports success", async () => {
+    await expect(
+      handler(
+        "/test-event",
+        "POST",
+      )?.({
+        context: ctx,
+        input: { id: "3", messagingId: "84900000000" },
+      }),
+    ).resolves.toEqual({ success: true })
   })
 })

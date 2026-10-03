@@ -1458,6 +1458,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/instagram-channels",
   },
   {
+    "method": "POST",
+    "operationId": "instagramChannels.sendCapiTestEvent",
+    "path": "/v1/instagram-channels/{id}/capi/test-event",
+  },
+  {
+    "method": "PUT",
+    "operationId": "instagramChannels.setCapiDataset",
+    "path": "/v1/instagram-channels/{id}/capi/dataset",
+  },
+  {
+    "method": "PUT",
+    "operationId": "instagramChannels.setCapiTestEventCode",
+    "path": "/v1/instagram-channels/{id}/capi/test-event-code",
+  },
+  {
     "method": "PUT",
     "operationId": "instagramChannels.setCoexist",
     "path": "/v1/instagram-channels/{id}/coexist",
@@ -1621,6 +1636,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "messengerChannels.list",
     "path": "/v1/messenger-channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "messengerChannels.sendCapiTestEvent",
+    "path": "/v1/messenger-channels/{id}/capi/test-event",
+  },
+  {
+    "method": "PUT",
+    "operationId": "messengerChannels.setCapiDataset",
+    "path": "/v1/messenger-channels/{id}/capi/dataset",
+  },
+  {
+    "method": "PUT",
+    "operationId": "messengerChannels.setCapiTestEventCode",
+    "path": "/v1/messenger-channels/{id}/capi/test-event-code",
   },
   {
     "method": "PUT",
@@ -2159,6 +2189,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "whatsappCalls.getRecording",
+    "path": "/v1/whatsapp/calls/{id}/recording",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappCalls.getSummary",
+    "path": "/v1/whatsapp/calls/{id}/summary",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappCalls.getTranscript",
+    "path": "/v1/whatsapp/calls/{id}/transcript",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappCalls.list",
+    "path": "/v1/whatsapp/calls",
+  },
+  {
+    "method": "GET",
     "operationId": "whatsappChannels.get",
     "path": "/v1/whatsapp-channels/{id}",
   },
@@ -2166,6 +2216,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "whatsappChannels.list",
     "path": "/v1/whatsapp-channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "whatsappChannels.sendCapiTestEvent",
+    "path": "/v1/whatsapp-channels/{id}/capi/test-event",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.setCapiDataset",
+    "path": "/v1/whatsapp-channels/{id}/capi/dataset",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.setCapiTestEventCode",
+    "path": "/v1/whatsapp-channels/{id}/capi/test-event-code",
   },
   {
     "method": "PUT",
@@ -2179,8 +2244,23 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "whatsappTemplates.get",
+    "path": "/v1/whatsapp/templates/{id}",
+  },
+  {
+    "method": "GET",
     "operationId": "whatsappTemplates.list",
     "path": "/v1/whatsapp/templates",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappTemplates.searchCatalogProducts",
+    "path": "/v1/whatsapp/templates/catalog-products",
+  },
+  {
+    "method": "POST",
+    "operationId": "whatsappTemplates.sync",
+    "path": "/v1/whatsapp-channels/{id}/templates/sync",
   },
   {
     "method": "GET",

@@ -49,6 +49,16 @@ class WhatsappMessageTemplateService extends BaseService {
     })
   }
 
+  /** One template of the workspace, or undefined. */
+  findByIdForWorkspace(props: { id: string; workspaceId: string }) {
+    return db.query.whatsappMessageTemplateModel.findFirst({
+      where: {
+        id: props.id,
+        integrationWhatsapp: { workspaceId: props.workspaceId },
+      },
+    })
+  }
+
   /** Approved-only template lookup for outbound template sends, scoped by workspace through the integration relation. */
   findApprovedByIdForIntegration(props: {
     id: string

@@ -1,4 +1,5 @@
 import {
+  CapiTestEventError,
   type ChannelIntegrationChannel,
   channelIntegrationChannels,
   channelIntegrationService,
@@ -11,8 +12,14 @@ import {
   notFoundException,
 } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { CAPI_TEST_MESSAGING_ID_MAX_LENGTH } from "@chatbotx.io/utils/meta-capi"
 import { z } from "zod"
 import { triggerSync as triggerWhatsappCoexistSync } from "@/features/integration-whatsapp/lib/coexist-trigger-sync"
+import {
+  saveCapiDataset,
+  saveCapiTestEventCodeFor,
+  sendCapiTestEventFor,
+} from "@/features/meta-conversions/lib/capi-operations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -236,6 +243,145 @@ export const createCoexistRoute = (channel: CoexistChannel) => {
           success: true,
           runId: typeof runId === "string" ? runId : undefined,
         }
+      }),
+  }
+}
+
+type CapiChannel = Extract<
+  ChannelIntegrationChannel,
+  "whatsapp" | "messenger" | "instagram"
+>
+
+const capiTestEventErrorMessages: Record<string, string> = {
+  testEventCodeRequired:
+    "Save a test event code first (`capi/test-event-code`), then send a test event.",
+  capiDisconnected:
+    "Conversions API is disconnected for this channel. Save a dataset to reconnect it.",
+  invalidMessagingId: "`messagingId` is not a valid messaging id.",
+}
+
+const TEST_EVENT_CODE_PATTERN = /^[A-Za-z0-9_-]*$/
+
+const capiSuccessResponse = z.object({ success: z.literal(true) })
+
+/**
+ * Meta Conversions API routes of a channel: dataset selection, the Events
+ * Manager test event code and a sample test event. Provisioning a dataset,
+ * disconnecting and custom connect stay private (they handle credentials).
+ */
+export const createCapiRoutes = (channel: CapiChannel) => {
+  const label = channelLabels[channel]
+  const base = `/v1/${channel}-channels/{id}/capi` as const
+  const idParam = z.object({
+    id: zodBigintAsString().describe(
+      `${label} channel (integration) id. Get it from the channel list route.`,
+    ),
+  })
+  return {
+    setCapiDataset: workspaceTokenAuthAPI
+      .route({
+        method: "PUT",
+        path: `${base}/dataset` as const,
+        summary: `Set ${label} CAPI dataset`,
+        description: `Selects the Meta dataset used for Conversions API events on a ${label} channel. The dataset is validated with Meta using the channel's token, then stored, and a disconnected Conversions API is reconnected. Read the current \`datasetId\` and \`hasCapiScope\` from the channel list route.`,
+        successStatus: 204,
+        tags: ["Channels"],
+      })
+      .input(
+        idParam.extend({
+          datasetId: z
+            .string()
+            .trim()
+            .min(1)
+            .describe("Meta dataset (pixel) id from Events Manager."),
+        }),
+      )
+      .errors(possibleErrorsOnMutatingResource)
+      .handler(async ({ context, input }) => {
+        await saveCapiDataset({
+          channel,
+          workspaceId: context.workspace.id,
+          integrationId: input.id,
+          datasetId: input.datasetId,
+        })
+      }),
+
+    setCapiTestEventCode: workspaceTokenAuthAPI
+      .route({
+        method: "PUT",
+        path: `${base}/test-event-code` as const,
+        summary: `Set ${label} CAPI test event code`,
+        description: `Sets (or clears with null) the Events Manager test_event_code. While it is set, every Conversions API event of this channel goes to the dataset's Test Events view instead of production, so clear it when you are done testing.`,
+        successStatus: 204,
+        tags: ["Channels"],
+      })
+      .input(
+        idParam.extend({
+          testEventCode: z
+            .string()
+            .trim()
+            .max(64)
+            .regex(TEST_EVENT_CODE_PATTERN)
+            .nullable()
+            .describe(
+              "The Test Events code (e.g. TEST12345); null or empty clears it.",
+            ),
+        }),
+      )
+      .errors(possibleErrorsOnMutatingResource)
+      .handler(async ({ context, input }) => {
+        await saveCapiTestEventCodeFor({
+          channel,
+          workspaceId: context.workspace.id,
+          integrationId: input.id,
+          testEventCode: input.testEventCode?.length
+            ? input.testEventCode
+            : null,
+        })
+      }),
+
+    sendCapiTestEvent: workspaceTokenAuthAPI
+      .route({
+        method: "POST",
+        path: `${base}/test-event` as const,
+        summary: `Send ${label} CAPI test event`,
+        description:
+          "Posts one sample Purchase to Meta for the given messaging id so it shows up under Events Manager → Test events. Needs a saved test event code (`capi/test-event-code`) and a connected Conversions API. Nothing is stored.",
+        tags: ["Channels"],
+      })
+      .input(
+        idParam.extend({
+          messagingId: z
+            .string()
+            .trim()
+            .min(1)
+            .max(CAPI_TEST_MESSAGING_ID_MAX_LENGTH)
+            .describe(
+              "The contact's messaging id (phone number, PSID or IGSID) to attribute the sample event to.",
+            ),
+        }),
+      )
+      .output(capiSuccessResponse)
+      .errors(possibleErrorsOnMutatingResource)
+      .handler(async ({ context, input }) => {
+        try {
+          await sendCapiTestEventFor({
+            channel,
+            workspaceId: context.workspace.id,
+            integrationId: input.id,
+            messagingId: input.messagingId,
+          })
+        } catch (error) {
+          if (error instanceof CapiTestEventError) {
+            throw new ChatbotXException(
+              capiTestEventErrorMessages[error.reason] ?? error.reason,
+              "capiTestEventRefused",
+              422,
+            )
+          }
+          throw error
+        }
+        return { success: true as const }
       }),
   }
 }

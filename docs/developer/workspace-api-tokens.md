@@ -485,6 +485,23 @@ an endpoint's scope.
   `scopes: null` tokens gain the scope automatically; pick it explicitly for
   restricted tokens. No migration: scopes are stored as plain text. `logo` is read back as an absolute URL (uploaded logos are stored as storage paths) and written as an http(s) URL; an external URL is loaded by every member's browser, so set only images you trust. An empty PATCH returns the settings unchanged.
 
+- **WhatsApp calls, CAPI and templates** — scope `integrations`:
+  `GET /v1/whatsapp/calls` (cursor-paginated history of every call of the
+  workspace; the recording's storage path is never returned, only
+  `hasRecording`), `.../{id}/recording` (15-minute signed URL),
+  `.../{id}/transcript`, `.../{id}/summary`. These are customer PII and calling
+  is paid, so only `scopes: null` and explicit `integrations` tokens reach
+  them. Scope `channels`: `PUT /v1/{whatsapp,messenger,instagram}-channels/{id}/capi/dataset`,
+  `.../capi/test-event-code` and `POST .../capi/test-event` (the dataset is
+  validated with Meta; while a test event code is set every CAPI event goes to
+  Test Events). The channel list shows `capiTestEventCode` and
+  `capiDisconnected`. Provisioning a dataset, disconnecting and custom connect
+  stay private. Scope `broadcasts`: `GET /v1/whatsapp/templates/{id}`,
+  `POST /v1/whatsapp-channels/{id}/templates/sync`,
+  `GET /v1/whatsapp/templates/catalog-products`. Not exposed yet: calling
+  settings, call hours, call-permission requests, WhatsApp Flows list/screens
+  and sending a template into a conversation.
+
 - **Imports** — a token can run a whole import without the browser's session
   upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
   `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file

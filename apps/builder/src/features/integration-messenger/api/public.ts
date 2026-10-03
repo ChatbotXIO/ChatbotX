@@ -2,6 +2,7 @@ import { messengerIntegrationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
+  createCapiRoutes,
   createChannelReadRoutes,
   createCoexistRoute,
   createHandoverResumeFlowRoute,
@@ -15,6 +16,7 @@ export const messengerChannelsPublicRouter = {
   ...createChannelReadRoutes("messenger"),
   ...createHandoverResumeFlowRoute("messenger"),
   ...createCoexistRoute("messenger"),
+  ...createCapiRoutes("messenger"),
   updateTagSync: workspaceTokenAuthAPI
     .route({
       method: "PATCH",
