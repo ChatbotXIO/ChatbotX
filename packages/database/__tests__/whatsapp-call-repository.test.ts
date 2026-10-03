@@ -1211,7 +1211,7 @@ describe("whatsappCallRepository.createPendingOutbound initiatedByUserId", () =>
 })
 
 const RETENTION_CAST_RE =
-  /"recordedAt" < .*::timestamptz - \("callRecordingRetentionDays"/
+  /"recordedAt" < .*::timestamptz - make_interval\(days => "callRecordingRetentionDays"\)/
 const TIMESTAMPTZ_CAST_RE = /::timestamptz/
 
 describe("whatsappCallRepository.listRecordingsPastRetention", () => {
@@ -1244,7 +1244,7 @@ describe("whatsappCallRepository.listRecordingsPastRetention", () => {
     )
 
     // The bound value renders between the column and the cast; its exact
-    // spelling is the driver's business, the cast is ours.
+    // spelling is the driver's business, the cast and interval are ours.
     expect(renderPredicate(captured.where)).toMatch(RETENTION_CAST_RE)
     expect(captured.limit).toBe(500)
   })
