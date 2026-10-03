@@ -6,6 +6,7 @@ const createPageMessageTemplate = vi.fn()
 const syncTemplates = vi.fn()
 const findByIdForWorkspace = vi.fn()
 const listCloneTargetsForUser = vi.fn()
+const assertPublicUrl = vi.fn((..._args: unknown[]) => Promise.resolve())
 const findByIdForIntegration = vi.fn()
 
 // Captures the handler the safe-action chain wraps so the action's
@@ -17,6 +18,8 @@ vi.mock("@chatbotx.io/integration-messenger/apis/upload", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  assertPublicUrl: (...args: unknown[]) => assertPublicUrl(...args),
+  buildContext: vi.fn(),
   messengerIntegrationService: {
     findByIdForWorkspace: (...args: unknown[]) => findByIdForWorkspace(...args),
     listCloneTargetsForUser: (...args: unknown[]) =>
@@ -25,6 +28,7 @@ vi.mock("@chatbotx.io/business", () => ({
   messengerMessageTemplateService: {
     findByIdForIntegration: (...args: unknown[]) =>
       findByIdForIntegration(...args),
+    syncFromMeta: vi.fn(),
   },
 }))
 
@@ -37,13 +41,16 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(),
 }))
 
-vi.mock(
-  "@/features/integration-messenger/message-templates/actions/sync-message-templates",
-  () => ({
-    syncMessengerMessageTemplatesForIntegration: (...args: unknown[]) =>
-      syncTemplates(...args),
-  }),
-)
+vi.mock("@/integration", () => ({
+  integrations: {
+    messenger: {
+      runAction: vi.fn(() => {
+        syncTemplates()
+        return Promise.resolve({ data: [] })
+      }),
+    },
+  },
+}))
 
 vi.mock("@/lib/safe-action", () => ({
   workspaceActionClient: {
@@ -58,13 +65,38 @@ vi.mock("@/lib/safe-action", () => ({
   },
 }))
 
-const { prepareComponentsForClone } = await import(
+const { prepareComponentsForClone, createMessengerMessageTemplate } =
+  await import(
+    "@/features/integration-messenger/message-templates/lib/message-template-operations"
+  )
+await import(
   "@/features/integration-messenger/message-templates/actions/clone-message-templates"
 )
 
 describe("prepareComponentsForClone", () => {
   beforeEach(() => {
     resumableUploadImage.mockClear()
+    assertPublicUrl.mockReset().mockResolvedValue(undefined)
+  })
+
+  test("refuses a stored image URL that resolves to a non-public address, without fetching it", async () => {
+    assertPublicUrl.mockRejectedValue(new Error("[ssrf-guard] not allowed"))
+    const components = [
+      {
+        type: "HEADER",
+        format: "IMAGE",
+        example: { header_handle: ["http://169.254.169.254/latest/meta"] },
+      },
+    ]
+
+    await expect(
+      prepareComponentsForClone(components, {} as never),
+    ).rejects.toThrow("ssrf-guard")
+    expect(assertPublicUrl).toHaveBeenCalledWith(
+      "http://169.254.169.254/latest/meta",
+      "Template header image URL",
+    )
+    expect(resumableUploadImage).not.toHaveBeenCalled()
   })
 
   test("rejects opaque Meta image handles", async () => {
@@ -250,5 +282,33 @@ describe("cloneMessengerMessageTemplateAction authorization", () => {
       { channel: "Page im-a", error: "rate limited" },
     ])
     expect(result.succeeded).toEqual([{ channel: "Page im-b" }])
+  })
+})
+
+describe("createMessengerMessageTemplate header image", () => {
+  test("a caller-supplied image URL on a non-public address is refused before anything is uploaded or created", async () => {
+    assertPublicUrl.mockReset().mockRejectedValue(new Error("[ssrf-guard] no"))
+    createPageMessageTemplate.mockReset()
+    resumableUploadImage.mockClear()
+
+    await expect(
+      createMessengerMessageTemplate({
+        workspaceId: "ws-1",
+        integrationMessenger: { auth: {} } as never,
+        request: {
+          name: "promo",
+          language: "vi",
+          headerType: "text_and_image",
+          headerText: "Hi",
+          headerVariables: [],
+          headerImageUrl: "http://169.254.169.254/x.png",
+          body: "Body",
+          bodyVariables: [],
+          buttons: [],
+        },
+      }),
+    ).rejects.toThrow("ssrf-guard")
+    expect(resumableUploadImage).not.toHaveBeenCalled()
+    expect(createPageMessageTemplate).not.toHaveBeenCalled()
   })
 })

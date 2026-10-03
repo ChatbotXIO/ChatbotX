@@ -36,6 +36,15 @@ const { orpcMock, capturedProcedures, scopes } = vi.hoisted(() => {
 })
 vi.mock("@/orpc", () => orpcMock)
 
+const coexist = vi.hoisted(() => ({
+  enable: vi.fn(),
+  disable: vi.fn(),
+  whatsapp: vi.fn(),
+}))
+vi.mock("@/features/integration-whatsapp/lib/coexist-trigger-sync", () => ({
+  triggerSync: vi.fn(),
+}))
+
 const handoverServices = vi.hoisted(() => ({
   whatsapp: vi.fn(async () => undefined),
   messenger: vi.fn(async () => undefined),
@@ -48,8 +57,10 @@ const service = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/business", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   channelIntegrationService: service,
+  coexistService: { enable: coexist.enable, disable: coexist.disable },
   integrationWhatsappService: {
     updateHandoverResumeFlow: handoverServices.whatsapp,
+    setCoexist: coexist.whatsapp,
   },
   messengerIntegrationService: {
     updateHandoverResumeFlow: handoverServices.messenger,
@@ -74,6 +85,7 @@ const {
   channelIntegrationsPublicRouter,
   createChannelReadRoutes,
   createHandoverResumeFlowRoute,
+  createCoexistRoute,
 } = await import("@/features/channel-integrations/api/public")
 
 const ctx = { workspace: { id: "ws-1" } }
@@ -163,5 +175,97 @@ describe.each([
       workspaceId: "ws-1",
       handoverResumeFlowId: null,
     })
+  })
+})
+
+describe("PUT /v1/<channel>-channels/{id}/coexist", () => {
+  const handlerFor = (channel: "whatsapp" | "messenger" | "instagram") => {
+    createCoexistRoute(channel)
+    return capturedProcedures.find(
+      (p) =>
+        p.route.method === "PUT" &&
+        p.route.path === `/v1/${channel}-channels/{id}/coexist`,
+    )?.handler
+  }
+
+  test("messenger enable goes through coexistService and returns the run id", async () => {
+    coexist.enable.mockResolvedValue({ success: true, runId: "r1" })
+
+    const result = await handlerFor("messenger")?.({
+      context: ctx,
+      input: { id: "3", enabled: true, aiReadsSyncedHistory: true },
+    })
+
+    expect(coexist.enable).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      integrationId: "3",
+      channel: "messenger",
+      aiReadsSyncedHistory: true,
+    })
+    expect(result).toEqual({ success: true, runId: "r1" })
+  })
+
+  test("instagram disable stops the sync", async () => {
+    coexist.disable.mockResolvedValue({ success: true })
+
+    await handlerFor("instagram")?.({
+      context: ctx,
+      input: { id: "3", enabled: false, aiReadsSyncedHistory: false },
+    })
+
+    expect(coexist.disable).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      integrationId: "3",
+      channel: "instagram",
+    })
+  })
+
+  test("whatsapp uses its own service with the Graph trigger", async () => {
+    coexist.whatsapp.mockResolvedValue({ success: true })
+
+    await handlerFor("whatsapp")?.({
+      context: ctx,
+      input: { id: "3", enabled: true, aiReadsSyncedHistory: false },
+    })
+
+    expect(coexist.whatsapp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        integrationId: "3",
+        enabled: true,
+      }),
+    )
+  })
+
+  test("a channel of another workspace is a 404", async () => {
+    coexist.enable.mockResolvedValue({ success: false, reason: "not_found" })
+
+    await expect(
+      handlerFor("messenger")?.({
+        context: ctx,
+        input: { id: "9", enabled: true, aiReadsSyncedHistory: false },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+  })
+
+  test.each([
+    ["invalidAuth", 409],
+    ["triggerRejected", 502],
+    ["triggerThrew", 502],
+  ])("whatsapp %s is not reported as not-found", async (cause, status) => {
+    createCoexistRoute("whatsapp")
+    const handler = capturedProcedures.find(
+      (p) =>
+        p.route.method === "PUT" &&
+        p.route.path === "/v1/whatsapp-channels/{id}/coexist",
+    )?.handler
+    coexist.whatsapp.mockResolvedValue({ success: false, cause, reason: "x" })
+
+    await expect(
+      handler?.({
+        context: ctx,
+        input: { id: "3", enabled: true, aiReadsSyncedHistory: false },
+      }),
+    ).rejects.toMatchObject({ httpStatusCode: status })
   })
 })

@@ -1434,6 +1434,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "PUT",
+    "operationId": "instagramChannels.setCoexist",
+    "path": "/v1/instagram-channels/{id}/coexist",
+  },
+  {
+    "method": "PUT",
     "operationId": "integrations.connectAiProvider",
     "path": "/v1/integrations/ai/{provider}",
   },
@@ -1593,6 +1598,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/messenger-channels",
   },
   {
+    "method": "PUT",
+    "operationId": "messengerChannels.setCoexist",
+    "path": "/v1/messenger-channels/{id}/coexist",
+  },
+  {
     "method": "PATCH",
     "operationId": "messengerChannels.updateHandoverResumeFlow",
     "path": "/v1/messenger-channels/{id}/handover-resume-flow",
@@ -1606,6 +1616,36 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "messengerPersonas.list",
     "path": "/v1/messenger-personas",
+  },
+  {
+    "method": "POST",
+    "operationId": "messengerTemplates.clone",
+    "path": "/v1/messenger/templates/{id}/clone",
+  },
+  {
+    "method": "POST",
+    "operationId": "messengerTemplates.create",
+    "path": "/v1/messenger-channels/{id}/templates",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "messengerTemplates.delete",
+    "path": "/v1/messenger/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerTemplates.get",
+    "path": "/v1/messenger/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerTemplates.list",
+    "path": "/v1/messenger/templates",
+  },
+  {
+    "method": "POST",
+    "operationId": "messengerTemplates.sync",
+    "path": "/v1/messenger-channels/{id}/templates/sync",
   },
   {
     "method": "POST",
@@ -2101,6 +2141,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "whatsappChannels.list",
     "path": "/v1/whatsapp-channels",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.setCoexist",
+    "path": "/v1/whatsapp-channels/{id}/coexist",
   },
   {
     "method": "PATCH",

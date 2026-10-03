@@ -18,6 +18,7 @@ import {
 import {
   channelIntegrationsPublicRouter,
   createChannelReadRoutes,
+  createCoexistRoute,
   createHandoverResumeFlowRoute,
 } from "@/features/channel-integrations/api/public"
 import { channelPostsPublicRouter } from "@/features/channel-posts/api/public"
@@ -41,6 +42,7 @@ import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { aiHandoverPublicRouter } from "@/features/integration-ai-handover/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
+import { messengerTemplatesPublicRouter } from "@/features/integration-messenger/message-templates/api/public"
 import { smtpIntegrationsPublicRouter } from "@/features/integration-smtp/api/public"
 import { webchatsPublicRouter } from "@/features/integration-webchat/api/public"
 import {
@@ -101,7 +103,10 @@ export const publicRouter = {
   igComments: igCommentsPublicRouter,
   igStories: igStoriesPublicRouter,
   channelIntegrations: channelIntegrationsPublicRouter,
-  instagramChannels: createChannelReadRoutes("instagram"),
+  instagramChannels: {
+    ...createChannelReadRoutes("instagram"),
+    ...createCoexistRoute("instagram"),
+  },
   inboxTeams: inboxTeamsPublicRouter,
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,
@@ -110,6 +115,7 @@ export const publicRouter = {
   messages: messagesPublicRouter,
   messengerChannels: messengerChannelsPublicRouter,
   messengerPersonas: messengerPersonasPublicRouter,
+  messengerTemplates: messengerTemplatesPublicRouter,
   minigames: minigamesPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
@@ -132,6 +138,7 @@ export const publicRouter = {
   whatsappChannels: {
     ...createChannelReadRoutes("whatsapp"),
     ...createHandoverResumeFlowRoute("whatsapp"),
+    ...createCoexistRoute("whatsapp"),
   },
   whatsappTemplates: whatsappTemplatesPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,

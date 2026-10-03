@@ -92,15 +92,47 @@ export const createMessengerMessageTemplateRequest = z
       .trim()
       .min(1)
       .max(512)
-      .regex(/^[a-z0-9_]+$/),
-    language: z.string().min(1),
-    headerType: z.enum(["none", "text", "text_and_image"]),
-    headerText: z.string().default(""),
-    headerVariables: z.array(templateVariableSchema).max(1).default([]),
-    headerImageUrl: z.string().url().optional(),
-    body: z.string().min(1),
-    bodyVariables: z.array(templateVariableSchema).max(15).default([]),
-    buttons: z.array(templateButtonSchema).max(3).default([]),
+      .regex(/^[a-z0-9_]+$/)
+      .describe("Template name: lowercase letters, digits and underscores."),
+    language: z
+      .string()
+      .min(1)
+      .describe("Meta language code of the template, e.g. `en_US`, `vi`."),
+    headerType: z
+      .enum(["none", "text", "text_and_image"])
+      .describe(
+        "`none`, a `text` header, or `text_and_image` (needs `headerImageUrl`).",
+      ),
+    headerText: z
+      .string()
+      .default("")
+      .describe("Header text; required unless `headerType` is `none`."),
+    headerVariables: z
+      .array(templateVariableSchema)
+      .max(1)
+      .default([])
+      .describe("Example for the header's `{{1}}` variable, if it has one."),
+    headerImageUrl: z
+      .string()
+      .url()
+      .optional()
+      .describe(
+        "Public https URL of the header image for `text_and_image`. It must resolve to a public address; redirects are not followed.",
+      ),
+    body: z
+      .string()
+      .min(1)
+      .describe("Body text; variables are `{{1}}` to `{{15}}`."),
+    bodyVariables: z
+      .array(templateVariableSchema)
+      .max(15)
+      .default([])
+      .describe("One example per body variable, matching the body text."),
+    buttons: z
+      .array(templateButtonSchema)
+      .max(3)
+      .default([])
+      .describe("Up to 3 POSTBACK, PHONE_NUMBER or URL buttons."),
   })
   .superRefine((value, ctx) => {
     if (value.headerType !== "none" && value.headerText.trim().length === 0) {

@@ -24,6 +24,11 @@ vi.mock("@chatbotx.io/business", () => ({
   messengerIntegrationService: { updateTagSync: vi.fn() },
   zaloIntegrationService: { updateTagSync: vi.fn() },
   channelIntegrationService: { list: vi.fn(), get: vi.fn() },
+  coexistService: { enable: vi.fn(), disable: vi.fn() },
+  integrationWhatsappService: {
+    updateHandoverResumeFlow: vi.fn(),
+    setCoexist: vi.fn(),
+  },
   channelIntegrationChannels: z.enum([
     "whatsapp",
     "messenger",
@@ -46,6 +51,9 @@ const workspaceTokenAuthAPIForScope = vi.hoisted(() =>
   }),
 )
 
+vi.mock("@/features/integration-whatsapp/lib/coexist-trigger-sync", () => ({
+  triggerSync: vi.fn(),
+}))
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 await import("@/features/user-persistent-menus/api/public")

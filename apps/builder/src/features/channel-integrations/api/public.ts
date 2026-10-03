@@ -2,11 +2,17 @@ import {
   type ChannelIntegrationChannel,
   channelIntegrationChannels,
   channelIntegrationService,
+  coexistService,
   integrationWhatsappService,
   messengerIntegrationService,
 } from "@chatbotx.io/business"
+import {
+  ChatbotXException,
+  notFoundException,
+} from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { triggerSync as triggerWhatsappCoexistSync } from "@/features/integration-whatsapp/lib/coexist-trigger-sync"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -136,6 +142,100 @@ export const createHandoverResumeFlowRoute = (
           workspaceId: context.workspace.id,
           handoverResumeFlowId: input.handoverResumeFlowId,
         })
+      }),
+  }
+}
+
+type CoexistChannel = Extract<
+  ChannelIntegrationChannel,
+  "whatsapp" | "messenger" | "instagram"
+>
+
+const coexistResponse = z.object({
+  success: z.boolean(),
+  runId: z.string().optional(),
+  reason: z.string().optional(),
+})
+
+/**
+ * `PUT /v1/<channel>-channels/{id}/coexist`: enables or disables coexistence
+ * sync (history import) for a channel, through the same services as the
+ * builder's toggle.
+ */
+export const createCoexistRoute = (channel: CoexistChannel) => {
+  const label = channelLabels[channel]
+  return {
+    setCoexist: workspaceTokenAuthAPI
+      .route({
+        method: "PUT",
+        path: `/v1/${channel}-channels/{id}/coexist` as const,
+        summary: `Set ${label} coexist sync`,
+        description: `Turns coexistence history sync on or off for a ${label} channel. Enabling starts (or reuses) a sync run (\`runId\` is returned for Messenger and Instagram); \`aiReadsSyncedHistory\` lets the AI read the synced history (default false). Disabling stops active runs. Read the current state from the channel list route (\`coexistEnabled\`).`,
+        tags: ["Channels"],
+      })
+      .input(
+        z.object({
+          id: zodBigintAsString().describe(
+            `${label} channel (integration) id. Get it from the channel list route.`,
+          ),
+          enabled: z.boolean().describe("Whether coexist sync is on."),
+          aiReadsSyncedHistory: z
+            .boolean()
+            .optional()
+            .default(false)
+            .describe("Only when enabling: let the AI read synced history."),
+        }),
+      )
+      .output(coexistResponse)
+      .errors(possibleErrorsOnMutatingResource)
+      .handler(async ({ context, input }) => {
+        const base = {
+          workspaceId: context.workspace.id,
+          integrationId: input.id,
+        }
+        const result =
+          channel === "whatsapp"
+            ? await integrationWhatsappService.setCoexist({
+                ...base,
+                enabled: input.enabled,
+                aiReadsSyncedHistory: input.aiReadsSyncedHistory,
+                triggerSync: triggerWhatsappCoexistSync,
+              })
+            : await (input.enabled
+                ? coexistService.enable({
+                    ...base,
+                    channel,
+                    aiReadsSyncedHistory: input.aiReadsSyncedHistory,
+                  })
+                : coexistService.disable({ ...base, channel }))
+        if (!result.success) {
+          const cause = "cause" in result ? result.cause : "notFound"
+          const reason = "reason" in result ? result.reason : undefined
+          if (cause === "invalidAuth") {
+            throw new ChatbotXException(
+              "The channel's credentials are invalid: reconnect the channel.",
+              "coexistInvalidAuth",
+              409,
+            )
+          }
+          if (cause === "triggerRejected" || cause === "triggerThrew") {
+            // Coexist is already switched on and its run exists; Meta refused
+            // the sync request, which the caller can retry.
+            throw new ChatbotXException(
+              `Coexist is on, but Meta did not start the sync (${typeof reason === "string" ? reason : cause}). Try again.`,
+              "coexistSyncNotStarted",
+              502,
+            )
+          }
+          throw notFoundException(
+            typeof reason === "string" ? reason : "Channel not found",
+          )
+        }
+        const runId = "runId" in result ? result.runId : undefined
+        return {
+          success: true,
+          runId: typeof runId === "string" ? runId : undefined,
+        }
       }),
   }
 }

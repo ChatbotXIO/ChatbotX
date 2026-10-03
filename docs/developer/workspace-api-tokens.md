@@ -446,6 +446,15 @@ an endpoint's scope.
   time, not a cap on the run: customers who become eligible while it
   progresses are still included. Token calls record no requesting user.
 
+- **Messenger templates and coexist** — `/v1/messenger/templates` (list, get,
+  clone, delete) and `/v1/messenger-channels/{id}/templates` (create, `/sync`)
+  use scope `broadcasts`, like the WhatsApp templates. Delete removes only the
+  local row (Meta has no delete in our integration; sync restores it). Clone
+  targets only Pages of the token's workspace. Header image URLs (create and
+  clone) must resolve to a public address, and an unauthenticated image
+  download does not follow redirects. `PUT /v1/{whatsapp,messenger,instagram}-channels/{id}/coexist`
+  (scope `channels`) toggles coexist history sync.
+
 - **Imports** — a token can run a whole import without the browser's session
   upload: `POST /v1/contacts/imports/upload-url` (scope `contacts`) and
   `POST /v1/products/imports/upload-url` (scope `ecommerce`) validate the file

@@ -3,6 +3,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   createChannelReadRoutes,
+  createCoexistRoute,
   createHandoverResumeFlowRoute,
 } from "@/features/channel-integrations/api/public"
 import { possibleErrorsOnMutatingResource } from "@/lib/orpc/orpc-error-helper"
@@ -13,6 +14,7 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
 export const messengerChannelsPublicRouter = {
   ...createChannelReadRoutes("messenger"),
   ...createHandoverResumeFlowRoute("messenger"),
+  ...createCoexistRoute("messenger"),
   updateTagSync: workspaceTokenAuthAPI
     .route({
       method: "PATCH",
