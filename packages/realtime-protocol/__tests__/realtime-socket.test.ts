@@ -113,10 +113,7 @@ describe("RealtimeSocket", () => {
   })
 
   it("keeps backing off across a repeated resync-then-immediate-close loop", async () => {
-    // Regression for PR #1349 finding #1: resetting #attempt on every `open`
-    // gave a server that closes right after connecting (e.g. a stale-cursor
-    // resync loop) zero backoff. Attempt must only reset after the socket
-    // stays open past `minUptimeBeforeResetMs`.
+    // A connection that closes immediately must retain its retry backoff.
     const sockets: FakeWebSocket[] = []
     const getUrl = vi.fn<() => Promise<string>>().mockResolvedValue("ws://test")
     new RealtimeSocket({
@@ -263,11 +260,8 @@ describe("RealtimeSocket", () => {
   })
 
   it("counts a native WebSocket error only once (onClose), not also via onError", async () => {
-    // Regression for PR #1349 round-4 medium finding: `onerror` used to also
-    // forward to `options.onError` before calling `socket.close()` — since
-    // `close()` always triggers `onclose` too, a caller tallying consecutive
-    // connect failures across both callbacks (e.g. the webchat widget's
-    // reconnect-failure banner threshold) counted one real failure as two.
+    // Native WebSocket errors close the socket, so onClose reports the failure
+    // exactly once.
     const webSocket = new FakeWebSocket()
     const onError = vi.fn()
     const onClose = vi.fn()

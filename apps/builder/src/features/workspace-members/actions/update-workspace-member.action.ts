@@ -2,7 +2,7 @@
 
 import { isDeepStrictEqual } from "node:util"
 import {
-  revokeWorkspaceMemberRealtimeConnections,
+  tryRevokeWorkspaceMemberRealtimeConnections,
   userService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
@@ -12,7 +12,6 @@ import { isCommunity } from "@/env"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
-import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   getSuperAdminPermissions,
@@ -75,7 +74,7 @@ export const updateWorkspaceMemberAction = workspaceActionClient
     // schema, it MUST be added to permissionsChanged/notificationsChanged (or
     // diffed separately) below, or it will silently never be persisted.
     if (!(permissionsChanged || notificationsChanged)) {
-      return
+      return { revokeWarning: false }
     }
 
     const updated = await workspaceMemberService.update({
@@ -87,29 +86,14 @@ export const updateWorkspaceMemberAction = workspaceActionClient
     if (!updated) {
       return { revokeWarning: false }
     }
-    // `revokeWorkspaceMemberRealtimeConnections` already retries a transient
-    // Redis failure a few times; if every attempt still fails, the
-    // permissions change itself has already been persisted — only the
-    // IMMEDIATE reauth-close of the member's existing sockets is uncertain
-    // (they still re-validate on their next forced reconnect), so this
-    // reports a warning rather than failing the whole action. See PR #1349
-    // finding #5.
-    let revokeWarning = false
-    if (permissionsChanged) {
-      try {
-        await revokeWorkspaceMemberRealtimeConnections({
-          userId: workspaceMember.userId,
-          workspaceId,
-          reason: "reauth",
-        })
-      } catch (error) {
-        revokeWarning = true
-        logger.error(
-          { err: error, userId: workspaceMember.userId, workspaceId },
-          "Failed to revoke workspace member realtime connections",
-        )
-      }
-    }
+    const revokeWarning =
+      permissionsChanged &&
+      !(await tryRevokeWorkspaceMemberRealtimeConnections({
+        userId: workspaceMember.userId,
+        workspaceId,
+        reason: "reauth",
+        errorMessage: "Failed to revoke workspace member realtime connections",
+      }))
 
     // Only a real permissions/role change is in the audit-log spec for this
     // action — a save that only touches notification settings must not be

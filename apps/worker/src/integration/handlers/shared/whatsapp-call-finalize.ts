@@ -16,6 +16,7 @@ import {
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { emitCallEnded, emitMissedAudioCall } from "@chatbotx.io/events"
 import {
+  type RealtimeEventData,
   RealtimeEventType,
   type RealtimeEventWhatsappCallTransportEnded,
   routeForConversation,
@@ -263,6 +264,44 @@ export type FinalizeCallSideEffectsInput = {
   lastError?: string | null
 }
 
+type RealtimeCallMessageEvent =
+  | Omit<
+      Extract<
+        RealtimeEventData,
+        { eventType: typeof RealtimeEventType.messageCreated }
+      >,
+      "route"
+    >
+  | Omit<
+      Extract<
+        RealtimeEventData,
+        { eventType: typeof RealtimeEventType.messageContentUpdated }
+      >,
+      "route"
+    >
+const publishCallMessageEvent = async (
+  call: Pick<WhatsappCallModel, "conversationId" | "id" | "workspaceId">,
+  event: RealtimeCallMessageEvent,
+): Promise<void> => {
+  try {
+    const conversation = await conversationService.findBy({
+      where: { id: call.conversationId, workspaceId: call.workspaceId },
+    })
+    await publishWorkspaceRealtimeEvent(call.workspaceId, {
+      ...event,
+      route: routeForConversation({
+        assignedUserId: conversation?.assignedUserId,
+        assignedInboxTeamId: conversation?.assignedInboxTeamId,
+      }),
+    })
+  } catch (error) {
+    logger.warn(
+      { callId: call.id, err: error, eventType: event.eventType },
+      "Whatsapp call: unable to emit realtime message event",
+    )
+  }
+}
+
 /**
  * The single terminate side-effect block every terminal path shares, all
  * guarded on the winning message insert (isNew) so a redelivery never re-fires
@@ -388,21 +427,10 @@ export const finalizeCallSideEffects = async (
     }
   }
 
-  try {
-    const conversation = await conversationService.findBy({
-      where: { id: call.conversationId, workspaceId: call.workspaceId },
-    })
-    await publishWorkspaceRealtimeEvent(call.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: { ...message, attachments: [] },
-      route: routeForConversation({
-        assignedUserId: conversation?.assignedUserId,
-        assignedInboxTeamId: conversation?.assignedInboxTeamId,
-      }),
-    })
-  } catch (error) {
-    logger.warn({ err: error }, "Whatsapp call: unable to emit realtime event")
-  }
+  await publishCallMessageEvent(call, {
+    eventType: RealtimeEventType.messageCreated,
+    data: { ...message, attachments: [] },
+  })
 
   if (!contactInbox) {
     return
@@ -566,22 +594,8 @@ export const enrichCallActivityMessage = async (props: {
     getWhatsappCallEntity(merged.contentAttributes) ??
     defaultCallEntity(call, overrides)
 
-  const conversation = await conversationService.findBy({
-    where: { id: call.conversationId, workspaceId: call.workspaceId },
+  await publishCallMessageEvent(call, {
+    eventType: RealtimeEventType.messageContentUpdated,
+    data: { messageId: merged.id, contentAttributes: entity },
   })
-  try {
-    await publishWorkspaceRealtimeEvent(call.workspaceId, {
-      eventType: RealtimeEventType.messageContentUpdated,
-      data: { messageId: merged.id, contentAttributes: entity },
-      route: routeForConversation({
-        assignedUserId: conversation?.assignedUserId,
-        assignedInboxTeamId: conversation?.assignedInboxTeamId,
-      }),
-    })
-  } catch (error) {
-    logger.warn(
-      { err: error, callId: call.id },
-      "Whatsapp call: unable to emit realtime enrichment event",
-    )
-  }
 }

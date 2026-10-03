@@ -13,6 +13,7 @@ import {
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
   resetRealtimeStreamPublisherForTests,
+  retryWithLinearBackoff,
 } from "./realtime-stream-publisher"
 
 const WORKSPACE_REALTIME_COALESCE_MS = 25
@@ -32,7 +33,6 @@ const IMMEDIATE_FLUSH_EVENT_TYPES = new Set([
 
 type PendingWorkspaceRealtimeEvents = {
   byteLength: number
-  events: RealtimeEventData[]
   serializedEvents: string[]
   timer: NodeJS.Timeout
   waiters: {
@@ -72,29 +72,15 @@ const flushRelayWindowIfElapsed = (): void => {
   relayWindow = createEmptyRelayWindow()
 }
 
-const appendWorkspaceRealtimeEvents = async (
-  workspaceId: string,
-  pending: PendingWorkspaceRealtimeEvents,
-): Promise<void> => {
-  const serializedRecord = `{"events":[${pending.serializedEvents.join(",")}],"kind":"workspace-events","workspaceId":${JSON.stringify(workspaceId)}}`
-  await publishSerializedRealtimeStreamRecord(workspaceId, serializedRecord)
-}
-
 const createPendingWorkspaceRealtimeEvents = (
   workspaceId: string,
 ): PendingWorkspaceRealtimeEvents => {
   const pending: PendingWorkspaceRealtimeEvents = {
     byteLength: BATCH_ENVELOPE_BYTES,
-    events: [],
     serializedEvents: [],
     timer: setTimeout(
       () =>
-        flushPendingWorkspaceRealtimeEvents(workspaceId).catch((error) => {
-          logger.error(
-            { err: error, workspaceId },
-            "Failed to publish realtime events",
-          )
-        }),
+        flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined),
       WORKSPACE_REALTIME_COALESCE_MS,
     ),
     waiters: [],
@@ -118,21 +104,26 @@ const flushPendingWorkspaceRealtimeEvents = (
 
   pendingByWorkspace.delete(workspaceId)
   clearTimeout(pending.timer)
-  if (pending.events.length === 0) {
+  if (pending.serializedEvents.length === 0) {
     return Promise.resolve()
   }
 
   relayWindow.flushes += 1
   relayWindow.maxBatchEvents = Math.max(
     relayWindow.maxBatchEvents,
-    pending.events.length,
+    pending.serializedEvents.length,
   )
 
   const previousAppend =
     inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
-  const append = previousAppend.then(() =>
-    appendWorkspaceRealtimeEvents(workspaceId, pending),
-  )
+  const append = previousAppend
+    .catch(() => undefined)
+    .then(() =>
+      publishSerializedRealtimeStreamRecord(
+        workspaceId,
+        `{"events":[${pending.serializedEvents.join(",")}],"kind":"workspace-events","workspaceId":${JSON.stringify(workspaceId)}}`,
+      ),
+    )
   append.then(
     () => {
       for (const waiter of pending.waiters) {
@@ -179,14 +170,8 @@ export const resetRealtimePublishStateForTests = (): void => {
 }
 
 /**
- * Drains every workspace's coalesced batch and in-flight append on worker
- * shutdown. Uses `allSettled` (not `all`): one workspace's Redis append
- * failing must not abort draining every OTHER workspace's still-pending
- * append — `Promise.all` would reject on the first failure and leave the
- * rest of the `Promise.all` call's un-awaited entries to settle
- * independently with no one logging their outcome, silently losing events
- * for workspaces that had nothing to do with the failing one. See PR #1349
- * round-4 medium finding (shutdown flush).
+ * Drains every workspace's coalesced batch and in-flight append independently
+ * so one failed workspace does not hide another workspace's delivery result.
  */
 export const flushAllPendingWorkspaceRealtimeEvents =
   async (): Promise<void> => {
@@ -255,20 +240,19 @@ export const publishWorkspaceRealtimeEvent = (
   relayWindow.bytes += serializedEventBytes
   relayWindow.eventTypes[event.eventType] =
     (relayWindow.eventTypes[event.eventType] ?? 0) + 1
-  const separatorBytes = pending.events.length > 0 ? 1 : 0
+  const separatorBytes = pending.serializedEvents.length > 0 ? 1 : 0
   const wouldExceedBytes =
     pending.byteLength + separatorBytes + serializedEventBytes >
     WORKSPACE_REALTIME_MAX_BYTES
   const wouldExceedCount =
-    pending.events.length + 1 > WORKSPACE_REALTIME_MAX_EVENTS
+    pending.serializedEvents.length + 1 > WORKSPACE_REALTIME_MAX_EVENTS
 
   if (wouldExceedBytes || wouldExceedCount) {
     flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined)
     pending = createPendingWorkspaceRealtimeEvents(workspaceId)
   }
 
-  const nextSeparatorBytes = pending.events.length > 0 ? 1 : 0
-  pending.events.push(event)
+  const nextSeparatorBytes = pending.serializedEvents.length > 0 ? 1 : 0
   pending.serializedEvents.push(serializedEvent)
   pending.byteLength += nextSeparatorBytes + serializedEventBytes
   const { promise: delivery, reject, resolve } = Promise.withResolvers<void>()
@@ -276,7 +260,7 @@ export const publishWorkspaceRealtimeEvent = (
 
   if (
     IMMEDIATE_FLUSH_EVENT_TYPES.has(event.eventType) ||
-    pending.events.length === WORKSPACE_REALTIME_MAX_EVENTS
+    pending.serializedEvents.length === WORKSPACE_REALTIME_MAX_EVENTS
   ) {
     flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined)
   }
@@ -318,41 +302,21 @@ export const publishWorkspaceMemberRealtimeEvent = async (
 const REVOKE_RETRY_ATTEMPTS = 3
 const REVOKE_RETRY_DELAY_MS = 250
 
-const delay = (ms: number): Promise<void> => {
-  const { promise, resolve } = Promise.withResolvers<void>()
-  setTimeout(resolve, ms)
-  return promise
+type WorkspaceMemberRealtimeConnectionRevocationArgs = {
+  reason: "deleted" | "reauth"
+  userId: string
+  workspaceId: string
 }
 
 /**
- * Immediately revokes a member's existing realtime connections and marks the
- * member revoked for any NEW connect too — `markRealtimeMemberRevoked` writes
- * a TTL'd `realtime:revoked:{workspaceId}:{userId}` key the gateway checks
- * against a connect token's `iat`, independent of whether that connect
- * carries a replay `lastSeq` (see `getRealtimeMemberRevokedKey`'s doc for
- * why a stream-entry-based check alone isn't enough). Retries a transient
- * Redis failure a few times before giving up: a revoke that silently fails
- * once leaves the member's existing socket receiving events, and a new
- * connect able to succeed, for up to `connectionLifetimeMs` (30 minutes by
- * default) until its next forced reconnect re-checks membership — callers
- * must still log and decide what to do if every attempt here fails.
- *
- * `reason` is required, not defaulted: `"deleted"` closes the socket
- * terminally (the member was actually removed from the workspace — the
- * client must not reconnect), `"reauth"` only forces a fresh token mint
- * (permissions or team membership changed, but the member is still in the
- * workspace). Using the wrong one either strands a still-valid member with a
- * dead inbox, or lets a removed member's existing socket keep reconnecting.
- * See PR #1349 finding #1 and round-4 finding #5.
+ * Immediately revokes a member's existing realtime connections and marks
+ * future connections as revoked.
  */
-export const revokeWorkspaceMemberRealtimeConnections = async (args: {
-  workspaceId: string
-  userId: string
-  reason: "deleted" | "reauth"
-}): Promise<void> => {
-  let lastError: unknown
-  for (let attempt = 1; attempt <= REVOKE_RETRY_ATTEMPTS; attempt += 1) {
-    try {
+export const revokeWorkspaceMemberRealtimeConnections = async (
+  args: WorkspaceMemberRealtimeConnectionRevocationArgs,
+): Promise<void> => {
+  await retryWithLinearBackoff(
+    async () => {
       await markRealtimeMemberRevoked(args.workspaceId, args.userId)
       await publishRealtimeStreamRecord({
         kind: "member-revoke",
@@ -360,15 +324,30 @@ export const revokeWorkspaceMemberRealtimeConnections = async (args: {
         workspaceId: args.workspaceId,
         userId: args.userId,
       })
-      return
-    } catch (error) {
-      lastError = error
-      if (attempt < REVOKE_RETRY_ATTEMPTS) {
-        await delay(REVOKE_RETRY_DELAY_MS * attempt)
-      }
-    }
+    },
+    {
+      attempts: REVOKE_RETRY_ATTEMPTS,
+      baseDelayMs: REVOKE_RETRY_DELAY_MS,
+      workspaceId: args.workspaceId,
+    },
+  )
+}
+
+export const tryRevokeWorkspaceMemberRealtimeConnections = async (
+  args: WorkspaceMemberRealtimeConnectionRevocationArgs & {
+    errorMessage: string
+  },
+): Promise<boolean> => {
+  try {
+    await revokeWorkspaceMemberRealtimeConnections(args)
+    return true
+  } catch (error) {
+    logger.error(
+      { err: error, userId: args.userId, workspaceId: args.workspaceId },
+      args.errorMessage,
+    )
+    return false
   }
-  throw lastError
 }
 
 /** Publishes an event to a guest conversation's active realtime connections. */

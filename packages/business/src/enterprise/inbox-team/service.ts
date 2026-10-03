@@ -19,8 +19,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../../base.service"
 import { ChatbotXException, notFoundException } from "../../errors"
-import { logger } from "../../logger"
-import { revokeWorkspaceMemberRealtimeConnections } from "../../platform/realtime-broadcast"
+import { tryRevokeWorkspaceMemberRealtimeConnections } from "../../platform/realtime-broadcast"
 import { type IdLabel, selectLabelsByIds } from "../../select-labels-by-ids"
 import { workspaceMemberService } from "../../workspace-member/service"
 
@@ -124,18 +123,13 @@ class InboxTeamService extends BaseService {
   ): Promise<void> {
     await Promise.all(
       Array.from(userIds, async (userId) => {
-        try {
-          await revokeWorkspaceMemberRealtimeConnections({
-            workspaceId,
-            userId,
-            reason: "reauth",
-          })
-        } catch (error) {
-          logger.error(
-            { err: error, userId, workspaceId },
+        await tryRevokeWorkspaceMemberRealtimeConnections({
+          workspaceId,
+          userId,
+          reason: "reauth",
+          errorMessage:
             "Failed to revoke inbox team member realtime connections",
-          )
-        }
+        })
       }),
     )
   }

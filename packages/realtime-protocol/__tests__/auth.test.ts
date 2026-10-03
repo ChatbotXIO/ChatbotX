@@ -1,8 +1,11 @@
 import { SignJWT } from "jose"
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import {
+  CLOCK_TOLERANCE_SECONDS,
   extractBearerToken,
+  REALTIME_MEMBER_REVOKED_TTL_SECONDS,
   REALTIME_TOKEN_PURPOSE,
+  REALTIME_TOKEN_TTL_SECONDS,
   signGuestConnectToken,
   signMemberConnectToken,
   signPresenceReportToken,
@@ -14,6 +17,12 @@ import {
 
 const SECRET = "a".repeat(32)
 const OTHER_SECRET = "b".repeat(32)
+
+it("keeps a revocation marker valid for every still-tolerated token", () => {
+  expect(REALTIME_MEMBER_REVOKED_TTL_SECONDS).toBeGreaterThanOrEqual(
+    REALTIME_TOKEN_TTL_SECONDS + CLOCK_TOLERANCE_SECONDS,
+  )
+})
 
 describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/verify mechanics)", () => {
   it("verifies a token signed for the same audience and purpose", async () => {
@@ -255,6 +264,51 @@ describe("signGuestConnectToken / verifyGuestConnectToken", () => {
 
     await expect(
       verifyGuestConnectToken(token, "guest-conversation-1", SECRET),
+    ).rejects.toThrow()
+  })
+})
+
+describe("guest token expiry tolerance", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("accepts a token expired four seconds ago but rejects one expired six seconds ago", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-10-03T12:00:00.000Z"))
+    const recentlyExpiredToken = await new SignJWT({
+      guestConversationId: "guest-conversation-1",
+      purpose: REALTIME_TOKEN_PURPOSE.guestConnect,
+      workspaceId: "workspace-1",
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setAudience("guest:guest-conversation-1")
+      .setExpirationTime(Math.floor(Date.now() / 1000) - 4)
+      .sign(new TextEncoder().encode(SECRET))
+
+    await expect(
+      verifyGuestConnectToken(
+        recentlyExpiredToken,
+        "guest-conversation-1",
+        SECRET,
+      ),
+    ).resolves.toEqual({
+      guestConversationId: "guest-conversation-1",
+      workspaceId: "workspace-1",
+    })
+
+    const expiredToken = await new SignJWT({
+      guestConversationId: "guest-conversation-1",
+      purpose: REALTIME_TOKEN_PURPOSE.guestConnect,
+      workspaceId: "workspace-1",
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setAudience("guest:guest-conversation-1")
+      .setExpirationTime(Math.floor(Date.now() / 1000) - 6)
+      .sign(new TextEncoder().encode(SECRET))
+
+    await expect(
+      verifyGuestConnectToken(expiredToken, "guest-conversation-1", SECRET),
     ).rejects.toThrow()
   })
 })

@@ -5,15 +5,15 @@ import {
   type RealtimeStreamRecord,
 } from "@chatbotx.io/realtime-protocol"
 import { createRedisConnection, type Redis } from "@chatbotx.io/redis"
+import { logger } from "../logger"
 import { resolveRealtimeRedisUrl } from "./settings"
 
 const REALTIME_STREAM_RETENTION_MS = 5 * 60 * 1000
 
-/** A transient Redis blip (brief network hiccup, failover) must not
- * permanently drop a realtime event with no gap signal to clients —
- * especially fire-and-forget guest publishes, which have no caller-level
- * retry of their own. Bounded so a genuine outage still fails fast instead
- * of queueing indefinitely. See PR #1349 finding #7. */
+/**
+ * A transient Redis blip must not permanently drop a realtime event with no
+ * gap signal to clients. Bounded retries still fail fast during an outage.
+ */
 const PUBLISH_RETRY_ATTEMPTS = 3
 const PUBLISH_RETRY_DELAY_MS = 100
 
@@ -23,6 +23,27 @@ const delay = (ms: number): Promise<void> => {
   const { promise, resolve } = Promise.withResolvers<void>()
   setTimeout(resolve, ms)
   return promise
+}
+
+export const retryWithLinearBackoff = async <T>(
+  fn: () => Promise<T>,
+  options: { attempts: number; baseDelayMs: number; workspaceId: string },
+): Promise<T> => {
+  for (let attempt = 1; attempt <= options.attempts; attempt += 1) {
+    try {
+      return await fn()
+    } catch (error) {
+      if (attempt === options.attempts) {
+        throw error
+      }
+      logger.warn(
+        { attempt, err: error, workspaceId: options.workspaceId },
+        "Realtime stream operation failed; retrying",
+      )
+      await delay(options.baseDelayMs * attempt)
+    }
+  }
+  throw new Error("Realtime retry attempts exhausted")
 }
 
 const getRealtimeStreamConnection = (): Redis =>
@@ -49,9 +70,8 @@ export const publishSerializedRealtimeStreamRecord = async (
   workspaceId: string,
   serializedRecord: string,
 ): Promise<void> => {
-  let lastError: unknown
-  for (let attempt = 1; attempt <= PUBLISH_RETRY_ATTEMPTS; attempt += 1) {
-    try {
+  await retryWithLinearBackoff(
+    async () => {
       await getRealtimeStreamConnection().xadd(
         getRealtimeStreamKey(workspaceId),
         "MINID",
@@ -61,15 +81,13 @@ export const publishSerializedRealtimeStreamRecord = async (
         "record",
         serializedRecord,
       )
-      return
-    } catch (error) {
-      lastError = error
-      if (attempt < PUBLISH_RETRY_ATTEMPTS) {
-        await delay(PUBLISH_RETRY_DELAY_MS * attempt)
-      }
-    }
-  }
-  throw lastError
+    },
+    {
+      attempts: PUBLISH_RETRY_ATTEMPTS,
+      baseDelayMs: PUBLISH_RETRY_DELAY_MS,
+      workspaceId,
+    },
+  )
 }
 
 /**
@@ -88,12 +106,7 @@ export const publishRealtimeStreamRecord = async (
 /**
  * Records that a member's realtime connections were just revoked, so the
  * gateway can reject a reconnect from a still-unexpired token minted before
- * this moment — independent of whether that connect carries a replay
- * `lastSeq` (a stream-entry-based check only catches a revoke sitting
- * inside the replayed window). The TTL mirrors the longest a token minted
- * right before this call could still pass verification, so once the key
- * expires every currently-valid token was necessarily minted after it. See
- * PR #1349 round-4 finding #5.
+ * this moment. The TTL outlives every still-valid token minted before it.
  */
 export const markRealtimeMemberRevoked = async (
   workspaceId: string,

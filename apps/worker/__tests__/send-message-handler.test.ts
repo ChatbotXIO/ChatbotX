@@ -853,10 +853,8 @@ describe("chat send-message handlers", () => {
   })
 
   test("routes a send-failure event to the conversation's assigned agent/team, not just full-access members", async () => {
-    // Regression for PR #1349 round-4 finding #3: `messageFailed` used to
-    // publish with no `route` at all, so a workspace member restricted to
-    // `chatScope: \"assigned\"` never saw a failed-send state (or the
-    // edit/delete buttons it unlocks) for a conversation assigned to them.
+    // Assigned-scope members need this failed-send event for their
+    // conversation.
     const error = new ChannelError(
       "expired human agent window",
       ChannelErrorCategory.PAYLOAD_INVALID,
@@ -925,10 +923,8 @@ describe("chat send-message handlers", () => {
   })
 
   test("routes a comment reply's messageIdAssigned event to the conversation's assigned agent/team", async () => {
-    // Regression for PR #1349 finding #1: `messageIdAssigned` used to
-    // publish with no `route` at all, so a workspace member restricted to
-    // `chatScope: "assigned"` never saw the provider comment id attach (the
-    // edit/delete buttons it unlocks) for a conversation assigned to them.
+    // Assigned-scope members need the provider comment id for their
+    // conversation.
     mockRunChannelHandler.mockResolvedValueOnce({
       messageIds: ["reply-1"],
       sentCount: 1,

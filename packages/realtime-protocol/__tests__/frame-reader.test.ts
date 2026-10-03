@@ -55,14 +55,14 @@ describe("createRealtimeFrameReader", () => {
     expect(onParseError).not.toHaveBeenCalled()
   })
 
-  test("reports malformed JSON but does not trigger a resync for it", () => {
+  test("reports malformed JSON and triggers a resync", () => {
     const { onParseError, onResyncNeeded, reader } = makeReader()
 
     const batch = reader.readFrame("not-json")
 
     expect(batch).toBeNull()
     expect(onParseError).toHaveBeenCalledTimes(1)
-    expect(onResyncNeeded).not.toHaveBeenCalled()
+    expect(onResyncNeeded).toHaveBeenCalledTimes(1)
   })
 
   test("reports and resyncs on a schema-invalid frame", () => {
@@ -125,10 +125,8 @@ describe("createRealtimeFrameReader", () => {
   })
 
   test("reportInvalidEvent shares the same throttle window as an invalid batch", () => {
-    // Regression for PR #1349 round-5: a per-event schema failure the
-    // caller discovers AFTER readFrame already returned a batch must not
-    // bypass the batch-envelope throttle — both are the same "something's
-    // wrong, resync" signal and must share one window.
+    // Per-event failures found after parsing share the batch-invalid resync
+    // throttle.
     const { onResyncNeeded, reader } = makeReader({ resyncThrottleMs: 2000 })
 
     reader.readFrame(JSON.stringify({ not: "valid" }))

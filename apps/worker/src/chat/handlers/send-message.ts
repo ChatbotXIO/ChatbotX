@@ -204,6 +204,10 @@ export async function sendMessageToChannel(
   const isBulkOutbound =
     isBulkOutboundMetadata(metadata, isBulkBroadcast) ||
     isBulkOutboundMetadata(message.contentAttributes?.metadata, isBulkBroadcast)
+  const conversationRoute = routeForConversation({
+    assignedInboxTeamId: conversation.assignedInboxTeamId,
+    assignedUserId: conversation.assignedUserId,
+  })
 
   // The job carries the contact inbox as it was at enqueue; a routing
   // handover may have landed since. Routing decisions (the gate, the
@@ -343,10 +347,7 @@ export async function sendMessageToChannel(
           queueWorkspaceRealtimeEvent(conversation.workspaceId, {
             eventType: RealtimeEventType.messageIdAssigned,
             data: { messageId: message.id, commentId: replyId },
-            route: routeForConversation({
-              assignedInboxTeamId: conversation.assignedInboxTeamId,
-              assignedUserId: conversation.assignedUserId,
-            }),
+            route: conversationRoute,
           })
 
           if (attemptsMade > 0) {
@@ -355,10 +356,7 @@ export async function sendMessageToChannel(
               message.clientId,
               conversation.workspaceId,
               new Date(message.createdAt),
-              routeForConversation({
-                assignedInboxTeamId: conversation.assignedInboxTeamId,
-                assignedUserId: conversation.assignedUserId,
-              }),
+              conversationRoute,
               isBulkOutbound,
             )
           }
@@ -388,10 +386,7 @@ export async function sendMessageToChannel(
           message.clientId,
           conversation.workspaceId,
           new Date(message.createdAt),
-          routeForConversation({
-            assignedInboxTeamId: conversation.assignedInboxTeamId,
-            assignedUserId: conversation.assignedUserId,
-          }),
+          conversationRoute,
           isBulkOutbound,
         )
       }
@@ -502,10 +497,7 @@ export async function sendMessageToChannel(
       conversation.workspaceId,
       message?.createdAt ? new Date(message.createdAt) : undefined,
       errorData.message,
-      routeForConversation({
-        assignedInboxTeamId: conversation.assignedInboxTeamId,
-        assignedUserId: conversation.assignedUserId,
-      }),
+      conversationRoute,
       isBulkOutbound,
     )
     // Terminal failures only: an attempt that is about to be retried must not

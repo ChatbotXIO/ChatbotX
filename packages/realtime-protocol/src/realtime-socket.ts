@@ -1,10 +1,6 @@
 export const REALTIME_CLOSE_CODE = {
-  // Client-generated, not sent by the server: this socket closes itself
-  // when `heartbeatTimeoutMs` elapses with no frame at all (not even the
-  // server's `hb` broadcast) — see `#armHeartbeat` below. Kept in this same
-  // table (not a bare magic number at the call site) so every close code
-  // this protocol uses, server- or client-originated, is discoverable in
-  // one place. See PR #1349 round-4 advisory.
+  // Client-generated when the heartbeat timeout elapses. Kept in this table
+  // so every protocol close code is discoverable in one place.
   heartbeatTimeout: 4000,
   revoked: 4001,
   resync: 4002,
@@ -16,9 +12,6 @@ export const REALTIME_CLOSE_CODE = {
   // normal replay path, so there's nothing to invalidate caches for.
   reauth: 4004,
 } as const
-
-export type RealtimeCloseCode =
-  (typeof REALTIME_CLOSE_CODE)[keyof typeof REALTIME_CLOSE_CODE]
 
 /**
  * `getUrl` throws this to signal that the failure is permanent — e.g. the
@@ -36,7 +29,7 @@ type RealtimeWebSocket = {
   onmessage: ((event: { data: string }) => void) | null
   onopen: (() => void) | null
 }
-export type RealtimeSocketOptions = {
+type RealtimeSocketOptions = {
   getUrl: () => Promise<string>
   heartbeatTimeoutMs?: number
   maxReconnectDelayMs?: number
@@ -136,18 +129,8 @@ export class RealtimeSocket {
           this.options.onMessage(event.data)
         }
         socket.onerror = () => {
-          // Deliberately does NOT call `this.options.onError` here: the
-          // native WebSocket `error` event carries no usable code/reason
-          // (per spec) and is ALWAYS followed by a `close` event once
-          // `.close()` below runs — calling both callbacks for the same
-          // underlying failure double-counts it for any caller tallying
-          // consecutive connect failures across `onError` + `onClose` (e.g.
-          // the webchat widget's reconnect-failure banner threshold).
-          // `onClose` is the single authoritative signal for this failure;
-          // `onError` stays reserved for failures that never produce a
-          // `close` event at all (a `getUrl()` rejection, handled in the
-          // `.catch` below). See PR #1349 round-4 medium finding (webchat
-          // double-counts connect failures).
+          // Native WebSocket errors carry no useful detail and are followed by
+          // close. Report the failure through `onClose` exactly once.
           socket.close()
         }
         socket.onclose = (event) => {
