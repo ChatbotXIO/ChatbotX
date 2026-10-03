@@ -68,6 +68,46 @@ export async function stepThreadControl({
   }
 }
 
+/** Meta dismisses WhatsApp typing indicators after ~25 seconds. */
+const WHATSAPP_TYPING_MAX_VISIBLE_MS = 25_000
+/** Re-send before Meta's window closes (see automated-response). */
+const WHATSAPP_TYPING_REFRESH_MS = 20_000
+const TYPING_STEP_MAX_SECONDS = 60
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms)
+  })
+
+const waitForTypingDuration = async (
+  totalMs: number,
+  refreshTyping: () => Promise<void>,
+) => {
+  if (totalMs <= 0) {
+    return
+  }
+
+  if (totalMs <= WHATSAPP_TYPING_MAX_VISIBLE_MS) {
+    await sleep(totalMs)
+    return
+  }
+
+  const deadline = Date.now() + totalMs
+  const intervalId = setInterval(() => {
+    if (Date.now() >= deadline) {
+      return
+    }
+
+    refreshTyping().catch(() => undefined)
+  }, WHATSAPP_TYPING_REFRESH_MS)
+
+  try {
+    await sleep(totalMs)
+  } finally {
+    clearInterval(intervalId)
+  }
+}
+
 export async function stepBlockContact({
   conversation,
 }: ExecuteStepProps<BlockContactStepSchema>) {
@@ -454,7 +494,7 @@ export async function stepEnableBot({
 export const stepSendTyping = async (
   props: ExecuteStepProps<TypingStepSchema>,
 ) => {
-  const { conversation, contactInbox: baseContactInbox } = props
+  const { conversation, contactInbox: baseContactInbox, step } = props
 
   const contactInbox = await resolveContactInbox(
     baseContactInbox,
@@ -466,11 +506,25 @@ export const stepSendTyping = async (
     return
   }
 
-  // Shared path so the WhatsApp wamid lookup lives in one place.
-  await sendTypingToChannel({
+  const typingPayload = {
     conversation,
     contactInbox,
-    typing: true,
-    seconds: props.step.seconds,
-  })
+    typing: true as const,
+    seconds: step.seconds,
+  }
+
+  const sendTyping = () =>
+    sendTypingToChannel(typingPayload).catch((err) => {
+      logger.debug(
+        { err, conversationId: conversation.id },
+        "stepSendTyping: typing indicator failed",
+      )
+    })
+
+  // Shared path so the WhatsApp wamid lookup lives in one place.
+  await sendTyping()
+
+  const delayMs =
+    Math.min(Math.max(step.seconds, 1), TYPING_STEP_MAX_SECONDS) * 1000
+  await waitForTypingDuration(delayMs, sendTyping)
 }
