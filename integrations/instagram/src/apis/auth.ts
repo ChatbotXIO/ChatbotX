@@ -153,6 +153,10 @@ export const getInstagramAccount = async (
     return await fetchInstagramAccount(userAccessToken)
   } catch (error) {
     if (error instanceof InstagramException) {
+      logger.warn(
+        { err: error },
+        "Failed to fetch Instagram account during connect",
+      )
       return null
     }
     throw error

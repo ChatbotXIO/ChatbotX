@@ -11,6 +11,7 @@ import type {
   ConnectionKind,
   ConnectionProvider,
 } from "./connection"
+import { SdkException } from "./exception"
 import type { Handler } from "./shared"
 
 type ProbeVerifyOptions = {
@@ -54,11 +55,14 @@ export const probeVerify = async (
 
 /** Identifies Google OAuth failures that require replacing stored credentials. */
 export const isGoogleRevokedError = (error: unknown): boolean => {
-  if (!(error instanceof Error && "response" in error)) {
+  const originError =
+    error instanceof SdkException ? error.getOriginError() : undefined
+  const candidate = originError ?? error
+  if (!(candidate instanceof Error && "response" in candidate)) {
     return false
   }
 
-  const response = error.response
+  const response = candidate.response
   if (!response || typeof response !== "object" || !("status" in response)) {
     return false
   }
@@ -66,7 +70,7 @@ export const isGoogleRevokedError = (error: unknown): boolean => {
   const status = typeof response.status === "number" ? response.status : null
   return (
     status === 401 ||
-    (status === 400 && error.message.includes("invalid_grant"))
+    (status === 400 && candidate.message.includes("invalid_grant"))
   )
 }
 
@@ -109,7 +113,21 @@ type GoogleOAuthClient = {
 type GoogleOAuthConnectionOptions<IConfig extends Oauth2Config> = {
   getClient: (config: IConfig) => GoogleOAuthClient
   scopes: readonly string[]
-  mapAuth?: (auth: Oauth2AuthValue) => AuthValue | Promise<AuthValue>
+}
+
+type GoogleOAuthConnectionResult<
+  IConfig extends Oauth2Config,
+  IAuth extends Oauth2AuthValue,
+> = {
+  authorizeUrl: (input: {
+    credential: IConfig
+    callbackUrl: string
+    state: string
+  }) => string
+  exchangeCode: Handler<
+    { code: string; callbackUrl: string; credential: IConfig },
+    IAuth
+  >
 }
 
 export const googleTokensToAuth = (
@@ -137,44 +155,59 @@ export const googleTokensToAuth = (
   }
 }
 
-export const googleOAuthConnection = <IConfig extends Oauth2Config>(
+export function googleOAuthConnection<IConfig extends Oauth2Config>(
   options: GoogleOAuthConnectionOptions<IConfig>,
-) => ({
-  authorizeUrl: ({
-    credential,
-    callbackUrl,
-    state,
-  }: {
-    credential: unknown
-    callbackUrl: string
-    state: string
-  }) =>
-    options
-      .getClient({ ...(credential as IConfig), redirectUrl: callbackUrl })
-      .generateAuthUrl({
-        access_type: "offline",
-        prompt: "consent",
-        scope: [...options.scopes],
-        state,
-      }),
-  exchangeCode: async ({
-    code,
-    callbackUrl,
-    credential,
-  }: {
-    code: string
-    callbackUrl: string
-    credential: unknown
-  }): Promise<AuthValue> => {
-    const config = {
-      ...(credential as IConfig),
-      redirectUrl: callbackUrl,
-    }
-    const { tokens } = await options.getClient(config).getToken(code)
-    const auth = googleTokensToAuth(config, callbackUrl, tokens)
-    return options.mapAuth ? await options.mapAuth(auth) : auth
+): GoogleOAuthConnectionResult<IConfig, Oauth2AuthValue>
+export function googleOAuthConnection<
+  IConfig extends Oauth2Config,
+  IAuth extends Oauth2AuthValue,
+>(
+  options: GoogleOAuthConnectionOptions<IConfig> & {
+    mapAuth: (auth: Oauth2AuthValue) => IAuth | Promise<IAuth>
   },
-})
+): GoogleOAuthConnectionResult<IConfig, IAuth>
+export function googleOAuthConnection<
+  IConfig extends Oauth2Config,
+  IAuth extends Oauth2AuthValue,
+>(
+  options: GoogleOAuthConnectionOptions<IConfig> & {
+    mapAuth?: (auth: Oauth2AuthValue) => IAuth | Promise<IAuth>
+  },
+) {
+  return {
+    authorizeUrl: ({
+      credential,
+      callbackUrl,
+      state,
+    }: {
+      credential: IConfig
+      callbackUrl: string
+      state: string
+    }) =>
+      options
+        .getClient({ ...credential, redirectUrl: callbackUrl })
+        .generateAuthUrl({
+          access_type: "offline",
+          prompt: "consent",
+          scope: [...options.scopes],
+          state,
+        }),
+    exchangeCode: async ({
+      code,
+      callbackUrl,
+      credential,
+    }: {
+      code: string
+      callbackUrl: string
+      credential: IConfig
+    }) => {
+      const config = { ...credential, redirectUrl: callbackUrl }
+      const { tokens } = await options.getClient(config).getToken(code)
+      const auth = googleTokensToAuth(config, callbackUrl, tokens)
+      return options.mapAuth ? await options.mapAuth(auth) : auth
+    },
+  }
+}
 type FacebookDialogOptions = {
   clientId: string
   callbackUrl: string

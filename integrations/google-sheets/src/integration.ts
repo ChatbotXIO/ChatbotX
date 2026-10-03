@@ -17,7 +17,10 @@ import type {
   GoogleSheetsConfig,
 } from "./schemas"
 
-const googleConnection = googleOAuthConnection<GoogleSheetsConfig>({
+const googleConnection = googleOAuthConnection<
+  GoogleSheetsConfig,
+  GoogleSheetsAuthValue
+>({
   getClient,
   scopes: GOOGLE_SHEETS_SCOPES,
   mapAuth: addGoogleSheetsIdentity,

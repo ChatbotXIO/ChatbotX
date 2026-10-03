@@ -206,9 +206,11 @@ the authoritative, current list, and
 each feature's scope assignment at compile/test time (e.g.
 `contacts-public-scope.test.ts`, `broadcasts-public-scope.test.ts`,
 `appointments-public-scope.test.ts`, `sequences-public-scope.test.ts`,
-`connections-public-scope.test.ts`, `analytics-public-scope.test.ts`,
-`conversations-public-scope.test.ts`, `products-public-scope.test.ts`,
-`product-categories-public-scope.test.ts`, `coupons-public-scope.test.ts`).
+`integrations-public-scope.test.ts`,
+`channels-and-integrations-public-scope.test.ts`,
+`analytics-public-scope.test.ts`, `conversations-public-scope.test.ts`,
+`products-public-scope.test.ts`, `product-categories-public-scope.test.ts`,
+`coupons-public-scope.test.ts`).
 
 What follows are the scope-assignment decisions and gotchas that aren't
 derivable from the code or those tests — read before adding or reassigning

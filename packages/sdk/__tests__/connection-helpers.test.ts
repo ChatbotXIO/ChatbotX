@@ -9,6 +9,7 @@ import {
   isUnauthorizedStatusError,
   oauth2Auth,
   probeVerify,
+  SdkException,
   selfServeConnection,
   verifyGraphToken,
 } from "../src"
@@ -38,6 +39,17 @@ describe("isGoogleRevokedError", () => {
     const error = Object.assign(new Error(message), { response: { status } })
 
     expect(isGoogleRevokedError(error)).toBe(true)
+  })
+
+  test("recognizes an original Google response wrapped by SdkException", () => {
+    const originError = Object.assign(new Error("Unauthorized"), {
+      response: { status: 401 },
+    })
+    const wrappedError = new SdkException(
+      "Google Calendar API error: Unauthorized",
+    ).setOriginError(originError)
+
+    expect(isGoogleRevokedError(wrappedError)).toBe(true)
   })
 
   test("rejects transient and malformed errors", () => {

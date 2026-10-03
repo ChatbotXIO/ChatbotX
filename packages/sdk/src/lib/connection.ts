@@ -37,10 +37,11 @@ export type ConnectionDescriptor = {
 }
 
 /** One selectable target surfaced by `listCandidates` during a connect session — carries auth, never persisted as-is. */
-export type ConnectionCandidate = ConnectionDescriptor & {
-  alreadyConnected?: "this_workspace" | "other_workspace"
-  auth: AuthValue
-}
+export type ConnectionCandidate<IAuth extends AuthValue = AuthValue> =
+  ConnectionDescriptor & {
+    alreadyConnected?: "this_workspace" | "other_workspace"
+    auth: IAuth
+  }
 
 /** Provider-specific platform credential or direct connection input. */
 export type ConnectionCredential = unknown
@@ -58,7 +59,7 @@ type ConnectionProviderCommon<IAuth extends AuthValue> = {
   }
 }
 
-type OAuthStrategy<ICreds> = {
+type OAuthStrategy<IAuth extends AuthValue, ICreds> = {
   strategy: Extract<ConnectionStrategy, "oauth_redirect" | "oauth_popup">
   authorizeUrl: (input: {
     credential: ICreds
@@ -67,7 +68,7 @@ type OAuthStrategy<ICreds> = {
   }) => string
   exchangeCode: Handler<
     { code: string; callbackUrl: string; credential: ICreds },
-    AuthValue
+    IAuth
   >
   fromCredentials?: never
 }
@@ -86,9 +87,9 @@ type SelfServeStrategy<IAuth extends AuthValue, ICreds> = {
   fromCredentials?: Handler<ICreds, IAuth>
 }
 
-type MultiAccount = {
+type MultiAccount<IAuth extends AuthValue> = {
   multiAccount: true
-  listCandidates: Handler<{ auth: AuthValue }, ConnectionCandidate[]>
+  listCandidates: Handler<{ auth: IAuth }, ConnectionCandidate<IAuth>[]>
 }
 
 type SingleAccount = {
@@ -101,8 +102,8 @@ export type ConnectionProvider<
   ICreds = ConnectionCredential,
 > = ConnectionProviderCommon<IAuth> &
   (
-    | OAuthStrategy<ICreds>
+    | OAuthStrategy<IAuth, ICreds>
     | CredentialStrategy<IAuth, ICreds>
     | SelfServeStrategy<IAuth, ICreds>
   ) &
-  (MultiAccount | SingleAccount)
+  (MultiAccount<IAuth> | SingleAccount)

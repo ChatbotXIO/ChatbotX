@@ -8,6 +8,7 @@ const findByTokenHash = vi.fn(
     id: string
     workspaceId: string
     permission: string
+    scopes: string[] | null
   } | null> => null,
 )
 const listByWorkspaceId = vi.fn(async () => [] as unknown[])
@@ -133,6 +134,7 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
       id: "t-1",
       workspaceId: "ws-1",
       permission: "full",
+      scopes: null,
     })
 
     const auth = await workspaceApiTokenService.findWorkspaceByTokenHash({

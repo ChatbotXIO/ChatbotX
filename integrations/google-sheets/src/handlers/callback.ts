@@ -13,16 +13,12 @@ export const callbackHandler = async (
     throw new SdkException("Code is required")
   }
 
-  try {
-    const client = getClient(props.config)
-    const tokens = await client.getToken(code)
+  const client = getClient(props.config)
+  const tokens = await client.getToken(code).catch(handleError)
 
-    return await googleSheetsTokensToAuth(
-      props.config,
-      props.config.redirectUrl,
-      tokens.tokens,
-    )
-  } catch (error) {
-    return handleError(error)
-  }
+  return await googleSheetsTokensToAuth(
+    props.config,
+    props.config.redirectUrl,
+    tokens.tokens,
+  )
 }

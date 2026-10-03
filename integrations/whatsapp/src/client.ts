@@ -47,7 +47,23 @@ export const verifyAccessToken = (
       `${API_URL}/${DEFAULT_API_VERSION}/${auth.metadata.wabaId}/phone_numbers`,
     )
     if (!res.ok) {
-      throw new WhatsappException("Access token is not valid")
+      const body = (await res.json()) as {
+        error?: {
+          code?: string | number
+          error_subcode?: string | number
+          message?: string
+          type?: string
+        }
+      }
+      const error = body.error
+      throw new WhatsappException(
+        error?.message ?? "Access token is not valid",
+        res.status,
+        error?.code,
+        error?.error_subcode,
+        error?.type,
+        { httpStatus: res.status, errorBody: body },
+      )
     }
 
     const body = (await res.json()) as WhatsappPhoneNumberResponse

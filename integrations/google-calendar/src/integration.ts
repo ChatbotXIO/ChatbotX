@@ -25,7 +25,10 @@ import type {
   GoogleCalendarConfig,
 } from "./schemas"
 
-const googleConnection = googleOAuthConnection<GoogleCalendarConfig>({
+const googleConnection = googleOAuthConnection<
+  GoogleCalendarConfig,
+  GoogleCalendarAuthValue
+>({
   getClient,
   scopes: GOOGLE_CALENDAR_SCOPES,
   mapAuth: async (baseAuth) => {

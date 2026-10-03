@@ -835,6 +835,72 @@ describe.skipIf(!databaseUrl)(
         expect(updated?.encryptedAuth).toBeNull()
       }))
 
+    test("appendResults identifies an all-limit-reached batch as quota exceeded", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-all-limits-1",
+        })
+
+        const updated = await connectSessionRepository.appendResults(
+          {
+            id: session.id,
+            results: [
+              {
+                targetId: "t1",
+                status: "limitReached",
+                reason: "channelLimit",
+              },
+              {
+                targetId: "t2",
+                status: "limitReached",
+                reason: "workspaceLimit",
+              },
+            ],
+            resultConnectionIds: [],
+          },
+          tx,
+        )
+
+        expect(updated?.status).toBe("failed")
+        expect(updated?.errorCode).toBe("quota_exceeded")
+      }))
+
+    test("appendResults completes an all-duplicated selectable batch without connection ids", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-all-duplicates-1",
+        })
+
+        const updated = await connectSessionRepository.appendResults(
+          {
+            id: session.id,
+            results: [
+              {
+                targetId: "t1",
+                status: "duplicated",
+                reason: "alreadyConnected",
+              },
+              {
+                targetId: "t2",
+                status: "duplicated",
+                reason: "alreadyConnected",
+              },
+            ],
+            resultConnectionIds: [],
+          },
+          tx,
+        )
+
+        expect(updated?.status).toBe("completed")
+        expect(updated?.resultConnectionIds).toEqual([])
+      }))
+
     test("appendResults under REAL concurrency: two separate connections each completing a different target merge into one completed session with no lost update", async () => {
       const seedClient = new Client({ connectionString: databaseUrl as string })
       await seedClient.connect()

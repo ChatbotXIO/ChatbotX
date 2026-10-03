@@ -168,7 +168,9 @@ function mapZaloCode(fields: ChannelErrorSource): ChannelError {
   })
 }
 
-// Zalo signals invalid access tokens with API code -124.
+// Zalo signals invalid, expired, or revoked access tokens with API code -124.
+// Connection verification cannot distinguish them; refresh before probing so a
+// merely expired token does not transition the connection to needs_reauth.
 export function isRevokedTokenError(error: unknown): boolean {
   const code =
     error instanceof ZaloException ? error.code : parseOriginError(error).code

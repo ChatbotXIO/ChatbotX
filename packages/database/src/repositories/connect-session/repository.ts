@@ -258,7 +258,10 @@ export const connectSessionRepository = {
     // Only selectable targets count toward completion or a successful batch.
     const selectableTargetIds = sql`(SELECT t->>'id' FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
     const distinctResultCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem WHERE elem->>'targetId' IN ${selectableTargetIds})`
+    // A duplicated outcome is successful: a retry raced an already-created
+    // connection, so its requested work is complete even without a new id.
     const hasSuccess = sql`(SELECT bool_or(elem2->>'status' NOT IN ('failed', 'limitReached')) FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
+    const allLimitReached = sql`(SELECT bool_and(elem2->>'status' = 'limitReached') FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
     const isComplete = sql`(${distinctResultCount} >= ${selectableTargetCount})`
 
     const [row] = await tx
@@ -272,7 +275,7 @@ export const connectSessionRepository = {
         status: sql`CASE WHEN NOT ${isComplete} THEN ${connectSessionModel.status} WHEN ${hasSuccess} THEN 'completed' ELSE 'failed' END`,
         step: sql`CASE WHEN ${isComplete} THEN 'done' ELSE ${connectSessionModel.step} END`,
         consumedAt: sql`CASE WHEN ${isComplete} THEN now() ELSE ${connectSessionModel.consumedAt} END`,
-        errorCode: sql`CASE WHEN ${isComplete} AND NOT ${hasSuccess} THEN 'provider_error' ELSE ${connectSessionModel.errorCode} END`,
+        errorCode: sql`CASE WHEN ${isComplete} AND ${allLimitReached} THEN 'quota_exceeded' WHEN ${isComplete} AND NOT ${hasSuccess} THEN 'provider_error' ELSE ${connectSessionModel.errorCode} END`,
         encryptedAuth: sql`CASE WHEN ${isComplete} THEN NULL ELSE ${connectSessionModel.encryptedAuth} END`,
       })
       .where(

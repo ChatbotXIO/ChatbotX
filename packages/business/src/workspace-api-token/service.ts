@@ -68,7 +68,7 @@ class WorkspaceApiTokenService extends BaseService {
     // matching `workspaceService.find`'s existing invalidation contract) —
     // dropping either tag would let one of those writes serve stale data
     // for the rest of this entry's TTL.
-    const result = await withCache(
+    return await withCache(
       `workspace-api-tokens:hash:${tokenHash}`,
       async () => {
         const apiToken = await workspaceApiTokenRepository.findByTokenHash(
@@ -95,10 +95,6 @@ class WorkspaceApiTokenService extends BaseService {
             : undefined,
       },
     )
-    if (!result) {
-      return
-    }
-    return result
   }
 
   async listTokens(props: {

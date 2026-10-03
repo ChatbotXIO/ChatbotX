@@ -56,8 +56,8 @@ export const connectSessionModel = pgTable(
       onDelete: "cascade",
       onUpdate: "cascade",
     }),
-    // The service must require exactly one actor when creating a session; actor
-    // deletion may null either FK.
+    // Exactly one actor provenance field is required at session creation; FK
+    // deletion may null either field later.
     actorUserId: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
@@ -69,7 +69,7 @@ export const connectSessionModel = pgTable(
     // White-label: the credential owner and host that started the flow.
     platformOwnerId: text(),
     originHost: text(),
-    // The service must validate this with `sanitizeReferer`
+    // `returnUrl` is sanitized with `sanitizeReferer`
     // (`apps/builder/src/lib/oauth-referer.ts`).
     returnUrl: text(),
     // SHA-256 hex digest of a 32-byte nonce; plaintext appears once inside `authorizeUrl`.
@@ -90,8 +90,8 @@ export const connectSessionModel = pgTable(
       .default(sql`'[]'::jsonb`)
       .notNull(),
     errorCode: text().$type<ConnectSessionErrorCode>(),
-    // The service sets a 10-minute TTL while pending and a 30-minute TTL once
-    // authorized. Reads treat `expiresAt <= now()` as `expired` regardless of
+    // Pending sessions expire after 10 minutes; authorized sessions expire
+    // after 30. Reads treat `expiresAt <= now()` as `expired` regardless of
     // the stored `status`.
     expiresAt: timestamp(timestampConfig).notNull(),
     consumedAt: timestamp(timestampConfig),
