@@ -136,12 +136,14 @@ describe("ToolsList — Beta badge", () => {
     return card
   }
 
-  test("marks the TikTok comment automation card as Beta", () => {
+  // TikTok comment automation graduated out of Beta, so its card must no
+  // longer carry the badge.
+  test("does not mark the TikTok comment automation card as Beta", () => {
     act(() => {
       root.render(<ToolsList permissions={fullPermissions} />)
     })
 
-    expect(cardFor("tiktokCommentAutomation.title").textContent).toContain(
+    expect(cardFor("tiktokCommentAutomation.title").textContent).not.toContain(
       "tools.beta",
     )
   })
