@@ -20,7 +20,11 @@ const env = keys()
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
-  max: 10,
+  max: env.DATABASE_POOL_MAX,
+  min: env.DATABASE_POOL_MIN,
+  statement_timeout: env.DATABASE_STATEMENT_TIMEOUT_MS,
+  idle_in_transaction_session_timeout:
+    env.DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
 })
