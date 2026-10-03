@@ -7,6 +7,7 @@ import {
   type ContactFilterField,
   type ContactInfoFilterValue,
   type ContactInfoType,
+  contactFilterFields,
   contactInfoFilterValues,
   contactInfoTypes,
   contactSources,
@@ -537,6 +538,24 @@ export const getFieldConfigs = ({
     ...botFieldConfigs,
     ...couponTopicConfigs,
   ]
+}
+
+/** Field preselected when the add-condition dialog opens. */
+const DEFAULT_FILTER_FIELD = contactFilterFields.enum.currentChannel
+
+/**
+ * The config the add-condition dialog opens on: the current channel when it is
+ * offered, otherwise the first pickable field. Retired (hidden) fields are never
+ * a default, and neither is a field that merely sits first in the definitions.
+ */
+export const getDefaultFilterConfig = (
+  configs: FieldConfig[],
+): FieldConfig | undefined => {
+  const pickableConfigs = configs.filter((config) => !config.hidden)
+  return (
+    pickableConfigs.find((config) => config.name === DEFAULT_FILTER_FIELD) ??
+    pickableConfigs[0]
+  )
 }
 
 export const getFieldOptions = (

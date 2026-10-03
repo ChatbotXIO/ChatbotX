@@ -13,6 +13,7 @@ import {
   formatConditionValueDisplay,
   formatFilterConditionValue,
   getConditionOptions,
+  getDefaultFilterConfig,
   getFieldConfigs,
   getFieldOptions,
 } from "@/features/contact-filter/components/contact-filter-config"
@@ -880,5 +881,55 @@ describe("contact filter field config helpers", () => {
         true,
       )
     })
+  })
+})
+
+describe("getDefaultFilterConfig", () => {
+  const config = (name: string, hidden?: boolean): FieldConfig => ({
+    name,
+    formField: formFieldTypes.enum.text,
+    group: "analytics",
+    hidden,
+    options: [],
+  })
+
+  test("prefers the current channel wherever it sits in the list", () => {
+    const configs = [
+      config("followsBusinessOnInstagram"),
+      config("language"),
+      config("currentChannel"),
+    ]
+
+    expect(getDefaultFilterConfig(configs)?.name).toBe("currentChannel")
+  })
+
+  test("falls back to the first pickable field when the channel is not offered", () => {
+    const configs = [config("locale", true), config("language"), config("tags")]
+
+    expect(getDefaultFilterConfig(configs)?.name).toBe("language")
+  })
+
+  test("never defaults to a retired (hidden) field", () => {
+    expect(
+      getDefaultFilterConfig([config("currentChannel", true), config("tags")])
+        ?.name,
+    ).toBe("tags")
+  })
+
+  test("returns undefined when nothing is pickable", () => {
+    expect(getDefaultFilterConfig([])).toBeUndefined()
+    expect(getDefaultFilterConfig([config("locale", true)])).toBeUndefined()
+  })
+
+  test("the real field configs open on the current channel, not an Instagram field", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+
+    expect(getDefaultFilterConfig(configs)?.name).toBe("currentChannel")
   })
 })

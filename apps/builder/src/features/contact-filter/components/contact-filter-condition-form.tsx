@@ -14,6 +14,7 @@ import type {
   ContactFilterConditionFormDraft,
   FieldConfig,
 } from "./contact-filter-config"
+import { getDefaultFilterConfig } from "./contact-filter-config"
 
 type ContactFilterConditionFormProps = {
   onAdd: (data: ContactFilterCondition) => void
@@ -32,11 +33,11 @@ export const ContactFilterConditionForm = ({
   const [open, setOpen] = useState(false)
 
   const getInitialDraft = useCallback((): ContactFilterConditionFormDraft => {
-    const firstConfig = configs[0]
-    const resetDraft = getResetDraftForField(firstConfig, conditionOptions)
+    const defaultConfig = getDefaultFilterConfig(configs)
+    const resetDraft = getResetDraftForField(defaultConfig, conditionOptions)
 
     return {
-      field: firstConfig?.name ?? "",
+      field: defaultConfig?.name ?? "",
       ...resetDraft,
     }
   }, [configs, conditionOptions])
