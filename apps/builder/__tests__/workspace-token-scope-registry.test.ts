@@ -7,6 +7,7 @@ import {
 
 const NEW_SCOPES = [
   "channels",
+  "integrations",
   "minigames",
   "appointments",
   "media",
@@ -14,10 +15,11 @@ const NEW_SCOPES = [
 ] as const
 
 describe("workspaceApiTokenScopes", () => {
-  test("includes the 5 newly named resource-area scopes", () => {
+  test("preserves distinct channel and integration resource-area scopes", () => {
     for (const scope of NEW_SCOPES) {
       expect(workspaceApiTokenScopes.options).toContain(scope)
     }
+    expect(workspaceApiTokenScopes.options).not.toContain("connections")
     expect(workspaceApiTokenScopes.options).toHaveLength(12)
   })
 })

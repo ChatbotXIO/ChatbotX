@@ -1,4 +1,5 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
   SdkException,
@@ -16,22 +17,49 @@ import {
   moosendSubscriberResponseSchema,
 } from "./schemas"
 
+const moosendFields = [
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+  },
+] as const
+
+const buildMoosendAuth = async (config: {
+  apiKey: string
+}): Promise<MoosendAuthValue> => createMoosendAuth(config.apiKey)
+
+const probeMoosend = async (auth: MoosendAuthValue) => {
+  await moosendRequest(
+    auth,
+    moosendListsPagePath(1, 1),
+    moosendMailingListsResponseSchema,
+  )
+}
+
+const isRevokedTokenError = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "kind" in error &&
+  error.kind === "invalid_credentials"
+
+const connection = apiKeyConnection({
+  displayName: "Moosend",
+  fields: moosendFields,
+  buildAuth: buildMoosendAuth,
+  probe: probeMoosend,
+  isRevoked: isRevokedTokenError,
+})
+
 const config: IntegrationDefinition<
   MoosendConfig,
   MoosendAuthValue,
   MoosendActions
 > = {
   name: "moosend",
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createMoosendAuth(props.apiKey)
-      await moosendRequest(
-        auth,
-        moosendListsPagePath(1, 1),
-        moosendMailingListsResponseSchema,
-      )
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listMailingLists: async ({ ctx, props }) => {
       const page = moosendListPageRequestSchema.parse(props)
       const response = await moosendRequest(

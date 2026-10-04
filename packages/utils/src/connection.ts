@@ -1,0 +1,155 @@
+import { z } from "zod"
+
+export const connectionStatuses = z.enum([
+  "connected",
+  "degraded",
+  "needs_reauth",
+  "paused",
+  "disconnected",
+])
+export type ConnectionStatus = z.infer<typeof connectionStatuses>
+
+export const ACTIVE_CONNECTION_STATUSES = [
+  "connected",
+  "degraded",
+] as const satisfies readonly ConnectionStatus[]
+export const INACTIVE_CONNECTION_STATUSES = [
+  "needs_reauth",
+  "paused",
+  "disconnected",
+] as const satisfies readonly ConnectionStatus[]
+/** Fails to type-check when a status is omitted from either partition. */
+type AssertEqual<A, B> = [A] extends [B]
+  ? [B] extends [A]
+    ? true
+    : never
+  : never
+const _assertConnectionStatusPartitionIsExhaustive: AssertEqual<
+  ConnectionStatus,
+  | (typeof ACTIVE_CONNECTION_STATUSES)[number]
+  | (typeof INACTIVE_CONNECTION_STATUSES)[number]
+> = true
+
+/** Why a connection last moved into (or stayed in) a non-`connected` status. */
+export const connectionStatusReasons = z.enum([
+  "manual",
+  "workspace_purge",
+  "trial_expired",
+  "tenant_suspended",
+  "token_revoked",
+  "provider_revoked",
+  "refresh_failed",
+  "verify_failed",
+  "quota_exceeded",
+  "orphaned_webhook",
+])
+export type ConnectionStatusReason = z.infer<typeof connectionStatusReasons>
+
+/**
+ * Legacy mirror for `Inbox.disconnectReason` — narrower than
+ * `ConnectionStatusReason`. Kept in sync manually (not derived) because the
+ * two enums serve different audiences: `Connection` reasons are precise for
+ * the API/audit trail, `Inbox.disconnectReason` predates this domain and its
+ * values are already load-bearing (UI copy, exports).
+ */
+export const CONNECTION_TO_INBOX_DISCONNECT_REASON: Record<
+  ConnectionStatusReason,
+  "manual" | "token_revoked"
+> = {
+  manual: "manual",
+  workspace_purge: "manual",
+  trial_expired: "manual",
+  tenant_suspended: "manual",
+  token_revoked: "token_revoked",
+  provider_revoked: "token_revoked",
+  refresh_failed: "token_revoked",
+  verify_failed: "manual",
+  quota_exceeded: "manual",
+  orphaned_webhook: "manual",
+}
+
+/**
+ * Each Inbox and each Integration owns at most one Connection. This enum is
+ * re-declared here as a Zod enum (same rationale as `channelTypes`) so the
+ * database layer and public API schemas can validate against it without
+ * depending on the SDK package.
+ */
+export const connectionKinds = z.enum(["channel", "integration"])
+export type ConnectionKind = z.infer<typeof connectionKinds>
+
+export const connectionConfigFieldSchema = z.object({
+  name: z.string(),
+  type: z.enum(["string", "secret", "number", "boolean", "enum", "url"]),
+  required: z.boolean(),
+  labelKey: z.string().optional(),
+  enumValues: z.array(z.string()).optional(),
+  description: z.string().optional(),
+})
+export type ConnectionConfigField = z.infer<typeof connectionConfigFieldSchema>
+
+export const connectSessionNextActionSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("open_url"), url: z.string() }),
+  z.object({
+    type: z.literal("enter_input"),
+    inputFields: z.array(connectionConfigFieldSchema),
+  }),
+  z.object({ type: z.literal("wait") }),
+])
+export type ConnectSessionNextAction = z.infer<
+  typeof connectSessionNextActionSchema
+>
+
+/** `ConnectSession.purpose` — set server-side, never accepted from client input. */
+export const connectSessionPurposes = z.enum([
+  "connect",
+  "reconnect",
+  "facebook_ads",
+  "messaging_ads",
+  "lead_ads",
+  "meta_catalog",
+])
+export type ConnectSessionPurpose = z.infer<typeof connectSessionPurposes>
+
+/** `ConnectSession.status` lifecycle. `expireDue` transitions due rows to `expired`. */
+export const connectSessionStatuses = z.enum([
+  "pending",
+  "authorized",
+  "awaiting_selection",
+  "completed",
+  "failed",
+  "expired",
+  "cancelled",
+])
+export type ConnectSessionStatus = z.infer<typeof connectSessionStatuses>
+
+export const ACTIVE_CONNECT_SESSION_STATUSES = [
+  "pending",
+  "authorized",
+  "awaiting_selection",
+] as const satisfies readonly ConnectSessionStatus[]
+export const TERMINAL_CONNECT_SESSION_STATUSES = [
+  "completed",
+  "failed",
+  "expired",
+  "cancelled",
+] as const satisfies readonly ConnectSessionStatus[]
+/** Fails to type-check when a status is omitted from either partition. */
+const _assertConnectSessionStatusPartitionIsExhaustive: AssertEqual<
+  ConnectSessionStatus,
+  | (typeof ACTIVE_CONNECT_SESSION_STATUSES)[number]
+  | (typeof TERMINAL_CONNECT_SESSION_STATUSES)[number]
+> = true
+
+export const connectSessionErrorCodes = z.enum([
+  "state_mismatch",
+  "expired",
+  "provider_denied",
+  "exchange_failed",
+  "provider_error",
+  "no_candidates",
+  "already_connected",
+  "quota_exceeded",
+  "trial_expired",
+  "internal_error",
+])
+export type ConnectSessionErrorCode = z.infer<typeof connectSessionErrorCodes>

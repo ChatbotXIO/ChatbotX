@@ -1,10 +1,15 @@
 import {
+  googleOAuthConnection,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  isGoogleRevokedError,
+  probeVerify,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { generateAuthUrl, getClient, getSheetsClient } from "./client"
+import { addGoogleSheetsIdentity } from "./connection-auth"
+import { GOOGLE_SHEETS_SCOPES } from "./constants"
 import { callbackHandler } from "./handlers/callback"
 import type {
   GoogleSheetsActions,
@@ -12,12 +17,49 @@ import type {
   GoogleSheetsConfig,
 } from "./schemas"
 
+const googleConnection = googleOAuthConnection<
+  GoogleSheetsConfig,
+  GoogleSheetsAuthValue
+>({
+  getClient,
+  scopes: GOOGLE_SHEETS_SCOPES,
+  mapAuth: addGoogleSheetsIdentity,
+})
+
 const config: IntegrationDefinition<
   GoogleSheetsConfig,
   GoogleSheetsAuthValue,
   GoogleSheetsActions
 > = {
   name: "googleSheets",
+  connection: {
+    kind: "integration",
+    strategy: "oauth_redirect",
+    multiAccount: false,
+    configFields: [],
+    ...googleConnection,
+    describe: (auth) => ({
+      sourceId: auth.metadata.accountId,
+      displayName: auth.metadata.email ?? "Google Sheets",
+      authExpiresAt: auth.tokens.expiresAt,
+    }),
+    verify: async ({ auth }) =>
+      await probeVerify(
+        async () => {
+          const client = getClient(auth)
+          const accessToken = await client.getAccessToken()
+          await client.getTokenInfo(
+            accessToken.token ?? auth.tokens.accessToken,
+          )
+        },
+        {
+          label: "Google Sheets credentials",
+          expiresAt: auth.tokens.expiresAt,
+          isRevoked: isGoogleRevokedError,
+        },
+      ),
+    isRevokedTokenError: isGoogleRevokedError,
+  },
   actions: {
     listSheetNames: async ({ ctx, props }): Promise<string[]> => {
       const sheetsClient = getSheetsClient(ctx.auth)
@@ -26,7 +68,6 @@ const config: IntegrationDefinition<
       })
 
       const sheets = response.data.sheets ?? []
-
       return sheets.map((sheet) => sheet.properties?.title ?? "")
     },
     listSheetHeaders: async ({ ctx, props }): Promise<string[]> => {

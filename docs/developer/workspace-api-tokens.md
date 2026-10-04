@@ -206,9 +206,11 @@ the authoritative, current list, and
 each feature's scope assignment at compile/test time (e.g.
 `contacts-public-scope.test.ts`, `broadcasts-public-scope.test.ts`,
 `appointments-public-scope.test.ts`, `sequences-public-scope.test.ts`,
-`integrations-public-scope.test.ts`, `analytics-public-scope.test.ts`,
-`conversations-public-scope.test.ts`, `products-public-scope.test.ts`,
-`product-categories-public-scope.test.ts`, `coupons-public-scope.test.ts`).
+`integrations-public-scope.test.ts`,
+`channels-and-integrations-public-scope.test.ts`,
+`analytics-public-scope.test.ts`, `conversations-public-scope.test.ts`,
+`products-public-scope.test.ts`, `product-categories-public-scope.test.ts`,
+`coupons-public-scope.test.ts`).
 
 What follows are the scope-assignment decisions and gotchas that aren't
 derivable from the code or those tests — read before adding or reassigning
@@ -410,50 +412,20 @@ an endpoint's scope.
     — the same template the builder's edit page shows the user. Never
     publish the bare `backgroundUrl` column value.
 
-- **Channels** — see the dedicated table below.
+- **Channels** — covers channel configuration and operations: Messenger/Zalo
+  tag sync, webchat management, Messenger personas, persistent menus, and
+  SMTP. A token scoped to `["channels"]` is not authorized for workspace
+  integrations.
+  - *Webchat custom CSS is token-writable.* A `channels`-scoped token may set
+    `customCss` without an additional in-handler permission check because
+    minting a workspace token already requires workspace-super-admin access.
+  - *Webchat welcome-flow ownership is always validated.* Public writes pass
+    `welcomeFlowId` through `integrationWebchatService`, which verifies the
+    flow belongs to the workspace before persisting it.
 
-### Channels scope — endpoint-to-scope table
-
-`channels` shipped in the enum/registry/i18n alongside `ads` but, like `ads`,
-carried no endpoints for a while. It now covers user persistent menus
-(Messenger bot menu) CRUD, webchat CRUD, SMTP integration CRUD,
-Messenger/Zalo tag-sync toggling, and a read-only list of Messenger personas
-across the workspace's connected Pages. As with every other scope, each
-public handler calls the same `packages/business` service method the
-private/action code calls — no business logic was duplicated to publish
-these.
-
-| Endpoint | Notes |
-|---|---|
-| `GET/POST /v1/user-persistent-menus`, `GET/PUT/DELETE /v1/user-persistent-menus/{id}` | Full CRUD via `userPersistentMenuService`. |
-| `GET/POST /v1/webchats`, `GET/PATCH/DELETE /v1/webchats/{id}` | Full CRUD via `integrationWebchatService`. `DELETE` cascades to disconnecting the webchat's `Inbox`. |
-| `GET/POST /v1/smtp-integrations`, `GET/PUT/DELETE /v1/smtp-integrations/{id}` | Full CRUD via `integrationSmtpService`. `DELETE` cascades to disconnecting the SMTP `Inbox`. The row's `auth` blob (SMTP password) is never returned — every response is hand-picked to `{id, name, fromAddress}`. |
-| `PATCH /v1/messenger-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `messengerIntegrationService.updateTagSync`. |
-| `PATCH /v1/zalo-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `zaloIntegrationService.updateTagSync`. |
-| `GET /v1/messenger-personas` | Read-only; lists Messenger personas across every Page connected to the workspace, with page access tokens projected away. |
-
-Two invariants specific to this scope:
-
-- **`customCss` is writable by a `channels`-scoped token with no extra
-  permission check.** The private `updateWebchatAction` gates `customCss`
-  behind `hasWorkspacePermission(..., "superAdmin")` because it renders via
-  `dangerouslySetInnerHTML` in `lib/widget-css.tsx`. The public webchat
-  `create`/`update` handlers accept it with only workspace-token scope. This
-  is **not** a privilege escalation: minting any workspace token already
-  requires the caller to be a workspace superAdmin
-  (`requireWorkspaceTokenSuperAdmin`), the same reasoning the Ads scope's
-  omitted `assertWorkspaceSuperAdmin` guard documents above. Do not add a
-  permission check here — there is no lower-privileged caller to check
-  against.
-- **`welcomeFlowId` normalization and workspace-ownership validation live in
-  `integrationWebchatService`, not in either caller.** Both `create` and
-  `update` call a shared private helper
-  (`resolveWelcomeFlowId`) that normalizes a falsy value to `null` and
-  validates the flow belongs to the same workspace via
-  `flowService.findActiveById`. This was fixed after a review found the
-  public and private paths disagreeing on both points — any future caller
-  of `integrationWebchatService.update`/`.create` gets this for free and
-  must not re-implement it upstream.
+- **Integrations** — covers workspace integrations, AI provider credentials,
+  external webhooks, and event webhooks. A token scoped to `["integrations"]`
+  is not authorized for channel configuration or operations.
 
 - **Minigames** — this scope shipped in the enum/registry/i18n alongside
   `ads` but, like `ads`, carried no endpoints for a while. It now publishes
@@ -487,9 +459,9 @@ Two invariants specific to this scope:
 ### Ads scope — endpoint-to-scope table
 
 `ads` shipped in the enum/registry/i18n from day one (alongside `channels`,
-`minigames`, `appointments`, `media`) but carried no endpoints until this
-table's routes were added — a token scoped to `["ads"]` reached nothing
-before. It now covers Ads conversion-rule CRUD, the CTWA/CTM/CTID funnel and
+`integrations`, `minigames`, `appointments`, `media`) but carried no endpoints
+until this table's routes were added — a token scoped to `["ads"]` reached
+nothing before. It now covers Ads conversion-rule CRUD, the CTWA/CTM/CTID funnel and
 CAPI-delivery reads, the conversion export, ad-account reads, and the full
 messaging-ad campaign lifecycle (create/retry/publish/pause/delete + video
 upload). Every handler below calls the same `packages/business` service

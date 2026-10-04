@@ -1,6 +1,8 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { dripRequest } from "./client"
@@ -23,20 +25,42 @@ import {
   dripTagsResponseSchema,
 } from "./schemas"
 
+const dripFields = [
+  {
+    name: "apiToken",
+    type: "secret",
+    required: true,
+  },
+] as const
+
+const buildDripAuth = async (config: {
+  apiToken: string
+}): Promise<DripAuthValue> => createDripAuth(config.apiToken)
+
+const probeDrip = async (auth: DripAuthValue) => {
+  const response = await dripRequest(
+    auth,
+    DRIP_ACCOUNTS_PATH,
+    dripAccountsResponseSchema,
+  )
+  if (response.accounts.length === 0) {
+    throw new DripNoAccountError()
+  }
+}
+
+const connection = apiKeyConnection({
+  displayName: "Drip",
+  fields: dripFields,
+  buildAuth: buildDripAuth,
+  probe: probeDrip,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<DripConfig, DripAuthValue, DripActions> = {
   name: "drip",
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const response = await dripRequest(
-        props,
-        DRIP_ACCOUNTS_PATH,
-        dripAccountsResponseSchema,
-      )
-      if (response.accounts.length === 0) {
-        throw new DripNoAccountError()
-      }
-      return createDripAuth(props.apiToken)
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listAccounts: async ({ ctx }) => {
       const response = await dripRequest(
         ctx.auth,

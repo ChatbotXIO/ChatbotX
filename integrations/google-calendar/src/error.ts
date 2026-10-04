@@ -19,7 +19,9 @@ export const handleError = (error: unknown, context: string): never => {
     finalMessage,
   )
 
-  throw new SdkException(`Google Calendar API error: ${finalMessage}`)
+  throw new SdkException(
+    `Google Calendar API error: ${finalMessage}`,
+  ).setOriginError(error)
 }
 
 const extractGoogleApiError = (error: Error) =>

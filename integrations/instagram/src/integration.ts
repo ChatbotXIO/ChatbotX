@@ -2,12 +2,17 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  oauth2Auth,
+  probeVerify,
 } from "@chatbotx.io/sdk"
+import { exchangeCodeForToken, fetchInstagramAccount } from "./apis/auth"
 import {
   refreshLongLivedToken,
+  subscribePageToInstagramWebhook,
   unsubscribePageFromInstagramWebhook,
 } from "./apis/page"
 import { getPostDetails } from "./apis/post"
+import { INSTAGRAM_BUSINESS_SCOPES } from "./constants"
 import { InstagramAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
 import { commentHandlers } from "./handlers/comment"
@@ -15,6 +20,7 @@ import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
+import { isRevokedTokenError } from "./lib/error-mapper"
 import type {
   InstagramActions,
   InstagramAuthValue,
@@ -27,6 +33,83 @@ const config: IntegrationDefinition<
   InstagramActions
 > = {
   name: "instagram",
+  connection: {
+    kind: "channel",
+    strategy: "oauth_redirect",
+    multiAccount: false,
+    configFields: [],
+    authorizeUrl: ({ credential, callbackUrl, state }) => {
+      const config = credential as InstagramConfig
+      const params = new URLSearchParams({
+        client_id: config.clientId,
+        redirect_uri: callbackUrl,
+        response_type: "code",
+        state,
+        scope: INSTAGRAM_BUSINESS_SCOPES.join(","),
+      })
+      return `https://www.instagram.com/oauth/authorize?${params.toString()}`
+    },
+    exchangeCode: async ({ code, callbackUrl, credential }) => {
+      const config = credential as InstagramConfig
+      const { accessToken } = await exchangeCodeForToken(
+        config,
+        code,
+        callbackUrl,
+      )
+      const account = await fetchInstagramAccount(accessToken)
+      if (!account) {
+        throw new Error(
+          "Instagram account is not a supported Business/Creator account.",
+        )
+      }
+      return oauth2Auth(
+        config,
+        callbackUrl,
+        { accessToken },
+        {
+          igId: account.userId,
+          igName: account.name,
+          pageId: account.id,
+          version: config.version,
+          username: account.username,
+        },
+      ) satisfies InstagramAuthValue
+    },
+    candidateToConfig: (auth) => ({ username: auth.metadata.username }),
+    describe: (auth) => ({
+      sourceId: auth.metadata.igId,
+      displayName: auth.metadata.igName,
+    }),
+    verify: async ({ auth }) =>
+      await probeVerify(
+        async () => {
+          const account = await fetchInstagramAccount(auth.tokens.accessToken)
+          if (!account || account.userId !== auth.metadata.igId) {
+            throw new Error("Instagram account could not be verified")
+          }
+        },
+        {
+          label: "Instagram connection",
+          expiresAt: auth.tokens.expiresAt,
+          isRevoked: isRevokedTokenError,
+        },
+      ),
+    isRevokedTokenError,
+    webhook: {
+      subscribe: ({ auth }) =>
+        subscribePageToInstagramWebhook({
+          igId: auth.metadata.igId,
+          accessToken: auth.tokens.accessToken,
+          version: auth.metadata.version,
+        }),
+      unsubscribe: ({ auth }) =>
+        unsubscribePageFromInstagramWebhook({
+          igId: auth.metadata.igId,
+          accessToken: auth.tokens.accessToken,
+          version: auth.metadata.version,
+        }),
+    },
+  },
   channels: {
     channel: {
       message: messageHandlers,

@@ -48,5 +48,10 @@ export const integrationRelations = defineRelationsPart(schema, (r) => ({
       from: r.integrationModel.id,
       to: r.integrationGeminiModel.integrationId,
     }),
+    connection: r.one.connectionModel({
+      from: r.integrationModel.id,
+      to: r.connectionModel.integrationId,
+      optional: true,
+    }),
   },
 }))

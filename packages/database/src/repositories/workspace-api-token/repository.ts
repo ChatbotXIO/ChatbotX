@@ -1,12 +1,42 @@
 import type { EncryptedData } from "@chatbotx.io/encryption"
 import { and, type DatabaseClient, db, eq, isNull, sql } from "../../client"
-import type {
-  TokenHash,
-  WorkspaceApiTokenPermission,
-  WorkspaceApiTokenScope,
+import { logger } from "../../logger"
+import {
+  type TokenHash,
+  type WorkspaceApiTokenPermission,
+  type WorkspaceApiTokenScope,
+  workspaceApiTokenScopes,
 } from "../../partials/workspace-api-token"
 import { workspaceApiTokenModel } from "../../schema"
 import type { WorkspaceApiTokenModel } from "../../types"
+
+const workspaceApiTokenScopesSchema = workspaceApiTokenScopes.array().nullable()
+
+const normalizeWorkspaceApiTokenScopes = (
+  scopes: string[] | null,
+): WorkspaceApiTokenScope[] | null => {
+  const parsed = workspaceApiTokenScopesSchema.safeParse(scopes)
+  if (parsed.success) {
+    return parsed.data
+  }
+
+  logger.warn(
+    { err: parsed.error },
+    "Dropping unrecognized workspace API token scopes",
+  )
+  if (scopes === null) {
+    return null
+  }
+
+  const normalizedScopes = new Set<WorkspaceApiTokenScope>()
+  for (const scope of scopes) {
+    const normalizedScope = workspaceApiTokenScopes.safeParse(scope)
+    if (normalizedScope.success) {
+      normalizedScopes.add(normalizedScope.data)
+    }
+  }
+  return [...normalizedScopes]
+}
 
 type InsertWorkspaceApiTokenInput = {
   workspaceId: string
@@ -41,17 +71,24 @@ class WorkspaceApiTokenRepository {
       where: { tokenHash },
     })
 
-    return row ?? null
+    if (!row) {
+      return null
+    }
+    return { ...row, scopes: normalizeWorkspaceApiTokenScopes(row.scopes) }
   }
 
   async listByWorkspaceId(
     workspaceId: string,
     tx: DatabaseClient = db,
   ): Promise<WorkspaceApiTokenModel[]> {
-    return await tx.query.workspaceApiTokenModel.findMany({
+    const rows = await tx.query.workspaceApiTokenModel.findMany({
       where: { workspaceId },
       orderBy: { createdAt: "desc" },
     })
+    return rows.map((row) => ({
+      ...row,
+      scopes: normalizeWorkspaceApiTokenScopes(row.scopes),
+    }))
   }
 
   async countByWorkspaceId(
@@ -125,7 +162,10 @@ class WorkspaceApiTokenRepository {
       where: { workspaceId, isDefault: true },
     })
 
-    return row ?? null
+    if (!row) {
+      return null
+    }
+    return { ...row, scopes: normalizeWorkspaceApiTokenScopes(row.scopes) }
   }
 
   /**

@@ -1,6 +1,8 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
@@ -24,20 +26,44 @@ import {
   mailchimpTagsResponseSchema,
 } from "./schemas"
 
+const mailchimpFields = [
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+  },
+] as const
+
+const buildMailchimpAuth = async (config: {
+  apiKey: string
+}): Promise<MailchimpAuthValue> => createMailchimpAuth(config.apiKey)
+
+const probeMailchimp = async (auth: MailchimpAuthValue) => {
+  await mailchimpRequest(
+    auth,
+    MAILCHIMP_PING_ENDPOINT,
+    mailchimpPingResponseSchema,
+  )
+}
+
+const connection = apiKeyConnection({
+  displayName: "Mailchimp",
+  fields: mailchimpFields,
+  buildAuth: buildMailchimpAuth,
+  probe: probeMailchimp,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   MailchimpConfig,
   MailchimpAuthValue,
   MailchimpActions
 > = {
   name: "mailchimp",
+  connection,
   actions: {
     validateApiKey: async ({ props }) => {
-      const auth = createMailchimpAuth(props.apiKey)
-      await mailchimpRequest(
-        auth,
-        MAILCHIMP_PING_ENDPOINT,
-        mailchimpPingResponseSchema,
-      )
+      const auth = await connection.fromCredentials(props)
       return { dataCenter: auth.dataCenter }
     },
     listAudiences: async ({ ctx }) => {
