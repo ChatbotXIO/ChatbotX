@@ -954,6 +954,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "coupons.bulkCreate",
+    "path": "/v1/coupon-topics/{topicId}/coupons/bulk",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.createImportUploadUrl",
+    "path": "/v1/coupon-imports/upload-url",
+  },
+  {
+    "method": "POST",
     "operationId": "coupons.createTopic",
     "path": "/v1/coupon-topics",
   },
@@ -963,9 +973,24 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/coupon-topics/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "coupons.export",
+    "path": "/v1/coupon-exports",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.getExport",
+    "path": "/v1/coupon-exports/{fileId}",
+  },
+  {
     "method": "GET",
     "operationId": "coupons.getTopic",
     "path": "/v1/coupon-topics/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.import",
+    "path": "/v1/coupon-imports",
   },
   {
     "method": "POST",

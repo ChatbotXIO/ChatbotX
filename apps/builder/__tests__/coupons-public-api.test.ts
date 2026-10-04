@@ -10,8 +10,14 @@ type RouteConfig = {
 
 type CapturedProcedure = {
   route: RouteConfig
+  errors?: Record<string, unknown>
   handler?: (...args: any[]) => any
 }
+
+const EXPORT_FILE_NAME_RE = /^coupons-\d{4}-\d{2}-\d{2}\.csv$/
+const EXPORT_PATH_RE =
+  /^workspaces\/workspace-1\/exports\/coupons\/coupon_.+\.csv$/
+const EXPORT_JOB_ID_RE = /^export-coupons-workspace-1-owner-1-file-1$/
 
 const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
   const capturedProcedures: CapturedProcedure[] = []
@@ -23,7 +29,10 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
     const chain = {
       input: vi.fn(() => chain),
       output: vi.fn(() => chain),
-      errors: vi.fn(() => chain),
+      errors: vi.fn((errors: Record<string, unknown>) => {
+        record.errors = errors
+        return chain
+      }),
       handler: vi.fn((fn: (...args: any[]) => any) => {
         record.handler = fn
         return { handler: fn }
@@ -58,6 +67,10 @@ const couponService = {
   issueCoupon: vi.fn(),
   markCouponUsed: vi.fn(),
   listIssuedCouponsForContact: vi.fn(),
+  importBatch: vi.fn(),
+  startImport: vi.fn(),
+  createExportFile: vi.fn(),
+  getExportFile: vi.fn(),
 }
 const contactService = {
   findByIdOrFail: vi.fn(),
@@ -66,7 +79,27 @@ const contactService = {
 
 vi.mock("@chatbotx.io/business", () => ({ couponService, contactService }))
 
+const defaultQueue = { add: vi.fn() }
+vi.mock("@chatbotx.io/worker-config", () => ({
+  DefaultJobAction: {
+    runImport: "runImport",
+    exportCoupons: "exportCoupons",
+  },
+  defaultQueue,
+}))
+
+const uploader = { getPresignedDownload: vi.fn() }
+vi.mock("@chatbotx.io/filesystem", () => ({ uploader }))
+
+const createPublicCouponImportUpload = vi.fn()
+vi.mock("@/features/coupons/lib/create-public-import-upload", () => ({
+  createPublicCouponImportUpload,
+}))
+
 await import("@/features/coupons/api/public")
+const { publicListCouponsRequest } = await import(
+  "@/features/coupons/schema/public"
+)
 
 const findProcedure = (method: string, path: string) => {
   const found = capturedProcedures.find(
@@ -274,6 +307,164 @@ describe("GET /v1/contacts/{identifier}/coupons", () => {
   })
 })
 
+describe("coupon import and export routes", () => {
+  test("POST /v1/coupon-topics/{topicId}/coupons/bulk delegates to importBatch", async () => {
+    couponService.importBatch.mockResolvedValueOnce({
+      processed: 2,
+      created: 2,
+      existing: 0,
+      allowedRemaining: 9998,
+      currentCount: 0,
+    })
+
+    await findProcedure(
+      "POST",
+      "/v1/coupon-topics/{topicId}/coupons/bulk",
+    ).handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { topicId: "topic-1", codes: ["SAVE10", "SAVE20"] },
+    })
+
+    expect(couponService.importBatch).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      topicId: "topic-1",
+      codes: ["SAVE10", "SAVE20"],
+    })
+  })
+
+  test("POST /v1/coupon-imports/upload-url delegates to the server-owned upload helper", async () => {
+    createPublicCouponImportUpload.mockResolvedValueOnce({
+      fileId: "file-1",
+      uploadUrl: "https://upload.example.test/signed",
+    })
+
+    await expect(
+      findProcedure("POST", "/v1/coupon-imports/upload-url").handler?.({
+        context: { workspace: { id: "workspace-1", ownerId: "owner-1" } },
+        input: {
+          fileName: "coupons.csv",
+          mimeType: "text/csv",
+          size: 42,
+        },
+      }),
+    ).resolves.toEqual({
+      fileId: "file-1",
+      uploadUrl: "https://upload.example.test/signed",
+    })
+
+    expect(createPublicCouponImportUpload).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+      fileName: "coupons.csv",
+      mimeType: "text/csv",
+    })
+  })
+
+  test("POST /v1/coupon-imports creates an import and enqueues the existing job payload", async () => {
+    couponService.startImport.mockResolvedValueOnce({ id: "import-1" })
+    defaultQueue.add.mockResolvedValueOnce(undefined)
+
+    await expect(
+      findProcedure("POST", "/v1/coupon-imports").handler?.({
+        context: { workspace: { id: "workspace-1", ownerId: "owner-1" } },
+        input: { topicId: "topic-1", fileId: "file-1" },
+      }),
+    ).resolves.toEqual({ importId: "import-1" })
+
+    expect(couponService.startImport).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      userId: "owner-1",
+      topicId: "topic-1",
+      fileId: "file-1",
+    })
+    expect(defaultQueue.add).toHaveBeenCalledWith(
+      "runImport",
+      { type: "runImport", data: { importId: "import-1" } },
+      { jobId: "import-coupons-import-1" },
+    )
+  })
+
+  test("documents storage and topic failures for CSV imports", () => {
+    expect(findProcedure("POST", "/v1/coupon-imports").errors).toMatchObject({
+      couponImportFileNotFound: { status: 404 },
+      couponImportUnsupportedFile: { status: 400 },
+      couponImportFileTooLarge: { status: 400 },
+      couponTopicInactive: { status: 400 },
+    })
+  })
+
+  test("POST /v1/coupon-exports creates an export file and queues the existing export job", async () => {
+    couponService.createExportFile.mockResolvedValueOnce({ id: "file-1" })
+    defaultQueue.add.mockResolvedValueOnce(undefined)
+
+    await expect(
+      findProcedure("POST", "/v1/coupon-exports").handler?.({
+        context: { workspace: { id: "workspace-1", ownerId: "owner-1" } },
+        input: { topicId: "topic-1", issueStatus: "published" },
+      }),
+    ).resolves.toEqual({ fileId: "file-1" })
+
+    expect(couponService.createExportFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        userId: "owner-1",
+        fileName: expect.stringMatching(EXPORT_FILE_NAME_RE),
+        path: expect.stringMatching(EXPORT_PATH_RE),
+      }),
+    )
+    expect(defaultQueue.add).toHaveBeenCalledWith(
+      "exportCoupons",
+      expect.objectContaining({
+        type: "exportCoupons",
+        data: expect.objectContaining({
+          workspaceId: "workspace-1",
+          requestedUserId: "owner-1",
+          fileId: "file-1",
+          outputFormat: "csv",
+          filter: { topicId: "topic-1", issueStatus: "published" },
+        }),
+      }),
+      expect.objectContaining({
+        jobId: expect.stringMatching(EXPORT_JOB_ID_RE),
+      }),
+    )
+  })
+
+  test("GET /v1/coupon-exports/{fileId} signs only uploaded exports", async () => {
+    couponService.getExportFile.mockResolvedValueOnce({
+      status: "uploaded",
+      fileName: "coupons.csv",
+      path: "workspaces/workspace-1/exports/coupons/file-1.csv",
+      totalRecords: 2,
+    })
+    uploader.getPresignedDownload.mockResolvedValueOnce(
+      "https://download.example.test/signed",
+    )
+
+    await expect(
+      findProcedure("GET", "/v1/coupon-exports/{fileId}").handler?.({
+        context: { workspace: { id: "workspace-1", ownerId: "owner-1" } },
+        input: { fileId: "file-1" },
+      }),
+    ).resolves.toEqual({
+      status: "uploaded",
+      fileName: "coupons.csv",
+      totalRecords: 2,
+      downloadUrl: "https://download.example.test/signed",
+    })
+
+    expect(couponService.getExportFile).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      fileId: "file-1",
+      userId: "owner-1",
+    })
+    expect(uploader.getPresignedDownload).toHaveBeenCalledWith(
+      "workspaces/workspace-1/exports/coupons/file-1.csv",
+      5 * 60,
+    )
+  })
+})
+
 describe("coupon topic routes forward workspace-scoped arguments", () => {
   test("GET /v1/coupon-topics lists topics with paging", async () => {
     couponService.listTopics.mockResolvedValueOnce({
@@ -377,5 +568,38 @@ describe("coupon topic routes forward workspace-scoped arguments", () => {
       perPage: 50,
       topicId: "t-1",
     })
+  })
+
+  test("GET /v1/coupons maps the PDF filter names to the existing service contract", async () => {
+    couponService.listCoupons.mockResolvedValueOnce({ data: [], pageCount: 1 })
+
+    await findProcedure("GET", "/v1/coupons").handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        page: 1,
+        perPage: 50,
+        status: "published",
+        usage: "notUsed",
+        keyword: "SUMMER",
+      },
+    })
+
+    expect(couponService.listCoupons).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      page: 1,
+      perPage: 50,
+      issueStatus: "published",
+      usageStatus: "notUsed",
+      search: "SUMMER",
+    })
+  })
+
+  test("coupon list rejects a canonical PDF filter combined with its legacy alias", () => {
+    expect(
+      publicListCouponsRequest.safeParse({
+        status: "published",
+        issueStatus: "published",
+      }).success,
+    ).toBe(false)
   })
 })

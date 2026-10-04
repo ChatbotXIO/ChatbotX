@@ -62,9 +62,11 @@ const appointmentCalendarService = {
 const appointmentService = {
   checkAvailability: vi.fn(),
 }
+const resolveTenantSettings = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   appointmentCalendarService,
   appointmentService,
+  resolveTenantSettings,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => {
@@ -99,6 +101,7 @@ const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
 
 beforeEach(() => {
   vi.clearAllMocks()
+  resolveTenantSettings.mockResolvedValue({ appUrl: "https://tenant.example/" })
 })
 
 test("registers the appointment calendars public router under the appointments scope", () => {
@@ -110,19 +113,33 @@ describe("GET /v1/appointment-calendars", () => {
 
   test("delegates to appointmentCalendarService.list", async () => {
     appointmentCalendarService.list.mockResolvedValueOnce({
-      data: [],
+      data: [{ id: "cal-1", publicLinkSlug: "sales" }],
       pageCount: 1,
     })
 
-    await procedure.handler?.({
-      context: { workspace: { id: "workspace-1" } },
-      input: { page: 1, perPage: 50, search: "sales" },
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { page: 1, perPage: 50, search: "sales" },
+      }),
+    ).resolves.toEqual({
+      data: [
+        {
+          id: "cal-1",
+          publicLinkSlug: "sales",
+          publicUrl: "https://tenant.example/booking/sales",
+        },
+      ],
+      pageCount: 1,
     })
 
     expect(appointmentCalendarService.list).toHaveBeenCalledWith({
       page: 1,
       perPage: 50,
       search: "sales",
+      workspaceId: "workspace-1",
+    })
+    expect(resolveTenantSettings).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
     })
   })
@@ -134,11 +151,18 @@ describe("GET /v1/appointment-calendars/{id}", () => {
   test("delegates to appointmentCalendarService.getForEdit", async () => {
     appointmentCalendarService.getForEdit.mockResolvedValueOnce({
       id: "cal-1",
+      publicLinkSlug: "sales",
     })
 
-    await procedure.handler?.({
-      context: { workspace: { id: "workspace-1" } },
-      input: { id: "cal-1" },
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "cal-1" },
+      }),
+    ).resolves.toEqual({
+      id: "cal-1",
+      publicLinkSlug: "sales",
+      publicUrl: "https://tenant.example/booking/sales",
     })
 
     expect(appointmentCalendarService.getForEdit).toHaveBeenCalledWith({
