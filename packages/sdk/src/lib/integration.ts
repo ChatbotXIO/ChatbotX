@@ -779,9 +779,10 @@ export class Integration<
 
   /**
    * Call the per-integration `refreshAuth` with bounded exponential backoff.
-   * A terminal failure (revoked refresh token, `invalid_grant`, and similar
-   * `AuthException`s) marks the integration offline. Transient failures throw
-   * after retries but retain the connection for the next scheduled refresh.
+   * A terminal failure (`AuthException` or one recognized by
+   * `connection.isRevokedTokenError`) marks the integration offline. Transient
+   * failures throw after retries but retain the connection for the next
+   * scheduled refresh.
    */
   private async refreshWithRetry(
     refreshAuth: NonNullable<T["refreshAuth"]>,
@@ -790,15 +791,17 @@ export class Integration<
   ): Promise<AuthValue> {
     let lastError: unknown
     let attempts = 0
+    let isTerminal = false
     for (let attempt = 1; attempt <= AUTH_REFRESH_MAX_ATTEMPTS; attempt++) {
       attempts = attempt
       try {
         return await refreshAuth({ auth: baseAuth })
       } catch (err) {
         lastError = err
-        // AuthException signals a non-recoverable refresh failure
-        // (revoked refresh token, invalid_grant, etc.) — stop retrying.
-        if (err instanceof AuthException) {
+        isTerminal =
+          err instanceof AuthException ||
+          this.props.connection?.isRevokedTokenError?.(err) === true
+        if (isTerminal) {
           break
         }
         if (attempt < AUTH_REFRESH_MAX_ATTEMPTS) {
@@ -807,7 +810,7 @@ export class Integration<
       }
     }
 
-    if (lastError instanceof AuthException && ctx.authStore?.markOffline) {
+    if (isTerminal && ctx.authStore?.markOffline) {
       try {
         await ctx.authStore.markOffline(lastError)
       } catch (error) {

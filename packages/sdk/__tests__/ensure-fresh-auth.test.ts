@@ -23,7 +23,10 @@ type RefreshAuthFn = (props: {
   auth: Oauth2AuthValue
 }) => Promise<Oauth2AuthValue>
 
-const makeIntegration = (refreshAuth: RefreshAuthFn) =>
+const makeIntegration = (
+  refreshAuth: RefreshAuthFn,
+  isRevokedTokenError?: (error: unknown) => boolean,
+) =>
   new Integration<
     IntegrationDefinition<Record<string, never>, Oauth2AuthValue>
   >({
@@ -32,6 +35,19 @@ const makeIntegration = (refreshAuth: RefreshAuthFn) =>
     handleRequest: async () => "ok",
     disconnect: async () => undefined,
     refreshAuth,
+    connection: isRevokedTokenError
+      ? {
+          kind: "integration",
+          configFields: [],
+          describe: () => ({ sourceId: "fixture", displayName: "Fixture" }),
+          verify: async () => ({ ok: true }),
+          isRevokedTokenError,
+          strategy: "api_key",
+          fromCredentials: async () =>
+            baseAuth(new Date(Date.now() + 60 * 60 * 1000).toISOString()),
+          multiAccount: false,
+        }
+      : undefined,
   })
 
 const makeContext = (auth: Oauth2AuthValue) => {
@@ -170,6 +186,26 @@ describe("Integration.ensureFreshAuth", () => {
       integration.ensureFreshAuth(ctx, { force: true }),
     ).rejects.toThrow("after 1 attempt(s)")
     expect(markOffline).toHaveBeenCalledTimes(1)
+  })
+
+  test("marks the connection offline when its descriptor recognizes a revoked token", async () => {
+    const revokedError = new Error("provider token revoked")
+    const refreshAuth = vi.fn(() => {
+      throw revokedError
+    })
+    const integration = makeIntegration(
+      refreshAuth,
+      (error) => error === revokedError,
+    )
+    const { ctx, markOffline } = makeContext(
+      baseAuth(new Date(Date.now() + 60 * 60 * 1000).toISOString()),
+    )
+
+    await expect(
+      integration.ensureFreshAuth(ctx, { force: true }),
+    ).rejects.toThrow("after 1 attempt(s)")
+    expect(refreshAuth).toHaveBeenCalledOnce()
+    expect(markOffline).toHaveBeenCalledExactlyOnceWith(revokedError)
   })
   test("locks then reloads auth before refreshing to avoid a stale duplicate refresh", async () => {
     const staleAuth = baseAuth(

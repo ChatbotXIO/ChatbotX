@@ -56,8 +56,8 @@ export const connectSessionModel = pgTable(
       onDelete: "cascade",
       onUpdate: "cascade",
     }),
-    // Exactly one actor provenance field is required at session creation; FK
-    // deletion may null either field later.
+    // Actor provenance is optional but mutually exclusive; FK deletion may null
+    // either field later.
     actorUserId: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
@@ -90,9 +90,8 @@ export const connectSessionModel = pgTable(
       .default(sql`'[]'::jsonb`)
       .notNull(),
     errorCode: text().$type<ConnectSessionErrorCode>(),
-    // Pending sessions expire after 10 minutes; authorized sessions expire
-    // after 30. Reads treat `expiresAt <= now()` as `expired` regardless of
-    // the stored `status`.
+    // `expiresAt` is an explicit deadline; `expireDue` transitions due rows to
+    // `expired`.
     expiresAt: timestamp(timestampConfig).notNull(),
     consumedAt: timestamp(timestampConfig),
   },
@@ -112,7 +111,7 @@ export const connectSessionModel = pgTable(
       "btree",
       table.stateNonceHash.asc().nullsLast(),
     ),
-    // Actor deletion may null either FK; creation still requires exactly one actor.
+    // At most one actor provenance field may be set; actor deletion may null either FK.
     check(
       "ConnectSession_actor_at_most_one",
       sql`(("actorUserId" IS NOT NULL)::int + ("actorTokenId" IS NOT NULL)::int) <= 1`,

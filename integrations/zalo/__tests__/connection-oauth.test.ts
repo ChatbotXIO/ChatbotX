@@ -2,10 +2,12 @@ import { expectStateVerbatim } from "@chatbotx.io/vitest-config/test-utils"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type * as ZaloAuthApi from "../src/api/auth"
 import { integration } from "../src/integration"
+import { ZaloException } from "../src/lib/exception"
 
 const mocks = vi.hoisted(() => ({
   convertCodeToTokens: vi.fn(),
   getZaloOAProfile: vi.fn(),
+  refreshAccessToken: vi.fn(),
 }))
 
 vi.mock("../src/api/auth", async (importOriginal) => {
@@ -14,6 +16,7 @@ vi.mock("../src/api/auth", async (importOriginal) => {
     ...actual,
     convertCodeToTokens: mocks.convertCodeToTokens,
     getZaloOAProfile: mocks.getZaloOAProfile,
+    refreshAccessToken: mocks.refreshAccessToken,
   }
 })
 
@@ -96,5 +99,36 @@ describe("Zalo connection.exchangeCode", () => {
         oaName: "Zalo Official Account",
       },
     })
+  })
+})
+
+describe("Zalo refreshAuth", () => {
+  test("preserves a revoked provider error for connection revocation detection", async () => {
+    const refreshAuth = integration.refreshAuth
+    if (!refreshAuth) {
+      throw new Error("Zalo integration must define refreshAuth")
+    }
+    const revokedError = new ZaloException("Token revoked", 400, -124)
+    mocks.refreshAccessToken.mockRejectedValueOnce(revokedError)
+
+    await expect(
+      refreshAuth({
+        auth: {
+          authType: "oauth2",
+          clientId: "app-1",
+          clientSecret: "secret-1",
+          redirectUrl: "https://app.example.test/callback",
+          tokens: {
+            accessToken: "expired-access-token",
+            refreshToken: "refresh-token",
+          },
+          oaId: "oa-1",
+          metadata: { oaName: "Zalo Official Account" },
+        },
+      }),
+    ).rejects.toBe(revokedError)
+    expect(integration.connection.isRevokedTokenError?.(revokedError)).toBe(
+      true,
+    )
   })
 })

@@ -3,6 +3,7 @@ import {
   facebookOauthCredential,
 } from "@chatbotx.io/vitest-config/test-utils"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { MessengerException } from "../src/exception"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
@@ -94,6 +95,43 @@ describe("Messenger connection.exchangeCode", () => {
         credential,
       }),
     ).rejects.toThrow("boom")
+  })
+})
+
+describe("Messenger refreshAuth", () => {
+  test("preserves a revoked provider error for connection revocation detection", async () => {
+    const refreshAuth = integration.refreshAuth
+    if (!refreshAuth) {
+      throw new Error("Messenger integration must define refreshAuth")
+    }
+    const revokedError = new MessengerException(
+      "Token revoked",
+      400,
+      190,
+      467,
+      "OAuthException",
+    )
+    mocks.exchangeLongLivedToken.mockRejectedValueOnce(revokedError)
+
+    await expect(
+      refreshAuth({
+        auth: {
+          authType: "oauth2",
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          redirectUrl: "https://app.example.test/callback",
+          tokens: { accessToken: "expired-access-token" },
+          metadata: {
+            pageId: "page-1",
+            pageName: "Page One",
+            version: "v23.0",
+          },
+        },
+      }),
+    ).rejects.toBe(revokedError)
+    expect(integration.connection.isRevokedTokenError?.(revokedError)).toBe(
+      true,
+    )
   })
 })
 

@@ -110,7 +110,7 @@ export const connectSessionPurposes = z.enum([
 ])
 export type ConnectSessionPurpose = z.infer<typeof connectSessionPurposes>
 
-/** `ConnectSession.status` lifecycle. `expiresAt <= now()` reads as `expired` regardless of the stored value. */
+/** `ConnectSession.status` lifecycle. `expireDue` transitions due rows to `expired`. */
 export const connectSessionStatuses = z.enum([
   "pending",
   "authorized",

@@ -3,10 +3,12 @@ import {
   oauthCredential,
 } from "@chatbotx.io/vitest-config/test-utils"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { TiktokAPIException } from "../src/exception"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
   getUserInfo: vi.fn(),
+  refreshAccessToken: vi.fn(),
 }))
 
 vi.mock("../src/apis/auth", async (importOriginal) => {
@@ -14,6 +16,7 @@ vi.mock("../src/apis/auth", async (importOriginal) => {
   return {
     ...actual,
     exchangeCodeForToken: mocks.exchangeCodeForToken,
+    refreshAccessToken: mocks.refreshAccessToken,
   }
 })
 
@@ -109,5 +112,39 @@ describe("TikTok connection.exchangeCode", () => {
         displayName: "TikTok User",
       },
     })
+  })
+})
+
+describe("TikTok refreshAuth", () => {
+  test("preserves a revoked provider error for connection revocation detection", async () => {
+    const refreshAuth = integration.refreshAuth
+    if (!refreshAuth) {
+      throw new Error("TikTok integration must define refreshAuth")
+    }
+    const revokedError = new TiktokAPIException("Token revoked", 401)
+    mocks.refreshAccessToken.mockRejectedValueOnce(revokedError)
+
+    await expect(
+      refreshAuth({
+        auth: {
+          authType: "oauth2",
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          redirectUrl: "https://app.example.test/callback",
+          tokens: {
+            accessToken: "expired-access-token",
+            refreshToken: "refresh-token",
+          },
+          metadata: {
+            openId: "open-id-1",
+            username: "tiktok-user",
+            displayName: "TikTok User",
+          },
+        },
+      }),
+    ).rejects.toBe(revokedError)
+    expect(integration.connection.isRevokedTokenError?.(revokedError)).toBe(
+      true,
+    )
   })
 })

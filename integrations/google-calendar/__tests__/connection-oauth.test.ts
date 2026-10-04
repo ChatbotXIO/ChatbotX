@@ -165,4 +165,40 @@ describe("Google Calendar refreshAuth", () => {
       }),
     ).rejects.toBeInstanceOf(AuthException)
   })
+
+  test("keeps the existing refresh token when Google omits it during refresh", async () => {
+    const refreshAuth = integration.refreshAuth
+    if (!refreshAuth) {
+      throw new Error("Google Calendar integration must define refreshAuth")
+    }
+    const refreshAccessToken = vi.fn().mockResolvedValue({
+      credentials: {
+        access_token: "rotated-access-token",
+        expiry_date: 1_800_000_000_000,
+      },
+    })
+    mocks.getClient.mockReturnValue({ refreshAccessToken })
+
+    await expect(
+      refreshAuth({
+        auth: {
+          authType: "oauth2",
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          redirectUrl: "https://app.example.test/connections/callback",
+          tokens: {
+            accessToken: "expired-access-token",
+            refreshToken: "existing-refresh-token",
+          },
+          metadata: {},
+        },
+      }),
+    ).resolves.toMatchObject({
+      tokens: {
+        accessToken: "rotated-access-token",
+        refreshToken: "existing-refresh-token",
+        expiresAt: "2027-01-15T08:00:00.000Z",
+      },
+    })
+  })
 })

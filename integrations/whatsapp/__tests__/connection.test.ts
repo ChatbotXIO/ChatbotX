@@ -91,6 +91,32 @@ describe("isRevokedTokenError", () => {
     expect(isRevokedTokenError(error)).toBe(true)
   })
 
+  test("recognizes OAuth code 190 without a subcode as a revoked token", () => {
+    const error = new WhatsappException(
+      "OAuth token invalid",
+      400,
+      190,
+      null,
+      "OAuthException",
+    )
+
+    expect(isRevokedTokenError(error)).toBe(true)
+  })
+
+  test.each([
+    464, 490,
+  ])("rejects OAuth subcode %i because it does not revoke the token", (subCode) => {
+    const error = new WhatsappException(
+      "OAuth token invalid",
+      400,
+      190,
+      subCode,
+      "OAuthException",
+    )
+
+    expect(isRevokedTokenError(error)).toBe(false)
+  })
+
   test("rejects unrelated OAuth and non-WhatsApp errors", () => {
     const unrelatedOAuthError = new WhatsappException(
       "OAuth token invalid",

@@ -57,6 +57,11 @@ const probeSendGrid = async (auth: SendGridAuthValue) => {
     SENDGRID_SCOPES_PATH,
     sendGridScopesResponseSchema,
   )
+  // SendGrid API keys can report Marketing permissions under either the
+  // modern "marketing.*" scope names or the legacy "marketing_campaigns.*"
+  // names depending on key type. Full Access keys have implicit write
+  // access but do NOT enumerate "marketing.write" in the scopes endpoint
+  // even though write calls succeed (HTTP 202). Checking read is enough.
   const hasRead =
     scopes.includes("marketing.read") ||
     scopes.includes("marketing_campaigns.read")
