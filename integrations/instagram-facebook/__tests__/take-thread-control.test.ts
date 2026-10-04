@@ -2,7 +2,6 @@ import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test, vi } from "vitest"
 import { takeThreadControl } from "../src/apis/page"
 import { API_URL, DEFAULT_API_VERSION } from "../src/constants"
-import { isNotThreadOwnerError } from "../src/lib/error-mapper"
 import type { InstagramAuthValue } from "../src/schema"
 
 vi.mock("../src/lib/logger", () => ({
@@ -50,15 +49,35 @@ const ctx = { auth } as never
 const contact = { id: "contact-1", sourceId: IGSID } as never
 
 type Counters = { sends: number; handovers: number }
+type SentBody = { message?: { text?: string } }
+type RefusalBody = {
+  error: { message: string; code: number; error_subcode?: number }
+}
+type StubGraphOptions = {
+  refusals: number | ((sendIndex: number) => boolean)
+  handover?: "ok" | "fail" | "rejected"
+  refusalBody?: RefusalBody
+  onSend?: (body: SentBody) => void
+}
 
-/** Send API refuses `refusals` times with 2534037, then succeeds. */
-function stubGraph(refusals: number, handover: "ok" | "fail" = "ok"): Counters {
+/** Configures Send API refusals and take_thread_control responses. */
+function stubGraph({
+  refusals,
+  handover = "ok",
+  refusalBody = NOT_THREAD_OWNER_BODY,
+  onSend,
+}: StubGraphOptions): Counters {
   const counters: Counters = { sends: 0, handovers: 0 }
   server.use(
-    http.post(SEND_URL, () => {
+    http.post(SEND_URL, async ({ request }) => {
       counters.sends += 1
-      if (counters.sends <= refusals) {
-        return HttpResponse.json(NOT_THREAD_OWNER_BODY, { status: 400 })
+      onSend?.((await request.json()) as SentBody)
+      const shouldRefuse =
+        typeof refusals === "function"
+          ? refusals(counters.sends)
+          : counters.sends <= refusals
+      if (shouldRefuse) {
+        return HttpResponse.json(refusalBody, { status: 400 })
       }
       return HttpResponse.json({
         recipient_id: IGSID,
@@ -79,6 +98,9 @@ function stubGraph(refusals: number, handover: "ok" | "fail" = "ok"): Counters {
           { status: 403 },
         )
       }
+      if (handover === "rejected") {
+        return HttpResponse.json({ success: false })
+      }
       return HttpResponse.json({ success: true })
     }),
   )
@@ -87,10 +109,8 @@ function stubGraph(refusals: number, handover: "ok" | "fail" = "ok"): Counters {
 
 describe("takeThreadControl", () => {
   test("posts to the Page node with the Page token", async () => {
-    const counters = stubGraph(0)
-    await expect(takeThreadControl(auth, IGSID)).resolves.toEqual({
-      success: true,
-    })
+    const counters = stubGraph({ refusals: 0 })
+    await expect(takeThreadControl(auth, IGSID)).resolves.toBeUndefined()
     expect(counters.handovers).toBe(1)
   })
 
@@ -118,16 +138,9 @@ describe("takeThreadControl", () => {
   })
 })
 
-describe("isNotThreadOwnerError", () => {
-  test("is false for non-Instagram errors and for other Graph codes", () => {
-    expect(isNotThreadOwnerError(null)).toBe(false)
-    expect(isNotThreadOwnerError(new Error("boom"))).toBe(false)
-  })
-})
-
 describe("sendMessage with the Handover Protocol", () => {
   test("2534037 once: takes the thread and retries exactly once", async () => {
-    const counters = stubGraph(1)
+    const counters = stubGraph({ refusals: 1 })
     const result = await sendMessage({
       ctx,
       data: {
@@ -140,7 +153,7 @@ describe("sendMessage with the Handover Protocol", () => {
   })
 
   test("2534037 twice: one handover, the second refusal propagates", async () => {
-    const counters = stubGraph(2)
+    const counters = stubGraph({ refusals: 2 })
     await expect(
       sendMessage({
         ctx,
@@ -154,7 +167,7 @@ describe("sendMessage with the Handover Protocol", () => {
   })
 
   test("take_thread_control failing propagates its own error, no second send", async () => {
-    const counters = stubGraph(1, "fail")
+    const counters = stubGraph({ refusals: 1, handover: "fail" })
     await expect(
       sendMessage({
         ctx,
@@ -167,22 +180,27 @@ describe("sendMessage with the Handover Protocol", () => {
     expect(counters).toEqual({ sends: 1, handovers: 1 })
   })
 
+  test("a refused take_thread_control propagates without a second send", async () => {
+    const counters = stubGraph({ refusals: 1, handover: "rejected" })
+    await expect(
+      sendMessage({
+        ctx,
+        data: {
+          contact,
+          message: { id: "msg-1", contentType: "text", text: "hello" },
+        },
+      } as never),
+    ).rejects.toThrow("Instagram take_thread_control was not accepted")
+    expect(counters).toEqual({ sends: 1, handovers: 1 })
+  })
+
   test("a non-2534037 refusal never triggers a handover", async () => {
-    let sends = 0
-    let handovers = 0
-    server.use(
-      http.post(SEND_URL, () => {
-        sends += 1
-        return HttpResponse.json(
-          { error: { message: "(#10) Permission denied", code: 10 } },
-          { status: 403 },
-        )
-      }),
-      http.post(HANDOVER_URL, () => {
-        handovers += 1
-        return HttpResponse.json({ success: true })
-      }),
-    )
+    const counters = stubGraph({
+      refusals: 1,
+      refusalBody: {
+        error: { message: "(#10) Permission denied", code: 10 },
+      },
+    })
     await expect(
       sendMessage({
         ctx,
@@ -192,14 +210,40 @@ describe("sendMessage with the Handover Protocol", () => {
         },
       } as never),
     ).rejects.toMatchObject({ code: 10 })
-    expect(sends).toBe(1)
-    expect(handovers).toBe(0)
+    expect(counters).toEqual({ sends: 1, handovers: 0 })
+  })
+
+  test("only retries the refused message in a multi-message send", async () => {
+    const sentBodies: SentBody[] = []
+    const counters = stubGraph({
+      refusals: (sendIndex) => sendIndex === 2,
+      onSend: (body) => sentBodies.push(body),
+    })
+    const result = await sendMessage({
+      ctx,
+      data: {
+        contact,
+        message: {
+          id: "msg-1",
+          contentType: "text",
+          text: "first message",
+          attachments: [
+            { fileType: "video", url: "https://example.com/second.mp4" },
+          ],
+        },
+      },
+    } as never)
+    expect(result).toEqual({ messageIds: ["mid-1", "mid-3"], sentCount: 2 })
+    expect(counters).toEqual({ sends: 3, handovers: 1 })
+    expect(
+      sentBodies.filter((body) => body.message?.text === "first message"),
+    ).toHaveLength(1)
   })
 })
 
 describe("sendFlowStep with the Handover Protocol", () => {
   test("sendText step recovers from 2534037 with one handover", async () => {
-    const counters = stubGraph(1)
+    const counters = stubGraph({ refusals: 1 })
     const result = await sendFlowStep({
       ctx,
       data: {

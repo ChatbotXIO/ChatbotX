@@ -59,8 +59,9 @@ export const handledFlowStepTypes = [
  * One Send API call with the Handover Protocol recovery: when Meta refuses the
  * send because another app owns the thread (2534037), take the thread back for
  * this IGSID and retry exactly once. Any other error, a second 2534037, or a
- * failing take_thread_control propagates unchanged. Scoped to ONE message so a
- * multi-message step never re-sends what already landed (fork, s171).
+ * failing or refused take_thread_control propagates unchanged. Scoped to ONE
+ * message so a multi-message step never re-sends what already landed (fork,
+ * s171).
  */
 const sendWithHandover = async (
   auth: InstagramAuthValue,

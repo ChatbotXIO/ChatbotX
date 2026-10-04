@@ -123,13 +123,13 @@ export const unsubscribePageFromInstagramWebhook = (props: {
 export const takeThreadControl = async (
   auth: InstagramAuthValue,
   recipientId: string,
-): Promise<{ success: boolean }> => {
+): Promise<void> => {
   if (!recipientId) {
     throw new InstagramAPIException(
       "Cannot take Instagram thread control: no recipient id.",
     )
   }
-  if (!auth?.metadata) {
+  if (!auth.metadata) {
     throw new InstagramAPIException(
       "Cannot take Instagram thread control: the integration has no metadata. Reconnect the Instagram account.",
     )
@@ -146,19 +146,27 @@ export const takeThreadControl = async (
   }
   const endpoint = `${version}/${pageId}/take_thread_control`
 
-  return await rescue(endpoint, () =>
-    instagramGraphClient.post<{ success: boolean }>(endpoint, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${auth.tokens.accessToken}`,
+  await rescue(endpoint, async () => {
+    const res = await instagramGraphClient.post<{ success?: boolean }>(
+      endpoint,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.tokens.accessToken}`,
+        },
+        json: {
+          recipient: { id: recipientId },
+          metadata: "ChatbotX handover: send refused with 2534037",
+        },
+        retry: 0,
       },
-      json: {
-        recipient: { id: recipientId },
-        metadata: "ChatbotX handover: send refused with 2534037",
-      },
-      retry: 0,
-    }),
-  )
+    )
+    if (res.success !== true) {
+      throw new InstagramAPIException(
+        `Instagram take_thread_control was not accepted for page ${pageId}`,
+      )
+    }
+  })
 }
 
 export const deleteProfileFields = (props: {
