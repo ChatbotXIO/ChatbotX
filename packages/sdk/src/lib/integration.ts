@@ -707,7 +707,7 @@ export class Integration<
       return await handler({ ...(props as object), ctx })
     } catch (error) {
       if (error instanceof AuthException && this.props.refreshAuth) {
-        ctx = await this.refreshAndPersist(ctx)
+        ctx = await this.refreshAndPersist(ctx, { force: true })
         return await handler({ ...(props as object), ctx })
       }
       throw error

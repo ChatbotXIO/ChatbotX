@@ -8,7 +8,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { exchangeCodeForToken, refreshAccessToken } from "./apis/auth"
 import { getUserInfo } from "./apis/user"
-import { TiktokAPIException } from "./exception"
+import { TiktokAPIException, TiktokMissingScopesError } from "./exception"
 import { callbackHandler } from "./handlers/callback"
 import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
@@ -16,19 +16,20 @@ import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
 import { isRevokedTokenError } from "./lib/error-mapper"
-import { parseTiktokScopes } from "./lib/scopes"
+import {
+  findMissingTiktokScopes,
+  parseTiktokScopes,
+  TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_CORE_SCOPES,
+  TIKTOK_OPTIONAL_PROFILE_SCOPES,
+} from "./lib/scopes"
 import { buildTokenTimestamps } from "./lib/token-utils"
 import type { TiktokActions, TiktokAuthValue, TiktokConfig } from "./schema"
 
 const TIKTOK_SCOPES = [
-  "user.info.basic",
-  "user.info.username",
-  "user.info.profile",
-  "user.info.stats",
-  "user.account.type",
-  "message.list.read",
-  "message.list.send",
-  "message.list.manage",
+  ...TIKTOK_CORE_SCOPES,
+  ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
+  ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
 ].join(",")
 
 const config: IntegrationDefinition<
@@ -73,6 +74,15 @@ const config: IntegrationDefinition<
         },
         code,
       )
+      const grantedScopes = parseTiktokScopes(tokenResponse.scope)
+      const missingCoreScopes = findMissingTiktokScopes(
+        grantedScopes,
+        TIKTOK_CORE_SCOPES,
+      )
+      if (missingCoreScopes.length > 0) {
+        throw new TiktokMissingScopesError(missingCoreScopes)
+      }
+
       const userInfo = await getUserInfo({
         accessToken: tokenResponse.access_token,
       })
@@ -92,6 +102,7 @@ const config: IntegrationDefinition<
           openId: tokenResponse.open_id,
           username: userInfo.username,
           displayName: userInfo.display_name,
+          scopes: grantedScopes,
         },
       ) satisfies TiktokAuthValue
     },

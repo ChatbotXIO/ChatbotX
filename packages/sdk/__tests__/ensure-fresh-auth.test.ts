@@ -132,6 +132,36 @@ describe("Integration.ensureFreshAuth", () => {
     expect(save).toHaveBeenCalledWith(newAuth)
     expect(result.auth).toBe(newAuth)
   })
+
+  test("reactively forces a refresh before retrying an auth-rejected action", async () => {
+    const farFuture = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    const refreshedAuth = {
+      ...baseAuth(farFuture),
+      tokens: { accessToken: "token-2", expiresAt: farFuture },
+    }
+    const refreshAuth = vi.fn(async () => refreshedAuth)
+    const integration = new Integration({
+      name: "reactive-refresh-fixture",
+      actions: {
+        send: ({ ctx }: { ctx: Context<Oauth2AuthValue> }) => {
+          if (ctx.auth.tokens.accessToken === "token-1") {
+            throw new AuthException("token rejected")
+          }
+          return ctx.auth.tokens.accessToken
+        },
+      },
+      handleRequest: async () => "ok",
+      disconnect: async () => undefined,
+      refreshAuth,
+    })
+    const { ctx, save } = makeContext(baseAuth(farFuture))
+
+    await expect(integration.runAction("send", { ctx })).resolves.toBe(
+      "token-2",
+    )
+    expect(refreshAuth).toHaveBeenCalledExactlyOnceWith({ auth: ctx.auth })
+    expect(save).toHaveBeenCalledExactlyOnceWith(refreshedAuth)
+  })
   test("force:true does not refresh non-oauth2 auth", async () => {
     const refreshAuth = vi.fn(async ({ auth }: { auth: AuthValue }) => auth)
     const integration = new Integration<

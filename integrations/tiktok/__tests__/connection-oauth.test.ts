@@ -3,7 +3,12 @@ import {
   oauthCredential,
 } from "@chatbotx.io/vitest-config/test-utils"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { TiktokAPIException } from "../src/exception"
+import { TiktokAPIException, TiktokMissingScopesError } from "../src/exception"
+import {
+  TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_CORE_SCOPES,
+  TIKTOK_OPTIONAL_PROFILE_SCOPES,
+} from "../src/lib/scopes"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
@@ -47,9 +52,11 @@ describe("TikTok connection.authorizeUrl", () => {
       "https://app.example.test/integrations/tiktok/callback",
     )
     expect(parsed.searchParams.get("disable_auto_auth")).toBe("1")
-    expect(parsed.searchParams.get("scope")).toBe(
-      "user.info.basic,user.info.username,user.info.profile,user.info.stats,user.account.type,message.list.read,message.list.send,message.list.manage",
-    )
+    expect(parsed.searchParams.get("scope")?.split(",")).toEqual([
+      ...TIKTOK_CORE_SCOPES,
+      ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
+      ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
+    ])
   })
 })
 
@@ -64,6 +71,11 @@ describe("TikTok connection.exchangeCode", () => {
       expires_in: 3600,
       refresh_expires_in: 7200,
       open_id: "open-id-1",
+      scope: [
+        ...TIKTOK_CORE_SCOPES,
+        ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
+        ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
+      ].join(","),
     })
     mocks.getUserInfo.mockResolvedValue({
       open_id: "open-id-1",
@@ -110,8 +122,35 @@ describe("TikTok connection.exchangeCode", () => {
         openId: "open-id-1",
         username: "tiktok-user",
         displayName: "TikTok User",
+        scopes: [
+          ...TIKTOK_CORE_SCOPES,
+          ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
+          ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
+        ],
       },
     })
+  })
+
+  test("refuses a code exchange missing a core messaging scope", async () => {
+    mocks.exchangeCodeForToken.mockResolvedValueOnce({
+      access_token: "access-token",
+      refresh_token: "refresh-token",
+      expires_in: 3600,
+      refresh_expires_in: 7200,
+      open_id: "open-id-1",
+      scope: TIKTOK_CORE_SCOPES.filter(
+        (scope) => scope !== "message.list.send",
+      ).join(","),
+    })
+
+    await expect(
+      integration.connection.exchangeCode?.({
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential,
+      }),
+    ).rejects.toBeInstanceOf(TiktokMissingScopesError)
+    expect(mocks.getUserInfo).not.toHaveBeenCalled()
   })
 })
 
