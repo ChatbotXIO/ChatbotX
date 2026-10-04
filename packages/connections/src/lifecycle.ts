@@ -69,8 +69,10 @@ export const disconnect = async (input: {
 
   if (adapter.store && foreignKey) {
     let auth: AuthValue | null = null
+    let loadedAuth = false
     try {
       auth = await adapter.store.loadAuthByForeignKey(foreignKey)
+      loadedAuth = true
     } catch (err) {
       teardownErrors.push(
         toPublicErrorMessage(err, "Provider-side teardown failed"),
@@ -110,6 +112,14 @@ export const disconnect = async (input: {
           )
         }
       }
+    } else if (loadedAuth) {
+      teardownErrors.push(
+        "Provider authentication was unavailable for teardown",
+      )
+      logger.warn(
+        { connectionId: connection.id, provider: connection.provider },
+        "connection disconnect: provider-side teardown skipped because auth is unavailable",
+      )
     }
   }
 

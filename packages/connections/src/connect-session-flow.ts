@@ -399,7 +399,7 @@ const completeReconnect = async (input: {
     workspaceUsageIncremented: false,
   }
   try {
-    await db.transaction(async (tx) => {
+    return await db.transaction(async (tx) => {
       const integrationId = await saveOrInsertSatellite({
         tx,
         workspaceId: connection.workspaceId,
@@ -429,27 +429,41 @@ const completeReconnect = async (input: {
         tx,
         quotaConsumption,
       })
+      return await connectSessionService.completeReconnect({
+        id: session.id,
+        workspaceId: session.workspaceId,
+        tx,
+        result: {
+          targetId: connection.sourceId,
+          status: "connected",
+          connectionId: connection.id,
+        },
+      })
     })
   } catch (err) {
     if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
-      await connectionStateService.compensateQuotaConsumption({
-        ownerId,
-        workspaceId: quotaConsumption.workspaceId,
-        workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
-      })
+      try {
+        await connectionStateService.compensateQuotaConsumption({
+          ownerId,
+          workspaceId: quotaConsumption.workspaceId,
+          workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
+        })
+      } catch (compensationErr) {
+        logger.error(
+          {
+            err: compensationErr,
+            sessionId: session.id,
+            connectionId: connection.id,
+            workspaceId: quotaConsumption.workspaceId,
+            ownerId,
+          },
+          "connection OAuth: reconnect quota compensation failed",
+        )
+      }
     }
+    await failSession(session, "internal_error", ["authorized"])
     throw err
   }
-
-  return await connectSessionService.completeReconnect({
-    id: session.id,
-    workspaceId: session.workspaceId,
-    result: {
-      targetId: connection.sourceId,
-      status: "connected",
-      connectionId: connection.id,
-    },
-  })
 }
 
 /**
@@ -465,11 +479,9 @@ const completeReconnect = async (input: {
  * Otherwise mirrors `connectFromCredentials`'s revive-or-insert
  * transaction body via the shared `upsertConnectionRow`.
  *
- * Scope: a *bare* connect. The per-provider UI conveniences a
- * picker-driven connect layers on top (Messenger's persistent-menu
- * branding, workspace-logo push, tag-sync enqueue — see
- * `apps/builder/src/features/integration-messenger/actions/connect-page.ts`)
- * are NOT replicated here; `ConnectionProvider.actions` (reserved) is the
+ * Scope: a bare connect. Per-provider UI conveniences such as Messenger
+ * branding, workspace-logo push, and tag-sync enqueue are not replicated
+ * here; they remain owned by their app-layer actions.
  */
 const connectCandidate = async (input: {
   adapter: ConnectionAdapter
@@ -564,12 +576,10 @@ const connectCandidate = async (input: {
 /**
  * Finishes an `awaiting_selection` connect session: atomically claims
  * each requested target (safe against a double-submit or two tabs — a
- * target claimed by a prior call maps to a `duplicated` outcome, never a
- * second connect), then connects it via `connectCandidate`. Never throws
- * for a single target's failure — every outcome (`connected`/
- * `duplicated`/`limitReached`/`failed`) is reported back per-target, the
- * same vocabulary `CONNECT_ITEM_STATUSES` uses for the picker flows this
- * replaces.
+ * target claimed by another attempt is skipped until its claimant records
+ * the outcome), then connects it via `connectCandidate`. Never throws for a
+ * single target's failure — every attempted outcome (`connected`/
+ * `duplicated`/`limitReached`/`failed`) is reported back per-target.
  */
 export const connectTargets = async (input: {
   sessionId: string
@@ -608,7 +618,9 @@ export const connectTargets = async (input: {
 
   const outcomes: ConnectSessionOutcome[] = []
   const connections: ConnectionModel[] = []
-  let updatedSession: ConnectSessionModel | undefined
+  let updatedSession = session
+  let flowError: unknown
+  let flowFailed = false
   const adapter = resolveAdapter(session.provider)
   const ownerId = await resolveOwnerId({
     kind: adapter.provider.kind,
@@ -684,15 +696,30 @@ export const connectTargets = async (input: {
         )
       }
     }
-  } finally {
-    // Runs even if something outside the per-target `try/catch` above threw,
-    // so previously collected outcomes are not silently dropped.
+  } catch (err) {
+    flowError = err
+    flowFailed = true
+  }
+
+  const connectionIds = connections.map((connection) => connection.id)
+  try {
     updatedSession = await connectSessionService.recordResults({
       id: session.id,
       workspaceId: session.workspaceId,
       results: outcomes,
-      resultConnectionIds: connections.map((connection) => connection.id),
+      resultConnectionIds: connectionIds,
     })
+  } catch (err) {
+    logger.error(
+      { err, sessionId: session.id, connectionIds },
+      "connectTargets: failed to record collected results",
+    )
+    if (!flowFailed) {
+      throw err
+    }
+  }
+  if (flowFailed) {
+    throw flowError
   }
 
   return { session: updatedSession, connections, outcomes }

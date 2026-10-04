@@ -1,3 +1,4 @@
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import type {
   ConnectSessionErrorCode,
   ConnectSessionOutcome,
@@ -55,6 +56,26 @@ const sessionLimitReachedException = () =>
     429,
   )
 
+const validateReturnUrl = (
+  returnUrl: string | null | undefined,
+): string | null => {
+  if (!returnUrl) {
+    return null
+  }
+  if (
+    !returnUrl.startsWith("/") ||
+    returnUrl.startsWith("//") ||
+    returnUrl.includes("\\")
+  ) {
+    throw new ChatbotXException(
+      "Connect session return URL must be an application-relative path.",
+      "validation",
+      400,
+    )
+  }
+  return returnUrl
+}
+
 /** Exactly one of `actorUserId`/`actorTokenId` is required at creation time, surfacing a clean error before the database's `ConnectSession_actor_at_most_one` CHECK, which only enforces `<= 1` because an actor FK may later become null through `ON DELETE SET NULL`. */
 const requireExactlyOneActor = (input: {
   actorUserId?: string | null
@@ -111,6 +132,7 @@ class ConnectSessionService extends BaseService {
     const nonce = toHex(randomBytes(NONCE_BYTES))
     const stateNonceHash = await hashNonce(nonce)
     const nextAction = input.nextAction?.(nonce) ?? null
+    const returnUrl = validateReturnUrl(input.returnUrl)
 
     const session = await connectSessionRepository.insert({
       id: input.id ?? createId(),
@@ -123,7 +145,7 @@ class ConnectSessionService extends BaseService {
       actorTokenId: input.actorTokenId ?? null,
       platformOwnerId: input.platformOwnerId ?? null,
       originHost: input.originHost ?? null,
-      returnUrl: input.returnUrl ?? null,
+      returnUrl,
       stateNonceHash,
       status: "pending",
       step: "authorize",
@@ -200,6 +222,7 @@ class ConnectSessionService extends BaseService {
     id: string
     returnUrl: string
   }): Promise<ConnectSessionModel> {
+    const returnUrl = validateReturnUrl(input.returnUrl)
     const existing = await this.findById(input.id)
     if (!existing) {
       throw new ConnectSessionNotFoundException()
@@ -208,7 +231,7 @@ class ConnectSessionService extends BaseService {
       id: input.id,
       workspaceId: existing.workspaceId,
       statuses: [...ACTIVE_STATUSES],
-      values: { returnUrl: input.returnUrl },
+      values: { returnUrl },
       requireUnexpired: true,
     })
     if (!updated) {
@@ -393,6 +416,7 @@ class ConnectSessionService extends BaseService {
   async completeReconnect(input: {
     id: string
     workspaceId?: string
+    tx: DatabaseClient
     result: ConnectSessionOutcome & { connectionId: string }
   }): Promise<ConnectSessionModel> {
     const existing = input.workspaceId
@@ -402,25 +426,20 @@ class ConnectSessionService extends BaseService {
     if (!workspaceId) {
       throw new ConnectSessionNotFoundException()
     }
-    const updated = await connectSessionRepository.completeReconnect({
-      id: input.id,
-      workspaceId,
-      result: input.result,
-    })
+    const updated = await connectSessionRepository.completeReconnect(
+      {
+        id: input.id,
+        workspaceId,
+        result: input.result,
+      },
+      input.tx,
+    )
     if (updated) {
       return updated
     }
-    if (existing) {
-      return existing
-    }
-    const current = await this.findByIdForWorkspace({
-      id: input.id,
-      workspaceId,
-    })
-    if (!current) {
-      throw new ConnectSessionNotFoundException()
-    }
-    return current
+    throw connectSessionExpiredException(
+      "This connect session is no longer active.",
+    )
   }
 
   /**

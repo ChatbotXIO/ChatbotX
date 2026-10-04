@@ -264,14 +264,11 @@ export const connectSessionRepository = {
     const newResults = sql`${JSON.stringify(input.results)}::jsonb`
     const mergedResults = sql`(${connectSessionModel.results} || ${newResults})`
     const selectableTargetCount = sql`(SELECT count(*) FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
-    // Only selectable targets count toward completion or a successful batch.
+    // Only selectable targets with a durable connected/duplicated outcome
+    // resolve the session. Failed and quota-limited attempts remain retryable.
     const selectableTargetIds = sql`(SELECT t->>'id' FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
-    const distinctResultCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem WHERE elem->>'targetId' IN ${selectableTargetIds})`
-    // A duplicated outcome represents a verified existing connection, so its
-    // requested work is complete even without a newly created id.
-    const hasSuccess = sql`(SELECT bool_or(elem2->>'status' NOT IN ('failed', 'limitReached')) FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
-    const allLimitReached = sql`(SELECT bool_and(elem2->>'status' = 'limitReached') FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
-    const isComplete = sql`(${distinctResultCount} >= ${selectableTargetCount})`
+    const distinctResolvedTargetCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem WHERE elem->>'targetId' IN ${selectableTargetIds} AND elem->>'status' IN ('connected', 'duplicated'))`
+    const isComplete = sql`(${distinctResolvedTargetCount} >= ${selectableTargetCount})`
 
     const [row] = await tx
       .update(connectSessionModel)
@@ -281,10 +278,9 @@ export const connectSessionRepository = {
           input.resultConnectionIds.map((id) => sql`${id}`),
           sql`, `,
         )}]::text[])`,
-        status: sql`CASE WHEN NOT ${isComplete} THEN ${connectSessionModel.status} WHEN ${hasSuccess} THEN 'completed' ELSE 'failed' END`,
+        status: sql`CASE WHEN ${isComplete} THEN 'completed' ELSE ${connectSessionModel.status} END`,
         step: sql`CASE WHEN ${isComplete} THEN 'done' ELSE ${connectSessionModel.step} END`,
         consumedAt: sql`CASE WHEN ${isComplete} THEN now() ELSE ${connectSessionModel.consumedAt} END`,
-        errorCode: sql`CASE WHEN ${isComplete} AND ${allLimitReached} THEN 'quota_exceeded' WHEN ${isComplete} AND NOT ${hasSuccess} THEN 'provider_error' ELSE ${connectSessionModel.errorCode} END`,
         encryptedAuth: sql`CASE WHEN ${isComplete} THEN NULL ELSE ${connectSessionModel.encryptedAuth} END`,
       })
       .where(

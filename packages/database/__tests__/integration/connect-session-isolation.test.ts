@@ -861,16 +861,20 @@ describe.skipIf(!databaseUrl)(
         ).toBe(true)
       }))
 
-    test("appendResults terminates an all-failed batch as failed with a generic errorCode, not completed", () =>
+    test("appendResults keeps retryable failures selectable until retried targets resolve", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
         const session = await seedSession(tx, {
           workspaceId,
           actorUserId: ownerId,
-          stateNonceHash: "iso-hash-allfailed-1",
+          stateNonceHash: "iso-hash-retryable-1",
         })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({ encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" } })
+          .where(eq(schema.connectSessionModel.id, session.id))
 
-        const updated = await connectSessionRepository.appendResults(
+        const afterFailure = await connectSessionRepository.appendResults(
           {
             id: session.id,
             workspaceId,
@@ -887,43 +891,31 @@ describe.skipIf(!databaseUrl)(
           tx,
         )
 
-        expect(updated?.status).toBe("failed")
-        expect(updated?.errorCode).toBe("provider_error")
-        expect(updated?.encryptedAuth).toBeNull()
-      }))
-
-    test("appendResults identifies an all-limit-reached batch as quota exceeded", () =>
-      run(async (tx) => {
-        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
-        const session = await seedSession(tx, {
-          workspaceId,
-          actorUserId: ownerId,
-          stateNonceHash: "iso-hash-all-limits-1",
+        expect(afterFailure).toMatchObject({
+          errorCode: null,
+          status: "awaiting_selection",
         })
+        expect(afterFailure?.encryptedAuth).not.toBeNull()
 
-        const updated = await connectSessionRepository.appendResults(
+        const completed = await connectSessionRepository.appendResults(
           {
             id: session.id,
             workspaceId,
             results: [
-              {
-                targetId: "t1",
-                status: "limitReached",
-                reason: "channelLimit",
-              },
+              { targetId: "t1", status: "connected", connectionId: "conn-1" },
               {
                 targetId: "t2",
-                status: "limitReached",
-                reason: "workspaceLimit",
+                status: "duplicated",
+                reason: "alreadyConnected",
               },
             ],
-            resultConnectionIds: [],
+            resultConnectionIds: ["conn-1"],
           },
           tx,
         )
 
-        expect(updated?.status).toBe("failed")
-        expect(updated?.errorCode).toBe("quota_exceeded")
+        expect(completed?.status).toBe("completed")
+        expect(completed?.encryptedAuth).toBeNull()
       }))
 
     test("appendResults completes an all-duplicated selectable batch without connection ids", () =>
@@ -958,83 +950,6 @@ describe.skipIf(!databaseUrl)(
 
         expect(updated?.status).toBe("completed")
         expect(updated?.resultConnectionIds).toEqual([])
-      }))
-
-    test("appendResults determines terminal state from mixed outcomes", () =>
-      run(async (tx) => {
-        const { workspaceId, ownerId } = await seedWorkspace(tx, "mixed")
-        const cases = [
-          {
-            errorCode: "provider_error",
-            results: [
-              {
-                targetId: "t1",
-                status: "limitReached",
-                reason: "channelLimit",
-              },
-              {
-                targetId: "t2",
-                status: "failed",
-                reason: "providerRejected",
-              },
-            ],
-            status: "failed",
-          },
-          {
-            errorCode: null,
-            results: [
-              {
-                targetId: "t1",
-                status: "limitReached",
-                reason: "channelLimit",
-              },
-              { targetId: "t2", status: "connected", connectionId: "conn-2" },
-            ],
-            status: "completed",
-          },
-          {
-            errorCode: null,
-            results: [
-              {
-                targetId: "t1",
-                status: "duplicated",
-                reason: "alreadyConnected",
-              },
-              {
-                targetId: "t2",
-                status: "failed",
-                reason: "providerRejected",
-              },
-            ],
-            status: "completed",
-          },
-        ] as const
-
-        for (const [index, testCase] of cases.entries()) {
-          const session = await seedSession(tx, {
-            workspaceId,
-            actorUserId: ownerId,
-            stateNonceHash: `iso-hash-mixed-${index}`,
-          })
-          const resultConnectionIds = testCase.results.flatMap((result) =>
-            result.connectionId ? [result.connectionId] : [],
-          )
-
-          const updated = await connectSessionRepository.appendResults(
-            {
-              id: session.id,
-              workspaceId,
-              results: [...testCase.results],
-              resultConnectionIds,
-            },
-            tx,
-          )
-
-          expect(updated).toMatchObject({
-            errorCode: testCase.errorCode,
-            status: testCase.status,
-          })
-        }
       }))
 
     test("appendResults under REAL concurrency: two separate connections each completing a different target merge into one completed session with no lost update", async () => {

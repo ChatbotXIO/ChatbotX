@@ -245,39 +245,10 @@ export const toChannelType = (provider: IntegrationType): ChannelType =>
   channelTypes.parse(provider === "instagramFacebook" ? "instagram" : provider)
 
 /**
- * Revive-or-insert-then-transition: the ~90-line block `connectFromCredentials`
- * and `connectCandidate` each ran independently before this extraction.
- *
- * Attempts to update an existing satellite row in place first whenever
- * `existing` still carries a foreign key (`resolveForeignKey`), and falls
- * back to inserting a fresh satellite row when that update actually
- * matches zero rows. The fallback matters because `Connection.inboxId`/
- * `integrationId` is NEVER cleared when a `delete_row` provider's
- * satellite row is deleted on disconnect (only the row itself goes away)
- * — so the stored FK being present does NOT mean a row to update still
- * exists; it's equally consistent with "this connection was fully
- * disconnected a while ago". Deciding from the FK's mere presence alone
- * (the previous `store.onDisconnect === "keep_row"` check had the same
- * flaw) silently no-ops the `UPDATE` and proceeds as if the auth were
- * saved, which under-reported as two different regressions:
- * - (I2) a `delete_row` provider's `connectFromCredentials({ allowUpdate:
- *   true })` call against an already-CONNECTED row (e.g. `PUT
- *   /v1/integrations/ai/{provider}` rotating an API key — the satellite
- *   row is still there, never deleted) used to always fall to the insert
- *   branch, which either collided with the satellite table's own unique
- *   constraint (a spurious `connectionAlreadyConnected` 409 for claude/
- *   deepseek/gemini/openrouter) or — for openai, which has none — silently
- *   inserted a SECOND `Integration` row and orphaned the first.
- * - (I3) reconnecting a `delete_row` channel (messenger/instagram) whose
- *   satellite row IS already gone used to always take the update branch
- *   (the FK/`inboxId` is still set), silently no-op, and still proceed to
- *   `connect.completed` — consuming quota and reporting success with no
- *   auth actually persisted anywhere.
- *
- * Either way this then updates or inserts the `Connection` row and drives
- * it through `connect.completed` — the sole event
- * `ConnectionStateService.transition` consumes quota from, so this is
- * inserted `disconnected` and transitioned, never hardcoded `connected`.
+ * Saves auth/config to an existing satellite row when its foreign key still
+ * matches, otherwise recreates that satellite row. A disconnected
+ * `delete_row` connection retains its stale foreign key after its satellite
+ * is deleted, so a zero-row save must insert instead of silently succeeding.
  */
 export const saveOrInsertSatellite = async (input: {
   tx: DatabaseClient

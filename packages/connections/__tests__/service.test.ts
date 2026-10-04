@@ -72,6 +72,7 @@ const mocks = vi.hoisted(() => ({
     inbox: { id: "inbox-new" },
     wasCreated: true,
   })),
+  loggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -275,7 +276,7 @@ vi.mock("../src/registry", () => ({
 }))
 
 vi.mock("../src/logger", () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+  logger: { warn: vi.fn(), error: mocks.loggerError, info: vi.fn() },
 }))
 
 const { connectionService } = await import("../src/service")
@@ -468,6 +469,29 @@ describe("ConnectionService.disconnect", () => {
     )
     expect(mocks.transition).toHaveBeenCalledWith(
       expect.objectContaining({ event: "user.disconnect", tx: "tx" }),
+    )
+  })
+
+  it("records skipped provider teardown when auth is unavailable", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
+    mocks.loadAuthByForeignKey.mockResolvedValueOnce(null)
+
+    await connectionService.disconnect({
+      connectionId: "conn-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.disconnect).not.toHaveBeenCalled()
+    expect(mocks.unsubscribe).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith(
+      {
+        id: "conn-1",
+        workspaceId: "ws-1",
+        values: {
+          lastError: "Provider authentication was unavailable for teardown",
+        },
+      },
+      "tx",
     )
   })
 
@@ -1442,6 +1466,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
     expect(mocks.completeReconnect).toHaveBeenCalledWith({
       id: "session-1",
       workspaceId: "ws-1",
+      tx: "tx",
       result: {
         targetId: "page-1",
         status: "connected",
@@ -1449,6 +1474,48 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
       },
     })
     expect(result.status).toBe("completed")
+  })
+
+  it("fails the authorized session when reconnect rollback compensation fails", async () => {
+    mocks.findByNonce.mockResolvedValue(reconnectSession)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "page-1" }),
+    )
+    mockAdapter.provider.describe = () => ({
+      sourceId: "page-1",
+      displayName: "Page One",
+    })
+    mocks.transition.mockImplementationOnce((input) => {
+      const quotaConsumption = input.quotaConsumption as {
+        consumed: boolean
+        workspaceId?: string
+        workspaceUsageIncremented: boolean
+      }
+      quotaConsumption.consumed = true
+      quotaConsumption.workspaceId = "ws-1"
+      quotaConsumption.workspaceUsageIncremented = true
+      throw new Error("transition failed")
+    })
+    mocks.compensateQuotaConsumption.mockRejectedValueOnce(
+      new Error("compensation failed"),
+    )
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toThrow("transition failed")
+
+    expect(mocks.failSession).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      errorCode: "internal_error",
+      statuses: ["authorized"],
+    })
   })
 
   it("falls back to inserting a fresh satellite row when the delete_row channel's satellite is already gone (regression I3: used to silently no-op the update, then still report connect.completed with no auth persisted)", async () => {
@@ -1656,6 +1723,28 @@ describe("ConnectionService.connectTargets", () => {
         targetIds: ["page-1"],
       }),
     ).rejects.toMatchObject({ code: "connectSessionExpired" })
+  })
+
+  it("preserves the original flow error when recording results fails", async () => {
+    mocks.claimTarget.mockRejectedValueOnce(new Error("claim failed"))
+    mocks.recordResults.mockRejectedValueOnce(new Error("result write failed"))
+
+    await expect(
+      connectionService.connectTargets({
+        sessionId: "session-1",
+        workspaceId: "ws-1",
+        targetIds: ["page-1"],
+      }),
+    ).rejects.toThrow("claim failed")
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      {
+        err: expect.objectContaining({ message: "result write failed" }),
+        sessionId: "session-1",
+        connectionIds: [],
+      },
+      "connectTargets: failed to record collected results",
+    )
   })
 
   it("connects a selectable target: creates the inbox with skipQuota, inserts the Connection, and reports connected", async () => {

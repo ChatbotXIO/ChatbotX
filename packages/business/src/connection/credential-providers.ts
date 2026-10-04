@@ -1,3 +1,4 @@
+import { toLogSafeError } from "@chatbotx.io/logger"
 import {
   AuthType,
   type ConnectionProvider,
@@ -9,6 +10,7 @@ import {
   verifyAiProviderApiKey,
 } from "../integration-ai-provider/verify"
 import { validateOpenaiCompatibleBaseUrlForEnvironment } from "../integration-openai-compatible/validate-base-url"
+import { logger } from "../logger"
 
 /**
  * `claude`/`deepseek`/`gemini`/`openai`/`openrouter`/`openaiCompatible` have
@@ -17,7 +19,6 @@ import { validateOpenaiCompatibleBaseUrlForEnvironment } from "../integration-op
  * inbound webhook or message dispatch. Their `ConnectionProvider` lives here
  * instead of a `connection` field on an `IntegrationDefinition`.
  */
-
 const secretTextAuth = (secretText: string): SecretTextAuthValue => ({
   authType: AuthType.secretText,
   secretText,
@@ -154,12 +155,16 @@ const verifyOpenaiCompatibleEndpoint = async (
       redirect: "manual",
     })
     return { ok: true }
-  } catch (error) {
+  } catch (err) {
+    logger.warn(
+      { err: toLogSafeError(err) },
+      "OpenAI-compatible endpoint verification failed",
+    )
     // Every branch below fails closed: a baseURL the caller cannot reach —
     // wrong host, wrong path, or an unresponsive provider — is unhealthy.
     // A genuine 401 is terminally revoked; every other failure is retryable.
-    if (isHTTPError(error)) {
-      const { status } = error.response
+    if (isHTTPError(err)) {
+      const { status } = err.response
       if (status === 401) {
         return { ok: false, revoked: true, error: "Invalid API key" }
       }
@@ -175,14 +180,14 @@ const verifyOpenaiCompatibleEndpoint = async (
         error: `Unexpected response from the endpoint (HTTP ${status})`,
       }
     }
-    if (isTimeoutError(error)) {
+    if (isTimeoutError(err)) {
       return {
         ok: false,
         revoked: false,
         error: "The endpoint did not respond in time",
       }
     }
-    if (isNetworkError(error)) {
+    if (isNetworkError(err)) {
       return {
         ok: false,
         revoked: false,

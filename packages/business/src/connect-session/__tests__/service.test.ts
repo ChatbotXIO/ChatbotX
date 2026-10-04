@@ -123,6 +123,19 @@ describe("connectSessionService.create", () => {
     expect(mocks.insert).not.toHaveBeenCalled()
   })
 
+  it("rejects an external return URL before creating a session", async () => {
+    await expect(
+      connectSessionService.create({
+        workspaceId: "ws-1",
+        provider: "messenger",
+        purpose: "connect",
+        actorUserId: "user-1",
+        returnUrl: "https://attacker.example",
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
   it("mints a nonce whose hash resolves back to the inserted session via findByNonce", async () => {
     mocks.insert.mockImplementation(
       async (values: Record<string, unknown>) => ({
@@ -378,6 +391,7 @@ describe("connectSessionService.completeReconnect", () => {
     const result = await connectSessionService.completeReconnect({
       id: "session-1",
       workspaceId: "ws-1",
+      tx: "tx" as never,
       result: {
         targetId: "page-1",
         status: "connected",
@@ -385,16 +399,36 @@ describe("connectSessionService.completeReconnect", () => {
       },
     })
 
-    expect(mocks.completeReconnect).toHaveBeenCalledWith({
-      id: "session-1",
-      workspaceId: "ws-1",
-      result: {
-        targetId: "page-1",
-        status: "connected",
-        connectionId: "conn-1",
+    expect(mocks.completeReconnect).toHaveBeenCalledWith(
+      {
+        id: "session-1",
+        workspaceId: "ws-1",
+        result: {
+          targetId: "page-1",
+          status: "connected",
+          connectionId: "conn-1",
+        },
       },
-    })
+      "tx",
+    )
     expect(result.status).toBe("completed")
+  })
+
+  it("throws when the atomic reconnect completion no-ops", async () => {
+    mocks.completeReconnect.mockResolvedValueOnce(undefined)
+
+    await expect(
+      connectSessionService.completeReconnect({
+        id: "session-1",
+        workspaceId: "ws-1",
+        tx: "tx" as never,
+        result: {
+          targetId: "page-1",
+          status: "connected",
+          connectionId: "conn-1",
+        },
+      }),
+    ).rejects.toMatchObject({ code: "connectSessionExpired" })
   })
 })
 

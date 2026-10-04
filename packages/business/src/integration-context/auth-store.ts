@@ -20,9 +20,8 @@ const channelToIntegrationTable = (channel: string): string => {
 }
 
 /**
- * `id` is required to load and save the satellite row; `inboxId` is optional
- * and only used by `markOffline`, since workspace-level integrations (e.g.
- * Google Sheets) are not inbox-bound.
+ * `id` is required to load and save the satellite row; `inboxId` identifies
+ * inbox-bound integrations when resolving their mirrored `Connection` row.
  */
 export type AuthStoreIntegrationRow = {
   id: string
@@ -51,10 +50,9 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
   const fallbackLockKey = `auth:refresh:${lockKeyPrefix}:${integration.id}`
   /**
    * Resolves the `Connection` row mirroring this `Integration<Channel>` (or
-   * workspace-integration satellite) row, so `markOffline`/`recordHealth`
-   * can route through `connectionStateService` instead of writing `Inbox`
-   * directly. Returns `undefined` for a row predating the Phase 1 backfill
-   * — callers fall back to the legacy direct write in that case.
+   * workspace-integration satellite) row so state changes route through
+   * `connectionStateService` instead of writing `Inbox` directly. Returns
+   * `undefined` for a row predating the Phase 1 backfill.
    */
   const resolveConnection = async () => {
     if (integration.inboxId) {

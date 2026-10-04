@@ -32,12 +32,10 @@ export type ConnectionAdapter = {
   integration?: Integration<IntegrationDefinition<any, any, any>>
   /**
    * Each provider's `ConnectionProvider<SpecificAuth, SpecificCreds>` is
-   * narrower than this field's declared type — same heterogeneous-registry
-   * tradeoff as `integration` above (mirrors how `apps/builder/src/integration.ts`
-   * already combines 22 distinctly-typed `Integration<T>` instances into one
-   * object). Callers load the matching row's `auth` for this exact provider,
-   * so the narrowing is safe at the call site even though it isn't expressed
-   * in this shared type.
+   * narrower than this field's declared type — the same heterogeneous-registry
+   * tradeoff as `integration` above. Callers load the matching row's `auth`
+   * for this exact provider, so the narrowing is safe at the call site even
+   * though it isn't expressed in this shared type.
    */
   // biome-ignore lint/suspicious/noExplicitAny: heterogeneous registry, see comment above
   provider: ConnectionProvider<any, any>

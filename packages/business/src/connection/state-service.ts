@@ -52,7 +52,6 @@ export type ConnectionQuotaConsumption = {
  * Provider-specific legacy mirrors and dashboard notifications stay owned by
  * their respective integrations and event producers.
  */
-
 class ConnectionStateService extends BaseService {
   async list(input: ConnectionListInput) {
     const [data, count] = await Promise.all([
@@ -125,17 +124,16 @@ class ConnectionStateService extends BaseService {
    * Applies one FSM event to an existing `Connection` row: computes the next
    * status via the pure `transitionConnection` (`./state.ts`), writes it,
    * mirrors `Inbox.status`/`disconnectReason` when the connection is
-   * inbox-bound, and — on the state machine's `quotaEdge` — consumes or
-   * releases exactly one unit of the caller-supplied quota owner's
-   * `channels` metric. Best-effort: a quota-release failure never rolls back
-   * the status write (the nightly reconcile self-heals), matching
-   * `inboxService.disconnect`'s existing behavior.
+   * inbox-bound, and consumes one `channels` quota unit at an inactive-to-active
+   * edge. A release at an active-to-inactive edge is best-effort: it is skipped
+   * with a warning when no quota owner remains, and a release failure never
+   * rolls back the status write (the nightly reconcile self-heals).
    */
   async transition(input: {
     connectionId: string
     event: ConnectionEvent
     reason?: ConnectionStatusReason
-    /** Required when the event can consume/release quota (all except read-only transitions). */
+    /** Required for channel quota consumption; ownerless release is best-effort. */
     ownerId?: string
     values?: Pick<
       typeof connectionModel.$inferInsert,
@@ -171,14 +169,18 @@ class ConnectionStateService extends BaseService {
       })
 
       if (result.noop) {
-        if (!input.values) {
+        const values = {
+          ...input.values,
+          ...(result.reason ? { statusReason: result.reason } : {}),
+        }
+        if (Object.keys(values).length === 0) {
           return existing
         }
         const updated = await connectionRepository.update(
           {
             id: existing.id,
             workspaceId: existing.workspaceId,
-            values: input.values,
+            values,
           },
           client,
         )
@@ -192,9 +194,9 @@ class ConnectionStateService extends BaseService {
         result.quotaEdge === "consume" && existing.kind === "channel"
       const releasesQuota =
         result.quotaEdge === "release" && existing.kind === "channel"
-      if ((consumesQuota || releasesQuota) && !input.ownerId) {
+      if (consumesQuota && !input.ownerId) {
         throw new Error(
-          `connection ${existing.id} transition "${input.event}" would ${result.quotaEdge} channel quota but no ownerId was supplied`,
+          `connection ${existing.id} transition "${input.event}" would consume channel quota but no ownerId was supplied`,
         )
       }
       if (consumesQuota && input.tx && !input.quotaConsumption) {
@@ -250,24 +252,21 @@ class ConnectionStateService extends BaseService {
       }
 
       if (consumesQuota && input.ownerId) {
-        try {
-          await workspaceUsageService.increment(
-            existing.workspaceId,
-            "channels",
-          )
-          quotaConsumption.workspaceUsageIncremented = true
-        } catch (err) {
+        await workspaceUsageService.increment(existing.workspaceId, "channels")
+        quotaConsumption.workspaceUsageIncremented = true
+      } else if (releasesQuota) {
+        if (input.ownerId) {
+          await this.releaseQuotaEdge(input.ownerId, existing.workspaceId)
+        } else {
           logger.warn(
             {
-              err,
+              connectionId: existing.id,
+              event: input.event,
               workspaceId: existing.workspaceId,
-              ownerId: input.ownerId,
             },
-            "connection connect: workspace usage channel increment failed",
+            "connection transition: skipped channel quota release without owner",
           )
         }
-      } else if (releasesQuota && input.ownerId) {
-        await this.releaseQuotaEdge(input.ownerId, existing.workspaceId)
       }
 
       return updated

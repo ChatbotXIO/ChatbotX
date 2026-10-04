@@ -212,6 +212,25 @@ describe("ConnectionStateService.transition", () => {
     expect(mocks.tryConsume).not.toHaveBeenCalled()
   })
 
+  test("writes a release-edge transition without an owner and skips quota release", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+
+    const result = await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "auth.revoked",
+    })
+
+    expect(result.status).toBe("needs_reauth")
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({ status: "needs_reauth" }),
+      }),
+      expect.anything(),
+    )
+    expect(mocks.release).not.toHaveBeenCalled()
+  })
+
   test("releases a consumed quota reservation when the state write fails", async () => {
     mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
     mocks.update.mockRejectedValueOnce(new Error("database write failed"))
@@ -223,6 +242,26 @@ describe("ConnectionStateService.transition", () => {
         ownerId: "owner-1",
       }),
     ).rejects.toThrow("database write failed")
+
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+    expect(mocks.decrement).not.toHaveBeenCalled()
+  })
+
+  test("rolls back quota consumption when the workspace usage increment fails", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.increment.mockRejectedValueOnce(new Error("usage write failed"))
+
+    await expect(
+      connectionStateService.transition({
+        connectionId: "conn-1",
+        event: "connect.completed",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toThrow("usage write failed")
 
     expect(mocks.release).toHaveBeenCalledWith({
       userId: "owner-1",
@@ -351,6 +390,30 @@ describe("ConnectionStateService.markUnhealthy", () => {
     expect(result).toBe(active)
     expect(mocks.update).not.toHaveBeenCalled()
     expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
+  })
+
+  test("persists a new reason for a same-status transition", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({ status: "degraded", statusReason: "refresh_failed" }),
+    )
+    mocks.update.mockResolvedValue(
+      baseConnection({ status: "degraded", statusReason: "verify_failed" }),
+    )
+
+    const result = await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "verify.failed_non_auth",
+      reason: "verify_failed",
+      ownerId: "owner-1",
+    })
+
+    expect(result.statusReason).toBe("verify_failed")
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: { statusReason: "verify_failed" },
+      }),
+      expect.anything(),
+    )
   })
 
   test("is an idempotent no-op without overwriting the row or mirroring Inbox when the connection is already inactive", async () => {

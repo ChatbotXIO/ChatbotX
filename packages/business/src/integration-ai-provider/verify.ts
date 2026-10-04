@@ -65,16 +65,9 @@ const verifyConfigByProvider: Record<AiKeyProvider, VerifyConfig> = {
   },
 }
 
-/**
- * Verifies an AI provider API key by calling its public "list models" endpoint.
- *
- * An explicit provider-defined invalid status proves the credentials are
- * invalid. A successful response proves they are valid. Provider outages and
- * unexpected responses remain unknown so callers can accept new credentials
- * without falsely restoring an existing connection to healthy.
- */
 export type AiKeyValidation = "valid" | "invalid" | "unknown"
 
+/** Verifies an AI provider API key by calling its public list-models endpoint. */
 export const verifyAiProviderApiKey = async (
   provider: AiKeyProvider,
   apiKey: string,

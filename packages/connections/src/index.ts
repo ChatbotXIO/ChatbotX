@@ -1,2 +1,1 @@
-export * from "./registry"
-export * from "./service"
+export { connectionService } from "./service"

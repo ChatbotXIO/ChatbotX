@@ -72,12 +72,8 @@ export type ConnectionStoreBinding = {
    * the auth column.
    *
    * Returns whether a row actually matched the FK and was updated — NOT
-   * `void`. `Connection.inboxId`/`integrationId` is never cleared when a
-   * `delete_row` provider's satellite row is deleted on disconnect (only
-   * the satellite row itself goes away), so the stored FK alone can't tell
-   * a caller whether a row to update still exists. Both callers above must
-   * fall back to `insertRow` when this returns `false` instead of silently
-   * no-op-ing a 0-row `UPDATE` and proceeding as if the auth were saved.
+   * `void`. Revive/connect callers must insert a replacement row when this
+   * returns `false`; refresh treats it as a failed auth persistence.
    */
   saveAuthByForeignKey: (
     foreignKey: string,
@@ -251,10 +247,10 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
 
 /**
  * Workspace-level satellite binding: `insertRow` creates the parent
- * `Integration` row (`workspaceId`, `integrationType`) and the satellite row
- * in one transaction, mirroring today's per-provider connect actions. These
- * are all singletons (`sourceId = "workspace"`); `identityColumn` is `null`
- * because the natural key is `workspaceId`, not a column on the satellite.
+ * `Integration` row and the satellite row in one transaction. Satellites are
+ * addressed by their parent `integrationId`, so they have no channel-style
+ * identity column. Most providers have one integration per workspace;
+ * `openaiCompatible` deliberately permits multiple rows.
  */
 type WorkspaceSatelliteTable = PgTable & {
   id: AnyPgColumn
