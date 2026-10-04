@@ -56,6 +56,12 @@ const sessionLimitReachedException = () =>
     429,
   )
 
+const containsControlCharacter = (value: string): boolean =>
+  Array.from(value).some((character) => {
+    const code = character.charCodeAt(0)
+    return code <= 31 || code === 127
+  })
+
 const validateReturnUrl = (
   returnUrl: string | null | undefined,
 ): string | null => {
@@ -65,6 +71,7 @@ const validateReturnUrl = (
   if (
     !returnUrl.startsWith("/") ||
     returnUrl.startsWith("//") ||
+    containsControlCharacter(returnUrl) ||
     returnUrl.includes("\\")
   ) {
     throw new ChatbotXException(
@@ -73,7 +80,15 @@ const validateReturnUrl = (
       400,
     )
   }
-  return returnUrl
+  const url = new URL(returnUrl, "http://x.invalid")
+  if (url.origin !== "http://x.invalid") {
+    throw new ChatbotXException(
+      "Connect session return URL must be an application-relative path.",
+      "validation",
+      400,
+    )
+  }
+  return `${url.pathname}${url.search}${url.hash}`
 }
 
 /** Exactly one of `actorUserId`/`actorTokenId` is required at creation time, surfacing a clean error before the database's `ConnectSession_actor_at_most_one` CHECK, which only enforces `<= 1` because an actor FK may later become null through `ON DELETE SET NULL`. */
@@ -350,11 +365,12 @@ class ConnectSessionService extends BaseService {
    * Atomically merges one `connectTargets` batch's outcomes into the
    * session's running totals via `connectSessionRepository.appendResults`
    * — a single guarded SQL `UPDATE`, not a read-then-write (which lost
-   * updates under concurrent batches). Completion counts DISTINCT ids only
-   * from selectable targets. The merge requires `expiresAt > now()` and an
-   * `awaiting_selection` status; a concurrent terminal transition updates
-   * zero rows and returns the current terminal session unchanged. A complete
-   * session is `completed` only when at least one result succeeded.
+   * updates under concurrent batches). Completion requires every selectable
+   * target to resolve as `connected` or `duplicated`; `failed` and
+   * `limitReached` outcomes remain retryable. The merge requires
+   * `expiresAt > now()` and an `awaiting_selection` status; a concurrent
+   * terminal transition updates zero rows and returns the current terminal
+   * session unchanged.
    */
   async recordResults(input: {
     id: string
@@ -434,6 +450,44 @@ class ConnectSessionService extends BaseService {
       },
       input.tx,
     )
+    if (updated) {
+      return updated
+    }
+    throw connectSessionExpiredException(
+      "This connect session is no longer active.",
+    )
+  }
+
+  /** Returns an OAuth callback claim to `pending` before any authorization has been persisted. */
+  async releaseAuthorization(input: {
+    id: string
+    workspaceId: string
+  }): Promise<void> {
+    await connectSessionRepository.updateWhereStatusIn({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      statuses: ["authorized"],
+      values: { status: "pending" },
+      requireUnexpired: true,
+    })
+  }
+
+  /** Durably stores exchanged OAuth auth while candidate discovery remains retryable. */
+  async storeAuthorization(input: {
+    id: string
+    workspaceId: string
+    encryptedAuth: EncryptedData
+  }): Promise<ConnectSessionModel> {
+    const updated = await connectSessionRepository.updateWhereStatusIn({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      statuses: ["authorized"],
+      values: {
+        encryptedAuth: input.encryptedAuth,
+        expiresAt: new Date(Date.now() + AUTHORIZED_TTL_MS),
+      },
+      requireUnexpired: true,
+    })
     if (updated) {
       return updated
     }
@@ -558,13 +612,18 @@ class ConnectSessionService extends BaseService {
     deletedTerminal: number
     terminalPurgeStopReason: "drained" | "deadline" | "chunkCap"
   }> {
-    const expired = await connectSessionRepository.expireDue({
-      before: new Date(),
-      statuses: [...ACTIVE_STATUSES],
-    })
-    const { deleted: deletedTerminal, stopReason: terminalPurgeStopReason } =
-      await connectSessionRepository.purgeOldTerminal(options)
-    return { expired, deletedTerminal, terminalPurgeStopReason }
+    const [expired, terminalPurge] = await Promise.all([
+      connectSessionRepository.expireDue({
+        before: new Date(),
+        statuses: [...ACTIVE_STATUSES],
+      }),
+      connectSessionRepository.purgeOldTerminal(options),
+    ])
+    return {
+      expired,
+      deletedTerminal: terminalPurge.deleted,
+      terminalPurgeStopReason: terminalPurge.stopReason,
+    }
   }
 
   /**

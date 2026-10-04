@@ -31,23 +31,32 @@ import {
   integrationZaloModel,
 } from "@chatbotx.io/database/schema"
 import type { AuthValue } from "@chatbotx.io/sdk"
-import type { SQL } from "drizzle-orm"
+import type { InferInsertModel, SQL } from "drizzle-orm"
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core"
 
-type ConnectionStoreInsertInput = {
-  workspaceId: string
-  inboxId?: string
-  integrationId?: string
-  auth: AuthValue
-  descriptor: { sourceId: string; displayName: string }
-  config?: Record<string, unknown>
-}
+type ConnectionStoreInsertInput =
+  | {
+      kind: "channel"
+      workspaceId: string
+      inboxId: string
+      auth: AuthValue
+      descriptor: { sourceId: string; displayName: string }
+      config?: Record<string, unknown>
+    }
+  | {
+      kind: "integration"
+      workspaceId: string
+      integrationId?: string
+      auth: AuthValue
+      descriptor: { sourceId: string; displayName: string }
+      config?: Record<string, unknown>
+    }
 
 /**
  * Per-`IntegrationType` DB adapter the Connection domain drives instead of
  * each channel/integration hand-rolling insert/delete/lookup logic.
  */
-export type ConnectionStoreBinding = {
+export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
   /**
    * Same read as `loadAuth`, keyed by the FK the `Connection` row actually
    * carries (`inboxId` for channels, `integrationId` for workspace
@@ -109,8 +118,24 @@ export type ConnectionStoreBinding = {
    * provider whose satellite row carries no additional client-settable
    * column.
    */
-  configColumns?: readonly string[]
+  configColumns?: readonly TConfigColumn[]
 }
+
+type ConfigColumn<TTable extends PgTable> = Exclude<
+  Extract<keyof InferInsertModel<TTable>, string>,
+  | "auth"
+  | "encryptedAuth"
+  | "id"
+  | "inboxId"
+  | "integrationId"
+  | "name"
+  | "workspaceId"
+>
+
+type WorkspaceConfigColumn<TTable extends PgTable> = Exclude<
+  Extract<keyof InferInsertModel<TTable>, string>,
+  "auth" | "encryptedAuth" | "id" | "integrationId" | "workspaceId"
+>
 
 /**
  * `AnyPgColumn`'s data type is erased to `unknown` by design (it spans every
@@ -122,15 +147,15 @@ export type ConnectionStoreBinding = {
  */
 const asAuthValue = (value: unknown): AuthValue => value as AuthValue
 
-const pickAllowed = (
+const pickAllowed = <TColumn extends string>(
   config: Record<string, unknown> | undefined,
-  configColumns: readonly string[] | undefined,
-): Record<string, unknown> =>
+  configColumns: readonly TColumn[] | undefined,
+): Partial<Record<TColumn, unknown>> =>
   Object.fromEntries(
     Object.entries(config ?? {}).filter(([key]) =>
-      configColumns?.includes(key),
+      configColumns?.includes(key as TColumn),
     ),
-  )
+  ) as Partial<Record<TColumn, unknown>>
 
 /**
  * Channel-satellite binding: a table with `id`, `workspaceId`, `inboxId`,
@@ -155,10 +180,10 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
   /** Extra fixed columns to set on insert (e.g. `IntegrationInstagram.type`). */
   extraInsertValues?: Record<string, unknown>
   /** Extra equality narrowing every read must apply (e.g. `type = 'instagram'`). */
-  extraWhere?: Record<string, AnyPgColumn extends never ? never : unknown>
+  extraWhere?: Partial<Record<Extract<keyof TTable, string>, unknown>>
   /** See `ConnectionStoreBinding.configColumns`. */
-  configColumns?: readonly string[]
-}): ConnectionStoreBinding => {
+  configColumns?: readonly ConfigColumn<TTable>[]
+}): ConnectionStoreBinding<ConfigColumn<TTable>> => {
   const { table } = opts
   // `.from()`/`.insert()` reject a generic `TTable` param (Drizzle's typing
   // resolves them against the exact table's config, which a shared factory
@@ -199,10 +224,13 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       return asAuthValue(row.auth)
     },
     saveAuthByForeignKey: async (inboxId, auth, config, tx = db) => {
-      const safeConfig = pickAllowed(config, opts.configColumns)
+      const safeConfig = pickAllowed<ConfigColumn<TTable>>(
+        config,
+        opts.configColumns,
+      )
       const updated = await tx
-        .update(rawTable)
-        .set({ ...safeConfig, auth } as never)
+        .update(table)
+        .set({ ...safeConfig, auth } as InferInsertModel<TTable>)
         .where(withExtraWhere(eq(table.inboxId, inboxId)))
         .returning({ id: table.id })
       return updated.length > 0
@@ -211,7 +239,13 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       const identityValues = identityCol
         ? { [opts.identityColumn as string]: input.descriptor.sourceId }
         : {}
-      const safeConfig = pickAllowed(input.config, opts.configColumns)
+      if (input.kind !== "channel") {
+        throw new Error(`${opts.tableName} requires a channel connection`)
+      }
+      const safeConfig = pickAllowed<ConfigColumn<TTable>>(
+        input.config,
+        opts.configColumns,
+      )
       // `safeConfig` spreads first so no client-controlled key can clobber
       // the system columns set below — see `ConnectionStoreBinding.configColumns`.
       const values = {
@@ -227,8 +261,8 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       // beyond this shared shape (e.g. `IntegrationApi.tokenHash`), so the
       // generic factory cannot express the exact per-table insert type.
       const [row] = await tx
-        .insert(rawTable)
-        .values(values as never)
+        .insert(table)
+        .values(values as InferInsertModel<TTable>)
         .returning({ id: table.id })
       return { id: row.id as string }
     },
@@ -269,7 +303,7 @@ const makeWorkspaceIntegrationBinding = <
   /** Hydrates an auth value with the stored base URL for endpoint verification. */
   baseUrlColumn?: AnyPgColumn
   /** See `ConnectionStoreBinding.configColumns`. */
-  configColumns?: readonly string[]
+  configColumns?: readonly WorkspaceConfigColumn<TTable>[]
   /**
    * NOT NULL satellite columns the credential-strategy `connect` request's
    * own `configFields` never supply (e.g. a bare-`apiKey` AI provider's
@@ -282,7 +316,7 @@ const makeWorkspaceIntegrationBinding = <
   defaultConfigValues?: (
     input: ConnectionStoreInsertInput,
   ) => Record<string, unknown>
-}): ConnectionStoreBinding => {
+}): ConnectionStoreBinding<WorkspaceConfigColumn<TTable>> => {
   const { table } = opts
   // `.from()`/`.insert()` reject a generic `TTable` param — see the same
   // note in `makeChannelBinding` above.
@@ -318,16 +352,25 @@ const makeWorkspaceIntegrationBinding = <
       return { ...auth, baseURL: row.baseURL }
     },
     saveAuthByForeignKey: async (integrationId, auth, config, tx = db) => {
-      const safeConfig = pickAllowed(config, opts.configColumns)
+      const safeConfig = pickAllowed<WorkspaceConfigColumn<TTable>>(
+        config,
+        opts.configColumns,
+      )
       const updated = await tx
-        .update(rawTable)
-        .set({ ...safeConfig, [authColumnName]: auth } as never)
+        .update(table)
+        .set({
+          ...safeConfig,
+          [authColumnName]: auth,
+        } as InferInsertModel<TTable>)
         .where(eq(table.integrationId, integrationId))
         .returning({ id: table.id })
       return updated.length > 0
     },
     insertRow: async (input, tx) => {
-      const safeConfig = pickAllowed(input.config, opts.configColumns)
+      const safeConfig = pickAllowed<WorkspaceConfigColumn<TTable>>(
+        input.config,
+        opts.configColumns,
+      )
       const run = async (client: DatabaseClient) => {
         const [parent] = await client
           .insert(integrationModel)
@@ -350,8 +393,8 @@ const makeWorkspaceIntegrationBinding = <
         }
         // Same per-table shape gap as `makeChannelBinding.insertRow` above.
         const [row] = await client
-          .insert(rawTable)
-          .values(values as never)
+          .insert(table)
+          .values(values as InferInsertModel<TTable>)
           .returning({ id: table.id })
         return { id: row.id as string, integrationId: parent.id as string }
       }

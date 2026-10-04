@@ -136,6 +136,36 @@ describe("connectSessionService.create", () => {
     expect(mocks.insert).not.toHaveBeenCalled()
   })
 
+  it("rejects a bare relative return URL before creating a session", async () => {
+    await expect(
+      connectSessionService.create({
+        workspaceId: "ws-1",
+        provider: "messenger",
+        purpose: "connect",
+        actorUserId: "user-1",
+        returnUrl: "connection/complete",
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    "/\t/evil.example",
+    "/\n/evil.example",
+    "/\r/evil.example",
+  ])("rejects a control-character return URL before URL normalization", async (returnUrl) => {
+    await expect(
+      connectSessionService.create({
+        workspaceId: "ws-1",
+        provider: "messenger",
+        purpose: "connect",
+        actorUserId: "user-1",
+        returnUrl,
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
   it("mints a nonce whose hash resolves back to the inserted session via findByNonce", async () => {
     mocks.insert.mockImplementation(
       async (values: Record<string, unknown>) => ({
@@ -279,6 +309,29 @@ describe("connectSessionService.attachAuthorization", () => {
         }),
       }),
     )
+  })
+
+  describe("connectSessionService.storeAuthorization", () => {
+    it("stores auth and extends the candidate-listing retry deadline", async () => {
+      await connectSessionService.storeAuthorization({
+        id: "session-1",
+        workspaceId: "ws-1",
+        encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" } as never,
+      })
+
+      expect(mocks.updateWhereStatusIn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "session-1",
+          workspaceId: "ws-1",
+          statuses: ["authorized"],
+          requireUnexpired: true,
+          values: expect.objectContaining({
+            encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" },
+            expiresAt: expect.any(Date),
+          }),
+        }),
+      )
+    })
   })
 
   it("throws notFound when the session does not exist", async () => {

@@ -1,12 +1,14 @@
+import { inboxService } from "@chatbotx.io/business"
+
 import {
   type ConnectionQuotaConsumption,
-  connectionStateService,
   isActiveConnectionStatus,
 } from "@chatbotx.io/business/connection"
 import {
   connectionAlreadyConnectedException,
   connectionCredentialsRejectedException,
   connectionNotConfiguredException,
+  connectionProviderUnavailableException,
   connectionWrongStrategyException,
   toPublicErrorMessage,
   validationException,
@@ -26,10 +28,14 @@ import { startSession } from "./connect-session-flow"
 import {
   findOrThrow,
   parseConfig,
+  providerFailureStatus,
   resolveAdapter,
   resolveOwnerId,
   subscribeWebhookBestEffort,
+  toChannelType,
+  toConnectionProviderError,
   upsertConnectionRow,
+  withQuotaCompensation,
 } from "./internal"
 import { logger } from "./logger"
 
@@ -37,11 +43,9 @@ import { logger } from "./logger"
  * `token`/`api_key`/`self_serve` connect: validates `config` against the
  * provider's `configFields`, live-validates it via `fromCredentials`, then
  * creates (or revives a previously disconnected) `Connection` row plus its
- * satellite table row in one transaction. Today every credential-strategy
- * provider is `kind: "integration"` (a workspace singleton, no quota
- * edge), but the transition still runs through `connectionStateService`
- * — not a hardcoded `status: "connected"` insert — so a future `kind:
- * "channel"` credential-strategy provider consumes quota correctly too.
+ * satellite table row in one transaction. Credential providers span both
+ * `integration` and `channel` kinds; the transition always runs through
+ * `connectionStateService` so channel quota edges are applied correctly.
  */
 export const connectFromCredentials = async (input: {
   workspaceId: string
@@ -115,12 +119,24 @@ export const connectFromCredentials = async (input: {
 
   const [auth, ownerId] = await Promise.all([
     provider.fromCredentials(parsedConfig).catch((err) => {
+      const providerError = toConnectionProviderError(err)
+      const retryStatus = providerFailureStatus(providerError)
       logger.warn(
-        { err, provider: input.provider, workspaceId: input.workspaceId },
-        "connection credentials: provider rejected credentials",
+        {
+          err: providerError,
+          provider: input.provider,
+          workspaceId: input.workspaceId,
+        },
+        "connection credentials: provider validation failed",
       )
+      if (retryStatus) {
+        throw connectionProviderUnavailableException(retryStatus)
+      }
       throw connectionCredentialsRejectedException(
-        toPublicErrorMessage(err, "The provided credentials were rejected."),
+        toPublicErrorMessage(
+          providerError,
+          "The provided credentials were rejected.",
+        ),
       )
     }),
     resolveOwnerId({
@@ -149,11 +165,36 @@ export const connectFromCredentials = async (input: {
     consumed: false,
     workspaceUsageIncremented: false,
   }
-  let connection: ConnectionModel
-  try {
-    connection = await db.transaction(
-      async (tx) =>
-        await upsertConnectionRow({
+  const connection = await withQuotaCompensation(
+    {
+      ownerId,
+      quotaConsumption,
+      context: {
+        provider: input.provider,
+        workspaceId: input.workspaceId,
+      },
+    },
+    async () =>
+      await db.transaction(async (tx) => {
+        let inboxId = existing?.inboxId ?? undefined
+        if (provider.kind === "channel" && !inboxId) {
+          if (!ownerId) {
+            throw new Error("Channel connection requires a workspace owner")
+          }
+          const { inbox } = await inboxService.create({
+            data: {
+              workspaceId: input.workspaceId,
+              channel: toChannelType(input.provider),
+              sourceId: descriptor.sourceId,
+              name: descriptor.displayName,
+            },
+            ownerId,
+            tx,
+            skipQuota: true,
+          })
+          inboxId = inbox.id
+        }
+        return await upsertConnectionRow({
           tx,
           workspaceId: input.workspaceId,
           provider: input.provider,
@@ -166,18 +207,10 @@ export const connectFromCredentials = async (input: {
           ownerId,
           quotaConsumption,
           actorUserId: input.actorUserId,
-        }),
-    )
-  } catch (err) {
-    if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
-      await connectionStateService.compensateQuotaConsumption({
-        ownerId,
-        workspaceId: quotaConsumption.workspaceId,
-        workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
-      })
-    }
-    throw err
-  }
+          inboxId,
+        })
+      }),
+  )
 
   return await subscribeWebhookBestEffort({
     adapter,

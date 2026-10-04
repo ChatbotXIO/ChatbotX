@@ -1,6 +1,7 @@
 import { workspaceMemberService } from "@chatbotx.io/business"
 import {
   type ConnectionAdapter,
+  type ConnectionQuotaConsumption,
   connectionStateService,
 } from "@chatbotx.io/business/connection"
 import {
@@ -20,12 +21,13 @@ import {
 } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
-import type {
-  AuthValue,
-  ConnectionCandidate,
-  ConnectionConfigField,
-  ConnectionDescriptor,
-  ConnectionKind,
+import {
+  type AuthValue,
+  type ConnectionCandidate,
+  type ConnectionConfigField,
+  type ConnectionDescriptor,
+  type ConnectionKind,
+  ConnectionProviderRejectedError,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { logger } from "./logger"
@@ -50,6 +52,145 @@ export const encryptedCandidatesSchema = z.array(
     auth: z.custom<AuthValue>(),
   }),
 ) satisfies z.ZodType<ConnectionCandidate[]>
+
+export const encryptedAuthorizationSchema =
+  z.custom<AuthValue>() satisfies z.ZodType<AuthValue>
+
+type ProviderFailure = {
+  code?: unknown
+  httpStatusCode?: unknown
+  name?: unknown
+  response?: { status?: unknown }
+  status?: unknown
+  statusCode?: unknown
+}
+
+const TRANSIENT_NETWORK_ERROR_CODES: Record<string, true> = {
+  ECONNABORTED: true,
+  ECONNREFUSED: true,
+  ECONNRESET: true,
+  EAI_AGAIN: true,
+  ENETUNREACH: true,
+  ENOTFOUND: true,
+  ETIMEDOUT: true,
+}
+
+/** Converts known provider 4xx responses to the explicit rejection contract. */
+export const toConnectionProviderError = (error: unknown): unknown => {
+  if (error instanceof ConnectionProviderRejectedError) {
+    return error
+  }
+  if (!error || typeof error !== "object") {
+    return error
+  }
+  const failure = error as ProviderFailure
+  let status: number | undefined
+  if (typeof failure.response?.status === "number") {
+    status = failure.response.status
+  } else if (typeof failure.httpStatusCode === "number") {
+    status = failure.httpStatusCode
+  } else if (typeof failure.status === "number") {
+    status = failure.status
+  } else if (typeof failure.statusCode === "number") {
+    status = failure.statusCode
+  }
+  if (
+    status === undefined ||
+    status < 400 ||
+    status >= 500 ||
+    status === 408 ||
+    status === 429
+  ) {
+    return error
+  }
+  const message =
+    error instanceof Error
+      ? error.message
+      : "The provider rejected the request."
+  return new ConnectionProviderRejectedError(message, error)
+}
+
+/**
+ * Maps unknown, network, timeout, and upstream-5xx failures to retryable
+ * gateway statuses. Only explicit provider rejection errors map to 400.
+ */
+export const providerFailureStatus = (
+  error: unknown,
+): 502 | 503 | undefined => {
+  if (error instanceof ConnectionProviderRejectedError) {
+    return
+  }
+  if (!error || typeof error !== "object") {
+    return 502
+  }
+  const failure = error as ProviderFailure
+  let status: number | undefined
+  if (typeof failure.response?.status === "number") {
+    status = failure.response.status
+  } else if (typeof failure.httpStatusCode === "number") {
+    status = failure.httpStatusCode
+  } else if (typeof failure.status === "number") {
+    status = failure.status
+  } else if (typeof failure.statusCode === "number") {
+    status = failure.statusCode
+  }
+  if (status !== undefined) {
+    if (status >= 500) {
+      return 502
+    }
+    if (status === 408 || status === 429) {
+      return 503
+    }
+  }
+  if (
+    failure.name === "AbortError" ||
+    failure.name === "TimeoutError" ||
+    (typeof failure.code === "string" &&
+      TRANSIENT_NETWORK_ERROR_CODES[failure.code])
+  ) {
+    return 503
+  }
+  return 502
+}
+
+/**
+ * Preserves the operation error when quota compensation fails after a
+ * transaction rollback, while retaining the compensation failure in logs.
+ */
+export const withQuotaCompensation = async <T>(
+  input: {
+    ownerId: string | undefined
+    quotaConsumption: ConnectionQuotaConsumption
+    context: Record<string, unknown>
+  },
+  operation: () => Promise<T>,
+): Promise<T> => {
+  try {
+    return await operation()
+  } catch (err) {
+    const { ownerId, quotaConsumption } = input
+    if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
+      try {
+        await connectionStateService.compensateQuotaConsumption({
+          ownerId,
+          workspaceId: quotaConsumption.workspaceId,
+          workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
+        })
+      } catch (compensationErr) {
+        logger.error(
+          {
+            err: compensationErr,
+            ...input.context,
+            workspaceId: quotaConsumption.workspaceId,
+            ownerId,
+          },
+          "connection: quota compensation failed",
+        )
+      }
+    }
+    throw err
+  }
+}
 
 /**
  * The FK a `Connection` row actually carries to its satellite row —
@@ -253,6 +394,7 @@ export const toChannelType = (provider: IntegrationType): ChannelType =>
 export const saveOrInsertSatellite = async (input: {
   tx: DatabaseClient
   workspaceId: string
+  kind: ConnectionKind
   inboxId?: string | null
   auth: AuthValue
   descriptor: ConnectionDescriptor
@@ -276,10 +418,27 @@ export const saveOrInsertSatellite = async (input: {
   }
 
   try {
+    if (input.kind === "channel") {
+      if (!input.inboxId) {
+        throw new Error("Channel connection requires an inbox ID")
+      }
+      const inserted = await input.store.insertRow(
+        {
+          kind: "channel",
+          workspaceId: input.workspaceId,
+          inboxId: input.inboxId,
+          auth: input.auth,
+          descriptor: input.descriptor,
+          config: input.extraConfig,
+        },
+        input.tx,
+      )
+      return inserted.integrationId
+    }
     const inserted = await input.store.insertRow(
       {
+        kind: "integration",
         workspaceId: input.workspaceId,
-        inboxId: input.inboxId ?? undefined,
         auth: input.auth,
         descriptor: input.descriptor,
         config: input.extraConfig,
@@ -335,6 +494,7 @@ export const upsertConnectionRow = async (input: {
   const integrationId = await saveOrInsertSatellite({
     tx,
     workspaceId,
+    kind,
     inboxId,
     auth,
     descriptor,

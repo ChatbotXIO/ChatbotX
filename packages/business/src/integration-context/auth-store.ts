@@ -159,8 +159,9 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
 /**
  * Build an {@link AuthStore} bound to a specific `Integration<Channel>` row.
  * The store reads/writes the row's `auth` column, serializes concurrent
- * refreshes via the shared distributed lock, and (for inbox-bound channels)
- * flips `Inbox.status` to `disconnected` when refresh terminally fails.
+ * refreshes via the shared distributed lock, and routes terminal refresh
+ * failures through `connectionStateService.markUnhealthy` when a mirrored
+ * `Connection` row exists.
  */
 export const makeAuthStore = <TAuth extends AuthValue = AuthValue>(
   channel: string,

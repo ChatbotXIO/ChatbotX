@@ -15,6 +15,7 @@ import {
   connectionNoCandidatesException,
   connectionNotConfiguredException,
   connectionNotOAuthException,
+  connectionProviderUnavailableException,
   connectionStateMismatchException,
   connectSessionExpiredException,
   notFoundException,
@@ -40,14 +41,18 @@ import type {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
+  encryptedAuthorizationSchema,
   encryptedCandidatesSchema,
+  providerFailureStatus,
   resolveAdapter,
   resolveForeignKey,
   resolveOwnerId,
   saveOrInsertSatellite,
   subscribeWebhookBestEffort,
   toChannelType,
+  toConnectionProviderError,
   upsertConnectionRow,
+  withQuotaCompensation,
 } from "./internal"
 import { logger } from "./logger"
 
@@ -198,14 +203,22 @@ export const completeAuthorization = async (input: {
   if (!session || session.id !== input.sessionId) {
     throw connectionStateMismatchException()
   }
+  const adapter = resolveAdapter(session.provider)
+  if (!adapter.provider.exchangeCode) {
+    throw connectionNotOAuthException(session.provider)
+  }
+  if (session.status === "authorized" && session.encryptedAuth) {
+    const auth = await encryptUtils.decryptObject(
+      session.encryptedAuth,
+      encryptedAuthorizationSchema,
+      `connect-session:${session.id}:authorization`,
+    )
+    return await listAndAttachCandidates(session, auth)
+  }
   if (session.status !== "pending") {
     throw connectSessionExpiredException(
       "This connect session is no longer active.",
     )
-  }
-  const adapter = resolveAdapter(session.provider)
-  if (!adapter.provider.exchangeCode) {
-    throw connectionNotOAuthException(session.provider)
   }
 
   // OAuth providers consume authorization codes once. The compare-and-set
@@ -223,13 +236,25 @@ export const completeAuthorization = async (input: {
       credential: input.credential,
     })
   } catch (err) {
+    const providerError = toConnectionProviderError(err)
+    const retryStatus = providerFailureStatus(providerError)
     logger.warn(
-      { err, sessionId: session.id, provider: session.provider },
+      { err: providerError, sessionId: session.id, provider: session.provider },
       "connection OAuth: authorization code exchange failed",
     )
+    if (retryStatus) {
+      await connectSessionService.releaseAuthorization({
+        id: session.id,
+        workspaceId: session.workspaceId,
+      })
+      throw connectionProviderUnavailableException(retryStatus)
+    }
     await failSession(session, "exchange_failed", ["authorized"])
     throw connectionCredentialsRejectedException(
-      toPublicErrorMessage(err, "The provider rejected the authorization."),
+      toPublicErrorMessage(
+        providerError,
+        "The provider rejected the authorization.",
+      ),
     )
   }
 
@@ -237,7 +262,16 @@ export const completeAuthorization = async (input: {
     return await completeReconnect({ session, auth })
   }
 
-  return await listAndAttachCandidates(session, auth)
+  const encryptedAuth = await encryptUtils.encryptObject(
+    auth,
+    `connect-session:${session.id}:authorization`,
+  )
+  const authorizedSession = await connectSessionService.storeAuthorization({
+    id: session.id,
+    workspaceId: session.workspaceId,
+    encryptedAuth,
+  })
+  return await listAndAttachCandidates(authorizedSession, auth)
 }
 
 /**
@@ -264,13 +298,18 @@ export const listAndAttachCandidates = async (
       ? await adapter.provider.listCandidates({ auth })
       : [{ ...adapter.provider.describe(auth), auth }]
   } catch (err) {
+    const providerError = toConnectionProviderError(err)
+    const retryStatus = providerFailureStatus(providerError)
     logger.warn(
-      { err, sessionId: session.id, provider: session.provider },
+      { err: providerError, sessionId: session.id, provider: session.provider },
       "connection OAuth: candidate listing failed",
     )
+    if (retryStatus) {
+      throw connectionProviderUnavailableException(retryStatus)
+    }
     await failSession(session, "provider_error")
     throw connectionCredentialsRejectedException(
-      toPublicErrorMessage(err, "Failed to list accounts."),
+      toPublicErrorMessage(providerError, "Failed to list accounts."),
     )
   }
 
@@ -399,68 +438,60 @@ const completeReconnect = async (input: {
     workspaceUsageIncremented: false,
   }
   try {
-    return await db.transaction(async (tx) => {
-      const integrationId = await saveOrInsertSatellite({
-        tx,
-        workspaceId: connection.workspaceId,
-        inboxId: connection.inboxId,
-        auth,
-        descriptor,
-        extraConfig: {},
-        existing: connection,
-        store,
-      })
-      await connectionRepository.update(
-        {
-          id: connection.id,
-          workspaceId: connection.workspaceId,
-          values: {
-            authExpiresAt,
-            lastError: null,
-            integrationId: integrationId ?? connection.integrationId,
-          },
-        },
-        tx,
-      )
-      await connectionStateService.transition({
-        connectionId: connection.id,
-        event: "connect.completed",
+    return await withQuotaCompensation(
+      {
         ownerId,
-        tx,
         quotaConsumption,
-      })
-      return await connectSessionService.completeReconnect({
-        id: session.id,
-        workspaceId: session.workspaceId,
-        tx,
-        result: {
-          targetId: connection.sourceId,
-          status: "connected",
+        context: {
           connectionId: connection.id,
+          sessionId: session.id,
         },
-      })
-    })
-  } catch (err) {
-    if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
-      try {
-        await connectionStateService.compensateQuotaConsumption({
-          ownerId,
-          workspaceId: quotaConsumption.workspaceId,
-          workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
-        })
-      } catch (compensationErr) {
-        logger.error(
-          {
-            err: compensationErr,
-            sessionId: session.id,
+      },
+      async () =>
+        await db.transaction(async (tx) => {
+          const integrationId = await saveOrInsertSatellite({
+            tx,
+            workspaceId: connection.workspaceId,
+            kind: connection.kind,
+            inboxId: connection.inboxId,
+            auth,
+            descriptor,
+            extraConfig: {},
+            existing: connection,
+            store,
+          })
+          await connectionRepository.update(
+            {
+              id: connection.id,
+              workspaceId: connection.workspaceId,
+              values: {
+                authExpiresAt,
+                lastError: null,
+                integrationId: integrationId ?? connection.integrationId,
+              },
+            },
+            tx,
+          )
+          await connectionStateService.transition({
             connectionId: connection.id,
-            workspaceId: quotaConsumption.workspaceId,
+            event: "connect.completed",
             ownerId,
-          },
-          "connection OAuth: reconnect quota compensation failed",
-        )
-      }
-    }
+            tx,
+            quotaConsumption,
+          })
+          return await connectSessionService.completeReconnect({
+            id: session.id,
+            workspaceId: session.workspaceId,
+            tx,
+            result: {
+              targetId: connection.sourceId,
+              status: "connected",
+              connectionId: connection.id,
+            },
+          })
+        }),
+    )
+  } catch (err) {
     await failSession(session, "internal_error", ["authorized"])
     throw err
   }
@@ -516,54 +547,53 @@ const connectCandidate = async (input: {
     consumed: false,
     workspaceUsageIncremented: false,
   }
-  let connection: ConnectionModel
-  try {
-    connection = await db.transaction(async (tx) => {
-      let inboxId: string | undefined
-      if (provider.kind === "channel") {
-        if (!ownerId) {
-          throw notFoundException("Workspace owner not found")
-        }
-        const { inbox } = await inboxService.create({
-          data: {
-            workspaceId: input.workspaceId,
-            channel: toChannelType(input.provider),
-            sourceId: descriptor.sourceId,
-            name: descriptor.displayName,
-          },
-          ownerId,
-          tx,
-          skipQuota: true,
-        })
-        inboxId = inbox.id
-      }
-
-      return await upsertConnectionRow({
-        tx,
-        workspaceId: input.workspaceId,
+  const connection = await withQuotaCompensation(
+    {
+      ownerId,
+      quotaConsumption,
+      context: {
         provider: input.provider,
-        kind: provider.kind,
-        descriptor,
-        auth,
-        extraConfig,
-        existing,
-        store,
-        ownerId,
-        quotaConsumption,
-        actorUserId: input.actorUserId,
-        inboxId,
-      })
-    })
-  } catch (err) {
-    if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
-      await connectionStateService.compensateQuotaConsumption({
-        ownerId,
-        workspaceId: quotaConsumption.workspaceId,
-        workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
-      })
-    }
-    throw err
-  }
+        workspaceId: input.workspaceId,
+      },
+    },
+    async () =>
+      await db.transaction(async (tx) => {
+        let inboxId: string | undefined
+        if (provider.kind === "channel") {
+          if (!ownerId) {
+            throw notFoundException("Workspace owner not found")
+          }
+          const { inbox } = await inboxService.create({
+            data: {
+              workspaceId: input.workspaceId,
+              channel: toChannelType(input.provider),
+              sourceId: descriptor.sourceId,
+              name: descriptor.displayName,
+            },
+            ownerId,
+            tx,
+            skipQuota: true,
+          })
+          inboxId = inbox.id
+        }
+
+        return await upsertConnectionRow({
+          tx,
+          workspaceId: input.workspaceId,
+          provider: input.provider,
+          kind: provider.kind,
+          descriptor,
+          auth,
+          extraConfig,
+          existing,
+          store,
+          ownerId,
+          quotaConsumption,
+          actorUserId: input.actorUserId,
+          inboxId,
+        })
+      }),
+  )
 
   return await subscribeWebhookBestEffort({
     adapter,

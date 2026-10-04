@@ -435,9 +435,9 @@ class ConnectionStateService extends BaseService {
    * quota, then a best-effort mirror onto the workspace's display-only
    * `channels` usage counter. Consume is handled inline in `transition`
    * (it must run BEFORE the status write and throw on failure, unlike
-   * release, which never blocks/rolls back an already-inactive connection)
-   * — this is the release-only counterpart, the same "only place either
-   * counter moves for a Connection-domain channel" as before.
+   * release, which never blocks/rolls back an already-inactive connection).
+   * This is the release-only counterpart and the only Connection-domain
+   * channel path that moves either counter.
    */
   private async releaseQuotaEdge(
     ownerId: string,

@@ -1,4 +1,5 @@
 import { channelLimitReachedException } from "@chatbotx.io/business/errors"
+import { ConnectionProviderRejectedError, SdkException } from "@chatbotx.io/sdk"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const SESSION_STATE_PATTERN = /^[^.]+\.nonce-abc$/
@@ -47,6 +48,8 @@ const mocks = vi.hoisted(() => ({
   attachAuthorization: vi.fn(),
   recordResults: vi.fn(),
   completeReconnect: vi.fn(),
+  releaseAuthorization: vi.fn(),
+  storeAuthorization: vi.fn(),
   failSession: vi.fn(),
   authorizeUrl: vi.fn(() => "https://provider.example.com/authorize"),
   exchangeCode: vi.fn(async () => ({
@@ -134,6 +137,8 @@ vi.mock("@chatbotx.io/business/connect-session", () => ({
     findByIdForWorkspace: mocks.findSessionByIdForWorkspace,
     claimTarget: mocks.claimTarget,
     releaseTarget: mocks.releaseTarget,
+    releaseAuthorization: mocks.releaseAuthorization,
+    storeAuthorization: mocks.storeAuthorization,
     submitInput: mocks.submitInput,
     claimAuthorization: mocks.claimAuthorization,
     attachAuthorization: mocks.attachAuthorization,
@@ -193,6 +198,12 @@ vi.mock("@chatbotx.io/business/errors", () => {
       ),
     connectionCredentialsRejectedException: (message: string) =>
       new TestChatbotXException(message, "connectionCredentialsRejected", 400),
+    connectionProviderUnavailableException: (httpStatusCode: 502 | 503) =>
+      new TestChatbotXException(
+        "The provider is temporarily unavailable. Please try again.",
+        "connectionProviderUnavailable",
+        httpStatusCode,
+      ),
     connectionNotOAuthException: (provider: string) =>
       new TestChatbotXException(
         `Connection provider "${provider}" does not support an OAuth connect flow.`,
@@ -394,6 +405,15 @@ beforeEach(() => {
       id: input.id,
       status: "completed",
       results: [input.result],
+    }),
+  )
+  mocks.storeAuthorization.mockImplementation(
+    async (input: Record<string, unknown>) => ({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      provider: "messenger",
+      status: "authorized",
+      encryptedAuth: input.encryptedAuth,
     }),
   )
 })
@@ -742,6 +762,9 @@ describe("ConnectionService.verify", () => {
 })
 
 describe("ConnectionService.connectFromCredentials", () => {
+  beforeEach(() => {
+    mockAdapter.provider.kind = "integration"
+  })
   it("throws connectionWrongStrategy when the provider strategy is not credential-based", async () => {
     mockAdapter.provider.strategy = "oauth_redirect" as never
     await expect(
@@ -766,7 +789,9 @@ describe("ConnectionService.connectFromCredentials", () => {
   })
 
   it("throws connectionCredentialsRejected when fromCredentials rejects the config", async () => {
-    mocks.fromCredentials.mockRejectedValue(new Error("Invalid API key"))
+    mocks.fromCredentials.mockRejectedValue(
+      new ConnectionProviderRejectedError("Invalid API key"),
+    )
     await expect(
       connectionService.connectFromCredentials({
         workspaceId: "ws-1",
@@ -774,6 +799,37 @@ describe("ConnectionService.connectFromCredentials", () => {
         config: { apiKey: "sk-bad" },
       }),
     ).rejects.toMatchObject({ code: "connectionCredentialsRejected" })
+  })
+
+  it("maps an SDK 4xx provider error to credential rejection", async () => {
+    mocks.fromCredentials.mockRejectedValue(
+      new SdkException("Invalid bot token", "invalid_token", 400),
+    )
+
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "telegram",
+        config: { apiKey: "sk-bad" },
+      }),
+    ).rejects.toMatchObject({ code: "connectionCredentialsRejected" })
+  })
+
+  it("maps an SDK 5xx provider error to a retryable gateway failure", async () => {
+    mocks.fromCredentials.mockRejectedValue(
+      new SdkException("Provider unavailable", "upstream_error", 503),
+    )
+
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "telegram",
+        config: { apiKey: "sk-live" },
+      }),
+    ).rejects.toMatchObject({
+      code: "connectionProviderUnavailable",
+      httpStatusCode: 502,
+    })
   })
 
   it("throws connectionAlreadyConnected when an active connection already exists for this provider", async () => {
@@ -812,7 +868,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-existing",
       event: "connect.completed",
-      ownerId: "owner-1",
+      ownerId: undefined,
       tx: "tx",
       quotaConsumption: expect.anything(),
     })
@@ -858,7 +914,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-new",
       event: "connect.completed",
-      ownerId: "owner-1",
+      ownerId: undefined,
       tx: "tx",
       quotaConsumption: expect.anything(),
     })
@@ -866,6 +922,7 @@ describe("ConnectionService.connectFromCredentials", () => {
   })
 
   it("releases a consumed quota reservation when the connection transaction rolls back", async () => {
+    mockAdapter.provider.kind = "channel"
     mocks.transition.mockImplementationOnce((input) => {
       Object.assign(input.quotaConsumption as object, {
         consumed: true,
@@ -882,7 +939,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     await expect(
       connectionService.connectFromCredentials({
         workspaceId: "ws-1",
-        provider: "claude",
+        provider: "telegram",
         config: { apiKey: "sk-live" },
       }),
     ).rejects.toThrow("transaction commit failed")
@@ -907,11 +964,12 @@ describe("ConnectionService.connectFromCredentials", () => {
   })
 
   it("degrades the connection when the post-connect webhook subscribe fails, without failing the connect itself", async () => {
+    mockAdapter.provider.kind = "channel"
     mocks.subscribe.mockRejectedValueOnce(new Error("webhook endpoint down"))
 
     const result = await connectionService.connectFromCredentials({
       workspaceId: "ws-1",
-      provider: "claude",
+      provider: "telegram",
       config: { apiKey: "sk-live" },
     })
 
@@ -1012,7 +1070,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-existing",
       event: "connect.completed",
-      ownerId: "owner-1",
+      ownerId: undefined,
       tx: "tx",
       quotaConsumption: expect.anything(),
     })
@@ -1050,7 +1108,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-existing",
       event: "connect.completed",
-      ownerId: "owner-1",
+      ownerId: undefined,
       tx: "tx",
       quotaConsumption: expect.anything(),
     })
@@ -1204,8 +1262,10 @@ describe("ConnectionService.completeAuthorization", () => {
     ).rejects.toMatchObject({ code: "connectSessionExpired" })
   })
 
-  it("fails the session with exchange_failed when exchangeCode throws", async () => {
-    mocks.exchangeCode.mockRejectedValue(new Error("bad code"))
+  it("fails the session with exchange_failed when exchangeCode rejects the authorization", async () => {
+    mocks.exchangeCode.mockRejectedValue(
+      new ConnectionProviderRejectedError("bad code"),
+    )
     await expect(
       connectionService.completeAuthorization({
         sessionId: "session-1",
@@ -1221,6 +1281,63 @@ describe("ConnectionService.completeAuthorization", () => {
       errorCode: "exchange_failed",
       statuses: ["authorized"],
     })
+  })
+
+  it("returns a retryable gateway error and releases an exchange claim without failing the session", async () => {
+    mocks.exchangeCode.mockRejectedValue(
+      Object.assign(new Error("provider unavailable"), {
+        response: { status: 503 },
+      }),
+    )
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toMatchObject({
+      code: "connectionProviderUnavailable",
+      httpStatusCode: 502,
+    })
+    expect(mocks.releaseAuthorization).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.failSession).not.toHaveBeenCalled()
+  })
+
+  it("preserves the original transaction error when quota compensation fails", async () => {
+    mockAdapter.provider.kind = "channel"
+    mocks.transition.mockImplementationOnce((input) => {
+      Object.assign(input.quotaConsumption as object, {
+        consumed: true,
+        workspaceId: "ws-1",
+        workspaceUsageIncremented: true,
+      })
+      return { id: input.connectionId, status: "connected" }
+    })
+    mocks.transaction.mockImplementationOnce(async (fn) => {
+      await fn("tx")
+      throw new Error("transaction commit failed")
+    })
+    mocks.compensateQuotaConsumption.mockRejectedValueOnce(
+      new Error("compensation unavailable"),
+    )
+
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "telegram",
+        config: { apiKey: "sk-live" },
+      }),
+    ).rejects.toThrow("transaction commit failed")
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      "connection: quota compensation failed",
+    )
   })
 
   it("does not exchange a duplicate callback after the pending claim is lost", async () => {
@@ -1259,6 +1376,65 @@ describe("ConnectionService.completeAuthorization", () => {
       workspaceId: "ws-1",
       errorCode: "no_candidates",
     })
+  })
+
+  it("keeps encrypted authorization for a retryable candidate listing failure", async () => {
+    mocks.listCandidates.mockRejectedValue(
+      Object.assign(new Error("provider unavailable"), {
+        response: { status: 503 },
+      }),
+    )
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toMatchObject({ code: "connectionProviderUnavailable" })
+    expect(mocks.storeAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "session-1",
+        workspaceId: "ws-1",
+        encryptedAuth: expect.anything(),
+      }),
+    )
+    expect(mocks.failSession).not.toHaveBeenCalled()
+  })
+
+  it("resumes candidate listing from encrypted authorization without re-exchanging the code", async () => {
+    mocks.findByNonce.mockResolvedValue({
+      id: "session-1",
+      workspaceId: "ws-1",
+      provider: "messenger",
+      status: "authorized",
+      encryptedAuth: { iv: "iv", ciphertext: "c", keyId: "k" },
+    })
+    mocks.decryptObject.mockResolvedValue({
+      authType: "oauth2",
+      clientId: "id",
+      clientSecret: "secret",
+      redirectUrl: "https://x",
+      tokens: { accessToken: "tok" },
+    })
+
+    await connectionService.completeAuthorization({
+      sessionId: "session-1",
+      nonce: "nonce-abc",
+      code: "unused-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: {},
+    })
+
+    expect(mocks.exchangeCode).not.toHaveBeenCalled()
+    expect(mocks.decryptObject).toHaveBeenCalledWith(
+      { iv: "iv", ciphertext: "c", keyId: "k" },
+      expect.anything(),
+      "connect-session:session-1:authorization",
+    )
+    expect(mocks.attachAuthorization).toHaveBeenCalled()
   })
 
   it("marks a candidate not selectable when it is already connected in this workspace", async () => {

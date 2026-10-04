@@ -387,6 +387,16 @@ export const connectionWrongStrategyException = (provider: string) =>
 export const connectionCredentialsRejectedException = (message: string) =>
   new ChatbotXException(message, "connectionCredentialsRejected", 400)
 
+/** A provider could not complete a connect request due to a transient upstream or transport failure. */
+export const connectionProviderUnavailableException = (
+  httpStatusCode: 502 | 503,
+) =>
+  new ChatbotXException(
+    "The provider is temporarily unavailable. Please try again.",
+    "connectionProviderUnavailable",
+    httpStatusCode,
+  )
+
 /** `startSession`/`completeAuthorization` called against a provider with no `authorizeUrl`/`exchangeCode` handler — not an OAuth-strategy provider. */
 export const connectionNotOAuthException = (provider: string) =>
   new ChatbotXException(

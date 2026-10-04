@@ -1,8 +1,8 @@
 /**
- * Pure Connection status state machine — zero imports beyond the enum types,
- * so it can be unit-tested without a database and reused by both
- * `ConnectionStateService.transition` (DB writes + audit) and any future
- * dry-run/preview caller.
+ * Pure Connection status state machine. It depends only on status types and
+ * the standard `ChatbotXException`, so it can be unit-tested without a
+ * database and reused by both `ConnectionStateService.transition` (DB writes
+ * + audit) and any future dry-run/preview caller.
  *
  * Families: ACTIVE = `connected | degraded` (quota held, `Inbox.status =
  * connected`). INACTIVE = `needs_reauth | paused | disconnected` (quota
@@ -12,11 +12,13 @@
  * `quotaEdge` is the single source of truth callers use to decide whether to
  * consume or best-effort release quota — never re-derive it ad hoc.
  */
+
 import {
   ACTIVE_CONNECTION_STATUSES,
   type ConnectionStatus,
   type ConnectionStatusReason,
 } from "@chatbotx.io/database/partials"
+import { ChatbotXException } from "../errors"
 
 export type ConnectionEvent =
   | "connect.completed"
@@ -49,12 +51,13 @@ type ConnectionTransitionResult = {
 export const isActiveConnectionStatus = (status: ConnectionStatus): boolean =>
   (ACTIVE_CONNECTION_STATUSES as readonly ConnectionStatus[]).includes(status)
 
-export class InvalidConnectionTransitionException extends Error {
+export class InvalidConnectionTransitionException extends ChatbotXException {
   constructor(from: ConnectionStatus | undefined, event: ConnectionEvent) {
     super(
       `Connection cannot handle event "${event}" from status "${from ?? "∅"}"`,
+      "connectionInactive",
+      409,
     )
-    this.name = "InvalidConnectionTransitionException"
   }
 }
 
@@ -87,9 +90,9 @@ const result = (
 /**
  * Resolve one event against the current status. Throws
  * {@link InvalidConnectionTransitionException} only for `auth.saved`,
- * `refresh`, or `verify` events fired against an INACTIVE status (409
- * `CONNECTION_INACTIVE` at the API layer) — every other unmodeled combination
- * is an idempotent no-op that returns the current status unchanged.
+ * `refresh.transient_failure`, `verify.failed_non_auth`, and `verify.ok`
+ * against an INACTIVE status (`connectionInactive`, HTTP 409). Every other
+ * unmodeled combination is an idempotent no-op that returns the current status.
  */
 export const transitionConnection = (
   input: ConnectionTransitionInput,

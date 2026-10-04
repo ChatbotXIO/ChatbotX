@@ -157,7 +157,7 @@ describe.each([
   ["openai", openaiConnectionProvider],
   ["openrouter", openrouterConnectionProvider],
 ] as const)("AI API-key provider: %s", (providerName, provider) => {
-  it("accepts a credential when validation is inconclusive", async () => {
+  it("rejects a credential when verification is inconclusive", async () => {
     const fromCredentials = provider.fromCredentials
     if (!fromCredentials) {
       throw new Error(`${providerName} is missing fromCredentials`)
@@ -166,10 +166,7 @@ describe.each([
 
     await expect(
       fromCredentials({ apiKey: "possibly-valid-key" }),
-    ).resolves.toEqual({
-      authType: "secretText",
-      secretText: "possibly-valid-key",
-    })
+    ).rejects.toThrow("Unable to verify")
   })
 
   it("marks invalid credentials revoked and unknown verification degraded", async () => {

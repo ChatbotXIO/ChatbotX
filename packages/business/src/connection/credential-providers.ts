@@ -2,6 +2,7 @@ import { toLogSafeError } from "@chatbotx.io/logger"
 import {
   AuthType,
   type ConnectionProvider,
+  ConnectionProviderRejectedError,
   type SecretTextAuthValue,
 } from "@chatbotx.io/sdk"
 import ky, { isHTTPError, isNetworkError, isTimeoutError } from "ky"
@@ -46,7 +47,12 @@ const makeAiKeyProvider = (
   fromCredentials: async ({ apiKey }) => {
     const validation = await verifyAiProviderApiKey(provider, apiKey)
     if (validation === "invalid") {
-      throw new Error(`Invalid ${displayName} API key`)
+      throw new ConnectionProviderRejectedError(
+        `Invalid ${displayName} API key`,
+      )
+    }
+    if (validation === "unknown") {
+      throw new Error(`Unable to verify ${displayName} API key`)
     }
     return secretTextAuth(apiKey)
   },
@@ -130,6 +136,9 @@ export const openaiCompatibleConnectionProvider: ConnectionProvider<
       apiKey,
     )
     if (!health.ok) {
+      if (health.rejected) {
+        throw new ConnectionProviderRejectedError(health.error)
+      }
       throw new Error(health.error)
     }
     return {
@@ -138,15 +147,30 @@ export const openaiCompatibleConnectionProvider: ConnectionProvider<
       secretText: apiKey,
     }
   },
-  verify: async ({ auth }) =>
-    await verifyOpenaiCompatibleEndpoint(auth.baseURL, auth.secretText),
+  verify: async ({ auth }) => {
+    const health = await verifyOpenaiCompatibleEndpoint(
+      auth.baseURL,
+      auth.secretText,
+    )
+    if (health.ok) {
+      return health
+    }
+    return {
+      ok: false,
+      revoked: health.revoked,
+      error: health.error,
+    }
+  },
   isRevokedTokenError: () => false,
 }
 
 const verifyOpenaiCompatibleEndpoint = async (
   baseURL: string,
   apiKey: string,
-): Promise<{ ok: true } | { ok: false; error: string; revoked: boolean }> => {
+): Promise<
+  | { ok: true }
+  | { ok: false; error: string; rejected: boolean; revoked: boolean }
+> => {
   try {
     await ky.get(`${baseURL.replace(TRAILING_SLASH_RE, "")}/models`, {
       headers: { Authorization: `Bearer ${apiKey}` },
@@ -166,17 +190,33 @@ const verifyOpenaiCompatibleEndpoint = async (
     if (isHTTPError(err)) {
       const { status } = err.response
       if (status === 401) {
-        return { ok: false, revoked: true, error: "Invalid API key" }
+        return {
+          ok: false,
+          revoked: true,
+          rejected: true,
+          error: "Invalid API key",
+        }
       }
       if (status === 403) {
-        return { ok: false, revoked: false, error: "Invalid API key" }
+        return {
+          ok: false,
+          revoked: false,
+          rejected: true,
+          error: "Invalid API key",
+        }
       }
       if (status >= 300 && status < 400) {
-        return { ok: false, revoked: false, error: "Unexpected redirect" }
+        return {
+          ok: false,
+          revoked: false,
+          rejected: true,
+          error: "Unexpected redirect",
+        }
       }
       return {
         ok: false,
         revoked: false,
+        rejected: status >= 400 && status < 500,
         error: `Unexpected response from the endpoint (HTTP ${status})`,
       }
     }
@@ -184,6 +224,7 @@ const verifyOpenaiCompatibleEndpoint = async (
       return {
         ok: false,
         revoked: false,
+        rejected: false,
         error: "The endpoint did not respond in time",
       }
     }
@@ -191,9 +232,15 @@ const verifyOpenaiCompatibleEndpoint = async (
       return {
         ok: false,
         revoked: false,
+        rejected: false,
         error: "Unable to reach the endpoint",
       }
     }
-    return { ok: false, revoked: false, error: "Unable to verify the endpoint" }
+    return {
+      ok: false,
+      revoked: false,
+      rejected: false,
+      error: "Unable to verify the endpoint",
+    }
   }
 }

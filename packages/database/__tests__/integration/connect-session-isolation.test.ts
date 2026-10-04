@@ -952,6 +952,113 @@ describe.skipIf(!databaseUrl)(
         expect(updated?.resultConnectionIds).toEqual([])
       }))
 
+    test("completeReconnect only completes an unexpired authorized session in its workspace and clears encrypted auth", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "reconnect")
+        const { workspaceId: otherWorkspaceId } = await seedWorkspace(
+          tx,
+          "reconnect-other",
+        )
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-reconnect",
+        })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({
+            status: "authorized",
+            step: "authorize",
+            encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" },
+          })
+          .where(eq(schema.connectSessionModel.id, session.id))
+
+        const rejectedWrongWorkspace =
+          await connectSessionRepository.completeReconnect(
+            {
+              id: session.id,
+              workspaceId: otherWorkspaceId,
+              result: {
+                targetId: "t1",
+                status: "connected",
+                connectionId: "connection-1",
+              },
+            },
+            tx,
+          )
+        expect(rejectedWrongWorkspace).toBeUndefined()
+
+        const completed = await connectSessionRepository.completeReconnect(
+          {
+            id: session.id,
+            workspaceId,
+            result: {
+              targetId: "t1",
+              status: "connected",
+              connectionId: "connection-1",
+            },
+          },
+          tx,
+        )
+        expect(completed).toMatchObject({
+          status: "completed",
+          step: "done",
+          encryptedAuth: null,
+          resultConnectionIds: ["connection-1"],
+        })
+
+        const alreadyCompleted =
+          await connectSessionRepository.completeReconnect(
+            {
+              id: session.id,
+              workspaceId,
+              result: {
+                targetId: "t2",
+                status: "connected",
+                connectionId: "connection-2",
+              },
+            },
+            tx,
+          )
+        expect(alreadyCompleted).toBeUndefined()
+      }))
+
+    test("completeReconnect rejects an expired authorized session", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(
+          tx,
+          "reconnect-expired",
+        )
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-reconnect-expired",
+        })
+        await tx
+          .update(schema.connectSessionModel)
+          .set({
+            status: "authorized",
+            step: "authorize",
+            expiresAt: new Date(Date.now() - 60_000),
+          })
+          .where(eq(schema.connectSessionModel.id, session.id))
+
+        await expect(
+          connectSessionRepository.completeReconnect(
+            {
+              id: session.id,
+              workspaceId,
+              result: {
+                targetId: "t1",
+                status: "connected",
+                connectionId: "connection-1",
+              },
+            },
+            tx,
+          ),
+        ).resolves.toBeUndefined()
+      }))
+
     test("appendResults under REAL concurrency: two separate connections each completing a different target merge into one completed session with no lost update", async () => {
       const seedClient = new Client({ connectionString: databaseUrl as string })
       await seedClient.connect()

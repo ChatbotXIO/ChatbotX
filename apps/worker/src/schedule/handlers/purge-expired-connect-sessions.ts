@@ -18,9 +18,10 @@ const MAX_CHUNKS_PER_RUN = 1000
  *   (`ConnectSessionService`'s lazy `applyExpiryRule`), so this half is
  *   display/reporting hygiene and the `countActiveByWorkspaceId`
  *   pending-session cap, not a correctness dependency.
- * - Deletes terminal rows older than `TERMINAL_RETENTION_DAYS` — without
- *   this a finished `ConnectSession` row (and any `encryptedAuth` an
- *   earlier run hadn't cleared yet) never leaves the table.
+ * - Deletes terminal rows older than `TERMINAL_RETENTION_DAYS`. This sweep
+ *   filters on `consumedAt`, not `expiresAt`, so the cron does not bound the
+ *   pending-session cap; it retains completed/failed/cancelled records only
+ *   long enough for diagnostics.
  */
 export async function purgeExpiredConnectSessions(): Promise<void> {
   const { expired, deletedTerminal, terminalPurgeStopReason } =

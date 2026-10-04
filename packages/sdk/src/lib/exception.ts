@@ -70,6 +70,16 @@ export class IntegrationException extends SdkException {}
 
 export class AuthException extends SdkException {}
 
+/** A provider explicitly rejected supplied credentials or an OAuth request. */
+export class ConnectionProviderRejectedError extends SdkException {
+  constructor(message: string, originError?: Error | unknown) {
+    super(message, "connectionProviderRejected", 400)
+    if (originError) {
+      this.setOriginError(originError)
+    }
+  }
+}
+
 /**
  * Wraps an OAuth2 token-refresh failure after its refresh attempt finishes.
  *

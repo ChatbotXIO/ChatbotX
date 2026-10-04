@@ -130,6 +130,7 @@ describe("CONNECTION_STORE_BINDINGS", () => {
 
     const result = await binding.insertRow(
       {
+        kind: "integration",
         workspaceId: "workspace-1",
         auth,
         descriptor: { sourceId: "workspace", displayName: "Claude" },
