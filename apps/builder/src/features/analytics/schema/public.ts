@@ -288,7 +288,7 @@ export const linkContactsPublicResponse = z.object({
 
 const commentAutomationRangePublicRequest = z.object({
   automationId: zodBigintAsString().describe(
-    "Comment automation id. Get it from `fbComments.list` or `igComments.list`.",
+    "Comment automation id. Get it from `fbComments.list` or `igComments.list`. An id that is not in this workspace returns an empty result.",
   ),
   from: z.iso
     .datetime({ offset: true })
