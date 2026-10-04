@@ -3294,6 +3294,7 @@
         "channelLimit": "Limite de canais atingido.",
         "workspaceLimit": "Limite do workspace atingido.",
         "providerRejected": "O provedor rejeitou esta solicitação.",
+        "inProgress": "A conexão já está em andamento.",
         "unknown": "Algo deu errado.",
         "followUpFailed": "Configuração incompleta — conclua nas configurações do canal."
       },

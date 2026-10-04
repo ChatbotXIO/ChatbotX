@@ -104,6 +104,34 @@ export const connectionRepository = {
     return row
   },
 
+  /**
+   * Returns every matching row grouped with active rows first per source id.
+   * Callers select the first row for each source to preserve the singular
+   * lookup's active-first semantics without issuing one query per candidate.
+   */
+  async findByProviderAndSourceIdsAnyWorkspace(
+    input: { provider: IntegrationType; sourceIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<ConnectionModel[]> {
+    if (input.sourceIds.length === 0) {
+      return []
+    }
+    return await tx
+      .select()
+      .from(connectionModel)
+      .where(
+        and(
+          eq(connectionModel.provider, input.provider),
+          inArray(connectionModel.sourceId, input.sourceIds),
+        ),
+      )
+      .orderBy(
+        connectionModel.sourceId,
+        sql`CASE WHEN ${inArray(connectionModel.status, ACTIVE_CONNECTION_STATUSES)} THEN 0 ELSE 1 END`,
+        desc(connectionModel.id),
+      )
+  },
+
   async findById(
     input: { id: string },
     tx: DatabaseClient = db,
@@ -127,6 +155,19 @@ export const connectionRepository = {
           eq(connectionModel.workspaceId, input.workspaceId),
         ),
       )
+      .for("update")
+    return row
+  },
+
+  /** Locks one connection row by globally-unique id; callers must pass an open transaction. */
+  async findByIdForUpdateById(
+    input: { id: string },
+    tx: DatabaseClient,
+  ): Promise<ConnectionModel | undefined> {
+    const [row] = await tx
+      .select()
+      .from(connectionModel)
+      .where(eq(connectionModel.id, input.id))
       .for("update")
     return row
   },

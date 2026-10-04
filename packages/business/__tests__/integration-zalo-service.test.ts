@@ -61,6 +61,17 @@ vi.mock("@chatbotx.io/redis", () => ({
 const dispatchAuditRecord = vi.fn()
 vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  // Defaults to "no Connection row" so the existing disconnect test below
+  // (written before the Connection-row integration) keeps exercising the
+  // legacy `inboxService.disconnect` fallback unchanged.
+  connectionRepository: { findByInboxId: vi.fn(async () => undefined) },
+}))
+
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { disconnectInbox: mockDisconnect },
+}))
+
 vi.mock("../src/inbox/connect-channel", () => ({
   connectChannelIntegration: mockConnectChannelIntegration,
 }))
@@ -278,7 +289,7 @@ describe("zaloIntegrationService.disconnect", () => {
     vi.clearAllMocks()
   })
 
-  test("deletes tagChannel rows before the integration row and calls inboxService.disconnect with the same tx", async () => {
+  test("deletes tagChannel rows before the integration row and disconnects its inbox in the same transaction", async () => {
     const callOrder: string[] = []
     const tx = {
       delete: vi.fn((table: { integrationId?: string }) => {
@@ -310,7 +321,6 @@ describe("zaloIntegrationService.disconnect", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "ws-1",
-      reason: "manual",
       tx,
     })
   })

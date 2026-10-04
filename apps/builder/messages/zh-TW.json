@@ -2525,6 +2525,7 @@
         "channelLimit": "已達渠道上限。",
         "workspaceLimit": "已達工作區上限。",
         "providerRejected": "服務提供方拒絕了此請求。",
+        "inProgress": "連線正在進行中。",
         "unknown": "發生錯誤。",
         "followUpFailed": "設定尚未完成——請在渠道設定中完成。"
       },

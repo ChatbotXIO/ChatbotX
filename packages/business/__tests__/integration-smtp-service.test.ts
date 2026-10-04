@@ -73,6 +73,10 @@ vi.mock("../src/inbox/service", () => ({
   inboxService: { disconnect: mockDisconnect },
 }))
 
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { disconnectInbox: mockDisconnect },
+}))
+
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))

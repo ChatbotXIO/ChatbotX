@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import {
   and,
   type DatabaseClient,
@@ -12,6 +14,7 @@ import {
   type ConnectSessionOutcome,
   connectSessionNextActionSchema,
   connectSessionOutcomeSchema,
+  connectSessionTargetClaimSchema,
   connectSessionTargetSchema,
 } from "../../partials/connect-session"
 import {
@@ -31,6 +34,9 @@ const parseConnectSession = (
       ? null
       : connectSessionNextActionSchema.parse(session.nextAction),
   targets: connectSessionTargetSchema.array().parse(session.targets),
+  targetClaims: z
+    .record(z.string(), connectSessionTargetClaimSchema)
+    .parse(session.targetClaims),
   results: connectSessionOutcomeSchema.array().parse(session.results),
 })
 export const connectSessionRepository = {
@@ -108,7 +114,13 @@ export const connectSessionRepository = {
         | (Partial<
             Pick<
               typeof connectSessionModel.$inferInsert,
-              "encryptedAuth" | "nextAction" | "status" | "step"
+              | "encryptedAuth"
+              | "expiresAt"
+              | "nextAction"
+              | "returnUrl"
+              | "status"
+              | "step"
+              | "targets"
             >
           > & {
             status?: Exclude<
@@ -197,20 +209,31 @@ export const connectSessionRepository = {
   },
 
   /**
-   * Atomic claim of one target id into `claimedTargetIds` — the `WHERE NOT
-   * (targetId = ANY(...))` clause makes this a compare-and-set at the DB
-   * level, so two concurrent connection attempts racing on the same target
-   * can never both win (the loser sees `claimTarget` return `false` and maps
-   * that to a `duplicated` outcome instead of double-connecting).
+   * Atomically acquires or replaces an expired target lease. The owner token
+   * makes release conditional, so a failed attempt cannot clear a newer
+   * claimant's lease.
    */
   async claimTarget(
-    input: { id: string; workspaceId: string; targetId: string },
+    input: {
+      id: string
+      workspaceId: string
+      targetId: string
+      ownerToken: string
+      leaseExpiresAt: Date
+    },
     tx: DatabaseClient = db,
   ): Promise<boolean> {
     const [row] = await tx
       .update(connectSessionModel)
       .set({
-        claimedTargetIds: sql`array_append(${connectSessionModel.claimedTargetIds}, ${input.targetId})`,
+        targetClaims: sql`jsonb_set(
+          ${connectSessionModel.targetClaims},
+          ARRAY[${input.targetId}]::text[],
+          jsonb_build_object(
+            'ownerToken', ${input.ownerToken}::text,
+            'expiresAt', ${input.leaseExpiresAt.toISOString()}::text
+          )
+        )`,
       })
       .where(
         and(
@@ -218,22 +241,30 @@ export const connectSessionRepository = {
           eq(connectSessionModel.workspaceId, input.workspaceId),
           eq(connectSessionModel.status, "awaiting_selection"),
           gt(connectSessionModel.expiresAt, sql`now()`),
-          sql`NOT (${input.targetId} = ANY(${connectSessionModel.claimedTargetIds}))`,
+          sql`(
+            ${connectSessionModel.targetClaims} -> ${input.targetId} IS NULL
+            OR (${connectSessionModel.targetClaims} -> ${input.targetId} ->> 'expiresAt')::timestamptz <= now()
+          )`,
         ),
       )
       .returning({ id: connectSessionModel.id })
     return Boolean(row)
   },
 
-  /** Releases a claimed target after a connect attempt that did not succeed. */
+  /** Releases only the caller's still-current target lease. */
   async releaseTarget(
-    input: { id: string; workspaceId: string; targetId: string },
+    input: {
+      id: string
+      workspaceId: string
+      targetId: string
+      ownerToken: string
+    },
     tx: DatabaseClient = db,
   ): Promise<void> {
     await tx
       .update(connectSessionModel)
       .set({
-        claimedTargetIds: sql`array_remove(${connectSessionModel.claimedTargetIds}, ${input.targetId})`,
+        targetClaims: sql`${connectSessionModel.targetClaims} - ${input.targetId}`,
       })
       .where(
         and(
@@ -241,6 +272,7 @@ export const connectSessionRepository = {
           eq(connectSessionModel.workspaceId, input.workspaceId),
           eq(connectSessionModel.status, "awaiting_selection"),
           gt(connectSessionModel.expiresAt, sql`now()`),
+          sql`${connectSessionModel.targetClaims} -> ${input.targetId} ->> 'ownerToken' = ${input.ownerToken}`,
         ),
       )
   },
@@ -258,14 +290,11 @@ export const connectSessionRepository = {
     const newResults = sql`${JSON.stringify(input.results)}::jsonb`
     const mergedResults = sql`(${connectSessionModel.results} || ${newResults})`
     const selectableTargetCount = sql`(SELECT count(*) FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
-    // Only selectable targets count toward completion or a successful batch.
+    // Only selectable targets with a durable connected/duplicated outcome
+    // resolve the session. Failed and quota-limited attempts remain retryable.
     const selectableTargetIds = sql`(SELECT t->>'id' FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
-    const distinctResultCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem WHERE elem->>'targetId' IN ${selectableTargetIds})`
-    // A duplicated outcome is successful: a retry raced an already-created
-    // connection, so its requested work is complete even without a new id.
-    const hasSuccess = sql`(SELECT bool_or(elem2->>'status' NOT IN ('failed', 'limitReached')) FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
-    const allLimitReached = sql`(SELECT bool_and(elem2->>'status' = 'limitReached') FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
-    const isComplete = sql`(${distinctResultCount} >= ${selectableTargetCount})`
+    const distinctResolvedTargetCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem WHERE elem->>'targetId' IN ${selectableTargetIds} AND elem->>'status' IN ('connected', 'duplicated'))`
+    const isComplete = sql`(${distinctResolvedTargetCount} >= ${selectableTargetCount})`
 
     const [row] = await tx
       .update(connectSessionModel)
@@ -275,10 +304,9 @@ export const connectSessionRepository = {
           input.resultConnectionIds.map((id) => sql`${id}`),
           sql`, `,
         )}]::text[])`,
-        status: sql`CASE WHEN NOT ${isComplete} THEN ${connectSessionModel.status} WHEN ${hasSuccess} THEN 'completed' ELSE 'failed' END`,
+        status: sql`CASE WHEN ${isComplete} THEN 'completed' ELSE ${connectSessionModel.status} END`,
         step: sql`CASE WHEN ${isComplete} THEN 'done' ELSE ${connectSessionModel.step} END`,
         consumedAt: sql`CASE WHEN ${isComplete} THEN now() ELSE ${connectSessionModel.consumedAt} END`,
-        errorCode: sql`CASE WHEN ${isComplete} AND ${allLimitReached} THEN 'quota_exceeded' WHEN ${isComplete} AND NOT ${hasSuccess} THEN 'provider_error' ELSE ${connectSessionModel.errorCode} END`,
         encryptedAuth: sql`CASE WHEN ${isComplete} THEN NULL ELSE ${connectSessionModel.encryptedAuth} END`,
       })
       .where(
@@ -286,6 +314,37 @@ export const connectSessionRepository = {
           eq(connectSessionModel.id, input.id),
           eq(connectSessionModel.workspaceId, input.workspaceId),
           eq(connectSessionModel.status, "awaiting_selection"),
+          gt(connectSessionModel.expiresAt, sql`now()`),
+        ),
+      )
+      .returning()
+    return row ? parseConnectSession(row) : undefined
+  },
+
+  /** Completes a one-target OAuth reconnect after its callback is claimed. */
+  async completeReconnect(
+    input: {
+      id: string
+      workspaceId: string
+      result: ConnectSessionOutcome & { connectionId: string }
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ConnectSessionModel | undefined> {
+    const [row] = await tx
+      .update(connectSessionModel)
+      .set({
+        results: sql`(${connectSessionModel.results} || ${JSON.stringify([input.result])}::jsonb)`,
+        resultConnectionIds: sql`array_append(${connectSessionModel.resultConnectionIds}, ${input.result.connectionId})`,
+        status: "completed",
+        step: "done",
+        consumedAt: sql`now()`,
+        encryptedAuth: null,
+      })
+      .where(
+        and(
+          eq(connectSessionModel.id, input.id),
+          eq(connectSessionModel.workspaceId, input.workspaceId),
+          eq(connectSessionModel.status, "authorized"),
           gt(connectSessionModel.expiresAt, sql`now()`),
         ),
       )

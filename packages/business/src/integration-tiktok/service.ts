@@ -10,8 +10,8 @@ import {
 } from "@chatbotx.io/integration-tiktok"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { connectChannelIntegration } from "../inbox/connect-channel"
-import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 
 /** The post a TikTok comment conversation sits on, as far as it can be resolved. */
@@ -294,11 +294,10 @@ class TiktokIntegrationService extends BaseService {
             eq(integrationTiktokModel.workspaceId, workspaceId),
           ),
         )
-      await inboxService.disconnect({
+      await connectionStateService.disconnectInbox({
         inboxId,
-        ownerId,
         workspaceId,
-        reason: "manual",
+        ownerId,
         tx: client,
       })
     }

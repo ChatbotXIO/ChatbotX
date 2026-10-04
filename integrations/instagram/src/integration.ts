@@ -75,7 +75,10 @@ const config: IntegrationDefinition<
         },
       ) satisfies InstagramAuthValue
     },
-    candidateToConfig: (auth) => ({ username: auth.metadata.username }),
+    candidateToConfig: (auth) => ({
+      pageId: auth.metadata.pageId,
+      username: auth.metadata.username,
+    }),
     describe: (auth) => ({
       sourceId: auth.metadata.igId,
       displayName: auth.metadata.igName,

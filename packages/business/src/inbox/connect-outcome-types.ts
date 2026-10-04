@@ -35,6 +35,10 @@ export const CONNECT_FAILURE_REASONS = {
   workspaceLimit: "workspaceLimit",
   // SdkException from Meta.
   providerRejected: "providerRejected",
+  // Internal persistence, crypto, or implementation failure.
+  internalError: "internalError",
+  // A concurrent request owns the target's unexpired connect lease.
+  inProgress: "inProgress",
   unknown: "unknown",
 } as const
 export type ConnectFailureReason =
@@ -54,7 +58,7 @@ export type ConnectWarning =
  * (`ConnectActionResult`).
  */
 export const CONNECT_SESSION_ERROR_CODES = {
-  // Pending-auth cookie / signup session missing, expired, or invalid.
+  // ConnectSession row / signup session missing, expired, or invalid.
   sessionExpired: "sessionExpired",
   // Raised by `notWorkspaceMemberException()`, NOT the generic `notFound`.
   notMember: "notMember",

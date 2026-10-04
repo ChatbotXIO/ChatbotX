@@ -5,8 +5,8 @@ import type { IntegrationApiModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { connectChannelIntegration } from "../inbox/connect-channel"
-import { inboxService } from "../inbox/service"
 
 type ConnectIntegrationApiInput = {
   ownerId: string
@@ -102,11 +102,10 @@ class IntegrationApiService extends BaseService {
   async disconnect(input: DisconnectIntegrationApiInput): Promise<void> {
     await db.transaction(async (tx) => {
       await integrationApiRepository.deleteById(input.id, tx)
-      await inboxService.disconnect({
+      await connectionStateService.disconnectInbox({
         inboxId: input.inboxId,
         ownerId: input.ownerId,
         workspaceId: input.workspaceId,
-        reason: "manual",
         tx,
       })
     })

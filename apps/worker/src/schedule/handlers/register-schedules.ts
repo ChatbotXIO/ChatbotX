@@ -327,6 +327,19 @@ export const registerSchedules = async () => {
       },
     },
   )
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeExpiredConnectSessions,
+    {
+      pattern: "0 * * * *",
+    },
+    {
+      name: ScheduleJobData.purgeExpiredConnectSessions,
+      data: {
+        type: ScheduleJobData.purgeExpiredConnectSessions,
+        data: {},
+      },
+    },
+  )
 
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.purgeWorkspaces,

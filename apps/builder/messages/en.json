@@ -878,6 +878,7 @@
         "channelLimit": "Channel limit reached.",
         "workspaceLimit": "Workspace limit reached.",
         "providerRejected": "The provider rejected this request.",
+        "inProgress": "Connection already in progress.",
         "unknown": "Something went wrong.",
         "followUpFailed": "Setup incomplete — finish from the channel settings."
       },

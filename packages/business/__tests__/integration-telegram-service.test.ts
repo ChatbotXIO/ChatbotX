@@ -57,6 +57,17 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "generated-id",
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  // Defaults to "no Connection row" so the existing disconnect test below
+  // (written before the Connection-row integration) keeps exercising the
+  // legacy `inboxService.disconnect` fallback unchanged.
+  connectionRepository: { findByInboxId: vi.fn(async () => undefined) },
+}))
+
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { disconnectInbox: mockDisconnect },
+}))
+
 vi.mock("../src/inbox/connect-channel", () => ({
   connectChannelIntegration: mockConnectChannelIntegration,
 }))
@@ -175,7 +186,7 @@ describe("telegramIntegrationService.disconnect", () => {
     vi.clearAllMocks()
   })
 
-  test("deletes then calls inboxService.disconnect", async () => {
+  test("deletes the integration row before disconnecting its inbox", async () => {
     const callOrder: string[] = []
     const tx = {
       delete: vi.fn(() => {

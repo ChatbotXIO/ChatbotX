@@ -11,11 +11,11 @@ import type { IntegrationThreadsModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import {
   connectChannelIntegration,
   runConnectTransaction,
 } from "../inbox/connect-channel"
-import { inboxService } from "../inbox/service"
 import { workspaceService } from "../workspace"
 
 const threadsRefreshAuthSchema = z
@@ -311,11 +311,10 @@ class IntegrationThreadsService extends BaseService {
       .delete(integrationThreadsModel)
       .where(eq(integrationThreadsModel.id, integration.id))
 
-    await inboxService.disconnect({
+    await connectionStateService.disconnectInbox({
       inboxId: integration.inboxId,
-      ownerId: workspace.ownerId,
       workspaceId: props.workspaceId,
-      reason: "manual",
+      ownerId: workspace.ownerId,
       tx: client,
     })
   }

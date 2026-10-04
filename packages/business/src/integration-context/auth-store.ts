@@ -1,7 +1,13 @@
 import { db, eq, sql } from "@chatbotx.io/database/client"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import { distributedLock } from "@chatbotx.io/redis"
 import { type AuthStore, type AuthValue, SdkException } from "@chatbotx.io/sdk"
+import { authExpiresAtOf } from "../connection/auth-expiry"
+import { InvalidConnectionTransitionException } from "../connection/state"
+import { connectionStateService } from "../connection/state-service"
+import { logger } from "../logger"
+import { workspaceMemberService } from "../workspace-member/service"
 
 const REFRESH_LOCK_TIMEOUT_SECONDS = 10
 
@@ -14,10 +20,8 @@ const channelToIntegrationTable = (channel: string): string => {
 }
 
 /**
- * Minimal shape required to build an {@link AuthStore}: a row from any
- * `Integration<Channel>` table. `id` is required (used to load/save/lock);
- * `inboxId` is optional and only used by `markOffline`, since workspace-level
- * integrations (e.g. Google Sheets) are not inbox-bound.
+ * `id` is required to load and save the satellite row; `inboxId` identifies
+ * inbox-bound integrations when resolving their mirrored `Connection` row.
  */
 export type AuthStoreIntegrationRow = {
   id: string
@@ -43,7 +47,34 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
   lockKeyPrefix: string,
   integration: AuthStoreIntegrationRow,
 ): AuthStore<TAuth> => {
-  const lockKey = `auth:refresh:${lockKeyPrefix}:${integration.id}`
+  const fallbackLockKey = `auth:refresh:${lockKeyPrefix}:${integration.id}`
+  /**
+   * Resolves the `Connection` row mirroring this `Integration<Channel>` (or
+   * workspace-integration satellite) row so state changes route through
+   * `connectionStateService` instead of writing `Inbox` directly. Returns
+   * `undefined` for a row predating PR #1411's `Connection` table — no
+   * backfill migration has populated `Connection` for pre-existing
+   * `Integration`/`Inbox` rows yet (no `packages/database/scripts/
+   * backfill-connection*.ts` exists in this repo). Once that one-time
+   * backfill ships and every `Integration`/`Inbox` row has a mirrored
+   * `Connection` row, this `undefined` branch — and the matching
+   * "pre-backfill fallback" branches below and in
+   * `ConnectionStateService.disconnectInbox` (`../connection/state-service.ts`)
+   * — become dead code safe to delete.
+   */
+  const resolveConnection = async () => {
+    if (integration.inboxId) {
+      return await connectionRepository.findByInboxId({
+        inboxId: integration.inboxId,
+      })
+    }
+    if (integration.integrationId) {
+      return await connectionRepository.findByIntegrationId({
+        integrationId: integration.integrationId,
+      })
+    }
+    return
+  }
 
   return {
     load: async () => {
@@ -58,19 +89,71 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
       return result.rows[0].auth
     },
     save: async (auth: TAuth) => {
-      await db.execute(
+      const result = await db.execute(
         sql`UPDATE ${sql.identifier(tableName)} SET auth = ${JSON.stringify(auth)}::jsonb WHERE "id" = ${integration.id}`,
       )
+      if (result.rowCount === 0) {
+        throw new SdkException(
+          `Unable to save auth for ${lockKeyPrefix} integration ${integration.id}`,
+        )
+      }
+      const connection = await resolveConnection()
+      if (!connection) {
+        // Pre-backfill fallback: no `Connection` row to mirror onto yet.
+        return
+      }
+      const authExpiresAt = authExpiresAtOf(auth)
+      // `auth.saved` only transitions a currently-ACTIVE (connected/
+      // degraded) connection — it throws from `needs_reauth`/`paused`/
+      // `disconnected` (see `transitionConnection`). The row write above
+      // already succeeded and is the source of truth for the refreshed
+      // token; a token refresh that happens to still work while the
+      // `Connection` is in one of those inactive states (a stale
+      // revocation, a pause mid-refresh, a disconnect race) must not fail
+      // the whole refresh/send over a state-machine mirror that was never
+      // going to apply anyway.
+      try {
+        await connectionStateService.recordAuthSaved({
+          connectionId: connection.id,
+          authExpiresAt,
+        })
+      } catch (err) {
+        if (err instanceof InvalidConnectionTransitionException) {
+          logger.warn(
+            { err, connectionId: connection.id },
+            "auth-store: recordAuthSaved could not transition an inactive connection; auth was still saved",
+          )
+          return
+        }
+        throw err
+      }
     },
-    withLock: (fn) =>
-      distributedLock.runExclusive({
-        key: lockKey,
+    withLock: async (fn) => {
+      const connection = await resolveConnection()
+      return await distributedLock.runExclusive({
+        key: connection
+          ? `auth:refresh:connection:${connection.id}`
+          : fallbackLockKey,
         timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
         fn,
-      }),
+      })
+    },
     markOffline: async () => {
+      const connection = await resolveConnection()
+      if (connection) {
+        const ownerId =
+          await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+            workspaceId: connection.workspaceId,
+          })
+        await connectionStateService.markUnhealthy({
+          connectionId: connection.id,
+          ownerId,
+        })
+        return
+      }
+      // Pre-backfill fallback: no `Connection` row exists yet for this
+      // integration — preserve the legacy Inbox disconnect.
       if (!integration.inboxId) {
-        // Workspace-level integration (no inbox) — nothing to disconnect.
         return
       }
       await db
@@ -84,8 +167,9 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
 /**
  * Build an {@link AuthStore} bound to a specific `Integration<Channel>` row.
  * The store reads/writes the row's `auth` column, serializes concurrent
- * refreshes via the shared distributed lock, and (for inbox-bound channels)
- * flips `Inbox.status` to `disconnected` when refresh terminally fails.
+ * refreshes via the shared distributed lock, and routes terminal refresh
+ * failures through `connectionStateService.markUnhealthy` when a mirrored
+ * `Connection` row exists.
  */
 export const makeAuthStore = <TAuth extends AuthValue = AuthValue>(
   channel: string,

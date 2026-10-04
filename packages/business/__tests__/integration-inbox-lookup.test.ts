@@ -58,6 +58,20 @@ vi.mock("../src/workspace", () => ({
   workspaceService: { create: vi.fn() },
 }))
 
+// `disconnect`'s Connection-row integration (so a real channel disconnect
+// drives the FSM instead of bypassing it — see `disconnect-messenger.ts`)
+// pulls in the full `@chatbotx.io/database/repositories` barrel, which
+// transitively needs schema exports this narrow lookup test's sparse
+// schema mock above doesn't carry — mocked at the boundary for the same
+// reason as the imports above.
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: { findByInboxId: vi.fn() },
+}))
+
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { transition: vi.fn() },
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
 })

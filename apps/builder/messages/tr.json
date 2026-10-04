@@ -836,6 +836,7 @@
         "channelLimit": "Kanal sınırına ulaşıldı.",
         "workspaceLimit": "Çalışma alanı sınırına ulaşıldı.",
         "providerRejected": "Sağlayıcı bu isteği reddetti.",
+        "inProgress": "Bağlantı zaten devam ediyor.",
         "unknown": "Bir şeyler ters gitti.",
         "followUpFailed": "Kurulum tamamlanmadı — kanal ayarlarından tamamlayın."
       },
