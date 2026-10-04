@@ -352,12 +352,16 @@ export const connectionInactiveException = () =>
     409,
   )
 
-/** No `ConnectionAdapter` (or no store binding on it) is registered for this provider — a registry/data integrity gap, not a user error. */
+/**
+ * `refresh`/`verify` cannot run when a provider has no satellite store.
+ * This is an expected unsupported operation for built-in connections such as
+ * `chatbotx`, so clients receive a request error instead of a server failure.
+ */
 export const connectionNotConfiguredException = (provider: string) =>
   new ChatbotXException(
     `Connection provider "${provider}" is not configured.`,
     "connectionNotConfigured",
-    500,
+    400,
   )
 
 export const connectionNotRefreshableException = (provider: string) =>

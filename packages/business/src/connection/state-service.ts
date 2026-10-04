@@ -14,7 +14,7 @@ import {
 import { type connectionModel, inboxModel } from "@chatbotx.io/database/schema"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
-import { channelLimitReachedException } from "../errors"
+import { ChatbotXException, channelLimitReachedException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
@@ -25,18 +25,23 @@ import {
   transitionConnection,
 } from "./state"
 
-class ConnectionNotFoundException extends Error {
+class ConnectionNotFoundException extends ChatbotXException {
   constructor(id: string) {
-    super(`Connection ${id} not found`)
-    this.name = "ConnectionNotFoundException"
+    super(`Connection ${id} not found`, "notFound", 404)
   }
 }
 
-export type ConnectionQuotaConsumption = {
-  consumed: boolean
-  workspaceId?: string
-  workspaceUsageIncremented: boolean
-}
+export type ConnectionQuotaConsumption =
+  | {
+      consumed: false
+      workspaceId?: undefined
+      workspaceUsageIncremented: false
+    }
+  | {
+      consumed: true
+      workspaceId: string
+      workspaceUsageIncremented: boolean
+    }
 
 /**
  * DB-backed reads/writes over the `Connection` table plus its `Inbox`
@@ -143,10 +148,11 @@ class ConnectionStateService extends BaseService {
     /** Required for a quota-consuming transition inside a caller-owned transaction. */
     quotaConsumption?: ConnectionQuotaConsumption
   }): Promise<ConnectionModel> {
-    const quotaConsumption = input.quotaConsumption ?? {
-      consumed: false,
-      workspaceUsageIncremented: false,
-    }
+    const quotaConsumption: ConnectionQuotaConsumption =
+      input.quotaConsumption ?? {
+        consumed: false,
+        workspaceUsageIncremented: false,
+      }
     const run = async (client: DatabaseClient): Promise<ConnectionModel> => {
       // Row-locked (not the relational `findById`): two concurrent
       // `transition` calls on the same connection must serialize here so
@@ -213,8 +219,11 @@ class ConnectionStateService extends BaseService {
         if (!consumed.ok) {
           throw channelLimitReachedException()
         }
-        quotaConsumption.consumed = true
-        quotaConsumption.workspaceId = existing.workspaceId
+        Object.assign(quotaConsumption, {
+          consumed: true,
+          workspaceId: existing.workspaceId,
+          workspaceUsageIncremented: false,
+        })
       }
 
       const updated = await connectionRepository.update(
@@ -278,19 +287,17 @@ class ConnectionStateService extends BaseService {
       }
       return await db.transaction(run)
     } catch (err) {
-      if (
-        quotaConsumption.consumed &&
-        input.ownerId &&
-        quotaConsumption.workspaceId
-      ) {
+      if (quotaConsumption.consumed && input.ownerId) {
         await this.releaseQuotaEdge(
           input.ownerId,
           quotaConsumption.workspaceId,
           quotaConsumption.workspaceUsageIncremented,
         )
-        quotaConsumption.consumed = false
-        quotaConsumption.workspaceId = undefined
-        quotaConsumption.workspaceUsageIncremented = false
+        Object.assign(quotaConsumption, {
+          consumed: false,
+          workspaceId: undefined,
+          workspaceUsageIncremented: false,
+        })
       }
       throw err
     }

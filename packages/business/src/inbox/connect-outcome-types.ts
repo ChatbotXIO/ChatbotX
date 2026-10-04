@@ -35,6 +35,8 @@ export const CONNECT_FAILURE_REASONS = {
   workspaceLimit: "workspaceLimit",
   // SdkException from Meta.
   providerRejected: "providerRejected",
+  // Internal persistence, crypto, or implementation failure.
+  internalError: "internalError",
   unknown: "unknown",
 } as const
 export type ConnectFailureReason =

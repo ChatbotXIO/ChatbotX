@@ -146,7 +146,7 @@ describe("ConnectionStateService.transition", () => {
     )
   })
 
-  test("throws ConnectionNotFoundException-style error when the row does not exist", async () => {
+  test("throws a typed not-found error when the row does not exist", async () => {
     mocks.findById.mockResolvedValue(undefined)
 
     await expect(
@@ -154,7 +154,7 @@ describe("ConnectionStateService.transition", () => {
         connectionId: "missing",
         event: "connect.completed",
       }),
-    ).rejects.toThrow("missing")
+    ).rejects.toMatchObject({ code: "notFound", httpStatusCode: 404 })
   })
 
   test("never consumes quota for a kind:integration connection even when ownerId is passed", async () => {

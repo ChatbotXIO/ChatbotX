@@ -36,6 +36,7 @@ export const connectSessionOutcomeSchema = z.object({
       "channelLimit",
       "workspaceLimit",
       "providerRejected",
+      "internalError",
       "unknown",
     ])
     .optional(),

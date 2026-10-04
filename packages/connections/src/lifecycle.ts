@@ -46,17 +46,12 @@ const loadActiveConnectionStore = async (input: {
 }
 
 /**
- * User-initiated teardown: best-effort provider-side disconnect + webhook
- * unsubscribe (never blocks the local state transition on an upstream
- * failure), then the satellite row's own `onDisconnect` policy
- * (`delete_row`/`keep_row`), then the FSM transition.
+ * User-initiated teardown: provider-side disconnect and webhook unsubscribe
+ * must both succeed before local auth is deleted and the FSM transitions.
+ * Retaining the satellite row on an upstream failure keeps teardown retryable.
  *
- * Scope note: this is the **generic** disconnect path shared by every
- * provider. Bespoke per-provider teardown side effects that predate the
- * Connection domain — messenger's shared-IG-page `general_info`
- * preservation, WhatsApp's coexist/staging cleanup, TikTok/Zalo specifics —
- * are NOT ported here; those remain in their existing per-channel disconnect
- * actions until a dedicated follow-up audits each one individually.
+ * This generic path does not port bespoke provider teardown side effects;
+ * existing per-channel disconnect actions retain those responsibilities.
  */
 export const disconnect = async (input: {
   connectionId: string
@@ -66,6 +61,7 @@ export const disconnect = async (input: {
   const adapter = resolveAdapter(connection.provider)
   const foreignKey = resolveForeignKey(connection)
   const teardownErrors: string[] = []
+  let teardownFailure: unknown
 
   if (adapter.store && foreignKey) {
     let auth: AuthValue | null = null
@@ -77,9 +73,10 @@ export const disconnect = async (input: {
       teardownErrors.push(
         toPublicErrorMessage(err, "Provider-side teardown failed"),
       )
-      logger.warn(
+      teardownFailure = err
+      logger.error(
         { err, connectionId: connection.id, provider: connection.provider },
-        "connection disconnect: failed to load auth for provider-side teardown, proceeding with local disconnect",
+        "connection disconnect: failed to load auth for provider-side teardown; retaining local auth for retry",
       )
     }
     if (auth) {
@@ -90,9 +87,10 @@ export const disconnect = async (input: {
           teardownErrors.push(
             toPublicErrorMessage(err, "Provider-side teardown failed"),
           )
-          logger.warn(
+          teardownFailure ??= err
+          logger.error(
             { err, connectionId: connection.id, provider: connection.provider },
-            "connection disconnect: provider-side disconnect failed, proceeding with local disconnect",
+            "connection disconnect: provider-side disconnect failed; retaining local auth for retry",
           )
         }
       }
@@ -100,27 +98,51 @@ export const disconnect = async (input: {
         try {
           await adapter.provider.webhook.unsubscribe({ auth })
         } catch (err) {
-          // Independent of the `disconnect` try/catch above — a channel
-          // whose `disconnect` throws (e.g. not implemented) must not skip
-          // its webhook unsubscribe, and vice versa.
           teardownErrors.push(
             toPublicErrorMessage(err, "Webhook unsubscribe failed"),
           )
-          logger.warn(
+          teardownFailure ??= err
+          logger.error(
             { err, connectionId: connection.id, provider: connection.provider },
-            "connection disconnect: webhook unsubscribe failed, proceeding with local disconnect",
+            "connection disconnect: webhook unsubscribe failed; retaining local auth for retry",
           )
         }
       }
     } else if (loadedAuth) {
-      teardownErrors.push(
+      const authUnavailableError = new Error(
         "Provider authentication was unavailable for teardown",
       )
-      logger.warn(
-        { connectionId: connection.id, provider: connection.provider },
-        "connection disconnect: provider-side teardown skipped because auth is unavailable",
+      teardownErrors.push(authUnavailableError.message)
+      teardownFailure = authUnavailableError
+      logger.error(
+        {
+          err: authUnavailableError,
+          connectionId: connection.id,
+          provider: connection.provider,
+        },
+        "connection disconnect: provider-side teardown skipped because auth is unavailable; retaining local auth for retry",
       )
     }
+  }
+
+  if (teardownFailure) {
+    await connectionRepository
+      .update({
+        id: connection.id,
+        workspaceId: connection.workspaceId,
+        values: { lastError: teardownErrors.join("; ") },
+      })
+      .catch((persistErr) => {
+        logger.error(
+          {
+            err: persistErr,
+            connectionId: connection.id,
+            provider: connection.provider,
+          },
+          "connection disconnect: failed to persist teardown error",
+        )
+      })
+    throw teardownFailure
   }
 
   const ownerId = await resolveOwnerId(connection)

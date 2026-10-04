@@ -33,6 +33,18 @@ import { integration as integrationWhatsapp } from "@chatbotx.io/integration-wha
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import type { Integration, IntegrationDefinition } from "@chatbotx.io/sdk"
 
+type StoreBindingKey = keyof typeof CONNECTION_STORE_BINDINGS
+
+type StoreBoundAdapter<Key extends StoreBindingKey> = ConnectionAdapter & {
+  readonly storeKey: Key
+}
+
+type StoreBoundConnectionRegistry = {
+  [Key in keyof ConnectionRegistry]: Key extends StoreBindingKey
+    ? StoreBoundAdapter<Key> | null
+    : ConnectionAdapter | null
+}
+
 /**
  * Builds a `ConnectionAdapter` from an `integrations/<name>` SDK package's
  * `Integration` instance. Throws at module-load time (not per-request) if
@@ -41,23 +53,25 @@ import type { Integration, IntegrationDefinition } from "@chatbotx.io/sdk"
  * a provider that regresses to having none fails the build immediately
  * instead of silently returning `undefined` behind an optional chain.
  */
-const fromIntegration = (
+const fromIntegration = <Key extends StoreBindingKey>(
   // biome-ignore lint/suspicious/noExplicitAny: heterogeneous registry
   integration: Integration<IntegrationDefinition<any, any, any>>,
-  storeKey: keyof typeof CONNECTION_STORE_BINDINGS,
+  storeKey: Key,
   credentialType?: ConnectionAdapter["credentialType"],
-): ConnectionAdapter => {
+): StoreBoundAdapter<Key> => {
+  if (integration.name !== storeKey) {
+    throw new Error(
+      `@chatbotx.io/connections: integration "${integration.name}" cannot use store binding "${storeKey}"`,
+    )
+  }
   const provider = integration.connection
   if (!provider) {
     throw new Error(
       `@chatbotx.io/connections: "${integration.name}" has no connection block registered under CONNECTION_REGISTRY.${storeKey}`,
     )
   }
-  // `null` is legitimate here (chatbotx has no satellite table — the Inbox
-  // row itself is the whole connection); only a missing `provider` above is
-  // treated as a build-time error.
   const store = CONNECTION_STORE_BINDINGS[storeKey] ?? undefined
-  return { integration, provider, store, credentialType }
+  return { integration, provider, store, credentialType, storeKey }
 }
 
 /**
@@ -65,17 +79,17 @@ const fromIntegration = (
  * store binding — the same shape `fromIntegration` produces, minus the SDK
  * `Integration` wrapper these providers never had.
  */
-const fromCredentialProvider = (
+const fromCredentialProvider = <Key extends StoreBindingKey>(
   provider: ConnectionAdapter["provider"],
-  storeKey: keyof typeof CONNECTION_STORE_BINDINGS,
-): ConnectionAdapter => {
+  storeKey: Key,
+): StoreBoundAdapter<Key> => {
   const store = CONNECTION_STORE_BINDINGS[storeKey]
   if (!store) {
     throw new Error(
       `@chatbotx.io/connections: no store binding for "${storeKey}"`,
     )
   }
-  return { provider, store }
+  return { provider, store, storeKey }
 }
 
 /**
@@ -86,7 +100,7 @@ const fromCredentialProvider = (
  * `undefined` — it has no satellite table; the `Inbox` row is the whole
  * connection).
  */
-export const CONNECTION_REGISTRY: ConnectionRegistry = {
+export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   activeCampaign: fromIntegration(integrationActiveCampaign, "activeCampaign"),
   api: fromIntegration(integrationApi, "api"),
   chatbotx: fromIntegration(integrationChatbotx, "chatbotx"),

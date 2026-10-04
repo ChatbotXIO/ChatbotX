@@ -39,6 +39,7 @@ import type {
   ConnectionCredential,
   ConnectSessionNextAction,
 } from "@chatbotx.io/sdk"
+import { ConnectionProviderRejectedError } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
   encryptedAuthorizationSchema,
@@ -101,15 +102,32 @@ const toFailureOutcome = (input: {
       reason: "alreadyConnected",
     }
   }
-  logger.warn(
+  const providerError = toConnectionProviderError(input.err)
+  if (providerError instanceof ConnectionProviderRejectedError) {
+    logger.warn(
+      {
+        err: providerError,
+        targetId: input.targetId,
+        provider: input.provider,
+      },
+      "connectTargets: candidate connect was rejected by the provider",
+    )
+    return {
+      targetId: input.targetId,
+      status: "failed",
+      reason: "providerRejected",
+      detail: toPublicErrorMessage(providerError, "Connect failed"),
+    }
+  }
+  logger.error(
     { err: input.err, targetId: input.targetId, provider: input.provider },
-    "connectTargets: candidate connect failed",
+    "connectTargets: candidate connect failed internally",
   )
   return {
     targetId: input.targetId,
     status: "failed",
-    reason: "providerRejected",
-    detail: toPublicErrorMessage(input.err, "Connect failed"),
+    reason: "internalError",
+    detail: "Connect failed",
   }
 }
 
@@ -262,15 +280,21 @@ export const completeAuthorization = async (input: {
     return await completeReconnect({ session, auth })
   }
 
-  const encryptedAuth = await encryptUtils.encryptObject(
-    auth,
-    `connect-session:${session.id}:authorization`,
-  )
-  const authorizedSession = await connectSessionService.storeAuthorization({
-    id: session.id,
-    workspaceId: session.workspaceId,
-    encryptedAuth,
-  })
+  let authorizedSession: ConnectSessionModel
+  try {
+    const encryptedAuth = await encryptUtils.encryptObject(
+      auth,
+      `connect-session:${session.id}:authorization`,
+    )
+    authorizedSession = await connectSessionService.storeAuthorization({
+      id: session.id,
+      workspaceId: session.workspaceId,
+      encryptedAuth,
+    })
+  } catch (err) {
+    await failSession(session, "internal_error", ["authorized"])
+    throw err
+  }
   return await listAndAttachCandidates(authorizedSession, auth)
 }
 
@@ -604,12 +628,12 @@ const connectCandidate = async (input: {
 }
 
 /**
- * Finishes an `awaiting_selection` connect session: atomically claims
- * each requested target (safe against a double-submit or two tabs — a
- * target claimed by another attempt is skipped until its claimant records
- * the outcome), then connects it via `connectCandidate`. Never throws for a
- * single target's failure — every attempted outcome (`connected`/
- * `duplicated`/`limitReached`/`failed`) is reported back per-target.
+ * Finishes an `awaiting_selection` connect session by claiming each requested
+ * target. A failed compare-and-set first checks whether an active connection
+ * was committed by another request; otherwise it clears the stale claim and
+ * retries the compare-and-set. Never throws for a single target's failure —
+ * every attempted outcome (`connected`/`duplicated`/`limitReached`/`failed`)
+ * is reported back per-target.
  */
 export const connectTargets = async (input: {
   sessionId: string
@@ -674,13 +698,54 @@ export const connectTargets = async (input: {
         continue
       }
 
-      const claimed = await connectSessionService.claimTarget({
+      let claimed = await connectSessionService.claimTarget({
         id: session.id,
         workspaceId: session.workspaceId,
         targetId,
       })
       if (!claimed) {
-        continue
+        const existing = await connectionRepository.findByProviderSourceId({
+          workspaceId: input.workspaceId,
+          provider: session.provider,
+          sourceId: candidate.sourceId,
+        })
+        if (existing && isActiveConnectionStatus(existing.status)) {
+          outcomes.push({
+            targetId,
+            status: "duplicated",
+            reason: "alreadyConnected",
+          })
+          continue
+        }
+        try {
+          await connectSessionService.releaseTarget({
+            id: session.id,
+            workspaceId: session.workspaceId,
+            targetId,
+          })
+        } catch (releaseErr) {
+          logger.error(
+            { err: releaseErr, targetId, provider: session.provider },
+            "connectTargets: failed to recover a stale target claim",
+          )
+          outcomes.push(
+            toFailureOutcome({
+              err: releaseErr,
+              provider: session.provider,
+              targetId,
+            }),
+          )
+          continue
+        }
+        claimed = await connectSessionService.claimTarget({
+          id: session.id,
+          workspaceId: session.workspaceId,
+          targetId,
+        })
+        if (!claimed) {
+          outcomes.push({ targetId, status: "failed", reason: "unknown" })
+          continue
+        }
       }
 
       try {
@@ -699,12 +764,6 @@ export const connectTargets = async (input: {
           connectionId: connection.id,
         })
       } catch (err) {
-        // The claim above already appended `targetId` to `claimedTargetIds`;
-        // every branch below ends in a non-`connected` outcome, so release it
-        // — otherwise a retry's `claimTarget` permanently sees this target as
-        // claimed even though it was never actually connected. Isolated in its
-        // own try so a transient release failure does not skip the remaining
-        // targets or persistently collected outcomes.
         try {
           await connectSessionService.releaseTarget({
             id: session.id,
@@ -712,9 +771,9 @@ export const connectTargets = async (input: {
             targetId,
           })
         } catch (releaseErr) {
-          logger.warn(
+          logger.error(
             { err: releaseErr, targetId, provider: session.provider },
-            "connectTargets: releaseTarget failed after a failed connect attempt; the target stays claimed until a later retry releases it",
+            "connectTargets: failed to release a target claim after a failed connect attempt",
           )
         }
         outcomes.push(

@@ -212,6 +212,7 @@ export const REASON_MESSAGE_KEYS: Partial<
   channelLimit: "channels.connectMany.reason.channelLimit",
   workspaceLimit: "channels.connectMany.reason.workspaceLimit",
   providerRejected: "channels.connectMany.reason.providerRejected",
+  internalError: "channels.connectMany.reason.unknown",
   unknown: "channels.connectMany.reason.unknown",
 }
 

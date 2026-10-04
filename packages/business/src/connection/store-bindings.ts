@@ -30,7 +30,7 @@ import {
   integrationWhatsappModel,
   integrationZaloModel,
 } from "@chatbotx.io/database/schema"
-import type { AuthValue } from "@chatbotx.io/sdk"
+import { type AuthValue, authValueSchema, SdkException } from "@chatbotx.io/sdk"
 import type { InferInsertModel, SQL } from "drizzle-orm"
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core"
 
@@ -137,15 +137,14 @@ type WorkspaceConfigColumn<TTable extends PgTable> = Exclude<
   "auth" | "encryptedAuth" | "id" | "integrationId" | "workspaceId"
 >
 
-/**
- * `AnyPgColumn`'s data type is erased to `unknown` by design (it spans every
- * column type in the schema). Every generic binding factory below reads a
- * jsonb `auth`/`encryptedAuth` column through this type, so the cast to
- * `AuthValue` happens once here rather than at each call site — Drizzle has
- * no way to express "this specific dynamic column is jsonb shaped like
- * AuthValue" generically.
- */
-const asAuthValue = (value: unknown): AuthValue => value as AuthValue
+/** Validates auth JSON read through Drizzle's erased generic column type. */
+const asAuthValue = (value: unknown): AuthValue => {
+  const parsedAuth = authValueSchema.safeParse(value)
+  if (!parsedAuth.success) {
+    throw new SdkException("Stored connection auth is invalid")
+  }
+  return parsedAuth.data
+}
 
 const pickAllowed = <TColumn extends string>(
   config: Record<string, unknown> | undefined,

@@ -131,7 +131,24 @@ beforeEach(() => {
 })
 
 describe("connectTargets — ConnectSession.encryptedAuth tamper detection (real encryption)", () => {
-  it("returns no outcome when another request owns the in-flight target", async () => {
+  it("scopes a missing target session lookup to the request workspace", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(undefined)
+
+    await expect(
+      connectTargets({
+        sessionId: "session-from-another-workspace",
+        workspaceId: "ws-2",
+        targetIds: ["page-1"],
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+
+    expect(mocks.findByIdForWorkspace).toHaveBeenCalledWith({
+      id: "session-from-another-workspace",
+      workspaceId: "ws-2",
+    })
+  })
+
+  it("records an explicit retryable outcome when a target claim remains unavailable", async () => {
     const encryptedAuth = await encryptUtils.encryptObject(
       [
         {
@@ -146,7 +163,7 @@ describe("connectTargets — ConnectSession.encryptedAuth tamper detection (real
       ...baseSession,
       encryptedAuth,
     })
-    mocks.claimTarget.mockResolvedValue(false) // short-circuits before candidate-connect logic
+    mocks.claimTarget.mockResolvedValue(false)
     mocks.recordResults.mockResolvedValue({
       ...baseSession,
       status: "awaiting_selection",
@@ -158,7 +175,14 @@ describe("connectTargets — ConnectSession.encryptedAuth tamper detection (real
       targetIds: ["page-1"],
     })
 
-    expect(result.outcomes).toEqual([])
+    expect(mocks.releaseTarget).toHaveBeenCalledWith({
+      id: baseSession.id,
+      workspaceId: baseSession.workspaceId,
+      targetId: "page-1",
+    })
+    expect(result.outcomes).toEqual([
+      { targetId: "page-1", status: "failed", reason: "unknown" },
+    ])
   })
 
   it("rejects a tampered encryptedAuth ciphertext instead of silently decrypting garbage (regression: replaces the deleted facebook-pending-auth tamper test)", async () => {

@@ -21,12 +21,15 @@ import {
 } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
+import type {
+  AuthValue,
+  ConnectionCandidate,
+  ConnectionConfigField,
+  ConnectionDescriptor,
+  ConnectionKind,
+} from "@chatbotx.io/sdk"
 import {
-  type AuthValue,
-  type ConnectionCandidate,
-  type ConnectionConfigField,
-  type ConnectionDescriptor,
-  type ConnectionKind,
+  authValueSchema,
   ConnectionProviderRejectedError,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
@@ -38,9 +41,8 @@ import { CONNECTION_REGISTRY } from "./registry"
  * `completeAuthorization` lists candidates: the full `ConnectionCandidate[]`
  * (each with its own `auth`), not just the single exchanged `auth` — a
  * multi-account provider (Messenger) hands back one distinct per-page auth
- * per candidate. `auth` itself is provider-specific and unvalidated here
- * (same trust boundary as `asAuthValue` in `store-bindings.ts`); everything
- * else mirrors `ConnectSessionTarget`.
+ * per candidate. The shared `authValueSchema` validates the base auth shape
+ * while preserving provider-defined `custom` fields.
  */
 export const encryptedCandidatesSchema = z.array(
   z.object({
@@ -49,12 +51,12 @@ export const encryptedCandidatesSchema = z.array(
     authExpiresAt: z.string().optional(),
     avatarUrl: z.string().optional(),
     alreadyConnected: z.enum(["this_workspace", "other_workspace"]).optional(),
-    auth: z.custom<AuthValue>(),
+    auth: authValueSchema,
   }),
 ) satisfies z.ZodType<ConnectionCandidate[]>
 
 export const encryptedAuthorizationSchema =
-  z.custom<AuthValue>() satisfies z.ZodType<AuthValue>
+  authValueSchema satisfies z.ZodType<AuthValue>
 
 type ProviderFailure = {
   code?: unknown
@@ -296,12 +298,10 @@ export const findOrThrow = async (input: {
 
 /**
  * Best-effort `provider.webhook.subscribe` right after a fresh
- * `connect.completed` — the FSM design's own "webhook.subscribe
- * best-effort (failure → degraded, lastError)" edge (`state.ts`'s
- * `verify.failed_non_auth`), mirrored from `disconnect`'s existing
- * best-effort `webhook.unsubscribe` call. Never throws: a subscribe
- * failure degrades the just-created connection instead of failing the
- * whole connect (the row and quota consumption already committed).
+ * `connect.completed`. A subscription failure is tolerated only when the FSM
+ * persists `verify.failed_non_auth` and returns the degraded connection. If
+ * that follow-up transition fails, this rethrows instead of reporting a
+ * connected result with a dead webhook.
  */
 export const subscribeWebhookBestEffort = async (input: {
   adapter: ConnectionAdapter
@@ -332,20 +332,15 @@ export const subscribeWebhookBestEffort = async (input: {
         ownerId: input.ownerId,
       })
     } catch (transitionErr) {
-      // This call runs after `upsertConnectionRow` commits the connection as
-      // `connected`. A transition failure must not make `connectTargets`
-      // release the target or report failure after that durable success.
-      // Degradation is best-effort; return the committed connection unchanged.
-      // A later health check can still degrade an unhealthy webhook.
       logger.error(
         {
           err: transitionErr,
           connectionId: input.connection.id,
           provider: input.connection.provider,
         },
-        "connect: failed to mark connection degraded after a webhook subscribe failure; leaving it connected",
+        "connect: failed to mark connection degraded after a webhook subscribe failure",
       )
-      return input.connection
+      throw transitionErr
     }
   }
 }
@@ -468,11 +463,7 @@ export const upsertConnectionRow = async (input: {
   existing: ConnectionModel | undefined
   store: NonNullable<ConnectionAdapter["store"]>
   ownerId: string | undefined
-  quotaConsumption: {
-    consumed: boolean
-    workspaceId?: string
-    workspaceUsageIncremented: boolean
-  }
+  quotaConsumption: ConnectionQuotaConsumption
   actorUserId?: string | null
   inboxId?: string | null
 }): Promise<ConnectionModel> => {

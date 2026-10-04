@@ -99,8 +99,10 @@ const requireExactlyOneActor = (input: {
   const hasUser = Boolean(input.actorUserId)
   const hasToken = Boolean(input.actorTokenId)
   if (hasUser === hasToken) {
-    throw new Error(
+    throw new ChatbotXException(
       "ConnectSession requires exactly one of actorUserId/actorTokenId",
+      "validation",
+      400,
     )
   }
 }

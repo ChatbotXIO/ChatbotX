@@ -144,6 +144,9 @@ export const connectFromCredentials = async (input: {
       workspaceId: input.workspaceId,
     }),
   ])
+  if ("baseURL" in auth && typeof auth.baseURL === "string") {
+    extraConfig.baseURL = auth.baseURL
+  }
 
   const descriptor = provider.describe(auth)
 

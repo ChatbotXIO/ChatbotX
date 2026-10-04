@@ -105,6 +105,15 @@ describe("CONNECTION_STORE_BINDINGS", () => {
       expect.objectContaining({ baseURL: expect.anything() }),
     )
   })
+  it("rejects malformed persisted auth instead of casting it to AuthValue", async () => {
+    const binding = bindingOrThrow("messenger")
+    const fixture = makeTx()
+    fixture.loadLimit.mockResolvedValue([{ auth: undefined }])
+
+    await expect(
+      binding.loadAuthByForeignKey("inbox-1", fixture.tx as never),
+    ).rejects.toThrow("Stored connection auth is invalid")
+  })
 
   it("applies the shared-table discriminator to every Instagram binding query", async () => {
     const binding = bindingOrThrow("instagram")

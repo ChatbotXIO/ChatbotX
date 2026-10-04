@@ -88,26 +88,28 @@ beforeEach(() => {
 })
 
 describe("connectSessionService.create", () => {
-  it("throws when neither actorUserId nor actorTokenId is provided", async () => {
+  it.each([
+    {
+      actorTokenId: undefined,
+      actorUserId: undefined,
+    },
+    {
+      actorTokenId: "token-1",
+      actorUserId: "user-1",
+    },
+  ])("rejects invalid actor combinations with a typed validation error", async ({
+    actorTokenId,
+    actorUserId,
+  }) => {
     await expect(
       connectSessionService.create({
         workspaceId: "ws-1",
         provider: "messenger",
         purpose: "connect",
+        actorUserId,
+        actorTokenId,
       }),
-    ).rejects.toThrow("exactly one of actorUserId/actorTokenId")
-  })
-
-  it("throws when both actorUserId and actorTokenId are provided", async () => {
-    await expect(
-      connectSessionService.create({
-        workspaceId: "ws-1",
-        provider: "messenger",
-        purpose: "connect",
-        actorUserId: "user-1",
-        actorTokenId: "token-1",
-      }),
-    ).rejects.toThrow("exactly one of actorUserId/actorTokenId")
+    ).rejects.toMatchObject({ code: "validation", httpStatusCode: 400 })
   })
 
   it("throws connectSessionLimitReached at the per-workspace pending cap", async () => {

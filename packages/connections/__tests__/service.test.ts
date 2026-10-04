@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   findByProviderAndSourceIdAnyWorkspace: vi.fn(async () => undefined),
   findByProviderAndSourceIdsAnyWorkspace: vi.fn(async () => []),
   insert: vi.fn(),
-  update: vi.fn(),
+  update: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
   transition: vi.fn(async (input: Record<string, unknown>) => ({
     id: input.connectionId,
@@ -176,7 +176,7 @@ vi.mock("@chatbotx.io/business/errors", () => {
       new TestChatbotXException(
         `Connection provider "${provider}" is not configured.`,
         "connectionNotConfigured",
-        500,
+        400,
       ),
     connectionNotRefreshableException: (provider: string) =>
       new TestChatbotXException(
@@ -280,8 +280,14 @@ vi.mock("../src/registry", () => ({
   CONNECTION_REGISTRY: new Proxy(
     {},
     {
-      get: (_target, provider) =>
-        provider === "unregistered" ? null : mockAdapter,
+      get: (_target, provider) => {
+        if (provider === "unregistered") {
+          return null
+        }
+        return provider === "chatbotx"
+          ? { ...mockAdapter, store: undefined }
+          : mockAdapter
+      },
     },
   ),
 }))
@@ -471,102 +477,120 @@ describe("ConnectionService.disconnect", () => {
     })
   })
 
-  it("proceeds to the state transition and records lastError even when provider-side teardown throws", async () => {
+  it("keeps auth available for retry when provider-side teardown fails", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockRejectedValue(new Error("upstream 500"))
-    await connectionService.disconnect({
-      connectionId: "conn-1",
-      workspaceId: "ws-1",
-    })
-    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith("inbox-1", "tx")
-    expect(mocks.update).toHaveBeenCalledWith(
-      {
-        id: "conn-1",
-        workspaceId: "ws-1",
-        values: { lastError: "upstream 500" },
-      },
-      "tx",
-    )
-    expect(mocks.transition).toHaveBeenCalledWith(
-      expect.objectContaining({ event: "user.disconnect", tx: "tx" }),
-    )
-  })
-
-  it("records skipped provider teardown when auth is unavailable", async () => {
-    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
-    mocks.loadAuthByForeignKey.mockResolvedValueOnce(null)
-
-    await connectionService.disconnect({
-      connectionId: "conn-1",
-      workspaceId: "ws-1",
-    })
-
-    expect(mocks.disconnect).not.toHaveBeenCalled()
-    expect(mocks.unsubscribe).not.toHaveBeenCalled()
-    expect(mocks.update).toHaveBeenCalledWith(
-      {
-        id: "conn-1",
-        workspaceId: "ws-1",
-        values: {
-          lastError: "Provider authentication was unavailable for teardown",
-        },
-      },
-      "tx",
-    )
-  })
-
-  it("persists the provider teardown and transaction failure after local rollback", async () => {
-    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
-    mocks.disconnect.mockRejectedValueOnce(new Error("upstream 500"))
-    mocks.update.mockResolvedValue(undefined)
-    mocks.transaction.mockImplementationOnce(async (fn) => {
-      await fn("tx")
-      throw new Error("transaction commit failed")
-    })
 
     await expect(
       connectionService.disconnect({
         connectionId: "conn-1",
         workspaceId: "ws-1",
       }),
-    ).rejects.toThrow("transaction commit failed")
+    ).rejects.toThrow("upstream 500")
 
-    expect(mocks.update).toHaveBeenLastCalledWith({
+    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
+    expect(mocks.transition).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith({
+      id: "conn-1",
+      workspaceId: "ws-1",
+      values: { lastError: "upstream 500" },
+    })
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      {
+        err: expect.objectContaining({ message: "upstream 500" }),
+        connectionId: "conn-1",
+        provider: "messenger",
+      },
+      "connection disconnect: provider-side disconnect failed; retaining local auth for retry",
+    )
+  })
+
+  it("keeps auth available for retry when provider authentication is unavailable", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
+    mocks.loadAuthByForeignKey.mockResolvedValueOnce(null)
+
+    await expect(
+      connectionService.disconnect({
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("Provider authentication was unavailable for teardown")
+
+    expect(mocks.disconnect).not.toHaveBeenCalled()
+    expect(mocks.unsubscribe).not.toHaveBeenCalled()
+    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
+    expect(mocks.transition).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith({
       id: "conn-1",
       workspaceId: "ws-1",
       values: {
-        lastError: "upstream 500; transaction commit failed",
+        lastError: "Provider authentication was unavailable for teardown",
       },
     })
   })
 
-  it("still calls webhook unsubscribe when the provider disconnect throws (e.g. not implemented) (I11)", async () => {
+  it("keeps the first teardown failure retryable after independent cleanup also fails", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
+    mocks.disconnect.mockRejectedValueOnce(
+      new Error("provider disconnect failed"),
+    )
+    mocks.unsubscribe.mockRejectedValueOnce(new Error("unsubscribe failed"))
+
+    await expect(
+      connectionService.disconnect({
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("provider disconnect failed")
+
+    expect(mocks.unsubscribe).toHaveBeenCalledWith({
+      auth: { authType: "none" },
+    })
+    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
+    expect(mocks.transition).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith({
+      id: "conn-1",
+      workspaceId: "ws-1",
+      values: {
+        lastError: "provider disconnect failed; unsubscribe failed",
+      },
+    })
+  })
+
+  it("still calls webhook unsubscribe when provider disconnect fails, then retains auth for retry (I11)", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockRejectedValueOnce(
       new Error("Method is not implemented."),
     )
     mocks.unsubscribe.mockResolvedValueOnce(undefined)
-    await connectionService.disconnect({
-      connectionId: "conn-1",
-      workspaceId: "ws-1",
-    })
-    // Each teardown step now runs in its own try/catch — a channel with
-    // no real disconnect API throwing must not skip the independent
-    // webhook unsubscribe step.
+
+    await expect(
+      connectionService.disconnect({
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("Method is not implemented.")
+
     expect(mocks.unsubscribe).toHaveBeenCalledWith({
       auth: { authType: "none" },
     })
+    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
   })
 
-  it("still calls provider disconnect when webhook unsubscribe throws", async () => {
+  it("still calls provider disconnect when webhook unsubscribe fails, then retains auth for retry", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockResolvedValueOnce(undefined)
     mocks.unsubscribe.mockRejectedValueOnce(new Error("unsubscribe failed"))
-    await connectionService.disconnect({
-      connectionId: "conn-1",
-      workspaceId: "ws-1",
-    })
+
+    await expect(
+      connectionService.disconnect({
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("unsubscribe failed")
+
     expect(mocks.disconnect).toHaveBeenCalledWith({ authType: "none" })
+    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
   })
 
   it("leaves Connection.lastError null when teardown succeeds (no spurious error stored)", async () => {
@@ -720,6 +744,22 @@ describe("ConnectionService.verify", () => {
       connectionId: "conn-1",
       event: "verify.ok",
       ownerId: "owner-1",
+    })
+  })
+
+  it("returns a client error when a built-in connection has no auth store", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ provider: "chatbotx" }),
+    )
+
+    await expect(
+      connectionService.verify({
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toMatchObject({
+      code: "connectionNotConfigured",
+      httpStatusCode: 400,
     })
   })
 
@@ -989,6 +1029,32 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(result).toBeDefined()
   })
 
+  it("fails the connect when webhook subscription and degradation both fail", async () => {
+    mockAdapter.provider.kind = "channel"
+    mocks.subscribe.mockRejectedValueOnce(new Error("webhook endpoint down"))
+    mocks.transition
+      .mockImplementationOnce(async (input) => ({
+        id: input.connectionId,
+        status: "connected",
+      }))
+      .mockRejectedValueOnce(new Error("degradation transition unavailable"))
+
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "telegram",
+        config: { apiKey: "sk-live" },
+      }),
+    ).rejects.toThrow("degradation transition unavailable")
+
+    expect(mocks.transition).toHaveBeenLastCalledWith({
+      connectionId: "conn-new",
+      event: "verify.failed_non_auth",
+      reason: "verify_failed",
+      ownerId: "owner-1",
+    })
+  })
+
   it("passes config fields the store's configColumns allow-list permits through to the satellite insert", async () => {
     mockAdapter.store.configColumns = ["model", "temperature"]
 
@@ -1001,6 +1067,32 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(mocks.insertRow).toHaveBeenCalledWith(
       expect.objectContaining({
         config: { model: "claude-3", temperature: 0.7 },
+      }),
+      "tx",
+    )
+
+    mockAdapter.store.configColumns = undefined
+  })
+  it("persists the normalized baseURL returned by credential validation", async () => {
+    mockAdapter.store.configColumns = ["baseURL"]
+    mocks.fromCredentials.mockResolvedValueOnce({
+      authType: "secretText",
+      secretText: "sk-live",
+      baseURL: "https://provider.example.com/v1/",
+    })
+
+    await connectionService.connectFromCredentials({
+      workspaceId: "ws-1",
+      provider: "claude",
+      config: {
+        apiKey: "sk-live",
+        baseURL: " https://provider.example.com/v1 ",
+      },
+    })
+
+    expect(mocks.insertRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: { baseURL: "https://provider.example.com/v1/" },
       }),
       "tx",
     )
@@ -1279,6 +1371,29 @@ describe("ConnectionService.completeAuthorization", () => {
       id: "session-1",
       workspaceId: "ws-1",
       errorCode: "exchange_failed",
+      statuses: ["authorized"],
+    })
+  })
+
+  it("fails the session when persisting exchanged authorization fails", async () => {
+    mocks.storeAuthorization.mockRejectedValueOnce(
+      new Error("authorization storage unavailable"),
+    )
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toThrow("authorization storage unavailable")
+
+    expect(mocks.failSession).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      errorCode: "internal_error",
       statuses: ["authorized"],
     })
   })
@@ -1968,8 +2083,8 @@ describe("ConnectionService.connectTargets", () => {
     })
   })
 
-  it("does not record a losing target claim as a completed duplicate", async () => {
-    mocks.claimTarget.mockResolvedValueOnce(false)
+  it("recovers a stale target claim with no active connection and reports the recovered connection", async () => {
+    mocks.claimTarget.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
 
     const result = await connectionService.connectTargets({
       sessionId: "session-1",
@@ -1977,14 +2092,14 @@ describe("ConnectionService.connectTargets", () => {
       targetIds: ["page-1"],
     })
 
-    expect(result.connections).toEqual([])
-    expect(result.outcomes).toEqual([])
-    expect(mocks.recordResults).toHaveBeenCalledWith({
+    expect(mocks.releaseTarget).toHaveBeenCalledWith({
       id: "session-1",
       workspaceId: "ws-1",
-      results: [],
-      resultConnectionIds: [],
+      targetId: "page-1",
     })
+    expect(result.outcomes).toEqual([
+      { targetId: "page-1", status: "connected", connectionId: "conn-new" },
+    ])
   })
 
   it("subscribes the provider webhook for the newly connected target", async () => {
@@ -2011,15 +2126,28 @@ describe("ConnectionService.connectTargets", () => {
     ])
   })
 
-  it("leaves a claim race unrecorded until its owner completes", async () => {
+  it("records an active connection as duplicated when its claim is already held", async () => {
     mocks.claimTarget.mockResolvedValue(false)
+    mocks.findByProviderSourceId.mockResolvedValue({
+      id: "conn-existing",
+      status: "connected",
+    })
+
     const result = await connectionService.connectTargets({
       sessionId: "session-1",
       workspaceId: "ws-1",
       targetIds: ["page-1"],
     })
+
     expect(mocks.insertRow).not.toHaveBeenCalled()
-    expect(result.outcomes).toEqual([])
+    expect(mocks.releaseTarget).not.toHaveBeenCalled()
+    expect(result.outcomes).toEqual([
+      {
+        targetId: "page-1",
+        status: "duplicated",
+        reason: "alreadyConnected",
+      },
+    ])
   })
 
   it("maps a channelLimitReached failure from connectCandidate to a limitReached outcome and releases the claim (regression: a claimed target was never released on failure, so a retry always saw duplicated)", async () => {
@@ -2041,19 +2169,21 @@ describe("ConnectionService.connectTargets", () => {
     })
   })
 
-  it("releases the claim on a generic/provider-rejected connect failure too (regression: item 8 — every non-connected outcome must release)", async () => {
-    mocks.inboxCreate.mockRejectedValue(new Error("provider is down"))
+  it("reports internal connect failures separately from provider rejections and releases the claim", async () => {
+    mocks.inboxCreate.mockRejectedValue(new Error("database write failed"))
+
     const result = await connectionService.connectTargets({
       sessionId: "session-1",
       workspaceId: "ws-1",
       targetIds: ["page-1"],
     })
+
     expect(result.outcomes).toEqual([
       {
         targetId: "page-1",
         status: "failed",
-        reason: "providerRejected",
-        detail: "provider is down",
+        reason: "internalError",
+        detail: "Connect failed",
       },
     ])
     expect(mocks.releaseTarget).toHaveBeenCalledWith({
@@ -2061,6 +2191,34 @@ describe("ConnectionService.connectTargets", () => {
       workspaceId: "ws-1",
       targetId: "page-1",
     })
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      {
+        err: expect.objectContaining({ message: "database write failed" }),
+        targetId: "page-1",
+        provider: "messenger",
+      },
+      "connectTargets: candidate connect failed internally",
+    )
+  })
+  it("reports explicit provider rejections without classifying them as internal errors", async () => {
+    mocks.inboxCreate.mockRejectedValue(
+      new ConnectionProviderRejectedError("provider denied"),
+    )
+
+    const result = await connectionService.connectTargets({
+      sessionId: "session-1",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+    })
+
+    expect(result.outcomes).toEqual([
+      {
+        targetId: "page-1",
+        status: "failed",
+        reason: "providerRejected",
+        detail: "provider denied",
+      },
+    ])
   })
 
   it("does not release a claim when the connect actually succeeds", async () => {

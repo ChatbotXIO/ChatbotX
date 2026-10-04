@@ -1167,7 +1167,7 @@ describe.skipIf(!databaseUrl)(
       }
     })
 
-    test("purgeOldTerminal deletes a terminal session past retention but leaves a recent terminal session alone", async () => {
+    test("retries a chunk-capped terminal purge and preserves recent sessions", async () => {
       const seedClient = new Client({ connectionString: databaseUrl as string })
       await seedClient.connect()
       const seedDb = createDatabase(seedClient)
@@ -1209,22 +1209,54 @@ describe.skipIf(!databaseUrl)(
           .returning()
         return row
       }
-      const oldRow = await seedTerminal("old", THIRTY_ONE_DAYS_AGO)
+      const oldRows = await Promise.all([
+        seedTerminal("old-1", THIRTY_ONE_DAYS_AGO),
+        seedTerminal("old-2", THIRTY_ONE_DAYS_AGO),
+      ])
       const recentRow = await seedTerminal("recent", new Date())
 
       try {
-        const result = await connectSessionRepository.purgeOldTerminal({
+        const firstPurge = await connectSessionRepository.purgeOldTerminal({
           retentionDays: 30,
-          chunkSize: 500,
+          chunkSize: 1,
           interChunkDelayMs: 0,
-          maxChunks: 10,
+          maxChunks: 1,
         })
 
-        expect(result.deleted).toBeGreaterThanOrEqual(1)
-        const oldStillThere = await connectSessionRepository.findById({
-          id: oldRow.id,
+        expect(firstPurge).toEqual({ deleted: 1, stopReason: "chunkCap" })
+        const rowsAfterFirstPurge = await Promise.all(
+          oldRows.map(
+            async (row) =>
+              await connectSessionRepository.findById({ id: row.id }),
+          ),
+        )
+        expect(rowsAfterFirstPurge.filter(Boolean)).toHaveLength(1)
+
+        const secondPurge = await connectSessionRepository.purgeOldTerminal({
+          retentionDays: 30,
+          chunkSize: 1,
+          interChunkDelayMs: 0,
+          maxChunks: 1,
         })
-        expect(oldStillThere).toBeUndefined()
+        expect(secondPurge).toEqual({ deleted: 1, stopReason: "chunkCap" })
+
+        await expect(
+          Promise.all(
+            oldRows.map(
+              async (row) =>
+                await connectSessionRepository.findById({ id: row.id }),
+            ),
+          ),
+        ).resolves.toEqual([undefined, undefined])
+
+        await expect(
+          connectSessionRepository.purgeOldTerminal({
+            retentionDays: 30,
+            chunkSize: 1,
+            interChunkDelayMs: 0,
+            maxChunks: 10,
+          }),
+        ).resolves.toEqual({ deleted: 0, stopReason: "drained" })
         const recentStillThere = await connectSessionRepository.findById({
           id: recentRow.id,
         })

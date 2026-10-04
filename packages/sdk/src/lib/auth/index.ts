@@ -9,9 +9,11 @@ export const AuthType = {
 } as const
 export type AuthType = (typeof AuthType)[keyof typeof AuthType]
 
-export const noneAuthSchema = z.object({
-  authType: z.literal(AuthType.none),
-})
+export const noneAuthSchema = z
+  .object({
+    authType: z.literal(AuthType.none),
+  })
+  .passthrough()
 export type NoneAuthConfig = z.infer<typeof noneAuthSchema>
 
 export type Oauth2Config = {
@@ -23,35 +25,41 @@ export type Oauth2Config = {
   stateParams?: Record<string, unknown>
 }
 
-export const oauth2AuthSchema = z.object({
-  authType: z.literal(AuthType.oauth2),
-  clientId: z.string().trim().min(1),
-  clientSecret: z.string().trim().min(1),
-  redirectUrl: z.string().trim().min(1),
-  version: z.string().trim().optional(),
-  verifyToken: z.string().trim().optional(),
-  tokens: z.object({
-    accessToken: z.string().trim().min(1),
-    expiresAt: z.string().trim().optional(),
-    refreshToken: z.string().trim().nullish(),
-    refreshTokenExpiresAt: z.string().trim().nullish(),
-  }),
-  metadata: z.record(z.string().trim().min(1), z.unknown()).optional(),
-})
+export const oauth2AuthSchema = z
+  .object({
+    authType: z.literal(AuthType.oauth2),
+    clientId: z.string().trim().min(1),
+    clientSecret: z.string().trim().min(1),
+    redirectUrl: z.string().trim().min(1),
+    version: z.string().trim().optional(),
+    verifyToken: z.string().trim().optional(),
+    tokens: z.object({
+      accessToken: z.string().trim().min(1),
+      expiresAt: z.string().trim().optional(),
+      refreshToken: z.string().trim().nullish(),
+      refreshTokenExpiresAt: z.string().trim().nullish(),
+    }),
+    metadata: z.record(z.string().trim().min(1), z.unknown()).optional(),
+  })
+  .passthrough()
 export type Oauth2AuthValue = z.infer<typeof oauth2AuthSchema>
 
-export const secretTextAuthSchema = z.object({
-  authType: z.literal(AuthType.secretText),
-  secretText: z.string().trim().min(1),
-})
+export const secretTextAuthSchema = z
+  .object({
+    authType: z.literal(AuthType.secretText),
+    secretText: z.string().trim().min(1),
+  })
+  .passthrough()
 export type SecretTextAuthValue = z.infer<typeof secretTextAuthSchema>
 
-export const customAuthSchema = z.object({
-  authType: z.literal(AuthType.custom),
-})
+export const customAuthSchema = z
+  .object({
+    authType: z.literal(AuthType.custom),
+  })
+  .passthrough()
 export type CustomAuthValue = z.infer<typeof customAuthSchema>
 
-const authValueSchema = z.discriminatedUnion("authType", [
+export const authValueSchema = z.discriminatedUnion("authType", [
   noneAuthSchema,
   oauth2AuthSchema,
   secretTextAuthSchema,
