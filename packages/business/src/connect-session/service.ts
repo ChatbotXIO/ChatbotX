@@ -55,7 +55,7 @@ const sessionLimitReachedException = () =>
     429,
   )
 
-/** Exactly one of `actorUserId`/`actorTokenId` at creation time, surfacing a clean error before the insert rather than a raw constraint-violation one. Stricter than the DB's own `ConnectSession_actor_exactly_one` CHECK, which only enforces `<= 1` (0 or 1) — it has to tolerate an actor FK going null later via `ON DELETE SET NULL`, not just at creation. */
+/** Exactly one of `actorUserId`/`actorTokenId` is required at creation time, surfacing a clean error before the database's `ConnectSession_actor_at_most_one` CHECK, which only enforces `<= 1` because an actor FK may later become null through `ON DELETE SET NULL`. */
 const requireExactlyOneActor = (input: {
   actorUserId?: string | null
   actorTokenId?: string | null
@@ -225,7 +225,7 @@ class ConnectSessionService extends BaseService {
    * non-multi-account provider — this method itself makes no registry-aware
    * decision, it only records the step.
    *
-   * Guarded by `updateWhereActive` (status + unexpired) in the SAME
+   * Guarded by `updateWhereStatusIn` (status + unexpired) in the SAME
    * statement as the write — not a `requireActive` read followed by a
    * separate `update` — so a cancel/expire that lands during the OAuth
    * provider's `exchangeCode` round trip can never be "revived" back into
@@ -266,11 +266,41 @@ class ConnectSessionService extends BaseService {
   }
 
   /**
+   * Atomically claims an OAuth callback before its single-use authorization
+   * code is exchanged. `authorized` is an existing transient active status:
+   * only the caller that moves `pending` to it may continue to attach auth.
+   */
+  async claimAuthorization(input: {
+    id: string
+    workspaceId?: string
+  }): Promise<ConnectSessionModel> {
+    const existing = input.workspaceId
+      ? undefined
+      : await this.findById(input.id)
+    const workspaceId = input.workspaceId ?? existing?.workspaceId
+    if (!workspaceId) {
+      throw new ConnectSessionNotFoundException()
+    }
+    const updated = await connectSessionRepository.updateWhereStatusIn({
+      id: input.id,
+      workspaceId,
+      statuses: ["pending"],
+      requireUnexpired: true,
+      values: { status: "authorized" },
+    })
+    if (updated) {
+      return updated
+    }
+    throw connectSessionExpiredException(
+      "This connect session is no longer active.",
+    )
+  }
+
+  /**
    * Atomic per-target claim — the compare-and-set that makes concurrent
-   * `connectTargets` calls (a double-submit, or two tabs) safe. Returns
-   * `false` when the target was already claimed by a prior call on this
-   * session; the caller maps that to a `duplicated` outcome rather than
-   * connecting the same target twice.
+   * `connectTargets` calls safe. Returns `false` when another call owns the
+   * in-flight attempt; the caller skips recording an outcome until that
+   * claimant finishes.
    */
   async claimTarget(input: {
     id: string
@@ -297,17 +327,11 @@ class ConnectSessionService extends BaseService {
    * Atomically merges one `connectTargets` batch's outcomes into the
    * session's running totals via `connectSessionRepository.appendResults`
    * — a single guarded SQL `UPDATE`, not a read-then-write (which lost
-   * updates under two concurrent batches on the same session). Completion
-   * is computed over DISTINCT target ids against the session's own
-   * selectable-target count, so a `notSelectable` target or a duplicated
-   * outcome can't skew it; the terminal status is `completed` only if at
-   * least one outcome succeeded, otherwise `failed` — an all-`failed`/
-   * all-`limitReached` batch no longer reports success. Guarded by
-   * `status = 'awaiting_selection'`: a session already terminal (a
-   * concurrent batch completed it first, or it was `fail`/`cancel`led)
-   * updates 0 rows — this returns that current terminal row unchanged
-   * instead of throwing, so a caller that merely raced another terminal
-   * transition sees the real outcome rather than a spurious error.
+   * updates under concurrent batches). Completion counts DISTINCT ids only
+   * from selectable targets. The merge requires `expiresAt > now()` and an
+   * `awaiting_selection` status; a concurrent terminal transition updates
+   * zero rows and returns the current terminal session unchanged. A complete
+   * session is `completed` only when at least one result succeeded.
    */
   async recordResults(input: {
     id: string
@@ -403,7 +427,7 @@ class ConnectSessionService extends BaseService {
    * Records user-submitted `enter_input` step data (e.g. a credential-
    * strategy `config`) without changing status — the caller advances the
    * step separately once it has processed the input. Guarded by
-   * `updateWhereActive` in the same statement as the write (see
+   * `updateWhereStatusIn` in the same statement as the write (see
    * `attachAuthorization`) rather than a `requireActive` read followed by a
    * separate `update`.
    */
@@ -434,11 +458,12 @@ class ConnectSessionService extends BaseService {
     )
   }
 
-  /** Transitions to `failed`, guarded to only affect an active (non-terminal) session — a replayed/duplicate OAuth callback `?error=` can never flip an already-`completed`/`cancelled`/etc. session. Returns the session's current (already-terminal) row unchanged instead of throwing when the guard doesn't match. */
+  /** Transitions to `failed`, guarded to only affect the supplied active statuses. A replayed OAuth callback can restrict this to `pending` so its exchange failure cannot overwrite a session that another callback already advanced. */
   async fail(input: {
     id: string
     workspaceId?: string
     errorCode: ConnectSessionErrorCode
+    statuses?: ConnectSessionStatus[]
   }): Promise<ConnectSessionModel> {
     const existing = input.workspaceId
       ? undefined
@@ -450,7 +475,7 @@ class ConnectSessionService extends BaseService {
     const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
       workspaceId,
-      statuses: [...ACTIVE_STATUSES],
+      statuses: input.statuses ?? [...ACTIVE_STATUSES],
       values: {
         status: "failed",
         errorCode: input.errorCode,
@@ -528,7 +553,7 @@ class ConnectSessionService extends BaseService {
    * — lazily flips the row so every reader agrees without a cron
    * dependency. Guarded by `updateWhereStatusIn` (same as `fail`/`cancel`)
    * so a concurrent completion racing this read can't be overwritten, and
-   * clears `consumedAt`/`encryptedAuth` like every other terminal
+   * sets `consumedAt` and clears `encryptedAuth` like every other terminal
    * transition — without that, `expireDue`'s cron sweep never selects the
    * row (it is no longer in an active status) and `purgeOldTerminal`
    * never selects it either (it only scans `consumedAt IS NOT NULL`), so

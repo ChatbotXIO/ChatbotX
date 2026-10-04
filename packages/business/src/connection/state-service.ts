@@ -43,17 +43,14 @@ export type ConnectionQuotaConsumption = {
  * legacy-status mirror. Deliberately **registry-free** — it never imports
  * `@chatbotx.io/connections` — so it stays safe to call from `markOffline`
  * hooks and webhook handlers that must not pull in the full provider
- * registry's module graph. The registry-aware orchestration (provider
- * `disconnect`/`webhook.unsubscribe` calls, store-binding CRUD) lives in
- * `ConnectionService` (Phase 2), which calls this service for the state
- * transition itself.
+ * registry's module graph. Registry-aware orchestration (provider
+ * `disconnect`/`webhook.unsubscribe` calls and store-binding CRUD) lives in
+ * `ConnectionService`, which calls this service for the state transition.
  *
- * Deferred to Phase 2 (not yet wired here): `Integration<Channel>.tokenRefreshError`,
- * `FacebookAds.status`, `MetaCatalog.status` legacy mirrors, and the
- * `dashboardEventBus.emit("connection:changed")` notification — both need
- * either registry lookups or new event-schema registration this pass keeps
- * out of scope. `Inbox.status`/`disconnectReason` (the mirror the trial-expiry
- * banner and every existing channel-status read already depends on) is wired.
+ * The `Inbox.status`/`disconnectReason` mirror is maintained here because
+ * existing channel-status reads and the trial-expiry banner depend on it.
+ * Provider-specific legacy mirrors and dashboard notifications stay owned by
+ * their respective integrations and event producers.
  */
 
 class ConnectionStateService extends BaseService {
@@ -358,10 +355,9 @@ class ConnectionStateService extends BaseService {
       // No ACTIVE row matched `(provider, identifier)` — the repository
       // fell back to its "any row, most recent" branch, which can be a
       // stale disconnected row (possibly from a DIFFERENT workspace that
-      // reconnected the same external account elsewhere). Proceeding is
-      // still the best available option (a webhook payload carries no
-      // workspace to disambiguate further), but this is worth a warning —
-      // see I8 in the PR review.
+      // reconnected the same external account elsewhere). Proceeding is still
+      // the best available option because webhooks carry no workspace id, so
+      // the warning makes the ambiguity observable.
       logger.warn(
         {
           provider: input.provider,

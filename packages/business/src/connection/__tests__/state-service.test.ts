@@ -198,7 +198,7 @@ describe("ConnectionStateService.transition", () => {
     expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
   })
 
-  test("throws when a channel quotaEdge is required but no ownerId is supplied (I8)", async () => {
+  test("throws when a channel quota edge requires an owner", async () => {
     mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
 
     await expect(

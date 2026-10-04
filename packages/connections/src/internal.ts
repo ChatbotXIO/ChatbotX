@@ -191,16 +191,11 @@ export const subscribeWebhookBestEffort = async (input: {
         ownerId: input.ownerId,
       })
     } catch (transitionErr) {
-      // Regression I9: this call lands AFTER `upsertConnectionRow`'s own
-      // transaction already committed the connection as `connected` — a
-      // throw here used to propagate out of `connectCandidate`, which
-      // `connectTargets`' catch then reported as a `failed` outcome (and
-      // released the just-claimed target) even though the connection row
-      // is, right now, actually connected and consuming quota. Degrading
-      // is itself best-effort: swallow the failure and return the
-      // already-committed connection unchanged rather than mis-reporting
-      // a successful connect as a failure. A later `verify`/health-check
-      // cycle will still catch and correctly degrade an unhealthy webhook.
+      // This call runs after `upsertConnectionRow` commits the connection as
+      // `connected`. A transition failure must not make `connectTargets`
+      // release the target or report failure after that durable success.
+      // Degradation is best-effort; return the committed connection unchanged.
+      // A later health check can still degrade an unhealthy webhook.
       logger.error(
         {
           err: transitionErr,

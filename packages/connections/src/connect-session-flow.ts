@@ -54,12 +54,14 @@ import { logger } from "./logger"
 const failSession = async (
   session: Pick<ConnectSessionModel, "id" | "workspaceId" | "provider">,
   errorCode: Parameters<typeof connectSessionService.fail>[0]["errorCode"],
+  statuses?: Parameters<typeof connectSessionService.fail>[0]["statuses"],
 ): Promise<void> => {
   try {
     await connectSessionService.fail({
       id: session.id,
       workspaceId: session.workspaceId,
       errorCode,
+      ...(statuses ? { statuses } : {}),
     })
   } catch (err) {
     logger.error(
@@ -201,18 +203,17 @@ export const completeAuthorization = async (input: {
       "This connect session is no longer active.",
     )
   }
-  // No local atomic claim on the session before `exchangeCode` (unlike
-  // `claimTarget`'s DB-level compare-and-set) — two concurrent calls for
-  // the same session could both pass this `status === "pending"` check
-  // and both call `exchangeCode` with the same `code`. Relies on the
-  // OAuth provider enforcing single-use authorization codes, which every
-  // provider this connects to does; a genuinely idempotent version would
-  // need its own compare-and-set (e.g. `pending` -> `authorizing`) here.
-
   const adapter = resolveAdapter(session.provider)
   if (!adapter.provider.exchangeCode) {
     throw connectionNotOAuthException(session.provider)
   }
+
+  // OAuth providers consume authorization codes once. The compare-and-set
+  // immediately before the exchange permits exactly one callback to use it.
+  await connectSessionService.claimAuthorization({
+    id: session.id,
+    workspaceId: session.workspaceId,
+  })
 
   let auth: AuthValue
   try {
@@ -226,7 +227,7 @@ export const completeAuthorization = async (input: {
       { err, sessionId: session.id, provider: session.provider },
       "connection OAuth: authorization code exchange failed",
     )
-    await failSession(session, "exchange_failed")
+    await failSession(session, "exchange_failed", ["authorized"])
     throw connectionCredentialsRejectedException(
       toPublicErrorMessage(err, "The provider rejected the authorization."),
     )
@@ -637,11 +638,6 @@ export const connectTargets = async (input: {
         targetId,
       })
       if (!claimed) {
-        outcomes.push({
-          targetId,
-          status: "duplicated",
-          reason: "alreadyConnected",
-        })
         continue
       }
 
@@ -664,12 +660,9 @@ export const connectTargets = async (input: {
         // The claim above already appended `targetId` to `claimedTargetIds`;
         // every branch below ends in a non-`connected` outcome, so release it
         // — otherwise a retry's `claimTarget` permanently sees this target as
-        // claimed and reports `duplicated` even though it was never actually
-        // connected. Isolated in its own try (regression I10): a
-        // `releaseTarget` failure (e.g. a transient DB error) must not
-        // propagate past this `catch` — that used to abort the ENTIRE
-        // `for` loop, skipping every remaining target in the batch and
-        // the `recordResults` call below for ones already processed.
+        // claimed even though it was never actually connected. Isolated in its
+        // own try so a transient release failure does not skip the remaining
+        // targets or persistently collected outcomes.
         try {
           await connectSessionService.releaseTarget({
             id: session.id,
@@ -692,11 +685,8 @@ export const connectTargets = async (input: {
       }
     }
   } finally {
-    // Runs even if something outside the per-target `try/catch` above threw
-    // unexpectedly (e.g. `claimTarget` itself) — the last line of defense so
-    // a partial batch's outcomes collected so far are never silently
-    // dropped (regression I10). On the normal path this is simply where
-    // the final merge happens.
+    // Runs even if something outside the per-target `try/catch` above threw,
+    // so previously collected outcomes are not silently dropped.
     updatedSession = await connectSessionService.recordResults({
       id: session.id,
       workspaceId: session.workspaceId,

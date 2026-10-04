@@ -42,7 +42,7 @@ describe("connectSessionRepository", () => {
     })
   })
 
-  test("completes reconnects only for the matching unexpired pending session", async () => {
+  test("completes reconnects only for the matching unexpired claimed session", async () => {
     const returning = vi.fn().mockResolvedValue([])
     const where = vi.fn(() => ({ returning }))
     const set = vi.fn(() => ({ where }))
@@ -74,7 +74,7 @@ describe("connectSessionRepository", () => {
     )
     expect(guardMocks.eq).toHaveBeenCalledWith(
       connectSessionModel.status,
-      "pending",
+      "authorized",
     )
     expect(guardMocks.gt).toHaveBeenCalledWith(
       connectSessionModel.expiresAt,

@@ -8,10 +8,9 @@
  * connected`). INACTIVE = `needs_reauth | paused | disconnected` (quota
  * released, `Inbox.status = disconnected`).
  *
- * Invariant: quota is consumed exactly on an INACTIVE/absent → ACTIVE edge
- * and released exactly on ACTIVE → INACTIVE, nowhere else. `quotaEdge` below
- * is the single source of truth callers use to decide whether to
- * consume/release quota — never re-derive it ad hoc.
+ * Invariant: quota transitions are calculated at active/inactive edges.
+ * `quotaEdge` is the single source of truth callers use to decide whether to
+ * consume or best-effort release quota — never re-derive it ad hoc.
  */
 import {
   ACTIVE_CONNECTION_STATUSES,

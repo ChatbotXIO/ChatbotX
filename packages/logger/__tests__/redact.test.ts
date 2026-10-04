@@ -167,6 +167,16 @@ describe("scrubSecretsInString", () => {
     expect(result).toContain("fields=name")
   })
 
+  test("redacts a bare Gemini key query parameter", () => {
+    const key = "AIzaSensitiveValue"
+    const result = scrubSecretsInString(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`,
+    )
+
+    expect(result).not.toContain(key)
+    expect(result).toContain("key=[redacted]")
+  })
+
   test("leaves a string without secrets untouched", () => {
     expect(scrubSecretsInString("just a message")).toBe("just a message")
   })

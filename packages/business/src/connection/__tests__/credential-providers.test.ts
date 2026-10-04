@@ -64,7 +64,11 @@ describe("openaiCompatibleConnectionProvider.fromCredentials", () => {
         apiKey: "sk-live",
         baseURL: "https://provider.example.com",
       }),
-    ).resolves.toMatchObject({ authType: "secretText", secretText: "sk-live" })
+    ).resolves.toMatchObject({
+      authType: "secretText",
+      baseURL: "https://provider.example.com/",
+      secretText: "sk-live",
+    })
   })
 
   it("reports an invalid API key on 401", async () => {
@@ -192,15 +196,48 @@ describe.each([
 })
 
 describe("openaiCompatibleConnectionProvider.verify", () => {
-  it("does not report healthy without the stored base URL", async () => {
+  it("verifies the stored endpoint and reports healthy", async () => {
+    mocks.get.mockResolvedValue(new Response(null, { status: 200 }))
+
     await expect(
       openaiCompatibleConnectionProvider.verify({
-        auth: { authType: "secretText", secretText: "sk-live" },
+        auth: {
+          authType: "secretText",
+          baseURL: "https://provider.example.com",
+          secretText: "sk-live",
+        },
+      }),
+    ).resolves.toEqual({ ok: true })
+
+    expect(mocks.get).toHaveBeenCalledWith(
+      "https://provider.example.com/models",
+      expect.objectContaining({
+        headers: { Authorization: "Bearer sk-live" },
+      }),
+    )
+  })
+
+  it("reports an unauthorized stored API key as revoked", async () => {
+    mocks.get.mockRejectedValue(
+      new HTTPError(
+        new Response(null, { status: 401 }),
+        fakeRequest(),
+        fakeOptions,
+      ),
+    )
+
+    await expect(
+      openaiCompatibleConnectionProvider.verify({
+        auth: {
+          authType: "secretText",
+          baseURL: "https://provider.example.com",
+          secretText: "sk-bad",
+        },
       }),
     ).resolves.toEqual({
       ok: false,
-      revoked: false,
-      error: "OpenAI-compatible endpoints require credential revalidation",
+      revoked: true,
+      error: "Invalid API key",
     })
   })
 })

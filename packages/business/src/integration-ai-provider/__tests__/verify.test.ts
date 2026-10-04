@@ -55,8 +55,8 @@ describe("verifyAiProviderApiKey", () => {
     ],
     [
       "gemini",
-      "https://generativelanguage.googleapis.com/v1beta/models?key=provider-key",
-      undefined,
+      "https://generativelanguage.googleapis.com/v1beta/models",
+      { "x-goog-api-key": "provider-key" },
     ],
   ] as const)("uses the provider-specific probe for %s", async (provider, url, headers) => {
     mockKyGet.mockResolvedValueOnce({})
@@ -77,6 +77,14 @@ describe("verifyAiProviderApiKey", () => {
     mockKyGet.mockRejectedValueOnce(new MockHTTPError(status))
 
     await expect(verifyAiProviderApiKey("openrouter", "bad-key")).resolves.toBe(
+      "invalid",
+    )
+  })
+
+  test("returns invalid when Gemini rejects an API key with API_KEY_INVALID", async () => {
+    mockKyGet.mockRejectedValueOnce(new MockHTTPError(400))
+
+    await expect(verifyAiProviderApiKey("gemini", "bad-key")).resolves.toBe(
       "invalid",
     )
   })

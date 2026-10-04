@@ -20,10 +20,9 @@ const channelToIntegrationTable = (channel: string): string => {
 }
 
 /**
- * Minimal shape required to build an {@link AuthStore}: a row from any
- * `Integration<Channel>` table. `id` is required (used to load/save/lock);
- * `inboxId` is optional and only used by `markOffline`, since workspace-level
- * integrations (e.g. Google Sheets) are not inbox-bound.
+ * `id` is required to load and save the satellite row; `inboxId` is optional
+ * and only used by `markOffline`, since workspace-level integrations (e.g.
+ * Google Sheets) are not inbox-bound.
  */
 export type AuthStoreIntegrationRow = {
   id: string
@@ -49,7 +48,7 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
   lockKeyPrefix: string,
   integration: AuthStoreIntegrationRow,
 ): AuthStore<TAuth> => {
-  const lockKey = `auth:refresh:${lockKeyPrefix}:${integration.id}`
+  const fallbackLockKey = `auth:refresh:${lockKeyPrefix}:${integration.id}`
   /**
    * Resolves the `Connection` row mirroring this `Integration<Channel>` (or
    * workspace-integration satellite) row, so `markOffline`/`recordHealth`
@@ -84,9 +83,14 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
       return result.rows[0].auth
     },
     save: async (auth: TAuth) => {
-      await db.execute(
+      const result = await db.execute(
         sql`UPDATE ${sql.identifier(tableName)} SET auth = ${JSON.stringify(auth)}::jsonb WHERE "id" = ${integration.id}`,
       )
+      if (result.rowCount === 0) {
+        throw new SdkException(
+          `Unable to save auth for ${lockKeyPrefix} integration ${integration.id}`,
+        )
+      }
       const connection = await resolveConnection()
       if (!connection) {
         // Pre-backfill fallback: no `Connection` row to mirror onto yet.
@@ -118,12 +122,16 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
         throw err
       }
     },
-    withLock: (fn) =>
-      distributedLock.runExclusive({
-        key: lockKey,
+    withLock: async (fn) => {
+      const connection = await resolveConnection()
+      return await distributedLock.runExclusive({
+        key: connection
+          ? `auth:refresh:connection:${connection.id}`
+          : fallbackLockKey,
         timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
         fn,
-      }),
+      })
+    },
     markOffline: async () => {
       const connection = await resolveConnection()
       if (connection) {

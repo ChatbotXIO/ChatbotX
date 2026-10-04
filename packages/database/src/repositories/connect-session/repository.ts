@@ -267,8 +267,8 @@ export const connectSessionRepository = {
     // Only selectable targets count toward completion or a successful batch.
     const selectableTargetIds = sql`(SELECT t->>'id' FROM jsonb_array_elements(${connectSessionModel.targets}) AS t WHERE (t->>'selectable')::boolean)`
     const distinctResultCount = sql`(SELECT count(DISTINCT elem->>'targetId') FROM jsonb_array_elements(${mergedResults}) AS elem WHERE elem->>'targetId' IN ${selectableTargetIds})`
-    // A duplicated outcome is successful: a retry raced an already-created
-    // connection, so its requested work is complete even without a new id.
+    // A duplicated outcome represents a verified existing connection, so its
+    // requested work is complete even without a newly created id.
     const hasSuccess = sql`(SELECT bool_or(elem2->>'status' NOT IN ('failed', 'limitReached')) FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
     const allLimitReached = sql`(SELECT bool_and(elem2->>'status' = 'limitReached') FROM jsonb_array_elements(${mergedResults}) AS elem2 WHERE elem2->>'targetId' IN ${selectableTargetIds})`
     const isComplete = sql`(${distinctResultCount} >= ${selectableTargetCount})`
@@ -299,7 +299,7 @@ export const connectSessionRepository = {
     return row ? parseConnectSession(row) : undefined
   },
 
-  /** Completes a one-target OAuth reconnect while its session is still pending. */
+  /** Completes a one-target OAuth reconnect after its callback is claimed. */
   async completeReconnect(
     input: {
       id: string
@@ -322,7 +322,7 @@ export const connectSessionRepository = {
         and(
           eq(connectSessionModel.id, input.id),
           eq(connectSessionModel.workspaceId, input.workspaceId),
-          eq(connectSessionModel.status, "pending"),
+          eq(connectSessionModel.status, "authorized"),
           gt(connectSessionModel.expiresAt, sql`now()`),
         ),
       )

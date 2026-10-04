@@ -14,6 +14,7 @@ import {
 import { db } from "@chatbotx.io/database/client"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
+import { distributedLock } from "@chatbotx.io/redis"
 import type { AuthStore, AuthValue } from "@chatbotx.io/sdk"
 import {
   findOrThrow,
@@ -22,6 +23,8 @@ import {
   resolveOwnerId,
 } from "./internal"
 import { logger } from "./logger"
+
+const REFRESH_LOCK_TIMEOUT_SECONDS = 10
 
 const loadActiveConnectionStore = async (input: {
   connectionId: string
@@ -195,6 +198,12 @@ export const refresh = async (input: {
         throw err
       }
     },
+    withLock: (fn) =>
+      distributedLock.runExclusive({
+        key: `auth:refresh:connection:${connection.id}`,
+        timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
+        fn,
+      }),
     markOffline: async () => {
       const ownerId = await resolveOwnerId(connection)
       await connectionStateService.markUnhealthy({

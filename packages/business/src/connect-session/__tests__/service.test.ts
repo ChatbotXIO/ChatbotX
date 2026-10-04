@@ -281,6 +281,25 @@ describe("connectSessionService.attachAuthorization", () => {
   })
 })
 
+describe("connectSessionService.claimAuthorization", () => {
+  it("claims an OAuth callback with a pending-only compare-and-set", async () => {
+    await expect(
+      connectSessionService.claimAuthorization({
+        id: "session-1",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toMatchObject({ status: "authorized" })
+
+    expect(mocks.updateWhereStatusIn).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      statuses: ["pending"],
+      requireUnexpired: true,
+      values: { status: "authorized" },
+    })
+  })
+})
+
 describe("connectSessionService.claimTarget", () => {
   it("scopes atomic claims to the session workspace", async () => {
     mocks.claimTarget.mockResolvedValue(true)

@@ -3,7 +3,10 @@ import { InvalidConnectionTransitionException } from "../../connection/state"
 import { makeAuthStore } from "../auth-store"
 
 const mocks = vi.hoisted(() => ({
-  execute: vi.fn(async () => ({ rows: [{ auth: { authType: "none" } }] })),
+  execute: vi.fn(async () => ({
+    rowCount: 1,
+    rows: [{ auth: { authType: "none" } }],
+  })),
   runExclusive: vi.fn((input: { fn: () => unknown }) => input.fn()),
   findByInboxId: vi.fn(),
   findByIntegrationId: vi.fn(),
@@ -64,7 +67,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.inboxUpdate.mockReturnValue({ set: mocks.inboxUpdateSet })
   mocks.inboxUpdateSet.mockReturnValue({ where: mocks.inboxUpdateWhere })
-  mocks.execute.mockResolvedValue({ rows: [{ auth: { authType: "none" } }] })
+  mocks.execute.mockResolvedValue({
+    rowCount: 1,
+    rows: [{ auth: { authType: "none" } }],
+  })
   mocks.findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
 })
 
@@ -127,6 +133,37 @@ describe("makeAuthStore.save", () => {
       inboxId: "inbox-1",
     })
     await expect(store.save({ authType: "none" })).resolves.toBeUndefined()
+  })
+
+  it("throws when the satellite row was deleted before auth persistence", async () => {
+    mocks.execute.mockResolvedValueOnce({ rowCount: 0, rows: [] })
+    const store = makeAuthStore("messenger", {
+      id: "row-1",
+      inboxId: "inbox-1",
+    })
+
+    await expect(store.save({ authType: "none" })).rejects.toThrow(
+      "Unable to save auth",
+    )
+    expect(mocks.recordAuthSaved).not.toHaveBeenCalled()
+  })
+})
+
+describe("makeAuthStore.withLock", () => {
+  it("uses the connection lock key when the satellite has a Connection row", async () => {
+    mocks.findByInboxId.mockResolvedValue({
+      id: "conn-1",
+      workspaceId: "ws-1",
+    })
+    const store = makeAuthStore("messenger", {
+      id: "row-1",
+      inboxId: "inbox-1",
+    })
+
+    await expect(store.withLock?.(async () => "locked")).resolves.toBe("locked")
+    expect(mocks.runExclusive).toHaveBeenCalledWith(
+      expect.objectContaining({ key: "auth:refresh:connection:conn-1" }),
+    )
   })
 })
 

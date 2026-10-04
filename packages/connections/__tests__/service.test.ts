@@ -43,6 +43,7 @@ const mocks = vi.hoisted(() => ({
   createSession: vi.fn(),
   findByNonce: vi.fn(),
   submitInput: vi.fn(),
+  claimAuthorization: vi.fn(),
   attachAuthorization: vi.fn(),
   recordResults: vi.fn(),
   completeReconnect: vi.fn(),
@@ -133,6 +134,7 @@ vi.mock("@chatbotx.io/business/connect-session", () => ({
     claimTarget: mocks.claimTarget,
     releaseTarget: mocks.releaseTarget,
     submitInput: mocks.submitInput,
+    claimAuthorization: mocks.claimAuthorization,
     attachAuthorization: mocks.attachAuthorization,
     recordResults: mocks.recordResults,
     completeReconnect: mocks.completeReconnect,
@@ -357,6 +359,14 @@ beforeEach(() => {
     provider: "messenger",
     status: "pending",
   })
+  mocks.claimAuthorization.mockImplementation(
+    async (input: Record<string, unknown>) => ({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      provider: "messenger",
+      status: "authorized",
+    }),
+  )
   mocks.attachAuthorization.mockImplementation(
     async (input: Record<string, unknown>) => ({
       id: input.id,
@@ -1185,7 +1195,28 @@ describe("ConnectionService.completeAuthorization", () => {
       id: "session-1",
       workspaceId: "ws-1",
       errorCode: "exchange_failed",
+      statuses: ["authorized"],
     })
+  })
+
+  it("does not exchange a duplicate callback after the pending claim is lost", async () => {
+    mocks.claimAuthorization.mockRejectedValueOnce(
+      Object.assign(new Error("Connect session expired"), {
+        code: "connectSessionExpired",
+      }),
+    )
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toMatchObject({ code: "connectSessionExpired" })
+
+    expect(mocks.exchangeCode).not.toHaveBeenCalled()
   })
 
   it("fails the session with no_candidates when listCandidates returns an empty list", async () => {
@@ -1672,6 +1703,25 @@ describe("ConnectionService.connectTargets", () => {
     })
   })
 
+  it("does not record a losing target claim as a completed duplicate", async () => {
+    mocks.claimTarget.mockResolvedValueOnce(false)
+
+    const result = await connectionService.connectTargets({
+      sessionId: "session-1",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+    })
+
+    expect(result.connections).toEqual([])
+    expect(result.outcomes).toEqual([])
+    expect(mocks.recordResults).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      results: [],
+      resultConnectionIds: [],
+    })
+  })
+
   it("subscribes the provider webhook for the newly connected target", async () => {
     await connectionService.connectTargets({
       sessionId: "session-1",
@@ -1696,7 +1746,7 @@ describe("ConnectionService.connectTargets", () => {
     ])
   })
 
-  it("maps a claim race (already claimed by a prior call) to duplicated without connecting twice", async () => {
+  it("leaves a claim race unrecorded until its owner completes", async () => {
     mocks.claimTarget.mockResolvedValue(false)
     const result = await connectionService.connectTargets({
       sessionId: "session-1",
@@ -1704,9 +1754,7 @@ describe("ConnectionService.connectTargets", () => {
       targetIds: ["page-1"],
     })
     expect(mocks.insertRow).not.toHaveBeenCalled()
-    expect(result.outcomes).toEqual([
-      { targetId: "page-1", status: "duplicated", reason: "alreadyConnected" },
-    ])
+    expect(result.outcomes).toEqual([])
   })
 
   it("maps a channelLimitReached failure from connectCandidate to a limitReached outcome and releases the claim (regression: a claimed target was never released on failure, so a retry always saw duplicated)", async () => {

@@ -169,10 +169,9 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
   // spanning 15 distinct tables cannot express) — upcast once here; column
   // references below stay on the narrowed `table` for real type checking.
   const rawTable: PgTable = table
-  // `identityColumn`, when set, is asserted (Phase 0 registration) to name a
-  // real text column on `table`; there is no generic way to encode "this
-  // string literal names a column of this specific table" across 15 distinct
-  // table shapes, so the lookup is a single documented cast.
+  // `identityColumn`, when set, is asserted to name a real text column on
+  // `table`; there is no generic way to encode this across 15 distinct table
+  // shapes, so the lookup uses a single documented cast.
   const identityCol = opts.identityColumn
     ? (table[opts.identityColumn as keyof TTable] as unknown as AnyPgColumn)
     : null
@@ -271,6 +270,8 @@ const makeWorkspaceIntegrationBinding = <
   integrationType: IntegrationType
   authColumn?: "auth" | "encryptedAuth"
   duplicateConstraint?: string
+  /** Hydrates an auth value with the stored base URL for endpoint verification. */
+  baseUrlColumn?: AnyPgColumn
   /** See `ConnectionStoreBinding.configColumns`. */
   configColumns?: readonly string[]
   /**
@@ -301,7 +302,11 @@ const makeWorkspaceIntegrationBinding = <
   return {
     loadAuthByForeignKey: async (integrationId, tx = db) => {
       const [row] = await tx
-        .select({ auth: authColumn })
+        .select(
+          opts.baseUrlColumn
+            ? { auth: authColumn, baseURL: opts.baseUrlColumn }
+            : { auth: authColumn },
+        )
         .from(rawTable)
         .where(eq(table.integrationId, integrationId))
         .limit(1)
@@ -310,7 +315,11 @@ const makeWorkspaceIntegrationBinding = <
           `Unable to load auth for ${opts.tableName} integration ${integrationId}`,
         )
       }
-      return asAuthValue(row.auth)
+      const auth = asAuthValue(row.auth)
+      if (!("baseURL" in row) || typeof row.baseURL !== "string") {
+        return auth
+      }
+      return { ...auth, baseURL: row.baseURL }
     },
     saveAuthByForeignKey: async (integrationId, auth, config, tx = db) => {
       const safeConfig = pickAllowed(config, opts.configColumns)
@@ -552,6 +561,7 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     table: integrationOpenaiCompatibleModel,
     tableName: "IntegrationOpenaiCompatible",
     integrationType: "openaiCompatible",
+    baseUrlColumn: integrationOpenaiCompatibleModel.baseURL,
     configColumns: [
       "baseURL",
       "defaultModel",

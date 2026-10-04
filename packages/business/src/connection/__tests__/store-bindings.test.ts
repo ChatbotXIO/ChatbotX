@@ -40,6 +40,7 @@ const makeTx = () => {
     insertValues,
     loadLimit,
     loadWhere,
+    select,
     updateSet,
     updateWhere,
   }
@@ -84,6 +85,24 @@ describe("CONNECTION_STORE_BINDINGS", () => {
     )
     expect(fixture.deleteWhere).toHaveBeenCalledWith(
       expect.objectContaining({ value: "inbox-1" }),
+    )
+  })
+
+  it("hydrates OpenAI-compatible auth with its persisted base URL", async () => {
+    const binding = bindingOrThrow("openaiCompatible")
+    const fixture = makeTx()
+    fixture.loadLimit.mockResolvedValue([
+      { auth, baseURL: "https://provider.example.com/" },
+    ])
+
+    await expect(
+      binding.loadAuthByForeignKey("integration-1", fixture.tx as never),
+    ).resolves.toEqual({
+      ...auth,
+      baseURL: "https://provider.example.com/",
+    })
+    expect(fixture.select).toHaveBeenCalledWith(
+      expect.objectContaining({ baseURL: expect.anything() }),
     )
   })
 
