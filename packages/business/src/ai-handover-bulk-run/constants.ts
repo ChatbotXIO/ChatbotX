@@ -29,6 +29,13 @@ export const AI_HANDOVER_BULK_ERROR_CODES = {
   pageNotConnected: "aiHandoverBulkPageNotConnected",
   /** Retry was asked while the latest revision is running or already succeeded. */
   nothingToRetry: "aiHandoverBulkNothingToRetry",
+  /** More threads are eligible than the caller confirmed (`confirmMaxEligible`). */
+  confirmCountExceeded: "aiHandoverBulkConfirmCountExceeded",
+  /**
+   * A confirmed change must start now: its count is only valid for the moment
+   * it was confirmed, so it cannot be left waiting for another run to stop.
+   */
+  runNotStartable: "aiHandoverBulkRunNotStartable",
 } as const
 
 /** `currentError` sentinels a run can end with, localized by the builder. */

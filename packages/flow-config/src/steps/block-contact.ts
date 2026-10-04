@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const blockContactStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.blockContact),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.blockContact)
+    .describe('Step type discriminator: "blockContact".'),
 })
 
 export type BlockContactStepSchema = z.infer<typeof blockContactStepSchema>

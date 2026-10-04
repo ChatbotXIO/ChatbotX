@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const startAnotherNodeStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.startAnotherNode),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.startAnotherNode)
+    .describe('Step type discriminator: "startAnotherNode".'),
   nodeId: zodBigintAsString(),
   viewOnly: z.boolean().optional(),
 })

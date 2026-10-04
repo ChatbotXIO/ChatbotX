@@ -51,16 +51,32 @@ export const CALL_HOURS_TIMEZONE_CODES = allTimezoneCodes.filter(
   isRuntimeTimezone,
 ) as [string, ...string[]]
 
-const minuteOfDaySchema = z.number().int().min(0).max(LAST_MINUTE_OF_DAY)
+const minuteOfDaySchema = z
+  .number()
+  .int()
+  .min(0)
+  .max(LAST_MINUTE_OF_DAY)
+  .describe("Minutes since midnight, 0-1439.")
 
 const callHoursRangeSchema = z.object({
-  openMinute: minuteOfDaySchema,
-  closeMinute: minuteOfDaySchema,
+  openMinute: minuteOfDaySchema.describe(
+    "Minute the range opens (e.g. 540 = 09:00).",
+  ),
+  closeMinute: minuteOfDaySchema.describe(
+    "Minute the range closes; must be after `openMinute`.",
+  ),
 })
 
 const callHoursDaySchema = z.object({
-  dayOfWeek: z.enum(CALL_HOURS_DAYS),
-  ranges: z.array(callHoursRangeSchema).max(MAX_CALL_HOURS_RANGES_PER_DAY),
+  dayOfWeek: z
+    .enum(CALL_HOURS_DAYS)
+    .describe("Day name; the 7 entries go MONDAY to SUNDAY in order."),
+  ranges: z
+    .array(callHoursRangeSchema)
+    .max(MAX_CALL_HOURS_RANGES_PER_DAY)
+    .describe(
+      "Up to two non-overlapping open ranges; empty means closed all day.",
+    ),
 })
 
 /**

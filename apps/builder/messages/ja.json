@@ -2252,7 +2252,8 @@
       "minigames": "ミニゲーム",
       "appointments": "予約",
       "media": "メディア",
-      "ads": "広告"
+      "ads": "広告",
+      "settings": "設定"
     },
     "adReferral": {
       "label": "Ads",

@@ -2,6 +2,7 @@
 import { describe, expect, test, vi } from "vitest"
 
 vi.mock("../src/queries", () => ({
+  buildContactInboxScopeWhere: (scope: unknown) => ({ __inboxScope: scope }),
   applyContactFilter: (criteria: unknown) => ({
     conversation: { status: "open" },
     __filter: criteria,
@@ -169,5 +170,30 @@ describe("buildContactListWhere", () => {
         },
       ],
     })
+  })
+
+  test("adds the inbox scope as an extra filter when one is given", () => {
+    const inboxScope = {
+      inboxIds: ["10", "11"],
+      requireRecentInteraction: true,
+    }
+
+    expect(buildContactListWhere({ ...baseInput, inboxScope })).toEqual({
+      workspaceId: "1",
+      __inboxScope: inboxScope,
+    })
+  })
+
+  test("ANDs the inbox scope with keyword and contact filter", () => {
+    const inboxScope = { inboxIds: ["10"], requireRecentInteraction: false }
+
+    const where = buildContactListWhere({
+      ...baseInput,
+      keyword: "Alice",
+      inboxScope,
+    })
+
+    expect(where.AND).toHaveLength(2)
+    expect(where.AND).toContainEqual({ __inboxScope: inboxScope })
   })
 })

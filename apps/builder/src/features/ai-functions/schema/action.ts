@@ -22,8 +22,20 @@ export const createAIFunctionRequest = z.object({
   dataCollect: z
     .array(
       z.object({
-        from: z.string().trim().min(1),
-        to: z.string().trim().min(1),
+        from: z
+          .string()
+          .trim()
+          .min(1)
+          .describe(
+            "Name of the value the model must extract from the conversation (becomes a string parameter of the function), e.g. `email`.",
+          ),
+        to: z
+          .string()
+          .trim()
+          .min(1)
+          .describe(
+            "Id of the custom field that stores the extracted value on the contact. Get it from `customFields.list`.",
+          ),
       }),
     )
     .describe(

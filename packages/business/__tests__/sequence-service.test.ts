@@ -123,6 +123,11 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   }),
 }))
 
+const mockEnsureFolder = vi.hoisted(() => vi.fn())
+vi.mock("../src/folder/service", () => ({
+  folderService: { ensureExists: mockEnsureFolder },
+}))
+
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
@@ -190,6 +195,87 @@ describe("sequenceService.create", () => {
     await expect(
       sequenceService.create({ workspaceId: WS, name: "Seq" }),
     ).rejects.toThrow("other db error")
+  })
+})
+
+describe("sequenceService folder validation", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("create checks the folder is a sequence folder of this workspace", async () => {
+    mockInsert.mockReturnValue({ values: mockInsertValues })
+    mockInsertValues.mockResolvedValue(undefined)
+
+    await sequenceService.create({
+      workspaceId: WS,
+      name: "Seq",
+      folderId: "folder-1",
+    })
+
+    expect(mockEnsureFolder).toHaveBeenCalledWith({
+      id: "folder-1",
+      workspaceId: WS,
+      folderType: "sequence",
+    })
+  })
+
+  test("create refuses a foreign folder before writing anything", async () => {
+    mockEnsureFolder.mockRejectedValueOnce(new Error("Folder not found"))
+
+    await expect(
+      sequenceService.create({
+        workspaceId: WS,
+        name: "Seq",
+        folderId: "foreign",
+      }),
+    ).rejects.toThrow("Folder not found")
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  test("a root or missing folder needs no check", async () => {
+    mockInsert.mockReturnValue({ values: mockInsertValues })
+    mockInsertValues.mockResolvedValue(undefined)
+
+    await sequenceService.create({ workspaceId: WS, name: "Seq" })
+    await sequenceService.create({
+      workspaceId: WS,
+      name: "Seq",
+      folderId: null,
+    })
+
+    expect(mockEnsureFolder).not.toHaveBeenCalled()
+  })
+
+  test("update checks a new folder id, but not a null (move to root)", async () => {
+    mockStepUpdateReturning.mockResolvedValue([{ id: "seq-1" }])
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      folderId: null,
+    })
+
+    await sequenceService.update(
+      { workspaceId: WS, id: "seq-1" },
+      { folderId: "folder-2" },
+    )
+    expect(mockEnsureFolder).toHaveBeenCalledWith({
+      id: "folder-2",
+      workspaceId: WS,
+      folderType: "sequence",
+    })
+
+    mockEnsureFolder.mockClear()
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      folderId: "folder-2",
+    })
+    await sequenceService.update(
+      { workspaceId: WS, id: "seq-1" },
+      { folderId: null },
+    )
+    expect(mockEnsureFolder).not.toHaveBeenCalled()
   })
 })
 

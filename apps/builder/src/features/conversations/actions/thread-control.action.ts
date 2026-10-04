@@ -1,12 +1,14 @@
 "use server"
 
 import {
-  contactInboxService,
   conversationService,
   type ThreadControlSnapshot,
 } from "@chatbotx.io/business"
-import { notFoundException } from "@chatbotx.io/business/errors"
-import { requestThreadControlAction } from "@chatbotx.io/channel-registry/thread-control"
+import {
+  ChatbotXException,
+  notFoundException,
+} from "@chatbotx.io/business/errors"
+import { requestConversationThreadControl } from "@chatbotx.io/channel-registry/thread-control"
 import { threadControlActions } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
@@ -55,27 +57,20 @@ export const threadControlAction = workspaceActionClient
         contactId: conversation.contactId,
       })
 
-      // The contact inbox must be one of this conversation's contact, so a
-      // caller cannot steer a thread of a contact outside their scope.
-      const contactInboxes = await contactInboxService.listByContactId({
-        workspaceId,
-        contactId: conversation.contactId,
-      })
-      if (
-        !contactInboxes.some((row) => row.id === parsedInput.contactInboxId)
-      ) {
-        throw notFoundException(t("conversationRouting.errors.notFound"))
-      }
-
       try {
-        const snapshot = await requestThreadControlAction({
+        // Refuses a contact inbox that is not one of this conversation's
+        // contact, so a caller cannot steer a thread outside their scope.
+        const snapshot = await requestConversationThreadControl({
           workspaceId,
-          conversationId,
+          conversation,
           contactInboxId: parsedInput.contactInboxId,
           action: parsedInput.action,
         })
         return { status: "applied", snapshot }
       } catch (error) {
+        if (error instanceof ChatbotXException && error.code === "notFound") {
+          throw notFoundException(t("conversationRouting.errors.notFound"))
+        }
         return mapThreadControlError(error, parsedInput.action, t)
       }
     },

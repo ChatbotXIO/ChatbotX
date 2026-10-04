@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const startExternalNodeStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.startExternalNode),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.startExternalNode)
+    .describe('Step type discriminator: "startExternalNode".'),
   flowId: zodBigintAsString(),
   nodeId: zodBigintAsString(),
 })

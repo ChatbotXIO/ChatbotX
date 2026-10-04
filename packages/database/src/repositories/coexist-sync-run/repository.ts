@@ -291,6 +291,31 @@ export class CoexistSyncRunRepository {
   }
 
   /**
+   * Newest coexist history-import run of one integration in one workspace, in
+   * any state. Scoped to `type: "coexist"` so an Automatic Customer Scan run
+   * never reads as the history-sync status.
+   */
+  async findLatestRun(input: {
+    workspaceId: string
+    integrationId: string
+    channel: CoexistChannel
+    tx?: DatabaseClient
+  }): Promise<CoexistSyncRunModel | null> {
+    const { tx = db } = input
+    return (
+      (await tx.query.coexistSyncRunModel.findFirst({
+        where: {
+          workspaceId: input.workspaceId,
+          integrationId: input.integrationId,
+          channel: input.channel,
+          type: "coexist",
+        },
+        orderBy: { createdAt: "desc" },
+      })) ?? null
+    )
+  }
+
+  /**
    * The newest run for this integration that is still alive
    * (`init | running | waiting`). Used by `enable` so re-confirming the popup
    * reuses a run parked in `waiting` rather than opening a second live one —
@@ -1111,6 +1136,8 @@ export class CoexistSyncRunRepository {
    */
   async listContactScanRuns(input: {
     workspaceId: string
+    /** Only runs of this channel integration. */
+    integrationId?: string
     page?: number
     perPage?: number
     sort?: { id: string; desc: boolean }[]
@@ -1120,6 +1147,7 @@ export class CoexistSyncRunRepository {
     const where = {
       workspaceId,
       type: "contact_scan" as const,
+      integrationId: input.integrationId,
     }
     const pagination = getPaginationWithDefaults(input)
     const sortObject = parseOrderByAsObject(coexistSyncRunModel, input)

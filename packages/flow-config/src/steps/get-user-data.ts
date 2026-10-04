@@ -33,8 +33,12 @@ export type InputFailureReason =
   (typeof inputFailureReasons)[keyof typeof inputFailureReasons]
 
 export const getUserDataStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.getUserData),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.getUserData)
+    .describe('Step type discriminator: "getUserData".'),
   message: z.string().trim().min(1).max(255),
   replyFormat: z.string().pipe(z.enum(ReplyFormat)),
   outputFieldId: z.string().trim().min(1),

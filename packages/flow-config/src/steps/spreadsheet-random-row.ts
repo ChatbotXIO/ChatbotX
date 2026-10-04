@@ -9,7 +9,9 @@ import {
 import { stepTypes } from "./step-action"
 
 export const spreadsheetGetRandomRowSchema = spreadsheetSchema.extend({
-  stepType: z.literal(stepTypes.enum.spreadsheetGetRandomRow),
+  stepType: z
+    .literal(stepTypes.enum.spreadsheetGetRandomRow)
+    .describe('Step type discriminator: "spreadsheetGetRandomRow".'),
   lookup: spreadsheetColumnFilterSchema,
   map: z.array(spreadsheetSheetToContactMappingSchema).min(1),
 })

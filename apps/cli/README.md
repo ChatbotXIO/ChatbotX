@@ -144,6 +144,8 @@ chatbotx bot-fields get <idOrName>                   # Get bot field
 # `bot-fields update <idOrName> --value <value>` (single field, PUT /v1/bot-fields/{idOrName}) is NOT
 # reachable — collides with `update` above under the same commandName; see Known command-name collisions.
 chatbotx bot-fields delete <idOrName>                # Unset bot field value
+chatbotx bot-fields reset <idOrName>                 # Clear one bot field value, keep the field
+chatbotx bot-fields bulk-reset --ids <ids>           # Clear up to 100 bot field values by id
 ```
 
 ---
@@ -178,7 +180,11 @@ chatbotx channel-posts list                           # [--limit --search --curs
 chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter post labels
 
 # Imports & exports
-chatbotx contacts imports                            # [--page --perPage --status --keyword]
+chatbotx contacts import-template                    # CSV template as text [--language]
+chatbotx contacts imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
+                                                     # Returns fileId + presigned PUT URL
+chatbotx contacts imports-files-headers <fileId>      # Column headers of the uploaded file
+chatbotx contacts imports                            # [--page --perPage --status --keyword --sort]
 chatbotx contacts find-by-imports <id>                # Get one import job
 chatbotx contacts export --fields <fields>            # [--contactIds --exportAll --filter]
 chatbotx contacts find-by-export-files <fileId>       # Poll export status/download URL
@@ -751,6 +757,7 @@ chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eli
 
 ```bash
 chatbotx inboxes list                                 # Connected inboxes; use `id` as `inboxId` elsewhere
+chatbotx inboxes update <id> --markReadOnOutbound <true|false>
 ```
 
 ---
@@ -770,9 +777,60 @@ chatbotx media-library files-move --fileIds <fileIds>  # [--folderId]
 
 ---
 
+### `inboxes` AI hand-over (Meta Business AI, scope `integrations`)
+
+```bash
+chatbotx inboxes settings list <inboxId>                  # AI hand-over settings
+chatbotx inboxes settings update <inboxId> --enabled --scheduleEnabled --timeRanges --gotoFlowId --returnMessage --pauseBotWaitingForStaff
+chatbotx inboxes apply-to-all list <inboxId>              # Switch state + latest run
+chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --dryRun        # Count only
+chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --confirmCount <n>
+chatbotx inboxes retry add <inboxId>                      # Retry the latest apply-to-all
+chatbotx inboxes history list <inboxId>                   # [--page --perPage]
+```
+
+### Conversation thread control (scope `inbox`)
+
+```bash
+chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass
+chatbotx conversations sync add <id> --contactInboxId <id>     # Sync the thread owner from the channel
+```
+
+### `workspace` settings (scope `settings`)
+
+```bash
+chatbotx workspace settings get                       # Get workspace settings
+chatbotx workspace settings update --defaultReply --defaultReplyFrequency --smartResponseDelaySeconds --capiLimitedDataUse --logo
+```
+
+### `whatsapp` calls (scope `integrations`)
+
+```bash
+chatbotx whatsapp calls                              # [--activity --inboxId --agentUserId --cursor]
+chatbotx whatsapp calls-recording <id>               # 15-minute signed playback URL
+chatbotx whatsapp calls-transcript <id>
+chatbotx whatsapp calls-summary <id>
+chatbotx whatsapp templates-catalog-products         # [--keyword] Meta Catalog product search
+chatbotx whatsapp-channels sync add <id>             # Sync WhatsApp templates from Meta
+chatbotx whatsapp-channels dataset update <id> --datasetId <id>      # CAPI dataset (also instagram/messenger)
+chatbotx whatsapp-channels test-event-code update <id> --testEventCode <code>         # "" clears it
+chatbotx whatsapp-channels test-event add <id> --messagingId <id>
+```
+
+### `channel-integrations`
+
+```bash
+chatbotx channel-integrations list                    # [--channel] Connected WhatsApp/Messenger/Instagram/Zalo/TikTok channels
+chatbotx whatsapp-channels list|get <id>              # Same data per channel; also instagram-channels, tiktok-channels
+chatbotx whatsapp-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
+```
+
 ### `messenger-channels`
 
 ```bash
+chatbotx messenger-channels list
+chatbotx messenger-channels get <id>
+chatbotx messenger-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
 chatbotx messenger-channels tag-sync update <id> --enabled <enabled>
 ```
 
@@ -821,6 +879,9 @@ chatbotx products get <id>
 chatbotx products create --name <name>
 chatbotx products update <id>                           # Full replace
 chatbotx products delete <id>
+chatbotx products import-template                       # XLSX template as base64 [--language]
+chatbotx products imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
+chatbotx products imports-files-headers <fileId>
 ```
 
 ---
@@ -929,6 +990,7 @@ chatbotx webchats delete <id>
 ### `zalo-channels`
 
 ```bash
+chatbotx zalo-channels list|get <id>
 chatbotx zalo-channels tag-sync update <id> --enabled <enabled>
 ```
 

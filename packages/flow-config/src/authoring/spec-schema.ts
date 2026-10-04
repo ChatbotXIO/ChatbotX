@@ -396,10 +396,11 @@ const flowStepSpecOptions = [
   gotoStepSpecSchema,
 ] as const
 
-const flowStepSpecSchema: z.ZodType<FlowStepSpec> = z.discriminatedUnion(
-  "type",
-  flowStepSpecOptions,
-)
+const flowStepSpecSchema: z.ZodType<FlowStepSpec> = z
+  .discriminatedUnion("type", flowStepSpecOptions)
+  .describe(
+    "One flow step. The `type` field selects the step kind: send, sendTemplate, wait, branch, action, startFlow, addNote or goto.",
+  )
 
 export type FlowSpecStepType = { type: string; description: string }
 

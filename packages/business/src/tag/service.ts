@@ -817,6 +817,16 @@ class TagService extends BaseService {
       workspaceId,
       pairs: newlyAttached.map((pair) => ({ contactId, tagId: pair.tagId })),
     })
+    // Same as the bulk path: only pairs inserted now are synced to channels.
+    if (newlyAttached.length > 0) {
+      await tagSyncService.enqueueAttachMany(
+        newlyAttached.map((pair) => ({
+          workspaceId,
+          contactId,
+          tagId: pair.tagId,
+        })),
+      )
+    }
   }
 
   /**
@@ -1002,6 +1012,11 @@ class TagService extends BaseService {
           { err: error, workspaceId, contactId, tagId: pair.tagId },
           "Failed to emit tagRemoved event",
         )
+      })
+      await tagSyncService.enqueueDetach({
+        workspaceId,
+        contactId,
+        tagId: pair.tagId,
       })
     }
   }

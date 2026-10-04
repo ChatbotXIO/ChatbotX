@@ -70,6 +70,11 @@ class MessengerMessageTemplateService extends BaseService {
     // inboxId column.
     const resolvedIntegrationMessengerId =
       await this.resolveIntegrationMessengerId({ tx, where })
+    // An inbox that is not a Messenger Page of the workspace matches nothing
+    // (not "every template").
+    if (where.inboxId && !resolvedIntegrationMessengerId) {
+      return []
+    }
 
     return tx.query.messengerMessageTemplateModel.findMany({
       where: {
@@ -95,6 +100,9 @@ class MessengerMessageTemplateService extends BaseService {
     const { tx = db, where } = props
     const resolvedIntegrationMessengerId =
       await this.resolveIntegrationMessengerId({ tx, where })
+    if (where.inboxId && !resolvedIntegrationMessengerId) {
+      return { data: [], pageCount: 1 }
+    }
     const queryWhere = {
       name: where.name ? { ilike: likeContains(where.name) } : undefined,
       status: where.status,
@@ -144,6 +152,17 @@ class MessengerMessageTemplateService extends BaseService {
       data,
       pageCount: Math.max(1, Math.ceil(total / pagination.limit)),
     }
+  }
+
+  /** One template of the workspace, with its Page, or undefined. */
+  findByIdForWorkspace(props: { id: string; workspaceId: string }) {
+    return db.query.messengerMessageTemplateModel.findFirst({
+      where: {
+        id: props.id,
+        integrationMessenger: { workspaceId: props.workspaceId },
+      },
+      with: { integrationMessenger: true },
+    })
   }
 
   findByIdForIntegration(props: {

@@ -1,9 +1,14 @@
 import { conversationService, messageService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import type { z } from "zod"
+import { z } from "zod"
+import {
+  ENGLISH_CALL_PERMISSION_MESSAGES,
+  requestWhatsappCallPermission,
+} from "@/features/integration-whatsapp/calling/lib/request-call-permission"
 import { changeMessageAttributes } from "@/features/messages/actions/change-message-attributes.action"
 import { deleteMessage } from "@/features/messages/actions/delete-message.action"
 import { editMessage } from "@/features/messages/actions/edit-message.action"
+import { sendWhatsappTemplateToConversation } from "@/features/messages/lib/send-whatsapp-template"
 import { listMessages } from "@/features/messages/queries"
 import {
   changeMessageAttributesRequest,
@@ -27,6 +32,8 @@ import {
   listConversationMessagesPublicRequest,
   messageIdPathParam,
   messageIdWithCreatedAtParam,
+  requestCallPermissionPublicRequest,
+  sendWhatsappTemplatePublicRequest,
 } from "../schema/public"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
@@ -46,6 +53,58 @@ type _EditMessagePublicResponseInSync =
 const _editMessagePublicResponseInSync: _EditMessagePublicResponseInSync = true
 
 export const messagesPublicRouter = {
+  requestWhatsappCallPermission: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/conversations/{conversationId}/whatsapp-call-permission",
+      summary: "Request WhatsApp call permission",
+      description:
+        "Sends Meta's call-permission request into a WhatsApp conversation so the customer can allow the business to call. The answer arrives as a reply on the conversation and is stored per contact. Meta allows one request per 24 hours and two per 7 days for each customer; the limit is checked against Meta first and refused with its reason. `inboxId` pins the WhatsApp number to send from.",
+      successStatus: 202,
+      tags: ["Messages"],
+    })
+    .input(requestCallPermissionPublicRequest)
+    .output(z.object({ queued: z.literal(true) }))
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const conversation = await conversationService.findByOrFail({
+        where: { id: input.conversationId, workspaceId },
+      })
+      await requestWhatsappCallPermission({
+        workspaceId,
+        conversation,
+        text: input.text,
+        inboxId: input.inboxId,
+        requireRequestedInbox: true,
+        messages: ENGLISH_CALL_PERMISSION_MESSAGES,
+      })
+      return { queued: true as const }
+    }),
+
+  sendWhatsappTemplate: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/conversations/{conversationId}/whatsapp-template",
+      summary: "Send WhatsApp template to conversation",
+      description:
+        "Queues one approved WhatsApp template into the conversation, bypassing the 24-hour window, so you can reach a customer who has not written recently. Pick the template with `whatsappTemplates.list` (status APPROVED, on the number you send from) and pass `templateData` for its parameters (omit for a template with none). `inboxId` chooses which WhatsApp number of the contact to send from; omit it to use the most recent. Delivery is asynchronous: a template that is not approved or belongs to another number fails in the worker and is not sent. This messages a real customer and may be billed by Meta.",
+      successStatus: 202,
+      tags: ["Messages"],
+    })
+    .input(sendWhatsappTemplatePublicRequest)
+    .output(z.object({ queued: z.literal(true) }))
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const { conversationId, ...request } = input
+      await sendWhatsappTemplateToConversation({
+        workspaceId: context.workspace.id,
+        conversationId,
+        request,
+      })
+      return { queued: true as const }
+    }),
+
   list: workspaceTokenAuthAPI
     .route({
       method: "GET",

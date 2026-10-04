@@ -11,10 +11,23 @@ import { stepTypes } from "./step-action"
 import type { ParameterInfo } from "./wa-template-utils"
 
 export const messengerTemplateButtonParamSchema = z.object({
-  sub_type: z.enum(["url", "phone_number"]),
-  index: z.number().optional(),
-  text: z.string().optional(),
-  payload: z.string().optional(),
+  sub_type: z
+    .enum(["url", "phone_number"])
+    .describe("Button kind: `url` or `phone_number`."),
+  index: z
+    .number()
+    .optional()
+    .describe("Zero-based position of the button in the template."),
+  text: z
+    .string()
+    .optional()
+    .describe("Variable value for a `url` button (the dynamic URL suffix)."),
+  payload: z
+    .string()
+    .optional()
+    .describe(
+      "Legacy; ignored by the sender. POSTBACK payloads come from the step's `buttons` configuration, so configure buttons there.",
+    ),
 })
 export type MessengerTemplateButtonParam = z.infer<
   typeof messengerTemplateButtonParamSchema
@@ -24,22 +37,43 @@ export const messengerTemplateParamsSchema = z.object({
   header: z
     .array(
       z.object({
-        type: z.enum(["text", "image"]),
-        text: z.string().optional(),
-        parameter_name: z.string().optional(),
-        image: z.object({ link: z.string() }).optional(),
+        type: z
+          .enum(["text", "image"])
+          .describe("Header parameter kind; fill the matching field."),
+        text: z
+          .string()
+          .optional()
+          .describe("Value for a `text` header variable."),
+        parameter_name: z
+          .string()
+          .optional()
+          .describe("Placeholder name, only for NAMED templates."),
+        image: z
+          .object({
+            link: z.string().describe("Public https URL of the image."),
+          })
+          .optional()
+          .describe("Image for an `image` header."),
       }),
     )
-    .optional(),
+    .optional()
+    .describe("Header parameters; one entry for a templated header."),
   body: z
     .array(
       z.object({
-        text: z.string(),
-        parameter_name: z.string().optional(),
+        text: z.string().describe("Value that replaces the variable."),
+        parameter_name: z
+          .string()
+          .optional()
+          .describe("Placeholder name, only for NAMED templates."),
       }),
     )
-    .optional(),
-  button: z.array(messengerTemplateButtonParamSchema).optional(),
+    .optional()
+    .describe("Body variables in order: {{1}}, {{2}}, ..."),
+  button: z
+    .array(messengerTemplateButtonParamSchema)
+    .optional()
+    .describe("Parameters for the template's dynamic buttons, by `index`."),
 })
 export type MessengerTemplateParams = z.infer<
   typeof messengerTemplateParamsSchema
@@ -63,7 +97,9 @@ export type MessengerTemplateComponentButton = {
 }
 
 export const sendMessengerTemplateMessageStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendMessengerTemplateMessage),
+  stepType: z
+    .literal(stepTypes.enum.sendMessengerTemplateMessage)
+    .describe('Step type discriminator: "sendMessengerTemplateMessage".'),
   template: z.object({
     id: z.string().trim().min(1),
     name: z.string(),

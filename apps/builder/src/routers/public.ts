@@ -15,6 +15,13 @@ import {
   capabilitiesPublicRouter,
   schemasPublicRouter,
 } from "@/features/capabilities/api/public"
+import {
+  channelIntegrationsPublicRouter,
+  createCapiRoutes,
+  createChannelReadRoutes,
+  createCoexistRoute,
+  createHandoverResumeFlowRoute,
+} from "@/features/channel-integrations/api/public"
 import { channelPostsPublicRouter } from "@/features/channel-posts/api/public"
 import { contactScanPublicRouter } from "@/features/contact-scan/api/public"
 import { contactsPublicRouter } from "@/features/contacts/api/public"
@@ -33,10 +40,14 @@ import { foldersPublicRouter } from "@/features/folders/api/public"
 import { igCommentsPublicRouter } from "@/features/ig-comments/api/public"
 import { igStoriesPublicRouter } from "@/features/ig-stories/api/public"
 import { inboxesPublicRouter } from "@/features/inboxes/api/public"
+import { aiHandoverPublicRouter } from "@/features/integration-ai-handover/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
+import { messengerTemplatesPublicRouter } from "@/features/integration-messenger/message-templates/api/public"
 import { smtpIntegrationsPublicRouter } from "@/features/integration-smtp/api/public"
 import { webchatsPublicRouter } from "@/features/integration-webchat/api/public"
+import { whatsappCallingPublicRouter } from "@/features/integration-whatsapp/calling/api/public"
+import { whatsappFlowsPublicRouter } from "@/features/integration-whatsapp/flows/api/public"
 import {
   templateMessagesPublicRouter,
   whatsappTemplatesPublicRouter,
@@ -60,12 +71,15 @@ import { tokenPublicRouter } from "@/features/token/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
+import { whatsappCallsPublicRouter } from "@/features/whatsapp-calls/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
+import { workspaceSettingsPublicRouter } from "@/features/workspaces/api/public"
 
 export const publicRouter = {
   ads: adsPublicRouter,
   aiAgents: aiAgentsPublicRouter,
   aiFiles: aiFilesPublicRouter,
+  aiHandover: aiHandoverPublicRouter,
   aiFunctions: aiFunctionsPublicRouter,
   aiMcpServers: aiMcpServersPublicRouter,
   analytics: analyticsPublicRouter,
@@ -93,6 +107,12 @@ export const publicRouter = {
   folders: foldersPublicRouter,
   igComments: igCommentsPublicRouter,
   igStories: igStoriesPublicRouter,
+  channelIntegrations: channelIntegrationsPublicRouter,
+  instagramChannels: {
+    ...createChannelReadRoutes("instagram"),
+    ...createCoexistRoute("instagram"),
+    ...createCapiRoutes("instagram"),
+  },
   inboxTeams: inboxTeamsPublicRouter,
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,
@@ -101,6 +121,7 @@ export const publicRouter = {
   messages: messagesPublicRouter,
   messengerChannels: messengerChannelsPublicRouter,
   messengerPersonas: messengerPersonasPublicRouter,
+  messengerTemplates: messengerTemplatesPublicRouter,
   minigames: minigamesPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
@@ -115,11 +136,22 @@ export const publicRouter = {
   tags: tagsPublicRouter,
   templateMessages: templateMessagesPublicRouter,
   token: tokenPublicRouter,
+  tiktokChannels: createChannelReadRoutes("tiktok"),
   triggers: triggersPublicRouter,
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,
   webhooks: webhooksPublicRouter,
+  whatsappCalls: whatsappCallsPublicRouter,
+  whatsappFlows: whatsappFlowsPublicRouter,
+  whatsappChannels: {
+    ...createChannelReadRoutes("whatsapp"),
+    ...createHandoverResumeFlowRoute("whatsapp"),
+    ...createCoexistRoute("whatsapp"),
+    ...createCapiRoutes("whatsapp"),
+    ...whatsappCallingPublicRouter,
+  },
   whatsappTemplates: whatsappTemplatesPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
+  workspaceSettings: workspaceSettingsPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,
 }

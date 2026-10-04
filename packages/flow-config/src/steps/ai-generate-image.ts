@@ -40,8 +40,12 @@ export const aiGenerateImageProvider = z.enum(["openai", "gemini"])
 export type AIGenerateImageProvider = z.infer<typeof aiGenerateImageProvider>
 
 export const aiGenerateImageSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.aiGenerateImage),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.aiGenerateImage)
+    .describe('Step type discriminator: "aiGenerateImage".'),
   provider: aiGenerateImageProvider,
   model: z.string().trim().min(1),
   prompt: z.string().trim().min(1),

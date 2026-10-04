@@ -9,7 +9,9 @@ import {
 } from "./base"
 
 export const sendMailNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.sendMail),
+  type: z
+    .literal(nodeTypeSchema.enum.sendMail)
+    .describe('Node type "sendMail". `data.details.steps` holds email steps.'),
   data: baseNodeDataSchema.extend({
     details: z.object({
       steps: z.array(emailStepSchema),

@@ -1,6 +1,11 @@
 import z from "zod"
 
-const sortSchema = z.array(z.object({ id: z.string(), desc: z.boolean() }))
+const sortSchema = z.array(
+  z.object({
+    id: z.string().describe("Column to sort by, e.g. `createdAt`."),
+    desc: z.boolean().describe("true for descending, false for ascending."),
+  }),
+)
 
 export const basePaginationRequest = z.object({
   page: z.coerce

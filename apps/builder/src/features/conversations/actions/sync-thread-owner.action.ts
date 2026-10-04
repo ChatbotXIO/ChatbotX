@@ -1,12 +1,14 @@
 "use server"
 
 import {
-  contactInboxService,
   conversationService,
   type ThreadControlSnapshot,
 } from "@chatbotx.io/business"
-import { notFoundException } from "@chatbotx.io/business/errors"
-import { syncThreadOwner } from "@chatbotx.io/channel-registry/thread-control"
+import {
+  ChatbotXException,
+  notFoundException,
+} from "@chatbotx.io/business/errors"
+import { syncConversationThreadOwner } from "@chatbotx.io/channel-registry/thread-control"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
@@ -55,24 +57,20 @@ export const syncThreadOwnerAction = workspaceActionClient
         contactId: conversation.contactId,
       })
 
-      // Fresh (uncached) row of a contact inbox of THIS conversation's contact:
-      // the sync reconciles against the stored state, so a stale cached row
-      // must not drive it, and a foreign contact inbox must not be reachable.
-      const contactInbox = await contactInboxService.findByUncached({
-        where: {
-          id: parsedInput.contactInboxId,
-          contactId: conversation.contactId,
-        },
-      })
-      if (!contactInbox) {
-        throw notFoundException(t("conversationRouting.errors.notFound"))
+      try {
+        // Fresh (uncached) row of a contact inbox of THIS conversation's
+        // contact; a foreign contact inbox is not reachable.
+        const snapshot = await syncConversationThreadOwner({
+          workspaceId,
+          conversation,
+          contactInboxId: parsedInput.contactInboxId,
+        })
+        return { status: "synced", snapshot }
+      } catch (error) {
+        if (error instanceof ChatbotXException && error.code === "notFound") {
+          throw notFoundException(t("conversationRouting.errors.notFound"))
+        }
+        throw error
       }
-
-      const snapshot = await syncThreadOwner({
-        workspaceId,
-        contactInbox,
-        conversationId: conversation.id,
-      })
-      return { status: "synced", snapshot }
     },
   )

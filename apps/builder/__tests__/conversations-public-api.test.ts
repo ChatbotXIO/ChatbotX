@@ -56,7 +56,18 @@ const conversationService = {
   setFollowed: vi.fn(),
   setBotEnabledByIds: vi.fn(),
 }
-vi.mock("@chatbotx.io/business", () => ({ conversationService }))
+vi.mock("@chatbotx.io/business", () => ({
+  conversationService,
+  ThreadControlUnsupportedError: class extends Error {},
+}))
+
+// The thread-control routes are covered by
+// conversations-thread-control-public-api.test.ts; here the channel registry
+// (which reads server env) only has to be importable.
+vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
+  requestConversationThreadControl: vi.fn(),
+  syncConversationThreadOwner: vi.fn(),
+}))
 
 const findConversation = vi.fn()
 const listConversations = vi.fn()

@@ -60,7 +60,8 @@ export const triggersPublicRouter = {
       method: "GET",
       path: "/v1/triggers/{id}",
       summary: "Get trigger",
-      description: "Returns a trigger with its real conditions and actions.",
+      description:
+        "Returns one trigger with its full conditions and actions. Use `triggers.list` to find its id first, and call this before `triggers.update`, which overwrites all conditions and actions.",
       tags: ["Triggers"],
     })
     .input(

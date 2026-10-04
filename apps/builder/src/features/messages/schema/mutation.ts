@@ -6,12 +6,29 @@ import { zodGuestConversationId } from "@/features/integration-webchat/lib/guest
 const MAX_FILE_SIZE = 5 * 1000 * 1000
 
 const mediaLibraryFileRequest = z.object({
-  path: z.string().min(1),
+  path: z
+    .string()
+    .min(1)
+    .describe(
+      "Storage path of an existing Media Library file (`path` from `mediaLibrary.listFiles` or `mediaLibrary.createFile`). The file is looked up by this value.",
+    ),
   // Display-only; the server resolves the public URL from `path` itself.
-  url: z.string().optional(),
-  mimeType: z.string().min(1),
-  name: z.string().nullish(),
-  size: z.number().int().nonnegative(),
+  url: z
+    .string()
+    .optional()
+    .describe(
+      "Optional public URL, display only; the server resolves the real URL from `path`.",
+    ),
+  mimeType: z
+    .string()
+    .min(1)
+    .describe("File MIME type, e.g. `image/png`; informational."),
+  name: z.string().nullish().describe("File display name; informational."),
+  size: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("File size in bytes; informational."),
 })
 
 const bypassField = z

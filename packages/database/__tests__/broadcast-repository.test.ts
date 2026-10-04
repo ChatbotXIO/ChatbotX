@@ -130,6 +130,67 @@ describe("broadcastRepository.listWithRelations", () => {
   })
 })
 
+describe("broadcastRepository list filters", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("narrows by channel and schedule window", async () => {
+    mocks.findMany.mockResolvedValue([])
+    const from = new Date("2026-10-01T00:00:00Z")
+    const to = new Date("2026-10-31T00:00:00Z")
+
+    await broadcastRepository.listWithRelations({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      scheduledFrom: from,
+      scheduledTo: to,
+    })
+
+    const call = mocks.findMany.mock.calls[0]?.[0] as {
+      where: { channel?: string; schedulesAt?: { gte?: Date; lte?: Date } }
+    }
+    expect(call.where.channel).toBe("whatsapp")
+    expect(call.where.schedulesAt).toEqual({ gte: from, lte: to })
+  })
+
+  test("adds no schedule or channel condition when none is given", async () => {
+    mocks.findMany.mockResolvedValue([])
+
+    await broadcastRepository.listWithRelations({ workspaceId: "ws-1" })
+
+    const call = mocks.findMany.mock.calls[0]?.[0] as {
+      where: { channel?: string; schedulesAt?: unknown }
+    }
+    expect(call.where.channel).toBeUndefined()
+    expect(call.where.schedulesAt).toBeUndefined()
+  })
+
+  test("an empty or unknown sort still orders by newest first", async () => {
+    mocks.findMany.mockResolvedValue([])
+
+    await broadcastRepository.listWithRelations({
+      workspaceId: "ws-1",
+      sort: [],
+    })
+
+    const call = mocks.findMany.mock.calls[0]?.[0] as { orderBy: unknown }
+    expect(call.orderBy).toEqual({ createdAt: "desc" })
+  })
+
+  test("get-by-id loads the target pages too", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "b" })
+
+    await broadcastRepository.findByIdOrName({
+      workspaceId: "ws-1",
+      idOrName: "7",
+    })
+
+    const call = mocks.findFirst.mock.calls[0]?.[0] as { with: unknown }
+    expect(call.with).toHaveProperty("targets")
+  })
+})
+
 describe("broadcastRepository.listAudience / countAudience", () => {
   beforeEach(() => {
     vi.clearAllMocks()

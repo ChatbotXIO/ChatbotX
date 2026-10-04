@@ -9,7 +9,11 @@ import {
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-import { createBotFieldRequest } from "../schema/action"
+import {
+  createBotFieldRequest,
+  publicBotFieldIdSchema,
+  resetBotFieldsRequest,
+} from "../schema/action"
 import { publicListBotFieldsResponse } from "../schema/query"
 import { publicBotFieldResource } from "../schema/resource"
 
@@ -132,11 +136,7 @@ export const botFieldsPublicRouter = {
           .array(
             z.union([
               z.object({
-                id: z.coerce
-                  .number()
-                  .int()
-                  .positive()
-                  .describe("Bot field id. Get it from `botFields.list`."),
+                id: publicBotFieldIdSchema,
                 value: z
                   .union([z.string(), z.number()])
                   .transform(String)
@@ -203,11 +203,7 @@ export const botFieldsPublicRouter = {
           .array(
             z.union([
               z.object({
-                id: z.coerce
-                  .number()
-                  .int()
-                  .positive()
-                  .describe("Bot field id. Get it from `botFields.list`."),
+                id: publicBotFieldIdSchema,
                 value: z
                   .union([z.string(), z.number()])
                   .transform(String)
@@ -246,6 +242,52 @@ export const botFieldsPublicRouter = {
           key: resolveKey(field),
           value: field.value,
         })),
+      })
+    }),
+
+  reset: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/bot-fields/{idOrName}/reset",
+      summary: "Reset bot field value",
+      description:
+        "Clears one bot field's value back to empty while keeping the field itself, so flows that reference it keep working. Use `botFields.list` to find its id or name first; use `botFields.delete` only to remove the field.",
+      tags: ["Bot Fields"],
+    })
+    .input(
+      z.object({
+        idOrName: z
+          .string()
+          .max(255)
+          .describe("Bot field id or name. Get it from `botFields.list`."),
+      }),
+    )
+    .output(publicBotFieldResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await botFieldService.clearValueByKey({
+          workspaceId: context.workspace.id,
+          key: input.idOrName,
+        }),
+    ),
+
+  resetMany: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/bot-fields/bulk-reset",
+      summary: "Reset several bot field values",
+      description:
+        "Clears the values of up to 100 bot fields in one call while keeping the fields themselves. Ids that do not belong to this workspace are ignored. Use `botFields.list` to find ids first.",
+      successStatus: 204,
+      tags: ["Bot Fields"],
+    })
+    .input(resetBotFieldsRequest)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      await botFieldService.bulkClearValues({
+        workspaceId: context.workspace.id,
+        ids: input.ids,
       })
     }),
 

@@ -1,5 +1,7 @@
+import type { ContactInboxScope } from "../../queries"
 import {
   applyContactFilter,
+  buildContactInboxScopeWhere,
   buildSmartKeywordWhere,
   pruneEmailPhoneFilterConditions,
 } from "../../queries"
@@ -21,6 +23,7 @@ type ListWhereInput = {
   workspaceId: string
   keyword?: string
   contactFilter?: ContactFilterCriteriaInput
+  inboxScope?: ContactInboxScope
   restrictToAssignedUserId?: string
   includeEmailAndPhone: boolean
 }
@@ -57,6 +60,9 @@ export function buildContactListWhere(input: ListWhereInput): ContactWhere {
       : undefined,
     contactFilter
       ? applyContactFilter(contactFilter, input.workspaceId)
+      : undefined,
+    input.inboxScope
+      ? buildContactInboxScopeWhere(input.inboxScope)
       : undefined,
   ].filter((filter): filter is ContactWhere =>
     filter ? hasWhereParts(filter) : false,

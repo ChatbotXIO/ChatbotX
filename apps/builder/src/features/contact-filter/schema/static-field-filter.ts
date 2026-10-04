@@ -162,15 +162,24 @@ const hasValue = (value: unknown): boolean =>
 export const staticFieldFilter = <T extends string>(field: T) =>
   z
     .object({
-      field: z.literal(field),
-      operator: operatorTypes,
+      field: z
+        .literal(field)
+        .describe(
+          "Contact filter field key. Valid keys and their operators are listed by `contacts.listFilterFields`.",
+        ),
+      operator: operatorTypes.describe(
+        "Comparison operator. Allowed operators depend on the field; see `contacts.listFilterFields` (`isEmpty`/`isNotEmpty` take no value; `isBetween`/`notBetween` take a two-item value).",
+      ),
       value: z
         .union([
           sampleStringSchema,
           z.array(sampleStringSchema),
           z.tuple([sampleStringSchema, sampleStringSchema]),
         ])
-        .optional(),
+        .optional()
+        .describe(
+          "Value to compare: a string, an array of ids/strings for `in`/`notIn`, or a two-item `[from, to]` array for `isBetween`/`notBetween`. Omit for `isEmpty`/`isNotEmpty`.",
+        ),
     })
     .superRefine((condition, ctx) => {
       const enabledOperators =

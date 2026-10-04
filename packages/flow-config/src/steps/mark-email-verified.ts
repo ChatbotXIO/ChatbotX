@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const markEmailVerifiedStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.markEmailVerified),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.markEmailVerified)
+    .describe('Step type discriminator: "markEmailVerified".'),
 })
 
 export type MarkEmailVerifiedStepSchema = z.infer<

@@ -35,8 +35,12 @@ export const aiGenerateTextProviderSchema = z.enum([
 
 export const aiGenerateTextSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.aiGenerateText),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.aiGenerateText)
+      .describe('Step type discriminator: "aiGenerateText".'),
     provider: aiGenerateTextProviderSchema,
     integrationId: z.string().trim().optional(),
     model: z.string().trim(),

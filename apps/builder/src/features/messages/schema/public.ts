@@ -1,6 +1,7 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { PUBLIC_LIST_MAX_PER_PAGE } from "@/lib/public-api/list"
+import { sendWhatsappTemplateRequest } from "./send-template"
 
 // `workspaceId` comes from `context.workspace.id` on every public route —
 // never accepted in the body, per `public-spec-operations.test.ts`'s
@@ -78,3 +79,31 @@ export const changeMessageAttributesPublicResponse = z.object({
   success: z.boolean(),
   messageId: z.string(),
 })
+
+export const sendWhatsappTemplatePublicRequest = z
+  .object({
+    templateId: sendWhatsappTemplateRequest.shape.templateId.describe(
+      "Id of an APPROVED WhatsApp template. Get it from `whatsappTemplates.list`.",
+    ),
+    templateData: sendWhatsappTemplateRequest.shape.templateData.describe(
+      'Runtime parameters of the template, e.g. `{"body":[{"type":"text","text":"Ada"}],"header":[{"type":"image","image":{"link":"https://example.com/a.png"}}]}`: `header`, `body` (variables in order), `button`, `carousel`. Omit for a template without parameters.',
+    ),
+    inboxId: sendWhatsappTemplateRequest.shape.inboxId.describe(
+      "WhatsApp inbox to send from; omit to use the contact's most recent one.",
+    ),
+  })
+  .and(conversationIdPathParam)
+
+export const requestCallPermissionPublicRequest = z
+  .object({
+    text: z
+      .string()
+      .trim()
+      .min(1)
+      .max(1024)
+      .describe("Text shown with the permission request."),
+    inboxId: zodBigintAsString()
+      .optional()
+      .describe("WhatsApp inbox to send from; omit to use the contact's."),
+  })
+  .and(conversationIdPathParam)

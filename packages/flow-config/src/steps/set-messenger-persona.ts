@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const setMessengerPersonaStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.setMessengerPersona),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.setMessengerPersona)
+    .describe('Step type discriminator: "setMessengerPersona".'),
   // The chosen persona's local id (MessengerPersona.id). Empty/undefined means
   // clear the contact's persona and fall back to the page default persona.
   personaId: z.string().optional(),

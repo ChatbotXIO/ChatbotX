@@ -11,9 +11,19 @@ import { messengerMessageTemplateResource } from "./resource"
 
 export const listMessengerMessageTemplatesRequest = z.object({
   workspaceId: zodBigintAsString(),
-  inboxId: zodBigintAsString().optional(),
-  integrationMessengerId: zodBigintAsString().optional(),
-  status: messengerTemplateStatusSchema.optional(),
+  inboxId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Restrict to templates of the Messenger Page connected to this inbox. Get it from `inboxes.list`.",
+    ),
+  integrationMessengerId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Restrict to templates of this Messenger channel. Get it from `messengerChannels.list`.",
+    ),
+  status: messengerTemplateStatusSchema
+    .optional()
+    .describe("Restrict to templates with this approval status."),
   page: z.coerce.number().int().positive().optional(),
   perPage: z.coerce.number().int().positive().optional(),
   name: z.string().optional(),

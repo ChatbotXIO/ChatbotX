@@ -6,7 +6,9 @@ import { buttonStepSchema } from "./button"
 import { stepTypes } from "./step-action"
 
 export const sendAudioStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendAudio),
+  stepType: z
+    .literal(stepTypes.enum.sendAudio)
+    .describe('Step type discriminator: "sendAudio".'),
   mode: uploadModes,
   url: zodUrlWithVariables(),
   buttons: z.array(buttonStepSchema),

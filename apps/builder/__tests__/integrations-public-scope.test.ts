@@ -33,6 +33,9 @@ const crudCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
 await import("@/features/integrations/api/public/ai")
 const aiCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
 
+await import("@/features/integration-ai-handover/api/public")
+const aiHandoverCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
+
 const allScopeCalls = workspaceTokenAuthAPIForScope.mock.calls.map(
   (call) => call[0],
 )
@@ -44,6 +47,12 @@ describe("integrations public router scope wiring", () => {
 
   test("ai.ts registers under the 'integrations' scope", () => {
     expect(allScopeCalls.slice(crudCallCount, aiCallCount)).toEqual([
+      "integrations",
+    ])
+  })
+
+  test("AI hand-over routes register under the 'integrations' scope", () => {
+    expect(allScopeCalls.slice(aiCallCount, aiHandoverCallCount)).toEqual([
       "integrations",
     ])
   })

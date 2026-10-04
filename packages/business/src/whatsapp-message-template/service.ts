@@ -33,6 +33,7 @@ class WhatsappMessageTemplateService extends BaseService {
 
     const queryWhere = {
       integrationWhatsappId: where.integrationWhatsappId,
+      status: where.status,
       integrationWhatsapp: {
         workspaceId: where.workspaceId,
         inboxId: where.inboxId,
@@ -45,6 +46,16 @@ class WhatsappMessageTemplateService extends BaseService {
         integrationWhatsapp: true,
       },
       orderBy: { createdAt: "asc" },
+    })
+  }
+
+  /** One template of the workspace, or undefined. */
+  findByIdForWorkspace(props: { id: string; workspaceId: string }) {
+    return db.query.whatsappMessageTemplateModel.findFirst({
+      where: {
+        id: props.id,
+        integrationWhatsapp: { workspaceId: props.workspaceId },
+      },
     })
   }
 

@@ -132,3 +132,50 @@ describe("pathAndMethodToCommandName — coupon import/export operations", () =>
     expect(new Set(commandNames)).toHaveLength(commandNames.length)
   })
 })
+
+describe("pathAndMethodToCommandName — bot field reset", () => {
+  test("POST resource/{id}/reset collapses to group:reset", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/bot-fields/{idOrName}/reset", "POST"),
+    ).toBe("bot-fields:reset")
+  })
+
+  test("the bulk route keeps its own name instead of colliding with the single reset", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/bot-fields/bulk-reset", "POST"),
+    ).toBe("bot-fields:bulk-reset")
+  })
+})
+
+describe("pathAndMethodToCommandName — workspace settings singleton", () => {
+  test("GET and PATCH on the same path get distinct commands", () => {
+    expect(pathAndMethodToCommandName("/v1/workspace/settings", "GET")).toBe(
+      "workspace:settings:get",
+    )
+    expect(pathAndMethodToCommandName("/v1/workspace/settings", "PATCH")).toBe(
+      "workspace:settings:update",
+    )
+  })
+})
+
+describe("pathAndMethodToCommandName — messenger templates by id", () => {
+  test("GET and DELETE on the same path get distinct commands", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/messenger/templates/{id}", "GET"),
+    ).toBe("messenger:templates:get")
+    expect(
+      pathAndMethodToCommandName("/v1/messenger/templates/{id}", "DELETE"),
+    ).toBe("messenger:templates:delete")
+  })
+})
+
+describe("pathAndMethodToCommandName — meta catalog singleton", () => {
+  test("GET (state) and POST (create) get distinct commands", () => {
+    expect(pathAndMethodToCommandName("/v1/products/meta-catalog", "GET")).toBe(
+      "products:meta-catalog:get",
+    )
+    expect(
+      pathAndMethodToCommandName("/v1/products/meta-catalog", "POST"),
+    ).toBe("products:meta-catalog:create")
+  })
+})

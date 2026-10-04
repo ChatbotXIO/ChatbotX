@@ -4,7 +4,9 @@ import { baseStepSchema } from "./base"
 import { stepTypes } from "./step-action"
 
 export const sendGifStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendGif),
+  stepType: z
+    .literal(stepTypes.enum.sendGif)
+    .describe('Step type discriminator: "sendGif".'),
   url: zodUrlWithVariables(),
 })
 

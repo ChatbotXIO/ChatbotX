@@ -28,7 +28,10 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { aiHandoverSettingsService } from "../ai-handover-settings/service"
+import {
+  aiHandoverSettingsService,
+  type SaveAiHandoverSettingsInput,
+} from "../ai-handover-settings/service"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
@@ -40,11 +43,28 @@ import {
 const log = getChildLogger("ai-handover-bulk-run")
 
 export type SetApplyToAllInput = AiHandoverBulkRunInboxRef & {
-  userId: string
+  /** `null` for a workspace-token caller, which has no session user. */
+  userId: string | null
   /** The desired state: `true` hands every eligible thread to the AI. */
   applyToAllCustomers: boolean
   /** Required for an OFF: the text sent with the HUMAN_AGENT tag. */
   message?: string | null
+  /**
+   * The most threads the caller accepts to be touched. The change is refused
+   * when more are eligible at request time, and when its run cannot start
+   * immediately (the count would go stale). It is a check, not a cap on the
+   * run: customers who become eligible while the run progresses are still
+   * included. Omitted by the builder, which confirms in the UI.
+   */
+  confirmMaxEligible?: number
+}
+
+/** What a change would do, without making it. */
+export type ApplyToAllPreview = {
+  /** `false` when the Page already is in the requested state. */
+  isChanged: boolean
+  /** Threads the run would touch right now (an estimate: customers keep writing). */
+  eligibleCount: number
 }
 
 /** What a change of the desired state did. */
@@ -134,52 +154,209 @@ class AiHandoverBulkRunService extends BaseService {
     const ref = { workspaceId, inboxId }
     const inbox = await aiHandoverSettingsService.requireInbox(ref)
     const message = this.validateMessage(input, inbox.channel)
+    await this.assertWithinConfirmedCount(input)
 
-    const change = await db.transaction(async (tx) => {
-      // Locked first, created only for a real change: a request for the state
-      // the Page is already in must leave no trace (a stray settings row would
-      // switch on the take-back for a Page nobody configured).
-      const existing = await aiHandoverSettingsRepository.lockExisting(ref, tx)
-      if (
-        (existing?.settings.applyToAllCustomers ?? false) ===
-        input.applyToAllCustomers
-      ) {
-        return { isChanged: false, run: null }
-      }
-      const { settings, inboxStatus } =
-        existing ??
-        (await aiHandoverSettingsRepository.lockForApplyToAll(
-          { ...ref, channel: inbox.channel },
+    const change = await db
+      .transaction(async (tx) => {
+        // Locked first, created only for a real change: a request for the state
+        // the Page is already in must leave no trace (a stray settings row would
+        // switch on the take-back for a Page nobody configured).
+        const existing = await aiHandoverSettingsRepository.lockExisting(
+          ref,
           tx,
-        ))
-      if (settings.applyToAllCustomers === input.applyToAllCustomers) {
-        // A concurrent first change got there between the two locks.
-        return { isChanged: false, run: null }
-      }
-      await this.assertCanApply(
-        settings,
-        inboxStatus,
-        input.applyToAllCustomers,
-      )
+        )
+        if (
+          (existing?.settings.applyToAllCustomers ?? false) ===
+          input.applyToAllCustomers
+        ) {
+          return { isChanged: false, run: null }
+        }
+        const { settings, inboxStatus } =
+          existing ??
+          (await aiHandoverSettingsRepository.lockForApplyToAll(
+            { ...ref, channel: inbox.channel },
+            tx,
+          ))
+        if (settings.applyToAllCustomers === input.applyToAllCustomers) {
+          // A concurrent first change got there between the two locks.
+          return { isChanged: false, run: null }
+        }
+        await this.assertCanApply(
+          settings,
+          inboxStatus,
+          input.applyToAllCustomers,
+        )
+        // The pre-check above ran against the state read before the lock; a
+        // concurrent change can make this request a real transition after all.
+        if (input.confirmMaxEligible !== undefined) {
+          this.assertCountWithinConfirmed(
+            input,
+            await this.countEligibleForChange({
+              ...ref,
+              channel: inbox.channel,
+              applyToAllCustomers: input.applyToAllCustomers,
+            }),
+          )
+        }
 
-      const updated = await aiHandoverSettingsRepository.setApplyToAll(
-        {
-          ...ref,
-          applyToAllCustomers: input.applyToAllCustomers,
-          applyToAllMessage: message,
-          requestedByUserId: input.userId,
-        },
-        tx,
-      )
-      await aiHandoverBulkRunRepository.cancelLive(ref, tx)
-      return {
-        isChanged: true,
-        run: await this.createRunIfDue(updated, inboxStatus, tx),
-      }
-    })
+        const updated = await aiHandoverSettingsRepository.setApplyToAll(
+          {
+            ...ref,
+            applyToAllCustomers: input.applyToAllCustomers,
+            applyToAllMessage: message,
+            requestedByUserId: input.userId,
+          },
+          tx,
+        )
+        await aiHandoverBulkRunRepository.cancelLive(ref, tx)
+        const run = await this.createRunIfDue(updated, inboxStatus, tx)
+        if (input.confirmMaxEligible !== undefined && !run) {
+          // Thrown inside the transaction: nothing is written.
+          throw bulkException(
+            AI_HANDOVER_BULK_ERROR_CODES.runNotStartable,
+            "A previous run was still running on this Page and has been told to stop. The confirmed count would be stale by the time this change could start: try again shortly.",
+          )
+        }
+        return { isChanged: true, run }
+      })
+      .catch(async (error: unknown) => {
+        // The refusal rolled the cancel back with the rest, so a run mid-chunk
+        // would keep going: make the cancel stick (own transaction) so the
+        // caller's retry finds the Page free.
+        if (
+          error instanceof ChatbotXException &&
+          error.code === AI_HANDOVER_BULK_ERROR_CODES.runNotStartable
+        ) {
+          await this.cancelLiveForInbox(ref)
+        }
+        throw error
+      })
 
     await this.afterChange(inboxId, change.run)
     return change
+  }
+
+  /**
+   * What `setApplyToAll` would do for the same request, without writing: the
+   * same refusals (page connected, an ON needs the automation running, an OFF
+   * needs its message) and the number of threads the run would touch.
+   */
+  async previewApplyToAll(
+    input: Omit<SetApplyToAllInput, "userId" | "confirmMaxEligible">,
+  ): Promise<ApplyToAllPreview> {
+    const { workspaceId, inboxId } = input
+    const ref = { workspaceId, inboxId }
+    const inbox = await aiHandoverSettingsService.requireInbox(ref)
+    this.validateMessage(input, inbox.channel)
+
+    const settings = await aiHandoverSettingsRepository.findByInbox(ref)
+    if (
+      (settings?.applyToAllCustomers ?? false) === input.applyToAllCustomers
+    ) {
+      return { isChanged: false, eligibleCount: 0 }
+    }
+    if (inbox.status !== inboxStatuses.enum.connected) {
+      throw bulkException(
+        AI_HANDOVER_BULK_ERROR_CODES.pageNotConnected,
+        "The Page is not connected",
+      )
+    }
+    if (
+      input.applyToAllCustomers &&
+      !(settings && (await aiHandoverSettingsService.isActiveNow(settings)))
+    ) {
+      throw bulkException(
+        AI_HANDOVER_BULK_ERROR_CODES.automationNotActive,
+        "Business AI automation must be enabled and running",
+      )
+    }
+
+    const eligibleCount = await this.countEligibleForChange({
+      ...ref,
+      channel: inbox.channel,
+      applyToAllCustomers: input.applyToAllCustomers,
+    })
+    return { isChanged: true, eligibleCount }
+  }
+
+  /** Threads a run for this change would touch, as of now. */
+  private countEligibleForChange(input: {
+    workspaceId: string
+    inboxId: string
+    channel: Parameters<typeof eligibilityOf>[0]["channel"]
+    applyToAllCustomers: boolean
+  }): Promise<number> {
+    const now = new Date()
+    return contactInboxRepository.countBulkAiEligible({
+      ...eligibilityOf(
+        {
+          action: input.applyToAllCustomers ? "enable" : "disable",
+          requestedAt: now,
+          channel: input.channel,
+        },
+        now,
+      ),
+      workspaceId: input.workspaceId,
+      inboxId: input.inboxId,
+      afterId: null,
+    })
+  }
+
+  /** Refuses a change that would touch more threads than the caller confirmed. */
+  private async assertWithinConfirmedCount(
+    input: SetApplyToAllInput,
+  ): Promise<void> {
+    if (input.confirmMaxEligible === undefined) {
+      return
+    }
+    const { userId: _userId, confirmMaxEligible: _max, ...request } = input
+    const { isChanged, eligibleCount } = await this.previewApplyToAll(request)
+    if (isChanged) {
+      this.assertCountWithinConfirmed(input, eligibleCount)
+    }
+  }
+
+  private assertCountWithinConfirmed(
+    input: SetApplyToAllInput,
+    eligibleCount: number,
+  ): void {
+    if (
+      input.confirmMaxEligible !== undefined &&
+      eligibleCount > input.confirmMaxEligible
+    ) {
+      throw bulkException(
+        AI_HANDOVER_BULK_ERROR_CODES.confirmCountExceeded,
+        `${eligibleCount} threads are eligible, more than the ${input.confirmMaxEligible} confirmed`,
+      )
+    }
+  }
+
+  /**
+   * Saves a Page's AI hand-over settings. Switching the automation off ends a
+   * running enable (its hand-overs would be undone by the take-back anyway); a
+   * disable is meant to finish. The engine's cached check already stops it at
+   * the next batch, so a failure to stop it is logged, never fatal to the save.
+   */
+  async saveSettings(
+    input: SaveAiHandoverSettingsInput,
+  ): Promise<AiHandoverSettingsModel> {
+    const saved = await aiHandoverSettingsService.save(input)
+    if (!saved.enabled) {
+      const { workspaceId, inboxId } = input
+      try {
+        await this.cancelLiveForInbox({
+          workspaceId,
+          inboxId,
+          action: "enable",
+        })
+      } catch (err) {
+        log.error(
+          { err, inboxId },
+          "AI hand-over settings saved off: could not stop the Page's enable run",
+        )
+      }
+    }
+    return saved
   }
 
   /**
@@ -188,7 +365,7 @@ class AiHandoverBulkRunService extends BaseService {
    * under the same rules as the change itself.
    */
   async retry(
-    input: AiHandoverBulkRunInboxRef & { userId: string },
+    input: AiHandoverBulkRunInboxRef & { userId: string | null },
   ): Promise<ApplyToAllChange> {
     const { workspaceId, inboxId } = input
     const ref = { workspaceId, inboxId }
@@ -412,7 +589,7 @@ class AiHandoverBulkRunService extends BaseService {
 
   /** The text an OFF sends, or `null` for an ON. */
   private validateMessage(
-    input: SetApplyToAllInput,
+    input: Pick<SetApplyToAllInput, "applyToAllCustomers" | "message">,
     channel: AiHandoverChannel,
   ): string | null {
     if (input.applyToAllCustomers) {

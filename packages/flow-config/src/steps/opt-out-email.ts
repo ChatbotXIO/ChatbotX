@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const optOutEmailStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.optOutEmail),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.optOutEmail)
+    .describe('Step type discriminator: "optOutEmail".'),
 })
 
 export type OptOutEmailStepSchema = z.infer<typeof optOutEmailStepSchema>

@@ -1,4 +1,5 @@
 import { contactService, importService, UNSCOPED } from "@chatbotx.io/business"
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
@@ -7,9 +8,11 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnStartingContactImport,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { resolveContactAvatars } from "../../queries/resolve-contact-avatars"
 import {
   createContactRequest,
   updateContactFieldRequest,
@@ -33,6 +36,13 @@ import {
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
+const pickAuditRequestInfo = (
+  actor: ReturnType<typeof getAuditActor>,
+): { ipAddress?: string; userAgent?: string } => ({
+  ipAddress: actor?.ipAddress,
+  userAgent: actor?.userAgent,
+})
+
 export const contactsCrudPublicRouter = {
   list: workspaceTokenAuthAPI
     .route({
@@ -49,13 +59,21 @@ export const contactsCrudPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { include, withCount, ...rest } = input
-      return await contactService.list({
+      const result = await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
         scope: UNSCOPED,
         include,
         withCount,
       })
+      // Same avatar resolution as the builder list: a stored key or no-avatar
+      // sentinel becomes a usable URL.
+      return {
+        ...result,
+        data: await resolveContactAvatars(result.data, context.workspace.id, {
+          publicUrls: true,
+        }),
+      }
     }),
 
   // Deprecated — use `contacts.list` instead (same filter shape, as a
@@ -76,13 +94,21 @@ export const contactsCrudPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { include, withCount, ...rest } = input
-      return await contactService.list({
+      const result = await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
         scope: UNSCOPED,
         include,
         withCount,
       })
+      // Same avatar resolution as the builder list: a stored key or no-avatar
+      // sentinel becomes a usable URL.
+      return {
+        ...result,
+        data: await resolveContactAvatars(result.data, context.workspace.id, {
+          publicUrls: true,
+        }),
+      }
     }),
 
   count: workspaceTokenAuthAPI
@@ -128,10 +154,16 @@ export const contactsCrudPublicRouter = {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
-      return await contactService.findPublicContactOrFail({
+      const contact = await contactService.findPublicContactOrFail({
         id: contactId,
         workspaceId: context.workspace.id,
       })
+      const [resolved] = await resolveContactAvatars(
+        [contact],
+        context.workspace.id,
+        { publicUrls: true },
+      )
+      return resolved
     }),
 
   create: workspaceTokenAuthAPI
@@ -188,13 +220,13 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/import",
       summary: "Import contacts from file",
       description:
-        "Starts an asynchronous bulk import of contacts from a previously uploaded file (`fileId`) into the given inbox. Returns an `importId` immediately; the import itself runs in the background, so newly imported contacts may not appear in `contacts.list` right away.",
+        "Starts an asynchronous bulk import of contacts from an uploaded CSV into an inbox. Flow: `contacts.getImportTemplate` for the format, `contacts.createImportUpload` to get a `fileId` and upload URL, upload the file, `contacts.peekImportHeaders` to read its columns, then call this with `channel`, `inboxId`, `fileId` and the column names: `phoneNumber`, `contactId` (a channel user id; required unless the channel is whatsapp), `email`, `firstName`, `lastName`, `sourceUserId` (WhatsApp BSUID). Optional: `fieldMapping` (up to 10 {column, customFieldId}), `tagId` for every contact, `countryCode` for phone normalization, `timezone`. Returns an `importId` immediately; track it with `contacts.getImport`. Only one import can run per workspace: while one is pending or processing this returns 409.",
       successStatus: 201,
       tags: ["Contacts"],
     })
     .input(importContactsRequest)
     .output(importContactsPublicResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnStartingContactImport)
     .handler(
       async ({ context, input }) =>
         await importService.startContactImport({
@@ -203,6 +235,9 @@ export const contactsCrudPublicRouter = {
           inboxId: input.inboxId,
           fileId: input.fileId,
           meta: buildContactImportMeta(input),
+          // The token path has no session user; the audit context (owner +
+          // token id) still carries the caller's IP and user agent.
+          actor: pickAuditRequestInfo(getAuditActor()),
         }),
     ),
 

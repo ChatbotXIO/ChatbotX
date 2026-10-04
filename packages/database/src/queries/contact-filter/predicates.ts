@@ -1,4 +1,4 @@
-import { type AnyColumn, type SQL, sql } from "drizzle-orm"
+import { type AnyColumn, and, inArray, type SQL, sql } from "drizzle-orm"
 import {
   type ContactInfoFilterValue,
   type ContactInfoType,
@@ -26,6 +26,31 @@ const COLUMN_NEGATION_OPERATORS = new Set<string>([
 
 export const contactInboxInteractedWithin24hSQL = (): SQL =>
   sql`${contactInboxModel.lastIncomingMessageAt} >= NOW() - INTERVAL '24 hours'`
+
+export type ContactInboxScope = {
+  /** Contact must have a contact-inbox on one of these inboxes. Omit for any inbox. */
+  inboxIds?: string[]
+  /** Contact-inbox must have received a message in the last 24 hours. */
+  requireRecentInteraction?: boolean
+}
+
+const inboxIdsPredicate = (inboxIds: string[]): SQL =>
+  inboxIds.length > 0
+    ? inArray(contactInboxModel.inboxId, inboxIds)
+    : sql`false`
+
+/** Contacts having at least one contact-inbox that satisfies the scope. */
+export const buildContactInboxScopeWhere = (
+  scope: ContactInboxScope,
+): ContactWhere =>
+  contactInboxExists(
+    and(
+      scope.inboxIds ? inboxIdsPredicate(scope.inboxIds) : undefined,
+      scope.requireRecentInteraction
+        ? contactInboxInteractedWithin24hSQL()
+        : undefined,
+    ),
+  )
 
 export const buildRawColumnWhere = (
   columnName: string,

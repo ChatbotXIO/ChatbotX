@@ -1501,7 +1501,7 @@ class BroadcastService extends BaseService {
         input.canViewEmailAndPhone,
       ) ?? null
 
-    return await db.transaction(async (tx) => {
+    const cloned = await db.transaction(async (tx) => {
       const [clone] = await tx
         .insert(broadcastModel)
         .values({
@@ -1533,6 +1533,9 @@ class BroadcastService extends BaseService {
       })
       return clone
     })
+    // Audited here (not in the UI action) so the token path leaves a record too.
+    await this.audit("create", `cloned a broadcast (#${cloned.id})`)
+    return cloned
   }
 
   /**

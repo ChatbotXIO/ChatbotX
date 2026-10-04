@@ -2,6 +2,7 @@ import {
   botMessageAnalyticsService,
   broadcastAnalyticsService,
   type ContactsByDimension,
+  commentAutomationAnalyticsService,
   contactAnalyticsService,
   conversationAnalyticsService,
   flowAnalyticsService,
@@ -11,8 +12,12 @@ import {
   refLinkAnalyticsService,
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
+import { flowService, smartDelayService } from "@chatbotx.io/business"
+import { notFoundException } from "@chatbotx.io/business/errors"
+import type { FlowNode } from "@chatbotx.io/flow-config"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import type { z } from "zod"
+import { buildSmartDelayNodeStats } from "@/features/flows/analytics/smart-delay-node-stats"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnDeletingResource,
@@ -25,6 +30,11 @@ import {
   botMessagesPublicResponse,
   broadcastStatsPublicRequest,
   broadcastStatsPublicResponse,
+  commentAutomationErrorsPublicResponse,
+  commentAutomationListPublicRequest,
+  commentAutomationReplyStatsPublicRequest,
+  commentAutomationReplyStatsPublicResponse,
+  commentAutomationTextTotalsPublicResponse,
   contactCountsPublicResponse,
   contactsByDimensionPublicRequest,
   contactsByDimensionPublicResponse,
@@ -34,6 +44,7 @@ import {
   conversationAssignedPublicResponse,
   conversationFollowUpsPublicResponse,
   conversationHandoffsPublicResponse,
+  flowSmartDelayStatsPublicResponse,
   flowStatsPublicRequest,
   flowStatsPublicResponse,
   humanAgentStatsPublicResponse,
@@ -671,6 +682,125 @@ export const analyticsPublicRouter = {
           }),
         { ttl: 120, tags: [flowStatsCacheTag(input.flowId)] },
       )
+    }),
+
+  flowSmartDelayStats: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/analytics/flows/{flowId}/smart-delay-stats",
+      summary: "Get flow wait and follow-up counts",
+      description:
+        "Per wait or follow-up node of the flow's draft version (keyed by node id): contacts still `waiting` and contacts that were `sent` onward. These are not part of `analytics.flowStats`. Find node ids with `flows.get`.",
+      tags: ["Analytics"],
+    })
+    .input(flowStatsPublicRequest)
+    .output(flowSmartDelayStatsPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const flow = await flowService.findById({ id: input.flowId, workspaceId })
+      const draft = flow.flowVersions?.find((version) => version.isDraft)
+      if (!draft) {
+        throw notFoundException("Flow has no draft version")
+      }
+      const rows = await smartDelayService.countByFlowStep({
+        workspaceId,
+        flowId: input.flowId,
+      })
+      return buildSmartDelayNodeStats(
+        draft.nodes as unknown as FlowNode[],
+        rows,
+      )
+    }),
+
+  commentAutomationReplyStats: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/analytics/comment-automation/replies",
+      summary: "Get comment automation reply counts",
+      description:
+        "Replies the comment automation sent per day in a range. Use `analytics.commentAutomationUserComments` and `analytics.commentAutomationBotReplies` for the texts behind the counts.",
+      tags: ["Analytics"],
+    })
+    .input(commentAutomationReplyStatsPublicRequest)
+    .output(commentAutomationReplyStatsPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const { from, to, ...rest } = input
+      return {
+        data: await commentAutomationAnalyticsService.getReplyStatsByDateRange({
+          ...rest,
+          startDate: from,
+          endDate: to,
+          workspaceId: context.workspace.id,
+        }),
+      }
+    }),
+
+  commentAutomationUserComments: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/analytics/comment-automation/user-comments",
+      summary: "List comment automation customer comments",
+      description:
+        "Distinct customer comments the automation matched in a range, with how often each occurred. The texts are customer-written and returned verbatim.",
+      tags: ["Analytics"],
+    })
+    .input(commentAutomationListPublicRequest)
+    .output(commentAutomationTextTotalsPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const { from, to, ...rest } = input
+      return await commentAutomationAnalyticsService.listUserComments({
+        ...rest,
+        startDate: from,
+        endDate: to,
+        workspaceId: context.workspace.id,
+      })
+    }),
+
+  commentAutomationBotReplies: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/analytics/comment-automation/bot-replies",
+      summary: "List comment automation bot replies",
+      description:
+        "Distinct replies the automation posted in a range, with how often each was sent.",
+      tags: ["Analytics"],
+    })
+    .input(commentAutomationListPublicRequest)
+    .output(commentAutomationTextTotalsPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const { from, to, ...rest } = input
+      return await commentAutomationAnalyticsService.listBotReplies({
+        ...rest,
+        startDate: from,
+        endDate: to,
+        workspaceId: context.workspace.id,
+      })
+    }),
+
+  commentAutomationErrors: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/analytics/comment-automation/errors",
+      summary: "List comment automation errors",
+      description:
+        "Failed comment replies in a range with the reason and the contact's name and avatar. Failed rows are kept for 30 days only.",
+      tags: ["Analytics"],
+    })
+    .input(commentAutomationListPublicRequest)
+    .output(commentAutomationErrorsPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const { from, to, ...rest } = input
+      return await commentAutomationAnalyticsService.listErrors({
+        ...rest,
+        startDate: from,
+        endDate: to,
+        workspaceId: context.workspace.id,
+      })
     }),
 
   magicLinkStats: workspaceTokenAuthAPI

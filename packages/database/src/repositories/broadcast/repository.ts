@@ -29,12 +29,28 @@ export type BroadcastListInput = {
   page?: number | null
   perPage?: number | null
   sort?: { id: string; desc: boolean }[] | null
+  channel?: string | null
+  /** Inclusive bounds on the scheduled send time. */
+  scheduledFrom?: Date | null
+  scheduledTo?: Date | null
+}
+
+const buildScheduleWhere = (input: BroadcastListInput) => {
+  if (!(input.scheduledFrom || input.scheduledTo)) {
+    return
+  }
+  return {
+    gte: input.scheduledFrom ?? undefined,
+    lte: input.scheduledTo ?? undefined,
+  }
 }
 
 const buildWhere = (input: BroadcastListInput) => ({
   workspaceId: input.workspaceId,
   name: input.name ? { ilike: likeContains(input.name) } : undefined,
   status: input.status ?? undefined,
+  channel: input.channel ?? undefined,
+  schedulesAt: buildScheduleWhere(input),
   deletedAt: { isNull: true as const },
 })
 
@@ -48,7 +64,12 @@ export const broadcastRepository = {
   async listWithRelations(input: BroadcastListInput, tx: DatabaseClient = db) {
     const where = buildWhere(input)
     const pagination = getPaginationWithDefaults(input)
-    const orderBy = parseOrderByAsObject(broadcastModel, input)
+    const requestedOrderBy = parseOrderByAsObject(broadcastModel, input)
+    // An empty or unknown sort yields no ORDER BY, which makes paging unstable.
+    const orderBy =
+      Object.keys(requestedOrderBy).length > 0
+        ? requestedOrderBy
+        : { createdAt: "desc" as const }
 
     return await tx.query.broadcastModel.findMany({
       where,
@@ -146,6 +167,9 @@ export const broadcastRepository = {
       deletedAt: { isNull: true as const },
     }
 
-    return await tx.query.broadcastModel.findFirst({ where })
+    return await tx.query.broadcastModel.findFirst({
+      where,
+      with: withBroadcastTargets,
+    })
   },
 }

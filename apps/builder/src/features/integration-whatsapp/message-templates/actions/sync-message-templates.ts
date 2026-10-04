@@ -1,14 +1,9 @@
 "use server"
 
-import {
-  buildContext,
-  integrationWhatsappService,
-  whatsappMessageTemplateService,
-} from "@chatbotx.io/business"
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
+import { integrationWhatsappService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { integrations } from "@/integration"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { syncWhatsappMessageTemplates } from "../lib/sync-whatsapp-templates"
 
 export const syncMessageTemplateAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -23,20 +18,5 @@ export const syncMessageTemplateAction = workspaceActionClient
       throw new Error("Whatsapp integration not found")
     }
 
-    const ctx = await buildContext({
-      workspaceId,
-      integrationType: "whatsapp",
-      integration: {
-        ...integrationWhatsapp,
-        auth: integrationWhatsapp.auth as WhatsappAuthValue,
-      },
-    })
-    const res = await integrations.whatsapp.runAction("listMessageTemplates", {
-      ctx,
-    })
-
-    await whatsappMessageTemplateService.syncFromMeta({
-      integrationWhatsappId: integrationWhatsapp.id,
-      templates: res.data,
-    })
+    await syncWhatsappMessageTemplates({ workspaceId, integrationWhatsapp })
   })

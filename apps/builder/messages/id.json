@@ -2252,7 +2252,8 @@
       "minigames": "Minigame",
       "appointments": "Janji Temu",
       "media": "Media",
-      "ads": "Iklan"
+      "ads": "Iklan",
+      "settings": "Pengaturan"
     },
     "adReferral": {
       "label": "Ads",

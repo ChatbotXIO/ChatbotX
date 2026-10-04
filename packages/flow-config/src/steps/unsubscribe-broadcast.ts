@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const unsubscribeBroadcastStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.unsubscribeBroadcast),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.unsubscribeBroadcast)
+    .describe('Step type discriminator: "unsubscribeBroadcast".'),
 })
 
 export type UnsubscribeBroadcastStepSchema = z.infer<

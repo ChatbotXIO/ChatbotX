@@ -274,4 +274,34 @@ describe("TagService.attachToContact", () => {
       undefined,
     )
   })
+
+  test("queues channel tag sync for newly attached pairs only", async () => {
+    findTags.mockResolvedValueOnce([{ id: "tag-1" }, { id: "tag-2" }])
+    insertReturning.mockResolvedValueOnce([{ tagId: "tag-2" }])
+    enqueueAttachMany.mockReset()
+
+    await tagService.attachToContact({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      tagIds: ["tag-1", "tag-2"],
+    })
+
+    expect(enqueueAttachMany).toHaveBeenCalledWith([
+      { workspaceId: "workspace-1", contactId: "contact-1", tagId: "tag-2" },
+    ])
+  })
+
+  test("does not queue tag sync when every pair already existed", async () => {
+    findTags.mockResolvedValueOnce([{ id: "tag-1" }])
+    insertReturning.mockResolvedValueOnce([])
+    enqueueAttachMany.mockReset()
+
+    await tagService.attachToContact({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      tagIds: ["tag-1"],
+    })
+
+    expect(enqueueAttachMany).not.toHaveBeenCalled()
+  })
 })

@@ -21,8 +21,12 @@ export const mailerLiteFieldMappingSchema = z.object({
 
 export const mailerLiteAddSubscriberSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.mailerLiteAddSubscriber),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.mailerLiteAddSubscriber)
+      .describe('Step type discriminator: "mailerLiteAddSubscriber".'),
     groupId: optionalTrimmedString,
     emailField: z.string().trim().min(1),
     status: z.enum(["active", "unconfirmed"]),

@@ -23,8 +23,12 @@ export type ActiveCampaignOperationType = z.infer<
 
 export const activeCampaignSyncContactSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.activeCampaignSyncContact),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.activeCampaignSyncContact)
+      .describe('Step type discriminator: "activeCampaignSyncContact".'),
     operation: activeCampaignOperationTypes.default("createOrUpdateContact"),
     emailField: z.string().trim().min(1),
     phoneField: z.string().trim().min(1).optional(),

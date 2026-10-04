@@ -1,7 +1,16 @@
-import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
+import {
+  type ChannelType,
+  requiresRecentInteractionWindow,
+} from "@chatbotx.io/database/partials"
+import type {
+  ContactFilterCriteriaInput,
+  ContactInboxScope,
+} from "@chatbotx.io/database/queries"
 import { contactRepository } from "@chatbotx.io/database/repositories"
 import type { ContactModel } from "@chatbotx.io/database/types"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
+import type { BroadcastSubaction } from "@chatbotx.io/utils/broadcast"
+import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import type { ContactAccessScope } from "./service"
 import { maskContactEmailAndPhone } from "./utils"
@@ -23,6 +32,14 @@ export type ListContactsInput = {
   workspaceId: string
   keyword?: string
   contactFilter?: ContactFilterCriteriaInput
+  /** Restrict to contacts with an inbox on one of these channels. */
+  channels?: ChannelType[] | null
+  /** Restrict to contacts with a conversation inbox in this list. */
+  inboxIds?: string[] | null
+  integrationWhatsappId?: string | null
+  integrationMessengerId?: string | null
+  /** Broadcast recipient sub-action; recent-interaction ones add the 24h window. */
+  subaction?: BroadcastSubaction | null
   page?: number | null
   perPage?: number | null
   sort?: { desc: boolean; id: string }[] | null
@@ -128,14 +145,51 @@ async function resolveCount(props: {
  * live COUNT) — folding it into every count call is a separate, measured
  * decision for the cache/perf pass.
  */
+function hasInboxKeys(input: ListContactsInput): boolean {
+  return Boolean(
+    input.channels?.length ||
+      input.inboxIds?.length ||
+      input.integrationWhatsappId ||
+      input.integrationMessengerId,
+  )
+}
+
+/**
+ * Turns the audience-style keys (`channels`, `inboxIds`, integration ids,
+ * `subaction`) into a where-builder scope. Inbox resolution is shared with
+ * broadcast audiences so both surfaces agree on which inboxes a key means.
+ */
+async function resolveInboxScope(
+  input: ListContactsInput,
+): Promise<ContactInboxScope | undefined> {
+  const requireRecentInteraction = requiresRecentInteractionWindow(
+    input.subaction,
+  )
+  if (!hasInboxKeys(input)) {
+    return requireRecentInteraction ? { requireRecentInteraction } : undefined
+  }
+  const inboxIds = await inboxService.resolveBroadcastInboxIds({
+    workspaceId: input.workspaceId,
+    channels: input.channels,
+    // An empty list means "no restriction" for a filter (unlike a broadcast
+    // audience, where it means nobody), so it must not win over `channels`.
+    inboxIds: input.inboxIds?.length ? input.inboxIds : undefined,
+    integrationWhatsappId: input.integrationWhatsappId,
+    integrationMessengerId: input.integrationMessengerId,
+  })
+  return { inboxIds, requireRecentInteraction }
+}
+
 function toListWhereInput(
   input: ListContactsInput,
   scope: ContactListScope | undefined,
+  inboxScope: ContactInboxScope | undefined,
 ): Parameters<typeof contactRepository.buildListWhere>[0] {
   return {
     workspaceId: input.workspaceId,
     keyword: input.keyword,
     contactFilter: input.contactFilter,
+    inboxScope,
     restrictToAssignedUserId: scope?.restrictToAssignedUserId,
     includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
   }
@@ -186,7 +240,9 @@ async function runList(input: ListInput) {
     perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
   }
 
-  const where = contactRepository.buildListWhere(toListWhereInput(input, scope))
+  const where = contactRepository.buildListWhere(
+    toListWhereInput(input, scope, await resolveInboxScope(input)),
+  )
 
   const pagination = getPaginationWithDefaults(normalizedInput)
   const orderBy = contactRepository.resolveOrderBy(normalizedInput)
@@ -245,13 +301,21 @@ export async function list(
 
 export async function count(input: CountInput): Promise<{ total: number }> {
   const scope = resolveScope(input.scope)
+  const inboxScope = await resolveInboxScope(input)
   if (
-    !(input.keyword || input.contactFilter || scope?.restrictToAssignedUserId)
+    !(
+      input.keyword ||
+      input.contactFilter ||
+      inboxScope ||
+      scope?.restrictToAssignedUserId
+    )
   ) {
     return getTotalContactsFromStats(input.workspaceId)
   }
 
-  const where = contactRepository.buildListWhere(toListWhereInput(input, scope))
+  const where = contactRepository.buildListWhere(
+    toListWhereInput(input, scope, inboxScope),
+  )
 
   const total = await contactRepository.count({ where })
   return { total }

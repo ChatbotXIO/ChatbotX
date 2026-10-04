@@ -104,13 +104,17 @@ export const exportContactsFilter = z.object({
 })
 export type ExportContactsFilter = z.infer<typeof exportContactsFilter>
 
+const EXPORT_FIELD_KEY = /^(sys|cus|tag):.+/
+const EXPORT_FIELD_KEY_MESSAGE =
+  "Use sys:<column>, cus:<customFieldId> or tag:<tagId>"
+
 export const exportContactsRequest = z
   .object({
     fields: z
-      .array(z.string())
+      .array(z.string().regex(EXPORT_FIELD_KEY, EXPORT_FIELD_KEY_MESSAGE))
       .min(1)
       .describe(
-        "Contact fields to include as CSV columns, e.g. `sys:firstName`, `sys:email`, or a custom field id.",
+        "CSV columns, each prefixed by kind: `sys:<column>` for a contact column (firstName, lastName, fullName, email, phoneNumber, gender, source, lastReadAt, blockedAt, contactId = platform id, sourceUserId = WhatsApp BSUID), `cus:<customFieldId>` for a custom field, `tag:<tagId>` for a tag (yes/no column). A key without a prefix is rejected.",
       ),
     contactIds: z
       .array(zodBigintAsString())

@@ -16,8 +16,12 @@ const optionalTrimmedString = z
 
 export const getResponseAddContactSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.getResponseAddContact),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.getResponseAddContact)
+      .describe('Step type discriminator: "getResponseAddContact".'),
     campaignId: z.string().trim().min(1),
     emailField: z.string().trim().min(1),
     tags: z.array(z.string().trim().min(1)).optional(),

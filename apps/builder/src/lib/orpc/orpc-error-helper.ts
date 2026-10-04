@@ -152,6 +152,159 @@ export const possibleErrorsOnMutatingResource = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** WhatsApp calling settings/hours: Meta or the local mirror failing is a 502. */
+export const possibleErrorsOnUpdatingWhatsappCalling = {
+  notFound,
+  businessError,
+  whatsappCallingUpstream: {
+    message: "Meta did not apply the calling change. Try again.",
+    status: 502,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Import upload: an unsupported or oversized file is a 400 the caller can fix. */
+export const possibleErrorsOnCreatingImportUpload = {
+  businessError,
+  importUnsupportedFileType: {
+    message: "Unsupported file type for this import. Use a CSV or XLSX file.",
+    status: 400,
+  },
+  importFileTooLarge: {
+    message: "The file exceeds the size limit for this import.",
+    status: 400,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Reading an uploaded import file's headers: all three failures are 400s. */
+export const possibleErrorsOnPeekingImportHeaders = {
+  notFound,
+  businessError,
+  importUnableToReadHeaders: {
+    message: "The file's headers could not be read.",
+    status: 400,
+  },
+  importUnsupportedFileType: {
+    message: "Unsupported file type for this import. Use a CSV or XLSX file.",
+    status: 400,
+  },
+  importFileTooLarge: {
+    message: "The file exceeds the size limit for this import.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Starting a contact import: only one import may run per workspace (409). */
+export const possibleErrorsOnStartingContactImport = {
+  notFound,
+  businessError,
+  contactImportAlreadyRunning: {
+    message: "A contact import is already running for this workspace.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** AI hand-over apply-to-all: every refusal is a 422 with its own code. */
+const aiHandoverRefusal = (message: string) => ({ message, status: 422 })
+
+export const possibleErrorsOnApplyingAiHandover = {
+  notFound,
+  businessError,
+  aiHandoverBulkConfirmCountExceeded: aiHandoverRefusal(
+    "More threads are eligible than `confirmCount` allows: run a dry run again and confirm the new count.",
+  ),
+  aiHandoverBulkRunNotStartable: aiHandoverRefusal(
+    "A previous run is still stopping on this Page: try again shortly.",
+  ),
+  aiHandoverBulkPageNotConnected: aiHandoverRefusal(
+    "The Page is not connected.",
+  ),
+  aiHandoverBulkAutomationNotActive: aiHandoverRefusal(
+    "Business AI automation must be enabled and running.",
+  ),
+  aiHandoverBulkNothingToRetry: aiHandoverRefusal(
+    "There is no failed run to retry.",
+  ),
+  aiHandoverBulkMessageRequired: aiHandoverRefusal(
+    "Turning it off needs the message sent to the customers it takes back.",
+  ),
+  aiHandoverBulkMessageTooLong: aiHandoverRefusal("The message is too long."),
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Conversation routing (thread control) refusals from the channel. */
+export const possibleErrorsOnThreadControl = {
+  ...possibleErrorsOnMutatingResource,
+  threadControlUnsupported: {
+    message: "This channel does not support that thread-control action.",
+    status: 400,
+  },
+  threadControlFailed: {
+    message: "The channel refused the thread-control change.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Coexist toggle: invalid channel credentials (409) or Meta refusing the sync (502). */
+export const possibleErrorsOnSettingCoexist = {
+  ...possibleErrorsOnMutatingResource,
+  coexistInvalidAuth: {
+    message: "The channel's credentials are invalid: reconnect the channel.",
+    status: 409,
+  },
+  coexistSyncNotStarted: {
+    message: "Coexist is on, but Meta did not start the sync. Try again.",
+    status: 502,
+  },
+} satisfies ErrorMap
+
+/** Conversions API test event: Meta or the channel refused it (422). */
+export const possibleErrorsOnSendingCapiTestEvent = {
+  ...possibleErrorsOnMutatingResource,
+  capiTestEventRefused: {
+    message: "The test event could not be sent.",
+    status: 422,
+  },
+} satisfies ErrorMap
+
+/** Cursor-paged list: a cursor that does not decode is a 400. */
+export const possibleErrorsOnListingWithCursor = {
+  ...possibleErrorsOnListingResource,
+  invalidCursor: {
+    message: "The cursor is invalid. Start again without a cursor.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Meta Catalog select/sync: a second run while one is active is a 409. */
+export const possibleErrorsOnStartingMetaCatalogRun = {
+  notFound,
+  businessError,
+  metaCatalogSyncAlreadyRunning: {
+    message: "A catalog sync or import is already running for this workspace.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Ad creative image upload: the type and size checks are 400s. */
+export const possibleErrorsOnCreatingAdImageUpload = {
+  notFound,
+  businessError,
+  adsCreativeUnsupportedImage: {
+    message:
+      "Use a JPEG, PNG, GIF or WebP image whose extension matches its type",
+    status: 400,
+  },
+  adsCreativeImageTooLarge: {
+    message: "Ad images are limited to 10 MB",
+    status: 400,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 export const possibleErrorsOnActivatingBroadcast = {
   notFound,
   businessError,

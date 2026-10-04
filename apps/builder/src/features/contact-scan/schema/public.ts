@@ -39,7 +39,19 @@ export const contactScanRunPublicResource = z.object({
   currentError: z.string().nullable(),
 })
 
-export const listContactScansPublicRequest = publicListRequest
+export const listContactScansPublicRequest = publicListRequest.extend({
+  integrationId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Only scans of this channel integration. Get it from the channel list routes, e.g. `messengerChannels.list`.",
+    ),
+  sort: z
+    .array(z.object({ id: z.string(), desc: z.boolean() }))
+    .optional()
+    .describe(
+      "Sort order as [{ id, desc }] pairs, e.g. `createdAt`, `status`. Defaults to newest first.",
+    ),
+})
 export const listContactScansPublicResponse = publicListResponse(
   contactScanRunPublicResource,
 )
