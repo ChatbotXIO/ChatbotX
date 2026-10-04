@@ -37,7 +37,11 @@ import {
 } from "./base"
 
 export const sendMessageNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.sendMessage),
+  type: z
+    .literal(nodeTypeSchema.enum.sendMessage)
+    .describe(
+      'Node type "sendMessage": sends messages. `data.details.beforeStep` selects the channel, `steps` are the messages/actions in order, `quickReplies` are quick-reply buttons shown after the last message.',
+    ),
   data: baseNodeDataSchema.extend({
     details: z
       .object({
@@ -63,7 +67,12 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
             ...actionSteps,
           ]),
         ),
-        quickReplies: z.array(buttonStepSchema).max(MAX_QUICK_REPLIES),
+        quickReplies: z
+          .array(buttonStepSchema)
+          .max(MAX_QUICK_REPLIES)
+          .describe(
+            `Quick-reply buttons shown after the last message (max ${MAX_QUICK_REPLIES}); use [] for none.`,
+          ),
         quickReplySettings: quickReplySettingsSchema.optional(),
       })
       .superRefine(refineQuickReplySettings),

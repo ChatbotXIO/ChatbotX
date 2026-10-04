@@ -74,8 +74,16 @@ export function commentAutomationChannelSupportsHideGif(
 }
 
 export const commentPostSchema = z.object({
-  type: z.enum(["published", "ads", "reels", "postIds", "all", "live"]),
-  value: z.array(z.string()),
+  type: z
+    .enum(["published", "ads", "reels", "postIds", "all", "live"])
+    .describe(
+      "Which posts the automation watches: `postIds` (only the posts listed in `value`), `live` (live videos), or `all`/`published`/`ads`/`reels` (any post; `value` unused, send `[]`).",
+    ),
+  value: z
+    .array(z.string())
+    .describe(
+      "Post or media ids to watch. Used only when `type` is `postIds`; get them from the channel's list-posts/list-media route. Send `[]` otherwise.",
+    ),
 })
 export type CommentPost = z.infer<typeof commentPostSchema>
 
@@ -145,8 +153,15 @@ export type CommentReplyType = z.infer<typeof commentReplyTypes>
 export const COMMENT_REPLY_MAX_TEXTS = 10
 
 export const commentReplySchema = z.object({
-  type: commentReplyTypes,
-  value: z.string().nullable(),
+  type: commentReplyTypes.describe(
+    "Reply kind: `text` (message text), `flow` (run a flow), `AIAgent` (an AI agent writes the reply) or `none` (no reply).",
+  ),
+  value: z
+    .string()
+    .nullable()
+    .describe(
+      "Reply payload by `type`: the message text for `text`, a flow id for `flow` (from `flows.list`), an AI agent id for `AIAgent` (from `aiAgents.list`), or null for `none`.",
+    ),
   /**
    * A `text` reply's messages, one public comment reply each. Optional because
    * every row written before this existed carries only `value` — read both
@@ -161,9 +176,16 @@ export const commentReplySchema = z.object({
    * Meta accepts one comment-anchored DM per comment.
    */
   values: z
-    .array(z.object({ value: z.string() }))
+    .array(
+      z.object({
+        value: z.string().describe("One reply message text."),
+      }),
+    )
     .max(COMMENT_REPLY_MAX_TEXTS)
-    .optional(),
+    .optional()
+    .describe(
+      "Public `text` replies only: up to 10 alternative messages, one is a separate public reply each. When set it takes precedence over `value`.",
+    ),
 })
 export type CommentReply = z.infer<typeof commentReplySchema>
 
@@ -211,15 +233,24 @@ export type CommentIncludeKeywordsType = z.infer<
 >
 
 export const commentIncludeKeywordsSchema = z.object({
-  type: commentIncludeKeywordsTypes,
-  value: z.array(z.string()),
+  type: commentIncludeKeywordsTypes.describe(
+    "Match mode: `all` (every comment), `equal` (comment equals a keyword), `contain` (comment contains a keyword) or `mentions` (comment tags at least `mentionCount` accounts). Matching ignores case and accents.",
+  ),
+  value: z
+    .array(z.string())
+    .describe(
+      "Keywords for `equal`/`contain`; any one matching is enough. Send `[]` for `all` and `mentions`.",
+    ),
   /** Only read when `type` is `mentions`. */
   mentionCount: z.coerce
     .number()
     .int()
     .min(1)
     .max(COMMENT_MENTION_COUNT_MAX)
-    .optional(),
+    .optional()
+    .describe(
+      "Minimum number of accounts the comment must tag (1-5). Only used when `type` is `mentions`; defaults to 1.",
+    ),
 })
 export type CommentIncludeKeywords = z.infer<
   typeof commentIncludeKeywordsSchema
@@ -230,61 +261,113 @@ export type CommentExcludeKeywordsType = z.infer<
 >
 
 export const commentOptionsSchema = z.object({
-  replyToNewContactsOnly: z.boolean(),
-  replyOncePerUserPerPost: z.boolean(),
-  likeUserComment: z.boolean(),
-  replyToUsersWhoCommentedOnOtherPosts: z.boolean(),
-  ignoreCommentReplies: z.boolean(),
-  trackUserTags: z.boolean(),
+  replyToNewContactsOnly: z
+    .boolean()
+    .describe(
+      "Only reply when the commenter is a new contact (no earlier conversation).",
+    ),
+  replyOncePerUserPerPost: z
+    .boolean()
+    .describe("Reply at most once per commenter on each post."),
+  likeUserComment: z
+    .boolean()
+    .describe(
+      "Also like the comment when replying (where the channel supports likes).",
+    ),
+  replyToUsersWhoCommentedOnOtherPosts: z
+    .boolean()
+    .describe(
+      "When false, skip commenters this automation already replied to on a different post.",
+    ),
+  ignoreCommentReplies: z
+    .boolean()
+    .describe(
+      "Ignore replies to other comments; only react to top-level comments.",
+    ),
+  trackUserTags: z
+    .boolean()
+    .describe(
+      "Count the accounts tagged in each comment into the contact's running totals, exposed as `{{total_tagged}}` and `{{total_new_tagged}}`. Comments are only processed for this automation when on.",
+    ),
 })
 export type CommentOptions = z.infer<typeof commentOptionsSchema>
 
 export const commentHideCommentsSchema = z.object({
-  all: z.boolean(),
-  hasPhoneNumber: z.boolean(),
-  hasImage: z.boolean(),
-  hasVideo: z.boolean(),
-  hasLink: z.boolean(),
-  hasKeywords: z.boolean(),
+  all: z.boolean().describe("Hide every matching comment."),
+  hasPhoneNumber: z
+    .boolean()
+    .describe("Hide comments containing a phone number."),
+  hasImage: z
+    .boolean()
+    .describe("Hide comments with an image attachment (Facebook only)."),
+  hasVideo: z
+    .boolean()
+    .describe("Hide comments with a video attachment (Facebook only)."),
+  hasLink: z.boolean().describe("Hide comments containing a link."),
+  hasKeywords: z
+    .boolean()
+    .describe("Hide comments containing any word in `keywords`."),
   /**
    * Optional because every row written before these existed lacks the key —
    * absent reads as off. GIF detection needs attachment data only some
    * channels expose (see `commentAutomationChannelSupportsHideGif`).
    */
-  hasGif: z.boolean().optional(),
-  hasEmoji: z.boolean().optional(),
-  keywords: z.array(z.string()),
-  showCommentsAfter: z.enum([
-    "none",
-    "6h",
-    "12h",
-    "1d",
-    "2d",
-    "3d",
-    "4d",
-    "5d",
-    "6d",
-    "7d",
-    "8d",
-    "9d",
-    "10d",
-  ]),
+  hasGif: z
+    .boolean()
+    .optional()
+    .describe(
+      "Hide comments containing a GIF. Only Facebook and Threads detect GIFs; ignored on other channels. Omitted means off.",
+    ),
+  hasEmoji: z
+    .boolean()
+    .optional()
+    .describe("Hide comments containing an emoji. Omitted means off."),
+  keywords: z
+    .array(z.string())
+    .describe("Words that trigger hiding when `hasKeywords` is true."),
+  showCommentsAfter: z
+    .enum([
+      "none",
+      "6h",
+      "12h",
+      "1d",
+      "2d",
+      "3d",
+      "4d",
+      "5d",
+      "6d",
+      "7d",
+      "8d",
+      "9d",
+      "10d",
+    ])
+    .describe(
+      "Unhide hidden comments after this delay: `none` (keep hidden), `6h`, `12h`, or `1d` to `10d`.",
+    ),
 })
 export type CommentHideComments = z.infer<typeof commentHideCommentsSchema>
 
 export const commentReplyAfterSchema = z.object({
-  type: z.enum([
-    "immediately",
-    "seconds",
-    "minutes",
-    "hours",
-    "randomWithin3Minutes",
-    "randomWithin5Minutes",
-    "randomWithin10Minutes",
-    "randomWithin20Minutes",
-    "randomWithin30Minutes",
-    "randomWithin60Minutes",
-  ]),
-  value: z.coerce.number(),
+  type: z
+    .enum([
+      "immediately",
+      "seconds",
+      "minutes",
+      "hours",
+      "randomWithin3Minutes",
+      "randomWithin5Minutes",
+      "randomWithin10Minutes",
+      "randomWithin20Minutes",
+      "randomWithin30Minutes",
+      "randomWithin60Minutes",
+    ])
+    .describe(
+      "Delay mode: `immediately`, a fixed wait in `seconds`/`minutes`/`hours` (amount in `value`), or a random wait up to the stated number of minutes.",
+    ),
+  value: z.coerce
+    .number()
+    .describe(
+      "Wait amount in the unit named by `type`. Only used for `seconds`, `minutes` and `hours`; send 0 otherwise.",
+    ),
 })
 export type CommentReplyAfter = z.infer<typeof commentReplyAfterSchema>

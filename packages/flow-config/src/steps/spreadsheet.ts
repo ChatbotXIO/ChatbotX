@@ -30,7 +30,9 @@ export const FilterMode = {
 export type FilterMode = (typeof FilterMode)[keyof typeof FilterMode]
 
 export const spreadsheetSchema = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
   stepType: z.union([
     z.literal(stepTypes.enum.spreadsheetGetRandomRow),
     z.literal(stepTypes.enum.spreadsheetGetRow),
@@ -76,8 +78,13 @@ const optionalCustomFieldIdSchema = z.union([
 ])
 
 export const spreadsheetSheetToContactMappingSchema = z.object({
-  customFieldId: optionalCustomFieldIdSchema,
-  header: z.string().min(1),
+  customFieldId: optionalCustomFieldIdSchema.describe(
+    "Id of the contact custom field (from `customFields.list`) that receives the sheet value.",
+  ),
+  header: z
+    .string()
+    .min(1)
+    .describe("Sheet column header whose value is read into the custom field."),
 })
 
 export type SpreadsheetSheetToContactMappingSchema = z.infer<
@@ -92,11 +99,21 @@ export const spreadsheetSheetToContactMappingDefaultFn = (
 })
 
 export const spreadsheetContactToSheetMappingSchema = z.object({
-  header: z.string().min(1),
+  header: z
+    .string()
+    .min(1)
+    .describe("Sheet column header that receives the value."),
   // Legacy v1 entries persisted `customFieldId: ""`; accept it (and undefined)
   // so existing steps validate. v2 uses `value`, not `customFieldId`.
-  customFieldId: optionalCustomFieldIdSchema.optional(),
-  value: z.string().default(""),
+  customFieldId: optionalCustomFieldIdSchema
+    .optional()
+    .describe("Legacy; leave unset and use `value`."),
+  value: z
+    .string()
+    .default("")
+    .describe(
+      "Value written to the column. May include `{{variable}}` placeholders such as contact fields.",
+    ),
 })
 
 export type SpreadsheetContactToSheetMappingSchema = z.infer<
@@ -111,14 +128,26 @@ export const spreadsheetContactToSheetMappingDefaultFn = (
 })
 
 export const spreadsheetColumnFilterSchema = z.object({
-  mode: z.enum(FilterMode),
-  conditions: z.array(
-    z.object({
-      column: z.string(),
-      operator: z.enum(Operator),
-      value: z.string(),
-    }),
-  ),
+  mode: z
+    .enum(FilterMode)
+    .describe("`AND` requires every condition to match a row; `OR` any one."),
+  conditions: z
+    .array(
+      z.object({
+        column: z.string().describe("Sheet column header to test."),
+        operator: z
+          .enum(Operator)
+          .describe(
+            "Comparison: is, is_not, gte, lte, gt, lt, contains, not_contains, starts_with or ends_with.",
+          ),
+        value: z
+          .string()
+          .describe(
+            "Value to compare the column against. May include `{{variable}}` placeholders.",
+          ),
+      }),
+    )
+    .describe("Row-matching conditions that select the sheet row."),
 })
 
 export type SpreadsheetColumnFilterSchema = z.infer<

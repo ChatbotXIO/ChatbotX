@@ -9,10 +9,18 @@ const FOLLOW_UP_MAX_DELAY_MS = FOLLOW_UP_MAX_DELAY_DAYS * 86_400_000
 
 export const followUpStepSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.followUp),
-    duration: z.coerce.number().int().min(1),
-    unit: waitStepDelayUnits,
+    id: zodBigintAsString().describe("Step id (numeric string)."),
+    stepType: z
+      .literal(stepTypes.enum.followUp)
+      .describe('Step type "followUp".'),
+    duration: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .describe(
+        `Delay length in \`unit\`s (integer >= 1). The total delay cannot exceed ${FOLLOW_UP_MAX_DELAY_DAYS} days.`,
+      ),
+    unit: waitStepDelayUnits.describe("Unit for `duration`."),
   })
   .superRefine((data, ctx) => {
     if (data.duration * delayUnitToMs(data.unit) > FOLLOW_UP_MAX_DELAY_MS) {

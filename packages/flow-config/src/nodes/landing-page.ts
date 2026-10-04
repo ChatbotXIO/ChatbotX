@@ -8,7 +8,9 @@ import {
 } from "./base"
 
 export const landingPageNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.landingPage),
+  type: z
+    .literal(nodeTypeSchema.enum.landingPage)
+    .describe('Node type "landingPage". `data.details` is an empty object.'),
   data: baseNodeDataSchema.extend({
     details: z.object({}),
   }),

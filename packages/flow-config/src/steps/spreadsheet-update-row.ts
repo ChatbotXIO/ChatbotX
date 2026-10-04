@@ -10,7 +10,9 @@ import {
 import { stepTypes } from "./step-action"
 
 export const spreadsheetUpdateRowSchema = spreadsheetSchema.extend({
-  stepType: z.literal(stepTypes.enum.spreadsheetUpdateRow),
+  stepType: z
+    .literal(stepTypes.enum.spreadsheetUpdateRow)
+    .describe('Step type discriminator: "spreadsheetUpdateRow".'),
   version: spreadsheetStepVersions
     .catch(spreadsheetStepVersions.enum.v1)
     .default(spreadsheetStepVersions.enum.v1),

@@ -7,7 +7,11 @@ import { facebookPostSchema, fbCommentResource } from "./resource"
 const sortSchema = z.array(z.object({ id: z.string(), desc: z.boolean() }))
 
 export const listFbCommentsPublicRequest = publicListRequest.extend({
-  sort: sortSchema.optional().describe("Sort order."),
+  sort: sortSchema
+    .optional()
+    .describe(
+      "Sort order as [{ id, desc }] pairs, e.g. `createdAt`, `name`. Defaults to newest first.",
+    ),
   name: z
     .string()
     .nullish()

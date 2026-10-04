@@ -63,7 +63,9 @@ export type MessengerTemplateComponentButton = {
 }
 
 export const sendMessengerTemplateMessageStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendMessengerTemplateMessage),
+  stepType: z
+    .literal(stepTypes.enum.sendMessengerTemplateMessage)
+    .describe('Step type discriminator: "sendMessengerTemplateMessage".'),
   template: z.object({
     id: z.string().trim().min(1),
     name: z.string(),

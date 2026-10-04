@@ -138,7 +138,8 @@ export const sequencesPublicRouter = {
       method: "DELETE",
       path: "/v1/sequences/{id}",
       summary: "Delete sequence",
-      description: "Permanently deletes a sequence and all of its steps.",
+      description:
+        "Permanently deletes a sequence and all of its steps; this cannot be undone. Use `sequences.list` to find its id first, and `sequences.update` to deactivate it instead if you may need it again.",
       successStatus: 204,
       tags: ["Sequences"],
     })

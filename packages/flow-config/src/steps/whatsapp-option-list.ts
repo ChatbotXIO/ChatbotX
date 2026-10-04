@@ -24,7 +24,9 @@ export type WhatsappOptionListItem = z.infer<
 >
 
 export const whatsappOptionListStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.whatsappOptionList),
+  stepType: z
+    .literal(stepTypes.enum.whatsappOptionList)
+    .describe('Step type discriminator: "whatsappOptionList".'),
   text: z.string().trim().min(1).max(WHATSAPP_OPTION_LIST_BODY_MAX),
   buttonId: zodBigintAsString(),
   buttonLabel: z.string().trim().min(1).max(WHATSAPP_OPTION_LIST_BUTTON_MAX),

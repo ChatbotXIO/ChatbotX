@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const typingStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.typing),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.typing)
+    .describe('Step type discriminator: "typing".'),
   seconds: z.coerce.number().min(1).max(60),
 })
 

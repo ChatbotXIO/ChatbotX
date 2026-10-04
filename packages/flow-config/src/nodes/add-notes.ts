@@ -9,7 +9,11 @@ import {
 } from "./base"
 
 export const addNotesNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.addNotes),
+  type: z
+    .literal(nodeTypeSchema.enum.addNotes)
+    .describe(
+      'Node type "addNotes": adds internal notes to the conversation. `data.details.steps` holds addNotes steps.',
+    ),
   data: baseNodeDataSchema.extend({
     details: z.object({
       beforeStep: addNotesStepSchema,

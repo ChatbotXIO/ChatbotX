@@ -9,7 +9,11 @@ import {
 } from "./base"
 
 export const conditionNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.condition),
+  type: z
+    .literal(nodeTypeSchema.enum.condition)
+    .describe(
+      'Node type "condition": branches the flow on contact conditions. `data.details.steps` holds exactly one condition step; its case ids and `otherwiseId` are the edge source handles.',
+    ),
   data: baseNodeDataSchema.extend({
     details: z.object({
       steps: z.array(conditionStepSchema).min(1).max(1),

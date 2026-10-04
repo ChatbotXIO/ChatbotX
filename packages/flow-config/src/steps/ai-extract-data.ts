@@ -109,8 +109,12 @@ const extractFieldSchema = z.object({
 })
 
 const extractDataBase = {
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.aiExtractData),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.aiExtractData)
+    .describe('Step type discriminator: "aiExtractData".'),
   extractFields: z.array(extractFieldSchema),
   states: z.tuple([successStateSchema, errorStateSchema]).optional(),
 }

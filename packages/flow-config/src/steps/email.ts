@@ -108,8 +108,12 @@ export const pageElementSchema = z.discriminatedUnion("type", [
 export type PageElementSchema = z.infer<typeof pageElementSchema>
 
 export const emailStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.email),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.email)
+    .describe('Step type discriminator: "email".'),
   integrationSmtpId: z.string().trim(),
   topicId: z.string().trim().optional(),
   from: z.string().trim(),

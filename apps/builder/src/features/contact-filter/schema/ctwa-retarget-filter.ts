@@ -36,20 +36,47 @@ export type CtwaRetargetChannel = z.infer<typeof ctwaRetargetChannelSchema>
  */
 export const ctwaRetargetConditionSchema = z
   .object({
-    field: z.literal("ctwaRetarget"),
-    segment: ctwaRetargetSegments,
-    adId: z.string().trim().min(1).optional(),
+    field: z
+      .literal("ctwaRetarget")
+      .describe(
+        "Always `ctwaRetarget`: contacts from Click-to-WhatsApp/Messenger/Instagram ads in a segment and date range.",
+      ),
+    segment: ctwaRetargetSegments.describe(
+      "Ad funnel stage to target: `conversations`, `leads` or `purchases`.",
+    ),
+    adId: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe("Restrict to contacts from this ad id. Omit for all ads."),
     // Scopes the segment to one WhatsApp integration, matching the Facebook
     // path. Safe to accept from the client: the resolved SQL is workspace-
     // scoped, so a foreign integration id matches nothing.
-    integrationWhatsappId: zodBigintAsString().optional(),
+    integrationWhatsappId: zodBigintAsString()
+      .optional()
+      .describe(
+        "Restrict to one WhatsApp integration id (numeric string). Omit for all.",
+      ),
     // Optional channel narrowing (Phase 4 generalization). Omitted keeps the
     // pre-existing WhatsApp-only (`ctwaClid`-keyed) behavior, so saved
     // filters created before this field existed keep parsing and resolving
     // identically.
-    channel: ctwaRetargetChannelSchema.optional(),
-    since: z.string().regex(DATE_KEY_PATTERN, "Expected YYYY-MM-DD"),
-    until: z.string().regex(DATE_KEY_PATTERN, "Expected YYYY-MM-DD"),
+    channel: ctwaRetargetChannelSchema
+      .optional()
+      .describe(
+        "Restrict to one ads-eligible channel (`whatsapp`, `messenger` or `instagram`). Omit for the WhatsApp-only default.",
+      ),
+    since: z
+      .string()
+      .regex(DATE_KEY_PATTERN, "Expected YYYY-MM-DD")
+      .describe("Range start, inclusive (UTC date `YYYY-MM-DD`)."),
+    until: z
+      .string()
+      .regex(DATE_KEY_PATTERN, "Expected YYYY-MM-DD")
+      .describe(
+        "Range end, inclusive (UTC date `YYYY-MM-DD`); must not precede `since` and the span is capped.",
+      ),
   })
   .superRefine((condition, ctx) => {
     const since = new Date(`${condition.since}T00:00:00.000Z`)

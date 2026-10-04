@@ -20,8 +20,12 @@ export const sendGridMergeFieldMappingSchema = z.object({
 
 export const sendGridAddContactSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.sendGridAddContact),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.sendGridAddContact)
+      .describe('Step type discriminator: "sendGridAddContact".'),
     listId: optionalTrimmedString,
     emailField: z.string().trim().min(1),
     phoneField: optionalTrimmedString,

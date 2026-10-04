@@ -22,8 +22,12 @@ export type AIDeleteMessageHistoryProvider = z.infer<
 >
 
 export const aiDeleteMessageHistorySchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.aiDeleteMessageHistory),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.aiDeleteMessageHistory)
+    .describe('Step type discriminator: "aiDeleteMessageHistory".'),
   provider: aiDeleteMessageHistoryProvider.catch("openai"),
   states: z.tuple([successStateSchema, errorStateSchema]).optional(),
 })

@@ -8,7 +8,9 @@ import {
 import { stepTypes } from "./step-action"
 
 export const spreadsheetSendDataSchema = spreadsheetSchema.extend({
-  stepType: z.literal(stepTypes.enum.spreadsheetSendData),
+  stepType: z
+    .literal(stepTypes.enum.spreadsheetSendData)
+    .describe('Step type discriminator: "spreadsheetSendData".'),
   version: spreadsheetStepVersions
     .catch(spreadsheetStepVersions.enum.v1)
     .default(spreadsheetStepVersions.enum.v1),

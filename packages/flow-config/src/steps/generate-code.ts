@@ -11,8 +11,12 @@ export const GenerateCodeType = {
 
 export const generateCodeStepSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.generateCode),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.generateCode)
+      .describe('Step type discriminator: "generateCode".'),
     type: z.enum(GenerateCodeType),
     min: z.coerce
       .number()

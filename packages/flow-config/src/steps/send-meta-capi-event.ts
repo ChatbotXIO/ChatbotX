@@ -215,8 +215,12 @@ export const withMetaCapiEventRefinements = <
 
 export const sendMetaCapiEventSchema = withMetaCapiEventRefinements(
   metaCapiEventFieldsSchema.extend({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.sendMetaCapiEvent),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.sendMetaCapiEvent)
+      .describe('Step type discriminator: "sendMetaCapiEvent".'),
     states: z.tuple([successStateSchema, errorStateSchema]),
   }),
 )

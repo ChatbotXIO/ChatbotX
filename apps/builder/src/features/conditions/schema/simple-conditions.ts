@@ -8,8 +8,16 @@ import z from "zod"
 // Simple conditions without additional fields
 const createSimpleCondition = (type: TriggerEventType) =>
   z.object({
-    id: zodBigintAsString().optional(),
-    type: z.literal(type),
+    id: zodBigintAsString()
+      .optional()
+      .describe(
+        "Existing condition id (numeric string) when keeping a condition returned by `triggers.get`; omit for a new condition.",
+      ),
+    type: z
+      .literal(type)
+      .describe(
+        `Condition type "${type}". Fires whenever the event happens; takes no other fields.`,
+      ),
   })
 
 // Simple conditions
@@ -43,9 +51,18 @@ export const contactReferredExistingContact = createSimpleCondition(
 // Conditions with sourceId
 const createConditionWithSourceId = (type: TriggerEventType) =>
   z.object({
-    id: zodBigintAsString().optional(),
-    type: z.literal(type),
-    sourceId: z.string().min(1, "Required"),
+    id: zodBigintAsString()
+      .optional()
+      .describe(
+        "Existing condition id (numeric string) when keeping a condition returned by `triggers.get`; omit for a new condition.",
+      ),
+    type: z.literal(type).describe(`Condition type "${type}".`),
+    sourceId: z
+      .string()
+      .min(1, "Required")
+      .describe(
+        "Id of the sequence (from `sequences.list`) the contact subscribes to or leaves.",
+      ),
   })
 
 export const subscribedToSequence = createConditionWithSourceId(

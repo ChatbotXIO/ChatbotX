@@ -23,7 +23,9 @@ export const BUTTON_LABEL_MAX = 20
 
 export const buttonStepSchema = z
   .object({
-    id: zodBigintAsString(),
+    id: zodBigintAsString().describe(
+      "Button id (numeric string). Also the `sourceHandle` of the edge that routes the button to its next node.",
+    ),
     label: z
       .string()
       .trim()
@@ -32,7 +34,10 @@ export const buttonStepSchema = z
         (value) => countMessageCharacters(value) <= BUTTON_LABEL_MAX,
         flowValidationCodes.constraintExceeded,
       )
-      .meta({ maxLength: BUTTON_LABEL_MAX }),
+      .meta({
+        description: `Button label shown to the contact (max ${BUTTON_LABEL_MAX} characters).`,
+        maxLength: BUTTON_LABEL_MAX,
+      }),
   })
   .and(
     z.discriminatedUnion("buttonType", [

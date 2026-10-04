@@ -9,8 +9,12 @@ import {
 import { stepTypes } from "./step-action"
 
 export const makeStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.make),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.make)
+    .describe('Step type discriminator: "make".'),
   events: z.array(z.string().trim().min(1).max(100)).min(1).max(20),
   states: z.tuple([successStateSchema, errorStateSchema]),
 })

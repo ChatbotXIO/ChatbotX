@@ -12,25 +12,39 @@ const nonEmptyStringArray = z.array(z.string().trim().min(1)).min(1)
 
 export const adsConversionRuleTriggerSchema = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal("templateSent"),
+    type: z
+      .literal("templateSent")
+      .describe(
+        "Fires when a message template is sent; requires `templateIds`.",
+      ),
     templateIds: nonEmptyStringArray.describe(
       "Template ids that trigger this rule when sent.",
     ),
   }),
   z.object({
-    type: z.literal("tagApplied"),
+    type: z
+      .literal("tagApplied")
+      .describe(
+        "Fires when a tag is applied to the contact; requires `tagIds`.",
+      ),
     tagIds: nonEmptyStringArray.describe(
       "Tag ids that trigger this rule when applied.",
     ),
   }),
   z.object({
-    type: z.literal("keywordMatched"),
+    type: z
+      .literal("keywordMatched")
+      .describe(
+        "Fires when a keyword automation matches; requires `automatedResponseIds`.",
+      ),
     automatedResponseIds: nonEmptyStringArray.describe(
       "Keyword automation ids that trigger this rule when matched.",
     ),
   }),
   z.object({
-    type: z.literal("contactReplied"),
+    type: z
+      .literal("contactReplied")
+      .describe("Fires when the contact replies; requires `firstReplyOnly`."),
     firstReplyOnly: z
       .boolean()
       .describe("Only trigger on the contact's first reply, not every reply."),

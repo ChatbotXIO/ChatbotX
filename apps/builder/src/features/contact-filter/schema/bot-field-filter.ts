@@ -104,17 +104,37 @@ const isIntervalOperator = (operator: OperatorType): boolean =>
  */
 export const botFieldConditionSchema = z
   .object({
-    field: z.literal("botField"),
-    botFieldId: z.string().min(1),
-    botFieldType: customFieldTypes.optional(),
-    valueType: formFieldTypes,
-    operator: operatorTypes,
+    field: z
+      .literal("botField")
+      .describe(
+        "Always `botField` for a workspace-level bot (account) field condition.",
+      ),
+    botFieldId: z
+      .string()
+      .min(1)
+      .describe(
+        "Bot field id from `contacts.listFilterFields` (`botFields[].id`).",
+      ),
+    botFieldType: customFieldTypes
+      .optional()
+      .describe(
+        "Exact type of the bot field (`type` in `contacts.listFilterFields`); `date`/`datetime` enable date semantics, `longText` limits operators to eq/ne/isEmpty/isNotEmpty.",
+      ),
+    valueType: formFieldTypes.describe(
+      "Value type of the field, from `valueType` in `contacts.listFilterFields`; decides how the value is cast and which operators are allowed.",
+    ),
+    operator: operatorTypes.describe(
+      "Comparison operator. Allowed operators depend on the field; see `contacts.listFilterFields` (`isEmpty`/`isNotEmpty` take no value; `isBetween`/`notBetween` take a two-item value).",
+    ),
     value: z
       .union([
         sampleStringSchema,
         z.tuple([sampleStringSchema, sampleStringSchema]),
       ])
-      .optional(),
+      .optional()
+      .describe(
+        "Value to compare against: a string, or a two-item `[from, to]` array for `isBetween`/`notBetween`. Omit for `isEmpty`/`isNotEmpty`.",
+      ),
   })
   .superRefine((condition, ctx) => {
     const enabledOperators = operatorsForBotField(

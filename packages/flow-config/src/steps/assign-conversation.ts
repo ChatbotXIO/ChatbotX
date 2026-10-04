@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const assignConversationStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.assignConversation),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.assignConversation)
+    .describe('Step type discriminator: "assignConversation".'),
   assignedId: z.string(),
 })
 

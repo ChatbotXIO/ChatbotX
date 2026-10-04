@@ -3,11 +3,24 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const conditionFilterConditionSchema = z.object({
-  field: z.string().min(1),
-  operator: z.string().min(1),
+  field: z
+    .string()
+    .min(1)
+    .describe(
+      "Contact field to test: a static field name from `GET /v1/contacts/filter-fields`, or `customField` together with `customFieldId` (the custom field id) to test a workspace custom field.",
+    ),
+  operator: z
+    .string()
+    .min(1)
+    .describe(
+      "Operator valid for this field, as listed by `GET /v1/contacts/filter-fields`.",
+    ),
   value: z
     .union([z.string(), z.array(z.string()), z.tuple([z.string(), z.string()])])
-    .optional(),
+    .optional()
+    .describe(
+      "Comparison value. Omit for valueless operators (e.g. isEmpty). A two-element tuple is a between-range; an array is a multi-value match.",
+    ),
   customFieldId: zodBigintAsString().optional(),
   /**
    * Runtime coupon topic id for dynamic coupon-topic filter rows. Kept so
@@ -37,9 +50,18 @@ export const conditionFilterConditionSchema = z.object({
 })
 
 export const conditionCaseSchema = z.object({
-  id: zodBigintAsString(),
-  operator: z.enum(["and", "or"]),
-  conditions: z.array(conditionFilterConditionSchema).min(1),
+  id: zodBigintAsString().describe(
+    "Case id (numeric string); also the `sourceHandle` of the edge taken when this case matches.",
+  ),
+  operator: z
+    .enum(["and", "or"])
+    .describe(
+      "Whether all (`and`) or any (`or`) of `conditions` must match. Cases are evaluated in order; the first match wins.",
+    ),
+  conditions: z
+    .array(conditionFilterConditionSchema)
+    .min(1)
+    .describe("Contact-filter conditions for this case (at least one)."),
   /**
    * IANA timezone captured from the editor's browser when the flow was saved,
    * used to interpret naive date/datetime condition values at runtime (the
@@ -50,10 +72,17 @@ export const conditionCaseSchema = z.object({
 export type ConditionCaseSchema = z.infer<typeof conditionCaseSchema>
 
 export const conditionStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.condition),
-  cases: z.array(conditionCaseSchema).min(1),
-  otherwiseId: zodBigintAsString(),
+  id: zodBigintAsString().describe("Step id (numeric string)."),
+  stepType: z
+    .literal(stepTypes.enum.condition)
+    .describe('Step type "condition".'),
+  cases: z
+    .array(conditionCaseSchema)
+    .min(1)
+    .describe("Ordered cases; the first whose conditions match is taken."),
+  otherwiseId: zodBigintAsString().describe(
+    "Id (numeric string) used as the `sourceHandle` of the edge taken when no case matches.",
+  ),
 })
 export type ConditionStepSchema = z.infer<typeof conditionStepSchema>
 

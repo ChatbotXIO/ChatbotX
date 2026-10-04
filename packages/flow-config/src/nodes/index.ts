@@ -28,11 +28,17 @@ export const flowVersionSchema = z.discriminatedUnion("type", [
 export type FlowVersionSchema = z.infer<typeof flowVersionSchema>
 
 export const edgeSchema = z.object({
-  id: z.string(),
-  source: z.string(),
-  sourceHandle: z.string(),
-  target: z.string(),
-  targetHandle: z.string(),
+  id: z.string().describe("Unique edge id."),
+  source: z.string().describe("Id of the node the edge leaves."),
+  sourceHandle: z
+    .string()
+    .describe(
+      "Output handle on the source node. For the node-level Continue connection use the source node's own id; for a button, condition case, or other step output use that button/case/state id.",
+    ),
+  target: z.string().describe("Id of the node the edge enters."),
+  targetHandle: z
+    .string()
+    .describe("Input handle on the target node: the target node's id."),
 })
 export type EdgeSchema = z.infer<typeof edgeSchema>
 

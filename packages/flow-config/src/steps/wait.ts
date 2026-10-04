@@ -40,34 +40,98 @@ export const delayUnitToMs = (unit: WaitStepDelayUnit): number => UNIT_MS[unit]
 
 export const waitStepSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.wait),
+    id: zodBigintAsString().describe("Step id (numeric string)."),
+    stepType: z.literal(stepTypes.enum.wait).describe('Step type "wait".'),
   })
   .and(
     z.discriminatedUnion("delayType", [
       z.object({
-        delayType: z.literal(waitStepDelayTypes.enum.duration),
-        duration: z.coerce.number().int().min(1).max(MAX_DELAY),
-        unit: waitStepDelayUnits,
-        interval: z.boolean(),
-        startTime: z.iso.time().nullable(),
-        endTime: z.iso.time().nullable(),
+        delayType: z
+          .literal(waitStepDelayTypes.enum.duration)
+          .describe("Wait a fixed duration."),
+        duration: z.coerce
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_DELAY)
+          .describe("Wait length in `unit`s (integer 1-999999)."),
+        unit: waitStepDelayUnits.describe("Unit for `duration`."),
+        interval: z
+          .boolean()
+          .describe(
+            "If true, only resume inside the daily window `startTime`-`endTime` (both then required); otherwise the wait ends exactly after `duration`.",
+          ),
+        startTime: z.iso
+          .time()
+          .nullable()
+          .describe(
+            "Daily window start, ISO time (HH:mm:ss). Required when `interval` is true, else null.",
+          ),
+        endTime: z.iso
+          .time()
+          .nullable()
+          .describe(
+            "Daily window end, ISO time (HH:mm:ss). Required when `interval` is true, else null.",
+          ),
       }),
       z.object({
-        delayType: z.literal(waitStepDelayTypes.enum.date),
-        dateType: waitStepDateTypes,
-        datetime: z.iso.datetime().optional(),
-        outputFieldId: z.string().trim().min(1).optional(),
-        offset: z.boolean().default(false),
-        offsetOperator: waitStepOffsetOperators.optional(),
-        offsetValue: z.coerce.number().int().min(1).max(MAX_DELAY).optional(),
-        offsetUnit: waitStepDelayUnits.optional(),
+        delayType: z
+          .literal(waitStepDelayTypes.enum.date)
+          .describe("Wait until a date."),
+        dateType: waitStepDateTypes.describe(
+          "`specific` waits until `datetime`; `dynamic` waits until the date stored in the custom field `outputFieldId`.",
+        ),
+        datetime: z.iso
+          .datetime()
+          .optional()
+          .describe(
+            "ISO 8601 datetime to wait until. Required when `dateType` is `specific`.",
+          ),
+        outputFieldId: z
+          .string()
+          .trim()
+          .min(1)
+          .optional()
+          .describe(
+            "Id of the date custom field holding the target date. Required when `dateType` is `dynamic`.",
+          ),
+        offset: z
+          .boolean()
+          .default(false)
+          .describe(
+            "Apply `offsetValue` `offsetUnit` before/after the dynamic date (uses `offsetOperator`).",
+          ),
+        offsetOperator: waitStepOffsetOperators
+          .optional()
+          .describe("`add` waits past the date; `subtract` ends before it."),
+        offsetValue: z.coerce
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_DELAY)
+          .optional()
+          .describe("Offset amount in `offsetUnit`s (integer 1-999999)."),
+        offsetUnit: waitStepDelayUnits
+          .optional()
+          .describe("Unit for `offsetValue`."),
       }),
       z.object({
-        delayType: z.literal(waitStepDelayTypes.enum.random),
-        min: z.coerce.number().int().min(1).max(MAX_DELAY),
-        max: z.coerce.number().int().min(1).max(MAX_DELAY),
-        unit: waitStepDelayUnits,
+        delayType: z
+          .literal(waitStepDelayTypes.enum.random)
+          .describe("Wait a random duration between `min` and `max`."),
+        min: z.coerce
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_DELAY)
+          .describe("Shortest wait in `unit`s (integer 1-999999)."),
+        max: z.coerce
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_DELAY)
+          .describe("Longest wait in `unit`s; must be >= `min`."),
+        unit: waitStepDelayUnits.describe("Unit for `min` and `max`."),
       }),
     ]),
   )
