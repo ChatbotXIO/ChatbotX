@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { verifyAiProviderApiKey } from "../verify"
 
 const { MockHTTPError, mockKyGet } = vi.hoisted(() => {
   class MockHTTPError extends Error {
@@ -23,18 +24,16 @@ vi.mock("ky", () => ({
   HTTPError: MockHTTPError,
 }))
 
-const { verifyAiProviderApiKey } = await import("../verify")
-
 describe("verifyAiProviderApiKey", () => {
   beforeEach(() => {
     mockKyGet.mockReset()
   })
 
-  test("checks OpenRouter credentials against the authenticated key endpoint", async () => {
+  test("returns valid after OpenRouter accepts the credential", async () => {
     mockKyGet.mockResolvedValueOnce({})
 
     await expect(verifyAiProviderApiKey("openrouter", "or-key")).resolves.toBe(
-      true,
+      "valid",
     )
 
     expect(mockKyGet).toHaveBeenCalledWith(
@@ -45,19 +44,52 @@ describe("verifyAiProviderApiKey", () => {
     )
   })
 
-  test("rejects explicitly unauthorized provider responses", async () => {
-    mockKyGet.mockRejectedValueOnce(new MockHTTPError(401))
+  test.each([
+    [
+      "claude",
+      "https://api.anthropic.com/v1/models",
+      {
+        "anthropic-version": "2023-06-01",
+        "x-api-key": "provider-key",
+      },
+    ],
+    [
+      "gemini",
+      "https://generativelanguage.googleapis.com/v1beta/models?key=provider-key",
+      undefined,
+    ],
+  ] as const)("uses the provider-specific probe for %s", async (provider, url, headers) => {
+    mockKyGet.mockResolvedValueOnce({})
 
-    await expect(verifyAiProviderApiKey("openrouter", "bad-key")).resolves.toBe(
-      false,
+    await expect(
+      verifyAiProviderApiKey(provider, "provider-key"),
+    ).resolves.toBe("valid")
+
+    expect(mockKyGet).toHaveBeenCalledWith(
+      url,
+      expect.objectContaining({ headers }),
     )
   })
 
-  test("does not block users on transient provider failures", async () => {
-    mockKyGet.mockRejectedValueOnce(new Error("network unavailable"))
+  test.each([
+    401, 403,
+  ])("returns invalid when the provider explicitly rejects credentials with %i", async (status) => {
+    mockKyGet.mockRejectedValueOnce(new MockHTTPError(status))
+
+    await expect(verifyAiProviderApiKey("openrouter", "bad-key")).resolves.toBe(
+      "invalid",
+    )
+  })
+
+  test.each([
+    new MockHTTPError(429),
+    new MockHTTPError(503),
+    new Error("network unavailable"),
+  ])("returns unknown for an inconclusive provider response", async (error) => {
+    mockKyGet.mockRejectedValueOnce(error)
 
     await expect(
       verifyAiProviderApiKey("openrouter", "possibly-valid-key"),
-    ).resolves.toBe(true)
+    ).resolves.toBe("unknown")
   })
 })

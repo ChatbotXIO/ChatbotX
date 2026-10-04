@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { InvalidConnectionTransitionException } from "../../connection/state"
+import { makeAuthStore } from "../auth-store"
 
 const mocks = vi.hoisted(() => ({
   execute: vi.fn(async () => ({ rows: [{ auth: { authType: "none" } }] })),
@@ -10,7 +11,6 @@ const mocks = vi.hoisted(() => ({
   inboxUpdateSet: vi.fn(),
   inboxUpdateWhere: vi.fn(),
   markUnhealthy: vi.fn(async () => undefined),
-  recordRefreshFailure: vi.fn(async () => undefined),
   recordAuthSaved: vi.fn(async () => undefined),
   transition: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
@@ -49,7 +49,6 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("../../connection/state-service", () => ({
   connectionStateService: {
     markUnhealthy: mocks.markUnhealthy,
-    recordRefreshFailure: mocks.recordRefreshFailure,
     recordAuthSaved: mocks.recordAuthSaved,
     transition: mocks.transition,
   },
@@ -60,8 +59,6 @@ vi.mock("../../workspace-member/service", () => ({
     findOwnerUserIdByWorkspaceId: mocks.findOwnerUserIdByWorkspaceId,
   },
 }))
-
-const { makeAuthStore } = await import("../auth-store")
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -144,7 +141,7 @@ describe("makeAuthStore.markOffline", () => {
       inboxId: "inbox-1",
     })
     await store.markOffline?.(new Error("provider revoked token"))
-    expect(mocks.recordRefreshFailure).toHaveBeenCalledWith({
+    expect(mocks.markUnhealthy).toHaveBeenCalledWith({
       connectionId: "conn-1",
       ownerId: "owner-1",
     })
@@ -159,7 +156,7 @@ describe("makeAuthStore.markOffline", () => {
       inboxId: "inbox-1",
     })
     await store.markOffline?.(new Error("provider revoked token"))
-    expect(mocks.recordRefreshFailure).not.toHaveBeenCalled()
+    expect(mocks.markUnhealthy).not.toHaveBeenCalled()
     expect(mocks.inboxUpdateSet).toHaveBeenCalledWith({
       status: "disconnected",
     })
@@ -168,7 +165,7 @@ describe("makeAuthStore.markOffline", () => {
   it("no-ops for a workspace-level integration with no Connection and no inboxId", async () => {
     const store = makeAuthStoreForTableFallback()
     await store.markOffline?.(new Error("provider revoked token"))
-    expect(mocks.recordRefreshFailure).not.toHaveBeenCalled()
+    expect(mocks.markUnhealthy).not.toHaveBeenCalled()
     expect(mocks.inboxUpdate).not.toHaveBeenCalled()
   })
 })

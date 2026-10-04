@@ -43,16 +43,21 @@ const makeAiKeyProvider = (
   // is the fixed provider label.
   describe: () => ({ sourceId: "workspace", displayName }),
   fromCredentials: async ({ apiKey }) => {
-    if (!(await verifyAiProviderApiKey(provider, apiKey))) {
+    const validation = await verifyAiProviderApiKey(provider, apiKey)
+    if (validation === "invalid") {
       throw new Error(`Invalid ${displayName} API key`)
     }
     return secretTextAuth(apiKey)
   },
   verify: async ({ auth }) => {
-    const ok = await verifyAiProviderApiKey(provider, auth.secretText)
-    return ok
-      ? { ok: true }
-      : { ok: false, revoked: true, error: "Invalid API key" }
+    const validation = await verifyAiProviderApiKey(provider, auth.secretText)
+    if (validation === "valid") {
+      return { ok: true }
+    }
+    if (validation === "invalid") {
+      return { ok: false, revoked: true, error: "Invalid API key" }
+    }
+    return { ok: false, revoked: false, error: "Unable to verify API key" }
   },
   // Rejection is detected by the same live "list models" probe used for
   // `verify`/`fromCredentials` (HTTP 401/403) — there is no separate revoked-
@@ -126,22 +131,12 @@ export const openaiCompatibleConnectionProvider: ConnectionProvider<
     }
     return secretTextAuth(apiKey)
   },
-  verify: ({ auth }) => {
-    // `auth` alone has no `baseURL` (it lives on the DB row's own column,
-    // not the auth jsonb) — a real health check needs that row's
-    // `baseURL` alongside `auth.secretText`. `ConnectionProvider.verify`'s
-    // signature (`Handler<{auth}, ConnectionHealth>`) has no room for it:
-    // `ConnectionService.verify`/`ConnectionService.refresh` only ever load
-    // and pass `auth`, never the satellite row's other columns, for any
-    // provider. Still unwired — treat presence of a stored secret as
-    // sufficient until either `baseURL` moves into `auth` itself or
-    // `verify`'s signature grows a second, store-row parameter.
-    return Promise.resolve(
-      auth.secretText
-        ? { ok: true as const }
-        : { ok: false as const, revoked: true, error: "Missing API key" },
-    )
-  },
+  verify: () =>
+    Promise.resolve({
+      ok: false as const,
+      revoked: false as const,
+      error: "OpenAI-compatible endpoints require credential revalidation",
+    }),
   isRevokedTokenError: () => false,
 }
 
@@ -154,6 +149,7 @@ const verifyOpenaiCompatibleEndpoint = async (
       headers: { Authorization: `Bearer ${apiKey}` },
       timeout: OPENAI_COMPATIBLE_VERIFY_TIMEOUT_MS,
       retry: 0,
+      redirect: "manual",
     })
     return { ok: true }
   } catch (error) {
@@ -168,6 +164,9 @@ const verifyOpenaiCompatibleEndpoint = async (
       const { status } = error.response
       if (status === 401 || status === 403) {
         return { ok: false, error: "Invalid API key" }
+      }
+      if (status >= 300 && status < 400) {
+        return { ok: false, error: "Unexpected redirect" }
       }
       return {
         ok: false,

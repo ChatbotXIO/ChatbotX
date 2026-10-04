@@ -1,4 +1,5 @@
 import ky, { HTTPError } from "ky"
+import { logger } from "../logger"
 
 const VERIFY_TIMEOUT_MS = 10_000
 const UNAUTHORIZED_STATUSES = new Set([401, 403])
@@ -58,15 +59,17 @@ const verifyConfigByProvider: Record<AiKeyProvider, VerifyConfig> = {
 /**
  * Verifies an AI provider API key by calling its public "list models" endpoint.
  *
- * Returns `false` only when the provider explicitly rejects the credentials
- * (HTTP 401/403). Transient failures (timeouts, rate limits, 5xx, network
- * errors) intentionally return `true`: we cannot prove the key is invalid, and
- * blocking the user on an unrelated outage would be a false negative.
+ * An explicit HTTP 401/403 proves the credentials are invalid. A successful
+ * response proves they are valid. Provider outages and unexpected responses
+ * remain unknown so callers can accept new credentials without falsely
+ * restoring an existing connection to healthy.
  */
-export async function verifyAiProviderApiKey(
+export type AiKeyValidation = "valid" | "invalid" | "unknown"
+
+export const verifyAiProviderApiKey = async (
   provider: AiKeyProvider,
   apiKey: string,
-): Promise<boolean> {
+): Promise<AiKeyValidation> => {
   const config = verifyConfigByProvider[provider]
 
   try {
@@ -75,11 +78,18 @@ export async function verifyAiProviderApiKey(
       timeout: VERIFY_TIMEOUT_MS,
       retry: 0,
     })
-    return true
-  } catch (error) {
-    if (error instanceof HTTPError) {
-      return !UNAUTHORIZED_STATUSES.has(error.response.status)
+    return "valid"
+  } catch (err) {
+    if (
+      err instanceof HTTPError &&
+      UNAUTHORIZED_STATUSES.has(err.response.status)
+    ) {
+      return "invalid"
     }
-    return true
+    logger.warn(
+      { err, provider },
+      "AI provider API key verification was inconclusive",
+    )
+    return "unknown"
   }
 }

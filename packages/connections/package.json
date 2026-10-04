@@ -31,7 +31,8 @@
     "@chatbotx.io/integration-zalo": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
-    "@chatbotx.io/utils": "workspace:*"
+    "@chatbotx.io/utils": "workspace:*",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

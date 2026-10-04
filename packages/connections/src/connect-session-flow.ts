@@ -3,6 +3,7 @@ import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import {
   authExpiresAtOf,
   type ConnectionAdapter,
+  type ConnectionQuotaConsumption,
   connectionStateService,
   isActiveConnectionStatus,
 } from "@chatbotx.io/business/connection"
@@ -49,6 +50,61 @@ import {
   upsertConnectionRow,
 } from "./internal"
 import { logger } from "./logger"
+
+const failSession = async (
+  session: Pick<ConnectSessionModel, "id" | "workspaceId" | "provider">,
+  errorCode: Parameters<typeof connectSessionService.fail>[0]["errorCode"],
+): Promise<void> => {
+  try {
+    await connectSessionService.fail({
+      id: session.id,
+      workspaceId: session.workspaceId,
+      errorCode,
+    })
+  } catch (err) {
+    logger.error(
+      { err, sessionId: session.id, provider: session.provider, errorCode },
+      "connection OAuth: failed to record terminal connect-session state",
+    )
+  }
+}
+
+const toFailureOutcome = (input: {
+  err: unknown
+  provider: IntegrationType
+  targetId: string
+}): ConnectSessionOutcome => {
+  if (
+    input.err instanceof ChatbotXException &&
+    input.err.code === "channelLimitReached"
+  ) {
+    return {
+      targetId: input.targetId,
+      status: "limitReached",
+      reason: "workspaceLimit",
+    }
+  }
+  if (
+    input.err instanceof ChatbotXException &&
+    input.err.code === "connectionAlreadyConnected"
+  ) {
+    return {
+      targetId: input.targetId,
+      status: "duplicated",
+      reason: "alreadyConnected",
+    }
+  }
+  logger.warn(
+    { err: input.err, targetId: input.targetId, provider: input.provider },
+    "connectTargets: candidate connect failed",
+  )
+  return {
+    targetId: input.targetId,
+    status: "failed",
+    reason: "providerRejected",
+    detail: toPublicErrorMessage(input.err, "Connect failed"),
+  }
+}
 
 /**
  * `oauth_redirect`/`oauth_popup` connect: creates a `ConnectSession`, then
@@ -166,20 +222,11 @@ export const completeAuthorization = async (input: {
       credential: input.credential,
     })
   } catch (err) {
-    // The genuine "user clicked cancel" case is filtered upstream — the
-    // OAuth callback handler checks `?error=...` and marks the session
-    // `provider_denied` BEFORE ever calling `completeAuthorization` with
-    // a `code` (see `apps/builder/src/app/integrations/[...integration]/callback.ts`).
-    // Every failure that reaches this catch is therefore the token
-    // exchange itself failing — network error, malformed response, or the
-    // provider rejecting an invalid/expired code — never an explicit
-    // denial, so it gets its own distinct terminal code rather than
-    // reusing `provider_denied`.
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode: "exchange_failed",
-    })
+    logger.warn(
+      { err, sessionId: session.id, provider: session.provider },
+      "connection OAuth: authorization code exchange failed",
+    )
+    await failSession(session, "exchange_failed")
     throw connectionCredentialsRejectedException(
       toPublicErrorMessage(err, "The provider rejected the authorization."),
     )
@@ -216,20 +263,18 @@ export const listAndAttachCandidates = async (
       ? await adapter.provider.listCandidates({ auth })
       : [{ ...adapter.provider.describe(auth), auth }]
   } catch (err) {
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode: "provider_error",
-    })
-    throw new Error(toPublicErrorMessage(err, "Failed to list accounts."))
+    logger.warn(
+      { err, sessionId: session.id, provider: session.provider },
+      "connection OAuth: candidate listing failed",
+    )
+    await failSession(session, "provider_error")
+    throw connectionCredentialsRejectedException(
+      toPublicErrorMessage(err, "Failed to list accounts."),
+    )
   }
 
   if (candidates.length === 0) {
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode: "no_candidates",
-    })
+    await failSession(session, "no_candidates")
     throw connectionNoCandidatesException()
   }
 
@@ -321,32 +366,20 @@ const completeReconnect = async (input: {
     workspaceId: session.workspaceId,
   })
   if (!connection) {
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode: "internal_error",
-    })
+    await failSession(session, "internal_error")
     throw notFoundException("Connection not found")
   }
 
   const adapter = resolveAdapter(connection.provider)
   const descriptor = adapter.provider.describe(auth)
   if (descriptor.sourceId !== connection.sourceId) {
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode: "provider_denied",
-    })
+    await failSession(session, "provider_denied")
     throw connectionIdentityMismatchException()
   }
 
   const foreignKey = resolveForeignKey(connection)
   if (!(adapter.store && foreignKey)) {
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode: "internal_error",
-    })
+    await failSession(session, "internal_error")
     throw connectionNotConfiguredException(connection.provider)
   }
   const store = adapter.store
@@ -360,36 +393,52 @@ const completeReconnect = async (input: {
   // (and consumes quota on it for a channel-kind connection) — the same
   // event `connectFromCredentials`'s revive path uses.
   const ownerId = await resolveOwnerId(connection)
-  await db.transaction(async (tx) => {
-    const integrationId = await saveOrInsertSatellite({
-      tx,
-      workspaceId: connection.workspaceId,
-      inboxId: connection.inboxId,
-      auth,
-      descriptor,
-      extraConfig: {},
-      existing: connection,
-      store,
-    })
-    await connectionRepository.update(
-      {
-        id: connection.id,
+  const quotaConsumption: ConnectionQuotaConsumption = {
+    consumed: false,
+    workspaceUsageIncremented: false,
+  }
+  try {
+    await db.transaction(async (tx) => {
+      const integrationId = await saveOrInsertSatellite({
+        tx,
         workspaceId: connection.workspaceId,
-        values: {
-          authExpiresAt,
-          lastError: null,
-          integrationId: integrationId ?? connection.integrationId,
+        inboxId: connection.inboxId,
+        auth,
+        descriptor,
+        extraConfig: {},
+        existing: connection,
+        store,
+      })
+      await connectionRepository.update(
+        {
+          id: connection.id,
+          workspaceId: connection.workspaceId,
+          values: {
+            authExpiresAt,
+            lastError: null,
+            integrationId: integrationId ?? connection.integrationId,
+          },
         },
-      },
-      tx,
-    )
-    await connectionStateService.transition({
-      connectionId: connection.id,
-      event: "connect.completed",
-      ownerId,
-      tx,
+        tx,
+      )
+      await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "connect.completed",
+        ownerId,
+        tx,
+        quotaConsumption,
+      })
     })
-  })
+  } catch (err) {
+    if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
+      await connectionStateService.compensateQuotaConsumption({
+        ownerId,
+        workspaceId: quotaConsumption.workspaceId,
+        workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
+      })
+    }
+    throw err
+  }
 
   return await connectSessionService.completeReconnect({
     id: session.id,
@@ -420,7 +469,6 @@ const completeReconnect = async (input: {
  * branding, workspace-logo push, tag-sync enqueue — see
  * `apps/builder/src/features/integration-messenger/actions/connect-page.ts`)
  * are NOT replicated here; `ConnectionProvider.actions` (reserved) is the
- * intended future home for a client to opt into any of those separately.
  */
 const connectCandidate = async (input: {
   adapter: ConnectionAdapter
@@ -436,7 +484,7 @@ const connectCandidate = async (input: {
     throw connectionNotConfiguredException(input.provider)
   }
   const store = adapter.store
-  const auth = input.candidate.auth as AuthValue
+  const auth = input.candidate.auth
   const descriptor = provider.describe(auth)
   const extraConfig = provider.candidateToConfig?.(auth) ?? {}
 
@@ -451,41 +499,58 @@ const connectCandidate = async (input: {
 
   const ownerId = input.ownerId
 
-  const connection = await db.transaction(async (tx) => {
-    let inboxId: string | undefined
-    if (provider.kind === "channel") {
-      if (!ownerId) {
-        throw notFoundException("Workspace owner not found")
+  const quotaConsumption: ConnectionQuotaConsumption = {
+    consumed: false,
+    workspaceUsageIncremented: false,
+  }
+  let connection: ConnectionModel
+  try {
+    connection = await db.transaction(async (tx) => {
+      let inboxId: string | undefined
+      if (provider.kind === "channel") {
+        if (!ownerId) {
+          throw notFoundException("Workspace owner not found")
+        }
+        const { inbox } = await inboxService.create({
+          data: {
+            workspaceId: input.workspaceId,
+            channel: toChannelType(input.provider),
+            sourceId: descriptor.sourceId,
+            name: descriptor.displayName,
+          },
+          ownerId,
+          tx,
+          skipQuota: true,
+        })
+        inboxId = inbox.id
       }
-      const { inbox } = await inboxService.create({
-        data: {
-          workspaceId: input.workspaceId,
-          channel: toChannelType(input.provider),
-          sourceId: descriptor.sourceId,
-          name: descriptor.displayName,
-        },
-        ownerId,
-        tx,
-        skipQuota: true,
-      })
-      inboxId = inbox.id
-    }
 
-    return await upsertConnectionRow({
-      tx,
-      workspaceId: input.workspaceId,
-      provider: input.provider,
-      kind: provider.kind,
-      descriptor,
-      auth,
-      extraConfig,
-      existing,
-      store,
-      ownerId,
-      actorUserId: input.actorUserId,
-      inboxId,
+      return await upsertConnectionRow({
+        tx,
+        workspaceId: input.workspaceId,
+        provider: input.provider,
+        kind: provider.kind,
+        descriptor,
+        auth,
+        extraConfig,
+        existing,
+        store,
+        ownerId,
+        quotaConsumption,
+        actorUserId: input.actorUserId,
+        inboxId,
+      })
     })
-  })
+  } catch (err) {
+    if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
+      await connectionStateService.compensateQuotaConsumption({
+        ownerId,
+        workspaceId: quotaConsumption.workspaceId,
+        workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
+      })
+    }
+    throw err
+  }
 
   return await subscribeWebhookBestEffort({
     adapter,
@@ -585,7 +650,7 @@ export const connectTargets = async (input: {
           adapter,
           provider: session.provider,
           workspaceId: input.workspaceId,
-          candidate: candidate as ConnectionCandidate,
+          candidate,
           ownerId,
           actorUserId: input.actorUserId,
         })
@@ -617,36 +682,13 @@ export const connectTargets = async (input: {
             "connectTargets: releaseTarget failed after a failed connect attempt; the target stays claimed until a later retry releases it",
           )
         }
-        if (
-          err instanceof ChatbotXException &&
-          err.code === "channelLimitReached"
-        ) {
-          outcomes.push({
+        outcomes.push(
+          toFailureOutcome({
+            err,
+            provider: session.provider,
             targetId,
-            status: "limitReached",
-            reason: "workspaceLimit",
-          })
-        } else if (
-          err instanceof ChatbotXException &&
-          err.code === "connectionAlreadyConnected"
-        ) {
-          outcomes.push({
-            targetId,
-            status: "duplicated",
-            reason: "alreadyConnected",
-          })
-        } else {
-          logger.warn(
-            { err, targetId, provider: session.provider },
-            "connectTargets: candidate connect failed",
-          )
-          outcomes.push({
-            targetId,
-            status: "failed",
-            reason: "providerRejected",
-            detail: toPublicErrorMessage(err, "Connect failed"),
-          })
-        }
+          }),
+        )
       }
     }
   } finally {

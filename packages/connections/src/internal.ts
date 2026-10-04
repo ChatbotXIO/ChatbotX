@@ -22,6 +22,7 @@ import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import type {
   AuthValue,
+  ConnectionCandidate,
   ConnectionConfigField,
   ConnectionDescriptor,
   ConnectionKind,
@@ -46,9 +47,9 @@ export const encryptedCandidatesSchema = z.array(
     authExpiresAt: z.string().optional(),
     avatarUrl: z.string().optional(),
     alreadyConnected: z.enum(["this_workspace", "other_workspace"]).optional(),
-    auth: z.unknown(),
+    auth: z.custom<AuthValue>(),
   }),
-)
+) satisfies z.ZodType<ConnectionCandidate[]>
 
 /**
  * The FK a `Connection` row actually carries to its satellite row —
@@ -128,9 +129,10 @@ export const parseConfig = (
   return parsed
 }
 
-export const resolveAdapter = (provider: string): ConnectionAdapter => {
-  const adapter =
-    CONNECTION_REGISTRY[provider as keyof typeof CONNECTION_REGISTRY]
+export const resolveAdapter = (
+  provider: IntegrationType,
+): ConnectionAdapter => {
+  const adapter = CONNECTION_REGISTRY[provider]
   if (!adapter) {
     throw connectionNotConfiguredException(provider)
   }
@@ -341,6 +343,11 @@ export const upsertConnectionRow = async (input: {
   existing: ConnectionModel | undefined
   store: NonNullable<ConnectionAdapter["store"]>
   ownerId: string | undefined
+  quotaConsumption: {
+    consumed: boolean
+    workspaceId?: string
+    workspaceUsageIncremented: boolean
+  }
   actorUserId?: string | null
   inboxId?: string | null
 }): Promise<ConnectionModel> => {
@@ -390,6 +397,7 @@ export const upsertConnectionRow = async (input: {
       event: "connect.completed",
       ownerId,
       tx,
+      quotaConsumption: input.quotaConsumption,
     })
   }
 
@@ -425,5 +433,6 @@ export const upsertConnectionRow = async (input: {
     event: "connect.completed",
     ownerId,
     tx,
+    quotaConsumption: input.quotaConsumption,
   })
 }

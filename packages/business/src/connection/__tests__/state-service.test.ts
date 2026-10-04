@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { connectionStateService } from "../state-service"
 
 const NO_OWNER_ID_MESSAGE = /no ownerId/
 
 const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
+  findByIdForWorkspace: vi.fn(),
+  list: vi.fn(),
+  count: vi.fn(),
   findByInboxId: vi.fn(),
   findByProviderAndSourceIdAnyWorkspace: vi.fn(),
   update: vi.fn(),
@@ -22,14 +26,15 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: {
     findById: mocks.findById,
+    findByIdForWorkspace: mocks.findByIdForWorkspace,
     findByInboxId: mocks.findByInboxId,
     findByIdForUpdate: mocks.findById,
     findByIdForUpdateById: mocks.findById,
     findByProviderAndSourceIdAnyWorkspace:
       mocks.findByProviderAndSourceIdAnyWorkspace,
     update: mocks.update,
-    list: vi.fn(),
-    count: vi.fn(),
+    list: mocks.list,
+    count: mocks.count,
   },
   aiHandoverSettingsRepository: { lockExisting: mocks.lockExisting },
   aiHandoverBulkRunRepository: { cancelLive: mocks.cancelLive },
@@ -69,8 +74,6 @@ vi.mock("../../inbox/service", () => ({
   inboxService: { disconnect: mocks.inboxDisconnect },
 }))
 
-const { connectionStateService } = await import("../state-service")
-
 const baseConnection = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: "conn-1",
   workspaceId: "ws-1",
@@ -93,6 +96,9 @@ const baseConnection = (overrides: Partial<Record<string, unknown>> = {}) => ({
 
 beforeEach(() => {
   mocks.findById.mockReset()
+  mocks.findByIdForWorkspace.mockReset()
+  mocks.list.mockReset()
+  mocks.count.mockReset()
   mocks.findByInboxId.mockReset()
   mocks.inboxDisconnect.mockReset()
   mocks.findByProviderAndSourceIdAnyWorkspace.mockReset()
@@ -204,6 +210,25 @@ describe("ConnectionStateService.transition", () => {
 
     expect(mocks.update).not.toHaveBeenCalled()
     expect(mocks.tryConsume).not.toHaveBeenCalled()
+  })
+
+  test("releases a consumed quota reservation when the state write fails", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.update.mockRejectedValueOnce(new Error("database write failed"))
+
+    await expect(
+      connectionStateService.transition({
+        connectionId: "conn-1",
+        event: "connect.completed",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toThrow("database write failed")
+
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+    expect(mocks.decrement).not.toHaveBeenCalled()
   })
 })
 
@@ -418,5 +443,67 @@ describe("ConnectionStateService.recordAuthSaved", () => {
     )
     expect(mocks.tryConsume).not.toHaveBeenCalled()
     expect(mocks.release).not.toHaveBeenCalled()
+  })
+})
+
+describe("ConnectionStateService workspace-scoped reads and display name", () => {
+  test("lists data and count with the same workspace scope", async () => {
+    const input = { workspaceId: "ws-1", page: 1, limit: 20 }
+    const data = [baseConnection()]
+    mocks.list.mockResolvedValue(data)
+    mocks.count.mockResolvedValue(1)
+
+    await expect(connectionStateService.list(input)).resolves.toEqual({
+      data,
+      count: 1,
+    })
+    expect(mocks.list).toHaveBeenCalledWith(input)
+    expect(mocks.count).toHaveBeenCalledWith(input)
+  })
+
+  test("gets a connection only through its workspace-scoped repository lookup", async () => {
+    const connection = baseConnection()
+    mocks.findByIdForWorkspace.mockResolvedValue(connection)
+
+    await expect(
+      connectionStateService.getForWorkspace({
+        id: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toEqual(connection)
+    expect(mocks.findByIdForWorkspace).toHaveBeenCalledWith({
+      id: "conn-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("updates only the display name and does nothing when the connection is absent", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValueOnce(undefined)
+    await expect(
+      connectionStateService.updateDisplayName({
+        id: "missing",
+        workspaceId: "ws-1",
+        displayName: "Ignored",
+      }),
+    ).resolves.toBeUndefined()
+    expect(mocks.update).not.toHaveBeenCalled()
+
+    const existing = baseConnection()
+    const updated = baseConnection({ displayName: "Renamed" })
+    mocks.findByIdForWorkspace.mockResolvedValueOnce(existing)
+    mocks.update.mockResolvedValueOnce(updated)
+
+    await expect(
+      connectionStateService.updateDisplayName({
+        id: "conn-1",
+        workspaceId: "ws-1",
+        displayName: "Renamed",
+      }),
+    ).resolves.toEqual(updated)
+    expect(mocks.update).toHaveBeenCalledWith({
+      id: "conn-1",
+      workspaceId: "ws-1",
+      values: { displayName: "Renamed" },
+    })
   })
 })

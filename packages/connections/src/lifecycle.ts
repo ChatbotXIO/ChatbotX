@@ -1,6 +1,7 @@
 import {
   authExpiresAtOf,
   connectionStateService,
+  InvalidConnectionTransitionException,
   isActiveConnectionStatus,
 } from "@chatbotx.io/business/connection"
 import {
@@ -22,6 +23,25 @@ import {
 } from "./internal"
 import { logger } from "./logger"
 
+const loadActiveConnectionStore = async (input: {
+  connectionId: string
+  workspaceId: string
+}) => {
+  const connection = await findOrThrow(input)
+  if (!isActiveConnectionStatus(connection.status)) {
+    throw connectionInactiveException()
+  }
+  const adapter = resolveAdapter(connection.provider)
+  if (!adapter.store) {
+    throw connectionNotConfiguredException(connection.provider)
+  }
+  const foreignKey = resolveForeignKey(connection)
+  if (!foreignKey) {
+    throw connectionNotConfiguredException(connection.provider)
+  }
+  return { connection, adapter, foreignKey, store: adapter.store }
+}
+
 /**
  * User-initiated teardown: best-effort provider-side disconnect + webhook
  * unsubscribe (never blocks the local state transition on an upstream
@@ -42,14 +62,16 @@ export const disconnect = async (input: {
   const connection = await findOrThrow(input)
   const adapter = resolveAdapter(connection.provider)
   const foreignKey = resolveForeignKey(connection)
-  let teardownError: string | null = null
+  const teardownErrors: string[] = []
 
   if (adapter.store && foreignKey) {
     let auth: AuthValue | null = null
     try {
       auth = await adapter.store.loadAuthByForeignKey(foreignKey)
     } catch (err) {
-      teardownError = toPublicErrorMessage(err, "Provider-side teardown failed")
+      teardownErrors.push(
+        toPublicErrorMessage(err, "Provider-side teardown failed"),
+      )
       logger.warn(
         { err, connectionId: connection.id, provider: connection.provider },
         "connection disconnect: failed to load auth for provider-side teardown, proceeding with local disconnect",
@@ -60,12 +82,8 @@ export const disconnect = async (input: {
         try {
           await adapter.integration.disconnect(auth)
         } catch (err) {
-          // Surfaced onto the row (not just logged) — a provider-side
-          // disconnect that silently failed is otherwise indistinguishable
-          // from a clean teardown once the row flips to `disconnected`.
-          teardownError = toPublicErrorMessage(
-            err,
-            "Provider-side teardown failed",
+          teardownErrors.push(
+            toPublicErrorMessage(err, "Provider-side teardown failed"),
           )
           logger.warn(
             { err, connectionId: connection.id, provider: connection.provider },
@@ -80,9 +98,8 @@ export const disconnect = async (input: {
           // Independent of the `disconnect` try/catch above — a channel
           // whose `disconnect` throws (e.g. not implemented) must not skip
           // its webhook unsubscribe, and vice versa.
-          teardownError = toPublicErrorMessage(
-            err,
-            "Webhook unsubscribe failed",
+          teardownErrors.push(
+            toPublicErrorMessage(err, "Webhook unsubscribe failed"),
           )
           logger.warn(
             { err, connectionId: connection.id, provider: connection.provider },
@@ -94,31 +111,51 @@ export const disconnect = async (input: {
   }
 
   const ownerId = await resolveOwnerId(connection)
-  // `deleteRowByForeignKey` and the FSM transition share one transaction:
-  // if the satellite delete throws, the whole disconnect rolls back
-  // instead of leaving the Connection row `connected` with its satellite
-  // row already gone.
-  return await db.transaction(async (tx) => {
-    if (adapter.store && foreignKey) {
-      await adapter.store.deleteRowByForeignKey(foreignKey, tx)
-    }
-    if (teardownError) {
-      await connectionRepository.update(
-        {
-          id: connection.id,
-          workspaceId: connection.workspaceId,
-          values: { lastError: teardownError },
-        },
+  try {
+    return await db.transaction(async (tx) => {
+      if (adapter.store && foreignKey) {
+        await adapter.store.deleteRowByForeignKey(foreignKey, tx)
+      }
+      if (teardownErrors.length > 0) {
+        await connectionRepository.update(
+          {
+            id: connection.id,
+            workspaceId: connection.workspaceId,
+            values: { lastError: teardownErrors.join("; ") },
+          },
+          tx,
+        )
+      }
+      return await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "user.disconnect",
+        ownerId,
         tx,
-      )
-    }
-    return await connectionStateService.transition({
-      connectionId: connection.id,
-      event: "user.disconnect",
-      ownerId,
-      tx,
+      })
     })
-  })
+  } catch (err) {
+    const lastError = [
+      ...teardownErrors,
+      toPublicErrorMessage(err, "Local disconnect finalization failed"),
+    ].join("; ")
+    await connectionRepository
+      .update({
+        id: connection.id,
+        workspaceId: connection.workspaceId,
+        values: { lastError },
+      })
+      .catch((persistErr) => {
+        logger.error(
+          {
+            err: persistErr,
+            connectionId: connection.id,
+            provider: connection.provider,
+          },
+          "connection disconnect: failed to persist teardown error after transaction rollback",
+        )
+      })
+    throw err
+  }
 }
 
 /** Forces `refreshAuth` regardless of expiry — `POST /v1/connections/{id}/refresh`. */
@@ -126,49 +163,41 @@ export const refresh = async (input: {
   connectionId: string
   workspaceId: string
 }): Promise<ConnectionModel> => {
-  const connection = await findOrThrow(input)
-  if (!isActiveConnectionStatus(connection.status)) {
-    throw connectionInactiveException()
-  }
-  const adapter = resolveAdapter(connection.provider)
+  const { connection, adapter, foreignKey, store } =
+    await loadActiveConnectionStore(input)
   if (!adapter.integration?.refreshAuth) {
     throw connectionNotRefreshableException(connection.provider)
   }
-  if (!adapter.store) {
-    throw connectionNotConfiguredException(connection.provider)
-  }
-  const foreignKey = resolveForeignKey(connection)
-  if (!foreignKey) {
-    throw connectionNotConfiguredException(connection.provider)
-  }
-  const store = adapter.store
 
   const auth = await store.loadAuthByForeignKey(foreignKey)
   const authStore: AuthStore<AuthValue> = {
     load: async () => await store.loadAuthByForeignKey(foreignKey),
     save: async (newAuth) => {
-      await db.transaction(async (tx) => {
-        const saved = await store.saveAuthByForeignKey(
-          foreignKey,
-          newAuth,
-          undefined,
-          tx,
+      const saved = await store.saveAuthByForeignKey(foreignKey, newAuth)
+      if (!saved) {
+        throw new Error(
+          `Connection ${connection.id} auth persistence did not match a satellite row`,
         )
-        if (!saved) {
-          throw new Error(
-            `Connection ${connection.id} auth persistence did not match a satellite row`,
-          )
-        }
+      }
+      try {
         await connectionStateService.recordAuthSaved({
           connectionId: connection.id,
           authExpiresAt: authExpiresAtOf(newAuth),
-          tx,
         })
-      })
+      } catch (err) {
+        if (err instanceof InvalidConnectionTransitionException) {
+          logger.warn(
+            { err, connectionId: connection.id },
+            "connection refresh: auth was saved after an inactive transition",
+          )
+          return
+        }
+        throw err
+      }
     },
     markOffline: async () => {
       const ownerId = await resolveOwnerId(connection)
-      await connectionStateService.recordRefreshFailure({
+      await connectionStateService.markUnhealthy({
         connectionId: connection.id,
         ownerId,
       })
@@ -208,22 +237,12 @@ export const verify = async (input: {
   connectionId: string
   workspaceId: string
 }): Promise<ConnectionModel> => {
-  const connection = await findOrThrow(input)
-  if (!isActiveConnectionStatus(connection.status)) {
-    throw connectionInactiveException()
-  }
-  const adapter = resolveAdapter(connection.provider)
-  if (!adapter.store) {
-    throw connectionNotConfiguredException(connection.provider)
-  }
-  const foreignKey = resolveForeignKey(connection)
-  if (!foreignKey) {
-    throw connectionNotConfiguredException(connection.provider)
-  }
+  const { connection, adapter, foreignKey, store } =
+    await loadActiveConnectionStore(input)
 
   const [ownerId, health] = await Promise.all([
     resolveOwnerId(connection),
-    adapter.store
+    store
       .loadAuthByForeignKey(foreignKey)
       .then(async (auth) => await adapter.provider.verify({ auth })),
   ])

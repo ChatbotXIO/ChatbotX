@@ -3,7 +3,7 @@ import { getChildLogger } from "@chatbotx.io/logger"
 
 const log = getChildLogger("purge-expired-connect-sessions")
 
-/** Matches the retention window every other short-lived/staging table in this codebase uses (`PARSE_FAILED_RETENTION_DAYS`, `GRACE_DAYS`). */
+/** Retention window for terminal connect sessions. */
 const TERMINAL_RETENTION_DAYS = 7
 const CHUNK_SIZE = 500
 const INTER_CHUNK_DELAY_MS = 100

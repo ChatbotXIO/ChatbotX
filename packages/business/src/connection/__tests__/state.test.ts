@@ -24,13 +24,25 @@ describe("transitionConnection — quota edge invariant", () => {
     }
   })
 
-  test("connect.completed from an already-ACTIVE status is an idempotent no-op with no quota change", () => {
-    for (const from of ["connected", "degraded"] as const) {
-      const result = transitionConnection({ from, event: "connect.completed" })
-      expect(result.to).toBe(from)
-      expect(result.noop).toBe(true)
-      expect(result.quotaEdge).toBeNull()
-    }
+  test("connect.completed from degraded restores connected without changing quota", () => {
+    const result = transitionConnection({
+      from: "degraded",
+      event: "connect.completed",
+    })
+
+    expect(result.to).toBe("connected")
+    expect(result.noop).toBe(false)
+    expect(result.quotaEdge).toBeNull()
+  })
+
+  test("connect.completed from connected is an idempotent no-op with no quota change", () => {
+    const result = transitionConnection({
+      from: "connected",
+      event: "connect.completed",
+    })
+
+    expect(result.noop).toBe(true)
+    expect(result.quotaEdge).toBeNull()
   })
 
   test("user.disconnect from an ACTIVE status releases quota exactly once", () => {

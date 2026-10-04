@@ -87,10 +87,10 @@ const result = (
 
 /**
  * Resolve one event against the current status. Throws
- * {@link InvalidConnectionTransitionException} only for `refresh`/`verify`
- * events fired against an INACTIVE status (409 `CONNECTION_INACTIVE` at the
- * API layer) — every other unmodeled combination is an idempotent no-op that
- * returns the current status unchanged.
+ * {@link InvalidConnectionTransitionException} only for `auth.saved`,
+ * `refresh`, or `verify` events fired against an INACTIVE status (409
+ * `CONNECTION_INACTIVE` at the API layer) — every other unmodeled combination
+ * is an idempotent no-op that returns the current status unchanged.
  */
 export const transitionConnection = (
   input: ConnectionTransitionInput,
@@ -99,11 +99,7 @@ export const transitionConnection = (
 
   switch (event) {
     case "connect.completed": {
-      if (
-        from !== undefined &&
-        from !== "disconnected" &&
-        from !== "needs_reauth"
-      ) {
+      if (from === "connected" || from === "paused") {
         return result(from, from, null)
       }
       return result(from, "connected", null)

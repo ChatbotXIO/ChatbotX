@@ -16,8 +16,7 @@ import type { ConnectionStoreBinding } from "./store-bindings"
  * `@chatbotx.io/connections` assembles `Record<IntegrationType, ConnectionAdapter | null>`
  * from each `integrations/<provider>`'s `connection` export plus
  * `CONNECTION_STORE_BINDINGS` — `null` for types with no connect lifecycle
- * yet (e.g. `chatbotx`, `metaCatalog` before it gets an `integrations/`
- * package).
+ * yet (for example `metaCatalog`, `outlookCalendar`, and `threads`).
  */
 export type ConnectionAdapter = {
   /**

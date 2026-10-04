@@ -131,7 +131,7 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
           await workspaceMemberService.findOwnerUserIdByWorkspaceId({
             workspaceId: connection.workspaceId,
           })
-        await connectionStateService.recordRefreshFailure({
+        await connectionStateService.markUnhealthy({
           connectionId: connection.id,
           ownerId,
         })

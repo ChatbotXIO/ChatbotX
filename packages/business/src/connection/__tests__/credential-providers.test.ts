@@ -1,14 +1,24 @@
+import type * as KyModule from "ky"
 import type { NormalizedOptions } from "ky"
 import { HTTPError, NetworkError, TimeoutError } from "ky"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  claudeConnectionProvider,
+  deepseekConnectionProvider,
+  geminiConnectionProvider,
+  openaiCompatibleConnectionProvider,
+  openaiConnectionProvider,
+  openrouterConnectionProvider,
+} from "../credential-providers"
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   isCloud: vi.fn(() => false),
+  verifyAiProviderApiKey: vi.fn(async () => "valid"),
 }))
 
 vi.mock("ky", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("ky")>()
+  const actual = await importOriginal<typeof KyModule>()
   return {
     ...actual,
     default: { get: mocks.get },
@@ -16,7 +26,7 @@ vi.mock("ky", async (importOriginal) => {
 })
 
 vi.mock("../../integration-ai-provider/verify", () => ({
-  verifyAiProviderApiKey: vi.fn(async () => true),
+  verifyAiProviderApiKey: mocks.verifyAiProviderApiKey,
 }))
 
 // Defaults to OSS (`isCloud() === false`), matching every pre-existing test
@@ -26,9 +36,6 @@ vi.mock("../../integration-ai-provider/verify", () => ({
 // …) through a real DNS-over-HTTPS lookup in `assertPublicUrl`.
 vi.mock("../../keys", () => ({ isCloud: mocks.isCloud }))
 
-const { openaiCompatibleConnectionProvider } = await import(
-  "../credential-providers"
-)
 // Narrowed once: `ConnectionProvider.fromCredentials` is optional in the
 // general type, but `openaiCompatibleConnectionProvider` always defines it.
 if (!openaiCompatibleConnectionProvider.fromCredentials) {
@@ -114,6 +121,87 @@ describe("openaiCompatibleConnectionProvider.fromCredentials", () => {
         baseURL: "https://slow.example.com",
       }),
     ).rejects.toThrow("did not respond in time")
+  })
+
+  it("rejects redirects without following them to another host", async () => {
+    mocks.get.mockRejectedValue(
+      new HTTPError(
+        new Response(null, { status: 302 }),
+        fakeRequest(),
+        fakeOptions,
+      ),
+    )
+
+    await expect(
+      fromCredentials({
+        apiKey: "sk-live",
+        baseURL: "https://provider.example.com",
+      }),
+    ).rejects.toThrow("Unexpected redirect")
+
+    expect(mocks.get).toHaveBeenCalledWith(
+      "https://provider.example.com/models",
+      expect.objectContaining({ redirect: "manual" }),
+    )
+  })
+})
+
+describe.each([
+  ["claude", claudeConnectionProvider],
+  ["deepseek", deepseekConnectionProvider],
+  ["gemini", geminiConnectionProvider],
+  ["openai", openaiConnectionProvider],
+  ["openrouter", openrouterConnectionProvider],
+] as const)("AI API-key provider: %s", (providerName, provider) => {
+  it("accepts a credential when validation is inconclusive", async () => {
+    const fromCredentials = provider.fromCredentials
+    if (!fromCredentials) {
+      throw new Error(`${providerName} is missing fromCredentials`)
+    }
+    mocks.verifyAiProviderApiKey.mockResolvedValueOnce("unknown")
+
+    await expect(
+      fromCredentials({ apiKey: "possibly-valid-key" }),
+    ).resolves.toEqual({
+      authType: "secretText",
+      secretText: "possibly-valid-key",
+    })
+  })
+
+  it("marks invalid credentials revoked and unknown verification degraded", async () => {
+    mocks.verifyAiProviderApiKey.mockResolvedValueOnce("invalid")
+    await expect(
+      provider.verify({ auth: { authType: "secretText", secretText: "bad" } }),
+    ).resolves.toEqual({
+      ok: false,
+      revoked: true,
+      error: "Invalid API key",
+    })
+
+    mocks.verifyAiProviderApiKey.mockResolvedValueOnce("unknown")
+    await expect(
+      provider.verify({
+        auth: { authType: "secretText", secretText: "unknown" },
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      revoked: false,
+      error: "Unable to verify API key",
+    })
+  })
+})
+
+describe("openaiCompatibleConnectionProvider.verify", () => {
+  it("does not report healthy without the stored base URL", async () => {
+    await expect(
+      openaiCompatibleConnectionProvider.verify({
+        auth: { authType: "secretText", secretText: "sk-live" },
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      revoked: false,
+      error: "OpenAI-compatible endpoints require credential revalidation",
+    })
   })
 })
 

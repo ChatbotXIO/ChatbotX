@@ -80,9 +80,9 @@ const fromCredentialProvider = (
 
 /**
  * Compile-time exhaustive `Record<IntegrationType, ConnectionAdapter | null>`.
- * `null` marks a type with no connect lifecycle yet: `metaCatalog` and
- * `outlookCalendar` have DB tables but no `integrations/` package or live
- * builder feature yet. `chatbotx` DOES have a real adapter (its `store` is
+ * `null` marks a type with no connect lifecycle yet: `metaCatalog`,
+ * `outlookCalendar`, and `threads` have no live builder feature or supported
+ * connection engine path. `chatbotx` DOES have a real adapter (its `store` is
  * `undefined` — it has no satellite table; the `Inbox` row is the whole
  * connection).
  */

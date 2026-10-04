@@ -20,10 +20,7 @@ const mocks = vi.hoisted(() => ({
     id: input.connectionId,
     status: "needs_reauth",
   })),
-  recordRefreshFailure: vi.fn(async (input: Record<string, unknown>) => ({
-    id: input.connectionId,
-    status: "needs_reauth",
-  })),
+  compensateQuotaConsumption: vi.fn(async () => undefined),
   recordAuthSaved: vi.fn(async (input: Record<string, unknown>) => ({
     id: input.connectionId,
     status: "connected",
@@ -120,9 +117,10 @@ vi.mock("@chatbotx.io/business/connection", () => ({
   connectionStateService: {
     transition: mocks.transition,
     markUnhealthy: mocks.markUnhealthy,
-    recordRefreshFailure: mocks.recordRefreshFailure,
+    compensateQuotaConsumption: mocks.compensateQuotaConsumption,
     recordAuthSaved: mocks.recordAuthSaved,
   },
+  InvalidConnectionTransitionException: Error,
   isActiveConnectionStatus: (status: string) =>
     status === "connected" || status === "degraded",
 }))
@@ -320,10 +318,6 @@ beforeEach(() => {
     id: input.connectionId,
     status: "needs_reauth",
   }))
-  mocks.recordRefreshFailure.mockImplementation(async (input) => ({
-    id: input.connectionId,
-    status: "needs_reauth",
-  }))
   mocks.authorizeUrl.mockReturnValue("https://provider.example.com/authorize")
   mocks.exchangeCode.mockResolvedValue({
     authType: "oauth2",
@@ -467,6 +461,31 @@ describe("ConnectionService.disconnect", () => {
     )
   })
 
+  it("persists the provider teardown and transaction failure after local rollback", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
+    mocks.disconnect.mockRejectedValueOnce(new Error("upstream 500"))
+    mocks.update.mockResolvedValue(undefined)
+    mocks.transaction.mockImplementationOnce(async (fn) => {
+      await fn("tx")
+      throw new Error("transaction commit failed")
+    })
+
+    await expect(
+      connectionService.disconnect({
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("transaction commit failed")
+
+    expect(mocks.update).toHaveBeenLastCalledWith({
+      id: "conn-1",
+      workspaceId: "ws-1",
+      values: {
+        lastError: "upstream 500; transaction commit failed",
+      },
+    })
+  })
+
   it("still calls webhook unsubscribe when the provider disconnect throws (e.g. not implemented) (I11)", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockRejectedValueOnce(
@@ -562,14 +581,40 @@ describe("ConnectionService.refresh", () => {
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "inbox-1",
       expect.objectContaining({ authType: "oauth2" }),
-      undefined,
-      "tx",
     )
     expect(mocks.recordAuthSaved).toHaveBeenCalledWith({
       connectionId: "conn-1",
       authExpiresAt: new Date("2030-01-01T00:00:00.000Z"),
-      tx: "tx",
     })
+  })
+
+  it("keeps rotated auth when the connection became inactive before mirroring", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
+    mocks.findById.mockResolvedValue(baseConnection())
+    mocks.recordAuthSaved.mockRejectedValueOnce(
+      new Error("connection inactive"),
+    )
+    mocks.ensureFreshAuth.mockImplementation(async (ctx) => {
+      await ctx.authStore.save({
+        authType: "oauth2",
+        tokens: { accessToken: "rotated" },
+      })
+    })
+
+    await expect(
+      connectionService.refresh({
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toMatchObject({ id: "conn-1" })
+
+    expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
+      "inbox-1",
+      expect.objectContaining({
+        authType: "oauth2",
+        tokens: { accessToken: "rotated" },
+      }),
+    )
   })
 
   it("does not record refreshed auth when no satellite row matches", async () => {
@@ -599,7 +644,7 @@ describe("ConnectionService.refresh", () => {
       connectionId: "conn-1",
       workspaceId: "ws-1",
     })
-    expect(mocks.recordRefreshFailure).toHaveBeenCalledWith({
+    expect(mocks.markUnhealthy).toHaveBeenCalledWith({
       connectionId: "conn-1",
       ownerId: "owner-1",
     })
@@ -735,6 +780,7 @@ describe("ConnectionService.connectFromCredentials", () => {
       event: "connect.completed",
       ownerId: "owner-1",
       tx: "tx",
+      quotaConsumption: expect.anything(),
     })
     expect(result.id).toBe("conn-existing")
   })
@@ -780,8 +826,38 @@ describe("ConnectionService.connectFromCredentials", () => {
       event: "connect.completed",
       ownerId: "owner-1",
       tx: "tx",
+      quotaConsumption: expect.anything(),
     })
     expect(result.id).toBe("conn-new")
+  })
+
+  it("releases a consumed quota reservation when the connection transaction rolls back", async () => {
+    mocks.transition.mockImplementationOnce((input) => {
+      Object.assign(input.quotaConsumption as object, {
+        consumed: true,
+        workspaceId: "ws-1",
+        workspaceUsageIncremented: true,
+      })
+      return { id: input.connectionId, status: "connected" }
+    })
+    mocks.transaction.mockImplementationOnce(async (fn) => {
+      await fn("tx")
+      throw new Error("transaction commit failed")
+    })
+
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "claude",
+        config: { apiKey: "sk-live" },
+      }),
+    ).rejects.toThrow("transaction commit failed")
+
+    expect(mocks.compensateQuotaConsumption).toHaveBeenCalledWith({
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+      workspaceUsageIncremented: true,
+    })
   })
 
   it("subscribes the provider webhook after a successful connect", async () => {
@@ -810,6 +886,7 @@ describe("ConnectionService.connectFromCredentials", () => {
       event: "connect.completed",
       ownerId: "owner-1",
       tx: "tx",
+      quotaConsumption: expect.anything(),
     })
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-new",
@@ -903,6 +980,7 @@ describe("ConnectionService.connectFromCredentials", () => {
       event: "connect.completed",
       ownerId: "owner-1",
       tx: "tx",
+      quotaConsumption: expect.anything(),
     })
     expect(result.id).toBe("conn-existing")
   })
@@ -940,6 +1018,7 @@ describe("ConnectionService.connectFromCredentials", () => {
       event: "connect.completed",
       ownerId: "owner-1",
       tx: "tx",
+      quotaConsumption: expect.anything(),
     })
     expect(result.id).toBe("conn-existing")
 
@@ -1326,6 +1405,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
       event: "connect.completed",
       ownerId: "owner-1",
       tx: "tx",
+      quotaConsumption: expect.anything(),
     })
     expect(mocks.recordAuthSaved).not.toHaveBeenCalled()
     expect(mocks.completeReconnect).toHaveBeenCalledWith({

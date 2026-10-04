@@ -1,4 +1,8 @@
-import { isActiveConnectionStatus } from "@chatbotx.io/business/connection"
+import {
+  type ConnectionQuotaConsumption,
+  connectionStateService,
+  isActiveConnectionStatus,
+} from "@chatbotx.io/business/connection"
 import {
   connectionAlreadyConnectedException,
   connectionCredentialsRejectedException,
@@ -141,22 +145,39 @@ export const connectFromCredentials = async (input: {
     throw connectionAlreadyConnectedException()
   }
 
-  const connection = await db.transaction(
-    async (tx) =>
-      await upsertConnectionRow({
-        tx,
-        workspaceId: input.workspaceId,
-        provider: input.provider,
-        kind: provider.kind,
-        descriptor,
-        auth,
-        extraConfig,
-        existing,
-        store,
+  const quotaConsumption: ConnectionQuotaConsumption = {
+    consumed: false,
+    workspaceUsageIncremented: false,
+  }
+  let connection: ConnectionModel
+  try {
+    connection = await db.transaction(
+      async (tx) =>
+        await upsertConnectionRow({
+          tx,
+          workspaceId: input.workspaceId,
+          provider: input.provider,
+          kind: provider.kind,
+          descriptor,
+          auth,
+          extraConfig,
+          existing,
+          store,
+          ownerId,
+          quotaConsumption,
+          actorUserId: input.actorUserId,
+        }),
+    )
+  } catch (err) {
+    if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
+      await connectionStateService.compensateQuotaConsumption({
         ownerId,
-        actorUserId: input.actorUserId,
-      }),
-  )
+        workspaceId: quotaConsumption.workspaceId,
+        workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
+      })
+    }
+    throw err
+  }
 
   return await subscribeWebhookBestEffort({
     adapter,
