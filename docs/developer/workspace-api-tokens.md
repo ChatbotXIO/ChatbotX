@@ -420,6 +420,11 @@ an endpoint's scope.
   - *Webchat welcome-flow ownership is always validated.* Public writes pass
     `welcomeFlowId` through `integrationWebchatService`, which verifies the
     flow belongs to the workspace before persisting it.
+  - *Channel discovery.* `GET /v1/channel-integrations` (`?channel=` narrows)
+    and `GET /v1/{whatsapp,messenger,instagram,zalo,tiktok}-channels[/{id}]`
+    list connected channels with safe columns only (never credentials); they
+    return the ids other routes need. `PATCH /v1/inboxes/{id}` currently sets
+    `markReadOnOutbound` only and needs the `inbox` scope.
 
 - **Integrations** — covers workspace integrations, AI provider credentials,
   external webhooks, and event webhooks. A token scoped to `["integrations"]`
