@@ -1,20 +1,11 @@
 import type { Context } from "@chatbotx.io/sdk"
+import { jsonResponse } from "@chatbotx.io/vitest-config/test-utils"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { integration } from "../src/integration"
 import {
   createGetResponseAuth,
   type GetResponseAuthValue,
 } from "../src/schemas"
-
-const jsonResponse = (
-  body: unknown,
-  status = 200,
-  headers: Record<string, string> = {},
-) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...headers },
-  })
 
 const createContext = (
   auth: GetResponseAuthValue,

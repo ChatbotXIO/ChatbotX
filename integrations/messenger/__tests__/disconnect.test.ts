@@ -46,9 +46,8 @@ describe("Messenger disconnect", () => {
   })
 
   test("continues to app-token unsubscribe when persistent menu cleanup fails", async () => {
-    mocks.deleteProfileFields.mockRejectedValueOnce(
-      new Error("menu cleanup failed"),
-    )
+    const cleanupError = new Error("menu cleanup failed")
+    mocks.deleteProfileFields.mockRejectedValueOnce(cleanupError)
 
     await integration.disconnect?.(auth)
 
@@ -62,7 +61,7 @@ describe("Messenger disconnect", () => {
       version: "v99.0",
     })
     expect(mocks.loggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({ err: "menu cleanup failed" }),
+      expect.objectContaining({ err: cleanupError }),
       expect.any(String),
     )
   })

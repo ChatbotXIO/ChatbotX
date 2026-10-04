@@ -93,7 +93,7 @@ beforeEach(() => {
   callOrder.length = 0
 })
 
-test("registers the smtp integrations public router under the channels scope", () => {
+test("registers the SMTP integrations public router under the channels scope", () => {
   expect(scopeArgAtImport).toBe("channels")
 })
 

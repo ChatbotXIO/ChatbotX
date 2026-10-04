@@ -1,5 +1,6 @@
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import type { AuthValue, Oauth2AuthValue } from "./auth"
+import type { ConnectionProvider } from "./connection"
 import {
   AuthException,
   AuthRefreshException,
@@ -7,6 +8,7 @@ import {
   SdkException,
 } from "./exception"
 import type { SendFlowStepData } from "./flow-step-data"
+import { sdkLogger } from "./logger"
 import type {
   BaseConfig,
   BulkThreadControlAction,
@@ -506,6 +508,9 @@ export type IntegrationDefinition<
   >
   disconnect: Handler<IAuth, void>
   refreshAuth?: Handler<{ auth: IAuth }, IAuth>
+  /** Adapter for connection authorization, identity, health, and webhooks. */
+  // biome-ignore lint/suspicious/noExplicitAny: credential shape varies per provider
+  connection?: ConnectionProvider<IAuth, any>
 }
 
 // ---------------------------------------------------------------------------
@@ -585,6 +590,10 @@ export class Integration<
 
   get disconnect(): T["disconnect"] {
     return this.props.disconnect
+  }
+
+  get connection(): T["connection"] {
+    return this.props.connection
   }
 
   get handleRequest(): T["handleRequest"] {
@@ -698,7 +707,7 @@ export class Integration<
       return await handler({ ...(props as object), ctx })
     } catch (error) {
       if (error instanceof AuthException && this.props.refreshAuth) {
-        ctx = await this.refreshAndPersist(ctx)
+        ctx = await this.refreshAndPersist(ctx, { force: true })
         return await handler({ ...(props as object), ctx })
       }
       throw error
@@ -722,28 +731,32 @@ export class Integration<
 
   private async refreshAndPersist(
     ctx: Context<AuthValue>,
+    opts?: { force?: boolean },
   ): Promise<Context<AuthValue>> {
-    const refreshAuth = this.props.refreshAuth
-    if (!refreshAuth) {
-      throw new SdkException(
-        `Integration "${this.name}" does not implement refreshAuth.`,
-      )
-    }
-
     const run = async (): Promise<Context<AuthValue>> => {
-      // Re-read current auth from the store to avoid clobbering a refresh that
-      // a sibling worker already completed inside the same lock window.
       let baseAuth = ctx.auth
       if (ctx.authStore) {
         try {
           baseAuth = await ctx.authStore.load()
-        } catch {
-          // Fall back to the in-memory auth if reload fails.
+        } catch (error) {
+          sdkLogger.warn(
+            { err: error, integration: this.name },
+            "Failed to reload integration auth; using in-memory auth",
+          )
         }
       }
 
-      if (!this.shouldProactivelyRefresh(baseAuth)) {
+      if (
+        baseAuth.authType !== "oauth2" ||
+        !(opts?.force || this.shouldProactivelyRefresh(baseAuth))
+      ) {
         return { ...ctx, auth: baseAuth }
+      }
+      const refreshAuth = this.props.refreshAuth
+      if (!refreshAuth) {
+        throw new SdkException(
+          `Integration "${this.name}" does not implement refreshAuth.`,
+        )
       }
 
       const newAuth = await this.refreshWithRetry(refreshAuth, baseAuth, ctx)
@@ -756,11 +769,20 @@ export class Integration<
     return ctx.authStore?.withLock ? await ctx.authStore.withLock(run) : run()
   }
 
+  /** Refreshes OAuth2 auth when it is near expiry or when explicitly forced. */
+  async ensureFreshAuth(
+    ctx: Context<AuthValue>,
+    opts?: { force?: boolean },
+  ): Promise<Context<AuthValue>> {
+    return await this.refreshAndPersist(ctx, opts)
+  }
+
   /**
    * Call the per-integration `refreshAuth` with bounded exponential backoff.
-   * On terminal failure (refresh-token revoked, all retries exhausted) the
-   * integration is marked offline via `ctx.authStore.markOffline` and an
-   * {@link AuthRefreshException} is thrown.
+   * A terminal failure (`AuthException` or one recognized by
+   * `connection.isRevokedTokenError`) marks the integration offline. Transient
+   * failures throw after retries but retain the connection for the next
+   * scheduled refresh.
    */
   private async refreshWithRetry(
     refreshAuth: NonNullable<T["refreshAuth"]>,
@@ -768,14 +790,18 @@ export class Integration<
     ctx: Context<AuthValue>,
   ): Promise<AuthValue> {
     let lastError: unknown
+    let attempts = 0
+    let isTerminal = false
     for (let attempt = 1; attempt <= AUTH_REFRESH_MAX_ATTEMPTS; attempt++) {
+      attempts = attempt
       try {
         return await refreshAuth({ auth: baseAuth })
       } catch (err) {
         lastError = err
-        // AuthException signals a non-recoverable refresh failure
-        // (revoked refresh token, invalid_grant, etc.) — stop retrying.
-        if (err instanceof AuthException) {
+        isTerminal =
+          err instanceof AuthException ||
+          this.props.connection?.isRevokedTokenError?.(err) === true
+        if (isTerminal) {
           break
         }
         if (attempt < AUTH_REFRESH_MAX_ATTEMPTS) {
@@ -784,16 +810,19 @@ export class Integration<
       }
     }
 
-    if (ctx.authStore?.markOffline) {
+    if (isTerminal && ctx.authStore?.markOffline) {
       try {
         await ctx.authStore.markOffline(lastError)
-      } catch {
-        // Don't shadow the underlying refresh failure with a markOffline failure.
+      } catch (error) {
+        sdkLogger.error(
+          { err: error, integration: this.name },
+          "Failed to mark integration auth offline",
+        )
       }
     }
 
     throw new AuthRefreshException(
-      `Integration "${this.name}" auth refresh failed after ${AUTH_REFRESH_MAX_ATTEMPTS} attempt(s); marked offline.`,
+      `Integration "${this.name}" auth refresh failed after ${attempts} attempt(s).`,
       lastError,
     )
   }

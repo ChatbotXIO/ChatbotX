@@ -1,6 +1,8 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { getResponseRequest } from "./client"
@@ -40,24 +42,45 @@ const mapPageMeta = (props: {
   total: props.total,
 })
 
+const getResponseFields = [
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+  },
+] as const
+
+const buildGetResponseAuth = async (config: {
+  apiKey: string
+}): Promise<GetResponseAuthValue> => createGetResponseAuth(config.apiKey)
+
+const probeGetResponse = async (auth: GetResponseAuthValue) => {
+  await getResponseRequest(
+    auth,
+    GET_RESPONSE_ACCOUNTS_PATH,
+    getResponseAccountsResponseSchema,
+    undefined,
+    [200],
+  )
+}
+
+const connection = apiKeyConnection({
+  displayName: "GetResponse",
+  fields: getResponseFields,
+  buildAuth: buildGetResponseAuth,
+  probe: probeGetResponse,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   GetResponseConfig,
   GetResponseAuthValue,
   GetResponseActions
 > = {
   name: "getResponse",
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createGetResponseAuth(props.apiKey)
-      await getResponseRequest(
-        auth,
-        GET_RESPONSE_ACCOUNTS_PATH,
-        getResponseAccountsResponseSchema,
-        undefined,
-        [200],
-      )
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listCampaigns: async ({ ctx, props }) => {
       const response = await getResponseRequest(
         ctx.auth,

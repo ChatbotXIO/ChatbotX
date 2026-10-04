@@ -193,6 +193,7 @@ These are the most common mistakes — read before writing any code:
 21. **TanStack Query mutations must invalidate.** `router.refresh()` only re-renders the RSC tree; it does not touch the browser-singleton QueryClient (`apps/builder/src/lib/query/query-client.ts`, `staleTime: 30_000`) that survives navigation. Every create, update, delete, toggle, or move of a TanStack-cached resource must call its invalidator (`useInvalidateTags`, `useInvalidateInboxes`, `useInvalidateUsers`, `useInvalidateSequences`, `useInvalidateCustomFields`, `useInvalidateBotFields`, `useInvalidateFlows`, `useSavedReplyCache`) or `setQueryData`. Invalidate before `router.push`. Shared mutation dialogs such as `ChangeFolderDialog` must expose `onSuccess` so callers can invalidate their resource. List payloads may contain derived fields (`flowVersions`, `folderId`, `stepsCount`), so invalidation is required even when the primary entity is unchanged.
 
 22. **`ContactInboxPost` has no FK and is partitioned by `workspaceId`.** Every ContactInbox, Contact, or Workspace delete path must go through `contactInboxPostService`; every post query must include `workspaceId`; and post writes must hold the durable workspace purge guard through commit.
+
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Git conventions

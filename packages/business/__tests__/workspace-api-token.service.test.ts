@@ -8,6 +8,7 @@ const findByTokenHash = vi.fn(
     id: string
     workspaceId: string
     permission: string
+    scopes: string[] | null
   } | null> => null,
 )
 const listByWorkspaceId = vi.fn(async () => [] as unknown[])
@@ -133,6 +134,7 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
       id: "t-1",
       workspaceId: "ws-1",
       permission: "full",
+      scopes: null,
     })
 
     const auth = await workspaceApiTokenService.findWorkspaceByTokenHash({
@@ -146,7 +148,32 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
     })
     expect(auth).toEqual({
       workspace: { id: "ws-1", name: "Acme", token: null },
-      apiToken: { id: "t-1", workspaceId: "ws-1", permission: "full" },
+      apiToken: {
+        id: "t-1",
+        workspaceId: "ws-1",
+        permission: "full",
+        scopes: null,
+      },
+    })
+  })
+
+  test("preserves distinct scopes from a cached token", async () => {
+    withCache.mockResolvedValue({
+      workspace: { id: "ws-1", name: "Acme", token: null },
+      apiToken: {
+        id: "t-1",
+        workspaceId: "ws-1",
+        permission: "full",
+        scopes: ["channels", "integrations"],
+      },
+    })
+
+    await expect(
+      workspaceApiTokenService.findWorkspaceByTokenHash({
+        tokenHash: TOKEN_HASH,
+      }),
+    ).resolves.toMatchObject({
+      apiToken: { scopes: ["channels", "integrations"] },
     })
   })
 

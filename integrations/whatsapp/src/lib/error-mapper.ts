@@ -267,8 +267,8 @@ export function isRevokedTokenError(error: unknown): boolean {
   const isOAuthRevoked =
     mappedError.category === ChannelErrorCategory.AUTH_FAILED &&
     mappedError.code === 190 &&
-    mappedError.subCode !== null &&
-    REVOKED_TOKEN_SUBCODES.has(Number(mappedError.subCode))
+    (mappedError.subCode === null ||
+      REVOKED_TOKEN_SUBCODES.has(Number(mappedError.subCode)))
 
   return isGraphMethodRevoked || isOAuthRevoked
 }

@@ -11,7 +11,8 @@
     "./msw": "./src/msw.ts",
     "./setup-env": "./src/setup-env.ts",
     "./setup-dom": "./src/setup-dom.ts",
-    "./setup-msw": "./src/setup-msw.ts"
+    "./setup-msw": "./src/setup-msw.ts",
+    "./test-utils": "./src/test-utils.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

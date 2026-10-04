@@ -7,6 +7,7 @@ import {
   type ChannelErrorSource,
   parseOriginError,
   TelegramAPIException,
+  TelegramException,
 } from "../exception"
 
 function extractApiFields(exc: TelegramAPIException): ChannelErrorSource {
@@ -190,12 +191,13 @@ function mapTelegramStatus(fields: ChannelErrorSource): ChannelError {
   })
 }
 
-// === Revoked / invalidated access token detection ===
-// Telegram bot tokens are not "revoked" per se — invalid bot tokens manifest as
-// 401 Unauthorized or AUTH_KEY_* RPC errors. Use ChannelErrorCategory.AUTH_FAILED
-// for reconnect prompts. Always returns false.
-export function isRevokedTokenError(_error: unknown): boolean {
-  return false
+// Telegram invalidates a bot token with an HTTP 401 response.
+export function isRevokedTokenError(error: unknown): boolean {
+  const status =
+    error instanceof TelegramException
+      ? error.httpStatusCode
+      : parseOriginError(error).httpStatusCode
+  return status === 401
 }
 
 export function mapToChannelError(rawError: unknown): ChannelError {

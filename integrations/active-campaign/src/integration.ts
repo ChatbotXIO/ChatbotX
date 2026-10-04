@@ -1,6 +1,8 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { activeCampaignRequest } from "./client"
@@ -22,6 +24,7 @@ import {
   type ActiveCampaignAuthValue,
   type ActiveCampaignConfig,
   type ActiveCampaignContactAutomationPayload,
+  type ActiveCampaignCredentialValue,
   activeCampaignAccountsResponseSchema,
   activeCampaignAutomationsResponseSchema,
   activeCampaignContactAutomationPayloadSchema,
@@ -67,22 +70,49 @@ const contactAutomationExists = async (
   )
 }
 
+const activeCampaignFields = [
+  {
+    name: "apiUrl",
+    type: "url",
+    required: true,
+  },
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+  },
+] as const
+
+const buildActiveCampaignAuth = async (
+  config: ActiveCampaignCredentialValue,
+): Promise<ActiveCampaignAuthValue> =>
+  createActiveCampaignAuth(activeCampaignCredentialSchema.parse(config))
+
+const probeActiveCampaign = async (auth: ActiveCampaignAuthValue) => {
+  await activeCampaignRequest(
+    auth,
+    activeCampaignAccountsPath(),
+    activeCampaignAccountsResponseSchema,
+  )
+}
+
+const connection = apiKeyConnection({
+  displayName: "ActiveCampaign",
+  fields: activeCampaignFields,
+  buildAuth: buildActiveCampaignAuth,
+  probe: probeActiveCampaign,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   ActiveCampaignConfig,
   ActiveCampaignAuthValue,
   ActiveCampaignActions
 > = {
   name: "activeCampaign",
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const credential = activeCampaignCredentialSchema.parse(props)
-      await activeCampaignRequest(
-        credential,
-        activeCampaignAccountsPath(),
-        activeCampaignAccountsResponseSchema,
-      )
-      return createActiveCampaignAuth(credential)
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listLists: async ({ ctx }) => {
       const response = await activeCampaignRequest(
         ctx.auth,

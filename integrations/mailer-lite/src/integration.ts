@@ -1,6 +1,8 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { mailerLiteRequest } from "./client"
@@ -38,24 +40,45 @@ const pageSearchParams = (props: { page: number; limit: number }) =>
     limit: String(props.limit),
   })
 
+const mailerLiteFields = [
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+  },
+] as const
+
+const buildMailerLiteAuth = async (config: {
+  apiKey: string
+}): Promise<MailerLiteAuthValue> => createMailerLiteAuth(config.apiKey)
+
+const probeMailerLite = async (auth: MailerLiteAuthValue) => {
+  await mailerLiteRequest(
+    auth,
+    MAILER_LITE_GROUPS_PATH,
+    mailerLiteGroupsResponseSchema,
+    { searchParams: pageSearchParams({ page: 1, limit: 1 }) },
+    [200],
+  )
+}
+
+const connection = apiKeyConnection({
+  displayName: "MailerLite",
+  fields: mailerLiteFields,
+  buildAuth: buildMailerLiteAuth,
+  probe: probeMailerLite,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   MailerLiteConfig,
   MailerLiteAuthValue,
   MailerLiteActions
 > = {
   name: "mailerLite",
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createMailerLiteAuth(props.apiKey)
-      await mailerLiteRequest(
-        auth,
-        MAILER_LITE_GROUPS_PATH,
-        mailerLiteGroupsResponseSchema,
-        { searchParams: pageSearchParams({ page: 1, limit: 1 }) },
-        [200],
-      )
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listGroups: async ({ ctx, props }) => {
       const response = await mailerLiteRequest(
         ctx.auth,
