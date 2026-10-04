@@ -163,6 +163,25 @@ export const possibleErrorsOnUpdatingWhatsappCalling = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** Import upload: an unsupported file type is a 400 the caller can fix. */
+export const possibleErrorsOnCreatingImportUpload = {
+  businessError,
+  importUnsupportedFileType: {
+    message: "Unsupported file type for this import. Use a CSV or XLSX file.",
+    status: 400,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Cursor-paged list: a cursor that does not decode is a 400. */
+export const possibleErrorsOnListingWithCursor = {
+  ...possibleErrorsOnListingResource,
+  invalidCursor: {
+    message: "The cursor is invalid. Start again without a cursor.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
 /** Meta Catalog select/sync: a second run while one is active is a 409. */
 export const possibleErrorsOnStartingMetaCatalogRun = {
   notFound,

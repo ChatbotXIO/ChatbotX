@@ -80,7 +80,7 @@ export const whatsappFlowsPublicRouter = {
       path: "/v1/whatsapp-channels/{id}/sync-flows",
       summary: "Sync WhatsApp Flows",
       description:
-        "Pulls the number's Flows and their status from Meta into this workspace.",
+        "Pulls the number's Flows and their status from Meta into this workspace. Then read the result with `whatsappFlows.list`.",
       successStatus: 204,
       tags: ["WhatsApp Flows"],
     })

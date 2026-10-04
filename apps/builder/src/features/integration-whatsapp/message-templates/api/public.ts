@@ -60,7 +60,7 @@ export const whatsappTemplatesPublicRouter = {
       path: "/v1/whatsapp-channels/{id}/templates/sync",
       summary: "Sync WhatsApp templates",
       description:
-        "Pulls the number's message templates and their approval status from Meta into this workspace. Run it after creating or editing a template on Meta, or to refresh a PENDING status.",
+        "Pulls the number's message templates and their approval status from Meta into this workspace. Run it after creating or editing a template on Meta, or to refresh a PENDING status. Then read the result with `whatsappTemplates.list`.",
       successStatus: 204,
       tags: ["WhatsApp Templates"],
     })

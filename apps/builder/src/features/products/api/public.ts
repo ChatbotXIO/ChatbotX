@@ -20,6 +20,7 @@ import {
   resolveProductImportTemplateLocale,
 } from "@/features/products/lib/product-import-template"
 import {
+  possibleErrorsOnCreatingImportUpload,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -212,7 +213,7 @@ export const productsPublicRouter = {
     })
     .input(importUploadUrlPublicRequest)
     .output(importUploadUrlPublicResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingImportUpload)
     .handler(
       async ({ context, input }) =>
         await createImportUpload({

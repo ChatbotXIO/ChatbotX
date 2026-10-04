@@ -4,25 +4,49 @@ const NUMERIC_PLACEHOLDER_PATTERN = /{{\d+}}/g
 const SUPPORTED_PLACEHOLDER_PATTERN = /^{{([1-9]|1[0-5])}}$/
 
 const templateVariableSchema = z.object({
-  key: z.string().regex(SUPPORTED_PLACEHOLDER_PATTERN),
-  example: z.string().min(1),
+  key: z
+    .string()
+    .regex(SUPPORTED_PLACEHOLDER_PATTERN)
+    .describe("Placeholder as written in the text, e.g. `{{1}}` (1 to 15)."),
+  example: z
+    .string()
+    .min(1)
+    .describe("Sample value Meta reviews for this placeholder."),
 })
+
+const BUTTON_TITLE = z
+  .string()
+  .min(1)
+  .max(20)
+  .describe("Button label, up to 20 characters.")
 
 const templateButtonSchema = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal("POSTBACK"),
-    title: z.string().min(1).max(20),
+    type: z
+      .literal("POSTBACK")
+      .describe("Button that sends a postback to the bot."),
+    title: BUTTON_TITLE,
   }),
   z.object({
-    type: z.literal("PHONE_NUMBER"),
-    title: z.string().min(1).max(20),
-    phoneNumber: z.string().min(1),
+    type: z.literal("PHONE_NUMBER").describe("Button that dials a number."),
+    title: BUTTON_TITLE,
+    phoneNumber: z
+      .string()
+      .min(1)
+      .describe("Number to dial in international format, e.g. `+84901234567`."),
   }),
   z.object({
-    type: z.literal("URL"),
-    title: z.string().min(1).max(20),
-    url: z.string().min(1),
-    variables: z.array(z.string().min(1)).max(1).default([]),
+    type: z.literal("URL").describe("Button that opens a link."),
+    title: BUTTON_TITLE,
+    url: z
+      .string()
+      .min(1)
+      .describe("Link to open; end it with `{{1}}` to append a variable."),
+    variables: z
+      .array(z.string().min(1))
+      .max(1)
+      .default([])
+      .describe("Example value for the URL's `{{1}}`, if it has one."),
   }),
 ])
 

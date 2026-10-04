@@ -111,7 +111,7 @@ export const workspaceSettingsPublicRouter = {
       path: "/v1/workspace/settings",
       summary: "Update workspace settings",
       description:
-        "Changes the Default Reply text/frequency, the bot reply delay, Conversions API Limited Data Use or the logo. Only the fields you send change. It cannot change the workspace's name, plan, status, owner or members.",
+        "Changes the Default Reply text/frequency, the bot reply delay, Conversions API Limited Data Use or the logo. Only the fields you send change. It cannot change the workspace's name, plan, status, owner or members. Read the current values with `workspaceSettings.get` first.",
       tags: ["Workspace"],
     })
     .input(updateWorkspaceSettingsRequest)

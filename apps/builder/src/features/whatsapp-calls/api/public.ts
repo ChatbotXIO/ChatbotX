@@ -9,7 +9,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   possibleErrorsOnFindingResource,
-  possibleErrorsOnListingResource,
+  possibleErrorsOnListingWithCursor,
 } from "@/lib/orpc/orpc-error-helper"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -75,7 +75,7 @@ export const whatsappCallsPublicRouter = {
         nextCursor: z.string().nullable(),
       }),
     )
-    .errors(possibleErrorsOnListingResource)
+    .errors(possibleErrorsOnListingWithCursor)
     .handler(async ({ context, input }) => {
       const cursor = input.cursor
         ? decodeCursor(input.cursor, whatsappCallListCursorSchema)

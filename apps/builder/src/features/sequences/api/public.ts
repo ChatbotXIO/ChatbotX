@@ -314,7 +314,7 @@ export const sequencesPublicRouter = {
       path: "/v1/sequence-folders/{id}",
       summary: "Rename sequence folder",
       description:
-        "Changes a sequence folder's name without moving its sequences.",
+        "Changes a sequence folder's name without moving its sequences. Find the folder id with `sequences.listFolders`.",
       tags: ["Sequences"],
     })
     .input(updateSequenceFolderPublicRequest)

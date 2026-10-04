@@ -87,43 +87,89 @@ export const waTemplateParamsSchema = z.object({
   header: z
     .array(
       z.object({
-        type: z.enum(["text", "image", "video", "document", "location"]),
-        text: z.string().optional(),
+        type: z
+          .enum(["text", "image", "video", "document", "location"])
+          .describe("Header parameter kind; fill the matching field."),
+        text: z
+          .string()
+          .optional()
+          .describe("Value for a `text` header variable."),
         // NAMED-template placeholder name for a text header; see body note.
-        parameter_name: z.string().optional(),
-        image: z.object({ link: z.string() }).optional(),
-        video: z.object({ link: z.string() }).optional(),
-        document: z.object({ link: z.string() }).optional(),
+        parameter_name: z
+          .string()
+          .optional()
+          .describe(
+            "Placeholder name, only for NAMED templates ({{order_id}}).",
+          ),
+        image: z
+          .object({
+            link: z.string().describe("Public https URL of the image."),
+          })
+          .optional(),
+        video: z
+          .object({
+            link: z.string().describe("Public https URL of the video."),
+          })
+          .optional(),
+        document: z
+          .object({
+            link: z.string().describe("Public https URL of the document."),
+          })
+          .optional(),
         location: z
           .object({
-            latitude: z.string().optional(),
-            longitude: z.string().optional(),
-            name: z.string().optional(),
-            address: z.string().optional(),
+            latitude: z
+              .string()
+              .optional()
+              .describe("Latitude, e.g. `10.7769`."),
+            longitude: z
+              .string()
+              .optional()
+              .describe("Longitude, e.g. `106.7009`."),
+            name: z.string().optional().describe("Place name."),
+            address: z.string().optional().describe("Street address."),
           })
           .optional(),
       }),
     )
-    .optional(),
+    .optional()
+    .describe("Header parameters; one entry for a templated header."),
   body: z
     .array(
       z.object({
-        type: z.literal("text").optional(),
-        text: z.string(),
+        type: z
+          .literal("text")
+          .optional()
+          .describe("Always `text` for a body variable."),
+        text: z.string().describe("Value that replaces the variable."),
         // Present only for NAMED templates ({{order_id}}); Meta requires it to
         // be echoed back on every send-time parameter. Absent for positional
         // templates ({{1}}), which must omit it.
-        parameter_name: z.string().optional(),
+        parameter_name: z
+          .string()
+          .optional()
+          .describe(
+            "Placeholder name, only for NAMED templates; omit for positional `{{1}}`.",
+          ),
       }),
     )
-    .optional(),
-  button: waTemplateButtonParamListSchema.optional(),
-  carousel: z.array(waTemplateCarouselCardSchema).optional(),
+    .optional()
+    .describe("Body variables in order: {{1}}, {{2}}, ..."),
+  button: waTemplateButtonParamListSchema
+    .optional()
+    .describe("Parameters for the template's dynamic buttons, by `index`."),
+  carousel: z
+    .array(waTemplateCarouselCardSchema)
+    .optional()
+    .describe("Cards of a carousel template, by `card_index`."),
   limited_time_offer: z
     .object({
-      expiration_time_ms: z.number(),
+      expiration_time_ms: z
+        .number()
+        .describe("Offer expiry as a Unix timestamp in milliseconds."),
     })
-    .optional(),
+    .optional()
+    .describe("Only for a limited-time-offer template."),
 })
 
 export type WaTemplateParams = z.infer<typeof waTemplateParamsSchema>

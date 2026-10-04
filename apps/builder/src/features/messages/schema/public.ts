@@ -86,7 +86,7 @@ export const sendWhatsappTemplatePublicRequest = z
       "Id of an APPROVED WhatsApp template. Get it from `whatsappTemplates.list`.",
     ),
     templateData: sendWhatsappTemplateRequest.shape.templateData.describe(
-      "Runtime parameters of the template (header, body variables, buttons), shaped like a flow step's template params. Omit for a template without parameters.",
+      'Runtime parameters of the template, e.g. `{"body":[{"type":"text","text":"Ada"}],"header":[{"type":"image","image":{"link":"https://example.com/a.png"}}]}`: `header`, `body` (variables in order), `button`, `carousel`. Omit for a template without parameters.',
     ),
     inboxId: sendWhatsappTemplateRequest.shape.inboxId.describe(
       "WhatsApp inbox to send from; omit to use the contact's most recent one.",

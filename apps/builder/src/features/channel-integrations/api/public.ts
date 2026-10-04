@@ -33,6 +33,14 @@ import {
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
 
+const channelListOperations: Record<ChannelIntegrationChannel, string> = {
+  whatsapp: "whatsappChannels.list",
+  messenger: "messengerChannels.list",
+  instagram: "instagramChannels.list",
+  tiktok: "tiktokChannels.list",
+  zalo: "zaloChannels.list",
+}
+
 const channelLabels: Record<ChannelIntegrationChannel, string> = {
   whatsapp: "WhatsApp",
   messenger: "Messenger",
@@ -122,6 +130,7 @@ export const createHandoverResumeFlowRoute = (
   channel: HandoverResumeFlowChannel,
 ) => {
   const label = channelLabels[channel]
+  const listOperation = channelListOperations[channel]
   return {
     updateHandoverResumeFlow: workspaceTokenAuthAPI
       .route({
@@ -135,7 +144,7 @@ export const createHandoverResumeFlowRoute = (
       .input(
         z.object({
           id: zodBigintAsString().describe(
-            `${label} channel (integration) id. Get it from the channel list route.`,
+            `${label} channel (integration) id. Get it from \`${listOperation}\`.`,
           ),
           handoverResumeFlowId: zodBigintAsString()
             .nullable()
@@ -198,6 +207,7 @@ const coexistStatusResponse = z.object({
  */
 export const createCoexistRoute = (channel: CoexistChannel) => {
   const label = channelLabels[channel]
+  const listOperation = channelListOperations[channel]
   return {
     getCoexistStatus: workspaceTokenAuthAPI
       .route({
@@ -210,7 +220,7 @@ export const createCoexistRoute = (channel: CoexistChannel) => {
       .input(
         z.object({
           id: zodBigintAsString().describe(
-            `${label} channel (integration) id. Get it from the channel list route.`,
+            `${label} channel (integration) id. Get it from \`${listOperation}\`.`,
           ),
         }),
       )
@@ -240,7 +250,7 @@ export const createCoexistRoute = (channel: CoexistChannel) => {
       .input(
         z.object({
           id: zodBigintAsString().describe(
-            `${label} channel (integration) id. Get it from the channel list route.`,
+            `${label} channel (integration) id. Get it from \`${listOperation}\`.`,
           ),
           enabled: z.boolean().describe("Whether coexist sync is on."),
           aiReadsSyncedHistory: z
@@ -328,10 +338,11 @@ const capiSuccessResponse = z.object({ success: z.literal(true) })
  */
 export const createCapiRoutes = (channel: CapiChannel) => {
   const label = channelLabels[channel]
+  const listOperation = channelListOperations[channel]
   const base = `/v1/${channel}-channels/{id}/capi` as const
   const idParam = z.object({
     id: zodBigintAsString().describe(
-      `${label} channel (integration) id. Get it from the channel list route.`,
+      `${label} channel (integration) id. Get it from \`${listOperation}\`.`,
     ),
   })
   return {

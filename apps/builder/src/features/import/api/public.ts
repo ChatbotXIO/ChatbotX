@@ -9,7 +9,7 @@ import {
   CONTACTS_IMPORT_TEMPLATE_FILENAME,
 } from "@/features/contacts/lib/contacts-import-template"
 import {
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnCreatingImportUpload,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
 } from "@/lib/orpc/orpc-error-helper"
@@ -43,7 +43,7 @@ export const importPublicRouter = {
     })
     .input(importUploadUrlPublicRequest)
     .output(importUploadUrlPublicResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingImportUpload)
     .handler(
       async ({ context, input }) =>
         await createImportUpload({

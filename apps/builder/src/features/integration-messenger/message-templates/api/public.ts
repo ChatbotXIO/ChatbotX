@@ -132,7 +132,7 @@ export const messengerTemplatesPublicRouter = {
       path: "/v1/messenger-channels/{id}/templates",
       summary: "Create Messenger template",
       description:
-        "Creates a utility message template on a Messenger Page (it is submitted to Meta for approval) and mirrors it locally. A template Meta rejects is still created: check `status` and `rejectionReason`. A `text_and_image` header downloads `headerImageUrl` from a public address.",
+        "Creates a utility message template on a Messenger Page (it is submitted to Meta for approval) and mirrors it locally. A template Meta rejects is still created: check `status` and `rejectionReason`. A `text_and_image` header downloads `headerImageUrl` from a public address. Check the outcome later with `messengerTemplates.get`.",
       successStatus: 201,
       tags: ["Messenger Templates"],
     })
@@ -237,7 +237,7 @@ export const messengerTemplatesPublicRouter = {
       path: "/v1/messenger-channels/{id}/templates/sync",
       summary: "Sync Messenger templates",
       description:
-        "Pulls the Page's message templates and their approval status from Meta into this workspace. Run it after creating or editing a template on Meta, or to refresh a `PENDING` status.",
+        "Pulls the Page's message templates and their approval status from Meta into this workspace. Run it after creating or editing a template on Meta, or to refresh a `PENDING` status. Then read the result with `messengerTemplates.list`.",
       successStatus: 204,
       tags: ["Messenger Templates"],
     })
