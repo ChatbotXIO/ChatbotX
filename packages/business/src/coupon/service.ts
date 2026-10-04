@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { couponRepository } from "@chatbotx.io/database/repositories"
 import { workspaceModel } from "@chatbotx.io/database/schema"
+import { uploader } from "@chatbotx.io/filesystem"
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 import { BaseService } from "../base.service"
 import { type ContactAccessScope, contactService } from "../contact/service"
@@ -43,6 +44,7 @@ export type CouponMarkUsedResult =
   | { ok: false; reason: "noIssuedCoupon"; coupon: null }
 
 const MAX_COUPONS_PER_TOPIC = 10_000
+const MAX_COUPON_IMPORT_BYTES = 10 * 1024 * 1024
 const NAME_MAX_LENGTH = 255
 const DESCRIPTION_MAX_LENGTH = 1000
 
@@ -463,6 +465,25 @@ class CouponService extends BaseService {
       throw new ChatbotXException(
         "Unsupported coupon import file",
         "couponImportUnsupportedFile",
+      )
+    }
+    let contentLength: number | undefined
+    try {
+      const head = await uploader.headObject(file.path)
+      contentLength = head.ContentLength
+    } catch {
+      throw new ChatbotXException(
+        "Coupon import file was not uploaded",
+        "couponImportFileNotFound",
+      )
+    }
+    if (
+      contentLength === undefined ||
+      contentLength > MAX_COUPON_IMPORT_BYTES
+    ) {
+      throw new ChatbotXException(
+        "Coupon import file exceeds the maximum allowed size",
+        "couponImportFileTooLarge",
       )
     }
     if (!topic || topic.status !== couponTopicStatuses.enum.active) {

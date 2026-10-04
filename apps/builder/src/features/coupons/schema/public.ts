@@ -5,6 +5,7 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { basePaginationRequest } from "@/lib/pagination"
+import { withPublicPaging } from "@/lib/public-api/list"
 import {
   contactCouponResource,
   couponResource,
@@ -82,14 +83,48 @@ export const listCouponsPublicRequest = basePaginationRequest.extend({
     ),
   issueStatus: couponIssueStatuses
     .optional()
-    .describe("Restrict to coupons with this issue status."),
+    .describe(
+      "Legacy alias for `status`. Restrict to coupons by issue status.",
+    ),
   usageStatus: couponUsageStatuses
     .optional()
-    .describe("Restrict to coupons with this usage status."),
+    .describe("Legacy alias for `usage`. Restrict to coupons by usage status."),
   search: z
     .string()
     .optional()
+    .describe(
+      "Legacy alias for `keyword`. Case-insensitive coupon-code match.",
+    ),
+  status: couponIssueStatuses
+    .optional()
+    .describe("Restrict to coupons by issue status."),
+  usage: couponUsageStatuses
+    .optional()
+    .describe("Restrict to coupons by usage status."),
+  keyword: z
+    .string()
+    .optional()
     .describe("Case-insensitive substring match against the coupon code."),
+})
+
+export const publicListCouponsRequest = withPublicPaging(
+  listCouponsPublicRequest.omit({ sort: true }),
+).superRefine((input, ctx) => {
+  const aliases = [
+    ["status", "issueStatus"],
+    ["usage", "usageStatus"],
+    ["keyword", "search"],
+  ] as const
+
+  for (const [canonical, legacy] of aliases) {
+    if (input[canonical] !== undefined && input[legacy] !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Use either \`${canonical}\` or legacy \`${legacy}\`, not both.`,
+        path: [canonical],
+      })
+    }
+  }
 })
 
 export const listCouponsPublicResponse = z.object({
@@ -117,6 +152,100 @@ export const markCouponUsedPublicRequest = z.object({
 
 export const listContactCouponsPublicResponse = z.object({
   data: z.array(contactCouponResource),
+})
+
+export const bulkCreateCouponsPublicRequest = z.object({
+  topicId: zodBigintAsString().describe(
+    "Coupon topic id. Get it from `coupons.listTopics`.",
+  ),
+  codes: z
+    .array(z.string().trim().min(1).max(255))
+    .min(1)
+    .max(10_000)
+    .describe("Coupon codes to add to this topic."),
+})
+
+export const bulkCreateCouponsPublicResponse = z.object({
+  processed: z.number(),
+  created: z.number(),
+  existing: z.number(),
+  allowedRemaining: z.number(),
+  currentCount: z.number(),
+})
+
+export const startCouponImportPublicRequest = z.object({
+  topicId: zodBigintAsString().describe(
+    "Coupon topic id. Get it from `coupons.listTopics`.",
+  ),
+  fileId: zodBigintAsString().describe(
+    "CSV import file id. Create one with `coupons.createImportUploadUrl` or use an existing coupon import file in this workspace.",
+  ),
+})
+
+export const startCouponImportPublicResponse = z.object({
+  importId: z.string(),
+})
+
+export const createCouponImportUploadUrlPublicRequest = z.object({
+  fileName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .refine((fileName) => fileName.toLowerCase().endsWith(".csv"), {
+      message: "Coupon import files must use the .csv extension",
+    })
+    .describe("CSV file name. The server generates the storage path."),
+  mimeType: z
+    .literal("text/csv")
+    .describe("Coupon imports accept only text/csv."),
+  size: z
+    .number()
+    .int()
+    .positive()
+    .max(10 * 1024 * 1024)
+    .describe("CSV size in bytes, up to 10 MiB."),
+})
+
+export const createCouponImportUploadUrlPublicResponse = z.object({
+  fileId: z.string(),
+  uploadUrl: z.string().url(),
+})
+
+export const startCouponExportPublicRequest = z.object({
+  topicId: zodBigintAsString()
+    .optional()
+    .describe("Optionally restrict the export to one coupon topic."),
+  issueStatus: couponIssueStatuses
+    .optional()
+    .describe("Optionally restrict by issue status."),
+  usageStatus: couponUsageStatuses
+    .optional()
+    .describe("Optionally restrict by usage status."),
+  search: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .optional()
+    .describe("Optionally restrict to coupon codes matching this text."),
+})
+
+export const startCouponExportPublicResponse = z.object({
+  fileId: z.string(),
+})
+
+export const getCouponExportPublicRequest = z.object({
+  fileId: zodBigintAsString().describe(
+    "Coupon export file id returned by `coupons.export`.",
+  ),
+})
+
+export const getCouponExportPublicResponse = z.object({
+  status: z.string(),
+  fileName: z.string(),
+  downloadUrl: z.string().url().nullable(),
+  totalRecords: z.number(),
 })
 
 export const couponIssueErrorData = z.object({

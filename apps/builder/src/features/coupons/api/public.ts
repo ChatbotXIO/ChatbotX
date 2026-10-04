@@ -1,5 +1,7 @@
 import { contactService, couponService } from "@chatbotx.io/business"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { uploader } from "@chatbotx.io/filesystem"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { ORPCError } from "@orpc/server"
 import { z } from "zod"
 import {
@@ -12,25 +14,59 @@ import {
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { createPublicCouponImportUpload } from "../lib/create-public-import-upload"
 import {
+  bulkCreateCouponsPublicRequest,
+  bulkCreateCouponsPublicResponse,
   couponIssueErrorData,
   couponMarkUsedErrorData,
+  createCouponImportUploadUrlPublicRequest,
+  createCouponImportUploadUrlPublicResponse,
   createCouponTopicPublicRequest,
+  getCouponExportPublicRequest,
+  getCouponExportPublicResponse,
   issueCouponPublicRequest,
   listContactCouponsPublicResponse,
-  listCouponsPublicRequest,
   listCouponsPublicResponse,
   listCouponTopicsPublicRequest,
   listCouponTopicsPublicResponse,
   markCouponUsedPublicRequest,
   publicCouponTopicResource,
   publicIssuedCouponResource,
+  publicListCouponsRequest,
+  startCouponExportPublicRequest,
+  startCouponExportPublicResponse,
+  startCouponImportPublicRequest,
+  startCouponImportPublicResponse,
   updateCouponTopicPublicRequest,
 } from "../schema/public"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("ecommerce")
 
 const tags = ["Coupons"]
+
+const couponImportErrors = {
+  couponImportFileNotFound: {
+    message: "Coupon import file not found",
+    status: 404,
+  },
+  couponImportUnsupportedFile: {
+    message: "Unsupported coupon import file",
+    status: 400,
+  },
+  couponImportFileTooLarge: {
+    message: "Coupon import file exceeds the maximum allowed size",
+    status: 400,
+  },
+  couponTopicInactive: {
+    message: "Coupon topic is not active",
+    status: 400,
+  },
+  couponImportLimitExceeded: {
+    message: "Coupon import exceeds topic limit",
+    status: 400,
+  },
+}
 
 export const couponsPublicRouter = {
   listTopics: workspaceTokenAuthAPI
@@ -208,12 +244,24 @@ export const couponsPublicRouter = {
         "Use this to find individual coupon codes across topics. Returns coupons in this workspace.",
       tags,
     })
-    .input(withPublicPaging(listCouponsPublicRequest.omit({ sort: true })))
+    .input(publicListCouponsRequest)
     .output(listCouponsPublicResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
+      const {
+        status,
+        usage,
+        keyword,
+        issueStatus,
+        usageStatus,
+        search,
+        ...filters
+      } = input
       const result = await couponService.listCoupons({
-        ...input,
+        ...filters,
+        issueStatus: status ?? issueStatus,
+        usageStatus: usage ?? usageStatus,
+        search: keyword ?? search,
         workspaceId: context.workspace.id,
       })
       return { data: result.data, pageCount: result.pageCount }
@@ -328,5 +376,178 @@ export const couponsPublicRouter = {
         contactId,
       })
       return { data }
+    }),
+
+  bulkCreate: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/coupon-topics/{topicId}/coupons/bulk",
+      summary: "Bulk create coupon codes",
+      description:
+        "Adds coupon codes to an active topic. Duplicate codes are ignored and the topic limit is enforced.",
+      tags,
+    })
+    .input(bulkCreateCouponsPublicRequest)
+    .output(bulkCreateCouponsPublicResponse)
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      couponTopicInactive: couponImportErrors.couponTopicInactive,
+      couponImportLimitExceeded: couponImportErrors.couponImportLimitExceeded,
+    })
+    .handler(async ({ context, input }) => {
+      const { topicId, codes } = input
+      return await couponService.importBatch({
+        workspaceId: context.workspace.id,
+        topicId,
+        codes,
+      })
+    }),
+
+  createImportUploadUrl: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/coupon-imports/upload-url",
+      summary: "Create coupon CSV upload URL",
+      description:
+        "Creates a short-lived upload URL for a CSV file. After uploading bytes to that URL, call `coupons.import` with the returned fileId. Standard MCP clients cannot upload binary data; use `coupons.bulkCreate` for text-only codes.",
+      tags,
+      successStatus: 201,
+    })
+    .input(createCouponImportUploadUrlPublicRequest)
+    .output(createCouponImportUploadUrlPublicResponse)
+    .errors({
+      ...possibleErrorsOnCreatingResource,
+      couponImportUnsupportedFile:
+        couponImportErrors.couponImportUnsupportedFile,
+    })
+    .handler(
+      async ({ context, input }) =>
+        await createPublicCouponImportUpload({
+          workspaceId: context.workspace.id,
+          ownerId: context.workspace.ownerId,
+          fileName: input.fileName,
+          mimeType: input.mimeType,
+        }),
+    ),
+
+  import: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/coupon-imports",
+      summary: "Import coupon codes from CSV",
+      description:
+        "Queues a CSV coupon import for an active topic. Create the file with `coupons.createImportUploadUrl`, upload the bytes, then call this operation with its fileId.",
+      tags,
+      successStatus: 201,
+    })
+    .input(startCouponImportPublicRequest)
+    .output(startCouponImportPublicResponse)
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      couponImportFileNotFound: couponImportErrors.couponImportFileNotFound,
+      couponImportUnsupportedFile:
+        couponImportErrors.couponImportUnsupportedFile,
+      couponImportFileTooLarge: couponImportErrors.couponImportFileTooLarge,
+      couponTopicInactive: couponImportErrors.couponTopicInactive,
+    })
+    .handler(async ({ context, input }) => {
+      const row = await couponService.startImport({
+        workspaceId: context.workspace.id,
+        userId: context.workspace.ownerId,
+        fileId: input.fileId,
+        topicId: input.topicId,
+      })
+
+      await defaultQueue.add(
+        DefaultJobAction.runImport,
+        {
+          type: DefaultJobAction.runImport,
+          data: { importId: row.id },
+        },
+        { jobId: `import-coupons-${row.id}` },
+      )
+
+      return { importId: row.id }
+    }),
+
+  export: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/coupon-exports",
+      summary: "Export coupon codes to CSV",
+      description:
+        "Queues a CSV export. Call `coupons.getExport` with the returned fileId until its status is uploaded, then use downloadUrl.",
+      tags,
+      successStatus: 201,
+    })
+    .input(startCouponExportPublicRequest)
+    .output(startCouponExportPublicResponse)
+    .errors(possibleErrorsOnCreatingResource)
+    .handler(async ({ context, input }) => {
+      const exportId = createId()
+      const fileName = `coupons-${new Date().toISOString().slice(0, 10)}.csv`
+      const outputPath = `workspaces/${context.workspace.id}/exports/coupons/coupon_${exportId}.csv`
+      const file = await couponService.createExportFile({
+        workspaceId: context.workspace.id,
+        userId: context.workspace.ownerId,
+        fileName,
+        path: outputPath,
+      })
+
+      await defaultQueue.add(
+        DefaultJobAction.exportCoupons,
+        {
+          type: DefaultJobAction.exportCoupons,
+          data: {
+            workspaceId: context.workspace.id,
+            requestedUserId: context.workspace.ownerId,
+            fileId: file.id,
+            outputPath,
+            outputFormat: "csv",
+            filter: {
+              topicId: input.topicId,
+              issueStatus: input.issueStatus,
+              usageStatus: input.usageStatus,
+              search: input.search,
+            },
+          },
+        },
+        {
+          jobId: `export-coupons-${context.workspace.id}-${context.workspace.ownerId}-${file.id}`,
+        },
+      )
+
+      return { fileId: file.id }
+    }),
+
+  getExport: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/coupon-exports/{fileId}",
+      summary: "Get coupon export status",
+      description:
+        "Returns export progress. downloadUrl is available only after the export status becomes uploaded.",
+      tags,
+    })
+    .input(getCouponExportPublicRequest)
+    .output(getCouponExportPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const file = await couponService.getExportFile({
+        workspaceId: context.workspace.id,
+        fileId: input.fileId,
+        userId: context.workspace.ownerId,
+      })
+      const downloadUrl =
+        file.status === "uploaded"
+          ? await uploader.getPresignedDownload(file.path, 5 * 60)
+          : null
+
+      return {
+        status: file.status,
+        fileName: file.fileName,
+        downloadUrl,
+        totalRecords: file.totalRecords,
+      }
     }),
 }

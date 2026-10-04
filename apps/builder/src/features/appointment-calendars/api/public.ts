@@ -1,6 +1,7 @@
 import {
   appointmentCalendarService,
   appointmentService,
+  resolveTenantSettings,
 } from "@chatbotx.io/business"
 import {
   possibleErrorsOnCreatingAppointmentCalendar,
@@ -31,6 +32,14 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("appointments")
 
 const tags = ["Appointment Calendars"]
 
+const withPublicUrl = <T extends { publicLinkSlug: string }>(
+  calendar: T,
+  appUrl: string,
+) => ({
+  ...calendar,
+  publicUrl: new URL(`/booking/${calendar.publicLinkSlug}`, appUrl).toString(),
+})
+
 export const appointmentCalendarsPublicRouter = {
   list: workspaceTokenAuthAPI
     .route({
@@ -45,11 +54,17 @@ export const appointmentCalendarsPublicRouter = {
     .output(publicListResponse(appointmentCalendarPublicResource))
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
-      const { data, pageCount } = await appointmentCalendarService.list({
-        ...input,
-        workspaceId: context.workspace.id,
-      })
-      return { data, pageCount }
+      const [{ data, pageCount }, { appUrl }] = await Promise.all([
+        appointmentCalendarService.list({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+        resolveTenantSettings({ workspaceId: context.workspace.id }),
+      ])
+      return {
+        data: data.map((calendar) => withPublicUrl(calendar, appUrl)),
+        pageCount,
+      }
     }),
 
   get: workspaceTokenAuthAPI
@@ -64,13 +79,16 @@ export const appointmentCalendarsPublicRouter = {
     .input(appointmentCalendarIdPublicRequest)
     .output(appointmentCalendarForEditPublicResource)
     .errors(possibleErrorsOnFindingResource)
-    .handler(
-      async ({ context, input }) =>
-        await appointmentCalendarService.getForEdit({
+    .handler(async ({ context, input }) => {
+      const [calendar, { appUrl }] = await Promise.all([
+        appointmentCalendarService.getForEdit({
           workspaceId: context.workspace.id,
           id: input.id,
         }),
-    ),
+        resolveTenantSettings({ workspaceId: context.workspace.id }),
+      ])
+      return withPublicUrl(calendar, appUrl)
+    }),
 
   create: workspaceTokenAuthAPI
     .route({

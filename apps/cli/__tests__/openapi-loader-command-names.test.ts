@@ -108,3 +108,27 @@ describe("pathAndMethodToCommandName — filter/variant on a collection", () => 
     )
   })
 })
+
+describe("pathAndMethodToCommandName — coupon import/export operations", () => {
+  test("keeps the new coupon commands distinct", () => {
+    const commandNames = [
+      pathAndMethodToCommandName(
+        "/v1/coupon-topics/{topicId}/coupons/bulk",
+        "POST",
+      ),
+      pathAndMethodToCommandName("/v1/coupon-imports/upload-url", "POST"),
+      pathAndMethodToCommandName("/v1/coupon-imports", "POST"),
+      pathAndMethodToCommandName("/v1/coupon-exports", "POST"),
+      pathAndMethodToCommandName("/v1/coupon-exports/{fileId}", "GET"),
+    ]
+
+    expect(commandNames).toEqual([
+      "coupon-topics:bulk:add",
+      "coupon-imports:upload-url",
+      "coupon-imports:create",
+      "coupon-exports:create",
+      "coupon-exports:get",
+    ])
+    expect(new Set(commandNames)).toHaveLength(commandNames.length)
+  })
+})

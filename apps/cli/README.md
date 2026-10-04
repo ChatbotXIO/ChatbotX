@@ -628,12 +628,23 @@ chatbotx coupon-topics update <id>
 chatbotx coupon-topics archive add <id>
 chatbotx coupon-topics unarchive add <id>
 chatbotx coupon-topics delete <id>
-chatbotx coupons list                                 # List individual coupon codes [--page --perPage]
+chatbotx coupons list                                 # [--topicId --status --usage --keyword --page --perPage]
 chatbotx coupon-topics issue add <id> --contactId <contactId>       # Issue coupon to contact
 chatbotx coupon-topics mark-used add <id> --contactId <contactId>   # Mark issued coupon as used
+chatbotx coupon-topics bulk add <topicId> --codes <codes>  # Add coupon codes to a topic
+chatbotx coupon-imports upload-url --fileName <name> --mimeType text/csv --size <bytes>
+chatbotx coupon-imports create --topicId <id> --fileId <id>
+chatbotx coupon-exports create                         # [--topicId --issueStatus --usageStatus --search]
+chatbotx coupon-exports get <fileId>                   # Poll a CSV export and obtain its download URL
 ```
 
 Coupons issued to a specific contact are listed via `contacts coupons list <identifier>` (see `contacts` above).
+For CSV imports, use `coupon-imports upload-url`, upload the bytes directly to
+the returned URL, then call `coupon-imports create`. MCP clients that only
+support JSON tool calls should use `coupon-topics bulk add` instead.
+
+`coupons list` also accepts legacy flags `--issueStatus`, `--usageStatus`, and
+`--search`; do not send a legacy flag together with its corresponding PDF name.
 
 ---
 

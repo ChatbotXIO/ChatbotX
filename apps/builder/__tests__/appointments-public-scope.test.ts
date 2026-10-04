@@ -8,12 +8,14 @@ const {
   getAccessState,
   isAtLimit,
   assertApiNotRateLimited,
+  resolveTenantSettings,
 } = vi.hoisted(() => ({
   findWorkspaceByTokenHash: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
   getAccessState: vi.fn().mockResolvedValue({ blocked: false }),
   isAtLimit: vi.fn().mockResolvedValue(false),
   assertApiNotRateLimited: vi.fn().mockResolvedValue(undefined),
+  resolveTenantSettings: vi.fn(),
 }))
 
 const appointmentCalendarService = { list: vi.fn() }
@@ -24,6 +26,7 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
   appointmentCalendarService,
+  resolveTenantSettings,
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -74,6 +77,7 @@ beforeEach(() => {
   getAccessState.mockResolvedValue({ blocked: false })
   isAtLimit.mockResolvedValue(false)
   assertApiNotRateLimited.mockResolvedValue(undefined)
+  resolveTenantSettings.mockResolvedValue({ appUrl: "https://tenant.example/" })
 })
 
 describe("real router: appointment calendars public API scope wiring", () => {
