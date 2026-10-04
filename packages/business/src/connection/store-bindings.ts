@@ -400,7 +400,17 @@ const makeWorkspaceIntegrationBinding = <
       return tx ? await run(tx) : await db.transaction((trx) => run(trx))
     },
     deleteRowByForeignKey: async (integrationId, tx = db) => {
-      await tx.delete(rawTable).where(eq(table.integrationId, integrationId))
+      // Deletes the parent `Integration` row (not the satellite) so the
+      // `onDelete: "cascade"` FK from every workspace-satellite table back
+      // to `integrationModel.id` removes the satellite row too — mirrors
+      // every legacy `*IntegrationService.disconnect` (e.g.
+      // `integrationClaudeService.disconnect`), which deletes `Integration`
+      // for the same reason: leaving the satellite's parent row behind
+      // orphans it for `integrationService.hasIntegrationOfTypes`/
+      // `listByWorkspaceId` and for every future reconnect.
+      await tx
+        .delete(integrationModel)
+        .where(eq(integrationModel.id, integrationId))
     },
     duplicateConstraint: opts.duplicateConstraint,
     configColumns: opts.configColumns,
@@ -541,7 +551,7 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     // OAuth-only (no `fromCredentials`): `candidateToConfig` is
     // developer-derived from `auth`, never client input — see
     // `integrations/instagram/src/integration.ts`.
-    configColumns: ["username"],
+    configColumns: ["pageId", "username"],
   }),
   instagramFacebook: makeChannelBinding({
     table: integrationInstagramModel,

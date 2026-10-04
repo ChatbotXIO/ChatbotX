@@ -524,6 +524,7 @@ export const upsertConnectionRow = async (input: {
         workspaceId,
         provider,
         kind,
+        channel: kind === "channel" ? toChannelType(provider) : null,
         sourceId: descriptor.sourceId,
         displayName: descriptor.displayName,
         inboxId: inboxId ?? null,
