@@ -298,4 +298,35 @@ export const connectSessionRepository = {
       .returning()
     return row ? parseConnectSession(row) : undefined
   },
+
+  /** Completes a one-target OAuth reconnect while its session is still pending. */
+  async completeReconnect(
+    input: {
+      id: string
+      workspaceId: string
+      result: ConnectSessionOutcome & { connectionId: string }
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ConnectSessionModel | undefined> {
+    const [row] = await tx
+      .update(connectSessionModel)
+      .set({
+        results: sql`(${connectSessionModel.results} || ${JSON.stringify([input.result])}::jsonb)`,
+        resultConnectionIds: sql`array_append(${connectSessionModel.resultConnectionIds}, ${input.result.connectionId})`,
+        status: "completed",
+        step: "done",
+        consumedAt: sql`now()`,
+        encryptedAuth: null,
+      })
+      .where(
+        and(
+          eq(connectSessionModel.id, input.id),
+          eq(connectSessionModel.workspaceId, input.workspaceId),
+          eq(connectSessionModel.status, "pending"),
+          gt(connectSessionModel.expiresAt, sql`now()`),
+        ),
+      )
+      .returning()
+    return row ? parseConnectSession(row) : undefined
+  },
 }

@@ -76,7 +76,7 @@ export const openrouterConnectionProvider = makeAiKeyProvider(
 const OPENAI_COMPATIBLE_VERIFY_TIMEOUT_MS = 10_000
 const TRAILING_SLASH_RE = /\/$/
 
-export type OpenaiCompatibleCredentials = { apiKey: string; baseURL: string }
+type OpenaiCompatibleCredentials = { apiKey: string; baseURL: string }
 
 /**
  * OpenAI-compatible presets have no fixed provider host, so verification

@@ -4,11 +4,15 @@ const NO_OWNER_ID_MESSAGE = /no ownerId/
 
 const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
+  findByInboxId: vi.fn(),
   findByProviderAndSourceIdAnyWorkspace: vi.fn(),
   update: vi.fn(),
+  inboxDisconnect: vi.fn(),
   inboxUpdate: vi.fn(),
   inboxUpdateSet: vi.fn(),
   inboxUpdateWhere: vi.fn(),
+  lockExisting: vi.fn(),
+  cancelLive: vi.fn(),
   tryConsume: vi.fn(),
   release: vi.fn(async () => undefined),
   increment: vi.fn(async () => undefined),
@@ -18,17 +22,17 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: {
     findById: mocks.findById,
-    // `ConnectionStateService.transition` reads via the row-locking
-    // variant (I6) — same mock fn, so every existing
-    // `mocks.findById.mockResolvedValue(...)` in this file still drives it.
+    findByInboxId: mocks.findByInboxId,
     findByIdForUpdate: mocks.findById,
+    findByIdForUpdateById: mocks.findById,
     findByProviderAndSourceIdAnyWorkspace:
       mocks.findByProviderAndSourceIdAnyWorkspace,
     update: mocks.update,
     list: vi.fn(),
     count: vi.fn(),
-    listDueForRefresh: vi.fn(),
   },
+  aiHandoverSettingsRepository: { lockExisting: mocks.lockExisting },
+  aiHandoverBulkRunRepository: { cancelLive: mocks.cancelLive },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -38,11 +42,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
       fn({ update: mocks.inboxUpdate }),
     ),
   },
+  and: vi.fn((...conditions) => conditions),
   eq: vi.fn((column, value) => ({ column, value })),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  inboxModel: { id: "id" },
+  inboxModel: { id: "id", workspaceId: "workspaceId" },
   workspaceUsageModel: {},
 }))
 
@@ -58,6 +63,10 @@ vi.mock("../../workspace-usage/service", () => ({
     increment: mocks.increment,
     decrement: mocks.decrement,
   },
+}))
+
+vi.mock("../../inbox/service", () => ({
+  inboxService: { disconnect: mocks.inboxDisconnect },
 }))
 
 const { connectionStateService } = await import("../state-service")
@@ -84,11 +93,15 @@ const baseConnection = (overrides: Partial<Record<string, unknown>> = {}) => ({
 
 beforeEach(() => {
   mocks.findById.mockReset()
+  mocks.findByInboxId.mockReset()
+  mocks.inboxDisconnect.mockReset()
   mocks.findByProviderAndSourceIdAnyWorkspace.mockReset()
   mocks.update.mockReset()
   mocks.inboxUpdate.mockReset()
   mocks.inboxUpdateSet.mockReset()
   mocks.inboxUpdateWhere.mockReset()
+  mocks.lockExisting.mockResolvedValue(null)
+  mocks.cancelLive.mockReset()
   mocks.tryConsume.mockReset()
   mocks.release.mockClear()
   mocks.increment.mockClear()
@@ -194,6 +207,66 @@ describe("ConnectionStateService.transition", () => {
   })
 })
 
+describe("ConnectionStateService.disconnectInbox", () => {
+  test("transitions a matching Connection through user.disconnect", async () => {
+    mocks.findByInboxId.mockResolvedValue(
+      baseConnection({ status: "connected" }),
+    )
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+
+    await connectionStateService.disconnectInbox({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+    })
+
+    expect(mocks.inboxDisconnect).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "conn-1",
+        workspaceId: "ws-1",
+        values: expect.objectContaining({ status: "disconnected" }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("uses the inbox-only legacy path before Connection backfill", async () => {
+    mocks.findByInboxId.mockResolvedValue(undefined)
+
+    await connectionStateService.disconnectInbox({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+    })
+
+    expect(mocks.inboxDisconnect).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      reason: "manual",
+    })
+  })
+
+  test("rejects a Connection from another workspace", async () => {
+    mocks.findByInboxId.mockResolvedValue(
+      baseConnection({ workspaceId: "other-workspace" }),
+    )
+
+    await expect(
+      connectionStateService.disconnectInbox({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toThrow("inbox-1")
+
+    expect(mocks.inboxDisconnect).not.toHaveBeenCalled()
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+})
+
 describe("ConnectionStateService.markUnhealthy", () => {
   test("releases quota exactly once from an ACTIVE connection and mirrors Inbox to disconnected(token_revoked)", async () => {
     mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
@@ -221,15 +294,50 @@ describe("ConnectionStateService.markUnhealthy", () => {
     )
   })
 
-  test("is an idempotent no-op (no quota release) when the connection is already INACTIVE", async () => {
-    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+  test("cancels live AI handover bulk runs in the same transaction as an inactive mirror", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
     mocks.update.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.lockExisting.mockResolvedValue({ id: "settings-1" })
 
     await connectionStateService.markUnhealthy({
       connectionId: "conn-1",
       ownerId: "owner-1",
     })
 
+    expect(mocks.cancelLive).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", inboxId: "inbox-1" },
+      expect.anything(),
+    )
+  })
+
+  test("does not overwrite an active connection's status reason or mirror Inbox for a no-op connect", async () => {
+    const active = baseConnection({
+      status: "connected",
+      statusReason: "verify_failed",
+    })
+    mocks.findById.mockResolvedValue(active)
+
+    const result = await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "connect.completed",
+      ownerId: "owner-1",
+    })
+
+    expect(result).toBe(active)
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
+  })
+
+  test("is an idempotent no-op without overwriting the row or mirroring Inbox when the connection is already inactive", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+
+    await connectionStateService.markUnhealthy({
+      connectionId: "conn-1",
+      ownerId: "owner-1",
+    })
+
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
     expect(mocks.release).not.toHaveBeenCalled()
     expect(mocks.tryConsume).not.toHaveBeenCalled()
   })
@@ -285,23 +393,29 @@ describe("ConnectionStateService.markUnhealthyByIdentifier", () => {
 })
 
 describe("ConnectionStateService.recordAuthSaved", () => {
-  test("clears lastError, sets authExpiresAt, and transitions degraded back to connected with no quota change", async () => {
-    mocks.update.mockResolvedValueOnce(undefined)
-    mocks.findById.mockResolvedValue(baseConnection({ status: "degraded" }))
-    mocks.update.mockResolvedValueOnce(baseConnection({ status: "connected" }))
-
+  test("updates auth metadata inside the locked transition and restores degraded to connected with no quota change", async () => {
     const expiresAt = new Date("2026-01-01T00:00:00Z")
+    mocks.findById.mockResolvedValue(baseConnection({ status: "degraded" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+
     const result = await connectionStateService.recordAuthSaved({
       connectionId: "conn-1",
       authExpiresAt: expiresAt,
     })
 
     expect(result.status).toBe("connected")
-    expect(mocks.update.mock.calls[0][0]).toEqual({
-      id: "conn-1",
-      workspaceId: "ws-1",
-      values: { authExpiresAt: expiresAt, lastError: null },
-    })
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "conn-1",
+        workspaceId: "ws-1",
+        values: expect.objectContaining({
+          authExpiresAt: expiresAt,
+          lastError: null,
+          status: "connected",
+        }),
+      }),
+      expect.anything(),
+    )
     expect(mocks.tryConsume).not.toHaveBeenCalled()
     expect(mocks.release).not.toHaveBeenCalled()
   })

@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => ({
   claimTarget: vi.fn(),
   releaseTarget: vi.fn(),
   recordResults: vi.fn(),
+  resolveAdapter: vi.fn(),
+  resolveOwnerId: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -100,9 +102,9 @@ const encryptedCandidatesSchema = z.array(
 
 vi.mock("../src/internal", () => ({
   encryptedCandidatesSchema,
-  resolveAdapter: vi.fn(),
+  resolveAdapter: mocks.resolveAdapter,
   resolveForeignKey: vi.fn(),
-  resolveOwnerId: vi.fn(),
+  resolveOwnerId: mocks.resolveOwnerId,
   subscribeWebhookBestEffort: vi.fn(),
   toChannelType: vi.fn(),
   upsertConnectionRow: vi.fn(),
@@ -125,6 +127,7 @@ const baseSession = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.resolveAdapter.mockReturnValue({ provider: { kind: "integration" } })
 })
 
 describe("connectTargets — ConnectSession.encryptedAuth tamper detection (real encryption)", () => {

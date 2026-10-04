@@ -282,6 +282,54 @@ export const toChannelType = (provider: IntegrationType): ChannelType =>
  * `ConnectionStateService.transition` consumes quota from, so this is
  * inserted `disconnected` and transitioned, never hardcoded `connected`.
  */
+export const saveOrInsertSatellite = async (input: {
+  tx: DatabaseClient
+  workspaceId: string
+  inboxId?: string | null
+  auth: AuthValue
+  descriptor: ConnectionDescriptor
+  extraConfig: Record<string, unknown>
+  existing?: ConnectionModel
+  store: NonNullable<ConnectionAdapter["store"]>
+}): Promise<string | undefined> => {
+  const existingForeignKey = input.existing
+    ? resolveForeignKey(input.existing)
+    : null
+  if (
+    existingForeignKey &&
+    (await input.store.saveAuthByForeignKey(
+      existingForeignKey,
+      input.auth,
+      input.extraConfig,
+      input.tx,
+    ))
+  ) {
+    return input.existing?.integrationId ?? undefined
+  }
+
+  try {
+    const inserted = await input.store.insertRow(
+      {
+        workspaceId: input.workspaceId,
+        inboxId: input.inboxId ?? undefined,
+        auth: input.auth,
+        descriptor: input.descriptor,
+        config: input.extraConfig,
+      },
+      input.tx,
+    )
+    return inserted.integrationId
+  } catch (err) {
+    if (
+      input.store.duplicateConstraint &&
+      isUniqueViolationError(err, input.store.duplicateConstraint)
+    ) {
+      throw connectionAlreadyConnectedException()
+    }
+    throw err
+  }
+}
+
 export const upsertConnectionRow = async (input: {
   tx: DatabaseClient
   workspaceId: string
@@ -311,43 +359,16 @@ export const upsertConnectionRow = async (input: {
     inboxId,
   } = input
 
-  let integrationId: string | undefined
-  const existingForeignKey = existing ? resolveForeignKey(existing) : null
-  let revived = false
-  if (existing && existingForeignKey) {
-    revived = await store.saveAuthByForeignKey(
-      existingForeignKey,
-      auth,
-      extraConfig,
-      tx,
-    )
-    if (revived) {
-      integrationId = existing.integrationId ?? undefined
-    }
-  }
-  if (!revived) {
-    try {
-      const inserted = await store.insertRow(
-        {
-          workspaceId,
-          inboxId: inboxId ?? undefined,
-          auth,
-          descriptor,
-          config: extraConfig,
-        },
-        tx,
-      )
-      integrationId = inserted.integrationId
-    } catch (err) {
-      if (
-        store.duplicateConstraint &&
-        isUniqueViolationError(err, store.duplicateConstraint)
-      ) {
-        throw connectionAlreadyConnectedException()
-      }
-      throw err
-    }
-  }
+  const integrationId = await saveOrInsertSatellite({
+    tx,
+    workspaceId,
+    inboxId,
+    auth,
+    descriptor,
+    extraConfig,
+    existing,
+    store,
+  })
 
   if (existing) {
     await connectionRepository.update(
@@ -372,20 +393,33 @@ export const upsertConnectionRow = async (input: {
     })
   }
 
-  const created = await connectionRepository.insert(
-    {
-      workspaceId,
-      provider,
-      kind,
-      sourceId: descriptor.sourceId,
-      displayName: descriptor.displayName,
-      inboxId: inboxId ?? null,
-      integrationId: integrationId ?? null,
-      status: "disconnected",
-      createdBy: actorUserId ?? null,
-    },
-    tx,
-  )
+  let created: ConnectionModel
+  try {
+    created = await connectionRepository.insert(
+      {
+        workspaceId,
+        provider,
+        kind,
+        sourceId: descriptor.sourceId,
+        displayName: descriptor.displayName,
+        inboxId: inboxId ?? null,
+        integrationId: integrationId ?? null,
+        status: "disconnected",
+        createdBy: actorUserId ?? null,
+      },
+      tx,
+    )
+  } catch (err) {
+    if (
+      isUniqueViolationError(
+        err,
+        "Connection_workspaceId_provider_sourceId_key",
+      )
+    ) {
+      throw connectionAlreadyConnectedException()
+    }
+    throw err
+  }
   return await connectionStateService.transition({
     connectionId: created.id,
     event: "connect.completed",

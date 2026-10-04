@@ -9,6 +9,7 @@ import type {
 import { connectSessionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectSessionModel } from "@chatbotx.io/database/types"
 import type { EncryptedData } from "@chatbotx.io/encryption"
+import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { ChatbotXException, connectSessionExpiredException } from "../errors"
 
@@ -41,7 +42,7 @@ const hashNonce = async (nonce: string): Promise<string> => {
   return toHex(new Uint8Array(digest))
 }
 
-export class ConnectSessionNotFoundException extends ChatbotXException {
+class ConnectSessionNotFoundException extends ChatbotXException {
   constructor() {
     super("Connect session not found.", "notFound", 404)
   }
@@ -86,9 +87,11 @@ const requireExactlyOneActor = (input: {
 class ConnectSessionService extends BaseService {
   /** Mints a new session and its one-time plaintext nonce (never persisted — only its hash is). Throws `connectSessionLimitReached` past the per-workspace pending cap. */
   async create(input: {
+    id?: string
     workspaceId: string
     provider: IntegrationType
     purpose: ConnectSessionPurpose
+    nextAction?: (nonce: string) => ConnectSessionModel["nextAction"]
     targetConnectionId?: string | null
     actorUserId?: string | null
     actorTokenId?: string | null
@@ -107,11 +110,14 @@ class ConnectSessionService extends BaseService {
 
     const nonce = toHex(randomBytes(NONCE_BYTES))
     const stateNonceHash = await hashNonce(nonce)
+    const nextAction = input.nextAction?.(nonce) ?? null
 
     const session = await connectSessionRepository.insert({
+      id: input.id ?? createId(),
       workspaceId: input.workspaceId,
       provider: input.provider,
       purpose: input.purpose,
+      nextAction,
       targetConnectionId: input.targetConnectionId ?? null,
       actorUserId: input.actorUserId ?? null,
       actorTokenId: input.actorTokenId ?? null,
@@ -227,16 +233,20 @@ class ConnectSessionService extends BaseService {
    */
   async attachAuthorization(input: {
     id: string
+    workspaceId?: string
     encryptedAuth: EncryptedData
     targets: ConnectSessionTarget[]
   }): Promise<ConnectSessionModel> {
-    const existing = await this.findById(input.id)
-    if (!existing) {
+    const existing = input.workspaceId
+      ? undefined
+      : await this.findById(input.id)
+    const workspaceId = input.workspaceId ?? existing?.workspaceId
+    if (!workspaceId) {
       throw new ConnectSessionNotFoundException()
     }
     const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
-      workspaceId: existing.workspaceId,
+      workspaceId,
       statuses: [...ACTIVE_STATUSES],
       requireUnexpired: true,
       values: {
@@ -262,7 +272,17 @@ class ConnectSessionService extends BaseService {
    * session; the caller maps that to a `duplicated` outcome rather than
    * connecting the same target twice.
    */
-  async claimTarget(input: { id: string; targetId: string }): Promise<boolean> {
+  async claimTarget(input: {
+    id: string
+    workspaceId?: string
+    targetId: string
+  }): Promise<boolean> {
+    if (input.workspaceId) {
+      return await connectSessionRepository.claimTarget({
+        ...input,
+        workspaceId: input.workspaceId,
+      })
+    }
     const session = await this.findById(input.id)
     if (!session) {
       return false
@@ -291,22 +311,50 @@ class ConnectSessionService extends BaseService {
    */
   async recordResults(input: {
     id: string
+    workspaceId?: string
     results: ConnectSessionOutcome[]
     resultConnectionIds: string[]
   }): Promise<ConnectSessionModel> {
-    const existing = await this.findById(input.id)
-    if (!existing) {
+    const existing = input.workspaceId
+      ? undefined
+      : await this.findById(input.id)
+    const workspaceId = input.workspaceId ?? existing?.workspaceId
+    if (!workspaceId) {
       throw new ConnectSessionNotFoundException()
     }
     const updated = await connectSessionRepository.appendResults({
       ...input,
-      workspaceId: existing.workspaceId,
+      workspaceId,
     })
-    return updated ?? existing
+    if (updated) {
+      return updated
+    }
+    if (existing) {
+      return existing
+    }
+    const current = await this.findByIdForWorkspace({
+      id: input.id,
+      workspaceId,
+    })
+    if (!current) {
+      throw new ConnectSessionNotFoundException()
+    }
+    return current
   }
 
   /** Releases a target `claimTarget` claimed whose `connectTargets` attempt did not end in `connected` — see `connectSessionRepository.releaseTarget`. */
-  async releaseTarget(input: { id: string; targetId: string }): Promise<void> {
+  async releaseTarget(input: {
+    id: string
+    workspaceId?: string
+    targetId: string
+  }): Promise<void> {
+    if (input.workspaceId) {
+      await connectSessionRepository.releaseTarget({
+        ...input,
+        workspaceId: input.workspaceId,
+      })
+      return
+    }
     const session = await this.findById(input.id)
     if (!session) {
       return
@@ -315,6 +363,40 @@ class ConnectSessionService extends BaseService {
       ...input,
       workspaceId: session.workspaceId,
     })
+  }
+
+  /** Completes the single target represented by an OAuth reconnect session. */
+  async completeReconnect(input: {
+    id: string
+    workspaceId?: string
+    result: ConnectSessionOutcome & { connectionId: string }
+  }): Promise<ConnectSessionModel> {
+    const existing = input.workspaceId
+      ? undefined
+      : await this.findById(input.id)
+    const workspaceId = input.workspaceId ?? existing?.workspaceId
+    if (!workspaceId) {
+      throw new ConnectSessionNotFoundException()
+    }
+    const updated = await connectSessionRepository.completeReconnect({
+      id: input.id,
+      workspaceId,
+      result: input.result,
+    })
+    if (updated) {
+      return updated
+    }
+    if (existing) {
+      return existing
+    }
+    const current = await this.findByIdForWorkspace({
+      id: input.id,
+      workspaceId,
+    })
+    if (!current) {
+      throw new ConnectSessionNotFoundException()
+    }
+    return current
   }
 
   /**
@@ -327,15 +409,19 @@ class ConnectSessionService extends BaseService {
    */
   async submitInput(input: {
     id: string
+    workspaceId?: string
     nextAction: ConnectSessionModel["nextAction"]
   }): Promise<ConnectSessionModel> {
-    const existing = await this.findById(input.id)
-    if (!existing) {
+    const existing = input.workspaceId
+      ? undefined
+      : await this.findById(input.id)
+    const workspaceId = input.workspaceId ?? existing?.workspaceId
+    if (!workspaceId) {
       throw new ConnectSessionNotFoundException()
     }
     const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
-      workspaceId: existing.workspaceId,
+      workspaceId,
       statuses: [...ACTIVE_STATUSES],
       values: { nextAction: input.nextAction },
       requireUnexpired: true,
@@ -351,15 +437,19 @@ class ConnectSessionService extends BaseService {
   /** Transitions to `failed`, guarded to only affect an active (non-terminal) session — a replayed/duplicate OAuth callback `?error=` can never flip an already-`completed`/`cancelled`/etc. session. Returns the session's current (already-terminal) row unchanged instead of throwing when the guard doesn't match. */
   async fail(input: {
     id: string
+    workspaceId?: string
     errorCode: ConnectSessionErrorCode
   }): Promise<ConnectSessionModel> {
-    const existing = await this.findById(input.id)
-    if (!existing) {
+    const existing = input.workspaceId
+      ? undefined
+      : await this.findById(input.id)
+    const workspaceId = input.workspaceId ?? existing?.workspaceId
+    if (!workspaceId) {
       throw new ConnectSessionNotFoundException()
     }
     const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
-      workspaceId: existing.workspaceId,
+      workspaceId,
       statuses: [...ACTIVE_STATUSES],
       values: {
         status: "failed",
@@ -368,7 +458,20 @@ class ConnectSessionService extends BaseService {
         encryptedAuth: null,
       },
     })
-    return updated ?? existing
+    if (updated) {
+      return updated
+    }
+    if (existing) {
+      return existing
+    }
+    const current = await this.findByIdForWorkspace({
+      id: input.id,
+      workspaceId,
+    })
+    if (!current) {
+      throw new ConnectSessionNotFoundException()
+    }
+    return current
   }
 
   /** Transitions to `cancelled`, guarded to only affect an active session — see `fail`. */

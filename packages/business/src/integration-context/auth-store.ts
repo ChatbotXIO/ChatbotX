@@ -2,12 +2,8 @@ import { db, eq, sql } from "@chatbotx.io/database/client"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import { distributedLock } from "@chatbotx.io/redis"
-import {
-  AuthException,
-  type AuthStore,
-  type AuthValue,
-  SdkException,
-} from "@chatbotx.io/sdk"
+import { type AuthStore, type AuthValue, SdkException } from "@chatbotx.io/sdk"
+import { authExpiresAtOf } from "../connection/auth-expiry"
 import { InvalidConnectionTransitionException } from "../connection/state"
 import { connectionStateService } from "../connection/state-service"
 import { logger } from "../logger"
@@ -96,10 +92,7 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
         // Pre-backfill fallback: no `Connection` row to mirror onto yet.
         return
       }
-      const authExpiresAt =
-        auth.authType === "oauth2" && auth.tokens.expiresAt
-          ? new Date(auth.tokens.expiresAt)
-          : null
+      const authExpiresAt = authExpiresAtOf(auth)
       // `auth.saved` only transitions a currently-ACTIVE (connected/
       // degraded) connection — it throws from `needs_reauth`/`paused`/
       // `disconnected` (see `transitionConnection`). The row write above
@@ -115,10 +108,14 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
           authExpiresAt,
         })
       } catch (err) {
-        logger.warn(
-          { err, connectionId: connection.id },
-          "auth-store: recordAuthSaved could not transition the connection (likely inactive) — auth was still saved",
-        )
+        if (err instanceof InvalidConnectionTransitionException) {
+          logger.warn(
+            { err, connectionId: connection.id },
+            "auth-store: recordAuthSaved could not transition an inactive connection; auth was still saved",
+          )
+          return
+        }
+        throw err
       }
     },
     withLock: (fn) =>
@@ -127,50 +124,22 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
         timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
         fn,
       }),
-    markOffline: async (reason?: unknown) => {
+    markOffline: async () => {
       const connection = await resolveConnection()
-      const isRevoked = reason instanceof AuthException
       if (connection) {
         const ownerId =
           await workspaceMemberService.findOwnerUserIdByWorkspaceId({
             workspaceId: connection.workspaceId,
           })
-        if (isRevoked) {
-          await connectionStateService.markUnhealthy({
-            connectionId: connection.id,
-            ownerId,
-          })
-          return
-        }
-        // Transient failure (network/5xx, retries exhausted) — degrade
-        // instead of revoking: the channel keeps sending and its quota slot
-        // stays held, matching a live provider outage rather than a real
-        // reauth requirement. Invalid from a terminal status (e.g. already
-        // `needs_reauth`) is a legitimate no-op, not an error.
-        try {
-          await connectionStateService.transition({
-            connectionId: connection.id,
-            event: "refresh.transient_failure",
-            reason: "refresh_failed",
-            ownerId,
-          })
-        } catch (err) {
-          if (!(err instanceof InvalidConnectionTransitionException)) {
-            throw err
-          }
-          // Not currently active — nothing to degrade.
-          logger.warn(
-            { err, connectionId: connection.id },
-            "auth-store: markOffline connection not currently active, nothing to degrade",
-          )
-        }
+        await connectionStateService.recordRefreshFailure({
+          connectionId: connection.id,
+          ownerId,
+        })
         return
       }
       // Pre-backfill fallback: no `Connection` row exists yet for this
-      // integration — fall back to the legacy direct `Inbox` write. Only for
-      // a genuine revocation; a transient failure with no `Connection` row
-      // to degrade must not disconnect the channel outright.
-      if (!(isRevoked && integration.inboxId)) {
+      // integration — preserve the legacy Inbox disconnect.
+      if (!integration.inboxId) {
         return
       }
       await db

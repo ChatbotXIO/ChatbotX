@@ -28,6 +28,10 @@ The chain is: **action / API handler → service (`packages/business/`) → repo
 - **Consistency:** Multiple consumers (builder actions, worker handlers, oRPC endpoints, public API tokens) reuse the same data logic instead of duplicating it.
 - **Public API / MCP surfaces need the same guarantees as the UI.** A workspace-token caller and a signed-in member hitting the same resource must run the same validation, cache invalidation, and event emission — which only happens if both call the same service method.
 
+## Connections orchestration
+
+`packages/connections` is an allowed orchestration layer above business services and repositories. It may compose registry-specific provider calls with transactions and pass transaction handles into business services or repositories; it must not become a second app layer or bypass the repository boundary for raw queries.
+
 ## Per-layer responsibilities
 
 | Layer | May import `db`? | Owns |

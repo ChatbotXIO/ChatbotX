@@ -34,7 +34,7 @@ vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => ({
 }))
 
 vi.mock("../src/connection/state-service", () => ({
-  connectionStateService: { transition: mocks.transition },
+  connectionStateService: { disconnectInbox: mocks.disconnectInbox },
 }))
 
 vi.mock("../src/inbox/service", () => ({
@@ -67,7 +67,7 @@ describe("integrationWhatsappService.disconnect", () => {
     vi.clearAllMocks()
   })
 
-  test("falls back to inboxService.disconnect when no Connection row exists yet (pre-backfill)", async () => {
+  test("delegates inbox disconnection to the connection state service", async () => {
     mocks.findByInboxId.mockResolvedValueOnce(undefined)
     const tx = makeTx()
 
@@ -82,29 +82,7 @@ describe("integrationWhatsappService.disconnect", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "ws-1",
-      reason: "manual",
       tx,
     })
-    expect(mocks.transition).not.toHaveBeenCalled()
-  })
-
-  test("routes through connectionStateService.transition instead of the legacy inboxService.disconnect fallback when a Connection row already exists (regression: the FSM path was never exercised — the action-level test fakes the whole method)", async () => {
-    mocks.findByInboxId.mockResolvedValueOnce({ id: "conn-1" })
-    const tx = makeTx()
-
-    await integrationWhatsappService.disconnect({
-      integrationWhatsapp: integrationWhatsappRow,
-      ownerId: "owner-1",
-      workspaceId: "ws-1",
-      tx,
-    })
-
-    expect(mocks.transition).toHaveBeenCalledWith({
-      connectionId: "conn-1",
-      event: "user.disconnect",
-      ownerId: "owner-1",
-      tx,
-    })
-    expect(mocks.disconnectInbox).not.toHaveBeenCalled()
   })
 })

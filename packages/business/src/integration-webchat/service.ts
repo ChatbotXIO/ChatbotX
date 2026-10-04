@@ -12,6 +12,7 @@ import { parsePagination } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
@@ -172,11 +173,10 @@ class IntegrationWebchatService extends BaseService {
         .delete(integrationWebchatModel)
         .where(eq(integrationWebchatModel.id, integrationWebchat.id))
 
-      await inboxService.disconnect({
+      await connectionStateService.disconnectInbox({
         inboxId: integrationWebchat.inboxId,
         ownerId: workspace.ownerId,
         workspaceId: input.workspaceId,
-        reason: "manual",
         tx,
       })
     })

@@ -23,20 +23,18 @@ import { disconnect, refresh, verify } from "./lifecycle"
  *     `listAndAttachCandidates`/`connectTargets` plus the session-flow-only
  *     private helpers `completeReconnect`/`connectCandidate`.
  *
- * This class is the one public surface (`connectionService`) every caller
+ * This object is the one public surface (`connectionService`) every caller
  * imports; the split above is purely a file-organization concern; behavior
  * is unchanged.
  */
-class ConnectionService {
-  disconnect = disconnect
-  refresh = refresh
-  verify = verify
-  connectFromCredentials = connectFromCredentials
-  reconnect = reconnect
-  startSession = startSession
-  completeAuthorization = completeAuthorization
-  listAndAttachCandidates = listAndAttachCandidates
-  connectTargets = connectTargets
+export const connectionService = {
+  disconnect,
+  refresh,
+  verify,
+  connectFromCredentials,
+  reconnect,
+  startSession,
+  completeAuthorization,
+  listAndAttachCandidates,
+  connectTargets,
 }
-
-export const connectionService = new ConnectionService()

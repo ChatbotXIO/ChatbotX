@@ -1,12 +1,14 @@
 import { channelLimitReachedException } from "@chatbotx.io/business/errors"
-import { AuthException } from "@chatbotx.io/sdk"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+const SESSION_STATE_PATTERN = /^[^.]+\.nonce-abc$/
 
 const mocks = vi.hoisted(() => ({
   findByIdForWorkspace: vi.fn(),
   findById: vi.fn(),
   findByProviderSourceId: vi.fn(),
   findByProviderAndSourceIdAnyWorkspace: vi.fn(async () => undefined),
+  findByProviderAndSourceIdsAnyWorkspace: vi.fn(async () => []),
   insert: vi.fn(),
   update: vi.fn(),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
@@ -15,6 +17,10 @@ const mocks = vi.hoisted(() => ({
     status: "connected",
   })),
   markUnhealthy: vi.fn(async (input: Record<string, unknown>) => ({
+    id: input.connectionId,
+    status: "needs_reauth",
+  })),
+  recordRefreshFailure: vi.fn(async (input: Record<string, unknown>) => ({
     id: input.connectionId,
     status: "needs_reauth",
   })),
@@ -42,6 +48,7 @@ const mocks = vi.hoisted(() => ({
   submitInput: vi.fn(),
   attachAuthorization: vi.fn(),
   recordResults: vi.fn(),
+  completeReconnect: vi.fn(),
   failSession: vi.fn(),
   authorizeUrl: vi.fn(() => "https://provider.example.com/authorize"),
   exchangeCode: vi.fn(async () => ({
@@ -76,6 +83,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findByProviderSourceId: mocks.findByProviderSourceId,
     findByProviderAndSourceIdAnyWorkspace:
       mocks.findByProviderAndSourceIdAnyWorkspace,
+    findByProviderAndSourceIdsAnyWorkspace:
+      mocks.findByProviderAndSourceIdsAnyWorkspace,
     insert: mocks.insert,
     update: mocks.update,
   },
@@ -101,9 +110,17 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
+  authExpiresAtOf: (auth: {
+    authType: string
+    tokens?: { expiresAt?: string }
+  }) =>
+    auth.authType === "oauth2" && auth.tokens?.expiresAt
+      ? new Date(auth.tokens.expiresAt)
+      : null,
   connectionStateService: {
     transition: mocks.transition,
     markUnhealthy: mocks.markUnhealthy,
+    recordRefreshFailure: mocks.recordRefreshFailure,
     recordAuthSaved: mocks.recordAuthSaved,
   },
   isActiveConnectionStatus: (status: string) =>
@@ -120,6 +137,7 @@ vi.mock("@chatbotx.io/business/connect-session", () => ({
     submitInput: mocks.submitInput,
     attachAuthorization: mocks.attachAuthorization,
     recordResults: mocks.recordResults,
+    completeReconnect: mocks.completeReconnect,
     fail: mocks.failSession,
   },
 }))
@@ -279,6 +297,7 @@ beforeEach(() => {
   mockAdapter.provider.kind = "channel"
   mocks.findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
   mocks.loadAuthByForeignKey.mockResolvedValue({ authType: "none" })
+  mocks.saveAuthByForeignKey.mockResolvedValue(true)
   mocks.verify.mockResolvedValue({ ok: true })
   mocks.fromCredentials.mockResolvedValue({
     authType: "secretText",
@@ -287,6 +306,7 @@ beforeEach(() => {
   mocks.isUniqueViolationError.mockReturnValue(false)
   mocks.findByProviderSourceId.mockResolvedValue(undefined)
   mocks.findByProviderAndSourceIdAnyWorkspace.mockResolvedValue(undefined)
+  mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([])
   mocks.insertRow.mockResolvedValue({ id: "sat-1", integrationId: "int-1" })
   mocks.insert.mockImplementation(async (values: Record<string, unknown>) => ({
     id: "conn-new",
@@ -297,6 +317,10 @@ beforeEach(() => {
     status: "disconnected",
   }))
   mocks.markUnhealthy.mockImplementation(async (input) => ({
+    id: input.connectionId,
+    status: "needs_reauth",
+  }))
+  mocks.recordRefreshFailure.mockImplementation(async (input) => ({
     id: input.connectionId,
     status: "needs_reauth",
   }))
@@ -316,22 +340,29 @@ beforeEach(() => {
     ciphertext: "c",
     keyId: "k",
   })
-  mocks.createSession.mockResolvedValue({
-    session: { id: "session-1", workspaceId: "ws-1", provider: "messenger" },
-    nonce: "nonce-abc",
-  })
+  mocks.createSession.mockImplementation(
+    async (input: {
+      id: string
+      nextAction: (nonce: string) => unknown
+      workspaceId: string
+      provider: string
+    }) => ({
+      session: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+        provider: input.provider,
+        nextAction: input.nextAction("nonce-abc"),
+      },
+      nonce: "nonce-abc",
+    }),
+  )
+
   mocks.findByNonce.mockResolvedValue({
     id: "session-1",
     workspaceId: "ws-1",
     provider: "messenger",
     status: "pending",
   })
-  mocks.submitInput.mockImplementation(
-    async (input: { id: string; nextAction: unknown }) => ({
-      id: input.id,
-      nextAction: input.nextAction,
-    }),
-  )
   mocks.attachAuthorization.mockImplementation(
     async (input: Record<string, unknown>) => ({
       id: input.id,
@@ -350,6 +381,14 @@ beforeEach(() => {
     async (input: Record<string, unknown>) => ({
       id: input.id,
       status: "completed",
+    }),
+  )
+
+  mocks.completeReconnect.mockImplementation(
+    async (input: Record<string, unknown>) => ({
+      id: input.id,
+      status: "completed",
+      results: [input.result],
     }),
   )
 })
@@ -523,49 +562,50 @@ describe("ConnectionService.refresh", () => {
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "inbox-1",
       expect.objectContaining({ authType: "oauth2" }),
+      undefined,
+      "tx",
     )
     expect(mocks.recordAuthSaved).toHaveBeenCalledWith({
       connectionId: "conn-1",
       authExpiresAt: new Date("2030-01-01T00:00:00.000Z"),
+      tx: "tx",
     })
   })
 
-  it("authStore.markOffline calls markUnhealthy for an AuthException", async () => {
+  it("does not record refreshed auth when no satellite row matches", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
+    mocks.saveAuthByForeignKey.mockResolvedValue(false)
+    mocks.ensureFreshAuth.mockImplementation(async (ctx) => {
+      await ctx.authStore.save({ authType: "none" })
+    })
+
+    await expect(
+      connectionService.refresh({
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("auth persistence did not match a satellite row")
+
+    expect(mocks.recordAuthSaved).not.toHaveBeenCalled()
+  })
+
+  it("authStore.markOffline records every terminal provider error as a refresh failure", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.findById.mockResolvedValue(baseConnection())
     mocks.ensureFreshAuth.mockImplementation(async (ctx) => {
-      await ctx.authStore.markOffline(new AuthException("revoked"))
+      await ctx.authStore.markOffline(new Error("provider revoked token"))
     })
     await connectionService.refresh({
       connectionId: "conn-1",
       workspaceId: "ws-1",
     })
-    expect(mocks.markUnhealthy).toHaveBeenCalledWith({
+    expect(mocks.recordRefreshFailure).toHaveBeenCalledWith({
       connectionId: "conn-1",
       ownerId: "owner-1",
     })
     expect(mocks.transition).not.toHaveBeenCalledWith(
       expect.objectContaining({ event: "refresh.transient_failure" }),
     )
-  })
-
-  it("authStore.markOffline degrades via refresh.transient_failure for a non-auth error", async () => {
-    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
-    mocks.findById.mockResolvedValue(baseConnection())
-    mocks.ensureFreshAuth.mockImplementation(async (ctx) => {
-      await ctx.authStore.markOffline(new Error("ECONNRESET"))
-    })
-    await connectionService.refresh({
-      connectionId: "conn-1",
-      workspaceId: "ws-1",
-    })
-    expect(mocks.markUnhealthy).not.toHaveBeenCalled()
-    expect(mocks.transition).toHaveBeenCalledWith({
-      connectionId: "conn-1",
-      event: "refresh.transient_failure",
-      reason: "refresh_failed",
-      ownerId: "owner-1",
-    })
   })
 })
 
@@ -954,6 +994,22 @@ describe("ConnectionService.startSession", () => {
     mockAdapter.provider.authorizeUrl = mocks.authorizeUrl
   })
 
+  it("rejects a reconnect target that does not belong to the session workspace", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(undefined)
+
+    await expect(
+      connectionService.startSession({
+        workspaceId: "ws-1",
+        provider: "messenger",
+        purpose: "reconnect",
+        targetConnectionId: "conn-other-workspace",
+        credential: {},
+        callbackUrl: "https://app.example.test/integrations/messenger/callback",
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(mocks.createSession).not.toHaveBeenCalled()
+  })
+
   it("creates a session, builds state as sessionId.nonce, and persists the resulting nextAction", async () => {
     const result = await connectionService.startSession({
       workspaceId: "ws-1",
@@ -975,15 +1031,9 @@ describe("ConnectionService.startSession", () => {
     expect(mocks.authorizeUrl).toHaveBeenCalledWith({
       credential: { clientId: "app-1" },
       callbackUrl: "https://app.example.test/integrations/messenger/callback",
-      state: "session-1.nonce-abc",
+      state: expect.stringMatching(SESSION_STATE_PATTERN),
     })
-    expect(mocks.submitInput).toHaveBeenCalledWith({
-      id: "session-1",
-      nextAction: {
-        type: "open_url",
-        url: "https://provider.example.com/authorize",
-      },
-    })
+    expect(mocks.submitInput).not.toHaveBeenCalled()
     expect(result.nextAction).toEqual({
       type: "open_url",
       url: "https://provider.example.com/authorize",
@@ -1054,6 +1104,7 @@ describe("ConnectionService.completeAuthorization", () => {
     ).rejects.toMatchObject({ code: "connectionCredentialsRejected" })
     expect(mocks.failSession).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       errorCode: "exchange_failed",
     })
   })
@@ -1071,15 +1122,19 @@ describe("ConnectionService.completeAuthorization", () => {
     ).rejects.toMatchObject({ code: "connectionNoCandidates" })
     expect(mocks.failSession).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       errorCode: "no_candidates",
     })
   })
 
   it("marks a candidate not selectable when it is already connected in this workspace", async () => {
-    mocks.findByProviderAndSourceIdAnyWorkspace.mockResolvedValue({
-      workspaceId: "ws-1",
-      status: "connected",
-    })
+    mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+      {
+        sourceId: "page-1",
+        workspaceId: "ws-1",
+        status: "connected",
+      },
+    ])
     await connectionService.completeAuthorization({
       sessionId: "session-1",
       nonce: "nonce-abc",
@@ -1101,10 +1156,13 @@ describe("ConnectionService.completeAuthorization", () => {
   })
 
   it("marks a candidate not selectable as other_workspace when connected elsewhere", async () => {
-    mocks.findByProviderAndSourceIdAnyWorkspace.mockResolvedValue({
-      workspaceId: "ws-2",
-      status: "connected",
-    })
+    mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+      {
+        sourceId: "page-1",
+        workspaceId: "ws-2",
+        status: "connected",
+      },
+    ])
     await connectionService.completeAuthorization({
       sessionId: "session-1",
       nonce: "nonce-abc",
@@ -1145,6 +1203,7 @@ describe("ConnectionService.completeAuthorization", () => {
     )
     expect(mocks.attachAuthorization).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       encryptedAuth: { iv: "iv", ciphertext: "c", keyId: "k" },
       targets: [
         expect.objectContaining({
@@ -1223,7 +1282,9 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
 
   it("verifies identity, saves auth, and revives the connection via connect.completed (not auth.saved)", async () => {
     mocks.findByNonce.mockResolvedValue(reconnectSession)
-    mocks.findById.mockResolvedValue(baseConnection({ sourceId: "page-1" }))
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "page-1" }),
+    )
     mocks.exchangeCode.mockResolvedValue({
       authType: "oauth2",
       clientId: "id",
@@ -1247,7 +1308,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "inbox-1",
       expect.objectContaining({ authType: "oauth2" }),
-      undefined,
+      {},
       "tx",
     )
     expect(mocks.update).toHaveBeenCalledWith(
@@ -1267,19 +1328,23 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
       tx: "tx",
     })
     expect(mocks.recordAuthSaved).not.toHaveBeenCalled()
-    expect(mocks.recordResults).toHaveBeenCalledWith({
+    expect(mocks.completeReconnect).toHaveBeenCalledWith({
       id: "session-1",
-      results: [
-        { targetId: "page-1", status: "connected", connectionId: "conn-1" },
-      ],
-      resultConnectionIds: ["conn-1"],
+      workspaceId: "ws-1",
+      result: {
+        targetId: "page-1",
+        status: "connected",
+        connectionId: "conn-1",
+      },
     })
     expect(result.status).toBe("completed")
   })
 
   it("falls back to inserting a fresh satellite row when the delete_row channel's satellite is already gone (regression I3: used to silently no-op the update, then still report connect.completed with no auth persisted)", async () => {
     mocks.findByNonce.mockResolvedValue(reconnectSession)
-    mocks.findById.mockResolvedValue(baseConnection({ sourceId: "page-1" }))
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "page-1" }),
+    )
     mocks.exchangeCode.mockResolvedValue({
       authType: "oauth2",
       clientId: "id",
@@ -1327,7 +1392,9 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
 
   it("throws connectionIdentityMismatch and fails the session when the re-granted account differs", async () => {
     mocks.findByNonce.mockResolvedValue(reconnectSession)
-    mocks.findById.mockResolvedValue(baseConnection({ sourceId: "page-1" }))
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "page-1" }),
+    )
     mockAdapter.provider.describe = () => ({
       sourceId: "page-2",
       displayName: "A Different Page",
@@ -1344,6 +1411,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
     ).rejects.toMatchObject({ code: "connectionIdentityMismatch" })
     expect(mocks.failSession).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       errorCode: "provider_denied",
     })
     expect(mocks.saveAuthByForeignKey).not.toHaveBeenCalled()
@@ -1356,7 +1424,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
 
   it("throws notFound and fails the session when the target connection no longer exists", async () => {
     mocks.findByNonce.mockResolvedValue(reconnectSession)
-    mocks.findById.mockResolvedValue(undefined)
+    mocks.findByIdForWorkspace.mockResolvedValue(undefined)
 
     await expect(
       connectionService.completeAuthorization({
@@ -1369,13 +1437,14 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
     ).rejects.toMatchObject({ code: "notFound" })
     expect(mocks.failSession).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       errorCode: "internal_error",
     })
   })
 
   it("never resolves an ownerId for a kind:integration connection being reconnected", async () => {
     mocks.findByNonce.mockResolvedValue(reconnectSession)
-    mocks.findById.mockResolvedValue(
+    mocks.findByIdForWorkspace.mockResolvedValue(
       baseConnection({
         sourceId: "page-1",
         kind: "integration",
@@ -1487,6 +1556,7 @@ describe("ConnectionService.connectTargets", () => {
 
     expect(mocks.claimTarget).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       targetId: "page-1",
     })
     expect(mocks.inboxCreate).toHaveBeenCalledWith(
@@ -1516,6 +1586,7 @@ describe("ConnectionService.connectTargets", () => {
     expect(result.connections).toHaveLength(1)
     expect(mocks.recordResults).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       results: result.outcomes,
       resultConnectionIds: ["conn-new"],
     })
@@ -1572,6 +1643,7 @@ describe("ConnectionService.connectTargets", () => {
     expect(result.connections).toHaveLength(0)
     expect(mocks.releaseTarget).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       targetId: "page-1",
     })
   })
@@ -1593,6 +1665,7 @@ describe("ConnectionService.connectTargets", () => {
     ])
     expect(mocks.releaseTarget).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       targetId: "page-1",
     })
   })

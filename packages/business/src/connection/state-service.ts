@@ -1,4 +1,4 @@
-import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import { and, type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import {
   CONNECTION_TO_INBOX_DISCONNECT_REASON,
   type ConnectionStatus,
@@ -6,13 +6,16 @@ import {
   type IntegrationType,
 } from "@chatbotx.io/database/partials"
 import {
+  aiHandoverBulkRunRepository,
+  aiHandoverSettingsRepository,
   type ConnectionListInput,
   connectionRepository,
 } from "@chatbotx.io/database/repositories"
-import { inboxModel } from "@chatbotx.io/database/schema"
+import { type connectionModel, inboxModel } from "@chatbotx.io/database/schema"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 import { channelLimitReachedException } from "../errors"
+import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceUsageService } from "../workspace-usage/service"
@@ -82,11 +85,36 @@ class ConnectionStateService extends BaseService {
     })
   }
 
-  async listDueForRefresh(input: {
-    before: Date
-    statuses: ConnectionStatus[]
-  }): Promise<ConnectionModel[]> {
-    return await connectionRepository.listDueForRefresh(input)
+  /**
+   * Disconnects the connection mirroring an inbox, or preserves the legacy
+   * inbox-only path for rows not yet backfilled into `Connection`.
+   */
+  async disconnectInbox(input: {
+    inboxId: string
+    workspaceId: string
+    ownerId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const connection = await connectionRepository.findByInboxId(
+      { inboxId: input.inboxId },
+      input.tx,
+    )
+    if (connection && connection.workspaceId !== input.workspaceId) {
+      throw new ConnectionNotFoundException(input.inboxId)
+    }
+    if (connection) {
+      await this.transition({
+        connectionId: connection.id,
+        event: "user.disconnect",
+        ownerId: input.ownerId,
+        tx: input.tx,
+      })
+      return
+    }
+    await inboxService.disconnect({
+      ...input,
+      reason: "manual",
+    })
   }
 
   /**
@@ -105,16 +133,12 @@ class ConnectionStateService extends BaseService {
     reason?: ConnectionStatusReason
     /** Required when the event can consume/release quota (all except read-only transitions). */
     ownerId?: string
+    values?: Pick<
+      typeof connectionModel.$inferInsert,
+      "authExpiresAt" | "lastError"
+    >
     tx?: DatabaseClient
   }): Promise<ConnectionModel> {
-    const scopedConnection = await connectionRepository.findById(
-      { id: input.connectionId },
-      input.tx,
-    )
-    if (!scopedConnection) {
-      throw new ConnectionNotFoundException(input.connectionId)
-    }
-
     const run = async (client: DatabaseClient): Promise<ConnectionModel> => {
       // Row-locked (not the relational `findById`): two concurrent
       // `transition` calls on the same connection must serialize here so
@@ -122,11 +146,8 @@ class ConnectionStateService extends BaseService {
       // quota edge — otherwise both can observe the same `existing.status`
       // and each consume (or release) a `channels` quota unit for what is
       // really a single state change.
-      const existing = await connectionRepository.findByIdForUpdate(
-        {
-          id: input.connectionId,
-          workspaceId: scopedConnection.workspaceId,
-        },
+      const existing = await connectionRepository.findByIdForUpdateById(
+        { id: input.connectionId },
         client,
       )
       if (!existing) {
@@ -139,6 +160,24 @@ class ConnectionStateService extends BaseService {
         reason: input.reason,
       })
 
+      if (result.noop) {
+        if (!input.values) {
+          return existing
+        }
+        const updated = await connectionRepository.update(
+          {
+            id: existing.id,
+            workspaceId: existing.workspaceId,
+            values: input.values,
+          },
+          client,
+        )
+        if (!updated) {
+          throw new ConnectionNotFoundException(input.connectionId)
+        }
+        return updated
+      }
+
       // Gated on `kind === "channel"` here (not just `input.ownerId` being
       // set) as defense-in-depth: the "channels" quota metric only applies
       // to channel connections, so a caller that mistakenly resolves and
@@ -146,11 +185,6 @@ class ConnectionStateService extends BaseService {
       // (AI providers, marketing tools) still cannot mis-consume/release a
       // channel-quota slot.
       if (result.quotaEdge && existing.kind === "channel" && !input.ownerId) {
-        // A channel-kind connection crossing the active/inactive boundary
-        // with no resolvable owner is a caller bug, not a legitimate no-op
-        // — `inboxService.create` throws in the same situation. Silently
-        // skipping here would let a channel go `connected` (or a disconnect
-        // go through) with no quota consumed/released at all.
         throw new Error(
           `connection ${existing.id} transition "${input.event}" would ${result.quotaEdge} channel quota but no ownerId was supplied`,
         )
@@ -178,6 +212,7 @@ class ConnectionStateService extends BaseService {
           id: existing.id,
           workspaceId: existing.workspaceId,
           values: {
+            ...input.values,
             status: result.to,
             statusReason: result.reason,
             connectedAt:
@@ -199,6 +234,7 @@ class ConnectionStateService extends BaseService {
       if (existing.inboxId) {
         await this.mirrorInboxStatus({
           inboxId: existing.inboxId,
+          workspaceId: existing.workspaceId,
           to: result.to,
           reason: result.reason,
           tx: client,
@@ -262,6 +298,15 @@ class ConnectionStateService extends BaseService {
     })
   }
 
+  /** Records a terminal provider refresh failure as a token revocation. */
+  async recordRefreshFailure(input: {
+    connectionId: string
+    ownerId?: string
+    tx?: DatabaseClient
+  }): Promise<ConnectionModel> {
+    return await this.markUnhealthy(input)
+  }
+
   /**
    * Same as `markUnhealthy`, resolved by `(provider, sourceId)` instead of a
    * known `Connection.id` — the shape a provider webhook payload (TikTok
@@ -308,37 +353,32 @@ class ConnectionStateService extends BaseService {
     })
   }
 
-  /** Records a successful `AuthStore.save` — clears any error, refreshes `authExpiresAt`, transitions back to `connected` if currently `degraded`. */
+  /** Records a successful `AuthStore.save` atomically with its state transition. */
   async recordAuthSaved(input: {
     connectionId: string
     authExpiresAt?: Date | null
     tx?: DatabaseClient
   }): Promise<ConnectionModel> {
-    const client = input.tx ?? db
-    const existing = await connectionRepository.findById(
-      { id: input.connectionId },
-      client,
-    )
-    if (!existing) {
-      throw new ConnectionNotFoundException(input.connectionId)
+    const run = async (client: DatabaseClient): Promise<ConnectionModel> =>
+      await this.transition({
+        connectionId: input.connectionId,
+        event: "auth.saved",
+        values: {
+          authExpiresAt: input.authExpiresAt ?? null,
+          lastError: null,
+        },
+        tx: client,
+      })
+
+    if (input.tx) {
+      return await run(input.tx)
     }
-    await connectionRepository.update(
-      {
-        id: input.connectionId,
-        workspaceId: existing.workspaceId,
-        values: { authExpiresAt: input.authExpiresAt ?? null, lastError: null },
-      },
-      client,
-    )
-    return await this.transition({
-      connectionId: input.connectionId,
-      event: "auth.saved",
-      tx: client,
-    })
+    return await db.transaction(run)
   }
 
   private async mirrorInboxStatus(input: {
     inboxId: string
+    workspaceId: string
     to: ConnectionStatus
     reason: ConnectionStatusReason | null
     tx: DatabaseClient
@@ -361,7 +401,18 @@ class ConnectionStateService extends BaseService {
                 : "manual",
             },
       )
-      .where(eq(inboxModel.id, input.inboxId))
+      .where(
+        and(
+          eq(inboxModel.id, input.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+    if (!isActive) {
+      const ref = { workspaceId: input.workspaceId, inboxId: input.inboxId }
+      if (await aiHandoverSettingsRepository.lockExisting(ref, input.tx)) {
+        await aiHandoverBulkRunRepository.cancelLive(ref, input.tx)
+      }
+    }
   }
 
   /**

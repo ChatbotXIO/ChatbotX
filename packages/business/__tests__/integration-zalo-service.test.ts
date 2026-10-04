@@ -69,7 +69,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("../src/connection/state-service", () => ({
-  connectionStateService: { transition: vi.fn() },
+  connectionStateService: { disconnectInbox: mockDisconnect },
 }))
 
 vi.mock("../src/inbox/connect-channel", () => ({
@@ -289,7 +289,7 @@ describe("zaloIntegrationService.disconnect", () => {
     vi.clearAllMocks()
   })
 
-  test("deletes tagChannel rows before the integration row and calls inboxService.disconnect with the same tx", async () => {
+  test("deletes tagChannel rows before the integration row and disconnects its inbox in the same transaction", async () => {
     const callOrder: string[] = []
     const tx = {
       delete: vi.fn((table: { integrationId?: string }) => {
@@ -321,39 +321,7 @@ describe("zaloIntegrationService.disconnect", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "ws-1",
-      reason: "manual",
       tx,
     })
-  })
-
-  test("routes through connectionStateService.transition instead of the legacy inboxService.disconnect fallback when a Connection row already exists (regression: the FSM path was only ever exercised by a mock forcing 'no Connection row')", async () => {
-    const { connectionRepository } = await import(
-      "@chatbotx.io/database/repositories"
-    )
-    const { connectionStateService } = await import(
-      "../src/connection/state-service"
-    )
-    vi.mocked(connectionRepository.findByInboxId).mockResolvedValueOnce({
-      id: "conn-1",
-    } as never)
-    const tx = {
-      delete: vi.fn(() => ({ where: vi.fn(async () => undefined) })),
-    }
-
-    await zaloIntegrationService.disconnect({
-      workspaceId: "ws-1",
-      id: "integration-1",
-      inboxId: "inbox-1",
-      ownerId: "owner-1",
-      tx: tx as never,
-    })
-
-    expect(connectionStateService.transition).toHaveBeenCalledWith({
-      connectionId: "conn-1",
-      event: "user.disconnect",
-      ownerId: "owner-1",
-      tx,
-    })
-    expect(mockDisconnect).not.toHaveBeenCalled()
   })
 })

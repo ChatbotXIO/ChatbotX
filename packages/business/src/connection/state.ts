@@ -31,14 +31,14 @@ export type ConnectionEvent =
   | "teardown.resume"
   | "teardown.disconnect"
 
-export type ConnectionTransitionInput = {
+type ConnectionTransitionInput = {
   /** `undefined` when no `Connection` row exists yet (first `connect.completed`). */
   from: ConnectionStatus | undefined
   event: ConnectionEvent
   reason?: ConnectionStatusReason
 }
 
-export type ConnectionTransitionResult = {
+type ConnectionTransitionResult = {
   to: ConnectionStatus
   reason: ConnectionStatusReason | null
   /** `null` = no quota change; `"consume"`/`"release"` = the edge callers must act on exactly once. */

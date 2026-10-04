@@ -20,6 +20,10 @@ vi.mock("../src/inbox/service", () => ({
   inboxService: { disconnect: vi.fn() },
 }))
 
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { disconnectInbox: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: mocks.transaction },
 }))

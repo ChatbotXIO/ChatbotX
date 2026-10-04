@@ -1,4 +1,5 @@
 export * from "./adapter"
+export * from "./auth-expiry"
 export * from "./credential-providers"
 export * from "./state"
 export * from "./state-service"

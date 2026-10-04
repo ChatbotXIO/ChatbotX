@@ -15,7 +15,6 @@ import type {
   ConnectSessionModel,
 } from "@chatbotx.io/database/types"
 import type {
-  AuthValue,
   ConnectionCredential,
   ConnectSessionNextAction,
 } from "@chatbotx.io/sdk"
@@ -28,6 +27,7 @@ import {
   subscribeWebhookBestEffort,
   upsertConnectionRow,
 } from "./internal"
+import { logger } from "./logger"
 
 /**
  * `token`/`api_key`/`self_serve` connect: validates `config` against the
@@ -109,14 +109,21 @@ export const connectFromCredentials = async (input: {
     )
   }
 
-  let auth: AuthValue
-  try {
-    auth = await provider.fromCredentials(parsedConfig)
-  } catch (err) {
-    throw connectionCredentialsRejectedException(
-      toPublicErrorMessage(err, "The provided credentials were rejected."),
-    )
-  }
+  const [auth, ownerId] = await Promise.all([
+    provider.fromCredentials(parsedConfig).catch((err) => {
+      logger.warn(
+        { err, provider: input.provider, workspaceId: input.workspaceId },
+        "connection credentials: provider rejected credentials",
+      )
+      throw connectionCredentialsRejectedException(
+        toPublicErrorMessage(err, "The provided credentials were rejected."),
+      )
+    }),
+    resolveOwnerId({
+      kind: provider.kind,
+      workspaceId: input.workspaceId,
+    }),
+  ])
 
   const descriptor = provider.describe(auth)
 
@@ -125,6 +132,7 @@ export const connectFromCredentials = async (input: {
     provider: input.provider,
     sourceId: descriptor.sourceId,
   })
+
   if (
     existing &&
     isActiveConnectionStatus(existing.status) &&
@@ -132,11 +140,6 @@ export const connectFromCredentials = async (input: {
   ) {
     throw connectionAlreadyConnectedException()
   }
-
-  const ownerId = await resolveOwnerId({
-    kind: provider.kind,
-    workspaceId: input.workspaceId,
-  })
 
   const connection = await db.transaction(
     async (tx) =>

@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   claimTarget: vi.fn(),
   releaseTarget: vi.fn(),
   appendResults: vi.fn(),
+  completeReconnect: vi.fn(),
   updateWhereStatusIn: vi.fn(),
   expireDue: vi.fn(async () => 0),
   purgeOldTerminal: vi.fn(
@@ -34,6 +35,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     claimTarget: mocks.claimTarget,
     releaseTarget: mocks.releaseTarget,
     appendResults: mocks.appendResults,
+    completeReconnect: mocks.completeReconnect,
     updateWhereStatusIn: mocks.updateWhereStatusIn,
     expireDue: mocks.expireDue,
     purgeOldTerminal: mocks.purgeOldTerminal,
@@ -75,6 +77,14 @@ beforeEach(() => {
     }),
   )
   mocks.findById.mockResolvedValue(baseSession())
+  mocks.completeReconnect.mockImplementation(
+    async (input: { id: string; result: Record<string, unknown> }) =>
+      baseSession({
+        id: input.id,
+        status: "completed",
+        results: [input.result],
+      }),
+  )
 })
 
 describe("connectSessionService.create", () => {
@@ -341,6 +351,31 @@ describe("connectSessionService.recordResults", () => {
         resultConnectionIds: [],
       }),
     ).rejects.toMatchObject({ code: "notFound" })
+  })
+})
+
+describe("connectSessionService.completeReconnect", () => {
+  it("completes a pending reconnect session with its connected result", async () => {
+    const result = await connectSessionService.completeReconnect({
+      id: "session-1",
+      workspaceId: "ws-1",
+      result: {
+        targetId: "page-1",
+        status: "connected",
+        connectionId: "conn-1",
+      },
+    })
+
+    expect(mocks.completeReconnect).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      result: {
+        targetId: "page-1",
+        status: "connected",
+        connectionId: "conn-1",
+      },
+    })
+    expect(result.status).toBe("completed")
   })
 })
 

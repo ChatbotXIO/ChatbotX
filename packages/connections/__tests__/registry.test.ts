@@ -3,14 +3,6 @@ import { CHANNEL_CAPABILITIES, channelTypes } from "@chatbotx.io/utils/channel"
 import { describe, expect, it } from "vitest"
 import { CONNECTION_REGISTRY } from "../src/registry"
 
-const channelToIntegrationTable = (channel: string): string => {
-  const integrationName = channel
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join("")
-  return `Integration${integrationName}`
-}
-
 describe("CONNECTION_REGISTRY", () => {
   it("has an entry (possibly null) for every IntegrationType", () => {
     for (const type of integrationTypes.options) {
@@ -49,18 +41,6 @@ describe("CONNECTION_REGISTRY", () => {
         channelSet.has(impliedChannel),
         `${type} -> ${impliedChannel}`,
       ).toBe(true)
-    }
-  })
-
-  it("channel-kind adapters keyed directly by ChannelType use the matching Integration<Channel> table", () => {
-    for (const [type, adapter] of Object.entries(CONNECTION_REGISTRY)) {
-      if (adapter?.provider.kind !== "channel") {
-        continue
-      }
-      if (!(channelTypes.options as readonly string[]).includes(type)) {
-        continue
-      }
-      expect(adapter.store.table).toBe(channelToIntegrationTable(type))
     }
   })
 

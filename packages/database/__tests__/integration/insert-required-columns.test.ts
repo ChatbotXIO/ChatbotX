@@ -106,7 +106,11 @@ function writtenColumns(
 /** A `tx` double that records `.values()` and resolves `.returning()` with one row. */
 function capturingTx() {
   const values = vi.fn(() => ({
-    returning: vi.fn().mockResolvedValue([{ id: "row-1" }]),
+    returning: vi
+      .fn()
+      .mockResolvedValue([
+        { id: "row-1", nextAction: null, results: [], targets: [] },
+      ]),
     onConflictDoUpdate: vi.fn(() => ({
       returning: vi.fn().mockResolvedValue([{ id: "row-1" }]),
     })),
@@ -253,6 +257,7 @@ describe.skipIf(!databaseUrl)(
               purpose: "connect",
               stateNonceHash: "nonce-hash",
               expiresAt: new Date(),
+              nextAction: null,
             },
             tx,
           ),

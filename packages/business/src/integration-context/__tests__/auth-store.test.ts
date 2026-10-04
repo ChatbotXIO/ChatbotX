@@ -1,4 +1,3 @@
-import { AuthException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { InvalidConnectionTransitionException } from "../../connection/state"
 
@@ -11,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   inboxUpdateSet: vi.fn(),
   inboxUpdateWhere: vi.fn(),
   markUnhealthy: vi.fn(async () => undefined),
+  recordRefreshFailure: vi.fn(async () => undefined),
   recordAuthSaved: vi.fn(async () => undefined),
   transition: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
@@ -49,6 +49,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("../../connection/state-service", () => ({
   connectionStateService: {
     markUnhealthy: mocks.markUnhealthy,
+    recordRefreshFailure: mocks.recordRefreshFailure,
     recordAuthSaved: mocks.recordAuthSaved,
     transition: mocks.transition,
   },
@@ -116,13 +117,13 @@ describe("makeAuthStore.save", () => {
     expect(mocks.recordAuthSaved).not.toHaveBeenCalled()
   })
 
-  it("does not throw when recordAuthSaved rejects because the connection is inactive (regression: a successful token refresh must not fail just because the FSM mirror can't apply from needs_reauth/paused/disconnected)", async () => {
+  it("swallows only an InvalidConnectionTransitionException from an inactive connection", async () => {
     mocks.findByInboxId.mockResolvedValue({
       id: "conn-1",
       workspaceId: "ws-1",
     })
     mocks.recordAuthSaved.mockRejectedValueOnce(
-      new Error("InvalidConnectionTransitionException"),
+      new InvalidConnectionTransitionException("needs_reauth", "auth.saved"),
     )
     const store = makeAuthStore("messenger", {
       id: "row-1",
@@ -133,7 +134,7 @@ describe("makeAuthStore.save", () => {
 })
 
 describe("makeAuthStore.markOffline", () => {
-  it("routes through connectionStateService.markUnhealthy for an AuthException", async () => {
+  it("treats a non-AuthException terminal error as revoked", async () => {
     mocks.findByInboxId.mockResolvedValue({
       id: "conn-1",
       workspaceId: "ws-1",
@@ -142,8 +143,8 @@ describe("makeAuthStore.markOffline", () => {
       id: "row-1",
       inboxId: "inbox-1",
     })
-    await store.markOffline?.(new AuthException("revoked"))
-    expect(mocks.markUnhealthy).toHaveBeenCalledWith({
+    await store.markOffline?.(new Error("provider revoked token"))
+    expect(mocks.recordRefreshFailure).toHaveBeenCalledWith({
       connectionId: "conn-1",
       ownerId: "owner-1",
     })
@@ -151,89 +152,23 @@ describe("makeAuthStore.markOffline", () => {
     expect(mocks.inboxUpdate).not.toHaveBeenCalled()
   })
 
-  it("degrades via refresh.transient_failure instead of revoking for a non-auth error", async () => {
-    mocks.findByInboxId.mockResolvedValue({
-      id: "conn-1",
-      workspaceId: "ws-1",
-    })
-    const store = makeAuthStore("messenger", {
-      id: "row-1",
-      inboxId: "inbox-1",
-    })
-    await store.markOffline?.(new Error("ECONNRESET"))
-    expect(mocks.markUnhealthy).not.toHaveBeenCalled()
-    expect(mocks.transition).toHaveBeenCalledWith({
-      connectionId: "conn-1",
-      event: "refresh.transient_failure",
-      reason: "refresh_failed",
-      ownerId: "owner-1",
-    })
-    expect(mocks.inboxUpdate).not.toHaveBeenCalled()
-  })
-
-  it("swallows an InvalidConnectionTransitionException when the connection is already inactive", async () => {
-    mocks.findByInboxId.mockResolvedValue({
-      id: "conn-1",
-      workspaceId: "ws-1",
-    })
-    mocks.transition.mockRejectedValueOnce(
-      new InvalidConnectionTransitionException(
-        "needs_reauth",
-        "refresh.transient_failure",
-      ),
-    )
-    const store = makeAuthStore("messenger", {
-      id: "row-1",
-      inboxId: "inbox-1",
-    })
-    await expect(
-      store.markOffline?.(new Error("ECONNRESET")),
-    ).resolves.toBeUndefined()
-  })
-
-  it("rethrows an unexpected error instead of silently dropping it", async () => {
-    mocks.findByInboxId.mockResolvedValue({
-      id: "conn-1",
-      workspaceId: "ws-1",
-    })
-    mocks.transition.mockRejectedValueOnce(new Error("db unavailable"))
-    const store = makeAuthStore("messenger", {
-      id: "row-1",
-      inboxId: "inbox-1",
-    })
-    await expect(store.markOffline?.(new Error("ECONNRESET"))).rejects.toThrow(
-      "db unavailable",
-    )
-  })
-
-  it("falls back to a direct Inbox write for an AuthException when no Connection row exists yet", async () => {
+  it("falls back to a direct Inbox write when no Connection row exists yet", async () => {
     mocks.findByInboxId.mockResolvedValue(undefined)
     const store = makeAuthStore("messenger", {
       id: "row-1",
       inboxId: "inbox-1",
     })
-    await store.markOffline?.(new AuthException("revoked"))
-    expect(mocks.markUnhealthy).not.toHaveBeenCalled()
+    await store.markOffline?.(new Error("provider revoked token"))
+    expect(mocks.recordRefreshFailure).not.toHaveBeenCalled()
     expect(mocks.inboxUpdateSet).toHaveBeenCalledWith({
       status: "disconnected",
     })
   })
 
-  it("does not touch Inbox for a transient failure when no Connection row exists yet", async () => {
-    mocks.findByInboxId.mockResolvedValue(undefined)
-    const store = makeAuthStore("messenger", {
-      id: "row-1",
-      inboxId: "inbox-1",
-    })
-    await store.markOffline?.(new Error("ECONNRESET"))
-    expect(mocks.markUnhealthy).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdate).not.toHaveBeenCalled()
-  })
-
   it("no-ops for a workspace-level integration with no Connection and no inboxId", async () => {
     const store = makeAuthStoreForTableFallback()
-    await store.markOffline?.(new AuthException("revoked"))
-    expect(mocks.markUnhealthy).not.toHaveBeenCalled()
+    await store.markOffline?.(new Error("provider revoked token"))
+    expect(mocks.recordRefreshFailure).not.toHaveBeenCalled()
     expect(mocks.inboxUpdate).not.toHaveBeenCalled()
   })
 })

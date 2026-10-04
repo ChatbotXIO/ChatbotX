@@ -17,17 +17,14 @@ import {
   integrationMailchimpModel,
   integrationMailerLiteModel,
   integrationMessengerModel,
-  integrationMetaCatalogModel,
   integrationModel,
   integrationMoosendModel,
   integrationOpenaiCompatibleModel,
   integrationOpenaiModel,
   integrationOpenrouterModel,
-  integrationOutlookCalendarModel,
   integrationSendGridModel,
   integrationSmtpModel,
   integrationTelegramModel,
-  integrationThreadsModel,
   integrationTiktokModel,
   integrationWebchatModel,
   integrationWhatsappModel,
@@ -37,15 +34,7 @@ import type { AuthValue } from "@chatbotx.io/sdk"
 import type { SQL } from "drizzle-orm"
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core"
 
-/** Minimal shape a binding's DB row is normalized to. */
-export type ConnectionStoreRow = {
-  id: string
-  inboxId?: string | null
-  integrationId?: string | null
-  auth: AuthValue
-}
-
-export type ConnectionStoreInsertInput = {
+type ConnectionStoreInsertInput = {
   workspaceId: string
   inboxId?: string
   integrationId?: string
@@ -56,16 +45,9 @@ export type ConnectionStoreInsertInput = {
 
 /**
  * Per-`IntegrationType` DB adapter the Connection domain drives instead of
- * each channel/integration hand-rolling insert/delete/lookup logic. `table`
- * is the SQL table name (matches `Connection.provider`'s satellite row);
- * `identityColumn` is the column that carries the provider's natural
- * external id (`pageId`, `phoneNumberId`, `botId`, …) — `null` when the row
- * has no external identity beyond its own `id` (api/smtp/webchat).
+ * each channel/integration hand-rolling insert/delete/lookup logic.
  */
 export type ConnectionStoreBinding = {
-  table: string
-  identityColumn: string | null
-  loadAuth: (rowId: string, tx?: DatabaseClient) => Promise<AuthValue>
   /**
    * Same read as `loadAuth`, keyed by the FK the `Connection` row actually
    * carries (`inboxId` for channels, `integrationId` for workspace
@@ -115,17 +97,10 @@ export type ConnectionStoreBinding = {
     input: ConnectionStoreInsertInput,
     tx?: DatabaseClient,
   ) => Promise<{ id: string; integrationId?: string }>
-  /** `delete_row`: messenger/instagram-style disconnect deletes the satellite row. `keep_row`: whatsapp/zalo/… keep it for reconnect matching (today's behaviour). */
-  onDisconnect: "delete_row" | "keep_row"
-  /** No-ops when `onDisconnect === "keep_row"`. Same FK as `loadAuthByForeignKey`. */
   deleteRowByForeignKey: (
     foreignKey: string,
     tx?: DatabaseClient,
   ) => Promise<void>
-  findRowByIdentifier: (
-    identifier: string,
-    tx?: DatabaseClient,
-  ) => Promise<ConnectionStoreRow | null>
   /** Unique-constraint name a duplicate insert violates — lets callers map it to `alreadyConnected` instead of a raw DB error. */
   duplicateConstraint?: string
   /**
@@ -150,6 +125,16 @@ export type ConnectionStoreBinding = {
  * AuthValue" generically.
  */
 const asAuthValue = (value: unknown): AuthValue => value as AuthValue
+
+const pickAllowed = (
+  config: Record<string, unknown> | undefined,
+  configColumns: readonly string[] | undefined,
+): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(config ?? {}).filter(([key]) =>
+      configColumns?.includes(key),
+    ),
+  )
 
 /**
  * Channel-satellite binding: a table with `id`, `workspaceId`, `inboxId`,
@@ -205,19 +190,6 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
   }
 
   return {
-    table: opts.tableName,
-    identityColumn: opts.identityColumn,
-    loadAuth: async (rowId, tx = db) => {
-      const [row] = await tx
-        .select({ auth: table.auth })
-        .from(rawTable)
-        .where(withExtraWhere(eq(table.id, rowId)))
-        .limit(1)
-      if (!row) {
-        throw new Error(`Unable to load auth for ${opts.tableName} ${rowId}`)
-      }
-      return asAuthValue(row.auth)
-    },
     loadAuthByForeignKey: async (inboxId, tx = db) => {
       const [row] = await tx
         .select({ auth: table.auth })
@@ -232,12 +204,7 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       return asAuthValue(row.auth)
     },
     saveAuthByForeignKey: async (inboxId, auth, config, tx = db) => {
-      const allowedConfigColumns = new Set(opts.configColumns ?? [])
-      const safeConfig = Object.fromEntries(
-        Object.entries(config ?? {}).filter(([key]) =>
-          allowedConfigColumns.has(key),
-        ),
-      )
+      const safeConfig = pickAllowed(config, opts.configColumns)
       const updated = await tx
         .update(rawTable)
         .set({ ...safeConfig, auth } as never)
@@ -249,12 +216,7 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       const identityValues = identityCol
         ? { [opts.identityColumn as string]: input.descriptor.sourceId }
         : {}
-      const allowedConfigColumns = new Set(opts.configColumns ?? [])
-      const safeConfig = Object.fromEntries(
-        Object.entries(input.config ?? {}).filter(([key]) =>
-          allowedConfigColumns.has(key),
-        ),
-      )
+      const safeConfig = pickAllowed(input.config, opts.configColumns)
       // `safeConfig` spreads first so no client-controlled key can clobber
       // the system columns set below — see `ConnectionStoreBinding.configColumns`.
       const values = {
@@ -275,7 +237,6 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
         .returning({ id: table.id })
       return { id: row.id as string }
     },
-    onDisconnect: opts.onDisconnect,
     deleteRowByForeignKey: async (inboxId, tx = db) => {
       if (opts.onDisconnect === "keep_row") {
         return
@@ -283,24 +244,6 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       await tx
         .delete(rawTable)
         .where(withExtraWhere(eq(table.inboxId, inboxId)))
-    },
-    findRowByIdentifier: async (identifier, tx = db) => {
-      if (!identityCol) {
-        return null
-      }
-      const [row] = await tx
-        .select({ id: table.id, inboxId: table.inboxId, auth: table.auth })
-        .from(rawTable)
-        .where(withExtraWhere(eq(identityCol, identifier)))
-        .limit(1)
-      if (!row) {
-        return null
-      }
-      return {
-        id: row.id as string,
-        inboxId: row.inboxId as string,
-        auth: asAuthValue(row.auth),
-      }
     },
     duplicateConstraint: opts.duplicateConstraint,
     configColumns: opts.configColumns,
@@ -356,19 +299,6 @@ const makeWorkspaceIntegrationBinding = <
   ] as unknown as AnyPgColumn
 
   return {
-    table: opts.tableName,
-    identityColumn: null,
-    loadAuth: async (rowId, tx = db) => {
-      const [row] = await tx
-        .select({ auth: authColumn })
-        .from(rawTable)
-        .where(eq(table.id, rowId))
-        .limit(1)
-      if (!row) {
-        throw new Error(`Unable to load auth for ${opts.tableName} ${rowId}`)
-      }
-      return asAuthValue(row.auth)
-    },
     loadAuthByForeignKey: async (integrationId, tx = db) => {
       const [row] = await tx
         .select({ auth: authColumn })
@@ -383,12 +313,7 @@ const makeWorkspaceIntegrationBinding = <
       return asAuthValue(row.auth)
     },
     saveAuthByForeignKey: async (integrationId, auth, config, tx = db) => {
-      const allowedConfigColumns = new Set(opts.configColumns ?? [])
-      const safeConfig = Object.fromEntries(
-        Object.entries(config ?? {}).filter(([key]) =>
-          allowedConfigColumns.has(key),
-        ),
-      )
+      const safeConfig = pickAllowed(config, opts.configColumns)
       const updated = await tx
         .update(rawTable)
         .set({ ...safeConfig, [authColumnName]: auth } as never)
@@ -397,12 +322,7 @@ const makeWorkspaceIntegrationBinding = <
       return updated.length > 0
     },
     insertRow: async (input, tx) => {
-      const allowedConfigColumns = new Set(opts.configColumns ?? [])
-      const safeConfig = Object.fromEntries(
-        Object.entries(input.config ?? {}).filter(([key]) =>
-          allowedConfigColumns.has(key),
-        ),
-      )
+      const safeConfig = pickAllowed(input.config, opts.configColumns)
       const run = async (client: DatabaseClient) => {
         const [parent] = await client
           .insert(integrationModel)
@@ -432,29 +352,8 @@ const makeWorkspaceIntegrationBinding = <
       }
       return tx ? await run(tx) : await db.transaction((trx) => run(trx))
     },
-    onDisconnect: "delete_row",
     deleteRowByForeignKey: async (integrationId, tx = db) => {
       await tx.delete(rawTable).where(eq(table.integrationId, integrationId))
-    },
-    findRowByIdentifier: async (identifier, tx = db) => {
-      // Workspace singletons are located by `workspaceId`, passed as `identifier`.
-      const [row] = await tx
-        .select({
-          id: table.id,
-          integrationId: table.integrationId,
-          auth: authColumn,
-        })
-        .from(rawTable)
-        .where(eq(table.workspaceId, identifier))
-        .limit(1)
-      if (!row) {
-        return null
-      }
-      return {
-        id: row.id as string,
-        integrationId: row.integrationId as string,
-        auth: asAuthValue(row.auth),
-      }
     },
     duplicateConstraint: opts.duplicateConstraint,
     configColumns: opts.configColumns,
@@ -489,6 +388,14 @@ const AI_KEY_PROVIDER_DEFAULTS = {
   { model: string; maxOutputTokens: number }
 >
 
+const AI_KEY_PROVIDER_CONFIG_COLUMNS = [
+  "model",
+  "maxOutputTokens",
+  "prompt",
+  "temperature",
+  "autoReply",
+] as const
+
 /**
  * `defaultModel`/`preset` NOT NULL defaults for `openaiCompatible`'s
  * credential-strategy connect (`configFields` only declare `apiKey`/
@@ -508,9 +415,8 @@ const OPENAI_COMPATIBLE_DEFAULTS = {
   preset: "custom",
 } as const
 
-export const CONNECTION_STORE_BINDINGS: Record<
-  IntegrationType,
-  ConnectionStoreBinding | null
+export const CONNECTION_STORE_BINDINGS: Partial<
+  Record<IntegrationType, ConnectionStoreBinding | null>
 > = {
   activeCampaign: makeWorkspaceIntegrationBinding({
     table: integrationActiveCampaignModel,
@@ -530,13 +436,7 @@ export const CONNECTION_STORE_BINDINGS: Record<
     tableName: "IntegrationClaude",
     integrationType: "claude",
     duplicateConstraint: "IntegrationClaude_workspaceId_key",
-    configColumns: [
-      "model",
-      "maxOutputTokens",
-      "prompt",
-      "temperature",
-      "autoReply",
-    ],
+    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
     defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.claude,
   }),
   deepseek: makeWorkspaceIntegrationBinding({
@@ -544,13 +444,7 @@ export const CONNECTION_STORE_BINDINGS: Record<
     tableName: "IntegrationDeepseek",
     integrationType: "deepseek",
     duplicateConstraint: "IntegrationDeepseek_workspaceId_key",
-    configColumns: [
-      "model",
-      "maxOutputTokens",
-      "prompt",
-      "temperature",
-      "autoReply",
-    ],
+    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
     defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.deepseek,
   }),
   drip: makeWorkspaceIntegrationBinding({
@@ -570,13 +464,7 @@ export const CONNECTION_STORE_BINDINGS: Record<
     tableName: "IntegrationGemini",
     integrationType: "gemini",
     duplicateConstraint: "IntegrationGemini_workspaceId_key",
-    configColumns: [
-      "model",
-      "maxOutputTokens",
-      "prompt",
-      "temperature",
-      "autoReply",
-    ],
+    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
     defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.gemini,
   }),
   getResponse: makeWorkspaceIntegrationBinding({
@@ -643,13 +531,6 @@ export const CONNECTION_STORE_BINDINGS: Record<
     onDisconnect: "delete_row",
     duplicateConstraint: "IntegrationMessenger_pageId_key",
   }),
-  metaCatalog: makeWorkspaceIntegrationBinding({
-    table: integrationMetaCatalogModel,
-    tableName: "IntegrationMetaCatalog",
-    integrationType: "metaCatalog",
-    authColumn: "encryptedAuth",
-    duplicateConstraint: "IntegrationMetaCatalog_workspaceId_key",
-  }),
   moosend: makeWorkspaceIntegrationBinding({
     table: integrationMoosendModel,
     tableName: "IntegrationMoosend",
@@ -661,11 +542,7 @@ export const CONNECTION_STORE_BINDINGS: Record<
     tableName: "IntegrationOpenai",
     integrationType: "openai",
     configColumns: [
-      "model",
-      "maxOutputTokens",
-      "prompt",
-      "temperature",
-      "autoReply",
+      ...AI_KEY_PROVIDER_CONFIG_COLUMNS,
       "autoReplyVoice",
       "voice",
     ],
@@ -693,19 +570,8 @@ export const CONNECTION_STORE_BINDINGS: Record<
     tableName: "IntegrationOpenrouter",
     integrationType: "openrouter",
     duplicateConstraint: "IntegrationOpenrouter_workspaceId_key",
-    configColumns: [
-      "model",
-      "maxOutputTokens",
-      "prompt",
-      "temperature",
-      "autoReply",
-    ],
+    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
     defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.openrouter,
-  }),
-  outlookCalendar: makeWorkspaceIntegrationBinding({
-    table: integrationOutlookCalendarModel,
-    tableName: "IntegrationOutlookCalendar",
-    integrationType: "outlookCalendar",
   }),
   sendGrid: makeWorkspaceIntegrationBinding({
     table: integrationSendGridModel,
@@ -725,13 +591,6 @@ export const CONNECTION_STORE_BINDINGS: Record<
     identityColumn: "botId",
     onDisconnect: "keep_row",
     duplicateConstraint: "IntegrationTelegram_botId_key",
-  }),
-  threads: makeChannelBinding({
-    table: integrationThreadsModel,
-    tableName: "IntegrationThreads",
-    identityColumn: "threadsUserId",
-    onDisconnect: "keep_row",
-    duplicateConstraint: "IntegrationThreads_threadsUserId_key",
   }),
   tiktok: makeChannelBinding({
     table: integrationTiktokModel,

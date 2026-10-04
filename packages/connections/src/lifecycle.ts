@@ -1,6 +1,6 @@
 import {
+  authExpiresAtOf,
   connectionStateService,
-  InvalidConnectionTransitionException,
   isActiveConnectionStatus,
 } from "@chatbotx.io/business/connection"
 import {
@@ -14,7 +14,6 @@ import { db } from "@chatbotx.io/database/client"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import type { AuthStore, AuthValue } from "@chatbotx.io/sdk"
-import { AuthException } from "@chatbotx.io/sdk"
 import {
   findOrThrow,
   resolveAdapter,
@@ -148,42 +147,31 @@ export const refresh = async (input: {
   const authStore: AuthStore<AuthValue> = {
     load: async () => await store.loadAuthByForeignKey(foreignKey),
     save: async (newAuth) => {
-      await store.saveAuthByForeignKey(foreignKey, newAuth)
-      const authExpiresAt =
-        newAuth.authType === "oauth2" && newAuth.tokens.expiresAt
-          ? new Date(newAuth.tokens.expiresAt)
-          : null
-      await connectionStateService.recordAuthSaved({
-        connectionId: connection.id,
-        authExpiresAt,
+      await db.transaction(async (tx) => {
+        const saved = await store.saveAuthByForeignKey(
+          foreignKey,
+          newAuth,
+          undefined,
+          tx,
+        )
+        if (!saved) {
+          throw new Error(
+            `Connection ${connection.id} auth persistence did not match a satellite row`,
+          )
+        }
+        await connectionStateService.recordAuthSaved({
+          connectionId: connection.id,
+          authExpiresAt: authExpiresAtOf(newAuth),
+          tx,
+        })
       })
     },
-    markOffline: async (reason?: unknown) => {
+    markOffline: async () => {
       const ownerId = await resolveOwnerId(connection)
-      if (reason instanceof AuthException) {
-        await connectionStateService.markUnhealthy({
-          connectionId: connection.id,
-          ownerId,
-        })
-        return
-      }
-      try {
-        await connectionStateService.transition({
-          connectionId: connection.id,
-          event: "refresh.transient_failure",
-          reason: "refresh_failed",
-          ownerId,
-        })
-      } catch (err) {
-        if (!(err instanceof InvalidConnectionTransitionException)) {
-          throw err
-        }
-        // Not currently active — nothing to degrade.
-        logger.warn(
-          { err, connectionId: connection.id },
-          "connection markOffline: connection not currently active, nothing to degrade",
-        )
-      }
+      await connectionStateService.recordRefreshFailure({
+        connectionId: connection.id,
+        ownerId,
+      })
     },
   }
 
@@ -233,9 +221,12 @@ export const verify = async (input: {
     throw connectionNotConfiguredException(connection.provider)
   }
 
-  const auth = await adapter.store.loadAuthByForeignKey(foreignKey)
-  const health = await adapter.provider.verify({ auth })
-  const ownerId = await resolveOwnerId(connection)
+  const [ownerId, health] = await Promise.all([
+    resolveOwnerId(connection),
+    adapter.store
+      .loadAuthByForeignKey(foreignKey)
+      .then(async (auth) => await adapter.provider.verify({ auth })),
+  ])
 
   if (health.ok) {
     return await connectionStateService.transition({

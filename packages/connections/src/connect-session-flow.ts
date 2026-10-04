@@ -1,6 +1,8 @@
 import { inboxService } from "@chatbotx.io/business"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import {
+  authExpiresAtOf,
+  type ConnectionAdapter,
   connectionStateService,
   isActiveConnectionStatus,
 } from "@chatbotx.io/business/connection"
@@ -17,9 +19,8 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
-import { db, isUniqueViolationError } from "@chatbotx.io/database/client"
+import { db } from "@chatbotx.io/database/client"
 import type {
-  ChannelType,
   ConnectSessionOutcome,
   ConnectSessionPurpose,
   IntegrationType,
@@ -36,11 +37,13 @@ import type {
   ConnectionCredential,
   ConnectSessionNextAction,
 } from "@chatbotx.io/sdk"
+import { createId } from "@chatbotx.io/utils"
 import {
   encryptedCandidatesSchema,
   resolveAdapter,
   resolveForeignKey,
   resolveOwnerId,
+  saveOrInsertSatellite,
   subscribeWebhookBestEffort,
   toChannelType,
   upsertConnectionRow,
@@ -74,14 +77,34 @@ export const startSession = async (input: {
   nextAction: ConnectSessionNextAction
 }> => {
   const adapter = resolveAdapter(input.provider)
-  if (!adapter.provider.authorizeUrl) {
+  const authorizeUrl = adapter.provider.authorizeUrl
+  if (!authorizeUrl) {
     throw connectionNotOAuthException(input.provider)
   }
+  if (input.targetConnectionId) {
+    const target = await connectionRepository.findByIdForWorkspace({
+      id: input.targetConnectionId,
+      workspaceId: input.workspaceId,
+    })
+    if (!target) {
+      throw notFoundException("Connection not found")
+    }
+  }
 
-  const { session, nonce } = await connectSessionService.create({
+  const sessionId = createId()
+  const { session } = await connectSessionService.create({
+    id: sessionId,
     workspaceId: input.workspaceId,
     provider: input.provider,
     purpose: input.purpose,
+    nextAction: (nonce) => {
+      const url = authorizeUrl({
+        credential: input.credential,
+        callbackUrl: input.callbackUrl,
+        state: `${sessionId}.${nonce}`,
+      })
+      return { type: "open_url", url }
+    },
     targetConnectionId: input.targetConnectionId,
     actorUserId: input.actorUserId,
     actorTokenId: input.actorTokenId,
@@ -89,18 +112,12 @@ export const startSession = async (input: {
     originHost: input.originHost,
     returnUrl: input.returnUrl,
   })
-
-  const url = adapter.provider.authorizeUrl({
-    credential: input.credential,
-    callbackUrl: input.callbackUrl,
-    state: `${session.id}.${nonce}`,
-  })
-  const nextAction: ConnectSessionNextAction = { type: "open_url", url }
-  const updated = await connectSessionService.submitInput({
-    id: session.id,
-    nextAction,
-  })
-  return { session: updated, nextAction }
+  if (!session.nextAction) {
+    throw new Error(
+      "Connect session was created without an authorization action",
+    )
+  }
+  return { session, nextAction: session.nextAction }
 }
 
 /**
@@ -160,6 +177,7 @@ export const completeAuthorization = async (input: {
     // reusing `provider_denied`.
     await connectSessionService.fail({
       id: session.id,
+      workspaceId: session.workspaceId,
       errorCode: "exchange_failed",
     })
     throw connectionCredentialsRejectedException(
@@ -200,6 +218,7 @@ export const listAndAttachCandidates = async (
   } catch (err) {
     await connectSessionService.fail({
       id: session.id,
+      workspaceId: session.workspaceId,
       errorCode: "provider_error",
     })
     throw new Error(toPublicErrorMessage(err, "Failed to list accounts."))
@@ -208,48 +227,58 @@ export const listAndAttachCandidates = async (
   if (candidates.length === 0) {
     await connectSessionService.fail({
       id: session.id,
+      workspaceId: session.workspaceId,
       errorCode: "no_candidates",
     })
     throw connectionNoCandidatesException()
   }
 
-  const targets = await Promise.all(
-    candidates.map(async (candidate) => {
-      if (candidate.alreadyConnected) {
-        return {
-          id: candidate.sourceId,
-          name: candidate.displayName,
-          avatarUrl: candidate.avatarUrl,
-          selectable: false,
-          alreadyConnected: candidate.alreadyConnected,
-        }
-      }
-      const existing =
-        await connectionRepository.findByProviderAndSourceIdAnyWorkspace({
-          provider: session.provider,
-          sourceId: candidate.sourceId,
-        })
-      if (existing && isActiveConnectionStatus(existing.status)) {
-        const scope: "this_workspace" | "other_workspace" =
-          existing.workspaceId === session.workspaceId
-            ? "this_workspace"
-            : "other_workspace"
-        return {
-          id: candidate.sourceId,
-          name: candidate.displayName,
-          avatarUrl: candidate.avatarUrl,
-          selectable: false,
-          alreadyConnected: scope,
-        }
-      }
+  const sourceIds = candidates
+    .filter((candidate) => !candidate.alreadyConnected)
+    .map((candidate) => candidate.sourceId)
+  const existingConnections =
+    await connectionRepository.findByProviderAndSourceIdsAnyWorkspace({
+      provider: session.provider,
+      sourceIds,
+    })
+  const existingBySourceId = new Map<string, ConnectionModel>()
+  for (const existing of existingConnections) {
+    if (!existingBySourceId.has(existing.sourceId)) {
+      existingBySourceId.set(existing.sourceId, existing)
+    }
+  }
+
+  const targets = candidates.map((candidate) => {
+    if (candidate.alreadyConnected) {
       return {
         id: candidate.sourceId,
         name: candidate.displayName,
         avatarUrl: candidate.avatarUrl,
-        selectable: true,
+        selectable: false,
+        alreadyConnected: candidate.alreadyConnected,
       }
-    }),
-  )
+    }
+    const existing = existingBySourceId.get(candidate.sourceId)
+    if (existing && isActiveConnectionStatus(existing.status)) {
+      const scope: "this_workspace" | "other_workspace" =
+        existing.workspaceId === session.workspaceId
+          ? "this_workspace"
+          : "other_workspace"
+      return {
+        id: candidate.sourceId,
+        name: candidate.displayName,
+        avatarUrl: candidate.avatarUrl,
+        selectable: false,
+        alreadyConnected: scope,
+      }
+    }
+    return {
+      id: candidate.sourceId,
+      name: candidate.displayName,
+      avatarUrl: candidate.avatarUrl,
+      selectable: true,
+    }
+  })
 
   // Encrypts the full candidate list — not just the exchanged `auth` — so
   // each candidate's own distinct `auth` (a multi-account provider's
@@ -264,6 +293,7 @@ export const listAndAttachCandidates = async (
   )
   return await connectSessionService.attachAuthorization({
     id: session.id,
+    workspaceId: session.workspaceId,
     encryptedAuth,
     targets,
   })
@@ -286,12 +316,14 @@ const completeReconnect = async (input: {
   if (!targetConnectionId) {
     throw notFoundException("Connection not found")
   }
-  const connection = await connectionRepository.findById({
+  const connection = await connectionRepository.findByIdForWorkspace({
     id: targetConnectionId,
+    workspaceId: session.workspaceId,
   })
   if (!connection) {
     await connectSessionService.fail({
       id: session.id,
+      workspaceId: session.workspaceId,
       errorCode: "internal_error",
     })
     throw notFoundException("Connection not found")
@@ -302,6 +334,7 @@ const completeReconnect = async (input: {
   if (descriptor.sourceId !== connection.sourceId) {
     await connectSessionService.fail({
       id: session.id,
+      workspaceId: session.workspaceId,
       errorCode: "provider_denied",
     })
     throw connectionIdentityMismatchException()
@@ -311,16 +344,14 @@ const completeReconnect = async (input: {
   if (!(adapter.store && foreignKey)) {
     await connectSessionService.fail({
       id: session.id,
+      workspaceId: session.workspaceId,
       errorCode: "internal_error",
     })
     throw connectionNotConfiguredException(connection.provider)
   }
   const store = adapter.store
 
-  const authExpiresAt =
-    auth.authType === "oauth2" && auth.tokens.expiresAt
-      ? new Date(auth.tokens.expiresAt)
-      : null
+  const authExpiresAt = authExpiresAtOf(auth)
   // `connect.completed`, not `auth.saved`/`recordAuthSaved` — `auth.saved`
   // requires the connection to already be ACTIVE (`connected`/`degraded`)
   // and throws otherwise (`state.ts`), but reconnect's whole purpose is
@@ -330,45 +361,16 @@ const completeReconnect = async (input: {
   // event `connectFromCredentials`'s revive path uses.
   const ownerId = await resolveOwnerId(connection)
   await db.transaction(async (tx) => {
-    // `Connection.inboxId`/`integrationId` is never cleared when a
-    // `delete_row` provider's satellite row is deleted on disconnect, so
-    // its mere presence doesn't mean a row to update still exists —
-    // attempt the update and fall back to inserting a fresh satellite row
-    // when it matches zero rows (regression I3: this used to silently
-    // no-op for a `delete_row` channel like messenger/instagram, then
-    // still proceed to `connect.completed` — consuming quota and
-    // reporting the reconnect as successful with no auth persisted
-    // anywhere).
-    const revived = await store.saveAuthByForeignKey(
-      foreignKey,
-      auth,
-      undefined,
+    const integrationId = await saveOrInsertSatellite({
       tx,
-    )
-    let integrationId: string | undefined
-    if (!revived) {
-      try {
-        const inserted = await store.insertRow(
-          {
-            workspaceId: connection.workspaceId,
-            inboxId: connection.inboxId ?? undefined,
-            auth,
-            descriptor,
-            config: {},
-          },
-          tx,
-        )
-        integrationId = inserted.integrationId
-      } catch (err) {
-        if (
-          store.duplicateConstraint &&
-          isUniqueViolationError(err, store.duplicateConstraint)
-        ) {
-          throw connectionAlreadyConnectedException()
-        }
-        throw err
-      }
-    }
+      workspaceId: connection.workspaceId,
+      inboxId: connection.inboxId,
+      auth,
+      descriptor,
+      extraConfig: {},
+      existing: connection,
+      store,
+    })
     await connectionRepository.update(
       {
         id: connection.id,
@@ -389,16 +391,14 @@ const completeReconnect = async (input: {
     })
   })
 
-  return await connectSessionService.recordResults({
+  return await connectSessionService.completeReconnect({
     id: session.id,
-    results: [
-      {
-        targetId: connection.sourceId,
-        status: "connected",
-        connectionId: connection.id,
-      },
-    ],
-    resultConnectionIds: [connection.id],
+    workspaceId: session.workspaceId,
+    result: {
+      targetId: connection.sourceId,
+      status: "connected",
+      connectionId: connection.id,
+    },
   })
 }
 
@@ -423,12 +423,14 @@ const completeReconnect = async (input: {
  * intended future home for a client to opt into any of those separately.
  */
 const connectCandidate = async (input: {
-  workspaceId: string
+  adapter: ConnectionAdapter
   provider: IntegrationType
+  workspaceId: string
   candidate: ConnectionCandidate
+  ownerId: string | undefined
   actorUserId?: string | null
 }): Promise<ConnectionModel> => {
-  const adapter = resolveAdapter(input.provider)
+  const { adapter } = input
   const { provider } = adapter
   if (!adapter.store) {
     throw connectionNotConfiguredException(input.provider)
@@ -447,10 +449,7 @@ const connectCandidate = async (input: {
     throw connectionAlreadyConnectedException()
   }
 
-  const ownerId = await resolveOwnerId({
-    kind: provider.kind,
-    workspaceId: input.workspaceId,
-  })
+  const ownerId = input.ownerId
 
   const connection = await db.transaction(async (tx) => {
     let inboxId: string | undefined
@@ -461,7 +460,7 @@ const connectCandidate = async (input: {
       const { inbox } = await inboxService.create({
         data: {
           workspaceId: input.workspaceId,
-          channel: toChannelType(input.provider) as ChannelType,
+          channel: toChannelType(input.provider),
           sourceId: descriptor.sourceId,
           name: descriptor.displayName,
         },
@@ -537,14 +536,22 @@ export const connectTargets = async (input: {
   const candidateBySourceId = new Map(
     candidates.map((candidate) => [candidate.sourceId, candidate]),
   )
+  const targetById = new Map(
+    session.targets.map((target) => [target.id, target]),
+  )
 
   const outcomes: ConnectSessionOutcome[] = []
   const connections: ConnectionModel[] = []
   let updatedSession: ConnectSessionModel | undefined
+  const adapter = resolveAdapter(session.provider)
+  const ownerId = await resolveOwnerId({
+    kind: adapter.provider.kind,
+    workspaceId: input.workspaceId,
+  })
 
   try {
     for (const targetId of input.targetIds) {
-      const target = session.targets.find((t) => t.id === targetId)
+      const target = targetById.get(targetId)
       const candidate = candidateBySourceId.get(targetId)
       if (!(target && candidate)) {
         outcomes.push({ targetId, status: "failed", reason: "unknown" })
@@ -561,6 +568,7 @@ export const connectTargets = async (input: {
 
       const claimed = await connectSessionService.claimTarget({
         id: session.id,
+        workspaceId: session.workspaceId,
         targetId,
       })
       if (!claimed) {
@@ -574,9 +582,11 @@ export const connectTargets = async (input: {
 
       try {
         const connection = await connectCandidate({
-          workspaceId: input.workspaceId,
+          adapter,
           provider: session.provider,
+          workspaceId: input.workspaceId,
           candidate: candidate as ConnectionCandidate,
+          ownerId,
           actorUserId: input.actorUserId,
         })
         connections.push(connection)
@@ -598,6 +608,7 @@ export const connectTargets = async (input: {
         try {
           await connectSessionService.releaseTarget({
             id: session.id,
+            workspaceId: session.workspaceId,
             targetId,
           })
         } catch (releaseErr) {
@@ -646,6 +657,7 @@ export const connectTargets = async (input: {
     // the final merge happens.
     updatedSession = await connectSessionService.recordResults({
       id: session.id,
+      workspaceId: session.workspaceId,
       results: outcomes,
       resultConnectionIds: connections.map((connection) => connection.id),
     })
