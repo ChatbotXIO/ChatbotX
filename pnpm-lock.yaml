@@ -3031,8 +3031,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.5)
       '@stepperize/react':
-        specifier: ^6.1.0
-        version: 6.1.0(react@19.2.5)(typescript@5.9.3)
+        specifier: ^8.0.0
+        version: 8.0.0(react@19.2.5)(typescript@5.9.3)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -6185,15 +6185,18 @@ packages:
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
-  '@stepperize/core@2.1.0':
-    resolution: {integrity: sha512-edzIlkAUDrqan3G7XhY32PvciyQoJtyX3Fz8G1LBgSHIg2rMTBsZk8oz39NxT7XFxqibRXf2rvsH81iwg+Dd6w==}
+  '@stepperize/core@4.0.0':
+    resolution: {integrity: sha512-ciSSDJnylQNAZIudFJHXsDG3sPlYEA3XAmRrogeJTdxGwM7R/HnH3aNoWoPn7+hstHpHuzMx6xN9GVWyAnvXAQ==}
     peerDependencies:
       typescript: ^5
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
-  '@stepperize/react@6.1.0':
-    resolution: {integrity: sha512-ywTt0OQDoBKcdzeBK9V1hTsMAQ+zAoIF/au9fcATspdGWfYr/z+mDGZm2cA2rzMJF79J+fUbjZPb+7Js4PtKBA==}
+  '@stepperize/react@8.0.0':
+    resolution: {integrity: sha512-KYgEC2wRhMXMNg3Gku15ZCZpI10y0aKhXGcFblC249byjd9pcCANKF1qAE75xCmLtum6ySfgu/l1OIrz1Fgm7g==}
     peerDependencies:
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^18.0.0 || ^19.0.0
 
   '@swc/core-darwin-arm64@1.16.13':
     resolution: {integrity: sha512-JrMH2h7ohd4mOIneNRx/diqTmCDSdWfp9uOdQ8VJ2V2CA7jOJ1jWb+qp8RoZLqgiVmwDDC7eySKB1kbvZ+jVXQ==}
@@ -13990,13 +13993,13 @@ snapshots:
 
   '@standard-schema/utils@0.3.0': {}
 
-  '@stepperize/core@2.1.0(typescript@5.9.3)':
-    dependencies:
+  '@stepperize/core@4.0.0(typescript@5.9.3)':
+    optionalDependencies:
       typescript: 5.9.3
 
-  '@stepperize/react@6.1.0(react@19.2.5)(typescript@5.9.3)':
+  '@stepperize/react@8.0.0(react@19.2.5)(typescript@5.9.3)':
     dependencies:
-      '@stepperize/core': 2.1.0(typescript@5.9.3)
+      '@stepperize/core': 4.0.0(typescript@5.9.3)
       react: 19.2.5
     transitivePeerDependencies:
       - typescript
