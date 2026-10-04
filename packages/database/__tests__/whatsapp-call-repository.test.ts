@@ -1211,7 +1211,7 @@ describe("whatsappCallRepository.createPendingOutbound initiatedByUserId", () =>
 })
 
 const RETENTION_CAST_RE =
-  /"recordedAt" < .*::timestamptz - \("callRecordingRetentionDays"/
+  /"recordedAt" < .*::timestamptz - make_interval\(days => "callRecordingRetentionDays"\)/
 const TIMESTAMPTZ_CAST_RE = /::timestamptz/
 
 describe("whatsappCallRepository.listRecordingsPastRetention", () => {
