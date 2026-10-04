@@ -103,6 +103,7 @@ export const connectSessionRepository = {
   async updateWhereStatusIn(
     input: {
       id: string
+      workspaceId: string
       values:
         | (Partial<
             Pick<
@@ -139,6 +140,7 @@ export const connectSessionRepository = {
       .where(
         and(
           eq(connectSessionModel.id, input.id),
+          eq(connectSessionModel.workspaceId, input.workspaceId),
           inArray(connectSessionModel.status, input.statuses),
           expiryCondition,
         ),
@@ -247,6 +249,7 @@ export const connectSessionRepository = {
   async appendResults(
     input: {
       id: string
+      workspaceId: string
       results: ConnectSessionOutcome[]
       resultConnectionIds: string[]
     },
@@ -281,6 +284,7 @@ export const connectSessionRepository = {
       .where(
         and(
           eq(connectSessionModel.id, input.id),
+          eq(connectSessionModel.workspaceId, input.workspaceId),
           eq(connectSessionModel.status, "awaiting_selection"),
           gt(connectSessionModel.expiresAt, sql`now()`),
         ),

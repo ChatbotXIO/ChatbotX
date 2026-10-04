@@ -514,6 +514,7 @@ describe.skipIf(!databaseUrl)(
         const updated = await connectSessionRepository.appendResults(
           {
             id: session.id,
+            workspaceId,
             results: [
               { targetId: "t1", status: "connected", connectionId: "conn-1" },
               { targetId: "unknown-id", status: "failed", reason: "unknown" },
@@ -532,6 +533,7 @@ describe.skipIf(!databaseUrl)(
         const completed = await connectSessionRepository.appendResults(
           {
             id: session.id,
+            workspaceId,
             results: [
               { targetId: "t2", status: "connected", connectionId: "conn-2" },
             ],
@@ -578,6 +580,7 @@ describe.skipIf(!databaseUrl)(
         const updated = await connectSessionRepository.appendResults(
           {
             id: session.id,
+            workspaceId,
             results: [
               {
                 targetId: "already",
@@ -609,6 +612,7 @@ describe.skipIf(!databaseUrl)(
         const result = await connectSessionRepository.appendResults(
           {
             id: session.id,
+            workspaceId,
             results: [{ targetId: "t1", status: "connected" }],
             resultConnectionIds: [],
           },
@@ -634,6 +638,7 @@ describe.skipIf(!databaseUrl)(
         const result = await connectSessionRepository.appendResults(
           {
             id: session.id,
+            workspaceId,
             results: [{ targetId: "t1", status: "connected" }],
             resultConnectionIds: ["conn-1"],
           },
@@ -641,6 +646,55 @@ describe.skipIf(!databaseUrl)(
         )
 
         expect(result).toBeUndefined()
+      }))
+
+    test("does not mutate an active session outside its workspace", () =>
+      run(async (tx) => {
+        const { workspaceId: workspaceA, ownerId } = await seedWorkspace(
+          tx,
+          "a",
+        )
+        const { workspaceId: workspaceB } = await seedWorkspace(tx, "b")
+        const session = await seedSession(tx, {
+          workspaceId: workspaceA,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-cross-workspace-mutation",
+        })
+
+        await expect(
+          connectSessionRepository.updateWhereStatusIn(
+            {
+              id: session.id,
+              workspaceId: workspaceB,
+              statuses: ["awaiting_selection"],
+              values: { status: "awaiting_selection", step: "callback" },
+            },
+            tx,
+          ),
+        ).resolves.toBeUndefined()
+        await expect(
+          connectSessionRepository.appendResults(
+            {
+              id: session.id,
+              workspaceId: workspaceB,
+              results: [{ targetId: "t1", status: "connected" }],
+              resultConnectionIds: ["conn-cross-workspace"],
+            },
+            tx,
+          ),
+        ).resolves.toBeUndefined()
+
+        await expect(
+          connectSessionRepository.findByIdForWorkspace(
+            { id: session.id, workspaceId: workspaceA },
+            tx,
+          ),
+        ).resolves.toMatchObject({
+          status: "awaiting_selection",
+          step: "select",
+          results: [],
+          resultConnectionIds: [],
+        })
       }))
 
     test("does not update a session outside the allowed statuses", () =>
@@ -659,6 +713,7 @@ describe.skipIf(!databaseUrl)(
         const result = await connectSessionRepository.updateWhereStatusIn(
           {
             id: session.id,
+            workspaceId,
             statuses: ["pending", "authorized", "awaiting_selection"],
             values: {
               status: "expired",
@@ -693,6 +748,7 @@ describe.skipIf(!databaseUrl)(
         const result = await connectSessionRepository.updateWhereStatusIn(
           {
             id: session.id,
+            workspaceId,
             statuses: ["pending", "authorized", "awaiting_selection"],
             values: { status: "awaiting_selection", step: "select" },
             requireUnexpired: true,
@@ -817,6 +873,7 @@ describe.skipIf(!databaseUrl)(
         const updated = await connectSessionRepository.appendResults(
           {
             id: session.id,
+            workspaceId,
             results: [
               { targetId: "t1", status: "failed", reason: "providerRejected" },
               {
@@ -847,6 +904,7 @@ describe.skipIf(!databaseUrl)(
         const updated = await connectSessionRepository.appendResults(
           {
             id: session.id,
+            workspaceId,
             results: [
               {
                 targetId: "t1",
@@ -880,6 +938,7 @@ describe.skipIf(!databaseUrl)(
         const updated = await connectSessionRepository.appendResults(
           {
             id: session.id,
+            workspaceId,
             results: [
               {
                 targetId: "t1",
@@ -899,6 +958,83 @@ describe.skipIf(!databaseUrl)(
 
         expect(updated?.status).toBe("completed")
         expect(updated?.resultConnectionIds).toEqual([])
+      }))
+
+    test("appendResults determines terminal state from mixed outcomes", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "mixed")
+        const cases = [
+          {
+            errorCode: "provider_error",
+            results: [
+              {
+                targetId: "t1",
+                status: "limitReached",
+                reason: "channelLimit",
+              },
+              {
+                targetId: "t2",
+                status: "failed",
+                reason: "providerRejected",
+              },
+            ],
+            status: "failed",
+          },
+          {
+            errorCode: null,
+            results: [
+              {
+                targetId: "t1",
+                status: "limitReached",
+                reason: "channelLimit",
+              },
+              { targetId: "t2", status: "connected", connectionId: "conn-2" },
+            ],
+            status: "completed",
+          },
+          {
+            errorCode: null,
+            results: [
+              {
+                targetId: "t1",
+                status: "duplicated",
+                reason: "alreadyConnected",
+              },
+              {
+                targetId: "t2",
+                status: "failed",
+                reason: "providerRejected",
+              },
+            ],
+            status: "completed",
+          },
+        ] as const
+
+        for (const [index, testCase] of cases.entries()) {
+          const session = await seedSession(tx, {
+            workspaceId,
+            actorUserId: ownerId,
+            stateNonceHash: `iso-hash-mixed-${index}`,
+          })
+          const resultConnectionIds = testCase.results.flatMap((result) =>
+            result.connectionId ? [result.connectionId] : [],
+          )
+
+          const updated = await connectSessionRepository.appendResults(
+            {
+              id: session.id,
+              workspaceId,
+              results: [...testCase.results],
+              resultConnectionIds,
+            },
+            tx,
+          )
+
+          expect(updated).toMatchObject({
+            errorCode: testCase.errorCode,
+            status: testCase.status,
+          })
+        }
       }))
 
     test("appendResults under REAL concurrency: two separate connections each completing a different target merge into one completed session with no lost update", async () => {
@@ -949,6 +1085,7 @@ describe.skipIf(!databaseUrl)(
             connectSessionRepository.appendResults(
               {
                 id: session.id,
+                workspaceId: workspace.id,
                 results: [
                   {
                     targetId: "t1",
@@ -963,6 +1100,7 @@ describe.skipIf(!databaseUrl)(
             connectSessionRepository.appendResults(
               {
                 id: session.id,
+                workspaceId: workspace.id,
                 results: [
                   {
                     targetId: "t2",

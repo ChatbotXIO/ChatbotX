@@ -4,7 +4,7 @@ import { googleSheetsLogger } from "./logger"
 
 export const handleError = (error: unknown) => {
   if (!(error instanceof Error)) {
-    throw new SdkException(`Unknown error: ${error}`)
+    throw new SdkException(`Unknown error: ${error}`).setOriginError(error)
   }
 
   const googleError = _extractGoogleApiError(error)
@@ -16,7 +16,9 @@ export const handleError = (error: unknown) => {
     finalMessage,
   )
 
-  throw new SdkException(`Google Sheets API error: ${finalMessage}`)
+  throw new SdkException(
+    `Google Sheets API error: ${finalMessage}`,
+  ).setOriginError(error)
 }
 
 const _extractGoogleApiError = (error: Error) =>

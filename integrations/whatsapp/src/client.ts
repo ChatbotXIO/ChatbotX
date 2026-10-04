@@ -47,7 +47,7 @@ export const verifyAccessToken = (
       `${API_URL}/${DEFAULT_API_VERSION}/${auth.metadata.wabaId}/phone_numbers`,
     )
     if (!res.ok) {
-      const body = (await res.json()) as {
+      const body = (await res.json().catch(() => ({}))) as {
         error?: {
           code?: string | number
           error_subcode?: string | number

@@ -159,6 +159,36 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
       ).resolves.toBeUndefined()
     }))
 
+  test("does not update or lock a connection outside its workspace", () =>
+    run(async (tx) => {
+      const { workspaceId: workspaceA } = await seedWorkspace(tx, "a")
+      const { workspaceId: workspaceB } = await seedWorkspace(tx, "b")
+      const connection = await seedIntegrationConnection(tx, {
+        workspaceId: workspaceA,
+        sourceId: "account-1",
+      })
+
+      await expect(
+        connectionRepository.update(
+          {
+            id: connection.id,
+            workspaceId: workspaceB,
+            values: { displayName: "cross-workspace update" },
+          },
+          tx,
+        ),
+      ).resolves.toBeUndefined()
+      await expect(
+        connectionRepository.findByIdForUpdate(
+          { id: connection.id, workspaceId: workspaceB },
+          tx,
+        ),
+      ).resolves.toBeUndefined()
+      await expect(
+        connectionRepository.findById({ id: connection.id }, tx),
+      ).resolves.toMatchObject({ displayName: "account-1" })
+    }))
+
   test("lists and counts only the requested workspace in public order", () =>
     run(async (tx) => {
       const { workspaceId: workspaceA } = await seedWorkspace(tx, "a")
@@ -539,7 +569,10 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
 
       transactionAPromise = transactionADb.transaction(async (tx) => {
         await expect(
-          connectionRepository.findByIdForUpdate({ id: connection.id }, tx),
+          connectionRepository.findByIdForUpdate(
+            { id: connection.id, workspaceId },
+            tx,
+          ),
         ).resolves.toMatchObject({ id: connection.id })
         lockEstablished.resolve()
         await releaseLock.promise

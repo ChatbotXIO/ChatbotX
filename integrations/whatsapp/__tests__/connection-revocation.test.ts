@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest"
+import { verifyAccessToken } from "../src/client"
 import { integration } from "../src/integration"
 
 const mocks = vi.hoisted(() => ({
@@ -43,6 +44,18 @@ describe("WhatsApp connection.verify", () => {
     ).resolves.toMatchObject({
       ok: false,
       revoked: true,
+    })
+  })
+
+  test("preserves a 401 status when the Graph error body is not JSON", async () => {
+    mocks.apiFetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected token <")),
+    })
+
+    await expect(verifyAccessToken(auth)).rejects.toMatchObject({
+      httpStatusCode: 401,
     })
   })
 

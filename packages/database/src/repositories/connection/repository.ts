@@ -1,5 +1,6 @@
 import type { ChannelType } from "@chatbotx.io/utils/channel"
 import {
+  and,
   type DatabaseClient,
   db,
   desc,
@@ -114,13 +115,18 @@ export const connectionRepository = {
 
   /** Locks one connection row; callers must pass an open transaction. */
   async findByIdForUpdate(
-    input: { id: string },
+    input: { id: string; workspaceId: string },
     tx: DatabaseClient,
   ): Promise<ConnectionModel | undefined> {
     const [row] = await tx
       .select()
       .from(connectionModel)
-      .where(eq(connectionModel.id, input.id))
+      .where(
+        and(
+          eq(connectionModel.id, input.id),
+          eq(connectionModel.workspaceId, input.workspaceId),
+        ),
+      )
       .for("update")
     return row
   },
@@ -152,13 +158,22 @@ export const connectionRepository = {
   },
 
   async update(
-    input: { id: string; values: Partial<typeof connectionModel.$inferInsert> },
+    input: {
+      id: string
+      workspaceId: string
+      values: Partial<typeof connectionModel.$inferInsert>
+    },
     tx: DatabaseClient = db,
   ): Promise<ConnectionModel | undefined> {
     const [row] = await tx
       .update(connectionModel)
       .set(input.values)
-      .where(eq(connectionModel.id, input.id))
+      .where(
+        and(
+          eq(connectionModel.id, input.id),
+          eq(connectionModel.workspaceId, input.workspaceId),
+        ),
+      )
       .returning()
     return row
   },
