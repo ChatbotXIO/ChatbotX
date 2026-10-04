@@ -106,21 +106,25 @@ export async function peekImportHeaders(input: {
     }
     throw error
   }
-  if (object.contentLength != null && object.contentLength > maxBytes) {
-    throw fileTooLarge(config.maxFileSizeMB)
-  }
   const tooLargeMessage = `File exceeds the ${config.maxFileSizeMB} MB import limit`
-  const stream = createByteLimitedStream(object.stream, {
-    maxBytes,
-    errorMessage: tooLargeMessage,
-  })
-  // `pipe` does not forward the byte guard's error to the CSV parser, so an
-  // oversized stream would otherwise be an unhandled error event and leave the
-  // parse waiting forever: race the parse against the guard's own error.
-  const guardError = new Promise<never>((_resolve, reject) => {
-    stream.once("error", reject)
-  })
   try {
+    // Inside the cleanup block: an oversized object must still release its
+    // storage connection.
+    if (object.contentLength != null && object.contentLength > maxBytes) {
+      throw fileTooLarge(config.maxFileSizeMB)
+    }
+    const stream = createByteLimitedStream(object.stream, {
+      maxBytes,
+      errorMessage: tooLargeMessage,
+    })
+    // `pipe` forwards neither the source's nor the byte guard's error to the
+    // parser, so either would be an unhandled error event leaving the parse
+    // waiting forever: route the source's error into the guard and race the
+    // parse against the guard's own error.
+    object.stream.once("error", (error) => stream.destroy(error))
+    const guardError = new Promise<never>((_resolve, reject) => {
+      stream.once("error", reject)
+    })
     return await Promise.race([readHeaders(format, stream), guardError])
   } catch (error) {
     // The byte guard reports an oversized stream as a plain Error; the XLSX

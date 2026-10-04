@@ -38,7 +38,9 @@ const publicCallResource = whatsappCallHistoryResource
   .extend({
     hasRecording: z
       .boolean()
-      .describe("Whether a recording exists; fetch it with `getRecording`."),
+      .describe(
+        "Whether a recording exists; fetch it with `whatsappCalls.getRecording`.",
+      ),
   })
 
 const listCallsRequest = z.object({
@@ -51,7 +53,9 @@ const listCallsRequest = z.object({
     .describe("Only calls on this WhatsApp inbox. Get it from `inboxes.list`."),
   agentUserId: zodBigintAsString()
     .optional()
-    .describe("Only calls answered or placed by this agent."),
+    .describe(
+      "Only calls answered or placed by this agent. Get the user id from `workspaceMembers.list`.",
+    ),
   cursor: z
     .string()
     .optional()

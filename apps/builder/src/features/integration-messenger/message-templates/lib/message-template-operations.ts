@@ -112,8 +112,8 @@ async function uploadHeaderImage(
   imageUrl: string,
   options: { authenticatedDownload: boolean },
 ): Promise<string> {
-  await assertPublicUrl(imageUrl, "Template header image URL")
   try {
+    await assertPublicUrl(imageUrl, "Template header image URL")
     return await resumableUploadImage(auth, imageUrl, options)
   } catch (error) {
     // A bad image (not an image, too large, unreachable) is the caller's to

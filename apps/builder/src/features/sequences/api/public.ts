@@ -336,7 +336,7 @@ export const sequencesPublicRouter = {
       path: "/v1/sequence-folders/{id}",
       summary: "Delete sequence folder",
       description:
-        "Permanently deletes a sequence folder. Its sequences are not deleted, only unfiled.",
+        "Permanently deletes a sequence folder and its sub-folders. Their sequences are not deleted, only unfiled.",
       successStatus: 204,
       tags: ["Sequences"],
     })

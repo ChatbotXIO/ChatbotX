@@ -156,6 +156,17 @@ class WorkspaceService extends BaseService {
       >
     >
   }): Promise<WorkspaceModel> {
+    // `defaultReply` holds the id of the Flow the Default Reply runs: it must be
+    // one of this workspace's flows, or every later default reply fails.
+    if (typeof props.data.defaultReply === "string") {
+      const flow = await db.query.flowModel.findFirst({
+        where: { id: props.data.defaultReply, workspaceId: props.id },
+        columns: { id: true },
+      })
+      if (!flow) {
+        throw notFoundException("Flow not found")
+      }
+    }
     const picked = Object.fromEntries(
       WORKSPACE_SETTINGS_KEYS.flatMap((key) =>
         props.data[key] === undefined ? [] : [[key, props.data[key]]],

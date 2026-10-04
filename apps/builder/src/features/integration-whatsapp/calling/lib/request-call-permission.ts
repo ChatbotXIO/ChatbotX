@@ -24,6 +24,8 @@ import {
 export type CallPermissionMessages = {
   notWhatsappConversation: string
   notFound: string
+  /** When the explicitly requested inbox is not one of the contact's. */
+  inboxNotFound?: string
   /** Fallback when Meta's own check failed with no usable text. */
   permissionCheckFailed: string
   permissionRequestLimitReached: string
@@ -32,6 +34,7 @@ export type CallPermissionMessages = {
 export const ENGLISH_CALL_PERMISSION_MESSAGES: CallPermissionMessages = {
   notWhatsappConversation: "This conversation is not on WhatsApp.",
   notFound: "WhatsApp channel not found",
+  inboxNotFound: "The contact has no WhatsApp inbox with this `inboxId`.",
   permissionCheckFailed:
     "Could not check the customer's call permission with Meta. Try again.",
   permissionRequestLimitReached:
@@ -53,6 +56,12 @@ export async function requestWhatsappCallPermission(props: {
   conversation: Awaited<ReturnType<typeof conversationService.findByOrFail>>
   text: string
   inboxId?: string
+  /**
+   * With `inboxId` set, refuse (404) when it is not one of the contact's
+   * WhatsApp inboxes instead of falling back to another number: a token caller
+   * who names the sender must never get the request sent from a different one.
+   */
+  requireRequestedInbox?: boolean
   user?: UserModel
   messages: CallPermissionMessages
 }): Promise<void> {
@@ -60,17 +69,26 @@ export async function requestWhatsappCallPermission(props: {
 
   // Prefer the caller's `inboxId` to pin the send to the number being viewed (a
   // contact can have WhatsApp ContactInbox rows on several connected numbers).
-  // Falls back to a contact + channel lookup when that pin finds nothing.
+  // Falls back to a contact + channel lookup when that pin finds nothing,
+  // unless the caller required the requested inbox.
+  const pinned = props.inboxId
+    ? await contactInboxService.findBy({
+        where: {
+          contactId: conversation.contactId,
+          channel: channelTypes.enum.whatsapp,
+          inboxId: props.inboxId,
+        },
+      })
+    : null
+  if (props.inboxId && !pinned && props.requireRequestedInbox) {
+    throw new ChatbotXException(
+      messages.inboxNotFound ?? messages.notFound,
+      "notFound",
+      404,
+    )
+  }
   const contactInbox =
-    (props.inboxId
-      ? await contactInboxService.findBy({
-          where: {
-            contactId: conversation.contactId,
-            channel: channelTypes.enum.whatsapp,
-            inboxId: props.inboxId,
-          },
-        })
-      : null) ??
+    pinned ??
     (await contactInboxService.findBy({
       where: {
         contactId: conversation.contactId,

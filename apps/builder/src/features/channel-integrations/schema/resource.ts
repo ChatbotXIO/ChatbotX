@@ -43,7 +43,7 @@ export const channelIntegrationResource = z.object({
     .string()
     .nullable()
     .describe(
-      "WhatsApp/Messenger: flow that runs when a partner hands a conversation back. Change it with the handover-resume-flow route.",
+      "WhatsApp/Messenger: flow that runs when a partner hands a conversation back. Change it with `updateHandoverResumeFlow` of the same channel group (e.g. `whatsappChannels.updateHandoverResumeFlow`).",
     ),
   tokenRefreshError: z
     .string()
@@ -56,6 +56,6 @@ export const channelIntegrationResource = z.object({
 
 export const channelIntegrationIdRequest = z.object({
   id: zodBigintAsString().describe(
-    "Channel integration id. Get it from the matching channel list route.",
+    "Channel integration id. Get it from the `list` operation of the same channel group, e.g. `whatsappChannels.list`.",
   ),
 })

@@ -121,7 +121,7 @@ const METHOD_VERBED_SINGLETON_PATHS = new Set([
   "products/meta-catalog",
 ])
 const SINGLETON_VERBS: Record<string, string> = {
-  get: "list",
+  get: "get",
   delete: "delete",
   post: "create",
   put: "update",

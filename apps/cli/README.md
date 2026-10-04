@@ -788,7 +788,7 @@ chatbotx conversations sync add <id> --contactInboxId <id>     # Sync the thread
 ### `workspace` settings (scope `settings`)
 
 ```bash
-chatbotx workspace settings list                      # Get workspace settings
+chatbotx workspace settings get                       # Get workspace settings
 chatbotx workspace settings update --defaultReply --defaultReplyFrequency --smartResponseDelaySeconds --capiLimitedDataUse --logo
 ```
 

@@ -6,7 +6,6 @@ import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
-  possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -138,7 +137,7 @@ export const messengerTemplatesPublicRouter = {
     })
     .input(createMessengerMessageTemplateRequest.and(channelIdParam))
     .output(createdTemplateResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...request } = input
       const workspaceId = context.workspace.id

@@ -26,6 +26,7 @@ import {
   timeRangeQueryWithGranularityMHDSchema,
   uniqueConversationsByAdminStatsSchema,
 } from "@chatbotx.io/analytics/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
 import { publicListRequest, withPublicPaging } from "@/lib/public-api/list"
@@ -286,9 +287,9 @@ export const linkContactsPublicResponse = z.object({
 // ─────────────────────────────────────────────────────────────────────────
 
 const commentAutomationRangePublicRequest = z.object({
-  automationId: z
-    .string()
-    .describe("Comment automation id. Get it from the channel's comment list."),
+  automationId: zodBigintAsString().describe(
+    "Comment automation id. Get it from `fbComments.list` or `igComments.list`.",
+  ),
   from: z.iso
     .datetime({ offset: true })
     .describe(

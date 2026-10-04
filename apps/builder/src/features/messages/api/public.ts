@@ -76,6 +76,7 @@ export const messagesPublicRouter = {
         conversation,
         text: input.text,
         inboxId: input.inboxId,
+        requireRequestedInbox: true,
         messages: ENGLISH_CALL_PERMISSION_MESSAGES,
       })
       return { queued: true as const }

@@ -175,4 +175,33 @@ describe("peekImportHeaders", () => {
       data: { size: 20 },
     })
   })
+
+  test("an object whose reported length is over the limit still releases its stream", async () => {
+    mocks.findFile.mockResolvedValue({ ...csvFile, fileSize: null })
+    const stream = Readable.from([Buffer.from("a,b\n")])
+    mocks.getObjectStream.mockResolvedValue({
+      stream,
+      contentLength: 21 * 1024 * 1024,
+    })
+
+    await expect(peekImportHeaders(input)).rejects.toMatchObject({
+      code: importHeaderPeekErrorCodes.fileTooLarge,
+    })
+    expect(stream.destroyed).toBe(true)
+  })
+
+  test("a connection error on the storage stream after it opened is unreadable, not a hang", async () => {
+    mocks.findFile.mockResolvedValue(csvFile)
+    const stream = new Readable({
+      read() {
+        // Never produces data: the test destroys the stream with an error.
+      },
+    })
+    mocks.getObjectStream.mockResolvedValue({ stream })
+    setTimeout(() => stream.destroy(new Error("ECONNRESET")), 5)
+
+    await expect(peekImportHeaders(input)).rejects.toMatchObject({
+      code: importHeaderPeekErrorCodes.unableToReadHeaders,
+    })
+  })
 })

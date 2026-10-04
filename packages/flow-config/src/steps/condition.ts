@@ -72,10 +72,12 @@ export const conditionCaseSchema = z.object({
 export type ConditionCaseSchema = z.infer<typeof conditionCaseSchema>
 
 export const conditionStepSchema = z.object({
-  id: zodBigintAsString().describe("Step id (numeric string)."),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
   stepType: z
     .literal(stepTypes.enum.condition)
-    .describe('Step type "condition".'),
+    .describe('Step type discriminator: "condition".'),
   cases: z
     .array(conditionCaseSchema)
     .min(1)

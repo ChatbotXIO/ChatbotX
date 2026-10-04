@@ -40,8 +40,12 @@ export const delayUnitToMs = (unit: WaitStepDelayUnit): number => UNIT_MS[unit]
 
 export const waitStepSchema = z
   .object({
-    id: zodBigintAsString().describe("Step id (numeric string)."),
-    stepType: z.literal(stepTypes.enum.wait).describe('Step type "wait".'),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.wait)
+      .describe('Step type discriminator: "wait".'),
   })
   .and(
     z.discriminatedUnion("delayType", [

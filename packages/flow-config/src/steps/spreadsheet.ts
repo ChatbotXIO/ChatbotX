@@ -107,7 +107,9 @@ export const spreadsheetContactToSheetMappingSchema = z.object({
   // so existing steps validate. v2 uses `value`, not `customFieldId`.
   customFieldId: optionalCustomFieldIdSchema
     .optional()
-    .describe("Legacy; leave unset and use `value`."),
+    .describe(
+      'Legacy v1 field. With `version: "v2"` leave it unset and use `value`; under v1 (the default when `version` is omitted) `value` is ignored.',
+    ),
   value: z
     .string()
     .default("")

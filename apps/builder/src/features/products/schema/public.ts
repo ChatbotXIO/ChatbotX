@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { isMetaCatalogSyncScopeComplete } from "../lib/meta-catalog-operations"
 import { productFormRequest } from "./action"
 
 // Explicit allow-list, not the whole row: every field picked here becomes a
@@ -94,9 +95,9 @@ export const updateProductPublicRequest = productFormRequest.extend({
 })
 
 // Meta Catalog. The stored rows carry the workspace's encrypted Meta credential
-// and internal lease/handle bookkeeping; the public resources are explicit
-// omissions of those
-// column can never leak by default: every omitted key is named here.
+// and internal lease/handle bookkeeping; the public resources omit those named
+// columns. A column added to the model later is exposed unless omitted here, so
+// `meta-catalog-public-schema` tests pin the exact public keys.
 export const metaCatalogConnectionPublicResource = createSelectSchema(
   integrationMetaCatalogModel,
   {
@@ -167,13 +168,10 @@ export const syncMetaCatalogPublicRequest = z
       .optional()
       .describe("Product ids, for scope `selected`; up to 1000."),
   })
-  .refine(
-    (value) =>
-      value.scope === "all" ||
-      (value.scope === "category" && Boolean(value.categoryId)) ||
-      (value.scope === "selected" && Boolean(value.selectedProductIds?.length)),
-    { message: "The scope needs its categoryId or selectedProductIds" },
-  )
+  .refine(isMetaCatalogSyncScopeComplete, {
+    path: ["scope"],
+    message: "The scope needs its categoryId or selectedProductIds",
+  })
 
 export const metaCatalogBusinessesPublicResponse = z.array(
   z.object({ id: z.string(), name: z.string().nullish() }),

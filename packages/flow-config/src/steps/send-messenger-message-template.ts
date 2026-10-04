@@ -25,7 +25,9 @@ export const messengerTemplateButtonParamSchema = z.object({
   payload: z
     .string()
     .optional()
-    .describe("Payload sent back when the button is tapped."),
+    .describe(
+      "Legacy; ignored by the sender. POSTBACK payloads come from the step's `buttons` configuration, so configure buttons there.",
+    ),
 })
 export type MessengerTemplateButtonParam = z.infer<
   typeof messengerTemplateButtonParamSchema

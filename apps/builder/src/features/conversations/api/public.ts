@@ -17,6 +17,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnThreadControl,
 } from "@/lib/orpc/orpc-error-helper"
 import { cursorPaginationRequest } from "@/lib/pagination"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -434,7 +435,7 @@ export const conversationsPublicRouter = {
     })
     .input(threadControlPublicRequest)
     .output(threadControlPublicResponse)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnThreadControl)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const conversation = await conversationService.findByOrFail({

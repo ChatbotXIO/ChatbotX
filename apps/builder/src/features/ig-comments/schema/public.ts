@@ -11,7 +11,7 @@ export const listIgCommentsPublicRequest = publicListRequest.extend({
   sort: sortSchema
     .optional()
     .describe(
-      "Sort order as [{ id, desc }] pairs, e.g. `createdAt`, `name`. Defaults to newest first.",
+      "Sort order as [{ id, desc }] pairs, e.g. `createdAt`, `name`. No default order: pass `createdAt` descending for newest first.",
     ),
   name: z
     .string()

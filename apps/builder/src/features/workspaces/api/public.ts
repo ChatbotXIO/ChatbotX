@@ -4,7 +4,7 @@ import {
   isSmartResponseDelayOption,
   SMART_RESPONSE_DELAY_OPTIONS,
 } from "@chatbotx.io/database/partials"
-import { getPublicFileUrl } from "@chatbotx.io/utils"
+import { getPublicFileUrl, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   possibleErrorsOnFindingResource,
@@ -32,7 +32,9 @@ const workspaceSettingsResource = z.object({
   defaultReply: z
     .string()
     .nullable()
-    .describe("Text of the Default Reply flow trigger, if any."),
+    .describe(
+      "Id of the Flow that runs as the Default Reply, or null when none is set. Get flow ids from `flows.list`.",
+    ),
   defaultReplyFrequency: defaultReplyFrequencies.describe(
     "How often the Default Reply may fire for the same contact and channel.",
   ),
@@ -44,12 +46,12 @@ const workspaceSettingsResource = z.object({
 })
 
 const updateWorkspaceSettingsRequest = z.object({
-  defaultReply: z
-    .string()
-    .max(4000)
+  defaultReply: zodBigintAsString()
     .nullable()
     .optional()
-    .describe("Default Reply text; null clears it."),
+    .describe(
+      "Id of the Flow to run as the Default Reply (an active flow with a published version, from `flows.list`); null clears it.",
+    ),
   defaultReplyFrequency: defaultReplyFrequencies
     .optional()
     .describe("How often the Default Reply may fire for the same contact."),
@@ -92,7 +94,7 @@ export const workspaceSettingsPublicRouter = {
       path: "/v1/workspace/settings",
       summary: "Get workspace settings",
       description:
-        "Returns the workspace settings editable through the API: Default Reply text and frequency, the bot reply delay, Meta Conversions API Limited Data Use, and the logo URL. Change them with `workspaceSettings.update`.",
+        "Returns the workspace settings editable through the API: the Default Reply flow and its frequency, the bot reply delay, Meta Conversions API Limited Data Use, and the logo URL. Change them with `workspaceSettings.update`.",
       tags: ["Workspace"],
     })
     .output(workspaceSettingsResource)
@@ -111,7 +113,7 @@ export const workspaceSettingsPublicRouter = {
       path: "/v1/workspace/settings",
       summary: "Update workspace settings",
       description:
-        "Changes the Default Reply text/frequency, the bot reply delay, Conversions API Limited Data Use or the logo. Only the fields you send change. It cannot change the workspace's name, plan, status, owner or members. Read the current values with `workspaceSettings.get` first.",
+        "Changes the Default Reply flow/frequency, the bot reply delay, Conversions API Limited Data Use or the logo. Only the fields you send change. It cannot change the workspace's name, plan, status, owner or members. Read the current values with `workspaceSettings.get` first.",
       tags: ["Workspace"],
     })
     .input(updateWorkspaceSettingsRequest)

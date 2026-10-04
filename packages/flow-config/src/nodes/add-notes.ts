@@ -12,7 +12,7 @@ export const addNotesNodeSchema = baseNodeSchema.extend({
   type: z
     .literal(nodeTypeSchema.enum.addNotes)
     .describe(
-      'Node type "addNotes": adds internal notes to the conversation. `data.details.steps` holds addNotes steps.',
+      'Node type "addNotes": a canvas annotation node. `data.details.beforeStep` holds one addNotes step whose `text` (max 1000 chars) is the note. It is documentation for flow editors only and does not post a note to the conversation at runtime.',
     ),
   data: baseNodeDataSchema.extend({
     details: z.object({

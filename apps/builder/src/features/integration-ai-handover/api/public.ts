@@ -3,8 +3,8 @@ import {
   aiHandoverSettingsService,
 } from "@chatbotx.io/business"
 import {
+  possibleErrorsOnApplyingAiHandover,
   possibleErrorsOnFindingResource,
-  possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { withListPagingNote } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -66,7 +66,7 @@ export const aiHandoverPublicRouter = {
     })
     .input(saveAiHandoverSettingsPublicRequest)
     .output(aiHandoverSettingsResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnApplyingAiHandover)
     .handler(async ({ context, input }) => {
       const { inboxId, ...settings } = input
       return toSettingsResource(
@@ -111,7 +111,7 @@ export const aiHandoverPublicRouter = {
     })
     .input(setApplyToAllPublicRequest)
     .output(setApplyToAllPublicResponse)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnApplyingAiHandover)
     .handler(async ({ context, input }) => {
       const request = {
         workspaceId: context.workspace.id,
@@ -148,7 +148,7 @@ export const aiHandoverPublicRouter = {
     })
     .input(aiHandoverInboxIdParam)
     .output(setApplyToAllPublicResponse)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnApplyingAiHandover)
     .handler(async ({ context, input }) => {
       const change = await aiHandoverBulkRunService.retry({
         workspaceId: context.workspace.id,

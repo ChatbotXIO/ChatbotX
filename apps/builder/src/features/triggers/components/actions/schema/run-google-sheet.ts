@@ -52,7 +52,9 @@ export const runGoogleSheet = z.discriminatedUnion("action", [
     ...baseRunGoogleSheetSchema,
     action: z
       .literal(stepTypes.enum.spreadsheetUpdateRow)
-      .describe("Write `map` values into the matching row."),
+      .describe(
+        "Write `map` values into EVERY row matching `lookup` (all matches are updated, not just the first; an empty `lookup` matches every row).",
+      ),
     map: z
       .array(spreadsheetContactToSheetMappingSchema)
       .min(1)
@@ -72,7 +74,9 @@ export const runGoogleSheet = z.discriminatedUnion("action", [
     ...baseRunGoogleSheetSchema,
     action: z
       .literal(stepTypes.enum.spreadsheetClearRow)
-      .describe("Clear the matching row."),
+      .describe(
+        "Clear EVERY row matching `lookup` (all matches are cleared, not just the first; an empty `lookup` matches every row).",
+      ),
   }),
 ])
 export type RunGoogleSheet = z.infer<typeof runGoogleSheet>

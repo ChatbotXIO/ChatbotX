@@ -1176,6 +1176,26 @@ describe("setApplyToAll: confirmMaxEligible", () => {
     expect(mocks.cancelLive).toHaveBeenCalledTimes(2)
   })
 
+  test("re-checks the confirmed count under the lock when a concurrent change made this a real transition", async () => {
+    // The pre-lock read says the Page is already ON (nothing to confirm)...
+    mocks.findSettings.mockResolvedValue(
+      settingsRow({ applyToAllCustomers: true }),
+    )
+    // ...but by the time the lock is taken it is OFF, so this request changes it.
+    setLocked(settingsRow({ applyToAllCustomers: false }))
+    mocks.countBulkAiEligible.mockResolvedValue(500)
+
+    await rejectsWithCode(
+      aiHandoverBulkRunService.setApplyToAll({
+        ...REQUEST,
+        applyToAllCustomers: true,
+        confirmMaxEligible: 0,
+      }),
+      AI_HANDOVER_BULK_ERROR_CODES.confirmCountExceeded,
+    )
+    expect(mocks.createForRevision).not.toHaveBeenCalled()
+  })
+
   test("an unconfirmed change (the UI) may still wait for the previous run", async () => {
     mocks.createForRevision.mockResolvedValue(null)
 

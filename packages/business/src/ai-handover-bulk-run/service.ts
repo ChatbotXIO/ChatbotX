@@ -186,6 +186,18 @@ class AiHandoverBulkRunService extends BaseService {
           inboxStatus,
           input.applyToAllCustomers,
         )
+        // The pre-check above ran against the state read before the lock; a
+        // concurrent change can make this request a real transition after all.
+        if (input.confirmMaxEligible !== undefined) {
+          this.assertCountWithinConfirmed(
+            input,
+            await this.countEligibleForChange({
+              ...ref,
+              channel: inbox.channel,
+              applyToAllCustomers: input.applyToAllCustomers,
+            }),
+          )
+        }
 
         const updated = await aiHandoverSettingsRepository.setApplyToAll(
           {
@@ -259,21 +271,35 @@ class AiHandoverBulkRunService extends BaseService {
       )
     }
 
+    const eligibleCount = await this.countEligibleForChange({
+      ...ref,
+      channel: inbox.channel,
+      applyToAllCustomers: input.applyToAllCustomers,
+    })
+    return { isChanged: true, eligibleCount }
+  }
+
+  /** Threads a run for this change would touch, as of now. */
+  private countEligibleForChange(input: {
+    workspaceId: string
+    inboxId: string
+    channel: Parameters<typeof eligibilityOf>[0]["channel"]
+    applyToAllCustomers: boolean
+  }): Promise<number> {
     const now = new Date()
-    const eligibleCount = await contactInboxRepository.countBulkAiEligible({
+    return contactInboxRepository.countBulkAiEligible({
       ...eligibilityOf(
         {
           action: input.applyToAllCustomers ? "enable" : "disable",
           requestedAt: now,
-          channel: inbox.channel,
+          channel: input.channel,
         },
         now,
       ),
-      workspaceId,
-      inboxId,
+      workspaceId: input.workspaceId,
+      inboxId: input.inboxId,
       afterId: null,
     })
-    return { isChanged: true, eligibleCount }
   }
 
   /** Refuses a change that would touch more threads than the caller confirmed. */
@@ -285,7 +311,19 @@ class AiHandoverBulkRunService extends BaseService {
     }
     const { userId: _userId, confirmMaxEligible: _max, ...request } = input
     const { isChanged, eligibleCount } = await this.previewApplyToAll(request)
-    if (isChanged && eligibleCount > input.confirmMaxEligible) {
+    if (isChanged) {
+      this.assertCountWithinConfirmed(input, eligibleCount)
+    }
+  }
+
+  private assertCountWithinConfirmed(
+    input: SetApplyToAllInput,
+    eligibleCount: number,
+  ): void {
+    if (
+      input.confirmMaxEligible !== undefined &&
+      eligibleCount > input.confirmMaxEligible
+    ) {
       throw bulkException(
         AI_HANDOVER_BULK_ERROR_CODES.confirmCountExceeded,
         `${eligibleCount} threads are eligible, more than the ${input.confirmMaxEligible} confirmed`,

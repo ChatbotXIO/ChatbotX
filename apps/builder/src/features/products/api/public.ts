@@ -1,10 +1,7 @@
-import {
-  createImportUpload,
-  peekImportHeaders,
-  productService,
-} from "@chatbotx.io/business"
+import { createImportUpload, productService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { peekImportHeadersForApi } from "@/features/import/lib/peek-import-headers-for-api"
 import {
   importHeadersPublicRequest,
   importHeadersPublicResponse,
@@ -26,6 +23,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnPeekingImportHeaders,
   possibleErrorsOnStartingMetaCatalogRun,
 } from "@/lib/orpc/orpc-error-helper"
 import { withPublicPaging } from "@/lib/public-api/list"
@@ -192,9 +190,9 @@ export const productsPublicRouter = {
     })
     .input(importHeadersPublicRequest)
     .output(importHeadersPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnPeekingImportHeaders)
     .handler(async ({ context, input }) => ({
-      headers: await peekImportHeaders({
+      headers: await peekImportHeadersForApi({
         workspaceId: context.workspace.id,
         fileId: input.fileId,
         type: "products",

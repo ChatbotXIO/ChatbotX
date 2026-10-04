@@ -184,7 +184,7 @@ export const commentReplySchema = z.object({
     .max(COMMENT_REPLY_MAX_TEXTS)
     .optional()
     .describe(
-      "Public `text` replies only: up to 10 alternative messages, one is a separate public reply each. When set it takes precedence over `value`.",
+      "Public `text` replies only: up to 10 messages, each sent as a separate public reply in order. When set it takes precedence over `value`.",
     ),
 })
 export type CommentReply = z.infer<typeof commentReplySchema>
@@ -287,7 +287,7 @@ export const commentOptionsSchema = z.object({
   trackUserTags: z
     .boolean()
     .describe(
-      "Count the accounts tagged in each comment into the contact's running totals, exposed as `{{total_tagged}}` and `{{total_new_tagged}}`. Comments are only processed for this automation when on.",
+      "Count the accounts tagged in each comment into the contact's running totals, exposed as `{{total_tagged}}` and `{{total_new_tagged}}`. Only gates this tag counting; replies and other actions run regardless.",
     ),
 })
 export type CommentOptions = z.infer<typeof commentOptionsSchema>

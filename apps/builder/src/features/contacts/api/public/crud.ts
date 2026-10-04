@@ -8,6 +8,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnStartingContactImport,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -225,7 +226,7 @@ export const contactsCrudPublicRouter = {
     })
     .input(importContactsRequest)
     .output(importContactsPublicResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnStartingContactImport)
     .handler(
       async ({ context, input }) =>
         await importService.startContactImport({

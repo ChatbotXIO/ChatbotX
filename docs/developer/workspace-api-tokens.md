@@ -474,7 +474,7 @@ an endpoint's scope.
   `magicLinkContacts`/`refLinkContacts` deliberately omit name and avatar.
 
 - **Workspace settings (scope `settings`)** — the 13th scope, added for
-  `GET/PATCH /v1/workspace/settings`: Default Reply text and frequency, the bot
+  `GET/PATCH /v1/workspace/settings`: the Default Reply flow (id) and its frequency, the bot
   reply delay (3–180 s or null), Conversions API Limited Data Use and the logo
   URL. They change what the workspace sends to customers and reports to Meta,
   so they sit outside the resource-area scopes. The service writes a strict

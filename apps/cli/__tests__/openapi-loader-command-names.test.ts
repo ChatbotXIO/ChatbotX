@@ -126,7 +126,7 @@ describe("pathAndMethodToCommandName — bot field reset", () => {
 describe("pathAndMethodToCommandName — workspace settings singleton", () => {
   test("GET and PATCH on the same path get distinct commands", () => {
     expect(pathAndMethodToCommandName("/v1/workspace/settings", "GET")).toBe(
-      "workspace:settings:list",
+      "workspace:settings:get",
     )
     expect(pathAndMethodToCommandName("/v1/workspace/settings", "PATCH")).toBe(
       "workspace:settings:update",
@@ -148,7 +148,7 @@ describe("pathAndMethodToCommandName — messenger templates by id", () => {
 describe("pathAndMethodToCommandName — meta catalog singleton", () => {
   test("GET (state) and POST (create) get distinct commands", () => {
     expect(pathAndMethodToCommandName("/v1/products/meta-catalog", "GET")).toBe(
-      "products:meta-catalog:list",
+      "products:meta-catalog:get",
     )
     expect(
       pathAndMethodToCommandName("/v1/products/meta-catalog", "POST"),

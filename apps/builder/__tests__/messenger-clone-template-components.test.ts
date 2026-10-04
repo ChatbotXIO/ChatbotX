@@ -91,7 +91,10 @@ describe("prepareComponentsForClone", () => {
 
     await expect(
       prepareComponentsForClone(components, {} as never),
-    ).rejects.toThrow("ssrf-guard")
+    ).rejects.toMatchObject({
+      name: "ChatbotXException",
+      message: expect.stringContaining("ssrf-guard"),
+    })
     expect(assertPublicUrl).toHaveBeenCalledWith(
       "http://169.254.169.254/latest/meta",
       "Template header image URL",

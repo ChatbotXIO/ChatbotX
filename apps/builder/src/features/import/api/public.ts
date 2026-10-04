@@ -1,8 +1,4 @@
-import {
-  createImportUpload,
-  importService,
-  peekImportHeaders,
-} from "@chatbotx.io/business"
+import { createImportUpload, importService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import {
   buildContactsImportTemplateCsv,
@@ -12,9 +8,11 @@ import {
   possibleErrorsOnCreatingImportUpload,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
+  possibleErrorsOnPeekingImportHeaders,
 } from "@/lib/orpc/orpc-error-helper"
 import { withListPagingNote } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { peekImportHeadersForApi } from "../lib/peek-import-headers-for-api"
 import {
   contactImportPublicResource,
   contactImportTemplatePublicResponse,
@@ -80,14 +78,14 @@ export const importPublicRouter = {
       path: "/v1/contacts/imports/files/{fileId}/headers",
       summary: "Read contact import file headers",
       description:
-        "Returns the column headers of an uploaded contact import file so you can build `columnMap` for `contacts.import`. Call `contacts.createImportUpload` and upload the file first.",
+        "Returns the column headers of an uploaded contact import file so you can name the matching columns (`phoneNumber`, `contactId`, `email`, `firstName`, `lastName`, `sourceUserId`, `fieldMapping`) in `contacts.import`. Call `contacts.createImportUpload` and upload the file first.",
       tags: ["Contacts"],
     })
     .input(importHeadersPublicRequest)
     .output(importHeadersPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnPeekingImportHeaders)
     .handler(async ({ context, input }) => ({
-      headers: await peekImportHeaders({
+      headers: await peekImportHeadersForApi({
         workspaceId: context.workspace.id,
         fileId: input.fileId,
         type: "contacts",

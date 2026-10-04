@@ -24,6 +24,8 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnSendingCapiTestEvent,
+  possibleErrorsOnSettingCoexist,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
@@ -214,7 +216,7 @@ export const createCoexistRoute = (channel: CoexistChannel) => {
         method: "GET",
         path: `/v1/${channel}-channels/{id}/coexist` as const,
         summary: `Get ${label} coexist sync status`,
-        description: `Returns the newest history-sync run of a ${label} channel with its progress and counters, or \`run: null\` if it never ran. Poll it after \`setCoexist\` returned a \`runId\`.`,
+        description: `Returns the newest history-sync run of a ${label} channel with its progress and counters, or \`run: null\` if it never ran. Poll it after \`${channel}Channels.setCoexist\` returned a \`runId\` (Messenger and Instagram only).`,
         tags: ["Channels"],
       })
       .input(
@@ -244,7 +246,7 @@ export const createCoexistRoute = (channel: CoexistChannel) => {
         method: "PUT",
         path: `/v1/${channel}-channels/{id}/coexist` as const,
         summary: `Set ${label} coexist sync`,
-        description: `Turns coexistence history sync on or off for a ${label} channel. Enabling starts (or reuses) a sync run (\`runId\` is returned for Messenger and Instagram); \`aiReadsSyncedHistory\` lets the AI read the synced history (default false). Disabling stops active runs. Read the current state from the channel list route (\`coexistEnabled\`).`,
+        description: `Turns coexistence history sync on or off for a ${label} channel. Enabling starts (or reuses) a sync run (\`runId\` is returned for Messenger and Instagram); \`aiReadsSyncedHistory\` lets the AI read the synced history (default false). Disabling stops active runs. Read the current state from \`${listOperation}\` (\`coexistEnabled\`).`,
         tags: ["Channels"],
       })
       .input(
@@ -261,7 +263,7 @@ export const createCoexistRoute = (channel: CoexistChannel) => {
         }),
       )
       .output(coexistResponse)
-      .errors(possibleErrorsOnMutatingResource)
+      .errors(possibleErrorsOnSettingCoexist)
       .handler(async ({ context, input }) => {
         const base = {
           workspaceId: context.workspace.id,
@@ -301,9 +303,7 @@ export const createCoexistRoute = (channel: CoexistChannel) => {
               502,
             )
           }
-          throw notFoundException(
-            typeof reason === "string" ? reason : "Channel not found",
-          )
+          throw notFoundException("Channel not found")
         }
         const runId = "runId" in result ? result.runId : undefined
         return {
@@ -321,7 +321,7 @@ type CapiChannel = Extract<
 
 const capiTestEventErrorMessages: Record<string, string> = {
   testEventCodeRequired:
-    "Save a test event code first (`capi/test-event-code`), then send a test event.",
+    "Save a test event code first (`setCapiTestEventCode` of the same channel group), then send a test event.",
   capiDisconnected:
     "Conversions API is disconnected for this channel. Save a dataset to reconnect it.",
   invalidMessagingId: "`messagingId` is not a valid messaging id.",
@@ -351,7 +351,7 @@ export const createCapiRoutes = (channel: CapiChannel) => {
         method: "PUT",
         path: `${base}/dataset` as const,
         summary: `Set ${label} CAPI dataset`,
-        description: `Selects the Meta dataset used for Conversions API events on a ${label} channel. The dataset is validated with Meta using the channel's token, then stored, and a disconnected Conversions API is reconnected. Read the current \`datasetId\` and \`hasCapiScope\` from the channel list route.`,
+        description: `Selects the Meta dataset used for Conversions API events on a ${label} channel. The dataset is validated with Meta using the channel's token, then stored, and a disconnected Conversions API is reconnected. Read the current \`datasetId\` and \`hasCapiScope\` from \`${listOperation}\`.`,
         successStatus: 204,
         tags: ["Channels"],
       })
@@ -413,8 +413,7 @@ export const createCapiRoutes = (channel: CapiChannel) => {
         method: "POST",
         path: `${base}/test-event` as const,
         summary: `Send ${label} CAPI test event`,
-        description:
-          "Posts one sample Purchase to Meta for the given messaging id so it shows up under Events Manager → Test events. Needs a saved test event code (`capi/test-event-code`) and a connected Conversions API. Nothing is stored.",
+        description: `Posts one sample Purchase to Meta for the given messaging id so it shows up under Events Manager → Test events. Needs a saved test event code (\`${channel}Channels.setCapiTestEventCode\`) and a connected Conversions API. If the channel has no dataset yet, one is created at Meta and saved first, exactly as in the builder.`,
         tags: ["Channels"],
       })
       .input(
@@ -430,7 +429,7 @@ export const createCapiRoutes = (channel: CapiChannel) => {
         }),
       )
       .output(capiSuccessResponse)
-      .errors(possibleErrorsOnMutatingResource)
+      .errors(possibleErrorsOnSendingCapiTestEvent)
       .handler(async ({ context, input }) => {
         try {
           await sendCapiTestEventFor({

@@ -28,7 +28,7 @@ export const customFieldValueChanged = z.object({
   value: z
     .unknown()
     .describe(
-      "Value to compare against. A string or number; for date fields an object `{ text, timezone }`. Ignored for isEmpty/isNotEmpty.",
+      "Value to compare against. A string or number; for date fields an object `{ text, timezone }`. For isBetween/notBetween pass two endpoints: an array `[start, end]` or an object `{ start, end }` (also `from`/`to`), e.g. `['2026-01-01', '2026-01-31']`. Ignored for isEmpty/isNotEmpty.",
     ),
 })
 export type CustomFieldValueChanged = z.infer<typeof customFieldValueChanged>

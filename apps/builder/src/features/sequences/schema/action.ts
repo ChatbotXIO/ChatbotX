@@ -62,7 +62,7 @@ export const updateSequenceSchema = z
     folderId: zodBigintAsString()
       .nullable()
       .describe(
-        "Move the sequence to this sequence folder, or null for no folder.",
+        'Move the sequence to this sequence folder, or null for no folder (unlike the `sequences.list` filter, "0" is not accepted here).',
       ),
   })
   .partial()

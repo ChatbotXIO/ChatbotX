@@ -26,7 +26,7 @@ import { stepTypes } from "./step-action"
 export const sendTextStepSchema = baseStepSchema.extend({
   stepType: z
     .literal(stepTypes.enum.sendText)
-    .describe('Step type "sendText": sends a text message.'),
+    .describe('Step type discriminator: "sendText" (sends a text message).'),
   text: z
     .string()
     .trim()

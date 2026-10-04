@@ -629,13 +629,14 @@ describe("comment automation request validation", () => {
       "@/features/analytics/schema/public"
     )
     const ok = {
-      automationId: "a",
+      automationId: "12",
       from: "2026-10-01T00:00:00+07:00",
       to: "2026-10-02T23:59:59+07:00",
       timezone: "Asia/Ho_Chi_Minh",
     }
 
     expect(schema.safeParse(ok).success).toBe(true)
+    expect(schema.safeParse({ ...ok, automationId: "abc" }).success).toBe(false)
     expect(schema.safeParse({ ...ok, from: "2026-10-01" }).success).toBe(false)
     expect(schema.safeParse({ ...ok, to: "garbage" }).success).toBe(false)
     expect(schema.safeParse({ ...ok, timezone: "Asia/Hanoi" }).success).toBe(

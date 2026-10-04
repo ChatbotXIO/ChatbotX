@@ -3,10 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const splitTrafficStepSchema = z.object({
-  id: zodBigintAsString().describe("Step id (numeric string)."),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
   stepType: z
     .literal(stepTypes.enum.splitTraffic)
-    .describe('Step type "splitTraffic".'),
+    .describe('Step type discriminator: "splitTraffic".'),
   cases: z
     .array(
       z.object({
@@ -19,7 +21,7 @@ export const splitTrafficStepSchema = z.object({
         nodeId: zodBigintAsString()
           .nullish()
           .describe(
-            "Not used for routing; leave null. Branches are wired with edges whose `sourceHandle` is `<stepId>-case-<index>`, where index is the 0-based position in `cases`.",
+            "Not used for routing; leave null. Branches are wired with edges whose `sourceHandle` is `<nodeId>-case-<index>` (the id of the containing node, not the step), where index is the 0-based position in `cases`.",
           ),
       }),
     )

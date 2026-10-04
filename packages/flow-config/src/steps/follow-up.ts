@@ -9,10 +9,12 @@ const FOLLOW_UP_MAX_DELAY_MS = FOLLOW_UP_MAX_DELAY_DAYS * 86_400_000
 
 export const followUpStepSchema = z
   .object({
-    id: zodBigintAsString().describe("Step id (numeric string)."),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
     stepType: z
       .literal(stepTypes.enum.followUp)
-      .describe('Step type "followUp".'),
+      .describe('Step type discriminator: "followUp".'),
     duration: z.coerce
       .number()
       .int()

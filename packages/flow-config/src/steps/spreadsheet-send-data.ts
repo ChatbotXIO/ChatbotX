@@ -13,7 +13,10 @@ export const spreadsheetSendDataSchema = spreadsheetSchema.extend({
     .describe('Step type discriminator: "spreadsheetSendData".'),
   version: spreadsheetStepVersions
     .catch(spreadsheetStepVersions.enum.v1)
-    .default(spreadsheetStepVersions.enum.v1),
+    .default(spreadsheetStepVersions.enum.v1)
+    .describe(
+      'Mapping format. Omitted or invalid parses as legacy "v1", where `map[].value` is ignored; set "v2" to write `map[].value`.',
+    ),
   map: z.array(spreadsheetContactToSheetMappingSchema).min(1),
 })
 export type SpreadsheetSendDataSchema = z.infer<

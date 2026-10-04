@@ -15,6 +15,7 @@ const update = vi.fn(() => ({ set: setUpdate }))
 
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }))
 const findFirstWorkspace = vi.fn(async () => ({ name: "Old Name" }))
+const findFirstFlow = vi.fn(async () => ({ id: "11" }))
 const countWorkspaces = vi.fn(async () => 0)
 const db = {
   insert,
@@ -23,6 +24,7 @@ const db = {
   query: {
     userModel: { findFirst: findFirstUser },
     workspaceModel: { findFirst: findFirstWorkspace },
+    flowModel: { findFirst: findFirstFlow },
   },
 }
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -353,7 +355,7 @@ describe("workspaceService.updateSettings", () => {
     await workspaceService.updateSettings({
       id: "ws-1",
       data: {
-        defaultReply: "hi",
+        defaultReply: "11",
         defaultReplyFrequency: "oncePerDay",
         smartResponseDelaySeconds: 10,
         capiLimitedDataUse: true,
@@ -366,12 +368,38 @@ describe("workspaceService.updateSettings", () => {
     })
 
     expect(setUpdate).toHaveBeenCalledWith({
-      defaultReply: "hi",
+      defaultReply: "11",
       defaultReplyFrequency: "oncePerDay",
       smartResponseDelaySeconds: 10,
       capiLimitedDataUse: true,
       logo: "https://cdn.example.com/l.png",
     })
+  })
+
+  test("a Default Reply flow of another workspace is refused and nothing is written", async () => {
+    setUpdate.mockClear()
+    findFirstFlow.mockResolvedValueOnce(undefined as never)
+
+    await expect(
+      workspaceService.updateSettings({
+        id: "ws-1",
+        data: { defaultReply: "99" },
+      }),
+    ).rejects.toThrow("Flow not found")
+    expect(setUpdate).not.toHaveBeenCalled()
+  })
+
+  test("clearing the Default Reply (null) needs no flow lookup", async () => {
+    setUpdate.mockClear()
+    findFirstFlow.mockClear()
+
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { defaultReply: null },
+    })
+
+    expect(findFirstFlow).not.toHaveBeenCalled()
+    expect(setUpdate).toHaveBeenCalledWith({ defaultReply: null })
   })
 
   test("an empty or all-undefined body writes nothing and returns the workspace", async () => {
