@@ -3314,6 +3314,7 @@
         "channelLimit": "Kanalgrænsen er nået.",
         "workspaceLimit": "Workspace-grænsen er nået.",
         "providerRejected": "Udbyderen afviste denne anmodning.",
+        "inProgress": "Forbindelse er allerede i gang.",
         "unknown": "Noget gik galt.",
         "followUpFailed": "Opsætning ufuldstændig – afslut den fra kanalindstillingerne."
       },

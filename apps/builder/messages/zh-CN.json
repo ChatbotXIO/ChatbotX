@@ -984,6 +984,7 @@
         "channelLimit": "已达渠道上限。",
         "workspaceLimit": "已达工作区上限。",
         "providerRejected": "服务提供方拒绝了此请求。",
+        "inProgress": "连接正在进行中。",
         "unknown": "出现问题。",
         "followUpFailed": "设置未完成——请在渠道设置中完成。"
       },

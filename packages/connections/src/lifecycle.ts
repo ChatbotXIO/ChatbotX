@@ -65,18 +65,18 @@ export const disconnect = async (input: {
 
   if (adapter.store && foreignKey) {
     let auth: AuthValue | null = null
-    let loadedAuth = false
     try {
       auth = await adapter.store.loadAuthByForeignKey(foreignKey)
-      loadedAuth = true
     } catch (err) {
       teardownErrors.push(
         toPublicErrorMessage(err, "Provider-side teardown failed"),
       )
-      teardownFailure = err
+      if (!adapter.provider.isRevokedTokenError?.(err)) {
+        teardownFailure = err
+      }
       logger.error(
         { err, connectionId: connection.id, provider: connection.provider },
-        "connection disconnect: failed to load auth for provider-side teardown; retaining local auth for retry",
+        "connection disconnect: failed to load auth for provider-side teardown",
       )
     }
     if (auth) {
@@ -87,10 +87,12 @@ export const disconnect = async (input: {
           teardownErrors.push(
             toPublicErrorMessage(err, "Provider-side teardown failed"),
           )
-          teardownFailure ??= err
+          if (!adapter.provider.isRevokedTokenError?.(err)) {
+            teardownFailure ??= err
+          }
           logger.error(
             { err, connectionId: connection.id, provider: connection.provider },
-            "connection disconnect: provider-side disconnect failed; retaining local auth for retry",
+            "connection disconnect: provider-side disconnect failed",
           )
         }
       }
@@ -101,26 +103,27 @@ export const disconnect = async (input: {
           teardownErrors.push(
             toPublicErrorMessage(err, "Webhook unsubscribe failed"),
           )
-          teardownFailure ??= err
+          if (!adapter.provider.isRevokedTokenError?.(err)) {
+            teardownFailure ??= err
+          }
           logger.error(
             { err, connectionId: connection.id, provider: connection.provider },
-            "connection disconnect: webhook unsubscribe failed; retaining local auth for retry",
+            "connection disconnect: webhook unsubscribe failed",
           )
         }
       }
-    } else if (loadedAuth) {
+    } else {
       const authUnavailableError = new Error(
         "Provider authentication was unavailable for teardown",
       )
       teardownErrors.push(authUnavailableError.message)
-      teardownFailure = authUnavailableError
       logger.error(
         {
           err: authUnavailableError,
           connectionId: connection.id,
           provider: connection.provider,
         },
-        "connection disconnect: provider-side teardown skipped because auth is unavailable; retaining local auth for retry",
+        "connection disconnect: provider-side teardown skipped because auth is unavailable",
       )
     }
   }

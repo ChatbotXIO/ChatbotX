@@ -3314,6 +3314,7 @@
         "channelLimit": "Limita de canale a fost atinsă.",
         "workspaceLimit": "Limita spațiului de lucru a fost atinsă.",
         "providerRejected": "Furnizorul a respins această solicitare.",
+        "inProgress": "Conexiunea este deja în curs.",
         "unknown": "Ceva nu a funcționat corect.",
         "followUpFailed": "Configurare incompletă — finalizeaz-o din setările canalului."
       },

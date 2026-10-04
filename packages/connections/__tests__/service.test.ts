@@ -501,11 +501,11 @@ describe("ConnectionService.disconnect", () => {
         connectionId: "conn-1",
         provider: "messenger",
       },
-      "connection disconnect: provider-side disconnect failed; retaining local auth for retry",
+      "connection disconnect: provider-side disconnect failed",
     )
   })
 
-  it("keeps auth available for retry when provider authentication is unavailable", async () => {
+  it("finishes local cleanup when provider authentication is unavailable", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.loadAuthByForeignKey.mockResolvedValueOnce(null)
 
@@ -514,19 +514,20 @@ describe("ConnectionService.disconnect", () => {
         connectionId: "conn-1",
         workspaceId: "ws-1",
       }),
-    ).rejects.toThrow("Provider authentication was unavailable for teardown")
+    ).resolves.toMatchObject({ status: "disconnected" })
 
     expect(mocks.disconnect).not.toHaveBeenCalled()
     expect(mocks.unsubscribe).not.toHaveBeenCalled()
-    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
-    expect(mocks.transition).not.toHaveBeenCalled()
-    expect(mocks.update).toHaveBeenCalledWith({
-      id: "conn-1",
-      workspaceId: "ws-1",
-      values: {
-        lastError: "Provider authentication was unavailable for teardown",
-      },
-    })
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalled()
+    expect(mocks.transition).toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: {
+          lastError: "Provider authentication was unavailable for teardown",
+        },
+      }),
+      "tx",
+    )
   })
 
   it("keeps the first teardown failure retryable after independent cleanup also fails", async () => {
@@ -1882,6 +1883,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
       id: "session-1",
       workspaceId: "ws-1",
       errorCode: "provider_denied",
+      statuses: ["authorized"],
     })
     expect(mocks.saveAuthByForeignKey).not.toHaveBeenCalled()
 
@@ -2049,6 +2051,7 @@ describe("ConnectionService.connectTargets", () => {
       id: "session-1",
       workspaceId: "ws-1",
       targetId: "page-1",
+      ownerToken: expect.any(String),
     })
     expect(mocks.inboxCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -2083,8 +2086,8 @@ describe("ConnectionService.connectTargets", () => {
     })
   })
 
-  it("recovers a stale target claim with no active connection and reports the recovered connection", async () => {
-    mocks.claimTarget.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+  it("reports an in-progress target without taking over its live claim", async () => {
+    mocks.claimTarget.mockResolvedValue(false)
 
     const result = await connectionService.connectTargets({
       sessionId: "session-1",
@@ -2092,13 +2095,9 @@ describe("ConnectionService.connectTargets", () => {
       targetIds: ["page-1"],
     })
 
-    expect(mocks.releaseTarget).toHaveBeenCalledWith({
-      id: "session-1",
-      workspaceId: "ws-1",
-      targetId: "page-1",
-    })
+    expect(mocks.releaseTarget).not.toHaveBeenCalled()
     expect(result.outcomes).toEqual([
-      { targetId: "page-1", status: "connected", connectionId: "conn-new" },
+      { targetId: "page-1", status: "failed", reason: "inProgress" },
     ])
   })
 
@@ -2166,6 +2165,7 @@ describe("ConnectionService.connectTargets", () => {
       id: "session-1",
       workspaceId: "ws-1",
       targetId: "page-1",
+      ownerToken: expect.any(String),
     })
   })
 
@@ -2190,6 +2190,7 @@ describe("ConnectionService.connectTargets", () => {
       id: "session-1",
       workspaceId: "ws-1",
       targetId: "page-1",
+      ownerToken: expect.any(String),
     })
     expect(mocks.loggerError).toHaveBeenCalledWith(
       {

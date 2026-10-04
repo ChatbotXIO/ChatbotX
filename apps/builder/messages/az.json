@@ -878,6 +878,7 @@
         "channelLimit": "Kanal həddinə çatılıb.",
         "workspaceLimit": "İş sahəsi həddinə çatılıb.",
         "providerRejected": "Provayder bu sorğunu rədd etdi.",
+        "inProgress": "Qoşulma artıq davam edir.",
         "unknown": "Xəta baş verdi.",
         "followUpFailed": "Quraşdırma tamamlanmayıb. Kanal parametrlərində quraşdırmanı tamamlayın."
       },

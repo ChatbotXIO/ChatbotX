@@ -3314,6 +3314,7 @@
         "channelLimit": "Batas saluran tercapai.",
         "workspaceLimit": "Batas ruang kerja tercapai.",
         "providerRejected": "Penyedia menolak permintaan ini.",
+        "inProgress": "Koneksi sedang berlangsung.",
         "unknown": "Terjadi kesalahan.",
         "followUpFailed": "Penyiapan belum selesai — selesaikan dari pengaturan saluran."
       },

@@ -3314,6 +3314,7 @@
         "channelLimit": "Kanavaraja saavutettu.",
         "workspaceLimit": "Työtilan raja saavutettu.",
         "providerRejected": "Palveluntarjoaja hylkäsi pyynnön.",
+        "inProgress": "Yhteys on jo käynnissä.",
         "unknown": "Jotain meni pieleen.",
         "followUpFailed": "Asetus on kesken – viimeistele kanavan asetuksista."
       },

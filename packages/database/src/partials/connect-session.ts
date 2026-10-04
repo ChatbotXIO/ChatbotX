@@ -18,6 +18,15 @@ export const connectSessionTargetSchema = z.object({
 })
 export type ConnectSessionTarget = z.infer<typeof connectSessionTargetSchema>
 
+/** Durable per-target lease used to serialize concurrent connect attempts. */
+export const connectSessionTargetClaimSchema = z.object({
+  ownerToken: z.string().min(1),
+  expiresAt: z.string().datetime(),
+})
+export type ConnectSessionTargetClaim = z.infer<
+  typeof connectSessionTargetClaimSchema
+>
+
 /**
  * Per-target result of a connection attempt. Structurally aligned with
  * the `CONNECT_ITEM_STATUSES`/`CONNECT_FAILURE_REASONS` vocabulary in
@@ -37,6 +46,7 @@ export const connectSessionOutcomeSchema = z.object({
       "workspaceLimit",
       "providerRejected",
       "internalError",
+      "inProgress",
       "unknown",
     ])
     .optional(),

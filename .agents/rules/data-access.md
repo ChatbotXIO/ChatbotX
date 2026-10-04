@@ -38,7 +38,7 @@ The chain is: **action / API handler → service (`packages/business/`) → repo
 |-------|---|------|
 | `packages/database/src/repositories/*` | Yes | Raw where-builders, joins, pagination, shard routing. **Never** cache invalidation, event emission, or validation. |
 | `packages/business/src/*` | Yes | Validation, orchestration across repositories, cache invalidation, events, audit, quota checks, optional `tx?: DatabaseClient` passthrough. **Never** imports from `apps/` or `integrations/`. |
-| `packages/connections/src/*` | Yes, through services/repositories | Provider orchestration, transactions, and transaction-handle passthrough. **Never** raw DB queries. |
+| `packages/connections/src/*` | Imports `db` only for `db.transaction` — never issues raw queries | Provider orchestration, opening transactions, and passing the transaction handle into business services or repositories. |
 | `apps/builder/src/features/*/actions/` | **No** | Parse input → call a service method → map the result/error for the client. |
 | `apps/builder/src/features/*/queries/` | **No** | See the `.query.ts` contract below. |
 | `apps/builder/src/features/*/api/` | **No** | Resolve session context into plain params, call the same service method the private path uses. |

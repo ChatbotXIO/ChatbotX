@@ -106,11 +106,15 @@ function writtenColumns(
 /** A `tx` double that records `.values()` and resolves `.returning()` with one row. */
 function capturingTx() {
   const values = vi.fn(() => ({
-    returning: vi
-      .fn()
-      .mockResolvedValue([
-        { id: "row-1", nextAction: null, results: [], targets: [] },
-      ]),
+    returning: vi.fn().mockResolvedValue([
+      {
+        id: "row-1",
+        nextAction: null,
+        results: [],
+        targets: [],
+        targetClaims: {},
+      },
+    ]),
     onConflictDoUpdate: vi.fn(() => ({
       returning: vi.fn().mockResolvedValue([{ id: "row-1" }]),
     })),

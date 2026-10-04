@@ -114,7 +114,7 @@ vi.mock("../src/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }))
 
-const { connectTargets } = await import("../src/connect-session-flow")
+const { connectTargets } = await import("../src/connect-targets")
 const { encryptUtils } = await import("@chatbotx.io/encryption")
 
 const baseSession = {
@@ -148,7 +148,7 @@ describe("connectTargets — ConnectSession.encryptedAuth tamper detection (real
     })
   })
 
-  it("records an explicit retryable outcome when a target claim remains unavailable", async () => {
+  it("reports an in-progress target without releasing its live claim", async () => {
     const encryptedAuth = await encryptUtils.encryptObject(
       [
         {
@@ -175,13 +175,15 @@ describe("connectTargets — ConnectSession.encryptedAuth tamper detection (real
       targetIds: ["page-1"],
     })
 
-    expect(mocks.releaseTarget).toHaveBeenCalledWith({
+    expect(mocks.releaseTarget).not.toHaveBeenCalled()
+    expect(mocks.recordResults).toHaveBeenCalledWith({
       id: baseSession.id,
       workspaceId: baseSession.workspaceId,
-      targetId: "page-1",
+      results: [],
+      resultConnectionIds: [],
     })
     expect(result.outcomes).toEqual([
-      { targetId: "page-1", status: "failed", reason: "unknown" },
+      { targetId: "page-1", status: "failed", reason: "inProgress" },
     ])
   })
 

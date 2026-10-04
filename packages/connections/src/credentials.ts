@@ -1,9 +1,4 @@
-import { inboxService } from "@chatbotx.io/business"
-
-import {
-  type ConnectionQuotaConsumption,
-  isActiveConnectionStatus,
-} from "@chatbotx.io/business/connection"
+import { isActiveConnectionStatus } from "@chatbotx.io/business/connection"
 import {
   connectionAlreadyConnectedException,
   connectionCredentialsRejectedException,
@@ -13,7 +8,6 @@ import {
   toPublicErrorMessage,
   validationException,
 } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type {
@@ -26,16 +20,13 @@ import type {
 } from "@chatbotx.io/sdk"
 import { startSession } from "./connect-session-flow"
 import {
+  connectAndPersist,
   findOrThrow,
   parseConfig,
   providerFailureStatus,
   resolveAdapter,
   resolveOwnerId,
-  subscribeWebhookBestEffort,
-  toChannelType,
   toConnectionProviderError,
-  upsertConnectionRow,
-  withQuotaCompensation,
 } from "./internal"
 import { logger } from "./logger"
 
@@ -163,63 +154,20 @@ export const connectFromCredentials = async (input: {
   ) {
     throw connectionAlreadyConnectedException()
   }
-
-  const quotaConsumption: ConnectionQuotaConsumption = {
-    consumed: false,
-    workspaceUsageIncremented: false,
-  }
-  const connection = await withQuotaCompensation(
-    {
-      ownerId,
-      quotaConsumption,
-      context: {
-        provider: input.provider,
-        workspaceId: input.workspaceId,
-      },
-    },
-    async () =>
-      await db.transaction(async (tx) => {
-        let inboxId = existing?.inboxId ?? undefined
-        if (provider.kind === "channel" && !inboxId) {
-          if (!ownerId) {
-            throw new Error("Channel connection requires a workspace owner")
-          }
-          const { inbox } = await inboxService.create({
-            data: {
-              workspaceId: input.workspaceId,
-              channel: toChannelType(input.provider),
-              sourceId: descriptor.sourceId,
-              name: descriptor.displayName,
-            },
-            ownerId,
-            tx,
-            skipQuota: true,
-          })
-          inboxId = inbox.id
-        }
-        return await upsertConnectionRow({
-          tx,
-          workspaceId: input.workspaceId,
-          provider: input.provider,
-          kind: provider.kind,
-          descriptor,
-          auth,
-          extraConfig,
-          existing,
-          store,
-          ownerId,
-          quotaConsumption,
-          actorUserId: input.actorUserId,
-          inboxId,
-        })
-      }),
-  )
-
-  return await subscribeWebhookBestEffort({
+  return await connectAndPersist({
     adapter,
+    provider: input.provider,
+    workspaceId: input.workspaceId,
     auth,
-    connection,
+    descriptor,
+    extraConfig,
+    existing,
     ownerId,
+    actorUserId: input.actorUserId,
+    reuseExistingInboxId: true,
+    missingOwnerError: new Error(
+      "Channel connection requires a workspace owner",
+    ),
   })
 }
 

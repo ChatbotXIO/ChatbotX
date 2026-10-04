@@ -1,4 +1,4 @@
-import { workspaceMemberService } from "@chatbotx.io/business"
+import { inboxService, workspaceMemberService } from "@chatbotx.io/business"
 import {
   type ConnectionAdapter,
   type ConnectionQuotaConsumption,
@@ -12,6 +12,7 @@ import {
 } from "@chatbotx.io/business/errors"
 import {
   type DatabaseClient,
+  db,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
 import {
@@ -77,6 +78,23 @@ const TRANSIENT_NETWORK_ERROR_CODES: Record<string, true> = {
   ETIMEDOUT: true,
 }
 
+/** Reads the HTTP status off whichever shape a provider SDK's thrown error uses. */
+const extractHttpStatus = (failure: ProviderFailure): number | undefined => {
+  if (typeof failure.response?.status === "number") {
+    return failure.response.status
+  }
+  if (typeof failure.httpStatusCode === "number") {
+    return failure.httpStatusCode
+  }
+  if (typeof failure.status === "number") {
+    return failure.status
+  }
+  if (typeof failure.statusCode === "number") {
+    return failure.statusCode
+  }
+  return
+}
+
 /** Converts known provider 4xx responses to the explicit rejection contract. */
 export const toConnectionProviderError = (error: unknown): unknown => {
   if (error instanceof ConnectionProviderRejectedError) {
@@ -85,17 +103,7 @@ export const toConnectionProviderError = (error: unknown): unknown => {
   if (!error || typeof error !== "object") {
     return error
   }
-  const failure = error as ProviderFailure
-  let status: number | undefined
-  if (typeof failure.response?.status === "number") {
-    status = failure.response.status
-  } else if (typeof failure.httpStatusCode === "number") {
-    status = failure.httpStatusCode
-  } else if (typeof failure.status === "number") {
-    status = failure.status
-  } else if (typeof failure.statusCode === "number") {
-    status = failure.statusCode
-  }
+  const status = extractHttpStatus(error as ProviderFailure)
   if (
     status === undefined ||
     status < 400 ||
@@ -126,16 +134,7 @@ export const providerFailureStatus = (
     return 502
   }
   const failure = error as ProviderFailure
-  let status: number | undefined
-  if (typeof failure.response?.status === "number") {
-    status = failure.response.status
-  } else if (typeof failure.httpStatusCode === "number") {
-    status = failure.httpStatusCode
-  } else if (typeof failure.status === "number") {
-    status = failure.status
-  } else if (typeof failure.statusCode === "number") {
-    status = failure.statusCode
-  }
+  const status = extractHttpStatus(failure)
   if (status !== undefined) {
     if (status >= 500) {
       return 502
@@ -551,5 +550,96 @@ export const upsertConnectionRow = async (input: {
     ownerId,
     tx,
     quotaConsumption: input.quotaConsumption,
+  })
+}
+
+/**
+ * Shared body of `connectFromCredentials`'s revive-or-insert transaction and
+ * `connectCandidate`'s per-target connect: mints (or revives) the `Inbox`
+ * row a channel-kind connection needs before `store.insertRow`/
+ * `connectionStateService.transition`'s own Inbox mirror can run —
+ * `skipQuota: true` there is required since `transition`'s quota edge is the
+ * sole quota consumption point on this path, so also consuming inside
+ * `inboxService.create` would charge a brand-new channel twice. Wraps the
+ * whole thing in `withQuotaCompensation` so a mid-transaction failure
+ * releases any quota unit `transition` already consumed, then subscribes
+ * the provider webhook best-effort.
+ */
+export const connectAndPersist = async (input: {
+  adapter: ConnectionAdapter
+  provider: IntegrationType
+  workspaceId: string
+  auth: AuthValue
+  descriptor: ConnectionDescriptor
+  extraConfig: Record<string, unknown>
+  existing: ConnectionModel | undefined
+  ownerId: string | undefined
+  actorUserId?: string | null
+  /** Reuses an inactive channel's existing `inboxId` instead of minting a new one — only `connectFromCredentials`'s revive-or-insert path does this; a fresh `connectCandidate` target never has one yet. */
+  reuseExistingInboxId?: boolean
+  missingOwnerError: Error
+}): Promise<ConnectionModel> => {
+  const { adapter, auth, descriptor, extraConfig, existing, ownerId } = input
+  const { provider } = adapter
+  if (!adapter.store) {
+    throw connectionNotConfiguredException(input.provider)
+  }
+  const store = adapter.store
+
+  const quotaConsumption: ConnectionQuotaConsumption = {
+    consumed: false,
+    workspaceUsageIncremented: false,
+  }
+  const connection = await withQuotaCompensation(
+    {
+      ownerId,
+      quotaConsumption,
+      context: { provider: input.provider, workspaceId: input.workspaceId },
+    },
+    async () =>
+      await db.transaction(async (tx) => {
+        let inboxId = input.reuseExistingInboxId
+          ? (existing?.inboxId ?? undefined)
+          : undefined
+        if (provider.kind === "channel" && !inboxId) {
+          if (!ownerId) {
+            throw input.missingOwnerError
+          }
+          const { inbox } = await inboxService.create({
+            data: {
+              workspaceId: input.workspaceId,
+              channel: toChannelType(input.provider),
+              sourceId: descriptor.sourceId,
+              name: descriptor.displayName,
+            },
+            ownerId,
+            tx,
+            skipQuota: true,
+          })
+          inboxId = inbox.id
+        }
+        return await upsertConnectionRow({
+          tx,
+          workspaceId: input.workspaceId,
+          provider: input.provider,
+          kind: provider.kind,
+          descriptor,
+          auth,
+          extraConfig,
+          existing,
+          store,
+          ownerId,
+          quotaConsumption,
+          actorUserId: input.actorUserId,
+          inboxId,
+        })
+      }),
+  )
+
+  return await subscribeWebhookBestEffort({
+    adapter,
+    auth,
+    connection,
+    ownerId,
   })
 }

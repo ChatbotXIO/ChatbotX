@@ -878,6 +878,7 @@
         "channelLimit": "Đã đạt giới hạn kênh.",
         "workspaceLimit": "Đã đạt giới hạn không gian làm việc.",
         "providerRejected": "Nhà cung cấp đã từ chối yêu cầu này.",
+        "inProgress": "Kết nối đang được thực hiện.",
         "unknown": "Đã xảy ra lỗi.",
         "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh."
       },

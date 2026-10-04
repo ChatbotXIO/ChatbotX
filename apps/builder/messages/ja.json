@@ -3293,6 +3293,7 @@
         "channelLimit": "チャネルの上限に達しました。",
         "workspaceLimit": "ワークスペースの上限に達しました。",
         "providerRejected": "プロバイダーがこのリクエストを拒否しました。",
+        "inProgress": "接続は既に進行中です。",
         "unknown": "問題が発生しました。",
         "followUpFailed": "設定が未完了です。チャネル設定から完了してください。"
       },

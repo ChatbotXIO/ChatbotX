@@ -239,6 +239,37 @@ describe("openaiCompatibleConnectionProvider.verify", () => {
   })
 })
 
+describe("openaiCompatibleConnectionProvider.describe", () => {
+  it("derives sourceId from auth.baseURL so two different endpoints are two different connections (regression: a constant sourceId would collide on the Connection table's (workspaceId, provider, sourceId) unique key, breaking the 'openaiCompatible permits multiple rows per workspace' contract)", () => {
+    const first = openaiCompatibleConnectionProvider.describe({
+      authType: "secretText",
+      baseURL: "https://one.example.com",
+      secretText: "sk-one",
+    })
+    const second = openaiCompatibleConnectionProvider.describe({
+      authType: "secretText",
+      baseURL: "https://two.example.com",
+      secretText: "sk-two",
+    })
+
+    expect(first.sourceId).toBe("https://one.example.com")
+    expect(second.sourceId).toBe("https://two.example.com")
+    expect(first.sourceId).not.toBe(second.sourceId)
+  })
+
+  it("derives the same sourceId for the same baseURL, so reconnecting the same endpoint collides on purpose", () => {
+    const auth = {
+      authType: "secretText" as const,
+      baseURL: "https://one.example.com",
+      secretText: "sk-one",
+    }
+
+    expect(openaiCompatibleConnectionProvider.describe(auth).sourceId).toBe(
+      openaiCompatibleConnectionProvider.describe(auth).sourceId,
+    )
+  })
+})
+
 describe("openaiCompatibleConnectionProvider.fromCredentials — SSRF guard (C2)", () => {
   it("rejects a link-local baseURL (e.g. the cloud metadata address) without ever probing it", async () => {
     mocks.isCloud.mockReturnValueOnce(true)

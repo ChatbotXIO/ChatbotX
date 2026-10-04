@@ -282,6 +282,7 @@ describe("connectSessionService.attachAuthorization", () => {
     await expect(
       connectSessionService.attachAuthorization({
         id: "session-1",
+        workspaceId: "ws-1",
         encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" } as never,
         targets: [],
       }),
@@ -292,6 +293,7 @@ describe("connectSessionService.attachAuthorization", () => {
     const targets = [{ id: "page-1", name: "Page One", selectable: true }]
     await connectSessionService.attachAuthorization({
       id: "session-1",
+      workspaceId: "ws-1",
       encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" } as never,
       targets,
     })
@@ -336,16 +338,18 @@ describe("connectSessionService.attachAuthorization", () => {
     })
   })
 
-  it("throws notFound when the session does not exist", async () => {
-    mocks.findById.mockResolvedValue(undefined)
+  it("does not use an unscoped lookup for a missing session", async () => {
+    mocks.updateWhereStatusIn.mockResolvedValue(undefined)
 
     await expect(
       connectSessionService.attachAuthorization({
         id: "missing",
+        workspaceId: "ws-1",
         encryptedAuth: { iv: "x", ciphertext: "y", keyId: "k" } as never,
         targets: [],
       }),
-    ).rejects.toMatchObject({ code: "notFound" })
+    ).rejects.toMatchObject({ code: "connectSessionExpired" })
+    expect(mocks.findById).not.toHaveBeenCalled()
   })
 })
 
@@ -374,13 +378,17 @@ describe("connectSessionService.claimTarget", () => {
     await expect(
       connectSessionService.claimTarget({
         id: "session-1",
+        workspaceId: "ws-1",
         targetId: "page-1",
+        ownerToken: "owner-token",
       }),
     ).resolves.toBe(true)
     expect(mocks.claimTarget).toHaveBeenCalledWith({
       id: "session-1",
       targetId: "page-1",
       workspaceId: "ws-1",
+      ownerToken: "owner-token",
+      leaseExpiresAt: expect.any(Date),
     })
   })
 
@@ -389,7 +397,9 @@ describe("connectSessionService.claimTarget", () => {
     await expect(
       connectSessionService.claimTarget({
         id: "session-1",
+        workspaceId: "ws-1",
         targetId: "page-1",
+        ownerToken: "owner-token",
       }),
     ).resolves.toBe(false)
   })
@@ -402,24 +412,28 @@ describe("connectSessionService.recordResults", () => {
     )
     const result = await connectSessionService.recordResults({
       id: "session-1",
+      workspaceId: "ws-1",
       results: [{ targetId: "a", status: "connected", connectionId: "c1" }],
       resultConnectionIds: ["c1"],
     })
     expect(mocks.appendResults).toHaveBeenCalledWith({
       id: "session-1",
+      workspaceId: "ws-1",
       results: [{ targetId: "a", status: "connected", connectionId: "c1" }],
       resultConnectionIds: ["c1"],
-      workspaceId: "ws-1",
     })
     expect(result.status).toBe("awaiting_selection")
   })
 
   it("returns the session's current terminal row instead of throwing when the atomic update's status guard no-ops (regression: a concurrent/replayed batch on an already-terminal session)", async () => {
     mocks.appendResults.mockResolvedValue(undefined)
-    mocks.findById.mockResolvedValue(baseSession({ status: "completed" }))
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseSession({ status: "completed" }),
+    )
 
     const result = await connectSessionService.recordResults({
       id: "session-1",
+      workspaceId: "ws-1",
       results: [{ targetId: "a", status: "connected", connectionId: "c1" }],
       resultConnectionIds: ["c1"],
     })
@@ -429,11 +443,12 @@ describe("connectSessionService.recordResults", () => {
 
   it("throws when the session truly does not exist", async () => {
     mocks.appendResults.mockResolvedValue(undefined)
-    mocks.findById.mockResolvedValue(undefined)
+    mocks.findByIdForWorkspace.mockResolvedValue(undefined)
 
     await expect(
       connectSessionService.recordResults({
         id: "session-missing",
+        workspaceId: "ws-1",
         results: [],
         resultConnectionIds: [],
       }),
@@ -491,12 +506,15 @@ describe("connectSessionService.releaseTarget", () => {
   it("scopes claim releases to the session workspace", async () => {
     await connectSessionService.releaseTarget({
       id: "session-1",
+      workspaceId: "ws-1",
       targetId: "page-1",
+      ownerToken: "owner-token",
     })
     expect(mocks.releaseTarget).toHaveBeenCalledWith({
       id: "session-1",
       targetId: "page-1",
       workspaceId: "ws-1",
+      ownerToken: "owner-token",
     })
   })
 })
@@ -505,6 +523,7 @@ describe("connectSessionService.fail / cancel", () => {
   it("fail sets status failed with the given errorCode, guarded to active sessions only", async () => {
     const result = await connectSessionService.fail({
       id: "session-1",
+      workspaceId: "ws-1",
       errorCode: "provider_denied",
     })
     expect(result.status).toBe("failed")
@@ -521,12 +540,14 @@ describe("connectSessionService.fail / cancel", () => {
     )
   })
 
-  it("fail does not flip an already-terminal session (regression: a replayed OAuth callback `?error=` must not override a completed session)", async () => {
+  it("does not flip an already-terminal session (regression: a replayed OAuth callback `?error=` must not override a completed session)", async () => {
     mocks.updateWhereStatusIn.mockResolvedValue(undefined)
-    mocks.findById.mockResolvedValue(baseSession({ status: "completed" }))
-
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseSession({ status: "completed" }),
+    )
     const result = await connectSessionService.fail({
       id: "session-1",
+      workspaceId: "ws-1",
       errorCode: "provider_denied",
     })
 
@@ -644,6 +665,7 @@ describe("connectSessionService.submitInput", () => {
     const nextAction = { type: "wait" } as never
     const result = await connectSessionService.submitInput({
       id: "session-1",
+      workspaceId: "ws-1",
       nextAction,
     })
 
@@ -668,6 +690,7 @@ describe("connectSessionService.submitInput", () => {
     await expect(
       connectSessionService.submitInput({
         id: "session-1",
+        workspaceId: "ws-1",
         nextAction: { type: "wait" } as never,
       }),
     ).rejects.toMatchObject({ code: "connectSessionExpired" })

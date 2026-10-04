@@ -75,7 +75,7 @@ const seedSession = async (
         { id: "t1", name: "A", selectable: true },
         { id: "t2", name: "B", selectable: true },
       ],
-      claimedTargetIds: [],
+      targetClaims: {},
       resultConnectionIds: [],
       results: [],
       expiresAt: FUTURE,
@@ -291,7 +291,7 @@ describe.skipIf(!databaseUrl)(
         })
       }))
 
-    test("claimTarget's compare-and-set: a second claim of the SAME target after it's already claimed returns false and does not duplicate the array entry", () =>
+    test("claimTarget's compare-and-set: a second claim of the SAME target after it's already claimed returns false and does not replace the lease", () =>
       run(async (tx) => {
         const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
         const session = await seedSession(tx, {
@@ -301,11 +301,23 @@ describe.skipIf(!databaseUrl)(
         })
 
         const first = await connectSessionRepository.claimTarget(
-          { id: session.id, workspaceId, targetId: "t1" },
+          {
+            id: session.id,
+            workspaceId,
+            targetId: "t1",
+            ownerToken: "owner-a",
+            leaseExpiresAt: FUTURE,
+          },
           tx,
         )
         const second = await connectSessionRepository.claimTarget(
-          { id: session.id, workspaceId, targetId: "t1" },
+          {
+            id: session.id,
+            workspaceId,
+            targetId: "t1",
+            ownerToken: "owner-b",
+            leaseExpiresAt: FUTURE,
+          },
           tx,
         )
 
@@ -314,11 +326,11 @@ describe.skipIf(!databaseUrl)(
 
         const [row] = await tx
           .select({
-            claimedTargetIds: schema.connectSessionModel.claimedTargetIds,
+            targetClaims: schema.connectSessionModel.targetClaims,
           })
           .from(schema.connectSessionModel)
           .where(eq(schema.connectSessionModel.id, session.id))
-        expect(row.claimedTargetIds).toEqual(["t1"])
+        expect(row.targetClaims.t1?.ownerToken).toBe("owner-a")
       }))
 
     test("claimTarget rejects completed and expired sessions", () =>
@@ -336,7 +348,13 @@ describe.skipIf(!databaseUrl)(
           .where(eq(schema.connectSessionModel.id, session.id))
         expect(
           await connectSessionRepository.claimTarget(
-            { id: session.id, workspaceId, targetId: "t1" },
+            {
+              id: session.id,
+              workspaceId,
+              targetId: "t1",
+              ownerToken: "owner-a",
+              leaseExpiresAt: FUTURE,
+            },
             tx,
           ),
         ).toBe(false)
@@ -351,7 +369,13 @@ describe.skipIf(!databaseUrl)(
           .where(eq(schema.connectSessionModel.id, session.id))
         expect(
           await connectSessionRepository.claimTarget(
-            { id: session.id, workspaceId, targetId: "t1" },
+            {
+              id: session.id,
+              workspaceId,
+              targetId: "t1",
+              ownerToken: "owner-a",
+              leaseExpiresAt: FUTURE,
+            },
             tx,
           ),
         ).toBe(false)
@@ -370,12 +394,23 @@ describe.skipIf(!databaseUrl)(
           stateNonceHash: "iso-hash-release-guard",
         })
         await connectSessionRepository.claimTarget(
-          { id: session.id, workspaceId, targetId: "t1" },
+          {
+            id: session.id,
+            workspaceId,
+            targetId: "t1",
+            ownerToken: "owner-a",
+            leaseExpiresAt: FUTURE,
+          },
           tx,
         )
 
         await connectSessionRepository.releaseTarget(
-          { id: session.id, workspaceId: otherWorkspaceId, targetId: "t1" },
+          {
+            id: session.id,
+            workspaceId: otherWorkspaceId,
+            targetId: "t1",
+            ownerToken: "owner-a",
+          },
           tx,
         )
         await tx
@@ -383,7 +418,12 @@ describe.skipIf(!databaseUrl)(
           .set({ status: "completed", consumedAt: new Date() })
           .where(eq(schema.connectSessionModel.id, session.id))
         await connectSessionRepository.releaseTarget(
-          { id: session.id, workspaceId, targetId: "t1" },
+          {
+            id: session.id,
+            workspaceId,
+            targetId: "t1",
+            ownerToken: "owner-a",
+          },
           tx,
         )
         await tx
@@ -395,17 +435,22 @@ describe.skipIf(!databaseUrl)(
           })
           .where(eq(schema.connectSessionModel.id, session.id))
         await connectSessionRepository.releaseTarget(
-          { id: session.id, workspaceId, targetId: "t1" },
+          {
+            id: session.id,
+            workspaceId,
+            targetId: "t1",
+            ownerToken: "owner-a",
+          },
           tx,
         )
 
         const [row] = await tx
           .select({
-            claimedTargetIds: schema.connectSessionModel.claimedTargetIds,
+            targetClaims: schema.connectSessionModel.targetClaims,
           })
           .from(schema.connectSessionModel)
           .where(eq(schema.connectSessionModel.id, session.id))
-        expect(row.claimedTargetIds).toEqual(["t1"])
+        expect(row.targetClaims.t1?.ownerToken).toBe("owner-a")
       }))
 
     test("claimTarget lets exactly one of two concurrent claims win", async () => {
@@ -434,7 +479,7 @@ describe.skipIf(!databaseUrl)(
           status: "awaiting_selection",
           step: "select",
           targets: [{ id: "race-target", name: "R", selectable: true }],
-          claimedTargetIds: [],
+          targetClaims: {},
           resultConnectionIds: [],
           results: [],
           expiresAt: FUTURE,
@@ -455,6 +500,8 @@ describe.skipIf(!databaseUrl)(
                 id: session.id,
                 workspaceId: workspace.id,
                 targetId: "race-target",
+                ownerToken: "owner-a",
+                leaseExpiresAt: FUTURE,
               },
               dbA,
             ),
@@ -463,6 +510,8 @@ describe.skipIf(!databaseUrl)(
                 id: session.id,
                 workspaceId: workspace.id,
                 targetId: "race-target",
+                ownerToken: "owner-b",
+                leaseExpiresAt: FUTURE,
               },
               dbB,
             ),
@@ -473,11 +522,13 @@ describe.skipIf(!databaseUrl)(
 
           const [row] = await seedDb
             .select({
-              claimedTargetIds: schema.connectSessionModel.claimedTargetIds,
+              targetClaims: schema.connectSessionModel.targetClaims,
             })
             .from(schema.connectSessionModel)
             .where(eq(schema.connectSessionModel.id, session.id))
-          expect(row.claimedTargetIds).toEqual(["race-target"])
+          expect(["owner-a", "owner-b"]).toContain(
+            row.targetClaims["race-target"]?.ownerToken,
+          )
         } finally {
           await Promise.all([clientA.end(), clientB.end()])
         }
@@ -494,6 +545,74 @@ describe.skipIf(!databaseUrl)(
         await seedClient.end()
       }
     })
+
+    test("claimTarget lets a new owner take over only an EXPIRED lease, never one still in flight (regression: a failed claimant's release must not drop a concurrent in-flight claim)", () =>
+      run(async (tx) => {
+        const { workspaceId, ownerId } = await seedWorkspace(tx, "a")
+        const session = await seedSession(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          stateNonceHash: "iso-hash-lease-takeover",
+        })
+
+        const PAST = new Date(Date.now() - 60_000)
+        expect(
+          await connectSessionRepository.claimTarget(
+            {
+              id: session.id,
+              workspaceId,
+              targetId: "t1",
+              ownerToken: "owner-a",
+              leaseExpiresAt: PAST,
+            },
+            tx,
+          ),
+        ).toBe(true)
+
+        // The lease is expired: a different owner may now take it over.
+        expect(
+          await connectSessionRepository.claimTarget(
+            {
+              id: session.id,
+              workspaceId,
+              targetId: "t1",
+              ownerToken: "owner-b",
+              leaseExpiresAt: FUTURE,
+            },
+            tx,
+          ),
+        ).toBe(true)
+
+        // owner-a's now-stale release must not clear owner-b's live claim.
+        await connectSessionRepository.releaseTarget(
+          {
+            id: session.id,
+            workspaceId,
+            targetId: "t1",
+            ownerToken: "owner-a",
+          },
+          tx,
+        )
+        const [row] = await tx
+          .select({ targetClaims: schema.connectSessionModel.targetClaims })
+          .from(schema.connectSessionModel)
+          .where(eq(schema.connectSessionModel.id, session.id))
+        expect(row.targetClaims.t1?.ownerToken).toBe("owner-b")
+
+        // A still-unexpired lease cannot be taken over by a third claimant.
+        expect(
+          await connectSessionRepository.claimTarget(
+            {
+              id: session.id,
+              workspaceId,
+              targetId: "t1",
+              ownerToken: "owner-c",
+              leaseExpiresAt: FUTURE,
+            },
+            tx,
+          ),
+        ).toBe(false)
+      }))
 
     test("appendResults does not let a non-selectable/unknown id's outcome count toward completion or success", () =>
       run(async (tx) => {
@@ -567,7 +686,7 @@ describe.skipIf(!databaseUrl)(
                 alreadyConnected: "other_workspace",
               },
             ],
-            claimedTargetIds: [],
+            targetClaims: {},
             resultConnectionIds: [],
             results: [],
             expiresAt: FUTURE,
@@ -843,19 +962,36 @@ describe.skipIf(!databaseUrl)(
 
         expect(
           await connectSessionRepository.claimTarget(
-            { id: session.id, workspaceId, targetId: "t1" },
+            {
+              id: session.id,
+              workspaceId,
+              targetId: "t1",
+              ownerToken: "owner-a",
+              leaseExpiresAt: FUTURE,
+            },
             tx,
           ),
         ).toBe(true)
 
         await connectSessionRepository.releaseTarget(
-          { id: session.id, workspaceId, targetId: "t1" },
+          {
+            id: session.id,
+            workspaceId,
+            targetId: "t1",
+            ownerToken: "owner-a",
+          },
           tx,
         )
 
         expect(
           await connectSessionRepository.claimTarget(
-            { id: session.id, workspaceId, targetId: "t1" },
+            {
+              id: session.id,
+              workspaceId,
+              targetId: "t1",
+              ownerToken: "owner-b",
+              leaseExpiresAt: FUTURE,
+            },
             tx,
           ),
         ).toBe(true)
@@ -1088,7 +1224,7 @@ describe.skipIf(!databaseUrl)(
             { id: "t1", name: "A", selectable: true },
             { id: "t2", name: "B", selectable: true },
           ],
-          claimedTargetIds: [],
+          targetClaims: {},
           resultConnectionIds: [],
           results: [],
           expiresAt: FUTURE,
@@ -1200,7 +1336,7 @@ describe.skipIf(!databaseUrl)(
             status: "completed",
             step: "done",
             targets: [],
-            claimedTargetIds: [],
+            targetClaims: {},
             resultConnectionIds: [],
             results: [],
             expiresAt: FUTURE,

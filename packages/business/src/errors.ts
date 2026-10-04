@@ -379,6 +379,14 @@ export const connectionAlreadyConnectedException = () =>
     409,
   )
 
+/** Another request currently owns the short-lived lease for this target's connect attempt. */
+export const connectionInProgressException = () =>
+  new ChatbotXException(
+    "A connection attempt for this target is already in progress.",
+    "connectionInProgress",
+    409,
+  )
+
 /** `connectFromCredentials` called against a provider whose `strategy` isn't `token`/`api_key`/`self_serve` (or one that never declared `fromCredentials`). */
 export const connectionWrongStrategyException = (provider: string) =>
   new ChatbotXException(

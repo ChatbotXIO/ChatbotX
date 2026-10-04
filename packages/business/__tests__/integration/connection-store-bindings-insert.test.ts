@@ -12,6 +12,18 @@
  * `extraConfig` fix) is actually persisted alongside its own NOT NULL
  * `defaultModel`/`preset`/`name` defaults.
  *
+ * Parametrized over every `CONNECTION_STORE_BINDINGS` key that declares its
+ * own `configColumns`/`defaultConfigValues` — the exact mechanism this file
+ * guards (a binding-supplied default backfilling a NOT NULL satellite
+ * column `pickAllowed` doesn't receive from the caller's bare `config`).
+ * Every other registered key (`makeChannelBinding` entries, and
+ * `makeWorkspaceIntegrationBinding` entries with no `configColumns`) never
+ * exercises `defaultConfigValues`, so forcing them through this same
+ * `{ workspaceId, auth, descriptor, config: {} }` shape would either no-op
+ * or require fixtures (an `Inbox` row, OAuth-shaped config) unrelated to the
+ * bug class this file exists to catch — see `store-bindings.ts` for the
+ * full registry.
+ *
  * Each `config` passed to `insertRow` below is exactly what
  * `connectFromCredentials` would forward for a bare `{ apiKey }` (or, for
  * `openaiCompatible`, `{ apiKey, baseURL }`) connect request — a mocked `tx`
@@ -120,98 +132,70 @@ const loadRow = async <TTable extends PgTable & { id: PgTable["id"] }>(
 describe.skipIf(!databaseUrl)(
   "CONNECTION_STORE_BINDINGS workspace-integration bindings insert against Postgres",
   () => {
-    test("claude: a bare apiKey connect fills the NOT NULL model/maxOutputTokens defaults", async () => {
+    test.each([
+      {
+        provider: "claude" as const,
+        displayName: "Claude",
+        config: {},
+        table: integrationClaudeModel,
+        model: "claude-sonnet-4-6",
+        maxOutputTokens: 1024,
+      },
+      {
+        provider: "deepseek" as const,
+        displayName: "DeepSeek",
+        config: {},
+        table: integrationDeepseekModel,
+        model: "deepseek-flash",
+        maxOutputTokens: 1024,
+      },
+      {
+        provider: "gemini" as const,
+        displayName: "Gemini",
+        config: {},
+        table: integrationGeminiModel,
+        model: "gemini-3.5-flash",
+        maxOutputTokens: 1024,
+      },
+      {
+        provider: "openai" as const,
+        displayName: "OpenAI",
+        config: {},
+        table: integrationOpenaiModel,
+        model: "gpt-5.4-mini",
+        maxOutputTokens: 1024,
+      },
+      {
+        provider: "openrouter" as const,
+        displayName: "OpenRouter",
+        config: {},
+        table: integrationOpenrouterModel,
+        model: "openai/gpt-5.4-mini",
+        maxOutputTokens: 1024,
+      },
+    ])("$provider: a bare apiKey connect fills the NOT NULL model/maxOutputTokens defaults", async ({
+      provider,
+      displayName,
+      config,
+      table,
+      model,
+      maxOutputTokens,
+    }) => {
       await withRolledBackTransaction(async (tx) => {
         const workspaceId = await seedWorkspace(tx)
-        const inserted = await getBinding("claude").insertRow(
+        const inserted = await getBinding(provider).insertRow(
           {
             workspaceId,
             auth: testAuth,
-            descriptor: { sourceId: "workspace", displayName: "Claude" },
-            config: {},
+            descriptor: { sourceId: "workspace", displayName },
+            config,
           },
           tx,
         )
         expect(inserted.integrationId).toBeTruthy()
-        const row = await loadRow(tx, integrationClaudeModel, inserted.id)
-        expect(row.model).toBe("claude-sonnet-4-6")
-        expect(row.maxOutputTokens).toBe(1024)
-      })
-    })
-
-    test("deepseek: a bare apiKey connect fills the NOT NULL model/maxOutputTokens defaults", async () => {
-      await withRolledBackTransaction(async (tx) => {
-        const workspaceId = await seedWorkspace(tx)
-        const inserted = await getBinding("deepseek").insertRow(
-          {
-            workspaceId,
-            auth: testAuth,
-            descriptor: { sourceId: "workspace", displayName: "DeepSeek" },
-            config: {},
-          },
-          tx,
-        )
-        expect(inserted.integrationId).toBeTruthy()
-        const row = await loadRow(tx, integrationDeepseekModel, inserted.id)
-        expect(row.model).toBe("deepseek-flash")
-        expect(row.maxOutputTokens).toBe(1024)
-      })
-    })
-
-    test("gemini: a bare apiKey connect fills the NOT NULL model/maxOutputTokens defaults", async () => {
-      await withRolledBackTransaction(async (tx) => {
-        const workspaceId = await seedWorkspace(tx)
-        const inserted = await getBinding("gemini").insertRow(
-          {
-            workspaceId,
-            auth: testAuth,
-            descriptor: { sourceId: "workspace", displayName: "Gemini" },
-            config: {},
-          },
-          tx,
-        )
-        expect(inserted.integrationId).toBeTruthy()
-        const row = await loadRow(tx, integrationGeminiModel, inserted.id)
-        expect(row.model).toBe("gemini-3.5-flash")
-        expect(row.maxOutputTokens).toBe(1024)
-      })
-    })
-
-    test("openai: a bare apiKey connect fills the NOT NULL model/maxOutputTokens defaults", async () => {
-      await withRolledBackTransaction(async (tx) => {
-        const workspaceId = await seedWorkspace(tx)
-        const inserted = await getBinding("openai").insertRow(
-          {
-            workspaceId,
-            auth: testAuth,
-            descriptor: { sourceId: "workspace", displayName: "OpenAI" },
-            config: {},
-          },
-          tx,
-        )
-        expect(inserted.integrationId).toBeTruthy()
-        const row = await loadRow(tx, integrationOpenaiModel, inserted.id)
-        expect(row.model).toBe("gpt-5.4-mini")
-        expect(row.maxOutputTokens).toBe(1024)
-      })
-    })
-
-    test("openrouter: a bare apiKey connect fills the NOT NULL model/maxOutputTokens defaults", async () => {
-      await withRolledBackTransaction(async (tx) => {
-        const workspaceId = await seedWorkspace(tx)
-        const inserted = await getBinding("openrouter").insertRow(
-          {
-            workspaceId,
-            auth: testAuth,
-            descriptor: { sourceId: "workspace", displayName: "OpenRouter" },
-            config: {},
-          },
-          tx,
-        )
-        expect(inserted.integrationId).toBeTruthy()
-        const row = await loadRow(tx, integrationOpenrouterModel, inserted.id)
-        expect(row.model).toBe("openai/gpt-5.4-mini")
-        expect(row.maxOutputTokens).toBe(1024)
+        const row = await loadRow(tx, table, inserted.id)
+        expect(row.model).toBe(model)
+        expect(row.maxOutputTokens).toBe(maxOutputTokens)
       })
     })
 

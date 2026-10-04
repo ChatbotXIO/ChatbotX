@@ -21,6 +21,8 @@ const AUTHORIZED_TTL_MS = 30 * 60 * 1000
 const NONCE_BYTES = 32
 /** Caps concurrent in-flight sessions per workspace — a runaway client retrying `create` cannot exhaust the table. */
 const MAX_PENDING_SESSIONS_PER_WORKSPACE = 20
+/** A target connect attempt has five minutes to finish before another request may take over. */
+const TARGET_CLAIM_LEASE_MS = 5 * 60 * 1000
 
 const ACTIVE_STATUSES: ReadonlySet<ConnectSessionStatus> = new Set([
   "pending",
@@ -173,7 +175,7 @@ class ConnectSessionService extends BaseService {
       // into a bare `DEFAULT` keyword and a NOT NULL violation. Every insert
       // must write them explicitly.
       targets: [],
-      claimedTargetIds: [],
+      targetClaims: {},
       resultConnectionIds: [],
       results: [],
       expiresAt: new Date(Date.now() + PENDING_TTL_MS),
@@ -200,13 +202,10 @@ class ConnectSessionService extends BaseService {
   }
 
   /**
-   * Workspace-unscoped lookup by id alone — the `/connect/{id}` completion
-   * page has no builder session (the person completing an API/MCP-started
-   * OAuth connect is never necessarily logged into the builder, or even a
-   * member of the workspace that started it). Safe to expose unscoped: the
-   * id is an unguessable snowflake acting as its own capability token, and
-   * the returned row's public projection (`ConnectSessionResource`) never
-   * carries `encryptedAuth`/`stateNonceHash`/`claimedTargetIds`.
+   * Workspace-unscoped lookup by id alone for the `/connect/{id}` completion
+   * page. The time-ordered snowflake id is an identifier, not a capability
+   * token; callers must authorize mutations with workspace scope or the OAuth
+   * state nonce.
    */
   async findById(id: string): Promise<ConnectSessionModel | undefined> {
     const session = await connectSessionRepository.findById({ id })
@@ -273,20 +272,13 @@ class ConnectSessionService extends BaseService {
    */
   async attachAuthorization(input: {
     id: string
-    workspaceId?: string
+    workspaceId: string
     encryptedAuth: EncryptedData
     targets: ConnectSessionTarget[]
   }): Promise<ConnectSessionModel> {
-    const existing = input.workspaceId
-      ? undefined
-      : await this.findById(input.id)
-    const workspaceId = input.workspaceId ?? existing?.workspaceId
-    if (!workspaceId) {
-      throw new ConnectSessionNotFoundException()
-    }
     const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
-      workspaceId,
+      workspaceId: input.workspaceId,
       statuses: [...ACTIVE_STATUSES],
       requireUnexpired: true,
       values: {
@@ -312,18 +304,11 @@ class ConnectSessionService extends BaseService {
    */
   async claimAuthorization(input: {
     id: string
-    workspaceId?: string
+    workspaceId: string
   }): Promise<ConnectSessionModel> {
-    const existing = input.workspaceId
-      ? undefined
-      : await this.findById(input.id)
-    const workspaceId = input.workspaceId ?? existing?.workspaceId
-    if (!workspaceId) {
-      throw new ConnectSessionNotFoundException()
-    }
     const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
-      workspaceId,
+      workspaceId: input.workspaceId,
       statuses: ["pending"],
       requireUnexpired: true,
       values: { status: "authorized" },
@@ -337,29 +322,18 @@ class ConnectSessionService extends BaseService {
   }
 
   /**
-   * Atomic per-target claim — the compare-and-set that makes concurrent
-   * `connectTargets` calls safe. Returns `false` when another call owns the
-   * in-flight attempt; the caller skips recording an outcome until that
-   * claimant finishes.
+   * Atomically claims one target with a lease. A caller may take over only a
+   * claim whose lease has expired.
    */
   async claimTarget(input: {
     id: string
-    workspaceId?: string
+    workspaceId: string
     targetId: string
+    ownerToken: string
   }): Promise<boolean> {
-    if (input.workspaceId) {
-      return await connectSessionRepository.claimTarget({
-        ...input,
-        workspaceId: input.workspaceId,
-      })
-    }
-    const session = await this.findById(input.id)
-    if (!session) {
-      return false
-    }
     return await connectSessionRepository.claimTarget({
       ...input,
-      workspaceId: session.workspaceId,
+      leaseExpiresAt: new Date(Date.now() + TARGET_CLAIM_LEASE_MS),
     })
   }
 
@@ -376,30 +350,17 @@ class ConnectSessionService extends BaseService {
    */
   async recordResults(input: {
     id: string
-    workspaceId?: string
+    workspaceId: string
     results: ConnectSessionOutcome[]
     resultConnectionIds: string[]
   }): Promise<ConnectSessionModel> {
-    const existing = input.workspaceId
-      ? undefined
-      : await this.findById(input.id)
-    const workspaceId = input.workspaceId ?? existing?.workspaceId
-    if (!workspaceId) {
-      throw new ConnectSessionNotFoundException()
-    }
-    const updated = await connectSessionRepository.appendResults({
-      ...input,
-      workspaceId,
-    })
+    const updated = await connectSessionRepository.appendResults(input)
     if (updated) {
       return updated
     }
-    if (existing) {
-      return existing
-    }
     const current = await this.findByIdForWorkspace({
       id: input.id,
-      workspaceId,
+      workspaceId: input.workspaceId,
     })
     if (!current) {
       throw new ConnectSessionNotFoundException()
@@ -407,47 +368,27 @@ class ConnectSessionService extends BaseService {
     return current
   }
 
-  /** Releases a target `claimTarget` claimed whose `connectTargets` attempt did not end in `connected` — see `connectSessionRepository.releaseTarget`. */
+  /** Releases only this attempt's target lease after a failed connection. */
   async releaseTarget(input: {
     id: string
-    workspaceId?: string
+    workspaceId: string
     targetId: string
+    ownerToken: string
   }): Promise<void> {
-    if (input.workspaceId) {
-      await connectSessionRepository.releaseTarget({
-        ...input,
-        workspaceId: input.workspaceId,
-      })
-      return
-    }
-    const session = await this.findById(input.id)
-    if (!session) {
-      return
-    }
-    await connectSessionRepository.releaseTarget({
-      ...input,
-      workspaceId: session.workspaceId,
-    })
+    await connectSessionRepository.releaseTarget(input)
   }
 
   /** Completes the single target represented by an OAuth reconnect session. */
   async completeReconnect(input: {
     id: string
-    workspaceId?: string
+    workspaceId: string
     tx: DatabaseClient
     result: ConnectSessionOutcome & { connectionId: string }
   }): Promise<ConnectSessionModel> {
-    const existing = input.workspaceId
-      ? undefined
-      : await this.findById(input.id)
-    const workspaceId = input.workspaceId ?? existing?.workspaceId
-    if (!workspaceId) {
-      throw new ConnectSessionNotFoundException()
-    }
     const updated = await connectSessionRepository.completeReconnect(
       {
         id: input.id,
-        workspaceId,
+        workspaceId: input.workspaceId,
         result: input.result,
       },
       input.tx,
@@ -508,19 +449,12 @@ class ConnectSessionService extends BaseService {
    */
   async submitInput(input: {
     id: string
-    workspaceId?: string
+    workspaceId: string
     nextAction: ConnectSessionModel["nextAction"]
   }): Promise<ConnectSessionModel> {
-    const existing = input.workspaceId
-      ? undefined
-      : await this.findById(input.id)
-    const workspaceId = input.workspaceId ?? existing?.workspaceId
-    if (!workspaceId) {
-      throw new ConnectSessionNotFoundException()
-    }
     const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
-      workspaceId,
+      workspaceId: input.workspaceId,
       statuses: [...ACTIVE_STATUSES],
       values: { nextAction: input.nextAction },
       requireUnexpired: true,
@@ -536,20 +470,13 @@ class ConnectSessionService extends BaseService {
   /** Transitions to `failed`, guarded to only affect the supplied active statuses. A replayed OAuth callback can restrict this to `pending` so its exchange failure cannot overwrite a session that another callback already advanced. */
   async fail(input: {
     id: string
-    workspaceId?: string
+    workspaceId: string
     errorCode: ConnectSessionErrorCode
     statuses?: ConnectSessionStatus[]
   }): Promise<ConnectSessionModel> {
-    const existing = input.workspaceId
-      ? undefined
-      : await this.findById(input.id)
-    const workspaceId = input.workspaceId ?? existing?.workspaceId
-    if (!workspaceId) {
-      throw new ConnectSessionNotFoundException()
-    }
     const updated = await connectSessionRepository.updateWhereStatusIn({
       id: input.id,
-      workspaceId,
+      workspaceId: input.workspaceId,
       statuses: input.statuses ?? [...ACTIVE_STATUSES],
       values: {
         status: "failed",
@@ -561,12 +488,9 @@ class ConnectSessionService extends BaseService {
     if (updated) {
       return updated
     }
-    if (existing) {
-      return existing
-    }
     const current = await this.findByIdForWorkspace({
       id: input.id,
-      workspaceId,
+      workspaceId: input.workspaceId,
     })
     if (!current) {
       throw new ConnectSessionNotFoundException()
@@ -614,13 +538,12 @@ class ConnectSessionService extends BaseService {
     deletedTerminal: number
     terminalPurgeStopReason: "drained" | "deadline" | "chunkCap"
   }> {
-    const [expired, terminalPurge] = await Promise.all([
-      connectSessionRepository.expireDue({
-        before: new Date(),
-        statuses: [...ACTIVE_STATUSES],
-      }),
-      connectSessionRepository.purgeOldTerminal(options),
-    ])
+    const expired = await connectSessionRepository.expireDue({
+      before: new Date(),
+      statuses: [...ACTIVE_STATUSES],
+    })
+    const terminalPurge =
+      await connectSessionRepository.purgeOldTerminal(options)
     return {
       expired,
       deletedTerminal: terminalPurge.deleted,

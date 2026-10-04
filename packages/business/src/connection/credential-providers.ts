@@ -119,7 +119,19 @@ export const openaiCompatibleConnectionProvider: ConnectionProvider<
       labelKey: "integrations.openaiCompatible.fields.apiKey",
     },
   ],
-  describe: () => ({ sourceId: "workspace", displayName: "OpenAI-compatible" }),
+  // `sourceId` is the per-connection identity the `Connection` table's
+  // `(workspaceId, provider, sourceId)` unique key enforces — unlike the
+  // single-row AI-key providers above, `openaiCompatible` deliberately
+  // permits multiple rows per workspace (see `store-bindings.ts`'s
+  // `WorkspaceSatelliteTable` doc), so the identity must vary per
+  // connection. `auth.baseURL` (already validated/normalized by
+  // `fromCredentials`) is that identity: two different endpoints are two
+  // different connections; reconnecting the SAME endpoint collides on
+  // purpose, mirroring every other provider's "already connected" guard.
+  describe: (auth) => ({
+    sourceId: auth.baseURL,
+    displayName: "OpenAI-compatible",
+  }),
   fromCredentials: async ({ apiKey, baseURL }) => {
     // SSRF guard: without this, a workspace token can drive `ky.get` at an
     // arbitrary attacker-chosen host (including internal/metadata

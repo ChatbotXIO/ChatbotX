@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import {
   and,
   type DatabaseClient,
@@ -12,6 +14,7 @@ import {
   type ConnectSessionOutcome,
   connectSessionNextActionSchema,
   connectSessionOutcomeSchema,
+  connectSessionTargetClaimSchema,
   connectSessionTargetSchema,
 } from "../../partials/connect-session"
 import {
@@ -31,6 +34,9 @@ const parseConnectSession = (
       ? null
       : connectSessionNextActionSchema.parse(session.nextAction),
   targets: connectSessionTargetSchema.array().parse(session.targets),
+  targetClaims: z
+    .record(z.string(), connectSessionTargetClaimSchema)
+    .parse(session.targetClaims),
   results: connectSessionOutcomeSchema.array().parse(session.results),
 })
 export const connectSessionRepository = {
@@ -203,20 +209,31 @@ export const connectSessionRepository = {
   },
 
   /**
-   * Atomic claim of one target id into `claimedTargetIds` — the `WHERE NOT
-   * (targetId = ANY(...))` clause makes this a compare-and-set at the DB
-   * level, so two concurrent connection attempts racing on the same target
-   * can never both win (the loser sees `claimTarget` return `false` and maps
-   * that to a `duplicated` outcome instead of double-connecting).
+   * Atomically acquires or replaces an expired target lease. The owner token
+   * makes release conditional, so a failed attempt cannot clear a newer
+   * claimant's lease.
    */
   async claimTarget(
-    input: { id: string; workspaceId: string; targetId: string },
+    input: {
+      id: string
+      workspaceId: string
+      targetId: string
+      ownerToken: string
+      leaseExpiresAt: Date
+    },
     tx: DatabaseClient = db,
   ): Promise<boolean> {
     const [row] = await tx
       .update(connectSessionModel)
       .set({
-        claimedTargetIds: sql`array_append(${connectSessionModel.claimedTargetIds}, ${input.targetId})`,
+        targetClaims: sql`jsonb_set(
+          ${connectSessionModel.targetClaims},
+          ARRAY[${input.targetId}]::text[],
+          jsonb_build_object(
+            'ownerToken', ${input.ownerToken}::text,
+            'expiresAt', ${input.leaseExpiresAt.toISOString()}::text
+          )
+        )`,
       })
       .where(
         and(
@@ -224,22 +241,30 @@ export const connectSessionRepository = {
           eq(connectSessionModel.workspaceId, input.workspaceId),
           eq(connectSessionModel.status, "awaiting_selection"),
           gt(connectSessionModel.expiresAt, sql`now()`),
-          sql`NOT (${input.targetId} = ANY(${connectSessionModel.claimedTargetIds}))`,
+          sql`(
+            ${connectSessionModel.targetClaims} -> ${input.targetId} IS NULL
+            OR (${connectSessionModel.targetClaims} -> ${input.targetId} ->> 'expiresAt')::timestamptz <= now()
+          )`,
         ),
       )
       .returning({ id: connectSessionModel.id })
     return Boolean(row)
   },
 
-  /** Releases a claimed target after a connect attempt that did not succeed. */
+  /** Releases only the caller's still-current target lease. */
   async releaseTarget(
-    input: { id: string; workspaceId: string; targetId: string },
+    input: {
+      id: string
+      workspaceId: string
+      targetId: string
+      ownerToken: string
+    },
     tx: DatabaseClient = db,
   ): Promise<void> {
     await tx
       .update(connectSessionModel)
       .set({
-        claimedTargetIds: sql`array_remove(${connectSessionModel.claimedTargetIds}, ${input.targetId})`,
+        targetClaims: sql`${connectSessionModel.targetClaims} - ${input.targetId}`,
       })
       .where(
         and(
@@ -247,6 +272,7 @@ export const connectSessionRepository = {
           eq(connectSessionModel.workspaceId, input.workspaceId),
           eq(connectSessionModel.status, "awaiting_selection"),
           gt(connectSessionModel.expiresAt, sql`now()`),
+          sql`${connectSessionModel.targetClaims} -> ${input.targetId} ->> 'ownerToken' = ${input.ownerToken}`,
         ),
       )
   },

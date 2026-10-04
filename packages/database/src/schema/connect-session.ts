@@ -13,6 +13,7 @@ import type {
   ConnectSessionNextAction,
   ConnectSessionOutcome,
   ConnectSessionTarget,
+  ConnectSessionTargetClaim,
 } from "../partials/connect-session"
 import {
   type ConnectSessionErrorCode,
@@ -83,7 +84,10 @@ export const connectSessionModel = pgTable(
       .$type<ConnectSessionTarget[]>()
       .default(sql`'[]'::jsonb`)
       .notNull(),
-    claimedTargetIds: text().array().default(sql`ARRAY[]::text[]`).notNull(),
+    targetClaims: jsonb()
+      .$type<Record<string, ConnectSessionTargetClaim>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
     resultConnectionIds: text().array().default(sql`ARRAY[]::text[]`).notNull(),
     results: jsonb()
       .$type<ConnectSessionOutcome[]>()

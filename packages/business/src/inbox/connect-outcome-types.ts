@@ -37,6 +37,8 @@ export const CONNECT_FAILURE_REASONS = {
   providerRejected: "providerRejected",
   // Internal persistence, crypto, or implementation failure.
   internalError: "internalError",
+  // A concurrent request owns the target's unexpired connect lease.
+  inProgress: "inProgress",
   unknown: "unknown",
 } as const
 export type ConnectFailureReason =
