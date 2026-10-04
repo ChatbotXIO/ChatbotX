@@ -130,8 +130,12 @@ export type ExternalRequestFieldsSchema = z.infer<
 
 export const externalRequestStepSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.callApi),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.callApi)
+      .describe('Step type discriminator: "callApi".'),
     method: externalRequestMethods.default("GET"),
     url: z.string().trim().min(1),
     headers: z.array(externalRequestHeaderSchema),

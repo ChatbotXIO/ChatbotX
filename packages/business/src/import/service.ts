@@ -140,6 +140,7 @@ class ImportService extends BaseService {
       throw new ChatbotXException(
         "An import is already in progress for this workspace. Please wait for it to complete.",
         "contactImportAlreadyRunning",
+        409,
       )
     }
 

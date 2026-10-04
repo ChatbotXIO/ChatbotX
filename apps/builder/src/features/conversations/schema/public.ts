@@ -1,3 +1,8 @@
+import {
+  threadControlActions,
+  threadControlEvents,
+  threadControlStates,
+} from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { findConversationResponse } from "./resource"
@@ -31,4 +36,48 @@ export const assignConversationPublicRequest = z.object({
     .describe(
       "New assignee: `u_<userId>` for a user or `t_<inboxTeamId>` for an inbox team, or null to unassign.",
     ),
+})
+
+export const threadControlSnapshotResource = z.object({
+  contactInboxId: z.string(),
+  threadControlState: threadControlStates.nullable(),
+  threadOwnerRole: z.string().nullable(),
+  threadOwnerAppId: z.string().nullable(),
+  threadControlUpdatedAt: z.date().nullable(),
+  threadOwnerExpiresAt: z.date().nullable(),
+  threadControlLastEvent: threadControlEvents.nullable(),
+})
+
+export const threadControlPublicRequest = z
+  .object({
+    contactInboxId: zodBigintAsString().describe(
+      "Contact inbox of the conversation's contact to steer. Get it from `conversations.get` (`contactInboxes[].id`).",
+    ),
+    action: threadControlActions.describe(
+      "`take` the thread from the partner, `release` it back, or `pass` it to the channel's escalation role.",
+    ),
+  })
+  .and(conversationIdPathParam)
+
+export const threadControlPublicResponse = z.object({
+  status: z
+    .enum(["applied", "notEscalation"])
+    .describe(
+      "`applied`, or `notEscalation` when the channel refused a `take` because only the escalation partner may take the thread.",
+    ),
+  snapshot: threadControlSnapshotResource
+    .optional()
+    .describe("The routing state after the action; absent when refused."),
+})
+
+export const syncThreadOwnerPublicRequest = z
+  .object({
+    contactInboxId: zodBigintAsString().describe(
+      "Contact inbox of the conversation's contact to check. Get it from `conversations.get`.",
+    ),
+  })
+  .and(conversationIdPathParam)
+
+export const syncThreadOwnerPublicResponse = z.object({
+  snapshot: threadControlSnapshotResource,
 })

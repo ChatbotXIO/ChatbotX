@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const addContactTagStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.addContactTag),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.addContactTag)
+    .describe('Step type discriminator: "addContactTag".'),
   tags: z.array(z.string().trim().min(1)).min(1),
 })
 

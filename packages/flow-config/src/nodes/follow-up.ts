@@ -9,7 +9,11 @@ import {
 } from "./base"
 
 export const followUpNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.followUp),
+  type: z
+    .literal(nodeTypeSchema.enum.followUp)
+    .describe(
+      'Node type "followUp". `data.details.steps` holds exactly one followUp step (a `duration` and `unit` delay).',
+    ),
   data: baseNodeDataSchema.extend({
     details: z.object({
       steps: z.array(followUpStepSchema).min(1).max(1),

@@ -24,7 +24,9 @@ import { stepTypes } from "./step-action"
  * `sendMessageNodeSchema` builds from it.
  */
 export const sendTextStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendText),
+  stepType: z
+    .literal(stepTypes.enum.sendText)
+    .describe('Step type discriminator: "sendText" (sends a text message).'),
   text: z
     .string()
     .trim()
@@ -32,8 +34,15 @@ export const sendTextStepSchema = baseStepSchema.extend({
     .refine(
       (value) => countMessageCharacters(value) <= SEND_TEXT_MAX,
       flowValidationCodes.sendTextTooLongForChannel,
+    )
+    .describe(
+      "Message text. May include `{{variable}}` placeholders; the maximum length depends on the target channel.",
     ),
-  buttons: z.array(buttonStepSchema),
+  buttons: z
+    .array(buttonStepSchema)
+    .describe(
+      "Buttons attached to the message (use [] for none). Per-channel button limits apply.",
+    ),
 })
 
 export type SendTextStepSchema = z.infer<typeof sendTextStepSchema>

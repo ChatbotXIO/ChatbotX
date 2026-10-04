@@ -1,5 +1,6 @@
 import {
   botMessageStatsSchema,
+  commentAutomationTimeseriesRow,
   conversationArchivedStatsSchema,
   conversationAssignedByAdminStatsSchema,
   conversationAssignedStatsSchema,
@@ -25,8 +26,10 @@ import {
   timeRangeQueryWithGranularityMHDSchema,
   uniqueConversationsByAdminStatsSchema,
 } from "@chatbotx.io/analytics/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { withPublicPaging } from "@/lib/public-api/list"
+import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
+import { publicListRequest, withPublicPaging } from "@/lib/public-api/list"
 
 // ─────────────────────────────────────────────────────────────────────────
 // Shared input schemas (workspaceId stripped — injected from the token's
@@ -158,6 +161,20 @@ export const flowStatsPublicRequest = flowStatsRequest.omit({
 // anywhere in its shape — reused directly.
 export const flowStatsPublicResponse = flowNodeStatsResponse
 
+export const flowSmartDelayStatsPublicResponse = z.record(
+  z.string(),
+  z.object({
+    waiting: z
+      .number()
+      .int()
+      .describe("Contacts currently waiting at this wait/follow-up node."),
+    sent: z
+      .number()
+      .int()
+      .describe("Contacts that already went through this node."),
+  }),
+)
+
 // ─────────────────────────────────────────────────────────────────────────
 // Magic link / ref link stats — `from`/`to`, matching every other analytics
 // time-range operation (`timeRangeQuerySchema`), rather than the internal
@@ -261,3 +278,50 @@ export const linkContactsPublicResponse = z.object({
   page: z.number(),
   pageCount: z.number(),
 })
+
+// ─────────────────────────────────────────────────────────────────────────
+// Comment automation analytics. The `from`/`to` pair matches the other public
+// analytics routes; handlers map it to the service's `startDate`/`endDate`.
+// The customer comment texts returned here are PII: they are returned
+// verbatim to any `analytics`-scoped token, exactly as the dashboard shows them.
+// ─────────────────────────────────────────────────────────────────────────
+
+const commentAutomationRangePublicRequest = z.object({
+  automationId: zodBigintAsString().describe(
+    "Comment automation id. Get it from `fbComments.list` or `igComments.list`. An id that is not in this workspace returns an empty result.",
+  ),
+  from: z.iso
+    .datetime({ offset: true })
+    .describe(
+      "ISO 8601 start of the range (inclusive) with a UTC offset, e.g. `2026-10-01T00:00:00+07:00`.",
+    ),
+  to: z.iso
+    .datetime({ offset: true })
+    .describe(
+      "ISO 8601 end of the range (inclusive) with a UTC offset, e.g. `2026-10-02T23:59:59+07:00`.",
+    ),
+  timezone: ianaTimezoneSchema.describe(
+    "IANA timezone used to bucket days, e.g. `Asia/Ho_Chi_Minh`.",
+  ),
+})
+
+export const commentAutomationReplyStatsPublicRequest =
+  commentAutomationRangePublicRequest
+
+export const commentAutomationListPublicRequest =
+  commentAutomationRangePublicRequest.extend({
+    page: publicListRequest.shape.page,
+    perPage: publicListRequest.shape.perPage,
+    keyword: z
+      .string()
+      .optional()
+      .describe("Case-insensitive substring filter on the text."),
+  })
+
+export const commentAutomationReplyStatsPublicResponse = z.object({
+  data: z.array(commentAutomationTimeseriesRow),
+})
+export {
+  listCommentAutomationErrorsResponse as commentAutomationErrorsPublicResponse,
+  listCommentAutomationTextTotalsResponse as commentAutomationTextTotalsPublicResponse,
+} from "@chatbotx.io/analytics/schemas"

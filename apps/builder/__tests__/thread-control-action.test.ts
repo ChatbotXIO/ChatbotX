@@ -9,8 +9,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   findByOrFail: vi.fn(),
-  listByContactId: vi.fn(),
-  requestThreadControlAction: vi.fn(),
+  requestConversationThreadControl: vi.fn(),
   requireContactAccessForMember: vi.fn(),
 }))
 
@@ -25,13 +24,12 @@ vi.mock("@chatbotx.io/business", async () => {
   }
   return {
     conversationService: { findByOrFail: mocks.findByOrFail },
-    contactInboxService: { listByContactId: mocks.listByContactId },
     ThreadControlUnsupportedError,
   }
 })
 
 vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
-  requestThreadControlAction: mocks.requestThreadControlAction,
+  requestConversationThreadControl: mocks.requestConversationThreadControl,
 }))
 
 vi.mock("@/features/contacts/permissions", () => ({
@@ -79,9 +77,8 @@ const snapshot = {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.findByOrFail.mockResolvedValue({ id: "conv-1", contactId: "contact-1" })
-  mocks.listByContactId.mockResolvedValue([{ id: "ci-1" }, { id: "ci-2" }])
   mocks.requireContactAccessForMember.mockResolvedValue({})
-  mocks.requestThreadControlAction.mockResolvedValue(snapshot)
+  mocks.requestConversationThreadControl.mockResolvedValue(snapshot)
 })
 
 describe("threadControlAction", () => {
@@ -97,9 +94,9 @@ describe("threadControlAction", () => {
       workspaceId: "ws-1",
       contactId: "contact-1",
     })
-    expect(mocks.requestThreadControlAction).toHaveBeenCalledWith({
+    expect(mocks.requestConversationThreadControl).toHaveBeenCalledWith({
       workspaceId: "ws-1",
-      conversationId: "conv-1",
+      conversation: { id: "conv-1", contactId: "contact-1" },
       contactInboxId: "ci-1",
       action: "take",
     })
@@ -111,18 +108,21 @@ describe("threadControlAction", () => {
     )
 
     await expect(run("release")).rejects.toThrow("Contact not found")
-    expect(mocks.requestThreadControlAction).not.toHaveBeenCalled()
+    expect(mocks.requestConversationThreadControl).not.toHaveBeenCalled()
   })
 
-  test("refuses a contact inbox that does not belong to the conversation's contact", async () => {
+  test("shows a translated not-found for a contact inbox of another contact", async () => {
+    mocks.requestConversationThreadControl.mockRejectedValue(
+      new ChatbotXException("Contact inbox not found", "notFound", 404),
+    )
+
     await expect(run("release", "ci-foreign")).rejects.toThrow(
       "conversationRouting.errors.notFound",
     )
-    expect(mocks.requestThreadControlAction).not.toHaveBeenCalled()
   })
 
   test("returns the inline refusal when the channel refuses a take (not escalation)", async () => {
-    mocks.requestThreadControlAction.mockRejectedValue(
+    mocks.requestConversationThreadControl.mockRejectedValue(
       new ThreadControlTakeRefusedError(
         "(#2494191) Only escalation may take",
         ChannelErrorCategory.PERMISSION_DENIED,
@@ -134,7 +134,7 @@ describe("threadControlAction", () => {
   })
 
   test("surfaces any other permission-denied take as an error, not the inline refusal", async () => {
-    mocks.requestThreadControlAction.mockRejectedValue(
+    mocks.requestConversationThreadControl.mockRejectedValue(
       new ChannelError(
         "(#10) Not the owner",
         ChannelErrorCategory.PERMISSION_DENIED,
@@ -146,7 +146,7 @@ describe("threadControlAction", () => {
   })
 
   test("surfaces a permission-denied release as an error, not the take refusal", async () => {
-    mocks.requestThreadControlAction.mockRejectedValue(
+    mocks.requestConversationThreadControl.mockRejectedValue(
       new ChannelError(
         "(#10) Not the owner",
         ChannelErrorCategory.PERMISSION_DENIED,
@@ -158,7 +158,7 @@ describe("threadControlAction", () => {
   })
 
   test("maps an unsupported channel to a translated error", async () => {
-    mocks.requestThreadControlAction.mockRejectedValue(
+    mocks.requestConversationThreadControl.mockRejectedValue(
       new ThreadControlUnsupportedError("messenger"),
     )
 
@@ -168,7 +168,7 @@ describe("threadControlAction", () => {
   })
 
   test("falls back to the generic message for a channel error without text", async () => {
-    mocks.requestThreadControlAction.mockRejectedValue(
+    mocks.requestConversationThreadControl.mockRejectedValue(
       new ChannelError("", ChannelErrorCategory.NETWORK_ERROR),
     )
 
@@ -179,7 +179,7 @@ describe("threadControlAction", () => {
 
   test("rethrows an unexpected error unchanged", async () => {
     const boom = new Error("database down")
-    mocks.requestThreadControlAction.mockRejectedValue(boom)
+    mocks.requestConversationThreadControl.mockRejectedValue(boom)
 
     await expect(run("take")).rejects.toBe(boom)
   })

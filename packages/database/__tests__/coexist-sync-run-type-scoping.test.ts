@@ -445,6 +445,30 @@ describe("CoexistSyncRun type-discriminator scoping", () => {
     expect(result).toEqual({ data: [], pageCount: 0 })
   })
 
+  test("listContactScanRuns narrows to one integration when asked", async () => {
+    const findMany = vi.fn().mockResolvedValue([])
+    const repository = new CoexistSyncRunRepository()
+
+    await repository.listContactScanRuns({
+      workspaceId: "workspace-1",
+      integrationId: "int-1",
+      tx: {
+        query: { coexistSyncRunModel: { findMany } },
+        $count: vi.fn().mockResolvedValue(0),
+      } as never,
+    })
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          workspaceId: "workspace-1",
+          type: "contact_scan",
+          integrationId: "int-1",
+        },
+      }),
+    )
+  })
+
   test("listContactScanRuns paginates and defaults to createdAt desc", async () => {
     const findMany = vi.fn().mockResolvedValue([{ id: "scan-1" }])
     const $count = vi.fn().mockResolvedValue(25)

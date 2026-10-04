@@ -14,6 +14,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "ads.createCampaignImageUpload",
+    "path": "/v1/ads/campaigns/upload-image",
+  },
+  {
+    "method": "POST",
     "operationId": "ads.createRule",
     "path": "/v1/ads/conversion-rules",
   },
@@ -233,6 +238,36 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ai-functions/{id}",
   },
   {
+    "method": "GET",
+    "operationId": "aiHandover.getApplyToAll",
+    "path": "/v1/inboxes/{inboxId}/ai-handover/apply-to-all",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiHandover.getSettings",
+    "path": "/v1/inboxes/{inboxId}/ai-handover/settings",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiHandover.listHistory",
+    "path": "/v1/inboxes/{inboxId}/ai-handover/history",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiHandover.retryApplyToAll",
+    "path": "/v1/inboxes/{inboxId}/ai-handover/apply-to-all/retry",
+  },
+  {
+    "method": "PUT",
+    "operationId": "aiHandover.saveSettings",
+    "path": "/v1/inboxes/{inboxId}/ai-handover/settings",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiHandover.setApplyToAll",
+    "path": "/v1/inboxes/{inboxId}/ai-handover/apply-to-all",
+  },
+  {
     "method": "POST",
     "operationId": "aiMcpServers.create",
     "path": "/v1/ai-mcp-servers",
@@ -299,6 +334,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "analytics.commentAutomationBotReplies",
+    "path": "/v1/analytics/comment-automation/bot-replies",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationErrors",
+    "path": "/v1/analytics/comment-automation/errors",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationReplyStats",
+    "path": "/v1/analytics/comment-automation/replies",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationUserComments",
+    "path": "/v1/analytics/comment-automation/user-comments",
+  },
+  {
+    "method": "GET",
     "operationId": "analytics.contactCountsPerDay",
     "path": "/v1/analytics/contact-counts-per-day",
   },
@@ -336,6 +391,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "analytics.conversationHandoffs",
     "path": "/v1/analytics/conversation-handoffs",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.flowSmartDelayStats",
+    "path": "/v1/analytics/flows/{flowId}/smart-delay-stats",
   },
   {
     "method": "GET",
@@ -513,6 +573,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/bot-fields",
   },
   {
+    "method": "POST",
+    "operationId": "botFields.reset",
+    "path": "/v1/bot-fields/{idOrName}/reset",
+  },
+  {
+    "method": "POST",
+    "operationId": "botFields.resetMany",
+    "path": "/v1/bot-fields/bulk-reset",
+  },
+  {
     "method": "PUT",
     "operationId": "botFields.set",
     "path": "/v1/bot-fields/{idOrName}",
@@ -601,6 +671,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "capabilities.get",
     "path": "/v1/capabilities",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelIntegrations.list",
+    "path": "/v1/channel-integrations",
   },
   {
     "method": "GET",
@@ -694,6 +769,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contacts.createImportUpload",
+    "path": "/v1/contacts/imports/upload-url",
+  },
+  {
+    "method": "POST",
     "operationId": "contacts.createNote",
     "path": "/v1/contacts/{identifier}/notes",
   },
@@ -736,6 +816,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "contacts.getImport",
     "path": "/v1/contacts/imports/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.getImportTemplate",
+    "path": "/v1/contacts/import-template",
   },
   {
     "method": "GET",
@@ -793,6 +878,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/tags",
   },
   {
+    "method": "GET",
+    "operationId": "contacts.peekImportHeaders",
+    "path": "/v1/contacts/imports/files/{fileId}/headers",
+  },
+  {
     "method": "POST",
     "operationId": "contacts.refreshProfile",
     "path": "/v1/contacts/{identifier}/refresh-profile",
@@ -801,6 +891,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "DELETE",
     "operationId": "contacts.removeTags",
     "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.resolveFilterValueLabels",
+    "path": "/v1/contacts/filter-value-labels",
   },
   {
     "method": "POST",
@@ -931,6 +1026,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "conversations.read",
     "path": "/v1/conversations/{id}/read",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.syncThreadOwner",
+    "path": "/v1/conversations/{id}/thread-control/sync",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.threadControl",
+    "path": "/v1/conversations/{id}/thread-control",
   },
   {
     "method": "POST",
@@ -1338,6 +1443,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/channels",
   },
   {
+    "method": "PATCH",
+    "operationId": "inboxes.update",
+    "path": "/v1/inboxes/{id}",
+  },
+  {
     "method": "POST",
     "operationId": "inboxTeams.addMembers",
     "path": "/v1/teams/{id}/members",
@@ -1371,6 +1481,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "inboxTeams.update",
     "path": "/v1/teams/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "instagramChannels.get",
+    "path": "/v1/instagram-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "instagramChannels.getCoexistStatus",
+    "path": "/v1/instagram-channels/{id}/coexist",
+  },
+  {
+    "method": "GET",
+    "operationId": "instagramChannels.list",
+    "path": "/v1/instagram-channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "instagramChannels.sendCapiTestEvent",
+    "path": "/v1/instagram-channels/{id}/capi/test-event",
+  },
+  {
+    "method": "PUT",
+    "operationId": "instagramChannels.setCapiDataset",
+    "path": "/v1/instagram-channels/{id}/capi/dataset",
+  },
+  {
+    "method": "PUT",
+    "operationId": "instagramChannels.setCapiTestEventCode",
+    "path": "/v1/instagram-channels/{id}/capi/test-event-code",
+  },
+  {
+    "method": "PUT",
+    "operationId": "instagramChannels.setCoexist",
+    "path": "/v1/instagram-channels/{id}/coexist",
   },
   {
     "method": "PUT",
@@ -1518,9 +1663,59 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/conversations/{conversationId}/messages",
   },
   {
+    "method": "POST",
+    "operationId": "messages.requestWhatsappCallPermission",
+    "path": "/v1/conversations/{conversationId}/whatsapp-call-permission",
+  },
+  {
+    "method": "POST",
+    "operationId": "messages.sendWhatsappTemplate",
+    "path": "/v1/conversations/{conversationId}/whatsapp-template",
+  },
+  {
     "method": "PUT",
     "operationId": "messages.update",
     "path": "/v1/conversations/{conversationId}/messages/{messageId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerChannels.get",
+    "path": "/v1/messenger-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerChannels.getCoexistStatus",
+    "path": "/v1/messenger-channels/{id}/coexist",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerChannels.list",
+    "path": "/v1/messenger-channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "messengerChannels.sendCapiTestEvent",
+    "path": "/v1/messenger-channels/{id}/capi/test-event",
+  },
+  {
+    "method": "PUT",
+    "operationId": "messengerChannels.setCapiDataset",
+    "path": "/v1/messenger-channels/{id}/capi/dataset",
+  },
+  {
+    "method": "PUT",
+    "operationId": "messengerChannels.setCapiTestEventCode",
+    "path": "/v1/messenger-channels/{id}/capi/test-event-code",
+  },
+  {
+    "method": "PUT",
+    "operationId": "messengerChannels.setCoexist",
+    "path": "/v1/messenger-channels/{id}/coexist",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "messengerChannels.updateHandoverResumeFlow",
+    "path": "/v1/messenger-channels/{id}/handover-resume-flow",
   },
   {
     "method": "PATCH",
@@ -1531,6 +1726,36 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "messengerPersonas.list",
     "path": "/v1/messenger-personas",
+  },
+  {
+    "method": "POST",
+    "operationId": "messengerTemplates.clone",
+    "path": "/v1/messenger/templates/{id}/clone",
+  },
+  {
+    "method": "POST",
+    "operationId": "messengerTemplates.create",
+    "path": "/v1/messenger-channels/{id}/templates",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "messengerTemplates.delete",
+    "path": "/v1/messenger/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerTemplates.get",
+    "path": "/v1/messenger/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerTemplates.list",
+    "path": "/v1/messenger/templates",
+  },
+  {
+    "method": "POST",
+    "operationId": "messengerTemplates.sync",
+    "path": "/v1/messenger-channels/{id}/templates/sync",
   },
   {
     "method": "POST",
@@ -1608,6 +1833,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/products",
   },
   {
+    "method": "POST",
+    "operationId": "products.createImportUpload",
+    "path": "/v1/products/imports/upload-url",
+  },
+  {
+    "method": "POST",
+    "operationId": "products.createMetaCatalog",
+    "path": "/v1/products/meta-catalog",
+  },
+  {
     "method": "DELETE",
     "operationId": "products.delete",
     "path": "/v1/products/{id}",
@@ -1619,8 +1854,38 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "products.getImportTemplate",
+    "path": "/v1/products/import-template",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.getMetaCatalog",
+    "path": "/v1/products/meta-catalog",
+  },
+  {
+    "method": "GET",
     "operationId": "products.list",
     "path": "/v1/products",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.listMetaCatalogBusinesses",
+    "path": "/v1/products/meta-catalog/businesses",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.peekImportHeaders",
+    "path": "/v1/products/imports/files/{fileId}/headers",
+  },
+  {
+    "method": "POST",
+    "operationId": "products.selectMetaCatalog",
+    "path": "/v1/products/meta-catalog/select",
+  },
+  {
+    "method": "POST",
+    "operationId": "products.syncMetaCatalog",
+    "path": "/v1/products/meta-catalog/sync",
   },
   {
     "method": "PUT",
@@ -1768,9 +2033,19 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/sequences",
   },
   {
+    "method": "POST",
+    "operationId": "sequences.createFolder",
+    "path": "/v1/sequence-folders",
+  },
+  {
     "method": "DELETE",
     "operationId": "sequences.delete",
     "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "sequences.deleteFolder",
+    "path": "/v1/sequence-folders/{id}",
   },
   {
     "method": "DELETE",
@@ -1789,6 +2064,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "sequences.listFolders",
+    "path": "/v1/sequence-folders",
+  },
+  {
+    "method": "GET",
     "operationId": "sequences.listStepContacts",
     "path": "/v1/sequences/{id}/steps/{stepId}/contacts",
   },
@@ -1796,6 +2076,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "sequences.update",
     "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "sequences.updateFolder",
+    "path": "/v1/sequence-folders/{id}",
   },
   {
     "method": "PUT",
@@ -1891,6 +2176,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "templateMessages.list",
     "path": "/v1/template-messages",
+  },
+  {
+    "method": "GET",
+    "operationId": "tiktokChannels.get",
+    "path": "/v1/tiktok-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "tiktokChannels.list",
+    "path": "/v1/tiktok-channels",
   },
   {
     "method": "GET",
@@ -1994,8 +2289,113 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "whatsappCalls.getRecording",
+    "path": "/v1/whatsapp/calls/{id}/recording",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappCalls.getSummary",
+    "path": "/v1/whatsapp/calls/{id}/summary",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappCalls.getTranscript",
+    "path": "/v1/whatsapp/calls/{id}/transcript",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappCalls.list",
+    "path": "/v1/whatsapp/calls",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappChannels.get",
+    "path": "/v1/whatsapp-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappChannels.getCallingSettings",
+    "path": "/v1/whatsapp-channels/{id}/calling",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappChannels.getCoexistStatus",
+    "path": "/v1/whatsapp-channels/{id}/coexist",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappChannels.list",
+    "path": "/v1/whatsapp-channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "whatsappChannels.sendCapiTestEvent",
+    "path": "/v1/whatsapp-channels/{id}/capi/test-event",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.setCapiDataset",
+    "path": "/v1/whatsapp-channels/{id}/capi/dataset",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.setCapiTestEventCode",
+    "path": "/v1/whatsapp-channels/{id}/capi/test-event-code",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.setCoexist",
+    "path": "/v1/whatsapp-channels/{id}/coexist",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.updateCallHours",
+    "path": "/v1/whatsapp-channels/{id}/calling/hours",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "whatsappChannels.updateCallingSettings",
+    "path": "/v1/whatsapp-channels/{id}/calling",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "whatsappChannels.updateHandoverResumeFlow",
+    "path": "/v1/whatsapp-channels/{id}/handover-resume-flow",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappFlows.getScreens",
+    "path": "/v1/whatsapp/flows/{flowId}/screens",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappFlows.list",
+    "path": "/v1/whatsapp/flows",
+  },
+  {
+    "method": "POST",
+    "operationId": "whatsappFlows.sync",
+    "path": "/v1/whatsapp-channels/{id}/sync-flows",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappTemplates.get",
+    "path": "/v1/whatsapp/templates/{id}",
+  },
+  {
+    "method": "GET",
     "operationId": "whatsappTemplates.list",
     "path": "/v1/whatsapp/templates",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappTemplates.searchCatalogProducts",
+    "path": "/v1/whatsapp/templates/catalog-products",
+  },
+  {
+    "method": "POST",
+    "operationId": "whatsappTemplates.sync",
+    "path": "/v1/whatsapp-channels/{id}/templates/sync",
   },
   {
     "method": "GET",
@@ -2006,6 +2406,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "workspaceMembers.list",
     "path": "/v1/members",
+  },
+  {
+    "method": "GET",
+    "operationId": "workspaceSettings.get",
+    "path": "/v1/workspace/settings",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "workspaceSettings.update",
+    "path": "/v1/workspace/settings",
+  },
+  {
+    "method": "GET",
+    "operationId": "zaloChannels.get",
+    "path": "/v1/zalo-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "zaloChannels.list",
+    "path": "/v1/zalo-channels",
   },
   {
     "method": "PATCH",

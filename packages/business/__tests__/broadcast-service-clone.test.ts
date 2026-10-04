@@ -92,6 +92,13 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
+const { mockDispatchAuditRecord } = vi.hoisted(() => ({
+  mockDispatchAuditRecord: vi.fn(),
+}))
+vi.mock("../src/audit/dispatcher", () => ({
+  dispatchAuditRecord: mockDispatchAuditRecord,
+}))
+
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {
     appliesToChannel: (channel: string) => channel === "messenger",
@@ -152,6 +159,26 @@ beforeEach(() => {
 })
 
 describe("broadcastService.cloneBroadcast", () => {
+  test("audits the clone so every caller (UI and token) leaves a record", async () => {
+    mockDispatchAuditRecord.mockClear()
+
+    const result = await clone()
+
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "create",
+      detail: `cloned a broadcast (#${result.id})`,
+    })
+  })
+
+  test("does not audit when the source broadcast is missing", async () => {
+    mockDispatchAuditRecord.mockClear()
+    findFirstBroadcast.mockResolvedValue(undefined)
+
+    await expect(clone()).rejects.toThrow("Broadcast not found")
+
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
   test("creates a draft copy carrying every config column and the schedule", async () => {
     const result = await clone()
 

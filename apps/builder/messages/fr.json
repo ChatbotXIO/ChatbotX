@@ -2252,7 +2252,8 @@
       "minigames": "Mini-jeux",
       "appointments": "Rendez-vous",
       "media": "Médias",
-      "ads": "Publicités"
+      "ads": "Publicités",
+      "settings": "Paramètres"
     },
     "adReferral": {
       "label": "Ads",

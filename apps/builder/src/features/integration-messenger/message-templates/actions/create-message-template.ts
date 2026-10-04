@@ -1,16 +1,11 @@
 "use server"
 
 import { messengerIntegrationService } from "@chatbotx.io/business"
-import { createPageMessageTemplate } from "@chatbotx.io/integration-messenger/apis/message-templates"
-import { resumableUploadImage } from "@chatbotx.io/integration-messenger/apis/upload"
-import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { SdkException } from "@chatbotx.io/sdk"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { buildMessengerMessageTemplateComponents } from "../lib/build-template-components"
+import { createMessengerMessageTemplate } from "../lib/message-template-operations"
 import { createMessengerMessageTemplateRequest } from "../schema/mutation"
-import { syncMessengerMessageTemplatesForIntegration } from "./sync-message-templates"
 
 function formatTemplateRejectionMessage({
   rejectionReason,
@@ -44,46 +39,20 @@ export const createMessengerMessageTemplateAction = workspaceActionClient
       throw new Error("Messenger integration not found")
     }
 
-    const auth = integrationMessenger.auth as MessengerAuthValue
-    const headerHandle =
-      parsedInput.headerType === "text_and_image" && parsedInput.headerImageUrl
-        ? await resumableUploadImage(auth, parsedInput.headerImageUrl, {
-            authenticatedDownload: false,
-          })
-        : undefined
-
-    const components = buildMessengerMessageTemplateComponents(
-      parsedInput,
-      headerHandle,
-    )
-
-    const resp = await createPageMessageTemplate(auth, {
-      name: parsedInput.name,
-      language: parsedInput.language,
-      category: "UTILITY",
-      components,
-    })
-
-    await syncMessengerMessageTemplatesForIntegration({
+    const created = await createMessengerMessageTemplate({
       workspaceId,
       integrationMessenger,
-      templateId: resp.id,
-      templateName: parsedInput.name,
-      templateLanguage: parsedInput.language,
+      request: parsedInput,
     })
 
-    await invalidateCacheByTags([
-      `workspaces:${workspaceId}#messenger#messageTemplates`,
-    ])
-
-    if (resp.status === "REJECTED") {
+    if (created.status === "REJECTED") {
       throw new SdkException(
         formatTemplateRejectionMessage({
-          rejectionReason: resp.rejection_reason,
-          specificRejectionReason: resp.specific_rejection_reason,
+          rejectionReason: created.rejectionReason,
+          specificRejectionReason: created.specificRejectionReason,
         }),
       )
     }
 
-    return { status: resp.status }
+    return { status: created.status }
   })

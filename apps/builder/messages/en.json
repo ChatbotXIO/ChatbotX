@@ -2438,7 +2438,8 @@
       "minigames": "Minigames",
       "appointments": "Appointments",
       "media": "Media",
-      "ads": "Ads"
+      "ads": "Ads",
+      "settings": "Settings"
     },
     "adReferral": {
       "label": "Ads",

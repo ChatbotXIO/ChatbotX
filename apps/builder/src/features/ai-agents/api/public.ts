@@ -31,7 +31,7 @@ export const aiAgentsPublicRouter = {
       path: "/v1/ai-agents",
       summary: "List AI agents",
       description:
-        "Use this to resolve an AI agent before referencing it in `flows.publish` or changing it with `aiAgents.update`. Returns the configured agents in the workspace.",
+        "Use this to resolve an AI agent before referencing it in `flows.publish` or changing it with `aiAgents.update`. Returns the configured agents in the workspace. The bot reply delay shown in the agent list is not per agent: it is the workspace setting `smartResponseDelaySeconds`, shared by every agent (read it with `workspaceSettings.get`, change it with `workspaceSettings.update`).",
       tags: ["AI Agents"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -101,7 +101,7 @@ export const aiAgentsPublicRouter = {
       path: "/v1/ai-agents/{id}",
       summary: "Update AI agent",
       description:
-        "Changes settings on an existing AI agent without replacing unrelated fields. Call `aiAgents.list` to resolve its id, and use `aiAgents.get` to inspect the saved result.",
+        "Changes settings on an existing AI agent without replacing unrelated fields. Call `aiAgents.list` to resolve its id, and use `aiAgents.get` to inspect the saved result. It does not change the bot reply delay: that is the workspace setting `smartResponseDelaySeconds` (`workspaceSettings.update`).",
       tags: ["AI Agents"],
       spec: mcpSpec({ visibility: "default" }),
     })

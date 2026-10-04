@@ -1,7 +1,6 @@
 "use server"
 
 import { broadcastService } from "@chatbotx.io/business"
-import { auditService } from "@chatbotx.io/business/audit"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
@@ -23,17 +22,9 @@ export const cloneBroadcastAction = workspaceActionClient
         )
       : false
 
-    const clone = await broadcastService.cloneBroadcast({
+    return await broadcastService.cloneBroadcast({
       workspaceId,
       broadcastId,
       canViewEmailAndPhone,
     })
-
-    await auditService.record({
-      workspaceId,
-      action: "create",
-      detail: `cloned a broadcast (#${clone.id})`,
-    })
-
-    return clone
   })

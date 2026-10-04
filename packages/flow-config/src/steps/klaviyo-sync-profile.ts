@@ -21,8 +21,12 @@ export const klaviyoPropertyMappingSchema = z.object({
 
 export const klaviyoSyncProfileSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.klaviyoSyncProfile),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.klaviyoSyncProfile)
+      .describe('Step type discriminator: "klaviyoSyncProfile".'),
     listId: optionalTrimmedString,
     emailField: z.string().trim().min(1),
     titleField: optionalTrimmedString,

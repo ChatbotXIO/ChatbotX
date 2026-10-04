@@ -31,8 +31,12 @@ export const defaultAnalyzeModels = {
 
 export const aiAnalyzeImageSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.aiAnalyzeImage),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.aiAnalyzeImage)
+      .describe('Step type discriminator: "aiAnalyzeImage".'),
     provider: aiAnalyzeImageProviderSchema,
     integrationId: z.string().trim().optional(),
     model: z.string().trim(),

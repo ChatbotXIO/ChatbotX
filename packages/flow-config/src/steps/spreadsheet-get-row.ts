@@ -9,7 +9,9 @@ import {
 import { stepTypes } from "./step-action"
 
 export const spreadsheetGetRowSchema = spreadsheetSchema.extend({
-  stepType: z.literal(stepTypes.enum.spreadsheetGetRow),
+  stepType: z
+    .literal(stepTypes.enum.spreadsheetGetRow)
+    .describe('Step type discriminator: "spreadsheetGetRow".'),
   lookup: spreadsheetColumnFilterSchema,
   map: z.array(spreadsheetSheetToContactMappingSchema).min(1),
 })

@@ -2252,7 +2252,8 @@
       "minigames": "Minispil",
       "appointments": "Aftaler",
       "media": "Medier",
-      "ads": "Annoncer"
+      "ads": "Annoncer",
+      "settings": "Indstillinger"
     },
     "adReferral": {
       "label": "Ads",

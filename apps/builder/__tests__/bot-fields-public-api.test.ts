@@ -53,6 +53,8 @@ const botFieldService = {
   updateByKey: vi.fn(),
   bulkUpdateByKeys: vi.fn(),
   deleteByKey: vi.fn(),
+  clearValueByKey: vi.fn(),
+  bulkClearValues: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ botFieldService }))
 
@@ -142,5 +144,47 @@ describe("PUT /v1/bot-fields", () => {
         { key: "legacy-field", value: "c" },
       ],
     })
+  })
+})
+
+describe("POST /v1/bot-fields/{idOrName}/reset", () => {
+  const procedure = findProcedure("POST", "/v1/bot-fields/{idOrName}/reset")
+
+  test("clears the value of one field addressed by id or name", async () => {
+    const field = { id: "1", name: "plan", type: "text", value: null }
+    botFieldService.clearValueByKey.mockResolvedValueOnce(field)
+
+    const result = await procedure.handler?.({
+      context: tokenContext,
+      input: { idOrName: "plan" },
+    })
+
+    expect(botFieldService.clearValueByKey).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      key: "plan",
+    })
+    expect(result).toEqual(field)
+  })
+})
+
+describe("POST /v1/bot-fields/bulk-reset", () => {
+  const procedure = findProcedure("POST", "/v1/bot-fields/bulk-reset")
+
+  test("clears the values of several fields in this workspace", async () => {
+    botFieldService.bulkClearValues.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: tokenContext,
+      input: { ids: ["1", "2"] },
+    })
+
+    expect(botFieldService.bulkClearValues).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["1", "2"],
+    })
+  })
+
+  test("is a 204 route like the other body-less mutations", () => {
+    expect(procedure.route.successStatus).toBe(204)
   })
 })

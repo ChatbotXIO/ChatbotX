@@ -56,8 +56,12 @@ export const aiEditImageDefaultQualities: Record<
 }
 
 export const aiEditImageSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.aiEditImage),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.aiEditImage)
+    .describe('Step type discriminator: "aiEditImage".'),
   provider: aiEditImageProvider,
   model: z.string().trim().min(1),
   inputFieldId: z.string().trim().min(1),

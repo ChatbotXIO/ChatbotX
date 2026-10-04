@@ -6,14 +6,20 @@ export const messengerPersistentMenuTypes = z.enum(["flow", "url"])
 
 export const messengerPersistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
-    label: z.string().min(1),
-    type: z.literal(messengerPersistentMenuTypes.enum.flow),
-    flowId: zodBigintAsString(),
+    label: z.string().min(1).describe("Button text shown to the user."),
+    type: z
+      .literal(messengerPersistentMenuTypes.enum.flow)
+      .describe("Item action: `flow` runs a flow when tapped."),
+    flowId: zodBigintAsString().describe(
+      "Flow to run when the item is tapped. Get it from `flows.list`.",
+    ),
   }),
   z.object({
-    label: z.string().min(1),
-    type: z.literal(messengerPersistentMenuTypes.enum.url),
-    url: z.url(),
+    label: z.string().min(1).describe("Button text shown to the user."),
+    type: z
+      .literal(messengerPersistentMenuTypes.enum.url)
+      .describe("Item action: `url` opens a web link when tapped."),
+    url: z.url().describe("Absolute URL to open (https recommended)."),
   }),
 ])
 export type MessengerPersistentMenu = z.infer<

@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const subscribeSequenceStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.subscribeSequence),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.subscribeSequence)
+    .describe('Step type discriminator: "subscribeSequence".'),
   sequenceId: z.string().optional(),
 })
 

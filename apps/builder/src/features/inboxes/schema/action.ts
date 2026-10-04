@@ -1,4 +1,5 @@
 import { listInboxesRequest } from "@chatbotx.io/business/inbox/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import { z } from "zod"
 import { inboxResource } from "./resource"
@@ -19,6 +20,17 @@ export const publicInboxResource = inboxResource.pick({
   channel: true,
   status: true,
   sourceId: true,
+  markReadOnOutbound: true,
+})
+
+export const updateInboxPublicRequest = z.object({
+  id: zodBigintAsString().describe("Inbox id. Get it from `inboxes.list`."),
+  markReadOnOutbound: z
+    .boolean()
+    .optional()
+    .describe(
+      "Whether the contact's unread conversation is marked read when an agent or flow sends a message to it.",
+    ),
 })
 
 export const publicListInboxResponse = z.object({

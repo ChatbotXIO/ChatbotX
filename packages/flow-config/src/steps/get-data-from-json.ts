@@ -10,8 +10,12 @@ import {
 import { stepTypes } from "./step-action"
 
 export const getDataFromJsonStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.getDataFromJson),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.getDataFromJson)
+    .describe('Step type discriminator: "getDataFromJson".'),
   inputFieldId: zodFieldReference(),
   mapping: z.array(
     z.object({

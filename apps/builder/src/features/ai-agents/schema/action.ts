@@ -16,7 +16,11 @@ import { MAX_WEB_SEARCH_AUTHORIZED_DOMAINS } from "../lib/web-search-tool"
 const webSearchAuthorizedDomainsSchema = z
   .array(
     z.object({
-      value: z.string().trim().pipe(z.hostname()),
+      value: z
+        .string()
+        .trim()
+        .pipe(z.hostname())
+        .describe("Bare hostname without scheme or path, e.g. `example.com`."),
     }),
   )
   .max(MAX_WEB_SEARCH_AUTHORIZED_DOMAINS)
@@ -39,8 +43,15 @@ export const createAIAgentRequest = z.object({
   messages: z
     .array(
       z.object({
-        role: aiMessageRoles,
-        content: z.string().trim().min(1).max(255),
+        role: aiMessageRoles.describe(
+          "Who the seed message is attributed to: `user`, `assistant`, `system` or `developer`.",
+        ),
+        content: z
+          .string()
+          .trim()
+          .min(1)
+          .max(255)
+          .describe("Seed message text, 1-255 characters."),
       }),
     )
     .describe(
@@ -51,30 +62,64 @@ export const createAIAgentRequest = z.object({
       z.union([
         z.discriminatedUnion("provider", [
           z.object({
-            provider: z.literal(aiProviders.enum.gemini),
-            model: geminiModels,
+            provider: z
+              .literal(aiProviders.enum.gemini)
+              .describe("AI provider for this model entry."),
+            model: geminiModels.describe(
+              "Model id offered by the `gemini` provider.",
+            ),
           }),
           z.object({
-            provider: z.literal(aiProviders.enum.openai),
-            model: openaiModels,
+            provider: z
+              .literal(aiProviders.enum.openai)
+              .describe("AI provider for this model entry."),
+            model: openaiModels.describe(
+              "Model id offered by the `openai` provider.",
+            ),
           }),
           z.object({
-            provider: z.literal(aiProviders.enum.claude),
-            model: claudeModels,
+            provider: z
+              .literal(aiProviders.enum.claude)
+              .describe("AI provider for this model entry."),
+            model: claudeModels.describe(
+              "Model id offered by the `claude` provider.",
+            ),
           }),
           z.object({
-            provider: z.literal(aiProviders.enum.deepseek),
-            model: deepseekModels,
+            provider: z
+              .literal(aiProviders.enum.deepseek)
+              .describe("AI provider for this model entry."),
+            model: deepseekModels.describe(
+              "Model id offered by the `deepseek` provider.",
+            ),
           }),
           z.object({
-            provider: z.literal(aiProviders.enum.openrouter),
-            model: openrouterModels,
+            provider: z
+              .literal(aiProviders.enum.openrouter)
+              .describe("AI provider for this model entry."),
+            model: openrouterModels.describe(
+              "Model id offered by the `openrouter` provider.",
+            ),
           }),
         ]),
         z.object({
-          kind: z.literal("openaiCompatible"),
-          integrationId: z.string().trim().min(1),
-          model: z.string().trim().min(1),
+          kind: z
+            .literal("openaiCompatible")
+            .describe(
+              "Marks a model served by a connected OpenAI-compatible integration instead of a built-in provider.",
+            ),
+          integrationId: z
+            .string()
+            .trim()
+            .min(1)
+            .describe(
+              "Id of the connected OpenAI-compatible integration. Get it from `integrations.list`.",
+            ),
+          model: z
+            .string()
+            .trim()
+            .min(1)
+            .describe("Model name as exposed by that integration's endpoint."),
         }),
       ]),
     )

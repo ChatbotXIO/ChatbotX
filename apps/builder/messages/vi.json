@@ -2438,7 +2438,8 @@
       "minigames": "Minigame",
       "appointments": "Lịch hẹn",
       "media": "Phương tiện",
-      "ads": "Quảng cáo"
+      "ads": "Quảng cáo",
+      "settings": "Cài đặt"
     },
     "adReferral": {
       "label": "Ads",

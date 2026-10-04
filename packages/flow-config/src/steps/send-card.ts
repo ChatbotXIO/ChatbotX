@@ -7,7 +7,9 @@ import { sendImageStepDefaultFn, sendImageStepSchema } from "./send-image"
 import { stepTypes } from "./step-action"
 
 export const sendCardStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendCard),
+  stepType: z
+    .literal(stepTypes.enum.sendCard)
+    .describe('Step type discriminator: "sendCard".'),
   title: z
     .string()
     .trim()

@@ -57,8 +57,9 @@ vi.mock("../src/folder/service", () => ({
   folderService: {},
 }))
 
+const enqueueDetach = vi.fn(async () => undefined)
 vi.mock("../src/tag/sync.service", () => ({
-  tagSyncService: { enqueueAttach: vi.fn(), enqueueDetach: vi.fn() },
+  tagSyncService: { enqueueAttach: vi.fn(), enqueueDetach },
 }))
 
 vi.mock("../src/ads-conversion/service", () => ({
@@ -144,5 +145,34 @@ describe("tagService.detachFromContact", () => {
     ).rejects.toThrow("Contact not found")
 
     expect(mockDeleteBuilder.returning).not.toHaveBeenCalled()
+  })
+
+  test("queues channel tag cleanup for the removed tags only", async () => {
+    mockDeleteBuilder.returning.mockResolvedValue([{ tagId: "tag-1" }])
+
+    await tagService.detachFromContact({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      tagIds: ["tag-1", "tag-2"],
+    })
+
+    expect(enqueueDetach).toHaveBeenCalledTimes(1)
+    expect(enqueueDetach).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      tagId: "tag-1",
+    })
+  })
+
+  test("does not queue tag cleanup when nothing was removed", async () => {
+    mockDeleteBuilder.returning.mockResolvedValue([])
+
+    await tagService.detachFromContact({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      tagIds: ["tag-1"],
+    })
+
+    expect(enqueueDetach).not.toHaveBeenCalled()
   })
 })

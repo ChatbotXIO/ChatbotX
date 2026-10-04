@@ -11,8 +11,12 @@ import {
 import { stepTypes } from "./step-action"
 
 export const aiSpeechToTextSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.aiSpeechToText),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.aiSpeechToText)
+    .describe('Step type discriminator: "aiSpeechToText".'),
   provider: z.literal("openai"),
   model: z.string().trim().min(1),
   inputFieldId: z.string().trim().min(1),

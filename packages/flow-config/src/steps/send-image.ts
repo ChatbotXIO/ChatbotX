@@ -6,7 +6,9 @@ import { buttonStepSchema } from "./button"
 import { stepTypes } from "./step-action"
 
 export const sendImageStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendImage),
+  stepType: z
+    .literal(stepTypes.enum.sendImage)
+    .describe('Step type discriminator: "sendImage".'),
   mode: uploadModes,
   // Accepts a plain URL or a `{{customField}}` placeholder resolved at send
   // time by the worker's contact-variable interpolation.

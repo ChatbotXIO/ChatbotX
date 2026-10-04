@@ -207,6 +207,14 @@ class CoexistService extends BaseService {
     return coexistSyncRunRepository.findLiveRun(input)
   }
 
+  findLatestRun(input: {
+    workspaceId: string
+    integrationId: string
+    channel: CoexistChannel
+  }): Promise<CoexistSyncRunModel | null> {
+    return coexistSyncRunRepository.findLatestRun(input)
+  }
+
   findIntegrationForCoexist(input: {
     workspaceId: string
     integrationId: string

@@ -54,8 +54,10 @@ export const contactScanPublicRouter = {
       async ({ context, input }) =>
         await listContactScanHistoryRows({
           workspaceId: context.workspace.id,
+          integrationId: input.integrationId,
           page: input.page,
           perPage: input.perPage,
+          sort: input.sort,
         }),
     ),
 

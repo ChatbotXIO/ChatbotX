@@ -2396,7 +2396,8 @@
       "minigames": "Minijuegos",
       "appointments": "Citas",
       "media": "Medios",
-      "ads": "Anuncios"
+      "ads": "Anuncios",
+      "settings": "Ajustes"
     },
     "adReferral": {
       "label": "Ads",

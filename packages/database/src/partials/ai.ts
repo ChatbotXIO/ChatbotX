@@ -215,20 +215,44 @@ Never:
 
 export const aiMcpServerAuth = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal(aiMcpServerAuthTypes.enum.none),
+    type: z
+      .literal(aiMcpServerAuthTypes.enum.none)
+      .describe("No authentication; the server is called without credentials."),
   }),
   z.object({
-    type: z.literal(aiMcpServerAuthTypes.enum.token),
-    token: z.string().trim().min(1),
+    type: z
+      .literal(aiMcpServerAuthTypes.enum.token)
+      .describe("Authenticate with a single bearer token."),
+    token: z
+      .string()
+      .trim()
+      .min(1)
+      .describe(
+        "Bearer token sent to the MCP server. Write-only: never returned by the API.",
+      ),
   }),
   z.object({
-    type: z.literal(aiMcpServerAuthTypes.enum.header),
-    headers: z.array(
-      z.object({
-        header: z.string().trim().min(1),
-        value: z.string().trim().min(1),
-      }),
-    ),
+    type: z
+      .literal(aiMcpServerAuthTypes.enum.header)
+      .describe("Authenticate with custom HTTP headers."),
+    headers: z
+      .array(
+        z.object({
+          header: z
+            .string()
+            .trim()
+            .min(1)
+            .describe("HTTP header name, e.g. `X-Api-Key`."),
+          value: z
+            .string()
+            .trim()
+            .min(1)
+            .describe(
+              "Header value sent to the MCP server. Write-only: never returned by the API.",
+            ),
+        }),
+      )
+      .describe("Custom headers added to every request to the MCP server."),
   }),
 ])
 export type AIMcpServerAuth = z.infer<typeof aiMcpServerAuth>

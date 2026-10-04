@@ -29,8 +29,12 @@ const hasCompleteJavascriptMapping = (
 
 export const executeJavascriptStepSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.executeJavascript),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.executeJavascript)
+      .describe('Step type discriminator: "executeJavascript".'),
     code: z.string().trim().min(1).max(MAX_CODE_LENGTH),
     // Optional dump of the whole return value. Individual fields are mapped
     // via `mapping`, the same JSON-path picker External API Request uses.

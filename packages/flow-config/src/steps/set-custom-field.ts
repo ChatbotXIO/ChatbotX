@@ -14,8 +14,12 @@ export type FieldOperationType =
   (typeof FieldOperationType)[keyof typeof FieldOperationType]
 
 export const setCustomFieldStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.setCustomField),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.setCustomField)
+    .describe('Step type discriminator: "setCustomField".'),
   inputFieldId: zodFieldReference(),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),

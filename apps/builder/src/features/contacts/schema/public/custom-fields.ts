@@ -1,6 +1,7 @@
 import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
 
 // The public API speaks friendly operation names (`increase`, not the
 // internal `"O04"` opaque code `FieldOperationType.increase` maps to) so an
@@ -48,6 +49,11 @@ export const addContactCustomFieldOperationsPublicRequest = z.object({
     .min(1)
     .max(20)
     .describe("Operations to apply in order, up to 20 per request."),
+  clientTimezone: ianaTimezoneSchema
+    .optional()
+    .describe(
+      "IANA timezone of the caller, e.g. `Asia/Ho_Chi_Minh`. Anchors a date-only value to that calendar day; defaults to the contact's, then the workspace's zone.",
+    ),
 })
 export type AddContactCustomFieldOperationsPublicRequest = z.infer<
   typeof addContactCustomFieldOperationsPublicRequest

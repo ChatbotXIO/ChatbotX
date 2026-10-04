@@ -5,7 +5,14 @@ import { inboxTeamMemberResource } from "../../inbox-team-members/schema/resourc
 import { inboxTeamResource } from "./resource"
 
 export const createInboxTeamRequest = z.object({
-  name: z.string().trim().min(1).max(255).describe("Team name."),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .describe(
+      "Team name (1-255 characters), shown when assigning conversations to the team.",
+    ),
   userIds: z
     .array(zodBigintAsString())
     .describe("User ids (numeric strings) to add as initial team members."),

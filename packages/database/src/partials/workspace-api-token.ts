@@ -24,6 +24,7 @@ export const workspaceApiTokenScopes = z.enum([
   "appointments",
   "media",
   "ads",
+  "settings",
 ])
 export type WorkspaceApiTokenScope = z.infer<typeof workspaceApiTokenScopes>
 

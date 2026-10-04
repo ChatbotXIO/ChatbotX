@@ -13,7 +13,9 @@ export const WHATSAPP_CALL_BUTTON_BODY_MAX = 1024
 export const WHATSAPP_CALL_BUTTON_LABEL_MAX = 20
 
 export const whatsappCallButtonStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.whatsappCallButton),
+  stepType: z
+    .literal(stepTypes.enum.whatsappCallButton)
+    .describe('Step type discriminator: "whatsappCallButton".'),
   text: z.string().trim().min(1).max(WHATSAPP_CALL_BUTTON_BODY_MAX),
   buttonLabel: z.string().trim().min(1).max(WHATSAPP_CALL_BUTTON_LABEL_MAX),
 })

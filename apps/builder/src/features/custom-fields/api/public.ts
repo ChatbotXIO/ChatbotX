@@ -26,7 +26,7 @@ export const customFieldsPublicRouter = {
       path: "/v1/custom-fields",
       summary: "Get all custom fields",
       description:
-        "Lists every custom field defined in the workspace, with its id and type. Use `contacts.setCustomFields` to set values on a contact.",
+        "Lists every custom field defined in the workspace, with its id and type. Use `contacts.setCustomField` to set values on a contact.",
       tags: ["Custom Fields"],
     })
     .input(publicListRequest)

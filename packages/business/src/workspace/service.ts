@@ -52,6 +52,14 @@ const PURGE_WORKSPACE_TEARDOWN_CONCURRENCY = 5
 const COMMUNITY_MAX_WORKSPACES = 1
 const WORKSPACE_LIMIT_LOCK_TIMEOUT_SECONDS = 30
 
+const WORKSPACE_SETTINGS_KEYS = [
+  "defaultReply",
+  "defaultReplyFrequency",
+  "smartResponseDelaySeconds",
+  "capiLimitedDataUse",
+  "logo",
+] as const
+
 class WorkspaceService extends BaseService {
   async findOrFail(props: {
     where: WorkspaceWhere
@@ -128,6 +136,47 @@ class WorkspaceService extends BaseService {
     }
     // Overnight window (endTime is earlier than startTime, e.g. 22:00-06:00).
     return currentTime >= startTime || currentTime <= endTime
+  }
+
+  /**
+   * Writes only the workspace's API-editable settings. A strict allow-list on
+   * purpose: the public API must never be able to touch status, plan, owner or
+   * tenant through this path, whatever object a caller hands in.
+   */
+  async updateSettings(props: {
+    id: string
+    data: Partial<
+      Pick<
+        typeof workspaceModel.$inferInsert,
+        | "defaultReply"
+        | "defaultReplyFrequency"
+        | "smartResponseDelaySeconds"
+        | "capiLimitedDataUse"
+        | "logo"
+      >
+    >
+  }): Promise<WorkspaceModel> {
+    // `defaultReply` holds the id of the Flow the Default Reply runs: it must be
+    // one of this workspace's flows, or every later default reply fails.
+    if (typeof props.data.defaultReply === "string") {
+      const flow = await db.query.flowModel.findFirst({
+        where: { id: props.data.defaultReply, workspaceId: props.id },
+        columns: { id: true },
+      })
+      if (!flow) {
+        throw notFoundException("Flow not found")
+      }
+    }
+    const picked = Object.fromEntries(
+      WORKSPACE_SETTINGS_KEYS.flatMap((key) =>
+        props.data[key] === undefined ? [] : [[key, props.data[key]]],
+      ),
+    )
+    // Nothing to write (an empty PATCH): an UPDATE with no SET is an error.
+    if (Object.keys(picked).length === 0) {
+      return await this.findById({ id: props.id })
+    }
+    return await this.update({ id: props.id, data: picked })
   }
 
   async update(props: {

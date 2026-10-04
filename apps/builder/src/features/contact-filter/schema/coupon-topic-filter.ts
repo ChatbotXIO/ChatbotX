@@ -28,10 +28,21 @@ const isValuelessOperator = (operator: OperatorType): boolean =>
  */
 export const couponTopicConditionSchema = z
   .object({
-    field: z.literal("couponTopic"),
-    topicId: z.string().min(1),
-    operator: operatorTypes,
-    value: sampleStringSchema.optional(),
+    field: z
+      .literal("couponTopic")
+      .describe("Always `couponTopic` for a coupon topic condition."),
+    topicId: z
+      .string()
+      .min(1)
+      .describe(
+        "Coupon topic id from the coupon topics list (`GET /v1/coupon-topics`).",
+      ),
+    operator: operatorTypes.describe(
+      "Allowed: `isNotEmpty` (has any coupon of the topic), `used` (has a used coupon), `eq` (has the coupon code in `value`). Only `eq` takes a value.",
+    ),
+    value: sampleStringSchema
+      .optional()
+      .describe("Coupon code to match; required for `eq`, omit otherwise."),
   })
   .superRefine((condition, ctx) => {
     if (

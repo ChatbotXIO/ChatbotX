@@ -7,7 +7,10 @@ import type { HTTPMethod } from "@orpc/server"
 import { ORPCError } from "@orpc/server"
 import { isCloud } from "@/env"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "@/features/ads-campaign/lib/api-paths"
-import { FILTER_VALUE_LABELS_POST_PATH } from "@/features/contact-filter/lib/api-paths"
+import {
+  FILTER_VALUE_LABELS_POST_PATH,
+  FILTER_VALUE_LABELS_TOKEN_PATH,
+} from "@/features/contact-filter/lib/api-paths"
 import { CONVERSATIONS_LIST_POST_PATH } from "@/features/conversations/lib/api-paths"
 
 export type WorkspaceAccessDenialReason = "trialExpired" | "macLimitReached"
@@ -73,6 +76,8 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
 
 const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
   ADS_CAMPAIGNS_INSIGHTS_PATH,
+  // Tag-id -> name lookup only: a primary-key read, no writes.
+  FILTER_VALUE_LABELS_TOKEN_PATH,
 ])
 
 /**
@@ -164,9 +169,19 @@ export const workspaceAccessDenialOrpcError = (
  * `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` — see the comments above for why each
  * path opts in independently.
  */
+/**
+ * Stopping a sending broadcast must stay possible on a trial-expired or
+ * over-limit workspace, exactly like the builder's `stopBroadcastAction`
+ * (`workspaceActionClientAllowExpired`). It only ever stops work, never starts
+ * any. Gate-only allow-list: a `read_only` token still cannot call it.
+ */
+export const BROADCAST_STOP_TOKEN_PATH = "/v1/broadcasts/{id}/stop"
+
 const READ_ONLY_POST_PATHS = new Set<string>([
   CONVERSATIONS_LIST_POST_PATH,
   FILTER_VALUE_LABELS_POST_PATH,
+  FILTER_VALUE_LABELS_TOKEN_PATH,
+  BROADCAST_STOP_TOKEN_PATH,
 ])
 
 export async function assertWorkspaceOwnerAccessForMethod(props: {

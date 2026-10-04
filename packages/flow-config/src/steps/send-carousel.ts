@@ -6,7 +6,9 @@ import { sendCardStepDefaultFn, sendCardStepSchema } from "./send-card"
 import { stepTypes } from "./step-action"
 
 export const sendCarouselStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendCarousel),
+  stepType: z
+    .literal(stepTypes.enum.sendCarousel)
+    .describe('Step type discriminator: "sendCarousel".'),
   layout: cardLayouts,
   cards: z.array(sendCardStepSchema),
 })

@@ -54,6 +54,7 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const sequenceService = {
+  list: vi.fn(),
   findWithSteps: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
@@ -88,6 +89,38 @@ beforeEach(() => {
 
 test("registers the sequences public router under the broadcasts scope", () => {
   expect(scopeArgAtImport).toBe("broadcasts")
+})
+
+describe("GET /v1/sequences", () => {
+  const procedure = findProcedure("GET", "/v1/sequences")
+
+  test("forwards filters and keeps newest-first as the default sort", async () => {
+    sequenceService.list.mockResolvedValue({ data: [], pageCount: 0 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { page: 1, perPage: 10, name: "wel", folderId: "5", active: true },
+    })
+    await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { page: 1, perPage: 10, sort: [{ id: "name", desc: false }] },
+    })
+
+    expect(sequenceService.list).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        name: "wel",
+        folderId: "5",
+        active: true,
+        sort: [{ id: "createdAt", desc: true }],
+      }),
+    )
+    expect(sequenceService.list).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ sort: [{ id: "name", desc: false }] }),
+    )
+  })
 })
 
 describe("POST /v1/sequences", () => {

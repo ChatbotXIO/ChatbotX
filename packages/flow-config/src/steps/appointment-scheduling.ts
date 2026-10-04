@@ -20,8 +20,12 @@ export type AppointmentSchedulingMode = z.infer<
 >
 
 const appointmentSchedulingBaseFields = {
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.appointmentScheduling),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.appointmentScheduling)
+    .describe('Step type discriminator: "appointmentScheduling".'),
   calendarId: zodBigintAsString(),
   states: z.tuple([successStateSchema, errorStateSchema]),
 }

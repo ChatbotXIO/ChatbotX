@@ -6,7 +6,9 @@ import { buttonStepSchema } from "./button"
 import { stepTypes } from "./step-action"
 
 export const sendVideoStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendVideo),
+  stepType: z
+    .literal(stepTypes.enum.sendVideo)
+    .describe('Step type discriminator: "sendVideo".'),
   mode: uploadModes,
   url: zodUrlWithVariables(),
   buttons: z.array(buttonStepSchema),

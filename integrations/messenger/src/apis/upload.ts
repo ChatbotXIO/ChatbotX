@@ -1,6 +1,40 @@
 import { DEFAULT_API_VERSION } from "../constants"
 import type { MessengerAuthValue } from "../schema"
 
+/** Meta's limit for template header images. */
+const MAX_HEADER_IMAGE_BYTES = 5 * 1024 * 1024
+const DOWNLOAD_TIMEOUT_MS = 20_000
+
+/** Reads a response body, failing as soon as it exceeds `maxBytes`. */
+async function readBodyWithLimit(
+  res: Response,
+  maxBytes: number,
+): Promise<Buffer<ArrayBuffer>> {
+  const declared = Number(res.headers.get("content-length"))
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    throw new Error(`Header image is larger than ${maxBytes} bytes`)
+  }
+  const chunks: Uint8Array[] = []
+  let total = 0
+  const reader = res.body?.getReader()
+  if (!reader) {
+    return Buffer.alloc(0)
+  }
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) {
+      break
+    }
+    total += value.byteLength
+    if (total > maxBytes) {
+      reader.cancel().catch(() => undefined)
+      throw new Error(`Header image is larger than ${maxBytes} bytes`)
+    }
+    chunks.push(value)
+  }
+  return Buffer.concat(chunks) as Buffer<ArrayBuffer>
+}
+
 type ResumableUploadImageOptions = {
   authenticatedDownload?: boolean
 }
@@ -23,26 +57,30 @@ export async function resumableUploadImage(
   const appId = auth.clientId
   const accessToken = auth.tokens.accessToken
   const authenticatedDownload = options.authenticatedDownload ?? true
+  const signal = AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS)
 
-  // 1. Download image bytes from the stored handle URL
+  // 1. Download image bytes from the stored handle URL. An unauthenticated
+  // download targets a caller-supplied or stored URL that the caller already
+  // checked is public; a redirect would send the fetch somewhere unchecked.
   const imgRes = await fetch(
     imageUrl,
     authenticatedDownload
       ? {
           headers: { Authorization: `Bearer ${accessToken}` },
+          signal,
         }
-      : undefined,
+      : { redirect: "error", signal },
   )
   if (!imgRes.ok) {
     throw new Error(`Template image download failed: HTTP ${imgRes.status}`)
   }
-  const imgBuf = Buffer.from(await imgRes.arrayBuffer())
   const mimeType = imgRes.headers.get("content-type") ?? "image/jpeg"
   if (!mimeType.startsWith("image/")) {
     throw new Error(
       `Header image must be an image file, got "${mimeType}" instead`,
     )
   }
+  const imgBuf = await readBodyWithLimit(imgRes, MAX_HEADER_IMAGE_BYTES)
   const fileName = new URL(imageUrl).pathname.split("/").pop() ?? "header.jpg"
 
   // 2. Create upload session — params as query string per Meta docs

@@ -5,8 +5,12 @@ import { whatsappFlowResource } from "./resource"
 
 export const listWhatsappFlowsRequest = z.object({
   workspaceId: zodBigintAsString(),
-  inboxId: zodBigintAsString().optional(),
-  integrationWhatsappId: zodBigintAsString().optional(),
+  inboxId: zodBigintAsString()
+    .optional()
+    .describe("Only Flows of the WhatsApp number on this inbox."),
+  integrationWhatsappId: zodBigintAsString()
+    .optional()
+    .describe("Only Flows of this WhatsApp channel."),
 })
 export type ListWhatsappFlowsRequest = z.infer<typeof listWhatsappFlowsRequest>
 

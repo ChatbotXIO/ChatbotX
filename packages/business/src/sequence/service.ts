@@ -25,6 +25,7 @@ import {
 } from "../contact-inbox/map-stats-contact-row"
 import { contactInboxService } from "../contact-inbox/service"
 import { notFoundException, validationException } from "../errors"
+import { folderService } from "../folder/service"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import {
   handleStepCreationImpact,
@@ -83,12 +84,28 @@ class SequenceService extends BaseService {
     return { data, pageCount: Math.ceil(total / pagination.limit) }
   }
 
+  /** A folder id must be a sequence folder of this workspace (null/absent = root). */
+  private async assertSequenceFolder(
+    workspaceId: string,
+    folderId: string | null | undefined,
+  ): Promise<void> {
+    if (!folderId) {
+      return
+    }
+    await folderService.ensureExists({
+      id: folderId,
+      workspaceId,
+      folderType: "sequence",
+    })
+  }
+
   async create(input: {
     workspaceId: string
     name: string
     folderId?: string | null
   }): Promise<{ sequenceId: string }> {
     const sequenceId = createId()
+    await this.assertSequenceFolder(input.workspaceId, input.folderId)
 
     try {
       await db.insert(sequenceModel).values({
@@ -127,6 +144,10 @@ class SequenceService extends BaseService {
       },
       message: "Sequence not found",
     })
+
+    if (data.folderId !== undefined && data.folderId !== sequence.folderId) {
+      await this.assertSequenceFolder(ctx.workspaceId, data.folderId)
+    }
 
     const changedEntries = Object.entries(data).filter(
       ([key, value]) => sequence[key as keyof typeof data] !== value,

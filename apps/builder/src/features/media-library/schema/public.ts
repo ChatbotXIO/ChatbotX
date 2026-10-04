@@ -83,7 +83,11 @@ export const createMediaLibraryFilePublicRequest = z.object({
   folderId: zodBigintAsString()
     .nullish()
     .describe("Folder to register the file in, or null for root-level."),
-  name: z.string().describe("File name."),
+  name: z
+    .string()
+    .describe(
+      "Display name of the file including its extension, e.g. `menu.pdf`.",
+    ),
   path: z
     .string()
     .describe("Storage path from `mediaLibrary.createUploadUrl`."),

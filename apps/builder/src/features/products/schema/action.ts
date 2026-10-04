@@ -62,9 +62,22 @@ export const productFormRequest = z.object({
   images: z
     .array(
       z.object({
-        id: z.string().optional(),
-        mode: z.enum(["link", "file"]).default("file"),
-        url: z.string().default(""),
+        id: z
+          .string()
+          .optional()
+          .describe(
+            "Existing image id when echoing a stored image back; omit for new images. Ignored on save.",
+          ),
+        mode: z
+          .enum(["link", "file"])
+          .default("file")
+          .describe(
+            "`file` for an image uploaded to the workspace storage or media library, `link` for an external image URL.",
+          ),
+        url: z
+          .string()
+          .default("")
+          .describe("Public image URL (https), matching `mode`."),
       }),
     )
     .default([])
@@ -72,9 +85,18 @@ export const productFormRequest = z.object({
   variantOptions: z
     .array(
       z.object({
-        name: z.string(),
-        values: z.array(z.string()),
-        position: z.coerce.number().default(0),
+        name: z
+          .string()
+          .describe(
+            "Option axis name, e.g. `Size`. Used as a key in variant combinations.",
+          ),
+        values: z
+          .array(z.string())
+          .describe("Allowed values for this option, e.g. `S`, `M`, `L`."),
+        position: z.coerce
+          .number()
+          .default(0)
+          .describe("Display order of this option; lower comes first."),
       }),
     )
     .default([])
@@ -82,9 +104,20 @@ export const productFormRequest = z.object({
   variants: z
     .array(
       z.object({
-        combination: z.record(z.string(), z.string()),
-        price: z.coerce.number().min(0).default(0),
-        isEnabled: z.boolean().default(true),
+        combination: z
+          .record(z.string(), z.string())
+          .describe(
+            'Map of option name to chosen value, e.g. {"Size":"M","Color":"Red"}; names and values must come from `variantOptions`.',
+          ),
+        price: z.coerce
+          .number()
+          .min(0)
+          .default(0)
+          .describe("Price of this variant in the product's currency."),
+        isEnabled: z
+          .boolean()
+          .default(true)
+          .describe("Whether this variant can be purchased."),
       }),
     )
     .default([])
@@ -94,9 +127,26 @@ export const productFormRequest = z.object({
   addons: z
     .array(
       z.object({
-        name: z.string().default(""),
-        maxSelections: z.coerce.number().int().min(1).default(1),
-        addonProductIds: z.array(z.string()).default([]),
+        name: z
+          .string()
+          .default("")
+          .describe(
+            "Add-on group title shown to the customer, e.g. `Toppings`.",
+          ),
+        maxSelections: z.coerce
+          .number()
+          .int()
+          .min(1)
+          .default(1)
+          .describe(
+            "Maximum number of add-on products the customer may pick from this group.",
+          ),
+        addonProductIds: z
+          .array(z.string())
+          .default([])
+          .describe(
+            "Ids of the products offered in this group. Get them from `products.list`; they are usually products with `isAddonOnly` true.",
+          ),
       }),
     )
     .default([])

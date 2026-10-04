@@ -132,8 +132,14 @@ class FolderService extends BaseService {
     let paths: string[] = []
 
     if (data.parentId) {
+      // Scoped by workspace and type: a parent of another tenant (or of
+      // another folder namespace) must read as missing, never be adopted.
       const parentFolder = await tx.query.folderModel.findFirst({
-        where: { id: data.parentId },
+        where: {
+          id: data.parentId,
+          workspaceId,
+          folderType: data.folderType,
+        },
       })
       if (!parentFolder) {
         throw new ChatbotXException("Parent folder does not exist!")

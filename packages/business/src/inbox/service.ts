@@ -169,6 +169,19 @@ class InboxService extends BaseService {
     // )
   }
 
+  async findByIdOrFail(props: {
+    workspaceId: string
+    id: string
+  }): Promise<InboxModel> {
+    const inbox = await this.find({
+      where: { id: props.id, workspaceId: props.workspaceId },
+    })
+    if (!inbox) {
+      throw notFoundException("Inbox not found")
+    }
+    return inbox
+  }
+
   async updateMarkReadOnOutbound(props: {
     workspaceId: string
     id: string

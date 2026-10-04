@@ -9,8 +9,12 @@ import {
 import { stepTypes } from "./step-action"
 
 export const moosendCreateContactSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.moosendCreateContact),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.moosendCreateContact)
+    .describe('Step type discriminator: "moosendCreateContact".'),
   listId: z.string().trim().min(1),
   emailField: z.string().trim().min(1),
   states: z.tuple([successStateSchema, errorStateSchema]),
