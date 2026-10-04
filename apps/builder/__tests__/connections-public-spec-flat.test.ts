@@ -108,7 +108,6 @@ describe("public API spec — connections/connect-sessions request bodies stay M
     expect(postOperationIds).toEqual(
       [
         "connectSessions.connectTargets",
-        "connectSessions.submitInput",
         "connections.create",
         "connections.reconnect",
         "connections.refresh",

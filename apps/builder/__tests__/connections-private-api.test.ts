@@ -185,7 +185,6 @@ describe("private connectionsAPI.createConnectionAPI", () => {
   })
 
   test("calls connectionService.connectFromCredentials with actorUserId — the same service method the public route calls, with only the caller's actor identity differing", async () => {
-    mocks.list.mockResolvedValue({ data: [{ id: "existing-conn" }] })
     mocks.connectFromCredentials.mockResolvedValueOnce({ id: "conn-1" })
 
     const handler = getCreateHandler()
@@ -204,7 +203,10 @@ describe("private connectionsAPI.createConnectionAPI", () => {
   })
 
   test("calls connectionService.startSession with actorUserId for an OAuth provider — same service as the public route", async () => {
-    mocks.list.mockResolvedValue({ data: [{ id: "existing-conn" }] })
+    mocks.resolveChannelPolicy.mockResolvedValueOnce({
+      ownerId: "owner-1",
+      visibleChannels: ["messenger"],
+    })
     mocks.resolveOAuthCredential.mockResolvedValueOnce({
       credential: { clientId: "id" },
       callbackUrl: "https://app.example.com/callback",
@@ -230,8 +232,7 @@ describe("private connectionsAPI.createConnectionAPI", () => {
     )
   })
 
-  test("throws channelHidden when the channel has no existing connection and the tenant's policy hides it (the hidden-channel branch)", async () => {
-    mocks.list.mockResolvedValue({ data: [] })
+  test("throws channelHidden when the tenant's policy hides the channel (the hidden-channel branch)", async () => {
     mocks.resolveChannelPolicy.mockResolvedValueOnce({
       ownerId: "owner-1",
       visibleChannels: [],
@@ -248,11 +249,11 @@ describe("private connectionsAPI.createConnectionAPI", () => {
     expect(mocks.connectFromCredentials).not.toHaveBeenCalled()
   })
 
-  test("does not hide an already-connected channel — an existing Connection row grandfathers it in regardless of the current policy", async () => {
-    mocks.list.mockResolvedValue({ data: [{ id: "existing-conn" }] })
-    // The hidden-channel check only ever runs when there is NO existing
-    // connection (`data.length === 0`) — `resolveChannelPolicy` must not
-    // even be called here, so no stub is queued for it.
+  test("does not hide a channel that is grandfathered into visibleChannels despite an empty creatable set (an already-connected channel stays connectable)", async () => {
+    mocks.resolveChannelPolicy.mockResolvedValueOnce({
+      ownerId: "owner-1",
+      visibleChannels: ["messenger"],
+    })
     mocks.resolveOAuthCredential.mockResolvedValueOnce({
       credential: { clientId: "id" },
       callbackUrl: "https://app.example.com/callback",
@@ -272,7 +273,6 @@ describe("private connectionsAPI.createConnectionAPI", () => {
   })
 
   test("does not hide a channel when no tenant policy applies (non-white-label)", async () => {
-    mocks.list.mockResolvedValue({ data: [] })
     mocks.resolveChannelPolicy.mockResolvedValueOnce(null)
     mocks.resolveOAuthCredential.mockResolvedValueOnce({
       credential: { clientId: "id" },

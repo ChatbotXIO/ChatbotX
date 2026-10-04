@@ -109,12 +109,15 @@ const integrationOpenAIService = {
   disconnect: vi.fn(),
 }
 
+const connectionStateService = { findByProviderSourceId: vi.fn() }
+
 vi.mock("@chatbotx.io/business", () => ({
   integrationService,
   integrationClaudeService,
   integrationDeepSeekService,
   integrationGeminiService,
   integrationOpenAIService,
+  connectionStateService,
 }))
 
 const connectionService = {
@@ -122,9 +125,6 @@ const connectionService = {
   connectFromCredentials: vi.fn(),
 }
 vi.mock("@chatbotx.io/connections", () => ({ connectionService }))
-
-const connectionRepository = { findByProviderSourceId: vi.fn() }
-vi.mock("@chatbotx.io/database/repositories", () => ({ connectionRepository }))
 
 await import("@/features/integrations/api/public/crud")
 await import("@/features/integrations/api/public/ai")
@@ -398,7 +398,7 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
   const procedure = findProcedure("DELETE", "/v1/integrations/ai/{provider}")
 
   test("resolves the Connection by (workspaceId, provider, 'workspace') and disconnects through connectionService", async () => {
-    connectionRepository.findByProviderSourceId.mockResolvedValueOnce({
+    connectionStateService.findByProviderSourceId.mockResolvedValueOnce({
       id: "conn-1",
     })
 
@@ -407,7 +407,7 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
       input: { provider: "deepseek" },
     })
 
-    expect(connectionRepository.findByProviderSourceId).toHaveBeenCalledWith({
+    expect(connectionStateService.findByProviderSourceId).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       provider: "deepseek",
       sourceId: "workspace",
@@ -419,7 +419,9 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
   })
 
   test("no-ops the disconnect call (idempotent) when no Connection row exists yet", async () => {
-    connectionRepository.findByProviderSourceId.mockResolvedValueOnce(undefined)
+    connectionStateService.findByProviderSourceId.mockResolvedValueOnce(
+      undefined,
+    )
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
@@ -430,7 +432,7 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
   })
 
   test("invalidates the AI integration cache after disconnecting", async () => {
-    connectionRepository.findByProviderSourceId.mockResolvedValueOnce({
+    connectionStateService.findByProviderSourceId.mockResolvedValueOnce({
       id: "conn-1",
     })
 
@@ -446,7 +448,9 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
   })
 
   test("invalidates the cache even when there was nothing to disconnect", async () => {
-    connectionRepository.findByProviderSourceId.mockResolvedValueOnce(undefined)
+    connectionStateService.findByProviderSourceId.mockResolvedValueOnce(
+      undefined,
+    )
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },

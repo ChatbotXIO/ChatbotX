@@ -78,8 +78,6 @@ const mocks = vi.hoisted(() => ({
     } | null> => null,
   ),
   findSessionByIdForWorkspace: vi.fn(),
-  requireSessionByIdForWorkspace: vi.fn(),
-  submitSessionInput: vi.fn(),
   cancelSession: vi.fn(),
 }))
 
@@ -95,8 +93,6 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/business/connect-session", () => ({
   connectSessionService: {
     findByIdForWorkspace: mocks.findSessionByIdForWorkspace,
-    requireByIdForWorkspace: mocks.requireSessionByIdForWorkspace,
-    submitInput: mocks.submitSessionInput,
     cancel: mocks.cancelSession,
   },
 }))
@@ -140,8 +136,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
       `${provider} not configured`,
       "connectionNotConfigured",
     ),
-  connectSessionExpiredException: (message: string) =>
-    new MockChatbotXException(message, "connectSessionExpired"),
 }))
 
 vi.mock("../src/features/connections/lib/resolve-provider", () => ({
@@ -170,11 +164,10 @@ vi.mock("@/lib/workspace/resolve-visible-channels", () => ({
   resolveChannelPolicy: mocks.resolveChannelPolicy,
 }))
 
-const {
-  connectionsPublicRouter,
-  connectionProvidersPublicRouter,
-  connectSessionsPublicRouter,
-} = await import("../src/features/connections/api/public")
+// Imported for its module-level side effect (populating `capturedProcedures`
+// as each router's `.route(...)` calls run) — no test needs the router
+// objects themselves.
+await import("../src/features/connections/api/public")
 
 const findProcedure = (method: string, path: string): CapturedProcedure => {
   const found = capturedProcedures.find(
@@ -199,17 +192,6 @@ beforeEach(() => {
   mocks.sanitizeOptionalReturnUrl.mockImplementation(
     async (url?: string) => url,
   )
-})
-
-describe("connections public router", () => {
-  test("registers list/get under /v1/connections and connection-providers under /v1/connection-providers", () => {
-    expect(() => connectionsPublicRouter).not.toThrow()
-    expect(() => connectionProvidersPublicRouter).not.toThrow()
-    expect(() => connectSessionsPublicRouter).not.toThrow()
-    expect(findProcedure("GET", "/v1/connections")).toBeDefined()
-    expect(findProcedure("GET", "/v1/connections/{id}")).toBeDefined()
-    expect(findProcedure("GET", "/v1/connection-providers")).toBeDefined()
-  })
 })
 
 describe("GET /v1/connections", () => {
@@ -312,44 +294,69 @@ describe("GET /v1/connection-providers", () => {
   })
 })
 
-describe("DELETE /v1/connections/{id}", () => {
-  const procedure = findProcedure("DELETE", "/v1/connections/{id}")
+describe.each([
+  {
+    httpMethod: "DELETE",
+    path: "/v1/connections/{id}",
+    label: "disconnect",
+    mock: connectionServiceMocks.disconnect,
+  },
+  {
+    httpMethod: "POST",
+    path: "/v1/connections/{id}/refresh",
+    label: "refresh",
+    mock: connectionServiceMocks.refresh,
+  },
+  {
+    httpMethod: "POST",
+    path: "/v1/connections/{id}/verify",
+    label: "verify",
+    mock: connectionServiceMocks.verify,
+  },
+])("$httpMethod $path", ({ httpMethod, path, label, mock }) => {
+  const procedure = () => findProcedure(httpMethod, path)
 
-  test("delegates to connectionService.disconnect scoped to the token's workspace", async () => {
-    connectionServiceMocks.disconnect.mockResolvedValueOnce({ id: "conn-1" })
+  test(`loads the connection, then delegates to connectionService.${label} scoped to the token's workspace`, async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "messenger",
+    })
+    mock.mockResolvedValueOnce({ id: "conn-1" })
 
-    const result = await procedure.handler?.({
+    const result = await procedure().handler?.({
       context,
       input: { id: "conn-1" },
     })
 
-    expect(connectionServiceMocks.disconnect).toHaveBeenCalledWith({
+    expect(mocks.getForWorkspace).toHaveBeenCalledWith({
+      id: "conn-1",
+      workspaceId: "workspace-1",
+    })
+    expect(mock).toHaveBeenCalledWith({
       connectionId: "conn-1",
       workspaceId: "workspace-1",
     })
     expect(result).toEqual({ id: "conn-1", resource: true })
+  })
+
+  test(`throws notFound before calling connectionService.${label} when the connection does not exist in this workspace`, async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce(undefined)
+
+    await expect(
+      procedure().handler?.({ context, input: { id: "missing" } }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(mock).not.toHaveBeenCalled()
   })
 })
 
-describe("POST /v1/connections/{id}/refresh", () => {
+describe("POST /v1/connections/{id}/refresh — provider error propagation", () => {
   const procedure = findProcedure("POST", "/v1/connections/{id}/refresh")
 
-  test("delegates to connectionService.refresh scoped to the token's workspace", async () => {
-    connectionServiceMocks.refresh.mockResolvedValueOnce({ id: "conn-1" })
-
-    const result = await procedure.handler?.({
-      context,
-      input: { id: "conn-1" },
-    })
-
-    expect(connectionServiceMocks.refresh).toHaveBeenCalledWith({
-      connectionId: "conn-1",
-      workspaceId: "workspace-1",
-    })
-    expect(result).toEqual({ id: "conn-1", resource: true })
-  })
-
   test("propagates a connectionInactive failure without swallowing it", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "messenger",
+    })
     connectionServiceMocks.refresh.mockRejectedValueOnce(
       new MockChatbotXException(
         "This connection is not active.",
@@ -360,25 +367,6 @@ describe("POST /v1/connections/{id}/refresh", () => {
     await expect(
       procedure.handler?.({ context, input: { id: "conn-1" } }),
     ).rejects.toThrow("This connection is not active.")
-  })
-})
-
-describe("POST /v1/connections/{id}/verify", () => {
-  const procedure = findProcedure("POST", "/v1/connections/{id}/verify")
-
-  test("delegates to connectionService.verify scoped to the token's workspace", async () => {
-    connectionServiceMocks.verify.mockResolvedValueOnce({ id: "conn-1" })
-
-    const result = await procedure.handler?.({
-      context,
-      input: { id: "conn-1" },
-    })
-
-    expect(connectionServiceMocks.verify).toHaveBeenCalledWith({
-      connectionId: "conn-1",
-      workspaceId: "workspace-1",
-    })
-    expect(result).toEqual({ id: "conn-1", resource: true })
   })
 })
 
@@ -410,7 +398,6 @@ describe("POST /v1/connections", () => {
 
   test("starts an OAuth session and returns connection: null, session", async () => {
     mocks.channelForProvider.mockReturnValue("messenger")
-    mocks.list.mockResolvedValueOnce({ data: [], count: 0 })
     mocks.resolveChannelPolicy.mockResolvedValueOnce({
       ownerId: "owner-1",
       creatable: ["messenger"],
@@ -444,9 +431,8 @@ describe("POST /v1/connections", () => {
     })
   })
 
-  test("throws channelHidden when the channel is hidden and not already connected", async () => {
+  test("throws channelHidden when the channel is outside the tenant's visibleChannels policy", async () => {
     mocks.channelForProvider.mockReturnValue("messenger")
-    mocks.list.mockResolvedValueOnce({ data: [], count: 0 })
     mocks.resolveChannelPolicy.mockResolvedValueOnce({
       ownerId: "owner-1",
       creatable: [],
@@ -459,11 +445,12 @@ describe("POST /v1/connections", () => {
     expect(connectionServiceMocks.startSession).not.toHaveBeenCalled()
   })
 
-  test("skips the hidden-channel check when the provider is already connected in this workspace", async () => {
+  test("does not hide a channel that is grandfathered into visibleChannels despite an empty creatable set (an already-connected channel stays connectable)", async () => {
     mocks.channelForProvider.mockReturnValue("messenger")
-    mocks.list.mockResolvedValueOnce({
-      data: [{ id: "conn-existing" }],
-      count: 1,
+    mocks.resolveChannelPolicy.mockResolvedValueOnce({
+      ownerId: "owner-1",
+      creatable: [],
+      visibleChannels: ["messenger"],
     })
     mocks.resolveOAuthCredential.mockResolvedValueOnce({
       credential: {},
@@ -473,9 +460,15 @@ describe("POST /v1/connections", () => {
       session: { id: "session-1" },
     })
 
-    await procedure.handler?.({ context, input: { provider: "messenger" } })
+    const result = await procedure.handler?.({
+      context,
+      input: { provider: "messenger" },
+    })
 
-    expect(mocks.resolveChannelPolicy).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      connection: null,
+      session: { id: "session-1", sessionResource: true },
+    })
   })
 })
 
@@ -580,7 +573,22 @@ describe("POST /v1/connect-sessions/{id}/targets", () => {
   const procedure = () =>
     findProcedure("POST", "/v1/connect-sessions/{id}/targets")
 
+  test("throws notFound before calling connectTargets when the session does not exist", async () => {
+    mocks.findSessionByIdForWorkspace.mockResolvedValueOnce(undefined)
+    await expect(
+      procedure().handler?.({
+        context,
+        input: { id: "missing", targetIds: ["page-1"] },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(connectionServiceMocks.connectTargets).not.toHaveBeenCalled()
+  })
+
   test("delegates to connectionService.connectTargets and maps the envelope", async () => {
+    mocks.findSessionByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "messenger",
+    })
     connectionServiceMocks.connectTargets.mockResolvedValueOnce({
       session: { id: "session-1" },
       connections: [{ id: "conn-1" }],
@@ -609,48 +617,22 @@ describe("POST /v1/connect-sessions/{id}/targets", () => {
   })
 })
 
-describe("POST /v1/connect-sessions/{id}/input", () => {
-  const procedure = () =>
-    findProcedure("POST", "/v1/connect-sessions/{id}/input")
-
-  test("throws connectSessionExpired when the session is not awaiting input", async () => {
-    mocks.requireSessionByIdForWorkspace.mockResolvedValueOnce({
-      id: "session-1",
-      nextAction: { type: "open_url", url: "https://x" },
-    })
-    await expect(
-      procedure().handler?.({
-        context,
-        input: { id: "session-1", input: { pin: "123456" } },
-      }),
-    ).rejects.toMatchObject({ code: "connectSessionExpired" })
-    expect(mocks.submitSessionInput).not.toHaveBeenCalled()
-  })
-
-  test("acknowledges an enter_input session and reverts to wait", async () => {
-    mocks.requireSessionByIdForWorkspace.mockResolvedValueOnce({
-      id: "session-1",
-      nextAction: { type: "enter_input", inputFields: [] },
-    })
-    mocks.submitSessionInput.mockResolvedValueOnce({ id: "session-1" })
-
-    const result = await procedure().handler?.({
-      context,
-      input: { id: "session-1", input: { pin: "123456" } },
-    })
-
-    expect(mocks.submitSessionInput).toHaveBeenCalledWith({
-      id: "session-1",
-      nextAction: { type: "wait" },
-    })
-    expect(result).toEqual({ id: "session-1", sessionResource: true })
-  })
-})
-
 describe("DELETE /v1/connect-sessions/{id}", () => {
   const procedure = () => findProcedure("DELETE", "/v1/connect-sessions/{id}")
 
+  test("throws notFound before calling cancel when the session does not exist", async () => {
+    mocks.findSessionByIdForWorkspace.mockResolvedValueOnce(undefined)
+    await expect(
+      procedure().handler?.({ context, input: { id: "missing" } }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(mocks.cancelSession).not.toHaveBeenCalled()
+  })
+
   test("delegates to connectSessionService.cancel scoped to the token's workspace", async () => {
+    mocks.findSessionByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "messenger",
+    })
     mocks.cancelSession.mockResolvedValueOnce({ id: "session-1" })
     const result = await procedure().handler?.({
       context,

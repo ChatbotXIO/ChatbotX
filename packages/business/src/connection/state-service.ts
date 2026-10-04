@@ -342,22 +342,35 @@ class ConnectionStateService extends BaseService {
    * `authorization.removed`'s `openId`, etc.) actually carries. Silently
    * no-ops when no matching connection exists (an orphaned/duplicate webhook
    * delivery, not a caller error).
+   *
+   * Pass `workspaceId` whenever the caller already knows it (e.g. TikTok's
+   * `authorization.removed`, which carries the integration row's
+   * `workspaceId`) — this resolves the exact `(workspaceId, provider,
+   * sourceId)` unique row instead of the any-workspace fallback below, so a
+   * different workspace's reconnected copy of the same external account can
+   * never be marked unhealthy by mistake.
    */
   async markUnhealthyByIdentifier(input: {
     provider: IntegrationType
     identifier: string
     reason?: ConnectionStatusReason
     ownerId?: string
+    workspaceId?: string
   }): Promise<ConnectionModel | null> {
-    const existing =
-      await connectionRepository.findByProviderAndSourceIdAnyWorkspace({
-        provider: input.provider,
-        sourceId: input.identifier,
-      })
+    const existing = input.workspaceId
+      ? await connectionRepository.findByProviderSourceId({
+          workspaceId: input.workspaceId,
+          provider: input.provider,
+          sourceId: input.identifier,
+        })
+      : await connectionRepository.findByProviderAndSourceIdAnyWorkspace({
+          provider: input.provider,
+          sourceId: input.identifier,
+        })
     if (!existing) {
       return null
     }
-    if (!isActiveConnectionStatus(existing.status)) {
+    if (!(input.workspaceId || isActiveConnectionStatus(existing.status))) {
       // No ACTIVE row matched `(provider, identifier)` — the repository
       // fell back to its "any row, most recent" branch, which can be a
       // stale disconnected row (possibly from a DIFFERENT workspace that
@@ -379,6 +392,23 @@ class ConnectionStateService extends BaseService {
       reason: input.reason,
       ownerId: input.ownerId,
     })
+  }
+
+  /** Thin pass-through for a workspace-scoped `(provider, sourceId)` lookup — the unique-key read a caller needs before a write it drives (e.g. the legacy AI-provider disconnect alias), so app-layer code never imports `connectionRepository` directly. */
+  async findByProviderSourceId(input: {
+    workspaceId: string
+    provider: IntegrationType
+    sourceId: string
+  }): Promise<ConnectionModel | undefined> {
+    return await connectionRepository.findByProviderSourceId(input)
+  }
+
+  /** Every distinct provider with a non-disconnected `Connection` row in this workspace — backs the connect catalog's "already connected" check with one `SELECT DISTINCT` instead of paging through every matching row. */
+  async listProvidersWithStatus(input: {
+    workspaceId: string
+    statuses: ConnectionStatus[]
+  }): Promise<IntegrationType[]> {
+    return await connectionRepository.distinctProvidersByStatus(input)
   }
 
   /** Records a successful `AuthStore.save` after the auth write commits. */

@@ -1,27 +1,18 @@
 import { connectionStateService } from "@chatbotx.io/business"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import {
-  channelHiddenException,
-  connectionNotConfiguredException,
-  connectSessionExpiredException,
   notFoundException,
   validationException,
 } from "@chatbotx.io/business/errors"
-import {
-  CONNECTION_REGISTRY,
-  connectionService,
-} from "@chatbotx.io/connections"
+import { connectionService } from "@chatbotx.io/connections"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
-import { sanitizeOptionalReturnUrl } from "@/lib/oauth-referer"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { withPublicPaging } from "@/lib/public-api/list"
-import { resolveChannelPolicy } from "@/lib/workspace/resolve-visible-channels"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { startConnect, startReconnect } from "../lib/connect-flow"
 import { toConnectSessionResource } from "../lib/connect-session-resource"
-import { resolveOAuthCredential } from "../lib/resolve-connect-credential"
 import {
-  channelForProvider,
   listConnectionProviderResources,
   toConnectionResource,
 } from "../lib/resolve-provider"
@@ -33,7 +24,6 @@ import {
   listConnectionProvidersRequest,
   listConnectionsRequest,
   reconnectConnectionRequest,
-  submitConnectSessionInputRequest,
   updateConnectionRequest,
 } from "../schema/request"
 
@@ -92,64 +82,22 @@ const createConnectionAPI = authorizedAPI
   .input(createConnectionRequest.and(withWorkspaceIdSchema))
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ context, input }) => {
-    const adapter = CONNECTION_REGISTRY[input.provider]
-    if (!adapter) {
-      throw connectionNotConfiguredException(input.provider)
-    }
-
-    const channel = channelForProvider(input.provider)
-    if (channel) {
-      const { data } = await connectionStateService.list({
-        workspaceId: input.workspaceId,
-        provider: input.provider,
-        perPage: 1,
-      })
-      if (data.length === 0) {
-        const policy = await resolveChannelPolicy(input.workspaceId)
-        if (policy && !policy.visibleChannels.includes(channel)) {
-          throw channelHiddenException(channel)
-        }
-      }
-    }
-
-    const isCredentialStrategy =
-      adapter.provider.strategy === "token" ||
-      adapter.provider.strategy === "api_key" ||
-      adapter.provider.strategy === "self_serve"
-
-    if (isCredentialStrategy) {
-      const connection = await connectionService.connectFromCredentials({
-        workspaceId: input.workspaceId,
-        provider: input.provider,
-        config: input.config ?? {},
-        actorUserId: context.user.id,
-      })
-      return { connection: toConnectionResource(connection), session: null }
-    }
-
     const ownerId = await resolvePlatformOwnerId({
       userId: context.user.id,
       workspaceId: input.workspaceId,
     })
-    const resolved = await resolveOAuthCredential({
-      provider: input.provider,
-      ownerId,
-    })
-    if (!resolved) {
-      throw connectionNotConfiguredException(input.provider)
-    }
-    const returnUrl = await sanitizeOptionalReturnUrl(input.redirectUrl)
-    const { session } = await connectionService.startSession({
+    const { connection, session } = await startConnect({
       workspaceId: input.workspaceId,
       provider: input.provider,
-      purpose: "connect",
-      credential: resolved.credential,
-      callbackUrl: resolved.callbackUrl,
-      actorUserId: context.user.id,
-      platformOwnerId: ownerId,
-      returnUrl,
+      config: input.config,
+      redirectUrl: input.redirectUrl,
+      ownerId,
+      actor: { actorUserId: context.user.id },
     })
-    return { connection: null, session: toConnectSessionResource(session) }
+    return {
+      connection: connection ? toConnectionResource(connection) : null,
+      session: session ? toConnectSessionResource(session) : null,
+    }
   })
 
 const reconnectConnectionAPI = authorizedAPI
@@ -173,22 +121,12 @@ const reconnectConnectionAPI = authorizedAPI
       userId: context.user.id,
       workspaceId: input.workspaceId,
     })
-    const resolved = await resolveOAuthCredential({
-      provider: connection.provider,
-      ownerId,
-    })
-    if (!resolved) {
-      throw connectionNotConfiguredException(connection.provider)
-    }
-    const returnUrl = await sanitizeOptionalReturnUrl(input.redirectUrl)
-    const { session } = await connectionService.reconnect({
-      connectionId: input.id,
+    const { session } = await startReconnect({
+      connection,
       workspaceId: input.workspaceId,
-      credential: resolved.credential,
-      callbackUrl: resolved.callbackUrl,
-      actorUserId: context.user.id,
-      platformOwnerId: ownerId,
-      returnUrl,
+      redirectUrl: input.redirectUrl,
+      ownerId,
+      actor: { actorUserId: context.user.id },
     })
     return { connection: null, session: toConnectSessionResource(session) }
   })
@@ -278,10 +216,6 @@ const listConnectionProvidersAPI = authorizedAPI
   .input(listConnectionProvidersRequest.and(withWorkspaceIdSchema))
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
-    // Support-session exemption from hidden-channel policy (the public
-    // route's `isSupportSession` parameter) is not yet threaded through this
-    // private path — deferred alongside the rest of the support-access
-    // integration this feature doesn't otherwise touch.
     const data = await listConnectionProviderResources({
       workspaceId: input.workspaceId,
       kind: input.kind,
@@ -332,33 +266,6 @@ const connectSessionTargetsAPI = authorizedAPI
     }
   })
 
-const submitConnectSessionInputAPI = authorizedAPI
-  .route({
-    method: "POST",
-    path: "/workspaces/{workspaceId}/connect-sessions/{id}/input",
-    summary: "Answer an enter_input step",
-    tags: ["Connections"],
-  })
-  .input(submitConnectSessionInputRequest.and(withWorkspaceIdSchema))
-  .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-  .handler(async ({ input }) => {
-    const session = await connectSessionService.requireByIdForWorkspace({
-      id: input.id,
-      workspaceId: input.workspaceId,
-    })
-    if (session.nextAction?.type !== "enter_input") {
-      throw connectSessionExpiredException(
-        "This connect session is not awaiting input.",
-      )
-    }
-    const updated = await connectSessionService.submitInput({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      nextAction: { type: "wait" },
-    })
-    return toConnectSessionResource(updated)
-  })
-
 const cancelConnectSessionAPI = authorizedAPI
   .route({
     method: "DELETE",
@@ -379,7 +286,6 @@ const cancelConnectSessionAPI = authorizedAPI
 export const connectSessionsAPI = {
   getConnectSessionAPI,
   connectSessionTargetsAPI,
-  submitConnectSessionInputAPI,
   cancelConnectSessionAPI,
 }
 

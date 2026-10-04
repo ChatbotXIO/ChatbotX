@@ -11,7 +11,17 @@ import {
   connectSessionTargetSchema,
   integrationTypes,
 } from "@chatbotx.io/database/partials"
+import type { ConnectionStrategy } from "@chatbotx.io/sdk"
 import { z } from "zod"
+
+/** Single source for the `strategy` enum shared by `connectionResource` and `connectionProviderResource` — kept in lockstep with the SDK's `ConnectionStrategy` via `satisfies`. */
+export const connectionStrategies = z.enum([
+  "oauth_redirect",
+  "oauth_popup",
+  "token",
+  "api_key",
+  "self_serve",
+]) satisfies z.ZodType<ConnectionStrategy>
 
 /**
  * Public/private `Connection` DTO — explicit field list, **never** `auth`.
@@ -29,13 +39,7 @@ export const connectionResource = z.object({
   displayName: z.string(),
   inboxId: z.string().nullable(),
   integrationId: z.string().nullable(),
-  strategy: z.enum([
-    "oauth_redirect",
-    "oauth_popup",
-    "token",
-    "api_key",
-    "self_serve",
-  ]),
+  strategy: connectionStrategies,
   capabilities: z.object({
     refreshable: z.boolean(),
     verifiable: z.boolean(),
@@ -50,7 +54,7 @@ export const connectionResource = z.object({
 })
 export type ConnectionResource = z.infer<typeof connectionResource>
 
-export const connectionProviderConfigField = z.object({
+const connectionProviderConfigField = z.object({
   name: z.string(),
   type: z.enum(["string", "secret", "number", "boolean", "enum", "url"]),
   required: z.boolean(),
@@ -60,16 +64,10 @@ export const connectionProviderConfigField = z.object({
 })
 
 export const connectionProviderResource = z.object({
-  provider: z.string(),
+  provider: integrationTypes,
   kind: connectionKinds,
-  channel: z.string().nullable(),
-  strategy: z.enum([
-    "oauth_redirect",
-    "oauth_popup",
-    "token",
-    "api_key",
-    "self_serve",
-  ]),
+  channel: channelTypes.nullable(),
+  strategy: connectionStrategies,
   multiAccount: z.boolean(),
   configFields: z.array(connectionProviderConfigField),
   available: z.boolean(),
@@ -110,13 +108,10 @@ export const connectEnvelope = z.object({
   connection: connectionResource.nullable(),
   session: connectSessionResource.nullable(),
 })
-export type ConnectEnvelope = z.infer<typeof connectEnvelope>
-
-/** `POST /v1/connect-sessions/{id}/targets` response. */
-export const connectSessionOutcomeResource = connectSessionOutcomeSchema
 
 export const connectSessionTargetsResource = z.object({
   session: connectSessionResource,
   connections: z.array(connectionResource),
-  outcomes: z.array(connectSessionOutcomeResource),
+  /** `POST /v1/connect-sessions/{id}/targets` response's per-target outcome. */
+  outcomes: z.array(connectSessionOutcomeSchema),
 })

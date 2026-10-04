@@ -2,6 +2,7 @@
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { integrationClaudeService } from "@chatbotx.io/business"
+import { verifyAiProviderApiKey } from "@chatbotx.io/business/integration-ai-provider/verify"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -9,7 +10,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { verifyClaudeApiKey } from "../lib"
 import {
   type ConnectClaudeSchema,
   connectClaudeSchema,
@@ -28,7 +28,12 @@ export const connectClaudeAction = workspaceActionClient
     }) => {
       const t = await getTranslations()
 
-      if (!(await verifyClaudeApiKey(parsedInput.apiKey))) {
+      if (
+        (await verifyAiProviderApiKey(
+          aiProviders.enum.claude,
+          parsedInput.apiKey,
+        )) === "invalid"
+      ) {
         return returnValidationErrors(connectClaudeSchema, {
           apiKey: {
             _errors: [t("validation.invalidApiKey")],

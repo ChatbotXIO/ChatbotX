@@ -180,6 +180,7 @@ describe("tiktok webhook routing", () => {
       workspaceId: "workspace-1",
     })
 
+    markUnhealthyByIdentifier.mockResolvedValueOnce({ id: "conn-1" })
     const response = await handleWebhook(
       "tiktok",
       asNextRequest(
@@ -201,6 +202,7 @@ describe("tiktok webhook routing", () => {
       identifier: "open-1",
       reason: "token_revoked",
       ownerId: "owner-1",
+      workspaceId: "workspace-1",
     })
   })
 })

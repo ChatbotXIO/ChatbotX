@@ -63,7 +63,6 @@ export const toConnectionResource = (
 export const listConnectionProviderResources = async (input: {
   workspaceId: string
   kind?: "channel" | "integration" | "sub_connection"
-  isSupportSession?: boolean
 }): Promise<ConnectionProviderResource[]> => {
   const [t, policy] = await Promise.all([
     getTranslations(),
@@ -85,7 +84,6 @@ export const listConnectionProviderResources = async (input: {
         resolveOneProvider({
           provider,
           policy,
-          isSupportSession: input.isSupportSession ?? false,
           alreadyConnected: alreadyConnectedByProvider.has(provider),
           t,
         }),
@@ -106,35 +104,19 @@ const NON_DISCONNECTED_STATUSES = [
   ...INACTIVE_CONNECTION_STATUSES.filter((status) => status !== "disconnected"),
 ]
 
-/** Hard backstop only — `connectionStateService.list` clamps `perPage` to the DB's 50-row `maxLimit`, so a workspace with more non-disconnected Connection rows than that needs this loop to see every page; this just bounds a pathological runaway. */
-const MAX_ALREADY_CONNECTED_PAGES = 50
-
 const resolveAlreadyConnectedProviders = async (
   workspaceId: string,
 ): Promise<Set<IntegrationType>> => {
-  const providers = new Set<IntegrationType>()
-  const perPage = 50
-  for (let page = 1; page <= MAX_ALREADY_CONNECTED_PAGES; page++) {
-    const { data } = await connectionStateService.list({
-      workspaceId,
-      status: NON_DISCONNECTED_STATUSES,
-      page,
-      perPage,
-    })
-    for (const row of data) {
-      providers.add(row.provider)
-    }
-    if (data.length < perPage) {
-      break
-    }
-  }
-  return providers
+  const providers = await connectionStateService.listProvidersWithStatus({
+    workspaceId,
+    statuses: NON_DISCONNECTED_STATUSES,
+  })
+  return new Set(providers)
 }
 
 const resolveOneProvider = async (input: {
   provider: IntegrationType
   policy: Awaited<ReturnType<typeof resolveChannelPolicy>>
-  isSupportSession: boolean
   alreadyConnected: boolean
   t: Awaited<ReturnType<typeof getTranslations>>
 }): Promise<ConnectionProviderResource | null> => {
@@ -190,7 +172,6 @@ const CREDENTIAL_STRATEGIES = new Set(["token", "api_key", "self_serve"])
 const resolveUnavailableReason = async (input: {
   provider: IntegrationType
   policy: Awaited<ReturnType<typeof resolveChannelPolicy>>
-  isSupportSession: boolean
   alreadyConnected: boolean
 }): Promise<ConnectionProviderResource["unavailableReason"]> => {
   const adapter = CONNECTION_REGISTRY[input.provider]
@@ -222,7 +203,6 @@ const resolveUnavailableReason = async (input: {
   if (
     channel &&
     input.policy &&
-    !input.isSupportSession &&
     !input.policy.visibleChannels.includes(channel)
   ) {
     return "hiddenForTenant"

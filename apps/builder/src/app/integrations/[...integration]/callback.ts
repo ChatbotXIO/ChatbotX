@@ -459,11 +459,22 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
       (err.code === "connectionStateMismatch" ||
         err.code === "connectSessionExpired")
     if (!isBenignReplay) {
-      await connectSessionService.fail({
-        id: session.id,
-        workspaceId: session.workspaceId,
-        errorCode: "internal_error",
-      })
+      // A DB blip inside `fail()` itself must not turn an already-failed
+      // callback into a 500 — the person still needs to land back on
+      // `returnUrl`, and the session just stays in its prior (non-terminal)
+      // status until the nightly reconcile or a future webhook retry.
+      try {
+        await connectSessionService.fail({
+          id: session.id,
+          workspaceId: session.workspaceId,
+          errorCode: "internal_error",
+        })
+      } catch (failErr) {
+        logger.error(
+          { err: failErr, sessionId: session.id },
+          "connect session fail() itself failed after completeAuthorization error",
+        )
+      }
     }
   }
 

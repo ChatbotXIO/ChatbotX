@@ -556,6 +556,12 @@ const connectionNotOAuth = {
   status: 400,
 }
 
+/** The provider's OAuth code exchange or live credential-check failed with a transient upstream/transport error — see `connectionProviderUnavailableException` in `@chatbotx.io/business/errors`, thrown by `packages/connections`'s `credentials.ts` and `connect-session-flow.ts`. */
+const connectionProviderUnavailable = {
+  message: "The provider is temporarily unavailable. Please try again.",
+  status: 502,
+}
+
 /** The tenant's channel-visibility policy hides this channel from an unattended API caller — see `channelHiddenException`. */
 const channelHidden = {
   message: "This channel is not available for this workspace",
@@ -572,6 +578,7 @@ export const possibleErrorsOnCreatingConnection = {
   connectionCredentialsRejected,
   connectionNotOAuth,
   connectionNotConfigured,
+  connectionProviderUnavailable,
   channelHidden,
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
@@ -581,6 +588,7 @@ export const possibleErrorsOnReconnectingConnection = {
   businessError,
   connectionNotOAuth,
   connectionNotConfigured,
+  connectionProviderUnavailable,
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
@@ -604,12 +612,6 @@ export const possibleErrorsOnFindingConnectSession = {
 export const possibleErrorsOnConnectingSessionTargets = {
   notFound,
   businessError,
-  connectSessionExpired,
-  ...possibleIdempotencyErrors,
-} satisfies ErrorMap
-
-export const possibleErrorsOnSubmittingConnectSessionInput = {
-  notFound,
   connectSessionExpired,
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap

@@ -88,16 +88,3 @@ export const connectSessionTargetsRequest = z.object({
       "Ids of the candidates to connect, from the session's `targets` list.",
     ),
 })
-
-export const submitConnectSessionInputRequest = z.object({
-  id: z
-    .string()
-    .describe(
-      "Connect session id, returned as `session.id` by `connections.create`/`connections.reconnect`.",
-    ),
-  input: z
-    .record(z.string(), z.unknown())
-    .describe(
-      'Answer for the session\'s current `nextAction.type: "enter_input"` step.',
-    ),
-})

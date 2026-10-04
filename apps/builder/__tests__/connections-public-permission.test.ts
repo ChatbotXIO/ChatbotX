@@ -26,24 +26,24 @@ const connectionServiceMocks = vi.hoisted(() => ({
   connectTargets: vi.fn(),
 }))
 
+const connectionStateMocks = vi.hoisted(() => ({
+  list: vi.fn(),
+  getForWorkspace: vi.fn(),
+  updateDisplayName: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   workspaceApiTokenService: { findWorkspaceByTokenHash },
   isWorkspaceScheduledForDeletion,
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
-  connectionStateService: {
-    list: vi.fn(),
-    getForWorkspace: vi.fn(),
-    updateDisplayName: vi.fn(),
-  },
+  connectionStateService: connectionStateMocks,
   platformCredentialService: { resolveForOwner: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/business/connect-session", () => ({
   connectSessionService: {
     findByIdForWorkspace: vi.fn(),
-    requireByIdForWorkspace: vi.fn(),
-    submitInput: vi.fn(),
     cancel: vi.fn(),
   },
 }))
@@ -52,6 +52,7 @@ vi.mock("@chatbotx.io/connections", () => ({
   connectionService: connectionServiceMocks,
   CONNECTION_REGISTRY: {
     messenger: { provider: { strategy: "oauth_redirect", kind: "channel" } },
+    claude: { provider: { strategy: "api_key", kind: "integration" } },
   },
 }))
 
@@ -123,7 +124,41 @@ beforeEach(() => {
 })
 
 describe("real router: connections public API permission enforcement (T5)", () => {
-  test("a read_only token is denied DELETE /v1/connections/{id} before any service call", async () => {
+  test.each([
+    {
+      label: "DELETE /v1/connections/{id}",
+      invoke: () =>
+        invoke(connectionsPublicRouter.disconnect, { id: "conn-1" }),
+      services: () => [connectionServiceMocks.disconnect],
+    },
+    {
+      label: "POST /v1/connections",
+      invoke: () =>
+        invoke(connectionsPublicRouter.create, { provider: "messenger" }),
+      services: () => [
+        connectionServiceMocks.connectFromCredentials,
+        connectionServiceMocks.startSession,
+      ],
+    },
+    {
+      label: "POST /v1/connections/{id}/refresh",
+      invoke: () => invoke(connectionsPublicRouter.refresh, { id: "conn-1" }),
+      services: () => [connectionServiceMocks.refresh],
+    },
+    {
+      label: "POST /v1/connections/{id}/verify",
+      invoke: () => invoke(connectionsPublicRouter.verify, { id: "conn-1" }),
+      services: () => [connectionServiceMocks.verify],
+    },
+    {
+      label: "POST /v1/connections/{id}/reconnect",
+      invoke: () => invoke(connectionsPublicRouter.reconnect, { id: "conn-1" }),
+      services: () => [connectionServiceMocks.reconnect],
+    },
+  ])("a read_only token is denied $label before any service call", async ({
+    invoke: invokeRoute,
+    services,
+  }) => {
     findWorkspaceByTokenHash.mockResolvedValue({
       workspace: { id: "ws-1", ownerId: "owner-1" },
       apiToken: {
@@ -133,82 +168,11 @@ describe("real router: connections public API permission enforcement (T5)", () =
       },
     })
 
-    await expect(
-      invoke(connectionsPublicRouter.disconnect, { id: "conn-1" }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+    await expect(invokeRoute()).rejects.toMatchObject({ code: "FORBIDDEN" })
 
-    expect(connectionServiceMocks.disconnect).not.toHaveBeenCalled()
-  })
-
-  test("a read_only token is denied POST /v1/connections before any service call", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue({
-      workspace: { id: "ws-1", ownerId: "owner-1" },
-      apiToken: {
-        id: "token-1",
-        permission: "read_only" as const,
-        scopes: null,
-      },
-    })
-
-    await expect(
-      invoke(connectionsPublicRouter.create, {
-        provider: "messenger",
-      }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" })
-
-    expect(connectionServiceMocks.connectFromCredentials).not.toHaveBeenCalled()
-    expect(connectionServiceMocks.startSession).not.toHaveBeenCalled()
-  })
-
-  test("a read_only token is denied POST /v1/connections/{id}/refresh before any service call", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue({
-      workspace: { id: "ws-1", ownerId: "owner-1" },
-      apiToken: {
-        id: "token-1",
-        permission: "read_only" as const,
-        scopes: null,
-      },
-    })
-
-    await expect(
-      invoke(connectionsPublicRouter.refresh, { id: "conn-1" }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" })
-
-    expect(connectionServiceMocks.refresh).not.toHaveBeenCalled()
-  })
-
-  test("a read_only token is denied POST /v1/connections/{id}/verify before any service call", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue({
-      workspace: { id: "ws-1", ownerId: "owner-1" },
-      apiToken: {
-        id: "token-1",
-        permission: "read_only" as const,
-        scopes: null,
-      },
-    })
-
-    await expect(
-      invoke(connectionsPublicRouter.verify, { id: "conn-1" }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" })
-
-    expect(connectionServiceMocks.verify).not.toHaveBeenCalled()
-  })
-
-  test("a read_only token is denied POST /v1/connections/{id}/reconnect before any service call", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue({
-      workspace: { id: "ws-1", ownerId: "owner-1" },
-      apiToken: {
-        id: "token-1",
-        permission: "read_only" as const,
-        scopes: null,
-      },
-    })
-
-    await expect(
-      invoke(connectionsPublicRouter.reconnect, { id: "conn-1" }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" })
-
-    expect(connectionServiceMocks.reconnect).not.toHaveBeenCalled()
+    for (const service of services()) {
+      expect(service).not.toHaveBeenCalled()
+    }
   })
 
   test("a contacts-scoped token is denied the real DELETE /v1/connections/{id} route with FORBIDDEN", async () => {
@@ -228,5 +192,84 @@ describe("real router: connections public API permission enforcement (T5)", () =
       message:
         "Token is not authorized for the 'channels' or 'integrations' scope",
     })
+  })
+
+  test("a channels-only token is denied creating an integration-kind (AI provider) connection", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue({
+      workspace: { id: "ws-1", ownerId: "owner-1" },
+      apiToken: {
+        id: "token-1",
+        permission: "full" as const,
+        scopes: ["channels"],
+      },
+    })
+
+    await expect(
+      invoke(connectionsPublicRouter.create, {
+        provider: "claude",
+        config: { apiKey: "sk-live" },
+      }),
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Token is not authorized for the 'integrations' scope",
+    })
+    expect(connectionServiceMocks.connectFromCredentials).not.toHaveBeenCalled()
+  })
+
+  test("a channels-only token is denied disconnecting an integration-kind connection", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue({
+      workspace: { id: "ws-1", ownerId: "owner-1" },
+      apiToken: {
+        id: "token-1",
+        permission: "full" as const,
+        scopes: ["channels"],
+      },
+    })
+    connectionStateMocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "claude",
+    })
+
+    await expect(
+      invoke(connectionsPublicRouter.disconnect, { id: "conn-1" }),
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Token is not authorized for the 'integrations' scope",
+    })
+    expect(connectionServiceMocks.disconnect).not.toHaveBeenCalled()
+  })
+
+  test("a channels-only token's list is forced to kind: channel even with no kind filter requested", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue({
+      workspace: { id: "ws-1", ownerId: "owner-1" },
+      apiToken: {
+        id: "token-1",
+        permission: "full" as const,
+        scopes: ["channels"],
+      },
+    })
+    connectionStateMocks.list.mockResolvedValueOnce({ data: [], count: 0 })
+
+    await invoke(connectionsPublicRouter.list, {})
+
+    expect(connectionStateMocks.list).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "channel" }),
+    )
+  })
+
+  test("a channels-only token's list is denied with FORBIDDEN when it explicitly requests kind: integration", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue({
+      workspace: { id: "ws-1", ownerId: "owner-1" },
+      apiToken: {
+        id: "token-1",
+        permission: "full" as const,
+        scopes: ["channels"],
+      },
+    })
+
+    await expect(
+      invoke(connectionsPublicRouter.list, { kind: "integration" }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+    expect(connectionStateMocks.list).not.toHaveBeenCalled()
   })
 })

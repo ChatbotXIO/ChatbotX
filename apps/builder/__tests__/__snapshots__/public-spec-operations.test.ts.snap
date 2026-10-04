@@ -774,11 +774,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
-    "operationId": "connectSessions.submitInput",
-    "path": "/v1/connect-sessions/{id}/input",
-  },
-  {
-    "method": "POST",
     "operationId": "contacts.addTags",
     "path": "/v1/contacts/{identifier}/tags",
   },

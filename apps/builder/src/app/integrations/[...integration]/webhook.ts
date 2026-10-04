@@ -376,17 +376,24 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       { status: 404, headers: { "Content-Type": "application/json" } },
     )
   }
-
   if (eventType === "authorization.removed") {
     const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
       workspaceId: integrationTiktok.workspaceId,
     })
-    await connectionStateService.markUnhealthyByIdentifier({
+    const connection = await connectionStateService.markUnhealthyByIdentifier({
       provider: "tiktok",
       identifier: userOpenId,
       reason: "token_revoked",
       ownerId,
+      workspaceId: integrationTiktok.workspaceId,
     })
+    if (!connection) {
+      logger.error(
+        { openId: userOpenId, workspaceId: integrationTiktok.workspaceId },
+        "TikTok authorization removed — no Connection row matched this workspace",
+      )
+      return new Response("ok")
+    }
     logger.info(
       { openId: userOpenId },
       "TikTok authorization removed — connection marked unhealthy",

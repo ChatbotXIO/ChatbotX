@@ -1,6 +1,7 @@
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import {
+  connectionStateService,
   integrationClaudeService,
   integrationDeepSeekService,
   integrationGeminiService,
@@ -8,7 +9,6 @@ import {
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { connectionService } from "@chatbotx.io/connections"
-import { connectionRepository } from "@chatbotx.io/database/repositories"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
@@ -135,7 +135,7 @@ export const integrationsAiPublicRouter = {
     .input(getAiProviderRequest)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const connection = await connectionRepository.findByProviderSourceId({
+      const connection = await connectionStateService.findByProviderSourceId({
         workspaceId: context.workspace.id,
         provider: input.provider,
         sourceId: "workspace",
