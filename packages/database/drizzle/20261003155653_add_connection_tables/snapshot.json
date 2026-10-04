@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "97a4c014-07a9-4aa0-bf74-b8a33490d340",
+  "id": "6910e6fe-7167-4fdc-8493-a5c74c8693e9",
   "prevIds": [
     "a1f7c613-421d-4bd6-a1eb-1f8317bc11fe"
   ],
@@ -515,8 +515,7 @@
     {
       "values": [
         "waitNode",
-        "followUp",
-        "quickReplyFollowUp"
+        "followUp"
       ],
       "name": "ContactOnSmartDelayType",
       "entityType": "enums",
@@ -33959,48 +33958,6 @@
       "method": "btree",
       "concurrently": false,
       "name": "ContactOnSmartDelay_followUp_active_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "ContactOnSmartDelay"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "contactInboxId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "flowId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "nodeId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": "\"status\" NOT IN ('completed', 'failed', 'canceled') AND \"type\" = 'quickReplyFollowUp'",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "ContactOnSmartDelay_quickReplyFollowUp_active_key",
       "entityType": "indexes",
       "schema": "public",
       "table": "ContactOnSmartDelay"
