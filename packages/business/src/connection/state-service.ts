@@ -1,4 +1,4 @@
-import { and, type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import {
   CONNECTION_TO_INBOX_DISCONNECT_REASON,
   type ConnectionStatus,
@@ -10,8 +10,9 @@ import {
   aiHandoverSettingsRepository,
   type ConnectionListInput,
   connectionRepository,
+  inboxRepository,
 } from "@chatbotx.io/database/repositories"
-import { type connectionModel, inboxModel } from "@chatbotx.io/database/schema"
+import type { connectionModel } from "@chatbotx.io/database/schema"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 import { ChatbotXException, channelLimitReachedException } from "../errors"
@@ -43,6 +44,9 @@ export type ConnectionQuotaConsumption =
       workspaceId: string
       workspaceUsageIncremented: boolean
     }
+
+/** A `channels` quota release a `transition` call decided on but has not yet executed — see `transition`'s `pendingRelease` handshake and `releasePendingQuota`. */
+export type PendingQuotaRelease = { ownerId: string; workspaceId: string }
 
 /**
  * DB-backed reads/writes over the `Connection` table plus its `Inbox`
@@ -186,13 +190,29 @@ class ConnectionStateService extends BaseService {
     tx?: DatabaseClient
     /** Required for a quota-consuming transition inside a caller-owned transaction. */
     quotaConsumption?: ConnectionQuotaConsumption
+    /**
+     * Caller-owned-transaction opt-in for a release-edge transition: when
+     * supplied alongside `tx`, a release this transition decides on is
+     * stashed here instead of firing immediately — `tx`'s owner must
+     * release it (via `releasePendingQuota`) only once ITS OWN transaction
+     * has actually committed; otherwise a later statement in that same
+     * transaction rolling back would under-count the release. Omitted →
+     * this transition keeps releasing immediately once its own DB work
+     * resolves, same as before this handshake existed.
+     */
+    pendingRelease?: { current: PendingQuotaRelease | null }
   }): Promise<ConnectionModel> {
     const quotaConsumption: ConnectionQuotaConsumption =
       input.quotaConsumption ?? {
         consumed: false,
         workspaceUsageIncremented: false,
       }
-    const run = async (client: DatabaseClient): Promise<ConnectionModel> => {
+    type RunResult = {
+      updated: ConnectionModel
+      /** A release this transition decided on but has not yet executed — see below. */
+      pendingRelease: PendingQuotaRelease | null
+    }
+    const run = async (client: DatabaseClient): Promise<RunResult> => {
       // Row-locked (not the relational `findById`): two concurrent
       // `transition` calls on the same connection must serialize here so
       // only one of them reads the pre-transition status and decides the
@@ -245,7 +265,7 @@ class ConnectionStateService extends BaseService {
             tx: client,
           })
         }
-        return updated
+        return { updated, pendingRelease: null }
       }
 
       const consumesQuota =
@@ -312,12 +332,22 @@ class ConnectionStateService extends BaseService {
         })
       }
 
+      let pendingRelease: RunResult["pendingRelease"] = null
       if (consumesQuota && input.ownerId) {
         await workspaceUsageService.increment(existing.workspaceId, "channels")
         quotaConsumption.workspaceUsageIncremented = true
       } else if (releasesQuota) {
         if (input.ownerId) {
-          await this.releaseQuotaEdge(input.ownerId, existing.workspaceId)
+          // Deferred (M-8): releasing here, inside the transaction, raced a
+          // COMMIT failure (or, for a caller-owned `tx`, any later statement
+          // in that same transaction) rolling back this very status write
+          // after the release had already fired — under-counting quota on
+          // rollback. The caller below only runs this once `run` has
+          // returned from an actually-committed transaction.
+          pendingRelease = {
+            ownerId: input.ownerId,
+            workspaceId: existing.workspaceId,
+          }
         } else {
           logger.warn(
             {
@@ -330,14 +360,29 @@ class ConnectionStateService extends BaseService {
         }
       }
 
-      return updated
+      return { updated, pendingRelease }
     }
 
     try {
-      if (input.tx) {
-        return await run(input.tx)
+      const { updated, pendingRelease } = input.tx
+        ? await run(input.tx)
+        : await db.transaction(run)
+      if (input.tx && input.pendingRelease) {
+        // Caller-owned transaction with a deferred-release handshake: only
+        // the caller knows when its own transaction actually commits, so it
+        // alone decides when to release — see `releasePendingQuota`.
+        input.pendingRelease.current = pendingRelease
+      } else if (pendingRelease) {
+        // Either the self-managed path (`db.transaction(run)` has only just
+        // resolved here because Postgres committed — safe to release now),
+        // or a caller-owned `tx` that didn't opt into the handshake above —
+        // same immediate-release behavior as before this fix.
+        await this.releaseQuotaEdge(
+          pendingRelease.ownerId,
+          pendingRelease.workspaceId,
+        )
       }
-      return await db.transaction(run)
+      return updated
     } catch (err) {
       if (quotaConsumption.consumed && input.ownerId) {
         await this.releaseQuotaEdge(
@@ -385,6 +430,26 @@ class ConnectionStateService extends BaseService {
       input.ownerId,
       input.workspaceId,
       input.workspaceUsageIncremented,
+    )
+  }
+
+  /**
+   * Releases a `channels` quota unit a `transition` call deferred via its
+   * `pendingRelease` handshake — call only after the caller-owned
+   * transaction that ran `transition` has actually committed (a later
+   * rollback must never release). No-ops when nothing was deferred (the
+   * transition didn't cross an active→inactive edge, or `pendingRelease`
+   * wasn't supplied to it in the first place).
+   */
+  async releasePendingQuota(
+    pendingRelease: PendingQuotaRelease | null,
+  ): Promise<void> {
+    if (!pendingRelease) {
+      return
+    }
+    await this.releaseQuotaEdge(
+      pendingRelease.ownerId,
+      pendingRelease.workspaceId,
     )
   }
 
@@ -501,9 +566,13 @@ class ConnectionStateService extends BaseService {
    * `IntegrationTiktok`) passes `inboxId` directly. Mirrors `Inbox.status`
    * to `needs_reauth` the same way `transition`'s `auth.revoked` edge does
    * for a backfilled connection — deliberately NOT `inboxService.disconnect`,
-   * which also releases `channels` quota; an un-backfilled row was never
-   * counted against quota through the `Connection` domain, so releasing it
-   * here would double-release.
+   * which also releases `channels` quota: an un-backfilled row's channel
+   * was never consumed through this Connection-domain `tryConsume`/
+   * `release` pairing in the first place (it predates the engine), so this
+   * function has no tracked unit to pair a release against here. The
+   * resulting drift — the owner stays charged for a channel stuck in
+   * `needs_reauth` — is corrected once the row is backfilled and
+   * reconciled, not by a point release in this fallback.
    */
   async markLegacyInboxUnhealthy(input: {
     inboxId: string
@@ -563,10 +632,11 @@ class ConnectionStateService extends BaseService {
     tx: DatabaseClient
   }): Promise<void> {
     const isActive = isActiveConnectionStatus(input.to)
-    await input.tx
-      .update(inboxModel)
-      .set(
-        isActive
+    await inboxRepository.updateConnectionMirror(
+      {
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        values: isActive
           ? {
               status: "connected",
               disconnectedAt: null,
@@ -574,18 +644,20 @@ class ConnectionStateService extends BaseService {
             }
           : {
               status: "disconnected",
-              disconnectedAt: new Date(),
-              disconnectReason: input.reason
-                ? CONNECTION_TO_INBOX_DISCONNECT_REASON[input.reason]
-                : "manual",
+              // A no-op re-assertion (`reason === null`) must preserve
+              // whatever `disconnectedAt`/`disconnectReason` is already
+              // stored (M-2) — only a real transition stamps fresh values.
+              ...(input.reason
+                ? {
+                    disconnectedAt: new Date(),
+                    disconnectReason:
+                      CONNECTION_TO_INBOX_DISCONNECT_REASON[input.reason],
+                  }
+                : {}),
             },
-      )
-      .where(
-        and(
-          eq(inboxModel.id, input.inboxId),
-          eq(inboxModel.workspaceId, input.workspaceId),
-        ),
-      )
+      },
+      input.tx,
+    )
     if (!isActive) {
       const ref = { workspaceId: input.workspaceId, inboxId: input.inboxId }
       if (await aiHandoverSettingsRepository.lockExisting(ref, input.tx)) {

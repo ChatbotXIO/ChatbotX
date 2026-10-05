@@ -25,6 +25,7 @@ import {
   integrationSendGridModel,
   integrationSmtpModel,
   integrationTelegramModel,
+  integrationThreadsModel,
   integrationTiktokModel,
   integrationWebchatModel,
   integrationWhatsappModel,
@@ -62,10 +63,14 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
    * carries (`inboxId` for channels, `integrationId` for workspace
    * integrations) — `Connection` has no column pointing at the satellite
    * row's own primary key, so this is what `ConnectionService` (disconnect/
-   * refresh/verify) uses to reach the row.
+   * refresh/verify) uses to reach the row. `workspaceId` is an additional
+   * required equality condition (defence-in-depth against cross-tenant
+   * parameter confusion) — every call site already has the owning
+   * `Connection` row's `workspaceId` in hand.
    */
   loadAuthByForeignKey: (
     foreignKey: string,
+    workspaceId: string,
     tx?: DatabaseClient,
   ) => Promise<AuthValue>
   /**
@@ -86,6 +91,7 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
    */
   saveAuthByForeignKey: (
     foreignKey: string,
+    workspaceId: string,
     auth: AuthValue,
     config?: Record<string, unknown>,
     tx?: DatabaseClient,
@@ -104,6 +110,7 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
   ) => Promise<{ id: string; integrationId?: string }>
   deleteRowByForeignKey: (
     foreignKey: string,
+    workspaceId: string,
     tx?: DatabaseClient,
   ) => Promise<void>
   /** Unique-constraint name a duplicate insert violates — lets callers map it to `alreadyConnected` instead of a raw DB error. */
@@ -125,18 +132,19 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
  * `id` is excluded for every other channel binding (its PK rides
  * `identityColumn`/the table's own default instead), but WhatsApp's binding
  * deliberately allow-lists it — see its `CONNECTION_STORE_BINDINGS` entry
- * below for why. Safe to widen here: `pickAllowed` still gates on each
- * binding's own `configColumns` array, so no other table is affected unless
- * it opts in the same way.
+ * below for why. `name` is likewise excluded by default (`insertRow` always
+ * derives it from `descriptor.displayName`, spread in after `safeConfig` so
+ * a client-supplied value there can never win on insert), but Threads'
+ * binding deliberately allow-lists it so a reconnect's `extraConfig` can
+ * refresh a stale display name through `saveAuthByForeignKey`'s UPDATE path
+ * the same way it clears `tokenRefreshError` — see its
+ * `CONNECTION_STORE_BINDINGS` entry below. Safe to widen here: `pickAllowed`
+ * still gates on each binding's own `configColumns` array, so no other
+ * table is affected unless it opts in the same way.
  */
 type ConfigColumn<TTable extends PgTable> = Exclude<
   Extract<keyof InferInsertModel<TTable>, string>,
-  | "auth"
-  | "encryptedAuth"
-  | "inboxId"
-  | "integrationId"
-  | "name"
-  | "workspaceId"
+  "auth" | "encryptedAuth" | "inboxId" | "integrationId" | "workspaceId"
 >
 
 type WorkspaceConfigColumn<TTable extends PgTable> = Exclude<
@@ -210,17 +218,19 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
     Object.entries(opts.extraWhere ?? {}).map(([column, value]) =>
       eq(table[column as keyof TTable] as unknown as AnyPgColumn, value),
     )
-  const withExtraWhere = (condition: SQL): SQL => {
-    const extras = extraConditions()
-    return extras.length > 0 ? (and(condition, ...extras) as SQL) : condition
-  }
+  const withExtraWhere = (condition: SQL, workspaceId: string): SQL =>
+    and(
+      condition,
+      eq(table.workspaceId, workspaceId),
+      ...extraConditions(),
+    ) as SQL
 
   return {
-    loadAuthByForeignKey: async (inboxId, tx = db) => {
+    loadAuthByForeignKey: async (inboxId, workspaceId, tx = db) => {
       const [row] = await tx
         .select({ auth: table.auth })
         .from(rawTable)
-        .where(withExtraWhere(eq(table.inboxId, inboxId)))
+        .where(withExtraWhere(eq(table.inboxId, inboxId), workspaceId))
         .limit(1)
       if (!row) {
         throw new Error(
@@ -229,7 +239,13 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       }
       return asAuthValue(row.auth)
     },
-    saveAuthByForeignKey: async (inboxId, auth, config, tx = db) => {
+    saveAuthByForeignKey: async (
+      inboxId,
+      workspaceId,
+      auth,
+      config,
+      tx = db,
+    ) => {
       const safeConfig = pickAllowed<ConfigColumn<TTable>>(
         config,
         opts.configColumns,
@@ -237,7 +253,7 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       const updated = await tx
         .update(table)
         .set({ ...safeConfig, auth } as InferInsertModel<TTable>)
-        .where(withExtraWhere(eq(table.inboxId, inboxId)))
+        .where(withExtraWhere(eq(table.inboxId, inboxId), workspaceId))
         .returning({ id: table.id })
       return updated.length > 0
     },
@@ -272,13 +288,13 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
         .returning({ id: table.id })
       return { id: row.id as string }
     },
-    deleteRowByForeignKey: async (inboxId, tx = db) => {
+    deleteRowByForeignKey: async (inboxId, workspaceId, tx = db) => {
       if (opts.onDisconnect === "keep_row") {
         return
       }
       await tx
         .delete(rawTable)
-        .where(withExtraWhere(eq(table.inboxId, inboxId)))
+        .where(withExtraWhere(eq(table.inboxId, inboxId), workspaceId))
     },
     duplicateConstraint: opts.duplicateConstraint,
     configColumns: opts.configColumns,
@@ -336,7 +352,7 @@ const makeWorkspaceIntegrationBinding = <
   ] as unknown as AnyPgColumn
 
   return {
-    loadAuthByForeignKey: async (integrationId, tx = db) => {
+    loadAuthByForeignKey: async (integrationId, workspaceId, tx = db) => {
       const [row] = await tx
         .select(
           opts.baseUrlColumn
@@ -344,7 +360,12 @@ const makeWorkspaceIntegrationBinding = <
             : { auth: authColumn },
         )
         .from(rawTable)
-        .where(eq(table.integrationId, integrationId))
+        .where(
+          and(
+            eq(table.integrationId, integrationId),
+            eq(table.workspaceId, workspaceId),
+          ),
+        )
         .limit(1)
       if (!row) {
         throw new Error(
@@ -357,7 +378,13 @@ const makeWorkspaceIntegrationBinding = <
       }
       return { ...auth, baseURL: row.baseURL }
     },
-    saveAuthByForeignKey: async (integrationId, auth, config, tx = db) => {
+    saveAuthByForeignKey: async (
+      integrationId,
+      workspaceId,
+      auth,
+      config,
+      tx = db,
+    ) => {
       const safeConfig = pickAllowed<WorkspaceConfigColumn<TTable>>(
         config,
         opts.configColumns,
@@ -368,7 +395,12 @@ const makeWorkspaceIntegrationBinding = <
           ...safeConfig,
           [authColumnName]: auth,
         } as InferInsertModel<TTable>)
-        .where(eq(table.integrationId, integrationId))
+        .where(
+          and(
+            eq(table.integrationId, integrationId),
+            eq(table.workspaceId, workspaceId),
+          ),
+        )
         .returning({ id: table.id })
       return updated.length > 0
     },
@@ -406,7 +438,7 @@ const makeWorkspaceIntegrationBinding = <
       }
       return tx ? await run(tx) : await db.transaction((trx) => run(trx))
     },
-    deleteRowByForeignKey: async (integrationId, tx = db) => {
+    deleteRowByForeignKey: async (integrationId, workspaceId, tx = db) => {
       // Deletes the parent `Integration` row (not the satellite) so the
       // `onDelete: "cascade"` FK from every workspace-satellite table back
       // to `integrationModel.id` removes the satellite row too — mirrors
@@ -417,7 +449,12 @@ const makeWorkspaceIntegrationBinding = <
       // `listByWorkspaceId` and for every future reconnect.
       await tx
         .delete(integrationModel)
-        .where(eq(integrationModel.id, integrationId))
+        .where(
+          and(
+            eq(integrationModel.id, integrationId),
+            eq(integrationModel.workspaceId, workspaceId),
+          ),
+        )
     },
     duplicateConstraint: opts.duplicateConstraint,
     configColumns: opts.configColumns,
@@ -630,6 +667,17 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     tableName: "IntegrationOpenaiCompatible",
     integrationType: "openaiCompatible",
     baseUrlColumn: integrationOpenaiCompatibleModel.baseURL,
+    // PARTIAL unique index (`where preset <> 'custom'`, see
+    // `schema/integration-openai-compatible.ts`) — Postgres still reports
+    // this exact index name as `error.cause.constraint` on a violation, so
+    // `isUniqueViolationError`'s plain name match (used identically for
+    // messenger/instagram's full unique indexes above) maps it to
+    // `connectionAlreadyConnectedException` the same way. Without this, a
+    // second non-custom-preset connect in the same workspace 500s with the
+    // raw Postgres error instead of surfacing
+    // `openaiCompatible.validation.presetAlreadyConnected` on the connect
+    // action — see that action's `isConnectionAlreadyConnectedError` catch.
+    duplicateConstraint: "IntegrationOpenaiCompatible_workspaceId_preset_key",
     configColumns: [
       "baseURL",
       "defaultModel",
@@ -670,6 +718,18 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     identityColumn: "botId",
     onDisconnect: "keep_row",
     duplicateConstraint: "IntegrationTelegram_botId_key",
+  }),
+  threads: makeChannelBinding({
+    table: integrationThreadsModel,
+    tableName: "IntegrationThreads",
+    identityColumn: "threadsUserId",
+    onDisconnect: "delete_row",
+    duplicateConstraint: "IntegrationThreads_threadsUserId_key",
+    // `tokenRefreshError`/`name`: a reconnect's `extraConfig` clears a
+    // stale refresh-cron error and refreshes the display name through this
+    // same `saveAuthByForeignKey` UPDATE, mirroring the legacy (pre-engine)
+    // satellite-only update — see `integrationThreadsService.reconnect`.
+    configColumns: ["username", "tokenRefreshError", "name"],
   }),
   tiktok: makeChannelBinding({
     table: integrationTiktokModel,
@@ -723,6 +783,19 @@ export const CONNECTION_STORE_BINDINGS: Partial<
       "platformType",
     ],
   }),
+  // No `duplicateConstraint` here, unlike every other channel's identity
+  // column (messenger/instagram/whatsapp/telegram/tiktok): `IntegrationZalo`
+  // has only a plain (non-unique) btree index on `oaId`
+  // (`IntegrationZalo_oaId_idx`, see `schema/integration-zalo.ts`) — no
+  // unique constraint actually exists for a duplicate insert to violate, so
+  // mapping a made-up constraint name here would silently never fire. A
+  // race connecting the same Zalo OA ID twice is NOT currently mapped to
+  // `alreadyConnected` — `backfill-connections.ts`'s `duplicate_source_inbox`
+  // report already surfaces OA IDs connected from multiple workspaces for
+  // this exact reason. Fixing this for real requires a migration adding
+  // `unique(oaId)` (or `unique(workspaceId, oaId)` if cross-workspace reuse
+  // of the same OA is intentionally allowed) — out of scope here since this
+  // change must not add/run a migration.
   zalo: makeChannelBinding({
     table: integrationZaloModel,
     tableName: "IntegrationZalo",

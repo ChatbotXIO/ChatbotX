@@ -18,6 +18,9 @@ const state = {
 const deactivateOwnerWorkspacesMock = vi.fn(async () => [] as string[])
 const connectionTransitionMock = vi.fn(async () => undefined)
 const listPausedByOwnerMock = vi.fn(async () => state.pausedConnections)
+const listTenantSuspendedWithoutConnectionByOwnerMock = vi.fn(
+  async () => [] as { id: string; workspaceId: string }[],
+)
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -44,6 +47,10 @@ vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: { listPausedByOwner: listPausedByOwnerMock },
+  inboxRepository: {
+    listTenantSuspendedWithoutConnectionByOwner:
+      listTenantSuspendedWithoutConnectionByOwnerMock,
+  },
 }))
 
 // Partial mock for the same reason as the schema mock above: analytics
@@ -82,6 +89,7 @@ beforeEach(() => {
   deactivateOwnerWorkspacesMock.mockResolvedValue([])
   connectionTransitionMock.mockResolvedValue(undefined)
   listPausedByOwnerMock.mockImplementation(async () => state.pausedConnections)
+  listTenantSuspendedWithoutConnectionByOwnerMock.mockResolvedValue([])
 })
 
 test("suspend pauses the owner's workspaces with teardownLevel pause and reason tenant_suspended", async () => {

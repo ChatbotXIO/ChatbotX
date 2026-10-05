@@ -12,22 +12,32 @@ import { auditService } from "@chatbotx.io/business/audit"
 import {
   type InstagramAuthValue,
   integration as integrationInstagram,
+  isRevokedTokenError as isInstagramRevokedTokenError,
 } from "@chatbotx.io/integration-instagram"
-import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
+import {
+  integration as integrationInstagramFacebook,
+  isRevokedTokenError as isInstagramFacebookRevokedTokenError,
+} from "@chatbotx.io/integration-instagram-facebook"
 import {
   integration as integrationMessenger,
+  isRevokedTokenError as isMessengerRevokedTokenError,
   logMessengerWelcomeProfile,
   type MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger"
-import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
+import {
+  isRevokedTokenError as isTiktokRevokedTokenError,
+  type TiktokAuthValue,
+} from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken as refreshTiktokAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
 import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
 import {
   integration as integrationWhatsapp,
+  isRevokedTokenError as isWhatsappRevokedTokenError,
   type WhatsappAuthValue,
 } from "@chatbotx.io/integration-whatsapp"
 import {
   calculateExpiresAt,
+  isRevokedTokenError as isZaloRevokedTokenError,
   refreshAccessToken as refreshZaloAccessToken,
   type ZaloAuthValue,
 } from "@chatbotx.io/integration-zalo"
@@ -120,10 +130,12 @@ async function refreshOneZalo(
         })
         return "refreshed"
       } catch (error) {
-        await zaloIntegrationService.markTokenRefreshError(
+        await zaloIntegrationService.markTokenRefreshError({
           id,
-          error instanceof Error ? error.message : String(error),
-        )
+          workspaceId,
+          error: error instanceof Error ? error.message : String(error),
+          isRevoked: isZaloRevokedTokenError(error),
+        })
         return "failed"
       }
     },
@@ -163,16 +175,20 @@ async function refreshOneTiktok(
           { clientId: auth.clientId, clientSecret: auth.clientSecret },
           auth.tokens.refreshToken,
         )
-        await tiktokIntegrationService.updateAuth(id, {
-          ...auth,
-          tokens: {
-            ...auth.tokens,
-            accessToken: newTokens.access_token,
-            refreshToken: newTokens.refresh_token,
-            ...buildTokenTimestamps(
-              newTokens.expires_in,
-              newTokens.refresh_expires_in,
-            ),
+        await tiktokIntegrationService.updateAuth({
+          id,
+          workspaceId,
+          auth: {
+            ...auth,
+            tokens: {
+              ...auth.tokens,
+              accessToken: newTokens.access_token,
+              refreshToken: newTokens.refresh_token,
+              ...buildTokenTimestamps(
+                newTokens.expires_in,
+                newTokens.refresh_expires_in,
+              ),
+            },
           },
         })
         await auditService.record({
@@ -182,10 +198,12 @@ async function refreshOneTiktok(
         })
         return "refreshed"
       } catch (error) {
-        await tiktokIntegrationService.markTokenRefreshError(
+        await tiktokIntegrationService.markTokenRefreshError({
           id,
-          error instanceof Error ? error.message : String(error),
-        )
+          workspaceId,
+          error: error instanceof Error ? error.message : String(error),
+          isRevoked: isTiktokRevokedTokenError(error),
+        })
         return "failed"
       }
     },
@@ -239,10 +257,12 @@ async function refreshOneInstagram(
         })
         return "refreshed"
       } catch (error) {
-        await instagramIntegrationService.markTokenRefreshError(
+        await instagramIntegrationService.markTokenRefreshError({
           id,
-          error instanceof Error ? error.message : String(error),
-        )
+          workspaceId,
+          error: error instanceof Error ? error.message : String(error),
+          isRevoked: isInstagramRevokedTokenError(error),
+        })
         return "failed"
       }
     },
@@ -300,10 +320,12 @@ async function refreshOneInstagramFacebook(
         })
         return "refreshed"
       } catch (error) {
-        await instagramIntegrationService.markTokenRefreshError(
+        await instagramIntegrationService.markTokenRefreshError({
           id,
-          error instanceof Error ? error.message : String(error),
-        )
+          workspaceId,
+          error: error instanceof Error ? error.message : String(error),
+          isRevoked: isInstagramFacebookRevokedTokenError(error),
+        })
         return "failed"
       }
     },
@@ -367,10 +389,12 @@ async function refreshOneMessenger(
           })
           return { result: "refreshed", refreshedAuth: newAuth }
         } catch (error) {
-          await messengerIntegrationService.markTokenRefreshError(
+          await messengerIntegrationService.markTokenRefreshError({
             id,
-            error instanceof Error ? error.message : String(error),
-          )
+            workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+            isRevoked: isMessengerRevokedTokenError(error),
+          })
           return { result: "failed" }
         }
       },
@@ -441,10 +465,12 @@ async function refreshOneWhatsapp(
         })
         return "refreshed"
       } catch (error) {
-        await integrationWhatsappService.markTokenRefreshError(
+        await integrationWhatsappService.markTokenRefreshError({
           id,
-          error instanceof Error ? error.message : String(error),
-        )
+          workspaceId,
+          error: error instanceof Error ? error.message : String(error),
+          isRevoked: isWhatsappRevokedTokenError(error),
+        })
         return "failed"
       }
     },

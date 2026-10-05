@@ -20,6 +20,7 @@ import {
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
+import { isActiveConnectionStatus } from "../connection/state"
 import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException, channelDuplicatedException } from "../errors"
 import { inboxService } from "../inbox/service"
@@ -90,11 +91,37 @@ class TiktokIntegrationService extends BaseService {
       .where(inArray(integrationTiktokModel.workspaceId, workspaceIds))
   }
 
-  async updateAuth(id: string, auth: Record<string, unknown>): Promise<void> {
-    await db
+  async updateAuth(props: {
+    id: string
+    workspaceId: string
+    auth: Record<string, unknown>
+  }): Promise<void> {
+    const [row] = await db
       .update(integrationTiktokModel)
-      .set({ auth, tokenRefreshError: null })
-      .where(eq(integrationTiktokModel.id, id))
+      .set({ auth: props.auth, tokenRefreshError: null })
+      .where(
+        and(
+          eq(integrationTiktokModel.id, props.id),
+          eq(integrationTiktokModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ openId: integrationTiktokModel.openId })
+
+    if (!row) {
+      return
+    }
+
+    const connection = await connectionStateService.findByProviderSourceId({
+      workspaceId: props.workspaceId,
+      provider: "tiktok",
+      sourceId: row.openId,
+    })
+
+    if (connection && isActiveConnectionStatus(connection.status)) {
+      await connectionStateService.recordAuthSaved({
+        connectionId: connection.id,
+      })
+    }
   }
 
   /**
@@ -134,7 +161,7 @@ class TiktokIntegrationService extends BaseService {
       )
     }
 
-    await this.cacheCommentToMessageStatus({ id, auth, status })
+    await this.cacheCommentToMessageStatus({ id, workspaceId, auth, status })
 
     await this.audit(
       "update",
@@ -183,7 +210,7 @@ class TiktokIntegrationService extends BaseService {
       return null
     }
 
-    await this.cacheCommentToMessageStatus({ id, auth, status })
+    await this.cacheCommentToMessageStatus({ id, workspaceId, auth, status })
     return status
   }
 
@@ -197,6 +224,7 @@ class TiktokIntegrationService extends BaseService {
    */
   private async cacheCommentToMessageStatus(props: {
     id: string
+    workspaceId: string
     auth: TiktokAuthValue
     status: TiktokDirectReplyStatus
   }): Promise<void> {
@@ -210,20 +238,43 @@ class TiktokIntegrationService extends BaseService {
         },
       },
     }
-    await this.updateAuth(props.id, updatedAuth)
+    await this.updateAuth({
+      id: props.id,
+      workspaceId: props.workspaceId,
+      auth: updatedAuth,
+    })
   }
 
-  async markTokenRefreshError(id: string, error: string): Promise<void> {
+  async markTokenRefreshError(props: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }): Promise<void> {
     const [row] = await db
       .update(integrationTiktokModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationTiktokModel.id, id))
+      .set({ tokenRefreshError: props.error })
+      .where(
+        and(
+          eq(integrationTiktokModel.id, props.id),
+          eq(integrationTiktokModel.workspaceId, props.workspaceId),
+        ),
+      )
       .returning({
         openId: integrationTiktokModel.openId,
-        workspaceId: integrationTiktokModel.workspaceId,
       })
 
     if (!row) {
+      return
+    }
+
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
+        provider: "tiktok",
+        identifier: row.openId,
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
+      })
       return
     }
 
@@ -231,7 +282,7 @@ class TiktokIntegrationService extends BaseService {
       provider: "tiktok",
       identifier: row.openId,
       reason: "refresh_failed",
-      workspaceId: row.workspaceId,
+      workspaceId: props.workspaceId,
     })
   }
 

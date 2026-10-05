@@ -115,6 +115,7 @@ type ReplaceAuthInput = FindWorkspaceIntegrationInput & {
   auth: unknown
   hasCapiScope: boolean
   capiScopeCheckedAt?: Date
+  tx?: DatabaseClient
 }
 
 type EnsureDatasetIdInput = FindWorkspaceIntegrationInput & {
@@ -395,8 +396,38 @@ class IntegrationWhatsappService extends BaseService {
     return integrationWhatsappRepository.updateAuth(input)
   }
 
-  markTokenRefreshError(id: string, error: string): Promise<void> {
-    return integrationWhatsappRepository.markTokenRefreshError(id, error)
+  async markTokenRefreshError(props: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }): Promise<void> {
+    const row = await integrationWhatsappRepository.markTokenRefreshError({
+      id: props.id,
+      workspaceId: props.workspaceId,
+      error: props.error,
+    })
+
+    if (!row) {
+      return
+    }
+
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
+        provider: "whatsapp",
+        identifier: row.phoneNumberId,
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
+      })
+      return
+    }
+
+    await connectionStateService.markDegradedByIdentifier({
+      provider: "whatsapp",
+      identifier: row.phoneNumberId,
+      workspaceId: props.workspaceId,
+      reason: "refresh_failed",
+    })
   }
 
   /**
@@ -448,13 +479,16 @@ class IntegrationWhatsappService extends BaseService {
       )
     }
 
-    const updated = await integrationWhatsappRepository.replaceAuth({
-      id: input.id,
-      workspaceId: input.workspaceId,
-      auth: input.auth,
-      hasCapiScope: input.hasCapiScope,
-      capiScopeCheckedAt: input.capiScopeCheckedAt ?? new Date(),
-    })
+    const updated = await integrationWhatsappRepository.replaceAuth(
+      {
+        id: input.id,
+        workspaceId: input.workspaceId,
+        auth: input.auth,
+        hasCapiScope: input.hasCapiScope,
+        capiScopeCheckedAt: input.capiScopeCheckedAt ?? new Date(),
+      },
+      input.tx,
+    )
     if (!updated) {
       throw new Error("WhatsApp integration not found")
     }

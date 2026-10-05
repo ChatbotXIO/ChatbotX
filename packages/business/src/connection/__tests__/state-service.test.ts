@@ -1,3 +1,4 @@
+import { db } from "@chatbotx.io/database/client"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { connectionStateService } from "../state-service"
 
@@ -14,9 +15,7 @@ const mocks = vi.hoisted(() => ({
   distinctProvidersByStatus: vi.fn(),
   update: vi.fn(),
   inboxDisconnect: vi.fn(),
-  inboxUpdate: vi.fn(),
-  inboxUpdateSet: vi.fn(),
-  inboxUpdateWhere: vi.fn(),
+  mirrorInbox: vi.fn(async () => undefined),
   lockExisting: vi.fn(),
   cancelLive: vi.fn(),
   tryConsume: vi.fn(),
@@ -30,7 +29,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findById: mocks.findById,
     findByIdForWorkspace: mocks.findByIdForWorkspace,
     findByInboxId: mocks.findByInboxId,
-    findByIdForUpdate: mocks.findById,
     findByIdForUpdateById: mocks.findById,
     findByProviderAndSourceIdAnyWorkspace:
       mocks.findByProviderAndSourceIdAnyWorkspace,
@@ -40,23 +38,18 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     list: mocks.list,
     count: mocks.count,
   },
+  inboxRepository: { updateConnectionMirror: mocks.mirrorInbox },
   aiHandoverSettingsRepository: { lockExisting: mocks.lockExisting },
   aiHandoverBulkRunRepository: { cancelLive: mocks.cancelLive },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    update: mocks.inboxUpdate,
-    transaction: vi.fn(async (fn: (tx: unknown) => unknown) =>
-      fn({ update: mocks.inboxUpdate }),
-    ),
+    transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn({})),
   },
-  and: vi.fn((...conditions) => conditions),
-  eq: vi.fn((column, value) => ({ column, value })),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  inboxModel: { id: "id", workspaceId: "workspaceId" },
   workspaceUsageModel: {},
 }))
 
@@ -107,9 +100,8 @@ beforeEach(() => {
   mocks.inboxDisconnect.mockReset()
   mocks.findByProviderAndSourceIdAnyWorkspace.mockReset()
   mocks.update.mockReset()
-  mocks.inboxUpdate.mockReset()
-  mocks.inboxUpdateSet.mockReset()
-  mocks.inboxUpdateWhere.mockReset()
+  mocks.mirrorInbox.mockReset()
+  mocks.mirrorInbox.mockResolvedValue(undefined)
   mocks.lockExisting.mockResolvedValue(null)
   mocks.cancelLive.mockReset()
   mocks.tryConsume.mockReset()
@@ -117,12 +109,11 @@ beforeEach(() => {
   mocks.increment.mockClear()
   mocks.decrement.mockClear()
 
-  mocks.inboxUpdateSet.mockImplementation(() => ({
-    where: mocks.inboxUpdateWhere,
-  }))
-  mocks.inboxUpdate.mockImplementation(() => ({ set: mocks.inboxUpdateSet }))
-  mocks.inboxUpdateWhere.mockResolvedValue(undefined)
   mocks.tryConsume.mockResolvedValue({ ok: true })
+  vi.mocked(db.transaction).mockImplementation(
+    (async (fn: (tx: unknown) => unknown) =>
+      await fn({})) as typeof db.transaction,
+  )
 })
 
 describe("ConnectionStateService.transition", () => {
@@ -145,8 +136,11 @@ describe("ConnectionStateService.transition", () => {
     expect(mocks.release).not.toHaveBeenCalled()
     expect(mocks.increment).toHaveBeenCalledWith("ws-1", "channels")
     expect(mocks.decrement).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "connected" }),
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({ status: "connected" }),
+      }),
+      expect.anything(),
     )
   })
 
@@ -199,7 +193,7 @@ describe("ConnectionStateService.transition", () => {
     ).rejects.toMatchObject({ code: "channelLimitReached" })
 
     expect(mocks.update).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
+    expect(mocks.mirrorInbox).not.toHaveBeenCalled()
   })
 
   test("throws when a channel quota edge requires an owner", async () => {
@@ -272,6 +266,34 @@ describe("ConnectionStateService.transition", () => {
       metric: "channels",
     })
     expect(mocks.decrement).not.toHaveBeenCalled()
+  })
+
+  test("defers the channel quota release until after the owned transaction actually commits (M-8)", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+
+    const callOrder: string[] = []
+    mocks.release.mockImplementationOnce(() => {
+      callOrder.push("release")
+      return Promise.resolve(undefined)
+    })
+    vi.mocked(db.transaction).mockImplementationOnce((async (
+      fn: (tx: unknown) => unknown,
+    ) => {
+      const settled = await fn({})
+      // The real `db.transaction` only resolves here once Postgres has
+      // committed — this marker stands in for that commit point.
+      callOrder.push("commit")
+      return settled
+    }) as typeof db.transaction)
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "auth.revoked",
+      ownerId: "owner-1",
+    })
+
+    expect(callOrder).toEqual(["commit", "release"])
   })
 })
 
@@ -354,11 +376,14 @@ describe("ConnectionStateService.markUnhealthy", () => {
     expect(mocks.decrement).toHaveBeenCalledWith("ws-1", "channels")
     expect(mocks.increment).not.toHaveBeenCalled()
     expect(mocks.tryConsume).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: "disconnected",
-        disconnectReason: "token_revoked",
+        values: expect.objectContaining({
+          status: "disconnected",
+          disconnectReason: "token_revoked",
+        }),
       }),
+      expect.anything(),
     )
   })
 
@@ -393,12 +418,15 @@ describe("ConnectionStateService.markUnhealthy", () => {
 
     expect(result).toBe(active)
     expect(mocks.update).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: "connected",
-        disconnectedAt: null,
-        disconnectReason: null,
+        values: expect.objectContaining({
+          status: "connected",
+          disconnectedAt: null,
+          disconnectReason: null,
+        }),
       }),
+      expect.anything(),
     )
   })
 
@@ -435,11 +463,16 @@ describe("ConnectionStateService.markUnhealthy", () => {
     })
 
     expect(mocks.update).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: "disconnected",
-        disconnectReason: "manual",
-      }),
+    // M-2: a no-op re-assertion must NOT stamp a fresh `disconnectReason`/
+    // `disconnectedAt` over whatever is already stored on the Inbox row —
+    // `values` carries only `status` here, nothing else.
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
+      {
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        values: { status: "disconnected" },
+      },
+      expect.anything(),
     )
     expect(mocks.release).not.toHaveBeenCalled()
     expect(mocks.tryConsume).not.toHaveBeenCalled()

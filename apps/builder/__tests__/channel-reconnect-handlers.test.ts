@@ -29,6 +29,12 @@ const {
   mockZaloHandleRequest,
   mockReconnectInbox,
   mockAuthExpiresAtOf,
+  mockDbTransaction,
+  mockWorkspaceFindById,
+  mockRunBrandingFollowUps,
+  mockGetBrandingUrl,
+  mockSeedMessengerPersistentMenu,
+  mockSeedInstagramPersistentMenu,
 } = vi.hoisted(() => ({
   mockFindMessengerIntegration: vi.fn(),
   mockUpdateMessengerIntegrationAuth: vi.fn(),
@@ -56,17 +62,31 @@ const {
   mockZaloHandleRequest: vi.fn(),
   mockReconnectInbox: vi.fn(),
   mockAuthExpiresAtOf: vi.fn(() => null),
+  mockDbTransaction: vi.fn(
+    async (callback: (tx: unknown) => unknown) => await callback({}),
+  ),
+  mockWorkspaceFindById: vi.fn(async () => ({
+    id: "ws-1",
+    ownerId: "owner-1",
+  })),
+  mockRunBrandingFollowUps: vi.fn(async () => undefined),
+  mockGetBrandingUrl: vi.fn(() => "https://app.example.test/branding"),
+  mockSeedMessengerPersistentMenu: vi.fn(),
+  mockSeedInstagramPersistentMenu: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   resolveTenantSettings: mockResolveTenantSettings,
+  workspaceService: { findById: mockWorkspaceFindById },
   messengerIntegrationService: {
     findByIdForWorkspace: mockFindMessengerIntegration,
     updateAuth: mockUpdateMessengerIntegrationAuth,
+    seedPersistentMenu: mockSeedMessengerPersistentMenu,
   },
   instagramIntegrationService: {
     findByIdForWorkspace: mockFindInstagramIntegration,
     updateAuth: mockUpdateInstagramIntegrationAuth,
+    seedPersistentMenu: mockSeedInstagramPersistentMenu,
   },
   zaloIntegrationService: {
     findById: mockFindZaloIntegration,
@@ -75,6 +95,18 @@ vi.mock("@chatbotx.io/business", () => ({
   connectionStateService: {
     reconnectInbox: mockReconnectInbox,
   },
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: { transaction: mockDbTransaction },
+}))
+
+vi.mock("@/features/channel-connect/lib/branding-follow-ups", () => ({
+  runBrandingFollowUps: mockRunBrandingFollowUps,
+}))
+
+vi.mock("@/features/integration-webchat/lib", () => ({
+  getBrandingUrl: mockGetBrandingUrl,
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
@@ -87,6 +119,7 @@ vi.mock("@chatbotx.io/integration-messenger", () => ({
   getFacebookUser: mockGetMessengerFacebookUser,
   getUserPages: mockGetUserPages,
   toAppAccessToken: mockToMessengerAppAccessToken,
+  integration: {},
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
@@ -99,12 +132,14 @@ vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
 vi.mock("@chatbotx.io/integration-instagram", () => ({
   getInstagramAccount: mockGetInstagramAccount,
   subscribePageToInstagramWebhook: mockSubscribeInstagramWebhook,
+  integration: {},
 }))
 
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   getFacebookUser: mockGetInstagramFacebookUser,
   getUserInstagramAccounts: mockGetUserInstagramAccounts,
   subscribePageToInstagramWebhook: mockSubscribeInstagramFacebookWebhook,
+  integration: {},
 }))
 
 vi.mock("@chatbotx.io/sdk", () => ({
@@ -214,6 +249,7 @@ describe("reconnectMessengerHandler", () => {
       id: "im-1",
       inboxId: "inbox-1",
       pageId: "page-1",
+      persistentMenus: [],
     })
     mockExchangeMessengerCode.mockResolvedValue("short-token")
     mockGetMessengerFacebookUser.mockResolvedValue({
@@ -291,9 +327,8 @@ describe("reconnectMessengerHandler", () => {
         userAccessToken: "long-short-token",
         avatar: UPLOADED_AVATAR_PATH,
       },
+      tx: expect.anything(),
     })
-    // DB write must land before the webhook subscription so a failed write
-    // never leaves the webhook re-bound to a token the row doesn't hold.
     expect(
       mockUpdateMessengerIntegrationAuth.mock.invocationCallOrder[0],
     ).toBeLessThan(mockSubscribePageToAppWebhook.mock.invocationCallOrder[0])
@@ -338,6 +373,7 @@ describe("reconnectMessengerHandler", () => {
     mockFindMessengerIntegration.mockResolvedValue({
       id: "im-1",
       pageId: "page-1",
+      persistentMenus: [],
       userInfo: { avatar: "public/space/ws-1/avatars/old.jpg" },
     })
     mockGetMessengerFacebookUser.mockResolvedValue({
@@ -397,6 +433,7 @@ describe("reconnectMessengerHandler", () => {
       inboxId: "inbox-1",
       workspaceId: "ws-1",
       authExpiresAt: null,
+      tx: expect.anything(),
     })
   })
 })
@@ -410,6 +447,7 @@ describe("reconnectInstagramHandler", () => {
       type: "instagram",
       igId: "ig-user-9",
       pageId: "me-1",
+      persistentMenus: [],
     })
     mockGetInstagramAccount.mockResolvedValue({
       id: "me-1",
@@ -420,6 +458,9 @@ describe("reconnectInstagramHandler", () => {
       profile_picture_url: "https://ig.example/avatar.jpg",
     })
     stubBuildIntegrationUserInfo()
+    mockResolveTenantSettings.mockResolvedValue({
+      appUrl: "https://app.example.test",
+    })
   })
 
   const executeReconnect = () =>
@@ -459,6 +500,7 @@ describe("reconnectInstagramHandler", () => {
         userAccessToken: "ig-user-token",
         avatar: UPLOADED_AVATAR_PATH,
       },
+      tx: expect.anything(),
     })
     expect(
       mockUpdateInstagramIntegrationAuth.mock.invocationCallOrder[0],
@@ -486,6 +528,7 @@ describe("reconnectInstagramHandler", () => {
       type: "instagram",
       igId: "ig-user-9",
       pageId: "me-1",
+      persistentMenus: [],
       userInfo: { avatar: "public/space/ws-1/avatars/old.jpg" },
     })
     mockGetInstagramAccount.mockResolvedValue({
@@ -530,6 +573,7 @@ describe("reconnectInstagramHandler", () => {
       inboxId: "inbox-1",
       workspaceId: "ws-1",
       authExpiresAt: null,
+      tx: expect.anything(),
     })
   })
 })
@@ -543,6 +587,7 @@ describe("reconnectInstagramFacebookHandler", () => {
       type: "facebook",
       igId: "ig-biz-9",
       pageId: "old-page",
+      persistentMenus: [],
     })
     mockGetInstagramFacebookUser.mockResolvedValue({
       id: "fb-user-1",
@@ -559,6 +604,9 @@ describe("reconnectInstagramFacebookHandler", () => {
         pageAccessToken: "page-access-token",
       },
     ])
+    mockResolveTenantSettings.mockResolvedValue({
+      appUrl: "https://app.example.test",
+    })
   })
 
   const executeReconnect = () =>
@@ -599,6 +647,7 @@ describe("reconnectInstagramFacebookHandler", () => {
         userAccessToken: "fb-user-token",
         avatar: UPLOADED_AVATAR_PATH,
       },
+      tx: expect.anything(),
     })
     expect(
       mockUpdateInstagramIntegrationAuth.mock.invocationCallOrder[0],
@@ -613,6 +662,7 @@ describe("reconnectInstagramFacebookHandler", () => {
       type: "facebook",
       igId: "ig-biz-9",
       pageId: "old-page",
+      persistentMenus: [],
       userInfo: { avatar: "public/space/ws-1/avatars/old.jpg" },
     })
     mockGetInstagramFacebookUser.mockResolvedValue({
@@ -671,6 +721,7 @@ describe("reconnectInstagramFacebookHandler", () => {
       inboxId: "inbox-1",
       workspaceId: "ws-1",
       authExpiresAt: null,
+      tx: expect.anything(),
     })
   })
 })
@@ -730,6 +781,7 @@ describe("reconnectZaloHandler", () => {
       "iz-1",
       freshAuthValue,
       "OA One",
+      expect.anything(),
     )
   })
 
@@ -740,6 +792,7 @@ describe("reconnectZaloHandler", () => {
       inboxId: "inbox-1",
       workspaceId: "ws-1",
       authExpiresAt: null,
+      tx: expect.anything(),
     })
   })
 

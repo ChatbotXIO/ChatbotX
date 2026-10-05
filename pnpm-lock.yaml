@@ -2525,6 +2525,9 @@ importers:
       '@chatbotx.io/integration-telegram':
         specifier: workspace:*
         version: link:../../integrations/telegram
+      '@chatbotx.io/integration-threads':
+        specifier: workspace:*
+        version: link:../../integrations/threads
       '@chatbotx.io/integration-tiktok':
         specifier: workspace:*
         version: link:../../integrations/tiktok

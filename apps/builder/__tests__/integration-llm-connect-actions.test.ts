@@ -3,17 +3,17 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 // The five LLM provider connect actions (Claude, DeepSeek, Gemini, OpenAI,
 // OpenRouter) — thin wrappers that verify the API key via the shared
-// tri-state `verifyAiProviderApiKey`, then delegate to the provider's
-// business-layer connect() and invalidate the AI cache. No db/schema
-// imports remain in these actions.
+// tri-state `verifyAiProviderApiKey`, then delegate to the Connection
+// domain's `connectionService.connectFromCredentials` (the same engine path
+// `integrations/api/public/ai.ts`'s deprecated `PUT` route uses) and
+// invalidate the AI cache. Each used to call its own provider-specific
+// legacy service (`integrationClaudeService.connect`, …) directly — a
+// second write path to the same rows the Connection engine also writes,
+// which caused 409 conflicts.
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
-  connectClaude: vi.fn(),
-  connectDeepSeek: vi.fn(),
-  connectGemini: vi.fn(),
-  connectOpenAI: vi.fn(),
-  connectOpenRouter: vi.fn(),
+  connectFromCredentials: vi.fn(),
   invalidateCache: vi.fn(),
   returnValidationErrors: vi.fn(
     (_schema: unknown, errors: Record<string, unknown>) => ({
@@ -35,12 +35,8 @@ vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
-  integrationClaudeService: { connect: mocks.connectClaude },
-  integrationDeepSeekService: { connect: mocks.connectDeepSeek },
-  integrationGeminiService: { connect: mocks.connectGemini },
-  integrationOpenAIService: { connect: mocks.connectOpenAI },
-  integrationOpenRouterService: { connect: mocks.connectOpenRouter },
+vi.mock("@chatbotx.io/connections", () => ({
+  connectionService: { connectFromCredentials: mocks.connectFromCredentials },
 }))
 
 vi.mock("@chatbotx.io/ai", async (importOriginal) => {
@@ -76,8 +72,8 @@ vi.mock("@chatbotx.io/business/integration-ai-provider/verify", () => ({
 }))
 // Dynamic imports are required here (not a static-import violation): the
 // action modules must load *after* the vi.mock registrations above are in
-// place, so each action's `verifyAiProviderApiKey`/service imports resolve
-// to the test doubles instead of the real implementations.
+// place, so each action's `verifyAiProviderApiKey`/`connectionService`
+// imports resolve to the test doubles instead of the real implementations.
 const { connectClaudeAction } = await import(
   "@/features/integration-claude/actions/connect.action"
 )
@@ -115,36 +111,31 @@ beforeEach(() => {
 describe.each([
   {
     action: () => connectClaudeAction,
-    connect: mocks.connectClaude,
     expectedProviderArg: "claude",
     label: "Claude",
   },
   {
     action: () => connectDeepSeekAction,
-    connect: mocks.connectDeepSeek,
     expectedProviderArg: "deepseek",
     label: "DeepSeek",
   },
   {
     action: () => connectGeminiAction,
-    connect: mocks.connectGemini,
     expectedProviderArg: "gemini",
     label: "Gemini",
   },
   {
     action: () => connectOpenAIAction,
-    connect: mocks.connectOpenAI,
     expectedProviderArg: "openai",
     label: "OpenAI",
   },
   {
     action: () => connectOpenRouterAction,
-    connect: mocks.connectOpenRouter,
     expectedProviderArg: "openrouter",
     label: "OpenRouter",
   },
-])("$label connect action", ({ action, connect, expectedProviderArg }) => {
-  test("returns a validation error and never calls connect when the key is invalid", async () => {
+])("$label connect action", ({ action, expectedProviderArg }) => {
+  test("returns a validation error and never calls connectFromCredentials when the key is invalid", async () => {
     mocks.verifyAiProviderApiKey.mockResolvedValue("invalid")
 
     const result = await (
@@ -159,11 +150,11 @@ describe.each([
         apiKey: { _errors: ["validation.invalidApiKey"] },
       },
     })
-    expect(connect).not.toHaveBeenCalled()
+    expect(mocks.connectFromCredentials).not.toHaveBeenCalled()
     expect(mocks.invalidateCache).not.toHaveBeenCalled()
   })
 
-  test("connects then invalidates the AI cache for the right provider when the key is valid", async () => {
+  test("connects via connectFromCredentials (allowUpdate: true) then invalidates the AI cache for the right provider when the key is valid", async () => {
     mocks.verifyAiProviderApiKey.mockResolvedValue("valid")
 
     await (action() as unknown as ActionHandler<typeof baseInput, [string]>)({
@@ -171,12 +162,16 @@ describe.each([
       bindArgsParsedInputs: [workspaceId],
     })
 
-    expect(connect).toHaveBeenCalledWith({
+    expect(mocks.connectFromCredentials).toHaveBeenCalledWith({
       workspaceId,
-      apiKey: baseInput.apiKey,
-      model: baseInput.model,
-      temperature: baseInput.temperature,
-      maxOutputTokens: baseInput.maxOutputTokens,
+      provider: expectedProviderArg,
+      config: {
+        apiKey: baseInput.apiKey,
+        model: baseInput.model,
+        temperature: baseInput.temperature,
+        maxOutputTokens: baseInput.maxOutputTokens,
+      },
+      allowUpdate: true,
     })
     expect(mocks.invalidateCache).toHaveBeenCalledWith(
       workspaceId,
@@ -192,12 +187,16 @@ describe.each([
       bindArgsParsedInputs: [workspaceId],
     })
 
-    expect(connect).toHaveBeenCalledWith({
+    expect(mocks.connectFromCredentials).toHaveBeenCalledWith({
       workspaceId,
-      apiKey: baseInput.apiKey,
-      model: baseInput.model,
-      temperature: baseInput.temperature,
-      maxOutputTokens: baseInput.maxOutputTokens,
+      provider: expectedProviderArg,
+      config: {
+        apiKey: baseInput.apiKey,
+        model: baseInput.model,
+        temperature: baseInput.temperature,
+        maxOutputTokens: baseInput.maxOutputTokens,
+      },
+      allowUpdate: true,
     })
     expect(mocks.invalidateCache).toHaveBeenCalledWith(
       workspaceId,

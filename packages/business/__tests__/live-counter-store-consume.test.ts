@@ -42,6 +42,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
   countDistinct,
   eq,
   gt: vi.fn(),
+  inArray: vi.fn((column: unknown, values: unknown) => ({
+    inArray: [column, values],
+  })),
   lte: vi.fn(),
   ne: vi.fn(),
   sql: Object.assign(
@@ -52,6 +55,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({
   ROOT_TENANT_ID: "1",
+  connectionModel: {
+    id: "connection.id",
+    workspaceId: "connection.workspaceId",
+    kind: "connection.kind",
+    status: "connection.status",
+  },
   userQuotaModel: {
     userId: "userId",
     workspacesUsed: "workspacesUsed",
@@ -61,7 +70,6 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     macUsed: "macUsed",
   },
   contactModel: { workspaceId: "contact.workspaceId" },
-  inboxModel: { workspaceId: "inbox.workspaceId" },
   workspaceMacModel: {
     macCount: "workspaceMac.macCount",
     periodStart: "workspaceMac.periodStart",

@@ -131,9 +131,11 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => {
       unblockAndRecord,
       upsertByIdentifier,
     },
-    importService: { startContactImport: contactImportService.startImport },
   }
 })
+vi.mock("@chatbotx.io/business/import", () => ({
+  importService: { startContactImport: contactImportService.startImport },
+}))
 
 await import("@/features/contacts/api/public/crud")
 

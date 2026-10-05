@@ -28,14 +28,16 @@ export const assignerFilterTypes = z.enum(["all", "unassigned"])
 export type AssignerFilterType =
   (typeof assignerFilterTypes)[keyof typeof assignerFilterTypes]
 
-export const inboxDisconnectReasons = z.enum([
-  "manual",
-  "workspace_purge",
-  "trial_expired",
-  "tenant_suspended",
-  "token_revoked",
-])
-export type InboxDisconnectReason = z.infer<typeof inboxDisconnectReasons>
+/**
+ * `InboxDisconnectReason` is defined in `@chatbotx.io/utils/connection`
+ * alongside `CONNECTION_TO_INBOX_DISCONNECT_REASON`, which maps onto it —
+ * same rationale as `inboxStatuses` above. Re-exported here as the
+ * conventional database-layer import site.
+ */
+export {
+  type InboxDisconnectReason,
+  inboxDisconnectReasons,
+} from "@chatbotx.io/utils/connection"
 
 export type ConversationStepChallenge = {
   type: "step"

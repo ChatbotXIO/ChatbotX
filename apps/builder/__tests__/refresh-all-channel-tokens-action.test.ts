@@ -48,6 +48,7 @@ vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
 vi.mock("@chatbotx.io/integration-messenger", () => ({
   integration: { refreshAuth: mocks.refreshMessengerAuth },
   logMessengerWelcomeProfile: mocks.logMessengerWelcomeProfile,
+  isRevokedTokenError: vi.fn(() => false),
 }))
 
 vi.mock("@chatbotx.io/integration-tiktok/apis/auth", () => ({
@@ -159,10 +160,12 @@ describe("refreshAllChannelTokensAction — Messenger", () => {
     const summary = await runRefresh()
 
     expect(summary).toEqual({ refreshed: 0, failed: 1 })
-    expect(mocks.markMessengerTokenRefreshError).toHaveBeenCalledWith(
-      "messenger-1",
-      "token expired",
-    )
+    expect(mocks.markMessengerTokenRefreshError).toHaveBeenCalledWith({
+      id: "messenger-1",
+      workspaceId: "ws-1",
+      error: "token expired",
+      isRevoked: false,
+    })
     expect(mocks.logMessengerWelcomeProfile).not.toHaveBeenCalled()
   })
 

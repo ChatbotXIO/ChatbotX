@@ -25,6 +25,9 @@ const mocks = vi.hoisted(() => {
       wasCreated: true,
     })),
     mockFindByProviderSourceId: vi.fn(async () => undefined),
+    mockMarkDegradedByIdentifier: vi.fn(async () => null),
+    mockMarkUnhealthyByIdentifier: vi.fn(async () => null),
+    mockUpdateReturning: vi.fn(async () => [{ oaId: "oa-1" }]),
     mockUpsertConnectionRow: vi.fn(async () => ({ id: "conn-1" })),
     mockWithQuotaCompensation: vi.fn(
       async (_input: unknown, operation: () => Promise<unknown>) =>
@@ -35,7 +38,15 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn((...conditions: unknown[]) => ({ conditions })),
-  db: { delete: mocks.mockDelete, transaction: mocks.mockTransaction },
+  db: {
+    delete: mocks.mockDelete,
+    transaction: mocks.mockTransaction,
+    update: vi.fn(() => ({
+      set: vi.fn(() => ({
+        where: vi.fn(() => ({ returning: mocks.mockUpdateReturning })),
+      })),
+    })),
+  },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   findOrFail: vi.fn(
     async (props: { client?: { query: typeof mocks.mockTx.query } }) =>
@@ -51,7 +62,7 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationZaloModel: { id: "id", oaId: "oaId" },
+  integrationZaloModel: { id: "id", oaId: "oaId", workspaceId: "workspaceId" },
   tagChannelModel: {
     channelType: "channelType",
     integrationId: "integrationId",
@@ -78,7 +89,11 @@ vi.mock("../src/connection", () => ({
 }))
 
 vi.mock("../src/connection/state-service", () => ({
-  connectionStateService: { disconnectInbox: mocks.mockDisconnect },
+  connectionStateService: {
+    disconnectInbox: mocks.mockDisconnect,
+    markDegradedByIdentifier: mocks.mockMarkDegradedByIdentifier,
+    markUnhealthyByIdentifier: mocks.mockMarkUnhealthyByIdentifier,
+  },
 }))
 
 vi.mock("../src/inbox/service", () => ({
@@ -327,5 +342,60 @@ describe("zaloIntegrationService.disconnect", () => {
       workspaceId: "ws-1",
       tx,
     })
+  })
+})
+
+describe("zaloIntegrationService.markTokenRefreshError", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.mockUpdateReturning.mockResolvedValue([{ oaId: "oa-1" }])
+  })
+
+  test("degrades the Connection by oaId on a transient refresh failure", async () => {
+    await zaloIntegrationService.markTokenRefreshError({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      error: "boom",
+      isRevoked: false,
+    })
+
+    expect(mocks.mockMarkDegradedByIdentifier).toHaveBeenCalledWith({
+      provider: "zalo",
+      identifier: "oa-1",
+      workspaceId: "ws-1",
+      reason: "refresh_failed",
+    })
+    expect(mocks.mockMarkUnhealthyByIdentifier).not.toHaveBeenCalled()
+  })
+
+  test("marks the Connection unhealthy when the provider confirms the token was revoked", async () => {
+    await zaloIntegrationService.markTokenRefreshError({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      error: "revoked",
+      isRevoked: true,
+    })
+
+    expect(mocks.mockMarkUnhealthyByIdentifier).toHaveBeenCalledWith({
+      provider: "zalo",
+      identifier: "oa-1",
+      workspaceId: "ws-1",
+      reason: "token_revoked",
+    })
+    expect(mocks.mockMarkDegradedByIdentifier).not.toHaveBeenCalled()
+  })
+
+  test("no-ops the engine notification when the satellite row no longer exists", async () => {
+    mocks.mockUpdateReturning.mockResolvedValue([])
+
+    await zaloIntegrationService.markTokenRefreshError({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      error: "boom",
+      isRevoked: false,
+    })
+
+    expect(mocks.mockMarkDegradedByIdentifier).not.toHaveBeenCalled()
+    expect(mocks.mockMarkUnhealthyByIdentifier).not.toHaveBeenCalled()
   })
 })

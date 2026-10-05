@@ -1,8 +1,11 @@
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import type {
   CredentialType,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
+import type { ConnectionModel } from "@chatbotx.io/database/types"
 import type {
+  AuthValue,
   ConnectionProvider,
   Integration,
   IntegrationDefinition,
@@ -46,6 +49,30 @@ export type ConnectionAdapter = {
    */
   store?: ConnectionStoreBinding
   credentialType?: CredentialType
+  /**
+   * Provider-specific teardown beyond the generic remote
+   * disconnect/webhook-unsubscribe + store row delete the engine's
+   * `disconnect` (`packages/connections/src/lifecycle.ts`) already performs.
+   * Only Messenger defines one today (wired in
+   * `packages/connections/src/registry.ts` from
+   * `packages/connections/src/messenger-teardown.ts`): it preserves a
+   * Facebook Page webhook subscription still shared with Instagram instead
+   * of unsubscribing it, tears down coexist mode, and cleans up
+   * `MetaCapiEvent`/tag rows the generic store binding doesn't know about.
+   */
+  teardown?: (input: {
+    connection: ConnectionModel
+    auth: AuthValue
+  }) => Promise<{
+    /**
+     * `true` to skip the generic `integration.disconnect` +
+     * `provider.webhook.unsubscribe` calls below — this hook already
+     * handled (or deliberately preserved) the remote side.
+     */
+    skipGenericRemoteTeardown: boolean
+    /** Runs inside the same transaction as the FSM transition + store row delete. */
+    withinTransaction: (tx: DatabaseClient) => Promise<void>
+  }>
 }
 
 export type ConnectionRegistry = Record<

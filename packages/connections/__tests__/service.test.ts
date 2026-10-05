@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
     status: "needs_reauth",
   })),
   compensateQuotaConsumption: vi.fn(async () => undefined),
+  releasePendingQuota: vi.fn(async () => undefined),
   recordAuthSaved: vi.fn(async (input: Record<string, unknown>) => ({
     id: input.connectionId,
     status: "connected",
@@ -124,6 +125,7 @@ vi.mock("@chatbotx.io/business/connection", () => ({
     transition: mocks.transition,
     markUnhealthy: mocks.markUnhealthy,
     compensateQuotaConsumption: mocks.compensateQuotaConsumption,
+    releasePendingQuota: mocks.releasePendingQuota,
     recordAuthSaved: mocks.recordAuthSaved,
   },
   InvalidConnectionTransitionException: Error,
@@ -207,6 +209,7 @@ vi.mock("@chatbotx.io/business/connection", () => ({
       existingForeignKey &&
       (await input.store.saveAuthByForeignKey(
         existingForeignKey,
+        input.workspaceId,
         input.auth,
         input.extraConfig,
         input.tx,
@@ -274,6 +277,7 @@ vi.mock("@chatbotx.io/business/connection", () => ({
       existingForeignKey &&
       (await input.store.saveAuthByForeignKey(
         existingForeignKey,
+        input.workspaceId,
         input.auth,
         input.extraConfig,
         input.tx,
@@ -571,6 +575,7 @@ beforeEach(() => {
     secretText: "sk-live",
   })
   mocks.isUniqueViolationError.mockReturnValue(false)
+  mocks.update.mockResolvedValue(baseConnection())
   mocks.findByProviderSourceId.mockResolvedValue(undefined)
   mocks.findByProviderAndSourceIdAnyWorkspace.mockResolvedValue(undefined)
   mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([])
@@ -690,17 +695,22 @@ describe("ConnectionService.disconnect", () => {
       connectionId: "conn-1",
       workspaceId: "ws-1",
     })
-    expect(mocks.loadAuthByForeignKey).toHaveBeenCalledWith("inbox-1")
+    expect(mocks.loadAuthByForeignKey).toHaveBeenCalledWith("inbox-1", "ws-1")
     expect(mocks.disconnect).toHaveBeenCalledWith({ authType: "none" })
     expect(mocks.unsubscribe).toHaveBeenCalledWith({
       auth: { authType: "none" },
     })
-    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith("inbox-1", "tx")
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith(
+      "inbox-1",
+      "ws-1",
+      "tx",
+    )
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-1",
       event: "user.disconnect",
       ownerId: "owner-1",
       tx: "tx",
+      pendingRelease: { current: null },
     })
     expect(result.status).toBe("disconnected")
   })
@@ -723,6 +733,7 @@ describe("ConnectionService.disconnect", () => {
       event: "user.disconnect",
       ownerId: undefined,
       tx: "tx",
+      pendingRelease: { current: null },
     })
   })
 
@@ -736,12 +747,17 @@ describe("ConnectionService.disconnect", () => {
     })
 
     expect(result.status).toBe("disconnected")
-    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith("inbox-1", "tx")
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith(
+      "inbox-1",
+      "ws-1",
+      "tx",
+    )
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-1",
       event: "user.disconnect",
       ownerId: "owner-1",
       tx: "tx",
+      pendingRelease: { current: null },
     })
     expect(mocks.update).toHaveBeenCalledWith(
       {
@@ -915,6 +931,7 @@ describe("ConnectionService.refresh", () => {
     })
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "inbox-1",
+      "ws-1",
       expect.objectContaining({ authType: "oauth2" }),
     )
     expect(mocks.recordAuthSaved).toHaveBeenCalledWith({
@@ -945,6 +962,7 @@ describe("ConnectionService.refresh", () => {
 
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "inbox-1",
+      "ws-1",
       expect.objectContaining({
         authType: "oauth2",
         tokens: { accessToken: "rotated" },
@@ -1288,7 +1306,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(result).toBeDefined()
   })
 
-  it("fails the connect when webhook subscription and degradation both fail", async () => {
+  it("degrades the connect result best-effort only — returns the already-persisted connection instead of failing when both the webhook subscribe and the degrade transition fail (regression: this previously rethrew the degrade-transition failure and failed an already-successful connect)", async () => {
     mockAdapter.provider.kind = "channel"
     mocks.subscribe.mockRejectedValueOnce(new Error("webhook endpoint down"))
     mocks.transition
@@ -1298,14 +1316,13 @@ describe("ConnectionService.connectFromCredentials", () => {
       }))
       .mockRejectedValueOnce(new Error("degradation transition unavailable"))
 
-    await expect(
-      connectionService.connectFromCredentials({
-        workspaceId: "ws-1",
-        provider: "telegram",
-        config: { apiKey: "sk-live" },
-      }),
-    ).rejects.toThrow("degradation transition unavailable")
+    const result = await connectionService.connectFromCredentials({
+      workspaceId: "ws-1",
+      provider: "telegram",
+      config: { apiKey: "sk-live" },
+    })
 
+    expect(result).toEqual({ id: "conn-new", status: "connected" })
     expect(mocks.transition).toHaveBeenLastCalledWith({
       connectionId: "conn-new",
       event: "verify.failed_non_auth",
@@ -1445,6 +1462,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(mocks.insertRow).not.toHaveBeenCalled()
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "int-existing",
+      "ws-1",
       expect.objectContaining({ authType: "secretText" }),
       {},
       "tx",
@@ -1485,6 +1503,7 @@ describe("ConnectionService.connectFromCredentials", () => {
 
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "int-stale",
+      "ws-1",
       expect.objectContaining({ authType: "secretText" }),
       {},
       "tx",
@@ -1560,6 +1579,112 @@ describe("ConnectionService.startSession", () => {
       type: "open_url",
       url: "https://provider.example.com/authorize",
     })
+  })
+
+  it("mints the workspace and the session inside one transaction when createWorkspace is given instead of workspaceId (M-7: a failed/cancelled start must not leave an empty orphan workspace behind)", async () => {
+    const mockCreateWorkspace = vi.fn((tx: unknown) => {
+      expect(tx).toBe("tx")
+      return Promise.resolve({ id: "ws-new" })
+    })
+
+    const result = await connectionService.startSession({
+      createWorkspace: mockCreateWorkspace,
+      provider: "messenger",
+      purpose: "connect",
+      credential: { clientId: "app-1" },
+      callbackUrl: "https://app.example.test/integrations/messenger/callback",
+      actorUserId: "user-1",
+    })
+
+    expect(mocks.transaction).toHaveBeenCalledOnce()
+    expect(mockCreateWorkspace).toHaveBeenCalledWith("tx")
+    expect(mocks.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-new",
+        provider: "messenger",
+        purpose: "connect",
+      }),
+      "tx",
+    )
+    expect(result.nextAction).toEqual({
+      type: "open_url",
+      url: "https://provider.example.com/authorize",
+    })
+  })
+
+  it("never creates a session when createWorkspace itself fails (the real transaction rolls both back together)", async () => {
+    const workspaceError = new Error("workspace quota exhausted")
+    const mockCreateWorkspace = vi.fn(() => Promise.reject(workspaceError))
+
+    await expect(
+      connectionService.startSession({
+        createWorkspace: mockCreateWorkspace,
+        provider: "messenger",
+        purpose: "connect",
+        credential: {},
+        callbackUrl: "https://app.example.test/integrations/messenger/callback",
+        actorUserId: "user-1",
+      }),
+    ).rejects.toBe(workspaceError)
+    expect(mocks.createSession).not.toHaveBeenCalled()
+  })
+
+  it("rejects a reconnect target that belongs to a different workspace even when createWorkspace is supplied instead of workspaceId (authorization bypass regression)", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(undefined)
+    const mockCreateWorkspace = vi.fn((tx: unknown) => {
+      expect(tx).toBe("tx")
+      return Promise.resolve({ id: "ws-new" })
+    })
+
+    await expect(
+      connectionService.startSession({
+        createWorkspace: mockCreateWorkspace,
+        provider: "messenger",
+        purpose: "reconnect",
+        targetConnectionId: "conn-other-workspace",
+        credential: {},
+        callbackUrl: "https://app.example.test/integrations/messenger/callback",
+        actorUserId: "user-1",
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(mocks.findByIdForWorkspace).toHaveBeenCalledWith({
+      id: "conn-other-workspace",
+      workspaceId: "ws-new",
+    })
+    expect(mocks.createSession).not.toHaveBeenCalled()
+  })
+
+  it("throws when both workspaceId and createWorkspace are given", async () => {
+    const mockCreateWorkspace = vi.fn(() => Promise.resolve({ id: "ws-new" }))
+    await expect(
+      connectionService.startSession({
+        workspaceId: "ws-1",
+        createWorkspace: mockCreateWorkspace,
+        provider: "messenger",
+        purpose: "connect",
+        credential: {},
+        callbackUrl: "https://app.example.test/integrations/messenger/callback",
+        actorUserId: "user-1",
+      }),
+    ).rejects.toThrow(
+      "startSession requires exactly one of workspaceId/createWorkspace",
+    )
+    expect(mocks.createSession).not.toHaveBeenCalled()
+  })
+
+  it("throws when neither workspaceId nor createWorkspace is given", async () => {
+    await expect(
+      connectionService.startSession({
+        provider: "messenger",
+        purpose: "connect",
+        credential: {},
+        callbackUrl: "https://app.example.test/integrations/messenger/callback",
+        actorUserId: "user-1",
+      }),
+    ).rejects.toThrow(
+      "startSession requires exactly one of workspaceId/createWorkspace",
+    )
+    expect(mocks.createSession).not.toHaveBeenCalled()
   })
 })
 
@@ -1991,6 +2116,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
 
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "inbox-1",
+      "ws-1",
       expect.objectContaining({ authType: "oauth2" }),
       {},
       "tx",
@@ -2525,6 +2651,7 @@ describe("ConnectionService.connectTargets", () => {
     expect(mocks.insertRow).not.toHaveBeenCalled()
     expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
       "inbox-existing",
+      "ws-1",
       { authType: "none" },
       {},
       "tx",

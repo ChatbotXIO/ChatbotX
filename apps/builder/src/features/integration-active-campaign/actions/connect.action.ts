@@ -1,12 +1,6 @@
 "use server"
 
-import { integrationActiveCampaignService } from "@chatbotx.io/business"
-import {
-  ActiveCampaignApiError,
-  integration as activeCampaignIntegration,
-} from "@chatbotx.io/integration-active-campaign"
-import { SdkException } from "@chatbotx.io/sdk"
-import { getTranslations } from "next-intl/server"
+import { connectionService } from "@chatbotx.io/connections"
 import { normalizeError } from "universal-error-normalizer"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { logger } from "@/lib/log"
@@ -18,20 +12,21 @@ export const connectActiveCampaignAction = workspaceActionClient
   .inputSchema(connectActiveCampaignSchema)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     try {
-      const auth = await activeCampaignIntegration.runAction(
-        "validateCredentials",
-        { props: parsedInput },
-      )
-      await integrationActiveCampaignService.upsert({ workspaceId, auth })
+      // `allowUpdate: true` mirrors the legacy
+      // `integrationActiveCampaignService.upsert` this replaces — that always
+      // upserted (replacing an already-connected workspace's stored
+      // credentials), never rejecting a repeat connect.
+      await connectionService.connectFromCredentials({
+        workspaceId,
+        provider: "activeCampaign",
+        config: parsedInput,
+        allowUpdate: true,
+      })
     } catch (error) {
       logger.error(
         { err: normalizeError(error), workspaceId },
         "Failed to connect ActiveCampaign",
       )
-      if (error instanceof ActiveCampaignApiError) {
-        const t = await getTranslations("activeCampaign.errors")
-        throw new SdkException(t("invalidCredentials"), 400, 400)
-      }
       throw error
     }
   })

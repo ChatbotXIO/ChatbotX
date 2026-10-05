@@ -307,6 +307,18 @@ export const connectSessionExpiredException = (
  * {@link connectSessionExpiredException} so the `/select` page can redirect
  * back quietly (no `?error=` toast) instead of surfacing the generic
  * "Your session expired" message for a plain user cancel.
+ *
+ * Carries no `returnUrl` (regression): the only caller that catches this —
+ * the `/select` page — used to redirect straight back to
+ * `ConnectSession.returnUrl` when present, but in this architecture that
+ * field is always the `/select` page's own URL (`start-channel-connect.ts`
+ * writes it via `updateReturnUrl` once the session id is known, purely so
+ * the OAuth callback knows where to send a SUCCESSFUL connect). Following
+ * it on cancellation instead bounces the request back to the same
+ * `/select` page, which re-resolves the still-cancelled session and throws
+ * this exact exception again — an infinite redirect loop on the ordinary
+ * "user clicked Cancel" path. The caller always falls back to the
+ * request's (sanitized) referer, or `/channels/create`, instead.
  */
 export const connectSessionCancelledException = () =>
   new ChatbotXException(

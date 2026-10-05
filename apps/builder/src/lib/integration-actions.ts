@@ -1,7 +1,7 @@
 import { dispatchAuditRecordSafely } from "@chatbotx.io/business/audit"
+import { connectionStateService } from "@chatbotx.io/business/connection"
 import { connectionService } from "@chatbotx.io/connections"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
-import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { normalizeError } from "universal-error-normalizer"
 import {
   type WorkspaceIdRequestParams,
@@ -57,11 +57,12 @@ export function createDisconnectAction(
         bindArgsParsedInputs: WorkspaceIdRequestParams
       }) => {
         try {
-          const connection = await connectionRepository.findByProviderSourceId({
-            workspaceId,
-            provider,
-            sourceId: "workspace",
-          })
+          const connection =
+            await connectionStateService.findByProviderSourceId({
+              workspaceId,
+              provider,
+              sourceId: "workspace",
+            })
           if (connection) {
             await connectionService.disconnect({
               connectionId: connection.id,

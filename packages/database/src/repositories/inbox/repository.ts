@@ -1,7 +1,7 @@
 import { and, type DatabaseClient, db, eq, isNull, lt, or } from "../../client"
 import type { ChannelType } from "../../partials"
 import { THREAD_CONTROL_SEEN_REFRESH_MS } from "../../partials/thread-control"
-import { inboxModel } from "../../schema"
+import { connectionModel, inboxModel, workspaceModel } from "../../schema"
 import type { InboxModel } from "../../types"
 
 export type InboxChannelOption = { id: string; name: string }
@@ -69,5 +69,68 @@ export const inboxRepository = {
       .returning({ id: inboxModel.id })
 
     return rows.length > 0
+  },
+
+  /**
+   * Inbox rows `tenantService.suspend()` paused directly — the pre-backfill
+   * fallback in `workspaceLifecycleService.disconnectWorkspaceInbox` writes
+   * `Inbox.status = "disconnected"`/`disconnectReason = "tenant_suspended"`
+   * straight onto the row when no `Connection` exists yet to route the pause
+   * through the engine (the `Inbox` model has no distinct `paused` status).
+   * Those rows are invisible to `connectionRepository.listPausedByOwner`, so
+   * `tenantService.reactivate` sweeps this list too. Temporary: remove
+   * alongside the matching fallback in `tenantService.reactivate` once the
+   * `Connection` backfill's `--verify` is 0 (see the plan's decision log).
+   */
+  async listTenantSuspendedWithoutConnectionByOwner(
+    input: { ownerId: string },
+    tx: DatabaseClient = db,
+  ): Promise<InboxModel[]> {
+    const rows = await tx
+      .select({ inbox: inboxModel })
+      .from(inboxModel)
+      .innerJoin(workspaceModel, eq(inboxModel.workspaceId, workspaceModel.id))
+      .leftJoin(connectionModel, eq(connectionModel.inboxId, inboxModel.id))
+      .where(
+        and(
+          eq(workspaceModel.ownerId, input.ownerId),
+          eq(inboxModel.status, "disconnected"),
+          eq(inboxModel.disconnectReason, "tenant_suspended"),
+          isNull(connectionModel.id),
+        ),
+      )
+    return rows.map((row) => row.inbox)
+  },
+
+  /**
+   * Mirrors a `Connection` status transition onto `Inbox.status` (and, when
+   * going inactive, `disconnectedAt`/`disconnectReason`) — the single write
+   * path `ConnectionStateService.mirrorInboxStatus` funnels through instead
+   * of touching `inboxModel` itself, so callers decide the exact column
+   * values (e.g. omitting `disconnectedAt`/`disconnectReason` to preserve
+   * them on a no-op re-assertion) and this just applies them.
+   */
+  async updateConnectionMirror(
+    input: {
+      inboxId: string
+      workspaceId: string
+      values: Partial<
+        Pick<
+          typeof inboxModel.$inferInsert,
+          "status" | "disconnectedAt" | "disconnectReason"
+        >
+      >
+    },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(inboxModel)
+      .set(input.values)
+      .where(
+        and(
+          eq(inboxModel.id, input.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
   },
 }

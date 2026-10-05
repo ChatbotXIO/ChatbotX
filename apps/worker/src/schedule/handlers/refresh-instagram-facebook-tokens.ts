@@ -4,6 +4,7 @@ import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   type InstagramAuthValue,
   integration as integrationInstagramFacebook,
+  isRevokedTokenError,
 } from "@chatbotx.io/integration-instagram-facebook"
 import { distributedLock } from "@chatbotx.io/redis"
 import { logger } from "../../lib/logger"
@@ -60,10 +61,12 @@ async function refreshOne(integration: {
               error,
               `[refreshInstagramFacebookTokens] id=${integration.id} failed`,
             )
-            await instagramIntegrationService.markTokenRefreshError(
-              integration.id,
-              error instanceof Error ? error.message : String(error),
-            )
+            await instagramIntegrationService.markTokenRefreshError({
+              id: integration.id,
+              workspaceId: integration.workspaceId,
+              error: error instanceof Error ? error.message : String(error),
+              isRevoked: isRevokedTokenError(error),
+            })
             await logProviderError({
               // The Facebook-linked variant logs under the one `instagram` label,
               // so a workspace filtering the Provider column sees every failure

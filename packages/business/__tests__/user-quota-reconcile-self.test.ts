@@ -71,9 +71,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   and: (...args: unknown[]) => ({ and: args }),
   count: vi.fn(() => "count()"),
-  countDistinct: vi.fn(),
+  countDistinct: vi.fn(() => "countDistinct()"),
   eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
   gt: vi.fn(),
+  inArray: (a: unknown, b: unknown) => ({ inArray: [a, b] }),
   lte: vi.fn(),
   sql: Object.assign(
     (strings: TemplateStringsArray) => ({ sql: strings.join("?") }),
@@ -82,12 +83,20 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sum: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({ planStatuses: {} }))
+vi.mock("@chatbotx.io/database/partials", () => ({
+  planStatuses: {},
+  ACTIVE_CONNECTION_STATUSES: ["connected", "degraded"],
+}))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   ROOT_TENANT_ID: "1",
+  connectionModel: {
+    id: "connection.id",
+    workspaceId: "connection.workspaceId",
+    kind: "connection.kind",
+    status: "connection.status",
+  },
   contactModel: { workspaceId: "contact.workspaceId" },
-  inboxModel: { workspaceId: "inbox.workspaceId" },
   userQuotaModel,
   workspaceMacModel: {},
   workspaceMemberModel: {},

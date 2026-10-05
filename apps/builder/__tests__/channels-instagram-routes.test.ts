@@ -34,7 +34,9 @@ const {
     async (): Promise<string | undefined> => "user-1",
   ),
   mockRedirect: vi.fn((path: string) => {
-    throw new Error(`redirect:${path}`)
+    const error = new Error(`redirect:${path}`)
+    Object.assign(error, { digest: `NEXT_REDIRECT;replace;${path};307;` })
+    throw error
   }),
   mockRequireWorkspacePermission: vi.fn(async () => undefined),
   mockResolveOAuthCredential: vi.fn(),
@@ -48,6 +50,16 @@ vi.mock("next/navigation", () => ({
     throw new Error("not found")
   }),
   redirect: mockRedirect,
+  unstable_rethrow: (error: unknown) => {
+    if (
+      error instanceof Error &&
+      "digest" in error &&
+      typeof error.digest === "string" &&
+      error.digest.startsWith("NEXT_REDIRECT")
+    ) {
+      throw error
+    }
+  },
 }))
 
 // The mock request objects below only carry `nextUrl`, not the real
@@ -164,7 +176,7 @@ describe.each([
     })
   })
 
-  test("creates a workspace first when there is no workspaceId yet (first channel ever)", async () => {
+  test("defers workspace creation into startSession's own transaction when there is no workspaceId yet (first channel ever) (M-7: a cancelled/failed start must not leave an empty orphan workspace behind)", async () => {
     const { GET } = await import(routePath)
 
     await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow(
@@ -172,12 +184,68 @@ describe.each([
     )
 
     expect(mockRequireWorkspacePermission).not.toHaveBeenCalled()
+    // The workspace is minted by `startSession`'s own implementation, in the
+    // same transaction as the `ConnectSession` insert — not eagerly by this
+    // route — so `workspaceService.create` never runs here; this mock
+    // `startSession` never invokes the callback it's handed.
+    expect(mockWorkspaceCreate).not.toHaveBeenCalled()
+    expect(mockStartSession).toHaveBeenCalledWith(
+      expect.objectContaining({ createWorkspace: expect.any(Function) }),
+    )
+
+    // The callback itself, once invoked (as the real `startSession` does
+    // inside its transaction), still creates the user's first workspace.
+    const passedCreateWorkspace = mockStartSession.mock.calls[0]?.[0]
+      .createWorkspace as (tx: unknown) => Promise<{ id: string }>
+    await expect(passedCreateWorkspace("tx")).resolves.toEqual({
+      id: "ws-new",
+      ownerId: "user-1",
+    })
     expect(mockWorkspaceCreate).toHaveBeenCalledWith({
       data: { name: "New Workspace", ownerId: "user-1" },
       createdBy: "user-1",
+      tx: "tx",
     })
+  })
+
+  test("never creates an orphan workspace when startSession fails before reaching the provider — simulated OAuth cancel (M-7)", async () => {
+    mockStartSession.mockRejectedValueOnce(
+      new Error("provider rejected the connect attempt"),
+    )
+    const { GET } = await import(routePath)
+
+    await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow(
+      "redirect:/channels/create?error=sessionExpired",
+    )
+
+    // Workspace creation now lives INSIDE `startSession`'s own transaction
+    // (`createWorkspace` below), so a failed/cancelled start — which never
+    // gets to invoke that callback for real here — never calls
+    // `workspaceService.create` directly from this route. Before M-7, the
+    // route called it eagerly regardless of whether `startSession`
+    // succeeded, leaving an empty orphan workspace behind on every
+    // cancelled/failed attempt.
+    expect(mockWorkspaceCreate).not.toHaveBeenCalled()
     expect(mockStartSession).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId: "ws-new" }),
+      expect.objectContaining({ createWorkspace: expect.any(Function) }),
+    )
+  })
+
+  test("rethrows createFirstWorkspace's plan-limit redirect instead of swallowing it as a generic session-start failure (regression: createWorkspace's own NEXT_REDIRECT was caught by this route's own catch and replaced with the generic /channels/create?error=sessionExpired page)", async () => {
+    const { workspaceLimitReachedException } = await import(
+      "@chatbotx.io/business/errors"
+    )
+    mockWorkspaceCreate.mockRejectedValueOnce(workspaceLimitReachedException())
+    // Mirrors what the real `startSession` does inside its own transaction:
+    // invokes the `createWorkspace` callback this route handed it.
+    mockStartSession.mockImplementationOnce(
+      async (input: { createWorkspace: (tx: unknown) => Promise<unknown> }) =>
+        input.createWorkspace("tx"),
+    )
+    const { GET } = await import(routePath)
+
+    await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow(
+      "redirect:/channels/create?error=workspaceLimitReached",
     )
   })
 

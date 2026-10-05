@@ -4,6 +4,7 @@ import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   type InstagramAuthValue,
   integration as integrationInstagram,
+  isRevokedTokenError,
 } from "@chatbotx.io/integration-instagram"
 import { distributedLock } from "@chatbotx.io/redis"
 import { logger } from "../../lib/logger"
@@ -58,10 +59,12 @@ async function refreshOne(integration: {
               error,
               `[refreshInstagramTokens] id=${integration.id} failed`,
             )
-            await instagramIntegrationService.markTokenRefreshError(
-              integration.id,
-              error instanceof Error ? error.message : String(error),
-            )
+            await instagramIntegrationService.markTokenRefreshError({
+              id: integration.id,
+              workspaceId: integration.workspaceId,
+              error: error instanceof Error ? error.message : String(error),
+              isRevoked: isRevokedTokenError(error),
+            })
             await logProviderError({
               provider: "instagram",
               workspaceId: integration.workspaceId,

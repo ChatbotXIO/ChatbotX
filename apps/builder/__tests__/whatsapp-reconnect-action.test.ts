@@ -27,6 +27,7 @@ const {
   upsertCurrentCredentialMock,
   reconnectInboxMock,
   authExpiresAtOfMock,
+  dbTransactionMock,
 } = vi.hoisted(() => ({
   exchangeAccessTokenMock: vi.fn(),
   findWabaMock: vi.fn(),
@@ -41,6 +42,9 @@ const {
   upsertCurrentCredentialMock: vi.fn(),
   reconnectInboxMock: vi.fn(),
   authExpiresAtOfMock: vi.fn(() => null),
+  dbTransactionMock: vi.fn(
+    async (callback: (tx: unknown) => unknown) => await callback({}),
+  ),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -87,6 +91,10 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/business/connection", () => ({
   authExpiresAtOf: authExpiresAtOfMock,
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: { transaction: dbTransactionMock },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -274,6 +282,7 @@ describe("reconnectWhatsappAction", () => {
       inboxId: "inbox-1",
       workspaceId: "ws-1",
       authExpiresAt: null,
+      tx: expect.anything(),
     })
   })
 })

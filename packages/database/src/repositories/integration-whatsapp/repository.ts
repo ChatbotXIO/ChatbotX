@@ -222,14 +222,16 @@ class IntegrationWhatsappRepository {
   }
 
   async markTokenRefreshError(
-    id: string,
-    error: string,
+    input: WorkspaceIntegrationRef & { error: string },
     tx: DatabaseClient = db,
-  ): Promise<void> {
-    await tx
+  ): Promise<{ phoneNumberId: string } | undefined> {
+    const [row] = await tx
       .update(integrationWhatsappModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationWhatsappModel.id, id))
+      .set({ tokenRefreshError: input.error })
+      .where(workspaceIntegrationFilter(input))
+      .returning({ phoneNumberId: integrationWhatsappModel.phoneNumberId })
+
+    return row
   }
 
   /**

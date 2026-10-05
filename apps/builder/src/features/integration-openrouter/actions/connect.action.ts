@@ -2,8 +2,8 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
-import { integrationOpenRouterService } from "@chatbotx.io/business"
 import { verifyAiProviderApiKey } from "@chatbotx.io/business/integration-ai-provider/verify"
+import { connectionService } from "@chatbotx.io/connections"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -42,12 +42,20 @@ export const connectOpenRouterAction = workspaceActionClient
         })
       }
 
-      await integrationOpenRouterService.connect({
+      // `allowUpdate: true` mirrors the legacy `integrationOpenRouterService.connect`
+      // this replaces — that always upserted (replacing an already-connected
+      // workspace's stored API key/config), never rejecting a repeat connect —
+      // see `ai.ts`'s `connectAiProvider` handler for the same contract.
+      await connectionService.connectFromCredentials({
         workspaceId,
-        apiKey: parsedInput.apiKey,
-        model: parsedInput.model,
-        temperature: parsedInput.temperature,
-        maxOutputTokens: parsedInput.maxOutputTokens,
+        provider: aiProviders.enum.openrouter,
+        config: {
+          apiKey: parsedInput.apiKey,
+          model: parsedInput.model,
+          temperature: parsedInput.temperature,
+          maxOutputTokens: parsedInput.maxOutputTokens,
+        },
+        allowUpdate: true,
       })
 
       await aiIntegrationService.invalidateCache(

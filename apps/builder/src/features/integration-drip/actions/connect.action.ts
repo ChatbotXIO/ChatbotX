@@ -1,12 +1,6 @@
 "use server"
 
-import { integrationDripService } from "@chatbotx.io/business"
-import {
-  DripNoAccountError,
-  integration as dripIntegration,
-} from "@chatbotx.io/integration-drip"
-import { SdkException } from "@chatbotx.io/sdk"
-import { getTranslations } from "next-intl/server"
+import { connectionService } from "@chatbotx.io/connections"
 import { normalizeError } from "universal-error-normalizer"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { logger } from "@/lib/log"
@@ -18,19 +12,20 @@ export const connectDripAction = workspaceActionClient
   .inputSchema(connectDripSchema)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     try {
-      const auth = await dripIntegration.runAction("validateCredentials", {
-        props: parsedInput,
+      // `allowUpdate: true` mirrors the legacy `integrationDripService.upsert`
+      // this replaces — that always upserted (replacing an already-connected
+      // workspace's stored API token), never rejecting a repeat connect.
+      await connectionService.connectFromCredentials({
+        workspaceId,
+        provider: "drip",
+        config: parsedInput,
+        allowUpdate: true,
       })
-      await integrationDripService.upsert({ workspaceId, auth })
     } catch (error) {
       logger.error(
         { err: normalizeError(error), workspaceId },
         "Failed to connect Drip",
       )
-      if (error instanceof DripNoAccountError) {
-        const t = await getTranslations("drip.errors")
-        throw new SdkException(t("noAccount"), 400, 400)
-      }
       throw error
     }
   })

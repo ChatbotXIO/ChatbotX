@@ -5,6 +5,7 @@ import {
 } from "./connect-session-flow"
 import { connectTargets } from "./connect-targets"
 import { connectFromCredentials, reconnect } from "./credentials"
+import { attachIntegrationConnectionRow } from "./internal"
 import { disconnect, refresh, verify } from "./lifecycle"
 
 /**
@@ -38,4 +39,5 @@ export const connectionService = {
   completeAuthorization,
   listAndAttachCandidates,
   connectTargets,
+  attachIntegrationConnectionRow,
 }

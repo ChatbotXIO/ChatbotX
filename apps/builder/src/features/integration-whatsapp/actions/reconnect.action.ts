@@ -9,6 +9,7 @@ import {
 } from "@chatbotx.io/business"
 import { authExpiresAtOf } from "@chatbotx.io/business/connection"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { db } from "@chatbotx.io/database/client"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
@@ -185,7 +186,13 @@ async function buildReconnectAuth(input: {
   }
 }
 
-async function persistReconnectAuthAndResubscribe(input: {
+/**
+ * Exported (used only by this module otherwise) so the transaction-atomicity
+ * fix — the auth write and `reconnectInbox` sharing one `db.transaction` —
+ * can be unit-tested directly without re-driving the whole OAuth exchange
+ * chain `reconnectWhatsapp` performs first.
+ */
+export async function persistReconnectAuthAndResubscribe(input: {
   auth: WhatsappAuthValue
   hasCapiScope: boolean
   grantedScopes: string[]
@@ -197,16 +204,24 @@ async function persistReconnectAuthAndResubscribe(input: {
   workspaceId: string
   inboxId: string
 }): Promise<boolean> {
-  await integrationWhatsappService.replaceAuth({
-    id: input.integrationWhatsappId,
-    workspaceId: input.workspaceId,
-    auth: input.auth,
-    hasCapiScope: input.hasCapiScope,
-  })
-  await connectionStateService.reconnectInbox({
-    inboxId: input.inboxId,
-    workspaceId: input.workspaceId,
-    authExpiresAt: authExpiresAtOf(input.auth),
+  // Both writes share one transaction so a failure inside `reconnectInbox`
+  // (e.g. a channel-limit re-check) rolls back the auth write too, instead of
+  // leaving the satellite row re-authorized while the Connection/Inbox state
+  // stays stale.
+  await db.transaction(async (tx) => {
+    await integrationWhatsappService.replaceAuth({
+      id: input.integrationWhatsappId,
+      workspaceId: input.workspaceId,
+      auth: input.auth,
+      hasCapiScope: input.hasCapiScope,
+      tx,
+    })
+    await connectionStateService.reconnectInbox({
+      inboxId: input.inboxId,
+      workspaceId: input.workspaceId,
+      authExpiresAt: authExpiresAtOf(input.auth),
+      tx,
+    })
   })
   try {
     await whatsappBusinessAccountService.upsertCurrentCredential({

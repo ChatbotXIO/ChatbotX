@@ -1,8 +1,4 @@
-import {
-  connectionStateService,
-  integrationThreadsService,
-} from "@chatbotx.io/business"
-import { authExpiresAtOf } from "@chatbotx.io/business/connection"
+import { integrationThreadsService } from "@chatbotx.io/business"
 import {
   buildThreadsAuthValue,
   getThreadsProfile,
@@ -67,15 +63,6 @@ export async function reconnectThreadsHandler(props: {
     if (!updated) {
       return { status: "error", reason: "notFound" }
     }
-
-    // `threads` has no `Connection` adapter/store binding registered yet
-    // (`CONNECTION_REGISTRY.threads === null`), so this always no-ops today;
-    // added for forward-compatibility once threads gets a real adapter.
-    await connectionStateService.reconnectInbox({
-      inboxId: integrationThreads.inboxId,
-      workspaceId: props.workspaceId,
-      authExpiresAt: authExpiresAtOf(auth),
-    })
 
     return { status: "success" }
   } catch (error) {

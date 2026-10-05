@@ -3,6 +3,7 @@ import { auditService } from "@chatbotx.io/business/audit"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   calculateExpiresAt,
+  isRevokedTokenError,
   refreshAccessToken,
   type ZaloAuthValue,
 } from "@chatbotx.io/integration-zalo"
@@ -79,10 +80,12 @@ async function refreshWithLockHeld(integration: {
     })
   } catch (error) {
     logger.error(error, `[refreshZaloTokens] id=${integration.id} failed`)
-    await zaloIntegrationService.markTokenRefreshError(
-      integration.id,
-      error instanceof Error ? error.message : String(error),
-    )
+    await zaloIntegrationService.markTokenRefreshError({
+      id: integration.id,
+      workspaceId: integration.workspaceId,
+      error: error instanceof Error ? error.message : String(error),
+      isRevoked: isRevokedTokenError(error),
+    })
     await logProviderError({
       provider: "zalo",
       workspaceId: integration.workspaceId,

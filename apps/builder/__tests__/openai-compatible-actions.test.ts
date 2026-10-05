@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
+  connectFromCredentials: vi.fn(),
   findByWorkspaceIdAndId: vi.fn(),
   isDuplicatePreset: vi.fn(() => false),
   returnValidationErrors: vi.fn(
@@ -35,6 +36,12 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   isOpenaiCompatiblePresetAlreadyConnectedError: mocks.isDuplicatePreset,
   validateOpenaiCompatibleBaseUrlForEnvironment: mocks.validateBaseUrl,
+}))
+
+vi.mock("@chatbotx.io/connections", () => ({
+  connectionService: {
+    connectFromCredentials: mocks.connectFromCredentials,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -126,6 +133,61 @@ describe("OpenAI-compatible actions", () => {
     })
     expect(mocks.verifyProvider).not.toHaveBeenCalled()
     expect(mocks.connect).not.toHaveBeenCalled()
+  })
+
+  test("connect calls connectFromCredentials with the validated baseURL and no allowUpdate (always a fresh connect)", async () => {
+    const result = await (
+      connectOpenaiCompatibleAction as unknown as ActionHandler<
+        typeof baseInput,
+        [string]
+      >
+    )({
+      parsedInput: baseInput,
+      bindArgsParsedInputs: ["workspace-1"],
+    })
+
+    expect(result).toBeUndefined()
+    expect(mocks.connect).not.toHaveBeenCalled()
+    expect(mocks.connectFromCredentials).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      provider: "openaiCompatible",
+      config: {
+        ...baseInput,
+        baseURL: baseInput.baseURL,
+        defaultModel: "gpt-4o-mini",
+      },
+    })
+    expect(mocks.connectFromCredentials.mock.calls[0]?.[0]).not.toHaveProperty(
+      "allowUpdate",
+    )
+  })
+
+  test("connect maps a connectionAlreadyConnected error from connectFromCredentials to a localized preset validation error instead of letting it propagate", async () => {
+    mocks.connectFromCredentials.mockRejectedValue(
+      new ChatbotXException(
+        "This provider is already connected in this workspace.",
+        "connectionAlreadyConnected",
+        409,
+      ),
+    )
+
+    const result = await (
+      connectOpenaiCompatibleAction as unknown as ActionHandler<
+        typeof baseInput,
+        [string]
+      >
+    )({
+      parsedInput: baseInput,
+      bindArgsParsedInputs: ["workspace-1"],
+    })
+
+    expect(result).toEqual({
+      validationErrors: {
+        preset: {
+          _errors: ["openaiCompatible.validation.presetAlreadyConnected"],
+        },
+      },
+    })
   })
 
   test("update validates existing base URL before verifying an API key change", async () => {

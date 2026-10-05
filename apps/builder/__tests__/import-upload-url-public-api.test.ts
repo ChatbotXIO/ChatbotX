@@ -36,6 +36,8 @@ const peekImportHeaders = vi.hoisted(() => vi.fn())
 const importServiceList = vi.hoisted(() => vi.fn())
 vi.mock("@chatbotx.io/business", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
+}))
+vi.mock("@chatbotx.io/business/import", () => ({
   createImportUpload,
   peekImportHeaders,
   importService: { list: importServiceList },

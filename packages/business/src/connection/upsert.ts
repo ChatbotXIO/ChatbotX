@@ -127,6 +127,7 @@ export const saveOrInsertSatellite = async (input: {
     existingForeignKey &&
     (await input.store.saveAuthByForeignKey(
       existingForeignKey,
+      input.workspaceId,
       input.auth,
       input.extraConfig,
       input.tx,
@@ -235,6 +236,15 @@ export const upsertConnectionRow = async (input: {
         id: existing.id,
         workspaceId: existing.workspaceId,
         values: {
+          // Keeps the revived row's identity in sync with the descriptor
+          // just validated — a no-op for every provider whose `existing`
+          // was found BY this exact `sourceId` (every current caller), but
+          // required for a provider like `openaiCompatible` whose
+          // `sourceId` IS its config (`baseURL`): without this, a revive
+          // that also updates that config value via `saveAuthByForeignKey`
+          // above would leave `Connection.sourceId` pointing at the stale
+          // value, silently desyncing the two.
+          sourceId: descriptor.sourceId,
           inboxId: inboxId ?? existing.inboxId,
           integrationId: integrationId ?? null,
           displayName: descriptor.displayName,

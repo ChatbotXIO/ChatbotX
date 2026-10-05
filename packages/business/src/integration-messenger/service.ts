@@ -19,6 +19,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
@@ -58,8 +59,10 @@ class MessengerIntegrationService extends BaseService {
     auth: Record<string, unknown>
     name?: string
     userInfo?: IntegrationUserInfo
+    tx?: DatabaseClient
   }): Promise<void> {
-    await db
+    const client = props.tx ?? db
+    await client
       .update(integrationMessengerModel)
       .set({
         auth: props.auth,
@@ -127,11 +130,43 @@ class MessengerIntegrationService extends BaseService {
       .where(inArray(integrationMessengerModel.workspaceId, workspaceIds))
   }
 
-  async markTokenRefreshError(id: string, error: string): Promise<void> {
-    await db
+  async markTokenRefreshError(props: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }): Promise<void> {
+    const [row] = await db
       .update(integrationMessengerModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationMessengerModel.id, id))
+      .set({ tokenRefreshError: props.error })
+      .where(
+        and(
+          eq(integrationMessengerModel.id, props.id),
+          eq(integrationMessengerModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ pageId: integrationMessengerModel.pageId })
+
+    if (!row) {
+      return
+    }
+
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
+        provider: "messenger",
+        identifier: row.pageId,
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
+      })
+      return
+    }
+
+    await connectionStateService.markDegradedByIdentifier({
+      provider: "messenger",
+      identifier: row.pageId,
+      workspaceId: props.workspaceId,
+      reason: "refresh_failed",
+    })
   }
 
   findByWorkspaceId(workspaceId: string) {

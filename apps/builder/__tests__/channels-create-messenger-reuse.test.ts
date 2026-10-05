@@ -24,7 +24,9 @@ const {
   mockGetCurrentUserId: vi.fn(async () => "user-1"),
   mockListAndAttachCandidates: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
-    throw new Error(`redirect:${path}`)
+    const error = new Error(`redirect:${path}`)
+    Object.assign(error, { digest: `NEXT_REDIRECT;replace;${path};307;` })
+    throw error
   }),
   mockRequireWorkspacePermission: vi.fn(async () => undefined),
   mockResolveOAuthCredential: vi.fn(),
@@ -39,6 +41,16 @@ vi.mock("next/navigation", () => ({
     throw new Error("not found")
   }),
   redirect: mockRedirect,
+  unstable_rethrow: (error: unknown) => {
+    if (
+      error instanceof Error &&
+      "digest" in error &&
+      typeof error.digest === "string" &&
+      error.digest.startsWith("NEXT_REDIRECT")
+    ) {
+      throw error
+    }
+  },
 }))
 
 // The mock request objects below only carry `nextUrl`, not the real

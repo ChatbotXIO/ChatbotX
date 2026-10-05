@@ -1,7 +1,10 @@
 import { tiktokIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { logProviderError } from "@chatbotx.io/business/error-log"
-import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
+import {
+  isRevokedTokenError,
+  type TiktokAuthValue,
+} from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
 import { parseTiktokScopes } from "@chatbotx.io/integration-tiktok/lib/scopes"
 import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
@@ -42,23 +45,27 @@ async function refreshOne(integration: {
               auth.tokens.refreshToken,
             )
 
-            await tiktokIntegrationService.updateAuth(integration.id, {
-              ...auth,
-              tokens: {
-                ...auth.tokens,
-                accessToken: newTokens.access_token,
-                refreshToken: newTokens.refresh_token,
-                ...buildTokenTimestamps(
-                  newTokens.expires_in,
-                  newTokens.refresh_expires_in,
-                ),
-              },
-              // A refresh never grants a new scope, but it does report the
-              // current set — which is how a connection made before scopes
-              // were recorded stops being reported as "unknown" on its own.
-              metadata: {
-                ...auth.metadata,
-                scopes: parseTiktokScopes(newTokens.scope),
+            await tiktokIntegrationService.updateAuth({
+              id: integration.id,
+              workspaceId: integration.workspaceId,
+              auth: {
+                ...auth,
+                tokens: {
+                  ...auth.tokens,
+                  accessToken: newTokens.access_token,
+                  refreshToken: newTokens.refresh_token,
+                  ...buildTokenTimestamps(
+                    newTokens.expires_in,
+                    newTokens.refresh_expires_in,
+                  ),
+                },
+                // A refresh never grants a new scope, but it does report the
+                // current set — which is how a connection made before scopes
+                // were recorded stops being reported as "unknown" on its own.
+                metadata: {
+                  ...auth.metadata,
+                  scopes: parseTiktokScopes(newTokens.scope),
+                },
               },
             })
 
@@ -73,10 +80,12 @@ async function refreshOne(integration: {
               error,
               `[refreshTiktokTokens] id=${integration.id} failed`,
             )
-            await tiktokIntegrationService.markTokenRefreshError(
-              integration.id,
-              error instanceof Error ? error.message : String(error),
-            )
+            await tiktokIntegrationService.markTokenRefreshError({
+              id: integration.id,
+              workspaceId: integration.workspaceId,
+              error: error instanceof Error ? error.message : String(error),
+              isRevoked: isRevokedTokenError(error),
+            })
             await logProviderError({
               provider: "tiktok",
               workspaceId: integration.workspaceId,

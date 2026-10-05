@@ -3,6 +3,7 @@ import { auditService } from "@chatbotx.io/business/audit"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   integration as integrationMessenger,
+  isRevokedTokenError,
   type MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger"
 import { distributedLock } from "@chatbotx.io/redis"
@@ -58,10 +59,12 @@ async function refreshOne(integration: {
               error,
               `[refreshMessengerTokens] id=${integration.id} failed`,
             )
-            await messengerIntegrationService.markTokenRefreshError(
-              integration.id,
-              error instanceof Error ? error.message : String(error),
-            )
+            await messengerIntegrationService.markTokenRefreshError({
+              id: integration.id,
+              workspaceId: integration.workspaceId,
+              error: error instanceof Error ? error.message : String(error),
+              isRevoked: isRevokedTokenError(error),
+            })
             await logProviderError({
               provider: "messenger",
               workspaceId: integration.workspaceId,

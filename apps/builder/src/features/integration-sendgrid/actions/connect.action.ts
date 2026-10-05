@@ -1,13 +1,6 @@
 "use server"
 
-import { integrationSendGridService } from "@chatbotx.io/business"
-import {
-  SendGridApiError,
-  SendGridMissingScopesError,
-  integration as sendGridIntegration,
-} from "@chatbotx.io/integration-sendgrid"
-import { SdkException } from "@chatbotx.io/sdk"
-import { getTranslations } from "next-intl/server"
+import { connectionService } from "@chatbotx.io/connections"
 import { normalizeError } from "universal-error-normalizer"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { logger } from "@/lib/log"
@@ -19,22 +12,17 @@ export const connectSendGridAction = workspaceActionClient
   .inputSchema(connectSendGridSchema)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     try {
-      const auth = await sendGridIntegration.runAction("validateCredentials", {
-        props: parsedInput,
+      // `allowUpdate: true` mirrors the legacy
+      // `integrationSendGridService.upsert` this replaces — that always
+      // upserted (replacing an already-connected workspace's stored API
+      // key), never rejecting a repeat connect.
+      await connectionService.connectFromCredentials({
+        workspaceId,
+        provider: "sendGrid",
+        config: parsedInput,
+        allowUpdate: true,
       })
-      await integrationSendGridService.upsert({ workspaceId, auth })
     } catch (error) {
-      if (error instanceof SendGridMissingScopesError) {
-        const t = await getTranslations("sendGrid.errors")
-        throw new SdkException(t("missingScopes"), 400, 400)
-      }
-      if (
-        error instanceof SendGridApiError &&
-        (error.statusCode === 401 || error.statusCode === 403)
-      ) {
-        const t = await getTranslations("sendGrid.errors")
-        throw new SdkException(t("invalidApiKey"), 400, 400)
-      }
       logger.error(
         { err: normalizeError(error), workspaceId },
         "Failed to connect SendGrid",

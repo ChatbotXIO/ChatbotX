@@ -3,12 +3,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockCreateInbox,
+  mockConnectionFindByProviderSourceId,
   mockDelete,
   mockDisconnect,
   mockFindByProviderSourceId,
   mockFindOrFail,
   mockIsConnected,
   mockMarkDegradedByIdentifier,
+  mockMarkUnhealthyByIdentifier,
+  mockRecordAuthSaved,
   mockTransaction,
   mockUpdateReturning,
   mockUpsertConnectionRow,
@@ -25,12 +28,15 @@ const {
       inbox: { id: "inbox-1" },
       wasCreated: true,
     })),
+    mockConnectionFindByProviderSourceId: vi.fn(async () => undefined),
     mockDelete,
     mockDisconnect: vi.fn(async () => undefined),
     mockFindByProviderSourceId: vi.fn(async () => undefined),
     mockFindOrFail: vi.fn(async () => ({ id: "integration-1" })),
     mockIsConnected: vi.fn(async () => false),
     mockMarkDegradedByIdentifier: vi.fn(async () => null),
+    mockMarkUnhealthyByIdentifier: vi.fn(async () => null),
+    mockRecordAuthSaved: vi.fn(async () => ({ id: "conn-1" })),
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
       callback({}),
     ),
@@ -96,7 +102,10 @@ vi.mock("../src/connection", () => ({
 vi.mock("../src/connection/state-service", () => ({
   connectionStateService: {
     disconnectInbox: mockDisconnect,
+    findByProviderSourceId: mockConnectionFindByProviderSourceId,
     markDegradedByIdentifier: mockMarkDegradedByIdentifier,
+    markUnhealthyByIdentifier: mockMarkUnhealthyByIdentifier,
+    recordAuthSaved: mockRecordAuthSaved,
   },
 }))
 
@@ -227,19 +236,88 @@ describe("tiktokIntegrationService.connect", () => {
   })
 })
 
+describe("tiktokIntegrationService.updateAuth", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUpdateReturning.mockResolvedValue([{ openId: "open-1" }])
+  })
+
+  test("tells the engine the connection recovered after a successful refresh", async () => {
+    mockConnectionFindByProviderSourceId.mockResolvedValue({
+      id: "conn-1",
+      status: "degraded",
+    })
+
+    await tiktokIntegrationService.updateAuth({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      auth: { token: "x" },
+    })
+
+    expect(mockConnectionFindByProviderSourceId).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      provider: "tiktok",
+      sourceId: "open-1",
+    })
+    expect(mockRecordAuthSaved).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+    })
+  })
+
+  test("does not touch the engine when no Connection row exists for this account", async () => {
+    mockConnectionFindByProviderSourceId.mockResolvedValue(undefined)
+
+    await tiktokIntegrationService.updateAuth({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      auth: { token: "x" },
+    })
+
+    expect(mockRecordAuthSaved).not.toHaveBeenCalled()
+  })
+
+  test("never throws auth.saved at a non-active connection (e.g. already disconnected)", async () => {
+    mockConnectionFindByProviderSourceId.mockResolvedValue({
+      id: "conn-1",
+      status: "disconnected",
+    })
+
+    await tiktokIntegrationService.updateAuth({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      auth: { token: "x" },
+    })
+
+    expect(mockRecordAuthSaved).not.toHaveBeenCalled()
+  })
+
+  test("no-ops when the satellite row no longer exists", async () => {
+    mockUpdateReturning.mockResolvedValue([])
+
+    await tiktokIntegrationService.updateAuth({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      auth: { token: "x" },
+    })
+
+    expect(mockConnectionFindByProviderSourceId).not.toHaveBeenCalled()
+    expect(mockRecordAuthSaved).not.toHaveBeenCalled()
+  })
+})
+
 describe("tiktokIntegrationService.markTokenRefreshError", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUpdateReturning.mockResolvedValue([
-      { openId: "open-1", workspaceId: "ws-1" },
-    ])
+    mockUpdateReturning.mockResolvedValue([{ openId: "open-1" }])
   })
 
-  test("writes the satellite column and degrades the Connection by openId", async () => {
-    await tiktokIntegrationService.markTokenRefreshError(
-      "integration-1",
-      "boom",
-    )
+  test("scopes the update by workspaceId and degrades the Connection by openId on a transient failure", async () => {
+    await tiktokIntegrationService.markTokenRefreshError({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      error: "boom",
+      isRevoked: false,
+    })
 
     expect(mockMarkDegradedByIdentifier).toHaveBeenCalledWith({
       provider: "tiktok",
@@ -247,17 +325,38 @@ describe("tiktokIntegrationService.markTokenRefreshError", () => {
       reason: "refresh_failed",
       workspaceId: "ws-1",
     })
+    expect(mockMarkUnhealthyByIdentifier).not.toHaveBeenCalled()
   })
 
-  test("no-ops the degrade when the satellite row no longer exists", async () => {
+  test("marks the Connection unhealthy when the provider confirms the token was revoked", async () => {
+    await tiktokIntegrationService.markTokenRefreshError({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      error: "revoked",
+      isRevoked: true,
+    })
+
+    expect(mockMarkUnhealthyByIdentifier).toHaveBeenCalledWith({
+      provider: "tiktok",
+      identifier: "open-1",
+      workspaceId: "ws-1",
+      reason: "token_revoked",
+    })
+    expect(mockMarkDegradedByIdentifier).not.toHaveBeenCalled()
+  })
+
+  test("no-ops the engine notification when the satellite row no longer exists", async () => {
     mockUpdateReturning.mockResolvedValue([])
 
-    await tiktokIntegrationService.markTokenRefreshError(
-      "integration-1",
-      "boom",
-    )
+    await tiktokIntegrationService.markTokenRefreshError({
+      id: "integration-1",
+      workspaceId: "ws-1",
+      error: "boom",
+      isRevoked: false,
+    })
 
     expect(mockMarkDegradedByIdentifier).not.toHaveBeenCalled()
+    expect(mockMarkUnhealthyByIdentifier).not.toHaveBeenCalled()
   })
 })
 

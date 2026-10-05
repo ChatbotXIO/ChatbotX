@@ -6,6 +6,7 @@ import { auditService } from "@chatbotx.io/business/audit"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   integration as integrationWhatsapp,
+  isRevokedTokenError,
   type WhatsappAuthValue,
 } from "@chatbotx.io/integration-whatsapp"
 import { distributedLock } from "@chatbotx.io/redis"
@@ -65,10 +66,12 @@ async function refreshOne(integration: {
               error,
               `[refreshWhatsappTokens] id=${integration.id} failed`,
             )
-            await integrationWhatsappService.markTokenRefreshError(
-              integration.id,
-              error instanceof Error ? error.message : String(error),
-            )
+            await integrationWhatsappService.markTokenRefreshError({
+              id: integration.id,
+              workspaceId: integration.workspaceId,
+              error: error instanceof Error ? error.message : String(error),
+              isRevoked: isRevokedTokenError(error),
+            })
             await logProviderError({
               provider: "whatsapp",
               workspaceId: integration.workspaceId,

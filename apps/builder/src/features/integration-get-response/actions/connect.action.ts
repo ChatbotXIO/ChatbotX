@@ -1,12 +1,6 @@
 "use server"
 
-import { integrationGetResponseService } from "@chatbotx.io/business"
-import {
-  GetResponseApiError,
-  integration as getResponseIntegration,
-} from "@chatbotx.io/integration-get-response"
-import { SdkException } from "@chatbotx.io/sdk"
-import { getTranslations } from "next-intl/server"
+import { connectionService } from "@chatbotx.io/connections"
 import { normalizeError } from "universal-error-normalizer"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { logger } from "@/lib/log"
@@ -18,20 +12,21 @@ export const connectGetResponseAction = workspaceActionClient
   .inputSchema(connectGetResponseSchema)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     try {
-      const auth = await getResponseIntegration.runAction(
-        "validateCredentials",
-        { props: parsedInput },
-      )
-      await integrationGetResponseService.upsert({ workspaceId, auth })
+      // `allowUpdate: true` mirrors the legacy
+      // `integrationGetResponseService.upsert` this replaces — that always
+      // upserted (replacing an already-connected workspace's stored API
+      // key), never rejecting a repeat connect.
+      await connectionService.connectFromCredentials({
+        workspaceId,
+        provider: "getResponse",
+        config: parsedInput,
+        allowUpdate: true,
+      })
     } catch (error) {
       logger.error(
         { err: normalizeError(error), workspaceId },
         "Failed to connect GetResponse",
       )
-      if (error instanceof GetResponseApiError) {
-        const t = await getTranslations("getResponse.errors")
-        throw new SdkException(t("invalidApiKey"), 400, 400)
-      }
       throw error
     }
   })

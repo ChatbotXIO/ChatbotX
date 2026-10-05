@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { webchatsAdapter } from "../src/template/adapters/webchats"
 
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
 vi.mock("../src/broadcast/plan-policy.service", () => ({
@@ -14,6 +15,7 @@ const {
   mockFindFirst,
   mockFindMany,
   mockInboxCreate,
+  mockIsAtLimit,
   mockParsePagination,
   mockRelationsFilterToSQL,
   mockTransaction,
@@ -47,6 +49,7 @@ const {
       inbox: { id: "inbox-1" },
       wasCreated: true,
     })),
+    mockIsAtLimit: vi.fn(async () => false),
     mockParsePagination: vi.fn(),
     mockRelationsFilterToSQL: vi.fn(),
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
@@ -113,6 +116,10 @@ vi.mock("../src/inbox/service", () => ({
 
 vi.mock("../src/connection/state-service", () => ({
   connectionStateService: { disconnectInbox: vi.fn() },
+}))
+
+vi.mock("../src/quota-enforcement/service", () => ({
+  quotaEnforcementService: { isAtLimit: mockIsAtLimit },
 }))
 
 vi.mock("../src/audit/dispatcher", () => ({
@@ -228,6 +235,50 @@ describe("integrationWebchatService.createWithWorkspace", () => {
       action: "connect",
       detail: "connected a new Webchat channel (#webchat-1)",
     })
+  })
+})
+
+describe("integrationWebchatService.create — quota gate", () => {
+  const tx = {
+    query: { integrationWebchatModel: { findFirst: mockFindFirst } },
+  } as never
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockIsAtLimit.mockResolvedValue(false)
+    mockInboxCreate.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      wasCreated: true,
+    } as never)
+    mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" } as never)
+    mockFindFirst.mockResolvedValue({ id: "webchat-1" } as never)
+  })
+
+  test("throws channelLimitReached and creates no Inbox/Connection row when the owner's channel quota is already full", async () => {
+    mockIsAtLimit.mockResolvedValue(true)
+
+    await expect(
+      integrationWebchatService.create(
+        { workspaceId: "ws-1", ownerId: "owner-1", data: baseData },
+        tx,
+      ),
+    ).rejects.toMatchObject({ code: "channelLimitReached" })
+
+    expect(mockInboxCreate).not.toHaveBeenCalled()
+    expect(mockUpsertConnectionRow).not.toHaveBeenCalled()
+  })
+
+  test("proceeds to create the Inbox + Connection row when quota has capacity", async () => {
+    mockIsAtLimit.mockResolvedValue(false)
+
+    const created = await integrationWebchatService.create(
+      { workspaceId: "ws-1", ownerId: "owner-1", data: baseData },
+      tx,
+    )
+
+    expect(created).toEqual({ id: "webchat-1" })
+    expect(mockInboxCreate).toHaveBeenCalledTimes(1)
+    expect(mockUpsertConnectionRow).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -384,5 +435,84 @@ describe("integrationWebchatService.update", () => {
     ).rejects.toThrow("Welcome flow not found")
 
     expect(mockUpdateSet).not.toHaveBeenCalled()
+  })
+})
+
+describe("webchatsAdapter.insert — quota exhausted during template install", () => {
+  const buildEntry = (sourceId: string) => ({
+    sourceId,
+    name: `Webchat ${sourceId}`,
+    auth: {},
+    enable: true,
+    authorizedDomains: [],
+    conversationStarters: [],
+    persistentMenus: [],
+    brandColor: "#000000",
+    hideHeader: false,
+    showLogo: true,
+    hideMessageInput: false,
+    customCss: null,
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockInboxCreate.mockResolvedValue({
+      inbox: { id: "inbox-2" },
+      wasCreated: true,
+    } as never)
+    mockUpsertConnectionRow.mockResolvedValue({ id: "conn-2" } as never)
+  })
+
+  test("skips the quota-exhausted webchat without creating any Inbox/Connection row, while still installing the rest of the batch", async () => {
+    mockIsAtLimit
+      .mockResolvedValueOnce(true) // first entry: quota already full
+      .mockResolvedValueOnce(false) // second entry: capacity available
+    mockFindFirst.mockResolvedValueOnce({ id: "webchat-2" } as never)
+
+    const tx = {
+      query: {
+        workspaceModel: {
+          findFirst: vi.fn(async () => ({ ownerId: "owner-1" })),
+        },
+        integrationWebchatModel: { findFirst: mockFindFirst },
+      },
+    }
+    const track = vi.fn()
+    const warn = vi.fn()
+
+    await webchatsAdapter.insert(
+      {
+        tx: tx as never,
+        workspaceId: "ws-1",
+        installationId: "install-1",
+        idMaps: {},
+        track,
+        warn,
+      },
+      [buildEntry("src-1"), buildEntry("src-2")],
+    )
+
+    // The quota-exhausted entry (src-1) must never reach the Inbox or
+    // Connection tables — proving the fix moved the quota check ahead of
+    // both inserts instead of inserting first and swallowing the failure.
+    expect(mockInboxCreate).toHaveBeenCalledTimes(1)
+    expect(mockUpsertConnectionRow).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: "webchats",
+        entityKind: "quota",
+        path: "webchats.src-1",
+        value: "channelLimitReached",
+      }),
+    )
+    // Only the entry with capacity gets tracked as an installed resource —
+    // the skipped one is never counted as connected.
+    expect(track).toHaveBeenCalledTimes(1)
+    expect(track).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceResourceId: "src-2",
+        resourceId: "webchat-2",
+      }),
+    )
   })
 })

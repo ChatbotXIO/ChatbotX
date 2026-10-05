@@ -1,12 +1,6 @@
 "use server"
 
-import { integrationMailerLiteService } from "@chatbotx.io/business"
-import {
-  MailerLiteApiError,
-  integration as mailerLiteIntegration,
-} from "@chatbotx.io/integration-mailer-lite"
-import { SdkException } from "@chatbotx.io/sdk"
-import { getTranslations } from "next-intl/server"
+import { connectionService } from "@chatbotx.io/connections"
 import { normalizeError } from "universal-error-normalizer"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { logger } from "@/lib/log"
@@ -18,23 +12,21 @@ export const connectMailerLiteAction = workspaceActionClient
   .inputSchema(connectMailerLiteSchema)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     try {
-      const auth = await mailerLiteIntegration.runAction(
-        "validateCredentials",
-        { props: parsedInput },
-      )
-      await integrationMailerLiteService.upsert({ workspaceId, auth })
+      // `allowUpdate: true` mirrors the legacy
+      // `integrationMailerLiteService.upsert` this replaces — that always
+      // upserted (replacing an already-connected workspace's stored API
+      // key), never rejecting a repeat connect.
+      await connectionService.connectFromCredentials({
+        workspaceId,
+        provider: "mailerLite",
+        config: parsedInput,
+        allowUpdate: true,
+      })
     } catch (error) {
       logger.error(
         { err: normalizeError(error), workspaceId },
         "Failed to connect MailerLite",
       )
-      if (
-        error instanceof MailerLiteApiError &&
-        (error.statusCode === 401 || error.statusCode === 403)
-      ) {
-        const t = await getTranslations("mailerLite.errors")
-        throw new SdkException(t("invalidApiKey"), 400, 400)
-      }
       throw error
     }
   })

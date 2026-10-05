@@ -309,13 +309,18 @@ const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
  * string — the Connection-domain `ConnectSession` flow (`POST
  * /v1/connections`, `POST /v1/connections/{id}/reconnect`, and the builder
  * pickers once converted). Unlike the legacy JSON-state flow below, this
- * path needs no builder session cookie and no host-relay hop: every fact it
- * needs (`workspaceId`, `provider`, `platformOwnerId`, `returnUrl`) lives on
- * the `ConnectSession` row itself — resolved once at `startSession` time —
- * not derived from the request's host or an authenticated user, so a
- * completion landing on the broker or a reseller's custom domain both
- * resolve identically with no relay needed. The completion page
- * (`/connect/{id}`) does not require a signed-in builder session either.
+ * path needs no builder session cookie and no authenticated user: every
+ * fact it needs (`workspaceId`, `provider`, `platformOwnerId`, `returnUrl`)
+ * lives on the `ConnectSession` row itself, resolved once at `startSession`
+ * time. It still relays back to `session.originHost` before touching the
+ * session (see below) — same as the legacy flow — because the nonce must
+ * only ever be consumed on the host where the person's browser session
+ * cookie lives. The provider's `redirect_uri`, however, is resolved from
+ * the credential (`buildProviderCallbackUrl`, see below), not from
+ * `originHost` or this request's host: an inherited platform credential
+ * still redirects to the broker even when `originHost` is a reseller's
+ * custom domain. The completion page (`/connect/{id}`) does not require a
+ * signed-in builder session either.
  */
 const handleConnectSessionCallback = async (
   url: URL,
@@ -472,10 +477,26 @@ const handleConnectSessionCallback = async (
       err instanceof ChatbotXException &&
       (err.code === "connectionStateMismatch" ||
         err.code === "connectSessionExpired")
+    // A transient upstream/provider failure (`exchangeCode` 502/503) is
+    // retryable — `completeAuthorization` already released the claim back
+    // to `pending` for it (or, for a candidate-listing failure, left the
+    // session at its still-active `authorized` status) before throwing
+    // `connectionProviderUnavailable`, specifically so a later retry can
+    // still complete the connect. Calling `fail()` here would terminalize
+    // that already-reopened session out from under the retry it was just
+    // reopened for.
+    const isRetryable =
+      err instanceof ChatbotXException &&
+      err.code === "connectionProviderUnavailable"
     if (isBenignReplay) {
       logger.debug(
         { err, sessionId: session.id, provider: session.provider },
         "connect session completeAuthorization replay ignored",
+      )
+    } else if (isRetryable) {
+      logger.warn(
+        { err, sessionId: session.id, provider: session.provider },
+        "connect session completeAuthorization failed with a retryable provider error — left active for retry",
       )
     } else {
       // Every other error reaching here is genuinely unexpected — most
@@ -1148,6 +1169,20 @@ export const handleCallback = async (
           }),
       )
 
+      const facebookAdsIntegration =
+        await integrationFacebookAdsService.findByWorkspaceId(workspace.id)
+      if (facebookAdsIntegration) {
+        await connectionService.attachIntegrationConnectionRow({
+          workspaceId: workspace.id,
+          provider: "facebookAds",
+          sourceId: "workspace",
+          displayName: "Facebook Ads",
+          integrationId: facebookAdsIntegration.integrationId,
+          ownerId: workspace.ownerId,
+          actorUserId: userId,
+        })
+      }
+
       return redirect(safeReferer)
     }
 
@@ -1175,11 +1210,24 @@ export const handleCallback = async (
           workspaceId: workspace.id,
         })
 
-        await appointmentExternalCalendarService.createGoogleFromOAuthCallback({
+        const integrationId =
+          await appointmentExternalCalendarService.createGoogleFromOAuthCallback(
+            {
+              workspaceId: workspace.id,
+              auth: connection.auth,
+              providerCalendarId: connection.providerCalendarId,
+              email: connection.email,
+            },
+          )
+
+        await connectionService.attachIntegrationConnectionRow({
           workspaceId: workspace.id,
-          auth: connection.auth,
-          providerCalendarId: connection.providerCalendarId,
-          email: connection.email,
+          provider: "googleCalendar",
+          sourceId: connection.providerCalendarId,
+          displayName: connection.email || "Google Calendar",
+          integrationId,
+          ownerId: workspace.ownerId,
+          actorUserId: userId,
         })
       } catch (error) {
         logger.error(

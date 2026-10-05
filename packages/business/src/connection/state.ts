@@ -135,6 +135,12 @@ export const transitionConnection = (
       if (from === undefined) {
         return result(from, "disconnected", "manual")
       }
+      // Already disconnected: a no-op re-assertion must preserve whatever
+      // reason/`disconnectedAt` is already stored (M-2), not overwrite it
+      // with `manual` just because this event fired again.
+      if (from === "disconnected") {
+        return result(from, from, null)
+      }
       return result(from, "disconnected", reason ?? "manual")
     }
     case "teardown.pause": {
@@ -150,6 +156,11 @@ export const transitionConnection = (
       return result(from, "connected", null)
     }
     case "teardown.disconnect": {
+      // Already disconnected: same preserve-on-no-op rule as user.disconnect
+      // above (M-2) — repeated teardown must not stomp the stored reason.
+      if (from === "disconnected") {
+        return result(from, from, null)
+      }
       return result(from, "disconnected", reason ?? "workspace_purge")
     }
     default: {

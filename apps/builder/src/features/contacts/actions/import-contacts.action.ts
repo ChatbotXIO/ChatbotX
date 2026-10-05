@@ -1,8 +1,8 @@
 "use server"
 
-import { importService } from "@chatbotx.io/business"
 import { getAuditActor } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { importService } from "@chatbotx.io/business/import"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,

@@ -45,7 +45,10 @@ import {
 import { BaseService } from "../base.service"
 import { coexistService } from "../coexist/service"
 import type { ConnectionEvent } from "../connection/state"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  type PendingQuotaRelease,
+} from "../connection/state-service"
 import { WorkspacePurgeIncompleteError } from "../errors"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -89,6 +92,21 @@ export type WorkspaceTeardownIntegrations = Record<
 >
 
 export type WorkspaceTeardownLevel = "pause" | "disconnect"
+
+/**
+ * `disconnectWorkspaceChannels`'s result: `pendingReleases` carries every
+ * `channels` quota release `connectionStateService.transition` deferred
+ * (via its `pendingRelease` handshake) across every connection-backed inbox
+ * this call processed — the caller must release each one (via
+ * `connectionStateService.releasePendingQuota`) only once `tx` (if the
+ * caller supplied its own) has actually committed; otherwise a later
+ * statement in that same transaction rolling back would under-count the
+ * release.
+ */
+export type WorkspaceChannelsTeardownResult = {
+  disconnected: number
+  pendingReleases: PendingQuotaRelease[]
+}
 
 /**
  * High-volume tables that carry a direct `workspaceId` FK, ordered
@@ -146,7 +164,7 @@ class WorkspaceLifecycleService extends BaseService {
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel?: WorkspaceTeardownLevel
     tx?: DatabaseClient
-  }): Promise<number> {
+  }): Promise<WorkspaceChannelsTeardownResult> {
     const { tx = db } = props
     const inboxes = await inboxService.listWithIntegrationsByWorkspace(
       props.workspaceId,
@@ -154,6 +172,7 @@ class WorkspaceLifecycleService extends BaseService {
     )
 
     let disconnected = 0
+    const pendingReleases: PendingQuotaRelease[] = []
     for (const inbox of inboxes) {
       await this.disconnectWorkspaceInbox({
         inbox,
@@ -162,11 +181,12 @@ class WorkspaceLifecycleService extends BaseService {
         integrations: props.integrations,
         teardownLevel: props.teardownLevel ?? "disconnect",
         tx,
+        pendingReleases,
       })
       disconnected += 1
     }
 
-    return disconnected
+    return { disconnected, pendingReleases }
   }
 
   async disconnectWorkspaceIntegrations(workspaceId: string): Promise<void> {
@@ -467,13 +487,20 @@ class WorkspaceLifecycleService extends BaseService {
 
     const teardownLevel = props.teardownLevel ?? "pause"
     for (const workspace of workspaces) {
-      await this.disconnectWorkspaceChannels({
+      const { pendingReleases } = await this.disconnectWorkspaceChannels({
         integrations: props.integrations,
         teardownLevel,
         reason: props.reason,
         workspaceId: workspace.id,
         ownerId: props.ownerId,
       })
+      // No enclosing transaction owns this call — nothing to wait on, so
+      // release each deferred `channels` quota unit right away (same
+      // timing `transition` used before the `pendingRelease` handshake
+      // existed).
+      for (const pendingRelease of pendingReleases) {
+        await connectionStateService.releasePendingQuota(pendingRelease)
+      }
       if (teardownLevel === "disconnect") {
         await this.disconnectWorkspaceIntegrations(workspace.id)
       }
@@ -494,6 +521,8 @@ class WorkspaceLifecycleService extends BaseService {
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel: WorkspaceTeardownLevel
     tx: DatabaseClient
+    /** Shared accumulator across every inbox `disconnectWorkspaceChannels` processes in this call — see `WorkspaceChannelsTeardownResult`. */
+    pendingReleases: PendingQuotaRelease[]
   }): Promise<void> {
     const { inbox, ownerId, reason, integrations, teardownLevel, tx } = props
     const removeIntegrationRow = teardownLevel === "disconnect"
@@ -519,7 +548,16 @@ class WorkspaceLifecycleService extends BaseService {
         }
       }
 
-      const resolvedReason = isTokenRevoked ? "token_revoked" : reason
+      // A tenant-suspend teardown must stay on `teardown.pause` with
+      // `tenant_suspended` even when the provider call failed because the
+      // token was already revoked remotely: the suspend flow, not the
+      // provider response, decides pause vs. disconnect. Only non-suspend
+      // teardowns (trial expiry, purge, manual) adopt `token_revoked` as the
+      // more specific reason.
+      const resolvedReason =
+        isTokenRevoked && reason !== "tenant_suspended"
+          ? "token_revoked"
+          : reason
 
       // This is the community-edition forensic trail: audit is gated off
       // outside cloud/enterprise, so this structured log is the only record
@@ -552,13 +590,26 @@ class WorkspaceLifecycleService extends BaseService {
           resolvedReason === "tenant_suspended"
             ? "teardown.pause"
             : "teardown.disconnect"
+        // Deferred via the `pendingRelease` handshake: this call's `tx` may
+        // be a transaction a caller further up owns (one that does more
+        // work after this inbox, or after this call returns) — only that
+        // caller knows when it actually commits, so `disconnectWorkspaceChannels`
+        // bubbles this up through `pendingReleases` instead of releasing it
+        // here.
+        const pendingRelease: { current: PendingQuotaRelease | null } = {
+          current: null,
+        }
         await connectionStateService.transition({
           connectionId: connection.id,
           event,
           reason: resolvedReason,
           ownerId,
           tx,
+          pendingRelease,
         })
+        if (pendingRelease.current) {
+          props.pendingReleases.push(pendingRelease.current)
+        }
         return
       }
 

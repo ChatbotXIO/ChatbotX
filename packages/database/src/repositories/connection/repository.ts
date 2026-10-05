@@ -141,24 +141,6 @@ export const connectionRepository = {
     })
   },
 
-  /** Locks one connection row; callers must pass an open transaction. */
-  async findByIdForUpdate(
-    input: { id: string; workspaceId: string },
-    tx: DatabaseClient,
-  ): Promise<ConnectionModel | undefined> {
-    const [row] = await tx
-      .select()
-      .from(connectionModel)
-      .where(
-        and(
-          eq(connectionModel.id, input.id),
-          eq(connectionModel.workspaceId, input.workspaceId),
-        ),
-      )
-      .for("update")
-    return row
-  },
-
   /** Locks one connection row by globally-unique id; callers must pass an open transaction. */
   async findByIdForUpdateById(
     input: { id: string },

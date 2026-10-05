@@ -1,10 +1,8 @@
 "use server"
 
-import { integrationMailchimpService } from "@chatbotx.io/business"
-import { createMailchimpAuth } from "@chatbotx.io/integration-mailchimp"
+import { connectionService } from "@chatbotx.io/connections"
 import { normalizeError } from "universal-error-normalizer"
 import { workspaceIdrequestParams } from "@/features/common/schema"
-import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { connectMailchimpSchema } from "../schema"
@@ -14,13 +12,15 @@ export const connectMailchimpAction = workspaceActionClient
   .inputSchema(connectMailchimpSchema)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     try {
-      await integrations.mailchimp.runAction("validateApiKey", {
-        props: { apiKey: parsedInput.apiKey },
-      })
-
-      await integrationMailchimpService.upsert({
+      // `allowUpdate: true` mirrors the legacy
+      // `integrationMailchimpService.upsert` this replaces — that always
+      // upserted (replacing an already-connected workspace's stored API
+      // key), never rejecting a repeat connect.
+      await connectionService.connectFromCredentials({
         workspaceId,
-        auth: createMailchimpAuth(parsedInput.apiKey),
+        provider: "mailchimp",
+        config: parsedInput,
+        allowUpdate: true,
       })
     } catch (error) {
       logger.error(

@@ -200,6 +200,39 @@ describe("connectSessionService.create", () => {
       connectSessionService.findByNonce("wrong-nonce"),
     ).resolves.toBeUndefined()
   })
+
+  it("forwards an optional tx to both the active-count check and the insert (M-7: a caller minting the session's workspace in the same breath can run both atomically)", async () => {
+    mocks.insert.mockImplementation(
+      async (values: Record<string, unknown>) => ({
+        ...baseSession(),
+        ...values,
+      }),
+    )
+    // Test seam: a literal tag is enough to prove the same reference is
+    // forwarded to both repository calls; the repository itself is mocked.
+    const tx = "tx" as unknown as Parameters<
+      typeof connectSessionService.create
+    >[1]
+
+    await connectSessionService.create(
+      {
+        workspaceId: "ws-1",
+        provider: "messenger",
+        purpose: "connect",
+        actorUserId: "user-1",
+      },
+      tx,
+    )
+
+    expect(mocks.countActiveByWorkspaceId).toHaveBeenCalledWith(
+      { workspaceId: "ws-1" },
+      tx,
+    )
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1" }),
+      tx,
+    )
+  })
 })
 
 describe("expiry rule", () => {

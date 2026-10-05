@@ -12,6 +12,7 @@ import type {
 } from "@chatbotx.io/database/partials"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 
 class InstagramIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -69,11 +70,48 @@ class InstagramIntegrationService extends BaseService {
     })
   }
 
-  async markTokenRefreshError(id: string, error: string): Promise<void> {
-    await db
+  async markTokenRefreshError(props: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }): Promise<void> {
+    const [row] = await db
       .update(integrationInstagramModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationInstagramModel.id, id))
+      .set({ tokenRefreshError: props.error })
+      .where(
+        and(
+          eq(integrationInstagramModel.id, props.id),
+          eq(integrationInstagramModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({
+        igId: integrationInstagramModel.igId,
+        type: integrationInstagramModel.type,
+      })
+
+    if (!row) {
+      return
+    }
+
+    const provider = row.type === "facebook" ? "instagramFacebook" : "instagram"
+
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
+        provider,
+        identifier: row.igId,
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
+      })
+      return
+    }
+
+    await connectionStateService.markDegradedByIdentifier({
+      provider,
+      identifier: row.igId,
+      workspaceId: props.workspaceId,
+      reason: "refresh_failed",
+    })
   }
 
   findByWorkspaceId(workspaceId: string, type?: "instagram" | "facebook") {
@@ -102,8 +140,10 @@ class InstagramIntegrationService extends BaseService {
     username?: string
     pageId?: string
     userInfo?: IntegrationUserInfo
+    tx?: DatabaseClient
   }): Promise<void> {
-    await db
+    const client = props.tx ?? db
+    await client
       .update(integrationInstagramModel)
       .set({
         auth: props.auth,

@@ -210,3 +210,111 @@ describe("transitionConnection — quota edge invariant", () => {
     }
   })
 })
+
+describe("transitionConnection — Phase 0 FSM edges", () => {
+  test("connect.completed revives from needs_reauth and from paused, consuming quota", () => {
+    for (const from of ["needs_reauth", "paused"] as const) {
+      const result = transitionConnection({ from, event: "connect.completed" })
+      expect(result.to).toBe("connected")
+      expect(result.noop).toBe(false)
+      expect(result.quotaEdge).toBe("consume")
+    }
+  })
+
+  test("teardown.resume (paused -> connected) consumes quota", () => {
+    const result = transitionConnection({
+      from: "paused",
+      event: "teardown.resume",
+    })
+    expect(result.to).toBe("connected")
+    expect(result.quotaEdge).toBe("consume")
+  })
+
+  test("auth.saved and verify.ok clear degraded to connected with no quota change", () => {
+    for (const event of ["auth.saved", "verify.ok"] as const) {
+      const result = transitionConnection({ from: "degraded", event })
+      expect(result.to).toBe("connected")
+      expect(result.quotaEdge).toBeNull()
+    }
+  })
+
+  test("verify.failed_non_auth degrades an ACTIVE connection with no quota change", () => {
+    for (const from of ["connected", "degraded"] as const) {
+      const result = transitionConnection({
+        from,
+        event: "verify.failed_non_auth",
+      })
+      expect(result.to).toBe("degraded")
+      expect(result.quotaEdge).toBeNull()
+    }
+  })
+
+  test("user.disconnect lands on disconnected from needs_reauth and from paused with no quota change", () => {
+    for (const from of ["needs_reauth", "paused"] as const) {
+      const result = transitionConnection({ from, event: "user.disconnect" })
+      expect(result.to).toBe("disconnected")
+      expect(result.noop).toBe(false)
+      expect(result.quotaEdge).toBeNull()
+    }
+  })
+
+  test("teardown.disconnect from paused lands on disconnected with no quota change", () => {
+    const result = transitionConnection({
+      from: "paused",
+      event: "teardown.disconnect",
+    })
+    expect(result.to).toBe("disconnected")
+    expect(result.noop).toBe(false)
+    expect(result.quotaEdge).toBeNull()
+  })
+
+  test("auth.revoked repeated on an already-inactive row is a no-op that discards any passed-in reason (M-2)", () => {
+    for (const from of ["needs_reauth", "paused", "disconnected"] as const) {
+      const result = transitionConnection({
+        from,
+        event: "auth.revoked",
+        reason: "token_revoked",
+      })
+      expect(result.to).toBe(from)
+      expect(result.noop).toBe(true)
+      expect(result.reason).toBeNull()
+    }
+  })
+
+  test("teardown.pause repeated on an already-inactive row is a no-op that discards any passed-in reason (M-2)", () => {
+    for (const from of ["needs_reauth", "paused", "disconnected"] as const) {
+      const result = transitionConnection({
+        from,
+        event: "teardown.pause",
+        reason: "trial_expired",
+      })
+      expect(result.to).toBe(from)
+      expect(result.noop).toBe(true)
+      expect(result.reason).toBeNull()
+    }
+  })
+
+  test("repeated user.disconnect on an already-disconnected row is a no-op that preserves the existing reason (M-2)", () => {
+    const result = transitionConnection({
+      from: "disconnected",
+      event: "user.disconnect",
+      reason: "manual",
+    })
+    expect(result.to).toBe("disconnected")
+    expect(result.noop).toBe(true)
+    expect(result.reason).toBeNull()
+    expect(result.quotaEdge).toBeNull()
+  })
+
+  test("repeated teardown.disconnect on an already-disconnected row is a no-op that preserves the existing reason (M-2)", () => {
+    const result = transitionConnection({
+      from: "disconnected",
+      event: "teardown.disconnect",
+      reason: "workspace_purge",
+    })
+    expect(result.to).toBe("disconnected")
+    expect(result.noop).toBe(true)
+    expect(result.reason).toBeNull()
+    expect(result.quotaEdge).toBeNull()
+  })
+})

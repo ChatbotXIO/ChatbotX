@@ -99,18 +99,52 @@ class ZaloIntegrationService extends BaseService {
     id: string,
     auth: Record<string, unknown>,
     name?: string,
+    tx?: DatabaseClient,
   ): Promise<void> {
-    await db
+    const client = tx ?? db
+    await client
       .update(integrationZaloModel)
       .set({ auth, tokenRefreshError: null, ...(name ? { name } : {}) })
       .where(eq(integrationZaloModel.id, id))
   }
 
-  async markTokenRefreshError(id: string, error: string): Promise<void> {
-    await db
+  async markTokenRefreshError(props: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }): Promise<void> {
+    const [row] = await db
       .update(integrationZaloModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationZaloModel.id, id))
+      .set({ tokenRefreshError: props.error })
+      .where(
+        and(
+          eq(integrationZaloModel.id, props.id),
+          eq(integrationZaloModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ oaId: integrationZaloModel.oaId })
+
+    if (!row) {
+      return
+    }
+
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
+        provider: "zalo",
+        identifier: row.oaId,
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
+      })
+      return
+    }
+
+    await connectionStateService.markDegradedByIdentifier({
+      provider: "zalo",
+      identifier: row.oaId,
+      workspaceId: props.workspaceId,
+      reason: "refresh_failed",
+    })
   }
 
   /**

@@ -224,7 +224,7 @@ describe("workspaceLifecycleService", () => {
         workspaceId: "workspace-1",
         ownerId: "owner-1",
       }),
-    ).resolves.toBe(1)
+    ).resolves.toEqual({ disconnected: 1, pendingReleases: [] })
 
     expect(disconnect).toHaveBeenCalledWith({ token: "secret" })
     expect(tx.update).toHaveBeenCalled()
@@ -306,6 +306,7 @@ describe("workspaceLifecycleService", () => {
       reason: "trial_expired",
       ownerId: "owner-1",
       tx,
+      pendingRelease: { current: null },
     })
     expect(mockInboxDisconnect).not.toHaveBeenCalled()
   })
@@ -341,6 +342,55 @@ describe("workspaceLifecycleService", () => {
       reason: "tenant_suspended",
       ownerId: "owner-1",
       tx,
+      pendingRelease: { current: null },
+    })
+    expect(mockInboxDisconnect).not.toHaveBeenCalled()
+  })
+
+  test("disconnectWorkspaceChannels keeps teardown.pause with reason tenant_suspended even when the provider reports the auth as revoked", async () => {
+    mockListWithIntegrationsByWorkspace.mockResolvedValue([
+      {
+        id: "inbox-1",
+        workspaceId: "workspace-1",
+        channel: "webchat",
+        integrationWebchat: {
+          id: "integration-1",
+          auth: { token: "secret" },
+        },
+      },
+    ])
+    mockFindByInboxId.mockResolvedValue({ id: "connection-1" })
+
+    const disconnect = vi.fn().mockRejectedValue(new Error("revoked"))
+
+    const tx = {
+      update: vi.fn(() => ({
+        set: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+      })),
+      delete: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+    }
+
+    await workspaceLifecycleService.disconnectWorkspaceChannels({
+      integrations: {
+        webchat: {
+          disconnect,
+          isRevokedTokenError: () => true,
+        },
+      },
+      teardownLevel: "pause",
+      reason: "tenant_suspended",
+      tx: tx as never,
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+    })
+
+    expect(mockConnectionTransition).toHaveBeenCalledWith({
+      connectionId: "connection-1",
+      event: "teardown.pause",
+      reason: "tenant_suspended",
+      ownerId: "owner-1",
+      tx,
+      pendingRelease: { current: null },
     })
     expect(mockInboxDisconnect).not.toHaveBeenCalled()
   })

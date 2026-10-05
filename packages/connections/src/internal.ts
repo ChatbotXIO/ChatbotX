@@ -267,10 +267,14 @@ export const findOrThrow = async (input: {
 
 /**
  * Best-effort `provider.webhook.subscribe` right after a fresh
- * `connect.completed`. A subscription failure is tolerated only when the FSM
- * persists `verify.failed_non_auth` and returns the degraded connection. If
- * that follow-up transition fails, this rethrows instead of reporting a
- * connected result with a dead webhook.
+ * `connect.completed`. Runs AFTER `connectAndPersist`'s own transaction has
+ * already committed, so neither failure here can ever fail the connect
+ * itself: a subscribe failure is tolerated by persisting
+ * `verify.failed_non_auth` (degrading the connection); if that follow-up
+ * transition ALSO fails, this logs and returns the original (still
+ * `connected`-looking) row rather than rethrowing — the connect already
+ * succeeded, and the next webhook-health check or reconcile pass gets
+ * another chance to degrade it.
  */
 export const subscribeWebhookBestEffort = async (input: {
   adapter: ConnectionAdapter
@@ -309,7 +313,7 @@ export const subscribeWebhookBestEffort = async (input: {
         },
         "connect: failed to mark connection degraded after a webhook subscribe failure",
       )
-      throw transitionErr
+      return input.connection
     }
   }
 }
@@ -407,11 +411,12 @@ export const connectAndPersist = async (input: {
   // Restores the v1.11.0 "connected a new channel" audit record, dropped
   // when messenger/instagram moved off their own `connectPage`/
   // `connectAccount` services onto this shared engine path. Generalized to
-  // every provider the engine connects (not just the 3 legacy channels) and
-  // gated on `!existing` to match the old `wasCreated` guard — a revived/
-  // updated connection never re-audits. Skipped (not faked) when there's no
-  // interactive actor, e.g. a workspace-token-driven public API connect.
-  if (!existing && input.actorUserId) {
+  // every provider the engine connects (not just the 3 legacy channels).
+  // Also fires when reviving an inactive satellite row in place (`existing`
+  // truthy) — the operator still took a deliberate connect action and
+  // expects an audit entry, same as a brand-new row; only `!input.actorUserId`
+  // skips it (not faked), e.g. a workspace-token-driven public API connect.
+  if (input.actorUserId) {
     await dispatchAuditRecordSafely(
       {
         userId: input.actorUserId,
@@ -424,4 +429,91 @@ export const connectAndPersist = async (input: {
   }
 
   return final
+}
+
+/**
+ * Keeps a `Connection` row in sync with a workspace-singleton integration's
+ * satellite row a caller already wrote this request (e.g. Facebook Ads'
+ * `storeFacebookAdsConnection`, Google Calendar's
+ * `appointmentExternalCalendarService.createGoogleFromOAuthCallback`) —
+ * those own the IntegrationFacebookAds/IntegrationGoogleCalendar
+ * insert-or-update decision themselves (keyed by workspaceId for Facebook
+ * Ads, by workspaceId + providerCalendarId for Google Calendar's
+ * multi-calendar support), so this deliberately does NOT go through
+ * `upsertConnectionRow`: its generic `CONNECTION_STORE_BINDINGS`-driven
+ * satellite insert has no way to know the row it would insert already
+ * exists, and would either surface a false "already connected" error for
+ * Facebook Ads (whose satellite table enforces one row per workspace) or
+ * silently create an orphaned duplicate Integration/satellite pair for
+ * Google Calendar (whose satellite has no workspace-level uniqueness). This
+ * only attaches/refreshes the `Connection` projection against the
+ * `integrationId` the satellite write above already settled on. Lives here
+ * (not the app-layer callback route) so the one `db.transaction` it needs
+ * stays inside the connections package, per the repo's data-access rule.
+ */
+export const attachIntegrationConnectionRow = async (input: {
+  workspaceId: string
+  provider: IntegrationType
+  sourceId: string
+  displayName: string
+  integrationId: string
+  ownerId: string | undefined
+  actorUserId: string
+}): Promise<void> => {
+  await db.transaction(async (tx) => {
+    const existing = await connectionRepository.findByProviderSourceId(
+      {
+        workspaceId: input.workspaceId,
+        provider: input.provider,
+        sourceId: input.sourceId,
+      },
+      tx,
+    )
+
+    if (existing) {
+      await connectionRepository.update(
+        {
+          id: existing.id,
+          workspaceId: existing.workspaceId,
+          values: {
+            integrationId: input.integrationId,
+            displayName: input.displayName,
+            lastError: null,
+          },
+        },
+        tx,
+      )
+      await connectionStateService.transition({
+        connectionId: existing.id,
+        event: "connect.completed",
+        ownerId: input.ownerId,
+        tx,
+      })
+      return
+    }
+
+    const created = await connectionRepository.insert(
+      {
+        workspaceId: input.workspaceId,
+        provider: input.provider,
+        kind: "integration",
+        channel: null,
+        sourceId: input.sourceId,
+        displayName: input.displayName,
+        inboxId: null,
+        integrationId: input.integrationId,
+        status: "disconnected",
+        statusReason: "manual",
+        disconnectedAt: new Date(),
+        createdBy: input.actorUserId,
+      },
+      tx,
+    )
+    await connectionStateService.transition({
+      connectionId: created.id,
+      event: "connect.completed",
+      ownerId: input.ownerId,
+      tx,
+    })
+  })
 }
