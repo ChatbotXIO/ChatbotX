@@ -54,6 +54,10 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
 
 vi.mock("@/env", () => ({ isCloud: () => true }))
 
+vi.mock("@/features/minigames/lib/play-url", () => ({
+  buildMinigamePlayUrl: (id: string) => `play:${id}`,
+}))
+
 // `@/orpc` also exports `authorizedAPI`, which pulls in the full better-auth
 // stack via `authMiddleware` — irrelevant here and unsafe to initialize in a
 // unit test. Same stub as workspace-token-scope-enforcement.test.ts.

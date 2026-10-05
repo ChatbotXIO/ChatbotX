@@ -64,6 +64,12 @@ const minigameService = {
 }
 const minigameContactService = { listPlays: vi.fn(), list: vi.fn() }
 
+// The play URL's host comes from env; its shape is pinned in
+// minigame-play-url.test.ts. Here it only has to be stamped on every row.
+vi.mock("@/features/minigames/lib/play-url", () => ({
+  buildMinigamePlayUrl: (id: string) => `play:${id}`,
+}))
+
 vi.mock("@chatbotx.io/business/minigame", () => ({
   minigameService,
   minigameContactService,
@@ -145,7 +151,10 @@ describe("GET /v1/minigames", () => {
         context,
         input: { page: 1, perPage: 50, name: "Prize" },
       }),
-    ).resolves.toEqual(result)
+    ).resolves.toEqual({
+      data: [{ id: "game-1", playUrl: "play:game-1" }],
+      pageCount: 2,
+    })
 
     expect(minigameService.list).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -166,7 +175,7 @@ describe("GET /v1/minigames/{id}", () => {
 
     await expect(
       procedure.handler?.({ context, input: { id: "game-1" } }),
-    ).resolves.toEqual(minigame)
+    ).resolves.toEqual({ ...minigame, playUrl: "play:game-1" })
 
     expect(minigameService.find).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -192,7 +201,7 @@ describe("POST /v1/minigames", () => {
 
     await expect(
       procedure.handler?.({ context, input: minigameInput }),
-    ).resolves.toEqual(minigame)
+    ).resolves.toEqual({ ...minigame, playUrl: "play:game-1" })
 
     expect(minigameService.create).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -213,7 +222,7 @@ describe("PUT /v1/minigames/{id}", () => {
         context,
         input: { id: "game-1", ...minigameInput },
       }),
-    ).resolves.toEqual(minigame)
+    ).resolves.toEqual({ ...minigame, playUrl: "play:game-1" })
 
     expect(minigameService.update).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -236,7 +245,7 @@ describe("PATCH /v1/minigames/{id}", () => {
         context,
         input: { id: "game-1", generalSettings: { name: "Renamed" } },
       }),
-    ).resolves.toEqual(minigame)
+    ).resolves.toEqual({ ...minigame, playUrl: "play:game-1" })
 
     expect(minigameService.updatePartial).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -305,7 +314,7 @@ describe("PATCH /v1/minigames/{id}/enabled", () => {
         context,
         input: { id: "game-1", enabled: false },
       }),
-    ).resolves.toEqual(minigame)
+    ).resolves.toEqual({ ...minigame, playUrl: "play:game-1" })
 
     expect(minigameService.setEnabled).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "game-1" },

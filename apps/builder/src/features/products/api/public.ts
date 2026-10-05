@@ -1,6 +1,7 @@
 import { productService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { bulkUpdateIdsRequest } from "@/features/common/schema"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -138,6 +139,58 @@ export const productsPublicRouter = {
       await productService.findById(input.id, context.workspace.id)
       await productService.delete({
         ids: [input.id],
+        workspaceId: context.workspace.id,
+      })
+    }),
+
+  setActive: workspaceTokenAuthAPI
+    .route({
+      method: "PATCH",
+      path: "/v1/products/{id}/active",
+      summary: "Enable or disable product",
+      description:
+        "Shows or hides a product in the catalog without replacing it. Call `products.get` to see the result, or `products.update` to change its price, variants or addons instead.",
+      successStatus: 204,
+      tags: ["Products"],
+    })
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Product id. Get it from `products.list`.",
+        ),
+        isActive: z
+          .boolean()
+          .describe("Whether the product is shown in the catalog."),
+      }),
+    )
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      // findById throws notFoundException (-> 404); `update` alone would
+      // silently no-op on a missing id.
+      await productService.findById(input.id, workspaceId)
+      await productService.update({
+        productId: input.id,
+        workspaceId,
+        data: { isActive: input.isActive },
+      })
+    }),
+
+  deleteMany: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/products/bulk-delete",
+      summary: "Delete multiple products",
+      description:
+        "Permanently deletes several products and their variants/addons in one call; ids outside this workspace are ignored. Use `products.list` to find their ids first.",
+      successStatus: 204,
+      tags: ["Products"],
+    })
+    .input(bulkUpdateIdsRequest)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await productService.delete({
+        ids: input.ids,
         workspaceId: context.workspace.id,
       })
     }),

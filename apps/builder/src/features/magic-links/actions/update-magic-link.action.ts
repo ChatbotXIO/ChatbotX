@@ -1,13 +1,7 @@
 "use server"
 
-import {
-  and,
-  db,
-  eq,
-  findOrFail,
-  isUniqueViolationError,
-} from "@chatbotx.io/database/client"
-import { magicLinkModel } from "@chatbotx.io/database/schema"
+import { magicLinkService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -41,21 +35,10 @@ export const updateMagicLink = async (
   },
   parsedInput: UpdateMagicLinkRequest,
 ) => {
-  const link = await findOrFail({
-    table: magicLinkModel,
-    where: {
-      id: ctx.id,
-      workspaceId: ctx.workspaceId,
-    },
-    message: "Magic link not found",
-  })
   try {
-    await db
-      .update(magicLinkModel)
-      .set(parsedInput)
-      .where(and(eq(magicLinkModel.id, link.id)))
+    await magicLinkService.update({ ...ctx, data: parsedInput })
   } catch (error) {
-    if (isUniqueViolationError(error)) {
+    if (error instanceof ChatbotXException && error.code === "validation") {
       return returnValidationErrors(updateMagicLinkRequest, {
         _errors: ["Validation Exception"],
         name: { _errors: ["Name is already taken"] },

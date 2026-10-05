@@ -39,6 +39,7 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 
 import { DeleteMagicLinksDialog } from "./delete-magic-links"
+import { buildMagicLinkUrl } from "./lib/magic-link-url"
 import { MagicLinkQrDialog } from "./magic-link-qr-dialog"
 import { MagicLinksTableToolbarActions } from "./magic-links-table-toolbar-actions"
 import type { ListMagicLinkItem, ListMagicLinksResponse } from "./schema/query"
@@ -58,10 +59,11 @@ const getMagicLinkUrl = (magicLink: {
   workspaceId: string
   name: string
 }): string =>
-  new URL(
-    `/r/${magicLink.workspaceId}/${magicLink.name}`,
-    window.location.origin,
-  ).toString()
+  buildMagicLinkUrl({
+    origin: window.location.origin,
+    workspaceId: magicLink.workspaceId,
+    name: magicLink.name,
+  })
 
 export const MagicLinksTable = ({
   workspaceId,

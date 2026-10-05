@@ -13,6 +13,7 @@ import {
   possibleErrorsOnMutatingMinigame,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { buildMinigamePlayUrl } from "../lib/play-url"
 import {
   createMinigamePublicRequest,
   listMinigamePlayersPublicRequest,
@@ -30,6 +31,11 @@ import {
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("minigames")
 
 const tags = ["Minigames"]
+
+const withPlayUrl = <T extends { id: string }>(minigame: T) => ({
+  ...minigame,
+  playUrl: buildMinigamePlayUrl(minigame.id),
+})
 
 export const minigamesPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -50,7 +56,7 @@ export const minigamesPublicRouter = {
         workspaceId: context.workspace.id,
         sort: [{ id: "createdAt", desc: true }],
       })
-      return { data: result.data, pageCount: result.pageCount }
+      return { data: result.data.map(withPlayUrl), pageCount: result.pageCount }
     }),
 
   get: workspaceTokenAuthAPI
@@ -71,12 +77,13 @@ export const minigamesPublicRouter = {
     )
     .output(minigamePublicResource)
     .errors(possibleErrorsOnFindingResource)
-    .handler(
-      async ({ context, input }) =>
+    .handler(async ({ context, input }) =>
+      withPlayUrl(
         await minigameService.find({
           workspaceId: context.workspace.id,
           id: input.id,
         }),
+      ),
     ),
 
   create: workspaceTokenAuthAPI
@@ -92,12 +99,13 @@ export const minigamesPublicRouter = {
     .input(createMinigamePublicRequest)
     .output(minigamePublicResource)
     .errors(possibleErrorsOnCreatingMinigame)
-    .handler(
-      async ({ context, input }) =>
+    .handler(async ({ context, input }) =>
+      withPlayUrl(
         await minigameService.create({
           ...input,
           workspaceId: context.workspace.id,
         }),
+      ),
     ),
 
   update: workspaceTokenAuthAPI
@@ -114,12 +122,14 @@ export const minigamesPublicRouter = {
     .errors(possibleErrorsOnMutatingMinigame)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      return await minigameService.update({
-        ...data,
-        workspaceId: context.workspace.id,
-        id,
-        originalPrizeQuantities: null,
-      })
+      return withPlayUrl(
+        await minigameService.update({
+          ...data,
+          workspaceId: context.workspace.id,
+          id,
+          originalPrizeQuantities: null,
+        }),
+      )
     }),
 
   updatePartial: workspaceTokenAuthAPI
@@ -136,11 +146,13 @@ export const minigamesPublicRouter = {
     .errors(possibleErrorsOnMutatingMinigame)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      return await minigameService.updatePartial({
-        ...data,
-        workspaceId: context.workspace.id,
-        id,
-      })
+      return withPlayUrl(
+        await minigameService.updatePartial({
+          ...data,
+          workspaceId: context.workspace.id,
+          id,
+        }),
+      )
     }),
 
   delete: workspaceTokenAuthAPI
@@ -199,12 +211,13 @@ export const minigamesPublicRouter = {
     .input(setMinigameEnabledPublicRequest)
     .output(minigamePublicResource)
     .errors(possibleErrorsOnMutatingMinigame)
-    .handler(
-      async ({ context, input }) =>
+    .handler(async ({ context, input }) =>
+      withPlayUrl(
         await minigameService.setEnabled(
           { workspaceId: context.workspace.id, id: input.id },
           input.enabled,
         ),
+      ),
     ),
 
   listPlays: workspaceTokenAuthAPI

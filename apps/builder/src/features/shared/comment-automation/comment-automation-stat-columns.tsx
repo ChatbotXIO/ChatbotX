@@ -2,11 +2,11 @@
 
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import type { ColumnDef } from "@tanstack/react-table"
+import { CommentAutomationStatsCell } from "./comment-automation-stats-cell"
 import {
   type CommentAutomationStatField,
-  CommentAutomationStatsCell,
   commentAutomationStatCounters,
-} from "./comment-automation-stats-cell"
+} from "./lib/stat-counters"
 
 /** The counter columns every comment automation row carries. */
 export type CommentAutomationStatRow = {

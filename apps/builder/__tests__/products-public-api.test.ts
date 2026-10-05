@@ -51,6 +51,7 @@ const productService = {
   findById: vi.fn(),
   createFull: vi.fn(),
   updateFull: vi.fn(),
+  update: vi.fn(),
   delete: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ productService }))
@@ -180,5 +181,53 @@ describe("DELETE /v1/products/{id}", () => {
     ).rejects.toThrow("Product does not exist.")
 
     expect(productService.delete).not.toHaveBeenCalled()
+  })
+})
+
+describe("PATCH /v1/products/{id}/active", () => {
+  const procedure = findProcedure("PATCH", "/v1/products/{id}/active")
+
+  test("toggles only isActive, scoped to the token's workspace", async () => {
+    productService.findById.mockResolvedValueOnce({ id: "p-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "p-1", isActive: false },
+    })
+
+    expect(productService.update).toHaveBeenCalledWith({
+      productId: "p-1",
+      workspaceId: "workspace-1",
+      data: { isActive: false },
+    })
+  })
+
+  test("404s (does not update) when the product does not exist", async () => {
+    productService.findById.mockRejectedValueOnce(
+      new Error("Product does not exist."),
+    )
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "missing", isActive: true },
+      }),
+    ).rejects.toThrow("Product does not exist.")
+
+    expect(productService.update).not.toHaveBeenCalled()
+  })
+})
+
+describe("POST /v1/products/bulk-delete", () => {
+  test("deletes the given ids in the token's workspace", async () => {
+    await findProcedure("POST", "/v1/products/bulk-delete").handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { ids: ["p-1", "p-2"] },
+    })
+
+    expect(productService.delete).toHaveBeenCalledWith({
+      ids: ["p-1", "p-2"],
+      workspaceId: "workspace-1",
+    })
   })
 })

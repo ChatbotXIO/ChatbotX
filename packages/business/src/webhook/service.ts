@@ -140,15 +140,7 @@ class WebhookService extends BaseService {
   }): Promise<WebhookModel> {
     const { workspaceId, name, url, conditions } = props
 
-    try {
-      await assertPublicUrl(url, "Webhook URL")
-    } catch (error) {
-      throw new ChatbotXException(
-        error instanceof Error ? error.message : "Invalid webhook URL",
-        "invalidRequestData",
-        422,
-      )
-    }
+    await this.assertDeliverableUrl(url)
 
     const created = await distributedLock.runExclusive({
       key: `webhook:${workspaceId}`,
@@ -192,6 +184,39 @@ class WebhookService extends BaseService {
     await this.audit("create", `created a new webhook (#${created.id})`)
 
     return created
+  }
+
+  /**
+   * Webhook deliveries are server-side POSTs, so the target must be a public
+   * address — same guard on create and on every URL change, or an update
+   * could re-point a registered webhook at an internal host.
+   */
+  private async assertDeliverableUrl(url: string): Promise<void> {
+    try {
+      await assertPublicUrl(url, "Webhook URL")
+    } catch (error) {
+      throw new ChatbotXException(
+        error instanceof Error ? error.message : "Invalid webhook URL",
+        "invalidRequestData",
+        422,
+      )
+    }
+  }
+
+  async findWithConditionsOrFail(input: {
+    workspaceId: string
+    id: string
+  }): Promise<WebhookWithConditions> {
+    const webhook = await db.query.webhookModel.findFirst({
+      where: { id: input.id, workspaceId: input.workspaceId },
+      with: { conditions: true },
+    })
+
+    if (!webhook) {
+      throw notFoundException("Webhook not found")
+    }
+
+    return webhook as WebhookWithConditions
   }
 
   async unregister(props: { workspaceId: string; id: string }): Promise<void> {
@@ -257,7 +282,20 @@ class WebhookService extends BaseService {
   }): Promise<WebhookModel | undefined> {
     const { workspaceId, id, url, conditions } = input
 
+    await this.assertDeliverableUrl(url)
+
     const result = await db.transaction(async (tx) => {
+      // Conditions are keyed by `webhookId` alone, so the workspace check has
+      // to come first — otherwise a foreign id would have its conditions
+      // rewritten even though the scoped `url` update below matches nothing.
+      const owned = await tx.query.webhookModel.findFirst({
+        where: { id, workspaceId },
+        columns: { id: true },
+      })
+      if (!owned) {
+        return
+      }
+
       const existingConditions = await tx.query.conditionModel.findMany({
         where: {
           webhookId: id,
@@ -318,6 +356,7 @@ class WebhookService extends BaseService {
       return await tx.query.webhookModel.findFirst({
         where: {
           id,
+          workspaceId,
         },
       })
     })

@@ -1,28 +1,9 @@
 "use client"
 
-import type { CommentAutomationEventType } from "@chatbotx.io/analytics/schemas"
 import { useFormatter } from "next-intl"
 import { memo, useCallback, useState } from "react"
 import { CommentAutomationContactsDialog } from "./comment-automation-contacts-dialog"
-
-/**
- * Which lifetime counter on the automation row backs each column. The counters
- * live on `CommentAutomation` rather than being aggregated from
- * `CommentAutomationEvent`, which a nightly cron purges after 30 days — so
- * unlike `BroadcastStatsCell` this needs no fetch and no store at all: the
- * numbers arrive with the row.
- */
-export const commentAutomationStatCounters = {
-  "message:sent": "sentCount",
-  "message:delivered": "deliveredCount",
-  "message:seen": "seenCount",
-  "flow:clicked": "clickedCount",
-  "message:failed": "failedCount",
-  "comment:missed": "missedCount",
-} as const satisfies Partial<Record<CommentAutomationEventType, string>>
-
-export type CommentAutomationStatField =
-  keyof typeof commentAutomationStatCounters
+import type { CommentAutomationStatField } from "./lib/stat-counters"
 
 type Props = {
   workspaceId: string

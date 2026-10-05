@@ -236,8 +236,9 @@ an endpoint's scope.
 
 - **Automation** — covers flows, triggers, keywords (automated responses),
   AI agents, AI MCP servers, AI functions, AI files, ref links, Facebook Lead
-  Ads automations, FB/IG comment automations, IG story automations, QR
-  codes, questionnaires (+ submissions), and spreadsheets — a full CRUD
+  Ads automations, FB/IG/Threads/TikTok comment automations, IG story
+  automations, magic links, QR codes, questionnaires (+ submissions), and
+  spreadsheets — a full CRUD
   surface so an agent can build, publish, and inspect automations without
   human help via the builder UI. AI triggers were retired (dropped from the
   schema and this scope) in favor of the AI
@@ -257,11 +258,18 @@ an endpoint's scope.
     was widened. Any future trigger route must keep populating both via
     `triggerRepository.findWithConditions` rather than reintroducing a
     hardcoded `[]`.
-  - *FB/IG comment `type` filter* — `CommentAutomation` serves fb-comments
-    (`messenger`) and ig-comments (`instagram`/`instagramFacebook`) off one
-    table. Every read and write must go through the `*Messenger`/`*Instagram`
-    service methods; a bare `workspaceId` + `id` where-clause lets
-    `/v1/fb-comments/{id}` mutate an IG automation.
+  - *Comment automation `type` filter* — `CommentAutomation` serves
+    fb-comments (`messenger`), ig-comments (`instagram`/`instagramFacebook`),
+    threads-comments (`threads`) and tiktok-comments (`tiktok`) off one
+    table. Every read and write must go through the channel's own service
+    methods (`*Messenger`/`*Instagram`/`*Threads*`/`*Tiktok*`); a bare
+    `workspaceId` + `id` where-clause lets `/v1/fb-comments/{id}` mutate an
+    IG automation. The Threads/TikTok update and delete methods return
+    nothing for a missing id, so their public handlers call
+    `findThreadsOrFail`/`findTiktokOrFail` first to answer 404. The one
+    cross-channel read is the `analytics.commentAutomation*` stats surface
+    (scope `analytics`), which resolves the id with `findOrFail` and never
+    writes.
   - *List endpoints default to all folders* — the builder's list pages scope
     to the root folder when no `folderId` is in the URL. Public list
     handlers pass `includeAllFolders: true`; omit it and `GET /v1/fb-comments`
@@ -279,6 +287,13 @@ an endpoint's scope.
     exported procedure. It iterates `Object.keys(router)`, so a newly added
     procedure is covered without a new test; a router wired to the wrong scope
     fails there.
+  - *Bulk deletes and missed-comment runs* — `POST /v1/<channel>-comments/bulk-delete`
+    passes that channel's `types` to `commentAutomationService.deleteMany`, so
+    an id of another channel is ignored rather than deleted. The cross-channel
+    `commentAutomations.*` router (`features/shared/comment-automation/api/public.ts`)
+    starts a missed-comment run through the same `processMissedComments`
+    function as the row action and reports its status; it never edits an
+    automation.
 
 - **Appointments** — covers appointment calendars, appointments, reminder
   dispatch audit reads, and external (Google/Outlook) calendar connections.
@@ -431,6 +446,9 @@ these.
 | `PATCH /v1/messenger-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `messengerIntegrationService.updateTagSync`. |
 | `PATCH /v1/zalo-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `zaloIntegrationService.updateTagSync`. |
 | `GET /v1/messenger-personas` | Read-only; lists Messenger personas across every Page connected to the workspace, with page access tokens projected away. |
+| `GET/PUT /v1/messenger-channels/{id}/settings` | Welcome flow, persistent menu, personas, ice breakers. `PUT` goes through `updateMessenger` (`features/integration-messenger/lib/update-messenger-settings.ts`), the same writer as the builder form; `GET` returns an allowlisted shape, never `auth`. |
+| `GET/PUT /v1/instagram-channels/{id}/settings` | Same, via `updateInstagram` (`features/integration-instagram/lib/update-instagram-settings.ts`). |
+| `GET/PATCH /v1/tiktok-channels/{id}/comment-to-message` | `tiktokIntegrationService.refreshCommentToMessage` (live read from TikTok) / `setCommentToMessage`. TikTok's eligibility rejection text is returned as-is. |
 
 Two invariants specific to this scope:
 
@@ -454,6 +472,11 @@ Two invariants specific to this scope:
   public and private paths disagreeing on both points — any future caller
   of `integrationWebchatService.update`/`.create` gets this for free and
   must not re-implement it upstream.
+- **Channel settings reject flows of another workspace.** The Messenger and
+  Instagram settings writers store bare flow ids (welcome flow, `flow` menu
+  items, ice breakers) and the Instagram one also resolves each flow's latest
+  version by id alone, so both call `flowService.assertAllExist` on every
+  referenced id before saving or calling the provider.
 
 - **Minigames** — this scope shipped in the enum/registry/i18n alongside
   `ads` but, like `ads`, carried no endpoints for a while. It now publishes

@@ -1,4 +1,5 @@
 import { igStoryAutomationService } from "@chatbotx.io/business"
+import { bulkUpdateIdsRequest } from "@/features/common/schema"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -145,4 +146,23 @@ export const igStoriesPublicRouter = {
         ? await listInstagramLoginStories(context.workspace.id)
         : await listInstagramFacebookStories(context.workspace.id),
     ),
+
+  deleteMany: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/ig-stories/bulk-delete",
+      summary: "Delete multiple Instagram story automations",
+      description:
+        "Permanently deletes several Instagram story automations in one call; ids of another channel or workspace are ignored. Use `igStories.list` to find their ids first.",
+      successStatus: 204,
+      tags: ["IG Stories"],
+    })
+    .input(bulkUpdateIdsRequest)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await igStoryAutomationService.deleteMany({
+        workspaceId: context.workspace.id,
+        ids: input.ids,
+      })
+    }),
 }

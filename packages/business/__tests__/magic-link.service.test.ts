@@ -8,7 +8,12 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
 const mocks = vi.hoisted(() => ({
   isUniqueViolationError: vi.fn(() => false),
   insertValues: vi.fn(),
+  insertReturning: vi.fn(),
   insert: vi.fn(),
+  updateSet: vi.fn(),
+  updateWhere: vi.fn(),
+  updateReturning: vi.fn(),
+  deleteWhere: vi.fn(),
   findMany: vi.fn(),
   findFirst: vi.fn(),
   count: vi.fn(),
@@ -16,8 +21,15 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  and: (...conditions: unknown[]) => ({ and: conditions }),
+  eq: (column: unknown, value: unknown) => ({ eq: [column, value] }),
+  inArray: (column: unknown, values: unknown) => ({
+    inArray: [column, values],
+  }),
   db: {
     insert: mocks.insert,
+    update: () => ({ set: mocks.updateSet }),
+    delete: () => ({ where: mocks.deleteWhere }),
     query: {
       magicLinkModel: {
         findMany: mocks.findMany,
@@ -31,7 +43,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  magicLinkModel: { name: "magicLink.name" },
+  magicLinkModel: {
+    id: "magicLink.id",
+    name: "magicLink.name",
+    workspaceId: "magicLink.workspaceId",
+  },
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
@@ -54,7 +70,12 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.isUniqueViolationError.mockReturnValue(false)
   mocks.insert.mockReturnValue({ values: mocks.insertValues })
-  mocks.insertValues.mockResolvedValue(undefined)
+  mocks.insertValues.mockReturnValue({ returning: mocks.insertReturning })
+  mocks.insertReturning.mockResolvedValue([{ id: "ml-new" }])
+  mocks.updateSet.mockReturnValue({ where: mocks.updateWhere })
+  mocks.updateWhere.mockReturnValue({ returning: mocks.updateReturning })
+  mocks.updateReturning.mockResolvedValue([{ id: "ml-1", name: "renamed" }])
+  mocks.deleteWhere.mockResolvedValue(undefined)
   mocks.findMany.mockResolvedValue([])
   mocks.count.mockResolvedValue(0)
 })
@@ -84,7 +105,7 @@ describe("magicLinkService.list", () => {
 describe("magicLinkService.create", () => {
   test("maps a unique violation to a validation exception on name", async () => {
     mocks.isUniqueViolationError.mockReturnValue(true)
-    mocks.insertValues.mockRejectedValue(new Error("duplicate key"))
+    mocks.insertReturning.mockRejectedValue(new Error("duplicate key"))
 
     await expect(
       magicLinkService.create({
@@ -101,7 +122,7 @@ describe("magicLinkService.create", () => {
   test("rethrows a non-unique-violation error", async () => {
     mocks.isUniqueViolationError.mockReturnValue(false)
     const error = new Error("connection lost")
-    mocks.insertValues.mockRejectedValue(error)
+    mocks.insertReturning.mockRejectedValue(error)
 
     await expect(
       magicLinkService.create({
@@ -109,6 +130,89 @@ describe("magicLinkService.create", () => {
         data: { name: "ok", url: "https://example.com" },
       }),
     ).rejects.toThrow(error)
+  })
+})
+
+describe("magicLinkService.create result", () => {
+  test("returns the inserted row", async () => {
+    const created = await magicLinkService.create({
+      workspaceId: "ws-1",
+      data: { name: "promo", url: "https://example.com" },
+    })
+
+    expect(created).toEqual({ id: "ml-new" })
+  })
+})
+
+describe("magicLinkService.update", () => {
+  test("throws not found for a link outside the workspace", async () => {
+    mocks.findFirst.mockResolvedValue(undefined)
+
+    await expect(
+      magicLinkService.update({
+        workspaceId: "ws-1",
+        id: "ml-other",
+        data: { name: "renamed" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+
+  test("scopes the write to the workspace and returns the row", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "ml-1" })
+
+    const updated = await magicLinkService.update({
+      workspaceId: "ws-1",
+      id: "ml-1",
+      data: { name: "renamed" },
+    })
+
+    expect(updated).toEqual({ id: "ml-1", name: "renamed" })
+    expect(mocks.updateSet).toHaveBeenCalledWith({ name: "renamed" })
+    expect(JSON.stringify(mocks.updateWhere.mock.calls[0]?.[0])).toContain(
+      "ws-1",
+    )
+  })
+
+  test("maps a unique violation to a validation exception on name", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "ml-1" })
+    mocks.isUniqueViolationError.mockReturnValue(true)
+    mocks.updateReturning.mockRejectedValue(new Error("duplicate key"))
+
+    await expect(
+      magicLinkService.update({
+        workspaceId: "ws-1",
+        id: "ml-1",
+        data: { name: "dup" },
+      }),
+    ).rejects.toMatchObject({ code: "validation", field: "name" })
+  })
+})
+
+describe("magicLinkService.deleteMany", () => {
+  test("scopes the delete to the workspace", async () => {
+    await magicLinkService.deleteMany({ workspaceId: "ws-1", ids: ["ml-1"] })
+
+    const where = JSON.stringify(mocks.deleteWhere.mock.calls[0]?.[0])
+    expect(where).toContain("ws-1")
+    expect(where).toContain("ml-1")
+  })
+
+  test("skips the query for an empty id list", async () => {
+    await magicLinkService.deleteMany({ workspaceId: "ws-1", ids: [] })
+
+    expect(mocks.deleteWhere).not.toHaveBeenCalled()
+  })
+})
+
+describe("magicLinkService.delete", () => {
+  test("throws not found before deleting a link outside the workspace", async () => {
+    mocks.findFirst.mockResolvedValue(undefined)
+
+    await expect(
+      magicLinkService.delete({ workspaceId: "ws-1", id: "ml-other" }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(mocks.deleteWhere).not.toHaveBeenCalled()
   })
 })
 

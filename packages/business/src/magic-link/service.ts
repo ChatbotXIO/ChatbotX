@@ -1,6 +1,9 @@
 import {
+  and,
   type DatabaseClient,
   db,
+  eq,
+  inArray,
   isUniqueViolationError,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
@@ -13,12 +16,14 @@ import {
 } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { validationException } from "../errors"
+import { notFoundException, validationException } from "../errors"
 
 type CreateMagicLinkData = Omit<
   typeof magicLinkModel.$inferInsert,
   "id" | "workspaceId"
 >
+
+type UpdateMagicLinkData = Partial<CreateMagicLinkData>
 
 type ListMagicLinksInput = {
   workspaceId: string
@@ -38,20 +43,80 @@ class MagicLinkService extends BaseService {
     workspaceId: string
     data: CreateMagicLinkData
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<MagicLinkModel> {
     const { tx = db, workspaceId, data } = input
     try {
-      await tx.insert(magicLinkModel).values({
-        id: createId(),
-        workspaceId,
-        ...data,
-      })
+      const [created] = await tx
+        .insert(magicLinkModel)
+        .values({
+          id: createId(),
+          workspaceId,
+          ...data,
+        })
+        .returning()
+      return created
     } catch (error) {
       if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken")
       }
       throw error
     }
+  }
+
+  async findOrFail(input: {
+    workspaceId: string
+    id: string
+  }): Promise<MagicLinkModel> {
+    const link = await this.findByWorkspace(input)
+    if (!link) {
+      throw notFoundException("Magic link not found")
+    }
+    return link
+  }
+
+  async update(input: {
+    workspaceId: string
+    id: string
+    data: UpdateMagicLinkData
+  }): Promise<MagicLinkModel> {
+    const link = await this.findOrFail(input)
+    try {
+      const [updated] = await db
+        .update(magicLinkModel)
+        .set(input.data)
+        .where(
+          and(
+            eq(magicLinkModel.id, link.id),
+            eq(magicLinkModel.workspaceId, input.workspaceId),
+          ),
+        )
+        .returning()
+      return updated
+    } catch (error) {
+      if (isUniqueViolationError(error)) {
+        throw validationException("name", "Name is already taken")
+      }
+      throw error
+    }
+  }
+
+  async delete(input: { workspaceId: string; id: string }): Promise<void> {
+    await this.findOrFail(input)
+    await this.deleteMany({ workspaceId: input.workspaceId, ids: [input.id] })
+  }
+
+  async deleteMany(input: { workspaceId: string; ids: string[] }) {
+    if (input.ids.length === 0) {
+      return
+    }
+    await db
+      .delete(magicLinkModel)
+      .where(
+        and(
+          eq(magicLinkModel.workspaceId, input.workspaceId),
+          inArray(magicLinkModel.id, input.ids),
+        ),
+      )
   }
 
   async list(input: ListMagicLinksInput): Promise<ListMagicLinksResult> {

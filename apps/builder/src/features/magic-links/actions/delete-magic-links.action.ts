@@ -1,7 +1,6 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { magicLinkModel } from "@chatbotx.io/database/schema"
+import { magicLinkService } from "@chatbotx.io/business"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -21,13 +20,6 @@ export const deleteMagicLinksAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await db
-        .delete(magicLinkModel)
-        .where(
-          and(
-            eq(magicLinkModel.workspaceId, workspaceId),
-            inArray(magicLinkModel.id, parsedInput.ids),
-          ),
-        )
+      await magicLinkService.deleteMany({ workspaceId, ids: parsedInput.ids })
     },
   )

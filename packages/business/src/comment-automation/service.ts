@@ -892,6 +892,26 @@ class CommentAutomationService extends BaseService {
     return { data, pageCount }
   }
 
+  /**
+   * Any channel's automation, scoped to the workspace. For reads that serve
+   * every channel at once (the stats drill-down), where the caller holds an id
+   * but not its `type`.
+   */
+  async findOrFail(input: {
+    workspaceId: string
+    id: string
+  }): Promise<CommentAutomationModel> {
+    const record = await db.query.commentAutomationModel.findFirst({
+      where: { id: input.id, workspaceId: input.workspaceId },
+    })
+
+    if (!record) {
+      throw notFoundException("Comment Automation not found")
+    }
+
+    return record
+  }
+
   async findMessengerOrFail(input: {
     workspaceId: string
     id: string
@@ -1194,41 +1214,25 @@ class CommentAutomationService extends BaseService {
     })
   }
 
-  async listThreadsAutomations(props: {
-    workspaceId: string
-    name?: string
-    isActive?: boolean
-    limit: number
-    offset: number
-    orderBy?: Record<string, unknown>
-    tx?: DatabaseClient
-  }) {
-    const {
-      workspaceId,
-      name,
-      isActive,
-      limit,
-      offset,
-      orderBy = { createdAt: "desc" },
-      tx = db,
-    } = props
+  async listThreadsAutomations(
+    input: ListChannelCommentsInput,
+  ): Promise<ListFbCommentsResult> {
+    const { tx = db } = input
     const where = {
-      workspaceId,
+      workspaceId: input.workspaceId,
       type: this.threadsType,
-      isActive,
-      name: name
-        ? {
-            ilike: `%${name}%`,
-          }
-        : undefined,
+      isActive: resolveIsActiveFilter(input.isActive),
+      name: input.name ? { ilike: likeContains(input.name) } : undefined,
     }
+
+    const pagination = getPaginationWithDefaults(input)
+    const orderBy = parseOrderByAsObject(commentAutomationModel, input)
 
     const [data, total] = await Promise.all([
       tx.query.commentAutomationModel.findMany({
         where,
         orderBy,
-        limit,
-        offset,
+        ...pagination,
       }),
       tx.$count(
         commentAutomationModel,
@@ -1236,10 +1240,7 @@ class CommentAutomationService extends BaseService {
       ),
     ])
 
-    return {
-      data,
-      total,
-    }
+    return { data, pageCount: Math.ceil(total / pagination.limit) }
   }
 
   getThreadsAutomation(props: {
@@ -1255,6 +1256,17 @@ class CommentAutomationService extends BaseService {
         id,
       },
     })
+  }
+
+  async findThreadsOrFail(props: {
+    workspaceId: string
+    id: string
+  }): Promise<CommentAutomationModel> {
+    const record = await this.getThreadsAutomation(props)
+    if (!record) {
+      throw notFoundException("Threads Comment Automation not found")
+    }
+    return record
   }
 
   async createThreadsAutomation(props: {
@@ -1413,6 +1425,17 @@ class CommentAutomationService extends BaseService {
         id,
       },
     })
+  }
+
+  async findTiktokOrFail(props: {
+    workspaceId: string
+    id: string
+  }): Promise<CommentAutomationModel> {
+    const record = await this.getTiktokAutomation(props)
+    if (!record) {
+      throw notFoundException("TikTok Comment Automation not found")
+    }
+    return record
   }
 
   async createTiktokAutomation(props: {

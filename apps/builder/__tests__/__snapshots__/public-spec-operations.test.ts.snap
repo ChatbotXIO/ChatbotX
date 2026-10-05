@@ -299,6 +299,31 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "analytics.commentAutomationBotReplies",
+    "path": "/v1/analytics/comment-automations/{automationId}/bot-replies",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationContacts",
+    "path": "/v1/analytics/comment-automations/{automationId}/contacts",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationErrors",
+    "path": "/v1/analytics/comment-automations/{automationId}/errors",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationReplies",
+    "path": "/v1/analytics/comment-automations/{automationId}/replies",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.commentAutomationUserComments",
+    "path": "/v1/analytics/comment-automations/{automationId}/user-comments",
+  },
+  {
+    "method": "GET",
     "operationId": "analytics.contactCountsPerDay",
     "path": "/v1/analytics/contact-counts-per-day",
   },
@@ -523,6 +548,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/bot-fields",
   },
   {
+    "method": "GET",
+    "operationId": "botSimulator.getLink",
+    "path": "/v1/bot-simulator/link",
+  },
+  {
     "method": "POST",
     "operationId": "broadcasts.clone",
     "path": "/v1/broadcasts/{id}/clone",
@@ -636,6 +666,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "channels.typing",
     "path": "/v1/channels/api/typing",
+  },
+  {
+    "method": "GET",
+    "operationId": "commentAutomations.getMissedCommentRun",
+    "path": "/v1/comment-automations/{id}/missed-comment-runs",
+  },
+  {
+    "method": "POST",
+    "operationId": "commentAutomations.processMissedComments",
+    "path": "/v1/comment-automations/{id}/missed-comment-runs",
   },
   {
     "method": "POST",
@@ -1148,6 +1188,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/fb-comments/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "fbComments.deleteMany",
+    "path": "/v1/fb-comments/bulk-delete",
+  },
+  {
     "method": "GET",
     "operationId": "fbComments.get",
     "path": "/v1/fb-comments/{id}",
@@ -1253,6 +1298,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ig-comments/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "igComments.deleteMany",
+    "path": "/v1/ig-comments/bulk-delete",
+  },
+  {
     "method": "GET",
     "operationId": "igComments.get",
     "path": "/v1/ig-comments/{id}",
@@ -1281,6 +1331,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "DELETE",
     "operationId": "igStories.delete",
     "path": "/v1/ig-stories/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "igStories.deleteMany",
+    "path": "/v1/ig-stories/bulk-delete",
   },
   {
     "method": "GET",
@@ -1348,6 +1403,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/teams/{id}",
   },
   {
+    "method": "GET",
+    "operationId": "instagramChannels.getSettings",
+    "path": "/v1/instagram-channels/{id}/settings",
+  },
+  {
+    "method": "PUT",
+    "operationId": "instagramChannels.updateSettings",
+    "path": "/v1/instagram-channels/{id}/settings",
+  },
+  {
     "method": "PUT",
     "operationId": "integrations.connectAiProvider",
     "path": "/v1/integrations/ai/{provider}",
@@ -1406,6 +1471,31 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "keywords.updateStatus",
     "path": "/v1/keywords/{id}/status",
+  },
+  {
+    "method": "POST",
+    "operationId": "magicLinks.create",
+    "path": "/v1/magic-links",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "magicLinks.delete",
+    "path": "/v1/magic-links/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "magicLinks.get",
+    "path": "/v1/magic-links/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "magicLinks.list",
+    "path": "/v1/magic-links",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "magicLinks.update",
+    "path": "/v1/magic-links/{id}",
   },
   {
     "method": "POST",
@@ -1498,6 +1588,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/conversations/{conversationId}/messages/{messageId}",
   },
   {
+    "method": "GET",
+    "operationId": "messengerChannels.getSettings",
+    "path": "/v1/messenger-channels/{id}/settings",
+  },
+  {
+    "method": "PUT",
+    "operationId": "messengerChannels.updateSettings",
+    "path": "/v1/messenger-channels/{id}/settings",
+  },
+  {
     "method": "PATCH",
     "operationId": "messengerChannels.updateTagSync",
     "path": "/v1/messenger-channels/{id}/tag-sync",
@@ -1588,6 +1688,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/products/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "products.deleteMany",
+    "path": "/v1/products/bulk-delete",
+  },
+  {
     "method": "GET",
     "operationId": "products.get",
     "path": "/v1/products/{id}",
@@ -1596,6 +1701,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "products.list",
     "path": "/v1/products",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "products.setActive",
+    "path": "/v1/products/{id}/active",
   },
   {
     "method": "PUT",
@@ -1868,6 +1978,81 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/template-messages",
   },
   {
+    "method": "POST",
+    "operationId": "threadsComments.create",
+    "path": "/v1/threads-comments",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "threadsComments.delete",
+    "path": "/v1/threads-comments/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "threadsComments.deleteMany",
+    "path": "/v1/threads-comments/bulk-delete",
+  },
+  {
+    "method": "GET",
+    "operationId": "threadsComments.get",
+    "path": "/v1/threads-comments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "threadsComments.list",
+    "path": "/v1/threads-comments",
+  },
+  {
+    "method": "GET",
+    "operationId": "threadsComments.listPosts",
+    "path": "/v1/threads-comments/threads-posts",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "threadsComments.update",
+    "path": "/v1/threads-comments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "tiktokChannels.getCommentToMessage",
+    "path": "/v1/tiktok-channels/{id}/comment-to-message",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "tiktokChannels.updateCommentToMessage",
+    "path": "/v1/tiktok-channels/{id}/comment-to-message",
+  },
+  {
+    "method": "POST",
+    "operationId": "tiktokComments.create",
+    "path": "/v1/tiktok-comments",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "tiktokComments.delete",
+    "path": "/v1/tiktok-comments/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "tiktokComments.deleteMany",
+    "path": "/v1/tiktok-comments/bulk-delete",
+  },
+  {
+    "method": "GET",
+    "operationId": "tiktokComments.get",
+    "path": "/v1/tiktok-comments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "tiktokComments.list",
+    "path": "/v1/tiktok-comments",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "tiktokComments.update",
+    "path": "/v1/tiktok-comments/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "token.get",
     "path": "/v1/token",
@@ -1963,9 +2148,29 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/webhooks/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "webhooks.deleteMany",
+    "path": "/v1/webhooks/bulk-delete",
+  },
+  {
+    "method": "GET",
+    "operationId": "webhooks.get",
+    "path": "/v1/webhooks/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "webhooks.list",
     "path": "/v1/webhooks",
+  },
+  {
+    "method": "PUT",
+    "operationId": "webhooks.update",
+    "path": "/v1/webhooks/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "webhooks.updateSettings",
+    "path": "/v1/webhooks/{id}/settings",
   },
   {
     "method": "GET",

@@ -50,6 +50,7 @@ Key files:
 | AI reply generation + delivery | [`apps/worker/src/integration/handlers/comment-automation/ai-reply.ts`](../apps/worker/src/integration/handlers/comment-automation/ai-reply.ts) |
 | DB queries (match/dedup/schedule) | [`packages/business/src/comment-automation/service.ts`](../packages/business/src/comment-automation/service.ts) |
 | Builder form + actions | [`apps/builder/src/features/fb-comments/`](../apps/builder/src/features/fb-comments/) (Facebook), [`apps/builder/src/features/ig-comments/`](../apps/builder/src/features/ig-comments/) (Instagram) |
+| Public API (CLI/MCP) | `api/public.ts` in each of `fb-comments`, `ig-comments`, `threads-comments`, `tiktok-comments` (scope `automation`); stats for every channel in [`apps/builder/src/features/analytics/api/public-comment-automation.ts`](../apps/builder/src/features/analytics/api/public-comment-automation.ts) (scope `analytics`); missed-comment runs in [`apps/builder/src/features/shared/comment-automation/api/public.ts`](../apps/builder/src/features/shared/comment-automation/api/public.ts) |
 | Job types | [`packages/worker-config/src/queues/integration/index.ts`](../packages/worker-config/src/queues/integration/index.ts) |
 
 ## Facebook ID formats (critical)

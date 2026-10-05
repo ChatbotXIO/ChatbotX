@@ -1,9 +1,8 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-
+import { buildMinigamePlayUrl } from "@/features/minigames/lib/play-url"
 import { MinigameForm } from "@/features/minigames/minigame-form"
 import { findMinigame } from "@/features/minigames/queries"
-import { getBrokerOrigin } from "@/lib/oauth-broker"
 
 export default async function EditMinigamePage({
   params,
@@ -23,7 +22,7 @@ export default async function EditMinigamePage({
     return notFound()
   }
 
-  const publicUrl = `${getBrokerOrigin()}/minigames?minigameId=${minigame.id}&token={{minigame_play_token}}`
+  const publicUrl = buildMinigamePlayUrl(minigame.id)
 
   return (
     <MinigameForm

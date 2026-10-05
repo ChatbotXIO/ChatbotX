@@ -23,6 +23,8 @@ vi.mock("@chatbotx.io/business", () => ({
   isWorkspaceScheduledForDeletion,
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
+  commentAutomationService: { findOrFail: vi.fn() },
+  contactInboxService: { findManyByIds: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -36,6 +38,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
   flowAnalyticsService: {},
   magicLinkAnalyticsService: {},
   refLinkAnalyticsService: {},
+  commentAutomationAnalyticsService: {},
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({

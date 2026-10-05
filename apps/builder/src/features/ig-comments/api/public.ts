@@ -1,4 +1,6 @@
 import { commentAutomationService } from "@chatbotx.io/business"
+import { igCommentAutomationTypes } from "@chatbotx.io/database/partials"
+import { bulkUpdateIdsRequest } from "@/features/common/schema"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -152,4 +154,24 @@ export const igCommentsPublicRouter = {
         ? await listInstagramLoginMedia(context.workspace.id)
         : await listInstagramFacebookMedia(context.workspace.id),
     ),
+
+  deleteMany: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/ig-comments/bulk-delete",
+      summary: "Delete multiple Instagram comment automations",
+      description:
+        "Permanently deletes several Instagram comment automations in one call; ids of another channel or workspace are ignored. Use `igComments.list` to find their ids first.",
+      successStatus: 204,
+      tags: ["IG Comments"],
+    })
+    .input(bulkUpdateIdsRequest)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await commentAutomationService.deleteMany({
+        workspaceId: context.workspace.id,
+        ids: input.ids,
+        types: [...igCommentAutomationTypes.options],
+      })
+    }),
 }
