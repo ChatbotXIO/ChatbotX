@@ -13,6 +13,7 @@ import {
   ROOT_TENANT_ID,
 } from "@chatbotx.io/database/partials"
 import {
+  connectionRepository,
   LIVE_RUN_STATUSES,
   PULL_CLAIMABLE_STATUSES,
 } from "@chatbotx.io/database/repositories"
@@ -43,6 +44,8 @@ import {
 } from "@chatbotx.io/sequence-scheduler/dispatch-cancel"
 import { BaseService } from "../base.service"
 import { coexistService } from "../coexist/service"
+import type { ConnectionEvent } from "../connection/state"
+import { connectionStateService } from "../connection/state-service"
 import { WorkspacePurgeIncompleteError } from "../errors"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -533,10 +536,32 @@ class WorkspaceLifecycleService extends BaseService {
         "workspace-teardown: inbox disconnected",
       )
 
-      // Delegates to inboxService (already a dependency here) rather than
-      // calling quotaEnforcementService/workspaceUsageService directly: those
-      // import back through tenant/workspace services and would close a
-      // circular dependency with this module.
+      // Connection-backed inboxes route their local status write through the
+      // engine: `transition` already mirrors `Inbox.status` and
+      // consumes/releases `channels` quota exactly once, so calling
+      // `inboxService.disconnect` afterward would double-write both. A
+      // pre-backfill inbox (no `Connection` row yet) falls back to the
+      // legacy direct write — same pattern as `disconnectInbox`'s existing
+      // fallback in `ConnectionStateService`.
+      const connection = await connectionRepository.findByInboxId(
+        { inboxId: inbox.id },
+        tx,
+      )
+      if (connection) {
+        const event: ConnectionEvent =
+          resolvedReason === "tenant_suspended"
+            ? "teardown.pause"
+            : "teardown.disconnect"
+        await connectionStateService.transition({
+          connectionId: connection.id,
+          event,
+          reason: resolvedReason,
+          ownerId,
+          tx,
+        })
+        return
+      }
+
       await inboxService.disconnect({
         inboxId: inbox.id,
         ownerId,

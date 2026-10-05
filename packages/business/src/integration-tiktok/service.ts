@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import type { IntegrationTiktokModel } from "@chatbotx.io/database/types"
 import {
@@ -11,11 +12,17 @@ import {
   tiktokCanListVideos,
   updateTiktokDirectReplyStatus,
 } from "@chatbotx.io/integration-tiktok"
-import { createId } from "@chatbotx.io/utils"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import {
+  CONNECTION_STORE_BINDINGS,
+  type ConnectionQuotaConsumption,
+  upsertConnectionRow,
+  withQuotaCompensation,
+} from "../connection"
 import { connectionStateService } from "../connection/state-service"
-import { ChatbotXException } from "../errors"
-import { connectChannelIntegration } from "../inbox/connect-channel"
+import { ChatbotXException, channelDuplicatedException } from "../errors"
+import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 
 /** The post a TikTok comment conversation sits on, as far as it can be resolved. */
@@ -207,10 +214,25 @@ class TiktokIntegrationService extends BaseService {
   }
 
   async markTokenRefreshError(id: string, error: string): Promise<void> {
-    await db
+    const [row] = await db
       .update(integrationTiktokModel)
       .set({ tokenRefreshError: error })
       .where(eq(integrationTiktokModel.id, id))
+      .returning({
+        openId: integrationTiktokModel.openId,
+        workspaceId: integrationTiktokModel.workspaceId,
+      })
+
+    if (!row) {
+      return
+    }
+
+    await connectionStateService.markDegradedByIdentifier({
+      provider: "tiktok",
+      identifier: row.openId,
+      reason: "refresh_failed",
+      workspaceId: row.workspaceId,
+    })
   }
 
   async listByWorkspace(
@@ -333,44 +355,83 @@ class TiktokIntegrationService extends BaseService {
     integration: { id: string } | undefined
   }> {
     const { workspaceId, ownerId, openId, username, displayName, auth } = input
-    const integrationId = createId()
-    let connectedInboxId: string | undefined
 
-    const { wasCreated, integration } = await db.transaction(async (tx) =>
-      connectChannelIntegration({
-        tx,
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+
+    const { wasCreated, inboxId, integration } = await withQuotaCompensation(
+      {
         ownerId,
-        inboxData: {
-          workspaceId,
-          name: displayName,
-          channel: "tiktok",
-          sourceId: username,
-        },
-        insertIntegration: async (inboxId) => {
-          connectedInboxId = inboxId
-          const [row] = await tx
-            .insert(integrationTiktokModel)
-            .values({
-              id: integrationId,
-              inboxId,
+        quotaConsumption,
+        context: { provider: "tiktok", workspaceId },
+      },
+      () =>
+        db.transaction(async (tx) => {
+          // Preserves `connectChannelIntegration`'s cross-workspace guard:
+          // two different workspaces must never simultaneously claim the
+          // same TikTok account. `connect.action.ts` catches this specific
+          // `channelDuplicated` code to redirect with a friendly error.
+          if (
+            await inboxService.isConnected({
+              tx,
+              channel: "tiktok",
+              sourceId: username,
               workspaceId,
-              openId,
-              name: displayName,
-              auth,
             })
-            .onConflictDoUpdate({
-              target: [integrationTiktokModel.openId],
-              set: {
-                auth,
-                name: displayName,
-                tokenRefreshError: null,
-              },
-            })
-            .returning({ id: integrationTiktokModel.id })
+          ) {
+            throw channelDuplicatedException()
+          }
 
-          return row
-        },
-      }),
+          const { inbox, wasCreated: inboxWasCreated } =
+            await inboxService.create({
+              tx,
+              ownerId,
+              data: {
+                workspaceId,
+                name: displayName,
+                channel: "tiktok",
+                sourceId: username,
+              },
+              skipQuota: true,
+            })
+
+          const existing = await connectionRepository.findByProviderSourceId(
+            { workspaceId, provider: "tiktok", sourceId: openId },
+            tx,
+          )
+
+          await upsertConnectionRow({
+            tx,
+            workspaceId,
+            provider: "tiktok",
+            kind: "channel",
+            descriptor: { sourceId: openId, displayName },
+            auth: auth as AuthValue,
+            extraConfig: {},
+            existing,
+            store: CONNECTION_STORE_BINDINGS.tiktok as NonNullable<
+              (typeof CONNECTION_STORE_BINDINGS)["tiktok"]
+            >,
+            ownerId,
+            quotaConsumption,
+            inboxId: inbox.id,
+          })
+
+          const row = await findOrFail({
+            table: integrationTiktokModel,
+            where: { inboxId: inbox.id },
+            client: tx,
+            message: "Integration TikTok not found",
+          })
+
+          return {
+            wasCreated: inboxWasCreated,
+            inboxId: inbox.id,
+            integration: row,
+          }
+        }),
     )
 
     // Re-authorizing is how a connection gains `video.list`, so anything cached
@@ -378,20 +439,17 @@ class TiktokIntegrationService extends BaseService {
     // caption-less for the rest of the TTL and the owner has no way to refresh
     // it. Best-effort by design: a failed invalidation must not undo a
     // successful connect.
-    if (connectedInboxId) {
-      const inboxId = connectedInboxId
-      await this.invalidateCacheTags(tiktokPostDetailsCacheTag(inboxId)).catch(
-        (err) => {
-          // The connection itself is already committed. A cache the invalidation
-          // could not reach costs a stale post card until its TTL runs out, which
-          // is not a reason to report a successful connect as failed.
-          logger.warn(
-            { err, inboxId },
-            "Connected TikTok but could not drop its cached post details",
-          )
-        },
-      )
-    }
+    await this.invalidateCacheTags(tiktokPostDetailsCacheTag(inboxId)).catch(
+      (err) => {
+        // The connection itself is already committed. A cache the invalidation
+        // could not reach costs a stale post card until its TTL runs out, which
+        // is not a reason to report a successful connect as failed.
+        logger.warn(
+          { err, inboxId },
+          "Connected TikTok but could not drop its cached post details",
+        )
+      },
+    )
 
     return { wasCreated, integration }
   }

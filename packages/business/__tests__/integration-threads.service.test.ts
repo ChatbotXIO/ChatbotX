@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   workspaceFindById: vi.fn(),
   findByInboxId: vi.fn(async () => undefined),
   connectionTransition: vi.fn(),
+  markDegradedByIdentifier: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -71,7 +72,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("../src/connection/state-service", () => ({
-  connectionStateService: { disconnectInbox: mocks.disconnectInbox },
+  connectionStateService: {
+    disconnectInbox: mocks.disconnectInbox,
+    markDegradedByIdentifier: mocks.markDegradedByIdentifier,
+  },
 }))
 
 vi.mock("../src/workspace", () => ({
@@ -404,5 +408,31 @@ describe("integrationThreadsService", () => {
       workspaceId: "workspace-1",
       tx: expect.anything(),
     })
+  })
+
+  test("markTokenRefreshError degrades the forward-compatible Connection row when the update matches", async () => {
+    mocks.updateReturning.mockResolvedValue([
+      { workspaceId: "workspace-1", threadsUserId: "threads-user-1" },
+    ])
+
+    await integrationThreadsService.markTokenRefreshError("threads-1", "boom")
+
+    expect(mocks.markDegradedByIdentifier).toHaveBeenCalledWith({
+      provider: "threads",
+      identifier: "threads-user-1",
+      workspaceId: "workspace-1",
+      reason: "refresh_failed",
+    })
+  })
+
+  test("markTokenRefreshError skips the degrade call when the update matches no row", async () => {
+    mocks.updateReturning.mockResolvedValue([])
+
+    await integrationThreadsService.markTokenRefreshError(
+      "threads-missing",
+      "boom",
+    )
+
+    expect(mocks.markDegradedByIdentifier).not.toHaveBeenCalled()
   })
 })

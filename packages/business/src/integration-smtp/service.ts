@@ -9,9 +9,15 @@ import type {
 import { createId } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
 import { BaseService } from "../base.service"
+import {
+  CONNECTION_STORE_BINDINGS,
+  type ConnectionQuotaConsumption,
+  upsertConnectionRow,
+  withQuotaCompensation,
+} from "../connection"
 import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException } from "../errors"
-import { connectChannelIntegration } from "../inbox/connect-channel"
+import { inboxService } from "../inbox/service"
 import type { IntegrationSmtpResource } from "./schema"
 
 /**
@@ -94,28 +100,56 @@ class IntegrationSmtpService extends BaseService {
     const { workspaceId, ownerId, name, fromAddress, auth } = input
 
     const smtpId = createId()
-    const { inbox, wasCreated } = await db.transaction(
-      async (tx) =>
-        await connectChannelIntegration({
-          tx,
-          ownerId,
-          inboxData: {
-            id: smtpId,
-            workspaceId,
-            channel: channelTypes.enum.smtp,
-            name,
-            sourceId: smtpId,
-          },
-          insertIntegration: async (inboxId) => {
-            await tx.insert(integrationSmtpModel).values({
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+
+    const { inbox, wasCreated } = await withQuotaCompensation(
+      {
+        ownerId,
+        quotaConsumption,
+        context: { provider: "smtp" },
+      },
+      () =>
+        db.transaction(async (tx) => {
+          const { inbox, wasCreated } = await inboxService.create({
+            tx,
+            ownerId,
+            data: {
               id: smtpId,
-              name,
               workspaceId,
-              inboxId,
-              fromAddress,
-              auth,
-            })
-          },
+              channel: channelTypes.enum.smtp,
+              name,
+              sourceId: smtpId,
+            },
+            skipQuota: true,
+          })
+
+          // `id === inboxId === sourceId` — the smtp binding's
+          // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationSmtp
+          // .id` to this same `smtpId` on insert, preserving the
+          // one-id-for-everything convention this service used to encode via
+          // an explicit `inboxData.id` + `insertIntegration({id: smtpId, ...})`
+          // pair through `connectChannelIntegration`.
+          await upsertConnectionRow({
+            tx,
+            workspaceId,
+            provider: "smtp",
+            kind: "channel",
+            descriptor: { sourceId: smtpId, displayName: name },
+            auth,
+            extraConfig: { fromAddress },
+            existing: undefined,
+            store: CONNECTION_STORE_BINDINGS.smtp as NonNullable<
+              (typeof CONNECTION_STORE_BINDINGS)["smtp"]
+            >,
+            ownerId,
+            quotaConsumption,
+            inboxId: inbox.id,
+          })
+
+          return { inbox, wasCreated }
         }),
     )
 

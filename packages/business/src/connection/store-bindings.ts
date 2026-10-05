@@ -121,11 +121,18 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
   configColumns?: readonly TConfigColumn[]
 }
 
+/**
+ * `id` is excluded for every other channel binding (its PK rides
+ * `identityColumn`/the table's own default instead), but WhatsApp's binding
+ * deliberately allow-lists it — see its `CONNECTION_STORE_BINDINGS` entry
+ * below for why. Safe to widen here: `pickAllowed` still gates on each
+ * binding's own `configColumns` array, so no other table is affected unless
+ * it opts in the same way.
+ */
 type ConfigColumn<TTable extends PgTable> = Exclude<
   Extract<keyof InferInsertModel<TTable>, string>,
   | "auth"
   | "encryptedAuth"
-  | "id"
   | "inboxId"
   | "integrationId"
   | "name"
@@ -484,8 +491,9 @@ export const CONNECTION_STORE_BINDINGS: Partial<
   api: makeChannelBinding({
     table: integrationApiModel,
     tableName: "IntegrationApi",
-    identityColumn: null,
+    identityColumn: "id",
     onDisconnect: "keep_row",
+    configColumns: ["tokenHash", "tokenPrefix", "callbackUrl"],
   }),
   chatbotx: null,
   claude: makeWorkspaceIntegrationBinding({
@@ -598,6 +606,7 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     table: integrationOpenaiModel,
     tableName: "IntegrationOpenai",
     integrationType: "openai",
+    duplicateConstraint: "IntegrationOpenAI_workspaceId_key",
     configColumns: [
       ...AI_KEY_PROVIDER_CONFIG_COLUMNS,
       "autoReplyVoice",
@@ -640,8 +649,9 @@ export const CONNECTION_STORE_BINDINGS: Partial<
   smtp: makeChannelBinding({
     table: integrationSmtpModel,
     tableName: "IntegrationSmtp",
-    identityColumn: null,
+    identityColumn: "id",
     onDisconnect: "keep_row",
+    configColumns: ["fromAddress"],
   }),
   telegram: makeChannelBinding({
     table: integrationTelegramModel,
@@ -660,15 +670,46 @@ export const CONNECTION_STORE_BINDINGS: Partial<
   webchat: makeChannelBinding({
     table: integrationWebchatModel,
     tableName: "IntegrationWebchat",
-    identityColumn: null,
+    identityColumn: "id",
     onDisconnect: "keep_row",
+    configColumns: [
+      "enable",
+      "authorizedDomains",
+      "conversationStarters",
+      "persistentMenus",
+      "brandColor",
+      "hideHeader",
+      "showLogo",
+      "hideMessageInput",
+      "customCss",
+      "welcomeFlowId",
+    ],
   }),
+  // `id` is in `configColumns` (allow-listed above `ConfigColumn`'s
+  // exclusion list) ONLY so `connectPhoneNumber` can set it on a fresh
+  // insert: the manual-onboarding webhook URL
+  // (`/integrations/whatsapp/webhook/{id}`) is minted from a locally
+  // generated id BEFORE this row exists, so the satellite's real PK must
+  // equal it for that route to ever find the row again. Never populated
+  // from wire input — WhatsApp has no `fromCredentials` handler, so it is
+  // unreachable from the generic `connectFromCredentials` HTTP path (see
+  // `packages/connections/src/credentials.ts`'s strategy guard). A revive
+  // (`saveAuthByForeignKey`'s UPDATE) must never receive this key — see
+  // `connect.ts`'s comment at its call site.
   whatsapp: makeChannelBinding({
     table: integrationWhatsappModel,
     tableName: "IntegrationWhatsapp",
     identityColumn: "phoneNumberId",
     onDisconnect: "keep_row",
     duplicateConstraint: "IntegrationWhatsapp_phoneNumberId_key",
+    configColumns: [
+      "id",
+      "wabaId",
+      "businessId",
+      "displayPhoneNumber",
+      "isCoexist",
+      "platformType",
+    ],
   }),
   zalo: makeChannelBinding({
     table: integrationZaloModel,

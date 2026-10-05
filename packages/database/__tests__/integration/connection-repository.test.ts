@@ -53,9 +53,9 @@ const seedIntegrationConnection = async (
     workspaceId: string
     sourceId: string
     displayName?: string
-    status?: "connected" | "disconnected" | "needs_reauth"
+    status?: "connected" | "disconnected" | "needs_reauth" | "paused"
     integrationId?: string
-    statusReason?: "manual"
+    statusReason?: "manual" | "trial_expired"
     disconnectedAt?: Date
   },
 ) => {
@@ -625,4 +625,57 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
       ])
     }
   }, 15_000)
+
+  test("listPausedByOwner returns paused connections across the owner's workspaces only", () =>
+    run(async (tx) => {
+      const { workspaceId: workspaceA, ownerId } = await seedWorkspace(
+        tx,
+        "paused-owner-a",
+      )
+      const [workspaceB] = await tx
+        .insert(schema.workspaceModel)
+        .values({
+          name: `connection-repository-paused-owner-b-${Date.now()}-${Math.random()}`,
+          ownerId,
+        })
+        .returning({ id: schema.workspaceModel.id })
+      const { workspaceId: otherWorkspaceId } = await seedWorkspace(
+        tx,
+        "paused-other-owner",
+      )
+
+      const pausedA = await seedIntegrationConnection(tx, {
+        workspaceId: workspaceA,
+        sourceId: "paused-a",
+        status: "paused",
+        statusReason: "trial_expired",
+      })
+      const pausedB = await seedIntegrationConnection(tx, {
+        workspaceId: workspaceB.id,
+        sourceId: "paused-b",
+        status: "paused",
+        statusReason: "trial_expired",
+      })
+      // Connected connection in the same owner's workspace — must be excluded.
+      await seedIntegrationConnection(tx, {
+        workspaceId: workspaceA,
+        sourceId: "connected-a",
+      })
+      // Paused connection in a different owner's workspace — must be excluded.
+      await seedIntegrationConnection(tx, {
+        workspaceId: otherWorkspaceId,
+        sourceId: "paused-other",
+        status: "paused",
+        statusReason: "trial_expired",
+      })
+
+      const result = await connectionRepository.listPausedByOwner(
+        { ownerId },
+        tx,
+      )
+
+      expect(result.map((row) => row.id).sort()).toEqual(
+        [pausedA.id, pausedB.id].sort(),
+      )
+    }))
 })

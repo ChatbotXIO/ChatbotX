@@ -1,7 +1,9 @@
 import {
+  connectionStateService,
   messengerIntegrationService,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
+import { authExpiresAtOf } from "@chatbotx.io/business/connection"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   debugToken,
@@ -113,6 +115,12 @@ export async function reconnectMessengerHandler(props: {
       auth,
       name: page.name,
       ...(userInfo ? { userInfo } : {}),
+    })
+
+    await connectionStateService.reconnectInbox({
+      inboxId: integrationMessenger.inboxId,
+      workspaceId: props.workspaceId,
+      authExpiresAt: authExpiresAtOf(auth),
     })
 
     // Re-subscribe the page to exactly the webhook fields its reconnected

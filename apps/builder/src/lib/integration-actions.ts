@@ -1,3 +1,4 @@
+import { dispatchAuditRecordSafely } from "@chatbotx.io/business/audit"
 import { connectionService } from "@chatbotx.io/connections"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
@@ -66,6 +67,18 @@ export function createDisconnectAction(
               connectionId: connection.id,
               workspaceId,
             })
+            // The legacy `service.disconnect(workspaceId)` fallback below
+            // already audits internally via `BaseService.audit()`;
+            // `connectionService.disconnect` (the engine path) doesn't, so
+            // this is the one place that has to — otherwise a backfilled
+            // workspace's disconnect silently drops its audit trail.
+            await dispatchAuditRecordSafely(
+              {
+                action: "disconnect",
+                detail: `disconnected the ${name} integration (#${connection.id})`,
+              },
+              `Failed to audit ${name} disconnect`,
+            )
           } else {
             await service.disconnect(workspaceId)
           }

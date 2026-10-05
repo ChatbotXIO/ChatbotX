@@ -25,6 +25,8 @@ const {
   replaceAuthMock,
   subscribeWebhookMock,
   upsertCurrentCredentialMock,
+  reconnectInboxMock,
+  authExpiresAtOfMock,
 } = vi.hoisted(() => ({
   exchangeAccessTokenMock: vi.fn(),
   findWabaMock: vi.fn(),
@@ -37,6 +39,8 @@ const {
   replaceAuthMock: vi.fn(),
   subscribeWebhookMock: vi.fn(),
   upsertCurrentCredentialMock: vi.fn(),
+  reconnectInboxMock: vi.fn(),
+  authExpiresAtOfMock: vi.fn(() => null),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -75,7 +79,14 @@ vi.mock("@chatbotx.io/business", () => ({
   whatsappBusinessAccountService: {
     upsertCurrentCredential: upsertCurrentCredentialMock,
   },
+  connectionStateService: {
+    reconnectInbox: reconnectInboxMock,
+  },
   WHATSAPP_CAPI_SCOPE: "whatsapp_business_manage_events",
+}))
+
+vi.mock("@chatbotx.io/business/connection", () => ({
+  authExpiresAtOf: authExpiresAtOfMock,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -123,6 +134,7 @@ describe("reconnectWhatsappAction", () => {
     })
     findWorkspaceIntegrationMock.mockResolvedValue({
       id: "iw-1",
+      inboxId: "inbox-1",
       wabaId: "waba-1",
       phoneNumberId: "phone-number-1",
       businessId: "business-1",
@@ -169,6 +181,7 @@ describe("reconnectWhatsappAction", () => {
       revision: 1,
     })
     subscribeWebhookMock.mockResolvedValue(undefined)
+    reconnectInboxMock.mockResolvedValue(undefined)
   })
 
   test("rejects non-super-admin members before reconnecting WhatsApp auth", async () => {
@@ -248,5 +261,19 @@ describe("reconnectWhatsappAction", () => {
         systemUserId: "system-user-1",
       }),
     )
+  })
+
+  test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
+    await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      parsedInput: { code: "oauth-code-1" },
+    })
+
+    expect(reconnectInboxMock).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      authExpiresAt: null,
+    })
   })
 })

@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
@@ -89,7 +90,7 @@ function requestWithWorkspaceId(workspaceId: string | null) {
   if (workspaceId) {
     url.searchParams.set("workspaceId", workspaceId)
   }
-  return { nextUrl: url } as unknown as { nextUrl: URL }
+  return new NextRequest(url)
 }
 
 beforeEach(() => {
@@ -144,6 +145,10 @@ describe.each([
       callbackUrl: "https://app.example.com/integrations/instagram/callback",
       actorUserId: "user-1",
       platformOwnerId: "owner-1",
+      // No `Host` header on the test's bare `NextRequest` — falls back to
+      // `getPublicHostFromRequest`'s dev default ("localhost:3123"), then
+      // `getPublicUrlFromRequest` strips the port unconditionally.
+      originHost: "localhost",
     })
     expect(mockUpdateReturnUrl).toHaveBeenCalledWith({
       id: "session-1",
@@ -219,11 +224,9 @@ describe.each([
     // Origin matches the test env's NEXT_PUBLIC_BUILDER_URL
     // (packages/vitest-config/src/setup-env.ts) exactly, so
     // `isAllowedOrigin` accepts it without needing `customDomainService`.
-    const req = {
-      nextUrl: new URL(
-        `http://localhost:3123/channels/${provider}?workspaceId=ws-1`,
-      ),
-    } as unknown as { nextUrl: URL }
+    const req = new NextRequest(
+      `http://localhost:3123/channels/${provider}?workspaceId=ws-1`,
+    )
 
     await expect(GET(req)).rejects.toThrow(
       "redirect:https://facebook.com/oauth-dialog",

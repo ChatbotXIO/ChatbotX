@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -104,7 +105,7 @@ function requestWithWorkspaceId(workspaceId: string | null) {
   if (workspaceId) {
     url.searchParams.set("workspaceId", workspaceId)
   }
-  return { nextUrl: url } as unknown as Parameters<typeof GET>[0]
+  return new NextRequest(url)
 }
 
 describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
@@ -228,6 +229,10 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       callbackUrl: "https://app.example.com/integrations/messenger/callback",
       actorUserId: "user-1",
       platformOwnerId: "owner-1",
+      // No `Host` header on the test's bare `NextRequest` — falls back to
+      // `getPublicHostFromRequest`'s dev default ("localhost:3123"), then
+      // `getPublicUrlFromRequest` strips the port unconditionally.
+      originHost: "localhost",
     })
     // Relative — `connectSessionService.updateReturnUrl`'s real
     // `validateReturnUrl` rejects an absolute value outright (regression C1).
@@ -253,11 +258,9 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     // Origin matches the test env's NEXT_PUBLIC_BUILDER_URL
     // (packages/vitest-config/src/setup-env.ts) exactly, so
     // `isAllowedOrigin` accepts it without needing `customDomainService`.
-    const req = {
-      nextUrl: new URL(
-        "http://localhost:3123/channels/create/messenger?workspaceId=ws-1",
-      ),
-    } as unknown as Parameters<typeof GET>[0]
+    const req = new NextRequest(
+      "http://localhost:3123/channels/create/messenger?workspaceId=ws-1",
+    )
 
     await expect(GET(req)).rejects.toThrow(
       "redirect:https://facebook.com/oauth-dialog",

@@ -18,6 +18,7 @@ import { ChatbotXException, channelLimitReachedException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { workspaceMemberService } from "../workspace-member/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import {
   type ConnectionEvent,
@@ -122,6 +123,44 @@ class ConnectionStateService extends BaseService {
     await inboxService.disconnect({
       ...input,
       reason: "manual",
+    })
+  }
+
+  /**
+   * Reconnect counterpart of {@link disconnectInbox}: after a reconnect
+   * flow (OAuth re-authorize or re-pasted credential) saves fresh auth onto
+   * the satellite row, call this to re-consume `channels` quota (the
+   * `connect.completed` edge, same event a fresh connect uses) and mirror
+   * `Inbox.status` back to `connected` — the FSM handles reviving from
+   * `needs_reauth`/`disconnected`/`paused` alike. No-ops for a row not yet
+   * backfilled into `Connection` (nothing to mirror/consume through yet);
+   * the reconnect flow's own satellite write already restored its auth.
+   */
+  async reconnectInbox(input: {
+    inboxId: string
+    workspaceId: string
+    authExpiresAt?: Date | null
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const connection = await connectionRepository.findByInboxId(
+      { inboxId: input.inboxId },
+      input.tx,
+    )
+    if (!connection) {
+      return
+    }
+    if (connection.workspaceId !== input.workspaceId) {
+      throw new ConnectionNotFoundException(input.inboxId)
+    }
+    const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+      workspaceId: input.workspaceId,
+    })
+    await this.transition({
+      connectionId: connection.id,
+      event: "connect.completed",
+      ownerId,
+      values: { authExpiresAt: input.authExpiresAt ?? null, lastError: null },
+      tx: input.tx,
     })
   }
 
@@ -350,24 +389,14 @@ class ConnectionStateService extends BaseService {
   }
 
   /**
-   * Same as `markUnhealthy`, resolved by `(provider, sourceId)` instead of a
-   * known `Connection.id` — the shape a provider webhook payload (TikTok
-   * `authorization.removed`'s `openId`, etc.) actually carries. Silently
-   * no-ops when no matching connection exists (an orphaned/duplicate webhook
-   * delivery, not a caller error).
-   *
-   * Pass `workspaceId` whenever the caller already knows it (e.g. TikTok's
-   * `authorization.removed`, which carries the integration row's
-   * `workspaceId`) — this resolves the exact `(workspaceId, provider,
-   * sourceId)` unique row instead of the any-workspace fallback below, so a
-   * different workspace's reconnected copy of the same external account can
-   * never be marked unhealthy by mistake.
+   * Shared `(provider, sourceId)` lookup behind `markUnhealthyByIdentifier`
+   * and `markDegradedByIdentifier` — see the former's doc for the
+   * `workspaceId`-present-vs-absent resolution difference and the
+   * ambiguity warning on an any-workspace fallback.
    */
-  async markUnhealthyByIdentifier(input: {
+  private async findConnectionByIdentifier(input: {
     provider: IntegrationType
     identifier: string
-    reason?: ConnectionStatusReason
-    ownerId?: string
     workspaceId?: string
   }): Promise<ConnectionModel | null> {
     const existing = input.workspaceId
@@ -397,8 +426,36 @@ class ConnectionStateService extends BaseService {
           connectionId: existing.id,
           status: existing.status,
         },
-        "markUnhealthyByIdentifier: no ACTIVE connection matched; falling back to the most recent non-active row",
+        "findConnectionByIdentifier: no ACTIVE connection matched; falling back to the most recent non-active row",
       )
+    }
+    return existing
+  }
+
+  /**
+   * Same as `markUnhealthy`, resolved by `(provider, sourceId)` instead of a
+   * known `Connection.id` — the shape a provider webhook payload (TikTok
+   * `authorization.removed`'s `openId`, etc.) actually carries. Silently
+   * no-ops when no matching connection exists (an orphaned/duplicate webhook
+   * delivery, not a caller error).
+   *
+   * Pass `workspaceId` whenever the caller already knows it (e.g. TikTok's
+   * `authorization.removed`, which carries the integration row's
+   * `workspaceId`) — this resolves the exact `(workspaceId, provider,
+   * sourceId)` unique row instead of the any-workspace fallback below, so a
+   * different workspace's reconnected copy of the same external account can
+   * never be marked unhealthy by mistake.
+   */
+  async markUnhealthyByIdentifier(input: {
+    provider: IntegrationType
+    identifier: string
+    reason?: ConnectionStatusReason
+    ownerId?: string
+    workspaceId?: string
+  }): Promise<ConnectionModel | null> {
+    const existing = await this.findConnectionByIdentifier(input)
+    if (!existing) {
+      return null
     }
     return await this.markUnhealthy({
       connectionId: existing.id,
@@ -408,12 +465,41 @@ class ConnectionStateService extends BaseService {
   }
 
   /**
+   * The transient counterpart of `markUnhealthyByIdentifier`: a token
+   * refresh attempt failed without the provider confirming the token/
+   * account itself was revoked (an API outage, rate limit, etc.) —
+   * `refresh.transient_failure` moves an active connection to `degraded`
+   * (reason defaults to `refresh_failed`) instead of `needs_reauth`,
+   * leaving `channels` quota untouched (the quota edge only fires on an
+   * active/inactive boundary crossing, and `degraded` is still active — see
+   * `isActiveConnectionStatus`). A non-active connection is left alone (a
+   * no-op, not an error): a refresh failure on an already-disconnected row
+   * has nothing to degrade.
+   */
+  async markDegradedByIdentifier(input: {
+    provider: IntegrationType
+    identifier: string
+    reason?: ConnectionStatusReason
+    workspaceId?: string
+  }): Promise<ConnectionModel | null> {
+    const existing = await this.findConnectionByIdentifier(input)
+    if (!(existing && isActiveConnectionStatus(existing.status))) {
+      return null
+    }
+    return await this.transition({
+      connectionId: existing.id,
+      event: "refresh.transient_failure",
+      reason: input.reason ?? "refresh_failed",
+    })
+  }
+
+  /**
    * `markUnhealthyByIdentifier`'s counterpart for a provider whose `Inbox`
    * row predates its `Connection` backfill — no `Connection` row exists yet
    * to resolve `(provider, identifier)` against, so the caller (a webhook
    * handler that already has the legacy per-provider row, e.g.
    * `IntegrationTiktok`) passes `inboxId` directly. Mirrors `Inbox.status`
-   * to `disconnected` the same way `transition`'s `auth.revoked` edge does
+   * to `needs_reauth` the same way `transition`'s `auth.revoked` edge does
    * for a backfilled connection — deliberately NOT `inboxService.disconnect`,
    * which also releases `channels` quota; an un-backfilled row was never
    * counted against quota through the `Connection` domain, so releasing it

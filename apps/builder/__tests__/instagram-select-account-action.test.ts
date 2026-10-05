@@ -14,19 +14,32 @@ const {
   findByInboxIdMock,
   loggerErrorMock,
   loggerWarnMock,
+  mockDbUpdate,
   resolveConnectSessionMock,
   runChannelHandlerMock,
   updateWorkspaceLogoMock,
-} = vi.hoisted(() => ({
-  buildContextMock: vi.fn(),
-  connectTargetsMock: vi.fn(),
-  findByInboxIdMock: vi.fn(),
-  loggerErrorMock: vi.fn(),
-  loggerWarnMock: vi.fn(),
-  resolveConnectSessionMock: vi.fn(),
-  runChannelHandlerMock: vi.fn(),
-  updateWorkspaceLogoMock: vi.fn(),
-}))
+} = vi.hoisted(() => {
+  // `connect-account.ts` persists a fresh branding menu via `db.update(...)` —
+  // chainable `set`/`where` stub avoids opening a real pg.Pool at module load.
+  const updateBuilder = {
+    set: vi.fn(),
+    where: vi.fn(),
+  }
+  updateBuilder.set.mockReturnValue(updateBuilder)
+  updateBuilder.where.mockResolvedValue(undefined)
+
+  return {
+    buildContextMock: vi.fn(),
+    connectTargetsMock: vi.fn(),
+    findByInboxIdMock: vi.fn(),
+    loggerErrorMock: vi.fn(),
+    loggerWarnMock: vi.fn(),
+    mockDbUpdate: vi.fn().mockReturnValue(updateBuilder),
+    resolveConnectSessionMock: vi.fn(),
+    runChannelHandlerMock: vi.fn(),
+    updateWorkspaceLogoMock: vi.fn(),
+  }
+})
 
 vi.mock("@/features/channel-connect/lib/resolve-connect-session", () => ({
   resolveConnectSession: resolveConnectSessionMock,
@@ -53,6 +66,11 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/connections", () => ({
   connectionService: { connectTargets: connectTargetsMock },
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: { update: mockDbUpdate },
+  eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
 }))
 
 vi.mock("@chatbotx.io/integration-instagram", () => ({
@@ -96,6 +114,7 @@ describe("connectInstagramAccount (Instagram direct login)", () => {
     findByInboxIdMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
+      persistentMenus: [],
     })
     runChannelHandlerMock.mockResolvedValue(undefined)
     updateWorkspaceLogoMock.mockResolvedValue(undefined)

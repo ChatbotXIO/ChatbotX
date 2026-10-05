@@ -52,15 +52,17 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
    * Resolves the `Connection` row mirroring this `Integration<Channel>` (or
    * workspace-integration satellite) row so state changes route through
    * `connectionStateService` instead of writing `Inbox` directly. Returns
-   * `undefined` for a row predating PR #1411's `Connection` table — no
-   * backfill migration has populated `Connection` for pre-existing
-   * `Integration`/`Inbox` rows yet (no `packages/database/scripts/
-   * backfill-connection*.ts` exists in this repo). Once that one-time
-   * backfill ships and every `Integration`/`Inbox` row has a mirrored
-   * `Connection` row, this `undefined` branch — and the matching
-   * "pre-backfill fallback" branches below and in
-   * `ConnectionStateService.disconnectInbox` (`../connection/state-service.ts`)
-   * — become dead code safe to delete.
+   * `undefined` for a row not yet covered by `Connection` — either it
+   * predates PR #1411's `Connection` table and the one-time
+   * `packages/database/scripts/backfill-connections.ts` run (Phase 4 of
+   * the connection-lifecycle plan) hasn't reached it yet, or it's a
+   * provider the backfill/engine deliberately skips (e.g. `threads`, which
+   * has no `Connection` adapter at all — see `CONNECTION_REGISTRY`). Once
+   * backfill has run and `--verify` reports zero gaps on this environment,
+   * this `undefined` branch — and the matching "pre-backfill fallback"
+   * branches below and in `ConnectionStateService.disconnectInbox`
+   * (`../connection/state-service.ts`) — become dead code safe to delete
+   * (Phase 5).
    */
   const resolveConnection = async () => {
     if (integration.inboxId) {

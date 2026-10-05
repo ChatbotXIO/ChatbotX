@@ -1,4 +1,8 @@
-import { zaloIntegrationService } from "@chatbotx.io/business"
+import {
+  connectionStateService,
+  zaloIntegrationService,
+} from "@chatbotx.io/business"
+import { authExpiresAtOf } from "@chatbotx.io/business/connection"
 import type { ZaloCredential } from "@chatbotx.io/database/partials"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
 import { integrations } from "@/integration"
@@ -48,6 +52,12 @@ export async function reconnectZaloHandler(props: {
       authValue,
       authValue.metadata.oaName,
     )
+
+    await connectionStateService.reconnectInbox({
+      inboxId: integrationZalo.inboxId,
+      workspaceId: props.workspaceId,
+      authExpiresAt: authExpiresAtOf(authValue),
+    })
 
     return { status: "success" }
   } catch (error) {
