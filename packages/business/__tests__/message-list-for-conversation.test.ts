@@ -246,7 +246,75 @@ describe("message list-for-conversation", () => {
       })
 
       expect(result.data[0].attachments[0].url).toBeNull()
+      expect(result.data[0].attachments[0].fallbackUrl).toBeNull()
       expect(mocks.uploader.getPresignedDownload).not.toHaveBeenCalled()
+    })
+
+    test("attaches a proxy fallback URL to a stored hydration-channel attachment", async () => {
+      mocks.uploader.getPresignedDownload.mockResolvedValue(
+        "https://signed.example.com/file",
+      )
+      mocks.contactInboxService.findManyByIds.mockResolvedValue([
+        { id: "ci-1", channel: "messenger" },
+      ])
+      mocks.repo.listByConversation.mockResolvedValue({
+        data: [
+          {
+            id: "msg-1",
+            contactInboxId: "ci-1",
+            attachments: [
+              { id: "att-1", originPath: "workspace/ws-1/files/a.png" },
+            ],
+          },
+        ],
+        nextCursor: null,
+      })
+
+      const result = await listForConversation({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        limit: 20,
+      })
+
+      expect(result.data[0].attachments[0].url).toBe(
+        "https://signed.example.com/file",
+      )
+      expect(result.data[0].attachments[0].fallbackUrl).toBe(
+        "https://app.example.com/media/attachment/signed-media-token",
+      )
+    })
+
+    test("keeps the primary URL when signing the fallback URL fails", async () => {
+      mocks.uploader.getPresignedDownload.mockResolvedValue(
+        "https://signed.example.com/file",
+      )
+      mocks.signMediaToken.mockRejectedValueOnce(new Error("signer down"))
+      mocks.contactInboxService.findManyByIds.mockResolvedValue([
+        { id: "ci-1", channel: "messenger" },
+      ])
+      mocks.repo.listByConversation.mockResolvedValue({
+        data: [
+          {
+            id: "msg-1",
+            contactInboxId: "ci-1",
+            attachments: [
+              { id: "att-1", originPath: "workspace/ws-1/files/a.png" },
+            ],
+          },
+        ],
+        nextCursor: null,
+      })
+
+      const result = await listForConversation({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        limit: 20,
+      })
+
+      expect(result.data[0].attachments[0].url).toBe(
+        "https://signed.example.com/file",
+      )
+      expect(result.data[0].attachments[0].fallbackUrl).toBeNull()
     })
 
     test.each([

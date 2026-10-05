@@ -1,6 +1,7 @@
 import {
   ensureAttachmentMirrored,
   markAttachmentUnresolvable,
+  restoreMirroredAttachment,
   TerminalMediaError,
 } from "@chatbotx.io/channel-registry/media-hydration"
 import type { LowJobCoexistAttachmentDownload } from "@chatbotx.io/worker-config"
@@ -33,10 +34,43 @@ export const markUnresolvableOnFinalAttempt = async (
   })
 }
 
+// Restoring an evicted object never changes the row, so a failure — even on
+// the final attempt — must not mark it unresolvable: the next view retries.
+const restoreEvictedAttachment = async (
+  data: LowJobCoexistAttachmentDownload["data"],
+): Promise<void> => {
+  try {
+    await restoreMirroredAttachment({
+      attachmentId: data.attachmentId,
+      workspaceId: data.workspaceId,
+      ...(data.messageCreatedAt === undefined
+        ? {}
+        : { messageCreatedAt: new Date(data.messageCreatedAt) }),
+    })
+  } catch (err) {
+    if (err instanceof TerminalMediaError) {
+      logger.warn(
+        { err, attachmentId: data.attachmentId, channel: data.channel },
+        "[coexist-attachment] terminal media failure — skipping restore",
+      )
+      return
+    }
+    logger.error(
+      { err, attachmentId: data.attachmentId, channel: data.channel },
+      "[coexist-attachment] restore failed",
+    )
+    throw err
+  }
+}
+
 export const coexistAttachmentDownload = async (
   job: AttachmentDownloadJob,
   data: LowJobCoexistAttachmentDownload["data"],
 ): Promise<void> => {
+  if (data.restore) {
+    await restoreEvictedAttachment(data)
+    return
+  }
   try {
     await ensureAttachmentMirrored({
       attachmentId: data.attachmentId,

@@ -71,13 +71,24 @@ export const isPendingOriginPath = (originPath: string): boolean =>
 export const isFailedOriginPath = (originPath: string): boolean =>
   originPath.startsWith(FAILED_PREFIX)
 
-const buildProxyUrl = async (props: {
-  kind: "attachment" | "avatar"
-  refId: string
-  workspaceId: string
-  messageCreatedAt?: number
-}): Promise<string> => {
-  const token = await signMediaToken(props)
+// A fallback URL is only used after its attachment's presigned storage URL
+// (1 hour) fails, so it must outlive it — otherwise an inbox left open past the
+// hour has an expired fallback exactly when it needs one.
+const FALLBACK_TOKEN_TTL_MS = 24 * 60 * 60 * 1000
+
+const buildProxyUrl = async (
+  props: {
+    kind: "attachment" | "avatar"
+    refId: string
+    workspaceId: string
+    messageCreatedAt?: number
+  },
+  ttlMs?: number,
+): Promise<string> => {
+  const token =
+    ttlMs === undefined
+      ? await signMediaToken(props)
+      : await signMediaToken(props, ttlMs)
   // White-label: proxied media must resolve on the workspace's own (custom)
   // domain, not the platform default, so the branded origin is preserved for
   // tenants on a custom domain. resolveWorkspaceAppUrl is withCache-backed, so
@@ -128,6 +139,35 @@ const resolveAttachmentUrl = async (
     })
   }
   return await finalize(ref.originPath)
+}
+
+/**
+ * Proxy URL the client falls back to when a mirrored attachment's storage URL
+ * fails to load (expired presign, or the object was evicted from storage). The
+ * proxy re-signs the stored key first and, on `?retry=1`, re-derives the media
+ * from the channel. Only hydration channels have that second path, so every
+ * other attachment — and any row that already resolves through the proxy —
+ * gets no fallback.
+ */
+export const resolveAttachmentFallbackUrl = async (
+  ref: Omit<AttachmentMediaRef, "kind">,
+): Promise<string | null> => {
+  if (
+    !HYDRATION_CHANNELS.has(ref.channel) ||
+    isFailedOriginPath(ref.originPath) ||
+    isPendingOriginPath(ref.originPath)
+  ) {
+    return null
+  }
+  return await buildProxyUrl(
+    {
+      kind: "attachment",
+      refId: ref.attachmentId,
+      workspaceId: ref.workspaceId,
+      messageCreatedAt: ref.messageCreatedAt?.getTime(),
+    },
+    FALLBACK_TOKEN_TTL_MS,
+  )
 }
 
 const resolveAvatarUrl = async (

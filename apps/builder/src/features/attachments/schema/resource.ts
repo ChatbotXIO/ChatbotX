@@ -9,6 +9,8 @@ export const attachmentResource = createSelectSchema(attachmentModel, {
 }).and(
   z.object({
     url: z.url().nullish(),
+    // Proxy URL to try when `url` fails to load (see `useAttachmentSource`).
+    fallbackUrl: z.url().nullish(),
   }),
 )
 export type AttachmentResource = z.infer<typeof attachmentResource>

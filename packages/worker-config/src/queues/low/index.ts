@@ -35,6 +35,9 @@ export type LowJobAction = (typeof LowJobAction)[keyof typeof LowJobAction]
  * Idempotency: jobId `att-${attachmentId}` dedups concurrent enqueues; the
  * handler additionally checks the originPath prefix to no-op on retries where a
  * prior worker already finished the upload.
+ *
+ * `restore` re-uploads an already mirrored attachment into its existing storage
+ * key instead (its object was evicted); that path never writes the row.
  */
 export type LowJobCoexistAttachmentDownload = {
   type: typeof LowJobAction.coexistAttachmentDownload
@@ -43,6 +46,9 @@ export type LowJobCoexistAttachmentDownload = {
     workspaceId: string
     channel: "messenger" | "whatsapp" | "instagram"
     integrationId: string
+    restore?: boolean
+    // Parent message createdAt (epoch ms) — the restore path's shard hint.
+    messageCreatedAt?: number
   }
 }
 

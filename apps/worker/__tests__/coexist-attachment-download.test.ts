@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   loggerError: vi.fn(),
   loggerWarn: vi.fn(),
   markAttachmentUnresolvable: vi.fn(),
+  restoreMirroredAttachment: vi.fn(),
 }))
 
 class MockTerminalMediaError extends Error {}
@@ -17,6 +18,7 @@ vi.mock("@chatbotx.io/channel-registry/media-hydration", () => ({
   markAttachmentUnresolvable: mocks.markAttachmentUnresolvable,
   MAX_ATTACHMENT_BYTES: 100 * 1024 * 1024,
   readBodyWithCap: vi.fn(),
+  restoreMirroredAttachment: mocks.restoreMirroredAttachment,
   TerminalMediaError: MockTerminalMediaError,
 }))
 
@@ -54,6 +56,7 @@ describe("coexistAttachmentDownload", () => {
       originPath: "workspace/workspace-1/media.jpg",
     })
     mocks.markAttachmentUnresolvable.mockResolvedValue(undefined)
+    mocks.restoreMirroredAttachment.mockResolvedValue({ restored: true })
   })
 
   test("delegates the existing job payload to shared hydration", async () => {
@@ -63,6 +66,50 @@ describe("coexistAttachmentDownload", () => {
       attachmentId: data.attachmentId,
       workspaceId: data.workspaceId,
     })
+  })
+
+  test("delegates a restore payload to the restore path instead of mirroring", async () => {
+    const messageCreatedAt = Date.parse("2026-09-18T00:00:00.000Z")
+
+    await coexistAttachmentDownload(job(), {
+      ...data,
+      restore: true,
+      messageCreatedAt,
+    })
+
+    expect(mocks.restoreMirroredAttachment).toHaveBeenCalledWith({
+      attachmentId: data.attachmentId,
+      workspaceId: data.workspaceId,
+      messageCreatedAt: new Date(messageCreatedAt),
+    })
+    expect(mocks.ensureAttachmentMirrored).not.toHaveBeenCalled()
+  })
+
+  test("never marks a row unresolvable when a restore fails on the final attempt", async () => {
+    const err = new Error("Graph returned fewer attachments")
+    mocks.restoreMirroredAttachment.mockRejectedValue(err)
+
+    await expect(
+      coexistAttachmentDownload(job(4, 5), { ...data, restore: true }),
+    ).rejects.toBe(err)
+
+    expect(mocks.markAttachmentUnresolvable).not.toHaveBeenCalled()
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err, attachmentId: data.attachmentId }),
+      expect.stringContaining("restore failed"),
+    )
+  })
+
+  test("terminates a permanent restore failure without retrying", async () => {
+    mocks.restoreMirroredAttachment.mockRejectedValue(
+      new MockTerminalMediaError("too large"),
+    )
+
+    await expect(
+      coexistAttachmentDownload(job(), { ...data, restore: true }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.markAttachmentUnresolvable).not.toHaveBeenCalled()
   })
 
   test("terminates permanent media failures without retrying", async () => {
