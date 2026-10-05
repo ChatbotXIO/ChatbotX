@@ -880,7 +880,8 @@
         "providerRejected": "Provayder bu sorğunu rədd etdi.",
         "inProgress": "Qoşulma artıq davam edir.",
         "unknown": "Xəta baş verdi.",
-        "followUpFailed": "Quraşdırma tamamlanmayıb. Kanal parametrlərində quraşdırmanı tamamlayın."
+        "followUpFailed": "Quraşdırma tamamlanmayıb. Kanal parametrlərində quraşdırmanı tamamlayın.",
+        "webhookSubscribeFailed": "Qoşuldu, lakin webhook abunəliyi uğursuz oldu — qoşulma parametrlərindən yenidən cəhd edin."
       },
       "sessionError": {
         "sessionExpired": "Sessiyanızın vaxtı bitib. Yenidən qoşulun.",

@@ -3317,7 +3317,8 @@
         "providerRejected": "Der Anbieter hat diese Anfrage abgelehnt.",
         "inProgress": "Verbindung wird bereits hergestellt.",
         "unknown": "Etwas ist schiefgelaufen.",
-        "followUpFailed": "Einrichtung unvollständig – bitte in den Kanaleinstellungen abschließen."
+        "followUpFailed": "Einrichtung unvollständig – bitte in den Kanaleinstellungen abschließen.",
+        "webhookSubscribeFailed": "Verbunden, aber das Webhook-Abonnement ist fehlgeschlagen – versuchen Sie es erneut in den Verbindungseinstellungen."
       },
       "sessionError": {
         "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte erneut verbinden.",

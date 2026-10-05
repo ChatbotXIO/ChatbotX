@@ -3317,7 +3317,8 @@
         "providerRejected": "Udbyderen afviste denne anmodning.",
         "inProgress": "Forbindelse er allerede i gang.",
         "unknown": "Noget gik galt.",
-        "followUpFailed": "Opsætning ufuldstændig – afslut den fra kanalindstillingerne."
+        "followUpFailed": "Opsætning ufuldstændig – afslut den fra kanalindstillingerne.",
+        "webhookSubscribeFailed": "Forbundet, men webhook-abonnementet mislykkedes — prøv igen fra forbindelsesindstillingerne."
       },
       "sessionError": {
         "sessionExpired": "Din session udløb. Opret forbindelse igen.",

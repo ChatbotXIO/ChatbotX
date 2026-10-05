@@ -1,5 +1,6 @@
 import "server-only"
 
+import type { ConnectWarning } from "@chatbotx.io/business/inbox/connect-outcome-types"
 import { connectionService } from "@chatbotx.io/connections"
 import type {
   ChannelType,
@@ -134,11 +135,19 @@ export async function connectSessionCandidate<
       )
     }
 
-    const warning = row
+    const followUpWarning = row
       ? await runConnectFollowUps(() => runFollowUps({ session, row }), {
           message: followUpFailureMessage,
         })
       : "followUpFailed"
+    // The FSM's own `degraded` signal (webhook subscribe failed) takes
+    // priority over a follow-up-failed warning — both are rare and either
+    // is worth surfacing, but a failed follow-up on an already-degraded
+    // connection is the less actionable of the two for the user to see.
+    const warning: ConnectWarning | undefined =
+      connection.status === "degraded"
+        ? "webhookSubscribeFailed"
+        : followUpWarning
 
     return connectedOutcome({
       sourceId: targetId,

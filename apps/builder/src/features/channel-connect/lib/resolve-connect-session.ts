@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/business"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import {
+  connectSessionCancelledException,
   connectSessionExpiredException,
   credentialMissingException,
   notWorkspaceMemberException,
@@ -85,6 +86,9 @@ async function resolveConnectSessionCore(props: {
     throw connectSessionExpiredException(
       "Your connect session expired. Please start again.",
     )
+  }
+  if (session.status === "failed" && session.errorCode === "provider_denied") {
+    throw connectSessionCancelledException()
   }
   if (
     session.actorUserId !== props.userId ||

@@ -3317,7 +3317,8 @@
         "providerRejected": "O fornecedor rejeitou este pedido.",
         "inProgress": "A ligação já está em curso.",
         "unknown": "Algo correu mal.",
-        "followUpFailed": "Configuração incompleta — conclua nas definições do canal."
+        "followUpFailed": "Configuração incompleta — conclua nas definições do canal.",
+        "webhookSubscribeFailed": "Ligado, mas a subscrição do webhook falhou — tente novamente nas definições da ligação."
       },
       "sessionError": {
         "sessionExpired": "A sua sessão expirou. Volte a ligar-se.",

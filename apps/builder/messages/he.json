@@ -1330,7 +1330,8 @@
         "providerRejected": "הספק דחה את הבקשה הזו.",
         "inProgress": "חיבור כבר מתבצע.",
         "unknown": "משהו השתבש.",
-        "followUpFailed": "ההגדרה לא הושלמה — סיים אותה מהגדרות הערוץ."
+        "followUpFailed": "ההגדרה לא הושלמה — סיים אותה מהגדרות הערוץ.",
+        "webhookSubscribeFailed": "מחובר, אך ההרשמה ל-webhook נכשלה — נסה שוב מהגדרות החיבור."
       },
       "sessionError": {
         "sessionExpired": "פג תוקף ההפעלה שלך. יש להתחבר שוב.",

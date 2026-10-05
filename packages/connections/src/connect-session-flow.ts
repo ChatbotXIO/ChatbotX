@@ -17,12 +17,13 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
+import { db, inArray } from "@chatbotx.io/database/client"
 import type {
   ConnectSessionPurpose,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
+import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type {
   ConnectionModel,
   ConnectSessionModel,
@@ -44,6 +45,7 @@ import {
   resolveForeignKey,
   resolveOwnerId,
   saveOrInsertSatellite,
+  subscribeWebhookBestEffort,
   toConnectionProviderError,
   withQuotaCompensation,
 } from "./internal"
@@ -275,6 +277,32 @@ export const listAndAttachCandidates = async (
     }
   }
 
+  // `instagram` (native login) and `instagramFacebook` (linked via Facebook)
+  // share one physical `IntegrationInstagram.igId` identity column but are
+  // stored under distinct `Connection.provider` values, so the
+  // provider-scoped lookup above can never see a sourceId already connected
+  // under the sibling provider — even once every legacy row has been
+  // backfilled into `Connection`. Cross-check the shared satellite column
+  // directly so the picker still greys out an account connected via the
+  // other login path. The satellite row is deleted on disconnect (`
+  // onDisconnect: "delete_row"`), so its mere existence means still-connected.
+  const crossProviderWorkspaceByIgId = new Map<string, string>()
+  if (
+    (session.provider === "instagram" ||
+      session.provider === "instagramFacebook") &&
+    sourceIds.length > 0
+  ) {
+    const rows = await db
+      .select({
+        igId: integrationInstagramModel.igId,
+        workspaceId: integrationInstagramModel.workspaceId,
+      })
+      .from(integrationInstagramModel)
+      .where(inArray(integrationInstagramModel.igId, sourceIds))
+    for (const row of rows) {
+      crossProviderWorkspaceByIgId.set(row.igId, row.workspaceId)
+    }
+  }
   const targets = candidates.map((candidate) => {
     if (candidate.alreadyConnected) {
       return {
@@ -286,9 +314,17 @@ export const listAndAttachCandidates = async (
       }
     }
     const existing = existingBySourceId.get(candidate.sourceId)
-    if (existing && isActiveConnectionStatus(existing.status)) {
+    const crossProviderWorkspaceId = crossProviderWorkspaceByIgId.get(
+      candidate.sourceId,
+    )
+    if (
+      (existing && isActiveConnectionStatus(existing.status)) ||
+      crossProviderWorkspaceId
+    ) {
+      const connectedWorkspaceId =
+        existing?.workspaceId ?? crossProviderWorkspaceId
       const scope: "this_workspace" | "other_workspace" =
-        existing.workspaceId === session.workspaceId
+        connectedWorkspaceId === session.workspaceId
           ? "this_workspace"
           : "other_workspace"
       return {
@@ -402,59 +438,72 @@ const completeReconnect = async (input: {
     workspaceUsageIncremented: false,
   }
   try {
-    return await withQuotaCompensation(
-      {
-        ownerId,
-        quotaConsumption,
-        context: {
-          connectionId: connection.id,
-          sessionId: session.id,
-        },
-      },
-      async () =>
-        await db.transaction(async (tx) => {
-          const integrationId = await saveOrInsertSatellite({
-            tx,
-            workspaceId: connection.workspaceId,
-            kind: connection.kind,
-            inboxId: connection.inboxId,
-            auth: reconnectAuth,
-            descriptor,
-            extraConfig: {},
-            existing: connection,
-            store,
-          })
-          await connectionRepository.update(
-            {
-              id: connection.id,
-              workspaceId: connection.workspaceId,
-              values: {
-                authExpiresAt,
-                lastError: null,
-                integrationId: integrationId ?? connection.integrationId,
-              },
-            },
-            tx,
-          )
-          await connectionStateService.transition({
+    const { session: updatedSession, connection: updatedConnection } =
+      await withQuotaCompensation(
+        {
+          ownerId,
+          quotaConsumption,
+          context: {
             connectionId: connection.id,
-            event: "connect.completed",
-            ownerId,
-            tx,
-            quotaConsumption,
-          })
-          return await connectSessionService.completeReconnect({
-            id: session.id,
-            workspaceId: session.workspaceId,
-            tx,
-            result: {
-              targetId: connection.sourceId,
-              status: "connected",
+            sessionId: session.id,
+          },
+        },
+        async () =>
+          await db.transaction(async (tx) => {
+            const integrationId = await saveOrInsertSatellite({
+              tx,
+              workspaceId: connection.workspaceId,
+              kind: connection.kind,
+              inboxId: connection.inboxId,
+              auth: reconnectAuth,
+              descriptor,
+              extraConfig: {},
+              existing: connection,
+              store,
+            })
+            await connectionRepository.update(
+              {
+                id: connection.id,
+                workspaceId: connection.workspaceId,
+                values: {
+                  authExpiresAt,
+                  lastError: null,
+                  integrationId: integrationId ?? connection.integrationId,
+                },
+              },
+              tx,
+            )
+            const transitioned = await connectionStateService.transition({
               connectionId: connection.id,
-            },
-          })
-        }),
-    )
+              event: "connect.completed",
+              ownerId,
+              tx,
+              quotaConsumption,
+            })
+            const completedSession =
+              await connectSessionService.completeReconnect({
+                id: session.id,
+                workspaceId: session.workspaceId,
+                tx,
+                result: {
+                  targetId: connection.sourceId,
+                  status: "connected",
+                  connectionId: connection.id,
+                },
+              })
+            return { session: completedSession, connection: transitioned }
+          }),
+      )
+    // Mirrors `connectAndPersist`'s best-effort webhook subscribe, run after
+    // the transaction commits — a subscribe failure degrades the already-
+    // persisted connection rather than rolling back a successful reconnect.
+    await subscribeWebhookBestEffort({
+      adapter,
+      auth: reconnectAuth,
+      connection: updatedConnection,
+      ownerId,
+    })
+    return updatedSession
   } catch (err) {
     await failSession(session, "internal_error", ["authorized"])
     throw err

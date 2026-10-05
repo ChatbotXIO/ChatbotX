@@ -3317,7 +3317,8 @@
         "providerRejected": "Le fournisseur a rejeté cette demande.",
         "inProgress": "Une connexion est déjà en cours.",
         "unknown": "Une erreur s'est produite.",
-        "followUpFailed": "Configuration incomplète — terminez-la depuis les paramètres du canal."
+        "followUpFailed": "Configuration incomplète — terminez-la depuis les paramètres du canal.",
+        "webhookSubscribeFailed": "Connecté, mais l'abonnement au webhook a échoué — réessayez depuis les paramètres de connexion."
       },
       "sessionError": {
         "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",

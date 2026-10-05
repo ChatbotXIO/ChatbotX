@@ -1,6 +1,8 @@
 import "server-only"
 
 import { instagramIntegrationService } from "@chatbotx.io/business"
+import { db, eq } from "@chatbotx.io/database/client"
+import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram-facebook"
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
@@ -53,5 +55,13 @@ async function runInstagramFacebookFollowUps({
     integrationRow: { ...instagramRow, auth },
     integration: integrationInstagramFacebook,
     integrationType: "instagramFacebook",
+    persistBrandingMenu: instagramRow.persistentMenus.length
+      ? undefined
+      : async (entry) => {
+          await db
+            .update(integrationInstagramModel)
+            .set({ persistentMenus: [entry] })
+            .where(eq(integrationInstagramModel.id, instagramRow.id))
+        },
   })
 }

@@ -838,7 +838,8 @@
         "providerRejected": "Sağlayıcı bu isteği reddetti.",
         "inProgress": "Bağlantı zaten devam ediyor.",
         "unknown": "Bir şeyler ters gitti.",
-        "followUpFailed": "Kurulum tamamlanmadı — kanal ayarlarından tamamlayın."
+        "followUpFailed": "Kurulum tamamlanmadı — kanal ayarlarından tamamlayın.",
+        "webhookSubscribeFailed": "Bağlandı, ancak webhook aboneliği başarısız oldu — bağlantı ayarlarından tekrar deneyin."
       },
       "sessionError": {
         "sessionExpired": "Oturumunuzun süresi doldu. Lütfen yeniden bağlanın.",

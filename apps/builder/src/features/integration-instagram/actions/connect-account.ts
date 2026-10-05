@@ -1,6 +1,8 @@
 import "server-only"
 
 import { instagramIntegrationService } from "@chatbotx.io/business"
+import { db, eq } from "@chatbotx.io/database/client"
+import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
@@ -17,9 +19,10 @@ import type { ConnectActionResultWire } from "@/features/channel-connect/schema"
  * `connectInstagramAccountViaFacebook` via `connectSessionCandidate`
  * (`channel-connect/lib/connect-session-candidate.ts`) — this file owns
  * only the Instagram-Business-Login-specific credential type and follow-up
- * (no `persistIntegrationUserInfo`; `addBranding` is a live Graph push, not
- * a DB write, so `IntegrationInstagram.persistentMenus` stays at its
- * default).
+ *   (no `persistIntegrationUserInfo`; `addBranding` is a live Graph push —
+ *   `runInstagramFollowUps` also seeds `IntegrationInstagram
+ *   .persistentMenus` with that same entry once the push succeeds, same as
+ *   Messenger's `connect-page.ts`).
  */
 export async function connectInstagramAccount(props: {
   userId: string
@@ -55,5 +58,13 @@ async function runInstagramFollowUps({
     integrationRow: { ...instagramRow, auth },
     integration: integrationInstagram,
     integrationType: "instagram",
+    persistBrandingMenu: instagramRow.persistentMenus.length
+      ? undefined
+      : async (entry) => {
+          await db
+            .update(integrationInstagramModel)
+            .set({ persistentMenus: [entry] })
+            .where(eq(integrationInstagramModel.id, instagramRow.id))
+        },
   })
 }

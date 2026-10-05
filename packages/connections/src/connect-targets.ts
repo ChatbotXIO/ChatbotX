@@ -7,6 +7,7 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
+import { isUniqueViolationError } from "@chatbotx.io/database/client"
 import type {
   ConnectSessionOutcome,
   IntegrationType,
@@ -136,18 +137,31 @@ const connectCandidate = async (input: {
     throw connectionAlreadyConnectedException()
   }
 
-  return await connectAndPersist({
-    adapter,
-    provider: input.provider,
-    workspaceId: input.workspaceId,
-    auth,
-    descriptor,
-    extraConfig,
-    existing,
-    ownerId: input.ownerId,
-    actorUserId: input.actorUserId,
-    missingOwnerError: notFoundException("Workspace owner not found"),
-  })
+  try {
+    return await connectAndPersist({
+      adapter,
+      provider: input.provider,
+      workspaceId: input.workspaceId,
+      auth,
+      descriptor,
+      extraConfig,
+      existing,
+      ownerId: input.ownerId,
+      actorUserId: input.actorUserId,
+      missingOwnerError: notFoundException("Workspace owner not found"),
+    })
+  } catch (err) {
+    // `upsertConnectionRow` already converts its own `Connection` unique
+    // violation into `connectionAlreadyConnectedException`. Any raw unique
+    // violation reaching here comes from the satellite/Inbox insert inside
+    // `saveOrInsertSatellite` (e.g. a page/account already bound to another
+    // row) and must report the same "duplicated" outcome instead of falling
+    // through `toFailureOutcome` to a generic internal error.
+    if (isUniqueViolationError(err)) {
+      throw connectionAlreadyConnectedException()
+    }
+    throw err
+  }
 }
 
 /**
@@ -254,11 +268,17 @@ export const connectTargets = async (input: {
           actorUserId: input.actorUserId,
         })
         connections.push(connection)
-        outcomes.push({
-          targetId,
-          status: "connected",
-          connectionId: connection.id,
-        })
+        outcomes.push(
+          connection.status === "degraded"
+            ? {
+                targetId,
+                status: "connected",
+                connectionId: connection.id,
+                detail:
+                  'Connected, but the provider webhook subscription failed — the matching entry in `connections[]` shows `status: "degraded"`; retry from the connection\'s settings.',
+              }
+            : { targetId, status: "connected", connectionId: connection.id },
+        )
       } catch (err) {
         try {
           await connectSessionService.releaseTarget({

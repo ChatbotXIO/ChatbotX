@@ -435,7 +435,7 @@ describe("ConnectionService.disconnect", () => {
     ).rejects.toThrow("Connection not found")
   })
 
-  it("calls provider disconnect + webhook unsubscribe + deletes the satellite row, then transitions", async () => {
+  it("calls provider disconnect + webhook unsubscribe, transitions, then deletes the satellite row", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     const result = await connectionService.disconnect({
       connectionId: "conn-1",
@@ -948,6 +948,8 @@ describe("ConnectionService.connectFromCredentials", () => {
         sourceId: "workspace",
         integrationId: "int-1",
         status: "disconnected",
+        statusReason: "manual",
+        disconnectedAt: expect.any(Date),
         createdBy: "user-1",
       }),
       "tx",

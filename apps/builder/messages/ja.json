@@ -3296,7 +3296,8 @@
         "providerRejected": "プロバイダーがこのリクエストを拒否しました。",
         "inProgress": "接続は既に進行中です。",
         "unknown": "問題が発生しました。",
-        "followUpFailed": "設定が未完了です。チャネル設定から完了してください。"
+        "followUpFailed": "設定が未完了です。チャネル設定から完了してください。",
+        "webhookSubscribeFailed": "接続しましたが、Webhookの登録に失敗しました。接続設定から再試行してください。"
       },
       "sessionError": {
         "sessionExpired": "セッションの有効期限が切れました。再接続してください。",

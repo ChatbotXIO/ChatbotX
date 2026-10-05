@@ -339,6 +339,28 @@ const handleConnectSessionCallback = async (
     return notFound()
   }
 
+  // Mirrors the legacy flow's relay (see `handleCallback` below): OAuth
+  // `redirect_uri`s are pinned per-credential (broker host for an inherited
+  // platform credential, the reseller's own custom domain for a
+  // tenant-owned one) and can differ from the host the connect flow
+  // actually started on — e.g. a reseller browsing the platform host
+  // authorizes through their own app, whose registered redirect_uri is
+  // their custom domain. Relay back to `originHost` (captured at
+  // `startSession` time) before touching the session at all, so the nonce
+  // is only consumed once, on the host where the user's session cookie
+  // lives. `resolveRelayTarget` is loop-safe (no-ops once already on the
+  // target host) and validates `originHost` against the same broker/
+  // builder/custom-domain allow-list as the legacy path.
+  if (session.originHost) {
+    const relayTarget = await resolveRelayTarget(
+      url,
+      `https://${session.originHost}`,
+    )
+    if (relayTarget) {
+      return redirect(relayTarget)
+    }
+  }
+
   // `session.returnUrl` is always application-relative now (`ConnectSession
   // .returnUrl` is validated by `validateReturnUrl`, which rejects an
   // absolute value) — resolve it against this callback's own public origin

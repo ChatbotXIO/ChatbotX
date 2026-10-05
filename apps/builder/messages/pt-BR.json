@@ -3296,7 +3296,8 @@
         "providerRejected": "O provedor rejeitou esta solicitação.",
         "inProgress": "A conexão já está em andamento.",
         "unknown": "Algo deu errado.",
-        "followUpFailed": "Configuração incompleta — conclua nas configurações do canal."
+        "followUpFailed": "Configuração incompleta — conclua nas configurações do canal.",
+        "webhookSubscribeFailed": "Conectado, mas a assinatura do webhook falhou — tente novamente nas configurações da conexão."
       },
       "sessionError": {
         "sessionExpired": "Sua sessão expirou. Reconecte-se.",

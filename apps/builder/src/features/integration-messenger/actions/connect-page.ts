@@ -4,7 +4,9 @@ import {
   messengerIntegrationService,
   tagSyncService,
 } from "@chatbotx.io/business"
+import { db, eq } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
+import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
@@ -39,12 +41,11 @@ import type { ConnectActionResultWire } from "@/features/channel-connect/schema"
  *page-level* token past `listCandidates`, so that identity isn't
  *   available here.
  * - `addBranding` pushes the persistent-menu entry straight to the Graph
- *   API (it reads/writes the page's *live* menu, never the DB), so the
- *   branding link still reaches end users — but `IntegrationMessenger
- *   .persistentMenus` (the DB's own local record, used by the persistent-
- *   menu settings UI) is left at its default `[]` instead of pre-seeded
- *   with this entry, unlike the old `connectPage({persistentMenus:
- *   [brandingMenuEntry]})` insert-time value.
+ *   API; `runMessengerFollowUps` now also seeds `IntegrationMessenger
+ *   .persistentMenus` with that same entry once the push succeeds (only
+ *   when the row has no menu yet — a fresh connect always does), matching
+ *   the old `connectPage({persistentMenus: [brandingMenuEntry]})`
+ *   insert-time value without needing it at insert time.
  */
 export async function connectMessengerPage({
   userId,
@@ -86,6 +87,14 @@ async function runMessengerFollowUps({
       integrationRow,
       integration: integrationMessenger,
       integrationType: "messenger",
+      persistBrandingMenu: messengerRow.persistentMenus.length
+        ? undefined
+        : async (entry) => {
+            await db
+              .update(integrationMessengerModel)
+              .set({ persistentMenus: [entry] })
+              .where(eq(integrationMessengerModel.id, messengerRow.id))
+          },
     }),
     tagSyncService.enqueueChannelScan({
       workspaceId: session.workspace.id,

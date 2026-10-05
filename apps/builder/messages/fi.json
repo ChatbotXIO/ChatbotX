@@ -3317,7 +3317,8 @@
         "providerRejected": "Palveluntarjoaja hylkäsi pyynnön.",
         "inProgress": "Yhteys on jo käynnissä.",
         "unknown": "Jotain meni pieleen.",
-        "followUpFailed": "Asetus on kesken – viimeistele kanavan asetuksista."
+        "followUpFailed": "Asetus on kesken – viimeistele kanavan asetuksista.",
+        "webhookSubscribeFailed": "Yhdistetty, mutta webhook-tilaus epäonnistui – yritä uudelleen yhteysasetuksista."
       },
       "sessionError": {
         "sessionExpired": "Istuntosi vanheni. Yhdistä uudelleen.",

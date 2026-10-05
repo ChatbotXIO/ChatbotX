@@ -101,13 +101,13 @@ const config: IntegrationDefinition<
     webhook: {
       subscribe: ({ auth }) =>
         subscribePageToInstagramWebhook({
-          igId: auth.metadata.igId,
+          igId: auth.metadata.pageId,
           accessToken: auth.tokens.accessToken,
           version: auth.metadata.version,
         }),
       unsubscribe: ({ auth }) =>
         unsubscribePageFromInstagramWebhook({
-          igId: auth.metadata.igId,
+          igId: auth.metadata.pageId,
           accessToken: auth.tokens.accessToken,
           version: auth.metadata.version,
         }),
@@ -140,7 +140,7 @@ const config: IntegrationDefinition<
   },
   disconnect: async (auth: InstagramAuthValue): Promise<void> => {
     await unsubscribePageFromInstagramWebhook({
-      igId: auth.metadata.igId,
+      igId: auth.metadata.pageId,
       accessToken: auth.tokens.accessToken,
       version: auth.metadata.version,
     })

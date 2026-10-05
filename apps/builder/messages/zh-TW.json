@@ -2527,7 +2527,8 @@
         "providerRejected": "服務提供方拒絕了此請求。",
         "inProgress": "連線正在進行中。",
         "unknown": "發生錯誤。",
-        "followUpFailed": "設定尚未完成——請在渠道設定中完成。"
+        "followUpFailed": "設定尚未完成——請在渠道設定中完成。",
+        "webhookSubscribeFailed": "已連接，但 webhook 訂閱失敗——請在連線設定中重試。"
       },
       "sessionError": {
         "sessionExpired": "您的工作階段已過期，請重新連接。",

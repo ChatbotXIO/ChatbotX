@@ -3317,7 +3317,8 @@
         "providerRejected": "Furnizorul a respins această solicitare.",
         "inProgress": "Conexiunea este deja în curs.",
         "unknown": "Ceva nu a funcționat corect.",
-        "followUpFailed": "Configurare incompletă — finalizeaz-o din setările canalului."
+        "followUpFailed": "Configurare incompletă — finalizeaz-o din setările canalului.",
+        "webhookSubscribeFailed": "Conectat, dar abonarea la webhook a eșuat — încearcă din nou din setările conexiunii."
       },
       "sessionError": {
         "sessionExpired": "Sesiunea ta a expirat. Te rugăm să te reconectezi.",
