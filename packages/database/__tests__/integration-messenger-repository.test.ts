@@ -3,9 +3,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
   eq: vi.fn((column: unknown, value: unknown) => ({ eq: [column, value] })),
-  inArray: vi.fn((column: unknown, values: unknown[]) => ({
-    inArray: [column, values],
-  })),
   isNull: vi.fn((column: unknown) => ({ isNull: column })),
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
     sql: [Array.from(strings), values],
@@ -16,7 +13,6 @@ vi.mock("../src/client", () => ({
   and: mocks.and,
   db: {},
   eq: mocks.eq,
-  inArray: mocks.inArray,
   isNull: mocks.isNull,
   sql: mocks.sql,
 }))
@@ -137,38 +133,5 @@ describe("integrationMessengerRepository.insert", () => {
         personas: [],
       }),
     )
-  })
-})
-
-describe("integrationMessengerRepository.findConnectedPageIds", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test("short-circuits to an empty Set without querying when given no ids", async () => {
-    await expect(
-      integrationMessengerRepository.findConnectedPageIds([]),
-    ).resolves.toEqual(new Set())
-  })
-
-  test("returns the connected page ids as a Set", async () => {
-    const where = vi
-      .fn()
-      .mockResolvedValue([{ pageId: "page-1" }, { pageId: "page-2" }])
-    const from = vi.fn(() => ({ where }))
-    const select = vi.fn(() => ({ from }))
-    const tx = { select } as never
-
-    await expect(
-      integrationMessengerRepository.findConnectedPageIds(
-        ["page-1", "page-2", "page-3"],
-        tx,
-      ),
-    ).resolves.toEqual(new Set(["page-1", "page-2"]))
-    expect(mocks.inArray).toHaveBeenCalledWith("pageId", [
-      "page-1",
-      "page-2",
-      "page-3",
-    ])
   })
 })

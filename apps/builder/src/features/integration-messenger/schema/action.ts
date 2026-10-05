@@ -7,6 +7,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 
 export const selectPageRequest = z.object({
+  sessionId: z.string().min(1),
   pageId: z.string().min(1),
 })
 

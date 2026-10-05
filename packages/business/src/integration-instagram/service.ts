@@ -6,42 +6,9 @@ import {
   findOrFail,
   sql,
 } from "@chatbotx.io/database/client"
-import type {
-  InstagramPersistentMenu,
-  IntegrationUserInfo,
-} from "@chatbotx.io/database/partials"
-import { integrationInstagramRepository } from "@chatbotx.io/database/repositories"
+import type { IntegrationUserInfo } from "@chatbotx.io/database/partials"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
-import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
-import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import {
-  auditChannelConnected,
-  connectChannelIntegration,
-  runConnectTransaction,
-} from "../inbox/connect-channel"
-
-export type ConnectInstagramAccountInput = {
-  actorUserId: string
-  ownerId: string
-  workspaceId: string
-  type: IntegrationInstagramModel["type"]
-  account: {
-    igId: string
-    igName: string
-    igUsername: string
-    pageId: string
-  }
-  auth: unknown
-  persistentMenus: InstagramPersistentMenu[]
-}
-
-export type ConnectInstagramAccountResult = {
-  workspaceId: string
-  integrationId: string
-  wasCreated: boolean
-  integration: IntegrationInstagramModel
-}
 
 class InstagramIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -152,27 +119,6 @@ class InstagramIntegrationService extends BaseService {
   }
 
   /**
-   * Store the authorizing user's identity after a connect. Separate from the
-   * insert because the avatar upload is an external call that must stay outside
-   * the connect transaction.
-   */
-  async updateUserInfo(props: {
-    id: string
-    workspaceId: string
-    userInfo: IntegrationUserInfo
-  }): Promise<void> {
-    await db
-      .update(integrationInstagramModel)
-      .set({ userInfo: props.userInfo })
-      .where(
-        and(
-          eq(integrationInstagramModel.id, props.id),
-          eq(integrationInstagramModel.workspaceId, props.workspaceId),
-        ),
-      )
-  }
-
-  /**
    * Whether an Instagram integration still exists for a Facebook page, optionally
    * scoped to a specific Meta app (`clientId`). Cross-workspace by design: a page
    * webhook subscription is global, so any surviving row must block a sibling
@@ -200,82 +146,6 @@ class InstagramIntegrationService extends BaseService {
 
   existsByPageId(pageId: string): Promise<boolean> {
     return this.existsForPage({ pageId })
-  }
-
-  /**
-   * Instagram ids from the given list that already have an integration.
-   * `IntegrationInstagram.igId` is unique platform-wide, so a match means
-   * the account cannot be connected again anywhere.
-   */
-  findConnectedIgIds(igIds: string[]): Promise<Set<string>> {
-    return integrationInstagramRepository.findConnectedIgIds(igIds)
-  }
-
-  /**
-   * Persists an Instagram account connect (native login or Facebook-linked
-   * — both share this table/method, `type` disambiguates the row). One
-   * `db.transaction` that settles with the write; nothing after it may
-   * reject, so a failing audit dispatch is logged, never thrown. Workspace
-   * is always required (the OAuth callback stores it in the cookie before
-   * this runs).
-   */
-  async connectAccount(
-    input: ConnectInstagramAccountInput,
-  ): Promise<ConnectInstagramAccountResult> {
-    const { integration, wasCreated } = await this.insertAccount(input)
-
-    if (wasCreated) {
-      await auditChannelConnected({
-        channel: "instagram",
-        actorUserId: input.actorUserId,
-        workspaceId: input.workspaceId,
-        integrationId: integration.id,
-      })
-    }
-
-    return {
-      workspaceId: input.workspaceId,
-      integrationId: integration.id,
-      wasCreated,
-      integration,
-    }
-  }
-
-  private insertAccount(input: ConnectInstagramAccountInput): Promise<{
-    integration: IntegrationInstagramModel
-    wasCreated: boolean
-  }> {
-    return runConnectTransaction("instagram", async (tx) => {
-      const { integration, wasCreated } = await connectChannelIntegration({
-        tx,
-        ownerId: input.ownerId,
-        inboxData: {
-          id: createId(),
-          workspaceId: input.workspaceId,
-          name: input.account.igName,
-          channel: "instagram",
-          sourceId: input.account.igId,
-        },
-        insertIntegration: (inboxId) =>
-          integrationInstagramRepository.insert(
-            {
-              id: createId(),
-              workspaceId: input.workspaceId,
-              inboxId,
-              igId: input.account.igId,
-              pageId: input.account.pageId,
-              auth: input.auth,
-              name: input.account.igName,
-              username: input.account.igUsername,
-              type: input.type,
-              persistentMenus: input.persistentMenus,
-            },
-            tx,
-          ),
-      })
-
-      return { integration, wasCreated }
-    })
   }
 
   listByWorkspaceId(workspaceId: string) {

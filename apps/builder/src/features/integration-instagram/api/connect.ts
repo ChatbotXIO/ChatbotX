@@ -12,7 +12,7 @@ import { selectFacebookAccountRequest } from "../schema/action-facebook"
 /**
  * The two Instagram pickers' connect transport — one route per login, same
  * contract as Messenger's: the signed-in user authorizes the call, the
- * workspace and user token come only from that login's pending-auth cookie
+ * workspace and user token come only from that login's `ConnectSession` row
  * (server-side, never the body), and every failure is a typed outcome in the
  * 200 response rather than a 500 the batch cannot classify. Server actions
  * are serialized per browser by Next, which is why the batch posts here
@@ -34,6 +34,7 @@ export const integrationInstagramConnectAPIs = {
       ({ input, context }): Promise<ConnectActionResultWire> =>
         connectInstagramAccountViaFacebook({
           userId: context.user.id,
+          sessionId: input.sessionId,
           igId: input.igId,
         }),
     ),
@@ -53,6 +54,7 @@ export const integrationInstagramConnectAPIs = {
       ({ input, context }): Promise<ConnectActionResultWire> =>
         connectInstagramAccount({
           userId: context.user.id,
+          sessionId: input.sessionId,
           igId: input.igId,
         }),
     ),

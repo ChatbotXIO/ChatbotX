@@ -14,7 +14,7 @@ import { selectPageRequest } from "../schema/action"
  * page at a time. Over this route it runs `CONNECT_CONCURRENCY` at once.
  *
  * Auth is the signed-in user (`authorizedAPI`) — the workspace and the user
- * token still come ONLY from the pending-auth cookie, read server-side by
+ * token still come ONLY from the `ConnectSession` row, read server-side by
  * `resolveConnectSession`, never from the request body. Every failure,
  * session-level or per-page, is a typed outcome in the 200 response: this
  * route must not turn a `ChatbotXException` into a 500 the batch cannot
@@ -35,6 +35,7 @@ export const integrationMessengerConnectAPIs = {
       ({ input, context }): Promise<ConnectActionResultWire> =>
         connectMessengerPage({
           userId: context.user.id,
+          sessionId: input.sessionId,
           pageId: input.pageId,
         }),
     ),

@@ -5,5 +5,5 @@ import { createDisconnectAction } from "@/lib/integration-actions"
 
 export const disconnectKlaviyoAction = createDisconnectAction(
   integrationKlaviyoService,
-  { name: "Klaviyo" },
+  { name: "Klaviyo", provider: "klaviyo" },
 )

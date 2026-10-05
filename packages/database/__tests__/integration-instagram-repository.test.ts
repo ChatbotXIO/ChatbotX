@@ -3,9 +3,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
   eq: vi.fn((column: unknown, value: unknown) => ({ eq: [column, value] })),
-  inArray: vi.fn((column: unknown, values: unknown[]) => ({
-    inArray: [column, values],
-  })),
   isNull: vi.fn((column: unknown) => ({ isNull: column })),
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
     sql: [Array.from(strings), values],
@@ -16,7 +13,6 @@ vi.mock("../src/client", () => ({
   and: mocks.and,
   db: {},
   eq: mocks.eq,
-  inArray: mocks.inArray,
   isNull: mocks.isNull,
   sql: mocks.sql,
 }))
@@ -116,34 +112,5 @@ describe("integrationInstagramRepository.insert", () => {
     expect(values).toHaveBeenCalledWith(
       expect.objectContaining({ type: "facebook", conversationStarters: [] }),
     )
-  })
-})
-
-describe("integrationInstagramRepository.findConnectedIgIds", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test("short-circuits to an empty Set without querying when given no ids", async () => {
-    await expect(
-      integrationInstagramRepository.findConnectedIgIds([]),
-    ).resolves.toEqual(new Set())
-  })
-
-  test("returns the connected ig ids as a Set", async () => {
-    const where = vi
-      .fn()
-      .mockResolvedValue([{ igId: "ig-1" }, { igId: "ig-2" }])
-    const from = vi.fn(() => ({ where }))
-    const select = vi.fn(() => ({ from }))
-    const tx = { select } as never
-
-    await expect(
-      integrationInstagramRepository.findConnectedIgIds(
-        ["ig-1", "ig-2", "ig-3"],
-        tx,
-      ),
-    ).resolves.toEqual(new Set(["ig-1", "ig-2"]))
-    expect(mocks.inArray).toHaveBeenCalledWith("igId", ["ig-1", "ig-2", "ig-3"])
   })
 })

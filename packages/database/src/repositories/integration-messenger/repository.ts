@@ -1,14 +1,5 @@
 import type { EncryptedData } from "@chatbotx.io/encryption"
-import {
-  and,
-  type DatabaseClient,
-  db,
-  eq,
-  gt,
-  inArray,
-  isNull,
-  sql,
-} from "../../client"
+import { and, type DatabaseClient, db, eq, gt, isNull, sql } from "../../client"
 import { inboxStatuses } from "../../partials"
 import { inboxModel, integrationMessengerModel } from "../../schema"
 import type { IntegrationMessengerModel } from "../../types"
@@ -99,27 +90,6 @@ export const integrationMessengerRepository = {
       .returning()
 
     return row
-  },
-
-  /**
-   * Page ids from the given list that already have a Messenger integration.
-   * `IntegrationMessenger.pageId` is unique platform-wide, so a match means
-   * the page cannot be connected again anywhere.
-   */
-  async findConnectedPageIds(
-    pageIds: string[],
-    tx: DatabaseClient = db,
-  ): Promise<Set<string>> {
-    if (pageIds.length === 0) {
-      return new Set()
-    }
-
-    const rows = await tx
-      .select({ pageId: integrationMessengerModel.pageId })
-      .from(integrationMessengerModel)
-      .where(inArray(integrationMessengerModel.pageId, pageIds))
-
-    return new Set(rows.map((row) => row.pageId))
   },
 
   /**

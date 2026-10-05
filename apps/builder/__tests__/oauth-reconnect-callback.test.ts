@@ -429,6 +429,53 @@ describe("handleCallback OAuth reconnect", () => {
     expect(mockRedirect).not.toHaveBeenCalled()
   })
 
+  test("messenger legacy callback with no flow/reconnectIntegrationId redirects to channel creation with an error instead of 404ing", async () => {
+    await handleCallback(
+      "messenger",
+      buildCallbackRequest("messenger", {
+        workspaceId: "1",
+        referer: REFERER,
+      }),
+    )
+
+    expect(mockReconnectMessengerHandler).not.toHaveBeenCalled()
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/channels/create?error=sessionExpired",
+    )
+  })
+
+  test("instagram legacy callback with no reconnectIntegrationId redirects with an error and never exchanges the single-use code", async () => {
+    await handleCallback(
+      "instagram",
+      buildCallbackRequest("instagram", {
+        workspaceId: "1",
+        referer: REFERER,
+      }),
+    )
+
+    expect(mockExchangeInstagramCode).not.toHaveBeenCalled()
+    expect(mockReconnectInstagramHandler).not.toHaveBeenCalled()
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/channels/create?error=sessionExpired",
+    )
+  })
+
+  test("instagramFacebook legacy callback with no reconnectIntegrationId redirects with an error and never exchanges the single-use code", async () => {
+    await handleCallback(
+      "instagramFacebook",
+      buildCallbackRequest("instagramFacebook", {
+        workspaceId: "1",
+        referer: REFERER,
+      }),
+    )
+
+    expect(mockExchangeInstagramFacebookCode).not.toHaveBeenCalled()
+    expect(mockReconnectInstagramFacebookHandler).not.toHaveBeenCalled()
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/channels/create?error=sessionExpired",
+    )
+  })
+
   test("google calendar callback resolves credentials with the tenant-aware owner", async () => {
     mockExchangeAndVerifyGoogleCalendar.mockResolvedValue({
       auth: { type: "oauth2", tokens: { accessToken: "google-token" } },

@@ -2,9 +2,9 @@
 
 import { appointmentExternalCalendarService } from "@chatbotx.io/business"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
-export const disconnectGoogleCalendarAction = workspaceActionClient
+export const disconnectGoogleCalendarAction = workspaceActionClientAllowExpired
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(async ({ bindArgsParsedInputs: [workspaceId, integrationId] }) => {
     await appointmentExternalCalendarService.disconnect({

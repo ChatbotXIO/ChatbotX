@@ -303,6 +303,30 @@ describe("WorkspaceService.create — community workspace limit", () => {
   })
 })
 
+describe("WorkspaceService.findActiveByOwner", () => {
+  test("excludes a workspace mid soft-delete and orders deterministically by id", async () => {
+    findFirstWorkspace.mockResolvedValueOnce({ id: "ws-1" })
+
+    const result = await workspaceService.findActiveByOwner({
+      ownerId: "owner-1",
+    })
+
+    expect(result).toEqual({ id: "ws-1" })
+    expect(findFirstWorkspace).toHaveBeenCalledWith({
+      where: { ownerId: "owner-1", scheduledDeletionAt: { isNull: true } },
+      orderBy: { id: "asc" },
+    })
+  })
+
+  test("returns undefined when the owner's only workspace is scheduled for deletion", async () => {
+    findFirstWorkspace.mockResolvedValueOnce(undefined)
+
+    await expect(
+      workspaceService.findActiveByOwner({ ownerId: "owner-1" }),
+    ).resolves.toBeUndefined()
+  })
+})
+
 describe("WorkspaceService.update — member cache invalidation", () => {
   test("invalidates the workspace tag and every member's workspace-members tag", async () => {
     workspaceMemberService.listUserIdsByWorkspaceId.mockResolvedValue([

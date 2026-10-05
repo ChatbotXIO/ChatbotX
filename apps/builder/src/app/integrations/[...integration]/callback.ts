@@ -36,16 +36,11 @@ import {
   type FacebookAdsAuthValue,
 } from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
+import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import {
-  exchangeCodeForToken as exchangeInstagramFacebookCode,
-  getFacebookUser as getInstagramFacebookUser,
-} from "@chatbotx.io/integration-instagram-facebook"
-import {
-  exchangeCodeForToken as exchangeMessengerCode,
   type FacebookUser,
   getFacebookUser as getMessengerFacebookUser,
 } from "@chatbotx.io/integration-messenger"
-import { exchangeLongLivedToken as exchangeMessengerLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
 import type { MetaCatalogAuthValue } from "@chatbotx.io/integration-meta-catalog/schemas"
 import {
   buildThreadsAuthValue,
@@ -63,7 +58,6 @@ import {
   getPublicUrlFromRequest,
   zodBigintAsString,
 } from "@chatbotx.io/utils"
-import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { normalizeError } from "universal-error-normalizer"
@@ -86,14 +80,6 @@ import {
   buildChannelErrorRedirectUrl,
   buildReconnectRedirectUrl,
 } from "@/lib/channel-reconnect"
-import {
-  encryptAuth,
-  FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
-  FB_INSTAGRAM_PENDING_AUTH_COOKIE,
-  FB_MESSENGER_PENDING_AUTH_COOKIE,
-  FB_PENDING_AUTH_MAX_AGE,
-  writePendingAuth,
-} from "@/lib/facebook-pending-auth"
 import { logger } from "@/lib/log"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
@@ -353,9 +339,17 @@ const handleConnectSessionCallback = async (
     return notFound()
   }
 
+  // `session.returnUrl` is always application-relative now (`ConnectSession
+  // .returnUrl` is validated by `validateReturnUrl`, which rejects an
+  // absolute value) — resolve it against this callback's own public origin
+  // before handing it to `sanitizeReferer` (which only accepts absolute
+  // URLs). The callback always lands on the correct host for the session:
+  // `buildProviderCallbackUrl` built the registered `redirect_uri` on the
+  // tenant's custom domain for a tenant-owned credential, else the broker —
+  // the same origin the connect flow started on.
   const fallbackReturnUrl = `/connect/${session.id}`
   const returnUrl = session.returnUrl
-    ? await sanitizeReferer(session.returnUrl)
+    ? await sanitizeReferer(new URL(session.returnUrl, url.origin).toString())
     : fallbackReturnUrl
 
   // Facebook/Google/Zalo/TikTok all return ?error=... when the user cancels
@@ -769,44 +763,19 @@ export const handleCallback = async (
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
-      const shortLivedToken = await exchangeMessengerCode(
-        messengerCredential.config,
-        code,
-        callbackUrl,
+      // A plain connect (no `flow`, no `reconnectIntegrationId`) never
+      // reaches here anymore: `channels/create/messenger/route.ts` mints a
+      // `ConnectSession` and its raw `"{sessionId}.{nonce}"` state is
+      // dispatched by `handleConnectSessionCallback` before this legacy
+      // switch ever runs. Every remaining caller of this callback sets one
+      // of `stateParams.flow` or `reconnectIntegrationId`, both handled
+      // above — this is a defensive fallback for a state that should be
+      // unreachable, not a case a real request is expected to hit.
+      logger.warn(
+        { workspaceId: workspace.id, integrationType },
+        "legacy messenger OAuth callback state matched no known flow",
       )
-      // Exchange for a long-lived user token before the page-select step so
-      // the pending-auth cookie stays usable even when the user leaves the
-      // picker open for a long time. Best-effort: the short-lived token still
-      // covers the normal flow if the exchange fails.
-      const userToken = await exchangeMessengerLongLivedToken(
-        messengerCredential.config,
-        shortLivedToken,
-      ).catch((error) => {
-        logger.info(
-          { err: error },
-          "Messenger long-lived token exchange failed, using short-lived token",
-        )
-        return shortLivedToken
-      })
-      const fbUser = await lookupFacebookUser(() =>
-        getMessengerFacebookUser(userToken, messengerCredential.config.version),
-      )
-      const token = await encryptAuth({
-        userToken,
-        userId: fbUser?.id,
-        userName: fbUser?.name,
-        userAvatarUrl: fbUser?.avatarUrl,
-        workspaceId: workspace.id,
-        referer: safeReferer,
-        version: messengerCredential.config.version,
-        expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
-      })
-
-      const cookieStore = await cookies()
-      writePendingAuth(cookieStore, FB_MESSENGER_PENDING_AUTH_COOKIE, token)
-      return redirect(
-        new URL("/channels/messenger/select", safeReferer).toString(),
-      )
+      return redirect("/channels/create?error=sessionExpired")
     }
 
     case "instagram": {
@@ -826,44 +795,41 @@ export const handleCallback = async (
         "/integrations/instagram/callback",
       )
 
+      // Checked before exchanging the single-use `code`: a plain connect
+      // never reaches here anymore (see the comment at the end of
+      // `case "messenger"`), so bail out before burning the code on a
+      // request that has no reconnect to apply it to.
+      if (!stateParams.reconnectIntegrationId) {
+        logger.warn(
+          { workspaceId: workspace.id, integrationType },
+          "legacy instagram OAuth callback state has no reconnectIntegrationId",
+        )
+        return redirect("/channels/create?error=sessionExpired")
+      }
+
       const { accessToken: userToken } = await exchangeInstagramCode(
         instagramCredential.config,
         code,
         callbackUrl,
       )
 
-      if (stateParams.reconnectIntegrationId) {
-        const result = await reconnectInstagramHandler({
-          credentialConfig: instagramCredential.config,
-          workspaceId: workspace.id,
-          integrationId: stateParams.reconnectIntegrationId,
-          userToken,
-        })
-        if (result.status === "success") {
-          await auditService.record({
-            userId,
-            workspaceId: workspace.id,
-            action: "update",
-            detail: "reconnected the Instagram channel",
-            ipAddress: getGuestClientIp(req.headers),
-            userAgent: req.headers.get("user-agent") ?? undefined,
-          })
-        }
-        return redirect(buildReconnectRedirectUrl(safeReferer, result))
-      }
-
-      const token = await encryptAuth({
-        userToken,
+      const result = await reconnectInstagramHandler({
+        credentialConfig: instagramCredential.config,
         workspaceId: workspace.id,
-        referer: safeReferer,
-        version: instagramCredential.config.version,
-        expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
+        integrationId: stateParams.reconnectIntegrationId,
+        userToken,
       })
-      const cookieStore = await cookies()
-      writePendingAuth(cookieStore, FB_INSTAGRAM_PENDING_AUTH_COOKIE, token)
-      return redirect(
-        new URL("/channels/instagram/select", safeReferer).toString(),
-      )
+      if (result.status === "success") {
+        await auditService.record({
+          userId,
+          workspaceId: workspace.id,
+          action: "update",
+          detail: "reconnected the Instagram channel",
+          ipAddress: getGuestClientIp(req.headers),
+          userAgent: req.headers.get("user-agent") ?? undefined,
+        })
+      }
+      return redirect(buildReconnectRedirectUrl(safeReferer, result))
     }
 
     case "instagramFacebook": {
@@ -883,57 +849,40 @@ export const handleCallback = async (
         "/integrations/instagram-facebook/callback",
       )
 
+      // Checked before exchanging the single-use `code`: a plain connect
+      // never reaches here anymore (see the comment at the end of
+      // `case "messenger"`), so bail out before burning the code on a
+      // request that has no reconnect to apply it to.
+      if (!stateParams.reconnectIntegrationId) {
+        logger.warn(
+          { workspaceId: workspace.id, integrationType },
+          "legacy instagramFacebook OAuth callback state has no reconnectIntegrationId",
+        )
+        return redirect("/channels/create?error=sessionExpired")
+      }
+
       const userToken = await exchangeInstagramFacebookCode(
         instagramFacebookCredential.config,
         code,
         callbackUrl,
       )
-      if (stateParams.reconnectIntegrationId) {
-        const result = await reconnectInstagramFacebookHandler({
-          credentialConfig: instagramFacebookCredential.config,
-          workspaceId: workspace.id,
-          integrationId: stateParams.reconnectIntegrationId,
-          userToken,
-        })
-        if (result.status === "success") {
-          await auditService.record({
-            userId,
-            workspaceId: workspace.id,
-            action: "update",
-            detail: "reconnected the Instagram channel",
-            ipAddress: getGuestClientIp(req.headers),
-            userAgent: req.headers.get("user-agent") ?? undefined,
-          })
-        }
-        return redirect(buildReconnectRedirectUrl(safeReferer, result))
-      }
-
-      const fbUser = await lookupFacebookUser(() =>
-        getInstagramFacebookUser(
-          userToken,
-          instagramFacebookCredential.config.version,
-        ),
-      )
-
-      const token = await encryptAuth({
-        userToken,
-        userId: fbUser?.id,
-        userName: fbUser?.name,
-        userAvatarUrl: fbUser?.avatarUrl,
+      const result = await reconnectInstagramFacebookHandler({
+        credentialConfig: instagramFacebookCredential.config,
         workspaceId: workspace.id,
-        referer: safeReferer,
-        version: instagramFacebookCredential.config.version,
-        expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
+        integrationId: stateParams.reconnectIntegrationId,
+        userToken,
       })
-      const cookieStore = await cookies()
-      writePendingAuth(
-        cookieStore,
-        FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
-        token,
-      )
-      return redirect(
-        new URL("/channels/instagram-facebook/select", safeReferer).toString(),
-      )
+      if (result.status === "success") {
+        await auditService.record({
+          userId,
+          workspaceId: workspace.id,
+          action: "update",
+          detail: "reconnected the Instagram channel",
+          ipAddress: getGuestClientIp(req.headers),
+          userAgent: req.headers.get("user-agent") ?? undefined,
+        })
+      }
+      return redirect(buildReconnectRedirectUrl(safeReferer, result))
     }
 
     case "threads": {
