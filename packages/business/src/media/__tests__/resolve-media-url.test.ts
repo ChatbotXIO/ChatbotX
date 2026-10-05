@@ -18,7 +18,63 @@ vi.mock("../../logger", () => ({
   logger: { warn: mocks.loggerWarn },
 }))
 
-import { resolveContactAvatarUrl, resolveMediaUrl } from "../resolve-media-url"
+import {
+  resolveAttachmentFallbackUrl,
+  resolveContactAvatarUrl,
+  resolveMediaUrl,
+} from "../resolve-media-url"
+
+describe("resolveAttachmentFallbackUrl", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("returns a signed proxy URL for a mirrored hydration-channel attachment", async () => {
+    const messageCreatedAt = new Date("2026-09-20T00:00:00.000Z")
+
+    const result = await resolveAttachmentFallbackUrl({
+      workspaceId: "workspace-1",
+      attachmentId: "attachment-1",
+      originPath: "workspace/media/image.jpg",
+      channel: "messenger",
+      messageCreatedAt,
+    })
+
+    expect(result).toBe(
+      "https://builder.example.com/media/attachment/signed-media-token",
+    )
+    expect(mocks.signMediaToken).toHaveBeenCalledWith(
+      {
+        workspaceId: "workspace-1",
+        kind: "attachment",
+        refId: "attachment-1",
+        messageCreatedAt: messageCreatedAt.getTime(),
+      },
+      24 * 60 * 60 * 1000,
+    )
+  })
+
+  test.each([
+    [
+      "a pending attachment",
+      "https://lookaside.facebook.com/media",
+      "messenger",
+    ],
+    ["a pending WhatsApp media id", "wa-media:media-1", "whatsapp"],
+    ["a permanently failed attachment", "failed:unresolvable", "instagram"],
+    ["a channel without media hydration", "ws-1/files/a.png", "telegram"],
+  ])("returns null for %s", async (_label, originPath, channel) => {
+    const result = await resolveAttachmentFallbackUrl({
+      workspaceId: "workspace-1",
+      attachmentId: "attachment-1",
+      originPath,
+      channel,
+    })
+
+    expect(result).toBeNull()
+    expect(mocks.signMediaToken).not.toHaveBeenCalled()
+  })
+})
 
 describe("resolveMediaUrl", () => {
   beforeEach(() => {
