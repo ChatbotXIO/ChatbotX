@@ -4,8 +4,10 @@ import {
   CREATABLE_CHANNELS,
   ROOT_TENANT_ID,
 } from "@chatbotx.io/database/partials"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { tenantModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
+import { connectionStateService } from "../../connection/state-service"
 import type { EmailTemplate } from "../../platform/settings"
 import { userQuotaService } from "../../user-quota/service"
 import { workspaceLifecycleService } from "../../workspace-lifecycle/service"
@@ -236,9 +238,24 @@ export const tenantService = {
     return this.setStatusByOwner(ownerId, "suspended")
   },
 
-  /** Restore a suspended tenant to active, re-enabling its sub-accounts. */
-  reactivate(ownerId: string): Promise<void> {
-    return this.setStatusByOwner(ownerId, "active")
+  /**
+   * Restore a suspended tenant to active, re-enabling its sub-accounts, then
+   * resume every `Connection` its `suspend()` call paused — the
+   * `teardown.resume` edge mirrors `Inbox.status` back to `connected` and
+   * re-consumes the `channels` quota unit `teardown.pause` released.
+   */
+  async reactivate(ownerId: string): Promise<void> {
+    await this.setStatusByOwner(ownerId, "active")
+    const pausedConnections = await connectionRepository.listPausedByOwner({
+      ownerId,
+    })
+    for (const connection of pausedConnections) {
+      await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "teardown.resume",
+        ownerId,
+      })
+    }
   },
 
   /**

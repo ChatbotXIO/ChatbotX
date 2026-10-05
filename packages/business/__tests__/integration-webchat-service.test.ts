@@ -14,23 +14,21 @@ const {
   mockFindFirst,
   mockFindMany,
   mockInboxCreate,
-  mockInsert,
   mockParsePagination,
   mockRelationsFilterToSQL,
   mockTransaction,
   mockUpdate,
   mockUpdateSet,
   mockUpdateWhere,
+  mockUpsertConnectionRow,
   mockWorkspaceCreate,
   mockWorkspaceFindOrFail,
 } = vi.hoisted(() => {
   let createIdCallCount = 0
-  const mockInsertReturning = vi.fn(async () => [{ id: "webchat-1" }])
-  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
-  const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
   const mockUpdateWhere = vi.fn(async () => undefined)
   const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }))
   const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }))
+  const mockFindFirst = vi.fn()
 
   return {
     mockUpdate,
@@ -43,18 +41,20 @@ const {
     // this is ever called; kept so a future test exercising a non-null id
     // has something to mock against.
     mockFindActiveFlowById: vi.fn(async () => ({ id: "flow-1" })),
-    mockFindFirst: vi.fn(),
+    mockFindFirst,
     mockFindMany: vi.fn(async () => []),
     mockInboxCreate: vi.fn(async () => ({
       inbox: { id: "inbox-1" },
       wasCreated: true,
     })),
-    mockInsert,
     mockParsePagination: vi.fn(),
     mockRelationsFilterToSQL: vi.fn(),
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
-      callback({ insert: mockInsert }),
+      callback({
+        query: { integrationWebchatModel: { findFirst: mockFindFirst } },
+      }),
     ),
+    mockUpsertConnectionRow: vi.fn(async () => ({ id: "conn-1" })),
     mockWorkspaceCreate: vi.fn(async () => ({
       id: "ws-new",
       ownerId: "user-1",
@@ -100,6 +100,11 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
+}))
+
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: { webchat: { duplicateConstraint: undefined } },
+  upsertConnectionRow: mockUpsertConnectionRow,
 }))
 
 vi.mock("../src/inbox/service", () => ({
@@ -153,7 +158,9 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     vi.clearAllMocks()
     mockTransaction.mockImplementation(
       async (callback: (tx: unknown) => unknown) =>
-        callback({ insert: mockInsert }),
+        callback({
+          query: { integrationWebchatModel: { findFirst: mockFindFirst } },
+        }),
     )
     mockWorkspaceFindOrFail.mockResolvedValue({
       id: "ws-1",
@@ -167,6 +174,8 @@ describe("integrationWebchatService.createWithWorkspace", () => {
       inbox: { id: "inbox-1" },
       wasCreated: true,
     } as never)
+    mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" } as never)
+    mockFindFirst.mockResolvedValue({ id: "webchat-1" } as never)
   })
 
   test("creates a workspace only when workspaceId is absent and reports createdWorkspace correctly", async () => {
@@ -189,7 +198,9 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     vi.clearAllMocks()
     mockTransaction.mockImplementation(
       async (callback: (tx: unknown) => unknown) =>
-        callback({ insert: mockInsert }),
+        callback({
+          query: { integrationWebchatModel: { findFirst: mockFindFirst } },
+        }),
     )
     mockWorkspaceCreate.mockResolvedValue({
       id: "ws-new",
@@ -199,6 +210,8 @@ describe("integrationWebchatService.createWithWorkspace", () => {
       inbox: { id: "inbox-1" },
       wasCreated: true,
     } as never)
+    mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" } as never)
+    mockFindFirst.mockResolvedValue({ id: "webchat-1" } as never)
 
     const withoutWorkspace =
       await integrationWebchatService.createWithWorkspace({

@@ -38,7 +38,6 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 import { connectSessionRepository } from "../../src/repositories/connect-session/repository"
 import { integrationInstagramRepository } from "../../src/repositories/integration-instagram/repository"
 import { integrationMessengerRepository } from "../../src/repositories/integration-messenger/repository"
-import { integrationWhatsappRepository } from "../../src/repositories/integration-whatsapp/repository"
 import { whatsappSignupSessionRepository } from "../../src/repositories/integration-whatsapp/signup-session"
 import {
   connectSessionModel,
@@ -210,26 +209,6 @@ describe.skipIf(!databaseUrl)(
           ),
       },
       {
-        name: "integrationWhatsappRepository.upsertByInbox",
-        table: integrationWhatsappModel as unknown as PgTable,
-        run: (tx) =>
-          integrationWhatsappRepository.upsertByInbox(
-            {
-              id: "integration-1",
-              workspaceId: "workspace-1",
-              inboxId: "inbox-1",
-              auth: { tokens: { accessToken: "token" } },
-              phoneNumberId: "phone-1",
-              wabaId: "waba-1",
-              businessId: "business-1",
-              name: "My Number",
-              isCoexist: false,
-              platformType: "CLOUD_API",
-            },
-            tx,
-          ),
-      },
-      {
         name: "whatsappSignupSessionRepository.createSignupSession",
         table: whatsappSignupSessionModel as unknown as PgTable,
         run: (tx) =>
@@ -310,6 +289,30 @@ describe.skipIf(!databaseUrl)(
         "channel",
         "name",
         "sourceId",
+        "workspaceId",
+      ])
+    })
+
+    /**
+     * `IntegrationWhatsapp` rows are written by the generic connection
+     * engine (`CONNECTION_STORE_BINDINGS.whatsapp`'s `insertRow`,
+     * `packages/business/src/connection/store-bindings.ts`), which this
+     * package cannot import — so pin the requirement instead, same as the
+     * `Inbox` case above. A new NOT NULL column without a database default
+     * fails here, and the fix is to write it from `connectPhoneNumber`
+     * (`packages/business/src/integration-whatsapp/connect.ts`)'s
+     * `extraConfig`, allow-listed in that binding's `configColumns`.
+     */
+    test("the IntegrationWhatsapp columns a connect must supply are still exactly these", () => {
+      expect(
+        requiredColumns(integrationWhatsappModel as unknown as PgTable),
+      ).toEqual([
+        "auth",
+        "businessId",
+        "inboxId",
+        "name",
+        "phoneNumberId",
+        "wabaId",
         "workspaceId",
       ])
     })

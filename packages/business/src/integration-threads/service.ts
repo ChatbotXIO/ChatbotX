@@ -95,10 +95,28 @@ class IntegrationThreadsService extends BaseService {
   }
 
   async markTokenRefreshError(id: string, error: string): Promise<void> {
-    await db
+    const [updated] = await db
       .update(integrationThreadsModel)
       .set({ tokenRefreshError: error })
       .where(eq(integrationThreadsModel.id, id))
+      .returning({
+        workspaceId: integrationThreadsModel.workspaceId,
+        threadsUserId: integrationThreadsModel.threadsUserId,
+      })
+
+    // `threads` has no `Connection` adapter/store binding registered yet
+    // (`CONNECTION_REGISTRY.threads === null`), so this always no-ops today;
+    // added for forward-compatibility once threads gets a real adapter —
+    // this cron path has no revoked/terminal signal, only a bare refresh
+    // failure, so `degraded` (not `markUnhealthyByIdentifier`) is correct.
+    if (updated) {
+      await connectionStateService.markDegradedByIdentifier({
+        provider: "threads",
+        identifier: updated.threadsUserId,
+        workspaceId: updated.workspaceId,
+        reason: "refresh_failed",
+      })
+    }
   }
 
   /**

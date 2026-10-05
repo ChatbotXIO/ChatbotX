@@ -46,9 +46,12 @@ const loadActiveConnectionStore = async (input: {
 }
 
 /**
- * User-initiated teardown: provider-side disconnect and webhook unsubscribe
- * must both succeed before local auth is deleted and the FSM transitions.
- * Retaining the satellite row on an upstream failure keeps teardown retryable.
+ * User-initiated teardown: local state ALWAYS finalizes (FSM transition +
+ * satellite row delete) regardless of provider-side disconnect/webhook-
+ * unsubscribe outcome — matching v1.11.0 (a flaky/down third-party API must
+ * never trap a workspace into being unable to remove a channel it no longer
+ * wants). Every provider-side failure is recorded on `Connection.lastError`
+ * for observability instead.
  *
  * This generic path does not port bespoke provider teardown side effects;
  * existing per-channel disconnect actions retain those responsibilities.
@@ -61,7 +64,6 @@ export const disconnect = async (input: {
   const adapter = resolveAdapter(connection.provider)
   const foreignKey = resolveForeignKey(connection)
   const teardownErrors: string[] = []
-  let teardownFailure: unknown
 
   if (adapter.store && foreignKey) {
     let auth: AuthValue | null = null
@@ -71,9 +73,6 @@ export const disconnect = async (input: {
       teardownErrors.push(
         toPublicErrorMessage(err, "Provider-side teardown failed"),
       )
-      if (!adapter.provider.isRevokedTokenError?.(err)) {
-        teardownFailure = err
-      }
       logger.error(
         { err, connectionId: connection.id, provider: connection.provider },
         "connection disconnect: failed to load auth for provider-side teardown",
@@ -87,9 +86,6 @@ export const disconnect = async (input: {
           teardownErrors.push(
             toPublicErrorMessage(err, "Provider-side teardown failed"),
           )
-          if (!adapter.provider.isRevokedTokenError?.(err)) {
-            teardownFailure ??= err
-          }
           logger.error(
             { err, connectionId: connection.id, provider: connection.provider },
             "connection disconnect: provider-side disconnect failed",
@@ -103,9 +99,6 @@ export const disconnect = async (input: {
           teardownErrors.push(
             toPublicErrorMessage(err, "Webhook unsubscribe failed"),
           )
-          if (!adapter.provider.isRevokedTokenError?.(err)) {
-            teardownFailure ??= err
-          }
           logger.error(
             { err, connectionId: connection.id, provider: connection.provider },
             "connection disconnect: webhook unsubscribe failed",
@@ -126,26 +119,6 @@ export const disconnect = async (input: {
         "connection disconnect: provider-side teardown skipped because auth is unavailable",
       )
     }
-  }
-
-  if (teardownFailure) {
-    await connectionRepository
-      .update({
-        id: connection.id,
-        workspaceId: connection.workspaceId,
-        values: { lastError: teardownErrors.join("; ") },
-      })
-      .catch((persistErr) => {
-        logger.error(
-          {
-            err: persistErr,
-            connectionId: connection.id,
-            provider: connection.provider,
-          },
-          "connection disconnect: failed to persist teardown error",
-        )
-      })
-    throw teardownFailure
   }
 
   const ownerId = await resolveOwnerId(connection)

@@ -22,6 +22,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: vi.fn(),
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: { findByProviderSourceId: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   integrationTiktokModel: { id: "id" },
 }))
@@ -36,8 +40,13 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.auditRecord,
 }))
 
-vi.mock("../src/inbox/connect-channel", () => ({
-  connectChannelIntegration: vi.fn(),
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: { tiktok: { duplicateConstraint: undefined } },
+  upsertConnectionRow: vi.fn(),
+  withQuotaCompensation: vi.fn(
+    async (_input: unknown, operation: () => Promise<unknown>) =>
+      await operation(),
+  ),
 }))
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))

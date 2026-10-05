@@ -1,14 +1,17 @@
 "use server"
 
 import {
+  connectionStateService,
   integrationWhatsappService,
   platformCredentialService,
   WHATSAPP_CAPI_SCOPE,
   whatsappBusinessAccountService,
 } from "@chatbotx.io/business"
+import { authExpiresAtOf } from "@chatbotx.io/business/connection"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   appAccessToken,
   exchangeAccessToken,
@@ -183,7 +186,7 @@ async function buildReconnectAuth(input: {
 }
 
 async function persistReconnectAuthAndResubscribe(input: {
-  auth: Awaited<ReturnType<typeof buildAuthValue>>
+  auth: WhatsappAuthValue
   hasCapiScope: boolean
   grantedScopes: string[]
   businessId: string
@@ -192,12 +195,18 @@ async function persistReconnectAuthAndResubscribe(input: {
   wabaId: string
   integrationWhatsappId: string
   workspaceId: string
+  inboxId: string
 }): Promise<boolean> {
   await integrationWhatsappService.replaceAuth({
     id: input.integrationWhatsappId,
     workspaceId: input.workspaceId,
     auth: input.auth,
     hasCapiScope: input.hasCapiScope,
+  })
+  await connectionStateService.reconnectInbox({
+    inboxId: input.inboxId,
+    workspaceId: input.workspaceId,
+    authExpiresAt: authExpiresAtOf(input.auth),
   })
   try {
     await whatsappBusinessAccountService.upsertCurrentCredential({
@@ -288,6 +297,7 @@ async function reconnectWhatsapp(input: {
     apiVersion: whatsappSettings.version,
     wabaId,
     integrationWhatsappId: input.integrationWhatsappId,
+    inboxId: existing.inboxId,
     workspaceId: input.workspaceId,
   })
 

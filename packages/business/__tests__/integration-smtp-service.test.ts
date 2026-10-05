@@ -2,22 +2,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockConnectChannelIntegration,
   mockDelete,
   mockDisconnect,
   mockDispatchAuditRecord,
   mockFindOrFail,
-  mockInsert,
-  mockInsertValues,
+  mockInboxCreate,
   mockTransaction,
   mockUpdate,
   mockUpdateReturning,
   mockUpdateWhere,
+  mockUpsertConnectionRow,
+  mockWithQuotaCompensation,
 } = vi.hoisted(() => {
   const mockDeleteWhere = vi.fn(async () => undefined)
   const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }))
-  const mockInsertValues = vi.fn(async () => undefined)
-  const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
   const mockUpdateReturning = vi.fn(async () => [
     { id: "smtp-1", name: "updated", fromAddress: "a@b.com" },
   ])
@@ -26,19 +24,25 @@ const {
   const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }))
 
   return {
-    mockConnectChannelIntegration: vi.fn(),
     mockDelete,
     mockDisconnect: vi.fn(async () => undefined),
     mockDispatchAuditRecord: vi.fn(async () => undefined),
     mockFindOrFail: vi.fn(),
-    mockInsert,
-    mockInsertValues,
+    mockInboxCreate: vi.fn(async () => ({
+      inbox: { id: "smtp-1" },
+      wasCreated: true,
+    })),
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
-      callback({ delete: mockDelete, insert: mockInsert, update: mockUpdate }),
+      callback({ delete: mockDelete, update: mockUpdate }),
     ),
     mockUpdate,
     mockUpdateReturning,
     mockUpdateWhere,
+    mockUpsertConnectionRow: vi.fn(async () => ({ id: "conn-1" })),
+    mockWithQuotaCompensation: vi.fn(
+      async (_input: unknown, operation: () => Promise<unknown>) =>
+        await operation(),
+    ),
   }
 })
 
@@ -65,12 +69,14 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "smtp-1",
 }))
 
-vi.mock("../src/inbox/connect-channel", () => ({
-  connectChannelIntegration: mockConnectChannelIntegration,
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: { smtp: { duplicateConstraint: undefined } },
+  upsertConnectionRow: mockUpsertConnectionRow,
+  withQuotaCompensation: mockWithQuotaCompensation,
 }))
 
 vi.mock("../src/inbox/service", () => ({
-  inboxService: { disconnect: mockDisconnect },
+  inboxService: { create: mockInboxCreate, disconnect: mockDisconnect },
 }))
 
 vi.mock("../src/connection/state-service", () => ({
@@ -97,26 +103,22 @@ const auth = {
 describe("integrationSmtpService.connect", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockWithQuotaCompensation.mockImplementation(
+      async (_input: unknown, operation: () => Promise<unknown>) =>
+        await operation(),
+    )
     mockTransaction.mockImplementation(
       async (callback: (tx: unknown) => unknown) =>
-        callback({
-          delete: mockDelete,
-          insert: mockInsert,
-          update: mockUpdate,
-        }),
+        callback({ delete: mockDelete, update: mockUpdate }),
     )
+    mockInboxCreate.mockResolvedValue({
+      inbox: { id: "smtp-1" },
+      wasCreated: true,
+    })
+    mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" })
   })
 
-  test("passes the pre-resolved host/port straight through into auth", async () => {
-    mockConnectChannelIntegration.mockImplementation(
-      async (props: {
-        insertIntegration: (inboxId: string) => Promise<unknown>
-      }) => {
-        await props.insertIntegration("inbox-1")
-        return { inbox: { id: "inbox-1" }, wasCreated: true }
-      },
-    )
-
+  test("passes auth through untouched and fromAddress as extraConfig", async () => {
     await integrationSmtpService.connect({
       workspaceId: "ws-1",
       ownerId: "owner-1",
@@ -125,10 +127,14 @@ describe("integrationSmtpService.connect", () => {
       auth,
     })
 
-    expect(mockInsertValues).toHaveBeenCalledWith(
+    expect(mockUpsertConnectionRow).toHaveBeenCalledWith(
       expect.objectContaining({
+        workspaceId: "ws-1",
+        provider: "smtp",
         auth,
-        fromAddress: "from@example.com",
+        extraConfig: { fromAddress: "from@example.com" },
+        inboxId: "smtp-1",
+        ownerId: "owner-1",
       }),
     )
   })
@@ -136,7 +142,7 @@ describe("integrationSmtpService.connect", () => {
   // The audit record belongs to the service, not the calling action, so a
   // public-API or worker caller gets it too.
   test("records the connect audit when the channel was created", async () => {
-    mockConnectChannelIntegration.mockResolvedValue({
+    mockInboxCreate.mockResolvedValue({
       inbox: { id: "inbox-1" },
       wasCreated: true,
     })
@@ -156,7 +162,7 @@ describe("integrationSmtpService.connect", () => {
   })
 
   test("records no audit when an existing inbox was reused", async () => {
-    mockConnectChannelIntegration.mockResolvedValue({
+    mockInboxCreate.mockResolvedValue({
       inbox: { id: "inbox-1" },
       wasCreated: false,
     })

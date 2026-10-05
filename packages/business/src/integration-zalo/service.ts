@@ -1,15 +1,23 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import {
   integrationZaloModel,
   tagChannelModel,
 } from "@chatbotx.io/database/schema"
 import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import {
+  CONNECTION_STORE_BINDINGS,
+  type ConnectionQuotaConsumption,
+  upsertConnectionRow,
+  withQuotaCompensation,
+} from "../connection"
 import { connectionStateService } from "../connection/state-service"
-import { notFoundException } from "../errors"
-import { connectChannelIntegration } from "../inbox/connect-channel"
+import { channelDuplicatedException, notFoundException } from "../errors"
+import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { tagSyncService } from "../tag/sync.service"
 
@@ -132,66 +140,97 @@ class ZaloIntegrationService extends BaseService {
     ownerId: string
     oaId: string
     name: string
-    auth: Record<string, unknown>
+    auth: AuthValue
   }): Promise<{ integrationId: string | undefined; wasCreated: boolean }> {
     const { workspaceId, ownerId, oaId, name, auth } = input
 
-    let connectedIntegrationId: string | undefined
-    let channelWasCreated = false
-
-    await db.transaction(async (tx) => {
-      const { wasCreated } = await connectChannelIntegration({
-        tx,
-        ownerId,
-        inboxData: {
-          workspaceId,
-          name,
-          channel: "zalo",
-          sourceId: oaId,
-        },
-        insertIntegration: async (inboxId, insertWasCreated) => {
-          // `false` means the Inbox already existed *in this workspace* and is
-          // already `connected` — the owner is re-running OAuth for their own
-          // OA, not colliding with another workspace. Cross-workspace
-          // duplicates are rejected earlier by `connectChannelIntegration`'s
-          // `inboxService.isConnected` check, which throws
-          // `channelDuplicatedException` before we get here. So skip the insert
-          // and leave `connectedIntegrationId` undefined: throwing would roll
-          // back the whole transaction, discarding the disconnected→connected
-          // revival `inboxService.create` performs on the same path.
-          if (!insertWasCreated) {
-            return
-          }
-          const [row] = await tx
-            .insert(integrationZaloModel)
-            .values({
-              inboxId,
-              workspaceId,
-              oaId,
-              auth,
-              name,
-            })
-            .returning({ id: integrationZaloModel.id })
-          connectedIntegrationId = row?.id
-        },
+    // A different workspace already holding a *connected* Inbox for this OA
+    // blocks the connect outright. Zalo's store binding deliberately carries
+    // no `duplicateConstraint` (Phase 4's backfill reports cross-workspace
+    // duplicates for manual review instead of a DB unique index), so this
+    // `isConnected` check is the only thing standing in for one.
+    if (
+      await inboxService.isConnected({
+        channel: "zalo",
+        sourceId: oaId,
+        workspaceId,
       })
-      channelWasCreated = wasCreated
-    })
+    ) {
+      throw channelDuplicatedException()
+    }
 
-    // Import any tags already on the OA into local tags + mappings. The row is
-    // already committed, so a queue outage must not fail the connect — hence
-    // the `.catch`, which also keeps the caller's audit record reachable: a
-    // throw here would leave a connected channel with no audit trail.
-    if (connectedIntegrationId) {
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+
+    const { integrationId, wasCreated } = await withQuotaCompensation(
+      {
+        ownerId,
+        quotaConsumption,
+        context: { provider: "zalo", workspaceId, oaId },
+      },
+      () =>
+        db.transaction(async (tx) => {
+          // A found row means this OA was already connected (possibly since
+          // disconnected) in THIS workspace — `upsertConnectionRow` revives it
+          // in place via `saveAuthByForeignKey` instead of inserting a second
+          // row.
+          const existing = await connectionRepository.findByProviderSourceId(
+            { workspaceId, provider: "zalo", sourceId: oaId },
+            tx,
+          )
+
+          const { inbox } = await inboxService.create({
+            tx,
+            ownerId,
+            data: { workspaceId, name, channel: "zalo", sourceId: oaId },
+            skipQuota: true,
+          })
+
+          await upsertConnectionRow({
+            tx,
+            workspaceId,
+            provider: "zalo",
+            kind: "channel",
+            descriptor: { sourceId: oaId, displayName: name },
+            auth,
+            extraConfig: {},
+            existing,
+            store: CONNECTION_STORE_BINDINGS.zalo as NonNullable<
+              (typeof CONNECTION_STORE_BINDINGS)["zalo"]
+            >,
+            ownerId,
+            quotaConsumption,
+            inboxId: inbox.id,
+          })
+
+          const integration = await findOrFail({
+            client: tx,
+            table: integrationZaloModel,
+            where: { inboxId: inbox.id },
+            message: `zaloIntegrationService.connect: IntegrationZalo row missing for inbox ${inbox.id}`,
+          })
+
+          return { integrationId: integration.id, wasCreated: !existing }
+        }),
+    )
+
+    // Import any tags already on the OA into local tags + mappings on a
+    // genuinely new connection only — the row is already committed, so a
+    // queue outage must not fail the connect (also keeps the caller's audit
+    // record reachable: a throw here would leave a connected channel with no
+    // audit trail).
+    if (wasCreated) {
       await tagSyncService
         .enqueueChannelScan({
           workspaceId,
           channelType: channelTypes.enum.zalo,
-          integrationId: connectedIntegrationId,
+          integrationId,
         })
         .catch((err) => {
           logger.warn(
-            { err, workspaceId, integrationId: connectedIntegrationId },
+            { err, workspaceId, integrationId },
             "zalo connect: channel tag scan enqueue failed",
           )
         })
@@ -200,10 +239,7 @@ class ZaloIntegrationService extends BaseService {
     // Last, so the cache is only dropped once every write above has settled.
     await this.invalidateCacheTags(`workspaces:${workspaceId}#zalos`)
 
-    return {
-      integrationId: connectedIntegrationId,
-      wasCreated: channelWasCreated,
-    }
+    return { integrationId, wasCreated }
   }
 
   async disconnect(input: {

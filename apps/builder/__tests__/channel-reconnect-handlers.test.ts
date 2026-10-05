@@ -27,6 +27,8 @@ const {
   mockFindZaloIntegration,
   mockUpdateZaloIntegrationAuth,
   mockZaloHandleRequest,
+  mockReconnectInbox,
+  mockAuthExpiresAtOf,
 } = vi.hoisted(() => ({
   mockFindMessengerIntegration: vi.fn(),
   mockUpdateMessengerIntegrationAuth: vi.fn(),
@@ -52,6 +54,8 @@ const {
   mockFindZaloIntegration: vi.fn(),
   mockUpdateZaloIntegrationAuth: vi.fn(),
   mockZaloHandleRequest: vi.fn(),
+  mockReconnectInbox: vi.fn(),
+  mockAuthExpiresAtOf: vi.fn(() => null),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -68,6 +72,13 @@ vi.mock("@chatbotx.io/business", () => ({
     findById: mockFindZaloIntegration,
     updateAuth: mockUpdateZaloIntegrationAuth,
   },
+  connectionStateService: {
+    reconnectInbox: mockReconnectInbox,
+  },
+}))
+
+vi.mock("@chatbotx.io/business/connection", () => ({
+  authExpiresAtOf: mockAuthExpiresAtOf,
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
@@ -201,6 +212,7 @@ describe("reconnectMessengerHandler", () => {
     vi.clearAllMocks()
     mockFindMessengerIntegration.mockResolvedValue({
       id: "im-1",
+      inboxId: "inbox-1",
       pageId: "page-1",
     })
     mockExchangeMessengerCode.mockResolvedValue("short-token")
@@ -377,6 +389,16 @@ describe("reconnectMessengerHandler", () => {
     expect(result).toEqual({ status: "error", reason: "failed" })
     expect(mockUpdateMessengerIntegrationAuth).not.toHaveBeenCalled()
   })
+
+  test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
+    await executeReconnect()
+
+    expect(mockReconnectInbox).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      authExpiresAt: null,
+    })
+  })
 })
 
 describe("reconnectInstagramHandler", () => {
@@ -384,6 +406,7 @@ describe("reconnectInstagramHandler", () => {
     vi.clearAllMocks()
     mockFindInstagramIntegration.mockResolvedValue({
       id: "ig-1",
+      inboxId: "inbox-1",
       type: "instagram",
       igId: "ig-user-9",
       pageId: "me-1",
@@ -499,6 +522,16 @@ describe("reconnectInstagramHandler", () => {
     expect(result).toEqual({ status: "error", reason: "notFound" })
     expect(mockGetInstagramAccount).not.toHaveBeenCalled()
   })
+
+  test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
+    await executeReconnect()
+
+    expect(mockReconnectInbox).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      authExpiresAt: null,
+    })
+  })
 })
 
 describe("reconnectInstagramFacebookHandler", () => {
@@ -506,6 +539,7 @@ describe("reconnectInstagramFacebookHandler", () => {
     vi.clearAllMocks()
     mockFindInstagramIntegration.mockResolvedValue({
       id: "ig-1",
+      inboxId: "inbox-1",
       type: "facebook",
       igId: "ig-biz-9",
       pageId: "old-page",
@@ -629,6 +663,16 @@ describe("reconnectInstagramFacebookHandler", () => {
     expect(result).toEqual({ status: "error", reason: "notFound" })
     expect(mockGetUserInstagramAccounts).not.toHaveBeenCalled()
   })
+
+  test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
+    await executeReconnect()
+
+    expect(mockReconnectInbox).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      authExpiresAt: null,
+    })
+  })
 })
 
 describe("reconnectZaloHandler", () => {
@@ -651,7 +695,11 @@ describe("reconnectZaloHandler", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFindZaloIntegration.mockResolvedValue({ id: "iz-1", oaId: "oa-1" })
+    mockFindZaloIntegration.mockResolvedValue({
+      id: "iz-1",
+      inboxId: "inbox-1",
+      oaId: "oa-1",
+    })
     mockZaloHandleRequest.mockResolvedValue(freshAuthValue)
   })
 
@@ -683,6 +731,16 @@ describe("reconnectZaloHandler", () => {
       freshAuthValue,
       "OA One",
     )
+  })
+
+  test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
+    await executeReconnect()
+
+    expect(mockReconnectInbox).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      authExpiresAt: null,
+    })
   })
 
   test("returns accountNotFound when a different OA was authorized", async () => {

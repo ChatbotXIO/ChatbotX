@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 const SESSION_STATE_PATTERN = /^[^.]+\.nonce-abc$/
 
 const mocks = vi.hoisted(() => ({
+  toChannelTypeMock: (provider: string) =>
+    provider === "instagramFacebook" ? "instagram" : provider,
   findByIdForWorkspace: vi.fn(),
   findById: vi.fn(),
   findByProviderSourceId: vi.fn(),
@@ -110,7 +112,6 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   inboxService: { create: mocks.inboxCreate },
 }))
-
 vi.mock("@chatbotx.io/business/connection", () => ({
   authExpiresAtOf: (auth: {
     authType: string
@@ -126,6 +127,254 @@ vi.mock("@chatbotx.io/business/connection", () => ({
     recordAuthSaved: mocks.recordAuthSaved,
   },
   InvalidConnectionTransitionException: Error,
+  // These six used to be real (unmocked) functions defined locally in
+  // `internal.ts`; they moved to `@chatbotx.io/business/connection`'s
+  // `upsert.ts` so business-layer services could call `upsertConnectionRow`
+  // directly inside their own transaction without a package cycle. Mirrors
+  // that module's real logic, wired to this file's own `mocks.*` stand-ins
+  // for the DB/quota primitives it calls.
+  resolveForeignKey: (connection: {
+    inboxId?: string | null
+    integrationId?: string | null
+  }) => connection.inboxId ?? connection.integrationId ?? null,
+  resolveOwnerId: async (connection: { kind: string; workspaceId: string }) =>
+    connection.kind === "channel"
+      ? await mocks.findOwnerUserIdByWorkspaceId({
+          workspaceId: connection.workspaceId,
+        })
+      : undefined,
+  toChannelType: mocks.toChannelTypeMock,
+  withQuotaCompensation: async (
+    input: {
+      ownerId: string | undefined
+      quotaConsumption: {
+        consumed: boolean
+        workspaceId?: string
+        workspaceUsageIncremented: boolean
+      }
+    },
+    operation: () => Promise<unknown>,
+  ) => {
+    try {
+      return await operation()
+    } catch (err) {
+      const { ownerId, quotaConsumption } = input
+      if (
+        quotaConsumption.consumed &&
+        quotaConsumption.workspaceId &&
+        ownerId
+      ) {
+        try {
+          await mocks.compensateQuotaConsumption({
+            ownerId,
+            workspaceId: quotaConsumption.workspaceId,
+            workspaceUsageIncremented:
+              quotaConsumption.workspaceUsageIncremented,
+          })
+        } catch (compensationErr) {
+          mocks.loggerError(
+            {
+              err: compensationErr,
+              workspaceId: quotaConsumption.workspaceId,
+              ownerId,
+            },
+            "connection: quota compensation failed",
+          )
+        }
+      }
+      throw err
+    }
+  },
+  saveOrInsertSatellite: async (input: {
+    tx: unknown
+    inboxId?: string | null
+    auth: unknown
+    descriptor: { sourceId: string; displayName: string }
+    extraConfig: Record<string, unknown>
+    existing?: { inboxId?: string | null; integrationId?: string | null }
+    store: {
+      saveAuthByForeignKey: typeof mocks.saveAuthByForeignKey
+      insertRow: typeof mocks.insertRow
+      duplicateConstraint?: string
+    }
+    kind: string
+    workspaceId: string
+  }) => {
+    const existingForeignKey = input.existing
+      ? (input.existing.inboxId ?? input.existing.integrationId ?? null)
+      : null
+    if (
+      existingForeignKey &&
+      (await input.store.saveAuthByForeignKey(
+        existingForeignKey,
+        input.auth,
+        input.extraConfig,
+        input.tx,
+      ))
+    ) {
+      return input.existing?.integrationId ?? undefined
+    }
+    try {
+      const inserted = await input.store.insertRow(
+        {
+          kind: input.kind,
+          workspaceId: input.workspaceId,
+          inboxId: input.inboxId,
+          auth: input.auth,
+          descriptor: input.descriptor,
+          config: input.extraConfig,
+        },
+        input.tx,
+      )
+      return inserted.integrationId
+    } catch (err) {
+      if (
+        input.store.duplicateConstraint &&
+        mocks.isUniqueViolationError(err, input.store.duplicateConstraint)
+      ) {
+        throw Object.assign(
+          new Error("This provider is already connected in this workspace."),
+          { code: "connectionAlreadyConnected", httpStatusCode: 409 },
+        )
+      }
+      throw err
+    }
+  },
+  upsertConnectionRow: async (input: {
+    tx: unknown
+    workspaceId: string
+    provider: string
+    kind: string
+    descriptor: { sourceId: string; displayName: string }
+    auth: unknown
+    extraConfig: Record<string, unknown>
+    existing:
+      | {
+          id: string
+          workspaceId: string
+          inboxId?: string | null
+          integrationId?: string | null
+        }
+      | undefined
+    store: {
+      saveAuthByForeignKey: typeof mocks.saveAuthByForeignKey
+      insertRow: typeof mocks.insertRow
+      duplicateConstraint?: string
+    }
+    ownerId: string | undefined
+    quotaConsumption: Record<string, unknown>
+    actorUserId?: string | null
+    inboxId?: string | null
+  }) => {
+    const existingForeignKey = input.existing
+      ? (input.existing.inboxId ?? input.existing.integrationId ?? null)
+      : null
+    let integrationId: string | undefined
+    if (
+      existingForeignKey &&
+      (await input.store.saveAuthByForeignKey(
+        existingForeignKey,
+        input.auth,
+        input.extraConfig,
+        input.tx,
+      ))
+    ) {
+      integrationId = input.existing?.integrationId ?? undefined
+    } else {
+      try {
+        const inserted = await input.store.insertRow(
+          {
+            kind: input.kind,
+            workspaceId: input.workspaceId,
+            inboxId: input.inboxId,
+            auth: input.auth,
+            descriptor: input.descriptor,
+            config: input.extraConfig,
+          },
+          input.tx,
+        )
+        integrationId = inserted.integrationId
+      } catch (err) {
+        if (
+          input.store.duplicateConstraint &&
+          mocks.isUniqueViolationError(err, input.store.duplicateConstraint)
+        ) {
+          throw Object.assign(
+            new Error("This provider is already connected in this workspace."),
+            { code: "connectionAlreadyConnected", httpStatusCode: 409 },
+          )
+        }
+        throw err
+      }
+    }
+
+    if (input.existing) {
+      await mocks.update(
+        {
+          id: input.existing.id,
+          workspaceId: input.existing.workspaceId,
+          values: {
+            inboxId: input.inboxId ?? input.existing.inboxId,
+            integrationId: integrationId ?? null,
+            displayName: input.descriptor.displayName,
+            lastError: null,
+          },
+        },
+        input.tx,
+      )
+      return await mocks.transition({
+        connectionId: input.existing.id,
+        event: "connect.completed",
+        ownerId: input.ownerId,
+        tx: input.tx,
+        quotaConsumption: input.quotaConsumption,
+      })
+    }
+
+    let created: { id: string }
+    try {
+      created = await mocks.insert(
+        {
+          workspaceId: input.workspaceId,
+          provider: input.provider,
+          kind: input.kind,
+          channel:
+            input.kind === "channel"
+              ? mocks.toChannelTypeMock(input.provider)
+              : null,
+          sourceId: input.descriptor.sourceId,
+          displayName: input.descriptor.displayName,
+          inboxId: input.inboxId ?? null,
+          integrationId: integrationId ?? null,
+          status: "disconnected",
+          statusReason: "manual",
+          disconnectedAt: new Date(),
+          createdBy: input.actorUserId ?? null,
+        },
+        input.tx,
+      )
+    } catch (err) {
+      if (
+        mocks.isUniqueViolationError(
+          err,
+          "Connection_workspaceId_provider_sourceId_key",
+        )
+      ) {
+        throw Object.assign(
+          new Error("This provider is already connected in this workspace."),
+          { code: "connectionAlreadyConnected", httpStatusCode: 409 },
+        )
+      }
+      throw err
+    }
+    return await mocks.transition({
+      connectionId: created.id,
+      event: "connect.completed",
+      ownerId: input.ownerId,
+      tx: input.tx,
+      quotaConsumption: input.quotaConsumption,
+    })
+  },
   isActiveConnectionStatus: (status: string) =>
     status === "connected" || status === "degraded",
 }))
@@ -477,24 +726,31 @@ describe("ConnectionService.disconnect", () => {
     })
   })
 
-  it("keeps auth available for retry when provider-side teardown fails", async () => {
+  it("finishes local cleanup even when provider-side teardown fails, recording the error instead of blocking", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockRejectedValue(new Error("upstream 500"))
 
-    await expect(
-      connectionService.disconnect({
-        connectionId: "conn-1",
-        workspaceId: "ws-1",
-      }),
-    ).rejects.toThrow("upstream 500")
-
-    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
-    expect(mocks.transition).not.toHaveBeenCalled()
-    expect(mocks.update).toHaveBeenCalledWith({
-      id: "conn-1",
+    const result = await connectionService.disconnect({
+      connectionId: "conn-1",
       workspaceId: "ws-1",
-      values: { lastError: "upstream 500" },
     })
+
+    expect(result.status).toBe("disconnected")
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith("inbox-1", "tx")
+    expect(mocks.transition).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+      event: "user.disconnect",
+      ownerId: "owner-1",
+      tx: "tx",
+    })
+    expect(mocks.update).toHaveBeenCalledWith(
+      {
+        id: "conn-1",
+        workspaceId: "ws-1",
+        values: { lastError: "upstream 500" },
+      },
+      "tx",
+    )
     expect(mocks.loggerError).toHaveBeenCalledWith(
       {
         err: expect.objectContaining({ message: "upstream 500" }),
@@ -530,68 +786,68 @@ describe("ConnectionService.disconnect", () => {
     )
   })
 
-  it("keeps the first teardown failure retryable after independent cleanup also fails", async () => {
+  it("finishes local cleanup when both provider disconnect and webhook unsubscribe fail, recording both errors", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockRejectedValueOnce(
       new Error("provider disconnect failed"),
     )
     mocks.unsubscribe.mockRejectedValueOnce(new Error("unsubscribe failed"))
 
-    await expect(
-      connectionService.disconnect({
-        connectionId: "conn-1",
-        workspaceId: "ws-1",
-      }),
-    ).rejects.toThrow("provider disconnect failed")
+    const result = await connectionService.disconnect({
+      connectionId: "conn-1",
+      workspaceId: "ws-1",
+    })
 
+    expect(result.status).toBe("disconnected")
     expect(mocks.unsubscribe).toHaveBeenCalledWith({
       auth: { authType: "none" },
     })
-    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
-    expect(mocks.transition).not.toHaveBeenCalled()
-    expect(mocks.update).toHaveBeenCalledWith({
-      id: "conn-1",
-      workspaceId: "ws-1",
-      values: {
-        lastError: "provider disconnect failed; unsubscribe failed",
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalled()
+    expect(mocks.transition).toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith(
+      {
+        id: "conn-1",
+        workspaceId: "ws-1",
+        values: {
+          lastError: "provider disconnect failed; unsubscribe failed",
+        },
       },
-    })
+      "tx",
+    )
   })
 
-  it("still calls webhook unsubscribe when provider disconnect fails, then retains auth for retry (I11)", async () => {
+  it("still calls webhook unsubscribe when provider disconnect fails, then finishes local cleanup anyway (I11)", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockRejectedValueOnce(
       new Error("Method is not implemented."),
     )
     mocks.unsubscribe.mockResolvedValueOnce(undefined)
 
-    await expect(
-      connectionService.disconnect({
-        connectionId: "conn-1",
-        workspaceId: "ws-1",
-      }),
-    ).rejects.toThrow("Method is not implemented.")
+    const result = await connectionService.disconnect({
+      connectionId: "conn-1",
+      workspaceId: "ws-1",
+    })
 
+    expect(result.status).toBe("disconnected")
     expect(mocks.unsubscribe).toHaveBeenCalledWith({
       auth: { authType: "none" },
     })
-    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalled()
   })
 
-  it("still calls provider disconnect when webhook unsubscribe fails, then retains auth for retry", async () => {
+  it("still calls provider disconnect when webhook unsubscribe fails, then finishes local cleanup anyway", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockResolvedValueOnce(undefined)
     mocks.unsubscribe.mockRejectedValueOnce(new Error("unsubscribe failed"))
 
-    await expect(
-      connectionService.disconnect({
-        connectionId: "conn-1",
-        workspaceId: "ws-1",
-      }),
-    ).rejects.toThrow("unsubscribe failed")
+    const result = await connectionService.disconnect({
+      connectionId: "conn-1",
+      workspaceId: "ws-1",
+    })
 
+    expect(result.status).toBe("disconnected")
     expect(mocks.disconnect).toHaveBeenCalledWith({ authType: "none" })
-    expect(mocks.deleteRowByForeignKey).not.toHaveBeenCalled()
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalled()
   })
 
   it("leaves Connection.lastError null when teardown succeeds (no spurious error stored)", async () => {

@@ -1,4 +1,8 @@
-import { instagramIntegrationService } from "@chatbotx.io/business"
+import {
+  connectionStateService,
+  instagramIntegrationService,
+} from "@chatbotx.io/business"
+import { authExpiresAtOf } from "@chatbotx.io/business/connection"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   getInstagramAccount,
@@ -85,6 +89,12 @@ export async function reconnectInstagramHandler(props: {
       ...(userInfo ? { userInfo } : {}),
     })
 
+    await connectionStateService.reconnectInbox({
+      inboxId: integrationInstagram.inboxId,
+      workspaceId: props.workspaceId,
+      authExpiresAt: authExpiresAtOf(auth),
+    })
+
     await subscribePageToInstagramWebhook({
       igId: integrationInstagram.pageId,
       accessToken: props.userToken,
@@ -168,6 +178,12 @@ export async function reconnectInstagramFacebookHandler(props: {
       username: account.username,
       pageId: account.pageId,
       ...(userInfo ? { userInfo } : {}),
+    })
+
+    await connectionStateService.reconnectInbox({
+      inboxId: integrationInstagram.inboxId,
+      workspaceId: props.workspaceId,
+      authExpiresAt: authExpiresAtOf(auth),
     })
 
     await subscribeFacebookPageToInstagramWebhook({

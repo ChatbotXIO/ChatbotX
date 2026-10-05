@@ -122,6 +122,10 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/business/connection", () => ({
+  authExpiresAtOf: vi.fn(() => null),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: vi.fn() },
 }))

@@ -2,8 +2,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
-  insert: vi.fn(),
-  connectChannelIntegration: vi.fn(),
+  findByInboxId: vi.fn(),
+  inboxCreate: vi.fn(),
+  upsertConnectionRow: vi.fn(),
+  withQuotaCompensation: vi.fn(
+    async (_input: unknown, operation: () => Promise<unknown>) =>
+      await operation(),
+  ),
   dispatchAuditRecord: vi.fn(),
   createId: vi.fn(() => "api-1"),
 }))
@@ -12,12 +17,14 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.dispatchAuditRecord,
 }))
 
-vi.mock("../src/inbox/connect-channel", () => ({
-  connectChannelIntegration: mocks.connectChannelIntegration,
+vi.mock("../src/inbox/service", () => ({
+  inboxService: { create: mocks.inboxCreate, disconnect: vi.fn() },
 }))
 
-vi.mock("../src/inbox/service", () => ({
-  inboxService: { disconnect: vi.fn() },
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: { api: { duplicateConstraint: undefined } },
+  upsertConnectionRow: mocks.upsertConnectionRow,
+  withQuotaCompensation: mocks.withQuotaCompensation,
 }))
 
 vi.mock("../src/connection/state-service", () => ({
@@ -33,7 +40,7 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  integrationApiRepository: { insert: mocks.insert },
+  integrationApiRepository: { findByInboxId: mocks.findByInboxId },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({
@@ -46,13 +53,19 @@ describe("integrationApiService.connect", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.createId.mockReturnValue("api-1")
-    mocks.insert.mockResolvedValue({ id: "api-1" })
+    mocks.withQuotaCompensation.mockImplementation(
+      async (_input: unknown, operation: () => Promise<unknown>) =>
+        await operation(),
+    )
+    mocks.inboxCreate.mockResolvedValue({
+      inbox: { id: "api-1" },
+      wasCreated: true,
+    })
+    mocks.upsertConnectionRow.mockResolvedValue({ id: "conn-1" })
+    mocks.findByInboxId.mockResolvedValue({ id: "api-1" })
     mocks.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
       fn({ tx: true }),
     )
-    mocks.connectChannelIntegration.mockResolvedValue({
-      integration: { id: "api-1" },
-    })
   })
 
   test("uses actorUserId, not ownerId, for API channel audit records", async () => {
@@ -67,9 +80,13 @@ describe("integrationApiService.connect", () => {
       callbackUrl: null,
     })
 
-    expect(mocks.connectChannelIntegration).toHaveBeenCalledWith(
+    expect(mocks.upsertConnectionRow).toHaveBeenCalledWith(
       expect.objectContaining({
+        workspaceId: "workspace-1",
+        provider: "api",
         ownerId: "owner-1",
+        actorUserId: "admin-1",
+        inboxId: "api-1",
       }),
     )
     expect(mocks.dispatchAuditRecord).toHaveBeenCalledTimes(1)

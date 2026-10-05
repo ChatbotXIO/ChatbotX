@@ -4,9 +4,7 @@ import {
   messengerIntegrationService,
   tagSyncService,
 } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
-import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"

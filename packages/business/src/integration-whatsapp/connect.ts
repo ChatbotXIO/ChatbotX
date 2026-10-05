@@ -1,17 +1,28 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
+  connectionRepository,
   integrationWhatsappRepository,
   whatsappSignupSessionRepository,
 } from "@chatbotx.io/database/repositories"
 import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecordSafely } from "../audit/dispatcher"
-import { connectSessionExpiredException } from "../errors"
+import {
+  CONNECTION_STORE_BINDINGS,
+  type ConnectionQuotaConsumption,
+  upsertConnectionRow,
+  withQuotaCompensation,
+} from "../connection"
+import {
+  channelDuplicatedException,
+  connectSessionExpiredException,
+} from "../errors"
 import {
   auditChannelConnected,
-  connectChannelIntegration,
   runConnectTransaction,
 } from "../inbox/connect-channel"
+import { inboxService } from "../inbox/service"
 import { workspaceService } from "../workspace/service"
 
 /** Signup-session identity threaded through `connectPhoneNumber`'s per-number claim. */
@@ -104,51 +115,142 @@ export async function connectPhoneNumber(
 function insertPhoneNumber(
   input: ConnectPhoneNumberInput,
 ): Promise<ConnectPhoneNumberResult> {
-  return runConnectTransaction("whatsapp", async (tx) => {
-    const claim = await claimPhoneNumberForSession(input, tx)
+  const quotaConsumption: ConnectionQuotaConsumption = {
+    consumed: false,
+    workspaceUsageIncremented: false,
+  }
 
-    const { workspaceId, createdWorkspace } = await resolveConnectWorkspace(
-      input,
-      tx,
-      claim,
-    )
-
-    const { integration, wasCreated } = await connectChannelIntegration({
-      tx,
+  return withQuotaCompensation(
+    {
       ownerId: input.ownerId,
-      inboxData: {
-        id: createId(),
-        workspaceId,
-        channel: "whatsapp",
-        sourceId: input.phoneNumber.id,
-        name: input.phoneNumber.name,
-      },
-      insertIntegration: (inboxId) =>
-        integrationWhatsappRepository.upsertByInbox(
-          {
-            id: input.integrationId,
+      quotaConsumption,
+      context: { provider: "whatsapp", actorUserId: input.actorUserId },
+    },
+    () =>
+      runConnectTransaction("whatsapp", async (tx) => {
+        const claim = await claimPhoneNumberForSession(input, tx)
+
+        const { workspaceId, createdWorkspace } = await resolveConnectWorkspace(
+          input,
+          tx,
+          claim,
+        )
+
+        // Mirrors the old `connectChannelIntegration`'s pre-check:
+        // `IntegrationWhatsapp.phoneNumberId` is unique platform-wide, not
+        // per-workspace, so a cross-workspace duplicate would otherwise only
+        // surface as the generic engine's `connectionAlreadyConnectedException`
+        // from deep inside `upsertConnectionRow` — losing the specific
+        // "already connected to another workspace" outcome the connect UI's
+        // `channelDuplicated` mapping expects (`inbox/connect-outcome.ts`).
+        if (
+          await inboxService.isConnected({
+            tx,
+            channel: "whatsapp",
+            sourceId: input.phoneNumber.id,
             workspaceId,
-            inboxId,
-            auth: input.auth,
-            phoneNumberId: input.phoneNumber.id,
+          })
+        ) {
+          throw channelDuplicatedException()
+        }
+
+        // The revive-or-insert lookup key `saveOrInsertSatellite` needs —
+        // present means a `Connection` row for this (workspace, phoneNumberId)
+        // already exists (even disconnected), so this is a revive rather
+        // than a genuine first-ever connect (`wasCreated` below).
+        const existing = await connectionRepository.findByProviderSourceId(
+          {
+            workspaceId,
+            provider: "whatsapp",
+            sourceId: input.phoneNumber.id,
+          },
+          tx,
+        )
+
+        const { inbox } = await inboxService.create({
+          tx,
+          ownerId: input.ownerId,
+          data: {
+            id: createId(),
+            workspaceId,
+            channel: "whatsapp",
+            sourceId: input.phoneNumber.id,
+            name: input.phoneNumber.name,
+          },
+          skipQuota: true,
+        })
+
+        // The satellite write's real insert-vs-update branch key:
+        // `IntegrationWhatsapp`'s `onDisconnect: "keep_row"` binding setting
+        // only governs the GENERIC engine's own (never invoked, for
+        // WhatsApp) delete step — WhatsApp's actual disconnect action
+        // (`integration-whatsapp/service.ts`'s `disconnect`) deletes the
+        // satellite row directly as part of its own coexist/CAPI cleanup,
+        // even though the `Connection` row survives (status flips instead).
+        // So a `Connection` row existing is NOT proof the satellite row
+        // still exists — check the row itself, by the same `inboxId`
+        // `saveOrInsertSatellite` keys its UPDATE-vs-INSERT decision on.
+        const satelliteExists = Boolean(
+          await integrationWhatsappRepository.findByInboxIdForWorkspace(
+            { workspaceId, inboxId: inbox.id },
+            tx,
+          ),
+        )
+
+        await upsertConnectionRow({
+          tx,
+          workspaceId,
+          provider: "whatsapp",
+          kind: "channel",
+          descriptor: {
+            sourceId: input.phoneNumber.id,
+            displayName: input.phoneNumber.name,
+          },
+          auth: input.auth as AuthValue,
+          extraConfig: {
             wabaId: input.wabaId,
             businessId: input.businessId,
-            name: input.phoneNumber.name,
             displayPhoneNumber: input.phoneNumber.displayPhoneNumber,
             isCoexist: input.isCoexist,
             platformType: input.platformType,
+            // Only when the satellite row doesn't already exist (see
+            // `store-bindings.ts`'s whatsapp binding comment for why `id`
+            // is allow-listed at all). A revive's `saveAuthByForeignKey`
+            // UPDATE must never see this key — it would try to overwrite
+            // the existing row's own PK.
+            ...(satelliteExists ? {} : { id: input.integrationId }),
           },
-          tx,
-        ),
-    })
+          existing,
+          store: CONNECTION_STORE_BINDINGS.whatsapp as NonNullable<
+            (typeof CONNECTION_STORE_BINDINGS)["whatsapp"]
+          >,
+          ownerId: input.ownerId,
+          quotaConsumption,
+          actorUserId: input.actorUserId,
+          inboxId: inbox.id,
+        })
 
-    return {
-      workspaceId,
-      createdWorkspace,
-      integrationRow: integration,
-      wasCreated,
-    }
-  })
+        const integration =
+          await integrationWhatsappRepository.findByInboxIdForWorkspace(
+            { workspaceId, inboxId: inbox.id },
+            tx,
+          )
+        if (!integration) {
+          throw new Error(
+            `connectPhoneNumber: IntegrationWhatsapp row missing for inbox ${inbox.id}`,
+          )
+        }
+
+        return {
+          workspaceId,
+          createdWorkspace,
+          integrationRow: integration,
+          // No Connection row for this (workspaceId, phoneNumberId) existed
+          // before this call — a genuine first connect, not a revive.
+          wasCreated: !existing,
+        }
+      }),
+  )
 }
 
 /** Claims this number from its signup session, row-locking it for the rest of the transaction. */
