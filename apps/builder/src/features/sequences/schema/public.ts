@@ -18,7 +18,7 @@ export const publicListSequenceStepContactsRequest = z.object({
   ),
   stepId: zodBigintAsString().describe("Sequence step id."),
   eventType: sequenceStepEventTypes.describe(
-    "Lifecycle event to filter recipients by (e.g. sent, opened).",
+    "Event to filter recipients by: `message:sent`, `message:delivered`, `message:seen`, `message:failed` or `flow:clicked`. `message:received` and `flow:ref` are accepted but not tracked per recipient, so they return the same list as `message:delivered`.",
   ),
   page: publicListRequest.shape.page,
   perPage: publicListRequest.shape.perPage,

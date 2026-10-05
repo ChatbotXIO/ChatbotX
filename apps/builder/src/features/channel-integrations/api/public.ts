@@ -16,15 +16,19 @@ import { CAPI_TEST_MESSAGING_ID_MAX_LENGTH } from "@chatbotx.io/utils/meta-capi"
 import { z } from "zod"
 import { triggerSync as triggerWhatsappCoexistSync } from "@/features/integration-whatsapp/lib/coexist-trigger-sync"
 import {
+  disconnectCapiFor,
+  provisionCapiDatasetFor,
   saveCapiDataset,
   saveCapiTestEventCodeFor,
   sendCapiTestEventFor,
 } from "@/features/meta-conversions/lib/capi-operations"
 import {
+  possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnSendingCapiTestEvent,
+  possibleErrorsOnSettingCapiDataset,
   possibleErrorsOnSettingCoexist,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -333,8 +337,9 @@ const capiSuccessResponse = z.object({ success: z.literal(true) })
 
 /**
  * Meta Conversions API routes of a channel: dataset selection, the Events
- * Manager test event code and a sample test event. Provisioning a dataset,
- * disconnecting and custom connect stay private (they handle credentials).
+ * Manager test event code and a sample test event, creating a dataset with the
+ * channel's stored token, and disconnecting. Custom connect stays private: it
+ * takes an access token.
  */
 export const createCapiRoutes = (channel: CapiChannel) => {
   const label = channelLabels[channel]
@@ -351,7 +356,7 @@ export const createCapiRoutes = (channel: CapiChannel) => {
         method: "PUT",
         path: `${base}/dataset` as const,
         summary: `Set ${label} CAPI dataset`,
-        description: `Selects the Meta dataset used for Conversions API events on a ${label} channel. The dataset is validated with Meta using the channel's token, then stored, and a disconnected Conversions API is reconnected. Read the current \`datasetId\` and \`hasCapiScope\` from \`${listOperation}\`.`,
+        description: `Sets the Meta dataset used for Conversions API events on a ${label} channel and reconnects a disconnected Conversions API. Pass \`datasetId\` to select an existing dataset: it is validated with Meta using the channel's token, then stored. Omit \`datasetId\` to have a dataset created (or the existing one reused) with the channel's stored token, exactly like the builder's "Create dataset". A Meta rejection (for example a missing CAPI permission) is returned as 400 with Meta's message; reconnect the channel in the builder when Meta reports the permission as missing. Read the current \`datasetId\` and \`hasCapiScope\` from \`${listOperation}\`.`,
         successStatus: 204,
         tags: ["Channels"],
       })
@@ -361,16 +366,42 @@ export const createCapiRoutes = (channel: CapiChannel) => {
             .string()
             .trim()
             .min(1)
-            .describe("Meta dataset (pixel) id from Events Manager."),
+            .optional()
+            .describe(
+              "Meta dataset (pixel) id from Events Manager. Omit to create one with the channel's stored token.",
+            ),
         }),
       )
-      .errors(possibleErrorsOnMutatingResource)
+      .errors(possibleErrorsOnSettingCapiDataset)
       .handler(async ({ context, input }) => {
-        await saveCapiDataset({
+        const ref = {
           channel,
           workspaceId: context.workspace.id,
           integrationId: input.id,
-          datasetId: input.datasetId,
+        }
+        if (input.datasetId) {
+          await saveCapiDataset({ ...ref, datasetId: input.datasetId })
+          return
+        }
+        await provisionCapiDatasetFor(ref)
+      }),
+
+    disconnectCapi: workspaceTokenAuthAPI
+      .route({
+        method: "DELETE",
+        path: base,
+        summary: `Disconnect ${label} CAPI`,
+        description: `Stops sending Conversions API events for a ${label} channel. The saved dataset and test event code are kept; \`capiDisconnected\` becomes true in \`${listOperation}\`. Reconnect with \`${channel}Channels.setCapiDataset\` (pass a dataset, or none to create one). Nothing is deleted at Meta.`,
+        successStatus: 204,
+        tags: ["Channels"],
+      })
+      .input(idParam)
+      .errors(possibleErrorsOnDeletingResource)
+      .handler(async ({ context, input }) => {
+        await disconnectCapiFor({
+          channel,
+          workspaceId: context.workspace.id,
+          integrationId: input.id,
         })
       }),
 

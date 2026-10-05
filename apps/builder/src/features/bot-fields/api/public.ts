@@ -6,7 +6,6 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 import {
@@ -14,7 +13,10 @@ import {
   publicBotFieldIdSchema,
   resetBotFieldsRequest,
 } from "../schema/action"
-import { publicListBotFieldsResponse } from "../schema/query"
+import {
+  listBotFieldsPublicRequest,
+  publicListBotFieldsResponse,
+} from "../schema/query"
 import { publicBotFieldResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
@@ -26,19 +28,17 @@ export const botFieldsPublicRouter = {
       path: "/v1/bot-fields",
       summary: "Get all bot fields",
       description:
-        "Use this to find bot field names before reading one with `botFields.get` or setting a value with `botFields.set`. Returns bot fields in this workspace.",
+        "Use this to find bot field names before reading one with `botFields.get` or setting a value with `botFields.set`. Returns bot fields in this workspace, newest first unless `sort` is given. Filter by `name` (substring) or `folderId`.",
       tags: ["Bot Fields"],
     })
-    .input(publicListRequest)
+    .input(listBotFieldsPublicRequest)
     .output(publicListBotFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const result = await botFieldService.list({
-        workspaceId: context.workspace.id,
         ...input,
-        sort: [{ id: "createdAt", desc: true }],
-        name: null,
-        folderId: null,
+        workspaceId: context.workspace.id,
+        sort: input.sort ?? [{ id: "createdAt", desc: true }],
       })
       return result
     }),

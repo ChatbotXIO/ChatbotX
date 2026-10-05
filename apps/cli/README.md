@@ -135,7 +135,7 @@ chatbotx custom-fields delete <id>
 ### `bot-fields`
 
 ```bash
-chatbotx bot-fields list                             # Get all bot fields
+chatbotx bot-fields list                             # Get all bot fields [--name --folderId --sort]
 chatbotx bot-fields create --name <name> --type <type> --value <value> --description <description>
                                                      # [--folderId]
 chatbotx bot-fields update --fields <fields>         # Set multiple bot field values, by id or name
@@ -193,6 +193,8 @@ chatbotx contacts find-by-export-files <fileId>       # Poll export status/downl
 chatbotx contacts bulk-tags --contactIds <contactIds> --tags <tags>
 chatbotx contacts bulk-delete --contactIds <contactIds>
 chatbotx contacts bulk-sequences --contactIds <contactIds> --sequenceIds <sequenceIds>
+chatbotx contacts bulk-sequences-remove --contactIds <contactIds> --sequenceIds <sequenceIds>
+chatbotx contacts bulk-tags-by-stats --source <broadcast|sequenceStep|commentAutomation> --eventType <event> --tags <tags>  # + --broadcastId | --sequenceId --stepId | --automationId
 
 # Tags
 chatbotx contacts tags list <identifier>             # Get all tags on a contact
@@ -282,8 +284,8 @@ chatbotx conversations attribute add <conversationId> <messageId> --createdAt <c
 chatbotx broadcasts list
 chatbotx broadcasts get <idOrName>                   # Get broadcast
 chatbotx broadcasts audience list <idOrName>         # Get broadcast audience (contacts) [--page --perPage]
-chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by delivery event
-                                                     # eventType: sent|delivered|read|failed [--page --perPage]
+chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ...)
+chatbotx broadcasts audience-preview                 # Count (total) and list a would-be audience before sending [--inboxIds --channels --contactFilter --page --perPage ...]
 chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedulesType <schedulesType>
                                                      # Cloud trial Messenger broadcasts: max 60/min and one active at a time
                                                      #   --schedulesAt <schedulesAt> --contactFilter <contactFilter>
@@ -836,9 +838,8 @@ chatbotx media-library files-move --fileIds <fileIds>  # [--folderId]
 ### `inboxes` AI hand-over (Meta Business AI, scope `integrations`)
 
 ```bash
-chatbotx inboxes settings list <inboxId>                  # AI hand-over settings
+chatbotx inboxes settings list <inboxId>                  # AI hand-over settings + apply-to-all status (applyToAll)
 chatbotx inboxes settings update <inboxId> --enabled --scheduleEnabled --timeRanges --gotoFlowId --returnMessage --pauseBotWaitingForStaff
-chatbotx inboxes apply-to-all list <inboxId>              # Switch state + latest run
 chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --dryRun        # Count only
 chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --confirmCount <n>
 chatbotx inboxes retry add <inboxId>                      # Retry the latest apply-to-all
@@ -848,8 +849,8 @@ chatbotx inboxes history list <inboxId>                   # [--page --perPage]
 ### Conversation thread control (scope `inbox`)
 
 ```bash
-chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass
-chatbotx conversations sync add <id> --contactInboxId <id>     # Sync the thread owner from the channel
+chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass|sync
+# --action sync only refreshes the stored thread owner from the channel
 ```
 
 ### `workspace` settings (scope `settings`)
@@ -866,10 +867,13 @@ chatbotx whatsapp calls                              # [--activity --inboxId --a
 chatbotx whatsapp calls-recording <id>               # 15-minute signed playback URL
 chatbotx whatsapp calls-transcript <id>
 chatbotx whatsapp calls-summary <id>
+chatbotx whatsapp calls-summary-providers            # Connected AI providers for a summary
+chatbotx whatsapp calls-summary-generate <id> [--provider <provider>]  # Write/replace the AI summary; provider optional when only one is connected
 chatbotx whatsapp templates-catalog-products         # [--keyword] Meta Catalog product search
 chatbotx whatsapp-channels sync add <id>             # Sync WhatsApp templates from Meta
-chatbotx whatsapp-channels dataset update <id> --datasetId <id>      # CAPI dataset (also instagram/messenger)
+chatbotx whatsapp-channels dataset update <id> [--datasetId <id>]    # Set the CAPI dataset; omit --datasetId to create one (also instagram/messenger)
 chatbotx whatsapp-channels test-event-code update <id> --testEventCode <code>         # "" clears it
+chatbotx whatsapp-channels capi delete <id>                       # Disconnect CAPI (also instagram/messenger)
 chatbotx whatsapp-channels test-event add <id> --messagingId <id>
 ```
 
@@ -942,6 +946,9 @@ chatbotx products bulk-delete --ids <ids>
 chatbotx products import-template                       # XLSX template as base64 [--language]
 chatbotx products imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
 chatbotx products imports-files-headers <fileId>
+chatbotx products imports create --fileId <id> --format <csv|xlsx> --columnMap <json>  # Start the import; 409 while one runs
+chatbotx products imports list                          # [--page --perPage --status --keyword --sort]
+chatbotx products find-by-imports <id>                  # Get one product import job
 ```
 
 ---

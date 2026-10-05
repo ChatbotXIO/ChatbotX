@@ -1,12 +1,24 @@
-import { contactService, tagService } from "@chatbotx.io/business"
+import {
+  broadcastService,
+  contactService,
+  tagService,
+} from "@chatbotx.io/business"
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
-import { possibleErrorsOnCreatingResource } from "@/lib/orpc/orpc-error-helper"
+import { sequenceService } from "@chatbotx.io/business/sequence"
+import {
+  possibleErrorsOnCreatingResource,
+  possibleErrorsOnMutatingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { enqueueBulkTagStatsContacts } from "../../lib/enqueue-bulk-tag-stats"
 import {
   bulkAddTagsPublicRequest,
   bulkContactIdsPublicRequest,
   bulkResultPublicResponse,
   bulkSubscribeSequencesPublicRequest,
+  bulkTagByStatsPublicRequest,
+  bulkTagByStatsPublicResponse,
+  bulkUnsubscribeSequencesPublicRequest,
 } from "../../schema/public/bulk"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -32,6 +44,42 @@ export const contactsBulkPublicRouter = {
           names: input.tags,
         })
       return { processed: processedContactIds.length, skippedContactIds }
+    }),
+
+  bulkTagByStats: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/contacts/bulk/tags/by-stats",
+      summary: "Tag contacts by stats event",
+      description:
+        'Queues a background job that adds the given tags (by name) to every contact behind one stats event, so you do not have to page through the recipients and tag them in batches of 1000. Pick the `source`: `broadcast` (with `broadcastId` and an `eventType`), `sequenceStep` (`sequenceId`, `stepId`) or `commentAutomation` (`automationId`). Contacts in `excludedContactIds` are skipped. Returns 202 as soon as the job is queued; a broadcast or sequence that is not in this workspace returns 404. Example: `{"source":"broadcast","broadcastId":"1","eventType":"message:seen","tags":["Engaged"]}`.',
+      successStatus: 202,
+      tags: ["Contacts"],
+    })
+    .input(bulkTagByStatsPublicRequest)
+    .output(bulkTagByStatsPublicResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      if (input.source === "broadcast") {
+        await broadcastService.findByIdOrName({
+          workspaceId,
+          idOrName: input.broadcastId,
+        })
+      } else if (input.source === "sequenceStep") {
+        await sequenceService.assertOwned({
+          workspaceId,
+          sequenceId: input.sequenceId,
+        })
+      }
+      return {
+        queued: await enqueueBulkTagStatsContacts({
+          workspaceId,
+          // The token has no member: attribute the job to the workspace owner.
+          requestedUserId: context.workspace.ownerId,
+          request: input,
+        }),
+      }
     }),
 
   bulkDelete: workspaceTokenAuthAPI
@@ -71,6 +119,28 @@ export const contactsBulkPublicRouter = {
     .handler(async ({ context, input }) => {
       const { processedContactIds, skippedContactIds } =
         await contactSequenceService.subscribeContacts({
+          workspaceId: context.workspace.id,
+          contactIds: input.contactIds,
+          sequenceIds: input.sequenceIds,
+        })
+      return { processed: processedContactIds.length, skippedContactIds }
+    }),
+
+  bulkUnsubscribeSequences: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/contacts/bulk/sequences/remove",
+      summary: "Unsubscribe multiple contacts from one or more sequences",
+      description:
+        "Removes every contact in `contactIds` that resolves in this workspace from every sequence in `sequenceIds`, cancelling their pending sequence messages. A contact that is not in a sequence is left as is. Contact ids that don't resolve are skipped and reported back in `skippedContactIds` rather than failing the whole request. Returns 404 when a sequence id is not in this workspace.",
+      tags: ["Contacts"],
+    })
+    .input(bulkUnsubscribeSequencesPublicRequest)
+    .output(bulkResultPublicResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const { processedContactIds, skippedContactIds } =
+        await contactSequenceService.unsubscribeContacts({
           workspaceId: context.workspace.id,
           contactIds: input.contactIds,
           sequenceIds: input.sequenceIds,

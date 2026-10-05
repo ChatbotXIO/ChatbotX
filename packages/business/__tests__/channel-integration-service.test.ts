@@ -100,6 +100,34 @@ describe("channelIntegrationService", () => {
     ])
   })
 
+  test("instagram is ads eligible only for Facebook-login accounts", async () => {
+    const base = {
+      inboxId: "2",
+      igId: "ig",
+      username: null,
+      coexistEnabled: false,
+      hasCapiScope: false,
+      datasetId: null,
+      capiTestEventCode: null,
+      capiDisconnectedAt: null,
+      tokenRefreshError: null,
+    }
+    queryModels.integrationInstagramModel.findMany.mockResolvedValue([
+      { ...base, id: "1", name: "Facebook login", type: "facebook" },
+      { ...base, id: "2", name: "Native login", type: "instagram" },
+    ])
+
+    const rows = await channelIntegrationService.list({
+      workspaceId: "ws-1",
+      channel: "instagram",
+    })
+
+    expect(rows.map((row) => [row.id, row.adsEligible])).toEqual([
+      ["1", true],
+      ["2", false],
+    ])
+  })
+
   test("zalo and tiktok are not ads eligible", async () => {
     queryModels.integrationZaloModel.findMany.mockResolvedValue([
       {

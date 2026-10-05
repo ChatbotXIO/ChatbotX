@@ -1,14 +1,23 @@
-import { createImportUpload, productService } from "@chatbotx.io/business"
+import {
+  createImportUpload,
+  importService,
+  productService,
+} from "@chatbotx.io/business"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { bulkUpdateIdsRequest } from "@/features/common/schema"
 import { peekImportHeadersForApi } from "@/features/import/lib/peek-import-headers-for-api"
 import {
+  getProductImportPublicRequest,
   importHeadersPublicRequest,
   importHeadersPublicResponse,
   importTemplatePublicRequest,
   importUploadUrlPublicRequest,
   importUploadUrlPublicResponse,
+  listContactImportsPublicRequest,
+  listProductImportsPublicResponse,
+  productImportPublicResource,
   productImportTemplatePublicResponse,
 } from "@/features/import/schema/public"
 import {
@@ -26,8 +35,9 @@ import {
   possibleErrorsOnMutatingResource,
   possibleErrorsOnPeekingImportHeaders,
   possibleErrorsOnStartingMetaCatalogRun,
+  possibleErrorsOnStartingProductImport,
 } from "@/lib/orpc/orpc-error-helper"
-import { withPublicPaging } from "@/lib/public-api/list"
+import { withListPagingNote, withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   createAndBindMetaCatalog,
@@ -37,6 +47,7 @@ import {
   selectMetaCatalog,
   syncProductsToMetaCatalog,
 } from "../lib/meta-catalog-operations"
+import { startProductImportJob } from "../lib/start-product-import"
 import {
   createMetaCatalogPublicRequest,
   createProductPublicRequest,
@@ -48,6 +59,8 @@ import {
   publicProductDetailResource,
   publicProductResource,
   selectMetaCatalogPublicRequest,
+  startProductImportPublicRequest,
+  startProductImportPublicResponse,
   syncMetaCatalogPublicRequest,
   updateProductPublicRequest,
 } from "../schema/public"
@@ -206,7 +219,7 @@ export const productsPublicRouter = {
       path: "/v1/products/imports/upload-url",
       summary: "Create product import upload URL",
       description:
-        "Step 1 of a product import: declares the CSV or XLSX (`fileName`, `mimeType`, `fileSize` in bytes, max 10 MB) and returns a presigned `presignedPostUrl` plus a `fileId`. Upload the file bytes to `presignedPostUrl` with an HTTP PUT, then start the import with that `fileId`.",
+        "Step 1 of a product import: declares the CSV or XLSX (`fileName`, `mimeType`, `fileSize` in bytes, max 10 MB) and returns a presigned `presignedPostUrl` plus a `fileId`. Upload the file bytes to `presignedPostUrl` with an HTTP PUT, then start the import with `products.startImport` using that `fileId`.",
       successStatus: 201,
       tags: ["Products"],
     })
@@ -222,6 +235,82 @@ export const productsPublicRouter = {
           type: "products",
         }),
     ),
+
+  startImport: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/products/imports",
+      summary: "Import products from file",
+      description:
+        "Starts an asynchronous bulk import of products from an uploaded CSV or XLSX file. Flow: `products.getImportTemplate` for the format, `products.createImportUpload` to get a `fileId` and upload URL, upload the file, `products.peekImportHeaders` to read its columns, then call this with `fileId`, `format` and `columnMap` (product field to file column header; only `name` is required). Every row is inserted as a new product (importing the same file twice creates duplicates; use `products.update` to change existing products). A category named in the file that does not exist is created unless `createMissingCategories` is false, in which case that row fails. Failed rows are listed in `errorSample` of `products.getImport`. Returns an `importId` immediately; track it with `products.getImport`. Only one product import can run per workspace: while one is pending or processing this returns 409.",
+      successStatus: 201,
+      tags: ["Products"],
+    })
+    .input(startProductImportPublicRequest)
+    .output(startProductImportPublicResponse)
+    .errors(possibleErrorsOnStartingProductImport)
+    .handler(
+      async ({ context, input }) =>
+        await startProductImportJob({
+          workspaceId: context.workspace.id,
+          userId: null,
+          fileId: input.fileId,
+          format: input.format,
+          meta: {
+            columnMap: input.columnMap,
+            createMissingCategories: input.createMissingCategories,
+          },
+        }),
+    ),
+
+  listImports: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/products/imports",
+      summary: "List product import jobs",
+      description: withListPagingNote(
+        "Returns background product-import jobs started with `products.startImport`, most recent first. Use `products.getImport` for one job's full detail.",
+      ),
+      tags: ["Products"],
+    })
+    .input(listContactImportsPublicRequest)
+    .output(listProductImportsPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => {
+      const { data, pageCount } = await importService.list({
+        ...input,
+        workspaceId: context.workspace.id,
+        type: "products",
+      })
+      return {
+        data: data.map((row) => ({ ...row, type: "products" as const })),
+        pageCount,
+      }
+    }),
+
+  getImport: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/products/imports/{id}",
+      summary: "Get product import job",
+      description:
+        "Returns one product import job's progress, result counts and `errorSample` (a sample of failed rows with the reason). Call `products.listImports` to find its id first.",
+      tags: ["Products"],
+    })
+    .input(getProductImportPublicRequest)
+    .output(productImportPublicResource)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const imported = await importService.find({
+        workspaceId: context.workspace.id,
+        id: input.id,
+        type: "products",
+      })
+      if (!imported) {
+        throw notFoundException("Import not found")
+      }
+      return { ...imported, type: "products" as const }
+    }),
 
   list: workspaceTokenAuthAPI
     .route({

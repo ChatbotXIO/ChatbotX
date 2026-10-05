@@ -188,3 +188,38 @@ describe("POST /v1/bot-fields/bulk-reset", () => {
     expect(procedure.route.successStatus).toBe(204)
   })
 })
+
+describe("GET /v1/bot-fields", () => {
+  const procedure = findProcedure("GET", "/v1/bot-fields")
+
+  test("passes the name and folder filters through and defaults to newest first", async () => {
+    botFieldService.list.mockResolvedValueOnce({ data: [], pageCount: 0 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { page: 1, perPage: 20, name: "tok", folderId: "0" },
+    })
+
+    expect(botFieldService.list).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      page: 1,
+      perPage: 20,
+      name: "tok",
+      folderId: "0",
+      sort: [{ id: "createdAt", desc: true }],
+    })
+  })
+
+  test("honours an explicit sort", async () => {
+    botFieldService.list.mockResolvedValueOnce({ data: [], pageCount: 0 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { page: 1, perPage: 20, sort: [{ id: "name", desc: false }] },
+    })
+
+    expect(botFieldService.list).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: [{ id: "name", desc: false }] }),
+    )
+  })
+})

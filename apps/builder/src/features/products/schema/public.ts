@@ -176,3 +176,56 @@ export const syncMetaCatalogPublicRequest = z
 export const metaCatalogBusinessesPublicResponse = z.array(
   z.object({ id: z.string(), name: z.string().nullish() }),
 )
+
+const columnDescription = (field: string) =>
+  `Header of the file column that holds the product ${field}. Take it from \`products.peekImportHeaders\`.`
+
+const requiredProductImportColumn = (field: string) =>
+  z
+    .string()
+    .min(1)
+    .describe(`Required. ${columnDescription(field)}`)
+
+const optionalProductImportColumn = (field: string) =>
+  z.string().optional().describe(columnDescription(field))
+
+export const startProductImportPublicRequest = z.object({
+  fileId: zodBigintAsString().describe(
+    "File id from `products.createImportUpload`, after the file bytes were uploaded.",
+  ),
+  format: z
+    .enum(["csv", "xlsx"])
+    .describe(
+      "Format of the uploaded file. It must match the file's extension and MIME type, otherwise the request is rejected with 422.",
+    ),
+  columnMap: z
+    .object({
+      name: requiredProductImportColumn("name"),
+      sku: optionalProductImportColumn("SKU"),
+      price: optionalProductImportColumn("price"),
+      discount: optionalProductImportColumn("discount"),
+      shortDescription: optionalProductImportColumn("short description"),
+      category: optionalProductImportColumn("category name"),
+      vendor: optionalProductImportColumn("vendor"),
+      inventoryQuantity: optionalProductImportColumn("inventory quantity"),
+      imageUrl: optionalProductImportColumn("image URL"),
+      productUrl: optionalProductImportColumn("product page URL"),
+    })
+    .describe(
+      "Maps product fields to file column headers. Only `name` is required; omitted fields are not imported.",
+    ),
+  createMissingCategories: z
+    .boolean()
+    .default(true)
+    .describe(
+      "When true (default) a category named in the file that does not exist yet is created; when false a row naming an unknown category fails and appears in the import's `errorSample`.",
+    ),
+})
+
+export const startProductImportPublicResponse = z.object({
+  importId: z
+    .string()
+    .describe(
+      "Id of the queued import job. Track it with `products.getImport`.",
+    ),
+})

@@ -7,6 +7,7 @@ import {
   releaseIdempotencyKey,
 } from "@/lib/idempotency/api-idempotency"
 import {
+  IDEMPOTENCY_EXEMPT_READ_PATHS,
   IDEMPOTENCY_KEY_HEADER,
   IDEMPOTENT_REPLAYED_HEADER,
 } from "@/lib/idempotency/constants"
@@ -31,6 +32,10 @@ export const apiIdempotencyMiddleware = os
 
       const method = (procedure["~orpc"].route.method ?? "POST").toUpperCase()
       if (method === "GET" || method === "HEAD") {
+        return await next()
+      }
+      const routePath = procedure["~orpc"].route.path
+      if (routePath && IDEMPOTENCY_EXEMPT_READ_PATHS.has(routePath)) {
         return await next()
       }
 

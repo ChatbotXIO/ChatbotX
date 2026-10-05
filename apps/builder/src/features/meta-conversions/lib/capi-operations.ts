@@ -105,3 +105,38 @@ export async function sendCapiTestEventFor(
     surfaceCapiError(error)
   }
 }
+
+/**
+ * Creates the channel's Meta dataset with the stored channel token (no
+ * credential is passed in) and reconnects a user-intent disconnect, exactly as
+ * the builder's "Create dataset" does.
+ */
+export async function provisionCapiDatasetFor(
+  input: IntegrationRef & { channel: MetaConversionsChannel },
+): Promise<void> {
+  const integration = await requireIntegration(input.channel, input)
+  try {
+    await metaConversionsService.provisionDatasetNow({
+      channel: input.channel,
+      integration,
+      provisionDataset: capiDatasetProvisioner(input.channel),
+    })
+  } catch (error) {
+    surfaceCapiError(error)
+  }
+  await metaConversionsService.reconnectCapi({
+    channel: input.channel,
+    integration,
+  })
+}
+
+/** Marks the Conversions API as user-disconnected; the stored dataset is kept. */
+export async function disconnectCapiFor(
+  input: IntegrationRef & { channel: MetaConversionsChannel },
+): Promise<void> {
+  const integration = await requireIntegration(input.channel, input)
+  await metaConversionsService.disconnectCapi({
+    channel: input.channel,
+    integration,
+  })
+}

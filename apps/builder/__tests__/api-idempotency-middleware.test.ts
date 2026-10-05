@@ -80,7 +80,7 @@ type Middleware = (
     }
     next: () => Promise<{ output: unknown }>
     path: readonly string[]
-    procedure: { "~orpc": { route: { method?: string } } }
+    procedure: { "~orpc": { route: { method?: string; path?: string } } }
   },
   input: unknown,
   output: (value: unknown) => unknown,
@@ -135,6 +135,61 @@ describe("apiIdempotencyMiddleware", () => {
 
     expect(next).toHaveBeenCalledOnce()
     expect(mocks.claim).not.toHaveBeenCalled()
+  })
+
+  test("skips a POST that only reads, so a repeated key never replays stale rows", async () => {
+    const next = vi.fn().mockResolvedValue({ output: { total: 3, data: [] } })
+    const output = vi.fn()
+
+    await expect(
+      middleware(
+        {
+          context: {
+            headers: new Headers({ "Idempotency-Key": "key-1" }),
+            apiCredentialId: "api-token:1",
+          },
+          next,
+          path: ["broadcasts", "previewAudience"],
+          procedure: {
+            "~orpc": {
+              route: {
+                method: "POST",
+                path: "/v1/broadcasts/audience/preview",
+              },
+            },
+          },
+        },
+        { channels: ["omnichannel"] },
+        output,
+      ),
+    ).resolves.toEqual({ output: { total: 3, data: [] } })
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(mocks.claim).not.toHaveBeenCalled()
+    expect(mocks.complete).not.toHaveBeenCalled()
+    expect(output).not.toHaveBeenCalled()
+  })
+
+  test("still protects a write POST on a similar path", async () => {
+    const next = vi.fn().mockResolvedValue({ output: { id: "b1" } })
+
+    await middleware(
+      {
+        context: {
+          headers: new Headers({ "Idempotency-Key": "key-1" }),
+          apiCredentialId: "api-token:1",
+        },
+        next,
+        path: ["broadcasts", "create"],
+        procedure: {
+          "~orpc": { route: { method: "POST", path: "/v1/broadcasts" } },
+        },
+      },
+      {},
+      vi.fn(),
+    )
+
+    expect(mocks.claim).toHaveBeenCalledOnce()
   })
 
   test("returns a replay without calling the handler", async () => {

@@ -14,12 +14,14 @@ import { MetaConversionsException } from "@chatbotx.io/integration-meta-conversi
  * Non-Meta errors are rethrown unchanged (they surface as the generic message)
  * unless a translated `fallback` is provided for the validation path.
  */
+export const CAPI_REQUEST_FAILED_CODE = "capiRequestFailed"
+
 export function surfaceCapiError(error: unknown, fallback?: string): never {
   if (error instanceof MetaConversionsException) {
-    throw new ChatbotXException(error.message)
+    throw new ChatbotXException(error.message, CAPI_REQUEST_FAILED_CODE, 400)
   }
   if (fallback) {
-    throw new ChatbotXException(fallback)
+    throw new ChatbotXException(fallback, CAPI_REQUEST_FAILED_CODE, 400)
   }
   throw error
 }

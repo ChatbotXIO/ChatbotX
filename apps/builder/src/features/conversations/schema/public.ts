@@ -53,9 +53,11 @@ export const threadControlPublicRequest = z
     contactInboxId: zodBigintAsString().describe(
       "Contact inbox of the conversation's contact to steer. Get it from `conversations.get` (`contactInboxes[].id`).",
     ),
-    action: threadControlActions.describe(
-      "`take` the thread from the partner, `release` it back, or `pass` it to the channel's escalation role.",
-    ),
+    action: z
+      .enum([...threadControlActions.options, "sync"])
+      .describe(
+        "`take` the thread from the partner, `release` it back, `pass` it to the channel's escalation role, or `sync` to only refresh the stored owner from the channel (changes nothing at the channel).",
+      ),
   })
   .and(conversationIdPathParam)
 
@@ -63,21 +65,9 @@ export const threadControlPublicResponse = z.object({
   status: z
     .enum(["applied", "notEscalation"])
     .describe(
-      "`applied`, or `notEscalation` when the channel refused a `take` because only the escalation partner may take the thread.",
+      "`applied` (always, for `sync`), or `notEscalation` when the channel refused a `take` because only the escalation partner may take the thread.",
     ),
   snapshot: threadControlSnapshotResource
     .optional()
     .describe("The routing state after the action; absent when refused."),
-})
-
-export const syncThreadOwnerPublicRequest = z
-  .object({
-    contactInboxId: zodBigintAsString().describe(
-      "Contact inbox of the conversation's contact to check. Get it from `conversations.get`.",
-    ),
-  })
-  .and(conversationIdPathParam)
-
-export const syncThreadOwnerPublicResponse = z.object({
-  snapshot: threadControlSnapshotResource,
 })

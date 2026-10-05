@@ -185,6 +185,12 @@ describe("isReadOnlyTokenAllowedMethod", () => {
     ).toBe(false)
   })
 
+  test("does not let a read_only token run the broadcast audience preview", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", "/v1/broadcasts/audience/preview"),
+    ).toBe(false)
+  })
+
   test("rejects POST/PUT/PATCH to every other path", () => {
     expect(isReadOnlyTokenAllowedMethod("POST", "/v1/ads/campaigns")).toBe(
       false,

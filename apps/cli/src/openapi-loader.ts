@@ -120,6 +120,9 @@ const METHOD_VERBED_SINGLETON_PATHS = new Set([
   "messenger/templates/{id}",
   "products/meta-catalog",
 ])
+// Collections under a resource that take both a list (GET) and a create (POST)
+// on the same path, which the generic naming would collapse into one command.
+const METHOD_VERBED_COLLECTION_PATHS = new Set(["products/imports"])
 const SINGLETON_VERBS: Record<string, string> = {
   get: "get",
   delete: "delete",
@@ -197,6 +200,11 @@ export function pathAndMethodToCommandName(
 
   if (!secondIsParam && METHOD_VERBED_SINGLETON_PATHS.has(normalized)) {
     const verb = segments[2] && m === "get" ? "get" : (SINGLETON_VERBS[m] ?? m)
+    return `${group}:${segments[1]}:${verb}`
+  }
+
+  if (!secondIsParam && METHOD_VERBED_COLLECTION_PATHS.has(normalized)) {
+    const verb = m === "get" ? "list" : (SINGLETON_VERBS[m] ?? m)
     return `${group}:${segments[1]}:${verb}`
   }
 

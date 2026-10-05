@@ -117,6 +117,12 @@ describe("ai-handover public routes", () => {
 
   test("getSettings validates the Page and returns defaults when never configured", async () => {
     mocks.find.mockResolvedValue(null)
+    mocks.findStatus.mockResolvedValue({
+      applyToAllCustomers: false,
+      revision: 0,
+      run: null,
+    })
+    mocks.findActive.mockResolvedValue(null)
 
     const result = await find(
       "GET",
@@ -130,13 +136,14 @@ describe("ai-handover public routes", () => {
       workspaceId: "ws-1",
       inboxId: "5",
     })
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       enabled: false,
       scheduleEnabled: false,
       timeRanges: [],
       gotoFlowId: null,
       returnMessage: null,
       pauseBotWaitingForStaff: false,
+      applyToAll: { status: "idle", applyToAllCustomers: false },
     })
   })
 
@@ -274,7 +281,8 @@ describe("ai-handover public routes", () => {
     })
   })
 
-  test("getApplyToAll reports idle for a Page never switched", async () => {
+  test("getSettings also reports apply-to-all as idle for a Page never switched", async () => {
+    mocks.find.mockResolvedValue(null)
     mocks.findStatus.mockResolvedValue({
       applyToAllCustomers: false,
       revision: 0,
@@ -284,17 +292,20 @@ describe("ai-handover public routes", () => {
 
     const result = await find(
       "GET",
-      `${BASE}/apply-to-all`,
+      `${BASE}/settings`,
     )?.({
       context,
       input: { inboxId: "5" },
     })
 
     expect(result).toMatchObject({
-      status: "idle",
-      applyToAllCustomers: false,
-      isAutomationActive: false,
-      run: null,
+      enabled: false,
+      applyToAll: {
+        status: "idle",
+        applyToAllCustomers: false,
+        isAutomationActive: false,
+        run: null,
+      },
     })
   })
 

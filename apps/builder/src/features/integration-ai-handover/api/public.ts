@@ -13,7 +13,7 @@ import { listAiHandoverBulkHistoryResponse } from "../schema/bulk"
 import {
   aiHandoverInboxIdParam,
   aiHandoverSettingsResource,
-  applyToAllStatusPublicResponse,
+  aiHandoverSettingsWithStatusResource,
   listAiHandoverHistoryPublicRequest,
   saveAiHandoverSettingsPublicRequest,
   setApplyToAllPublicRequest,
@@ -41,18 +41,26 @@ export const aiHandoverPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/inboxes/{inboxId}/ai-handover/settings",
-      summary: "Get AI hand-over settings",
+      summary: "Get AI hand-over settings and status",
       description:
-        "Returns a Messenger Page's Meta Business AI hand-over settings: the master switch, optional schedule, the flow or message used when the AI hands a conversation back. A Page that never configured it returns the defaults (everything off). Find the Page with `inboxes.list`.",
+        "Returns a Messenger Page's Meta Business AI hand-over settings (the master switch, optional schedule, the flow or message used when the AI hands a conversation back) and, in `applyToAll`, whether the Page is set to hand every customer to the AI, whether the automation is running now and the latest run's status (counts, errors, pause). A Page that never configured it returns the defaults (everything off). Poll it after `aiHandover.setApplyToAll`. Find the Page with `inboxes.list`.",
       tags: ["Integrations"],
     })
     .input(aiHandoverInboxIdParam)
-    .output(aiHandoverSettingsResource)
+    .output(aiHandoverSettingsWithStatusResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const ref = { workspaceId: context.workspace.id, inboxId: input.inboxId }
       await aiHandoverSettingsService.requireInbox(ref)
-      return toSettingsResource(await aiHandoverSettingsService.find(ref))
+      const [settings, state, activeSettings] = await Promise.all([
+        aiHandoverSettingsService.find(ref),
+        aiHandoverBulkRunService.findStatus(ref),
+        aiHandoverSettingsService.findActive(ref),
+      ])
+      return {
+        ...toSettingsResource(settings),
+        applyToAll: toApplyToAllStatus(state, activeSettings !== null),
+      }
     }),
 
   saveSettings: workspaceTokenAuthAPI
@@ -78,35 +86,13 @@ export const aiHandoverPublicRouter = {
       )
     }),
 
-  getApplyToAll: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/inboxes/{inboxId}/ai-handover/apply-to-all",
-      summary: "Get AI hand-over apply-to-all status",
-      description:
-        "Returns whether the Page is set to hand every customer to the AI, whether the automation is running now, and the status of the latest run (counts, errors, pause). Poll it after `aiHandover.setApplyToAll`.",
-      tags: ["Integrations"],
-    })
-    .input(aiHandoverInboxIdParam)
-    .output(applyToAllStatusPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
-    .handler(async ({ context, input }) => {
-      const ref = { workspaceId: context.workspace.id, inboxId: input.inboxId }
-      await aiHandoverSettingsService.requireInbox(ref)
-      const [state, activeSettings] = await Promise.all([
-        aiHandoverBulkRunService.findStatus(ref),
-        aiHandoverSettingsService.findActive(ref),
-      ])
-      return toApplyToAllStatus(state, activeSettings !== null)
-    }),
-
   setApplyToAll: workspaceTokenAuthAPI
     .route({
       method: "POST",
       path: "/v1/inboxes/{inboxId}/ai-handover/apply-to-all",
       summary: "Set AI hand-over apply-to-all",
       description:
-        "Moves a Page's `applyToAllCustomers` switch: ON hands every eligible customer thread to Meta Business AI (the Page's automation must be running), OFF takes them back and sends `message` (required) with the HUMAN_AGENT tag. This messages real customers. First call with `dryRun: true` to get `eligibleCount`, then call again with `confirmCount` set to the most customers you accept; it is refused when more are eligible at that moment or when the change cannot start immediately (a previous run is still winding down). It is a check at request time, not a cap: customers who become eligible while the run progresses are still included. Track progress with `aiHandover.getApplyToAll`.",
+        "Moves a Page's `applyToAllCustomers` switch: ON hands every eligible customer thread to Meta Business AI (the Page's automation must be running), OFF takes them back and sends `message` (required) with the HUMAN_AGENT tag. This messages real customers. First call with `dryRun: true` to get `eligibleCount`, then call again with `confirmCount` set to the most customers you accept; it is refused when more are eligible at that moment or when the change cannot start immediately (a previous run is still winding down). It is a check at request time, not a cap: customers who become eligible while the run progresses are still included. Track progress with `aiHandover.getSettings` (`applyToAll`).",
       tags: ["Integrations"],
     })
     .input(setApplyToAllPublicRequest)

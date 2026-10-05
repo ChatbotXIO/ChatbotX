@@ -27,7 +27,7 @@ const parseStrictContactFilter = (value: unknown) => {
   }
 }
 
-const strictContactFilter = z.preprocess(
+export const strictContactFilter = z.preprocess(
   parseStrictContactFilter,
   contactFilterCriteriaSchema
     .optional()

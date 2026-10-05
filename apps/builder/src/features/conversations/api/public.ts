@@ -30,8 +30,6 @@ import {
   assignConversationPublicRequest,
   conversationIdPathParam,
   getConversationPublicResponse,
-  syncThreadOwnerPublicRequest,
-  syncThreadOwnerPublicResponse,
   threadControlPublicRequest,
   threadControlPublicResponse,
 } from "../schema/public"
@@ -428,9 +426,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/thread-control",
-      summary: "Take, release or pass conversation thread",
+      summary: "Control conversation thread",
       description:
-        "Controls who owns a contact inbox's routing thread on channels that share a conversation with another app (e.g. WhatsApp with Meta AI or a partner): `take` it, `release` it, or `pass` it to the escalation role. Read `contactInboxes[].threadControlState` and `threadOwnerRole` with `conversations.get` first. A `take` the channel refuses returns `status: notEscalation` (HTTP 200) instead of an error.",
+        "Controls who owns a contact inbox's routing thread on channels that share a conversation with another app (e.g. WhatsApp with Meta AI or a partner): `take` it, `release` it, or `pass` it to the escalation role. `sync` asks the channel who currently owns the thread and updates the stored state to match without changing anything at the channel (channels that cannot report an owner, like WhatsApp, leave it unchanged). Read `contactInboxes[].threadControlState` and `threadOwnerRole` with `conversations.get` first. A `take` the channel refuses returns `status: notEscalation` (HTTP 200) instead of an error. Every successful call returns the routing `snapshot`.",
       tags: ["Conversations"],
     })
     .input(threadControlPublicRequest)
@@ -441,6 +439,16 @@ export const conversationsPublicRouter = {
       const conversation = await conversationService.findByOrFail({
         where: { id: input.id, workspaceId },
       })
+      if (input.action === "sync") {
+        return {
+          status: "applied" as const,
+          snapshot: await syncConversationThreadOwner({
+            workspaceId,
+            conversation,
+            contactInboxId: input.contactInboxId,
+          }),
+        }
+      }
       try {
         const snapshot = await requestConversationThreadControl({
           workspaceId,
@@ -459,32 +467,6 @@ export const conversationsPublicRouter = {
           (key) => THREAD_CONTROL_ERROR_COPY[key],
         )
         return { status: refusal.status }
-      }
-    }),
-
-  syncThreadOwner: workspaceTokenAuthAPI
-    .route({
-      method: "POST",
-      path: "/v1/conversations/{id}/thread-control/sync",
-      summary: "Sync conversation thread owner",
-      description:
-        "Asks the contact inbox's channel who currently owns the routing thread and updates the stored state to match, then returns it. Channels that cannot report an owner (WhatsApp) leave the state unchanged. Use `conversations.get` to find `contactInboxId`.",
-      tags: ["Conversations"],
-    })
-    .input(syncThreadOwnerPublicRequest)
-    .output(syncThreadOwnerPublicResponse)
-    .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      const workspaceId = context.workspace.id
-      const conversation = await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
-      return {
-        snapshot: await syncConversationThreadOwner({
-          workspaceId,
-          conversation,
-          contactInboxId: input.contactInboxId,
-        }),
       }
     }),
 }

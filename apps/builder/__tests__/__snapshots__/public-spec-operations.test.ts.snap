@@ -239,11 +239,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
-    "operationId": "aiHandover.getApplyToAll",
-    "path": "/v1/inboxes/{inboxId}/ai-handover/apply-to-all",
-  },
-  {
-    "method": "GET",
     "operationId": "aiHandover.getSettings",
     "path": "/v1/inboxes/{inboxId}/ai-handover/settings",
   },
@@ -649,6 +644,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "broadcasts.previewAudience",
+    "path": "/v1/broadcasts/audience/preview",
+  },
+  {
+    "method": "POST",
     "operationId": "broadcasts.resend",
     "path": "/v1/broadcasts/{id}/resend",
   },
@@ -826,6 +826,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "contacts.bulkSubscribeSequences",
     "path": "/v1/contacts/bulk/sequences",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkTagByStats",
+    "path": "/v1/contacts/bulk/tags/by-stats",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkUnsubscribeSequences",
+    "path": "/v1/contacts/bulk/sequences/remove",
   },
   {
     "method": "DELETE",
@@ -1106,11 +1116,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "conversations.read",
     "path": "/v1/conversations/{id}/read",
-  },
-  {
-    "method": "POST",
-    "operationId": "conversations.syncThreadOwner",
-    "path": "/v1/conversations/{id}/thread-control/sync",
   },
   {
     "method": "POST",
@@ -1578,6 +1583,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/teams/{id}",
   },
   {
+    "method": "DELETE",
+    "operationId": "instagramChannels.disconnectCapi",
+    "path": "/v1/instagram-channels/{id}/capi",
+  },
+  {
     "method": "GET",
     "operationId": "instagramChannels.get",
     "path": "/v1/instagram-channels/{id}",
@@ -1808,6 +1818,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/conversations/{conversationId}/messages/{messageId}",
   },
   {
+    "method": "DELETE",
+    "operationId": "messengerChannels.disconnectCapi",
+    "path": "/v1/messenger-channels/{id}/capi",
+  },
+  {
     "method": "GET",
     "operationId": "messengerChannels.get",
     "path": "/v1/messenger-channels/{id}",
@@ -1999,6 +2014,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "products.getImport",
+    "path": "/v1/products/imports/{id}",
+  },
+  {
+    "method": "GET",
     "operationId": "products.getImportTemplate",
     "path": "/v1/products/import-template",
   },
@@ -2011,6 +2031,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "products.list",
     "path": "/v1/products",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.listImports",
+    "path": "/v1/products/imports",
   },
   {
     "method": "GET",
@@ -2031,6 +2056,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "products.setActive",
     "path": "/v1/products/{id}/active",
+  },
+  {
+    "method": "POST",
+    "operationId": "products.startImport",
+    "path": "/v1/products/imports",
   },
   {
     "method": "POST",
@@ -2533,6 +2563,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/webhooks/{id}/settings",
   },
   {
+    "method": "POST",
+    "operationId": "whatsappCalls.generateSummary",
+    "path": "/v1/whatsapp/calls/{id}/summary/generate",
+  },
+  {
     "method": "GET",
     "operationId": "whatsappCalls.getRecording",
     "path": "/v1/whatsapp/calls/{id}/recording",
@@ -2551,6 +2586,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "whatsappCalls.list",
     "path": "/v1/whatsapp/calls",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappCalls.listSummaryProviders",
+    "path": "/v1/whatsapp/calls/summary-providers",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "whatsappChannels.disconnectCapi",
+    "path": "/v1/whatsapp-channels/{id}/capi",
   },
   {
     "method": "GET",

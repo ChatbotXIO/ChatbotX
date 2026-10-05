@@ -66,9 +66,9 @@ function summarize(
 ): ChannelIntegrationSummary {
   return {
     ...SUMMARY_DEFAULTS,
+    adsEligible: adsEligibleChannels.has(channel),
     ...fields,
     channel,
-    adsEligible: adsEligibleChannels.has(channel),
   }
 }
 
@@ -156,6 +156,7 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         inboxId: true,
         name: true,
         igId: true,
+        type: true,
         username: true,
         coexistEnabled: true,
         hasCapiScope: true,
@@ -171,6 +172,9 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         inboxId: row.inboxId,
         name: row.name,
         externalId: row.igId,
+        // Click-to-message ads need a Facebook-login account; accounts
+        // connected through native Instagram login cannot run them.
+        adsEligible: row.type === "facebook",
         username: row.username,
         coexistEnabled: row.coexistEnabled,
         hasCapiScope: row.hasCapiScope,

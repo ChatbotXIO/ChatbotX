@@ -169,6 +169,23 @@ describe("pathAndMethodToCommandName — messenger templates by id", () => {
   })
 })
 
+describe("pathAndMethodToCommandName — products imports collection", () => {
+  test("list (GET) and start (POST) on the same path get distinct commands", () => {
+    expect(pathAndMethodToCommandName("/v1/products/imports", "GET")).toBe(
+      "products:imports:list",
+    )
+    expect(pathAndMethodToCommandName("/v1/products/imports", "POST")).toBe(
+      "products:imports:create",
+    )
+  })
+
+  test("one job is still found by id", () => {
+    expect(pathAndMethodToCommandName("/v1/products/imports/{id}", "GET")).toBe(
+      "products:find-by-imports",
+    )
+  })
+})
+
 describe("pathAndMethodToCommandName — meta catalog singleton", () => {
   test("GET (state) and POST (create) get distinct commands", () => {
     expect(pathAndMethodToCommandName("/v1/products/meta-catalog", "GET")).toBe(

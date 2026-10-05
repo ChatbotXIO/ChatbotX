@@ -1,8 +1,12 @@
 import { broadcastService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { broadcastStatuses } from "@chatbotx.io/database/partials"
+import {
+  broadcastStatuses,
+  resolveBroadcastAudienceRange,
+} from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
+import { resolveContactAvatars } from "@/features/contacts/queries/resolve-contact-avatars"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnActivatingBroadcast,
@@ -11,9 +15,11 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnReadingWithBody,
 } from "@/lib/orpc/orpc-error-helper"
 import { BROADCAST_STOP_TOKEN_PATH } from "@/lib/workspace/authorize-workspace-access"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH } from "../lib/api-paths"
 import {
   createBroadcastRequest,
   resolveScheduleTime,
@@ -23,6 +29,8 @@ import {
 } from "../schema/action"
 import {
   listBroadcastsPublicRequest,
+  previewBroadcastAudiencePublicRequest,
+  previewBroadcastAudiencePublicResponse,
   publicListBroadcastContactsRequest,
   publicListBroadcastContactsResponse,
 } from "../schema/public"
@@ -148,6 +156,51 @@ export const broadcastsPublicRouter = {
         }),
     ),
 
+  previewAudience: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
+      summary: "Preview broadcast audience before send",
+      description:
+        "Counts and lists the contact inboxes a broadcast would be sent to, without creating anything. `total` is the size of the whole audience (the `audienceRangeStart`/`audienceRangeEnd` window already applied, one contact on several channels counts once per channel); `data` is one page of it in send order (ascending contact inbox id), `page` from 1 and `perPage` up to 50. Select the audience like `broadcasts.create`: `subaction`, `contactFilter`, the window, and the inboxes with `inboxIds`, or `channels` (`omnichannel` = every channel), or an integration id; none given means an empty audience (`total` 0). `fullName`, `avatar` and `occurredAt` come from the contact. Use `perPage: 1` when you only need `total`. A page past the window is empty. Use `broadcasts.getAudience` for a broadcast that already exists.",
+      tags: ["Broadcasts"],
+    })
+    .input(previewBroadcastAudiencePublicRequest)
+    .output(previewBroadcastAudiencePublicResponse)
+    .errors(possibleErrorsOnReadingWithBody)
+    .handler(async ({ context, input }) => {
+      const audience = {
+        workspaceId: context.workspace.id,
+        channels: input.channels,
+        inboxIds: input.inboxIds,
+        integrationWhatsappId: input.integrationWhatsappId,
+        integrationMessengerId: input.integrationMessengerId,
+        contactFilter: input.contactFilter,
+        subaction: input.subaction,
+        audienceRange: resolveBroadcastAudienceRange(input),
+      }
+      const [total, rows] = await Promise.all([
+        broadcastService.countAudience(audience),
+        broadcastService.listAudiencePreview({
+          ...audience,
+          page: input.page ?? 1,
+          perPage: input.perPage ?? 20,
+        }),
+      ])
+      const withAvatars = await resolveContactAvatars(
+        rows.map((row) => ({ ...row, id: row.contactId })),
+        context.workspace.id,
+        { publicUrls: true },
+      )
+      return {
+        total,
+        data: withAvatars.map(({ id: _id, createdAt, ...row }) => ({
+          ...row,
+          occurredAt: createdAt.toISOString(),
+        })),
+      }
+    }),
+
   // Delivery stats already have a public route under the `analytics` scope
   // (`GET /v1/analytics/broadcasts/{broadcastId}/stats`, cached) — not
   // duplicated here.
@@ -158,7 +211,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/contacts",
       summary: "List broadcast recipients by event type",
       description:
-        "Returns contacts that reached one delivery event (e.g. sent, delivered, read, failed) for a broadcast.",
+        "Returns contacts that reached one event for a broadcast (`message:sent`, `message:delivered`, `message:seen`, `message:failed` or `flow:clicked`; `message:received` and `flow:ref` behave like `message:delivered`).",
       tags: ["Broadcasts"],
     })
     .input(publicListBroadcastContactsRequest)

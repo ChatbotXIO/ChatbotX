@@ -446,16 +446,16 @@ an endpoint's scope.
   is not authorized for channel configuration or operations.
 
 - **Conversation routing and AI hand-over** — `POST
-  /v1/conversations/{id}/thread-control` (take/release/pass; scope `inbox`) and
-  `.../thread-control/sync` call the same `channel-registry` functions as the
-  inbox UI, including the check that the contact inbox belongs to the
+  /v1/conversations/{id}/thread-control` (`action` take/release/pass/sync; scope `inbox`)
+  calls the same `channel-registry` functions as the inbox UI, including the check that the contact inbox belongs to the
   conversation's contact. `bypassThreadControlLock` is not exposed. A refused
   `take` returns `status: notEscalation` (200), not an error.
   `PATCH /v1/{whatsapp,messenger}-channels/{id}/handover-resume-flow` (scope
   `channels`) replaces the UI's super-admin gate. Meta Business AI hand-over
   lives under `/v1/inboxes/{inboxId}/ai-handover/*` with scope `integrations`:
-  settings (GET/PUT; saving off also stops a running enable), apply-to-all
-  (GET status, POST switch, POST retry) and history. Apply-to-all messages and
+  settings (GET also returns the apply-to-all status as `applyToAll`; PUT saves,
+  saving off also stops a running enable), apply-to-all (POST switch, POST
+  retry) and history. Apply-to-all messages and
   hands over real customers, so the POST is bounded: `dryRun: true` returns
   `eligibleCount` and changes nothing, and a real change must carry
   `confirmCount` (the most customers the caller accepts) or it is refused when
@@ -519,14 +519,18 @@ an endpoint's scope.
   `GET /v1/whatsapp/calls` (cursor-paginated history of every call of the
   workspace; the recording's storage path is never returned, only
   `hasRecording`), `.../{id}/recording` (15-minute signed URL),
-  `.../{id}/transcript`, `.../{id}/summary`. These are customer PII and calling
+  `.../{id}/transcript`, `.../{id}/summary`, `POST .../{id}/summary/generate`
+  (writes an AI summary; `provider` may be omitted when exactly one is
+  connected, otherwise list them with `GET /v1/whatsapp/calls/summary-providers`). These are customer PII and calling
   is paid, so only `scopes: null` and explicit `integrations` tokens reach
   them. Scope `channels`: `PUT /v1/{whatsapp,messenger,instagram}-channels/{id}/capi/dataset`,
   `.../capi/test-event-code` and `POST .../capi/test-event` (the dataset is
   validated with Meta; while a test event code is set every CAPI event goes to
   Test Events). The channel list shows `capiTestEventCode` and
-  `capiDisconnected`. Provisioning a dataset, disconnecting and custom connect
-  stay private. Scope `broadcasts`: `GET /v1/whatsapp/templates/{id}`,
+  `capiDisconnected`. `PUT .../{id}/capi/dataset` without `datasetId` creates
+  a dataset with the channel's stored token (either way it reconnects a
+  disconnected channel) and `DELETE .../{id}/capi` disconnects; custom connect stays private because it
+  takes an access token. Scope `broadcasts`: `GET /v1/whatsapp/templates/{id}`,
   `POST /v1/whatsapp-channels/{id}/templates/sync`,
   `GET /v1/whatsapp/templates/catalog-products`, and WhatsApp Flows
   (`GET /v1/whatsapp/flows`, `.../{flowId}/screens`,
@@ -570,8 +574,10 @@ an endpoint's scope.
   `GET /v1/{contacts,products}/imports/files/{fileId}/headers` reads the header
   row (only for a file of that import type — another type reads as "not
   found"), and `GET /v1/{contacts,products}/import-template` returns the
-  CSV text / base64 XLSX template. `contacts.import` returns 409 while another
-  import is pending or processing.
+  CSV text / base64 XLSX template. `contacts.import` and `products.startImport`
+  (`POST /v1/products/imports`, with `columnMap`) return 409 while another import
+  of that type is pending or processing; `GET /v1/products/imports` and
+  `.../{id}` read product import jobs like the contact ones.
 
 - **Minigames** — this scope shipped in the enum/registry/i18n alongside
   `ads` but, like `ads`, carried no endpoints for a while. It now publishes
@@ -694,6 +700,21 @@ approved as UI-only.
   allow-listed for `read_only` tokens and trial-expired workspaces. Only tags:
   sequence, broadcast, ref-link, inbox, member and team names belong to other
   scopes and come from their own list routes.
+- `POST /v1/broadcasts/audience/preview` counts (`total`) and lists the
+  contact inboxes a broadcast *would* reach (same selectors as
+  `broadcasts.create`, the audience window applied) before anything exists. It
+  is a pure read that stays open on trial-expired workspaces, but a
+  `read_only` token cannot call it: it pages every contact of the workspace
+  and takes an arbitrary `contactFilter`.
+- `POST /v1/contacts/bulk/sequences/remove` is the bulk counterpart of
+  `bulk/sequences`. `POST /v1/contacts/bulk/tags/by-stats` queues the same
+  background job as the builder's "tag everyone behind this stat" (sources
+  `broadcast`, `sequenceStep`, `commentAutomation`); it is attributed to the
+  workspace owner because a token has no member. The comment-automation
+  drill-down is `GET /v1/analytics/comment-automation/contacts`.
+- `adsEligible` is false for Instagram accounts connected through native
+  Instagram login; only Facebook-login accounts can run click-to-message ads.
+- `GET /v1/bot-fields` takes `name`, `folderId` (`"0"` = no folder) and `sort`.
 - BSUID and WhatsApp username are on the contact-inbox resource
   (`sourceUserId`, `sourceUsername`); a BSUID-only contact is keyed by it in
   `sourceId`.

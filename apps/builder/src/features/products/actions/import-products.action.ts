@@ -1,15 +1,14 @@
 "use server"
 
-import { importService } from "@chatbotx.io/business"
 import {
   importFormats,
   productImportMetaSchema,
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { z } from "zod"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { startProductImportJob } from "../lib/start-product-import"
 
 const importProductsRequest = z.object({
   fileId: zodBigintAsString(),
@@ -25,27 +24,12 @@ export const importProductsAction = workspaceActionClient
       ctx: { user },
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
-    }) => {
-      const row = await importService.startProductImport({
+    }) =>
+      await startProductImportJob({
         workspaceId,
         userId: user.id,
         fileId: parsedInput.fileId,
         format: parsedInput.format,
         meta: parsedInput.meta,
-      })
-      try {
-        await defaultQueue.add(
-          DefaultJobAction.runImport,
-          {
-            type: DefaultJobAction.runImport,
-            data: { importId: row.id },
-          },
-          { jobId: `import-products-${row.id}` },
-        )
-      } catch (error) {
-        await importService.fail(row.id, "Unable to queue product import")
-        throw error
-      }
-      return { importId: row.id }
-    },
+      }),
   )
