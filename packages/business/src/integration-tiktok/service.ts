@@ -5,12 +5,16 @@ import type { IntegrationTiktokModel } from "@chatbotx.io/database/types"
 import {
   buildTiktokVideoUrl,
   findTiktokVideo,
+  getTiktokDirectReplyStatus,
   type TiktokAuthValue,
+  type TiktokDirectReplyStatus,
   tiktokCanListVideos,
+  updateTiktokDirectReplyStatus,
 } from "@chatbotx.io/integration-tiktok"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { connectionStateService } from "../connection/state-service"
+import { ChatbotXException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
 import { logger } from "../logger"
 
@@ -84,6 +88,122 @@ class TiktokIntegrationService extends BaseService {
       .update(integrationTiktokModel)
       .set({ auth, tokenRefreshError: null })
       .where(eq(integrationTiktokModel.id, id))
+  }
+
+  /**
+   * Turns TikTok's Comment-to-Message on or off for one connected account.
+   *
+   * TikTok's own rejection text is the only thing that says WHICH eligibility
+   * rule an account failed — registered in Vietnam, Indonesia or Thailand;
+   * owner over 18; a Registered Business Account or one that has run Messaging
+   * Ads; messaging permissions set to "Requests". So it is surfaced verbatim
+   * rather than replaced with a generic failure.
+   */
+  async setCommentToMessage(props: {
+    workspaceId: string
+    id: string
+    enabled: boolean
+  }): Promise<TiktokDirectReplyStatus> {
+    const { workspaceId, id, enabled } = props
+    const integration = await this.findById({ id, workspaceId })
+    const auth = integration.auth as TiktokAuthValue
+    const status: TiktokDirectReplyStatus = enabled ? "ENABLE" : "DISABLE"
+
+    try {
+      await updateTiktokDirectReplyStatus(
+        auth.tokens.accessToken,
+        auth.metadata.openId,
+        status,
+      )
+    } catch (error) {
+      logger.error(
+        { err: error, id, workspaceId },
+        "Failed to update TikTok Comment-to-Message",
+      )
+      throw new ChatbotXException(
+        error instanceof Error
+          ? error.message
+          : "Failed to update TikTok Comment-to-Message",
+      )
+    }
+
+    await this.cacheCommentToMessageStatus({ id, auth, status })
+
+    await this.audit(
+      "update",
+      `${enabled ? "enabled" : "disabled"} TikTok Comment-to-Message`,
+    )
+
+    return status
+  }
+
+  /**
+   * Re-reads the setting from TikTok and re-caches it.
+   *
+   * Exists because the toggle can be flipped in the TikTok app, and because
+   * every connection made before this shipped carries no cached value at all —
+   * without a way to ask, those rows would read "off" forever. `null` when
+   * TikTok answered without a status: leaving the cache alone beats recording
+   * a guess the toggle would then present as fact.
+   */
+  async refreshCommentToMessage(props: {
+    workspaceId: string
+    id: string
+  }): Promise<TiktokDirectReplyStatus | null> {
+    const { workspaceId, id } = props
+    const integration = await this.findById({ id, workspaceId })
+    const auth = integration.auth as TiktokAuthValue
+
+    let status: TiktokDirectReplyStatus | undefined
+    try {
+      status = await getTiktokDirectReplyStatus(
+        auth.tokens.accessToken,
+        auth.metadata.openId,
+      )
+    } catch (error) {
+      logger.error(
+        { err: error, id, workspaceId },
+        "Failed to read the TikTok Comment-to-Message setting",
+      )
+      throw new ChatbotXException(
+        error instanceof Error
+          ? error.message
+          : "Failed to read the TikTok Comment-to-Message setting",
+      )
+    }
+
+    if (!status) {
+      return null
+    }
+
+    await this.cacheCommentToMessageStatus({ id, auth, status })
+    return status
+  }
+
+  /**
+   * Caches the status on the integration's auth metadata.
+   *
+   * A cache, never the authority — the owner can flip Comment-to-Message inside
+   * the TikTok app and nothing notifies us, which is why a re-check exists. The
+   * spread keeps `scopes` and the profile fields, which token refresh re-stamps
+   * onto this same object.
+   */
+  private async cacheCommentToMessageStatus(props: {
+    id: string
+    auth: TiktokAuthValue
+    status: TiktokDirectReplyStatus
+  }): Promise<void> {
+    const updatedAuth: TiktokAuthValue = {
+      ...props.auth,
+      metadata: {
+        ...props.auth.metadata,
+        commentToMessage: {
+          status: props.status,
+          checkedAt: new Date().toISOString(),
+        },
+      },
+    }
+    await this.updateAuth(props.id, updatedAuth)
   }
 
   async markTokenRefreshError(id: string, error: string): Promise<void> {

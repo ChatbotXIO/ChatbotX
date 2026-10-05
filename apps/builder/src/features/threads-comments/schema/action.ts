@@ -238,18 +238,41 @@ export function createThreadsCommentRequestSchema(
     })
 
   return z.object({
-    name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
-    post: threadsPostSchema,
-    publicReply: threadsReplySchema,
-    includeKeywords: threadsIncludeKeywordsSchema,
-    excludeKeywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(MAX_NAME_LENGTH)
+      .describe("Automation name."),
+    post: threadsPostSchema.describe(
+      "Which comments to answer: `all` posts or specific `postIds` (get them from `threadsComments.listPosts`).",
+    ),
+    publicReply: threadsReplySchema.describe(
+      "Public reply posted under the comment: `text`, a `flow`, an `AIAgent`, or `none`.",
+    ),
+    includeKeywords: threadsIncludeKeywordsSchema.describe(
+      "Only trigger when the comment matches these keywords, or `mentions` to trigger on comments that tag the account.",
+    ),
+    excludeKeywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH).describe(
+      "Never trigger when the comment matches these keywords.",
+    ),
     // Optional, never defaulted here: the update schema is this one made
     // `.partial()`, and a default would reset the stored match type on every
     // PATCH that did not mention it. The column defaults to `contain`.
-    excludeKeywordsType: commentExcludeKeywordsTypes.optional(),
-    options: threadsOptionsSchema,
-    hideComments: threadsHideCommentsSchema.optional(),
-    replyAfter: threadsReplyAfterSchema,
+    excludeKeywordsType: commentExcludeKeywordsTypes
+      .optional()
+      .describe(
+        "How `excludeKeywords` match: `equal` (the whole comment) or `contain` (anywhere in it).",
+      ),
+    options: threadsOptionsSchema.describe(
+      "Matching and trigger behavior options.",
+    ),
+    hideComments: threadsHideCommentsSchema
+      .optional()
+      .describe("Whether to hide matching comments after replying."),
+    replyAfter: threadsReplyAfterSchema.describe(
+      "Delay before sending the reply.",
+    ),
   })
 }
 
@@ -291,7 +314,10 @@ export const updateThreadsCommentRequest = createThreadsCommentRequest
   .partial()
   .and(
     z.object({
-      isActive: z.boolean().optional(),
+      isActive: z
+        .boolean()
+        .optional()
+        .describe("Whether the automation is enabled."),
     }),
   )
   .refine((value) => Object.keys(value).length > 0, {

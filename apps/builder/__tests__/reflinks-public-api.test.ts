@@ -53,7 +53,17 @@ const reflinkService = {
   update: vi.fn(),
   deleteMany: vi.fn(),
 }
-vi.mock("@chatbotx.io/business", () => ({ reflinkService }))
+const inboxService = {
+  listWithIntegrationsByWorkspace: vi.fn(async () => [] as unknown[]),
+}
+const resolveTenantSettings = vi.fn(async () => ({
+  appUrl: "https://app.tenant.test",
+}))
+vi.mock("@chatbotx.io/business", () => ({
+  reflinkService,
+  inboxService,
+  resolveTenantSettings,
+}))
 
 vi.mock("@chatbotx.io/database/schema", () => {
   const schema = {
@@ -85,6 +95,7 @@ const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
 
 beforeEach(() => {
   vi.clearAllMocks()
+  inboxService.listWithIntegrationsByWorkspace.mockResolvedValue([])
 })
 
 test("registers the reflinks public router under the automation scope", () => {
@@ -179,5 +190,80 @@ describe("DELETE /v1/ref-links/{id}", () => {
       workspaceId: "workspace-1",
       ids: ["reflink-1"],
     })
+  })
+})
+
+describe("open-chat links", () => {
+  const inbox = (overrides: Record<string, unknown>) => ({
+    id: "inbox-1",
+    name: "My Page",
+    workspaceId: "workspace-1",
+    sourceId: "page-1",
+    channel: "messenger",
+    ...overrides,
+  })
+
+  test("returns one link per linkable channel of the token workspace", async () => {
+    reflinkService.findOrFail.mockResolvedValueOnce({
+      id: "reflink-1",
+      name: "welcome",
+    })
+    inboxService.listWithIntegrationsByWorkspace.mockResolvedValueOnce([
+      inbox({}),
+      inbox({ id: "inbox-2", channel: "zalo", sourceId: "oa-1", name: "OA" }),
+      inbox({ id: "inbox-3", channel: "smtp", name: "Mail" }),
+      inbox({ id: "inbox-4", channel: "tiktok", name: "TT" }),
+    ])
+
+    const result = (await findProcedure("GET", "/v1/ref-links/{id}").handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "reflink-1" },
+    })) as { links: Record<string, unknown>[] }
+
+    expect(inboxService.listWithIntegrationsByWorkspace).toHaveBeenCalledWith(
+      "workspace-1",
+    )
+    expect(result.links).toEqual([
+      {
+        inboxId: "inbox-1",
+        inboxName: "My Page",
+        channel: "messenger",
+        url: "https://m.me/page-1?ref=welcome",
+        receivesRef: true,
+      },
+      {
+        inboxId: "inbox-2",
+        inboxName: "OA",
+        channel: "zalo",
+        url: "https://zalo.me/oa-1?ref=welcome",
+        receivesRef: false,
+      },
+    ])
+  })
+
+  test("list loads inboxes once for the whole page", async () => {
+    reflinkService.list.mockResolvedValueOnce({
+      data: [
+        { id: "1", name: "a" },
+        { id: "2", name: "b" },
+      ],
+      pageCount: 1,
+    })
+    inboxService.listWithIntegrationsByWorkspace.mockResolvedValueOnce([
+      inbox({}),
+    ])
+
+    const result = (await findProcedure("GET", "/v1/ref-links").handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { page: 1, perPage: 50 },
+    })) as { data: { links: { url: string }[] }[] }
+
+    expect(inboxService.listWithIntegrationsByWorkspace).toHaveBeenCalledTimes(
+      1,
+    )
+    expect(result.data.map((row) => row.links[0]?.url)).toEqual([
+      "https://m.me/page-1?ref=a",
+      "https://m.me/page-1?ref=b",
+    ])
   })
 })

@@ -18,11 +18,15 @@ vi.mock("@chatbotx.io/integration-messenger", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   userPersistentMenuService: {},
-  integrationWebchatService: {},
   resolveTenantSettings: vi.fn(),
   integrationSmtpService: {},
   messengerIntegrationService: { updateTagSync: vi.fn() },
   zaloIntegrationService: { updateTagSync: vi.fn() },
+  integrationWebchatService: {},
+  tiktokIntegrationService: {
+    setCommentToMessage: vi.fn(),
+    refreshCommentToMessage: vi.fn(),
+  },
   channelIntegrationService: { list: vi.fn(), get: vi.fn() },
   coexistService: { enable: vi.fn(), disable: vi.fn() },
   integrationWhatsappService: {
@@ -37,6 +41,21 @@ vi.mock("@chatbotx.io/business", () => ({
     "tiktok",
   ]),
 }))
+
+// The settings writers reach Facebook/Instagram; only the scope wiring is
+// under test here.
+vi.mock(
+  "@/features/integration-messenger/lib/update-messenger-settings",
+  () => ({
+    updateMessenger: vi.fn(),
+  }),
+)
+vi.mock(
+  "@/features/integration-instagram/lib/update-instagram-settings",
+  () => ({
+    updateInstagram: vi.fn(),
+  }),
+)
 
 const workspaceTokenAuthAPIForScope = vi.hoisted(() =>
   vi.fn((_scope: string) => {
@@ -78,6 +97,15 @@ const messengerCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
 
 await import("@/features/integration-zalo/api/public")
 const zaloCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
+
+await import("@/features/integration-instagram/api/public")
+const instagramCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
+
+await import("@/features/integration-tiktok/api/public")
+const tiktokCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
+
+await import("@/features/bot-simulator/api/public")
+const botSimulatorCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
 
 const allScopeCalls = workspaceTokenAuthAPIForScope.mock.calls.map(
   (call) => call[0],
@@ -124,5 +152,23 @@ describe("channels public router scope wiring", () => {
     expect(allScopeCalls.slice(messengerCallCount, zaloCallCount)).toEqual([
       "channels",
     ])
+  })
+
+  test("integration-instagram/api/public.ts registers under the 'channels' scope", () => {
+    expect(allScopeCalls.slice(zaloCallCount, instagramCallCount)).toEqual([
+      "channels",
+    ])
+  })
+
+  test("integration-tiktok/api/public.ts registers under the 'channels' scope", () => {
+    expect(allScopeCalls.slice(instagramCallCount, tiktokCallCount)).toEqual([
+      "channels",
+    ])
+  })
+
+  test("bot-simulator/api/public.ts registers under the 'channels' scope", () => {
+    expect(allScopeCalls.slice(tiktokCallCount, botSimulatorCallCount)).toEqual(
+      ["channels"],
+    )
   })
 })

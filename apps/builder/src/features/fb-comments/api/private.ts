@@ -1,15 +1,11 @@
-import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import {
   listCommentAutomationContactsRequest,
   listCommentAutomationContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
-import {
-  commentAutomationService,
-  contactInboxService,
-} from "@chatbotx.io/business"
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import { commentAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
+import { listCommentAutomationContacts } from "@/features/shared/comment-automation/lib/list-automation-contacts"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -110,82 +106,15 @@ export const fbCommentsPrivateAPI = {
     .input(listCommentAutomationContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listCommentAutomationContactsResponse)
-    .handler(async ({ input }) => {
-      const { workspaceId, automationId, eventType, total, page, perPage } =
-        input
-      // The caller already knows the count — it is the number rendered on the
-      // column it clicked — so the page never re-counts. Same contract as
-      // `privateListBroadcastContactsAPI`.
-      const totalValue = total ?? 0
-      const emptyPage = {
-        data: [],
-        total: totalValue,
-        contactTotal: 0,
-        page,
-        pageCount: 0,
-      }
-
-      if (!eventType) {
-        return emptyPage
-      }
-
-      const { contactInboxIds, events, contactTotal } =
-        await commentAutomationAnalyticsService.getContacts({
-          workspaceId,
-          automationId,
-          eventType,
-          page,
-          perPage,
-        })
-
-      if (events.length === 0) {
-        return emptyPage
-      }
-
-      // Workspace-scoped: the service joins through `Contact.workspaceId`, so a
-      // row whose inbox belongs to another tenant resolves to nothing rather
-      // than being hydrated into this response.
-      const contactInboxes = await contactInboxService.findManyByIds({
-        workspaceId,
-        ids: [...new Set(contactInboxIds)],
-      })
-      const inboxById = new Map(contactInboxes.map((c) => [c.id, c]))
-      const pageCount = Math.ceil(totalValue / perPage)
-
-      // One entry per EVENT, newest first — the same contact appears once per
-      // occurrence. Several rows can share a `contactInbox`, which is why the
-      // hydration is a lookup rather than a join over unique ids.
-      const data = events
-        .map((event) => {
-          const contactInbox = inboxById.get(event.contactInboxId)
-          if (!contactInbox) {
-            return null
-          }
-          return {
-            rowKey: event.rowKey,
-            // The real `Contact.id`, which is what the tag actions expect.
-            contactId: contactInbox.contactId,
-            contactInboxId: event.contactInboxId,
-            firstName: contactInbox.contact.firstName ?? null,
-            lastName: contactInbox.contact.lastName ?? null,
-            fullName: contactInbox.contact.fullName ?? null,
-            sourceId: contactInbox.sourceId,
-            avatar: contactInbox.contact.avatar ?? null,
-            channel: contactInbox.channel as ChannelType,
-            conversationId: contactInbox.conversation?.id ?? "",
-            errorContent: event.errorContent ?? null,
-            occurredAt: event.occurredAt,
-            // Only a `comment:missed` row carries these; a delivery row
-            // describes the reply, so they stay null and the dialog renders
-            // its error column instead.
-            commentText: event.commentText ?? null,
-            missReason: event.missReason ?? null,
-          }
-        })
-        .filter((row) => row !== null)
-
-      return { data, total: totalValue, contactTotal, page, pageCount }
-    }),
+    .handler(
+      async ({ input }) =>
+        await listCommentAutomationContacts({
+          ...input,
+          // The caller already knows the count — it is the number rendered on
+          // the column it clicked.
+          total: input.total ?? 0,
+        }),
+    ),
 
   facebookPostsAPI: authorizedAPI
     .route({

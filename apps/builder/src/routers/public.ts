@@ -10,6 +10,7 @@ import { appointmentRemindersPublicRouter } from "@/features/appointment-managem
 import { appointmentsPublicRouter } from "@/features/appointments/api/public"
 import { keywordsPublicRouter } from "@/features/automated-response/api/public"
 import { botFieldsPublicRouter } from "@/features/bot-fields/api/public"
+import { botSimulatorPublicRouter } from "@/features/bot-simulator/api/public"
 import { broadcastsPublicRouter } from "@/features/broadcasts/api/public"
 import {
   capabilitiesPublicRouter,
@@ -47,9 +48,11 @@ import { igStoriesPublicRouter } from "@/features/ig-stories/api/public"
 import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { aiHandoverPublicRouter } from "@/features/integration-ai-handover/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
+import { instagramChannelsPublicRouter } from "@/features/integration-instagram/api/public"
 import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
 import { messengerTemplatesPublicRouter } from "@/features/integration-messenger/message-templates/api/public"
 import { smtpIntegrationsPublicRouter } from "@/features/integration-smtp/api/public"
+import { tiktokChannelsPublicRouter } from "@/features/integration-tiktok/api/public"
 import { webchatsPublicRouter } from "@/features/integration-webchat/api/public"
 import { whatsappCallingPublicRouter } from "@/features/integration-whatsapp/calling/api/public"
 import { whatsappFlowsPublicRouter } from "@/features/integration-whatsapp/flows/api/public"
@@ -59,6 +62,7 @@ import {
 } from "@/features/integration-whatsapp/message-templates/api/public"
 import { zaloChannelsPublicRouter } from "@/features/integration-zalo/api/public"
 import { integrationsPublicRouter } from "@/features/integrations/api/public"
+import { magicLinksPublicRouter } from "@/features/magic-links/api/public"
 import { mediaLibraryPublicRouter } from "@/features/media-library/api/public"
 import { messagesPublicRouter } from "@/features/messages/api/public"
 import { minigamesPublicRouter } from "@/features/minigames/api/public"
@@ -70,8 +74,11 @@ import { questionnairesPublicRouter } from "@/features/questionnaires/api/public
 import { reflinksPublicRouter } from "@/features/reflinks/api/public"
 import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
 import { sequencesPublicRouter } from "@/features/sequences/api/public"
+import { commentAutomationsPublicRouter } from "@/features/shared/comment-automation/api/public"
 import { spreadsheetsPublicRouter } from "@/features/spreadsheets/api/public"
 import { tagsPublicRouter } from "@/features/tags/api/public"
+import { threadsCommentsPublicRouter } from "@/features/threads-comments/api/public"
+import { tiktokCommentsPublicRouter } from "@/features/tiktok-comments/api/public"
 import { tokenPublicRouter } from "@/features/token/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
@@ -93,10 +100,12 @@ export const publicRouter = {
   appointmentReminders: appointmentRemindersPublicRouter,
   appointments: appointmentsPublicRouter,
   botFields: botFieldsPublicRouter,
+  botSimulator: botSimulatorPublicRouter,
   broadcasts: broadcastsPublicRouter,
   capabilities: capabilitiesPublicRouter,
   channelPosts: channelPostsPublicRouter,
   channels: channelsPublicRouter,
+  commentAutomations: commentAutomationsPublicRouter,
   connectionProviders: connectionProvidersPublicRouter,
   connections: connectionsPublicRouter,
   connectSessions: connectSessionsPublicRouter,
@@ -120,11 +129,13 @@ export const publicRouter = {
     ...createChannelReadRoutes("instagram"),
     ...createCoexistRoute("instagram"),
     ...createCapiRoutes("instagram"),
+    ...instagramChannelsPublicRouter,
   },
   inboxTeams: inboxTeamsPublicRouter,
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,
   keywords: keywordsPublicRouter,
+  magicLinks: magicLinksPublicRouter,
   mediaLibrary: mediaLibraryPublicRouter,
   messages: messagesPublicRouter,
   messengerChannels: messengerChannelsPublicRouter,
@@ -143,8 +154,13 @@ export const publicRouter = {
   spreadsheets: spreadsheetsPublicRouter,
   tags: tagsPublicRouter,
   templateMessages: templateMessagesPublicRouter,
+  threadsComments: threadsCommentsPublicRouter,
+  tiktokComments: tiktokCommentsPublicRouter,
   token: tokenPublicRouter,
-  tiktokChannels: createChannelReadRoutes("tiktok"),
+  tiktokChannels: {
+    ...createChannelReadRoutes("tiktok"),
+    ...tiktokChannelsPublicRouter,
+  },
   triggers: triggersPublicRouter,
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,

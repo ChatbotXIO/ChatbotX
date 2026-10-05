@@ -9,7 +9,7 @@ import {
 import { addContactTagAction } from "@/features/contacts/actions/add-contact-tag.action"
 import { bulkTagStatsContactsAction } from "@/features/contacts/actions/bulk-tag-stats-contacts.action"
 import { client } from "@/lib/orpc/orpc"
-import type { CommentAutomationStatField } from "./comment-automation-stats-cell"
+import type { CommentAutomationStatField } from "./lib/stat-counters"
 
 const eventTypeToLabel: Record<CommentAutomationStatField, string> = {
   "message:sent": "sent",

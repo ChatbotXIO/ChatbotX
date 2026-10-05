@@ -236,8 +236,9 @@ an endpoint's scope.
 
 - **Automation** — covers flows, triggers, keywords (automated responses),
   AI agents, AI MCP servers, AI functions, AI files, ref links, Facebook Lead
-  Ads automations, FB/IG comment automations, IG story automations, QR
-  codes, questionnaires (+ submissions), and spreadsheets — a full CRUD
+  Ads automations, FB/IG/Threads/TikTok comment automations, IG story
+  automations, magic links, QR codes, questionnaires (+ submissions), and
+  spreadsheets — a full CRUD
   surface so an agent can build, publish, and inspect automations without
   human help via the builder UI. AI triggers were retired (dropped from the
   schema and this scope) in favor of the AI
@@ -257,11 +258,18 @@ an endpoint's scope.
     was widened. Any future trigger route must keep populating both via
     `triggerRepository.findWithConditions` rather than reintroducing a
     hardcoded `[]`.
-  - *FB/IG comment `type` filter* — `CommentAutomation` serves fb-comments
-    (`messenger`) and ig-comments (`instagram`/`instagramFacebook`) off one
-    table. Every read and write must go through the `*Messenger`/`*Instagram`
-    service methods; a bare `workspaceId` + `id` where-clause lets
-    `/v1/fb-comments/{id}` mutate an IG automation.
+  - *Comment automation `type` filter* — `CommentAutomation` serves
+    fb-comments (`messenger`), ig-comments (`instagram`/`instagramFacebook`),
+    threads-comments (`threads`) and tiktok-comments (`tiktok`) off one
+    table. Every read and write must go through the channel's own service
+    methods (`*Messenger`/`*Instagram`/`*Threads*`/`*Tiktok*`); a bare
+    `workspaceId` + `id` where-clause lets `/v1/fb-comments/{id}` mutate an
+    IG automation. The Threads/TikTok update and delete methods return
+    nothing for a missing id, so their public handlers call
+    `findThreadsOrFail`/`findTiktokOrFail` first to answer 404. The one
+    cross-channel read is the `analytics.commentAutomation*` stats surface
+    (scope `analytics`), which resolves the id with `findOrFail` and never
+    writes.
   - *List endpoints default to all folders* — the builder's list pages scope
     to the root folder when no `folderId` is in the URL. Public list
     handlers pass `includeAllFolders: true`; omit it and `GET /v1/fb-comments`
@@ -279,6 +287,13 @@ an endpoint's scope.
     exported procedure. It iterates `Object.keys(router)`, so a newly added
     procedure is covered without a new test; a router wired to the wrong scope
     fails there.
+  - *Bulk deletes and missed-comment runs* — `POST /v1/<channel>-comments/bulk-delete`
+    passes that channel's `types` to `commentAutomationService.deleteMany`, so
+    an id of another channel is ignored rather than deleted. The cross-channel
+    `commentAutomations.*` router (`features/shared/comment-automation/api/public.ts`)
+    starts a missed-comment run through the same `processMissedComments`
+    function as the row action and reports its status; it never edits an
+    automation.
 
 - **Appointments** — covers appointment calendars, appointments, reminder
   dispatch audit reads, and external (Google/Outlook) calendar connections.
@@ -457,6 +472,18 @@ an endpoint's scope.
   clone) must resolve to a public address, and an unauthenticated image
   download does not follow redirects. `PUT /v1/{whatsapp,messenger,instagram}-channels/{id}/coexist`
   (scope `channels`) toggles coexist history sync.
+
+- **Channel settings and bot simulator** (scope `channels`) —
+  `GET/PUT /v1/{messenger,instagram}-channels/{id}/settings` read and replace
+  the welcome flow, persistent menu, ice breakers (and Messenger personas)
+  through the same writers as the builder form
+  (`features/integration-{messenger,instagram}/lib/update-*-settings.ts`); both
+  call `flowService.assertAllExist` first, so a flow of another workspace is
+  refused before anything is saved or pushed to Meta. `GET/PATCH
+  /v1/tiktok-channels/{id}/comment-to-message` read (live from TikTok) and set
+  Comment-to-Message via `tiktokIntegrationService`; TikTok's eligibility
+  rejection text is returned as-is. `GET /v1/bot-simulator/link` returns the
+  `/bs/...` preview link after the same checks the preview page runs.
 
 - **Broadcasts** — `broadcasts.list` filters by `status`, `name`, `channel`
   and a `scheduledFrom`/`scheduledTo` window and accepts `sort`; each broadcast

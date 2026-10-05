@@ -1,0 +1,354 @@
+import {
+  buildContext,
+  flowService,
+  type IntegrationContext,
+  inboxService,
+  messengerIntegrationService,
+} from "@chatbotx.io/business"
+import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { db } from "@chatbotx.io/database/client"
+import type { MessengerPersona } from "@chatbotx.io/database/partials"
+import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import { encodeButtonPayload } from "@chatbotx.io/flow-config"
+import {
+  ensureMessengerWhitelistedDomain,
+  integration as integrationMessenger,
+  isRegisteredPersona,
+  logMessengerWelcomeProfile,
+  type MessengerProfileRequest,
+  messengerMenusToCallToActions,
+} from "@chatbotx.io/integration-messenger"
+import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
+import { distributedStore } from "@chatbotx.io/redis"
+import { createId } from "@chatbotx.io/utils"
+import { normalizeError } from "universal-error-normalizer"
+import { getBrandingUrl } from "@/features/integration-webchat/lib"
+import { logger } from "@/lib/log"
+import { findIntegrationMessenger } from "../queries"
+import type { UpdateMessengerRequest } from "../schema/action"
+
+/** Every flow id the settings point at — welcome flow, menu items, ice breakers. */
+const collectFlowIds = (input: UpdateMessengerRequest): string[] => [
+  ...new Set([
+    ...(input.welcomeFlowId ? [input.welcomeFlowId] : []),
+    ...input.persistentMenus.flatMap((menu) =>
+      menu.type === "flow" ? [menu.flowId] : [],
+    ),
+    ...input.conversationStarters.map((starter) => starter.flowId),
+  ]),
+]
+
+/**
+ * Saves a Messenger page's settings and pushes them to Facebook. Plain
+ * function (no session) so the builder action and the public API share it.
+ */
+export const updateMessenger = async (
+  ctx: {
+    workspaceId: string
+    id: string
+  },
+  parsedInput: UpdateMessengerRequest,
+) => {
+  await flowService.assertAllExist({
+    workspaceId: ctx.workspaceId,
+    flowIds: collectFlowIds(parsedInput),
+  })
+
+  try {
+    const { markReadOnOutbound, ...integrationInput } = parsedInput
+    let botContext: IntegrationContext<MessengerAuthValue> | undefined
+    let fieldsToDelete: string[] = []
+    let profileParams: MessengerProfileRequest = {}
+
+    const inboxId = await db.transaction(async (tx) => {
+      const integrationMessengerData = await findIntegrationMessenger({
+        workspaceId: ctx.workspaceId,
+        id: ctx.id,
+      })
+      const syncedPersonas = await syncMessengerPersonas(
+        ctx.workspaceId,
+        integrationMessengerData,
+        integrationInput.personas,
+      )
+      const defaultPersona = syncedPersonas.find((persona) => persona.isDefault)
+
+      // A default persona that failed to register with Facebook has no
+      // facebookPersonaId. Persisting personaId: null here would silently drop
+      // the page's persona identity from every outbound message, so surface the
+      // failure (rolls back the tx) instead of degrading to the generic page.
+      if (defaultPersona && !isRegisteredPersona(defaultPersona)) {
+        throw new ChatbotXException(
+          "Couldn't register the default persona with Facebook. Please try saving again.",
+        )
+      }
+
+      await messengerIntegrationService.updateProfileFields(
+        { id: ctx.id },
+        {
+          ...integrationInput,
+          personas: syncedPersonas,
+          personaId: defaultPersona?.facebookPersonaId ?? null,
+        },
+        tx,
+      )
+
+      botContext = await buildContext({
+        workspaceId: ctx.workspaceId,
+        integrationType: "messenger",
+        integration: {
+          ...integrationMessengerData,
+          auth: integrationMessengerData.auth as MessengerAuthValue,
+        },
+      })
+
+      fieldsToDelete = getFieldsToDelete(integrationInput)
+      profileParams = getMessengerProfileParams(
+        {
+          ...integrationMessengerData,
+          ...integrationInput,
+        },
+        botContext.platform.appUrl,
+      )
+
+      return integrationMessengerData.inboxId
+    })
+
+    if (markReadOnOutbound !== undefined) {
+      await inboxService.updateMarkReadOnOutbound({
+        workspaceId: ctx.workspaceId,
+        id: inboxId,
+        enabled: markReadOnOutbound,
+      })
+    }
+
+    if (!botContext) {
+      return
+    }
+
+    if (fieldsToDelete.length > 0) {
+      await integrationMessenger
+        .runChannelHandler("bot", "deleteProfileFields", {
+          ctx: botContext,
+          fields: fieldsToDelete,
+        })
+        .catch((error) => {
+          logger.warn(
+            {
+              err: normalizeError(error),
+              workspaceId: ctx.workspaceId,
+              integrationId: ctx.id,
+              action: "deleteProfileFields",
+              reason: "messengerProfileSyncFailed",
+            },
+            "Failed to delete Messenger profile fields after settings update",
+          )
+        })
+    }
+
+    await ensureMessengerWhitelistedDomain({ ctx: botContext }).catch(
+      (error) => {
+        logger.warn(
+          {
+            err: normalizeError(error),
+            workspaceId: ctx.workspaceId,
+            integrationId: ctx.id,
+            action: "ensureMessengerWhitelistedDomain",
+            reason: "messengerProfileSyncFailed",
+          },
+          "Failed to ensure Messenger whitelisted domain after settings update",
+        )
+      },
+    )
+
+    if (Object.keys(profileParams).length > 0) {
+      await integrationMessenger
+        .runChannelHandler("bot", "updateProfile", {
+          ctx: botContext,
+          data: profileParams,
+        })
+        .catch((error) => {
+          logger.warn(
+            {
+              err: normalizeError(error),
+              workspaceId: ctx.workspaceId,
+              integrationId: ctx.id,
+              action: "updateProfile",
+              reason: "messengerProfileSyncFailed",
+            },
+            "Failed to update Messenger profile after settings update",
+          )
+        })
+      if (await claimWelcomeProfileRead(botContext.auth.metadata?.pageId)) {
+        await logMessengerWelcomeProfile({
+          ctx: botContext,
+          reason: "profileUpdated",
+        })
+      }
+    }
+  } catch (error) {
+    // Preserve explicit, actionable messages (e.g. persona registration); only
+    // unknown failures collapse to the generic message.
+    if (error instanceof ChatbotXException) {
+      throw error
+    }
+    logger.debug(error, "Failed to update Facebook page")
+    throw new ChatbotXException("Failed to update Facebook page")
+  }
+}
+
+/**
+ * The Messenger Profile API allows 10 calls per 10 minutes per Page, and a
+ * settings save already spends several of them, so the diagnostic read-back
+ * runs at most once per page in this window.
+ */
+const WELCOME_PROFILE_READ_TTL_SECONDS = 5 * 60
+
+const welcomeProfileReadKey = (pageId: string): string =>
+  `messenger:welcome-profile-read:${pageId}`
+
+/**
+ * Atomically claims the page's read-back slot (`SET NX EX`), so concurrent
+ * saves for the same page yield exactly one Graph read. Fails closed: with no
+ * page id or an unreachable Redis the read is skipped, never the save.
+ */
+const claimWelcomeProfileRead = async (
+  pageId: string | undefined,
+): Promise<boolean> => {
+  if (!pageId) {
+    return false
+  }
+  try {
+    return await distributedStore.setNumberIfNotExists(
+      welcomeProfileReadKey(pageId),
+      1,
+      WELCOME_PROFILE_READ_TTL_SECONDS,
+    )
+  } catch (error) {
+    logger.warn(
+      { err: normalizeError(error), pageId },
+      "Skipped Messenger welcome profile read-back: throttle unavailable",
+    )
+    return false
+  }
+}
+
+const getFieldsToDelete = (
+  input: Pick<
+    UpdateMessengerRequest,
+    "persistentMenus" | "conversationStarters"
+  >,
+): string[] => {
+  const fields: string[] = []
+  if (!input.persistentMenus.length) {
+    fields.push("PERSISTENT_MENU")
+  }
+  if (!input.conversationStarters.length) {
+    fields.push("ICE_BREAKERS")
+  }
+  return fields
+}
+
+const getMessengerProfileParams = (
+  model: IntegrationMessengerModel,
+  appUrl: string,
+): MessengerProfileRequest => {
+  const params: MessengerProfileRequest = {}
+
+  params.get_started = {
+    payload: model.welcomeFlowId
+      ? encodeButtonPayload({ flowId: model.welcomeFlowId })
+      : "GET_STARTED",
+  }
+
+  if (model.persistentMenus.length) {
+    const brandingUrl = getBrandingUrl("messenger", appUrl)
+    const menus = moveBrandingMenuLast(model.persistentMenus, brandingUrl)
+    const callToActions = messengerMenusToCallToActions(menus)
+    params.persistent_menu = [
+      {
+        locale: "default",
+        composer_input_disabled: false,
+        call_to_actions: callToActions,
+      },
+    ]
+  }
+
+  if (model.conversationStarters.length) {
+    params.ice_breakers = model.conversationStarters.map((starter) => ({
+      question: starter.question,
+      payload: encodeButtonPayload({
+        flowId: starter.flowId,
+      }),
+    }))
+  }
+
+  return params
+}
+
+/**
+ * Register the page's personas with Facebook and return the persona list with
+ * each `facebookPersonaId` filled in.
+ *
+ * - Personas keep their stable local `id` (assigned here if missing for legacy
+ *   rows). A persona whose name or profile picture changed has its
+ *   `facebookPersonaId` cleared so Facebook recreates it (FB personas are
+ *   immutable), since the recreated persona gets a new Facebook id.
+ * - Personas removed from the list are deleted from Facebook by `syncPersonas`.
+ */
+const syncMessengerPersonas = async (
+  workspaceId: string,
+  model: IntegrationMessengerModel,
+  personas: MessengerPersona[],
+): Promise<MessengerPersona[]> => {
+  const oldById = new Map(
+    model.personas.map((persona) => [persona.id, persona]),
+  )
+
+  // Authoritative local ids + carry-over Facebook ids derived from the stored
+  // personas (never trust client-sent Facebook ids).
+  const normalized: MessengerPersona[] = personas.map((persona) => {
+    const id = persona.id || createId()
+    const old = oldById.get(id)
+    const unchanged =
+      old &&
+      old.name === persona.name &&
+      old.profilePicture.url === persona.profilePicture.url
+    return {
+      ...persona,
+      id,
+      facebookPersonaId: unchanged ? old?.facebookPersonaId : undefined,
+    }
+  })
+
+  const ctx = await buildContext({
+    workspaceId,
+    integrationType: "messenger",
+    integration: {
+      ...model,
+      auth: model.auth as MessengerAuthValue,
+    },
+  })
+
+  const { personas: synced } = await integrationMessenger.runAction(
+    "syncPersonas",
+    {
+      ctx,
+      personas: normalized.map((persona) => ({
+        id: persona.id,
+        name: persona.name,
+        profilePictureUrl: persona.profilePicture.url,
+        facebookPersonaId: persona.facebookPersonaId,
+      })),
+    },
+  )
+
+  const facebookIdById = new Map(
+    synced.map((persona) => [persona.id, persona.facebookPersonaId]),
+  )
+
+  return normalized.map((persona) => ({
+    ...persona,
+    facebookPersonaId: facebookIdById.get(persona.id),
+  }))
+}

@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => {
   )
 
   return {
+    assertAllExist: vi.fn().mockResolvedValue(undefined),
     buildContext: vi.fn(),
     dbTransaction: vi.fn(
       async (callback: (tx: { update: typeof txUpdate }) => Promise<void>) =>
@@ -40,6 +41,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: mocks.buildContext,
+  flowService: { assertAllExist: mocks.assertAllExist },
   inboxService: {
     updateMarkReadOnOutbound: mocks.updateMarkReadOnOutbound,
   },
@@ -107,7 +109,7 @@ vi.mock("../src/features/integration-messenger/queries", () => ({
 }))
 
 const { updateMessenger } = await import(
-  "../src/features/integration-messenger/actions/update-messenger-action"
+  "../src/features/integration-messenger/lib/update-messenger-settings"
 )
 
 const botContext = {
@@ -118,7 +120,7 @@ const botContext = {
 const saveSettings = () =>
   updateMessenger(
     {
-      workspace: { id: "workspace-1" } as never,
+      workspaceId: "workspace-1",
       id: "messenger-1",
     },
     {
@@ -163,7 +165,7 @@ describe("updateMessenger", () => {
 
     await updateMessenger(
       {
-        workspace: { id: "workspace-1" } as never,
+        workspaceId: "workspace-1",
         id: "messenger-1",
       },
       {
@@ -188,7 +190,7 @@ describe("updateMessenger", () => {
   test("updates the inbox flag after saving the Messenger integration", async () => {
     await updateMessenger(
       {
-        workspace: { id: "workspace-1" } as never,
+        workspaceId: "workspace-1",
         id: "messenger-1",
       },
       {
@@ -210,7 +212,7 @@ describe("updateMessenger", () => {
   test("does not update the inbox flag when the field is omitted", async () => {
     await updateMessenger(
       {
-        workspace: { id: "workspace-1" } as never,
+        workspaceId: "workspace-1",
         id: "messenger-1",
       },
       {
@@ -304,5 +306,29 @@ describe("updateMessenger", () => {
 
     expect(mocks.setNumberIfNotExists).not.toHaveBeenCalled()
     expect(mocks.logMessengerWelcomeProfile).not.toHaveBeenCalled()
+  })
+
+  test("rejects a flow of another workspace before saving or calling Facebook", async () => {
+    const notFound = new Error("Flow does not exists.")
+    mocks.assertAllExist.mockRejectedValueOnce(notFound)
+
+    await expect(
+      updateMessenger(
+        { workspaceId: "workspace-1", id: "messenger-1" },
+        {
+          welcomeFlowId: "flow-1",
+          persistentMenus: [{ type: "flow", label: "Menu", flowId: "flow-1" }],
+          personas: [],
+          conversationStarters: [{ question: "Hi?", flowId: "flow-2" }],
+        },
+      ),
+    ).rejects.toBe(notFound)
+
+    expect(mocks.assertAllExist).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      flowIds: ["flow-1", "flow-2"],
+    })
+    expect(mocks.dbTransaction).not.toHaveBeenCalled()
+    expect(mocks.runChannelHandler).not.toHaveBeenCalled()
   })
 })

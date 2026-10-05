@@ -1,4 +1,5 @@
 import { commentAutomationService } from "@chatbotx.io/business"
+import { bulkUpdateIdsRequest } from "@/features/common/schema"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -138,4 +139,24 @@ export const fbCommentsPublicRouter = {
       async ({ context }) =>
         await listFacebookPostsForAutomation(context.workspace.id),
     ),
+
+  deleteMany: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/fb-comments/bulk-delete",
+      summary: "Delete multiple FB comment automations",
+      description:
+        "Permanently deletes several FB comment automations in one call; ids of another channel or workspace are ignored. Use `fbComments.list` to find their ids first.",
+      successStatus: 204,
+      tags: ["FB Comments"],
+    })
+    .input(bulkUpdateIdsRequest)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await commentAutomationService.deleteMany({
+        workspaceId: context.workspace.id,
+        ids: input.ids,
+        types: ["messenger"],
+      })
+    }),
 }

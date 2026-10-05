@@ -10,10 +10,19 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { createReflinkLinkBuilder } from "../lib/reflink-links"
 import { createReflinkRequest, updateReflinkRequest } from "../schema/action"
-import { reflinkResource } from "../schema/resource"
+import { reflinkPublicResource } from "../schema/public"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
+
+const withLinks = async <T extends { name: string }>(
+  workspaceId: string,
+  reflink: T,
+) => {
+  const buildLinks = await createReflinkLinkBuilder(workspaceId)
+  return { ...reflink, links: buildLinks(reflink.name) }
+}
 
 export const reflinksPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -26,15 +35,22 @@ export const reflinksPublicRouter = {
       tags: ["Ref Links"],
     })
     .input(publicListRequest)
-    .output(publicListResponse(reflinkResource))
+    .output(publicListResponse(reflinkPublicResource))
     .errors(possibleErrorsOnListingResource)
-    .handler(
-      async ({ context, input }) =>
-        await reflinkService.list({
-          ...input,
-          workspaceId: context.workspace.id,
-        }),
-    ),
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const [{ data, pageCount }, buildLinks] = await Promise.all([
+        reflinkService.list({ ...input, workspaceId }),
+        createReflinkLinkBuilder(workspaceId),
+      ])
+      return {
+        data: data.map((reflink) => ({
+          ...reflink,
+          links: buildLinks(reflink.name),
+        })),
+        pageCount,
+      }
+    }),
 
   get: workspaceTokenAuthAPI
     .route({
@@ -42,7 +58,7 @@ export const reflinksPublicRouter = {
       path: "/v1/ref-links/{id}",
       summary: "Get ref link",
       description:
-        "Returns one ref link's target and settings. Use `reflinks.list` to find its id first.",
+        "Returns one ref link's target and settings, plus `links`: the ready-to-share open-chat URL for each connected channel. Use `reflinks.list` to find its id first.",
       tags: ["Ref Links"],
     })
     .input(
@@ -52,14 +68,16 @@ export const reflinksPublicRouter = {
         ),
       }),
     )
-    .output(reflinkResource)
+    .output(reflinkPublicResource)
     .errors(possibleErrorsOnFindingResource)
-    .handler(
-      async ({ context, input }) =>
+    .handler(async ({ context, input }) =>
+      withLinks(
+        context.workspace.id,
         await reflinkService.findOrFail({
           workspaceId: context.workspace.id,
           id: input.id,
         }),
+      ),
     ),
 
   create: workspaceTokenAuthAPI
@@ -68,19 +86,21 @@ export const reflinksPublicRouter = {
       path: "/v1/ref-links",
       summary: "Create ref link",
       description:
-        "Adds a shareable link that redirects to a flow or destination. Use `reflinks.list` first to avoid duplicating an existing one.",
+        "Adds a shareable link that redirects to a flow or destination; the response's `links` holds the full open-chat URL per connected channel. Use `reflinks.list` first to avoid duplicating an existing one.",
       successStatus: 201,
       tags: ["Ref Links"],
     })
     .input(createReflinkRequest)
-    .output(reflinkResource)
+    .output(reflinkPublicResource)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(
-      async ({ context, input }) =>
+    .handler(async ({ context, input }) =>
+      withLinks(
+        context.workspace.id,
         await reflinkService.create({
           workspaceId: context.workspace.id,
           data: input,
         }),
+      ),
     ),
 
   update: workspaceTokenAuthAPI
@@ -101,13 +121,16 @@ export const reflinksPublicRouter = {
         }),
       ),
     )
-    .output(reflinkResource)
+    .output(reflinkPublicResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      return await reflinkService.update(
-        { workspaceId: context.workspace.id, id },
-        data,
+      return await withLinks(
+        context.workspace.id,
+        await reflinkService.update(
+          { workspaceId: context.workspace.id, id },
+          data,
+        ),
       )
     }),
 

@@ -43,6 +43,26 @@ vi.mock("@chatbotx.io/business", () => ({
     updateInstagram: vi.fn(),
     deleteMessenger: vi.fn(),
     deleteInstagram: vi.fn(),
+    listThreadsAutomations: vi.fn(),
+    findThreadsOrFail: vi.fn(),
+    createThreadsAutomation: vi.fn(),
+    updateThreadsAutomation: vi.fn(),
+    deleteThreadsAutomation: vi.fn(),
+    listTiktokAutomations: vi.fn(),
+    findTiktokOrFail: vi.fn(),
+    createTiktokAutomation: vi.fn(),
+    updateTiktokAutomation: vi.fn(),
+    deleteTiktokAutomation: vi.fn(),
+    deleteMany: vi.fn(),
+    findOrFail: vi.fn(),
+    findMissedCommentsInProgress: vi.fn(),
+  },
+  magicLinkService: {
+    list: vi.fn(),
+    findOrFail: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   },
   igStoryAutomationService: {
     list: vi.fn(),
@@ -83,6 +103,13 @@ vi.mock("@chatbotx.io/business", () => ({
 // hit by a rejected call, so they stay bare mocks.
 vi.mock("@/features/fb-comments/lib/facebook-posts", () => ({
   listFacebookPostsForAutomation: vi.fn(),
+}))
+vi.mock(
+  "@/features/shared/comment-automation/lib/missed-comments/process-missed-comments",
+  () => ({ processMissedComments: vi.fn() }),
+)
+vi.mock("@/features/threads-comments/lib/threads-posts", () => ({
+  listThreadsPostsForWorkspace: vi.fn(),
 }))
 vi.mock("@/features/ig-comments/lib/instagram-media", () => ({
   listInstagramFacebookMedia: vi.fn(),
@@ -152,6 +179,18 @@ const { spreadsheetsPublicRouter } = await import(
 const { facebookLeadAdsPublicRouter } = await import(
   "../src/features/facebook-lead-ad-automation/api/public"
 )
+const { threadsCommentsPublicRouter } = await import(
+  "../src/features/threads-comments/api/public"
+)
+const { tiktokCommentsPublicRouter } = await import(
+  "../src/features/tiktok-comments/api/public"
+)
+const { magicLinksPublicRouter } = await import(
+  "../src/features/magic-links/api/public"
+)
+const { commentAutomationsPublicRouter } = await import(
+  "../src/features/shared/comment-automation/api/public"
+)
 
 const TOKEN = "cbx_ws_fixture"
 const DENIED_MESSAGE = "Token is not authorized for the 'automation' scope"
@@ -203,6 +242,10 @@ const routers = {
   questionnaires: questionnairesPublicRouter,
   spreadsheets: spreadsheetsPublicRouter,
   "facebook-lead-ads": facebookLeadAdsPublicRouter,
+  "threads-comments": threadsCommentsPublicRouter,
+  "tiktok-comments": tiktokCommentsPublicRouter,
+  "magic-links": magicLinksPublicRouter,
+  "comment-automations": commentAutomationsPublicRouter,
 } as const
 
 for (const [name, router] of Object.entries(routers)) {

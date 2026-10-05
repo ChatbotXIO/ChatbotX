@@ -94,8 +94,12 @@ vi.mock("../src/folder/service", () => ({
   folderService: { ensureExists: vi.fn() },
 }))
 
+const { mockAssertPublicUrl } = vi.hoisted(() => ({
+  mockAssertPublicUrl: vi.fn(),
+}))
+
 vi.mock("../src/net/ssrf-guard", () => ({
-  assertPublicUrl: vi.fn(),
+  assertPublicUrl: mockAssertPublicUrl,
 }))
 
 vi.mock("../src/audit/dispatcher", () => ({
@@ -248,5 +252,47 @@ describe("webhookService.updateWithConditions", () => {
     expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
     // Cache still refreshes unconditionally, unlike the audit.
     expect(mockUpdateWebhookCache).toHaveBeenCalledWith(WS)
+  })
+
+  test("touches no condition of a webhook outside the workspace", async () => {
+    mockConditionFindMany.mockResolvedValue([
+      {
+        id: "cond-foreign",
+        type: "tagApplied",
+        sourceId: "t",
+        operator: null,
+        value: null,
+      },
+    ])
+    mockWebhookFindFirst.mockResolvedValue(undefined)
+
+    const result = await webhookService.updateWithConditions({
+      workspaceId: WS,
+      id: "webhook-of-another-workspace",
+      url: URL,
+      conditions: [{ type: "newContact" }],
+    })
+
+    expect(result).toBeUndefined()
+    expect(mockConditionFindMany).not.toHaveBeenCalled()
+    expect(mockTxDelete).not.toHaveBeenCalled()
+    expect(mockTxInsert).not.toHaveBeenCalled()
+    expect(mockTxUpdate).not.toHaveBeenCalled()
+  })
+
+  test("rejects a non-public URL before writing anything", async () => {
+    mockAssertPublicUrl.mockRejectedValueOnce(
+      new Error("Webhook URL must be public"),
+    )
+
+    await expect(
+      webhookService.updateWithConditions({
+        workspaceId: WS,
+        id: WEBHOOK_ID,
+        url: "http://169.254.169.254/latest",
+        conditions: [],
+      }),
+    ).rejects.toMatchObject({ code: "invalidRequestData" })
+    expect(mockDbTransaction).not.toHaveBeenCalled()
   })
 })

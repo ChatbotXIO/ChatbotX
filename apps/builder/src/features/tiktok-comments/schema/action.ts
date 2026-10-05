@@ -261,19 +261,44 @@ export function createTiktokCommentRequestSchema(
     })
 
   return z.object({
-    name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
-    post: tiktokPostSchema,
-    publicReply: tiktokReplySchema,
-    privateReply: tiktokPrivateReplySchema,
-    includeKeywords: tiktokIncludeKeywordsSchema,
-    excludeKeywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(MAX_NAME_LENGTH)
+      .describe("Automation name."),
+    post: tiktokPostSchema.describe(
+      "Which comments to answer: `all` videos or specific `postIds`.",
+    ),
+    publicReply: tiktokReplySchema.describe(
+      "Public reply posted under the comment: `text`, a `flow`, an `AIAgent`, or `none`.",
+    ),
+    privateReply: tiktokPrivateReplySchema.describe(
+      "Private message sent to the commenter: `text`, an `AIAgent`, or `none`.",
+    ),
+    includeKeywords: tiktokIncludeKeywordsSchema.describe(
+      "Only trigger when the comment matches these keywords, or `mentions` to trigger on comments that tag the account.",
+    ),
+    excludeKeywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH).describe(
+      "Never trigger when the comment matches these keywords.",
+    ),
     // Optional, never defaulted here: the update schema is this one made
     // `.partial()`, and a default would reset the stored match type on every
     // PATCH that did not mention it. The column defaults to `contain`.
-    excludeKeywordsType: commentExcludeKeywordsTypes.optional(),
-    options: tiktokOptionsSchema,
-    hideComments: tiktokHideCommentsSchema,
-    replyAfter: tiktokReplyAfterSchema,
+    excludeKeywordsType: commentExcludeKeywordsTypes
+      .optional()
+      .describe(
+        "How `excludeKeywords` match: `equal` (the whole comment) or `contain` (anywhere in it).",
+      ),
+    options: tiktokOptionsSchema.describe(
+      "Matching and trigger behavior options.",
+    ),
+    hideComments: tiktokHideCommentsSchema.describe(
+      "Whether to hide matching comments after replying.",
+    ),
+    replyAfter: tiktokReplyAfterSchema.describe(
+      "Delay before sending the reply.",
+    ),
   })
 }
 
@@ -315,7 +340,10 @@ export const updateTiktokCommentRequest = createTiktokCommentRequest
   .partial()
   .and(
     z.object({
-      isActive: z.boolean().optional(),
+      isActive: z
+        .boolean()
+        .optional()
+        .describe("Whether the automation is enabled."),
     }),
   )
   .refine((value) => Object.keys(value).length > 0, {

@@ -63,6 +63,7 @@ import {
   timeRangeWithGranularityMHDPublicRequest,
   uniqueConversationsByAdminPublicResponse,
 } from "../schema/public"
+import { commentAutomationAnalyticsPublicRouter } from "./public-comment-automation"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("analytics")
 
@@ -917,4 +918,6 @@ export const analyticsPublicRouter = {
       })
       await invalidateCacheByTags([flowStatsCacheTag(input.flowId)])
     }),
+
+  ...commentAutomationAnalyticsPublicRouter,
 }

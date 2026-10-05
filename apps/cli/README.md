@@ -427,9 +427,13 @@ chatbotx triggers delete <id>
 
 ```bash
 chatbotx webhooks list
+chatbotx webhooks get <id>                             # URL, active state and conditions
 chatbotx webhooks create --name <name> --url <url> --conditions <conditions>
                                                      # conditions: JSON array of event conditions, at least one required
+chatbotx webhooks update <id> --url <url> --conditions <conditions>  # Full replace; keep a condition's `id` to update it
+chatbotx webhooks settings update <id>                 # [--name] [--active]
 chatbotx webhooks delete <id>
+chatbotx webhooks bulk-delete --ids <ids>
 ```
 
 ---
@@ -549,6 +553,12 @@ chatbotx analytics magic-links-stats --linkId <linkId>
 chatbotx analytics magic-links-contacts --linkId <linkId>
 chatbotx analytics ref-links-stats --linkId <linkId>
 chatbotx analytics ref-links-contacts --linkId <linkId>
+# Comment automation stats — any channel's automation id (fb/ig/threads/tiktok)
+chatbotx analytics comment-automation-replies --automationId <id>        # Replies sent per day (--from --to: ISO with offset)
+chatbotx analytics comment-automation-user-comments --automationId <id>  # [--keyword] [--page --perPage]
+chatbotx analytics comment-automation-bot-replies --automationId <id>    # [--keyword] [--page --perPage]
+chatbotx analytics comment-automation-errors --automationId <id>         # Failed replies (kept 30 days)
+chatbotx analytics comment-automation-contacts --automationId <id> --eventType <eventType>  # No time range
 ```
 
 ---
@@ -598,6 +608,14 @@ chatbotx appointments delete <id>
 
 ---
 
+### `bot-simulator`
+
+```bash
+chatbotx bot-simulator link --webchatId <webchatId> --websiteUrl <websiteUrl>  # { url } — preview link for a website + webchat
+```
+
+---
+
 ### `capabilities`
 
 ```bash
@@ -610,6 +628,17 @@ chatbotx capabilities list                            # [--include --channel]  D
 
 ```bash
 chatbotx schemas flow-spec                            # JSON Schema for the flow-spec DSL
+```
+
+---
+
+### `comment-automations`
+
+Any channel's comment automation id (fb/ig/threads/tiktok).
+
+```bash
+chatbotx comment-automations missed-comment-run add <id>    # Process missed comments (last 7 days, single-post automations)
+chatbotx comment-automations missed-comment-runs list <id>  # { inProgress } — poll until false
 ```
 
 ---
@@ -711,6 +740,7 @@ chatbotx fb-comments get <id>
 chatbotx fb-comments create
 chatbotx fb-comments update <id>
 chatbotx fb-comments delete <id>
+chatbotx fb-comments bulk-delete --ids <ids>
 chatbotx fb-comments facebook-posts                   # List eligible Facebook posts
 ```
 
@@ -735,6 +765,7 @@ chatbotx ig-comments get <id>
 chatbotx ig-comments create
 chatbotx ig-comments update <id>
 chatbotx ig-comments delete <id>
+chatbotx ig-comments bulk-delete --ids <ids>
 chatbotx ig-comments instagram-media --variant <instagram|facebook>  # List eligible media
 ```
 
@@ -748,6 +779,7 @@ chatbotx ig-stories get <id>
 chatbotx ig-stories create
 chatbotx ig-stories update <id>
 chatbotx ig-stories delete <id>
+chatbotx ig-stories bulk-delete --ids <ids>
 chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eligible stories
 ```
 
@@ -759,6 +791,30 @@ chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eli
 chatbotx inboxes list                                 # Connected inboxes; use `id` as `inboxId` elsewhere
 chatbotx inboxes update <id> --markReadOnOutbound <true|false>
 ```
+
+---
+
+### `instagram-channels`
+
+```bash
+chatbotx instagram-channels list|get <id>
+chatbotx instagram-channels settings list <id>         # Welcome flow, ice breakers, persistent menu
+chatbotx instagram-channels settings update <id>       # Full replace; pushes to Instagram
+```
+
+---
+
+### `magic-links`
+
+```bash
+chatbotx magic-links list                              # [--keyword]
+chatbotx magic-links get <id>
+chatbotx magic-links create --name <name> --url <url>
+chatbotx magic-links update <id>
+chatbotx magic-links delete <id>
+```
+
+Click stats: `chatbotx analytics magic-links-stats --linkId <id>`.
 
 ---
 
@@ -832,6 +888,8 @@ chatbotx messenger-channels list
 chatbotx messenger-channels get <id>
 chatbotx messenger-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
 chatbotx messenger-channels tag-sync update <id> --enabled <enabled>
+chatbotx messenger-channels settings list <id>         # Welcome flow, persistent menu, personas, ice breakers
+chatbotx messenger-channels settings update <id>       # Full replace; pushes to Facebook
 ```
 
 ---
@@ -878,7 +936,9 @@ chatbotx products list                                 # [--page --perPage]
 chatbotx products get <id>
 chatbotx products create --name <name>
 chatbotx products update <id>                           # Full replace
+chatbotx products active update <id> --isActive <isActive>  # Show/hide without replacing
 chatbotx products delete <id>
+chatbotx products bulk-delete --ids <ids>
 chatbotx products import-template                       # XLSX template as base64 [--language]
 chatbotx products imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
 chatbotx products imports-files-headers <fileId>
@@ -951,6 +1011,43 @@ chatbotx spreadsheets update <id>
 chatbotx spreadsheets delete <id>
 chatbotx spreadsheets worksheets list <id>
 chatbotx spreadsheets headers list <id> <worksheetName>
+```
+
+---
+
+### `threads-comments`
+
+```bash
+chatbotx threads-comments list
+chatbotx threads-comments get <id>
+chatbotx threads-comments create
+chatbotx threads-comments update <id>
+chatbotx threads-comments delete <id>
+chatbotx threads-comments bulk-delete --ids <ids>
+chatbotx threads-comments threads-posts                # List eligible Threads posts
+```
+
+---
+
+### `tiktok-channels`
+
+```bash
+chatbotx tiktok-channels list|get <id>
+chatbotx tiktok-channels comment-to-message list <id>  # Live state from TikTok
+chatbotx tiktok-channels comment-to-message update <id> --enabled <enabled>
+```
+
+---
+
+### `tiktok-comments`
+
+```bash
+chatbotx tiktok-comments list
+chatbotx tiktok-comments get <id>
+chatbotx tiktok-comments create
+chatbotx tiktok-comments update <id>
+chatbotx tiktok-comments delete <id>
+chatbotx tiktok-comments bulk-delete --ids <ids>
 ```
 
 ---

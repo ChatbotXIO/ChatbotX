@@ -13,9 +13,17 @@ export const listMinigamesPublicRequest = publicListRequest.extend({
     .describe("Case-insensitive substring match against the minigame's name."),
 })
 
-export const minigamePublicResource = minigameResource.omit({
-  workspaceId: true,
-})
+export const minigamePublicResource = minigameResource
+  .omit({
+    workspaceId: true,
+  })
+  .extend({
+    playUrl: z
+      .string()
+      .describe(
+        "Public play link (the dashboard's Copy URL). Put it in a flow button or message as-is: `{{minigame_play_token}}` is filled per contact when the flow sends it, which is how a play is attributed. Opened outside a flow, the token is missing and the page cannot identify the player.",
+      ),
+  })
 
 export const listMinigamesPublicResponse = publicListResponse(
   minigamePublicResource,

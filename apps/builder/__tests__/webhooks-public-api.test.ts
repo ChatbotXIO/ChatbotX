@@ -50,11 +50,16 @@ const webhookService = {
   list: vi.fn(),
   register: vi.fn(),
   unregister: vi.fn(),
+  findWithConditionsOrFail: vi.fn(),
+  updateWithConditions: vi.fn(),
+  updateSettings: vi.fn(),
+  deleteMany: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ webhookService }))
 
 vi.mock("@chatbotx.io/database/schema", () => {
   const schema = {
+    parse: vi.fn((value: unknown) => value),
     pick: vi.fn(() => schema),
     extend: vi.fn(() => schema),
     omit: vi.fn(() => schema),
@@ -186,6 +191,89 @@ describe("DELETE /v1/webhooks/{id}", () => {
     expect(webhookService.unregister).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "webhook-1",
+    })
+  })
+})
+
+const context = { workspace: { id: "workspace-1" } }
+const webhook = { id: "wh-1", url: "https://example.com", conditions: [] }
+
+describe("GET /v1/webhooks/{id}", () => {
+  test("reads the webhook with its conditions in the token workspace", async () => {
+    webhookService.findWithConditionsOrFail.mockResolvedValueOnce(webhook)
+
+    await expect(
+      findProcedure("GET", "/v1/webhooks/{id}").handler?.({
+        context,
+        input: { id: "wh-1" },
+      }),
+    ).resolves.toEqual(webhook)
+    expect(webhookService.findWithConditionsOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "wh-1",
+    })
+  })
+})
+
+describe("PUT /v1/webhooks/{id}", () => {
+  const procedure = findProcedure("PUT", "/v1/webhooks/{id}")
+  const input = {
+    id: "wh-1",
+    url: "https://example.com/new",
+    conditions: [{ type: "newContact" }],
+  }
+
+  test("replaces url and conditions in the token workspace", async () => {
+    webhookService.updateWithConditions.mockResolvedValueOnce({ id: "wh-1" })
+    webhookService.findWithConditionsOrFail.mockResolvedValueOnce(webhook)
+
+    await procedure.handler?.({ context, input })
+
+    expect(webhookService.updateWithConditions).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "wh-1",
+      url: "https://example.com/new",
+      conditions: [{ type: "newContact" }],
+    })
+  })
+
+  test("404s when the webhook is not in the workspace", async () => {
+    webhookService.updateWithConditions.mockResolvedValueOnce(undefined)
+
+    await expect(procedure.handler?.({ context, input })).rejects.toMatchObject(
+      { code: "notFound" },
+    )
+  })
+})
+
+describe("PATCH /v1/webhooks/{id}/settings", () => {
+  test("patches name/active without touching url or conditions", async () => {
+    webhookService.findWithConditionsOrFail.mockResolvedValueOnce(webhook)
+
+    await findProcedure("PATCH", "/v1/webhooks/{id}/settings").handler?.({
+      context,
+      input: { id: "wh-1", active: false },
+    })
+
+    expect(webhookService.updateSettings).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "wh-1",
+      active: false,
+    })
+    expect(webhookService.updateWithConditions).not.toHaveBeenCalled()
+  })
+})
+
+describe("POST /v1/webhooks/bulk-delete", () => {
+  test("deletes the given ids in the token workspace", async () => {
+    await findProcedure("POST", "/v1/webhooks/bulk-delete").handler?.({
+      context,
+      input: { ids: ["wh-1", "wh-2"] },
+    })
+
+    expect(webhookService.deleteMany).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["wh-1", "wh-2"],
     })
   })
 })
