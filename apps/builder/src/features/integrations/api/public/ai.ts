@@ -52,6 +52,7 @@ const aiProviderServices = {
     findByWorkspaceId: (
       workspaceId: string,
     ) => Promise<AiProviderRow | undefined>
+    disconnect: (workspaceId: string) => Promise<void>
   }
 >
 
@@ -135,6 +136,7 @@ export const integrationsAiPublicRouter = {
     .input(getAiProviderRequest)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
+      const service = aiProviderServices[input.provider]
       const connection = await connectionStateService.findByProviderSourceId({
         workspaceId: context.workspace.id,
         provider: input.provider,
@@ -142,12 +144,17 @@ export const integrationsAiPublicRouter = {
       })
       // Idempotent, same as the pre-Connection-domain per-provider
       // `disconnect(workspaceId)` this aliases: a no-op when already
-      // disconnected, not a 404.
+      // disconnected, not a 404. A workspace not yet backfilled into
+      // `Connection` falls back to that legacy per-provider disconnect
+      // directly — otherwise a stored API key would survive a
+      // "disconnect" that silently no-ops here.
       if (connection) {
         await connectionService.disconnect({
           connectionId: connection.id,
           workspaceId: context.workspace.id,
         })
+      } else {
+        await service.disconnect(context.workspace.id)
       }
 
       await aiIntegrationService.invalidateCache(

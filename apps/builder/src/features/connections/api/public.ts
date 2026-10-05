@@ -1,10 +1,8 @@
 import { connectionStateService } from "@chatbotx.io/business"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
-import {
-  notFoundException,
-  validationException,
-} from "@chatbotx.io/business/errors"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { connectionService } from "@chatbotx.io/connections"
+import type { WorkspaceApiTokenScope } from "@chatbotx.io/database/partials"
 import {
   possibleErrorsOnCancelingConnectSession,
   possibleErrorsOnConnectingSessionTargets,
@@ -23,6 +21,11 @@ import { publicListResponse, withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { startConnect, startReconnect } from "../lib/connect-flow"
 import { toConnectSessionResource } from "../lib/connect-session-resource"
+import {
+  listConnectionResources,
+  toConnectEnvelope,
+  toConnectTargetsResource,
+} from "../lib/connection-response"
 import {
   assertTokenScopeForProvider,
   resolveListKind,
@@ -54,6 +57,49 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope([
   "integrations",
 ])
 
+type PublicConnectionContext = {
+  apiToken: { scopes: WorkspaceApiTokenScope[] | null | undefined }
+  workspace: { id: string }
+}
+
+/**
+ * Shared get-then-assert-scope preamble for every `{id}` route below: loads
+ * the `Connection` scoped to this workspace (404 if missing), then asserts
+ * the caller's token is authorized for its provider's kind — in that order,
+ * so a channels-only token gets `FORBIDDEN` for an integration connection
+ * before any mutation runs (not after, as `update` used to).
+ */
+const loadScopedConnection = async (
+  context: PublicConnectionContext,
+  id: string,
+) => {
+  const connection = await connectionStateService.getForWorkspace({
+    id,
+    workspaceId: context.workspace.id,
+  })
+  if (!connection) {
+    throw notFoundException("Connection not found")
+  }
+  assertTokenScopeForProvider(context.apiToken.scopes, connection.provider)
+  return connection
+}
+
+/** Same as `loadScopedConnection`, for a `ConnectSession` route. */
+const loadScopedSession = async (
+  context: PublicConnectionContext,
+  id: string,
+) => {
+  const session = await connectSessionService.findByIdForWorkspace({
+    id,
+    workspaceId: context.workspace.id,
+  })
+  if (!session) {
+    throw notFoundException("Connect session not found")
+  }
+  assertTokenScopeForProvider(context.apiToken.scopes, session.provider)
+  return session
+}
+
 export const connectionsPublicRouter = {
   list: workspaceTokenAuthAPI
     .route({
@@ -69,19 +115,15 @@ export const connectionsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const kind = resolveListKind(context.apiToken.scopes, input.kind)
-      const { data, count } = await connectionStateService.list({
+      return await listConnectionResources({
         workspaceId: context.workspace.id,
         kind,
         provider: input.provider,
         channel: input.channel,
-        status: input.status ? [input.status] : undefined,
+        status: input.status,
         page: input.page,
         perPage: input.perPage,
       })
-      return {
-        data: data.map(toConnectionResource),
-        pageCount: Math.max(1, Math.ceil(count / input.perPage)),
-      }
     }),
 
   get: workspaceTokenAuthAPI
@@ -97,14 +139,7 @@ export const connectionsPublicRouter = {
     .output(connectionResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const connection = await connectionStateService.getForWorkspace({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-      if (!connection) {
-        throw notFoundException("Connection not found")
-      }
-      assertTokenScopeForProvider(context.apiToken.scopes, connection.provider)
+      const connection = await loadScopedConnection(context, input.id)
       return toConnectionResource(connection)
     }),
 
@@ -115,7 +150,7 @@ export const connectionsPublicRouter = {
       successStatus: 201,
       summary: "Connect channel or integration",
       description:
-        'Credential-strategy providers (`token`/`api_key`/`self_serve`) connect immediately and return `connection` (`session: null`). OAuth providers (`oauth_redirect`/`oauth_popup`) return `connection: null` and a `session` whose `nextAction` is `{type:"open_url", url}` — show that URL to the person connecting, then poll `GET /v1/connect-sessions/{id}` until `awaiting_selection` (a multi-account provider) or `completed` (a single-account provider), then call `POST /v1/connect-sessions/{id}/targets` to finish a multi-account connect. The person opening the URL must have admin rights on the account being connected: the resulting token belongs to them, so hand each person their own link — a leaked URL can only connect the opener\'s account into this workspace.',
+        'Credential-strategy providers (`token`/`api_key`/`self_serve`) connect immediately and return `connection` (`session: null`). OAuth providers (`oauth_redirect`/`oauth_popup`) return `connection: null` and a `session` whose `nextAction` is `{type:"open_url", url}` — show that URL to the person connecting, then poll `GET /v1/connect-sessions/{id}` until `awaiting_selection` (a multi-account provider) or `completed` (a single-account provider), then call `POST /v1/connect-sessions/{id}/targets` to finish a multi-account connect. The person opening the URL must have admin rights on the account being connected: the resulting token belongs to them, so hand each person their own link — a leaked URL can only connect the opener\'s account into this workspace…',
       tags: ["Connections"],
     })
     .input(createConnectionRequest)
@@ -124,7 +159,7 @@ export const connectionsPublicRouter = {
     .handler(async ({ context, input }) => {
       assertTokenScopeForProvider(context.apiToken.scopes, input.provider)
       const ownerId = await resolveOwnerForWorkspace(context.workspace)
-      const { connection, session } = await startConnect({
+      const result = await startConnect({
         workspaceId: context.workspace.id,
         provider: input.provider,
         config: input.config,
@@ -132,10 +167,7 @@ export const connectionsPublicRouter = {
         ownerId,
         actor: { actorTokenId: context.apiToken.id },
       })
-      return {
-        connection: connection ? toConnectionResource(connection) : null,
-        session: session ? toConnectSessionResource(session) : null,
-      }
+      return toConnectEnvelope(result)
     }),
 
   reconnect: workspaceTokenAuthAPI
@@ -152,14 +184,7 @@ export const connectionsPublicRouter = {
     .output(connectEnvelope)
     .errors(possibleErrorsOnReconnectingConnection)
     .handler(async ({ context, input }) => {
-      const connection = await connectionStateService.getForWorkspace({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-      if (!connection) {
-        throw notFoundException("Connection not found")
-      }
-      assertTokenScopeForProvider(context.apiToken.scopes, connection.provider)
+      const connection = await loadScopedConnection(context, input.id)
       const ownerId = await resolveOwnerForWorkspace(context.workspace)
       const { session } = await startReconnect({
         connection,
@@ -168,12 +193,12 @@ export const connectionsPublicRouter = {
         ownerId,
         actor: { actorTokenId: context.apiToken.id },
       })
-      return { connection: null, session: toConnectSessionResource(session) }
+      return toConnectEnvelope({ connection: null, session })
     }),
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PATCH",
+      method: "PUT",
       path: "/v1/connections/{id}",
       summary: "Rename connection",
       description:
@@ -184,18 +209,15 @@ export const connectionsPublicRouter = {
     .output(connectionResource)
     .errors(possibleErrorsOnUpdatingConnection)
     .handler(async ({ context, input }) => {
-      if (input.displayName === undefined) {
-        throw validationException("displayName", "displayName is required")
-      }
+      const existing = await loadScopedConnection(context, input.id)
       const connection = await connectionStateService.updateDisplayName({
-        id: input.id,
+        id: existing.id,
         workspaceId: context.workspace.id,
         displayName: input.displayName,
       })
       if (!connection) {
         throw notFoundException("Connection not found")
       }
-      assertTokenScopeForProvider(context.apiToken.scopes, connection.provider)
       return toConnectionResource(connection)
     }),
 
@@ -212,14 +234,7 @@ export const connectionsPublicRouter = {
     .output(connectionResource)
     .errors(possibleErrorsOnDisconnectingConnection)
     .handler(async ({ context, input }) => {
-      const existing = await connectionStateService.getForWorkspace({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-      if (!existing) {
-        throw notFoundException("Connection not found")
-      }
-      assertTokenScopeForProvider(context.apiToken.scopes, existing.provider)
+      await loadScopedConnection(context, input.id)
       const connection = await connectionService.disconnect({
         connectionId: input.id,
         workspaceId: context.workspace.id,
@@ -240,14 +255,7 @@ export const connectionsPublicRouter = {
     .output(connectionResource)
     .errors(possibleErrorsOnRefreshingConnection)
     .handler(async ({ context, input }) => {
-      const existing = await connectionStateService.getForWorkspace({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-      if (!existing) {
-        throw notFoundException("Connection not found")
-      }
-      assertTokenScopeForProvider(context.apiToken.scopes, existing.provider)
+      await loadScopedConnection(context, input.id)
       const connection = await connectionService.refresh({
         connectionId: input.id,
         workspaceId: context.workspace.id,
@@ -268,14 +276,7 @@ export const connectionsPublicRouter = {
     .output(connectionResource)
     .errors(possibleErrorsOnVerifyingConnection)
     .handler(async ({ context, input }) => {
-      const existing = await connectionStateService.getForWorkspace({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-      if (!existing) {
-        throw notFoundException("Connection not found")
-      }
-      assertTokenScopeForProvider(context.apiToken.scopes, existing.provider)
+      await loadScopedConnection(context, input.id)
       const connection = await connectionService.verify({
         connectionId: input.id,
         workspaceId: context.workspace.id,
@@ -321,14 +322,7 @@ export const connectSessionsPublicRouter = {
     .output(connectSessionResource)
     .errors(possibleErrorsOnFindingConnectSession)
     .handler(async ({ context, input }) => {
-      const session = await connectSessionService.findByIdForWorkspace({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-      if (!session) {
-        throw notFoundException("Connect session not found")
-      }
-      assertTokenScopeForProvider(context.apiToken.scopes, session.provider)
+      const session = await loadScopedSession(context, input.id)
       return toConnectSessionResource(session)
     }),
 
@@ -345,24 +339,13 @@ export const connectSessionsPublicRouter = {
     .output(connectSessionTargetsResource)
     .errors(possibleErrorsOnConnectingSessionTargets)
     .handler(async ({ context, input }) => {
-      const session = await connectSessionService.findByIdForWorkspace({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-      if (!session) {
-        throw notFoundException("Connect session not found")
-      }
-      assertTokenScopeForProvider(context.apiToken.scopes, session.provider)
+      await loadScopedSession(context, input.id)
       const result = await connectionService.connectTargets({
         sessionId: input.id,
         workspaceId: context.workspace.id,
         targetIds: input.targetIds,
       })
-      return {
-        session: toConnectSessionResource(result.session),
-        connections: result.connections.map(toConnectionResource),
-        outcomes: result.outcomes,
-      }
+      return toConnectTargetsResource(result)
     }),
 
   cancel: workspaceTokenAuthAPI
@@ -378,14 +361,7 @@ export const connectSessionsPublicRouter = {
     .output(connectSessionResource)
     .errors(possibleErrorsOnCancelingConnectSession)
     .handler(async ({ context, input }) => {
-      const existing = await connectSessionService.findByIdForWorkspace({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-      if (!existing) {
-        throw notFoundException("Connect session not found")
-      }
-      assertTokenScopeForProvider(context.apiToken.scopes, existing.provider)
+      await loadScopedSession(context, input.id)
       const session = await connectSessionService.cancel({
         id: input.id,
         workspaceId: context.workspace.id,

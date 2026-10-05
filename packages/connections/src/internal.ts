@@ -28,6 +28,7 @@ import type {
   ConnectionConfigField,
   ConnectionDescriptor,
   ConnectionKind,
+  ConnectionStrategy,
 } from "@chatbotx.io/sdk"
 import {
   authValueSchema,
@@ -36,6 +37,10 @@ import {
 import { z } from "zod"
 import { logger } from "./logger"
 import { CONNECTION_REGISTRY } from "./registry"
+
+/** Single source for which `ConnectionStrategy`s connect via direct credentials (vs. an OAuth round trip) — shared by `credentials.ts`'s strategy-branch check, `connect-flow.ts`'s `startConnect`, and `resolve-provider.ts`'s catalog availability check. */
+export const isCredentialStrategy = (strategy: ConnectionStrategy): boolean =>
+  strategy === "token" || strategy === "api_key" || strategy === "self_serve"
 
 /**
  * What a session's `encryptedAuth` blob actually holds once

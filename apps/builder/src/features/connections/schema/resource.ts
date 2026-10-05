@@ -15,7 +15,7 @@ import type { ConnectionStrategy } from "@chatbotx.io/sdk"
 import { z } from "zod"
 
 /** Single source for the `strategy` enum shared by `connectionResource` and `connectionProviderResource` — kept in lockstep with the SDK's `ConnectionStrategy` via `satisfies`. */
-export const connectionStrategies = z.enum([
+const connectionStrategies = z.enum([
   "oauth_redirect",
   "oauth_popup",
   "token",

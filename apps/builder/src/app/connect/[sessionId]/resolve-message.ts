@@ -5,12 +5,13 @@ import type { ConnectSessionStatus } from "@chatbotx.io/database/partials"
  * `ConnectSession.status` (or `null` when the session id resolved to
  * nothing at all). `"pending"`/`"awaiting_selection"` are still-in-flight
  * states, mapped to `"processing"` (auto-refreshing), never `"failed"`.
- * `"authorized"` is a declared `ConnectSessionStatus` value with no writer
- * today — `attachAuthorization` (`packages/business/src/connect-session/service.ts`)
- * goes straight from `pending` to `awaiting_selection`, skipping it — kept
- * here (mapped the same as the other in-flight states) only so a future
- * intermediate step that DOES write it doesn't silently fall through to
- * `"failed"`. Every other value (including a genuinely unknown future
+ * `"authorized"` is a transient active status `claimAuthorization`
+ * (`packages/business/src/connect-session/service.ts`) writes to atomically
+ * claim an OAuth callback before exchanging its code — `attachAuthorization`
+ * moves it on to `awaiting_selection` moments later — kept here (mapped the
+ * same as the other in-flight states) so a page load that lands mid-claim
+ * doesn't fall through to `"failed"`.
+ * Every other value (including a genuinely unknown future
  * status) falls back to `"failed"` rather than silently misreporting
  * progress as success.
  *
@@ -19,7 +20,7 @@ import type { ConnectSessionStatus } from "@chatbotx.io/database/partials"
  * `@testing-library/react` (not a dependency of this app) or a React
  * render harness.
  */
-export type ConnectSessionMessageKind =
+type ConnectSessionMessageKind =
   | "invalid"
   | "processing"
   | "completed"

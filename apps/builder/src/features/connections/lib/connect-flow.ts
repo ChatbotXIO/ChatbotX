@@ -5,25 +5,22 @@ import {
 import {
   CONNECTION_REGISTRY,
   connectionService,
+  isCredentialStrategy,
+  toChannelType,
 } from "@chatbotx.io/connections"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import type {
   ConnectionModel,
   ConnectSessionModel,
 } from "@chatbotx.io/database/types"
-import type { ConnectionStrategy } from "@chatbotx.io/sdk"
 import { sanitizeOptionalReturnUrl } from "@/lib/oauth-referer"
 import { resolveChannelPolicy } from "@/lib/workspace/resolve-visible-channels"
 import { resolveOAuthCredential } from "./resolve-connect-credential"
-import { channelForProvider } from "./resolve-provider"
 
 /** A connect/reconnect always runs as either a builder-session user or a workspace-token caller — never both, never neither. */
-export type ConnectFlowActor =
+type ConnectFlowActor =
   | { actorUserId: string; actorTokenId?: never }
   | { actorTokenId: string; actorUserId?: never }
-
-export const isCredentialStrategy = (strategy: ConnectionStrategy): boolean =>
-  strategy === "token" || strategy === "api_key" || strategy === "self_serve"
 
 /**
  * Throws `channelHiddenException` when `provider` is a channel this
@@ -34,14 +31,14 @@ export const isCredentialStrategy = (strategy: ConnectionStrategy): boolean =>
  * query on top. A no-op for a non-channel provider or a workspace with no
  * tenant policy.
  */
-export const assertChannelCreatable = async (
+const assertChannelCreatable = async (
   workspaceId: string,
   provider: IntegrationType,
 ): Promise<void> => {
-  const channel = channelForProvider(provider)
-  if (!channel) {
+  if (CONNECTION_REGISTRY[provider]?.provider.kind !== "channel") {
     return
   }
+  const channel = toChannelType(provider)
   const policy = await resolveChannelPolicy(workspaceId)
   if (policy && !policy.visibleChannels.includes(channel)) {
     throw channelHiddenException(channel)

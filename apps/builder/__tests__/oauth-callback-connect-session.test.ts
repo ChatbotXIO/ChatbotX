@@ -4,6 +4,8 @@ import {
   connectionStateMismatchException,
   connectSessionExpiredException,
 } from "@chatbotx.io/business/errors"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
+import type * as ChatbotxUtilsModule from "@chatbotx.io/utils"
 import type { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -18,6 +20,8 @@ const {
   mockNotFound,
   mockRedirect,
   mockGetCurrentUser,
+  mockLoggerDebug,
+  mockLoggerError,
 } = vi.hoisted(() => ({
   mockFindByNonce: vi.fn(),
   mockFailSession: vi.fn(),
@@ -31,6 +35,8 @@ const {
   }),
   mockRedirect: vi.fn((target: string) => target),
   mockGetCurrentUser: vi.fn(),
+  mockLoggerDebug: vi.fn(),
+  mockLoggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -75,6 +81,28 @@ vi.mock("@chatbotx.io/connections", () => ({
       provider: { multiAccount: false },
     },
     unconfigured: null,
+  },
+  // Mirrors the real `packages/connections` `failSession`'s exact contract
+  // (forwards to `connectSessionService.fail`, shaping its payload the
+  // same way) including its own try/catch swallow of a persistence
+  // failure — several tests below rely on that swallow behavior rather
+  // than letting a DB blip during `fail()` escape as an unhandled
+  // rejection.
+  failSession: async (
+    session: { id: string; workspaceId: string; provider: string },
+    errorCode: string,
+    statuses?: string[],
+  ) => {
+    try {
+      await mockFailSession({
+        id: session.id,
+        workspaceId: session.workspaceId,
+        errorCode,
+        ...(statuses ? { statuses } : {}),
+      })
+    } catch {
+      // swallow — matches the real `failSession`'s best-effort contract
+    }
   },
 }))
 
@@ -127,7 +155,7 @@ vi.mock("@chatbotx.io/sdk", () => ({
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  const actual = await importOriginal<typeof ChatbotxUtilsModule>()
   return {
     ...actual,
     getPublicUrlFromRequest: (request: { url: string }) => request.url,
@@ -172,6 +200,7 @@ vi.mock("@/integration", () => ({
     zalo: {},
     googleCalendar: {},
     googleSheets: {},
+    unconfigured: {},
   },
 }))
 
@@ -182,7 +211,12 @@ vi.mock("@/lib/platform-credential-owner", () => ({
 vi.mock("@/lib/auth/utils", () => ({ getCurrentUser: mockGetCurrentUser }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  logger: {
+    debug: mockLoggerDebug,
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: mockLoggerError,
+  },
 }))
 
 vi.mock("@/lib/oauth-broker", () => ({
@@ -249,6 +283,22 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     ).rejects.toThrow("not found")
   })
 
+  test("404s when the session's provider does not match the integrationType resolved from the callback route, without attempting a fail or code exchange", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "zalo",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+
+    await expect(
+      handleCallback("messenger", buildRequest("123.abc-nonce")),
+    ).rejects.toThrow("not found")
+
+    expect(mockFailSession).not.toHaveBeenCalled()
+    expect(mockCompleteAuthorization).not.toHaveBeenCalled()
+  })
+
   test("provider denial (?error=access_denied) fails the session with provider_denied and redirects without exchanging code", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
@@ -265,6 +315,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     expect(mockFailSession).toHaveBeenCalledWith({
       id: "123",
       errorCode: "provider_denied",
+      statuses: ["pending"],
     })
     expect(mockCompleteAuthorization).not.toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
@@ -286,7 +337,25 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     expect(mockFailSession).toHaveBeenCalledWith({
       id: "123",
       errorCode: "provider_error",
+      statuses: ["pending"],
     })
+  })
+
+  test("a DB blip inside failSession while recording the ?error= outcome is swallowed by its own try/catch — the request still redirects instead of throwing", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockFailSession.mockRejectedValueOnce(new Error("db blip"))
+
+    await handleCallback(
+      "messenger",
+      buildRequest("123.abc-nonce", "&error=access_denied"),
+    )
+
+    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
   })
 
   test("redirects to the session's own sanitized returnUrl when set", async () => {
@@ -320,13 +389,17 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     })
 
     await expect(
-      handleCallback("messenger", buildRequest("123.abc-nonce")),
+      handleCallback(
+        "unconfigured" as IntegrationType,
+        buildRequest("123.abc-nonce"),
+      ),
     ).rejects.toThrow("not found")
 
     expect(mockResolveForOwner).not.toHaveBeenCalled()
     expect(mockFailSession).toHaveBeenCalledWith({
       id: "123",
       errorCode: "internal_error",
+      statuses: ["pending"],
     })
   })
 
@@ -345,6 +418,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     expect(mockFailSession).toHaveBeenCalledWith({
       id: "123",
       errorCode: "internal_error",
+      statuses: ["pending"],
     })
   })
 
@@ -364,7 +438,40 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     expect(mockFailSession).toHaveBeenCalledWith({
       id: "123",
       errorCode: "internal_error",
+      statuses: ["pending"],
     })
+  })
+
+  test("a DB blip inside failSession for an OAuth-unconfigured provider is swallowed — still 404s instead of throwing", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "unconfigured",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockFailSession.mockRejectedValueOnce(new Error("db blip"))
+
+    await expect(
+      handleCallback(
+        "unconfigured" as IntegrationType,
+        buildRequest("123.abc-nonce"),
+      ),
+    ).rejects.toThrow("not found")
+  })
+
+  test("a DB blip inside failSession for a missing platform credential is swallowed — still 404s instead of throwing", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockResolveForOwner.mockResolvedValueOnce(undefined)
+    mockFailSession.mockRejectedValueOnce(new Error("db blip"))
+
+    await expect(
+      handleCallback("messenger", buildRequest("123.abc-nonce")),
+    ).rejects.toThrow("not found")
   })
 
   test("calls completeAuthorization with the reconstructed callback URL and this exact credential config", async () => {
@@ -410,7 +517,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       targets: [{ id: "oa-1", selectable: true }],
     })
 
-    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+    await handleCallback("zalo", buildRequest("123.abc-nonce"))
 
     expect(mockConnectTargets).toHaveBeenCalledWith({
       sessionId: "123",
@@ -453,7 +560,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       actorUserId: "user-1",
     })
 
-    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+    await handleCallback("zalo", buildRequest("123.abc-nonce"))
 
     expect(mockConnectTargets).not.toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith(
@@ -479,6 +586,21 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
   })
 
+  test("a DB blip inside failSession for an unexpected completeAuthorization error is swallowed — the request still redirects instead of throwing", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockRejectedValueOnce(new Error("boom"))
+    mockFailSession.mockRejectedValueOnce(new Error("db blip"))
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+  })
+
   test("fails the session when the post-authorization auto-connect (connectTargets) throws (regression: item 10 — the session previously stayed awaiting_selection forever)", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
@@ -494,7 +616,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     })
     mockConnectTargets.mockRejectedValueOnce(new Error("boom"))
 
-    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+    await handleCallback("zalo", buildRequest("123.abc-nonce"))
 
     expect(mockFailSession).toHaveBeenCalledWith({
       id: "123",
@@ -524,6 +646,11 @@ describe("handleCallback — ConnectSession state dispatch", () => {
 
     expect(mockFailSession).not.toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+    expect(mockLoggerDebug).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: "123", provider: "messenger" }),
+      "connect session completeAuthorization replay ignored",
+    )
+    expect(mockLoggerError).not.toHaveBeenCalled()
   })
 
   test("a forged/stale state on replay (connectionStateMismatch) also redirects without failing the session", async () => {
@@ -541,5 +668,10 @@ describe("handleCallback — ConnectSession state dispatch", () => {
 
     expect(mockFailSession).not.toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+    expect(mockLoggerDebug).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: "123", provider: "messenger" }),
+      "connect session completeAuthorization replay ignored",
+    )
+    expect(mockLoggerError).not.toHaveBeenCalled()
   })
 })

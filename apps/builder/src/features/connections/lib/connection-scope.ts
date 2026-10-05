@@ -7,9 +7,8 @@ import type {
 import { ORPCError } from "@orpc/server"
 
 /** The resource-area scope a connection of this kind falls under — `channel` connections are gated by `channels`, everything else (`integration`) by `integrations`. */
-export const requiredScopeForKind = (
-  kind: ConnectionKind,
-): WorkspaceApiTokenScope => (kind === "channel" ? "channels" : "integrations")
+const requiredScopeForKind = (kind: ConnectionKind): WorkspaceApiTokenScope =>
+  kind === "channel" ? "channels" : "integrations"
 
 /**
  * Throws the same `FORBIDDEN` shape `requireTokenScope` (`@/orpc`) throws,
@@ -35,7 +34,7 @@ export const assertTokenScopeForProvider = (
 }
 
 /** Every `ConnectionKind` this token's scopes permit, or `null` for an unrestricted token. */
-export const allowedKindsForScopes = (
+const allowedKindsForScopes = (
   scopes: WorkspaceApiTokenScope[] | null | undefined,
 ): ConnectionKind[] | null => {
   if (scopes === null || scopes === undefined) {

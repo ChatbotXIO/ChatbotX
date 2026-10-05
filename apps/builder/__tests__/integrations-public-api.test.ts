@@ -418,7 +418,7 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
     })
   })
 
-  test("no-ops the disconnect call (idempotent) when no Connection row exists yet", async () => {
+  test("no-ops the Connection-domain disconnect call (idempotent) and falls back to the legacy per-provider disconnect when no Connection row exists yet (regression: a stored API key previously survived a silent no-op disconnect)", async () => {
     connectionStateService.findByProviderSourceId.mockResolvedValueOnce(
       undefined,
     )
@@ -429,6 +429,9 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
     })
 
     expect(connectionService.disconnect).not.toHaveBeenCalled()
+    expect(integrationDeepSeekService.disconnect).toHaveBeenCalledWith(
+      "workspace-1",
+    )
   })
 
   test("invalidates the AI integration cache after disconnecting", async () => {

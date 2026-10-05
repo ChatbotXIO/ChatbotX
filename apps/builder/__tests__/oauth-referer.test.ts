@@ -65,6 +65,65 @@ describe("sanitizeReferer", () => {
   })
 })
 
+describe("sanitizeOptionalReturnUrl", () => {
+  test("returns undefined for a missing redirectUrl without a lookup", async () => {
+    const { sanitizeOptionalReturnUrl } = await loadModule()
+
+    expect(await sanitizeOptionalReturnUrl(undefined)).toBeUndefined()
+    expect(mockFindActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("returns undefined for a malformed, non-URL string", async () => {
+    const { sanitizeOptionalReturnUrl } = await loadModule()
+
+    expect(await sanitizeOptionalReturnUrl("not-a-url")).toBeUndefined()
+    expect(mockFindActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("rejects a javascript: scheme URL", async () => {
+    mockFindActiveByDomain.mockResolvedValue(undefined)
+    const { sanitizeOptionalReturnUrl } = await loadModule()
+
+    expect(
+      await sanitizeOptionalReturnUrl("javascript:alert(document.cookie)"),
+    ).toBeUndefined()
+  })
+
+  test("rejects a protocol-relative URL", async () => {
+    const { sanitizeOptionalReturnUrl } = await loadModule()
+
+    expect(await sanitizeOptionalReturnUrl("//evil.com/path")).toBeUndefined()
+    expect(mockFindActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("rejects a foreign origin that is not an active custom domain", async () => {
+    mockFindActiveByDomain.mockResolvedValue(undefined)
+    const { sanitizeOptionalReturnUrl } = await loadModule()
+
+    expect(
+      await sanitizeOptionalReturnUrl("https://evil.example.org/steal"),
+    ).toBeUndefined()
+    expect(mockFindActiveByDomain).toHaveBeenCalledWith("evil.example.org")
+  })
+
+  test("accepts the platform origin without a custom-domain lookup", async () => {
+    const { sanitizeOptionalReturnUrl } = await loadModule()
+
+    const redirectUrl = `${PLATFORM_URL}/connections/success`
+    expect(await sanitizeOptionalReturnUrl(redirectUrl)).toBe(redirectUrl)
+    expect(mockFindActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("accepts a redirectUrl that maps to an active custom domain", async () => {
+    mockFindActiveByDomain.mockResolvedValue(activeDomain)
+    const { sanitizeOptionalReturnUrl } = await loadModule()
+
+    const redirectUrl = "https://chat.acme.com/connections/success"
+    expect(await sanitizeOptionalReturnUrl(redirectUrl)).toBe(redirectUrl)
+    expect(mockFindActiveByDomain).toHaveBeenCalledWith("chat.acme.com")
+  })
+})
+
 describe("resolveRelayTarget", () => {
   test("relays to the originating custom domain, preserving path and query", async () => {
     mockFindActiveByDomain.mockResolvedValue(activeDomain)
@@ -154,6 +213,14 @@ describe("with a dedicated broker host", () => {
 
     const referer = `${PLATFORM_URL}/space/42/dashboard`
     expect(await sanitizeReferer(referer)).toBe(referer)
+    expect(mockFindActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("sanitizeOptionalReturnUrl accepts the broker origin without a lookup", async () => {
+    const { sanitizeOptionalReturnUrl } = await loadWithBroker()
+
+    const redirectUrl = `${BROKER_URL}/connections/success`
+    expect(await sanitizeOptionalReturnUrl(redirectUrl)).toBe(redirectUrl)
     expect(mockFindActiveByDomain).not.toHaveBeenCalled()
   })
 

@@ -1,17 +1,32 @@
 import { connectionStateService } from "@chatbotx.io/business"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
-import {
-  notFoundException,
-  validationException,
-} from "@chatbotx.io/business/errors"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { connectionService } from "@chatbotx.io/connections"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
+import {
+  possibleErrorsOnCancelingConnectSession,
+  possibleErrorsOnConnectingSessionTargets,
+  possibleErrorsOnCreatingConnection,
+  possibleErrorsOnDisconnectingConnection,
+  possibleErrorsOnFindingConnectSession,
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnListingResource,
+  possibleErrorsOnReconnectingConnection,
+  possibleErrorsOnRefreshingConnection,
+  possibleErrorsOnUpdatingConnection,
+  possibleErrorsOnVerifyingConnection,
+} from "@/lib/orpc/orpc-error-helper"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
-import { withPublicPaging } from "@/lib/public-api/list"
+import { publicListResponse, withPublicPaging } from "@/lib/public-api/list"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { startConnect, startReconnect } from "../lib/connect-flow"
 import { toConnectSessionResource } from "../lib/connect-session-resource"
+import {
+  listConnectionResources,
+  toConnectEnvelope,
+  toConnectTargetsResource,
+} from "../lib/connection-response"
 import {
   listConnectionProviderResources,
   toConnectionResource,
@@ -26,6 +41,13 @@ import {
   reconnectConnectionRequest,
   updateConnectionRequest,
 } from "../schema/request"
+import {
+  connectEnvelope,
+  connectionProviderResource,
+  connectionResource,
+  connectSessionResource,
+  connectSessionTargetsResource,
+} from "../schema/resource"
 
 const listConnectionsAPI = authorizedAPI
   .route({
@@ -35,22 +57,20 @@ const listConnectionsAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(withPublicPaging(listConnectionsRequest).and(withWorkspaceIdSchema))
+  .output(publicListResponse(connectionResource))
+  .errors(possibleErrorsOnListingResource)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-  .handler(async ({ input }) => {
-    const { data, count } = await connectionStateService.list({
+  .handler(({ input }) =>
+    listConnectionResources({
       workspaceId: input.workspaceId,
       kind: input.kind,
       provider: input.provider,
       channel: input.channel,
-      status: input.status ? [input.status] : undefined,
+      status: input.status,
       page: input.page,
       perPage: input.perPage,
-    })
-    return {
-      data: data.map(toConnectionResource),
-      pageCount: Math.max(1, Math.ceil(count / input.perPage)),
-    }
-  })
+    }),
+  )
 
 const getConnectionAPI = authorizedAPI
   .route({
@@ -60,6 +80,8 @@ const getConnectionAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(getConnectionRequest.and(withWorkspaceIdSchema))
+  .output(connectionResource)
+  .errors(possibleErrorsOnFindingResource)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
     const connection = await connectionStateService.getForWorkspace({
@@ -80,13 +102,15 @@ const createConnectionAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(createConnectionRequest.and(withWorkspaceIdSchema))
+  .output(connectEnvelope)
+  .errors(possibleErrorsOnCreatingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ context, input }) => {
     const ownerId = await resolvePlatformOwnerId({
       userId: context.user.id,
       workspaceId: input.workspaceId,
     })
-    const { connection, session } = await startConnect({
+    const result = await startConnect({
       workspaceId: input.workspaceId,
       provider: input.provider,
       config: input.config,
@@ -94,10 +118,7 @@ const createConnectionAPI = authorizedAPI
       ownerId,
       actor: { actorUserId: context.user.id },
     })
-    return {
-      connection: connection ? toConnectionResource(connection) : null,
-      session: session ? toConnectSessionResource(session) : null,
-    }
+    return toConnectEnvelope(result)
   })
 
 const reconnectConnectionAPI = authorizedAPI
@@ -108,6 +129,8 @@ const reconnectConnectionAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(reconnectConnectionRequest.and(withWorkspaceIdSchema))
+  .output(connectEnvelope)
+  .errors(possibleErrorsOnReconnectingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ context, input }) => {
     const connection = await connectionStateService.getForWorkspace({
@@ -128,22 +151,21 @@ const reconnectConnectionAPI = authorizedAPI
       ownerId,
       actor: { actorUserId: context.user.id },
     })
-    return { connection: null, session: toConnectSessionResource(session) }
+    return toConnectEnvelope({ connection: null, session })
   })
 
 const updateConnectionAPI = authorizedAPI
   .route({
-    method: "PATCH",
+    method: "PUT",
     path: "/workspaces/{workspaceId}/connections/{id}",
     summary: "Rename a connection",
     tags: ["Connections"],
   })
   .input(updateConnectionRequest.and(withWorkspaceIdSchema))
+  .output(connectionResource)
+  .errors(possibleErrorsOnUpdatingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
-    if (input.displayName === undefined) {
-      throw validationException("displayName", "displayName is required")
-    }
     const connection = await connectionStateService.updateDisplayName({
       id: input.id,
       workspaceId: input.workspaceId,
@@ -163,6 +185,8 @@ const disconnectConnectionAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(getConnectionRequest.and(withWorkspaceIdSchema))
+  .output(connectionResource)
+  .errors(possibleErrorsOnDisconnectingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
     const connection = await connectionService.disconnect({
@@ -180,6 +204,8 @@ const refreshConnectionAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(getConnectionRequest.and(withWorkspaceIdSchema))
+  .output(connectionResource)
+  .errors(possibleErrorsOnRefreshingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
     const connection = await connectionService.refresh({
@@ -197,6 +223,8 @@ const verifyConnectionAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(getConnectionRequest.and(withWorkspaceIdSchema))
+  .output(connectionResource)
+  .errors(possibleErrorsOnVerifyingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
     const connection = await connectionService.verify({
@@ -214,13 +242,15 @@ const listConnectionProvidersAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(listConnectionProvidersRequest.and(withWorkspaceIdSchema))
+  .output(publicListResponse(connectionProviderResource))
+  .errors(possibleErrorsOnListingResource)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
     const data = await listConnectionProviderResources({
       workspaceId: input.workspaceId,
       kind: input.kind,
     })
-    return { data }
+    return { data, pageCount: 1 }
   })
 
 const getConnectSessionAPI = authorizedAPI
@@ -231,6 +261,8 @@ const getConnectSessionAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(getConnectSessionRequest.and(withWorkspaceIdSchema))
+  .output(connectSessionResource)
+  .errors(possibleErrorsOnFindingConnectSession)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
     const session = await connectSessionService.findByIdForWorkspace({
@@ -251,6 +283,8 @@ const connectSessionTargetsAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(connectSessionTargetsRequest.and(withWorkspaceIdSchema))
+  .output(connectSessionTargetsResource)
+  .errors(possibleErrorsOnConnectingSessionTargets)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ context, input }) => {
     const result = await connectionService.connectTargets({
@@ -259,11 +293,7 @@ const connectSessionTargetsAPI = authorizedAPI
       targetIds: input.targetIds,
       actorUserId: context.user.id,
     })
-    return {
-      session: toConnectSessionResource(result.session),
-      connections: result.connections.map(toConnectionResource),
-      outcomes: result.outcomes,
-    }
+    return toConnectTargetsResource(result)
   })
 
 const cancelConnectSessionAPI = authorizedAPI
@@ -274,6 +304,8 @@ const cancelConnectSessionAPI = authorizedAPI
     tags: ["Connections"],
   })
   .input(getConnectSessionRequest.and(withWorkspaceIdSchema))
+  .output(connectSessionResource)
+  .errors(possibleErrorsOnCancelingConnectSession)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
     const session = await connectSessionService.cancel({

@@ -7,10 +7,14 @@ const findIntegrationTiktokByOpenId = vi.fn()
 const telegramHandleRequest = vi.fn()
 const tiktokHandleRequest = vi.fn()
 const markUnhealthyByIdentifier = vi.fn()
+const markLegacyInboxUnhealthy = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
-  connectionStateService: { markUnhealthyByIdentifier },
+  connectionStateService: {
+    markUnhealthyByIdentifier,
+    markLegacyInboxUnhealthy,
+  },
   workspaceMemberService: { findOwnerUserIdByWorkspaceId },
   customDomainService: { findActiveByDomain: vi.fn() },
   platformCredentialService: {
@@ -203,6 +207,40 @@ describe("tiktok webhook routing", () => {
       reason: "token_revoked",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+    })
+  })
+
+  test("falls back to connectionStateService.markLegacyInboxUnhealthy when no Connection row matches (regression: avoid double-releasing channels quota via inboxService.disconnect)", async () => {
+    findIntegrationTiktokByOpenId.mockResolvedValue({
+      auth: {
+        clientId: "id",
+        clientSecret: "secret",
+        redirectUrl: "https://x",
+      },
+      inboxId: "inbox-1",
+      openId: "open-1",
+      workspaceId: "workspace-1",
+    })
+
+    markUnhealthyByIdentifier.mockResolvedValueOnce(null)
+    const response = await handleWebhook(
+      "tiktok",
+      asNextRequest(
+        "http://localhost/integrations/tiktok",
+        JSON.stringify({
+          event: "authorization.removed",
+          user_openid: "open-1",
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe("ok")
+    expect(tiktokHandleRequest).not.toHaveBeenCalled()
+    expect(markLegacyInboxUnhealthy).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "workspace-1",
+      reason: "token_revoked",
     })
   })
 })

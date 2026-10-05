@@ -4,8 +4,9 @@ import { getTranslations } from "next-intl/server"
 import { ConnectSessionAutoRefresh } from "./auto-refresh"
 import { resolveConnectSessionMessageKind } from "./resolve-message"
 
-export const metadata: Metadata = {
-  title: "Connecting…",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("connectSessionPage")
+  return { title: t("metadataTitle") }
 }
 
 type ConnectSessionPageProps = {
@@ -19,8 +20,9 @@ type ConnectSessionPageProps = {
  * failed `sanitizeOptionalReturnUrl`). No builder login is required: the
  * person completing an API/MCP-started connect is never necessarily a
  * builder user or a member of the workspace that started it — `sessionId`
- * itself is the capability token (an unguessable snowflake), matched
- * against `ConnectSessionService.findById`'s workspace-unscoped read.
+ * is a time-ordered snowflake, an identifier rather than a capability
+ * token (see `ConnectSessionService.findById`), so this page intentionally
+ * reveals nothing beyond coarse status (`kind`) for it.
  *
  * This page never lets the visitor pick a target for a multi-account
  * provider — that is the API/MCP caller's own job, via their own

@@ -2,9 +2,14 @@ import {
   connectionStateService,
   platformCredentialService,
 } from "@chatbotx.io/business"
-import { CONNECTION_REGISTRY } from "@chatbotx.io/connections"
+import {
+  CONNECTION_REGISTRY,
+  isCredentialStrategy,
+  toChannelType,
+} from "@chatbotx.io/connections"
 import type {
   ChannelType,
+  ConnectionKind,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
 import {
@@ -62,7 +67,7 @@ export const toConnectionResource = (
  */
 export const listConnectionProviderResources = async (input: {
   workspaceId: string
-  kind?: "channel" | "integration" | "sub_connection"
+  kind?: ConnectionKind
 }): Promise<ConnectionProviderResource[]> => {
   const [t, policy] = await Promise.all([
     getTranslations(),
@@ -145,7 +150,7 @@ const resolveOneProvider = async (input: {
     provider: input.provider,
     kind: adapter.provider.kind,
     channel: (adapter.provider.kind === "channel"
-      ? (channelForProvider(input.provider) ?? null)
+      ? toChannelType(input.provider)
       : null) as ChannelType | null,
     strategy: adapter.provider.strategy,
     multiAccount: adapter.provider.multiAccount,
@@ -154,20 +159,6 @@ const resolveOneProvider = async (input: {
     unavailableReason,
   }
 }
-
-export const channelForProvider = (
-  provider: IntegrationType,
-): ChannelType | undefined => {
-  const adapter = CONNECTION_REGISTRY[provider]
-  if (adapter?.provider.kind !== "channel") {
-    return
-  }
-  return provider === "instagramFacebook"
-    ? "instagram"
-    : (provider as ChannelType)
-}
-
-const CREDENTIAL_STRATEGIES = new Set(["token", "api_key", "self_serve"])
 
 const resolveUnavailableReason = async (input: {
   provider: IntegrationType
@@ -189,7 +180,7 @@ const resolveUnavailableReason = async (input: {
   // resolves that identity gap rather than shipping a second "workspace"-
   // literal `sourceId` collision class.
   if (
-    CREDENTIAL_STRATEGIES.has(adapter.provider.strategy) &&
+    isCredentialStrategy(adapter.provider.strategy) &&
     !adapter.provider.fromCredentials
   ) {
     return "notImplemented"
@@ -199,7 +190,10 @@ const resolveUnavailableReason = async (input: {
     return "alreadyConnected"
   }
 
-  const channel = channelForProvider(input.provider)
+  const channel =
+    adapter.provider.kind === "channel"
+      ? toChannelType(input.provider)
+      : undefined
   if (
     channel &&
     input.policy &&

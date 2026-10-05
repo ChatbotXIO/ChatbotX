@@ -5666,6 +5666,7 @@
     "unavailableDescription": "此工作區不再可用。"
   },
   "connectSessionPage": {
+    "metadataTitle": "Connecting…",
     "processingTitle": "Finishing up…",
     "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
     "completedTitle": "Connected!",

@@ -506,10 +506,10 @@ const connectionInactive = {
   status: 409,
 }
 
-/** No `ConnectionAdapter`/store binding registered for the provider — a data-integrity gap, not a user error. */
+/** `refresh`/`verify`/connect called against a provider with no `ConnectionAdapter`/store binding — an expected unsupported operation (e.g. a built-in connection with no satellite store), not a server failure. See `connectionNotConfiguredException` in `@chatbotx.io/business/errors`. */
 const connectionNotConfigured = {
   message: "This connection provider is not configured",
-  status: 500,
+  status: 400,
 }
 
 /** The provider has no `refreshAuth` handler (e.g. a static API-key credential). */
@@ -556,7 +556,7 @@ const connectionNotOAuth = {
   status: 400,
 }
 
-/** The provider's OAuth code exchange or live credential-check failed with a transient upstream/transport error — see `connectionProviderUnavailableException` in `@chatbotx.io/business/errors`, thrown by `packages/connections`'s `credentials.ts` and `connect-session-flow.ts`. */
+/** The provider's OAuth code exchange or live credential-check failed with a transient upstream/transport error — see `connectionProviderUnavailableException` in `@chatbotx.io/business/errors`, thrown by `packages/connections`'s `credentials.ts` and `connect-session-flow.ts`. The exception itself carries either 502 or 503; this map documents the common 502 case. */
 const connectionProviderUnavailable = {
   message: "The provider is temporarily unavailable. Please try again.",
   status: 502,
@@ -598,7 +598,7 @@ export const possibleErrorsOnUpdatingConnection = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
-/** The `state` nonce did not resolve to a matching session, or the session is expired/consumed — see `ConnectSessionService`. */
+/** The session's `updateWhereStatusIn` status+unexpired guard didn't match — already advanced, cancelled, or expired — see `ConnectSessionService.attachAuthorization`/`claimAuthorization`/etc. */
 const connectSessionExpired = {
   message: "This connect session is no longer active",
   status: 400,

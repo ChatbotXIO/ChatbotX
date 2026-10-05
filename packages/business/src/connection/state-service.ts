@@ -394,6 +394,34 @@ class ConnectionStateService extends BaseService {
     })
   }
 
+  /**
+   * `markUnhealthyByIdentifier`'s counterpart for a provider whose `Inbox`
+   * row predates its `Connection` backfill — no `Connection` row exists yet
+   * to resolve `(provider, identifier)` against, so the caller (a webhook
+   * handler that already has the legacy per-provider row, e.g.
+   * `IntegrationTiktok`) passes `inboxId` directly. Mirrors `Inbox.status`
+   * to `disconnected` the same way `transition`'s `auth.revoked` edge does
+   * for a backfilled connection — deliberately NOT `inboxService.disconnect`,
+   * which also releases `channels` quota; an un-backfilled row was never
+   * counted against quota through the `Connection` domain, so releasing it
+   * here would double-release.
+   */
+  async markLegacyInboxUnhealthy(input: {
+    inboxId: string
+    workspaceId: string
+    reason?: ConnectionStatusReason
+  }): Promise<void> {
+    await db.transaction(async (tx) => {
+      await this.mirrorInboxStatus({
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        to: "needs_reauth",
+        reason: input.reason ?? "token_revoked",
+        tx,
+      })
+    })
+  }
+
   /** Thin pass-through for a workspace-scoped `(provider, sourceId)` lookup — the unique-key read a caller needs before a write it drives (e.g. the legacy AI-provider disconnect alias), so app-layer code never imports `connectionRepository` directly. */
   async findByProviderSourceId(input: {
     workspaceId: string

@@ -6,6 +6,16 @@ import {
 } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 
+const connectionIdField = z
+  .string()
+  .describe("Connection id. Get it from `connections.list`.")
+
+const connectSessionIdField = z
+  .string()
+  .describe(
+    "Connect session id, returned as `session.id` by `connections.create`/`connections.reconnect`.",
+  )
+
 export const listConnectionsRequest = z.object({
   kind: connectionKinds.optional().describe("Filter by connection kind."),
   provider: integrationTypes
@@ -20,7 +30,7 @@ export const listConnectionsRequest = z.object({
 })
 
 export const getConnectionRequest = z.object({
-  id: z.string().describe("Connection id. Get it from `connections.list`."),
+  id: connectionIdField,
 })
 
 export const listConnectionProvidersRequest = z.object({
@@ -37,7 +47,7 @@ export const createConnectionRequest = z.object({
     .describe(
       "Credential-strategy config (e.g. an API key). See `connectionProviders.list`'s `configFields` for the provider's required shape. Ignored for an OAuth-strategy provider.",
     ),
-  /** Where to send the browser once an OAuth connect session finishes (validated with `sanitizeReferer`). Ignored for a credential-strategy connect. */
+  /** Where to send the browser once an OAuth connect session finishes (validated with `sanitizeOptionalReturnUrl`). Ignored for a credential-strategy connect. */
   redirectUrl: z
     .url()
     .optional()
@@ -47,7 +57,7 @@ export const createConnectionRequest = z.object({
 })
 
 export const reconnectConnectionRequest = z.object({
-  id: z.string().describe("Connection id. Get it from `connections.list`."),
+  id: connectionIdField,
   redirectUrl: z
     .url()
     .optional()
@@ -57,30 +67,21 @@ export const reconnectConnectionRequest = z.object({
 })
 
 export const updateConnectionRequest = z.object({
-  id: z.string().describe("Connection id. Get it from `connections.list`."),
+  id: connectionIdField,
   displayName: z
     .string()
     .trim()
     .min(1)
     .max(200)
-    .optional()
     .describe("New display name for the connection."),
 })
 
 export const getConnectSessionRequest = z.object({
-  id: z
-    .string()
-    .describe(
-      "Connect session id, returned as `session.id` by `connections.create`/`connections.reconnect`.",
-    ),
+  id: connectSessionIdField,
 })
 
 export const connectSessionTargetsRequest = z.object({
-  id: z
-    .string()
-    .describe(
-      "Connect session id, returned as `session.id` by `connections.create`/`connections.reconnect`.",
-    ),
+  id: connectSessionIdField,
   targetIds: z
     .array(z.string())
     .min(1)

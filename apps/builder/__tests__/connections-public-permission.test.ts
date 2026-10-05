@@ -26,6 +26,19 @@ const connectionServiceMocks = vi.hoisted(() => ({
   connectTargets: vi.fn(),
 }))
 
+const connectSessionServiceMocks = vi.hoisted(() => ({
+  findByIdForWorkspace: vi.fn(),
+  cancel: vi.fn(),
+}))
+
+const resolveProviderMocks = vi.hoisted(() => ({
+  toConnectionResource: vi.fn((row: { id: string }) => ({ id: row.id })),
+}))
+
+const connectSessionResourceMocks = vi.hoisted(() => ({
+  toConnectSessionResource: vi.fn((row: { id: string }) => ({ id: row.id })),
+}))
+
 const connectionStateMocks = vi.hoisted(() => ({
   list: vi.fn(),
   getForWorkspace: vi.fn(),
@@ -42,14 +55,15 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/connect-session", () => ({
-  connectSessionService: {
-    findByIdForWorkspace: vi.fn(),
-    cancel: vi.fn(),
-  },
+  connectSessionService: connectSessionServiceMocks,
 }))
 
 vi.mock("@chatbotx.io/connections", () => ({
   connectionService: connectionServiceMocks,
+  isCredentialStrategy: (strategy: string) =>
+    strategy === "token" || strategy === "api_key" || strategy === "self_serve",
+  toChannelType: (provider: string) =>
+    provider === "instagramFacebook" ? "instagram" : provider,
   CONNECTION_REGISTRY: {
     messenger: { provider: { strategy: "oauth_redirect", kind: "channel" } },
     claude: { provider: { strategy: "api_key", kind: "integration" } },
@@ -57,13 +71,13 @@ vi.mock("@chatbotx.io/connections", () => ({
 }))
 
 vi.mock("../src/features/connections/lib/resolve-provider", () => ({
-  toConnectionResource: vi.fn((row: { id: string }) => ({ id: row.id })),
+  toConnectionResource: resolveProviderMocks.toConnectionResource,
   listConnectionProviderResources: vi.fn(),
-  channelForProvider: vi.fn(() => undefined),
 }))
 
 vi.mock("../src/features/connections/lib/connect-session-resource", () => ({
-  toConnectSessionResource: vi.fn((row: { id: string }) => ({ id: row.id })),
+  toConnectSessionResource:
+    connectSessionResourceMocks.toConnectSessionResource,
 }))
 
 vi.mock("../src/features/connections/lib/resolve-connect-credential", () => ({
@@ -104,7 +118,7 @@ vi.mock("@/middlewares/auth", () => ({
 }))
 
 const { call } = await import("@orpc/server")
-const { connectionsPublicRouter } = await import(
+const { connectionsPublicRouter, connectSessionsPublicRouter } = await import(
   "../src/features/connections/api/public"
 )
 
@@ -271,5 +285,119 @@ describe("real router: connections public API permission enforcement (T5)", () =
       invoke(connectionsPublicRouter.list, { kind: "integration" }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
     expect(connectionStateMocks.list).not.toHaveBeenCalled()
+  })
+  test.each([
+    {
+      label: "GET /v1/connections/{id}",
+      setupLoad: () =>
+        connectionStateMocks.getForWorkspace.mockResolvedValueOnce({
+          id: "conn-1",
+          provider: "claude",
+        }),
+      invoke: () => invoke(connectionsPublicRouter.get, { id: "conn-1" }),
+      notCalled: () => [resolveProviderMocks.toConnectionResource],
+    },
+    {
+      label: "PUT /v1/connections/{id}",
+      setupLoad: () =>
+        connectionStateMocks.getForWorkspace.mockResolvedValueOnce({
+          id: "conn-1",
+          provider: "claude",
+        }),
+      invoke: () =>
+        invoke(connectionsPublicRouter.update, {
+          id: "conn-1",
+          displayName: "Renamed connection",
+        }),
+      notCalled: () => [connectionStateMocks.updateDisplayName],
+    },
+    {
+      label: "POST /v1/connections/{id}/reconnect",
+      setupLoad: () =>
+        connectionStateMocks.getForWorkspace.mockResolvedValueOnce({
+          id: "conn-1",
+          provider: "claude",
+        }),
+      invoke: () => invoke(connectionsPublicRouter.reconnect, { id: "conn-1" }),
+      notCalled: () => [connectionServiceMocks.reconnect],
+    },
+    {
+      label: "POST /v1/connections/{id}/refresh",
+      setupLoad: () =>
+        connectionStateMocks.getForWorkspace.mockResolvedValueOnce({
+          id: "conn-1",
+          provider: "claude",
+        }),
+      invoke: () => invoke(connectionsPublicRouter.refresh, { id: "conn-1" }),
+      notCalled: () => [connectionServiceMocks.refresh],
+    },
+    {
+      label: "POST /v1/connections/{id}/verify",
+      setupLoad: () =>
+        connectionStateMocks.getForWorkspace.mockResolvedValueOnce({
+          id: "conn-1",
+          provider: "claude",
+        }),
+      invoke: () => invoke(connectionsPublicRouter.verify, { id: "conn-1" }),
+      notCalled: () => [connectionServiceMocks.verify],
+    },
+    {
+      label: "GET /v1/connect-sessions/{id}",
+      setupLoad: () =>
+        connectSessionServiceMocks.findByIdForWorkspace.mockResolvedValueOnce({
+          id: "sess-1",
+          provider: "claude",
+        }),
+      invoke: () => invoke(connectSessionsPublicRouter.get, { id: "sess-1" }),
+      notCalled: () => [connectSessionResourceMocks.toConnectSessionResource],
+    },
+    {
+      label: "POST /v1/connect-sessions/{id}/targets",
+      setupLoad: () =>
+        connectSessionServiceMocks.findByIdForWorkspace.mockResolvedValueOnce({
+          id: "sess-1",
+          provider: "claude",
+        }),
+      invoke: () =>
+        invoke(connectSessionsPublicRouter.connectTargets, {
+          id: "sess-1",
+          targetIds: ["target-1"],
+        }),
+      notCalled: () => [connectionServiceMocks.connectTargets],
+    },
+    {
+      label: "DELETE /v1/connect-sessions/{id} (cancel)",
+      setupLoad: () =>
+        connectSessionServiceMocks.findByIdForWorkspace.mockResolvedValueOnce({
+          id: "sess-1",
+          provider: "claude",
+        }),
+      invoke: () =>
+        invoke(connectSessionsPublicRouter.cancel, { id: "sess-1" }),
+      notCalled: () => [connectSessionServiceMocks.cancel],
+    },
+  ])("a channels-only token is denied $label on an integration-kind resource before any mutation runs", async ({
+    setupLoad,
+    invoke: invokeRoute,
+    notCalled,
+  }) => {
+    findWorkspaceByTokenHash.mockResolvedValue({
+      workspace: { id: "ws-1", ownerId: "owner-1" },
+      apiToken: {
+        id: "token-1",
+        permission: "full" as const,
+        scopes: ["channels"],
+      },
+    })
+    setupLoad()
+
+    await expect(invokeRoute()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Token is not authorized for the 'integrations' scope",
+    })
+
+    for (const service of notCalled()) {
+      expect(service).not.toHaveBeenCalled()
+    }
   })
 })

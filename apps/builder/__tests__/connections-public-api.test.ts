@@ -62,9 +62,6 @@ const mocks = vi.hoisted(() => ({
     id: row.id,
     sessionResource: true,
   })),
-  channelForProvider: vi.fn(
-    (_provider: string): string | undefined => undefined,
-  ),
   resolveOAuthCredential: vi.fn(),
   sanitizeOptionalReturnUrl: vi.fn(async (url?: string) => url),
   resolveOwnerForWorkspace: vi.fn(async () => "owner-1"),
@@ -109,6 +106,10 @@ const connectionServiceMocks = vi.hoisted(() => ({
 
 vi.mock("@chatbotx.io/connections", () => ({
   connectionService: connectionServiceMocks,
+  isCredentialStrategy: (strategy: string) =>
+    strategy === "token" || strategy === "api_key" || strategy === "self_serve",
+  toChannelType: (provider: string) =>
+    provider === "instagramFacebook" ? "instagram" : provider,
   CONNECTION_REGISTRY: {
     claude: { provider: { strategy: "api_key", kind: "integration" } },
     messenger: { provider: { strategy: "oauth_redirect", kind: "channel" } },
@@ -141,7 +142,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 vi.mock("../src/features/connections/lib/resolve-provider", () => ({
   toConnectionResource: mocks.toConnectionResource,
   listConnectionProviderResources: mocks.listConnectionProviderResources,
-  channelForProvider: mocks.channelForProvider,
 }))
 
 vi.mock("../src/features/connections/lib/connect-session-resource", () => ({
@@ -186,7 +186,6 @@ const context = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.channelForProvider.mockReturnValue(undefined)
   mocks.resolveOwnerForWorkspace.mockResolvedValue("owner-1")
   mocks.resolveChannelPolicy.mockResolvedValue(null)
   mocks.sanitizeOptionalReturnUrl.mockImplementation(
@@ -374,7 +373,6 @@ describe("POST /v1/connections", () => {
   const procedure = findProcedure("POST", "/v1/connections")
 
   test("connects a credential-strategy provider immediately and returns connection, session: null", async () => {
-    mocks.channelForProvider.mockReturnValue(undefined)
     connectionServiceMocks.connectFromCredentials.mockResolvedValueOnce({
       id: "conn-1",
     })
@@ -397,7 +395,6 @@ describe("POST /v1/connections", () => {
   })
 
   test("starts an OAuth session and returns connection: null, session", async () => {
-    mocks.channelForProvider.mockReturnValue("messenger")
     mocks.resolveChannelPolicy.mockResolvedValueOnce({
       ownerId: "owner-1",
       creatable: ["messenger"],
@@ -432,7 +429,6 @@ describe("POST /v1/connections", () => {
   })
 
   test("throws channelHidden when the channel is outside the tenant's visibleChannels policy", async () => {
-    mocks.channelForProvider.mockReturnValue("messenger")
     mocks.resolveChannelPolicy.mockResolvedValueOnce({
       ownerId: "owner-1",
       creatable: [],
@@ -446,7 +442,6 @@ describe("POST /v1/connections", () => {
   })
 
   test("does not hide a channel that is grandfathered into visibleChannels despite an empty creatable set (an already-connected channel stays connectable)", async () => {
-    mocks.channelForProvider.mockReturnValue("messenger")
     mocks.resolveChannelPolicy.mockResolvedValueOnce({
       ownerId: "owner-1",
       creatable: [],
@@ -515,11 +510,10 @@ describe("POST /v1/connections/{id}/reconnect", () => {
   })
 })
 
-describe("PATCH /v1/connections/{id}", () => {
-  const procedure = findProcedure("PATCH", "/v1/connections/{id}")
+describe("PUT /v1/connections/{id}", () => {
+  const procedure = findProcedure("PUT", "/v1/connections/{id}")
 
   test("throws notFound when the connection does not exist in this workspace", async () => {
-    mocks.updateDisplayName.mockResolvedValueOnce(undefined)
     await expect(
       procedure.handler?.({
         context,
@@ -529,6 +523,10 @@ describe("PATCH /v1/connections/{id}", () => {
   })
 
   test("renames the connection scoped to the token's workspace", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "claude",
+    })
     mocks.updateDisplayName.mockResolvedValueOnce({ id: "conn-1" })
 
     const result = await procedure.handler?.({

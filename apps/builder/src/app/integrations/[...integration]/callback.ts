@@ -18,6 +18,7 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   CONNECTION_REGISTRY,
   connectionService,
+  failSession,
 } from "@chatbotx.io/connections"
 import { db } from "@chatbotx.io/database/client"
 import {
@@ -329,7 +330,11 @@ const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
  * resolve identically with no relay needed. The completion page
  * (`/connect/{id}`) does not require a signed-in builder session either.
  */
-const handleConnectSessionCallback = async (url: URL, rawState: string) => {
+const handleConnectSessionCallback = async (
+  url: URL,
+  rawState: string,
+  integrationType: IntegrationType,
+) => {
   const [sessionId, nonce] = rawState.split(".")
   if (!(sessionId && nonce)) {
     return notFound()
@@ -338,6 +343,13 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
   const session = await connectSessionService.findByNonce(nonce)
   if (!session || session.id !== sessionId) {
     logger.debug({ sessionId }, "connect session state could not be verified")
+    return notFound()
+  }
+  if (session.provider !== integrationType) {
+    logger.debug(
+      { sessionId, provider: session.provider, integrationType },
+      "connect session state does not match this callback route's provider",
+    )
     return notFound()
   }
 
@@ -353,12 +365,15 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
   // provider-side failure, not a denial, and must not be reported as one.
   const oauthError = url.searchParams.get("error")
   if (oauthError) {
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode:
-        oauthError === "access_denied" ? "provider_denied" : "provider_error",
-    })
+    // Restricted to `pending`: a replayed/edited `?error=` on a session
+    // that already advanced (e.g. to `awaiting_selection`) must not
+    // terminalize the in-flight session out from under the request that's
+    // actually progressing it.
+    await failSession(
+      session,
+      oauthError === "access_denied" ? "provider_denied" : "provider_error",
+      ["pending"],
+    )
     return redirect(returnUrl)
   }
 
@@ -371,11 +386,7 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
     // Without this, the session stays `awaiting_selection`/`authorized`
     // until its TTL lapses and the completion page polls the whole time —
     // a server-side misconfiguration, not a recoverable state.
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode: "internal_error",
-    })
+    await failSession(session, "internal_error", ["pending"])
     return notFound()
   }
 
@@ -388,11 +399,7 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
       { sessionId: session.id, provider: session.provider },
       "connect session platform credential missing",
     )
-    await connectSessionService.fail({
-      id: session.id,
-      workspaceId: session.workspaceId,
-      errorCode: "internal_error",
-    })
+    await failSession(session, "internal_error", ["pending"])
     return notFound()
   }
 
@@ -444,37 +451,32 @@ const handleConnectSessionCallback = async (url: URL, rawState: string) => {
     // that's "nothing to do, this request is a no-op", not a failure, so
     // it must NOT call `fail()` and flip a still-active session to
     // `failed` out from under the request that's actually progressing it.
-    // Every other error reaching here is genuinely unexpected — most
-    // commonly the auto-connect step above (`connectTargets`) throwing
-    // after a successful `completeAuthorization` — and is the only thing
-    // that terminalizes the session in that case; without it the session
-    // stayed `awaiting_selection` until its TTL lapsed, and the
-    // completion page polled the whole time instead of showing a failure.
-    logger.error(
-      { err, sessionId: session.id, provider: session.provider },
-      "connect session completeAuthorization failed",
-    )
     const isBenignReplay =
       err instanceof ChatbotXException &&
       (err.code === "connectionStateMismatch" ||
         err.code === "connectSessionExpired")
-    if (!isBenignReplay) {
+    if (isBenignReplay) {
+      logger.debug(
+        { err, sessionId: session.id, provider: session.provider },
+        "connect session completeAuthorization replay ignored",
+      )
+    } else {
+      // Every other error reaching here is genuinely unexpected — most
+      // commonly the auto-connect step above (`connectTargets`) throwing
+      // after a successful `completeAuthorization` — and is the only thing
+      // that terminalizes the session in that case; without it the session
+      // stayed `awaiting_selection` until its TTL lapsed, and the
+      // completion page polled the whole time instead of showing a failure.
       // A DB blip inside `fail()` itself must not turn an already-failed
       // callback into a 500 — the person still needs to land back on
       // `returnUrl`, and the session just stays in its prior (non-terminal)
-      // status until the nightly reconcile or a future webhook retry.
-      try {
-        await connectSessionService.fail({
-          id: session.id,
-          workspaceId: session.workspaceId,
-          errorCode: "internal_error",
-        })
-      } catch (failErr) {
-        logger.error(
-          { err: failErr, sessionId: session.id },
-          "connect session fail() itself failed after completeAuthorization error",
-        )
-      }
+      // status until the nightly reconcile or a future webhook retry —
+      // `failSession` (`@chatbotx.io/connections`) swallows that for us.
+      logger.error(
+        { err, sessionId: session.id, provider: session.provider },
+        "connect session completeAuthorization failed",
+      )
+      await failSession(session, "internal_error")
     }
   }
 
@@ -501,7 +503,11 @@ export const handleCallback = async (
   // ads/lead-ads/meta-catalog connect flows) moves onto sessions, this
   // early branch becomes the only path and the switch below is deleted.
   if (CONNECT_SESSION_STATE_PATTERN.test(rawStateParam)) {
-    return await handleConnectSessionCallback(url, rawStateParam)
+    return await handleConnectSessionCallback(
+      url,
+      rawStateParam,
+      integrationType,
+    )
   }
 
   let rawState: unknown

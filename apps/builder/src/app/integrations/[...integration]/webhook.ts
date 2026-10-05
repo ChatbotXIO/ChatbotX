@@ -388,9 +388,20 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       workspaceId: integrationTiktok.workspaceId,
     })
     if (!connection) {
-      logger.error(
+      // No `Connection` row yet for this provider/workspace — the inbox
+      // predates the TikTok backfill. Mirror the legacy "set status
+      // disconnected" behavior directly on the `Inbox` row so a
+      // revoked-token inbox doesn't silently stay `connected`; never
+      // `inboxService.disconnect`, which also releases `channels` quota
+      // this un-backfilled row was never counted against.
+      await connectionStateService.markLegacyInboxUnhealthy({
+        inboxId: integrationTiktok.inboxId,
+        workspaceId: integrationTiktok.workspaceId,
+        reason: "token_revoked",
+      })
+      logger.info(
         { openId: userOpenId, workspaceId: integrationTiktok.workspaceId },
-        "TikTok authorization removed — no Connection row matched this workspace",
+        "TikTok authorization removed — no Connection row; marked legacy inbox unhealthy",
       )
       return new Response("ok")
     }
