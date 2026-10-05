@@ -6,7 +6,10 @@ import {
   findOrFail,
   sql,
 } from "@chatbotx.io/database/client"
-import type { IntegrationUserInfo } from "@chatbotx.io/database/partials"
+import type {
+  InstagramPersistentMenu,
+  IntegrationUserInfo,
+} from "@chatbotx.io/database/partials"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import { BaseService } from "../base.service"
 
@@ -116,6 +119,23 @@ class InstagramIntegrationService extends BaseService {
           eq(integrationInstagramModel.workspaceId, props.workspaceId),
         ),
       )
+  }
+
+  /**
+   * Seeds the row's own `persistentMenus` column with a single branding
+   * entry after the live Graph API push succeeds — restores the v1.11.0
+   * insert-time-seeded value, same as Messenger's `seedPersistentMenu`.
+   * Callers gate this to rows that don't already have user-configured menu
+   * items, so it never clobbers.
+   */
+  async seedPersistentMenu(props: {
+    id: string
+    entry: InstagramPersistentMenu
+  }): Promise<void> {
+    await db
+      .update(integrationInstagramModel)
+      .set({ persistentMenus: [props.entry] })
+      .where(eq(integrationInstagramModel.id, props.id))
   }
 
   /**

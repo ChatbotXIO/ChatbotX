@@ -16,6 +16,7 @@ const {
   loggerWarnMock,
   resolveConnectSessionMock,
   runChannelHandlerMock,
+  seedPersistentMenuMock,
   updateWorkspaceLogoMock,
 } = vi.hoisted(() => ({
   buildContextMock: vi.fn(),
@@ -25,6 +26,7 @@ const {
   loggerWarnMock: vi.fn(),
   resolveConnectSessionMock: vi.fn(),
   runChannelHandlerMock: vi.fn(),
+  seedPersistentMenuMock: vi.fn(),
   updateWorkspaceLogoMock: vi.fn(),
 }))
 
@@ -48,6 +50,7 @@ vi.mock("@chatbotx.io/business", () => ({
   buildContext: buildContextMock,
   instagramIntegrationService: {
     findByInboxId: findByInboxIdMock,
+    seedPersistentMenu: seedPersistentMenuMock,
   },
 }))
 
@@ -96,9 +99,11 @@ describe("connectInstagramAccount (Instagram direct login)", () => {
     findByInboxIdMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
+      persistentMenus: [],
     })
     runChannelHandlerMock.mockResolvedValue(undefined)
     updateWorkspaceLogoMock.mockResolvedValue(undefined)
+    seedPersistentMenuMock.mockResolvedValue(undefined)
     buildContextMock.mockResolvedValue({})
   })
 

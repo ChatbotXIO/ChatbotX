@@ -17,6 +17,7 @@ const {
   loggerWarnMock,
   resolveConnectSessionMock,
   runChannelHandlerMock,
+  seedPersistentMenuMock,
   updateWorkspaceLogoMock,
 } = vi.hoisted(() => ({
   buildContextMock: vi.fn(),
@@ -27,6 +28,7 @@ const {
   loggerWarnMock: vi.fn(),
   resolveConnectSessionMock: vi.fn(),
   runChannelHandlerMock: vi.fn(),
+  seedPersistentMenuMock: vi.fn(),
   updateWorkspaceLogoMock: vi.fn(),
 }))
 
@@ -50,6 +52,7 @@ vi.mock("@chatbotx.io/business", () => ({
   buildContext: buildContextMock,
   messengerIntegrationService: {
     findByInboxId: findByInboxIdMock,
+    seedPersistentMenu: seedPersistentMenuMock,
   },
   tagSyncService: { enqueueChannelScan: enqueueChannelScanMock },
 }))
@@ -99,9 +102,11 @@ describe("connectMessengerPage", () => {
     findByInboxIdMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
+      persistentMenus: [],
     })
     runChannelHandlerMock.mockResolvedValue(undefined)
     updateWorkspaceLogoMock.mockResolvedValue(undefined)
+    seedPersistentMenuMock.mockResolvedValue(undefined)
     enqueueChannelScanMock.mockResolvedValue(undefined)
     buildContextMock.mockResolvedValue({})
   })

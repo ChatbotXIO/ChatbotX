@@ -10,6 +10,7 @@ import {
 import {
   channelTypes,
   type IntegrationUserInfo,
+  type MessengerPersistentMenu,
 } from "@chatbotx.io/database/partials"
 import { integrationMessengerRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -72,6 +73,24 @@ class MessengerIntegrationService extends BaseService {
           eq(integrationMessengerModel.workspaceId, props.workspaceId),
         ),
       )
+  }
+
+  /**
+   * Seeds the row's own `persistentMenus` column with a single branding
+   * entry after the live Graph API push succeeds — restores the v1.11.0
+   * insert-time-seeded value (dropped when Messenger moved onto the unified
+   * connect session, whose `candidateToConfig` has no app-layer branding
+   * context to seed it at insert time). Callers gate this to rows that
+   * don't already have user-configured menu items, so it never clobbers.
+   */
+  async seedPersistentMenu(props: {
+    id: string
+    entry: MessengerPersistentMenu
+  }): Promise<void> {
+    await db
+      .update(integrationMessengerModel)
+      .set({ persistentMenus: [props.entry] })
+      .where(eq(integrationMessengerModel.id, props.id))
   }
 
   findAllForTokenRefresh() {

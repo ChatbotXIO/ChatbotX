@@ -1,8 +1,6 @@
 import "server-only"
 
 import { instagramIntegrationService } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
-import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
@@ -60,11 +58,10 @@ async function runInstagramFollowUps({
     integrationType: "instagram",
     persistBrandingMenu: instagramRow.persistentMenus.length
       ? undefined
-      : async (entry) => {
-          await db
-            .update(integrationInstagramModel)
-            .set({ persistentMenus: [entry] })
-            .where(eq(integrationInstagramModel.id, instagramRow.id))
-        },
+      : (entry) =>
+          instagramIntegrationService.seedPersistentMenu({
+            id: instagramRow.id,
+            entry,
+          }),
   })
 }
