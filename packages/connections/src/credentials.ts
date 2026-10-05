@@ -22,6 +22,7 @@ import { startSession } from "./connect-session-flow"
 import {
   connectAndPersist,
   findOrThrow,
+  isCredentialStrategy,
   parseConfig,
   providerFailureStatus,
   resolveAdapter,
@@ -56,11 +57,7 @@ export const connectFromCredentials = async (input: {
 }): Promise<ConnectionModel> => {
   const adapter = resolveAdapter(input.provider)
   const { provider } = adapter
-  const isCredentialStrategy =
-    provider.strategy === "token" ||
-    provider.strategy === "api_key" ||
-    provider.strategy === "self_serve"
-  if (!(isCredentialStrategy && provider.fromCredentials)) {
+  if (!(isCredentialStrategy(provider.strategy) && provider.fromCredentials)) {
     throw connectionWrongStrategyException(input.provider)
   }
   if (!adapter.store) {

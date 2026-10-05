@@ -92,6 +92,9 @@ importers:
       '@chatbotx.io/channel-registry':
         specifier: workspace:*
         version: link:../../packages/channel-registry
+      '@chatbotx.io/connections':
+        specifier: workspace:*
+        version: link:../../packages/connections
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../../packages/database

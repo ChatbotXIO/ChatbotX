@@ -13,7 +13,13 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
+import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  CONNECTION_REGISTRY,
+  connectionService,
+  failSession,
+} from "@chatbotx.io/connections"
 import { db } from "@chatbotx.io/database/client"
 import {
   type IntegrationType,
@@ -309,6 +315,174 @@ const lookupFacebookUser = async (
   }
 }
 
+const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
+
+/**
+ * Dispatches an OAuth callback whose `state` is a raw `"{sessionId}.{nonce}"`
+ * string — the Connection-domain `ConnectSession` flow (`POST
+ * /v1/connections`, `POST /v1/connections/{id}/reconnect`, and the builder
+ * pickers once converted). Unlike the legacy JSON-state flow below, this
+ * path needs no builder session cookie and no host-relay hop: every fact it
+ * needs (`workspaceId`, `provider`, `platformOwnerId`, `returnUrl`) lives on
+ * the `ConnectSession` row itself — resolved once at `startSession` time —
+ * not derived from the request's host or an authenticated user, so a
+ * completion landing on the broker or a reseller's custom domain both
+ * resolve identically with no relay needed. The completion page
+ * (`/connect/{id}`) does not require a signed-in builder session either.
+ */
+const handleConnectSessionCallback = async (
+  url: URL,
+  rawState: string,
+  integrationType: IntegrationType,
+) => {
+  const [sessionId, nonce] = rawState.split(".")
+  if (!(sessionId && nonce)) {
+    return notFound()
+  }
+
+  const session = await connectSessionService.findByNonce(nonce)
+  if (!session || session.id !== sessionId) {
+    logger.debug({ sessionId }, "connect session state could not be verified")
+    return notFound()
+  }
+  if (session.provider !== integrationType) {
+    logger.debug(
+      { sessionId, provider: session.provider, integrationType },
+      "connect session state does not match this callback route's provider",
+    )
+    return notFound()
+  }
+
+  const fallbackReturnUrl = `/connect/${session.id}`
+  const returnUrl = session.returnUrl
+    ? await sanitizeReferer(session.returnUrl)
+    : fallbackReturnUrl
+
+  // Facebook/Google/Zalo/TikTok all return ?error=... when the user cancels
+  // the OAuth dialog — no code exchange to attempt. Only `access_denied` is
+  // an actual user cancellation; every other provider error value (e.g.
+  // `server_error`, `temporarily_unavailable`, `invalid_scope`) is a
+  // provider-side failure, not a denial, and must not be reported as one.
+  const oauthError = url.searchParams.get("error")
+  if (oauthError) {
+    // Restricted to `pending`: a replayed/edited `?error=` on a session
+    // that already advanced (e.g. to `awaiting_selection`) must not
+    // terminalize the in-flight session out from under the request that's
+    // actually progressing it.
+    await failSession(
+      session,
+      oauthError === "access_denied" ? "provider_denied" : "provider_error",
+      ["pending"],
+    )
+    return redirect(returnUrl)
+  }
+
+  const adapter = CONNECTION_REGISTRY[session.provider]
+  if (!(adapter?.credentialType && session.platformOwnerId)) {
+    logger.error(
+      { sessionId: session.id, provider: session.provider },
+      "connect session provider is not OAuth-configured",
+    )
+    // Without this, the session stays `awaiting_selection`/`authorized`
+    // until its TTL lapses and the completion page polls the whole time —
+    // a server-side misconfiguration, not a recoverable state.
+    await failSession(session, "internal_error", ["pending"])
+    return notFound()
+  }
+
+  const credential = await platformCredentialService.resolveForOwner({
+    ownerId: session.platformOwnerId,
+    type: adapter.credentialType,
+  })
+  if (!credential) {
+    logger.error(
+      { sessionId: session.id, provider: session.provider },
+      "connect session platform credential missing",
+    )
+    await failSession(session, "internal_error", ["pending"])
+    return notFound()
+  }
+
+  const code = url.searchParams.get("code") ?? ""
+  // Reconstructs the exact redirect_uri the provider was given at
+  // `authorizeUrl` time — `buildProviderCallbackUrl` resolved it once
+  // against this same credential, and the callback always lands on that
+  // registered host/path (no relay hop for this flow, see above).
+  const callbackUrl = `${url.origin}${url.pathname}`
+
+  try {
+    const completed = await connectionService.completeAuthorization({
+      sessionId: session.id,
+      nonce,
+      code,
+      callbackUrl,
+      credential: credential.config,
+    })
+
+    // A non-multi-account provider's grant always resolves to exactly one
+    // selectable target — finish the connect immediately so an API/MCP
+    // caller (one with no builder session, `actorTokenId` set) never has to
+    // make a second `targets` call for it. A builder-initiated session
+    // (`actorUserId` set) skips this: its picker page — Instagram's direct
+    // login is non-multi-account too, but still shows a confirm screen with
+    // per-row coexist/sync-history opt-ins the person must set before the
+    // connect actually runs — owns finishing the connect itself via its own
+    // `connectTargets` call from the "Continue" button.
+    if (
+      completed.status === "awaiting_selection" &&
+      !adapter.provider.multiAccount &&
+      !completed.actorUserId
+    ) {
+      const onlyTarget = completed.targets[0]
+      if (onlyTarget?.selectable) {
+        await connectionService.connectTargets({
+          sessionId: completed.id,
+          workspaceId: completed.workspaceId,
+          targetIds: [onlyTarget.id],
+        })
+      }
+    }
+  } catch (err) {
+    // `completeAuthorization` already marks the session `failed` for its own
+    // known error paths (exchange rejected, no candidates). A replayed/
+    // double-fired callback (a duplicate request while the session is
+    // still legitimately `pending`/`authorized`/`awaiting_selection`)
+    // throws `connectionStateMismatch`/`connectSessionExpired` instead —
+    // that's "nothing to do, this request is a no-op", not a failure, so
+    // it must NOT call `fail()` and flip a still-active session to
+    // `failed` out from under the request that's actually progressing it.
+    const isBenignReplay =
+      err instanceof ChatbotXException &&
+      (err.code === "connectionStateMismatch" ||
+        err.code === "connectSessionExpired")
+    if (isBenignReplay) {
+      logger.debug(
+        { err, sessionId: session.id, provider: session.provider },
+        "connect session completeAuthorization replay ignored",
+      )
+    } else {
+      // Every other error reaching here is genuinely unexpected — most
+      // commonly the auto-connect step above (`connectTargets`) throwing
+      // after a successful `completeAuthorization` — and is the only thing
+      // that terminalizes the session in that case; without it the session
+      // stayed `awaiting_selection` until its TTL lapsed, and the
+      // completion page polled the whole time instead of showing a failure.
+      // A DB blip inside `fail()` itself must not turn an already-failed
+      // callback into a 500 — the person still needs to land back on
+      // `returnUrl`, and the session just stays in its prior (non-terminal)
+      // status until the nightly reconcile or a future webhook retry —
+      // `failSession` (`@chatbotx.io/connections`) swallows that for us.
+      logger.error(
+        { err, sessionId: session.id, provider: session.provider },
+        "connect session completeAuthorization failed",
+      )
+      await failSession(session, "internal_error")
+    }
+  }
+
+  return redirect(returnUrl)
+}
+
 export const handleCallback = async (
   integrationType: IntegrationType,
   req: NextRequest,
@@ -319,11 +493,26 @@ export const handleCallback = async (
 
   // Parse state params to get workspace info
   const url = new URL(getPublicUrlFromRequest(req))
+  const rawStateParam = url.searchParams.get("state") ?? ""
+
+  // New Connection-domain sessions (`POST /v1/connections`, `POST
+  // /v1/connections/{id}/reconnect`) carry a raw "{sessionId}.{nonce}"
+  // state — never JSON/base64-encoded — dispatched here before the legacy
+  // parse below, which would otherwise throw trying to atob/JSON.parse it.
+  // TODO(Phase 5): once every legacy JSON-state caller (builder pickers,
+  // ads/lead-ads/meta-catalog connect flows) moves onto sessions, this
+  // early branch becomes the only path and the switch below is deleted.
+  if (CONNECT_SESSION_STATE_PATTERN.test(rawStateParam)) {
+    return await handleConnectSessionCallback(
+      url,
+      rawStateParam,
+      integrationType,
+    )
+  }
+
   let rawState: unknown
   try {
-    rawState = JSON.parse(
-      atob(decodeURIComponent(url.searchParams.get("state") || "")),
-    )
+    rawState = JSON.parse(atob(decodeURIComponent(rawStateParam)))
   } catch {
     logger.debug(
       { url: url.toString() },

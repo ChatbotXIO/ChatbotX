@@ -1,11 +1,10 @@
 import {
+  connectionStateService,
   customDomainService,
   platformCredentialService,
   tenantService,
+  workspaceMemberService,
 } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
-import { inboxStatuses } from "@chatbotx.io/database/partials"
-import { inboxModel } from "@chatbotx.io/database/schema"
 import { getSafeErrorDetails } from "@chatbotx.io/integration-threads"
 import type {
   TiktokAuthValue,
@@ -377,15 +376,38 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       { status: 404, headers: { "Content-Type": "application/json" } },
     )
   }
-
   if (eventType === "authorization.removed") {
-    await db
-      .update(inboxModel)
-      .set({ status: inboxStatuses.enum.disconnected })
-      .where(eq(inboxModel.id, integrationTiktok.inboxId))
+    const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+      workspaceId: integrationTiktok.workspaceId,
+    })
+    const connection = await connectionStateService.markUnhealthyByIdentifier({
+      provider: "tiktok",
+      identifier: userOpenId,
+      reason: "token_revoked",
+      ownerId,
+      workspaceId: integrationTiktok.workspaceId,
+    })
+    if (!connection) {
+      // No `Connection` row yet for this provider/workspace — the inbox
+      // predates the TikTok backfill. Mirror the legacy "set status
+      // disconnected" behavior directly on the `Inbox` row so a
+      // revoked-token inbox doesn't silently stay `connected`; never
+      // `inboxService.disconnect`, which also releases `channels` quota
+      // this un-backfilled row was never counted against.
+      await connectionStateService.markLegacyInboxUnhealthy({
+        inboxId: integrationTiktok.inboxId,
+        workspaceId: integrationTiktok.workspaceId,
+        reason: "token_revoked",
+      })
+      logger.info(
+        { openId: userOpenId, workspaceId: integrationTiktok.workspaceId },
+        "TikTok authorization removed — no Connection row; marked legacy inbox unhealthy",
+      )
+      return new Response("ok")
+    }
     logger.info(
       { openId: userOpenId },
-      "TikTok authorization removed — inbox marked disconnected",
+      "TikTok authorization removed — connection marked unhealthy",
     )
     return new Response("ok")
   }

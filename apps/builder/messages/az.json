@@ -6061,6 +6061,21 @@
     "unavailableTitle": "Abunəlikdən çıxmaq mümkün deyil.",
     "unavailableDescription": "Bu iş sahəsi artıq mövcud deyil."
   },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
+  },
   "templatesPublicPage": {
     "invalidTitle": "Bu keçid artıq əlçatan deyil.",
     "invalidDescription": "Bu şablonun paylaşma keçidi etibarsızdır, deaktivdir və ya vaxtı bitib.",

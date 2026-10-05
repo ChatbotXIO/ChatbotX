@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   count: vi.fn(),
   findByInboxId: vi.fn(),
   findByProviderAndSourceIdAnyWorkspace: vi.fn(),
+  findByProviderSourceId: vi.fn(),
+  distinctProvidersByStatus: vi.fn(),
   update: vi.fn(),
   inboxDisconnect: vi.fn(),
   inboxUpdate: vi.fn(),
@@ -32,6 +34,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findByIdForUpdateById: mocks.findById,
     findByProviderAndSourceIdAnyWorkspace:
       mocks.findByProviderAndSourceIdAnyWorkspace,
+    findByProviderSourceId: mocks.findByProviderSourceId,
+    distinctProvidersByStatus: mocks.distinctProvidersByStatus,
     update: mocks.update,
     list: mocks.list,
     count: mocks.count,
@@ -477,6 +481,46 @@ describe("ConnectionStateService.markUnhealthyByIdentifier", () => {
 
     expect(result?.status).toBe("needs_reauth")
     expect(mocks.release).toHaveBeenCalledTimes(1)
+  })
+
+  test("resolves via the workspace-scoped unique key when workspaceId is given, never touching the any-workspace fallback", async () => {
+    mocks.findByProviderSourceId.mockResolvedValue(
+      baseConnection({ id: "conn-3", status: "connected" }),
+    )
+    mocks.findById.mockResolvedValue(
+      baseConnection({ id: "conn-3", status: "connected" }),
+    )
+    mocks.update.mockResolvedValue(
+      baseConnection({ id: "conn-3", status: "needs_reauth" }),
+    )
+
+    const result = await connectionStateService.markUnhealthyByIdentifier({
+      provider: "tiktok",
+      identifier: "open-id-2",
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.findByProviderSourceId).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      provider: "tiktok",
+      sourceId: "open-id-2",
+    })
+    expect(mocks.findByProviderAndSourceIdAnyWorkspace).not.toHaveBeenCalled()
+    expect(result?.status).toBe("needs_reauth")
+  })
+
+  test("returns null without falling back to the any-workspace lookup when the workspace-scoped key has no match", async () => {
+    mocks.findByProviderSourceId.mockResolvedValue(undefined)
+
+    const result = await connectionStateService.markUnhealthyByIdentifier({
+      provider: "tiktok",
+      identifier: "open-id-3",
+      workspaceId: "ws-other",
+    })
+
+    expect(result).toBeNull()
+    expect(mocks.findByProviderAndSourceIdAnyWorkspace).not.toHaveBeenCalled()
   })
 })
 

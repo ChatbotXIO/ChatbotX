@@ -218,4 +218,21 @@ export const connectionRepository = {
       .returning()
     return row
   },
+
+  /** `SELECT DISTINCT provider` for the given workspace+statuses — backs `listConnectionProviderResources`'s already-connected check without paging through every matching row. */
+  async distinctProvidersByStatus(
+    input: { workspaceId: string; statuses: ConnectionStatus[] },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationType[]> {
+    const rows = await tx
+      .selectDistinct({ provider: connectionModel.provider })
+      .from(connectionModel)
+      .where(
+        and(
+          eq(connectionModel.workspaceId, input.workspaceId),
+          inArray(connectionModel.status, input.statuses),
+        ),
+      )
+    return rows.map((row) => row.provider)
+  },
 }

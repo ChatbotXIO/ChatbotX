@@ -3,6 +3,7 @@
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { integrationOpenRouterService } from "@chatbotx.io/business"
+import { verifyAiProviderApiKey } from "@chatbotx.io/business/integration-ai-provider/verify"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -10,7 +11,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { verifyOpenRouterApiKey } from "../lib"
 import {
   type ConnectOpenRouterSchema,
   connectOpenRouterSchema,
@@ -29,7 +29,12 @@ export const connectOpenRouterAction = workspaceActionClient
     }) => {
       const t = await getTranslations()
 
-      if (!(await verifyOpenRouterApiKey(parsedInput.apiKey))) {
+      if (
+        (await verifyAiProviderApiKey(
+          aiProviders.enum.openrouter,
+          parsedInput.apiKey,
+        )) === "invalid"
+      ) {
         return returnValidationErrors(connectOpenRouterSchema, {
           apiKey: {
             _errors: [t("validation.invalidApiKey")],
