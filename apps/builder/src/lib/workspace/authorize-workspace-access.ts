@@ -7,6 +7,7 @@ import type { HTTPMethod } from "@orpc/server"
 import { ORPCError } from "@orpc/server"
 import { isCloud } from "@/env"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "@/features/ads-campaign/lib/api-paths"
+import { BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH } from "@/features/broadcasts/lib/api-paths"
 import {
   FILTER_VALUE_LABELS_POST_PATH,
   FILTER_VALUE_LABELS_TOKEN_PATH,
@@ -72,6 +73,13 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
  *   per entity type, too large for a GET query string. Primary-key lookups
  *   that only read, so the filter's names keep resolving on a trial-expired
  *   workspace. Trial gate only — not reviewed for read_only-token exposure.
+ * - `BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH`
+ *   (`/v1/broadcasts/audience/preview`): the audience filter is a JSON
+ *   body, so POST. They only select contact inboxes and never write, so they
+ *   stay open on a trial-expired workspace. They are NOT allow-listed for
+ *   `read_only` tokens: unlike `broadcasts.getAudience` (bounded by broadcasts
+ *   that already exist) they page every contact of the workspace and accept
+ *   an arbitrary `contactFilter`.
  */
 
 const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
@@ -182,6 +190,7 @@ const READ_ONLY_POST_PATHS = new Set<string>([
   FILTER_VALUE_LABELS_POST_PATH,
   FILTER_VALUE_LABELS_TOKEN_PATH,
   BROADCAST_STOP_TOKEN_PATH,
+  BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
 ])
 
 export async function assertWorkspaceOwnerAccessForMethod(props: {

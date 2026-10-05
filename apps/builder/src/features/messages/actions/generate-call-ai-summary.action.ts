@@ -1,16 +1,11 @@
 "use server"
 
 import { aiProviders } from "@chatbotx.io/ai"
-import { generateCallSummary } from "@chatbotx.io/ai/server"
-import {
-  whatsappCallSummaryService,
-  whatsappCallTranscriptService,
-} from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { assertCanReadCallArtifactOrThrow } from "@/features/integration-whatsapp/calling/actions/assert-call-access"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { generateCallSummaryForCall } from "../../whatsapp-calls/lib/generate-call-summary"
 
 const generateCallAiSummarySchema = z.object({
   whatsappCallId: zodBigintAsString(),
@@ -39,25 +34,9 @@ export const generateCallAiSummaryAction = workspaceActionClient
       },
     })
 
-    const transcriptText =
-      await whatsappCallTranscriptService.getTranscriptTextForCall({
-        callId: whatsappCallId,
-        workspaceId,
-      })
-    if (!transcriptText.trim()) {
-      throw new ChatbotXException("This call has no transcript to summarize")
-    }
-
-    const aiSummary = await generateCallSummary({
+    const aiSummary = await generateCallSummaryForCall({
       workspaceId,
-      provider,
-      transcriptText,
-    })
-
-    await whatsappCallSummaryService.attachSummary({
       callId: whatsappCallId,
-      workspaceId,
-      aiSummary,
       provider,
     })
 

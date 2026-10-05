@@ -206,6 +206,62 @@ export const possibleErrorsOnStartingContactImport = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/**
+ * A read that uses POST because its filter body does not fit a query string.
+ * It is exempt from idempotency (`IDEMPOTENCY_EXEMPT_READ_PATHS`), so it does
+ * not declare the idempotency codes.
+ */
+export const possibleErrorsOnReadingWithBody = {
+  notFound,
+  businessError,
+} satisfies ErrorMap
+
+/** Starting a product import: one import per workspace (409), file checks (404/422). */
+export const possibleErrorsOnStartingProductImport = {
+  notFound,
+  businessError,
+  productImportFileNotFound: {
+    message: "The uploaded product import file was not found.",
+    status: 404,
+  },
+  productImportFileTypeInvalid: {
+    message: "The file is not a valid product import file.",
+    status: 422,
+  },
+  productImportFormatMismatch: {
+    message: "`format` does not match the uploaded file.",
+    status: 422,
+  },
+  productImportAlreadyRunning: {
+    message: "A product import is already running for this workspace.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Generating a call summary: no transcript / provider not connected (422), concurrent run (409). */
+export const possibleErrorsOnGeneratingCallSummary = {
+  notFound,
+  businessError,
+  callTranscriptEmpty: {
+    message: "This call has no transcript to summarize.",
+    status: 422,
+  },
+  callSummaryProviderNotConnected: {
+    message: "The chosen AI provider is not connected to this workspace.",
+    status: 422,
+  },
+  callSummaryProviderRequired: {
+    message: "Several AI providers are connected: pass `provider`.",
+    status: 422,
+  },
+  summaryAlreadyGenerating: {
+    message: "A summary is already being generated for this call.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 /** AI hand-over apply-to-all: every refusal is a 422 with its own code. */
 const aiHandoverRefusal = (message: string) => ({ message, status: 422 })
 
@@ -261,8 +317,16 @@ export const possibleErrorsOnSettingCoexist = {
 } satisfies ErrorMap
 
 /** Conversions API test event: Meta or the channel refused it (422). */
-export const possibleErrorsOnSendingCapiTestEvent = {
+export const possibleErrorsOnSettingCapiDataset = {
   ...possibleErrorsOnMutatingResource,
+  capiRequestFailed: {
+    message: "Meta rejected the Conversions API request.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnSendingCapiTestEvent = {
+  ...possibleErrorsOnSettingCapiDataset,
   capiTestEventRefused: {
     message: "The test event could not be sent.",
     status: 422,

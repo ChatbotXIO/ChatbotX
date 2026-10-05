@@ -593,7 +593,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/broadcasts/{broadcastId}/stats",
       summary: "Get broadcast stats",
       description:
-        "Use this after resolving a broadcast with `broadcasts.get` to inspect sent, delivered, read, and failed counts. Compare results with `analytics.flowStats` for automation performance.",
+        "Use this after resolving a broadcast with `broadcasts.get` to inspect sent, delivered, seen, and failed counts. Compare results with `analytics.flowStats` for automation performance.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })

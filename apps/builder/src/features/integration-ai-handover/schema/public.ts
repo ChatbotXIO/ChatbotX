@@ -112,6 +112,13 @@ export const setApplyToAllPublicResponse = z.object({
 
 export const applyToAllStatusPublicResponse = getApplyToAllStatusResponse
 
+export const aiHandoverSettingsWithStatusResource =
+  aiHandoverSettingsResource.extend({
+    applyToAll: applyToAllStatusPublicResponse.describe(
+      "Whether every customer is handed to the AI, whether the automation runs now, and the latest apply-to-all run.",
+    ),
+  })
+
 export const listAiHandoverHistoryPublicRequest = publicListRequest.and(
   aiHandoverInboxIdParam,
 )

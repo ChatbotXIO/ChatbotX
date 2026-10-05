@@ -30,6 +30,10 @@ export const contactImportPublicResource = z.object({
   updatedAt: z.date(),
 })
 
+export const productImportPublicResource = contactImportPublicResource.extend({
+  type: z.literal("products"),
+})
+
 export const listContactImportsPublicRequest = publicListRequest.extend({
   status: importStatuses
     .optional()
@@ -52,8 +56,18 @@ export const listContactImportsPublicResponse = publicListResponse(
   contactImportPublicResource,
 )
 
+export const listProductImportsPublicResponse = publicListResponse(
+  productImportPublicResource,
+)
+
 export const getContactImportPublicRequest = z.object({
   id: z.string().describe("Import job id. Get it from `contacts.listImports`."),
+})
+
+export const getProductImportPublicRequest = z.object({
+  id: zodBigintAsString().describe(
+    "Import job id. Get it from `products.listImports`.",
+  ),
 })
 
 export const importUploadUrlPublicRequest = z.object({

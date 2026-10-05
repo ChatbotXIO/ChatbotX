@@ -10,6 +10,7 @@ import {
 } from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { beforeAll, describe, expect, test, vi } from "vitest"
+import { IDEMPOTENCY_EXEMPT_READ_PATHS } from "@/lib/idempotency/constants"
 
 // `@/routers/public` transitively imports every feature's `api/public.ts`,
 // which pulls in `@chatbotx.io/database/client` (opens a real `pg.Pool` at
@@ -897,7 +898,12 @@ describe("public API spec — declared codes match what the mapper throws", () =
     "INTERNAL_SERVER_ERROR",
   ]
 
-  type ProcedureErrorMap = { path: string; method: string; codes: string[] }
+  type ProcedureErrorMap = {
+    path: string
+    routePath: string
+    method: string
+    codes: string[]
+  }
 
   function collectErrorMaps(
     node: unknown,
@@ -908,11 +914,15 @@ describe("public API spec — declared codes match what the mapper throws", () =
       return
     }
     const def = (
-      node as Record<string, { errorMap?: object; route?: { method?: string } }>
+      node as Record<
+        string,
+        { errorMap?: object; route?: { method?: string; path?: string } }
+      >
     )["~orpc"]
     if (def?.errorMap) {
       out.push({
         path: path.join("."),
+        routePath: def.route?.path ?? "",
         method: (def.route?.method ?? "POST").toUpperCase(),
         codes: Object.keys(def.errorMap),
       })
@@ -953,6 +963,9 @@ describe("public API spec — declared codes match what the mapper throws", () =
     const writeMethods = ["POST", "PUT", "PATCH", "DELETE"]
     const writesMissingCodes = procedures
       .filter((procedure) => writeMethods.includes(procedure.method))
+      .filter(
+        (procedure) => !IDEMPOTENCY_EXEMPT_READ_PATHS.has(procedure.routePath),
+      )
       .map((procedure) => ({
         path: procedure.path,
         absent: idempotencyCodes.filter(

@@ -51,7 +51,9 @@ export const channelIntegrationResource = z.object({
     .describe("Set when the stored token needs the user to reconnect."),
   adsEligible: z
     .boolean()
-    .describe("Whether this channel can be used for click-to-message ads."),
+    .describe(
+      "Whether this channel can be used for click-to-message ads. Instagram accounts connected through native Instagram login are not eligible; only Facebook-login accounts are.",
+    ),
 })
 
 export const channelIntegrationIdRequest = z.object({

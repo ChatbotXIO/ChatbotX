@@ -2,15 +2,12 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const {
-  findManyByIdsSpy,
-  removeContactSequencesForContactsSpy,
-  requireContactPermissionScopeSpy,
-} = vi.hoisted(() => ({
-  findManyByIdsSpy: vi.fn(),
-  removeContactSequencesForContactsSpy: vi.fn(),
-  requireContactPermissionScopeSpy: vi.fn(),
-}))
+const { unsubscribeContactsSpy, requireContactPermissionScopeSpy } = vi.hoisted(
+  () => ({
+    unsubscribeContactsSpy: vi.fn(),
+    requireContactPermissionScopeSpy: vi.fn(),
+  }),
+)
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -20,15 +17,9 @@ vi.mock("@/lib/safe-action", () => {
   return { workspaceActionClient: chain }
 })
 
-vi.mock("@chatbotx.io/business", () => ({
-  contactService: {
-    findManyByIds: findManyByIdsSpy,
-  },
-}))
-
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
   contactSequenceService: {
-    removeContactSequencesForContacts: removeContactSequencesForContactsSpy,
+    unsubscribeContacts: unsubscribeContactsSpy,
   },
 }))
 
@@ -48,70 +39,47 @@ type ActionHandler = (args: {
 const callAction = removeContactSequenceAction as unknown as ActionHandler
 const WORKSPACE_ID = "ws-1"
 
+// Chunking, the workspace check on sequences and the skipped-id report live in
+// `contactSequenceService.unsubscribeContacts` (covered by the business tests),
+// shared with the public bulk-unsubscribe route.
 describe("removeContactSequenceAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    findManyByIdsSpy.mockResolvedValue([{ id: "contact-1" }])
-    removeContactSequencesForContactsSpy.mockResolvedValue(undefined)
+    unsubscribeContactsSpy.mockResolvedValue({
+      processedContactIds: [],
+      skippedContactIds: [],
+    })
     requireContactPermissionScopeSpy.mockResolvedValue({
       restrictToAssignedUserId: "user-1",
     })
   })
 
-  test("delegates sequence removal to the business service", async () => {
+  test("delegates to the shared service with the member's access scope", async () => {
     await callAction({
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: { ids: ["contact-1"], sequences: ["sequence-1"] },
     })
 
-    expect(findManyByIdsSpy).toHaveBeenCalledWith({
-      workspaceId: WORKSPACE_ID,
-      ids: ["contact-1"],
-      accessScope: { restrictToAssignedUserId: "user-1" },
-    })
-    expect(removeContactSequencesForContactsSpy).toHaveBeenCalledWith({
+    expect(unsubscribeContactsSpy).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1"],
       sequenceIds: ["sequence-1"],
-      reason: "subscription_removed",
+      accessScope: { restrictToAssignedUserId: "user-1" },
     })
   })
 
-  test("chunks contact ids before delegating to the business service", async () => {
-    const ids = Array.from({ length: 1001 }, (_, index) => `contact-${index}`)
-    findManyByIdsSpy
-      .mockResolvedValueOnce(ids.slice(0, 1000).map((id) => ({ id })))
-      .mockResolvedValueOnce(ids.slice(1000).map((id) => ({ id })))
+  test("does not touch any subscription when the permission check fails", async () => {
+    requireContactPermissionScopeSpy.mockRejectedValueOnce(
+      new Error("forbidden"),
+    )
 
-    await callAction({
-      bindArgsParsedInputs: [WORKSPACE_ID],
-      parsedInput: { ids, sequences: ["sequence-1"] },
-    })
+    await expect(
+      callAction({
+        bindArgsParsedInputs: [WORKSPACE_ID],
+        parsedInput: { ids: ["contact-1"], sequences: ["sequence-1"] },
+      }),
+    ).rejects.toThrow("forbidden")
 
-    expect(findManyByIdsSpy).toHaveBeenCalledTimes(2)
-    expect(removeContactSequencesForContactsSpy).toHaveBeenCalledTimes(2)
-    expect(removeContactSequencesForContactsSpy).toHaveBeenNthCalledWith(1, {
-      workspaceId: WORKSPACE_ID,
-      contactIds: ids.slice(0, 1000),
-      sequenceIds: ["sequence-1"],
-      reason: "subscription_removed",
-    })
-    expect(removeContactSequencesForContactsSpy).toHaveBeenNthCalledWith(2, {
-      workspaceId: WORKSPACE_ID,
-      contactIds: ids.slice(1000),
-      sequenceIds: ["sequence-1"],
-      reason: "subscription_removed",
-    })
-  })
-
-  test("does not remove subscriptions when scoped lookup returns no contacts", async () => {
-    findManyByIdsSpy.mockResolvedValue([])
-
-    await callAction({
-      bindArgsParsedInputs: [WORKSPACE_ID],
-      parsedInput: { ids: ["contact-2"], sequences: ["sequence-1"] },
-    })
-
-    expect(removeContactSequencesForContactsSpy).not.toHaveBeenCalled()
+    expect(unsubscribeContactsSpy).not.toHaveBeenCalled()
   })
 })

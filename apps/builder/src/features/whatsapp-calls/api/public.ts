@@ -1,3 +1,5 @@
+import { aiProviders } from "@chatbotx.io/ai"
+import { listConnectedCallSummaryProviders } from "@chatbotx.io/ai/server"
 import {
   callRecordingService,
   whatsappCallHistoryService,
@@ -9,10 +11,13 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   possibleErrorsOnFindingResource,
+  possibleErrorsOnGeneratingCallSummary,
+  possibleErrorsOnListingResource,
   possibleErrorsOnListingWithCursor,
 } from "@/lib/orpc/orpc-error-helper"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { generateCallSummaryForCall } from "../lib/generate-call-summary"
 import { InvalidWhatsappCallCursorError } from "../queries/list-whatsapp-calls.query"
 import {
   CALL_ACTIVITY_CHIPS,
@@ -181,7 +186,7 @@ export const whatsappCallsPublicRouter = {
       path: "/v1/whatsapp/calls/{id}/summary",
       summary: "Get WhatsApp call AI summary",
       description:
-        "Returns the AI summary generated for the call and the provider that wrote it. `summary` is null until one was generated in the inbox.",
+        "Returns the AI summary generated for the call and the provider that wrote it. `summary` is null until one is generated, in the inbox or with `whatsappCalls.generateSummary`.",
       tags: ["WhatsApp Calls"],
     })
     .input(callIdParam)
@@ -202,4 +207,70 @@ export const whatsappCallsPublicRouter = {
         provider: result?.aiSummaryProvider ?? null,
       }
     }),
+
+  listSummaryProviders: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/whatsapp/calls/summary-providers",
+      summary: "List call summary AI providers",
+      description:
+        "Lists the AI providers connected to this workspace that can write a call summary. Pass one `provider` value to `whatsappCalls.generateSummary` (needed only when more than one is listed). The list is empty when no AI integration is connected; connect one in the builder first.",
+      tags: ["WhatsApp Calls"],
+    })
+    .output(
+      z.object({
+        providers: z.array(
+          z.object({
+            id: z
+              .string()
+              .describe(
+                "Id of the connected AI integration in this workspace.",
+              ),
+            provider: aiProviders.describe(
+              "Provider key to send as `provider` to `whatsappCalls.generateSummary`.",
+            ),
+            label: z.string().describe("Display name of the provider."),
+          }),
+        ),
+      }),
+    )
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context }) => ({
+      providers: await listConnectedCallSummaryProviders(context.workspace.id),
+    })),
+
+  generateSummary: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/whatsapp/calls/{id}/summary/generate",
+      summary: "Generate WhatsApp call AI summary",
+      description:
+        "Writes an AI summary (`summary`, `keyPoints`, `actionItems`) from the call transcript with the chosen `provider` (omit it when only one is connected) and saves it, replacing any earlier summary. It calls the provider with the workspace's own AI connection, so it uses that account's AI quota. Find providers with `whatsappCalls.listSummaryProviders` and read the saved result with `whatsappCalls.getSummary`. Returns 422 when the call has no transcript, no AI provider is connected, the named provider is not connected, or `provider` is omitted while several are connected, and 409 while another summary is being generated for the same call.",
+      successStatus: 200,
+      tags: ["WhatsApp Calls"],
+    })
+    .input(
+      callIdParam.extend({
+        provider: aiProviders
+          .optional()
+          .describe(
+            "AI provider that writes the summary. Omit it when exactly one AI provider is connected to the workspace; with several, pass one from `whatsappCalls.listSummaryProviders`.",
+          ),
+      }),
+    )
+    .output(
+      z.object({
+        summary: whatsappCallAiSummarySchema.describe(
+          "The summary that was generated and saved.",
+        ),
+      }),
+    )
+    .errors(possibleErrorsOnGeneratingCallSummary)
+    .handler(async ({ context, input }) => ({
+      summary: await generateCallSummaryForCall({
+        workspaceId: context.workspace.id,
+        callId: input.id,
+        provider: input.provider,
+      }),
+    })),
 }

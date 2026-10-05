@@ -211,6 +211,7 @@ class ImportService extends BaseService {
       throw new ChatbotXException(
         "Product import file not found",
         "productImportFileNotFound",
+        404,
       )
     }
     const config = getImportEntry("products").config
@@ -219,12 +220,14 @@ class ImportService extends BaseService {
       throw new ChatbotXException(
         "Product import file type is invalid",
         "productImportFileTypeInvalid",
+        422,
       )
     }
     if (fileFormat !== input.format) {
       throw new ChatbotXException(
         "Product import format does not match the uploaded file",
         "productImportFormatMismatch",
+        422,
       )
     }
     const active = await db.query.importModel.findFirst({
@@ -239,6 +242,7 @@ class ImportService extends BaseService {
       throw new ChatbotXException(
         "A product import is already running",
         "productImportAlreadyRunning",
+        409,
       )
     }
 
@@ -279,6 +283,7 @@ class ImportService extends BaseService {
         throw new ChatbotXException(
           "A product import is already running",
           "productImportAlreadyRunning",
+          409,
         )
       }
       throw error

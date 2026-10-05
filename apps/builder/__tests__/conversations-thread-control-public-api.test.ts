@@ -167,20 +167,37 @@ describe("POST /v1/conversations/{id}/thread-control", () => {
   })
 })
 
-describe("POST /v1/conversations/{id}/thread-control/sync", () => {
-  test("syncs and returns the snapshot", async () => {
+describe("POST /v1/conversations/{id}/thread-control with action sync", () => {
+  test("syncs, returns the snapshot and never asks the channel to change ownership", async () => {
     mocks.syncConversationThreadOwner.mockResolvedValue(snapshot)
 
-    const result = await find("/v1/conversations/{id}/thread-control/sync")?.({
+    const result = await find("/v1/conversations/{id}/thread-control")?.({
       context,
-      input: { id: "conv-1", contactInboxId: "ci-1" },
+      input: { id: "conv-1", contactInboxId: "ci-1", action: "sync" },
     })
 
-    expect(result).toEqual({ snapshot })
+    expect(result).toEqual({ status: "applied", snapshot })
     expect(mocks.syncConversationThreadOwner).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       conversation,
       contactInboxId: "ci-1",
     })
+    expect(mocks.requestConversationThreadControl).not.toHaveBeenCalled()
+  })
+
+  test("a conversation outside the workspace is refused before the channel", async () => {
+    mocks.syncConversationThreadOwner.mockClear()
+    mocks.findByOrFail.mockRejectedValueOnce(
+      new ChatbotXException("Not found", "notFound", 404),
+    )
+
+    await expect(
+      find("/v1/conversations/{id}/thread-control")?.({
+        context,
+        input: { id: "conv-x", contactInboxId: "ci-1", action: "sync" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+
+    expect(mocks.syncConversationThreadOwner).not.toHaveBeenCalled()
   })
 })

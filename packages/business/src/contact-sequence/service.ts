@@ -224,6 +224,49 @@ class ContactSequenceService extends BaseService {
       skippedContactIds: contactIds.filter((id) => !processedSet.has(id)),
     }
   }
+
+  /**
+   * Bulk counterpart of `subscribeContacts`: removes every contact that
+   * resolves in the workspace (and `accessScope`) from every given sequence.
+   * Ids that do not resolve are reported back as skipped. Shared by the
+   * builder action and the public API.
+   */
+  async unsubscribeContacts(props: {
+    workspaceId: string
+    contactIds: string[]
+    sequenceIds: string[]
+    accessScope?: ContactAccessScope
+  }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
+    const { workspaceId, contactIds, sequenceIds, accessScope } = props
+    await this.assertSequencesInWorkspace({ workspaceId, sequenceIds })
+
+    const processedContactIds: string[] = []
+    for (let offset = 0; offset < contactIds.length; offset += CHUNK_SIZE) {
+      const contacts = await contactService.findManyByIds({
+        workspaceId,
+        ids: contactIds.slice(offset, offset + CHUNK_SIZE),
+        accessScope,
+      })
+      if (contacts.length === 0) {
+        continue
+      }
+      const resolvedIds = contacts.map((contact) => contact.id)
+      processedContactIds.push(...resolvedIds)
+      await this.removeContactSequencesForContacts({
+        workspaceId,
+        contactIds: resolvedIds,
+        sequenceIds,
+        reason: "subscription_removed",
+      })
+    }
+
+    const processedSet = new Set(processedContactIds)
+    return {
+      processedContactIds,
+      skippedContactIds: contactIds.filter((id) => !processedSet.has(id)),
+    }
+  }
+
   /**
    * The flow-step `addContactTag`/`addContactSequence`-equivalent single-
    * contact subscription: unlike `subscribeContacts` (bulk, no per-enrollment

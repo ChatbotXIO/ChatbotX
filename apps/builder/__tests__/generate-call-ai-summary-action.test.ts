@@ -40,6 +40,7 @@ vi.mock("@chatbotx.io/ai", async () => {
 })
 
 vi.mock("@chatbotx.io/ai/server", () => ({
+  CallSummaryProviderNotConnectedError: class extends Error {},
   generateCallSummary: mocks.generateCallSummary,
 }))
 
@@ -52,6 +53,14 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
+  summaryAlreadyGeneratingException: () => new Error("already generating"),
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: {
+    runExclusive: async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+  },
+  isLockAcquisitionError: () => false,
 }))
 
 vi.mock(

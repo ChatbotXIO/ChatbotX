@@ -236,7 +236,7 @@ export const sequencesPublicRouter = {
       path: "/v1/sequences/{id}/steps/{stepId}/contacts",
       summary: "List sequence step recipients by event type",
       description:
-        "Returns contacts that reached one lifecycle event (e.g. sent, opened) at one step of a sequence.",
+        "Returns contacts that reached one event (`message:sent`, `message:delivered`, `message:seen`, `message:failed` or `flow:clicked`; `message:received` and `flow:ref` behave like `message:delivered`) at one step of a sequence.",
       tags: ["Sequences"],
     })
     .input(publicListSequenceStepContactsRequest)
