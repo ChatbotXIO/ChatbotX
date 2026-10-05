@@ -1,5 +1,6 @@
 import {
   createMessageRepository,
+  flowRepository,
   mediaLibraryFileRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
@@ -24,7 +25,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
-import { ChatbotXException } from "../errors"
+import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
@@ -126,6 +127,17 @@ export const createOutgoing = async (props: {
   const { conversation, input: parsedInput, user, contactInbox } = props
 
   if ("flowId" in parsedInput) {
+    // The worker resolves the flow inside the conversation's workspace and
+    // fails asynchronously when it is missing; reject it here so the caller
+    // gets a 404 instead of a 204 for a send that can never happen.
+    if (
+      !(await flowRepository.existsInWorkspace({
+        workspaceId: conversation.workspaceId,
+        id: parsedInput.flowId,
+      }))
+    ) {
+      throw notFoundException("Flow not found")
+    }
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
       data: {

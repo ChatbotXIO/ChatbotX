@@ -16,6 +16,7 @@ const {
   mockDelete,
   mockDispatchAuditRecord,
   mockStepFindFirst,
+  mockFlowFindFirst,
   mockStepUpdate,
   mockStepUpdateSet,
   mockStepUpdateReturning,
@@ -59,6 +60,7 @@ const {
     mockDelete,
     mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
     mockStepFindFirst: vi.fn(),
+    mockFlowFindFirst: vi.fn(),
     mockStepUpdate,
     mockStepUpdateSet,
     mockStepUpdateReturning,
@@ -91,6 +93,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     update: () => mockStepUpdate(),
     query: {
       sequenceStepModel: { findFirst: mockStepFindFirst },
+      flowModel: { findFirst: mockFlowFindFirst },
     },
   },
   and: (...args: unknown[]) => ({ and: args }),
@@ -562,6 +565,7 @@ describe("sequenceService.upsertStep", () => {
   })
 
   test("update path: does not recalculate when only flowId changes and order is unchanged", async () => {
+    mockFlowFindFirst.mockResolvedValue({ id: "flow-1" })
     mockStepFindFirst.mockResolvedValue({
       id: "step-1",
       order: 1,
@@ -578,5 +582,94 @@ describe("sequenceService.upsertStep", () => {
     })
 
     expect(mockHandleStepUpdateImpact).not.toHaveBeenCalled()
+  })
+})
+
+describe("sequenceService step flow validation", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("createStep rejects a flow that is not in the workspace and inserts nothing", async () => {
+    mockFlowFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      sequenceService.createStep({
+        workspaceId: WS,
+        sequenceId: "seq-1",
+        data: { order: 0, flowId: "foreign-flow" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+
+    expect(mockFlowFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "foreign-flow", workspaceId: WS },
+      }),
+    )
+    expect(mockStepInsert).not.toHaveBeenCalled()
+  })
+
+  test("createStep accepts a flow of the workspace", async () => {
+    mockFlowFindFirst.mockResolvedValue({ id: "flow-1" })
+    mockStepInsertReturning.mockResolvedValue([{ id: "new-step" }])
+
+    await sequenceService.createStep({
+      workspaceId: WS,
+      sequenceId: "seq-1",
+      data: { order: 0, flowId: "flow-1" },
+    })
+
+    expect(mockStepInsert).toHaveBeenCalledOnce()
+  })
+
+  test("a step without a flow skips the flow lookup", async () => {
+    mockStepInsertReturning.mockResolvedValue([{ id: "new-step" }])
+
+    await sequenceService.createStep({
+      workspaceId: WS,
+      sequenceId: "seq-1",
+      data: { order: 0, flowId: null },
+    })
+
+    expect(mockFlowFindFirst).not.toHaveBeenCalled()
+  })
+
+  test("updateStep rejects a foreign flow before writing", async () => {
+    mockStepFindFirst.mockResolvedValue({
+      id: "step-1",
+      order: 1,
+      sequenceId: "seq-1",
+      sequence: { workspaceId: WS },
+    })
+    mockFlowFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      sequenceService.updateStep({
+        workspaceId: WS,
+        stepId: "step-1",
+        sequenceId: "seq-1",
+        data: { order: 1, flowId: "foreign-flow" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+
+    expect(mockStepUpdate).not.toHaveBeenCalled()
+  })
+
+  test("deleteStep refuses a step whose parent is a different sequence", async () => {
+    mockStepFindFirst.mockResolvedValue({
+      id: "step-1",
+      sequenceId: "seq-other",
+      sequence: { workspaceId: WS },
+    })
+
+    await expect(
+      sequenceService.deleteStep({
+        workspaceId: WS,
+        stepId: "step-1",
+        sequenceId: "seq-1",
+      }),
+    ).rejects.toThrow("Step not found")
+
+    expect(mockStepDelete).not.toHaveBeenCalled()
   })
 })

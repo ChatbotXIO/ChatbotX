@@ -232,7 +232,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/contacts-count",
       summary: "Get contacts count",
       description:
-        "Use this for total contacts over a time range. Counts all contacts that existed at any point within the given `from`/`to` time range.",
+        "Returns the current total number of contacts across the workspace's inboxes. `from`, `to` and `timezone` are accepted for consistency with the other analytics routes but do not narrow this count; use `analytics.contactCountsPerDay` or `analytics.newContactsCount` for counts over a range.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
